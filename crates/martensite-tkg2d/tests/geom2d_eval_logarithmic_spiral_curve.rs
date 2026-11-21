@@ -180,7 +180,7 @@ fn evaluated_logarithmic_spiral_curve_copy_independent() {
     let aCurve = spiral(1.0, 0.2);
     let aCopy = aCurve.copy().unwrap();
     assert!(!aCopy.is_null());
-    let aCopyCurve: Handle<Geom2dEvalLogarithmicSpiralCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalLogarithmicSpiralCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
     EXPECT_NEAR(aCopyCurve.scale(), 1.0, precision::confusion());
     EXPECT_NEAR(aCopyCurve.growth_exponent(), 0.2, precision::confusion());

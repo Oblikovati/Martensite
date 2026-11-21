@@ -36,7 +36,7 @@ fn integers(input: &[i32]) -> Array1<'static, i32> {
 
 fn line_2d() -> Handle<dyn Geom2dCurve> {
     let direction = Direction2::new(1.0, 0.0).unwrap();
-    Handle::new(Geom2dLine::from_point(Point2::default(), direction)).cast()
+    Handle::new(Geom2dLine::from_point(Point2::default(), direction)).into_upcast()
 }
 
 fn cache_ready(curve: &Geom2dBSplineCurve) -> bool {
@@ -49,7 +49,7 @@ fn cache_ready(curve: &Geom2dBSplineCurve) -> bool {
 fn nonuniform_metadata_refresh_invalidates_cache_and_keeps_eval_representation() {
     let curve = nonuniform_curve();
     let representation: Handle<dyn RepCurveDesc> =
-        Handle::new(RepCurveDescFull::new(line_2d())).cast();
+        Handle::new(RepCurveDescFull::new(line_2d())).into_upcast();
     curve
         .set_eval_representation(representation.clone())
         .unwrap();

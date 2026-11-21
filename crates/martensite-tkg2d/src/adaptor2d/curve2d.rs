@@ -4,8 +4,8 @@ use crate::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3,
 };
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped, Transient};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2, Point2, Vector2};
 
@@ -171,21 +171,26 @@ pub trait Adaptor2dCurve2d: Transient {
         Err(not_implemented("Adaptor2d_Curve2d::EvalDN"))
     }
 }
-impl_transient_interface!(dyn Adaptor2dCurve2d, "Adaptor2d_Curve2d", StandardTransient);
+// The instantiable base and its virtual interface have the same persisted class.
+impl RuntimeTyped for dyn Adaptor2dCurve2d {
+    const TYPE_NAME: &'static str = Adaptor2dCurve2dBase::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        Adaptor2dCurve2dBase::static_type()
+    }
+}
+impl_transient_interface_target!(dyn Adaptor2dCurve2d);
 
 /// An instance of the non-abstract defined base class itself, whose members all raise
-/// a not-implemented failure but `NbSamples`; `Handle::new(Adaptor2dCurve2dBase::default())`.
+/// a not-implemented failure but `NbSamples`; `Handle::new(Adaptor2dCurve2dBase)`.
 ///
 /// Its dynamic type is `Adaptor2dCurve2dBase`, as for `new Adaptor2dCurve2dBase()`.
 #[derive(Default)]
-pub struct Adaptor2dCurve2dBase {
-    parent: StandardTransient,
-}
+pub struct Adaptor2dCurve2dBase;
 impl_transient!(
     Adaptor2dCurve2dBase,
     "Adaptor2d_Curve2d",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn Adaptor2dCurve2d]
 );
 impl Adaptor2dCurve2d for Adaptor2dCurve2dBase {}

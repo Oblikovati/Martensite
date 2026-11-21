@@ -13,7 +13,7 @@ use crate::geom2d::{
 };
 use crate::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient, project_concrete};
 use martensite_tkmath::geom_abs::CurveType;
 use martensite_tkmath::gp::{Point2, Vector2};
 
@@ -104,7 +104,7 @@ impl<'a> Geom2dGridEvalCurve<'a> {
         &mut self,
         curve: &'a dyn Adaptor2dCurve2d,
     ) -> Result<(), Failure> {
-        if let Some(geom_adaptor) = Geom2dAdaptorCurve::project_from(curve) {
+        if let Some(geom_adaptor) = project_concrete::<Geom2dAdaptorCurve>(curve) {
             self.initialization_curve(&geom_adaptor.curve());
             return Ok(());
         }
@@ -171,8 +171,7 @@ impl<'a> Geom2dGridEvalCurve<'a> {
 fn extract_basis_curve(curve: &Handle<dyn Geom2dCurve>) -> Handle<dyn Geom2dCurve> {
     let mut result: Handle<dyn Geom2dCurve> = curve.clone();
     loop {
-        let trimmed: Handle<Geom2dTrimmedCurve> = result.cast::<Geom2dTrimmedCurve>();
-        let Some(wrapper) = trimmed.get() else {
+        let Some(wrapper) = result.downcast_ref::<Geom2dTrimmedCurve>() else {
             return result;
         };
         result = wrapper.basis_curve();
@@ -235,7 +234,7 @@ fn classify_bounded<'a>(
 }
 
 // `occ::down_cast<T>(basis)` when it succeeds.
-fn kind<T: RuntimeTyped>(basis: &Handle<dyn Geom2dCurve>) -> Option<Handle<T>> {
-    let typed: Handle<T> = basis.cast::<T>();
+fn kind<T: Transient>(basis: &Handle<dyn Geom2dCurve>) -> Option<Handle<T>> {
+    let typed: Handle<T> = basis.downcast::<T>();
     (!typed.is_null()).then_some(typed)
 }

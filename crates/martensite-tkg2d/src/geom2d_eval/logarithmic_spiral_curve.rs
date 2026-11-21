@@ -6,7 +6,7 @@ use crate::geom2d::{Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, Ge
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis2d, Point2, Transform2, Vector2};
 use std::io;
 
@@ -15,7 +15,6 @@ const CLASS: &str = "Geom2dEval_LogarithmicSpiralCurve";
 /// A logarithmic spiral on `(-inf, +inf)`, neither closed nor periodic; immutable
 /// like every eval curve; `Handle::new(Geom2dEvalLogarithmicSpiralCurve::new(axis, 1.0, 0.1)?)`.
 pub struct Geom2dEvalLogarithmicSpiralCurve {
-    parent: StandardTransient,
     position: Axis2d,
     scale: f64,
     growth_exponent: f64,
@@ -24,7 +23,6 @@ impl_transient!(
     Geom2dEvalLogarithmicSpiralCurve,
     "Geom2dEval_LogarithmicSpiralCurve",
     dyn Geom2dCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve]
 );
 impl Clone for Geom2dEvalLogarithmicSpiralCurve {
@@ -110,17 +108,13 @@ impl Geom2dEvalLogarithmicSpiralCurve {
             )));
         }
         Ok(Self {
-            parent: StandardTransient::default(),
             position,
             scale,
             growth_exponent,
         })
     }
     fn copied(&self) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            ..*self
-        }
+        Self { ..*self }
     }
     /// The local coordinate system (`Position`); `curve.position()`.
     pub fn position(&self) -> Axis2d {
@@ -151,7 +145,7 @@ impl Geom2dGeometry for Geom2dEvalLogarithmicSpiralCurve {
         ))
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let fields = [

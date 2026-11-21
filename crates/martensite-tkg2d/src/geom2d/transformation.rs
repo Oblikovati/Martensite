@@ -1,20 +1,14 @@
 //! `Geom2dTransformation`: a shared Transform2.
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkmath::gp::{Axis2d, Point2, Transform2, TransformForm, Vector2};
 
 /// A transient similarity of the plane; `Handle::new(Geom2dTransformation::default())`.
 #[derive(Default)]
 pub struct Geom2dTransformation {
-    parent: StandardTransient,
     state: SharedState<Transform2>,
 }
-impl_transient!(
-    Geom2dTransformation,
-    "Geom2d_Transformation",
-    StandardTransient,
-    parent
-);
+impl_transient!(Geom2dTransformation, "Geom2d_Transformation", dyn Transient);
 impl Clone for Geom2dTransformation {
     fn clone(&self) -> Self {
         Self::new(self.trsf2d())
@@ -25,7 +19,6 @@ impl Geom2dTransformation {
     /// `Geom2dTransformation::new(transform)`.
     pub fn new(transform: Transform2) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(transform),
         }
     }

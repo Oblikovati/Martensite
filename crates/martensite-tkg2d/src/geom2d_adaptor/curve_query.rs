@@ -6,7 +6,7 @@ use crate::geom2d::{
     Geom2dTrimmedCurve,
 };
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient, project_concrete};
 use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2};
 use std::f64::consts::PI;
 
@@ -148,8 +148,8 @@ pub(super) fn nb_samples(curve: &dyn Geom2dCurve) -> Result<i32, Failure> {
     Ok(count.min(300))
 }
 
-fn downcast<T: RuntimeTyped>(curve: &dyn Geom2dCurve) -> Result<&T, Failure> {
-    T::project_from(curve).ok_or_else(|| {
+fn downcast<T: RuntimeTyped + Transient>(curve: &dyn Geom2dCurve) -> Result<&T, Failure> {
+    project_concrete::<T>(curve).ok_or_else(|| {
         no_such_object(&format!(
             "Geom2dAdaptor_Curve::NbSamples: {} is not a {}",
             curve.dynamic_type().name(),

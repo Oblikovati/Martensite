@@ -8,7 +8,7 @@ use crate::geom2d::{Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, Ge
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis2d, Point2, Transform2, Vector2};
 use std::io;
 
@@ -17,7 +17,6 @@ const CLASS: &str = "Geom2dEval_CircleInvoluteCurve";
 /// The involute of a circle of radius R on `[0, +inf)`, neither closed nor periodic;
 /// immutable like every eval curve; `Handle::new(Geom2dEvalCircleInvoluteCurve::new(axis, 1.0)?)`.
 pub struct Geom2dEvalCircleInvoluteCurve {
-    parent: StandardTransient,
     position: Axis2d,
     radius: f64,
 }
@@ -25,7 +24,6 @@ impl_transient!(
     Geom2dEvalCircleInvoluteCurve,
     "Geom2dEval_CircleInvoluteCurve",
     dyn Geom2dCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve]
 );
 impl Clone for Geom2dEvalCircleInvoluteCurve {
@@ -82,17 +80,10 @@ impl Geom2dEvalCircleInvoluteCurve {
                 "{CLASS}: radius = {radius}; expected > 0"
             )));
         }
-        Ok(Self {
-            parent: StandardTransient::default(),
-            position,
-            radius,
-        })
+        Ok(Self { position, radius })
     }
     fn copied(&self) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            ..*self
-        }
+        Self { ..*self }
     }
     /// The local coordinate system (`Position`); `curve.position()`.
     pub fn position(&self) -> Axis2d {
@@ -116,7 +107,7 @@ impl Geom2dGeometry for Geom2dEvalCircleInvoluteCurve {
         Err(unsupported("Geom2dEval_CircleInvoluteCurve::Transform", ""))
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let fields = [("Radius", self.radius)];

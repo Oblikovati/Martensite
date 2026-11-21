@@ -9,7 +9,7 @@ use crate::geom2d::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2, Point2, Vector2};
 
@@ -36,21 +36,18 @@ impl OffsetState {
 /// `Adaptor2dOffsetCurve::with_offset(&basis, 3.0)?`.
 #[derive(Default)]
 pub struct Adaptor2dOffsetCurve {
-    parent: StandardTransient,
     state: SharedState<OffsetState>,
 }
 impl_transient!(
     Adaptor2dOffsetCurve,
     "Adaptor2d_OffsetCurve",
     dyn Adaptor2dCurve2d,
-    parent,
     interfaces: [dyn Adaptor2dCurve2d]
 );
 
 impl Adaptor2dOffsetCurve {
     fn from_state(state: OffsetState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -137,7 +134,7 @@ impl Adaptor2dCurve2d for Adaptor2dOffsetCurve {
         if let Some(basis) = state.curve.get() {
             state.curve = basis.shallow_copy()?;
         }
-        Ok(Handle::new(Self::from_state(state)).cast())
+        Ok(Handle::new(Self::from_state(state)).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         Ok(self.state.read().first)
@@ -164,7 +161,7 @@ impl Adaptor2dCurve2d for Adaptor2dOffsetCurve {
         let trimmed = Self::from_state(self.snapshot());
         let offset: f64 = trimmed.offset();
         trimmed.load_offset_bounded(offset, first, last);
-        Ok(Handle::new(trimmed).cast())
+        Ok(Handle::new(trimmed).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         kind::is_closed(&self.snapshot())

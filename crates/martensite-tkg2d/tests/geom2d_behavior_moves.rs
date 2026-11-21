@@ -45,7 +45,7 @@ fn copying_moves_leave_the_source_unchanged() {
     assert_point(center(&c.rotated(p, FRAC_PI_2).unwrap()), 2.0, 0.0);
     let scaled = c.scaled(p, 3.0).unwrap();
     assert_point(center(&scaled), -2.0, -2.0);
-    assert_eq!(scaled.cast::<Geom2dCircle>().radius(), 6.0);
+    assert_eq!(scaled.downcast_ref::<Geom2dCircle>().unwrap().radius(), 6.0);
     assert_point(
         center(&c.translated(Vector2::new(1.0, -1.0)).unwrap()),
         1.0,
@@ -64,7 +64,7 @@ fn copying_moves_leave_the_source_unchanged() {
 #[test]
 fn in_place_moves_change_every_handle() {
     let c = circle();
-    let shared: Handle<dyn Geom2dGeometry> = c.cast();
+    let shared: Handle<dyn Geom2dGeometry> = c.upcast();
     shared.mirror_point(Point2::new(1.0, 0.0)).unwrap();
     assert_point(c.location(), 2.0, 0.0);
     shared.mirror_axis(axis(0.0, 1.0)).unwrap();
@@ -127,7 +127,7 @@ fn line_trimmed_and_offset_follow_the_frozen_serialization_schema() {
         dump(&line, 1),
         r#""className": "Geom2d_Line", "className": "Geom2d_Curve", "pos": {"className": "gp_Ax2d"}"#
     );
-    let basis: Handle<dyn Geom2dCurve> = circle().cast();
+    let basis: Handle<dyn Geom2dCurve> = circle().into_upcast();
     let trimmed = Geom2dTrimmedCurve::new(&basis, 0.5, 1.5, true, true).unwrap();
     assert_eq!(
         dump(&trimmed, 1),
@@ -184,13 +184,13 @@ fn bezier_and_bspline_follow_the_frozen_serialization_schema() {
 fn trimmed_line_refuses_nan_bounds() {
     // Regression: internally SetTrim and Reverse call each other without end on the NaN
     // bounds of a non-periodic basis; unbounded recursion would overflow the stack.
-    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(axis(0.0, 0.0))).cast();
+    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(axis(0.0, 0.0))).into_upcast();
     let error = Geom2dTrimmedCurve::new(&line, f64::NAN, 1.0, true, true)
         .err()
         .unwrap();
     assert_eq!(error.exception_type(), "Standard_ConstructionError");
     // The periodic circle keeps the defined NaN bounds.
-    let basis: Handle<dyn Geom2dCurve> = circle().cast();
+    let basis: Handle<dyn Geom2dCurve> = circle().into_upcast();
     let trimmed = Geom2dTrimmedCurve::new(&basis, f64::NAN, 1.0, true, true).unwrap();
     assert!(trimmed.first_parameter().is_nan());
 }

@@ -33,14 +33,14 @@ fn line_and_circle() -> (Handle<dyn Geom2dCurve>, Handle<dyn Geom2dCurve>) {
     let line = Handle::new(Geom2dLine::from_point(Point2::new(3.0, 4.0), direction));
     let axis = Axis22d::new(Point2::new(0.0, 0.0), direction, true).unwrap();
     let circle = Handle::new(Geom2dCircle::new(axis, 2.0).unwrap());
-    (line.cast(), circle.cast())
+    (line.into_upcast(), circle.into_upcast())
 }
 
 #[test]
 fn curve_and_adaptor_reinitialization_preserves_state_transitions() {
     let (line, circle) = line_and_circle();
     let adaptor = Geom2dAdaptorCurve::with_range(&line, 4.0, 5.0).unwrap();
-    let throwing = Adaptor2dCurve2dBase::default();
+    let throwing = Adaptor2dCurve2dBase;
     let fallback = Adaptor2dLine2d::new(
         Point2::new(6.0, 7.0),
         Direction2::new(0.0, 1.0).unwrap(),
@@ -91,7 +91,7 @@ fn check_curve_changes(
     )
     .unwrap();
     let trimmed = Handle::new(Geom2dTrimmedCurve::new(line, 4.0, 5.0, true, true).unwrap());
-    evaluator.initialization_curve(&trimmed.cast());
+    evaluator.initialization_curve(&trimmed.into_upcast());
     append_state(output, evaluator);
 }
 

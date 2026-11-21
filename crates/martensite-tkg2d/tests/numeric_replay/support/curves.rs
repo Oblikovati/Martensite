@@ -50,13 +50,13 @@ pub fn transform_case(output: &Output, values: &[f64]) {
         real(output, c.transformed_parameter(v, t));
     }
     real(output, c.parametric_transformation(t));
-    show(output, c.reversed(), |r| show_curve(output, &r.cast()));
+    show(output, c.reversed(), |r| show_curve(output, &r.into_cast()));
     attempt(output, || {
         c.reverse()?;
-        show_curve(output, &c.cast());
+        show_curve(output, &c.upcast());
         Ok(())
     });
-    moves(output, &c.cast(), &mut r, show_curve);
+    moves(output, &c.upcast(), &mut r, show_curve);
     end(output);
 }
 
@@ -141,16 +141,16 @@ fn parabola_specific(output: &Output, e: &Geom2dParabola, value: f64) {
 }
 
 fn conic_specific(output: &Output, c: &Handle<dyn Geom2dCurve>, value: f64) {
-    if let Some(e) = c.cast::<Geom2dCircle>().get() {
+    if let Some(e) = c.downcast_ref::<Geom2dCircle>() {
         circle_specific(output, e, value);
     }
-    if let Some(e) = c.cast::<Geom2dEllipse>().get() {
+    if let Some(e) = c.downcast_ref::<Geom2dEllipse>() {
         ellipse_specific(output, e, value);
     }
-    if let Some(e) = c.cast::<Geom2dHyperbola>().get() {
+    if let Some(e) = c.downcast_ref::<Geom2dHyperbola>() {
         hyperbola_specific(output, e, value);
     }
-    if let Some(e) = c.cast::<Geom2dParabola>().get() {
+    if let Some(e) = c.downcast_ref::<Geom2dParabola>() {
         parabola_specific(output, e, value);
     }
 }
@@ -193,7 +193,7 @@ fn trimmed_state(output: &Output, t: &Geom2dTrimmedCurve, u: &[f64]) {
 }
 
 fn trimmed_copy(output: &Output, t: &Geom2dTrimmedCurve, u: &[f64]) -> Result<(), Failure> {
-    let copy: Handle<Geom2dTrimmedCurve> = t.copy()?.cast();
+    let copy: Handle<Geom2dTrimmedCurve> = t.copy()?.into_downcast();
     trimmed_state(output, &copy, u);
     Ok(())
 }
@@ -204,7 +204,7 @@ pub fn trimmed_case(output: &Output, values: &[f64]) {
         return;
     };
     let u = r.reals();
-    let t: Handle<Geom2dTrimmedCurve> = c.cast();
+    let t: Handle<Geom2dTrimmedCurve> = c.downcast();
     let (u1, u2) = (r.real(), r.real());
     let (sense, adjust) = (r.flag(), r.flag());
     let m = trsf(&mut r);
@@ -237,13 +237,17 @@ pub fn offset_case(output: &Output, values: &[f64]) {
         return;
     };
     let u = r.reals();
-    let o: Handle<Geom2dOffsetCurve> = c.cast();
+    let o: Handle<Geom2dOffsetCurve> = c.downcast();
     let d = r.real();
     let no_check = r.flag();
     let m = trsf(&mut r);
     let basis = curve(&mut r).unwrap();
     offset_state(output, &o, &u);
-    offset_state(output, &o.copy().unwrap().cast::<Geom2dOffsetCurve>(), &u);
+    offset_state(
+        output,
+        &o.copy().unwrap().into_downcast::<Geom2dOffsetCurve>(),
+        &u,
+    );
     o.set_offset_value(d);
     offset_state(output, &o, &u);
     attempt(output, || o.reverse());
@@ -252,7 +256,7 @@ pub fn offset_case(output: &Output, values: &[f64]) {
     offset_state(output, &o, &u);
     attempt(output, || o.set_basis_curve(&basis, no_check));
     offset_state(output, &o, &u);
-    attempt(output, || o.set_basis_curve(&o.cast(), no_check));
+    attempt(output, || o.set_basis_curve(&o.upcast(), no_check));
     offset_state(output, &o, &u);
     real(output, o.transformed_parameter(0.5, m));
     real(output, o.parametric_transformation(m));

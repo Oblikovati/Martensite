@@ -9,7 +9,7 @@ use crate::geom2d::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2, Point2, Vector2};
 
@@ -23,14 +23,12 @@ use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2, Poi
 /// `Geom2dAdaptorCurve::with_range(&curve, 0.0, 1.0)?`.
 #[derive(Default)]
 pub struct Geom2dAdaptorCurve {
-    parent: StandardTransient,
     state: SharedState<AdaptorState>,
 }
 impl_transient!(
     Geom2dAdaptorCurve,
     "Geom2dAdaptor_Curve",
     dyn Adaptor2dCurve2d,
-    parent,
     interfaces: [dyn Adaptor2dCurve2d]
 );
 
@@ -87,7 +85,6 @@ impl Geom2dAdaptorCurve {
     pub fn shallow_adaptor(&self) -> Result<Self, Failure> {
         let copy: AdaptorState = state::shallow_state(&self.state.read())?;
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(copy),
         })
     }
@@ -99,7 +96,7 @@ impl Geom2dAdaptorCurve {
 
 impl Adaptor2dCurve2d for Geom2dAdaptorCurve {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
-        Ok(Handle::new(self.shallow_adaptor()?).cast())
+        Ok(Handle::new(self.shallow_adaptor()?).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         Ok(self.bounds().0)
@@ -122,7 +119,7 @@ impl Adaptor2dCurve2d for Geom2dAdaptorCurve {
         last: f64,
         _tolerance: f64,
     ) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
-        Ok(Handle::new(Self::with_range(&self.curve(), first, last)?).cast())
+        Ok(Handle::new(Self::with_range(&self.curve(), first, last)?).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         let (first, last) = self.bounds();
@@ -179,7 +176,7 @@ impl Adaptor2dCurve2d for Geom2dAdaptorCurve {
         query::nb_samples(self.state.read().curve()?)
     }
     fn bezier(&self) -> Result<Handle<Geom2dBezierCurve>, Failure> {
-        Ok(self.state.read().curve.cast())
+        Ok(self.state.read().curve.downcast())
     }
     fn bspline(&self) -> Result<Handle<Geom2dBSplineCurve>, Failure> {
         Ok(query::bspline(&self.state.read()))

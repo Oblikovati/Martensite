@@ -32,7 +32,7 @@ fn bezier_curve_copy_method_uses_optimized_constructor() {
     let myOriginalCurve = SetUp();
     // Test that Copy() method uses the optimized copy constructor
     let aCopiedGeom: Handle<dyn Geom2dGeometry> = myOriginalCurve.copy().unwrap();
-    let aCopiedCurve: Handle<Geom2dBezierCurve> = aCopiedGeom.cast::<Geom2dBezierCurve>();
+    let aCopiedCurve: Handle<Geom2dBezierCurve> = aCopiedGeom.into_downcast::<Geom2dBezierCurve>();
 
     assert!(!aCopiedCurve.is_null());
 

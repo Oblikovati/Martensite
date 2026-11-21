@@ -122,7 +122,7 @@ fn hash_curve_hasher_b_spline_curve_quadratic_bezier_equivalent_copied_curves_sa
 fn hash_curve_hasher_line_reversed_different_comparison() {
     let myHasher = SetUp();
     let aLine1 = line(pnt(0.0, 0.0), dir(1.0, 0.0));
-    let aLine2: Handle<Geom2dLine> = aLine1.reversed().unwrap().cast();
+    let aLine2: Handle<Geom2dLine> = aLine1.reversed().unwrap().into_downcast();
 
     assert!(!myHasher.equal(&curve(&aLine1), &curve(&aLine2)));
 }
@@ -133,7 +133,7 @@ fn hash_curve_hasher_bezier_curve_reversed_different_comparison() {
     let aPoles = poles(&[(0.0, 0.0), (1.0, 2.0), (2.0, 0.0)]);
 
     let aCurve1 = Handle::new(Geom2dBezierCurve::new(&aPoles).unwrap());
-    let aCurve2: Handle<Geom2dBezierCurve> = aCurve1.reversed().unwrap().cast();
+    let aCurve2: Handle<Geom2dBezierCurve> = aCurve1.reversed().unwrap().into_downcast();
 
     assert!(!myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }

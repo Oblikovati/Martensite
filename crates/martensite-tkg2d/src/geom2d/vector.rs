@@ -22,7 +22,7 @@ pub trait Geom2dVector: Geom2dGeometry {
     }
     /// Reversed copy (`Reversed`); `let reversed = vector.reversed()?;`.
     fn reversed(&self) -> Result<Handle<dyn Geom2dVector>, Failure> {
-        let copy: Handle<dyn Geom2dVector> = self.copy()?.cast::<dyn Geom2dVector>();
+        let copy: Handle<dyn Geom2dVector> = self.copy()?.into_cast::<dyn Geom2dVector>();
         copy.reverse();
         Ok(copy)
     }
@@ -55,4 +55,4 @@ pub trait Geom2dVector: Geom2dGeometry {
         *self.vector_cell(PROTECTED).read()
     }
 }
-impl_transient_interface!(dyn Geom2dVector, "Geom2d_Vector", dyn Geom2dGeometry);
+impl_transient_interface!(dyn Geom2dVector, "Geom2d_Vector", dyn Geom2dGeometry, upcasts: [dyn Geom2dGeometry]);

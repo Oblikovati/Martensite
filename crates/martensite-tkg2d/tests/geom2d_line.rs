@@ -146,7 +146,7 @@ fn line_lin2d() {
 fn line_copy() {
     let myLine = setup();
     let aCopyGeom: Handle<dyn Geom2dGeometry> = myLine.copy().unwrap();
-    let aCopy: Handle<Geom2dLine> = aCopyGeom.cast::<Geom2dLine>();
+    let aCopy: Handle<Geom2dLine> = aCopyGeom.into_downcast::<Geom2dLine>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.direction().x(), 1.0, precision::confusion());

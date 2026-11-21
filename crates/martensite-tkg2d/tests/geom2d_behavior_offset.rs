@@ -17,7 +17,7 @@ use std::f64::consts::PI;
 
 fn circle(radius: f64) -> Handle<dyn Geom2dCurve> {
     let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap());
-    Handle::new(Geom2dCircle::from_axis(axis, radius, true).unwrap()).cast()
+    Handle::new(Geom2dCircle::from_axis(axis, radius, true).unwrap()).into_upcast()
 }
 
 fn poles(values: &[(f64, f64)]) -> Array1<'static, Point2> {
@@ -31,7 +31,7 @@ fn poles(values: &[(f64, f64)]) -> Array1<'static, Point2> {
 // A cubic whose first derivative vanishes at u = 0 (P0 == P1).
 fn cusp() -> Handle<dyn Geom2dCurve> {
     let bezier = Geom2dBezierCurve::new(&poles(&[(0.0, 0.0), (0.0, 0.0), (1.0, 1.0), (2.0, 0.0)]));
-    Handle::new(bezier.unwrap()).cast()
+    Handle::new(bezier.unwrap()).into_upcast()
 }
 
 fn offset(basis: &Handle<dyn Geom2dCurve>, distance: f64) -> Handle<Geom2dOffsetCurve> {
@@ -80,7 +80,7 @@ fn offset_properties_follow_the_basis() {
         Point2::new(0.0, 0.0),
         Direction2::new(1.0, 0.0).unwrap(),
     ))
-    .cast();
+    .into_upcast();
     let shifted = offset(&line, 1.0);
     let scale = Transform2::scaling(Point2::new(0.0, 0.0), -3.0);
     assert_eq!(shifted.transformed_parameter(2.0, scale), 6.0);
@@ -111,7 +111,7 @@ fn reverse_transform_and_copy() {
     let copy = Geom2dOffsetCurve::copy_of(&curve).unwrap();
     assert_eq!(copy.offset(), -1.0);
     assert!(copy.basis_curve() != curve.basis_curve());
-    let generic: Handle<dyn Geom2dCurve> = curve.copy().unwrap().cast();
+    let generic: Handle<dyn Geom2dCurve> = curve.copy().unwrap().into_cast();
     assert_eq!(generic.value(0.3).unwrap(), curve.value(0.3).unwrap());
     // On the reversed basis the normal points inwards: a positive offset shrinks it.
     curve.set_offset_value(0.25);
@@ -126,8 +126,8 @@ fn reverse_transform_and_copy() {
 fn nested_trimmed_and_offset_bases_are_unwrapped() {
     let basis = circle(2.0);
     let trimmed: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&basis, 0.5, 2.0, true, true).unwrap()).cast();
-    let inner: Handle<dyn Geom2dCurve> = offset(&trimmed, 0.25).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&basis, 0.5, 2.0, true, true).unwrap()).into_upcast();
+    let inner: Handle<dyn Geom2dCurve> = offset(&trimmed, 0.25).into_upcast();
     let outer = offset(&inner, 0.5);
     assert_eq!(outer.offset(), 0.75);
     let unwrapped = outer.basis_curve();
@@ -149,7 +149,7 @@ fn c0_bspline(middle: (f64, f64)) -> Handle<dyn Geom2dCurve> {
     let mut mults = Array1::<i32>::with_bounds(1, 3).unwrap();
     mults.as_mut_slice().copy_from_slice(&[3, 2, 3]);
     let points = poles(&[(0.0, 0.0), (1.0, 0.0), middle, (3.0, 1.0), (4.0, 0.0)]);
-    Handle::new(Geom2dBSplineCurve::new(&points, &knots, &mults, 2, false).unwrap()).cast()
+    Handle::new(Geom2dBSplineCurve::new(&points, &knots, &mults, 2, false).unwrap()).into_upcast()
 }
 
 #[test]

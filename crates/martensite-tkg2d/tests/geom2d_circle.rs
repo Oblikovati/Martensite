@@ -155,7 +155,7 @@ fn circle_reversed_parameter() {
 fn circle_copy() {
     let myCircle = setup();
     let aCopyGeom: Handle<dyn Geom2dGeometry> = myCircle.copy().unwrap();
-    let aCopy: Handle<Geom2dCircle> = aCopyGeom.cast::<Geom2dCircle>();
+    let aCopy: Handle<Geom2dCircle> = aCopyGeom.into_downcast::<Geom2dCircle>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.radius(), 5.0, precision::confusion());

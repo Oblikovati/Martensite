@@ -139,15 +139,15 @@ fn bspline_cached_and_direct_runs_agree_with_the_curve() {
 #[test]
 fn dispatch_strips_trims_and_leaves_other_classes_uninitialized() {
     let circle: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dCircle::from_axis(x_axis(), 2.0, true).unwrap()).cast();
+        Handle::new(Geom2dCircle::from_axis(x_axis(), 2.0, true).unwrap()).into_upcast();
     let trimmed: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&circle, 0.5, 1.0, true, true).unwrap()).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&circle, 0.5, 1.0, true, true).unwrap()).into_upcast();
     let evaluator = Geom2dGridEvalCurve::from_curve(&trimmed);
     assert_eq!(evaluator.get_type(), CurveType::Circle);
     let grid = evaluator.evaluate_grid(&params(1, &[3.0])).unwrap();
     assert!(grid[1].distance(circle.value(3.0).unwrap()) < 1e-15);
     let sine: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dEvalSineWaveCurve::new(x_axis(), 2.0, 3.0, 0.5).unwrap()).cast();
+        Handle::new(Geom2dEvalSineWaveCurve::new(x_axis(), 2.0, 3.0, 0.5).unwrap()).into_upcast();
     let uninitialized = Geom2dGridEvalCurve::from_curve(&sine);
     assert!(matches!(
         uninitialized.evaluator(),
@@ -176,7 +176,7 @@ fn adaptors_other_than_geom2d_adaptor_use_the_fallback() {
         evaluator.evaluator(),
         Geom2dGridEvalEvaluator::Other(_)
     ));
-    let base = Adaptor2dCurve2dBase::default();
+    let base = Adaptor2dCurve2dBase;
     let refused = Geom2dGridEvalCurve::from_adaptor(&base).err().unwrap();
     assert_eq!(refused.exception_type(), "Standard_NotImplemented");
     let fallback = Geom2dGridEvalOtherCurve::new(&base);
@@ -198,11 +198,11 @@ fn grid_evaluation_ignores_the_evaluation_representation() {
         Point2::new(5.0, 5.0),
         Direction2::new(1.0, 0.0).unwrap(),
     ))
-    .cast();
+    .into_upcast();
     bezier
-        .set_eval_representation(Handle::new(RepCurveDescFull::new(rep)).cast())
+        .set_eval_representation(Handle::new(RepCurveDescFull::new(rep)).into_upcast())
         .unwrap();
-    let adaptor = Geom2dAdaptorCurve::with_curve(&bezier.cast()).unwrap();
+    let adaptor = Geom2dAdaptorCurve::with_curve(&bezier.upcast()).unwrap();
     let grid = Geom2dGridEvalCurve::from_adaptor(&adaptor)
         .unwrap()
         .evaluate_grid(&params(1, &[0.5]))
@@ -216,7 +216,7 @@ fn offset_grid_is_empty_at_a_degenerate_normal() {
     let cusp: Handle<dyn Geom2dCurve> = Handle::new(
         Geom2dBezierCurve::new(&points(&[(0.0, 0.0), (0.0, 0.0), (1.0, 1.0), (2.0, 0.0)])).unwrap(),
     )
-    .cast();
+    .into_upcast();
     let offset = Handle::new(Geom2dOffsetCurve::new(&cusp, 0.25, false).unwrap());
     let evaluator = Geom2dGridEvalOffsetCurve::new(offset);
     assert!(
@@ -274,7 +274,7 @@ fn null_offset_grid_preserves_empty_outputs_without_establishing_geometry() {
 #[test]
 fn bound_bspline_and_offset_grids_also_return_empty_for_no_parameters() {
     let spline = polyline();
-    let offset = Handle::new(Geom2dOffsetCurve::new(&spline.clone().cast(), 0.25, true).unwrap());
+    let offset = Handle::new(Geom2dOffsetCurve::new(&spline.upcast(), 0.25, true).unwrap());
     let spline_grid = Geom2dGridEvalBSplineCurve::new(spline);
     let offset_grid = Geom2dGridEvalOffsetCurve::new(offset);
     assert!(!spline_grid.geometry().is_null());

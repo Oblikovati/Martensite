@@ -95,19 +95,19 @@ macro_rules! define_rep_curve_evaluation {
             let Some(curve) = representation.get() else {
                 return Ok(Handle::default());
             };
-            let copy: Handle<$curve> = curve.copy()?.cast();
+            let copy: Handle<$curve> = curve.copy()?.into_cast();
             if copy.is_null() {
                 return Ok(Handle::default());
             }
             Ok(
                 match (source.kind(), source.max_deriv_order(), source.mapping()) {
                     (RepCurveKind::DerivBounded, Some(order), _) => {
-                        Handle::new(RepCurveDescDerivBounded::new(copy, order)).cast()
+                        Handle::new(RepCurveDescDerivBounded::new(copy, order)).into_upcast()
                     }
                     (RepCurveKind::Mapped, Some(order), Some((domain, map))) => {
-                        Handle::new(RepCurveDescMapped::new(copy, order, domain, map)).cast()
+                        Handle::new(RepCurveDescMapped::new(copy, order, domain, map)).into_upcast()
                     }
-                    _ => Handle::new(RepCurveDescFull::new(copy)).cast(),
+                    _ => Handle::new(RepCurveDescFull::new(copy)).into_upcast(),
                 },
             )
         }

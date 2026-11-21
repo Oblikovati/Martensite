@@ -39,14 +39,14 @@ fn bezier(kind: i32, r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure>
         } else {
             Geom2dEvalTBezierCurve::new(&p, a)?
         };
-        return Ok(Handle::new(curve).cast());
+        return Ok(Handle::new(curve).into_upcast());
     }
     let curve = if rational {
         Geom2dEvalAHTBezierCurve::with_weights(&p, &w, degree, alpha, beta)?
     } else {
         Geom2dEvalAHTBezierCurve::new(&p, degree, alpha, beta)?
     };
-    Ok(Handle::new(curve).cast())
+    Ok(Handle::new(curve).into_upcast())
 }
 
 /// Curve kinds 11..16, as g2_eval_curve reads them.
@@ -57,13 +57,13 @@ pub fn curve(kind: i32, r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failu
     let a = r.ax();
     let x = r.real();
     if kind == 12 {
-        return Ok(Handle::new(Geom2dEvalCircleInvoluteCurve::new(a, x)?).cast());
+        return Ok(Handle::new(Geom2dEvalCircleInvoluteCurve::new(a, x)?).into_upcast());
     }
     let y = r.real();
     match kind {
-        11 => Ok(Handle::new(Geom2dEvalArchimedeanSpiralCurve::new(a, x, y)?).cast()),
-        13 => Ok(Handle::new(Geom2dEvalLogarithmicSpiralCurve::new(a, x, y)?).cast()),
-        _ => Ok(Handle::new(Geom2dEvalSineWaveCurve::new(a, x, y, r.real())?).cast()),
+        11 => Ok(Handle::new(Geom2dEvalArchimedeanSpiralCurve::new(a, x, y)?).into_upcast()),
+        13 => Ok(Handle::new(Geom2dEvalLogarithmicSpiralCurve::new(a, x, y)?).into_upcast()),
+        _ => Ok(Handle::new(Geom2dEvalSineWaveCurve::new(a, x, y, r.real())?).into_upcast()),
     }
 }
 
@@ -103,23 +103,23 @@ fn aht_state(output: &Output, t: &Geom2dEvalAHTBezierCurve) {
 }
 
 fn analytic_state(output: &Output, c: &Handle<dyn Geom2dCurve>) {
-    if let Some(s) = c.cast::<Geom2dEvalArchimedeanSpiralCurve>().get() {
+    if let Some(s) = c.downcast_ref::<Geom2dEvalArchimedeanSpiralCurve>() {
         ax(output, s.position());
         [s.initial_radius(), s.growth_rate()]
             .into_iter()
             .for_each(|value| real(output, value));
     }
-    if let Some(s) = c.cast::<Geom2dEvalCircleInvoluteCurve>().get() {
+    if let Some(s) = c.downcast_ref::<Geom2dEvalCircleInvoluteCurve>() {
         ax(output, s.position());
         real(output, s.radius());
     }
-    if let Some(s) = c.cast::<Geom2dEvalLogarithmicSpiralCurve>().get() {
+    if let Some(s) = c.downcast_ref::<Geom2dEvalLogarithmicSpiralCurve>() {
         ax(output, s.position());
         [s.scale(), s.growth_exponent()]
             .into_iter()
             .for_each(|value| real(output, value));
     }
-    if let Some(s) = c.cast::<Geom2dEvalSineWaveCurve>().get() {
+    if let Some(s) = c.downcast_ref::<Geom2dEvalSineWaveCurve>() {
         ax(output, s.position());
         [s.amplitude(), s.omega(), s.phase()]
             .into_iter()
@@ -128,10 +128,10 @@ fn analytic_state(output: &Output, c: &Handle<dyn Geom2dCurve>) {
 }
 
 fn state(output: &Output, c: &Handle<dyn Geom2dCurve>) {
-    if let Some(t) = c.cast::<Geom2dEvalTBezierCurve>().get() {
+    if let Some(t) = c.downcast_ref::<Geom2dEvalTBezierCurve>() {
         tbezier_state(output, t);
     }
-    if let Some(t) = c.cast::<Geom2dEvalAHTBezierCurve>().get() {
+    if let Some(t) = c.downcast_ref::<Geom2dEvalAHTBezierCurve>() {
         aht_state(output, t);
     }
     analytic_state(output, c);
@@ -149,7 +149,7 @@ pub fn eval_case(output: &Output, values: &[f64]) {
     let u = r.reals();
     type_name(output, &c);
     state(output, &c);
-    let copy: Handle<dyn Geom2dCurve> = c.copy().unwrap().cast();
+    let copy: Handle<dyn Geom2dCurve> = c.copy().unwrap().into_cast();
     type_name(output, &copy);
     state(output, &copy);
     summary(output, &*copy, &u);

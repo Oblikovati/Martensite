@@ -53,7 +53,7 @@ pub fn moves(output: &Output, g: &Handle<dyn Geom2dGeometry>, r: &mut Reader, sh
 }
 
 fn show_point(output: &Output, g: &Handle<dyn Geom2dGeometry>) {
-    let p: Handle<Geom2dCartesianPoint> = g.cast();
+    let p: Handle<Geom2dCartesianPoint> = g.downcast();
     let (x, y) = p.coord();
     [x, y].into_iter().for_each(|value| real(output, value));
     pnt(output, p.pnt2d());
@@ -72,15 +72,15 @@ pub fn point_case(output: &Output, values: &[f64]) {
     real(output, p.square_distance(&*o));
     show_point(output, &p.copy().unwrap());
     p.set_coord(x, y);
-    show_point(output, &p.cast());
+    show_point(output, &p.upcast());
     p.set_x(y);
     p.set_y(x);
-    show_point(output, &p.cast());
+    show_point(output, &p.upcast());
     p.set_pnt2d(b);
-    show_point(output, &p.cast());
+    show_point(output, &p.upcast());
     dump(output, &*p, 0);
     dump(output, &*p, 1);
-    moves(output, &p.cast(), &mut r, show_point);
+    moves(output, &p.upcast(), &mut r, show_point);
     end(output);
 }
 
@@ -99,7 +99,9 @@ fn vector_pair(output: &Output, v: &dyn Geom2dVector, o: &dyn Geom2dVector) {
     show(output, v.angle(o), |value| real(output, value));
     real(output, v.dot(o));
     real(output, v.crossed(o));
-    show(output, v.reversed(), |r| show_vector(output, &r.cast()));
+    show(output, v.reversed(), |r| {
+        show_vector(output, &r.into_upcast())
+    });
 }
 
 pub fn direction_case(output: &Output, values: &[f64]) {
@@ -111,27 +113,27 @@ pub fn direction_case(output: &Output, values: &[f64]) {
         Err(error) => return replay_println!(output, "{}", error.exception_type()),
     };
     let o = Handle::new(Geom2dVectorWithMagnitude::from_vec2d(other));
-    show_vector(output, &d.cast());
+    show_vector(output, &d.upcast());
     dir(output, d.dir2d().unwrap());
     vector_pair(output, &*d, &*o);
     real(output, d.crossed(&*o));
     attempt(output, || d.set_coord(a, b));
-    show_vector(output, &d.cast());
+    show_vector(output, &d.upcast());
     attempt(output, || d.set_x(a));
-    show_vector(output, &d.cast());
+    show_vector(output, &d.upcast());
     attempt(output, || d.set_y(b));
-    show_vector(output, &d.cast());
+    show_vector(output, &d.upcast());
     d.set_dir2d(Direction2::new(1.0, 1.0).unwrap());
-    show_vector(output, &d.cast());
+    show_vector(output, &d.upcast());
     d.reverse();
-    show_vector(output, &d.cast());
+    show_vector(output, &d.upcast());
     show_vector(output, &d.copy().unwrap());
-    moves(output, &d.cast(), &mut r, show_vector);
+    moves(output, &d.upcast(), &mut r, show_vector);
     end(output);
 }
 
 fn show_vwm(output: &Output, v: &Handle<Geom2dVectorWithMagnitude>) {
-    show_vector(output, &v.cast());
+    show_vector(output, &v.upcast());
 }
 
 pub fn vector_case(output: &Output, values: &[f64]) {
@@ -163,7 +165,7 @@ pub fn vector_case(output: &Output, values: &[f64]) {
     show_vwm(output, &v);
     v.set_vec2d(b);
     show_vwm(output, &v);
-    moves(output, &v.cast(), &mut r, show_vector);
+    moves(output, &v.upcast(), &mut r, show_vector);
     end(output);
 }
 
@@ -192,7 +194,7 @@ fn vector_updates(
 }
 
 fn show_axis(output: &Output, g: &Handle<dyn Geom2dGeometry>) {
-    let a: Handle<Geom2dAxisPlacement> = g.cast();
+    let a: Handle<Geom2dAxisPlacement> = g.downcast();
     ax(output, a.ax2d());
     dir(output, a.direction());
     pnt(output, a.location());
@@ -207,17 +209,17 @@ pub fn axis_case(output: &Output, values: &[f64]) {
     let a = Handle::new(Geom2dAxisPlacement::new(first));
     let o = Handle::new(Geom2dAxisPlacement::from_location(p, d));
     real(output, a.angle(&o));
-    show_axis(output, &a.reversed().cast());
+    show_axis(output, &a.reversed().into_upcast());
     a.reverse();
-    show_axis(output, &a.cast());
+    show_axis(output, &a.upcast());
     a.set_location(p);
-    show_axis(output, &a.cast());
+    show_axis(output, &a.upcast());
     a.set_direction(d);
-    show_axis(output, &a.cast());
+    show_axis(output, &a.upcast());
     a.set_axis(other);
-    show_axis(output, &a.cast());
+    show_axis(output, &a.upcast());
     show_axis(output, &a.copy().unwrap());
-    moves(output, &a.cast(), &mut r, show_axis);
+    moves(output, &a.upcast(), &mut r, show_axis);
     end(output);
 }
 

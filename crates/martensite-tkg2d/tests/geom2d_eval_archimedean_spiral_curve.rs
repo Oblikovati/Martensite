@@ -146,7 +146,7 @@ fn evaluated_archimedean_spiral_curve_copy_independent() {
     let aCurve = Geom2dEvalArchimedeanSpiralCurve::new(anAx2d, 1.0, 2.0).unwrap();
     let aCopy = aCurve.copy().unwrap();
     assert!(!aCopy.is_null());
-    let aCopyCurve: Handle<Geom2dEvalArchimedeanSpiralCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalArchimedeanSpiralCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
     EXPECT_NEAR(aCopyCurve.initial_radius(), 1.0, precision::confusion());
     EXPECT_NEAR(aCopyCurve.growth_rate(), 2.0, precision::confusion());

@@ -4,19 +4,17 @@ use super::geometry::Geom2dGeometry;
 use super::protected::ProtectedAccess;
 use super::vector::Geom2dVector;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Direction2, Transform2, Vector2, resolution};
 
 /// A unit vector; `Handle::new(Geom2dDirection::new(1.0, 1.0)?)`.
 pub struct Geom2dDirection {
-    parent: StandardTransient,
     state: SharedState<Vector2>,
 }
 impl_transient!(
     Geom2dDirection,
     "Geom2d_Direction",
     dyn Geom2dVector,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dVector]
 );
 
@@ -34,7 +32,6 @@ fn normalized_coordinates(x: f64, y: f64, where_: &str) -> Result<Vector2, Failu
 impl Geom2dDirection {
     fn stored(vector: Vector2) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(vector),
         }
     }
@@ -87,7 +84,7 @@ impl Geom2dGeometry for Geom2dDirection {
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
         // Evaluation policy: the defined Copy passes gpVec2d to the Direction2 constructor, which
         // normalizes the stored unit vector once more (the last bit can change).
-        Ok(Handle::new(Self::from_dir2d(self.dir2d()?)).cast())
+        Ok(Handle::new(Self::from_dir2d(self.dir2d()?)).into_upcast())
     }
 }
 impl Geom2dVector for Geom2dDirection {

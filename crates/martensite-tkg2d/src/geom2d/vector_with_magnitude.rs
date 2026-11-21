@@ -3,19 +3,17 @@ use super::geometry::Geom2dGeometry;
 use super::protected::ProtectedAccess;
 use super::vector::Geom2dVector;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Point2, Transform2, Vector2};
 
 /// A vector with magnitude; `Handle::new(Geom2dVectorWithMagnitude::new(3.0, 4.0))`.
 pub struct Geom2dVectorWithMagnitude {
-    parent: StandardTransient,
     state: SharedState<Vector2>,
 }
 impl_transient!(
     Geom2dVectorWithMagnitude,
     "Geom2d_VectorWithMagnitude",
     dyn Geom2dVector,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dVector]
 );
 impl Clone for Geom2dVectorWithMagnitude {
@@ -28,7 +26,6 @@ impl Geom2dVectorWithMagnitude {
     /// `Geom2dVectorWithMagnitude::from_vec2d(Vector2::new(1.0, 0.0))`.
     pub fn from_vec2d(vector: Vector2) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(vector),
         }
     }
@@ -118,7 +115,7 @@ impl Geom2dGeometry for Geom2dVectorWithMagnitude {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
 }
 impl Geom2dVector for Geom2dVectorWithMagnitude {

@@ -101,26 +101,23 @@ macro_rules! define_rep_curve_descriptors {
         ::martensite_tkernel::impl_transient_interface!(
             dyn RepCurveDesc,
             "Base",
-            ::martensite_tkernel::standard::StandardTransient
+            dyn ::martensite_tkernel::standard::Transient
         );
 
         /// `RepCurveDesc::RepCurveDescFull`; `Handle::new(RepCurveDescFull::new(curve))`.
         pub struct RepCurveDescFull {
-            parent: ::martensite_tkernel::standard::StandardTransient,
             representation: ::martensite_tkernel::standard::SharedState<::martensite_tkernel::standard::Handle<$curve>>,
         }
         ::martensite_tkernel::impl_transient!(
             RepCurveDescFull,
             "Full",
             dyn RepCurveDesc,
-            parent,
             interfaces: [dyn RepCurveDesc]
         );
         impl RepCurveDescFull {
             /// Descriptor evaluating through `representation`; `RepCurveDescFull::new(curve)`.
             pub fn new(representation: ::martensite_tkernel::standard::Handle<$curve>) -> Self {
                 Self {
-                    parent: ::martensite_tkernel::standard::StandardTransient::default(),
                     representation: ::martensite_tkernel::standard::SharedState::new(representation),
                 }
             }
@@ -146,21 +143,18 @@ macro_rules! define_rep_curve_descriptors {
         /// `RepCurveDesc::RepCurveDescDerivBounded` (default `MaxDerivOrder` 3);
         /// `Handle::new(RepCurveDescDerivBounded::new(curve, 2))`.
         pub struct RepCurveDescDerivBounded {
-            parent: ::martensite_tkernel::standard::StandardTransient,
             state: ::martensite_tkernel::standard::SharedState<(::martensite_tkernel::standard::Handle<$curve>, usize)>,
         }
         ::martensite_tkernel::impl_transient!(
             RepCurveDescDerivBounded,
             "DerivBounded",
             dyn RepCurveDesc,
-            parent,
             interfaces: [dyn RepCurveDesc]
         );
         impl RepCurveDescDerivBounded {
             /// Descriptor limited to `max_deriv_order`; `RepCurveDescDerivBounded::new(curve, 3)`.
             pub fn new(representation: ::martensite_tkernel::standard::Handle<$curve>, max_deriv_order: usize) -> Self {
                 Self {
-                    parent: ::martensite_tkernel::standard::StandardTransient::default(),
                     state: ::martensite_tkernel::standard::SharedState::new((representation, max_deriv_order)),
                 }
             }
@@ -190,14 +184,12 @@ macro_rules! define_rep_curve_descriptors {
         /// `RepCurveDesc::RepCurveDescMapped`: optional bounded domain and affine parameter map;
         /// `Handle::new(RepCurveDescMapped::new(curve, 3, None, Map1d::default()))`.
         pub struct RepCurveDescMapped {
-            parent: ::martensite_tkernel::standard::StandardTransient,
             state: ::martensite_tkernel::standard::SharedState<$crate::geom2d_eval::MappedCurveState<$curve>>,
         }
         ::martensite_tkernel::impl_transient!(
             RepCurveDescMapped,
             "Mapped",
             dyn RepCurveDesc,
-            parent,
             interfaces: [dyn RepCurveDesc]
         );
         impl RepCurveDescMapped {
@@ -216,7 +208,6 @@ macro_rules! define_rep_curve_descriptors {
                     param_map,
                 };
                 Self {
-                    parent: ::martensite_tkernel::standard::StandardTransient::default(),
                     state: ::martensite_tkernel::standard::SharedState::new(state),
                 }
             }

@@ -1,14 +1,14 @@
 //! The locked state of `Geom2dAdaptorCurve`: the loaded curve, its kind, its bounds
 //! and the kind-specific evaluation data (`CurveDataVariant`).
 use super::curve::Geom2dAdaptorCurve;
-use crate::geom2d::errors::{construction, null_object};
+use crate::geom2d::errors::{construction, no_such_object, null_object};
 use crate::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
     Geom2dHyperbola, Geom2dLine, Geom2dOffsetCurve, Geom2dParabola, Geom2dTrimmedCurve,
 };
 use crate::geom2d_eval::RepCurveDesc;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
 use martensite_tkmath::bsplclib::Cache;
 use martensite_tkmath::geom_abs::CurveType;
 use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2};
@@ -160,6 +160,20 @@ fn is_class<T: RuntimeTyped>(curve: &Handle<dyn Geom2dCurve>) -> bool {
     curve.is_instance(T::static_type())
 }
 
+/// Borrow concrete curve state without retaining another owner.
+/// `borrow_curve::<Geom2dOffsetCurve>(&state.curve)?`.
+pub(super) fn borrow_curve<T: RuntimeTyped + Transient>(
+    curve: &Handle<dyn Geom2dCurve>,
+) -> Result<&T, Failure> {
+    curve.downcast_ref::<T>().ok_or_else(|| {
+        let actual = curve.dynamic_type().map_or("null", |kind| kind.name());
+        no_such_object(&format!(
+            "Geom2dAdaptor_Curve: {actual}; expected {}",
+            T::TYPE_NAME
+        ))
+    })
+}
+
 // Kind and data from the exact dynamic type, as the defined `DynamicType() ==` chain.
 fn classify(
     state: &mut AdaptorState,
@@ -168,7 +182,8 @@ fn classify(
     last: f64,
 ) -> Result<(), Failure> {
     if is_class::<Geom2dTrimmedCurve>(curve) {
-        let basis: Handle<dyn Geom2dCurve> = curve.cast::<Geom2dTrimmedCurve>().basis_curve();
+        let basis: Handle<dyn Geom2dCurve> =
+            borrow_curve::<Geom2dTrimmedCurve>(curve)?.basis_curve();
         return load_range(state, &basis, first, last);
     }
     let (kind, data): (CurveType, CurveData) = if let Some(elementary) = elementary_data(curve)? {
@@ -193,27 +208,27 @@ fn elementary_data(
     Ok(Some(if is_class::<Geom2dCircle>(curve) {
         (
             CurveType::Circle,
-            CurveData::Circle(curve.cast::<Geom2dCircle>().circ2d()?),
+            CurveData::Circle(borrow_curve::<Geom2dCircle>(curve)?.circ2d()?),
         )
     } else if is_class::<Geom2dLine>(curve) {
         (
             CurveType::Line,
-            CurveData::Line(curve.cast::<Geom2dLine>().lin2d()),
+            CurveData::Line(borrow_curve::<Geom2dLine>(curve)?.lin2d()),
         )
     } else if is_class::<Geom2dEllipse>(curve) {
         (
             CurveType::Ellipse,
-            CurveData::Ellipse(curve.cast::<Geom2dEllipse>().elips2d()?),
+            CurveData::Ellipse(borrow_curve::<Geom2dEllipse>(curve)?.elips2d()?),
         )
     } else if is_class::<Geom2dParabola>(curve) {
         (
             CurveType::Parabola,
-            CurveData::Parabola(curve.cast::<Geom2dParabola>().parab2d()?),
+            CurveData::Parabola(borrow_curve::<Geom2dParabola>(curve)?.parab2d()?),
         )
     } else if is_class::<Geom2dHyperbola>(curve) {
         (
             CurveType::Hyperbola,
-            CurveData::Hyperbola(curve.cast::<Geom2dHyperbola>().hypr2d()?),
+            CurveData::Hyperbola(borrow_curve::<Geom2dHyperbola>(curve)?.hypr2d()?),
         )
     } else {
         return Ok(None);
@@ -221,7 +236,7 @@ fn elementary_data(
 }
 
 fn bezier_data(curve: &Handle<dyn Geom2dCurve>) -> CurveData {
-    let bezier: Handle<Geom2dBezierCurve> = curve.cast();
+    let bezier: Handle<Geom2dBezierCurve> = curve.downcast();
     let eval_rep = bezier.eval_representation();
     CurveData::Bezier(BezierData {
         curve: bezier,
@@ -231,7 +246,7 @@ fn bezier_data(curve: &Handle<dyn Geom2dCurve>) -> CurveData {
 }
 
 fn bspline_data(curve: &Handle<dyn Geom2dCurve>) -> CurveData {
-    let bspline: Handle<Geom2dBSplineCurve> = curve.cast();
+    let bspline: Handle<Geom2dBSplineCurve> = curve.downcast();
     let eval_rep = bspline.eval_representation();
     CurveData::BSpline(BSplineData {
         curve: bspline,
@@ -246,7 +261,7 @@ fn offset_data(
     first: f64,
     last: f64,
 ) -> Result<CurveData, Failure> {
-    let offset_curve: Handle<Geom2dOffsetCurve> = curve.cast();
+    let offset_curve: &Geom2dOffsetCurve = borrow_curve(curve)?;
     let basis: Handle<dyn Geom2dCurve> = offset_curve.basis_curve();
     let basis_adaptor = Handle::new(Geom2dAdaptorCurve::with_range(&basis, first, last)?);
     Ok(CurveData::Offset(OffsetData {
