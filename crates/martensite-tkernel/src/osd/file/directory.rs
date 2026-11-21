@@ -40,7 +40,7 @@ impl Default for Directory {
 
 impl Directory {
     /// An empty path over the host calls; `Directory::empty()`.
-    pub fn empty() -> Self {
+    fn empty() -> Self {
         Self::with_calls(CadPath::default(), native_calls())
     }
     /// A directory at `path` over the host calls; `Directory::with_path(CadPath::new("out/"))`.

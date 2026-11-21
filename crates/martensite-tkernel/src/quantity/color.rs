@@ -119,7 +119,7 @@ impl Color {
         COLOR_EPSILON.store(value.to_bits(), Ordering::Relaxed);
     }
     /// Computes double-precision squared distance; `color.square_distance(color) == 0.0`.
-    pub fn square_distance(self, other: Self) -> f64 {
+    pub(super) fn square_distance(self, other: Self) -> f64 {
         let [r, g, b] = std::array::from_fn(|i| f64::from(self.rgb[i]) - f64::from(other.rgb[i]));
         r * r + g * g + b * b
     }

@@ -53,7 +53,7 @@ impl Default for File {
 
 impl File {
     /// An empty path over the host calls; `File::empty()`.
-    pub fn empty() -> Self {
+    fn empty() -> Self {
         Self::with_calls(CadPath::default(), native_calls())
     }
     /// A file named `name` over the host calls; `File::new("part.step")`.

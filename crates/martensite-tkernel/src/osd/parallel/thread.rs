@@ -171,7 +171,7 @@ impl OsdThread {
         true
     }
     /// Lets the thread run on unjoined, for every copy; `thread.detach()`.
-    pub fn detach(&self) {
+    fn detach(&self) {
         if let Some(thread) = self.thread.write().take() {
             // Dropping the JoinHandle is pthread_detach.
             drop(thread.handle().take());

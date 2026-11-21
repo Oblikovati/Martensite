@@ -230,15 +230,15 @@ impl CadPath {
 /// Component accessors and setters.
 impl CadPath {
     /// `Node()`; `path.node()`.
-    pub fn node(&self) -> AsciiString {
+    fn node(&self) -> AsciiString {
         AsciiString::from_raw(&self.node)
     }
     /// Example: `path.user_name()`.
-    pub fn user_name(&self) -> AsciiString {
+    fn user_name(&self) -> AsciiString {
         AsciiString::from_raw(&self.user_name)
     }
     /// Example: `path.password()`.
-    pub fn password(&self) -> AsciiString {
+    fn password(&self) -> AsciiString {
         AsciiString::from_raw(&self.password)
     }
     /// `Disk()`; `path.disk()`.

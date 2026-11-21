@@ -14,7 +14,6 @@ mod wall_native;
 pub use chronometer::Chronometer;
 pub use clocks::{CpuTimes, NativeCpuTimes, NativeWallClock, WallClock};
 pub use osd_statics::Osd;
-pub use real_text::{c_string_to_real, real_to_c_string};
 pub use signal_capabilities::SignalCapabilities;
 pub use signals::{NativeSignalHost, SignalHost, SignalState};
 pub use sleep::{

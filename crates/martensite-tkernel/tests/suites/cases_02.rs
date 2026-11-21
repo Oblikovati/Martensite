@@ -133,8 +133,6 @@ pub mod perf_meter_supplemental;
 pub mod precision_behavior;
 #[path = "../quantity_api_behavior.rs"]
 pub mod quantity_api_behavior;
-#[path = "../quantity_color.rs"]
-pub mod quantity_color;
 #[path = "../quantity_color_borrowed_rgb.rs"]
 pub mod quantity_color_borrowed_rgb;
 #[path = "../quantity_color_rgba.rs"]
