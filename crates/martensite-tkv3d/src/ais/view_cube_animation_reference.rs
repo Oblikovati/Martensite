@@ -25,15 +25,16 @@ impl<'a> AisViewCubeAnimationRef<'a> {
     }
     /// Explicitly retain a snapshot of the current target; `let owning=alias.clone_handle()`.
     pub fn clone_handle(&self) -> Handle<dyn AisAnimationCameraSource> {
-        self.fields.read().animation.clone()
+        self.fields.read().animation.as_ref().clone()
     }
     /// Access the current object outside its field lock; `alias.with_animation(|value| value.is_some())`.
-    /// A storage lease permits replacement inside callbacks without adding a native reference.
+    /// The outer value lease permits replacement without adding a native reference.
+    /// Last-owner retirement waits until an active callback releases its captured value.
     pub fn with_animation<R>(
         &self,
         inspect: impl FnOnce(Option<&dyn AisAnimationCameraSource>) -> R,
     ) -> R {
-        let current = self.fields.read().animation.observe();
+        let current = self.fields.read().animation.clone();
         inspect(current.get())
     }
 }
