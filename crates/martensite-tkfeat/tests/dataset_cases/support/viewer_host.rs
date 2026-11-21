@@ -38,7 +38,7 @@ impl ViewerHost {
         let window = virtual_window();
         let view = viewer.create_view().unwrap();
         view.get().unwrap().view().set_subview_composer(false);
-        view.set_window(&window.cast(), 0).unwrap();
+        view.set_window(&window.upcast(), 0).unwrap();
         context.redraw_immediate(&viewer).unwrap();
         view.set_computed_mode(false);
         viewer.set_default_lights().unwrap();
@@ -58,7 +58,7 @@ impl ViewerHost {
     /// `vdisplay name`: the shape in the variable, in the context's default mode.
     /// Example: `host.display("result", &shape);`.
     pub fn display(&mut self, name: &str, shape: &Shape) {
-        let object: Handle<dyn AisInteractiveObject> = AisShape::new(shape).cast();
+        let object: Handle<dyn AisInteractiveObject> = AisShape::new(shape).into_upcast();
         self.context.display(&object, true).unwrap();
         self.displayed.insert(name.to_owned(), object);
     }
@@ -131,12 +131,10 @@ impl ViewerHost {
     /// Renders once more, retires the view and returns what the validation layer reported.
     /// Example: `let errors = host.close();`.
     pub fn close(self) -> Vec<String> {
-        let render = self
-            .view
-            .get()
-            .unwrap()
-            .view()
-            .cast::<Graphic3dRenderView>();
+        let view = self.view.view();
+        let render = view
+            .downcast_ref::<Graphic3dRenderView>()
+            .expect("the open view must use the Vulkan driver");
         // The void redraw adapter discards errors; a real render must still succeed here.
         render.try_redraw().expect("the open view must render");
         self.view.remove();
@@ -175,7 +173,7 @@ fn driver_options() -> VulkanOptions {
 }
 
 fn black_viewer(driver: &Handle<Graphic3dRenderDriver>) -> Handle<V3dViewer> {
-    let viewer = V3dViewer::new(&driver.cast()).unwrap();
+    let viewer = V3dViewer::new(&driver.upcast()).unwrap();
     let black = Color::named(NamedColor::BLACK);
     viewer.set_default_background_color(black);
     viewer.set_default_bg_gradient_colors(black, black, AspectGradientFillMethod::None);
