@@ -6,7 +6,7 @@ use super::text_in::{get_real, read_direction3, read_flag, read_int, read_knots,
 use super::type_codes::surface as code;
 use super::undefined_type_handler;
 use martensite_tkernel::ncollection::Array2;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface, GeomCylindricalSurface,
@@ -42,8 +42,8 @@ fn read_record(stype: i32, stream: &mut IoStream) -> Result<Handle<dyn GeomSurfa
 }
 
 /// `occ::handle<Surface> S = SS;`.
-fn upcast<S: Transient + RuntimeTyped>(surface: S) -> Handle<dyn GeomSurface> {
-    Handle::new(surface).into_cast()
+fn upcast<S: HandleUpcast<dyn GeomSurface>>(surface: S) -> Handle<dyn GeomSurface> {
+    Handle::new(surface).into_upcast()
 }
 
 /// `IS >> Axis3`: location and the main, X and Y directions; `Axis3(P, A, AX)` is

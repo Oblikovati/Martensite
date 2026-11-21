@@ -7,7 +7,7 @@ mod parameters;
 use crate::native_failure::failure;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dCurveOnSurface, Adaptor3dSurface};
 
@@ -49,10 +49,9 @@ struct CurvlinState {
 /// let u = f.get_u_parameter(&*adaptor, 0.5, 1)?;
 /// ```
 pub struct CurvlinFunc {
-    parent: StandardTransient,
     state: SharedState<CurvlinState>,
 }
-impl_transient!(CurvlinFunc, "Approx_CurvlinFunc", StandardTransient, parent);
+impl_transient!(CurvlinFunc, "Approx_CurvlinFunc", dyn Transient);
 
 /// The null-object failure of a null handle the retained code dereferences.
 pub(crate) fn null_handle(what: &str) -> Failure {
@@ -110,7 +109,6 @@ impl CurvlinFunc {
             prev_u: 0.0,
         };
         let func = Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         };
         func.init()?;

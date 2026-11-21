@@ -15,7 +15,7 @@ use martensite_tkgeombase::geom_tools::{self, Curve2dSet, CurveSet, SurfaceSet};
 
 /// One geometry family: its handle, its set class and the GeomTools members on them.
 pub trait GtKind {
-    type Geometry: ?Sized + martensite_tkernel::standard::RuntimeTyped;
+    type Geometry: ?Sized + martensite_tkernel::standard::TransientHandleTarget;
     type Set;
     fn build(r: &mut Reader<'_>) -> Result<Handle<Self::Geometry>, Failure>;
     fn dump(g: &Handle<Self::Geometry>, s: &mut IoStream) -> Result<(), Failure>;

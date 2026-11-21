@@ -14,7 +14,7 @@ use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomCurve, GeomRectangularTrimmedSurface, GeomSurface, GeomTrimmedCurve,
 };
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom_adaptor::GeomSurfaceAdaptor;
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::convert::ParameterisationType;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
@@ -122,7 +122,7 @@ pub fn build_c3d_on_iso_line(
     iso: IsoLine,
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
     // Convert adapter to the appropriate type.
-    let adapter: Handle<GeomAdaptorSurface> = surf.cast();
+    let adapter = surf.view::<dyn GeomSurfaceAdaptor>();
     let Some(geom_adapter) = adapter.get() else {
         return Ok(Handle::default());
     };
@@ -196,7 +196,7 @@ fn extracted_iso(
             ((p1, p2), (v1, v2))
         };
         let trimmed = GeomRectangularTrimmedSurface::new(surface, u, v, (true, true))?;
-        let trimmed: Handle<dyn GeomSurface> = Handle::new(trimmed).cast();
+        let trimmed: Handle<dyn GeomSurface> = Handle::new(trimmed).into_upcast();
         let t: &dyn GeomSurface = live(&trimmed, "GeomLib::buildC3dOnIsoLine")?;
         return if iso.is_u {
             t.u_iso(iso.param)
@@ -214,7 +214,7 @@ fn extracted_iso(
     } else {
         s.v_iso(iso.param)?
     };
-    Ok(Handle::new(GeomTrimmedCurve::new(&c3d, p1, p2, true, true)?).cast())
+    Ok(Handle::new(GeomTrimmedCurve::new(&c3d, p1, p2, true, true)?).into_upcast())
 }
 
 // The greatest distance between the 3D curve and the surface point of the pcurve at

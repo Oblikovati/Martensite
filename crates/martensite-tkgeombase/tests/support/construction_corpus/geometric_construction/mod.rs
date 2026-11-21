@@ -7,7 +7,7 @@ pub use surfaces::*;
 
 use super::common::{self as p, Reader};
 use super::print::Output;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, TransientHandleTarget};
 use martensite_tkg2d::geom2d::{
     Geom2dCircle, Geom2dCurve, Geom2dEllipse, Geom2dHyperbola, Geom2dLine, Geom2dParabola,
     Geom2dTransformation, Geom2dTrimmedCurve,
@@ -22,7 +22,7 @@ use martensite_tkmath::gp::{
 };
 
 /// The class name of a handle, `null` for a null one (gb_name).
-pub fn name<T: ?Sized + RuntimeTyped>(output: &Output, handle: &Handle<T>) {
+pub fn name<T: ?Sized + TransientHandleTarget>(output: &Output, handle: &Handle<T>) {
     match handle.dynamic_type() {
         Some(kind) => output.write(format_args!("{} ", kind.name())),
         None => output.write(format_args!("null ")),
@@ -30,7 +30,7 @@ pub fn name<T: ?Sized + RuntimeTyped>(output: &Output, handle: &Handle<T>) {
 }
 
 /// gb_geom_curve: the class, then the trimmed bounds and basis or the gp element.
-pub fn geom_curve<T: ?Sized + RuntimeTyped>(output: &Output, handle: &Handle<T>) {
+pub fn geom_curve<T: ?Sized + TransientHandleTarget>(output: &Output, handle: &Handle<T>) {
     let curve: Handle<dyn GeomCurve> = handle.cast();
     name(output, &curve);
     if let Some(trimmed) = curve.cast::<GeomTrimmedCurve>().get() {
@@ -57,7 +57,7 @@ fn geom_conic(output: &Output, curve: &Handle<dyn GeomCurve>) {
 }
 
 /// gb_geom2d_curve: the class, then the trimmed bounds and basis or the gp element.
-pub fn geom2d_curve<T: ?Sized + RuntimeTyped>(output: &Output, handle: &Handle<T>) {
+pub fn geom2d_curve<T: ?Sized + TransientHandleTarget>(output: &Output, handle: &Handle<T>) {
     let curve: Handle<dyn Geom2dCurve> = handle.cast();
     name(output, &curve);
     if let Some(trimmed) = curve.cast::<Geom2dTrimmedCurve>().get() {
@@ -84,7 +84,7 @@ fn geom2d_conic(output: &Output, curve: &Handle<dyn Geom2dCurve>) {
 }
 
 /// gb_geom_surface: the class, then the trimmed bounds and basis or the gp element.
-pub fn geom_surface<T: ?Sized + RuntimeTyped>(output: &Output, handle: &Handle<T>) {
+pub fn geom_surface<T: ?Sized + TransientHandleTarget>(output: &Output, handle: &Handle<T>) {
     let surface: Handle<dyn GeomSurface> = handle.cast();
     name(output, &surface);
     if let Some(trimmed) = surface.cast::<GeomRectangularTrimmedSurface>().get() {

@@ -1,7 +1,7 @@
 //! `Add3dCurve` and `Add2dCurve`: add the box of a curve to a box, through
 //! Curve and Curve2d.
 use crate::geom_bnd_lib::{Curve, Curve2d};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, project_concrete};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
@@ -97,7 +97,7 @@ impl Add2dCurve {
         tolerance: f64,
         bounds: &mut BoundingBox2,
     ) -> Result<(), Failure> {
-        if let Some(geom_adaptor) = Geom2dAdaptorCurve::project_from(curve) {
+        if let Some(geom_adaptor) = project_concrete::<Geom2dAdaptorCurve>(curve) {
             return Self::add_curve_range(&geom_adaptor.curve(), u1, u2, tolerance, bounds);
         }
         let step: f64 = (u2 - u1) / f64::from(FALLBACK_POINTS - 1);

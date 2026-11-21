@@ -84,20 +84,17 @@ impl_transient!(
     LinearFlexion,
     "FEmTool_LinearFlexion",
     dyn ElementaryCriterion,
-    parent,
     interfaces: [dyn ElementaryCriterion]
 );
 impl_transient!(
     LinearJerk,
     "FEmTool_LinearJerk",
     dyn ElementaryCriterion,
-    parent,
     interfaces: [dyn ElementaryCriterion]
 );
 impl_transient!(
     LinearTension,
     "FEmTool_LinearTension",
     dyn ElementaryCriterion,
-    parent,
     interfaces: [dyn ElementaryCriterion]
 );

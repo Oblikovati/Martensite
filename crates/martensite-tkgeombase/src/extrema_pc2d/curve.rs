@@ -5,7 +5,7 @@ use super::{
     OffsetCurve, OtherCurve, Parabola, SearchMode,
 };
 use crate::extrema_pc_core::PcCurveRef;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
@@ -191,11 +191,11 @@ fn from_adaptor<'a>(
 }
 
 // `occ::down_cast<T>(theCurve)` when it succeeds.
-fn kind<T: RuntimeTyped>(curve: &Handle<dyn Geom2dCurve>) -> Option<Handle<T>> {
-    let typed: Handle<T> = curve.cast::<T>();
+fn kind<T: Transient>(curve: &Handle<dyn Geom2dCurve>) -> Option<Handle<T>> {
+    let typed: Handle<T> = curve.downcast::<T>();
     (!typed.is_null()).then_some(typed)
 }
-// The analytical classes are tested with `curve.cast::<T>().get()`.
+// The analytical classes are tested with `curve.downcast::<T>().get()`.
 
 // `initFromGeomCurve`: the analytical kinds and the splines by class, the rest through
 // an owned adaptor.
@@ -269,7 +269,7 @@ fn from_geom_spline<'a>(
         None => Geom2dAdaptorCurve::with_curve(curve)?,
     };
     let is_offset: bool = adaptor.get_type()? == CurveType::OffsetCurve;
-    let owned: CurveRef2d<'a> = PcCurveRef::Shared(Handle::new(adaptor).cast());
+    let owned: CurveRef2d<'a> = PcCurveRef::Shared(Handle::new(adaptor).into_upcast());
     if is_offset {
         return Ok(E::Offset(OffsetCurve::from_curve_ref(owned, domain)?));
     }

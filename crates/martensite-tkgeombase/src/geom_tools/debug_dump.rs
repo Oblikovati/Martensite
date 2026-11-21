@@ -1,7 +1,7 @@
 //! `Dump`: the debugger helper that dumps any geometric transient.
 use super::console::ConsoleOutput;
 use super::{curve_print, curve2d_print, surface_print};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface};
@@ -20,13 +20,13 @@ use std::io::{Read, Seek, SeekFrom};
 /// use martensite_tkgeombase::geom_tools::{StdoutConsole, geom_tools_dump};
 /// assert_eq!(geom_tools_dump(&Handle::default(), &StdoutConsole), "Error: Not a geometric object");
 /// ```
-pub fn geom_tools_dump(object: &Handle<StandardTransient>, console: &dyn ConsoleOutput) -> String {
+pub fn geom_tools_dump(object: &Handle<dyn Transient>, console: &dyn ConsoleOutput) -> String {
     let result = dump_geometry(object, console);
     result.unwrap_or_else(|failure| failure.message().to_string())
 }
 
 fn dump_geometry(
-    object: &Handle<StandardTransient>,
+    object: &Handle<dyn Transient>,
     console: &dyn ConsoleOutput,
 ) -> Result<String, Failure> {
     let surface: Handle<dyn GeomSurface> = object.cast();

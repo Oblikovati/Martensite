@@ -2,7 +2,6 @@
 use super::*;
 fn function(rational: bool) -> AxSweep {
     AxSweep {
-        parent: StandardTransient::default(),
         settings: Settings {
             nbpol: 3,
             nb2d: 2,

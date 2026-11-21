@@ -2,7 +2,7 @@
 use crate::fem_tool::{AssemblyTable, Curve};
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::{Array1, HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkmath::math::{Matrix, Vector};
 
 /// The quality of a smoothing (`QualityValues`): the ICDANA code (0 when the
@@ -114,8 +114,4 @@ pub trait SmoothCriterion: Transient {
     /// the current ones, as the retained assignment).
     fn set_point_weights(&self, weight: &Array1<'_, f64>);
 }
-impl_transient_interface!(
-    dyn SmoothCriterion,
-    "AppDef_SmoothCriterion",
-    StandardTransient
-);
+impl_transient_interface!(dyn SmoothCriterion, "AppDef_SmoothCriterion", dyn Transient);

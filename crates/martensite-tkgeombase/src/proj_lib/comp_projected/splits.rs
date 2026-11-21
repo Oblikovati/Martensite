@@ -62,9 +62,9 @@ fn split_on_direction<'a>(
         s.last_v_parameter()? - s.first_v_parameter()?
     };
     let line: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(start, direction)).cast();
+        Handle::new(Geom2dLine::from_point(start, direction)).into_upcast();
     let bound2d: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(&line, 0., last_2d)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(&line, 0., last_2d)?).into_upcast();
     let bound = Adaptor3dCurveOnSurface::with_curve(&bound2d, surface)?;
     let (first, last) = (pair.curve.first_parameter()?, pair.curve.last_parameter()?);
     find_split_point(

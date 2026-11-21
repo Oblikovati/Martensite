@@ -1,7 +1,7 @@
 //! `Node`: the constraints of the approximation at one (U, V) point.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array2;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use martensite_tkmath::gp::{Point3, Xy};
 
 /// The locked fields of a node.
@@ -20,10 +20,9 @@ struct NodeState {
 /// Shared through handles; every member takes `&self`.
 /// `let node = AdvApp2VarNode::with_orders(1, 2); node.point(0, 0)?`.
 pub struct AdvApp2VarNode {
-    parent: StandardTransient,
     state: SharedState<NodeState>,
 }
-impl_transient!(AdvApp2VarNode, "AdvApp2Var_Node", StandardTransient, parent);
+impl_transient!(AdvApp2VarNode, "AdvApp2Var_Node", dyn Transient);
 
 impl Default for AdvApp2VarNode {
     fn default() -> Self {
@@ -82,7 +81,6 @@ impl AdvApp2VarNode {
 
     fn from_state(state: NodeState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

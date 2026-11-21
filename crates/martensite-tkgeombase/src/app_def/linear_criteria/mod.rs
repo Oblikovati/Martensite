@@ -12,7 +12,7 @@ use crate::fem_tool::{AssemblyTable, Curve, ElementaryCriterion};
 use crate::native_failure::{allocation_failure, array_failure, failure};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::math::{Matrix, Vector};
 
 /// The mutable fields of `LinearCriteria`, shared by every handle.
@@ -49,7 +49,6 @@ pub(super) struct CriteriaState {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct LinearCriteria {
-    parent: StandardTransient,
     ssp: MultiLine,
     state: SharedState<CriteriaState>,
 }
@@ -57,7 +56,6 @@ impl_transient!(
     LinearCriteria,
     "AppDef_LinearCriteria",
     dyn SmoothCriterion,
-    parent,
     interfaces: [dyn SmoothCriterion]
 );
 
@@ -95,7 +93,6 @@ impl LinearCriteria {
             last_index: 0,
         };
         Ok(Self {
-            parent: StandardTransient::default(),
             ssp: ssp.clone(),
             state: SharedState::new(state),
         })

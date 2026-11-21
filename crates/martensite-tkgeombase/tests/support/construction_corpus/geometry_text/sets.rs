@@ -9,7 +9,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{
     ProgressIndicator, ProgressIndicatorHooks, ProgressRange, ProgressScope,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg2d::geom2d_eval::Geom2dEvalSineWaveCurve;
@@ -195,7 +195,7 @@ pub fn progress_case(ctx: &Context, values: &[f64]) {
 /// `gt_debug_dump kind spec`.
 pub fn debug_dump_case(ctx: &Context, values: &[f64]) {
     let mut r = Reader::new(values);
-    let object: Handle<StandardTransient> = match r.integer() {
+    let object: Handle<dyn Transient> = match r.integer() {
         0 => Curves::build(&mut r).unwrap().cast(),
         1 => Curves2d::build(&mut r).unwrap().cast(),
         2 => Surfaces::build(&mut r).unwrap().cast(),
@@ -216,14 +216,12 @@ pub fn debug_dump_case(ctx: &Context, values: &[f64]) {
 
 /// GtHandler: stores the helix (42), the sine wave (43) and the ellipsoid (44).
 struct ProbeHandler {
-    parent: StandardTransient,
     base: UndefinedTypeHandlerBase,
 }
 impl_transient!(
     ProbeHandler,
     "ProbeHandler",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn UndefinedTypeHandler]
 );
 
@@ -342,7 +340,6 @@ fn handler_texts<K: GtKind>(ctx: &Context, r: &mut Reader<'_>) {
 pub fn handler_case(ctx: &Context, values: &[f64]) {
     let original = geom_tools::get_undefined_type_handler();
     let mine: Handle<dyn UndefinedTypeHandler> = Handle::new(ProbeHandler {
-        parent: StandardTransient::default(),
         base: UndefinedTypeHandlerBase::with_console(ctx.console()),
     })
     .into_cast();
