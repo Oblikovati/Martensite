@@ -43,7 +43,7 @@ fn side_curve(
     let trim: bool = (f - stored.first_parameter()).abs() > precision::p_confusion()
         || (l - stored.last_parameter()).abs() > precision::p_confusion();
     let copy: Handle<dyn GeomCurve> = if trim {
-        Handle::new(GeomTrimmedCurve::new(curve, f, l, true, true)?).cast::<dyn GeomCurve>()
+        Handle::new(GeomTrimmedCurve::new(curve, f, l, true, true)?).into_upcast::<dyn GeomCurve>()
     } else {
         stored.copy()?.cast::<dyn GeomCurve>()
     };
@@ -101,7 +101,8 @@ pub(super) fn ruled_patch(edge1: &Edge, edge2: &Edge) -> Result<RuledPatch, Fail
 
 /// A 2d line through `(u, v)` (`new Geom2dLine(gpPnt2d(u, v), direction)`).
 pub(super) fn line2d(u: f64, v: f64, direction: Direction2) -> Handle<dyn Geom2dCurve> {
-    Handle::new(Geom2dLine::from_point(Point2::new(u, v), direction)).cast::<dyn Geom2dCurve>()
+    Handle::new(Geom2dLine::from_point(Point2::new(u, v), direction))
+        .into_upcast::<dyn Geom2dCurve>()
 }
 
 /// The iso V = `v` p-curve of a section edge on the face: along -U on `[-l1, -f1]` for

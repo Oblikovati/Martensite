@@ -42,8 +42,8 @@ pub fn fun_uiso_line_on_sphe(f: &Shape, pc: &Handle<dyn Geom2dCurve>) -> Result<
     }
     let sss = TopOpeBRepToolShapeTool::basis_surface_of_face(&topods::face(f)?)?;
     let lll = basis_curve2d(pc)?;
-    let sphere: Handle<GeomSphericalSurface> = sss.cast();
-    let line: Handle<Geom2dLine> = lll.cast();
+    let sphere: Handle<GeomSphericalSurface> = sss.downcast();
+    let line: Handle<Geom2dLine> = lll.downcast();
     match (sphere.is_null(), line.get()) {
         (false, Some(l)) => {
             Ok(l.direction().x().abs() < precision::parametric(precision::confusion()))
@@ -89,7 +89,7 @@ pub fn fun_reverse_pc(
     let p3d = bas.value(p2d.x(), p2d.y())?;
     let reversed = !p3d.is_equal(&p3dc3d, tol);
     if reversed {
-        let line: Handle<Geom2dLine> = basis_curve2d(pcnew)?.cast();
+        let line: Handle<Geom2dLine> = basis_curve2d(pcnew)?.downcast();
         let l = line.get().ok_or_else(|| null_object("2d line"))?;
         l.set_direction(l.direction().reversed());
     }
@@ -130,7 +130,7 @@ pub fn fun_make_uiso_line_on_sphe(
     let scale = p3df - par3dinf;
     let origin =
         Point2::new(uinf, vinf).translated(Vector2::new(vdir.x() * scale, vdir.y() * scale));
-    let line: Handle<Geom2dLine> = basis_curve2d(pcnew)?.cast();
+    let line: Handle<Geom2dLine> = basis_curve2d(pcnew)?.downcast();
     if let Some(l) = line.get() {
         l.set_lin2d(Line2::new(origin, vdir));
     } else if !basis_curve2d(pcnew)?.is_null() {
@@ -176,8 +176,8 @@ impl TopOpeBRepDSBuildTool {
         let (vmin, vmax, parmin, parmax) = self.oriented_parameters(e)?;
         let tolmin = BRepTool::vertex_tolerance(&vmin)?.max(newtol);
         let tolmax = BRepTool::vertex_tolerance(&vmax)?.max(newtol);
-        let trimmed: Handle<GeomTrimmedCurve> = c3dnew.clone().cast();
-        let bspline: Handle<GeomBSplineCurve> = c3dnew.clone().cast();
+        let trimmed: Handle<GeomTrimmedCurve> = c3dnew.downcast();
+        let bspline: Handle<GeomBSplineCurve> = c3dnew.downcast();
         let (newparmin, newparmax) = if trimmed.is_null() && bspline.is_null() {
             (parmin, parmax)
         } else {
@@ -365,7 +365,7 @@ impl TopOpeBRepDSBuildTool {
                     true,
                     true,
                 )?)
-                .cast();
+                .into_upcast();
             }
         }
         let (mut pc1new, mut pc2new) = (

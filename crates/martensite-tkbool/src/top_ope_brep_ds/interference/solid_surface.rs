@@ -1,5 +1,5 @@
 //! `TopOpeBRepDSSolidSurfaceInterference`: an interference of a surface on a solid.
-use super::TopOpeBRepDSInterference;
+use super::{InterferenceRecord, InterferenceState};
 use crate::top_ope_brep_ds::{TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use martensite_tkernel::impl_transient;
 use std::ops::Deref;
@@ -8,20 +8,26 @@ use std::ops::Deref;
 /// interference members are reached through `Deref`;
 /// `TopOpeBRepDSSolidSurfaceInterference::new(&t, TopOpeBRepDSKind::Solid, 1, TopOpeBRepDSKind::Surface, 1)`.
 pub struct TopOpeBRepDSSolidSurfaceInterference {
-    parent: TopOpeBRepDSInterference,
+    record: InterferenceState,
 }
 impl_transient!(
     TopOpeBRepDSSolidSurfaceInterference,
     "TopOpeBRepDSSolidSurfaceInterference",
-    TopOpeBRepDSInterference,
-    parent
+    dyn InterferenceRecord,
+    interfaces: [dyn InterferenceRecord]
 );
 
-impl Deref for TopOpeBRepDSSolidSurfaceInterference {
-    type Target = TopOpeBRepDSInterference;
+impl InterferenceRecord for TopOpeBRepDSSolidSurfaceInterference {
+    fn interference_state(&self) -> &InterferenceState {
+        &self.record
+    }
+}
 
-    fn deref(&self) -> &TopOpeBRepDSInterference {
-        &self.parent
+impl Deref for TopOpeBRepDSSolidSurfaceInterference {
+    type Target = InterferenceState;
+
+    fn deref(&self) -> &Self::Target {
+        &self.record
     }
 }
 
@@ -36,7 +42,7 @@ impl TopOpeBRepDSSolidSurfaceInterference {
         g: i32,
     ) -> Self {
         Self {
-            parent: TopOpeBRepDSInterference::new(t, st, s, gt, g),
+            record: InterferenceState::new(t, st, s, gt, g),
         }
     }
 }

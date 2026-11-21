@@ -31,7 +31,7 @@ pub(super) fn segment(start: Point3, end: Point3) -> Result<Handle<dyn GeomCurve
     let mut extremities = one_based::<Point3>(2)?;
     put(&mut extremities, 1, start)?;
     put(&mut extremities, 2, end)?;
-    Ok(Handle::new(GeomBezierCurve::new(&extremities)?).cast::<dyn GeomCurve>())
+    Ok(Handle::new(GeomBezierCurve::new(&extremities)?).into_upcast::<dyn GeomCurve>())
 }
 
 /// `Edge3`: the reversed lateral edge of the previous face at `Vf_toMap`, or a new

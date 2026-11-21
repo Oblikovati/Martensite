@@ -89,7 +89,7 @@ fn check_input(wire: &Shape, shape: &Shape) -> Result<(), Failure> {
 /// The shape transformed by a copy (to avoid adding new p-curves to the input).
 fn transformed_copy(shape: &Shape, t: Transform3) -> Result<Shape, Failure> {
     let modification: Handle<dyn BRepToolsModification> =
-        Handle::new(TrsfModification::new(t)).cast();
+        Handle::new(TrsfModification::new(t)).into_upcast();
     Modifier::with_modification(shape, &modification)?.modified_shape(shape)
 }
 

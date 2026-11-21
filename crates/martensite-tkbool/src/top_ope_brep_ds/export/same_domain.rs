@@ -2,9 +2,10 @@
 //! FDSEdgeIsConnexToSameDomainFaces, FDS_SIisGIofIofSBAofTofI, FDSHasSameDomain3d/2d,
 //! FUN_ds_getoov).
 use super::{fds_idata, has_same_domain, href};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::{
-    TopOpeBRepDSConfig, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, fdscnx_edge_connexity_same_shape_ds,
+    TopOpeBRepDSConfig, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure, TopOpeBRepDSKind,
+    fdscnx_edge_connexity_same_shape_ds,
 };
 use crate::top_ope_brep_tool::{TopOpeBRepToolShapeTool, fun_tool_ng_s};
 use martensite_tkbrep::brep::BRepTool;
@@ -117,7 +118,7 @@ pub fn fds_edge_is_connex_to_same_domain_faces(
 pub fn fds_si_is_gi_of_i_of_sba_of_t_of_i(
     bds: &TopOpeBRepDSDataStructure,
     si: i32,
-    i: &Handle<TopOpeBRepDSInterference>,
+    i: &Handle<dyn InterferenceRecord>,
 ) -> Result<bool, Failure> {
     if si == 0 || i.is_null() {
         return Ok(false);

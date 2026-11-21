@@ -3,7 +3,7 @@ use crate::top_ope_brep_build::TopOpeBRepBuildLoopBase;
 use martensite_tkbrep::topods::Shape;
 
 fn loop_handle() -> Handle<dyn TopOpeBRepBuildLoop> {
-    Handle::new(TopOpeBRepBuildLoopBase::from_shape(&Shape::default())).cast()
+    Handle::new(TopOpeBRepBuildLoopBase::from_shape(&Shape::default())).into_upcast()
 }
 fn same_loop(left: &Handle<dyn TopOpeBRepBuildLoop>, right: &Handle<dyn TopOpeBRepBuildLoop>) {
     assert!(std::ptr::eq(left.get().unwrap(), right.get().unwrap()));

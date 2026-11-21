@@ -2,16 +2,15 @@
 //! FUN_find3dISEsameISF, FUN_select3dISEsameISF).
 use super::fun_select_itrasha_interference;
 use super::select::{to_list, to_vec};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::export::{fds_data, fds_tdata, fun_ds_get_vsdm, fun_ds_sdm, iref};
-use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-};
+use crate::top_ope_brep_ds::{ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSKind};
 use crate::top_ope_brep_tool::fun_tool_eshared;
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{ShapeEnum, State};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The vertex bookkeeping of `FUN_select3dI` for a VERTEX geometry `g1`: its same
 /// domain vertex index in `oog`, the other vertex in `oov`, and the status (1 on the

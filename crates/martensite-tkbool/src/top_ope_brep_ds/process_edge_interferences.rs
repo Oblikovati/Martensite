@@ -10,9 +10,9 @@ use super::process_interferences_tool::{
 };
 use super::{
     ListOfInterference, TopOpeBRepDSCurvePointInterference, TopOpeBRepDSDataStructure,
-    TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    fdscnx_edge_connexity_same_shape_ds,
+    TopOpeBRepDSHDataStructure, TopOpeBRepDSKind, fdscnx_edge_connexity_same_shape_ds,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_tool::fsc_get_psc_with_reference;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topexp::{self, Explorer};
@@ -23,7 +23,7 @@ use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{ShapeEnum, State};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// `FUN_vertexofedge(V, E)`: `v` is a vertex of `e`; `fun_vertexofedge(&v, &e)?`.
 pub fn fun_vertexofedge(v: &Shape, e: &Shape) -> Result<bool, Failure> {
@@ -48,7 +48,7 @@ fn keep_e_interference(ds: &TopOpeBRepDSDataStructure, i: &H, e: &Shape) -> Resu
         topexp::vertices(&topods::edge(e)?, false);
         return Ok(res);
     }
-    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.cast();
+    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
     if let Some(cpi) = cpi.get() {
         let eps = precision::p_confusion();
         let par = cpi.parameter();
@@ -251,7 +251,7 @@ pub fn fun_resolve_e_unknown(
         if !(idt && isb1 == s1 && isa1 == s1) {
             continue;
         }
-        let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i1.cast();
+        let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i1.downcast();
         let Some(cpi) = cpi.get() else {
             continue;
         };

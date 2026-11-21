@@ -1,9 +1,7 @@
 //! The records of the data structure: the interferences of each geometry and shape,
 //! the same domain data of the shapes, and the split states of the shapes.
-use super::{
-    TopOpeBRepDSConfig, TopOpeBRepDSCurve, TopOpeBRepDSInterference, TopOpeBRepDSPoint,
-    TopOpeBRepDSSurface,
-};
+use super::{TopOpeBRepDSConfig, TopOpeBRepDSCurve, TopOpeBRepDSPoint, TopOpeBRepDSSurface};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::List;
 use martensite_tkernel::standard::Handle;
@@ -11,7 +9,7 @@ use martensite_tkg3d::top_abs::{Orientation, State};
 use std::ops::{Deref, DerefMut};
 
 /// The interferences of an entity of the data structure.
-pub type ListOfInterference = List<Handle<TopOpeBRepDSInterference>>;
+pub type ListOfInterference = List<Handle<dyn InterferenceRecord>>;
 
 /// The interferences of a geometry (`TopOpeBRepDSGeometryData`);
 /// `let mut g = TopOpeBRepDSGeometryData::default(); g.add_interference(&i);`.
@@ -38,7 +36,7 @@ impl TopOpeBRepDSGeometryData {
     }
 
     /// `AddInterference(I)`: appended; `g.add_interference(&i)`.
-    pub fn add_interference(&mut self, i: &Handle<TopOpeBRepDSInterference>) {
+    pub fn add_interference(&mut self, i: &Handle<dyn InterferenceRecord>) {
         self.my_interferences.append(i.clone());
     }
 }

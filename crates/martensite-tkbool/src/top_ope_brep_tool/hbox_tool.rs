@@ -6,7 +6,7 @@ use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::IndexedDataMap;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tktopalgo::brep_bnd_lib::BRepBndLib;
@@ -16,21 +16,18 @@ use std::sync::OnceLock;
 /// are keyed with their orientation (the native default hasher, `IsEqual`);
 /// `let hbt = TopOpeBRepToolHBoxTool::new(); hbt.add_box(&face)?;`.
 pub struct TopOpeBRepToolHBoxTool {
-    parent: StandardTransient,
     my_ims: SharedState<IndexedDataMap<Shape, BoundingBox3>>,
 }
 impl_transient!(
     TopOpeBRepToolHBoxTool,
     "TopOpeBRepToolHBoxTool",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for TopOpeBRepToolHBoxTool {
     /// `TopOpeBRepToolHBoxTool()`: no box.
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_ims: SharedState::new(IndexedDataMap::default()),
         }
     }

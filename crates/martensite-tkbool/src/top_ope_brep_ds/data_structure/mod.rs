@@ -14,10 +14,11 @@ pub use curve_explorer::TopOpeBRepDSCurveExplorer;
 pub use point_explorer::TopOpeBRepDSPointExplorer;
 
 use super::{
-    ListOfInterference, TopOpeBRepDSCurve, TopOpeBRepDSCurveData, TopOpeBRepDSInterference,
-    TopOpeBRepDSPoint, TopOpeBRepDSPointData, TopOpeBRepDSShapeData, TopOpeBRepDSShapeWithState,
-    TopOpeBRepDSSurface, TopOpeBRepDSSurfaceData,
+    ListOfInterference, TopOpeBRepDSCurve, TopOpeBRepDSCurveData, TopOpeBRepDSPoint,
+    TopOpeBRepDSPointData, TopOpeBRepDSShapeData, TopOpeBRepDSShapeWithState, TopOpeBRepDSSurface,
+    TopOpeBRepDSSurfaceData,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::ncollection::{DataMap, IndexedDataMap, IndexedMap, List};
@@ -72,7 +73,7 @@ pub(crate) fn program_error(message: &str) -> Failure {
 }
 
 /// Removes the first interference that is the same object as `i`.
-fn remove_first_same(l: &mut ListOfInterference, i: &Handle<TopOpeBRepDSInterference>) {
+fn remove_first_same(l: &mut ListOfInterference, i: &Handle<dyn InterferenceRecord>) {
     let address = i.object_address();
     let mut removed = false;
     l.retain(|x| {
@@ -150,7 +151,7 @@ impl TopOpeBRepDSDataStructure {
     /// the list.
     fn find_interference(
         l: &ListOfInterference,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
     ) -> Option<usize> {
         l.iter()
             .position(|x| x.object_address() == i.object_address())

@@ -5,14 +5,15 @@ use super::{
     fds_data, fds_has_same_domain3d, fds_parameter, fds_tdata, fun_ds_getoov, fun_ds_has_i2d,
     has_same_domain, href, iref,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::process_interferences_tool::{
     fun_select_gi_interference, fun_select_gk_interference, fun_select_itrasha_interference,
     fun_select_sk_interference, fun_select_traori_interference, fun_select_trasha_interference,
     make_epv_interference,
 };
 use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSTransition, store_interference_ds,
+    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure, TopOpeBRepDSKind,
+    TopOpeBRepDSTransition, store_interference_ds,
 };
 use crate::top_ope_brep_tool::{
     fun_tool_getxx_ng, fun_tool_is_closing_e, fun_tool_nggeom_f, fun_tool_orient_e_in_f,
@@ -26,7 +27,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{self, Orientation, ShapeEnum, State};
 use martensite_tkmath::gp::{Direction3, Point2, Vector3};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The first interference of a non-empty list.
 fn first(l: &ListOfInterference) -> H {

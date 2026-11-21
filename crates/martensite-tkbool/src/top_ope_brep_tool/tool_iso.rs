@@ -26,7 +26,7 @@ pub fn uviso(
         return Ok((false, false, false));
     }
     let lll = basis_curve2d(pc)?;
-    let line: Handle<Geom2dLine> = lll.cast();
+    let line: Handle<Geom2dLine> = lll.downcast();
     let Some(l) = line.get() else {
         return Ok((false, false, false));
     };

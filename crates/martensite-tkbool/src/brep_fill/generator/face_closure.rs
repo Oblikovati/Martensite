@@ -18,7 +18,8 @@ use martensite_tkmath::gp::{Direction2, Point2};
 
 /// A 2d line through `(u, v)` (`new Geom2dLine(gpPnt2d(u, v), direction)`).
 fn line2d(u: f64, v: f64, direction: Direction2) -> Handle<dyn Geom2dCurve> {
-    Handle::new(Geom2dLine::from_point(Point2::new(u, v), direction)).cast::<dyn Geom2dCurve>()
+    Handle::new(Geom2dLine::from_point(Point2::new(u, v), direction))
+        .into_upcast::<dyn Geom2dCurve>()
 }
 
 /// A 2d Bezier segment (`new Geom2dBezierCurve(Extrem)`).
@@ -26,7 +27,7 @@ fn segment2d(start: Point2, end: Point2) -> Result<Handle<dyn Geom2dCurve>, Fail
     let mut poles = one_based::<Point2>(2)?;
     put(&mut poles, 1, start)?;
     put(&mut poles, 2, end)?;
-    Ok(Handle::new(Geom2dBezierCurve::new(&poles)?).cast::<dyn Geom2dCurve>())
+    Ok(Handle::new(Geom2dBezierCurve::new(&poles)?).into_upcast::<dyn Geom2dCurve>())
 }
 
 /// The p-curves of the section edges (iso V lines, not on a plane) and of the

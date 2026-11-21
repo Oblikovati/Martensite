@@ -94,7 +94,7 @@ impl TopOpeBRepToolCurveTool {
         points: &Array1<'_, Point3>,
     ) -> Result<Handle<dyn GeomCurve>, Failure> {
         let (knots, mults) = index_knots(points.length())?;
-        Ok(Handle::new(GeomBSplineCurve::new(points, &knots, &mults, 1, false)?).cast())
+        Ok(Handle::new(GeomBSplineCurve::new(points, &knots, &mults, 1, false)?).into_upcast())
     }
 
     /// `MakeBSpline1fromPnt2d(P)`: the 2d B-spline of degree 1 through the points;
@@ -103,7 +103,7 @@ impl TopOpeBRepToolCurveTool {
         points: &Array1<'_, Point2>,
     ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         let (knots, mults) = index_knots(points.length())?;
-        Ok(Handle::new(Geom2dBSplineCurve::new(points, &knots, &mults, 1, false)?).cast())
+        Ok(Handle::new(Geom2dBSplineCurve::new(points, &knots, &mults, 1, false)?).into_upcast())
     }
 
     /// `IsProjectable(S, C)`: false for a conic on a cone, an ellipse on a cylinder and
@@ -130,11 +130,15 @@ impl TopOpeBRepToolCurveTool {
 /// B-spline); StandardNotImplemented for another type.
 pub fn make_pcurve(pc: &ProjectedCurve) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     Ok(match pc.get_type()? {
-        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(pc.line()?)).cast(),
-        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(pc.circle()?)).cast(),
-        CurveType::Ellipse => Handle::new(Geom2dEllipse::from_elips2d(pc.ellipse()?)).cast(),
-        CurveType::Parabola => Handle::new(Geom2dParabola::from_parab2d(pc.parabola()?)).cast(),
-        CurveType::Hyperbola => Handle::new(Geom2dHyperbola::from_hypr2d(pc.hyperbola()?)).cast(),
+        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(pc.line()?)).into_upcast(),
+        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(pc.circle()?)).into_upcast(),
+        CurveType::Ellipse => Handle::new(Geom2dEllipse::from_elips2d(pc.ellipse()?)).into_upcast(),
+        CurveType::Parabola => {
+            Handle::new(Geom2dParabola::from_parab2d(pc.parabola()?)).into_upcast()
+        }
+        CurveType::Hyperbola => {
+            Handle::new(Geom2dHyperbola::from_hypr2d(pc.hyperbola()?)).into_upcast()
+        }
         CurveType::BSplineCurve => pc.bspline()?.cast(),
         _ => {
             return Err(Failure::with_type(

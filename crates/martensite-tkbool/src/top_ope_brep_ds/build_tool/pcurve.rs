@@ -40,7 +40,7 @@ pub fn topopebrepds_set_the_pcurve(
     c: &Handle<dyn Geom2dCurve>,
 ) -> Result<(), Failure> {
     let (surface, _) = BRepTool::surface_with_location(f)?;
-    let gp: Handle<GeomPlane> = surface.cast();
+    let gp: Handle<GeomPlane> = surface.downcast();
     let oc = if gp.is_null() {
         BRepTool::curve_on_face(e, f)?.pcurve
     } else {
@@ -165,7 +165,7 @@ impl TopOpeBRepDSBuildTool {
         let reversed = Geom2dTrimmedCurve::new(pct, cdsmin, cdsmax, true, true)?;
         reversed.reverse()?;
         let (f, l) = (reversed.first_parameter(), reversed.last_parameter());
-        let reversed: Handle<dyn Geom2dCurve> = Handle::new(reversed).cast();
+        let reversed: Handle<dyn Geom2dCurve> = Handle::new(reversed).into_upcast();
         let mut out = pct.clone();
         geom_lib::same_range(
             precision::p_confusion(),
@@ -223,7 +223,7 @@ impl TopOpeBRepDSBuildTool {
                 pct = Self::reversed_pcurve(&pct, (cdsmin, cdsmax), (cf, cl))?;
             } else {
                 let deca = (cf - cdsmin).abs() > precision::p_confusion();
-                let line2d: Handle<Geom2dLine> = pct.clone().cast();
+                let line2d: Handle<Geom2dLine> = pct.downcast();
                 if let Some(l) = line2d.get()
                     && range.is_some()
                     && deca

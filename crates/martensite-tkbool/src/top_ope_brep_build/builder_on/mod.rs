@@ -13,11 +13,10 @@ use super::{
     TopOpeBRepBuildBuilder, TopOpeBRepBuildGTopo, TopOpeBRepBuildShapeSet,
     TopOpeBRepBuildWireEdgeSet,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_ds::export::{fds_data, fds_has_same_domain2d, fds_has_same_domain3d};
-use crate::top_ope_brep_ds::{
-    TopOpeBRepDSDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSShapeShapeInterference, TopOpeBRepDSTransition,
-};
+use crate::top_ope_brep_ds::{TopOpeBRepDSDataStructure, TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use crate::top_ope_brep_tool::{
     fun_tool_find_pin_e, fun_tool_orient_e_in_f, fun_tool_orient_e_in_f_forward, fun_tool_sta_pin_e,
 };
@@ -230,9 +229,9 @@ impl<'a> TopOpeBRepBuildBuilderON<'a> {
 
     /// `GFillONCheckI(I)`: a shape/shape EDGE/FACE interference of FACE transitions on a
     /// split section edge, between shapes of a rank; `bon.g_fill_on_check_i(&i)?`.
-    pub fn g_fill_on_check_i(&self, i: &Handle<TopOpeBRepDSInterference>) -> Result<bool, Failure> {
+    pub fn g_fill_on_check_i(&self, i: &Handle<dyn InterferenceRecord>) -> Result<bool, Failure> {
         let pb = self.pb()?;
-        let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+        let ssi = i.view::<dyn ShapeInterferenceRecord>();
         let Some(s) = ssi.get() else {
             return Ok(false);
         };
@@ -264,7 +263,7 @@ impl<'a> TopOpeBRepBuildBuilderON<'a> {
     /// interference filled; `bon.g_fill_on_parts_wes1(&i)?`.
     pub fn g_fill_on_parts_wes1(
         &mut self,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         if !self.g_fill_on_check_i(i)? {
             return Ok(());
@@ -284,7 +283,7 @@ impl<'a> TopOpeBRepBuildBuilderON<'a> {
     /// `bon.g_fill_on_parts_wes2(&i, &esp)?`.
     pub fn g_fill_on_parts_wes2(
         &mut self,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
         esp_on: &Shape,
     ) -> Result<(), Failure> {
         let pb = self.pb()?;

@@ -18,7 +18,7 @@ fn circle(parameters: [f64; 2]) -> TopOpeBRepLineInter {
     }
     let mut line = TopOpeBRepLineInter::new();
     line.set_line(
-        &Handle::new(source).cast(),
+        &Handle::new(source).into_upcast(),
         &BRepAdaptorSurface::default(),
         &BRepAdaptorSurface::default(),
     )

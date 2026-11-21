@@ -1,8 +1,9 @@
 //! VPoint geometry lookup retains the source search ordering and parameter fallback.
 use super::{GeometrySearch, TopOpeBRepFacesFiller};
 use crate::top_ope_brep::{TopOpeBRepLineInter, TopOpeBRepTypeLineCurve, TopOpeBRepVPointInter};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::export::fds_parameter;
-use crate::top_ope_brep_ds::{ListOfInterference, TopOpeBRepDSInterference, TopOpeBRepDSKind};
+use crate::top_ope_brep_ds::{ListOfInterference, TopOpeBRepDSKind};
 use crate::top_ope_brep_tool::fun_tool_maxtol;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
@@ -83,7 +84,7 @@ impl Restriction {
 type GeometrySearchHit = (
     Option<(i32, TopOpeBRepDSKind)>,
     bool,
-    Handle<TopOpeBRepDSInterference>,
+    Handle<dyn InterferenceRecord>,
 );
 
 fn lookup(

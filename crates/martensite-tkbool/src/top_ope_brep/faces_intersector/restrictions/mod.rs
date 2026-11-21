@@ -149,7 +149,10 @@ mod tests {
                 tolerance: 1e-7,
             };
             let line = walking(side, reverse);
-            assert!(side.on_restriction(&line.cast::<IntPatchWLine>()).unwrap());
+            assert!(
+                side.on_restriction(&line.downcast::<IntPatchWLine>())
+                    .unwrap()
+            );
             let mut lines = vec![line];
             convert_groups(
                 &mut lines,
@@ -163,7 +166,7 @@ mod tests {
             )
             .unwrap();
             assert_eq!(lines.len(), 1);
-            let restriction = lines[0].cast::<IntPatchRLine>();
+            let restriction = lines[0].downcast::<IntPatchRLine>();
             assert!(!restriction.is_null());
             assert!(restriction.is_arc_on_s1());
             assert_eq!(restriction.nb_pnts().unwrap(), 3);
@@ -196,7 +199,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(segments.len(), 1);
-        let merged = segments[0].cast::<IntPatchWLine>();
+        let merged = segments[0].downcast::<IntPatchWLine>();
         assert_eq!(merged.nb_pnts().unwrap(), 100);
         assert_eq!(merged.nb_vertex(), 2);
         assert!(
@@ -211,7 +214,7 @@ mod tests {
         );
     }
     fn separated_segments(side: Side<'_>) -> Vec<Handle<dyn IntPatchLine>> {
-        let source = walking(side, false).cast::<IntPatchWLine>();
+        let source = walking(side, false).downcast::<IntPatchWLine>();
         let mut segments = Vec::new();
         for (first, last) in [(0., 0.4), (0.6, 1.)] {
             let polygon = Handle::new(IntSurfLineOn2S::new(None));

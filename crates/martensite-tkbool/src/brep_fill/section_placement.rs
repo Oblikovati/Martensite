@@ -48,7 +48,7 @@ fn edge_curve(edge: &Edge) -> Result<Option<Handle<dyn GeomCurve>>, Failure> {
         return Ok(None);
     }
     Ok(Some(
-        Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).cast(),
+        Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).into_upcast(),
     ))
 }
 
@@ -66,7 +66,7 @@ fn section_geometry(section: &Shape) -> Result<Handle<dyn GeomGeometry>, Failure
         // No edge found: the section is a vertex.
         let vertices = Explorer::new(section, ShapeEnum::Vertex, ShapeEnum::Shape)?;
         let p = BRepTool::pnt(&topods::vertex(vertices.current())?)?;
-        return Ok(Handle::new(GeomCartesianPoint::new(p.x(), p.y(), p.z())).cast());
+        return Ok(Handle::new(GeomCartesianPoint::new(p.x(), p.y(), p.z())).into_upcast());
     };
     if !explorer.more() {
         return Ok(first.cast());
@@ -188,7 +188,7 @@ impl BRepFillSectionPlacement {
         let a_section = section_geometry(&self.my_section)?;
         let mut placement = GeomFillSectionPlacement::new(&law.law(1)?, &a_section)?;
         let wire_adaptor: Handle<dyn Adaptor3dCurve> =
-            Handle::new(BRepAdaptorCompCurve::with_wire(law.wire(), false)?).cast();
+            Handle::new(BRepAdaptorCompCurve::with_wire(law.wire(), false)?).into_upcast();
         placement.perform_on_path(&wire_adaptor, precision::confusion())?;
         let (index1, mut index2) = law_interval(law, placement.parameter_on_path())?;
         let a_vertex: Vertex = topods::vertex(vertex)?;

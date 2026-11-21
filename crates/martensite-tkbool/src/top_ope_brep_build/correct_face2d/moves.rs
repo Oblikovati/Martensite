@@ -34,7 +34,7 @@ fn translate_curve2d(an_e: &Edge, a_face: &Face, a_tr_v: Vector2) -> Result<C2d,
     let a_tr_c: C2d = c2d.copy()?.cast();
     let new_c2d = Geom2dTrimmedCurve::new(&a_tr_c, pc.first, pc.last, true, true)?;
     martensite_tkg2d::geom2d::Geom2dGeometry::translate(&new_c2d, a_tr_v)?;
-    Ok(Handle::new(new_c2d).cast())
+    Ok(Handle::new(new_c2d).into_upcast())
 }
 
 /// Whether a 2d translation is not a whole number of periods in a periodic direction

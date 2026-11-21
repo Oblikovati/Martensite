@@ -1,7 +1,8 @@
 //! `TopOpeBRepDSEdgeInterferenceTool`: the transition of an edge at a point or
 //! vertex crossed by several edges, accumulated with a curve transition.
+use super::TopOpeBRepDSPoint;
 use super::export::{fds_parameter, iref};
-use super::{TopOpeBRepDSInterference, TopOpeBRepDSPoint};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_tool::TopOpeBRepToolShapeTool;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Shape, ShapeIterator};
@@ -28,7 +29,7 @@ impl Default for TopOpeBRepDSEdgeInterferenceTool {
 
 /// `::Parameter(I)` (static): the parameter of an edge/vertex or curve/point
 /// interference; StandardProgramError otherwise.
-fn parameter(i: &Handle<TopOpeBRepDSInterference>) -> Result<f64, Failure> {
+fn parameter(i: &Handle<dyn InterferenceRecord>) -> Result<f64, Failure> {
     fds_parameter(i).map_err(|_| {
         Failure::with_type(
             "Standard_ProgramError",
@@ -56,7 +57,7 @@ impl TopOpeBRepDSEdgeInterferenceTool {
     /// `Init(E, I)`: the reference edge (its orientation, the support of `i`) and, for
     /// a FORWARD/REVERSED edge, its geometry at the parameter of `i`;
     /// `t.init(&e, &i)?`.
-    pub fn init(&mut self, e: &Shape, i: &Handle<TopOpeBRepDSInterference>) -> Result<(), Failure> {
+    pub fn init(&mut self, e: &Shape, i: &Handle<dyn InterferenceRecord>) -> Result<(), Failure> {
         self.my_edge_orientation = e.orientation();
         self.my_edge_oriented = iref(i)?.support();
         if inex(self.my_edge_orientation) {
@@ -76,7 +77,7 @@ impl TopOpeBRepDSEdgeInterferenceTool {
         &mut self,
         e: &Shape,
         v: &Shape,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         if inex(e.orientation()) {
             return Ok(());
@@ -112,7 +113,7 @@ impl TopOpeBRepDSEdgeInterferenceTool {
         &mut self,
         e: &Shape,
         _p: &TopOpeBRepDSPoint,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         if inex(e.orientation()) {
             return Ok(());
@@ -134,7 +135,7 @@ impl TopOpeBRepDSEdgeInterferenceTool {
     /// `Transition(I)`: the transition of `i` set to IN/IN (INTERNAL reference), OUT/OUT
     /// (EXTERNAL) or the accumulated states with the reference edge as support (on
     /// FACE shapes); `t.transition(&i)?`.
-    pub fn transition(&self, i: &Handle<TopOpeBRepDSInterference>) -> Result<(), Failure> {
+    pub fn transition(&self, i: &Handle<dyn InterferenceRecord>) -> Result<(), Failure> {
         let ii = iref(i)?;
         let (b, a) = match self.my_edge_orientation {
             Orientation::Internal => (State::In, State::In),

@@ -49,7 +49,7 @@ fn add_domain(point: &mut IntPatchPoint, face: &Face, edge: &Edge, vertex: &Vert
     );
     point.set_vertex(
         first,
-        &Handle::new(BRepTopAdaptorHVertex::new(vertex, &arc)).cast(),
+        &Handle::new(BRepTopAdaptorHVertex::new(vertex, &arc)).into_upcast(),
     );
     if first {
         point.set_parameters(uv.x(), uv.y(), 0., 0.);

@@ -11,7 +11,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, List};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::top_abs::State;
 use std::cell::RefCell;
 use std::sync::RwLockWriteGuard;
@@ -41,15 +41,13 @@ pub struct HBuilderState {
 /// The shared builder of the topological operations (`TopOpeBRepBuildHBuilder`);
 /// `let hb = Handle::new(TopOpeBRepBuildHBuilder::new(&TopOpeBRepDSBuildTool::new()));`.
 pub struct TopOpeBRepBuildHBuilder {
-    parent: StandardTransient,
     my_state: SharedState<HBuilderState>,
 }
 
 impl_transient!(
     TopOpeBRepBuildHBuilder,
     "TopOpeBRepBuildHBuilder",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl TopOpeBRepBuildHBuilder {
@@ -57,7 +55,6 @@ impl TopOpeBRepBuildHBuilder {
     /// ancestor map done; `TopOpeBRepBuildHBuilder::new(&TopOpeBRepDSBuildTool::new())`.
     pub fn new(bt: &TopOpeBRepDSBuildTool) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_state: SharedState::new(HBuilderState {
                 builder: TopOpeBRepBuildBuilder1::new(bt),
                 my_sect_edge_ds_edges1: DataMap::default(),

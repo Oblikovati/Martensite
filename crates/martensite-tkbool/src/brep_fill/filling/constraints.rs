@@ -7,28 +7,36 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dCurveOnSurface};
 use martensite_tkg3d::geom::GeomSurface;
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
-use martensite_tkgeomalgo::geom_plate::GeomPlateCurveConstraint;
+use martensite_tkg3d::geom_adaptor::GeomSurfaceAdaptor;
+use martensite_tkgeomalgo::geom_plate::{
+    GeomPlateCurveConstraintSource, GeomPlateCurveConstraintState,
+};
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use std::ops::Deref;
 
 /// A filling constraint preserving its derived runtime type through base handles.
 /// `let c = BRepFillCurveConstraint::with_curve(&curve, 0, 10, 1e-4)?;`.
 pub struct BRepFillCurveConstraint {
-    parent: GeomPlateCurveConstraint,
+    constraint: GeomPlateCurveConstraintState,
 }
 impl_transient!(
     BRepFillCurveConstraint,
     "BRepFillCurveConstraint",
-    GeomPlateCurveConstraint,
-    parent
+    dyn GeomPlateCurveConstraintSource,
+    interfaces: [dyn GeomPlateCurveConstraintSource]
 );
 
+impl GeomPlateCurveConstraintSource for BRepFillCurveConstraint {
+    fn curve_constraint_state(&self) -> &GeomPlateCurveConstraintState {
+        &self.constraint
+    }
+}
+
 impl Deref for BRepFillCurveConstraint {
-    type Target = GeomPlateCurveConstraint;
+    type Target = GeomPlateCurveConstraintState;
 
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.constraint
     }
 }
 
@@ -42,14 +50,14 @@ impl BRepFillCurveConstraint {
         order: i32,
         npt: i32,
         tols: [f64; 3],
-    ) -> Result<Handle<GeomPlateCurveConstraint>, Failure> {
+    ) -> Result<Handle<dyn GeomPlateCurveConstraintSource>, Failure> {
         let surf = checked_constraint_surface(boundary, order)?;
         Ok(Handle::new(Self {
-            parent: GeomPlateCurveConstraint::from_derived_state(
+            constraint: GeomPlateCurveConstraintState::from_derived_state(
                 boundary, order, npt, tols, &surf,
             )?,
         })
-        .cast())
+        .into_upcast())
     }
 
     /// `BRepFillCurveConstraint(Boundary, Tang, NPt, TolDist)` (natively defaulted to
@@ -60,11 +68,13 @@ impl BRepFillCurveConstraint {
         tang: i32,
         npt: i32,
         tol_dist: f64,
-    ) -> Result<Handle<GeomPlateCurveConstraint>, Failure> {
+    ) -> Result<Handle<dyn GeomPlateCurveConstraintSource>, Failure> {
         Ok(Handle::new(Self {
-            parent: GeomPlateCurveConstraint::new(boundary, tang, npt, tol_dist, 0.01, 0.1)?,
+            constraint: GeomPlateCurveConstraintState::new(
+                boundary, tang, npt, tol_dist, 0.01, 0.1,
+            )?,
         })
-        .cast())
+        .into_upcast())
     }
 }
 
@@ -86,12 +96,15 @@ fn checked_constraint_surface(
 /// The geometric surface of a curve on surface: that of a GeomAdaptorSurface, else
 /// the located surface of the face of a BRepAdaptorSurface.
 fn surface_of(frontiere: &Adaptor3dCurveOnSurface) -> Result<Handle<dyn GeomSurface>, Failure> {
-    let gs1: Handle<GeomAdaptorSurface> = frontiere.get_surface().cast();
-    if let Some(gs1) = gs1.get() {
-        return Ok(gs1.surface());
+    if let Some(geometric) = frontiere
+        .get_surface()
+        .view::<dyn GeomSurfaceAdaptor>()
+        .get()
+    {
+        return Ok(geometric.surface());
     }
-    let bs1: Handle<BRepAdaptorSurface> = frontiere.get_surface().cast();
-    let bs1 = bs1.get().ok_or_else(|| {
+    let surface = frontiere.get_surface();
+    let bs1 = surface.downcast_ref::<BRepAdaptorSurface>().ok_or_else(|| {
         Failure::with_type("Standard_NullObject", "BRepFillCurveConstraint: surface adaptor neither GeomAdaptor_Surface nor BRepAdaptor_Surface; expected one of them", "BRepFillCurveConstraint")
     })?;
     BRepTool::surface(&bs1.face())

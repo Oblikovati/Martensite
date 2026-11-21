@@ -85,7 +85,7 @@ fn walking_parameters(
         .iter()
         .filter(|line| line.arc_type() == IntPatchIType::Walking)
     {
-        let line = source.cast::<IntPatchWLine>();
+        let line = source.downcast::<IntPatchWLine>();
         for index in [1, line.nb_pnts()?] {
             let (u, v) = line.point(index)?.parameters_on_surface(first);
             parameters.push(TheProjPCurOfGInter::find_parameter(

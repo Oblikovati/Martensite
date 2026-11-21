@@ -32,7 +32,7 @@ fn step(
     restrictions: &mut Vec<Handle<dyn IntPatchLine>>,
     lines: &mut Vec<Handle<dyn IntPatchLine>>,
 ) -> Result<(), Failure> {
-    let walking = source.cast::<IntPatchWLine>();
+    let walking = source.downcast::<IntPatchWLine>();
     let first = walking.vertex(1)?;
     let last = walking.vertex(walking.nb_vertex())?;
     let appended = append_segment(source, &walking, &first, side, group)?;
@@ -58,7 +58,7 @@ fn append_segment(
         let Some(previous) = group.last() else {
             return Ok(false);
         };
-        let previous = previous.cast::<IntPatchWLine>();
+        let previous = previous.downcast::<IntPatchWLine>();
         let last = previous.vertex(previous.nb_vertex())?;
         let tolerance = if last.tolerance() > first.tolerance() {
             last.tolerance()
