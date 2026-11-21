@@ -12,7 +12,7 @@ impl BRepBuilder {
     /// `MakeFace(F)`: an undefined face (no surface); the inline native member makes no
     /// lock check; `builder.make_face(&mut face)`.
     pub fn make_face(&self, face: &mut Face) {
-        self.make_shape(face, &Handle::new(BRepTFace::new()).into_cast());
+        self.make_shape(face, &Handle::new(BRepTFace::new()).into_upcast());
     }
 
     /// `MakeFace(F, S, Tol)`: the TFace keeps its identity location, which is what the
@@ -40,7 +40,7 @@ impl BRepBuilder {
         tface.set_surface(surface);
         tface.set_tolerance(tolerance);
         tface.set_location(location);
-        self.make_shape(face, &Handle::new(tface).into_cast());
+        self.make_shape(face, &Handle::new(tface).into_upcast());
         Ok(())
     }
 
@@ -54,7 +54,7 @@ impl BRepBuilder {
         let tface = BRepTFace::new();
         check_unlocked_shape(face, "BRep_Builder::MakeFace")?;
         tface.set_triangulation(triangulation, true);
-        self.make_shape(face, &Handle::new(tface).into_cast());
+        self.make_shape(face, &Handle::new(tface).into_upcast());
         Ok(())
     }
 
@@ -69,7 +69,7 @@ impl BRepBuilder {
         let tface = BRepTFace::new();
         check_unlocked_shape(face, "BRep_Builder::MakeFace")?;
         tface.set_triangulations(triangulations, active)?;
-        self.make_shape(face, &Handle::new(tface).into_cast());
+        self.make_shape(face, &Handle::new(tface).into_upcast());
         Ok(())
     }
 

@@ -39,7 +39,8 @@ fn support() -> Handle<GeomSurfaceOfLinearExtrusion> {
     )
     .unwrap();
     Handle::new(
-        GeomSurfaceOfLinearExtrusion::new(&Handle::new(curve).cast(), Direction3::Z).unwrap(),
+        GeomSurfaceOfLinearExtrusion::new(&Handle::new(curve).into_upcast(), Direction3::Z)
+            .unwrap(),
     )
 }
 fn face_fixture() -> (Face, Handle<BRepTFace>) {

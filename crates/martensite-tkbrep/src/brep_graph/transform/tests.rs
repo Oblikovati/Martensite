@@ -18,7 +18,7 @@ struct Fixture {
 }
 
 fn plane() -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::from_pln(Plane3::default())).cast()
+    Handle::new(GeomPlane::from_pln(Plane3::default())).into_upcast()
 }
 
 // One triangle over three nodes of the XY plane, with UV nodes.
@@ -50,7 +50,7 @@ fn fixture() -> Fixture {
         .vertices()
         .add(Point3::new(1.0, 0.0, 0.0), 1e-7);
     let line: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_cast();
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast();
     let edge = graph.editor().edges().add(v0, v1, &line, 0.0, 1.0, 1e-7);
     let face_a = graph
         .editor()

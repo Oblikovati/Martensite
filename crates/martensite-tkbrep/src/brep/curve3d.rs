@@ -6,7 +6,7 @@ use super::gcurve::{BRepGCurve, GCurveBase, dump_gcurve};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::real::{real_first, real_last};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkmath::gp::Point3;
 use martensite_tkmath::toploc::Location;
@@ -23,11 +23,10 @@ use std::io;
 /// assert_eq!(curve.first(), -f64::MAX);
 /// ```
 pub struct BRepCurve3D {
-    transient: StandardTransient,
     pub(crate) gcurve: GCurveBase,
     pub(crate) curve: SharedState<Handle<dyn GeomCurve>>,
 }
-impl_transient!(BRepCurve3D, "BRep_Curve3D", dyn BRepGCurve, transient,
+impl_transient!(BRepCurve3D, "BRep_Curve3D", dyn BRepGCurve,
     interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve]);
 
 impl BRepCurve3D {
@@ -67,7 +66,6 @@ impl BRepCurve3D {
         range: (f64, f64),
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             gcurve: GCurveBase::new(location, range.0, range.1),
             curve: SharedState::new(curve),
         }
@@ -94,7 +92,7 @@ impl BRepCurveRepresentation for BRepCurve3D {
         let copy = self.copy_from_current_binding()?;
         let (first, last) = self.range();
         copy.set_range(first, last)?;
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_class_name(stream, "BRep_Curve3D")?;

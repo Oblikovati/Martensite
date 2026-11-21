@@ -6,6 +6,7 @@ use crate::brep::access::vertex_tshape;
 use crate::brep::errors::{no_such_object, null_object};
 use crate::topexp::{self, Explorer};
 use crate::topods::{Edge, Face, Shape, ShapeIterator, Vertex};
+use crate::topods::{EdgeView, FaceView};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface};
@@ -16,7 +17,7 @@ use martensite_tkmath::toploc::Location;
 /// "Search the vertex in the edge": the matching child of the FORWARD edge (the one
 /// with the vertex orientation when there are several) and whether the edge is
 /// REVERSED with several matches.
-fn vertex_in_edge(vertex: &Vertex, edge: &Edge) -> (Shape, bool) {
+fn vertex_in_edge(vertex: &Vertex, edge: &EdgeView<'_>) -> (Shape, bool) {
     let mut found = Shape::default();
     let mut reversed = false;
     let mut children = ShapeIterator::new(&edge.oriented(Orientation::Forward), true, true);
@@ -91,7 +92,7 @@ fn closed_curve_parameter(
 
 /// The parameter of an INTERNAL or EXTERNAL vertex on the 3D curve of the edge (or of
 /// a degenerated edge); None without a matching point representation.
-fn parameter_on_curve(vertex: &Vertex, edge: &Edge) -> Result<Option<f64>, Failure> {
+fn parameter_on_curve(vertex: &Vertex, edge: &EdgeView<'_>) -> Result<Option<f64>, Failure> {
     let found = BRepTool::curve_with_location(edge)?;
     let location = found.location.predivided(vertex.location())?;
     if found.curve.is_null() && !BRepTool::degenerated(edge)? {
@@ -117,7 +118,7 @@ fn parameter_on_curve(vertex: &Vertex, edge: &Edge) -> Result<Option<f64>, Failu
 /// The parameter of a vertex on the first p-curve of an edge without 3D curve; a
 /// parameter at an end of a closed p-curve becomes the end matching the vertex
 /// orientation.
-fn parameter_on_first_pcurve(vertex: &Vertex, edge: &Edge) -> Result<Option<f64>, Failure> {
+fn parameter_on_first_pcurve(vertex: &Vertex, edge: &EdgeView<'_>) -> Result<Option<f64>, Failure> {
     let found = BRepTool::first_curve_on_surface(edge)?;
     let location = found.location.predivided(vertex.location())?;
     for point in points(vertex, "BRep_Tool::Parameter")? {
@@ -166,7 +167,7 @@ impl BRepTool {
     /// `Parameter(theV, theE, theParam)`: the range end for a FORWARD or REVERSED vertex
     /// of the edge, else the stored parameter on the 3D curve or on the first p-curve;
     /// None (`false`) when there is none; `BRepTool::find_parameter(&vertex, &edge)?`.
-    pub fn find_parameter(vertex: &Vertex, edge: &Edge) -> Result<Option<f64>, Failure> {
+    pub fn find_parameter(vertex: &Vertex, edge: &EdgeView<'_>) -> Result<Option<f64>, Failure> {
         let has_children =
             ShapeIterator::new(&edge.oriented(Orientation::Forward), true, true).more();
         let mut orientation = Orientation::Internal;
@@ -189,7 +190,7 @@ impl BRepTool {
 
     /// `Parameter(V, E)`: [`BRepTool::find_parameter`], raising Standard_NoSuchObject
     /// ("no parameter on edge") without one; `BRepTool::parameter(&vertex, &edge)?`.
-    pub fn parameter(vertex: &Vertex, edge: &Edge) -> Result<f64, Failure> {
+    pub fn parameter(vertex: &Vertex, edge: &EdgeView<'_>) -> Result<f64, Failure> {
         Self::find_parameter(vertex, edge)?.ok_or_else(|| {
             no_such_object(
                 "BRep_Tool:: no parameter on edge",
@@ -200,7 +201,11 @@ impl BRepTool {
 
     /// `Parameter(V, E, F)`: the parameter on the p-curve on the face's surface;
     /// `BRepTool::parameter_on_face(&vertex, &edge, &face)?`.
-    pub fn parameter_on_face(vertex: &Vertex, edge: &Edge, face: &Face) -> Result<f64, Failure> {
+    pub fn parameter_on_face(
+        vertex: &Vertex,
+        edge: &EdgeView<'_>,
+        face: &FaceView<'_>,
+    ) -> Result<f64, Failure> {
         let (surface, location) = Self::surface_with_location(face)?;
         Self::parameter_on_surface(vertex, edge, &surface, &location)
     }
@@ -211,7 +216,7 @@ impl BRepTool {
     /// without one; `BRepTool::parameter_on_surface(&vertex, &edge, &surface, &location)?`.
     pub fn parameter_on_surface(
         vertex: &Vertex,
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<f64, Failure> {
@@ -245,7 +250,7 @@ impl BRepTool {
     /// `Parameters(V, F)`: the stored (U, V) parameters on the face's surface, else the
     /// UV point of the first face edge that has the vertex at an end; Standard_NoSuchObject
     /// ("no parameters on surface") otherwise; `BRepTool::parameters(&vertex, &face)?`.
-    pub fn parameters(vertex: &Vertex, face: &Face) -> Result<Point2, Failure> {
+    pub fn parameters(vertex: &Vertex, face: &FaceView<'_>) -> Result<Point2, Failure> {
         let (surface, location) = Self::surface_with_location(face)?;
         let relative = location.predivided(vertex.location())?;
         for point in points(vertex, "BRep_Tool::Parameters")? {

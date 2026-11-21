@@ -23,7 +23,7 @@ static LABELS: TableLabels = TableLabels {
 /// use martensite_tkg3d::geom::{GeomCurve, GeomLine};
 /// use martensite_tkmath::gp::{Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> =
-///     Handle::new(GeomLine::from_point(Point3::new(0., 0., 0.), Direction3::default())).into_cast();
+///     Handle::new(GeomLine::from_point(Point3::new(0., 0., 0.), Direction3::default())).into_upcast();
 /// let mut set = BinCurveSet::new();
 /// assert_eq!(set.add(&line), 1);
 /// assert_eq!(set.index(&line), 1);

@@ -1,7 +1,7 @@
 //! Named extension curve records evaluation before returning its owned failure.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg2d::geom2d::{
     Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, Geom2dGeometry, Geom2dLine,
@@ -16,17 +16,15 @@ use std::sync::{
 };
 
 pub struct FailingParameterCurve {
-    parent: StandardTransient,
     line: Geom2dLine,
     evaluations: Arc<AtomicUsize>,
 }
-impl_transient!(FailingParameterCurve, "FailingParameterCurve", dyn Geom2dCurve, parent,
+impl_transient!(FailingParameterCurve, "FailingParameterCurve", dyn Geom2dCurve,
     interfaces: [dyn Geom2dCurve, dyn Geom2dGeometry]);
 
 impl FailingParameterCurve {
     pub fn new(evaluations: Arc<AtomicUsize>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             line: Geom2dLine::new(martensite_tkmath::gp::Axis2d::default()),
             evaluations,
         }

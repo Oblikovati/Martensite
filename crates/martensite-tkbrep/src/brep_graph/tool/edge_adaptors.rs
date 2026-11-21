@@ -160,7 +160,7 @@ fn curve_on_surface_of(
     )?)
     .cast();
     let adapted: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&surface.surface)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&surface.surface)?).into_upcast();
     Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(
         &curve2d, &adapted,
     )?))

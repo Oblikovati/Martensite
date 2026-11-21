@@ -1,7 +1,7 @@
 //! The regularity queries of `BRep_Tool`.
 use super::BRepTool;
 use super::curves::representations;
-use crate::topods::{Edge, Face};
+use crate::topods::{EdgeView, FaceView};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkmath::geom_abs::Shape as Continuity;
@@ -16,9 +16,9 @@ impl BRepTool {
     /// `HasContinuity(E, F1, F2)`: the edge has a regularity between the faces' located
     /// surfaces; `BRepTool::has_continuity_on_faces(&edge, &f1, &f2)?`.
     pub fn has_continuity_on_faces(
-        edge: &Edge,
-        face1: &Face,
-        face2: &Face,
+        edge: &EdgeView<'_>,
+        face1: &FaceView<'_>,
+        face2: &FaceView<'_>,
     ) -> Result<bool, Failure> {
         let (surface1, location1) = Self::surface_with_location(face1)?;
         let (surface2, location2) = Self::surface_with_location(face2)?;
@@ -28,9 +28,9 @@ impl BRepTool {
     /// `Continuity(E, F1, F2)`: the continuity between the faces, C0 without a
     /// regularity; `BRepTool::continuity_on_faces(&edge, &f1, &f2)?`.
     pub fn continuity_on_faces(
-        edge: &Edge,
-        face1: &Face,
-        face2: &Face,
+        edge: &EdgeView<'_>,
+        face1: &FaceView<'_>,
+        face2: &FaceView<'_>,
     ) -> Result<Continuity, Failure> {
         let (surface1, location1) = Self::surface_with_location(face1)?;
         let (surface2, location2) = Self::surface_with_location(face2)?;
@@ -40,7 +40,7 @@ impl BRepTool {
     /// `HasContinuity(E, S1, S2, L1, L2)`: the edge has a regularity between the located
     /// surfaces; `BRepTool::has_continuity_on_surfaces(&edge, (&s1, &s2), (&l1, &l2))?`.
     pub fn has_continuity_on_surfaces(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surfaces: SurfacePair<'_>,
         locations: LocationPair<'_>,
     ) -> Result<bool, Failure> {
@@ -57,7 +57,7 @@ impl BRepTool {
     /// the located surfaces, C0 without one;
     /// `BRepTool::continuity_on_surfaces(&edge, (&s1, &s2), (&l1, &l2))?`.
     pub fn continuity_on_surfaces(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surfaces: SurfacePair<'_>,
         locations: LocationPair<'_>,
     ) -> Result<Continuity, Failure> {
@@ -73,7 +73,7 @@ impl BRepTool {
 
     /// `HasContinuity(E)`: the edge has a regularity on some two surfaces;
     /// `BRepTool::has_continuity(&edge)?`.
-    pub fn has_continuity(edge: &Edge) -> Result<bool, Failure> {
+    pub fn has_continuity(edge: &EdgeView<'_>) -> Result<bool, Failure> {
         let list = representations(edge, "BRep_Tool::HasContinuity")?;
         Ok(list
             .iter()
@@ -83,7 +83,7 @@ impl BRepTool {
 
     /// `MaxContinuity(E)`: the highest continuity of the regularities, C0 without one;
     /// `BRepTool::max_continuity(&edge)?`.
-    pub fn max_continuity(edge: &Edge) -> Result<Continuity, Failure> {
+    pub fn max_continuity(edge: &EdgeView<'_>) -> Result<Continuity, Failure> {
         let mut maximum = Continuity::C0;
         for representation in representations(edge, "BRep_Tool::MaxContinuity")? {
             let Some(r) = representation.get().filter(|r| r.is_regularity()) else {

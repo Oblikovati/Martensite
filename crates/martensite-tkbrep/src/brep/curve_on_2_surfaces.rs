@@ -6,7 +6,7 @@ use super::dump::{dump_base, dump_class_name, dump_handle, dump_location};
 use super::errors::null_object;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::Point3;
@@ -34,12 +34,10 @@ pub(crate) struct TwoSurfacesFields {
 /// assert_eq!(regularity.continuity().unwrap(), Shape::G1);
 /// ```
 pub struct BRepCurveOn2Surfaces {
-    transient: StandardTransient,
     pub(crate) representation: CurveRepresentationBase,
     pub(crate) fields: SharedState<TwoSurfacesFields>,
 }
-impl_transient!(BRepCurveOn2Surfaces, "BRep_CurveOn2Surfaces", dyn BRepCurveRepresentation,
-    transient, interfaces: [dyn BRepCurveRepresentation]);
+impl_transient!(BRepCurveOn2Surfaces, "BRep_CurveOn2Surfaces", dyn BRepCurveRepresentation, interfaces: [dyn BRepCurveRepresentation]);
 
 impl BRepCurveOn2Surfaces {
     /// `BRep_CurveOn2Surfaces(S1, S2, L1, L2, C)`; `BRepCurveOn2Surfaces::new(&s1, &s2, &l1, &l2, Shape::C1)`.
@@ -51,7 +49,6 @@ impl BRepCurveOn2Surfaces {
         continuity: Continuity,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             representation: CurveRepresentationBase::new(location1),
             fields: SharedState::new(TwoSurfacesFields {
                 surface: surface1.clone(),
@@ -122,7 +119,7 @@ impl BRepCurveRepresentation for BRepCurveOn2Surfaces {
             &fields.location2,
             fields.continuity,
         );
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_class_name(stream, "BRep_CurveOn2Surfaces")?;

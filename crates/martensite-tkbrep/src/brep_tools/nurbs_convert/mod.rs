@@ -5,7 +5,7 @@ mod helpers;
 mod mesh;
 mod surface;
 
-use super::copy_modification::CopyModification;
+use super::copy_modification::{CopyModificationSource, CopyOptions};
 use super::modification::{BRepToolsModification, NewCurve, NewSurface};
 use crate::bintools::handle_table::{HandleKey, IdentityHasher};
 use crate::brep::BRepTool;
@@ -13,7 +13,7 @@ use crate::topods::{Edge, Face, Shape, Vertex};
 use helpers::{is_convert, new_curve_of, new_parameter_on_curve};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, IndexedDataMap};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomCurve, GeomTrimmedCurve};
 use martensite_tkgeombase::geom_convert::curve_to_bspline_curve;
@@ -27,7 +27,7 @@ use martensite_tkmath::toploc::Location;
 /// `NCollection_IndexedDataMap<occ::handle<Standard_Transient>, occ::handle<Standard_Transient>>`:
 /// each original curve or surface with its conversion, by object identity.
 pub(super) type ConversionMap =
-    IndexedDataMap<HandleKey<StandardTransient>, Handle<StandardTransient>, IdentityHasher>;
+    IndexedDataMap<HandleKey<dyn Transient>, Handle<dyn Transient>, IdentityHasher>;
 
 /// The mutable state of the modification.
 #[derive(Default)]
@@ -36,7 +36,7 @@ struct NurbsState {
     led: Vec<Shape>,
     /// `mylcu`: the p-curves kept for the second pass of a seam (not aligned with
     /// `led`, as natively).
-    lcu: Vec<Handle<StandardTransient>>,
+    lcu: Vec<Handle<dyn Transient>>,
     /// `myMap`.
     map: ConversionMap,
     /// `myUpdatedEdges`: the edges whose tolerance grew.
@@ -47,8 +47,7 @@ struct NurbsState {
 /// the face bounds), curves B-spline curves on the edge range and p-curves are
 /// projected on the new surfaces; the mesh is copied with its parameters remapped.
 ///
-/// The native class derives from `BRepTools_CopyModification`, which the Rust type
-/// embeds as its parent field.
+/// Inherited mesh copying uses the same options as `BRepTools_CopyModification`.
 ///
 /// ```
 /// use martensite_tkbrep::brep_tools::NurbsConvertModification;
@@ -56,15 +55,14 @@ struct NurbsState {
 /// assert!(modification.updated_edges().is_empty());
 /// ```
 pub struct NurbsConvertModification {
-    parent: CopyModification,
+    copy_options: CopyOptions,
     state: SharedState<NurbsState>,
 }
 impl_transient!(
     NurbsConvertModification,
     "BRepTools_NurbsConvertModification",
-    CopyModification,
-    parent,
-    interfaces: [dyn BRepToolsModification]
+    dyn CopyModificationSource,
+    interfaces: [dyn BRepToolsModification, dyn CopyModificationSource]
 );
 
 impl Default for NurbsConvertModification {
@@ -77,7 +75,7 @@ impl NurbsConvertModification {
     /// `BRepTools_NurbsConvertModification()`; `NurbsConvertModification::new()`.
     pub fn new() -> Self {
         Self {
-            parent: CopyModification::default(),
+            copy_options: CopyOptions::default(),
             state: SharedState::new(NurbsState::default()),
         }
     }
@@ -89,12 +87,12 @@ impl NurbsConvertModification {
     }
 
     /// `myMap.Add(original, converted)` (an existing key keeps its conversion).
-    fn record(&self, original: Handle<StandardTransient>, converted: Handle<StandardTransient>) {
+    fn record(&self, original: Handle<dyn Transient>, converted: Handle<dyn Transient>) {
         self.state.write().map.add(HandleKey(original), converted);
     }
 
     /// `myMap.Contains(original)`.
-    fn is_recorded(&self, original: &Handle<StandardTransient>) -> bool {
+    fn is_recorded(&self, original: &Handle<dyn Transient>) -> bool {
         self.state.read().map.contains(&HandleKey(original.clone()))
     }
 
@@ -267,7 +265,7 @@ fn convert_curve(
         ((last - first).abs() - period).abs() <= tol_par && last <= period
     };
     if !whole_period {
-        trimmed = Handle::new(GeomTrimmedCurve::new(curve, first, last, true, true)?).cast();
+        trimmed = Handle::new(GeomTrimmedCurve::new(curve, first, last, true, true)?).into_upcast();
     }
     let converted = curve_to_bspline_curve(&trimmed, ParameterisationType::TgtThetaOver2)?;
     let Some(bspline) = converted.get() else {
@@ -286,8 +284,17 @@ fn convert_curve(
 }
 
 impl NurbsConvertModification {
-    /// The embedded `BRepTools_CopyModification`, whose members the mesh members call.
-    fn copy_modification(&self) -> &CopyModification {
-        &self.parent
+    fn copy_options(&self) -> &CopyOptions {
+        &self.copy_options
+    }
+}
+
+impl CopyModificationSource for NurbsConvertModification {
+    fn is_copy_geom(&self) -> bool {
+        self.copy_options.is_copy_geom()
+    }
+
+    fn is_copy_mesh(&self) -> bool {
+        self.copy_options.is_copy_mesh()
     }
 }

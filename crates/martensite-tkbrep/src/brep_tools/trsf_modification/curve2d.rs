@@ -41,7 +41,7 @@ fn narrowed_range(curve: &dyn Geom2dCurve, (mut f, mut l): (f64, f64)) -> (f64, 
 
 /// The basis of a `Geom2d_TrimmedCurve` (exact type), the curve otherwise.
 fn untrimmed(curve: Handle<dyn Geom2dCurve>) -> Handle<dyn Geom2dCurve> {
-    let trimmed = curve.cast::<Geom2dTrimmedCurve>();
+    let trimmed = curve.downcast::<Geom2dTrimmedCurve>();
     match trimmed.get() {
         Some(trimmed) => trimmed.basis_curve(),
         None => curve,
@@ -81,7 +81,7 @@ impl TrsfModification {
         let (f, l) = narrowed_range(basis, (found.first, found.last));
         let (mut new_first, mut new_last) = (f, l);
         if scale.abs() != 1.0 {
-            pcurve = Handle::new(Geom2dTrimmedCurve::new(&pcurve, f, l, true, true)?).cast();
+            pcurve = Handle::new(Geom2dTrimmedCurve::new(&pcurve, f, l, true, true)?).into_upcast();
             let local = local_transformation(self.trsf(), &location)?;
             let Some(stored) = surface.get() else {
                 return Ok(false);

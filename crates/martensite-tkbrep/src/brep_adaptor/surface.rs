@@ -3,6 +3,7 @@ use super::forward::inherited_surface_members;
 use crate::brep::BRepTool;
 use crate::brep_tools;
 use crate::topods::Face;
+use crate::topods::FaceView;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
@@ -19,8 +20,8 @@ use martensite_tkmath::gp::{
 /// A face seen as a surface (`BRepAdaptor_Surface`): the surface of the face,
 /// restricted to the UV bounds of the face or not, transformed by the face location.
 ///
-/// The native class derives from `GeomAdaptor_TransformedSurface`; the Rust type embeds
-/// it as its parent field and forwards every inherited member.
+/// The native class derives from `GeomAdaptor_TransformedSurface`; the Rust adaptor forwards
+/// inherited evaluations to its geometric component.
 ///
 /// ```
 /// use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
@@ -29,14 +30,14 @@ use martensite_tkmath::gp::{
 /// ```
 #[derive(Default)]
 pub struct BRepAdaptorSurface {
-    parent: GeomAdaptorTransformedSurface,
+    evaluator: GeomAdaptorTransformedSurface,
     face: SharedState<Face>,
 }
 impl Clone for BRepAdaptorSurface {
     /// Copies face/adaptor values while retaining nested owners; `let copied = source.clone();`.
     fn clone(&self) -> Self {
         Self {
-            parent: self.parent.clone(),
+            evaluator: self.evaluator.clone(),
             face: SharedState::new(self.face()),
         }
     }
@@ -46,42 +47,41 @@ impl_transient!(
     BRepAdaptorSurface,
     "BRepAdaptor_Surface",
     GeomAdaptorTransformedSurface,
-    parent,
     interfaces: [dyn Adaptor3dSurface]
 );
 
 impl BRepAdaptorSurface {
     /// `BRepAdaptor_Surface(F, R)`: `restriction` limits the surface to the UV bounds of
     /// the face; `BRepAdaptorSurface::with_face(&face, true)?`.
-    pub fn with_face(face: &Face, restriction: bool) -> Result<Self, Failure> {
+    pub fn with_face(face: &FaceView<'_>, restriction: bool) -> Result<Self, Failure> {
         let adaptor = Self::default();
         adaptor.initialize(face, restriction)?;
         Ok(adaptor)
     }
 
-    /// The embedded parent adaptor (the `GeomAdaptor_TransformedSurface` base).
+    /// The transformed evaluator. Example: `adaptor.transformed_surface()`.
     pub fn transformed_surface(&self) -> &GeomAdaptorTransformedSurface {
-        &self.parent
+        &self.evaluator
     }
 
     /// `Initialize(F, Restriction)`: a null face is ignored; otherwise the face is
     /// stored and, when it has a surface, the surface is loaded (on the face's UV bounds
     /// with `restriction`) with the face location; `adaptor.initialize(&face, true)?`.
-    pub fn initialize(&self, face: &Face, restriction: bool) -> Result<(), Failure> {
+    pub fn initialize(&self, face: &FaceView<'_>, restriction: bool) -> Result<(), Failure> {
         if face.is_null() {
             return Ok(());
         }
-        *self.face.write() = face.clone();
+        *self.face.write() = face.to_face();
         let (surface, location) = BRepTool::surface_with_location(face)?;
         if surface.is_null() {
             return Ok(());
         }
         let trsf = location.transformation();
         if !restriction {
-            return self.parent.load(&surface, trsf);
+            return self.evaluator.load(&surface, trsf);
         }
         let (umin, umax, vmin, vmax) = brep_tools::uv_bounds(face)?;
-        self.parent
+        self.evaluator
             .load_range(&surface, ((umin, umax, vmin, vmax), (0.0, 0.0)), trsf)
     }
 
@@ -101,10 +101,10 @@ impl Adaptor3dSurface for BRepAdaptorSurface {
     /// shared transformed adaptor and the face.
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
         let copy = Self {
-            parent: self.parent.shallow_adaptor()?,
+            evaluator: self.evaluator.shallow_adaptor()?,
             face: SharedState::new(self.face()),
         };
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
 
     inherited_surface_members!();
