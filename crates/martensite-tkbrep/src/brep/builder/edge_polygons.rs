@@ -70,7 +70,7 @@ impl BRepBuilder {
         if !replaced {
             let relative = relative_to(location, edge)?;
             let representation = BRepPolygon3D::new(polygon, &relative);
-            tedge.change_curves(|curves| curves.push(Handle::new(representation).into_cast()));
+            tedge.change_curves(|curves| curves.push(Handle::new(representation).into_upcast()));
         }
         tedge.set_modified(true);
         Ok(())
@@ -96,7 +96,7 @@ impl BRepBuilder {
                 return removed;
             }
             let representation = BRepPolygonOnTriangulation::new(nodes, triangulation, &relative);
-            curves.push(Handle::new(representation).into_cast());
+            curves.push(Handle::new(representation).into_upcast());
             true
         });
         if modified {
@@ -126,7 +126,7 @@ impl BRepBuilder {
             }
             let representation =
                 BRepPolygonOnClosedTriangulation::new(nodes.0, nodes.1, triangulation, &relative);
-            curves.push(Handle::new(representation).into_cast());
+            curves.push(Handle::new(representation).into_upcast());
             true
         });
         if modified {
@@ -162,7 +162,7 @@ impl BRepBuilder {
             remove_first(curves, |r| r.is_polygon_on_surface_at(surface, &relative));
             if polygon.is_some() {
                 let representation = BRepPolygonOnSurface::new(polygon, surface, &relative);
-                curves.push(Handle::new(representation).into_cast());
+                curves.push(Handle::new(representation).into_upcast());
             }
         });
         tedge.set_modified(true);
@@ -203,7 +203,7 @@ impl BRepBuilder {
                     surface,
                     &Location::default(),
                 );
-                curves.push(Handle::new(representation).into_cast());
+                curves.push(Handle::new(representation).into_upcast());
             }
         });
         tedge.set_modified(true);

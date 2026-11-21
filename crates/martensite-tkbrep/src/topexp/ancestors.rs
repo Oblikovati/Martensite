@@ -1,7 +1,7 @@
 //! The ancestor maps: each sub-shape of one type bound to the list of the shapes of
 //! another type that contain it.
 use super::Explorer;
-use crate::topods::Shape;
+use crate::topods::{Shape, ShapeView};
 use crate::toptools::IndexedDataMapOfShapeListOfShape;
 use martensite_tkernel::ncollection::List;
 use martensite_tkernel::standard::Failure;
@@ -35,7 +35,7 @@ enum Append {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub fn map_shapes_and_ancestors(
-    shape: &Shape,
+    shape: &ShapeView<'_>,
     sub_kind: ShapeEnum,
     ancestor_kind: ShapeEnum,
     map: &mut IndexedDataMapOfShapeListOfShape,
@@ -48,7 +48,7 @@ pub fn map_shapes_and_ancestors(
 /// `IsEqual` when `use_orientation`, else `IsSame`); the native default of
 /// `useOrientation` is false; `topexp::map_shapes_and_unique_ancestors(&s, ts, ta, &mut m, false)?`.
 pub fn map_shapes_and_unique_ancestors(
-    shape: &Shape,
+    shape: &ShapeView<'_>,
     sub_kind: ShapeEnum,
     ancestor_kind: ShapeEnum,
     map: &mut IndexedDataMapOfShapeListOfShape,
@@ -60,7 +60,7 @@ pub fn map_shapes_and_unique_ancestors(
 
 /// The shared body: visit the ancestors, then the sub-shapes under no ancestor.
 fn bind_ancestors(
-    shape: &Shape,
+    shape: &ShapeView<'_>,
     sub_kind: ShapeEnum,
     ancestor_kind: ShapeEnum,
     map: &mut IndexedDataMapOfShapeListOfShape,

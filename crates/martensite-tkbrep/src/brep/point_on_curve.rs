@@ -5,7 +5,7 @@ use super::point_representation::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkmath::toploc::Location;
 use std::io;
@@ -20,18 +20,16 @@ use std::io;
 /// assert!(point.is_point_on_curve_at(&Handle::default(), &Location::default()));
 /// ```
 pub struct BRepPointOnCurve {
-    transient: StandardTransient,
     point: PointRepresentationBase,
     curve: SharedState<Handle<dyn GeomCurve>>,
 }
-impl_transient!(BRepPointOnCurve, "BRep_PointOnCurve", dyn BRepPointRepresentation, transient,
+impl_transient!(BRepPointOnCurve, "BRep_PointOnCurve", dyn BRepPointRepresentation,
     interfaces: [dyn BRepPointRepresentation]);
 
 impl BRepPointOnCurve {
     /// `BRep_PointOnCurve(P, C, L)`; `BRepPointOnCurve::new(0.5, &curve, &location)`.
     pub fn new(parameter: f64, curve: &Handle<dyn GeomCurve>, location: &Location) -> Self {
         Self {
-            transient: StandardTransient::default(),
             point: PointRepresentationBase::new(parameter, location),
             curve: SharedState::new(curve.clone()),
         }

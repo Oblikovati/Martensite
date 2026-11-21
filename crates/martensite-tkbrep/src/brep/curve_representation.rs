@@ -3,7 +3,7 @@ use super::dump::{dump_class_name, dump_location};
 use super::errors::undefined_member;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface};
 use martensite_tkmath::geom_abs::Shape as Continuity;
@@ -252,7 +252,7 @@ pub trait BRepCurveRepresentation: Transient {
 impl_transient_interface!(
     dyn BRepCurveRepresentation,
     "BRep_CurveRepresentation",
-    StandardTransient
+    dyn Transient
 );
 
 /// The body of `BRep_CurveRepresentation::DumpJson`: the class name and the location;

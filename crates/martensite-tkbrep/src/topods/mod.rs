@@ -27,14 +27,17 @@ pub use alerts::{AlertAttribute, AlertWithShape};
 pub use builder::Builder;
 pub use hshape::HShape;
 pub use iterator::ShapeIterator;
-pub use shape::Shape;
+pub use shape::{Shape, ShapeView};
 pub use shape_read_source::TopoDSShapeReadSource;
 pub(crate) use tshape::dump_tshape;
 pub use tshape::{TShape, TShapeBase};
-pub use tshapes::{TCompSolid, TCompound, TEdge, TFace, TShell, TSolid, TVertex, TWire};
+pub use tshapes::{
+    TCompSolid, TCompound, TEdge, TEdgeSource, TFace, TFaceSource, TShell, TSolid, TVertex,
+    TVertexSource, TWire,
+};
 pub use typed::{
-    CompSolid, Compound, Edge, Face, Shell, Solid, Vertex, Wire, comp_solid, compound, edge, face,
-    shell, solid, vertex, wire,
+    CompSolid, Compound, Edge, EdgeView, Face, FaceView, Shell, Solid, Vertex, Wire, comp_solid,
+    compound, edge, face, shell, solid, vertex, wire,
 };
 #[cfg(test)]
 mod shape_reference_scope_tests;

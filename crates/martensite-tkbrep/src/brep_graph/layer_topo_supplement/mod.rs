@@ -7,7 +7,7 @@ use crate::brep_graph::{BRepGraph, NodeId, NodeKind};
 use crate::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Guid, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::OnceLock;
 
@@ -76,11 +76,10 @@ impl Default for SupplementRecords {
 /// ```
 #[derive(Default)]
 pub struct LayerTopoSupplement {
-    transient: StandardTransient,
     base: LayerBase,
     records: SharedState<SupplementRecords>,
 }
-impl_transient!(LayerTopoSupplement, "BRepGraph_LayerTopoSupplement", dyn BRepGraphLayer, transient,
+impl_transient!(LayerTopoSupplement, "BRepGraph_LayerTopoSupplement", dyn BRepGraphLayer,
     interfaces: [dyn BRepGraphLayer]);
 
 /// `GetID()`: bd76a339-9958-4d92-a3de-1296bd67a992.

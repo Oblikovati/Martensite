@@ -51,7 +51,7 @@ pub(super) fn trimmed_2d(
     curve: &Handle<dyn Geom2dCurve>,
     (f, l): (f64, f64),
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, f, l, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, f, l, true, true)?).into_upcast())
 }
 
 /// `new Geom2dAdaptor_Curve(C, f, l)` as an adaptor handle.
@@ -59,13 +59,13 @@ pub(super) fn adaptor_2d(
     curve: &Handle<dyn Geom2dCurve>,
     (f, l): (f64, f64),
 ) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
-    Ok(Handle::new(Geom2dAdaptorCurve::with_range(curve, f, l)?).cast())
+    Ok(Handle::new(Geom2dAdaptorCurve::with_range(curve, f, l)?).into_upcast())
 }
 
 /// `new GeomAdaptor_Curve(C, f, l)` as an adaptor handle.
 pub(super) fn adaptor_3d(curve: &RangedCurve) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
     let (f, l) = curve.range;
-    Ok(Handle::new(GeomAdaptorCurve::with_range(&curve.curve, f, l)?).cast())
+    Ok(Handle::new(GeomAdaptorCurve::with_range(&curve.curve, f, l)?).into_upcast())
 }
 
 /// `S->Bounds(...)` widened by 10% on each side (`u`, `v`), the widening reduced for a
@@ -104,7 +104,7 @@ pub(super) fn widened_adaptor(
         ));
     };
     let (u1, u2, v1, v2) = widened_domain(stored)?;
-    Ok(Handle::new(GeomAdaptorSurface::with_bounds(surface, (u1, u2, v1, v2))?).cast())
+    Ok(Handle::new(GeomAdaptorSurface::with_bounds(surface, (u1, u2, v1, v2))?).into_upcast())
 }
 
 impl NurbsConvertModification {
@@ -254,7 +254,7 @@ impl NurbsConvertModification {
         tolerance: &mut f64,
     ) -> Result<bool, Failure> {
         let adapted: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(surface)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
         let projection = ComputeApprox::with_curve(&adaptor_3d(c3d)?, &adapted, *tolerance)?;
         *curve = if projection.bspline().is_null() {
             to_bspline_2d(&projection.bezier().cast())?
@@ -343,7 +343,7 @@ fn trimmed_basis(
     (mut f, mut l): (f64, f64),
 ) -> Result<TrimmedBasis, Failure> {
     let mut c2d = base.clone();
-    if let Some(trimmed) = c2d.cast::<Geom2dTrimmedCurve>().get() {
+    if let Some(trimmed) = c2d.downcast::<Geom2dTrimmedCurve>().get() {
         c2d = trimmed.basis_curve();
     }
     let Some(basis) = c2d.get() else {

@@ -1,7 +1,8 @@
 //! Infinite range endpoints skip evaluation and retain explicitly stored UVs.
 use super::curve_on_surface_order::failing_curve::FailingParameterCurve;
 use martensite_tkbrep::brep::{
-    BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepCurveRepresentation, BRepGCurve,
+    BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepCurveOnSurfaceSource,
+    BRepCurveRepresentation, BRepGCurve,
 };
 use martensite_tkernel::{precision, standard::Handle};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
@@ -91,4 +92,21 @@ fn seam_updates_second_uv_pair_before_propagating_first_curve_failure() {
         value.uv_points2(),
         (Point2::new(4., 0.), Point2::new(8., 0.))
     );
+}
+
+#[test]
+fn seam_parent_view_preserves_identity_and_first_uv_state() {
+    let seam = Handle::new(seam(&line()));
+    let parent = seam.upcast::<dyn BRepCurveOnSurfaceSource>();
+    assert_eq!(parent.object_address(), seam.object_address());
+    assert!(std::ptr::addr_eq(
+        parent.get().unwrap(),
+        seam.as_curve_on_surface()
+    ));
+    assert!(parent.downcast_ref::<BRepCurveOnSurface>().is_none());
+    assert!(parent.is_curve_on_closed_surface());
+    let first = Point2::new(1., 2.);
+    let last = Point2::new(3., 4.);
+    parent.set_uv_points(first, last);
+    assert_eq!(seam.uv_points(), (first, last));
 }

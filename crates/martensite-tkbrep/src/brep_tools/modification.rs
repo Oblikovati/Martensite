@@ -2,7 +2,7 @@
 //! applies to a shape.
 use crate::topods::{Edge, Face, Vertex};
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface};
 use martensite_tkmath::geom_abs::Shape as Continuity;
@@ -133,5 +133,5 @@ pub trait BRepToolsModification: Transient {
 impl_transient_interface!(
     dyn BRepToolsModification,
     "BRepTools_Modification",
-    StandardTransient
+    dyn Transient
 );

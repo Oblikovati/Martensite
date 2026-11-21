@@ -2,7 +2,7 @@
 use super::Shape;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::dump::{self, DumpOutput, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::io;
 
@@ -210,7 +210,7 @@ pub trait TShape: Transient {
         self.tshape_base().child_count() as i32
     }
 }
-impl_transient_interface!(dyn TShape, "TopoDS_TShape", StandardTransient);
+impl_transient_interface!(dyn TShape, "TopoDS_TShape", dyn Transient);
 
 /// `static_cast<TopAbs_ShapeEnum>(myState & Bits_ShapeType_Mask)`. The constructor only
 /// stores a `TopAbs_ShapeEnum` and no member changes those bits, so the value is one
