@@ -8,7 +8,7 @@ use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
     ncollection::{DataMap, Shared},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 mod amplify;
 mod boundaries;
@@ -17,12 +17,11 @@ mod vertex;
 type FaceIntersections = Handle<Shared<SharedState<DataMap<FacePtr, Handle<FaceEdgeSet>>>>>;
 /// Native model healing stage; `BRepMeshModelHealer::new()`.
 pub struct BRepMeshModelHealer {
-    transient: StandardTransient,
     model: SharedState<Handle<dyn MeshModel>>,
     parameters: FaceCheckerParameters,
     intersections: SharedState<FaceIntersections>,
 }
-impl_transient!(BRepMeshModelHealer,"BRepMesh_ModelHealer",dyn ModelAlgo,transient,interfaces:[dyn ModelAlgo]);
+impl_transient!(BRepMeshModelHealer,"BRepMesh_ModelHealer",dyn ModelAlgo,interfaces:[dyn ModelAlgo]);
 impl BRepMeshModelHealer {
     /// Construct the native stage with owned parameter storage; `BRepMeshModelHealer::new()`.
     pub fn new() -> Self {
@@ -135,7 +134,6 @@ impl ModelAlgo for BRepMeshModelHealer {
 impl Default for BRepMeshModelHealer {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             model: SharedState::default(),
             parameters: Handle::new(Shared::new(SharedState::new(MeshParameters::default()))),
             intersections: SharedState::default(),

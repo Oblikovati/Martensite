@@ -1,7 +1,7 @@
 //! The discretisation of the curve constraints.
 use super::GeomPlateBuildPlateSurface;
 use super::intersect::ZonesPerCurve;
-use crate::geom_plate::{GeomPlateCurveConstraint, live};
+use crate::geom_plate::GeomPlateCurveConstraintState;
 use crate::law::{LawFunction, LawInterpol};
 use crate::plate::PlatePinpointConstraint;
 use martensite_tkernel::ncollection::Array1;
@@ -64,7 +64,7 @@ impl GeomPlateBuildPlateSurface {
     fn load_zone_pinpoint(
         &mut self,
         state: &DiscretiseState,
-        lin: &GeomPlateCurveConstraint,
+        lin: &GeomPlateCurveConstraintState,
         inter: f64,
     ) -> Result<(), Failure> {
         let ac2d = state.ac2d.as_ref().ok_or_else(|| {
@@ -90,7 +90,7 @@ impl GeomPlateBuildPlateSurface {
     ) -> Result<(), Failure> {
         if zone_of(g1g1, inter).is_some() {
             let lin = self.lin_cont[i].clone();
-            return self.load_zone_pinpoint(state, live(&lin, "a curve constraint")?, inter);
+            return self.load_zone_pinpoint(state, super::curve_state(&lin)?, inter);
         }
         self.plate_cont_mut(i).push(inter);
         Ok(())
@@ -127,7 +127,7 @@ impl GeomPlateBuildPlateSurface {
 
     /// Whether an end point of a curve without zone goes to the plate: always for a
     /// computed initial surface unless the 2d curve is a circle, never for a given one.
-    fn keeps_ends(&self, lin: &GeomPlateCurveConstraint) -> Result<bool, Failure> {
+    fn keeps_ends(&self, lin: &GeomPlateCurveConstraintState) -> Result<bool, Failure> {
         if self.surf_init_is_give {
             return Ok(false);
         }
@@ -143,7 +143,7 @@ impl GeomPlateBuildPlateSurface {
         zones: (&[f64], &[f64]),
     ) -> Result<(), Failure> {
         let lin_handle = self.lin_cont[i].clone();
-        let lin = live(&lin_handle, "a curve constraint")?;
+        let lin = super::curve_state(&lin_handle)?;
         let range = (lin.first_parameter()?, lin.last_parameter()?);
         let c2d = lin.curve2d_on_surf()?;
         let length2d: Option<f64> = match c2d.is_some() {

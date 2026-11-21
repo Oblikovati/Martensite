@@ -3,7 +3,7 @@ use super::{MeshAllocator, mesh_index, samples::CurveSamples};
 use crate::imesh_data::{FacePtr, MeshCurve, MeshPCurve, ParametersList};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, SharedState, StandardTransient},
+    standard::{Failure, SharedState},
 };
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::{Point2, Point3};
@@ -68,15 +68,13 @@ macro_rules! point_members {
 }
 /// Native `BRepMeshData_Curve` with allocator-owned samples.
 pub struct DiscreteCurve {
-    transient: StandardTransient,
     samples: SharedState<CurveSamples<Point3>>,
 }
-impl_transient!(DiscreteCurve, "BRepMeshData_Curve", dyn MeshCurve, transient, interfaces: [dyn MeshCurve, dyn ParametersList]);
+impl_transient!(DiscreteCurve, "BRepMeshData_Curve", dyn MeshCurve, interfaces: [dyn MeshCurve, dyn ParametersList]);
 impl DiscreteCurve {
     /// Empty discretization; `DiscreteCurve::new(&allocator)`.
     pub fn new(allocator: &MeshAllocator) -> Self {
         Self {
-            transient: StandardTransient::default(),
             samples: SharedState::new(CurveSamples::new(allocator, false)),
         }
     }
@@ -87,17 +85,15 @@ impl MeshCurve for DiscreteCurve {
 }
 /// Native `BRepMeshData_PCurve` with allocator-owned samples.
 pub struct DiscretePCurve {
-    transient: StandardTransient,
     samples: SharedState<CurveSamples<Point2>>,
     face: FacePtr,
     orientation: Orientation,
 }
-impl_transient!(DiscretePCurve, "BRepMeshData_PCurve", dyn MeshPCurve, transient, interfaces: [dyn MeshPCurve, dyn ParametersList]);
+impl_transient!(DiscretePCurve, "BRepMeshData_PCurve", dyn MeshPCurve, interfaces: [dyn MeshPCurve, dyn ParametersList]);
 impl DiscretePCurve {
     /// Empty discretization; `DiscretePCurve::new(face, orientation, &allocator)`.
     pub fn new(face: FacePtr, orientation: Orientation, allocator: &MeshAllocator) -> Self {
         Self {
-            transient: StandardTransient::default(),
             samples: SharedState::new(CurveSamples::new(allocator, true)),
             face,
             orientation,

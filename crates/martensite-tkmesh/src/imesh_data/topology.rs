@@ -73,7 +73,7 @@ pub trait MeshEdge: TessellatedShape {
         Ok(())
     }
 }
-impl_transient_interface!(dyn MeshEdge, "IMeshData_Edge", dyn TessellatedShape);
+impl_transient_interface!(dyn MeshEdge, "IMeshData_Edge", dyn TessellatedShape, upcasts: [dyn TessellatedShape, dyn MeshShape]);
 /// Ordered discrete wire; `wire.edges_nb()`.
 pub trait MeshWire: TessellatedShape {
     /// Associated topology; `wire.get_wire()?`.
@@ -91,7 +91,7 @@ pub trait MeshWire: TessellatedShape {
     /// Stored orientation; `wire.get_edge_orientation(0)?`.
     fn get_edge_orientation(&self, index: i32) -> Result<Orientation, Failure>;
 }
-impl_transient_interface!(dyn MeshWire, "IMeshData_Wire", dyn TessellatedShape);
+impl_transient_interface!(dyn MeshWire, "IMeshData_Wire", dyn TessellatedShape, upcasts: [dyn TessellatedShape, dyn MeshShape]);
 /// Discrete face, whose first wire is outer; `face.wires_nb()`.
 pub trait MeshFace: TessellatedShape {
     /// Status extension; `face.status()`.
@@ -116,7 +116,7 @@ pub trait MeshFace: TessellatedShape {
             || status.is_equal(Status::UnorientedWire)
     }
 }
-impl_transient_interface!(dyn MeshFace, "IMeshData_Face", dyn TessellatedShape);
+impl_transient_interface!(dyn MeshFace, "IMeshData_Face", dyn TessellatedShape, upcasts: [dyn TessellatedShape, dyn MeshShape]);
 /// Complete discrete shape model; `model.faces_nb()`.
 pub trait MeshModel: MeshShape {
     /// Stored bounding-box size; `model.get_max_size()`.
@@ -134,4 +134,4 @@ pub trait MeshModel: MeshShape {
     /// Indexed edge; `model.get_edge(0)?`.
     fn get_edge(&self, index: i32) -> Result<EdgeHandle, Failure>;
 }
-impl_transient_interface!(dyn MeshModel, "IMeshData_Model", dyn MeshShape);
+impl_transient_interface!(dyn MeshModel, "IMeshData_Model", dyn MeshShape, upcasts: [dyn MeshShape]);

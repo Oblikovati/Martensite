@@ -1,5 +1,5 @@
 //! The evaluations of `GeomPlate_CurveConstraint`.
-use super::curve_constraint::{GeomPlateCurveConstraint, not_on_surface};
+use super::curve_constraint::{GeomPlateCurveConstraintState, not_on_surface};
 use super::live;
 use crate::law::LawFunction;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -21,7 +21,7 @@ enum ParameterSource {
     Curve3d(Handle<dyn Adaptor3dCurve>),
 }
 
-impl GeomPlateCurveConstraint {
+impl GeomPlateCurveConstraintState {
     fn parameter_source(&self) -> ParameterSource {
         let state = self.state.read();
         if state.hcurve_2d.is_some() {

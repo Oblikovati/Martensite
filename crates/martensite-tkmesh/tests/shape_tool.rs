@@ -47,7 +47,7 @@ fn geometric_flags_deteriorate_without_recovering_prior_failures() {
         let (edge, face) = fixtures::tool_topology(kind, 2., 0.5);
         let model = Handle::new(DiscreteEdge::new(&edge, &allocator).unwrap());
         let discrete_face: FaceHandle =
-            Handle::new(DiscreteFace::new(&face, &allocator).unwrap()).cast();
+            Handle::new(DiscreteFace::new(&face, &allocator).unwrap()).into_upcast();
         let pcurve = model.add_pcurve(discrete_face.downgrade(), Orientation::Forward);
         ShapeTool::check_and_update_flags(&model.cast(), &pcurve).unwrap();
         assert_eq!(model.get_degenerated(), kind != 2);

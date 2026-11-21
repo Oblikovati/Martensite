@@ -29,7 +29,7 @@ pub struct BRepMeshContext {
     context: Context,
 }
 // Name the parent through its public interface so the runtime identity is unambiguous.
-impl_transient!(BRepMeshContext, "BRepMesh_Context", dyn MeshContext, context, interfaces: [dyn MeshShape, dyn MeshContext]);
+impl_transient!(BRepMeshContext, "BRepMesh_Context", dyn MeshContext, interfaces: [dyn MeshShape, dyn MeshContext]);
 
 impl BRepMeshContext {
     /// Read `CSF_MeshAlgo` from the process
@@ -46,12 +46,12 @@ impl BRepMeshContext {
     ) -> Result<Self, Failure> {
         let factory = algo_factory(resolve_mesh_type(mesh_type, environment));
         let context = Context::new();
-        context.set_model_builder(&Handle::new(BRepMeshModelBuilder::new()).cast());
-        context.set_edge_discret(&Handle::new(BRepMeshEdgeDiscret::new()).cast());
-        context.set_model_healer(&Handle::new(BRepMeshModelHealer::new()).cast());
-        context.set_pre_processor(&Handle::new(BRepMeshModelPreProcessor::new()).cast());
-        context.set_face_discret(&Handle::new(BRepMeshFaceDiscret::new(&factory)).cast());
-        context.set_post_processor(&Handle::new(BRepMeshModelPostProcessor::new()).cast());
+        context.set_model_builder(&Handle::new(BRepMeshModelBuilder::new()).into_upcast());
+        context.set_edge_discret(&Handle::new(BRepMeshEdgeDiscret::new()).into_upcast());
+        context.set_model_healer(&Handle::new(BRepMeshModelHealer::new()).into_upcast());
+        context.set_pre_processor(&Handle::new(BRepMeshModelPreProcessor::new()).into_upcast());
+        context.set_face_discret(&Handle::new(BRepMeshFaceDiscret::new(&factory)).into_upcast());
+        context.set_post_processor(&Handle::new(BRepMeshModelPostProcessor::new()).into_upcast());
         Ok(Self { context })
     }
 
@@ -91,8 +91,10 @@ fn resolve_mesh_type(
 /// The algorithm factory of a resolved mesh type.
 fn algo_factory(mesh_type: MeshAlgoType) -> Handle<dyn MeshAlgoFactory> {
     match mesh_type {
-        MeshAlgoType::Delabella => Handle::new(BRepMeshDelabellaMeshAlgoFactory::new()).cast(),
-        _ => Handle::new(BRepMeshMeshAlgoFactory::new()).cast(),
+        MeshAlgoType::Delabella => {
+            Handle::new(BRepMeshDelabellaMeshAlgoFactory::new()).into_upcast()
+        }
+        _ => Handle::new(BRepMeshMeshAlgoFactory::new()).into_upcast(),
     }
 }
 

@@ -139,7 +139,7 @@ fn HelixGeomTest__BuilderHelixCoil_Approximation() {
     assert!(!a_curve.is_null());
 
     // Verify that the curve is a B-spline
-    let a_bspline: Handle<GeomBSplineCurve> = a_curve.cast();
+    let a_bspline: Handle<GeomBSplineCurve> = a_curve.downcast();
     assert!(!a_bspline.is_null());
 
     // Check B-spline properties

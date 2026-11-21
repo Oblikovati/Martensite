@@ -40,7 +40,7 @@ pub fn delaunay_insertion_cells_count<A: DelaunayInsertionHooks + ?Sized>(
 ) -> Result<(i32, i32), Failure> {
     let face = algo.base_data().get_dface();
     GeomTool::cells_count(
-        &face.get_surface().cast(),
+        &face.get_surface().into_upcast(),
         vertices_nb,
         face.get_deflection(),
         Some(algo.insertion().get_range_splitter().range_state()),

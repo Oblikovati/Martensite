@@ -10,7 +10,7 @@ use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
     ncollection::List,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
@@ -21,11 +21,10 @@ pub type TransferLog = Arc<SharedState<Vec<&'static str>>>;
 
 /// A provider that accepts every shape and stream transfer and records it.
 pub struct RecordingProvider {
-    transient: StandardTransient,
     base: DeProviderBase,
     log: TransferLog,
 }
-impl_transient!(RecordingProvider, "RecordingProvider", dyn DeProvider, transient, interfaces: [dyn DeProvider]);
+impl_transient!(RecordingProvider, "RecordingProvider", dyn DeProvider, interfaces: [dyn DeProvider]);
 impl RecordingProvider {
     fn record(&self, transfer: &'static str) -> Result<bool, Failure> {
         self.log.write().push(transfer);
@@ -95,19 +94,17 @@ impl DeProvider for RecordingProvider {
 
 /// A node of format `REC` (extension `rec`) whose stream support is configurable.
 pub struct RecordingNode {
-    transient: StandardTransient,
     base: DeConfigurationNodeBase,
     streams: bool,
     log: TransferLog,
 }
-impl_transient!(RecordingNode, "RecordingNode", dyn DeConfigurationNode, transient, interfaces: [dyn DeConfigurationNode]);
+impl_transient!(RecordingNode, "RecordingNode", dyn DeConfigurationNode, interfaces: [dyn DeConfigurationNode]);
 
 impl RecordingNode {
     /// A bound node and the log its providers write to.
     pub fn create(streams: bool) -> (Handle<RecordingNode>, TransferLog) {
         let log: TransferLog = Arc::new(SharedState::new(Vec::new()));
         let node = RecordingNode {
-            transient: StandardTransient::default(),
             base: DeConfigurationNodeBase::default(),
             streams,
             log: log.clone(),
@@ -128,14 +125,13 @@ impl DeConfigurationNode for RecordingNode {
     }
     fn build_provider(&self) -> Handle<dyn DeProvider> {
         let provider = RecordingProvider {
-            transient: StandardTransient::default(),
             base: DeProviderBase::with_node(&self.base.this().unwrap_or_default()),
             log: self.log.clone(),
         };
-        Handle::new(provider).cast()
+        Handle::new(provider).into_upcast()
     }
     fn copy(&self) -> Handle<dyn DeConfigurationNode> {
-        RecordingNode::create(self.streams).0.cast()
+        RecordingNode::create(self.streams).0.into_upcast()
     }
     fn get_format(&self) -> AsciiString {
         AsciiString::new("REC")

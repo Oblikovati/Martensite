@@ -72,7 +72,7 @@ impl HelixGeomBuilderApproxCurve for HelixGeomBuilderHelixCoil {
         if i_err != 0 {
             b.approx.error_status = 2;
         } else {
-            b.approx.curves.append(bc.cast());
+            b.approx.curves.append(bc.into_upcast());
         }
         Ok(())
     }

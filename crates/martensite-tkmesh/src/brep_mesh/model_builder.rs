@@ -8,20 +8,20 @@ use crate::{
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient,
-    message::{Algorithm, Status},
+    message::{AlgorithmSource, AlgorithmState, Status},
     standard::{Failure, Handle, RuntimeTyped},
 };
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tktopalgo::brep_bnd_lib::BRepBndLib;
 /// Concrete native model construction; `BRepMeshModelBuilder::new().perform(&shape, &parameters)`.
 pub struct BRepMeshModelBuilder {
-    algorithm: Algorithm,
+    algorithm: AlgorithmState,
 }
-impl_transient!(BRepMeshModelBuilder,"BRepMesh_ModelBuilder",dyn ModelBuilder,algorithm,interfaces:[dyn ModelBuilder]);
+impl_transient!(BRepMeshModelBuilder,"BRepMesh_ModelBuilder",dyn ModelBuilder,interfaces:[dyn ModelBuilder, dyn AlgorithmSource]);
 impl Default for BRepMeshModelBuilder {
     fn default() -> Self {
         Self {
-            algorithm: Algorithm::with_runtime_type(Self::static_type()),
+            algorithm: AlgorithmState::with_runtime_type(Self::static_type()),
         }
     }
 }
@@ -43,15 +43,12 @@ impl BRepMeshModelBuilder {
     }
 }
 impl std::ops::Deref for BRepMeshModelBuilder {
-    type Target = Algorithm;
+    type Target = AlgorithmState;
     fn deref(&self) -> &Self::Target {
         &self.algorithm
     }
 }
 impl ModelBuilder for BRepMeshModelBuilder {
-    fn algorithm(&self) -> &Algorithm {
-        &self.algorithm
-    }
     fn perform_internal(
         &self,
         shape: &Shape,
@@ -65,9 +62,15 @@ impl ModelBuilder for BRepMeshModelBuilder {
         }
         let model = Handle::new(DiscreteModel::new(shape));
         model.set_max_size(Self::model_size(&bounds, parameters)?);
-        let visitor = Handle::new(BRepMeshShapeVisitor::new(&model.cast()));
-        ShapeExplorer::new(shape).accept(&visitor.cast())?;
+        let visitor = Handle::new(BRepMeshShapeVisitor::new(&model.upcast()));
+        ShapeExplorer::new(shape).accept(&visitor.into_upcast())?;
         self.set_status(Status::DONE1);
-        Ok(model.cast())
+        Ok(model.into_upcast())
+    }
+}
+
+impl AlgorithmSource for BRepMeshModelBuilder {
+    fn algorithm_state(&self) -> &AlgorithmState {
+        &self.algorithm
     }
 }

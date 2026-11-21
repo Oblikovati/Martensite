@@ -15,9 +15,9 @@ pub fn tool_topology(kind: i32, tolerance: f64, span: f64) -> (Edge, Face) {
     builder.make_edge(&mut edge).unwrap();
     if kind != 0 {
         let curve: Handle<dyn GeomCurve> = if kind == 3 {
-            Handle::new(GeomCircle::new(Axis2::default(), 1.).unwrap()).cast()
+            Handle::new(GeomCircle::new(Axis2::default(), 1.).unwrap()).into_upcast()
         } else {
-            Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast()
+            Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast()
         };
         builder.update_edge_curve(&edge, &curve, 2e-7).unwrap();
         builder.range(&edge, 0., span, false).unwrap();
@@ -29,7 +29,8 @@ pub fn tool_topology(kind: i32, tolerance: f64, span: f64) -> (Edge, Face) {
     builder.make_wire(&mut wire);
     builder.add(&mut wire, &edge).unwrap();
     let mut face = Face::default();
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+    let surface: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     builder
         .make_face_on_surface(&mut face, &surface, 3e-7)
         .unwrap();
