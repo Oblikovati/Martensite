@@ -16,7 +16,7 @@ impl StdPrsIsolines {
     /// Append trimmed native surface isolines; `StdPrsIsolines::add_on_surface_polylines(&face,&drawer,0.1,output)?`.
     pub fn add_on_surface_polylines(
         face: &Face,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         deflection: f64,
         mut output: StdPrsIsolineDestination<'_>,
     ) -> Result<(), Failure> {
@@ -37,7 +37,7 @@ impl StdPrsIsolines {
     pub fn add_on_surface(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Face,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         deflection: f64,
     ) -> Result<(), Failure> {
         let [mut u, mut v] = super::isoline_outputs::empty_isoline_lists();
@@ -53,7 +53,7 @@ impl StdPrsIsolines {
     pub fn add_on_surface_parameters<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         surface: &Handle<S>,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         deflection: f64,
         parameters: [&SharedState<Sequence<f64>>; 2],
     ) -> Result<(), Failure> {
@@ -64,7 +64,7 @@ impl StdPrsIsolines {
     pub fn add_on_surface_references<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         surface: &SharedState<Handle<S>>,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         deflection: f64,
         parameters: [&SharedState<Sequence<f64>>; 2],
     ) -> Result<(), Failure> {

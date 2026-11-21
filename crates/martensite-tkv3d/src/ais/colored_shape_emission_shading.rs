@@ -8,7 +8,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::*;
 pub(super) fn emit_colored_shading<S: AisColoredShapeSource + ?Sized>(
     reference: &AisColoredCompoundRef<'_>,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     closed: bool,
     emission: &mut ColoredShapeEmission<'_, S>,
 ) -> Result<(), Failure> {

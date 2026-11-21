@@ -1,5 +1,5 @@
 //! Native depth-first style dispatch preserves full faces and strips overridden lower-dimensional children.
-use super::{AisColoredDrawer, AisColoredDrawerCompounds, AisShapeDrawerMap};
+use super::{AisColoredDrawerSource, AisColoredDrawerCompounds, AisShapeDrawerMap};
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topods::{Compound, Shape, ShapeIterator},
@@ -27,7 +27,7 @@ impl ColoredDispatchParent {
 /// Append native per-style topology groups, supporting closed-output aliases; `ais_colored_shape_dispatch_colors(&drawer,&shape,&styles,ShapeEnum::Compound,false,&opened,&opened[4])?`.
 #[allow(clippy::too_many_arguments)] // Exact pinned protected overload exposes the opened array and possibly aliased closed map.
 pub fn ais_colored_shape_dispatch_colors(
-    parent: &Handle<AisColoredDrawer>,
+    parent: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     styles: &AisShapeDrawerMap,
     parent_kind: ShapeEnum,
@@ -47,7 +47,7 @@ pub fn ais_colored_shape_dispatch_colors(
     dispatch_colored_topology(parent, shape, inherited, &context)
 }
 pub(super) fn dispatch_colored_topology(
-    parent: &Handle<AisColoredDrawer>,
+    parent: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     inherited: ColoredDispatchParent,
     context: &ColoredDispatchContext<'_>,
@@ -67,10 +67,10 @@ pub(super) fn dispatch_colored_topology(
     dispatch_colored_leaf(&drawer, shape, kind, inherited, overridden, context)
 }
 pub(super) fn dispatch_colored_drawer(
-    parent: &Handle<AisColoredDrawer>,
+    parent: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     styles: &AisShapeDrawerMap,
-) -> Result<(Handle<AisColoredDrawer>, bool), Failure> {
+) -> Result<(Handle<dyn AisColoredDrawerSource>, bool), Failure> {
     let mut drawer = parent.clone();
     let nodes = styles.nodes.read();
     let Some(node) = super::shape_drawer_map::find_shape_drawer_node(&nodes, shape) else {
@@ -81,7 +81,7 @@ pub(super) fn dispatch_colored_drawer(
     Ok((drawer, true))
 }
 fn dispatch_colored_leaf(
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     kind: ShapeEnum,
     inherited: ColoredDispatchParent,
@@ -99,7 +99,7 @@ fn dispatch_colored_leaf(
     Ok(overridden || sub_override)
 }
 fn dispatch_colored_children(
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     inherited: ColoredDispatchParent,
     context: &ColoredDispatchContext<'_>,
@@ -143,7 +143,7 @@ fn should_group_colored_leaf(own: bool, descendant: bool, parent: ShapeEnum) -> 
         || (parent <= ShapeEnum::Shell && !(own || descendant))
 }
 fn bind_colored_compound(
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     kind: ShapeEnum,
     closed: bool,

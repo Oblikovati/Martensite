@@ -16,7 +16,7 @@ use martensite_tkservice::graphic3d::{
     Graphic3dAspectsMembers, Graphic3dMaterialAspect, Graphic3dStructureSource,
 };
 use martensite_tktopalgo::brep_bnd_lib::BRepBndLib;
-use martensite_tkv3d::ais::{AisColoredDrawer, AisShapeSource};
+use martensite_tkv3d::ais::{AisColoredDrawer, AisColoredDrawerSource, AisShapeSource};
 use martensite_tkv3d::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkv3d::prs3d::{Prs3dDrawer, Prs3dRoot, Prs3dText, Prs3dTextAspect};
 
@@ -153,7 +153,8 @@ pub(super) fn bind_style_groups(
 ) -> Result<(), Failure> {
     let parent = object.attributes();
     for (style, compound) in style_groups(settings)? {
-        let drawer = Handle::new(AisColoredDrawer::new(&parent));
+        let drawer =
+            Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
         object
             .colored_shape_base_map()
             .bind(&group_shape(&compound)?, &drawer)?;

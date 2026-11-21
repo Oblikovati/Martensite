@@ -1,5 +1,8 @@
 //! Named actual drawer subclass observes native map/Value state from its own destructor.
-use super::{AisColoredDrawer, AisColoredDrawerCompounds};
+use martensite_tkservice::graphic3d::{
+    Graphic3dPresentationAttributesBase, Graphic3dPresentationAttributesSource,
+};
+use super::{AisColoredDrawer, AisColoredDrawerSource, AisColoredDrawerCompounds};
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkernel::standard::Handle;
 use std::{
@@ -14,8 +17,19 @@ pub(super) struct ColoredCompoundKeyDropFake {
 martensite_tkernel::impl_transient!(
     ColoredCompoundKeyDropFake,
     "CompoundKeyDestructorProbe",
-    AisColoredDrawer
+    AisColoredDrawer,
+    interfaces: [dyn AisColoredDrawerSource, dyn Graphic3dPresentationAttributesSource]
 );
+impl AisColoredDrawerSource for ColoredCompoundKeyDropFake {
+    fn colored_drawer(&self) -> &AisColoredDrawer {
+        &self.parent
+    }
+}
+impl Graphic3dPresentationAttributesSource for ColoredCompoundKeyDropFake {
+    fn presentation_attributes_base(&self) -> &Graphic3dPresentationAttributesBase {
+        self.parent.presentation_attributes_base()
+    }
+}
 impl ColoredCompoundKeyDropFake {
     pub(super) fn new(
         parent: &Handle<Prs3dDrawer>,

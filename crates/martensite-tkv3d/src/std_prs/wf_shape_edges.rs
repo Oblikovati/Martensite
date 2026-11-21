@@ -22,7 +22,7 @@ impl StdPrsWfShape {
     /// Preserve wire/free/shared category ordering in one segments array; `Self::add_all_edges(&shape,&drawer)?`.
     pub fn add_all_edges(
         shape: &Shape,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<Handle<dyn Graphic3dArraySource>, Failure> {
         let deflection = StdPrsToolTriangulatedShape::get_deflection(shape, drawer)?;
         let mut polylines = List::default();
@@ -45,7 +45,7 @@ pub(super) fn classified_wf_edges(shape: &Shape) -> Result<[Vec<Edge>; 3], Failu
 }
 pub(super) fn append_wf_edge_polylines(
     edges: &[Edge],
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     deflection: f64,
     polylines: &mut List<Handle<HSequence<Point3>>>,
 ) -> Result<(), Failure> {
@@ -62,7 +62,7 @@ pub(super) fn append_wf_edge_polylines(
 }
 fn wf_edge_points(
     edge: &Edge,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     deflection: f64,
 ) -> Result<Sequence<Point3>, Failure> {
     let (polygon, mesh, location) = BRepTool::first_polygon_on_triangulation(edge)?;
@@ -93,7 +93,7 @@ fn polygon_mesh_points(
 }
 fn sampled_wf_curve(
     edge: &Edge,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     deflection: f64,
 ) -> Result<Sequence<Point3>, Failure> {
     let mut points = Sequence::default();

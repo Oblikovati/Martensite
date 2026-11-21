@@ -1,4 +1,7 @@
 //! Actual native parent defaults and custom-drawer destructor ordering replay.
+use martensite_tkservice::graphic3d::{
+    Graphic3dPresentationAttributesBase, Graphic3dPresentationAttributesSource,
+};
 use super::*;
 use crate::select_mgr::SelectMgrEntityOwnerMembers;
 use crate::select3d::Select3DSensitiveEntityMembers;
@@ -45,8 +48,19 @@ struct ColoredReleaseDrawerFake {
 martensite_tkernel::impl_transient!(
     ColoredReleaseDrawerFake,
     "MartensiteColoredReleaseDrawerProbe",
-    AisColoredDrawer
+    AisColoredDrawer,
+    interfaces: [dyn AisColoredDrawerSource, dyn Graphic3dPresentationAttributesSource]
 );
+impl AisColoredDrawerSource for ColoredReleaseDrawerFake {
+    fn colored_drawer(&self) -> &AisColoredDrawer {
+        &self.colored
+    }
+}
+impl Graphic3dPresentationAttributesSource for ColoredReleaseDrawerFake {
+    fn presentation_attributes_base(&self) -> &Graphic3dPresentationAttributesBase {
+        self.colored.presentation_attributes_base()
+    }
+}
 impl Drop for ColoredReleaseDrawerFake {
     fn drop(&mut self) {
         let owner = self.owner.upgrade();
@@ -75,7 +89,7 @@ fn install_release_drawer(scene: &ColoredOwnerReplay, label: &'static str) {
     scene
         .object
         .change_custom_aspects_map()
-        .bind(&scene.key, &drawer.cast())
+        .bind(&scene.key, &drawer.upcast())
         .unwrap();
     scene.prs.set_update_status(false);
 }
@@ -255,7 +269,7 @@ fn record_created_alias(
     scene: &ColoredOwnerReplay,
     retained: &AisShapeDrawerMapRef<'_>,
     mutable: &AisShapeDrawerMapMut<'_>,
-) -> Handle<AisColoredDrawer> {
+) -> Handle<dyn AisColoredDrawerSource> {
     let child = scene.object.custom_aspects(&scene.key).unwrap();
     let dirty = i32::from(scene.prs.must_be_updated());
     let same = i32::from(retained.is_same_reference(&mutable.as_const()));
@@ -265,7 +279,7 @@ fn record_created_alias(
     );
     child
 }
-fn record_reused_alias(scene: &ColoredOwnerReplay, child: &Handle<AisColoredDrawer>) {
+fn record_reused_alias(scene: &ColoredOwnerReplay, child: &Handle<dyn AisColoredDrawerSource>) {
     scene.prs.set_update_status(false);
     let repeat = scene.object.custom_aspects(&scene.key.reversed()).unwrap();
     let dirty = i32::from(scene.prs.must_be_updated());
@@ -295,7 +309,7 @@ fn record_replaced_slot(
     scene: &ColoredOwnerReplay,
     alias: &AisShapeDrawerNodeRef<'_>,
     address: *const (),
-    previous: &Handle<AisColoredDrawer>,
+    previous: &Handle<dyn AisColoredDrawerSource>,
 ) {
     let dirty = i32::from(scene.prs.must_be_updated());
     let current = scene
@@ -387,8 +401,19 @@ struct ColoredOwnerDropDrawerFake {
 martensite_tkernel::impl_transient!(
     ColoredOwnerDropDrawerFake,
     "MartensiteColoredOwnerDropDrawer",
-    AisColoredDrawer
+    AisColoredDrawer,
+    interfaces: [dyn AisColoredDrawerSource, dyn Graphic3dPresentationAttributesSource]
 );
+impl AisColoredDrawerSource for ColoredOwnerDropDrawerFake {
+    fn colored_drawer(&self) -> &AisColoredDrawer {
+        &self.colored
+    }
+}
+impl Graphic3dPresentationAttributesSource for ColoredOwnerDropDrawerFake {
+    fn presentation_attributes_base(&self) -> &Graphic3dPresentationAttributesBase {
+        self.colored.presentation_attributes_base()
+    }
+}
 impl Drop for ColoredOwnerDropDrawerFake {
     fn drop(&mut self) {
         let keys = self.retained_key.tshape().ref_count();
@@ -408,7 +433,7 @@ fn record_owner_destruction(rows: &Arc<Mutex<String>>) {
     let drawer = owner_drop_drawer(&key, &object.attributes(), rows);
     object
         .change_custom_aspects_map()
-        .bind(&key, &drawer.cast())
+        .bind(&key, &drawer.upcast())
         .unwrap();
     drop(drawer);
     drop(object);

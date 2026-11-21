@@ -1,7 +1,7 @@
 //! The actual native ColoredShape reference is projected only onto the owned map prerequisite.
 use super::shape_drawer_reference_rows::shape_drawer_row;
 use super::{
-    AisColoredDrawer, AisShapeDrawerMap, shape_drawer_reference_inputs::shape_drawer_vertex,
+    AisColoredDrawerSource, AisShapeDrawerMap, shape_drawer_reference_inputs::shape_drawer_vertex,
 };
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkbrep::topods::Shape;
@@ -38,7 +38,7 @@ struct ShapeDrawerLifecycleReplay<'a> {
     output: &'a mut String,
     map: &'a AisShapeDrawerMap,
     input: &'a ShapeDrawerLifecycleInputs,
-    children: [Handle<AisColoredDrawer>; 4],
+    children: [Handle<dyn AisColoredDrawerSource>; 4],
 }
 impl ShapeDrawerLifecycleReplay<'_> {
     fn record(&mut self, label: &str) {

@@ -12,7 +12,7 @@ impl StdPrsIsolines {
     /// Append genuine mesh crossings, retaining aliases; `StdPrsIsolines::add_on_triangulation_polylines(&face,&drawer,output)?`.
     pub fn add_on_triangulation_polylines(
         face: &Face,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         mut output: StdPrsIsolineDestination<'_>,
     ) -> Result<(), Failure> {
         // Surface callback failures propagate on this path; only the surface-sampling overload suppresses them.
@@ -22,7 +22,7 @@ impl StdPrsIsolines {
     pub fn add_on_triangulation(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Face,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<(), Failure> {
         let [mut u, mut v] = super::isoline_outputs::empty_isoline_lists();
         Self::add_on_triangulation_polylines(
@@ -35,7 +35,7 @@ impl StdPrsIsolines {
     /// Evaluate explicit live native inputs before submitting groups; `StdPrsIsolines::add_on_triangulation_parameters(&prs,&drawer,inputs)?`.
     pub fn add_on_triangulation_parameters(
         prs: &Handle<dyn Graphic3dStructureSource>,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         inputs: StdPrsIsolineTriangulationInputs<'_>,
     ) -> Result<(), Failure> {
         let [mut u, mut v] = super::isoline_outputs::empty_isoline_lists();

@@ -15,7 +15,7 @@ use martensite_tkservice::graphic3d::{
     Graphic3dStructureDisplay, Graphic3dStructureSource,
 };
 use martensite_tkv3d::ais::{
-    AisColoredDrawer, AisColoredShapeBase, AisColoredShapeSource, AisInteractiveObject,
+    AisColoredDrawerSource, AisColoredShapeBase, AisColoredShapeSource, AisInteractiveObject,
     AisInteractiveObjectBase, AisKindOfInteractive, AisShapeMembers, AisShapeSource,
     ais_colored_shape_compute, ais_colored_shape_compute_selection, ais_colored_shape_set_color,
     ais_colored_shape_set_transparency, ais_colored_shape_set_width, ais_shape_color_into,
@@ -38,7 +38,7 @@ struct AisObjectFields {
     to_sync_styles: bool,
     /// The custom drawers `DispatchStyles` bound: `SetMaterial` visits them, since martensite-tkv3d
     /// keeps the iteration of `myShapeColors` private.
-    drawers: Vec<Handle<AisColoredDrawer>>,
+    drawers: Vec<Handle<dyn AisColoredDrawerSource>>,
 }
 
 /// `XCAFPrsAISObject`.
@@ -122,11 +122,11 @@ impl XCAFPrsAISObject {
         &self.base.shape_colors
     }
     /// Records a drawer bound by `DispatchStyles`.
-    pub(super) fn remember_drawer(&self, drawer: &Handle<AisColoredDrawer>) {
+    pub(super) fn remember_drawer(&self, drawer: &Handle<dyn AisColoredDrawerSource>) {
         self.fields.write().drawers.push(drawer.clone());
     }
     /// The drawers bound by the last `DispatchStyles`.
-    pub(super) fn dispatched_drawers(&self) -> Vec<Handle<AisColoredDrawer>> {
+    pub(super) fn dispatched_drawers(&self) -> Vec<Handle<dyn AisColoredDrawerSource>> {
         self.fields.read().drawers.clone()
     }
 }

@@ -1,6 +1,6 @@
 //! Const Key/Value aliases track allocated node identity rather than a moving numeric index.
 use super::{
-    AisColoredDrawer, AisColoredDrawerCompounds,
+    AisColoredDrawerSource, AisColoredDrawerCompounds,
     colored_compound_map::find_colored_compound,
     colored_compound_node::{ColoredCompoundNode, colored_compound_removed},
 };
@@ -27,7 +27,7 @@ impl AisColoredDrawerCompounds {
     /// Find a value without altering the output on a miss; `map.find_into(&drawer,&mut compound)?`.
     pub fn find_into(
         &self,
-        drawer: &Handle<AisColoredDrawer>,
+        drawer: &Handle<dyn AisColoredDrawerSource>,
         output: &mut Compound,
     ) -> Result<bool, Failure> {
         let nodes = self.nodes.read();

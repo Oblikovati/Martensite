@@ -1,5 +1,5 @@
 //! Allocated indexed-map nodes keep native Key/Value slots stable across table growth.
-use super::{AisColoredDrawer, colored_compound_value::ColoredCompoundValue};
+use super::{AisColoredDrawerSource, colored_compound_value::ColoredCompoundValue};
 use martensite_tkbrep::topods::Compound;
 use martensite_tkernel::{
     ncollection::HashPolicy,
@@ -13,12 +13,12 @@ use std::{
     },
 };
 pub(super) struct ColoredCompoundNode {
-    pub drawer: IntrusiveReferenceSlot<AisColoredDrawer>,
+    pub drawer: IntrusiveReferenceSlot<dyn AisColoredDrawerSource>,
     pub compound: ColoredCompoundValue,
     live: AtomicBool,
 }
 impl ColoredCompoundNode {
-    pub(super) fn new(drawer: &Handle<AisColoredDrawer>, compound: &Compound) -> Self {
+    pub(super) fn new(drawer: &Handle<dyn AisColoredDrawerSource>, compound: &Compound) -> Self {
         // Initialize the list node's value before retaining the key.
         let compound = ColoredCompoundValue::new(compound);
         let key = IntrusiveReferenceSlot::default();

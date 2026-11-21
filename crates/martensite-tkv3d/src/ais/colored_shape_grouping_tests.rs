@@ -8,8 +8,8 @@ use std::fmt::Write;
 struct ColoredDispatchFixture {
     input: colored_shape_expansion_inputs::ColoredExpansionInputs,
     _parent: Handle<Prs3dDrawer>,
-    base: Handle<AisColoredDrawer>,
-    custom: Handle<AisColoredDrawer>,
+    base: Handle<dyn AisColoredDrawerSource>,
+    custom: Handle<dyn AisColoredDrawerSource>,
     styles: AisShapeDrawerMap,
     opened: AisColoredOpenedCompounds,
     closed: AisColoredDrawerCompounds,
@@ -18,8 +18,8 @@ impl ColoredDispatchFixture {
     fn new(scenario: usize) -> Self {
         let input = colored_shape_expansion_inputs::ColoredExpansionInputs::new();
         let parent = Handle::new(Prs3dDrawer::new());
-        let base = Handle::new(AisColoredDrawer::new(&parent));
-        let custom = Handle::new(AisColoredDrawer::new(&parent));
+        let base = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+        let custom = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
         let styles = dispatch_fixture_styles(&input, scenario, &custom);
         base.set_hidden(scenario == 7);
         Self {
@@ -77,7 +77,7 @@ fn dispatch_fixture_row(rows: &mut String, scenario: usize, alias: bool) {
 fn dispatch_fixture_styles(
     input: &colored_shape_expansion_inputs::ColoredExpansionInputs,
     scenario: usize,
-    custom: &Handle<AisColoredDrawer>,
+    custom: &Handle<dyn AisColoredDrawerSource>,
 ) -> AisShapeDrawerMap {
     let styles = AisShapeDrawerMap::default();
     if (1..=6).contains(&scenario) {
@@ -104,8 +104,8 @@ fn dispatch_fixture_override(
 pub(super) fn dispatch_group_row(
     rows: &mut String,
     groups: &AisColoredDrawerCompounds,
-    base: &Handle<AisColoredDrawer>,
-    custom: &Handle<AisColoredDrawer>,
+    base: &Handle<dyn AisColoredDrawerSource>,
+    custom: &Handle<dyn AisColoredDrawerSource>,
 ) {
     write!(rows, " {}", groups.len()).unwrap();
     for index in 1..=groups.len() {
@@ -117,8 +117,8 @@ pub(super) fn dispatch_group_row(
 }
 fn dispatch_fixture_style(
     address: *const (),
-    base: &Handle<AisColoredDrawer>,
-    custom: &Handle<AisColoredDrawer>,
+    base: &Handle<dyn AisColoredDrawerSource>,
+    custom: &Handle<dyn AisColoredDrawerSource>,
 ) -> i32 {
     if address == base.object_address() {
         return 0;

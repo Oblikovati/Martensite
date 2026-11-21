@@ -1,6 +1,6 @@
 //! Native aggregate styles expand into topology leaves while explicit styles win.
 use super::shape_drawer_cursor::ShapeDrawerNativeCursor;
-use super::{AisColoredDrawer, AisColoredShapeSource, AisShapeDrawerMap};
+use super::{AisColoredDrawerSource, AisColoredShapeSource, AisShapeDrawerMap};
 use martensite_tkbrep::{topexp::Explorer, topods::Shape};
 use martensite_tkernel::standard::{Failure, Handle, HandleReference};
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -11,7 +11,7 @@ pub trait AisColoredShapeExpansion: AisColoredShapeSource {
         &self,
         output: &AisShapeDrawerMap,
         key: &Shape,
-        drawer: &Handle<AisColoredDrawer>,
+        drawer: &Handle<dyn AisColoredDrawerSource>,
     ) -> Result<(), Failure> {
         // Native helper is nonvirtual; subclasses cannot replace recursive style precedence.
         bind_colored_shape_leaves(output, key, drawer)
@@ -37,7 +37,7 @@ impl<S: AisColoredShapeSource + ?Sized> AisColoredShapeExpansion for S {}
 pub(super) fn bind_colored_shape_leaves(
     output: &AisShapeDrawerMap,
     key: &Shape,
-    drawer: &impl HandleReference<AisColoredDrawer>,
+    drawer: &impl HandleReference<dyn AisColoredDrawerSource>,
 ) -> Result<(), Failure> {
     let target = match key.shape_type()? {
         ShapeEnum::Solid | ShapeEnum::Shell => ShapeEnum::Face,
@@ -53,7 +53,7 @@ fn bind_missing_colored_leaves(
     output: &AisShapeDrawerMap,
     key: &Shape,
     target: ShapeEnum,
-    drawer: &impl HandleReference<AisColoredDrawer>,
+    drawer: &impl HandleReference<dyn AisColoredDrawerSource>,
 ) -> Result<(), Failure> {
     let mut explorer = Explorer::new(key, target, ShapeEnum::Shape)?;
     while explorer.more() {

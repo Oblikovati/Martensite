@@ -51,7 +51,7 @@ impl AisColoredShapeSource for ColoredDispatchFake {
         // Source overrides retain this actual single native subclass map.
         &self.base
     }
-    fn custom_aspects(&self, shape: &Shape) -> Result<Handle<AisColoredDrawer>, Failure> {
+    fn custom_aspects(&self, shape: &Shape) -> Result<Handle<dyn AisColoredDrawerSource>, Failure> {
         self.event("custom-before");
         self.fail_stage(1)?;
         let result = ais_colored_shape_custom_aspects(self, shape)?;

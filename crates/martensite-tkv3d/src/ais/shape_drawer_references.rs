@@ -1,6 +1,6 @@
 //! Borrowed specialization references preserve node identity without retaining native owned fields.
 use super::{
-    AisColoredDrawer, AisShapeDrawerMap,
+    AisColoredDrawerSource, AisShapeDrawerMap,
     shape_drawer_map::find_shape_drawer_node,
     shape_drawer_node::{ShapeDrawerNode, removed_shape_drawer_node},
 };
@@ -95,7 +95,7 @@ impl AisShapeDrawerNodeRef<'_> {
     }
     /// Explicitly retains a value snapshot; later slot replacement leaves it unchanged.
     /// Example: `let owned_drawer=node.clone_drawer()?`.
-    pub fn clone_drawer(&self) -> Result<Handle<AisColoredDrawer>, Failure> {
+    pub fn clone_drawer(&self) -> Result<Handle<dyn AisColoredDrawerSource>, Failure> {
         let node = self.live_node()?;
         node.read_fields(|fields| fields.drawer.clone())
     }
@@ -107,7 +107,7 @@ impl AisShapeDrawerNodeRef<'_> {
 impl<'a> AisShapeDrawerValueMut<'a> {
     /// Replaces the actual value; const node aliases immediately observe the same slot.
     /// Example: `value.assign(&drawer)?`.
-    pub fn assign(&self, value: &Handle<AisColoredDrawer>) -> Result<(), Failure> {
+    pub fn assign(&self, value: &Handle<dyn AisColoredDrawerSource>) -> Result<(), Failure> {
         let node = self.reference.live_node()?;
         node.replace_value(value)
     }

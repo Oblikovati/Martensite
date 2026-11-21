@@ -1,5 +1,5 @@
 //! Real BRep keys preserve independent original/reversed/located topology ownership.
-use super::AisColoredDrawer;
+use super::{AisColoredDrawer, AisColoredDrawerSource};
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkbrep::{
     brep::BRepBuilder,
@@ -15,8 +15,8 @@ pub(super) struct ShapeDrawerReferenceInputs {
     pub reversed: Shape,
     pub located: Shape,
     pub parent: Handle<Prs3dDrawer>,
-    pub first: Handle<AisColoredDrawer>,
-    pub second: Handle<AisColoredDrawer>,
+    pub first: Handle<dyn AisColoredDrawerSource>,
+    pub second: Handle<dyn AisColoredDrawerSource>,
 }
 impl ShapeDrawerReferenceInputs {
     pub fn new() -> Self {
@@ -24,8 +24,8 @@ impl ShapeDrawerReferenceInputs {
         let reversed = key.reversed();
         let located = translated_drawer_key(&key);
         let parent = Handle::new(Prs3dDrawer::new());
-        let first = Handle::new(AisColoredDrawer::new(&parent));
-        let second = Handle::new(AisColoredDrawer::new(&parent));
+        let first = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+        let second = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
         Self {
             key,
             reversed,

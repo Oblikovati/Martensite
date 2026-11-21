@@ -1,5 +1,5 @@
 //! Named application subclass retains native descriptor ancestry and virtual JSON dispatch.
-use super::AisColoredDrawer;
+use super::{AisColoredDrawer, AisColoredDrawerSource};
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkernel::standard::{Handle, dump::DumpStream};
 use martensite_tkservice::graphic3d::{
@@ -11,7 +11,12 @@ struct ColoredDrawerApplicationFake {
     colored: AisColoredDrawer,
 }
 martensite_tkernel::impl_transient!(ColoredDrawerApplicationFake, "MartensiteColoredDrawerProbe", AisColoredDrawer,
-    interfaces: [dyn Graphic3dPresentationAttributesSource]);
+    interfaces: [dyn AisColoredDrawerSource, dyn Graphic3dPresentationAttributesSource]);
+impl AisColoredDrawerSource for ColoredDrawerApplicationFake {
+    fn colored_drawer(&self) -> &AisColoredDrawer {
+        &self.colored
+    }
+}
 impl Graphic3dPresentationAttributesSource for ColoredDrawerApplicationFake {
     fn presentation_attributes_base(&self) -> &Graphic3dPresentationAttributesBase {
         let parent = &self.colored;
@@ -22,7 +27,7 @@ impl Graphic3dPresentationAttributesSource for ColoredDrawerApplicationFake {
         Ok(())
     }
 }
-fn runtime_names(colored: &Handle<AisColoredDrawer>) -> String {
+fn runtime_names(colored: &Handle<dyn AisColoredDrawerSource>) -> String {
     let descriptor = colored.dynamic_type().unwrap();
     let parent = descriptor.parent().unwrap();
     let grandparent = parent.parent().unwrap();
@@ -36,11 +41,11 @@ fn runtime_names(colored: &Handle<AisColoredDrawer>) -> String {
 fn runtime_header(
     output: &mut String,
     application: &Handle<ColoredDrawerApplicationFake>,
-    colored: &Handle<AisColoredDrawer>,
+    colored: &Handle<dyn AisColoredDrawerSource>,
     defaults: &Handle<Prs3dDrawer>,
 ) {
     let names = runtime_names(colored);
-    let attributes: Handle<dyn Graphic3dPresentationAttributesSource> = colored.cast();
+    let attributes: Handle<dyn Graphic3dPresentationAttributesSource> = colored.upcast();
     let mut json = DumpStream::default();
     attributes.dump_json(&mut json, 0).unwrap();
     drop(attributes);
@@ -91,8 +96,8 @@ fn record_application(output: &mut String, defaults: &Handle<Prs3dDrawer>) {
     let application = Handle::new(ColoredDrawerApplicationFake {
         colored: AisColoredDrawer::new(defaults),
     });
-    let base: Handle<Prs3dDrawer> = application.cast();
-    let colored: Handle<AisColoredDrawer> = base.cast();
+    let base: Handle<dyn Graphic3dPresentationAttributesSource> = application.upcast();
+    let colored: Handle<dyn AisColoredDrawerSource> = base.cast();
     runtime_header(output, &application, &colored, defaults);
     independent_ownership(output, &colored);
     drop(base);

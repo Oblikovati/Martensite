@@ -2,7 +2,7 @@
 use crate::prs3d::{Prs3dDrawer, Prs3dDrawerFields};
 use martensite_tkernel::{
     quantity::Color,
-    standard::{Handle, HandleFieldRef, SharedState},
+    standard::{Handle, HandleFieldRef, HandleUpcast, RuntimeType, RuntimeTyped, SharedState},
 };
 use martensite_tkservice::graphic3d::{
     Graphic3dPresentationAttributesBase, Graphic3dPresentationAttributesSource,
@@ -23,7 +23,7 @@ pub struct AisColoredDrawerFlags {
     /// Native `myHasOwnWidth`; `drawer.flags.write().has_own_width = true`.
     pub has_own_width: bool,
 }
-/// The actual inherited drawer type; `let parent: Handle<AisColoredDrawerParent> = colored.cast()`.
+/// The inherited drawer borrowed from the colored object; `let parent: &AisColoredDrawerParent = &colored;`.
 pub type AisColoredDrawerParent = Prs3dDrawer;
 
 /// A linked presentation drawer with independent per-subshape override flags.
@@ -34,7 +34,41 @@ pub struct AisColoredDrawer {
     pub flags: SharedState<AisColoredDrawerFlags>,
 }
 martensite_tkernel::impl_transient!(AisColoredDrawer, "AisColoredDrawer", Prs3dDrawer,
-    interfaces: [dyn Graphic3dPresentationAttributesSource]);
+    interfaces: [dyn AisColoredDrawerSource, dyn Graphic3dPresentationAttributesSource]);
+
+/// A colored drawer object with its original flags and inherited virtual operations.
+pub trait AisColoredDrawerSource: Graphic3dPresentationAttributesSource {
+    /// Borrow the actual colored drawer; `source.colored_drawer().is_hidden()`.
+    fn colored_drawer(&self) -> &AisColoredDrawer;
+}
+impl RuntimeTyped for dyn AisColoredDrawerSource {
+    const TYPE_NAME: &'static str = AisColoredDrawer::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        AisColoredDrawer::static_type()
+    }
+}
+martensite_tkernel::impl_transient_interface_target!(dyn AisColoredDrawerSource);
+impl HandleUpcast<dyn Graphic3dPresentationAttributesSource> for dyn AisColoredDrawerSource {
+    fn upcast_arc(
+        owner: std::sync::Arc<Self>,
+    ) -> std::sync::Arc<dyn Graphic3dPresentationAttributesSource> {
+        owner
+    }
+}
+impl std::ops::Deref for dyn AisColoredDrawerSource {
+    type Target = AisColoredDrawer;
+
+    fn deref(&self) -> &AisColoredDrawer {
+        self.colored_drawer()
+    }
+}
+impl AisColoredDrawerSource for AisColoredDrawer {
+    fn colored_drawer(&self) -> &AisColoredDrawer {
+        self
+    }
+}
+
 impl AisColoredDrawer {
     /// Links the actual parent handle while leaving every ownership flag false.
     /// Example: `AisColoredDrawer::new(&defaults)`.

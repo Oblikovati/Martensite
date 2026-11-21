@@ -22,8 +22,8 @@ fn actual_meshed_shell_closure_replays_hidden_front_back_and_nan_policy() {
 fn closed_dispatch_row(rows: &mut String, scenario: usize) {
     let shape = closed_dispatch_shape(scenario);
     let parent = Handle::new(Prs3dDrawer::new());
-    let base = Handle::new(AisColoredDrawer::new(&parent));
-    let custom = Handle::new(AisColoredDrawer::new(&parent));
+    let base = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let custom = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
     let styles = closed_dispatch_styles(&shape, &custom, scenario);
     let opened: AisColoredOpenedCompounds = std::array::from_fn(|_| Default::default());
     let closed = AisColoredDrawerCompounds::default();
@@ -42,7 +42,7 @@ fn closed_dispatch_shape(scenario: usize) -> Shape {
     shape
 }
 fn dispatch_closed_fixture(
-    base: &Handle<AisColoredDrawer>,
+    base: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     styles: &AisShapeDrawerMap,
     opened: &AisColoredOpenedCompounds,
@@ -61,7 +61,7 @@ fn dispatch_closed_fixture(
 }
 fn closed_dispatch_styles(
     shape: &Shape,
-    custom: &Handle<AisColoredDrawer>,
+    custom: &Handle<dyn AisColoredDrawerSource>,
     scenario: usize,
 ) -> AisShapeDrawerMap {
     let styles = AisShapeDrawerMap::default();

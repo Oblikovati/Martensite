@@ -30,7 +30,7 @@ pub fn ais_colored_shape_compute_selection<S: AisColoredShapeSource + ?Sized>(
 #[allow(clippy::too_many_arguments)] // Pinned protected native overload.
 pub fn ais_colored_shape_compute_subshape_selection<S: AisColoredShapeSource + ?Sized>(
     object: &S,
-    parent: &Handle<AisColoredDrawer>,
+    parent: &Handle<dyn AisColoredDrawerSource>,
     styles: &AisShapeDrawerMap,
     shape: &Shape,
     owner: &dyn HandleReference<StdSelectBRepOwner>,
@@ -167,7 +167,7 @@ fn new_colored_root_owner<S: AisColoredShapeSource + ?Sized>(
 }
 
 fn compute_colored_subshape_selection<S: AisColoredShapeSource + ?Sized>(
-    parent: &Handle<AisColoredDrawer>,
+    parent: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     owner: &dyn HandleReference<StdSelectBRepOwner>,
     context: &ColoredSubshapeSelection<'_, S>,
@@ -195,7 +195,7 @@ fn build_colored_decomposed_sensitive<S: AisColoredShapeSource + ?Sized>(
     build_colored_sensitive(shape, &owner, context)
 }
 fn select_colored_children<S: AisColoredShapeSource + ?Sized>(
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     owner: &dyn HandleReference<StdSelectBRepOwner>,
     context: &ColoredSubshapeSelection<'_, S>,
