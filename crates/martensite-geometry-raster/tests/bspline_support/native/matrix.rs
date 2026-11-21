@@ -103,13 +103,19 @@ fn mutate(space: &Spatial, plane: &Planar) {
     use martensite_tkg2d::geom2d::Geom2dBSplineCurve;
     use martensite_tkg3d::geom::GeomBSplineCurve;
     use martensite_tkmath::gp::{Point2, Point3};
-    let handle = space.curve_part().curve().cast::<GeomBSplineCurve>();
+    let handle = space
+        .curve_part()
+        .curve()
+        .into_downcast::<GeomBSplineCurve>();
     handle
         .get()
         .unwrap()
         .set_pole(2, Point3::new(1., 4., 0.))
         .unwrap();
-    let handle = plane.curve_part().curve().cast::<Geom2dBSplineCurve>();
+    let handle = plane
+        .curve_part()
+        .curve()
+        .into_downcast::<Geom2dBSplineCurve>();
     handle
         .get()
         .unwrap()

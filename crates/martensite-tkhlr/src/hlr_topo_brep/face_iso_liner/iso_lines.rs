@@ -29,7 +29,7 @@ impl IsoContext<'_> {
                 Point2::new(0., prm)
             };
             let iso_line = Handle::new(Geom2dLine::from_point(ori, dir));
-            let curve: Handle<dyn Geom2dCurve> = iso_line.clone().cast();
+            let curve: Handle<dyn Geom2dCurve> = iso_line.upcast();
             let ind_h = hatcher.add_hatching(Geom2dAdaptorCurve::with_curve(&curve)?);
             hatcher.trim_hatching(ind_h)?;
             if hatcher.trim_done(ind_h)? && !hatcher.trim_failed(ind_h)? {

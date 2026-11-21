@@ -7,7 +7,8 @@ use martensite_tkg3d::{
 use martensite_tkmath::gp::{Axis3, Point3};
 
 fn populated_intersector() -> Intersector {
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+    let surface: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     let adaptor = GeomAdaptorSurface::with_bounds(&surface, (-1., 1., -1., 1.)).unwrap();
     let grid = ThePolyhedronOfInterCSurf::on_adaptor(&adaptor, (3, 3), [-1., -1., 1., 1.]).unwrap();
     let mut intersector = Intersector::new();

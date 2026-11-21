@@ -1,7 +1,7 @@
 //! `HLRBRep_ShapeBounds`.
 use crate::hlr_algo::MinMaxIndices;
 use crate::hlr_topo_brep::OutLiner;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 
 /// HLRBRep_ShapeBounds: one shape of the hidden line algorithm: its outliner, its
 /// user data, its number of isolines, the ranges of its vertices, edges and faces
@@ -18,7 +18,7 @@ use martensite_tkernel::standard::{Handle, StandardTransient};
 #[derive(Clone, Default)]
 pub struct ShapeBounds {
     shape: Handle<OutLiner>,
-    shape_data: Handle<StandardTransient>,
+    shape_data: Handle<dyn Transient>,
     nb_iso: i32,
     vert_start: i32,
     vert_end: i32,
@@ -42,7 +42,7 @@ impl ShapeBounds {
     /// `ShapeBounds::with_data(&s, &data, 0, (1, 8, 1, 12, 1, 6))`.
     pub fn with_data(
         s: &Handle<OutLiner>,
-        s_data: &Handle<StandardTransient>,
+        s_data: &Handle<dyn Transient>,
         nb_iso: i32,
         r: ShapeRanges,
     ) -> Self {
@@ -87,12 +87,12 @@ impl ShapeBounds {
     }
 
     /// ShapeData(SD); `sb.set_shape_data(&data)`.
-    pub fn set_shape_data(&mut self, sd: &Handle<StandardTransient>) {
+    pub fn set_shape_data(&mut self, sd: &Handle<dyn Transient>) {
         self.shape_data = sd.clone();
     }
 
     /// ShapeData(); `sb.shape_data()`.
-    pub fn shape_data(&self) -> &Handle<StandardTransient> {
+    pub fn shape_data(&self) -> &Handle<dyn Transient> {
         &self.shape_data
     }
 

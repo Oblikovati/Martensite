@@ -68,7 +68,7 @@ fn mutate(surface: &Surface) {
     let handle = surface
         .surface_part()
         .surface()
-        .cast::<martensite_tkg3d::geom::GeomBezierSurface>();
+        .into_downcast::<martensite_tkg3d::geom::GeomBezierSurface>();
     handle
         .get()
         .unwrap()

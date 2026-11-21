@@ -14,7 +14,7 @@ pub fn geometry(index: usize) -> Handle<GeomBezierSurface> {
     martensite_tkgeombase::geom_tools::read_surface(&mut IoStream::from_bytes(
         record.as_bytes().to_vec(),
     ))
-    .cast()
+    .into_downcast()
 }
 #[cfg(all(target_os = "linux", feature = "x11-integration-tests"))]
 pub fn look() -> Look {

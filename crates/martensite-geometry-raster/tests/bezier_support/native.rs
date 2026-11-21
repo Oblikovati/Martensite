@@ -46,13 +46,19 @@ fn mutate_geometry(space: &Spatial, plane: &Planar) {
     use martensite_tkg2d::geom2d::Geom2dBezierCurve;
     use martensite_tkg3d::geom::GeomBezierCurve;
     use martensite_tkmath::gp::{Point2, Point3};
-    let handle = space.curve_part().curve().cast::<GeomBezierCurve>();
+    let handle = space
+        .curve_part()
+        .curve()
+        .into_downcast::<GeomBezierCurve>();
     handle
         .get()
         .unwrap()
         .set_pole(2, Point3::new(0., 8., 0.))
         .unwrap();
-    let handle = plane.curve_part().curve().cast::<Geom2dBezierCurve>();
+    let handle = plane
+        .curve_part()
+        .curve()
+        .into_downcast::<Geom2dBezierCurve>();
     handle
         .get()
         .unwrap()
