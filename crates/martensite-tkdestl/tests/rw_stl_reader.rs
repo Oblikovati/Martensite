@@ -9,7 +9,7 @@ use martensite_tkernel::{
     message::{ProgressIndicator, ProgressRange},
     ncollection::Sequence,
     osd::{CadPath, IStream, StreamAccess},
-    standard::{Handle, ReadLineBuffer, SharedState, StandardTransient},
+    standard::{Handle, ReadLineBuffer, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkmath::{gp::Xyz, poly::Triangulation};
@@ -20,13 +20,13 @@ use support::shapes::mesh_of;
 /// A reader recording its callbacks.
 #[derive(Default)]
 struct RecordingReader {
-    transient: StandardTransient,
+
     base: RwStlReaderBase,
     nodes: SharedState<Vec<[f64; 3]>>,
     triangles: SharedState<Vec<[i32; 3]>>,
     solids: SharedState<i32>,
 }
-impl_transient!(RecordingReader, "RecordingReader", dyn RwStlReader, transient, interfaces: [dyn RwStlReader]);
+impl_transient!(RecordingReader, "RecordingReader", dyn RwStlReader, interfaces: [dyn RwStlReader]);
 impl RwStlReader for RecordingReader {
     fn reader_base(&self) -> &RwStlReaderBase {
         &self.base

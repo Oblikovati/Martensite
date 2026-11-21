@@ -1,10 +1,6 @@
 //! A mesh data source over a triangulation, as the mesh display commands use: nodes and triangles
 //! by identifier, and each triangle's normal.
-use martensite_tkernel::{
-    impl_transient,
-    ncollection::Array1,
-    standard::{Handle, StandardTransient},
-};
+use martensite_tkernel::{impl_transient, ncollection::Array1, standard::Handle};
 use martensite_tkmath::{gp::Vector3, poly::Triangulation};
 use martensite_tkmeshvs::{MeshVSDataSource, MeshVSEntityType, MeshVSPackedMap, flags::*};
 
@@ -13,21 +9,19 @@ const SQUARE_CONFUSION: f64 = 1.0e-14;
 
 /// A triangulation's nodes, triangles and normals; `StlDataSource::new(&mesh)`.
 pub struct StlDataSource {
-    transient: StandardTransient,
     nodes: MeshVSPackedMap,
     elements: MeshVSPackedMap,
     node_coords: Vec<[f64; 3]>,
     element_nodes: Vec<[i32; 3]>,
     element_normals: Vec<[f64; 3]>,
 }
-impl_transient!(StlDataSource, "StlDataSource", dyn MeshVSDataSource, transient, interfaces: [dyn MeshVSDataSource]);
+impl_transient!(StlDataSource, "StlDataSource", dyn MeshVSDataSource, interfaces: [dyn MeshVSDataSource]);
 
 impl StlDataSource {
     /// Copies the mesh; the identifiers run from 1 as its indices do.
     pub fn new(mesh: &Handle<Triangulation>) -> Self {
         let mesh = mesh.get().expect("a read mesh");
         let mut source = Self {
-            transient: StandardTransient::default(),
             nodes: MeshVSPackedMap::default(),
             elements: MeshVSPackedMap::default(),
             node_coords: Vec::new(),
