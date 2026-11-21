@@ -8,7 +8,7 @@ use crate::aspect::{
 };
 #[cfg(not(windows))]
 use crate::platform::unsupported;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// The Win32 backend named by the unsupported errors.
@@ -28,7 +28,6 @@ pub struct WntWindowFields {
 
 /// A Win32 window wrapper; `WntWindow::from_handle(hwnd)` borrows an application HWND.
 pub struct WntWindow {
-    transient: StandardTransient,
     base: AspectWindowBase,
     /// The fields, shared by every handle.
     pub fields: SharedState<WntWindowFields>,
@@ -37,7 +36,7 @@ pub struct WntWindow {
     #[cfg(windows)]
     connection_lease: crate::aspect::AspectDisplayConnectionLease,
 }
-martensite_tkernel::impl_transient!(WntWindow, "WNT_Window", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(WntWindow, "WNT_Window", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 
 /// `WNT_WindowPtr`: a reference to a Win32 window.
 pub type WntWindowPtr = Handle<WntWindow>;
@@ -85,7 +84,6 @@ impl WntWindow {
             let base = AspectWindowBase::default();
             base.fields_mut().display = display;
             Ok(Self {
-                transient: StandardTransient::default(),
                 base,
                 fields: SharedState::new(fields),
                 _owner: None,

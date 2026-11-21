@@ -37,8 +37,8 @@ impl Deref for ImageAlienPixMap {
         &self.base
     }
 }
-martensite_tkernel::impl_transient!(ImageAlienPixMap, "Image_AlienPixMap", ImagePixMap, base,
-    interfaces:[dyn super::ImagePixMapSource]);
+martensite_tkernel::impl_transient!(ImageAlienPixMap, "Image_AlienPixMap", ImagePixMap,
+    interfaces:[dyn super::ImagePixMapSource, dyn super::ImagePixMapObject]);
 
 /// A failure message to the default messenger.
 fn send_fail(text: &str) {

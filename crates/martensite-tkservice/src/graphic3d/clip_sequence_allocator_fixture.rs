@@ -4,7 +4,7 @@ use super::{Graphic3dClipPlane, Graphic3dSequenceOfHClipPlane};
 use martensite_tkernel::ncollection::{
     AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource,
 };
-use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use std::{
     ptr::NonNull,
     sync::{Arc, Weak},
@@ -21,7 +21,7 @@ pub(super) struct ClipArgumentAllocator {
     pub(super) scene: Weak<ClipArgumentScene>,
 }
 martensite_tkernel::impl_transient!(ClipArgumentAllocator,"Martensite_ClipArgumentAllocator",
-    AllocatorObject,parent,interfaces:[dyn AllocatorSource]);
+    AllocatorObject,interfaces:[dyn AllocatorSource]);
 // SAFETY: all allocations/free delegate to this actual Standard heap provider.
 unsafe impl AllocatorSource for ClipArgumentAllocator {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -37,40 +37,45 @@ unsafe impl AllocatorSource for ClipArgumentAllocator {
     }
 }
 impl ClipArgumentAllocator {
-    fn record(&self, scene: &ClipArgumentScene, phase: &str) {
+    fn record(&self, scene: &ClipArgumentScene, phase: &str, owners: usize) {
         let row = format!(
             "{phase} {} {} {} {}",
             scene.collection.size(),
-            self.transient_base().ref_count(),
-            scene.original.observe().ref_count(),
-            scene.replacement.observe().ref_count()
+            owners,
+            scene.original.ref_count(),
+            scene.replacement.ref_count()
         );
         scene.rows.write().push(row);
     }
 }
 
-fn record_argument_allocate_before(source: &ClipArgumentAllocator) -> Arc<ClipArgumentScene> {
+fn record_argument_allocate_before(
+    source: &ClipArgumentAllocator,
+    owners: usize,
+) -> Arc<ClipArgumentScene> {
     let scene = source.scene.upgrade().unwrap();
-    source.record(&scene, "allocate-before");
+    source.record(&scene, "allocate-before", owners);
     scene
 }
-fn record_argument_allocate_after(source: &ClipArgumentAllocator) {
+fn record_argument_allocate_after(source: &ClipArgumentAllocator, owners: usize) {
     let scene = source.scene.upgrade().unwrap();
-    source.record(&scene, "allocate-after");
+    source.record(&scene, "allocate-after", owners);
 }
-fn record_argument_free(source: &ClipArgumentAllocator) {
+fn record_argument_free(source: &ClipArgumentAllocator, owners: usize) {
     let scene = source.scene.upgrade().unwrap();
-    source.record(&scene, "free-before");
+    source.record(&scene, "free-before", owners);
 }
 fn clip_argument_allocate(invocation: &AllocatorInvocation, size: usize) -> Option<NonNull<u8>> {
+    let owners = invocation.ref_count();
     // SAFETY: selectors read actual fields/plain trace values without retiring native objects.
     let scene = martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(record_argument_allocate_before)
+        invocation.capture(|source| record_argument_allocate_before(source, owners))
     });
-    *scene.argument.write() = scene.replacement.observe().clone();
+    *scene.argument.write() = scene.replacement.upgrade().clone();
+    let owners = invocation.ref_count();
     // SAFETY: the after selector records plain trace values without retiring objects.
     martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(record_argument_allocate_after)
+        invocation.capture(|source| record_argument_allocate_after(source, owners))
     });
     invocation.allocate_base(size)
 }
@@ -78,9 +83,10 @@ unsafe fn clip_argument_free(
     invocation: &AllocatorInvocation,
     pointer: *mut u8,
 ) -> Result<(), Failure> {
+    let owners = invocation.ref_count();
     // SAFETY: record step is callback-free; current resource receives the original accepted pointer.
     martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(record_argument_free)
+        invocation.capture(|source| record_argument_free(source, owners))
     });
     // SAFETY: the caller passes the pointer this resource accepted from its allocation.
     unsafe { invocation.free_base(pointer) }

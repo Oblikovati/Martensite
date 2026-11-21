@@ -9,14 +9,13 @@ use super::{
 use crate::image::{
     ImageAlienPixMap, ImageCompressedPixMap, ImageDdsParser, ImagePixMap, ImageSupportedFormats,
 };
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A cube map packed in one image or DDS file.
 ///
 /// Example: `Graphic3dCubeMapPacked::from_pix_map(pixmap, &Graphic3dCubeMapOrder::default_order())`.
 pub struct Graphic3dCubeMapPacked {
-    transient: StandardTransient,
     base: Graphic3dCubeMapBase,
     order: Graphic3dCubeMapOrder,
     tile_number_x: SharedState<u32>,
@@ -27,7 +26,7 @@ impl Graphic3dTextureRoot for Graphic3dCubeMapPacked {
     }
 }
 impl Graphic3dTextureMap for Graphic3dCubeMapPacked {}
-martensite_tkernel::impl_transient!(Graphic3dCubeMapPacked, "Graphic3d_CubeMapPacked", dyn Graphic3dCubeMap, transient,
+martensite_tkernel::impl_transient!(Graphic3dCubeMapPacked, "Graphic3d_CubeMapPacked", dyn Graphic3dCubeMap,
     interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dCubeMap]);
 
 /// `checkImage`: the tile grid width of a 1x6, 6x1, 2x3 or 3x2 image, else `None`. A zero
@@ -70,7 +69,6 @@ impl Graphic3dCubeMapPacked {
     pub fn from_file(file_path: &AsciiString, order: &Graphic3dValidatedCubeMapOrder) -> Self {
         let base = Graphic3dCubeMapBase::from_file(file_path, false);
         Self {
-            transient: StandardTransient::default(),
             base,
             order: *order.order(),
             tile_number_x: SharedState::new(1),
@@ -79,12 +77,11 @@ impl Graphic3dCubeMapPacked {
     /// An image whose shape gives the tile grid; an image of another shape is dropped.
     /// Example: `Graphic3dCubeMapPacked::from_pix_map(pixmap, &Graphic3dCubeMapOrder::default_order())`.
     pub fn from_pix_map(
-        image: Handle<ImagePixMap>,
+        image: Handle<dyn crate::image::ImagePixMapObject>,
         order: &Graphic3dValidatedCubeMapOrder,
     ) -> Self {
         let base = Graphic3dCubeMapBase::from_pix_map(Handle::default(), false);
         let texture = Self {
-            transient: StandardTransient::default(),
             base,
             order: *order.order(),
             tile_number_x: SharedState::new(1),
@@ -112,7 +109,7 @@ impl Graphic3dCubeMapPacked {
         if !image.load(file_path) {
             return;
         }
-        let pixmap: Handle<ImagePixMap> = image.cast();
+        let pixmap: Handle<dyn crate::image::ImagePixMapObject> = image.cast();
         let Some(tiles) = pixmap
             .get()
             .and_then(|p| tile_number_x_of(p.width(), p.height()))
@@ -125,7 +122,11 @@ impl Graphic3dCubeMapPacked {
     }
     /// The tile of the current side as a new image. The native wrapper aliases the tile
     /// inside the packed image; here it holds a copy of the tile rows (row stride kept).
-    fn tile_wrapper(&self, pixmap: &ImagePixMap, tiles: u32) -> Handle<ImagePixMap> {
+    fn tile_wrapper(
+        &self,
+        pixmap: &ImagePixMap,
+        tiles: u32,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let tile_size = pixmap.width() / tiles as usize;
         let is_top_down = pixmap.is_top_down();
         self.base.root.fields.write().is_top_down = is_top_down;
@@ -158,7 +159,7 @@ impl Graphic3dCubeMapPacked {
         );
         pixmap.set_top_down(is_top_down);
         if wrapped {
-            Handle::new(wrapper)
+            Handle::new(wrapper).into_upcast()
         } else {
             Handle::default()
         }
@@ -213,7 +214,10 @@ impl Graphic3dCubeMap for Graphic3dCubeMapPacked {
         image
     }
     /// The tile of the current side (loading the file first when needed), or null.
-    fn value(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn value(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let root = &self.base.root;
         if *self.tile_number_x.read() == 0 {
             return Handle::default();

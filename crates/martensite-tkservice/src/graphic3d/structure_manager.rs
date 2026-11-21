@@ -40,15 +40,13 @@ pub struct Graphic3dStructureManagerFields {
 
 /// A structure manager; `Graphic3dStructureManager::new(&driver)?`.
 pub struct Graphic3dStructureManager {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<Graphic3dStructureManagerFields>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dStructureManager,
     "Graphic3d_StructureManager",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Drop for Graphic3dStructureManager {
@@ -71,7 +69,6 @@ impl Graphic3dStructureManager {
             device_lost_flag: false,
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         })
     }
@@ -182,7 +179,7 @@ impl Graphic3dStructureManager {
     /// `RegisterObject`: binds the affinity of an object; `manager.register_object(address, &affinity)`.
     pub fn register_object(
         &self,
-        object: &Handle<StandardTransient>,
+        object: &Handle<dyn martensite_tkernel::standard::Transient>,
         affinity: &Handle<Graphic3dViewAffinity>,
     ) {
         let key = object.object_address() as usize;
@@ -193,7 +190,7 @@ impl Graphic3dStructureManager {
         fields.registered_objects.insert(key, affinity.clone());
     }
     /// `UnregisterObject`; `manager.unregister_object(&object)`.
-    pub fn unregister_object(&self, object: &Handle<StandardTransient>) {
+    pub fn unregister_object(&self, object: &Handle<dyn martensite_tkernel::standard::Transient>) {
         self.fields
             .write()
             .registered_objects
@@ -202,7 +199,7 @@ impl Graphic3dStructureManager {
     /// `ObjectAffinity`: the affinity of an object, or null; `manager.object_affinity(&object)`.
     pub fn object_affinity(
         &self,
-        object: &Handle<StandardTransient>,
+        object: &Handle<dyn martensite_tkernel::standard::Transient>,
     ) -> Handle<Graphic3dViewAffinity> {
         let fields = self.fields.read();
         fields

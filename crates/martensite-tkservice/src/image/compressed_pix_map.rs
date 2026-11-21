@@ -30,7 +30,6 @@ pub struct ImageCompressedPixMapFields {
 
 /// A compressed image; `ImageCompressedPixMap::default().is_top_down()`.
 pub struct ImageCompressedPixMap {
-    transient: StandardTransient,
     fields: SharedState<ImageCompressedPixMapFields>,
 }
 impl Default for ImageCompressedPixMap {
@@ -48,7 +47,6 @@ impl Default for ImageCompressedPixMap {
             is_complete_mips: false,
         };
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }
@@ -56,8 +54,7 @@ impl Default for ImageCompressedPixMap {
 martensite_tkernel::impl_transient!(
     ImageCompressedPixMap,
     "Image_CompressedPixMap",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl ImageCompressedPixMap {
@@ -148,7 +145,6 @@ impl ImageCompressedPixMap {
 ///
 /// Example: `let formats = ImageSupportedFormats::default(); formats.add(ImageFormat::Rgba);`.
 pub struct ImageSupportedFormats {
-    transient: StandardTransient,
     state: SharedState<(Vec<bool>, bool)>,
 }
 impl Default for ImageSupportedFormats {
@@ -156,7 +152,6 @@ impl Default for ImageSupportedFormats {
     fn default() -> Self {
         let formats = vec![false; IMAGE_COMPRESSED_FORMAT_NB as usize];
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new((formats, false)),
         }
     }
@@ -164,8 +159,7 @@ impl Default for ImageSupportedFormats {
 martensite_tkernel::impl_transient!(
     ImageSupportedFormats,
     "Image_SupportedFormats",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl ImageSupportedFormats {

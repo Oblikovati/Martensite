@@ -3,7 +3,7 @@
 use super::{
     Graphic3dCubeMapSide, Graphic3dTextureMap, Graphic3dTextureRootBase, Graphic3dTypeOfTexture,
 };
-use crate::image::{ImageCompressedPixMap, ImagePixMap, ImageSupportedFormats};
+use crate::image::{ImageCompressedPixMap, ImageSupportedFormats};
 use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
@@ -49,7 +49,10 @@ impl Graphic3dCubeMapBase {
     }
     /// `Graphic3d_CubeMap(thePixmap, theToGenerateMipmaps)`;
     /// `Graphic3dCubeMapBase::from_pix_map(Handle::default(), false)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>, to_generate_mipmaps: bool) -> Self {
+    pub fn from_pix_map(
+        pix_map: Handle<dyn crate::image::ImagePixMapObject>,
+        to_generate_mipmaps: bool,
+    ) -> Self {
         Self::with_root(
             Graphic3dTextureRootBase::from_pix_map(pix_map, Graphic3dTypeOfTexture::Cubemap),
             to_generate_mipmaps,
@@ -71,12 +74,16 @@ pub trait Graphic3dCubeMap: Graphic3dTextureMap {
         supported: &Handle<ImageSupportedFormats>,
     ) -> Handle<ImageCompressedPixMap>;
     /// The image of the current side, or null; `cube_map.value(&supported)`.
-    fn value(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap>;
+    fn value(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject>;
 }
 martensite_tkernel::impl_transient_interface!(
     dyn Graphic3dCubeMap,
     "Graphic3d_CubeMap",
-    dyn Graphic3dTextureMap
+    dyn Graphic3dTextureMap,
+    upcasts: [dyn Graphic3dTextureMap]
 );
 
 /// The side of an integer value, `None` past `NEG_Z`.

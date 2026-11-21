@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Test adapter whose real retained owner supplies every delegated view operation.
 pub(super) struct ReferenceCaptureView {
-    transient: StandardTransient,
+
     retained: Graphic3dRetainedView,
     pub(super) kind: CaptureBufferKindRef,
     pub(super) reads: SharedState<Vec<Graphic3dBufferType>>,
@@ -17,7 +17,7 @@ pub(super) struct ReferenceCaptureView {
     pub(super) events: SharedState<Vec<(&'static str, bool)>>,
     nested_active: AtomicBool,
 }
-martensite_tkernel::impl_transient!(ReferenceCaptureView, "ReferenceCaptureView", StandardTransient, transient, interfaces:[dyn Graphic3dCView]);
+martensite_tkernel::impl_transient!(ReferenceCaptureView, "ReferenceCaptureView", StandardTransient, interfaces:[dyn Graphic3dCView]);
 impl ReferenceCaptureView {
     /// Own a callback adapter sharing one kind field; `ReferenceCaptureView::new(manager, layers)`.
     pub(super) fn new(
@@ -25,7 +25,7 @@ impl ReferenceCaptureView {
         layers: &[Handle<Graphic3dLayer>],
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
+
             retained: Graphic3dRetainedView::new(manager, layers).unwrap(),
             kind: CaptureBufferKindRef::new(Graphic3dBufferType::Rgb),
             reads: SharedState::new(Vec::new()),
@@ -118,19 +118,19 @@ impl Graphic3dCView for ReferenceCaptureView {
         );
         self.observe_capture(_image, kind)
     }
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient> {
+    fn fbo_create(&self, width: i32, height: i32) -> Handle<dyn martensite_tkernel::standard::Transient> {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_create(width, height)
     }
-    fn fbo_release(&self, fbo: &mut Handle<StandardTransient>) {
+    fn fbo_release(&self, fbo: &mut Handle<dyn martensite_tkernel::standard::Transient>) {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_release(fbo);
     }
-    fn fbo_get_dimensions(&self, fbo: &Handle<StandardTransient>) -> [i32; 4] {
+    fn fbo_get_dimensions(&self, fbo: &Handle<dyn martensite_tkernel::standard::Transient>) -> [i32; 4] {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_get_dimensions(fbo)
     }
-    fn fbo_change_viewport(&self, fbo: &Handle<StandardTransient>, width: i32, height: i32) {
+    fn fbo_change_viewport(&self, fbo: &Handle<dyn martensite_tkernel::standard::Transient>, width: i32, height: i32) {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_change_viewport(fbo, width, height);
     }

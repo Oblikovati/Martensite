@@ -34,15 +34,9 @@ pub(super) struct LightState {
 
 /// A light source; `Graphic3dCLight::new(Graphic3dTypeOfLightSource::Spot)`.
 pub struct Graphic3dCLight {
-    transient: StandardTransient,
     pub(super) state: SharedState<LightState>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dCLight,
-    "Graphic3d_CLight",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dCLight, "Graphic3d_CLight", StandardTransient);
 
 /// `makeId`: `Graphic3d_CLight_<amb|dir|pos|spot><n>` with the next counter value.
 fn make_id(kind: Graphic3dTypeOfLightSource) -> AsciiString {
@@ -103,7 +97,6 @@ impl Graphic3dCLight {
             to_cast_shadows: false,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

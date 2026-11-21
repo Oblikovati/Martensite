@@ -1,7 +1,7 @@
 //! `Media_Frame` and `Media_Scaler` as the build without FFmpeg compiles them: a frame has no
 //! FFmpeg frame, so it is always empty, and the scaler never converts.
 use super::{MediaAvFrame, MediaSwsContext};
-use crate::image::{ImageFormat, ImagePixMap};
+use crate::image::ImageFormat;
 use martensite_tkernel::ncollection::Vec2;
 use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 
@@ -20,11 +20,10 @@ pub struct MediaFrameFields {
 
 /// A decoded frame; `MediaFrame::default().is_empty()`.
 pub struct MediaFrame {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<MediaFrameFields>,
 }
-martensite_tkernel::impl_transient!(MediaFrame, "Media_Frame", StandardTransient, transient);
+martensite_tkernel::impl_transient!(MediaFrame, "Media_Frame", StandardTransient);
 
 impl Default for MediaFrame {
     /// Pts 0, pixel ratio 1, unlocked.
@@ -36,7 +35,6 @@ impl Default for MediaFrame {
             is_locked: false,
         };
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }
@@ -134,7 +132,7 @@ impl MediaFrame {
         self.fields.write().is_locked = to_lock;
     }
     /// `InitWrapper`: false without FFmpeg (and for a null image); `frame.init_wrapper(&pixmap)`.
-    pub fn init_wrapper(&self, pix_map: &Handle<ImagePixMap>) -> bool {
+    pub fn init_wrapper(&self, pix_map: &Handle<dyn crate::image::ImagePixMapObject>) -> bool {
         self.unref();
         let _ = pix_map;
         false
@@ -158,11 +156,10 @@ pub struct MediaScalerFields {
 
 /// A pixel format converter; `MediaScaler::default().is_valid() == false`.
 pub struct MediaScaler {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<MediaScalerFields>,
 }
-martensite_tkernel::impl_transient!(MediaScaler, "Media_Scaler", StandardTransient, transient);
+martensite_tkernel::impl_transient!(MediaScaler, "Media_Scaler", StandardTransient);
 
 impl Default for MediaScaler {
     fn default() -> Self {
@@ -174,7 +171,6 @@ impl Default for MediaScaler {
             res_format: 0,
         };
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

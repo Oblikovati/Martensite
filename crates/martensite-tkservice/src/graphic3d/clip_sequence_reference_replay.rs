@@ -3,7 +3,7 @@ use super::clip_sequence_storage::ClipPlaneNodeLease;
 use super::{
     Graphic3dClipPlane, Graphic3dSequenceOfHClipPlane, Graphic3dSequenceOfHClipPlaneIterator,
 };
-use martensite_tkernel::standard::{Handle, Transient};
+use martensite_tkernel::standard::Handle;
 type ClipReferenceActors = (
     Handle<Graphic3dSequenceOfHClipPlane>,
     Handle<Graphic3dClipPlane>,
@@ -29,9 +29,9 @@ fn record_reference_counts(rows: &mut Vec<String>, phase: &str, actors: &ClipRef
         phase,
         &[
             sequence.size(),
-            sequence.transient_base().ref_count(),
-            first.ref_count(),
-            second.ref_count(),
+            i32::try_from(sequence.ref_count()).unwrap(),
+            i32::try_from(first.ref_count()).unwrap(),
+            i32::try_from(second.ref_count()).unwrap(),
         ],
     );
 }
@@ -93,9 +93,9 @@ fn record_cursor_edit(
         &[
             i32::from(same),
             sequence.size(),
-            first.ref_count(),
-            second.ref_count(),
-            third.ref_count(),
+            i32::try_from(first.ref_count()).unwrap(),
+            i32::try_from(second.ref_count()).unwrap(),
+            i32::try_from(third.ref_count()).unwrap(),
         ],
     );
 }
@@ -117,11 +117,15 @@ fn record_iterator_borrow(
     sequence: &Handle<Graphic3dSequenceOfHClipPlane>,
     iterator: &Graphic3dSequenceOfHClipPlaneIterator,
 ) {
-    let count = iterator.value_ref().unwrap().observe().ref_count();
+    let count = i32::try_from(iterator.value_ref().unwrap().ref_count()).unwrap();
     record_native_values(
         rows,
         "iterator-borrow",
-        &[i32::from(iterator.more()), sequence.ref_count(), count],
+        &[
+            i32::from(iterator.more()),
+            i32::try_from(sequence.ref_count()).unwrap(),
+            count,
+        ],
     );
 }
 fn replay_null_initialization(rows: &mut Vec<String>) {
@@ -130,7 +134,12 @@ fn replay_null_initialization(rows: &mut Vec<String>) {
     let mut iterator = Graphic3dSequenceOfHClipPlaneIterator::from_handle(&sequence);
     record_iterator_borrow(rows, &sequence, &iterator);
     iterator.init_handle(&Handle::<Graphic3dSequenceOfHClipPlane>::default());
-    record_empty_cursor(rows, "iterator-null", sequence.ref_count(), &iterator);
+    record_empty_cursor(
+        rows,
+        "iterator-null",
+        i32::try_from(sequence.ref_count()).unwrap(),
+        &iterator,
+    );
     sequence.remove_at(&mut iterator).unwrap();
     record_empty_cursor(rows, "remove-end", sequence.size(), &iterator);
 }
@@ -176,7 +185,7 @@ fn record_removed_cursor(
         &[
             i32::from(iterator.more()),
             actors.0.size(),
-            actors.3.ref_count(),
+            i32::try_from(actors.3.ref_count()).unwrap(),
         ],
     );
 }

@@ -1,7 +1,7 @@
 //! Behaviour tests of `Aspect_Grid_Bounds`.
 #![allow(non_snake_case)]
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::StandardTransient;
+
 use martensite_tkservice::aspect::{
     AspectCircularGrid, AspectCircularGridBase, AspectCircularGridMembers, AspectGrid,
     AspectGridBase, AspectRectangularGrid, AspectRectangularGridBase, AspectRectangularGridMembers,
@@ -12,17 +12,17 @@ use std::f64::consts::PI;
 // Display/Erase/IsDisplayed/UpdateDisplay are pure virtual on the base. V3d_RectangularGrid
 // supplies them in production; these tests only exercise the bounds accessors.
 struct RectGridStub {
-    transient: StandardTransient,
+
     base: AspectRectangularGridBase,
 }
-impl_transient!(RectGridStub, "RectGridStub", dyn AspectRectangularGrid, transient,
+impl_transient!(RectGridStub, "RectGridStub", dyn AspectRectangularGrid,
     interfaces: [dyn AspectGrid, dyn AspectRectangularGrid]);
 impl RectGridStub {
     fn new(theXStep: f64, theYStep: f64) -> Self {
         let base = AspectRectangularGridBase::new(theXStep, theYStep, 0.0, 0.0, 0.0, 0.0, 0.0)
             .expect("valid steps");
         Self {
-            transient: StandardTransient::default(),
+
             base,
         }
     }
@@ -51,16 +51,16 @@ impl AspectRectangularGrid for RectGridStub {
 }
 
 struct CircGridStub {
-    transient: StandardTransient,
+
     base: AspectCircularGridBase,
 }
-impl_transient!(CircGridStub, "CircGridStub", dyn AspectCircularGrid, transient,
+impl_transient!(CircGridStub, "CircGridStub", dyn AspectCircularGrid,
     interfaces: [dyn AspectGrid, dyn AspectCircularGrid]);
 impl CircGridStub {
     fn new(theRadiusStep: f64, theDivisions: i32) -> Self {
         let base = AspectCircularGridBase::new(theRadiusStep, theDivisions, 0.0, 0.0, 0.0);
         Self {
-            transient: StandardTransient::default(),
+
             base,
         }
     }

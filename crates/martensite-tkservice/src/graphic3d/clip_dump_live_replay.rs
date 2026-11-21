@@ -1,38 +1,42 @@
-//! Native child callbacks edit other nodes while DumpJson keeps a live traversal and no owners.
+//! Child callbacks edit real next nodes while each DumpJson receiver owns one snapshot (#592).
 use super::{Graphic3dClipPlane, Graphic3dClipPlaneSource, Graphic3dSequenceOfHClipPlane};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Handle, SharedState, Transient, WeakHandle};
-use std::{io, sync::Arc};
+use martensite_tkernel::standard::{Handle, SharedState, WeakHandle};
+use std::{
+    io,
+    sync::{Arc, OnceLock},
+};
 struct ClipDumpLiveEdit {
     remove: WeakHandle<dyn Graphic3dClipPlaneSource>,
     append: WeakHandle<dyn Graphic3dClipPlaneSource>,
 }
 struct ClipDumpLivePlaybackPlane {
     base: Graphic3dClipPlane,
+    identity: OnceLock<WeakHandle<ClipDumpLivePlaybackPlane>>,
     tag: i32,
     collection: WeakHandle<Graphic3dSequenceOfHClipPlane>,
     rows: Arc<SharedState<Vec<String>>>,
     edit: SharedState<Option<ClipDumpLiveEdit>>,
 }
 martensite_tkernel::impl_transient!(ClipDumpLivePlaybackPlane,
-    "Martensite_ClipDumpLivePlaybackPlane", Graphic3dClipPlane, base,
+    "Martensite_ClipDumpLivePlaybackPlane", Graphic3dClipPlane,
     interfaces: [dyn Graphic3dClipPlaneSource]);
 impl Graphic3dClipPlaneSource for ClipDumpLivePlaybackPlane {
     fn clip_plane_base(&self) -> &Graphic3dClipPlane {
         &self.base
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
-        let sequence = self.collection.observe();
+        let sequence = self.collection.upgrade();
         self.rows.write().push(format!(
             "visit {} {depth} {} {}",
             self.tag,
             sequence.size(),
-            self.transient_base().ref_count()
+            self.identity.get().unwrap().ref_count()
         ));
         let edit = self.edit.write().take();
         if let Some(edit) = edit {
-            sequence.remove_reference(&*edit.remove.observe());
-            sequence.append_reference(&*edit.append.observe());
+            sequence.remove_reference(&edit.remove.upgrade());
+            sequence.append_reference(&edit.append.upgrade());
         }
         stream.append(&format!("\"tag\": {}", self.tag));
         Ok(())
@@ -43,13 +47,16 @@ fn live_dump_plane(
     rows: &Arc<SharedState<Vec<String>>>,
     tag: i32,
 ) -> Handle<ClipDumpLivePlaybackPlane> {
-    Handle::new(ClipDumpLivePlaybackPlane {
+    let plane = Handle::new(ClipDumpLivePlaybackPlane {
         base: Graphic3dClipPlane::default(),
+        identity: OnceLock::new(),
         tag,
         collection: sequence.downgrade(),
         rows: rows.clone(),
         edit: SharedState::default(),
-    })
+    });
+    plane.identity.set(plane.downgrade()).unwrap();
+    plane
 }
 #[test]
 fn null_dump_children_and_depth_zero_replay_native_json_without_projection() {
@@ -97,7 +104,7 @@ fn prepare_live_dump(actors: &ClipDumpLiveActors) {
     });
     actors
         .sequence
-        .append_reference(&*actors.first.observe_as::<dyn Graphic3dClipPlaneSource>());
+        .append_reference(&actors.first.upcast::<dyn Graphic3dClipPlaneSource>());
     actors.sequence.append_reference(&actors.second);
     actors.sequence.set_override_global(true);
 }
@@ -111,7 +118,7 @@ fn live_dump_count_row(actors: &ClipDumpLiveActors) -> String {
     )
 }
 #[test]
-fn virtual_dump_edits_follow_real_next_nodes_and_preserve_native_counts() {
+fn virtual_dump_edits_follow_real_nodes_with_one_owned_receiver_snapshot() {
     let actors = live_dump_actors();
     prepare_live_dump(&actors);
     let mut stream = DumpStream::default();
@@ -122,5 +129,9 @@ fn virtual_dump_edits_follow_real_next_nodes_and_preserve_native_counts() {
         .lines()
         .skip(2)
         .collect();
-    assert_eq!(*actors.rows.read(), expected);
+    let actual = actors.rows.read();
+    // #592: each virtual call owns one Arc snapshot; traversal, JSON and final owners stay native.
+    assert_eq!(&expected[..2], &["visit 1 -2 2 2", "visit 3 -2 2 2"]);
+    assert_eq!(&actual[..2], &["visit 1 -2 2 3", "visit 3 -2 2 3"]);
+    assert_eq!(&actual[2..], &expected[2..]);
 }

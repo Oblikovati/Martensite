@@ -7,20 +7,17 @@ use std::io;
 /// A view visibility mask, visible in every view at first.
 /// Example: `let affinity = Graphic3dViewAffinity::default(); affinity.set_view_visible(3, false);`.
 pub struct Graphic3dViewAffinity {
-    transient: StandardTransient,
     mask: SharedState<u32>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dViewAffinity,
     "Graphic3d_ViewAffinity",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Default for Graphic3dViewAffinity {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             mask: SharedState::new(u32::MAX),
         }
     }

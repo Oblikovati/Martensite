@@ -20,10 +20,11 @@ impl Graphic3dClipSequenceFieldRef {
     }
 }
 impl HandleReference<dyn Graphic3dClipPlaneSequenceSource> for Graphic3dClipSequenceFieldRef {
-    fn observe(&self) -> HandleObserver<dyn Graphic3dClipPlaneSequenceSource> {
-        self.slot.upgrade().map_or_else(
-            || Handle::<dyn Graphic3dClipPlaneSequenceSource>::default().observe(),
-            |slot| slot.observe(),
+    fn observe(&self) -> HandleObserver<'_, dyn Graphic3dClipPlaneSequenceSource> {
+        HandleObserver::Snapshot(
+            self.slot
+                .upgrade()
+                .map_or_else(Handle::default, |slot| slot.observe().into_handle()),
         )
     }
     fn reference_address(&self) -> *const () {
@@ -46,14 +47,14 @@ mod tests {
     use super::*;
     use crate::graphic3d::Graphic3dSequenceOfHClipPlane;
     #[test]
-    fn captured_clipping_field_keeps_identity_and_observes_replacement_without_ownership() {
+    fn captured_clipping_field_keeps_identity_and_owns_only_its_read_snapshot() {
         let first = Handle::new(Graphic3dSequenceOfHClipPlane::default());
         let second = Handle::new(Graphic3dSequenceOfHClipPlane::default());
         let slot = Arc::new(IntrusiveReferenceSlot::default());
         slot.assign(&first).unwrap();
         let alias = Graphic3dClipSequenceFieldRef::new(&slot);
         assert_eq!(first.ref_count(), 2);
-        assert_eq!(alias.observe().ref_count(), 2);
+        assert_eq!(alias.observe().ref_count(), 3);
         slot.assign(&second).unwrap();
         assert_eq!(alias.object_address(), second.object_address());
         assert_eq!(alias.reference_address(), slot.reference_address());

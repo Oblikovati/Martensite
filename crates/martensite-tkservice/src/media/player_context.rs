@@ -67,19 +67,13 @@ impl PlayerShared {
 
 /// A video player; `MediaPlayerContext::new(None)` starts its worker thread.
 pub struct MediaPlayerContext {
-    transient: StandardTransient,
     shared: Arc<PlayerShared>,
     /// `myToForceRgb`.
     to_force_rgb: AtomicBool,
     /// `myThread`.
     thread: Mutex<Option<JoinHandle<()>>>,
 }
-martensite_tkernel::impl_transient!(
-    MediaPlayerContext,
-    "Media_PlayerContext",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(MediaPlayerContext, "Media_PlayerContext", StandardTransient);
 
 impl Drop for MediaPlayerContext {
     /// The destructor stops and joins the worker thread.
@@ -119,7 +113,6 @@ impl MediaPlayerContext {
         let worker = shared.clone();
         let thread = std::thread::spawn(move || do_thread_loop(&worker));
         Self {
-            transient: StandardTransient::default(),
             shared,
             to_force_rgb: AtomicBool::new(true),
             thread: Mutex::new(Some(thread)),

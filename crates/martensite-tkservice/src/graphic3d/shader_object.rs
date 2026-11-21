@@ -38,7 +38,6 @@ pub type Graphic3dShaderVariableList = Vec<Graphic3dShaderObjectVariable>;
 ///
 /// Example: `Graphic3dShaderObject::create_from_source(Graphic3dTypeOfShaderObject::Vertex, "void main(){}".into())`.
 pub struct Graphic3dShaderObject {
-    transient: StandardTransient,
     id: AsciiString,
     source: AsciiString,
     path: CadPath,
@@ -47,8 +46,7 @@ pub struct Graphic3dShaderObject {
 martensite_tkernel::impl_transient!(
     Graphic3dShaderObject,
     "Graphic3d_ShaderObject",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Graphic3dShaderObject {
@@ -60,7 +58,6 @@ impl Graphic3dShaderObject {
         let mut id = AsciiString::from("Graphic3d_ShaderObject_");
         id.assign_cat(number);
         Self {
-            transient: StandardTransient::default(),
             id,
             source: AsciiString::default(),
             path: CadPath::default(),

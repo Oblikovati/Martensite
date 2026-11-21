@@ -2,13 +2,12 @@
 //! below a minimal scale.
 use super::transform_pers::{Graphic3dTransformPersBase, Graphic3dTransformPersSource};
 use super::{Graphic3dCamera, Graphic3dTransModeFlags, graphic3d_transform_pers_persistent_scale};
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::Point3;
 
 /// Zoom persistence with a lower scale bound;
 /// `Graphic3dTransformPersScaledAbove::new(2.0, &anchor)?`.
 pub struct Graphic3dTransformPersScaledAbove {
-    transient: StandardTransient,
     base: Graphic3dTransformPersBase,
     scale: f64,
 }
@@ -27,7 +26,7 @@ impl Graphic3dTransformPersSource for Graphic3dTransformPersScaledAbove {
     }
 }
 martensite_tkernel::impl_transient!(Graphic3dTransformPersScaledAbove,
-    "Graphic3d_TransformPersScaledAbove", dyn Graphic3dTransformPersSource, transient,
+    "Graphic3d_TransformPersScaledAbove", dyn Graphic3dTransformPersSource,
     interfaces: [dyn Graphic3dTransformPersSource]);
 
 impl Graphic3dTransformPersScaledAbove {
@@ -36,10 +35,6 @@ impl Graphic3dTransformPersScaledAbove {
     pub fn new(scale: f64, point: &Point3) -> Result<Self, Failure> {
         let base =
             Graphic3dTransformPersBase::with_point(Graphic3dTransModeFlags::ZOOM_PERS, point)?;
-        Ok(Self {
-            transient: StandardTransient::default(),
-            base,
-            scale,
-        })
+        Ok(Self { base, scale })
     }
 }

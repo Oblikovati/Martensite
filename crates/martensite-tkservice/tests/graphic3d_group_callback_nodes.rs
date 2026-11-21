@@ -10,7 +10,7 @@ fn append_clearing_group(
     presentation: &Handle<Graphic3dStructure>,
     earlier: &Handle<dyn Graphic3dGroup>,
 ) -> Handle<dyn Graphic3dGroup> {
-    let active = EarlierGroupClear::new(&presentation.cast(), earlier.observe());
+    let active = EarlierGroupClear::new(&presentation.cast(), earlier.downgrade());
     presentation
         .cstructure()
         .cstructure_base()

@@ -231,7 +231,6 @@ pub fn graphic3d_transform_pers_dump_json(
 
 /// The concrete `Graphic3d_TransformPers`; `Graphic3dTransformPers::new(Graphic3dTransModeFlags::ZOOM_PERS)?`.
 pub struct Graphic3dTransformPers {
-    transient: StandardTransient,
     base: Graphic3dTransformPersBase,
 }
 impl Graphic3dTransformPersSource for Graphic3dTransformPers {
@@ -240,7 +239,7 @@ impl Graphic3dTransformPersSource for Graphic3dTransformPers {
     }
 }
 martensite_tkernel::impl_transient!(Graphic3dTransformPers, "Graphic3d_TransformPers",
-    StandardTransient, transient, interfaces: [dyn Graphic3dTransformPersSource]);
+    StandardTransient, interfaces: [dyn Graphic3dTransformPersSource]);
 
 impl Graphic3dTransformPers {
     /// See [`Graphic3dTransformPersBase::new`]; `Graphic3dTransformPers::new(mode)?`.
@@ -265,10 +264,7 @@ impl Graphic3dTransformPers {
         )?))
     }
     fn from_base(base: Graphic3dTransformPersBase) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
     /// Static `IsZoomOrRotate(theMode)`; `Graphic3dTransformPers::is_zoom_or_rotate_mode(mode)`.
     pub fn is_zoom_or_rotate_mode(mode: Flags) -> bool {

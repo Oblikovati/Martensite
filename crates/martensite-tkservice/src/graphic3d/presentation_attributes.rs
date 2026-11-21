@@ -163,7 +163,6 @@ impl<T: Graphic3dPresentationAttributesSource + ?Sized> Graphic3dPresentationAtt
 /// The native `Graphic3d_PresentationAttributes`; `Graphic3dPresentationAttributes::default()`.
 #[derive(Default)]
 pub struct Graphic3dPresentationAttributes {
-    transient: StandardTransient,
     base: Graphic3dPresentationAttributesBase,
 }
 impl Graphic3dPresentationAttributesSource for Graphic3dPresentationAttributes {
@@ -172,5 +171,5 @@ impl Graphic3dPresentationAttributesSource for Graphic3dPresentationAttributes {
     }
 }
 martensite_tkernel::impl_transient!(Graphic3dPresentationAttributes,
-    "Graphic3d_PresentationAttributes", StandardTransient, transient,
+    "Graphic3d_PresentationAttributes", StandardTransient,
     interfaces: [dyn Graphic3dPresentationAttributesSource]);

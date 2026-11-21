@@ -1,5 +1,5 @@
 //! Graphic3d_FrameStats formatting and the data frame operations.
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::graphic3d::{
     Graphic3dCView, Graphic3dFrameStats, Graphic3dFrameStatsBase,
@@ -10,10 +10,10 @@ use martensite_tkservice::graphic3d::{
 
 #[derive(Default)]
 struct FakeFrameStats {
-    transient: StandardTransient,
+
     base: Graphic3dFrameStatsBase,
 }
-martensite_tkernel::impl_transient!(FakeFrameStats, "FakeFrameStats", dyn Graphic3dFrameStats, transient,
+martensite_tkernel::impl_transient!(FakeFrameStats, "FakeFrameStats", dyn Graphic3dFrameStats,
     interfaces: [dyn Graphic3dFrameStats]);
 impl Graphic3dFrameStats for FakeFrameStats {
     fn frame_stats_base(&self) -> &Graphic3dFrameStatsBase {

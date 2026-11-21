@@ -44,15 +44,13 @@ struct ConnectionState {
 /// A window-system connection; `AspectDisplayConnection::new()?` opens `$DISPLAY`
 /// on Linux or borrows the process module on Windows.
 pub struct AspectDisplayConnection {
-    transient: StandardTransient,
     state: SharedState<ConnectionState>,
     native: Arc<dyn NativeDisplayCalls>,
 }
 martensite_tkernel::impl_transient!(
     AspectDisplayConnection,
     "Aspect_DisplayConnection",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl AspectDisplayConnection {
@@ -65,7 +63,6 @@ impl AspectDisplayConnection {
             ..Default::default()
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
             native,
         }

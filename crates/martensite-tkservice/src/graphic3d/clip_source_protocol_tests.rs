@@ -12,7 +12,7 @@ struct NativeClipProtocolPlane {
     dump_calls: SharedState<usize>,
 }
 martensite_tkernel::impl_transient!(NativeClipProtocolPlane,
-    "Martensite_ClipProtocolPlane", Graphic3dClipPlane, base,
+    "Martensite_ClipProtocolPlane", Graphic3dClipPlane,
     interfaces: [dyn Graphic3dClipPlaneSource]);
 impl Graphic3dClipPlaneSource for NativeClipProtocolPlane {
     fn clip_plane_base(&self) -> &Graphic3dClipPlane {
@@ -32,7 +32,7 @@ struct NativeClipProtocolSequence {
     dump_calls: SharedState<usize>,
 }
 martensite_tkernel::impl_transient!(NativeClipProtocolSequence,
-    "Martensite_ClipProtocolSequence", Graphic3dSequenceOfHClipPlane, base,
+    "Martensite_ClipProtocolSequence", Graphic3dSequenceOfHClipPlane,
     interfaces: [dyn Graphic3dClipPlaneSequenceSource]);
 impl Graphic3dClipPlaneSequenceSource for NativeClipProtocolSequence {
     fn clip_sequence_base(&self) -> &Graphic3dSequenceOfHClipPlane {
@@ -58,7 +58,8 @@ fn protocol_plane() -> Handle<NativeClipProtocolPlane> {
 #[test]
 fn derived_plane_clone_and_dump_dispatch_preserve_real_inherited_fields() {
     let concrete = protocol_plane();
-    let source = concrete.observe_as::<dyn Graphic3dClipPlaneSource>();
+    let source = concrete.into_upcast::<dyn Graphic3dClipPlaneSource>();
+    let concrete = source.downcast_ref::<NativeClipProtocolPlane>().unwrap();
     let cloned = source.clone_plane();
     source.dump_json(&mut DumpStream::default(), -1).unwrap();
     assert_eq!(*concrete.clone_calls.read(), 1);
@@ -76,7 +77,8 @@ fn collection_source_uses_actual_storage_and_one_native_descriptor() {
         base: Graphic3dSequenceOfHClipPlane::default(),
         dump_calls: SharedState::new(0),
     });
-    let source = concrete.observe_as::<dyn Graphic3dClipPlaneSequenceSource>();
+    let source = concrete.into_upcast::<dyn Graphic3dClipPlaneSequenceSource>();
+    let concrete = source.downcast_ref::<NativeClipProtocolSequence>().unwrap();
     source.set_override_global(true);
     source.dump_json(&mut DumpStream::default(), -1).unwrap();
     assert!(concrete.base.to_override_global());
@@ -117,7 +119,8 @@ fn sequence_protocol_row() -> String {
         base: Graphic3dSequenceOfHClipPlane::default(),
         dump_calls: SharedState::new(0),
     });
-    let source = concrete.observe_as::<dyn Graphic3dClipPlaneSequenceSource>();
+    let source = concrete.into_upcast::<dyn Graphic3dClipPlaneSequenceSource>();
+    let concrete = source.downcast_ref::<NativeClipProtocolSequence>().unwrap();
     source.set_override_global(true);
     source.dump_json(&mut DumpStream::default(), -1).unwrap();
     format!(
@@ -150,7 +153,8 @@ fn native_plane_and_collection_protocol_rows_replay_from_frozen_rows() {
 }
 fn capture_plane_protocol_rows() -> String {
     let concrete = protocol_plane();
-    let source = concrete.observe_as::<dyn Graphic3dClipPlaneSource>();
+    let source = concrete.into_upcast::<dyn Graphic3dClipPlaneSource>();
+    let concrete = source.downcast_ref::<NativeClipProtocolPlane>().unwrap();
     let cloned = source.clone_plane();
     source.dump_json(&mut DumpStream::default(), -1).unwrap();
     let mut rows = plane_protocol_row("original", &source);
@@ -255,11 +259,11 @@ fn clip_sequence_descriptor_rows(sequence: &Handle<Graphic3dSequenceOfHClipPlane
 #[test]
 fn derived_planes_travel_through_both_chain_links() {
     let derived = protocol_plane();
-    let as_base = derived.clone().cast::<Graphic3dClipPlane>();
+    let as_base = derived.upcast::<dyn Graphic3dClipPlaneSource>();
     let head = Handle::new(Graphic3dClipPlane::default());
     let tail = Handle::new(Graphic3dClipPlane::default());
-    Graphic3dClipPlane::set_chain_next_plane(&head, as_base.clone()).unwrap();
-    Graphic3dClipPlane::set_chain_next_plane(&as_base, tail.clone()).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&head.upcast(), as_base.clone()).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&as_base, tail.upcast()).unwrap();
     let next = head.chain_next_plane();
     let previous = tail.chain_previous_plane();
     for link in [&next, &previous] {

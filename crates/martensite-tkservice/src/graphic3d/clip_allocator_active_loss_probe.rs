@@ -4,11 +4,11 @@ use super::clip_sequence_allocator_fixture::ClipArgumentScene;
 use super::{Graphic3dClipPlane, Graphic3dClipPlaneSource};
 use martensite_tkernel::ncollection::{AllocatorObject, AllocatorSource, BaseAllocator};
 use martensite_tkernel::standard::{
-    Handle, HandleFieldRef, ProjectedHandleReference, SharedState, Transient,
+    Handle, HandleFieldRef, ProjectedHandleReference, SharedState, WeakHandle,
 };
 use std::{
     ptr::NonNull,
-    sync::{Arc, Weak},
+    sync::{Arc, OnceLock, Weak},
 };
 struct ClipActiveLossScene {
     arguments: Arc<ClipArgumentScene>,
@@ -16,10 +16,11 @@ struct ClipActiveLossScene {
 }
 struct ClipActiveLossPlaybackAllocator {
     parent: AllocatorObject,
+    identity: OnceLock<WeakHandle<ClipActiveLossPlaybackAllocator>>,
     scene: Weak<ClipActiveLossScene>,
 }
 martensite_tkernel::impl_transient!(ClipActiveLossPlaybackAllocator,
-    "Martensite_ClipActiveLossPlaybackAllocator", AllocatorObject, parent,
+    "Martensite_ClipActiveLossPlaybackAllocator", AllocatorObject,
     interfaces:[dyn AllocatorSource]);
 // SAFETY: this derived allocator delegates allocation to the actual Standard heap provider.
 unsafe impl AllocatorSource for ClipActiveLossPlaybackAllocator {
@@ -36,12 +37,11 @@ unsafe impl AllocatorSource for ClipActiveLossPlaybackAllocator {
 impl Drop for ClipActiveLossPlaybackAllocator {
     fn drop(&mut self) {
         let scene = self.scene.upgrade().unwrap();
-        scene
-            .arguments
-            .rows
-            .write()
-            .push(format!("destroy {}", self.transient_base().ref_count()));
-        *scene.arguments.argument.write() = scene.arguments.replacement.observe().clone();
+        scene.arguments.rows.write().push(format!(
+            "destroy {}",
+            self.identity.get().unwrap().ref_count()
+        ));
+        *scene.arguments.argument.write() = scene.arguments.replacement.upgrade().clone();
     }
 }
 fn active_loss_scene(
@@ -56,9 +56,11 @@ fn active_loss_scene(
     });
     let allocator = Handle::new(ClipActiveLossPlaybackAllocator {
         parent: AllocatorObject::default(),
+        identity: OnceLock::new(),
         scene: Arc::downgrade(&scene),
-    })
-    .into_cast::<dyn AllocatorSource>();
+    });
+    allocator.identity.set(allocator.downgrade()).unwrap();
+    let allocator = allocator.into_upcast::<dyn AllocatorSource>();
     install_active_loss_resource(&scene, &allocator);
     *scene.owner.write() = allocator;
     scene
@@ -103,9 +105,6 @@ fn capture_active_loss_scene(
         .upgrade()
         .expect("active allocator scene=None; expected externally anchored fixture")
 }
-fn capture_active_loss_count(allocator: &ClipActiveLossPlaybackAllocator) -> i32 {
-    allocator.transient_base().ref_count()
-}
 fn active_loss_allocate(
     invocation: &martensite_tkernel::ncollection::AllocatorInvocation,
     size: usize,
@@ -115,10 +114,7 @@ fn active_loss_allocate(
     let scene = martensite_tkernel::standard::raise_native_failure(unsafe {
         invocation.capture(capture_active_loss_scene)
     });
-    // SAFETY: the count selector reads one field and returns a local without callbacks.
-    let count = martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(capture_active_loss_count)
-    });
+    let count = invocation.ref_count();
     retire_active_loss_owner(&scene, count);
     // All following accesses are captured native locals, not the destroyed receiver.
     scene
@@ -139,7 +135,7 @@ fn install_active_loss_resource(
         .write()
         .clear(Some(BaseAllocator::from_handle(allocator)));
 }
-fn retire_active_loss_owner(scene: &ClipActiveLossScene, count: i32) {
+fn retire_active_loss_owner(scene: &ClipActiveLossScene, count: usize) {
     let arguments = &scene.arguments;
     arguments.rows.write().push(format!("allocate {count}"));
     arguments

@@ -62,15 +62,9 @@ pub struct Graphic3dLightSetFields {
 
 /// A set of lights; `let set = Graphic3dLightSet::default(); set.add(&light)?;`.
 pub struct Graphic3dLightSet {
-    transient: StandardTransient,
     state: Arc<SharedState<Graphic3dLightSetFields>>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dLightSet,
-    "Graphic3d_LightSet",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dLightSet, "Graphic3d_LightSet", StandardTransient);
 
 impl Default for Graphic3dLightSetFields {
     fn default() -> Self {
@@ -92,7 +86,6 @@ impl Default for Graphic3dLightSetFields {
 impl Default for Graphic3dLightSet {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: Arc::new(SharedState::new(Graphic3dLightSetFields::default())),
         }
     }

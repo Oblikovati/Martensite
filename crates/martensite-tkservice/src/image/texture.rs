@@ -6,9 +6,7 @@
 use super::texture_io::{
     IStreamReader, copy_file_range, fail, open_input, probe_format, read_probe,
 };
-use super::{
-    ImageAlienPixMap, ImageCompressedPixMap, ImageDdsParser, ImagePixMap, ImageSupportedFormats,
-};
+use super::{ImageAlienPixMap, ImageCompressedPixMap, ImageDdsParser, ImageSupportedFormats};
 use crate::json_dump::{class_begin, field_dumped, field_real, field_string};
 use martensite_tkernel::ncollection::{Buffer, HashPolicy};
 use martensite_tkernel::osd::SeekDir;
@@ -116,7 +114,10 @@ pub trait ImageTextureSource: Transient {
         ImageDdsParser::load(supported, &base.image_path, 0, 0)
     }
     /// The decoded image (null when the file does not load); `texture.read_image(&f)`.
-    fn read_image(&self, _supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn read_image(
+        &self,
+        _supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let base = self.texture_base();
         if base.buffer.is_some() {
             return self.load_image_buffer(&base.buffer, &base.texture_id);
@@ -169,7 +170,7 @@ pub trait ImageTextureSource: Transient {
         field_real(stream, "myLength", base.length as f64)
     }
     /// Loads a PNG, JPEG, BMP or GIF image file; `texture.load_image_file(&p)`.
-    fn load_image_file(&self, path: &AsciiString) -> Handle<ImagePixMap> {
+    fn load_image_file(&self, path: &AsciiString) -> Handle<dyn crate::image::ImagePixMapObject> {
         let image = ImageAlienPixMap::default();
         if !image.load(path) {
             return Handle::default();
@@ -182,7 +183,7 @@ pub trait ImageTextureSource: Transient {
         path: &AsciiString,
         offset: i64,
         length: i64,
-    ) -> Handle<ImagePixMap> {
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         if length > i64::from(i32::MAX) {
             fail(&[
                 b"Error: Image file size is too big '",
@@ -219,7 +220,11 @@ pub trait ImageTextureSource: Transient {
         Handle::new(image).cast()
     }
     /// Loads an image from memory; `texture.load_image_buffer(&buffer, &id)`.
-    fn load_image_buffer(&self, buffer: &Handle<Buffer>, id: &AsciiString) -> Handle<ImagePixMap> {
+    fn load_image_buffer(
+        &self,
+        buffer: &Handle<Buffer>,
+        id: &AsciiString,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let Some(bytes) = buffer.get().map(Buffer::as_slice) else {
             return Handle::default();
         };
@@ -292,10 +297,9 @@ impl<T: ImageTextureSource + ?Sized> ImageTextureMembers for T {}
 
 /// The native `Image_Texture`; `ImageTexture::new(&AsciiString::from("wood.png"))`.
 pub struct ImageTexture {
-    transient: StandardTransient,
     base: ImageTextureBase,
 }
-martensite_tkernel::impl_transient!(ImageTexture, "Image_Texture", StandardTransient, transient,
+martensite_tkernel::impl_transient!(ImageTexture, "Image_Texture", StandardTransient,
     interfaces: [dyn ImageTextureSource]);
 impl martensite_tkernel::standard::RuntimeTyped for dyn ImageTextureSource {
     const TYPE_NAME: &'static str = "Image_Texture";
@@ -304,10 +308,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn ImageTextureSource {
         // interface registration would invent an extra native ancestor and split is_kind.
         <ImageTexture as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn ImageTextureSource);
 
 impl ImageTexture {
     /// A texture of an image file; `ImageTexture::new(&path)`.
@@ -323,10 +325,7 @@ impl ImageTexture {
         Self::with_base(ImageTextureBase::from_buffer(buffer, id))
     }
     fn with_base(base: ImageTextureBase) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
 }
 impl ImageTextureSource for ImageTexture {

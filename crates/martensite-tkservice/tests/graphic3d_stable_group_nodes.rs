@@ -18,7 +18,7 @@ fn advance_group_cursor(presentation: &Graphic3dStructure, cursor: &mut Sequence
 fn current_group_target(
     presentation: &Graphic3dStructure,
     cursor: &SequenceNativeCursor,
-) -> HandleObserver<dyn Graphic3dGroup> {
+) -> WeakHandle<dyn Graphic3dGroup> {
     let structure = presentation.cstructure();
     let fields = structure.cstructure_base().fields.read();
     cursor
@@ -30,7 +30,7 @@ fn current_group_target(
                 cursor.position()
             )
         })
-        .observe()
+        .downgrade()
 }
 #[test]
 fn duplicate_payloads_have_distinct_actual_nodes_without_extra_intrusive_owners() {
