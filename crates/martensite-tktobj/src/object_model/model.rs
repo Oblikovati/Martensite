@@ -9,9 +9,7 @@ use super::{
 use martensite_tkernel::{
     impl_transient_interface,
     message::Messenger,
-    standard::{
-        Failure, Guid, Handle, SharedState, StandardTransient, Transient, WeakHandle, exceptions,
-    },
+    standard::{Failure, Guid, Handle, SharedState, Transient, WeakHandle, exceptions},
     tcollection::{ExtendedString, HExtendedString},
 };
 use martensite_tklcaf::{
@@ -147,7 +145,7 @@ pub trait DocumentModel: Transient {
     }
     /// `GetObjects`: a `martensite_object_model_ModelIterator` on every object.
     fn get_objects(&self) -> Result<Handle<dyn ObjectIterator>, Failure> {
-        Ok(ModelIterator::new(&self.model_base().this()?)?.cast())
+        Ok(ModelIterator::new(&self.model_base().this()?)?.into_upcast())
     }
     /// `GetChildren`: the children of the main partition, null without it.
     fn get_children(&self) -> Result<Handle<dyn ObjectIterator>, Failure> {
@@ -174,7 +172,7 @@ pub trait DocumentModel: Transient {
     }
     /// `GetRoot`: the main partition.
     fn get_root(&self) -> Result<Handle<dyn ModelObject>, Failure> {
-        Ok(self.get_partition(&self.get_label(), false)?.cast())
+        Ok(self.get_partition(&self.get_label(), false)?.into_upcast())
     }
     /// `GetModelName`: `ObjectModel` by default.
     fn get_model_name(&self) -> Handle<HExtendedString> {
@@ -236,5 +234,5 @@ pub trait DocumentModel: Transient {
 impl_transient_interface!(
     dyn DocumentModel,
     "martensite_object_model_DocumentModel",
-    StandardTransient
+    dyn Transient
 );

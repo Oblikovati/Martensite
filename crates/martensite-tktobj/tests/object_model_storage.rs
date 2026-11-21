@@ -5,7 +5,7 @@ use crate::object_model_document::{ModelFixture, serial};
 use martensite_tkernel::{
     impl_transient,
     message::{Gravity, Messenger, Printer, PrinterBase, PrinterType},
-    standard::{Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient, dump::DumpStream},
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, dump::DumpStream},
     tcollection::{AsciiString, ExtendedString},
 };
 use martensite_tklcaf::tdoc_std::{TDocStdApplication, TDocStdDocument};
@@ -59,32 +59,30 @@ impl Printer for RecordingPrinter {
 /// A model with its own application (`GetApplication` is virtual), so that the messages
 /// of one test do not reach the process-wide application.
 pub struct PrivateModel {
-    transient: StandardTransient,
     base: DocumentModelBase,
     application: Handle<DocumentApplication>,
 }
-impl_transient!(PrivateModel, "ObjectModel_PrivateModel", dyn DocumentModel, transient,
+impl_transient!(PrivateModel, "ObjectModel_PrivateModel", dyn DocumentModel,
     interfaces: [dyn DocumentModel]);
 impl DocumentModel for PrivateModel {
     fn model_base(&self) -> &DocumentModelBase {
         &self.base
     }
     fn new_empty(&self) -> Result<Handle<dyn DocumentModel>, Failure> {
-        Ok(PrivateModel::new().cast())
+        Ok(PrivateModel::new().into_upcast())
     }
     fn get_application(&self) -> Result<Handle<dyn DocumentApplicationApi>, Failure> {
-        Ok(self.application.cast())
+        Ok(self.application.upcast())
     }
 }
 impl PrivateModel {
     /// A new model over a new application.
     pub fn new() -> Handle<PrivateModel> {
         let model = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: DocumentModelBase::new().unwrap(),
             application: DocumentApplication::new().unwrap(),
         });
-        model.model_base().bind_self(&model.cast());
+        model.model_base().bind_self(&model.upcast());
         model
     }
 }
@@ -254,7 +252,7 @@ fn the_format_version_is_read_by_the_assistant() {
     model.set_format_version(7).unwrap();
     model.commit_command().unwrap();
     assert_eq!(model.get_format_version().unwrap(), 7);
-    ModelAssistant::set_current_model(&model.clone().cast());
+    ModelAssistant::set_current_model(&model.upcast());
     assert_eq!(ModelAssistant::get_app_version().unwrap(), 7);
     assert!(ModelAssistant::get_current_model() == *model);
     ModelAssistant::unset_current_model();
@@ -279,7 +277,7 @@ fn the_assistant_binds_types_and_models() {
     ModelAssistant::clear_type_map();
     assert_eq!(ModelAssistant::find_type_index(Some(document)), 0);
     ModelAssistant::clear_model_map();
-    ModelAssistant::bind_model(&fixture.my_model.clone().cast());
+    ModelAssistant::bind_model(&fixture.my_model.upcast());
     assert!(ModelAssistant::find_model("ObjectModel").unwrap() == fixture.my_model);
     assert!(ModelAssistant::find_model("Other").unwrap().is_null());
     ModelAssistant::clear_model_map();

@@ -1,8 +1,6 @@
 //! Exact runtime class descriptor identity, immediate parents and inherited partition filtering.
 use crate::object_model_document::ObjectFixture;
-use martensite_tkernel::standard::{
-    Handle, RuntimeType, RuntimeTyped, StandardTransient, Transient,
-};
+use martensite_tkernel::standard::{Handle, RuntimeType, RuntimeTyped, Transient};
 use martensite_tktobj::object_model::{
     BackReferences, DocumentApplication, DocumentApplicationApi, HiddenPartition, ModelObject,
     ModelPartition, ObjectIterator, StandardObjectIterator, StandardPartition,
@@ -27,18 +25,13 @@ fn concrete_application_descriptor_has_runtime_immediate_base_and_own_class_iden
         <dyn DocumentApplicationApi>::static_type()
     ));
     assert!(application.is_instance(descriptor));
-    assert!(application.is_kind_handle(DocumentApplication::static_type_ref()));
-    assert!(
-        application
-            .cast::<dyn DocumentApplicationApi>()
-            .cast::<DocumentApplication>()
-            == application
-    );
+    assert!(application.is_kind(DocumentApplication::static_type()));
+    assert!(application.downcast::<DocumentApplication>() == application);
 }
 #[test]
 fn concrete_partition_descriptor_has_runtime_object_parent_and_own_class_identity() {
     let fixture = ObjectFixture::set_up();
-    let partition = fixture.my_partition.cast::<StandardPartition>();
+    let partition = fixture.my_partition.downcast::<StandardPartition>();
     assert!(!partition.is_null());
     let descriptor = StandardPartition::static_type();
     assert_runtime_parent(
@@ -54,8 +47,8 @@ fn concrete_partition_descriptor_has_runtime_object_parent_and_own_class_identit
     assert!(partition.is_kind(<dyn ModelObject>::static_type()));
     assert!(
         partition
-            .cast::<dyn ModelPartition>()
-            .cast::<StandardPartition>()
+            .upcast::<dyn ModelPartition>()
+            .into_downcast::<StandardPartition>()
             == partition
     );
 }
@@ -72,12 +65,12 @@ fn concrete_empty_iterator_descriptor_has_runtime_transient_parent_and_identity(
         descriptor,
         <dyn ObjectIterator>::static_type()
     ));
-    assert!(iterator.is_instance_handle(StandardObjectIterator::static_type_ref()));
-    assert!(iterator.is_kind(StandardTransient::static_type()));
+    assert!(iterator.is_instance(StandardObjectIterator::static_type()));
+    assert!(iterator.is_kind(<dyn Transient>::static_type()));
     assert!(
         iterator
-            .cast::<dyn ObjectIterator>()
-            .cast::<StandardObjectIterator>()
+            .upcast::<dyn ObjectIterator>()
+            .into_downcast::<StandardObjectIterator>()
             == iterator
     );
 }
@@ -87,8 +80,8 @@ fn runtime_partition_type_filter_includes_the_hidden_partition_subclass() {
     let hidden = fixture
         .command(|| HiddenPartition::new(&fixture.my_partition.new_label().unwrap()).unwrap());
     let sequence = Handle::new(BackReferences::default());
-    sequence.append(fixture.my_partition.cast());
-    sequence.append(hidden.cast());
+    sequence.append(fixture.my_partition.upcast());
+    sequence.append(hidden.upcast());
     let iterator = TypedSequenceIterator::new(&sequence, Some(StandardPartition::static_type()));
     assert!(iterator.more());
     assert!(iterator.value() == fixture.my_partition);
@@ -103,14 +96,11 @@ fn assert_class_descriptor<T: RuntimeTyped + ?Sized>(name: &str, parent: &str) {
     let descriptor = T::static_type();
     assert_runtime_parent(descriptor, name, parent);
     assert_eq!(T::TYPE_NAME, name);
-    let slot = T::static_type_ref();
-    assert!(std::ptr::eq(slot, T::static_type_ref()));
-    assert!(std::ptr::eq(slot.get().unwrap(), descriptor));
+    assert!(std::ptr::eq(T::static_type(), descriptor));
     assert!(std::ptr::eq(
-        T::static_type_handle().get().unwrap(),
+        RuntimeType::registered_by_name(name).unwrap(),
         descriptor
     ));
-    assert!(std::ptr::eq(descriptor.class_handle_ref(), slot));
 }
 #[test]
 fn model_object_and_application_class_descriptors_preserve_runtime_names_and_parents() {

@@ -209,10 +209,10 @@ pub trait DocumentModelState: DocumentModel {
         }
         let mut attribute: Handle<ObjectAttribute> = Handle::default();
         if label.find_attribute_as(&ObjectAttribute::get_id(), &mut attribute)? {
-            return Ok(attribute.get_object().cast());
+            return Ok(attribute.get_object().into_cast());
         }
         if hidden {
-            return Ok(HiddenPartition::new(label)?.cast());
+            return Ok(HiddenPartition::new(label)?.into_upcast());
         }
         StandardPartition::create(label, true)
     }
@@ -269,7 +269,7 @@ pub trait DocumentModelState: DocumentModel {
             target,
             "martensite_object_model_DocumentModel::CopyReferences",
         )?;
-        let target_root: Handle<dyn ModelObject> = target.get_main_partition()?.cast();
+        let target_root: Handle<dyn ModelObject> = target.get_main_partition()?.into_upcast();
         martensite_tkcdf::live(
             &mine,
             "martensite_object_model_DocumentModel::CopyReferences",

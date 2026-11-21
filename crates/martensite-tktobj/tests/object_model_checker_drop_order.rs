@@ -2,18 +2,19 @@
 use martensite_tkernel::{
     impl_transient,
     message::Messenger,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
-use martensite_tktobj::object_model::{DocumentModel, DocumentModelBase, ModelIntegrityCheck};
+use martensite_tktobj::object_model::{
+    DocumentModel, DocumentModelBase, ModelIntegrityCheck, ModelIntegrityCheckParent,
+};
 use std::sync::{Arc, Weak};
 
 struct MessengerObservingModel {
-    transient: StandardTransient,
     base: DocumentModelBase,
     messenger: Weak<Messenger>,
     observations: Arc<SharedState<Vec<bool>>>,
 }
-impl_transient!(MessengerObservingModel, "MessengerObservingModel", dyn DocumentModel, transient,
+impl_transient!(MessengerObservingModel, "MessengerObservingModel", dyn DocumentModel,
     interfaces: [dyn DocumentModel]);
 impl DocumentModel for MessengerObservingModel {
     fn model_base(&self) -> &DocumentModelBase {
@@ -41,12 +42,11 @@ fn checker_drop_fixture() -> CheckerDropFixture {
     let messenger = Arc::new(Messenger::new());
     let observations = Arc::new(SharedState::new(Vec::new()));
     let model: Handle<dyn DocumentModel> = Handle::new(MessengerObservingModel {
-        transient: StandardTransient::default(),
         base: DocumentModelBase::new().unwrap(),
         messenger: Arc::downgrade(&messenger),
         observations: observations.clone(),
     })
-    .cast();
+    .into_upcast();
     let checker = ModelIntegrityCheck::new(&model);
     checker.algorithm().set_messenger(Some(messenger.clone()));
     drop(messenger);
@@ -56,9 +56,10 @@ fn checker_drop_fixture() -> CheckerDropFixture {
 #[test]
 fn checker_releases_its_model_before_its_inherited_message_service() {
     let (checker, model, observations) = checker_drop_fixture();
+    let parent = Handle::new(checker).into_upcast::<ModelIntegrityCheckParent>();
     drop(model);
     assert!(observations.read().is_empty());
-    drop(checker);
+    drop(parent);
     assert_eq!(*observations.read(), vec![true]);
 }
 

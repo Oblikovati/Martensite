@@ -2,7 +2,7 @@
 use super::DocumentModel;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -13,14 +13,13 @@ use martensite_tklcaf::{
 /// `martensite_object_model_ModelAttribute::GetID()`.
 const TMODEL_ID: Guid = guid_from_text("bbdab6a6-dca9-11d4-ba37-0060b0ee18ea");
 
-/// `martensite_object_model_ModelAttribute`; `label.add_attribute(&Handle::new(ModelAttribute::new()).cast(), true)`.
+/// `martensite_object_model_ModelAttribute`; `label.add_attribute(&Handle::new(ModelAttribute::new()).into_upcast(), true)`.
 #[derive(Default)]
 pub struct ModelAttribute {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     model: SharedState<Handle<dyn DocumentModel>>,
 }
-impl_transient!(ModelAttribute, "martensite_object_model_ModelAttribute", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(ModelAttribute, "martensite_object_model_ModelAttribute", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl ModelAttribute {
     /// `GetID`.
@@ -59,7 +58,7 @@ impl TdfAttribute for ModelAttribute {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,

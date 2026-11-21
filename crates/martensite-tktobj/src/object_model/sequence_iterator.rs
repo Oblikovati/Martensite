@@ -2,7 +2,7 @@
 use super::{BackReferences, ModelObject, ObjectIterator};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeType, SharedState, StandardTransient},
+    standard::{Failure, Handle, RuntimeType, SharedState},
 };
 
 /// `martensite_object_model_TypedSequenceIterator`; it sees later changes of the shared sequence, as by the model.
@@ -13,13 +13,11 @@ use martensite_tkernel::{
 /// assert!(!iterator.more());
 /// ```
 pub struct TypedSequenceIterator {
-    transient: StandardTransient,
     index: SharedState<usize>,
     kind: Option<&'static RuntimeType>,
     objects: Handle<BackReferences>,
 }
-impl_transient!(TypedSequenceIterator, "martensite_object_model_TypedSequenceIterator", dyn ObjectIterator,
-    transient, interfaces: [dyn ObjectIterator]);
+impl_transient!(TypedSequenceIterator, "martensite_object_model_TypedSequenceIterator", dyn ObjectIterator, interfaces: [dyn ObjectIterator]);
 
 impl TypedSequenceIterator {
     /// `martensite_object_model_TypedSequenceIterator()`: an empty iterator.
@@ -30,7 +28,6 @@ impl TypedSequenceIterator {
     /// `None`).
     pub fn new(objects: &Handle<BackReferences>, kind: Option<&'static RuntimeType>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             index: SharedState::new(1),
             kind,
             objects: objects.clone(),
