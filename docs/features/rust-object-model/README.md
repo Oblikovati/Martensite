@@ -147,11 +147,11 @@ include `tkbo` and `geometry-raster`. `tkv3d` uses it in tests.
 2. Keep observable behavior: output, traversal order (`tests/map_traversal_order.rs`), error
    types and messages. When a ported behavior looks like a bug, check the OCCT source before
    changing it (maintainer instruction).
-3. Build and run Clippy on the crate. Run affected migrated test suites once
-   their workspace dev-dependencies have also migrated. Cargo resolves those
-   dependencies for unit tests as well as integration tests. At the later
-   dependency's step, run any newly eligible suite. Run `occt-parity` after the
-   `tkernel` step and after any step that touches `tkernel`.
+3. Build, lint and test only the toolkit under active migration. Reuse the
+   recorded results for completed toolkits. If a suite needs workspace
+   dev-dependencies that still use the old model, run that suite once those
+   dependencies have migrated. Run `occt-parity` when qualifying a `tkernel`
+   change.
 4. Commit each crate locally and integrate it into `feature/rust-object-model`
    in dependency order.
 5. Report the measured effect to the maintainer: the parity table for `tkernel` steps, and
