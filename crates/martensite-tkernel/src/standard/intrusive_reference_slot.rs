@@ -87,7 +87,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         let old = self.begin_retirement(pointer)?;
         let mut completion = RetirementCompletion(Some(self));
         drop(old);
-        self.finish_retirement(&incoming, false);
+        self.finish_retirement(incoming, false);
         completion.0 = None;
         Ok(())
     }
@@ -107,10 +107,10 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         members.retiring = true;
         Ok(members.ownership.take())
     }
-    fn finish_retirement(&self, incoming: &WeakHandle<T>, retiring: bool) {
+    fn finish_retirement(&self, mut incoming: WeakHandle<T>, retiring: bool) {
         loop {
             let mut members = self.members.write();
-            if members.settle_retirement(incoming, retiring) {
+            if members.settle_retirement(&mut incoming, retiring) {
                 return;
             }
             // A callback can publish another owned target. Its destructor must still
@@ -212,11 +212,15 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
     }
 }
 impl<T: ?Sized + RuntimeTyped> ReferenceSlotMembers<T> {
-    fn settle_retirement(&mut self, incoming: &WeakHandle<T>, retiring: bool) -> bool {
+    fn settle_retirement(&mut self, incoming: &mut WeakHandle<T>, retiring: bool) -> bool {
         if self.ownership.is_empty() {
-            let incoming = incoming.upgrade();
-            self.pointer = incoming.downgrade();
-            self.ownership.replace(incoming);
+            let owner = incoming.upgrade();
+            self.pointer = if owner.is_null() {
+                WeakHandle::default()
+            } else {
+                std::mem::take(incoming)
+            };
+            self.ownership.replace(owner);
         } else if self.pointer.object_address() != incoming.object_address() {
             return false;
         }
@@ -276,7 +280,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveRetirementBorrow<'_, T> {
             return Ok(());
         }
         let incoming = source.observe().downgrade();
-        self.slot.finish_retirement(&incoming, true);
+        self.slot.finish_retirement(incoming, true);
         Ok(())
     }
     /// Nested nullification; `borrow.clear()?`.
