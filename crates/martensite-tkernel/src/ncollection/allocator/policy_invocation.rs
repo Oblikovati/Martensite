@@ -22,8 +22,25 @@ impl BaseAllocator {
 }
 impl AllocatorPolicyInvocation {
     /// Allocate from actual shared backing; `policy.allocate(8, true)`.
-    pub(crate) fn allocate(&self, size: usize, zeroed: bool) -> Option<NonNull<u8>> {
-        match &*self.inner {
+    pub fn allocate(&self, size: usize, zeroed: bool) -> Option<NonNull<u8>> {
+        self.inner.allocate(size, zeroed)
+    }
+    /// Keep the common allocator's uninitialized optimal allocation; `policy.allocate_optimal(8)`.
+    pub fn allocate_optimal(&self, size: usize) -> Option<NonNull<u8>> {
+        self.inner.allocate_optimal(size)
+    }
+    /// Release accepted original backing; `unsafe { policy.free_nullable(pointer) }?`.
+    /// # Safety
+    /// A non-null pointer must be live and accepted by this actual physical policy.
+    pub unsafe fn free_nullable(&self, pointer: *mut u8) -> Result<(), Failure> {
+        // SAFETY: the caller's original-pointer contract is forwarded unchanged.
+        unsafe { self.inner.free_nullable(pointer) }
+    }
+}
+// The policy bodies live on the kind, so a facade calls them without copying its `Arc` (#584).
+impl AllocatorKind {
+    pub(super) fn allocate(&self, size: usize, zeroed: bool) -> Option<NonNull<u8>> {
+        match self {
             AllocatorKind::Common => heap_allocate(size, MALLOC_ALIGNMENT, zeroed),
             AllocatorKind::Heap => heap_allocate(heap_round(size)?, MALLOC_ALIGNMENT, zeroed),
             AllocatorKind::Incremental(engine) => locked(engine).allocate(size),
@@ -33,16 +50,12 @@ impl AllocatorPolicyInvocation {
             }
         }
     }
-    /// Keep the common allocator's uninitialized optimal allocation; `policy.allocate_optimal(8)`.
-    pub fn allocate_optimal(&self, size: usize) -> Option<NonNull<u8>> {
-        let zeroed = !matches!(&*self.inner, AllocatorKind::Common);
+    pub(super) fn allocate_optimal(&self, size: usize) -> Option<NonNull<u8>> {
+        let zeroed = !matches!(self, AllocatorKind::Common);
         self.allocate(size, zeroed)
     }
-    /// Release accepted original backing; `unsafe { policy.free_nullable(pointer) }?`.
-    /// # Safety
-    /// A non-null pointer must be live and accepted by this actual physical policy.
-    pub unsafe fn free_nullable(&self, pointer: *mut u8) -> Result<(), Failure> {
-        match &*self.inner {
+    pub(super) unsafe fn free_nullable(&self, pointer: *mut u8) -> Result<(), Failure> {
+        match self {
             AllocatorKind::Common | AllocatorKind::Heap | AllocatorKind::Aligned(_) => {
                 if let Some(pointer) = NonNull::new(pointer) {
                     // SAFETY: the caller supplies this backing's original live allocation.

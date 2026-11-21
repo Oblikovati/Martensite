@@ -189,7 +189,7 @@ impl BaseAllocator {
     pub fn ref_count(&self) -> i32 {
         let count = match &self.fields.reference {
             super::reference::AllocatorReference::Owned(owner) => owner.ref_count(),
-            _ => self.fields.registration.read().ref_count(),
+            _ => self.fields.registration.ref_count(),
         };
         i32::try_from(count).unwrap_or(i32::MAX)
     }

@@ -6,14 +6,14 @@
 //! implementation serve safe Rust code and collections.
 // Unsafe is confined to implementing allocator-api2's contract and forwarding frees.
 use super::{
-    AccumulatingAllocatorObject, AlignedAllocatorObject, AllocatorObject, AllocatorSource,
-    HeapAllocatorObject, IncrementalAllocatorObject,
+    AccumulatingAllocatorObject, AlignedAllocatorObject, AllocatorObject, HeapAllocatorObject,
+    IncrementalAllocatorObject,
 };
-use crate::standard::{Failure, SharedState, WeakHandle};
+use crate::standard::Failure;
 use allocator_api2::alloc::{AllocError, Allocator, Layout};
 use std::{
     ptr::NonNull,
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{Arc, Mutex, MutexGuard, OnceLock},
 };
 mod accumulating;
 mod aligned;
@@ -31,6 +31,8 @@ mod physical_storage;
 mod policy_invocation;
 pub use policy_invocation::AllocatorPolicyInvocation;
 mod reference;
+mod registration;
+use registration::SourceRegistration;
 mod typed_lease;
 mod typed_policy;
 pub use physical_storage::{AllocatorPhysicalStorage, AllocatorStorageLease};
@@ -53,13 +55,16 @@ use raw_heap::MALLOC_ALIGNMENT;
 
 /// A shared allocator identity and policy; `BaseAllocator::common().allocate(16)`.
 pub struct BaseAllocator {
+    // Shared so that copying a lease into every allocation is one count, not a heap block (#584).
     fields: Arc<AllocatorFacadeFields>,
 }
 struct AllocatorFacadeFields {
     inner: Arc<AllocatorKind>,
-    registration: Arc<SharedState<WeakHandle<dyn AllocatorSource>>>,
+    registration: Arc<SourceRegistration>,
     reference: reference::AllocatorReference,
     virtual_allocations: Arc<virtual_typed::VirtualAllocationRecords>,
+    // The storage lease of a facade whose registration never held a custom source (#584).
+    lease: OnceLock<BaseAllocator>,
 }
 
 /// A lock-scoped view of the protected accumulating-allocator extension operations.
@@ -134,11 +139,25 @@ impl BaseAllocator {
         Self {
             fields: Arc::new(AllocatorFacadeFields {
                 inner: Arc::new(kind),
-                registration: Arc::new(SharedState::default()),
+                registration: Arc::default(),
                 reference: reference::AllocatorReference::Policy,
                 virtual_allocations: Arc::new(Mutex::new(Default::default())),
+                lease: OnceLock::new(),
             }),
         }
+    }
+
+    /// Whether a custom source class ever registered; built-in sources dispatch to the
+    /// embedded policy, so their calls skip runtime dispatch (#584).
+    fn ever_custom(&self) -> bool {
+        self.fields.registration.ever_custom()
+    }
+
+    fn is_heap_kind(&self) -> bool {
+        matches!(
+            &*self.fields.inner,
+            AllocatorKind::Common | AllocatorKind::Heap | AllocatorKind::Aligned(_)
+        )
     }
 
     /// The process-wide common allocator; `BaseAllocator::common() == BaseAllocator::common()`.
@@ -229,6 +248,10 @@ impl BaseAllocator {
     /// The block stays allocated until `free_raw` (or, for arenas, `reset`/drop).
     /// Example: `let p = allocator.allocate_raw(16).unwrap(); unsafe { allocator.free_raw(p) }?`.
     pub fn allocate_raw(&self, size: usize) -> Option<NonNull<u8>> {
+        if !self.ever_custom() {
+            // The inherited Allocate body of every built-in class reduces to this policy.
+            return self.allocate_policy(size, true);
+        }
         self.source_invocation()
             .map(|source| source.allocate(size))
             .unwrap_or_else(|| self.allocate_policy(size, true))
@@ -237,6 +260,9 @@ impl BaseAllocator {
     /// Raw optimal allocation: uninitialized `malloc` for the common allocator, the same
     /// policy as `allocate_raw` for every subclass. Example: `allocator.allocate_optimal_raw(8)`.
     pub fn allocate_optimal_raw(&self, size: usize) -> Option<NonNull<u8>> {
+        if !self.ever_custom() {
+            return self.allocate_optimal_builtin(size);
+        }
         self.source_invocation()
             .map(|source| source.allocate_optimal(size))
             .unwrap_or_else(|| self.allocate_optimal_builtin(size))
@@ -262,6 +288,10 @@ impl BaseAllocator {
     /// A non-null address must come from this allocator and still be live. Null is valid input;
     /// the accumulating allocator reports it as `Standard_ProgramError`.
     pub unsafe fn free_raw_nullable(&self, address: *mut u8) -> Result<(), Failure> {
+        if !self.ever_custom() && !self.leases_accumulating_storage() {
+            // SAFETY: built-in Free bodies release through this policy under the same contract.
+            return unsafe { self.free_builtin_nullable(address) };
+        }
         // SAFETY: the original nullable-pointer contract is forwarded to actual virtual Free.
         self.source_invocation()
             .map(|source| unsafe { source.free(address) })
@@ -272,7 +302,7 @@ impl BaseAllocator {
         address: *mut u8,
     ) -> Result<(), Failure> {
         // SAFETY: the caller's original pointer contract is unchanged by the physical lease.
-        unsafe { self.policy_invocation().free_nullable(address) }
+        unsafe { self.fields.inner.free_nullable(address) }
     }
 
     /// One allocation of the handle's policy; `zeroed` only matters for heap kinds.
@@ -281,7 +311,7 @@ impl BaseAllocator {
         size: usize,
         zeroed: bool,
     ) -> Option<NonNull<u8>> {
-        self.policy_invocation().allocate(size, zeroed)
+        self.fields.inner.allocate(size, zeroed)
     }
 
     /// Whether `Free(address)` would succeed, without freeing: only the accumulating allocator
@@ -407,9 +437,14 @@ unsafe impl Allocator for BaseAllocator {
         if layout.size() == 0 {
             return;
         }
-        if self.has_virtual_allocation(pointer) {
+        if self.may_hold_record(layout) && self.has_virtual_allocation(pointer) {
             // SAFETY: caller returns the exact live typed allocation.
             unsafe { self.free_virtual_typed(pointer) };
+            return;
+        }
+        if !self.ever_custom() && self.is_heap_kind() {
+            // SAFETY: built-in heap typed allocations use direct `std::alloc` provenance.
+            unsafe { self.free_direct_heap_typed(pointer, layout) };
             return;
         }
         // SAFETY: arenas return their live range with the original lease and layout.

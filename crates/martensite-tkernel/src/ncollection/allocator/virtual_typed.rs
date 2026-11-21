@@ -1,10 +1,6 @@
 //! Preserve the original virtual allocation pointer across typed reborrows and alignment padding.
 use super::BaseAllocator;
-use crate::ncollection::{
-    AccumulatingAllocatorObject, AlignedAllocatorObject, AllocatorObject, HeapAllocatorObject,
-    IncrementalAllocatorObject,
-};
-use crate::standard::RuntimeTyped;
+use super::registration::builtin_source_class;
 use std::{
     alloc::Layout,
     collections::HashMap,
@@ -17,13 +13,21 @@ use std::{
 pub(super) type VirtualAllocationRecords = Mutex<HashMap<usize, AtomicPtr<u8>>>;
 impl BaseAllocator {
     pub(super) fn uses_custom_source(&self) -> bool {
+        if !self.ever_custom() {
+            return false;
+        }
         let Some(source) = self.source_observer() else {
             return false;
         };
         let descriptor = source
             .dynamic_type()
             .expect("non-null allocator descriptor");
-        !builtin_source_descriptor(descriptor)
+        !builtin_source_class(descriptor)
+    }
+    /// Whether a typed allocation of `layout` may carry an original-pointer record: only a
+    /// custom source or an over-aligned heap block needs one (#584).
+    pub(super) fn may_hold_record(&self, layout: Layout) -> bool {
+        self.ever_custom() || (self.is_heap_kind() && layout.align() > super::MALLOC_ALIGNMENT)
     }
     pub(super) fn allocate_virtual_typed(&self, layout: Layout) -> Option<NonNull<u8>> {
         let request = virtual_allocation_size(layout)?;
@@ -65,9 +69,21 @@ impl BaseAllocator {
         if layout.size() == 0 {
             return;
         }
-        if self.has_virtual_allocation(pointer) {
+        if self.may_hold_record(layout) && self.has_virtual_allocation(pointer) {
             // SAFETY: caller supplies live provenance and compatible actual current Free.
             unsafe { self.free_virtual_typed_using(pointer, current) };
+            return;
+        }
+        if self.is_heap_kind() {
+            if !self.ever_custom() && !current.ever_custom() && current.is_heap_kind() {
+                // SAFETY: direct built-in heap blocks use `std::alloc` with `direct_heap_layout`.
+                unsafe { self.free_direct_heap_typed(pointer, layout) };
+                return;
+            }
+            // A custom or cross-kind release forwards through `free_raw_nullable`.
+            // SAFETY: the caller returns the exact live block; current must accept it.
+            let released = unsafe { current.free_raw_nullable(pointer.as_ptr()) };
+            crate::standard::raise_native_failure(released);
             return;
         }
         // SAFETY: caller's accepted current resource is forwarded for the original live arena.
@@ -89,18 +105,6 @@ impl BaseAllocator {
         // SAFETY: same arena identity preserves its original typed lease and layout.
         unsafe { self.free_typed(pointer) };
     }
-}
-
-fn builtin_source_descriptor(descriptor: &crate::standard::RuntimeType) -> bool {
-    [
-        AllocatorObject::static_type(),
-        HeapAllocatorObject::static_type(),
-        IncrementalAllocatorObject::static_type(),
-        AccumulatingAllocatorObject::static_type(),
-        AlignedAllocatorObject::static_type(),
-    ]
-    .into_iter()
-    .any(|known| std::ptr::eq(descriptor, known))
 }
 
 fn virtual_allocation_size(layout: Layout) -> Option<usize> {
