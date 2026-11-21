@@ -6,17 +6,16 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle},
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle},
 };
 use std::sync::Arc;
 
 struct ModelObservingReader {
-    transient: StandardTransient,
     base: InterfaceFileReaderDataBase,
     model: WeakHandle<dyn InterfaceInterfaceModel>,
     observations: Arc<SharedState<Vec<bool>>>,
 }
-impl_transient!(ModelObservingReader, "ModelObservingReader", dyn InterfaceFileReaderData, transient, interfaces: [dyn InterfaceFileReaderData]);
+impl_transient!(ModelObservingReader, "ModelObservingReader", dyn InterfaceFileReaderData, interfaces: [dyn InterfaceFileReaderData]);
 impl InterfaceFileReaderData for ModelObservingReader {
     fn reader_data_base(&self) -> &InterfaceFileReaderDataBase {
         &self.base
@@ -45,7 +44,7 @@ impl InterfaceFileReaderTool for LifetimeReaderTool {
         &self,
         _: i32,
         _: &mut Handle<InterfaceCheck>,
-        _: &mut Handle<StandardTransient>,
+        _: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         Ok(false)
     }
@@ -55,7 +54,7 @@ impl InterfaceFileReaderTool for LifetimeReaderTool {
     fn analyse_record(
         &self,
         _: i32,
-        _: &Handle<StandardTransient>,
+        _: &Handle<dyn Transient>,
         _: &mut Handle<InterfaceCheck>,
     ) -> Result<bool, Failure> {
         Ok(false)
@@ -67,12 +66,11 @@ fn observed_reader(
     observations: &Arc<SharedState<Vec<bool>>>,
 ) -> Handle<dyn InterfaceFileReaderData> {
     Handle::new(ModelObservingReader {
-        transient: StandardTransient::default(),
         base: InterfaceFileReaderDataBase::new(0, 1),
         model: model.downgrade(),
         observations: observations.clone(),
     })
-    .cast()
+    .into_upcast()
 }
 
 #[test]

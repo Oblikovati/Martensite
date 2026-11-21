@@ -48,7 +48,7 @@ fn edge(out: &mut Sink, e: &Edge) -> Result<(), Failure> {
     let (c, f, l) = BRepTool::curve(e)?;
     real(out, f);
     real(out, l);
-    let b: Handle<GeomBSplineCurve> = c.cast();
+    let b: Handle<GeomBSplineCurve> = c.downcast();
     bspline(out, &b)?;
     let (v1, v2) = topexp::vertices(e, false);
     vertex(out, &v1)?;

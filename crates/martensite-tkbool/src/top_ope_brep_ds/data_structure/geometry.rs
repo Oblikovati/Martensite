@@ -214,7 +214,7 @@ impl TopOpeBRepDSDataStructure {
     pub fn remove_shape_interference(
         &mut self,
         s: &Shape,
-        i: &martensite_tkernel::standard::Handle<crate::top_ope_brep_ds::TopOpeBRepDSInterference>,
+        i: &martensite_tkernel::standard::Handle<dyn crate::top_ope_brep_ds::InterferenceRecord>,
     ) {
         let l = self.change_shape_interferences(s);
         if Self::find_interference(l, i).is_some() {

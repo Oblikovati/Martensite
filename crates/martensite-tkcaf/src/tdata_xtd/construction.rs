@@ -195,7 +195,7 @@ impl TDataXtdShape {
             ));
         }
         let attribute = Handle::new(Self::new());
-        label.add_attribute(&attribute.cast(), true)?;
+        label.add_attribute(&attribute.upcast(), true)?;
         Ok(attribute)
     }
     /// `Set(label, shape)`: the shape attribute (created on an empty label) with `shape` as

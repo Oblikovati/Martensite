@@ -1,7 +1,7 @@
 //! Named callback fixture with exact traces and injected failure positions.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::{
     adaptor3d::{Adaptor3dSurface, h_surface_tool::Adaptor3dSurfaceHandle},
@@ -15,13 +15,12 @@ use std::sync::{Arc, Mutex};
 pub type CallbackTrace = Arc<Mutex<Vec<&'static str>>>;
 
 pub struct SamplingCallbackSurface {
-    parent: StandardTransient,
     pub bounds: [f64; 4],
     pub trace: CallbackTrace,
     pub fail_at: Option<usize>,
     pub spline: Option<[i32; 4]>,
 }
-impl_transient!(SamplingCallbackSurface, "SamplingCallbackSurface", dyn Adaptor3dSurface, parent, interfaces: [dyn Adaptor3dSurface]);
+impl_transient!(SamplingCallbackSurface, "SamplingCallbackSurface", dyn Adaptor3dSurface, interfaces: [dyn Adaptor3dSurface]);
 
 impl SamplingCallbackSurface {
     pub fn callback(&self, name: &'static str) -> Result<(), Failure> {
@@ -104,11 +103,10 @@ pub fn make_spline_surface(
 ) -> (Adaptor3dSurfaceHandle, CallbackTrace) {
     let trace = Arc::new(Mutex::new(Vec::new()));
     let surface = SamplingCallbackSurface {
-        parent: StandardTransient::default(),
         bounds,
         trace: trace.clone(),
         fail_at,
         spline,
     };
-    (Handle::new(surface).cast(), trace)
+    (Handle::new(surface).into_upcast(), trace)
 }

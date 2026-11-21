@@ -5,7 +5,7 @@ use martensite_tkbrep::{brep::BRepTool, topods};
 use martensite_tkcaf::tnaming::TNaming;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -16,10 +16,9 @@ use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeShape, BRepBuilde
 /// Computes an actual named Cartesian or relative vertex; `NamingPointDriver::default()`.
 #[derive(Default)]
 pub struct NamingPointDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingPointDriver,"DNamingPointDriver",dyn TFunctionDriver,transient,interfaces:[dyn TFunctionDriver]);
+impl_transient!(NamingPointDriver,"DNamingPointDriver",dyn TFunctionDriver,interfaces:[dyn TFunctionDriver]);
 fn point_offsets(function: &Handle<TFunctionFunction>) -> Result<[f64; 3], Failure> {
     Ok([
         values::real_argument(function, 1)?.get().unwrap().get(),

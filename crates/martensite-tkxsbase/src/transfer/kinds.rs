@@ -3,27 +3,27 @@
 use super::{TransferActorOps, TransferFindHasher, TransferFinder, TransferProcessOps};
 use martensite_tkernel::{
     ncollection::{DefaultHashPolicy, HashPolicy},
-    standard::{Handle, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeTyped, Transient, TransientHandleTarget},
 };
 use std::fmt::Debug;
 use std::io::{self, Write};
 
 /// One instance of the transfer templates: its starting objects and their hashing.
 pub trait TransferProcessKind: Sized + Send + Sync + 'static {
-    /// `TheStart` (`Handle<StandardTransient>` or `Handle<TransferFinder>`).
+    /// `TheStart` (`Handle<dyn Transient>` or `Handle<TransferFinder>`).
     type Start: Clone + Default + PartialEq + Debug + Send + Sync + 'static;
-    /// `TheMapHasher` (`std::hash<Handle<StandardTransient>>` or `TransferFindHasher`).
+    /// `TheMapHasher` (`std::hash<Handle<dyn Transient>>` or `TransferFindHasher`).
     type Hasher: HashPolicy<Self::Start> + Default + Send + Sync + 'static;
     /// The actor class seen through its virtual members (`dyn TransferActorOps<Self>`).
-    type Actor: ?Sized + TransferActorOps<Self> + RuntimeTyped;
+    type Actor: ?Sized + TransferActorOps<Self> + RuntimeTyped + TransientHandleTarget;
     /// The process class seen through its virtual members (`dyn TransferProcessOps<Self>`).
-    type Process: ?Sized + TransferProcessOps<Self> + RuntimeTyped;
+    type Process: ?Sized + TransferProcessOps<Self> + RuntimeTyped + TransientHandleTarget;
     /// The native name of the iterator class (in its messages).
     const ITERATOR_NAME: &'static str;
     /// Whether a starting object is null.
     fn is_null(start: &Self::Start) -> bool;
     /// The starting object as a transient (for `InterfaceCheck::SetEntity`).
-    fn as_transient(start: &Self::Start) -> Handle<StandardTransient>;
+    fn as_transient(start: &Self::Start) -> Handle<dyn Transient>;
     /// The base `PrintTrace(start, S)`: " Type:" and the dynamic type name (nothing for
     /// null).
     fn print_start(start: &Self::Start, s: &mut dyn Write) -> io::Result<()>;
@@ -34,7 +34,7 @@ pub trait TransferProcessKind: Sized + Send + Sync + 'static {
 pub struct TransferTransientKind;
 
 impl TransferProcessKind for TransferTransientKind {
-    type Start = Handle<StandardTransient>;
+    type Start = Handle<dyn Transient>;
     type Hasher = DefaultHashPolicy;
     type Actor = dyn TransferActorOps<Self>;
     type Process = dyn TransferProcessOps<Self>;
@@ -42,7 +42,7 @@ impl TransferProcessKind for TransferTransientKind {
     fn is_null(start: &Self::Start) -> bool {
         start.is_null()
     }
-    fn as_transient(start: &Self::Start) -> Handle<StandardTransient> {
+    fn as_transient(start: &Self::Start) -> Handle<dyn Transient> {
         start.clone()
     }
     fn print_start(start: &Self::Start, s: &mut dyn Write) -> io::Result<()> {
@@ -66,7 +66,7 @@ impl TransferProcessKind for TransferFinderKind {
     fn is_null(start: &Self::Start) -> bool {
         start.is_null()
     }
-    fn as_transient(start: &Self::Start) -> Handle<StandardTransient> {
+    fn as_transient(start: &Self::Start) -> Handle<dyn Transient> {
         start.cast()
     }
     fn print_start(start: &Self::Start, s: &mut dyn Write) -> io::Result<()> {

@@ -11,7 +11,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::MapOfShape;
 use martensite_tkernel::{
     ncollection::HSequence,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use martensite_tkshhealing::shape_fix::ShapeFix;
 
@@ -26,16 +26,15 @@ pub(super) fn live_model<'m>(
 }
 
 /// The items of a list object of transients, `None` when `ent` is not a list.
-pub(super) fn listed(ent: &Handle<StandardTransient>) -> Option<Vec<Handle<StandardTransient>>> {
-    ent.cast::<HSequence<Handle<StandardTransient>>>()
-        .get()
+pub(super) fn listed(ent: &Handle<dyn Transient>) -> Option<Vec<Handle<dyn Transient>>> {
+    ent.downcast_ref::<HSequence<Handle<dyn Transient>>>()
         .map(|l| l.sequence(|s| s.iter().cloned().collect()))
 }
 
 impl XSControlTransferReader {
     /// `TransientResult(theEnt)`: the transient result of the final result of `ent`
     /// (null otherwise).
-    pub fn transient_result(&self, ent: &Handle<StandardTransient>) -> Handle<StandardTransient> {
+    pub fn transient_result(&self, ent: &Handle<dyn Transient>) -> Handle<dyn Transient> {
         let res = self.final_result(ent);
         let mres = res
             .get()
@@ -45,14 +44,14 @@ impl XSControlTransferReader {
             .get()
             .map(TransferResultFromTransient::binder)
             .unwrap_or_default();
-        match binder.cast::<TransferSimpleBinderOfTransient>().get() {
+        match binder.downcast_ref::<TransferSimpleBinderOfTransient>() {
             Some(bnd) if bnd.has_result() => bnd.result(),
             _ => Handle::default(),
         }
     }
     /// `ShapeResult(theEnt)`: the shape of the final result of `ent`, its regularity
     /// encoded when "read.encoderegularity.angle" is positive (null otherwise).
-    pub fn shape_result(&self, ent: &Handle<StandardTransient>) -> Result<Shape, Failure> {
+    pub fn shape_result(&self, ent: &Handle<dyn Transient>) -> Result<Shape, Failure> {
         let res = self.final_result(ent);
         let mres = res
             .get()
@@ -71,7 +70,7 @@ impl XSControlTransferReader {
     }
     /// `ClearResult(theEnt, theMode)`: the mark of `ent` cleared (negative mode), else its
     /// final result stripped by mode; false when not marked.
-    pub fn clear_result(&self, ent: &Handle<StandardTransient>, mode: i32) -> bool {
+    pub fn clear_result(&self, ent: &Handle<dyn Transient>, mode: i32) -> bool {
         let num = self.number(ent);
         let Some(mark) = self.result_at(num).filter(|_| num != 0) else {
             return false;
@@ -80,7 +79,7 @@ impl XSControlTransferReader {
             self.state.write().results.insert(num, Handle::default());
             return true;
         }
-        match mark.cast::<TransferResultFromModel>().get() {
+        match mark.downcast_ref::<TransferResultFromModel>() {
             Some(resu) => {
                 resu.strip(mode);
                 true
@@ -92,10 +91,10 @@ impl XSControlTransferReader {
     /// mapped items (mode 1) of the process.
     fn entity_from_mapped(
         &self,
-        res: &Handle<StandardTransient>,
+        res: &Handle<dyn Transient>,
         binder: &Handle<dyn TransferBinder>,
         mode: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let (tp, model) = (self.transient_process(), self.model());
         let Some(process) = tp.get() else {
             return Ok(Handle::default());
@@ -125,8 +124,7 @@ impl XSControlTransferReader {
                 continue;
             }
             if abinder
-                .cast::<TransferSimpleBinderOfTransient>()
-                .get()
+                .downcast_ref::<TransferSimpleBinderOfTransient>()
                 .is_some_and(|trb| trb.result() == *res)
             {
                 return process.mapped(i);
@@ -141,9 +139,9 @@ impl XSControlTransferReader {
     /// without final result.
     pub fn entity_from_result(
         &self,
-        res: &Handle<StandardTransient>,
+        res: &Handle<dyn Transient>,
         mode: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let sh = XSControlUtils::new().binder_shape(res);
         if !sh.is_null() {
             return self.entity_from_shape_result(&sh, mode);
@@ -163,8 +161,7 @@ impl XSControlTransferReader {
             };
             for item in live.results(mode - 2)? {
                 if let Some(rft) = item
-                    .cast::<TransferResultFromTransient>()
-                    .get()
+                    .downcast_ref::<TransferResultFromTransient>()
                     .filter(|r| r.binder() == binder)
                 {
                     return Ok(rft.start());
@@ -180,7 +177,7 @@ impl XSControlTransferReader {
         &self,
         res: &Shape,
         mode: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         if res.is_null() {
             return Ok(Handle::default());
         }
@@ -199,8 +196,7 @@ impl XSControlTransferReader {
             };
             for item in live.results(mode - 2)? {
                 let Some(rft) = item
-                    .cast::<TransferResultFromTransient>()
-                    .get()
+                    .downcast_ref::<TransferResultFromTransient>()
                     .map(|r| (r.start(), r.binder()))
                 else {
                     continue;
@@ -218,7 +214,7 @@ impl XSControlTransferReader {
         &self,
         res: &Shape,
         mode: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let (tp, model) = (self.transient_process(), self.model());
         let Some(process) = tp.get() else {
             return Ok(Handle::default());
@@ -263,7 +259,7 @@ impl XSControlTransferReader {
         &self,
         res: Option<&[Shape]>,
         mode: i32,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         let mut lt = Vec::new();
         let Some(shapes_list) = res.filter(|r| !r.is_empty()) else {
             return Ok(lt);
@@ -308,7 +304,7 @@ impl XSControlTransferReader {
         &self,
         shapes: &MapOfShape,
         mode: i32,
-        lt: &mut Vec<Handle<StandardTransient>>,
+        lt: &mut Vec<Handle<dyn Transient>>,
     ) -> Result<(), Failure> {
         let model = self.model();
         let xu = XSControlUtils::new();
@@ -326,8 +322,7 @@ impl XSControlTransferReader {
                     ))
                 })?;
                 let Some(rft) = item
-                    .cast::<TransferResultFromTransient>()
-                    .get()
+                    .downcast_ref::<TransferResultFromTransient>()
                     .map(|r| (r.start(), r.binder()))
                 else {
                     continue;

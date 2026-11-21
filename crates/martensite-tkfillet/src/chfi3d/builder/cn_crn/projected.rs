@@ -42,14 +42,14 @@ fn projected_curves(e: &Edge, f: &Face) -> Result<CurvePair, Failure> {
     let proj2d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dTrimmedCurve::new(
         &pc.pcurve, pc.first, pc.last, true, true,
     )?)
-    .cast();
+    .into_upcast();
     let (projc, up1, up2) = BRepTool::curve(e)?;
     if projc.is_null() {
         return Err(construction("Failed to get 3D curve of edge"));
     }
     Ok((
         proj2d,
-        Handle::new(GeomTrimmedCurve::new(&projc, up1, up2, true, true)?).cast(),
+        Handle::new(GeomTrimmedCurve::new(&projc, up1, up2, true, true)?).into_upcast(),
     ))
 }
 
@@ -242,9 +242,9 @@ impl ChFi3dBuilder {
                 (c.p[ic][icmoins], ulast)
             };
             let ctrim: Handle<dyn GeomCurve> =
-                Handle::new(GeomTrimmedCurve::new(&curve, a, b, true, true)?).cast();
+                Handle::new(GeomTrimmedCurve::new(&curve, a, b, true, true)?).into_upcast();
             let ctrim2d: Handle<dyn Geom2dCurve> =
-                Handle::new(Geom2dTrimmedCurve::new(&curve2d, a, b, true, true)?).cast();
+                Handle::new(Geom2dTrimmedCurve::new(&curve2d, a, b, true, true)?).into_upcast();
             let ivtx = self.ds.add_shape(c.v1.as_ref());
             let mut ends = if from_v1 {
                 ([ivtx, c.indpoint[ic][1]], [true, false])

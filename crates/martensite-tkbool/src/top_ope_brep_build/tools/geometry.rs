@@ -172,7 +172,8 @@ impl TopOpeBRepBuildTools {
         if BRepTool::degenerated(e)? {
             let (c2d, f2, l2, tolpc) = fc2d_curve_on_surface(e, from_face, true)?;
             let trimmed: Handle<dyn Geom2dCurve> =
-                Handle::new(Geom2dTrimmedCurve::new(&copy2d(&c2d)?, f2, l2, true, true)?).cast();
+                Handle::new(Geom2dTrimmedCurve::new(&copy2d(&c2d)?, f2, l2, true, true)?)
+                    .into_upcast();
             return bb.update_edge_pcurve_on_face(e, &trimmed, to_face, tol_e.max(tolpc));
         }
         if BRepTool::is_closed_on_face(e, from_face)? {

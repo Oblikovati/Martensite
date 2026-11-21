@@ -1,26 +1,24 @@
 //! Exact binder chain teardown, including the native retained-middle mutation.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, Transient},
 };
 use martensite_tkxsbase::transfer::{TransferBinder, TransferBinderBase};
 use std::sync::{Arc, Mutex};
 
 type ReleaseTrace = Arc<Mutex<Vec<usize>>>;
 struct CountedBinder {
-    transient: StandardTransient,
     base: TransferBinderBase,
     number: usize,
     trace: ReleaseTrace,
 }
-impl_transient!(CountedBinder, "CountedBinder", dyn TransferBinder,
-    transient, interfaces: [dyn TransferBinder]);
+impl_transient!(CountedBinder, "CountedBinder", dyn TransferBinder, interfaces: [dyn TransferBinder]);
 impl TransferBinder for CountedBinder {
     fn binder_base(&self) -> &TransferBinderBase {
         &self.base
     }
     fn result_type(&self) -> &'static RuntimeType {
-        StandardTransient::static_type()
+        <dyn Transient>::static_type()
     }
     fn result_type_name(&self) -> String {
         "owned".into()
@@ -33,12 +31,11 @@ impl Drop for CountedBinder {
 }
 fn binder(number: usize, trace: &ReleaseTrace) -> Handle<dyn TransferBinder> {
     Handle::new(CountedBinder {
-        transient: StandardTransient::default(),
         base: TransferBinderBase::default(),
         number,
         trace: trace.clone(),
     })
-    .cast()
+    .into_upcast()
 }
 fn chain(
     length: usize,

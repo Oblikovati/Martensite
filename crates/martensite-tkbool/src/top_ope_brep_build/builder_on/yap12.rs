@@ -3,17 +3,15 @@
 use super::context::{FcxContext, OnContext};
 use super::{TopOpeBRepBuildBuilderON, fun_build_tb};
 use crate::top_ope_brep_build::TopOpeBRepBuildBuilder;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_ds::export::{fds_data, fun_ds_sdm};
-use crate::top_ope_brep_ds::{
-    TopOpeBRepDSConfig, TopOpeBRepDSKind, TopOpeBRepDSShapeShapeInterference,
-    TopOpeBRepDSTransition,
-};
+use crate::top_ope_brep_ds::{TopOpeBRepDSConfig, TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use crate::top_ope_brep_tool::{
     fsc_get_psc, fsc_state_eonface, fun_tool_getdxx, fun_tool_getxx, fun_tool_getxx_ng,
     fun_tool_nggeom_f, fun_tool_orient_e_in_f_forward, fun_tool_par_e_tol, fun_tool_par_f_tol,
 };
 use martensite_tkbrep::topods;
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{self, Orientation, ShapeEnum, State};
 use martensite_tkmath::gp::{Direction3, Point2, Vector3};
 
@@ -81,7 +79,7 @@ impl TopOpeBRepBuildBuilderON<'_> {
     ) -> Result<Option<TopOpeBRepDSTransition>, Failure> {
         let bds = self.pb()?.hds()?.ds();
         for i in bds.shape_interferences(cx.fcx.as_ref(), true).iter() {
-            let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+            let ssi = i.view::<dyn ShapeInterferenceRecord>();
             let Some(s) = ssi.get() else {
                 continue;
             };

@@ -7,13 +7,13 @@ use crate::chfi_ds::{CircSection, SpineHandle, SurfDataHandle, lock};
 use crate::chfi3d::fil_common_point;
 use martensite_tkbrep::topods::Face;
 use martensite_tkernel::ncollection::{Array1, HArray1};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 
 /// The sections as a shared 1-based array (`NCollectionHArray1<ChFiDSCircSection>`),
 /// the simulation object of a surface data (null without sections).
 pub(crate) fn sections_transient(
     sections: Vec<CircSection>,
-) -> Result<Handle<StandardTransient>, Failure> {
+) -> Result<Handle<dyn Transient>, Failure> {
     if sections.is_empty() {
         return Ok(Handle::default());
     }
@@ -22,7 +22,7 @@ pub(crate) fn sections_transient(
     for (i, s) in (1..).zip(sections) {
         a.set_value(i, s).map_err(range)?;
     }
-    Ok(Handle::new(HArray1::from_owned(a)).cast())
+    Ok(Handle::new(HArray1::from_owned(a)).into_upcast())
 }
 
 impl ChFi3dBuilder {

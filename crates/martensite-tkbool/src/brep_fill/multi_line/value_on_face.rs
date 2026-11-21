@@ -85,7 +85,7 @@ fn on_transverse_iso(the_v: &Geom2dAdaptorCurve, mut dist: f64) -> Result<Option
         dist = -dist;
     }
     let line: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(Point2::new(0., dist), Direction2::X)).cast();
+        Handle::new(Geom2dLine::from_point(Point2::new(0., dist), Direction2::X)).into_upcast();
     let cu2 = Geom2dAdaptorCurve::with_curve(&line)?;
     let intersector = GInter::between(the_v, &cu2, 0., tol)?;
     if !intersector.is_done() {

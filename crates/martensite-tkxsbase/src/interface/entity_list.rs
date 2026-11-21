@@ -2,7 +2,7 @@
 //! value is the entity itself, or an `InterfaceEntityCluster` chain beyond one.
 use super::errors::interface_error;
 use super::{InterfaceEntityCluster, InterfaceEntityIterator};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeType, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, Transient, exceptions};
 
 /// `InterfaceEntityList`. Copies share the value (natively a handle copy).
 ///
@@ -10,13 +10,13 @@ use martensite_tkernel::standard::{Failure, Handle, RuntimeType, StandardTransie
 /// use martensite_tkxsbase::interface::InterfaceEntityList;
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let mut list = InterfaceEntityList::new();
-/// list.append(&Handle::new(StandardTransient::default())).unwrap();
-/// list.append(&Handle::new(StandardTransient::default())).unwrap();
+/// list.append(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>()).unwrap();
+/// list.append(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>()).unwrap();
 /// assert_eq!(list.nb_entities(), 2);
 /// ```
 #[derive(Clone, Default)]
 pub struct InterfaceEntityList {
-    theval: Handle<StandardTransient>,
+    theval: Handle<dyn Transient>,
 }
 
 fn null_entity(member: &str) -> Failure {
@@ -41,7 +41,7 @@ impl InterfaceEntityList {
         self.theval.nullify();
     }
     /// `Append(ent)`: at the end; `StandardNullObject` for null.
-    pub fn append(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn append(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if ent.is_null() {
             return Err(null_entity("Append"));
         }
@@ -56,7 +56,7 @@ impl InterfaceEntityList {
     }
     /// `Add(ent)`: at the end, or at the front when the first cluster is full (a new
     /// cluster then heads the chain); `StandardNullObject` for null.
-    pub fn add(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn add(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if ent.is_null() {
             return Err(null_entity("Add"));
         }
@@ -69,14 +69,14 @@ impl InterfaceEntityList {
             return self.wrap_single(ent);
         };
         if live.is_local_full() {
-            self.theval =
-                Handle::new(InterfaceEntityCluster::with_entity_and_next(ent, &cluster)).cast();
+            self.theval = Handle::new(InterfaceEntityCluster::with_entity_and_next(ent, &cluster))
+                .into_upcast();
             return Ok(());
         }
         live.append(ent)
     }
     /// `Remove(ent)`: `StandardNullObject` for null.
-    pub fn remove(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn remove(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if ent.is_null() {
             return Err(null_entity("Remove"));
         }
@@ -128,7 +128,7 @@ impl InterfaceEntityList {
             .map_or(1, InterfaceEntityCluster::nb_entities)
     }
     /// `Value(num)`: `StandardOutOfRange` out of the list.
-    pub fn value(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         if self.theval.is_null() {
             return Err(out_of_range("Value", num));
         }
@@ -142,7 +142,7 @@ impl InterfaceEntityList {
     }
     /// `SetValue(num, ent)`: `StandardNullObject` for null, `StandardOutOfRange` out of
     /// the list.
-    pub fn set_value(&mut self, num: i32, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn set_value(&mut self, num: i32, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if ent.is_null() {
             return Err(null_entity("SetValue"));
         }
@@ -186,7 +186,7 @@ impl InterfaceEntityList {
         &self,
         atype: &RuntimeType,
         num: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         if self.theval.is_null() {
             return Err(interface_error(
                 "Interface EntityList : TypedEntity , none found",
@@ -211,7 +211,7 @@ impl InterfaceEntityList {
         &self,
         atype: &RuntimeType,
         num: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let found = self.typed_walk(atype);
         if num == 0 && found.len() > 1 {
             return Err(interface_error(
@@ -226,7 +226,7 @@ impl InterfaceEntityList {
     }
     /// The entities kind of `atype` in the native scan order: each cluster from its last
     /// local place down to the first.
-    fn typed_walk(&self, atype: &RuntimeType) -> Vec<Handle<StandardTransient>> {
+    fn typed_walk(&self, atype: &RuntimeType) -> Vec<Handle<dyn Transient>> {
         let mut found = Vec::new();
         let mut current = self.cluster();
         while let Some(cluster) = current.get() {
@@ -243,10 +243,10 @@ impl InterfaceEntityList {
     fn cluster(&self) -> Handle<InterfaceEntityCluster> {
         self.theval.cast()
     }
-    fn wrap_single(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn wrap_single(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         let cluster = InterfaceEntityCluster::with_entity(&self.theval);
         cluster.append(ent)?;
-        self.theval = Handle::new(cluster).cast();
+        self.theval = Handle::new(cluster).into_upcast();
         Ok(())
     }
 }
@@ -254,10 +254,11 @@ impl InterfaceEntityList {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use martensite_tkernel::standard::StandardTransient;
     use martensite_tkernel::{standard::RuntimeTyped, tcollection::HAsciiString};
 
-    fn entity() -> Handle<StandardTransient> {
-        Handle::new(StandardTransient::default())
+    fn entity() -> Handle<dyn Transient> {
+        Handle::new(StandardTransient).into_upcast::<dyn Transient>()
     }
 
     #[test]
@@ -268,7 +269,7 @@ mod tests {
         list.add(&first).unwrap();
         assert!(list.value(1).unwrap() == first);
         assert!(list.value(2).is_err());
-        let text: Handle<StandardTransient> = Handle::new(HAsciiString::new("t")).cast();
+        let text: Handle<dyn Transient> = Handle::new(HAsciiString::new("t")).into_upcast();
         list.append(&text).unwrap();
         (0..3).for_each(|_| list.add(&entity()).unwrap());
         assert_eq!(list.nb_entities(), 5);
@@ -277,7 +278,7 @@ mod tests {
         assert_eq!(list.nb_typed_entities(HAsciiString::static_type()), 1);
         assert!(list.typed_entity(HAsciiString::static_type(), 0).unwrap() == text);
         let several = list
-            .typed_entity(StandardTransient::static_type(), 0)
+            .typed_entity(<dyn Transient>::static_type(), 0)
             .err()
             .unwrap();
         assert_eq!(several.exception_type(), "InterfaceInterfaceError");
@@ -291,10 +292,10 @@ mod tests {
         let mut list = InterfaceEntityList::new();
         let first = entity();
         list.append(&first).unwrap();
-        assert_eq!(list.nb_typed_entities(StandardTransient::static_type()), 1);
+        assert_eq!(list.nb_typed_entities(<dyn Transient>::static_type()), 1);
         assert!(list.typed_entity(HAsciiString::static_type(), 0).is_err());
         assert!(
-            list.typed_entity(StandardTransient::static_type(), 2)
+            list.typed_entity(<dyn Transient>::static_type(), 2)
                 .is_err()
         );
         let other = entity();

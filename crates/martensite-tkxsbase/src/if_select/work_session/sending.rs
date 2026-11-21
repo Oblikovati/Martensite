@@ -3,7 +3,7 @@
 //! sending leaves the errors unhandled for the next calls.
 use super::item_lists::h_text;
 use super::params::info;
-use super::{ERRHAND, IFSelectWorkSession, interrupted, report_interruption};
+use super::{ERRHAND, IFSelectSession, interrupted, report_interruption};
 use crate::if_graph::{IFGraphSubPartsEvaluate, IFGraphSubPartsIterator};
 use crate::if_select::{
     IFSelectDispatch, IFSelectReturnStatus, IFSelectSelectPointed, IFSelectSelection,
@@ -39,7 +39,7 @@ enum Output<'s> {
     Stream(&'s mut dyn Write),
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// Records the last run checks.
     fn set_check_run(&self, checks: InterfaceCheckIterator) {
         self.state.write().thecheckrun = checks;
@@ -127,7 +127,7 @@ impl IFSelectWorkSession {
             sp.set_list(Some(&iter.content()));
             *nf += 1;
             let filnam = self.split_file_name(disp, *nf)?;
-            let stat = self.send_selected(&filnam, &Handle::new(sp).cast(), false)?;
+            let stat = self.send_selected(&filnam, &Handle::new(sp).into_upcast(), false)?;
             if stat != IFSelectReturnStatus::RetDone {
                 println!("File {filnam} failed");
             }

@@ -6,7 +6,7 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Handle, StandardTransient, Transient},
+    standard::{Failure, Handle, Transient},
     tcollection::HAsciiString,
 };
 
@@ -26,7 +26,7 @@ pub trait InterfaceGeneralModule: Transient {
         &self,
         _model: &Handle<dyn InterfaceInterfaceModel>,
         cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         iter: &mut InterfaceEntityIterator,
     ) {
         self.fill_shared_case(cn, ent, iter);
@@ -35,11 +35,11 @@ pub trait InterfaceGeneralModule: Transient {
     fn fill_shared_case(
         &self,
         cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         iter: &mut InterfaceEntityIterator,
     );
     /// `Share(iter, shared)`: adds a shared entity to the iterator.
-    fn share(&self, iter: &mut InterfaceEntityIterator, shared: &Handle<StandardTransient>) {
+    fn share(&self, iter: &mut InterfaceEntityIterator, shared: &Handle<dyn Transient>) {
         iter.get_one_item(shared);
     }
     /// `ListImplied(model, CN, ent, iter)`: by default `ListImpliedCase`.
@@ -47,7 +47,7 @@ pub trait InterfaceGeneralModule: Transient {
         &self,
         _model: &Handle<dyn InterfaceInterfaceModel>,
         cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         iter: &mut InterfaceEntityIterator,
     ) {
         self.list_implied_case(cn, ent, iter);
@@ -56,7 +56,7 @@ pub trait InterfaceGeneralModule: Transient {
     fn list_implied_case(
         &self,
         _cn: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _iter: &mut InterfaceEntityIterator,
     ) {
     }
@@ -65,12 +65,12 @@ pub trait InterfaceGeneralModule: Transient {
     fn check_case(
         &self,
         cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         shares: &InterfaceShareTool,
         ach: &mut Handle<InterfaceCheck>,
     ) -> Result<(), Failure>;
     /// `CanCopy(CN, ent)`: false by default.
-    fn can_copy(&self, _cn: i32, _ent: &Handle<StandardTransient>) -> bool {
+    fn can_copy(&self, _cn: i32, _ent: &Handle<dyn Transient>) -> bool {
         false
     }
     /// `Dispatch(CN, entfrom, entto, TC)`: by default the entity itself (`entto` =
@@ -78,29 +78,29 @@ pub trait InterfaceGeneralModule: Transient {
     fn dispatch(
         &self,
         _cn: i32,
-        entfrom: &Handle<StandardTransient>,
-        entto: &mut Handle<StandardTransient>,
+        entfrom: &Handle<dyn Transient>,
+        entto: &mut Handle<dyn Transient>,
         _tc: &mut InterfaceCopyTool,
     ) -> Result<bool, Failure> {
         *entto = entfrom.clone();
         Ok(false)
     }
     /// `NewVoid(CN, entto)`: an empty entity of the case.
-    fn new_void(&self, cn: i32, entto: &mut Handle<StandardTransient>) -> bool;
+    fn new_void(&self, cn: i32, entto: &mut Handle<dyn Transient>) -> bool;
     /// `CopyCase(CN, entfrom, entto, TC)`: fills `entto` from `entfrom`.
     fn copy_case(
         &self,
         cn: i32,
-        entfrom: &Handle<StandardTransient>,
-        entto: &Handle<StandardTransient>,
+        entfrom: &Handle<dyn Transient>,
+        entto: &Handle<dyn Transient>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure>;
     /// `NewCopiedCase(CN, entfrom, entto, TC)`: false by default.
     fn new_copied_case(
         &self,
         _cn: i32,
-        _entfrom: &Handle<StandardTransient>,
-        _entto: &mut Handle<StandardTransient>,
+        _entfrom: &Handle<dyn Transient>,
+        _entto: &mut Handle<dyn Transient>,
         _tc: &mut InterfaceCopyTool,
     ) -> Result<bool, Failure> {
         Ok(false)
@@ -109,19 +109,19 @@ pub trait InterfaceGeneralModule: Transient {
     fn renew_implied_case(
         &self,
         _cn: i32,
-        _entfrom: &Handle<StandardTransient>,
-        _entto: &Handle<StandardTransient>,
+        _entfrom: &Handle<dyn Transient>,
+        _entto: &Handle<dyn Transient>,
         _tc: &InterfaceCopyTool,
     ) -> Result<(), Failure> {
         Ok(())
     }
     /// `WhenDeleteCase(CN, ent, dispatched)`: nothing by default.
-    fn when_delete_case(&self, _cn: i32, _ent: &Handle<StandardTransient>, _dispatched: bool) {}
+    fn when_delete_case(&self, _cn: i32, _ent: &Handle<dyn Transient>, _dispatched: bool) {}
     /// `CategoryNumber(CN, ent, shares)`: 0 (not specified) by default.
     fn category_number(
         &self,
         _cn: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
     ) -> i32 {
         0
@@ -130,7 +130,7 @@ pub trait InterfaceGeneralModule: Transient {
     fn name(
         &self,
         _cn: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
     ) -> Handle<HAsciiString> {
         Handle::default()
@@ -139,5 +139,5 @@ pub trait InterfaceGeneralModule: Transient {
 impl_transient_interface!(
     dyn InterfaceGeneralModule,
     "InterfaceGeneralModule",
-    StandardTransient
+    dyn Transient
 );

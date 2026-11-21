@@ -5,16 +5,16 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient_interface,
     message::{Message, ProgressRange},
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
 use std::fmt::Write;
 
 /// `Handle<XSControlWorkSession>`: martensite-tkde only forward-declares the work session, so
-/// the implementation passes a handle to any transient; a provider casts it to the work session
-/// class (de-design.md section 2).
-pub type DeWorkSession = Handle<StandardTransient>;
+/// the framework passes an erased Rust owner. Each provider checks the concrete work session
+/// type it supports (de-design.md section 2).
+pub type DeWorkSession = Handle<dyn Transient>;
 
 /// The private `myNode` of `DeProvider`; `DeProviderBase::default()` is the default
 /// constructor (no node), [`DeProviderBase::with_node`] the one from a node.
@@ -230,7 +230,7 @@ pub trait DeProvider: Transient {
         Ok(report_unsupported(self, "stream write operation"))
     }
 }
-impl_transient_interface!(dyn DeProvider, "DEProvider", StandardTransient);
+impl_transient_interface!(dyn DeProvider, "DEProvider", dyn Transient);
 
 /// The default transfer body: "Error: provider FORMAT VENDOR doesn't support OPERATION",
 /// then `false`.
@@ -253,10 +253,9 @@ mod tests {
     /// A provider that implements no transfer.
     #[derive(Default)]
     struct NamedProvider {
-        transient: StandardTransient,
         base: DeProviderBase,
     }
-    impl_transient!(NamedProvider, "NamedProvider", dyn DeProvider, transient, interfaces: [dyn DeProvider]);
+    impl_transient!(NamedProvider, "NamedProvider", dyn DeProvider, interfaces: [dyn DeProvider]);
     impl DeProvider for NamedProvider {
         fn provider_base(&self) -> &DeProviderBase {
             &self.base

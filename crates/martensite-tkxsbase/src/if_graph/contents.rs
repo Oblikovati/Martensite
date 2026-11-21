@@ -5,7 +5,7 @@ use crate::interface::{
     InterfaceEntityIterator, InterfaceGraph, InterfaceGraphContent, InterfaceGraphContentEvaluate,
     InterfaceModelEntities,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions};
 use std::ops::{Deref, DerefMut};
 
 /// Declares a graph content of IFGraph: its content (the dereference target) and its
@@ -48,7 +48,7 @@ graph_content_tool!(
     /// ```
     /// use martensite_tkxsbase::if_graph::IFGraphAllShared;
     /// use martensite_tkxsbase::interface::{InterfaceGraph, InterfaceGraphContentEvaluate};
-    /// fn shared(graph: &InterfaceGraph, ent: &martensite_tkernel::standard::Handle<martensite_tkernel::standard::StandardTransient>) -> i32 {
+    /// fn shared(graph: &InterfaceGraph, ent: &martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
     ///     let mut all = IFGraphAllShared::with_entity(graph, ent).unwrap();
     ///     all.result().unwrap().nb_entities()
     /// }
@@ -61,7 +61,7 @@ impl IFGraphAllShared {
     /// model; `StandardNullObject` for a graph without model (a native null dereference).
     pub fn with_entity(
         agraph: &InterfaceGraph,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<Self, Failure> {
         let mut all = Self::new(agraph)?;
         let model = agraph.model().get().ok_or_else(|| {
@@ -73,7 +73,7 @@ impl IFGraphAllShared {
         Ok(all)
     }
     /// `GetFromEntity(ent)`: `ent` and its shareds.
-    pub fn get_from_entity(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn get_from_entity(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         self.thegraph.get_from_entity(ent, true, 0)
     }
     /// `GetFromIter(iter)`: the entities of `iter` and their shareds.
@@ -100,7 +100,7 @@ impl InterfaceGraphContentEvaluate for IFGraphAllShared {
 /// passed as a plain entity iterator, whose list stays empty, so nothing is added.
 fn implicit_all_shared(
     agraph: &InterfaceGraph,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
 ) -> Result<IFGraphAllShared, Failure> {
     let model_graph = InterfaceGraph::new(agraph.model(), true)?;
     IFGraphAllShared::with_entity(&model_graph, ent)
@@ -117,7 +117,7 @@ impl IFGraphCompare {
     /// implicit `IFGraphAllShared` it builds).
     pub fn get_from_entity(
         &mut self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         first: bool,
     ) -> Result<(), Failure> {
         let iter = implicit_all_shared(&self.thegraph, ent)?;
@@ -188,7 +188,7 @@ graph_content_tool!(
 impl IFGraphCumulate {
     /// `GetFromEntity(ent)`. Native defect kept: nothing is added (see the implicit
     /// `IFGraphAllShared` it builds).
-    pub fn get_from_entity(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn get_from_entity(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         let iter = implicit_all_shared(&self.thegraph, ent)?;
         self.get_from_iter(&iter)
     }
@@ -241,7 +241,7 @@ impl IFGraphCumulate {
     }
     /// `NbTimes(ent)`: the count of selections of `ent` (0 out of the model; -1 when
     /// loaded but never selected, as natively).
-    pub fn nb_times(&self, ent: &Handle<StandardTransient>) -> Result<i32, Failure> {
+    pub fn nb_times(&self, ent: &Handle<dyn Transient>) -> Result<i32, Failure> {
         let num = self.thegraph.entity_number(ent);
         if num == 0 {
             return Ok(0);
@@ -278,7 +278,7 @@ graph_content_tool!(
 
 impl IFGraphExternalSources {
     /// `GetFromEntity(ent)`: `ent` and its shareds form the list.
-    pub fn get_from_entity(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn get_from_entity(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         self.thegraph.get_from_entity(ent, true, 0)
     }
     /// `GetFromIter(iter)`: the entities of `iter` form the list.

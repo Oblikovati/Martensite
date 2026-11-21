@@ -7,7 +7,7 @@ use crate::transfer_brep::{TransferBRep, TransferBRepShapeBinder};
 use martensite_tkbrep::topods::{Builder, Compound, Shape};
 use martensite_tkernel::{
     message::ProgressRange,
-    standard::{Handle, StandardTransient},
+    standard::{Handle, Transient},
     tcollection::AsciiString,
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -213,7 +213,7 @@ fn algo_container_and_statics() {
         non_manifold: false,
         detailing_level: ShapeEnum::Vertex,
     };
-    let mut info: Handle<StandardTransient> = Handle::default();
+    let mut info: Handle<dyn Transient> = Handle::default();
     let progress = ProgressRange::default();
     let result = container
         .process_shape(&shape, &args, &mut info, &progress)
@@ -234,7 +234,7 @@ fn algo_container_and_statics() {
         pseq: "write.no.seq",
         ..args
     };
-    let mut write_info: Handle<StandardTransient> = Handle::default();
+    let mut write_info: Handle<dyn Transient> = Handle::default();
     assert!(
         container
             .process_shape(&shape, &write_args, &mut write_info, &progress)
@@ -247,5 +247,5 @@ fn algo_container_and_statics() {
             .unwrap()
             .is_null()
     );
-    XSAlgo::set_algo_container(&Handle::new(XSAlgoAlgoContainer::new()).cast());
+    XSAlgo::set_algo_container(&Handle::new(XSAlgoAlgoContainer::new()).into_upcast());
 }

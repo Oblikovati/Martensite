@@ -113,7 +113,10 @@ fn hermite_bezier(
     }
     let mut poles = points4()?;
     plib::coefficients_poles(&coeffs, None, &mut poles, None)?;
-    Ok((Handle::new(GeomBezierCurve::new(&poles)?).cast(), p01))
+    Ok((
+        Handle::new(GeomBezierCurve::new(&poles)?).into_upcast(),
+        p01,
+    ))
 }
 
 /// An array of four points at the origin, from 1.
@@ -182,14 +185,14 @@ fn append_projection(
         Handle::new(Geom2dTrimmedCurve::new(
             &pc.pcurve, pc.first, pc.last, true, true,
         )?)
-        .cast(),
+        .into_upcast(),
     );
     let (c3, up1, up2) = BRepTool::curve(&e1)?;
     if c3.is_null() {
         return Err(construction("Failed to get 3D curve of edge"));
     }
     out.cproj
-        .push(Handle::new(GeomTrimmedCurve::new(&c3, up1, up2, true, true)?).cast());
+        .push(Handle::new(GeomTrimmedCurve::new(&c3, up1, up2, true, true)?).into_upcast());
     *error = f64::min(*error, BRepTool::edge_tolerance(&e1)?);
     Ok(())
 }

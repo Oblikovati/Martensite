@@ -4,7 +4,7 @@ use super::presentation_colors;
 use martensite_tkernel::quantity::NamedColor;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdata_std::support::cast_attribute;
@@ -68,11 +68,10 @@ impl Default for PresentationState {
 /// assert!(presentation.has_own_color() && presentation.color() == NamedColor::RED);
 /// ```
 pub struct TDataXtdPresentation {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<PresentationState>,
 }
-impl_transient!(TDataXtdPresentation, "TDataXtdPresentation", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataXtdPresentation, "TDataXtdPresentation", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataXtdPresentation {
     fn default() -> Self {
@@ -84,7 +83,6 @@ impl TDataXtdPresentation {
     /// `TDataXtdPresentation()`: null driver, white, nothing owned, not displayed.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(PresentationState::default()),
         }
@@ -98,7 +96,7 @@ impl TDataXtdPresentation {
         let mut presentation: Handle<TDataXtdPresentation> = Handle::default();
         if !label.find_attribute_as(&Self::get_id(), &mut presentation)? {
             presentation = Handle::new(Self::new());
-            label.add_attribute(&presentation.cast(), true)?;
+            label.add_attribute(&presentation.upcast(), true)?;
         }
         martensite_tklcaf::live(&presentation, "TDataXtdPresentation::Set")?
             .set_driver_guid(driver)?;
@@ -361,13 +359,13 @@ impl TdfAttribute for TDataXtdPresentation {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).upcast()
     }
     /// `BackupCopy`: a new presentation with every field.
     fn backup_copy(&self) -> Result<Handle<dyn TdfAttribute>, Failure> {
         let copy = Self::new();
         *copy.state.write() = self.read();
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).upcast())
     }
     fn paste(
         &self,

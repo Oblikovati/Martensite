@@ -4,7 +4,7 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::HAsciiString,
 };
 use std::{
@@ -14,20 +14,17 @@ use std::{
 
 #[derive(Default)]
 struct DeletionCountModel {
-    transient: StandardTransient,
     base: InterfaceModelBase,
     held_table: SharedState<Option<InterfaceSharingTableHandle>>,
-    observations: Arc<SharedState<Vec<i32>>>,
+    observations: Arc<SharedState<Vec<usize>>>,
 }
-impl_transient!(DeletionCountModel, "DeletionCountModel", dyn InterfaceInterfaceModel, transient,
+impl_transient!(DeletionCountModel, "DeletionCountModel", dyn InterfaceInterfaceModel,
     interfaces: [dyn InterfaceInterfaceModel]);
 
 impl Drop for DeletionCountModel {
     fn drop(&mut self) {
         if let Some(table) = self.held_table.read().as_ref() {
-            self.observations
-                .write()
-                .push(table.get().unwrap().transient_base().ref_count());
+            self.observations.write().push(table.ref_count());
         }
     }
 }
@@ -47,17 +44,16 @@ impl InterfaceInterfaceModel for DeletionCountModel {
     fn dump_header(&self, _: &mut dyn Write, _: i32) -> io::Result<()> {
         Ok(())
     }
-    fn print_label(&self, _: &Handle<StandardTransient>, _: &mut dyn Write) -> io::Result<()> {
+    fn print_label(&self, _: &Handle<dyn Transient>, _: &mut dyn Write) -> io::Result<()> {
         Ok(())
     }
-    fn string_label(&self, _: &Handle<StandardTransient>) -> Handle<HAsciiString> {
+    fn string_label(&self, _: &Handle<dyn Transient>) -> Handle<HAsciiString> {
         Handle::default()
     }
 }
 
-fn recorded_model(observations: Arc<SharedState<Vec<i32>>>) -> Handle<DeletionCountModel> {
+fn recorded_model(observations: Arc<SharedState<Vec<usize>>>) -> Handle<DeletionCountModel> {
     Handle::new(DeletionCountModel {
-        transient: StandardTransient::default(),
         base: InterfaceModelBase::default(),
         held_table: SharedState::new(None),
         observations,
@@ -82,7 +78,7 @@ fn assignment_releases_the_old_model_before_replacing_its_old_table() {
     let mut target = InterfaceGraph::new(&model.cast(), false).unwrap();
     *model.held_table.write() = target.sharing_table_handle().cloned();
     drop(model);
-    let source_model = Handle::new(DeletionCountModel::default()).cast();
+    let source_model = Handle::new(DeletionCountModel::default()).into_upcast();
     let source = InterfaceGraph::new(&source_model, false).unwrap();
     target.assign_from(&source).unwrap();
     assert_eq!(observations.snapshot(), vec![2]);

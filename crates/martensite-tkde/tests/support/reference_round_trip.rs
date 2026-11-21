@@ -46,12 +46,12 @@ pub fn save_all(wrapper: &DeWrapper) -> AsciiString {
 }
 
 fn probe_int(wrapper: &DeWrapper) -> i32 {
-    let node = probe_value(wrapper, "STEP", "Martensite").cast::<ProbeNode>();
+    let node = probe_value(wrapper, "STEP", "Martensite").into_downcast::<ProbeNode>();
     node.get().expect("the STEP node").value()
 }
 
 fn probe_tolerance(wrapper: &DeWrapper) -> f64 {
-    let node = probe_value(wrapper, "STEP", "ACME").cast::<dyn DeShapeFixConfigurationNode>();
+    let node = probe_value(wrapper, "STEP", "ACME").into_cast::<dyn DeShapeFixConfigurationNode>();
     node.get()
         .expect("the ACME node")
         .shape_fix_parameters()

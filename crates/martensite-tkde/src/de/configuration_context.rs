@@ -8,7 +8,7 @@ use martensite_tkernel::{
     message::Message,
     ncollection::{DataMap, List},
     osd::{CadPath, File, OpenMode, OsdErrorAccess, Protection},
-    standard::{Failure, SharedState, StandardTransient},
+    standard::{Failure, SharedState, Transient},
     tcollection::AsciiString,
 };
 use std::fmt::Write;
@@ -27,14 +27,12 @@ pub type DeResourceMap = DataMap<AsciiString, AsciiString>;
 /// ```
 #[derive(Default)]
 pub struct DeConfigurationContext {
-    transient: StandardTransient,
     resource: SharedState<DeResourceMap>,
 }
 impl_transient!(
     DeConfigurationContext,
     "DEConfigurationContext",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl DeConfigurationContext {

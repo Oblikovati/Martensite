@@ -1,16 +1,16 @@
 //! The process-wide library of typed values (`AddLib`, `Lib`, `FromLib`, `LibList`) and
 //! the map of static values (`Stats`, `StaticValue`); xsbase-design.md section 2.
-use super::{MoniToolTypedValue, MoniToolValueType};
+use super::{MoniToolTypedValue, MoniToolTypedValueOps, MoniToolValueType};
 use martensite_tkernel::{
     ncollection::DataMap,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
     tcollection::AsciiString,
 };
 use std::sync::{OnceLock, PoisonError, RwLock, RwLockWriteGuard};
 
-/// The native `DataMap<AsciiString, Handle<StandardTransient>>`
+/// The native `DataMap<AsciiString, Handle<dyn Transient>>`
 /// of the library and of the static values.
-pub type MoniToolTypedValueMap = DataMap<AsciiString, Handle<StandardTransient>>;
+pub type MoniToolTypedValueMap = DataMap<AsciiString, Handle<dyn Transient>>;
 
 fn library_lock() -> &'static RwLock<MoniToolTypedValueMap> {
     static LIBRARY: OnceLock<RwLock<MoniToolTypedValueMap>> = OnceLock::new();
@@ -50,7 +50,7 @@ fn library() -> RwLockWriteGuard<'static, MoniToolTypedValueMap> {
     if lib.is_empty() {
         // The standard types are valid specifications; an error cannot occur here.
         for tv in standard_types().unwrap_or_default() {
-            lib.bind(tv.name(), Handle::new(tv).cast());
+            lib.bind(tv.name(), Handle::new(tv).into_upcast());
         }
     }
     lib
@@ -64,7 +64,7 @@ impl MoniToolTypedValue {
         if !def.is_empty() {
             value.set_definition(def);
         }
-        library().bind(value.name(), tv.cast());
+        library().bind(value.name(), tv.upcast());
         true
     }
     /// `Lib(def)`: the recorded typed value (the original), null when none.
@@ -90,7 +90,7 @@ impl MoniToolTypedValue {
         stats_lock().write().unwrap_or_else(PoisonError::into_inner)
     }
     /// `StaticValue(name)`: the static value of a name, null when unknown.
-    pub fn static_value(name: &str) -> Handle<MoniToolTypedValue> {
+    pub fn static_value(name: &str) -> Handle<dyn MoniToolTypedValueOps> {
         let found = Self::stats().seek(&AsciiString::new(name)).cloned();
         found.map(|h| h.cast()).unwrap_or_default()
     }

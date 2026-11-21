@@ -5,25 +5,24 @@
 //!
 //! No class overrides the virtual members (`Print`, `HasInterpret`, `Interpret`,
 //! `Satisfies`, the `Set*Value` setters), so they are inherent methods; the derived
-//! `InterfaceTypedValue` embeds this struct (xsbase-design.md section 1).
+//! `InterfaceTypedValue` shares its value state (xsbase-design.md section 1).
 //!
 //! The native readers dereference the shared string without a check, and it is null
 //! after `ClearValue`; the implementation reads a null string as empty (`IsSetValue`, `RealValue`,
 //! `CStringValue`), while the setters that edit it in place return `StandardNullObject`.
 use super::MoniToolValueType;
 use martensite_tkernel::{
-    impl_transient,
+    impl_transient, impl_transient_interface_target,
     ncollection::DataMap,
-    standard::{
-        Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, exceptions,
-    },
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
+use std::ops::Deref;
 
 /// `MoniToolValueInterpret`: interprets a value (`native`: to the native form, else to
 /// the coded form) for the typed value given as first argument.
 pub type MoniToolValueInterpret =
-    fn(&MoniToolTypedValue, &Handle<HAsciiString>, bool) -> Handle<HAsciiString>;
+    fn(&MoniToolValue, &Handle<HAsciiString>, bool) -> Handle<HAsciiString>;
 /// `MoniToolValueSatisfies`: an additional check of a value.
 pub type MoniToolValueSatisfies = fn(&Handle<HAsciiString>) -> bool;
 
@@ -67,7 +66,7 @@ pub(super) struct TypedValueState {
     pub(super) thedef: AsciiString,
     pub(super) thelabel: AsciiString,
     pub(super) thetype: MoniToolValueType,
-    pub(super) theotyp: Handle<RuntimeType>,
+    pub(super) theotyp: Option<&'static RuntimeType>,
     pub(super) thelims: i32,
     pub(super) themaxlen: i32,
     pub(super) theintlow: i32,
@@ -82,7 +81,7 @@ pub(super) struct TypedValueState {
     pub(super) thesatisn: AsciiString,
     pub(super) theival: i32,
     pub(super) thehval: Handle<HAsciiString>,
-    pub(super) theoval: Handle<StandardTransient>,
+    pub(super) theoval: Handle<dyn Transient>,
 }
 
 /// `MoniToolTypedValue`.
@@ -97,15 +96,36 @@ pub(super) struct TypedValueState {
 /// assert_eq!(value.definition().as_bytes(), b"Integer  >= 0");
 /// ```
 pub struct MoniToolTypedValue {
-    transient: StandardTransient,
+    pub(super) value: MoniToolValue,
+}
+impl_transient!(MoniToolTypedValue, "MoniToolTypedValue", dyn Transient, interfaces: [dyn MoniToolTypedValueOps]);
+
+impl Deref for MoniToolTypedValue {
+    type Target = MoniToolValue;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+/// The shared typed-value interface, including transient identity.
+pub trait MoniToolTypedValueOps: Transient + Deref<Target = MoniToolValue> {}
+
+impl MoniToolTypedValueOps for MoniToolTypedValue {}
+
+impl RuntimeTyped for dyn MoniToolTypedValueOps {
+    const TYPE_NAME: &'static str = MoniToolTypedValue::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        MoniToolTypedValue::static_type()
+    }
+}
+impl_transient_interface_target!(dyn MoniToolTypedValueOps);
+
+/// Typed-value specification and storage shared by the parameter classes.
+pub struct MoniToolValue {
     pub(super) state: SharedState<TypedValueState>,
 }
-impl_transient!(
-    MoniToolTypedValue,
-    "MoniToolTypedValue",
-    StandardTransient,
-    transient
-);
 
 /// The types a typed value accepts (the constructor raises for the others).
 fn supported_type(kind: MoniToolValueType) -> bool {
@@ -121,6 +141,14 @@ impl MoniToolTypedValue {
     /// for a type other than integer, real, enum, text or ident; `init` is set when it
     /// satisfies the specification.
     pub fn new(name: &str, kind: MoniToolValueType, init: &str) -> Result<Self, Failure> {
+        Ok(Self {
+            value: MoniToolValue::new(name, kind, init)?,
+        })
+    }
+}
+
+impl MoniToolValue {
+    pub(crate) fn new(name: &str, kind: MoniToolValueType, init: &str) -> Result<Self, Failure> {
         if !supported_type(kind) {
             return Err(exceptions::construction_error(&format!(
                 "MoniToolTypedValue : Type not supported: {kind:?}; expected Integer, Real, Enum, Text or Ident"
@@ -134,7 +162,6 @@ impl MoniToolTypedValue {
     }
     pub(super) fn from_state(state: TypedValueState) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -190,21 +217,20 @@ impl MoniToolTypedValue {
         self.state.read().theunidef.clone()
     }
     /// `SetObjectType`: `StandardConstructionError` unless an object typed value.
-    pub fn set_object_type(&self, typ: &Handle<RuntimeType>) -> Result<(), Failure> {
+    pub fn set_object_type(&self, typ: Option<&'static RuntimeType>) -> Result<(), Failure> {
         let mut state = self.state.write();
         if state.thetype != MoniToolValueType::ValueIdent {
             return Err(not_kind("AddEnum, Not an Entity/Object", state.thetype));
         }
-        state.theotyp = typ.clone();
+        state.theotyp = typ;
         Ok(())
     }
     /// `ObjectType`: the type set, else `StandardTransient`.
-    pub fn object_type(&self) -> Handle<RuntimeType> {
-        let typ = self.state.read().theotyp.clone();
-        if typ.is_some() {
-            return typ;
-        }
-        StandardTransient::static_type_handle()
+    pub fn object_type(&self) -> &'static RuntimeType {
+        self.state
+            .read()
+            .theotyp
+            .unwrap_or_else(<dyn Transient>::static_type)
     }
     /// `SetInterpret`.
     pub fn set_interpret(&self, func: Option<MoniToolValueInterpret>) {
@@ -269,21 +295,21 @@ impl MoniToolTypedValue {
         text.real_value().unwrap_or(0.0)
     }
     /// `ObjectValue`.
-    pub fn object_value(&self) -> Handle<StandardTransient> {
+    pub fn object_value(&self) -> Handle<dyn Transient> {
         self.state.read().theoval.clone()
     }
     /// `GetObjectValue`.
-    pub fn get_object_value(&self, val: &mut Handle<StandardTransient>) {
+    pub fn get_object_value(&self, val: &mut Handle<dyn Transient>) {
         *val = self.object_value();
     }
     /// `SetObjectValue`: only for an object typed value; the object must be kind of the
     /// object type when one is set; a null object clears the value.
-    pub fn set_object_value(&self, obj: &Handle<StandardTransient>) -> bool {
+    pub fn set_object_value(&self, obj: &Handle<dyn Transient>) -> bool {
         let mut state = self.state.write();
         if state.thetype != MoniToolValueType::ValueIdent {
             return false;
         }
-        if let Some(typ) = state.theotyp.get()
+        if let Some(typ) = state.theotyp
             && obj.is_some()
             && !obj.is_kind(typ)
         {
@@ -320,7 +346,7 @@ impl TypedValueState {
             thedef: AsciiString::default(),
             thelabel: AsciiString::default(),
             thetype: kind,
-            theotyp: Handle::default(),
+            theotyp: None,
             thelims: 0,
             themaxlen: 0,
             theintlow: 0,

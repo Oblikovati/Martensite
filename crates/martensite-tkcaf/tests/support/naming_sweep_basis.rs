@@ -109,7 +109,7 @@ fn face_plane(shape: &Shape) -> Result<Handle<GeomPlane>, Failure> {
         .is_some_and(|kind| kind.name() == "Geom_RectangularTrimmedSurface")
     {
         surface = surface
-            .cast::<GeomRectangularTrimmedSurface>()
+            .downcast::<GeomRectangularTrimmedSurface>()
             .basis_surface();
     }
     Ok(surface.cast())

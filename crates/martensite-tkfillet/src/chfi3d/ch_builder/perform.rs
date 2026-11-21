@@ -64,8 +64,8 @@ impl ChFi3dChBuilder {
     ) -> Result<(bool, State, State), Failure> {
         let kind = chamfer_kind(spine, NOT_CHAMFER)?;
         let tol_guide = hguide.resolution(self.base.tolapp3d)?;
-        let s1: Handle<dyn Adaptor3dSurface> = hs1.clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = hs2.clone().cast();
+        let s1: Handle<dyn Adaptor3dSurface> = hs1.upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = hs2.upcast();
         let offset = penetration_guide(&kind, spine, hguide);
         let fns = chamfer_functions(&kind, (&s1, &s2), hguide, offset.as_ref(), choix)?;
         let mut walk = BRepBlendWalking::new(&s1, &s2, i1, i2, hguide);
@@ -120,8 +120,8 @@ impl ChFi3dChBuilder {
         let or = call.s1.face().orientation();
         let pfirst = out.first;
         self.base.extend_ends_to_spine(call.spine, out)?;
-        let s1: Handle<dyn Adaptor3dSurface> = call.s1.clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = call.s2.clone().cast();
+        let s1: Handle<dyn Adaptor3dSurface> = call.s1.upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = call.s2.upcast();
         let offset = penetration_guide(&kind, call.spine, call.guide);
         let fns = chamfer_functions(&kind, (&s1, &s2), call.guide, offset.as_ref(), call.choix)?;
         let ccall = ComputeCall {

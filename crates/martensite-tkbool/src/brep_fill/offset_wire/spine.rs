@@ -35,7 +35,7 @@ fn cut_curve(
 ) -> Result<(), Failure> {
     let (p_tol, tol): (f64, f64) = (precision::p_confusion() * 10., precision::confusion() * 10.);
     let curve = c.get().ok_or_else(null_curve)?;
-    let basis: Handle<dyn Geom2dCurve> = c.clone().cast();
+    let basis: Handle<dyn Geom2dCurve> = c.cast();
     let (mut uf, ul) = (curve.first_parameter(), curve.last_parameter());
     let (mut pf, pl) = (curve.value(uf)?, curve.value(ul)?);
     let step: f64 = (ul - uf) / f64::from(nb_parts);
@@ -47,14 +47,16 @@ fn cut_curve(
             if ul - uc < p_tol || pl.distance(pc) < tol {
                 continue;
             }
-            the_curves
-                .push(Handle::new(Geom2dTrimmedCurve::new(&basis, uf, uc, true, true)?).cast());
+            the_curves.push(
+                Handle::new(Geom2dTrimmedCurve::new(&basis, uf, uc, true, true)?).into_upcast(),
+            );
             (uf, pf) = (uc, pc);
             ya_cut = true;
         }
     }
     if ya_cut {
-        the_curves.push(Handle::new(Geom2dTrimmedCurve::new(&basis, uf, ul, true, true)?).cast());
+        the_curves
+            .push(Handle::new(Geom2dTrimmedCurve::new(&basis, uf, ul, true, true)?).into_upcast());
     } else {
         the_curves.push(basis);
     }
@@ -126,7 +128,7 @@ pub(super) fn cut_edge(
         return Ok(0);
     }
     let mut cuter = Mat2dCutCurve::new();
-    cuter.perform(&ct2d.clone().cast())?;
+    cuter.perform(&ct2d.cast())?;
     if force_cut == 0 && cuter.un_modified() {
         return Ok(0);
     }
@@ -134,7 +136,7 @@ pub(super) fn cut_edge(
     let curve3d = a_c.get().ok_or_else(null_curve)?;
     let mut vf: Vertex = v1;
     for (k, piece) in the_curves.iter().enumerate() {
-        let cc: Handle<Geom2dTrimmedCurve> = piece.cast();
+        let cc: Handle<Geom2dTrimmedCurve> = piece.downcast();
         let cc = cc.get().ok_or_else(null_curve)?;
         let vl: Vertex = if k + 1 == the_curves.len() {
             v2.clone()

@@ -44,13 +44,13 @@ pub(super) fn fun51(pilot: &Handle<IFSelectSessionPilot>) -> Status {
 /// `fun_dispone` (dispone): a new dispatch per entity, recorded.
 pub(super) fn fun_dispone(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
-    Ok(pilot.record_item(&Handle::new(IFSelectDispPerOne::new()).cast()))
+    Ok(pilot.record_item(&Handle::new(IFSelectDispPerOne::new()).into_upcast()))
 }
 
 /// `fun_dispglob` (dispglob): a new global dispatch, recorded.
 pub(super) fn fun_dispglob(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
-    Ok(pilot.record_item(&Handle::new(IFSelectDispGlobal::new()).cast()))
+    Ok(pilot.record_item(&Handle::new(IFSelectDispGlobal::new()).into_upcast()))
 }
 
 /// The integer parameter item of the first argument (with a message when missing).
@@ -80,7 +80,7 @@ pub(super) fn fun_dispcount(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     };
     let disp = IFSelectDispPerCount::new();
     disp.set_count(&par);
-    Ok(pilot.record_item(&Handle::new(disp).cast()))
+    Ok(pilot.record_item(&Handle::new(disp).into_upcast()))
 }
 
 /// `fun_dispfiles` (dispfile): a new dispatch per count of files.
@@ -90,7 +90,7 @@ pub(super) fn fun_dispfiles(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     };
     let disp = IFSelectDispPerFiles::new();
     disp.set_count(&par);
-    Ok(pilot.record_item(&Handle::new(disp).cast()))
+    Ok(pilot.record_item(&Handle::new(disp).into_upcast()))
 }
 
 /// `fun_dispsign` (dispsign): a new dispatch per signature.
@@ -109,9 +109,9 @@ pub(super) fn fun_dispsign(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     }
     let disp = IFSelectDispPerSignature::new();
     disp.set_sign_counter(
-        &Handle::new(IFSelectSignCounter::with_signature(&sig, true, false)?).cast(),
+        &Handle::new(IFSelectSignCounter::with_signature(&sig, true, false)?).into_upcast(),
     )?;
-    Ok(pilot.record_item(&Handle::new(disp).cast()))
+    Ok(pilot.record_item(&Handle::new(disp).into_upcast()))
 }
 
 /// `fun56` (dumpdisp): the status of a dispatch.
@@ -213,7 +213,7 @@ fn applied_selection(
         if let Some(l) = list.filter(|l| !l.is_empty()) {
             let sp = IFSelectSelectPointed::new();
             sp.add_list(Some(&l));
-            sel = Handle::new(sp).cast();
+            sel = Handle::new(sp).into_upcast();
         }
     }
     if sel.is_some() {

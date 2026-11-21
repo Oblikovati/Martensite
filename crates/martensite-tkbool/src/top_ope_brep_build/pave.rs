@@ -1,9 +1,6 @@
 //! `TopOpeBRepBuildPave` (a vertex with its parameter on an edge, a loop of the edge
 //! builder) and `TopOpeBRepBuildPaveSet` (the paves of an edge sorted along it).
-use super::loops::{
-    TopOpeBRepBuildLoop, TopOpeBRepBuildLoopBase, TopOpeBRepBuildLoopSet,
-    TopOpeBRepBuildLoopSetBase,
-};
+use super::loops::{TopOpeBRepBuildLoop, TopOpeBRepBuildLoopSet, TopOpeBRepBuildLoopSetBase};
 use crate::top_ope_brep_ds::TopOpeBRepDSKind;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp::{self, Explorer};
@@ -28,11 +25,10 @@ struct PaveFields {
 /// builder; its members take `&self`, the paves being shared through handles;
 /// `let pv = TopOpeBRepBuildPave::new(&v, 0.5, false);`.
 pub struct TopOpeBRepBuildPave {
-    parent: TopOpeBRepBuildLoopBase,
     my_is_shape: bool,
     fields: SharedState<PaveFields>,
 }
-impl_transient!(TopOpeBRepBuildPave, "TopOpeBRepBuildPave", TopOpeBRepBuildLoopBase, parent, interfaces: [dyn TopOpeBRepBuildLoop]);
+impl_transient!(TopOpeBRepBuildPave, "TopOpeBRepBuildPave", dyn TopOpeBRepBuildLoop, interfaces: [dyn TopOpeBRepBuildLoop]);
 
 impl TopOpeBRepBuildPave {
     /// `TopOpeBRepBuildPave(V, P, B)`: the vertex `v` at `p`, a shape loop when `b`; no
@@ -40,7 +36,6 @@ impl TopOpeBRepBuildPave {
     /// `TopOpeBRepBuildPave::new(&v, 0.5, false)`.
     pub fn new(v: &Shape, p: f64, b: bool) -> Self {
         Self {
-            parent: TopOpeBRepBuildLoopBase::from_shape(v),
             my_is_shape: b,
             fields: SharedState::new(PaveFields {
                 vertex: v.clone(),
@@ -117,7 +112,7 @@ impl TopOpeBRepBuildLoop for TopOpeBRepBuildPave {
     }
 
     fn block_iterator(&self) -> super::TopOpeBRepBuildBlockIterator {
-        self.parent.block_iterator()
+        super::TopOpeBRepBuildBlockIterator::new(0, 0)
     }
 }
 
@@ -384,7 +379,7 @@ impl TopOpeBRepBuildLoopSet for TopOpeBRepBuildPaveSet {
     fn loop_(&self) -> Result<Handle<dyn TopOpeBRepBuildLoop>, Failure> {
         self.my_vertices
             .get(self.my_vertices_it)
-            .map(|p| p.cast())
+            .map(Handle::upcast)
             .ok_or_else(|| {
                 Failure::with_type(
                     "Standard_NoSuchObject",

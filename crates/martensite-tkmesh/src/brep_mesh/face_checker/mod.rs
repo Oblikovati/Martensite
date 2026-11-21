@@ -12,7 +12,6 @@ mod types;
 pub use types::*;
 /// Native self-intersection checker with live parameter ownership; `BRepMeshFaceChecker::new(&face,&parameters)`.
 pub struct BRepMeshFaceChecker {
-    transient: StandardTransient,
     face: FaceHandle,
     parameters: FaceCheckerParameters,
     wires: SharedState<WireCollections>,
@@ -27,14 +26,12 @@ struct WireCollections {
 impl_transient!(
     BRepMeshFaceChecker,
     "BRepMesh_FaceChecker",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 impl BRepMeshFaceChecker {
     /// Preserve the native parameter reference through a shared owner; `BRepMeshFaceChecker::new(&face,&parameters)`.
     pub fn new(face: &FaceHandle, parameters: &FaceCheckerParameters) -> Self {
         Self {
-            transient: StandardTransient::default(),
             face: face.clone(),
             parameters: parameters.clone(),
             wires: SharedState::default(),

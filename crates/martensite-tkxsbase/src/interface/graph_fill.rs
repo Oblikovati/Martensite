@@ -2,7 +2,7 @@
 use super::graph::GRAPH_PRESENT;
 use super::int_array::{int_at, set_int};
 use super::{InterfaceEntityIterator, InterfaceGraph};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions};
 
 impl InterfaceGraph {
     /// `GetFromModel`: every entity present with status 0.
@@ -19,7 +19,7 @@ impl InterfaceGraph {
     /// is skipped with its sub-tree.
     pub fn get_from_entity(
         &mut self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         shared: bool,
         newstat: i32,
     ) -> Result<(), Failure> {
@@ -44,7 +44,7 @@ impl InterfaceGraph {
     /// `cumul`). Native quirk kept: the shared entities are added with the simple form.
     pub fn get_from_entity_overlap(
         &mut self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         shared: bool,
         newstat: i32,
         overlapstat: i32,

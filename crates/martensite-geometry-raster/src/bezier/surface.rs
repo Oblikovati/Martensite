@@ -32,7 +32,7 @@ impl BezierSurfaceDrawable {
         poles: PolesStyle,
         settings: (i32, f64, i32),
     ) -> Self {
-        let geometry = surface.cast::<dyn GeomSurface>();
+        let geometry = surface.into_upcast::<dyn GeomSurface>();
         Self {
             surface: SurfaceDrawable::with_look(geometry, look, settings),
             poles,
@@ -47,7 +47,7 @@ impl BezierSurfaceDrawable {
         &self.poles
     }
     fn bezier(&self) -> Handle<GeomBezierSurface> {
-        self.surface.surface().cast::<GeomBezierSurface>()
+        self.surface.surface().into_downcast::<GeomBezierSurface>()
     }
     /// Finds first-after-indices poles in pixels; `surface.find_pole((x,y),display,1.,(0,0))?`.
     pub fn find_pole(

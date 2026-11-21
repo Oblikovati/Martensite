@@ -8,12 +8,12 @@
 //! (edit forms), `register` (`Init`).
 use super::{
     IFSelectDispPerCount, IFSelectDispPerFiles, IFSelectDispPerSignature, IFSelectDispatch,
-    IFSelectIntParam, IFSelectReturnStatus, IFSelectSessionPilot, IFSelectSignature,
-    IFSelectTransientList, IFSelectWorkSession,
+    IFSelectIntParam, IFSelectReturnStatus, IFSelectSession, IFSelectSessionPilot,
+    IFSelectSignature, IFSelectTransientList, IFSelectWorkSessionOps,
 };
 use martensite_tkernel::{
     message::MessageStream,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use std::fmt::Write as _;
 
@@ -44,7 +44,7 @@ pub struct IFSelectFunctions;
 /// dereference).
 pub(super) fn session_of(
     pilot: &Handle<IFSelectSessionPilot>,
-) -> Result<Handle<IFSelectWorkSession>, Failure> {
+) -> Result<Handle<dyn IFSelectWorkSessionOps>, Failure> {
     let ws = pilot.session();
     if ws.is_null() {
         return Err(exceptions::null_object(
@@ -117,60 +117,61 @@ fn c_string_from(text: &[u8], start: usize) -> String {
 
 impl IFSelectFunctions {
     /// `GiveEntity(WS, name = "")`: the entity of a number or label (null when none).
-    pub fn give_entity(
-        ws: &Handle<IFSelectWorkSession>,
+    pub fn give_entity<S: ?Sized + IFSelectWorkSessionOps>(
+        ws: &Handle<S>,
         name: &str,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let num = Self::give_entity_number(ws, name)?;
         if num > 0 {
-            return Ok(ws.starting_entity(num));
+            return Ok(ws.work_session().starting_entity(num));
         }
         Ok(Handle::default())
     }
     /// `GiveEntityNumber(WS, name = "")`: the number of an entity given by number or
     /// label; an empty name is read from the standard input. `StandardNullObject`
     /// without session.
-    pub fn give_entity_number(
-        ws: &Handle<IFSelectWorkSession>,
+    pub fn give_entity_number<S: ?Sized + IFSelectWorkSessionOps>(
+        ws: &Handle<S>,
         name: &str,
     ) -> Result<i32, Failure> {
         let live = ws.get().ok_or_else(|| {
             exceptions::null_object("IFSelectFunctions::GiveEntityNumber: null session")
         })?;
         if !name.is_empty() {
-            return Ok(live.number_from_label(name, 0));
+            return Ok(live.work_session().number_from_label(name, 0));
         }
         let ligne = read_word_from_stdin();
         if ligne.is_empty() {
             return Ok(0);
         }
-        Ok(live.number_from_label(&ligne, 0))
+        Ok(live.work_session().number_from_label(&ligne, 0))
     }
     /// `GiveList(WS, first = "", second = "")`: the list the texts give (see the work
     /// session).
-    pub fn give_list(
-        ws: &Handle<IFSelectWorkSession>,
+    pub fn give_list<S: ?Sized + IFSelectWorkSessionOps>(
+        ws: &Handle<S>,
         first: &str,
         second: &str,
     ) -> Result<IFSelectTransientList, Failure> {
         let live = ws
             .get()
             .ok_or_else(|| exceptions::null_object("IFSelectFunctions::GiveList: null session"))?;
-        live.give_list_texts(first, second)
+        live.work_session().give_list_texts(first, second)
     }
     /// `GiveDispatch(WS, name, mode = true)`: the dispatch item `name`, or for
     /// "name(arg)" the dispatch item `name` with its parameter: a count for a dispatch
     /// per count or per files, a signature item for a dispatch per signature (set on the
     /// item when `mode`); null when not available, with a message. Native defect kept:
     /// a name which is not an item and lacks '(' or ')' raises `StandardOutOfRange`.
-    pub fn give_dispatch(
-        ws: &Handle<IFSelectWorkSession>,
+    pub fn give_dispatch<S: ?Sized + IFSelectWorkSessionOps>(
+        ws: &Handle<S>,
         name: &str,
         mode: bool,
     ) -> Result<Handle<dyn IFSelectDispatch>, Failure> {
         let live = ws.get().ok_or_else(|| {
             exceptions::null_object("IFSelectFunctions::GiveDispatch: null session")
         })?;
+        let live = live.work_session();
         let disp: Handle<dyn IFSelectDispatch> = live.named_item(name).cast();
         if disp.is_some() {
             return Ok(disp); // OK as it is given
@@ -190,7 +191,7 @@ impl IFSelectFunctions {
 
 /// The parameter `arg` of a dispatch given as "name(arg)" (see `GiveDispatch`).
 fn set_dispatch_parameter(
-    ws: &IFSelectWorkSession,
+    ws: &IFSelectSession,
     name: &str,
     disp: &Handle<dyn IFSelectDispatch>,
     arg: &str,
@@ -238,7 +239,7 @@ fn set_dispatch_parameter(
                 &Handle::new(super::IFSelectSignCounter::with_signature(
                     &sg, true, false,
                 )?)
-                .cast(),
+                .into_upcast(),
             )?;
         }
         return Ok(disp.clone());

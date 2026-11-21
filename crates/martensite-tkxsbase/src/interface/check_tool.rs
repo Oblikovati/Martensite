@@ -7,7 +7,7 @@ use super::{
     InterfaceGraph, InterfaceHGraph, InterfaceInterfaceModel, InterfaceModelEntities,
     InterfaceModelReports, InterfaceProtocol, InterfaceReportEntity, InterfaceShareTool,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions};
 use std::io::{self, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -92,7 +92,7 @@ impl InterfaceCheckTool {
     /// error of the graph.
     pub fn fill_check(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         sh: &InterfaceShareTool,
         ach: &mut Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {

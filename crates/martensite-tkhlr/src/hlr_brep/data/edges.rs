@@ -56,7 +56,7 @@ impl Data {
             b.w.intersector.load();
             b.w.loaded_face = Some(fi);
             let face = Shape::from(fd.geometry().surface().face());
-            b.w.classifier = if mst.is_bound(&face) {
+            let classifier = if mst.is_bound(&face) {
                 mst.find(&face)?.get_topol_tool()
             } else {
                 let brt = BRepTopAdaptorTool::with_face(
@@ -66,6 +66,7 @@ impl Data {
                 mst.bind(face, brt.clone());
                 brt.get_topol_tool()
             };
+            b.w.classifier = super::face_classifier::retain_face_classifier(classifier);
             if b.w.i_face_test {
                 b.w.i_face_smpl = !fd.cut();
                 let fd =

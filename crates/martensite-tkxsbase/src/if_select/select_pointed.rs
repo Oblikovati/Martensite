@@ -6,7 +6,7 @@ use super::{
 use crate::interface::{InterfaceCopyControl, InterfaceEntityIterator, InterfaceGraph};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -14,7 +14,7 @@ use martensite_tkernel::{
 #[derive(Default)]
 struct PointedState {
     theset: bool,
-    theitems: Vec<Handle<StandardTransient>>,
+    theitems: Vec<Handle<dyn Transient>>,
 }
 
 /// `IFSelectSelectPointed`.
@@ -23,16 +23,15 @@ struct PointedState {
 /// use martensite_tkxsbase::if_select::IFSelectSelectPointed;
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let sel = IFSelectSelectPointed::new();
-/// let ent = Handle::new(StandardTransient::default());
+/// let ent = Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>();
 /// assert!(sel.add(&ent) && !sel.add(&ent));
 /// assert_eq!((sel.nb_items(), sel.rank(&ent)), (1, 1));
 /// ```
 #[derive(Default)]
 pub struct IFSelectSelectPointed {
-    transient: StandardTransient,
     state: SharedState<PointedState>,
 }
-impl_transient!(IFSelectSelectPointed, "IFSelectSelectPointed", dyn IFSelectSelectBase, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectBase]);
+impl_transient!(IFSelectSelectPointed, "IFSelectSelectPointed", dyn IFSelectSelectBase, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectBase]);
 
 impl IFSelectSelectPointed {
     /// `IFSelectSelectPointed()`: not set, no item.
@@ -50,7 +49,7 @@ impl IFSelectSelectPointed {
         self.state.read().theset
     }
     /// `SetEntity(item)`: set, with `item` alone (none for null).
-    pub fn set_entity(&self, item: &Handle<StandardTransient>) {
+    pub fn set_entity(&self, item: &Handle<dyn Transient>) {
         let mut st = self.state.write();
         st.theitems.clear();
         st.theset = true;
@@ -59,13 +58,13 @@ impl IFSelectSelectPointed {
         }
     }
     /// `SetList(list)`: set, with the items of `list` (none for null).
-    pub fn set_list(&self, list: Option<&[Handle<StandardTransient>]>) {
+    pub fn set_list(&self, list: Option<&[Handle<dyn Transient>]>) {
         let mut st = self.state.write();
         st.theitems = list.map(<[_]>::to_vec).unwrap_or_default();
         st.theset = true;
     }
     /// `Add(item)`: appends a new item (false for null or present).
-    pub fn add(&self, item: &Handle<StandardTransient>) -> bool {
+    pub fn add(&self, item: &Handle<dyn Transient>) -> bool {
         let mut st = self.state.write();
         if item.is_null() || st.theitems.contains(item) {
             return false;
@@ -76,7 +75,7 @@ impl IFSelectSelectPointed {
     }
     /// `Remove(item)`: removes the last occurrence. Native quirk kept: true even when
     /// `item` is not present (false only for null).
-    pub fn remove(&self, item: &Handle<StandardTransient>) -> bool {
+    pub fn remove(&self, item: &Handle<dyn Transient>) -> bool {
         if item.is_null() {
             return false;
         }
@@ -87,7 +86,7 @@ impl IFSelectSelectPointed {
         true
     }
     /// `Toggle(item)`: removes the first occurrence, or appends; true when appended.
-    pub fn toggle(&self, item: &Handle<StandardTransient>) -> bool {
+    pub fn toggle(&self, item: &Handle<dyn Transient>) -> bool {
         if item.is_null() {
             return false;
         }
@@ -105,7 +104,7 @@ impl IFSelectSelectPointed {
     }
     /// `AddList(list)`: appends the items not present before. Native quirks kept: the
     /// duplicates inside `list` are all appended, and the result is always false.
-    pub fn add_list(&self, list: Option<&[Handle<StandardTransient>]>) -> bool {
+    pub fn add_list(&self, list: Option<&[Handle<dyn Transient>]>) -> bool {
         let Some(list) = list else { return false };
         let mut st = self.state.write();
         let before = st.theitems.clone();
@@ -115,18 +114,18 @@ impl IFSelectSelectPointed {
         false
     }
     /// `RemoveList(list)`: `Remove` of each item.
-    pub fn remove_list(&self, list: Option<&[Handle<StandardTransient>]>) -> bool {
+    pub fn remove_list(&self, list: Option<&[Handle<dyn Transient>]>) -> bool {
         list.is_some_and(|l| l.iter().fold(false, |res, i| self.remove(i) | res))
     }
     /// `ToggleList(list)`: `Toggle` of each item. Native quirk kept: always true.
-    pub fn toggle_list(&self, list: Option<&[Handle<StandardTransient>]>) -> bool {
+    pub fn toggle_list(&self, list: Option<&[Handle<dyn Transient>]>) -> bool {
         list.iter().flat_map(|l| l.iter()).for_each(|i| {
             self.toggle(i);
         });
         true
     }
     /// `Rank(item)`: the rank of the last occurrence (0 when absent or null).
-    pub fn rank(&self, item: &Handle<StandardTransient>) -> i32 {
+    pub fn rank(&self, item: &Handle<dyn Transient>) -> i32 {
         if item.is_null() {
             return 0;
         }
@@ -142,7 +141,7 @@ impl IFSelectSelectPointed {
         self.state.read().theitems.len() as i32
     }
     /// `Item(num)`: null out of range.
-    pub fn item(&self, num: i32) -> Handle<StandardTransient> {
+    pub fn item(&self, num: i32) -> Handle<dyn Transient> {
         let st = self.state.read();
         usize::try_from(num - 1)
             .ok()
@@ -171,10 +170,7 @@ impl IFSelectSelectPointed {
     /// The items replaced from the last one by `image` (removed when it fails).
     fn update_with(
         &self,
-        image: impl Fn(
-            &Handle<StandardTransient>,
-            &mut Handle<StandardTransient>,
-        ) -> Result<bool, Failure>,
+        image: impl Fn(&Handle<dyn Transient>, &mut Handle<dyn Transient>) -> Result<bool, Failure>,
     ) -> Result<(), Failure> {
         let items = self.state.read().theitems.clone();
         let mut kept = items.clone();

@@ -4,7 +4,7 @@ use super::{Status, first_byte, h_text, session_of};
 use crate::c_text::atoi;
 use crate::if_select::{
     IFSelectDispatch, IFSelectGeneralModifier, IFSelectModifier, IFSelectRemainMode,
-    IFSelectReturnStatus, IFSelectSelection, IFSelectSessionPilot, IFSelectWorkSession,
+    IFSelectReturnStatus, IFSelectSelection, IFSelectSession, IFSelectSessionPilot,
 };
 use martensite_tkernel::{
     message::{Message, MessageStream},
@@ -131,7 +131,7 @@ pub(super) fn fun40(pilot: &Handle<IFSelectSessionPilot>) -> Status {
 
 /// The modifier named by the first argument, with a message when not one.
 fn named_modifier(
-    ws: &IFSelectWorkSession,
+    ws: &IFSelectSession,
     arg1: &str,
     sout: &mut MessageStream<'_>,
     text: &str,

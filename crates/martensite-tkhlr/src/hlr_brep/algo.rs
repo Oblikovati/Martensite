@@ -3,7 +3,7 @@ use super::InternalAlgo;
 use crate::hlr_topo_brep::OutLiner;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 
 /// HLRBRep_Algo: the exact hidden line algorithm on shapes: each added shape is
 /// outlined (HLRTopoBRep_OutLiner) and loaded in the internal algorithm, reached
@@ -18,15 +18,16 @@ use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 /// assert_eq!(algo.index(&Shape::default()), 1);
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
+// #592: this is reusable algorithm state, not a projected runtime parent.
 pub struct Algo {
-    parent: InternalAlgo,
+    internal: InternalAlgo,
 }
-impl_transient!(Algo, "HLRBRep_Algo", InternalAlgo, parent);
+impl_transient!(Algo, "HLRBRep_Algo", InternalAlgo);
 
 impl std::ops::Deref for Algo {
     type Target = InternalAlgo;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.internal
     }
 }
 
@@ -34,7 +35,7 @@ impl Algo {
     /// HLRBRep_Algo(); `Algo::new()?`.
     pub fn new() -> Result<Self, Failure> {
         Ok(Self {
-            parent: InternalAlgo::new()?,
+            internal: InternalAlgo::new()?,
         })
     }
 
@@ -42,13 +43,13 @@ impl Algo {
     /// `Algo::from_algo(&a)?`.
     pub fn from_algo(a: &Algo) -> Result<Self, Failure> {
         Ok(Self {
-            parent: InternalAlgo::from_algo(a)?,
+            internal: InternalAlgo::from_algo(a)?,
         })
     }
 
     /// Add(S, SData, nbIso): outlines `s` and loads it with user data;
     /// `algo.add_with_data(&shape, &data, 0)`.
-    pub fn add_with_data(&self, s: &Shape, s_data: &Handle<StandardTransient>, nb_iso: i32) {
+    pub fn add_with_data(&self, s: &Shape, s_data: &Handle<dyn Transient>, nb_iso: i32) {
         self.load_with_data(&Handle::new(OutLiner::with_original(s)), s_data, nb_iso);
     }
 

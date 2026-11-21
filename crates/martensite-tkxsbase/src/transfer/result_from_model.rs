@@ -7,7 +7,7 @@ use crate::interface::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::IndexedMap,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -31,14 +31,12 @@ struct ModelResultState {
 /// assert!(!result.has_result() && result.main_number() == 0);
 /// ```
 pub struct TransferResultFromModel {
-    transient: StandardTransient,
     state: SharedState<ModelResultState>,
 }
 impl_transient!(
     TransferResultFromModel,
     "TransferResultFromModel",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl Default for TransferResultFromModel {
@@ -66,7 +64,6 @@ impl TransferResultFromModel {
             themchk: InterfaceCheckStatus::CheckAny,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -87,7 +84,7 @@ impl TransferResultFromModel {
         self.state.read().thename.clone()
     }
     /// Records the number and the label of `start` in the model.
-    fn set_main_identity(&self, start: &Handle<StandardTransient>) {
+    fn set_main_identity(&self, start: &Handle<dyn Transient>) {
         let model = self.model();
         let Some(live) = model.get() else { return };
         let num = live.number(start);
@@ -104,11 +101,7 @@ impl TransferResultFromModel {
         st.themlab = label;
     }
     /// `Fill(TP, ent)`: the main result of `ent` from its binder in `TP` (false without).
-    pub fn fill(
-        &self,
-        tp: &Handle<TransferTransientProcess>,
-        ent: &Handle<StandardTransient>,
-    ) -> bool {
+    pub fn fill(&self, tp: &Handle<TransferTransientProcess>, ent: &Handle<dyn Transient>) -> bool {
         let Some(process) = tp.get() else {
             return false;
         };
@@ -198,7 +191,7 @@ impl TransferResultFromModel {
     /// `ResultFromKey(start)`: `StandardNullObject` without main result.
     pub fn result_from_key(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
     ) -> Result<Handle<TransferResultFromTransient>, Failure> {
         let main = self.main_result();
         if main.is_null() {
@@ -209,7 +202,7 @@ impl TransferResultFromModel {
     /// `Results(level)`: the main result (level 0 or less); the main result, its
     /// sub-results and the main result again (level 1, native quirk kept); all the results
     /// in depth (level 2 and more). `StandardNullObject` without main result from level 1.
-    pub fn results(&self, level: i32) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    pub fn results(&self, level: i32) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         let main = self.main_result();
         if level <= 0 {
             return Ok(vec![main.cast()]);
@@ -228,7 +221,7 @@ impl TransferResultFromModel {
         Ok(map.iter().cloned().collect())
     }
     /// `TransferredList(level = 2)`: the starts of the results with a result.
-    pub fn transferred_list(&self, level: i32) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    pub fn transferred_list(&self, level: i32) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         Ok(self
             .results(level)?
             .iter()
@@ -246,7 +239,7 @@ impl TransferResultFromModel {
         &self,
         check: InterfaceCheckStatus,
         result: bool,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         let mut list = Vec::new();
         for res in self.results(2)? {
             let unres = res.cast::<TransferResultFromTransient>();

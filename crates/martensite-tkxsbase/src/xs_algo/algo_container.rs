@@ -7,16 +7,14 @@ use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient, Transient},
+    standard::{Failure, Handle, Transient},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::{
     shape_algo::ShapeAlgo,
     shape_extend::ShapeExtendMsgRegistrator,
     shape_fix::FixRoot,
-    shape_process::{
-        ShapeProcess, ShapeProcessContext, ShapeProcessOperLibrary, ShapeProcessShapeContext,
-    },
+    shape_process::{ShapeProcess, ShapeProcessOperLibrary, ShapeProcessShapeContext},
 };
 use std::sync::{OnceLock, RwLock};
 
@@ -49,7 +47,7 @@ pub trait XSAlgoAlgoContainerOps: Transient {
         &self,
         shape: &Shape,
         args: &XSAlgoProcessShapeArgs<'_>,
-        info: &mut Handle<StandardTransient>,
+        info: &mut Handle<dyn Transient>,
         progress: &ProgressRange<'_>,
     ) -> Result<Shape, Failure> {
         process_shape(shape, args, info, progress)
@@ -69,7 +67,7 @@ pub trait XSAlgoAlgoContainerOps: Transient {
     fn merge_transfer_info(
         &self,
         tp: &Handle<TransferTransientProcess>,
-        info: &Handle<StandardTransient>,
+        info: &Handle<dyn Transient>,
         start_tp_item: i32,
     ) -> Result<(), Failure> {
         let context = info.cast::<ShapeProcessShapeContext>();
@@ -86,7 +84,7 @@ pub trait XSAlgoAlgoContainerOps: Transient {
     fn merge_transfer_info_finder(
         &self,
         fp: &Handle<TransferFinderProcess>,
-        info: &Handle<StandardTransient>,
+        info: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let context = info.cast::<ShapeProcessShapeContext>();
         let Some(live) = context.get() else {
@@ -98,7 +96,7 @@ pub trait XSAlgoAlgoContainerOps: Transient {
 impl_transient_interface!(
     dyn XSAlgoAlgoContainerOps,
     "XSAlgoAlgoContainer",
-    StandardTransient
+    dyn Transient
 );
 
 /// The container `MergeTransferInfo(TP, ...)`: as the processor's, from item `start`.
@@ -125,10 +123,8 @@ fn merge_into_transient(
 /// assert!(container.check_pcurve(&Edge::default(), &Face::default(), 1e-7, false).is_err());
 /// ```
 #[derive(Default)]
-pub struct XSAlgoAlgoContainer {
-    transient: StandardTransient,
-}
-impl_transient!(XSAlgoAlgoContainer, "XSAlgoAlgoContainer", StandardTransient, transient, interfaces: [dyn XSAlgoAlgoContainerOps]);
+pub struct XSAlgoAlgoContainer {}
+impl_transient!(XSAlgoAlgoContainer, "XSAlgoAlgoContainer", dyn Transient, interfaces: [dyn XSAlgoAlgoContainerOps]);
 
 impl XSAlgoAlgoContainer {
     /// `XSAlgoAlgoContainer()`.
@@ -144,7 +140,7 @@ impl XSAlgoAlgoContainerOps for XSAlgoAlgoContainer {}
 fn shape_context(
     shape: &Shape,
     args: &XSAlgoProcessShapeArgs<'_>,
-    info: &Handle<StandardTransient>,
+    info: &Handle<dyn Transient>,
 ) -> Result<Handle<ShapeProcessShapeContext>, Failure> {
     let given = info.cast::<ShapeProcessShapeContext>();
     if given.is_some() {
@@ -170,7 +166,7 @@ fn shape_context(
 fn process_shape(
     shape: &Shape,
     args: &XSAlgoProcessShapeArgs<'_>,
-    info: &mut Handle<StandardTransient>,
+    info: &mut Handle<dyn Transient>,
     progress: &ProgressRange<'_>,
 ) -> Result<Shape, Failure> {
     if shape.is_null() {
@@ -206,7 +202,7 @@ fn process_shape(
     resource
         .write()
         .set_resource_real("Runtime.MaxTolerance", args.max_tol);
-    if !ShapeProcess::perform_sequence(&context.cast::<ShapeProcessContext>(), &seq, progress)? {
+    if !ShapeProcess::perform_sequence(&context.upcast(), &seq, progress)? {
         return Ok(shape.clone());
     }
     Ok(live.result())
@@ -271,7 +267,7 @@ impl XSAlgo {
             return Ok(());
         }
         ShapeAlgo::init()?;
-        Self::set_algo_container(&Handle::new(XSAlgoAlgoContainer::new()).cast());
+        Self::set_algo_container(&Handle::new(XSAlgoAlgoContainer::new()).into_upcast());
         InterfaceStatic::standards()?;
         init_statics()?;
         ShapeProcessOperLibrary::init()

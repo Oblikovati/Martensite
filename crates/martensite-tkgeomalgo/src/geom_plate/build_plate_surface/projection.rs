@@ -1,6 +1,6 @@
 //! The projections of curves and points on the initial surface.
 use super::GeomPlateBuildPlateSurface;
-use crate::geom_plate::curve_constraint::GeomPlateCurveConstraint;
+use crate::geom_plate::curve_constraint::GeomPlateCurveConstraintState;
 use crate::geom_plate::live;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
@@ -71,7 +71,7 @@ impl GeomPlateBuildPlateSurface {
     /// native sequence of `LoadCurve`, `Disc2dContour` and `EcartContraintesMil`).
     pub(super) fn uv_on_init(
         &mut self,
-        lin: &GeomPlateCurveConstraint,
+        lin: &GeomPlateCurveConstraintState,
         u: f64,
         p3d: impl FnOnce() -> Result<Point3, Failure>,
     ) -> Result<Point2, Failure> {

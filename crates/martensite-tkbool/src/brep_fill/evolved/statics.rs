@@ -235,7 +235,7 @@ pub fn altitud(v: &Vertex) -> Result<f64, Failure> {
 /// trimmed in place of a trimmed Bisector_BisecAna.
 pub fn simple_expression(b: &Bisec) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let value = b.value();
-    let bis: Handle<dyn Geom2dCurve> = value.clone().cast();
+    let bis: Handle<dyn Geom2dCurve> = value.cast();
     let Some(tr_bis) = value.get() else {
         return Ok(bis);
     };
@@ -252,5 +252,5 @@ pub fn simple_expression(b: &Bisec) -> Result<Handle<dyn Geom2dCurve>, Failure> 
         true,
         true,
     )?)
-    .cast())
+    .into_upcast())
 }

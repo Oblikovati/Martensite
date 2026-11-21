@@ -145,10 +145,10 @@ impl FaceIsoBuilder {
         length: f64,
     ) -> Result<(), Failure> {
         let line = Geom2dLine::from_point(start, Direction2::from_vector(segment)?);
-        let line = Handle::new(line).cast::<dyn Geom2dCurve>();
+        let line = Handle::new(line).into_upcast::<dyn Geom2dCurve>();
         let trimmed = Geom2dTrimmedCurve::new(&line, 0.0, length, true, true)?;
         let curve =
-            Geom2dAdaptorCurve::with_curve(&Handle::new(trimmed).cast::<dyn Geom2dCurve>())?;
+            Geom2dAdaptorCurve::with_curve(&Handle::new(trimmed).into_upcast::<dyn Geom2dCurve>())?;
         self.hatcher.add_element(curve, Orientation::Forward);
         Ok(())
     }
@@ -270,7 +270,7 @@ fn trim_end(end: &mut CurveEnd, t: f64) -> Result<(), Failure> {
     };
     if l - f > precision::p_confusion() {
         let trimmed = Geom2dTrimmedCurve::new(&end.curve, f, l, true, true)?;
-        end.curve = Handle::new(trimmed).cast::<dyn Geom2dCurve>();
+        end.curve = Handle::new(trimmed).into_upcast::<dyn Geom2dCurve>();
     }
     Ok(())
 }

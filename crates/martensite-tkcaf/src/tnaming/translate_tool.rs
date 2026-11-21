@@ -9,7 +9,7 @@ use martensite_tkbrep::brep::{
 use martensite_tkbrep::topods::{self, Shape, TShape};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeTyped, Transient, exceptions},
 };
 use martensite_tkmath::poly::mesh_purpose;
 
@@ -24,15 +24,8 @@ use martensite_tkmath::poly::mesh_purpose;
 /// assert_eq!(shape.shape_type().unwrap(), ShapeEnum::Wire);
 /// ```
 #[derive(Default)]
-pub struct TNamingTranslateTool {
-    transient: StandardTransient,
-}
-impl_transient!(
-    TNamingTranslateTool,
-    "TNamingTranslateTool",
-    StandardTransient,
-    transient
-);
+pub struct TNamingTranslateTool;
+impl_transient!(TNamingTranslateTool, "TNamingTranslateTool", dyn Transient);
 
 /// Declares the `Make*` members: the BRep builder makes an empty shape of the type.
 macro_rules! make_member {
@@ -50,7 +43,7 @@ macro_rules! make_member {
 impl TNamingTranslateTool {
     /// `new TNamingTranslateTool()`.
     pub fn new() -> Self {
-        Self::default()
+        Self
     }
     /// `Add(S1, S2)`: `BRepBuilder::Add`.
     pub fn add(&self, shape: &mut Shape, component: &Shape) -> Result<(), Failure> {
@@ -163,8 +156,11 @@ impl TNamingTranslateTool {
 
 /// The native C-style cast `*((occ::handle<BRepTX>*)&S.TShape())`: a TShape of another
 /// class is `StandardTypeMismatch` (undefined behaviour natively).
-fn brep_tshape<T: RuntimeTyped>(shape: &Shape, who: &str) -> Result<Handle<T>, Failure> {
-    let tshape = shape.tshape().cast::<T>();
+fn brep_tshape<T: RuntimeTyped + Transient>(
+    shape: &Shape,
+    who: &str,
+) -> Result<Handle<T>, Failure> {
+    let tshape = shape.tshape().downcast::<T>();
     if tshape.is_null() {
         return Err(exceptions::type_mismatch(&format!(
             "{who}: the TShape is not a {}; expected a BRep shape of that type",
@@ -192,7 +188,7 @@ fn translate_point(
     let parameter = point.parameter();
     if point.is_point_on_curve() {
         let copy = BRepPointOnCurve::new(parameter, &point.curve()?, &location);
-        return Ok(Handle::new(copy).cast());
+        return Ok(Handle::new(copy).upcast());
     }
     if point.is_point_on_curve_on_surface() {
         let copy = BRepPointOnCurveOnSurface::new(
@@ -201,12 +197,12 @@ fn translate_point(
             &point.surface()?,
             &location,
         );
-        return Ok(Handle::new(copy).cast());
+        return Ok(Handle::new(copy).upcast());
     }
     if point.is_point_on_surface() {
         let surface = point.surface()?;
         let copy = BRepPointOnSurface::new(parameter, point.parameter2()?, &surface, &location);
-        return Ok(Handle::new(copy).cast());
+        return Ok(Handle::new(copy).upcast());
     }
     // The native list then holds a null representation.
     Ok(Handle::default())

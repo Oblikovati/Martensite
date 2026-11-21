@@ -19,14 +19,12 @@ use martensite_tkmath::gp::Vector3;
 /// assert!(!line.has_first_point());
 /// ```
 pub struct ContapTheIWLineOfTheIWalking {
-    parent: StandardTransient,
     line: IntPatchTheIWLineOfTheIWalking,
 }
 impl_transient!(
     ContapTheIWLineOfTheIWalking,
     "Contap_TheIWLineOfTheIWalking",
-    StandardTransient,
-    parent
+    StandardTransient
 );
 
 impl ContapTheIWLineOfTheIWalking {
@@ -35,7 +33,6 @@ impl ContapTheIWLineOfTheIWalking {
     /// `ContapTheIWLineOfTheIWalking::new(None)`.
     pub fn new(allocator: Option<BaseAllocator>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             line: IntPatchTheIWLineOfTheIWalking::new(allocator),
         }
     }
@@ -189,7 +186,6 @@ impl ContapTheIWLineOfTheIWalking {
 impl TheIWLine for ContapTheIWLineOfTheIWalking {
     fn with_inc_allocator() -> Self {
         Self {
-            parent: StandardTransient::default(),
             line: <IntPatchTheIWLineOfTheIWalking as TheIWLine>::with_inc_allocator(),
         }
     }

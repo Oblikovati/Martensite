@@ -11,17 +11,16 @@ use martensite_tkbrep::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::{BaseAllocator, IncrementalAllocatorObject},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::top_abs::Orientation;
 /// Native `BRepMeshData_Wire`; `DiscreteWire::new(&wire, 0, &allocator)`.
 pub struct DiscreteWire {
-    transient: StandardTransient,
     shape: ShapeState,
     status: StatusOwner,
     edges: SharedState<ArenaVec<(EdgePtr, Orientation), BaseAllocator>>,
 }
-impl_transient!(DiscreteWire, "BRepMeshData_Wire", dyn MeshWire, transient,
+impl_transient!(DiscreteWire, "BRepMeshData_Wire", dyn MeshWire,
     interfaces: [dyn MeshWire, dyn TessellatedShape, dyn MeshShape]);
 mesh_tessellation_members!(DiscreteWire);
 impl DiscreteWire {
@@ -30,7 +29,6 @@ impl DiscreteWire {
         let mut edges = arena_vector(allocator);
         edges.reserve(if edge_nb > 0 { edge_nb as usize } else { 256 });
         Self {
-            transient: StandardTransient::default(),
             shape: ShapeState::new(wire),
             status: StatusOwner::default(),
             edges: SharedState::new(edges),
@@ -61,21 +59,19 @@ impl MeshWire for DiscreteWire {
 }
 /// Native `BRepMeshData_Face`; `DiscreteFace::new(&face, &allocator)?`.
 pub struct DiscreteFace {
-    transient: StandardTransient,
     shape: ShapeState,
     status: StatusOwner,
     allocator: MeshAllocator,
     surface: Handle<BRepAdaptorSurface>,
     wires: SharedState<ArenaVec<WireHandle, BaseAllocator>>,
 }
-impl_transient!(DiscreteFace, "BRepMeshData_Face", dyn MeshFace, transient,
+impl_transient!(DiscreteFace, "BRepMeshData_Face", dyn MeshFace,
     interfaces: [dyn MeshFace, dyn TessellatedShape, dyn MeshShape]);
 mesh_tessellation_members!(DiscreteFace);
 impl DiscreteFace {
     /// Builds the unrestricted surface adaptor once; `DiscreteFace::new(&face, &allocator)?`.
     pub fn new(face: &Face, allocator: &MeshAllocator) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             shape: ShapeState::new(face),
             status: StatusOwner::default(),
             allocator: allocator.clone(),
@@ -93,7 +89,7 @@ impl MeshFace for DiscreteFace {
     }
     fn add_wire(&self, wire: &Wire, edge_nb: i32) -> WireHandle {
         let wire: WireHandle =
-            Handle::new(DiscreteWire::new(wire, edge_nb, &self.allocator)).cast();
+            Handle::new(DiscreteWire::new(wire, edge_nb, &self.allocator)).into_upcast();
         self.wires.write().push(wire.clone());
         wire
     }
@@ -107,14 +103,13 @@ impl MeshFace for DiscreteFace {
 }
 /// Native `BRepMeshData_Model`; `DiscreteModel::new(&shape)`.
 pub struct DiscreteModel {
-    transient: StandardTransient,
     shape: ShapeState,
     max_size: SharedState<f64>,
     allocator: MeshAllocator,
     faces: SharedState<ArenaVec<FaceHandle, BaseAllocator>>,
     edges: SharedState<ArenaVec<EdgeHandle, BaseAllocator>>,
 }
-impl_transient!(DiscreteModel, "BRepMeshData_Model", dyn MeshModel, transient,
+impl_transient!(DiscreteModel, "BRepMeshData_Model", dyn MeshModel,
     interfaces: [dyn MeshModel, dyn MeshShape]);
 mesh_shape_members!(DiscreteModel);
 impl DiscreteModel {
@@ -122,7 +117,6 @@ impl DiscreteModel {
     pub fn new(shape: &Shape) -> Self {
         let allocator = Handle::new(IncrementalAllocatorObject::new(MEMORY_BLOCK_SIZE_HUGE));
         Self {
-            transient: StandardTransient::default(),
             shape: ShapeState::new(shape),
             max_size: SharedState::new(0.0),
             faces: SharedState::new(arena_vector(&allocator)),
@@ -143,7 +137,7 @@ impl MeshModel for DiscreteModel {
         self.faces.read().len() as i32
     }
     fn add_face(&self, face: &Face) -> Result<FaceHandle, Failure> {
-        let face: FaceHandle = Handle::new(DiscreteFace::new(face, &self.allocator)?).cast();
+        let face: FaceHandle = Handle::new(DiscreteFace::new(face, &self.allocator)?).into_upcast();
         self.faces.write().push(face.clone());
         Ok(face)
     }
@@ -155,7 +149,7 @@ impl MeshModel for DiscreteModel {
         self.edges.read().len() as i32
     }
     fn add_edge(&self, edge: &Edge) -> Result<EdgeHandle, Failure> {
-        let edge: EdgeHandle = Handle::new(DiscreteEdge::new(edge, &self.allocator)?).cast();
+        let edge: EdgeHandle = Handle::new(DiscreteEdge::new(edge, &self.allocator)?).into_upcast();
         self.edges.write().push(edge.clone());
         Ok(edge)
     }

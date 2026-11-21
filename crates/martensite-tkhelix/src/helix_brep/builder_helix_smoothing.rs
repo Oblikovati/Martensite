@@ -21,7 +21,7 @@ impl JointEnd<'_> {
     // the identity location) and its last (`at_end`) or first parameter.
     fn of(edge: &Edge, at_end: bool) -> Result<JointEnd<'_>, Failure> {
         let (curve, first, last) = BRepTool::curve(edge)?;
-        let curve: Handle<GeomBSplineCurve> = curve.cast();
+        let curve: Handle<GeomBSplineCurve> = curve.into_downcast();
         let parameter: f64 = if at_end { last } else { first };
         Ok(JointEnd {
             edge,
@@ -107,7 +107,7 @@ impl HelixBRepBuilderHelix {
             return Ok(());
         }
         let tolerance: f64 = BRepTool::edge_tolerance(end.edge)?;
-        let as_curve: Handle<dyn GeomCurve> = end.curve.cast();
+        let as_curve: Handle<dyn GeomCurve> = end.curve.upcast();
         BRepBuilder::default().update_edge_curve(end.edge, &as_curve, tolerance)
     }
 

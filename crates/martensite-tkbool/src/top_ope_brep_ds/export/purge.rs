@@ -5,14 +5,14 @@ use super::{
     fds_data, fds_idata, fds_si_is_gi_of_i_of_sba_of_t_of_i, fds_tdata, fun_ds_get_vsdm,
     has_same_domain, href, iref,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::process_interferences_tool::{
     fun_select_sk_interference, fun_select_trasha_interference,
 };
 use crate::top_ope_brep_ds::tool::{MapOfShapeOn1State, TopOpeBRepDSTOOL};
 use crate::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSFaceEdgeInterference,
-    TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    fdscnx_edge_connexity_same_shape_ds,
+    TopOpeBRepDSHDataStructure, TopOpeBRepDSKind, fdscnx_edge_connexity_same_shape_ds,
 };
 use crate::top_ope_brep_tool::fun_tool_orient_v_in_e;
 use martensite_tkbrep::brep::BRepTool;
@@ -23,7 +23,7 @@ use martensite_tkernel::ncollection::{IndexedMap, List};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{self, Orientation, ShapeEnum, State};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The edge of index `i` when it is a non-degenerated edge.
 fn non_degenerated_edge(bds: &TopOpeBRepDSDataStructure, i: i32) -> Result<Option<Edge>, Failure> {
@@ -254,7 +254,7 @@ pub fn fun_ds_has_fei(
 fn split_gb1(li: &ListOfInterference) -> (Vec<H>, Vec<H>) {
     let (mut lii, mut lgb1) = (Vec::new(), Vec::new());
     for i in li.iter() {
-        let fei: Handle<TopOpeBRepDSFaceEdgeInterference> = i.cast();
+        let fei: Handle<TopOpeBRepDSFaceEdgeInterference> = i.downcast();
         if fei.get().is_some_and(|f| f.gbound()) {
             lgb1.push(i.clone());
         } else {
@@ -297,7 +297,7 @@ fn feigb1_to0(
     }
     new_t.set_orientation(new_o);
     ii.set_geometry(gsd);
-    let fei: Handle<TopOpeBRepDSFaceEdgeInterference> = igb1.cast();
+    let fei: Handle<TopOpeBRepDSFaceEdgeInterference> = igb1.downcast();
     if let Some(fei) = fei.get() {
         fei.set_gbound(false);
     }

@@ -5,7 +5,7 @@ use crate::interface::test_norm::{FakeEntity, fake_chain, fake_entity};
 use martensite_tkernel::{
     impl_transient,
     message::{Msg, ProgressRange},
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped, StandardTransient, Transient},
     tcollection::HAsciiString,
 };
 
@@ -26,40 +26,40 @@ enum FakeMode {
 /// A named actor of transients.
 #[derive(Default)]
 struct FakeActor {
-    base: TransferActorOfProcessForTransient,
+    base: TransferActor<TransferTransientKind>,
     mode: FakeMode,
 }
-impl_transient!(FakeActor, "Fake_Actor", TransferActorOfProcessForTransient, base, interfaces: [dyn TransferActorOps<TransferTransientKind>]);
+impl_transient!(FakeActor, "Fake_Actor", dyn TransferActorOps<TransferTransientKind>, interfaces: [dyn TransferActorOps<TransferTransientKind>]);
 
 fn fake_actor(mode: FakeMode) -> Handle<dyn TransferActorOps<TransferTransientKind>> {
     Handle::new(FakeActor {
         mode,
         ..FakeActor::default()
     })
-    .cast()
+    .into_upcast()
 }
 
-fn text_result(start: &Handle<StandardTransient>) -> Handle<dyn TransferBinder> {
+fn text_result(start: &Handle<dyn Transient>) -> Handle<dyn TransferBinder> {
     let name = start
         .cast::<FakeEntity>()
         .get()
         .map(|e| e.name.read().clone())
         .unwrap_or_default();
     let binder = TransferSimpleBinderOfTransient::new();
-    let _ = binder.set_result(&Handle::new(HAsciiString::new(&name)).cast());
-    Handle::new(binder).cast()
+    let _ = binder.set_result(&Handle::new(HAsciiString::new(&name)).into_upcast());
+    Handle::new(binder).into_upcast()
 }
 
 impl TransferActorOps<TransferTransientKind> for FakeActor {
     fn actor(&self) -> &TransferActor<TransferTransientKind> {
-        self.base.actor()
+        &self.base
     }
-    fn recognize(&self, start: &Handle<StandardTransient>) -> bool {
+    fn recognize(&self, start: &Handle<dyn Transient>) -> bool {
         start.cast::<FakeEntity>().is_some()
     }
     fn transferring(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<dyn TransferProcessOps<TransferTransientKind>>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -86,7 +86,7 @@ impl TransferActorOps<TransferTransientKind> for FakeActor {
 
 fn result_text(
     tp: &TransferProcess<TransferTransientKind>,
-    start: &Handle<StandardTransient>,
+    start: &Handle<dyn Transient>,
 ) -> String {
     let res = tp.find_transient(start);
     res.cast::<HAsciiString>()
@@ -104,12 +104,12 @@ fn binding_finding_and_roots() {
         tp.is_already_used(&a).unwrap_err().exception_type(),
         "TransferTransferFailure"
     );
-    tp.bind_transient(&a, &Handle::new(HAsciiString::new("ra")).cast())
+    tp.bind_transient(&a, &Handle::new(HAsciiString::new("ra")).into_upcast())
         .unwrap();
     assert!(tp.is_bound(&a) && !tp.is_already_used(&a).unwrap());
     tp.add_warning_text(&b, "careful", "");
     assert!(!tp.is_bound(&b) && tp.check(&b).has_warnings());
-    tp.bind_transient(&b, &Handle::new(HAsciiString::new("rb")).cast())
+    tp.bind_transient(&b, &Handle::new(HAsciiString::new("rb")).into_upcast())
         .unwrap();
     assert!(
         tp.check(&b).has_warnings(),
@@ -144,8 +144,11 @@ fn multiple_results_and_used_binders() {
     );
     tp.bind_multiple(&a).unwrap();
     tp.bind_multiple(&a).unwrap();
-    tp.add_multiple(&a, &Handle::new(StandardTransient::default()))
-        .unwrap();
+    tp.add_multiple(
+        &a,
+        &Handle::new(StandardTransient).into_upcast::<dyn Transient>(),
+    )
+    .unwrap();
     assert!(
         tp.find(&a)
             .cast::<TransferMultipleBinder>()
@@ -153,27 +156,28 @@ fn multiple_results_and_used_binders() {
             .is_some_and(|m| m.nb_results() == 1)
     );
     let b = fake_entity("b", &[]);
-    tp.bind_transient(&b, &Handle::new(StandardTransient::default()))
-        .unwrap();
+    tp.bind_transient(
+        &b,
+        &Handle::new(StandardTransient).into_upcast::<dyn Transient>(),
+    )
+    .unwrap();
     assert!(tp.bind_multiple(&b).is_err());
     assert!(tp.add_multiple(&b, &Handle::default()).is_err());
     tp.find(&b).set_already_used();
     let err = tp
-        .bind(&b, &Handle::new(TransferVoidBinder::new()).cast())
+        .bind(&b, &Handle::new(TransferVoidBinder::new()).into_upcast())
         .unwrap_err();
     assert_eq!(err.message(), "TransferProcess : Bind, already Bound");
     let mut val = Handle::default();
-    assert!(
-        tp.find_typed_transient(&b, StandardTransient::static_type(), &mut val) && val.is_some()
-    );
+    assert!(tp.find_typed_transient(&b, <dyn Transient>::static_type(), &mut val) && val.is_some());
     let mut typed: Handle<HAsciiString> = Handle::default();
     assert!(
-        !tp.find_typed_transient_as(&b, StandardTransient::static_type(), &mut typed)
+        !tp.find_typed_transient_as(&b, <dyn Transient>::static_type(), &mut typed)
             && typed.is_null()
     );
-    let mut any: Handle<StandardTransient> = Handle::default();
+    let mut any: Handle<dyn Transient> = Handle::default();
     assert!(
-        tp.get_typed_transient_as(&tp.find(&b), StandardTransient::static_type(), &mut any)
+        tp.get_typed_transient_as(&tp.find(&b), <dyn Transient>::static_type(), &mut any)
             && any.is_some()
     );
     assert!(tp.find_else_bind(&fake_entity("c", &[])).is_some() && tp.nb_mapped() == 3);
@@ -190,7 +194,10 @@ fn transfer_through_actors_with_roots() {
     assert!(tp.actor().next() == last);
     let (_, ents) = fake_chain();
     let progress = ProgressRange::default();
-    assert!(tp.recognize(&ents[3]) && !tp.recognize(&Handle::new(StandardTransient::default())));
+    assert!(
+        tp.recognize(&ents[3])
+            && !tp.recognize(&Handle::new(StandardTransient).into_upcast::<dyn Transient>())
+    );
     assert!(tp.transfer(&ents[3], &progress).unwrap());
     assert_eq!(result_text(&tp, &ents[3]), "d");
     assert_eq!(result_text(&tp, &ents[0]), "a");
@@ -206,8 +213,11 @@ fn transfer_through_actors_with_roots() {
     assert_eq!(tp.root_result(false).number(), 4);
     assert_eq!(tp.abnormal_result().number(), 0);
     assert!(
-        !tp.transfer(&Handle::new(StandardTransient::default()), &progress)
-            .unwrap()
+        !tp.transfer(
+            &Handle::new(StandardTransient).into_upcast::<dyn Transient>(),
+            &progress
+        )
+        .unwrap()
     );
 }
 
@@ -343,11 +353,14 @@ fn transient_process_model_graph_and_context() {
 #[test]
 fn finder_process_mappers() {
     let fp = TransferFinderProcess::new(10);
-    let obj = Handle::new(StandardTransient::default());
+    let obj = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
     let mapper = fp.transient_mapper(&obj);
     let finder: Handle<dyn TransferFinder> = mapper.cast();
-    fp.bind_transient(&finder, &Handle::new(StandardTransient::default()))
-        .unwrap();
+    fp.bind_transient(
+        &finder,
+        &Handle::new(StandardTransient).into_upcast::<dyn Transient>(),
+    )
+    .unwrap();
     let again = fp.transient_mapper(&obj);
     assert!(again == mapper && fp.nb_mapped() == 1);
     mapper.set_integer_attribute("n", 1);
@@ -409,8 +422,11 @@ fn iterator_selections() {
     );
     assert!(iter.add(&text_result(&a)).is_err());
     iter.add_with_start(&text_result(&a), &a);
-    iter.add_with_start(&Handle::new(TransferVoidBinder::new()).cast(), &b);
-    iter.add_with_start(&Handle::new(TransferMultipleBinder::new()).cast(), &c);
+    iter.add_with_start(&Handle::new(TransferVoidBinder::new()).into_upcast(), &b);
+    iter.add_with_start(
+        &Handle::new(TransferMultipleBinder::new()).into_upcast(),
+        &c,
+    );
     assert_eq!(iter.number(), 3);
     iter.start();
     assert!(

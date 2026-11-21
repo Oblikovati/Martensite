@@ -18,15 +18,8 @@ use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tktopalgo::brep_bnd_lib::BRepBndLib;
 /// Native mesh tolerance calculation; `Deflection::is_consistent(0.1, 0.2, false, 0.1)`.
 #[derive(Default)]
-pub struct Deflection {
-    transient: StandardTransient,
-}
-impl_transient!(
-    Deflection,
-    "BRepMesh_Deflection",
-    StandardTransient,
-    transient
-);
+pub struct Deflection {}
+impl_transient!(Deflection, "BRepMesh_Deflection", StandardTransient);
 impl Deflection {
     /// Scale relative tolerance by topology bounds; `Deflection::compute_absolute(&shape, 0.01, -1.0)?`.
     pub fn compute_absolute(shape: &Shape, relative: f64, maximum: f64) -> Result<f64, Failure> {

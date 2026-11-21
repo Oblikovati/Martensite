@@ -8,12 +8,12 @@ use crate::if_select::{
     IFSelectSelectIntersection, IFSelectSelectPointed, IFSelectSelectSharing,
     IFSelectSelectSignature, IFSelectSelectUnion, IFSelectSelectUnknownEntities,
     IFSelectSessionPilot, IFSelectSignCounter, IFSelectSignCounterOps, IFSelectSignType,
-    IFSelectSignature, IFSelectSignatureList,
+    IFSelectSignature,
 };
 use crate::interface::{InterfaceInterfaceModel, InterfaceModelEntities};
 use martensite_tkernel::{
     message::{Message, MessageStream},
-    standard::{Handle, StandardTransient},
+    standard::{Handle, Transient},
 };
 use std::fmt::Write as _;
 
@@ -69,19 +69,22 @@ pub(super) fn fun82(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     let par: Handle<IFSelectIntParam> = ws.named_item(&pilot.arg(1)?).cast();
     let sel = IFSelectSelectEntityNumber::new();
     sel.set_number(&par);
-    record_selection(pilot, Handle::new(sel).cast())
+    record_selection(pilot, Handle::new(sel).into_upcast())
 }
 
 /// `fun83` (union).
 pub(super) fn fun83(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
-    record_selection(pilot, Handle::new(IFSelectSelectUnion::new()).cast())
+    record_selection(pilot, Handle::new(IFSelectSelectUnion::new()).into_upcast())
 }
 
 /// `fun84` (intersect).
 pub(super) fn fun84(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
-    record_selection(pilot, Handle::new(IFSelectSelectIntersection::new()).cast())
+    record_selection(
+        pilot,
+        Handle::new(IFSelectSelectIntersection::new()).into_upcast(),
+    )
 }
 
 /// A new selection of the entities whose type is (`exact`) or contains the argument.
@@ -90,7 +93,8 @@ fn type_selection(pilot: &Handle<IFSelectSessionPilot>, exact: bool) -> Status {
         let _ = writeln!(Message::send_info(), "Donner le TYPE a selectionner");
         return Ok(RetError);
     }
-    let sign: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(false)).cast();
+    let sign: Handle<dyn IFSelectSignature> =
+        Handle::new(IFSelectSignType::new(false)).into_upcast();
     record_selection(
         pilot,
         Handle::new(IFSelectSelectSignature::with_signature(
@@ -98,7 +102,7 @@ fn type_selection(pilot: &Handle<IFSelectSessionPilot>, exact: bool) -> Status {
             &pilot.arg(1)?,
             exact,
         ))
-        .cast(),
+        .into_upcast(),
     )
 }
 
@@ -111,7 +115,7 @@ pub(super) fn fun85(pilot: &Handle<IFSelectSessionPilot>) -> Status {
 pub(super) fn fun86(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     record_selection(
         pilot,
-        Handle::new(IFSelectSelectErrorEntities::new()).cast(),
+        Handle::new(IFSelectSelectErrorEntities::new()).into_upcast(),
     )
 }
 
@@ -119,13 +123,16 @@ pub(super) fn fun86(pilot: &Handle<IFSelectSessionPilot>) -> Status {
 pub(super) fn fun87(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     record_selection(
         pilot,
-        Handle::new(IFSelectSelectUnknownEntities::new()).cast(),
+        Handle::new(IFSelectSelectUnknownEntities::new()).into_upcast(),
     )
 }
 
 /// `fun88` (sharing).
 pub(super) fn fun88(pilot: &Handle<IFSelectSessionPilot>) -> Status {
-    record_selection(pilot, Handle::new(IFSelectSelectSharing::new()).cast())
+    record_selection(
+        pilot,
+        Handle::new(IFSelectSelectSharing::new()).into_upcast(),
+    )
 }
 
 /// `fun89` (typecontain).
@@ -148,13 +155,13 @@ pub(super) fn fun90(pilot: &Handle<IFSelectSessionPilot>) -> Status {
         );
         sp.add_list(Some(&list));
     }
-    record_selection(pilot, Handle::new(sp).cast())
+    record_selection(pilot, Handle::new(sp).into_upcast())
 }
 
 /// The listing of a pointed selection in `fun91`.
 fn list_pointed(
     sout: &mut MessageStream<'_>,
-    ws: &crate::if_select::IFSelectWorkSession,
+    ws: &crate::if_select::IFSelectSession,
     sp: &IFSelectSelectPointed,
     arg1: &str,
     model: &Handle<dyn InterfaceInterfaceModel>,
@@ -247,7 +254,7 @@ pub(super) fn fun92(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?.compute_check(false)?;
     record_selection(
         pilot,
-        Handle::new(IFSelectSelectIncorrectEntities::new()).cast(),
+        Handle::new(IFSelectSelectIncorrectEntities::new()).into_upcast(),
     )
 }
 
@@ -267,9 +274,7 @@ pub(super) fn fun93(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     let exact = !(argc > 3 && first_byte(&pilot.arg(3)?) == b'c');
     let item = ws.named_item(&arg1);
     let sign: Handle<dyn IFSelectSignature> = item.cast();
-    let cnt = item
-        .cast::<IFSelectSignatureList>()
-        .cast::<dyn IFSelectSignCounterOps>();
+    let cnt = item.cast::<dyn IFSelectSignCounterOps>();
     let sel = if sign.is_some() {
         IFSelectSelectSignature::with_signature(&sign, &arg2, exact)
     } else if cnt.is_some() {
@@ -278,7 +283,7 @@ pub(super) fn fun93(pilot: &Handle<IFSelectSessionPilot>) -> Status {
         let _ = writeln!(sout, "{arg1}:neither Signature nor Counter");
         return Ok(RetError);
     };
-    record_selection(pilot, Handle::new(sel).cast())
+    record_selection(pilot, Handle::new(sel).into_upcast())
 }
 
 /// `fun94` (signcounter): a new counter of a signature recorded.
@@ -296,7 +301,7 @@ pub(super) fn fun94(pilot: &Handle<IFSelectSessionPilot>) -> Status {
         return Ok(RetError);
     }
     let cnt = IFSelectSignCounter::with_signature(&sign, true, true)?;
-    Ok(pilot.record_item(&Handle::new(cnt).cast::<StandardTransient>()))
+    Ok(pilot.record_item(&Handle::new(cnt).into_upcast::<dyn Transient>()))
 }
 
 /// `funbselected` (nbselected): a new graph counter of a deduction recorded.
@@ -315,5 +320,5 @@ pub(super) fn funbselected(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     }
     let cnt = IFSelectGraphCounter::new(true, true);
     cnt.set_applied(&applied);
-    Ok(pilot.record_item(&Handle::new(cnt).cast()))
+    Ok(pilot.record_item(&Handle::new(cnt).into_upcast()))
 }

@@ -7,10 +7,10 @@ fn data_drop_releases_owned_classifier_projector_and_final_handle() {
     let owned = Handle::new(Data::new(0, 0, 0).unwrap());
     let source = owned.downgrade();
     let projector = std::sync::Arc::downgrade(&owned.walk.read().proj);
-    let classifier = Handle::new(BRepTopAdaptorTopolTool::new());
-    let weak = classifier.downgrade();
-    owned.walk.write().classifier = classifier;
-    assert!(!weak.upgrade().is_null());
+    let classifier = std::sync::Arc::new(BRepTopAdaptorTopolTool::new());
+    let weak = std::sync::Arc::downgrade(&classifier);
+    owned.walk.write().classifier = Some(classifier);
+    assert!(weak.upgrade().is_some());
     #[allow(
         drop_bounds,
         reason = "requires an explicit destructor body, not only owned fields"
@@ -19,23 +19,23 @@ fn data_drop_releases_owned_classifier_projector_and_final_handle() {
     explicit_drop::<Data>();
     drop(owned);
     assert!(source.upgrade().is_null());
-    assert!(weak.upgrade().is_null());
+    assert!(weak.upgrade().is_none());
     assert!(projector.upgrade().is_none());
 }
 #[test]
 fn data_destroy_only_releases_cache_and_final_drop_respects_external_owners() {
     let owned = Data::new(0, 0, 0).unwrap();
-    let classifier = Handle::new(BRepTopAdaptorTopolTool::new());
-    let weak = classifier.downgrade();
-    owned.walk.write().classifier = classifier.clone();
+    let classifier = std::sync::Arc::new(BRepTopAdaptorTopolTool::new());
+    let weak = std::sync::Arc::downgrade(&classifier);
+    owned.walk.write().classifier = Some(classifier.clone());
     owned.destroy();
     owned.destroy();
     assert!(owned.walk.read().rejection_cache.is_none());
-    assert!(!weak.upgrade().is_null());
+    assert!(weak.upgrade().is_some());
     drop(owned);
-    assert!(!weak.upgrade().is_null());
+    assert!(weak.upgrade().is_some());
     drop(classifier);
-    assert!(weak.upgrade().is_null());
+    assert!(weak.upgrade().is_none());
 }
 
 use crate::hlr_algo::WiresBlock;
@@ -43,7 +43,7 @@ use martensite_tkbrep::{
     brep::BRepBuilder,
     topods::{TShape, Vertex},
 };
-use martensite_tkernel::{impl_transient, standard::WeakHandle};
+use martensite_tkernel::standard::WeakHandle;
 use martensite_tkmath::gp::Point3;
 use std::sync::{
     Arc,
@@ -51,17 +51,21 @@ use std::sync::{
 };
 
 struct ObservingClassifierRelease {
-    parent: BRepTopAdaptorTopolTool,
+    classifier: BRepTopAdaptorTopolTool,
     wires: WeakHandle<WiresBlock>,
     mapped_shape: WeakHandle<dyn TShape>,
     observations: Arc<AtomicU8>,
 }
-impl_transient!(
-    ObservingClassifierRelease,
-    "HiddenLineObservingClassifierRelease",
-    BRepTopAdaptorTopolTool,
-    parent
-);
+impl super::FaceClassifier for ObservingClassifierRelease {
+    fn classify(
+        &self,
+        point: martensite_tkmath::gp::Point2,
+        tolerance: f64,
+        recadre: bool,
+    ) -> Result<martensite_tkg3d::top_abs::State, martensite_tkernel::standard::Failure> {
+        self.classifier.classify(point, tolerance, recadre)
+    }
+}
 impl Drop for ObservingClassifierRelease {
     fn drop(&mut self) {
         let flags = u8::from(!self.wires.upgrade().is_null())
@@ -87,12 +91,12 @@ fn classifier_releases_before_owned_face_records_and_shape_maps() {
     let mapped_shape = mapped_vertex(&owned);
     let observations = Arc::new(AtomicU8::new(0));
     let observer = ObservingClassifierRelease {
-        parent: BRepTopAdaptorTopolTool::new(),
+        classifier: BRepTopAdaptorTopolTool::new(),
         wires: weak_wires.clone(),
         mapped_shape: mapped_shape.clone(),
         observations: observations.clone(),
     };
-    owned.walk.write().classifier = Handle::new(observer).cast();
+    owned.walk.write().classifier = Some(Arc::new(observer));
     drop(owned);
     assert_eq!(observations.load(Ordering::SeqCst), 3);
     assert!(weak_wires.upgrade().is_null());

@@ -109,7 +109,7 @@ pub fn iso_matrix() -> Vec<CaptureCase> {
             let surface = geom_tools::read_surface(&mut stream(record));
             let adaptor = GeomAdaptorSurface::with_surface(&surface).unwrap();
             let iso = Adaptor3dIsoCurve::with_surface(
-                &Handle::new(adaptor).cast::<dyn Adaptor3dSurface>(),
+                &Handle::new(adaptor).into_upcast::<dyn Adaptor3dSurface>(),
             );
             cases.push((
                 format!("iso-{label}-mode{mode}"),

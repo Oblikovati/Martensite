@@ -177,9 +177,9 @@ fn param_on_neighbours(
         .ok_or_else(|| Failure::with_message("Standard_NullObject", "ParamOnSpine"))?
         .d1(ptg)?;
     let pln: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_point(pp, Direction3::from_vector(vv)?)?).cast();
+        Handle::new(GeomPlane::from_point(pp, Direction3::from_vector(vv)?)?).into_upcast();
     let plan: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&pln)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&pln)?).into_upcast();
     let sens = if nl <= f { -1 } else { 1 };
     let (nbed, periodic) = {
         let sp = lock(spine);
@@ -197,7 +197,7 @@ fn param_on_neighbours(
             (o == Orientation::Forward && sens == 1) || (o == Orientation::Reversed && sens == -1);
         let he = Handle::new(BRepAdaptorCurve::with_edge(&edge)?);
         let tolc = he.resolution(tol)?;
-        let hec: Handle<dyn Adaptor3dCurve> = he.clone().cast();
+        let hec: Handle<dyn Adaptor3dCurve> = he.upcast();
         let w = inter_plane_edge(&plan, &hec, first, tolc)?;
         found = w.is_some();
         if let Some(w) = w {
@@ -368,8 +368,8 @@ impl ChFi3dBuilder {
         };
         let mut tron = dsp.angle(ded)? > PI / 18. || psp.distance(&ped) >= 0.1 * p1.distance(&p2);
         if !tron && let Some(ivois) = ya_un_voisin(spine, iedge, isfirst) {
-            let bs1: Handle<BRepAdaptorSurface> = s1.clone().cast();
-            let bs2: Handle<BRepAdaptorSurface> = s2.clone().cast();
+            let bs1: Handle<BRepAdaptorSurface> = s1.downcast();
+            let bs2: Handle<BRepAdaptorSurface> = s2.downcast();
             if let (Some(b1), Some(b2)) = (bs1.get(), bs2.get()) {
                 let (f1, f2) = (b1.face(), b2.face());
                 let (cp1, cp2) = {

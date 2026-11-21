@@ -142,8 +142,8 @@ impl dyn ChFi3dBuilderOps + '_ {
             }
             self.start_sides(&spine, &mut wk)?;
             self.plane_starts(&guides, &mut wk, (wf, wl))?;
-            its.0.initialize_surface(&wk.side1.hs.clone().cast())?;
-            its.1.initialize_surface(&wk.side2.hs.clone().cast())?;
+            its.0.initialize_surface(&wk.side1.hs.upcast())?;
+            its.1.initialize_surface(&wk.side2.hs.upcast())?;
             let mut sd = shared(SurfData::new());
             let mut seq_sd = vec![sd.clone()];
             let walk = WalkSettings {

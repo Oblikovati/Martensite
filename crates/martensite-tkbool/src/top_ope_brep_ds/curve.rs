@@ -1,7 +1,8 @@
 //! `TopOpeBRepDSCurve`: a section curve of the data structure, with its range,
 //! tolerance, the faces it lies on and the surface/curve interferences carrying its
 //! p-curves.
-use super::{TopOpeBRepDSInterference, TopOpeBRepDSSurfaceCurveInterference};
+use super::TopOpeBRepDSSurfaceCurveInterference;
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbrep::topods::{Edge, Shape};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -21,8 +22,8 @@ pub struct TopOpeBRepDSCurve {
     my_is_walk: bool,
     my_s1: Shape,
     my_s2: Shape,
-    my_sci1: Handle<TopOpeBRepDSInterference>,
-    my_sci2: Handle<TopOpeBRepDSInterference>,
+    my_sci1: Handle<dyn InterferenceRecord>,
+    my_sci2: Handle<dyn InterferenceRecord>,
     my_keep: bool,
     my_mother: i32,
     my_ds_index: i32,
@@ -59,11 +60,11 @@ impl Default for TopOpeBRepDSCurve {
 
 /// The p-curve of a surface/curve interference; StandardNullObject when it is not
 /// one (a null dereference natively).
-fn sci_pcurve(sci: &Handle<TopOpeBRepDSInterference>) -> Result<Handle<dyn Geom2dCurve>, Failure> {
+fn sci_pcurve(sci: &Handle<dyn InterferenceRecord>) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     if sci.is_null() {
         return Ok(Handle::default());
     }
-    let sc: Handle<TopOpeBRepDSSurfaceCurveInterference> = sci.clone().cast();
+    let sc: Handle<TopOpeBRepDSSurfaceCurveInterference> = sci.downcast();
     Ok(sc.get().ok_or_else(not_surface_curve)?.pcurve())
 }
 
@@ -98,19 +99,19 @@ impl TopOpeBRepDSCurve {
     /// `SetSCI(I1, I2)`; `c.set_sci(&i1, &i2)`.
     pub fn set_sci(
         &mut self,
-        i1: &Handle<TopOpeBRepDSInterference>,
-        i2: &Handle<TopOpeBRepDSInterference>,
+        i1: &Handle<dyn InterferenceRecord>,
+        i2: &Handle<dyn InterferenceRecord>,
     ) {
         (self.my_sci1, self.my_sci2) = (i1.clone(), i2.clone());
     }
 
     /// `GetSCI1()`; `c.get_sci1()`.
-    pub fn get_sci1(&self) -> &Handle<TopOpeBRepDSInterference> {
+    pub fn get_sci1(&self) -> &Handle<dyn InterferenceRecord> {
         &self.my_sci1
     }
 
     /// `GetSCI2()`; `c.get_sci2()`.
-    pub fn get_sci2(&self) -> &Handle<TopOpeBRepDSInterference> {
+    pub fn get_sci2(&self) -> &Handle<dyn InterferenceRecord> {
         &self.my_sci2
     }
 
@@ -118,8 +119,8 @@ impl TopOpeBRepDSCurve {
     pub fn get_sci(
         &self,
     ) -> (
-        Handle<TopOpeBRepDSInterference>,
-        Handle<TopOpeBRepDSInterference>,
+        Handle<dyn InterferenceRecord>,
+        Handle<dyn InterferenceRecord>,
     ) {
         (self.my_sci1.clone(), self.my_sci2.clone())
     }
@@ -286,13 +287,13 @@ impl TopOpeBRepDSCurve {
 
 /// The p-curve of a surface/curve interference set in place (nothing for a null one).
 fn set_sci_pcurve(
-    sci: &Handle<TopOpeBRepDSInterference>,
+    sci: &Handle<dyn InterferenceRecord>,
     pc: &Handle<dyn Geom2dCurve>,
 ) -> Result<(), Failure> {
     if sci.is_null() {
         return Ok(());
     }
-    let sc: Handle<TopOpeBRepDSSurfaceCurveInterference> = sci.clone().cast();
+    let sc: Handle<TopOpeBRepDSSurfaceCurveInterference> = sci.downcast();
     sc.get().ok_or_else(not_surface_curve)?.set_pcurve(pc);
     Ok(())
 }

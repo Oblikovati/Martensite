@@ -148,9 +148,9 @@ impl ChFi3dFilBuilder {
         }
         let (op1, op2) = (reverse(op1), reverse(op2));
         let radius = constant_radius(&spine_of(&tc.st[0])?, "PerformTwoCorner")?.unwrap_or(0.);
-        let s: Handle<dyn Adaptor3dSurface> = hfaco.clone().cast();
-        let s1: Handle<dyn Adaptor3dSurface> = hbrs[0].clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = hbrs[1].clone().cast();
+        let s: Handle<dyn Adaptor3dSurface> = hfaco.upcast();
+        let s1: Handle<dyn Adaptor3dSurface> = hbrs[0].upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = hbrs[1].upcast();
         ChFiKPartComputeData::compute_corner_rotule(
             &mut self.base.ds,
             &cs.coin,
@@ -192,7 +192,7 @@ impl ChFi3dFilBuilder {
             b.push(mkbound_geom(&surf, p2df, p2da, (t3d, ta), false)?);
             fac_ends.push((tc.sens[k], p2dfac, v2dfac));
         }
-        let gfaco: Handle<dyn Adaptor3dSurface> = hfaco.clone().cast();
+        let gfaco: Handle<dyn Adaptor3dSurface> = hfaco.upcast();
         let (bfac, pcurve_on_face) =
             mkbound_tangents_2d(&gfaco, fac_ends[0], fac_ends[1], (t3d, ta))?;
         let mut fil = GeomFillConstrainedFilling::new(8, 20);
@@ -207,7 +207,7 @@ impl ChFi3dFilBuilder {
             })?;
             let trim = hpiv.trim(lo, hi, self.base.tolesp)?;
             let bpiv: Handle<dyn GeomFillBoundary> =
-                Handle::new(GeomFillSimpleBound::new(&trim, t3d, ta)).cast();
+                Handle::new(GeomFillSimpleBound::new(&trim, t3d, ta)).into_upcast();
             fil.init_four([&bfac, &b[1], &bpiv, &b[0]], true)?;
             let (_, darc) = hpiv.d1(piv.par.0)?;
             let b1 = b[0]
@@ -220,7 +220,7 @@ impl ChFi3dFilBuilder {
             let k = if pivotverslebas != pcfalenvers { 1 } else { 0 };
             cs.resetcp[k] = true;
             let mut fapiv = ctx.ff[k].clone();
-            hfapiv = hbrs[k].clone().cast();
+            hfapiv = hbrs[k].upcast();
             fapiv.set_orientation(Orientation::Forward);
             let (pc, pctrans) = self.pcurve_on_pivot(&piv.edge, &fapiv, (lo, hi), pcfalenvers)?;
             pcurve_on_piv = pc;
@@ -267,7 +267,7 @@ impl ChFi3dFilBuilder {
                 true,
                 true,
             )?)
-            .cast();
+            .into_upcast();
             geom2d_convert::curve_to_bspline_curve(&trc, ParameterisationType::TgtThetaOver2)?
         } else {
             geom2d_convert::split_bspline_curve(

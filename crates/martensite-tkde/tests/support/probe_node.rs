@@ -9,18 +9,17 @@ use martensite_tkde::de::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::{Buffer, List},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::AsciiString,
 };
 
 /// The native `ProbeProvider`: names itself and implements no transfer.
 pub struct ProbeProvider {
-    transient: StandardTransient,
     base: DeProviderBase,
     format: AsciiString,
     vendor: AsciiString,
 }
-impl_transient!(ProbeProvider, "ProbeProvider", dyn DeProvider, transient, interfaces: [dyn DeProvider]);
+impl_transient!(ProbeProvider, "ProbeProvider", dyn DeProvider, interfaces: [dyn DeProvider]);
 impl DeProvider for ProbeProvider {
     fn provider_base(&self) -> &DeProviderBase {
         &self.base
@@ -46,7 +45,6 @@ pub struct ProbeSpec {
 
 /// The native `ProbeNode`.
 pub struct ProbeNode {
-    transient: StandardTransient,
     base: DeShapeFixConfigurationNodeBase,
     spec: ProbeSpec,
     value: SharedState<i32>,
@@ -55,7 +53,6 @@ impl_transient!(
     ProbeNode,
     "ProbeNode",
     dyn DeShapeFixConfigurationNode,
-    transient,
     interfaces: [dyn DeConfigurationNode, dyn DeShapeFixConfigurationNode]
 );
 
@@ -67,7 +64,6 @@ impl ProbeNode {
     /// The node before it has a handle (for the plugin holders' `Default`).
     pub fn unbound(spec: ProbeSpec) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: DeShapeFixConfigurationNodeBase::default(),
             spec,
             value: SharedState::new(7),
@@ -105,15 +101,14 @@ impl DeConfigurationNode for ProbeNode {
     fn build_provider(&self) -> Handle<dyn DeProvider> {
         let node = self.configuration_node_base().this().unwrap_or_default();
         let provider = ProbeProvider {
-            transient: StandardTransient::default(),
             base: DeProviderBase::with_node(&node),
             format: AsciiString::new(self.spec.format),
             vendor: AsciiString::new(self.spec.vendor),
         };
-        Handle::new(provider).cast()
+        Handle::new(provider).into_upcast()
     }
     fn copy(&self) -> Handle<dyn DeConfigurationNode> {
-        ProbeNode::create(self.spec.clone()).cast()
+        ProbeNode::create(self.spec.clone()).into_upcast()
     }
     fn get_format(&self) -> AsciiString {
         AsciiString::new(self.spec.format)
@@ -206,7 +201,7 @@ macro_rules! plugin_vendor {
                 }
             }
         }
-        impl_transient!($name, $text, ProbeNode, node, interfaces: [dyn DeConfigurationNode]);
+        impl_transient!($name, $text, ProbeNode, interfaces: [dyn DeConfigurationNode]);
         impl DeConfigurationNode for $name {
             fn configuration_node_base(&self) -> &DeConfigurationNodeBase {
                 self.node.configuration_node_base()

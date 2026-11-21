@@ -1,10 +1,10 @@
 //! The printing of check and signature lists, the evaluation of a selection, of a
 //! dispatch and of the whole share-out, and the listing of entities.
 use super::params::info;
-use super::{IFSelectWorkSession, write_out};
+use super::{IFSelectSession, write_out};
 use crate::if_select::{
     IFSelectCheckCounter, IFSelectDispatch, IFSelectPacketList, IFSelectPrintCount,
-    IFSelectSelection, IFSelectShareOutResult, IFSelectSignatureList, IFSelectSignatureListOps,
+    IFSelectSelection, IFSelectShareOutResult, IFSelectSignatureListOps,
 };
 use crate::interface::{
     InterfaceCategory, InterfaceCheckIterator, InterfaceEntityIterator, InterfaceInterfaceModel,
@@ -18,7 +18,7 @@ fn evaluation_header(what: &str) -> String {
     format!("    ****    {what} Interrupted by Exception    ****  Title")
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `PrintCheckList(S, checklist, failsonly, mode)`: by entity, or counted by message
     /// (with the entities for the list modes).
     pub fn print_check_list(
@@ -40,13 +40,13 @@ impl IFSelectWorkSession {
         counter.print_list(s, &model, mode)
     }
     /// `PrintSignatureList(S, signlist, mode)`: nothing for null.
-    pub fn print_signature_list(
+    pub fn print_signature_list<L: ?Sized + IFSelectSignatureListOps>(
         &self,
         s: &mut dyn Write,
-        signlist: &Handle<IFSelectSignatureList>,
+        signlist: &Handle<L>,
         mode: IFSelectPrintCount,
     ) -> Result<(), Failure> {
-        match signlist.cast::<dyn IFSelectSignatureListOps>().get() {
+        match signlist.get() {
             Some(list) => list.print_list(s, &self.model(), mode),
             None => Ok(()),
         }
@@ -285,7 +285,7 @@ impl IFSelectWorkSession {
         out: &mut Vec<u8>,
         m: &dyn InterfaceInterfaceModel,
         tool: &InterfaceShareFlags,
-        ent: &Handle<martensite_tkernel::standard::StandardTransient>,
+        ent: &Handle<dyn martensite_tkernel::standard::Transient>,
         num: i32,
     ) -> Result<(), Failure> {
         out.extend_from_slice(InterfaceMsg::blanks_for_integer(num, 6).as_bytes());
@@ -314,7 +314,7 @@ fn list_marked(
     out: &mut Vec<u8>,
     m: &dyn InterfaceInterfaceModel,
     tool: &InterfaceShareFlags,
-    ent: &Handle<martensite_tkernel::standard::StandardTransient>,
+    ent: &Handle<dyn martensite_tkernel::standard::Transient>,
     num: i32,
     (newcount, cnt): (&mut i32, &mut i32),
 ) -> Result<(), Failure> {

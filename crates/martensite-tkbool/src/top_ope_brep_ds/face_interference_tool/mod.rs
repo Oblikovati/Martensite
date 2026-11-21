@@ -3,10 +3,9 @@
 //! FUNParameters and FUNComputeGeomData).
 use super::export::config::dir;
 use super::export::{fds_config3d, fds_data, fds_has_same_domain3d, iref};
-use super::{
-    TopOpeBRepDSConfig, TopOpeBRepDSCurve, TopOpeBRepDSDataStructure, TopOpeBRepDSInterference,
-    TopOpeBRepDSShapeShapeInterference,
-};
+use super::{TopOpeBRepDSConfig, TopOpeBRepDSCurve, TopOpeBRepDSDataStructure};
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_tool::{
     TopOpeBRepToolShapeTool, fun_tool_find_pin_e, fun_tool_nggeom_f,
     fun_tool_orient_e_in_f_forward, fun_tool_paron_ef, fun_tool_plane_face, fun_tool_proj_ponf,
@@ -142,7 +141,7 @@ pub struct TopOpeBRepDSFaceInterferenceTool<'a> {
 }
 
 /// The shape/shape interference of a handle (none for another type).
-fn ssi(i: &Handle<TopOpeBRepDSInterference>) -> Handle<TopOpeBRepDSShapeShapeInterference> {
+fn ssi(i: &Handle<dyn InterferenceRecord>) -> Handle<dyn ShapeInterferenceRecord> {
     i.cast()
 }
 

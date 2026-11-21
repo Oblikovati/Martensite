@@ -127,20 +127,20 @@ pub fn mkbound(
     isfreeboundary: bool,
 ) -> Result<Handle<dyn GeomFillBoundary>, Failure> {
     let hc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(curv)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(curv)?).into_upcast();
     let cons = Adaptor3dCurveOnSurface::with_curve(&hc, hs)?;
     if isfreeboundary {
         let hcons: Handle<dyn Adaptor3dCurve> =
-            Handle::new(Adaptor3dCurveOnSurface::copy_of(&cons)).cast();
-        return Ok(Handle::new(GeomFillSimpleBound::new(&hcons, t3d, ta)).cast());
+            Handle::new(Adaptor3dCurveOnSurface::copy_of(&cons)).into_upcast();
+        return Ok(Handle::new(GeomFillSimpleBound::new(&hcons, t3d, ta)).into_upcast());
     }
-    Ok(Handle::new(GeomFillBoundWithSurf::new(&cons, t3d, ta)).cast())
+    Ok(Handle::new(GeomFillBoundWithSurf::new(&cons, t3d, ta)).into_upcast())
 }
 
 /// The straight segment from `p1` to `p2` as a Bezier pcurve.
 fn segment(p1: Point2, p2: Point2) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let mut poles = [p1, p2];
-    Ok(Handle::new(Geom2dBezierCurve::new(&Array1::from_slice(&mut poles))?).cast())
+    Ok(Handle::new(Geom2dBezierCurve::new(&Array1::from_slice(&mut poles))?).into_upcast())
 }
 
 /// `ChFi3dmkbound(Fac, curv, p1, p2, t3d, ta, isfreeboundary)`: `(boundary, pcurve)` of
@@ -178,7 +178,8 @@ pub fn mkbound_geom(
     tolerances: (f64, f64),
     isfreeboundary: bool,
 ) -> Result<Handle<dyn GeomFillBoundary>, Failure> {
-    let hs: Handle<dyn Adaptor3dSurface> = Handle::new(GeomAdaptorSurface::with_surface(s)?).cast();
+    let hs: Handle<dyn Adaptor3dSurface> =
+        Handle::new(GeomAdaptorSurface::with_surface(s)?).into_upcast();
     mkbound_points(&hs, p1, p2, tolerances, isfreeboundary)
 }
 

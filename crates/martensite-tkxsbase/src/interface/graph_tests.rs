@@ -2,7 +2,7 @@
 //! `InterfaceCopyTool` and `InterfaceCheckIterator` on the fake norm.
 use super::test_norm::{FakeEntity, fake_chain, fake_entity, fake_model};
 use super::*;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
 
 #[test]
 fn sharings_and_roots() {
@@ -169,8 +169,8 @@ fn copy_tool_copies_with_references() {
     );
     tool.clear().unwrap();
     assert!(!tool.search(&ents[0], &mut res).unwrap());
-    let text: Handle<StandardTransient> =
-        Handle::new(martensite_tkernel::tcollection::HAsciiString::new("t")).cast();
+    let text: Handle<dyn Transient> =
+        Handle::new(martensite_tkernel::tcollection::HAsciiString::new("t")).into_upcast();
     let mut out = Handle::default();
     assert!(tool.copy(&text, &mut out, false, false).unwrap());
     tool.transfer_entity(&ents[3]).unwrap();

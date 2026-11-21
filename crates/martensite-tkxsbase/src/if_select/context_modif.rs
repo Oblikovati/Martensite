@@ -7,7 +7,7 @@ use crate::interface::{
 };
 use martensite_tkernel::{
     message::Message,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::fmt::Write as _;
@@ -81,8 +81,8 @@ impl IFSelectContextModif {
     /// transferred); `StandardNullObject` without copy map.
     pub fn search_image(
         &self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<Option<Handle<StandardTransient>>, Failure> {
+        ent: &Handle<dyn Transient>,
+    ) -> Result<Option<Handle<dyn Transient>>, Failure> {
         let map = self.themap.get().ok_or_else(no_map)?;
         let mut res = Handle::default();
         Ok(map.search(ent, &mut res)?.then_some(res))
@@ -147,14 +147,14 @@ impl IFSelectContextModif {
         !self.thesel
     }
     /// `IsTransferred(ent)`: true without copy map.
-    pub fn is_transferred(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_transferred(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         if self.themap.is_null() {
             return Ok(true);
         }
         Ok(self.search_image(ent)?.is_some())
     }
     /// `IsSelected(ent)`.
-    pub fn is_selected(&self, ent: &Handle<StandardTransient>) -> bool {
+    pub fn is_selected(&self, ent: &Handle<dyn Transient>) -> bool {
         let num = self.thegraf.entity_number(ent);
         num > 0
             && self
@@ -225,14 +225,14 @@ impl IFSelectContextModif {
         }
     }
     /// `ValueOriginal`: `StandardNoSuchObject` without current entity.
-    pub fn value_original(&self) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value_original(&self) -> Result<Handle<dyn Transient>, Failure> {
         if self.thecurr <= 0 {
             return Err(exceptions::no_such_object("IFSelectContextModif"));
         }
         self.thegraf.entity(self.thecurr)
     }
     /// `ValueResult`: the image of the current entity (itself without copy map).
-    pub fn value_result(&self) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value_result(&self) -> Result<Handle<dyn Transient>, Failure> {
         let ent = self.value_original()?;
         if self.themap.is_null() {
             return Ok(ent);
@@ -295,12 +295,12 @@ impl IFSelectContextModif {
         self.thechek.add(check, num);
     }
     /// `AddWarning(start, mess, orig = "")`.
-    pub fn add_warning(&mut self, start: &Handle<StandardTransient>, mess: &str, orig: &str) {
+    pub fn add_warning(&mut self, start: &Handle<dyn Transient>, mess: &str, orig: &str) {
         let num = self.thegraf.entity_number(start);
         self.thechek.c_check(num).add_warning_text(mess, orig);
     }
     /// `AddFail(start, mess, orig = "")`.
-    pub fn add_fail(&mut self, start: &Handle<StandardTransient>, mess: &str, orig: &str) {
+    pub fn add_fail(&mut self, start: &Handle<dyn Transient>, mess: &str, orig: &str) {
         let num = self.thegraf.entity_number(start);
         self.thechek.c_check(num).add_fail_text(mess, orig);
     }
@@ -313,7 +313,7 @@ impl IFSelectContextModif {
         Ok(ach)
     }
     /// `CCheck(ent)`: the check of `ent` (number -1 out of the graph).
-    pub fn c_check_entity(&mut self, ent: &Handle<StandardTransient>) -> Handle<InterfaceCheck> {
+    pub fn c_check_entity(&mut self, ent: &Handle<dyn Transient>) -> Handle<InterfaceCheck> {
         let mut num = self.thegraf.entity_number(ent);
         if num == 0 {
             num = -1;

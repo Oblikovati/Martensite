@@ -15,7 +15,8 @@ fn allocator() -> Handle<IncrementalAllocatorObject> {
 }
 fn source_face() -> Face {
     let mut face = Face::default();
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+    let surface: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     BRepBuilder::default()
         .make_face_on_surface(&mut face, &surface, 1e-7)
         .unwrap();
@@ -186,7 +187,7 @@ fn edge_flags_are_copied_then_mutate_independently_of_topology() {
 #[test]
 fn pcurve_lookup_deliberately_uses_first_or_last_not_orientation_search() {
     let face: FaceHandle =
-        Handle::new(DiscreteFace::new(&source_face(), &allocator()).unwrap()).cast();
+        Handle::new(DiscreteFace::new(&source_face(), &allocator()).unwrap()).into_upcast();
     let edge = DiscreteEdge::new(&source_edge(), &allocator()).unwrap();
     assert!(edge.is_free());
     let first = edge.add_pcurve(face.downgrade(), Orientation::Forward);
@@ -208,14 +209,14 @@ fn edge_clear_visits_3d_and_all_pcurves() {
     assert_eq!(pcurve.get().unwrap().parameters_nb(), 2);
     edge.clear(false).unwrap();
     assert_eq!(pcurve.get().unwrap().parameters_nb(), 0);
-    let replacement: CurveHandle = Handle::new(DiscreteCurve::new(&allocator())).cast();
+    let replacement: CurveHandle = Handle::new(DiscreteCurve::new(&allocator())).into_upcast();
     edge.set_curve(replacement.clone());
     assert!(edge.get_curve() == replacement);
 }
 #[test]
 fn wire_and_pcurve_references_do_not_own_their_targets() {
     let face: FaceHandle =
-        Handle::new(DiscreteFace::new(&source_face(), &allocator()).unwrap()).cast();
+        Handle::new(DiscreteFace::new(&source_face(), &allocator()).unwrap()).into_upcast();
     let mut topology = Wire::default();
     BRepBuilder::default().make_wire(&mut topology);
     let wire = face.get().unwrap().add_wire(&topology, 0);
@@ -311,7 +312,7 @@ fn fill_edge_curves(edge: &DiscreteEdge, pcurve: &PCurveHandle) {
 
 fn assert_weak_wire_edge(wire: &WireHandle) {
     let edge: EdgeHandle =
-        Handle::new(DiscreteEdge::new(&source_edge(), &allocator()).unwrap()).cast();
+        Handle::new(DiscreteEdge::new(&source_edge(), &allocator()).unwrap()).into_upcast();
     assert_eq!(
         wire.get()
             .unwrap()

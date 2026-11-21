@@ -68,7 +68,7 @@ type LifData = (Face, i32, f64, Edge, i32);
 /// domain containing its support for an EDGE transition); None when not EDGE.
 fn lif_data(
     bds: &TopOpeBRepDSDataStructure,
-    i: &Handle<crate::top_ope_brep_ds::TopOpeBRepDSInterference>,
+    i: &Handle<dyn crate::top_ope_brep_ds::InterferenceRecord>,
     fsdm: &List<Shape>,
 ) -> Result<Option<LifData>, Failure> {
     let ((sb, ib, _, _), (_, _, st, s)) = fds_idata(i);

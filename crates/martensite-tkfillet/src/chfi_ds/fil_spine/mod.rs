@@ -2,7 +2,7 @@
 mod law;
 mod radius;
 
-use super::spine::{Spine, SpineObject};
+use super::spine::{SpineData, SpineObject};
 use super::{ElSpine, errors::domain_error};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -10,10 +10,10 @@ use martensite_tkgeomalgo::law::LawFunction;
 use martensite_tkmath::gp::Xy;
 use std::ops::{Deref, DerefMut};
 
-/// A fillet guideline (`ChFiDSFilSpine`): a [`Spine`] with the radius given as
+/// A fillet guideline (`ChFiDSFilSpine`): a curve guideline with the radius given as
 /// `(abscissa, radius)` pairs sorted by abscissa, and one radius law per elementary spine.
 ///
-/// It dereferences to its [`Spine`] part, as the native class inherits it.
+/// It dereferences to its [`SpineData`] guideline, shared by the spine family.
 ///
 /// ```
 /// use martensite_tkfillet::chfi_ds::FilSpine;
@@ -26,15 +26,15 @@ use std::ops::{Deref, DerefMut};
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct FilSpine {
-    spine: Spine,
+    spine: SpineData,
     par_and_rad: Vec<Xy>,
     laws: Vec<Handle<dyn LawFunction>>,
 }
-impl_transient!(FilSpine, "ChFiDSFilSpine", Spine, spine);
+impl_transient!(FilSpine, "ChFiDSFilSpine", dyn SpineObject, interfaces: [dyn SpineObject]);
 
 impl Default for FilSpine {
     fn default() -> Self {
-        Self::from_spine(Spine::new())
+        Self::with_tolerance(martensite_tkernel::precision::confusion())
     }
 }
 
@@ -47,10 +47,10 @@ impl FilSpine {
     /// `ChFiDSFilSpine(Tol)`: an empty fillet guideline of tolerance `tolerance`;
     /// `FilSpine::with_tolerance(1e-4)`.
     pub fn with_tolerance(tolerance: f64) -> Self {
-        Self::from_spine(Spine::with_tolerance(tolerance))
+        Self::from_spine(SpineData::with_tolerance(tolerance))
     }
 
-    fn from_spine(spine: Spine) -> Self {
+    fn from_spine(spine: SpineData) -> Self {
         Self {
             spine,
             par_and_rad: Vec::new(),
@@ -97,17 +97,17 @@ impl FilSpine {
 }
 
 impl SpineObject for FilSpine {
-    fn spine(&self) -> &Spine {
+    fn spine(&self) -> &SpineData {
         &self.spine
     }
-    fn spine_mut(&mut self) -> &mut Spine {
+    fn spine_mut(&mut self) -> &mut SpineData {
         &mut self.spine
     }
     /// `Reset(AllData)`: the base reset and the laws cleared; the radii are cleared with
     /// `all_data`, else completed to the bounds of the guideline (StandardNoSuchObject
     /// when no radius is set).
     fn reset(&mut self, all_data: bool) -> Result<(), Failure> {
-        SpineObject::reset(&mut self.spine, all_data)?;
+        self.spine.reset_guideline(all_data)?;
         self.laws.clear();
         if all_data {
             self.par_and_rad.clear();
@@ -117,7 +117,7 @@ impl SpineObject for FilSpine {
     }
     /// `AppendElSpine(Els)`: the base append, then the law of the new elementary spine.
     fn append_el_spine(&mut self, el_spine: &Handle<ElSpine>) -> Result<(), Failure> {
-        SpineObject::append_el_spine(&mut self.spine, el_spine)?;
+        self.spine.push_el_spine(el_spine);
         self.append_law(el_spine)
     }
     fn as_fil_spine(&self) -> Option<&FilSpine> {
@@ -129,14 +129,14 @@ impl SpineObject for FilSpine {
 }
 
 impl Deref for FilSpine {
-    type Target = Spine;
-    fn deref(&self) -> &Spine {
+    type Target = SpineData;
+    fn deref(&self) -> &SpineData {
         &self.spine
     }
 }
 
 impl DerefMut for FilSpine {
-    fn deref_mut(&mut self) -> &mut Spine {
+    fn deref_mut(&mut self) -> &mut SpineData {
         &mut self.spine
     }
 }

@@ -11,7 +11,7 @@ use martensite_tkernel::{
     impl_transient,
     ncollection::DataMap,
     osd::Timer as OsdTimer,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use std::io::{self, Write};
@@ -40,10 +40,9 @@ struct TimerState {
 /// ```
 #[derive(Default)]
 pub struct MoniToolTimer {
-    transient: StandardTransient,
     state: SharedState<TimerState>,
 }
-impl_transient!(MoniToolTimer, "MoniToolTimer", StandardTransient, transient);
+impl_transient!(MoniToolTimer, "MoniToolTimer", dyn Transient);
 
 /// The amendments `ComputeAmendments` measures (`GetAmendments`): access, internal,
 /// external and the error of 10 nested timers.

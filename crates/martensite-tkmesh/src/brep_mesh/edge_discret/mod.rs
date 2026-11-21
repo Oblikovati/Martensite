@@ -7,7 +7,7 @@ use crate::{
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::top_abs::Orientation;
 mod process;
@@ -20,10 +20,9 @@ struct EdgeDiscretState {
 /// Edge processing strategy; `BRepMeshEdgeDiscret::new().perform(&model, &parameters, &range)`.
 #[derive(Default)]
 pub struct BRepMeshEdgeDiscret {
-    transient: StandardTransient,
     state: SharedState<EdgeDiscretState>,
 }
-impl_transient!(BRepMeshEdgeDiscret,"BRepMesh_EdgeDiscret",dyn ModelAlgo,transient,interfaces:[dyn ModelAlgo]);
+impl_transient!(BRepMeshEdgeDiscret,"BRepMesh_EdgeDiscret",dyn ModelAlgo,interfaces:[dyn ModelAlgo]);
 impl BRepMeshEdgeDiscret {
     /// Empty native edge stage; `BRepMeshEdgeDiscret::new()`.
     pub fn new() -> Self {
@@ -40,7 +39,7 @@ impl BRepMeshEdgeDiscret {
             parameters,
             minimum_points,
         )?)
-        .cast())
+        .into_upcast())
     }
     /// SameParameter chooses the 3D constructor; `BRepMeshEdgeDiscret::create_face_tessellator(&edge, orientation, &face, &parameters, 2)?`.
     pub fn create_face_tessellator(
@@ -60,14 +59,14 @@ impl BRepMeshEdgeDiscret {
             parameters,
             minimum_points,
         )?)
-        .cast())
+        .into_upcast())
     }
     /// Existing polygon extraction factory; `BRepMeshEdgeDiscret::create_edge_tessellation_extractor(&edge, &face)?`.
     pub fn create_edge_tessellation_extractor(
         edge: &EdgeHandle,
         face: &FaceHandle,
     ) -> Result<Handle<dyn CurveTessellator>, Failure> {
-        Ok(Handle::new(EdgeTessellationExtractor::new(edge, face)?).cast())
+        Ok(Handle::new(EdgeTessellationExtractor::new(edge, face)?).into_upcast())
     }
     /// Native function-call operator during a model run; `stage.process_edge(index)?`.
     pub fn process_edge(&self, index: i32) -> Result<(), Failure> {

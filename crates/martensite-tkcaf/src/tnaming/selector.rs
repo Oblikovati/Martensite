@@ -126,7 +126,7 @@ impl TNamingSelector {
             // vro 06.09.00.
             name.set_shape_type(selection.shape_type()?);
         }
-        self.label.add_attribute(&naming.cast(), true)
+        self.label.add_attribute(&naming.upcast(), true)
     }
     /// `Select(Selection, Geometry, KeepOrientation)`: the selection is its own context
     /// (temporary, natively).
@@ -276,7 +276,7 @@ fn is_specific_case(access: &TdfLabel, context: &Shape) -> Result<bool, Failure>
     }
     let mut found = false;
     while children.more() {
-        let child = children.value().cast::<TNamingNamedShape>();
+        let child = children.value().downcast::<TNamingNamedShape>();
         if child.is_some() && !all_in_context(&child, &oriented)? {
             found = true;
             break;

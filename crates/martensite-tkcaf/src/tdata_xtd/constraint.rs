@@ -4,7 +4,9 @@ use super::{TDataXtd, TDataXtdConstraintEnum};
 use crate::tnaming::TNamingNamedShape;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, exceptions},
+    standard::{
+        Failure, Guid, Handle, HandleUpcast, SharedState, TransientHandleTarget, exceptions,
+    },
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdata_std::TDataStdReal;
@@ -41,11 +43,10 @@ struct ConstraintState {
 /// assert!(constraint.verified() && constraint.nb_geometries() == 0);
 /// ```
 pub struct TDataXtdConstraint {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<ConstraintState>,
 }
-impl_transient!(TDataXtdConstraint, "TDataXtdConstraint", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataXtdConstraint, "TDataXtdConstraint", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataXtdConstraint {
     fn default() -> Self {
@@ -76,7 +77,6 @@ impl TDataXtdConstraint {
     /// `TDataXtdConstraint()`: a verified `RADIUS` constraint without geometry.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(ConstraintState {
                 constraint_type: TDataXtdConstraintEnum::Radius,
@@ -302,7 +302,7 @@ impl TdfAttribute for TDataXtdConstraint {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).upcast()
     }
     /// `Paste`: the relocated geometries, plane and value, then the type and flags.
     fn paste(
@@ -336,13 +336,13 @@ impl TdfAttribute for TDataXtdConstraint {
             && kind <= TDataXtdConstraintEnum::FacesAngle as i32;
         let limit = if placement { 2 } else { 4 };
         for geometry in state.geometries.iter().take(limit).filter(|g| g.is_some()) {
-            data_set.add_attribute(&geometry.cast());
+            data_set.add_attribute(&geometry.upcast());
         }
         if state.value.is_some() {
-            data_set.add_attribute(&state.value.cast());
+            data_set.add_attribute(&state.value.upcast());
         }
         if state.plane.is_some() {
-            data_set.add_attribute(&state.plane.cast());
+            data_set.add_attribute(&state.plane.upcast());
         }
     }
     /// `Dump`: `Constraint ` and the type name.
@@ -353,7 +353,11 @@ impl TdfAttribute for TDataXtdConstraint {
 }
 
 /// `RT->HasRelocation(source, target)` into a new null handle.
-fn relocated<T: martensite_tkernel::standard::RuntimeTyped>(
+fn relocated<
+    T: martensite_tkernel::standard::RuntimeTyped
+        + TransientHandleTarget
+        + HandleUpcast<dyn TdfAttribute>,
+>(
     table: &TdfRelocationTable,
     source: &Handle<T>,
 ) -> Handle<T>
@@ -361,6 +365,6 @@ where
     Handle<T>: Clone,
 {
     let mut target: Handle<T> = Handle::default();
-    table.has_attribute_relocation_as(&source.cast(), &mut target);
+    table.has_attribute_relocation_as(&source.upcast(), &mut target);
     target
 }

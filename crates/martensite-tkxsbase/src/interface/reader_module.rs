@@ -4,7 +4,7 @@ use super::{InterfaceCheck, InterfaceFileReaderData, InterfaceProtocol};
 use crate::lib_ctl::{LibCtlGlobalNode, LibCtlKind, LibCtlLibrary, LibCtlNode, LibCtlRegistry};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Handle, StandardTransient, Transient},
+    standard::{Failure, Handle, Transient},
 };
 use std::sync::OnceLock;
 
@@ -27,7 +27,7 @@ pub trait InterfaceReaderModule: Transient {
         data: &Handle<dyn InterfaceFileReaderData>,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure>;
     /// `NewRead(casenum, data, num, ach, ent)`: creates and reads an entity; false
     /// (not done) by default.
@@ -37,7 +37,7 @@ pub trait InterfaceReaderModule: Transient {
         _data: &Handle<dyn InterfaceFileReaderData>,
         _num: i32,
         _ach: &mut Handle<InterfaceCheck>,
-        _ent: &mut Handle<StandardTransient>,
+        _ent: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         Ok(false)
     }
@@ -45,7 +45,7 @@ pub trait InterfaceReaderModule: Transient {
 impl_transient_interface!(
     dyn InterfaceReaderModule,
     "InterfaceReaderModule",
-    StandardTransient
+    dyn Transient
 );
 
 /// The instance of the LibCtl template for `InterfaceReaderModule`.

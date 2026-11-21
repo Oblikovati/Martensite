@@ -2,13 +2,14 @@
 //! the other face, their orientations, ranks and same domains, and the case flags.
 use super::{TopOpeBRepBuildBuilder, fun_build_tb, fun_find_esd};
 use crate::top_ope_brep_build::TopOpeBRepBuildGTopo;
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_ds::export::{
     fds_assign, fds_data, fds_has_same_domain3d, fun_ds_one_sd, fun_ds_sdm,
 };
 use crate::top_ope_brep_ds::process_interferences_tool::fun_select_gi_interference;
 use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSInterference,
-    TopOpeBRepDSShapeShapeInterference, TopOpeBRepDSTransition, fdscnx_face_edge_connex_faces,
+    ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSTransition, fdscnx_face_edge_connex_faces,
 };
 use crate::top_ope_brep_tool::{
     fun_tool_bounds, fun_tool_curves_so, fun_tool_is_closing_e, fun_tool_maxtol,
@@ -106,10 +107,8 @@ pub(super) struct FcxContext {
 }
 
 /// The shape/shape interference (None when another interference).
-fn ssi_of(
-    i: &Handle<TopOpeBRepDSInterference>,
-) -> Option<Handle<TopOpeBRepDSShapeShapeInterference>> {
-    let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+fn ssi_of(i: &Handle<dyn InterferenceRecord>) -> Option<Handle<dyn ShapeInterferenceRecord>> {
+    let ssi: Handle<dyn ShapeInterferenceRecord> = i.cast();
     ssi.get().is_some().then_some(ssi)
 }
 
@@ -133,7 +132,7 @@ impl OnContext {
         pb: &TopOpeBRepBuildBuilder,
         my_face: &Shape,
         pg: &TopOpeBRepBuildGTopo,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
         esp_on: &Shape,
     ) -> Result<Option<Self>, Failure> {
         let hds = pb.hds()?;

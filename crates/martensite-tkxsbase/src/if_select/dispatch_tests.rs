@@ -11,7 +11,7 @@ fn chain() -> InterfaceGraph {
 }
 
 fn all() -> Handle<dyn IFSelectSelection> {
-    Handle::new(IFSelectSelectModelEntities::new()).cast()
+    Handle::new(IFSelectSelectModelEntities::new()).into_upcast()
 }
 
 /// The sizes of the parts of `packs`.
@@ -42,7 +42,7 @@ fn dispatch_base_members() {
     assert!(disp.has_root_name() && disp.root_name().is_some());
     let shared = IFSelectSelectShared::new();
     shared.set_input(&all());
-    disp.set_final_selection(&Handle::new(shared).cast());
+    disp.set_final_selection(&Handle::new(shared).into_upcast());
     let iter = disp.selections().unwrap();
     assert!(
         !iter.more(),
@@ -101,12 +101,12 @@ fn per_signature() {
     assert_eq!(disp.label().as_bytes(), b"One File per Signature ???");
     assert_eq!(part_sizes(&g, &disp), vec![4]);
     let counter = IFSelectSignCounter::with_signature(
-        &Handle::new(IFSelectSignType::new(true)).cast(),
+        &Handle::new(IFSelectSignType::new(true)).into_upcast(),
         true,
         false,
     )
     .unwrap();
-    let counter: Handle<dyn IFSelectSignCounterOps> = Handle::new(counter).cast();
+    let counter: Handle<dyn IFSelectSignCounterOps> = Handle::new(counter).into_upcast();
     disp.set_sign_counter(&counter).unwrap();
     assert!(
         disp.sign_counter() == counter

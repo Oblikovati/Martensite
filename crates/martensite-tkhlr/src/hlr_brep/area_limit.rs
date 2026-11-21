@@ -10,7 +10,6 @@ use std::sync::{Mutex, MutexGuard};
 /// An edge vertex with states on either side and independently assigned neighbor links.
 /// Example: `limit.clear()` releases its links without changing the vertex or states.
 pub struct AreaLimit {
-    parent: StandardTransient,
     vertex: Intersection,
     boundary: bool,
     interference: bool,
@@ -23,7 +22,7 @@ struct LimitRelations {
     next: Handle<AreaLimit>,
 }
 
-impl_transient!(AreaLimit, "HLRBRep_AreaLimit", StandardTransient, parent);
+impl_transient!(AreaLimit, "HLRBRep_AreaLimit", StandardTransient);
 
 macro_rules! state_accessors {
     ($get:ident, $set:ident, $index:expr, $doc:literal) => {
@@ -50,7 +49,6 @@ impl AreaLimit {
         edge_after: State,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             vertex: *vertex,
             boundary,
             interference,

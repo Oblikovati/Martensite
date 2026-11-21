@@ -15,7 +15,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::MapOfShape;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -31,12 +31,11 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 /// ```
 #[derive(Default)]
 pub struct XSControlSelectForTransfer {
-    transient: StandardTransient,
     base: IFSelectSelectExtractBase,
     the_tr: SharedState<Handle<XSControlTransferReader>>,
     the_ac: SharedState<Handle<dyn TransferActorOfTransientProcessOps>>,
 }
-impl_transient!(XSControlSelectForTransfer, "XSControlSelectForTransfer", dyn IFSelectSelectExtract, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+impl_transient!(XSControlSelectForTransfer, "XSControlSelectForTransfer", dyn IFSelectSelectExtract, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
 impl_extract_selection!(XSControlSelectForTransfer, base);
 
 impl XSControlSelectForTransfer {
@@ -76,7 +75,7 @@ impl IFSelectSelectExtract for XSControlSelectForTransfer {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let mut act = self.actor();
@@ -108,16 +107,14 @@ impl IFSelectSelectExtract for XSControlSelectForTransfer {
 /// assert_eq!(sel.label().as_bytes(), b"(Level 1)Connected Entities through produced Shapes");
 /// ```
 pub struct XSControlConnectedShapes {
-    transient: StandardTransient,
     base: IFSelectSelectExploreBase,
     the_tr: SharedState<Handle<XSControlTransferReader>>,
 }
-impl_transient!(XSControlConnectedShapes, "XSControlConnectedShapes", dyn IFSelectSelectExplore, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
+impl_transient!(XSControlConnectedShapes, "XSControlConnectedShapes", dyn IFSelectSelectExplore, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
 
 impl Default for XSControlConnectedShapes {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(1),
             the_tr: SharedState::default(),
         }
@@ -145,7 +142,7 @@ impl XSControlConnectedShapes {
         ashape: &Shape,
         tp: &Handle<TransferTransientProcess>,
         kind: ShapeEnum,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         let process = tp.get().ok_or_else(|| {
             martensite_tkernel::standard::exceptions::null_object(
                 "XSControlConnectedShapes::AdjacentEntities: null transient process",
@@ -210,7 +207,7 @@ impl IFSelectSelectExplore for XSControlConnectedShapes {
     fn explore(
         &self,
         _level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {

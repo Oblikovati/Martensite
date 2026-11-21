@@ -4,7 +4,7 @@ use super::{DeConfigurationNode, DeDefaultWrapperHooks, DeSectionGlobal, DeWrapp
 use martensite_tkernel::{
     impl_transient,
     ncollection::{DataMap, IndexedDataMap, List},
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use std::sync::{Arc, RwLockReadGuard};
@@ -35,12 +35,11 @@ pub(super) struct WrapperSettings {
 /// assert_eq!(wrapper.nodes().extent(), 0);
 /// ```
 pub struct DeWrapper {
-    transient: StandardTransient,
     pub(super) hooks: Arc<dyn DeWrapperHooks>,
     pub(super) settings: SharedState<WrapperSettings>,
     pub(super) configuration: SharedState<DeFormatMap>,
 }
-impl_transient!(DeWrapper, "DEWrapper", StandardTransient, transient);
+impl_transient!(DeWrapper, "DEWrapper", dyn Transient);
 
 impl Default for DeWrapper {
     fn default() -> Self {
@@ -56,7 +55,6 @@ impl DeWrapper {
         hooks: Arc<dyn DeWrapperHooks>,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             hooks,
             settings: SharedState::new(WrapperSettings {
                 global_parameters,

@@ -98,8 +98,8 @@ fn local_curve(
         u - delt,
         u + delt,
     )?)
-    .cast();
-    let surface: Handle<dyn Adaptor3dSurface> = hs.clone().cast();
+    .into_upcast();
+    let surface: Handle<dyn Adaptor3dSurface> = hs.upcast();
     Adaptor3dCurveOnSurface::with_curve(&hc2d, &surface)
 }
 

@@ -2,7 +2,7 @@
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmesh::brep_mesh::{
     BRepMeshDiscretAlgoFactory, BRepMeshDiscretRoot, BRepMeshIncrementalMeshFactory,
     DiscretRootBase, factories, find_factory, register_factory, unregister_factory,
@@ -18,7 +18,7 @@ fn name_of(factory: &Handle<dyn BRepMeshDiscretAlgoFactory>) -> String {
 #[test]
 fn registry_custom_factory_registration_and_removal_match_name_rules() {
     let custom: Handle<dyn BRepMeshDiscretAlgoFactory> =
-        Handle::new(FakeDiscretFactory::default()).cast();
+        Handle::new(FakeDiscretFactory::default()).into_upcast();
     register_factory(&custom, false);
     register_factory(&custom, false);
     assert_eq!(name_of(&find_factory("factoryprobe")), "FactoryProbe");
@@ -32,10 +32,8 @@ fn registry_custom_factory_registration_and_removal_match_name_rules() {
 
 /// A named fake factory registered by the test.
 #[derive(Default)]
-struct FakeDiscretFactory {
-    transient: StandardTransient,
-}
-impl_transient!(FakeDiscretFactory, "FakeDiscretFactory", dyn BRepMeshDiscretAlgoFactory, transient, interfaces: [dyn BRepMeshDiscretAlgoFactory]);
+struct FakeDiscretFactory {}
+impl_transient!(FakeDiscretFactory, "FakeDiscretFactory", dyn BRepMeshDiscretAlgoFactory, interfaces: [dyn BRepMeshDiscretAlgoFactory]);
 
 impl BRepMeshDiscretAlgoFactory for FakeDiscretFactory {
     fn name(&self) -> &str {
@@ -48,17 +46,16 @@ impl BRepMeshDiscretAlgoFactory for FakeDiscretFactory {
         _linear_deflection: f64,
         _angular_deflection: f64,
     ) -> Handle<dyn BRepMeshDiscretRoot> {
-        Handle::new(FakeDiscretAlgorithm::default()).cast()
+        Handle::new(FakeDiscretAlgorithm::default()).into_upcast()
     }
 }
 
 /// A fake algorithm whose Perform never succeeds.
 #[derive(Default)]
 struct FakeDiscretAlgorithm {
-    transient: StandardTransient,
     base: DiscretRootBase,
 }
-impl_transient!(FakeDiscretAlgorithm, "FakeDiscretAlgorithm", dyn BRepMeshDiscretRoot, transient, interfaces: [dyn BRepMeshDiscretRoot]);
+impl_transient!(FakeDiscretAlgorithm, "FakeDiscretAlgorithm", dyn BRepMeshDiscretRoot, interfaces: [dyn BRepMeshDiscretRoot]);
 
 impl BRepMeshDiscretRoot for FakeDiscretAlgorithm {
     fn discret_root_base(&self) -> &DiscretRootBase {

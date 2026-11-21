@@ -89,7 +89,7 @@ impl ChFi3dBuilder {
             self.write_split_cork(oc, ishape, et, cork)?;
         }
         let (mut box1, mut box2) = (BoundingBox3::default(), BoundingBox3::default());
-        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.clone().cast();
+        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.upcast();
         enlarge_box_pcurve(&hbs, &cork.pc, (cork.udeb, cork.ufin), &mut box1, &mut box2)?;
         self.write_continuation(oc, vtx, (arcpiv, fopbis), ishape)?;
         enlarge_box_ds(
@@ -219,7 +219,7 @@ impl ChFi3dBuilder {
         bound_fac(&oc.hbs, boite(pv1, pv2), true)?;
         bound_fac(&oc.hbop, boite(pop1, pop2), true)?;
         let (hbop, hbs): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (oc.hbop.clone().cast(), oc.hbs.clone().cast());
+            (oc.hbop.upcast(), oc.hbs.upcast());
         let mut out = IntersectionCurves::default();
         if !compute_curves(
             (&hbop, &hbs),

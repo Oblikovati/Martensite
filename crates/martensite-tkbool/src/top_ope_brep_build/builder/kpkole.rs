@@ -4,14 +4,14 @@
 use super::TopOpeBRepBuildBuilder;
 use super::kpart::kpresu::*;
 use crate::top_ope_brep_build::TopOpeBRepBuildWireToFace;
-use crate::top_ope_brep_ds::TopOpeBRepDSShapeShapeInterference;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_tool::{TopOpeBRepToolShapeExplorer, fun_tool_plane_face};
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topexp::{self, Explorer};
 use martensite_tkbrep::topods::{self, Face, Shape};
 use martensite_tkbrep::toptools::IndexedDataMapOfShapeListOfShape;
 use martensite_tkernel::ncollection::List;
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{ShapeEnum, State};
 
 /// The faces of the tangent map: the first face OUT, the first face IN and all the
@@ -37,7 +37,7 @@ impl TopOpeBRepBuildBuilder {
             let bds = self.hds()?.ds();
             for f in lfhg.iter() {
                 for i in bds.shape_interferences(f, true).iter() {
-                    let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+                    let ssi = i.view::<dyn ShapeInterferenceRecord>();
                     if ssi.get().is_none() {
                         return Ok(false);
                     }

@@ -1,46 +1,41 @@
 //! `MoniToolSignText`: a text that identifies an object in a context.
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Handle, StandardTransient, Transient},
+    standard::{Handle, Transient},
     tcollection::AsciiString,
 };
 
 /// `MoniToolSignText`, abstract: gives a text as a signature of an object.
 ///
 /// ```
-/// use martensite_tkernel::{impl_transient, standard::{Handle, StandardTransient}, tcollection::AsciiString};
+/// use martensite_tkernel::{impl_transient, standard::{Handle, Transient}, tcollection::AsciiString};
 /// use martensite_tkxsbase::moni_tool::MoniToolSignText;
-/// #[derive(Default)]
-/// struct Silent { transient: StandardTransient }
-/// impl_transient!(Silent, "Doc_Silent", dyn MoniToolSignText, transient, interfaces: [dyn MoniToolSignText]);
+/// struct Silent;
+/// impl_transient!(Silent, "Doc_Silent", dyn MoniToolSignText, interfaces: [dyn MoniToolSignText]);
 /// impl MoniToolSignText for Silent {
 ///     fn name(&self) -> String { "silent".into() }
-///     fn text(&self, _: &Handle<StandardTransient>, _: &Handle<StandardTransient>) -> AsciiString {
+///     fn text(&self, _: &Handle<dyn Transient>, _: &Handle<dyn Transient>) -> AsciiString {
 ///         AsciiString::default()
 ///     }
 /// }
-/// let ent: Handle<StandardTransient> = Handle::new(Silent::default()).cast();
-/// assert_eq!(Silent::default().text_alone(&ent).as_bytes(), b"Doc_Silent");
+/// let ent: Handle<dyn Transient> = Handle::new(Silent).into_upcast();
+/// assert_eq!(Silent.text_alone(&ent).as_bytes(), b"Doc_Silent");
 /// ```
 pub trait MoniToolSignText: Transient {
     /// `Name`: the identification of the signature.
     fn name(&self) -> String;
     /// `Text`: the signature of `ent` in `context` (which may be null).
-    fn text(
-        &self,
-        ent: &Handle<StandardTransient>,
-        context: &Handle<StandardTransient>,
-    ) -> AsciiString;
+    fn text(&self, ent: &Handle<dyn Transient>, context: &Handle<dyn Transient>) -> AsciiString;
     /// `TextAlone`: `Text` without context; when empty, "(NULL)" or the dynamic type name.
-    fn text_alone(&self, ent: &Handle<StandardTransient>) -> AsciiString {
+    fn text_alone(&self, ent: &Handle<dyn Transient>) -> AsciiString {
         sign_text_alone(self.text(ent, &Handle::default()), ent)
     }
 }
-impl_transient_interface!(dyn MoniToolSignText, "MoniToolSignText", StandardTransient);
+impl_transient_interface!(dyn MoniToolSignText, "MoniToolSignText", dyn Transient);
 
 /// The native body of `MoniToolSignText::TextAlone` after the call to `Text`, shared by
 /// the overrides that call the base member; `sign_text_alone(text, &ent)`.
-pub fn sign_text_alone(mut atext: AsciiString, ent: &Handle<StandardTransient>) -> AsciiString {
+pub fn sign_text_alone(mut atext: AsciiString, ent: &Handle<dyn Transient>) -> AsciiString {
     if atext.length() != 0 {
         return atext;
     }
@@ -54,15 +49,16 @@ pub fn sign_text_alone(mut atext: AsciiString, ent: &Handle<StandardTransient>) 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use martensite_tkernel::standard::StandardTransient;
 
     #[test]
     fn empty_text_falls_back_to_null_or_type_name() {
-        let null: Handle<StandardTransient> = Handle::default();
+        let null: Handle<dyn Transient> = Handle::default();
         assert_eq!(
             sign_text_alone(AsciiString::default(), &null).as_bytes(),
             b"(NULL)"
         );
-        let object = Handle::new(StandardTransient::default());
+        let object = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
         let text = sign_text_alone(AsciiString::default(), &object);
         assert_eq!(text.as_bytes(), b"Standard_Transient");
         let kept = sign_text_alone(AsciiString::new("given"), &object);

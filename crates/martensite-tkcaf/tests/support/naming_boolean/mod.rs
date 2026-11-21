@@ -13,7 +13,7 @@ use martensite_tkbo::brep_algo_api::{
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -28,10 +28,9 @@ use values::optional_failure as failed;
 /// Native document Boolean driver; `NamingBooleanDriver::default()`.
 #[derive(Default)]
 pub struct NamingBooleanDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingBooleanDriver, "DNamingBooleanOperationDriver", dyn TFunctionDriver, transient, interfaces: [dyn TFunctionDriver]);
+impl_transient!(NamingBooleanDriver, "DNamingBooleanOperationDriver", dyn TFunctionDriver, interfaces: [dyn TFunctionDriver]);
 
 fn input_pair(function: &Handle<TFunctionFunction>) -> Result<Option<(Shape, Shape)>, Failure> {
     let previous = previous_function(function)?;

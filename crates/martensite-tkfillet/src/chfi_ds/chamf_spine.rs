@@ -1,6 +1,6 @@
 //! The guideline of a chamfer with its distances or its distance and angle.
 use super::errors::standard_failure;
-use super::spine::{Spine, SpineObject};
+use super::spine::{SpineData, SpineObject};
 use super::{ChamfMethod, ChamfMode, ElSpine};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -9,7 +9,7 @@ use std::ops::{Deref, DerefMut};
 /// A chamfer guideline (`ChFiDSChamfSpine`): a [`Spine`] with the chamfer method and its
 /// distances or distance and angle.
 ///
-/// It dereferences to its [`Spine`] part, as the native class inherits it.
+/// It dereferences to its [`SpineData`] guideline, shared by the spine family.
 ///
 /// ```
 /// use martensite_tkfillet::chfi_ds::{ChamfMethod, ChamfSpine};
@@ -21,17 +21,17 @@ use std::ops::{Deref, DerefMut};
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct ChamfSpine {
-    spine: Spine,
+    spine: SpineData,
     d1: f64,
     d2: f64,
     angle: f64,
     method: ChamfMethod,
 }
-impl_transient!(ChamfSpine, "ChFiDSChamfSpine", Spine, spine);
+impl_transient!(ChamfSpine, "ChFiDSChamfSpine", dyn SpineObject, interfaces: [dyn SpineObject]);
 
 impl Default for ChamfSpine {
     fn default() -> Self {
-        Self::from_spine(Spine::new())
+        Self::with_tolerance(martensite_tkernel::precision::confusion())
     }
 }
 
@@ -44,10 +44,10 @@ impl ChamfSpine {
 
     /// `ChFiDSChamfSpine(Tol)`; `ChamfSpine::with_tolerance(1e-4)`.
     pub fn with_tolerance(tolerance: f64) -> Self {
-        Self::from_spine(Spine::with_tolerance(tolerance))
+        Self::from_spine(SpineData::with_tolerance(tolerance))
     }
 
-    fn from_spine(mut spine: Spine) -> Self {
+    fn from_spine(mut spine: SpineData) -> Self {
         spine.set_mode(ChamfMode::ClassicChamfer);
         Self {
             spine,
@@ -118,17 +118,18 @@ impl ChamfSpine {
 }
 
 impl SpineObject for ChamfSpine {
-    fn spine(&self) -> &Spine {
+    fn spine(&self) -> &SpineData {
         &self.spine
     }
-    fn spine_mut(&mut self) -> &mut Spine {
+    fn spine_mut(&mut self) -> &mut SpineData {
         &mut self.spine
     }
     fn reset(&mut self, all_data: bool) -> Result<(), Failure> {
-        SpineObject::reset(&mut self.spine, all_data)
+        self.spine.reset_guideline(all_data)
     }
     fn append_el_spine(&mut self, el_spine: &Handle<ElSpine>) -> Result<(), Failure> {
-        SpineObject::append_el_spine(&mut self.spine, el_spine)
+        self.spine.push_el_spine(el_spine);
+        Ok(())
     }
     fn as_chamf_spine(&self) -> Option<&ChamfSpine> {
         Some(self)
@@ -139,14 +140,14 @@ impl SpineObject for ChamfSpine {
 }
 
 impl Deref for ChamfSpine {
-    type Target = Spine;
-    fn deref(&self) -> &Spine {
+    type Target = SpineData;
+    fn deref(&self) -> &SpineData {
         &self.spine
     }
 }
 
 impl DerefMut for ChamfSpine {
-    fn deref_mut(&mut self) -> &mut Spine {
+    fn deref_mut(&mut self) -> &mut SpineData {
         &mut self.spine
     }
 }
@@ -154,6 +155,7 @@ impl DerefMut for ChamfSpine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chfi_ds::Spine;
     use martensite_tkernel::standard::RuntimeTyped;
 
     #[test]
@@ -183,5 +185,12 @@ mod tests {
         let descriptor = ChamfSpine::static_type();
         assert_eq!(descriptor.name(), "ChFiDSChamfSpine");
         assert!(descriptor.is_subtype(Spine::static_type()));
+        let owner = Handle::new(ChamfSpine::with_tolerance(1e-3));
+        let erased = owner.upcast::<dyn martensite_tkernel::standard::Transient>();
+        let view = erased.view::<dyn SpineObject>();
+        assert_eq!(view.object_address(), owner.object_address());
+        let borrowed = view.get().unwrap();
+        assert_eq!(borrowed.get_tolesp(), 1e-3);
+        assert_eq!(borrowed.dynamic_type().name(), descriptor.name());
     }
 }

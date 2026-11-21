@@ -1,19 +1,20 @@
 //! The reductions of closed same domain edges and pure 2d interferences of the edge
 //! interference reducer (FUN_reclSE2, FUN_reclSE, FUN_unkeepEVIonGb1, FUN_keepl3dF,
 //! FUN_reducepure2dI0, FUN_reducepure2dI).
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::export::complete_se::tki_groups;
 use crate::top_ope_brep_ds::export::{fds_copy, fds_data, fds_idata, fun_ds_sdm, iref};
 use crate::top_ope_brep_ds::process_interferences_tool::select::{to_list, to_vec};
 use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSTKI, TopOpeBRepDSTransition,
+    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSKind, TopOpeBRepDSTKI,
+    TopOpeBRepDSTransition,
 };
 use crate::top_ope_brep_tool::{TopOpeBRepToolTOOL, fun_tool_orient_v_in_e};
 use martensite_tkbrep::topods;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{self, Orientation, ShapeEnum, State};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The orientation from IN of an interference.
 fn ori(i: &H) -> Result<Orientation, Failure> {

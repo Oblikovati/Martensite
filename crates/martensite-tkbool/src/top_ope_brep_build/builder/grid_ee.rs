@@ -6,6 +6,7 @@ use crate::top_ope_brep_build::{
     TopOpeBRepBuildEdgeBuilder, TopOpeBRepBuildGTopo, TopOpeBRepBuildPaveClassifier,
     TopOpeBRepBuildPaveSet,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::export::{
     fds_assign, fds_idata, fds_parameter, fun_ds_getoov_hds, fun_ds_has_i2d,
 };
@@ -14,8 +15,8 @@ use crate::top_ope_brep_ds::process_interferences_tool::{
 };
 use crate::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSPointIterator, TopOpeBRepDSTKI,
-    TopOpeBRepDSTransition, fun_ds_get_tr,
+    TopOpeBRepDSKind, TopOpeBRepDSPointIterator, TopOpeBRepDSTKI, TopOpeBRepDSTransition,
+    fun_ds_get_tr,
 };
 use crate::top_ope_brep_tool::{TopOpeBRepToolShapeTool, TopOpeBRepToolTOOL};
 use martensite_tkbrep::brep::BRepTool;
@@ -58,14 +59,14 @@ pub(super) fn null_interference() -> Failure {
 }
 
 /// The GBound of an edge/vertex interference (false for another interference).
-fn evi_gbound(i: &Handle<TopOpeBRepDSInterference>) -> bool {
-    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.clone().cast();
+fn evi_gbound(i: &Handle<dyn InterferenceRecord>) -> bool {
+    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.downcast();
     evi.get().is_some_and(|e| e.gbound())
 }
 
 /// `FUN_isonbound(HDS, I)` (static): a VERTEX geometry bound of its edge/vertex
 /// interference and without same domain vertex.
-fn fun_isonbound(hds: &TopOpeBRepDSHDataStructure, i: &Handle<TopOpeBRepDSInterference>) -> bool {
+fn fun_isonbound(hds: &TopOpeBRepDSHDataStructure, i: &Handle<dyn InterferenceRecord>) -> bool {
     let Some(ii) = i.get() else {
         return false;
     };

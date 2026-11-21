@@ -51,7 +51,7 @@ impl ChFi3dBuilder {
         let pardeb = [pfil1.x(), pfil1.y(), pfac1.x(), pfac1.y()];
         let parfin = [pfil2.x(), pfil2.y(), pfac2.x(), pfac2.y()];
         bound_fac(&oc.hbs, boite(pfac1, pfac2), true)?;
-        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.clone().cast();
+        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.upcast();
         let mut out = IntersectionCurves::default();
         if !compute_curves(
             (&hgs, &hbs),
@@ -127,9 +127,9 @@ impl ChFi3dBuilder {
         (udeb, par2, ufin): (f64, f64, f64),
     ) -> Result<(), Failure> {
         let c1: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&cork.cc, udeb, par2, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&cork.cc, udeb, par2, true, true)?).into_upcast();
         let c2: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&cork.cc, par2, ufin, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&cork.cc, par2, ufin, true, true)?).into_upcast();
         cork.icurv = [
             self.ds
                 .add_curve(&mut TopOpeBRepDSCurve::new(&c1, cork.tolreached, false)),

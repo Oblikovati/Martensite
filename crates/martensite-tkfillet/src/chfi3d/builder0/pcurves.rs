@@ -50,7 +50,7 @@ pub fn reparam_pcurv(uf: f64, ul: f64, pcurv: &mut Handle<dyn Geom2dCurve>) -> R
         pc.degree(),
         false,
     )?;
-    *pcurv = Handle::new(rebuilt).cast();
+    *pcurv = Handle::new(rebuilt).into_upcast();
     Ok(())
 }
 
@@ -72,13 +72,17 @@ pub fn project_pcurv(
     let projc = ProjectedCurve::with_tolerance(hsg, hcg, tol)?;
     *tolreached = projc.get_tolerance();
     *pcurv = match projc.get_type()? {
-        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(projc.line()?)).cast(),
-        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(projc.circle()?)).cast(),
-        CurveType::Ellipse => Handle::new(Geom2dEllipse::from_elips2d(projc.ellipse()?)).cast(),
-        CurveType::Hyperbola => {
-            Handle::new(Geom2dHyperbola::from_hypr2d(projc.hyperbola()?)).cast()
+        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(projc.line()?)).into_upcast(),
+        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(projc.circle()?)).into_upcast(),
+        CurveType::Ellipse => {
+            Handle::new(Geom2dEllipse::from_elips2d(projc.ellipse()?)).into_upcast()
         }
-        CurveType::Parabola => Handle::new(Geom2dParabola::from_parab2d(projc.parabola()?)).cast(),
+        CurveType::Hyperbola => {
+            Handle::new(Geom2dHyperbola::from_hypr2d(projc.hyperbola()?)).into_upcast()
+        }
+        CurveType::Parabola => {
+            Handle::new(Geom2dParabola::from_parab2d(projc.parabola()?)).into_upcast()
+        }
         CurveType::BezierCurve => projc.bezier()?.cast(),
         CurveType::BSplineCurve => projc.bspline()?.cast(),
         _ => {
@@ -163,9 +167,10 @@ pub fn same_parameter_geom(
     tol3d: f64,
     tolreached: &mut f64,
 ) -> Result<bool, Failure> {
-    let hs: Handle<dyn Adaptor3dSurface> = Handle::new(GeomAdaptorSurface::with_surface(s)?).cast();
+    let hs: Handle<dyn Adaptor3dSurface> =
+        Handle::new(GeomAdaptorSurface::with_surface(s)?).into_upcast();
     let hc: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_range(c3d, pardeb, parfin)?).cast();
+        Handle::new(GeomAdaptorCurve::with_range(c3d, pardeb, parfin)?).into_upcast();
     same_parameter(&hc, pcurv, &hs, tol3d, tolreached)
 }
 
@@ -181,7 +186,7 @@ pub fn compute_pcurv(
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let (p1, p2) = if reverse { (uv2, uv1) } else { (uv1, uv2) };
     let pcurv = match iso_line(p1, p2, (pardeb, parfin))? {
-        Some(line) => Handle::new(line).cast(),
+        Some(line) => Handle::new(line).into_upcast(),
         None => {
             let (mut poles, mut knots, mut mults) = ([p1, p2], [pardeb, parfin], [2, 2]);
             let (poles, knots, mults) = (
@@ -189,10 +194,10 @@ pub fn compute_pcurv(
                 Array1::from_slice(&mut knots),
                 Array1::from_slice(&mut mults),
             );
-            Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).cast()
+            Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).into_upcast()
         }
     };
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&pcurv, pardeb, parfin, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&pcurv, pardeb, parfin, true, true)?).into_upcast())
 }
 
 /// The iso line of `ChFi3dComputePCurv` when the points differ by the range along V
@@ -251,8 +256,9 @@ pub fn compute_pcurv_geom(
     tolreached: &mut f64,
     reverse: bool,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    let hs: Handle<dyn Adaptor3dSurface> = Handle::new(GeomAdaptorSurface::with_surface(s)?).cast();
+    let hs: Handle<dyn Adaptor3dSurface> =
+        Handle::new(GeomAdaptorSurface::with_surface(s)?).into_upcast();
     let hc: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_range(c3d, pardeb, parfin)?).cast();
+        Handle::new(GeomAdaptorCurve::with_range(c3d, pardeb, parfin)?).into_upcast();
     compute_pcurv_on(&hc, uvs, &hs, (pardeb, parfin), tol3d, tolreached, reverse)
 }

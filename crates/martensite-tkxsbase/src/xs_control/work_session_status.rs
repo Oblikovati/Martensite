@@ -4,7 +4,7 @@ use super::XSControlWorkSession;
 use super::work_session::{live_reader, live_writer};
 use crate::interface::InterfaceModelEntities;
 use crate::transfer::{TransferBinder, TransferFinderProcess, TransferTransientProcess};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions};
 use std::io::Write;
 
 /// The index of an item and of its root: `num` > 0 an item, `num` < 0 a root (`None`
@@ -29,7 +29,7 @@ fn item_header(kind: &str, ne: i32, max: i32, nr: i32) -> String {
 
 /// The name of the type of an object, `StandardNullObject` for null (a native null
 /// dereference).
-fn type_name(obj: &Handle<StandardTransient>) -> Result<&'static str, Failure> {
+fn type_name(obj: &Handle<dyn Transient>) -> Result<&'static str, Failure> {
     obj.dynamic_type().map(|t| t.name()).ok_or_else(|| {
         exceptions::null_object("XSControlWorkSession::PrintTransferStatus: null item")
     })
@@ -126,7 +126,7 @@ impl XSControlWorkSession {
     /// The transient result of a writing, with its entity in the model of the session.
     fn print_write_result(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         s: &mut dyn Write,
     ) -> Result<(), Failure> {
         if ent.is_null() {

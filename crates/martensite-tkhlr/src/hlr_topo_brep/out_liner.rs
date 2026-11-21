@@ -23,12 +23,11 @@ use std::sync::RwLockWriteGuard;
 /// assert!(outliner.original_shape().is_null());
 /// ```
 pub struct OutLiner {
-    base: StandardTransient,
     original_shape: SharedState<Shape>,
     out_lined_shape: SharedState<Shape>,
     ds: SharedState<Data>,
 }
-impl_transient!(OutLiner, "HLRTopoBRep_OutLiner", StandardTransient, base);
+impl_transient!(OutLiner, "HLRTopoBRep_OutLiner", StandardTransient);
 
 impl Default for OutLiner {
     fn default() -> Self {
@@ -48,7 +47,6 @@ impl OutLiner {
     /// HLRTopoBRep_OutLiner(OriS, OutS); `OutLiner::with_shapes(&shape, &outlined)`.
     pub fn with_shapes(ori_s: &Shape, out_s: &Shape) -> Self {
         Self {
-            base: StandardTransient::default(),
             original_shape: SharedState::new(ori_s.clone()),
             out_lined_shape: SharedState::new(out_s.clone()),
             ds: SharedState::new(Data::new()),

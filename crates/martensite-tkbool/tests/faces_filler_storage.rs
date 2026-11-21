@@ -1,4 +1,5 @@
 //! Face-pair storage boundaries and current-curve allocation are operation-local.
+use martensite_tkbool::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbool::{
     top_ope_brep::TopOpeBRepFacesFiller,
     top_ope_brep_ds::{
@@ -14,7 +15,7 @@ fn point(x: f64) -> TopOpeBRepDSPoint {
     TopOpeBRepDSPoint::new(Point3::new(x, 0.0, 0.0), 1.0e-7)
 }
 
-fn interference() -> Handle<TopOpeBRepDSInterference> {
+fn interference() -> Handle<dyn InterferenceRecord> {
     Handle::new(TopOpeBRepDSInterference::new(
         &TopOpeBRepDSTransition::default(),
         Kind::Curve,
@@ -22,6 +23,7 @@ fn interference() -> Handle<TopOpeBRepDSInterference> {
         Kind::Point,
         1,
     ))
+    .into_upcast()
 }
 
 #[test]

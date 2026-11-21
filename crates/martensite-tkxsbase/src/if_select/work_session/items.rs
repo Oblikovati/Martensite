@@ -1,16 +1,16 @@
 //! The items of the session: identified by number (ident), optionally named, each
 //! with an attribute (the item itself, its name, or null once removed).
-use super::{IFSelectWorkSession, WorkSessionState};
+use super::{IFSelectSession, WorkSessionState};
 use crate::c_text::atoi;
 use crate::if_select::IFSelectDispatch;
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 
 impl WorkSessionState {
     /// `theitems.FindIndex(item)`: the 1-based ident of a key, 0 when absent.
-    pub(crate) fn find_index(&self, item: &Handle<StandardTransient>) -> i32 {
+    pub(crate) fn find_index(&self, item: &Handle<dyn Transient>) -> i32 {
         self.theitems
             .iter()
             .position(|(key, _)| key == item)
@@ -18,11 +18,7 @@ impl WorkSessionState {
     }
     /// `theitems.Add(item, attr)`: the ident of the key, added with `attr` when absent
     /// (an existing attribute is kept).
-    fn add_item_entry(
-        &mut self,
-        item: &Handle<StandardTransient>,
-        attr: Handle<StandardTransient>,
-    ) -> i32 {
+    fn add_item_entry(&mut self, item: &Handle<dyn Transient>, attr: Handle<dyn Transient>) -> i32 {
         let id = self.find_index(item);
         if id > 0 {
             return id;
@@ -31,23 +27,23 @@ impl WorkSessionState {
         self.theitems.len() as i32
     }
     /// The attribute of the ident `id` (1-based, in range).
-    fn attribute_mut(&mut self, id: i32) -> &mut Handle<StandardTransient> {
+    fn attribute_mut(&mut self, id: i32) -> &mut Handle<dyn Transient> {
         &mut self.theitems[id as usize - 1].1
     }
 }
 
 /// The name as a transient attribute.
-fn name_attribute(name: &str) -> Handle<StandardTransient> {
-    Handle::new(HAsciiString::new(name)).cast()
+fn name_attribute(name: &str) -> Handle<dyn Transient> {
+    Handle::new(HAsciiString::new(name)).into_upcast()
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `MaxIdent`: the highest ident (the removed items count).
     pub fn max_ident(&self) -> i32 {
         self.state.read().theitems.len() as i32
     }
     /// `Item(id)`: null out of range or once removed.
-    pub fn item(&self, id: i32) -> Handle<StandardTransient> {
+    pub fn item(&self, id: i32) -> Handle<dyn Transient> {
         let st = self.state.read();
         let Some((key, attr)) = usize::try_from(id - 1)
             .ok()
@@ -62,7 +58,7 @@ impl IFSelectWorkSession {
         }
     }
     /// `ItemIdent(item)`: 0 when unknown or removed.
-    pub fn item_ident(&self, item: &Handle<StandardTransient>) -> i32 {
+    pub fn item_ident(&self, item: &Handle<dyn Transient>) -> i32 {
         if item.is_null() {
             return 0;
         }
@@ -76,7 +72,7 @@ impl IFSelectWorkSession {
     }
     /// `NamedItem(name)`: the item of a name, or of an ident given as "#nnn"; null when
     /// unknown.
-    pub fn named_item(&self, name: &str) -> Handle<StandardTransient> {
+    pub fn named_item(&self, name: &str) -> Handle<dyn Transient> {
         if name.is_empty() {
             return Handle::default();
         }
@@ -91,7 +87,7 @@ impl IFSelectWorkSession {
             .unwrap_or_default()
     }
     /// `NamedItem(name)` for a name as a handle (null for a null name).
-    pub fn named_item_h(&self, name: &Handle<HAsciiString>) -> Handle<StandardTransient> {
+    pub fn named_item_h(&self, name: &Handle<HAsciiString>) -> Handle<dyn Transient> {
         match name.get() {
             Some(n) => self.named_item(&String::from_utf8_lossy(n.string().as_bytes())),
             None => Handle::default(),
@@ -114,7 +110,7 @@ impl IFSelectWorkSession {
         item.map_or(0, |i| self.item_ident(&i))
     }
     /// The attribute of an item, null when unknown.
-    fn attribute(&self, item: &Handle<StandardTransient>) -> Handle<StandardTransient> {
+    fn attribute(&self, item: &Handle<dyn Transient>) -> Handle<dyn Transient> {
         let st = self.state.read();
         let id = st.find_index(item);
         if id == 0 {
@@ -124,11 +120,11 @@ impl IFSelectWorkSession {
         }
     }
     /// `HasName(item)`: true when its attribute is a name.
-    pub fn has_name(&self, item: &Handle<StandardTransient>) -> bool {
+    pub fn has_name(&self, item: &Handle<dyn Transient>) -> bool {
         item.is_some() && self.attribute(item).cast::<HAsciiString>().is_some()
     }
     /// `Name(item)`: its name, null when unnamed or unknown.
-    pub fn name(&self, item: &Handle<StandardTransient>) -> Handle<HAsciiString> {
+    pub fn name(&self, item: &Handle<dyn Transient>) -> Handle<HAsciiString> {
         if item.is_null() {
             return Handle::default();
         }
@@ -136,7 +132,7 @@ impl IFSelectWorkSession {
     }
     /// `AddItem(item, active = true)`: its ident (the existing one, revived when it was
     /// removed); a dispatch is activated in the share-out when `active`.
-    pub fn add_item(&self, item: &Handle<StandardTransient>, active: bool) -> Result<i32, Failure> {
+    pub fn add_item(&self, item: &Handle<dyn Transient>, active: bool) -> Result<i32, Failure> {
         if item.is_null() {
             return Ok(0);
         }
@@ -163,7 +159,7 @@ impl IFSelectWorkSession {
     pub fn add_named_item(
         &self,
         name: &str,
-        item: &Handle<StandardTransient>,
+        item: &Handle<dyn Transient>,
         active: bool,
     ) -> Result<i32, Failure> {
         if item.is_null() || name.starts_with('#') || name.starts_with('!') {
@@ -198,11 +194,7 @@ impl IFSelectWorkSession {
     /// `SetActive(item, mode)`: a dispatch added to (true) or removed from (false, not
     /// yet run, its file root cleared) the share-out; false for other items or no
     /// change. `StandardNullObject` for a null item (a native null dereference).
-    pub fn set_active(
-        &self,
-        item: &Handle<StandardTransient>,
-        mode: bool,
-    ) -> Result<bool, Failure> {
+    pub fn set_active(&self, item: &Handle<dyn Transient>, mode: bool) -> Result<bool, Failure> {
         if item.is_null() {
             return Err(exceptions::null_object(
                 "IFSelectWorkSession::SetActive: null item",
@@ -255,7 +247,7 @@ impl IFSelectWorkSession {
     }
     /// `RemoveItem(item)`: removed from the share-out and from the names; its ident stays
     /// with a null attribute. False when unknown or already removed.
-    pub fn remove_item(&self, item: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn remove_item(&self, item: &Handle<dyn Transient>) -> Result<bool, Failure> {
         if item.is_null() {
             return Ok(false);
         }

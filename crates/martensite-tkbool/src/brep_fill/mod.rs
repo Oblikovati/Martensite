@@ -33,7 +33,7 @@ pub use filling::{
 pub use generator::{BRepFillGenerator, GeneratedFaces};
 pub use location_law::{
     BRepFillACRLaw, BRepFillDraftLaw, BRepFillEdge3DLaw, BRepFillEdgeOnSurfLaw,
-    BRepFillLocationLaw, BRepFillLocationLawBase,
+    BRepFillLocationLaw, BRepFillLocationLawBase, Edge3dLocationLaw,
 };
 pub use multi_line::{BRepFillMultiLine, MultiLineCurves};
 pub use offset_ancestors::BRepFillOffsetAncestors;

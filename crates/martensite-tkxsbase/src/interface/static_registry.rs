@@ -53,7 +53,7 @@ impl InterfaceStatic {
         } else {
             InterfaceStatic::new(family, name, kind, init)?
         };
-        MoniToolTypedValue::stats().bind(AsciiString::new(name), Handle::new(item).cast());
+        MoniToolTypedValue::stats().bind(AsciiString::new(name), Handle::new(item).into_upcast());
         Ok(true)
     }
     /// `Init(family, name, type, init = "")` with a type letter: 'e', 'i', 'o', 'p', 'r',

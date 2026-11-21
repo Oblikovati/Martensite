@@ -1,7 +1,8 @@
 //! `InterfaceStatic`: a typed value recorded by name in the process-wide map of static
 //! values (`MoniToolTypedValue::Stats`), with its family, a wild-card and an update
 //! status. The static functions on the map are in `static_registry`.
-use super::{InterfaceParamType, InterfaceTypedValue};
+use super::{InterfaceParamType, InterfaceTypedValue, InterfaceTypedValueOps};
+use crate::moni_tool::{MoniToolTypedValueOps, MoniToolValue};
 use martensite_tkernel::{
     impl_transient,
     standard::{Failure, Handle, SharedState},
@@ -20,8 +21,7 @@ struct StaticState {
     theupdate: bool,
 }
 
-/// `InterfaceStatic`: embeds its `InterfaceTypedValue` (registered as its RTTI parent)
-/// and dereferences to it.
+/// A process-wide named parameter with its family, wildcard and update status.
 ///
 /// ```
 /// use martensite_tkxsbase::interface::{InterfaceParamType, InterfaceStatic};
@@ -30,21 +30,37 @@ struct StaticState {
 /// assert_eq!(value.real_value(), 0.5);
 /// ```
 pub struct InterfaceStatic {
-    base: InterfaceTypedValue,
+    value: MoniToolValue,
     state: SharedState<StaticState>,
 }
 impl_transient!(
     InterfaceStatic,
     "InterfaceStatic",
-    InterfaceTypedValue,
-    base
+    dyn InterfaceTypedValueOps,
+    interfaces: [dyn MoniToolTypedValueOps, dyn InterfaceTypedValueOps]
 );
 
 impl Deref for InterfaceStatic {
-    type Target = InterfaceTypedValue;
-    fn deref(&self) -> &InterfaceTypedValue {
-        &self.base
+    type Target = MoniToolValue;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
     }
+}
+
+impl MoniToolTypedValueOps for InterfaceStatic {}
+impl InterfaceTypedValueOps for InterfaceStatic {}
+
+fn parameter_value(
+    name: &str,
+    kind: InterfaceParamType,
+    initial: &str,
+) -> Result<MoniToolValue, Failure> {
+    MoniToolValue::new(
+        name,
+        InterfaceTypedValue::param_type_to_value_type(kind),
+        initial,
+    )
 }
 
 impl InterfaceStatic {
@@ -55,19 +71,13 @@ impl InterfaceStatic {
         kind: InterfaceParamType,
         init: &str,
     ) -> Result<Self, Failure> {
-        Ok(Self::with_base(
-            family,
-            InterfaceTypedValue::new(name, kind, init)?,
-        ))
+        Ok(Self::with_base(family, parameter_value(name, kind, init)?))
     }
     /// `InterfaceStatic(family, name, other)`: the specification of `other` (limits,
     /// unit, enumeration, object type) and its value. Native quirk kept: the interpret
     /// and satisfies functions and the label are not copied.
     pub fn from_other(family: &str, name: &str, other: &InterfaceStatic) -> Result<Self, Failure> {
-        let created = Self::with_base(
-            family,
-            InterfaceTypedValue::new(name, other.param_type(), "")?,
-        );
+        let created = Self::with_base(family, parameter_value(name, other.param_type(), "")?);
         created.copy_specification(other)?;
         if other.is_set_value() {
             let text = String::from_utf8_lossy(other.c_string_value().as_bytes()).into_owned();
@@ -75,9 +85,9 @@ impl InterfaceStatic {
         }
         Ok(created)
     }
-    fn with_base(family: &str, base: InterfaceTypedValue) -> Self {
+    fn with_base(family: &str, value: MoniToolValue) -> Self {
         Self {
-            base,
+            value,
             state: SharedState::new(StaticState {
                 thefamily: AsciiString::new(family),
                 thewild: Handle::default(),
@@ -104,7 +114,7 @@ impl InterfaceStatic {
                 self.set_unit_def(&String::from_utf8_lossy(other.unit_def().as_bytes()));
             }
             InterfaceParamType::ParamEnum => self.copy_enumeration(other)?,
-            InterfaceParamType::ParamIdent => self.set_object_type(&other.object_type())?,
+            InterfaceParamType::ParamIdent => self.set_object_type(Some(other.object_type()))?,
             _ => {}
         }
         Ok(())
@@ -118,6 +128,11 @@ impl InterfaceStatic {
         }
         Ok(())
     }
+    /// Read the exchange parameter type, e.g. `value.param_type()`.
+    pub fn param_type(&self) -> InterfaceParamType {
+        InterfaceTypedValueOps::param_type(self)
+    }
+
     /// `PrintStatic(S)`: name, family, the typed value print and the wild-card. Native
     /// quirks kept: the value is not printed after "Value : ", and the satisfies line of
     /// the static's own (never set) function is not printed.
@@ -194,11 +209,12 @@ mod tests {
             (true, -1)
         );
         let object = InterfaceStatic::new("F", "o", InterfaceParamType::ParamIdent, "").unwrap();
-        assert!(
+        assert_eq!(
             InterfaceStatic::from_other("F", "o2", &object)
                 .unwrap()
                 .object_type()
-                .is_some()
+                .name(),
+            "Standard_Transient"
         );
     }
 
@@ -225,6 +241,8 @@ mod tests {
             "{text}"
         );
         assert!(value.is_kind(MoniToolTypedValue::static_type()));
-        assert!(value.cast::<InterfaceTypedValue>().is_some());
+        let view = value.view::<dyn InterfaceTypedValueOps>();
+        assert_eq!(view.object_address(), value.object_address());
+        assert_eq!(view.get().unwrap().param_type(), value.param_type());
     }
 }

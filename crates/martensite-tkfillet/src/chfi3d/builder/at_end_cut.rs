@@ -6,7 +6,7 @@ use super::corner_tools::{extend_surface, inters_update_on_same};
 use super::one_corner::{pcurve_of, value_2d};
 use crate::chfi_ds::lock;
 use martensite_tkbool::top_ope_brep_ds::{
-    TopOpeBRepDSInterference, TopOpeBRepDSPoint, TopOpeBRepDSSurface,
+    InterferenceRecord, TopOpeBRepDSPoint, TopOpeBRepDSSurface,
 };
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topexp;
@@ -35,9 +35,9 @@ pub(super) struct CutLoop {
     pub indcurve: [i32; NN],
     pub indpoint1: i32,
     pub indpoint2: i32,
-    pub interfedge: Vec<Handle<TopOpeBRepDSInterference>>,
-    pub interf_pc: Vec<Handle<TopOpeBRepDSInterference>>,
-    pub interf_ps: Vec<Handle<TopOpeBRepDSInterference>>,
+    pub interfedge: Vec<Handle<dyn InterferenceRecord>>,
+    pub interf_pc: Vec<Handle<dyn InterferenceRecord>>,
+    pub interf_ps: Vec<Handle<dyn InterferenceRecord>>,
     pub paredge1: f64,
     pub paredge2: f64,
     pub tolex: f64,
@@ -155,7 +155,7 @@ impl ChFi3dBuilder {
             let c3df = self.ds.curve(ae.fi[0].line_index()).curve().clone();
             let mut ufi = ae.fi[1].parameter(ae.isfirst);
             let (hgs, hbs): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-                (ae.hgs.clone().cast(), ae.hbs.clone().cast());
+                (ae.hgs.upcast(), ae.hbs.upcast());
             let ok = {
                 let mut g = lock(&ae.fd);
                 let (mut fi, mut cp) = (g.interference(1).clone(), g.vertex(ae.isfirst, 1).clone());
@@ -279,9 +279,9 @@ impl ChFi3dBuilder {
         if lock(&ae.stripe).is_in_ds(!ae.isfirst) != 0 {
             return Ok(());
         }
-        let gs1: Handle<dyn GeomSurface> = s1.clone().cast();
+        let gs1: Handle<dyn GeomSurface> = s1.upcast();
         ae.hgs.load(&gs1)?;
-        let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.clone().cast();
+        let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.upcast();
         cl.inters.perform(hc, &hgs)?;
         if !cl.inters.is_done() || cl.inters.nb_points()? == 0 {
             return Ok(());
@@ -349,8 +349,8 @@ impl ChFi3dBuilder {
         };
         let inter_ss = GeomIntIntSS::with_surfaces(&cl.sfacemoins1, &cl.sface, 1.0e-7, approx)?;
         if inter_ss.is_done() {
-            let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.clone().cast();
-            let hca: Handle<dyn Adaptor3dCurve> = hc.clone().cast();
+            let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.upcast();
+            let hca: Handle<dyn Adaptor3dCurve> = hc.upcast();
             let mut trouve = false;
             let mut i = 1;
             while i <= inter_ss.nb_lines() && !trouve {
@@ -380,8 +380,8 @@ impl ChFi3dBuilder {
     ) -> Result<bool, Failure> {
         let e2 = ae.edges[nb].clone();
         let (c, hc) = Self::edge_curve(&e2)?;
-        let hca: Handle<dyn Adaptor3dCurve> = hc.clone().cast();
-        let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.clone().cast();
+        let hca: Handle<dyn Adaptor3dCurve> = hc.upcast();
+        let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.upcast();
         cl.inters.perform(&hca, &hgs)?;
         if cl.prolface[NN] == 0 && (!cl.inters.is_done() || cl.inters.nb_points()? == 0) {
             self.extend_fillet(ae, cl, &hca)?;

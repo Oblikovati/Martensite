@@ -1,9 +1,5 @@
 //! A named adaptor records deterministic mathematical evaluation and injected failure.
-use martensite_tkernel::{
-    impl_transient,
-    ncollection::Array1,
-    standard::{Failure, StandardTransient},
-};
+use martensite_tkernel::{impl_transient, ncollection::Array1, standard::Failure};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::{
     geom_abs::{CurveType, Shape},
@@ -11,15 +7,18 @@ use martensite_tkmath::{
 };
 use std::sync::Mutex;
 pub struct TracingSamplerCurve {
-    transient: StandardTransient,
     parameters: Mutex<Vec<f64>>,
     blocked: Option<f64>,
 }
-impl_transient!(TracingSamplerCurve, "TracingSamplerCurve", dyn Adaptor3dCurve, transient, interfaces: [dyn Adaptor3dCurve]);
+impl_transient!(
+    TracingSamplerCurve,
+    "TracingSamplerCurve",
+    dyn Adaptor3dCurve,
+    interfaces: [dyn Adaptor3dCurve]
+);
 impl TracingSamplerCurve {
     pub fn new(blocked: Option<f64>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             parameters: Mutex::new(Vec::new()),
             blocked,
         }

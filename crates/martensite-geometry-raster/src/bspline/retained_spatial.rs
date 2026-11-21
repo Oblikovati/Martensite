@@ -28,7 +28,7 @@ impl SpatialSplineDrawable {
     ) -> Self {
         Self {
             curve: SpatialCurveDrawable::with_look(
-                curve.cast::<dyn GeomCurve>(),
+                curve.into_upcast::<dyn GeomCurve>(),
                 CurveLook::new(look.curve_color),
                 settings,
             ),
@@ -49,7 +49,7 @@ impl SpatialSplineDrawable {
         &self.knots
     }
     fn bspline(&self) -> Handle<GeomBSplineCurve> {
-        self.curve.curve().cast::<GeomBSplineCurve>()
+        self.curve.curve().into_downcast::<GeomBSplineCurve>()
     }
     fn rendering(&self) -> SplineRendering<'_> {
         SplineRendering::new(

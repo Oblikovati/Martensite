@@ -8,7 +8,7 @@ use crate::interface::{
 use martensite_tkernel::{
     impl_transient,
     message::Message,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::fmt::Write as _;
@@ -29,10 +29,9 @@ struct TransformState {
 /// assert_eq!(trf.label().as_bytes(), b"Standard Copy (no Modifier)");
 /// ```
 pub struct IFSelectTransformStandard {
-    transient: StandardTransient,
     state: SharedState<TransformState>,
 }
-impl_transient!(IFSelectTransformStandard, "IFSelectTransformStandard", dyn IFSelectTransformer, transient, interfaces: [dyn IFSelectTransformer]);
+impl_transient!(IFSelectTransformStandard, "IFSelectTransformStandard", dyn IFSelectTransformer, interfaces: [dyn IFSelectTransformer]);
 
 impl Default for IFSelectTransformStandard {
     fn default() -> Self {
@@ -57,7 +56,6 @@ impl IFSelectTransformStandard {
             themap: Handle::default(),
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -264,11 +262,7 @@ impl IFSelectTransformer for IFSelectTransformStandard {
         self.apply_modifiers(g, protocol, &mut tc, checks, newmod)
     }
     /// `Updated(entfrom, entto)`: the image in the copy map of the last run.
-    fn updated(
-        &self,
-        entfrom: &Handle<StandardTransient>,
-        entto: &mut Handle<StandardTransient>,
-    ) -> bool {
+    fn updated(&self, entfrom: &Handle<dyn Transient>, entto: &mut Handle<dyn Transient>) -> bool {
         let map = self.state.read().themap.clone();
         map.get()
             .is_some_and(|m| m.search(entfrom, entto).unwrap_or(false))
