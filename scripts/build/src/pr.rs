@@ -186,7 +186,6 @@ fn run_package_checks(
     })
 }
 
-/// Runs both file linters before failing, so one run shows every problem.
 fn lint_changed_files(
     context: &BuildContext<'_>,
     merge_base: &str,
@@ -196,6 +195,17 @@ fn lint_changed_files(
     reporter.step("Check toolkit unsafe inventory", || {
         check_unsafe_inventory(context.runner, context.root(), changed)
     })?;
+    lint_touched_text(context, merge_base, changed)
+}
+
+/// Runs whitespace and formatting checks together.
+/// Example: `lint_touched_text(context, merge_base, changed)?`.
+pub(crate) fn lint_touched_text(
+    context: &BuildContext<'_>,
+    merge_base: &str,
+    changed: &[ChangedFile],
+) -> BuildResult<()> {
+    let reporter = &context.reporter;
     let whitespace = reporter.step("Check whitespace in changed files", || {
         check_whitespace(&context.git, merge_base, changed)
     });

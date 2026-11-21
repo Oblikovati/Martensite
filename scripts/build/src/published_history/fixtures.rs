@@ -163,6 +163,7 @@ pub(crate) fn package(name: &str, version: &str) -> crate::workspace::WorkspaceP
         version: Version::parse(version).unwrap(),
         dir: format!("crates/{name}"),
         path_dependencies: Vec::new(),
+        library_path_dependencies: Vec::new(),
     }
 }
 

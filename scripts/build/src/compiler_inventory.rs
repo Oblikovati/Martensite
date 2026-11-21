@@ -1,8 +1,10 @@
 //! Expanded unsafe diagnostics are collected separately from acceptance lints (#81).
 pub(crate) mod baseline;
+mod migration;
 mod ownership;
 mod parser;
 mod provenance;
+pub(crate) use migration::capture_migration;
 
 use std::path::Path;
 
@@ -23,7 +25,8 @@ pub fn capture_inventory(
         BuildTarget::Triple(triple) => triple.clone(),
     };
     let spec = inventory_command(root, &triple);
-    let diagnostics = collect_diagnostics(runner, root, &spec)?;
+    let directory = Path::new("target/unsafe-inventory");
+    let diagnostics = collect_diagnostics(runner, root, &spec, directory)?;
     let provenance = provenance::capture(runner, root, &spec)?;
     write_report(root, &triple, &diagnostics, &provenance)?;
     baseline::verify(
@@ -38,15 +41,16 @@ fn collect_diagnostics(
     runner: &dyn CommandRunner,
     root: &Path,
     spec: &CommandSpec,
+    directory: &Path,
 ) -> BuildResult<ownership::ClassifiedDiagnostics> {
     // Cargo does not reliably replay cached dependency warnings (#81).
-    runner.run(&CommandSpec::new("cargo", root).args([
-        "clean",
-        "--target-dir",
-        "target/unsafe-inventory/build",
-    ]))?;
+    runner.run(
+        &CommandSpec::new("cargo", root)
+            .args(["clean", "--target-dir"])
+            .arg(directory.join("build").to_string_lossy()),
+    )?;
     let output = runner.capture_output(spec)?;
-    preserve_compiler_output(root, &output)?;
+    preserve_compiler_output(&root.join(directory), &output)?;
     require_compiler_success(spec, &output)?;
     let stdout =
         std::str::from_utf8(&output.stdout).map_err(|error| output_error(error.to_string()))?;
@@ -56,12 +60,16 @@ fn collect_diagnostics(
 
 // Prevent skipped PR captures from publishing another revision's evidence (#411).
 pub(crate) fn invalidate_previous_evidence(root: &Path) -> BuildResult<()> {
+    invalidate_evidence(&root.join("target/unsafe-inventory"))
+}
+
+fn invalidate_evidence(directory: &Path) -> BuildResult<()> {
     for name in [
         "latest.json",
         "compiler.stdout.jsonl",
         "compiler.stderr.txt",
     ] {
-        let path = root.join("target/unsafe-inventory").join(name);
+        let path = directory.join(name);
         match std::fs::remove_file(&path) {
             Ok(()) => {}
             Err(cause) if cause.kind() == std::io::ErrorKind::NotFound => {}
@@ -71,9 +79,8 @@ pub(crate) fn invalidate_previous_evidence(root: &Path) -> BuildResult<()> {
     Ok(())
 }
 
-fn preserve_compiler_output(root: &Path, output: &CommandOutput) -> BuildResult<()> {
-    let directory = root.join("target/unsafe-inventory");
-    std::fs::create_dir_all(&directory).map_err(|cause| io_error(&directory, cause))?;
+fn preserve_compiler_output(directory: &Path, output: &CommandOutput) -> BuildResult<()> {
+    std::fs::create_dir_all(directory).map_err(|cause| io_error(directory, cause))?;
     for (name, bytes) in [
         ("compiler.stdout.jsonl", &output.stdout),
         ("compiler.stderr.txt", &output.stderr),
@@ -98,19 +105,21 @@ fn require_compiler_success(spec: &CommandSpec, output: &CommandOutput) -> Build
 }
 
 fn inventory_command(root: &Path, triple: &str) -> CommandSpec {
-    CommandSpec::new("cargo", root)
-        .args([
-            "check",
-            "--locked",
-            "--workspace",
-            "--all-targets",
-            "--target",
-            triple,
-            "--message-format=json",
-            "--target-dir",
-            "target/unsafe-inventory/build",
-        ])
-        .environment("RUSTFLAGS", Some("--force-warn unsafe_code"))
+    inventory_environment(CommandSpec::new("cargo", root).args([
+        "check",
+        "--locked",
+        "--workspace",
+        "--all-targets",
+        "--target",
+        triple,
+        "--message-format=json",
+        "--target-dir",
+        "target/unsafe-inventory/build",
+    ]))
+}
+
+fn inventory_environment(spec: CommandSpec) -> CommandSpec {
+    spec.environment("RUSTFLAGS", Some("--force-warn unsafe_code"))
         .environment("CARGO_ENCODED_RUSTFLAGS", None)
         // A build cache replays a fraction of the diagnostics this report counts. Empty values
         // also override a wrapper set in a Cargo configuration file.

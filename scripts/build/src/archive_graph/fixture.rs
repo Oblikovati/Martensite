@@ -103,6 +103,7 @@ impl HistoricalAssetFixture {
                 version: semver::Version::parse(version).unwrap(),
                 dir: format!("crates/{name}"),
                 path_dependencies: Vec::new(),
+                library_path_dependencies: Vec::new(),
             })
             .collect(),
         }

@@ -1,6 +1,7 @@
 # Rust-native object model
 
-Status: planned. Decided by the maintainer on 2026-11-21. Tracking issue: #592.
+Status: foundation migration in progress. Decided by the maintainer on 2026-11-21.
+Tracking issue: #592.
 
 Martensite's object model copies C++: classes inherit by embedding their parent struct
 (`parent: StandardTransient`), abstract classes are traits, and `Handle<T>` stores a
@@ -128,13 +129,15 @@ dependency level, from `cargo metadata`:
 8. `tktopalgo`
 9. `tkhlr`, `tkshhealing`, `tkprim`, `tkhelix`
 10. `tkmesh`, `tkbo`, `topology-test-support`, `tkxsbase`
-11. `geometry-raster`, `tkbool`, `tkcaf`, `tkv3d`, `tkxmesh`
+11. `geometry-raster`, `tksketch`, `tkbool`, `tkcaf`, `tkv3d`, `tkxmesh`
 12. `boolean-cases`, `tkvcaf`, `tkfeat`, `tkfillet`, `tkmeshvs`
 13. `tkxcaf`, `tkoffset`
 14. `tkdeiges`, `tkrwmesh`, `tkdestep`, `tkdestl`
 15. `tkdeobj`, `tkdeply`
 
-`martensite-build` (the xtask driver) has no object model.
+`martensite-build` (the xtask driver) has no object model. The release candidate
+added `tksketch` after this migration was planned. Its normal dependencies
+include `tkbo`, and `tkv3d` uses it in tests.
 
 ## Procedure per crate
 
@@ -143,15 +146,65 @@ dependency level, from `cargo metadata`:
 2. Keep observable behavior: output, traversal order (`tests/map_traversal_order.rs`), error
    types and messages. When a ported behavior looks like a bug, check the OCCT source before
    changing it (maintainer instruction).
-3. Build, run Clippy and test the crate and every migrated crate it reaches; run the
-   `occt-parity` harness after the `tkernel` step and after any step that touches `tkernel`.
+3. Build and run Clippy on the crate. Run affected migrated test suites once
+   their workspace dev-dependencies have also migrated. Cargo resolves those
+   dependencies for unit tests as well as integration tests. At the later
+   dependency's step, run any newly eligible suite. Run `occt-parity` after the
+   `tkernel` step and after any step that touches `tkernel`.
 4. Commit in small steps; open one PR per crate into `feature/rust-object-model`.
 5. Report the measured effect to the maintainer: the parity table for `tkernel` steps, and
    for geometry toolkits a release timing of a representative workload when one exists.
 
-The usual PR gate (`cargo xtask pr`) builds every dependent of `tkernel`, so it fails until
-the last crate is migrated. Run targeted checks per step instead, and run the full gate
-before the branch merges into `release/next`.
+### Temporary gate on the feature branch
+
+Bootstrap the feature branch with the workflow, driver, migration order and
+`migration-step` at zero before opening the first crate PR. In each crate PR,
+advance that file by one. Use the event base commit to run the gate locally on Linux.
+
+```sh
+cargo xtask object-model-pr --base <feature-base-sha> --plan
+cargo xtask object-model-pr --base <feature-base-sha>
+```
+
+The hosted job builds the driver from that base and checks the candidate merge
+commit. It refuses changes outside the next crate and its migration records,
+including changes to the driver, workflow and compiler baselines. Review the
+exact base and merge commit and verify the gate files in the PR diff before
+merging. The branch uses the standard pull request event with read-only
+permissions.
+
+For `process-policy`, `test-support`, or `topology-test-support`, a PR can record
+the audit in `<crate-short-name>-verification.md` if the crate needs no source
+changes. Its suite runs at the same point in the migration order.
+
+For a crate with an unmigrated dev dependency, the job runs Clippy and builds
+the library. Once the last required dev dependency migrates, it builds all
+targets and runs that crate's deferred suite. This also makes the crate's
+ThreadSanitizer controls eligible.
+
+| Deferred full suites | First eligible after |
+| --- | --- |
+| `tkhlr`, `tkshhealing` | `tkprim` |
+| `tkbo` | `geometry-raster` |
+| `tkbool` | `boolean-cases` |
+| `tkcaf`, `tkfeat`, `vulkan` | `tkfillet` |
+| `tkdeiges`, `tkdestep` | `tkdestl` |
+
+The gate checks toolkit source counts against the event base per file and
+unsafe construct. Update the candidate's source baseline when counts fall. The
+gate requires that baseline to match the candidate tree. Run
+`cargo test -p martensite-build unsafe_inventory_matches_reviewed_baseline`
+to see the actual counts when they differ from the record. Scoped compiler
+diagnostics go in `target/unsafe-inventory/migration/`. Their group counts must
+stay within the event base's reviewed compiler inventory. A scoped capture can
+emit fewer warnings because the compiler checks fewer targets.
+
+Once the cursor reaches the end, branch from the completed feature tip and
+remove the temporary gate and cursor on that integration branch. Open the
+integration PR to `release/next` with all feature commits as ancestors. The
+ordinary PR gate will run the workspace compiler inventory, affected package
+suites, and sanitizer controls. Record any compiler inventory removals in
+the reviewed full baseline before merging.
 
 ## Risks and open points
 

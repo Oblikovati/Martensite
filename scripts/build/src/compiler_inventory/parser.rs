@@ -96,7 +96,7 @@ impl UnsafeDiagnostic {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-struct SummaryLocation {
+pub(super) struct SummaryLocation {
     package: String,
     target: String,
     target_kinds: Vec<String>,
@@ -107,8 +107,8 @@ struct SummaryLocation {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub(super) struct SummaryEntry {
-    location: SummaryLocation,
-    emitted_primary_spans: usize,
+    pub(super) location: SummaryLocation,
+    pub(super) emitted_primary_spans: usize,
 }
 
 fn expansion_depth(span: &CompilerSpan) -> usize {

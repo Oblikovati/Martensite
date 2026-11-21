@@ -17,6 +17,7 @@ mod fake_runner;
 mod git;
 mod inventory_impact;
 mod lint;
+mod object_model_pr;
 mod occt_parity;
 mod package_manifest;
 mod plan;
@@ -46,7 +47,6 @@ mod suite_weights;
 mod targets;
 mod thread_sanitizer;
 mod thread_sanitizer_selection;
-#[cfg(test)]
 mod unsafe_inventory;
 mod version;
 #[cfg(test)]

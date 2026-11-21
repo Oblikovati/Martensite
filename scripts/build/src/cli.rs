@@ -36,6 +36,8 @@ pub enum BuildCommand {
         #[arg(long, default_value = "origin/main")]
         base: String,
     },
+    /// Validate the next crate of the Rust-native object model migration (#592).
+    ObjectModelPr(crate::object_model_pr::ObjectModelPrArgs),
     /// Rehearse a release on this machine: semver gate, lint, tests, packages.
     Release {
         /// The version to release, e.g. `0.3.0` or `v0.3.0`.
@@ -188,6 +190,7 @@ pub fn execute(command: BuildCommand) -> BuildResult<()> {
 fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()> {
     match command {
         BuildCommand::Pr { base } => validate_pull_request(context, &base, &BuildTarget::Host),
+        BuildCommand::ObjectModelPr(args) => crate::object_model_pr::run(context, &args),
         BuildCommand::Release { version, target } => rehearse_release(context, &version, target),
         BuildCommand::OcctParity(args) => {
             crate::occt_parity::run_occt_parity(context, &args.request())
