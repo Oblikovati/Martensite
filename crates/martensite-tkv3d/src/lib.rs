@@ -15,6 +15,7 @@
 #[macro_use]
 mod test_window_forwarding;
 pub mod ais;
+mod inherited_native_type;
 pub mod prs3d;
 pub mod prs_mgr;
 pub mod select3d;

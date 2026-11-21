@@ -64,7 +64,7 @@ fn brep_checked_edge_sensitive(
     })
 }
 fn build_borrowed_brep_edge(
-    edge: &martensite_tkbrep::topods::Edge,
+    edge: &martensite_tkbrep::topods::EdgeView<'_>,
     references: EdgeSelectionReferences<'_>,
     sampling: EdgeSamplingCriteria,
     output: &mut dyn super::brep_edge_destination::BrepEdgeEntityDestination,
@@ -80,7 +80,7 @@ fn build_borrowed_brep_edge(
     brep_analytical_edge_sensitive(edge, &curve, references, sampling, output)
 }
 fn load_brep_edge_curve(
-    edge: &martensite_tkbrep::topods::Edge,
+    edge: &martensite_tkbrep::topods::EdgeView<'_>,
 ) -> Result<Option<BRepAdaptorCurve>, Failure> {
     match martensite_tkernel::standard::catch_native_failure(|| BRepAdaptorCurve::with_edge(edge)) {
         Ok(curve) => Ok(Some(curve)),
@@ -89,7 +89,7 @@ fn load_brep_edge_curve(
     }
 }
 fn brep_analytical_edge_sensitive(
-    edge: &martensite_tkbrep::topods::Edge,
+    edge: &martensite_tkbrep::topods::EdgeView<'_>,
     curve: &BRepAdaptorCurve,
     references: EdgeSelectionReferences<'_>,
     sampling: EdgeSamplingCriteria,
@@ -103,7 +103,7 @@ fn brep_analytical_edge_sensitive(
     Ok(())
 }
 fn brep_line_sensitive(
-    edge: &martensite_tkbrep::topods::Edge,
+    edge: &martensite_tkbrep::topods::EdgeView<'_>,
     curve: &BRepAdaptorCurve,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
 ) -> Result<Handle<dyn Select3DSensitiveEntity>, Failure> {

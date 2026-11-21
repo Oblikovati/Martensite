@@ -44,7 +44,7 @@ fn textured_concrete_virtual_source_retains_actual_pixmap_field() {
     source.set_texture_file_name(&"texture.png".into()).unwrap();
     assert!(retained.read().is_null());
     assert_eq!(
-        source.texture_file().read().unwrap().as_bytes(),
+        source.texture_file().as_bytes(),
         b"texture.png"
     );
 }
