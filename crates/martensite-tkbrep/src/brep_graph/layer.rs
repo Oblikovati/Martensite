@@ -4,9 +4,7 @@ use crate::brep_graph::{
     BRepGraph, ItemDomain, ItemId, NodeId, NodeKind, NodeTag, RefId, RefKind, RefTag, TypedId,
 };
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{
-    Failure, Guid, Handle, RuntimeTyped, StandardTransient, Transient,
-};
+use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeTyped, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -188,7 +186,7 @@ pub trait BRepGraphLayer: Transient {
         }
     }
 }
-impl_transient_interface!(dyn BRepGraphLayer, "BRepGraph_Layer", StandardTransient);
+impl_transient_interface!(dyn BRepGraphLayer, "BRepGraph_Layer", dyn Transient);
 
 /// A concrete layer class with a static type GUID (`T::GetID()`), which the registry's
 /// typed `Find<T>` and `Ensure<T>` read; `Ensure` creates it with `Default`.

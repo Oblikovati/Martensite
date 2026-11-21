@@ -5,7 +5,7 @@ use super::curve_representation::{
 use super::dump::{dump_base, dump_class_name, dump_handle};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::poly::Polygon3D;
 use martensite_tkmath::toploc::Location;
 use std::io;
@@ -20,18 +20,16 @@ use std::io;
 /// assert!(polygon.is_polygon3d() && polygon.polygon3d().unwrap().is_null());
 /// ```
 pub struct BRepPolygon3D {
-    transient: StandardTransient,
     representation: CurveRepresentationBase,
     polygon: SharedState<Handle<Polygon3D>>,
 }
-impl_transient!(BRepPolygon3D, "BRep_Polygon3D", dyn BRepCurveRepresentation, transient,
+impl_transient!(BRepPolygon3D, "BRep_Polygon3D", dyn BRepCurveRepresentation,
     interfaces: [dyn BRepCurveRepresentation]);
 
 impl BRepPolygon3D {
     /// `BRep_Polygon3D(P, L)`; `BRepPolygon3D::new(&polygon, &location)`.
     pub fn new(polygon: &Handle<Polygon3D>, location: &Location) -> Self {
         Self {
-            transient: StandardTransient::default(),
             representation: CurveRepresentationBase::new(location),
             polygon: SharedState::new(polygon.clone()),
         }
@@ -56,7 +54,7 @@ impl BRepCurveRepresentation for BRepPolygon3D {
     /// A new representation on the same polygon and location.
     fn copy(&self) -> Result<Handle<dyn BRepCurveRepresentation>, Failure> {
         let copy = Self::new(&self.polygon.read(), &self.location());
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_class_name(stream, "BRep_Polygon3D")?;

@@ -2,7 +2,7 @@
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::geom::{
     GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3, GeomGeometry, GeomLine,
@@ -20,7 +20,6 @@ use std::sync::{
 type BoundQuery = Arc<dyn Fn(&'static str) -> Result<f64, Failure> + Send + Sync>;
 
 pub struct RebindingSpaceCurve {
-    parent: StandardTransient,
     line: GeomLine,
     evaluations: Arc<AtomicUsize>,
     evaluator: Arc<dyn Fn(f64) -> Result<Point3, Failure> + Send + Sync>,
@@ -29,7 +28,7 @@ pub struct RebindingSpaceCurve {
     fallible_query: SharedState<Option<BoundQuery>>,
     dump_hook: SharedState<Option<Arc<dyn Fn() + Send + Sync>>>,
 }
-impl_transient!(RebindingSpaceCurve, "RebindingSpaceCurve", dyn GeomCurve, parent,
+impl_transient!(RebindingSpaceCurve, "RebindingSpaceCurve", dyn GeomCurve,
     interfaces: [dyn GeomCurve, dyn GeomGeometry]);
 
 impl RebindingSpaceCurve {
@@ -38,7 +37,6 @@ impl RebindingSpaceCurve {
         evaluator: Arc<dyn Fn(f64) -> Result<Point3, Failure> + Send + Sync>,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             line: GeomLine::new(martensite_tkmath::gp::Axis1::default()),
             evaluations,
             evaluator,

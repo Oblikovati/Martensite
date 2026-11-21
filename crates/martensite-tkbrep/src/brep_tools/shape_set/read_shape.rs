@@ -103,7 +103,7 @@ impl BRepToolsShapeSet {
                     return Ok(None);
                 }
                 let point = BRepPointOnCurve::new(parameter, &curve, &identity);
-                Ok(Some(Handle::new(point).into_cast()))
+                Ok(Some(Handle::new(point).into_upcast()))
             }
             2 => {
                 read_int(stream, &mut c);
@@ -113,7 +113,7 @@ impl BRepToolsShapeSet {
                     return Ok(None);
                 }
                 let point = BRepPointOnCurveOnSurface::new(parameter, &pcurve, &surface, &identity);
-                Ok(Some(Handle::new(point).into_cast()))
+                Ok(Some(Handle::new(point).into_upcast()))
             }
             3 => {
                 let parameter2 = get_real(stream);
@@ -123,7 +123,7 @@ impl BRepToolsShapeSet {
                     return Ok(None);
                 }
                 let point = BRepPointOnSurface::new(parameter, parameter2, &surface, &identity);
-                Ok(Some(Handle::new(point).into_cast()))
+                Ok(Some(Handle::new(point).into_upcast()))
             }
             _ => Ok(None),
         }

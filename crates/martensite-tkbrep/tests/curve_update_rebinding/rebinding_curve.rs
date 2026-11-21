@@ -2,7 +2,7 @@
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg2d::geom2d::{
     Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, Geom2dGeometry, Geom2dLine,
@@ -20,7 +20,6 @@ use std::sync::{
 type BoundQuery = Arc<dyn Fn(&'static str) -> Result<f64, Failure> + Send + Sync>;
 
 pub struct RebindingParameterCurve {
-    parent: StandardTransient,
     line: Geom2dLine,
     evaluations: Arc<AtomicUsize>,
     evaluator: Arc<dyn Fn(f64) -> Result<Point2, Failure> + Send + Sync>,
@@ -29,7 +28,7 @@ pub struct RebindingParameterCurve {
     fallible_query: SharedState<Option<BoundQuery>>,
     dump_hook: SharedState<Option<Arc<dyn Fn() + Send + Sync>>>,
 }
-impl_transient!(RebindingParameterCurve, "RebindingParameterCurve", dyn Geom2dCurve, parent,
+impl_transient!(RebindingParameterCurve, "RebindingParameterCurve", dyn Geom2dCurve,
     interfaces: [dyn Geom2dCurve, dyn Geom2dGeometry]);
 
 impl RebindingParameterCurve {
@@ -38,7 +37,6 @@ impl RebindingParameterCurve {
         evaluator: Arc<dyn Fn(f64) -> Result<Point2, Failure> + Send + Sync>,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             line: Geom2dLine::new(martensite_tkmath::gp::Axis2d::default()),
             evaluations,
             evaluator,

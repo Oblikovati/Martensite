@@ -5,12 +5,12 @@
 //! TShape of another class raises Standard_TypeMismatch.
 use super::errors::{null_object, tshape_mismatch};
 use super::{BRepTEdge, BRepTFace, BRepTVertex};
-use crate::topods::Shape;
+use crate::topods::ShapeView;
 use martensite_tkernel::standard::{Failure, RuntimeTyped, Transient, project_concrete};
 
 /// The TShape of `shape` as the BRep class `T`; `member` names the caller in errors.
 fn brep_tshape<'a, T: RuntimeTyped + 'static>(
-    shape: &'a Shape,
+    shape: &'a ShapeView<'_>,
     member: &str,
 ) -> Result<&'a T, Failure> {
     let tshape = shape
@@ -23,16 +23,19 @@ fn brep_tshape<'a, T: RuntimeTyped + 'static>(
 }
 
 /// The `BRep_TVertex` of a vertex; `vertex_tshape(&vertex, "BRep_Tool::Pnt")?`.
-pub fn vertex_tshape<'a>(shape: &'a Shape, member: &str) -> Result<&'a BRepTVertex, Failure> {
+pub fn vertex_tshape<'a>(
+    shape: &'a ShapeView<'_>,
+    member: &str,
+) -> Result<&'a BRepTVertex, Failure> {
     brep_tshape::<BRepTVertex>(shape, member)
 }
 
 /// The `BRep_TEdge` of an edge; `edge_tshape(&edge, "BRep_Tool::Tolerance")?`.
-pub fn edge_tshape<'a>(shape: &'a Shape, member: &str) -> Result<&'a BRepTEdge, Failure> {
+pub fn edge_tshape<'a>(shape: &'a ShapeView<'_>, member: &str) -> Result<&'a BRepTEdge, Failure> {
     brep_tshape::<BRepTEdge>(shape, member)
 }
 
 /// The `BRep_TFace` of a face; `face_tshape(&face, "BRep_Tool::Surface")?`.
-pub fn face_tshape<'a>(shape: &'a Shape, member: &str) -> Result<&'a BRepTFace, Failure> {
+pub fn face_tshape<'a>(shape: &'a ShapeView<'_>, member: &str) -> Result<&'a BRepTFace, Failure> {
     brep_tshape::<BRepTFace>(shape, member)
 }

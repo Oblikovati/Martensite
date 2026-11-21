@@ -4,7 +4,7 @@
 //! `GeomProjLib::ProjectOnPlane` (keeping its parametrization), then onto the plane
 //! parameters by `ProjLib_ProjectedCurve`.
 use super::BRepTool;
-use crate::topods::Edge;
+use crate::topods::EdgeView;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dTrimmedCurve};
@@ -22,10 +22,10 @@ use martensite_tkmath::toploc::Location;
 /// The plane of `surface`: the surface itself or the basis of a rectangular trimmed
 /// surface; null otherwise (the planar test of `CurveOnPlane` and `UVPoints`).
 pub(super) fn plane_of(surface: &Handle<dyn GeomSurface>) -> Handle<GeomPlane> {
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     match trimmed.get() {
-        Some(trimmed) => trimmed.basis_surface().cast::<GeomPlane>(),
-        None => surface.cast::<GeomPlane>(),
+        Some(trimmed) => trimmed.basis_surface().downcast::<GeomPlane>(),
+        None => surface.downcast::<GeomPlane>(),
     }
 }
 
@@ -40,7 +40,7 @@ fn is_valid_trim_range(curve: &Handle<dyn GeomCurve>, first: f64, last: f64) -> 
         return false;
     }
     let mut basis = curve.clone();
-    while let Some(trimmed) = basis.cast::<GeomTrimmedCurve>().get() {
+    while let Some(trimmed) = basis.downcast::<GeomTrimmedCurve>().get() {
         basis = trimmed.basis_curve();
     }
     let Some(basis) = basis.get() else {
@@ -64,7 +64,7 @@ struct CurveInPlaneFrame {
 /// The 3D curve of the edge in the plane's frame and its range, transformed (with the
 /// parameters mapped) when the relative location is not the identity.
 fn curve_in_plane_frame(
-    edge: &Edge,
+    edge: &EdgeView<'_>,
     location: &Location,
 ) -> Result<Option<CurveInPlaneFrame>, Failure> {
     let found = BRepTool::curve_with_location(edge)?;
@@ -102,7 +102,7 @@ impl BRepTool {
     /// curve, with the range `0, 0` in the first two cases and the edge range in the last.
     /// `let (pcurve, first, last) = BRepTool::curve_on_plane(&edge, &surface, &location)?;`.
     pub fn curve_on_plane(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<(Handle<dyn Geom2dCurve>, f64, f64), Failure> {
@@ -118,7 +118,7 @@ impl BRepTool {
             return Ok((Handle::default(), reported.0, reported.1));
         }
         let trimmed: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, false)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, false)?).into_upcast();
         let normal = plane_ref.position().direction();
         let projected = geom_proj_lib::project_on_plane(&trimmed, &plane, normal, true)?;
         let pcurve = pcurve_on_plane(&plane, &projected)?;
@@ -133,13 +133,15 @@ fn pcurve_on_plane(
     plane: &Handle<GeomPlane>,
     projected: &Handle<dyn GeomCurve>,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    let surface: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&plane.clone().cast())?).cast();
+    let surface: Handle<dyn Adaptor3dSurface> = Handle::new(GeomAdaptorSurface::with_surface(
+        &plane.clone().into_upcast(),
+    )?)
+    .cast();
     let curve: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_curve(projected)?).cast();
+        Handle::new(GeomAdaptorCurve::with_curve(projected)?).into_upcast();
     let projection = ProjectedCurve::with_curve(&surface, &curve)?;
     let pcurve = geom2d_adaptor::make_curve(&projection)?;
-    if let Some(trimmed) = pcurve.cast::<Geom2dTrimmedCurve>().get() {
+    if let Some(trimmed) = pcurve.downcast::<Geom2dTrimmedCurve>().get() {
         return Ok(trimmed.basis_curve());
     }
     Ok(pcurve)

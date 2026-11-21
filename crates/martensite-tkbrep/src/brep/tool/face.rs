@@ -1,7 +1,7 @@
 //! The face queries of `BRep_Tool`.
 use super::BRepTool;
 use crate::brep::access::face_tshape;
-use crate::topods::Face;
+use crate::topods::FaceView;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomSurface;
@@ -23,7 +23,7 @@ impl BRepTool {
     /// `Surface(F, L)`: the stored surface and the face location composed with the
     /// TFace location; `let (surface, location) = BRepTool::surface_with_location(&face)?;`.
     pub fn surface_with_location(
-        face: &Face,
+        face: &FaceView<'_>,
     ) -> Result<(Handle<dyn GeomSurface>, Location), Failure> {
         let tface = face_tshape(face, "BRep_Tool::Surface")?;
         let location = (face.location() * &tface.location())?;
@@ -32,7 +32,7 @@ impl BRepTool {
 
     /// `Surface(F)`: the surface, transformed into a copy when the composed location
     /// is not the identity; `BRepTool::surface(&face)?`.
-    pub fn surface(face: &Face) -> Result<Handle<dyn GeomSurface>, Failure> {
+    pub fn surface(face: &FaceView<'_>) -> Result<Handle<dyn GeomSurface>, Failure> {
         let tface = face_tshape(face, "BRep_Tool::Surface")?;
         let surface = tface.surface();
         let Some(stored) = surface.get() else {
@@ -51,7 +51,7 @@ impl BRepTool {
     /// face location (the TFace location is not composed);
     /// `BRepTool::triangulation(&face, mesh_purpose::NONE)?`.
     pub fn triangulation(
-        face: &Face,
+        face: &FaceView<'_>,
         purpose: MeshPurpose,
     ) -> Result<(Handle<Triangulation>, Location), Failure> {
         let tface = face_tshape(face, "BRep_Tool::Triangulation")?;
@@ -60,25 +60,27 @@ impl BRepTool {
 
     /// `Triangulations(F, L)`: every triangulation and the face location;
     /// `BRepTool::triangulations(&face)?`.
-    pub fn triangulations(face: &Face) -> Result<(Vec<Handle<Triangulation>>, Location), Failure> {
+    pub fn triangulations(
+        face: &FaceView<'_>,
+    ) -> Result<(Vec<Handle<Triangulation>>, Location), Failure> {
         let tface = face_tshape(face, "BRep_Tool::Triangulations")?;
         Ok((tface.triangulations(), face.location().clone()))
     }
 
     /// `Tolerance(F)`: the stored tolerance, at least `Precision::Confusion()`;
     /// `BRepTool::face_tolerance(&face)?`.
-    pub fn face_tolerance(face: &Face) -> Result<f64, Failure> {
+    pub fn face_tolerance(face: &FaceView<'_>) -> Result<f64, Failure> {
         let tface = face_tshape(face, "BRep_Tool::Tolerance")?;
         Ok(floored_tolerance(tface.tolerance()))
     }
 
     /// `NaturalRestriction(F)`; `BRepTool::natural_restriction(&face)?`.
-    pub fn natural_restriction(face: &Face) -> Result<bool, Failure> {
+    pub fn natural_restriction(face: &FaceView<'_>) -> Result<bool, Failure> {
         Ok(face_tshape(face, "BRep_Tool::NaturalRestriction")?.natural_restriction())
     }
 
     /// `IsGeometric(F)`: the face has a surface; `BRepTool::is_geometric_face(&face)?`.
-    pub fn is_geometric_face(face: &Face) -> Result<bool, Failure> {
+    pub fn is_geometric_face(face: &FaceView<'_>) -> Result<bool, Failure> {
         Ok(face_tshape(face, "BRep_Tool::IsGeometric")?
             .surface()
             .is_some())

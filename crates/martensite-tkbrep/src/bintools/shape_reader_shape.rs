@@ -74,7 +74,7 @@ impl BinShapeReader {
             1 => {
                 let curve = self.read_curve(input)?;
                 Ok((!curve.is_null()).then(|| {
-                    Handle::new(BRepPointOnCurve::new(parameter, &curve, &identity)).into_cast()
+                    Handle::new(BRepPointOnCurve::new(parameter, &curve, &identity)).into_upcast()
                 }))
             }
             2 => {

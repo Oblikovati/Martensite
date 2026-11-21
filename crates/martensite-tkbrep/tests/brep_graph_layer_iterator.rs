@@ -6,23 +6,21 @@ use martensite_tkbrep::brep_graph::copy_remap::CopyRemap;
 use martensite_tkbrep::brep_graph::layer::{AttachedGraph, BRepGraphLayer, LayerBase, as_layer};
 use martensite_tkbrep::brep_graph::layer_registry::LayerRegistry;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// Minimal concrete layer for testing the iterator.
 struct TestLayer {
-    transient: StandardTransient,
     base: LayerBase,
     id: Guid,
     name: AsciiString,
 }
-impl_transient!(TestLayer, "TestLayer", dyn BRepGraphLayer, transient,
+impl_transient!(TestLayer, "TestLayer", dyn BRepGraphLayer,
     interfaces: [dyn BRepGraphLayer]);
 
 impl TestLayer {
     fn new(id: Guid, name: &str) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: LayerBase::new(),
             id,
             name: AsciiString::new(name),

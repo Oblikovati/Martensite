@@ -17,7 +17,7 @@ fn owned_input_is_identical_between_two_processes() {
 }
 fn complete_snapshot() -> FaceInputSnapshot {
     let (face, fields) = face_fixture();
-    let surface = fields.surface().cast::<GeomSurfaceOfLinearExtrusion>();
+    let surface = fields.surface().downcast::<GeomSurfaceOfLinearExtrusion>();
     representations::append_owner(&face, representations::seam_edge(&surface).cast());
     let mut transform = martensite_tkmath::gp::Transform3::default();
     transform.set_translation(martensite_tkmath::gp::Vector3::new(3., -2., 5.));

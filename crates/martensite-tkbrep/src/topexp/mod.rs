@@ -12,7 +12,7 @@ pub use ancestors::{map_shapes_and_ancestors, map_shapes_and_unique_ancestors};
 pub use explorer::{Explorer, ExplorerShapeSlot};
 pub use vertices::{common_vertex, first_vertex, last_vertex, vertices, wire_vertices};
 
-use crate::topods::{Shape, ShapeIterator};
+use crate::topods::{ShapeIterator, ShapeView};
 use crate::toptools::{IndexedMapOfShape, MapOfShape};
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -32,7 +32,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 /// assert_eq!(map.extent(), 1);
 /// ```
 pub fn map_shapes_of_type(
-    shape: &Shape,
+    shape: &ShapeView<'_>,
     kind: ShapeEnum,
     map: &mut IndexedMapOfShape,
 ) -> Result<(), Failure> {
@@ -47,8 +47,13 @@ pub fn map_shapes_of_type(
 /// `MapShapes(S, M, cumOri, cumLoc)` into an indexed map: `shape` then, depth first,
 /// every sub-shape. Only the first level uses `cum_ori` and `cum_loc`: the recursion
 /// calls the native defaults (both true); `topexp::map_shapes(&shape, &mut map, true, true)`.
-pub fn map_shapes(shape: &Shape, map: &mut IndexedMapOfShape, cum_ori: bool, cum_loc: bool) {
-    map.add(shape.clone());
+pub fn map_shapes(
+    shape: &ShapeView<'_>,
+    map: &mut IndexedMapOfShape,
+    cum_ori: bool,
+    cum_loc: bool,
+) {
+    map.add(shape.to_shape());
     let mut iterator = ShapeIterator::new(shape, cum_ori, cum_loc);
     while let Ok(child) = iterator.value() {
         map_shapes(child, map, true, true);
@@ -58,8 +63,13 @@ pub fn map_shapes(shape: &Shape, map: &mut IndexedMapOfShape, cum_ori: bool, cum
 
 /// `MapShapes(S, M, cumOri, cumLoc)` into a plain map (iteration order follows the
 /// hash, hence the TShape addresses); `topexp::map_shapes_into_map(&shape, &mut map, true, true)`.
-pub fn map_shapes_into_map(shape: &Shape, map: &mut MapOfShape, cum_ori: bool, cum_loc: bool) {
-    map.add(shape.clone());
+pub fn map_shapes_into_map(
+    shape: &ShapeView<'_>,
+    map: &mut MapOfShape,
+    cum_ori: bool,
+    cum_loc: bool,
+) {
+    map.add(shape.to_shape());
     let mut iterator = ShapeIterator::new(shape, cum_ori, cum_loc);
     while let Ok(child) = iterator.value() {
         map_shapes_into_map(child, map, true, true);

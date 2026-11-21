@@ -1,5 +1,5 @@
 //! Martensite scoped face views preserve native read-only topology ownership.
-use super::{Face, Shape, edge_reference_scope::with_typed_shape_reference};
+use super::{Face, FaceView, ShapeView, edge_reference_scope::with_typed_shape_reference};
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
 impl Face {
@@ -11,14 +11,14 @@ impl Face {
     /// let escaped=Face::with_shape_reference(&shape,|face|Ok(face));
     /// ```
     pub fn with_shape_reference<R>(
-        shape: &Shape,
-        project: impl FnOnce(&Face) -> Result<R, Failure>,
+        shape: &ShapeView<'_>,
+        project: impl FnOnce(&FaceView<'_>) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
         with_typed_shape_reference(
             shape,
             ShapeEnum::Face,
             "TopoDS::Face",
-            Face::unchecked,
+            FaceView::scoped,
             project,
         )
     }

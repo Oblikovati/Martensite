@@ -9,8 +9,8 @@ use super::shape_set_base::{BinShapeSetBase, put_point};
 use crate::brep::access::{edge_tshape, face_tshape, vertex_tshape};
 use crate::brep::update_curves::as_gcurve;
 use crate::brep::{
-    BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepCurveRepresentation, BRepPointRepresentation,
-    BRepTool,
+    BRepCurveOnClosedSurface, BRepCurveOnSurfaceSource, BRepCurveRepresentation,
+    BRepPointRepresentation, BRepTool,
 };
 use crate::topods::{Face, Shape, Vertex};
 use martensite_tkernel::standard::{Failure, Handle};
@@ -256,10 +256,10 @@ fn stored_uv_points(
     closed: bool,
 ) -> (martensite_tkmath::gp::Point2, martensite_tkmath::gp::Point2) {
     if closed {
-        let seam = representation.cast::<BRepCurveOnClosedSurface>();
-        return seam.get().map(|seam| seam.uv_points2()).unwrap_or_default();
+        let seam = representation.downcast_ref::<BRepCurveOnClosedSurface>();
+        return seam.map(|seam| seam.uv_points2()).unwrap_or_default();
     }
-    let pcurve = representation.cast::<BRepCurveOnSurface>();
+    let pcurve = representation.view::<dyn BRepCurveOnSurfaceSource>();
     pcurve
         .get()
         .map(|pcurve| pcurve.uv_points())

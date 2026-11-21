@@ -164,7 +164,7 @@ impl Modifier {
         });
         let mut other = BRepTool::curve_on_face(&current, &face)?.pcurve;
         if other.is_null() {
-            other = Handle::new(Geom2dLine::new(Axis2d::default())).cast();
+            other = Handle::new(Geom2dLine::new(Axis2d::default())).into_upcast();
         }
         let pair = if forward_first {
             (&other, curve2d)

@@ -8,7 +8,7 @@ use martensite_tkmath::{
 };
 #[test]
 fn reference_scope_preserves_topology_counts_and_all_shape_fields() {
-    let topology: Handle<dyn TShape> = Handle::new(TCompound::new()).cast();
+    let topology: Handle<dyn TShape> = Handle::new(TCompound::new()).into_upcast();
     let mut transform = Transform3::default();
     transform.set_translation(Vector3::new(2., 3., 4.));
     let placement = Location::new(transform);
@@ -17,7 +17,7 @@ fn reference_scope_preserves_topology_counts_and_all_shape_fields() {
         assert_eq!(shape.tshape().ref_count(), 1);
         assert!(shape.location().is_equal(&placement));
         assert_eq!(shape.orientation(), Orientation::Reversed);
-        let copied = shape.clone();
+        let copied = shape.to_shape();
         assert_eq!(topology.ref_count(), 2);
         assert!(copied.is_equal(shape));
         Ok(())
@@ -26,8 +26,25 @@ fn reference_scope_preserves_topology_counts_and_all_shape_fields() {
     assert_eq!(topology.ref_count(), 1);
 }
 #[test]
+fn explicit_value_copy_can_outlive_the_scope() {
+    let topology: Handle<dyn TShape> = Handle::new(TCompound::new()).into_upcast();
+    let saved = Shape::with_reference_parts(
+        &topology,
+        &Location::default(),
+        Orientation::Reversed,
+        |shape| Ok(shape.to_shape()),
+    )
+    .unwrap();
+    assert_eq!(topology.ref_count(), 2);
+    assert_eq!(saved.tshape().object_address(), topology.object_address());
+    assert_eq!(saved.orientation(), Orientation::Reversed);
+    drop(topology);
+    assert_eq!(saved.tshape().ref_count(), 1);
+}
+
+#[test]
 fn reference_scope_releases_observation_after_result_or_typed_failure() {
-    let topology: Handle<dyn TShape> = Handle::new(TCompound::new()).cast();
+    let topology: Handle<dyn TShape> = Handle::new(TCompound::new()).into_upcast();
     let failure = Failure::out_of_range("callback index=0; expected 1..=1");
     let returned = Shape::with_reference_parts(
         &topology,

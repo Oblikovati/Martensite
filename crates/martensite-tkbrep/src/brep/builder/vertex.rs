@@ -77,7 +77,7 @@ impl BRepBuilder {
     /// `MakeVertex(V)`: an undefined vertex; the inline native member makes no lock
     /// check; `builder.make_vertex(&mut vertex)`.
     pub fn make_vertex(&self, vertex: &mut Vertex) {
-        self.make_shape(vertex, &Handle::new(BRepTVertex::new()).into_cast());
+        self.make_shape(vertex, &Handle::new(BRepTVertex::new()).into_upcast());
     }
 
     /// `MakeVertex(V, P, Tol)`; `builder.make_vertex_at(&mut vertex, point, 1e-7)?`.

@@ -3,11 +3,12 @@ use super::curve_on_2_surfaces::BRepCurveOn2Surfaces;
 use super::curve_representation::BRepCurveRepresentation;
 use super::dump::{dump_base, dump_class_name, dump_field};
 use super::gcurve::BRepGCurve;
-use crate::topods::{self, TShape, TShapeBase, dump_tshape};
+use crate::topods::{TEdgeSource, TShape, TShapeBase, dump_tshape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::{self, DumpStream};
 use martensite_tkernel::standard::real::real_epsilon;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, SharedState};
+use martensite_tkg3d::top_abs::ShapeEnum;
 use std::io;
 
 /// `ParameterMask`, `RangeMask` and `DegeneratedMask` of `myFlags`.
@@ -43,10 +44,10 @@ impl TEdgeFields {
 /// assert!(edge.same_parameter() && edge.same_range() && !edge.degenerated());
 /// ```
 pub struct BRepTEdge {
-    parent: topods::TEdge,
+    tshape: TShapeBase,
     pub(crate) fields: SharedState<TEdgeFields>,
 }
-impl_transient!(BRepTEdge, "BRep_TEdge", topods::TEdge, parent, interfaces: [dyn TShape]);
+impl_transient!(BRepTEdge, "BRep_TEdge", dyn TEdgeSource, interfaces: [dyn TShape, dyn TEdgeSource]);
 
 impl BRepTEdge {
     /// `BRep_TEdge()`: no representation, SameParameter and SameRange set; `BRepTEdge::new()`.
@@ -59,7 +60,7 @@ impl BRepTEdge {
         fields.set_flag(PARAMETER_MASK, true);
         fields.set_flag(RANGE_MASK, true);
         Self {
-            parent: topods::TEdge::new(),
+            tshape: TShapeBase::new(ShapeEnum::Edge),
             fields: SharedState::new(fields),
         }
     }
@@ -129,9 +130,11 @@ fn is_copied_by_empty_copy(representation: &Handle<dyn BRepCurveRepresentation>)
         || representation.is_kind(BRepCurveOn2Surfaces::static_type())
 }
 
+impl TEdgeSource for BRepTEdge {}
+
 impl TShape for BRepTEdge {
     fn tshape_base(&self) -> &TShapeBase {
-        TShape::tshape_base(&self.parent)
+        &self.tshape
     }
     /// A new edge with the same tolerance and flags and copies of the parametric
     /// curves and regularities (the polygons are not copied).
@@ -148,7 +151,7 @@ impl TShape for BRepTEdge {
         copy.set_degenerated(self.degenerated());
         copy.set_same_parameter(self.same_parameter());
         copy.set_same_range(self.same_range());
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// The class name, the `TopoDS_TShape` dump, the tolerance, the flags and each
     /// curve representation.
