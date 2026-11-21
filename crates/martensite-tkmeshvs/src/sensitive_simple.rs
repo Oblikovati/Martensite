@@ -6,7 +6,7 @@
 //! (also as their runtime-type parent, so a down cast to the base type finds it) and forward
 //! every member to it.
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis2, GeneralTransform3, Point3, Transform3, Xyz};
 use martensite_tkservice::graphic3d::Graphic3dTransformPersSource;
 use martensite_tkv3d::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
@@ -19,17 +19,14 @@ use std::io;
 
 /// The entity of an owner that must not be detected; `MeshVSDummySensitiveEntity::new(&owner)`.
 pub struct MeshVSDummySensitiveEntity {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
 }
-martensite_tkernel::impl_transient!(MeshVSDummySensitiveEntity, "MeshVSDummySensitiveEntity", dyn Select3DSensitiveEntity, transient,
-    interfaces: [dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(MeshVSDummySensitiveEntity, "MeshVSDummySensitiveEntity", dyn Select3DSensitiveEntity, interfaces: [dyn Select3DSensitiveEntity]);
 
 impl MeshVSDummySensitiveEntity {
     /// An entity of an owner that detects nothing.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
         }
     }
@@ -141,8 +138,7 @@ pub struct MeshVSSensitiveFace {
     face: Select3DSensitiveFace,
     center: Point3,
 }
-martensite_tkernel::impl_transient!(MeshVSSensitiveFace, "MeshVSSensitiveFace", Select3DSensitiveFace, face,
-    interfaces: [dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(MeshVSSensitiveFace, "MeshVSSensitiveFace", Select3DSensitiveFace, interfaces: [dyn Select3DSensitiveEntity]);
 delegate_sensitive_entity!(MeshVSSensitiveFace, face);
 
 impl MeshVSSensitiveFace {
@@ -176,8 +172,7 @@ impl MeshVSSensitiveFace {
 pub struct MeshVSSensitiveSegment {
     segment: Select3DSensitiveSegment,
 }
-martensite_tkernel::impl_transient!(MeshVSSensitiveSegment, "MeshVSSensitiveSegment", Select3DSensitiveSegment, segment,
-    interfaces: [dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(MeshVSSensitiveSegment, "MeshVSSensitiveSegment", Select3DSensitiveSegment, interfaces: [dyn Select3DSensitiveEntity]);
 delegate_sensitive_entity!(MeshVSSensitiveSegment, segment);
 
 impl MeshVSSensitiveSegment {

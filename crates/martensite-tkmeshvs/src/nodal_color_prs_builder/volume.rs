@@ -8,9 +8,11 @@ use crate::data_source::normals::{coord, face_polygon};
 use crate::mesh_prs_builder::{fan_index, volume_edge_map};
 use martensite_tkernel::ncollection::{Array1, Sequence};
 use martensite_tkernel::quantity::{Color, ColorSpace};
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::{Direction3, Point2, Point3, Vector3};
-use martensite_tkservice::graphic3d::{Graphic3dArrayOfPrimitives, Graphic3dArrayOfTriangles};
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfPrimitives, Graphic3dArrayOfTriangles, Graphic3dArraySource,
+};
 
 /// The color parameters of a volume: texture colors and the ratio of the reflected colors.
 pub struct MeshVSNodalColorScale {
@@ -50,20 +52,24 @@ impl MeshVSNodalColorPrsBuilder {
     /// `add_volume_prs`: `nodes` are the element node ids (one-based), the face indices are
     /// zero-based into them and into `coords`.
     #[allow(clippy::too_many_arguments)]
-    pub fn add_volume_prs(
+    pub fn add_volume_prs<A: Graphic3dArraySource + ?Sized>(
         &self,
         topo: &MeshVSTopologyHandle,
         nodes: &Array1<'_, i32>,
         coords: &Array1<'_, f64>,
-        array: &Handle<Graphic3dArrayOfPrimitives>,
+        array: &Handle<A>,
         is_shaded: bool,
         scale: &MeshVSNodalColorScale,
     ) -> Result<(), Failure> {
         let (Some(faces), Some(target)) = (topo.get(), array.get()) else {
             return Ok(());
         };
+        let triangles = target
+            .dynamic_type()
+            .is_subtype(Graphic3dArrayOfTriangles::static_type());
+        let target = target.primitive_array();
         let faces = faces.array1();
-        if array.cast::<Graphic3dArrayOfTriangles>().is_null() {
+        if !triangles {
             return add_edges(faces.iter(), coords, target);
         }
         for face in faces.iter() {

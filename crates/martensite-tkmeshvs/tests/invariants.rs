@@ -2,7 +2,7 @@
 //! Actual getters after independent source/output mutations prove value-copy behavior.
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Handle, RuntimeTyped, Transient},
+    standard::{Handle, RuntimeTyped},
     tcollection::AsciiString,
 };
 use martensite_tkmeshvs::{MeshVSDrawer, MeshVSDrawerSource};
@@ -44,7 +44,7 @@ fn color_material_and_string_overwrites_outputs_and_copies_are_independent() {
     let copy = target.clone();
     fill_values(&target, 0.5, "other");
     assert_values(&copy, 0.25, "original");
-    assert_eq!(copy.transient_base().ref_count(), 0);
+    assert_eq!(source.ref_count(), 1);
     assert!(copy.remove_color(7));
     assert!(!copy.remove_color(7));
     assert!(copy.remove_material(7));
@@ -84,10 +84,11 @@ fn assert_values(drawer: &MeshVSDrawer, alpha: f32, text: &str) {
 #[test]
 fn actual_source_projection_shares_descriptor_base_and_does_not_increment_count() {
     let owner = Handle::new(MeshVSDrawer::default());
+    let source = owner.upcast::<dyn MeshVSDrawerSource>();
     let argument: &dyn martensite_tkernel::standard::HandleReference<dyn MeshVSDrawerSource> =
-        &owner;
+        &source;
     let observed = argument.observe();
-    assert_eq!(owner.ref_count(), 1);
+    assert_eq!(owner.ref_count(), 2);
     assert_eq!(observed.object_address(), owner.object_address());
     assert!(std::ptr::eq(
         MeshVSDrawer::static_type(),
@@ -95,11 +96,11 @@ fn actual_source_projection_shares_descriptor_base_and_does_not_increment_count(
     ));
     assert_eq!(MeshVSDrawer::get_type_name(), "MeshVSDrawer");
     assert!(std::ptr::eq(
-        observed.get().unwrap().transient_base(),
-        owner.transient_base()
+        observed.get().unwrap().owned_drawer(),
+        owner.get().unwrap()
     ));
     assert_eq!(
         argument.reference_address(),
-        std::ptr::from_ref(&owner).cast()
+        std::ptr::from_ref(&source).cast()
     );
 }

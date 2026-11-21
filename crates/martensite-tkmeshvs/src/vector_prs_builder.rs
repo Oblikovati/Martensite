@@ -14,7 +14,7 @@ use crate::prs_builder::{MeshVSPrsBuilder, MeshVSPrsBuilderBase, MeshVSPrsBuilde
 use crate::selection_policy::MESHVS_BP_VECTOR;
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::quantity::Color;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::Vector3;
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 
@@ -46,13 +46,11 @@ impl MeshVSVectorFields {
 
 /// The builder of mesh vectors; `MeshVSVectorPrsBuilder::with_defaults(&mesh, 10.0, &color)`.
 pub struct MeshVSVectorPrsBuilder {
-    transient: StandardTransient,
     base: MeshVSPrsBuilderBase,
     /// The vector fields; `builder.fields.read().is_simple_prs`.
     pub fields: SharedState<MeshVSVectorFields>,
 }
-martensite_tkernel::impl_transient!(MeshVSVectorPrsBuilder, "MeshVSVectorPrsBuilder", dyn MeshVSPrsBuilder, transient,
-    interfaces: [dyn MeshVSPrsBuilder]);
+martensite_tkernel::impl_transient!(MeshVSVectorPrsBuilder, "MeshVSVectorPrsBuilder", dyn MeshVSPrsBuilder, interfaces: [dyn MeshVSPrsBuilder]);
 
 impl MeshVSVectorPrsBuilder {
     /// A builder of a parent mesh: the maximal length, the color and the arrow part 0.1 go into the drawer
@@ -69,7 +67,6 @@ impl MeshVSVectorPrsBuilder {
         is_simple_prs: bool,
     ) -> Self {
         let builder = Self {
-            transient: StandardTransient::default(),
             base: MeshVSPrsBuilderBase::new(parent, flags, data_source, id, priority),
             fields: SharedState::new(MeshVSVectorFields {
                 is_simple_prs,

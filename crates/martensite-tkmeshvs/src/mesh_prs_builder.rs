@@ -24,7 +24,7 @@ use crate::flags::{MESHVS_DMF_BASE_MODE_MASK, MESHVS_DMF_HILIGHT_PRS};
 use crate::mesh::MeshVSMeshSource;
 use crate::prs_builder::{MeshVSPrsBuilder, MeshVSPrsBuilderBase};
 use crate::selection_policy::MESHVS_BP_MESH;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 
 /// The overridable members of `MeshVSMeshPrsBuilder`; the default bodies are the standard behavior.
@@ -90,11 +90,9 @@ pub fn meshvs_mesh_prs_build<B: MeshVSMeshPrsBuilderSource + ?Sized>(
 
 /// The concrete `MeshVSMeshPrsBuilder`; `MeshVSMeshPrsBuilder::new(&mesh, MESHVS_DMF_BASE_MODE_MASK, &Handle::default(), -1, MESHVS_BP_MESH)`.
 pub struct MeshVSMeshPrsBuilder {
-    transient: StandardTransient,
     base: MeshVSPrsBuilderBase,
 }
-martensite_tkernel::impl_transient!(MeshVSMeshPrsBuilder, "MeshVSMeshPrsBuilder", dyn MeshVSPrsBuilder, transient,
-    interfaces: [dyn MeshVSMeshPrsBuilderSource, dyn MeshVSPrsBuilder]);
+martensite_tkernel::impl_transient!(MeshVSMeshPrsBuilder, "MeshVSMeshPrsBuilder", dyn MeshVSPrsBuilder, interfaces: [dyn MeshVSMeshPrsBuilderSource, dyn MeshVSPrsBuilder]);
 
 impl MeshVSMeshPrsBuilder {
     /// A builder of a parent mesh, with its flags, data source, id and priority.
@@ -106,7 +104,6 @@ impl MeshVSMeshPrsBuilder {
         priority: i32,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: MeshVSPrsBuilderBase::new(parent, flags, data_source, id, priority),
         }
     }

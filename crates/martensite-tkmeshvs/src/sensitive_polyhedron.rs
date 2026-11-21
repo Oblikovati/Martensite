@@ -6,7 +6,7 @@
 //! the origin for the nodes no face uses.
 use crate::data_source::MeshVSTopologyHandle;
 use martensite_tkernel::ncollection::{Array1, Vec3};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Point3, Xyz};
 use martensite_tkv3d::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use martensite_tkv3d::select_mgr::SelectMgrEntityOwnerSource;
@@ -17,7 +17,6 @@ use martensite_tkv3d::select3d::{
 
 /// A sensitive volume; `MeshVSSensitivePolyhedron::new(&owner, &nodes, 1, &topo)?`.
 pub struct MeshVSSensitivePolyhedron {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     topology: Vec<Vec<Point3>>,
     center: Xyz,
@@ -26,8 +25,7 @@ pub struct MeshVSSensitivePolyhedron {
     nodes_lower: i32,
     topo: MeshVSTopologyHandle,
 }
-martensite_tkernel::impl_transient!(MeshVSSensitivePolyhedron, "MeshVSSensitivePolyhedron", dyn Select3DSensitiveEntity, transient,
-    interfaces: [dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(MeshVSSensitivePolyhedron, "MeshVSSensitivePolyhedron", dyn Select3DSensitiveEntity, interfaces: [dyn Select3DSensitiveEntity]);
 
 impl MeshVSSensitivePolyhedron {
     /// `nodes` is the array
@@ -68,7 +66,6 @@ impl MeshVSSensitivePolyhedron {
         }
         center /= nodes.len() as f64;
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             topology,
             center,

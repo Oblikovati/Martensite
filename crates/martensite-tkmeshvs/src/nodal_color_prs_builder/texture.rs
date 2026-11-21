@@ -4,7 +4,7 @@
 //! and `create_texture`.
 use super::MeshVSNodalColorFields;
 use martensite_tkernel::quantity::Color;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::{
     Graphic3dTexture2DBase, Graphic3dTexture2DSource, Graphic3dTextureMap, Graphic3dTextureRoot,
     Graphic3dTextureRootBase, Graphic3dTypeOfTexture, Graphic3dTypeOfTextureFilter,
@@ -13,24 +13,22 @@ use martensite_tkservice::image::{ImageFormat, ImagePixMap};
 
 /// The texture of the nodal colors; `MeshVSImageTexture2D::new(pixmap)`.
 pub struct MeshVSImageTexture2D {
-    transient: StandardTransient,
     base: Graphic3dTexture2DBase,
 }
-martensite_tkernel::impl_transient!(MeshVSImageTexture2D, "MeshVSImageTexture2D", dyn Graphic3dTexture2DSource, transient,
-    interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture2DSource]);
+martensite_tkernel::impl_transient!(MeshVSImageTexture2D, "MeshVSImageTexture2D", dyn Graphic3dTexture2DSource, interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture2DSource]);
 
 impl MeshVSImageTexture2D {
     /// The protected 2D constructor of a pixmap, then modulation and bilinear filtering.
     pub fn new(image: Handle<ImagePixMap>) -> Self {
-        let base = Graphic3dTexture2DBase::from_pix_map(image, Graphic3dTypeOfTexture::TOT_2D);
+        let base = Graphic3dTexture2DBase::from_pix_map(
+            image.into_upcast(),
+            Graphic3dTypeOfTexture::TOT_2D,
+        );
         base.root.params.set_modulate(true);
         base.root
             .params
             .set_filter(Graphic3dTypeOfTextureFilter::Bilinear);
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
 }
 

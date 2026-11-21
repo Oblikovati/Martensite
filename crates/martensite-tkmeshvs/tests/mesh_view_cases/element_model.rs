@@ -2,7 +2,7 @@
 //! The test model of the cases: five volumes (two pyramids, two hexahedra and a prism) on sixteen
 //! nodes. It holds no face normals, so a volume asks for its vector in vain.
 use martensite_tkernel::ncollection::{Array1, HArray1, Sequence};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 use martensite_tkmeshvs::flags::{MESHVS_ET_NODE, MESHVS_ET_VOLUME};
 use martensite_tkmeshvs::{
     MeshVSDataSource, MeshVSEntityType, MeshVSPackedMap, MeshVSTopologyHandle,
@@ -39,11 +39,8 @@ const ELEMENTS: [&[i32]; 5] = [
 
 /// The model as a mesh data source; `ElementModelSource::default()`.
 #[derive(Default)]
-pub struct ElementModelSource {
-    transient: StandardTransient,
-}
-martensite_tkernel::impl_transient!(ElementModelSource, "ElementModelSource", dyn MeshVSDataSource, transient,
-    interfaces: [dyn MeshVSDataSource]);
+pub struct ElementModelSource {}
+martensite_tkernel::impl_transient!(ElementModelSource, "ElementModelSource", dyn MeshVSDataSource, interfaces: [dyn MeshVSDataSource]);
 
 fn ids_up_to(last: i32) -> MeshVSPackedMap {
     let mut map = MeshVSPackedMap::default();

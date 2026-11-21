@@ -18,7 +18,7 @@ use crate::selection_policy::MESHVS_BP_TEXT;
 use crate::tool::text::{font_aspect, terminated_font, text_display, text_style};
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::aspect::AspectTypeOfMarker;
@@ -58,13 +58,11 @@ impl MeshVSTextMaps {
 
 /// The builder of mesh texts; `MeshVSTextPrsBuilder::new(&mesh, 10.0, &color, MESHVS_DMF_TEXT_DATA_PRS, &Handle::default(), -1, MESHVS_BP_TEXT)`.
 pub struct MeshVSTextPrsBuilder {
-    transient: StandardTransient,
     base: MeshVSPrsBuilderBase,
     /// The text maps; `builder.texts.read().nodes.extent()`.
     pub texts: SharedState<MeshVSTextMaps>,
 }
-martensite_tkernel::impl_transient!(MeshVSTextPrsBuilder, "MeshVSTextPrsBuilder", dyn MeshVSPrsBuilder, transient,
-    interfaces: [dyn MeshVSPrsBuilder]);
+martensite_tkernel::impl_transient!(MeshVSTextPrsBuilder, "MeshVSTextPrsBuilder", dyn MeshVSPrsBuilder, interfaces: [dyn MeshVSPrsBuilder]);
 
 impl MeshVSTextPrsBuilder {
     /// The height and
@@ -79,7 +77,6 @@ impl MeshVSTextPrsBuilder {
         priority: i32,
     ) -> Self {
         let builder = Self {
-            transient: StandardTransient::default(),
             base: MeshVSPrsBuilderBase::new(parent, flags, data_source, id, priority),
             texts: SharedState::default(),
         };

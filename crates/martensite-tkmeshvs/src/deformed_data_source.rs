@@ -14,7 +14,7 @@ use crate::MeshVSEntityType;
 use crate::data_source::{MeshVSDataSource, MeshVSPackedMap, MeshVSTopologyHandle};
 use crate::flags::MESHVS_ET_NODE;
 use martensite_tkernel::ncollection::{Array1, DataMap};
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkmath::gp::Vector3;
 
 /// The private fields of `MeshVSDeformedDataSource`.
@@ -30,19 +30,16 @@ pub struct MeshVSDeformedDataSourceFields {
 
 /// A data source deformed by nodal vectors; `MeshVSDeformedDataSource::new(&source, 2.0)`.
 pub struct MeshVSDeformedDataSource {
-    transient: StandardTransient,
     /// The private fields; `deformed.fields.read().magnify`.
     pub fields: SharedState<MeshVSDeformedDataSourceFields>,
 }
-martensite_tkernel::impl_transient!(MeshVSDeformedDataSource, "MeshVSDeformedDataSource", dyn MeshVSDataSource, transient,
-    interfaces: [dyn MeshVSDataSource]);
+martensite_tkernel::impl_transient!(MeshVSDeformedDataSource, "MeshVSDeformedDataSource", dyn MeshVSDataSource, interfaces: [dyn MeshVSDataSource]);
 
 impl MeshVSDeformedDataSource {
     /// A magnify <= 0 becomes 1.
     /// Example: `MeshVSDeformedDataSource::new(&source, 3.0)`.
     pub fn new(non_deformed: &Handle<dyn MeshVSDataSource>, magnify: f64) -> Self {
         let source = Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(MeshVSDeformedDataSourceFields {
                 non_deformed: non_deformed.clone(),
                 ..Default::default()
