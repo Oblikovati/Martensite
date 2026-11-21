@@ -1,7 +1,7 @@
 //! Handle-string construction, buffer identity and content hash contracts.
-use martensite_tkernel::ncollection::{DataMap, HashPolicy};
-use martensite_tkernel::standard::Handle;
-use martensite_tkernel::tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString};
+use crate::ncollection::{DataMap, HashPolicy};
+use crate::standard::Handle;
+use crate::tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString};
 
 #[test]
 fn ascii_handle_raw_pointer_names_the_wrapped_buffer_across_shared_handles() {

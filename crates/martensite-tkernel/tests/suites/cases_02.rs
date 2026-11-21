@@ -245,12 +245,6 @@ pub mod standard_values_api_behavior;
 pub mod stl_algorithms;
 #[path = "../storage_api_behavior.rs"]
 pub mod storage_api_behavior;
-#[path = "../string_borrowed_operators.rs"]
-pub mod string_borrowed_operators;
-#[path = "../tcollection_ascii_string.rs"]
-pub mod tcollection_ascii_string;
-#[path = "../tcollection_extended_string.rs"]
-pub mod tcollection_extended_string;
 #[path = "../typed_allocator_method_contracts.rs"]
 pub mod typed_allocator_method_contracts;
 #[path = "../typed_allocator_provenance_contracts.rs"]

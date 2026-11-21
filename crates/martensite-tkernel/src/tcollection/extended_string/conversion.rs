@@ -1,6 +1,11 @@
 //! UTF-8 output, printing, raw access and HashCode.
-use super::{ExtendedString, errors::out_of_range, utf};
-use crate::standard::{Failure, hash_bytes};
+#[cfg(test)]
+use super::errors::out_of_range;
+use super::{ExtendedString, utf};
+#[cfg(test)]
+use crate::standard::Failure;
+use crate::standard::hash_bytes;
+#[cfg(test)]
 use std::io;
 impl ExtendedString {
     /// Returns UTF-8 through the first zero code unit, dropping unpaired surrogates;
@@ -10,13 +15,15 @@ impl ExtendedString {
     }
     /// Returns the UTF-8 byte length `to_utf8` produces;
     /// `text.utf8_length()`.
-    pub fn utf8_length(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn utf8_length(&self) -> usize {
         self.to_utf8().len()
     }
     /// Writes UTF-8 and a NUL into a caller buffer and returns the byte count,
     /// and refuses a buffer shorter than
     /// `utf8_length() + 1` with Standard_OutOfRange; `text.write_utf8(&mut buffer)?`.
-    pub fn write_utf8(&self, buffer: &mut [u8]) -> Result<usize, Failure> {
+    #[cfg(test)]
+    pub(crate) fn write_utf8(&self, buffer: &mut [u8]) -> Result<usize, Failure> {
         let encoded = self.to_utf8();
         let length = encoded.len();
         if buffer.len() <= length {
@@ -41,22 +48,17 @@ impl ExtendedString {
         }
         &self.terminated
     }
-    /// Windows-only view of the units as a UTF-16 `wchar_t` string;
-    /// `text.to_wide_string()`.
-    #[cfg(windows)]
-    pub fn to_wide_string(&self) -> &[u16] {
-        self.as_utf16_with_nul()
-    }
     /// Writes the UTF-8 form through the first zero unit;
     /// `text.print(&mut std::io::stdout())?`.
-    pub fn print(&self, output: &mut impl io::Write) -> io::Result<()> {
+    #[cfg(test)]
+    pub(crate) fn print(&self, output: &mut impl io::Write) -> io::Result<()> {
         output.write_all(self.to_utf8().as_bytes())
     }
     /// FNV-1a over the host-endian unit bytes (signed-char quirk) for
     /// fewer than two units, Murmur otherwise. The values differ from the AsciiString hash for
     /// ASCII text, since two bytes per unit are hashed (kept
     /// on purpose); `text.hash_code()`.
-    pub fn hash_code(&self) -> usize {
+    pub(crate) fn hash_code(&self) -> usize {
         let bytes: Vec<u8> = self
             .as_utf16()
             .iter()

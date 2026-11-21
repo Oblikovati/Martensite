@@ -1,9 +1,11 @@
 //! AssignCat, Cat and Prepend.
+use super::ExtendedString;
+#[cfg(test)]
 use super::{
-    ExtendedString,
     errors::{leading_units, out_of_range},
     utf,
 };
+#[cfg(test)]
 use crate::standard::Failure;
 impl ExtendedString {
     /// Appends converted input: a string, a code-unit slice, a byte (`char`), a unit, an
@@ -14,7 +16,8 @@ impl ExtendedString {
     }
     /// Appends a bounded null-terminated UTF-16 buffer; `text.assign_cat_c_units(Some(&[65, 0, 66]))`.
     /// A null pointer is represented by `None` and appends nothing.
-    pub fn assign_cat_c_units(&mut self, units: Option<&[u16]>) {
+    #[cfg(test)]
+    pub(crate) fn assign_cat_c_units(&mut self, units: Option<&[u16]>) {
         let Some(units) = units else {
             return;
         };
@@ -28,14 +31,16 @@ impl ExtendedString {
     }
     /// Returns a copy with a bounded null-terminated UTF-16 buffer appended;
     /// `text.cat_c_units(Some(&[65, 0, 66]))`. A null pointer uses `None`.
-    pub fn cat_c_units(&self, units: Option<&[u16]>) -> Self {
+    #[cfg(test)]
+    pub(crate) fn cat_c_units(&self, units: Option<&[u16]>) -> Self {
         let mut copy = self.clone();
         copy.assign_cat_c_units(units);
         copy
     }
     /// Prepends the portion of a bounded null-terminated UTF-16 buffer before its first zero;
     /// `text.prepend_c_units(Some(&[65, 0, 66]))`. A null pointer uses `None`.
-    pub fn prepend_c_units(&mut self, units: Option<&[u16]>) {
+    #[cfg(test)]
+    pub(crate) fn prepend_c_units(&mut self, units: Option<&[u16]>) {
         let Some(units) = units else {
             return;
         };
@@ -43,7 +48,8 @@ impl ExtendedString {
     }
     /// Prepends a NUL-terminated suffix of this string, keeping the aliased-pointer case;
     /// `text.prepend_c_units_from_self(2)?`.
-    pub fn prepend_c_units_from_self(&mut self, start: usize) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn prepend_c_units_from_self(&mut self, start: usize) -> Result<(), Failure> {
         let Some(suffix) = self.as_utf16().get(start..) else {
             return Err(out_of_range(
                 "TCollection_ExtendedString::Prepend : self code-unit offset",
@@ -56,7 +62,8 @@ impl ExtendedString {
     }
     /// The (pointer, length) AssignCat: a null pointer or a length <= 0 appends nothing;
     /// `text.assign_cat_span(Some(&[65, 66]), 1)`.
-    pub fn assign_cat_span(&mut self, units: Option<&[u16]>, length: i32) {
+    #[cfg(test)]
+    pub(crate) fn assign_cat_span(&mut self, units: Option<&[u16]>, length: i32) {
         let (Some(units), Ok(count)) = (units, usize::try_from(length)) else {
             return;
         };
@@ -66,7 +73,8 @@ impl ExtendedString {
     /// constructor, so a negative total raises Standard_OutOfRange; any other negative
     /// length would overrun the buffer and is refused the same way.
     /// `text.cat_span(Some(&[65]), 1)?`.
-    pub fn cat_span(&self, units: Option<&[u16]>, length: i32) -> Result<Self, Failure> {
+    #[cfg(test)]
+    pub(crate) fn cat_span(&self, units: Option<&[u16]>, length: i32) -> Result<Self, Failure> {
         let Ok(count) = usize::try_from(length) else {
             return Err(out_of_range(
                 "TCollection_ExtendedString : negative length",
@@ -86,7 +94,8 @@ impl ExtendedString {
         Ok(result)
     }
     /// Inserts a string or code-unit slice at the beginning; `text.prepend(&prefix)`.
-    pub fn prepend(&mut self, input: impl AsRef<[u16]>) {
+    #[cfg(test)]
+    pub(crate) fn prepend(&mut self, input: impl AsRef<[u16]>) {
         let units = input.as_ref();
         if units.is_empty() {
             return;
@@ -96,7 +105,8 @@ impl ExtendedString {
     }
     /// The (pointer, length) Prepend: a null pointer or a length <= 0 changes nothing;
     /// `text.prepend_span(Some(&[65]), 1)`.
-    pub fn prepend_span(&mut self, units: Option<&[u16]>, length: i32) {
+    #[cfg(test)]
+    pub(crate) fn prepend_span(&mut self, units: Option<&[u16]>, length: i32) {
         let (Some(units), Ok(count)) = (units, usize::try_from(length)) else {
             return;
         };
@@ -104,13 +114,15 @@ impl ExtendedString {
     }
     /// Appends a range of this string's own units (the aliased-pointer append);
     /// `text.assign_cat_self(0..text.len())`.
-    pub fn assign_cat_self(&mut self, range: std::ops::Range<usize>) {
+    #[cfg(test)]
+    pub(crate) fn assign_cat_self(&mut self, range: std::ops::Range<usize>) {
         let copy = self.as_utf16()[range].to_vec();
         self.append_units(&copy);
     }
     /// Prepends a range of this string's own units (the aliased-pointer prepend);
     /// `text.prepend_self(5..10)`.
-    pub fn prepend_self(&mut self, range: std::ops::Range<usize>) {
+    #[cfg(test)]
+    pub(crate) fn prepend_self(&mut self, range: std::ops::Range<usize>) {
         let copy = self.as_utf16()[range].to_vec();
         self.prepend(copy);
     }

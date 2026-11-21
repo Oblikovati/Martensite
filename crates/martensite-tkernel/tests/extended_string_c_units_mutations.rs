@@ -1,5 +1,5 @@
 //! Null-terminated UTF-16 mutation behavior of the pointer overloads.
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn bounded_pointer_mutations_stop_at_nul_and_spans_keep_embedded_nul() {

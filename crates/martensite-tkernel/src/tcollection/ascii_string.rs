@@ -93,6 +93,7 @@ pub(crate) fn c_string_prefix(bytes: &[u8]) -> &[u8] {
 }
 mod assignment;
 mod c_string_comparison;
+#[cfg(test)]
 mod c_string_editing;
 mod case_adjust;
 mod comparison;
@@ -107,5 +108,7 @@ mod storage;
 mod stream;
 mod traits;
 mod utf8_scan;
-pub use concatenation::CatOperand;
+#[cfg(test)]
+pub(crate) use concatenation::CatOperand;
+#[cfg(test)]
 pub(crate) use raise::negative_width;

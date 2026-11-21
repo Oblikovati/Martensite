@@ -1,9 +1,10 @@
 //! In-place edits: Insert, SetValue, Remove, Trunc, Split, Copy and ownership moves.
 use super::{
     ExtendedString,
-    errors::{int_length, leading_units, offset, out_of_range},
-    utf,
+    errors::{int_length, offset, out_of_range},
 };
+#[cfg(test)]
+use super::{errors::leading_units, utf};
 use crate::standard::Failure;
 impl ExtendedString {
     /// Inserts one code unit, zero included, at a one-based position in 1..=len+1;
@@ -16,7 +17,8 @@ impl ExtendedString {
     }
     /// Inserts a converted string or code-unit slice at a one-based position in 1..=len+1;
     /// `text.insert(1, &ExtendedString::new("ab"))?`.
-    pub fn insert(&mut self, index: i32, input: impl Into<Self>) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn insert(&mut self, index: i32, input: impl Into<Self>) -> Result<(), Failure> {
         self.check_insert_position(index)?;
         let input = input.into();
         if input.is_empty() {
@@ -30,7 +32,8 @@ impl ExtendedString {
     }
     /// The (pointer, length) Insert: the position is checked first, then a null pointer or a
     /// length <= 0 inserts nothing; `text.insert_span(1, Some(&[65]), 1)?`.
-    pub fn insert_span(
+    #[cfg(test)]
+    pub(crate) fn insert_span(
         &mut self,
         index: i32,
         units: Option<&[u16]>,
@@ -44,11 +47,17 @@ impl ExtendedString {
     }
     /// Inserts units from a bounded null-terminated UTF-16 buffer; the index is validated
     /// before null or empty input is ignored. `text.insert_c_units(1, Some(&[65, 0, 66]))?`.
-    pub fn insert_c_units(&mut self, index: i32, units: Option<&[u16]>) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn insert_c_units(
+        &mut self,
+        index: i32,
+        units: Option<&[u16]>,
+    ) -> Result<(), Failure> {
         self.insert(index, units.map_or(&[][..], utf::c_units_prefix))
     }
     /// Replaces one code unit at a one-based position in 1..=len; `text.set_value(6, 0x67)?`.
-    pub fn set_value(&mut self, index: i32, unit: u16) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn set_value(&mut self, index: i32, unit: u16) -> Result<(), Failure> {
         if index < 1 || index > self.length() {
             return Err(out_of_range(
                 "TCollection_ExtendedString::SetValue : parameter theWhere",
@@ -60,7 +69,12 @@ impl ExtendedString {
     }
     /// Overwrites from a one-based position in 1..=len+1, growing the string when the
     /// replacement runs past its end; `text.set_value_units(2, &[65, 66])?`.
-    pub fn set_value_units(&mut self, index: i32, units: impl AsRef<[u16]>) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn set_value_units(
+        &mut self,
+        index: i32,
+        units: impl AsRef<[u16]>,
+    ) -> Result<(), Failure> {
         let units = units.as_ref();
         let at = self.set_value_position(index)?;
         if units.is_empty() {
@@ -73,7 +87,8 @@ impl ExtendedString {
     }
     /// The (pointer, length) SetValue: the position is checked first, then a null pointer
     /// or a length <= 0 changes nothing; `text.set_value_span(1, Some(&[65]), 1)?`.
-    pub fn set_value_span(
+    #[cfg(test)]
+    pub(crate) fn set_value_span(
         &mut self,
         index: i32,
         units: Option<&[u16]>,
@@ -86,7 +101,12 @@ impl ExtendedString {
     }
     /// Replaces units from a bounded null-terminated UTF-16 buffer; validates the index before
     /// ignoring null or empty input. `text.set_value_c_units(1, Some(&[65, 0, 66]))?`.
-    pub fn set_value_c_units(&mut self, index: i32, units: Option<&[u16]>) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn set_value_c_units(
+        &mut self,
+        index: i32,
+        units: Option<&[u16]>,
+    ) -> Result<(), Failure> {
         let Some(units) = units else {
             return self.set_value_units(index, []);
         };
@@ -95,7 +115,8 @@ impl ExtendedString {
     /// Replays forward overlap from a receiver offset when the write stays within the length;
     /// `text.set_value_c_units_from_self(2, 0)?` on `[65, 66, 0, 67]`.
     /// Extending self-alias writes are refused because setting a value reallocates first.
-    pub fn set_value_c_units_from_self(
+    #[cfg(test)]
+    pub(crate) fn set_value_c_units_from_self(
         &mut self,
         index: i32,
         source_start: usize,
@@ -114,7 +135,8 @@ impl ExtendedString {
     }
     /// Erases `count` units from a one-based position; the position must be in 1..=len and
     /// the range must end inside the string; `text.remove(2, 2)?`.
-    pub fn remove(&mut self, index: i32, count: i32) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn remove(&mut self, index: i32, count: i32) -> Result<(), Failure> {
         // i64 keeps where + how_many exact where an `i32` sum would overflow.
         let end = i64::from(index) + i64::from(count);
         if index < 1 || index > self.length() || count < 0 || end > i64::from(self.length()) + 1 {
@@ -176,7 +198,7 @@ impl ExtendedString {
     }
     /// Replaces the content with a string or code-unit slice;
     /// `text.copy(&[65, 66])`.
-    pub fn copy(&mut self, units: impl AsRef<[u16]>) {
+    pub(crate) fn copy(&mut self, units: impl AsRef<[u16]>) {
         let units = units.as_ref();
         if units.is_empty() && self.terminated.is_empty() {
             return;
@@ -187,23 +209,27 @@ impl ExtendedString {
     }
     /// Copies another value and returns this receiver for assignment chaining; `target.copy_assign(&source).clear()`.
     /// Rust borrowing prevents passing the same value as both receiver and source.
-    pub fn copy_assign(&mut self, source: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn copy_assign(&mut self, source: &Self) -> &mut Self {
         self.clone_from(source);
         self
     }
     /// Models the self-assignment no-op and returns this receiver; `text.copy_assign_self()`.
-    pub fn copy_assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn copy_assign_self(&mut self) -> &mut Self {
         self
     }
     /// Copies a bounded UTF-16 C string through its first NUL; `text.copy_c_units(Some(&[65, 0, 66]))`.
     /// `None` and an empty prefix clear the string, as a null pointer does.
-    pub fn copy_c_units(&mut self, units: Option<&[u16]>) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn copy_c_units(&mut self, units: Option<&[u16]>) -> &mut Self {
         self.copy(units.map_or(&[][..], utf::c_units_prefix));
         self
     }
     /// The (pointer, length) Copy: a null pointer or a length <= 0 empties the string;
     /// `text.copy_span(None, 3)`.
-    pub fn copy_span(&mut self, units: Option<&[u16]>, length: i32) {
+    #[cfg(test)]
+    pub(crate) fn copy_span(&mut self, units: Option<&[u16]>, length: i32) {
         match (units, usize::try_from(length)) {
             (Some(units), Ok(count)) => self.copy(leading_units(units, count)),
             _ => self.copy([]),
@@ -214,18 +240,21 @@ impl ExtendedString {
         self.terminated = Vec::new();
     }
     /// Exchanges the content of two strings; `first.swap(&mut second)`.
-    pub fn swap(&mut self, other: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn swap(&mut self, other: &mut Self) {
         std::mem::swap(self, other);
     }
     /// Takes the source's content and leaves the source empty (`Move`);
     /// `target.move_assign(&mut source)`.
-    pub fn move_assign(&mut self, source: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn move_assign(&mut self, source: &mut Self) {
         if source.terminated.is_empty() {
             self.copy([]);
             return;
         }
         *self = std::mem::take(source);
     }
+    #[cfg(test)]
     fn remove_error(&self, index: i32, count: i32) -> Failure {
         out_of_range(
             "TCollection_ExtendedString::Remove: Invalid parameters",
@@ -236,6 +265,7 @@ impl ExtendedString {
             ),
         )
     }
+    #[cfg(test)]
     fn set_value_position(&self, index: i32) -> Result<usize, Failure> {
         if index < 1 || index > self.length() + 1 {
             return Err(out_of_range(
@@ -245,6 +275,7 @@ impl ExtendedString {
         }
         Ok(offset(index))
     }
+    #[cfg(test)]
     fn self_c_units_length(&self, source_start: usize) -> Result<usize, Failure> {
         let Some(source) = self.as_utf16_with_nul().get(source_start..=self.len()) else {
             return Err(out_of_range(
@@ -257,6 +288,7 @@ impl ExtendedString {
             .position(|&unit| unit == 0)
             .unwrap_or(source.len()))
     }
+    #[cfg(test)]
     fn copy_self_units_in_order(&mut self, target_start: usize, source_start: usize, count: usize) {
         for index in 0..count {
             self.terminated[target_start + index] = self.terminated[source_start + index];

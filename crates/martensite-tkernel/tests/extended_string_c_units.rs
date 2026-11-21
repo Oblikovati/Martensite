@@ -1,5 +1,5 @@
 //! Compatible UTF-16 C-string concatenation adapters.
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn array_addition_uses_the_native_terminator_boundary() {

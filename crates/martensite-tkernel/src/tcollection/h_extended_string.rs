@@ -5,8 +5,12 @@
 //! A member that reads another object copies what it needs before it locks its own
 //! string, so passing the same object twice (`text.assign_cat(&text)`) cannot deadlock.
 use super::{ExtendedString, HAsciiString};
-use crate::standard::{Handle, StandardTransient};
-use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
+#[cfg(test)]
+use crate::standard::Handle;
+use crate::standard::StandardTransient;
+#[cfg(test)]
+use std::sync::RwLockWriteGuard;
+use std::sync::{PoisonError, RwLock, RwLockReadGuard};
 mod editing;
 mod hasher;
 pub use hasher::HExtendedStringHasher;
@@ -34,12 +38,14 @@ impl HExtendedString {
         Self::from(ExtendedString::from_utf16(units))
     }
     /// Wraps one code unit (empty for zero); `HExtendedString::from_char(0x20AC)`.
-    pub fn from_char(unit: u16) -> Self {
+    #[cfg(test)]
+    pub(crate) fn from_char(unit: u16) -> Self {
         Self::from(ExtendedString::from_char(unit))
     }
     /// Wraps `length` copies of `unit`; Standard_OutOfRange for a negative length;
     /// `HExtendedString::filled(3, 45)?`.
-    pub fn filled(length: i32, unit: u16) -> Result<Self, crate::standard::Failure> {
+    #[cfg(test)]
+    pub(crate) fn filled(length: i32, unit: u16) -> Result<Self, crate::standard::Failure> {
         ExtendedString::filled(length, unit).map(Self::from)
     }
     /// Converts an HAsciiString's string as UTF-8 when it decodes (the handle constructor);
@@ -57,10 +63,12 @@ impl HExtendedString {
         self.string.read().unwrap_or_else(PoisonError::into_inner)
     }
     /// Locks the string for an edit; no code panics while holding it.
+    #[cfg(test)]
     fn string_mut(&self) -> RwLockWriteGuard<'_, ExtendedString> {
         self.string.write().unwrap_or_else(PoisonError::into_inner)
     }
     /// Wraps a result string into a fresh handle.
+    #[cfg(test)]
     fn share(string: ExtendedString) -> Handle<Self> {
         Handle::new(Self::from(string))
     }
@@ -77,4 +85,5 @@ impl From<&ExtendedString> for HExtendedString {
         Self::from(string.clone())
     }
 }
+#[cfg(test)]
 mod method_contracts;

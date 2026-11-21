@@ -44,7 +44,8 @@ impl ExtendedString {
     }
     /// Parses the UTF-8 form with the crate's `strtod`; zero for an empty string,
     /// Standard_NumericError when nothing is read; `text.real_value()?`.
-    pub fn real_value(&self) -> Result<f64, Failure> {
+    #[cfg(test)]
+    pub(crate) fn real_value(&self) -> Result<f64, Failure> {
         if self.is_empty() {
             return Ok(0.0);
         }
@@ -54,7 +55,8 @@ impl ExtendedString {
     }
     /// Whether the UTF-8 form starts with (or, when `full`, entirely is) a real value;
     /// false when empty; `text.is_real_value(true)`.
-    pub fn is_real_value(&self, full: bool) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_real_value(&self, full: bool) -> bool {
         !self.is_empty() && self.as_ascii().is_real_value(full)
     }
     /// The text is converted to an ASCII string as UTF-8, with no replacement.

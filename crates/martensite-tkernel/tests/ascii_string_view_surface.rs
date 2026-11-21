@@ -1,5 +1,5 @@
 //! Backed checks for the literal and string-view constructor surface.
-use martensite_tkernel::tcollection::AsciiString;
+use crate::tcollection::AsciiString;
 
 #[test]
 fn char_array_constructor_truncates_but_string_view_surface_keeps_full_span() {

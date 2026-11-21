@@ -1,5 +1,5 @@
 //! Null-terminated UTF-16 search adapters of the pointer overloads.
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn pointer_search_stops_at_nul_while_explicit_spans_keep_all_units() {

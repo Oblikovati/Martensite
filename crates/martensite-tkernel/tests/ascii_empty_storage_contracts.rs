@@ -1,5 +1,5 @@
 //! Storage identity contracts of the ASCII string.
-use martensite_tkernel::tcollection::AsciiString;
+use crate::tcollection::AsciiString;
 
 fn empty_buffer_address(text: &AsciiString) -> *const u8 {
     assert_eq!(text.as_bytes_with_nul(), &[0]);

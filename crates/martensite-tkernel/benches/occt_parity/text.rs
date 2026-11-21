@@ -10,10 +10,6 @@ pub const CASES: &[Case] = &[
         run: ascii_cat_search,
     },
     Case {
-        name: "ascii_borrowed_cat_search",
-        run: ascii_borrowed_cat_search,
-    },
-    Case {
         name: "ascii_binary_search",
         run: ascii_binary_search,
     },
@@ -26,8 +22,8 @@ pub const CASES: &[Case] = &[
         run: ascii_format_real,
     },
     Case {
-        name: "extended_cat_search",
-        run: extended_cat_search,
+        name: "extended_generic_cat_search",
+        run: extended_generic_cat_search,
     },
     Case {
         name: "hascii_cat_search",
@@ -48,19 +44,6 @@ fn ascii_cat_search(n: usize) -> Sample {
         text.assign_cat(black_box("ab"));
     }
     text.assign_cat("needle");
-    let found = text.search("needle");
-    Sample::since(start, appends, i64::from(found))
-}
-
-/// Same native operation as the generic conversion above, using bounded input.
-fn ascii_borrowed_cat_search(n: usize) -> Sample {
-    let appends = n / 10;
-    let start = Instant::now();
-    let mut text = AsciiString::default();
-    for _ in 0..appends {
-        text.assign_cat_c_bytes(Some(black_box(b"ab")));
-    }
-    text.assign_cat_c_bytes(Some(b"needle"));
     let found = text.search("needle");
     Sample::since(start, appends, i64::from(found))
 }
@@ -104,15 +87,15 @@ fn ascii_text_checksum(bytes: &[u8]) -> i64 {
     })
 }
 
-fn extended_cat_search(n: usize) -> Sample {
+fn extended_generic_cat_search(n: usize) -> Sample {
     let appends = n / 10;
     let start = Instant::now();
     let mut text = ExtendedString::default();
     for _ in 0..appends {
-        text.assign_cat_c_units(Some(black_box(&[97, 98, 0])));
+        text.assign_cat(black_box(&[97, 98][..]));
     }
     let needle = [78, 0x20ac];
-    text.assign_cat_c_units(Some(&needle));
+    text.assign_cat(&needle[..]);
     Sample::since(start, appends, i64::from(text.search(needle)))
 }
 

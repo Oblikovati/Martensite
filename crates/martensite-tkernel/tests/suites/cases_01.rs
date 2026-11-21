@@ -13,8 +13,6 @@ pub mod fsd_binary_string_hooks;
 pub mod fsd_binary_supplemental;
 #[path = "../h_array1_of_real_supplemental.rs"]
 pub mod h_array1_of_real_supplemental;
-#[path = "../h_string_method_contracts.rs"]
-pub mod h_string_method_contracts;
 #[path = "../handle_advanced.rs"]
 pub mod handle_advanced;
 #[path = "../handle_descriptor_references.rs"]

@@ -32,7 +32,8 @@ impl AsciiString {
     }
     /// Inserts one byte, NUL included, before `position` in `1..=len+1`;
     /// `text.insert_char(1, b'>')?`.
-    pub fn insert_char(&mut self, position: i32, byte: u8) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn insert_char(&mut self, position: i32, byte: u8) -> Result<(), Failure> {
         if position > self.length() + 1 {
             return Err(out_of_range(
                 "Insert",
@@ -60,7 +61,8 @@ impl AsciiString {
     }
     /// Inserting a span of this string: inserts a copy of the
     /// zero-based `source` span; `text.insert_self(2, 0..3)?`.
-    pub fn insert_self(
+    #[cfg(test)]
+    pub(crate) fn insert_self(
         &mut self,
         position: i32,
         source: std::ops::Range<usize>,
@@ -81,7 +83,12 @@ impl AsciiString {
         self.insert(index + 1, what)
     }
     /// Inserts before `index` in `1..=len`; `text.insert_before(1, "head")?`.
-    pub fn insert_before(&mut self, index: i32, what: impl AsRef<[u8]>) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn insert_before(
+        &mut self,
+        index: i32,
+        what: impl AsRef<[u8]>,
+    ) -> Result<(), Failure> {
         if index < 1 || index > self.length() {
             return Err(out_of_range(
                 "InsertBefore",
@@ -199,7 +206,8 @@ impl AsciiString {
     /// Copying a span of this string: moves the zero-based `source`
     /// span to the front. A span starting at offset 0 is the self-copy early
     /// return and leaves the string unchanged; `text.copy_self(2..4)`.
-    pub fn copy_self(&mut self, source: std::ops::Range<usize>) {
+    #[cfg(test)]
+    pub(crate) fn copy_self(&mut self, source: std::ops::Range<usize>) {
         assert!(
             source.start <= source.end && source.end <= self.len(),
             "AsciiString source {source:?}; expected a span within 0..{}",

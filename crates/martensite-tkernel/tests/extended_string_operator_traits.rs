@@ -1,6 +1,6 @@
 //! Backed ExtendedString comparison and hash trait behavior.
-use martensite_tkernel::ncollection::HashKey;
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::ncollection::HashKey;
+use crate::tcollection::ExtendedString;
 
 const HASH_FIXTURES: &[(&[u16], usize)] = &[
     (&[], 14_695_981_039_346_656_037),

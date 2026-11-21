@@ -1,5 +1,5 @@
 //! Null-terminated UTF-16 comparison and affix adapters of the pointer overloads.
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn predicates_stop_at_nul_while_explicit_spans_keep_all_units() {

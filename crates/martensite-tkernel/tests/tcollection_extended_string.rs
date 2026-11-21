@@ -1,6 +1,6 @@
 //! UTF-16 legacy assertions, including aliasing and invalid pointer/length adapters.
 #![allow(non_snake_case, clippy::approx_constant)]
-use martensite_tkernel::{
+use crate::{
     ncollection::DataMap,
     tcollection::{AsciiString, ExtendedString},
 };
