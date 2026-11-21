@@ -13,7 +13,7 @@ use martensite_tkmath::gp::Point3;
 pub(super) fn change_contact_curve(shape: &Shape) {
     let (curve, _, _) = BRepTool::curve(&edge(shape).unwrap()).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, Point3::new(8., 0., 1.))
         .unwrap();
 }

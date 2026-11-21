@@ -65,7 +65,7 @@ fn polynomial_curve(source: &OwnedPolynomialBoundary) -> Result<Handle<dyn GeomC
         .map(|p| Point3::new(p[0], p[1], p[2]))
         .collect();
     let poles = Array1::from_shared(&points, 1);
-    Ok(Handle::new(GeomBezierCurve::new(&poles)?).cast())
+    Ok(Handle::new(GeomBezierCurve::new(&poles)?).into_upcast())
 }
 fn retain_constructor_handles(
     edge: Shape,

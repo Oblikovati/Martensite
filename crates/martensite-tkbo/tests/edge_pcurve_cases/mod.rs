@@ -46,7 +46,7 @@ fn observe(kind: usize, orientation: usize, cached: bool) -> Vec<f64> {
         Point2::new(9., 8.),
         Direction2::new(1., 0.).unwrap(),
     )))
-    .cast();
+    .into_upcast();
     let mut range = (9., 8.);
     let mut tolerance = 9.;
     let simple = algo_tools2d::has_curve_on_surface_simple(&edge, &fixture.face).unwrap();

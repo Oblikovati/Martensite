@@ -25,7 +25,8 @@ fn native_closed_predicate_and_direct_seam_helper() {
     assert!(BRepTool::is_closed_on_face(&edge, &face).unwrap());
 }
 fn cylindrical_seam() -> (Face, Edge) {
-    let surface = Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.).unwrap()).cast();
+    let surface =
+        Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.).unwrap()).into_upcast();
     let face = BRepBuilderAPIMakeFace::from_surface_bounds(
         &surface,
         (0., std::f64::consts::TAU, -2., 2.),

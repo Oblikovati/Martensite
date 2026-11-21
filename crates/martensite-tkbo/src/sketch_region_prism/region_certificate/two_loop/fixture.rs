@@ -64,7 +64,8 @@ pub(super) fn cubic(scale: f64, offset: [f64; 2]) -> Shape {
 /// Build the existing cubic fixture from explicitly authored stored poles.
 pub(in crate::sketch_region_prism) fn authored_cubic(points: [Point3; 4]) -> Shape {
     let poles = Array1::from_shared(&points, 1);
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&poles).unwrap()).cast();
+    let curve: Handle<dyn GeomCurve> =
+        Handle::new(GeomBezierCurve::new(&poles).unwrap()).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

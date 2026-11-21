@@ -145,10 +145,10 @@ impl FaceFace {
     fn intersection_domains(&mut self) -> Result<[Rc<dyn TheTopolTool>; 2], Failure> {
         let domains: [Rc<dyn TheTopolTool>; 2] = [
             Rc::new(super::super::TopolTool::with_surface(
-                &self.surfaces[0].clone().cast(),
+                &self.surfaces[0].upcast(),
             )?),
             Rc::new(super::super::TopolTool::with_surface(
-                &self.surfaces[1].clone().cast(),
+                &self.surfaces[1].upcast(),
             )?),
         ];
         self.kernel.constructor.load(
@@ -170,8 +170,8 @@ impl FaceFace {
             &self.surfaces[1],
             self.tolerance(),
         )?;
-        let first = self.surfaces[0].clone().cast();
-        let second = self.surfaces[1].clone().cast();
+        let first = self.surfaces[0].upcast();
+        let second = self.surfaces[1].upcast();
         let step =
             IntPatchIntersection::define_uv_max_step(&first, &*domains[0], &second, &*domains[1])?;
         let both_splines = self.surfaces[0].get_type()? == SurfaceType::BSplineSurface
@@ -208,7 +208,7 @@ impl FaceFace {
             &self.surfaces[1],
             self.tolerance(),
         )?;
-        let first = self.surfaces[0].clone().cast();
+        let first = self.surfaces[0].upcast();
         let tolerance = self.tolerance();
         if same {
             return self.kernel.intersection.perform_self(
@@ -226,8 +226,8 @@ impl FaceFace {
         analytic: bool,
         tangential: f64,
     ) -> Result<(), Failure> {
-        let first = self.surfaces[0].clone().cast();
-        let second = self.surfaces[1].clone().cast();
+        let first = self.surfaces[0].upcast();
+        let second = self.surfaces[1].upcast();
         let tolerance = self.tolerance();
         let options = IntPatchIntersectionOptions {
             is_geom_int: analytic,

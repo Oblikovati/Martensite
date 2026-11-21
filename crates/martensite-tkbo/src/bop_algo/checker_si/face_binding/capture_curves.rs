@@ -21,7 +21,7 @@ pub(super) fn space(source: &Handle<dyn GeomCurve>) -> Result<OwnedSpaceCurve, B
         .ok_or_else(|| unsupported("3D curve", "null"))?
         .copy()?
         .cast::<dyn GeomCurve>();
-    if let Some(line) = curve.cast::<GeomLine>().get() {
+    if let Some(line) = curve.downcast::<GeomLine>().get() {
         let position = line.position();
         let origin = position.location();
         let direction = position.direction();
@@ -30,7 +30,7 @@ pub(super) fn space(source: &Handle<dyn GeomCurve>) -> Result<OwnedSpaceCurve, B
             direction: [direction.x(), direction.y(), direction.z()],
         }));
     }
-    let handle = curve.cast::<GeomBSplineCurve>();
+    let handle = curve.downcast::<GeomBSplineCurve>();
     let spline = handle
         .get()
         .ok_or_else(|| unsupported("3D curve", format!("{:?}", curve.dynamic_type())))?;
@@ -62,7 +62,7 @@ pub(super) fn plane(source: &Handle<dyn Geom2dCurve>) -> Result<OwnedLine<2>, Bi
         .ok_or_else(|| unsupported("stored pcurve", "null"))?
         .copy()?
         .cast::<dyn Geom2dCurve>();
-    let handle = curve.cast::<Geom2dLine>();
+    let handle = curve.downcast::<Geom2dLine>();
     let line = handle.get().ok_or_else(|| {
         unsupported(
             "pcurve map",

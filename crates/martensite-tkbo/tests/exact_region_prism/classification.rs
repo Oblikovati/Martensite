@@ -27,7 +27,7 @@ fn cubic_controls(
     pcurve: &Handle<dyn martensite_tkg2d::geom2d::Geom2dCurve>,
     scale: f64,
 ) -> Vec<[f64; 2]> {
-    let curve = pcurve.cast::<Geom2dBezierCurve>();
+    let curve = pcurve.downcast::<Geom2dBezierCurve>();
     let curve = curve.get().expect("pcurve: expected Bézier representation");
     assert!(!curve.is_rational());
     let controls: Vec<[f64; 2]> = (1..=curve.nb_poles())

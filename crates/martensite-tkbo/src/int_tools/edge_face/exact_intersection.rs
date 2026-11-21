@@ -13,8 +13,8 @@ pub(super) fn exact_intersection_parameter(
     first: f64,
     last: f64,
 ) -> Result<Option<f64>, Failure> {
-    let curve = curve.shallow_copy()?.cast();
-    let surface = surface.shallow_copy()?.cast();
+    let curve = curve.shallow_copy()?;
+    let surface = surface.shallow_copy()?;
     let mut intersector = HInter::new();
     intersector.perform(&curve, &surface)?;
     if !intersector.is_done() {

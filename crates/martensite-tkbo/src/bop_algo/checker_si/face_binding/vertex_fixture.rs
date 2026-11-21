@@ -62,7 +62,7 @@ fn vertex(tolerance: f64, offset: f64) -> Vertex {
         .unwrap();
     vertex
         .tshape()
-        .cast::<BRepTVertex>()
+        .downcast::<BRepTVertex>()
         .get()
         .unwrap()
         .set_tolerance(tolerance);

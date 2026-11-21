@@ -47,7 +47,7 @@ fn mutate_actual_copied_curve(shape: &Shape) {
     use martensite_tkg3d::geom::GeomBezierCurve;
     let (curve, _, _) = BRepTool::curve(&edge(shape).unwrap()).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, Point3::new(8., 0., 1.))
         .unwrap();
 }
@@ -59,7 +59,7 @@ fn live_stored_pcurve_mutation_rejects_current_map_without_changing_scalar_captu
     let stored = BRepTool::curve_on_face(&actual, &census.inputs.construction_support).unwrap();
     stored
         .pcurve
-        .cast::<Geom2dLine>()
+        .downcast::<Geom2dLine>()
         .set_location(Point2::new(9., 8.));
     assert_live_geometry_incomplete(&census);
     assert_current_parameter_map_rejected(&census, 1);
@@ -70,7 +70,7 @@ fn live_plane_mutation_is_not_hidden_by_unchanged_face_identity() {
     let census = live_census();
     let (surface, _) =
         BRepTool::surface_with_location(&census.inputs.construction_support).unwrap();
-    let plane = surface.cast::<GeomPlane>();
+    let plane = surface.downcast::<GeomPlane>();
     let mut changed = plane.pln();
     changed.set_location(Point3::new(0., 0., 1.));
     plane.set_pln(changed);
@@ -110,8 +110,8 @@ fn unsupported_actual_support_is_typed_and_never_matches_historical_plane() {
         .inputs
         .construction_support
         .tshape()
-        .cast::<BRepTFace>()
-        .set_surface(&cylinder.cast());
+        .downcast::<BRepTFace>()
+        .set_surface(&cylinder.upcast());
     assert_live_geometry_incomplete(&census);
     assert_unsupported_support_preserved(&census);
 }

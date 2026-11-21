@@ -16,7 +16,8 @@ pub fn closed_analytic_cubic(scale: f64, reverse: bool) -> Shape {
         Point3::new(0., 0., 0.),
     ];
     let poles = Array1::from_shared(&points, 1);
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&poles).unwrap()).cast();
+    let curve: Handle<dyn GeomCurve> =
+        Handle::new(GeomBezierCurve::new(&poles).unwrap()).into_upcast();
     let source = BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

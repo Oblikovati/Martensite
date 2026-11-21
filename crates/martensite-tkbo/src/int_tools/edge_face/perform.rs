@@ -48,7 +48,7 @@ impl EdgeFace {
             .get()
             .expect("edge-face context")
             .surface_adaptor(&self.face)?;
-        self.surface = cached.read().shallow_copy()?.cast();
+        self.surface = cached.read().shallow_copy()?.into_downcast();
         let curve = self.curve.get().expect("initialized edge-face curve");
         let (edge_tol, face_tol) = (
             BRepTool::edge_tolerance(&self.edge)?,

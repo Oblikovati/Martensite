@@ -135,7 +135,8 @@ impl FaceFace {
                 continue;
             }
             let pcurve =
-                GeomIntIntSS::make_bspline2d(&part.line, part.first, part.last, index == 0)?.cast();
+                GeomIntIntSS::make_bspline2d(&part.line, part.first, part.last, index == 0)?
+                    .into_upcast();
             retry.pcurves_ok = retry.pcurves_ok
                 && pcurve_checks::check_pcurve(&pcurve, &self.faces[index], &self.context)?;
             set_pcurve(&mut curve, index, &pcurve);
@@ -198,7 +199,7 @@ impl FaceFace {
         );
         let mut tolerance = self.approximation_tolerance;
         let projected = self.project_pcurve(index, curve.curve(), range, &mut tolerance, false)?;
-        Ok(projected.cast::<Geom2dBSplineCurve>().cast())
+        Ok(projected.downcast::<Geom2dBSplineCurve>().into_upcast())
     }
 }
 fn invalid_pcurve(

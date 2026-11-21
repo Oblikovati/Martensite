@@ -64,7 +64,7 @@ fn intersecting_planes() -> [Face; 2] {
 }
 
 fn plane_face(frame: Axis3) -> Face {
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).cast();
+    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).into_upcast();
     BRepBuilderAPIMakeFace::from_surface_bounds(&surface, (-2.0, 2.0, -2.0, 2.0), 1e-7)
         .unwrap()
         .face()
@@ -73,7 +73,7 @@ fn plane_face(frame: Axis3) -> Face {
 
 fn replace_source_surface(face: &Face) {
     let frame = Axis3::new(Point3::new(20.0, 30.0, 40.0), Direction3::Z, Direction3::X).unwrap();
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).cast();
+    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).into_upcast();
     BRepBuilder::default()
         .update_face(face, &surface, &Location::default(), 1e-7)
         .unwrap();

@@ -21,9 +21,10 @@ impl Tools {
         range_tolerance: f64,
         parallel: bool,
     ) -> Result<bool, Failure> {
-        let spatial = Handle::new(GeomAdaptorCurve::with_range(curve, first, last)?).into_cast();
-        let planar = Handle::new(Geom2dAdaptorCurve::with_range(pcurve, first, last)?).into_cast();
-        let surface = Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_cast();
+        let spatial = Handle::new(GeomAdaptorCurve::with_range(curve, first, last)?).into_upcast();
+        let planar =
+            Handle::new(Geom2dAdaptorCurve::with_range(pcurve, first, last)?).into_upcast();
+        let surface = Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
         let on_surface = Handle::new(Adaptor3dCurveOnSurface::with_curve(&planar, &surface)?);
         let mut check = CheckCurveOnSurface::with_curve(&spatial, range_tolerance);
         check.set_parallel(parallel);

@@ -55,7 +55,7 @@ fn observe_utilities(kind: usize, orientation: usize, cached: bool) -> Vec<f64> 
         GeomTrimmedCurve::new(&fixture.curve, fixture.range.0, fixture.range.1, true, true)
             .unwrap(),
     )
-    .cast();
+    .into_upcast();
     let adjusted =
         algo_tools2d::adjust_pcurve_for_curve(&fixture.face, &bounded, &curve, context).unwrap();
     append_point(&mut output, adjusted.value(parameter).unwrap());
@@ -110,7 +110,7 @@ fn native_isoline_flags_ignore_direction_sign() {
             Point2::new(0., 0.),
             Direction2::new(x, y).unwrap(),
         )))
-        .cast();
+        .into_upcast();
         BRepBuilder::default()
             .update_edge_pcurve_on_face(&edge, &curve, &fixture.face, 1e-7)
             .unwrap();

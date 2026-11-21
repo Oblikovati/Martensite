@@ -112,7 +112,7 @@ fn bezier_surface() -> martensite_tkernel::standard::Handle<dyn GeomSurface> {
     poles.set_value(2, 1, Point3::new(1.0, 0.0, 0.0)).unwrap();
     poles.set_value(1, 2, Point3::new(0.0, 1.0, 0.0)).unwrap();
     poles.set_value(2, 2, Point3::new(1.0, 1.0, 0.0)).unwrap();
-    martensite_tkernel::standard::Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast()
+    martensite_tkernel::standard::Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast()
 }
 
 fn bspline_surface() -> martensite_tkernel::standard::Handle<dyn GeomSurface> {
@@ -135,7 +135,7 @@ fn bspline_surface() -> martensite_tkernel::standard::Handle<dyn GeomSurface> {
         (false, false),
     )
     .unwrap();
-    martensite_tkernel::standard::Handle::new(spline).cast()
+    martensite_tkernel::standard::Handle::new(spline).into_upcast()
 }
 
 fn curved_bezier_surface() -> martensite_tkernel::standard::Handle<dyn GeomSurface> {
@@ -148,7 +148,7 @@ fn curved_bezier_surface() -> martensite_tkernel::standard::Handle<dyn GeomSurfa
             poles.set_value(u, v, Point3::new(x, y, z)).unwrap();
         }
     }
-    martensite_tkernel::standard::Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast()
+    martensite_tkernel::standard::Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast()
 }
 
 fn curved_bspline_surface() -> martensite_tkernel::standard::Handle<dyn GeomSurface> {
@@ -170,7 +170,7 @@ fn curved_bspline_surface() -> martensite_tkernel::standard::Handle<dyn GeomSurf
         (false, false),
     )
     .unwrap();
-    martensite_tkernel::standard::Handle::new(spline).cast()
+    martensite_tkernel::standard::Handle::new(spline).into_upcast()
 }
 
 fn cubic_knots() -> (

@@ -33,10 +33,10 @@ impl<const DIM: usize> CapturedMetricCurve<DIM> {
 pub(crate) fn capture_space_curve(
     curve: &Handle<dyn GeomCurve>,
 ) -> Result<CapturedMetricCurve<3>, CapturedGeometryCause> {
-    if let Some(bezier) = curve.cast::<GeomBezierCurve>().get() {
+    if let Some(bezier) = curve.downcast::<GeomBezierCurve>().get() {
         return Ok(space_bezier(bezier));
     }
-    if let Some(line) = curve.cast::<GeomLine>().get() {
+    if let Some(line) = curve.downcast::<GeomLine>().get() {
         let frame = line.position();
         let p = frame.location();
         let d = frame.direction();
@@ -50,10 +50,10 @@ pub(crate) fn capture_space_curve(
 pub(crate) fn capture_plane_curve(
     curve: &Handle<dyn Geom2dCurve>,
 ) -> Result<CapturedMetricCurve<2>, CapturedGeometryCause> {
-    if let Some(bezier) = curve.cast::<Geom2dBezierCurve>().get() {
+    if let Some(bezier) = curve.downcast::<Geom2dBezierCurve>().get() {
         return Ok(plane_bezier(bezier));
     }
-    if let Some(line) = curve.cast::<Geom2dLine>().get() {
+    if let Some(line) = curve.downcast::<Geom2dLine>().get() {
         let p = line.location();
         let d = line.direction();
         return Ok(CapturedMetricCurve::Line {

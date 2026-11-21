@@ -48,8 +48,8 @@ pub(super) fn correct_surface(
     Ok(())
 }
 fn nested_basis(surface: &Handle<dyn GeomSurface>) -> bool {
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
-    let offset = surface.cast::<GeomOffsetSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
+    let offset = surface.downcast::<GeomOffsetSurface>();
     let basis = if !trimmed.is_null() {
         trimmed.basis_surface()
     } else if !offset.is_null() {
@@ -57,8 +57,8 @@ fn nested_basis(surface: &Handle<dyn GeomSurface>) -> bool {
     } else {
         return false;
     };
-    !basis.cast::<GeomRectangularTrimmedSurface>().is_null()
-        || !basis.cast::<GeomOffsetSurface>().is_null()
+    !basis.downcast::<GeomRectangularTrimmedSurface>().is_null()
+        || !basis.downcast::<GeomOffsetSurface>().is_null()
 }
 fn enlarge_bounds(bounds: &mut [f64; 4], natural: [f64; 4], periodic: [bool; 2], delta: f64) {
     for axis in [0, 1] {
@@ -131,7 +131,7 @@ impl SeamBounds {
         if pcurve.pcurve.is_null() {
             return Ok(false);
         }
-        let line = pcurve.pcurve.cast::<Geom2dLine>();
+        let line = pcurve.pcurve.downcast::<Geom2dLine>();
         if line.is_null() {
             return Ok(false);
         }
