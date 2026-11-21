@@ -108,7 +108,7 @@ fn add_co_edge(
     range: (f64, f64),
 ) {
     let pcurve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::new(Axis2d::new(line.0, line.1))).into_cast();
+        Handle::new(Geom2dLine::new(Axis2d::new(line.0, line.1))).into_upcast();
     boundary.co_edges.push(SurfaceBoundaryCoEdge {
         edge_index,
         orientation,

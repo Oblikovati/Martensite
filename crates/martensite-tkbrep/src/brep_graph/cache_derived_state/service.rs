@@ -12,7 +12,7 @@ use crate::brep_graph::cache::{BRepGraphCache, CacheBase, CacheType};
 use crate::brep_graph::copy_remap::CopyRemap;
 use crate::brep_graph::{BRepGraph, CoEdgeId, EdgeId, NodeId, ShellId, WireId};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Guid, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::OnceLock;
 
@@ -49,11 +49,10 @@ pub(super) fn ensure_size<T: Default + Clone>(entries: &mut Vec<T>, index: u32) 
 /// ```
 #[derive(Default)]
 pub struct CacheDerivedState {
-    transient: StandardTransient,
     pub(super) base: CacheBase,
     pub(super) entries: SharedState<DerivedEntries>,
 }
-impl_transient!(CacheDerivedState, "BRepGraph_CacheDerivedState", dyn BRepGraphCache, transient,
+impl_transient!(CacheDerivedState, "BRepGraph_CacheDerivedState", dyn BRepGraphCache,
     interfaces: [dyn BRepGraphCache]);
 
 /// `GetID()`: a1c2e3f4-5678-4abc-9def-0123456789ab.

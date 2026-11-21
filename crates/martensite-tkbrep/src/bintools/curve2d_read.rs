@@ -3,7 +3,7 @@ use super::curve_write::code;
 use super::errors::wrap_failure;
 use super::geometry_in::{read_degree, read_direction2, read_knots, read_point2, read_poles};
 use super::scalars::{get_bool, get_integer, get_real, stream_get};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
@@ -36,8 +36,8 @@ fn read_record(ctype: u8, stream: &mut IoStream) -> Result<Handle<dyn Geom2dCurv
     }
 }
 
-fn upcast<C: Transient + RuntimeTyped>(curve: C) -> Handle<dyn Geom2dCurve> {
-    Handle::new(curve).into_cast()
+fn upcast<C: HandleUpcast<dyn Geom2dCurve>>(curve: C) -> Handle<dyn Geom2dCurve> {
+    Handle::new(curve).into_upcast()
 }
 
 fn read_line(stream: &mut IoStream) -> Result<Geom2dLine, Failure> {

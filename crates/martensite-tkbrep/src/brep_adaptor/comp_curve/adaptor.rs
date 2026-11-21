@@ -52,10 +52,10 @@ impl Adaptor3dCurve for BRepAdaptorCompCurve {
                 .map(|curve| curve.shallow_copy())
                 .transpose()?
                 .unwrap_or_default();
-            copies.push(copy.cast::<BRepAdaptorCurve>());
+            copies.push(copy.downcast::<BRepAdaptorCurve>());
         }
         state.curves = Some(copies);
-        Ok(Handle::new(Self::from_state(state)).cast())
+        Ok(Handle::new(Self::from_state(state)).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         Ok(self.state.read().t_first)
@@ -113,7 +113,7 @@ impl Adaptor3dCurve for BRepAdaptorCompCurve {
     ) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
         let state = self.snapshot();
         let trimmed = Self::with_range(&state.wire, state.is_by_ac, first, last, tolerance)?;
-        Ok(Handle::new(trimmed).cast())
+        Ok(Handle::new(trimmed).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         self.state.read().wire.closed()

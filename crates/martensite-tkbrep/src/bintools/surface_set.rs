@@ -25,7 +25,7 @@ static LABELS: TableLabels = TableLabels {
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 /// use martensite_tkmath::gp::Axis3;
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let mut set = BinSurfaceSet::new();
 /// assert_eq!(set.add(&plane), 1);
 /// assert!(set.surface(1).unwrap() == plane);

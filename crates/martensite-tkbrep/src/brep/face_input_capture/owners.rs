@@ -1,7 +1,7 @@
 //! Typed retained owners keep every discovered cell alive until all leases drop.
 use super::types::{FaceCaptureBehavior as Behavior, FaceCaptureIncomplete as Incomplete};
 use crate::{brep::*, topods::TShape};
-use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient, TransientHandleTarget};
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dLine};
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBSplineSurface, GeomCurve, GeomLine, GeomPlane, GeomSurface,
@@ -42,7 +42,7 @@ impl Owner {
     }
 }
 
-pub(super) fn unsupported<T: Transient + RuntimeTyped + ?Sized>(
+pub(super) fn unsupported<T: TransientHandleTarget + ?Sized>(
     handle: &Handle<T>,
     expected: &'static str,
 ) -> Incomplete {
@@ -56,11 +56,11 @@ pub(super) fn unsupported<T: Transient + RuntimeTyped + ?Sized>(
 }
 
 pub(super) fn spatial_owner(handle: &Handle<dyn GeomCurve>) -> Result<Owner, Incomplete> {
-    let line = handle.cast::<GeomLine>();
+    let line = handle.downcast::<GeomLine>();
     if exact(&line) {
         return Ok(Owner::Line(line));
     }
-    let spline = handle.cast::<GeomBSplineCurve>();
+    let spline = handle.downcast::<GeomBSplineCurve>();
     if exact(&spline) {
         return Ok(Owner::Spline(spline));
     }
@@ -71,11 +71,11 @@ pub(super) fn surface_owner(
     handle: &Handle<dyn GeomSurface>,
     behavior: Behavior,
 ) -> Result<Owner, Incomplete> {
-    let plane = handle.cast::<GeomPlane>();
+    let plane = handle.downcast::<GeomPlane>();
     if exact(&plane) {
         return Ok(Owner::Plane(plane));
     }
-    let surface = handle.cast::<GeomSurfaceOfLinearExtrusion>();
+    let surface = handle.downcast::<GeomSurfaceOfLinearExtrusion>();
     if exact(&surface) {
         return Ok(Owner::Extrusion(surface));
     }
@@ -88,7 +88,7 @@ fn tensor_owner(handle: &Handle<dyn GeomSurface>, behavior: Behavior) -> Result<
             "stored plane or linear extrusion surface",
         ));
     }
-    let spline = handle.cast::<GeomBSplineSurface>();
+    let spline = handle.downcast::<GeomBSplineSurface>();
     if exact(&spline) {
         return Ok(Owner::SplineSurface(spline));
     }
@@ -99,11 +99,11 @@ fn tensor_owner(handle: &Handle<dyn GeomSurface>, behavior: Behavior) -> Result<
 }
 
 pub(super) fn planar_owner(handle: &Handle<dyn Geom2dCurve>) -> Result<Owner, Incomplete> {
-    let line = handle.cast::<Geom2dLine>();
+    let line = handle.downcast::<Geom2dLine>();
     if exact(&line) {
         return Ok(Owner::PlanarLine(line));
     }
-    let spline = handle.cast::<Geom2dBSplineCurve>();
+    let spline = handle.downcast::<Geom2dBSplineCurve>();
     if exact(&spline) {
         return Ok(Owner::PlanarSpline(spline));
     }
@@ -114,15 +114,15 @@ pub(super) fn representation_owner(
     handle: &Handle<dyn BRepCurveRepresentation>,
     behavior: Behavior,
 ) -> Result<Owner, Incomplete> {
-    let seam = handle.cast::<BRepCurveOnClosedSurface>();
+    let seam = handle.downcast::<BRepCurveOnClosedSurface>();
     if exact(&seam) {
         return Ok(Owner::Seam(seam));
     }
-    let pcurve = handle.cast::<BRepCurveOnSurface>();
+    let pcurve = handle.downcast::<BRepCurveOnSurface>();
     if exact(&pcurve) {
         return Ok(Owner::Parametric(pcurve));
     }
-    let curve = handle.cast::<BRepCurve3D>();
+    let curve = handle.downcast::<BRepCurve3D>();
     if exact(&curve) {
         return Ok(Owner::Spatial(curve));
     }
@@ -135,7 +135,7 @@ fn regularity_owner(
     if behavior == Behavior::StoredRepresentationsV1 {
         return Err(unsupported(handle, "spatial curve or one/two line pcurves"));
     }
-    let regularity = handle.cast::<BRepCurveOn2Surfaces>();
+    let regularity = handle.downcast::<BRepCurveOn2Surfaces>();
     if exact(&regularity) {
         return Ok(Owner::Regularity(regularity));
     }

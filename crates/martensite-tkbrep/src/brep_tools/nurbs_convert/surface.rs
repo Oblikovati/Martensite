@@ -88,7 +88,7 @@ impl NurbsConvertModification {
                 (v1, v2),
                 (true, true),
             )?;
-            result.surface = Handle::new(trimmed).cast();
+            result.surface = Handle::new(trimmed).into_upcast();
         }
         let Some(to_convert) = result.surface.get() else {
             return Ok(false);

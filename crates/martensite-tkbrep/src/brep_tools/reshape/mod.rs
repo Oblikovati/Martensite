@@ -6,9 +6,8 @@ use crate::brep::{BRepBuilder, BRepTool};
 use crate::topods::{self, Shape, Vertex};
 use crate::toptools::{MapOfShape, ShapeMapHasher};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::gp::Point3;
 use martensite_tkmath::toploc::Location;
@@ -358,15 +357,14 @@ pub trait ReShape: Transient {
         history::history_of(self.reshape_data())
     }
 }
-impl_transient_interface!(dyn ReShape, "BRepTools_ReShape", StandardTransient);
+parent_interface!(dyn ReShape, BRepToolsReShape, []);
 
 /// The base class `BRepTools_ReShape` itself.
 #[derive(Default)]
 pub struct BRepToolsReShape {
-    parent: StandardTransient,
     data: ReShapeData,
 }
-impl_transient!(BRepToolsReShape, "BRepTools_ReShape", StandardTransient, parent, interfaces: [dyn ReShape]);
+impl_transient!(BRepToolsReShape, "BRepTools_ReShape", dyn Transient, interfaces: [dyn ReShape]);
 
 impl BRepToolsReShape {
     /// `BRepTools_ReShape()`; `BRepToolsReShape::new()`.

@@ -1,4 +1,5 @@
 //! `TopExp_Explorer`: a depth-first search for the sub-shapes of one type.
+use crate::topods::ShapeView;
 use crate::topods::errors::null_shape;
 use crate::topods::{Shape, ShapeIterator};
 use martensite_tkernel::standard::Failure;
@@ -48,7 +49,11 @@ impl Default for Explorer {
 impl Explorer {
     /// `TopExp_Explorer(S, ToFind, ToAvoid)`; the native default `ToAvoid` is
     /// `ShapeEnum::Shape`; `Explorer::new(&shape, ShapeEnum::Edge, ShapeEnum::Shape)?`.
-    pub fn new(shape: &Shape, to_find: ShapeEnum, to_avoid: ShapeEnum) -> Result<Self, Failure> {
+    pub fn new(
+        shape: &ShapeView<'_>,
+        to_find: ShapeEnum,
+        to_avoid: ShapeEnum,
+    ) -> Result<Self, Failure> {
         let mut explorer = Self::default();
         explorer.init(shape, to_find, to_avoid)?;
         Ok(explorer)
@@ -58,7 +63,7 @@ impl Explorer {
     /// is found when it has the type `to_find`; `explorer.init(&shape, find, avoid)?`.
     pub fn init(
         &mut self,
-        shape: &Shape,
+        shape: &ShapeView<'_>,
         to_find: ShapeEnum,
         to_avoid: ShapeEnum,
     ) -> Result<(), Failure> {
@@ -75,11 +80,11 @@ impl Explorer {
 
     fn initialize_search(
         &mut self,
-        shape: &Shape,
+        shape: &ShapeView<'_>,
         to_find: ShapeEnum,
         to_avoid: ShapeEnum,
     ) -> Option<ShapeEnum> {
-        self.shape = shape.clone();
+        self.shape = shape.to_shape();
         self.to_find = to_find;
         self.to_avoid = to_avoid;
         // Nothing is found in a null shape, for SHAPE, or in a shape simpler than `to_find`.

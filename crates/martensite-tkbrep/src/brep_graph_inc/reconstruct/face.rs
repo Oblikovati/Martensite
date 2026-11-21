@@ -85,7 +85,7 @@ fn attach_triangulation(
     if triangulation.is_null() {
         return Ok(triangulation);
     }
-    let tface = face.tshape().cast::<BRepTFace>();
+    let tface = face.tshape().downcast::<BRepTFace>();
     if let Some(tface) = tface.get() {
         tface.set_triangulations(std::slice::from_ref(&triangulation), &triangulation)?;
     }

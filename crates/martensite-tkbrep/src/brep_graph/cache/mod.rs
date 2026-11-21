@@ -7,7 +7,7 @@ use crate::brep_graph::{
     VertexRefId,
 };
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, Guid, RuntimeTyped, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Guid, RuntimeTyped, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -196,7 +196,7 @@ pub trait BRepGraphCache: Transient {
     /// `OnDetached()`: called before the registry detaches this cache.
     fn on_detached(&self) {}
 }
-impl_transient_interface!(dyn BRepGraphCache, "BRepGraph_Cache", StandardTransient);
+impl_transient_interface!(dyn BRepGraphCache, "BRepGraph_Cache", dyn Transient);
 
 /// A concrete cache class with a static GUID (`T::GetID()`) for the registry's typed
 /// `Find<T>` and `Ensure<T>`; `Ensure` creates it with `Default`.

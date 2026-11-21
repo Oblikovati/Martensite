@@ -55,27 +55,27 @@ pub struct Builder;
 impl Builder {
     /// `MakeWire(W)`: an empty wire; `Builder.make_wire(&mut wire)`.
     pub fn make_wire(&self, wire: &mut Wire) {
-        self.make_shape(wire, &Handle::new(TWire::new()).into_cast());
+        self.make_shape(wire, &Handle::new(TWire::new()).into_upcast());
     }
 
     /// `MakeShell(S)`: an empty shell; `Builder.make_shell(&mut shell)`.
     pub fn make_shell(&self, shell: &mut Shell) {
-        self.make_shape(shell, &Handle::new(TShell::new()).into_cast());
+        self.make_shape(shell, &Handle::new(TShell::new()).into_upcast());
     }
 
     /// `MakeSolid(S)`: a solid covering the whole space (no shell); `Builder.make_solid(&mut solid)`.
     pub fn make_solid(&self, solid: &mut Solid) {
-        self.make_shape(solid, &Handle::new(TSolid::new()).into_cast());
+        self.make_shape(solid, &Handle::new(TSolid::new()).into_upcast());
     }
 
     /// `MakeCompSolid(C)`: an empty composite solid; `Builder.make_comp_solid(&mut c)`.
     pub fn make_comp_solid(&self, comp_solid: &mut CompSolid) {
-        self.make_shape(comp_solid, &Handle::new(TCompSolid::new()).into_cast());
+        self.make_shape(comp_solid, &Handle::new(TCompSolid::new()).into_upcast());
     }
 
     /// `MakeCompound(C)`: an empty compound; `Builder.make_compound(&mut compound)`.
     pub fn make_compound(&self, compound: &mut Compound) {
-        self.make_shape(compound, &Handle::new(TCompound::new()).into_cast());
+        self.make_shape(compound, &Handle::new(TCompound::new()).into_upcast());
     }
 
     /// The protected `MakeShape(S, T)`, public for the derived builders of other

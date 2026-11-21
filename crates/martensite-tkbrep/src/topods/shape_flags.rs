@@ -1,7 +1,7 @@
 //! The TShape flags seen through a shape. Each
 //! native member forwards to the TShape without a null check; the Rust members raise
 //! Standard_NullObject for a null shape instead of dereferencing it.
-use super::Shape;
+use super::ShapeView;
 use martensite_tkernel::standard::Failure;
 
 /// Declares a flag getter and setter pair forwarding to the TShape.
@@ -22,7 +22,7 @@ macro_rules! shape_flag {
     };
 }
 
-impl Shape {
+impl ShapeView<'_> {
     shape_flag!(free, set_free, "Free");
     shape_flag!(locked, set_locked, "Locked");
     shape_flag!(modified, set_modified, "Modified");

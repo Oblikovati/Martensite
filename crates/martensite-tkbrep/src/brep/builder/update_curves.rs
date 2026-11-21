@@ -52,7 +52,7 @@ pub fn update_curve3d(
     if last_is_gcurve {
         curve3d.set_range(range.0, range.1)?;
     }
-    list.push(Handle::new(curve3d).into_cast());
+    list.push(Handle::new(curve3d).into_upcast());
     Ok(())
 }
 
@@ -119,7 +119,7 @@ pub fn update_pcurve(
     if let Some((first_uv, last_uv)) = uv {
         representation.set_uv_points(first_uv, last_uv);
     }
-    list.push(Handle::new(representation).into_cast());
+    list.push(Handle::new(representation).into_upcast());
     Ok(())
 }
 
@@ -167,7 +167,7 @@ pub fn update_pcurves(
     if let Some((first_uv, last_uv)) = uv {
         representation.set_uv_points2(first_uv, last_uv);
     }
-    list.push(Handle::new(representation).into_cast());
+    list.push(Handle::new(representation).into_upcast());
     Ok(())
 }
 
@@ -189,7 +189,7 @@ pub fn update_regularity(
     }
     let regularity =
         BRepCurveOn2Surfaces::new(surfaces.0, surfaces.1, locations.0, locations.1, continuity);
-    list.push(Handle::new(regularity).into_cast());
+    list.push(Handle::new(regularity).into_upcast());
     Ok(())
 }
 
@@ -215,7 +215,7 @@ pub fn update_point_on_curve(
         point.set_parameter(parameter);
         return;
     }
-    list.push(Handle::new(BRepPointOnCurve::new(parameter, curve, location)).into_cast());
+    list.push(Handle::new(BRepPointOnCurve::new(parameter, curve, location)).into_upcast());
 }
 
 /// `UpdatePoints(lpr, p, PC, S, L)`: sets the parameter on the p-curve, or appends a
@@ -234,7 +234,7 @@ pub fn update_point_on_pcurve(
         return;
     }
     let point = BRepPointOnCurveOnSurface::new(parameter, pcurve, surface, location);
-    list.push(Handle::new(point).into_cast());
+    list.push(Handle::new(point).into_upcast());
 }
 
 /// `UpdatePoints(lpr, p1, p2, S, L)`: sets both parameters on the surface, or appends
@@ -250,6 +250,6 @@ pub fn update_point_on_surface(
         return point.set_parameter2(parameters.1);
     }
     let point = BRepPointOnSurface::new(parameters.0, parameters.1, surface, location);
-    list.push(Handle::new(point).into_cast());
+    list.push(Handle::new(point).into_upcast());
     Ok(())
 }

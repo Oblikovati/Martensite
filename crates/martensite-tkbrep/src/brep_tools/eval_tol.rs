@@ -84,11 +84,11 @@ fn measured_deviation(
     range: (f64, f64),
 ) -> Result<f64, Failure> {
     let curve: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_range(c3d, range.0, range.1)?).cast();
+        Handle::new(GeomAdaptorCurve::with_range(c3d, range.0, range.1)?).into_upcast();
     let pcurve: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(c2d, range.0, range.1)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(c2d, range.0, range.1)?).into_upcast();
     let adapted: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surface)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
     let on_surface = Handle::new(Adaptor3dCurveOnSurface::with_curve(&pcurve, &adapted)?);
     let mut check = CheckCurveOnSurface::with_curve(&curve, precision::p_confusion());
     check.perform(&on_surface);

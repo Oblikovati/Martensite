@@ -59,9 +59,9 @@ fn mapped_face(source: &Location) -> (Face, Handle<BRepTFace>) {
     let (mut face, fields) = face_fixture();
     face.set_location(source, false).unwrap();
     fields.set_location(source);
-    let surface = fields.surface().cast::<GeomSurfaceOfLinearExtrusion>();
+    let surface = fields.surface().downcast::<GeomSurfaceOfLinearExtrusion>();
     let edge = representations::seam_edge(&surface);
-    let seam = edge.curves()[1].cast::<BRepCurveOnClosedSurface>();
+    let seam = edge.curves()[1].downcast::<BRepCurveOnClosedSurface>();
     seam.curve_representation_base().set_location(source);
     representations::append_owner(&face, edge.cast());
     (face, fields)

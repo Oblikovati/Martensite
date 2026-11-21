@@ -5,7 +5,7 @@ use crate::brep_graph::layer::{AttachedGraph, BRepGraphLayer, LayerBase, LayerTy
 use crate::brep_graph::{ItemUid, NodeId, Uid};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, FlatMap};
-use martensite_tkernel::standard::{Failure, Guid, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::OnceLock;
 
@@ -169,11 +169,10 @@ impl Default for HistoryState {
 /// ```
 #[derive(Default)]
 pub struct LayerHistory {
-    transient: StandardTransient,
     base: LayerBase,
     state: SharedState<HistoryState>,
 }
-impl_transient!(LayerHistory, "BRepGraph_LayerHistory", dyn BRepGraphLayer, transient,
+impl_transient!(LayerHistory, "BRepGraph_LayerHistory", dyn BRepGraphLayer,
     interfaces: [dyn BRepGraphLayer]);
 
 /// `GetID()`: 7b6756a1-0f98-48b0-9985-c0ab41e38012.

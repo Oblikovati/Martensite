@@ -10,9 +10,7 @@ use crate::brep_graph::copy_remap::CopyRemap;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{
-    Failure, Guid, Handle, SharedState, StandardTransient, Transient,
-};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::OnceLock;
 
@@ -54,7 +52,7 @@ pub trait CacheMeshDriver: Transient {
 impl_transient_interface!(
     dyn CacheMeshDriver,
     "BRepGraph_CacheMesh::Driver",
-    StandardTransient
+    dyn Transient
 );
 
 // `mySlots` and `myActiveSlot`, behind the cache lock.
@@ -111,11 +109,10 @@ impl MeshSlots {
 /// ```
 #[derive(Default)]
 pub struct CacheMesh {
-    transient: StandardTransient,
     base: CacheBase,
     slots: SharedState<MeshSlots>,
 }
-impl_transient!(CacheMesh, "BRepGraph_CacheMesh", dyn BRepGraphCache, transient,
+impl_transient!(CacheMesh, "BRepGraph_CacheMesh", dyn BRepGraphCache,
     interfaces: [dyn BRepGraphCache]);
 
 /// `GetID()`: d706ee7b-3c3a-4994-8fdc-c6902bd81450.
