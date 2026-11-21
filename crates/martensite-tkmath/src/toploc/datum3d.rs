@@ -1,16 +1,15 @@
 use crate::gp::{Transform3, TransformForm};
 use martensite_tkernel::standard::{
-    StandardTransient,
+    Transient,
     dump::{self, DumpOutput, DumpStream},
 };
 use std::io::{self, Write};
 /// `Datum3`: an elementary coordinate system whose identity is its handle; `Datum3::new(transform)`.
 #[derive(Default)]
 pub struct Datum3 {
-    base: StandardTransient,
     transform: Transform3,
 }
-martensite_tkernel::impl_transient!(Datum3, "TopLoc_Datum3D", StandardTransient, base);
+martensite_tkernel::impl_transient!(Datum3, "TopLoc_Datum3D", dyn Transient);
 impl std::fmt::Debug for Datum3 {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
@@ -22,10 +21,7 @@ impl std::fmt::Debug for Datum3 {
 impl Datum3 {
     /// Stores the transformation; a non-rigid one is not rejected; `Datum3::new(transform)`.
     pub fn new(transform: Transform3) -> Self {
-        Self {
-            base: StandardTransient::default(),
-            transform,
-        }
+        Self { transform }
     }
     /// Borrows the transformation that maps this datum to the default one; `datum.transformation()`.
     pub const fn transformation(&self) -> &Transform3 {

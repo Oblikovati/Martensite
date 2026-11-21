@@ -12,7 +12,7 @@ use super::{CoherentLink, CoherentNode, CoherentTriangle};
 use crate::{gp::Xyz, poly::Triangulation};
 use martensite_tkernel::{
     ncollection::BaseAllocator,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 /// A removed node and the node the mesh was reconnected to, as `TwoIntegers`;
 /// `TwoIntegers::new(4, 2)`.
@@ -32,7 +32,6 @@ impl TwoIntegers {
 /// `CoherentTriangulation`; `CoherentTriangulation::new()`.
 #[derive(Default)]
 pub struct CoherentTriangulation {
-    base: StandardTransient,
     pub(super) triangles: Vec<CoherentTriangle>,
     pub(super) nodes: Vec<CoherentNode>,
     // Link slots and the used count: DynamicArray::clear keeps its blocks, so
@@ -45,8 +44,7 @@ pub struct CoherentTriangulation {
 martensite_tkernel::impl_transient!(
     CoherentTriangulation,
     "Poly_CoherentTriangulation",
-    StandardTransient,
-    base
+    dyn Transient
 );
 impl CoherentTriangulation {
     /// An empty structure; `CoherentTriangulation::new()`.
@@ -57,7 +55,6 @@ impl CoherentTriangulation {
     /// `CoherentTriangulation::new_in(arena)`.
     pub fn new_in(allocator: BaseAllocator) -> Self {
         Self {
-            base: StandardTransient::default(),
             triangles: Vec::new(),
             nodes: Vec::new(),
             links: Vec::new(),

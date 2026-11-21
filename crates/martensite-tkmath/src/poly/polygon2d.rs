@@ -3,7 +3,7 @@ use crate::gp::Point2;
 use martensite_tkernel::{
     ncollection::Array1,
     standard::{
-        Failure, Handle, SharedState, StandardTransient,
+        Failure, Handle, SharedState, Transient,
         dump::{self, DumpOutput},
     },
 };
@@ -14,10 +14,9 @@ struct Polygon2DFields {
 }
 /// `Polygon2D`: one-based 2D nodes, the closing node repeated; `Polygon2D::new(4)?`.
 pub struct Polygon2D {
-    base: StandardTransient,
     fields: SharedState<Polygon2DFields>,
 }
-martensite_tkernel::impl_transient!(Polygon2D, "Poly_Polygon2D", StandardTransient, base);
+martensite_tkernel::impl_transient!(Polygon2D, "Poly_Polygon2D", dyn Transient);
 impl Polygon2D {
     /// Allocates `nb_nodes` origin nodes at `1..=nb_nodes`; `Polygon2D::new(4)?`.
     pub fn new(nb_nodes: i32) -> Result<Self, Failure> {
@@ -31,7 +30,6 @@ impl Polygon2D {
     }
     fn from_fields(nodes: Array1<'static, Point2>) -> Self {
         Self {
-            base: StandardTransient::default(),
             fields: SharedState::new(Polygon2DFields {
                 deflection: 0.0,
                 nodes,

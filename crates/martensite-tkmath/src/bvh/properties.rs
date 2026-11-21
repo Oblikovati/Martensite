@@ -6,13 +6,9 @@ use martensite_tkernel::ncollection::{Mat4, MatrixScalar, Vec4};
 use std::any::Any;
 use std::fmt::Debug;
 
-/// Abstract properties of a geometric object, shared through a handle.
-///
-/// `as_any` stands in for `Handle(...)::DownCast`; `properties.as_any().downcast_ref::<BvhTransform<f64>>()`.
-pub trait BvhProperties: Any + Debug + Send + Sync {
-    /// Returns the object for run-time downcasting.
-    fn as_any(&self) -> &dyn Any;
-}
+/// Shared properties of a geometric object.
+/// Example: `let erased: &dyn Any = properties.as_ref();`.
+pub trait BvhProperties: Any + Debug + Send + Sync {}
 
 /// Transform properties of a geometric object (the only matrix type is 4x4).
 ///
@@ -101,11 +97,4 @@ where
     let product = *matrix * *vector;
     product * T::from_double(1.0 / product.w.to_double())
 }
-impl<T> BvhProperties for BvhTransform<T>
-where
-    T: MatrixScalar + Debug + Send + Sync + 'static,
-{
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl<T> BvhProperties for BvhTransform<T> where T: MatrixScalar + Debug + Send + Sync + 'static {}

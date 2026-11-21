@@ -2,7 +2,7 @@ use super::triangulation::dump_size;
 use martensite_tkernel::{
     ncollection::{Array1, HArray1OfReal},
     standard::{
-        Failure, Handle, SharedState, StandardTransient,
+        Failure, Handle, SharedState, Transient,
         dump::{self, DumpOutput},
     },
 };
@@ -15,14 +15,12 @@ struct PolygonOnTriangulationFields {
 /// `PolygonOnTriangulation`: node indices into a triangulation with optional
 /// parameters; `PolygonOnTriangulation::new(4, false)?`.
 pub struct PolygonOnTriangulation {
-    base: StandardTransient,
     fields: SharedState<PolygonOnTriangulationFields>,
 }
 martensite_tkernel::impl_transient!(
     PolygonOnTriangulation,
     "Poly_PolygonOnTriangulation",
-    StandardTransient,
-    base
+    dyn Transient
 );
 const NO_PARAMETERS: &str = "Poly_PolygonOnTriangulation::Parameter : parameters is NULL";
 impl PolygonOnTriangulation {
@@ -60,7 +58,6 @@ impl PolygonOnTriangulation {
     }
     fn from_fields(nodes: Array1<'static, i32>, parameters: Handle<HArray1OfReal>) -> Self {
         Self {
-            base: StandardTransient::default(),
             fields: SharedState::new(PolygonOnTriangulationFields {
                 deflection: 0.0,
                 nodes,

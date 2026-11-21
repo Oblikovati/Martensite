@@ -6,12 +6,11 @@ use crate::gp::{Transform3, Xyz};
 use map::MergedNodesMap;
 use martensite_tkernel::{
     ncollection::Vec3,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 use std::collections::HashSet;
 /// Node merging tool writing into an output triangulation; `MergeNodesTool::new(0.5, 0.0, -1)`.
 pub struct MergeNodesTool {
-    base: StandardTransient,
     output: Handle<Triangulation>,
     node_map: MergedNodesMap,
     // Only membership matters for Map::add_ref, so its bucket order is not kept.
@@ -27,12 +26,7 @@ pub struct MergeNodesTool {
     drop_degenerate: bool,
     merge_elements: bool,
 }
-martensite_tkernel::impl_transient!(
-    MergeNodesTool,
-    "Poly_MergeNodesTool",
-    StandardTransient,
-    base
-);
+martensite_tkernel::impl_transient!(MergeNodesTool, "Poly_MergeNodesTool", dyn Transient);
 impl MergeNodesTool {
     /// Merges a whole mesh; a null handle for an input under 3 nodes or without triangles,
     /// or, unless `force`, when nothing merged; `MergeNodesTool::merge_nodes(&mesh, t, false, 0.5, 0.0, true)?`.
@@ -71,7 +65,6 @@ impl MergeNodesTool {
             995329
         };
         let mut tool = Self {
-            base: StandardTransient::default(),
             output: Handle::new(Triangulation::new()),
             node_map: MergedNodesMap::new(buckets),
             elements: HashSet::new(),

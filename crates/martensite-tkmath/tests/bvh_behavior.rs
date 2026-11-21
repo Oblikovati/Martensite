@@ -264,12 +264,10 @@ fn transform_constructor_keeps_identity_inverse_until_set() {
     let properties: Arc<dyn BvhProperties> = Arc::new(assigned);
     let mut set = triangulation(&[0.0]);
     set.set_properties(Some(properties));
-    let stored = set
-        .properties()
-        .unwrap()
-        .as_any()
-        .downcast_ref::<BvhTransform<f64>>();
-    assert_eq!(stored.unwrap().transform(), &matrix);
+    let erased: &dyn std::any::Any = set.properties().unwrap().as_ref();
+    let stored = erased.downcast_ref::<BvhTransform<f64>>().unwrap();
+    assert_eq!(stored.transform(), &matrix);
+    assert!(erased.downcast_ref::<BvhTransform<f32>>().is_none());
 }
 
 /// Fails on node 3 so a worker abandons the queue mid-build.
