@@ -1,6 +1,7 @@
 //! Synchronize two parameter spaces before splitting, then independently rebuild reverse seams.
 use super::split_values::Knots;
 use super::*;
+use crate::shape_upgrade::EdgeDivider;
 use martensite_tkbrep::topods;
 pub(super) struct DividedCurves {
     pub spatial: SplitCurves3d,
@@ -8,8 +9,8 @@ pub(super) struct DividedCurves {
     pub reversed: SplitCurves2d,
     pub knots3: Knots,
     pub knots2: Knots,
-    pub split3: Handle<ShapeUpgradeSplitCurve3d>,
-    pub split2: Handle<ShapeUpgradeSplitCurve2d>,
+    pub split3: Handle<dyn SplitCurve3d>,
+    pub split2: Handle<dyn SplitCurve2d>,
     pub transfer: Handle<dyn TransferParameters>,
     pub was_same_range: bool,
     pub has3: bool,
@@ -20,7 +21,7 @@ pub(super) fn build<T: WireDivider + ?Sized>(
     tool: &T,
     edge: &Edge,
     face: &Face,
-    criterion: &Handle<ShapeUpgradeEdgeDivide>,
+    criterion: &Handle<dyn EdgeDivider>,
 ) -> Result<DividedCurves, Failure> {
     let mut curves = prepare_curves(tool, edge, face, criterion)?;
     synchronize(&mut curves)?;
@@ -40,22 +41,22 @@ fn prepare_curves<T: WireDivider + ?Sized>(
     tool: &T,
     edge: &Edge,
     face: &Face,
-    criterion: &Handle<ShapeUpgradeEdgeDivide>,
+    criterion: &Handle<dyn EdgeDivider>,
 ) -> Result<DividedCurves, Failure> {
     let transfer = tool.transfer_param_tool();
     state::require(&transfer, "parameter transfer")?;
-    transfer.set_max_tolerance(tool.wire_divide_base().max_tolerance());
-    let transfer = transfer.cast::<dyn TransferParameters>();
+    transfer
+        .transfer_parameter_data()
+        .set_max_tolerance(tool.wire_divide_base().max_tolerance());
     transfer.init(edge, face)?;
-    let virtual_criterion = criterion.cast::<dyn EdgeDivider>();
     Ok(DividedCurves {
         spatial: Handle::default(),
         planar: Handle::default(),
         reversed: Handle::default(),
         knots3: criterion.knots_3d(),
         knots2: criterion.knots_2d(),
-        split3: virtual_criterion.split_curve_3d_tool(),
-        split2: virtual_criterion.split_curve_2d_tool(),
+        split3: criterion.split_curve_3d_tool(),
+        split2: criterion.split_curve_2d_tool(),
         was_same_range: transfer.is_same_range(),
         transfer,
         has3: criterion.has_curve_3d(),
@@ -71,10 +72,10 @@ fn synchronize(curves: &mut DividedCurves) -> Result<(), Failure> {
         split_values::correct(&curves.knots3, &curves.knots2, &values2, &values3)?;
     }
     if curves.has2 {
-        build_curve(&curves.split2.cast(), &curves.knots3, &values2)?;
+        build_curve(&curves.split2, &curves.knots3, &values2)?;
     }
     if curves.has3 {
-        build_curve(&curves.split3.cast(), &curves.knots2, &values3)?;
+        build_curve(&curves.split3, &curves.knots2, &values3)?;
     }
     if curves.has2 {
         curves.knots2 = curves.split2.split_values();
@@ -85,7 +86,7 @@ fn synchronize(curves: &mut DividedCurves) -> Result<(), Failure> {
     Ok(())
 }
 fn build_curve(
-    tool: &Handle<dyn SplitCurve>,
+    tool: &Handle<impl SplitCurve + ?Sized>,
     other: &Knots,
     values: &Knots,
 ) -> Result<(), Failure> {
@@ -106,7 +107,7 @@ fn reverse_seam(curves: &mut DividedCurves, edge: &Edge, face: &Face) -> Result<
         return Ok(());
     }
     curves.split2.init_curve_range(&curve, first, last)?;
-    let splitter = curves.split2.cast::<dyn SplitCurve>();
+    let splitter = &curves.split2;
     if !curves.knots2.is_null() {
         splitter.set_split_values(&curves.knots2)?;
     }
@@ -150,7 +151,7 @@ mod tests {
         spatial
             .split_curve_data()
             .with_mut(|fields| fields.status = 1);
-        let curves = short_circuit_fixture(&spatial);
+        let curves = short_circuit_fixture(&spatial.upcast());
         assert!(curves.is_done().unwrap());
         spatial
             .split_curve_data()
@@ -160,7 +161,7 @@ mod tests {
             "Standard_NullObject"
         );
     }
-    fn short_circuit_fixture(spatial: &Handle<ShapeUpgradeSplitCurve3d>) -> DividedCurves {
+    fn short_circuit_fixture(spatial: &Handle<dyn SplitCurve3d>) -> DividedCurves {
         DividedCurves {
             spatial: Handle::default(),
             planar: Handle::default(),

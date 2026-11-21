@@ -56,7 +56,7 @@ fn face_mode_defaults_and_shape_fix_root_parent_are_native() {
     fixer.set_fix_add_natural_bound_mode(1);
     assert_eq!(fixer.fix_orientation_mode(), 0);
     assert_eq!(fixer.fix_add_natural_bound_mode(), 1);
-    let parent: &ShapeFixRoot = &fixer;
+    let parent: &dyn FixRoot = &fixer;
     parent.set_precision(0.25);
     assert_eq!(fixer.precision(), 0.25);
     fixer.set_min_tolerance(0.125);
@@ -68,7 +68,7 @@ fn surface_initialization_keeps_root_face_and_result_as_separate_states() {
     let surface = plane_surface();
     let fixer = ShapeFixFace::default();
     fixer.init_surface(&surface, 1e-6, false).unwrap();
-    let parent: &ShapeFixRoot = &fixer;
+    let parent: &dyn FixRoot = &fixer;
     let base = parent.fix_root_data().with(|fields| fields.shape.clone());
 
     assert_eq!(base.orientation(), Orientation::Forward);

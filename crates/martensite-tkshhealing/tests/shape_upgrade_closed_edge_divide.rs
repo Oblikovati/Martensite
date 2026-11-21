@@ -10,10 +10,7 @@ use martensite_tkg3d::geom::{GeomCircle, GeomCurve, GeomPlane, GeomSurface};
 use martensite_tkmath::gp::{Axis2, Axis2d, Axis3, Point3};
 use martensite_tkshhealing::{
     shape_build::ShapeBuildEdge,
-    shape_upgrade::{
-        EdgeDivider, EdgeSplitKnots, ShapeUpgradeClosedEdgeDivide, ShapeUpgradeEdgeDivide,
-        SplitCurve,
-    },
+    shape_upgrade::{EdgeDivider, EdgeSplitKnots, ShapeUpgradeClosedEdgeDivide},
 };
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 
@@ -116,10 +113,15 @@ fn planar_only_and_unsplittable_edges_match_native() {
 #[test]
 fn dynamic_criterion_shares_native_parent_and_tool_parameter_handles() {
     let divider = Handle::new(ShapeUpgradeClosedEdgeDivide::new());
-    let base = divider.cast::<ShapeUpgradeEdgeDivide>();
-    let criterion = divider.cast::<dyn EdgeDivider>();
-    assert!(!base.is_null());
-    assert!(criterion.compute(&circle_edge()).unwrap());
+    let base = divider.upcast::<dyn EdgeDivider>();
+    assert_eq!(base.object_address(), divider.object_address());
+    let descriptor = base.dynamic_type().unwrap();
+    assert_eq!(descriptor.name(), "ShapeUpgrade_ClosedEdgeDivide");
+    assert_eq!(
+        descriptor.parent().unwrap().name(),
+        "ShapeUpgrade_EdgeDivide"
+    );
+    assert!(base.compute(&circle_edge()).unwrap());
     let knots = base.knots_3d();
     assert_eq!(
         knots.object_address(),

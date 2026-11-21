@@ -5,7 +5,7 @@ mod swept;
 type ParameterBounds = (f64, f64, f64, f64);
 
 use crate::shape_extend::{ShapeExtend, ShapeExtendCompositeSurface};
-use crate::shape_upgrade::{ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData};
+use crate::shape_upgrade::{SplitSurface, SplitSurfaceData};
 use martensite_tkernel::{
     impl_transient,
     standard::{Failure, Handle, SharedState},
@@ -33,15 +33,15 @@ impl Default for ConversionModes {
 /// Converts supported surfaces into a patch grid whose analytic spline patches use Bezier bases.
 /// Example: `converter.init_surface(&surface)?; converter.perform(true)?;`.
 pub struct ShapeUpgradeConvertSurfaceToBezierBasis {
-    parent: ShapeUpgradeSplitSurface,
+    state: SplitSurfaceData,
     modes: SharedState<ConversionModes>,
     segments: SharedState<Handle<ShapeExtendCompositeSurface>>,
 }
-impl_transient!(ShapeUpgradeConvertSurfaceToBezierBasis, "ShapeUpgrade_ConvertSurfaceToBezierBasis", ShapeUpgradeSplitSurface, parent, interfaces:[dyn SplitSurface]);
+impl_transient!(ShapeUpgradeConvertSurfaceToBezierBasis, "ShapeUpgrade_ConvertSurfaceToBezierBasis", dyn SplitSurface, interfaces:[dyn SplitSurface]);
 impl Default for ShapeUpgradeConvertSurfaceToBezierBasis {
     fn default() -> Self {
         Self {
-            parent: ShapeUpgradeSplitSurface::default(),
+            state: SplitSurfaceData::default(),
             modes: SharedState::new(ConversionModes::default()),
             segments: SharedState::new(Handle::default()),
         }
@@ -107,12 +107,12 @@ impl ShapeUpgradeConvertSurfaceToBezierBasis {
         *self.segments.write() = Handle::new(segments);
     }
     fn state(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
 }
 impl SplitSurface for ShapeUpgradeConvertSurfaceToBezierBasis {
     fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
     fn compute(&self, segment: bool) -> Result<(), Failure> {
         self.compute_conversion(segment)

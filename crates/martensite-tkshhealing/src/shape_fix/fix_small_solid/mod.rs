@@ -4,7 +4,7 @@ mod merge;
 mod remove;
 
 use self::config::SmallSolidConfig;
-use super::{FixRoot, FixRootData, ShapeFixRoot};
+use super::{FixRoot, FixRootData};
 use crate::shape_build::ShapeBuildReShape;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
@@ -22,11 +22,11 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState};
 /// ```
 #[derive(Default)]
 pub struct ShapeFixFixSmallSolid {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     config: SharedState<SmallSolidConfig>,
 }
 
-impl_transient!(ShapeFixFixSmallSolid, "ShapeFix_FixSmallSolid", ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
+impl_transient!(ShapeFixFixSmallSolid, "ShapeFix_FixSmallSolid", dyn FixRoot, interfaces: [dyn FixRoot]);
 
 impl ShapeFixFixSmallSolid {
     /// Constructs with mode `0` and disabled thresholds; `ShapeFixFixSmallSolid::new()`.
@@ -76,7 +76,7 @@ impl ShapeFixFixSmallSolid {
 
 impl FixRoot for ShapeFixFixSmallSolid {
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
 }
 

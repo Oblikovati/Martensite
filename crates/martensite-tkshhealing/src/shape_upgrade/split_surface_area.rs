@@ -1,5 +1,5 @@
 //! ShapeUpgradeSplitSurfaceArea.
-use super::{ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData};
+use super::{SplitSurface, SplitSurfaceData};
 use martensite_tkernel::{
     impl_transient,
     standard::{Failure, Handle, SharedState, real::real_to_int},
@@ -20,16 +20,16 @@ struct AreaSplitSettings {
 /// Split a surface into parameter-space regions sized from its physical aspect ratio.
 /// Example: `let splitter = ShapeUpgradeSplitSurfaceArea::new();`.
 pub struct ShapeUpgradeSplitSurfaceArea {
-    parent: ShapeUpgradeSplitSurface,
+    state: SplitSurfaceData,
     settings: SharedState<AreaSplitSettings>,
 }
 
-impl_transient!(ShapeUpgradeSplitSurfaceArea,"ShapeUpgrade_SplitSurfaceArea",ShapeUpgradeSplitSurface,parent,interfaces:[dyn SplitSurface]);
+impl_transient!(ShapeUpgradeSplitSurfaceArea,"ShapeUpgrade_SplitSurfaceArea",dyn SplitSurface,interfaces:[dyn SplitSurface]);
 
 impl Default for ShapeUpgradeSplitSurfaceArea {
     fn default() -> Self {
         Self {
-            parent: ShapeUpgradeSplitSurface::new(),
+            state: SplitSurfaceData::default(),
             settings: SharedState::new(AreaSplitSettings {
                 parts: 1,
                 u_splits: -1,
@@ -70,7 +70,7 @@ impl ShapeUpgradeSplitSurfaceArea {
     /// Access common parent state shared with this criterion;
     /// `splitter.split_surface_data().with(|fields| fields.rows)`.
     pub fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
 
     fn compute_area_splits(&self) -> Result<(), Failure> {
@@ -107,7 +107,7 @@ impl AreaSplitSettings {
 
 impl SplitSurface for ShapeUpgradeSplitSurfaceArea {
     fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
 
     fn compute(&self, _segment: bool) -> Result<(), Failure> {

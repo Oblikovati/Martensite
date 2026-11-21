@@ -10,7 +10,7 @@ use crate::shape_build::ShapeBuildReShape;
 use crate::shape_construct::ShapeConstructProjectCurveOnSurface;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState, Transient};
 
 /// Repair missing or inconsistent edge curves, parameterization and vertex tolerances.
 ///
@@ -20,17 +20,15 @@ use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 /// assert!(ShapeFixEdge::new().status_flag(ShapeExtendStatus::Ok));
 /// ```
 pub struct ShapeFixEdge {
-    parent: StandardTransient,
     status: SharedState<i32>,
     context: SharedState<Handle<ShapeBuildReShape>>,
     projector: Handle<ShapeConstructProjectCurveOnSurface>,
 }
-impl_transient!(ShapeFixEdge, "ShapeFix_Edge", StandardTransient, parent);
+impl_transient!(ShapeFixEdge, "ShapeFix_Edge", dyn Transient);
 
 impl Default for ShapeFixEdge {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             status: SharedState::new(0),
             context: SharedState::new(Handle::default()),
             projector: Handle::new(ShapeConstructProjectCurveOnSurface::new()),

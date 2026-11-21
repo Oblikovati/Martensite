@@ -2,15 +2,15 @@
 //! Shape Healing tools send their messages to.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::ShapeMapHasher;
+use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Gravity, Msg};
 use martensite_tkernel::ncollection::{DataMap, HashPolicy, List};
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Handle, SharedState, Transient};
 use std::fmt;
 
 /// A transient object keyed by handle identity rather than object contents.
 #[derive(Clone)]
-pub struct TransientKey(pub Handle<StandardTransient>);
+pub struct TransientKey(pub Handle<dyn Transient>);
 
 impl fmt::Debug for TransientKey {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -49,13 +49,7 @@ pub type ShapeMessageMap = DataMap<Shape, List<Msg>, ShapeMapHasher>;
 pub trait BasicMsgRegistrator: Transient {
     /// `Send(object, message, gravity)` (virtual): attaches a message to an object; the
     /// base class does nothing; `registrator.send_transient(&object, &message, gravity)`.
-    fn send_transient(
-        &self,
-        _object: &Handle<StandardTransient>,
-        _message: &Msg,
-        _gravity: Gravity,
-    ) {
-    }
+    fn send_transient(&self, _object: &Handle<dyn Transient>, _message: &Msg, _gravity: Gravity) {}
 
     /// `Send(shape, message, gravity)` (virtual): attaches a message to a shape; the base
     /// class does nothing; `registrator.send_shape(&shape, &message, gravity)`.
@@ -67,22 +61,15 @@ pub trait BasicMsgRegistrator: Transient {
         self.send_transient(&Handle::default(), message, gravity);
     }
 }
-impl_transient_interface!(
-    dyn BasicMsgRegistrator,
-    "ShapeExtend_BasicMsgRegistrator",
-    StandardTransient
-);
+parent_interface!(dyn BasicMsgRegistrator, ShapeExtendBasicMsgRegistrator, []);
 
 /// The base class `ShapeExtendBasicMsgRegistrator` itself: every message is dropped.
 #[derive(Default)]
-pub struct ShapeExtendBasicMsgRegistrator {
-    parent: StandardTransient,
-}
+pub struct ShapeExtendBasicMsgRegistrator {}
 impl_transient!(
     ShapeExtendBasicMsgRegistrator,
     "ShapeExtend_BasicMsgRegistrator",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn BasicMsgRegistrator]
 );
 
@@ -113,21 +100,18 @@ struct MessageMaps {
 /// assert!(registrator.map_transient(|map| map.is_empty()));
 /// ```
 pub struct ShapeExtendMsgRegistrator {
-    parent: ShapeExtendBasicMsgRegistrator,
     maps: SharedState<MessageMaps>,
 }
 impl_transient!(
     ShapeExtendMsgRegistrator,
     "ShapeExtend_MsgRegistrator",
-    ShapeExtendBasicMsgRegistrator,
-    parent,
+    dyn BasicMsgRegistrator,
     interfaces: [dyn BasicMsgRegistrator]
 );
 
 impl Default for ShapeExtendMsgRegistrator {
     fn default() -> Self {
         Self {
-            parent: ShapeExtendBasicMsgRegistrator::new(),
             maps: SharedState::new(MessageMaps::default()),
         }
     }
@@ -155,7 +139,7 @@ impl ShapeExtendMsgRegistrator {
 impl BasicMsgRegistrator for ShapeExtendMsgRegistrator {
     /// Appends the message to the list of the object (a new list for a new object); a
     /// null object is ignored. The gravity is not kept.
-    fn send_transient(&self, object: &Handle<StandardTransient>, message: &Msg, _gravity: Gravity) {
+    fn send_transient(&self, object: &Handle<dyn Transient>, message: &Msg, _gravity: Gravity) {
         if object.is_null() {
             return;
         }

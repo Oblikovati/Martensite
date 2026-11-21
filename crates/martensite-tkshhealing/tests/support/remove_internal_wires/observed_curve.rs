@@ -1,7 +1,7 @@
 //! A named geometry observer verifies callback-visible progress without mocking geometry.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 use martensite_tkg3d::geom::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3, GeomGeometry};
 use martensite_tkmath::{
@@ -15,12 +15,11 @@ use std::sync::{
 };
 
 pub struct RemovalObservingCurve {
-    parent: StandardTransient,
     basis: Handle<dyn GeomCurve>,
     remover: Weak<ShapeUpgradeRemoveInternalWires>,
     observed: Arc<AtomicUsize>,
 }
-impl_transient!(RemovalObservingCurve, "RemovalObservingCurve", StandardTransient, parent, interfaces: [dyn GeomGeometry, dyn GeomCurve]);
+impl_transient!(RemovalObservingCurve, "RemovalObservingCurve", dyn Transient, interfaces: [dyn GeomGeometry, dyn GeomCurve]);
 impl RemovalObservingCurve {
     pub fn new(
         basis: Handle<dyn GeomCurve>,
@@ -28,7 +27,6 @@ impl RemovalObservingCurve {
         observed: &Arc<AtomicUsize>,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             basis,
             remover: Arc::downgrade(remover),
             observed: observed.clone(),

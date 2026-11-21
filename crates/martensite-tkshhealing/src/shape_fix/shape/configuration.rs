@@ -13,7 +13,7 @@ pub(super) struct ShapeFixModes {
 impl Default for ShapeFixShape {
     fn default() -> Self {
         Self {
-            parent: super::super::ShapeFixRoot::new(),
+            root: FixRootData::default(),
             result: SharedState::new(Shape::default()),
             status: SharedState::new(0),
             solid_tool: Handle::new(ShapeFixSolid::new()),
@@ -110,22 +110,22 @@ impl ShapeFixShape {
 }
 impl FixRoot for ShapeFixShape {
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
     fn set_msg_registrator(&self, messages: &Handle<dyn BasicMsgRegistrator>) {
-        self.parent.set_msg_registrator(messages);
+        self.root.set_msg_registrator(messages);
         self.solid_tool.set_msg_registrator(messages);
     }
     fn set_precision(&self, precision: f64) {
-        self.parent.set_precision(precision);
+        self.root.set_precision(precision);
         self.solid_tool.set_precision(precision);
     }
     fn set_min_tolerance(&self, tolerance: f64) {
-        self.parent.set_min_tolerance(tolerance);
+        self.root.set_min_tolerance(tolerance);
         self.solid_tool.set_min_tolerance(tolerance);
     }
     fn set_max_tolerance(&self, tolerance: f64) {
-        self.parent.set_max_tolerance(tolerance);
+        self.root.set_max_tolerance(tolerance);
         self.solid_tool.set_max_tolerance(tolerance);
     }
 }

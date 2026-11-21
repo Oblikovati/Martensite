@@ -1,6 +1,6 @@
 //! ShapeUpgradeSplitCurve2dContinuity.
 use super::{
-    ShapeUpgradeSplitCurve2d, SplitCurve, SplitCurveData, SplitCurves2d,
+    CurveSplit2dData, SplitCurve, SplitCurve2d, SplitCurveData, SplitCurves2d,
     curve_continuity::ContinuitySettings,
 };
 use martensite_tkernel::{
@@ -21,13 +21,13 @@ mod compute;
 /// splitter.set_tolerance(1e-7);
 /// ```
 pub struct ShapeUpgradeSplitCurve2dContinuity {
-    parent: ShapeUpgradeSplitCurve2d,
+    geometry: CurveSplit2dData,
     settings: SharedState<ContinuitySettings>,
 }
 impl Default for ShapeUpgradeSplitCurve2dContinuity {
     fn default() -> Self {
         Self {
-            parent: ShapeUpgradeSplitCurve2d::default(),
+            geometry: CurveSplit2dData::default(),
             settings: SharedState::new(
                 ContinuitySettings::with_tolerance(precision::p_confusion()),
             ),
@@ -35,7 +35,7 @@ impl Default for ShapeUpgradeSplitCurve2dContinuity {
     }
 }
 impl_transient!(ShapeUpgradeSplitCurve2dContinuity, "ShapeUpgrade_SplitCurve2dContinuity",
-    ShapeUpgradeSplitCurve2d, parent, interfaces: [dyn SplitCurve]);
+    dyn SplitCurve2d, interfaces: [dyn SplitCurve, dyn SplitCurve2d]);
 
 impl ShapeUpgradeSplitCurve2dContinuity {
     /// defaults are C1 and `precision::p_confusion()`;
@@ -58,7 +58,7 @@ impl ShapeUpgradeSplitCurve2dContinuity {
 
     /// Copy a 2D curve over its natural bounds; `splitter.init_curve(&curve)?`.
     pub fn init_curve(&self, curve: &Handle<dyn Geom2dCurve>) -> Result<(), Failure> {
-        self.parent.init_curve(curve)
+        self.geometry.init_curve(curve)
     }
 
     /// Copy a 2D curve over an explicit range; `splitter.init_curve_range(&curve, 0., 1.)?`.
@@ -68,31 +68,37 @@ impl ShapeUpgradeSplitCurve2dContinuity {
         first: f64,
         last: f64,
     ) -> Result<(), Failure> {
-        self.parent.init_curve_range(curve, first, last)
+        self.geometry.init_curve_range(curve, first, last)
     }
 
     /// The corrected private curve copy; `let curve = splitter.curve()`.
     pub fn curve(&self) -> Handle<dyn Geom2dCurve> {
-        self.parent.source_curve()
+        self.geometry.source_curve()
     }
 
     /// The result array shared with the base splitter; `let curves = splitter.curves()`.
     pub fn curves(&self) -> SplitCurves2d {
-        self.parent.curves()
+        self.geometry.curves()
     }
 }
 
 impl SplitCurve for ShapeUpgradeSplitCurve2dContinuity {
     fn split_curve_data(&self) -> &SplitCurveData {
-        self.parent.split_curve_data()
+        self.geometry.split_curve_data()
     }
 
     fn build(&self, segment: bool) -> Result<(), Failure> {
-        self.parent.build(segment)
+        self.geometry.build_geometry(segment)
     }
 
     fn compute(&self) -> Result<(), Failure> {
         self.compute_continuity()
+    }
+}
+
+impl SplitCurve2d for ShapeUpgradeSplitCurve2dContinuity {
+    fn curve_geometry(&self) -> &CurveSplit2dData {
+        &self.geometry
     }
 }
 

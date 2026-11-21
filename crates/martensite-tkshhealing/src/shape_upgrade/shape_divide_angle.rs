@@ -1,8 +1,5 @@
 //! Angular subdivision policy.
-use super::{
-    FaceDivider, ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeShapeDivide,
-    ShapeUpgradeSplitSurfaceAngle,
-};
+use super::{FaceDivider, ShapeDivider, ShapeUpgradeShapeDivide, ShapeUpgradeSplitSurfaceAngle};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
 
@@ -59,17 +56,16 @@ impl ShapeUpgradeShapeDivideAngle {
             return 0.;
         }
         let surface = face
-            .cast::<dyn FaceDivider>()
             .split_surface_tool()
-            .cast::<ShapeUpgradeSplitSurfaceAngle>();
+            .downcast::<ShapeUpgradeSplitSurfaceAngle>();
         surface
             .get()
             .map_or(0., ShapeUpgradeSplitSurfaceAngle::max_angle)
     }
 }
-fn configure_angle_face(face: &Handle<ShapeUpgradeFaceDivide>, maximum_angle: f64) {
+fn configure_angle_face(face: &Handle<dyn FaceDivider>, maximum_angle: f64) {
     face.set_split_surface_tool(
-        &Handle::new(ShapeUpgradeSplitSurfaceAngle::new(maximum_angle)).cast(),
+        &Handle::new(ShapeUpgradeSplitSurfaceAngle::new(maximum_angle)).into_upcast(),
     );
     face.set_wire_divide_tool(&Handle::default());
 }

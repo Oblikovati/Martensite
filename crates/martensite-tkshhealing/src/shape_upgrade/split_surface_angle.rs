@@ -1,5 +1,5 @@
 //! ShapeUpgradeSplitSurfaceAngle.
-use super::{ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData};
+use super::{SplitSurface, SplitSurfaceData};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkernel::{
     impl_transient,
@@ -15,15 +15,15 @@ use martensite_tkg3d::geom::{
 /// Divide supported rotational surfaces into angular intervals.
 /// `let splitter = ShapeUpgradeSplitSurfaceAngle::new(std::f64::consts::PI);`
 pub struct ShapeUpgradeSplitSurfaceAngle {
-    parent: ShapeUpgradeSplitSurface,
+    state: SplitSurfaceData,
     maximum_angle: SharedState<f64>,
 }
-impl_transient!(ShapeUpgradeSplitSurfaceAngle, "ShapeUpgrade_SplitSurfaceAngle", ShapeUpgradeSplitSurface, parent, interfaces: [dyn SplitSurface]);
+impl_transient!(ShapeUpgradeSplitSurfaceAngle, "ShapeUpgrade_SplitSurfaceAngle", dyn SplitSurface, interfaces: [dyn SplitSurface]);
 impl ShapeUpgradeSplitSurfaceAngle {
     /// Retain the supplied angle without clamping; `ShapeUpgradeSplitSurfaceAngle::new(1.)`.
     pub fn new(maximum_angle: f64) -> Self {
         Self {
-            parent: ShapeUpgradeSplitSurface::new(),
+            state: SplitSurfaceData::default(),
             maximum_angle: SharedState::new(maximum_angle),
         }
     }
@@ -56,7 +56,7 @@ impl ShapeUpgradeSplitSurfaceAngle {
 }
 impl SplitSurface for ShapeUpgradeSplitSurfaceAngle {
     fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
     fn compute(&self, _segment: bool) -> Result<(), Failure> {
         self.compute_angles()

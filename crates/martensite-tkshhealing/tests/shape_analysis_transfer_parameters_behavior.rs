@@ -101,10 +101,6 @@ fn sequence_uses_derived_scalar_transfer_and_shared_base_state() {
         result.sequence(|s| s.iter().copied().collect::<Vec<_>>()),
         vec![11., 14., 17.]
     );
-    assert!(
-        !derived
-            .cast::<ShapeAnalysisTransferParameters>()
-            .is_same_range()
-    );
+    assert!(!derived.upcast::<dyn TransferParameters>().is_same_range());
     assert_eq!(virtual_tool.perform_parameter(13., false).unwrap(), 2.5);
 }

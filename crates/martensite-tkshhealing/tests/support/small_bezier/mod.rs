@@ -13,29 +13,32 @@ use martensite_tkmath::gp::{Axis2d, Axis3, Direction3, Point2, Point3};
 use martensite_tkshhealing::{
     shape_extend::{ShapeExtend, ShapeExtendStatus},
     shape_upgrade::{
-        ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d, SplitCurve, SplitCurveData,
+        CurveSplit2dData, CurveSplit3dData, SplitCurve, SplitCurve2d, SplitCurve3d, SplitCurveData,
     },
 };
 
 // Named native-style subclasses inject splitter outcomes without mocking geometry.
 macro_rules! criterion {
-    ($name:ident, $base:ty, $rtti:literal) => {
-        pub struct $name { parent: $base, mode: i32 }
-        impl_transient!($name, $rtti, $base, parent, interfaces: [dyn SplitCurve]);
+    ($name:ident, $data:ty, $interface:ident, $rtti:literal) => {
+        pub struct $name { geometry: $data, mode: i32 }
+        impl_transient!($name, $rtti, dyn $interface, interfaces: [dyn SplitCurve, dyn $interface]);
         impl $name {
-            pub fn new(mode: i32) -> Self { Self { parent: <$base>::new(), mode } }
+            pub fn new(mode: i32) -> Self { Self { geometry: <$data>::default(), mode } }
+        }
+        impl $interface for $name {
+            fn curve_geometry(&self) -> &$data { &self.geometry }
         }
         impl SplitCurve for $name {
-            fn split_curve_data(&self) -> &SplitCurveData { self.parent.split_curve_data() }
+            fn split_curve_data(&self) -> &SplitCurveData { self.geometry.split_curve_data() }
             fn compute(&self) -> Result<(), Failure> {
                 if self.mode == 3 {
                     self.split_values().change_sequence(|s|s.insert_before(2,0.5).map(|_|()))?;
                 }
-                self.parent.compute()
+                { self.split_curve_data().reset_status(); Ok(()) }
             }
             fn build(&self, segment: bool) -> Result<(), Failure> {
                 if self.mode == 4 { return Err(Failure::new("fixture splitter failure")); }
-                self.parent.build(segment)?;
+                self.geometry.build_geometry(segment)?;
                 let flag = match self.mode { 1 => ShapeExtendStatus::Fail1, 2 => ShapeExtendStatus::Done2, _ => return Ok(()) };
                 self.split_curve_data().with_mut(|f|f.status=ShapeExtend::encode_status(flag));
                 Ok(())
@@ -45,12 +48,14 @@ macro_rules! criterion {
 }
 criterion!(
     SpatialCriterion,
-    ShapeUpgradeSplitCurve3d,
+    CurveSplit3dData,
+    SplitCurve3d,
     "SmallBezierSpatialCriterion"
 );
 criterion!(
     PlanarCriterion,
-    ShapeUpgradeSplitCurve2d,
+    CurveSplit2dData,
+    SplitCurve2d,
     "SmallBezierPlanarCriterion"
 );
 

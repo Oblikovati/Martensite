@@ -5,17 +5,20 @@ use martensite_tkernel::{
     standard::{Failure, Handle},
 };
 use martensite_tkshhealing::shape_upgrade::{
-    ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d, SplitCurve, SplitCurveData,
+    CurveSplit2dData, CurveSplit3dData, SplitCurve, SplitCurve2d, SplitCurve3d, SplitCurveData,
 };
 macro_rules! midpoint_criterion {
-    ($name:ident,$base:ty,$native:literal) => {
+    ($name:ident,$data:ty, $interface:ident,$native:literal) => {
         #[derive(Default)]
-        pub struct $name {parent:$base}
-        impl_transient!($name,$native,$base,parent,interfaces:[dyn SplitCurve]);
+        pub struct $name {geometry:$data}
+        impl_transient!($name,$native,dyn $interface,interfaces:[dyn SplitCurve,dyn $interface]);
+        impl $interface for $name {
+            fn curve_geometry(&self) -> &$data { &self.geometry }
+        }
         impl SplitCurve for $name {
-            fn split_curve_data(&self)->&SplitCurveData {self.parent.split_curve_data()}
+            fn split_curve_data(&self)->&SplitCurveData {self.geometry.split_curve_data()}
             fn compute(&self)->Result<(),Failure> {
-                self.parent.compute()?;
+                self.split_curve_data().reset_status();
                 let values=self.split_values();
                 let (first,last)=values.sequence(|s|(*s.value(1).unwrap(),*s.value(s.len()).unwrap()));
                 let middle=Handle::new(HSequence::default());
@@ -24,17 +27,19 @@ macro_rules! midpoint_criterion {
                 self.split_curve_data().with_mut(|f|f.status=1);
                 Ok(())
             }
-            fn build(&self,segment:bool)->Result<(),Failure>{self.parent.build(segment)}
+            fn build(&self,segment:bool)->Result<(),Failure>{self.geometry.build_geometry(segment)}
         }
     };
 }
 midpoint_criterion!(
     Midpoint2d,
-    ShapeUpgradeSplitCurve2d,
+    CurveSplit2dData,
+    SplitCurve2d,
     "Test_EdgeDivideMidpoint2d"
 );
 midpoint_criterion!(
     Midpoint3d,
-    ShapeUpgradeSplitCurve3d,
+    CurveSplit3dData,
+    SplitCurve3d,
     "Test_EdgeDivideMidpoint3d"
 );

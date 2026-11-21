@@ -16,7 +16,7 @@ mod walking;
 
 use crate::shape_analysis::ShapeAnalysisSurface;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkernel::{impl_transient, precision};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface};
@@ -33,14 +33,12 @@ struct SurfaceCurveProjectionFields {
 /// Projects a three-dimensional curve into a surface's parameter space.
 /// `let projector = ShapeConstructProjectCurveOnSurface::new();`
 pub struct ShapeConstructProjectCurveOnSurface {
-    parent: StandardTransient,
     fields: SharedState<SurfaceCurveProjectionFields>,
 }
 impl_transient!(
     ShapeConstructProjectCurveOnSurface,
     "ShapeConstruct_ProjectCurveOnSurface",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for ShapeConstructProjectCurveOnSurface {
@@ -53,7 +51,6 @@ impl Default for ShapeConstructProjectCurveOnSurface {
             cache: Vec::new(),
         };
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }
