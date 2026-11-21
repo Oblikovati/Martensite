@@ -1,11 +1,12 @@
 //! Small segments retain native saved-parameter and vertex-location mutation order.
 use super::geometry::PieceSamples;
 use super::*;
+use crate::shape_upgrade::FixSmallCurves;
 pub(super) fn next_vertex<T: WireDivider + ?Sized>(
     tool: &T,
     support: &mut WireSupport,
     curves: &DividedCurves,
-    small: &Handle<ShapeUpgradeFixSmallCurves>,
+    small: &Handle<dyn FixSmallCurves>,
     cursor: &mut PieceCursor,
     piece: &mut PieceGeometry,
     index: usize,
@@ -66,7 +67,7 @@ fn skip_piece(
     Ok(())
 }
 fn repair_small(
-    small: &Handle<ShapeUpgradeFixSmallCurves>,
+    small: &Handle<dyn FixSmallCurves>,
     cursor: &mut PieceCursor,
     piece: &mut PieceGeometry,
     samples: &PieceSamples,
@@ -81,7 +82,7 @@ fn repair_small(
     Ok(())
 }
 fn approximate(
-    small: &Handle<ShapeUpgradeFixSmallCurves>,
+    small: &Handle<dyn FixSmallCurves>,
     cursor: &mut PieceCursor,
     piece: &mut PieceGeometry,
     mut last: f64,

@@ -1,11 +1,14 @@
 //! edge split criteria and shared parameter ownership.
-use super::{ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d, ShapeUpgradeTool};
+use super::{ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d};
 use crate::shape_extend::ShapeExtendStatus;
+use crate::shape_upgrade::SplitCurve2d;
+use crate::shape_upgrade::SplitCurve3d;
+use crate::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use martensite_tkbrep::topods::{Edge, Face};
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient,
     ncollection::HSequence,
-    standard::{Failure, Handle, SharedState, Transient},
+    standard::{Failure, Handle, SharedState},
 };
 mod compute;
 /// Shared split parameters; `Handle::new(HSequence::<f64>::default())`.
@@ -23,19 +26,21 @@ pub struct EdgeDivideFields {
     pub knots_2d: EdgeSplitKnots,
     /// Shared spatial splitting parameters.
     pub knots_3d: EdgeSplitKnots,
-    curve_2d_tool: Handle<ShapeUpgradeSplitCurve2d>,
-    curve_3d_tool: Handle<ShapeUpgradeSplitCurve3d>,
+    curve_2d_tool: Handle<dyn SplitCurve2d>,
+    curve_3d_tool: Handle<dyn SplitCurve3d>,
 }
 /// Protected state shared with derived criteria; `EdgeDivideData::default()`.
 pub struct EdgeDivideData {
+    pub(super) tool: UpgradeToolData,
     fields: SharedState<EdgeDivideFields>,
 }
 impl Default for EdgeDivideData {
     fn default() -> Self {
         Self {
+            tool: UpgradeToolData::default(),
             fields: SharedState::new(EdgeDivideFields {
-                curve_2d_tool: Handle::new(ShapeUpgradeSplitCurve2d::new()),
-                curve_3d_tool: Handle::new(ShapeUpgradeSplitCurve3d::new()),
+                curve_2d_tool: Handle::new(ShapeUpgradeSplitCurve2d::new()).into_upcast(),
+                curve_3d_tool: Handle::new(ShapeUpgradeSplitCurve3d::new()).into_upcast(),
                 ..EdgeDivideFields::default()
             }),
         }
@@ -50,7 +55,8 @@ impl EdgeDivideData {
     pub fn with_mut<R>(&self, write: impl FnOnce(&mut EdgeDivideFields) -> R) -> R {
         write(&mut self.fields.write())
     }
-    fn clear(&self) {
+    /// Clear discovery flags and knots, retaining face and tools; `divider.clear()`.
+    pub fn clear(&self) {
         self.with_mut(|fields| {
             fields.knots_3d = Handle::default();
             fields.knots_2d = Handle::default();
@@ -60,7 +66,7 @@ impl EdgeDivideData {
     }
 }
 /// Virtual edge criterion and tool selection; `divider.compute(&edge)?`.
-pub trait EdgeDivider: Transient {
+pub trait EdgeDivider: UpgradeTool {
     /// Shared protected state; `divider.edge_divide_data()`.
     fn edge_divide_data(&self) -> &EdgeDivideData;
     /// Discover curves and compute split parameters; `divider.compute(&edge)?`.
@@ -68,36 +74,42 @@ pub trait EdgeDivider: Transient {
         self.edge_divide_data().clear();
         let spatial = compute::spatial_knots(self, edge)?;
         let planar = compute::planar_knots(self, edge)?;
-        Ok(compute::curve_done(&spatial.cast())? || compute::curve_done(&planar.cast())?)
+        Ok(compute::curve_done(&spatial)? || compute::curve_done(&planar)?)
     }
     /// Virtual pcurve tool selection; `divider.split_curve_2d_tool()`.
-    fn split_curve_2d_tool(&self) -> Handle<ShapeUpgradeSplitCurve2d> {
+    fn split_curve_2d_tool(&self) -> Handle<dyn SplitCurve2d> {
         self.edge_divide_data()
             .with(|fields| fields.curve_2d_tool.clone())
     }
     /// Virtual spatial tool selection; `divider.split_curve_3d_tool()`.
-    fn split_curve_3d_tool(&self) -> Handle<ShapeUpgradeSplitCurve3d> {
+    fn split_curve_3d_tool(&self) -> Handle<dyn SplitCurve3d> {
         self.edge_divide_data()
             .with(|fields| fields.curve_3d_tool.clone())
     }
 }
-impl_transient_interface!(dyn EdgeDivider, "ShapeUpgrade_EdgeDivide", ShapeUpgradeTool);
+impl std::ops::Deref for dyn EdgeDivider {
+    type Target = EdgeDivideData;
+    fn deref(&self) -> &Self::Target {
+        self.edge_divide_data()
+    }
+}
+
+parent_interface!(dyn EdgeDivider, ShapeUpgradeEdgeDivide, [dyn UpgradeTool]);
 /// Base curve-discovery criterion; `ShapeUpgradeEdgeDivide::new()`.
 #[derive(Default)]
 pub struct ShapeUpgradeEdgeDivide {
-    parent: ShapeUpgradeTool,
     state: EdgeDivideData,
 }
-impl_transient!(ShapeUpgradeEdgeDivide,"ShapeUpgrade_EdgeDivide",ShapeUpgradeTool,parent,interfaces:[dyn EdgeDivider]);
+impl_transient!(ShapeUpgradeEdgeDivide,"ShapeUpgrade_EdgeDivide",dyn UpgradeTool,interfaces:[dyn EdgeDivider, dyn UpgradeTool]);
 impl EdgeDivider for ShapeUpgradeEdgeDivide {
     fn edge_divide_data(&self) -> &EdgeDivideData {
         &self.state
     }
 }
 impl std::ops::Deref for ShapeUpgradeEdgeDivide {
-    type Target = ShapeUpgradeTool;
+    type Target = EdgeDivideData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.state
     }
 }
 impl ShapeUpgradeEdgeDivide {
@@ -105,38 +117,47 @@ impl ShapeUpgradeEdgeDivide {
     pub fn new() -> Self {
         Self::default()
     }
-    /// Clear discovery flags and knots, retaining face and tools; `divider.clear()`.
-    pub fn clear(&self) {
-        self.state.clear();
-    }
-    /// Set the supimplementation face; `divider.set_face(&face)`.
+}
+impl EdgeDivideData {
+    /// Set the support face; `divider.set_face(&face)`.
     pub fn set_face(&self, face: &Face) {
-        self.state.with_mut(|fields| fields.face = face.clone());
+        self.with_mut(|fields| fields.face = face.clone());
     }
     /// Whether Compute found a pcurve; `divider.has_curve_2d()`.
     pub fn has_curve_2d(&self) -> bool {
-        self.state.with(|fields| fields.has_curve_2d)
+        self.with(|fields| fields.has_curve_2d)
     }
     /// Whether Compute found a spatial curve; `divider.has_curve_3d()`.
     pub fn has_curve_3d(&self) -> bool {
-        self.state.with(|fields| fields.has_curve_3d)
+        self.with(|fields| fields.has_curve_3d)
     }
     /// Shared pcurve parameters; `divider.knots_2d()`.
     pub fn knots_2d(&self) -> EdgeSplitKnots {
-        self.state.with(|fields| fields.knots_2d.clone())
+        self.with(|fields| fields.knots_2d.clone())
     }
     /// Shared spatial parameters; `divider.knots_3d()`.
     pub fn knots_3d(&self) -> EdgeSplitKnots {
-        self.state.with(|fields| fields.knots_3d.clone())
+        self.with(|fields| fields.knots_3d.clone())
     }
     /// Replace the pcurve splitting tool; `divider.set_split_curve_2d_tool(&tool)`.
-    pub fn set_split_curve_2d_tool(&self, tool: &Handle<ShapeUpgradeSplitCurve2d>) {
-        self.state
-            .with_mut(|fields| fields.curve_2d_tool = tool.clone());
+    pub fn set_split_curve_2d_tool(&self, tool: &Handle<dyn SplitCurve2d>) {
+        self.with_mut(|fields| fields.curve_2d_tool = tool.clone());
     }
     /// Replace the spatial splitting tool; `divider.set_split_curve_3d_tool(&tool)`.
-    pub fn set_split_curve_3d_tool(&self, tool: &Handle<ShapeUpgradeSplitCurve3d>) {
-        self.state
-            .with_mut(|fields| fields.curve_3d_tool = tool.clone());
+    pub fn set_split_curve_3d_tool(&self, tool: &Handle<dyn SplitCurve3d>) {
+        self.with_mut(|fields| fields.curve_3d_tool = tool.clone());
+    }
+}
+
+impl UpgradeTool for ShapeUpgradeEdgeDivide {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state.tool
+    }
+}
+
+impl std::ops::Deref for EdgeDivideData {
+    type Target = UpgradeToolData;
+    fn deref(&self) -> &Self::Target {
+        &self.tool
     }
 }

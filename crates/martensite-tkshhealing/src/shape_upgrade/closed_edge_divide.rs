@@ -1,6 +1,7 @@
 //! ShapeUpgradeClosedEdgeDivide.
-use super::{EdgeDivideData, EdgeDivider, ShapeUpgradeEdgeDivide, SplitCurve};
+use super::{EdgeDivideData, EdgeDivider};
 use crate::shape_analysis::{PCurveRange, ShapeAnalysisEdge};
+use crate::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use martensite_tkbrep::{brep::BRepTool, topods::Edge};
 use martensite_tkernel::{
     impl_transient,
@@ -14,19 +15,18 @@ use martensite_tkmath::gp::Point3;
 /// `let divider = ShapeUpgradeClosedEdgeDivide::new();`
 #[derive(Default)]
 pub struct ShapeUpgradeClosedEdgeDivide {
-    parent: ShapeUpgradeEdgeDivide,
+    state: EdgeDivideData,
 }
-impl_transient!(ShapeUpgradeClosedEdgeDivide, "ShapeUpgrade_ClosedEdgeDivide", ShapeUpgradeEdgeDivide,
-    parent, interfaces: [dyn EdgeDivider]);
+impl_transient!(ShapeUpgradeClosedEdgeDivide, "ShapeUpgrade_ClosedEdgeDivide", dyn EdgeDivider, interfaces: [dyn EdgeDivider, dyn UpgradeTool]);
 impl std::ops::Deref for ShapeUpgradeClosedEdgeDivide {
-    type Target = ShapeUpgradeEdgeDivide;
+    type Target = EdgeDivideData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.state
     }
 }
 impl EdgeDivider for ShapeUpgradeClosedEdgeDivide {
     fn edge_divide_data(&self) -> &EdgeDivideData {
-        self.parent.edge_divide_data()
+        &self.state
     }
     fn compute(&self, edge: &Edge) -> Result<bool, Failure> {
         self.clear();
@@ -147,4 +147,10 @@ fn farthest_sample(
         parameter += step;
     }
     Ok((maximum_parameter, maximum_distance))
+}
+
+impl UpgradeTool for ShapeUpgradeClosedEdgeDivide {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state.tool
+    }
 }

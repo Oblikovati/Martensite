@@ -41,9 +41,7 @@ impl ShapeFixSolid {
             }
         }
         let result = self.context().apply(&self.shape(), ShapeEnum::Shape)?;
-        self.parent
-            .fix_root_data()
-            .with_mut(|fields| fields.shape = result);
+        self.root.with_mut(|fields| fields.shape = result);
         Ok(changed)
     }
     fn fix_shells(

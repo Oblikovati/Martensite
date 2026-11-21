@@ -1,6 +1,6 @@
 //! ShapeUpgradeSplitCurve3dContinuity.
 use super::{
-    ShapeUpgradeSplitCurve3d, SplitCurve, SplitCurveData, SplitCurves3d,
+    CurveSplit3dData, SplitCurve, SplitCurve3d, SplitCurveData, SplitCurves3d,
     curve_continuity::ContinuitySettings,
 };
 use martensite_tkernel::{
@@ -14,19 +14,19 @@ mod compute;
 /// Correct or split a private curve copy at insufficiently continuous knots.
 /// `let splitter = ShapeUpgradeSplitCurve3dContinuity::new();`
 pub struct ShapeUpgradeSplitCurve3dContinuity {
-    parent: ShapeUpgradeSplitCurve3d,
+    geometry: CurveSplit3dData,
     settings: SharedState<ContinuitySettings>,
 }
 impl Default for ShapeUpgradeSplitCurve3dContinuity {
     fn default() -> Self {
         Self {
-            parent: ShapeUpgradeSplitCurve3d::default(),
+            geometry: CurveSplit3dData::default(),
             settings: SharedState::new(ContinuitySettings::with_tolerance(precision::confusion())),
         }
     }
 }
 impl_transient!(ShapeUpgradeSplitCurve3dContinuity, "ShapeUpgrade_SplitCurve3dContinuity",
-    ShapeUpgradeSplitCurve3d, parent, interfaces: [dyn SplitCurve]);
+    dyn SplitCurve3d, interfaces: [dyn SplitCurve, dyn SplitCurve3d]);
 
 impl ShapeUpgradeSplitCurve3dContinuity {
     /// Use C1 and Confusion defaults; `ShapeUpgradeSplitCurve3dContinuity::new()`.
@@ -44,7 +44,7 @@ impl ShapeUpgradeSplitCurve3dContinuity {
     }
     /// Copy a curve over its natural range; `splitter.init_curve(&curve)?`.
     pub fn init_curve(&self, curve: &Handle<dyn GeomCurve>) -> Result<(), Failure> {
-        self.parent.init_curve(curve)
+        self.geometry.init_curve(curve)
     }
     /// Copy a curve over the clamped range; `splitter.init_curve_range(&curve, 0., 1.)?`.
     pub fn init_curve_range(
@@ -53,25 +53,31 @@ impl ShapeUpgradeSplitCurve3dContinuity {
         first: f64,
         last: f64,
     ) -> Result<(), Failure> {
-        self.parent.init_curve_range(curve, first, last)
+        self.geometry.init_curve_range(curve, first, last)
     }
     /// Share the corrected private curve; `let curve = splitter.curve()`.
     pub fn curve(&self) -> Handle<dyn GeomCurve> {
-        self.parent.source_curve()
+        self.geometry.source_curve()
     }
     /// Share the built pieces; `let pieces = splitter.curves()`.
     pub fn curves(&self) -> SplitCurves3d {
-        self.parent.curves()
+        self.geometry.curves()
     }
 }
 impl SplitCurve for ShapeUpgradeSplitCurve3dContinuity {
     fn split_curve_data(&self) -> &SplitCurveData {
-        self.parent.split_curve_data()
+        self.geometry.split_curve_data()
     }
     fn build(&self, segment: bool) -> Result<(), Failure> {
-        self.parent.build(segment)
+        self.geometry.build_geometry(segment)
     }
     fn compute(&self) -> Result<(), Failure> {
         self.compute_continuity()
+    }
+}
+
+impl SplitCurve3d for ShapeUpgradeSplitCurve3dContinuity {
+    fn curve_geometry(&self) -> &CurveSplit3dData {
+        &self.geometry
     }
 }

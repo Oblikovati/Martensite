@@ -2,9 +2,7 @@
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{GeomCylindricalSurface, GeomPlane, GeomSurface};
 use martensite_tkmath::gp::Axis3;
-use martensite_tkshhealing::shape_upgrade::{
-    ShapeUpgradeSplitSurface, ShapeUpgradeSplitSurfaceArea, SplitSurface,
-};
+use martensite_tkshhealing::shape_upgrade::{ShapeUpgradeSplitSurfaceArea, SplitSurface};
 
 #[derive(Clone, Copy)]
 struct Fixture {
@@ -202,7 +200,7 @@ fn assert_parent_sequences(
     u_values: &Handle<martensite_tkernel::ncollection::HSequence<f64>>,
     v_values: &Handle<martensite_tkernel::ncollection::HSequence<f64>>,
 ) {
-    let parent = criterion.cast::<ShapeUpgradeSplitSurface>();
+    let parent = criterion.upcast::<dyn SplitSurface>();
     assert!(parent.is_kind_name("ShapeUpgrade_SplitSurface"));
     assert_eq!(
         parent.u_split_values().object_address(),

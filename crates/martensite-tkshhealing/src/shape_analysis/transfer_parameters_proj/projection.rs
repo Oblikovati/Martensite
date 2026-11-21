@@ -7,7 +7,7 @@ pub(super) fn segment(
     to_2d: bool,
     bounds: (f64, f64),
 ) -> Result<f64, Failure> {
-    let linear = tool.parent.perform_parameter(parameter, to_2d)?;
+    let linear = tool.linear.perform_parameter(parameter, to_2d)?;
     let (distance, projected, deviation) = if to_2d {
         project_planar(state, parameter, linear, bounds)?
     } else {

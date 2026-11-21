@@ -13,8 +13,9 @@ use martensite_tkg3d::{
     top_abs::ShapeEnum,
 };
 use martensite_tkmath::gp::Plane3;
+use martensite_tkshhealing::shape_upgrade::FaceDivider;
 use martensite_tkshhealing::shape_upgrade::{
-    ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeShapeConvertToBezier, ShapeUpgradeShapeDivide,
+    ShapeDivider, ShapeUpgradeShapeConvertToBezier, ShapeUpgradeShapeDivide,
 };
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeFace;
 
@@ -30,7 +31,7 @@ impl ShapeDivider for DerivedBezierPolicy {
     fn perform(&self, new_context: bool) -> Result<bool, Failure> {
         self.converter.perform_with_policy(self, new_context)
     }
-    fn split_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    fn split_face_tool(&self) -> Handle<dyn FaceDivider> {
         self.calls.write().push("face-tool");
         let face = ShapeDivider::split_face_tool(&self.converter);
         if self.suppress_surface {

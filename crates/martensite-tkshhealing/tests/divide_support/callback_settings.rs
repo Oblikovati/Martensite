@@ -5,33 +5,35 @@ use martensite_tkernel::{
 };
 use martensite_tkmath::gp::Plane3;
 use martensite_tkshhealing::shape_upgrade::{
-    FaceDivideData, FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeShapeDivide, ShapeUpgradeTool,
-    ShapeUpgradeWireDivide, WireDivider,
+    FaceDivideData, FaceDivider, ShapeUpgradeShapeDivide, WireDivider,
 };
+use martensite_tkshhealing::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeFace;
 use std::sync::{Arc, Weak};
 
 struct ReconfiguringFace {
-    parent: ShapeUpgradeFaceDivide,
+    state: FaceDivideData,
     operation: Weak<ShapeUpgradeShapeDivide>,
     observed: SharedState<Vec<(f64, i32)>>,
 }
-impl_transient!(ReconfiguringFace,"HealingTest_ReconfiguringFace",ShapeUpgradeFaceDivide,parent,interfaces:[dyn FaceDivider]);
+impl_transient!(ReconfiguringFace,"HealingTest_ReconfiguringFace",dyn FaceDivider,interfaces:[dyn FaceDivider, dyn UpgradeTool]);
+impl UpgradeTool for ReconfiguringFace {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state
+    }
+}
 impl FaceDivider for ReconfiguringFace {
     fn face_divide_data(&self) -> &FaceDivideData {
-        self.parent.face_divide_data()
+        &self.state
     }
-    fn face_divide_base(&self) -> &ShapeUpgradeTool {
-        self.parent.face_divide_base()
-    }
-    fn wire_divide_tool(&self) -> Handle<ShapeUpgradeWireDivide> {
+    fn wire_divide_tool(&self) -> Handle<dyn WireDivider> {
         let operation = self.operation.upgrade().unwrap();
         operation.set_min_tolerance(0.03125);
         operation.set_edge_mode(7);
-        self.parent.wire_divide_tool()
+        self.state.wire_divide_tool()
     }
     fn perform(&self, _area: f64) -> Result<bool, Failure> {
-        let wire = self.parent.wire_divide_tool();
+        let wire = self.state.wire_divide_tool();
         let mode = wire.wire_divide_data().with(|fields| fields.edge_mode);
         self.observed.write().push((wire.min_tolerance(), mode));
         Ok(false)
@@ -47,7 +49,7 @@ fn reconfiguring_operation() -> (Arc<ShapeUpgradeShapeDivide>, Handle<Reconfigur
     operation.set_min_tolerance(0.015625);
     operation.set_edge_mode(1);
     let policy = Handle::new(ReconfiguringFace {
-        parent: ShapeUpgradeFaceDivide::empty(),
+        state: FaceDivideData::default(),
         operation: Arc::downgrade(&operation),
         observed: SharedState::new(Vec::new()),
     });
@@ -63,20 +65,22 @@ fn wire_selection_callback_updates_settings_before_face_execution() {
 }
 
 struct CountingFace {
-    parent: ShapeUpgradeFaceDivide,
+    state: FaceDivideData,
     selections: SharedState<usize>,
 }
-impl_transient!(CountingFace,"HealingTest_CountingFace",ShapeUpgradeFaceDivide,parent,interfaces:[dyn FaceDivider]);
+impl_transient!(CountingFace,"HealingTest_CountingFace",dyn FaceDivider,interfaces:[dyn FaceDivider, dyn UpgradeTool]);
+impl UpgradeTool for CountingFace {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state
+    }
+}
 impl FaceDivider for CountingFace {
     fn face_divide_data(&self) -> &FaceDivideData {
-        self.parent.face_divide_data()
+        &self.state
     }
-    fn face_divide_base(&self) -> &ShapeUpgradeTool {
-        self.parent.face_divide_base()
-    }
-    fn wire_divide_tool(&self) -> Handle<ShapeUpgradeWireDivide> {
+    fn wire_divide_tool(&self) -> Handle<dyn WireDivider> {
         *self.selections.write() += 1;
-        self.parent.wire_divide_tool()
+        self.state.wire_divide_tool()
     }
 }
 
@@ -96,14 +100,15 @@ fn cylindrical_policy() -> CountingFace {
         shape_build::ShapeBuildReShape, shape_upgrade::ShapeUpgradeSplitSurfaceAngle,
     };
     let policy = CountingFace {
-        parent: ShapeUpgradeFaceDivide::new(cylindrical_face()),
+        state: FaceDivideData::default(),
         selections: SharedState::new(0),
     };
+    policy.state.init(&cylindrical_face());
     policy
-        .parent
+        .state
         .set_context(&Handle::new(ShapeBuildReShape::new()));
     policy
-        .parent
+        .state
         .set_split_surface_tool(&Handle::new(ShapeUpgradeSplitSurfaceAngle::new(1.5)).cast());
     policy
 }

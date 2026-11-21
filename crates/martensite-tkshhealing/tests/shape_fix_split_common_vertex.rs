@@ -186,11 +186,10 @@ fn vertex_at_shared_point(edge: &Shape) -> Vertex {
 
 #[test]
 fn native_handle_aliases_share_mutations_and_project_to_real_root() {
-    use martensite_tkshhealing::shape_fix::ShapeFixRoot;
     let (face, _, _) = two_wire_face(false);
     let fixer = Handle::new(ShapeFixSplitCommonVertex::new());
     let alias = fixer.clone();
-    let root = fixer.cast::<ShapeFixRoot>();
+    let root = fixer.upcast::<dyn FixRoot>();
     assert!(!root.is_null());
     fixer.init(&face.into_shape()).unwrap();
     assert_eq!(

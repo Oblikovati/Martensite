@@ -4,20 +4,20 @@ use martensite_tkernel::{
     impl_transient,
     standard::{Handle, SharedState, WeakHandle},
 };
+use martensite_tkshhealing::shape_upgrade::FaceDivider;
 use martensite_tkshhealing::{
     shape_build::ShapeBuildReShape,
-    shape_extend::{BasicMsgRegistrator, ShapeExtendBasicMsgRegistrator},
-    shape_upgrade::{ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeShapeDivide},
+    shape_extend::BasicMsgRegistrator,
+    shape_upgrade::{ShapeDivider, ShapeUpgradeShapeDivide},
 };
 use std::sync::Arc;
 
 struct ReleaseObserver {
-    parent: ShapeExtendBasicMsgRegistrator,
     context: WeakHandle<ShapeBuildReShape>,
-    face_tool: WeakHandle<ShapeUpgradeFaceDivide>,
+    face_tool: WeakHandle<dyn FaceDivider>,
     observations: Arc<SharedState<Vec<(bool, bool)>>>,
 }
-impl_transient!(ReleaseObserver, "ReleaseObserver", ShapeExtendBasicMsgRegistrator, parent,
+impl_transient!(ReleaseObserver, "ReleaseObserver", dyn BasicMsgRegistrator,
     interfaces: [dyn BasicMsgRegistrator]);
 impl BasicMsgRegistrator for ReleaseObserver {}
 impl Drop for ReleaseObserver {
@@ -33,7 +33,6 @@ fn attach_observer(
     observations: Arc<SharedState<Vec<(bool, bool)>>>,
 ) -> Handle<ReleaseObserver> {
     let observer = Handle::new(ReleaseObserver {
-        parent: ShapeExtendBasicMsgRegistrator::default(),
         context: divider.context().downgrade(),
         face_tool: divider.split_face_tool().downgrade(),
         observations,

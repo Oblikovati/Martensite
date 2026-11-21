@@ -3,9 +3,9 @@ use super::ShapeAnalysisEdge;
 use crate::shape_build::ShapeBuildEdge;
 use martensite_tkbrep::topods::{Edge, Face};
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient,
     ncollection::HSequence,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
 };
 use martensite_tkmath::gp::resolution;
 mod operations;
@@ -41,6 +41,10 @@ impl Default for TransferParameterData {
     }
 }
 impl TransferParameterData {
+    pub(in crate::shape_analysis) fn init(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
+        operations::initialize(self, edge, face)
+    }
+
     /// Inspect protected state; `state.with(|fields| fields.first)`.
     pub fn with<R>(&self, read: impl FnOnce(&TransferParameterFields) -> R) -> R {
         read(&self.fields.read())
@@ -48,6 +52,37 @@ impl TransferParameterData {
     /// Update subclass projection state; `state.with_mut(|fields| fields.max_tolerance=1e-6)`.
     pub fn with_mut<R>(&self, write: impl FnOnce(&mut TransferParameterFields) -> R) -> R {
         write(&mut self.fields.write())
+    }
+    /// Transform one parameter, preserving arithmetic order; `tool.perform_parameter(0.5,true)?`.
+    pub fn perform_parameter(&self, parameter: f64, to_2d: bool) -> Result<f64, Failure> {
+        Ok(self.with(|fields| {
+            if to_2d {
+                return fields.shift + parameter * fields.scale;
+            }
+            -fields.shift / fields.scale + parameter * 1. / fields.scale
+        }))
+    }
+    /// Copy every matching representation range; `tool.transfer_range(&edge,0.,1.,false)?`.
+    pub(in crate::shape_analysis) fn transfer_range(
+        &self,
+        edge: &Edge,
+        previous: f64,
+        current: f64,
+        is_2d: bool,
+    ) -> Result<(), Failure> {
+        let (source, alpha, beta) = operations::range_fractions(self, previous, current, is_2d);
+        ShapeBuildEdge.copy_ranges(edge, &source, alpha, beta)
+    }
+    /// Compare exact linear coefficients; `tool.is_same_range()`.
+    pub(in crate::shape_analysis) fn is_same_range(&self) -> bool {
+        self.with(|fields| fields.shift == 0. && fields.scale == 1.)
+    }
+    pub(in crate::shape_analysis) fn perform(
+        &self,
+        parameters: &Handle<HSequence<f64>>,
+        to_2d: bool,
+    ) -> Result<Handle<HSequence<f64>>, Failure> {
+        operations::transfer_sequence(parameters, |value| self.perform_parameter(value, to_2d))
     }
 }
 /// Virtual transfer operations retain derived scalar dispatch; `tool.perform_parameter(0.5,true)?`.
@@ -61,7 +96,7 @@ pub trait TransferParameters: Transient {
     }
     /// Discover unoriented curve ranges; `tool.init(&edge,&face)?`.
     fn init(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
-        operations::initialize(self.transfer_parameter_data(), edge, face)
+        self.transfer_parameter_data().init(edge, face)
     }
     /// Transform an independent sequence through virtual scalar transfer; `tool.perform(&parameters,true)?`.
     fn perform(
@@ -69,16 +104,12 @@ pub trait TransferParameters: Transient {
         parameters: &Handle<HSequence<f64>>,
         to_2d: bool,
     ) -> Result<Handle<HSequence<f64>>, Failure> {
-        operations::transfer_sequence(self, parameters, to_2d)
+        operations::transfer_sequence(parameters, |value| self.perform_parameter(value, to_2d))
     }
     /// Transform one parameter, preserving arithmetic order; `tool.perform_parameter(0.5,true)?`.
     fn perform_parameter(&self, parameter: f64, to_2d: bool) -> Result<f64, Failure> {
-        Ok(self.transfer_parameter_data().with(|fields| {
-            if to_2d {
-                return fields.shift + parameter * fields.scale;
-            }
-            -fields.shift / fields.scale + parameter * 1. / fields.scale
-        }))
+        self.transfer_parameter_data()
+            .perform_parameter(parameter, to_2d)
     }
     /// Copy every matching representation range; `tool.transfer_range(&edge,0.,1.,false)?`.
     fn transfer_range(
@@ -88,28 +119,21 @@ pub trait TransferParameters: Transient {
         current: f64,
         is_2d: bool,
     ) -> Result<(), Failure> {
-        let (source, alpha, beta) =
-            operations::range_fractions(self.transfer_parameter_data(), previous, current, is_2d);
-        ShapeBuildEdge.copy_ranges(edge, &source, alpha, beta)
+        self.transfer_parameter_data()
+            .transfer_range(edge, previous, current, is_2d)
     }
     /// Compare exact linear coefficients; `tool.is_same_range()`.
     fn is_same_range(&self) -> bool {
-        self.transfer_parameter_data()
-            .with(|fields| fields.shift == 0. && fields.scale == 1.)
+        self.transfer_parameter_data().is_same_range()
     }
 }
-impl_transient_interface!(
-    dyn TransferParameters,
-    "ShapeAnalysis_TransferParameters",
-    StandardTransient
-);
 /// Base linear parameter transfer; `ShapeAnalysisTransferParameters::new()`.
 #[derive(Default)]
 pub struct ShapeAnalysisTransferParameters {
-    parent: StandardTransient,
     state: TransferParameterData,
 }
-impl_transient!(ShapeAnalysisTransferParameters,"ShapeAnalysis_TransferParameters",StandardTransient,parent,interfaces:[dyn TransferParameters]);
+impl_transient!(ShapeAnalysisTransferParameters,"ShapeAnalysis_TransferParameters",dyn Transient,interfaces:[dyn TransferParameters]);
+parent_interface!(dyn TransferParameters, ShapeAnalysisTransferParameters, []);
 impl TransferParameters for ShapeAnalysisTransferParameters {
     fn transfer_parameter_data(&self) -> &TransferParameterData {
         &self.state

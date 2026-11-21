@@ -7,7 +7,7 @@ use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkshhealing::{
     shape_extend::{ShapeExtend, ShapeExtendStatus},
-    shape_upgrade::{FixSmallCurves, ShapeUpgradeFixSmallBezierCurves, ShapeUpgradeFixSmallCurves},
+    shape_upgrade::{FixSmallCurves, ShapeUpgradeFixSmallBezierCurves},
 };
 
 fn configured(
@@ -128,7 +128,7 @@ fn small_bezier_trim_exceptions_and_cn_pcurve_match_native() {
 #[test]
 fn small_bezier_real_parent_shares_tools_precision_and_retained_status() {
     let fixer = configured(false, false, false, 0, 0);
-    let base = fixer.cast::<ShapeUpgradeFixSmallCurves>();
+    let base = fixer.upcast::<dyn FixSmallCurves>();
     assert!(!base.is_null());
     base.set_precision(0.01);
     assert_eq!(fixer.precision(), 0.01);

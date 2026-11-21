@@ -18,7 +18,7 @@ use martensite_tkmath::geom_abs::Shape;
 pub(super) fn compute(tool: &ShapeUpgradeConvertCurve3dToBezier) -> Result<(), Failure> {
     clear_outputs(tool);
     let (first, last) = endpoints(tool)?;
-    let curve = tool.parent.source_curve();
+    let curve = tool.geometry.source_curve();
     if let Some(trimmed) = curve.cast::<GeomTrimmedCurve>().get() {
         return recurse_trimmed(tool, &trimmed.basis_curve(), first, last);
     }
@@ -87,7 +87,7 @@ fn compute_bezier(
 ) -> Result<(), Failure> {
     initialize_direct(tool, first, last)?;
     if first < precision::p_confusion() && last > 1. - precision::p_confusion() {
-        append_segment(tool, tool.parent.source_curve());
+        append_segment(tool, tool.geometry.source_curve());
         set_status(tool, ShapeExtendStatus::Ok);
         return Ok(());
     }
@@ -106,7 +106,7 @@ fn compute_line(
 ) -> Result<(), Failure> {
     initialize_direct(tool, first, last)?;
     if !tool.line_mode() {
-        append_segment(tool, tool.parent.source_curve());
+        append_segment(tool, tool.geometry.source_curve());
         set_status(tool, ShapeExtendStatus::Ok);
         return Ok(());
     }

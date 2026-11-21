@@ -9,7 +9,7 @@ use martensite_tkmath::gp::{Axis2, Axis3};
 use martensite_tkshhealing::{
     shape_extend::ShapeExtendStatus,
     shape_upgrade::{
-        FaceDivider, ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeShapeDivideAngle,
+        FaceDivider, ShapeDivider, ShapeUpgradeShapeDivideAngle,
         ShapeUpgradeShapeDivideClosedEdges, ShapeUpgradeSplitSurface,
     },
 };
@@ -44,14 +44,14 @@ fn count(shape: &Shape, kind: ShapeEnum) -> i32 {
 }
 fn configure_angle(
     divider: &ShapeUpgradeShapeDivideAngle,
-    initial: &Handle<ShapeUpgradeFaceDivide>,
+    initial: &Handle<dyn FaceDivider>,
     mode: usize,
 ) {
     if mode == 1 {
         divider.set_max_angle(1.).unwrap();
     }
     if mode == 2 {
-        initial.set_split_surface_tool(&Handle::new(ShapeUpgradeSplitSurface::new()));
+        initial.set_split_surface_tool(&Handle::new(ShapeUpgradeSplitSurface::new()).into_upcast());
     }
     if mode == 3 {
         divider.set_split_face_tool(&Handle::default());
@@ -123,9 +123,10 @@ fn angle_and_closed_edge_wrappers_match_native() {
 fn angle_reset_preserves_face_identity_but_discards_wire_policy() {
     let divider = ShapeUpgradeShapeDivideAngle::new(1.);
     let face = divider.split_face_tool();
-    face.set_wire_divide_tool(&Handle::new(
-        martensite_tkshhealing::shape_upgrade::ShapeUpgradeWireDivide::new(),
-    ));
+    face.set_wire_divide_tool(
+        &Handle::new(martensite_tkshhealing::shape_upgrade::ShapeUpgradeWireDivide::new())
+            .into_upcast(),
+    );
     divider.init_tool(2.).unwrap();
     assert!(divider.split_face_tool() == face);
     assert!(face.cast::<dyn FaceDivider>().wire_divide_tool().is_null());

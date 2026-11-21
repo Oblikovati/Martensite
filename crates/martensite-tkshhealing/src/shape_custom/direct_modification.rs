@@ -7,7 +7,7 @@ use martensite_tkbrep::brep_tools::{BRepToolsModification, NewCurve, NewSurface}
 use martensite_tkbrep::topods::{self, Edge, Face, Vertex};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Gravity, Msg};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{
@@ -97,14 +97,12 @@ fn indirection(
 /// ```
 #[derive(Default)]
 pub struct ShapeCustomDirectModification {
-    parent: StandardTransient,
     messages: ShapeCustomModificationFields,
 }
 impl_transient!(
     ShapeCustomDirectModification,
     "ShapeCustom_DirectModification",
     dyn ShapeCustomModification,
-    parent,
     interfaces: [dyn BRepToolsModification, dyn ShapeCustomModification]
 );
 

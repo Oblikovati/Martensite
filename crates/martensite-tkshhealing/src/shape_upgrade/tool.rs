@@ -2,7 +2,7 @@
 use crate::shape_build::ShapeBuildReShape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 
 /// The fields of a `ShapeUpgradeTool`.
 #[derive(Clone)]
@@ -24,19 +24,52 @@ struct ToolFields {
 /// assert_eq!(tool.limit_tolerance(5.0), 2.0);
 /// ```
 pub struct ShapeUpgradeTool {
-    parent: StandardTransient,
+    data: UpgradeToolData,
+}
+
+/// Context and tolerances shared by upgrade tools. Example: `UpgradeToolData::default()`.
+pub struct UpgradeToolData {
     fields: SharedState<ToolFields>,
+}
+
+/// The real owner of the common upgrade tool fields.
+pub trait UpgradeTool: Transient {
+    /// The common tool fields. Example: `tool.upgrade_tool_data().precision()`.
+    fn upgrade_tool_data(&self) -> &UpgradeToolData;
+}
+parent_interface!(dyn UpgradeTool, ShapeUpgradeTool, []);
+
+impl UpgradeTool for ShapeUpgradeTool {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.data
+    }
+}
+
+impl std::ops::Deref for dyn UpgradeTool {
+    type Target = UpgradeToolData;
+    fn deref(&self) -> &Self::Target {
+        self.upgrade_tool_data()
+    }
+}
+
+impl std::ops::Deref for ShapeUpgradeTool {
+    type Target = UpgradeToolData;
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
 }
 impl_transient!(
     ShapeUpgradeTool,
     "ShapeUpgrade_Tool",
-    StandardTransient,
-    parent
+    dyn Transient,
+    interfaces: [dyn UpgradeTool]
 );
 
 impl Default for ShapeUpgradeTool {
     fn default() -> Self {
-        Self::new()
+        Self {
+            data: UpgradeToolData::default(),
+        }
     }
 }
 
@@ -45,8 +78,13 @@ impl ShapeUpgradeTool {
     /// `precision::confusion()`, maximum tolerance 1;
     /// `ShapeUpgradeTool::new()`.
     pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Default for UpgradeToolData {
+    fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(ToolFields {
                 context: Handle::default(),
                 precision: precision::confusion(),
@@ -55,11 +93,13 @@ impl ShapeUpgradeTool {
             }),
         }
     }
+}
 
+impl UpgradeToolData {
     /// copies the context, the precision and the tolerances of `tool`;
     /// Standard_NullObject for a null tool;
     /// `tool.set(&other)?`.
-    pub fn set(&self, tool: &Handle<ShapeUpgradeTool>) -> Result<(), Failure> {
+    pub fn set<T: UpgradeTool + ?Sized>(&self, tool: &Handle<T>) -> Result<(), Failure> {
         let source = tool.get().ok_or_else(|| {
             Failure::with_type(
                 "Standard_NullObject",
@@ -67,7 +107,7 @@ impl ShapeUpgradeTool {
                 "",
             )
         })?;
-        let copied = source.fields.read().clone();
+        let copied = source.upgrade_tool_data().fields.read().clone();
         *self.fields.write() = copied;
         Ok(())
     }

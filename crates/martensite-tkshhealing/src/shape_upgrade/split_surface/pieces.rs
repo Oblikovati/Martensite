@@ -48,7 +48,7 @@ impl SplitSurfaceData {
             return trimmed_surface(&copy, bounds);
         }
         if segment_patch(&copy, bounds).is_err() {
-            // fallback trims the possibly mutated copy, not a fresh supimplementation surface.
+            // fallback trims the possibly mutated copy, not a fresh support surface.
             return trimmed_surface(&copy, bounds);
         }
         self.add_status(ShapeExtendStatus::Done3);

@@ -1,7 +1,6 @@
 //! Whole-shape area division settings from ShapeUpgradeShapeDivideArea.
-use super::{
-    ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeFaceDivideArea, ShapeUpgradeShapeDivide,
-};
+use super::{ShapeDivider, ShapeUpgradeFaceDivideArea, ShapeUpgradeShapeDivide};
+use crate::shape_upgrade::FaceDivider;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     precision,
@@ -32,7 +31,7 @@ impl ShapeDivider for ShapeUpgradeShapeDivideArea {
     fn shape_divide_base(&self) -> &ShapeUpgradeShapeDivide {
         &self.parent
     }
-    fn split_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    fn split_face_tool(&self) -> Handle<dyn FaceDivider> {
         self.new_face_tool()
     }
 }
@@ -106,7 +105,7 @@ impl ShapeUpgradeShapeDivideArea {
             settings.parts = parts;
         }
     }
-    fn new_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    fn new_face_tool(&self) -> Handle<dyn FaceDivider> {
         let settings = *self.settings.read();
         let tool = ShapeUpgradeFaceDivideArea::empty();
         tool.set_max_area(settings.max_area);

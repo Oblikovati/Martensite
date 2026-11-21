@@ -6,7 +6,7 @@ use martensite_tkbrep::topods::{self, Edge, Face, Shape, ShapeIterator};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::toploc::Location;
 use rebuild::{rebuild_edge, rebuild_face, rebuild_vertex};
@@ -35,14 +35,12 @@ struct RemoveLocationsFields {
 /// assert_eq!(remover.remove_level(), ShapeEnum::Face);
 /// ```
 pub struct ShapeUpgradeRemoveLocations {
-    parent: StandardTransient,
     fields: SharedState<RemoveLocationsFields>,
 }
 impl_transient!(
     ShapeUpgradeRemoveLocations,
     "ShapeUpgrade_RemoveLocations",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for ShapeUpgradeRemoveLocations {
@@ -56,7 +54,6 @@ impl ShapeUpgradeRemoveLocations {
     /// except compounds); `ShapeUpgradeRemoveLocations::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(RemoveLocationsFields {
                 level_removing: ShapeEnum::Shape,
                 shape: Shape::default(),

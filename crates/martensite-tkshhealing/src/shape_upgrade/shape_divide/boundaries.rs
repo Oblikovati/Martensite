@@ -1,7 +1,7 @@
 use super::ShapeDivider;
 use crate::{
     shape_extend::ShapeExtendStatus,
-    shape_upgrade::{FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeWireDivide, WireDivider},
+    shape_upgrade::{FaceDivider, WireDivider},
 };
 use martensite_tkbrep::{
     brep_tools::ReShape,
@@ -17,7 +17,7 @@ use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 pub(super) fn divide_free_boundaries(
     tool: &(impl ShapeDivider + ?Sized),
     source: &Shape,
-    face: &Handle<ShapeUpgradeFaceDivide>,
+    face: &Handle<dyn FaceDivider>,
 ) -> Result<(), Failure> {
     let wire = selected_wire(face)?;
     if wire.is_null() {
@@ -30,7 +30,7 @@ pub(super) fn divide_free_boundaries(
 fn divide_boundary_kind(
     tool: &(impl ShapeDivider + ?Sized),
     source: &Shape,
-    wire: &Handle<ShapeUpgradeWireDivide>,
+    wire: &Handle<dyn WireDivider>,
     kind: ShapeEnum,
 ) -> Result<(), Failure> {
     let (avoid, message) = if kind == ShapeEnum::Wire {
@@ -41,9 +41,7 @@ fn divide_boundary_kind(
     divide_boundaries(tool, source, wire, kind, avoid, &message)
 }
 
-fn selected_wire(
-    face: &Handle<ShapeUpgradeFaceDivide>,
-) -> Result<Handle<ShapeUpgradeWireDivide>, Failure> {
+fn selected_wire(face: &Handle<dyn FaceDivider>) -> Result<Handle<dyn WireDivider>, Failure> {
     if face.is_null() {
         return Err(Failure::with_type(
             "Standard_NullObject",
@@ -53,7 +51,7 @@ fn selected_wire(
     }
     Ok(face.cast::<dyn FaceDivider>().wire_divide_tool())
 }
-fn configure_wire(tool: &(impl ShapeDivider + ?Sized), wire: &Handle<ShapeUpgradeWireDivide>) {
+fn configure_wire(tool: &(impl ShapeDivider + ?Sized), wire: &Handle<dyn WireDivider>) {
     let (precision, max, min, mode) = tool
         .shape_divide_base()
         .with(|f| (f.precision, f.max_tolerance, f.min_tolerance, f.edge_mode));
@@ -66,7 +64,7 @@ fn configure_wire(tool: &(impl ShapeDivider + ?Sized), wire: &Handle<ShapeUpgrad
 fn divide_boundaries(
     tool: &(impl ShapeDivider + ?Sized),
     source: &Shape,
-    wire: &Handle<ShapeUpgradeWireDivide>,
+    wire: &Handle<dyn WireDivider>,
     kind: ShapeEnum,
     avoid: ShapeEnum,
     message: &Msg,
@@ -92,7 +90,7 @@ fn eligible_boundary(shape: &Shape, kind: ShapeEnum) -> Result<bool, Failure> {
 fn divide_applied_boundaries(
     tool: &(impl ShapeDivider + ?Sized),
     original: &Shape,
-    wire: &Handle<ShapeUpgradeWireDivide>,
+    wire: &Handle<dyn WireDivider>,
     kind: ShapeEnum,
     message: &Msg,
 ) -> Result<(), Failure> {
@@ -111,7 +109,7 @@ fn divide_applied_boundaries(
 }
 fn perform_boundary(
     tool: &(impl ShapeDivider + ?Sized),
-    wire: &Handle<ShapeUpgradeWireDivide>,
+    wire: &Handle<dyn WireDivider>,
     shape: &Shape,
     kind: ShapeEnum,
 ) -> Result<(), Failure> {
@@ -125,7 +123,7 @@ fn perform_boundary(
 }
 fn record_boundary(
     tool: &(impl ShapeDivider + ?Sized),
-    wire: &Handle<ShapeUpgradeWireDivide>,
+    wire: &Handle<dyn WireDivider>,
     shape: &Shape,
     message: &Msg,
 ) -> Result<(), Failure> {

@@ -12,7 +12,7 @@ mod singularities;
 pub use singularities::SurfaceSingularity;
 
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface, SurfaceBounds};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
@@ -46,23 +46,16 @@ struct SurfaceAnalysisFields {
 /// # Ok::<(),martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct ShapeAnalysisSurface {
-    parent: StandardTransient,
     fields: SharedState<SurfaceAnalysisFields>,
     extrema: SharedState<Option<martensite_tkgeombase::extrema::ExtPS<'static>>>,
 }
-impl_transient!(
-    ShapeAnalysisSurface,
-    "ShapeAnalysis_Surface",
-    StandardTransient,
-    parent
-);
+impl_transient!(ShapeAnalysisSurface, "ShapeAnalysis_Surface", dyn Transient);
 
 impl ShapeAnalysisSurface {
     /// Creates the analyzer; `ShapeAnalysisSurface::new(&surface)?`.
     pub fn new(surface: &Handle<dyn GeomSurface>) -> Result<Self, Failure> {
         let fields = SurfaceAnalysisFields::new(surface)?;
         Ok(Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(fields),
             extrema: SharedState::new(None),
         })

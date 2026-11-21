@@ -1,8 +1,5 @@
 //! Projection-based parameter transfer, preserving selection and mutation order.
-use super::{
-    ShapeAnalysisCurve, ShapeAnalysisEdge, ShapeAnalysisTransferParameters, TransferParameterData,
-    TransferParameters,
-};
+use super::{ShapeAnalysisCurve, ShapeAnalysisEdge, TransferParameterData, TransferParameters};
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topods::{Edge, Face},
@@ -50,29 +47,23 @@ impl Default for ProjectionTransferState {
 }
 /// Project between edge parameterizations; `ShapeAnalysisTransferParametersProj::new()`.
 pub struct ShapeAnalysisTransferParametersProj {
-    parent: ShapeAnalysisTransferParameters,
+    linear: TransferParameterData,
     state: SharedState<ProjectionTransferState>,
 }
 impl Default for ShapeAnalysisTransferParametersProj {
     fn default() -> Self {
-        let parent = ShapeAnalysisTransferParameters::new();
-        parent.set_max_tolerance(1.);
+        let linear = TransferParameterData::default();
+        linear.with_mut(|fields| fields.max_tolerance = 1.);
         Self {
-            parent,
+            linear,
             state: SharedState::new(ProjectionTransferState::default()),
         }
     }
 }
-impl_transient!(ShapeAnalysisTransferParametersProj,"ShapeAnalysis_TransferParametersProj",ShapeAnalysisTransferParameters,parent,interfaces:[dyn TransferParameters]);
-impl std::ops::Deref for ShapeAnalysisTransferParametersProj {
-    type Target = ShapeAnalysisTransferParameters;
-    fn deref(&self) -> &Self::Target {
-        &self.parent
-    }
-}
+impl_transient!(ShapeAnalysisTransferParametersProj,"ShapeAnalysis_TransferParametersProj",dyn TransferParameters,interfaces:[dyn TransferParameters]);
 impl TransferParameters for ShapeAnalysisTransferParametersProj {
     fn transfer_parameter_data(&self) -> &TransferParameterData {
-        self.parent.transfer_parameter_data()
+        &self.linear
     }
     fn init(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
         initialize::initialize(self, edge, face)
@@ -80,7 +71,7 @@ impl TransferParameters for ShapeAnalysisTransferParametersProj {
     fn perform_parameter(&self, parameter: f64, to_2d: bool) -> Result<f64, Failure> {
         let state = self.state.snapshot();
         if !self.requires_projection(&state)? {
-            return self.parent.perform_parameter(parameter, to_2d);
+            return self.linear.perform_parameter(parameter, to_2d);
         }
         let bounds = self.target_bounds(&state, to_2d)?;
         let projected = projection::segment(self, &state, parameter, to_2d, bounds)?;
@@ -93,7 +84,7 @@ impl TransferParameters for ShapeAnalysisTransferParametersProj {
     ) -> Result<Handle<HSequence<f64>>, Failure> {
         let state = self.state.snapshot();
         if !self.requires_projection(&state)? {
-            return self.parent.perform(parameters, to_2d);
+            return self.linear.perform(parameters, to_2d);
         }
         sequence::transfer(self, &state, parameters, to_2d)
     }
@@ -106,7 +97,7 @@ impl TransferParameters for ShapeAnalysisTransferParametersProj {
     ) -> Result<(), Failure> {
         let state = self.state.snapshot();
         if !self.requires_projection(&state)? {
-            return self.parent.transfer_range(edge, previous, current, is_2d);
+            return self.linear.transfer_range(edge, previous, current, is_2d);
         }
         range::transfer(self, &state, edge, previous, current, is_2d)
     }
@@ -116,7 +107,7 @@ impl TransferParameters for ShapeAnalysisTransferParametersProj {
         !self
             .requires_projection(&state)
             .expect("initialized transfer requires a valid BRep edge")
-            && self.parent.is_same_range()
+            && self.linear.is_same_range()
     }
 }
 impl ShapeAnalysisTransferParametersProj {

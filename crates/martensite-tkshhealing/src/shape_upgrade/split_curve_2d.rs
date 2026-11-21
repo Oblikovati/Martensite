@@ -1,55 +1,21 @@
-//! ShapeUpgradeSplitCurve2d: copied geometry and split state.
-use super::split_curve_geometry::{CurveFamily2d, CurveSplitKernel};
-use super::{ShapeUpgradeSplitCurve, SplitCurve, SplitCurveData};
+//! The 2d curve family and its shared splitter state.
+use super::split_curve_geometry::{CurveFamily2d, CurveSplitKernel, define_curve_splitter};
+use super::{SplitCurve, SplitCurveData};
 use martensite_tkernel::{
-    impl_transient,
     ncollection::HArray1,
     standard::{Failure, Handle},
 };
 use martensite_tkg2d::geom2d::Geom2dCurve;
+
 /// Shared resulting curve array; multipart `build(false)` entries may be null.
 pub type SplitCurves2d = Handle<HArray1<Handle<dyn Geom2dCurve>>>;
-/// Splits a private curve copy; `ShapeUpgradeSplitCurve2d::new()`.
-/// offset construction from null pieces crashes; Rust records a typed failure divergence.
-#[derive(Default)]
-pub struct ShapeUpgradeSplitCurve2d {
-    parent: CurveSplitKernel<CurveFamily2d>,
-}
-impl_transient!(ShapeUpgradeSplitCurve2d,"ShapeUpgrade_SplitCurve2d",ShapeUpgradeSplitCurve,parent,interfaces:[dyn SplitCurve]);
-impl SplitCurve for ShapeUpgradeSplitCurve2d {
-    fn split_curve_data(&self) -> &SplitCurveData {
-        self.parent.split_curve_data()
-    }
-    fn build(&self, segment: bool) -> Result<(), Failure> {
-        self.parent.build(segment)
-    }
-}
-impl ShapeUpgradeSplitCurve2d {
-    /// Creates an splitter without an input curve; `ShapeUpgradeSplitCurve2d::new()`.
-    pub fn new() -> Self {
-        Self::default()
-    }
-    /// Copy a curve over its natural bounds; `splitter.init_curve(&curve)?`.
-    pub fn init_curve(&self, curve: &Handle<dyn Geom2dCurve>) -> Result<(), Failure> {
-        self.parent.init_natural(curve)
-    }
-    /// Copy and clamp the range as OCC966 requires; `splitter.init_curve_range(&curve,0.,1.)?`.
-    pub fn init_curve_range(
-        &self,
-        curve: &Handle<dyn Geom2dCurve>,
-        first: f64,
-        last: f64,
-    ) -> Result<(), Failure> {
-        self.parent.init_curve_range(curve, first, last)
-    }
-    /// Shared result array; null before Build allocates it; `splitter.curves()`.
-    pub fn curves(&self) -> SplitCurves2d {
-        self.parent.curves()
-    }
-    pub(super) fn source_curve(&self) -> Handle<dyn Geom2dCurve> {
-        self.parent.source_curve()
-    }
-    pub(super) fn set_result_curves(&self, curves: SplitCurves2d) {
-        self.parent.set_result_curves(curves);
-    }
-}
+
+define_curve_splitter!(
+    ShapeUpgradeSplitCurve2d,
+    SplitCurve2d,
+    CurveSplit2dData,
+    SplitCurves2d,
+    dyn Geom2dCurve,
+    CurveFamily2d,
+    "ShapeUpgrade_SplitCurve2d"
+);

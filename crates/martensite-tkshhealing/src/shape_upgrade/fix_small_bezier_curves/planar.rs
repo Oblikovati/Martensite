@@ -1,5 +1,6 @@
 //! Preserve the seam's forward-range reuse and its narrower native catch boundary.
 use super::*;
+use crate::shape_upgrade::SplitCurve2d;
 impl ShapeUpgradeFixSmallBezierCurves {
     pub(super) fn approximate_planar_pair(
         &self,
@@ -97,10 +98,7 @@ impl ShapeUpgradeFixSmallBezierCurves {
     }
 }
 
-fn planar_split_accepted(
-    tool: &Handle<ShapeUpgradeSplitCurve2d>,
-    reversed: bool,
-) -> Result<bool, Failure> {
+fn planar_split_accepted(tool: &Handle<dyn SplitCurve2d>, reversed: bool) -> Result<bool, Failure> {
     let criterion = tool.cast::<dyn SplitCurve>();
     criterion.perform(true)?;
     Ok(if reversed {

@@ -1,6 +1,7 @@
 //! Synchronize two parameter spaces before splitting, then independently rebuild reverse seams.
 use super::split_values::Knots;
 use super::*;
+use crate::shape_upgrade::EdgeDivider;
 use martensite_tkbrep::topods;
 pub(super) struct DividedCurves {
     pub spatial: SplitCurves3d,
@@ -8,8 +9,8 @@ pub(super) struct DividedCurves {
     pub reversed: SplitCurves2d,
     pub knots3: Knots,
     pub knots2: Knots,
-    pub split3: Handle<ShapeUpgradeSplitCurve3d>,
-    pub split2: Handle<ShapeUpgradeSplitCurve2d>,
+    pub split3: Handle<dyn SplitCurve3d>,
+    pub split2: Handle<dyn SplitCurve2d>,
     pub transfer: Handle<dyn TransferParameters>,
     pub was_same_range: bool,
     pub has3: bool,
@@ -20,7 +21,7 @@ pub(super) fn build<T: WireDivider + ?Sized>(
     tool: &T,
     edge: &Edge,
     face: &Face,
-    criterion: &Handle<ShapeUpgradeEdgeDivide>,
+    criterion: &Handle<dyn EdgeDivider>,
 ) -> Result<DividedCurves, Failure> {
     let mut curves = prepare_curves(tool, edge, face, criterion)?;
     synchronize(&mut curves)?;
@@ -40,7 +41,7 @@ fn prepare_curves<T: WireDivider + ?Sized>(
     tool: &T,
     edge: &Edge,
     face: &Face,
-    criterion: &Handle<ShapeUpgradeEdgeDivide>,
+    criterion: &Handle<dyn EdgeDivider>,
 ) -> Result<DividedCurves, Failure> {
     let transfer = tool.transfer_param_tool();
     state::require(&transfer, "parameter transfer")?;
@@ -150,7 +151,7 @@ mod tests {
         spatial
             .split_curve_data()
             .with_mut(|fields| fields.status = 1);
-        let curves = short_circuit_fixture(&spatial);
+        let curves = short_circuit_fixture(&spatial.upcast());
         assert!(curves.is_done().unwrap());
         spatial
             .split_curve_data()
@@ -160,7 +161,7 @@ mod tests {
             "Standard_NullObject"
         );
     }
-    fn short_circuit_fixture(spatial: &Handle<ShapeUpgradeSplitCurve3d>) -> DividedCurves {
+    fn short_circuit_fixture(spatial: &Handle<dyn SplitCurve3d>) -> DividedCurves {
         DividedCurves {
             spatial: Handle::default(),
             planar: Handle::default(),

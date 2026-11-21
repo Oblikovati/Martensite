@@ -1,7 +1,7 @@
 //! Behavior tests of ShapeExtend::init, the SHMessage resource and the message registrators.
 mod support;
 use martensite_tkernel::message::{Gravity, Msg, MsgFile, MsgFileSource};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkshhealing::sh_message::SHAPE_US;
 use martensite_tkshhealing::shape_extend::{
@@ -68,7 +68,8 @@ fn text_message(text: &str) -> Msg {
 #[test]
 fn the_registrator_keeps_messages_per_object_and_per_shape() {
     let registrator = ShapeExtendMsgRegistrator::new();
-    let object: Handle<StandardTransient> = Handle::new(StandardTransient::default());
+    let object: Handle<dyn Transient> =
+        Handle::new(martensite_tkernel::standard::StandardTransient::default()).into_upcast();
     let edge = support::square_edges().remove(0);
     registrator.send_transient(&object, &text_message("a"), Gravity::Info);
     registrator.send_transient(&object, &text_message("b"), Gravity::Fail);

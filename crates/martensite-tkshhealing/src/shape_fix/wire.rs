@@ -55,7 +55,7 @@ mod wire_tails;
 pub use wire_intersection_tool::ShapeFixIntersectionTool;
 pub use wire_split_tool::ShapeFixSplitTool;
 
-use super::{FixRoot, FixRootData, ShapeFixRoot};
+use super::{FixRoot, FixRootData};
 use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisWire};
 use crate::shape_build::{ShapeBuildEdge, ShapeBuildReShape};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus, ShapeExtendWireData};
@@ -122,17 +122,17 @@ struct WireFixState {
 
 /// The implemented `ShapeFixWire` reorder, no-gap and periodic-cone p-curve paths.
 pub struct ShapeFixWire {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     state: SharedState<WireFixState>,
     edge_fixer: Handle<ShapeFixEdge>,
 }
 
-impl_transient!(ShapeFixWire, "ShapeFix_Wire", ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
+impl_transient!(ShapeFixWire, "ShapeFix_Wire", dyn FixRoot, interfaces: [dyn FixRoot]);
 
 impl Default for ShapeFixWire {
     fn default() -> Self {
         Self {
-            parent: ShapeFixRoot::new(),
+            root: FixRootData::default(),
             state: SharedState::new(WireFixState {
                 analyzer: Handle::new(ShapeAnalysisWire::new()),
                 reorder_status: 0,
@@ -243,7 +243,7 @@ impl ShapeFixWire {
         self.state.read().analyzer.is_loaded()
     }
 
-    /// Whether both working edges and a supimplementation face are available; `fixer.is_ready()`.
+    /// Whether both working edges and a support face are available; `fixer.is_ready()`.
     pub fn is_ready(&self) -> bool {
         self.state.read().analyzer.is_ready()
     }
@@ -536,12 +536,12 @@ fn crossing_vertex(face: &Face, point: Point2) -> Result<Vertex, Failure> {
 
 impl FixRoot for ShapeFixWire {
     fn set_precision(&self, precision: f64) {
-        self.parent.set_precision(precision);
+        self.root.set_precision(precision);
         self.state.read().analyzer.set_precision(precision);
     }
 
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
 }
 

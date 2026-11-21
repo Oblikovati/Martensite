@@ -1,8 +1,6 @@
 use super::ShapeDivider;
 use crate::{
-    shape_build::ShapeBuildReShape,
-    shape_extend::ShapeExtendStatus,
-    shape_upgrade::{FaceDivider, ShapeUpgradeFaceDivide},
+    shape_build::ShapeBuildReShape, shape_extend::ShapeExtendStatus, shape_upgrade::FaceDivider,
 };
 use martensite_tkbrep::{
     brep_tools::ReShape,
@@ -52,7 +50,7 @@ fn divide_noncompound(
 fn divide_faces(
     tool: &(impl ShapeDivider + ?Sized),
     source: &Shape,
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
 ) -> Result<(), Failure> {
     configure_face(tool, face_tool);
     let message = tool.face_msg();
@@ -68,7 +66,7 @@ fn divide_faces(
     }
     Ok(())
 }
-fn configure_face(tool: &(impl ShapeDivider + ?Sized), face: &Handle<ShapeUpgradeFaceDivide>) {
+fn configure_face(tool: &(impl ShapeDivider + ?Sized), face: &Handle<dyn FaceDivider>) {
     let (precision, max, segment) = tool
         .shape_divide_base()
         .with(|f| (f.precision, f.max_tolerance, f.segment_mode));
@@ -87,7 +85,7 @@ fn configure_face(tool: &(impl ShapeDivider + ?Sized), face: &Handle<ShapeUpgrad
 }
 fn divide_applied_faces(
     tool: &(impl ShapeDivider + ?Sized),
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
     applied: &Shape,
     message: &Msg,
 ) -> Result<(), Failure> {
@@ -104,7 +102,7 @@ fn divide_applied_faces(
 }
 fn divide_face(
     tool: &(impl ShapeDivider + ?Sized),
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
     source: &Shape,
     message: &Msg,
 ) -> Result<(), Failure> {
@@ -116,7 +114,7 @@ fn divide_face(
 }
 fn record_face(
     tool: &(impl ShapeDivider + ?Sized),
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
     source: &Shape,
     message: &Msg,
 ) -> Result<(), Failure> {

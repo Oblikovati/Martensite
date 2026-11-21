@@ -6,8 +6,8 @@ use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::Handle;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkshhealing::shape_process::{
-    ShapeProcess, ShapeProcessContext, ShapeProcessOperLibrary, ShapeProcessOperation,
-    ShapeProcessOperationsFlags, ShapeProcessShapeContext,
+    ShapeProcess, ShapeProcessContext, ShapeProcessContextSource, ShapeProcessOperLibrary,
+    ShapeProcessOperation, ShapeProcessOperationsFlags, ShapeProcessShapeContext,
 };
 
 fn context_with(values: &[(&str, &str)]) -> ShapeProcessContext {
@@ -85,7 +85,8 @@ fn fix_shape_flag_runs_on_a_shape_context() {
     let context = Handle::new(ShapeProcessShapeContext::with_shape(&face, "", "").unwrap());
     let mut flags = ShapeProcessOperationsFlags::default();
     flags.set(ShapeProcessOperation::FixShape);
-    let base: Handle<ShapeProcessContext> = context.clone().cast();
+    let base = context.upcast::<dyn ShapeProcessContextSource>();
+    assert_eq!(base.object_address(), context.object_address());
     assert!(ShapeProcess::perform_operations(&base, flags, &ProgressRange::default()).unwrap());
     assert!(!context.result().is_null());
 }

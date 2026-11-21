@@ -93,7 +93,7 @@ fn tool_keeps_the_tolerances_around_the_precision() {
     tool.set(&other).unwrap();
     assert!(tool.context() == other.context());
     assert_eq!(tool.max_tolerance(), 1.0);
-    assert!(tool.set(&Handle::default()).is_err());
+    assert!(tool.set(&Handle::<ShapeUpgradeTool>::default()).is_err());
 }
 
 #[test]

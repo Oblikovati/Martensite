@@ -10,7 +10,7 @@ use martensite_tkg3d::geom::{
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::{Axis3, Direction3, Point3};
 use martensite_tkshhealing::shape_analysis::ShapeAnalysis;
-use martensite_tkshhealing::shape_fix::{FixRoot, ShapeFixFace};
+use martensite_tkshhealing::shape_fix::ShapeFixFace;
 use support::*;
 
 #[test]
@@ -20,7 +20,7 @@ fn add_natural_bound_builds_a_finite_empty_sphere_face() {
     let fixer = ShapeFixFace::default();
     fixer.init_surface(&sphere, 1e-7, true).unwrap();
     fixer.set_fix_add_natural_bound_mode(0);
-    let parent: &martensite_tkshhealing::shape_fix::ShapeFixRoot = &fixer;
+    let parent: &dyn martensite_tkshhealing::shape_fix::FixRoot = &fixer;
     let root_shape = parent.fix_root_data().with(|fields| fields.shape.clone());
 
     assert!(fixer.fix_add_natural_bound().unwrap());

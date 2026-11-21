@@ -34,7 +34,7 @@ fn configure(divider: &ShapeUpgradeFaceDivideArea, mode: usize) {
         divider.set_split_surface_tool(&if mode == 4 {
             Handle::default()
         } else {
-            Handle::new(ShapeUpgradeSplitSurface::new())
+            Handle::new(ShapeUpgradeSplitSurface::new()).into_upcast()
         });
     }
     if mode == 6 {
