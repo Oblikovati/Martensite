@@ -1,6 +1,6 @@
 //! Unicode conversions, the current format and the format types.
 use super::support::FakeResourceSystem;
-use martensite_tkernel::{
+use crate::{
     resource::{FormatType, ResourceManager, ResourceUnicode},
     tcollection::ExtendedString,
 };
@@ -148,7 +148,6 @@ fn utf8_locale_and_unconverted_formats() {
 }
 #[test]
 fn current_format_is_process_wide_and_read_from_charset() {
-    let _serial = super::serial();
     let system: Arc<FakeResourceSystem> = Arc::default();
     system.write_resource(&PathBuf::from("charset"), "CharSet", "FormatType", "EUC");
     system.set_environment("CSF_CharSetDefaults", PathBuf::from("charset"));

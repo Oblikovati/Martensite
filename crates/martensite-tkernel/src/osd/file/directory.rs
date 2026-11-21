@@ -92,13 +92,6 @@ impl Directory {
         parent.build(protection)?;
         Ok(parent)
     }
-    /// `mkdtemp("/tmp/CSFXXXXXX")` (mode 0700), or an empty directory
-    /// object when it fails; `Directory::build_temporary()`.
-    ///
-    /// The `unlink` of the new directory always fails (EISDIR) and is ignored.
-    pub fn build_temporary() -> Self {
-        Self::build_temporary_with(native_calls())
-    }
     /// Builds a temporary directory over injected calls; `Directory::build_temporary_with(calls)`.
     pub fn build_temporary_with(calls: Arc<dyn PosixFileCalls>) -> Self {
         let Ok(name) = calls.mkdtemp(b"/tmp/CSFXXXXXX") else {

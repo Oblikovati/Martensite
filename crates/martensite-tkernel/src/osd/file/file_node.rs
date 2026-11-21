@@ -49,10 +49,6 @@ impl FileNode {
             calls,
         }
     }
-    /// The injected system calls; `node.calls()`.
-    pub fn calls(&self) -> &Arc<dyn PosixFileCalls> {
-        &self.calls
-    }
     /// `Path(name)`: the output reference becomes the returned path; `node.path()`.
     pub fn path(&self) -> CadPath {
         self.path.clone()

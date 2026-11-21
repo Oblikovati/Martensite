@@ -65,7 +65,8 @@ pub enum FormatType {
 }
 impl FormatType {
     /// The ANSI alias; `FormatType::ANSI == FormatType::NoConversion`.
-    pub const ANSI: Self = Self::NoConversion;
+    #[cfg(test)]
+    pub(crate) const ANSI: Self = Self::NoConversion;
     /// Every format in discriminant order; `FormatType::ALL[26] == FormatType::Big5`.
     pub const ALL: [Self; 27] = [
         Self::Sjis,
@@ -97,7 +98,8 @@ impl FormatType {
         Self::Big5,
     ];
     /// The format with a raw discriminant, if any; `FormatType::from_raw(4) == Some(FormatType::Utf8)`.
-    pub fn from_raw(value: i32) -> Option<Self> {
+    #[cfg(test)]
+    pub(crate) fn from_raw(value: i32) -> Option<Self> {
         usize::try_from(value)
             .ok()
             .and_then(|index| Self::ALL.get(index).copied())

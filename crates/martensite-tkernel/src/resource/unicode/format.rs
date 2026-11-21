@@ -9,7 +9,7 @@ use std::sync::atomic::Ordering;
 impl ResourceUnicode {
     /// Sets the format used by the format-less conversions and marks it as read;
     /// `ResourceUnicode::set_format(FormatType::Utf8)`.
-    pub fn set_format(format: FormatType) {
+    pub(crate) fn set_format(format: FormatType) {
         let _lock = FORMAT_LOCK
             .lock()
             .unwrap_or_else(|poison| poison.into_inner());
@@ -18,12 +18,12 @@ impl ResourceUnicode {
     }
     /// The current format, read on first use from the `CharSet` resources of the process
     /// environment; `ResourceUnicode::get_format()?`.
-    pub fn get_format() -> Result<FormatType, Failure> {
+    pub(crate) fn get_format() -> Result<FormatType, Failure> {
         Self::get_format_with(&ResourceHost::native())
     }
     /// `get_format` reading the `CharSet` resources through injected host services;
     /// `ResourceUnicode::get_format_with(&host)?`.
-    pub fn get_format_with(host: &ResourceHost) -> Result<FormatType, Failure> {
+    pub(crate) fn get_format_with(host: &ResourceHost) -> Result<FormatType, Failure> {
         if FORMAT_READ.load(Ordering::Acquire) {
             return Ok(current());
         }
@@ -36,13 +36,8 @@ impl ResourceUnicode {
         }
         Ok(current())
     }
-    /// Re-reads `FormatType` from the `CharSet` resources of the process environment;
-    /// `ResourceUnicode::read_format()?`.
-    pub fn read_format() -> Result<(), Failure> {
-        Self::read_format_with(&ResourceHost::native())
-    }
-    /// `read_format` through injected host services; `ResourceUnicode::read_format_with(&host)?`.
-    pub fn read_format_with(host: &ResourceHost) -> Result<(), Failure> {
+    /// Re-reads the format through injected host services; `ResourceUnicode::read_format_with(&host)?`.
+    pub(crate) fn read_format_with(host: &ResourceHost) -> Result<(), Failure> {
         let _lock = FORMAT_LOCK
             .lock()
             .unwrap_or_else(|poison| poison.into_inner());
