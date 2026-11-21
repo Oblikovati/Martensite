@@ -50,7 +50,7 @@ macro_rules! xcaf_real_property {
             }
             /// `Set(V)`: `TDataStdReal::Set` (backed up when it changes).
             pub fn set_value(&self, value: f64) -> Result<(), Failure> {
-                self.real.set_value(value)
+                TDataStdRealSource::set_value(self, value)
             }
             /// `Get()`.
             pub fn get(&self) -> f64 {
@@ -85,7 +85,7 @@ macro_rules! xcaf_real_property {
                 Self::get_id()
             }
             fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-                self.real.restore(with)
+                self.restore_real(with)
             }
             /// `NewEmpty` (from `IMPLEMENT_DERIVED_ATTRIBUTE`).
             fn new_empty(&self) -> Handle<dyn TdfAttribute> {
@@ -94,9 +94,9 @@ macro_rules! xcaf_real_property {
             fn paste(
                 &self,
                 into: &Handle<dyn TdfAttribute>,
-                table: &Handle<TdfRelocationTable>,
+                _table: &Handle<TdfRelocationTable>,
             ) -> Result<(), Failure> {
-                self.real.paste(into, table)
+                self.paste_real(into)
             }
             #[doc = concat!("`Dump`: `\"", $word, " <value>\"`.")]
             fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {
@@ -196,7 +196,7 @@ impl TdfAttribute for XCAFDocCentroid {
     fn paste(
         &self,
         into: &Handle<dyn TdfAttribute>,
-        _table: &Handle<TdfRelocationTable>,
+        __table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
         let target = downcast::<XCAFDocCentroid>(into, "XCAFDocCentroid::Paste")?;
         live(&target, "XCAFDocCentroid::Paste")?.set_point(&self.get())
