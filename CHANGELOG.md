@@ -8,7 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- Shared one intersection context across the workers of parallel Boolean operations instead of building one per worker, and built missing cached services outside the cache lock; the body self-intersection check stays serial because its parallel path raised peak memory across long operations (#496, #580).
+- Ran the body self-intersection check on four workers that share one intersection context, releasing free heap pages first so that later workers do not grow peak memory; a 19-check conical text operation took about 66 s instead of 106 s at about 1% more peak memory. Parallel Boolean operations also share one context instead of building one per worker (#496, #580).
 
 - Reused complete native endpoint-incidence discovery across contact-cardinality reports while preserving empty-report and self-contact diagnostics (#566).
 
