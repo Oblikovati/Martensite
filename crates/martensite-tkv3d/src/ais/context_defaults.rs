@@ -417,7 +417,7 @@ impl AisInteractiveContext {
     pub fn dump_json(&self, stream: &mut DumpStream, _depth: i32) -> io::Result<()> {
         let fields = self.fields.read();
         class_begin(stream, "AisInteractiveContext")?;
-        field_integer(stream, "myObjects.Size()", fields.objects.extent() as i32)?;
+        field_integer(stream, "myObjects.Size()", fields.objects.len() as i32)?;
         field_pointer(
             stream,
             "mgrSelector.get()",

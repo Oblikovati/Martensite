@@ -113,8 +113,10 @@ mod context_erase;
 
 mod context_bulk_display;
 mod context_clear_prs;
+mod context_object_map;
 mod context_object_queries;
 mod context_object_walk;
+pub use context_object_map::AisContextObjectMap;
 mod context_remove;
 
 mod line;

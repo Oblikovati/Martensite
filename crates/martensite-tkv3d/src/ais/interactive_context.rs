@@ -1,17 +1,18 @@
 //! Owned context state with non-owning links from interactive objects.
-use super::{AisGlobalStatus, AisInteractiveObject, AisSelection, AisSelectionSource};
+use super::context_object_map::AisContextObjectMap;
+use super::{AisSelection, AisSelectionSource};
 use crate::v3d::V3dViewSource;
 use crate::{
     prs_mgr::PrsMgrPresentationManager, prs3d::Prs3dDrawer, select_mgr::*, v3d::V3dViewer,
 };
 use martensite_tkernel::{
-    ncollection::{DataMap, Sequence},
+    ncollection::Sequence,
     standard::{Failure, Handle, SharedState, WeakHandle, exceptions::null_object},
 };
 /// Native protected context storage; `context.fields.read().objects.len()`.
 pub struct AisInteractiveContextFields {
     /// `myObjects`.
-    pub objects: DataMap<Handle<dyn AisInteractiveObject>, Handle<AisGlobalStatus>>,
+    pub objects: AisContextObjectMap,
     /// `mgrSelector`.
     pub selection_manager: Handle<SelectMgrSelectionManager>,
     /// `myMainPM`.
@@ -56,7 +57,7 @@ impl AisInteractiveContextFields {
         ));
         let styles = super::context_styles::context_default_styles()?;
         Ok(Self {
-            objects: DataMap::default(),
+            objects: AisContextObjectMap::default(),
             selection_manager,
             presentation_manager,
             viewer: viewer.clone(),
