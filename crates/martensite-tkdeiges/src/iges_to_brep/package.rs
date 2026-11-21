@@ -49,7 +49,7 @@ fn is_any_of<const N: usize>(start: &Handle<dyn IgesDataEntityKind>, kinds: [&st
 /// The tools of the package.
 ///
 /// ```
-/// use martensite_tkdeiges::iges_data::IgesDataIgesEntity;
+/// use martensite_tkdeiges::iges_data::IgesDataEntityKind;
 /// use martensite_tkdeiges::iges_to_brep::IgesToBRep;
 /// use martensite_tkernel::standard::Handle;
 /// assert!(!IgesToBRep::is_curve_and_surface(&Handle::<dyn IgesDataEntityKind>::default()));

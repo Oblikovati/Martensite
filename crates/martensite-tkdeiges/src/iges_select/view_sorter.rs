@@ -30,7 +30,7 @@ struct SorterFields {
 /// use martensite_tkdeiges::{iges_data::IgesDataIgesEntity, iges_select::IgesSelectViewSorter};
 /// use martensite_tkernel::standard::Handle;
 /// let sorter = IgesSelectViewSorter::default();
-/// let entity = Handle::new(IgesDataIgesEntity::default());
+/// let entity = Handle::new(IgesDataIgesEntity::default()).into_upcast();
 /// assert!(sorter.add_entity(&entity));
 /// assert!(!sorter.add_entity(&entity));
 /// assert_eq!(sorter.nb_entities(), 1);

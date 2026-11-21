@@ -15,7 +15,7 @@ use std::io::Write;
 /// The dump of the entities of a model.
 ///
 /// ```
-/// use martensite_tkdeiges::iges_data::{IgesDataIgesDumper, IgesDataIgesEntity, IgesDataIgesModel, IgesDataProtocol};
+/// use martensite_tkdeiges::iges_data::{IgesDataEntityKind, IgesDataIgesDumper, IgesDataIgesModel, IgesDataProtocol};
 /// use martensite_tkernel::standard::Handle;
 /// let protocol = Handle::new(IgesDataProtocol::default());
 /// let dumper = IgesDataIgesDumper::new(&IgesDataIgesModel::new(), &protocol.cast());
