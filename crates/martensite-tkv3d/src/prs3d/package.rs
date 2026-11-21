@@ -206,7 +206,7 @@ fn add_borrowed_line_primitives(
     let reference = line.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_primitives_aspect(&aspect);
-    group.add_primitive_array(primitives, true);
+    group.add_primitive_array(&primitives.upcast(), true);
     Ok(())
 }
 

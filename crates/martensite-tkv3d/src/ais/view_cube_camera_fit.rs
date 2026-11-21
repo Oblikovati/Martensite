@@ -31,16 +31,13 @@ pub(super) fn cube_oriented_end_camera<C: AisViewCubeSource + ?Sized>(
 ) -> Result<(), Failure> {
     let (start, end, reset) = {
         let fields = cube.interaction_base().fields.read();
-        (
-            fields.start.observe(),
-            fields.end.observe(),
-            fields.reset_up,
-        )
+        (fields.start.clone(), fields.end.clone(), fields.reset_up)
     };
     start.copy(&view.camera());
     end.copy(&view.camera());
     set_cube_end_orientation(cube, view, &end, orientation)?;
     align_cube_end_up(&start, &end, reset)?;
+    drop((start, end));
     let endpoint = HandleFieldRef::new(&cube.interaction_base().fields, cube_end_camera_slot);
     cube.view_fit_all(view, &endpoint)
 }
@@ -105,7 +102,7 @@ fn cube_end_camera_slot(fields: &super::AisViewCubeInteractionFields) -> &Handle
 }
 fn observed_cube_fit_view(
     view: &dyn HandleReference<dyn V3dViewSource>,
-) -> Result<martensite_tkernel::standard::HandleObserver<dyn V3dViewSource>, Failure> {
+) -> Result<martensite_tkernel::standard::HandleObserver<'_, dyn V3dViewSource>, Failure> {
     let observed = view.observe();
     if observed.is_null() {
         return Err(null_object(

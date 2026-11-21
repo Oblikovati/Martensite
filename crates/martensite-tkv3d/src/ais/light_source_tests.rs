@@ -2,11 +2,10 @@
 use super::*;
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::{gp::*, toploc::Datum3};
 use martensite_tkservice::{aspect::AspectTypeOfMarker, graphic3d::*};
 pub(super) struct FakeLightPresentation {
-    transient: StandardTransient,
     light: AisLightSourceBase,
     fail_refresh: std::sync::atomic::AtomicBool,
     pub(super) persistence_calls: std::sync::atomic::AtomicUsize,
@@ -15,14 +14,12 @@ pub(super) struct FakeLightPresentation {
 martensite_tkernel::impl_transient!(
     FakeLightPresentation,
     "FakeLightPresentation",
-    StandardTransient,
-    transient,
+    dyn martensite_tkernel::standard::Transient,
     interfaces:[dyn AisLightSourceSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]
 );
 impl FakeLightPresentation {
     pub(super) fn new(kind: Graphic3dTypeOfLightSource) -> Self {
         Self {
-            transient: StandardTransient::default(),
             fail_refresh: std::sync::atomic::AtomicBool::new(false),
             persistence_calls: std::sync::atomic::AtomicUsize::new(0),
             frame_calls: std::sync::atomic::AtomicUsize::new(0),

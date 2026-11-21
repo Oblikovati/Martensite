@@ -7,7 +7,7 @@ use super::{
 use crate::prs_mgr::PrsMgrPresentation;
 use martensite_tkernel::{
     quantity::Color,
-    standard::{Failure, HandleObserver},
+    standard::{Failure, Handle},
 };
 use martensite_tkservice::graphic3d::{Graphic3dMaterialAspect, Graphic3dStructureSource};
 
@@ -47,10 +47,11 @@ fn refresh_textured_mode_presentations<S: AisTexturedShapeSource + ?Sized>(
     let mut cursor = LiveNodeCursor::default();
     // Iterate the live presentation Sequence node by node: a group callback
     // may remove earlier or later presentations or append new ones, and the walk goes on
-    // from the same node. The guard ends before the callback; no owner is added.
+    // from the same node. The guard ends before the callback; the step's snapshot is the
+    // one extra presentation owner during it (#592).
     while let Some(presentation) = next_live_presentation(object, &mut cursor)? {
         if presentation.get().is_some_and(|p| p.mode() == 3) {
-            let structure = presentation.observe_as::<dyn Graphic3dStructureSource>();
+            let structure = presentation.into_upcast::<dyn Graphic3dStructureSource>();
             ais_textured_shape_update_attributes(object, &structure)?;
         }
     }
@@ -59,7 +60,7 @@ fn refresh_textured_mode_presentations<S: AisTexturedShapeSource + ?Sized>(
 fn next_live_presentation<S: AisTexturedShapeSource + ?Sized>(
     object: &S,
     cursor: &mut LiveNodeCursor,
-) -> Result<Option<HandleObserver<PrsMgrPresentation>>, Failure> {
+) -> Result<Option<Handle<PrsMgrPresentation>>, Failure> {
     let fields = object.presentable_base().fields.read();
     cursor.advance(&fields.presentations)
 }

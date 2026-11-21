@@ -9,9 +9,7 @@ use crate::std_select::{StdSelectBRepOwner, StdSelectBRepOwnerMembers, StdSelect
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::standard::exceptions::program_error;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkmath::gp::{Transform3, TransformForm};
 use martensite_tkmath::toploc::{Datum3, Location};
 use martensite_tkservice::graphic3d::*;
@@ -29,19 +27,17 @@ pub struct AisConnectedInteractiveFields {
 /// connected, not recomputed) at its own location.
 /// Example: `let instance = AisConnectedInteractive::new(PrsMgrTypeOfPresentation3d::AllView); instance.connect(&object)?;`.
 pub struct AisConnectedInteractive {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     /// The protected fields.
     pub fields: SharedState<AisConnectedInteractiveFields>,
 }
-martensite_tkernel::impl_transient!(AisConnectedInteractive, "AisConnectedInteractive", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(AisConnectedInteractive, "AisConnectedInteractive", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl AisConnectedInteractive {
     /// An unconnected instance; `AisConnectedInteractive::new(PrsMgrTypeOfPresentation3d::AllView)`.
     pub fn new(kind: PrsMgrTypeOfPresentation3d) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(kind),
             fields: SharedState::default(),
         });
@@ -348,19 +344,17 @@ pub struct AisMultipleConnectedInteractiveFields {
 /// selected as a whole through one assembly owner.
 /// Example: `let assembly = AisMultipleConnectedInteractive::new; assembly.connect(&object)?;`.
 pub struct AisMultipleConnectedInteractive {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     /// The protected fields.
     pub fields: SharedState<AisMultipleConnectedInteractiveFields>,
 }
-martensite_tkernel::impl_transient!(AisMultipleConnectedInteractive, "AisMultipleConnectedInteractive", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(AisMultipleConnectedInteractive, "AisMultipleConnectedInteractive", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl AisMultipleConnectedInteractive {
     /// An empty assembly without own presentations; `AisMultipleConnectedInteractive::new()`.
     pub fn new() -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::default(),
         });

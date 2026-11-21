@@ -41,7 +41,7 @@ impl RoutingShape {
 }
 /// The native `TextureFile()` text; `routing_file(&*owner)`.
 pub fn routing_file(owner: &RoutingShape) -> String {
-    let file = owner.texture_file().read().unwrap();
+    let file = owner.texture_file();
     file.to_string_lossy().to_string()
 }
 impl AisTexturedShapeSource for RoutingShape {

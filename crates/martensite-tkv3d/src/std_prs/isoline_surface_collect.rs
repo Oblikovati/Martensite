@@ -1,5 +1,5 @@
 //! Native surface catch boundary suppresses checked failures while preserving completed intervals and caller lists.
-use super::StdPrsIsolineSurfaceSource;
+use super::StdPrsIsolineSurfaceTarget;
 use super::isoline_surface_reference::IsolineSurfaceReference;
 use super::{
     StdPrsIsolineDestination, isoline_surface_curves::IsolineSurfaceCurves,
@@ -11,9 +11,7 @@ use martensite_tkernel::{
     standard::{Failure, SharedState, catch_native_failure},
 };
 use martensite_tkgeomalgo::hatch::Hatcher;
-pub(super) fn collect_surface_isolines<
-    S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
->(
+pub(super) fn collect_surface_isolines<S: StdPrsIsolineSurfaceTarget + ?Sized>(
     surface: &IsolineSurfaceReference<'_, S>,
     drawer: &Prs3dDrawer,
     deflection: f64,
@@ -25,9 +23,7 @@ pub(super) fn collect_surface_isolines<
         sample_surface_isolines(surface, drawer, deflection, parameters, output)
     });
 }
-fn sample_surface_isolines<
-    S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
->(
+fn sample_surface_isolines<S: StdPrsIsolineSurfaceTarget + ?Sized>(
     surface: &IsolineSurfaceReference<'_, S>,
     drawer: &Prs3dDrawer,
     deflection: f64,
@@ -61,9 +57,7 @@ fn sample_isoline_intervals(
     Ok(())
 }
 
-fn surface_isoline_hatcher<
-    S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
->(
+fn surface_isoline_hatcher<S: StdPrsIsolineSurfaceTarget + ?Sized>(
     surface: &IsolineSurfaceReference<'_, S>,
     drawer: &Prs3dDrawer,
     parameters: [&SharedState<Sequence<f64>>; 2],

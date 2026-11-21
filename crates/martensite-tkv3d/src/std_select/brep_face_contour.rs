@@ -1,12 +1,13 @@
 //! Native nonplanar fallback follows the first wire and appends analytic circular entities before the final contour.
 use super::brep_face_sensitive::FaceSelectionCriteria;
 use crate::{select_mgr::SelectMgrEntityOwnerSource, select3d::*};
+use martensite_tkbrep::topods::FaceView;
 use martensite_tkbrep::{
     brep::BRepTool,
     brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface},
     brep_tools::WireExplorer,
     topexp::Explorer,
-    topods::{self, Face},
+    topods,
 };
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
@@ -22,7 +23,7 @@ use martensite_tkmath::{
     gp::Point3,
 };
 pub(super) fn brep_face_contour_sensitive(
-    face: &Face,
+    face: &FaceView<'_>,
     surface: &BRepAdaptorSurface,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     entities: &mut dyn super::brep_face_destination::BrepFaceEntityDestination,
@@ -40,7 +41,7 @@ pub(super) fn brep_face_contour_sensitive(
     collect_face_contour(&mut explorer, &context, entities)
 }
 fn first_face_contour_wire(
-    face: &Face,
+    face: &FaceView<'_>,
 ) -> Result<Option<martensite_tkbrep::topods::Wire>, Failure> {
     // Destroy the explorer's topology copies before the first curve callback.
     let wires = Explorer::new(face, ShapeEnum::Wire, ShapeEnum::Shape)?;

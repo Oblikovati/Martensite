@@ -38,7 +38,7 @@ impl Drop for TextureChainPixels {
         ais_textured_shape_with_retirement(&**owner, self, |scope| self.run_chain_stage(&scope))
             .unwrap();
         let count = self.control.read().last.observe().ref_count();
-        let file = owner.texture_file().read().unwrap();
+        let file = owner.texture_file();
         self.trace.write().push(
             format!(
                 "CHAIN {} {} {} {count} {}",

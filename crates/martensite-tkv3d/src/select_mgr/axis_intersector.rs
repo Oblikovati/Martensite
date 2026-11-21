@@ -1,12 +1,11 @@
 //! Selecting axis state, including initialization assertions.
 use super::{SelectMgrBaseIntersectorBase, SelectMgrSelectionType};
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::gp::{Axis1, Direction3, GeneralTransform3, Point3, TransformForm, Xyz};
 
 /// A ray selector; initialize its axis before geometric queries.
 /// Example: `let volume = SelectMgrAxisIntersector::new(); volume.init(axis);`.
 pub struct SelectMgrAxisIntersector {
-    pub(super) transient: StandardTransient,
     /// Inherited camera and selection type; `volume.base.selection_type.read()`.
     pub base: SelectMgrBaseIntersectorBase,
     pub(super) axis: SharedState<Axis1>,
@@ -20,7 +19,6 @@ impl SelectMgrAxisIntersector {
     /// Create an uninitialized selector with the native default axis; `SelectMgrAxisIntersector::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: SelectMgrBaseIntersectorBase::default(),
             axis: SharedState::new(Axis1::default()),
         }

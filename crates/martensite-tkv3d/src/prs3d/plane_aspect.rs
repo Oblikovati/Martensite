@@ -3,7 +3,7 @@ use super::Prs3dLineAspect;
 use super::basic_aspect::{Prs3dBasicAspect, dump_aspect_field};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::aspect::AspectTypeOfLine;
 use martensite_tkservice::json_dump::{class_begin, field_integer, field_real};
 use std::f64::consts::PI;
@@ -55,13 +55,12 @@ impl Default for Prs3dPlaneSettings {
 ///
 /// Example: `let plane = Prs3dPlaneAspect::new()?; plane.set_plane_length(2.0, 3.0);`.
 pub struct Prs3dPlaneAspect {
-    transient: StandardTransient,
     edges_aspect: Handle<Prs3dLineAspect>,
     iso_aspect: Handle<Prs3dLineAspect>,
     arrow_aspect: Handle<Prs3dLineAspect>,
     settings: SharedState<Prs3dPlaneSettings>,
 }
-martensite_tkernel::impl_transient!(Prs3dPlaneAspect, "Prs3dPlaneAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dPlaneAspect, "Prs3dPlaneAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 /// A solid line aspect of a named color and width.
@@ -77,7 +76,6 @@ impl Prs3dPlaneAspect {
     /// Green edges, gray75 isoparameters of width 0.5, peach-puff arrows; `Prs3dPlaneAspect::new()?`.
     pub fn new() -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             edges_aspect: solid_line(NamedColor::GREEN, 1.0)?,
             iso_aspect: solid_line(NamedColor::GRAY75, 0.5)?,
             arrow_aspect: solid_line(NamedColor::PEACHPUFF, 1.0)?,

@@ -46,7 +46,7 @@ fn incoming_texture_count(incoming: &WeakHandle<ImagePixMap>) -> i32 {
 }
 pub fn texture_state_suffix(owner: &AisTexturedShape, prefix: String) -> String {
     let predefined = owner.textured_shape_base().fields.read().predefined_texture as i32;
-    let file = owner.texture_file().read().unwrap();
+    let file = owner.texture_file();
     format!("{prefix} {predefined} {}", file.to_string_lossy())
         .trim_end()
         .to_string()

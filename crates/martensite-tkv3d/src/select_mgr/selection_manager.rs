@@ -3,27 +3,24 @@ use super::*;
 use crate::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkernel::{
     ncollection::Map,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions::null_object},
+    standard::{Failure, Handle, SharedState, exceptions::null_object},
 };
 
 pub(super) type ManagedSelectable = Handle<dyn SelectMgrSelectableObject>;
 /// Owns a selector and the set of globally loaded objects; `SelectMgrSelectionManager::new(&selector)`.
 pub struct SelectMgrSelectionManager {
-    transient: StandardTransient,
     pub(super) selector: Handle<dyn SelectMgrViewerSelectorSource>,
     pub(super) global: SharedState<Map<ManagedSelectable>>,
 }
 martensite_tkernel::impl_transient!(
     SelectMgrSelectionManager,
     "SelectMgrSelectionManager",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 impl SelectMgrSelectionManager {
     /// Retain the injected selector, including a native null handle; `SelectMgrSelectionManager::new(&selector)`.
     pub fn new(selector: &Handle<dyn SelectMgrViewerSelectorSource>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             selector: selector.clone(),
             global: SharedState::default(),
         }

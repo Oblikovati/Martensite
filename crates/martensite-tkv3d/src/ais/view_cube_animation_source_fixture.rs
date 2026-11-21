@@ -1,8 +1,6 @@
 //! Named real camera subclass records dispatch and native intrusive counts without owning aliases.
 use super::super::{view_cube_interaction_fixture::WidgetScene, *};
-use martensite_tkernel::standard::{
-    Failure, Handle, SharedState, StandardTransient, Transient, WeakHandle,
-};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use std::sync::{Arc, atomic::AtomicU64};
 pub(super) struct CubeTransportTrace {
     pub(super) scenario: usize,
@@ -41,18 +39,14 @@ impl CubeTransportTrace {
         ));
     }
     pub(super) fn widget_reference_counts(&self) -> [i32; 2] {
-        let observed = self.cube.read().observe();
-        let cube = observed.get().unwrap();
-        let context = cube.interactive_base().fields.read().context.observe();
-        [context.ref_count(), observed.ref_count()]
+        let reference = self.cube.read().clone();
+        let count = reference.ref_count();
+        let cube = reference.upgrade();
+        let context_count = cube.interactive_base().fields.read().context.ref_count();
+        [context_count, count]
     }
     fn clicked_owner_count(&self) -> i32 {
-        let current = self.clicked_owner.read().upgrade();
-        let owner = current.observe();
-        drop(current);
-        owner
-            .get()
-            .map_or(0, |owner| owner.transient_base().ref_count())
+        self.clicked_owner.read().ref_count()
     }
     pub(super) fn replace(&self, id: usize) {
         let probe = self.probes.read()[id].upgrade();
@@ -66,29 +60,31 @@ impl CubeTransportTrace {
     }
 }
 pub(super) struct CubeTransportAnimation {
-    transient: StandardTransient,
+    owner: std::sync::OnceLock<WeakHandle<Self>>,
     pub(super) base: AisAnimationCameraBase,
     pub(super) trace: Arc<CubeTransportTrace>,
     pub(super) identity: i32,
     pub(super) next: AtomicU64,
 }
-martensite_tkernel::impl_transient!(CubeTransportAnimation,"TransportAnimation",dyn AisAnimationCameraSource,transient,
+martensite_tkernel::impl_transient!(CubeTransportAnimation,"TransportAnimation",dyn AisAnimationCameraSource,
     interfaces:[dyn AisAnimationCameraSource,dyn AisAnimationSource]);
 impl CubeTransportAnimation {
     pub(super) fn new(trace: &Arc<CubeTransportTrace>, identity: i32) -> Handle<Self> {
-        Handle::new(Self {
-            transient: StandardTransient::default(),
+        let owner = Handle::new(Self {
+            owner: std::sync::OnceLock::new(),
             base: AisAnimationCameraBase::new("transport", &Handle::default()),
             trace: trace.clone(),
             identity,
             next: AtomicU64::new(0.125_f64.to_bits()),
-        })
+        });
+        owner.owner.set(owner.downgrade()).unwrap();
+        owner
     }
     pub(super) fn channels(&self) -> [i32; 7] {
         let fields = self.base.fields.read();
         [
             self.identity,
-            self.transient.ref_count(),
+            self.owner.get().unwrap().ref_count(),
             fields.view.is_null() as i32,
             fields.camera_start.ref_count(),
             fields.camera_end.ref_count(),

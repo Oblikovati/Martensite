@@ -4,21 +4,19 @@ use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkservice::graphic3d::*;
 /// A native interactive light presentation; `AisLightSource::new(&light)?`.
 pub struct AisLightSource {
-    transient: StandardTransient,
     base: AisLightSourceBase,
 }
-martensite_tkernel::impl_transient!(AisLightSource,"AisLightSource",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisLightSource,"AisLightSource",dyn AisInteractiveObject,
     interfaces:[dyn AisLightSourceSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisLightSource {
     /// Retain the live light and create its native drawers/aspects; `AisLightSource::new(&light)?`.
     pub fn new(light: &Handle<Graphic3dCLight>) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisLightSourceBase::new(light),
         });
         super::light_source_aspects::ais_light_source_initialize(&*object)?;

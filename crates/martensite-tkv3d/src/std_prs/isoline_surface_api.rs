@@ -1,5 +1,5 @@
 //! Surface overloads retain original parameter lists and submit native U/V group policy.
-use super::StdPrsIsolineSurfaceSource;
+use super::StdPrsIsolineSurfaceTarget;
 use super::isoline_surface_reference::IsolineSurfaceReference;
 use super::{
     StdPrsIsolineDestination, StdPrsIsolines, isoline_parameters::face_isoline_parameters,
@@ -50,9 +50,7 @@ impl StdPrsIsolines {
         add_isoline_groups(prs, drawer, &mut u, &mut v)
     }
     /// Sample explicit parameters against the actual face adaptor; `StdPrsIsolines::add_on_surface_parameters(&prs,&surface,&drawer,0.1,parameters)?`.
-    pub fn add_on_surface_parameters<
-        S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
-    >(
+    pub fn add_on_surface_parameters<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         surface: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
@@ -63,9 +61,7 @@ impl StdPrsIsolines {
         add_surface_reference_groups(prs, &reference, drawer, deflection, parameters)
     }
     /// Preserve a native live handle slot during callbacks; `StdPrsIsolines::add_on_surface_references(&prs,&surface_slot,&drawer,0.1,parameters)?`.
-    pub fn add_on_surface_references<
-        S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
-    >(
+    pub fn add_on_surface_references<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         surface: &SharedState<Handle<S>>,
         drawer: &Handle<Prs3dDrawer>,
@@ -95,9 +91,7 @@ fn face_surface_isoline_inputs(
     Ok(Some((surface, parameters.map(SharedState::new))))
 }
 
-fn add_surface_reference_groups<
-    S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
->(
+fn add_surface_reference_groups<S: StdPrsIsolineSurfaceTarget + ?Sized>(
     prs: &Handle<dyn Graphic3dStructureSource>,
     reference: &IsolineSurfaceReference<'_, S>,
     drawer: &Prs3dDrawer,

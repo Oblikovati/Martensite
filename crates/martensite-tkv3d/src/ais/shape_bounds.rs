@@ -10,7 +10,7 @@ pub(super) fn shape_presentation_bounds_snapshot<S: AisShapeSource + ?Sized>(
     object: &S,
 ) -> Result<BoundingBox3, Failure> {
     let base = object.shape_base();
-    let shape = base.fields.read().shape.clone();
+    let shape = base.fields.read().shape.to_shape();
     if shape.shape_type()? == ShapeEnum::Compound && shape.nb_children() == 0 {
         base.fields.write().bounds.set_void();
         return Ok(base.fields.read().bounds.clone());
@@ -21,7 +21,7 @@ pub(super) fn shape_presentation_bounds_snapshot<S: AisShapeSource + ?Sized>(
     Ok(base.fields.read().bounds.clone())
 }
 fn recompute_shape_topology_bounds<S: AisShapeSource + ?Sized>(object: &S) -> Result<(), Failure> {
-    let shape = object.shape_base().fields.read().shape.clone();
+    let shape = object.shape_base().fields.read().shape.to_shape();
     let mut bounds = BoundingBox3::default();
     let result = BRepBndLib::add(&shape, &mut bounds, false);
     let mut fields = object.shape_base().fields.write();

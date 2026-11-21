@@ -5,7 +5,6 @@ use martensite_tkernel::{
 };
 use martensite_tkservice::image::*;
 pub(super) struct XrImageSourceFake {
-    transient: StandardTransient,
     base: ImageTextureBase,
     pub calls: SharedState<i32>,
     pub fail: SharedState<bool>,
@@ -13,7 +12,7 @@ pub(super) struct XrImageSourceFake {
     pub expected: Handle<ImageSupportedFormats>,
     pub image: Handle<ImagePixMap>,
 }
-martensite_tkernel::impl_transient!(XrImageSourceFake,"Martensite_XrImageSourceFake",dyn ImageTextureSource,transient,interfaces:[dyn ImageTextureSource]);
+martensite_tkernel::impl_transient!(XrImageSourceFake,"Martensite_XrImageSourceFake",dyn ImageTextureSource,interfaces:[dyn ImageTextureSource]);
 impl XrImageSourceFake {
     pub fn new(kind: i32) -> Self {
         let mut base = ImageTextureBase::from_file(&AsciiString::default());
@@ -21,7 +20,6 @@ impl XrImageSourceFake {
             base.texture_id = AsciiString::from("xr/reference-source");
         }
         Self {
-            transient: StandardTransient::default(),
             base,
             calls: SharedState::new(0),
             fail: SharedState::new(false),

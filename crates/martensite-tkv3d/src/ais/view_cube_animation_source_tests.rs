@@ -130,13 +130,17 @@ fn dispatch_transport_owner_click(
 }
 
 #[test]
-fn borrowed_derived_animation_access_does_not_increment_native_count_and_can_replace_slot() {
+fn derived_animation_outer_lease_defers_replaced_owner_retirement() {
     let proof = CubeTransportScene::new(0);
     let alias = proof.scene.cube.view_animation_ref();
     alias.with_animation(|animation| {
-        assert_eq!(animation.unwrap().transient_base().ref_count(), 2);
+        assert!(std::ptr::eq(
+            animation.unwrap(),
+            &*proof.owners[0] as &dyn AisAnimationCameraSource
+        ));
+        assert_eq!(proof.owners[0].ref_count(), 2);
         proof.trace.replace(1);
-        assert_eq!(animation.unwrap().transient_base().ref_count(), 1);
+        assert_eq!(proof.owners[0].ref_count(), 2);
     });
     assert_eq!(alias.object_address(), proof.owners[1].object_address());
     assert_eq!(proof.owners[0].ref_count(), 1);

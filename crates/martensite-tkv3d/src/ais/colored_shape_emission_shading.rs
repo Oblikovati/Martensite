@@ -16,7 +16,7 @@ pub(super) fn emit_colored_shading<S: AisColoredShapeSource + ?Sized>(
     if !triangles.is_null() {
         let group = colored_shaded_group(closed, emission)?;
         set_colored_group_shading(&**group, drawer);
-        group.add_primitive_array(&triangles.cast(), true);
+        group.add_primitive_array(&triangles.into_upcast(), true);
     }
     emit_colored_face_boundaries(reference, drawer, emission)
 }
@@ -25,7 +25,9 @@ fn collect_colored_triangles<S: AisColoredShapeSource + ?Sized>(
     drawer: &Prs3dDrawer,
     object: &S,
 ) -> Result<Handle<Graphic3dArrayOfTriangles>, Failure> {
-    let aspect = drawer.shading_aspect().aspect_ref().observe();
+    let shading = drawer.shading_aspect();
+    let aspect_reference = shading.aspect_ref();
+    let aspect = aspect_reference.observe();
     let textured = aspect.to_map_texture() && !aspect.texture_map().is_null();
     let fields = object.shape_base().fields.read();
     let (origin, repeat, scale) = (fields.uv_origin, fields.uv_repeat, fields.uv_scale);
@@ -66,11 +68,11 @@ fn emit_colored_face_boundaries<S: AisColoredShapeSource + ?Sized>(
     if segments.is_null() {
         return Ok(());
     }
-    emit_colored_boundary_array(drawer, &segments, emission)
+    emit_colored_boundary_array(drawer, segments, emission)
 }
 fn emit_colored_boundary_array<S: AisColoredShapeSource + ?Sized>(
     drawer: &Prs3dDrawer,
-    segments: &Handle<Graphic3dArrayOfSegments>,
+    segments: Handle<Graphic3dArrayOfSegments>,
     emission: &mut ColoredShapeEmission<'_, S>,
 ) -> Result<(), Failure> {
     if emission.boundary.is_null() {
@@ -82,12 +84,12 @@ fn emit_colored_boundary_array<S: AisColoredShapeSource + ?Sized>(
     emission.boundary.set_primitives_aspect(&aspect);
     emission
         .boundary
-        .add_primitive_array(&segments.observe_as::<Graphic3dArrayOfPrimitives>(), true);
+        .add_primitive_array(&segments.into_upcast(), true);
     Ok(())
 }
 
 fn set_colored_group_shading(group: &dyn Graphic3dGroup, drawer: &Prs3dDrawer) {
-    let shading = drawer.shading_aspect().downgrade().observe();
+    let shading = drawer.shading_aspect();
     let reference = shading.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_primitives_aspect(&aspect);

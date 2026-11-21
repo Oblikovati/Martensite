@@ -19,7 +19,7 @@ pub struct AisManipulatorSensCircle {
 // The native class has no RTTI of its own: it reports `Select3DSensitiveCircle`, which it
 // embeds; this descriptor only serves the interface casts of the override.
 martensite_tkernel::impl_transient!(AisManipulatorSensCircle, "AisManipulator_ManipSensCircle",
-    Select3DSensitiveCircle, circle, interfaces: [dyn Select3DSensitiveEntity]);
+    Select3DSensitiveCircle, interfaces: [dyn Select3DSensitiveEntity]);
 impl AisManipulatorSensCircle {
     /// The boundary of a circle; `AisManipulatorSensCircle::new(&owner, &circle)`.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>, circle: &Circle3) -> Self {

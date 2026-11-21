@@ -3,7 +3,7 @@ use martensite_tkbrep::{
     topexp,
     topods::{self, Builder, Shape, TShape},
 };
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkg3d::geom::*;
 use martensite_tkmath::{
     geom_abs::Shape as Continuity,
@@ -11,19 +11,17 @@ use martensite_tkmath::{
 };
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 pub(super) struct BrepContourMutationCurveFake {
-    transient: StandardTransient,
     edge: SharedState<WeakHandle<dyn TShape>>,
     pub mutate: AtomicBool,
     pub calls: AtomicUsize,
     pub slot_callback:
         SharedState<Option<Box<dyn super::brep_owner_slot_curve_callback::BrepCurveSlotMutation>>>,
 }
-martensite_tkernel::impl_transient!(BrepContourMutationCurveFake,"Martensite_ContourMutationCurve",dyn GeomCurve,transient,interfaces:[dyn GeomGeometry,dyn GeomCurve]);
+martensite_tkernel::impl_transient!(BrepContourMutationCurveFake,"Martensite_ContourMutationCurve",dyn GeomCurve,interfaces:[dyn GeomGeometry,dyn GeomCurve]);
 impl BrepContourMutationCurveFake {
     pub fn new() -> Handle<Self> {
         let edge = SharedState::new(WeakHandle::default());
         Handle::new(Self {
-            transient: Default::default(),
             edge,
             mutate: AtomicBool::new(false),
             calls: AtomicUsize::new(0),

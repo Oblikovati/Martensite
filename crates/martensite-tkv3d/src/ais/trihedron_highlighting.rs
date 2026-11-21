@@ -55,7 +55,10 @@ pub fn ais_trihedron_hilight_owner<O: AisTrihedronSource + ?Sized>(
         owner.datum_part(),
         style,
     ));
-    group.add_primitive_array(&object.array_of_primitives(owner.datum_part()), true);
+    group.add_primitive_array(
+        &object.array_of_primitives(owner.datum_part()).into_upcast(),
+        true,
+    );
     let layer = if style.z_layer() != GRAPHIC3D_ZLAYER_ID_UNKNOWN {
         style.z_layer()
     } else {

@@ -158,10 +158,8 @@ impl V3dView {
             Ok(())
         })
     }
-    fn viewer_ref_observer(
-        &self,
-    ) -> martensite_tkernel::standard::HandleObserver<super::V3dViewer> {
-        self.state.read().viewer.observe()
+    fn viewer_ref_observer(&self) -> Handle<super::V3dViewer> {
+        self.viewer()
     }
 }
 

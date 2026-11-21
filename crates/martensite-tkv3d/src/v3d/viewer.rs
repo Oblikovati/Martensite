@@ -14,7 +14,7 @@ use martensite_tkernel::ncollection::AllocatorList;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::HandleReference as _;
 use martensite_tkernel::standard::short_real::short_real_last;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkmath::gp::{Axis3, Direction3, Point3, StandardDirection3};
 use martensite_tkservice::aspect::{
     AspectBackground, AspectGenId, AspectGradientBackground, AspectGradientFillMethod,
@@ -65,13 +65,16 @@ pub(crate) struct V3dViewerState {
 ///
 /// Example: `let viewer = V3dViewer::new(&driver)?; let view = viewer.create_view()?;`.
 pub struct V3dViewer {
-    transient: StandardTransient,
     driver: Handle<dyn Graphic3dGraphicDriver>,
     structure_manager: Handle<Graphic3dStructureManager>,
     this: SharedState<WeakHandle<V3dViewer>>,
     pub(crate) state: SharedState<V3dViewerState>,
 }
-martensite_tkernel::impl_transient!(V3dViewer, "V3dViewer", StandardTransient, transient);
+martensite_tkernel::impl_transient!(
+    V3dViewer,
+    "V3dViewer",
+    dyn martensite_tkernel::standard::Transient
+);
 
 impl V3dViewer {
     /// A viewer of a driver: gray 30 background, view size 1000, `XposYnegZpos` projection,
@@ -119,7 +122,6 @@ impl V3dViewer {
             grid_echo_last_vert: Graphic3dVertex::new(last, last, last),
         };
         let viewer = Handle::new(Self {
-            transient: StandardTransient::default(),
             driver: driver.clone(),
             structure_manager: manager,
             this: SharedState::new(WeakHandle::default()),
@@ -185,7 +187,8 @@ impl V3dViewer {
         for pass_subviews in [true, false] {
             let mut cursor = self.defined_view_iterator();
             while cursor.more() {
-                let reference = cursor.value_ref().observe();
+                let node = cursor.value_ref();
+                let reference = node.observe();
                 if let Some(view) = reference.get().filter(|v| v.is_subview() == pass_subviews) {
                     visit(view);
                 }

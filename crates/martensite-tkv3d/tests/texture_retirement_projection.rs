@@ -55,7 +55,7 @@ fn retirement_after_row(
     outer_file: bool,
 ) -> String {
     let slot = owner.texture_pix_map();
-    let file = owner.texture_file().read().unwrap();
+    let file = owner.texture_file();
     format!(
         "AFTER {mode} {} {} {} {} {} {}",
         i32::from(outer_file),

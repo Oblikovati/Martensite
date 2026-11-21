@@ -6,8 +6,7 @@ use martensite_tkernel::{
     ncollection::{Array1, List},
     osd::{NativeSignalHost, OsdThread, SignalHost},
     standard::{
-        Failure, Handle, NonRecursiveMutex, SharedState, StandardCondition, StandardTransient,
-        exceptions::null_object,
+        Failure, Handle, NonRecursiveMutex, SharedState, StandardCondition, exceptions::null_object,
     },
 };
 use std::sync::{
@@ -85,15 +84,13 @@ impl SelectMgrBvhThreadPoolFields {
 
 /// Lazily started pool for sensitive-entity BVHs; `pool.add_entity(&entity)?; pool.wait_threads()`.
 pub struct SelectMgrBvhThreadPool {
-    transient: StandardTransient,
     /// `Protected native state`.
     pub fields: Arc<SelectMgrBvhThreadPoolFields>,
 }
 martensite_tkernel::impl_transient!(
     SelectMgrBvhThreadPool,
     "SelectMgrBVHThreadPool",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 impl SelectMgrBvhThreadPool {
     /// Captures the current floating-signal setting; `SelectMgrBvhThreadPool::new(2)`.
@@ -119,10 +116,7 @@ impl SelectMgrBvhThreadPool {
         for worker in fields.threads.write().as_mut_slice() {
             *worker = SelectMgrBvhThread::for_pool(Arc::downgrade(&fields), catch_fpe);
         }
-        Self {
-            transient: StandardTransient::default(),
-            fields,
-        }
+        Self { fields }
     }
     /// Exposes the actual mutable workers; release the guard before pool operations.
     /// Example: `pool.threads().change_value(1)?.set_priority(2)`.

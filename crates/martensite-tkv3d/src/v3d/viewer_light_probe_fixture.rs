@@ -23,7 +23,7 @@ pub(super) struct LiveLightViewSource {
     pub control: Arc<ViewerLightProbeControl>,
     pub identity: usize,
 }
-martensite_tkernel::impl_transient!(LiveLightViewSource,"Martensite_LiveLightViewSource",V3dView,base,
+martensite_tkernel::impl_transient!(LiveLightViewSource,"Martensite_LiveLightViewSource",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for LiveLightViewSource {
     fn view_base(&self) -> &V3dView {

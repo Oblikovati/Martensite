@@ -10,7 +10,7 @@ pub fn v3d_view_redraw(view: &V3dView) {
     }
     view.state.write().is_invalidated_immediate = false;
     // Native MyViewer is a raw pointer; a storage lease must not fabricate an owning reference.
-    let viewer = view.state.read().viewer.observe();
+    let viewer = view.viewer();
     let Some(viewer) = viewer.get() else { return };
     let manager = viewer.structure_manager();
     let Some(manager) = manager.get() else { return };

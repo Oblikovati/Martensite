@@ -125,14 +125,13 @@ impl V3dViewState {
 ///
 /// Example: `let view = viewer.create_view()?; view.set_window(&window, 0)?; view.fit_all(0.01, true)?;`.
 pub struct V3dView {
-    pub(crate) transient: StandardTransient,
     /// Actual protected `myView` handle field; `view.driver_view_slot.assign(&replacement)?`.
     pub driver_view_slot: IntrusiveReferenceSlot<dyn Graphic3dCView>,
     pub(crate) default_camera: Handle<Graphic3dCamera>,
     pub(crate) this: SharedState<WeakHandle<dyn V3dViewSource>>,
     pub(crate) state: SharedState<V3dViewState>,
 }
-martensite_tkernel::impl_transient!(V3dView, "V3dView", StandardTransient, transient,
+martensite_tkernel::impl_transient!(V3dView, "V3dView", StandardTransient,
     interfaces:[dyn V3dViewSource]);
 
 /// The driver view of a viewer's driver; a missing viewer or driver is refused.
@@ -164,11 +163,12 @@ impl V3dView {
     }
     /// `View`: the driver view; `view.view()`.
     pub fn view(&self) -> Handle<dyn Graphic3dCView> {
-        self.driver_view_slot.observe().clone()
+        self.driver_view_slot.observe().into_handle()
     }
-    /// Borrow the then-current driver view without ownership; `view.driver_view_observer().redraw()`.
-    pub fn driver_view_observer(&self) -> HandleObserver<dyn Graphic3dCView> {
+    /// Read the then-current driver view; `view.driver_view_observer().redraw()`.
+    pub fn driver_view_observer(&self) -> HandleObserver<'_, dyn Graphic3dCView> {
         // Native direct myView uses must reread after callbacks rather than keep an owning copy.
+        // The slot lends a short snapshot owner: drop it before callbacks may retire the view.
         self.driver_view_slot.observe()
     }
     /// `Viewer`: the viewer, null after `Remove`; `view.viewer()`.

@@ -176,6 +176,32 @@ fn native_const_compound_projection_is_uncounted_and_explicit_copy_is_owning() {
         include_str!("../../tests/fixtures/colored-shape-compute/native-compound-reference.txt")
     );
 }
+
+#[test]
+fn scoped_compound_read_keeps_its_value_during_reentrant_assignment() {
+    let parent = Handle::new(Prs3dDrawer::new());
+    let drawer = Handle::new(AisColoredDrawer::new(&parent));
+    let mut original = Compound::default();
+    Builder.make_compound(&mut original);
+    let topology = original.tshape().downgrade();
+    let map = AisColoredDrawerCompounds::default();
+    map.add(&drawer, &original).unwrap();
+    drop(original);
+    let mut replacement = Compound::default();
+    Builder.make_compound(&mut replacement);
+    let entry = map.node_ref(1).unwrap();
+    entry.with_shape(|prior| {
+        entry.assign_compound(&replacement)?;
+        assert_eq!(prior.tshape().ref_count(), 1);
+        assert_eq!(prior.tshape().object_address(), topology.object_address());
+        entry.with_shape(|current| {
+            assert!(current.is_equal(&replacement));
+            Ok(())
+        })
+    }).unwrap();
+    assert!(topology.upgrade().is_null());
+}
+
 fn record_compound_reference(
     map: &AisColoredDrawerCompounds,
     compound: &Compound,
@@ -185,7 +211,7 @@ fn record_compound_reference(
         .unwrap()
         .with_shape(|shape| {
             record_compound_read_counts(rows, "referenced", shape, compound);
-            let copy = shape.clone();
+            let copy = shape.to_shape();
             record_compound_read_counts(rows, "copied", shape, compound);
             drop(copy);
             writeln!(rows, "copy-released {}", shape.tshape().ref_count()).unwrap();
@@ -197,7 +223,7 @@ fn record_compound_reference(
 fn record_compound_read_counts(
     rows: &mut String,
     label: &str,
-    shape: &martensite_tkbrep::topods::Shape,
+    shape: &martensite_tkbrep::topods::ShapeView<'_>,
     compound: &Compound,
 ) {
     let same = i32::from(shape.is_equal(compound));

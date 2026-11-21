@@ -5,9 +5,7 @@ use crate::prs_mgr::*;
 use crate::prs3d::Prs3dShadingAspect;
 use crate::select_mgr::*;
 use martensite_tkernel::ncollection::{HArray1, Vec3, Vec4};
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkmath::poly::Triangulation;
 use martensite_tkservice::graphic3d::*;
 
@@ -24,11 +22,10 @@ struct TriangulationFields {
 /// `AisTriangulation`: displays a triangulation in mode 0, colored per node when colors are
 /// set. Example: `let object = AisTriangulation::new(&triangulation)?;`.
 pub struct AisTriangulation {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     fields: SharedState<TriangulationFields>,
 }
-martensite_tkernel::impl_transient!(AisTriangulation, "AisTriangulation", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(AisTriangulation, "AisTriangulation", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl AisTriangulation {
@@ -43,7 +40,6 @@ impl AisTriangulation {
             )
         })?;
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::new(TriangulationFields {
                 triangulation: triangulation.clone(),

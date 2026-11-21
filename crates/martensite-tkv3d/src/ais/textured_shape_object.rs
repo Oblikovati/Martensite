@@ -13,10 +13,9 @@ pub type AisTexturedShapeParent = dyn AisShapeSource;
 /// Real native textured presentation object, with bounded inherited shape behavior.
 /// Example: `let object=AisTexturedShape::new(&shape); object.set_texture_pix_map(&pixels);`.
 pub struct AisTexturedShape {
-    transient: StandardTransient,
     base: AisTexturedShapeBase,
 }
-martensite_tkernel::impl_transient!(AisTexturedShape,"AisTexturedShape",dyn AisShapeSource,transient,interfaces:[dyn AisTexturedShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(AisTexturedShape,"AisTexturedShape",dyn AisShapeSource,interfaces:[dyn AisTexturedShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisTexturedShape {
     /// Retain actual topology and initialize native fields; `AisTexturedShape::new(&shape)`.
     pub fn new(shape: &Shape) -> Handle<Self> {
@@ -35,7 +34,6 @@ impl AisTexturedShape {
     }
     fn from_base(base: AisTexturedShapeBase) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base,
         });
         prs_mgr_presentable_bind(&object.cast());

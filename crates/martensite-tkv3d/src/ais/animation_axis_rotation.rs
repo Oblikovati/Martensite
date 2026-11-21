@@ -4,20 +4,19 @@ use super::{
     AisBaseAnimationObjectSource, AisInteractiveContext, AisInteractiveObject,
     ais_base_animation_object_update_transform,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::{Axis1, Transform3};
 
 /// The rotation animation of an object; the angle interpolates linearly with the local
 /// normalized progress. Example: `AisAnimationAxisRotation::new("spin", &context, &object, axis, 0., PI)`.
 pub struct AisAnimationAxisRotation {
-    transient: StandardTransient,
     base: AisBaseAnimationObjectBase,
     rot_axis: Axis1,
     angle_start: f64,
     angle_end: f64,
 }
-martensite_tkernel::impl_transient!(AisAnimationAxisRotation, "AisAnimationAxisRotation", dyn AisBaseAnimationObjectSource, transient,
+martensite_tkernel::impl_transient!(AisAnimationAxisRotation, "AisAnimationAxisRotation", dyn AisBaseAnimationObjectSource,
     interfaces: [dyn AisAnimationSource, dyn AisBaseAnimationObjectSource]);
 
 impl AisAnimationAxisRotation {
@@ -32,7 +31,6 @@ impl AisAnimationAxisRotation {
         angle_end: f64,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisBaseAnimationObjectBase::new(name, context, object),
             rot_axis: axis,
             angle_start,

@@ -5,9 +5,7 @@ use crate::select_mgr::*;
 use crate::select3d::Select3DSensitivePrimitiveArray;
 use martensite_tkernel::ncollection::Vec2;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::{Point2, Point3};
 use martensite_tkmath::toploc::Location;
@@ -52,12 +50,11 @@ pub struct AisMediaPlayerFields {
 /// `AisMediaPlayer`: draws the current video frame in the lower left corner overlay layer.
 /// Example: `let player = AisMediaPlayer::new?; player.open_input(&path, false);`.
 pub struct AisMediaPlayer {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     /// The protected fields.
     pub fields: SharedState<AisMediaPlayerFields>,
 }
-martensite_tkernel::impl_transient!(AisMediaPlayer, "AisMediaPlayer", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(AisMediaPlayer, "AisMediaPlayer", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl AisMediaPlayer {
@@ -80,7 +77,6 @@ impl AisMediaPlayer {
         aspect.set_texture_map_on(true);
         aspect.set_texture_set(frame_pair.clone().cast());
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::new(AisMediaPlayerFields {
                 frame_pair,

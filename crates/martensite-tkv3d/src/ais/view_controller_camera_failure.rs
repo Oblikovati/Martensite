@@ -6,7 +6,7 @@ pub(super) struct PrimitiveStopFailure {
     transient: StandardTransient,
     base: AisAnimationBase,
 }
-martensite_tkernel::impl_transient!(PrimitiveStopFailure,"PrimitiveStopFailure",dyn AisAnimationSource,transient,interfaces:[dyn AisAnimationSource]);
+martensite_tkernel::impl_transient!(PrimitiveStopFailure,"PrimitiveStopFailure",dyn AisAnimationSource,interfaces:[dyn AisAnimationSource]);
 impl PrimitiveStopFailure {
     pub(super) fn new() -> Self {
         let transient = StandardTransient::default();

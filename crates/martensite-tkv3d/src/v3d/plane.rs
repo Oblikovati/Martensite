@@ -1,7 +1,7 @@
 //! `V3dPlane`: a clipping plane with an optional hatched presentation.
 use crate::v3d::V3dViewSource;
 use martensite_tkernel::quantity::Color;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Plane3, Transform3};
 use martensite_tkmath::toploc::Datum3;
 use martensite_tkservice::aspect::{AspectHatchStyle, AspectInteriorStyle};
@@ -17,11 +17,14 @@ use martensite_tkservice::graphic3d::{
 ///
 /// Example: `let plane = V3dPlane::new(0.0, 0.0, 1.0, 0.0)?; plane.display(&view, gray)?;`.
 pub struct V3dPlane {
-    transient: StandardTransient,
     graphic_structure: SharedState<Handle<dyn Graphic3dStructureSource>>,
     plane: Handle<Graphic3dClipPlane>,
 }
-martensite_tkernel::impl_transient!(V3dPlane, "V3dPlane", StandardTransient, transient);
+martensite_tkernel::impl_transient!(
+    V3dPlane,
+    "V3dPlane",
+    dyn martensite_tkernel::standard::Transient
+);
 
 impl V3dPlane {
     /// A plane of equation coefficients; a null normal raises `Standard_ConstructionError`.
@@ -29,7 +32,6 @@ impl V3dPlane {
     pub fn new(a: f64, b: f64, c: f64, d: f64) -> Result<Self, Failure> {
         let clip = Graphic3dClipPlane::from_plane(&Plane3::from_equation(a, b, c, d)?)?;
         Ok(Self {
-            transient: StandardTransient::default(),
             graphic_structure: SharedState::new(Handle::default()),
             plane: Handle::new(clip),
         })

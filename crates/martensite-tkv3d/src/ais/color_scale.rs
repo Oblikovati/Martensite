@@ -4,7 +4,7 @@ use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
     quantity::*,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::{AsciiString, ExtendedString},
 };
 use martensite_tkservice::{aspect::*, graphic3d::*};
@@ -89,17 +89,15 @@ pub(super) struct ColorScaleFields {
 }
 /// An actual colored bar, frame and text presentation; `AisColorScale::new()?`.
 pub struct AisColorScale {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     pub(super) fields: SharedState<ColorScaleFields>,
 }
-martensite_tkernel::impl_transient!(AisColorScale,"AisColorScale",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisColorScale,"AisColorScale",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn PrsMgrPresentableObject,dyn SelectMgrSelectableObject]);
 impl AisColorScale {
     /// Create an opaque unlit scale; set its dimensions before display. `AisColorScale::new()?`.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::default(),
         });

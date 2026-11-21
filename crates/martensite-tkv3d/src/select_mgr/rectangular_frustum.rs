@@ -1,6 +1,6 @@
 //! Rectangular point/box selection state and construction.
 use super::*;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::gp::{Direction3, Point2, Point3, Xy};
 
 /// Stored selection bounds, independent from the last built geometry.
@@ -68,7 +68,6 @@ impl Default for RectangularRay {
 }
 /// A finite selecting frustum built from a pixel or rectangle; native RTTI is BaseFrustum.
 pub struct SelectMgrRectangularFrustum {
-    pub(super) transient: StandardTransient,
     /// Shared builder, tolerance and camera; `volume.base.window_size()`.
     pub base: SelectMgrBaseFrustumBase,
     /// Protected native geometry; `volume.frustum_core.read().vertices()`.
@@ -90,7 +89,6 @@ impl SelectMgrRectangularFrustum {
     /// Start with empty geometry and unknown selection; `SelectMgrRectangularFrustum::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: SelectMgrBaseFrustumBase::default(),
             frustum_core: SharedState::new(SelectMgrFrustumCore::new()),
             selection_rectangle: SharedState::new(SelectMgrSelectionRectangle::new()),

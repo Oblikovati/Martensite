@@ -56,7 +56,7 @@ fn run_nested_retirement(
 }
 fn retirement_nested_row(owner: &AisTexturedShape, pixels: &RetirementProjectionPixels) -> String {
     let slot = owner.texture_pix_map();
-    let file = owner.texture_file().read().unwrap();
+    let file = owner.texture_file();
     format!(
         "NESTED {} {} {} {} {} {}",
         pixels.mode,

@@ -54,7 +54,7 @@ fn record_texture_chain_after(
     outer_file: bool,
 ) {
     let count = control.read().last.observe().ref_count();
-    let file = owner.texture_file().read().unwrap();
+    let file = owner.texture_file();
     trace.write().push(
         format!(
             "AFTER {} {} {} {count} {}",

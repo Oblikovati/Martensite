@@ -23,7 +23,6 @@ martensite_tkernel::impl_transient_interface!(
 ///
 /// Example: `let s = V3dComputedStructure::create(&manager, &grid.clone().cast())?;`.
 pub struct V3dComputedStructure {
-    transient: StandardTransient,
     base: Graphic3dStructureBase,
     owner: WeakHandle<dyn V3dStructureComputer>,
 }
@@ -38,7 +37,6 @@ impl V3dComputedStructure {
         owner: &Handle<dyn V3dStructureComputer>,
     ) -> Result<Handle<dyn Graphic3dStructureSource>, Failure> {
         let structure = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dStructureBase::new(manager, &Handle::default())?,
             owner: owner.downgrade(),
         });

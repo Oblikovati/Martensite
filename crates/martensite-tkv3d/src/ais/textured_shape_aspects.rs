@@ -145,7 +145,7 @@ fn selected_textured_path(
     }
     (
         AisTexturedTextureSource::File(AsciiString::from_bytes(
-            super::textured_shape_source::native_textured_cstring_prefix(&fields.texture_file),
+            super::textured_shape_source::native_textured_cstring(&fields.texture_file).to_bytes(),
         )),
         textured_file_description(&fields.texture_file),
     )

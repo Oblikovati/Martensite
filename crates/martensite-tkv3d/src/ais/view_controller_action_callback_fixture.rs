@@ -3,7 +3,7 @@ use super::{AisInteractiveObject, AisInteractiveObjectBase};
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::standard::{
-    Failure, Handle, SharedState, StandardTransient, raise_native_failure,
+    Failure, Handle, SharedState, raise_native_failure,
 };
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::{
@@ -11,17 +11,15 @@ use martensite_tkservice::graphic3d::{
 };
 use std::sync::atomic::{AtomicI32, Ordering};
 pub(super) struct ActionCallbackObject {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     pub(super) calls: AtomicI32,
     pub(super) fail_kind: AtomicI32,
     pub(super) last_center: SharedState<Point3>,
 }
-martensite_tkernel::impl_transient!(ActionCallbackObject,"ActionCallbackObject",dyn AisInteractiveObject,transient,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(ActionCallbackObject,"ActionCallbackObject",dyn AisInteractiveObject,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl ActionCallbackObject {
     pub(super) fn new() -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             calls: AtomicI32::new(0),
             fail_kind: AtomicI32::new(0),

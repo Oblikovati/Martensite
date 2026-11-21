@@ -3,7 +3,7 @@ use super::{AisInteractiveObject, AisInteractiveObjectBase};
 use crate::{prs_mgr::*, prs3d::*};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::ExtendedString,
 };
 use martensite_tkg3d::geom::GeomAxis2Placement;
@@ -251,15 +251,13 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// Selectable wire/shaded datum; `AisTrihedron::new(&placement)?`.
 pub struct AisTrihedron {
-    transient: StandardTransient,
     base: AisTrihedronBase,
 }
-martensite_tkernel::impl_transient!(AisTrihedron,"AisTrihedron",dyn AisInteractiveObject,transient,interfaces:[dyn AisTrihedronSource,dyn AisInteractiveObject,dyn crate::select_mgr::SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(AisTrihedron,"AisTrihedron",dyn AisInteractiveObject,interfaces:[dyn AisTrihedronSource,dyn AisInteractiveObject,dyn crate::select_mgr::SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisTrihedron {
     /// Bind the native datum constructor; `AisTrihedron::new(&placement)?`.
     pub fn new(component: &Handle<GeomAxis2Placement>) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisTrihedronBase::new(component)?,
         });
         prs_mgr_presentable_bind(&object.cast());

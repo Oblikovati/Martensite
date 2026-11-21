@@ -5,7 +5,7 @@ use super::*;
 use crate::prs_mgr::{PrsMgrPresentableObjectMembers, prs_mgr_presentable_bind};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Axis3, Circle3, Direction3, Plane3, Point3};
@@ -28,19 +28,17 @@ pub struct PrsDimCircularFields {
 
 /// `PrsDimRadiusDimension`; `PrsDimRadiusDimension::from_circle(&circle)?`.
 pub struct PrsDimRadiusDimension {
-    transient: StandardTransient,
     pub(super) base: PrsDimDimensionBase,
     /// The protected fields.
     pub fields: SharedState<PrsDimCircularFields>,
 }
-martensite_tkernel::impl_transient!(PrsDimRadiusDimension, "PrsDimRadiusDimension", dyn PrsDimDimensionSource, transient,
+martensite_tkernel::impl_transient!(PrsDimRadiusDimension, "PrsDimRadiusDimension", dyn PrsDimDimensionSource,
     interfaces: [dyn PrsDimDimensionSource, dyn crate::ais::AisInteractiveObject, dyn crate::select_mgr::SelectMgrSelectableObject, dyn crate::prs_mgr::PrsMgrPresentableObject]);
 prs_dim_dimension_impls!(PrsDimRadiusDimension);
 
 impl PrsDimRadiusDimension {
     fn create(setup: impl FnOnce(&Self) -> Result<(), Failure>) -> Result<Handle<Self>, Failure> {
         let dimension = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: PrsDimDimensionBase::new(PrsDimKindOfDimension::Radius),
             fields: SharedState::new(PrsDimCircularFields::default()),
         });

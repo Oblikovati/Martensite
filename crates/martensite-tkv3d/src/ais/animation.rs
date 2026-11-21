@@ -1,7 +1,7 @@
 //! Martensite animation timelines preserve AisAnimation.
 use martensite_tkernel::{
     ncollection::Sequence,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use martensite_tkservice::media::MediaTimer;
@@ -117,24 +117,19 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisAnimationSource {
         // Derived Source handles must recognize the actual concrete native ancestor descriptor.
         <AisAnimation as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Projection changes the Rust interface while retaining the same live native object.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisAnimationSource);
 
 /// Native concrete animation container; `Handle::new(AisAnimation::new("timeline"))`.
 pub struct AisAnimation {
-    transient: StandardTransient,
     base: AisAnimationBase,
 }
-martensite_tkernel::impl_transient!(AisAnimation,"AisAnimation",StandardTransient,transient,
+martensite_tkernel::impl_transient!(AisAnimation,"AisAnimation",dyn martensite_tkernel::standard::Transient,
     interfaces:[dyn AisAnimationSource]);
 impl AisAnimation {
     /// Construct an empty named timeline; `AisAnimation::new("timeline")`.
     pub fn new(name: impl Into<AsciiString>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisAnimationBase::new(name),
         }
     }

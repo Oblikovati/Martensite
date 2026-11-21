@@ -10,11 +10,21 @@ pub trait AisViewCubeMembers: AisViewCubeSource {
     /// Copy the current animation handle; replacements do not alter this snapshot.
     /// Example: `let owned=cube.view_animation`; native ViewAnimation equivalence uses `view_animation_ref`.
     fn view_animation(&self) -> Handle<dyn AisAnimationCameraSource> {
-        self.interaction_base().fields.read().animation.clone()
+        self.interaction_base()
+            .fields
+            .read()
+            .animation
+            .as_ref()
+            .clone()
     }
     /// Replace the retained native camera animation; `cube.set_view_animation(&animation)`.
     fn set_view_animation(&self, animation: &Handle<dyn AisAnimationCameraSource>) {
-        self.interaction_base().fields.write().animation = animation.clone();
+        let replacement = std::sync::Arc::new(animation.clone());
+        let removed = {
+            let mut fields = self.interaction_base().fields.write();
+            std::mem::replace(&mut fields.animation, replacement)
+        };
+        drop(removed);
     }
     /// Read own duration or diagnose a null animation; `cube.duration()?`.
     fn duration(&self) -> Result<f64, Failure> {

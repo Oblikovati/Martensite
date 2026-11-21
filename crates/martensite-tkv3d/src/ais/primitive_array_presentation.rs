@@ -14,9 +14,7 @@ use crate::select3d::{
 };
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkmath::toploc::Location;
 use martensite_tkservice::aspect::AspectTypeOfFacingModel;
 use martensite_tkservice::graphic3d::{
@@ -39,18 +37,16 @@ struct PArrayFields {
 /// This mutable AIS owner is confined to its viewer invocation; it is not a published result.
 /// Example: `let object = PrimitiveArrayPresentation::from_array(vertices);`.
 pub struct PrimitiveArrayPresentation {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     fields: SharedState<PArrayFields>,
 }
-martensite_tkernel::impl_transient!(PrimitiveArrayPresentation, "MyPArrayObject", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(PrimitiveArrayPresentation, "MyPArrayObject", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl PrimitiveArrayPresentation {
     /// The object of an existing array.
     fn allocate(parray: Handle<Graphic3dArrayOfPrimitives>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::new(PArrayFields {
                 marker_aspect: Handle::default(),
@@ -134,7 +130,7 @@ impl PrsMgrPresentableObject for PrimitiveArrayPresentation {
         } else if let Some(shading) = self.attributes().shading_aspect().get() {
             group.set_group_primitives_aspect(&shading.aspect().cast());
         }
-        group.add_primitive_array(&fields.parray, true);
+        group.add_primitive_array(&fields.parray.upcast(), true);
         Ok(())
     }
     /// `SetColor`: the own color, then the shading and marker colors.

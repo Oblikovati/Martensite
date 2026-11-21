@@ -3,7 +3,7 @@ use super::basic_aspect::{Prs3dBasicAspect, dump_graphic_aspects};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::aspect::AspectTypeOfMarker;
 use martensite_tkservice::graphic3d::{
     Graphic3dAspectMarker3d, Graphic3dAspectsMembers as _, Graphic3dMarkerImage,
@@ -15,10 +15,9 @@ use std::io;
 ///
 /// Example: `let aspect = Prs3dPointAspect::new(AspectTypeOfMarker::Plus, yellow, 1.0)?;`.
 pub struct Prs3dPointAspect {
-    transient: StandardTransient,
     pub(super) aspect: SharedState<Handle<Graphic3dAspectMarker3d>>,
 }
-martensite_tkernel::impl_transient!(Prs3dPointAspect, "Prs3dPointAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dPointAspect, "Prs3dPointAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 impl Prs3dPointAspect {
@@ -41,7 +40,6 @@ impl Prs3dPointAspect {
     /// Wraps an existing Graphic3d aspect; `Prs3dPointAspect::from_aspect(aspect)`.
     pub fn from_aspect(aspect: Handle<Graphic3dAspectMarker3d>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             aspect: SharedState::new(aspect),
         }
     }

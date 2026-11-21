@@ -2,9 +2,7 @@
 //! world points for the selecting frustums.
 use martensite_tkernel::ncollection::{Vec3, Vec4};
 use martensite_tkernel::precision::confusion;
-use martensite_tkernel::standard::{
-    Handle, HandleReference, SharedState, StandardTransient, WeakHandleFieldRef,
-};
+use martensite_tkernel::standard::{Handle, HandleReference, SharedState, WeakHandleFieldRef};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::Graphic3dCamera;
 use std::sync::Arc;
@@ -23,14 +21,12 @@ struct BuilderState {
 ///
 /// Example: `let builder = SelectMgrFrustumBuilder::new(); builder.set_window_size(400, 300);`.
 pub struct SelectMgrFrustumBuilder {
-    transient: StandardTransient,
     state: Arc<SharedState<BuilderState>>,
 }
 martensite_tkernel::impl_transient!(
     SelectMgrFrustumBuilder,
     "SelectMgrFrustumBuilder",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 
 impl Default for SelectMgrFrustumBuilder {
@@ -51,7 +47,6 @@ impl SelectMgrFrustumBuilder {
             is_viewport_set: false,
         };
         Self {
-            transient: StandardTransient::default(),
             state: Arc::new(SharedState::new(state)),
         }
     }

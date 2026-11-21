@@ -33,7 +33,7 @@ pub struct AisColoredDrawer {
     /// Writable native public fields; guards borrow actual storage, never copied flag proxies.
     pub flags: SharedState<AisColoredDrawerFlags>,
 }
-martensite_tkernel::impl_transient!(AisColoredDrawer, "AisColoredDrawer", Prs3dDrawer, drawer,
+martensite_tkernel::impl_transient!(AisColoredDrawer, "AisColoredDrawer", Prs3dDrawer,
     interfaces: [dyn Graphic3dPresentationAttributesSource]);
 impl AisColoredDrawer {
     /// Links the actual parent handle while leaving every ownership flag false.

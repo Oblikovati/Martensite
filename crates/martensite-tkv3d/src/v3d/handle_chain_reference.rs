@@ -104,23 +104,17 @@ impl<T: RuntimeTyped + ?Sized> V3dHandleChainNodeRef<'_, T> {
     }
 }
 impl<T: RuntimeTyped + ?Sized> HandleReference<T> for V3dHandleChainNodeRef<'_, T> {
-    fn observe(&self) -> HandleObserver<T> {
-        self.chain.inspect(|chain| {
-            self.position
-                .value(chain)
-                .unwrap_or_else(|| invalid_handle_node(self.position))
-                .observe()
-        })
+    fn observe(&self) -> HandleObserver<'_, T> {
+        HandleObserver::Snapshot(self.with_handle(Handle::clone))
     }
     fn reference_address(&self) -> *const () {
-        self.chain.inspect(|chain| {
-            std::ptr::from_ref(
-                self.position
-                    .value(chain)
-                    .unwrap_or_else(|| invalid_handle_node(self.position)),
-            )
-            .cast()
-        })
+        self.with_handle(|handle| std::ptr::from_ref(handle).cast())
+    }
+    fn object_address(&self) -> *const () {
+        self.with_handle(Handle::object_address)
+    }
+    fn is_null(&self) -> bool {
+        self.with_handle(Handle::is_null)
     }
 }
 fn invalid_handle_node(position: ListCursor) -> ! {

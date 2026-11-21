@@ -1,6 +1,7 @@
 //! Named application subclass keeps native inherited RTTI while overriding the real virtual interfaces.
 use super::xr_recording_group::XrRecordingEvents;
 use super::*;
+use crate::inherited_native_type::inherited_native_type;
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::standard::{
@@ -43,64 +44,13 @@ impl XrDerivedFake {
         *self.hiding_calls.write() += 1;
     }
 }
-impl RuntimeTyped for XrDerivedFake {
-    const TYPE_NAME: &'static str = "Martensite_XrDerivedFake";
-    fn static_type() -> &'static RuntimeType {
-        static CASTERS: OnceLock<Handle<RuntimeType>> = OnceLock::new();
-        CASTERS
-            .get_or_init(register_xr_derived_interfaces)
-            .get()
-            .unwrap()
-    }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        // Caster metadata projects the actual wrapper, not its composed core, retaining overrides.
-        project_concrete::<Self>(object)
-    }
-}
-fn register_xr_derived_interfaces() -> Handle<RuntimeType> {
-    RuntimeType::register_owned_with_interfaces::<XrDerivedFake>(
-        XrDerivedFake::TYPE_NAME,
-        std::mem::size_of::<XrDerivedFake>(),
-        Some(AisXrTrackedDevice::static_type_handle()),
-        xr_derived_interfaces(),
-    )
-}
-fn xr_derived_interfaces() -> Vec<InterfaceEntry> {
-    vec![
-        InterfaceEntry::new(InterfaceCaster::<dyn AisXrTrackedDeviceSource>::new(
-            |value| Some(project_concrete::<XrDerivedFake>(value)?),
-        )),
-        InterfaceEntry::new(InterfaceCaster::<dyn AisInteractiveObject>::new(|value| {
-            Some(project_concrete::<XrDerivedFake>(value)?)
-        })),
-        InterfaceEntry::new(InterfaceCaster::<dyn SelectMgrSelectableObject>::new(
-            |value| Some(project_concrete::<XrDerivedFake>(value)?),
-        )),
-        InterfaceEntry::new(InterfaceCaster::<dyn PrsMgrPresentableObject>::new(
-            |value| Some(project_concrete::<XrDerivedFake>(value)?),
-        )),
-    ]
-}
-impl Transient for XrDerivedFake {
-    fn dynamic_type(&self) -> &'static RuntimeType {
-        // Native subclasses without their own RTTI inherit the exact XR descriptor.
-        AisXrTrackedDevice::static_type()
-    }
-    fn rust_interface_descriptor(&self) -> &RuntimeType {
-        // Native identity and Rust callback projection remain separate responsibilities.
-        Self::static_type()
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        // Core/base views retain the same native reference-count subobject.
-        self.core.transient_base()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        if requested == TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.core.project(requested)
-    }
-}
+inherited_native_type!(
+    XrDerivedFake,
+    AisXrTrackedDevice,
+    "Martensite_XrDerivedFake",
+    named,
+    [dyn AisXrTrackedDeviceSource, dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]
+);
 impl AisXrTrackedDeviceSource for XrDerivedFake {
     fn xr_tracked_device_base(&self) -> &AisXrTrackedDeviceBase {
         // Qualified native geometry and nonvirtual members borrow the actual inherited state.

@@ -15,7 +15,7 @@ pub(super) fn light_group(
     let group = prs.new_group()?;
     group.set_closed(closed);
     group.set_group_primitives_aspect(&aspect);
-    group.add_primitive_array(array, true);
+    group.add_primitive_array(&array.upcast(), true);
     Ok(())
 }
 pub(super) fn light_point(

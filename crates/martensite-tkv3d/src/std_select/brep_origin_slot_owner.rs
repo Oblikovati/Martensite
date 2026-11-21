@@ -1,8 +1,7 @@
 //! Named owner override mutates the original live slot before invoking the native base setter.
 use crate::select_mgr::*;
 use martensite_tkernel::standard::{
-    Failure, Handle, HandleFieldRef, HandleReference, SharedState, StandardTransient, WeakHandle,
-    raise_native_failure,
+    Failure, Handle, HandleFieldRef, HandleReference, SharedState, WeakHandle, raise_native_failure,
 };
 use std::{fmt::Write, sync::Arc};
 pub(super) struct OriginSlotSharedInput {
@@ -14,17 +13,15 @@ pub(super) struct OriginSlotSharedInput {
 #[derive(Debug, PartialEq)]
 pub(super) struct OriginNonStandardFailure(pub i32);
 pub(super) struct OriginSlotOwnerFake {
-    transient: StandardTransient,
     owner: SelectMgrEntityOwnerBase,
     label: i32,
     input: Arc<OriginSlotSharedInput>,
 }
-martensite_tkernel::impl_transient!(OriginSlotOwnerFake,"Martensite_OriginSlotOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(OriginSlotOwnerFake,"Martensite_OriginSlotOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl OriginSlotOwnerFake {
     pub fn new(label: i32, input: &Arc<OriginSlotSharedInput>) -> Handle<Self> {
         let owner = SelectMgrEntityOwnerBase::new(&Handle::default(), label);
         Handle::new(Self {
-            transient: Default::default(),
             owner,
             label,
             input: input.clone(),

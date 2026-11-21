@@ -16,7 +16,7 @@ struct SubviewMutationProbe {
     identity: i32,
     commands: Arc<SharedState<Option<SubviewMutationCommands>>>,
 }
-martensite_tkernel::impl_transient!(SubviewMutationProbe,"Martensite_SubviewMutationProbe",V3dView,base,interfaces:[dyn V3dViewSource]);
+martensite_tkernel::impl_transient!(SubviewMutationProbe,"Martensite_SubviewMutationProbe",V3dView,interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for SubviewMutationProbe {
     fn view_base(&self) -> &V3dView {
         &self.base

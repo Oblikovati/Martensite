@@ -8,17 +8,15 @@ use martensite_tkernel::{
 };
 use martensite_tkservice::null_driver::NullGraphicDriver;
 pub(super) struct ClickPauseRecorder {
-    transient: StandardTransient,
     base: AisAnimationBase,
     pauses: SharedState<i32>,
     fail_pause: bool,
 }
 martensite_tkernel::impl_transient!(ClickPauseRecorder,"ClickPauseRecorder",
-    dyn AisAnimationSource,transient,interfaces:[dyn AisAnimationSource]);
+    dyn AisAnimationSource,interfaces:[dyn AisAnimationSource]);
 impl ClickPauseRecorder {
     pub(super) fn new(fail_pause: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisAnimationBase::new("click"),
             pauses: SharedState::new(0),
             fail_pause,

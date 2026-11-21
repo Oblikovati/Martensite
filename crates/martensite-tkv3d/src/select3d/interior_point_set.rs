@@ -10,7 +10,7 @@ use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::{Array1, Vec3};
 use martensite_tkernel::precision::confusion;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Point3, Xyz};
 use martensite_tkservice::json_dump::{base_class, class_begin, field_dumped};
 use std::io;
@@ -92,7 +92,6 @@ struct PointSetState {
 ///
 /// Example: `let set = Select3DInteriorSensitivePointSet::new(&owner, &points)?;`.
 pub struct Select3DInteriorSensitivePointSet {
-    transient: StandardTransient,
     entity: Select3DSensitiveEntityBase,
     set: Select3DSensitiveSetBase,
     planar_polygons: Vec<Handle<Select3DSensitivePoly>>,
@@ -100,7 +99,7 @@ pub struct Select3DInteriorSensitivePointSet {
     cog: Point3,
     bnd_box: Select3DBndBox3d,
 }
-martensite_tkernel::impl_transient!(Select3DInteriorSensitivePointSet, "Select3DInteriorSensitivePointSet", dyn Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(Select3DInteriorSensitivePointSet, "Select3DInteriorSensitivePointSet", dyn Select3DSensitiveSet,
     interfaces: [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet]);
 
 impl Select3DInteriorSensitivePointSet {
@@ -119,7 +118,6 @@ impl Select3DInteriorSensitivePointSet {
         let planar_polygons = planar_parts(owner, points)?;
         let polygons_idxs = (0..planar_polygons.len() as i32).collect();
         Ok(Self {
-            transient: StandardTransient::default(),
             entity: Select3DSensitiveEntityBase::new(owner),
             set: Select3DSensitiveSetBase::default(),
             planar_polygons,

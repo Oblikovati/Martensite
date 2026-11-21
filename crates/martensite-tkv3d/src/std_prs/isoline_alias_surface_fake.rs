@@ -16,17 +16,15 @@ pub(super) struct IsolineLiveInputs {
     pub parameters: [SharedState<Sequence<f64>>; 2],
 }
 pub(super) struct IsolineAliasSurfaceFake {
-    parent: StandardTransient,
     plane: GeomPlane,
     pub calls: SharedState<i32>,
     pub fail_closed: SharedState<bool>,
     inputs: Arc<IsolineLiveInputs>,
 }
-martensite_tkernel::impl_transient!(IsolineAliasSurfaceFake,"Martensite_IsolineAliasSurfaceFake",StandardTransient,parent,interfaces:[dyn GeomSurface,dyn GeomGeometry]);
+martensite_tkernel::impl_transient!(IsolineAliasSurfaceFake,"Martensite_IsolineAliasSurfaceFake",dyn martensite_tkernel::standard::Transient,interfaces:[dyn GeomSurface,dyn GeomGeometry]);
 impl IsolineAliasSurfaceFake {
     pub(super) fn new(inputs: &Arc<IsolineLiveInputs>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             plane: GeomPlane::new(Axis3::default()),
             calls: SharedState::new(0),
             fail_closed: SharedState::new(false),

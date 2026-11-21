@@ -7,7 +7,7 @@ use crate::prs_mgr::{PrsMgrPresentableObjectMembers, prs_mgr_presentable_bind};
 use crate::select_mgr::{SelectMgrEntityOwnerSource, SelectMgrSelection};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg3d::geom::{GeomCircle, GeomCurve, GeomPlane, GeomSurface};
 use martensite_tkgeomalgo::geom_api::IntCS;
@@ -21,12 +21,11 @@ const DIAMETER_SYMBOL: u16 = 0x00D8;
 
 /// `PrsDimDiameterDimension`; `PrsDimDiameterDimension::from_circle(&circle)?`.
 pub struct PrsDimDiameterDimension {
-    transient: StandardTransient,
     pub(super) base: PrsDimDimensionBase,
     /// The protected fields.
     pub fields: SharedState<PrsDimCircularFields>,
 }
-martensite_tkernel::impl_transient!(PrsDimDiameterDimension, "PrsDimDiameterDimension", dyn PrsDimDimensionSource, transient,
+martensite_tkernel::impl_transient!(PrsDimDiameterDimension, "PrsDimDiameterDimension", dyn PrsDimDimensionSource,
     interfaces: [dyn PrsDimDimensionSource, dyn crate::ais::AisInteractiveObject, dyn crate::select_mgr::SelectMgrSelectableObject, dyn crate::prs_mgr::PrsMgrPresentableObject]);
 prs_dim_dimension_impls!(PrsDimDiameterDimension);
 
@@ -36,7 +35,6 @@ impl PrsDimDiameterDimension {
         setup: impl FnOnce(&Self) -> Result<(), Failure>,
     ) -> Result<Handle<Self>, Failure> {
         let dimension = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: PrsDimDimensionBase::new(PrsDimKindOfDimension::Diameter),
             fields: SharedState::new(PrsDimCircularFields::default()),
         });

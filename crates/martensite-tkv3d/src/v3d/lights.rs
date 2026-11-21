@@ -25,7 +25,7 @@ macro_rules! light_parent {
 pub struct V3dAmbientLight {
     light: Graphic3dCLight,
 }
-martensite_tkernel::impl_transient!(V3dAmbientLight, "V3dAmbientLight", Graphic3dCLight, light);
+martensite_tkernel::impl_transient!(V3dAmbientLight, "V3dAmbientLight", Graphic3dCLight);
 light_parent!(V3dAmbientLight, Graphic3dCLight, light);
 
 impl V3dAmbientLight {
@@ -41,7 +41,7 @@ impl V3dAmbientLight {
 pub struct V3dPositionLight {
     light: Graphic3dCLight,
 }
-martensite_tkernel::impl_transient!(V3dPositionLight, "V3dPositionLight", Graphic3dCLight, light);
+martensite_tkernel::impl_transient!(V3dPositionLight, "V3dPositionLight", Graphic3dCLight);
 light_parent!(V3dPositionLight, Graphic3dCLight, light);
 
 impl V3dPositionLight {
@@ -57,12 +57,7 @@ impl V3dPositionLight {
 pub struct V3dDirectionalLight {
     base: V3dPositionLight,
 }
-martensite_tkernel::impl_transient!(
-    V3dDirectionalLight,
-    "V3dDirectionalLight",
-    V3dPositionLight,
-    base
-);
+martensite_tkernel::impl_transient!(V3dDirectionalLight, "V3dDirectionalLight", V3dPositionLight);
 light_parent!(V3dDirectionalLight, V3dPositionLight, base);
 
 impl V3dDirectionalLight {
@@ -101,12 +96,7 @@ impl V3dDirectionalLight {
 pub struct V3dPositionalLight {
     base: V3dPositionLight,
 }
-martensite_tkernel::impl_transient!(
-    V3dPositionalLight,
-    "V3dPositionalLight",
-    V3dPositionLight,
-    base
-);
+martensite_tkernel::impl_transient!(V3dPositionalLight, "V3dPositionalLight", V3dPositionLight);
 light_parent!(V3dPositionalLight, V3dPositionLight, base);
 
 impl V3dPositionalLight {
@@ -123,7 +113,7 @@ impl V3dPositionalLight {
 pub struct V3dSpotLight {
     base: V3dPositionLight,
 }
-martensite_tkernel::impl_transient!(V3dSpotLight, "V3dSpotLight", V3dPositionLight, base);
+martensite_tkernel::impl_transient!(V3dSpotLight, "V3dSpotLight", V3dPositionLight);
 light_parent!(V3dSpotLight, V3dPositionLight, base);
 
 impl V3dSpotLight {

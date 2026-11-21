@@ -1,8 +1,9 @@
 //! Genuine BRep selection owners retain shape identity and the inherited selectable-owner state.
 use super::{StdSelectShapeFields, StdSelectShapeRef, StdSelectShapeSource};
 use crate::select_mgr::*;
-use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkbrep::topods::{Shape, ShapeView};
+use martensite_tkernel::standard::{Handle, SharedState};
+use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering};
 /// Actual derived fields; `StdSelectBRepOwnerBase::new(&shape,&object,7,true)`.
 pub struct StdSelectBRepOwnerBase {
@@ -18,14 +19,14 @@ pub struct StdSelectBRepOwnerBase {
 impl StdSelectBRepOwnerBase {
     /// Construct the inherited owner first, then copy topology; `Self::new(&shape,&object,7,true)`.
     pub fn new(
-        shape: &Shape,
+        shape: &ShapeView<'_>,
         selectable: &Handle<dyn SelectMgrSelectableObject>,
         priority: i32,
         decomposed: bool,
     ) -> Self {
         let owner = SelectMgrEntityOwnerBase::new(selectable, priority);
         let shape = SharedState::new(StdSelectShapeFields {
-            shape: shape.clone(),
+            shape: Arc::new(shape.to_shape()),
         });
         owner.fields.write().from_decomposition = decomposed;
         Self {
@@ -48,11 +49,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn StdSelectBRepOwnerSource
         // The application dispatch protocol shares the one genuine native class descriptor.
         <StdSelectBRepOwner as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Registered casters project the actual subclass base without allocating a facade.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn StdSelectBRepOwnerSource);
 /// Nonvirtual BRep owner operations preserve the pinned inverted HasHilightMode predicate; `owner.reset_hilight_mode()`.
 pub trait StdSelectBRepOwnerMembers: StdSelectBRepOwnerSource {
     /// Borrow the native geometry field without retaining topology; `let reference=owner.shape_ref();`.
@@ -89,10 +87,9 @@ pub trait StdSelectBRepOwnerMembers: StdSelectBRepOwnerSource {
 impl<S: StdSelectBRepOwnerSource + ?Sized> StdSelectBRepOwnerMembers for S {}
 /// Concrete native BRep owner; `let owner=StdSelectBRepOwner::with_shape(&shape,7,true);`.
 pub struct StdSelectBRepOwner {
-    transient: StandardTransient,
     base: StdSelectBRepOwnerBase,
 }
-martensite_tkernel::impl_transient!(StdSelectBRepOwner,"StdSelectBRepOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn StdSelectBRepOwnerSource,dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(StdSelectBRepOwner,"StdSelectBRepOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn StdSelectBRepOwnerSource,dyn SelectMgrEntityOwnerSource]);
 impl StdSelectBRepOwner {
     /// Construct a null-shape priority owner; `Self::new(5)`.
     pub fn new(priority: i32) -> Handle<Self> {
@@ -100,19 +97,18 @@ impl StdSelectBRepOwner {
         Self::with_shape(&shape, priority, false)
     }
     /// Retain geometry with native decomposition state; `Self::with_shape(&shape,7,true)`.
-    pub fn with_shape(shape: &Shape, priority: i32, decomposed: bool) -> Handle<Self> {
+    pub fn with_shape(shape: &ShapeView<'_>, priority: i32, decomposed: bool) -> Handle<Self> {
         let selectable = Handle::default();
         Self::with_selectable(shape, &selectable, priority, decomposed)
     }
     /// Retain geometry while borrowing the selectable identity; `Self::with_selectable(&shape,&object,7,true)`.
     pub fn with_selectable(
-        shape: &Shape,
+        shape: &ShapeView<'_>,
         selectable: &Handle<dyn SelectMgrSelectableObject>,
         priority: i32,
         decomposed: bool,
     ) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: StdSelectBRepOwnerBase::new(shape, selectable, priority, decomposed),
         });
         select_mgr_entity_owner_bind(&object.cast());

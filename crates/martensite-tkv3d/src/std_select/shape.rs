@@ -3,8 +3,9 @@ use super::shape_reference::{StdSelectShapeFields, StdSelectShapeRef};
 use crate::{prs_mgr::*, prs3d::Prs3dDrawer, std_prs::*};
 use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
+use std::sync::Arc;
 /// Genuine derived state; `let base=StdSelectShapeBase::new(&shape,&drawer);`.
 pub struct StdSelectShapeBase {
     /// Derived geometry is released before its native parent.
@@ -17,7 +18,7 @@ impl StdSelectShapeBase {
     pub fn new(shape: &Shape, drawer: &Handle<Prs3dDrawer>) -> Self {
         let presentable = PrsMgrPresentableObjectBase::new(PrsMgrTypeOfPresentation3d::AllView);
         let shape = SharedState::new(StdSelectShapeFields {
-            shape: shape.clone(),
+            shape: Arc::new(shape.to_shape()),
         });
         if !drawer.is_null() {
             presentable.fields.read().drawer.set_link(drawer);
@@ -37,11 +38,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn StdSelectShapeSource {
         // The application dispatch protocol shares the one genuine native class descriptor.
         <StdSelectShape as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Registered casters project the actual subclass base without allocating a facade.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn StdSelectShapeSource);
 /// Nonvirtual native shape-field operations; `source.set_shape(&replacement)`.
 pub trait StdSelectShapeMembers: StdSelectShapeSource {
     /// Borrow the field across later setters without retaining geometry; `let reference=source.shape_ref();`.
@@ -51,7 +49,7 @@ pub trait StdSelectShapeMembers: StdSelectShapeSource {
     }
     /// Replace actual geometry without presentation invalidation; `source.set_shape(&replacement)`.
     fn set_shape(&self, shape: &Shape) {
-        let replacement = shape.clone();
+        let replacement = Arc::new(shape.to_shape());
         let old = std::mem::replace(
             &mut self.std_select_shape_base().shape.write().shape,
             replacement,
@@ -62,15 +60,13 @@ pub trait StdSelectShapeMembers: StdSelectShapeSource {
 impl<S: StdSelectShapeSource + ?Sized> StdSelectShapeMembers for S {}
 /// Native highlight presentation object; `let object=StdSelectShape::new(&shape,&drawer);`.
 pub struct StdSelectShape {
-    transient: StandardTransient,
     base: StdSelectShapeBase,
 }
-martensite_tkernel::impl_transient!(StdSelectShape,"StdSelectShape",dyn PrsMgrPresentableObject,transient,interfaces:[dyn StdSelectShapeSource,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(StdSelectShape,"StdSelectShape",dyn PrsMgrPresentableObject,interfaces:[dyn StdSelectShapeSource,dyn PrsMgrPresentableObject]);
 impl StdSelectShape {
     /// Allocate real geometry and register its inherited presentation identity; `Self::new(&shape,&drawer)`.
     pub fn new(shape: &Shape, drawer: &Handle<Prs3dDrawer>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: StdSelectShapeBase::new(shape, drawer),
         });
         prs_mgr_presentable_bind(&object.cast());

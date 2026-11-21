@@ -155,8 +155,5 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisLightSourceSource {
         // One LightSource descriptor; the Rust source view adds no ancestor.
         <super::AisLightSource as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Preserve the actual subclass/interface projection independently of descriptor ancestry.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisLightSourceSource);

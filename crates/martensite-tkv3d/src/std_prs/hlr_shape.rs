@@ -158,10 +158,8 @@ fn no_data() -> Failure {
 /// curve into the current group (seen lines, then hidden ones when asked).
 /// Example: `StdPrsHlrShape::default.compute_hlr(&prs, &shape, &drawer, &camera)?`.
 #[derive(Default)]
-pub struct StdPrsHlrShape {
-    transient: StandardTransient,
-}
-martensite_tkernel::impl_transient!(StdPrsHlrShape, "StdPrsHLRShape", dyn StdPrsHlrShapeI, transient,
+pub struct StdPrsHlrShape {}
+martensite_tkernel::impl_transient!(StdPrsHlrShape, "StdPrsHLRShape", dyn StdPrsHlrShapeI,
     interfaces: [dyn StdPrsHlrShapeI]);
 
 impl StdPrsHlrShapeI for StdPrsHlrShape {
@@ -232,10 +230,8 @@ fn null_camera() -> Failure {
 /// regular lines (or are outlines) become one segment array each.
 /// Example: `StdPrsHlrPolyShape::default.compute_hlr(&prs, &shape, &drawer, &camera)?`.
 #[derive(Default)]
-pub struct StdPrsHlrPolyShape {
-    transient: StandardTransient,
-}
-martensite_tkernel::impl_transient!(StdPrsHlrPolyShape, "StdPrsHLRPolyShape", dyn StdPrsHlrShapeI, transient,
+pub struct StdPrsHlrPolyShape {}
+martensite_tkernel::impl_transient!(StdPrsHlrPolyShape, "StdPrsHLRPolyShape", dyn StdPrsHlrShapeI,
     interfaces: [dyn StdPrsHlrShapeI]);
 
 impl StdPrsHlrShapeI for StdPrsHlrPolyShape {
@@ -317,6 +313,6 @@ fn add_segments(
         array.add_vertex_pnt(p2)?;
     }
     group.set_primitives_aspect(aspect);
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.into_upcast(), true);
     Ok(())
 }

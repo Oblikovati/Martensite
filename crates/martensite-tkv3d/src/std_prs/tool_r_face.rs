@@ -1,5 +1,5 @@
 //! Oriented p-curve traversal for Martensite isoline trimming.
-use super::{StdPrsIsolineSurfaceSource, StdPrsToolRFaceEdgeRef};
+use super::{StdPrsIsolineSurfaceTarget, StdPrsToolRFaceEdgeRef};
 use martensite_tkbrep::{
     brep::BRepTool,
     topexp::Explorer,
@@ -32,9 +32,7 @@ impl StdPrsToolRFace {
         Self::default()
     }
     /// Retain the face with forward orientation; `StdPrsToolRFace::with_surface(&surface)?`.
-    pub fn with_surface<
-        S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
-    >(
+    pub fn with_surface<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         surface: &Handle<S>,
     ) -> Result<Self, Failure> {
         let mut face = surface.isoline_surface_base().face();

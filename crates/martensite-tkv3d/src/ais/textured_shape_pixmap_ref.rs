@@ -28,8 +28,8 @@ impl<'a> AisTexturedShapePixMapRef<'a> {
         let pixels = self.pixels;
         pixels.object_address()
     }
-    /// Current native count without retaining the target; `alias.ref_count()`.
-    pub fn ref_count(&self) -> i32 {
+    /// Current strong count without retaining the target; `alias.ref_count()`.
+    pub fn ref_count(&self) -> usize {
         let pixels = self.pixels;
         pixels.ref_count()
     }
@@ -50,7 +50,7 @@ impl<'a> AisTexturedShapePixMapRef<'a> {
     }
 }
 impl HandleReference<ImagePixMap> for AisTexturedShapePixMapRef<'_> {
-    fn observe(&self) -> HandleObserver<ImagePixMap> {
+    fn observe(&self) -> HandleObserver<'_, ImagePixMap> {
         let pixels = self.pixels;
         pixels.observe()
     }

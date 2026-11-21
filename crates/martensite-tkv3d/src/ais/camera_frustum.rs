@@ -3,7 +3,7 @@ use super::{AisInteractiveObject, AisInteractiveObjectBase};
 use crate::{prs_mgr::*, prs3d::*, select_mgr::*};
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkservice::{
     aspect::{AspectTypeOfFacingModel, AspectTypeOfLine},
@@ -30,18 +30,16 @@ pub struct AisCameraFrustumFields {
 }
 /// Camera visualization with live presentation aspects; `AisCameraFrustum::new()?`.
 pub struct AisCameraFrustum {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     /// Native cached geometry and aliased primitive arrays.
     pub fields: SharedState<AisCameraFrustumFields>,
 }
-martensite_tkernel::impl_transient!(AisCameraFrustum,"AisCameraFrustum",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisCameraFrustum,"AisCameraFrustum",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisCameraFrustum {
     /// Create a white, plastified, blended frustum with transparency 0.7; `AisCameraFrustum::new()?`.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::default(),
         });

@@ -58,11 +58,11 @@ fn add_wf_reference_free_edges<S: TopoDSShapeReadSource>(
         return Ok(());
     }
     let group = prs.observe().new_group()?;
-    let line = drawer.free_boundary_aspect().downgrade().observe();
+    let line = drawer.free_boundary_aspect();
     let reference = line.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_primitives_aspect(&aspect);
-    group.add_primitive_array(&edges, true);
+    group.add_primitive_array(&edges.into_upcast(), true);
     Ok(())
 }
 fn add_wf_reference_polylines<S: TopoDSShapeReadSource>(
@@ -96,7 +96,7 @@ fn add_wf_reference_vertices<S: TopoDSShapeReadSource>(
         return Ok(());
     }
     let group = prs.observe().new_group()?;
-    let point = drawer.point_aspect().downgrade().observe();
+    let point = drawer.point_aspect();
     let reference = point.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_primitives_aspect(&aspect);

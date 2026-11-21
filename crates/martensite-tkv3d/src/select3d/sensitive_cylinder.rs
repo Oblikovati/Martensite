@@ -7,14 +7,13 @@ use super::{
 use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::{Mat4, Vec3};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::bvh::{BvhBox, std_max};
 use martensite_tkmath::gp::{Point3, Transform3};
 /// A sensitive cylinder (a cone when the radii differ), placed by a transformation.
 ///
 /// Example: `let cylinder = Select3DSensitiveCylinder::new(&owner, 1.0, 1.0, 2.0, trsf, false);`.
 pub struct Select3DSensitiveCylinder {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     trsf: Transform3,
     bottom_radius: f64,
@@ -22,7 +21,7 @@ pub struct Select3DSensitiveCylinder {
     height: f64,
     is_hollow: bool,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveCylinder, "Select3DSensitiveCylinder", dyn Select3DSensitiveEntity, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveCylinder, "Select3DSensitiveCylinder", dyn Select3DSensitiveEntity,
     interfaces: [dyn Select3DSensitiveEntity]);
 
 impl Select3DSensitiveCylinder {
@@ -36,7 +35,6 @@ impl Select3DSensitiveCylinder {
         is_hollow: bool,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             trsf,
             bottom_radius: bottom_rad,

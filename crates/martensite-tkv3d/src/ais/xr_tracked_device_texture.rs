@@ -1,9 +1,10 @@
 //! Native private XR texture holder delegates image reads while preserving resource identity.
 use super::AisXrTrackedDeviceSource;
+use crate::inherited_native_type::inherited_native_type;
 use crate::{prs_mgr::PrsMgrPresentableObjectMembers, prs3d::Prs3dShadingAspect};
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkservice::{aspect::AspectTypeOfFacingModel, graphic3d::*, image::*};
@@ -55,64 +56,13 @@ impl XrDeviceTexture {
     }
 }
 // Native private XRTexture inherits Texture2D's descriptor; Rust caster metadata is separate.
-impl martensite_tkernel::standard::RuntimeTyped for XrDeviceTexture {
-    const TYPE_NAME: &'static str = "Martensite_XrDeviceTexture";
-    fn static_type() -> &'static martensite_tkernel::standard::RuntimeType {
-        static CASTERS: std::sync::OnceLock<Handle<martensite_tkernel::standard::RuntimeType>> =
-            std::sync::OnceLock::new();
-        CASTERS
-            .get_or_init(register_xr_texture_interfaces)
-            .get()
-            .unwrap()
-    }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // A cast recovers this actual holder to forward the retained image source.
-        martensite_tkernel::standard::project_concrete::<Self>(object)
-    }
-}
-impl martensite_tkernel::standard::Transient for XrDeviceTexture {
-    fn dynamic_type(&self) -> &'static martensite_tkernel::standard::RuntimeType {
-        // Native XRTexture does not declare RTTI and inherits its Texture2D descriptor.
-        <Graphic3dTexture2D as martensite_tkernel::standard::RuntimeTyped>::static_type()
-    }
-    fn rust_interface_descriptor(&self) -> &martensite_tkernel::standard::RuntimeType {
-        // The caster metadata retains the holder's actual virtual image override.
-        <Self as martensite_tkernel::standard::RuntimeTyped>::static_type()
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        // All texture views retain the same intrusive ownership subobject.
-        martensite_tkernel::standard::Transient::transient_base(&self.core)
-    }
-    fn project(&self, requested: std::any::TypeId) -> Option<&dyn std::any::Any> {
-        if requested == std::any::TypeId::of::<Self>() {
-            return Some(self);
-        }
-        martensite_tkernel::standard::Transient::project(&self.core, requested)
-    }
-}
-fn register_xr_texture_interfaces() -> Handle<martensite_tkernel::standard::RuntimeType> {
-    use martensite_tkernel::standard::{RuntimeType, RuntimeTyped};
-    RuntimeType::register_owned_with_interfaces::<XrDeviceTexture>(
-        XrDeviceTexture::TYPE_NAME,
-        std::mem::size_of::<XrDeviceTexture>(),
-        Some(Graphic3dTexture2D::static_type_handle()),
-        xr_texture_interfaces(),
-    )
-}
-fn xr_texture_interfaces() -> Vec<martensite_tkernel::standard::InterfaceEntry> {
-    use martensite_tkernel::standard::{InterfaceCaster, InterfaceEntry, project_concrete};
-    vec![
-        InterfaceEntry::new(InterfaceCaster::<dyn Graphic3dTextureRoot>::new(|value| {
-            Some(project_concrete::<XrDeviceTexture>(value)?)
-        })),
-        InterfaceEntry::new(InterfaceCaster::<dyn Graphic3dTextureMap>::new(|value| {
-            Some(project_concrete::<XrDeviceTexture>(value)?)
-        })),
-        InterfaceEntry::new(InterfaceCaster::<dyn Graphic3dTexture2DSource>::new(
-            |value| Some(project_concrete::<XrDeviceTexture>(value)?),
-        )),
-    ]
-}
+inherited_native_type!(
+    XrDeviceTexture,
+    Graphic3dTexture2D,
+    "Martensite_XrDeviceTexture",
+    named,
+    [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture2DSource]
+);
 impl Graphic3dTexture2DSource for XrDeviceTexture {
     fn texture_2d_base(&self) -> &Graphic3dTexture2DBase {
         // Preserve public texture parent state and immutable source identity.
@@ -125,7 +75,10 @@ impl Graphic3dTextureRoot for XrDeviceTexture {
         // Texture reads use the retained image source while resource parameters remain native.
         self.core.texture_root_base()
     }
-    fn get_image(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn get_image(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn ImagePixMapObject> {
         // The XR texture bypasses the root file/image path and forwards the exact handle.
         self.image.read_image(supported)
     }
