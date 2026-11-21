@@ -44,15 +44,9 @@ type PresentationDriverMap = DataMap<Guid, Handle<dyn TPrsStdDriver>, GuidHashPo
 /// ```
 #[derive(Default)]
 pub struct TPrsStdDriverTable {
-    transient: StandardTransient,
     drivers: SharedState<PresentationDriverMap>,
 }
-impl_transient!(
-    TPrsStdDriverTable,
-    "TPrsStdDriverTable",
-    StandardTransient,
-    transient
-);
+impl_transient!(TPrsStdDriverTable, "TPrsStdDriverTable", StandardTransient);
 
 /// The file-static handle of `TPrsStdDriverTable::Get` (never destroyed natively).
 static PRESENTATION_DRIVER_TABLE: OnceLock<Handle<TPrsStdDriverTable>> = OnceLock::new();
@@ -80,27 +74,27 @@ impl TPrsStdDriverTable {
         let standard: [(Guid, Handle<dyn TPrsStdDriver>); 6] = [
             (
                 TDataXtdAxis::get_id(),
-                Handle::new(TPrsStdAxisDriver::new()).cast(),
+                Handle::new(TPrsStdAxisDriver::new()).into_upcast(),
             ),
             (
                 TDataXtdConstraint::get_id(),
-                Handle::new(TPrsStdConstraintDriver::new()).cast(),
+                Handle::new(TPrsStdConstraintDriver::new()).into_upcast(),
             ),
             (
                 TDataXtdGeometry::get_id(),
-                Handle::new(TPrsStdGeometryDriver::new()).cast(),
+                Handle::new(TPrsStdGeometryDriver::new()).into_upcast(),
             ),
             (
                 TNamingNamedShape::get_id(),
-                Handle::new(TPrsStdNamedShapeDriver::new()).cast(),
+                Handle::new(TPrsStdNamedShapeDriver::new()).into_upcast(),
             ),
             (
                 TDataXtdPlane::get_id(),
-                Handle::new(TPrsStdPlaneDriver::new()).cast(),
+                Handle::new(TPrsStdPlaneDriver::new()).into_upcast(),
             ),
             (
                 TDataXtdPoint::get_id(),
-                Handle::new(TPrsStdPointDriver::new()).cast(),
+                Handle::new(TPrsStdPointDriver::new()).into_upcast(),
             ),
         ];
         for (guid, driver) in standard {

@@ -5,7 +5,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tklcaf::tdf::{TdfAttributeState, TdfLabel};
 use martensite_tkmath::gp::Point3;
 use martensite_tkv3d::{
-    ais::{AisInteractiveObject, AisPoint, AisShape},
+    ais::{AisColoredShape, AisInteractiveObject, AisPoint, AisShape, AisShapeParameters, AisShapeSource},
     prs_mgr::PrsMgrPresentableObjectMembers,
 };
 use martensite_tkvcaf::tprs_std::{TPrsStdDriver, TPrsStdNamedShapeDriver};
@@ -28,7 +28,7 @@ fn update_infinite(object: &mut Handle<dyn AisInteractiveObject>) {
             .update(&label, object)
             .unwrap()
     );
-    assert!(!object.cast::<AisShape>().is_null());
+    assert!(object.view::<dyn AisShapeSource>().get().is_some());
 }
 
 fn point_object() -> Handle<dyn AisInteractiveObject> {
@@ -62,6 +62,17 @@ fn reusing_a_shape_object_updates_its_infinite_state_without_replacing_identity(
     update_infinite(&mut object);
     assert_eq!(object.object_address(), previous);
     assert!(object.is_infinite());
+}
+
+#[test]
+fn named_shape_updates_the_existing_colored_object_through_its_shape_interface() {
+    let shape = support::make_box(2.0, 3.0, 4.0);
+    let colored = AisColoredShape::new(&shape);
+    let mut object = colored.upcast::<dyn AisInteractiveObject>();
+    update_infinite(&mut object);
+    assert_eq!(colored.object_address(), object.object_address());
+    assert_ne!(colored.shape(), shape);
+    assert!(colored.is_infinite());
 }
 
 #[test]

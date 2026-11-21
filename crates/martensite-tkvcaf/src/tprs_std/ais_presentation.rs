@@ -7,10 +7,7 @@ use martensite_tkcaf::tdata_xtd::TDataXtdPresentation;
 use martensite_tkcdf::json_dump::{class_begin, field_dumped};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Guid, Handle, RuntimeTyped, SharedState, StandardTransient, dump::DumpStream,
-        exceptions,
-    },
+    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState, dump::DumpStream, exceptions},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
@@ -43,12 +40,11 @@ const NO_MORE_OBJECT: &str = "TPrsStdAISPresentation has no associated TDataXtdP
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct TPrsStdAISPresentation {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     /// `myAIS`: the interactive object built by the driver.
     pub(super) ais: SharedState<Handle<dyn AisInteractiveObject>>,
 }
-impl_transient!(TPrsStdAISPresentation, "TPrsStdAISPresentation", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TPrsStdAISPresentation, "TPrsStdAISPresentation", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TPrsStdAISPresentation {
     fn default() -> Self {
@@ -60,7 +56,6 @@ impl TPrsStdAISPresentation {
     /// `TPrsStdAISPresentation()`: no interactive object.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             ais: SharedState::new(Handle::default()),
         }
@@ -79,7 +74,7 @@ impl TPrsStdAISPresentation {
         let mut presentation: Handle<TPrsStdAISPresentation> = Handle::default();
         if !label.find_attribute_as(&Self::get_id(), &mut presentation)? {
             presentation = Handle::new(Self::new());
-            label.add_attribute(&presentation.clone().cast(), true)?;
+            label.add_attribute(&presentation.upcast(), true)?;
         }
         Ok(presentation)
     }
@@ -262,11 +257,11 @@ impl TdfAttribute for TPrsStdAISPresentation {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `BackupCopy`: a new empty presentation.
     fn backup_copy(&self) -> Result<Handle<dyn TdfAttribute>, Failure> {
-        Ok(Handle::new(Self::new()).cast())
+        Ok(Handle::new(Self::new()).into_upcast())
     }
     /// `Paste`: erases the target's interactive object (keeping its displayed flag) and
     /// drops it; the next update rebuilds it.
