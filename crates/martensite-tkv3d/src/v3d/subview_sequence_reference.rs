@@ -2,7 +2,7 @@
 use super::{V3dView, V3dViewSource};
 use martensite_tkernel::{
     ncollection::SequenceCursor,
-    standard::{HandleObserver, HandleReference, raise_native_failure},
+    standard::{Handle, HandleObserver, HandleReference, raise_native_failure},
 };
 /// Live native subview iterator; `let mut cursor=parent.subview_iterator(); cursor.next()`.
 pub struct V3dSubviewCursor<'a> {
@@ -42,23 +42,27 @@ impl<'a> V3dSubviewNodeRef<'a> {
     pub(super) fn new(parent: &'a V3dView, position: SequenceCursor) -> Self {
         Self { parent, position }
     }
+    fn with_handle<R>(&self, inspect: impl FnOnce(&Handle<dyn V3dViewSource>) -> R) -> R {
+        let state = self.parent.state.read();
+        let value = self
+            .position
+            .value(&state.subviews)
+            .unwrap_or_else(|| invalid_subview_node(self.position));
+        inspect(value)
+    }
 }
 impl HandleReference<dyn V3dViewSource> for V3dSubviewNodeRef<'_> {
-    fn observe(&self) -> HandleObserver<dyn V3dViewSource> {
-        let state = self.parent.state.read();
-        self.position
-            .value(&state.subviews)
-            .unwrap_or_else(|| invalid_subview_node(self.position))
-            .observe()
+    fn observe(&self) -> HandleObserver<'_, dyn V3dViewSource> {
+        HandleObserver::Snapshot(self.with_handle(Handle::clone))
     }
     fn reference_address(&self) -> *const () {
-        let state = self.parent.state.read();
-        std::ptr::from_ref(
-            self.position
-                .value(&state.subviews)
-                .unwrap_or_else(|| invalid_subview_node(self.position)),
-        )
-        .cast()
+        self.with_handle(|handle| std::ptr::from_ref(handle).cast())
+    }
+    fn object_address(&self) -> *const () {
+        self.with_handle(Handle::object_address)
+    }
+    fn is_null(&self) -> bool {
+        self.with_handle(Handle::is_null)
     }
 }
 

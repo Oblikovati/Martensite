@@ -91,7 +91,7 @@ impl AisShapeDrawerNodeRef<'_> {
     /// Example: `node.drawer_ref_count()?`.
     pub fn drawer_ref_count(&self) -> Result<i32, Failure> {
         let node = self.live_node()?;
-        node.read_fields(|fields| fields.drawer.ref_count())
+        node.read_fields(|fields| i32::try_from(fields.drawer.ref_count()).unwrap_or(i32::MAX))
     }
     /// Explicitly retains a value snapshot; later slot replacement leaves it unchanged.
     /// Example: `let owned_drawer=node.clone_drawer()?`.

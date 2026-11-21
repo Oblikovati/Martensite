@@ -24,7 +24,7 @@ impl V3dView {
     }
     /// `Redraw`: fits Z and redraws, recomputing once after a lost device; `view.redraw()`.
     pub fn redraw(&self) {
-        let source = self.this.read().observe();
+        let source = self.this();
         if let Some(source) = source.get() {
             source.redraw();
             return;
@@ -33,7 +33,7 @@ impl V3dView {
     }
     /// `RedrawImmediate`: dispatches the actual native subclass; `view.redraw_immediate()`.
     pub fn redraw_immediate(&self) {
-        let source = self.this.read().observe();
+        let source = self.this();
         if let Some(source) = source.get() {
             source.redraw_immediate();
             return;

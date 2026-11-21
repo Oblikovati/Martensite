@@ -317,6 +317,6 @@ fn add_segments(
         array.add_vertex_pnt(p2)?;
     }
     group.set_primitives_aspect(aspect);
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.into_upcast(), true);
     Ok(())
 }

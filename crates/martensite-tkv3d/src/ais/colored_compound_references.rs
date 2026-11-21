@@ -85,7 +85,7 @@ impl AisColoredCompoundRef<'_> {
     /// Inspect actual drawer ownership without retaining it; `alias.drawer_ref_count()?`.
     pub fn drawer_ref_count(&self) -> Result<i32, Failure> {
         let node = self.live_node()?;
-        Ok(node.drawer.ref_count())
+        Ok(i32::try_from(node.drawer.ref_count()).unwrap_or(i32::MAX))
     }
 }
 fn colored_compound_index(index: usize, extent: usize) -> Failure {

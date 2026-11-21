@@ -164,7 +164,7 @@ impl V3dView {
     }
     /// `View`: the driver view; `view.view()`.
     pub fn view(&self) -> Handle<dyn Graphic3dCView> {
-        self.driver_view_slot.observe().clone()
+        self.driver_view_slot.observe().into_handle()
     }
     /// Borrow the then-current driver view without ownership; `view.driver_view_observer().redraw()`.
     pub fn driver_view_observer(&self) -> HandleObserver<dyn Graphic3dCView> {

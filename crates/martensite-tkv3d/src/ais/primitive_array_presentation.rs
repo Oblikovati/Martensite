@@ -130,7 +130,7 @@ impl PrsMgrPresentableObject for PrimitiveArrayPresentation {
         } else if let Some(shading) = self.attributes().shading_aspect().get() {
             group.set_group_primitives_aspect(&shading.aspect().cast());
         }
-        group.add_primitive_array(&fields.parray, true);
+        group.add_primitive_array(&fields.parray.upcast(), true);
         Ok(())
     }
     /// `SetColor`: the own color, then the shading and marker colors.
