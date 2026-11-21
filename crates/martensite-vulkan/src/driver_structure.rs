@@ -1,6 +1,7 @@
 //! Renderer-created groups make ordinary Graphic3d submissions reach the draw stream.
 use crate::{Graphic3dDrawGroup, RenderError};
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 /// The Vulkan driver structure (`Graphic3dCStructure` of the driver): it owns the
 /// structure's draw groups, connections, highlight state and shadow links, and lowers them
@@ -9,7 +10,6 @@ use martensite_tkservice::graphic3d::*;
 /// Created by `Graphic3dRenderDriver::create_structure`; e.g.
 /// `driver.create_structure(&manager)?.cast::<Graphic3dRenderStructure>`.
 pub struct Graphic3dRenderStructure {
-    transient: StandardTransient,
     base: Graphic3dCStructureBase,
     connection: SharedState<Option<WeakHandle<Self>>>,
     this: SharedState<WeakHandle<Self>>,
@@ -24,7 +24,7 @@ struct RaytraceState {
     flag: bool,
     modification: usize,
 }
-martensite_tkernel::impl_transient!(Graphic3dRenderStructure, "Martensite_RenderStructure", StandardTransient, transient, interfaces:[dyn Graphic3dCStructure]);
+martensite_tkernel::impl_transient!(Graphic3dRenderStructure, "Martensite_RenderStructure", StandardTransient, interfaces:[dyn Graphic3dCStructure]);
 impl Graphic3dRenderStructure {
     /// A structure of `manager` whose groups lay out text with `text_source`; e.g.
     /// `Graphic3dRenderStructure::new(&manager, Arc::new(FreeTypeTextSource::default()))?`.
@@ -40,7 +40,6 @@ impl Graphic3dRenderStructure {
         text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
     ) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dCStructureBase::new(manager)?,
             connection: SharedState::default(),
             this: SharedState::default(),
@@ -69,7 +68,7 @@ impl Graphic3dRenderStructure {
         view_id: i32,
         extent: [u32; 2],
         rendering: &Graphic3dRenderingParams,
-        clipping: &Handle<Graphic3dSequenceOfHClipPlane>,
+        clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
         elements: &crate::render_element_pass::RenderElementPass,
     ) -> Result<crate::stencil_program::StencilProgram, RenderError> {
         if !self.is_visible_in_view(view_id) || self.is_culled() {

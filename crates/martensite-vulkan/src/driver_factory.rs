@@ -15,18 +15,16 @@ pub const VULKAN_DRIVER_NAME: &str = "TKVulkan";
 
 /// Creates Vulkan drivers from shared default options; `VulkanDriverFactory::new()`.
 pub struct VulkanDriverFactory {
-    transient: StandardTransient,
     base: Graphic3dGraphicDriverFactoryBase,
     default_options: SharedState<VulkanOptions>,
 }
 martensite_tkernel::impl_transient!(VulkanDriverFactory, "Martensite_VulkanDriverFactory",
-    StandardTransient, transient, interfaces:[dyn Graphic3dGraphicDriverFactory]);
+    StandardTransient, interfaces:[dyn Graphic3dGraphicDriverFactory]);
 
 impl VulkanDriverFactory {
     /// A factory named [`VULKAN_DRIVER_NAME`] with default options; `VulkanDriverFactory::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Graphic3dGraphicDriverFactoryBase::new(&AsciiString::from(VULKAN_DRIVER_NAME)),
             default_options: SharedState::new(VulkanOptions::default()),
         }
