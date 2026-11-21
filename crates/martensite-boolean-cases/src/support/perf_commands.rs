@@ -90,7 +90,7 @@ pub fn bezier_as_spline(count: i32, step: f64) -> Handle<GeomBSplineCurve> {
         Point3::new(3., 0., 0.),
     ];
     let bezier: Handle<dyn GeomCurve> =
-        Handle::new(GeomBezierCurve::new(&Array1::from_shared(&points, 1)).unwrap()).cast();
+        Handle::new(GeomBezierCurve::new(&Array1::from_shared(&points, 1)).unwrap()).into_upcast();
     let curve = curve_to_bspline_curve(&bezier, ParameterisationType::TgtThetaOver2)
         .unwrap_or_else(|failure| panic!("convert: {failure:?}"));
     for i in 1..=count {

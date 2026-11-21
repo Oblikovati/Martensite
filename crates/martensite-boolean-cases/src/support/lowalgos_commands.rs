@@ -48,7 +48,7 @@ pub fn frame(at: [f64; 3], normal: [f64; 3], x: [f64; 3]) -> Axis3 {
 
 /// `plane name x y z dx dy dz ux uy uz`, bound; `plane(s, "p", [0.; 3], [0., 0., 1.], [1., 0., 0.])`.
 pub fn plane(s: &mut dyn Session, name: &str, at: [f64; 3], n: [f64; 3], x: [f64; 3]) -> Surface {
-    let surface: Surface = Handle::new(GeomPlane::new(frame(at, n, x))).cast();
+    let surface: Surface = Handle::new(GeomPlane::new(frame(at, n, x))).into_upcast();
     s.bind_drawing(name, Drawing::Surface(&surface));
     surface
 }
@@ -58,7 +58,7 @@ pub fn plane(s: &mut dyn Session, name: &str, at: [f64; 3], n: [f64; 3], x: [f64
 pub fn cylinder(s: &mut dyn Session, name: &str, at: Placed, radius: f64) -> Surface {
     let surface = GeomCylindricalSurface::new(frame(at.0, at.1, at.2), radius)
         .unwrap_or_else(|failure| panic!("cylinder {name} {radius}: {failure:?}"));
-    bound_surface(s, name, Handle::new(surface).cast())
+    bound_surface(s, name, Handle::new(surface).into_upcast())
 }
 
 /// `torus name x y z dx dy dz ux uy uz major minor`, bound.
@@ -66,7 +66,7 @@ pub fn cylinder(s: &mut dyn Session, name: &str, at: Placed, radius: f64) -> Sur
 pub fn torus(s: &mut dyn Session, name: &str, at: Placed, major: f64, minor: f64) -> Surface {
     let surface = GeomToroidalSurface::new(frame(at.0, at.1, at.2), major, minor)
         .unwrap_or_else(|failure| panic!("torus {name} {major} {minor}: {failure:?}"));
-    bound_surface(s, name, Handle::new(surface).cast())
+    bound_surface(s, name, Handle::new(surface).into_upcast())
 }
 
 /// `cone name x y z dx dy dz ux uy uz degrees radius`, bound.
@@ -75,7 +75,7 @@ pub fn cone(s: &mut dyn Session, name: &str, at: Placed, degrees: f64, radius: f
     let angle = degrees * (std::f64::consts::PI / 180.0);
     let surface = GeomConicalSurface::new(frame(at.0, at.1, at.2), angle, radius)
         .unwrap_or_else(|failure| panic!("cone {name} {degrees} {radius}: {failure:?}"));
-    bound_surface(s, name, Handle::new(surface).cast())
+    bound_surface(s, name, Handle::new(surface).into_upcast())
 }
 
 /// `sphere name x y z radius`, bound; `sphere(s, "ss1", [0., 0., 0.], 6.5)`.
@@ -84,7 +84,7 @@ pub fn sphere(s: &mut dyn Session, name: &str, at: [f64; 3], radius: f64) -> Sur
         .unwrap_or_else(|failure| panic!("sphere {name} {at:?}: {failure:?}"));
     let surface = GeomSphericalSurface::new(placed, radius)
         .unwrap_or_else(|failure| panic!("sphere {name} {radius}: {failure:?}"));
-    bound_surface(s, name, Handle::new(surface).cast())
+    bound_surface(s, name, Handle::new(surface).into_upcast())
 }
 
 /// A script's `x y z dx dy dz ux uy uz`.
@@ -142,7 +142,7 @@ pub fn restore_surface(s: &mut dyn Session, file: &str, name: &str, kind: SavedS
     assert!(!surface.is_null(), "restore {file}: expected a surface");
     if kind == SavedSurface::BSpline {
         assert!(
-            !surface.cast::<GeomBSplineSurface>().is_null(),
+            !surface.downcast::<GeomBSplineSurface>().is_null(),
             "restore {file}: expected a BSpline surface"
         );
     }
@@ -449,7 +449,7 @@ pub fn cylinder_from_normal(
         .unwrap_or_else(|failure| panic!("cylinder {name} {at:?} {normal:?}: {failure:?}"));
     let surface = GeomCylindricalSurface::new(placed, radius)
         .unwrap_or_else(|failure| panic!("cylinder {name} {radius}: {failure:?}"));
-    bound_surface(s, name, Handle::new(surface).cast())
+    bound_surface(s, name, Handle::new(surface).into_upcast())
 }
 
 /// The script's title between its two rules, and `puts ""`.

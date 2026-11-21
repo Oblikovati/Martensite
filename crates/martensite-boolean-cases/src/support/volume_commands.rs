@@ -28,14 +28,14 @@ fn frame_along(at: [f64; 3], normal: [f64; 3]) -> Axis3 {
 pub fn cylinder(at: [f64; 3], normal: [f64; 3], radius: f64) -> Handle<dyn GeomSurface> {
     let surface = GeomCylindricalSurface::new(frame_along(at, normal), radius)
         .unwrap_or_else(|failure| panic!("cylinder {radius}: {failure:?}"));
-    Handle::new(surface).cast()
+    Handle::new(surface).into_upcast()
 }
 
 /// `sphere c x y z dx dy dz radius`; `sphere([0.; 3], [0., 0., 1.], 550.)`.
 pub fn sphere(at: [f64; 3], normal: [f64; 3], radius: f64) -> Handle<dyn GeomSurface> {
     let surface = GeomSphericalSurface::new(frame_along(at, normal), radius)
         .unwrap_or_else(|failure| panic!("sphere {radius}: {failure:?}"));
-    Handle::new(surface).cast()
+    Handle::new(surface).into_upcast()
 }
 
 fn radians(degrees: f64) -> f64 {
