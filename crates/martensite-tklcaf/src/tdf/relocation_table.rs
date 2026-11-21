@@ -4,7 +4,7 @@ use super::{TdfAttribute, TdfAttributeMap, TdfLabel, TdfLabelMap};
 use martensite_tkernel::{
     impl_transient,
     ncollection::{DataMap, IndexedDataMap},
-    standard::{Handle, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Handle, RuntimeTyped, SharedState, Transient, TransientHandleTarget},
 };
 use std::{io, sync::RwLockWriteGuard};
 
@@ -13,7 +13,7 @@ pub type TdfLabelTable = DataMap<TdfLabel, TdfLabel>;
 /// `NCollection_DataMap<occ::handle<TDF_Attribute>, occ::handle<TDF_Attribute>>`.
 pub type TdfAttributeTable = DataMap<Handle<dyn TdfAttribute>, Handle<dyn TdfAttribute>>;
 /// `NCollection_IndexedDataMap<occ::handle<Standard_Transient>, occ::handle<Standard_Transient>>`.
-pub type TdfTransientTable = IndexedDataMap<Handle<StandardTransient>, Handle<StandardTransient>>;
+pub type TdfTransientTable = IndexedDataMap<Handle<dyn Transient>, Handle<dyn Transient>>;
 
 #[derive(Default, Clone, Copy)]
 struct RelocationFlags {
@@ -34,18 +34,12 @@ struct RelocationFlags {
 /// ```
 #[derive(Default)]
 pub struct TdfRelocationTable {
-    transient: StandardTransient,
     flags: SharedState<RelocationFlags>,
     label_table: SharedState<TdfLabelTable>,
     attribute_table: SharedState<TdfAttributeTable>,
     transient_table: SharedState<TdfTransientTable>,
 }
-impl_transient!(
-    TdfRelocationTable,
-    "TDF_RelocationTable",
-    StandardTransient,
-    transient
-);
+impl_transient!(TdfRelocationTable, "TDF_RelocationTable", dyn Transient);
 
 impl TdfRelocationTable {
     /// `TDF_RelocationTable(selfRelocate)`.
@@ -120,7 +114,7 @@ impl TdfRelocationTable {
         self.unbound(source, target)
     }
     /// The template `HasRelocation<T>`: relocated and of type `T`.
-    pub fn has_attribute_relocation_as<T: RuntimeTyped + ?Sized>(
+    pub fn has_attribute_relocation_as<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
         &self,
         source: &Handle<dyn TdfAttribute>,
         target: &mut Handle<T>,
@@ -129,14 +123,14 @@ impl TdfRelocationTable {
         if !self.has_attribute_relocation(source, &mut found) {
             return false;
         }
-        *target = found.cast::<T>();
+        *target = found.into_cast::<T>();
         target.is_some()
     }
     /// `SetTransientRelocation`: binds once.
     pub fn set_transient_relocation(
         &self,
-        source: &Handle<StandardTransient>,
-        target: &Handle<StandardTransient>,
+        source: &Handle<dyn Transient>,
+        target: &Handle<dyn Transient>,
     ) {
         let mut table = self.transient_table.write();
         if !table.contains(source) {
@@ -146,8 +140,8 @@ impl TdfRelocationTable {
     /// `HasTransientRelocation`.
     pub fn has_transient_relocation(
         &self,
-        source: &Handle<StandardTransient>,
-        target: &mut Handle<StandardTransient>,
+        source: &Handle<dyn Transient>,
+        target: &mut Handle<dyn Transient>,
     ) -> bool {
         *target = Handle::default();
         if let Ok(found) = self.transient_table.read().find_from_key(source) {

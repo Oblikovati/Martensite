@@ -51,9 +51,9 @@ pub trait TDocStdApplicationIo: TDocStdApplication {
         let retrieved = self
             .retrieve_document(&directory, &file, true, filter, range)
             .and_then(|retrieved| {
-                let retrieved: Handle<TDocStdDocument> = retrieved.cast();
+                let retrieved: Handle<TDocStdDocument> = retrieved.into_downcast();
                 if !is_append_mode(filter) {
-                    self.open_document(&retrieved.cast())?;
+                    self.open_document(&retrieved.upcast())?;
                 }
                 Ok(retrieved)
             });
@@ -80,13 +80,13 @@ pub trait TDocStdApplicationIo: TDocStdApplication {
         filter: &Handle<PcdmReaderFilter>,
         range: &ProgressRange<'_>,
     ) -> PcdmReaderStatus {
-        let mut read: Handle<dyn CdmDocument> = document.cast();
+        let mut read: Handle<dyn CdmDocument> = document.upcast();
         let outcome = self
             .read_stream(stream, &mut read, filter, range)
             .and_then(|()| {
-                *document = read.cast();
+                *document = read.into_downcast();
                 if document.is_some() && !is_append_mode(filter) {
-                    self.open_document(&document.cast())?;
+                    self.open_document(&document.upcast())?;
                 }
                 Ok(())
             });
@@ -154,7 +154,7 @@ pub trait TDocStdApplicationIo: TDocStdApplication {
         let (directory, file) = directory_and_file(path);
         let target = live(document, "TDocStd_Application::SaveAs")?;
         target.open(&self.application_base().this()?);
-        let mut storer = CdfStore::new(&document.cast())?;
+        let mut storer = CdfStore::new(&document.upcast())?;
         if !storer.set_folder(&directory)? {
             return Ok((storer.store_status(), false));
         }
@@ -207,7 +207,7 @@ pub trait TDocStdApplicationIo: TDocStdApplication {
                 return Ok(PcdmStoreStatus::DriverFailure);
             };
             writer.set_format(&format);
-            writer.write_stream(&document.cast(), stream, range)?;
+            writer.write_stream(&document.upcast(), stream, range)?;
             if writer.get_store_status() == PcdmStoreStatus::Ok {
                 target.set_saved()?;
             }
@@ -233,7 +233,7 @@ pub trait TDocStdApplicationIo: TDocStdApplication {
             );
             return Ok(PcdmStoreStatus::Failure);
         }
-        let mut storer = CdfStore::new(&document.cast())?;
+        let mut storer = CdfStore::new(&document.upcast())?;
         self.realize_store(&mut storer, document, &mut message, range)?;
         Ok(storer.store_status())
     }
@@ -249,7 +249,7 @@ pub trait TDocStdApplicationIo: TDocStdApplication {
                 ExtendedString::new("TDocStd_Application::the document has not been saved yet");
             return Ok(PcdmStoreStatus::Failure);
         }
-        let mut storer = CdfStore::new(&document.cast())?;
+        let mut storer = CdfStore::new(&document.upcast())?;
         self.realize_store(&mut storer, document, status_message, range)?;
         Ok(storer.store_status())
     }

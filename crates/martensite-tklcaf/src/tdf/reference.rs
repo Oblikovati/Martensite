@@ -10,7 +10,7 @@ use crate::{
 use martensite_tkcdf::json_dump::class_begin;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
 };
 use std::io;
 
@@ -20,11 +20,10 @@ const REFERENCE_ID: Guid = guid_from_text("2a96b610-ec8b-11d0-bee7-080009dc3333"
 /// `TDF_Reference`; `TdfReference::set(&label, &origin)`.
 #[derive(Default)]
 pub struct TdfReference {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     origin: SharedState<TdfLabel>,
 }
-impl_transient!(TdfReference, "TDF_Reference", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TdfReference, "TDF_Reference", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TdfReference {
     /// `GetID`; `TdfReference::get_id()`.
@@ -48,7 +47,7 @@ impl TdfReference {
         let mut found: Handle<TdfReference> = Handle::default();
         if !label.find_attribute_as(&REFERENCE_ID, &mut found)? {
             found = Handle::new(TdfReference::new());
-            label.add_attribute(&found.cast(), true)?;
+            label.add_attribute(&found.upcast(), true)?;
         }
         live(&found, "TDF_Reference::Set")?.set_origin(origin)?;
         Ok(found)
@@ -76,12 +75,12 @@ impl TdfAttribute for TdfReference {
         REFERENCE_ID
     }
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        let origin = live(&with.cast::<TdfReference>(), "TDF_Reference::Restore")?.get();
+        let origin = live(&with.downcast::<TdfReference>(), "TDF_Reference::Restore")?.get();
         *self.origin.write() = origin;
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(TdfReference::new()).cast()
+        Handle::new(TdfReference::new()).into_upcast()
     }
     /// `Paste`: the relocated origin, else the origin itself.
     fn paste(
@@ -97,7 +96,7 @@ impl TdfAttribute for TdfReference {
                 target = origin;
             }
         }
-        live(&into.cast::<TdfReference>(), "TDF_Reference::Paste")?.set_origin(&target)
+        live(&into.downcast::<TdfReference>(), "TDF_Reference::Paste")?.set_origin(&target)
     }
     /// `References`: the origin, unless this label is imported.
     fn references(&self, data_set: &Handle<TdfDataSet>) {

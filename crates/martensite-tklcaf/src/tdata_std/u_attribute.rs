@@ -9,20 +9,17 @@ use crate::tdf::{
 use martensite_tkcdf::json_dump::{class_begin, field_guid};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream, exceptions,
-    },
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream, exceptions},
 };
 use std::io;
 
 /// `TDataStd_UAttribute`: identified by a user ID only; `TDataStdUAttribute::set(&label, &id)`.
 #[derive(Default)]
 pub struct TDataStdUAttribute {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     id: SharedState<Guid>,
 }
-impl_transient!(TDataStdUAttribute, "TDataStd_UAttribute", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdUAttribute, "TDataStd_UAttribute", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TDataStdUAttribute {
     /// `TDataStd_UAttribute()`: the null ID.
@@ -55,7 +52,7 @@ impl TdfAttribute for TDataStdUAttribute {
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
         let created = Self::new();
         *created.id.write() = self.id();
-        Handle::new(created).cast()
+        Handle::new(created).into_upcast()
     }
     fn paste(
         &self,
@@ -83,11 +80,10 @@ const CURRENT_ID: Guid = guid_from_text("2a96b623-ec8b-11d0-bee7-080009dc3333");
 /// `TDataStd_Current`: kept on the root label; `TDataStdCurrent::set(&label)`.
 #[derive(Default)]
 pub struct TDataStdCurrent {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     label: SharedState<TdfLabel>,
 }
-impl_transient!(TDataStdCurrent, "TDataStd_Current", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdCurrent, "TDataStd_Current", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TDataStdCurrent {
     /// `GetID`.
@@ -144,7 +140,7 @@ impl TdfAttribute for TDataStdCurrent {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste`: the relocated label, else the label itself.
     fn paste(

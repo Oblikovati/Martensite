@@ -1,14 +1,14 @@
 //! A named attribute fake uses the real transaction callback and backup interfaces.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, StandardTransient},
+    standard::{Failure, Guid, Handle},
     tcollection::AsciiString,
 };
 use martensite_tklcaf::{
     guid_from_text,
     tdf::{
-        TdfAttribute, TdfAttributeBase, TdfAttributeState, TdfData, TdfDelta, TdfLabel,
-        TdfRelocationTable, TdfTool, TdfTransaction,
+        TdfAttribute, TdfAttributeBase, TdfAttributeState, TdfData, TdfDelta, TdfDeltaSource,
+        TdfLabel, TdfRelocationTable, TdfTool, TdfTransaction,
     },
 };
 use std::sync::{Arc, Mutex};
@@ -22,17 +22,15 @@ pub(super) enum CommitAction {
     NestedCommit(TdfLabel),
 }
 pub(super) struct CommitProbeAttribute {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     history: History,
     action: Mutex<Option<CommitAction>>,
 }
-impl_transient!(CommitProbeAttribute, "CommitProbeAttribute", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(CommitProbeAttribute, "CommitProbeAttribute", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl CommitProbeAttribute {
     fn new(history: History) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             history,
             action: Mutex::new(None),
@@ -54,7 +52,7 @@ impl TdfAttribute for CommitProbeAttribute {
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
         // A backup shares observation only, never the pending one-shot action.
-        Handle::new(Self::new(self.history.clone())).cast()
+        Handle::new(Self::new(self.history.clone())).into_upcast()
     }
     fn paste(
         &self,
@@ -178,6 +176,6 @@ fn label_at(data: &Handle<TdfData>, path: &[i32]) -> TdfLabel {
 }
 fn attach(label: &TdfLabel, history: &History) -> Handle<CommitProbeAttribute> {
     let probe = Handle::new(CommitProbeAttribute::new(history.clone()));
-    label.add_attribute(&probe.cast(), true).unwrap();
+    label.add_attribute(&probe.upcast(), true).unwrap();
     probe
 }

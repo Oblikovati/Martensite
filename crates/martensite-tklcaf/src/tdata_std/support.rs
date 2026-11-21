@@ -3,7 +3,9 @@
 //! `Restore`/`Paste`.
 use crate::live;
 use crate::tdf::{TdfAttribute, TdfAttributeState, TdfLabel};
-use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeTyped, SharedState};
+use martensite_tkernel::standard::{
+    Failure, Guid, Handle, HandleUpcast, RuntimeTyped, SharedState, TransientHandleTarget,
+};
 
 /// The native `SetAttr`: the attribute of `id` on the label, created with `make` (and given
 /// the ID through `SetID` when `with_id`) and added when absent.
@@ -14,7 +16,7 @@ pub fn find_or_add<T>(
     make: impl FnOnce() -> T,
 ) -> Result<Handle<T>, Failure>
 where
-    T: TdfAttribute + RuntimeTyped,
+    T: TdfAttribute + RuntimeTyped + HandleUpcast<dyn TdfAttribute>,
 {
     let mut found: Handle<T> = Handle::default();
     if label.find_attribute_as(id, &mut found)? {
@@ -24,7 +26,7 @@ where
     if with_id {
         live(&created, "TDataStd SetAttr")?.set_id(id)?;
     }
-    label.add_attribute(&created.cast(), true)?;
+    label.add_attribute(&created.upcast(), true)?;
     Ok(created)
 }
 
@@ -50,7 +52,7 @@ pub fn reset_user_id<A: TdfAttribute + ?Sized>(
 
 /// The `occ::down_cast<T>(with)` of `Restore` and `Paste`; `Standard_NullObject` when the
 /// attribute is not a `T` (a null dereference natively).
-pub fn cast_attribute<T: RuntimeTyped + ?Sized>(
+pub fn cast_attribute<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
     attribute: &Handle<dyn TdfAttribute>,
     who: &str,
 ) -> Result<Handle<T>, Failure> {
@@ -71,16 +73,6 @@ pub fn set_backed_up<A: TdfAttribute + ?Sized, V: PartialEq + Clone>(
     attribute.backup()?;
     *slot.write() = value.clone();
     Ok(())
-}
-
-/// `Backup()` through the attribute's own handle, so that the virtual `BackupCopy` is the
-/// most derived one when a native class derives from this attribute; an attribute without
-/// handle has no label and backs up nothing. Example: `backup_as_dynamic(&attribute)?`.
-pub fn backup_as_dynamic<A: TdfAttribute + ?Sized>(attribute: &A) -> Result<(), Failure> {
-    match attribute.attribute_base().this() {
-        Ok(this) => live(&this, "TDF_Attribute::Backup")?.backup(),
-        Err(_) => attribute.backup(),
-    }
 }
 
 /// The `this` pointer of a native `Dump` (`anOS << this`).

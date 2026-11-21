@@ -9,7 +9,10 @@ use crate::tdf::{TdfAttribute, TdfAttributeState, TdfLabel};
 use martensite_tkcdf::json_dump::{class_begin, field_integer};
 use martensite_tkernel::{
     ncollection::HArray1,
-    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState, dump::DumpStream, exceptions},
+    standard::{
+        Failure, Guid, Handle, HandleUpcast, RuntimeTyped, SharedState, dump::DumpStream,
+        exceptions,
+    },
 };
 use std::io;
 
@@ -36,7 +39,9 @@ impl<T: ArrayItem> ArrayState<T> {
 }
 
 /// An array attribute and the native differences between the four classes.
-pub(crate) trait ArrayAttribute: TdfAttribute + RuntimeTyped + Sized {
+pub(crate) trait ArrayAttribute:
+    TdfAttribute + RuntimeTyped + HandleUpcast<dyn TdfAttribute> + Sized
+{
     /// The array item.
     type Item: ArrayItem;
     /// The value `Init` fills the new array with.
@@ -86,7 +91,7 @@ pub(crate) fn set_attr<A: ArrayAttribute>(
         (lower, upper),
         is_delta,
     )?;
-    label.add_attribute(&created.cast(), true)?;
+    label.add_attribute(&created.upcast(), true)?;
     Ok(created)
 }
 
@@ -296,7 +301,7 @@ pub(crate) fn paste<A: ArrayAttribute>(
         let state = attribute.array_state().read();
         (state.value.clone(), state.is_delta, state.id)
     };
-    let target = into.cast::<A>();
+    let target = into.downcast::<A>();
     let (false, Some(target)) = (items.is_null(), target.get()) else {
         return Ok(());
     };

@@ -4,7 +4,7 @@
 use martensite_tkernel::{
     impl_transient,
     ncollection::{DataMap, HArray1},
-    standard::{Handle, StandardTransient},
+    standard::{Handle, Transient},
     tcollection::ExtendedString,
 };
 use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -32,10 +32,9 @@ macro_rules! h_data_map {
     ($(#[$doc:meta])* $name:ident, $type_name:literal, $value:ty) => {
         $(#[$doc])*
         pub struct $name {
-            transient: StandardTransient,
             map: RwLock<DataMap<ExtendedString, $value>>,
         }
-        impl_transient!($name, $type_name, StandardTransient, transient);
+        impl_transient!($name, $type_name, dyn Transient);
 
         impl Default for $name {
             /// The constructor with the default `NbBuckets = 1`.
@@ -49,7 +48,7 @@ macro_rules! h_data_map {
             pub fn new(nb_buckets: i32) -> Self {
                 let mut map = DataMap::default();
                 map.resize(usize::try_from(nb_buckets).unwrap_or(0));
-                Self { transient: StandardTransient::default(), map: RwLock::new(map) }
+                Self { map: RwLock::new(map) }
             }
         }
 
@@ -59,7 +58,7 @@ macro_rules! h_data_map {
             fn from_map(other: &DataMap<ExtendedString, $value>) -> Self {
                 let mut map = DataMap::default();
                 map.assign(other);
-                Self { transient: StandardTransient::default(), map: RwLock::new(map) }
+                Self { map: RwLock::new(map) }
             }
             fn map(&self) -> RwLockReadGuard<'_, DataMap<ExtendedString, $value>> {
                 self.map.read().unwrap_or_else(PoisonError::into_inner)

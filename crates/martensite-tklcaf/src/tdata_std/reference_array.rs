@@ -14,7 +14,7 @@ use martensite_tkcdf::json_dump::{class_begin, field_integer, field_string};
 use martensite_tkernel::{
     impl_transient,
     ncollection::HArray1,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
     tcollection::AsciiString,
 };
 use std::io;
@@ -32,17 +32,15 @@ const REFERENCE_ARRAY_ID: Guid = guid_from_text("7EE745A6-BB50-446c-BB0B-C195B23
 /// assert_eq!(array.value(1).unwrap().tag(), 3);
 /// ```
 pub struct TDataStdReferenceArray {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<ArrayState<TdfLabel>>,
 }
-impl_transient!(TDataStdReferenceArray, "TDataStd_ReferenceArray", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdReferenceArray, "TDataStd_ReferenceArray", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdReferenceArray {
     /// `TDataStd_ReferenceArray()`: no array and the default ID.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(ArrayState::new(REFERENCE_ARRAY_ID)),
         }
@@ -181,7 +179,7 @@ impl TdfAttribute for TDataStdReferenceArray {
         restore(self, with)
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste(Into, RT)`: without array, `Into` loses its array; else `Into` takes the
     /// bounds, the non-null labels (relocated when the table knows them) and the ID.
@@ -190,7 +188,7 @@ impl TdfAttribute for TDataStdReferenceArray {
         into: &Handle<dyn TdfAttribute>,
         table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target = into.cast::<Self>();
+        let target = into.downcast::<Self>();
         let target = live(&target, "TDataStd_ReferenceArray::Paste")?;
         let shared = array(self);
         let Some(items) = shared.get() else {

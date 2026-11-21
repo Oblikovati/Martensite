@@ -1,8 +1,6 @@
 //! `TDataStd_Real`: a real value attribute with a user ID and a (deprecated) dimension.
 use super::TDataStd;
-use super::support::{
-    backup_as_dynamic, cast_attribute, find_or_add, reset_user_id, set_backed_up, set_user_id,
-};
+use super::support::{cast_attribute, find_or_add, reset_user_id, set_backed_up, set_user_id};
 use crate::guid_from_text;
 use crate::json::dump_attribute_json_base;
 use crate::tdf::{
@@ -10,11 +8,14 @@ use crate::tdf::{
 };
 use martensite_tkcdf::json_dump::{class_begin, field_integer, field_real};
 use martensite_tkernel::{
-    impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    impl_transient, impl_transient_interface_target,
+    standard::{
+        Failure, Guid, Handle, HandleUpcast, RuntimeType, RuntimeTyped, SharedState,
+        dump::DumpStream,
+    },
     tcollection::AsciiString,
 };
-use std::io;
+use std::{io, sync::Arc};
 
 /// `TDataStd_Real::GetID()`.
 const REAL_ID: Guid = guid_from_text("2a96b60f-ec8b-11d0-bee7-080009dc3333");
@@ -31,12 +32,6 @@ pub enum TDataStdRealEnum {
     Angular,
 }
 
-#[derive(Clone, Copy, PartialEq)]
-struct RealState {
-    value: f64,
-    dimension: TDataStdRealEnum,
-}
-
 /// `TDataStd_Real`; `TDataStdReal::set(&label, 1.5)`.
 ///
 /// ```
@@ -45,25 +40,123 @@ struct RealState {
 /// let attribute = TDataStdReal::set(&data.root(), 1.5).unwrap();
 /// assert_eq!(TDataStdReal::get(&attribute), 1.5);
 /// ```
+#[derive(Default)]
 pub struct TDataStdReal {
-    transient: StandardTransient,
-    base: TdfAttributeBase,
+    base: TDataStdRealBase,
+}
+impl_transient!(TDataStdReal, "TDataStd_Real", dyn TdfAttribute, interfaces: [dyn TdfAttribute, dyn TDataStdRealSource]);
+
+/// Storage shared by OCAF real attributes. Example: `TDataStdRealBase::default()`.
+pub struct TDataStdRealBase {
+    attribute: TdfAttributeBase,
     value: SharedState<f64>,
     dimension: SharedState<TDataStdRealEnum>,
     id: SharedState<Guid>,
 }
-impl_transient!(TDataStdReal, "TDataStd_Real", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
 
-impl Default for TDataStdReal {
-    /// `TDataStd_Real()`: `RealFirst()` (the most negative double), scalar, default ID.
+impl Default for TDataStdRealBase {
+    /// The native initial value is the most negative double.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
-            base: TdfAttributeBase::default(),
+            attribute: TdfAttributeBase::default(),
             value: SharedState::new(f64::MIN),
             dimension: SharedState::new(TDataStdRealEnum::Scalar),
             id: SharedState::new(REAL_ID),
         }
+    }
+}
+
+impl TDataStdRealBase {
+    /// The composed label and transaction fields. Example: `real.real_base().attribute()`.
+    pub fn attribute(&self) -> &TdfAttributeBase {
+        &self.attribute
+    }
+}
+
+/// Inherited real operations on the actual attribute. Example: `real.upcast::<dyn TDataStdRealSource>()`.
+pub trait TDataStdRealSource: TdfAttribute {
+    /// The real fields. Example: `real.real_base().attribute()`.
+    fn real_base(&self) -> &TDataStdRealBase;
+
+    /// Changes the value with a backup of this attribute. Example: `real.set_value(2.5)?`.
+    fn set_value(&self, value: f64) -> Result<(), Failure> {
+        set_backed_up(self, &self.real_base().value, &value)
+    }
+
+    /// Reads the value. Example: `TDataStdRealSource::get(real)`.
+    fn get(&self) -> f64 {
+        *self.real_base().value.read()
+    }
+
+    /// Changes the legacy dimension with a backup. Example: `real.set_dimension(TDataStdRealEnum::Length)?`.
+    fn set_dimension(&self, dimension: TDataStdRealEnum) -> Result<(), Failure> {
+        set_backed_up(self, &self.real_base().dimension, &dimension)
+    }
+
+    /// Reads the legacy dimension. Example: `real.get_dimension()`.
+    fn get_dimension(&self) -> TDataStdRealEnum {
+        *self.real_base().dimension.read()
+    }
+
+    /// Checks whether the label references an origin with this real ID. Example: `real.is_captured()?`.
+    fn is_captured(&self) -> Result<bool, Failure> {
+        let mut reference: Handle<TdfReference> = Handle::default();
+        if !self
+            .label()
+            .find_attribute_as(&TdfReference::get_id(), &mut reference)?
+        {
+            return Ok(false);
+        }
+        let origin = crate::live(&reference, "TDataStd_Real::IsCaptured")?.get();
+        let id = *self.real_base().id.read();
+        origin.is_attribute(&id)
+    }
+
+    /// Restores the stored real fields. Example: `real.restore_real(&backup)?`.
+    fn restore_real(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
+        let other = cast_attribute::<dyn TDataStdRealSource>(with, "TDataStd_Real::Restore")?;
+        let other = crate::live(&other, "TDataStd_Real::Restore")?;
+        let (value, dimension, id) = (
+            other.get(),
+            other.get_dimension(),
+            *other.real_base().id.read(),
+        );
+        let target = self.real_base();
+        *target.value.write() = value;
+        *target.dimension.write() = dimension;
+        *target.id.write() = id;
+        Ok(())
+    }
+
+    /// Copies the stored real fields through the destination's backup. Example: `real.paste_real(&destination)?`.
+    fn paste_real(&self, into: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
+        let target = cast_attribute::<dyn TDataStdRealSource>(into, "TDataStd_Real::Paste")?;
+        let target = crate::live(&target, "TDataStd_Real::Paste")?;
+        target.set_value(self.get())?;
+        target.set_dimension(self.get_dimension())?;
+        // Derived measures have a fixed attribute GUID separate from the stored real GUID.
+        let id = *self.real_base().id.read();
+        set_user_id(target, &target.real_base().id, &id)
+    }
+}
+
+impl RuntimeTyped for dyn TDataStdRealSource {
+    const TYPE_NAME: &'static str = TDataStdReal::TYPE_NAME;
+    fn static_type() -> &'static RuntimeType {
+        TDataStdReal::static_type()
+    }
+}
+impl_transient_interface_target!(dyn TDataStdRealSource);
+
+impl HandleUpcast<dyn TdfAttribute> for dyn TDataStdRealSource {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn TdfAttribute> {
+        owner
+    }
+}
+
+impl TDataStdRealSource for TDataStdReal {
+    fn real_base(&self) -> &TDataStdRealBase {
+        &self.base
     }
 }
 
@@ -90,85 +183,53 @@ impl TDataStdReal {
         crate::live(&attribute, "TDataStd_Real::Set")?.set_value(value)?;
         Ok(attribute)
     }
-    /// `Set(V)`: backed up when it changes (`==` on doubles, as natively). The
-    /// backup goes through the attribute's own handle, so that a derived attribute
-    /// (`XCAFDoc_Area`, `XCAFDoc_Volume`) backs up as itself (the virtual `BackupCopy`).
+    /// Changes the value with a backup. Example: `attribute.set_value(2.5)?`.
     pub fn set_value(&self, value: f64) -> Result<(), Failure> {
-        if *self.value.read() == value {
-            return Ok(());
-        }
-        backup_as_dynamic(self)?;
-        *self.value.write() = value;
-        Ok(())
+        TDataStdRealSource::set_value(self, value)
     }
-    /// `Get`; `TDataStdReal::get(&attribute)`.
+    /// Reads the value. Example: `TDataStdReal::get(&attribute)`.
     pub fn get(&self) -> f64 {
-        *self.value.read()
+        TDataStdRealSource::get(self)
     }
-    /// `SetDimension` (deprecated natively): backed up when it changes.
+    /// Changes the legacy dimension with a backup. Example: `attribute.set_dimension(TDataStdRealEnum::Length)?`.
     pub fn set_dimension(&self, dimension: TDataStdRealEnum) -> Result<(), Failure> {
-        set_backed_up(self, &self.dimension, &dimension)
+        TDataStdRealSource::set_dimension(self, dimension)
     }
-    /// `GetDimension` (deprecated natively).
+    /// Reads the legacy dimension. Example: `attribute.get_dimension()`.
     pub fn get_dimension(&self) -> TDataStdRealEnum {
-        *self.dimension.read()
+        TDataStdRealSource::get_dimension(self)
     }
-    /// `IsCaptured`: the label holds a `TDF_Reference` whose label has an attribute of this ID.
+    /// Checks for a referenced origin with this real ID. Example: `attribute.is_captured()?`.
     pub fn is_captured(&self) -> Result<bool, Failure> {
-        let mut reference: Handle<TdfReference> = Handle::default();
-        if !self
-            .label()
-            .find_attribute_as(&TdfReference::get_id(), &mut reference)?
-        {
-            return Ok(false);
-        }
-        let origin = crate::live(&reference, "TDataStd_Real::IsCaptured")?.get();
-        origin.is_attribute(&self.id())
-    }
-    fn state(&self) -> RealState {
-        RealState {
-            value: self.get(),
-            dimension: self.get_dimension(),
-        }
+        TDataStdRealSource::is_captured(self)
     }
 }
 
 impl TdfAttribute for TDataStdReal {
     fn attribute_base(&self) -> &TdfAttributeBase {
-        &self.base
+        self.base.attribute()
     }
     fn id(&self) -> Guid {
-        *self.id.read()
+        *self.base.id.read()
     }
     fn set_id(&self, guid: &Guid) -> Result<(), Failure> {
-        set_user_id(self, &self.id, guid)
+        set_user_id(self, &self.base.id, guid)
     }
     fn set_default_id(&self) -> Result<(), Failure> {
-        reset_user_id(self, &self.id, REAL_ID)
+        reset_user_id(self, &self.base.id, REAL_ID)
     }
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        let other = cast_attribute::<TDataStdReal>(with, "TDataStd_Real::Restore")?;
-        let other = crate::live(&other, "TDataStd_Real::Restore")?;
-        let state = other.state();
-        let id = other.id();
-        *self.value.write() = state.value;
-        *self.dimension.write() = state.dimension;
-        *self.id.write() = id;
-        Ok(())
+        self.restore_real(with)
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,
         into: &Handle<dyn TdfAttribute>,
         _relocation_table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target = cast_attribute::<TDataStdReal>(into, "TDataStd_Real::Paste")?;
-        let target = crate::live(&target, "TDataStd_Real::Paste")?;
-        target.set_value(self.get())?;
-        target.set_dimension(self.get_dimension())?;
-        target.set_id(&self.id())
+        self.paste_real(into)
     }
     /// `Dump`: `Real <dimension><value><guid>` with the default stream precision.
     fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {

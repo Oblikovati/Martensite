@@ -1,7 +1,7 @@
 //! The delta compaction (`SRN_DELTA_COMPACT`) and the JSON dump of `TDocStd_Document`.
 use super::{TDocStdCompoundDelta, TDocStdDocument};
 use crate::live;
-use crate::tdf::{GuidMap, TdfDelta, TdfLabel};
+use crate::tdf::{GuidMap, TdfDeltaSource, TdfLabel};
 use martensite_tkcdf::cdm::CdmDocumentLifecycle;
 use martensite_tkcdf::json_dump::{
     base_class, class_begin, field_dumped, field_integer, field_string,
@@ -70,7 +70,7 @@ impl TDocStdDocument {
             .map_or(undos.len(), |at| at + 1);
         let compound = compound_of(&undos[split..], undos.last())?;
         let mut kept = undos[..split].to_vec();
-        kept.push(compound.cast());
+        kept.push(compound.into_upcast());
         let kept_redos = if from_redo.is_null() {
             Vec::new()
         } else {
@@ -147,8 +147,8 @@ impl TDocStdDocument {
 
 /// The compound delta of the undos after the compaction start.
 fn compound_of(
-    deltas: &[Handle<TdfDelta>],
-    last: Option<&Handle<TdfDelta>>,
+    deltas: &[Handle<dyn TdfDeltaSource>],
+    last: Option<&Handle<dyn TdfDeltaSource>>,
 ) -> Result<Handle<TDocStdCompoundDelta>, Failure> {
     let compound = Handle::new(TDocStdCompoundDelta::new());
     let target = live(&compound, "TDocStd_Document::PerformDeltaCompaction")?.delta();
@@ -202,7 +202,7 @@ fn dump_deltas(
     stream: &mut DumpStream,
     depth: i32,
     field: &str,
-    deltas: &[Handle<TdfDelta>],
+    deltas: &[Handle<dyn TdfDeltaSource>],
 ) -> io::Result<()> {
     for delta in deltas.iter().filter_map(Handle::get) {
         field_dumped(

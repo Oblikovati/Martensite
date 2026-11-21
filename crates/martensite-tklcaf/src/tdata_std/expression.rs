@@ -1,20 +1,21 @@
-//! `TDataStd_Expression` (an expression string and the variables it uses) and its derived
-//! class `TDataStd_Relation`, which embeds it: a relation handle casts to the expression,
-//! and the members the relation inherits are the expression's.
+//! Expression strings and variables shared by the expression and relation attributes.
 use super::TDataStdVariable;
-use super::support::cast_attribute;
+use super::support::{cast_attribute, find_or_add};
 use crate::guid_from_text;
 use crate::json::dump_attribute_json_base;
 use crate::live;
-use crate::tdf::{TdfAttribute, TdfAttributeBase, TdfAttributeState, TdfLabel, TdfRelocationTable};
+use crate::tdf::{TdfAttribute, TdfAttributeBase, TdfLabel, TdfRelocationTable};
 use martensite_tkcdf::json_dump::{class_begin, field_dumped, field_string};
 use martensite_tkernel::{
-    impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    impl_transient, impl_transient_interface_target,
+    standard::{
+        Failure, Guid, Handle, HandleUpcast, RuntimeType, RuntimeTyped, SharedState,
+        dump::DumpStream,
+    },
     tcollection::ExtendedString,
 };
 use std::io;
-use std::sync::RwLockWriteGuard;
+use std::sync::{Arc, RwLockWriteGuard};
 
 /// `TDataStd_Expression::GetID()`.
 const EXPRESSION_ID: Guid = guid_from_text("ce24146a-8e57-11d1-8953-080009dc4425");
@@ -24,7 +25,7 @@ const RELATION_ID: Guid = guid_from_text("ce24146b-8e57-11d1-8953-080009dc4425")
 /// `TDataStd_Expression`; `TDataStdExpression::set(&label)`.
 ///
 /// ```
-/// use martensite_tklcaf::{tdata_std::TDataStdExpression, tdf::TdfData};
+/// use martensite_tklcaf::{tdata_std::{TDataStdExpression, TDataStdExpressionSource}, tdf::TdfData};
 /// use martensite_tkernel::tcollection::ExtendedString;
 /// let data = TdfData::new();
 /// let expression = TDataStdExpression::set(&data.root()).unwrap();
@@ -33,12 +34,69 @@ const RELATION_ID: Guid = guid_from_text("ce24146b-8e57-11d1-8953-080009dc4425")
 /// ```
 #[derive(Default)]
 pub struct TDataStdExpression {
-    transient: StandardTransient,
-    base: TdfAttributeBase,
+    base: TDataStdExpressionBase,
+}
+impl_transient!(TDataStdExpression, "TDataStd_Expression", dyn TdfAttribute,
+    interfaces: [dyn TdfAttribute, dyn TDataStdExpressionSource]);
+
+/// The fields of an expression, for attributes implementing `TDataStdExpressionSource`.
+/// Example: `TDataStdExpressionBase::default()`.
+#[derive(Default)]
+pub struct TDataStdExpressionBase {
+    attribute: TdfAttributeBase,
     expression: SharedState<ExtendedString>,
     variables: SharedState<Vec<Handle<dyn TdfAttribute>>>,
 }
-impl_transient!(TDataStdExpression, "TDataStd_Expression", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+
+/// The expression operations inherited by `TDataStd_Relation`.
+/// Example: `relation.upcast::<dyn TDataStdExpressionSource>().get_expression()`.
+pub trait TDataStdExpressionSource: TdfAttribute {
+    /// Borrow the expression state for the concrete attribute.
+    /// Example: `let fields = relation.expression_base();`.
+    fn expression_base(&self) -> &TDataStdExpressionBase;
+
+    /// `Name`: the expression string. Example: `expression.name()`.
+    fn name(&self) -> ExtendedString {
+        self.get_expression()
+    }
+
+    /// `SetExpression(E)`: backs up the actual attribute when its expression changes.
+    /// Example: `expression.set_expression(&ExtendedString::new("a+b"))?`.
+    fn set_expression(&self, expression: &ExtendedString) -> Result<(), Failure> {
+        super::support::set_backed_up(self, &self.expression_base().expression, expression)
+    }
+
+    /// `GetExpression`. Example: `expression.get_expression()`.
+    fn get_expression(&self) -> ExtendedString {
+        self.expression_base().expression.read().clone()
+    }
+
+    /// `GetVariables`: lends the variables through a write guard.
+    /// Example: `expression.get_variables().len()`.
+    fn get_variables(&self) -> RwLockWriteGuard<'_, Vec<Handle<dyn TdfAttribute>>> {
+        self.expression_base().variables.write()
+    }
+}
+
+impl RuntimeTyped for dyn TDataStdExpressionSource {
+    const TYPE_NAME: &'static str = TDataStdExpression::TYPE_NAME;
+    fn static_type() -> &'static RuntimeType {
+        TDataStdExpression::static_type()
+    }
+}
+impl_transient_interface_target!(dyn TDataStdExpressionSource);
+
+impl HandleUpcast<dyn TdfAttribute> for dyn TDataStdExpressionSource {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn TdfAttribute> {
+        owner
+    }
+}
+
+impl TDataStdExpressionSource for TDataStdExpression {
+    fn expression_base(&self) -> &TDataStdExpressionBase {
+        &self.base
+    }
+}
 
 impl TDataStdExpression {
     /// `GetID`.
@@ -51,49 +109,24 @@ impl TDataStdExpression {
     }
     /// `Set(label)`: the expression of the label, added when absent.
     pub fn set(label: &TdfLabel) -> Result<Handle<Self>, Failure> {
-        find_or_add(label, &EXPRESSION_ID, Self::new)
+        find_or_add(label, &EXPRESSION_ID, false, Self::new)
     }
-    /// `Name`: the expression string.
-    pub fn name(&self) -> ExtendedString {
-        self.get_expression()
-    }
-    /// `SetExpression(E)`: backed up when it changes.
-    pub fn set_expression(&self, expression: &ExtendedString) -> Result<(), Failure> {
-        if *self.expression.read() == *expression {
-            return Ok(());
-        }
-        self.backup_as_dynamic()?;
-        *self.expression.write() = expression.clone();
-        Ok(())
-    }
-    /// `Backup()` through the attribute's own handle, so that the virtual `BackupCopy` is
-    /// the derived class's (a `TDataStd_Relation` backs up as a relation, not as the
-    /// embedded expression); an attribute without handle has no label and backs up nothing.
-    fn backup_as_dynamic(&self) -> Result<(), Failure> {
-        match self.base.this() {
-            Ok(this) => live(&this, "TDataStd_Expression::Backup")?.backup(),
-            Err(_) => self.backup(),
-        }
-    }
-    /// `GetExpression`.
-    pub fn get_expression(&self) -> ExtendedString {
-        self.expression.read().clone()
-    }
-    /// `GetVariables`: the variables, lent through the write guard of the list.
-    pub fn get_variables(&self) -> RwLockWriteGuard<'_, Vec<Handle<dyn TdfAttribute>>> {
-        self.variables.write()
-    }
+}
+
+impl TDataStdExpressionBase {
     /// The shared body of `Restore`: the other expression's string, and its variables cast
     /// to `TDataStd_Variable` (an attribute of another class becomes null, as natively).
     fn restore_expression(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        let other = cast_attribute::<Self>(with, "TDataStd_Expression::Restore")?;
+        let other =
+            cast_attribute::<dyn TDataStdExpressionSource>(with, "TDataStd_Expression::Restore")?;
         let other = live(&other, "TDataStd_Expression::Restore")?;
         let expression = other.get_expression();
         let variables = other
+            .expression_base()
             .variables
             .read()
             .iter()
-            .map(|v| v.cast::<TDataStdVariable>().cast())
+            .map(|v| v.downcast::<TDataStdVariable>().into_upcast())
             .collect();
         *self.expression.write() = expression;
         *self.variables.write() = variables;
@@ -107,14 +140,15 @@ impl TDataStdExpression {
         into: &Handle<dyn TdfAttribute>,
         table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target = into.cast::<Self>();
+        let target = into.cast::<dyn TDataStdExpressionSource>();
         let target = live(&target, "TDataStd_Expression::Paste")?;
-        target.set_expression(&self.get_expression())?;
+        let expression = self.expression.read().clone();
+        target.set_expression(&expression)?;
         let variables = self.variables.read().clone();
         for variable in variables {
             let mut relocated = Handle::default();
             live(table, "TDataStd_Expression::Paste")?.has_attribute_relocation(
-                &variable.cast::<TDataStdVariable>().cast(),
+                &variable.downcast::<TDataStdVariable>().into_upcast(),
                 &mut relocated,
             );
             target.get_variables().push(relocated);
@@ -134,40 +168,25 @@ impl TDataStdExpression {
     }
 }
 
-/// The `Set(label)` of both classes: the attribute of `id`, added when absent.
-fn find_or_add<T: TdfAttribute + martensite_tkernel::standard::RuntimeTyped>(
-    label: &TdfLabel,
-    id: &Guid,
-    make: impl FnOnce() -> T,
-) -> Result<Handle<T>, Failure> {
-    let mut found: Handle<T> = Handle::default();
-    if label.find_attribute_as(id, &mut found)? {
-        return Ok(found);
-    }
-    let created = Handle::new(make());
-    label.add_attribute(&created.cast(), true)?;
-    Ok(created)
-}
-
 impl TdfAttribute for TDataStdExpression {
     fn attribute_base(&self) -> &TdfAttributeBase {
-        &self.base
+        &self.base.attribute
     }
     fn id(&self) -> Guid {
         EXPRESSION_ID
     }
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        self.restore_expression(with)
+        self.base.restore_expression(with)
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,
         into: &Handle<dyn TdfAttribute>,
         table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        self.paste_expression(into, table)
+        self.base.paste_expression(into, table)
     }
     /// `Dump`: `"Expression"`.
     fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {
@@ -178,25 +197,33 @@ impl TdfAttribute for TDataStdExpression {
         class_begin(stream, "TDataStd_Expression")?;
         dump_attribute_json_base(self, stream, depth)?;
         field_string(stream, "myExpression", &self.get_expression().to_utf8())?;
-        self.dump_variables(stream, depth, "anAttribute.get()")
+        self.base.dump_variables(stream, depth, "anAttribute.get()")
     }
 }
 
 /// `TDataStd_Relation`: an expression that states a relation; `TDataStdRelation::set(&label)`.
 ///
 /// ```
-/// use martensite_tklcaf::{tdata_std::{TDataStdExpression, TDataStdRelation}, tdf::TdfData};
+/// use martensite_tklcaf::{tdata_std::{TDataStdExpressionSource, TDataStdRelation}, tdf::TdfData};
 /// use martensite_tkernel::tcollection::ExtendedString;
 /// let data = TdfData::new();
 /// let relation = TDataStdRelation::set(&data.root()).unwrap();
 /// relation.set_relation(&ExtendedString::new("a=b")).unwrap();
-/// assert!(!relation.cast::<TDataStdExpression>().is_null());
+/// let expression = relation.upcast::<dyn TDataStdExpressionSource>();
+/// assert_eq!(expression.get_expression(), ExtendedString::new("a=b"));
 /// ```
 #[derive(Default)]
 pub struct TDataStdRelation {
-    expression: TDataStdExpression,
+    base: TDataStdExpressionBase,
 }
-impl_transient!(TDataStdRelation, "TDataStd_Relation", TDataStdExpression, expression, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdRelation, "TDataStd_Relation", dyn TDataStdExpressionSource,
+    interfaces: [dyn TdfAttribute, dyn TDataStdExpressionSource]);
+
+impl TDataStdExpressionSource for TDataStdRelation {
+    fn expression_base(&self) -> &TDataStdExpressionBase {
+        &self.base
+    }
+}
 
 impl TDataStdRelation {
     /// `GetID`.
@@ -209,42 +236,43 @@ impl TDataStdRelation {
     }
     /// `Set(label)`: the relation of the label, added when absent.
     pub fn set(label: &TdfLabel) -> Result<Handle<Self>, Failure> {
-        find_or_add(label, &RELATION_ID, Self::new)
+        find_or_add(label, &RELATION_ID, false, Self::new)
     }
-    /// The embedded `TDataStd_Expression` (the native base class).
-    pub fn expression(&self) -> &TDataStdExpression {
-        &self.expression
+    /// Borrow the expression operations of the relation.
+    /// Example: `relation.expression().get_expression()`.
+    pub fn expression(&self) -> &dyn TDataStdExpressionSource {
+        self
     }
     /// `SetRelation(R)`: `SetExpression`.
     pub fn set_relation(&self, relation: &ExtendedString) -> Result<(), Failure> {
-        self.expression.set_expression(relation)
+        self.set_expression(relation)
     }
     /// `GetRelation`: `GetExpression`.
     pub fn get_relation(&self) -> ExtendedString {
-        self.expression.get_expression()
+        self.get_expression()
     }
 }
 
 impl TdfAttribute for TDataStdRelation {
     fn attribute_base(&self) -> &TdfAttributeBase {
-        &self.expression.base
+        &self.base.attribute
     }
     fn id(&self) -> Guid {
         RELATION_ID
     }
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        self.expression.restore_expression(with)
+        self.base.restore_expression(with)
     }
     /// `NewEmpty`: the registered derived-attribute creator, a new relation.
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,
         into: &Handle<dyn TdfAttribute>,
         table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        self.expression.paste_expression(into, table)
+        self.base.paste_expression(into, table)
     }
     /// `Dump`: `"Relation"`.
     fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {
@@ -255,7 +283,6 @@ impl TdfAttribute for TDataStdRelation {
         class_begin(stream, "TDataStd_Relation")?;
         dump_attribute_json_base(self, stream, depth)?;
         field_string(stream, "GetRelation()", &self.get_relation().to_utf8())?;
-        self.expression
-            .dump_variables(stream, depth, "aVariable.get()")
+        self.base.dump_variables(stream, depth, "aVariable.get()")
     }
 }

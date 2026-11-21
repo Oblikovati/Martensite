@@ -4,9 +4,7 @@ use crate::{guid_from_text, json::dump_attribute_json_base, live};
 use martensite_tkcdf::json_dump::{class_begin, field_integer};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream, exceptions,
-    },
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream, exceptions},
 };
 use std::io;
 
@@ -24,11 +22,10 @@ const TAG_SOURCE_ID: Guid = guid_from_text("2a96b611-ec8b-11d0-bee7-080009dc3333
 /// ```
 #[derive(Default)]
 pub struct TdfTagSource {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     tag: SharedState<i32>,
 }
-impl_transient!(TdfTagSource, "TDF_TagSource", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TdfTagSource, "TDF_TagSource", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TdfTagSource {
     /// `GetID`; `TdfTagSource::get_id()`.
@@ -46,7 +43,7 @@ impl TdfTagSource {
             return Ok(found);
         }
         let created = Handle::new(TdfTagSource::new());
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `NewChild(L)` (static): a new child of `label` from its tag source, added when absent.
@@ -91,19 +88,19 @@ impl TdfAttribute for TdfTagSource {
         TAG_SOURCE_ID
     }
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        let tag = live(&with.cast::<TdfTagSource>(), "TDF_TagSource::Restore")?.get();
+        let tag = live(&with.downcast::<TdfTagSource>(), "TDF_TagSource::Restore")?.get();
         *self.tag.write() = tag;
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(TdfTagSource::new()).cast()
+        Handle::new(TdfTagSource::new()).into_upcast()
     }
     fn paste(
         &self,
         into: &Handle<dyn TdfAttribute>,
         _relocation_table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        live(&into.cast::<TdfTagSource>(), "TDF_TagSource::Paste")?.set_value(self.get())
+        live(&into.downcast::<TdfTagSource>(), "TDF_TagSource::Paste")?.set_value(self.get())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         class_begin(stream, "TDF_TagSource")?;

@@ -12,7 +12,7 @@ use martensite_tkcdf::json_dump::{class_begin, field_integer};
 use martensite_tkernel::{
     impl_transient,
     ncollection::{PackedMap, packed_map_algo},
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
     tcol_std::HPackedMapOfInteger,
 };
 use std::io;
@@ -38,17 +38,15 @@ struct IntPackedMapState {
 /// assert!(map.contains(7) && map.extent() == 1);
 /// ```
 pub struct TDataStdIntPackedMap {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<IntPackedMapState>,
 }
-impl_transient!(TDataStdIntPackedMap, "TDataStd_IntPackedMap", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdIntPackedMap, "TDataStd_IntPackedMap", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdIntPackedMap {
     /// `TDataStd_IntPackedMap()`: an empty map, delta off.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(IntPackedMapState {
                 map: Handle::new(HPackedMapOfInteger::default()),
@@ -78,7 +76,7 @@ impl TDataStdIntPackedMap {
         let attribute = live(&created, "TDataStd_IntPackedMap::Set")?;
         attribute.clear()?;
         attribute.set_delta(is_delta);
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `ChangeMap(theMap)` with a handle: false for a null or the same map, or equal
@@ -193,7 +191,7 @@ impl TdfAttribute for TDataStdIntPackedMap {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste(Into, RT)`: an `Into` of the same class takes the map and the delta flag.
     fn paste(
@@ -201,7 +199,7 @@ impl TdfAttribute for TDataStdIntPackedMap {
         into: &Handle<dyn TdfAttribute>,
         _table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target = into.cast::<Self>();
+        let target = into.downcast::<Self>();
         let Some(target) = target.get() else {
             return Ok(());
         };
@@ -235,22 +233,24 @@ impl TdfAttribute for TDataStdIntPackedMap {
         old_attribute: &Handle<dyn TdfAttribute>,
     ) -> Result<Handle<dyn TdfDeltaOnModification>, Failure> {
         if !self.get_delta() {
-            return Ok(TdfDefaultDeltaOnModification::new(old_attribute).cast());
+            return Ok(TdfDefaultDeltaOnModification::new(old_attribute).into_upcast());
         }
-        Ok(TDataStdDeltaOnModificationOfIntPackedMap::new(&old_attribute.cast())?.cast())
+        Ok(
+            TDataStdDeltaOnModificationOfIntPackedMap::new(&old_attribute.downcast())?
+                .into_upcast(),
+        )
     }
 }
 
 /// `TDataStd_DeltaOnModificationOfIntPackedMap`: the keys a modification removed
 /// (`myAddition`, added back on undo) and added (`myDeletion`, removed on undo).
 pub struct TDataStdDeltaOnModificationOfIntPackedMap {
-    transient: StandardTransient,
     base: TdfAttributeDeltaBase,
     addition: Option<PackedMap<i32>>,
     deletion: Option<PackedMap<i32>>,
 }
 impl_transient!(TDataStdDeltaOnModificationOfIntPackedMap, "TDataStd_DeltaOnModificationOfIntPackedMap",
-    dyn TdfDeltaOnModification, transient, interfaces: [dyn TdfAttributeDelta, dyn TdfDeltaOnModification]);
+    dyn TdfDeltaOnModification, interfaces: [dyn TdfAttributeDelta, dyn TdfDeltaOnModification]);
 
 impl TDataStdDeltaOnModificationOfIntPackedMap {
     /// The constructor `(OldAtt)`: compares the backup with the current attribute and
@@ -265,8 +265,7 @@ impl TDataStdDeltaOnModificationOfIntPackedMap {
             (None, None)
         };
         Ok(TdfAttributeDeltaBase::share(Self {
-            transient: StandardTransient::default(),
-            base: TdfAttributeDeltaBase::new(&old_attribute.cast()),
+            base: TdfAttributeDeltaBase::new(&old_attribute.upcast()),
             addition,
             deletion,
         }))
@@ -310,7 +309,7 @@ impl TdfAttributeDelta for TDataStdDeltaOnModificationOfIntPackedMap {
     /// `Apply`: the backup is added back when its label lost the attribute; otherwise the
     /// current attribute backs up, loses `myDeletion` and gains `myAddition`.
     fn apply(&self) -> Result<(), Failure> {
-        let backup = self.attribute().cast::<TDataStdIntPackedMap>();
+        let backup = self.attribute().into_downcast::<TDataStdIntPackedMap>();
         if backup.is_null() {
             return Ok(());
         }
@@ -319,7 +318,7 @@ impl TdfAttributeDelta for TDataStdDeltaOnModificationOfIntPackedMap {
             .label()
             .find_attribute_as(&INT_PACKED_MAP_ID, &mut current)?
         {
-            return self.label().add_attribute(&backup.cast(), true);
+            return self.label().add_attribute(&backup.into_upcast(), true);
         }
         let current = live(
             &current,

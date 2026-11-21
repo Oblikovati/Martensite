@@ -42,7 +42,7 @@ fn relocated(
     carried: Handle<TDataStdTreeNode>,
 ) -> Handle<TDataStdTreeNode> {
     let mut target = carried;
-    if !table.has_attribute_relocation_as(&source.cast(), &mut target) && table.after_relocate() {
+    if !table.has_attribute_relocation_as(&source.upcast(), &mut target) && table.after_relocate() {
         return Handle::default();
     }
     target
@@ -129,7 +129,7 @@ impl TdfAttribute for TDataStdTreeNode {
         into: &Handle<dyn TdfAttribute>,
         table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target = into.cast::<Self>();
+        let target = into.downcast::<Self>();
         let target = live(&target, "TDataStd_TreeNode::Paste")?;
         let table = live(table, "TDataStd_TreeNode::Paste")?;
         let mut link = relocated(table, &self.father(), Handle::default());
@@ -147,7 +147,7 @@ impl TdfAttribute for TDataStdTreeNode {
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
         let node = Self::new();
         node.set_tree_id(&self.id());
-        Handle::new(node).cast()
+        Handle::new(node).into_upcast()
     }
     /// `References`: every direct child node.
     fn references(&self, data_set: &Handle<TdfDataSet>) {
@@ -156,7 +156,7 @@ impl TdfAttribute for TDataStdTreeNode {
         };
         let mut child = self.first();
         while let Some(current) = child.get() {
-            data_set.add_attribute(&child.cast());
+            data_set.add_attribute(&child.upcast());
             child = current.next();
         }
     }

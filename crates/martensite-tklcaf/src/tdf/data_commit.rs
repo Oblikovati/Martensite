@@ -5,7 +5,7 @@ use super::attribute_state::{remove_backup, resume};
 use super::sparse_commit::{CommitRoute, CommitTraversal, NativeCommitRoute};
 use super::{
     TdfAttribute, TdfAttributeDelta, TdfAttributeIterator, TdfAttributeState, TdfDelta,
-    TdfDeltaOnRemoval,
+    TdfDeltaOnRemoval, TdfDeltaSource,
     data::DataCore,
     label_node::{MAY_BE_MODIFIED_MASK, TdfLabelNode},
 };
@@ -81,7 +81,7 @@ fn commit_touched_labels<Route: CommitRoute>(
 }
 fn close_transaction(core: &DataCore, delta: &Handle<TdfDelta>, with_delta: bool) {
     let mut state = core.state.write();
-    let delta_is_empty = delta.get().is_none_or(TdfDelta::is_empty);
+    let delta_is_empty = delta.get().is_none_or(TdfDeltaSource::is_empty);
     if state.nb_touched_att != 0 && !(with_delta && delta_is_empty) {
         state.time += 1;
     }
@@ -131,9 +131,9 @@ pub(crate) fn abort_until_transaction(
 }
 
 /// `Undo(aDelta, withDelta)`: applies an applicable delta in undo mode, removal deltas last.
-pub(crate) fn undo(
+pub(crate) fn undo<D: TdfDeltaSource + ?Sized>(
     core: &DataCore,
-    delta: &Handle<TdfDelta>,
+    delta: &Handle<D>,
     with_delta: bool,
 ) -> Result<Handle<TdfDelta>, Failure> {
     let Some(applied) = delta
@@ -145,11 +145,11 @@ pub(crate) fn undo(
     if with_delta {
         open_transaction(core);
     }
-    applied.before_or_after_apply(true)?;
+    applied.delta_base().before_or_after_apply(true)?;
     core.state.write().not_undo_mode = false;
     fix_order(applied);
     // A failing delta leaves the undo mode on, as the native exception does.
-    applied.apply()?;
+    applied.delta_base().apply()?;
     core.state.write().not_undo_mode = true;
     let mut new_delta = Handle::default();
     if with_delta {
@@ -159,19 +159,19 @@ pub(crate) fn undo(
         }
     }
     core.state.write().time = applied.begin_time();
-    applied.before_or_after_apply(false)?;
+    applied.delta_base().before_or_after_apply(false)?;
     Ok(new_delta)
 }
 
 /// Private `FixOrder`: the removal deltas (which add attributes back) go last, so that undo
 /// never puts two attributes of one ID on a label.
-fn fix_order(delta: &TdfDelta) {
+fn fix_order(delta: &(impl TdfDeltaSource + ?Sized)) {
     let deltas = delta.attribute_deltas();
     let is_removal =
-        |d: &Handle<dyn TdfAttributeDelta>| d.cast::<dyn TdfDeltaOnRemoval>().is_some();
+        |d: &Handle<dyn TdfAttributeDelta>| d.view::<dyn TdfDeltaOnRemoval>().get().is_some();
     let mut ordered: Vec<_> = deltas.iter().filter(|d| !is_removal(d)).cloned().collect();
     ordered.extend(deltas.iter().filter(|d| is_removal(d)).cloned());
-    delta.replace_delta_list(ordered);
+    delta.delta_base().replace_delta_list(ordered);
 }
 
 /// The recursive `CommitTransaction(aLabel, aDelta, withDelta)`: commits the attributes
@@ -276,12 +276,12 @@ impl LabelCommit<'_> {
             return self.commit_forgotten(current, attribute, last, backup);
         }
         if attribute.attribute_base().saved_transaction() < 0 {
-            self.add_delta(|| Ok(attribute.delta_on_resume()?.cast()))?;
+            self.add_delta(|| Ok(attribute.delta_on_resume()?.into_upcast()))?;
             attribute.attribute_base().set_saved_transaction(0);
         } else if backup.is_null() {
-            self.add_delta(|| Ok(attribute.delta_on_addition()?.cast()))?;
+            self.add_delta(|| Ok(attribute.delta_on_addition()?.into_upcast()))?;
         } else {
-            self.add_delta(|| Ok(attribute.delta_on_modification(&backup)?.cast()))?;
+            self.add_delta(|| Ok(attribute.delta_on_modification(&backup)?.into_upcast()))?;
             if backup
                 .get()
                 .is_some_and(|b| b.transaction() == attribute.transaction())
@@ -303,7 +303,7 @@ impl LabelCommit<'_> {
         let base = attribute.attribute_base();
         if base.saved_transaction() < attribute.transaction() {
             // Forgotten in a lower transaction than the current one.
-            self.add_delta(|| Ok(attribute.delta_on_forget()?.cast()))?;
+            self.add_delta(|| Ok(attribute.delta_on_forget()?.into_upcast()))?;
             return Ok(false);
         }
         if backup.is_null() {
@@ -322,7 +322,7 @@ impl LabelCommit<'_> {
         }
         // BeforeForget has already been called once.
         attribute.forget(self.core.transaction() - 1);
-        self.add_delta(|| Ok(attribute.delta_on_forget()?.cast()))?;
+        self.add_delta(|| Ok(attribute.delta_on_forget()?.into_upcast()))?;
         self.modified = true;
         Ok(false)
     }
@@ -333,7 +333,7 @@ impl LabelCommit<'_> {
         attribute: &dyn TdfAttribute,
         last: &Handle<dyn TdfAttribute>,
     ) -> Result<(), Failure> {
-        self.add_delta(|| Ok(attribute.delta_on_removal()?.cast()))?;
+        self.add_delta(|| Ok(attribute.delta_on_removal()?.into_upcast()))?;
         if self.core.not_undo_mode() {
             attribute.before_removal()?;
         }

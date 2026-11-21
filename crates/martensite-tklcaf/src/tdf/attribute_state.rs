@@ -2,7 +2,9 @@
 use super::attribute_base::{BACKUP_MASK, FORGOTTEN_MASK, VALID_MASK};
 use super::{TdfAttribute, TdfLabel};
 use crate::live;
-use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeTyped, exceptions};
+use martensite_tkernel::standard::{
+    Failure, Guid, Handle, RuntimeTyped, TransientHandleTarget, exceptions,
+};
 
 /// The non-virtual members of `TDF_Attribute`.
 pub trait TdfAttributeState: TdfAttribute {
@@ -67,7 +69,7 @@ pub trait TdfAttributeState: TdfAttribute {
         self.label().find_attribute(id, attribute)
     }
     /// The template `FindAttribute<T>`: found and of type `T`.
-    fn find_attribute_as<T: RuntimeTyped + ?Sized>(
+    fn find_attribute_as<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
         &self,
         id: &Guid,
         attribute: &mut Handle<T>,

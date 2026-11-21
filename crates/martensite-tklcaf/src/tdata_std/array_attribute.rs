@@ -11,17 +11,15 @@ macro_rules! array_attribute {
     ) => {
         $(#[$doc])*
         pub struct $name {
-            transient: StandardTransient,
             base: TdfAttributeBase,
             state: SharedState<ArrayState<$item>>,
         }
-        impl_transient!($name, $type_name, dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+        impl_transient!($name, $type_name, dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
         impl Default for $name {
             /// The native constructor: no array, delta off, the default ID.
             fn default() -> Self {
                 Self {
-                    transient: StandardTransient::default(),
                     base: TdfAttributeBase::default(),
                     state: SharedState::new(ArrayState::new(guid_from_text($guid))),
                 }
@@ -131,7 +129,7 @@ macro_rules! array_attribute {
                 restore(self, with)
             }
             fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-                Handle::new(Self::new()).cast()
+                Handle::new(Self::new()).into_upcast()
             }
             fn paste(&self, into: &Handle<dyn TdfAttribute>, _table: &Handle<TdfRelocationTable>) -> Result<(), Failure> {
                 paste(self, into)
@@ -149,9 +147,9 @@ macro_rules! array_attribute {
                 old_attribute: &Handle<dyn TdfAttribute>,
             ) -> Result<Handle<dyn TdfDeltaOnModification>, Failure> {
                 if !self.get_delta() {
-                    return Ok(TdfDefaultDeltaOnModification::new(old_attribute).cast());
+                    return Ok(TdfDefaultDeltaOnModification::new(old_attribute).into_upcast());
                 }
-                Ok($delta::new(&old_attribute.cast::<$name>())?.cast())
+                Ok($delta::new(&old_attribute.downcast::<$name>())?.into_upcast())
             }
         }
     };
