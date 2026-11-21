@@ -1,7 +1,7 @@
 //! Hash surface hasher construction and evaluation contracts.
 #![allow(non_snake_case)]
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, HandleUpcast, RuntimeTyped};
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomCircle, GeomConicalSurface, GeomCurve,
     GeomCylindricalSurface, GeomGeometry, GeomLine, GeomOffsetSurface, GeomPlane,
@@ -18,12 +18,14 @@ fn SetUp() -> GeomHashSurfaceHasher {
 }
 
 // The implicit `occ::handle<T>` to `occ::handle<GeomSurface>` conversion at each call.
-fn surface<T: ?Sized + RuntimeTyped>(handle: &Handle<T>) -> Handle<dyn GeomSurface> {
-    handle.cast()
+fn surface<T: ?Sized + HandleUpcast<dyn GeomSurface>>(
+    handle: &Handle<T>,
+) -> Handle<dyn GeomSurface> {
+    handle.upcast()
 }
 // The implicit conversion to `occ::handle<GeomCurve>`.
-fn curve<T: ?Sized + RuntimeTyped>(handle: &Handle<T>) -> Handle<dyn GeomCurve> {
-    handle.cast()
+fn curve<T: ?Sized + HandleUpcast<dyn GeomCurve>>(handle: &Handle<T>) -> Handle<dyn GeomCurve> {
+    handle.upcast()
 }
 
 // `occ::down_cast<T>(theSurface->Copy())`.

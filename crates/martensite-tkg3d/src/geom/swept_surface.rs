@@ -18,7 +18,7 @@ pub trait GeomSweptSurface: GeomSurface {
     /// The swept curve (`BasisCurve`); `surface.basis_curve()`.
     fn basis_curve(&self) -> Handle<dyn GeomCurve>;
 }
-impl_transient_interface!(dyn GeomSweptSurface, "Geom_SweptSurface", dyn GeomSurface);
+impl_transient_interface!(dyn GeomSweptSurface, "Geom_SweptSurface", dyn GeomSurface, upcasts: [dyn GeomSurface]);
 
 /// `GeomSweptSurface::DumpJson`; `dump_swept_surface(&mut stream, -1, &basis, dir, smooth)?`.
 pub fn dump_swept_surface(

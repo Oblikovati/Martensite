@@ -1,24 +1,24 @@
 //! Vertex dispatch, base behavior and caller-supplied sampling counts.
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::{impl_transient, standard::RuntimeTyped};
 use martensite_tkg2d::adaptor2d::{Adaptor2dCurve2d, Adaptor2dLine2d};
 use martensite_tkg3d::adaptor3d::{
-    Adaptor3dHVertex, Adaptor3dHVertexBase, Adaptor3dSurface, Adaptor3dTopolTool,
+    Adaptor3dCurve, Adaptor3dHVertex, Adaptor3dHVertexBase, Adaptor3dSurface, Adaptor3dTopolTool,
 };
-use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom::{GeomCurve, GeomLine, GeomPlane, GeomSurface};
+use martensite_tkg3d::geom_adaptor::{
+    GeomAdaptorCurve, GeomAdaptorSurface, GeomAdaptorSurfaceOfLinearExtrusion,
+    GeomAdaptorSurfaceOfRevolution, GeomSurfaceAdaptor,
+};
 use martensite_tkg3d::top_abs::Orientation;
-use martensite_tkmath::gp::{Axis3, Direction2, Direction3, Point2, Point3};
+use martensite_tkmath::gp::{Axis1, Axis3, Direction2, Direction3, Point2, Point3};
 
 /// A subclass of the vertex whose members all differ from the base ones.
-struct FakeOverridingVertex {
-    parent: StandardTransient,
-}
+struct FakeOverridingVertex;
 impl_transient!(
     FakeOverridingVertex,
     "FakeOverridingVertex",
     dyn Adaptor3dHVertex,
-    parent,
     interfaces: [dyn Adaptor3dHVertex]
 );
 impl Adaptor3dHVertex for FakeOverridingVertex {
@@ -61,14 +61,12 @@ fn base_vertex_keeps_its_base_members() {
     assert_eq!(vertex.orientation(), Orientation::Reversed);
     assert!(vertex.is_same(&vertex).unwrap());
     assert!(vertex.is_kind_name("Adaptor3d_HVertex"));
+    assert!(vertex.is_instance(<dyn Adaptor3dHVertex>::static_type()));
 }
 
 #[test]
 fn trait_handles_dispatch_to_the_overrides() {
-    let fake: Handle<dyn Adaptor3dHVertex> = Handle::new(FakeOverridingVertex {
-        parent: StandardTransient::default(),
-    })
-    .cast();
+    let fake: Handle<dyn Adaptor3dHVertex> = Handle::new(FakeOverridingVertex).into_upcast();
     assert_eq!(fake.value(), Point2::new(7.0, 8.0));
     assert_eq!(fake.parameter(&line()).unwrap(), 42.0);
     assert!(fake.resolution(&line()).is_err());
@@ -115,4 +113,47 @@ fn sample_pnts_body_spreads_the_counts_of_the_given_computation() {
     tool.sample_pnts(0.01, 2, 2).unwrap();
     assert_eq!(tool.u_parameters().unwrap().length(), 6);
     assert_eq!(tool.nb_samples_v().unwrap(), 6);
+}
+
+fn meridian() -> Handle<dyn Adaptor3dCurve> {
+    let x = Point3::new(2., 0., 0.);
+    let z = Direction3::new(0., 0., 1.).unwrap();
+    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(x, z)).into_upcast();
+    Handle::new(GeomAdaptorCurve::with_curve(&line).unwrap()).into_upcast()
+}
+
+fn check_swept_dispatch(adaptor: &Handle<dyn Adaptor3dSurface>, expected: Point3) {
+    let owners = adaptor.ref_count();
+    let view = adaptor.view::<dyn GeomSurfaceAdaptor>();
+    let surface = view.get().unwrap();
+    assert_eq!(adaptor.ref_count(), owners);
+    assert_eq!(view.object_address(), adaptor.object_address());
+    assert!(adaptor.is_kind(GeomAdaptorSurface::static_type()));
+    assert!(surface.surface().is_null());
+    assert_eq!(surface.value(0., 1.5).unwrap(), expected);
+    let owning = adaptor.cast::<dyn GeomSurfaceAdaptor>();
+    assert_eq!(owning.object_address(), adaptor.object_address());
+    assert_eq!(adaptor.ref_count(), owners + 1);
+    let upcast = owning.into_upcast::<dyn Adaptor3dSurface>();
+    assert_eq!(upcast.value(0., 1.5).unwrap(), expected);
+    assert_eq!(adaptor.ref_count(), owners + 1);
+    assert!(adaptor.downcast_ref::<GeomAdaptorSurface>().is_none());
+}
+
+#[test]
+fn swept_adaptor_views_keep_identity_and_dispatch() {
+    let meridian = meridian();
+    let x = Direction3::new(1., 0., 0.).unwrap();
+    let z = Direction3::new(0., 0., 1.).unwrap();
+    let axis = Axis1::new(Point3::default(), z);
+    let extrusion = GeomAdaptorSurfaceOfLinearExtrusion::with_curve_and_direction(&meridian, x);
+    let revolution = GeomAdaptorSurfaceOfRevolution::with_curve_and_axis(&meridian, axis).unwrap();
+    check_swept_dispatch(
+        &Handle::new(extrusion).into_upcast(),
+        Point3::new(3.5, 0., 0.),
+    );
+    check_swept_dispatch(
+        &Handle::new(revolution).into_upcast(),
+        Point3::new(2., 0., 1.5),
+    );
 }

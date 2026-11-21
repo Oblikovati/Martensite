@@ -6,9 +6,9 @@ use super::elementary_eval::{
     impl_eval_elementary_surface, positive,
 };
 use martensite_tkernel::impl_transient;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkmath::gp::{Axis3, Vector3, Xyz};
 use std::f64::consts::PI;
 use std::io;
@@ -27,14 +27,12 @@ struct EllipsoidState {
 /// the isos and `Transform` raise StandardNotImplemented;
 /// `Handle::new(GeomEvalEllipsoidSurface::new(Axis3::default(), 3.0, 2.0, 1.0)?)`.
 pub struct GeomEvalEllipsoidSurface {
-    parent: StandardTransient,
     state: SharedState<EllipsoidState>,
 }
 impl_transient!(
     GeomEvalEllipsoidSurface,
     "GeomEval_EllipsoidSurface",
     dyn crate::geom::GeomElementarySurface,
-    parent,
     interfaces: [
         dyn crate::geom::GeomGeometry,
         dyn crate::geom::GeomSurface,
@@ -51,7 +49,6 @@ impl Clone for GeomEvalEllipsoidSurface {
 impl GeomEvalEllipsoidSurface {
     fn stored(state: EllipsoidState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

@@ -13,7 +13,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkg2d::geom2d_eval::aht_bezier_data::AhtBezierData;
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
@@ -25,14 +25,12 @@ const CLASS: &str = "GeomEval_AHTBezierCurve";
 /// (`Reverse` and `Transform` raise StandardNotImplemented);
 /// `Handle::new(GeomEvalAHTBezierCurve::new(&poles, 1, 1.0, 1.0)?)`.
 pub struct GeomEvalAHTBezierCurve {
-    parent: StandardTransient,
     data: AhtBezierData<Point3>,
 }
 impl_transient!(
     GeomEvalAHTBezierCurve,
     "GeomEval_AHTBezierCurve",
     dyn GeomBoundedCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn GeomBoundedCurve]
 );
 impl Clone for GeomEvalAHTBezierCurve {
@@ -72,10 +70,7 @@ impl GeomEvalAHTBezierCurve {
         Ok(Self::stored(data))
     }
     fn stored(data: AhtBezierData<Point3>) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            data,
-        }
+        Self { data }
     }
     // Copy() reruns the matching constructor on valid stored values.
     fn copied(&self) -> Self {
@@ -88,7 +83,7 @@ impl GeomGeometry for GeomEvalAHTBezierCurve {
         Err(unsupported("GeomEval_AHTBezierCurve::Transform", ""))
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_class_name(stream, CLASS)?;

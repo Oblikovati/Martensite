@@ -1,7 +1,7 @@
 //! `GeomGeometry`: the root of the 3D transient geometry hierarchy.
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::dump_class_name;
 use martensite_tkmath::gp::{Axis1, Axis2, Point3, Transform3, Vector3};
 use std::io;
@@ -119,7 +119,7 @@ pub trait GeomGeometry: Transient {
         Ok(copy)
     }
 }
-impl_transient_interface!(dyn GeomGeometry, "Geom_Geometry", StandardTransient);
+impl_transient_interface!(dyn GeomGeometry, "Geom_Geometry", dyn Transient);
 
 /// `GeomGeometry::DumpJson`: the class name only; `dump_geometry(&mut stream, -1)?`.
 pub fn dump_geometry(stream: &mut DumpStream, _depth: i32) -> io::Result<()> {

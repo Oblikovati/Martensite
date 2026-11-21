@@ -4,7 +4,7 @@
 mod common;
 use common::{CreateUniformParams, EXPECT_NEAR};
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, HandleUpcast};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::{GeomCylindricalSurface, GeomOffsetSurface, GeomPlane, GeomSurface};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
@@ -33,11 +33,11 @@ fn Cylinder5() -> Handle<GeomCylindricalSurface> {
 }
 
 // `new GeomOffsetSurface(theBasis, theOffset)`.
-fn Offset<S: RuntimeTyped + ?Sized>(
+fn Offset<S: HandleUpcast<dyn GeomSurface> + ?Sized>(
     theBasis: &Handle<S>,
     theOffset: f64,
 ) -> Handle<GeomOffsetSurface> {
-    Handle::new(GeomOffsetSurface::new(&theBasis.cast(), theOffset, false).unwrap())
+    Handle::new(GeomOffsetSurface::new(&theBasis.upcast(), theOffset, false).unwrap())
 }
 
 #[test]

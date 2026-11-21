@@ -44,12 +44,12 @@ fn report<T>(output: &Output, built: Result<T, Failure>) -> Option<T> {
 pub fn base_case(output: &Output, values: &[f64]) {
     let mut r = Reader::new(values);
     let u = r.reals();
-    let c: Handle<dyn Adaptor3dCurve> = Handle::new(Adaptor3dCurveBase::default()).cast();
+    let c: Handle<dyn Adaptor3dCurve> = Handle::new(Adaptor3dCurveBase).cast();
     curve_adaptor_summary(output, &c, &u);
     attempt(output, || c.shallow_copy().map(|_| ()));
     attempt(output, || c.trim(0., 1., 1e-7).map(|_| ()));
     make_curve_summary(output, &*c, &u);
-    let s: Handle<dyn Adaptor3dSurface> = Handle::new(Adaptor3dSurfaceBase::default()).cast();
+    let s: Handle<dyn Adaptor3dSurface> = Handle::new(Adaptor3dSurfaceBase).cast();
     surface_adaptor_summary(output, &s, &u);
     attempt(output, || s.shallow_copy().map(|_| ()));
     attempt(output, || s.u_trim(0., 1., 1e-7).map(|_| ()));

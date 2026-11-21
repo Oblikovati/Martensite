@@ -76,9 +76,9 @@ mod tests {
     #[test]
     fn extrusion_value_copy_retains_curve_and_representation_handles() {
         let source = ExtrusionData {
-            basis_curve: Handle::new(GeomAdaptorCurve::default()).cast(),
+            basis_curve: Handle::new(GeomAdaptorCurve::default()).into_upcast(),
             direction: Xyz::new(1.0, 2.0, 3.0),
-            eval_rep: Handle::new(RepSurfaceDescFull::new(plane_surface())).cast(),
+            eval_rep: Handle::new(RepSurfaceDescFull::new(plane_surface())).into_upcast(),
         };
         let copied = copy_extrusion(&source);
         assert!(source.basis_curve == copied.basis_curve);
@@ -89,9 +89,9 @@ mod tests {
     #[test]
     fn revolution_value_copy_retains_curve_and_representation_handles() {
         let source = RevolutionData {
-            basis_curve: Handle::new(GeomAdaptorCurve::default()).cast(),
+            basis_curve: Handle::new(GeomAdaptorCurve::default()).into_upcast(),
             axis: Axis1::default(),
-            eval_rep: Handle::new(RepSurfaceDescFull::new(plane_surface())).cast(),
+            eval_rep: Handle::new(RepSurfaceDescFull::new(plane_surface())).into_upcast(),
         };
         let copied = copy_revolution(&source);
         assert!(source.basis_curve == copied.basis_curve);
@@ -112,7 +112,7 @@ mod tests {
     }
 
     fn plane_surface() -> Handle<dyn GeomSurface> {
-        Handle::new(GeomPlane::from_pln(Plane3::default())).cast()
+        Handle::new(GeomPlane::from_pln(Plane3::default())).into_upcast()
     }
 
     fn offset_state() -> OffsetData {
@@ -122,7 +122,7 @@ mod tests {
             equivalent_adaptor: Handle::new(GeomAdaptorSurface::with_surface(&plane).unwrap()),
             offset_surface: Handle::new(GeomOffsetSurface::new(&plane, 2.5, false).unwrap()),
             offset: 2.5,
-            eval_rep: Handle::new(RepSurfaceDescFull::new(plane)).cast(),
+            eval_rep: Handle::new(RepSurfaceDescFull::new(plane)).into_upcast(),
         }
     }
 
@@ -131,7 +131,7 @@ mod tests {
         let source = BSplineData {
             surface: Handle::default(),
             cache: shared_cache(),
-            eval_rep: Handle::new(RepSurfaceDescFull::new(plane_surface())).cast(),
+            eval_rep: Handle::new(RepSurfaceDescFull::new(plane_surface())).into_upcast(),
         };
         let copied = copy_bspline(&source);
         assert!(source.cache.is_same(&copied.cache));

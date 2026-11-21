@@ -6,9 +6,9 @@ use super::elementary_eval::{
 use crate::geom::quadric::frame_rows;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkmath::gp::{Axis3, Vector3, Xyz};
 use std::io;
 
@@ -24,14 +24,12 @@ struct HypParaboloidState {
 /// A hyperbolic paraboloid; `UReverse`, `VReverse`, the isos and `Transform` raise
 /// StandardNotImplemented; `GeomEvalHypParaboloidSurface::new(Axis3::default(), 2.0, 3.0)?`.
 pub struct GeomEvalHypParaboloidSurface {
-    parent: StandardTransient,
     state: SharedState<HypParaboloidState>,
 }
 impl_transient!(
     GeomEvalHypParaboloidSurface,
     "GeomEval_HypParaboloidSurface",
     dyn crate::geom::GeomElementarySurface,
-    parent,
     interfaces: [
         dyn crate::geom::GeomGeometry,
         dyn crate::geom::GeomSurface,
@@ -48,7 +46,6 @@ impl Clone for GeomEvalHypParaboloidSurface {
 impl GeomEvalHypParaboloidSurface {
     fn stored(state: HypParaboloidState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

@@ -9,10 +9,10 @@ use crate::geom::{
     BasisSurfaceEvaluator, GeomBSplineSurface, GeomBezierSurface, GeomSurface, GeomSurfaceD1,
     GeomSurfaceD2, GeomSurfaceD3, SurfaceBounds,
 };
-use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast, RuntimeType, RuntimeTyped};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkmath::geom_abs::{Shape, SurfaceType};
 use martensite_tkmath::gp::{
     Axis1, Cone3, Cylinder3, Direction3, Plane3, Point3, Sphere3, Torus3, Vector3,
@@ -30,7 +30,6 @@ use martensite_tkmath::gp::{
 /// `GeomAdaptorSurface::with_bounds(&surface, (0.0, 1.0, 0.0, 1.0))?`.
 #[derive(Default)]
 pub struct GeomAdaptorSurface {
-    parent: StandardTransient,
     state: SharedState<SurfaceState>,
 }
 impl Clone for GeomAdaptorSurface {
@@ -44,9 +43,36 @@ impl_transient!(
     GeomAdaptorSurface,
     "GeomAdaptor_Surface",
     dyn Adaptor3dSurface,
-    parent,
-    interfaces: [dyn Adaptor3dSurface]
+    interfaces: [dyn Adaptor3dSurface, dyn GeomSurfaceAdaptor]
 );
+
+/// The Geom-backed adaptor family, including extrusion and revolution.
+/// A handle to this interface retains the same owner and virtual surface evaluation.
+pub trait GeomSurfaceAdaptor: Adaptor3dSurface {
+    /// Returns the loaded Geom surface; `adaptor.surface()`.
+    fn surface(&self) -> Handle<dyn GeomSurface>;
+}
+
+impl RuntimeTyped for dyn GeomSurfaceAdaptor {
+    const TYPE_NAME: &'static str = GeomAdaptorSurface::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        GeomAdaptorSurface::static_type()
+    }
+}
+impl_transient_interface_target!(dyn GeomSurfaceAdaptor);
+
+impl HandleUpcast<dyn Adaptor3dSurface> for dyn GeomSurfaceAdaptor {
+    fn upcast_arc(owner: std::sync::Arc<Self>) -> std::sync::Arc<dyn Adaptor3dSurface> {
+        owner
+    }
+}
+
+impl GeomSurfaceAdaptor for GeomAdaptorSurface {
+    fn surface(&self) -> Handle<dyn GeomSurface> {
+        self.surface()
+    }
+}
 
 impl GeomAdaptorSurface {
     /// An adaptor on `surface` over its own bounds (`GeomAdaptorSurface(S)`);
@@ -131,20 +157,15 @@ impl GeomAdaptorSurface {
         let source = self.state.read();
         Ok(Self::from_state(state::shallow_state(&source)?))
     }
-    /// An adaptor holding `state` (the derived adaptors build their copies with it).
+    /// Creates an adaptor holding the specified state.
     pub(crate) fn from_state(state: SurfaceState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
     /// Copies value members while retaining nested shared handle identities.
     pub(crate) fn copy_value(&self) -> Self {
         Self::from_state(state::copy_value(&self.state.read()))
-    }
-    /// The protected state, for the derived adaptors.
-    pub(crate) fn cell(&self) -> &SharedState<SurfaceState> {
-        &self.state
     }
     /// One `EvalDk` of the retained switch (for the equivalent-surface shortcut of
     /// the offset evaluators); `adaptor.evaluate::<EvalD1>(u, v)?`.
@@ -163,7 +184,7 @@ impl GeomAdaptorSurface {
 
 impl Adaptor3dSurface for GeomAdaptorSurface {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
-        Ok(Handle::new(self.shallow_adaptor()?).cast())
+        Ok(Handle::new(self.shallow_adaptor()?).into_upcast())
     }
     fn first_u_parameter(&self) -> Result<f64, Failure> {
         Ok(self.state.read().u_first)
@@ -209,7 +230,7 @@ impl Adaptor3dSurface for GeomAdaptorSurface {
             );
             (state.surface.clone(), range)
         };
-        Ok(Handle::new(Self::with_range(&surface, range)?).cast())
+        Ok(Handle::new(Self::with_range(&surface, range)?).into_upcast())
     }
     fn v_trim(
         &self,
@@ -225,7 +246,7 @@ impl Adaptor3dSurface for GeomAdaptorSurface {
             );
             (state.surface.clone(), range)
         };
-        Ok(Handle::new(Self::with_range(&surface, range)?).cast())
+        Ok(Handle::new(Self::with_range(&surface, range)?).into_upcast())
     }
     fn is_u_closed(&self) -> Result<bool, Failure> {
         shape::is_closed(&self.state.read(), Direction::U)
@@ -309,8 +330,7 @@ impl Adaptor3dSurface for GeomAdaptorSurface {
         query::basis_curve(&self.state.read())
     }
     fn basis_surface(&self) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
-        let basis: Self = query::basis_surface_adaptor(&self.state.read())?;
-        Ok(Handle::new(basis).cast())
+        query::basis_surface(&self.state.read())
     }
     fn offset_value(&self) -> Result<f64, Failure> {
         query::offset_value(&self.state.read())

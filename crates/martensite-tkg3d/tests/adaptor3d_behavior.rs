@@ -44,7 +44,7 @@ fn inter_func_rejects_a_fix_other_than_one_or_two() {
 
 #[test]
 fn inter_func_keeps_the_curve_failure_for_its_caller() {
-    let base: Handle<dyn Adaptor2dCurve2d> = Handle::new(Adaptor2dCurve2dBase::default()).cast();
+    let base: Handle<dyn Adaptor2dCurve2d> = Handle::new(Adaptor2dCurve2dBase).into_upcast();
     let mut function = Adaptor3dInterFunc::new(&base, 0.5, 1).unwrap();
     let mut value = 0.0;
     assert!(!function.value(0.1, &mut value));

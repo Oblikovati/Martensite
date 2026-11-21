@@ -9,10 +9,10 @@ use crate::geom::{
     GeomSurface, GeomSurfaceOfLinearExtrusion, GeomSurfaceOfRevolution, GeomToroidalSurface,
 };
 use crate::geom_adaptor::{
-    GeomAdaptorCurve, GeomAdaptorSurface, GeomAdaptorSurfaceOfLinearExtrusion,
-    GeomAdaptorSurfaceOfRevolution, GeomAdaptorTransformedSurface,
+    GeomAdaptorCurve, GeomAdaptorSurfaceOfLinearExtrusion, GeomAdaptorSurfaceOfRevolution,
+    GeomAdaptorTransformedSurface, GeomSurfaceAdaptor,
 };
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, project_concrete, project_interface};
 use martensite_tkmath::geom_abs::SurfaceType;
 use martensite_tkmath::gp::{Transform3, TransformForm};
 
@@ -29,21 +29,21 @@ pub(super) enum AdaptorResolution<'a> {
 pub(super) fn resolve_adaptor(
     surface: &dyn Adaptor3dSurface,
 ) -> Result<AdaptorResolution<'_>, Failure> {
-    if let Some(transformed) = GeomAdaptorTransformedSurface::project_from(surface) {
+    if let Some(transformed) = project_concrete::<GeomAdaptorTransformedSurface>(surface) {
         let trsf: Transform3 = transformed.trsf();
         let kept: Option<Transform3> = (trsf.form() != TransformForm::Identity).then_some(trsf);
         let original = transformed.geom_surface_original();
         return Ok(AdaptorResolution::Geometry(original, kept));
     }
-    if let Some(revolution) = GeomAdaptorSurfaceOfRevolution::project_from(surface) {
+    if let Some(revolution) = project_concrete::<GeomAdaptorSurfaceOfRevolution>(surface) {
         let stored = revolution.surface();
         return swept_resolution(surface, stored, || revolution_surface(revolution));
     }
-    if let Some(extrusion) = GeomAdaptorSurfaceOfLinearExtrusion::project_from(surface) {
+    if let Some(extrusion) = project_concrete::<GeomAdaptorSurfaceOfLinearExtrusion>(surface) {
         let stored = extrusion.surface();
         return swept_resolution(surface, stored, || extrusion_surface(extrusion));
     }
-    if let Some(geom_adaptor) = GeomAdaptorSurface::project_from(surface) {
+    if let Some(geom_adaptor) = project_interface::<dyn GeomSurfaceAdaptor>(surface) {
         let mut geom = geom_adaptor.surface();
         if geom.is_null() {
             geom = elementary_surface(surface)?;
@@ -85,15 +85,19 @@ fn resolved_or_fallback(
 /// surface, null for any other type.
 fn elementary_surface(surface: &dyn Adaptor3dSurface) -> Result<Handle<dyn GeomSurface>, Failure> {
     Ok(match surface.get_type()? {
-        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(surface.plane()?)).cast(),
+        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(surface.plane()?)).into_upcast(),
         SurfaceType::Cylinder => {
-            Handle::new(GeomCylindricalSurface::from_cylinder(surface.cylinder()?)).cast()
+            Handle::new(GeomCylindricalSurface::from_cylinder(surface.cylinder()?)).into_upcast()
         }
-        SurfaceType::Cone => Handle::new(GeomConicalSurface::from_cone(surface.cone()?)).cast(),
+        SurfaceType::Cone => {
+            Handle::new(GeomConicalSurface::from_cone(surface.cone()?)).into_upcast()
+        }
         SurfaceType::Sphere => {
-            Handle::new(GeomSphericalSurface::from_sphere(surface.sphere()?)).cast()
+            Handle::new(GeomSphericalSurface::from_sphere(surface.sphere()?)).into_upcast()
         }
-        SurfaceType::Torus => Handle::new(GeomToroidalSurface::from_torus(surface.torus()?)).cast(),
+        SurfaceType::Torus => {
+            Handle::new(GeomToroidalSurface::from_torus(surface.torus()?)).into_upcast()
+        }
         _ => Handle::default(),
     })
 }
@@ -116,7 +120,7 @@ fn revolution_surface(
         return Ok(Handle::default());
     }
     let axis = adaptor.axe_of_revolution()?;
-    Ok(Handle::new(GeomSurfaceOfRevolution::new(&curve, axis)?).cast())
+    Ok(Handle::new(GeomSurfaceOfRevolution::new(&curve, axis)?).into_upcast())
 }
 
 /// `CreateExtrusionSurface`: a new extrusion on the adaptor's basis curve and
@@ -129,5 +133,5 @@ fn extrusion_surface(
         return Ok(Handle::default());
     }
     let direction = adaptor.direction()?;
-    Ok(Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, direction)?).cast())
+    Ok(Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, direction)?).into_upcast())
 }

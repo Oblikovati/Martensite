@@ -16,7 +16,7 @@ use crate::geom::{
     GeomSurfaceOfLinearExtrusion, GeomSurfaceOfRevolution, GeomToroidalSurface,
 };
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkmath::geom_abs::SurfaceType;
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 
@@ -287,7 +287,7 @@ fn classify_other<'a>(
 }
 
 // `occ::down_cast<T>(basis)` when it succeeds.
-fn kind<T: RuntimeTyped>(basis: &Handle<dyn GeomSurface>) -> Option<Handle<T>> {
-    let typed: Handle<T> = basis.cast::<T>();
+fn kind<T: Transient>(basis: &Handle<dyn GeomSurface>) -> Option<Handle<T>> {
+    let typed: Handle<T> = basis.downcast::<T>();
     (!typed.is_null()).then_some(typed)
 }

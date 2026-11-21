@@ -16,7 +16,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkmath::elslib;
 use martensite_tkmath::geom_abs::Shape;
@@ -33,14 +33,12 @@ struct TorusState {
 
 /// A torus; `Handle::new(GeomToroidalSurface::new(frame, 5.0, 1.0)?)`.
 pub struct GeomToroidalSurface {
-    parent: StandardTransient,
     state: SharedState<TorusState>,
 }
 impl_transient!(
     GeomToroidalSurface,
     "Geom_ToroidalSurface",
     dyn GeomElementarySurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomElementarySurface]
 );
 impl Clone for GeomToroidalSurface {
@@ -52,7 +50,6 @@ impl Clone for GeomToroidalSurface {
 impl GeomToroidalSurface {
     fn stored(state: TorusState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -157,7 +154,7 @@ impl GeomGeometry for GeomToroidalSurface {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let s: TorusState = self.snapshot();
@@ -200,12 +197,12 @@ impl GeomSurface for GeomToroidalSurface {
     fn u_iso(&self, u: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let s: TorusState = self.snapshot();
         let circle = elslib::torus_u_iso(s.pos, s.major_radius, s.minor_radius, u);
-        Ok(Handle::new(GeomCircle::from_circ(circle)).cast())
+        Ok(Handle::new(GeomCircle::from_circ(circle)).into_upcast())
     }
     fn v_iso(&self, v: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let s: TorusState = self.snapshot();
         let circle = elslib::torus_v_iso(s.pos, s.major_radius, s.minor_radius, v);
-        Ok(Handle::new(GeomCircle::from_circ(circle)).cast())
+        Ok(Handle::new(GeomCircle::from_circ(circle)).into_upcast())
     }
     fn continuity(&self) -> Shape {
         Shape::CN

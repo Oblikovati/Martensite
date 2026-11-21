@@ -22,7 +22,7 @@ pub use public_surface_data::{
     ExtrusionData as GeomAdaptorSurfaceExtrusionData, OffsetData as GeomAdaptorSurfaceOffsetData,
     RevolutionData as GeomAdaptorSurfaceRevolutionData, SurfaceDataVariant,
 };
-pub use surface::GeomAdaptorSurface;
+pub use surface::{GeomAdaptorSurface, GeomSurfaceAdaptor};
 pub use surface_state::LoadRange as GeomAdaptorSurfaceRange;
 mod extrusion_kind;
 mod surface_of_linear_extrusion;

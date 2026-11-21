@@ -8,7 +8,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name, dump_field};
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Axis1, Direction3, Line3, Point3, Transform3, Vector3};
@@ -16,14 +16,12 @@ use std::io;
 
 /// A line through a point along a direction; `Handle::new(GeomLine::new(axis))`.
 pub struct GeomLine {
-    parent: StandardTransient,
     state: SharedState<Axis1>,
 }
 impl_transient!(
     GeomLine,
     "Geom_Line",
     dyn GeomCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve]
 );
 impl Clone for GeomLine {
@@ -35,7 +33,6 @@ impl GeomLine {
     /// Line on an axis (`GeomLine(Axis1)`); `GeomLine::new(axis)`.
     pub fn new(axis: Axis1) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(axis),
         }
     }
@@ -78,7 +75,7 @@ impl GeomGeometry for GeomLine {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let position: Axis1 = self.position();

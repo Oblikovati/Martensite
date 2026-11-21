@@ -1,28 +1,33 @@
 //! The canonical kinds of a surface of revolution and the frame they are built on
 //! (`myAxeRev`): a cylinder, plane or cone for a revolved line, a sphere or torus
 //! for a coplanar circle.
-use super::surface::GeomAdaptorSurface;
-use crate::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
+use super::surface_eval;
+use super::surface_eval_order::EvalD0;
+use super::surface_state::SurfaceState;
+use crate::adaptor3d::Adaptor3dCurve;
 use crate::geom::errors::construction;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::Failure;
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::elclib;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
 use martensite_tkmath::gp::{
     Axis1, Axis3, Cone3, Cylinder3, Direction3, Line3, Plane3, Point3, Sphere3, Torus3, Vector3,
 };
 
-/// What the kind computations read: the base adaptor (for `Value(0, 0)`), the
+/// What the kind computations read: the shared evaluator state (for `Value(0, 0)`), the
 /// basis curve, the axis and the current auxiliary frame.
 pub(super) struct Revolved<'a> {
-    pub(super) base: &'a GeomAdaptorSurface,
+    pub(super) state: &'a SharedState<SurfaceState>,
     pub(super) curve: &'a dyn Adaptor3dCurve,
     pub(super) axis: Axis1,
     pub(super) axe_rev: Axis3,
 }
 impl Revolved<'_> {
     fn origin_point(&self) -> Result<Point3, Failure> {
-        self.base.value(0., 0.)
+        self.value(0.)
+    }
+    fn value(&self, v: f64) -> Result<Point3, Failure> {
+        surface_eval::evaluate::<EvalD0>(&mut self.state.write(), 0., v)
     }
     // Vector3(myAxeRev.Location(), P) * myAxeRev.XDirection().
     fn radial_distance(&self, point: Point3) -> f64 {
@@ -239,7 +244,7 @@ fn reference_points(
     } else if precision::is_infinite(first) {
         p
     } else {
-        revolved.base.value(0., first)?
+        revolved.value(first)?
     };
     Ok((p, q))
 }

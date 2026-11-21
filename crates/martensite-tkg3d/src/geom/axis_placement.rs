@@ -43,5 +43,5 @@ pub trait GeomAxisPlacement: GeomGeometry {
 impl_transient_interface!(
     dyn GeomAxisPlacement,
     "Geom_AxisPlacement",
-    dyn GeomGeometry
+    dyn GeomGeometry, upcasts: [dyn GeomGeometry]
 );

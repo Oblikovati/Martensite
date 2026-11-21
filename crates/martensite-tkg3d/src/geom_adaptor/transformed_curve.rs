@@ -9,7 +9,7 @@ use crate::geom::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, SharedState};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{
     Circle3, Ellipse3, Hyperbola3, Line3, Parabola3, Point3, Transform3, TransformForm, Vector3,
@@ -25,7 +25,6 @@ struct TransformedCurveState {
 /// adaptor, or the loaded curve on a surface, with every evaluation and every
 /// canonical kind transformed; `GeomAdaptorTransformedCurve::with_curve(&curve, trsf)?`.
 pub struct GeomAdaptorTransformedCurve {
-    parent: StandardTransient,
     curve: Handle<GeomAdaptorCurve>,
     state: SharedState<TransformedCurveState>,
 }
@@ -51,14 +50,12 @@ impl_transient!(
     GeomAdaptorTransformedCurve,
     "GeomAdaptor_TransformedCurve",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
 impl GeomAdaptorTransformedCurve {
     fn from_parts(curve: Handle<GeomAdaptorCurve>, state: TransformedCurveState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             curve,
             state: SharedState::new(state),
         }
@@ -199,7 +196,7 @@ impl GeomAdaptorTransformedCurve {
 
 impl Adaptor3dCurve for GeomAdaptorTransformedCurve {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
-        Ok(Handle::new(self.shallow_adaptor()?).cast())
+        Ok(Handle::new(self.shallow_adaptor()?).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         self.source().first_parameter()
@@ -233,7 +230,7 @@ impl Adaptor3dCurve for GeomAdaptorTransformedCurve {
             }
         }
         copy.set_trsf(source.trsf);
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         self.source().is_closed()

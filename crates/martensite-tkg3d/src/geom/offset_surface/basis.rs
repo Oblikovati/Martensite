@@ -62,7 +62,7 @@ pub(super) fn resolve_basis(
     }
     let (u1, u2, v1, v2) = bounds;
     let trimmed = GeomRectangularTrimmedSurface::new(&checking, (u1, u2), (v1, v2), (true, true))?;
-    Ok((Handle::new(trimmed).cast(), checking))
+    Ok((Handle::new(trimmed).into_upcast(), checking))
 }
 
 // The basis curve of a swept surface with its trimmed and offset wrappers removed,

@@ -38,7 +38,7 @@ fn transformed_plane() -> (Handle<dyn GeomSurface>, GeomAdaptorTransformedSurfac
 #[test]
 fn surface_reinitialization_preserves_transformation_lifecycle() {
     let (plane, transformed) = transformed_plane();
-    let throwing = Adaptor3dSurfaceBase::default();
+    let throwing = Adaptor3dSurfaceBase;
     let plain = GeomAdaptorSurface::with_surface(&plane).unwrap();
     let mut evaluator = GeomGridEvalSurface::from_adaptor(&transformed).unwrap();
     let mut output = String::new();

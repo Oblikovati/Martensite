@@ -19,7 +19,7 @@ impl GeomGeometry for GeomBezierSurface {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(Self::copy_of(self)?).cast())
+        Ok(Handle::new(Self::copy_of(self)?).into_upcast())
     }
     /// The base level is GeomBoundedSurface::DumpJson, which is the inherited
     /// GeomSurface one (it writes the class name "GeomSurface").

@@ -280,7 +280,7 @@ fn revolution_data(
     let curve =
         GeomAdaptorCurve::with_range(&revolution.basis_curve(), state.v_first, state.v_last)?;
     Ok(SurfaceData::Revolution(RevolutionData {
-        basis_curve: Handle::new(curve).cast(),
+        basis_curve: Handle::new(curve).into_upcast(),
         axis: revolution.axis(),
         eval_rep: revolution.eval_representation(),
     }))
@@ -295,7 +295,7 @@ fn extrusion_data(
     let curve =
         GeomAdaptorCurve::with_range(&extrusion.basis_curve(), state.u_first, state.u_last)?;
     Ok(SurfaceData::Extrusion(ExtrusionData {
-        basis_curve: Handle::new(curve).cast(),
+        basis_curve: Handle::new(curve).into_upcast(),
         direction: extrusion.direction().xyz(),
         eval_rep: extrusion.eval_representation(),
     }))

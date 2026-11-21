@@ -17,7 +17,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, StandardTransient, real};
+use martensite_tkernel::standard::{Failure, real};
 use martensite_tkg2d::geom2d::arrays::{at, one_based, put};
 use martensite_tkg2d::geom2d::bspline_curve_core::GivenWeights;
 use martensite_tkg2d::geom2d::spline_data::check_curve_data;
@@ -26,14 +26,12 @@ use martensite_tkmath::gp::{Point3, Vector3, resolution};
 
 /// A B-spline curve; `Handle::new(GeomBSplineCurve::new(&poles, &knots, &mults, 3, false)?)`.
 pub struct GeomBSplineCurve {
-    parent: StandardTransient,
     state: SharedState<BSplineState>,
 }
 impl_transient!(
     GeomBSplineCurve,
     "Geom_BSplineCurve",
     dyn GeomBoundedCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn GeomBoundedCurve]
 );
 
@@ -60,7 +58,6 @@ impl GeomBSplineCurve {
     martensite_tkg2d::bspline_curve_edits!(Point3, Vector3);
     fn from_state(state: BSplineState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

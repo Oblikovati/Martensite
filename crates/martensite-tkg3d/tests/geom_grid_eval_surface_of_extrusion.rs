@@ -5,7 +5,9 @@ mod common;
 use common::{CreateUniformParams, EXPECT_NEAR};
 use martensite_tkernel::ncollection::Array2;
 use martensite_tkernel::standard::Handle;
-use martensite_tkg3d::geom::{GeomCircle, GeomLine, GeomSurface, GeomSurfaceOfLinearExtrusion};
+use martensite_tkg3d::geom::{
+    GeomCircle, GeomCurve, GeomLine, GeomSurface, GeomSurfaceOfLinearExtrusion,
+};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
 use martensite_tkg3d::geom_grid_eval::{
     GeomGridEvalSurfD1, GeomGridEvalSurfD2, GeomGridEvalSurfD3, GeomGridEvalSurface,
@@ -41,11 +43,11 @@ fn CircleXY(theRadius: f64) -> Handle<GeomCircle> {
 }
 
 // `new GeomSurfaceOfLinearExtrusion(theCurve, theDirection)`.
-fn Extrusion<C: martensite_tkernel::standard::RuntimeTyped + ?Sized>(
+fn Extrusion<C: martensite_tkernel::standard::HandleUpcast<dyn GeomCurve> + ?Sized>(
     theCurve: &Handle<C>,
     theDirection: Direction3,
 ) -> Handle<GeomSurfaceOfLinearExtrusion> {
-    Handle::new(GeomSurfaceOfLinearExtrusion::new(&theCurve.cast(), theDirection).unwrap())
+    Handle::new(GeomSurfaceOfLinearExtrusion::new(&theCurve.upcast(), theDirection).unwrap())
 }
 
 #[test]
