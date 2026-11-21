@@ -10,13 +10,12 @@ use super::named_expression::{
 use super::numeric_value::ExprNumericValue;
 use super::package::copy_share;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A named unknown, free or assigned to an expression;
 /// `let x: Handle<ExprNamedUnknown> = ExprNamedUnknown::new(&AsciiString::new("x"));`.
 pub struct ExprNamedUnknown {
-    parent: StandardTransient,
     name: SharedState<AsciiString>,
     expression: SharedState<ExprHandle>,
     link: ExprSelfLink,
@@ -25,14 +24,12 @@ impl_transient!(
     ExprNamedUnknown,
     "Expr_NamedUnknown",
     dyn ExprNamedExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression, dyn ExprNamedExpression]
 );
 impl ExprNamedUnknown {
     /// `new ExprNamedUnknown(name)`: a free unknown; `ExprNamedUnknown::new(&AsciiString::new("x"))`.
     pub fn new(name: &AsciiString) -> Handle<Self> {
         let object: Self = Self {
-            parent: StandardTransient::default(),
             name: SharedState::new(name.clone()),
             expression: SharedState::new(Handle::default()),
             link: ExprSelfLink::default(),

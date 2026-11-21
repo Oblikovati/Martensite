@@ -26,7 +26,7 @@ impl ExprIntrpParseContext<'_> {
         let second: ExprHandle = self.recept.pop();
         let first: ExprHandle = self.recept.pop();
         self.recept
-            .push_relation(&ExprEqual::new(&first, &second).cast());
+            .push_relation(&ExprEqual::new(&first, &second).into_upcast());
         Ok(())
     }
     /// the stacked relations, the last first, gathered in a

@@ -27,7 +27,8 @@ pub trait ExprNamedExpression: ExprGeneralExpression {
 impl_transient_interface!(
     dyn ExprNamedExpression,
     "Expr_NamedExpression",
-    dyn ExprGeneralExpression
+    dyn ExprGeneralExpression,
+    upcasts: [dyn ExprGeneralExpression]
 );
 
 /// `ExprNamedExpression::IsIdentical`: `other` is a named expression that is this

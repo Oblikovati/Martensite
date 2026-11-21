@@ -30,7 +30,7 @@ impl ExprSquare {
             let base: ExprHandle =
                 deref(operand, "Expr_Square::ShallowSimplified")?.sub_expression(1)?;
             let four: ExprHandle = ExprNumericValue::expression(4.0);
-            return Ok(Some(ExprExponentiate::new(&base, &four).cast()));
+            return Ok(Some(ExprExponentiate::new(&base, &four).into_upcast()));
         }
         if !is_kind::<ExprExponentiate>(operand) {
             return Ok(None);
@@ -59,7 +59,7 @@ impl ExprGeneralExpression for ExprSquare {
         self.core.link().me()
     }
     fn copy(&self) -> Result<ExprHandle, Failure> {
-        Ok(Self::new(&copy_share(&self.operand())?).cast())
+        Ok(Self::new(&copy_share(&self.operand())?).into_upcast())
     }
     fn is_identical(&self, other: &ExprHandle) -> Result<bool, Failure> {
         operand_is_identical::<ExprSquare>(&self.operand(), other)

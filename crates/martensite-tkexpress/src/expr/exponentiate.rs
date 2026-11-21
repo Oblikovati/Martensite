@@ -26,14 +26,14 @@ impl ExprExponentiate {
     /// The rules on a numeric exponent: `a^0` is 1, `a^1` is `a`, and two values fold
     /// with `pow`; `None` when no rule applies.
     fn exponent_rule(first: &ExprHandle, second: &ExprHandle) -> Option<ExprHandle> {
-        let exponent: f64 = second.cast::<ExprNumericValue>().get()?.get_value();
+        let exponent: f64 = second.downcast::<ExprNumericValue>().get()?.get_value();
         if exponent == 0.0 {
             return Some(ExprNumericValue::expression(1.0));
         }
         if exponent == 1.0 {
             return Some(first.clone());
         }
-        let base: f64 = first.cast::<ExprNumericValue>().get()?.get_value();
+        let base: f64 = first.downcast::<ExprNumericValue>().get()?.get_value();
         Some(ExprNumericValue::expression(martensite_cmath::pow(
             base, exponent,
         )))
@@ -86,7 +86,7 @@ impl ExprGeneralExpression for ExprExponentiate {
     }
     fn copy(&self) -> Result<ExprHandle, Failure> {
         let first: ExprHandle = copy_share(&self.first_operand())?;
-        Ok(Self::new(&first, &copy_share(&self.second_operand())?).cast())
+        Ok(Self::new(&first, &copy_share(&self.second_operand())?).into_upcast())
     }
     fn is_identical(&self, other: &ExprHandle) -> Result<bool, Failure> {
         operands_are_identical::<ExprExponentiate, _>(self, other)

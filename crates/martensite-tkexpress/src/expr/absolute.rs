@@ -31,7 +31,7 @@ impl ExprGeneralExpression for ExprAbsolute {
             // `Abs(-u)` becomes a new `Abs(u)`, not simplified further.
             let inner: ExprHandle =
                 deref(&operand, "Expr_Absolute::ShallowSimplified")?.sub_expression(1)?;
-            return Ok(ExprAbsolute::new(&inner).cast());
+            return Ok(ExprAbsolute::new(&inner).into_upcast());
         }
         self.core.link().me()
     }

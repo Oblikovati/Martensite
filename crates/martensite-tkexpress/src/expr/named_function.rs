@@ -8,7 +8,7 @@ use super::handles::{ExprHandle, ExprSelfLink, adopt, deref};
 use super::named_unknown::ExprNamedUnknown;
 use super::package::copy_share;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// The variables of a function with the bounds of the array they came from, since
@@ -27,7 +27,6 @@ struct NamedFunctionState {
 /// A named function `f(x, y) = expression`;
 /// `ExprNamedFunction::new(&AsciiString::new("f"), &body, &vars).get_name() == "f"`.
 pub struct ExprNamedFunction {
-    parent: StandardTransient,
     state: SharedState<NamedFunctionState>,
     variables: FunctionVariables,
     link: ExprSelfLink,
@@ -36,7 +35,6 @@ impl_transient!(
     ExprNamedFunction,
     "Expr_NamedFunction",
     dyn ExprGeneralFunction,
-    parent,
     interfaces: [dyn ExprGeneralFunction]
 );
 impl ExprNamedFunction {
@@ -44,7 +42,6 @@ impl ExprNamedFunction {
     /// `vars`; `ExprNamedFunction::new(&AsciiString::new("f"), &body, &vars)`.
     pub fn new(name: &AsciiString, exp: &ExprHandle, vars: &ExprVariables<'_>) -> Handle<Self> {
         let object: Self = Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(NamedFunctionState {
                 name: name.clone(),
                 expression: exp.clone(),
@@ -102,7 +99,7 @@ impl ExprGeneralFunction for ExprNamedFunction {
     }
     fn copy(&self) -> Result<ExprFunctionHandle, Failure> {
         let expression: ExprHandle = copy_share(&self.expression())?;
-        Ok(Self::new(&self.get_name(), &expression, &self.variable_array()).cast())
+        Ok(Self::new(&self.get_name(), &expression, &self.variable_array()).into_upcast())
     }
     fn derivative(&self, var: &Handle<ExprNamedUnknown>) -> Result<ExprFunctionHandle, Failure> {
         self.derivative_of_degree(var, 1)

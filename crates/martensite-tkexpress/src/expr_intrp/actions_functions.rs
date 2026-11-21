@@ -19,24 +19,28 @@ type StandardConstructor = fn(&ExprHandle) -> ExprHandle;
 
 /// Standard function aliases in matching order, paired with their constructors.
 const STANDARD_FUNCTIONS: [(&[&str], StandardConstructor); 18] = [
-    (&["abs", "Abs"], |op| ExprAbsolute::new(op).cast()),
-    (&["acos", "ACos"], |op| ExprArcCosine::new(op).cast()),
-    (&["asin", "ASin"], |op| ExprArcSine::new(op).cast()),
-    (&["atan", "ATan"], |op| ExprArcTangent::new(op).cast()),
-    (&["acosh", "ACosh"], |op| ExprArgCosh::new(op).cast()),
-    (&["asinh", "ASinh"], |op| ExprArgSinh::new(op).cast()),
-    (&["atanh", "ATanh"], |op| ExprArgTanh::new(op).cast()),
-    (&["cosh", "Cosh"], |op| ExprCosh::new(op).cast()),
-    (&["cos", "Cos"], |op| ExprCosine::new(op).cast()),
-    (&["exp", "Exp"], |op| ExprExponential::new(op).cast()),
-    (&["log"], |op| ExprLogOf10::new(op).cast()),
-    (&["Log", "Ln"], |op| ExprLogOfe::new(op).cast()),
-    (&["sign", "Sign"], |op| ExprSign::new(op).cast()),
-    (&["sin", "Sin"], |op| ExprSine::new(op).cast()),
-    (&["sinh", "Sinh"], |op| ExprSinh::new(op).cast()),
-    (&["sqrt", "Sqrt"], |op| ExprSquareRoot::new(op).cast()),
-    (&["tan", "Tan"], |op| ExprTangent::new(op).cast()),
-    (&["tanh", "Tanh"], |op| ExprTanh::new(op).cast()),
+    (&["abs", "Abs"], |op| ExprAbsolute::new(op).into_upcast()),
+    (&["acos", "ACos"], |op| ExprArcCosine::new(op).into_upcast()),
+    (&["asin", "ASin"], |op| ExprArcSine::new(op).into_upcast()),
+    (&["atan", "ATan"], |op| {
+        ExprArcTangent::new(op).into_upcast()
+    }),
+    (&["acosh", "ACosh"], |op| ExprArgCosh::new(op).into_upcast()),
+    (&["asinh", "ASinh"], |op| ExprArgSinh::new(op).into_upcast()),
+    (&["atanh", "ATanh"], |op| ExprArgTanh::new(op).into_upcast()),
+    (&["cosh", "Cosh"], |op| ExprCosh::new(op).into_upcast()),
+    (&["cos", "Cos"], |op| ExprCosine::new(op).into_upcast()),
+    (&["exp", "Exp"], |op| ExprExponential::new(op).into_upcast()),
+    (&["log"], |op| ExprLogOf10::new(op).into_upcast()),
+    (&["Log", "Ln"], |op| ExprLogOfe::new(op).into_upcast()),
+    (&["sign", "Sign"], |op| ExprSign::new(op).into_upcast()),
+    (&["sin", "Sin"], |op| ExprSine::new(op).into_upcast()),
+    (&["sinh", "Sinh"], |op| ExprSinh::new(op).into_upcast()),
+    (&["sqrt", "Sqrt"], |op| {
+        ExprSquareRoot::new(op).into_upcast()
+    }),
+    (&["tan", "Tan"], |op| ExprTangent::new(op).into_upcast()),
+    (&["tanh", "Tanh"], |op| ExprTanh::new(op).into_upcast()),
 ];
 
 /// the standard function `name` of `op`, null when
@@ -116,7 +120,7 @@ impl ExprIntrpParseContext<'_> {
                     arguments.push(self.pop_required("ExprIntrp_EndFunction")?);
                 }
                 arguments.reverse();
-                Ok(ExprPolyFunction::new(function, &arguments).cast())
+                Ok(ExprPolyFunction::new(function, &arguments).into_upcast())
             }
         }
     }
