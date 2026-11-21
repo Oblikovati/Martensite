@@ -1,5 +1,5 @@
 //! Forward borrows project item fields only, leaving raw links disjoint from yielded values.
-use super::{List, ListCursor, ListIter, ListIterMut, address, owner};
+use super::{List, ListCursor, ListIter, ListIterMut, owner};
 // SAFETY: shared/mutable iterators borrow their List and carry the same bounds as slice iterators.
 unsafe impl<T: Sync> Send for ListIter<'_, T> {}
 // SAFETY: as for Send above: ListIter only hands out shared item references, which needs T:
@@ -17,11 +17,11 @@ impl ListCursor {
     }
     /// Checks whether the cursor names a node; `cursor.more()`.
     pub fn more(self) -> bool {
-        self.address.is_some()
+        !self.raw.current.is_null()
     }
     /// Looks up the stable node in its list; `cursor.value(&list)`.
     pub fn value<T>(self, list: &List<T>) -> Option<&T> {
-        let node = list.owned_node(self.address)?;
+        let node = list.owned_node(self)?;
         // SAFETY: owned_node only returns a live node owned by `list`, and `&list` bounds the
         // shared borrow.
         Some(unsafe { owner::item_ref(node) })
@@ -29,7 +29,7 @@ impl ListCursor {
     /// Borrows the positioned item exclusively; `*cursor.change_value(&mut list).unwrap() = 9`.
     /// End or foreign cursors return None instead of dereferencing.
     pub fn change_value<'a, T>(&self, list: &'a mut List<T>) -> Option<&'a mut T> {
-        let node = list.owned_node(self.address)?;
+        let node = list.owned_node(*self)?;
         // SAFETY: owned_node only returns a live node owned by `list`, and `&mut list` bounds
         // the exclusive borrow.
         Some(unsafe { owner::item_mut(node) })
@@ -39,12 +39,15 @@ impl ListCursor {
         if !self.more() {
             return;
         }
-        self.previous = self.address;
-        self.address = list
-            .owned_node(self.address)
-            // SAFETY: owned_node only returns a live node owned by `list`, and `&list` keeps
-            // its link unchanged.
-            .and_then(|node| address(unsafe { (*node).next() }));
+        if let Some(node) = list.owned_node(*self) {
+            // SAFETY: owned_node bounds both provenance and liveness by the List borrow.
+            self.raw.current = unsafe { (*node).next() };
+            self.raw.previous = node;
+            self.revision = list.topology.revision();
+        } else {
+            self.raw.previous = self.raw.current;
+            self.raw.current = std::ptr::null_mut();
+        }
     }
 }
 impl<'a, T> Iterator for ListIter<'a, T> {
@@ -54,7 +57,7 @@ impl<'a, T> Iterator for ListIter<'a, T> {
             return None;
         }
         let node = self.next;
-        self.previous = address(node);
+        self.previous = node;
         // SAFETY: `node` is a non-null node of the borrowed list's live chain, which the
         // iterator's borrow keeps unchanged.
         self.next = unsafe { (*node).next() };
@@ -76,7 +79,7 @@ impl<'a, T> Iterator for ListIterMut<'a, T> {
             return None;
         }
         let node = self.next;
-        self.previous = address(node);
+        self.previous = node;
         // SAFETY: `node` is a non-null node of the exclusively borrowed list's live chain.
         self.next = unsafe { (*node).next() };
         // SAFETY: each node is yielded once, so the exclusive item borrows never alias, and the

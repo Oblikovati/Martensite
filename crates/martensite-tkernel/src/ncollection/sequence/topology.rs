@@ -1,73 +1,140 @@
-//! One canonical base; only its mutable lookup cache changes through shared access.
-use super::{BaseAllocator, BaseSequence, SeqNode};
-use std::cell::UnsafeCell;
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+//! Local base links and movable sequence metadata. Observers retain identities only.
+use super::{
+    BaseAllocator, BaseSequence, BaseSequenceRawIterator, NodeRevision, SeqNode,
+    base_storage::{SequenceNodeLiveness, SequenceSearch},
+    lookup_cache::SequenceLookupCache,
+};
+use std::{
+    cell::UnsafeCell,
+    sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError},
+};
 
-struct SequenceSharedState {
-    state: UnsafeCell<BaseSequence>,
-    cache_lock: Mutex<()>,
-}
-// SAFETY: topology edits require exclusivity; shared cache writes hold cache_lock. Pointers
-// remain opaque here; Sequence's independent item owners retain T's Send/Sync bounds.
-unsafe impl Send for SequenceSharedState {}
-// SAFETY: as for Send above: shared users only write the cache pair under cache_lock and never
-// dereference nodes.
-unsafe impl Sync for SequenceSharedState {}
-// Shared operations write only a non-panicking cache pair under the lock. Poisoning
-// from a read guard cannot invalidate topology, so shared unwinding remains safe.
-impl std::panic::RefUnwindSafe for SequenceSharedState {}
 pub(super) struct SequenceTopology {
-    shared: Arc<SequenceSharedState>,
+    base: UnsafeCell<BaseSequence>,
+    revision: NodeRevision,
+    cache: SequenceLookupCache,
+    observer: OnceLock<Arc<Mutex<SequenceObservation>>>,
+    inspection: Mutex<()>,
 }
 
-/// A locked read of the actual base, including its lookup cache.
+// SAFETY: raw links are opaque metadata here. Only the owning Sequence permits node access
+// under exclusive or shared borrows and checks its T's corresponding thread-safety bound.
+unsafe impl Send for SequenceTopology {}
+// SAFETY: edits require exclusive ownership. #586 indexed reads borrow only structural fields,
+// and explicit inspection guards serialize writes to the disjoint base cache fields.
+unsafe impl Sync for SequenceTopology {}
+impl std::panic::RefUnwindSafe for SequenceTopology {}
+
+/// A coherent view of the actual linker metadata and lookup cache.
 /// Example: `let base = sequence.base_access(); assert_eq!(base.size(), 2)`.
-/// Drop this guard before calling another sequence method which accesses its cache.
 pub struct SequenceBaseAccess<'a> {
     topology: &'a SequenceTopology,
-    _lock: MutexGuard<'a, ()>,
+    _inspection: MutexGuard<'a, ()>,
 }
+
 impl std::ops::Deref for SequenceBaseAccess<'_> {
     type Target = BaseSequence;
     fn deref(&self) -> &BaseSequence {
-        // SAFETY: the guard excludes cache writers; structural changes require &mut Sequence.
-        unsafe { &*self.topology.shared.state.get() }
+        // SAFETY: the inspection guard prevents cache-pair writes during this borrow.
+        // Structural changes always require exclusive ownership.
+        unsafe { &*self.topology.base.get() }
     }
 }
+
+struct PublishSequenceEdit<'a>(&'a mut SequenceTopology);
+
+impl Drop for PublishSequenceEdit<'_> {
+    fn drop(&mut self) {
+        self.0.cache.import(self.0.base.get_mut());
+        self.0.publish_observation();
+    }
+}
+
 impl SequenceTopology {
-    pub(super) fn identity(&self) -> usize {
-        // A token follows the actual canonical base allocation, never a copied metadata view.
-        Arc::as_ptr(&self.shared) as usize
+    pub(super) fn identity(&self) -> u64 {
+        self.revision.chain_id()
+    }
+    pub(super) fn revision(&self) -> NodeRevision {
+        self.revision
     }
     pub(super) fn new(allocator: BaseAllocator) -> Self {
         Self::from_base(BaseSequence::new(Some(allocator)))
     }
     pub(super) fn from_base(base: BaseSequence) -> Self {
+        let mut cache = SequenceLookupCache::default();
+        cache.import(&base);
         Self {
-            shared: Arc::new(SequenceSharedState {
-                state: UnsafeCell::new(base),
-                cache_lock: Mutex::new(()),
-            }),
+            base: UnsafeCell::new(base),
+            revision: NodeRevision::new(),
+            cache,
+            observer: OnceLock::new(),
+            inspection: Mutex::new(()),
         }
     }
     pub(super) fn access(&self) -> SequenceBaseAccess<'_> {
-        SequenceBaseAccess {
-            topology: self,
-            _lock: self
-                .shared
-                .cache_lock
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner),
-        }
-    }
-    pub(super) fn edit<R>(&mut self, edit: impl FnOnce(&mut BaseSequence) -> R) -> R {
-        let _guard = self
-            .shared
-            .cache_lock
+        let lock = self
+            .inspection
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        // SAFETY: exclusive owner and lock exclude observers and shared cache updates.
-        edit(unsafe { &mut *self.shared.state.get() })
+        let (current, index) = self.cache.position();
+        let base = self.base.get();
+        // SAFETY: the inspection lock grants exclusive cache-pair writes, and writes touch
+        // only these fields. Other shared methods borrow disjoint fields or the atomic cache.
+        unsafe {
+            std::ptr::addr_of_mut!((*base).current).write(current);
+            std::ptr::addr_of_mut!((*base).current_index).write(index);
+        }
+        SequenceBaseAccess {
+            topology: self,
+            _inspection: lock,
+        }
+    }
+    pub(super) fn clear_scope(&self) -> Option<&SequenceNodeLiveness> {
+        // SAFETY: only exclusive edits modify this field. Inspection touches the cache fields.
+        unsafe { (*self.base.get()).clear_node_scope.as_ref() }
+    }
+    pub(super) fn cursor(&self, is_start: bool) -> BaseSequenceRawIterator {
+        let (first, last) = self.endpoints();
+        if is_start {
+            BaseSequenceRawIterator {
+                current: first,
+                previous: std::ptr::null_mut(),
+            }
+        } else {
+            BaseSequenceRawIterator {
+                current: std::ptr::null_mut(),
+                previous: last,
+            }
+        }
+    }
+    pub(super) fn resolve_transfer_link(&self, link: *mut SeqNode) -> *mut SeqNode {
+        self.search().resolve_live_link(link)
+    }
+    pub(super) fn edit<R>(&mut self, edit: impl FnOnce(&mut BaseSequence) -> R) -> R {
+        self.revision.edit();
+        self.edit_preserving_positions(edit)
+    }
+    pub(super) fn edit_preserving_positions<R>(
+        &mut self,
+        edit: impl FnOnce(&mut BaseSequence) -> R,
+    ) -> R {
+        let base = self.base.get_mut();
+        (base.current, base.current_index) = self.cache.position();
+        let publish = PublishSequenceEdit(self);
+        edit(publish.0.base.get_mut())
+    }
+    pub(super) unsafe fn append_live_node(&mut self, node: *mut SeqNode) {
+        if self.base.get_mut().is_empty() {
+            self.edit_preserving_positions(|base| unsafe {
+                // SAFETY: the caller transfers a fresh detached node to this live chain.
+                base.append_node(node)
+            });
+            return;
+        }
+        // SAFETY: the caller supplies a live chain and a fresh node. A nonempty append
+        // leaves the lookup position valid and has no effect on existing cursor identities.
+        unsafe { self.base.get_mut().append_node(node) };
+        self.publish_observation();
     }
     pub(super) fn edit_pair<R>(
         &mut self,
@@ -76,54 +143,80 @@ impl SequenceTopology {
     ) -> R {
         self.edit(|base| other.edit(|donor| edit(base, donor)))
     }
+    // Ordinary clear retains the old identities during destruction. Never read the former
+    // cache node afterward, as its storage has already been freed.
+    pub(super) fn reset_retired_chain(&mut self) {
+        self.revision.edit();
+        self.base.get_mut().nullify();
+        self.cache.import(self.base.get_mut());
+        self.publish_observation();
+    }
     pub(super) fn observer(&self) -> SequenceObserver {
+        let observation = self
+            .observer
+            .get_or_init(|| Arc::new(Mutex::new(self.observation())));
+        // A concurrent reader may have published while the observer cell was initializing.
+        self.publish_observation();
         SequenceObserver {
-            shared: self.shared.clone(),
+            shared: observation.clone(),
+        }
+    }
+    fn publish_observation(&self) {
+        if let Some(observer) = self.observer.get() {
+            *observer.lock().unwrap_or_else(PoisonError::into_inner) = self.observation();
+        }
+    }
+    fn observation(&self) -> SequenceObservation {
+        let (node, index) = self.cache.position();
+        let (head, tail) = self.endpoints();
+        SequenceObservation {
+            size: self.size(),
+            first_node: super::iteration::pointer_address(head),
+            last_node: super::iteration::pointer_address(tail),
+            cached_node: super::iteration::pointer_address(node),
+            cached_index: index,
         }
     }
     pub(super) fn size(&self) -> usize {
-        // SAFETY: the state cell is live while `self` is, and Shared cache writes never touch structural fields; &self excludes topology changes.
-        unsafe { (*self.shared.state.get()).size }
+        // SAFETY: the inspection guard never writes structural fields. Edits require &mut self.
+        unsafe { (*self.base.get()).size }
     }
     pub(super) fn endpoints(&self) -> (*mut SeqNode, *mut SeqNode) {
-        // SAFETY: the state cell is live while `self` is. Field reads do not create a shared reference spanning concurrently mutable cache fields.
-        unsafe {
-            (
-                (*self.shared.state.get()).first,
-                (*self.shared.state.get()).last,
-            )
-        }
+        // SAFETY: the inspection guard never writes structural fields. Edits require &mut self.
+        unsafe { ((*self.base.get()).first, (*self.base.get()).last) }
     }
     pub(super) fn allocator(&self) -> &BaseAllocator {
-        // SAFETY: shared methods only modify disjoint current/current_index fields.
-        unsafe { &(*self.shared.state.get()).allocator }
+        // SAFETY: the field is disjoint from both cache fields written during inspection.
+        unsafe { &(*self.base.get()).allocator }
     }
+    #[inline]
+    fn search(&self) -> SequenceSearch<'_> {
+        let (first, last) = self.endpoints();
+        SequenceSearch {
+            first,
+            last,
+            size: self.size(),
+            clear_scope: self.clear_scope(),
+        }
+    }
+    #[inline]
     pub(super) fn find(&self, index: usize, update_cache: bool) -> *mut SeqNode {
-        let _lock = self
-            .shared
-            .cache_lock
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-        let base = self.shared.state.get();
-        // SAFETY: Sequence checks index and owns a consistent live topology.
-        let node = unsafe { (*base).find(index) };
+        let (previous, previous_index) = self.cache.position();
+        // SAFETY: Sequence validates index and retains the live chain or its clear-scope liveness.
+        let node = unsafe { self.search().find(index, previous, previous_index) };
         if update_cache {
-            // SAFETY: `base` points to this topology's live state, and the shared cache pair is written by one caller at a time. Field writes avoid forming &mut BaseSequence while allocator() is borrowed.
-            unsafe {
-                std::ptr::addr_of_mut!((*base).current).write(node);
-                std::ptr::addr_of_mut!((*base).current_index).write(index);
-            }
+            self.cache.publish(node, index);
+            self.publish_observation();
         }
         node
     }
 }
 
-/// Read-only canonical metadata access, including during destruction.
+/// Read-only metadata access, including during destruction.
 /// Example: `let observer = sequence.observer(); assert_eq!(observer.snapshot().size, 2)`.
-/// Release any SequenceBaseAccess guard before reading this observer on the same thread.
 #[derive(Clone)]
 pub struct SequenceObserver {
-    shared: Arc<SequenceSharedState>,
+    shared: Arc<Mutex<SequenceObservation>>,
 }
 /// One synchronized read of canonical metadata, never used as authoritative container state.
 /// Example: `let observed = sequence.observer().snapshot(); assert_eq!(observed.cached_index, 1)`.
@@ -142,21 +235,8 @@ pub struct SequenceObservation {
     pub cached_index: usize,
 }
 impl SequenceObserver {
-    /// Copies metadata under its synchronization lock; `observer.snapshot().size`.
+    /// Copies synchronized metadata; `observer.snapshot().size`.
     pub fn snapshot(&self) -> SequenceObservation {
-        let _guard = self
-            .shared
-            .cache_lock
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-        // SAFETY: every structural/cache write takes this lock; only identities escape.
-        let base = unsafe { &*self.shared.state.get() };
-        SequenceObservation {
-            size: base.size,
-            first_node: super::iteration::pointer_address(base.first),
-            last_node: super::iteration::pointer_address(base.last),
-            cached_node: super::iteration::pointer_address(base.current),
-            cached_index: base.current_index,
-        }
+        *self.shared.lock().unwrap_or_else(PoisonError::into_inner)
     }
 }

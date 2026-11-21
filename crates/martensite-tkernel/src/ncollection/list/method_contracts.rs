@@ -1,5 +1,5 @@
 //! Checked access and explicit cursor expressions that Rust syntax cannot borrow directly.
-use super::{List, ListCursor, ListIter, no_such_object};
+use super::{BaseListRawIterator, List, ListCursor, ListIter, no_such_object};
 use crate::standard::Failure;
 
 impl<T> List<T> {
@@ -45,8 +45,11 @@ impl ListCursor {
     /// Copies a const STL iterator's node position; `ListCursor::from_iterator(&list.iter())`.
     pub fn from_iterator<T>(iterator: &ListIter<'_, T>) -> Self {
         Self {
-            address: super::address(iterator.next),
-            previous: iterator.previous,
+            raw: BaseListRawIterator {
+                current: iterator.next,
+                previous: iterator.previous,
+            },
+            revision: iterator.revision,
         }
     }
     /// Assigns a const STL iterator's position and returns the destination; `cursor.assign_iterator(&list.iter())`.
@@ -91,7 +94,8 @@ impl<T> Default for ListIter<'_, T> {
         Self {
             next: std::ptr::null_mut(),
             item: std::marker::PhantomData,
-            previous: None,
+            previous: std::ptr::null_mut(),
+            revision: Default::default(),
         }
     }
 }

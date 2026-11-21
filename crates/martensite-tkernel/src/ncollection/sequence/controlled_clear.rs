@@ -2,7 +2,7 @@
 use super::{
     Sequence, SequenceCursor, SequenceNodeRetirement,
     base_storage::SequenceNodeLiveness,
-    owner::{SequenceNodeOwners, take_owner},
+    owner_registry::{SequenceOwnerRegistry, resolve_clear_link},
 };
 use crate::standard::{Failure, exceptions::program_error, raise_native_failure};
 use std::sync::Arc;
@@ -10,23 +10,26 @@ use std::sync::Arc;
 /// Clear traversal over actual nodes; `let progress=sequence.begin_clear_progress()`.
 /// Visit captures Next before callbacks; detach/free afterward, then reset only at completion.
 pub struct SequenceClearProgress {
-    scope_identity: usize,
+    scope_identity: u64,
     invocation: Arc<()>,
     current: SequenceCursor,
     pending: Option<SequenceCursor>,
     saved_next: SequenceCursor,
 }
-unsafe fn registry_contains<T>(registry: *const (), address: usize) -> bool {
-    // SAFETY: the token's sequence owns this boxed registry for every scoped topology access.
-    let owners = unsafe { &*registry.cast::<SequenceNodeOwners<T>>() };
-    owners.contains_key(&address)
-}
 impl<T> Sequence<T> {
     /// Start ordered clearing without changing old metadata; `sequence.begin_clear_progress()`.
     pub fn begin_clear_progress(&mut self) -> SequenceClearProgress {
-        if self.topology.access().clear_node_scope.is_some() {
+        if self.topology.clear_scope().is_some() {
             return raise_native_failure(Err(clear_phase_failure("Begin", "an idle sequence")));
         }
+        let mut registry = SequenceOwnerRegistry::default();
+        let mut node = self.topology.endpoints().0;
+        while !node.is_null() {
+            registry.register(node);
+            // SAFETY: before installing controlled clear, the owning chain is contiguous and live.
+            node = unsafe { (*node).next() };
+        }
+        self.clear_nodes = Some(registry);
         let scope = self.clear_node_liveness();
         let invocation = Arc::clone(&scope.invocation);
         self.topology
@@ -43,8 +46,12 @@ impl<T> Sequence<T> {
         SequenceNodeLiveness {
             // #77: retained tokens keep their invocation identity distinct after cancellation.
             invocation: Arc::new(()),
-            registry: self.owners.registry_address().cast(),
-            contains: registry_contains::<T>,
+            registry: self
+                .clear_nodes
+                .as_ref()
+                .expect("active clear owns the live-node index")
+                .registry_address(),
+            resolve: resolve_clear_link,
         }
     }
     /// Capture current payload and Next before its callbacks; `sequence.visit_clear_node(&mut progress)?`.
@@ -85,9 +92,13 @@ impl<T> Sequence<T> {
             .pending
             .ok_or_else(|| clear_phase_failure("Detach", "one visited pending node"))?;
         let node = self
-            .owned_node(cursor.current_node())
+            .owned_node(cursor)
             .ok_or_else(|| super::no_such_node("Clear", cursor))?;
-        let owner = take_owner(&mut self.owners, node);
+        // SAFETY: the live-node index proved this node is still owned by this sequence.
+        let owner = unsafe { self.take_unlinked(node) };
+        if let Some(nodes) = &mut self.clear_nodes {
+            nodes.record_historical_retirement();
+        }
         progress.pending = None;
         progress.current = progress.saved_next;
         Ok(SequenceNodeRetirement { owner })
@@ -116,17 +127,28 @@ impl<T> Sequence<T> {
     }
     fn abandon_unvisited_clear_nodes(&mut self) {
         // Clearing saves the next link before deleting: nodes appended in the last callback are lost.
-        for owner in std::mem::take(&mut self.owners).into_owners().into_values() {
-            owner.abandon();
+        if let Some(mut leftover) = self.clear_nodes.take() {
+            leftover.abandon();
         }
+    }
+    pub(super) fn check_clear_transfer(&self, member: &str) -> Result<(), Failure> {
+        if self
+            .clear_nodes
+            .as_ref()
+            .is_some_and(SequenceOwnerRegistry::has_historical_topology)
+        {
+            return Err(clear_phase_failure(
+                member,
+                "a live chain without retired links",
+            ));
+        }
+        Ok(())
     }
     fn check_clear_progress(&self, progress: &SequenceClearProgress) -> Result<(), Failure> {
         let identity = self.topology.identity();
         let same_invocation = self
             .topology
-            .access()
-            .clear_node_scope
-            .as_ref()
+            .clear_scope()
             .is_some_and(|scope| Arc::ptr_eq(&scope.invocation, &progress.invocation));
         if progress.scope_identity != identity || !same_invocation {
             return Err(program_error(&format!(

@@ -16,15 +16,13 @@ impl<T: Clone> List<T> {
             self.append_copied_list(source);
             return;
         }
-        self.owners.reserve(source.owners.len());
         self.topology
             // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
-            // lists with the same allocator (checked above), and the donor's owners move to
-            // `self` right after.
+            // lists with the same allocator (checked above); transferring the chain
+            // transfers its ownership.
             .edit_pair(&mut source.topology, |base, donor| unsafe {
                 base.append_list(donor)
             });
-        self.owners.extend(source.owners.drain());
     }
     /// Prepends another list, panicking on failure; `destination.prepend_list(&mut source)`.
     pub fn prepend_list(&mut self, source: &mut Self) {
@@ -37,15 +35,13 @@ impl<T: Clone> List<T> {
         if self.allocator() != source.allocator() {
             return self.insert_copied_list_before(source, &mut self.cursor());
         }
-        self.owners.reserve(source.owners.len());
         self.topology
             // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
-            // lists with the same allocator (checked above), and the donor's owners move to
-            // `self` right after.
+            // lists with the same allocator (checked above); transferring the chain
+            // transfers its ownership.
             .edit_pair(&mut source.topology, |base, donor| unsafe {
                 base.prepend_list(donor)
             });
-        self.owners.extend(source.owners.drain());
         Ok(())
     }
     /// Splices before a node while retaining caller cursor state; `list.insert_list_before(&mut source, &cursor)?`.
@@ -67,7 +63,6 @@ impl<T: Clone> List<T> {
             return self.insert_copied_list_before(source, cursor);
         }
         let mut raw = self.locate_cursor(*cursor, "InsertBefore")?;
-        self.owners.reserve(source.owners.len());
         self.topology
             // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
             // lists with the same allocator (checked above), and `raw` is a cursor
@@ -75,8 +70,8 @@ impl<T: Clone> List<T> {
             .edit_pair(&mut source.topology, |base, donor| unsafe {
                 base.insert_list_before(donor, &mut raw)
             })?;
-        self.owners.extend(source.owners.drain());
-        cursor.update_raw(raw);
+        cursor.raw = raw;
+        cursor.revision = self.topology.revision();
         Ok(())
     }
     /// Splices after current; an end cursor appends; `list.insert_list_after(&mut source, &cursor)?`.
@@ -102,7 +97,6 @@ impl<T: Clone> List<T> {
         source: &mut Self,
         raw: &mut BaseListRawIterator,
     ) -> Result<(), Failure> {
-        self.owners.reserve(source.owners.len());
         self.topology
             // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
             // lists; the caller checked that the allocators match and passes a cursor validated
@@ -110,7 +104,6 @@ impl<T: Clone> List<T> {
             .edit_pair(&mut source.topology, |base, donor| unsafe {
                 base.insert_list_after(donor, raw)
             })?;
-        self.owners.extend(source.owners.drain());
         Ok(())
     }
     fn append_copied_list(&mut self, source: &mut Self) {
@@ -136,6 +129,7 @@ impl<T: Clone> List<T> {
 impl<T: Clone> Clone for List<T> {
     fn clone(&self) -> Self {
         let mut copy = Self::with_allocator(self.allocator().clone());
+        copy.common_nodes = self.common_nodes;
         copy.assign(self);
         copy
     }

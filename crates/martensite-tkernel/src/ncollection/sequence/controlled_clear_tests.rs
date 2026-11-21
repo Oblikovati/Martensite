@@ -100,3 +100,24 @@ fn liveness_registry_stays_readable_after_owner_edits_during_clear() {
     sequence.clear(None);
     assert!(sequence.is_empty());
 }
+
+#[test]
+fn historical_clear_links_cannot_transfer_node_ownership() {
+    let mut sequence: Sequence<i32> = [1, 2, 3].into_iter().collect();
+    let mut progress = sequence.begin_clear_progress();
+    assert_eq!(retire_integer_node(&mut sequence, &mut progress), 1);
+
+    let mut tail: Sequence<i32> = [7].into_iter().collect();
+    assert!(sequence.split(2, &mut tail).is_err());
+    assert!(tail.is_empty());
+    tail.append(7);
+    let failed = catch_native_failure(|| {
+        sequence.append_sequence(&mut tail);
+        Ok(())
+    });
+    assert!(failed.is_err());
+    assert_eq!(tail.first(), Some(&7));
+    assert_eq!(retire_integer_node(&mut sequence, &mut progress), 2);
+    assert_eq!(retire_integer_node(&mut sequence, &mut progress), 3);
+    sequence.finish_clear_progress(progress).unwrap();
+}

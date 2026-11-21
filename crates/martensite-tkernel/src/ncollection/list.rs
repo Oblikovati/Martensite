@@ -1,12 +1,16 @@
 //! Singly linked lists with allocator-owned stable nodes.
-use super::{BaseAllocator, BaseListRawIterator, BaseListStorage, ListLinkNode, ListValueNode};
+use super::{
+    BaseAllocator, BaseListRawIterator, BaseListStorage, ListLinkNode, ListValueNode,
+    node_revision::NodeRevision,
+};
 use crate::standard::Failure;
-use owner::{ListNodeOwner, ListNodeOwners};
+use owner::ListNodeOwner;
 use std::marker::PhantomData;
 /// Allocator-owned list; `List::from_iter_in([1,2], BaseAllocator::common())`.
 pub struct List<T> {
     topology: topology::ListTopology,
-    owners: ListNodeOwners<T>,
+    items: PhantomData<T>,
+    common_nodes: bool,
 }
 // SAFETY: base links are inert ownership metadata; shared access never mutates them.
 // Owners enforce the same item Send/Sync bounds as the former boxed chain.
@@ -14,32 +18,48 @@ unsafe impl<T: Send> Send for List<T> {}
 // SAFETY: as for Send above: shared access never mutates the links, and items are only shared
 // when T: Sync.
 unsafe impl<T: Sync> Sync for List<T> {}
+// Moving the list owner never moves its allocated items.
+impl<T> Unpin for List<T> {}
 /// Detached node position, usable across insertions; `list.cursor().value(&list)`.
 ///
 /// `ListCursor::default()` is the end position, like a default list iterator.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Default)]
 pub struct ListCursor {
-    address: Option<usize>,
-    previous: Option<usize>,
+    raw: BaseListRawIterator,
+    revision: NodeRevision,
 }
+// SAFETY: these are inert positions. Dereferencing always requires proof from an owning List.
+unsafe impl Send for ListCursor {}
+// SAFETY: shared cursor access reads identities, and item access requires a checked List borrow.
+unsafe impl Sync for ListCursor {}
 /// Forward shared iterator; `list.iter()`.
 pub struct ListIter<'a, T> {
     next: *mut ListLinkNode,
     item: PhantomData<&'a T>,
-    previous: Option<usize>,
+    previous: *mut ListLinkNode,
+    revision: NodeRevision,
 }
 /// Forward exclusive iterator; `list.iter_mut()`.
 pub struct ListIterMut<'a, T> {
     next: *mut ListLinkNode,
     item: PhantomData<&'a mut T>,
-    previous: Option<usize>,
+    previous: *mut ListLinkNode,
+    revision: NodeRevision,
 }
 impl<T> List<T> {
+    fn construct_node(&self, construct: impl FnOnce() -> T) -> ListNodeOwner<T> {
+        if self.common_nodes {
+            return ListNodeOwner::construct_common(construct);
+        }
+        ListNodeOwner::construct(self.allocator(), construct)
+    }
+
     /// Creates an empty list with the chosen resource; `List::<i32>::with_allocator(arena)`.
     pub fn with_allocator(resource: BaseAllocator) -> Self {
         Self {
             topology: topology::ListTopology::new(resource),
-            owners: ListNodeOwners::new(),
+            items: PhantomData,
+            common_nodes: false,
         }
     }
     /// Constructs items in a selected resource; `List::from_iter_in([1,2], arena)`.
@@ -91,7 +111,8 @@ impl<T> List<T> {
         ListIter {
             next: self.base_storage().first,
             item: PhantomData,
-            previous: None,
+            previous: std::ptr::null_mut(),
+            revision: self.topology.revision(),
         }
     }
     /// Borrows exclusive elements in chain order; `list.iter_mut().for_each(|v| *v += 1)`.
@@ -99,14 +120,15 @@ impl<T> List<T> {
         ListIterMut {
             next: self.base_storage().first,
             item: PhantomData,
-            previous: None,
+            previous: std::ptr::null_mut(),
+            revision: self.topology.revision(),
         }
     }
     /// Returns a stable position at the head; `let mut cursor = list.cursor()`.
     pub fn cursor(&self) -> ListCursor {
         ListCursor {
-            address: address(self.base_storage().first),
-            previous: None,
+            raw: BaseListRawIterator::new(self.base_storage()),
+            revision: self.topology.revision(),
         }
     }
     /// Appends a freshly allocated node; `*list.append(42) == 42`.
@@ -119,9 +141,8 @@ impl<T> List<T> {
     }
     /// Allocates before constructing the head value, keeping placement order; `list.prepend_with(|| 42)`.
     pub fn prepend_with(&mut self, construct: impl FnOnce() -> T) -> &mut T {
-        let owner = ListNodeOwner::construct(self.allocator(), construct);
-        let node = owner.link;
-        self.owners.insert(node as usize, owner);
+        let owner = self.construct_node(construct);
+        let node = owner.into_link();
         self.topology
             // SAFETY: `node` is a freshly constructed node owned by this list and not yet
             // linked.
@@ -166,6 +187,7 @@ impl<T> List<T> {
     pub fn clear_with_allocator(&mut self, resource: BaseAllocator) {
         self.clear();
         self.topology.edit(|base| base.allocator = resource);
+        self.common_nodes = false;
     }
     /// Reverses links without moving values between nodes; `list.reverse()`.
     pub fn reverse(&mut self) {
@@ -176,18 +198,20 @@ impl<T> List<T> {
     /// Exchanges nodes and their allocator resources; `first.exchange(&mut second)`.
     pub fn exchange(&mut self, other: &mut Self) {
         self.topology.exchange(&mut other.topology);
-        std::mem::swap(&mut self.owners, &mut other.owners);
+        std::mem::swap(&mut self.common_nodes, &mut other.common_nodes);
     }
     /// Transfers the nodes, leaving the source empty with its own allocator;
     /// `List::move_from(&mut source)`.
     pub fn move_from(source: &mut Self) -> Self {
         let mut moved = Self::with_allocator(source.allocator().clone());
+        moved.common_nodes = source.common_nodes;
         moved.exchange(source);
         moved
     }
     /// Replaces this list and its allocator with the source's nodes; `list.move_assign(&mut source)`.
     pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
         self.clear_with_allocator(source.allocator().clone());
+        self.common_nodes = source.common_nodes;
         self.exchange(source);
         self
     }
@@ -225,7 +249,10 @@ impl<T> List<T> {
 }
 impl<T> Default for List<T> {
     fn default() -> Self {
-        Self::with_allocator(BaseAllocator::common())
+        let mut list = Self::with_allocator(BaseAllocator::common());
+        // Only the constructor-selected resource is known never to invoke custom dispatch.
+        list.common_nodes = true;
+        list
     }
 }
 impl<T> Drop for List<T> {
@@ -235,7 +262,11 @@ impl<T> Drop for List<T> {
 }
 impl<T> FromIterator<T> for List<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        Self::from_iter_in(iter, BaseAllocator::common())
+        let mut list = Self::default();
+        for item in iter {
+            list.append(item);
+        }
+        list
     }
 }
 fn address(node: *mut ListLinkNode) -> Option<usize> {

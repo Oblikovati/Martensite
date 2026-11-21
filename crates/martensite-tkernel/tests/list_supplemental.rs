@@ -45,3 +45,19 @@ fn list_clone_and_allocator_vector_mutation_use_real_storage() {
     assert_eq!(list.front(), Some(&7));
     assert_eq!(clone.front(), Some(&8));
 }
+
+#[test]
+fn default_and_explicit_common_nodes_keep_provenance_when_spliced() {
+    let mut destination: List<i32> = [1, 2].into_iter().collect();
+    let mut source = List::with_allocator(BaseAllocator::common());
+    let moved = std::ptr::from_mut(source.append(3));
+    let cursor = source.cursor();
+    destination.append_list(&mut source);
+    assert_eq!(
+        std::ptr::from_ref(cursor.value(&destination).unwrap()),
+        moved
+    );
+    assert!(cursor.value(&source).is_none());
+    assert_eq!(destination.iter().copied().collect::<Vec<_>>(), [1, 2, 3]);
+    destination.clear();
+}

@@ -1,6 +1,8 @@
 //! Collection cases; twins in `occt/collections.cpp`.
 use super::{Case, Sample};
-use martensite_tkernel::ncollection::{DataMap, DynamicArray, IndexedMap, List, Sequence};
+use martensite_tkernel::ncollection::{
+    BaseAllocator, DataMap, DynamicArray, IndexedMap, List, Sequence,
+};
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -26,6 +28,18 @@ pub const CASES: &[Case] = &[
         run: sequence_append,
     },
     Case {
+        name: "sequence_append_explicit_common",
+        run: sequence_append_explicit_common,
+    },
+    Case {
+        name: "sequence_edit_batch",
+        run: sequence_edit_batch,
+    },
+    Case {
+        name: "sequence_cursor_walk",
+        run: sequence_cursor_walk,
+    },
+    Case {
         name: "sequence_iterate",
         run: sequence_iterate,
     },
@@ -44,6 +58,18 @@ pub const CASES: &[Case] = &[
     Case {
         name: "list_append_iterate",
         run: list_append_iterate,
+    },
+    Case {
+        name: "list_append_explicit_common",
+        run: list_append_explicit_common,
+    },
+    Case {
+        name: "list_edit_batch",
+        run: list_edit_batch,
+    },
+    Case {
+        name: "list_cursor_walk",
+        run: list_cursor_walk,
     },
 ];
 
@@ -157,5 +183,95 @@ fn list_append_iterate(n: usize) -> Sample {
         list.append(i);
     }
     let sum: i64 = list.iter().map(|value| i64::from(*value)).sum();
+    Sample::since(start, n, black_box(sum))
+}
+
+fn sequence_append_explicit_common(n: usize) -> Sample {
+    let mut sequence = Sequence::with_allocator(BaseAllocator::common());
+    let start = Instant::now();
+    for i in 0..n {
+        sequence.append(i as f64);
+    }
+    Sample::since(start, n, black_box(sequence.len()) as i64)
+}
+
+fn sequence_edit_batch(n: usize) -> Sample {
+    let mut sequence: Sequence<i32> = [1, 2, 3, 4].into_iter().collect();
+    let mut tail = Sequence::default();
+    let start = Instant::now();
+    let mut checksum = 0;
+    for i in 0..n {
+        edit_sequence(&mut sequence, &mut tail, black_box((i & 7) as i32));
+        checksum += i64::from(sequence.first().copied().unwrap());
+        checksum += i64::from(sequence.last().copied().unwrap());
+    }
+    Sample::since(start, n, black_box(checksum))
+}
+
+fn edit_sequence(sequence: &mut Sequence<i32>, tail: &mut Sequence<i32>, value: i32) {
+    sequence.append(value);
+    sequence.prepend(7);
+    sequence.insert_before(3, 8).unwrap();
+    sequence.exchange(1, 7).unwrap();
+    sequence.reverse();
+    sequence.split(5, tail).unwrap();
+    sequence.append_sequence(tail);
+    sequence.remove_range(1, 3).unwrap();
+}
+
+fn sequence_cursor_walk(n: usize) -> Sample {
+    let sequence = filled_sequence(n);
+    let start = Instant::now();
+    let mut cursor = sequence.cursor();
+    let mut sum = 0.0;
+    while let Some(item) = cursor.value(&sequence) {
+        sum += item;
+        cursor.next(&sequence);
+    }
+    Sample::since(start, n, black_box(sum) as i64)
+}
+
+fn list_append_explicit_common(n: usize) -> Sample {
+    let mut list = List::with_allocator(BaseAllocator::common());
+    let start = Instant::now();
+    for i in 0..n as i32 {
+        list.append(i);
+    }
+    Sample::since(start, n, black_box(list.len()) as i64)
+}
+
+fn list_edit_batch(n: usize) -> Sample {
+    let mut list: List<i32> = [1, 2, 3, 4].into_iter().collect();
+    let start = Instant::now();
+    let mut checksum = 0;
+    for i in 0..n {
+        edit_list(&mut list, black_box((i & 7) as i32));
+        checksum += i64::from(list.first().copied().unwrap());
+        checksum += i64::from(list.last().copied().unwrap());
+    }
+    Sample::since(start, n, black_box(checksum))
+}
+
+fn edit_list(list: &mut List<i32>, value: i32) {
+    list.append(value);
+    list.prepend(7);
+    let mut position = list.cursor();
+    position.next(list);
+    list.insert_before_at(8, &mut position).unwrap();
+    list.remove(&mut position).unwrap();
+    list.reverse();
+    list.remove_first().unwrap();
+    list.remove_first().unwrap();
+}
+
+fn list_cursor_walk(n: usize) -> Sample {
+    let list: List<i32> = (0..n as i32).collect();
+    let start = Instant::now();
+    let mut cursor = list.cursor();
+    let mut sum = 0;
+    while let Some(item) = cursor.value(&list) {
+        sum += i64::from(*item);
+        cursor.next(&list);
+    }
     Sample::since(start, n, black_box(sum))
 }

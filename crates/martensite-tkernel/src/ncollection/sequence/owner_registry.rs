@@ -1,81 +1,143 @@
-//! The owner index lives behind one raw allocation pointer so the controlled-clear liveness
-//! check can keep reading it while the sequence later inserts or removes owners.
-//!
-//! A `Box` field would not do: every `&mut` access through the box re-asserts unique
-//! ownership of the whole map, which invalidates the pointer the clear scope saved.
-//! Deriving every reference from the same raw pointer keeps that saved pointer valid.
-use super::owner::SequenceNodeOwners;
+//! Controlled clear keeps native metadata after the corresponding allocations retire.
+//! Only this phase indexes liveness. Its index address survives moves and later edits.
+use super::{SeqNode, SequenceNodeOwner};
 use std::{
+    collections::{HashMap, hash_map},
     marker::PhantomData,
-    ops::{Deref, DerefMut},
     ptr::NonNull,
 };
 
-/// Heap-allocated owner index with a stable address; `SequenceOwnerRegistry::<i32>::default()`.
-pub(super) struct SequenceOwnerRegistry<T> {
-    owners: NonNull<SequenceNodeOwners<T>>,
-    // Owns the map exactly as `Box<SequenceNodeOwners<T>>` does, for drop check and variance.
-    map: PhantomData<SequenceNodeOwners<T>>,
+#[derive(Default)]
+struct ClearNodeLinks {
+    live: HashMap<usize, *mut SeqNode>,
+    retained_old_links: bool,
 }
-// SAFETY: the registry uniquely owns its map like a Box, so it may move to another thread
-// whenever the map itself may.
-unsafe impl<T> Send for SequenceOwnerRegistry<T> where SequenceNodeOwners<T>: Send {}
-// SAFETY: shared registry access only hands out `&SequenceNodeOwners<T>`, as `&Box` does.
-unsafe impl<T> Sync for SequenceOwnerRegistry<T> where SequenceNodeOwners<T>: Sync {}
+
+pub(super) struct SequenceOwnerRegistry<T> {
+    // A Box field would reassert unique ownership when borrowed mutably, invalidating the
+    // saved clear-scope pointer. Derive every borrow from one original raw pointer.
+    links: NonNull<ClearNodeLinks>,
+    values: PhantomData<T>,
+}
+
+// SAFETY: this registry owns the live payloads, so moving it requires T: Send.
+unsafe impl<T: Send> Send for SequenceOwnerRegistry<T> {}
+// SAFETY: shared access reads only inert identities; the owner protects payloads and links.
+unsafe impl<T: Sync> Sync for SequenceOwnerRegistry<T> {}
+
 impl<T> Default for SequenceOwnerRegistry<T> {
     fn default() -> Self {
-        let owners = Box::into_raw(Box::<SequenceNodeOwners<T>>::default());
-        // Keep the original allocation provenance; Box::into_non_null exceeds our MSRV.
-        let owners = NonNull::new(owners).unwrap_or_else(|| {
-            std::alloc::handle_alloc_error(std::alloc::Layout::new::<SequenceNodeOwners<T>>())
-        });
+        let links = Box::into_raw(Box::default());
         Self {
-            owners,
-            map: PhantomData,
+            // SAFETY: a Box allocation never yields a null pointer.
+            links: unsafe { NonNull::new_unchecked(links) },
+            values: PhantomData,
         }
     }
 }
+
 impl<T> SequenceOwnerRegistry<T> {
-    /// The address the controlled-clear scope reads; it shares every access's provenance.
-    pub(super) fn registry_address(&self) -> *const SequenceNodeOwners<T> {
-        self.owners.as_ptr().cast_const()
+    pub(super) fn registry_address(&self) -> *const () {
+        self.links.as_ptr().cast()
     }
-    /// Moves the map out, releasing its allocation; `registry.into_owners().into_values()`.
-    pub(super) fn into_owners(mut self) -> SequenceNodeOwners<T> {
-        std::mem::take(&mut *self)
+
+    pub(super) fn live_link(&self, link: *mut SeqNode) -> Option<*mut SeqNode> {
+        self.read().live.get(&link.addr()).copied()
+    }
+
+    pub(super) fn register(&mut self, link: *mut SeqNode) {
+        self.write().live.insert(link.addr(), link);
+    }
+
+    pub(super) fn release_link(&mut self, link: *mut SeqNode) -> Option<*mut SeqNode> {
+        self.write().live.remove(&link.addr())
+    }
+
+    pub(super) fn record_historical_retirement(&mut self) {
+        self.write().retained_old_links = true;
+    }
+
+    pub(super) fn has_historical_topology(&self) -> bool {
+        self.read().retained_old_links
+    }
+
+    pub(super) fn abandon(&mut self) {
+        for (_, node) in self.write().live.drain() {
+            // SAFETY: these are the live nodes stranded when old metadata is reset.
+            unsafe { SequenceNodeOwner::<T>::from_unlinked(node) }.abandon();
+        }
+    }
+
+    fn read(&self) -> &ClearNodeLinks {
+        // SAFETY: the index remains live until Drop; a shared borrow prevents mutation.
+        unsafe { self.links.as_ref() }
+    }
+
+    fn write(&mut self) -> &mut ClearNodeLinks {
+        // SAFETY: exclusive ownership prevents overlapping access to this live index.
+        unsafe { self.links.as_mut() }
     }
 }
-impl<T> Deref for SequenceOwnerRegistry<T> {
-    type Target = SequenceNodeOwners<T>;
-    fn deref(&self) -> &Self::Target {
-        // SAFETY: the pointer came from Box::into_raw and stays live until Drop; `&self`
-        // excludes every mutable access for this borrow.
-        unsafe { self.owners.as_ref() }
-    }
+
+pub(super) unsafe fn resolve_clear_link(
+    registry: *const (),
+    address: usize,
+) -> Option<*mut SeqNode> {
+    // SAFETY: caller holds the original Sequence borrow for the installed scope. Return the
+    // current allocation's provenance, since a reentrant append may reuse a retired address.
+    let links = unsafe { &*registry.cast::<ClearNodeLinks>() };
+    links.live.get(&address).copied()
 }
-impl<T> DerefMut for SequenceOwnerRegistry<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        // SAFETY: the pointer came from Box::into_raw and stays live until Drop; `&mut self`
-        // excludes every other access for this borrow.
-        unsafe { self.owners.as_mut() }
-    }
-}
+
 impl<T> Drop for SequenceOwnerRegistry<T> {
     fn drop(&mut self) {
-        // SAFETY: the pointer came from Box::into_raw and is released only here, once.
-        drop(unsafe { Box::from_raw(self.owners.as_ptr()) });
+        let mut remaining = ClearNodeRemainder::<T> {
+            // SAFETY: reclaim the unique original Box; no scope remains attached to it.
+            nodes: unsafe { Box::from_raw(self.links.as_ptr()) }
+                .live
+                .into_values(),
+            values: PhantomData,
+        };
+        remaining.release();
+    }
+}
+
+struct ClearNodeRemainder<T> {
+    nodes: hash_map::IntoValues<usize, *mut SeqNode>,
+    values: PhantomData<T>,
+}
+
+impl<T> ClearNodeRemainder<T> {
+    fn release(&mut self) {
+        for node in self.nodes.by_ref() {
+            // SAFETY: remaining registered nodes transfer to the guard after topology resets.
+            drop(unsafe { SequenceNodeOwner::<T>::from_unlinked(node) });
+        }
+    }
+}
+
+impl<T> Drop for ClearNodeRemainder<T> {
+    fn drop(&mut self) {
+        // A panicking node has already advanced the iterator.
+        self.release();
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::SequenceOwnerRegistry;
+    use crate::ncollection::SeqNode;
+
     #[test]
-    fn checked_registry_pointer_retains_identity_through_mutable_access() {
-        let mut registry = super::SequenceOwnerRegistry::<i32>::default();
+    fn clear_index_address_survives_mutation() {
+        let mut registry = SequenceOwnerRegistry::<i32>::default();
         let original = registry.registry_address();
-        assert!(!original.is_null());
-        registry.clear();
+        let mut prefix = SeqNode::default();
+        let link = std::ptr::from_mut(&mut prefix);
+        registry.register(link);
+        assert_eq!(registry.live_link(link), Some(link));
+        assert_eq!(registry.release_link(link), Some(link));
         assert_eq!(registry.registry_address(), original);
-        assert!(registry.into_owners().is_empty());
+        assert_eq!(registry.live_link(link), None);
     }
 }

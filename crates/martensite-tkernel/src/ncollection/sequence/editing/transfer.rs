@@ -1,26 +1,28 @@
-use super::super::{BaseSequence, Sequence, owner::take_owner, topology::SequenceTopology};
+use super::super::{BaseSequence, Sequence, topology::SequenceTopology};
 use crate::standard::Failure;
 
 impl<T> Sequence<T> {
     /// Clears/rebinds destination before checking the split index; `sequence.split(2, &mut tail)?`.
     pub fn split(&mut self, index: usize, destination: &mut Self) -> Result<(), Failure> {
         destination.clear(Some(self.allocator().clone()));
+        destination.common_nodes = self.common_nodes;
         self.offset("Split", index)?;
-        destination.owners.reserve(self.len() - index + 1);
+        // A raw split publishes the new owner before it can discover a retired predecessor.
+        // Verify that the prefix links are still live before transferring any ownership.
+        self.check_clear_transfer("Split")?;
         self.topology
             // SAFETY: the index was checked, `destination` was cleared to an empty base, and
             // this sequence exclusively owns its nodes.
             .edit_pair(&mut destination.topology, |base, tail| unsafe {
                 base.split(index, tail)
             })?;
-        let mut node = destination.topology.endpoints().0;
-        while !node.is_null() {
-            destination
-                .owners
-                .insert(node as usize, take_owner(&mut self.owners, node));
-            // SAFETY: `node` is a non-null node of the transferred chain, whose owner has just
-            // moved to `destination`.
-            node = unsafe { (*node).next() };
+        if let Some(registry) = &mut self.clear_nodes {
+            let mut node = destination.topology.endpoints().0;
+            while !node.is_null() {
+                registry.release_link(node);
+                // SAFETY: the split transferred the live suffix to the destination.
+                node = unsafe { (*node).next() };
+            }
         }
         Ok(())
     }
@@ -30,7 +32,9 @@ impl<T> Sequence<T> {
         let base = source.topology.edit(|base| std::mem::replace(base, empty));
         Self {
             topology: SequenceTopology::from_base(base),
-            owners: std::mem::take(&mut source.owners),
+            clear_nodes: source.clear_nodes.take(),
+            items: std::marker::PhantomData,
+            common_nodes: source.common_nodes,
         }
     }
     /// Destroys target before transferring source cache and ownership; `sequence.move_assign(&mut source)`.
@@ -41,7 +45,8 @@ impl<T> Sequence<T> {
             .edit_pair(&mut source.topology, |base, donor| {
                 *base = std::mem::replace(donor, empty);
             });
-        self.owners = std::mem::take(&mut source.owners);
+        self.clear_nodes = source.clear_nodes.take();
+        self.common_nodes = source.common_nodes;
         self
     }
 }

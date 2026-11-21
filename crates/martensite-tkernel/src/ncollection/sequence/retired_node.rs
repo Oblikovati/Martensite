@@ -22,7 +22,7 @@ impl<T> SequenceNodeRetirement<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::ncollection::{Sequence, SequenceCursor, SequenceNativeCursor};
+    use crate::ncollection::{BaseAllocator, Sequence, SequenceCursor, SequenceNativeCursor};
     use crate::standard::SharedState;
     use std::sync::{Arc, Mutex, Weak};
 
@@ -56,6 +56,21 @@ mod tests {
         }
         (scope, lengths)
     }
+    #[test]
+    fn default_node_retirement_retains_raw_heap_compatibility() {
+        let (scope, lengths) = populated_drop_scope();
+        let mut cursor = scope.read().cursor();
+        let retired = scope.write().detach_cursor(&mut cursor).unwrap().unwrap();
+        // SAFETY: a default sequence node uses the common raw heap backing; this resource
+        // accepts exactly that original address.
+        unsafe {
+            retired.retire_using(|| {
+                assert_eq!(*lengths.lock().unwrap(), vec![1]);
+                BaseAllocator::common()
+            });
+        }
+    }
+
     #[test]
     fn detached_node_reenters_collection_after_native_metadata_and_guard_release() {
         let (scope, lengths) = populated_drop_scope();

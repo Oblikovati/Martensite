@@ -1,21 +1,13 @@
 //! Canonical cursor state can advance before Drop without aliasing its observer.
-use super::{
-    BaseSequenceRawIterator, SeqNode, Sequence, SequenceCursor, SequenceNodeOwner,
-    SequenceNodeRetirement, iteration::pointer_address, owner::take_owner,
-};
+use super::{SeqNode, Sequence, SequenceCursor, SequenceNodeOwner, SequenceNodeRetirement};
 use crate::standard::Failure;
 use std::sync::{Arc, Mutex, PoisonError};
-struct SequenceCursorState(Mutex<BaseSequenceRawIterator>);
-// SAFETY: cursor pointers are identities only; dereferencing requires fresh owner lookup.
-unsafe impl Send for SequenceCursorState {}
-// SAFETY: as for Send above: the state behind the Mutex holds opaque links that are only
-// dereferenced after a fresh owner lookup.
-unsafe impl Sync for SequenceCursorState {}
+struct SequenceCursorState(Mutex<SequenceCursor>);
 impl SequenceCursorState {
-    fn read(&self) -> BaseSequenceRawIterator {
+    fn read(&self) -> SequenceCursor {
         *self.0.lock().unwrap_or_else(PoisonError::into_inner)
     }
-    fn write(&self, cursor: BaseSequenceRawIterator) {
+    fn write(&self, cursor: SequenceCursor) {
         *self.0.lock().unwrap_or_else(PoisonError::into_inner) = cursor;
     }
 }
@@ -32,11 +24,11 @@ pub struct SequenceCursorObserver {
 impl SequenceNativeCursor {
     /// Positions at first or past-last; `SequenceNativeCursor::new(&sequence, false)`.
     pub fn new<T>(sequence: &Sequence<T>, start: bool) -> Self {
-        Self::from_raw(BaseSequenceRawIterator::new(&sequence.base_access(), start))
+        Self::from_position(SequenceCursor::new(sequence, start))
     }
-    fn from_raw(raw: BaseSequenceRawIterator) -> Self {
+    fn from_position(cursor: SequenceCursor) -> Self {
         Self {
-            shared: Arc::new(SequenceCursorState(Mutex::new(raw))),
+            shared: Arc::new(SequenceCursorState(Mutex::new(cursor))),
         }
     }
     /// Creates a view of actual current/previous fields; `cursor.observer()`.
@@ -47,11 +39,7 @@ impl SequenceNativeCursor {
     }
     /// Copies the current safe detached position; `cursor.position().value(&sequence)`.
     pub fn position(&self) -> SequenceCursor {
-        let raw = self.shared.read();
-        SequenceCursor {
-            address: pointer_address(raw.current),
-            previous: pointer_address(raw.previous),
-        }
+        self.shared.read()
     }
     /// Advances from a freshly resolved live node; `cursor.next(&sequence)?`.
     pub fn next<T>(&mut self, sequence: &Sequence<T>) -> Result<(), Failure> {
@@ -60,57 +48,51 @@ impl SequenceNativeCursor {
             return Ok(());
         }
         let node = sequence
-            .owned_node(position.address)
+            .owned_node(position)
             .ok_or_else(|| super::no_such_node("Next", position))?;
-        self.shared.write(BaseSequenceRawIterator {
-            // SAFETY: owned_node only returns a live node owned by `sequence`, and `&sequence`
-            // keeps its link unchanged.
-            current: unsafe { (*node).next() },
-            previous: node,
-        });
+        let mut updated = position;
+        updated.step_to_next(sequence, node);
+        self.shared.write(updated);
         Ok(())
     }
     /// Steps through the remembered live predecessor; `cursor.previous(&sequence)?`.
     pub fn previous<T>(&mut self, sequence: &Sequence<T>) -> Result<(), Failure> {
         let position = self.position();
-        let Some(address) = position.previous else {
-            self.shared.write(BaseSequenceRawIterator::default());
+        if position.raw.previous.is_null() {
+            self.shared.write(SequenceCursor::default());
             return Ok(());
-        };
+        }
         let node = sequence
-            .owned_node(Some(address))
+            .previous_link(position)
             .ok_or_else(|| super::no_such_node("Previous", position))?;
-        self.shared.write(BaseSequenceRawIterator {
-            current: node,
-            // SAFETY: owned_node only returns a live node owned by `sequence`, and `&sequence`
-            // keeps its link unchanged.
-            previous: unsafe { (*node).previous() },
-        });
+        let mut updated = position;
+        updated.step_to_previous(sequence, node);
+        self.shared.write(updated);
         Ok(())
     }
 }
 impl Default for SequenceNativeCursor {
     fn default() -> Self {
-        Self::from_raw(BaseSequenceRawIterator::default())
+        Self::from_position(SequenceCursor::default())
     }
 }
 impl Clone for SequenceNativeCursor {
     fn clone(&self) -> Self {
-        Self::from_raw(self.shared.read())
+        Self::from_position(self.shared.read())
     }
 }
 impl SequenceCursorObserver {
     /// Reads More without dereferencing current; `observer.more()`.
     pub fn more(&self) -> bool {
-        !self.shared.read().current.is_null()
+        self.shared.read().more()
     }
     /// Reads opaque current identity; `observer.current_node()`.
     pub fn current_node(&self) -> Option<usize> {
-        pointer_address(self.shared.read().current)
+        self.shared.read().current_node()
     }
     /// Reads remembered opaque predecessor identity; `observer.previous_node()`.
     pub fn previous_node(&self) -> Option<usize> {
-        pointer_address(self.shared.read().previous)
+        self.shared.read().previous_node()
     }
 }
 impl<T> Sequence<T> {
@@ -131,7 +113,7 @@ impl<T> Sequence<T> {
             return Ok(None);
         }
         let node = self
-            .owned_node(position.address)
+            .owned_node(position)
             .ok_or_else(|| super::no_such_node("Remove", position))?;
         Ok(Some(SequenceNodeRetirement {
             owner: self.detach_native_node(cursor, node),
@@ -142,10 +124,17 @@ impl<T> Sequence<T> {
         cursor: &mut SequenceNativeCursor,
         node: *mut SeqNode,
     ) -> SequenceNodeOwner<T> {
-        let mut raw = cursor.shared.read();
+        let mut position = cursor.shared.read();
+        let mut raw = position.raw;
         raw.current = node;
+        let previous = self
+            .previous_link(position)
+            .filter(|previous| *previous != node);
         self.prepare_owned_cursor(&mut raw);
-        cursor.shared.write(raw);
-        take_owner(&mut self.owners, node)
+        position.raw = raw;
+        position.record_detachment(self, previous);
+        cursor.shared.write(position);
+        // SAFETY: prepare_owned_cursor transferred one live unlinked node.
+        unsafe { self.take_unlinked(node) }
     }
 }
