@@ -14,7 +14,7 @@
 //! ```
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 use martensite_tkmesh::brep_mesh::{
     BRepMeshDiscretAlgoFactory, BRepMeshDiscretRoot, BRepMeshIncrementalMesh, register_factory,
 };
@@ -24,10 +24,8 @@ pub const XBREPMESH_FACTORY_NAME: &str = "XBRepMesh";
 
 /// A meshing factory making incremental meshers; `XBRepMeshFactory::new()`.
 #[derive(Default)]
-pub struct XBRepMeshFactory {
-    transient: StandardTransient,
-}
-impl_transient!(XBRepMeshFactory, "XBRepMeshFactory", dyn BRepMeshDiscretAlgoFactory, transient,
+pub struct XBRepMeshFactory {}
+impl_transient!(XBRepMeshFactory, "XBRepMeshFactory", dyn BRepMeshDiscretAlgoFactory,
     interfaces: [dyn BRepMeshDiscretAlgoFactory]);
 
 impl XBRepMeshFactory {
@@ -35,7 +33,7 @@ impl XBRepMeshFactory {
     /// keeps its place. Example: `let factory = XBRepMeshFactory::new();`.
     pub fn new() -> Handle<Self> {
         let factory = Handle::new(Self::default());
-        register_factory(&factory.clone().cast(), false);
+        register_factory(&factory.upcast(), false);
         factory
     }
 }
@@ -61,6 +59,6 @@ impl BRepMeshDiscretAlgoFactory for XBRepMeshFactory {
             parameters.angle = ang_deflection;
         }
         algorithm.set_shape(shape);
-        Handle::new(algorithm).cast()
+        Handle::new(algorithm).into_upcast()
     }
 }
