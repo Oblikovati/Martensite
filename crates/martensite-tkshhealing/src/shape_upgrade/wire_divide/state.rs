@@ -50,10 +50,7 @@ impl WireDivideData {
         write(&mut self.fields.write())
     }
 }
-pub(super) fn require<T: martensite_tkernel::standard::RuntimeTyped + ?Sized>(
-    handle: &Handle<T>,
-    name: &str,
-) -> Result<(), Failure> {
+pub(super) fn require<T: ?Sized>(handle: &Handle<T>, name: &str) -> Result<(), Failure> {
     if handle.is_null() {
         return Err(Failure::with_type(
             "Standard_NullObject",

@@ -217,7 +217,9 @@ impl ShapeUpgradeShapeConvertToBezier {
         let face = Handle::new(ShapeUpgradeFaceDivide::empty());
         let wire = Handle::new(ShapeUpgradeWireDivide::new());
         wire.set_edge_mode(self.parent.with(|fields| fields.edge_mode));
-        wire.set_fix_small_curve_tool(&Handle::new(ShapeUpgradeFixSmallBezierCurves::new()).cast());
+        wire.set_fix_small_curve_tool(
+            &Handle::new(ShapeUpgradeFixSmallBezierCurves::new()).into_upcast(),
+        );
         configure_curve_tools(&wire, modes);
         face.set_wire_divide_tool(&wire.into_upcast());
         configure_surface_tool(&face, modes);
@@ -237,11 +239,11 @@ fn configure_curve_tools(wire: &ShapeUpgradeWireDivide, modes: ConversionModes) 
         converter.set_line_mode(modes.lines_3d);
         converter.set_circle_mode(modes.circles_3d);
         converter.set_conic_mode(modes.conics_3d);
-        wire.set_split_curve_3d_tool(&converter.cast());
+        wire.set_split_curve_3d_tool(&converter.into_upcast());
     }
     if modes.curves_2d {
         let converter = Handle::new(ShapeUpgradeConvertCurve2dToBezier::new());
-        wire.set_split_curve_2d_tool(&converter.cast());
+        wire.set_split_curve_2d_tool(&converter.into_upcast());
     }
 }
 fn configure_surface_tool(face: &ShapeUpgradeFaceDivide, modes: ConversionModes) {
@@ -253,7 +255,7 @@ fn configure_surface_tool(face: &ShapeUpgradeFaceDivide, modes: ConversionModes)
     converter.set_revolution_mode(modes.revolutions);
     converter.set_extrusion_mode(modes.extrusions);
     converter.set_bspline_mode(modes.bspline_surfaces);
-    face.set_split_surface_tool(&converter.cast());
+    face.set_split_surface_tool(&converter.into_upcast());
 }
 fn message(key: &str) -> Msg {
     Msg::from_key(&AsciiString::from(key))

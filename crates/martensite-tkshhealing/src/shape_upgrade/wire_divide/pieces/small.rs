@@ -90,7 +90,7 @@ fn approximate(
     let mut spatial = Handle::default();
     let mut planar = Handle::default();
     let mut reversed = Handle::default();
-    let approximated = small.cast::<dyn FixSmallCurves>().approx(
+    let approximated = small.approx(
         &mut spatial,
         &mut planar,
         &mut reversed,

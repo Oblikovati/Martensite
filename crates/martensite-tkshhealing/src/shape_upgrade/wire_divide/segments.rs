@@ -45,18 +45,18 @@ fn prepare_curves<T: WireDivider + ?Sized>(
 ) -> Result<DividedCurves, Failure> {
     let transfer = tool.transfer_param_tool();
     state::require(&transfer, "parameter transfer")?;
-    transfer.set_max_tolerance(tool.wire_divide_base().max_tolerance());
-    let transfer = transfer.cast::<dyn TransferParameters>();
+    transfer
+        .transfer_parameter_data()
+        .set_max_tolerance(tool.wire_divide_base().max_tolerance());
     transfer.init(edge, face)?;
-    let virtual_criterion = criterion.cast::<dyn EdgeDivider>();
     Ok(DividedCurves {
         spatial: Handle::default(),
         planar: Handle::default(),
         reversed: Handle::default(),
         knots3: criterion.knots_3d(),
         knots2: criterion.knots_2d(),
-        split3: virtual_criterion.split_curve_3d_tool(),
-        split2: virtual_criterion.split_curve_2d_tool(),
+        split3: criterion.split_curve_3d_tool(),
+        split2: criterion.split_curve_2d_tool(),
         was_same_range: transfer.is_same_range(),
         transfer,
         has3: criterion.has_curve_3d(),
@@ -72,10 +72,10 @@ fn synchronize(curves: &mut DividedCurves) -> Result<(), Failure> {
         split_values::correct(&curves.knots3, &curves.knots2, &values2, &values3)?;
     }
     if curves.has2 {
-        build_curve(&curves.split2.cast(), &curves.knots3, &values2)?;
+        build_curve(&curves.split2, &curves.knots3, &values2)?;
     }
     if curves.has3 {
-        build_curve(&curves.split3.cast(), &curves.knots2, &values3)?;
+        build_curve(&curves.split3, &curves.knots2, &values3)?;
     }
     if curves.has2 {
         curves.knots2 = curves.split2.split_values();
@@ -86,7 +86,7 @@ fn synchronize(curves: &mut DividedCurves) -> Result<(), Failure> {
     Ok(())
 }
 fn build_curve(
-    tool: &Handle<dyn SplitCurve>,
+    tool: &Handle<impl SplitCurve + ?Sized>,
     other: &Knots,
     values: &Knots,
 ) -> Result<(), Failure> {
@@ -107,7 +107,7 @@ fn reverse_seam(curves: &mut DividedCurves, edge: &Edge, face: &Face) -> Result<
         return Ok(());
     }
     curves.split2.init_curve_range(&curve, first, last)?;
-    let splitter = curves.split2.cast::<dyn SplitCurve>();
+    let splitter = &curves.split2;
     if !curves.knots2.is_null() {
         splitter.set_split_values(&curves.knots2)?;
     }

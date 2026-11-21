@@ -53,7 +53,7 @@ pub struct ShapeAnalysisTransferParametersProj {
 impl Default for ShapeAnalysisTransferParametersProj {
     fn default() -> Self {
         let linear = TransferParameterData::default();
-        linear.with_mut(|fields| fields.max_tolerance = 1.);
+        linear.set_max_tolerance(1.);
         Self {
             linear,
             state: SharedState::new(ProjectionTransferState::default()),
