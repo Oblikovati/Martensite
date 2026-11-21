@@ -131,7 +131,7 @@ impl ViewerHost {
     /// Renders once more, retires the view and returns what the validation layer reported.
     /// Example: `let errors = host.close();`.
     pub fn close(self) -> Vec<String> {
-        let view = self.view.view();
+        let view = self.view.view_base().view();
         let render = view
             .downcast_ref::<Graphic3dRenderView>()
             .expect("the open view must use the Vulkan driver");
