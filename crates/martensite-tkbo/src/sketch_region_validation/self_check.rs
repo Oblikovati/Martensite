@@ -29,7 +29,11 @@ use super::outcome::{
 };
 use crate::bop_algo::{BOPAlgoCheckerSI, FaceTermination, SelfCheckCompletion};
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::{ncollection::List, standard::Failure};
+use martensite_tkernel::{
+    ncollection::List,
+    osd::{HeapRelease, NativeHeapRelease},
+    standard::Failure,
+};
 use std::num::NonZeroUsize;
 
 // Each worker adds memory (allocator arenas and in-flight task data), so the check bounds its
@@ -38,26 +42,31 @@ use std::num::NonZeroUsize;
 // approved tradeoff only at four. Boolean operations keep one worker per task (#496).
 const SELF_CHECK_WORKERS: NonZeroUsize = NonZeroUsize::new(4).unwrap();
 
-// #580: four workers halved one check, but across the ~19 checks of an attached cone-text
-// operation glibc kept freed memory in the worker threads' arenas. Peak RSS rose from 310 MB
-// to 470 MB for 37% less time (316 MB with MALLOC_ARENA_MAX=1), outside the approved
-// tradeoff, so the check stays serial until its parallel path fits that limit.
-pub(super) const SELF_CHECK_PARALLEL: bool = false;
+// #580: across the ~19 checks of an attached cone-text operation, the workers could not
+// reuse the free pages that the serial work before them left in the main glibc arena, so peak
+// RSS rose from 310 MB to 470 MB. Releasing free pages before each parallel check kept the
+// full operation at 310 MB with the parallel speed (60.7 s against 95-99 s serial).
+pub(super) const SELF_CHECK_PARALLEL: bool = true;
 
 pub(crate) fn inspect_self_intersection(
     shape: &Shape,
     sources: &[SourceRelation],
 ) -> Vec<ValidationFinding> {
     // The serial comparison test pins identical findings for the parallel path.
-    inspect_self_intersection_with(shape, sources, SELF_CHECK_PARALLEL)
+    inspect_self_intersection_with(shape, sources, SELF_CHECK_PARALLEL, &NativeHeapRelease)
 }
 
 pub(super) fn inspect_self_intersection_with(
     shape: &Shape,
     sources: &[SourceRelation],
     parallel: bool,
+    heap: &impl HeapRelease,
 ) -> Vec<ValidationFinding> {
     let mut checker = configured_checker(shape, parallel);
+    if parallel {
+        // Its result only says whether pages came back; the check needs no answer.
+        heap.release_free_pages();
+    }
     let trace = checker.perform_observed();
     let mut inspection = AnalyticInspection {
         checker: &checker,

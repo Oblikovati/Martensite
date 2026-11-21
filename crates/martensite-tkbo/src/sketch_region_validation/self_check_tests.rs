@@ -197,14 +197,42 @@ fn completed_single_walk_is_scoped_to_its_actual_execution() {
     );
 }
 
-// #580: the production check is serial until its parallel path fits the memory tradeoff.
+/// Counts heap releases instead of calling the allocator (#580).
+#[derive(Default)]
+struct CountingHeap {
+    releases: std::cell::Cell<usize>,
+}
+
+impl martensite_tkernel::osd::HeapRelease for CountingHeap {
+    fn release_free_pages(&self) -> bool {
+        self.releases.set(self.releases.get() + 1);
+        true
+    }
+}
+
+// The production check runs on its bounded workers (#496, #580).
 #[test]
-fn the_production_self_check_runs_serially() {
+fn the_production_self_check_runs_on_four_workers() {
     use crate::bop_algo::Parallelism;
     let shape = converted_box();
     let production =
         super::self_check::configured_checker(&shape, super::self_check::SELF_CHECK_PARALLEL);
-    assert_eq!(production.options().parallelism(), Parallelism::SERIAL);
+    let four = std::num::NonZeroUsize::new(4).unwrap();
+    assert_eq!(
+        production.options().parallelism(),
+        Parallelism::limited(four)
+    );
+}
+
+// #580: free heap pages are released once before a parallel check, never for a serial one.
+#[test]
+fn only_a_parallel_check_releases_free_heap_pages() {
+    let shape = converted_box();
+    for (parallel, expected) in [(true, 1), (false, 0)] {
+        let heap = CountingHeap::default();
+        super::self_check::inspect_self_intersection_with(&shape, &[], parallel, &heap);
+        assert_eq!(heap.releases.get(), expected, "parallel={parallel}");
+    }
 }
 
 // The check bounds its workers; serial stays serial (#496).
@@ -224,7 +252,9 @@ fn the_self_check_runs_on_at_most_four_workers() {
 fn parallel_and_serial_checks_report_identical_findings() {
     for shape in [overlapping_solids(), converted_box()] {
         let report = |parallel| {
-            let findings = super::self_check::inspect_self_intersection_with(&shape, &[], parallel);
+            let heap = CountingHeap::default();
+            let findings =
+                super::self_check::inspect_self_intersection_with(&shape, &[], parallel, &heap);
             format!("{findings:?}")
         };
         let serial = report(false);
