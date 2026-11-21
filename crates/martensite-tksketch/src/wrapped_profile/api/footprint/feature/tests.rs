@@ -128,3 +128,46 @@ fn feature_cancellation_returns_no_body() {
     assert_eq!(error.stage, CylinderFeatureStage::Admission);
     assert!(matches!(*error.cause, CylinderFeatureCause::Cancelled));
 }
+
+// The feature Boolean runs in parallel only because it publishes the serial solid exactly.
+#[test]
+fn parallel_and_serial_feature_booleans_publish_identical_solids() {
+    for (kind, normal) in [
+        (CylinderFeatureKind::Boss, NormalSense::Outward),
+        (CylinderFeatureKind::Pocket, NormalSense::Inward),
+    ] {
+        let serial = feature_boolean_bytes(kind, normal, false);
+        assert_eq!(feature_boolean_bytes(kind, normal, true), serial);
+    }
+}
+
+fn feature_boolean_bytes(
+    kind: CylinderFeatureKind,
+    normal: NormalSense,
+    parallel: bool,
+) -> Vec<u8> {
+    let attachment = attachment(None);
+    let mut request = request(&attachment, [-0.25, 0.25], [1., 2.]);
+    request.support.normal = normal;
+    let attempt = Attempt {
+        attachment: attachment.record().id,
+        revision: REVISION,
+        kind,
+    };
+    let (support, mut band) = attachment.resolve_band(REVISION, &request).unwrap();
+    let solid = admit(
+        attempt,
+        &support.body,
+        support.face.orientation(),
+        request.depths,
+        request.support.normal,
+    )
+    .unwrap();
+    let mut never = || false;
+    let tool = attachment
+        .build_trimmed_tool(REVISION, &request, &mut band, &mut never)
+        .unwrap();
+    let native = tool.extrusion().export_native().unwrap();
+    let operation = boolean(attempt, &solid, &native.bodies, parallel, &mut never).unwrap();
+    encoding::encode::<()>(operation.shape(), &[]).unwrap()
+}

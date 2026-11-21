@@ -47,6 +47,11 @@ caller's context gave 267 MB with the same report. The fix, with an
 operation-scoped worker bound, is on branch `perf/496-restore-parallel-self-check`
 and its note `docs/features/self-intersection-search/shared-context.md`. With
 four workers the check took 7.3 s in release and 32.0 s in debug.
+A single check stayed inside the memory tradeoff, but the complete attached
+operation runs about 19 checks, and glibc kept freed memory in the worker
+threads' arenas between them: peak RSS rose from 310 MB to 470 MB for 37% less
+time (316 MB with `MALLOC_ARENA_MAX=1`). The self-check is serial again until that
+is solved (#580).
 
 ### 3. A global worker cap slows other workloads
 
@@ -55,14 +60,16 @@ four workers the check took 7.3 s in release and 32.0 s in debug.
 that cap used `bfuse_complex`, which runs the serial one-step Boolean, so it never
 exercised the cap. A worker bound belongs to the operation that needs it.
 
-### 4. The feature's Fuse runs serially
+### 4. The feature's Fuse ran serially
 
-`apply_material` builds the Boolean with the default options, so the Fuse is
-serial. With parallel mode, the shared context and the parallel check, the
-complete call produced an archive identical byte for byte to the serial one.
-That run overlapped test suites, so its time is not usable, and its peak RSS was
-465 MB against 318 MB serial. Measure the parallel Fuse alone on a quiet host
-before enabling it; the memory tradeoff limit applies.
+`apply_material` built the Boolean with the default options, so the Fuse was
+serial. The feature Boolean now runs in parallel on the shared context. With the
+serial self-check of #580, the complete test took 103.2 s against 124.0 s for the
+serial Fuse under the same host load, and peak RSS was 316,568 KiB against
+315,752 KiB. On the earlier code the parallel Fuse also produced an archive
+identical byte for byte to the serial one, and
+`parallel_and_serial_feature_booleans_publish_identical_solids` pins that on the
+cylinder band boss and pocket.
 
 ### 5. The debug profile leaves the geometry crates unoptimized
 
