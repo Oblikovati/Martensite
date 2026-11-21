@@ -5,7 +5,7 @@ use std::fmt::Debug;
 impl<T: Default> DynamicArray<T> {
     /// Inserts using Rust value moves after default staging; `array.insert_before(1, 42)?`.
     /// Use `insert_before_with_assignment` for observable custom assignment operations.
-    pub fn insert_before<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_before<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         value: T,
@@ -14,7 +14,7 @@ impl<T: Default> DynamicArray<T> {
     }
     /// Inserts after an existing item; `array.insert_after(1, 42)?`.
     /// Default construction precedes Rust value moves; custom assignments use the hook adapter.
-    pub fn insert_after<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_after<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         value: T,
@@ -24,7 +24,7 @@ impl<T: Default> DynamicArray<T> {
     /// Runs descending shift assignments then the supplied final assignment.
     /// `array.insert_before_with_assignment(1, std::mem::swap, |slot| *slot = 42)?`.
     /// A panic preserves the committed size and completed assignments.
-    pub fn insert_before_with_assignment<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_before_with_assignment<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         shift_assignment: impl FnMut(&mut T, &mut T),
@@ -36,7 +36,7 @@ impl<T: Default> DynamicArray<T> {
     /// Assigns shifts from high to low, then assigns the new value after the selected item.
     /// `array.insert_after_with_assignment(0, std::mem::swap, |slot| *slot = 42)?`.
     /// Each callback receives distinct initialized slots; no raw pointers are required.
-    pub fn insert_after_with_assignment<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_after_with_assignment<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         shift_assignment: impl FnMut(&mut T, &mut T),
@@ -82,7 +82,7 @@ impl<T: Default> DynamicArray<T> {
 impl<T: Clone + Default> DynamicArray<T> {
     /// Copies into the staged insertion slot using `Clone::clone_from`.
     /// `array.insert_before_ref(1, &value)?`; ordinary shifts use Rust moves.
-    pub fn insert_before_ref<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_before_ref<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         value: &T,
@@ -91,7 +91,7 @@ impl<T: Clone + Default> DynamicArray<T> {
     }
     /// Copies after the selected item once default and shift staging have completed.
     /// `array.insert_after_ref(1, &value)?`; custom move assignment uses the hook adapter.
-    pub fn insert_after_ref<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_after_ref<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         value: &T,

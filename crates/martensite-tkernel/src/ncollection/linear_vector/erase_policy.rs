@@ -5,7 +5,7 @@ impl<T> LinearVector<T> {
     /// Removes one value through move-assignment callbacks; e.g.
     /// `vector.erase_with_move(0, |target, source| *target = std::mem::take(source))?`.
     /// Callbacks must leave both slots initialized, including when unwinding.
-    pub fn erase_with_move<F>(&mut self, index: usize, assign: F) -> Result<(), ArrayError>
+    pub(crate) fn erase_with_move<F>(&mut self, index: usize, assign: F) -> Result<(), ArrayError>
     where
         F: FnMut(&mut T, &mut T),
     {
@@ -16,7 +16,7 @@ impl<T> LinearVector<T> {
     /// Removes a half-open range after forward move assignment; e.g.
     /// `vector.erase_range_with_move(1, 3, |target, source| *target = std::mem::take(source))?`.
     /// An assignment panic retains the original length and all completed mutations.
-    pub fn erase_range_with_move<F>(
+    pub(crate) fn erase_range_with_move<F>(
         &mut self,
         from: usize,
         to: usize,

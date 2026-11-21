@@ -5,7 +5,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// Allocates an uninitialized detached block through the raw allocator policy.
     /// `let pointer = storage.allocate_block(size_of::<i32>())?;`
     /// The block is not registered in the array; retain its allocator until raw deallocation.
-    pub fn allocate_block(&self, item_size: usize) -> Result<*mut u8, Failure> {
+    pub(crate) fn allocate_block(&self, item_size: usize) -> Result<*mut u8, Failure> {
         // The request size is a `usize` product; this detached request has no typed layout.
         let bytes = self.array.increment.wrapping_mul(item_size);
         let allocator = self.array.allocator.clone().unwrap_or_default();
@@ -21,7 +21,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// Non-null pointers must be live allocations of the current compatible raw allocator.
     /// Never pass an AllocVec-owned `block_at` address; its allocation layout differs.
     /// No live values/references may be accessed afterward. Null follows the allocator policy.
-    pub unsafe fn deallocate_block(&self, pointer: *mut u8) -> Result<(), Failure> {
+    pub(crate) unsafe fn deallocate_block(&self, pointer: *mut u8) -> Result<(), Failure> {
         let allocator = self.array.allocator.clone().unwrap_or_default();
         // SAFETY: the caller supplies this allocator's live raw-policy allocation or null.
         unsafe { allocator.free_raw_nullable(pointer) }
@@ -31,7 +31,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// # Safety
     /// The pointer must be aligned, writable for T, exclusively accessible, and uninitialized.
     /// Caller owns cleanup until initialized slots are published; no active reference may alias.
-    pub unsafe fn construct_at(pointer: *mut T, construct: impl FnOnce() -> T) {
+    pub(crate) unsafe fn construct_at(pointer: *mut T, construct: impl FnOnce() -> T) {
         // SAFETY: the caller provides exclusive aligned storage with no owned live value.
         unsafe { crate::ncollection::raw_element_lifetime::construct_in_slot(pointer, construct) };
     }
@@ -41,7 +41,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// Pointer must identify one exclusively accessible live T removed from automatic ownership.
     /// Do not read, destroy or republish it again without reconstruction. Drop must not unwind
     /// to keep destruction noexcept.
-    pub unsafe fn destroy_at(pointer: *mut T) {
+    pub(crate) unsafe fn destroy_at(pointer: *mut T) {
         // SAFETY: caller guarantees a live value whose destructor will not run automatically.
         unsafe { crate::ncollection::raw_element_lifetime::destroy_in_slot(pointer) };
     }
@@ -53,7 +53,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// or duplicate owners may exist. Removed slots lose automatic Drop ownership; caller must
     /// destroy or validly republish them. Never publish a slot after destruction without rebuilding it.
     /// On a validation error, no initialization preconditions apply and metadata is unchanged.
-    pub unsafe fn set_used_size(&mut self, new_used: usize) -> Result<(), Failure> {
+    pub(crate) unsafe fn set_used_size(&mut self, new_used: usize) -> Result<(), Failure> {
         self.validate_initialized_prefix(new_used)?;
         for (index, block) in self.array.blocks.iter_mut().enumerate() {
             let length = initialized_block_length(index, self.array.increment, new_used);
@@ -69,7 +69,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// Retained blocks are rejected because allocator rebinding needs a separate ownership model.
     /// Existing detached pointers still require their original allocator after an allocator change.
     /// The unsafe `copy_parameters_retained` adapter supplies the separate retained ownership policy.
-    pub fn copy_parameters(
+    pub(crate) fn copy_parameters(
         &mut self,
         source: &DynamicArray<T>,
         copy_allocator: bool,

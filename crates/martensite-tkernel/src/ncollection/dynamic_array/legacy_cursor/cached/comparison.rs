@@ -3,7 +3,7 @@ use super::{DynamicArrayCachedIterator, Failure};
 impl<T, const M: bool> DynamicArrayCachedIterator<T, M> {
     /// Checks the left-minus-right ordering independently of container identity.
     /// `left.less_than(&right)?;` rejects signed-overflow cases.
-    pub fn less_than<const O: bool>(
+    pub(crate) fn less_than<const O: bool>(
         &self,
         other: &DynamicArrayCachedIterator<T, O>,
     ) -> Result<bool, Failure> {
@@ -11,7 +11,7 @@ impl<T, const M: bool> DynamicArrayCachedIterator<T, M> {
     }
     /// Keeps the right-minus-left ordering, including its own signed-overflow boundary.
     /// `left.greater_than(&right)?;` can compare cursors from different owners.
-    pub fn greater_than<const O: bool>(
+    pub(crate) fn greater_than<const O: bool>(
         &self,
         other: &DynamicArrayCachedIterator<T, O>,
     ) -> Result<bool, Failure> {
@@ -19,7 +19,7 @@ impl<T, const M: bool> DynamicArrayCachedIterator<T, M> {
     }
     /// Negates the right-minus-left ordering, which differs from checking left-minus-right overflow.
     /// `left.at_most(&right)?;` compares positions without reading saved element pointers.
-    pub fn at_most<const O: bool>(
+    pub(crate) fn at_most<const O: bool>(
         &self,
         other: &DynamicArrayCachedIterator<T, O>,
     ) -> Result<bool, Failure> {
@@ -27,7 +27,7 @@ impl<T, const M: bool> DynamicArrayCachedIterator<T, M> {
     }
     /// Negates the left-minus-right ordering independently of owner-sensitive equality.
     /// `left.at_least(&right)?;` remains meaningful after element allocation destruction.
-    pub fn at_least<const O: bool>(
+    pub(crate) fn at_least<const O: bool>(
         &self,
         other: &DynamicArrayCachedIterator<T, O>,
     ) -> Result<bool, Failure> {

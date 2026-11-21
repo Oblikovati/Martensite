@@ -104,14 +104,14 @@ fn NCollection_LinearVectorTest__ToArray1_SamePointer() {
         vector.append(index * 10);
     }
     let pointer = vector.as_slice().as_ptr();
-    let array = vector.to_array1();
+    let array = vector.as_array1_mut();
     assert_eq!(array.len(), 10);
     assert_eq!(&array[0] as *const i32, pointer);
 }
 #[test]
 fn NCollection_LinearVectorTest__ToArray1_ModifyReflectsInSource() {
     let mut vector = integers(&[1, 2, 3, 4, 5]);
-    let mut array = vector.to_array1();
+    let mut array = vector.as_array1_mut();
     array[0] = 99;
     array[4] = 77;
     assert_eq!(vector[0], 99);
@@ -121,7 +121,7 @@ fn NCollection_LinearVectorTest__ToArray1_ModifyReflectsInSource() {
 #[test]
 fn NCollection_LinearVectorTest__ToArray1_EmptyVector() {
     let mut vector = LinearVector::<i32>::default();
-    let array = vector.to_array1();
+    let array = vector.as_array1_mut();
     assert_eq!(array.len(), 0);
     assert!(array.is_empty());
 }
@@ -131,7 +131,7 @@ fn NCollection_LinearVectorTest__ToArray1_ReadThrough() {
     for index in 0..7 {
         vector.append(index * 11);
     }
-    let array = vector.to_array1();
+    let array = vector.as_array1_mut();
     for index in 0..7 {
         assert_eq!(array[index], index * 11);
     }
@@ -140,7 +140,7 @@ fn NCollection_LinearVectorTest__ToArray1_ReadThrough() {
 fn NCollection_LinearVectorTest__ToArray1_NonTrivial() {
     let mut vector = strings(&["alpha", "beta", "gamma"]);
     let pointer = &vector[0] as *const String;
-    let mut array = vector.to_array1();
+    let mut array = vector.as_array1_mut();
     assert_eq!(array.len(), 3);
     assert_eq!(&array[0] as *const String, pointer);
     assert_eq!(array[0], "alpha");

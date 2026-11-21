@@ -13,7 +13,7 @@ impl<T: Default> DynamicArray<T> {
     /// before element access or any automatic cleanup, including unwinding before a catch. Never
     /// read/drop a dead slot. An initial source-constructor panic leaves the old target live; callers
     /// must distinguish these phases before repair. Callbacks leave their source/temporary live.
-    pub unsafe fn set_value_from_index_with_reconstruction<
+    pub(crate) unsafe fn set_value_from_index_with_reconstruction<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(
@@ -37,7 +37,7 @@ impl<T: Default> DynamicArray<T> {
     /// slot still counted and owned. Repair via a retained raw pointer before element access or
     /// automatic cleanup, including unwind cleanup before a catch. Initial constructor failure
     /// retains the old live target (possibly modified as donor); distinguish it from transfer failure.
-    pub unsafe fn set_value_moved_from_index_with_reconstruction<
+    pub(crate) unsafe fn set_value_moved_from_index_with_reconstruction<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(

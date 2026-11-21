@@ -1,5 +1,8 @@
 //! Internal SetValue sources are constructed after allocation and gap initialization.
-use super::{ArrayError, DynamicArray, checked_index};
+use super::DynamicArray;
+#[cfg(test)]
+use super::{ArrayError, checked_index};
+#[cfg(test)]
 use std::fmt::Debug;
 
 impl<T: Default> DynamicArray<T> {
@@ -7,7 +10,8 @@ impl<T: Default> DynamicArray<T> {
     /// `array.set_value_from_index_with_assignment(2, 0, |s| *s, |t, s| *t = *s)?`.
     /// Existing targets, including the source itself, receive assignment from a distinct temporary.
     /// New targets construct gaps first. Callbacks must leave their inputs live on unwind.
-    pub fn set_value_from_index_with_assignment<
+    #[cfg(test)]
+    pub(crate) fn set_value_from_index_with_assignment<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(
@@ -24,7 +28,8 @@ impl<T: Default> DynamicArray<T> {
     /// `array.set_value_moved_from_index_with_assignment(2, 0, std::mem::take, std::mem::swap)?`.
     /// A self-source first constructs a temporary; assignment therefore never aliases its inputs.
     /// A constructor panic retains donor mutations and the old logical size.
-    pub fn set_value_moved_from_index_with_assignment<
+    #[cfg(test)]
+    pub(crate) fn set_value_moved_from_index_with_assignment<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(
@@ -37,6 +42,7 @@ impl<T: Default> DynamicArray<T> {
         self.set_internal_with_assignment(index, source_index, move_construct, move_assign)
     }
 
+    #[cfg(test)]
     fn set_internal_with_assignment<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
@@ -57,6 +63,7 @@ impl<T: Default> DynamicArray<T> {
             },
         )
     }
+    #[cfg(test)]
     pub(super) fn set_internal_constructed<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,

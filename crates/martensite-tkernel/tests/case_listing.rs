@@ -1,6 +1,5 @@
-//! Every `tests/*.rs` case file runs: either the `toolkit` executable lists it in
-//! `tests/suites/`, or `Cargo.toml` declares it as its own `[[test]]` target.
-//! Cargo's `autotests = false` would otherwise skip a new file without a warning.
+//! Case files in `tests/*.rs` need an executable, a library test registration, or
+//! a `[[test]]` target. Cargo's `autotests = false` skips unregistered files.
 use std::collections::BTreeSet;
 use std::path::Path;
 
@@ -23,6 +22,23 @@ fn suite_listed_files(tests: &Path) -> BTreeSet<String> {
     listed
 }
 
+fn library_listed_files(root: &Path) -> BTreeSet<String> {
+    let source = root.join("src");
+    let library = std::fs::read_to_string(source.join("lib.rs")).expect("library root");
+    let indices = library
+        .lines()
+        .zip(library.lines().skip(1))
+        .filter(|(attribute, _)| attribute.trim() == "#[cfg(test)]")
+        .filter_map(|(_, include)| include.trim().strip_prefix("include!(\""))
+        .filter_map(|include| include.strip_suffix("\");"));
+    let mut cases = BTreeSet::new();
+    for index in indices {
+        let index = std::fs::read_to_string(source.join(index)).expect("library test index");
+        cases.extend(quoted_after(&index, "#[path = \"../../tests/"));
+    }
+    cases
+}
+
 fn separate_target_files(manifest: &str) -> BTreeSet<String> {
     quoted_after(manifest, "path = \"tests/").collect()
 }
@@ -41,12 +57,13 @@ fn every_case_file_belongs_to_a_test_target() {
     let manifest = std::fs::read_to_string(root.join("Cargo.toml")).expect("crate manifest");
     let mut covered = suite_listed_files(&root.join("tests"));
     covered.extend(separate_target_files(&manifest));
+    covered.extend(library_listed_files(root));
     let missing: Vec<String> = case_files(&root.join("tests"))
         .difference(&covered)
         .cloned()
         .collect();
     assert!(
         missing.is_empty(),
-        "case files {missing:?}: expected each in tests/suites/ or a [[test]] target"
+        "case files {missing:?}: expected each in a suite, a library test index, or a [[test]] target"
     );
 }
