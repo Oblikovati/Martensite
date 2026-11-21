@@ -36,7 +36,7 @@ impl ResourceUnicode {
         }
         Ok(current())
     }
-    /// `read_format` through injected host services; `ResourceUnicode::read_format_with(&host)?`.
+    /// Re-reads the format through injected host services; `ResourceUnicode::read_format_with(&host)?`.
     pub(crate) fn read_format_with(host: &ResourceHost) -> Result<(), Failure> {
         let _lock = FORMAT_LOCK
             .lock()

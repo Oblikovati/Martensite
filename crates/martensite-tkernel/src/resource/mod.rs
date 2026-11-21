@@ -49,7 +49,7 @@ static DEBUG: AtomicBool = AtomicBool::new(false);
 /// ```
 ///
 /// `Clone` copies the manager
-/// as a context copy needs: the name, the three maps, the flags and the host.
+/// as a context copy needs: the name, maps, flags and host.
 #[derive(Clone)]
 pub struct ResourceManager {
     // Transient base: the manager is shared by handle.
