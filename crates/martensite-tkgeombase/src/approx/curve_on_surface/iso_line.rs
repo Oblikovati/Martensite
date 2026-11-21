@@ -9,7 +9,7 @@ use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomCurve, GeomRectangularTrimmedSurface, GeomSurface, GeomTrimmedCurve,
 };
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom_adaptor::GeomSurfaceAdaptor;
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::convert::ParameterisationType;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
@@ -99,7 +99,7 @@ impl CurveOnSurface {
         c2d: &dyn Adaptor2dCurve2d,
         (is_u, param, is_forward): IsoLine,
     ) -> Result<bool, Failure> {
-        let geom_adaptor: Handle<GeomAdaptorSurface> = self.surf.cast();
+        let geom_adaptor = self.surf.view::<dyn GeomSurfaceAdaptor>();
         let Some(geom_adaptor) = geom_adaptor.get() else {
             return Ok(false);
         };
@@ -164,7 +164,7 @@ impl CurveOnSurface {
                 ((p1, p2), (v1, v2))
             };
             let trimmed = GeomRectangularTrimmedSurface::new(&surf, u, v, (true, true))?;
-            surf = Handle::new(trimmed).cast::<dyn GeomSurface>();
+            surf = Handle::new(trimmed).into_upcast::<dyn GeomSurface>();
         }
         let surface = surf.get().ok_or_else(|| null_table("Surface"))?;
         let iso = if is_u {
@@ -176,7 +176,7 @@ impl CurveOnSurface {
             return Ok(Some(iso));
         }
         let trimmed = GeomTrimmedCurve::new(&iso, p1, p2, true, true)?;
-        Ok(Some(Handle::new(trimmed).cast::<dyn GeomCurve>()))
+        Ok(Some(Handle::new(trimmed).into_upcast::<dyn GeomCurve>()))
     }
 
     // The largest distance between the 3D curve and the curve on surface at 24

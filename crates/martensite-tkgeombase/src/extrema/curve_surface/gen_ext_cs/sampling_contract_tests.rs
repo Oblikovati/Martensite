@@ -1,19 +1,17 @@
 //! Sampling and failure receipts retained by the move-only grid change (#496).
 use super::*;
-use martensite_tkernel::{impl_transient, standard::StandardTransient};
+use martensite_tkernel::{impl_transient, standard::Transient};
 use std::sync::Mutex;
 
 #[derive(Default)]
 pub(super) struct RecordingGridSurface {
-    parent: StandardTransient,
     samples: Mutex<Vec<[f64; 2]>>,
     fail_at: Option<usize>,
 }
 impl_transient!(
     RecordingGridSurface,
     "RecordingGridSurface496",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Adaptor3dSurface for RecordingGridSurface {

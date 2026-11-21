@@ -25,7 +25,7 @@ use std::ops::{Deref, DerefMut};
 /// use martensite_tkgeombase::geom_lprop::CurAndInf2d;
 /// use martensite_tkmath::gp::{Axis2d, Ellipse2};
 /// let ellipse = Ellipse2::from_x_axis(Axis2d::default(), 10.0, 3.0, true).unwrap();
-/// let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dEllipse::from_elips2d(ellipse)).cast();
+/// let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dEllipse::from_elips2d(ellipse)).into_upcast();
 /// let mut analyzer = CurAndInf2d::new();
 /// analyzer.perform_cur_ext(&curve).unwrap();
 /// assert_eq!(analyzer.nb_points(), 4);

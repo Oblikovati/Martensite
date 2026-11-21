@@ -145,14 +145,14 @@ pub(super) fn extend_c2d(
         let d: f64 = u1y * u2x - u1x * u2y;
         (uo21y * u1x - uo21x * u1y) / d
     };
-    let seg_line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(lin)).cast();
+    let seg_line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(lin)).into_upcast();
     let (s1, s2) = if first_or_last == 0 {
         (par_on_lin, 0.)
     } else {
         (0., par_on_lin)
     };
     let segment: Handle<dyn Geom2dBoundedCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&seg_line, s1, s2, true, true)?).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&seg_line, s1, s2, true, true)?).into_upcast();
     comp.add(&segment, precision::confusion(), first_or_last != 0)?;
     *res = comp.bspline_curve();
     Ok(())

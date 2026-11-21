@@ -6,7 +6,7 @@
 //! (including offsets and rational Bezier curves), the 3D one only at the adaptor.
 //! A failure anywhere is caught natively and means "not proven" (`Err` here).
 use super::rational_bezier::rational_bezier_square_distance;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, project_concrete};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dConic, Geom2dCurve,
@@ -42,8 +42,7 @@ pub(super) fn constant_square_distance_2d(
         }
         _ => {}
     }
-    let upcast: &dyn Transient = curve;
-    let Some(adaptor) = Geom2dAdaptorCurve::project_from(upcast) else {
+    let Some(adaptor) = project_concrete::<Geom2dAdaptorCurve>(curve) else {
         return Ok(None);
     };
     let geometry: Handle<dyn Geom2dCurve> = adaptor.curve();

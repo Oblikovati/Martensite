@@ -132,9 +132,9 @@ impl SameParameter {
         s: &Handle<dyn GeomSurface>,
         tol: f64,
     ) -> Result<Self, Failure> {
-        let hcurve_2d = Handle::new(Geom2dAdaptorCurve::with_curve(c2d)?).cast();
-        let c3d = Handle::new(GeomAdaptorCurve::with_curve(c3d)?).cast();
-        let surf = Handle::new(GeomAdaptorSurface::with_surface(s)?).cast();
+        let hcurve_2d = Handle::new(Geom2dAdaptorCurve::with_curve(c2d)?).into_upcast();
+        let c3d = Handle::new(GeomAdaptorCurve::with_curve(c3d)?).into_upcast();
+        let surf = Handle::new(GeomAdaptorSurface::with_surface(s)?).into_upcast();
         Self::with_inputs(c3d, hcurve_2d, surf, tol)
     }
 
@@ -146,7 +146,7 @@ impl SameParameter {
         s: &Handle<dyn Adaptor3dSurface>,
         tol: f64,
     ) -> Result<Self, Failure> {
-        let hcurve_2d = Handle::new(Geom2dAdaptorCurve::with_curve(c2d)?).cast();
+        let hcurve_2d = Handle::new(Geom2dAdaptorCurve::with_curve(c2d)?).into_upcast();
         Self::with_inputs(c3d.clone(), hcurve_2d, s.clone(), tol)
     }
 

@@ -2,7 +2,7 @@
 //! spec of the implementation (same kinds, same order).
 use super::fixture_input::GeometryFixtureInput;
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
     Geom2dHyperbola, Geom2dLine, Geom2dOffsetCurve, Geom2dParabola, Geom2dTrimmedCurve,
@@ -20,8 +20,8 @@ use martensite_tkmath::gp::{Axis3, Point2, Point3};
 
 type Built<T> = Result<Handle<T>, Failure>;
 
-fn up<T: Transient + RuntimeTyped, U: ?Sized + RuntimeTyped>(value: T) -> Handle<U> {
-    Handle::new(value).into_cast()
+fn up<T: HandleUpcast<U>, U: ?Sized>(value: T) -> Handle<U> {
+    Handle::new(value).into_upcast()
 }
 
 /// `gt_ax3`: a frame and an indirect flag.

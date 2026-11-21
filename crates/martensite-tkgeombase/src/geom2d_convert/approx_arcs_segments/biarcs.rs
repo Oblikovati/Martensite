@@ -254,7 +254,7 @@ mod tests {
     // calculateLines has no retained caller, so only this test reaches it.
     #[test]
     fn calculate_lines_joins_the_scan_parameters_farther_apart_than_the_tolerance() {
-        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(gp::ox2d())).cast();
+        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(gp::ox2d())).into_upcast();
         let adaptor = Geom2dAdaptorCurve::with_range(&line, 0.0, 3.0).unwrap();
         let mut approx = ApproxArcsSegments::new(&adaptor, 0.4, 0.1).unwrap();
         approx.my_seq_params = (0..=6)

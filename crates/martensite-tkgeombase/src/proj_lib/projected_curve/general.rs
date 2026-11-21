@@ -62,7 +62,7 @@ impl ProjectedState {
             only_3d: false,
             only_2d: true,
         };
-        let hprojector: Handle<dyn Adaptor2dCurve2d> = Handle::new(projector).cast();
+        let hprojector: Handle<dyn Adaptor2dCurve2d> = Handle::new(projector).into_upcast();
         let appr = CurveOnSurface::new(
             &hprojector,
             &self.surface,

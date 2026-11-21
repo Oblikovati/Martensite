@@ -46,7 +46,8 @@ use std::sync::{OnceLock, PoisonError, RwLock};
 /// handler every printer and reader consults, as natively.
 fn active_handler() -> &'static RwLock<Handle<dyn UndefinedTypeHandler>> {
     static ACTIVE: OnceLock<RwLock<Handle<dyn UndefinedTypeHandler>>> = OnceLock::new();
-    ACTIVE.get_or_init(|| RwLock::new(Handle::new(UndefinedTypeHandlerBase::default()).into_cast()))
+    ACTIVE
+        .get_or_init(|| RwLock::new(Handle::new(UndefinedTypeHandlerBase::default()).into_upcast()))
 }
 
 /// The active handler, read once per dispatch as `GetUndefinedTypeHandler()` is.

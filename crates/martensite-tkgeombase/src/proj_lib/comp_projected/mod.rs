@@ -22,7 +22,7 @@ use crate::native_failure::failure;
 use derivatives::Pair;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
@@ -141,14 +141,12 @@ fn null(what: &str) -> Failure {
 /// }
 /// ```
 pub struct CompProjectedCurve {
-    parent: StandardTransient,
     state: SharedState<CompState>,
 }
 impl_transient!(
     CompProjectedCurve,
     "ProjLib_CompProjectedCurve",
     dyn Adaptor2dCurve2d,
-    parent,
     interfaces: [dyn Adaptor2dCurve2d]
 );
 
@@ -164,7 +162,6 @@ impl Default for CompProjectedCurve {
 impl CompProjectedCurve {
     pub(super) fn from_state(state: CompState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

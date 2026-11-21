@@ -55,7 +55,7 @@ pub(super) fn trimmed_to_bspline(
     }
     if surf.cast::<GeomRectangularTrimmedSurface>().is_some() {
         let a_strim = GeomRectangularTrimmedSurface::new(&surf, (u1, u2), (v1, v2), (true, true))?;
-        return surface_to_bspline_surface(&Handle::new(a_strim).cast());
+        return surface_to_bspline_surface(&Handle::new(a_strim).into_upcast());
     }
     // For cylinders, cones, spheres, toruses.
     let domain = TrimDomain {

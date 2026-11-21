@@ -60,7 +60,8 @@ impl OnPlaneState {
             let normal: Direction3 = Direction3::from_vector(c.xc.crossed(c.yc))?;
             let frame: Axis2 =
                 Axis2::with_x_direction(c.p, normal, Direction3::from_vector(c.xc)?)?;
-            projected = Handle::new(GeomParabola::from_parab(Parabola3::new(frame, focal)?)).cast();
+            projected =
+                Handle::new(GeomParabola::from_parab(Parabola3::new(frame, focal)?)).into_upcast();
         } else if c.yc.magnitude() < conf || c.yc.is_parallel(c.xc, precision::angular())? {
             self.is_approx = true;
         } else if !self.keep_param {
@@ -126,7 +127,7 @@ impl OnPlaneState {
         for i in 1..=bezier.nb_poles() {
             projected.set_pole(i, oblique.project_point(bezier.pole(i)?))?;
         }
-        let curve: Handle<dyn GeomCurve> = Handle::new(projected).cast();
+        let curve: Handle<dyn GeomCurve> = Handle::new(projected).into_upcast();
         self.result = Handle::new(GeomAdaptorCurve::with_curve(&curve)?);
         Ok(())
     }
@@ -142,7 +143,7 @@ impl OnPlaneState {
         for i in 1..=bspline.nb_poles() {
             projected.set_pole(i, oblique.project_point(bspline.pole(i)?))?;
         }
-        let curve: Handle<dyn GeomCurve> = Handle::new(projected).cast();
+        let curve: Handle<dyn GeomCurve> = Handle::new(projected).into_upcast();
         self.result = Handle::new(GeomAdaptorCurve::with_curve(&curve)?);
         Ok(())
     }
@@ -159,7 +160,7 @@ fn hyperbola(frame: Axis2, major: f64, minor: f64) -> Result<Handle<dyn GeomCurv
     Ok(Handle::new(GeomHyperbola::from_hypr(Hyperbola3::new(
         frame, major, minor,
     )?))
-    .cast())
+    .into_upcast())
 }
 
 fn null_curve() -> Failure {
@@ -282,7 +283,7 @@ impl OnPlaneState {
         let mut copy: OnPlaneState = self.shallow_copy()?;
         copy.curve_type = CurveType::OtherCurve;
         let adaptor: Handle<dyn Adaptor3dCurve> =
-            Handle::new(ProjectOnPlane::from_state(copy)).cast();
+            Handle::new(ProjectOnPlane::from_state(copy)).into_upcast();
         CLProps3d::new(adaptor, 2, precision::confusion())
     }
 
@@ -335,7 +336,7 @@ impl OnPlaneState {
             return Ok(Handle::default());
         }
         self.curve_type = CurveType::Parabola;
-        Ok(Handle::new(GeomParabola::from_parab(maker.value()?)).cast())
+        Ok(Handle::new(GeomParabola::from_parab(maker.value()?)).into_upcast())
     }
 
     /// `BuildHyperbolaByApex`: the hyperbola through the curvature maximum of the

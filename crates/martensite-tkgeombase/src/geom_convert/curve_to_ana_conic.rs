@@ -92,7 +92,7 @@ pub(super) fn compute_circle(
     }
     fit.deviation = a_max;
     (fit.first, fit.last) = periodic_range(&crc, curve, (c1, c2))?;
-    Ok(Handle::new(GeomCircle::from_circ(crc)).cast())
+    Ok(Handle::new(GeomCircle::from_circ(crc)).into_upcast())
 }
 
 // The parameters on a closed conic of the ends of `[c1, c2]`: the first in
@@ -393,5 +393,5 @@ fn finish_ellipse(
     }
     fit.deviation = param2;
     (fit.first, fit.last) = periodic_range(&ellipse, curve, (c1, c2))?;
-    Ok(Handle::new(gell).cast())
+    Ok(Handle::new(gell).into_upcast())
 }

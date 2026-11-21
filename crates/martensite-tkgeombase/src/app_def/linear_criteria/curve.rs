@@ -34,9 +34,9 @@ fn constraint_order(order: i32) -> Shape {
 // myCriteria[0..3] = Tension, Flexion, Jerk, each assigned as soon as it is built.
 fn build_criteria(state: &mut CriteriaState, shape: CurveShape) -> Result<(), Failure> {
     let order: Shape = constraint_order(shape.order);
-    state.criteria[0] = Handle::new(LinearTension::new(shape.work_degree, order)?).cast();
-    state.criteria[1] = Handle::new(LinearFlexion::new(shape.work_degree, order)?).cast();
-    state.criteria[2] = Handle::new(LinearJerk::new(shape.work_degree, order)?).cast();
+    state.criteria[0] = Handle::new(LinearTension::new(shape.work_degree, order)?).into_upcast();
+    state.criteria[1] = Handle::new(LinearFlexion::new(shape.work_degree, order)?).into_upcast();
+    state.criteria[2] = Handle::new(LinearJerk::new(shape.work_degree, order)?).into_upcast();
     Ok(())
 }
 

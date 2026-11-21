@@ -6,7 +6,7 @@ use super::context::AdvApp2VarContext;
 use super::criterion::{AdvApp2VarCriterion, AdvApp2VarCriterionType};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use martensite_tkmath::convert::GridPolynomialToPoles;
 use martensite_tkmath::gp::Point3;
 
@@ -42,15 +42,9 @@ pub(super) struct PatchState {
 /// Shared through handles; every member takes `&self`.
 /// `AdvApp2VarPatch::with_domain([0.0, 1.0, 0.0, 1.0], 1, 1).u_order() == 1`.
 pub struct AdvApp2VarPatch {
-    parent: StandardTransient,
     pub(super) state: SharedState<PatchState>,
 }
-impl_transient!(
-    AdvApp2VarPatch,
-    "AdvApp2Var_Patch",
-    StandardTransient,
-    parent
-);
+impl_transient!(AdvApp2VarPatch, "AdvApp2Var_Patch", dyn Transient);
 
 impl Default for AdvApp2VarPatch {
     fn default() -> Self {
@@ -82,7 +76,6 @@ impl AdvApp2VarPatch {
             ..PatchState::default()
         };
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
