@@ -103,7 +103,7 @@ fn free_edge_faces(
 /// standing for its basis.
 fn basis_surface(f: &Face) -> Result<Handle<dyn GeomSurface>, Failure> {
     let s = BRepTool::surface(f)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     Ok(trimmed.get().map_or(s.clone(), |t| t.basis_surface()))
 }
 
@@ -248,7 +248,7 @@ impl DPrism {
             .clone();
             if new_face.is_none() {
                 let surf = basis_surface(&topods::face(s)?)?;
-                if surf.cast::<GeomPlane>().is_null() {
+                if surf.downcast_ref::<GeomPlane>().is_none() {
                     break;
                 }
                 let mut face = Face::default();

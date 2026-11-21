@@ -413,13 +413,13 @@ impl Form {
     /// or cone (no wire, or a natural restriction).
     fn is_infinite_face(fac: &Face) -> Result<bool, Failure> {
         let mut s = BRepTool::surface(fac)?;
-        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
         if let Some(t) = trimmed.get() {
             s = t.basis_surface();
         }
-        let elementary = !s.cast::<GeomPlane>().is_null()
-            || !s.cast::<GeomCylindricalSurface>().is_null()
-            || !s.cast::<GeomConicalSurface>().is_null();
+        let elementary = s.downcast_ref::<GeomPlane>().is_some()
+            || s.downcast_ref::<GeomCylindricalSurface>().is_some()
+            || s.downcast_ref::<GeomConicalSurface>().is_some();
         if !elementary {
             return Ok(false);
         }

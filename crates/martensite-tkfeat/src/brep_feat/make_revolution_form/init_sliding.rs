@@ -20,14 +20,14 @@ use martensite_tktopalgo::brep_lib::BRepLibMakeEdge;
 /// Whether the surface of the face is a plane, a cylinder, a cone or a torus.
 fn of_revolution(face: &Face) -> Result<bool, Failure> {
     let mut s = BRepTool::surface(face)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     if let Some(t) = trimmed.get() {
         s = t.basis_surface();
     }
-    Ok(!s.cast::<GeomPlane>().is_null()
-        || !s.cast::<GeomCylindricalSurface>().is_null()
-        || !s.cast::<GeomConicalSurface>().is_null()
-        || !s.cast::<GeomToroidalSurface>().is_null())
+    Ok(s.downcast_ref::<GeomPlane>().is_some()
+        || s.downcast_ref::<GeomCylindricalSurface>().is_some()
+        || s.downcast_ref::<GeomConicalSurface>().is_some()
+        || s.downcast_ref::<GeomToroidalSurface>().is_some())
 }
 
 /// The vertex at a point with the confusion tolerance.
@@ -48,7 +48,7 @@ impl BRepFeatMakeRevolutionForm {
     /// `rayon`.
     fn coaxial_circle(&self, on_edge: &Edge, rayon: f64) -> Result<bool, Failure> {
         let (crv, _, _) = BRepTool::curve(on_edge)?;
-        let circle: Handle<GeomCircle> = crv.cast();
+        let circle: Handle<GeomCircle> = crv.downcast();
         let Some(c) = circle.get() else {
             return Ok(false);
         };
@@ -86,7 +86,7 @@ impl BRepFeatMakeRevolutionForm {
             return Ok(Some(false));
         }
         // Control only start and end points no control at the middle to improve
-        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(self.axe)).cast();
+        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(self.axe)).into_upcast();
         let proj = ProjectPointOnCurve::with_curve(self.rib.first_pnt, &line)?;
         if proj.nb_points() < 1 {
             self.fail(StatusError::NoProjPt);

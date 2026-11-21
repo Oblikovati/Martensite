@@ -126,7 +126,9 @@ fn edge_samples(edge: &Edge, seq: &mut Sequence<Point3>) -> Result<(), Failure> 
         .curve
         .get()
         .ok_or_else(|| null_object("LocOpe::SampleEdges", "edge without 3D curve"))?;
-    let c: Handle<dyn GeomCurve> = curve.transformed(located.location.transformation())?.cast();
+    let c: Handle<dyn GeomCurve> = curve
+        .transformed(located.location.transformation())?
+        .into_cast();
     let c = c
         .get()
         .ok_or_else(|| null_object("LocOpe::SampleEdges", "transformed geometry is not a curve"))?;

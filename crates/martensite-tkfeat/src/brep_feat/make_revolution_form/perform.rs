@@ -110,7 +110,7 @@ impl BRepFeatMakeRevolutionForm {
         vec1: Vector3,
     ) -> Result<Option<Shape>, Failure> {
         let normale: Handle<dyn GeomCurve> =
-            Handle::new(GeomLine::from_point(pt, Direction3::from_vector(vec1)?)).cast();
+            Handle::new(GeomLine::from_point(pt, Direction3::from_vector(vec1)?)).into_upcast();
         let mut scur = Sequence::default();
         scur.append(normale);
         let mut asi1 = CSIntersector::with_shape(f1);

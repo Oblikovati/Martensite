@@ -7,12 +7,13 @@ use martensite_tkbrep::topexp::{self, Explorer};
 use martensite_tkbrep::topods::{self, Edge, Face, Shape, Vertex};
 use martensite_tkbrep::toptools::{IndexedDataMapOfShapeListOfShape, MapOfShape, ShapeMapHasher};
 use martensite_tkernel::ncollection::{DataMap, List};
-use martensite_tkernel::standard::{Failure, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Transient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// `GeneratedShape`: the virtual members of a generated shape. The
 /// implementations compute their maps on first use, hence `&mut self`.
-/// Custom implementors retain an owned transient base, as does `GluedShape`.
+/// Implementors declare themselves with `impl_transient!` and list `dyn GeneratedShape`
+/// among their interfaces, as does `GluedShape`.
 /// Example: `let generated: &dyn GeneratedShape = &GluedShape::default();`.
 pub trait GeneratedShape: Transient {
     /// The edges of the basis the shape is generated from.
@@ -31,7 +32,7 @@ pub trait GeneratedShape: Transient {
 martensite_tkernel::impl_transient_interface!(
     dyn GeneratedShape,
     "LocOpe_GeneratedShape",
-    StandardTransient
+    dyn Transient
 );
 
 /// `GluedShape`: a shape glued on faces of a basis; its generating edges are the
@@ -45,8 +46,6 @@ martensite_tkernel::impl_transient_interface!(
 /// ```
 #[derive(Default)]
 pub struct GluedShape {
-    // Keep the reference base's counter operation-local; cloning resets its ownership count.
-    transient: StandardTransient,
     shape: Shape,
     map: MapOfShape,
     g_shape: DataMap<Shape, Shape, ShapeMapHasher>,
@@ -55,10 +54,9 @@ pub struct GluedShape {
 }
 
 impl Clone for GluedShape {
-    /// Copy state into a fresh zero-counter owner; `let copied = glued.clone()`.
+    /// Copy every field; `let copied = glued.clone()`.
     fn clone(&self) -> Self {
         Self {
-            transient: self.transient.clone(),
             shape: self.shape.clone(),
             map: self.map.clone(),
             g_shape: self.g_shape.clone(),
@@ -67,10 +65,10 @@ impl Clone for GluedShape {
         }
     }
 
-    /// Preserve the target counter during assignment; `target.clone_from(&source)`.
+    /// Assign field by field; `target.clone_from(&source)`.
     fn clone_from(&mut self, source: &Self) {
-        // f452af042 exposed counters: reference StandardTransient assignment preserves them.
-        self.transient.clone_from(&source.transient);
+        // f452af042 mirrored the reference assignment field by field; the native handle owns
+        // the count now, and each collection keeps its own `clone_from` (allocator reuse).
         self.shape.clone_from(&source.shape);
         self.map.clone_from(&source.map);
         self.g_shape.clone_from(&source.g_shape);
@@ -83,7 +81,6 @@ martensite_tkernel::impl_transient!(
     GluedShape,
     "LocOpe_GluedShape",
     dyn GeneratedShape,
-    transient,
     interfaces: [dyn GeneratedShape]
 );
 

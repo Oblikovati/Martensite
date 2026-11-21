@@ -22,7 +22,7 @@ impl DPrism {
         let (p1, p2) = (BRepTool::pnt(&v1)?, BRepTool::pnt(&v2)?);
         let (dy, dz) = (p2.y() - p1.y(), p2.z() - p1.z());
         let s = basis_surface(&self.spine)?;
-        let pp = s.cast::<GeomPlane>();
+        let pp = s.downcast::<GeomPlane>();
         let p = pp
             .get()
             .ok_or_else(|| construction_error("LocOpe_DPrism::Curves", "the spine is not planar"))?
@@ -54,8 +54,9 @@ impl DPrism {
                 .curve
                 .get()
                 .ok_or_else(|| null_object("LocOpe_DPrism::Curves", "edge without 3D curve"))?;
-            let c: Handle<dyn GeomCurve> =
-                base.transformed(located.location.transformation())?.cast();
+            let c: Handle<dyn GeomCurve> = base
+                .transformed(located.location.transformation())?
+                .into_cast();
             let curve = c.get().ok_or_else(|| {
                 null_object(
                     "LocOpe_DPrism::Curves",
@@ -74,9 +75,11 @@ impl DPrism {
                 let locy = normale.crossed(Direction3::from_vector(d1)?)?;
                 let ldir = vector_of(locy.xyz() * dy + normale.xyz() * dz);
                 let lin = Line3::new(pt, Direction3::from_vector(ldir)?);
-                let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(lin)).cast();
-                scurves
-                    .append(Handle::new(GeomTrimmedCurve::new(&line, u1, u2, true, true)?).cast());
+                let line: Handle<dyn GeomCurve> =
+                    Handle::new(GeomLine::from_lin(lin)).into_upcast();
+                scurves.append(
+                    Handle::new(GeomTrimmedCurve::new(&line, u1, u2, true, true)?).into_upcast(),
+                );
             }
         }
         Ok(())
@@ -104,6 +107,6 @@ impl DPrism {
             Point3::new(bar.x(), bar.y(), bar.z()),
             Direction3::from_vector(vec)?,
         );
-        Ok(Handle::new(GeomLine::new(axis)).cast())
+        Ok(Handle::new(GeomLine::new(axis)).into_upcast())
     }
 }

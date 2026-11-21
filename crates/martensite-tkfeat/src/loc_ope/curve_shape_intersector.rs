@@ -109,7 +109,7 @@ impl CurveShapeIntersector {
         if s.is_null() {
             return Ok(());
         }
-        let gc: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(*c)).cast();
+        let gc: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(*c)).into_upcast();
         let ac = GeomAdaptorCurve::with_range(&gc, 0., 2. * std::f64::consts::PI)?;
         let mut the_int = BRepIntCurveSurfaceInter::new();
         the_int.init_curve(s, &ac, precision::confusion())?;

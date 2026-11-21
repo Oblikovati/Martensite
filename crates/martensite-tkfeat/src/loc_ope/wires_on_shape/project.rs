@@ -24,7 +24,9 @@ pub(super) fn located_curve(edge: &Edge) -> Result<(Handle<dyn GeomCurve>, f64, 
         let curve = c
             .get()
             .ok_or_else(|| null_object("LocOpe_WiresOnShape", "edge without 3D curve"))?;
-        c = curve.transformed(located.location.transformation())?.cast();
+        c = curve
+            .transformed(located.location.transformation())?
+            .into_cast();
     }
     Ok((c, located.first, located.last))
 }

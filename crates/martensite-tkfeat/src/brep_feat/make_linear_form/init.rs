@@ -34,11 +34,12 @@ fn touches(p: Point3, d: Vector3, face: &Face) -> Result<bool, Failure> {
 /// Whether the surface of the face is a plane or a cylinder (the rib may slide on it).
 fn slides_on(face: &Face) -> Result<bool, Failure> {
     let mut s = BRepTool::surface(face)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     if let Some(t) = trimmed.get() {
         s = t.basis_surface();
     }
-    Ok(!s.cast::<GeomPlane>().is_null() || !s.cast::<GeomCylindricalSurface>().is_null())
+    Ok(s.downcast_ref::<GeomPlane>().is_some()
+        || s.downcast_ref::<GeomCylindricalSurface>().is_some())
 }
 
 impl BRepFeatMakeLinearForm {

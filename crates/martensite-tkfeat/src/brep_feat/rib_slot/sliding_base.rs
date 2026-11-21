@@ -45,7 +45,7 @@ impl Base {
 /// The trimmed curve of an edge (`new GeomTrimmedCurve(C, f, l)`).
 fn trimmed(e: &Edge) -> Result<Handle<dyn GeomCurve>, Failure> {
     let (c, f, l) = BRepTool::curve(e)?;
-    Ok(Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).cast())
+    Ok(Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).into_upcast())
 }
 
 /// The vertex at a point.
@@ -206,7 +206,7 @@ impl SlidingBase<'_> {
             return Ok((false, false));
         }
         let (fpar, lpar) = (cc.first_parameter(), cc.last_parameter());
-        let cc: Handle<dyn GeomCurve> = Handle::new(cc).cast();
+        let cc: Handle<dyn GeomCurve> = Handle::new(cc).into_upcast();
         let c = cc
             .get()
             .ok_or_else(|| no_such_object("BRepFeat_RibSlot sliding base", "null curve"))?;
