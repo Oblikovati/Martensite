@@ -15,7 +15,7 @@ fn micro_fixture(kind: usize, tolerance: f64) -> Edge {
         Point3::default(),
         Direction3::new(1., 0., 0.).unwrap(),
     )))
-    .cast();
+    .into_upcast();
     builder
         .make_edge_with_curve(&mut edge, &curve, tolerance)
         .unwrap();

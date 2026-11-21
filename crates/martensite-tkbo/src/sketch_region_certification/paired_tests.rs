@@ -22,7 +22,7 @@ pub(crate) fn bezier_shape(controls: &[[f64; 2]], weights: Option<&[f64]>) -> Sh
         None => GeomBezierCurve::new(&poles),
     }
     .unwrap();
-    let curve: Handle<dyn GeomCurve> = Handle::new(curve).cast();
+    let curve: Handle<dyn GeomCurve> = Handle::new(curve).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

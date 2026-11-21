@@ -71,7 +71,7 @@ fn assert_copied_geometry(batch: &CandidateBatch) {
         let (curve, _, _) = BRepTool::curve(&edge(&segment.edge).unwrap()).unwrap();
         assert_eq!(
             curve
-                .cast::<GeomBezierCurve>()
+                .downcast::<GeomBezierCurve>()
                 .get()
                 .unwrap()
                 .pole(2)
@@ -84,7 +84,7 @@ fn assert_copied_geometry(batch: &CandidateBatch) {
 fn mutate_source_curve(source: &Shape) {
     let (curve, _, _) = BRepTool::curve(&edge(source).unwrap()).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .get()
         .unwrap()
         .set_pole(2, Point3::new(8., 0., 0.))
@@ -311,7 +311,7 @@ fn assert_original_geometry(source: &Shape) {
     let (curve, _, _) = BRepTool::curve(&edge(source).unwrap()).unwrap();
     assert_eq!(
         curve
-            .cast::<GeomBezierCurve>()
+            .downcast::<GeomBezierCurve>()
             .get()
             .unwrap()
             .pole(2)

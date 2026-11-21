@@ -1,6 +1,6 @@
 //! An edge interval between adjacent paves, plus inserted vertices and shrunk bounds.
 use super::Pave;
-use martensite_tkernel::{impl_transient, standard::StandardTransient};
+use martensite_tkernel::{impl_transient, standard::Transient};
 use martensite_tkmath::bnd::BoundingBox3;
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
@@ -11,7 +11,6 @@ pub type PaveBlockHandle = Arc<Mutex<PaveBlock>>;
 /// `BOPDSPaveBlock`; two endpoint paves define one interval on an original edge.
 #[derive(Clone)]
 pub struct PaveBlock {
-    parent: StandardTransient,
     edge: i32,
     original_edge: i32,
     pave1: Pave,
@@ -27,7 +26,6 @@ pub struct PaveBlock {
 impl Default for PaveBlock {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             edge: -1,
             original_edge: -1,
             pave1: Pave::default(),
@@ -42,7 +40,7 @@ impl Default for PaveBlock {
     }
 }
 
-impl_transient!(PaveBlock, "BOPDSPaveBlock", StandardTransient, parent);
+impl_transient!(PaveBlock, "BOPDSPaveBlock", dyn Transient);
 
 impl std::fmt::Debug for PaveBlock {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

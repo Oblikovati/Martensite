@@ -128,7 +128,7 @@ fn face_frame(
     algo_tools2d::edge_tangent(edge, parameter, &mut derivative)?;
     let tangent = Direction3::from_vector(derivative)?;
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_point(point, tangent)?).cast();
+        Handle::new(GeomPlane::from_point(point, tangent)?).into_upcast();
     let mut plane = ProjectPointOnSurf::new();
     plane.init_surface(&surface, surface.bounds(), ExtAlgo::Grad)?;
     let (step, small) = step::minimum_step(edge, face, candidates, point, context)?;

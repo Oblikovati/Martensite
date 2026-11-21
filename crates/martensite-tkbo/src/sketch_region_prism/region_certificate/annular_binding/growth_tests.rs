@@ -41,11 +41,11 @@ impl AnnularBindingProgress for GrowAtBoundary {
 fn space_curve() -> Result<Handle<dyn GeomCurve>, Failure> {
     let poles =
         [[0., 0.], [4., 0.], [2., 2.], [0., 4.], [0., 0.]].map(|p| Point3::new(p[0], p[1], 0.));
-    Ok(Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1))?).cast())
+    Ok(Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1))?).into_upcast())
 }
 fn plane_curve() -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let poles = [[0., 0.], [4., 0.], [2., 2.], [0., 4.], [0., 0.]].map(|p| Point2::new(p[0], p[1]));
-    Ok(Handle::new(Geom2dBezierCurve::new(&Array1::from_shared(&poles, 1))?).cast())
+    Ok(Handle::new(Geom2dBezierCurve::new(&Array1::from_shared(&poles, 1))?).into_upcast())
 }
 fn grow(target: &GrowthTarget) -> Result<(), Failure> {
     match target {
@@ -119,7 +119,7 @@ fn swept_basis(receipt: &PrismReceipt) -> GrowthTarget {
         .unwrap();
     let (surface, _) =
         BRepTool::surface_with_location(&face(&side.context.occurrence).unwrap()).unwrap();
-    GrowthTarget::Extrusion(surface.cast())
+    GrowthTarget::Extrusion(surface.downcast())
 }
 #[test]
 fn copied_space_growth_is_guarded_at_each_external_capture_boundary() {

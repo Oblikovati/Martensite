@@ -37,7 +37,7 @@ fn empty_boundary_only_and_interior_only_lines_leave_output_untouched() {
         assert!(!done);
         assert_eq!(output.len(), 1);
         assert_eq!(
-            output[0].cast::<IntPatchWLine>().nb_pnts().unwrap(),
+            output[0].downcast::<IntPatchWLine>().nb_pnts().unwrap(),
             if pattern == 0 { 0 } else { 3 }
         );
     }
@@ -48,7 +48,7 @@ fn periodic_endpoints_keep_creation_way_and_append_four_point_line() {
         let (done, output) = split(3, mode).unwrap();
         assert!(done);
         assert_eq!(output.len(), 2);
-        let line = output[1].cast::<IntPatchWLine>();
+        let line = output[1].downcast::<IntPatchWLine>();
         assert_eq!(line.nb_pnts().unwrap(), 4);
         assert_eq!(line.get_creating_way(), IntPatchWLType::ImpImp);
         assert_eq!(line.point(1).unwrap().parameters_on_s1(), (0., 0.));
@@ -64,7 +64,7 @@ fn middle_seam_produces_two_new_lines() {
     assert!(done);
     assert_eq!(output.len(), 3);
     for item in &output[1..] {
-        assert_eq!(item.cast::<IntPatchWLine>().nb_pnts().unwrap(), 3);
+        assert_eq!(item.downcast::<IntPatchWLine>().nb_pnts().unwrap(), 3);
     }
 }
 #[test]
@@ -72,7 +72,7 @@ fn constructor_parts_are_honoured_and_unperformed_constructor_fails() {
     let (done, output) = split(3, 4).unwrap();
     assert!(done);
     assert_eq!(output.len(), 2);
-    let line = output[1].cast::<IntPatchWLine>();
+    let line = output[1].downcast::<IntPatchWLine>();
     assert_eq!(line.nb_pnts().unwrap(), 2);
     assert_eq!(line.point(1).unwrap().parameters_on_s1(), (0.1, 0.));
     assert_eq!(line.point(2).unwrap().parameters_on_s1(), (0.2, 0.));

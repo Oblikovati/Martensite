@@ -62,7 +62,7 @@ fn MakePlaneFace(first_u: f64, last_u: f64, first_v: f64, last_v: f64, z: f64) -
 
 fn cylinder_surface() -> Handle<dyn GeomSurface> {
     Handle::new(GeomCylindricalSurface::new(Axis3::from_axis2(gp::xoy()), 10.0).unwrap())
-        .into_cast()
+        .into_upcast()
 }
 
 fn MakeCylinderFace() -> Shape {

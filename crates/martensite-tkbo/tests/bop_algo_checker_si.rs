@@ -84,7 +84,7 @@ fn run(label: &str, shape: &Shape, level: i32, out: &mut String) {
 
 fn spindle_torus() -> Shape {
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomToroidalSurface::new(Axis3::default(), 2.0, 3.0).unwrap()).into_cast();
+        Handle::new(GeomToroidalSurface::new(Axis3::default(), 2.0, 3.0).unwrap()).into_upcast();
     let maker = BRepBuilderAPIMakeFace::from_surface(&surface, precision::confusion()).unwrap();
     maker.face().unwrap().into_shape()
 }

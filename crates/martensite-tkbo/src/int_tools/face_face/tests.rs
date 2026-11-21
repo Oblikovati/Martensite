@@ -59,10 +59,10 @@ fn descriptor(geometry: Handle<dyn GeomCurve>) -> Curve {
     )
 }
 fn closed_circle() -> Curve {
-    let curve = Handle::new(GeomCircle::new(Axis2::default(), 2.0).unwrap()).cast();
+    let curve = Handle::new(GeomCircle::new(Axis2::default(), 2.0).unwrap()).into_upcast();
     descriptor(
         Handle::new(GeomTrimmedCurve::new(&curve, 0.0, std::f64::consts::TAU, true, true).unwrap())
-            .cast(),
+            .into_upcast(),
     )
 }
 #[test]
@@ -83,8 +83,9 @@ fn preparation_splits_closed_curves_only_when_requested() {
 }
 fn plane_cone() -> FaceFace {
     let ff = FaceFace::default();
-    let plane = Handle::new(GeomPlane::new(Axis3::default())).cast();
-    let cone = Handle::new(GeomConicalSurface::new(Axis3::default(), 0.3, 2.0).unwrap()).cast();
+    let plane = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
+    let cone =
+        Handle::new(GeomConicalSurface::new(Axis3::default(), 0.3, 2.0).unwrap()).into_upcast();
     ff.surfaces[0].load(&plane).unwrap();
     ff.surfaces[1].load(&cone).unwrap();
     ff
@@ -92,13 +93,14 @@ fn plane_cone() -> FaceFace {
 #[test]
 fn preparation_reduces_only_four_line_plane_cone_case() {
     let mut ff = plane_cone();
-    let line = descriptor(Handle::new(GeomLine::new(Axis1::default())).cast());
+    let line = descriptor(Handle::new(GeomLine::new(Axis1::default())).into_upcast());
     ff.curves = vec![line.clone(); 3];
     ff.prepare_lines_3d(false).unwrap();
     assert_eq!(ff.curves.len(), 3);
     ff.curves.push(line);
-    ff.curves[2] =
-        descriptor(Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast());
+    ff.curves[2] = descriptor(
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast(),
+    );
     ff.prepare_lines_3d(false).unwrap();
     assert_eq!(ff.curves.len(), 2);
     ff.curves = vec![closed_circle(); 4];

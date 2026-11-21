@@ -75,7 +75,7 @@ pub(super) fn curve_of(shape: &Shape) -> Handle<GeomBezierCurve> {
     let mut edges = IndexedMapOfShape::default();
     topexp::map_shapes_of_type(shape, ShapeEnum::Edge, &mut edges).unwrap();
     let edge = edge(edges.find_key(1).unwrap()).unwrap();
-    BRepTool::curve(&edge).unwrap().0.cast()
+    BRepTool::curve(&edge).unwrap().0.downcast()
 }
 #[test]
 fn copied_output_survives_later_source_geometry_and_topology_mutation() {

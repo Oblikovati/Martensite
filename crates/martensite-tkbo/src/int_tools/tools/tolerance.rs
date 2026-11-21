@@ -16,19 +16,19 @@ use martensite_tkmath::{bnd::BoundingBox3, geom_abs::CurveType};
 impl Tools {
     /// Adapts tolerance only for a trimmed parabola; `Tools::curve_tolerance(&curve, 1e-7)?`.
     pub fn curve_tolerance(curve: &Handle<dyn GeomCurve>, tolerance: f64) -> Result<f64, Failure> {
-        let trimmed = curve.cast::<GeomTrimmedCurve>();
+        let trimmed = curve.downcast::<GeomTrimmedCurve>();
         if trimmed.is_null() {
             return Ok(tolerance);
         }
         if GeomAdaptorCurve::with_curve(curve)?.get_type()? != CurveType::Parabola {
             return Ok(tolerance);
         }
-        let parabola = trimmed.basis_curve().cast::<GeomParabola>();
+        let parabola = trimmed.basis_curve().downcast::<GeomParabola>();
         if parabola.is_null() || parabola.focal() == 0. {
             return Ok(tolerance);
         }
         let axis: Handle<dyn GeomCurve> =
-            Handle::new(GeomLine::new(parabola.parab()?.x_axis())).into_cast();
+            Handle::new(GeomLine::new(parabola.parab()?.x_axis())).into_upcast();
         let first = parabola_tolerance(&parabola, &axis, curve.first_parameter(), tolerance)?;
         let last = parabola_tolerance(&parabola, &axis, curve.last_parameter(), tolerance)?;
         Ok(if first > last { first } else { last })

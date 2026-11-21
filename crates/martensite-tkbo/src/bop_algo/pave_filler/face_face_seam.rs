@@ -48,15 +48,15 @@ impl ClosedEdgeProbe {
 
 /// Native static `IsPlaneFF`: a plane, or an offset or trimmed surface based on a plane.
 fn is_plane_ff(surface: &Handle<dyn GeomSurface>) -> bool {
-    let offset = surface.cast::<GeomOffsetSurface>();
+    let offset = surface.downcast::<GeomOffsetSurface>();
     if let Some(offset) = offset.get() {
-        return offset.basis_surface().cast::<GeomPlane>().is_some();
+        return offset.basis_surface().downcast::<GeomPlane>().is_some();
     }
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     if let Some(trimmed) = trimmed.get() {
-        return trimmed.basis_surface().cast::<GeomPlane>().is_some();
+        return trimmed.basis_surface().downcast::<GeomPlane>().is_some();
     }
-    surface.cast::<GeomPlane>().is_some()
+    surface.downcast::<GeomPlane>().is_some()
 }
 
 impl BOPAlgoPaveFiller {

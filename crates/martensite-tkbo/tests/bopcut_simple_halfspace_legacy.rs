@@ -140,7 +140,7 @@ fn BOPCutSimpleTest__PlanarCircleCut_ZQ1() {
             )
             .unwrap(),
         )
-        .cast();
+        .into_upcast();
         let edge = BRepBuilderAPIMakeEdge::from_curve(&curve)
             .unwrap()
             .edge()

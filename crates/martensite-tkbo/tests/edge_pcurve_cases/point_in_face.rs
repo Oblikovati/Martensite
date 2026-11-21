@@ -44,7 +44,7 @@ fn observe(kind: usize, orientation: usize, mode: usize) -> [f64; 6] {
             Point2::new(if mode == 3 { 100. } else { 0.5 }, 0.),
             Direction2::Y,
         )))
-        .cast();
+        .into_upcast();
         algo_tools3d::point_in_face_curve(
             &face,
             &line,

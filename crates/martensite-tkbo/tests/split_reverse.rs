@@ -93,5 +93,5 @@ fn edges(kind: usize) -> (Edge, Edge) {
     (split, original)
 }
 fn line(direction: Direction3) -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::new(Axis1::new(Point3::default(), direction))).cast()
+    Handle::new(GeomLine::new(Axis1::new(Point3::default(), direction))).into_upcast()
 }

@@ -42,8 +42,8 @@ impl FaceFace {
             indicemax: part.last,
         };
         approximation.perform_on_surfaces(
-            &self.surfaces[0].clone().cast(),
-            &self.surfaces[1].clone().cast(),
+            &self.surfaces[0].upcast(),
+            &self.surfaces[1].upcast(),
             &part.line,
             range,
         )

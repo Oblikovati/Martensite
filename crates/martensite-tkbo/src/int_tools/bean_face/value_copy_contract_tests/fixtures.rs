@@ -4,7 +4,7 @@ fn curve_edge(curve: &Handle<GeomBezierCurve>) -> Edge {
     let mut edge = Edge::default();
     let builder = BRepBuilder::default();
     builder
-        .make_edge_with_curve(&mut edge, &curve.cast::<dyn GeomCurve>(), 1e-7)
+        .make_edge_with_curve(&mut edge, &curve.upcast::<dyn GeomCurve>(), 1e-7)
         .unwrap();
     builder.range(&edge, 0., 1., true).unwrap();
     edge
@@ -38,7 +38,7 @@ pub(super) fn cached_surface() -> (Handle<GeomBezierSurface>, BRepAdaptorSurface
     surface.clear_eval_representation();
     let mut face = Face::default();
     BRepBuilder::default()
-        .make_face_on_surface(&mut face, &surface.cast::<dyn GeomSurface>(), 1e-7)
+        .make_face_on_surface(&mut face, &surface.upcast::<dyn GeomSurface>(), 1e-7)
         .unwrap();
     let adaptor = BRepAdaptorSurface::with_face(&face, false).unwrap();
     assert_eq!(adaptor.value(0.25, 0.5).unwrap(), Point3::new(0.5, 1., 0.));

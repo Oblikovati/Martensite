@@ -162,9 +162,9 @@ fn planar_preparation_completions(
 /// Native static `IsBasedOnPlane`: a plane or a rectangular trimmed plane.
 fn is_based_on_plane(face: &Face) -> Result<bool, Failure> {
     let (surface, _) = BRepTool::surface_with_location(face)?;
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     if let Some(trimmed) = trimmed.get() {
-        return Ok(trimmed.basis_surface().cast::<GeomPlane>().is_some());
+        return Ok(trimmed.basis_surface().downcast::<GeomPlane>().is_some());
     }
-    Ok(surface.cast::<GeomPlane>().is_some())
+    Ok(surface.downcast::<GeomPlane>().is_some())
 }

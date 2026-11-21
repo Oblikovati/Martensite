@@ -61,18 +61,20 @@ fn adapt_reference(
     let transform = representation.location().transformation();
     if representation.is_curve3d() {
         let curve: Handle<dyn GeomCurve> = representation.curve3d()?.transformed(transform)?.cast();
-        return Ok(Handle::new(GeomAdaptorCurve::with_range(&curve, range.0, range.1)?).cast());
+        return Ok(
+            Handle::new(GeomAdaptorCurve::with_range(&curve, range.0, range.1)?).into_upcast(),
+        );
     }
     let surface: Handle<dyn GeomSurface> = representation.surface()?.transformed(transform)?.cast();
-    Ok(curve_on_surface(&representation.pcurve()?, &surface, range)?.cast())
+    Ok(curve_on_surface(&representation.pcurve()?, &surface, range)?.into_upcast())
 }
 pub(super) fn curve_on_surface(
     curve: &Handle<dyn Geom2dCurve>,
     surface: &Handle<dyn GeomSurface>,
     range: (f64, f64),
 ) -> Result<Handle<Adaptor3dCurveOnSurface>, Failure> {
-    let curve = Handle::new(Geom2dAdaptorCurve::with_range(curve, range.0, range.1)?).cast();
-    let surface = Handle::new(GeomAdaptorSurface::with_surface(surface)?).cast();
+    let curve = Handle::new(Geom2dAdaptorCurve::with_range(curve, range.0, range.1)?).into_upcast();
+    let surface = Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
     Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(
         &curve, &surface,
     )?))

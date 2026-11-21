@@ -70,7 +70,7 @@ pub(in crate::sketch_region_prism) fn capture_bezier_edge(
 pub(super) fn require_bezier_evaluator(
     curve: &Handle<dyn GeomCurve>,
 ) -> Result<(), PrismSurfaceCause> {
-    let bezier = curve.cast::<GeomBezierCurve>();
+    let bezier = curve.downcast::<GeomBezierCurve>();
     let Some(bezier) = bezier.get() else {
         return Err(PrismSurfaceCause::Unsupported {
             representation: "stored full-range Bézier",
@@ -90,10 +90,10 @@ pub(super) fn require_bezier_evaluator(
 fn actual_surface(shape: &Shape) -> Result<CapturedPrismSurface, PrismSurfaceCause> {
     let actual = face(shape)?;
     let (surface, location) = BRepTool::surface_with_location(&actual)?;
-    if surface.cast::<GeomPlane>().is_some() {
+    if surface.downcast::<GeomPlane>().is_some() {
         return Ok(CapturedPrismSurface::Plane(capture_support(&actual)?));
     }
-    let extrusion = surface.cast::<GeomSurfaceOfLinearExtrusion>();
+    let extrusion = surface.downcast::<GeomSurfaceOfLinearExtrusion>();
     let Some(extrusion) = extrusion.get() else {
         return Err(PrismSurfaceCause::Unsupported {
             representation: "plane or stored linear extrusion",

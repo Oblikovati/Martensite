@@ -92,7 +92,7 @@ fn capture_pcurve(
 /// Example: `capture_support(&face)?` binds later exact arithmetic to this face revision.
 pub(crate) fn capture_support(face: &Face) -> Result<CapturedPlaneSupport, CapturedGeometryCause> {
     let (surface, location) = BRepTool::surface_with_location(face)?;
-    let plane = surface.cast::<GeomPlane>();
+    let plane = surface.downcast::<GeomPlane>();
     let Some(plane) = plane.get() else {
         return Err(CapturedGeometryCause::Unsupported {
             representation: "support plane",

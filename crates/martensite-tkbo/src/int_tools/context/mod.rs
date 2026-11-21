@@ -9,7 +9,7 @@ use martensite_tkbrep::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::BaseAllocator,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
 };
 use martensite_tkg3d::{
     adaptor3d::Adaptor3dSurface,
@@ -33,7 +33,6 @@ mod services;
 pub use cache::Cached;
 /// `IntToolsContext`; `Context::default().state_point_face(&face, uv)?`.
 pub struct Context {
-    parent: StandardTransient,
     tolerance: SharedState<f64>,
     classifiers: ShapeCache<FClass2d>,
     surfaces: ShapeCache<BRepAdaptorSurface>,
@@ -46,7 +45,7 @@ pub struct Context {
     edge_projectors: ShapeCache<ProjectPointOnCurve>,
     curve_projectors: projectors::CurveCache,
 }
-impl_transient!(Context, "IntToolsContext", StandardTransient, parent);
+impl_transient!(Context, "IntToolsContext", dyn Transient);
 impl Default for Context {
     fn default() -> Self {
         Self::with_allocator(BaseAllocator::common())
@@ -56,7 +55,6 @@ impl Context {
     /// Uses the injected allocator for cached maps and services; `Context::with_allocator(BaseAllocator::common())`.
     pub fn with_allocator(allocator: BaseAllocator) -> Self {
         Self {
-            parent: StandardTransient::default(),
             tolerance: SharedState::new(1e-12),
             classifiers: ShapeCache::new(&allocator),
             surfaces: ShapeCache::new(&allocator),
