@@ -50,7 +50,7 @@ fn reference_slot_retiring_pointer_is_actual_and_conflicts_fail_explicitly() {
     assert_eq!(next.ref_count(), 1);
     slot.assign(&old).unwrap();
     drop(retiring);
-    slot.publish_ownership(next.clone(), false);
+    slot.finish_retirement(&next.downgrade(), false);
     assert_eq!(slot.object_address(), next.object_address());
     assert_eq!(next.ref_count(), 2);
 }
@@ -93,7 +93,7 @@ fn reference_slot_retiring_projection_refuses_a_fabricated_live_pointee() {
     assert_retiring_projection_failure(&failure);
     assert_eq!(storage.ref_count(), 0);
     drop(storage);
-    slot.publish_ownership(Handle::<StandardTransient>::default(), false);
+    slot.finish_retirement(&Handle::<StandardTransient>::default().downgrade(), false);
 }
 
 fn assert_retiring_projection_failure(failure: &crate::standard::Failure) {
@@ -116,7 +116,7 @@ fn reference_slot_retiring_reborrow_checks_actual_pointer_and_phase() {
             .unwrap()
     );
     drop(ownership);
-    slot.publish_ownership(Handle::<StandardTransient>::default(), false);
+    slot.finish_retirement(&Handle::<StandardTransient>::default().downgrade(), false);
 }
 
 #[test]

@@ -1,4 +1,4 @@
-//! Every nested EndScope boundary must retain callback-published native ownership loss.
+//! Nested retirement releases callback-published pixmaps with the retiring pointer still visible.
 #[path = "support/texture_retirement_chain_fixture.rs"]
 mod chain_fixture;
 use chain_fixture::*;
@@ -8,13 +8,13 @@ use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
 use std::sync::Arc;
 #[test]
-fn texture_retirement_two_destructors_preserve_all_native_lost_references() {
+fn texture_retirement_releases_all_displaced_owners() {
     let trace = Arc::new(SharedState::new(Vec::new()));
     run_texture_chain(false, &trace);
     run_texture_chain(true, &trace);
     assert_eq!(
         trace.read().join("\n"),
-        include_str!("fixtures/ais_textured_shape/native-retirement-chain.txt").trim_end()
+        include_str!("fixtures/ais_textured_shape/rust-retirement-chain.txt").trim_end()
     );
 }
 fn run_texture_chain(outer_file: bool, trace: &Arc<SharedState<Vec<String>>>) {

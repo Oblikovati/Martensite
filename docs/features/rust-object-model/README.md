@@ -108,6 +108,20 @@ greppable.
   `dyn` access to the cost of a concrete one. Measure first; it needs `unsafe` in `tkernel`
   under the crate's exception.
 
+## Callback ownership
+
+TKV3D keeps a callback target alive until the callback returns, even if application code
+replaces its slot. `ref_count` includes any temporary Arc owner used for that call. Code
+running inside a callback should use the count as a snapshot of Rust ownership.
+
+A reentrant texture setter releases each displaced pixmap while the texture slot still
+identifies that pixmap. A destructor can inspect it at strong count zero and make scoped
+setter calls. The outer setter then publishes its requested value. The Rust regression
+fixtures record these counts and the additional destructor that runs when Rust releases
+the owner OCCT leaked. The OCCT captures remain available for comparison.
+
+## Related API changes
+
 The accepted API changes of #583 still apply and are best done in the same pass: public items
 that no other toolkit calls become crate-private (#591, list in
 [consumed-public-api.tsv](../tkernel-occt-parity/consumed-public-api.tsv)),

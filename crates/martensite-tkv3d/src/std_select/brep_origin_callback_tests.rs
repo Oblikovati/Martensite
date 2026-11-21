@@ -70,7 +70,7 @@ impl SelectMgrEntityOwnerSource for BrepOriginCallbackOwnerFake {
     }
 }
 #[test]
-fn actual_origin_callback_preserves_borrowed_counts_frozen_end_and_replaced_later_slot() {
+fn actual_origin_callback_retains_current_owner_and_reads_replaced_later_slot() {
     let mut empty = Compound::default();
     Builder.make_compound(&mut empty);
     let object = AisColoredShape::new(&empty);
@@ -81,7 +81,7 @@ fn actual_origin_callback_preserves_borrowed_counts_frozen_end_and_replaced_late
     record_origin_callback_finish(&selection, &object, &owners, &rows);
     assert_eq!(
         *rows.read(),
-        include_str!("../../tests/fixtures/colored-shape-compute/native-selection-origin.txt")
+        include_str!("../../tests/fixtures/colored-shape-compute/rust-selection-origin.txt")
     );
 }
 fn invoke_origin_callback_load(

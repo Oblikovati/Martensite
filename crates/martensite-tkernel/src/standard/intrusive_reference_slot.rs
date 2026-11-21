@@ -13,6 +13,12 @@ enum ReferenceSlotOwnership<T: ?Sized> {
     Shared(Option<HandleSlot<T>>),
 }
 impl<T: ?Sized> ReferenceSlotOwnership<T> {
+    fn is_empty(&self) -> bool {
+        match self {
+            Self::Direct(handle) => handle.is_null(),
+            Self::Shared(slot) => slot.is_none(),
+        }
+    }
     fn take(&mut self) -> Self {
         match self {
             Self::Direct(handle) => Self::Direct(std::mem::take(handle)),
@@ -79,8 +85,10 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         // Assignment captures its pointer argument before ending the old scope, not an owning copy.
         let incoming = source.observe().downgrade();
         let old = self.begin_retirement(pointer)?;
+        let mut completion = RetirementCompletion(Some(self));
         drop(old);
-        self.publish_ownership(incoming.upgrade(), false);
+        self.finish_retirement(&incoming, false);
+        completion.0 = None;
         Ok(())
     }
     /// Release ownership without prematurely clearing the pointer; `slot.clear()?`.
@@ -99,15 +107,18 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         members.retiring = true;
         Ok(members.ownership.take())
     }
-    fn publish_ownership(&self, ownership: Handle<T>, retiring: bool) {
-        let pointer = ownership.downgrade();
-        let mut members = self.members.write();
-        let displaced = members.ownership.replace(ownership);
-        members.pointer = pointer;
-        members.retiring = retiring;
-        // A displaced object's destructor can inspect the newly published slot.
-        drop(members);
-        drop(displaced);
+    fn finish_retirement(&self, incoming: &WeakHandle<T>, retiring: bool) {
+        loop {
+            let mut members = self.members.write();
+            if members.settle_retirement(incoming, retiring) {
+                return;
+            }
+            // A callback can publish another owned target. Its destructor must still
+            // see its own pointer and may in turn publish another target.
+            let displaced = members.ownership.take();
+            drop(members);
+            drop(displaced);
+        }
     }
     /// Observe pointer nullness even during a destructor; `slot.is_null()`.
     pub fn is_null(&self) -> bool {
@@ -200,6 +211,34 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         std::ptr::from_ref(&members.pointer).cast()
     }
 }
+impl<T: ?Sized + RuntimeTyped> ReferenceSlotMembers<T> {
+    fn settle_retirement(&mut self, incoming: &WeakHandle<T>, retiring: bool) -> bool {
+        if self.ownership.is_empty() {
+            let incoming = incoming.upgrade();
+            self.pointer = incoming.downgrade();
+            self.ownership.replace(incoming);
+        } else if self.pointer.object_address() != incoming.object_address() {
+            return false;
+        }
+        self.retiring = retiring;
+        true
+    }
+}
+
+struct RetirementCompletion<'a, T: ?Sized + RuntimeTyped>(Option<&'a IntrusiveReferenceSlot<T>>);
+impl<T: ?Sized + RuntimeTyped> Drop for RetirementCompletion<'_, T> {
+    fn drop(&mut self) {
+        let Some(slot) = self.0 else {
+            return;
+        };
+        // An unwinding destructor may have published a new target before it failed.
+        let mut members = slot.members.write();
+        if members.ownership.is_empty() {
+            members.pointer = WeakHandle::default();
+        }
+        members.retiring = false;
+    }
+}
 #[cfg(test)]
 #[path = "intrusive_reference_slot_tests.rs"]
 mod tests;
@@ -237,19 +276,12 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveRetirementBorrow<'_, T> {
             return Ok(());
         }
         let incoming = source.observe().downgrade();
-        self.release_current_reference();
-        self.slot.publish_ownership(incoming.upgrade(), true);
+        self.slot.finish_retirement(&incoming, true);
         Ok(())
     }
     /// Nested nullification; `borrow.clear()?`.
     pub fn clear(&self) -> Result<(), Failure> {
         let null = Handle::<T>::default();
         self.assign(&null)
-    }
-    fn release_current_reference(&self) {
-        // A nested destructor still enters through the current pointer slot. Its identity
-        // remains readable until the incoming object is published, even at zero owners.
-        let ownership = self.slot.members.write().ownership.take();
-        drop(ownership);
     }
 }

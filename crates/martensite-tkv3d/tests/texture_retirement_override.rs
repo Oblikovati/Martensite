@@ -1,6 +1,5 @@
 //! Setters called from the destructor of the retiring texture pixmap reach the application
-//! override, which records the field before and after its base call exactly as natively
-//! (`the recorded texture_retirement_override capture`).
+//! override, which records the field before and after its base call.
 #[path = "support/texture_retirement_override_fixture.rs"]
 mod override_fixture;
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
@@ -9,7 +8,7 @@ use martensite_tkv3d::ais::*;
 use override_fixture::*;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
-const NATIVE: &str = include_str!("fixtures/ais_textured_shape/native-retirement-override.txt");
+const RUST_ROUTING: &str = include_str!("fixtures/ais_textured_shape/rust-retirement-override.txt");
 
 #[test]
 fn texture_retirement_destructor_setters_route_to_the_derived_override() {
@@ -18,12 +17,9 @@ fn texture_retirement_destructor_setters_route_to_the_derived_override() {
         run_routing_case(mode, false, &trace);
         run_routing_case(mode, true, &trace);
     }
-    let actual: Vec<String> = trace.read().clone();
-    let expected: Vec<&str> = NATIVE.lines().collect();
-    assert_eq!(
-        actual, expected,
-        "Rust override routing; expected the native records"
-    );
+    let rows = trace.read();
+    let actual = rows.iter().map(|row| row.trim_end()).collect::<Vec<_>>();
+    assert_eq!(actual, RUST_ROUTING.lines().collect::<Vec<_>>());
 }
 #[test]
 fn texture_retirement_unscoped_setter_from_a_dropping_pixmap_fails_typed() {

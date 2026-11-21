@@ -14,7 +14,7 @@ fn texture_retirement_actual_getter_projects_count_zero_pointee() {
     assert_eq!(trace.read()[0], "POINTEE none 1 0 3 2 73");
 }
 #[test]
-fn texture_retirement_native_nested_matrix_matches_all_actual_records() {
+fn texture_retirement_nested_matrix_preserves_pointer_and_arc_ownership() {
     let trace = Arc::new(SharedState::new(Vec::new()));
     for mode in ["none", "same", "file", "pixmap"] {
         run_projection_case(mode, false, &trace);
@@ -22,7 +22,7 @@ fn texture_retirement_native_nested_matrix_matches_all_actual_records() {
     }
     assert_eq!(
         trace.read().join("\n"),
-        include_str!("fixtures/ais_textured_shape/native-retirement-projection.txt").trim_end()
+        include_str!("fixtures/ais_textured_shape/rust-retirement-projection.txt").trim_end()
     );
 }
 fn run_projection_case(
