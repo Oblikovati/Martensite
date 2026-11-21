@@ -139,26 +139,15 @@ impl UnitsMethods {
             .map_or(LengthUnit::Undefined, |(_, unit)| *unit)
     }
 
-    /// The length unit of `factor` relative to the default base unit, millimetres;
-    /// `UnitsMethods::get_length_unit_by_factor_value_default(25.4)`.
-    pub fn get_length_unit_by_factor_value_default(factor: f64) -> LengthUnit {
-        Self::get_length_unit_by_factor_value(factor, LengthUnit::Millimeter)
-    }
-
     /// The short name of the unit matching `factor` in `base`;
     /// `UnitsMethods::dump_length_unit_factor(25.4, LengthUnit::Millimeter) == "in"`.
     pub fn dump_length_unit_factor(factor: f64, base: LengthUnit) -> &'static str {
         Self::dump_length_unit(Self::get_length_unit_by_factor_value(factor, base))
     }
 
-    /// The name of the length unit of `factor` relative to the default base unit, millimetres;
-    /// `UnitsMethods::dump_length_unit_factor_default(25.4) == "in"`.
-    pub fn dump_length_unit_factor_default(factor: f64) -> &'static str {
-        Self::dump_length_unit_factor(factor, LengthUnit::Millimeter)
-    }
     /// The short name of `unit` (`UNDEFINED` for Undefined; mil is `min`, microinch
     /// `nin`); `UnitsMethods::dump_length_unit(LengthUnit::Foot) == "ft"`.
-    pub fn dump_length_unit(unit: LengthUnit) -> &'static str {
+    fn dump_length_unit(unit: LengthUnit) -> &'static str {
         NAMES
             .iter()
             .find(|(_, candidate)| *candidate == unit)
@@ -235,9 +224,12 @@ mod tests {
         methods.set_cascade_length_unit_default(25.4);
         assert_eq!(methods.get_cascade_length_unit_default(), 25.4);
         assert_eq!(
-            UnitsMethods::get_length_unit_by_factor_value_default(25.4),
+            UnitsMethods::get_length_unit_by_factor_value(25.4, LengthUnit::Millimeter),
             LengthUnit::Inch
         );
-        assert_eq!(UnitsMethods::dump_length_unit_factor_default(25.4), "in");
+        assert_eq!(
+            UnitsMethods::dump_length_unit_factor(25.4, LengthUnit::Millimeter),
+            "in"
+        );
     }
 }

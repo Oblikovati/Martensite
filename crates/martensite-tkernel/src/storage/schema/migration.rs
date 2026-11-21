@@ -128,7 +128,7 @@ impl TypeMigration {
 
     /// The process-wide table, loaded once from the host environment;
     /// `TypeMigration::process_wide()`.
-    pub fn process_wide() -> &'static Self {
+    pub(super) fn process_wide() -> &'static Self {
         static TABLE: OnceLock<TypeMigration> = OnceLock::new();
         TABLE.get_or_init(|| Self::load(&NativeMigrationSource))
     }

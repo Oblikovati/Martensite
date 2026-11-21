@@ -20,7 +20,7 @@ fn stream_write(stream: &mut IoStream, bytes: &[u8], member: &str) -> Result<(),
 
 impl BinaryFile {
     /// Writes one host-order integer and returns its size, 4; `BinaryFile::put_integer_stream(&mut out, 1, false)?`.
-    pub fn put_integer_stream(
+    fn put_integer_stream(
         stream: &mut IoStream,
         value: i32,
         only_count: bool,
