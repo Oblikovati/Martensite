@@ -40,10 +40,10 @@ fn public_pole_copies_remain_detached_from_private_cache_views() {
 #[test]
 fn cached_coefficients_stay_owned_while_a_fresh_adaptor_reads_the_edit() {
     let curve = segment();
-    let adaptor = Geom2dAdaptorCurve::with_curve(&curve.cast()).unwrap();
+    let adaptor = Geom2dAdaptorCurve::with_curve(&curve.upcast()).unwrap();
     assert_eq!(adaptor.d0(0.25).unwrap(), Point2::new(0.5, 0.));
     curve.set_pole(1, Point2::new(4., 0.)).unwrap();
-    let fresh = Geom2dAdaptorCurve::with_curve(&curve.cast()).unwrap();
+    let fresh = Geom2dAdaptorCurve::with_curve(&curve.upcast()).unwrap();
     assert_eq!(fresh.d0(0.25).unwrap(), Point2::new(3.5, 0.));
     drop(curve);
     assert_eq!(adaptor.d0(0.25).unwrap(), Point2::new(0.5, 0.));

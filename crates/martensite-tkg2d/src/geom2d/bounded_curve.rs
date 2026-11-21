@@ -1,6 +1,6 @@
 //! `Geom2dBoundedCurve`: curves limited by two finite parameters.
 use super::curve::{Geom2dCurve, dump_curve};
-use super::geometry::{dump_base, dump_class_name};
+use super::geometry::{Geom2dGeometry, dump_base, dump_class_name};
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::dump::DumpStream;
@@ -17,7 +17,7 @@ pub trait Geom2dBoundedCurve: Geom2dCurve {
 impl_transient_interface!(
     dyn Geom2dBoundedCurve,
     "Geom2d_BoundedCurve",
-    dyn Geom2dCurve
+    dyn Geom2dCurve, upcasts: [dyn Geom2dCurve, dyn Geom2dGeometry]
 );
 
 /// `Geom2dBoundedCurve::DumpJson`; `dump_bounded_curve(&mut stream, -1)?`.

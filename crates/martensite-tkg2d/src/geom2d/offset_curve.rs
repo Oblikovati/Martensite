@@ -12,7 +12,7 @@ use crate::geom2d_eval::{RepCurveDesc, rep_utils};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Point2, Transform2, Vector2, resolution};
 use std::io;
@@ -24,18 +24,16 @@ struct OffsetState {
     basis_continuity: Shape,
 }
 
-/// An offset curve; `Handle::new(Geom2dOffsetCurve::new(&circle.cast(), 1.0, false)?)`.
+/// An offset curve; `Handle::new(Geom2dOffsetCurve::new(&circle.upcast(), 1.0, false)?)`.
 ///
 /// Unless trimmed, the basis curve is shared with the caller, as internally.
 pub struct Geom2dOffsetCurve {
-    parent: StandardTransient,
     state: SharedState<OffsetState>,
 }
 impl_transient!(
     Geom2dOffsetCurve,
     "Geom2d_OffsetCurve",
     dyn Geom2dCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve]
 );
 
@@ -61,26 +59,22 @@ fn resolve_basis(
     let mut checking: Handle<dyn Geom2dCurve> = curve.clone();
     let mut is_trimmed: bool = false;
     loop {
-        let trimmed: Handle<Geom2dTrimmedCurve> = checking.cast();
-        let offset: Handle<Geom2dOffsetCurve> = checking.cast();
-        if trimmed.is_null() && offset.is_null() {
-            break;
-        }
-        if let Some(trimmed) = trimmed.get() {
+        if let Some(trimmed) = checking.downcast_ref::<Geom2dTrimmedCurve>() {
             checking = trimmed.basis_curve();
             is_trimmed = true;
+            continue;
         }
-        let offset: Handle<Geom2dOffsetCurve> = checking.cast();
-        if let Some(offset) = offset.get() {
-            let nested: f64 = offset.offset();
-            checking = offset.basis_curve();
-            resolution_state.offset += nested;
-        }
+        let Some(offset) = checking.downcast_ref::<Geom2dOffsetCurve>() else {
+            break;
+        };
+        let nested: f64 = offset.offset();
+        checking = offset.basis_curve();
+        resolution_state.offset += nested;
     }
     check_c0(&checking, not_check_c0, uf, ul, resolution_state)?;
     if is_trimmed {
         let trimmed = Geom2dTrimmedCurve::new(&checking, uf, ul, true, true)?;
-        return Ok(Handle::new(trimmed).cast());
+        return Ok(Handle::new(trimmed).into_upcast());
     }
     Ok(checking)
 }
@@ -95,8 +89,7 @@ fn check_c0(
     let mut continuity: Shape = checking.continuity();
     resolution_state.continuity = Some(continuity);
     let mut is_c0: bool = !not_check_c0 && continuity == Shape::C0;
-    let bspline: Handle<Geom2dBSplineCurve> = checking.cast();
-    if let (true, Some(bspline)) = (is_c0, bspline.get()) {
+    if let (true, Some(bspline)) = (is_c0, checking.downcast_ref::<Geom2dBSplineCurve>()) {
         if bspline.is_g1(uf, ul, precision::angular())? {
             continuity = Shape::G1;
             resolution_state.continuity = Some(continuity);
@@ -133,7 +126,6 @@ impl Geom2dOffsetCurve {
             basis_continuity: resolved.continuity.unwrap_or(Shape::C0),
         };
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }
@@ -143,13 +135,12 @@ impl Geom2dOffsetCurve {
     pub fn copy_of(other: &Geom2dOffsetCurve) -> Result<Self, Failure> {
         let source = other.state.read();
         let state = OffsetState {
-            basis: source.basis.copy()?.cast(),
+            basis: source.basis.copy()?.into_cast(),
             eval_rep: rep_utils::clone_curve_desc(&source.eval_rep)?,
             offset_value: source.offset_value,
             basis_continuity: source.basis_continuity,
         };
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }
@@ -206,7 +197,7 @@ impl Geom2dGeometry for Geom2dOffsetCurve {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(Self::copy_of(self)?).cast())
+        Ok(Handle::new(Self::copy_of(self)?).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state = self.state.read();

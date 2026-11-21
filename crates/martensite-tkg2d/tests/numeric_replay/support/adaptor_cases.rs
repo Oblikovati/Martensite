@@ -76,7 +76,7 @@ pub fn load_case(output: &Output, values: &[f64]) {
     let u = r.reals();
     let (u1, u2) = (r.real(), r.real());
     let a = Handle::new(Geom2dAdaptorCurve::default());
-    let dynamic: Handle<dyn Adaptor2dCurve2d> = a.cast();
+    let dynamic: Handle<dyn Adaptor2dCurve2d> = a.upcast();
     empty_geom(output, &a);
     let null: Handle<dyn Geom2dCurve> = Handle::default();
     attempt(output, || a.load(&null));
@@ -152,7 +152,7 @@ pub fn offset_load_case(output: &Output, values: &[f64]) {
             return;
         }
     };
-    let dynamic: Handle<dyn Adaptor2dCurve2d> = o.cast();
+    let dynamic: Handle<dyn Adaptor2dCurve2d> = o.upcast();
     adaptor_summary(output, &dynamic, &u);
     o.load_curve(&b2);
     offset_bounds(output, &o);
@@ -168,21 +168,21 @@ pub fn offset_load_case(output: &Output, values: &[f64]) {
 
 // Sets, or for a null descriptor clears, the evaluation representation (a2_set_rep).
 pub fn set_rep(c: &Handle<dyn Geom2dCurve>, d: &Handle<dyn RepCurveDesc>) -> Result<(), Failure> {
-    if let Some(b) = c.cast::<Geom2dBezierCurve>().get() {
+    if let Some(b) = c.downcast_ref::<Geom2dBezierCurve>() {
         return update_rep(
             d,
             |x| b.set_eval_representation(x),
             || b.clear_eval_representation(),
         );
     }
-    if let Some(b) = c.cast::<Geom2dBSplineCurve>().get() {
+    if let Some(b) = c.downcast_ref::<Geom2dBSplineCurve>() {
         return update_rep(
             d,
             |x| b.set_eval_representation(x),
             || b.clear_eval_representation(),
         );
     }
-    if let Some(b) = c.cast::<Geom2dOffsetCurve>().get() {
+    if let Some(b) = c.downcast_ref::<Geom2dOffsetCurve>() {
         return update_rep(
             d,
             |x| b.set_eval_representation(x),
@@ -216,13 +216,13 @@ pub fn evalrep_case(output: &Output, values: &[f64]) {
     let (u1, u2) = (r.real(), r.real());
     attempt(output, || set_rep(&c, &d));
     let a = Handle::new(Geom2dAdaptorCurve::with_range(&c, u1, u2).expect("probe range"));
-    let dynamic: Handle<dyn Adaptor2dCurve2d> = a.cast();
+    let dynamic: Handle<dyn Adaptor2dCurve2d> = a.upcast();
     adaptor_summary(output, &dynamic, &u);
     set_rep(&c, &Handle::default()).unwrap();
     adaptor_summary(output, &dynamic, &u);
     a.load_range(&c, u1, u2).unwrap();
     adaptor_summary(output, &dynamic, &u);
-    let copy: Handle<dyn Geom2dCurve> = c.copy().unwrap().cast();
+    let copy: Handle<dyn Geom2dCurve> = c.copy().unwrap().into_cast();
     a.load_range(&copy, u1, u2).unwrap();
     adaptor_summary(output, &dynamic, &u);
     end(output);

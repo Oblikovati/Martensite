@@ -1,7 +1,7 @@
 //! Planar geometry construction, evaluation and boundary contracts.
 #![allow(non_snake_case)]
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, HandleUpcast};
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
     Geom2dGeometry, Geom2dHyperbola, Geom2dLine, Geom2dOffsetCurve, Geom2dParabola,
@@ -16,13 +16,13 @@ fn SetUp() -> Geom2dHashCurveHasher {
 }
 
 // The implicit `Handle<T>` to `Handle<Geom2dCurve>` conversion at each call.
-fn curve<T: ?Sized + RuntimeTyped>(handle: &Handle<T>) -> Handle<dyn Geom2dCurve> {
-    handle.cast()
+fn curve<T: ?Sized + HandleUpcast<dyn Geom2dCurve>>(handle: &Handle<T>) -> Handle<dyn Geom2dCurve> {
+    handle.upcast()
 }
 
 // `occ::down_cast<T>(theCurve->Copy())`.
-fn copied<T: RuntimeTyped + Geom2dGeometry>(handle: &Handle<T>) -> Handle<T> {
-    handle.copy().unwrap().cast()
+fn copied<T: Geom2dGeometry>(handle: &Handle<T>) -> Handle<T> {
+    handle.copy().unwrap().into_downcast()
 }
 
 fn pnt(x: f64, y: f64) -> Point2 {

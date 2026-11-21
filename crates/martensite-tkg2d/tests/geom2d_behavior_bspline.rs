@@ -425,7 +425,7 @@ fn resolution_reverse_transform_and_copy() {
     let copy = Geom2dBSplineCurve::copy_of(&c).unwrap();
     assert_eq!(copy.poles().as_slice(), c.poles().as_slice());
     assert_eq!(Geom2dBSplineCurve::max_degree(), 25);
-    let generic: Handle<dyn Geom2dCurve> = c.copy().unwrap().cast();
+    let generic: Handle<dyn Geom2dCurve> = c.copy().unwrap().into_cast();
     assert_eq!(generic.value(0.5).unwrap(), c.value(0.5).unwrap());
 }
 

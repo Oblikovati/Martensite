@@ -32,7 +32,7 @@ fn near(a: Point2, x: f64, y: f64) {
 
 #[test]
 fn conic_placement_members() {
-    let c: Handle<dyn Geom2dConic> = Handle::new(Geom2dCircle::new(frame(), 2.0).unwrap()).cast();
+    let c: Handle<dyn Geom2dConic> = Handle::new(Geom2dCircle::new(frame(), 2.0).unwrap()).into_upcast();
     assert_eq!(c.location(), Point2::new(1.0, 2.0));
     assert_eq!(c.x_axis().direction(), Direction2::new(0.0, 1.0).unwrap());
     // A direct frame turns X counterclockwise: Y = (-1, 0).
@@ -243,14 +243,14 @@ fn parabola_members() {
 #[test]
 fn copies_are_independent() {
     let e = Handle::new(Geom2dEllipse::from_axis(origin_axis(), 5.0, 3.0, true).unwrap());
-    let copy: Handle<Geom2dEllipse> = e.copy().unwrap().cast();
+    let copy: Handle<Geom2dEllipse> = e.copy().unwrap().into_downcast();
     copy.set_major_radius(7.0).unwrap();
     assert_eq!((e.major_radius(), copy.major_radius()), (5.0, 7.0));
     let h = Handle::new(Geom2dHyperbola::from_axis(origin_axis(), 1.0, 2.0, false).unwrap());
     assert_eq!(
-        h.copy().unwrap().cast::<Geom2dHyperbola>().minor_radius(),
+        h.copy().unwrap().into_downcast::<Geom2dHyperbola>().minor_radius(),
         2.0
     );
     let p = Handle::new(Geom2dParabola::from_axis(origin_axis(), 1.0, false).unwrap());
-    assert_eq!(p.copy().unwrap().cast::<Geom2dParabola>().focal(), 1.0);
+    assert_eq!(p.copy().unwrap().into_downcast::<Geom2dParabola>().focal(), 1.0);
 }

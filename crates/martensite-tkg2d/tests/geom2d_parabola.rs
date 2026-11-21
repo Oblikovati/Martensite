@@ -123,7 +123,7 @@ fn parabola_set_focal() {
 fn parabola_copy() {
     let myParabola = setup();
     let aCopyGeom: Handle<dyn Geom2dGeometry> = myParabola.copy().unwrap();
-    let aCopy: Handle<Geom2dParabola> = aCopyGeom.cast::<Geom2dParabola>();
+    let aCopy: Handle<Geom2dParabola> = aCopyGeom.into_downcast::<Geom2dParabola>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.focal(), 4.0, precision::confusion());

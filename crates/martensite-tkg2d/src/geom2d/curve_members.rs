@@ -189,7 +189,7 @@ macro_rules! spline_geometry_members {
             ::martensite_tkernel::standard::Handle<$geometry>,
             ::martensite_tkernel::standard::Failure,
         > {
-            Ok(::martensite_tkernel::standard::Handle::new(Self::copy_of(self)?).cast())
+            Ok(::martensite_tkernel::standard::Handle::new(Self::copy_of(self)?).into_upcast())
         }
         fn dump_json(
             &self,

@@ -24,7 +24,7 @@ fn regular_offset_fixture() -> Geom2dOffsetCurve {
     let circle: Handle<dyn Geom2dCurve> = Handle::new(
         Geom2dCircle::from_axis(Axis2d::new(Point2::default(), Direction2::X), 5.0, true).unwrap(),
     )
-    .cast();
+    .into_upcast();
     Geom2dOffsetCurve::new(&circle, 2.0, false).unwrap()
 }
 
@@ -115,7 +115,7 @@ fn offset_curve_copy_constructor_basis_curve() {
 #[test]
 fn offset_curve_copy_method_uses_optimized_constructor() {
     let original = regular_offset_fixture();
-    let copy = original.copy().unwrap().cast::<Geom2dOffsetCurve>();
+    let copy = original.copy().unwrap().into_downcast::<Geom2dOffsetCurve>();
     assert!(!copy.is_null());
     EXPECT_DOUBLE_EQ(original.offset(), copy.offset());
     let mut u = original.first_parameter();

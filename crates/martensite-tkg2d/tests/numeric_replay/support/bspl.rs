@@ -115,7 +115,7 @@ pub fn bezier_case(output: &Output, values: &[f64]) {
         return;
     };
     let u = r.reals();
-    let b: Handle<Geom2dBezierCurve> = c.cast();
+    let b: Handle<Geom2dBezierCurve> = c.downcast();
     let count = r.integer();
     bezier_state(output, &b, &u);
     for _ in 0..count {
@@ -376,7 +376,7 @@ pub fn bspline_case(output: &Output, values: &[f64]) {
         return;
     };
     let u = r.reals();
-    let b: Handle<Geom2dBSplineCurve> = c.cast();
+    let b: Handle<Geom2dBSplineCurve> = c.downcast();
     let count = r.integer();
     bspline_state(output, &b, &u);
     for _ in 0..count {
@@ -396,12 +396,12 @@ pub fn desc(r: &mut Reader, rep: Handle<dyn Geom2dCurve>) -> Handle<dyn RepCurve
     let domain = r.flag();
     let (first, last, scale, offset) = (r.real(), r.real(), r.real(), r.real());
     match kind {
-        0 => Handle::new(RepCurveDescFull::new(rep)).cast(),
-        1 => Handle::new(RepCurveDescDerivBounded::new(rep, order)).cast(),
+        0 => Handle::new(RepCurveDescFull::new(rep)).into_upcast(),
+        1 => Handle::new(RepCurveDescDerivBounded::new(rep, order)).into_upcast(),
         _ => {
             let domain = domain.then_some(Domain1d { first, last });
             let map = Map1d { scale, offset };
-            Handle::new(RepCurveDescMapped::new(rep, order, domain, map)).cast()
+            Handle::new(RepCurveDescMapped::new(rep, order, domain, map)).into_upcast()
         }
     }
 }
@@ -427,7 +427,7 @@ eval_represented!(Geom2dBezierCurve);
 eval_represented!(Geom2dBSplineCurve);
 eval_represented!(Geom2dOffsetCurve);
 
-fn evalrep_on<C: EvalRepresented + martensite_tkernel::standard::RuntimeTyped>(
+fn evalrep_on<C: EvalRepresented + martensite_tkernel::standard::HandleUpcast<dyn Geom2dCurve>>(
     output: &Output,
     c: &Handle<C>,
     d: &Handle<dyn RepCurveDesc>,
@@ -437,14 +437,14 @@ fn evalrep_on<C: EvalRepresented + martensite_tkernel::standard::RuntimeTyped>(
     attempt(output, || c.set_rep(d.clone()));
     flag(output, c.has_rep());
     summary(output, &**c, u);
-    let copy: Handle<C> = c.copy().unwrap().cast();
+    let copy: Handle<C> = c.copy().unwrap().into_downcast();
     flag(output, copy.has_rep());
     summary(output, &*copy, u);
     attempt(output, || {
-        c.set_rep(Handle::new(RepCurveDescFull::new(Handle::default())).cast())
+        c.set_rep(Handle::new(RepCurveDescFull::new(Handle::default())).into_upcast())
     });
-    let own = Handle::new(RepCurveDescFull::new(c.cast()));
-    attempt(output, || c.set_rep(own.cast()));
+    let own = Handle::new(RepCurveDescFull::new(c.upcast()));
+    attempt(output, || c.set_rep(own.into_upcast()));
     c.reverse().unwrap();
     flag(output, c.has_rep());
     c.transform(t).unwrap();
@@ -461,14 +461,17 @@ pub fn evalrep_case(output: &Output, values: &[f64]) {
     let rep = curve(&mut r).unwrap();
     let d = desc(&mut r, rep);
     let t = trsf(&mut r);
-    if c.cast::<Geom2dBezierCurve>().is_some() {
-        evalrep_on(output, &c.cast::<Geom2dBezierCurve>(), &d, &u, t);
+    let typed = c.downcast::<Geom2dBezierCurve>();
+    if typed.is_some() {
+        evalrep_on(output, &typed, &d, &u, t);
     }
-    if c.cast::<Geom2dBSplineCurve>().is_some() {
-        evalrep_on(output, &c.cast::<Geom2dBSplineCurve>(), &d, &u, t);
+    let typed = c.downcast::<Geom2dBSplineCurve>();
+    if typed.is_some() {
+        evalrep_on(output, &typed, &d, &u, t);
     }
-    if c.cast::<Geom2dOffsetCurve>().is_some() {
-        evalrep_on(output, &c.cast::<Geom2dOffsetCurve>(), &d, &u, t);
+    let typed = c.downcast::<Geom2dOffsetCurve>();
+    if typed.is_some() {
+        evalrep_on(output, &typed, &d, &u, t);
     }
     end(output);
 }

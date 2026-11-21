@@ -127,7 +127,7 @@ fn hyperbola_set_minor_radius() {
 fn hyperbola_copy() {
     let myHyperbola = setup();
     let aCopyGeom: Handle<dyn Geom2dGeometry> = myHyperbola.copy().unwrap();
-    let aCopy: Handle<Geom2dHyperbola> = aCopyGeom.cast::<Geom2dHyperbola>();
+    let aCopy: Handle<Geom2dHyperbola> = aCopyGeom.into_downcast::<Geom2dHyperbola>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.major_radius(), 5.0, precision::confusion());

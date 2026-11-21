@@ -7,7 +7,7 @@ use crate::geom2d::{Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, Ge
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis2d, Point2, Transform2, Vector2};
 use std::io;
 
@@ -17,7 +17,6 @@ const CLASS: &str = "Geom2dEval_ArchimedeanSpiralCurve";
 /// immutable like every eval curve;
 /// `Handle::new(Geom2dEvalArchimedeanSpiralCurve::new(axis, 0.0, 1.0)?)`.
 pub struct Geom2dEvalArchimedeanSpiralCurve {
-    parent: StandardTransient,
     position: Axis2d,
     initial_radius: f64,
     growth_rate: f64,
@@ -26,7 +25,6 @@ impl_transient!(
     Geom2dEvalArchimedeanSpiralCurve,
     "Geom2dEval_ArchimedeanSpiralCurve",
     dyn Geom2dCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve]
 );
 impl Clone for Geom2dEvalArchimedeanSpiralCurve {
@@ -80,17 +78,13 @@ impl Geom2dEvalArchimedeanSpiralCurve {
             )));
         }
         Ok(Self {
-            parent: StandardTransient::default(),
             position,
             initial_radius,
             growth_rate,
         })
     }
     fn copied(&self) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            ..*self
-        }
+        Self { ..*self }
     }
     /// The local coordinate system (`Position`); `curve.position()`.
     pub fn position(&self) -> Axis2d {
@@ -124,7 +118,7 @@ impl Geom2dGeometry for Geom2dEvalArchimedeanSpiralCurve {
         ))
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let fields = [

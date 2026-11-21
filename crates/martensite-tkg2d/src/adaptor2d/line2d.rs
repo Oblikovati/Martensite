@@ -7,7 +7,7 @@ use crate::geom2d::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::elclib;
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{
@@ -25,14 +25,12 @@ struct Line2dState {
 /// trim surfaces; `Adaptor2dLine2d::new(Point2::new(0.0, 0.0), direction, 0.0, 10.0)`.
 #[derive(Default)]
 pub struct Adaptor2dLine2d {
-    parent: StandardTransient,
     state: SharedState<Line2dState>,
 }
 impl_transient!(
     Adaptor2dLine2d,
     "Adaptor2d_Line2d",
     dyn Adaptor2dCurve2d,
-    parent,
     interfaces: [dyn Adaptor2dCurve2d]
 );
 
@@ -54,7 +52,6 @@ impl Adaptor2dLine2d {
             ax2d: Axis2d::new(point, direction),
         };
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -80,7 +77,7 @@ impl Adaptor2dCurve2d for Adaptor2dLine2d {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
         let copy = Adaptor2dLine2d::default();
         *copy.state.write() = *self.state.read();
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         Ok(self.state.read().u_first)
@@ -112,7 +109,7 @@ impl Adaptor2dCurve2d for Adaptor2dLine2d {
     ) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
         let trimmed = Adaptor2dLine2d::default();
         trimmed.load_bounded(Line2::from(self.axis()), first, last);
-        Ok(Handle::new(trimmed).cast())
+        Ok(Handle::new(trimmed).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         Ok(false)

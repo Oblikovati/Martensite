@@ -5,7 +5,7 @@ use super::errors;
 use super::geometry::{Geom2dGeometry, dump_base, dump_class_name};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Axis2d, Axis22d, Circle2, Point2, Transform2, Vector2};
 use std::io;
@@ -18,14 +18,12 @@ struct CircleState {
 
 /// A circle; `Handle::new(Geom2dCircle::from_axis(axis, 2.0, true)?)`.
 pub struct Geom2dCircle {
-    parent: StandardTransient,
     state: SharedState<CircleState>,
 }
 impl_transient!(
     Geom2dCircle,
     "Geom2d_Circle",
     dyn Geom2dConic,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn Geom2dConic]
 );
 impl Clone for Geom2dCircle {
@@ -46,7 +44,6 @@ fn checked_radius(radius: f64) -> Result<f64, Failure> {
 impl Geom2dCircle {
     fn stored(state: CircleState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -100,7 +97,7 @@ impl Geom2dGeometry for Geom2dCircle {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state: CircleState = *self.state.read();

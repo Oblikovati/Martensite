@@ -151,7 +151,7 @@ fn ellipse_point_on_ellipse_foci_distance_sum() {
 fn ellipse_copy() {
     let myEllipse = setup();
     let aCopyGeom: Handle<dyn Geom2dGeometry> = myEllipse.copy().unwrap();
-    let aCopy: Handle<Geom2dEllipse> = aCopyGeom.cast::<Geom2dEllipse>();
+    let aCopy: Handle<Geom2dEllipse> = aCopyGeom.into_downcast::<Geom2dEllipse>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.major_radius(), 10.0, precision::confusion());

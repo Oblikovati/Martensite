@@ -7,7 +7,7 @@ use crate::geom2d::trim_bounds::{TrimBasis, TrimmedBounds};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Point2, Transform2, Vector2};
 use std::io;
@@ -34,18 +34,16 @@ impl TrimBasis for dyn Geom2dCurve {
     }
 }
 
-/// A trimmed curve; `Handle::new(Geom2dTrimmedCurve::new(&circle.cast(), 0.0, PI, true, true)?)`.
+/// A trimmed curve; `Handle::new(Geom2dTrimmedCurve::new(&circle.upcast(), 0.0, PI, true, true)?)`.
 ///
 /// The basis curve is a private copy, so its lock is never this object's lock.
 pub struct Geom2dTrimmedCurve {
-    parent: StandardTransient,
     state: SharedState<TrimmedState>,
 }
 impl_transient!(
     Geom2dTrimmedCurve,
     "Geom2d_TrimmedCurve",
     dyn Geom2dBoundedCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn Geom2dBoundedCurve]
 );
 
@@ -66,10 +64,9 @@ impl Geom2dTrimmedCurve {
         let Some(source) = curve.get() else {
             return Err(errors::construction("Geom2d_TrimmedCurve:: C is null"));
         };
-        let trimmed: Handle<Geom2dTrimmedCurve> = curve.cast();
-        let basis: Handle<dyn Geom2dCurve> = match trimmed.get() {
-            Some(inner) => inner.basis_curve().copy()?.cast(),
-            None => source.copy()?.cast(),
+        let basis = match curve.downcast_ref::<Geom2dTrimmedCurve>() {
+            Some(inner) => inner.basis_curve().copy()?.into_cast(),
+            None => source.copy()?.into_cast(),
         };
         let mut state = TrimmedBounds {
             basis,
@@ -78,7 +75,6 @@ impl Geom2dTrimmedCurve {
         };
         state.set_trim(u1, u2, sense, adjust_periodic, CLASS)?;
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }
@@ -113,7 +109,7 @@ impl Geom2dGeometry for Geom2dTrimmedCurve {
         // theAdjustPeriodic, so periodic bounds are adjusted again.
         let state = self.state.read();
         let copy = Self::new(&state.basis, state.u_trim1, state.u_trim2, true, true)?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state = self.state.read();

@@ -237,6 +237,6 @@ fn copying_getters_and_resolution() {
     // bsplclib::resolution: the L1 norm of the pole difference, 2.25 on the unit span.
     EXPECT_NEAR(line.resolution(1e-3).unwrap(), 1e-3 / 2.25, 1e-18);
     EXPECT_NEAR(line.resolution(2e-3).unwrap(), 2e-3 / 2.25, 1e-18);
-    let generic: Handle<dyn Geom2dCurve> = r.copy().unwrap().cast();
+    let generic: Handle<dyn Geom2dCurve> = r.copy().unwrap().into_cast();
     assert_eq!(generic.value(0.4).unwrap(), r.value(0.4).unwrap());
 }

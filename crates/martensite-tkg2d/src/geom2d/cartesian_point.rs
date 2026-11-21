@@ -3,21 +3,19 @@ use super::geometry::{Geom2dGeometry, dump_base, dump_class_name, dump_field};
 use super::point::{Geom2dPoint, dump_point};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Point2, Transform2};
 use std::io;
 
 /// A Cartesian point; `Handle::new(Geom2dCartesianPoint::new(1.0, 2.0))`.
 #[derive(Default)]
 pub struct Geom2dCartesianPoint {
-    parent: StandardTransient,
     state: SharedState<Point2>,
 }
 impl_transient!(
     Geom2dCartesianPoint,
     "Geom2d_CartesianPoint",
     dyn Geom2dPoint,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dPoint]
 );
 impl Clone for Geom2dCartesianPoint {
@@ -30,7 +28,6 @@ impl Geom2dCartesianPoint {
     /// `Geom2dCartesianPoint::from_pnt2d(Point2::new(1.0, 2.0))`.
     pub fn from_pnt2d(point: Point2) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(point),
         }
     }
@@ -61,7 +58,7 @@ impl Geom2dGeometry for Geom2dCartesianPoint {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let point: Point2 = self.pnt2d();

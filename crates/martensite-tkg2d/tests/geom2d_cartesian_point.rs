@@ -111,7 +111,7 @@ fn cartesian_point_transform_rotation() {
 fn cartesian_point_copy() {
     let aPnt = Handle::new(Geom2dCartesianPoint::new(3.0, 4.0));
     let aCopyGeom: Handle<dyn Geom2dGeometry> = aPnt.copy().unwrap();
-    let aCopy: Handle<Geom2dCartesianPoint> = aCopyGeom.cast::<Geom2dCartesianPoint>();
+    let aCopy: Handle<Geom2dCartesianPoint> = aCopyGeom.into_downcast::<Geom2dCartesianPoint>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.x(), 3.0, precision::confusion());

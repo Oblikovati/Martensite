@@ -160,7 +160,7 @@ fn evaluated_circle_involute_curve_copy_independent() {
     let aCurve = involute(3.0);
     let aCopy = aCurve.copy().unwrap();
     assert!(!aCopy.is_null());
-    let aCopyCurve: Handle<Geom2dEvalCircleInvoluteCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalCircleInvoluteCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
     EXPECT_NEAR(aCopyCurve.radius(), 3.0, precision::confusion());
 }

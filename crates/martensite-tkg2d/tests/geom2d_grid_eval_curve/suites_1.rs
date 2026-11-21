@@ -136,10 +136,10 @@ fn grid_curve_bezier_curve_dispatch() {
 
 #[test]
 fn grid_curve_offset_curve_dispatch() {
-    let aLine: Handle<dyn Geom2dCurve> = Line(0.0, 0.0, 1.0, 0.0).cast();
+    let aLine: Handle<dyn Geom2dCurve> = Line(0.0, 0.0, 1.0, 0.0).into_upcast();
     let anOffset = Handle::new(Geom2dOffsetCurve::new(&aLine, 1.0, false).unwrap());
 
-    let anEval = Geom2dGridEvalCurve::from_curve(&anOffset.cast());
+    let anEval = Geom2dGridEvalCurve::from_curve(&anOffset.upcast());
     assert_eq!(anEval.get_type(), CurveType::OffsetCurve);
 
     let aParams = CreateUniformParams(0.0, 5.0, 6);
@@ -156,7 +156,7 @@ fn grid_curve_offset_curve_dispatch() {
 fn grid_curve_direct_handle_init() {
     let aGeomLine = Line(0.0, 0.0, 1.0, 0.0);
 
-    let anEval = Geom2dGridEvalCurve::from_curve(&aGeomLine.cast());
+    let anEval = Geom2dGridEvalCurve::from_curve(&aGeomLine.upcast());
     assert_eq!(anEval.get_type(), CurveType::Line);
 
     let aParams = CreateUniformParams(0.0, 10.0, 11);
@@ -237,10 +237,10 @@ fn grid_curve_unified_derivative_d3() {
 
 #[test]
 fn grid_curve_offset_curve_derivative_d3() {
-    let aCircle: Handle<dyn Geom2dCurve> = CircleOfRadius2().cast();
+    let aCircle: Handle<dyn Geom2dCurve> = CircleOfRadius2().into_upcast();
     let anOffset = Handle::new(Geom2dOffsetCurve::new(&aCircle, 0.5, false).unwrap());
 
-    let anEval = Geom2dGridEvalCurve::from_curve(&anOffset.cast());
+    let anEval = Geom2dGridEvalCurve::from_curve(&anOffset.upcast());
     assert_eq!(anEval.get_type(), CurveType::OffsetCurve);
 
     let aParams = CreateUniformParams(0.0, 2.0 * PI, 9);
