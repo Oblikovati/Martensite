@@ -40,8 +40,7 @@ pub fn collapse_singularities(
     if !surface.is_instance(GeomBSplineSurface::static_type()) {
         return Ok(surface.clone());
     }
-    let bspline_handle: Handle<GeomBSplineSurface> = surface.downcast();
-    let Some(bspline) = bspline_handle.get() else {
+    let Some(bspline) = surface.downcast_ref::<GeomBSplineSurface>() else {
         return Ok(surface.clone());
     };
     let mut vertices = degenerated_vertex_points(face)?;

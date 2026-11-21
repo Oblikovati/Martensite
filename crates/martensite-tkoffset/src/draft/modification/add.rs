@@ -241,8 +241,7 @@ impl DraftState {
                         e_inf.add(&other_f)?;
 
                         // find fixed point
-                        let a_local_geom = c.downcast::<GeomLine>();
-                        match a_local_geom.get() {
+                        match c.downcast_ref::<GeomLine>() {
                             None => {
                                 self.bad_shape = edg.clone().into_shape();
                                 self.err_stat = DraftErrorStatus::EdgeRecomputation;

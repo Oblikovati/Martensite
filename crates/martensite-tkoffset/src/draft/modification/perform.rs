@@ -699,7 +699,7 @@ impl DraftState {
             |s: &Handle<dyn GeomSurface>| -> Result<Option<Handle<dyn Geom2dCurve>>, Failure> {
                 let sel =
                     live(&s.downcast::<GeomSurfaceOfLinearExtrusion>(), "extrusion")?.basis_curve();
-                match sel.downcast::<GeomCircle>().get() {
+                match sel.downcast_ref::<GeomCircle>() {
                     Some(gcir) => {
                         let u = elclib::parameter(&gcir.circ()?, ptfixe)?;
                         Ok(Some(

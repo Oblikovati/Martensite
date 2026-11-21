@@ -92,7 +92,7 @@ pub(super) fn untrimmed_curve(c: &Handle<dyn GeomCurve>) -> Result<Handle<dyn Ge
 /// The basis of a trimmed curve when the handle down casts to one (`down_cast`, a null
 /// curve stays null), else the curve.
 pub(super) fn down_cast_basis(c: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
-    match c.downcast::<GeomTrimmedCurve>().get() {
+    match c.downcast_ref::<GeomTrimmedCurve>() {
         Some(t) => t.basis_curve(),
         None => c.clone(),
     }

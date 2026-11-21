@@ -181,8 +181,7 @@ impl DraftFaceInfo {
     /// The basis of a trimmed surface;
     /// `DraftFaceInfo::with_surface(&s, true)`.
     pub fn with_surface(s: &Handle<dyn GeomSurface>, has_new_geometry: bool) -> Self {
-        let t = s.downcast::<GeomRectangularTrimmedSurface>();
-        let my_geom = match t.get() {
+        let my_geom = match s.downcast_ref::<GeomRectangularTrimmedSurface>() {
             Some(t) => t.basis_surface(),
             None => s.clone(),
         };

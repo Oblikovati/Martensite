@@ -451,7 +451,7 @@ pub(super) fn make_degenerated_edge(
     let tol = precision::confusion();
     // kill trimmed curves
     let mut c = cc.clone();
-    while let Some(ct) = c.downcast::<GeomTrimmedCurve>().get() {
+    while let Some(ct) = c.downcast_ref::<GeomTrimmedCurve>() {
         c = ct.basis_curve();
     }
 
@@ -528,8 +528,7 @@ pub(super) fn find_created_edge(
             if live(&cet, "curve")?.is_instance_name("Geom_TrimmedCurve") {
                 cet = live(&cet.downcast::<GeomTrimmedCurve>(), "curve")?.basis_curve();
             }
-            let circ = cet.downcast::<GeomCircle>();
-            let Some(circ) = circ.get() else {
+            let Some(circ) = cet.downcast_ref::<GeomCircle>() else {
                 continue;
             };
             if (circ.radius() - radius.abs()).abs() > tol {
