@@ -107,9 +107,9 @@ pub use h_sequence::HSequence;
 mod hash_policy;
 pub use hash_policy::{DefaultHashPolicy, HashKey, HashPolicy, buckets_from_int, next_map_prime};
 mod base_map;
-pub use base_map::{
-    BaseMap, BaseMapIndexedIterator, IndexedCursorSource, IndexedCursorSourceMut, MapLinkNode,
-};
+pub use base_map::{BaseMap, MapLinkNode};
+#[cfg(test)]
+pub(crate) use base_map::{BaseMapIndexedIterator, IndexedCursorSource};
 mod chained_slots;
 mod slot_chains;
 pub use slot_chains::{HashBucketChain, HashBucketTable};
@@ -145,7 +145,8 @@ pub use flat_data_map::{
 mod ordered_map;
 mod ordered_table;
 pub use ordered_map::{OrderedMap, OrderedMapIter};
-pub use ordered_table::{OrderedNodeMut, OrderedNodeRef};
+#[cfg(test)]
+pub(crate) use ordered_table::{OrderedNodeMut, OrderedNodeRef};
 
 mod ordered_data_map;
 pub use ordered_data_map::{

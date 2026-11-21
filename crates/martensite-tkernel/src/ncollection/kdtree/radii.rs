@@ -1,4 +1,6 @@
-use super::{Failure, KDTree, KdPoint, Region};
+#[cfg(test)]
+use super::Region;
+use super::{Failure, KDTree, KdPoint};
 impl<P: KdPoint, const D: usize> KDTree<P, D, true> {
     /// Returns the stored radius by original index; `tree.radius(1)?`.
     pub fn radius(&self, index: usize) -> Result<f64, Failure> {
@@ -6,11 +8,13 @@ impl<P: KdPoint, const D: usize> KDTree<P, D, true> {
         Ok(self.radii[index - 1])
     }
     /// Collects every sphere containing the query; `tree.containing_search(&query)`.
-    pub fn containing_search(&self, query: &P) -> Vec<usize> {
+    #[cfg(test)]
+    pub(crate) fn containing_search(&self, query: &P) -> Vec<usize> {
         let mut result = Vec::new();
         self.containing_visit(query, Region::root(self.len()), &mut result);
         result
     }
+    #[cfg(test)]
     fn containing_visit(&self, query: &P, region: Region<D>, result: &mut Vec<usize>) {
         if region.lo == region.hi {
             return;
@@ -31,6 +35,7 @@ impl<P: KdPoint, const D: usize> KDTree<P, D, true> {
         self.containing_visit(query, left, result);
         self.containing_visit(query, right, result);
     }
+    #[cfg(test)]
     fn containing_candidate(&self, query: &P, index: usize, result: &mut Vec<usize>) {
         let radius = self.radii[index - 1];
         if self.distance(query, index) <= radius * radius {
@@ -38,7 +43,8 @@ impl<P: KdPoint, const D: usize> KDTree<P, D, true> {
         }
     }
     /// Minimizes center distance minus radius, including negative gaps; `tree.nearest_weighted(&q,None)`.
-    pub fn nearest_weighted(&self, query: &P, gap: Option<&mut f64>) -> usize {
+    #[cfg(test)]
+    pub(crate) fn nearest_weighted(&self, query: &P, gap: Option<&mut f64>) -> usize {
         let mut best = (0, if self.is_empty() { 0.0 } else { f64::MAX });
         self.weighted_visit(query, Region::root(self.len()), &mut best);
         if let Some(output) = gap {
@@ -46,6 +52,7 @@ impl<P: KdPoint, const D: usize> KDTree<P, D, true> {
         }
         best.0
     }
+    #[cfg(test)]
     fn weighted_visit(&self, query: &P, region: Region<D>, best: &mut (usize, f64)) {
         if region.lo == region.hi {
             return;
@@ -73,6 +80,7 @@ impl<P: KdPoint, const D: usize> KDTree<P, D, true> {
         self.weighted_visit(query, near, best);
         self.weighted_visit(query, far, best);
     }
+    #[cfg(test)]
     fn weighted_candidate(&self, query: &P, index: usize, best: &mut (usize, f64)) {
         let gap = self.distance(query, index).sqrt() - self.radii[index - 1];
         if gap < best.1 {

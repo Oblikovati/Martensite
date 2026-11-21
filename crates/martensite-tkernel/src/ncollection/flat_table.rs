@@ -31,7 +31,7 @@ pub(super) struct FlatItems<'a, K, V> {
     pub index: usize,
 }
 impl<K, V, H: HashPolicy<K>> FlatTable<K, V, H> {
-    pub fn new(hasher: H, hint: usize) -> Self {
+    pub(crate) fn new(hasher: H, hint: usize) -> Self {
         let mut table = Self {
             slots: Vec::new(),
             count: 0,
@@ -181,7 +181,7 @@ impl<K, V, H: HashPolicy<K>> FlatTable<K, V, H> {
     }
 }
 impl<K, V, H> FlatTable<K, V, H> {
-    pub fn clear(&mut self, release: bool) {
+    pub(crate) fn clear(&mut self, release: bool) {
         self.count = 0;
         if release {
             self.slots = Vec::new();
@@ -229,4 +229,5 @@ fn capacity_for(count: usize) -> usize {
 }
 mod copy_insertion;
 mod iteration;
+#[cfg(test)]
 mod transfer;

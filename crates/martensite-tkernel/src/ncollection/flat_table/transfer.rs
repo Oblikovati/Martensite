@@ -2,7 +2,7 @@
 use super::FlatTable;
 
 impl<K, V, H> FlatTable<K, V, H> {
-    pub fn move_from_with(source: &mut Self, take_policy: impl FnOnce(&mut H) -> H) -> Self {
+    pub(crate) fn move_from_with(source: &mut Self, take_policy: impl FnOnce(&mut H) -> H) -> Self {
         let hasher: H = take_policy(&mut source.hasher);
         Self {
             slots: std::mem::take(&mut source.slots),
@@ -10,7 +10,7 @@ impl<K, V, H> FlatTable<K, V, H> {
             hasher,
         }
     }
-    pub fn move_assign_with(
+    pub(crate) fn move_assign_with(
         &mut self,
         source: &mut Self,
         assign_policy: impl FnOnce(&mut H, &mut H),

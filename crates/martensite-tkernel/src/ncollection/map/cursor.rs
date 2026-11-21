@@ -55,7 +55,8 @@ impl<'a, K> MapIterator<'a, K> {
         self.current("NCollection_Map::Iterator::Key")
     }
     /// `Reset`: restarts on the map the cursor was created for.
-    pub fn reset(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn reset(&mut self) {
         self.keys.entries.reset();
     }
     /// Both cursors are on the same key, or both are past the end.
@@ -92,12 +93,14 @@ impl<K> Clone for MapIterator<'_, K> {
 
 impl<K> MapIterator<'_, K> {
     /// Advances and returns this cursor, as prefix increment; `cursor.advance().key()`.
-    pub fn advance(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn advance(&mut self) -> &mut Self {
         self.next();
         self
     }
     /// Returns the previous cursor and advances, as postfix increment; `cursor.advance_post().key()`.
-    pub fn advance_post(&mut self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn advance_post(&mut self) -> Self {
         let previous = self.clone();
         self.next();
         previous

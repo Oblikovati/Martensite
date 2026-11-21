@@ -1,7 +1,8 @@
 use super::{KDTree, KdPoint, Region};
 impl<P: KdPoint, const D: usize, const R: bool> KDTree<P, D, R> {
     /// Collects original indices inside an inclusive sphere; `tree.range_search(&query,1.0)`.
-    pub fn range_search(&self, query: &P, radius: f64) -> Vec<usize> {
+    #[cfg(test)]
+    pub(crate) fn range_search(&self, query: &P, radius: f64) -> Vec<usize> {
         let mut result = Vec::new();
         self.for_each_in_range(query, radius, |index| result.push(index));
         result
@@ -61,11 +62,13 @@ impl<P: KdPoint, const D: usize, const R: bool> KDTree<P, D, R> {
         }
     }
     /// Collects points in the inclusive axis-aligned box; `tree.box_search(&minimum,&maximum)`.
-    pub fn box_search(&self, min: &P, max: &P) -> Vec<usize> {
+    #[cfg(test)]
+    pub(crate) fn box_search(&self, min: &P, max: &P) -> Vec<usize> {
         let mut result = Vec::new();
         self.box_visit(min, max, Region::root(self.len()), &mut result);
         result
     }
+    #[cfg(test)]
     fn box_visit(&self, min: &P, max: &P, region: Region<D>, result: &mut Vec<usize>) {
         if region.lo == region.hi {
             return;
@@ -88,6 +91,7 @@ impl<P: KdPoint, const D: usize, const R: bool> KDTree<P, D, R> {
             self.box_visit(min, max, right, result);
         }
     }
+    #[cfg(test)]
     fn box_candidate(&self, min: &P, max: &P, index: usize, result: &mut Vec<usize>) {
         let point = &self.points[index - 1];
         if (1..=D).all(|axis| {

@@ -5,51 +5,42 @@ use crate::ncollection::HashBucketTable;
 impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
     /// The key table with each chain's `(key, item)` pairs, or `None` before
     /// one exists. The index table stays private.
-    ///
-    /// ```
-    /// # use martensite_tkernel::ncollection::IndexedDataMap;
-    /// let mut map = IndexedDataMap::<i32, i32>::default();
-    /// map.add(7, 70);
-    /// let table = map.buckets().unwrap();
-    /// assert_eq!(table.chain(8)?.collect::<Vec<_>>(), [(&7, &70)]);
-    /// # Ok::<(), martensite_tkernel::standard::Failure>(())
-    /// ```
-    pub fn buckets(&self) -> Option<HashBucketTable<'_, K, V>> {
+    pub(crate) fn buckets(&self) -> Option<HashBucketTable<'_, K, V>> {
         self.storage.buckets()
     }
     /// Exchanges entries, allocators and policies like move assignment; `target.move_from(&mut source)`.
-    pub fn move_from(&mut self, source: &mut Self) -> &mut Self {
+    pub(crate) fn move_from(&mut self, source: &mut Self) -> &mut Self {
         self.exchange(source);
         self
     }
 
     /// Keeps self-assignment safe without aliasing mutable references; `map.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }
 
 impl<K: Debug + Clone, V: Clone, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
     /// Copies a binding, assigning only the item on a hit; `map.bind_ref(&1, &42)`.
-    pub fn bind_ref(&mut self, key: &K, value: &V) -> bool {
+    pub(crate) fn bind_ref(&mut self, key: &K, value: &V) -> bool {
         let count = self.len();
         self.place_borrowed(key, value, true) > count
     }
 
     /// Copies a binding and borrows its stored item; `*map.bound_ref(&1, &42) = 7`.
-    pub fn bound_ref(&mut self, key: &K, value: &V) -> &mut V {
+    pub(crate) fn bound_ref(&mut self, key: &K, value: &V) -> &mut V {
         let index = self.place_borrowed(key, value, true);
         self.storage.value_at_mut(index)
     }
 
     /// Copies arguments only if no binding exists; `map.try_bind_ref(&1, &42)`.
-    pub fn try_bind_ref(&mut self, key: &K, value: &V) -> bool {
+    pub(crate) fn try_bind_ref(&mut self, key: &K, value: &V) -> bool {
         let count = self.len();
         self.place_borrowed(key, value, false) > count
     }
 
     /// Borrows a stored item, copying arguments only on a miss; `map.try_bound_ref(&1, &42)`.
-    pub fn try_bound_ref(&mut self, key: &K, value: &V) -> &mut V {
+    pub(crate) fn try_bound_ref(&mut self, key: &K, value: &V) -> &mut V {
         let index = self.place_borrowed(key, value, false);
         self.storage.value_at_mut(index)
     }

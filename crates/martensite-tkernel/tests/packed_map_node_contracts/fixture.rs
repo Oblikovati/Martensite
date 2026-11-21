@@ -1,6 +1,4 @@
-#[path = "../packed_map_rows/mod.rs"]
-mod decoder;
-use decoder::{ExpectedRows, decode_expected_rows};
+use crate::packed_map_rows::{ExpectedRows, decode_expected_rows};
 use martensite_tkernel::ncollection::{PackedInteger, PackedMap, PackedMapNode, PackedWord};
 use std::sync::OnceLock;
 

@@ -26,7 +26,8 @@ impl<K: Debug, V, H: HashPolicy<K>> DataMap<K, V, H> {
         }
     }
     /// Returns the injected hash policy; `map.hasher().salt`.
-    pub fn hasher(&self) -> &H {
+    #[cfg(test)]
+    pub(crate) fn hasher(&self) -> &H {
         &self.hasher
     }
     /// Returns allocator identity; `map.allocator()==&arena`.

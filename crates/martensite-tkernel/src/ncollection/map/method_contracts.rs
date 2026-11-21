@@ -25,7 +25,8 @@ impl<K: Debug, H: HashPolicy<K>> Map<K, H> {
         Ok(())
     }
     /// Preserves the self-assignment branch without aliasing Rust references; `map.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
     /// Exchanges storage, allocator and policy like move assignment; `map.move_from_returning(&mut source)`.
@@ -34,22 +35,26 @@ impl<K: Debug, H: HashPolicy<K>> Map<K, H> {
         self
     }
     /// Constructs a key after growth and before lookup; `map.emplace_with(|| 42)`.
-    pub fn emplace_with(&mut self, construct: impl FnOnce() -> K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn emplace_with(&mut self, construct: impl FnOnce() -> K) -> bool {
         self.prepare_emplacement();
         self.emplace(construct())
     }
     /// Constructs a replacement and returns its stable slot; `map.emplaced_with(|| 42)`.
-    pub fn emplaced_with(&mut self, construct: impl FnOnce() -> K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn emplaced_with(&mut self, construct: impl FnOnce() -> K) -> &K {
         self.prepare_emplacement();
         self.emplaced(construct())
     }
     /// Constructs a lookup key even on a hit, retaining the stored key; `map.try_emplace_with(|| 42)`.
-    pub fn try_emplace_with(&mut self, construct: impl FnOnce() -> K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_emplace_with(&mut self, construct: impl FnOnce() -> K) -> bool {
         self.prepare_emplacement();
         self.try_emplace(construct())
     }
     /// Constructs a lookup key and returns the existing or inserted key; `map.try_emplaced_with(|| 42)`.
-    pub fn try_emplaced_with(&mut self, construct: impl FnOnce() -> K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn try_emplaced_with(&mut self, construct: impl FnOnce() -> K) -> &K {
         self.prepare_emplacement();
         self.try_emplaced(construct())
     }

@@ -1,7 +1,7 @@
 //! Key/value bindings threaded in insertion order over safe slots.
-use super::ordered_table::{
-    OrderedItems, OrderedItemsMut, OrderedNodeMut, OrderedNodeRef, OrderedTable, buckets_from_int,
-};
+use super::ordered_table::{OrderedItems, OrderedItemsMut, OrderedTable, buckets_from_int};
+#[cfg(test)]
+use super::ordered_table::{OrderedNodeMut, OrderedNodeRef};
 use super::{BaseAllocator, DefaultHashPolicy, HashPolicy};
 use crate::standard::Failure;
 use std::fmt::Debug;
@@ -58,7 +58,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
     }
     /// The signed-count constructors; a negative count raises Standard_OutOfRange;
     /// `OrderedDataMap::with_int_buckets(policy, 10, BaseAllocator::common())?`.
-    pub fn with_int_buckets(
+    #[cfg(test)]
+    pub(crate) fn with_int_buckets(
         hasher: H,
         buckets: i32,
         resource: BaseAllocator,
@@ -70,7 +71,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         ))
     }
     /// A negative size raises Standard_OutOfRange; `map.resize_int(200)?`.
-    pub fn resize_int(&mut self, size: i32) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn resize_int(&mut self, size: i32) -> Result<(), Failure> {
         self.resize(buckets_from_int(size)?);
         Ok(())
     }
@@ -84,7 +86,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.table.len()
     }
     /// Returns the binding extent; `map.extent()==3`.
-    pub fn extent(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn extent(&self) -> usize {
         self.len()
     }
     /// Checks for no bindings; `map.is_empty()`.
@@ -96,7 +99,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.table.bucket_count()
     }
     /// Borrows the retained hash policy; `map.hasher().salt`.
-    pub fn hasher(&self) -> &H {
+    #[cfg(test)]
+    pub(crate) fn hasher(&self) -> &H {
         &self.table.hasher
     }
     /// Borrows the map allocator; `map.allocator()==&arena`.
@@ -108,7 +112,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.table.resize(size);
     }
     /// Tests key membership; `map.is_bound(&42)`.
-    pub fn is_bound(&self, key: &K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_bound(&self, key: &K) -> bool {
         self.table.lookup(key).is_some()
     }
     /// Optionally borrows a value; `map.seek(&42)`.
@@ -116,11 +121,11 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.contained(key).map(|(_, value)| value)
     }
     /// Optionally borrows a value exclusively; `map.change_seek(&42)`.
-    pub fn change_seek(&mut self, key: &K) -> Option<&mut V> {
+    pub(crate) fn change_seek(&mut self, key: &K) -> Option<&mut V> {
         self.contained_mut(key).map(|(_, value)| value)
     }
     /// Borrows the stored key/value pair; `map.contained(&42)`.
-    pub fn contained(&self, key: &K) -> Option<(&K, &V)> {
+    pub(crate) fn contained(&self, key: &K) -> Option<(&K, &V)> {
         let slot = self.table.lookup(key)?;
         Some((self.table.key(slot), self.table.value(slot)))
     }
@@ -139,7 +144,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
     }
     /// Swaps order, storage, policies and allocators; `map.exchange(&mut other)`.
     /// Uses Rust policy swapping; use `exchange_with` for explicit policy callbacks.
-    pub fn exchange(&mut self, other: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn exchange(&mut self, other: &mut Self) {
         std::mem::swap(self, other);
     }
 }
@@ -149,7 +155,7 @@ impl<K: Debug, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.seek(key).ok_or_else(|| missing_ordered_key(key))
     }
     /// Finds a mutable value or reports NoSuchObject; `*map.change_find(&42)?=7`.
-    pub fn change_find(&mut self, key: &K) -> Result<&mut V, Failure> {
+    pub(crate) fn change_find(&mut self, key: &K) -> Result<&mut V, Failure> {
         self.change_seek(key)
             .ok_or_else(|| missing_ordered_key(key))
     }
@@ -163,7 +169,8 @@ impl<K, V, H: HashPolicy<K> + Default> OrderedDataMap<K, V, H> {
 impl<K, V, H: HashPolicy<K> + Clone> OrderedDataMap<K, V, H> {
     /// Compatibility transfer retaining a cloned source policy; use `move_from_with` for explicit policy moves.
     /// Moves the bindings, leaving source allocator and bucket selection intact; `OrderedDataMap::move_from(&mut source)`.
-    pub fn move_from(source: &mut Self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn move_from(source: &mut Self) -> Self {
         let empty = Self::with_allocator(
             source.hasher().clone(),
             source.bucket_count(),
@@ -189,7 +196,8 @@ impl<K, V: Clone, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
 }
 impl<K: Clone, V: Clone, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
     /// Copies order retaining destination policy/allocator; `map.assign(&source)`.
-    pub fn assign(&mut self, source: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign(&mut self, source: &Self) -> &mut Self {
         self.table.clear(false);
         if source.table.len() == 0 {
             return self;
@@ -239,6 +247,7 @@ mod binding;
 mod cursor;
 mod edges;
 mod iteration;
+#[cfg(test)]
 mod method_contracts;
 
 mod mixed_binding;

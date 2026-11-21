@@ -46,7 +46,7 @@ impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
         self.len() == 0
     }
     /// Returns the retained hash policy; `map.hasher().salt`.
-    pub fn hasher(&self) -> &H {
+    pub(crate) fn hasher(&self) -> &H {
         &self.hasher
     }
     /// Returns the map allocator; `map.allocator()==&arena`.
@@ -110,7 +110,8 @@ impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
         self.storage.clear(release);
     }
     /// Swaps entries, policies and allocators; `map.exchange(&mut other)`.
-    pub fn exchange(&mut self, other: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn exchange(&mut self, other: &mut Self) {
         std::mem::swap(&mut self.hasher, &mut other.hasher);
         std::mem::swap(&mut self.storage, &mut other.storage);
     }
@@ -149,8 +150,10 @@ fn missing_binding<K: Debug>(key: &K) -> Failure {
 mod binding;
 mod cursor;
 mod iteration;
+#[cfg(test)]
 mod method_contracts;
 mod operations;
+#[cfg(test)]
 mod signed_overloads;
 pub use cursor::{IndexedDataMapIterator, IndexedDataMapIteratorMut};
 

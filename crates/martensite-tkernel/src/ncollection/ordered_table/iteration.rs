@@ -7,6 +7,7 @@ pub(in crate::ncollection) struct OrderView<'a, K, V> {
     order: &'a [OrderSlot],
     keys: &'a [K],
     values: &'a [V],
+    #[cfg(test)]
     first: SlotLink,
 }
 
@@ -33,6 +34,7 @@ impl<K, V, H> OrderedTable<K, V, H> {
             order: &self.order,
             keys: self.storage.payload().keys(),
             values: self.storage.payload().values(),
+            #[cfg(test)]
             first: self.first,
         };
         OrderedItems {
@@ -40,7 +42,7 @@ impl<K, V, H> OrderedTable<K, V, H> {
             current: self.first,
         }
     }
-    pub fn items_mut(&mut self) -> OrderedItemsMut<'_, K, V> {
+    pub(crate) fn items_mut(&mut self) -> OrderedItemsMut<'_, K, V> {
         let order = self.order_slots();
         SlotRangeMut::new(order, self.storage.payload_mut())
     }
@@ -58,7 +60,8 @@ impl<K, V, H> OrderedTable<K, V, H> {
 
 impl<'a, K, V> OrderedItems<'a, K, V> {
     /// The cursor is on an entry.
-    pub fn more(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn more(&self) -> bool {
         self.current.is_some()
     }
     pub(crate) fn current_pair(&self) -> Option<(&'a K, &'a V)> {
@@ -66,6 +69,7 @@ impl<'a, K, V> OrderedItems<'a, K, V> {
         Some((&view.keys[slot], &view.values[slot]))
     }
     /// Back to the head the cursor was created on; a default cursor stays empty.
+    #[cfg(test)]
     pub(crate) fn restart(&mut self) {
         self.current = self.view.and_then(|view| view.first);
     }

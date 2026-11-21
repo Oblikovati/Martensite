@@ -1,6 +1,8 @@
 //! Shared ranges follow the first-key chains in bucket order.
 use super::{Debug, DoubleMap, DoubleMapItems, DoubleMapValues, HashPolicy};
-use crate::ncollection::{HashBucketTable, slot_chains::SlotRange};
+#[cfg(test)]
+use crate::ncollection::HashBucketTable;
+use crate::ncollection::slot_chains::SlotRange;
 impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H1, H2> {
     /// Borrows both keys in first-key bucket order; `for (first,second) in map.items() {}`.
     pub fn items(&self) -> DoubleMapItems<'_, A, B> {
@@ -9,31 +11,22 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         }
     }
     /// Borrows second keys in first-key bucket order; `map.iter().count()`.
-    pub fn iter(&self) -> DoubleMapValues<'_, A, B> {
+    pub(crate) fn iter(&self) -> DoubleMapValues<'_, A, B> {
         DoubleMapValues {
             pairs: self.items(),
         }
     }
     /// Returns an exhausted value iterator; `map.iter()!=map.end()`.
-    pub fn end(&self) -> DoubleMapValues<'_, A, B> {
+    #[cfg(test)]
+    pub(crate) fn end(&self) -> DoubleMapValues<'_, A, B> {
         DoubleMapValues {
             pairs: DoubleMapItems::default(),
         }
     }
     /// The first (Key1) table, yielding `(key1, key2)` pairs per chain, or
     /// `None` before one exists. The second table stays private.
-    ///
-    /// ```
-    /// # use martensite_tkernel::ncollection::DoubleMap;
-    /// let mut map = DoubleMap::<i32, i32>::default();
-    /// assert!(map.buckets().is_none());
-    /// map.bind(1, 5).unwrap();
-    /// let table = map.buckets().unwrap();
-    /// assert_eq!(table.len(), 102);
-    /// assert_eq!(table.chain(2)?.collect::<Vec<_>>(), [(&1, &5)]);
-    /// # Ok::<(), martensite_tkernel::standard::Failure>(())
-    /// ```
-    pub fn buckets(&self) -> Option<HashBucketTable<'_, A, B>> {
+    #[cfg(test)]
+    pub(crate) fn buckets(&self) -> Option<HashBucketTable<'_, A, B>> {
         self.storage.buckets()
     }
 }

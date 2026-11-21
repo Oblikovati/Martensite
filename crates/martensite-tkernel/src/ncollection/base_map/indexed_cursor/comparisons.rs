@@ -4,7 +4,7 @@ use crate::standard::Failure;
 impl<C: IndexedCursorSource, const M: bool> BaseMapIndexedIterator<C, M> {
     /// Equality: all exhausted iterators compare equal, even across owners.
     /// Example: `left.is_equal(&left_map, &right, &right_map)?`.
-    pub fn is_equal<const OTHER: bool>(
+    pub(crate) fn is_equal<const OTHER: bool>(
         &self,
         container: &C,
         other: &BaseMapIndexedIterator<C, OTHER>,
@@ -19,7 +19,7 @@ impl<C: IndexedCursorSource, const M: bool> BaseMapIndexedIterator<C, M> {
         )
     }
     /// Negates equality with its size short-circuit; `left.is_not_equal(&map, &right, &map)?`.
-    pub fn is_not_equal<const OTHER: bool>(
+    pub(crate) fn is_not_equal<const OTHER: bool>(
         &self,
         container: &C,
         other: &BaseMapIndexedIterator<C, OTHER>,
@@ -32,7 +32,7 @@ impl<C: IndexedCursorSource, const M: bool> BaseMapIndexedIterator<C, M> {
 
 impl<C, const M: bool> BaseMapIndexedIterator<C, M> {
     /// Compares proxy owners without requiring borrowed getters; `left.is_equal_with(&a, &right, &b, size, size)?`.
-    pub fn is_equal_with<const OTHER: bool>(
+    pub(crate) fn is_equal_with<const OTHER: bool>(
         &self,
         container: &C,
         other: &BaseMapIndexedIterator<C, OTHER>,
@@ -47,7 +47,7 @@ impl<C, const M: bool> BaseMapIndexedIterator<C, M> {
         Ok(self.owner == other.owner && self.index == other.index)
     }
     /// Negates proxy-owner equality with identical Size dispatch; `left.is_not_equal_with(&a, &right, &b, size, size)?`.
-    pub fn is_not_equal_with<const OTHER: bool>(
+    pub(crate) fn is_not_equal_with<const OTHER: bool>(
         &self,
         container: &C,
         other: &BaseMapIndexedIterator<C, OTHER>,
@@ -59,22 +59,28 @@ impl<C, const M: bool> BaseMapIndexedIterator<C, M> {
             .map(|equal| !equal)
     }
     /// Compares signed index distance without size callbacks; `left.is_less(&right)`.
-    pub fn is_less<const OTHER: bool>(&self, other: &BaseMapIndexedIterator<C, OTHER>) -> bool {
+    pub(crate) fn is_less<const OTHER: bool>(
+        &self,
+        other: &BaseMapIndexedIterator<C, OTHER>,
+    ) -> bool {
         self.distance(other) < 0
     }
     /// Reverses the less-than comparison; `left.is_greater(&right)`.
-    pub fn is_greater<const OTHER: bool>(&self, other: &BaseMapIndexedIterator<C, OTHER>) -> bool {
+    pub(crate) fn is_greater<const OTHER: bool>(
+        &self,
+        other: &BaseMapIndexedIterator<C, OTHER>,
+    ) -> bool {
         other.is_less(self)
     }
     /// Negates the reversed comparison; `left.is_less_or_equal(&right)`.
-    pub fn is_less_or_equal<const OTHER: bool>(
+    pub(crate) fn is_less_or_equal<const OTHER: bool>(
         &self,
         other: &BaseMapIndexedIterator<C, OTHER>,
     ) -> bool {
         !other.is_less(self)
     }
     /// Negates the less-than comparison; `left.is_greater_or_equal(&right)`.
-    pub fn is_greater_or_equal<const OTHER: bool>(
+    pub(crate) fn is_greater_or_equal<const OTHER: bool>(
         &self,
         other: &BaseMapIndexedIterator<C, OTHER>,
     ) -> bool {
