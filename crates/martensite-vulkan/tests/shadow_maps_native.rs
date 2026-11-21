@@ -308,7 +308,7 @@ impl ShadowScene {
             Color::named(NamedColor::WHITE),
         )
         .unwrap();
-        let light: Handle<Graphic3dCLight> = Handle::new(spot).cast();
+        let light: Handle<dyn Graphic3dCLightSource> = Handle::new(spot).cast();
         let value = light.get().unwrap();
         value.set_cast_shadows(true).unwrap();
         let [x, y, z] = direction;

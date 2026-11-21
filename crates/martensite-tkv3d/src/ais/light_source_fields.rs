@@ -5,12 +5,12 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::Transform3;
 use martensite_tkservice::aspect::AspectTypeOfMarker;
 use martensite_tkservice::graphic3d::{
-    Graphic3dAspectLine3d, Graphic3dAspectMarker3d, Graphic3dCLight, Graphic3dMarkerImage,
+    Graphic3dAspectLine3d, Graphic3dAspectMarker3d, Graphic3dCLightSource, Graphic3dMarkerImage,
 };
 
 impl AisLightSourceBase {
     /// `myLightSource`; `base.light_source()`.
-    pub fn light_source(&self) -> Handle<Graphic3dCLight> {
+    pub fn light_source(&self) -> Handle<dyn Graphic3dCLightSource> {
         self.parameters.read().light.clone()
     }
     /// `myToDisplayName`; `base.to_display_name_field()`.

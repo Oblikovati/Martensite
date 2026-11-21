@@ -5,7 +5,7 @@ use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkservice::{aspect::AspectTypeOfMarker, graphic3d::*};
 
 pub(super) struct LightSourceParameters {
-    pub light: Handle<Graphic3dCLight>,
+    pub light: Handle<dyn Graphic3dCLightSource>,
     pub display_name: bool,
     pub display_range: bool,
     pub size: f64,
@@ -28,7 +28,7 @@ pub struct AisLightSourceBase {
 }
 impl AisLightSourceBase {
     /// Retain the live light and initialize native fields; `AisLightSourceBase::new(&light)`.
-    pub fn new(light: &Handle<Graphic3dCLight>) -> Self {
+    pub fn new(light: &Handle<dyn Graphic3dCLightSource>) -> Self {
         let kind = light.light_type();
         Self {
             interactive: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
@@ -38,7 +38,7 @@ impl AisLightSourceBase {
     }
 }
 impl LightSourceParameters {
-    fn new(light: &Handle<Graphic3dCLight>, kind: Graphic3dTypeOfLightSource) -> Self {
+    fn new(light: &Handle<dyn Graphic3dCLightSource>, kind: Graphic3dTypeOfLightSource) -> Self {
         let zoomable = matches!(
             kind,
             Graphic3dTypeOfLightSource::Positional | Graphic3dTypeOfLightSource::Spot
@@ -128,11 +128,11 @@ pub trait AisLightSourceSource: AisInteractiveObject {
         super::light_source_geometry::compute_light_spot(self, presentation, mode)
     }
     /// Retain the current live light; `object.light()`.
-    fn light(&self) -> Handle<Graphic3dCLight> {
+    fn light(&self) -> Handle<dyn Graphic3dCLightSource> {
         self.light_source_base().parameters.read().light.clone()
     }
     /// Replace the light and mark every presentation dirty, even for identical handles; `object.set_light(&light)`.
-    fn set_light(&self, light: &Handle<Graphic3dCLight>) {
+    fn set_light(&self, light: &Handle<dyn Graphic3dCLightSource>) {
         self.light_source_base().parameters.write().light = light.clone();
         self.set_to_update_all();
     }

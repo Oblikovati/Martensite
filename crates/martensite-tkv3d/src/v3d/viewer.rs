@@ -21,9 +21,10 @@ use martensite_tkservice::aspect::{
     AspectGridType,
 };
 use martensite_tkservice::graphic3d::{
-    GRAPHIC3D_ZLAYER_ID_TOP, Graphic3dAspectMarker3d, Graphic3dCLight, Graphic3dGraphicDriver,
-    Graphic3dGroup, Graphic3dRenderingParams, Graphic3dStructureManager, Graphic3dStructureSource,
-    Graphic3dTypeOfShadingModel, Graphic3dVertex, Graphic3dZLayerId, Graphic3dZLayerSettings,
+    GRAPHIC3D_ZLAYER_ID_TOP, Graphic3dAspectMarker3d, Graphic3dCLightSource,
+    Graphic3dGraphicDriver, Graphic3dGroup, Graphic3dRenderingParams, Graphic3dStructureManager,
+    Graphic3dStructureSource, Graphic3dTypeOfShadingModel, Graphic3dVertex, Graphic3dZLayerId,
+    Graphic3dZLayerSettings,
 };
 use std::collections::BTreeSet;
 
@@ -34,8 +35,8 @@ pub(crate) struct V3dViewerState {
     pub(crate) z_layer_gen_id: AspectGenId,
     pub(crate) defined_views: AllocatorList<Handle<dyn V3dViewSource>>,
     pub(crate) active_views: AllocatorList<Handle<dyn V3dViewSource>>,
-    pub(crate) defined_lights: AllocatorList<Handle<Graphic3dCLight>>,
-    pub(crate) active_lights: AllocatorList<Handle<Graphic3dCLight>>,
+    pub(crate) defined_lights: AllocatorList<Handle<dyn Graphic3dCLightSource>>,
+    pub(crate) active_lights: AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     pub(crate) background: AspectBackground,
     pub(crate) gradient_background: AspectGradientBackground,
     pub(crate) view_size: f64,

@@ -21,7 +21,7 @@ use martensite_tkservice::aspect::{
     AspectWindow, AspectWindowMembers as _,
 };
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dCView, Graphic3dCViewMembers as _, Graphic3dCViewSubviews as _,
+    Graphic3dCLightSource, Graphic3dCView, Graphic3dCViewMembers as _, Graphic3dCViewSubviews as _,
     Graphic3dCamera, Graphic3dGroup, Graphic3dStructureSource, Graphic3dVertex,
 };
 
@@ -40,7 +40,7 @@ pub(crate) struct V3dViewState {
     pub(crate) subviews: martensite_tkernel::ncollection::Sequence<Handle<dyn V3dViewSource>>,
     pub(crate) parent_view: WeakHandle<dyn V3dViewSource>,
     pub(crate) active_lights:
-        martensite_tkernel::ncollection::AllocatorList<Handle<Graphic3dCLight>>,
+        martensite_tkernel::ncollection::AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     pub(crate) active_lights_cursor: martensite_tkernel::ncollection::ListCursor,
     pub(crate) default_view_axis: Direction3,
     pub(crate) default_view_point: Point3,

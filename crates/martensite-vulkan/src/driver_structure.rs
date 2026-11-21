@@ -223,7 +223,10 @@ impl Graphic3dCStructure for Graphic3dRenderStructure {
         let groups = &mut fields.groups;
         let mut cursor = groups.cursor();
         while cursor.more() {
-            if cursor.value(groups).is_some_and(|stored| stored == group) {
+            if cursor
+                .value(groups)
+                .is_some_and(|stored| &**stored == group)
+            {
                 martensite_tkernel::standard::raise_native_failure(
                     groups.remove_cursor(&mut cursor),
                 );

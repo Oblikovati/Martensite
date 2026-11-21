@@ -9,7 +9,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dLightSet, Graphic3dLightSetIterationFilter,
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dLightSet, Graphic3dLightSetIterationFilter,
     Graphic3dLightSetIterator, Graphic3dTypeOfLightSource,
 };
 
@@ -39,7 +39,10 @@ fn light_state(output: &Output, l: &Graphic3dCLight) {
 }
 
 /// The source light of operation 15: a light of `kind` with fixed settings.
-fn copy_source(output: &Output, kind: Graphic3dTypeOfLightSource) -> Handle<Graphic3dCLight> {
+fn copy_source(
+    output: &Output,
+    kind: Graphic3dTypeOfLightSource,
+) -> Handle<dyn Graphic3dCLightSource> {
     let source = Graphic3dCLight::new(kind);
     source.set_name(&AsciiString::from("source"));
     tried(output, source.set_intensity(3.0));
@@ -51,7 +54,7 @@ fn copy_source(output: &Output, kind: Graphic3dTypeOfLightSource) -> Handle<Grap
     tried(output, source.set_angle(0.25));
     tried(output, source.set_smooth_radius(0.5));
     tried(output, source.set_smooth_angle(0.125));
-    Handle::new(source)
+    Handle::new(source).into_upcast()
 }
 
 fn point_op(output: &Output, r: &mut Reader<'_>, l: &Graphic3dCLight, op: i32) {
@@ -153,8 +156,9 @@ fn read_set_light(
     output: &Output,
     r: &mut Reader<'_>,
     s: &Graphic3dLightSet,
-) -> Handle<Graphic3dCLight> {
-    let light = Handle::new(Graphic3dCLight::new(light_type(r.integer())));
+) -> Handle<dyn Graphic3dCLightSource> {
+    let light = Handle::new(Graphic3dCLight::new(light_type(r.integer())))
+        .into_upcast::<dyn Graphic3dCLightSource>();
     light.set_enabled(r.flag());
     if r.flag() {
         tried(output, light.set_cast_shadows(true));

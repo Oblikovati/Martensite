@@ -108,7 +108,7 @@ fn lights(row: &str) -> OwnedResult<RenderLightSet> {
     set.add(&source_light(row)?)?;
     Ok(RenderLightSet::snapshot(&set, identity_clip())?)
 }
-fn source_light(row: &str) -> OwnedResult<Handle<Graphic3dCLight>> {
+fn source_light(row: &str) -> OwnedResult<Handle<dyn Graphic3dCLightSource>> {
     let kind = match row.split('-').next() {
         Some("positional") => Graphic3dTypeOfLightSource::Positional,
         Some("spot") => Graphic3dTypeOfLightSource::Spot,

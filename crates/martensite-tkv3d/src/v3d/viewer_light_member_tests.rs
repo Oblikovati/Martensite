@@ -76,7 +76,7 @@ fn native_light_cursor_row(scene: &LightProbeScene) -> String {
 }
 fn light_alias_name(
     light: &martensite_tkernel::standard::HandleObserver<
-        martensite_tkservice::graphic3d::Graphic3dCLight,
+        dyn martensite_tkservice::graphic3d::Graphic3dCLightSource,
     >,
 ) -> String {
     String::from_utf8_lossy(light.name().as_bytes()).into_owned()

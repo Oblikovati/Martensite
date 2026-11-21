@@ -12,7 +12,7 @@ pub struct LightingScene {
     pub base: ViewerScene,
     pub aspect: Handle<Graphic3dAspects>,
     pub vertices: Handle<Graphic3dArrayOfPrimitives>,
-    pub light: Handle<Graphic3dCLight>,
+    pub light: Handle<dyn Graphic3dCLightSource>,
 }
 impl LightingScene {
     /// Build the paired native fixture; `LightingScene::new(&driver, "lit-phong")`.
@@ -194,7 +194,10 @@ fn fill_lighting_vertex_slots(vertices: &Graphic3dArrayOfPrimitives, mode: &str)
         }
     }
 }
-pub(crate) fn configure_lights(base: &ViewerScene, mode: &str) -> Handle<Graphic3dCLight> {
+pub(crate) fn configure_lights(
+    base: &ViewerScene,
+    mode: &str,
+) -> Handle<dyn Graphic3dCLightSource> {
     let light = lighting_source(mode);
     configure_light_parameters(&light, mode);
     let ambient = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient));
@@ -208,7 +211,7 @@ pub(crate) fn configure_lights(base: &ViewerScene, mode: &str) -> Handle<Graphic
     base.cview().set_lights(&set);
     light
 }
-fn lighting_source(mode: &str) -> Handle<Graphic3dCLight> {
+fn lighting_source(mode: &str) -> Handle<dyn Graphic3dCLightSource> {
     let kind = match mode {
         "lit-point" | "lit-range" => Graphic3dTypeOfLightSource::Positional,
         "lit-spot" => Graphic3dTypeOfLightSource::Spot,

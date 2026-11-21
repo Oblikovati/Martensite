@@ -3,9 +3,9 @@ use martensite_tkernel::{
     ncollection::AllocatorList,
     standard::{Handle, raise_native_failure},
 };
-use martensite_tkservice::graphic3d::Graphic3dCLight;
+use martensite_tkservice::graphic3d::Graphic3dCLightSource;
 pub(super) fn remove_light_node(
-    chain: &mut AllocatorList<Handle<Graphic3dCLight>>,
+    chain: &mut AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     identity: *const (),
 ) {
     let mut cursor = chain.cursor();
@@ -22,7 +22,7 @@ pub(super) fn remove_light_node(
 }
 
 pub(super) fn contains_light_node(
-    chain: &AllocatorList<Handle<Graphic3dCLight>>,
+    chain: &AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     identity: *const (),
 ) -> bool {
     chain

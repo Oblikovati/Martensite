@@ -3,12 +3,12 @@ use super::*;
 use martensite_tkernel::standard::{Handle, HandleReference, SharedState, WeakHandle};
 use martensite_tkservice::{
     aspect::AspectNeutralWindow,
-    graphic3d::{Graphic3dCLight, Graphic3dLightSet},
+    graphic3d::{Graphic3dCLightSource, Graphic3dLightSet},
 };
 use std::sync::Arc;
 pub(super) struct ViewerLightProbeControl {
     pub viewer: WeakHandle<V3dViewer>,
-    pub lights: SharedState<[WeakHandle<Graphic3dCLight>; 3]>,
+    pub lights: SharedState<[WeakHandle<dyn Graphic3dCLightSource>; 3]>,
     pub views: SharedState<[WeakHandle<dyn V3dViewSource>; 3]>,
     pub caller: SharedState<Handle<dyn V3dViewSource>>,
     pub caller_set: SharedState<Handle<Graphic3dLightSet>>,

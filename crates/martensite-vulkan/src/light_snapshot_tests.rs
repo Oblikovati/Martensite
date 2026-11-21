@@ -3,10 +3,10 @@ use super::*;
 use crate::identity_clip;
 use Graphic3dTypeOfLightSource as Kind;
 use martensite_tkernel::quantity::{Color, ColorSpace};
-fn source(kind: Kind) -> Handle<Graphic3dCLight> {
+fn source(kind: Kind) -> Handle<dyn Graphic3dCLightSource> {
     Handle::new(Graphic3dCLight::new(kind))
 }
-fn set(sources: &[Handle<Graphic3dCLight>]) -> Handle<Graphic3dLightSet> {
+fn set(sources: &[Handle<dyn Graphic3dCLightSource>]) -> Handle<Graphic3dLightSet> {
     let lights = Handle::new(Graphic3dLightSet::default());
     for light in sources {
         assert!(lights.add(light).unwrap());

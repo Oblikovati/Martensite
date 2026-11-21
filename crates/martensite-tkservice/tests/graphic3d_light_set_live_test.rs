@@ -2,8 +2,9 @@
 use martensite_tkernel::quantity::{Color, ColorSpace};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dLightSet, Graphic3dLightSetIterationFilter as Filter,
-    Graphic3dLightSetIterator as Cursor, Graphic3dTypeOfLightSource as Kind,
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dLightSet,
+    Graphic3dLightSetIterationFilter as Filter, Graphic3dLightSetIterator as Cursor,
+    Graphic3dTypeOfLightSource as Kind,
 };
 
 const NATIVE: &str = concat!(
@@ -24,7 +25,7 @@ const KINDS: [Kind; 4] = [
 
 struct LiveReplay {
     set: Handle<Graphic3dLightSet>,
-    sources: [Handle<Graphic3dCLight>; 6],
+    sources: [Handle<dyn Graphic3dCLightSource>; 6],
     cursor: Cursor,
     other: Cursor,
     filter: Filter,
@@ -42,7 +43,7 @@ impl LiveReplay {
         }
     }
 
-    fn ordinal(&self, source: &Handle<Graphic3dCLight>) -> i32 {
+    fn ordinal(&self, source: &Handle<dyn Graphic3dCLightSource>) -> i32 {
         self.sources
             .iter()
             .position(|light| light == source)
@@ -132,9 +133,10 @@ impl LiveReplay {
     }
 }
 
-fn replay_sources() -> [Handle<Graphic3dCLight>; 6] {
+fn replay_sources() -> [Handle<dyn Graphic3dCLightSource>; 6] {
     let sources = std::array::from_fn(|id| {
-        let source = Handle::new(Graphic3dCLight::new(KINDS[id % 4]));
+        let source = Handle::new(Graphic3dCLight::new(KINDS[id % 4]))
+            .into_upcast::<dyn Graphic3dCLightSource>();
         source.set_intensity((id + 1) as f32).unwrap();
         source
     });
@@ -208,7 +210,8 @@ fn indexed_membership_filters_exhaustion_and_cache_match_native() {
 
 #[test]
 fn iterator_retains_storage_after_the_set_wrapper_is_dropped() {
-    let source = Handle::new(Graphic3dCLight::new(Kind::Directional));
+    let source = Handle::new(Graphic3dCLight::new(Kind::Directional))
+        .into_upcast::<dyn Graphic3dCLightSource>();
     let cursor = {
         let set = Graphic3dLightSet::default();
         set.add(&source).unwrap();
@@ -221,8 +224,10 @@ fn iterator_retains_storage_after_the_set_wrapper_is_dropped() {
 #[test]
 fn cloned_cursor_indices_are_independent_and_membership_is_shared() {
     let set = Graphic3dLightSet::default();
-    let first = Handle::new(Graphic3dCLight::new(Kind::Ambient));
-    let last = Handle::new(Graphic3dCLight::new(Kind::Spot));
+    let first =
+        Handle::new(Graphic3dCLight::new(Kind::Ambient)).into_upcast::<dyn Graphic3dCLightSource>();
+    let last =
+        Handle::new(Graphic3dCLight::new(Kind::Spot)).into_upcast::<dyn Graphic3dCLightSource>();
     set.add(&first).unwrap();
     let mut cursor = Cursor::new(&set, Filter::None);
     let copied = cursor.clone();

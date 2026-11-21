@@ -15,7 +15,7 @@ martensite_tkernel::impl_transient!(AisLightSource,"AisLightSource",dyn AisInter
     interfaces:[dyn AisLightSourceSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisLightSource {
     /// Retain the live light and create its native drawers/aspects; `AisLightSource::new(&light)?`.
-    pub fn new(light: &Handle<Graphic3dCLight>) -> Result<Handle<Self>, Failure> {
+    pub fn new(light: &Handle<dyn Graphic3dCLightSource>) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
             base: AisLightSourceBase::new(light),
         });

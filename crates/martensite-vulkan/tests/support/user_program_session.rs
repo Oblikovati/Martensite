@@ -136,7 +136,7 @@ impl UserProgramSession {
                 false,
             )
             .unwrap();
-            let light: Handle<Graphic3dCLight> = Handle::new(light).cast();
+            let light: Handle<dyn Graphic3dCLightSource> = Handle::new(light).cast();
             let value = light.get().unwrap();
             value
                 .set_direction(&Direction3::new(direction, 0., 0.).unwrap())
@@ -145,7 +145,7 @@ impl UserProgramSession {
             self.add_light(light);
         }
     }
-    fn add_light(&self, light: Handle<Graphic3dCLight>) {
+    fn add_light(&self, light: Handle<dyn Graphic3dCLightSource>) {
         self.viewer.add_light(&light);
         self.viewer.set_light_on_one(&light).unwrap();
     }

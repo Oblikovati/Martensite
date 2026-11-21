@@ -182,7 +182,9 @@ fn cap_texels() -> [[f64; 3]; 4] {
     let bytes = texture_scene::modes::texture_mode_pixels("nearest");
     [0, 1, 2, 3].map(|texel| [0, 1, 2].map(|k| f64::from(bytes[texel * 4 + k]) / 255.))
 }
-fn cap_point_light_and_ambient(scene: &scene::ViewerScene) -> (Handle<Graphic3dCLight>, [f64; 3]) {
+fn cap_point_light_and_ambient(
+    scene: &scene::ViewerScene,
+) -> (Handle<dyn Graphic3dCLightSource>, [f64; 3]) {
     use martensite_tkernel::quantity::ColorSpace;
     let lights = scene.cview().lights().get().unwrap().lights();
     let mut ambient = [0.; 3];

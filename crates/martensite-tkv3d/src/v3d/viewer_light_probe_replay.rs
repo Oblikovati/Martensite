@@ -5,14 +5,14 @@ use martensite_tkernel::{
     tcollection::AsciiString,
 };
 use martensite_tkservice::{
-    graphic3d::{Graphic3dCLight, Graphic3dTypeOfLightSource},
+    graphic3d::{Graphic3dCLight, Graphic3dCLightSource, Graphic3dTypeOfLightSource},
     null_driver::NullGraphicDriver,
 };
 use std::sync::Arc;
 pub(super) struct LightProbeScene {
     pub viewer: Handle<V3dViewer>,
     pub control: Arc<ViewerLightProbeControl>,
-    pub lights: [Handle<Graphic3dCLight>; 3],
+    pub lights: [Handle<dyn Graphic3dCLightSource>; 3],
     pub views: [Handle<dyn V3dViewSource>; 3],
 }
 pub(super) fn make_light_probe_scene(policy: usize) -> LightProbeScene {
@@ -35,12 +35,13 @@ pub(super) fn make_light_probe_scene(policy: usize) -> LightProbeScene {
     prepare_light_case(&scene);
     scene
 }
-fn make_probe_lights(policy: usize) -> [Handle<Graphic3dCLight>; 3] {
+fn make_probe_lights(policy: usize) -> [Handle<dyn Graphic3dCLightSource>; 3] {
     std::array::from_fn(|index| {
         if policy == 6 && index == 0 {
             return Handle::default();
         }
-        let light = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient));
+        let light = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient))
+            .into_upcast::<dyn Graphic3dCLightSource>();
         light.set_name(&AsciiString::from((index + 1).to_string().as_str()));
         light
     })

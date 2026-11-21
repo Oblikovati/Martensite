@@ -234,7 +234,7 @@ pub use index_buffer::{
     Graphic3dMutableIndexBuffer,
 };
 pub use layer::{Graphic3dArrayOfIndexedMapOfStructure, Graphic3dLayer};
-pub use light::Graphic3dCLight;
+pub use light::{Graphic3dCLight, Graphic3dCLightSource};
 pub use light_set::{
     Graphic3dLightSet, Graphic3dLightSetFields, Graphic3dLightSetIterationFilter,
     Graphic3dLightSetIterator,

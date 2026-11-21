@@ -1,6 +1,8 @@
 //! Light selection observes its caller only at the actual sensitive-entity Add boundaries.
 use martensite_tkernel::standard::{Handle, HandleObserver, HandleReference};
-use martensite_tkservice::graphic3d::{Graphic3dCLight, Graphic3dTypeOfLightSource};
+use martensite_tkservice::graphic3d::{
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dTypeOfLightSource,
+};
 use martensite_tkv3d::{
     ais::AisLightSource,
     select_mgr::{SelectMgrSelectableObject, SelectMgrSelection},
@@ -64,7 +66,7 @@ impl HandleReference<SelectMgrSelection> for ForbiddenSelectionReference {
 }
 
 fn light(kind: Graphic3dTypeOfLightSource) -> Handle<AisLightSource> {
-    let source = Handle::new(Graphic3dCLight::new(kind));
+    let source = Handle::new(Graphic3dCLight::new(kind)).into_upcast::<dyn Graphic3dCLightSource>();
     AisLightSource::new(&source).unwrap()
 }
 

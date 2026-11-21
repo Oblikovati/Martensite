@@ -23,7 +23,9 @@ impl FakeLightPresentation {
             fail_refresh: std::sync::atomic::AtomicBool::new(false),
             persistence_calls: std::sync::atomic::AtomicUsize::new(0),
             frame_calls: std::sync::atomic::AtomicUsize::new(0),
-            light: AisLightSourceBase::new(&Handle::new(Graphic3dCLight::new(kind))),
+            light: AisLightSourceBase::new(
+                &Handle::new(Graphic3dCLight::new(kind)).into_upcast::<dyn Graphic3dCLightSource>(),
+            ),
         }
     }
 }
@@ -201,7 +203,8 @@ fn native_world_light_transform_snapshots() {
 #[test]
 fn live_light_replacement_retains_pointer_identity() {
     let object = FakeLightPresentation::new(light_kind(1));
-    let replacement = Handle::new(Graphic3dCLight::new(light_kind(3)));
+    let replacement =
+        Handle::new(Graphic3dCLight::new(light_kind(3))).into_upcast::<dyn Graphic3dCLightSource>();
     object.set_light(&replacement);
     assert_eq!(
         object.light().object_address(),

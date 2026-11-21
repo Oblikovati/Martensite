@@ -15,7 +15,7 @@ use martensite_tkservice::graphic3d::*;
 #[derive(Clone, Debug, PartialEq)]
 pub struct RenderShadowMap {
     /// The casting light (GlShadowMap::LightSource); ShadowMapDump finds maps by its name.
-    pub(crate) light: Handle<Graphic3dCLight>,
+    pub(crate) light: Handle<dyn Graphic3dCLightSource>,
     pub(crate) light_matrix: [f32; 16],
     pub(crate) depth: Vec<f32>,
 }
@@ -75,7 +75,7 @@ impl ShadowCameras {
 
 /// The casting lights when the view renders shadow maps (GlView::Redraw "allocate shadow
 /// maps"): shadows enabled, a positive resolution and at least one enabled caster.
-fn shadow_casters(view: &dyn Graphic3dCView) -> Vec<Handle<Graphic3dCLight>> {
+fn shadow_casters(view: &dyn Graphic3dCView) -> Vec<Handle<dyn Graphic3dCLightSource>> {
     let params = view.rendering_params();
     let lights = view.lights();
     let Some(set) = lights.get() else {
