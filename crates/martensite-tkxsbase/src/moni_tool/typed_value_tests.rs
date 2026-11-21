@@ -1,7 +1,7 @@
 //! Unit tests of `MoniToolTypedValue`: specifications, setters, printing and library.
 use super::{MoniToolTypedValue, MoniToolValueType};
 use martensite_tkernel::{
-    standard::{Handle, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeTyped, StandardTransient, Transient},
     tcollection::HAsciiString,
 };
 
@@ -92,9 +92,11 @@ fn text_objects_and_clear() {
     let object = MoniToolTypedValue::new("o", MoniToolValueType::ValueIdent, "").unwrap();
     assert!(!value.set_object_value(&Handle::default()));
     object
-        .set_object_type(&HAsciiString::static_type_handle())
+        .set_object_type(Some(HAsciiString::static_type()))
         .unwrap();
-    assert!(!object.set_object_value(&Handle::new(StandardTransient::default())));
+    assert!(
+        !object.set_object_value(&Handle::new(StandardTransient).into_upcast::<dyn Transient>())
+    );
     assert!(object.set_object_value(&text("s").cast()));
     assert_eq!(object.object_type_name(), "TCollection_HAsciiString");
     assert_eq!(

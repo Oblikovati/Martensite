@@ -94,7 +94,7 @@ pub(super) fn fun6465(pilot: &Handle<IFSelectSessionPilot>) -> Status {
         let list = IFSelectFunctions::give_list(&ws, &part, "")?;
         let pointed = IFSelectSelectPointed::new();
         pointed.set_list(list.as_deref());
-        sp = Handle::new(pointed).cast();
+        sp = Handle::new(pointed).into_upcast();
     }
     let effect = ws.run_modifier_selected(&modif, &sp, runcopy)?;
     effect_message(
@@ -120,7 +120,7 @@ pub(super) fn fun66(pilot: &Handle<IFSelectSessionPilot>) -> Status {
         );
         return Ok(RetError);
     }
-    Ok(pilot.record_item(&Handle::new(IFSelectModifReorder::new(opt == b'l')).cast()))
+    Ok(pilot.record_item(&Handle::new(IFSelectModifReorder::new(opt == b'l')).into_upcast()))
 }
 
 /// `fun70` (toggle): the direction of an extraction toggled.
@@ -195,7 +195,10 @@ pub(super) fn record_selection(
 /// `fun72` (modelroots).
 pub(super) fn fun72(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
-    record_selection(pilot, Handle::new(IFSelectSelectModelRoots::new()).cast())
+    record_selection(
+        pilot,
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast(),
+    )
 }
 
 /// The help of `fun73`.
@@ -232,19 +235,22 @@ pub(super) fn fun73(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     } else {
         sel.set_range(&param(&arg1), &param(&arg2));
     }
-    record_selection(pilot, Handle::new(sel).cast())
+    record_selection(pilot, Handle::new(sel).into_upcast())
 }
 
 /// `fun74` (roots).
 pub(super) fn fun74(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
-    record_selection(pilot, Handle::new(IFSelectSelectRoots::new()).cast())
+    record_selection(pilot, Handle::new(IFSelectSelectRoots::new()).into_upcast())
 }
 
 /// `fun75` (shared).
 pub(super) fn fun75(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
-    record_selection(pilot, Handle::new(IFSelectSelectShared::new()).cast())
+    record_selection(
+        pilot,
+        Handle::new(IFSelectSelectShared::new()).into_upcast(),
+    )
 }
 
 /// `fun76` (diff): a new difference of the selections given (if any) recorded.
@@ -252,7 +258,7 @@ pub(super) fn fun76(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     let ws = session_of(pilot)?;
     let argc = pilot.nb_words();
     let (arg1, arg2) = (pilot.arg(1)?, pilot.arg(2)?);
-    let sel: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectDiff::new()).cast();
+    let sel: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectDiff::new()).into_upcast();
     let mut sout = Message::send_info();
     if argc < 3 {
         let _ = writeln!(
@@ -305,6 +311,6 @@ pub(super) fn fun79(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
     record_selection(
         pilot,
-        Handle::new(IFSelectSelectModelEntities::new()).cast(),
+        Handle::new(IFSelectSelectModelEntities::new()).into_upcast(),
     )
 }

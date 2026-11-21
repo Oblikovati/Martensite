@@ -9,7 +9,7 @@ use crate::if_select::{
     IFSelectSelection, IFSelectSignType, IFSelectTransformStandard, IFSelectTransformer,
 };
 use crate::interface::InterfaceModelEntities;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 
 fn selection(
     session: &IFSelectWorkSession,
@@ -25,9 +25,9 @@ fn global(session: &IFSelectWorkSession) -> Handle<dyn IFSelectDispatch> {
     let all = selection(
         session,
         "all",
-        Handle::new(IFSelectSelectModelEntities::new()).cast(),
+        Handle::new(IFSelectSelectModelEntities::new()).into_upcast(),
     );
-    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).cast();
+    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).into_upcast();
     session.add_named_item("glob", &disp.cast(), true).unwrap();
     assert!(session.set_item_selection(&disp.cast(), &all));
     disp
@@ -39,14 +39,14 @@ fn session_selections() {
     let shared = selection(
         &plain,
         "shared",
-        Handle::new(IFSelectSelectShared::new()).cast(),
+        Handle::new(IFSelectSelectShared::new()).into_upcast(),
     );
     plain.set_input_selection(
         &shared,
         &selection(
             &plain,
             "roots",
-            Handle::new(IFSelectSelectModelRoots::new()).cast(),
+            Handle::new(IFSelectSelectModelRoots::new()).into_upcast(),
         ),
     );
     assert_eq!(
@@ -58,7 +58,7 @@ fn session_selections() {
     let roots = selection(
         &session,
         "roots",
-        Handle::new(IFSelectSelectModelRoots::new()).cast(),
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast(),
     );
     assert_eq!(
         session.eval_selection(&roots).unwrap().content(),
@@ -77,7 +77,7 @@ fn session_selections() {
     let shared = selection(
         &session,
         "shared",
-        Handle::new(IFSelectSelectShared::new()).cast(),
+        Handle::new(IFSelectSelectShared::new()).into_upcast(),
     );
     assert!(session.set_input_selection(&shared, &roots) && session.nb_sources(&shared) == 1);
     assert!(session.source(&shared, 1).unwrap() == roots);
@@ -94,13 +94,13 @@ fn session_selections() {
     let range = selection(
         &session,
         "range",
-        Handle::new(IFSelectSelectRange::new()).cast(),
+        Handle::new(IFSelectSelectRange::new()).into_upcast(),
     );
     assert!(session.toggle_select_extract(&range) && session.is_reversed_select_extract(&range));
     let union = selection(
         &session,
         "union",
-        Handle::new(IFSelectSelectUnion::new()).cast(),
+        Handle::new(IFSelectSelectUnion::new()).into_upcast(),
     );
     assert_eq!(
         (
@@ -133,9 +133,9 @@ fn session_selections() {
 #[test]
 fn session_give_lists() {
     let (session, ents, _) = loaded_with(true);
-    let seq = martensite_tkernel::ncollection::HSequence::<Handle<StandardTransient>>::default();
+    let seq = martensite_tkernel::ncollection::HSequence::<Handle<dyn Transient>>::default();
     seq.append(ents[1].clone());
-    let as_list = session.give_list(&Handle::new(seq).cast()).unwrap();
+    let as_list = session.give_list(&Handle::new(seq).into_upcast()).unwrap();
     assert_eq!(
         as_list,
         Some(vec![ents[1].clone()]),
@@ -144,14 +144,14 @@ fn session_give_lists() {
     selection(
         &session,
         "roots",
-        Handle::new(IFSelectSelectModelRoots::new()).cast(),
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast(),
     );
     selection(
         &session,
         "shared",
-        Handle::new(IFSelectSelectShared::new()).cast(),
+        Handle::new(IFSelectSelectShared::new()).into_upcast(),
     );
-    let sign: Handle<StandardTransient> = Handle::new(IFSelectSignType::new(false)).cast();
+    let sign: Handle<dyn Transient> = Handle::new(IFSelectSignType::new(false)).into_upcast();
     session.add_named_item("type", &sign, true).unwrap();
     assert_eq!(
         session.give_list_texts("(1, 3,1)", "").unwrap(),
@@ -277,7 +277,7 @@ fn session_modifiers_and_transformers() {
     let (session, ents, _) = loaded();
     let disp = global(&session);
     let reorder: Handle<dyn IFSelectGeneralModifier> =
-        Handle::new(IFSelectModifReorder::new(false)).cast();
+        Handle::new(IFSelectModifReorder::new(false)).into_upcast();
     session
         .add_named_item("reorder", &reorder.cast(), true)
         .unwrap();
@@ -306,7 +306,7 @@ fn session_modifiers_and_transformers() {
             .set_applied_modifier(&reorder, &disp.cast())
             .unwrap()
     );
-    assert!(session.uses_applied_modifier(&reorder).unwrap() == disp.cast::<StandardTransient>());
+    assert!(session.uses_applied_modifier(&reorder).unwrap() == disp.cast::<dyn Transient>());
     assert!(
         session.reset_applied_modifier(&reorder).unwrap()
             && session.nb_final_modifiers(true).unwrap() == 0
@@ -337,7 +337,7 @@ fn session_modifiers_and_transformers() {
     let roots = selection(
         &session,
         "roots",
-        Handle::new(IFSelectSelectModelRoots::new()).cast(),
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast(),
     );
     let before = session.model();
     assert!(session.set_model_content(&roots, true).unwrap());
@@ -390,7 +390,7 @@ fn session_sending() {
     let roots = selection(
         &session,
         "roots",
-        Handle::new(IFSelectSelectModelRoots::new()).cast(),
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast(),
     );
     assert_eq!(
         session.send_selected("sel.stp", &roots, false).unwrap(),

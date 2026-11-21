@@ -6,7 +6,7 @@ use super::{
     InterfaceCheck, InterfaceCheckIterator, InterfaceDataState, InterfaceEntityIterator,
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceReportEntity,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use std::sync::OnceLock;
 
 /// `nulch()`: the shared empty check returned for an entity without report.
@@ -34,7 +34,7 @@ pub trait InterfaceModelReports: InterfaceInterfaceModel {
                 state.therepch.seek(&num).cloned(),
             )
         };
-        let semantic_state = |rep: Handle<StandardTransient>| {
+        let semantic_state = |rep: Handle<dyn Transient>| {
             let error = rep
                 .cast::<InterfaceReportEntity>()
                 .get()
@@ -225,7 +225,7 @@ pub trait InterfaceModelReports: InterfaceInterfaceModel {
     }
     /// `Reports(semantic = false)`: the reports, in the native map order.
     fn reports(&self, semantic: bool) -> InterfaceEntityIterator {
-        let reports: Vec<Handle<StandardTransient>> = {
+        let reports: Vec<Handle<dyn Transient>> = {
             let state = self.model_base().read();
             let map = if semantic {
                 &state.therepch

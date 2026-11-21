@@ -14,14 +14,10 @@ use crate::if_select::{
     IFSelectSignType, IFSelectSignValidity, IFSelectSignature,
 };
 use crate::interface::InterfaceStatic;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 
 /// Adds a named item to the session.
-fn add(
-    ws: &XSControlWorkSession,
-    name: &str,
-    item: Handle<StandardTransient>,
-) -> Result<(), Failure> {
+fn add(ws: &XSControlWorkSession, name: &str, item: Handle<dyn Transient>) -> Result<(), Failure> {
     ws.add_named_item(name, &item, true)?;
     Ok(())
 }
@@ -49,27 +45,33 @@ fn int_param(value: i32) -> Handle<IFSelectIntParam> {
 fn add_standard_selections(
     ws: &Handle<XSControlWorkSession>,
 ) -> Result<Handle<dyn IFSelectSelection>, Failure> {
-    let sle: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectModelEntities::new()).cast();
+    let sle: Handle<dyn IFSelectSelection> =
+        Handle::new(IFSelectSelectModelEntities::new()).into_upcast();
     add(ws, "xst-model-all", sle.cast())?;
-    let slr: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectModelRoots::new()).cast();
+    let slr: Handle<dyn IFSelectSelection> =
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast();
     add(ws, "xst-model-roots", slr.cast())?;
     let norm = String::from_utf8_lossy(ws.selected_norm(false).as_bytes()).into_owned();
     if !norm.eq_ignore_ascii_case("STEP") {
         let st1 = XSControlSelectForTransfer::new();
         st1.set_input(&slr);
         st1.set_reader(&ws.transfer_reader());
-        add(ws, "xst-transferrable-roots", Handle::new(st1).cast())?;
+        add(
+            ws,
+            "xst-transferrable-roots",
+            Handle::new(st1).into_upcast(),
+        )?;
     }
     let st2 = XSControlSelectForTransfer::new();
     st2.set_input(&sle);
     st2.set_reader(&ws.transfer_reader());
-    add(ws, "xst-transferrable-all", Handle::new(st2).cast())?;
+    add(ws, "xst-transferrable-all", Handle::new(st2).into_upcast())?;
     let strs = XSControlSignTransferStatus::new();
     strs.set_reader(&ws.transfer_reader());
-    add(ws, "xst-transfer-status", Handle::new(strs).cast())?;
+    add(ws, "xst-transfer-status", Handle::new(strs).into_upcast())?;
     let scs = XSControlConnectedShapes::new();
     scs.set_reader(&ws.transfer_reader());
-    add(ws, "xst-connected-faces", Handle::new(scs).cast())?;
+    add(ws, "xst-connected-faces", Handle::new(scs).into_upcast())?;
     Ok(slr)
 }
 
@@ -78,29 +80,30 @@ type TypeSignatures = (Handle<dyn IFSelectSignature>, Handle<dyn IFSelectSignatu
 
 /// The standard signatures and counters; the long type signature is returned.
 fn add_standard_signatures(ws: &XSControlWorkSession) -> Result<TypeSignatures, Failure> {
-    let stp: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(false)).cast();
+    let stp: Handle<dyn IFSelectSignature> =
+        Handle::new(IFSelectSignType::new(false)).into_upcast();
     add(ws, "xst-long-type", stp.cast())?;
-    let stc: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(true)).cast();
+    let stc: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(true)).into_upcast();
     add(ws, "xst-type", stc.cast())?;
     add(
         ws,
         "xst-ancestor-type",
-        Handle::new(IFSelectSignAncestor::new(false)).cast(),
+        Handle::new(IFSelectSignAncestor::new(false)).into_upcast(),
     )?;
     add(
         ws,
         "xst-types",
-        Handle::new(IFSelectSignCounter::with_signature(&stp, false, true)?).cast(),
+        Handle::new(IFSelectSignCounter::with_signature(&stp, false, true)?).into_upcast(),
     )?;
     add(
         ws,
         "xst-category",
-        Handle::new(IFSelectSignCategory::new()).cast(),
+        Handle::new(IFSelectSignCategory::new()).into_upcast(),
     )?;
     add(
         ws,
         "xst-validity",
-        Handle::new(IFSelectSignValidity::new()).cast(),
+        Handle::new(IFSelectSignValidity::new()).into_upcast(),
     )?;
     Ok((stp, stc))
 }
@@ -114,20 +117,35 @@ fn add_standard_dispatches(
     add_dispatch(
         ws,
         "xst-disp-one",
-        Handle::new(IFSelectDispPerOne::new()).cast(),
+        Handle::new(IFSelectDispPerOne::new()).into_upcast(),
         slr,
     )?;
     let dispcount = IFSelectDispPerCount::new();
     dispcount.set_count(&int_param(5));
-    add_dispatch(ws, "xst-disp-count", Handle::new(dispcount).cast(), slr)?;
+    add_dispatch(
+        ws,
+        "xst-disp-count",
+        Handle::new(dispcount).into_upcast(),
+        slr,
+    )?;
     let dispfiles = IFSelectDispPerFiles::new();
     dispfiles.set_count(&int_param(10));
-    add_dispatch(ws, "xst-disp-files", Handle::new(dispfiles).cast(), slr)?;
+    add_dispatch(
+        ws,
+        "xst-disp-files",
+        Handle::new(dispfiles).into_upcast(),
+        slr,
+    )?;
     let dispsign = IFSelectDispPerSignature::new();
     dispsign.set_sign_counter(
-        &Handle::new(IFSelectSignCounter::with_signature(stc, true, false)?).cast(),
+        &Handle::new(IFSelectSignCounter::with_signature(stc, true, false)?).into_upcast(),
     )?;
-    add_dispatch(ws, "xst-disp-sign", Handle::new(dispsign).cast(), slr)
+    add_dispatch(
+        ws,
+        "xst-disp-sign",
+        Handle::new(dispsign).into_upcast(),
+        slr,
+    )
 }
 
 /// The standard items of a session without them.
@@ -138,22 +156,22 @@ fn add_standard_items(ws: &Handle<XSControlWorkSession>) -> Result<(), Failure> 
     add(
         ws,
         "xst-pointed",
-        Handle::new(IFSelectSelectPointed::new()).cast(),
+        Handle::new(IFSelectSelectPointed::new()).into_upcast(),
     )?;
     add(
         ws,
         "xst-sharing",
-        Handle::new(IFSelectSelectSharing::new()).cast(),
+        Handle::new(IFSelectSelectSharing::new()).into_upcast(),
     )?;
     add(
         ws,
         "xst-shared",
-        Handle::new(IFSelectSelectShared::new()).cast(),
+        Handle::new(IFSelectSelectShared::new()).into_upcast(),
     )?;
     add(
         ws,
         "xst-nb-selected",
-        Handle::new(IFSelectGraphCounter::new(true, false)).cast(),
+        Handle::new(IFSelectGraphCounter::new(true, false)).into_upcast(),
     )?;
     ws.set_sign_type(&stp);
     Ok(())

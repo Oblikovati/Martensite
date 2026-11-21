@@ -1,14 +1,15 @@
 //! `InterfaceTypedValue`: a `MoniToolTypedValue` whose type is an
 //! `InterfaceParamType` (the two enumerations have the same values).
 use super::InterfaceParamType;
-use crate::moni_tool::{MoniToolTypedValue, MoniToolValueType};
-use martensite_tkernel::{impl_transient, standard::Failure};
+use crate::moni_tool::{MoniToolTypedValueOps, MoniToolValue, MoniToolValueType};
+use martensite_tkernel::{
+    impl_transient, impl_transient_interface_target,
+    standard::{Failure, HandleUpcast, RuntimeType, RuntimeTyped},
+};
 use std::ops::Deref;
+use std::sync::Arc;
 
-/// `InterfaceTypedValue`: embeds its `MoniToolTypedValue` (registered as its RTTI
-/// parent) and dereferences to it. The native class redeclares private fields of its base
-/// that it never uses; they have no counterpart.
-///
+/// A typed value classified by its exchange parameter type.///
 /// ```
 /// use martensite_tkxsbase::interface::{InterfaceParamType, InterfaceTypedValue};
 /// let value = InterfaceTypedValue::new("count", InterfaceParamType::ParamInteger, "3").unwrap();
@@ -16,31 +17,58 @@ use std::ops::Deref;
 /// assert_eq!(value.integer_value(), 3);
 /// ```
 pub struct InterfaceTypedValue {
-    base: MoniToolTypedValue,
+    value: MoniToolValue,
 }
 impl_transient!(
     InterfaceTypedValue,
     "InterfaceTypedValue",
-    MoniToolTypedValue,
-    base
+    dyn MoniToolTypedValueOps,
+    interfaces: [dyn MoniToolTypedValueOps, dyn InterfaceTypedValueOps]
 );
 
 impl Deref for InterfaceTypedValue {
-    type Target = MoniToolTypedValue;
-    fn deref(&self) -> &MoniToolTypedValue {
-        &self.base
+    type Target = MoniToolValue;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl MoniToolTypedValueOps for InterfaceTypedValue {}
+impl InterfaceTypedValueOps for InterfaceTypedValue {}
+
+/// A typed value with a parameter type, including a recorded static parameter.
+pub trait InterfaceTypedValueOps: MoniToolTypedValueOps {
+    /// Get the parameter type, e.g. `value.param_type() == InterfaceParamType::ParamText`.
+    fn param_type(&self) -> InterfaceParamType {
+        InterfaceTypedValue::value_type_to_param_type(self.value_type())
+    }
+}
+
+impl RuntimeTyped for dyn InterfaceTypedValueOps {
+    const TYPE_NAME: &'static str = InterfaceTypedValue::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        InterfaceTypedValue::static_type()
+    }
+}
+impl_transient_interface_target!(dyn InterfaceTypedValueOps);
+impl HandleUpcast<dyn MoniToolTypedValueOps> for dyn InterfaceTypedValueOps {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn MoniToolTypedValueOps> {
+        owner
     }
 }
 
 impl InterfaceTypedValue {
     /// `InterfaceTypedValue(name, type = ParamText, init = "")`.
     pub fn new(name: &str, kind: InterfaceParamType, init: &str) -> Result<Self, Failure> {
-        let base = MoniToolTypedValue::new(name, Self::param_type_to_value_type(kind), init)?;
-        Ok(Self { base })
+        Ok(Self {
+            value: MoniToolValue::new(name, Self::param_type_to_value_type(kind), init)?,
+        })
     }
     /// `Type`: the value type as a parameter type.
     pub fn param_type(&self) -> InterfaceParamType {
-        Self::value_type_to_param_type(self.value_type())
+        InterfaceTypedValueOps::param_type(self)
     }
     /// `ParamTypeToValueType(typ)`: the same value.
     pub fn param_type_to_value_type(typ: InterfaceParamType) -> MoniToolValueType {
@@ -83,7 +111,7 @@ impl InterfaceTypedValue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use martensite_tkernel::standard::{Handle, RuntimeTyped};
+    use martensite_tkernel::standard::Handle;
 
     #[test]
     fn conversions_keep_the_value() {
@@ -99,8 +127,9 @@ mod tests {
         assert_eq!(bad.exception_type(), "Standard_ConstructionError");
         let value =
             Handle::new(InterfaceTypedValue::new("t", InterfaceParamType::ParamText, "").unwrap());
-        assert!(value.cast::<MoniToolTypedValue>().is_some());
-        assert!(value.is_kind(MoniToolTypedValue::static_type()));
+        let view = value.view::<dyn MoniToolTypedValueOps>();
+        assert_eq!(view.object_address(), value.object_address());
+        assert!(value.is_kind(<dyn MoniToolTypedValueOps>::static_type()));
     }
 
     fn param_of(value: i32) -> InterfaceParamType {

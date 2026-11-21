@@ -2,20 +2,18 @@
 use super::InterfaceEntityCluster;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 use std::sync::Arc;
 
 struct ClusterDeletionRecord {
-    transient: StandardTransient,
     ordinal: i32,
     observations: Arc<SharedState<Vec<i32>>>,
 }
 impl_transient!(
     ClusterDeletionRecord,
     "ClusterDeletionRecord",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl Drop for ClusterDeletionRecord {
@@ -27,13 +25,12 @@ impl Drop for ClusterDeletionRecord {
 fn recorded_entity(
     ordinal: i32,
     observations: &Arc<SharedState<Vec<i32>>>,
-) -> Handle<StandardTransient> {
+) -> Handle<dyn Transient> {
     Handle::new(ClusterDeletionRecord {
-        transient: StandardTransient::default(),
         ordinal,
         observations: observations.clone(),
     })
-    .cast()
+    .into_upcast()
 }
 
 #[test]

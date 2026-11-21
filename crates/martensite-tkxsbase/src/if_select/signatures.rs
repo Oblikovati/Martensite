@@ -8,21 +8,16 @@ use crate::interface::{
 use crate::moni_tool::MoniToolSignText;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeType, SharedState, StandardTransient},
+    standard::{Failure, Handle, RuntimeType, SharedState, Transient},
     tcollection::AsciiString,
 };
 
-/// Applies `read` to the type a signature by type reads: the entity itself when it is a
-/// type, else its dynamic type (`None` for null).
+/// Applies `read` to the entity's descriptor (`None` for null).
 fn with_entity_type<R>(
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     read: impl FnOnce(&RuntimeType) -> R,
 ) -> Option<R> {
-    let kind = ent.cast::<RuntimeType>();
-    match kind.get() {
-        Some(live) => Some(read(live)),
-        None => ent.dynamic_type().map(read),
-    }
+    ent.dynamic_type().map(read)
 }
 
 /// `IFSelectSignType`: the type name of the entity (without its package with `nopk`).
@@ -32,30 +27,40 @@ fn with_entity_type<R>(
 /// use martensite_tkxsbase::if_select::IFSelectSignType;
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let sign = IFSelectSignType::new(true);
-/// assert_eq!(sign.value(&Handle::new(StandardTransient::default()), &Handle::default()), "Transient");
+/// assert_eq!(sign.value(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>(), &Handle::default()), "Transient");
 /// ```
 pub struct IFSelectSignType {
-    transient: StandardTransient,
-    base: IFSelectSignatureBase,
-    thenopk: bool,
+    signature: SignTypeData,
 }
-impl_transient!(IFSelectSignType, "IFSelectSignType", dyn IFSelectSignature, transient, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
+impl_transient!(IFSelectSignType, "IFSelectSignType", dyn IFSelectSignature, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
 impl_signature_text!(IFSelectSignType);
 
 impl IFSelectSignType {
     /// `IFSelectSignType(nopk = false)`: "Class Type" (without package) or "Dynamic Type".
     pub fn new(nopk: bool) -> Self {
+        Self {
+            signature: SignTypeData::new(nopk),
+        }
+    }
+}
+
+struct SignTypeData {
+    base: IFSelectSignatureBase,
+    nopk: bool,
+}
+
+impl SignTypeData {
+    fn new(nopk: bool) -> Self {
         let name = if nopk { "Class Type" } else { "Dynamic Type" };
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new(name),
-            thenopk: nopk,
+            nopk,
         }
     }
 }
 
 /// `IFSelectSignType::Value`: the type name, after the first '_' with `nopk`.
-fn sign_type_value(ent: &Handle<StandardTransient>, nopk: bool) -> String {
+fn sign_type_value(ent: &Handle<dyn Transient>, nopk: bool) -> String {
     with_entity_type(ent, |kind| {
         let name = kind.name();
         if !nopk {
@@ -71,32 +76,31 @@ fn sign_type_value(ent: &Handle<StandardTransient>, nopk: bool) -> String {
 impl InterfaceSignType for IFSelectSignType {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
-        sign_type_value(ent, self.thenopk)
+        sign_type_value(ent, self.signature.nopk)
     }
 }
 
 impl IFSelectSignature for IFSelectSignType {
     fn signature_base(&self) -> &IFSelectSignatureBase {
-        &self.base
+        &self.signature.base
     }
 }
 
-/// `IFSelectSignAncestor`: a signature by type which matches the ancestor types too;
-/// embeds its `IFSelectSignType` (registered as its RTTI parent).
+/// A type signature whose matching includes ancestors.
 pub struct IFSelectSignAncestor {
-    base: IFSelectSignType,
+    signature: SignTypeData,
 }
-impl_transient!(IFSelectSignAncestor, "IFSelectSignAncestor", IFSelectSignType, base, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
+impl_transient!(IFSelectSignAncestor, "IFSelectSignAncestor", IFSelectSignType, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
 impl_signature_text!(IFSelectSignAncestor);
 
 impl IFSelectSignAncestor {
     /// `IFSelectSignAncestor(nopk = false)`.
     pub fn new(nopk: bool) -> Self {
         Self {
-            base: IFSelectSignType::new(nopk),
+            signature: SignTypeData::new(nopk),
         }
     }
 }
@@ -104,21 +108,21 @@ impl IFSelectSignAncestor {
 impl InterfaceSignType for IFSelectSignAncestor {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
-        model: &Handle<dyn InterfaceInterfaceModel>,
+        ent: &Handle<dyn Transient>,
+        _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
-        self.base.value(ent, model)
+        sign_type_value(ent, self.signature.nopk)
     }
 }
 
 impl IFSelectSignature for IFSelectSignAncestor {
     fn signature_base(&self) -> &IFSelectSignatureBase {
-        &self.base.base
+        &self.signature.base
     }
     /// `Matches`: the type of `ent` is `text` or inherits it (by name).
     fn matches(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
         text: &AsciiString,
         _exact: bool,
@@ -130,10 +134,9 @@ impl IFSelectSignature for IFSelectSignAncestor {
 
 /// `IFSelectSignCategory`: the category of the entity in the model.
 pub struct IFSelectSignCategory {
-    transient: StandardTransient,
     base: IFSelectSignatureBase,
 }
-impl_transient!(IFSelectSignCategory, "IFSelectSignCategory", dyn IFSelectSignature, transient, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
+impl_transient!(IFSelectSignCategory, "IFSelectSignCategory", dyn IFSelectSignature, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
 impl_signature_text!(IFSelectSignCategory);
 
 impl Default for IFSelectSignCategory {
@@ -146,7 +149,6 @@ impl IFSelectSignCategory {
     /// `IFSelectSignCategory()`: "Category", with the category names as cases.
     pub fn new() -> Self {
         let sign = Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("Category"),
         };
         InterfaceCategory::init();
@@ -161,7 +163,7 @@ impl InterfaceSignType for IFSelectSignCategory {
     /// `Value`: the category name of the entity (empty for null).
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         match model.get().filter(|_| ent.is_some()) {
@@ -180,10 +182,9 @@ impl IFSelectSignature for IFSelectSignCategory {
 /// `IFSelectSignValidity`: the validity of the entity (unknown, unloaded, errors,
 /// warnings, OK).
 pub struct IFSelectSignValidity {
-    transient: StandardTransient,
     base: IFSelectSignatureBase,
 }
-impl_transient!(IFSelectSignValidity, "IFSelectSignValidity", dyn IFSelectSignature, transient, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
+impl_transient!(IFSelectSignValidity, "IFSelectSignValidity", dyn IFSelectSignature, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
 impl_signature_text!(IFSelectSignValidity);
 
 impl Default for IFSelectSignValidity {
@@ -196,7 +197,6 @@ impl IFSelectSignValidity {
     /// `IFSelectSignValidity()`: "Validity", with its seven cases.
     pub fn new() -> Self {
         let sign = Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("Validity"),
         };
         for case in [
@@ -214,7 +214,7 @@ impl IFSelectSignValidity {
     }
     /// `CVal(ent, model)`: the validity of `ent` (empty for null).
     pub fn c_val(
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> &'static str {
         let Some(live) = model.get().filter(|_| ent.is_some()) else {
@@ -247,7 +247,7 @@ impl IFSelectSignValidity {
 impl InterfaceSignType for IFSelectSignValidity {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         Self::c_val(ent, model).to_owned()
@@ -269,18 +269,16 @@ struct MultipleState {
 
 /// `IFSelectSignMultiple`: the values of several signatures, in columns.
 pub struct IFSelectSignMultiple {
-    transient: StandardTransient,
     base: IFSelectSignatureBase,
     state: SharedState<MultipleState>,
 }
-impl_transient!(IFSelectSignMultiple, "IFSelectSignMultiple", dyn IFSelectSignature, transient, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
+impl_transient!(IFSelectSignMultiple, "IFSelectSignMultiple", dyn IFSelectSignature, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
 impl_signature_text!(IFSelectSignMultiple);
 
 impl IFSelectSignMultiple {
     /// `IFSelectSignMultiple(name)`: no sub-signature.
     pub fn new(name: &str) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new(name),
             state: SharedState::default(),
         }
@@ -323,7 +321,7 @@ impl InterfaceSignType for IFSelectSignMultiple {
     /// `Value`: the values of the sub-signatures, in columns.
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         let st = self.state.read();
@@ -347,7 +345,7 @@ impl IFSelectSignature for IFSelectSignMultiple {
     /// `Matches`: exact on the whole value, else when a sub-signature matches.
     fn matches(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
         text: &AsciiString,
         exact: bool,

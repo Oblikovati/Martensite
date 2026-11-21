@@ -2,7 +2,8 @@
 //! protocol and of its resources, then dispatches objects to their modules.
 use super::{LibCtlGlobalNode, LibCtlNode};
 use crate::interface::InterfaceProtocol;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions};
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient, exceptions};
 use std::sync::{Arc, PoisonError, RwLock};
 
 /// What a library needs from its protocol type: the native `TheProtocol` interface.
@@ -10,19 +11,19 @@ pub trait LibCtlProtocol {
     /// `NbResources`.
     fn lib_nb_resources(&self) -> i32;
     /// `Resource(num)`, as a transient for the down cast to the library's protocol type.
-    fn lib_resource(&self, num: i32) -> Handle<StandardTransient>;
+    fn lib_resource(&self, num: i32) -> Handle<dyn Transient>;
     /// `CaseNumber(obj)`.
-    fn lib_case_number(&self, obj: &Handle<StandardTransient>) -> i32;
+    fn lib_case_number(&self, obj: &Handle<dyn Transient>) -> i32;
 }
 
 impl<P: ?Sized + InterfaceProtocol> LibCtlProtocol for P {
     fn lib_nb_resources(&self) -> i32 {
         self.nb_resources()
     }
-    fn lib_resource(&self, num: i32) -> Handle<StandardTransient> {
+    fn lib_resource(&self, num: i32) -> Handle<dyn Transient> {
         self.resource(num).cast()
     }
-    fn lib_case_number(&self, obj: &Handle<StandardTransient>) -> i32 {
+    fn lib_case_number(&self, obj: &Handle<dyn Transient>) -> i32 {
         self.case_number(obj)
     }
 }
@@ -33,7 +34,7 @@ pub trait LibCtlKind: Sized + 'static {
     /// `TheModule` (`InterfaceGeneralModule` for `InterfaceGeneralLib`...).
     type Module: ?Sized + RuntimeTyped;
     /// `TheProtocol` (`InterfaceProtocol` for the Interface libraries...).
-    type Protocol: ?Sized + RuntimeTyped + LibCtlProtocol;
+    type Protocol: ?Sized + RuntimeTyped + LibCtlProtocol + TransientHandleTarget;
     /// The process-wide registry of this library.
     fn registry() -> &'static LibCtlRegistry<Self>;
 }
@@ -125,14 +126,14 @@ impl<K: LibCtlKind> LibCtlLibrary<K> {
     }
     /// `AddProtocol(protocol)`: adds the nodes of a protocol (ignored unless it is of the
     /// library's protocol type) and of its resources.
-    pub fn add_protocol(&mut self, protocol: &Handle<StandardTransient>) {
+    pub fn add_protocol(&mut self, protocol: &Handle<dyn Transient>) {
         self.add_protocol_in(K::registry(), protocol);
     }
     /// `AddProtocol` over an explicit registry.
     pub fn add_protocol_in(
         &mut self,
         registry: &LibCtlRegistry<K>,
-        protocol: &Handle<StandardTransient>,
+        protocol: &Handle<dyn Transient>,
     ) {
         add_protocol_impl(registry, &mut self.thelist, protocol);
     }
@@ -159,7 +160,7 @@ impl<K: LibCtlKind> LibCtlLibrary<K> {
     /// `Select(obj, module, CN)`: the module of the first protocol giving `obj` a
     /// positive case number, with that number; `None` (natively a null module and 0)
     /// when no protocol recognises it.
-    pub fn select(&self, obj: &Handle<StandardTransient>) -> Option<(Handle<K::Module>, i32)> {
+    pub fn select(&self, obj: &Handle<dyn Transient>) -> Option<(Handle<K::Module>, i32)> {
         let mut current = self.thelist.clone();
         while let Some(node) = current {
             let protocol = node.protocol();
@@ -209,7 +210,7 @@ impl<K: LibCtlKind> LibCtlLibrary<K> {
 fn add_protocol_impl<K: LibCtlKind>(
     registry: &LibCtlRegistry<K>,
     target: &mut Option<Arc<LibCtlNode<K>>>,
-    protocol: &Handle<StandardTransient>,
+    protocol: &Handle<dyn Transient>,
 ) {
     let typed: Handle<K::Protocol> = protocol.cast();
     let Some(live) = typed.get() else { return };

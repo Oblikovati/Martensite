@@ -5,7 +5,7 @@ use super::transfer_reader_results::{listed, live_model};
 use crate::interface::{InterfaceCheckIterator, InterfaceCheckStatus, InterfaceModelEntities};
 use crate::transfer_brep::TransferBRep;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 
 impl XSControlTransferReader {
     /// `CheckList(theEnt, theLevel = 0)`: the checks of the final results: of all of
@@ -13,7 +13,7 @@ impl XSControlTransferReader {
     /// (negative level), or of `ent`, named by kind.
     pub fn check_list(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         level: i32,
     ) -> Result<InterfaceCheckIterator, Failure> {
         let mut chl = InterfaceCheckIterator::new();
@@ -60,7 +60,7 @@ impl XSControlTransferReader {
     /// when not `FailsOnly`).
     pub fn has_checks(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         fails_only: bool,
     ) -> Result<bool, Failure> {
         let resu = self.final_result(ent);
@@ -80,10 +80,10 @@ impl XSControlTransferReader {
     /// lists of the results are appended (the native `Append` of a sequence handle).
     pub fn checked_list(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         withcheck: InterfaceCheckStatus,
         result: bool,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         let mut res = Vec::new();
         if ent.is_null() {
             return Ok(res);
@@ -114,10 +114,7 @@ impl XSControlTransferReader {
     }
     /// `LastTransferList(theRoots)`: the roots (or mapped items) of the process with a
     /// result.
-    pub fn last_transfer_list(
-        &self,
-        roots: bool,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    pub fn last_transfer_list(&self, roots: bool) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         let (tp, model) = (self.transient_process(), self.model());
         let mut li = Vec::new();
         let Some(process) = tp.get() else {

@@ -3,7 +3,7 @@ use super::edit_form::{FormItem, slot_out_of_range};
 use super::{IFSelectEditForm, IFSelectEditValue, IFSelectListEditor, IFSelectTextList};
 use crate::interface::{InterfaceInterfaceModel, InterfaceMsg, InterfaceParamType};
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::HAsciiString,
 };
 use std::fmt::Write as _;
@@ -373,7 +373,7 @@ impl IFSelectEditForm {
     /// `ApplyData(ent, model)`: the editor applies the form to `ent` and `model`.
     pub fn apply_data(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         self.theeditor.apply(&self.this(), ent, model)

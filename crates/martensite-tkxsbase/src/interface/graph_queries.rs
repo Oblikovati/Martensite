@@ -2,14 +2,14 @@
 use super::graph::{GRAPH_SHARE_ERROR, redefined_content};
 use super::{InterfaceEntityIterator, InterfaceGraph, InterfaceModelEntities, InterfaceShareTool};
 use martensite_tkernel::{
-    standard::{Failure, Handle, RuntimeType, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeType, Transient, exceptions},
     tcollection::HAsciiString,
 };
 
 impl InterfaceGraph {
     /// `HasShareErrors(ent)`: an entity out of the model has errors; false without
     /// statuses.
-    pub fn has_share_errors(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn has_share_errors(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         if self.thestats.is_null() {
             return Ok(false);
         }
@@ -22,10 +22,7 @@ impl InterfaceGraph {
     /// `Shareds(ent)`: the entities `ent` shares, from its module (evaluated each time);
     /// empty for an entity out of the model. A model without GTool is dereferenced
     /// natively: `StandardNullObject`.
-    pub fn shareds(
-        &self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<InterfaceEntityIterator, Failure> {
+    pub fn shareds(&self, ent: &Handle<dyn Transient>) -> Result<InterfaceEntityIterator, Failure> {
         let mut iter = InterfaceEntityIterator::new();
         let num = self.entity_number(ent);
         if num == 0 {
@@ -45,16 +42,16 @@ impl InterfaceGraph {
     /// `GetShareds(ent)`: `Shareds(ent).Content()`.
     pub fn get_shareds(
         &self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+        ent: &Handle<dyn Transient>,
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         Ok(self.shareds(ent)?.content())
     }
     /// `GetSharings(ent)`: the entities sharing `ent`; `None` (natively null) for an
     /// entity out of the model.
     pub fn get_sharings(
         &self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<Option<Vec<Handle<StandardTransient>>>, Failure> {
+        ent: &Handle<dyn Transient>,
+    ) -> Result<Option<Vec<Handle<dyn Transient>>>, Failure> {
         let num = self.entity_number(ent);
         if num == 0 {
             return Ok(None);
@@ -66,7 +63,7 @@ impl InterfaceGraph {
     /// `Sharings(ent)`.
     pub fn sharings(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<InterfaceEntityIterator, Failure> {
         let mut iter = InterfaceEntityIterator::new();
         if let Some(list) = self.get_sharings(ent)? {
@@ -78,7 +75,7 @@ impl InterfaceGraph {
     /// sharings of `ent` (`ent` itself when it has that type).
     pub fn typed_sharings(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         atype: &RuntimeType,
     ) -> Result<InterfaceEntityIterator, Failure> {
         let mut iter = InterfaceEntityIterator::new();
@@ -102,7 +99,7 @@ impl InterfaceGraph {
     }
     /// `Name(ent)`: the name a module gives to an entity out of the model (null for an
     /// entity of the model, or without GTool or module).
-    pub fn name(&self, ent: &Handle<StandardTransient>) -> Result<Handle<HAsciiString>, Failure> {
+    pub fn name(&self, ent: &Handle<dyn Transient>) -> Result<Handle<HAsciiString>, Failure> {
         let Some(model) = self.themodel.get() else {
             return Ok(Handle::default());
         };
@@ -131,7 +128,7 @@ impl InterfaceGraph {
 /// `AddTypedSharings` (static helper of `TypedSharings`). Native quirk kept: the limit
 /// passed down is the count of sharings of the level, not the graph size.
 fn add_typed_sharings(
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     atype: &RuntimeType,
     iter: &mut InterfaceEntityIterator,
     n: i32,

@@ -4,7 +4,7 @@ use super::{TransferStatusExec, TransferStatusResult, transfer_failure};
 use crate::interface::InterfaceCheck;
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Handle, RuntimeType, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, RuntimeType, SharedState, Transient},
 };
 
 /// The private fields of `TransferBinder`.
@@ -36,6 +36,20 @@ impl Default for TransferBinderBase {
     }
 }
 
+impl TransferBinderBase {
+    pub(crate) fn set_result_present(&self) -> Result<(), Failure> {
+        let mut state = self.state.write();
+        if state.thestatus == TransferStatusResult::StatusUsed {
+            return Err(transfer_failure(
+                "Binder : SetResult, Result is Already Set and Used",
+            ));
+        }
+        state.theexecst = TransferStatusExec::StatusDone;
+        state.thestatus = TransferStatusResult::StatusDefined;
+        Ok(())
+    }
+}
+
 impl Drop for TransferBinderBase {
     /// `~TransferBinder`: unlinks the chain of results iteratively while each next binder
     /// is held only by the chain, so a long chain does not recurse (as natively).
@@ -54,11 +68,6 @@ impl Drop for TransferBinderBase {
             current = next;
         }
     }
-}
-
-/// Whether two transient bases are those of one object.
-fn same_object(first: &StandardTransient, second: &StandardTransient) -> bool {
-    std::ptr::eq(first, second)
 }
 
 /// `TransferBinder`, abstract: `ResultType` and `ResultTypeName` are required,
@@ -112,10 +121,10 @@ pub trait TransferBinder: Transient {
     /// after cutting it from the chain of `next`.
     fn add_result(&self, next: &Handle<dyn TransferBinder>) {
         let Some(added) = next.get() else { return };
-        if same_object(added.transient_base(), self.transient_base()) {
+        if std::ptr::addr_eq(added, self) {
             return;
         }
-        added.cut_result_of(self.transient_base());
+        cut_result_of(added, std::ptr::from_ref(self).cast());
         let (first, end) = {
             let state = self.binder_base().state.read();
             (state.thenextr.clone(), state.theendr.clone())
@@ -133,30 +142,6 @@ pub trait TransferBinder: Transient {
                 return;
             }
             binder = following;
-        }
-    }
-    /// `CutResult(next)` (private): removes `next` (given by its transient base, as the
-    /// native caller passes `this`) from this chain.
-    fn cut_result_of(&self, next: &StandardTransient) {
-        let first = self.next_result();
-        let Some(live) = first.get() else { return };
-        if same_object(live.transient_base(), next) {
-            let mut state = self.binder_base().state.write();
-            state.thenextr.nullify();
-            state.theendr.nullify();
-            return;
-        }
-        let mut current = first.clone();
-        loop {
-            let following = current.next_result();
-            let Some(candidate) = following.get() else {
-                return;
-            };
-            if same_object(candidate.transient_base(), next) {
-                current.cut_result_of(next);
-                return;
-            }
-            current = following.clone();
         }
     }
     /// `NextResult`.
@@ -210,15 +195,30 @@ pub trait TransferBinder: Transient {
     /// `SetResultPresent` (protected): "done" and "defined";
     /// `TransferTransferFailure` when the result was already used.
     fn set_result_present(&self) -> Result<(), Failure> {
-        let mut state = self.binder_base().state.write();
-        if state.thestatus == TransferStatusResult::StatusUsed {
-            return Err(transfer_failure(
-                "Binder : SetResult, Result is Already Set and Used",
-            ));
-        }
-        state.theexecst = TransferStatusExec::StatusDone;
-        state.thestatus = TransferStatusResult::StatusDefined;
-        Ok(())
+        self.binder_base().set_result_present()
     }
 }
-impl_transient_interface!(dyn TransferBinder, "TransferBinder", StandardTransient);
+impl_transient_interface!(dyn TransferBinder, "TransferBinder", dyn Transient);
+
+/// Detach an existing occurrence before linking a binder into another chain.
+fn cut_result_of(binder: &dyn TransferBinder, next: *const ()) {
+    let mut current = binder.next_result();
+    if current.object_address() == next {
+        unlink_next(binder);
+        return;
+    }
+    while let Some(live) = current.get() {
+        let following = live.next_result();
+        if following.object_address() == next {
+            unlink_next(live);
+            return;
+        }
+        current = following;
+    }
+}
+
+fn unlink_next(binder: &dyn TransferBinder) {
+    let mut state = binder.binder_base().state.write();
+    state.thenextr.nullify();
+    state.theendr.nullify();
+}

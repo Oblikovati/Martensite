@@ -3,7 +3,7 @@ use super::InterfaceInterfaceModel;
 use crate::moni_tool::MoniToolSignText;
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Handle, StandardTransient},
+    standard::{Handle, Transient},
     tcollection::AsciiString,
 };
 
@@ -19,22 +19,22 @@ pub trait InterfaceSignType: MoniToolSignText {
     /// `Value(ent, model)`: the signature of `ent` in `model`.
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String;
 }
 impl_transient_interface!(
     dyn InterfaceSignType,
     "InterfaceSignType",
-    dyn MoniToolSignText
+    dyn MoniToolSignText, upcasts: [dyn MoniToolSignText]
 );
 
 /// `InterfaceSignType::Text(ent, context)`: `Value` when the context is a model and the
 /// entity is not null, else empty.
 pub fn interface_sign_type_text<S: InterfaceSignType + ?Sized>(
     sign: &S,
-    ent: &Handle<StandardTransient>,
-    context: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
+    context: &Handle<dyn Transient>,
 ) -> AsciiString {
     let model: Handle<dyn InterfaceInterfaceModel> = context.cast();
     if ent.is_null() || model.is_null() {

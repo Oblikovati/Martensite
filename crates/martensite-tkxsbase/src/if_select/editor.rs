@@ -3,12 +3,12 @@
 //! entity or a model, edits and applies back.
 use super::{IFSelectEditForm, IFSelectEditValue, IFSelectListEditor};
 use crate::c_text::atoi;
-use crate::interface::{InterfaceInterfaceModel, InterfaceMsg, InterfaceTypedValue};
+use crate::interface::{
+    InterfaceInterfaceModel, InterfaceMsg, InterfaceTypedValue, InterfaceTypedValueOps,
+};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{
-        Failure, Handle, SharedState, StandardTransient, Transient, WeakHandle, exceptions,
-    },
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::collections::HashMap;
@@ -23,7 +23,7 @@ struct EditorState {
     themaxco: i32,
     themaxla: i32,
     thenames: HashMap<Vec<u8>, i32>,
-    thevalues: Vec<Handle<InterfaceTypedValue>>,
+    thevalues: Vec<Handle<dyn InterfaceTypedValueOps>>,
     theshorts: Vec<AsciiString>,
     themodes: Vec<IFSelectEditValue>,
     thelists: Vec<i32>,
@@ -138,14 +138,14 @@ pub trait IFSelectEditor: Transient {
     fn load(
         &self,
         form: &Handle<IFSelectEditForm>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure>;
     /// `Apply(form, ent, model)`: applies the edited values of `form` to `ent` and `model`.
     fn apply(
         &self,
         form: &Handle<IFSelectEditForm>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure>;
     /// `Form(readonly, undoable = true)`: a complete form on this editor, its label the
@@ -217,6 +217,17 @@ pub trait IFSelectEditor: Transient {
         shortname: &str,
         accessmode: IFSelectEditValue,
     ) -> Result<(), Failure> {
+        self.set_typed_value(num, typval.upcast(), shortname, accessmode)
+    }
+
+    /// Register a value or static parameter, e.g. `editor.set_typed_value(1, value, "", mode)`.
+    fn set_typed_value(
+        &self,
+        num: i32,
+        typval: Handle<dyn InterfaceTypedValueOps>,
+        shortname: &str,
+        accessmode: IFSelectEditValue,
+    ) -> Result<(), Failure> {
         let base = self.editor_base();
         let Some(i) = base.rank(num) else {
             return Ok(());
@@ -233,7 +244,7 @@ pub trait IFSelectEditor: Transient {
         st.themaxco = st.themaxco.max(name.length());
         st.themaxla = st.themaxla.max(label.length());
         st.thenames.insert(name.as_bytes().to_vec(), num);
-        st.thevalues[i] = typval.clone();
+        st.thevalues[i] = typval;
         st.theshorts[i] = AsciiString::new(shortname);
         st.themodes[i] = accessmode;
         Ok(())
@@ -251,7 +262,7 @@ pub trait IFSelectEditor: Transient {
         self.editor_base().state.read().thenbval
     }
     /// `TypedValue(num)`: `StandardOutOfRange` out of the capacity.
-    fn typed_value(&self, num: i32) -> Result<Handle<InterfaceTypedValue>, Failure> {
+    fn typed_value(&self, num: i32) -> Result<Handle<dyn InterfaceTypedValueOps>, Failure> {
         let st = self.editor_base().state.read();
         let cap = st.thevalues.len();
         usize::try_from(num - 1)
@@ -373,7 +384,7 @@ pub trait IFSelectEditor: Transient {
                 continue;
             };
             let _ = write!(out, " {}{i} ", InterfaceMsg::blanks_for_integer(i, 3));
-            out.push_str(&print_defs_names(self, i, &tv, labels));
+            out.push_str(&print_defs_names(self, i, &*tv, labels));
             let _ = writeln!(
                 out,
                 " {}{} {}",
@@ -385,7 +396,7 @@ pub trait IFSelectEditor: Transient {
         s.write_all(out.as_bytes())
     }
 }
-impl_transient_interface!(dyn IFSelectEditor, "IFSelectEditor", StandardTransient);
+impl_transient_interface!(dyn IFSelectEditor, "IFSelectEditor", dyn Transient);
 
 /// The title lines of `PrintDefs`.
 fn print_defs_header<E: IFSelectEditor + ?Sized>(editor: &E, labels: bool) -> String {
@@ -424,7 +435,7 @@ fn print_defs_header<E: IFSelectEditor + ?Sized>(editor: &E, labels: bool) -> St
 fn print_defs_names<E: IFSelectEditor + ?Sized>(
     editor: &E,
     i: i32,
-    tv: &InterfaceTypedValue,
+    tv: &dyn InterfaceTypedValueOps,
     labels: bool,
 ) -> String {
     if labels {

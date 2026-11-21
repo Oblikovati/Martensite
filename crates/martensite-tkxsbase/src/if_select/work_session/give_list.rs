@@ -1,11 +1,11 @@
 //! The lists of entities given by an object, by entity numbers or labels, or by
 //! selection names applied in chain ("sel1 sel2 (1,2)").
-use super::{IFSelectTransientList, IFSelectWorkSession};
+use super::{IFSelectSession, IFSelectTransientList};
 use crate::if_select::IFSelectSelection;
 use crate::interface::InterfaceModelEntities;
 use martensite_tkernel::{
     ncollection::HSequence,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::HAsciiString,
 };
 use std::collections::BTreeSet;
@@ -34,15 +34,12 @@ pub(super) fn parenthesized_ids(selname: &str) -> Vec<String> {
     ids
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `GiveList(obj)`: a list of transients itself, the result of a selection, all the
     /// entities of the model, an entity of the model, or the list a text gives; `None`
     /// for null.
-    pub fn give_list(
-        &self,
-        obj: &Handle<StandardTransient>,
-    ) -> Result<IFSelectTransientList, Failure> {
-        if let Some(list) = obj.cast::<HSequence<Handle<StandardTransient>>>().get() {
+    pub fn give_list(&self, obj: &Handle<dyn Transient>) -> Result<IFSelectTransientList, Failure> {
+        if let Some(list) = obj.cast::<HSequence<Handle<dyn Transient>>>().get() {
             return Ok(Some(list.sequence(|s| s.iter().cloned().collect())));
         }
         if obj.is_null() {
@@ -98,7 +95,7 @@ impl IFSelectWorkSession {
     pub fn give_list_from_list(
         &self,
         selname: &str,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<IFSelectTransientList, Failure> {
         let list = if selname.starts_with('(') || self.number_from_label(selname, 0) > 0 {
             None
@@ -143,7 +140,7 @@ impl IFSelectWorkSession {
         }
     }
     /// The entities of the identifiers (numbers or labels), each once.
-    fn entities_of_ids(&self, ids: &[String]) -> Vec<Handle<StandardTransient>> {
+    fn entities_of_ids(&self, ids: &[String]) -> Vec<Handle<dyn Transient>> {
         let mut numap = BTreeSet::new();
         let mut list = Vec::new();
         for id in ids {
@@ -162,8 +159,8 @@ impl IFSelectWorkSession {
     /// the result list is never allocated, so two lists raise `StandardNullObject`.
     pub fn give_list_combined(
         &self,
-        l1: Option<&[Handle<StandardTransient>]>,
-        l2: Option<&[Handle<StandardTransient>]>,
+        l1: Option<&[Handle<dyn Transient>]>,
+        l2: Option<&[Handle<dyn Transient>]>,
         mode: i32,
     ) -> Result<IFSelectTransientList, Failure> {
         if l1.is_none() || l2.is_none() {

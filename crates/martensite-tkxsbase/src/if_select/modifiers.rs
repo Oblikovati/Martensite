@@ -9,7 +9,7 @@ use crate::interface::{
 };
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -75,7 +75,7 @@ pub trait IFSelectGeneralModifier: Transient {
 impl_transient_interface!(
     dyn IFSelectGeneralModifier,
     "IFSelectGeneralModifier",
-    StandardTransient
+    dyn Transient
 );
 
 /// `IFSelectModifier`, abstract: `Perform` is required (its protected constructor is
@@ -93,7 +93,7 @@ pub trait IFSelectModifier: IFSelectGeneralModifier {
 impl_transient_interface!(
     dyn IFSelectModifier,
     "IFSelectModifier",
-    dyn IFSelectGeneralModifier
+    dyn IFSelectGeneralModifier, upcasts: [dyn IFSelectGeneralModifier]
 );
 
 /// `IFSelectModifReorder`: puts the entities in the order of the share tool (roots
@@ -105,17 +105,15 @@ impl_transient_interface!(
 /// assert!(modif.may_change_graph() && modif.label().as_bytes() == b"Reorder, Roots last");
 /// ```
 pub struct IFSelectModifReorder {
-    transient: StandardTransient,
     base: IFSelectGeneralModifierBase,
     thertl: bool,
 }
-impl_transient!(IFSelectModifReorder, "IFSelectModifReorder", dyn IFSelectModifier, transient, interfaces: [dyn IFSelectGeneralModifier, dyn IFSelectModifier]);
+impl_transient!(IFSelectModifReorder, "IFSelectModifReorder", dyn IFSelectModifier, interfaces: [dyn IFSelectGeneralModifier, dyn IFSelectModifier]);
 
 impl IFSelectModifReorder {
     /// `IFSelectModifReorder(rootlast = true)`.
     pub fn new(rootlast: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectGeneralModifierBase::new(true),
             thertl: rootlast,
         }
@@ -176,18 +174,16 @@ struct AppliedState {
 /// use martensite_tkxsbase::if_select::{IFSelectAppliedModifiers, IFSelectModifReorder};
 /// use martensite_tkernel::standard::Handle;
 /// let applied = IFSelectAppliedModifiers::new(2, 5).unwrap();
-/// assert!(applied.add_modif(&Handle::new(IFSelectModifReorder::new(true)).cast()).unwrap());
+/// assert!(applied.add_modif(&Handle::new(IFSelectModifReorder::new(true)).into_upcast()).unwrap());
 /// assert_eq!(applied.count(), 1);
 /// ```
 pub struct IFSelectAppliedModifiers {
-    transient: StandardTransient,
     state: SharedState<AppliedState>,
 }
 impl_transient!(
     IFSelectAppliedModifiers,
     "IFSelectAppliedModifiers",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl IFSelectAppliedModifiers {
@@ -200,7 +196,6 @@ impl IFSelectAppliedModifiers {
             theentcnt: 0,
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }

@@ -8,7 +8,7 @@ use crate::interface::InterfaceShareFlags;
 use crate::xs_algo::DEShapeFixParameters;
 use martensite_tkernel::{
     message::{ProgressRange, ProgressScope},
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 use martensite_tkshhealing::shape_process::ShapeProcessOperationsFlags;
@@ -83,7 +83,7 @@ pub trait XSControlReaderOps {
         Ok(Some(roots))
     }
     /// `RootForTransfer(num = 1)`: null out of the roots.
-    fn root_for_transfer(&mut self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    fn root_for_transfer(&mut self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let nbr = self.nb_roots_for_transfer()?;
         if num < 1 || num > nbr {
             return Ok(Handle::default());
@@ -109,7 +109,7 @@ pub trait XSControlReaderOps {
     /// without result.
     fn transfer_entity(
         &mut self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         progress: &ProgressRange<'_>,
     ) -> Result<bool, Failure> {
         if start.is_null() {
@@ -128,7 +128,7 @@ pub trait XSControlReaderOps {
     /// for `None`).
     fn transfer_list(
         &mut self,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         progress: &ProgressRange<'_>,
     ) -> Result<i32, Failure> {
         let Some(list) = list else {
@@ -162,7 +162,7 @@ impl XSControlReaderOps for XSControlReader {
 }
 
 /// The roots of the graph of the session that the transfer reader recognizes.
-fn recognized_roots(reader: &XSControlReader) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+fn recognized_roots(reader: &XSControlReader) -> Result<Vec<Handle<dyn Transient>>, Failure> {
     let ws = reader.session()?;
     let hgraph = ws.graph()?;
     let graph = hgraph
@@ -204,7 +204,7 @@ fn begin_reading<R: XSControlReaderOps + ?Sized>(
 /// result added; the count of the transferred starts.
 fn transfer_starts<R: XSControlReaderOps + ?Sized>(
     reader: &mut R,
-    starts: &[Handle<StandardTransient>],
+    starts: &[Handle<dyn Transient>],
     scope: &ProgressScope<'_>,
 ) -> Result<i32, Failure> {
     let tr = begin_reading(reader)?;

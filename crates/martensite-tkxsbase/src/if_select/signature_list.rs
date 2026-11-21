@@ -3,22 +3,23 @@
 use super::IFSelectPrintCount;
 use crate::interface::{InterfaceInterfaceModel, InterfaceModelEntities, InterfaceMsg};
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient, impl_transient_interface_target,
     ncollection::IndexedDataMap,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient, exceptions},
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::io::{self, Write};
+use std::ops::Deref;
 
 /// The counts by signature (in the order of the first occurrence).
 pub type IFSelectSignatureCounts = IndexedDataMap<AsciiString, i32>;
 /// The entities by signature.
-pub type IFSelectSignatureEntities = IndexedDataMap<AsciiString, Vec<Handle<StandardTransient>>>;
+pub type IFSelectSignatureEntities = IndexedDataMap<AsciiString, Vec<Handle<dyn Transient>>>;
 
 /// The counts, the entity lists (copies) and the count of nulls of a list.
 type ListSnapshot = (
     Vec<(String, i32)>,
-    Vec<(String, Vec<Handle<StandardTransient>>)>,
+    Vec<(String, Vec<Handle<dyn Transient>>)>,
     i32,
 );
 
@@ -33,8 +34,7 @@ struct ListState {
     thediclist: IFSelectSignatureEntities,
 }
 
-/// `IFSelectSignatureList` (concrete, embedded by the counters); its virtual members
-/// are [`IFSelectSignatureListOps`].
+/// Counts and optionally groups entities by their signatures.
 ///
 /// ```
 /// use martensite_tkxsbase::if_select::IFSelectSignatureList;
@@ -45,10 +45,22 @@ struct ListState {
 /// assert_eq!((list.nb_times("A"), list.nb_nulls()), (1, 1));
 /// ```
 pub struct IFSelectSignatureList {
-    transient: StandardTransient,
+    list: IFSelectSignatureListData,
+}
+impl_transient!(IFSelectSignatureList, "IFSelectSignatureList", dyn Transient, interfaces: [dyn IFSelectSignatureListOps]);
+
+impl Deref for IFSelectSignatureList {
+    type Target = IFSelectSignatureListData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.list
+    }
+}
+
+/// Shared storage and nonvirtual operations for signature lists and counters.
+pub struct IFSelectSignatureListData {
     state: SharedState<ListState>,
 }
-impl_transient!(IFSelectSignatureList, "IFSelectSignatureList", StandardTransient, transient, interfaces: [dyn IFSelectSignatureListOps]);
 
 impl Default for IFSelectSignatureList {
     fn default() -> Self {
@@ -59,6 +71,14 @@ impl Default for IFSelectSignatureList {
 impl IFSelectSignatureList {
     /// `IFSelectSignatureList(withlist = false)`: named "...".
     pub fn new(withlist: bool) -> Self {
+        Self {
+            list: IFSelectSignatureListData::new(withlist),
+        }
+    }
+}
+
+impl IFSelectSignatureListData {
+    pub(super) fn new(withlist: bool) -> Self {
         let state = ListState {
             thesignonly: false,
             thelistat: withlist,
@@ -69,7 +89,6 @@ impl IFSelectSignatureList {
             thediclist: IFSelectSignatureEntities::default(),
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -94,7 +113,7 @@ impl IFSelectSignatureList {
         st.thediclist.clear(true);
     }
     /// `Add(ent, sign)`: counts `sign` (an empty one as a null), with `ent` in its list.
-    pub fn add(&self, ent: &Handle<StandardTransient>, sign: &str) {
+    pub fn add(&self, ent: &Handle<dyn Transient>, sign: &str) {
         let mut st = self.state.write();
         if st.thesignonly {
             st.thelastval = AsciiString::new(sign);
@@ -171,7 +190,7 @@ impl IFSelectSignatureList {
     }
     /// `Entities(sign)`: the entities of `sign` (`None` without lists, empty for an
     /// unknown signature).
-    pub fn entities(&self, sign: &str) -> Option<Vec<Handle<StandardTransient>>> {
+    pub fn entities(&self, sign: &str) -> Option<Vec<Handle<dyn Transient>>> {
         let st = self.state.read();
         if !st.thelistat {
             return None;
@@ -217,8 +236,8 @@ impl IFSelectSignatureList {
 
 /// The virtual members of `IFSelectSignatureList` (`Clear`, `Name`, the printing).
 pub trait IFSelectSignatureListOps: Transient {
-    /// The embedded list.
-    fn signature_list(&self) -> &IFSelectSignatureList;
+    /// Borrow the list data, e.g. `counter.signature_list().nb_times("A")`.
+    fn signature_list(&self) -> &IFSelectSignatureListData;
     /// `Clear`.
     fn clear(&self) {
         self.signature_list().clear_base();
@@ -246,15 +265,18 @@ pub trait IFSelectSignatureListOps: Transient {
         print_sum(self.signature_list(), s)
     }
 }
-impl_transient_interface!(
-    dyn IFSelectSignatureListOps,
-    "IFSelectSignatureList",
-    StandardTransient
-);
+impl RuntimeTyped for dyn IFSelectSignatureListOps {
+    const TYPE_NAME: &'static str = IFSelectSignatureList::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        IFSelectSignatureList::static_type()
+    }
+}
+impl_transient_interface_target!(dyn IFSelectSignatureListOps);
 
 impl IFSelectSignatureListOps for IFSelectSignatureList {
-    fn signature_list(&self) -> &IFSelectSignatureList {
-        self
+    fn signature_list(&self) -> &IFSelectSignatureListData {
+        &self.list
     }
 }
 
@@ -264,7 +286,7 @@ fn io_failure(err: io::Error) -> Failure {
 }
 
 /// `IFSelectSignatureList::PrintCount`.
-fn print_count(list: &IFSelectSignatureList, s: &mut dyn Write) -> io::Result<()> {
+fn print_count(list: &IFSelectSignatureListData, s: &mut dyn Write) -> io::Result<()> {
     let name = list.name_base();
     let (counts, _, nbnuls) = list.snapshot();
     write!(s, " Count\t{name}\n -----\t-----------\n")?;
@@ -287,7 +309,7 @@ fn print_count(list: &IFSelectSignatureList, s: &mut dyn Write) -> io::Result<()
 /// numbered 2 (the value of `IFSelectShortByItem`) prints "??".
 fn print_entities(
     s: &mut dyn Write,
-    list: &[Handle<StandardTransient>],
+    list: &[Handle<dyn Transient>],
     model: &Handle<dyn InterfaceInterfaceModel>,
     mode: IFSelectPrintCount,
 ) -> Result<(), Failure> {
@@ -377,7 +399,7 @@ fn integer_signature(name: &str) -> Result<Option<i32>, Failure> {
 }
 
 /// `IFSelectSignatureList::PrintSum`.
-fn print_sum(list: &IFSelectSignatureList, s: &mut dyn Write) -> Result<(), Failure> {
+fn print_sum(list: &IFSelectSignatureListData, s: &mut dyn Write) -> Result<(), Failure> {
     let (counts, _, _) = list.snapshot();
     write!(s, " Summary {}\n -----\t-----------\n", list.name_base()).map_err(io_failure)?;
     let (mut nbtot, mut maxent, mut nbval, mut nbve, mut minval, mut maxval, mut totval) =

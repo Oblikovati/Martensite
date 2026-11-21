@@ -5,9 +5,7 @@ use super::{IFSelectReturnStatus, IFSelectSessionPilot};
 use martensite_tkernel::{
     impl_transient_interface,
     ncollection::DataMap,
-    standard::{
-        Failure, Handle, SharedState, StandardTransient, Transient, WeakHandle, exceptions,
-    },
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, exceptions},
     tcollection::AsciiString,
 };
 use std::sync::{OnceLock, PoisonError, RwLock, RwLockWriteGuard};
@@ -185,8 +183,4 @@ pub trait IFSelectActivator: Transient {
         *base.thefile.write() = AsciiString::new(file);
     }
 }
-impl_transient_interface!(
-    dyn IFSelectActivator,
-    "IFSelectActivator",
-    StandardTransient
-);
+impl_transient_interface!(dyn IFSelectActivator, "IFSelectActivator", dyn Transient);

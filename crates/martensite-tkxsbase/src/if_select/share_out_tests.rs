@@ -11,8 +11,8 @@ fn text(s: &str) -> Handle<HAsciiString> {
 
 fn global() -> Handle<dyn IFSelectDispatch> {
     let disp = IFSelectDispGlobal::new();
-    disp.set_final_selection(&Handle::new(IFSelectSelectModelEntities::new()).cast());
-    Handle::new(disp).cast()
+    disp.set_final_selection(&Handle::new(IFSelectSelectModelEntities::new()).into_upcast());
+    Handle::new(disp).into_upcast()
 }
 
 #[test]
@@ -25,7 +25,7 @@ fn share_out_dispatches_and_modifiers() {
     assert_eq!((share.nb_dispatches(), share.dispatch_rank(&d2)), (2, 2));
     assert!(share.dispatch(3).is_err());
     let reorder: Handle<dyn IFSelectGeneralModifier> =
-        Handle::new(IFSelectModifReorder::new(true)).cast();
+        Handle::new(IFSelectModifReorder::new(true)).into_upcast();
     share.add_modifier_for(&reorder, 2, 0).unwrap();
     assert!(
         reorder.dispatch() == d2 && share.nb_modifiers(true) == 1 && share.nb_modifiers(false) == 0
@@ -33,7 +33,7 @@ fn share_out_dispatches_and_modifiers() {
     share.add_modifier(&reorder, 0).unwrap();
     assert!(reorder.dispatch().is_null() && share.modifier_rank(&reorder).unwrap() == 1);
     share.add_modif(
-        &Handle::new(IFSelectModifReorder::new(false)).cast(),
+        &Handle::new(IFSelectModifReorder::new(false)).into_upcast(),
         true,
         1,
     );

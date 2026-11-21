@@ -5,7 +5,7 @@ use super::{
     InterfaceModelEntities,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::sync::{Arc, OnceLock};
@@ -149,7 +149,7 @@ impl InterfaceCheckIterator {
         found.map_or_else(null_check, |i| lists.thelist[i].clone())
     }
     /// `Check(ent)`: by its number in the model, else by the entity of the checks.
-    pub fn check_entity(&self, ent: &Handle<StandardTransient>) -> Handle<InterfaceCheck> {
+    pub fn check_entity(&self, ent: &Handle<dyn Transient>) -> Handle<InterfaceCheck> {
         let num = self.themod.get().map_or(-1, |m| m.number(ent));
         if num > 0 {
             return self.check(num);
@@ -171,7 +171,7 @@ impl InterfaceCheckIterator {
     }
     /// `CCheck(ent)`: by number or entity, created (with number -1 or the entity number)
     /// when none.
-    pub fn c_check_entity(&mut self, ent: &Handle<StandardTransient>) -> Handle<InterfaceCheck> {
+    pub fn c_check_entity(&mut self, ent: &Handle<dyn Transient>) -> Handle<InterfaceCheck> {
         let num = self.themod.get().map_or(-1, |m| m.number(ent));
         if num > 0 {
             return self.c_check(num);
@@ -268,7 +268,7 @@ impl InterfaceCheckIterator {
         &self,
         failsonly: bool,
         global: bool,
-    ) -> Result<Option<Vec<Handle<StandardTransient>>>, Failure> {
+    ) -> Result<Option<Vec<Handle<dyn Transient>>>, Failure> {
         let Some(model) = self.themod.get() else {
             return Ok(None);
         };

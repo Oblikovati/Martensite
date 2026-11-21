@@ -9,7 +9,7 @@ use crate::if_graph::{
 use crate::interface::{InterfaceEntityIterator, InterfaceGraph};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 
@@ -119,7 +119,7 @@ pub trait IFSelectDispatch: Transient {
         Ok(InterfaceEntityIterator::new())
     }
 }
-impl_transient_interface!(dyn IFSelectDispatch, "IFSelectDispatch", StandardTransient);
+impl_transient_interface!(dyn IFSelectDispatch, "IFSelectDispatch", dyn Transient);
 
 /// Declares a dispatch with its base and the given extra fields.
 macro_rules! dispatch_struct {
@@ -127,11 +127,10 @@ macro_rules! dispatch_struct {
         $(#[$doc])*
         #[derive(Default)]
         pub struct $name {
-            transient: StandardTransient,
             base: IFSelectDispatchBase,
             $($field: $ty,)*
         }
-        impl_transient!($name, $native, dyn IFSelectDispatch, transient, interfaces: [dyn IFSelectDispatch]);
+        impl_transient!($name, $native, dyn IFSelectDispatch, interfaces: [dyn IFSelectDispatch]);
         impl $name {
             #[doc = concat!("`", $native, "()`.")]
             pub fn new() -> Self {

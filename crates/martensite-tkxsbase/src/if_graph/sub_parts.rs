@@ -4,7 +4,7 @@ use crate::interface::{
     InterfaceEntityIterator, InterfaceGraph, InterfaceGraphContent, InterfaceInterfaceModel,
     interface_error,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions};
 
 /// The fields and the non-virtual members of `IFGraphSubPartsIterator`.
 pub struct IFGraphSubPartsIterator {
@@ -122,7 +122,7 @@ impl IFGraphSubPartsIterator {
     /// `GetFromEntity(ent, shared)`: puts `ent` (and its shareds) in the current part.
     pub fn get_from_entity(
         &mut self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         shared: bool,
     ) -> Result<(), Failure> {
         self.thegraph
@@ -156,15 +156,15 @@ impl IFGraphSubPartsIterator {
         Ok(graph)
     }
     /// `IsLoaded(ent)`.
-    pub fn is_loaded(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_loaded(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         self.thegraph.is_present(self.thegraph.entity_number(ent))
     }
     /// `IsInPart(ent)`: loaded with a part.
-    pub fn is_in_part(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_in_part(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         Ok(self.entity_part_num(ent)? != 0)
     }
     /// `EntityPartNum(ent)`: the part of `ent` (0 when not loaded or in no part).
-    pub fn entity_part_num(&self, ent: &Handle<StandardTransient>) -> Result<i32, Failure> {
+    pub fn entity_part_num(&self, ent: &Handle<dyn Transient>) -> Result<i32, Failure> {
         let num = self.thegraph.entity_number(ent);
         if !self.thegraph.is_present(num)? {
             return Ok(0);
@@ -227,7 +227,7 @@ impl IFGraphSubPartsIterator {
         Ok(self.theparts[self.current("IsSingle")?] == 1)
     }
     /// `FirstEntity`: the first entity of the current part.
-    pub fn first_entity(&self) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn first_entity(&self) -> Result<Handle<dyn Transient>, Failure> {
         let curr = self.current("FirstEntity")?;
         let firsts = self
             .thefirsts

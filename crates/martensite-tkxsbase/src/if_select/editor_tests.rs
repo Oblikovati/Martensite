@@ -149,7 +149,7 @@ fn list_editor_load_edited() {
         !led.load_edited(None) && !led.load_edited(Some(&texts(&["a"]))),
         "native quirk: max 0"
     );
-    let bounded = IFSelectListEditor::with_definition(&Handle::default(), 2);
+    let bounded = IFSelectListEditor::with_definition(&Handle::<InterfaceTypedValue>::default(), 2);
     assert!(bounded.load_edited(Some(&texts(&["a", "b"]))) && bounded.is_modified(2));
     assert!(bounded.original_values().is_none() && bounded.remove(-1, 1).is_ok());
     let (model, _) = fake_chain();

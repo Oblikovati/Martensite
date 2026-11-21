@@ -10,7 +10,7 @@ use super::{InterfaceCopyTool, InterfaceEntityList, InterfaceParamType, Interfac
 use crate::moni_tool::MoniToolValueType;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::HAsciiString,
 };
 
@@ -19,6 +19,14 @@ const CONTENT_LOCAL_FIELD: i32 = 7;
 const CONTENT_LOCAL_REF: i32 = 1;
 const CONTENT_LOCAL_SHIFT: i32 = 5;
 const CONTENT_NUMBER_SHIFT: i32 = 8;
+
+// Is an entity, parameter type, entity, and literal in native output order.
+type UndefinedParam = (
+    bool,
+    InterfaceParamType,
+    Handle<dyn Transient>,
+    Handle<HAsciiString>,
+);
 
 /// The fields of an undefined content.
 #[derive(Default)]
@@ -41,14 +49,12 @@ struct ContentState {
 /// ```
 #[derive(Default)]
 pub struct InterfaceUndefinedContent {
-    transient: StandardTransient,
     state: SharedState<ContentState>,
 }
 impl_transient!(
     InterfaceUndefinedContent,
     "InterfaceUndefinedContent",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 fn local_of(desc: i32) -> i32 {
@@ -107,18 +113,7 @@ impl InterfaceUndefinedContent {
     }
     /// `ParamData(num, ptype, ent, val)`: (is an entity, type, entity, literal);
     /// `StandardOutOfRange` out of 1..NbParams.
-    pub fn param_data(
-        &self,
-        num: i32,
-    ) -> Result<
-        (
-            bool,
-            InterfaceParamType,
-            Handle<StandardTransient>,
-            Handle<HAsciiString>,
-        ),
-        Failure,
-    > {
+    pub fn param_data(&self, num: i32) -> Result<UndefinedParam, Failure> {
         let mut state = self.state.write();
         if num < 1 || num > state.thenbparams {
             return Err(exceptions::out_of_range(&format!(
@@ -148,7 +143,7 @@ impl InterfaceUndefinedContent {
         Ok(local_of(int_at(&self.state.read().theparams, num)?) == CONTENT_LOCAL_REF)
     }
     /// `ParamEntity(num)`: `InterfaceInterfaceError` for a literal.
-    pub fn param_entity(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn param_entity(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let state = self.state.read();
         let desc = int_at(&state.theparams, num)?;
         if local_of(desc) != CONTENT_LOCAL_REF {
@@ -215,7 +210,7 @@ impl InterfaceUndefinedContent {
     pub fn add_entity(
         &self,
         ptype: InterfaceParamType,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         self.reservate(self.nb_params() + 1, 0)?;
         let mut state = self.state.write();
@@ -284,7 +279,7 @@ impl InterfaceUndefinedContent {
         &self,
         num: i32,
         ptype: InterfaceParamType,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let mut state = self.state.write();
         let desc = int_at(&state.theparams, num)?;
@@ -306,7 +301,7 @@ impl InterfaceUndefinedContent {
         set_int(&state.theparams, num, desc)
     }
     /// `SetEntity(num, ent)`: `InterfaceInterfaceError` for a literal parameter.
-    pub fn set_entity(&self, num: i32, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn set_entity(&self, num: i32, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         let mut state = self.state.write();
         let desc = int_at(&state.theparams, num)?;
         if local_of(desc) != CONTENT_LOCAL_REF {

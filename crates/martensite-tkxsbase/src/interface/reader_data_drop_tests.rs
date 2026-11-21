@@ -5,15 +5,14 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 use std::sync::Arc;
 
 struct LifetimeReader {
-    transient: StandardTransient,
     base: InterfaceFileReaderDataBase,
 }
-impl_transient!(LifetimeReader, "LifetimeReader", dyn InterfaceFileReaderData, transient, interfaces: [dyn InterfaceFileReaderData]);
+impl_transient!(LifetimeReader, "LifetimeReader", dyn InterfaceFileReaderData, interfaces: [dyn InterfaceFileReaderData]);
 impl InterfaceFileReaderData for LifetimeReader {
     fn reader_data_base(&self) -> &InterfaceFileReaderDataBase {
         &self.base
@@ -24,15 +23,13 @@ impl InterfaceFileReaderData for LifetimeReader {
 }
 
 struct ParameterLengthEntity {
-    transient: StandardTransient,
     list: Handle<InterfaceParamList>,
     observations: Arc<SharedState<Vec<i32>>>,
 }
 impl_transient!(
     ParameterLengthEntity,
     "ParameterLengthEntity",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 impl Drop for ParameterLengthEntity {
     fn drop(&mut self) {
@@ -42,7 +39,6 @@ impl Drop for ParameterLengthEntity {
 
 fn populated_reader() -> Handle<dyn InterfaceFileReaderData> {
     let reader = Handle::new(LifetimeReader {
-        transient: StandardTransient::default(),
         base: InterfaceFileReaderDataBase::new(1, 2),
     });
     reader
@@ -55,13 +51,12 @@ fn populated_reader() -> Handle<dyn InterfaceFileReaderData> {
 fn length_entity(
     list: &Handle<InterfaceParamList>,
     observations: &Arc<SharedState<Vec<i32>>>,
-) -> Handle<StandardTransient> {
+) -> Handle<dyn Transient> {
     Handle::new(ParameterLengthEntity {
-        transient: StandardTransient::default(),
         list: list.clone(),
         observations: observations.clone(),
     })
-    .cast()
+    .into_upcast()
 }
 
 #[test]

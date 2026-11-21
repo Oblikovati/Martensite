@@ -9,7 +9,7 @@ use crate::if_graph::{IFGraphCumulate, IFGraphStrongComponants, IFGraphSubPartsE
 use crate::interface::{InterfaceEntityIterator, InterfaceGraph, InterfaceInterfaceModel};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 
@@ -48,27 +48,43 @@ macro_rules! extract_with_root_result {
 /// assert_eq!(flag.label().as_bytes(), b"Picked: Entities Flagged by Incorrect");
 /// ```
 pub struct IFSelectSelectFlag {
-    transient: StandardTransient,
-    base: IFSelectSelectExtractBase,
-    thename: AsciiString,
+    flag: SelectionFlag,
 }
-impl_transient!(IFSelectSelectFlag, "IFSelectSelectFlag", dyn IFSelectSelectExtract, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+impl_transient!(IFSelectSelectFlag, "IFSelectSelectFlag", dyn IFSelectSelectExtract, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
 
 impl IFSelectSelectFlag {
     /// `IFSelectSelectFlag(flagname)`.
     pub fn new(flagname: &str) -> Self {
         Self {
-            transient: StandardTransient::default(),
-            base: IFSelectSelectExtractBase::default(),
-            thename: AsciiString::new(flagname),
+            flag: SelectionFlag::new(flagname),
         }
     }
     /// `FlagName`.
     pub fn flag_name(&self) -> &AsciiString {
-        &self.thename
+        &self.flag.name
     }
     fn flag_base(&self) -> &IFSelectSelectExtractBase {
-        &self.base
+        &self.flag.base
+    }
+}
+
+struct SelectionFlag {
+    base: IFSelectSelectExtractBase,
+    name: AsciiString,
+}
+
+impl SelectionFlag {
+    fn new(name: &str) -> Self {
+        Self {
+            base: IFSelectSelectExtractBase::default(),
+            name: AsciiString::new(name),
+        }
+    }
+
+    fn label(&self) -> AsciiString {
+        let mut label = AsciiString::new("Entities Flagged by ");
+        label.assign_cat(&self.name);
+        label
     }
 }
 
@@ -98,37 +114,34 @@ fn flag_root_result<S: IFSelectSelectExtract + ?Sized>(
 extract_with_root_result!(
     IFSelectSelectFlag,
     flag_base,
-    |s: &IFSelectSelectFlag, g| flag_root_result(s, &s.thename, g),
+    |s: &IFSelectSelectFlag, g| flag_root_result(s, s.flag_name(), g),
     false
 );
 
 impl IFSelectSelectExtract for IFSelectSelectFlag {
     fn extract_base(&self) -> &IFSelectSelectExtractBase {
-        &self.base
+        self.flag_base()
     }
     /// `Sort`: false (not used: `RootResult` reads the flags).
     fn sort(
         &self,
         _rank: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         Ok(false)
     }
     /// `ExtractLabel`: "Entities Flagged by " and the flag name.
     fn extract_label(&self) -> AsciiString {
-        let mut lab = AsciiString::new("Entities Flagged by ");
-        lab.assign_cat(&self.thename);
-        lab
+        self.flag.label()
     }
 }
 
-/// `IFSelectSelectIncorrectEntities`: the entities flagged "Incorrect"; embeds its
-/// `IFSelectSelectFlag` (registered as its RTTI parent).
+/// Selects the entities flagged "Incorrect".
 pub struct IFSelectSelectIncorrectEntities {
-    base: IFSelectSelectFlag,
+    flag: SelectionFlag,
 }
-impl_transient!(IFSelectSelectIncorrectEntities, "IFSelectSelectIncorrectEntities", IFSelectSelectFlag, base, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+impl_transient!(IFSelectSelectIncorrectEntities, "IFSelectSelectIncorrectEntities", IFSelectSelectFlag, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
 
 impl Default for IFSelectSelectIncorrectEntities {
     fn default() -> Self {
@@ -140,15 +153,15 @@ impl IFSelectSelectIncorrectEntities {
     /// `IFSelectSelectIncorrectEntities()`: the flag "Incorrect".
     pub fn new() -> Self {
         Self {
-            base: IFSelectSelectFlag::new("Incorrect"),
+            flag: SelectionFlag::new("Incorrect"),
         }
     }
     /// `FlagName` (inherited).
     pub fn flag_name(&self) -> &AsciiString {
-        self.base.flag_name()
+        &self.flag.name
     }
     fn flag_base(&self) -> &IFSelectSelectExtractBase {
-        &self.base.base
+        &self.flag.base
     }
 }
 
@@ -161,25 +174,25 @@ extract_with_root_result!(
 
 impl IFSelectSelectExtract for IFSelectSelectIncorrectEntities {
     fn extract_base(&self) -> &IFSelectSelectExtractBase {
-        &self.base.base
+        &self.flag.base
     }
     fn sort(
         &self,
-        rank: i32,
-        ent: &Handle<StandardTransient>,
-        model: &Handle<dyn InterfaceInterfaceModel>,
+        _rank: i32,
+        _ent: &Handle<dyn Transient>,
+        _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
-        self.base.sort(rank, ent, model)
+        Ok(false)
     }
     fn extract_label(&self) -> AsciiString {
-        self.base.extract_label()
+        self.flag.label()
     }
 }
 
 /// The entities of `input` selected at most once by `cumulate` (or more, when not
 /// direct).
 fn local_roots(
-    input: &[Handle<StandardTransient>],
+    input: &[Handle<dyn Transient>],
     cumulate: &IFGraphCumulate,
     direct: bool,
 ) -> Result<InterfaceEntityIterator, Failure> {
@@ -198,10 +211,9 @@ macro_rules! roots_extract {
         $(#[$doc])*
         #[derive(Default)]
         pub struct $name {
-            transient: StandardTransient,
             base: IFSelectSelectExtractBase,
         }
-        impl_transient!($name, $native, dyn IFSelectSelectExtract, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+        impl_transient!($name, $native, dyn IFSelectSelectExtract, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
         impl $name {
             #[doc = concat!("`", $native, "()`: direct, no input.")]
             pub fn new() -> Self {
@@ -217,7 +229,7 @@ macro_rules! roots_extract {
                 &self.base
             }
             /// `Sort`: true (not used: `RootResult` counts the sharings).
-            fn sort(&self, _rank: i32, _ent: &Handle<StandardTransient>, _model: &Handle<dyn InterfaceInterfaceModel>) -> Result<bool, Failure> {
+            fn sort(&self, _rank: i32, _ent: &Handle<dyn Transient>, _model: &Handle<dyn InterfaceInterfaceModel>) -> Result<bool, Failure> {
                 Ok(true)
             }
             fn extract_label(&self) -> AsciiString {
@@ -333,11 +345,10 @@ impl IFSelectRankRange {
 /// [`IFSelectRankRange`].
 #[derive(Default)]
 pub struct IFSelectSelectRange {
-    transient: StandardTransient,
     base: IFSelectSelectExtractBase,
     range: IFSelectRankRange,
 }
-impl_transient!(IFSelectSelectRange, "IFSelectSelectRange", dyn IFSelectSelectExtract, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+impl_transient!(IFSelectSelectRange, "IFSelectSelectRange", dyn IFSelectSelectExtract, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
 super::impl_extract_selection!(IFSelectSelectRange, base);
 
 impl std::ops::Deref for IFSelectSelectRange {
@@ -362,7 +373,7 @@ impl IFSelectSelectExtract for IFSelectSelectRange {
     fn sort(
         &self,
         rank: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let (from, to) = (self.lower_value(), self.upper_value());

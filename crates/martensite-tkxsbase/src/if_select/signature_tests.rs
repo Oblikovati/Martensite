@@ -8,14 +8,14 @@ use crate::interface::{
 };
 use crate::moni_tool::MoniToolSignText;
 use martensite_tkernel::{
-    standard::{Handle, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeTyped, Transient},
     tcollection::AsciiString,
 };
 
 fn chain() -> (
     Handle<dyn InterfaceInterfaceModel>,
     InterfaceGraph,
-    Vec<Handle<StandardTransient>>,
+    Vec<Handle<dyn Transient>>,
 ) {
     let (model, ents) = fake_chain();
     let graph = InterfaceGraph::new(&model, true).unwrap();
@@ -56,7 +56,7 @@ fn signatures_by_type_category_validity() {
     let dynamic = IFSelectSignType::new(false);
     assert_eq!(dynamic.value(&ents[0], &model), "Fake_Entity");
     assert_eq!(dynamic.value(&Handle::default(), &model), "");
-    let type_entity: Handle<StandardTransient> = Handle::new(FakeEntity::default()).cast();
+    let type_entity: Handle<dyn Transient> = Handle::new(FakeEntity::default()).into_upcast();
     assert_eq!(
         IFSelectSignType::new(true).value(&type_entity, &model),
         "Entity"
@@ -104,14 +104,26 @@ fn signatures_by_type_category_validity() {
 fn multiple_signatures() {
     let (model, _, ents) = chain();
     let multi = IFSelectSignMultiple::new("Multi");
-    multi.add(&Handle::new(IFSelectSignType::new(true)).cast(), 8, false);
-    multi.add(&Handle::new(IFSelectSignValidity::new()).cast(), 0, false);
+    multi.add(
+        &Handle::new(IFSelectSignType::new(true)).into_upcast(),
+        8,
+        false,
+    );
+    multi.add(
+        &Handle::new(IFSelectSignValidity::new()).into_upcast(),
+        0,
+        false,
+    );
     multi.add(&Handle::default(), 3, false);
     assert_eq!(multi.value(&ents[0], &model), "Entity     OK   ");
     assert!(multi.matches(&ents[0], &model, &text("OK"), false).unwrap());
     assert!(!multi.matches(&ents[0], &model, &text("OK"), true).unwrap());
     let maxi = IFSelectSignMultiple::new("Maxi");
-    maxi.add(&Handle::new(IFSelectSignType::new(false)).cast(), 4, true);
+    maxi.add(
+        &Handle::new(IFSelectSignType::new(false)).into_upcast(),
+        4,
+        true,
+    );
     assert_eq!(
         maxi.value(&ents[0], &model),
         "Fake_Entit._Entity   ",
@@ -193,7 +205,8 @@ fn signature_lists() {
 #[test]
 fn sign_counters() {
     let (model, g, ents) = chain();
-    let sign: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(true)).cast();
+    let sign: Handle<dyn IFSelectSignature> =
+        Handle::new(IFSelectSignType::new(true)).into_upcast();
     let counter = IFSelectSignCounter::with_signature(&sign, true, true).unwrap();
     assert_eq!(counter.name(), "Class Type");
     assert!(
@@ -217,7 +230,8 @@ fn sign_counters() {
         counter.computed_sign(&ents[1], &g).unwrap().as_bytes(),
         b"Entity"
     );
-    let roots: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectModelRoots::new()).cast();
+    let roots: Handle<dyn IFSelectSelection> =
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast();
     assert!(!counter.compute_selected(&g, false).unwrap());
     counter.set_selection(&roots);
     assert_eq!(counter.sel_mode(), 2);
@@ -246,7 +260,8 @@ fn graph_and_check_counters() {
         4,
         "no deduction: no signature, null values"
     );
-    let shared: Handle<dyn IFSelectSelectDeduct> = Handle::new(IFSelectSelectShared::new()).cast();
+    let shared: Handle<dyn IFSelectSelectDeduct> =
+        Handle::new(IFSelectSelectShared::new()).into_upcast();
     graph_counter.set_applied(&shared);
     assert!(graph_counter.applied() == shared);
     graph_counter.add_with_graph(Some(&ents), &g).unwrap();
@@ -281,7 +296,7 @@ fn graph_and_check_counters() {
         ),
         (1, 1, 1)
     );
-    checks.set_signature(&Handle::new(IFSelectSignType::new(true)).cast());
+    checks.set_signature(&Handle::new(IFSelectSignType::new(true)).into_upcast());
     assert!(checks.signature().is_some());
     checks.clear();
     checks.analyse(&list, &model, false, true).unwrap();
@@ -297,8 +312,10 @@ fn graph_and_check_counters() {
 #[test]
 fn selections_by_signature() {
     let (_, g, ents) = chain();
-    let all: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectModelEntities::new()).cast();
-    let sign: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(false)).cast();
+    let all: Handle<dyn IFSelectSelection> =
+        Handle::new(IFSelectSelectModelEntities::new()).into_upcast();
+    let sign: Handle<dyn IFSelectSignature> =
+        Handle::new(IFSelectSignType::new(false)).into_upcast();
     let exact = IFSelectSelectSignature::with_signature(&sign, "Fake_Entity", true);
     exact.set_input(&all);
     assert!(exact.is_exact() && exact.signature() == sign && exact.counter().is_null());
@@ -329,8 +346,8 @@ fn selections_by_signature() {
         "native quirk: a trailing separator counts an item"
     );
     let graph_counter = IFSelectGraphCounter::new(false, false);
-    graph_counter.set_applied(&Handle::new(IFSelectSelectShared::new()).cast());
-    let counter: Handle<dyn IFSelectSignCounterOps> = Handle::new(graph_counter).cast();
+    graph_counter.set_applied(&Handle::new(IFSelectSelectShared::new()).into_upcast());
+    let counter: Handle<dyn IFSelectSignCounterOps> = Handle::new(graph_counter).into_upcast();
     let by_count = IFSelectSelectSignature::with_counter(&counter, ">=1", false);
     by_count.set_input(&all);
     assert_eq!(

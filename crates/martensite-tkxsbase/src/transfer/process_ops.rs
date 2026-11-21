@@ -2,9 +2,9 @@
 //! process classes; xsbase-design.md section 3.
 use super::{TransferFinderKind, TransferProcess, TransferProcessKind, TransferTransientKind};
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient, impl_transient_interface_target,
     message::Messenger,
-    standard::{Handle, RuntimeTyped, StandardTransient, Transient},
+    standard::{Handle, HandleUpcast, RuntimeType, RuntimeTyped, Transient},
 };
 use std::io;
 use std::ops::Deref;
@@ -25,16 +25,21 @@ pub trait TransferProcessOps<K: TransferProcessKind>: Transient {
         0
     }
 }
-impl_transient_interface!(
-    dyn TransferProcessOps<TransferTransientKind>,
-    "TransferProcessForTransient",
-    StandardTransient
-);
-impl_transient_interface!(
-    dyn TransferProcessOps<TransferFinderKind>,
-    "TransferProcessForFinder",
-    StandardTransient
-);
+// The storage class and its virtual interface use the same native descriptor.
+macro_rules! process_descriptor {
+    ($kind:ty, $class:ty) => {
+        impl RuntimeTyped for dyn TransferProcessOps<$kind> {
+            const TYPE_NAME: &'static str = <$class as RuntimeTyped>::TYPE_NAME;
+
+            fn static_type() -> &'static RuntimeType {
+                <$class as RuntimeTyped>::static_type()
+            }
+        }
+        impl_transient_interface_target!(dyn TransferProcessOps<$kind>);
+    };
+}
+process_descriptor!(TransferTransientKind, TransferProcessForTransient);
+process_descriptor!(TransferFinderKind, TransferProcessForFinder);
 
 /// `TransferProcessForTransient`: a process over transients; dereferences to its
 /// [`TransferProcess`].
@@ -45,18 +50,14 @@ impl_transient_interface!(
 /// assert_eq!((tp.trace_level(), tp.nb_mapped(), tp.error_handle()), (0, 0, true));
 /// ```
 pub struct TransferProcessForTransient {
-    transient: StandardTransient,
     core: TransferProcess<TransferTransientKind>,
 }
-impl_transient!(TransferProcessForTransient, "TransferProcessForTransient", StandardTransient, transient, interfaces: [dyn TransferProcessOps<TransferTransientKind>]);
+impl_transient!(TransferProcessForTransient, "TransferProcessForTransient", dyn Transient, interfaces: [dyn TransferProcessOps<TransferTransientKind>]);
 
 impl TransferProcessForTransient {
     /// The unbound object, for the derived processes (they bind their own handle).
     pub fn unbound(core: TransferProcess<TransferTransientKind>) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            core,
-        }
+        Self { core }
     }
     /// `TransferProcessForTransient(nb = 10000)`.
     pub fn new(nb: i32) -> Handle<Self> {
@@ -90,18 +91,14 @@ impl TransferProcessOps<TransferTransientKind> for TransferProcessForTransient {
 /// assert_eq!(fp.trace_level(), 1);
 /// ```
 pub struct TransferProcessForFinder {
-    transient: StandardTransient,
     core: TransferProcess<TransferFinderKind>,
 }
-impl_transient!(TransferProcessForFinder, "TransferProcessForFinder", StandardTransient, transient, interfaces: [dyn TransferProcessOps<TransferFinderKind>]);
+impl_transient!(TransferProcessForFinder, "TransferProcessForFinder", dyn Transient, interfaces: [dyn TransferProcessOps<TransferFinderKind>]);
 
 impl TransferProcessForFinder {
     /// The unbound object, for the derived processes (they bind their own handle).
     pub fn unbound(core: TransferProcess<TransferFinderKind>) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            core,
-        }
+        Self { core }
     }
     /// `TransferProcessForFinder(nb = 10000)`.
     pub fn new(nb: i32) -> Handle<Self> {
@@ -131,10 +128,10 @@ impl TransferProcessOps<TransferFinderKind> for TransferProcessForFinder {
 pub fn bind_new<K, P>(process: P) -> Handle<P>
 where
     K: TransferProcessKind,
-    P: TransferProcessOps<K> + RuntimeTyped + 'static,
+    P: TransferProcessOps<K> + HandleUpcast<K::Process>,
 {
     let handle = Handle::new(process);
-    let ops: Handle<K::Process> = handle.cast();
+    let ops: Handle<K::Process> = handle.upcast();
     handle.process().bind_self(&ops);
     handle
 }

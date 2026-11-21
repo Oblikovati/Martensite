@@ -3,7 +3,7 @@
 use super::{TransferFinder, TransferFinderBase};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, Transient},
 };
 
 /// `TransferTransientMapper`.
@@ -11,23 +11,21 @@ use martensite_tkernel::{
 /// ```
 /// use martensite_tkxsbase::transfer::{TransferFinder, TransferTransientMapper};
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
-/// let key = Handle::new(StandardTransient::default());
-/// let first: Handle<dyn TransferFinder> = Handle::new(TransferTransientMapper::new(&key)).cast();
-/// let second: Handle<dyn TransferFinder> = Handle::new(TransferTransientMapper::new(&key)).cast();
+/// let key = Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>();
+/// let first: Handle<dyn TransferFinder> = Handle::new(TransferTransientMapper::new(&key)).into_upcast();
+/// let second: Handle<dyn TransferFinder> = Handle::new(TransferTransientMapper::new(&key)).into_upcast();
 /// assert!(first.equates(&second));
 /// ```
 pub struct TransferTransientMapper {
-    transient: StandardTransient,
     base: TransferFinderBase,
-    theval: Handle<StandardTransient>,
+    theval: Handle<dyn Transient>,
 }
-impl_transient!(TransferTransientMapper, "TransferTransientMapper", dyn TransferFinder, transient, interfaces: [dyn TransferFinder]);
+impl_transient!(TransferTransientMapper, "TransferTransientMapper", dyn TransferFinder, interfaces: [dyn TransferFinder]);
 
 impl TransferTransientMapper {
     /// `TransferTransientMapper(akey)`: the hash code is the key's address hash.
-    pub fn new(akey: &Handle<StandardTransient>) -> Self {
+    pub fn new(akey: &Handle<dyn Transient>) -> Self {
         let mapper = Self {
-            transient: StandardTransient::default(),
             base: TransferFinderBase::default(),
             theval: akey.clone(),
         };
@@ -35,7 +33,7 @@ impl TransferTransientMapper {
         mapper
     }
     /// `Value`.
-    pub fn value(&self) -> &Handle<StandardTransient> {
+    pub fn value(&self) -> &Handle<dyn Transient> {
         &self.theval
     }
 }
@@ -76,12 +74,12 @@ pub struct TransferDataInfo;
 impl TransferDataInfo {
     /// `Type(ent)`: its dynamic type (`StandardTransient` for null, which the native
     /// code dereferences).
-    pub fn type_of(ent: &Handle<StandardTransient>) -> &'static RuntimeType {
+    pub fn type_of(ent: &Handle<dyn Transient>) -> &'static RuntimeType {
         ent.dynamic_type()
-            .unwrap_or_else(StandardTransient::static_type)
+            .unwrap_or_else(<dyn Transient>::static_type)
     }
     /// `TypeName(ent)`.
-    pub fn type_name(ent: &Handle<StandardTransient>) -> String {
+    pub fn type_name(ent: &Handle<dyn Transient>) -> String {
         Self::type_of(ent).name().to_owned()
     }
 }
@@ -89,19 +87,20 @@ impl TransferDataInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use martensite_tkernel::standard::StandardTransient;
     use martensite_tkernel::tcollection::HAsciiString;
 
     #[test]
     fn mapper_identity_and_types() {
-        let text: Handle<StandardTransient> = Handle::new(HAsciiString::new("x")).cast();
+        let text: Handle<dyn Transient> = Handle::new(HAsciiString::new("x")).into_upcast();
         let mapper = TransferTransientMapper::new(&text);
         assert!(*mapper.value() == text);
         assert_eq!(mapper.value_type().name(), "TCollection_HAsciiString");
         assert_eq!(mapper.value_type_name(), "TCollection_HAsciiString");
         let other: Handle<dyn TransferFinder> = Handle::new(TransferTransientMapper::new(
-            &Handle::new(StandardTransient::default()),
+            &Handle::new(StandardTransient).into_upcast::<dyn Transient>(),
         ))
-        .cast();
+        .into_upcast();
         assert!(!mapper.equates(&other) && !mapper.equates(&Handle::default()));
         assert_eq!(
             TransferDataInfo::type_name(&Handle::default()),
@@ -116,12 +115,12 @@ mod tests {
         mapper.set_string_attribute("s", "t");
         let copy = TransferTransientMapper::new(&text);
         copy.get_attributes(
-            &Handle::new(TransferTransientMapper::new(&text)).cast(),
+            &Handle::new(TransferTransientMapper::new(&text)).into_upcast(),
             "",
             true,
         );
         let source: Handle<dyn TransferFinder> =
-            Handle::new(TransferTransientMapper::new(&text)).cast();
+            Handle::new(TransferTransientMapper::new(&text)).into_upcast();
         source.set_integer_attribute("i", 3);
         copy.same_attributes(&source);
         assert_eq!(copy.integer_attribute("i"), 3);

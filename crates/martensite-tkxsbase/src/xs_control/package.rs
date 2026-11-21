@@ -15,7 +15,7 @@ impl XSControl {
     /// use martensite_tkxsbase::if_select::IFSelectSessionPilot;
     /// use martensite_tkxsbase::xs_control::{XSControl, XSControlWorkSession};
     /// let pilot = IFSelectSessionPilot::new("test>").unwrap();
-    /// pilot.set_session(&XSControlWorkSession::new().cast());
+    /// pilot.set_session(&XSControlWorkSession::new());
     /// assert!(XSControl::session(&pilot).unwrap().is_some());
     /// ```
     pub fn session(

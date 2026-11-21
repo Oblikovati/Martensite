@@ -3,9 +3,7 @@ use super::{IFSelectSelectExtract, IFSelectSelectExtractBase, impl_extract_selec
 use crate::interface::{InterfaceInterfaceModel, InterfaceModelEntities, InterfaceModelReports};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{
-        Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, exceptions,
-    },
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -18,14 +16,14 @@ pub trait IFSelectSelectAnyType: IFSelectSelectExtract {
 impl_transient_interface!(
     dyn IFSelectSelectAnyType,
     "IFSelectSelectAnyType",
-    dyn IFSelectSelectExtract
+    dyn IFSelectSelectExtract, upcasts: [dyn IFSelectSelectExtract]
 );
 
 /// `IFSelectSelectAnyType::Sort`: the entity is kind of `TypeForMatch` (a null entity
 /// is natively dereferenced: `StandardNullObject`).
 pub fn any_type_sort<S: IFSelectSelectAnyType + ?Sized>(
     sel: &S,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
 ) -> Result<bool, Failure> {
     let kind = ent
         .dynamic_type()
@@ -40,16 +38,15 @@ pub fn any_type_sort<S: IFSelectSelectAnyType + ?Sized>(
 /// assert_eq!(IFSelectSelectType::new().label().as_bytes(), b"Picked: Standard_Transient");
 /// ```
 pub struct IFSelectSelectType {
-    transient: StandardTransient,
     base: IFSelectSelectExtractBase,
     thetype: SharedState<&'static RuntimeType>,
 }
-impl_transient!(IFSelectSelectType, "IFSelectSelectType", dyn IFSelectSelectAnyType, transient, interfaces: [dyn super::IFSelectSelection, dyn super::IFSelectSelectDeduct, dyn IFSelectSelectExtract, dyn IFSelectSelectAnyType]);
+impl_transient!(IFSelectSelectType, "IFSelectSelectType", dyn IFSelectSelectAnyType, interfaces: [dyn super::IFSelectSelection, dyn super::IFSelectSelectDeduct, dyn IFSelectSelectExtract, dyn IFSelectSelectAnyType]);
 impl_extract_selection!(IFSelectSelectType, base);
 
 impl Default for IFSelectSelectType {
     fn default() -> Self {
-        Self::with_type(StandardTransient::static_type())
+        Self::with_type(<dyn Transient>::static_type())
     }
 }
 
@@ -61,7 +58,6 @@ impl IFSelectSelectType {
     /// `IFSelectSelectType(atype)`.
     pub fn with_type(atype: &'static RuntimeType) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExtractBase::default(),
             thetype: SharedState::new(atype),
         }
@@ -79,7 +75,7 @@ impl IFSelectSelectExtract for IFSelectSelectType {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         any_type_sort(self, ent)
@@ -111,10 +107,9 @@ macro_rules! plain_extract {
         $(#[$doc])*
         #[derive(Default)]
         pub struct $name {
-            transient: StandardTransient,
             base: IFSelectSelectExtractBase,
         }
-        impl_transient!($name, $native, dyn IFSelectSelectExtract, transient, interfaces: [dyn super::IFSelectSelection, dyn super::IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+        impl_transient!($name, $native, dyn IFSelectSelectExtract, interfaces: [dyn super::IFSelectSelection, dyn super::IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
         impl_extract_selection!($name, base);
         impl $name {
             #[doc = concat!("`", $native, "()`: direct, no input.")]
@@ -138,7 +133,7 @@ impl IFSelectSelectExtract for IFSelectSelectErrorEntities {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let live = live_model(model)?;
@@ -162,7 +157,7 @@ impl IFSelectSelectExtract for IFSelectSelectUnknownEntities {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let live = live_model(model)?;

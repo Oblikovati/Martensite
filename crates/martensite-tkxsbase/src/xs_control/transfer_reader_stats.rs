@@ -12,7 +12,7 @@ use crate::transfer::{
 };
 use martensite_tkernel::{
     message::Messenger,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use std::fmt::Write as _;
 use std::io::Write;
@@ -111,7 +111,7 @@ impl StatusCounts {
 }
 
 /// The entity and its type, as the per entity lines print them.
-fn entity_text(model: &dyn InterfaceInterfaceModel, ent: &Handle<StandardTransient>) -> String {
+fn entity_text(model: &dyn InterfaceInterfaceModel, ent: &Handle<dyn Transient>) -> String {
     let mut printed = Vec::new();
     let _ = model.print(ent, &mut printed, 0);
     format!(
@@ -244,7 +244,7 @@ impl XSControlTransferReader {
     /// with a binder are numbered 0.
     pub fn print_stats_on_list(
         tp: &Handle<TransferTransientProcess>,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         what: i32,
         mode: i32,
     ) -> Result<(), Failure> {
@@ -284,7 +284,7 @@ fn print_records(
     messenger: &Messenger,
     model: &Handle<dyn InterfaceInterfaceModel>,
     mut itrp: TransferIteratorOfProcess<TransferTransientKind>,
-    list: Option<&[Handle<StandardTransient>]>,
+    list: Option<&[Handle<dyn Transient>]>,
     mode: i32,
 ) -> Result<(), Failure> {
     let m = model.get().ok_or_else(|| {

@@ -1,14 +1,14 @@
 //! Unit tests of `TransferBinder` and its concrete binders.
 use super::*;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient, Transient};
 use martensite_tkernel::tcollection::HAsciiString;
 
 fn simple(text: &str) -> Handle<dyn TransferBinder> {
     let binder = TransferSimpleBinderOfTransient::new();
     binder
-        .set_result(&Handle::new(HAsciiString::new(text)).cast())
+        .set_result(&Handle::new(HAsciiString::new(text)).into_upcast())
         .unwrap();
-    Handle::new(binder).cast()
+    Handle::new(binder).into_upcast()
 }
 
 fn chain_len(first: &Handle<dyn TransferBinder>) -> usize {
@@ -23,7 +23,7 @@ fn chain_len(first: &Handle<dyn TransferBinder>) -> usize {
 
 #[test]
 fn chain_append_cut_and_multiple() {
-    let head: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).cast();
+    let head: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).into_upcast();
     let (b1, b2, b3) = (simple("a"), simple("b"), simple("c"));
     head.add_result(&head);
     head.add_result(&Handle::default());
@@ -50,13 +50,13 @@ fn statuses_checks_and_merge() {
     binder.set_already_used();
     assert_eq!(binder.status(), TransferStatusResult::StatusVoid);
     binder
-        .set_result(&Handle::new(StandardTransient::default()))
+        .set_result(&Handle::new(StandardTransient).into_upcast::<dyn Transient>())
         .unwrap();
     assert_eq!(binder.status_exec(), TransferStatusExec::StatusDone);
     binder.set_already_used();
     let err = binder.set_result(&Handle::default()).unwrap_err();
     assert_eq!(err.exception_type(), "TransferTransferFailure");
-    let other: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).cast();
+    let other: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).into_upcast();
     other.add_fail("bad", "");
     other.add_warning("warn", "");
     binder.merge(&other);
@@ -81,7 +81,7 @@ fn simple_binder_typed_result_and_types() {
         &mut res
     ));
     assert!(res.is_some());
-    let none: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).cast();
+    let none: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).into_upcast();
     assert!(!TransferSimpleBinderOfTransient::get_typed_result(
         &none,
         HAsciiString::static_type(),
@@ -99,7 +99,7 @@ fn simple_binder_typed_result_and_types() {
 fn multiple_and_list_binders() {
     let multi = TransferMultipleBinder::new();
     assert!(!multi.is_multiple() && multi.nb_results() == 0 && multi.multiple_result().is_empty());
-    multi.add_transient_result(&Handle::new(StandardTransient::default()));
+    multi.add_transient_result(&Handle::new(StandardTransient).into_upcast::<dyn Transient>());
     assert!(!multi.is_multiple());
     multi.add_transient_result(&Handle::default());
     assert!(multi.is_multiple() && multi.result_value(1).is_ok());
@@ -114,11 +114,14 @@ fn multiple_and_list_binders() {
     );
     let list = TransferTransientListBinder::with_list(&[Handle::default()]);
     assert!(!list.is_multiple());
-    list.add_transient_result(&Handle::new(StandardTransient::default()));
+    list.add_transient_result(&Handle::new(StandardTransient).into_upcast::<dyn Transient>());
     assert!(
         list.is_multiple()
             && list
-                .set_result(1, &Handle::new(StandardTransient::default()))
+                .set_result(
+                    1,
+                    &Handle::new(StandardTransient).into_upcast::<dyn Transient>()
+                )
                 .is_ok()
     );
     assert!(list.set_result(0, &Handle::default()).is_err() && list.transient(3).is_err());

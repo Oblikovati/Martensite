@@ -9,7 +9,7 @@ use crate::interface::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -27,9 +27,8 @@ macro_rules! plain_selection {
         $(#[$doc])*
         #[derive(Default)]
         pub struct $name {
-            transient: StandardTransient,
         }
-        impl_transient!($name, $native, $parent, transient, interfaces: [$($iface),*]);
+        impl_transient!($name, $native, $parent, interfaces: [$($iface),*]);
         impl $name {
             #[doc = concat!("`", $native, "()`.")]
             pub fn new() -> Self {
@@ -89,10 +88,9 @@ impl IFSelectSelectBase for IFSelectSelectModelEntities {}
 /// `IFSelectSelectEntityNumber`: the entity of a number (an integer parameter).
 #[derive(Default)]
 pub struct IFSelectSelectEntityNumber {
-    transient: StandardTransient,
     thenum: SharedState<Handle<IFSelectIntParam>>,
 }
-impl_transient!(IFSelectSelectEntityNumber, "IFSelectSelectEntityNumber", dyn IFSelectSelectBase, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectBase]);
+impl_transient!(IFSelectSelectEntityNumber, "IFSelectSelectEntityNumber", dyn IFSelectSelectBase, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectBase]);
 
 impl IFSelectSelectEntityNumber {
     /// `IFSelectSelectEntityNumber()`: no number.
@@ -139,10 +137,9 @@ macro_rules! plain_deduct {
         $(#[$doc])*
         #[derive(Default)]
         pub struct $name {
-            transient: StandardTransient,
             base: IFSelectSelectDeductBase,
         }
-        impl_transient!($name, $native, dyn IFSelectSelectDeduct, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct]);
+        impl_transient!($name, $native, dyn IFSelectSelectDeduct, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct]);
         impl $name {
             #[doc = concat!("`", $native, "()`: no input.")]
             pub fn new() -> Self {
@@ -162,7 +159,7 @@ macro_rules! plain_deduct {
 fn one_level<S: IFSelectSelectDeduct + ?Sized>(
     sel: &S,
     g: &InterfaceGraph,
-    step: impl Fn(&Handle<StandardTransient>) -> Result<InterfaceEntityIterator, Failure>,
+    step: impl Fn(&Handle<dyn Transient>) -> Result<InterfaceEntityIterator, Failure>,
 ) -> Result<InterfaceEntityIterator, Failure> {
     let mut graph = InterfaceGraph::from_graph(g, false)?;
     for ent in sel.input_result(g)?.content() {

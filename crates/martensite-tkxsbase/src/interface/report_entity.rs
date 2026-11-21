@@ -3,15 +3,15 @@
 use super::InterfaceCheck;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 
 /// The fields of a report.
 #[derive(Clone, Default)]
 struct ReportState {
     thecheck: Handle<InterfaceCheck>,
-    theconcerned: Handle<StandardTransient>,
-    thecontent: Handle<StandardTransient>,
+    theconcerned: Handle<dyn Transient>,
+    thecontent: Handle<dyn Transient>,
 }
 
 /// `InterfaceReportEntity`.
@@ -19,27 +19,25 @@ struct ReportState {
 /// ```
 /// use martensite_tkxsbase::interface::InterfaceReportEntity;
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
-/// let unknown = Handle::new(StandardTransient::default());
+/// let unknown = Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>();
 /// let report = InterfaceReportEntity::unknown(&unknown);
 /// assert!(report.has_content() && !report.has_new_content());
 /// ```
 #[derive(Default)]
 pub struct InterfaceReportEntity {
-    transient: StandardTransient,
     state: SharedState<ReportState>,
 }
 impl_transient!(
     InterfaceReportEntity,
     "InterfaceReportEntity",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl InterfaceReportEntity {
     /// `InterfaceReportEntity(unknown)`: an unknown entity, its own content, no check
     /// (natively a null check, which `IsError` and `IsUnknown` dereference; the implementation reads
     /// it as empty).
-    pub fn unknown(unknown: &Handle<StandardTransient>) -> Self {
+    pub fn unknown(unknown: &Handle<dyn Transient>) -> Self {
         Self::from_state(ReportState {
             thecheck: Handle::default(),
             theconcerned: unknown.clone(),
@@ -47,10 +45,7 @@ impl InterfaceReportEntity {
         })
     }
     /// `InterfaceReportEntity(acheck, concerned)`: the check gets the entity.
-    pub fn with_check(
-        acheck: &Handle<InterfaceCheck>,
-        concerned: &Handle<StandardTransient>,
-    ) -> Self {
+    pub fn with_check(acheck: &Handle<InterfaceCheck>, concerned: &Handle<dyn Transient>) -> Self {
         if let Some(check) = acheck.get() {
             check.set_entity(concerned);
         }
@@ -62,12 +57,11 @@ impl InterfaceReportEntity {
     }
     fn from_state(state: ReportState) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
     /// `SetContent(content)`.
-    pub fn set_content(&self, content: &Handle<StandardTransient>) {
+    pub fn set_content(&self, content: &Handle<dyn Transient>) {
         self.state.write().thecontent = content.clone();
     }
     /// `Check`.
@@ -79,7 +73,7 @@ impl InterfaceReportEntity {
         self.state.write().thecheck = check.clone();
     }
     /// `Concerned`.
-    pub fn concerned(&self) -> Handle<StandardTransient> {
+    pub fn concerned(&self) -> Handle<dyn Transient> {
         self.state.read().theconcerned.clone()
     }
     /// `HasContent`.
@@ -92,7 +86,7 @@ impl InterfaceReportEntity {
         state.thecontent.is_some() && state.thecontent != state.theconcerned
     }
     /// `Content`.
-    pub fn content(&self) -> Handle<StandardTransient> {
+    pub fn content(&self) -> Handle<dyn Transient> {
         self.state.read().thecontent.clone()
     }
     /// `IsError`: the check has fails.
@@ -113,17 +107,18 @@ impl InterfaceReportEntity {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use martensite_tkernel::standard::StandardTransient;
 
     #[test]
     fn reports_with_checks() {
-        let concerned = Handle::new(StandardTransient::default());
+        let concerned = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
         let check = Handle::new(InterfaceCheck::new());
         let report = InterfaceReportEntity::with_check(&check, &concerned);
         assert!(check.entity() == concerned);
         assert!(!report.has_content() && !report.is_unknown());
         check.add_fail_text("bad", "");
         assert!(report.is_error());
-        let content = Handle::new(StandardTransient::default());
+        let content = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
         report.set_content(&content);
         assert!(report.has_new_content() && report.content() == content);
         assert!(report.concerned() == concerned);

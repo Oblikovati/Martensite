@@ -8,9 +8,29 @@ use crate::interface::test_norm::{fake_entity, fake_model};
 use crate::transfer::{TransferFinderProcess, TransferTransientProcess};
 use martensite_tkernel::{
     message::ProgressRange,
-    standard::{Handle, StandardTransient},
+    standard::{Handle, Transient},
     tcollection::AsciiString,
 };
+
+#[test]
+fn pilot_keeps_the_norm_session_owner_and_descriptor() {
+    use crate::if_select::{IFSelectSessionPilot, IFSelectWorkSession};
+    use martensite_tkernel::standard::{RuntimeType, RuntimeTyped};
+
+    let pilot = IFSelectSessionPilot::new("").unwrap();
+    let ws = XSControlWorkSession::new();
+    pilot.set_session(&ws);
+    let owned = pilot.session();
+    assert_eq!(owned.object_address(), ws.object_address());
+    assert_eq!(ws.ref_count(), 3);
+    assert_eq!(owned.downcast::<XSControlWorkSession>(), ws);
+    let base = IFSelectWorkSession::static_type();
+    assert!(owned.is_kind(base));
+    assert!(std::ptr::eq(
+        RuntimeType::registered_by_name("IFSelectWorkSession").unwrap(),
+        base
+    ));
+}
 
 #[test]
 fn select_norm_takes_a_recorded_controller() {
@@ -75,7 +95,7 @@ fn results_by_mode() {
 #[test]
 fn transfer_read_one_on_the_model_reads_the_roots() {
     let (ws, ents) = reading_session();
-    let model: Handle<StandardTransient> = ws.model().cast();
+    let model: Handle<dyn Transient> = ws.model().cast();
     assert_eq!(
         ws.transfer_read_one(&model, &ProgressRange::default())
             .unwrap(),
@@ -111,7 +131,7 @@ fn map_writer_and_vars() {
     let fp = TransferFinderProcess::new(5);
     assert!(ws.set_map_writer(&fp).unwrap());
     assert!(ws.transfer_writer().finder_process() == fp);
-    let vars: Handle<dyn XSControlVarsOps> = Handle::new(XSControlVars::new()).cast();
+    let vars: Handle<dyn XSControlVarsOps> = Handle::new(XSControlVars::new()).into_upcast();
     ws.set_vars(&vars);
     assert!(ws.vars() == vars);
 }
@@ -192,7 +212,7 @@ fn package_session_and_vars_of_a_pilot() {
     assert!(XSControl::session(&pilot).unwrap().is_null());
     assert!(XSControl::vars(&pilot).unwrap().is_null());
     let ws = XSControlWorkSession::new();
-    pilot.set_session(&ws.clone().cast());
+    pilot.set_session(&ws);
     assert!(XSControl::session(&pilot).unwrap() == ws);
     assert!(XSControl::vars(&pilot).unwrap() == ws.vars());
     assert!(XSControl::session(&Handle::default()).is_err());

@@ -7,7 +7,7 @@ use crate::interface::{
 };
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Handle, StandardTransient, Transient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -45,11 +45,7 @@ pub trait IFSelectSelection: Transient {
         Ok(InterfaceGraphContent::from_graph(&graph)?.deref_iterator())
     }
 }
-impl_transient_interface!(
-    dyn IFSelectSelection,
-    "IFSelectSelection",
-    StandardTransient
-);
+impl_transient_interface!(dyn IFSelectSelection, "IFSelectSelection", dyn Transient);
 
 /// `IFSelectSelection::CompleteResult`: the root result with the shared entities.
 pub fn selection_complete_result<S: IFSelectSelection + ?Sized>(
@@ -81,7 +77,7 @@ pub trait IFSelectSelectBase: IFSelectSelection {}
 impl_transient_interface!(
     dyn IFSelectSelectBase,
     "IFSelectSelectBase",
-    dyn IFSelectSelection
+    dyn IFSelectSelection, upcasts: [dyn IFSelectSelection]
 );
 
 /// `IFSelectSelectBase::FillIterator`: nothing (a base selection has no input).
@@ -185,16 +181,12 @@ pub trait IFSelectTransformer: Transient {
         false
     }
     /// `Updated(entfrom, entto)`: the image of `entfrom` (false when it has none).
-    fn updated(
-        &self,
-        entfrom: &Handle<StandardTransient>,
-        entto: &mut Handle<StandardTransient>,
-    ) -> bool;
+    fn updated(&self, entfrom: &Handle<dyn Transient>, entto: &mut Handle<dyn Transient>) -> bool;
     /// `Label`.
     fn label(&self) -> AsciiString;
 }
 impl_transient_interface!(
     dyn IFSelectTransformer,
     "IFSelectTransformer",
-    StandardTransient
+    dyn Transient
 );

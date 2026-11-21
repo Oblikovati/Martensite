@@ -7,7 +7,7 @@ use crate::interface::{InterfaceCheckStatus, InterfaceInterfaceModel, InterfaceM
 use crate::xs_control::{XSControlSelectForTransfer, XSControlTransferReader};
 use martensite_tkernel::{
     message::{Message, MessageStream, ProgressRange},
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use std::fmt::Write as _;
 
@@ -95,7 +95,7 @@ fn entity_result(
     pilot: &IFSelectSessionPilot,
     reader: &XSControlTransferReader,
     m: &dyn InterfaceInterfaceModel,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     sout: &mut MessageStream<'_>,
 ) -> Status {
     let rm = reader.final_result(ent);
@@ -149,8 +149,8 @@ pub(super) fn trbegin(pilot: &Handle<IFSelectSessionPilot>) -> Status {
 /// A list of entities, `StandardNullObject` for none (a native null list
 /// dereference).
 fn live_list(
-    list: Option<Vec<Handle<StandardTransient>>>,
-) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    list: Option<Vec<Handle<dyn Transient>>>,
+) -> Result<Vec<Handle<dyn Transient>>, Failure> {
     list.ok_or_else(|| exceptions::null_object("XSControlFunctions::tread: no list of entities"))
 }
 

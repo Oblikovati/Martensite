@@ -4,7 +4,7 @@ use super::{
     InterfaceEntityIterator, InterfaceGTool, InterfaceGeneralLib, InterfaceGraph, InterfaceHGraph,
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceProtocol,
 };
-use martensite_tkernel::standard::{Failure, Handle, RuntimeType, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, Transient};
 use std::io::{self, Write};
 use std::sync::RwLockReadGuard;
 
@@ -12,7 +12,7 @@ use std::sync::RwLockReadGuard;
 ///
 /// ```
 /// use martensite_tkxsbase::interface::InterfaceShareTool;
-/// fn shared(tool: &InterfaceShareTool, ent: &martensite_tkernel::standard::Handle<martensite_tkernel::standard::StandardTransient>) -> bool {
+/// fn shared(tool: &InterfaceShareTool, ent: &martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient>) -> bool {
 ///     tool.is_shared(ent).unwrap_or(false)
 /// }
 /// ```
@@ -79,27 +79,24 @@ impl InterfaceShareTool {
         self.graph().root_entities()
     }
     /// `IsShared(ent)`: `ent` shares at least one entity.
-    pub fn is_shared(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_shared(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         Ok(!self.graph().get_shareds(ent)?.is_empty())
     }
     /// `Shareds(ent)`.
-    pub fn shareds(
-        &self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<InterfaceEntityIterator, Failure> {
+    pub fn shareds(&self, ent: &Handle<dyn Transient>) -> Result<InterfaceEntityIterator, Failure> {
         self.graph().shareds(ent)
     }
     /// `Sharings(ent)`.
     pub fn sharings(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<InterfaceEntityIterator, Failure> {
         self.graph().sharings(ent)
     }
     /// `NbTypedSharings(ent, atype)`.
     pub fn nb_typed_sharings(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         atype: &RuntimeType,
     ) -> Result<i32, Failure> {
         let list = self.graph().get_sharings(ent)?.unwrap_or_default();
@@ -113,9 +110,9 @@ impl InterfaceShareTool {
     /// model).
     pub fn typed_sharing(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         atype: &RuntimeType,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let Some(list) = self.graph().get_sharings(ent)? else {
             return Ok(Handle::default());
         };
@@ -133,12 +130,12 @@ impl InterfaceShareTool {
     /// sharing ones unless `rootlast` (always for the model).
     pub fn all(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         rootlast: bool,
     ) -> Result<InterfaceEntityIterator, Failure> {
         let model = self.model();
         let nb = model.nb_entities();
-        let is_model = *ent == model.cast::<StandardTransient>();
+        let is_model = *ent == model.cast::<dyn Transient>();
         let fl = if is_model {
             self.model_ranks(&model, nb, rootlast)?
         } else {
@@ -191,7 +188,7 @@ impl InterfaceShareTool {
         &self,
         model: &Handle<dyn InterfaceInterfaceModel>,
         nb: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<Vec<i32>, Failure> {
         let mut fl = vec![0; (nb + 1) as usize];
         let mut n0 = 0;

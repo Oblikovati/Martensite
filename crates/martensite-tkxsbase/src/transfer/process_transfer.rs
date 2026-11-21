@@ -107,7 +107,7 @@ impl<K: TransferProcessKind> TransferProcess<K> {
         };
         let mut text = String::from("                  *** Exception Raised with no Result\n");
         let binder: Handle<dyn TransferBinder> =
-            Handle::new(super::TransferVoidBinder::new()).cast();
+            Handle::new(super::TransferVoidBinder::new()).into_upcast();
         self.bind(start, &binder)?;
         binder.add_fail("Transfer stopped by exception raising", "");
         if self.trace_level() != 0 {

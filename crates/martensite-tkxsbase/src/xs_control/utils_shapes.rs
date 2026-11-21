@@ -8,7 +8,7 @@ use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{Compound, HShape, Shape, ShapeIterator, Shell, Wire};
 use martensite_tkernel::{
     ncollection::HSequence,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::shape_extend::ShapeExtendExplorer;
@@ -161,24 +161,23 @@ impl XSControlUtils {
     }
     /// `ShapeBinder(shape, hs = true)`: the shape as a handle shape (`hs`), else as a
     /// shape binder.
-    pub fn shape_binder(&self, shape: &Shape, hs: bool) -> Handle<StandardTransient> {
+    pub fn shape_binder(&self, shape: &Shape, hs: bool) -> Handle<dyn Transient> {
         if hs {
-            return Handle::new(HShape::new(shape)).cast();
+            return Handle::new(HShape::new(shape)).into_upcast();
         }
-        Handle::new(TransferBRepShapeBinder::with_result(shape)).cast()
+        Handle::new(TransferBRepShapeBinder::with_result(shape)).into_upcast()
     }
     /// `BinderShape(tr)`: the shape of a binder, a shape mapper or a handle shape; null
     /// otherwise.
-    pub fn binder_shape(&self, tr: &Handle<StandardTransient>) -> Shape {
+    pub fn binder_shape(&self, tr: &Handle<dyn Transient>) -> Shape {
         let binder = tr.cast::<dyn TransferBinder>();
         if binder.is_some() {
             return TransferBRep::shape_result(&binder);
         }
-        if let Some(sm) = tr.cast::<TransferBRepShapeMapper>().get() {
+        if let Some(sm) = tr.downcast_ref::<TransferBRepShapeMapper>() {
             return sm.value().clone();
         }
-        tr.cast::<HShape>()
-            .get()
+        tr.downcast_ref::<HShape>()
             .map(HShape::shape)
             .unwrap_or_default()
     }

@@ -8,9 +8,10 @@ use crate::interface::{
     InterfaceEntityIterator, InterfaceGraph, InterfaceInterfaceModel, InterfaceModelEntities,
     InterfaceProtocol, InterfaceProtocolBase, InterfaceShareFlags,
 };
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     message::{ProgressRange, ProgressScope},
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 
 /// `TransferTransferOutput`.
@@ -36,7 +37,7 @@ impl TransferOutput {
         amodel: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<Self, Failure>
     where
-        A: TransferActorOfTransientProcessOps + RuntimeTyped + ?Sized,
+        A: TransferActorOfTransientProcessOps + TransientHandleTarget + ?Sized,
     {
         let model = amodel.get().ok_or_else(|| {
             exceptions::null_object("TransferTransferOutput: null model; expected a model")
@@ -76,7 +77,7 @@ impl TransferOutput {
     /// model.
     pub fn transfer(
         &self,
-        obj: &Handle<StandardTransient>,
+        obj: &Handle<dyn Transient>,
         progress: &ProgressRange<'_>,
     ) -> Result<(), Failure> {
         let model = self.themodel.get().ok_or_else(|| {

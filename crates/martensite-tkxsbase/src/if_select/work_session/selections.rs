@@ -1,12 +1,12 @@
 //! The inputs of the selections (sources, extraction direction, controls,
 //! combinations), the pointed selections and the selections given by name.
-use super::IFSelectWorkSession;
+use super::IFSelectSession;
 use crate::if_select::{
     IFSelectSelectCombine, IFSelectSelectControl, IFSelectSelectDeduct, IFSelectSelectExtract,
     IFSelectSelectModelEntities, IFSelectSelectPointed, IFSelectSelectSignature, IFSelectSelection,
-    IFSelectSignCounterOps, IFSelectSignature, IFSelectSignatureList,
+    IFSelectSignCounterOps, IFSelectSignature,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 
 /// The parts of a selection name "name(signature)": the name, and the text between the
 /// last '(' and the closing ')' when both are past the start.
@@ -54,7 +54,7 @@ pub(super) fn split_selection_name(selname: &str) -> SelectionName {
     }
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// True when `sel` is an item.
     fn is_item(&self, sel: &Handle<dyn IFSelectSelection>) -> bool {
         self.item_ident(&sel.cast()) != 0
@@ -199,14 +199,14 @@ impl IFSelectWorkSession {
     /// `name` (null when refused).
     pub fn new_select_pointed(
         &self,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         name: &str,
     ) -> Result<Handle<dyn IFSelectSelection>, Failure> {
         let sel = IFSelectSelectPointed::new();
         if list.is_some() {
             sel.add_list(list);
         }
-        let handle: Handle<dyn IFSelectSelection> = Handle::new(sel).cast();
+        let handle: Handle<dyn IFSelectSelection> = Handle::new(sel).into_upcast();
         let added = self.add_named_item(name, &handle.cast(), true)?;
         Ok(if added == 0 {
             Handle::default()
@@ -219,7 +219,7 @@ impl IFSelectWorkSession {
     pub fn set_select_pointed(
         &self,
         sel: &Handle<dyn IFSelectSelection>,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         mode: i32,
     ) -> bool {
         let sp = sel.cast::<IFSelectSelectPointed>();
@@ -246,9 +246,7 @@ impl IFSelectWorkSession {
             return item.cast();
         };
         let sign = item.cast::<dyn IFSelectSignature>();
-        let cnt = item
-            .cast::<IFSelectSignatureList>()
-            .cast::<dyn IFSelectSignCounterOps>();
+        let cnt = item.cast::<dyn IFSelectSignCounterOps>();
         let selsign = if sign.is_some() {
             IFSelectSelectSignature::with_signature(&sign, &text, false)
         } else if cnt.is_some() {
@@ -257,7 +255,7 @@ impl IFSelectWorkSession {
             println!("{selname} : neither Signature nor Counter");
             return Handle::default();
         };
-        selsign.set_input(&Handle::new(IFSelectSelectModelEntities::new()).cast()); // by default
-        Handle::new(selsign).cast()
+        selsign.set_input(&Handle::new(IFSelectSelectModelEntities::new()).into_upcast()); // by default
+        Handle::new(selsign).into_upcast()
     }
 }

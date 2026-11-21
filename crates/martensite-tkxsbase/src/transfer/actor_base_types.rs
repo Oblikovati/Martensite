@@ -7,7 +7,7 @@
 //! ```
 //! use martensite_tkernel::standard::Handle;
 //! use martensite_tkxsbase::transfer::{TransferActorOfFinderProcess, TransferActorOfFinderProcessBaseType};
-//! let base: Handle<TransferActorOfFinderProcessBaseType> = Handle::new(TransferActorOfFinderProcess::new()).cast();
+//! let base: Handle<TransferActorOfFinderProcessBaseType> = Handle::new(TransferActorOfFinderProcess::new()).into_upcast();
 //! base.set_last(true);
 //! assert!(base.is_last());
 //! ```
