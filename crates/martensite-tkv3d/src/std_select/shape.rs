@@ -5,6 +5,7 @@ use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
+use std::sync::Arc;
 /// Genuine derived state; `let base=StdSelectShapeBase::new(&shape,&drawer);`.
 pub struct StdSelectShapeBase {
     /// Derived geometry is released before its native parent.
@@ -17,7 +18,7 @@ impl StdSelectShapeBase {
     pub fn new(shape: &Shape, drawer: &Handle<Prs3dDrawer>) -> Self {
         let presentable = PrsMgrPresentableObjectBase::new(PrsMgrTypeOfPresentation3d::AllView);
         let shape = SharedState::new(StdSelectShapeFields {
-            shape: shape.clone(),
+            shape: Arc::new(shape.to_shape()),
         });
         if !drawer.is_null() {
             presentable.fields.read().drawer.set_link(drawer);
@@ -51,7 +52,7 @@ pub trait StdSelectShapeMembers: StdSelectShapeSource {
     }
     /// Replace actual geometry without presentation invalidation; `source.set_shape(&replacement)`.
     fn set_shape(&self, shape: &Shape) {
-        let replacement = shape.clone();
+        let replacement = Arc::new(shape.to_shape());
         let old = std::mem::replace(
             &mut self.std_select_shape_base().shape.write().shape,
             replacement,

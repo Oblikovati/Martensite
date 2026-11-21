@@ -1,8 +1,9 @@
 //! Genuine BRep selection owners retain shape identity and the inherited selectable-owner state.
 use super::{StdSelectShapeFields, StdSelectShapeRef, StdSelectShapeSource};
 use crate::select_mgr::*;
-use martensite_tkbrep::topods::Shape;
+use martensite_tkbrep::topods::{Shape, ShapeView};
 use martensite_tkernel::standard::{Handle, SharedState};
+use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering};
 /// Actual derived fields; `StdSelectBRepOwnerBase::new(&shape,&object,7,true)`.
 pub struct StdSelectBRepOwnerBase {
@@ -18,14 +19,14 @@ pub struct StdSelectBRepOwnerBase {
 impl StdSelectBRepOwnerBase {
     /// Construct the inherited owner first, then copy topology; `Self::new(&shape,&object,7,true)`.
     pub fn new(
-        shape: &Shape,
+        shape: &ShapeView<'_>,
         selectable: &Handle<dyn SelectMgrSelectableObject>,
         priority: i32,
         decomposed: bool,
     ) -> Self {
         let owner = SelectMgrEntityOwnerBase::new(selectable, priority);
         let shape = SharedState::new(StdSelectShapeFields {
-            shape: shape.clone(),
+            shape: Arc::new(shape.to_shape()),
         });
         owner.fields.write().from_decomposition = decomposed;
         Self {
@@ -99,13 +100,13 @@ impl StdSelectBRepOwner {
         Self::with_shape(&shape, priority, false)
     }
     /// Retain geometry with native decomposition state; `Self::with_shape(&shape,7,true)`.
-    pub fn with_shape(shape: &Shape, priority: i32, decomposed: bool) -> Handle<Self> {
+    pub fn with_shape(shape: &ShapeView<'_>, priority: i32, decomposed: bool) -> Handle<Self> {
         let selectable = Handle::default();
         Self::with_selectable(shape, &selectable, priority, decomposed)
     }
     /// Retain geometry while borrowing the selectable identity; `Self::with_selectable(&shape,&object,7,true)`.
     pub fn with_selectable(
-        shape: &Shape,
+        shape: &ShapeView<'_>,
         selectable: &Handle<dyn SelectMgrSelectableObject>,
         priority: i32,
         decomposed: bool,

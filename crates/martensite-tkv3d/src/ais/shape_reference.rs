@@ -1,8 +1,11 @@
 //! Borrow the actual native AisShape topology field across assignments.
 use super::{AisShapeFields, AisShapeSource};
 use crate::{prs_mgr::PrsMgrPresentableObjectFields, prs3d::Prs3dDrawer};
-use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
-use martensite_tkernel::standard::{Failure, Handle, HandleFieldRef, SharedState};
+use martensite_tkbrep::topods::{Shape, ShapeView, TopoDSShapeReadSource};
+use martensite_tkernel::standard::{
+    Failure, Handle, HandleFieldRef, SharedState, catch_native_failure,
+};
+use std::sync::Arc;
 /// Non-owning live `Shape()` reference; `let alias=object.shape_ref();`.
 #[derive(Clone, Copy)]
 pub struct AisShapeRef<'a> {
@@ -22,20 +25,17 @@ impl AisShapeRef<'_> {
     /// Explicitly retain an owning snapshot; `let copied=alias.clone_shape();`.
     pub fn clone_shape(&self) -> Shape {
         let fields = self.fields.read();
-        fields.shape.clone()
+        fields.shape.to_shape()
     }
 }
 impl TopoDSShapeReadSource for AisShapeRef<'_> {
     fn read_current_shape<R>(
         &self,
-        project: impl FnOnce(&Shape) -> Result<R, Failure>,
+        project: impl FnOnce(&ShapeView<'_>) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
-        let fields = self.fields.read();
-        let topology = fields.shape.tshape().observe();
-        let location = fields.shape.location().clone();
-        let orientation = fields.shape.orientation();
-        drop(fields);
-        Shape::with_reference_parts(&*topology, &location, orientation, project)
+        // The callback can replace the field. Lease the value without retaining its TShape.
+        let shape = Arc::clone(&self.fields.read().shape);
+        catch_native_failure(move || project(&shape))
     }
 }
 /// Nonvirtual parent topology methods; `object.set_shape(&replacement)`.
@@ -57,9 +57,12 @@ pub trait AisShapeMembers: AisShapeSource {
     }
     /// Assign before enabling lazy bounds recomputation; `object.set_shape(&shape)`.
     fn set_shape(&self, shape: &Shape) {
+        let replacement = Arc::new(shape.to_shape());
         let mut fields = self.shape_base().fields.write();
-        fields.shape = shape.clone();
+        let previous = std::mem::replace(&mut fields.shape, replacement);
         fields.recompute_bounds = true;
+        drop(fields);
+        drop(previous);
     }
 }
 impl<S: AisShapeSource + ?Sized> AisShapeMembers for S {}

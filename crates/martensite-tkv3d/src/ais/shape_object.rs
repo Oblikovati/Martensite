@@ -169,7 +169,7 @@ pub fn ais_shape_compute<S: AisShapeSource + ?Sized>(
     if mode == 2 {
         return ais_shape_compute_bounds_mode(object, prs);
     }
-    let shape = object.shape_base().fields.read().shape.clone();
+    let shape = object.shape_base().fields.read().shape.to_shape();
     if shape.is_null() {
         return Ok(());
     }
@@ -244,7 +244,7 @@ pub fn ais_shape_compute_hlr<S: AisShapeSource + ?Sized>(
     trsf: &Handle<Datum3>,
     prs: &Handle<dyn Graphic3dStructureSource>,
 ) -> Result<(), Failure> {
-    let shape = object.shape_base().fields.read().shape.clone();
+    let shape = object.shape_base().fields.read().shape.to_shape();
     let drawer = object.attributes();
     match trsf.get() {
         Some(datum) if datum.trsf().form() != TransformForm::Identity => {
@@ -356,7 +356,7 @@ pub fn ais_shape_selection_mode(kind: ShapeEnum) -> i32 {
 pub trait AisShapeParameters: AisShapeSource {
     /// `Shape`: a copy of the shape; `object.shape()`.
     fn shape(&self) -> Shape {
-        self.shape_base().fields.read().shape.clone()
+        self.shape_base().fields.read().shape.to_shape()
     }
     /// `Set`: the same as `SetShape`; `object.set(&shape)`.
     fn set(&self, shape: &Shape) {

@@ -4,6 +4,7 @@ use crate::{ais::*, prs_mgr::PrsMgrPresentableObjectMembers, prs3d::Prs3dDrawer,
 use martensite_tkbrep::topods::{Builder, Compound, Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
 use std::fmt::Write;
+use std::sync::Arc;
 #[test]
 fn actual_native_brep_owner_state_and_reference_contracts_replay() {
     let mut first = Compound::default();
@@ -22,6 +23,32 @@ fn actual_native_brep_owner_state_and_reference_contracts_replay() {
         include_str!("../../tests/fixtures/colored-shape-compute/native-owner-state.txt")
     );
 }
+
+#[test]
+fn scoped_shape_read_survives_replacement_of_its_last_field_owner() {
+    let mut original = Compound::default();
+    Builder.make_compound(&mut original);
+    let topology = original.tshape().downgrade();
+    let object = StdSelectShape::new(&original, &Handle::default());
+    drop(original);
+    let mut replacement = Compound::default();
+    Builder.make_compound(&mut replacement);
+    let alias = object.shape_ref();
+    alias
+        .read_current_shape(|prior| {
+            assert_eq!(prior.tshape().ref_count(), 1);
+            object.set_shape(&replacement);
+            assert_eq!(prior.tshape().ref_count(), 1);
+            assert_eq!(prior.tshape().object_address(), topology.object_address());
+            alias.read_current_shape(|current| {
+                assert!(current.is_equal(&replacement));
+                Ok(())
+            })
+        })
+        .unwrap();
+    assert!(topology.upgrade().is_null());
+}
+
 fn record_owner_mode_states(rows: &mut String) {
     let owner = StdSelectBRepOwner::new(-7);
     record_owner_state("priority", &owner, rows);
@@ -68,7 +95,7 @@ fn record_owner_field_alias(first: &Shape, second: &Shape, rows: &mut String) {
     let other = owner.shape_ref();
     let same = alias.is_same_reference(&other);
     record_owner_borrow(&alias, first, same, rows);
-    owner.brep_owner_base().shape.write().shape = second.clone();
+    owner.brep_owner_base().shape.write().shape = Arc::new(second.clone());
     record_owner_replacement(&alias, first, second, rows);
     let copy = alias.clone_shape();
     let same = i32::from(copy.is_equal(second));

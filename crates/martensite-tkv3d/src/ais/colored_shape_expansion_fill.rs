@@ -34,7 +34,7 @@ fn own_colored_compounds<S: AisColoredShapeSource + ?Sized>(
     let mut owned = OwnedCompounds::with_hasher(ShapeMapHasher, 1);
     let fields = object.shape_base().fields.read();
     if fields.shape.shape_type()? == ShapeEnum::Compound {
-        owned.add(fields.shape.clone());
+        owned.add(fields.shape.to_shape());
         collect_colored_compounds(&mut owned, &fields.shape)?;
     }
     Ok(owned)
