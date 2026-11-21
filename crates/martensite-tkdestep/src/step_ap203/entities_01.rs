@@ -277,7 +277,9 @@ impl StepAP203CcDesignSpecificationReference {
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
-        a_document_reference_assigned_document: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
+        a_document_reference_assigned_document: &Handle<
+            dyn crate::StepEntityBase<StepBasicDocument>,
+        >,
         a_document_reference_source: &Handle<HAsciiString>,
         a_items: &Handle<HArray1<StepAP203SpecifiedItem>>,
     ) {

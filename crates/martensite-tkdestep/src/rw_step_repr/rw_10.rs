@@ -25,7 +25,8 @@ impl RwStepReprRwPropertyDefinitionRepresentation {
         }
         let mut a_definition: StepReprRepresentedDefinition = Default::default();
         data.read_entity_select(num, 1, "definition", ach, &mut a_definition)?;
-        let mut a_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = Default::default();
+        let mut a_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         data.read_entity(
             num,
             2,

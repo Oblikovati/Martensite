@@ -1,9 +1,6 @@
 //! Full RegressionCommands OCC27700_Text computation; point-style frame and text have separate groups.
 use super::*;
-use martensite_tkernel::{
-    standard::{HandleReference},
-    tcollection::ExtendedString,
-};
+use martensite_tkernel::{standard::HandleReference, tcollection::ExtendedString};
 use martensite_tkmath::gp::{Axis2, Direction3, Point3};
 use martensite_tkservice::{aspect::AspectInteriorStyle, graphic3d::*};
 use martensite_tkv3d::v3d::V3dTypeOfOrientation;

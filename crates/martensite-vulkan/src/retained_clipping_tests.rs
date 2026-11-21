@@ -20,7 +20,8 @@ fn layer_origin_recomputes_w_from_the_plane_location_in_double() {
 #[test]
 fn layer_origin_applies_to_every_plane_of_a_chain() {
     let first = plane(0., 1., 0., -3.);
-    Graphic3dClipPlane::set_chain_next_plane(&first.upcast(), plane(0., 0., 1., 2.).into_upcast()).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&first.upcast(), plane(0., 0., 1., 2.).into_upcast())
+        .unwrap();
     let local = snapshot_chain_around(first.into_upcast(), Some([10., 1., -1.])).unwrap();
     assert_eq!(local, vec![[0., 1., 0., -2.], [0., 0., 1., 1.]]);
 }

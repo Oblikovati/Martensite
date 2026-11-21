@@ -47,7 +47,8 @@ macro_rules! rw_block_0079 {
         }
         let mut $a_same_sense: bool = Default::default();
         $data.read_boolean($num, 2, "same_sense", $ach, &mut $a_same_sense)?;
-        let mut $a_parent_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
+        let mut $a_parent_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         $data.read_entity(
             $num,
             3,
@@ -149,7 +150,8 @@ macro_rules! rw_block_0086 {
     ($a_agreement_flag:ident, $a_base_surface:ident, $a_name:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_base_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = Default::default();
+        let mut $a_base_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         $data.read_entity(
             $num,
             2,

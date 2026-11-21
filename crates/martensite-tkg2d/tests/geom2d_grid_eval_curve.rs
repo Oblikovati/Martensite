@@ -58,7 +58,9 @@ fn CircleOfRadius2() -> Handle<Geom2dCircle> {
 }
 
 // `Geom2dAdaptorCurve anAdaptor(theCurve)`.
-fn Adaptor<T: Geom2dCurve + HandleUpcast<dyn Geom2dCurve>>(theCurve: &Handle<T>) -> Geom2dAdaptorCurve {
+fn Adaptor<T: Geom2dCurve + HandleUpcast<dyn Geom2dCurve>>(
+    theCurve: &Handle<T>,
+) -> Geom2dAdaptorCurve {
     Geom2dAdaptorCurve::with_curve(&theCurve.upcast::<dyn Geom2dCurve>()).unwrap()
 }
 

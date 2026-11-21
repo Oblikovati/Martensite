@@ -21,8 +21,10 @@ fn point_distances_through_the_point_interface() {
 
 #[test]
 fn vector_interface_members() {
-    let v: Handle<dyn Geom2dVector> = Handle::new(Geom2dVectorWithMagnitude::new(3.0, 4.0)).into_upcast();
-    let d: Handle<dyn Geom2dVector> = Handle::new(Geom2dDirection::new(0.0, 2.0).unwrap()).into_upcast();
+    let v: Handle<dyn Geom2dVector> =
+        Handle::new(Geom2dVectorWithMagnitude::new(3.0, 4.0)).into_upcast();
+    let d: Handle<dyn Geom2dVector> =
+        Handle::new(Geom2dDirection::new(0.0, 2.0).unwrap()).into_upcast();
     assert_eq!(
         (v.coord(), v.x(), v.y(), v.magnitude()),
         ((3.0, 4.0), 3.0, 4.0, 5.0)

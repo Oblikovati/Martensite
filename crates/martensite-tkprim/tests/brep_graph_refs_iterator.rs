@@ -50,7 +50,8 @@ fn makeEdgeWithInternalVertex() -> Edge {
 
 fn wrapEdgeInFace(theEdge: &Edge) -> Face {
     let aBuilder = BRepBuilder::default();
-    let aPlane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
+    let aPlane: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     let mut aFace = Face::default();
     aBuilder
         .make_face_on_surface(&mut aFace, &aPlane, precision::confusion())

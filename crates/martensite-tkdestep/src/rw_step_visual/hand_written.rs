@@ -9,13 +9,17 @@ use crate::step_visual::*;
 use martensite_tkernel::standard::exceptions;
 
 /// The tessellated items of a set: an owned shared array, null when not read.
-type TessellatedItems = ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>;
+type TessellatedItems =
+    ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>;
 
 /// The array of a object handle, or the failure of its null dereference.
 fn live_items<'a>(
     items: &'a TessellatedItems,
     where_called: &str,
-) -> Result<&'a Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>, Failure> {
+) -> Result<
+    &'a Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>,
+    Failure,
+> {
     items
         .get()
         .ok_or_else(|| exceptions::null_object(&format!("{where_called}: null array")))

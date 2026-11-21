@@ -11,7 +11,9 @@ fn side(value: u8, top_down: bool) -> Handle<ImagePixMap> {
 }
 
 fn cube(top_down: bool) -> Handle<dyn Graphic3dCubeMap> {
-    let sides: Vec<_> = (0..6).map(|index| side(10 * index, top_down).into_upcast()).collect();
+    let sides: Vec<_> = (0..6)
+        .map(|index| side(10 * index, top_down).into_upcast())
+        .collect();
     Handle::new(
         martensite_tkservice::graphic3d::Graphic3dCubeMapSeparate::from_images(&sides).unwrap(),
     )

@@ -36,7 +36,10 @@ impl StepShapeBooleanOperand {
         self.the_solid_model.clone()
     }
     /// `set_solid_model`.
-    pub fn set_solid_model(&mut self, a_solid_model: &Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>) {
+    pub fn set_solid_model(
+        &mut self,
+        a_solid_model: &Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>,
+    ) {
         self.the_solid_model = a_solid_model.clone();
     }
     /// `half_space_solid`.

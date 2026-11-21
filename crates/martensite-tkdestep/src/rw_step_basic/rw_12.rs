@@ -118,7 +118,9 @@ impl RwStepBasicRwGeneralPropertyAssociation {
             StepBasicGeneralProperty::static_type(),
             &mut a_general_property,
         )?;
-        let mut a_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> = Default::default();
+        let mut a_property_definition: Handle<
+            dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        > = Default::default();
         the_data.read_entity(
             the_num,
             4,

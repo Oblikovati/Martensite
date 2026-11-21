@@ -58,7 +58,9 @@ fn si_name(unit: &StepBasicSiUnit) -> String {
 }
 
 /// The measure of a conversion-based unit, from its factor.
-fn measure_of(conversion: &StepBasicConversionBasedUnit) -> Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>> {
+fn measure_of(
+    conversion: &StepBasicConversionBasedUnit,
+) -> Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>> {
     let factor: Handle<dyn Transient> = conversion.conversion_factor();
     let direct: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>> = factor.cast();
     if direct.is_some() {
@@ -149,7 +151,10 @@ fn sdr_of_root(
     root: &Handle<dyn Transient>,
     graph: &InterfaceGraph,
 ) -> Result<Handle<StepShapeShapeDefinitionRepresentation>, Failure> {
-    if root.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>().is_null() {
+    if root
+        .cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>()
+        .is_null()
+    {
         return Ok(root.cast());
     }
     for shape in entities_of(graph.sharings(root)?)? {
@@ -201,7 +206,8 @@ impl StepControlReader {
             let Some(live) = sdr.get() else {
                 continue;
             };
-            let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = live.used_representation().cast();
+            let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
+                live.used_representation().cast();
             let context = step_live(&rep, WHERE)?.context_of_items();
             if context.is_null() {
                 continue;
@@ -215,7 +221,8 @@ impl StepControlReader {
             let model = self.step_model()?;
             if let Some(live) = model.get() {
                 for rank in 1..=live.nb_entities() {
-                    let context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = live.value(rank)?.cast();
+                    let context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> =
+                        live.value(rank)?.cast();
                     if context.is_some()
                         && let Some(names) = find_units(&context)?
                     {

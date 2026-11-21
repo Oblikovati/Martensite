@@ -99,7 +99,11 @@ fn configure_chains(
     }
     if mode == "clip-two-chains" {
         let second = clip_plane(-1., 0., 5.);
-        Graphic3dClipPlane::set_chain_next_plane(&second.upcast(), clip_plane(0., -1., 5.).into_upcast()).unwrap();
+        Graphic3dClipPlane::set_chain_next_plane(
+            &second.upcast(),
+            clip_plane(0., -1., 5.).into_upcast(),
+        )
+        .unwrap();
         sequence.append(second);
     }
 }

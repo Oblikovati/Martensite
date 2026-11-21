@@ -42,9 +42,16 @@ use martensite_tkxsbase::xs_control::XSControlWorkSession;
 
 /// A dimension or a tolerance.
 fn is_gdt(entity: &Handle<dyn Transient>) -> bool {
-    entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().is_some()
-        || entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>().is_some()
-        || entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().get().is_some()
+    entity
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+        .is_some()
+        || entity
+            .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+            .is_some()
+        || entity
+            .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+            .get()
+            .is_some()
 }
 
 /// A datum, a datum target or a datum feature.
@@ -232,14 +239,20 @@ impl ReaderState {
             if is_gdt(&entity) {
                 let label = self.create_gdt_object_in_xcaf(&entity, doc, ws, factors)?;
                 if !label.is_null() {
-                    if entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().get().is_some() {
+                    if entity
+                        .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+                        .get()
+                        .is_some()
+                    {
                         set_geom_tol_object_to_xcaf(&entity, &label, &from_process, factors)?;
                     } else {
                         set_dim_object_to_xcaf(&entity, &label, &from_process, factors)?;
                     }
                 }
             } else if entity.cast::<StepVisualDraughtingCallout>().is_some()
-                || entity.cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>().is_some()
+                || entity
+                    .cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>()
+                    .is_some()
                 || entity
                     .cast::<StepVisualTessellatedAnnotationOccurrence>()
                     .is_some()

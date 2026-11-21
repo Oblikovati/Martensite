@@ -24,11 +24,14 @@ impl RwStepVisualRwAnnotationFillAreaOccurrence {
             return Ok(());
         }
         rw_block_b_0182!(a_name, a_styles, ach, data, num);
-        let mut anent: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> = Default::default();
+        let mut anent: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> =
+            Default::default();
         let mut nsub: i32 = Default::default();
         if data.read_sub_list(num, 2, "styles", ach, &mut nsub, false, 0, 0)? {
             let nb: i32 = data.nb_params(nsub)?;
-            a_styles = step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>(1, nb)?;
+            a_styles = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>,
+            >(1, nb)?;
             for i in 1..=nb {
                 if data.read_entity(
                     nsub,
@@ -51,8 +54,9 @@ impl RwStepVisualRwAnnotationFillAreaOccurrence {
             StandardTransient::static_type(),
             &mut a_item,
         )?;
-        let mut a_fill_style_target: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>> =
-            Default::default();
+        let mut a_fill_style_target: Handle<
+            dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>,
+        > = Default::default();
         data.read_entity(
             num,
             4,

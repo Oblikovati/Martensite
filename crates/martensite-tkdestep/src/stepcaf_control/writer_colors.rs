@@ -13,8 +13,8 @@ use crate::step_shape::StepShapeContextDependentShapeRepresentation;
 use crate::step_visual::{
     StepVisualColour, StepVisualInvisibility, StepVisualInvisibleItem,
     StepVisualMechanicalDesignGeometricPresentationRepresentation,
-    StepVisualPresentationStyleAssignment,
-    StepVisualPresentationStyleByContext, StepVisualPresentationStyleSelect, StepVisualStyledItem,
+    StepVisualPresentationStyleAssignment, StepVisualPresentationStyleByContext,
+    StepVisualPresentationStyleSelect, StepVisualStyledItem,
 };
 use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkbrep::toptools::{MapOfShape, ShapeMapHasher};
@@ -68,12 +68,17 @@ struct SharedColours {
 }
 
 impl SharedColours {
-    fn encode(&mut self, color: &Color) -> Result<Handle<dyn crate::StepEntityBase<StepVisualColour>>, Failure> {
+    fn encode(
+        &mut self,
+        color: &Color,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualColour>>, Failure> {
         StepConstructStyles::encode_color_shared(color, &mut self.dpdcs, &mut self.col_rgbs)
     }
 }
 
-fn is_by_context(psa: &Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>) -> bool {
+fn is_by_context(
+    psa: &Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>,
+) -> bool {
     psa.get().is_none() || psa.cast::<StepVisualPresentationStyleByContext>().is_some()
 }
 
@@ -117,7 +122,8 @@ pub(super) fn get_styled_item(
     let mut found_items = Vec::new();
     let mut is_filled = false;
     for index in 1..=step_array1_len(&items) {
-        let selected: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> = step_array1_item(&items, index, WHERE)?.cast();
+        let selected: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> =
+            step_array1_item(&items, index, WHERE)?.cast();
         let Some(live) = selected.get() else {
             continue;
         };

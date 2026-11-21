@@ -120,7 +120,9 @@ mod tests {
     #[test]
     fn dedicated_cap_content_stays_stale_until_its_aspect_counter_is_refreshed() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255).into_upcast()));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         let before = snapshot_cap_fixture(&cache, &plane, &texture)
             .image
@@ -141,7 +143,9 @@ mod tests {
     #[test]
     fn inherited_caps_revalidate_content_and_an_ordinary_upload_updates_a_shared_resource() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255).into_upcast()));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         snapshot_cap_fixture(&cache, &plane, &texture);
         texture.set_image(cap_revision_image(0).into_upcast());
@@ -162,7 +166,9 @@ mod tests {
     #[test]
     fn cap_cache_does_not_retain_a_dead_plane_on_an_empty_redraw() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255).into_upcast()));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         snapshot_cap_fixture(&cache, &plane, &texture);
         assert_eq!(cache.cap_textures.bindings.lock().unwrap().len(), 1);
@@ -173,7 +179,9 @@ mod tests {
     #[test]
     fn shared_release_turns_stale_cap_black_and_repair_reuses_the_current_resource() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255).into_upcast()));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         snapshot_cap_fixture(&cache, &plane, &texture);
         texture.set_image(Handle::new(ImagePixMap::default()).into_upcast());

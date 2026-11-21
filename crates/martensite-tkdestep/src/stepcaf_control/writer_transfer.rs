@@ -463,7 +463,8 @@ fn write_sub_shape_names(
             }
             // Access the correspondent STEP Representation Item
             let mapper = TransferBRep::shape_mapper(&fp, &sub_shape)?;
-            let mut item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Handle::default();
+            let mut item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                Handle::default();
             if !process.find_typed_transient_as(
                 &mapper.cast(),
                 StepReprRepresentationItem::static_type(),

@@ -1,6 +1,6 @@
 //! Const Key/Value aliases track allocated node identity rather than a moving numeric index.
 use super::{
-    AisColoredDrawerSource, AisColoredDrawerCompounds,
+    AisColoredDrawerCompounds, AisColoredDrawerSource,
     colored_compound_map::find_colored_compound,
     colored_compound_node::{ColoredCompoundNode, colored_compound_removed},
 };

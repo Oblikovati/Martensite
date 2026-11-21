@@ -83,10 +83,7 @@ fn mat_list_instances_keep_distinct_registered_names_and_identity() {
     let bisector_list = Handle::new(MatListOfBisector::new());
     let edge: Handle<dyn Transient> = edge_list.upcast();
     let bisector: Handle<dyn Transient> = bisector_list.upcast();
-    for (owner, name) in [
-        (&edge, "MAT_ListOfEdge"),
-        (&bisector, "MAT_ListOfBisector"),
-    ] {
+    for (owner, name) in [(&edge, "MAT_ListOfEdge"), (&bisector, "MAT_ListOfBisector")] {
         let descriptor = owner.dynamic_type().unwrap();
         assert_eq!(descriptor.name(), name);
         assert!(std::ptr::eq(

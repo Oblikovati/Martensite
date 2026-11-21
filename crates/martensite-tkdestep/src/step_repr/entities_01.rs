@@ -96,8 +96,12 @@ impl StepReprAssemblyComponentUsage {
         a_product_definition_relationship_name: &Handle<HAsciiString>,
         has_product_definition_relationship_description: bool,
         a_product_definition_relationship_description: &Handle<HAsciiString>,
-        a_product_definition_relationship_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
-        a_product_definition_relationship_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_product_definition_relationship_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
+        a_product_definition_relationship_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
         has_reference_designator: bool,
         a_reference_designator: &Handle<HAsciiString>,
     ) -> Result<(), Failure> {
@@ -282,7 +286,9 @@ impl StepReprCompoundRepresentationItem {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        item_element: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        item_element: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
     ) {
         self.parent.init(a_name);
         self.state.write().the_item_element = item_element.clone();

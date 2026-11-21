@@ -5,7 +5,10 @@ use martensite_tkernel::standard::Handle;
 use martensite_tklcaf::tdf::{TdfAttributeState, TdfLabel};
 use martensite_tkmath::gp::Point3;
 use martensite_tkv3d::{
-    ais::{AisColoredShape, AisInteractiveObject, AisPoint, AisShape, AisShapeParameters, AisShapeSource},
+    ais::{
+        AisColoredShape, AisInteractiveObject, AisPoint, AisShape, AisShapeParameters,
+        AisShapeSource,
+    },
     prs_mgr::PrsMgrPresentableObjectMembers,
 };
 use martensite_tkvcaf::tprs_std::{TPrsStdDriver, TPrsStdNamedShapeDriver};

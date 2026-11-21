@@ -8,7 +8,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Test adapter whose real retained owner supplies every delegated view operation.
 pub(super) struct ReferenceCaptureView {
-
     retained: Graphic3dRetainedView,
     pub(super) kind: CaptureBufferKindRef,
     pub(super) reads: SharedState<Vec<Graphic3dBufferType>>,
@@ -25,7 +24,6 @@ impl ReferenceCaptureView {
         layers: &[Handle<Graphic3dLayer>],
     ) -> Self {
         Self {
-
             retained: Graphic3dRetainedView::new(manager, layers).unwrap(),
             kind: CaptureBufferKindRef::new(Graphic3dBufferType::Rgb),
             reads: SharedState::new(Vec::new()),
@@ -118,7 +116,11 @@ impl Graphic3dCView for ReferenceCaptureView {
         );
         self.observe_capture(_image, kind)
     }
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<dyn martensite_tkernel::standard::Transient> {
+    fn fbo_create(
+        &self,
+        width: i32,
+        height: i32,
+    ) -> Handle<dyn martensite_tkernel::standard::Transient> {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_create(width, height)
     }
@@ -126,11 +128,19 @@ impl Graphic3dCView for ReferenceCaptureView {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_release(fbo);
     }
-    fn fbo_get_dimensions(&self, fbo: &Handle<dyn martensite_tkernel::standard::Transient>) -> [i32; 4] {
+    fn fbo_get_dimensions(
+        &self,
+        fbo: &Handle<dyn martensite_tkernel::standard::Transient>,
+    ) -> [i32; 4] {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_get_dimensions(fbo)
     }
-    fn fbo_change_viewport(&self, fbo: &Handle<dyn martensite_tkernel::standard::Transient>, width: i32, height: i32) {
+    fn fbo_change_viewport(
+        &self,
+        fbo: &Handle<dyn martensite_tkernel::standard::Transient>,
+        width: i32,
+        height: i32,
+    ) {
         let retained: &dyn Graphic3dCView = &self.retained;
         retained.fbo_change_viewport(fbo, width, height);
     }

@@ -15,9 +15,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::Message;
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, catch_native_failure,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, catch_native_failure};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::bnd::BoundingBox3;

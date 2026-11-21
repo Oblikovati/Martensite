@@ -31,8 +31,12 @@ impl StepVisualTessellatedShapeRepresentationWithAccuracyParameters {
     pub fn init(
         &self,
         the_representation_name: &Handle<HAsciiString>,
-        the_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
-        the_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        the_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        the_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         the_tessellation_accuracy_parameters: &Handle<HArray1<f64>>,
     ) {
         self.parent.init(
@@ -68,7 +72,9 @@ impl StepVisualTessellatedShell {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>>,
+        the_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>,
+        >,
         the_has_topological_link: bool,
         the_topological_link: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
     ) {
@@ -107,7 +113,9 @@ impl StepVisualTessellatedSolid {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>>,
+        the_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>,
+        >,
         the_has_geometric_link: bool,
         the_geometric_link: &Handle<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>,
     ) {

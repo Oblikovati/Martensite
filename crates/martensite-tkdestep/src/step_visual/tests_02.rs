@@ -186,7 +186,12 @@ fn init_round_trip_step_visual_curve_style() {
     let a_curve_width = StepBasicSizeSelect::default();
     let a_curve_colour = Handle::new(StepVisualColour::new());
     let object = StepVisualCurveStyle::new();
-    object.init(&a_name, &a_curve_font, &a_curve_width, &a_curve_colour.upcast());
+    object.init(
+        &a_name,
+        &a_curve_font,
+        &a_curve_width,
+        &a_curve_colour.upcast(),
+    );
     assert!(object.name() == a_name);
     assert!(object.curve_colour() == a_curve_colour);
 }

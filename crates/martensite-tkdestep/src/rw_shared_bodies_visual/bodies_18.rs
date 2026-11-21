@@ -2,7 +2,9 @@
 
 macro_rules! rw_block_b_0183 {
     ($a_context_of_items:ident, $a_items:ident, $a_name:ident, $ach:ident, $data:ident, $ent:ident, $num:ident) => {
-        let mut $a_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = Default::default();
+        let mut $a_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         $data.read_entity(
             $num,
             3,
@@ -87,8 +89,10 @@ pub(crate) use rw_block_b_0189;
 
 macro_rules! rw_block_b_0190 {
     ($an_ent:ident, $an_items:ident, $nb_sub:ident) => {
-        let mut $an_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>> = Default::default();
-        let mut $an_ent: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
+        let mut $an_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>> =
+            Default::default();
+        let mut $an_ent: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
+            Default::default();
         let mut $nb_sub: i32 = Default::default();
     };
 }

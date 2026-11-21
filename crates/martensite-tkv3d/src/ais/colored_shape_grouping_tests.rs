@@ -18,8 +18,10 @@ impl ColoredDispatchFixture {
     fn new(scenario: usize) -> Self {
         let input = colored_shape_expansion_inputs::ColoredExpansionInputs::new();
         let parent = Handle::new(Prs3dDrawer::new());
-        let base = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
-        let custom = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+        let base =
+            Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+        let custom =
+            Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
         let styles = dispatch_fixture_styles(&input, scenario, &custom);
         base.set_hidden(scenario == 7);
         Self {

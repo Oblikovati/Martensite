@@ -50,19 +50,28 @@ pub use entities::*;
 /// The name of a GD&T entity, `None` for an entity that is invalid (protection against invalid input).
 fn semantic_name_of(entity: &Handle<dyn Transient>) -> Option<Handle<HAsciiString>> {
     let mut name = Handle::default();
-    if let Some(tolerance) = entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().get() {
+    if let Some(tolerance) = entity
+        .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+        .get()
+    {
         if tolerance.toleranced_shape_aspect().is_null() {
             return None;
         }
         name = tolerance.name();
     }
-    if let Some(size) = entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().get() {
+    if let Some(size) = entity
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+        .get()
+    {
         if size.applies_to().is_null() {
             return None;
         }
         name = size.name();
     }
-    if let Some(location) = entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>().get() {
+    if let Some(location) = entity
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+        .get()
+    {
         if location.related_shape_aspect().is_null() || location.relating_shape_aspect().is_null() {
             return None;
         }
@@ -74,7 +83,11 @@ fn semantic_name_of(entity: &Handle<dyn Transient>) -> Option<Handle<HAsciiStrin
 /// The value of the rank of a value range, multiplied by the length factor when it is a length.
 /// `None` is the `continue` of the search.
 fn range_value(
-    items: &Handle<martensite_tkernel::ncollection::HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+    items: &Handle<
+        martensite_tkernel::ncollection::HArray1<
+            Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        >,
+    >,
     rank: i32,
     value: &mut f64,
     factors: &StepDataFactors,

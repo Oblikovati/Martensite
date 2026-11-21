@@ -67,7 +67,12 @@ pub(super) fn degenerate_torus_as_revolution(
     let offset = surface.cast::<GeomOffsetSurface>();
     let torus: Handle<GeomToroidalSurface> = match offset.get() {
         Some(live) => live.basis_surface().cast(),
-        None if made.cast::<dyn crate::StepEntityBase<StepGeomToroidalSurface>>().is_some() => surface.cast(),
+        None if made
+            .cast::<dyn crate::StepEntityBase<StepGeomToroidalSurface>>()
+            .is_some() =>
+        {
+            surface.cast()
+        }
         None => return Ok(made),
     };
     let Some(live) = torus.get() else {

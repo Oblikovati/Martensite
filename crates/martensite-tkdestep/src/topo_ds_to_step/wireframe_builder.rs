@@ -2,13 +2,13 @@
 //! :S4134: abv 10 Mar 99: the methods below moved from package TopoDSToGBWire. :j1 modified by abv
 //! 22 Oct 98: CSR BUC60401: unused parts of code dropped; fixed trimming of circles and ellipses
 //! (radians used instead of degrees).
-use crate::step_entity::StepBaseHandle;
 use super::{TopoDSToStepBuilderError, TopoDSToStepRoot, TopoDSToStepShapeMap, TopoDSToStepTool};
 use crate::geom_to_step::{
     GeomToStepMakeCartesianPoint, GeomToStepMakeCurve, GeomToStepMakeLine, array1_of,
     empty_step_name, shared_array1,
 };
 use crate::step_data::{StepDataFactors, StepDataSelectType};
+use crate::step_entity::StepBaseHandle;
 use crate::step_entity::step_live;
 use crate::step_geom::{
     StepGeomCartesianPoint, StepGeomCurve, StepGeomTrimmedCurve, StepGeomTrimmingPreference,

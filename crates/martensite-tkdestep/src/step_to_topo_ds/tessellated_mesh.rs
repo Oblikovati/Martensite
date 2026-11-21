@@ -71,7 +71,9 @@ macro_rules! complex_elements {
 }
 
 /// The elements of the four triangulated classes; `None` for any other class.
-fn elements_of(item: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>) -> Result<Option<MeshElements>, Failure> {
+fn elements_of(
+    item: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>,
+) -> Result<Option<MeshElements>, Failure> {
     if let Some(live) = item.cast::<StepVisualTriangulatedFace>().get() {
         return Ok(Some(simple_elements!(live)));
     }

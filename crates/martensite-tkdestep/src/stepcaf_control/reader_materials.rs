@@ -61,11 +61,13 @@ fn find_solid_for_pds(
             return Ok(solid);
         }
         for second in session.sharings(&representation.cast())? {
-            let relationship = second.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
+            let relationship =
+                second.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
             let Some(relationship) = relationship.get() else {
                 continue;
             };
-            let rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = representation.cast();
+            let rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+                representation.cast();
             let other = if relationship.rep1() == rep {
                 relationship.rep2()
             } else {
@@ -140,11 +142,15 @@ fn material_of(
         dens_val_type: empty(),
     };
     for sharing in session.sharings(product_definition)? {
-        if sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>().is_null() {
+        if sharing
+            .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>()
+            .is_null()
+        {
             continue;
         }
         for second in session.sharings(&sharing)? {
-            let representation = second.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
+            let representation = second
+                .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
             let Some(representation) = representation.get().map(|live| live.used_representation())
             else {
                 continue;

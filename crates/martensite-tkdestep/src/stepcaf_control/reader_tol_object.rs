@@ -44,7 +44,10 @@ fn recorded_type(entity: &Handle<dyn Transient>) -> Option<StepDimTolGeometricTo
 /// `getTolType`: the type of a tolerance; `None` for another entity.
 fn tolerance_type_of(entity: &Handle<dyn Transient>) -> XCAFDimTolObjectsGeomToleranceType {
     use XCAFDimTolObjectsGeomToleranceType as Kind;
-    if entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().is_null() {
+    if entity
+        .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+        .is_null()
+    {
         return Kind::None;
     }
     if let Some(recorded) = recorded_type(entity) {
@@ -205,7 +208,9 @@ pub(super) fn set_geom_tol_object_to_xcaf(
     let object = live_attribute.get_object()?;
     let live_object = step_live(&object, WHERE)?;
     let tolerance = entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>();
-    let live_tolerance = tolerance.get().ok_or_else(|| martensite_tkernel::standard::exceptions::null_object(&format!("{WHERE}: null tolerance")))?;
+    let live_tolerance = tolerance.get().ok_or_else(|| {
+        martensite_tkernel::standard::exceptions::null_object(&format!("{WHERE}: null tolerance"))
+    })?;
     live_object.set_type(tolerance_type_of(entity));
     // get value
     let measure = measure_with_unit(&live_tolerance.magnitude());

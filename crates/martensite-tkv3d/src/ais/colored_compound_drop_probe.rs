@@ -1,10 +1,10 @@
 //! Named actual drawer subclass observes native map/Value state from its own destructor.
+use super::{AisColoredDrawer, AisColoredDrawerCompounds, AisColoredDrawerSource};
+use crate::prs3d::Prs3dDrawer;
+use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::{
     Graphic3dPresentationAttributesBase, Graphic3dPresentationAttributesSource,
 };
-use super::{AisColoredDrawer, AisColoredDrawerSource, AisColoredDrawerCompounds};
-use crate::prs3d::Prs3dDrawer;
-use martensite_tkernel::standard::Handle;
 use std::{
     fmt::Write,
     sync::{Arc, Mutex, Weak},

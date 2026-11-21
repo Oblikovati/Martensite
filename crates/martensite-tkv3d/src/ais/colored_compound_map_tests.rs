@@ -17,7 +17,8 @@ use std::{
 #[test]
 fn actual_compound_group_map_replays_native_borrowed_key_value_lifetimes() {
     let parent = Handle::new(Prs3dDrawer::new());
-    let drawer = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let drawer =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
     let mut first = Compound::default();
     let mut second = Compound::default();
     Builder.make_compound(&mut first);
@@ -126,7 +127,8 @@ fn record_compound_release(
 #[test]
 fn native_value_assignment_keeps_old_pointer_at_zero_before_retaining_incoming() {
     let parent = Handle::new(Prs3dDrawer::new());
-    let drawer = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let drawer =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
     let map = Arc::new(AisColoredDrawerCompounds::default());
     let mut replacement = Compound::default();
     Builder.make_compound(&mut replacement);
@@ -162,7 +164,8 @@ fn record_native_compound_assignment(
 #[test]
 fn native_const_compound_projection_is_uncounted_and_explicit_copy_is_owning() {
     let parent = Handle::new(Prs3dDrawer::new());
-    let drawer = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let drawer =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
     let mut compound = Compound::default();
     Builder.make_compound(&mut compound);
     let map = AisColoredDrawerCompounds::default();
@@ -180,7 +183,8 @@ fn native_const_compound_projection_is_uncounted_and_explicit_copy_is_owning() {
 #[test]
 fn scoped_compound_read_keeps_its_value_during_reentrant_assignment() {
     let parent = Handle::new(Prs3dDrawer::new());
-    let drawer = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let drawer =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
     let mut original = Compound::default();
     Builder.make_compound(&mut original);
     let topology = original.tshape().downgrade();
@@ -190,15 +194,17 @@ fn scoped_compound_read_keeps_its_value_during_reentrant_assignment() {
     let mut replacement = Compound::default();
     Builder.make_compound(&mut replacement);
     let entry = map.node_ref(1).unwrap();
-    entry.with_shape(|prior| {
-        entry.assign_compound(&replacement)?;
-        assert_eq!(prior.tshape().ref_count(), 1);
-        assert_eq!(prior.tshape().object_address(), topology.object_address());
-        entry.with_shape(|current| {
-            assert!(current.is_equal(&replacement));
-            Ok(())
+    entry
+        .with_shape(|prior| {
+            entry.assign_compound(&replacement)?;
+            assert_eq!(prior.tshape().ref_count(), 1);
+            assert_eq!(prior.tshape().object_address(), topology.object_address());
+            entry.with_shape(|current| {
+                assert!(current.is_equal(&replacement));
+                Ok(())
+            })
         })
-    }).unwrap();
+        .unwrap();
     assert!(topology.upgrade().is_null());
 }
 

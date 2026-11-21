@@ -37,8 +37,12 @@ impl StepKinematicsPlanarCurvePair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_curve1: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         the_curve2: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
@@ -83,8 +87,12 @@ impl StepKinematicsPlanarCurvePairRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_planar_curve_pair_curve1: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         the_planar_curve_pair_curve2: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
@@ -138,7 +146,9 @@ impl StepKinematicsPlanarPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_rotation: f64,
         the_actual_translation_x: f64,
         the_actual_translation_y: f64,
@@ -199,8 +209,12 @@ impl StepKinematicsPlanarPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,
@@ -299,8 +313,12 @@ impl StepKinematicsPointOnPlanarCurvePair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_pair_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         the_orientation: bool,
@@ -339,7 +357,9 @@ impl StepKinematicsPointOnPlanarCurvePairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_point_on_curve: &Handle<StepGeomPointOnCurve>,
         the_input_orientation: &StepKinematicsSpatialRotation,
     ) {

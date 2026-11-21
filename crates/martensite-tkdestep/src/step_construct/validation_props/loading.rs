@@ -42,7 +42,8 @@ impl StepConstructValidationProps {
             &text(descr),
             target,
         );
-        let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
+        let items =
+            step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
         step_array1_set(&items, 1, prop.clone(), WHERE)?;
         let rep = Handle::new(StepReprRepresentation::new());
         rep.init(&text(descr), &items, context);

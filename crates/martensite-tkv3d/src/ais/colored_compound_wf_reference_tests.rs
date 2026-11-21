@@ -21,7 +21,8 @@ fn actual_wf_callbacks_preserve_uncounted_compound_reference_through_failure_and
 }
 fn compound_wf_reference_rows(fail: bool) -> String {
     let drawer = compound_wf_reference_drawer();
-    let key = Handle::new(AisColoredDrawer::new(&drawer)).into_upcast::<dyn AisColoredDrawerSource>();
+    let key =
+        Handle::new(AisColoredDrawer::new(&drawer)).into_upcast::<dyn AisColoredDrawerSource>();
     let input = colored_shape_expansion_inputs::ColoredExpansionInputs::new();
     let mut compound = Compound::default();
     BRepBuilder::default().make_compound(&mut compound);

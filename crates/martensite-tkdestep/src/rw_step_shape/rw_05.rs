@@ -22,7 +22,9 @@ impl RwStepShapeRwContextDependentShapeRepresentation {
         if !data.check_nb_params(num, 2, ach, "context_dependent_shape_representation")? {
             return Ok(());
         }
-        let mut a_rep_rel: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> = Default::default();
+        let mut a_rep_rel: Handle<
+            dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>,
+        > = Default::default();
         data.read_entity(
             num,
             1,

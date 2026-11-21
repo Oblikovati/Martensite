@@ -14,7 +14,9 @@ use martensite_tkernel::tcollection::HAsciiString;
 
 const TOLERANCE: f64 = 1e-7;
 
-fn measure_with_unit(value: f64) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepBasicMeasureWithUnit>> {
+fn measure_with_unit(
+    value: f64,
+) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepBasicMeasureWithUnit>> {
     let measure = Handle::new(StepBasicMeasureWithUnit::new());
     let member = Handle::new(StepBasicMeasureValueMember::new());
     member.set_name("POSITIVE_LENGTH_MEASURE");
@@ -166,7 +168,9 @@ fn measure_qualification_works_with_both_types() {
 }
 
 /// The helper the test recreates from the assembly reader.
-fn get_measure_with_unit(measure: &Handle<dyn Transient>) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepBasicMeasureWithUnit>> {
+fn get_measure_with_unit(
+    measure: &Handle<dyn Transient>,
+) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepBasicMeasureWithUnit>> {
     if measure.is_null() {
         return Handle::default();
     }

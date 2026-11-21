@@ -60,7 +60,9 @@ impl StepReprReprItemAndMeasureWithUnit {
         Ok(())
     }
     /// `get_representation_item`.
-    pub fn get_representation_item(&self) -> Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> {
+    pub fn get_representation_item(
+        &self,
+    ) -> Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> {
         let ri = Handle::new(StepReprRepresentationItem::new());
         ri.init(&self.name());
         ri.into_upcast()

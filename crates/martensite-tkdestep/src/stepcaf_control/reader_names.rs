@@ -46,7 +46,10 @@ fn has_useful_text(text: &Handle<HAsciiString>) -> bool {
 }
 
 /// The label of an external file of a product definition, null when there is none.
-fn label_of_extern_file(pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, pd_file: &PdFileMap) -> TdfLabel {
+fn label_of_extern_file(
+    pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+    pd_file: &PdFileMap,
+) -> TdfLabel {
     pd_file
         .find(pd)
         .ok()
@@ -195,7 +198,8 @@ impl ReaderState {
             if is_exactly::<StepBasicProductDefinition>(&entity)
                 || is_exactly::<StepBasicProductDefinitionWithAssociatedDocuments>(&entity)
             {
-                let pd: Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> = entity.cast();
+                let pd: Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> =
+                    entity.cast();
                 let product = step_live(&pd, WHERE)?
                     .formation()
                     .get()
@@ -254,7 +258,10 @@ impl ReaderState {
         aspect: &Handle<dyn Transient>,
     ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, Failure> {
         for sharing in graph.sharings(aspect)?.content() {
-            if sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>().is_null() {
+            if sharing
+                .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>()
+                .is_null()
+            {
                 continue;
             }
             for second in graph.sharings(&sharing)?.content() {
@@ -295,9 +302,13 @@ impl ReaderState {
         while rank <= sr.nb_items() && binder.is_null() {
             let item = sr.items_value(rank)?;
             step_live(&item, WHERE)?;
-            if item.cast::<dyn crate::StepEntityBase<StepShapeSolidModel>>().is_some()
+            if item
+                .cast::<dyn crate::StepEntityBase<StepShapeSolidModel>>()
+                .is_some()
                 || item.cast::<StepShapeShellBasedSurfaceModel>().is_some()
-                || item.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some()
+                || item
+                    .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+                    .is_some()
             {
                 binder = tp.find(&item.cast());
             }
@@ -342,7 +353,10 @@ impl ReaderState {
                     continue;
                 }
             }
-            if shared.cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>().is_some() {
+            if shared
+                .cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>()
+                .is_some()
+            {
                 label =
                     self.label_of_property_aspect(&shared, ws, step_live(tool, WHERE)?, props)?;
             }
@@ -358,7 +372,8 @@ impl ReaderState {
     ) -> Result<(), Failure> {
         let representation = pdr.used_representation();
         let representation = step_live(&representation, WHERE)?;
-        let context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = representation.context_of_items();
+        let context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> =
+            representation.context_of_items();
         for j in 1..=representation.nb_items() {
             let item = representation.items_value(j)?;
             let (mut is_area, mut value) = (false, 0.);
@@ -397,7 +412,8 @@ impl ReaderState {
         }
         // interpret props one by one
         for prop in found {
-            let pdr = prop.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
+            let pdr =
+                prop.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
             let Some(pdr) = pdr.get() else {
                 continue;
             };

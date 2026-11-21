@@ -48,8 +48,12 @@ impl StepKinematicsSphericalPairWithPinAndRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,
@@ -156,8 +160,12 @@ impl StepKinematicsSphericalPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,
@@ -259,8 +267,12 @@ impl StepKinematicsSurfacePair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_surface1: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         the_surface2: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
@@ -315,8 +327,12 @@ impl StepKinematicsSurfacePairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_surface_pair_surface1: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         the_surface_pair_surface2: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
@@ -380,7 +396,9 @@ impl StepKinematicsUnconstrainedPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_placement: &Handle<StepGeomAxis2Placement3d>,
     ) {
         self.parent

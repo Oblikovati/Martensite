@@ -139,8 +139,12 @@ impl StepReprPropertyDefinitionRelationship {
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_relating_property_definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
-        a_related_property_definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
+        a_relating_property_definition: &Handle<
+            dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        >,
+        a_related_property_definition: &Handle<
+            dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        >,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();
@@ -200,8 +204,12 @@ impl StepReprQuantifiedAssemblyComponentUsage {
         a_product_definition_relationship_name: &Handle<HAsciiString>,
         has_product_definition_relationship_description: bool,
         a_product_definition_relationship_description: &Handle<HAsciiString>,
-        a_product_definition_relationship_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
-        a_product_definition_relationship_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_product_definition_relationship_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
+        a_product_definition_relationship_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
         has_assembly_component_usage_reference_designator: bool,
         a_assembly_component_usage_reference_designator: &Handle<HAsciiString>,
         a_quantity: &Handle<dyn Transient>,

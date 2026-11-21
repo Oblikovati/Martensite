@@ -136,7 +136,11 @@ impl TopoDSToStepBuilder {
             maker.init(&face, tool, fp, factors)?;
             // MakeFace Error Handling: warning only
             if maker.is_done() {
-                faces.push(maker.value()?.cast::<dyn crate::StepEntityBase<StepShapeFace>>());
+                faces.push(
+                    maker
+                        .value()?
+                        .cast::<dyn crate::StepEntityBase<StepShapeFace>>(),
+                );
             }
             explorer.next()?;
             let _ = scope.next(1.0);
@@ -213,7 +217,10 @@ impl TopoDSToStepBuilder {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root.check_done("TopoDSToStepBuilder::Value()")?;
         Ok(self.my_result.clone())
     }
@@ -221,7 +228,9 @@ impl TopoDSToStepBuilder {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn tessellated_value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>, Failure> {
+    pub fn tessellated_value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>, Failure> {
         self.root
             .check_done("TopoDSToStepBuilder::TessellatedValue()")?;
         Ok(self.my_tessellated_result.clone())

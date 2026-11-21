@@ -1,6 +1,6 @@
 //! The actual indexed iterator freezes no extent and keeps node addresses through rehash.
 use super::{
-    AisColoredDrawer, AisColoredDrawerSource, AisColoredDrawerCompounds,
+    AisColoredDrawer, AisColoredDrawerCompounds, AisColoredDrawerSource,
     colored_compound_cursor::ColoredCompoundNativeCursor,
 };
 use crate::prs3d::Prs3dDrawer;
@@ -10,8 +10,10 @@ use std::fmt::Write;
 #[test]
 fn native_indexed_cursor_observes_add_resize_next_and_clear() {
     let parent = Handle::new(Prs3dDrawer::new());
-    let first = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
-    let second = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let first =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let second =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
     let mut compound = Compound::default();
     Builder.make_compound(&mut compound);
     let map = AisColoredDrawerCompounds::default();

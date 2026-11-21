@@ -276,7 +276,8 @@ mod tests {
     #[test]
     fn styled_item_keeps_a_representation_item_under_both_fields() {
         let styled = StepVisualStyledItem::new();
-        let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Handle::new(StepGeomPlane::new()).cast();
+        let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Handle::new(StepGeomPlane::new()).cast();
         styled.set_item(&item);
         assert_eq!(styled.item().object_address(), item.object_address());
         assert_eq!(

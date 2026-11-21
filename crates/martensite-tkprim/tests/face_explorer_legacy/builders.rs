@@ -66,7 +66,8 @@ pub(super) fn cylinder_face() -> Face {
 
 pub(super) fn disc_face() -> Face {
     let frame = Axis2::new(origin(), dz()).unwrap();
-    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 2.0).unwrap()).into_upcast();
+    let circle: Handle<dyn GeomCurve> =
+        Handle::new(GeomCircle::new(frame, 2.0).unwrap()).into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve(&circle).unwrap();
     assert!(edge.is_done());
     let wire = BRepBuilderAPIMakeWire::from_edge(&edge.edge().unwrap()).unwrap();

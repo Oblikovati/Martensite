@@ -152,7 +152,9 @@ fn annotations_of(
     name: &mut Handle<HAsciiString>,
 ) -> Result<Vec<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>>, Failure> {
     let mut annotations = Vec::new();
-    if entity.cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>().is_some()
+    if entity
+        .cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>()
+        .is_some()
         || entity
             .cast::<StepVisualTessellatedAnnotationOccurrence>()
             .is_some()
@@ -166,7 +168,9 @@ fn annotations_of(
         *name = callout.name();
         for rank in 1..=callout.nb_contents() {
             let content = callout.contents_value(rank)?;
-            let occurrence = content.value().cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>();
+            let occurrence = content
+                .value()
+                .cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>();
             if occurrence.is_some() {
                 annotations.push(occurrence.cast());
                 break;
@@ -263,7 +267,9 @@ fn tessellated_annotation_shape(
     factor: f64,
     factors: &StepDataFactors,
 ) -> Result<Shape, Failure> {
-    let set = item.item().cast::<dyn crate::StepEntityBase<StepVisualTessellatedGeometricSet>>();
+    let set = item
+        .item()
+        .cast::<dyn crate::StepEntityBase<StepVisualTessellatedGeometricSet>>();
     let Some(live) = set.get() else {
         return Ok(Shape::default());
     };

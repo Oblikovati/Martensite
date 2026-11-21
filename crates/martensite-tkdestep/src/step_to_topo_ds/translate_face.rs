@@ -40,7 +40,9 @@ fn orientation_of(forward: bool) -> Orientation {
 
 /// fix for bug 0026376: Solid Works wrote a face on a toroidal surface with a negative major radius;
 /// "Solid Works" and "ProE" seem to interpret it as a face of reversed orientation.
-fn is_reversed(surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>) -> Result<bool, Failure> {
+fn is_reversed(
+    surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
+) -> Result<bool, Failure> {
     if let Some(trimmed) = surface.cast::<StepGeomRectangularTrimmedSurface>().get() {
         return is_reversed(&trimmed.basis_surface());
     }
@@ -109,7 +111,10 @@ impl StepToTopoDSTranslateFace {
             process.add_fail_text(&entity, " Surface has not been created", "");
             return Ok(surface);
         }
-        if step_surface.cast::<dyn crate::StepEntityBase<StepGeomBSplineSurface>>().is_null() {
+        if step_surface
+            .cast::<dyn crate::StepEntityBase<StepGeomBSplineSurface>>()
+            .is_null()
+        {
             return Ok(surface);
         }
         let algorithms = ShapeAlgo::algo_container();
@@ -227,7 +232,10 @@ impl StepToTopoDSTranslateFace {
             );
         }
         let entity: Handle<dyn Transient> = face_loop.cast();
-        if face_loop.cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>().is_null() {
+        if face_loop
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>()
+            .is_null()
+        {
             // Type not yet implemented or non sens
             build
                 .process

@@ -103,7 +103,8 @@ fn offset_of_c0_basis_has_no_continuity_and_offset_dn_is_not_implemented() {
     assert_eq!(kind(offset.continuity()), "Standard_TypeMismatch");
     assert_eq!(kind(offset.eval_dn(0.5, 1)), "Standard_NotImplemented");
     // Offset of an offset: EvalD3 needs the basis EvalDN, which is not implemented.
-    let nested = Adaptor2dOffsetCurve::with_offset(&Handle::new(offset).into_upcast(), 0.1).unwrap();
+    let nested =
+        Adaptor2dOffsetCurve::with_offset(&Handle::new(offset).into_upcast(), 0.1).unwrap();
     assert_eq!(kind(nested.eval_d3(0.5)), "Standard_NotImplemented");
 }
 

@@ -81,8 +81,10 @@ fn runtime_type_step_visual_tessellated_shape_representation_with_accuracy_param
 #[test]
 fn init_round_trip_step_visual_tessellated_shape_representation_with_accuracy_parameters() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_tessellation_accuracy_parameters =
         Handle::new(HArray1::<f64>::with_bounds(1, 2).unwrap());

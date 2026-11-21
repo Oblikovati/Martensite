@@ -177,7 +177,13 @@ impl StepControlActorWrite {
         is_manifold: bool,
         shape_group: &Handle<martensite_tkernel::ncollection::HSequence<Shape>>,
         fp: &Handle<TransferFinderProcess>,
-    ) -> Result<(Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, bool), Failure> {
+    ) -> Result<
+        (
+            Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
+            bool,
+        ),
+        Failure,
+    > {
         if the_shape.shape_type()? == ShapeEnum::Shape {
             // for external references
             return Ok((
@@ -195,7 +201,8 @@ impl StepControlActorWrite {
             StepControlStepModelType::AS_IS => trmode,
             other => other,
         };
-        let new_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = match of_mode {
+        let new_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = match of_mode
+        {
             StepControlStepModelType::MANIFOLD_SOLID_BREP => {
                 Handle::new(StepShapeAdvancedBrepShapeRepresentation::new()).cast()
             }
@@ -243,7 +250,8 @@ impl StepControlActorWrite {
             for item in &items[rank..] {
                 let split = representation_of_item(item);
                 let live_split = step_live(&split, WHERE)?;
-                let axis: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = self.default_axis()?.cast();
+                let axis: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                    self.default_axis()?.cast();
                 live_split.set_items(&shared_array1(vec![axis, item.clone()]));
                 let mut context = StepConstructUnitContext::new();
                 context.init(tolerance, model, factors)?;
@@ -260,7 +268,10 @@ impl StepControlActorWrite {
         }
         let tessellated: Vec<_> = items
             .iter()
-            .filter(|item| item.cast::<dyn crate::StepEntityBase<StepVisualTessellatedItem>>().is_some())
+            .filter(|item| {
+                item.cast::<dyn crate::StepEntityBase<StepVisualTessellatedItem>>()
+                    .is_some()
+            })
             .cloned()
             .collect();
         if !tessellated.is_empty() {

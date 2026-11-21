@@ -103,5 +103,7 @@ fn append_carry_source_geometry(scene: &ViewerScene, mode: &str, log: &CarryMode
     if mode.starts_with("flip-carry-noninteger") {
         record_model(&scene.group, "local-after", log);
     }
-    scene.group.add_primitive_array(&scene.vertices.upcast(), true);
+    scene
+        .group
+        .add_primitive_array(&scene.vertices.upcast(), true);
 }

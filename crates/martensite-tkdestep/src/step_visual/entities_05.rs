@@ -279,7 +279,9 @@ impl StepVisualRepositionedTessellatedGeometricSet {
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_items: &ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>,
+        the_items: &ObjectHandle<
+            Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>,
+        >,
         the_location: &Handle<StepGeomAxis2Placement3d>,
     ) {
         self.parent.init(the_name, the_items);

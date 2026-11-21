@@ -252,7 +252,8 @@ impl RwStepBasicRwDocumentProductAssociation {
             return Ok(());
         }
         rw_block_0102!(a_description, a_name, ach, data, has_description, num);
-        let mut a_relating_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>> = Default::default();
+        let mut a_relating_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>> =
+            Default::default();
         data.read_entity(
             num,
             3,

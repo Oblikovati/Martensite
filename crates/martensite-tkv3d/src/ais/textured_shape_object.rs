@@ -33,9 +33,7 @@ impl AisTexturedShape {
         ))
     }
     fn from_base(base: AisTexturedShapeBase) -> Handle<Self> {
-        let object = Handle::new(Self {
-            base,
-        });
+        let object = Handle::new(Self { base });
         prs_mgr_presentable_bind(&object.cast());
         object
     }

@@ -307,7 +307,10 @@ impl StepToTopoDSTranslateCompositeCurve {
                 pcurve = Handle::default();
             }
             curve = Handle::default();
-        } else if let Some(surface_curve) = parent.cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>().get() {
+        } else if let Some(surface_curve) = parent
+            .cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>()
+            .get()
+        {
             curve = surface_curve.curve3d();
             if surf_mode {
                 pcurve = surface_curve_pcurve(surface_curve, step_surface, segment.same_sense())?;

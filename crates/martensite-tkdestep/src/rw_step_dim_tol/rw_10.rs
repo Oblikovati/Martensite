@@ -82,7 +82,8 @@ impl RwStepDimTolRwProjectedZoneDefinition {
             nb_sub,
             num
         );
-        let mut a_projection_end: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
+        let mut a_projection_end: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
+            Default::default();
         data.read_entity(
             num,
             3,

@@ -205,8 +205,9 @@ macro_rules! rw_block_b_0182 {
     ($a_name:ident, $a_styles:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_styles: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>> =
-            Default::default();
+        let mut $a_styles: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        > = Default::default();
     };
 }
 pub(crate) use rw_block_b_0182;

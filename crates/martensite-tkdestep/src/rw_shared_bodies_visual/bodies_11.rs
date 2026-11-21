@@ -119,7 +119,8 @@ macro_rules! rw_block_b_0088 {
             $the_arch,
             &mut $a_representation_item_name,
         )?;
-        let mut $a_edge_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let mut $a_edge_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         $the_data.read_entity(
             $the_num,
             2,
@@ -128,7 +129,8 @@ macro_rules! rw_block_b_0088 {
             StepShapeVertex::static_type(),
             &mut $a_edge_edge_start,
         )?;
-        let mut $a_edge_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let mut $a_edge_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         $the_data.read_entity(
             $the_num,
             3,

@@ -70,9 +70,7 @@ impl StepControlController {
 type SessionItems = Vec<(&'static str, Handle<dyn Transient>)>;
 
 /// The items the constructor and `customise` both add: selections on `roots`, and the editors.
-fn norm_items(
-    roots: &Handle<dyn IFSelectSelection>,
-) -> Result<SessionItems, Failure> {
+fn norm_items(roots: &Handle<dyn IFSelectSelection>) -> Result<SessionItems, Failure> {
     let faces = Handle::new(STEPSelectionsSelectFaces::default());
     faces.set_input(roots);
     let curves = Handle::new(STEPSelectionsSelectGSCurves::default());
@@ -264,7 +262,8 @@ impl XSControlController for StepControlController {
         if !(0..=4).contains(&modetrans) {
             return Ok(IFSelectReturnStatus::RetError);
         }
-        let write_actor: Handle<dyn crate::StepEntityBase<StepControlActorWrite>> = self.base.adaptor_write().into_cast();
+        let write_actor: Handle<dyn crate::StepEntityBase<StepControlActorWrite>> =
+            self.base.adaptor_write().into_cast();
         let step_model: Handle<StepDataStepModel> = model.cast();
         let live_model = step_live(&step_model, "StepControlController::TransferWriteShape")?;
         if let Some(live) = write_actor.get() {

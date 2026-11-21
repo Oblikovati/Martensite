@@ -196,7 +196,11 @@ pub(super) const TABLE_READ_02: &[ReadRow] = &[
         StepBasicDesignContext,
         RwStepBasicRwProductDefinitionContext
     ),
-    read_row!(341, StepBasicTimeMeasureWithUnit, RwStepBasicRwMeasureWithUnit),
+    read_row!(
+        341,
+        StepBasicTimeMeasureWithUnit,
+        RwStepBasicRwMeasureWithUnit
+    ),
     read_row!(342, StepBasicRatioUnit, RwStepBasicRwNamedUnit),
     read_row!(343, StepBasicTimeUnit, RwStepBasicRwNamedUnit),
     read_row!(
@@ -224,8 +228,16 @@ pub(super) const TABLE_READ_02: &[ReadRow] = &[
         StepBasicApprovalDateTime,
         RwStepBasicRwApprovalDateTime
     ),
-    read_row!(349, StepVisualCameraImage2dWithScale, RwStepVisualRwCameraImage),
-    read_row!(350, StepVisualCameraImage3dWithScale, RwStepVisualRwCameraImage),
+    read_row!(
+        349,
+        StepVisualCameraImage2dWithScale,
+        RwStepVisualRwCameraImage
+    ),
+    read_row!(
+        350,
+        StepVisualCameraImage3dWithScale,
+        RwStepVisualRwCameraImage
+    ),
     read_row!(
         351,
         StepGeomCartesianTransformationOperator2d,

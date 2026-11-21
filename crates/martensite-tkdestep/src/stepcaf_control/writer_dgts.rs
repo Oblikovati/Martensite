@@ -233,7 +233,8 @@ fn write_legacy_dimension(
     let upper = limit_item(step_array1_item(values, 2, WHERE)?, unit, "upper limit")?;
     model.add_with_refs(&lower.cast(), 0, false)?;
     model.add_with_refs(&upper.cast(), 0, false)?;
-    let limits = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 2)?;
+    let limits =
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 2)?;
     step_array1_set(&limits, 1, lower.cast(), WHERE)?;
     step_array1_set(&limits, 2, upper.cast(), WHERE)?;
     let range = Handle::new(StepReprValueRange::new());

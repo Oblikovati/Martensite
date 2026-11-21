@@ -29,7 +29,9 @@ impl StepGeomCompositeCurve {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_segments: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>>>,
+        a_segments: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>>,
+        >,
         a_self_intersect: StepDataLogical,
     ) {
         let mut state = self.state.write();

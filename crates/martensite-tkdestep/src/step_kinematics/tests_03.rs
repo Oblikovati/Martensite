@@ -14,8 +14,10 @@ use crate::step_repr::*;
 #[test]
 fn init_round_trip_step_kinematics_mechanism_representation() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_represented_topology = StepKinematicsKinematicTopologyRepresentationSelect::default();
     let object = StepKinematicsMechanismRepresentation::new();
@@ -40,12 +42,19 @@ fn runtime_type_step_kinematics_mechanism_state_representation() {
 #[test]
 fn init_round_trip_step_kinematics_mechanism_state_representation() {
     let the_name = Handle::new(HAsciiString::new("sample"));
-    let the_items =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
+    let the_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_mechanism = Handle::new(StepKinematicsMechanismRepresentation::new());
     let object = StepKinematicsMechanismStateRepresentation::new();
-    object.init(&the_name, &the_items, &the_context_of_items.upcast(), &the_mechanism);
+    object.init(
+        &the_name,
+        &the_items,
+        &the_context_of_items.upcast(),
+        &the_mechanism,
+    );
     assert!(object.mechanism() == the_mechanism);
 }
 

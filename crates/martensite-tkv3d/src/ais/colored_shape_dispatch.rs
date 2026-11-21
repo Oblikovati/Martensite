@@ -1,5 +1,5 @@
 //! Native depth-first style dispatch preserves full faces and strips overridden lower-dimensional children.
-use super::{AisColoredDrawerSource, AisColoredDrawerCompounds, AisShapeDrawerMap};
+use super::{AisColoredDrawerCompounds, AisColoredDrawerSource, AisShapeDrawerMap};
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topods::{Compound, Shape, ShapeIterator},

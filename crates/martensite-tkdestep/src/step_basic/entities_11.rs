@@ -95,7 +95,9 @@ impl StepBasicProductDefinitionReferenceWithLocalRepresentation {
         the_id: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
         the_formation: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
-        the_frame_of_reference: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
+        the_frame_of_reference: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionContext>,
+        >,
     ) {
         self.parent.init(
             the_id,
@@ -141,8 +143,12 @@ impl StepBasicProductDefinitionRelationship {
         a_name: &Handle<HAsciiString>,
         has_description: bool,
         a_description: &Handle<HAsciiString>,
-        a_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
-        a_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
+        a_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
     ) -> Result<(), Failure> {
         let mut state = self.state.write();
         state.the_id = a_id.clone();
@@ -186,7 +192,9 @@ impl StepBasicProductDefinitionRelationship {
     }
     /// `relating_product_definition`.
     /// Returns field RelatingProductDefinition
-    pub fn relating_product_definition(&self) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> {
+    pub fn relating_product_definition(
+        &self,
+    ) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> {
         let field_the_relating_product_definition =
             self.state.read().the_relating_product_definition.clone();
         field_the_relating_product_definition.product_definition()
@@ -198,7 +206,9 @@ impl StepBasicProductDefinitionRelationship {
     /// The null dereference or array index failure.
     pub fn set_relating_product_definition(
         &self,
-        a_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
     ) -> Result<(), Failure> {
         self.state
             .write()
@@ -216,7 +226,9 @@ impl StepBasicProductDefinitionRelationship {
     }
     /// `related_product_definition`.
     /// Returns field RelatedProductDefinition
-    pub fn related_product_definition(&self) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> {
+    pub fn related_product_definition(
+        &self,
+    ) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> {
         let field_the_related_product_definition =
             self.state.read().the_related_product_definition.clone();
         field_the_related_product_definition.product_definition()
@@ -228,7 +240,9 @@ impl StepBasicProductDefinitionRelationship {
     /// The null dereference or array index failure.
     pub fn set_related_product_definition(
         &self,
-        a_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
     ) -> Result<(), Failure> {
         self.state
             .write()

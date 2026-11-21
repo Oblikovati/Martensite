@@ -64,7 +64,9 @@ macro_rules! rw_block_b_0044 {
         rw_block_b_0109!($a_items, $a_name, $ach, $anent2, $data, $nsub2, $num);
         if $data.read_sub_list($num, 2, "items", $ach, &mut $nsub2, false, 0, 0)? {
             let $nb2: i32 = $data.nb_params($nsub2)?;
-            $a_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, $nb2)?;
+            $a_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, $nb2)?;
             for $i2 in 1..=$nb2 {
                 if $data.read_entity(
                     $nsub2,

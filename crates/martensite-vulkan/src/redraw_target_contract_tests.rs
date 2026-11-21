@@ -77,7 +77,10 @@ fn assert_public_round_trip_refused(selection: u8) {
 fn selected_public_targets(
     api: &dyn Graphic3dCView,
     selection: u8,
-) -> (Handle<dyn martensite_tkernel::standard::Transient>, Handle<dyn martensite_tkernel::standard::Transient>) {
+) -> (
+    Handle<dyn martensite_tkernel::standard::Transient>,
+    Handle<dyn martensite_tkernel::standard::Transient>,
+) {
     let target = |window| {
         if window {
             Handle::default()

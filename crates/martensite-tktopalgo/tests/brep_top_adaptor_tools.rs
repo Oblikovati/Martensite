@@ -181,7 +181,9 @@ fn topol_tool_errors_follow_the_native_exceptions() {
     );
     let absent = Handle::default();
     assert_eq!(
-        tool.vertex_orientation(&absent).unwrap_err().exception_type(),
+        tool.vertex_orientation(&absent)
+            .unwrap_err()
+            .exception_type(),
         "Standard_NullObject"
     );
     assert_eq!(

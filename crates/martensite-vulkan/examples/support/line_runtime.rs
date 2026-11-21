@@ -29,7 +29,9 @@ fn check_empty_and_mixed(scene: &scene::ViewerScene) {
     scene.group.aspects().set_line_pattern(0);
     scene.render_view().try_redraw().unwrap();
     assert_eq!(ink(&scene.render_view().capture().unwrap()), 0);
-    scene.group.add_primitive_array(&scene.vertices.upcast(), true);
+    scene
+        .group
+        .add_primitive_array(&scene.vertices.upcast(), true);
     scene.render_view().try_redraw().unwrap();
     let triangles = ink(&scene.render_view().capture().unwrap());
     assert!(triangles > 0);

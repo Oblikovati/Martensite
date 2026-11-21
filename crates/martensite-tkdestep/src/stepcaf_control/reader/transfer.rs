@@ -28,7 +28,9 @@ impl ReaderState {
                 step_live(&made.seq_pds, WHERE)?.append(entity.clone());
             }
             let pd = entity.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>();
-            let is_sr = entity.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some();
+            let is_sr = entity
+                .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+                .is_some();
             if pd.is_null() && !is_sr {
                 continue;
             }

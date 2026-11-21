@@ -166,7 +166,12 @@ fn init_round_trip_step_shape_boxed_half_space() {
     let a_agreement_flag = true;
     let a_enclosure = Handle::new(StepShapeBoxDomain::new());
     let object = StepShapeBoxedHalfSpace::new();
-    object.init(&a_name, &a_base_surface.upcast(), a_agreement_flag, &a_enclosure);
+    object.init(
+        &a_name,
+        &a_base_surface.upcast(),
+        a_agreement_flag,
+        &a_enclosure,
+    );
     assert!(object.enclosure() == a_enclosure);
 }
 
@@ -224,7 +229,9 @@ fn runtime_type_step_shape_connected_edge_set() {
 #[test]
 fn init_round_trip_step_shape_connected_edge_set() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
-    let a_ces_edges = Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>::with_bounds(1, 2).unwrap());
+    let a_ces_edges = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>::with_bounds(1, 2).unwrap(),
+    );
     let object = StepShapeConnectedEdgeSet::new();
     object.init(&a_representation_item_name, &a_ces_edges);
     assert!(object.ces_edges() == a_ces_edges);
@@ -253,8 +260,9 @@ fn runtime_type_step_shape_connected_face_sub_set() {
 #[test]
 fn init_round_trip_step_shape_connected_face_sub_set() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
-    let a_connected_face_set_cfs_faces =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>::with_bounds(1, 2).unwrap());
+    let a_connected_face_set_cfs_faces = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>::with_bounds(1, 2).unwrap(),
+    );
     let a_parent_face_set = Handle::new(StepShapeConnectedFaceSet::new());
     let object = StepShapeConnectedFaceSubSet::new();
     object.init(

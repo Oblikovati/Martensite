@@ -91,12 +91,15 @@ impl TopoDSToStepMakeShellBasedSurfaceModel {
             )?;
             return Ok(made);
         }
-        let surface: Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>> = builder.value()?.cast();
+        let surface: Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>> =
+            builder.value()?.cast();
         if surface.is_some() {
             let open = Handle::new(StepShapeOpenShell::new());
             open.init(
                 &empty_step_name(),
-                &shared_array1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>(vec![surface.cast()]),
+                &shared_array1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>(vec![
+                    surface.cast(),
+                ]),
             );
             let mut select = StepShapeShell::default();
             select.set_value(&open.cast())?;
@@ -126,7 +129,8 @@ impl TopoDSToStepMakeShellBasedSurfaceModel {
             if value.is_some() {
                 let mut select = StepShapeShell::default();
                 if shell.closed()? {
-                    let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = value.cast();
+                    let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> =
+                        value.cast();
                     select.set_value(&closed.cast())?;
                 } else {
                     let open: Handle<dyn crate::StepEntityBase<StepShapeOpenShell>> = value.cast();

@@ -74,8 +74,11 @@ pub(crate) use rw_block_b_0078;
 
 macro_rules! rw_block_b_0079 {
     ($a_definition:ident, $a_description:ident, $a_name:ident, $a_representation:ident, $a_type:ident, $ach:ident, $an_ent:ident, $an_items:ident, $data:ident, $ent:ident, $i:ident, $nb_elements:ident, $nb_sub:ident, $num:ident) => {
-        let mut $an_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>> = Default::default();
-        let mut $an_ent: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+        let mut $an_items: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        > = Default::default();
+        let mut $an_ent: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         let mut $nb_sub: i32 = Default::default();
         let $a_type: InterfaceParamType = $data.param_type($num, 5)?;
         if $a_type == InterfaceParamType::ParamIdent {
@@ -87,7 +90,9 @@ macro_rules! rw_block_b_0079 {
                 StepReprRepresentationItem::static_type(),
                 &mut $an_ent,
             )?;
-            $an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
+            $an_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, 1)?;
             step_array1_set(&$an_items, 1, $an_ent.clone(), "ReadStep")?;
         } else {
             if $data.read_sub_list(
@@ -101,7 +106,9 @@ macro_rules! rw_block_b_0079 {
                 0,
             )? {
                 let $nb_elements: i32 = $data.nb_params($nb_sub)?;
-                $an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, $nb_elements)?;
+                $an_items = step_new_array1::<
+                    Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+                >(1, $nb_elements)?;
                 for $i in 1..=$nb_elements {
                     if $data.read_entity(
                         $nb_sub,
@@ -177,7 +184,10 @@ macro_rules! rw_block_b_0081 {
             0,
         )? {
             let $nb_elements: i32 = $data.nb_params($nb_sub)?;
-            $an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>(1, $nb_elements)?;
+            $an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>(
+                1,
+                $nb_elements,
+            )?;
             for $i in 1..=$nb_elements {
                 if $data.read_entity(
                     $nb_sub,

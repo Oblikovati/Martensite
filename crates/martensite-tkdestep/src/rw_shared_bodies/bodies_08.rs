@@ -173,12 +173,14 @@ macro_rules! rw_block_0065 {
     ($a_cfs_faces:ident, $a_name:ident, $ach:ident, $anent2:ident, $data:ident, $ent:ident, $i2:ident, $nb2:ident, $nsub2:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_cfs_faces: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>> = Default::default();
+        let mut $a_cfs_faces: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>> =
+            Default::default();
         let mut $anent2: Handle<dyn crate::StepEntityBase<StepShapeFace>> = Default::default();
         let mut $nsub2: i32 = Default::default();
         if $data.read_sub_list($num, 2, "cfs_faces", $ach, &mut $nsub2, false, 0, 0)? {
             let $nb2: i32 = $data.nb_params($nsub2)?;
-            $a_cfs_faces = step_new_array1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>(1, $nb2)?;
+            $a_cfs_faces =
+                step_new_array1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>(1, $nb2)?;
             for $i2 in 1..=$nb2 {
                 if $data.read_entity(
                     $nsub2,

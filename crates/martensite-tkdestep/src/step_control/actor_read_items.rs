@@ -51,7 +51,9 @@ fn is_need_representation(
         for shared in shared_entities(tp, &sdr.cast())? {
             let mut rep2: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = shared.cast();
             if rep2.is_null() {
-                let srr: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> = shared.cast();
+                let srr: Handle<
+                    dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>,
+                > = shared.cast();
                 let Some(live_srr) = srr.get() else {
                     continue;
                 };
@@ -192,7 +194,10 @@ impl StepControlActorRead {
             builder.init_faceted_brep(&start.cast(), tp, local, range)?;
         } else if start.cast::<StepShapeBrepWithVoids>().is_some() {
             builder.init_brep_with_voids(&start.cast(), tp, local, range)?;
-        } else if start.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+            .is_some()
+        {
             builder.init_manifold_solid(&start.cast(), tp, local, range)?;
         } else if start.cast::<StepShapeShellBasedSurfaceModel>().is_some() {
             // The tool leaves the state for the call; the builder does not come back to the actor
@@ -212,7 +217,10 @@ impl StepControlActorRead {
             .is_some()
         {
             builder.init_faceted_brep_with_voids(&start.cast(), tp, local, range)?;
-        } else if start.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+            .is_some()
+        {
             builder.init_geometric_set(&start.cast(), tp, local, Some(self), is_manifold, range)?;
         } else if start.cast::<StepShapeEdgeBasedWireframeModel>().is_some() {
             builder.init_edge_based_wireframe_model(&start.cast(), tp, local)?;
@@ -236,9 +244,15 @@ impl StepControlActorRead {
                 local,
                 range,
             )?;
-        } else if start.cast::<dyn crate::StepEntityBase<StepVisualTessellatedFace>>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepVisualTessellatedFace>>()
+            .is_some()
+        {
             builder.init_tessellated_face(&start.cast(), tp, only_no_brep, has_geom, local)?;
-        } else if start.cast::<dyn crate::StepEntityBase<StepVisualTessellatedSurfaceSet>>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepVisualTessellatedSurfaceSet>>()
+            .is_some()
+        {
             builder.init_tessellated_surface_set(&start.cast(), tp, has_geom, local)?;
         } else {
             return Ok(false);

@@ -218,7 +218,10 @@ impl TopoDSToStepMakeStepEdge {
         made.init(edge, tool, fp, factors)?;
         Ok(made)
     }
-    fn finish(&mut self, result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>) {
+    fn finish(
+        &mut self,
+        result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+    ) {
         self.my_error = TopoDSToStepMakeEdgeError::EdgeDone;
         self.my_result = result;
         self.root.done = true;
@@ -240,7 +243,10 @@ impl TopoDSToStepMakeStepEdge {
         edge: &Edge,
         tool: &TopoDSToStepTool,
         fp: &Handle<TransferFinderProcess>,
-    ) -> Result<Option<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>>, Failure> {
+    ) -> Result<
+        Option<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>>,
+        Failure,
+    > {
         // [BEGIN] Processing non-manifold topology (ssv; 11.11.2010)
         if step_model_of(fp)?.internal_parameters().write_nonmanifold {
             let mapper = TransferBRep::shape_mapper(fp, edge)?;
@@ -361,7 +367,10 @@ impl TopoDSToStepMakeStepEdge {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root.check_done("TopoDSToStepMakeStepEdge::Value()")?;
         Ok(self.my_result.clone())
     }

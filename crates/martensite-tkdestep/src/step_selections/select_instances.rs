@@ -55,14 +55,22 @@ fn add_all_sharings(
 fn is_shape_item(start: &Handle<dyn Transient>) -> bool {
     start.cast::<StepShapeFacetedBrep>().is_some()
         || start.cast::<StepShapeBrepWithVoids>().is_some()
-        || start.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+            .is_some()
         || start.cast::<StepShapeShellBasedSurfaceModel>().is_some()
         || start
             .cast::<StepShapeFacetedBrepAndBrepWithVoids>()
             .is_some()
-        || start.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some()
-        || start.cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>().is_some()
-        || start.cast::<dyn crate::StepEntityBase<StepReprMappedItem>>().is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+            .is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+            .is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+            .is_some()
 }
 
 /// `add_instances` on a context_dependent_shape_representation: the definitions of its part.
@@ -125,7 +133,8 @@ fn add_instances(
     if cdsr.is_some() {
         return add_cdsr_instances(&cdsr, graph, explored);
     }
-    let und: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> = start.cast();
+    let und: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> =
+        start.cast();
     if let Some(live) = und.get() {
         add_instances(&live.rep1().cast(), graph, explored)?;
         add_instances(&live.rep2().cast(), graph, explored)?;

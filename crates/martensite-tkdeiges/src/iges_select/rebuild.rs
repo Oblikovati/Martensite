@@ -1,5 +1,4 @@
 //! The modifiers that rebuild the drawings and the groups a partial copy has broken.
-use martensite_tkernel::standard::project_interface;
 use super::IgesSelectModelModifier;
 use super::IgesSelectViewSorter;
 use super::modifier_bases::{iges_model_modifier, modifier_base};
@@ -13,6 +12,7 @@ use crate::iges_data::{
 };
 use crate::iges_draw::{IgesDrawDrawing, IgesDrawDrawingWithRotation};
 use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::project_interface;
 use martensite_tkernel::{
     ncollection::HArray1,
     standard::{Failure, Handle, RuntimeTyped},
@@ -262,7 +262,10 @@ fn copied_members(
     tc: &InterfaceCopyTool,
 ) -> Result<InterfaceEntityIterator, Failure> {
     let mut newlist = InterfaceEntityIterator::new();
-    if let Some(source) = ent.get().and_then(|entity| project_interface::<dyn IgesBasicGroupSource>(entity)) {
+    if let Some(source) = ent
+        .get()
+        .and_then(|entity| project_interface::<dyn IgesBasicGroupSource>(entity))
+    {
         let group = source.group_base();
         for rank in 1..=group.nb_entities() {
             let mut newent = Handle::default();

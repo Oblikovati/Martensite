@@ -177,7 +177,12 @@ fn init_round_trip_step_shape_extruded_face_solid() {
     let a_extruded_direction = Handle::new(StepGeomDirection::new());
     let a_depth = 2.5;
     let object = StepShapeExtrudedFaceSolid::new();
-    object.init(&a_name, &a_swept_area.upcast(), &a_extruded_direction, a_depth);
+    object.init(
+        &a_name,
+        &a_swept_area.upcast(),
+        &a_extruded_direction,
+        a_depth,
+    );
     assert!(object.extruded_direction() == a_extruded_direction);
     assert!(object.depth() == a_depth);
 }
@@ -195,8 +200,10 @@ fn runtime_type_step_shape_face_based_surface_model() {
 #[test]
 fn init_round_trip_step_shape_face_based_surface_model() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
-    let a_fbsm_faces =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>::with_bounds(1, 2).unwrap());
+    let a_fbsm_faces = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let object = StepShapeFaceBasedSurfaceModel::new();
     object.init(&a_representation_item_name, &a_fbsm_faces);
     assert!(object.fbsm_faces() == a_fbsm_faces);
@@ -243,7 +250,10 @@ fn runtime_type_step_shape_face_surface() {
 #[test]
 fn init_round_trip_step_shape_face_surface() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_bounds = Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>::with_bounds(1, 2).unwrap());
+    let a_bounds = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let a_face_geometry = Handle::new(StepGeomSurface::new());
     let a_same_sense = true;
     let object = StepShapeFaceSurface::new();
@@ -279,7 +289,12 @@ fn init_round_trip_step_shape_faceted_brep_and_brep_with_voids() {
     let a_faceted_brep = Handle::new(StepShapeFacetedBrep::new());
     let a_brep_with_voids = Handle::new(StepShapeBrepWithVoids::new());
     let object = StepShapeFacetedBrepAndBrepWithVoids::new();
-    object.init(&a_name, &a_outer.upcast(), &a_faceted_brep, &a_brep_with_voids);
+    object.init(
+        &a_name,
+        &a_outer.upcast(),
+        &a_faceted_brep,
+        &a_brep_with_voids,
+    );
     assert!(object.faceted_brep() == a_faceted_brep);
     assert!(object.brep_with_voids() == a_brep_with_voids);
 }

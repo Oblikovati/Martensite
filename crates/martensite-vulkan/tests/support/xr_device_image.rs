@@ -1,8 +1,5 @@
 //! Named no-I/O source preserves the actual XR texture delegation in rendering fixtures.
-use martensite_tkernel::{
-    standard::Handle,
-    tcollection::AsciiString,
-};
+use martensite_tkernel::{standard::Handle, tcollection::AsciiString};
 use martensite_tkservice::image::*;
 pub struct XrCaptureImage {
     base: ImageTextureBase,
@@ -34,7 +31,10 @@ impl ImageTextureSource for XrCaptureImage {
         // The constructor snapshots the native source identity and keeps this source alive.
         &self.base
     }
-    fn read_image(&self, _formats: &Handle<ImageSupportedFormats>) -> Handle<dyn ImagePixMapObject> {
+    fn read_image(
+        &self,
+        _formats: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn ImagePixMapObject> {
         // No external decoding should affect the renderer differential fixture.
         self.image.clone()
     }

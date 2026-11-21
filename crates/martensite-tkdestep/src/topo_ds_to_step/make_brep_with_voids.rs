@@ -40,7 +40,9 @@ pub(super) fn shells_of(solid: &Solid) -> Result<Vec<Shape>, Failure> {
 }
 
 /// The closed shell of a builder's result: si OPEN on le force a CLOSED mais que c est une honte !
-fn closed_shell_of(builder: &TopoDSToStepBuilder) -> Result<Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>, Failure> {
+fn closed_shell_of(
+    builder: &TopoDSToStepBuilder,
+) -> Result<Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>, Failure> {
     let value = builder.value()?;
     let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = value.cast();
     if closed.is_some() {

@@ -170,7 +170,8 @@ impl RwStepReprRwRepresentationMap {
         if !data.check_nb_params(num, 2, ach, "representation_map")? {
             return Ok(());
         }
-        let mut a_mapping_origin: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+        let mut a_mapping_origin: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         data.read_entity(
             num,
             1,
@@ -179,7 +180,8 @@ impl RwStepReprRwRepresentationMap {
             StepReprRepresentationItem::static_type(),
             &mut a_mapping_origin,
         )?;
-        let mut a_mapped_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = Default::default();
+        let mut a_mapped_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         data.read_entity(
             num,
             2,

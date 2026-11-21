@@ -73,7 +73,9 @@ impl RwStepReprRwCompoundRepresentationItem {
         rw_block_0108!(a_items, a_name, ach, anent2, data, nsub2, num);
         if data.read_sub_list(num, 2, "item_element", ach, &mut nsub2, false, 0, 0)? {
             let nb2: i32 = data.nb_params(nsub2)?;
-            a_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb2)?;
+            a_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, nb2)?;
             for i2 in 1..=nb2 {
                 if data.read_entity(
                     nsub2,
@@ -189,7 +191,9 @@ impl RwStepReprRwConfigurationEffectivity {
         }
         let mut a_effectivity_id: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "effectivity.id", ach, &mut a_effectivity_id)?;
-        let mut a_product_definition_effectivity_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>> = Default::default();
+        let mut a_product_definition_effectivity_usage: Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        > = Default::default();
         data.read_entity(
             num,
             2,

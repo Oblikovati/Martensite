@@ -138,7 +138,8 @@ impl RwStepShapeRwBooleanResult {
         } else {
             ach.add_fail_text("Parameter #2 (operator) is not an enumeration", "");
         }
-        let mut a_solid_model1: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>> = Default::default();
+        let mut a_solid_model1: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -149,7 +150,8 @@ impl RwStepShapeRwBooleanResult {
         )?;
         let mut a_first_operand: StepShapeBooleanOperand = Default::default();
         a_first_operand.set_solid_model(&a_solid_model1);
-        let mut a_solid_model2: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>> = Default::default();
+        let mut a_solid_model2: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>> =
+            Default::default();
         data.read_entity(
             num,
             4,

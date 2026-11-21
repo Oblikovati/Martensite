@@ -32,7 +32,6 @@ pub const ELEMENTS: [(MeshVSEntityType, &[i32]); 6] = [
 /// The fake data source of the tests; `UnitSquareSource::default()`.
 #[derive(Default)]
 pub struct UnitSquareSource {
-
     base: MeshVSDataSource3DBase,
 }
 martensite_tkernel::impl_transient!(UnitSquareSource, "UnitSquareSource", dyn MeshVSDataSource3D, interfaces: [dyn MeshVSDataSource, dyn MeshVSDataSource3D]);

@@ -34,8 +34,10 @@ fn runtime_type_step_shape_shape_dimension_representation() {
 #[test]
 fn init_round_trip_step_shape_shape_dimension_representation() {
     let the_name = Handle::new(HAsciiString::new("sample"));
-    let the_items =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
+    let the_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let object = StepShapeShapeDimensionRepresentation::new();
     object.init(&the_name, &the_items, &the_context_of_items.upcast());
@@ -159,11 +161,17 @@ fn runtime_type_step_shape_subface() {
 #[test]
 fn init_round_trip_step_shape_subface() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
-    let a_face_bounds =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>::with_bounds(1, 2).unwrap());
+    let a_face_bounds = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let a_parent_face = Handle::new(StepShapeFace::new());
     let object = StepShapeSubface::new();
-    object.init(&a_representation_item_name, &a_face_bounds, &a_parent_face.upcast());
+    object.init(
+        &a_representation_item_name,
+        &a_face_bounds,
+        &a_parent_face.upcast(),
+    );
     assert!(object.parent_face() == a_parent_face);
 }
 

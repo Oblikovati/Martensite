@@ -3,7 +3,9 @@ use super::{
     IgesToBRep, IgesToBRepBRepEntity, IgesToBRepCurveAndSurface, IgesToBRepTopoCurve,
     IgesToBRepTopoSurface,
 };
-use crate::iges_basic::{IgesBasicGroup, IgesBasicGroupSource, IgesBasicSingularSubfigure, IgesBasicSubfigureDef};
+use crate::iges_basic::{
+    IgesBasicGroup, IgesBasicGroupSource, IgesBasicSingularSubfigure, IgesBasicSubfigureDef,
+};
 use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataToolLocation, iges_live};
 use martensite_tkbrep::brep::BRepBuilder;

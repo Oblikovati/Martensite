@@ -96,7 +96,8 @@ fn pds_through_relationship(
     sr: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
 ) -> Result<Handle<StepReprProductDefinitionShape>, Failure> {
     for entity in graph.sharings(&sr.cast())?.content() {
-        let relationship = entity.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
+        let relationship =
+            entity.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
         let Some(relationship) = relationship.get() else {
             continue;
         };
@@ -125,7 +126,9 @@ fn aspect_in_binder(
     let mut current = binder.clone();
     while let Some(live) = current.get() {
         if let Some(simple) = current.cast::<TransferSimpleBinderOfTransient>().get() {
-            let aspect = simple.result().cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>();
+            let aspect = simple
+                .result()
+                .cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>();
             if aspect.get().is_some_and(|asp| asp.of_shape() == *pds) {
                 return aspect;
             }
@@ -210,7 +213,8 @@ impl StepConstructValidationProps {
         let hgraph = self.hgraph()?;
         let hgraph = step_live(&hgraph, WHERE)?;
         let graph = hgraph.graph();
-        let mut prod_def = Handle::<dyn crate::StepEntityBase<StepBasicProductDefinition>>::default();
+        let mut prod_def =
+            Handle::<dyn crate::StepEntityBase<StepBasicProductDefinition>>::default();
         if process.find_typed_transient_as(
             mapper,
             StepBasicProductDefinition::static_type(),
@@ -288,7 +292,8 @@ impl StepConstructValidationProps {
             &text("properties for subshape"),
             &characterized,
         );
-        let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
+        let items =
+            step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
         step_array1_set(&items, 1, item.cast(), WHERE)?;
         let sr = Handle::new(StepShapeShapeRepresentation::new());
         sr.init(&text(""), &items, context);
@@ -331,7 +336,8 @@ impl StepConstructValidationProps {
         context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) -> Result<(), Failure> {
         let process = step_live(self.finder_process(), WHERE)?;
-        let mut item = Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
+        let mut item =
+            Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
         if !process.find_typed_transient_as(
             mapper,
             StepGeomGeometricRepresentationItem::static_type(),

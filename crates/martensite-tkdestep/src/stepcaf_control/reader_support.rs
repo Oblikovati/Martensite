@@ -114,7 +114,9 @@ pub(super) fn measure_with_unit(
 }
 
 /// The named unit of a measure's unit, `None` when it is null or not of the first case.
-pub(super) fn named_unit_of(unit: &StepBasicUnit) -> Option<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>> {
+pub(super) fn named_unit_of(
+    unit: &StepBasicUnit,
+) -> Option<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>> {
     if unit.is_null() || unit.case_num(&unit.value()) != 1 {
         return None;
     }
@@ -158,7 +160,9 @@ pub(super) fn mass_conversion_factor(
     if second.case_num(&second.value()) == 1 {
         let named = second.named_unit();
         step_live(&named, WHERE)?;
-        if let Some(si_unit) = named.cast::<dyn crate::StepEntityBase<StepBasicSiUnit>>().get()
+        if let Some(si_unit) = named
+            .cast::<dyn crate::StepEntityBase<StepBasicSiUnit>>()
+            .get()
             && si_unit.name() == StepBasicSiUnitName::SunGram
             && si_unit.has_prefix()
         {

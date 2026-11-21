@@ -3,8 +3,7 @@
 use super::fakes::ScriptedDriver;
 use martensite_tkernel::standard::Handle;
 use martensite_tkernel::storage::{
-    BaseDriver, DriverBase, HeaderData, IoStream, OpenMode, StorageError,
-    StreamException,
+    BaseDriver, DriverBase, HeaderData, IoStream, OpenMode, StorageError, StreamException,
 };
 
 #[test]

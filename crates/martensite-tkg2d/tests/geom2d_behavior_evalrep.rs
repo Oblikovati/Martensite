@@ -184,7 +184,8 @@ fn validation_rejects_bad_descriptors() {
             .exception_type(),
         "Standard_ProgramError"
     );
-    let own: Handle<dyn RepCurveDesc> = Handle::new(RepCurveDescFull::new(owner.upcast())).into_upcast();
+    let own: Handle<dyn RepCurveDesc> =
+        Handle::new(RepCurveDescFull::new(owner.upcast())).into_upcast();
     assert!(owner.set_eval_representation(own.clone()).is_err());
     assert!(validate_curve_desc(&Handle::default(), std::ptr::null()).is_ok());
     assert!(validate_curve_desc(&own, std::ptr::null()).is_ok());

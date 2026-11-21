@@ -40,7 +40,6 @@ fn default_extended_handle_keys_compare_contents_and_support_null() {
     );
 }
 
-
 #[test]
 fn statically_upcast_string_handles_keep_native_identity_keys() {
     let first = Handle::new(HAsciiString::new("abc"));

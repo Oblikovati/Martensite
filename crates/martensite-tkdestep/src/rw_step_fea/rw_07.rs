@@ -115,7 +115,9 @@ impl RwStepFEARwFeaMaterialPropertyRepresentation {
         if !data.check_nb_params(num, 3, ach, "fea_material_property_representation")? {
             return Ok(());
         }
-        let mut a_property_definition_representation_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> = Default::default();
+        let mut a_property_definition_representation_definition: Handle<
+            dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        > = Default::default();
         data.read_entity(
             num,
             1,
@@ -126,7 +128,9 @@ impl RwStepFEARwFeaMaterialPropertyRepresentation {
         )?;
         let mut a_definition: StepReprRepresentedDefinition = Default::default();
         a_definition.set_value(&a_property_definition_representation_definition.cast())?;
-        let mut a_property_definition_representation_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = Default::default();
+        let mut a_property_definition_representation_used_representation: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentation>,
+        > = Default::default();
         data.read_entity(
             num,
             2,

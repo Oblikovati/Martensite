@@ -157,9 +157,7 @@ fn equal_height_torus() -> BRepPrimTorus {
     torus
 }
 fn offset_line(edge: &Edge, face: &Face, expected: f64) {
-    let curve = BRepTool::curve_on_face(edge, face)
-        .unwrap()
-        .pcurve;
+    let curve = BRepTool::curve_on_face(edge, face).unwrap().pcurve;
     let line = curve.downcast_ref::<Geom2dLine>().unwrap();
     assert!((line.location().y() - expected).abs() < 1e-14);
     assert_eq!((line.direction().x(), line.direction().y()), (1.0, 0.0));

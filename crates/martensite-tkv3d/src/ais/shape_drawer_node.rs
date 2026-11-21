@@ -19,7 +19,10 @@ pub(super) struct ShapeDrawerNode {
     drawer: SharedState<Option<Handle<dyn AisColoredDrawerSource>>>,
 }
 impl ShapeDrawerNode {
-    pub(super) fn new(key: &Shape, value: &impl HandleReference<dyn AisColoredDrawerSource>) -> Self {
+    pub(super) fn new(
+        key: &Shape,
+        value: &impl HandleReference<dyn AisColoredDrawerSource>,
+    ) -> Self {
         // Construct the handle-valued base before copying the original key.
         let drawer = value.clone_handle();
         let key = key.clone();
@@ -45,7 +48,11 @@ impl ShapeDrawerNode {
         &self,
         inspect: impl FnOnce(
             &Shape,
-            &HandleFieldRef<'_, Option<Handle<dyn AisColoredDrawerSource>>, dyn AisColoredDrawerSource>,
+            &HandleFieldRef<
+                '_,
+                Option<Handle<dyn AisColoredDrawerSource>>,
+                dyn AisColoredDrawerSource,
+            >,
         ) -> R,
     ) -> Result<R, Failure> {
         let fields = self.fields.read();
@@ -120,7 +127,9 @@ pub(super) fn removed_shape_drawer_node() -> Failure {
     )
 }
 
-fn live_shape_drawer_value(slot: &Option<Handle<dyn AisColoredDrawerSource>>) -> &Handle<dyn AisColoredDrawerSource> {
+fn live_shape_drawer_value(
+    slot: &Option<Handle<dyn AisColoredDrawerSource>>,
+) -> &Handle<dyn AisColoredDrawerSource> {
     // This internal borrow spans a live iterator node; erasing that node invalidates native references.
     slot.as_ref()
         .expect("ShapeDrawerNode value=None; expected a live iterator value slot")

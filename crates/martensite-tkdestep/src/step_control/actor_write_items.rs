@@ -330,7 +330,10 @@ pub(super) fn as_is_mode(shape: &Shape) -> Result<StepControlStepModelType, Fail
 pub(super) fn representation_of_item(
     item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
 ) -> Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> {
-    if item.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_some() {
+    if item
+        .cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+        .is_some()
+    {
         Handle::new(StepShapeAdvancedBrepShapeRepresentation::new()).cast()
     } else if item.cast::<StepShapeShellBasedSurfaceModel>().is_some() {
         Handle::new(StepShapeManifoldSurfaceShapeRepresentation::new()).cast()
@@ -338,7 +341,10 @@ pub(super) fn representation_of_item(
         Handle::new(StepShapeGeometricallyBoundedWireframeShapeRepresentation::new()).cast()
     } else if item.cast::<StepShapeFacetedBrep>().is_some() {
         Handle::new(StepShapeFacetedBrepShapeRepresentation::new()).cast()
-    } else if item.cast::<dyn crate::StepEntityBase<StepVisualTessellatedItem>>().is_some() {
+    } else if item
+        .cast::<dyn crate::StepEntityBase<StepVisualTessellatedItem>>()
+        .is_some()
+    {
         Handle::new(StepVisualTessellatedShapeRepresentation::new()).cast()
     } else {
         Handle::new(StepShapeShapeRepresentation::new()).cast()

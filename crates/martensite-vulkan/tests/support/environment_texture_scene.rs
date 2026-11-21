@@ -145,7 +145,9 @@ fn displayed_sphere(scene: &EnvironmentTextureScene) -> Handle<dyn AisInteractiv
 }
 fn shading_dumps(scene: &EnvironmentTextureScene, dumps: &mut Vec<Vec<u8>>) {
     scene.orient_and_fit(V3dTypeOfOrientation::XposYnegZpos);
-    let environment = Handle::new(Graphic3dTextureEnv::from_pix_map(ramp_texture(true).into_upcast()));
+    let environment = Handle::new(Graphic3dTextureEnv::from_pix_map(
+        ramp_texture(true).into_upcast(),
+    ));
     scene.view().set_texture_env(&environment);
     for model in SHADING_MODELS {
         scene.shading(model);

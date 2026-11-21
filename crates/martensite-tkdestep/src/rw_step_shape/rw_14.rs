@@ -22,7 +22,8 @@ impl RwStepShapeRwOrientedFace {
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
         data.check_derived(num, 2, "bounds", ach, false)?;
-        let mut a_face_element: Handle<dyn crate::StepEntityBase<StepShapeFace>> = Default::default();
+        let mut a_face_element: Handle<dyn crate::StepEntityBase<StepShapeFace>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -76,7 +77,8 @@ impl RwStepShapeRwOrientedOpenShell {
             return Ok(());
         }
         rw_block_0198!(a_name, ach, data, num);
-        let mut a_open_shell_element: Handle<dyn crate::StepEntityBase<StepShapeOpenShell>> = Default::default();
+        let mut a_open_shell_element: Handle<dyn crate::StepEntityBase<StepShapeOpenShell>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -129,7 +131,8 @@ impl RwStepShapeRwOrientedPath {
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
         data.check_derived(num, 2, "edge_list", ach, false)?;
-        let mut a_path_element: Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>> = Default::default();
+        let mut a_path_element: Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>> =
+            Default::default();
         data.read_entity(
             num,
             3,

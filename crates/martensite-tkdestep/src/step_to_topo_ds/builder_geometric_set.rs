@@ -112,9 +112,10 @@ fn rectangular_composite_shape(
     for i in 1..=live.nb_segments_i() {
         for j in 1..=live.nb_segments_j() {
             let patch = live.segments_value(i, j)?;
-            let parent: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = step_live(&patch, "StepToTopoDSBuilder")?
-                .parent_surface()
-                .cast();
+            let parent: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+                step_live(&patch, "StepToTopoDSBuilder")?
+                    .parent_surface()
+                    .cast();
             let face = translate_bounded_surf(&parent, precision, factors)?;
             if !face.is_null() {
                 builder.add(&mut compound, &face)?;
@@ -185,7 +186,10 @@ impl StepToTopoDSBuilder {
         if surface.is_some() {
             return self.surface_shape(&surface, tp, factors);
         }
-        if ent.cast::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>().is_some() {
+        if ent
+            .cast::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>()
+            .is_some()
+        {
             let Some(actor) = actor else {
                 return Ok(Shape::default());
             };

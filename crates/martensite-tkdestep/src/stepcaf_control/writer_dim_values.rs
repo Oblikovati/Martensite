@@ -44,7 +44,10 @@ struct ValueItems {
 }
 
 impl ValueItems {
-    fn push(&mut self, item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>) -> Result<(), Failure> {
+    fn push(
+        &mut self,
+        item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    ) -> Result<(), Failure> {
         step_array1_set(&self.items, self.next, item, WHERE)?;
         self.next += 1;
         Ok(())
@@ -99,7 +102,10 @@ fn modifiers_item(
 ) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Failure> {
     let modifiers = object.get_modifiers();
     let compound = Handle::new(StepReprCompoundRepresentationItem::new());
-    let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, modifiers.len() as i32)?;
+    let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+        1,
+        modifiers.len() as i32,
+    )?;
     for (index, modifier) in modifiers.iter().enumerate() {
         let item = Handle::new(StepReprDescriptiveRepresentationItem::new());
         item.init(
@@ -218,7 +224,9 @@ pub(super) fn write_dim_values(
         + i32::from(is_oriented)
         + object.nb_descriptions();
     let mut values = ValueItems {
-        items: step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?,
+        items: step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+            1, count,
+        )?,
         next: 1,
     };
     // Nominal value

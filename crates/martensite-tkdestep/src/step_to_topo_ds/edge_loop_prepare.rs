@@ -50,9 +50,14 @@ fn prepare_curve(
 }
 
 /// The 3D curve entity of an edge curve: the one of a surface curve, or the geometry itself.
-fn curve_3d_entity(edge_curve: &StepShapeEdgeCurve) -> Handle<dyn crate::StepEntityBase<StepGeomCurve>> {
+fn curve_3d_entity(
+    edge_curve: &StepShapeEdgeCurve,
+) -> Handle<dyn crate::StepEntityBase<StepGeomCurve>> {
     let curve = edge_curve.edge_geometry();
-    match curve.cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>().get() {
+    match curve
+        .cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>()
+        .get()
+    {
         Some(surface_curve) => surface_curve.curve3d(),
         None => curve,
     }
@@ -208,7 +213,10 @@ impl Junction {
 fn bind_confused_junction(
     junction: &Junction,
     (v1, v2): (&Vertex, &Vertex),
-    (curve1, curve2): (&Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>, &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>),
+    (curve1, curve2): (
+        &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
+        &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
+    ),
     preci: f64,
     tool: &mut StepToTopoDSTool,
 ) -> Result<bool, Failure> {
@@ -244,8 +252,12 @@ pub(super) fn connect_adjacent_edges(
         let (Some(live1), Some(live2)) = (oriented1.get(), oriented2.get()) else {
             continue;
         };
-        let curve1 = live1.edge_element().cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
-        let curve2 = live2.edge_element().cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
+        let curve1 = live1
+            .edge_element()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
+        let curve2 = live2
+            .edge_element()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
         // see #29979
         let (Some(edge1), Some(edge2)) = (curve1.get(), curve2.get()) else {
             continue;

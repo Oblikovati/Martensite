@@ -116,7 +116,9 @@ impl StepToTopoDSTranslateEdgeLoop {
     ) -> Result<(), Failure> {
         self.root.done = true;
         let bound = step_live(face_bound, "StepToTopoDSTranslateEdgeLoop")?;
-        let edge_loop = bound.bound().cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>();
+        let edge_loop = bound
+            .bound()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>();
         if tool.is_bound(&edge_loop.cast()) {
             self.my_result = topods::wire(tool.find(&edge_loop.cast())?)?.into_shape();
             self.my_error = StepToTopoDSTranslateEdgeLoopError::Done;
@@ -251,7 +253,9 @@ impl StepToTopoDSTranslateEdgeLoop {
             oriented.clone()
         };
         live_oriented = step_live(&working, "StepToTopoDSTranslateEdgeLoop")?;
-        let edge_curve = live_oriented.edge_element().cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
+        let edge_curve = live_oriented
+            .edge_element()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
         let Some(live_curve) = edge_curve.get() else {
             return Ok(());
         };

@@ -1,5 +1,8 @@
 //! Nonvirtual ColoredShape map aliases and ordered custom-drawer removal.
-use super::{AisColoredDrawer, AisColoredDrawerSource, AisColoredShapeSource, AisShapeDrawerMapMut, AisShapeDrawerMapRef};
+use super::{
+    AisColoredDrawer, AisColoredDrawerSource, AisColoredShapeSource, AisShapeDrawerMapMut,
+    AisShapeDrawerMapRef,
+};
 use crate::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};

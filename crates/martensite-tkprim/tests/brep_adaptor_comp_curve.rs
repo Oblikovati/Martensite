@@ -139,7 +139,8 @@ fn BRepAdaptor_CompCurve_Test__OCC30869_ReversedEdgeBoundaryPoints() {
         Direction3::new(0., 0., -1.).unwrap(),
     )
     .unwrap();
-    let aCircle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(anAx2, 1.0).unwrap()).into_upcast();
+    let aCircle: Handle<dyn GeomCurve> =
+        Handle::new(GeomCircle::new(anAx2, 1.0).unwrap()).into_upcast();
 
     let t1 = PI / 2.0; // 1.5707963267949
     let t2 = 3.0 * PI / 2.0; // 4.71238898038469

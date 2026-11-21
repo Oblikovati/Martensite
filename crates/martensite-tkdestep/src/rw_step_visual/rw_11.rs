@@ -150,7 +150,8 @@ impl RwStepVisualRwFillAreaStyleColour {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_fill_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> = Default::default();
+        let mut a_fill_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> =
+            Default::default();
         data.read_entity(
             num,
             2,

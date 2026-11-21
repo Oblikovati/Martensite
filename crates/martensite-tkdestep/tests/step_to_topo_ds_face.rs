@@ -11,8 +11,8 @@ use martensite_tkdestep::step_visual::{
     StepVisualTriangulatedFace, StepVisualTriangulatedSurfaceSet,
 };
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::Xyz;
 use martensite_tkmath::poly::{Triangulation, mesh_purpose};

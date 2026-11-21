@@ -68,7 +68,9 @@ impl StepShapeConnectedFaceSubSet {
     pub fn init(
         &self,
         a_representation_item_name: &Handle<HAsciiString>,
-        a_connected_face_set_cfs_faces: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>>,
+        a_connected_face_set_cfs_faces: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>,
+        >,
         a_parent_face_set: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
     ) {
         self.parent
@@ -185,8 +187,12 @@ impl StepShapeDimensionalLocationWithPath {
         a_shape_aspect_relationship_name: &Handle<HAsciiString>,
         has_shape_aspect_relationship_description: bool,
         a_shape_aspect_relationship_description: &Handle<HAsciiString>,
-        a_shape_aspect_relationship_relating_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
-        a_shape_aspect_relationship_related_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+        a_shape_aspect_relationship_relating_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
+        a_shape_aspect_relationship_related_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
         a_path: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     ) {
         self.parent.init(
@@ -216,7 +222,11 @@ impl StepShapeDimensionalSize {
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
-    pub fn init(&self, a_applies_to: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, a_name: &Handle<HAsciiString>) {
+    pub fn init(
+        &self,
+        a_applies_to: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+        a_name: &Handle<HAsciiString>,
+    ) {
         let mut state = self.state.write();
         state.the_applies_to = a_applies_to.clone();
         state.the_name = a_name.clone();

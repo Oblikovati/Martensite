@@ -74,10 +74,14 @@ impl IFSelectSelectExplore for STEPSelectionsSelectAssembly {
         if let Some(live) = cdsr.get() {
             return Ok(is_of_nauo(&live.represented_product_relation()));
         }
-        if start.cast::<dyn crate::StepEntityBase<StepReprMappedItem>>().is_some() {
-            let rep = entities_of(g.sharings(start)?)?
-                .into_iter()
-                .find(|ent| ent.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some());
+        if start
+            .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+            .is_some()
+        {
+            let rep = entities_of(g.sharings(start)?)?.into_iter().find(|ent| {
+                ent.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+                    .is_some()
+            });
             let Some(rep) = rep else {
                 return Ok(false);
             };
@@ -125,17 +129,30 @@ impl IFSelectSelectExplore for STEPSelectionsSelectFaces {
         if start.is_null() {
             return Ok(false);
         }
-        if start.cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>().is_some() {
+        if start
+            .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+            .is_some()
+        {
             return Ok(true);
         }
-        if start.cast::<dyn crate::StepEntityBase<StepGeomSurface>>().is_some() {
+        if start
+            .cast::<dyn crate::StepEntityBase<StepGeomSurface>>()
+            .is_some()
+        {
             let mut in_face_or_surface = false;
             for sharing in entities_of(g.sharings(start)?)? {
-                if sharing.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some() {
+                if sharing
+                    .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+                    .is_some()
+                {
                     return Ok(true);
                 }
-                if sharing.cast::<dyn crate::StepEntityBase<StepGeomSurface>>().is_some()
-                    || sharing.cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>().is_some()
+                if sharing
+                    .cast::<dyn crate::StepEntityBase<StepGeomSurface>>()
+                    .is_some()
+                    || sharing
+                        .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+                        .is_some()
                 {
                     in_face_or_surface = true;
                 }
@@ -191,12 +208,17 @@ impl IFSelectSelectExplore for STEPSelectionsSelectGSCurves {
         if start.is_null() {
             return Ok(false);
         }
-        if start.cast::<dyn crate::StepEntityBase<StepGeomCurve>>().is_some() {
+        if start
+            .cast::<dyn crate::StepEntityBase<StepGeomCurve>>()
+            .is_some()
+        {
             if start.cast::<StepGeomCompositeCurve>().is_some() {
                 return explore_composite_curve(start, g, explored);
             }
             for sharing in entities_of(g.sharings(start)?)? {
-                if sharing.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some()
+                if sharing
+                    .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+                    .is_some()
                     || sharing.cast::<StepGeomCompositeCurveSegment>().is_some()
                 {
                     return Ok(true);
@@ -216,9 +238,10 @@ fn explore_composite_curve(
     g: &InterfaceGraph,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<bool, Failure> {
-    let set = entities_of(g.sharings(start)?)?
-        .into_iter()
-        .find(|ent| ent.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some());
+    let set = entities_of(g.sharings(start)?)?.into_iter().find(|ent| {
+        ent.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+            .is_some()
+    });
     let Some(set) = set else {
         return Ok(false);
     };

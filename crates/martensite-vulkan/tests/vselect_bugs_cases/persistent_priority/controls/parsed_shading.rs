@@ -2,8 +2,8 @@
 use super::*;
 use crate::viewer_objects::PrimitiveArrayObject;
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfQuadrangles, Graphic3dArraySource, Graphic3dAspectsMembers as _, Graphic3dAspectsSource,
-    Graphic3dMaterialAspect, Graphic3dStructureMembers as _,
+    Graphic3dArrayOfQuadrangles, Graphic3dArraySource, Graphic3dAspectsMembers as _,
+    Graphic3dAspectsSource, Graphic3dMaterialAspect, Graphic3dStructureMembers as _,
 };
 use martensite_tkv3d::ais::PrimitiveArrayPresentation;
 

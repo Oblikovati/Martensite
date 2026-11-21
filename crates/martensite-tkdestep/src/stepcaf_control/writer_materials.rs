@@ -29,7 +29,8 @@ use martensite_tkxsbase::interface::{InterfaceHGraph, InterfaceModelEntities};
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
 use std::collections::HashMap;
 
-type RepresentationMap = HashMap<Vec<u8>, Handle<dyn crate::StepEntityBase<StepReprRepresentation>>>;
+type RepresentationMap =
+    HashMap<Vec<u8>, Handle<dyn crate::StepEntityBase<StepReprRepresentation>>>;
 
 /// `FindPDSforRI`: the product definition shape and context of a representation item.
 fn find_pds_for_item(
@@ -38,11 +39,15 @@ fn find_pds_for_item(
     pds: &mut Handle<StepReprProductDefinitionShape>,
     context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
 ) -> Result<(), Failure> {
-    if entity.cast::<dyn crate::StepEntityBase<StepReprRepresentationItem>>().is_null() {
+    if entity
+        .cast::<dyn crate::StepEntityBase<StepReprRepresentationItem>>()
+        .is_null()
+    {
         return Ok(());
     }
     for sharing in sharings_of(graph, entity)? {
-        let representation: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = sharing.cast();
+        let representation: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
+            sharing.cast();
         if representation.is_null() {
             continue;
         }

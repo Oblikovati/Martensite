@@ -46,9 +46,12 @@ fn read_fea_model(
     let mut sub2 = 0;
     if data.read_sub_list(num, 2, messages.items, ach, &mut sub2, false, 0, 0)? {
         let count = data.nb_params(sub2)?;
-        fields.items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
+        fields.items = step_new_array1::<
+            Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        >(1, count)?;
         for rank in 1..=count {
-            let mut item = Handle::<dyn crate::StepEntityBase<StepReprRepresentationItem>>::default();
+            let mut item =
+                Handle::<dyn crate::StepEntityBase<StepReprRepresentationItem>>::default();
             data.read_entity(
                 sub2,
                 rank,

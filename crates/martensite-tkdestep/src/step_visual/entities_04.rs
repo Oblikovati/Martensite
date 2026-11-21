@@ -159,7 +159,11 @@ impl StepVisualFillAreaStyleColour {
         get fill_colour = fill_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_fill_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_fill_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    ) {
         let mut state = self.state.write();
         state.name = a_name.clone();
         state.fill_colour = a_fill_colour.clone();
@@ -209,7 +213,9 @@ impl StepVisualOverRidingStyledItem {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        a_styles: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        >,
         a_item: &Handle<dyn Transient>,
         a_over_ridden_style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     ) {

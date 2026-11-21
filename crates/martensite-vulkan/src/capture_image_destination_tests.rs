@@ -95,7 +95,10 @@ fn valid_counting_destination_observes_projection_allocation_and_type_callbacks(
         .write_image(&destination, Graphic3dBufferType::Rgba, 0)
         .unwrap();
     assert_eq!(destination.callbacks.load(Ordering::Relaxed), 3);
-    assert!(std::ptr::eq(destination.original_image_base().unwrap(), &destination.inner.base));
+    assert!(std::ptr::eq(
+        destination.original_image_base().unwrap(),
+        &destination.inner.base
+    ));
     assert_eq!(destination.callbacks.load(Ordering::Relaxed), 4);
     assert_eq!(
         destination.inner.base.data().data.row(0).unwrap(),

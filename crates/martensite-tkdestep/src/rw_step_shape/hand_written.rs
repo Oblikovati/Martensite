@@ -42,7 +42,9 @@ fn face_bound_orientation(
 }
 
 /// Whether the ends are two distinct vertices at equal points, within `Precision::confusion`.
-fn are_ends_match(edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>) -> Result<bool, Failure> {
+fn are_ends_match(
+    edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
+) -> Result<bool, Failure> {
     let start = edge_curve.edge_start().cast::<StepShapeVertexPoint>();
     let end = edge_curve.edge_end().cast::<StepShapeVertexPoint>();
     if start == end {
@@ -135,7 +137,9 @@ fn other_face_bound_orientation(
     let mut sharing = share_tool.sharings(&edge_loop)?;
     sharing.select_type(StepShapeFaceBound::static_type(), true);
     sharing.start();
-    let face_bound = sharing.value()?.cast::<dyn crate::StepEntityBase<StepShapeFaceBound>>();
+    let face_bound = sharing
+        .value()?
+        .cast::<dyn crate::StepEntityBase<StepShapeFaceBound>>();
     Ok(face_bound
         .get()
         .map_or(running, |bound| bound.orientation()))
@@ -158,7 +162,9 @@ impl RwStepShapeRwFaceBound {
         // The variable outlives the loop, so an orientation found for one edge stays for
         // the next edge whose links are missing.
         let mut other_orientation = true;
-        let edge_loop = ent.bound().cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>();
+        let edge_loop = ent
+            .bound()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>();
         let Some(the_loop) = edge_loop.get() else {
             return Ok(());
         };

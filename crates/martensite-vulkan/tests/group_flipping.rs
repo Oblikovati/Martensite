@@ -75,12 +75,18 @@ fn ordered_nested_commands_restore_ordinary_geometry_and_keep_selection_flipper(
         .camera()
         .set_up(&Direction3::new(0., -1., 0.).unwrap());
     scene.group.set_flipping_options(true, &Axis2::default());
-    scene.group.add_primitive_array(&scene.vertices.upcast(), true);
+    scene
+        .group
+        .add_primitive_array(&scene.vertices.upcast(), true);
     scene.group.set_flipping_options(true, &Axis2::default());
-    scene.group.add_primitive_array(&scene.vertices.upcast(), true);
+    scene
+        .group
+        .add_primitive_array(&scene.vertices.upcast(), true);
     scene.group.set_flipping_options(false, &Axis2::default());
     scene.group.set_flipping_options(false, &Axis2::default());
-    scene.group.add_primitive_array(&scene.vertices.upcast(), true);
+    scene
+        .group
+        .add_primitive_array(&scene.vertices.upcast(), true);
     scene.render_view().try_redraw().unwrap();
     let frame = device.last_frame();
     assert_eq!(
@@ -116,7 +122,9 @@ fn flipping_is_camera_dependent_and_clear_removes_the_brackets() {
     scene
         .group
         .set_group_primitives_aspect(&scene::unlit_style([1., 0., 0., 1.]));
-    scene.group.add_primitive_array(&scene.vertices.upcast(), true);
+    scene
+        .group
+        .add_primitive_array(&scene.vertices.upcast(), true);
     scene.render_view().try_redraw().unwrap();
     assert_ne!(
         before.draws()[0].clip_transform(),

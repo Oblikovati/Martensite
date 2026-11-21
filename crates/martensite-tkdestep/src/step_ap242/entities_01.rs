@@ -129,7 +129,9 @@ impl StepAP242ItemIdentifiedRepresentationUsage {
         the_description: &Handle<HAsciiString>,
         the_definition: &StepAP242ItemIdentifiedRepresentationUsageDefinition,
         the_used_representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
-        the_identified_item: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        the_identified_item: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
     ) {
         let mut state = self.state.write();
         state.name = the_name.clone();

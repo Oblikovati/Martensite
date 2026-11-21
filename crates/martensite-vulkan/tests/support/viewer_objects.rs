@@ -12,8 +12,8 @@ use martensite_tkg3d::geom::{GeomCartesianPoint, GeomCircle};
 use martensite_tkgeombase::gc::MakeCircle;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfPolylines, Graphic3dArraySource, Graphic3dArrayOfSegments,
-    Graphic3dArrayOfTriangles, Graphic3dAspectsMembers as _,
+    Graphic3dArrayOfPolylines, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
+    Graphic3dArraySource, Graphic3dAspectsMembers as _,
 };
 use martensite_tkv3d::ais::{AisCircle, AisInteractiveObject, AisPoint};
 use martensite_tkv3d::prs_mgr::PrsMgrPresentableObjectMembers as _;

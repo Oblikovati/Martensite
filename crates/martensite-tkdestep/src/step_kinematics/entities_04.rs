@@ -90,8 +90,12 @@ impl StepKinematicsLowOrderKinematicPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,
@@ -231,8 +235,12 @@ impl StepKinematicsMechanismRepresentation {
     pub fn init(
         &self,
         the_representation_name: &Handle<HAsciiString>,
-        the_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
-        the_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        the_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        the_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         the_represented_topology: &StepKinematicsKinematicTopologyRepresentationSelect,
     ) {
         self.parent.init(

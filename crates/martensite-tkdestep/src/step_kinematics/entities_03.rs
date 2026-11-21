@@ -37,8 +37,12 @@ impl StepKinematicsLinearFlexibleAndPinionPair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_pinion_radius: f64,
     ) {
@@ -78,8 +82,12 @@ impl StepKinematicsLinearFlexibleAndPlanarCurvePair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_pair_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         the_orientation: bool,
@@ -140,8 +148,12 @@ impl StepKinematicsLowOrderKinematicPair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_tx: bool,
         the_ty: bool,
@@ -201,7 +213,9 @@ impl StepKinematicsLowOrderKinematicPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_translation_x: f64,
         the_actual_translation_y: f64,
         the_actual_translation_z: f64,

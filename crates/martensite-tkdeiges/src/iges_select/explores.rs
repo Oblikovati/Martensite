@@ -1,5 +1,4 @@
 //! The selections that go down the structure of entities to the geometry they hold.
-use martensite_tkernel::standard::project_interface;
 use crate::iges_basic::{IgesBasicGroupSource, IgesBasicSingleParent};
 use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataSingleParentEntity;
@@ -12,6 +11,7 @@ use crate::iges_solid::{
 };
 use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::project_interface;
 use martensite_tkernel::{
     impl_transient,
     standard::{Failure, Handle, RuntimeTyped},
@@ -104,7 +104,10 @@ pub(super) fn explore_group(
     ent: &Handle<dyn Transient>,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<bool, Failure> {
-    let Some(group) = ent.get().and_then(project_interface::<dyn IgesBasicGroupSource>) else {
+    let Some(group) = ent
+        .get()
+        .and_then(project_interface::<dyn IgesBasicGroupSource>)
+    else {
         return Ok(false);
     };
     let live = group.group_base();

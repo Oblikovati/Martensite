@@ -16,7 +16,11 @@ fn current_filename_preserves_native_c_string_bytes() {
     assert_eq!(object.texture_file().as_bytes_with_nul(), b"ABC\0");
     let base = object.textured_shape_base();
     assert_eq!(base.fields.read().texture_file.as_bytes(), b"ABC\0tail");
-    base.fields.write().texture_file.set_value_char(1, b'Z').unwrap();
+    base.fields
+        .write()
+        .texture_file
+        .set_value_char(1, b'Z')
+        .unwrap();
     assert_eq!(object.texture_file().as_bytes(), b"ZBC");
     base.fields.write().texture_file.truncate(0).unwrap();
     assert_eq!(object.texture_file().as_bytes(), b"");

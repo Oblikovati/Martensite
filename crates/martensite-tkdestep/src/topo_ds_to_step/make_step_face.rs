@@ -47,7 +47,10 @@ impl TopoDSToStepMakeStepFace {
         made.init(face, tool, fp, factors)?;
         Ok(made)
     }
-    fn finish(&mut self, result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>) {
+    fn finish(
+        &mut self,
+        result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+    ) {
         self.my_error = TopoDSToStepMakeFaceError::FaceDone;
         self.my_result = result;
         self.root.done = true;
@@ -69,7 +72,10 @@ impl TopoDSToStepMakeStepFace {
     fn linking_face(
         face: &Face,
         fp: &Handle<TransferFinderProcess>,
-    ) -> Result<Option<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>>, Failure> {
+    ) -> Result<
+        Option<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>>,
+        Failure,
+    > {
         if !step_model_of(fp)?.internal_parameters().write_nonmanifold {
             return Ok(None);
         }
@@ -178,7 +184,8 @@ impl TopoDSToStepMakeStepFace {
                 add_warning(fp, face, " a Wire not mapped")?;
                 continue;
             }
-            let bound_loop: Handle<dyn crate::StepEntityBase<StepShapeLoop>> = maker.value()?.cast();
+            let bound_loop: Handle<dyn crate::StepEntityBase<StepShapeLoop>> =
+                maker.value()?.cast();
             // CAS.CADE face orientation:
             // when a face is reversed in a shell, the orientation of the underlying
             // topology is implicitly reversed. This is not the case in Step.
@@ -238,7 +245,10 @@ impl TopoDSToStepMakeStepFace {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root.check_done("TopoDSToStepMakeStepFace::Value()")?;
         Ok(self.my_result.clone())
     }

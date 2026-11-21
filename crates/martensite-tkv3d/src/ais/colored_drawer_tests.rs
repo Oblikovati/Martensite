@@ -6,7 +6,9 @@ use martensite_tkernel::{
 };
 use martensite_tkservice::{
     aspect::AspectTypeOfLine,
-    graphic3d::{Graphic3dAspectsLineMembers, Graphic3dAspectsMembers, Graphic3dPresentationAttributesSource},
+    graphic3d::{
+        Graphic3dAspectsLineMembers, Graphic3dAspectsMembers, Graphic3dPresentationAttributesSource,
+    },
 };
 use std::fmt::Write;
 
@@ -16,7 +18,8 @@ fn linked_colored_drawer() -> (Handle<Prs3dDrawer>, Handle<dyn AisColoredDrawerS
     let line =
         Prs3dLineAspect::new(Color::named(NamedColor::BLUE), AspectTypeOfLine::Solid, 2.5).unwrap();
     defaults.set_line_aspect(Handle::new(line));
-    let drawer = Handle::new(AisColoredDrawer::new(&defaults)).into_upcast::<dyn AisColoredDrawerSource>();
+    let drawer =
+        Handle::new(AisColoredDrawer::new(&defaults)).into_upcast::<dyn AisColoredDrawerSource>();
     (defaults, drawer)
 }
 fn ownership_bits(drawer: &AisColoredDrawer) -> String {

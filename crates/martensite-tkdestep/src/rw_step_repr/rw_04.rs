@@ -93,11 +93,14 @@ impl RwStepReprRwConstructiveGeometryRepresentation {
             return Ok(());
         }
         rw_block_0179!(a_items, a_name, ach, data, num);
-        let mut an_ent: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+        let mut an_ent: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         let mut nsub: i32 = Default::default();
         if data.read_sub_list(num, 2, "items", ach, &mut nsub, false, 0, 0)? {
             let nb: i32 = data.nb_params(nsub)?;
-            a_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb)?;
+            a_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, nb)?;
             for i in 1..=nb {
                 if data.read_entity(
                     nsub,
@@ -111,7 +114,9 @@ impl RwStepReprRwConstructiveGeometryRepresentation {
                 }
             }
         }
-        let mut a_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = Default::default();
+        let mut a_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         data.read_entity(
             num,
             3,

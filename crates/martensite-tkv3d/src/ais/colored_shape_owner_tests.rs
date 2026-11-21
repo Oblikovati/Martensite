@@ -1,7 +1,4 @@
 //! Actual native parent defaults and custom-drawer destructor ordering replay.
-use martensite_tkservice::graphic3d::{
-    Graphic3dPresentationAttributesBase, Graphic3dPresentationAttributesSource,
-};
 use super::*;
 use crate::select_mgr::SelectMgrEntityOwnerMembers;
 use crate::select3d::Select3DSensitiveEntityMembers;
@@ -9,6 +6,9 @@ use crate::{prs_mgr::*, select_mgr::SelectMgrSelectableObject};
 use martensite_tkernel::standard::{Handle, RuntimeTyped, WeakHandle};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dPresentationAttributesBase, Graphic3dPresentationAttributesSource,
+};
 use martensite_tkservice::{graphic3d::Graphic3dStructureManager, null_driver::NullGraphicDriver};
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};

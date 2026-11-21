@@ -86,7 +86,10 @@ impl TopoDSToStepMakeStepVertex {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root
             .check_done("TopoDSToStepMakeStepVertex::Value()")?;
         Ok(self.my_result.clone())

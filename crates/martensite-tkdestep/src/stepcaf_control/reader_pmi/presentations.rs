@@ -294,9 +294,14 @@ pub(in crate::stepcaf_control) fn read_connection_points(
             factor = local.length_factor();
         }
     }
-    if let Some(size) = gdt.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().get() {
+    if let Some(size) = gdt
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+        .get()
+    {
         // retrieve derived geometry
-        let aspect = size.applies_to().cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>();
+        let aspect = size
+            .applies_to()
+            .cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>();
         if aspect.is_null() {
             return Ok(());
         }
@@ -309,7 +314,10 @@ pub(in crate::stepcaf_control) fn read_connection_points(
             }
             live_object.set_connection_name(&found.name);
         }
-    } else if let Some(location) = gdt.cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>().get() {
+    } else if let Some(location) = gdt
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+        .get()
+    {
         // retrieve derived geometry
         let first_aspect = location
             .relating_shape_aspect()

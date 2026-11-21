@@ -1,8 +1,8 @@
 //! Fixed inputs for schema clock and type migration tests.
 #[path = "scripted_driver.rs"]
 mod scripted_driver;
-pub use scripted_driver::ScriptedDriver;
 use martensite_tkernel::storage::{CreationDateSource, MigrationFile, MigrationSource};
+pub use scripted_driver::ScriptedDriver;
 
 /// A clock stuck on 2 March 2001.
 pub struct FixedClock;

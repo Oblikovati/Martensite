@@ -97,7 +97,8 @@ impl DimensionValues {
         item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
-        let with_unit = item.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>();
+        let with_unit =
+            item.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>();
         let live = step_live(&with_unit, WHERE)?;
         let measure = live.get_measure_with_unit();
         let is_length = item
@@ -130,7 +131,8 @@ impl DimensionValues {
         item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
-        let with_qualifier = item.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnitAndQRI>>();
+        let with_qualifier =
+            item.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnitAndQRI>>();
         let live = step_live(&with_qualifier, WHERE)?;
         let measure = live.get_measure_with_unit();
         let is_length = item
@@ -175,7 +177,10 @@ impl DimensionValues {
             if item.is_null() {
                 continue;
             }
-            if item.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>().is_some() {
+            if item
+                .cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>()
+                .is_some()
+            {
                 self.read_measure_item(&item, factors)?;
             } else if item
                 .cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnitAndQRI>>()
@@ -376,15 +381,17 @@ fn set_path(
     let Some(usage) = usage.get() else {
         return Ok(false);
     };
-    let item: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>> = if usage.nb_identified_item() > 0 {
-        usage.identified_item_value(1)?.cast()
-    } else {
-        Handle::default()
-    };
+    let item: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>> =
+        if usage.nb_identified_item() > 0 {
+            usage.identified_item_value(1)?.cast()
+        } else {
+            Handle::default()
+        };
     if item.is_null() {
         return Ok(false);
     }
-    let holder: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = first_of(&session.sharings(&item.cast())?);
+    let holder: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+        first_of(&session.sharings(&item.cast())?);
     let shape = session.shape_at(find_shape_index_for_dgt(&holder.cast(), session)?)?;
     let edge = if shape.is_null() {
         Default::default()
@@ -445,8 +452,10 @@ pub(super) fn set_dim_object_to_xcaf(
     session: &SessionGraph,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {
-    let size = entity.cast::<dyn crate::StepEntityBase<crate::step_shape::StepShapeDimensionalSize>>();
-    let location = entity.cast::<dyn crate::StepEntityBase<crate::step_shape::StepShapeDimensionalLocation>>();
+    let size =
+        entity.cast::<dyn crate::StepEntityBase<crate::step_shape::StepShapeDimensionalSize>>();
+    let location =
+        entity.cast::<dyn crate::StepEntityBase<crate::step_shape::StepShapeDimensionalLocation>>();
     if size.is_null() && location.is_null() {
         return Ok(());
     }

@@ -284,7 +284,8 @@ mod tests {
             StepBasicSiPrefix::SpMilli,
             StepBasicSiUnitName::SunRadian,
         );
-        let units = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, 1).unwrap();
+        let units =
+            step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, 1).unwrap();
         step_array1_set(&units, 1, unit.cast(), WHERE).unwrap();
         let context = Handle::new(StepReprGlobalUnitAssignedContext::new());
         context.init(
@@ -374,7 +375,8 @@ mod tests {
                 .unwrap()
                 .is_null()
         );
-        let units = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, 0).unwrap();
+        let units =
+            step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, 0).unwrap();
         let context = Handle::new(StepReprGlobalUnitAssignedContext::new());
         context.init(
             &Handle::new(HAsciiString::new("")),

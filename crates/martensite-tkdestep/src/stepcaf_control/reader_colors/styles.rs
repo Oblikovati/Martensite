@@ -23,7 +23,10 @@ enum ComponentShape {
 
 impl StyleContext<'_> {
     /// Whether a style is among the invisible ones.
-    fn is_visible_style(&self, style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>) -> Result<bool, Failure> {
+    fn is_visible_style(
+        &self,
+        style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    ) -> Result<bool, Failure> {
         let key: Handle<dyn Transient> = style.cast();
         Ok(!step_live(self.invisible, WHERE)?
             .sequence(|items| items.iter().any(|item| *item == key)))
@@ -117,13 +120,19 @@ impl StyleContext<'_> {
         Ok(())
     }
     /// `set_style`: the style of parts and instances.
-    fn set_style(&self, style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>) -> Result<(), Failure> {
+    fn set_style(
+        &self,
+        style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    ) -> Result<(), Failure> {
         let Some(live) = style.get() else {
             return Ok(());
         };
         let tr = step_live(self.ws, WHERE)?.transfer_reader();
         let tp = step_live(&tr, WHERE)?.transient_process();
-        if let Some(overriding) = style.view::<dyn crate::StepEntityBase<StepVisualOverRidingStyledItem>>().get() {
+        if let Some(overriding) = style
+            .view::<dyn crate::StepEntityBase<StepVisualOverRidingStyledItem>>()
+            .get()
+        {
             self.set_style(&overriding.over_ridden_style())?;
             let component = style.cast::<StepVisualContextDependentOverRidingStyledItem>();
             if component.is_some() {
@@ -196,7 +205,8 @@ fn is_overridden(
     is_root: bool,
 ) -> Result<bool, Failure> {
     for sharing in graph.sharings(&style.cast())?.content() {
-        let overriding = sharing.view::<dyn crate::StepEntityBase<StepVisualOverRidingStyledItem>>();
+        let overriding =
+            sharing.view::<dyn crate::StepEntityBase<StepVisualOverRidingStyledItem>>();
         let Some(overriding) = overriding.get() else {
             continue;
         };
@@ -204,7 +214,10 @@ fn is_overridden(
             return Ok(true);
         }
         let item = overriding.item_ap242()?.value();
-        if item.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some() {
+        if item
+            .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+            .is_some()
+        {
             return Ok(true);
         }
     }

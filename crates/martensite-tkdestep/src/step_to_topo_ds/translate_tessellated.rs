@@ -175,7 +175,12 @@ impl StepToTopoDSTranslateFace {
     reason = "the two loops read each of these"
 )]
 fn translate_items(
-    items: &mut dyn FnMut(i32) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>, Failure>,
+    items: &mut dyn FnMut(
+        i32,
+    ) -> Result<
+        Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>,
+        Failure,
+    >,
     count: i32,
     translator: &mut StepToTopoDSTranslateFace,
     tool: &mut StepToTopoDSTool,

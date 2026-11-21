@@ -194,7 +194,8 @@ impl RwStepVisualRwCurveStyle {
         data.read_entity_select(num, 2, "curve_font", ach, &mut a_curve_font)?;
         let mut a_curve_width: StepBasicSizeSelect = Default::default();
         data.read_entity_select(num, 3, "curve_width", ach, &mut a_curve_width)?;
-        let mut a_curve_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> = Default::default();
+        let mut a_curve_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> =
+            Default::default();
         data.read_entity(
             num,
             4,

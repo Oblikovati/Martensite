@@ -87,13 +87,17 @@ impl RwStepVisualRwAnnotationCurveOccurrenceAndGeomReprItem {
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
         data.named_for_complex_short("STYLED_ITEM", "STYITM", num0, &mut num, ach);
-        let mut a_styles: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>> =
+        let mut a_styles: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        > = Default::default();
+        let mut an_ent: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> =
             Default::default();
-        let mut an_ent: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> = Default::default();
         let mut nsub: i32 = Default::default();
         if data.read_sub_list(num, 1, "styles", ach, &mut nsub, false, 0, 0)? {
             let nb: i32 = data.nb_params(nsub)?;
-            a_styles = step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>(1, nb)?;
+            a_styles = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>,
+            >(1, nb)?;
             for i in 1..=nb {
                 if data.read_entity(
                     nsub,

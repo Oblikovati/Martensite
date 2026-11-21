@@ -39,7 +39,8 @@ impl RwStepVisualRwTessellatedConnectingEdge {
         );
         let mut a_smooth: StepDataLogical = Default::default();
         the_data.read_logical(the_num, 5, "smooth", the_check, &mut a_smooth)?;
-        let mut a_face1: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>> = Default::default();
+        let mut a_face1: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>> =
+            Default::default();
         the_data.read_entity(
             the_num,
             6,
@@ -48,7 +49,8 @@ impl RwStepVisualRwTessellatedConnectingEdge {
             StepVisualTessellatedFace::static_type(),
             &mut a_face1,
         )?;
-        let mut a_face2: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>> = Default::default();
+        let mut a_face2: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>> =
+            Default::default();
         the_data.read_entity(
             the_num,
             7,

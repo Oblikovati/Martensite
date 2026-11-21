@@ -55,7 +55,9 @@ fn rgb_key(values: [f64; 3]) -> [u64; 3] {
 impl StepConstructStyles {
     /// `encode_color(Col)`: a predefined colour entity when the colour is one of the colours STEP
     /// predefines, otherwise an RGB one.
-    pub fn encode_color(color: &Color) -> Result<Handle<dyn crate::StepEntityBase<StepVisualColour>>, Failure> {
+    pub fn encode_color(
+        color: &Color,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualColour>>, Failure> {
         // detect if color corresponds to one of pre-defined colors
         if let Some(name) = predefined_name(color) {
             return Ok(new_predefined(name).into_upcast());

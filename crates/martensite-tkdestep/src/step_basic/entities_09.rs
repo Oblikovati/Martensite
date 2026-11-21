@@ -397,7 +397,9 @@ impl StepBasicProduct {
         a_id: &Handle<HAsciiString>,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_frame_of_reference: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>>,
+        a_frame_of_reference: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>,
+        >,
     ) {
         let mut state = self.state.write();
         state.id = a_id.clone();

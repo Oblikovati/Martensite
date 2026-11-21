@@ -114,7 +114,8 @@ impl StepControlActorRead {
                 self.prepare_units(&rep, tp, &mut local)?;
                 reset_units = true;
             }
-            let shape_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = rep.cast();
+            let shape_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
+                rep.cast();
             let mut binder: Handle<dyn TransferBinder> = Handle::default();
             if shape_rep.is_some() {
                 binder = if live_tp.is_bound(&shape_rep.cast()) {
@@ -164,12 +165,17 @@ impl StepControlActorRead {
             if !scope.more() {
                 break;
             }
-            if item.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>().is_null() {
+            if item
+                .cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>()
+                .is_null()
+            {
                 continue;
             }
             let binder: Handle<dyn TransferBinder> =
                 if is_exactly::<StepReprShapeRepresentationRelationship>(&item) {
-                    let srr: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> = item.cast();
+                    let srr: Handle<
+                        dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>,
+                    > = item.cast();
                     let is_rep1 = as_rep == step_live(&srr, "StepControlActorRead")?.rep1();
                     let nb_rep = if is_rep1 { 2 } else { 1 };
                     self.transfer_srr(&srr, tp, factors, nb_rep, use_trsf, &scope.next(1.0))?

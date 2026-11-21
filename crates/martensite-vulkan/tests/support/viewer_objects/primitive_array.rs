@@ -8,10 +8,10 @@ use martensite_tkernel::standard::{Failure, Handle, HandleReference};
 use martensite_tkmath::toploc::Location;
 use martensite_tkservice::aspect::AspectTypeOfFacingModel;
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfPrimitives, Graphic3dArraySource, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
-    Graphic3dAspectsReplaceMap, Graphic3dAspectsSource, Graphic3dGroupMembers as _,
-    Graphic3dPresentationAttributesSource as _, Graphic3dStructureMembers as _,
-    Graphic3dStructureSource,
+    Graphic3dArrayOfPrimitives, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
+    Graphic3dArraySource, Graphic3dAspectsReplaceMap, Graphic3dAspectsSource,
+    Graphic3dGroupMembers as _, Graphic3dPresentationAttributesSource as _,
+    Graphic3dStructureMembers as _, Graphic3dStructureSource,
 };
 use martensite_tkv3d::ais::{AisInteractiveObject, AisInteractiveObjectBase};
 use martensite_tkv3d::prs_mgr::{

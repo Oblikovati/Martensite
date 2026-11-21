@@ -144,10 +144,12 @@ impl RwStepVisualRwDraughtingModel {
             let num2: i32 = sub2;
             let nb0: i32 = data.nb_params(num2)?;
             if nb0 > 0 {
-                a_representation_items =
-                    step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb0)?;
+                a_representation_items = step_new_array1::<
+                    Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+                >(1, nb0)?;
                 for i0 in 1..=nb0 {
-                    let mut an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+                    let mut an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                        Default::default();
                     data.read_entity(
                         num2,
                         i0,
@@ -160,8 +162,9 @@ impl RwStepVisualRwDraughtingModel {
                 }
             }
         }
-        let mut a_representation_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> =
-            Default::default();
+        let mut a_representation_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         data.read_entity(
             num,
             3,

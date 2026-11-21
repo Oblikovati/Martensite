@@ -98,7 +98,12 @@ fn shared_mutation_through_base_handles() {
     ));
     assert_eq!(erased.ref_count(), 2);
     assert!(erased.is_instance_name("Geom2d_Circle"));
-    for base in ["Geom2d_Conic", "Geom2d_Curve", "Geom2d_Geometry", "Standard_Transient"] {
+    for base in [
+        "Geom2d_Conic",
+        "Geom2d_Curve",
+        "Geom2d_Geometry",
+        "Standard_Transient",
+    ] {
         assert!(erased.is_kind_name(base), "{base}");
     }
 }
@@ -106,15 +111,24 @@ fn shared_mutation_through_base_handles() {
 // Evaluation representations: validation, mapped evaluation and clearing on Transform.
 #[test]
 fn evaluation_representation_is_validated_and_used() {
-    let owner = Handle::new(Geom2dOffsetCurve::new(&circle(1.0).into_upcast(), 1.0, false).unwrap());
+    let owner =
+        Handle::new(Geom2dOffsetCurve::new(&circle(1.0).into_upcast(), 1.0, false).unwrap());
     let own = Handle::new(RepCurveDescFull::new(owner.upcast()));
-    let error = owner.set_eval_representation(own.into_upcast()).err().unwrap();
+    let error = owner
+        .set_eval_representation(own.into_upcast())
+        .err()
+        .unwrap();
     assert_eq!(error.exception_type(), "Standard_ProgramError");
     let map = Map1d {
         scale: 2.0,
         offset: 0.0,
     };
-    let mapped = Handle::new(RepCurveDescMapped::new(circle(2.0).into_upcast(), 3, None, map));
+    let mapped = Handle::new(RepCurveDescMapped::new(
+        circle(2.0).into_upcast(),
+        3,
+        None,
+        map,
+    ));
     owner.set_eval_representation(mapped.into_upcast()).unwrap();
     let d1: Vector2 = owner.dn(0.0, 1).unwrap();
     assert_eq!((d1.x(), d1.y()), (0.0, 4.0));

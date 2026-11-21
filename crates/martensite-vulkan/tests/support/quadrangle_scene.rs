@@ -62,9 +62,10 @@ impl QuadrangleScene {
             if mode == "quad-overlap" { 0.5 } else { 0. },
             false,
         ));
-        self.scene
-            .group
-            .add_primitive_array(&quad_vertices("quad-transparent", offset, 1.).into_upcast(), true);
+        self.scene.group.add_primitive_array(
+            &quad_vertices("quad-transparent", offset, 1.).into_upcast(),
+            true,
+        );
     }
     fn add_layer_occluder(&self, mode: &str, offset: f64) {
         self.occluder.clear(false);
@@ -73,7 +74,10 @@ impl QuadrangleScene {
         }
         let group = self.occluder.new_group().unwrap();
         group.set_primitives_aspect(&quad_aspect([1., 0., 0.], 0., false));
-        group.add_primitive_array(&quad_vertices("quad-transparent", offset, -1.).into_upcast(), true);
+        group.add_primitive_array(
+            &quad_vertices("quad-transparent", offset, -1.).into_upcast(),
+            true,
+        );
         self.occluder.display();
     }
 }

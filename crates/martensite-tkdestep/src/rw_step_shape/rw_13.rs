@@ -186,7 +186,8 @@ impl RwStepShapeRwOrientedClosedShell {
             return Ok(());
         }
         rw_block_0198!(a_name, ach, data, num);
-        let mut a_closed_shell_element: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = Default::default();
+        let mut a_closed_shell_element: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -240,7 +241,8 @@ impl RwStepShapeRwOrientedEdge {
         data.read_string(num, 1, "name", ach, &mut a_name)?;
         data.check_derived(num, 2, "edge_start", ach, false)?;
         data.check_derived(num, 3, "edge_end", ach, false)?;
-        let mut a_edge_element: Handle<dyn crate::StepEntityBase<StepShapeEdge>> = Default::default();
+        let mut a_edge_element: Handle<dyn crate::StepEntityBase<StepShapeEdge>> =
+            Default::default();
         data.read_entity(
             num,
             4,

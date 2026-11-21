@@ -1,10 +1,10 @@
 //! `StepConstructStyles`: reads and writes shape styles such as colour: a list of styles, taken from
 //! the STEP model (reading) or filled by calls to `add_style` (writing).
-use crate::step_entity::StepBaseHandle;
 use super::{StepConstruct, StepConstructRenderingProperties, StepConstructTool};
 use crate::api_header_section::APIHeaderSectionMakeHeader;
 use crate::step_basic::{StepBasicMeasureValueMember, StepBasicSizeSelect};
 use crate::step_data::{StepDataSelectMember, StepDataSelectType, StepDataStepModel};
+use crate::step_entity::StepBaseHandle;
 use crate::step_entity::{HArray1, HSequence, step_array1_set, step_live, step_new_array1};
 use crate::step_geom::StepGeomGeometricRepresentationItem;
 use crate::step_repr::{
@@ -223,7 +223,10 @@ impl StepConstructStyles {
         self.my_styles.extent() as i32
     }
     /// `style`.
-    pub fn style(&self, i: i32) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
+    pub fn style(
+        &self,
+        i: i32,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         Ok(self.my_styles.find_key(i as usize)?.cast())
     }
     /// `nb_root_styles`: the number of override styles.
@@ -231,7 +234,10 @@ impl StepConstructStyles {
         self.my_root_styles.extent() as i32
     }
     /// `root_style`.
-    pub fn root_style(&self, i: i32) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
+    pub fn root_style(
+        &self,
+        i: i32,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         Ok(self.my_root_styles.find_key(i as usize)?.cast())
     }
     /// `clear_styles`: all defined styles and the PSA sequence.
@@ -253,20 +259,21 @@ impl StepConstructStyles {
         override_style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         let styles = single(psa.clone())?;
-        let style: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> = if override_style.is_null() {
-            let style = Handle::new(StepVisualStyledItem::new());
-            style.init(&text("color"), &styles, &item.cast());
-            style.into_upcast()
-        } else {
-            let style = Handle::new(StepVisualOverRidingStyledItem::new());
-            style.init(
-                &text("overriding color"),
-                &styles,
-                &item.cast(),
-                override_style,
-            );
-            style.cast()
-        };
+        let style: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> =
+            if override_style.is_null() {
+                let style = Handle::new(StepVisualStyledItem::new());
+                style.init(&text("color"), &styles, &item.cast());
+                style.into_upcast()
+            } else {
+                let style = Handle::new(StepVisualOverRidingStyledItem::new());
+                style.init(
+                    &text("overriding color"),
+                    &styles,
+                    &item.cast(),
+                    override_style,
+                );
+                style.cast()
+            };
         self.my_styles.add(style.cast());
         // for future using
         self.my_psa.push(psa.clone());
@@ -299,7 +306,9 @@ impl StepConstructStyles {
             return Ok(false);
         }
         // create MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION
-        let elems = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
+        let elems = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+            1, count,
+        )?;
         for i in 1..=count {
             step_array1_set(
                 &elems,

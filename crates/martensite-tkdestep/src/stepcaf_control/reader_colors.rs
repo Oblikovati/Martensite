@@ -233,9 +233,11 @@ fn set_assembly_component_style(
     if representation.is_null() {
         return Ok(());
     }
-    let mut relationship = Handle::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>::default();
+    let mut relationship =
+        Handle::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>::default();
     for sharing in graph.sharings(&representation.cast())?.content() {
-        let found = sharing.cast::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>();
+        let found =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>();
         if found.is_some() {
             relationship = found;
         }

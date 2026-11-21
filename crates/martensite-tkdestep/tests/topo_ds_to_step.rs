@@ -286,7 +286,8 @@ fn an_edge_of_a_face_is_an_edge_curve_on_a_surface_curve() {
     .unwrap();
     assert!(made.is_done());
     assert_eq!(made.error(), TopoDSToStepMakeEdgeError::EdgeDone);
-    let value: Handle<dyn martensite_tkdestep::StepEntityBase<StepShapeEdgeCurve>> = made.value().unwrap().cast();
+    let value: Handle<dyn martensite_tkdestep::StepEntityBase<StepShapeEdgeCurve>> =
+        made.value().unwrap().cast();
     let live = value.get().expect("an edge_curve");
     assert_eq!(
         live.edge_geometry().dynamic_type().unwrap().name(),
@@ -311,7 +312,8 @@ fn a_wire_of_a_box_is_an_edge_loop_of_four_edges() {
     .unwrap();
     assert!(made.is_done());
     // On success never sets the error: its value there is whatever the memory held.
-    let value: Handle<dyn martensite_tkdestep::StepEntityBase<StepShapeEdgeLoop>> = made.value().unwrap().cast();
+    let value: Handle<dyn martensite_tkdestep::StepEntityBase<StepShapeEdgeLoop>> =
+        made.value().unwrap().cast();
     assert_eq!(value.get().expect("an edge_loop").nb_edge_list(), 4);
 }
 

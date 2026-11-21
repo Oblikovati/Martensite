@@ -42,7 +42,11 @@ impl AisShapeDrawerMap {
     }
     /// Binds or replaces a value while retaining the first stored key and node.
     /// Example: `map.bind(&shape.reversed(), &replacement)?`.
-    pub fn bind(&self, key: &Shape, value: &Handle<dyn AisColoredDrawerSource>) -> Result<bool, Failure> {
+    pub fn bind(
+        &self,
+        key: &Shape,
+        value: &Handle<dyn AisColoredDrawerSource>,
+    ) -> Result<bool, Failure> {
         // The borrowed-slot path also serves native same-map expansion without owning input copies.
         self.bind_reference(key, value)
     }

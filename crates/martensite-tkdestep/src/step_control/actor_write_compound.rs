@@ -121,7 +121,8 @@ impl StepControlActorWrite {
                 break;
             }
             let subs: Handle<dyn TransferFinder> = TransferBRep::shape_mapper(fp, item)?.cast();
-            let mut ax1 = Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
+            let mut ax1 =
+                Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
             let mut bnd = self.transfer_sub_shape(
                 &subs,
                 sdr0,

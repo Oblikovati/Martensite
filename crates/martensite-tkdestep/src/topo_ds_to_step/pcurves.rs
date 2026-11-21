@@ -62,7 +62,10 @@ fn pcurve_entity(
     factors: &StepDataFactors,
 ) -> Result<Handle<StepGeomPcurve>, Failure> {
     let made = GeomToStepMakeCurve::from_geom2d(curve, factors)?.value()?;
-    let items = shared_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(vec![made.cast()]);
+    let items =
+        shared_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(vec![
+            made.cast(),
+        ]);
     let context = Handle::new(
         StepGeomGeometricRepresentationContextAndParametricRepresentationContext::new(),
     );

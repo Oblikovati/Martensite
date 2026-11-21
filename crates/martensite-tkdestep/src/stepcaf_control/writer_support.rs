@@ -89,7 +89,8 @@ pub(super) fn find_entities(
     };
     let mut count = 0;
     for index in 1..=list.nb_transients() {
-        let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = list.transient(index)?.cast();
+        let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            list.transient(index)?.cast();
         if item.is_some() {
             count += 1;
             items.push(item.cast());

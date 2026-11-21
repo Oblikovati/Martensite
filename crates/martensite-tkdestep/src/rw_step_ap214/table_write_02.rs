@@ -196,7 +196,11 @@ pub(super) const TABLE_WRITE_02: &[WriteRow] = &[
         StepBasicDesignContext,
         RwStepBasicRwProductDefinitionContext
     ),
-    write_row!(341, StepBasicTimeMeasureWithUnit, RwStepBasicRwMeasureWithUnit),
+    write_row!(
+        341,
+        StepBasicTimeMeasureWithUnit,
+        RwStepBasicRwMeasureWithUnit
+    ),
     write_row!(342, StepBasicRatioUnit, RwStepBasicRwNamedUnit),
     write_row!(343, StepBasicTimeUnit, RwStepBasicRwNamedUnit),
     write_row!(
@@ -224,8 +228,16 @@ pub(super) const TABLE_WRITE_02: &[WriteRow] = &[
         StepBasicApprovalDateTime,
         RwStepBasicRwApprovalDateTime
     ),
-    write_row!(349, StepVisualCameraImage2dWithScale, RwStepVisualRwCameraImage),
-    write_row!(350, StepVisualCameraImage3dWithScale, RwStepVisualRwCameraImage),
+    write_row!(
+        349,
+        StepVisualCameraImage2dWithScale,
+        RwStepVisualRwCameraImage
+    ),
+    write_row!(
+        350,
+        StepVisualCameraImage3dWithScale,
+        RwStepVisualRwCameraImage
+    ),
     write_row!(
         351,
         StepGeomCartesianTransformationOperator2d,

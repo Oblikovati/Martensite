@@ -140,7 +140,8 @@ fn append_styles(
     if count == 0 {
         return Ok(());
     }
-    let new_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
+    let new_items =
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
     for index in 1..=old_length {
         step_array1_set(
             &new_items,

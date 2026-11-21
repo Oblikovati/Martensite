@@ -262,7 +262,8 @@ impl StepAP214RepItemGroup {
             .init(a_group_name, has_group_description, a_group_description);
         let mut state = self.state.write();
         if state.the_representation_item.is_null() {
-            state.the_representation_item = Handle::new(StepReprRepresentationItem::new()).into_upcast();
+            state.the_representation_item =
+                Handle::new(StepReprRepresentationItem::new()).into_upcast();
         }
         drop(state);
         let field_the_representation_item = self.state.read().the_representation_item.clone();

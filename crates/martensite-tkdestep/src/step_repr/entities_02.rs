@@ -52,7 +52,9 @@ impl StepReprConfigurationEffectivity {
     pub fn init(
         &self,
         a_effectivity_id: &Handle<HAsciiString>,
-        a_product_definition_effectivity_usage: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>,
+        a_product_definition_effectivity_usage: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        >,
         a_configuration: &Handle<StepReprConfigurationDesign>,
     ) {
         self.parent
@@ -161,7 +163,9 @@ impl StepReprDataEnvironment {
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_elements: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>>,
+        a_elements: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>,
+        >,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();

@@ -83,7 +83,9 @@ mod tests {
     fn native_ready_aspect_ignores_content_revision_until_synchronization() {
         let images = RetainedTextureImages::default();
         let readiness = RetainedAspectTextures::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(readiness_image(255).into_upcast()));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            readiness_image(255).into_upcast(),
+        ));
         let aspect = Handle::new(Graphic3dAspects::default());
         aspect.set_texture_map(texture.cast());
         let first = readiness
@@ -111,7 +113,9 @@ mod tests {
     fn another_actual_binding_refreshes_the_shared_resource_and_explicit_aspect_rebinds() {
         let images = RetainedTextureImages::default();
         let readiness = RetainedAspectTextures::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(readiness_image(255).into_upcast()));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            readiness_image(255).into_upcast(),
+        ));
         let aspect = Handle::new(Graphic3dAspects::default());
         aspect.set_texture_map(texture.cast());
         readiness.snapshot(&aspect.cast(), &images).unwrap();

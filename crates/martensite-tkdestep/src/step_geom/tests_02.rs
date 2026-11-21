@@ -158,8 +158,12 @@ fn runtime_type_step_geom_composite_curve() {
 #[test]
 fn init_round_trip_step_geom_composite_curve() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_segments =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>>::with_bounds(1, 2).unwrap());
+    let a_segments = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>>::with_bounds(
+            1, 2,
+        )
+        .unwrap(),
+    );
     let a_self_intersect = StepDataLogical::default();
     let object = StepGeomCompositeCurve::new();
     object.init(&a_name, &a_segments, a_self_intersect);

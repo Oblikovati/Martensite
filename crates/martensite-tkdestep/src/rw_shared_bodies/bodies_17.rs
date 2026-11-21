@@ -42,16 +42,18 @@ macro_rules! rw_block_0185 {
             $ach,
             &mut $a_representation_name,
         )?;
-        let mut $a_representation_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>> =
-            Default::default();
+        let mut $a_representation_items: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        > = Default::default();
     };
 }
 pub(crate) use rw_block_0185;
 
 macro_rules! rw_block_0186 {
     ($a_representation_context_of_items:ident, $a_representation_items:ident, $a_representation_name:ident, $ach:ident, $data:ident, $ent:ident, $num:ident) => {
-        let mut $a_representation_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> =
-            Default::default();
+        let mut $a_representation_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         $data.read_entity(
             $num,
             3,

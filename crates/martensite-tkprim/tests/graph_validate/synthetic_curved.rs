@@ -40,7 +40,8 @@ fn BRepGraph_ValidateTest__Synthetic_Sphere_AuditClean() {
     let mut graph = BRepGraph::new();
     graph.clear().unwrap();
     let wire = synthetic_sphere_wire(&mut graph);
-    let sphere = Handle::new(GeomSphericalSurface::new(Axis3::default(), 8.0).unwrap()).into_upcast();
+    let sphere =
+        Handle::new(GeomSphericalSurface::new(Axis3::default(), 8.0).unwrap()).into_upcast();
     let face = synthetic_face(&mut graph, &sphere, wire);
     synthetic_solid(&mut graph, &[face]);
     assert!(audit_graph(&graph).is_valid());

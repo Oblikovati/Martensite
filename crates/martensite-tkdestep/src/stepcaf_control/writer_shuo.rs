@@ -16,8 +16,7 @@ use crate::step_repr::{
 use crate::step_shape::StepShapeContextDependentShapeRepresentation;
 use crate::step_visual::{
     StepVisualInvisibility, StepVisualInvisibleItem,
-    StepVisualMechanicalDesignGeometricPresentationRepresentation,
-    StepVisualStyledItem,
+    StepVisualMechanicalDesignGeometricPresentationRepresentation, StepVisualStyledItem,
 };
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::quantity::{Color, NamedColor};
@@ -277,7 +276,10 @@ fn add_to_mdgpr(
     let old_items = live.items();
     let old_length = step_array1_len(&old_items);
     // create new array of styled items by an olds and new one
-    let new_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, old_length + 1)?;
+    let new_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+        1,
+        old_length + 1,
+    )?;
     for index in 1..=old_length {
         step_array1_set(
             &new_items,

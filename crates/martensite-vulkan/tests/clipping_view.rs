@@ -139,9 +139,9 @@ fn invalid_planes_fail_redraw_and_sphere_generated_cap_textures_render() {
     assert!(scene.render_view().capture().is_err());
     let cap = plane([1., 0., 0., 0.]);
     cap.set_capping(true);
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(Handle::new(
-        martensite_tkservice::image::ImagePixMap::default(),
-    ).into_upcast()));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+        Handle::new(martensite_tkservice::image::ImagePixMap::default()).into_upcast(),
+    ));
     texture.get_params().set_gen_mode(
         Graphic3dTypeOfTextureMode::Sphere,
         martensite_tkernel::ncollection::Vec4::new(1., 0., 0., 0.),

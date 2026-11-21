@@ -75,7 +75,8 @@ pub(crate) use rw_block_0030;
 macro_rules! rw_block_0031 {
     ($a_description:ident, $a_name:ident, $a_related_shape_aspect:ident, $a_relating_shape_aspect:ident, $ach:ident, $data:ident, $ent:ident, $has_description:ident, $num:ident) => {
         rw_block_0102!($a_description, $a_name, $ach, $data, $has_description, $num);
-        let mut $a_relating_shape_aspect: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
+        let mut $a_relating_shape_aspect: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
+            Default::default();
         $data.read_entity(
             $num,
             3,
@@ -84,7 +85,8 @@ macro_rules! rw_block_0031 {
             StepReprShapeAspect::static_type(),
             &mut $a_relating_shape_aspect,
         )?;
-        let mut $a_related_shape_aspect: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
+        let mut $a_related_shape_aspect: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
+            Default::default();
         $data.read_entity(
             $num,
             4,

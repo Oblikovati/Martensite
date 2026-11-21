@@ -29,7 +29,13 @@ fn make_manifold_solid_brep(
     fp: &Handle<TransferFinderProcess>,
     factors: &StepDataFactors,
     progress: &ProgressRange<'_>,
-) -> Result<(Handle<StepShapeManifoldSolidBrep>, StepBaseHandle<StepVisualTessellatedItem>), Failure> {
+) -> Result<
+    (
+        Handle<StepShapeManifoldSolidBrep>,
+        StepBaseHandle<StepVisualTessellatedItem>,
+    ),
+    Failure,
+> {
     let model = step_model_of(fp)?;
     let (mode, tessellated) = {
         let parameters = model.internal_parameters();

@@ -101,7 +101,8 @@ impl RwStepShapeRwManifoldSolidBrep {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_outer: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> = Default::default();
+        let mut a_outer: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> =
+            Default::default();
         data.read_entity(
             num,
             2,

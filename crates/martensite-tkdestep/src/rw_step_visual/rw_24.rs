@@ -27,7 +27,8 @@ impl RwStepVisualRwTextStyleForDefinedFont {
         )? {
             return Ok(());
         }
-        let mut a_text_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> = Default::default();
+        let mut a_text_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> =
+            Default::default();
         data.read_entity(
             num,
             1,

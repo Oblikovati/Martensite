@@ -44,10 +44,13 @@ pub(super) const WHERE: &str = "STEPCAFControlReader";
 /// The labels of the shapes that were transferred.
 pub type STEPCAFControlShapeLabelMap = DataMap<Shape, TdfLabel, ShapeMapHasher>;
 /// The product definitions of a transfer and the external files they refer to.
-pub(super) type PdFileMap =
-    DataMap<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Handle<STEPCAFControlExternFile>>;
+pub(super) type PdFileMap = DataMap<
+    Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+    Handle<STEPCAFControlExternFile>,
+>;
 /// The shapes originating from SDRs and their product definitions.
-pub(super) type ShapePdMap = DataMap<Shape, Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, ShapeMapHasher>;
+pub(super) type ShapePdMap =
+    DataMap<Shape, Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, ShapeMapHasher>;
 
 /// `fill_shapes_map`: all compounds and their components, without location.
 fn fill_shapes_map(shape: &Shape, map: &mut MapOfShape) -> Result<(), Failure> {

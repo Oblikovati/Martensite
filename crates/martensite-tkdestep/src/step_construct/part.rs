@@ -67,7 +67,9 @@ fn new_product_context(schema: i32) -> Handle<dyn crate::StepEntityBase<StepBasi
 }
 
 /// The formation of a schema: AP203 writes the one with a specified source.
-fn new_formation(schema: i32) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>> {
+fn new_formation(
+    schema: i32,
+) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>> {
     if schema != 3 {
         return Handle::new(StepBasicProductDefinitionFormation::new()).into_upcast();
     }
@@ -84,7 +86,10 @@ fn new_definition_context(
     Handle<HAsciiString>,
 ) {
     if schema == 3 {
-        return (Handle::new(StepBasicDesignContext::new()).into_upcast(), text(""));
+        return (
+            Handle::new(StepBasicDesignContext::new()).into_upcast(),
+            text(""),
+        );
     }
     (
         Handle::new(StepBasicProductDefinitionContext::new()).into_upcast(),
@@ -124,7 +129,8 @@ fn new_product(
 ) -> Result<Handle<StepBasicProduct>, Failure> {
     let context = new_product_context(schema);
     live_init(&context, &text(""), ac, &text("mechanical"))?;
-    let contexts = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>(1, 1)?;
+    let contexts =
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>(1, 1)?;
     step_array1_set(&contexts, 1, context, WHERE)?;
     let product = Handle::new(StepBasicProduct::new());
     product.init(name, name, &text(""), &contexts);
@@ -209,20 +215,28 @@ impl StepConstructPart {
         self.my_sdr.clone()
     }
     /// `SRValue`: `SDR->UsedRepresentation()`, null if not done.
-    pub fn sr_value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, Failure> {
+    pub fn sr_value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, Failure> {
         if !self.my_done {
             return Ok(Handle::default());
         }
-        Ok(step_live(&self.my_sdr, WHERE)?.used_representation().into_cast())
+        Ok(step_live(&self.my_sdr, WHERE)?
+            .used_representation()
+            .into_cast())
     }
     /// `SDR->Definition().PropertyDefinition()`.
-    fn property(&self) -> Result<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>, Failure> {
+    fn property(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>, Failure> {
         Ok(step_live(&self.my_sdr, WHERE)?
             .definition()
             .property_definition())
     }
     /// `PD`.
-    pub fn pd(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
+    pub fn pd(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
         Ok(step_live(&self.property()?, WHERE)?
             .definition()
             .product_definition())
@@ -232,11 +246,16 @@ impl StepConstructPart {
         Ok(self.property()?.into_downcast())
     }
     /// `PDF`.
-    pub fn pdf(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>, Failure> {
+    pub fn pdf(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>, Failure>
+    {
         Ok(step_live(&self.pd()?, WHERE)?.formation())
     }
     /// `PDC`.
-    pub fn pdc(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>, Failure> {
+    pub fn pdc(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>, Failure> {
         Ok(step_live(&self.pd()?, WHERE)?.frame_of_reference())
     }
     /// `Product`.
@@ -244,7 +263,9 @@ impl StepConstructPart {
         Ok(step_live(&self.pdf()?, WHERE)?.of_product())
     }
     /// `PC`.
-    pub fn pc(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>, Failure> {
+    pub fn pc(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>, Failure> {
         step_live(&self.product()?, WHERE)?.frame_of_reference_value(1)
     }
     /// `AC`.
@@ -252,11 +273,16 @@ impl StepConstructPart {
         Ok(step_live(&self.pc()?, WHERE)?.frame_of_reference())
     }
     /// `PRPC`.
-    pub fn prpc(&self) -> Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>> {
+    pub fn prpc(
+        &self,
+    ) -> Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>> {
         self.my_prpc.clone()
     }
     /// The category as the owner of its text fields.
-    fn category(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>>, Failure> {
+    fn category(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>>, Failure>
+    {
         Ok(self.my_prpc.clone())
     }
     part_text_fields! {

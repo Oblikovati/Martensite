@@ -57,7 +57,10 @@ pub(super) fn collect_shape_aspect(
         return Ok(());
     }
     // Retrieve Shape_Aspect, connected to Representation_Item from Derived_Shape_Aspect
-    if aspect.cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>().is_some() {
+    if aspect
+        .cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>()
+        .is_some()
+    {
         let deriving: Handle<StepReprShapeAspectDerivingRelationship> =
             first_of(&session.sharings(&aspect.cast())?);
         if let Some(deriving) = deriving.get() {
@@ -74,11 +77,13 @@ pub(super) fn collect_shape_aspect(
     // Find all children Shape_Aspect
     let mut is_simple = true;
     for sharing in session.sharings(&aspect.cast())? {
-        let relationship = sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
-        let Some(relationship) = relationship
-            .get()
-            .filter(|_| sharing.cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>().is_null())
-        else {
+        let relationship =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
+        let Some(relationship) = relationship.get().filter(|_| {
+            sharing
+                .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+                .is_null()
+        }) else {
             continue;
         };
         let related = relationship.related_shape_aspect();
@@ -157,7 +162,8 @@ pub(super) fn read_datums(
             continue;
         };
         for sharing in session.sharings(&datum.cast())? {
-            let relationship = sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
+            let relationship =
+                sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
             let Some(relationship) = relationship.get() else {
                 continue;
             };

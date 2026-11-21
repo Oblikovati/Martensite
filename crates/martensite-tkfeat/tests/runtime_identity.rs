@@ -3,11 +3,11 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{
     Handle, RuntimeType, RuntimeTyped, StandardTransient, Transient,
 };
-use std::sync::Arc;
 use martensite_tkfeat::{
     brep_feat::BRepFeatBuilder,
     loc_ope::{CSIntersector, GeneratedShape, GluedShape, WiresOnShape},
 };
+use std::sync::Arc;
 
 // Reifying the bound proves each public type without an empty runtime helper.
 struct LocalOperationThreadProof<T: ?Sized + Send + Sync>(std::marker::PhantomData<T>);

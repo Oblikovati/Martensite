@@ -12,7 +12,6 @@ use std::f64::consts::PI;
 // Display/Erase/IsDisplayed/UpdateDisplay are pure virtual on the base. V3d_RectangularGrid
 // supplies them in production; these tests only exercise the bounds accessors.
 struct RectGridStub {
-
     base: AspectRectangularGridBase,
 }
 impl_transient!(RectGridStub, "RectGridStub", dyn AspectRectangularGrid,
@@ -21,10 +20,7 @@ impl RectGridStub {
     fn new(theXStep: f64, theYStep: f64) -> Self {
         let base = AspectRectangularGridBase::new(theXStep, theYStep, 0.0, 0.0, 0.0, 0.0, 0.0)
             .expect("valid steps");
-        Self {
-
-            base,
-        }
+        Self { base }
     }
 }
 impl AspectGrid for RectGridStub {
@@ -51,7 +47,6 @@ impl AspectRectangularGrid for RectGridStub {
 }
 
 struct CircGridStub {
-
     base: AspectCircularGridBase,
 }
 impl_transient!(CircGridStub, "CircGridStub", dyn AspectCircularGrid,
@@ -59,10 +54,7 @@ impl_transient!(CircGridStub, "CircGridStub", dyn AspectCircularGrid,
 impl CircGridStub {
     fn new(theRadiusStep: f64, theDivisions: i32) -> Self {
         let base = AspectCircularGridBase::new(theRadiusStep, theDivisions, 0.0, 0.0, 0.0);
-        Self {
-
-            base,
-        }
+        Self { base }
     }
 }
 impl AspectGrid for CircGridStub {

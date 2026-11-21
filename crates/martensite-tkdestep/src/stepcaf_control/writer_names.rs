@@ -270,7 +270,8 @@ fn write_metadata_representation_item(
     let live_values = step_live(&values, WHERE)?;
     live_values.set_name(&name);
     // Add item to representation:
-    let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
+    let items =
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
     step_array1_set(&items, 1, item.clone(), WHERE)?;
     live_values.set_items(&items);
     // Set representation context (reuse from shape representation):

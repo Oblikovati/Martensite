@@ -38,7 +38,6 @@ fn graduated_trihedron_defaults_and_axis_checks() {
 }
 
 struct FakeDriverFactory {
-
     base: Graphic3dGraphicDriverFactoryBase,
 }
 martensite_tkernel::impl_transient!(FakeDriverFactory, "FakeDriverFactory", StandardTransient,
@@ -61,11 +60,7 @@ fn text_of(text: &AsciiString) -> String {
 
 fn factory(name: &str) -> Handle<dyn Graphic3dGraphicDriverFactory> {
     let base = Graphic3dGraphicDriverFactoryBase::new(&AsciiString::from(name));
-    Handle::new(FakeDriverFactory {
-
-        base,
-    })
-    .cast()
+    Handle::new(FakeDriverFactory { base }).cast()
 }
 
 #[test]
@@ -109,7 +104,6 @@ impl CpuTimes for FakeCpuTimes {
 
 #[derive(Default)]
 struct FakeFrameStats {
-
     base: Graphic3dFrameStatsBase,
 }
 martensite_tkernel::impl_transient!(FakeFrameStats, "FakeFrameStats", dyn Graphic3dFrameStats,

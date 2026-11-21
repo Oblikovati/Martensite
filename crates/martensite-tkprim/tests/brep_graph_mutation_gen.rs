@@ -74,7 +74,8 @@ fn BRepGraph_MutationGenEditorTest__EditorCreationRegistersOwnGeneration() {
     let aWire = aGraph.editor().wires().add(&aCoEdges);
 
     let anInnerWires: Vec<WireId> = Vec::new();
-    let aPlane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
+    let aPlane: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     let aFace = aGraph
         .editor()
         .faces()

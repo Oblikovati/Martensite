@@ -28,9 +28,13 @@ impl StepVisualAnnotationFillAreaOccurrence {
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        the_styles: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        >,
         the_item: &Handle<dyn Transient>,
-        the_fill_style_target: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
+        the_fill_style_target: &Handle<
+            dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>,
+        >,
     ) {
         self.parent.init(the_name, the_styles, the_item);
         self.state.write().my_fill_style_target = the_fill_style_target.clone();
@@ -60,7 +64,9 @@ impl StepVisualAnnotationPlane {
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        the_styles: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        >,
         the_item: &Handle<dyn Transient>,
         the_elements: &Handle<HArray1<StepVisualAnnotationPlaneElement>>,
     ) {

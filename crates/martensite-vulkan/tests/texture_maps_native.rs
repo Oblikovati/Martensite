@@ -98,7 +98,9 @@ fn texture_set(maps: &[Option<&[u8]>; 5]) -> Handle<Graphic3dTextureSet> {
     Handle::new(set)
 }
 fn map_texture(ppm: &[u8], unit: usize) -> Handle<dyn Graphic3dTextureMap> {
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(map_pixmap(ppm).into_upcast()));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+        map_pixmap(ppm).into_upcast(),
+    ));
     let unit_value = [
         Graphic3dTextureUnit::BASE_COLOR,
         Graphic3dTextureUnit::EMISSIVE,

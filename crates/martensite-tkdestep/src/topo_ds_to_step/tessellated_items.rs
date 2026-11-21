@@ -140,7 +140,9 @@ pub(super) fn tessellated_solid(
     let solid = Handle::new(StepVisualTessellatedSolid::new());
     let items = items_of_shells(shells)?;
     let array = if items.is_empty() {
-        step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>(1, 0)?
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>(
+            1, 0,
+        )?
     } else {
         shared_array1(items)
     };

@@ -212,7 +212,8 @@ pub(crate) use rw_block_b_0133;
 
 macro_rules! rw_block_b_0134 {
     ($a_assigned_date:ident, $a_role:ident, $ach:ident, $data:ident, $num:ident) => {
-        let mut $a_assigned_date: Handle<dyn crate::StepEntityBase<StepBasicDate>> = Default::default();
+        let mut $a_assigned_date: Handle<dyn crate::StepEntityBase<StepBasicDate>> =
+            Default::default();
         $data.read_entity(
             $num,
             1,

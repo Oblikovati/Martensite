@@ -45,7 +45,8 @@ fn collect_view_shapes(
         }
     }
     for sharing in session.sharings(&representation.cast())? {
-        let relationship = sharing.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
+        let relationship =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
         let Some(relationship) = relationship.get() else {
             continue;
         };
@@ -238,9 +239,9 @@ impl ReaderState {
         let camera = entity.cast::<dyn crate::StepEntityBase<StepVisualCameraModelD3>>();
         let live_camera = step_live(&camera, WHERE)?;
         // find the proper DraughtingModel
-        let model = super::reader_support::first_of::<dyn crate::StepEntityBase<StepVisualDraughtingModel>>(
-            &session.sharings(entity)?,
-        );
+        let model = super::reader_support::first_of::<
+            dyn crate::StepEntityBase<StepVisualDraughtingModel>,
+        >(&session.sharings(entity)?);
         let mut local = *factors;
         if model.is_some() {
             local = factors_of_representation(
@@ -272,7 +273,10 @@ impl ReaderState {
         }
         let (mut shapes, mut gdts) = (Vec::new(), Vec::new());
         for shared in session.shareds(&model.cast())? {
-            if let Some(mapped) = shared.cast::<dyn crate::StepEntityBase<StepReprMappedItem>>().get() {
+            if let Some(mapped) = shared
+                .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+                .get()
+            {
                 let source = mapped.mapping_source();
                 let representation = step_live(&source, WHERE)?.mapped_representation();
                 if representation.is_some() {
@@ -283,7 +287,9 @@ impl ReaderState {
                         &mut shapes,
                     )?;
                 }
-            } else if shared.cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>().is_some()
+            } else if shared
+                .cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>()
+                .is_some()
                 || shared.cast::<StepVisualDraughtingCallout>().is_some()
             {
                 self.gdts_of_annotation(session, &shared, true, &mut gdts)?;
@@ -316,7 +322,9 @@ impl ReaderState {
         let session = SessionGraph::of_process(ws)?;
         for i in 1..=model.nb_entities() {
             let entity = model.value(i)?;
-            if entity.cast::<dyn crate::StepEntityBase<StepVisualCameraModelD3>>().is_some()
+            if entity
+                .cast::<dyn crate::StepEntityBase<StepVisualCameraModelD3>>()
+                .is_some()
                 && !self.read_view(&entity, &session, doc, factors)?
             {
                 return Ok(false);

@@ -188,7 +188,11 @@ impl StepShapeManifoldSolidBrep {
         get outer = outer: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_outer: &Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_outer: &Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>,
+    ) {
         self.state.write().outer = a_outer.cast();
         self.parent.parent.parent.init(a_name);
     }
@@ -281,7 +285,8 @@ impl Default for StepShapeMeasureRepresentationItemAndQualifiedRepresentationIte
             state: Default::default(),
         };
         {
-            object.state.write().my_measure = Handle::new(StepBasicMeasureWithUnit::new()).into_upcast();
+            object.state.write().my_measure =
+                Handle::new(StepBasicMeasureWithUnit::new()).into_upcast();
         }
         object
     }

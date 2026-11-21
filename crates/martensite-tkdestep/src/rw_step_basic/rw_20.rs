@@ -112,7 +112,8 @@ impl RwStepBasicRwProductDefinitionEffectivity {
         }
         let mut a_id: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "id", ach, &mut a_id)?;
-        let mut a_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>> = Default::default();
+        let mut a_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>> =
+            Default::default();
         data.read_entity(
             num,
             2,
@@ -213,7 +214,9 @@ impl RwStepBasicRwProductDefinitionFormationRelationship {
         }
         rw_block_0110!(a_description, a_id, a_name, ach, data, num);
         data.read_string(num, 3, "description", ach, &mut a_description)?;
-        let mut a_relating_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>> = Default::default();
+        let mut a_relating_product_definition_formation: Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        > = Default::default();
         data.read_entity(
             num,
             4,
@@ -222,7 +225,9 @@ impl RwStepBasicRwProductDefinitionFormationRelationship {
             StepBasicProductDefinitionFormation::static_type(),
             &mut a_relating_product_definition_formation,
         )?;
-        let mut a_related_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>> = Default::default();
+        let mut a_related_product_definition_formation: Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        > = Default::default();
         data.read_entity(
             num,
             5,

@@ -192,7 +192,10 @@ impl StepToGeom {
         if let Some(offset) = sc.cast::<StepGeomOffsetCurve3d>().get() {
             return Self::make_offset_curve(offset, sc, factors);
         }
-        if let Some(surface_curve) = sc.cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>().get() {
+        if let Some(surface_curve) = sc
+            .cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>()
+            .get()
+        {
             //:o5 abv 17 Feb 99
             return Self::make_curve(&surface_curve.curve3d(), factors);
         }

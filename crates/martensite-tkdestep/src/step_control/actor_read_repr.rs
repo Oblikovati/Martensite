@@ -259,7 +259,8 @@ impl StepControlActorRead {
             live_tp.add_warning_text(&srr.cast(), text, "");
         }
         let mut trsf = Transform3::default();
-        let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> = srr.cast();
+        let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> =
+            srr.cast();
         let iatrsf = self.compute_srrwt(&relation, tp, &mut trsf, factors)?;
         let binder: Handle<dyn TransferBinder> = if live_tp.is_bound(&rep.cast()) {
             live_tp.find(&rep.cast())
@@ -301,7 +302,8 @@ impl StepControlActorRead {
         let mut one_result = Shape::default();
         let mut nsh = 0;
         let mut trsf = Transform3::default();
-        let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> = und.cast();
+        let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> =
+            und.cast();
         let iatrsf = self.compute_srrwt(&relation, tp, &mut trsf, factors)?;
         let scope = ProgressScope::unnamed(progress, 2.0, false);
         for rank in 1..=2 {

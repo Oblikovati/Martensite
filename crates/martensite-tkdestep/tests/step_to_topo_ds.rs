@@ -18,8 +18,8 @@ use martensite_tkdestep::step_visual::{
     StepVisualTriangulatedSurfaceSet,
 };
 use martensite_tkernel::ncollection::{DataMap, HArray1, HArray2};
-use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::{Direction3, Line3, Point3, Xyz};
 use martensite_tkmath::poly::{Triangulation, mesh_purpose};
@@ -159,7 +159,9 @@ fn mesh_of(translator: &StepToTopoDSTranslateFace) -> Handle<Triangulation> {
     mesh
 }
 
-fn translate_face(face: &Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualTessellatedFace>>) -> Handle<Triangulation> {
+fn translate_face(
+    face: &Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualTessellatedFace>>,
+) -> Handle<Triangulation> {
     let (mut tool, mut nm_tool) = tools();
     let mut translator = StepToTopoDSTranslateFace::new();
     let mut has_geom = false;

@@ -154,7 +154,8 @@ impl RwStepShapeRwEdgeCurve {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         the_step_data.read_string(the_record_id, 1, "name", the_message_tool, &mut a_name)?;
-        let mut an_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let mut an_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         the_step_data.read_entity(
             the_record_id,
             2,
@@ -163,7 +164,8 @@ impl RwStepShapeRwEdgeCurve {
             StepShapeVertex::static_type(),
             &mut an_edge_start,
         )?;
-        let mut an_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let mut an_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         the_step_data.read_entity(
             the_record_id,
             3,
@@ -172,7 +174,8 @@ impl RwStepShapeRwEdgeCurve {
             StepShapeVertex::static_type(),
             &mut an_edge_end,
         )?;
-        let mut an_edge_geometry: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
+        let mut an_edge_geometry: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         the_step_data.read_entity(
             the_record_id,
             4,

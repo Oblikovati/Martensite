@@ -74,7 +74,11 @@ impl TopoDSToStepTool {
         self.my_data_map.is_bound(shape)
     }
     /// `bind(S, T)`.
-    pub fn bind(&mut self, shape: &Shape, item: &Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>) {
+    pub fn bind(
+        &mut self,
+        shape: &Shape,
+        item: &Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+    ) {
         self.my_data_map.bind(shape.clone(), item.cast());
     }
     /// `find(S)`.
@@ -84,7 +88,8 @@ impl TopoDSToStepTool {
     pub fn find(
         &self,
         shape: &Shape,
-    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         Ok(self.my_data_map.find(shape)?.cast())
     }
     /// `faceted`.

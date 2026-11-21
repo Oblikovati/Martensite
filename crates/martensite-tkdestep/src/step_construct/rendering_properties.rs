@@ -170,8 +170,8 @@ impl StepConstructRenderingProperties {
         }
         // Check for ambient reflectance
         let ambient = select.surface_style_reflectance_ambient();
-        if let Some(full) = ambient
-            .downcast_ref::<StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular>()
+        if let Some(full) =
+            ambient.downcast_ref::<StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular>()
         {
             self.my_is_defined = true;
             self.my_ambient_reflectance.set(full.ambient_reflectance());
@@ -183,8 +183,8 @@ impl StepConstructRenderingProperties {
                 &full.specular_colour(),
                 &mut self.my_specular_colour.value,
             )?;
-        } else if let Some(both) = ambient
-            .downcast_ref::<StepVisualSurfaceStyleReflectanceAmbientDiffuse>()
+        } else if let Some(both) =
+            ambient.downcast_ref::<StepVisualSurfaceStyleReflectanceAmbientDiffuse>()
         {
             self.my_ambient_reflectance.set(both.ambient_reflectance());
             self.my_diffuse_reflectance.set(both.diffuse_reflectance());

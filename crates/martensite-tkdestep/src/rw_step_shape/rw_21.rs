@@ -82,7 +82,8 @@ impl RwStepShapeRwVertexLoop {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_loop_vertex: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let mut a_loop_vertex: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         data.read_entity(
             num,
             2,
@@ -130,7 +131,8 @@ impl RwStepShapeRwVertexPoint {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_vertex_geometry: Handle<dyn crate::StepEntityBase<StepGeomPoint>> = Default::default();
+        let mut a_vertex_geometry: Handle<dyn crate::StepEntityBase<StepGeomPoint>> =
+            Default::default();
         data.read_entity(
             num,
             2,

@@ -108,9 +108,17 @@ fn init_round_trip_step_basic_product_definition_with_associated_documents() {
     let a_description = Handle::new(HAsciiString::new("sample"));
     let a_formation = Handle::new(StepBasicProductDefinitionFormation::new());
     let a_frame = Handle::new(StepBasicProductDefinitionContext::new());
-    let a_doc_ids = Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>::with_bounds(1, 2).unwrap());
+    let a_doc_ids = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>::with_bounds(1, 2).unwrap(),
+    );
     let object = StepBasicProductDefinitionWithAssociatedDocuments::new();
-    object.init(&a_id, &a_description, &a_formation.upcast(), &a_frame.upcast(), &a_doc_ids);
+    object.init(
+        &a_id,
+        &a_description,
+        &a_formation.upcast(),
+        &a_frame.upcast(),
+        &a_doc_ids,
+    );
     assert!(object.doc_ids() == a_doc_ids);
 }
 

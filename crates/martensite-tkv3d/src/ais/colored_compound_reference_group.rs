@@ -3,7 +3,7 @@ use super::{
     color_scale_recording::record_scale_vertices,
     colored_compound_reference_graphics::ColoredCompoundGraphicsTrace,
 };
-use martensite_tkernel::standard::{Handle};
+use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::{graphic3d::*, null_driver::NullGroup};
 use std::{fmt::Write, sync::Arc};

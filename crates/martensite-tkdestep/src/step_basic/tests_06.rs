@@ -120,8 +120,10 @@ fn init_round_trip_step_basic_product() {
     let a_id = Handle::new(HAsciiString::new("sample"));
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_description = Handle::new(HAsciiString::new("sample"));
-    let a_frame_of_reference =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>::with_bounds(1, 2).unwrap());
+    let a_frame_of_reference = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let object = StepBasicProduct::new();
     object.init(&a_id, &a_name, &a_description, &a_frame_of_reference);
     assert!(object.id() == a_id);
@@ -246,7 +248,12 @@ fn init_round_trip_step_basic_product_definition() {
     let a_formation = Handle::new(StepBasicProductDefinitionFormation::new());
     let a_frame_of_reference = Handle::new(StepBasicProductDefinitionContext::new());
     let object = StepBasicProductDefinition::new();
-    object.init(&a_id, &a_description, &a_formation.upcast(), &a_frame_of_reference.upcast());
+    object.init(
+        &a_id,
+        &a_description,
+        &a_formation.upcast(),
+        &a_frame_of_reference.upcast(),
+    );
     assert!(object.id() == a_id);
     assert!(object.description() == a_description);
     assert!(object.formation() == a_formation);

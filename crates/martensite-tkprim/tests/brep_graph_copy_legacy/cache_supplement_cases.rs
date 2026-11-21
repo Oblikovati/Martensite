@@ -3,7 +3,7 @@ use martensite_tkbrep::brep_graph::cache::{BRepGraphCache, CacheBase, CacheType}
 use martensite_tkbrep::brep_graph::layer_topo_supplement::{AttachmentKind, LayerTopoSupplement};
 use martensite_tkbrep::topods::{Edge, ShapeIterator};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Guid};
+use martensite_tkernel::standard::Guid;
 use martensite_tkg3d::top_abs::Orientation;
 use std::collections::HashSet;
 use std::sync::{Mutex, OnceLock};

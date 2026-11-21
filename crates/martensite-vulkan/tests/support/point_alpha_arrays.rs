@@ -104,7 +104,9 @@ fn configure_alpha_image(style: &dyn Graphic3dAspectsSource, mode: &str) {
         16
     ));
     image.set_top_down(true);
-    let marker = Graphic3dMarkerImage::from_images(Handle::new(image).into_upcast(), Handle::default()).unwrap();
+    let marker =
+        Graphic3dMarkerImage::from_images(Handle::new(image).into_upcast(), Handle::default())
+            .unwrap();
     style.set_marker_image(Handle::new(marker));
 }
 fn alpha_marker_type(mode: &str) -> AspectTypeOfMarker {

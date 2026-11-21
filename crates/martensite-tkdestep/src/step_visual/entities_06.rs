@@ -30,7 +30,9 @@ impl StepVisualStyledItem {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        a_styles: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        >,
         a_item: &Handle<dyn Transient>,
     ) {
         let mut state = self.state.write();
@@ -265,7 +267,9 @@ impl StepVisualSurfaceStyleRenderingWithProperties {
     pub fn init(
         &self,
         the_surface_style_rendering_rendering_method: StepVisualShadingSurfaceMethod,
-        the_surface_style_rendering_surface_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+        the_surface_style_rendering_surface_colour: &Handle<
+            dyn crate::StepEntityBase<StepVisualColour>,
+        >,
         the_properties: &Handle<HArray1<StepVisualRenderingPropertiesSelect>>,
     ) {
         self.parent.init(

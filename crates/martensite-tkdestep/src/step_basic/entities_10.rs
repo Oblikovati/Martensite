@@ -275,8 +275,12 @@ impl StepBasicProductDefinitionFormationRelationship {
         a_id: &Handle<HAsciiString>,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_relating_product_definition_formation: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
-        a_related_product_definition_formation: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
+        a_relating_product_definition_formation: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        >,
+        a_related_product_definition_formation: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        >,
     ) {
         let mut state = self.state.write();
         state.the_id = a_id.clone();

@@ -106,5 +106,7 @@ pub fn texture_handle(mode: &str) -> Handle<Graphic3dTexture2D> {
         );
         return Handle::new(Graphic3dTexture2D::from_file(&path.as_str().into()));
     }
-    Handle::new(Graphic3dTexture2D::from_pix_map(texture_image(mode).into_upcast()))
+    Handle::new(Graphic3dTexture2D::from_pix_map(
+        texture_image(mode).into_upcast(),
+    ))
 }

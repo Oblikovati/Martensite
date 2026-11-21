@@ -112,7 +112,9 @@ struct CurveRead {
 }
 
 impl CurveRead {
-    fn new(curve: &Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>>) -> Result<Self, Failure> {
+    fn new(
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>>,
+    ) -> Result<Self, Failure> {
         let rational = curve.cast::<StepGeomBSplineCurveWithKnotsAndRationalBSplineCurve>();
         if let Some(live) = rational.get() {
             return Ok(Self {

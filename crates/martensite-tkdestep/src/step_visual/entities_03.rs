@@ -210,7 +210,9 @@ impl StepVisualContextDependentOverRidingStyledItem {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        a_styles: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        >,
         a_item: &Handle<dyn Transient>,
         a_over_ridden_style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
         a_style_context: &Handle<HArray1<StepVisualStyleContextSelect>>,

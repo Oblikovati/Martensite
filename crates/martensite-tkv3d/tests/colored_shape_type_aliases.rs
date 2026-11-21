@@ -10,7 +10,8 @@ fn native_colored_parent_and_group_aliases_preserve_ownership_and_identity() {
     let object = AisColoredShape::new(&shape);
     let mut rows = Vec::new();
     record_colored_parent_alias(&object, &shape, &mut rows);
-    let drawer = Handle::new(AisColoredDrawer::new(&object.attributes())).into_upcast::<dyn AisColoredDrawerSource>();
+    let drawer = Handle::new(AisColoredDrawer::new(&object.attributes()))
+        .into_upcast::<dyn AisColoredDrawerSource>();
     let groups = AisColoredShapeDrawerCompounds::default();
     groups.add(&drawer, &shape).unwrap();
     record_colored_group_alias(&groups, &drawer, &shape, &mut rows);

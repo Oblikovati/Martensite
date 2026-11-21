@@ -85,7 +85,10 @@ fn runtime_type_step_repr_global_unit_assigned_context() {
 fn init_round_trip_step_repr_global_unit_assigned_context() {
     let a_context_identifier = Handle::new(HAsciiString::new("sample"));
     let a_context_type = Handle::new(HAsciiString::new("sample"));
-    let a_units = Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>::with_bounds(1, 2).unwrap());
+    let a_units = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let object = StepReprGlobalUnitAssignedContext::new();
     object.init(&a_context_identifier, &a_context_type, &a_units);
     assert!(object.units() == a_units);

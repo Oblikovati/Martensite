@@ -46,7 +46,10 @@ fn algorithm_interface_shares_the_concrete_owners_reporting_state() {
     );
     assert!(!root.cast::<DerivedMessageAlgorithm>().is_null());
     let borrowed = root.view::<dyn AlgorithmSource>();
-    assert!(std::ptr::eq(borrowed.get().unwrap().algorithm_state(), &derived.state));
+    assert!(std::ptr::eq(
+        borrowed.get().unwrap().algorithm_state(),
+        &derived.state
+    ));
     assert_eq!(root.ref_count(), 3);
     base.change_status().clear_status(Status::FAIL2);
     assert!(!derived.state.get_status().is_fail());

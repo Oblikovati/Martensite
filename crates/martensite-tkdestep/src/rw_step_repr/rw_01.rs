@@ -257,7 +257,8 @@ impl RwStepReprRwAssemblyComponentUsageSubstitute {
         if data.is_param_defined(num, 2)? {
             data.read_string(num, 2, "definition", ach, &mut a_def)?;
         }
-        let mut a_base: Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>> = Default::default();
+        let mut a_base: Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -266,7 +267,8 @@ impl RwStepReprRwAssemblyComponentUsageSubstitute {
             StepReprAssemblyComponentUsage::static_type(),
             &mut a_base,
         )?;
-        let mut a_subs: Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>> = Default::default();
+        let mut a_subs: Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>> =
+            Default::default();
         data.read_entity(
             num,
             4,

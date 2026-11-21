@@ -80,8 +80,10 @@ fn runtime_type_step_kinematics_kinematic_topology_directed_structure() {
 #[test]
 fn init_round_trip_step_kinematics_kinematic_topology_directed_structure() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_parent = Handle::new(StepKinematicsKinematicTopologyStructure::new());
     let object = StepKinematicsKinematicTopologyDirectedStructure::new();
@@ -107,8 +109,10 @@ fn runtime_type_step_kinematics_kinematic_topology_network_structure() {
 #[test]
 fn init_round_trip_step_kinematics_kinematic_topology_network_structure() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_parent = Handle::new(StepKinematicsKinematicTopologyStructure::new());
     let object = StepKinematicsKinematicTopologyNetworkStructure::new();

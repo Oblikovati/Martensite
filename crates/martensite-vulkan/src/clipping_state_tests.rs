@@ -11,7 +11,8 @@ struct Planes(Vec<(&'static str, Handle<dyn Graphic3dClipPlaneSource>)>);
 impl Planes {
     fn add(&mut self, name: &'static str, a: f64, d: f64) -> Handle<dyn Graphic3dClipPlaneSource> {
         let equation = Vec4::new(a, 1. - a, 0., d);
-        let plane: Handle<dyn Graphic3dClipPlaneSource> = Handle::new(Graphic3dClipPlane::from_equation(equation).unwrap()).into_upcast();
+        let plane: Handle<dyn Graphic3dClipPlaneSource> =
+            Handle::new(Graphic3dClipPlane::from_equation(equation).unwrap()).into_upcast();
         self.0.push((name, plane.clone()));
         plane
     }
@@ -27,7 +28,9 @@ impl Planes {
     }
 }
 
-fn sequence(planes: &[&Handle<dyn Graphic3dClipPlaneSource>]) -> Handle<dyn Graphic3dClipPlaneSequenceSource> {
+fn sequence(
+    planes: &[&Handle<dyn Graphic3dClipPlaneSource>],
+) -> Handle<dyn Graphic3dClipPlaneSequenceSource> {
     let sequence = Handle::new(Graphic3dSequenceOfHClipPlane::default());
     for plane in planes {
         sequence.append_reference(*plane);

@@ -95,7 +95,11 @@ impl StepShapeVertexLoop {
         get loop_vertex = loop_vertex: Handle<dyn crate::StepEntityBase<StepShapeVertex>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_loop_vertex: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_loop_vertex: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    ) {
         self.state.write().loop_vertex = a_loop_vertex.clone();
         self.parent.parent.parent.init(a_name);
     }
@@ -113,7 +117,11 @@ impl StepShapeVertexPoint {
         get vertex_geometry = vertex_geometry: Handle<dyn crate::StepEntityBase<StepGeomPoint>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_vertex_geometry: &Handle<dyn crate::StepEntityBase<StepGeomPoint>>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_vertex_geometry: &Handle<dyn crate::StepEntityBase<StepGeomPoint>>,
+    ) {
         self.state.write().vertex_geometry = a_vertex_geometry.clone();
         self.parent.parent.parent.init(a_name);
     }

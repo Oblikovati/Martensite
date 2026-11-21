@@ -118,8 +118,12 @@ impl StepDimTolGeometricToleranceRelationship {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_relating_geometric_tolerance: &Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>,
-        the_related_geometric_tolerance: &Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>,
+        the_relating_geometric_tolerance: &Handle<
+            dyn crate::StepEntityBase<StepDimTolGeometricTolerance>,
+        >,
+        the_related_geometric_tolerance: &Handle<
+            dyn crate::StepEntityBase<StepDimTolGeometricTolerance>,
+        >,
     ) {
         let mut state = self.state.write();
         state.my_name = the_name.clone();
@@ -356,7 +360,9 @@ impl StepDimTolModifiedGeometricTolerance {
         the_geometric_tolerance_name: &Handle<HAsciiString>,
         the_geometric_tolerance_description: &Handle<HAsciiString>,
         the_geometric_tolerance_magnitude: &Handle<dyn Transient>,
-        the_geometric_tolerance_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+        the_geometric_tolerance_toleranced_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
         the_modifier: StepDimTolLimitCondition,
     ) -> Result<(), Failure> {
         self.parent.init(

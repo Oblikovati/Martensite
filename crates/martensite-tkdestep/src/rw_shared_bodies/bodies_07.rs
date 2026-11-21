@@ -78,10 +78,12 @@ macro_rules! rw_block_0051 {
         )? {
             let $num2: i32 = $sub2;
             let $nb0: i32 = $data.nb_params($num2)?;
-            $a_representation_items =
-                step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, $nb0)?;
+            $a_representation_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, $nb0)?;
             for $i0 in 1..=$nb0 {
-                let mut $an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+                let mut $an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                    Default::default();
                 $data.read_entity(
                     $num2,
                     $i0,
@@ -127,11 +129,13 @@ macro_rules! rw_block_0052 {
             0,
         )? {
             let $nb0: i32 = $data.nb_params($sub2)?;
-            $a_representation_items =
-                step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, $nb0)?;
+            $a_representation_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, $nb0)?;
             let $num2: i32 = $sub2;
             for $i0 in 1..=$nb0 {
-                let mut $an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+                let mut $an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                    Default::default();
                 $data.read_entity(
                     $num2,
                     $i0,
@@ -161,7 +165,9 @@ macro_rules! rw_block_0053 {
         rw_block_0108!($a_items, $a_name, $ach, $anent2, $data, $nsub2, $num);
         if $data.read_sub_list($num, 2, "items", $ach, &mut $nsub2, false, 0, 0)? {
             let $nb2: i32 = $data.nb_params($nsub2)?;
-            $a_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, $nb2)?;
+            $a_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, $nb2)?;
             for $i2 in 1..=$nb2 {
                 if $data.read_entity(
                     $nsub2,
@@ -175,7 +181,9 @@ macro_rules! rw_block_0053 {
                 }
             }
         }
-        let mut $a_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = Default::default();
+        let mut $a_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         $data.read_entity(
             $num,
             3,

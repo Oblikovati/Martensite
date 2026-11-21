@@ -1,9 +1,5 @@
 use martensite_tkbrep::brep_graph::cache::{BRepGraphCache, CacheBase, CacheType};
-use martensite_tkernel::{
-    impl_transient,
-    standard::{Guid},
-    tcollection::AsciiString,
-};
+use martensite_tkernel::{impl_transient, standard::Guid, tcollection::AsciiString};
 use std::{
     collections::HashMap,
     sync::{

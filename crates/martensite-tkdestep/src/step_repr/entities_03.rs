@@ -97,8 +97,12 @@ impl StepReprMakeFromUsageOption {
         a_product_definition_relationship_name: &Handle<HAsciiString>,
         has_product_definition_relationship_description: bool,
         a_product_definition_relationship_description: &Handle<HAsciiString>,
-        a_product_definition_relationship_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
-        a_product_definition_relationship_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_product_definition_relationship_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
+        a_product_definition_relationship_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
         a_ranking: i32,
         a_ranking_rationale: &Handle<HAsciiString>,
         a_quantity: &Handle<dyn Transient>,
@@ -224,7 +228,9 @@ impl StepReprMaterialPropertyRepresentation {
     pub fn init(
         &self,
         a_property_definition_representation_definition: &StepReprRepresentedDefinition,
-        a_property_definition_representation_used_representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+        a_property_definition_representation_used_representation: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentation>,
+        >,
         a_dependent_environment: &Handle<StepReprDataEnvironment>,
     ) {
         self.parent.init(
@@ -250,7 +256,8 @@ impl Default for StepReprMeasureRepresentationItem {
             state: Default::default(),
         };
         {
-            object.state.write().my_measure = Handle::new(StepBasicMeasureWithUnit::new()).into_upcast();
+            object.state.write().my_measure =
+                Handle::new(StepBasicMeasureWithUnit::new()).into_upcast();
         }
         object
     }

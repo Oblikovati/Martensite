@@ -21,7 +21,12 @@ fn format(code: i32) -> ImageFormat {
 }
 
 /// The patterned image of a request.
-fn patterned(size_x: usize, size_y: usize, code: i32, top_down: bool) -> Handle<dyn martensite_tkservice::image::ImagePixMapObject> {
+fn patterned(
+    size_x: usize,
+    size_y: usize,
+    code: i32,
+    top_down: bool,
+) -> Handle<dyn martensite_tkservice::image::ImagePixMapObject> {
     let image = ImagePixMap::default();
     image.set_top_down(top_down);
     image.init_trash(format(code), size_x, size_y, 0);

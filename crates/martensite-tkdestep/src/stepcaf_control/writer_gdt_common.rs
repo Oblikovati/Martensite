@@ -1,6 +1,5 @@
 //! What the parts of `STEPCAFControlWriter` that write GD&T share: finding the product definition
 //! shape of an entity, the unit of a context, the values of dimensions, shape aspects and presentations.
-use crate::step_entity::StepBaseHandle;
 use super::STEPCAFControlGDTProperty;
 use super::writer::{WHERE, WriterState};
 use super::writer_support::{find_entities, finder_process_of, model_of};
@@ -17,6 +16,7 @@ use crate::step_basic::{
 use crate::step_data::{
     StepDataFactors, StepDataLogical, StepDataSelectMember, StepDataSelectType,
 };
+use crate::step_entity::StepBaseHandle;
 use crate::step_entity::{
     HArray1, step_array1_item, step_array1_len, step_array1_set, step_live, step_new_array1,
 };
@@ -114,7 +114,9 @@ fn advanced_face_of_edge(
 ) -> Result<Handle<StepShapeAdvancedFace>, Failure> {
     for oriented in sharing_of_type::<_, StepShapeOrientedEdge>(graph, edge)? {
         for edge_loop in sharing_of_type::<_, StepShapeEdgeLoop>(graph, &oriented)? {
-            for bound in sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeFaceBound>>(graph, &edge_loop)? {
+            for bound in sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeFaceBound>>(
+                graph, &edge_loop,
+            )? {
                 let faces = sharing_of_type::<_, StepShapeAdvancedFace>(graph, &bound)?;
                 if let Some(face) = faces.into_iter().next() {
                     return Ok(face);
@@ -171,9 +173,16 @@ pub(super) fn find_pds_for_dgt(
     if face.is_null() {
         return Ok(false);
     }
-    for set in sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>(graph, face)? {
-        for item in sharing_of_type::<_, dyn crate::StepEntityBase<StepReprRepresentationItem>>(graph, &set)? {
-            for representation in sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeShapeRepresentation>>(graph, &item)?
+    for set in
+        sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>(graph, face)?
+    {
+        for item in sharing_of_type::<_, dyn crate::StepEntityBase<StepReprRepresentationItem>>(
+            graph, &set,
+        )? {
+            for representation in sharing_of_type::<
+                _,
+                dyn crate::StepEntityBase<StepShapeShapeRepresentation>,
+            >(graph, &item)?
             {
                 *context = step_live(&representation, WHERE)?.context_of_items();
                 *pds = pds_of_representation(graph, &representation)?;
@@ -197,7 +206,11 @@ pub(super) fn find_pds(
         return Ok(Handle::default());
     }
     // try to find shape_representation in sharings
-    for representation in sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeShapeRepresentation>>(graph, entity)? {
+    for representation in sharing_of_type::<
+        _,
+        dyn crate::StepEntityBase<StepShapeShapeRepresentation>,
+    >(graph, entity)?
+    {
         *context = step_live(&representation, WHERE)?.context_of_items();
         let pds = pds_of_representation(graph, &representation)?;
         if pds.is_some() {

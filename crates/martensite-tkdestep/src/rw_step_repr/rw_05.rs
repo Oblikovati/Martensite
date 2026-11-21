@@ -20,17 +20,20 @@ impl RwStepReprRwDataEnvironment {
             return Ok(());
         }
         rw_block_0149!(a_description, a_name, ach, data, num);
-        let mut a_elements: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>> =
-            Default::default();
+        let mut a_elements: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>,
+        > = Default::default();
         let mut sub3: i32 = 0;
         if data.read_sub_list(num, 3, "elements", ach, &mut sub3, false, 0, 0)? {
             let nb0: i32 = data.nb_params(sub3)?;
-            a_elements =
-                step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>(1, nb0)?;
+            a_elements = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>,
+            >(1, nb0)?;
             let num2: i32 = sub3;
             for i0 in 1..=nb0 {
-                let mut an_it0: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>> =
-                    Default::default();
+                let mut an_it0: Handle<
+                    dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>,
+                > = Default::default();
                 data.read_entity(
                     num2,
                     i0,

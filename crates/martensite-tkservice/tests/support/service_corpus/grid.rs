@@ -10,7 +10,6 @@ use martensite_tkservice::aspect::{
 
 /// The do-nothing rectangular grid of the native probe (`SvRectGrid`).
 struct SvRectGrid {
-
     base: AspectRectangularGridBase,
 }
 impl_transient!(SvRectGrid, "SvRectGrid", dyn AspectRectangularGrid,
@@ -40,7 +39,6 @@ impl AspectRectangularGrid for SvRectGrid {
 
 /// The do-nothing circular grid of the native probe (`SvCircGrid`).
 struct SvCircGrid {
-
     base: AspectCircularGridBase,
 }
 impl_transient!(SvCircGrid, "SvCircGrid", dyn AspectCircularGrid,
@@ -74,10 +72,7 @@ pub fn rectangular_case(output: &Output, values: &[f64]) {
     let p: Vec<f64> = (0..9).map(|_| r.real()).collect();
     attempt(output, || {
         let base = AspectRectangularGridBase::new(p[0], p[1], p[2], p[3], p[4], p[5], p[6])?;
-        let grid = SvRectGrid {
-
-            base,
-        };
+        let grid = SvRectGrid { base };
         grid.init();
         let (gx, gy) = grid.compute(p[7], p[8]);
         real(output, gx);
@@ -99,10 +94,7 @@ pub fn circular_case(output: &Output, values: &[f64]) {
     let p: Vec<f64> = (0..5).map(|_| r.real()).collect();
     attempt(output, || {
         let base = AspectCircularGridBase::new(1.0, 1, 0.0, 0.0, 0.0);
-        let grid = SvCircGrid {
-
-            base,
-        };
+        let grid = SvCircGrid { base };
         grid.set_grid_values(p[0], p[1], step, divisions, p[2])?;
         let (gx, gy) = grid.compute(p[3], p[4]);
         real(output, gx);

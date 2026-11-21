@@ -1,6 +1,8 @@
 //! Read leases preserve topology identity while assignments retire the previous value outside the lock.
 use martensite_tkbrep::topods::{Compound, Shape, TShape};
-use martensite_tkernel::standard::{Failure, SharedState, WeakHandle, catch_native_failure, exceptions};
+use martensite_tkernel::standard::{
+    Failure, SharedState, WeakHandle, catch_native_failure, exceptions,
+};
 use std::sync::Arc;
 
 enum ColoredCompoundState {
@@ -117,11 +119,10 @@ impl ColoredCompoundValue {
     }
 
     pub(super) fn release(&self) {
-        let retired = self
-            .state
-            .write()
-            .begin_retirement()
-            .expect("compound topology retirement failed; expected a single owning-map release");
+        let retired =
+            self.state.write().begin_retirement().expect(
+                "compound topology retirement failed; expected a single owning-map release",
+            );
         drop(retired);
         *self.state.write() = ColoredCompoundState::Removed;
     }

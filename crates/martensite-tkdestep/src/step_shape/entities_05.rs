@@ -180,7 +180,11 @@ impl StepShapeRevolvedFaceSolid {
         get angle = angle: f64;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
+    ) {
         self.parent.init(a_name, a_swept_area);
     }
     /// `init`.

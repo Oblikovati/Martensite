@@ -6,7 +6,6 @@ use martensite_tkservice::{graphic3d::*, null_driver::NullGroup};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct EarlierGroupClear {
-
     inner: NullGroup,
     earlier: WeakHandle<dyn Graphic3dGroup>,
     armed: AtomicBool,
@@ -19,7 +18,6 @@ impl EarlierGroupClear {
         earlier: WeakHandle<dyn Graphic3dGroup>,
     ) -> Handle<Self> {
         Handle::new(Self {
-
             inner: NullGroup::new(presentation),
             earlier,
             armed: AtomicBool::new(true),

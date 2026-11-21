@@ -97,7 +97,9 @@ fn probe_image(format: ImageFormat) -> Handle<ImagePixMap> {
 /// GetImage returns a null image.
 fn probe_texture(format: Option<ImageFormat>) -> Handle<Graphic3dTexture2D> {
     match format {
-        Some(format) => Handle::new(Graphic3dTexture2D::from_pix_map(probe_image(format).into_upcast())),
+        Some(format) => Handle::new(Graphic3dTexture2D::from_pix_map(
+            probe_image(format).into_upcast(),
+        )),
         None => Handle::new(Graphic3dTexture2D::from_file(
             &"/nonexistent/martensite-missing.png".into(),
         )),

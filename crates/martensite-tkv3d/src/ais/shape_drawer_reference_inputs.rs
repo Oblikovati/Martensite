@@ -24,8 +24,10 @@ impl ShapeDrawerReferenceInputs {
         let reversed = key.reversed();
         let located = translated_drawer_key(&key);
         let parent = Handle::new(Prs3dDrawer::new());
-        let first = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
-        let second = Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+        let first =
+            Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+        let second =
+            Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
         Self {
             key,
             reversed,

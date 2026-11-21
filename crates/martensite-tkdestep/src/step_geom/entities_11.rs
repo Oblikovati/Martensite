@@ -184,7 +184,11 @@ impl StepGeomSweptSurface {
         get swept_curve = swept_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_swept_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+    ) {
         self.state.write().swept_curve = a_swept_curve.clone();
         self.parent.parent.parent.init(a_name);
     }

@@ -6,7 +6,10 @@ use martensite_tkservice::aspect::AspectTypeOfMarker;
 use martensite_tkservice::graphic3d::Graphic3dMarkerImage;
 use martensite_tkservice::image::{ImageFormat, ImagePixMap};
 
-fn image(format: ImageFormat, size: usize) -> Handle<dyn martensite_tkservice::image::ImagePixMapObject> {
+fn image(
+    format: ImageFormat,
+    size: usize,
+) -> Handle<dyn martensite_tkservice::image::ImagePixMapObject> {
     let pixmap = ImagePixMap::default();
     pixmap.init_zero(format, size, size, 0, 0);
     Handle::new(pixmap).into_upcast()

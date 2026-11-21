@@ -67,7 +67,8 @@ impl StepConstructStyles {
         ) {
             return Ok(step_live(&sr, WHERE)?.context_of_items());
         }
-        let mut item = Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
+        let mut item =
+            Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
         if !process.find_typed_transient_as(
             &mapper,
             StepGeomGeometricRepresentationItem::static_type(),
@@ -78,7 +79,10 @@ impl StepConstructStyles {
         let hgraph = self.tool.graph(false)?;
         let sharings = step_live(&hgraph, WHERE)?.graph().sharings(&item.cast())?;
         for sharing in sharings.content() {
-            if let Some(sr) = sharing.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().get() {
+            if let Some(sr) = sharing
+                .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+                .get()
+            {
                 let context = sr.context_of_items();
                 if context.is_some() {
                     return Ok(context);
@@ -90,7 +94,10 @@ impl StepConstructStyles {
     /// Whether a style is on a whole shape representation, which makes it a root style.
     fn styles_representation(style: &StepVisualStyledItem) -> Result<bool, Failure> {
         let item = style.item_ap242()?.value();
-        Ok(item.get().is_some() && item.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some())
+        Ok(item.get().is_some()
+            && item
+                .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+                .is_some())
     }
     /// The styled items of one MDGPR or DM.
     fn load_container(
@@ -99,7 +106,9 @@ impl StepConstructStyles {
     ) -> Result<(), Failure> {
         let container = step_live(container, WHERE)?;
         for j in 1..=container.nb_items() {
-            let style = container.items_value(j)?.cast::<dyn crate::StepEntityBase<StepVisualStyledItem>>();
+            let style = container
+                .items_value(j)?
+                .cast::<dyn crate::StepEntityBase<StepVisualStyledItem>>();
             let Some(live) = style.get() else {
                 continue;
             };
@@ -123,7 +132,10 @@ impl StepConstructStyles {
                 || is_exactly::<StepVisualDraughtingModel>(&entity)
             {
                 self.load_container(&entity.cast())?;
-            } else if let Some(style) = entity.cast::<dyn crate::StepEntityBase<StepVisualStyledItem>>().get() {
+            } else if let Some(style) = entity
+                .cast::<dyn crate::StepEntityBase<StepVisualStyledItem>>()
+                .get()
+            {
                 if Self::styles_representation(style)? && !self.my_root_styles.contains(&entity) {
                     self.my_root_styles.add(entity);
                 } else if !self.my_styles.contains(&entity) {
@@ -223,7 +235,8 @@ impl StepConstructStyles {
         curve_col: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         rendering_props: &StepConstructRenderingProperties,
         is_for_nauo: bool,
-    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>, Failure>
+    {
         let mut items: Vec<Handle<dyn Transient>> = Vec::new();
         if surf_col.is_some() {
             items.push(Self::surface_style_usage(surf_col, rendering_props)?.cast());
@@ -241,11 +254,12 @@ impl StepConstructStyles {
             select.set_value(item)?;
             step_array1_set(&selects, index as i32 + 1, select, WHERE)?;
         }
-        let psa: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> = if is_for_nauo {
-            Handle::new(StepVisualPresentationStyleByContext::new()).cast()
-        } else {
-            Handle::new(StepVisualPresentationStyleAssignment::new()).into_upcast()
-        };
+        let psa: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> =
+            if is_for_nauo {
+                Handle::new(StepVisualPresentationStyleByContext::new()).cast()
+            } else {
+                Handle::new(StepVisualPresentationStyleAssignment::new()).into_upcast()
+            };
         step_live(&psa, WHERE)?.init(&selects);
         Ok(psa)
     }
@@ -255,7 +269,8 @@ impl StepConstructStyles {
         &mut self,
         item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         col: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
-    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>, Failure>
+    {
         // if this color already was processed, just use the same PSA, else create new and add it to map
         let key: Handle<dyn Transient> = col.cast();
         if let Some((_, psa)) = self

@@ -51,8 +51,12 @@ impl StepKinematicsGearPair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_radius_first_link: f64,
         the_radius_second_link: f64,
@@ -94,7 +98,9 @@ impl StepKinematicsGearPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_rotation1: f64,
     ) {
         self.parent
@@ -130,8 +136,12 @@ impl StepKinematicsGearPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_gear_pair_radius_first_link: f64,
         the_gear_pair_radius_second_link: f64,
@@ -213,8 +223,12 @@ impl StepKinematicsKinematicLinkRepresentation {
     pub fn init(
         &self,
         the_representation_name: &Handle<HAsciiString>,
-        the_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
-        the_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        the_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        the_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         the_represented_link: &Handle<StepKinematicsKinematicLink>,
     ) {
         self.parent.init(
@@ -255,8 +269,12 @@ impl StepKinematicsKinematicPair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         _unused_2: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
-        the_item_defined_transformation_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_joint: &Handle<StepKinematicsKinematicJoint>,
     ) {
         self.parent.init(the_representation_item_name);
@@ -296,7 +314,9 @@ impl StepKinematicsKinematicPropertyMechanismRepresentation {
     pub fn init(
         &self,
         the_property_definition_representation_definition: &StepReprRepresentedDefinition,
-        the_property_definition_representation_used_representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+        the_property_definition_representation_used_representation: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentation>,
+        >,
         the_base: &Handle<StepKinematicsKinematicLinkRepresentation>,
     ) {
         self.parent.init(
@@ -323,8 +343,12 @@ impl StepKinematicsKinematicTopologyDirectedStructure {
     pub fn init(
         &self,
         the_representation_name: &Handle<HAsciiString>,
-        the_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
-        the_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        the_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        the_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         the_parent: &Handle<StepKinematicsKinematicTopologyStructure>,
     ) {
         self.parent.init(
@@ -352,8 +376,12 @@ impl StepKinematicsKinematicTopologyNetworkStructure {
     pub fn init(
         &self,
         the_representation_name: &Handle<HAsciiString>,
-        the_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
-        the_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        the_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        the_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         the_parent: &Handle<StepKinematicsKinematicTopologyStructure>,
     ) {
         self.parent.init(

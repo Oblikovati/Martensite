@@ -91,8 +91,12 @@ impl StepFEAFeaModel {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
-        a_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        a_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        a_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         a_creating_software: &Handle<HAsciiString>,
         a_intended_analysis_code: &Handle<HArray1<AsciiString>>,
         a_description: &Handle<HAsciiString>,

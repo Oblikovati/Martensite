@@ -10,7 +10,8 @@ use martensite_tklcaf::tdata_std::TDataStdInteger;
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeState, TdfLabel, TdfTool};
 use martensite_tklcaf::tdoc_std::{TDocStdDocument, TDocStdStandardApplication};
 use martensite_tkxcaf::xcaf_doc::{
-    XCAFDocAssemblyItemId, XCAFDocDocumentTool, XCAFDocNote, XCAFDocNoteBalloon, XCAFDocNoteCommentSource, XCAFDocNotesTool,
+    XCAFDocAssemblyItemId, XCAFDocDocumentTool, XCAFDocNote, XCAFDocNoteBalloon,
+    XCAFDocNoteCommentSource, XCAFDocNotesTool,
 };
 
 struct NotesContext {
@@ -459,6 +460,8 @@ fn balloon_restore_uses_the_same_embedded_comment_across_handle_views() {
     assert_eq!(view.object_address(), source.object_address());
     assert!(std::ptr::eq(view.comment_base(), source.note_comment()));
     let restored = XCAFDocNoteBalloon::new();
-    restored.restore(&source.upcast::<dyn TdfAttribute>()).unwrap();
+    restored
+        .restore(&source.upcast::<dyn TdfAttribute>())
+        .unwrap();
     assert_eq!(restored.comment(), text);
 }

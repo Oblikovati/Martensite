@@ -159,7 +159,8 @@ fn revisions_and_ids_are_per_texture() {
 
 #[test]
 fn separate_cube_maps_keep_matching_images_only() {
-    let images: Vec<Handle<dyn martensite_tkservice::image::ImagePixMapObject>> = (0..6).map(|_| pixmap(ImageFormat::Rgb)).collect();
+    let images: Vec<Handle<dyn martensite_tkservice::image::ImagePixMapObject>> =
+        (0..6).map(|_| pixmap(ImageFormat::Rgb)).collect();
     let cube = Graphic3dCubeMapSeparate::from_images(&images).unwrap();
     assert!(cube.is_done());
     let supported = Handle::new(ImageSupportedFormats::default());

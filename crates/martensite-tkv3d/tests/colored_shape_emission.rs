@@ -60,8 +60,10 @@ impl ColoredEmissionFixture {
         let object = AisColoredShape::new(&shape);
         object.attributes().set_auto_triangulation(false);
         object.attributes().setup_own_defaults().unwrap();
-        let base = Handle::new(AisColoredDrawer::new(&object.attributes())).into_upcast::<dyn AisColoredDrawerSource>();
-        let custom = Handle::new(AisColoredDrawer::new(&object.attributes())).into_upcast::<dyn AisColoredDrawerSource>();
+        let base = Handle::new(AisColoredDrawer::new(&object.attributes()))
+            .into_upcast::<dyn AisColoredDrawerSource>();
+        let custom = Handle::new(AisColoredDrawer::new(&object.attributes()))
+            .into_upcast::<dyn AisColoredDrawerSource>();
         let styles = emission_styles(&input, &shape, &custom, scenario);
         configure_emission_flags(&object, scenario);
         let scene = Self {

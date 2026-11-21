@@ -305,7 +305,10 @@ impl StepToTopoDSTranslateEdge {
             builder.make_edge(&mut state.edge)?;
             builder.add(&mut state.edge, &state.v1)?;
             builder.add(&mut state.edge, &state.v2)?;
-        } else if let Some(surface_curve) = curve.cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>().get() {
+        } else if let Some(surface_curve) = curve
+            .cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>()
+            .get()
+        {
             self.make_from_curve_3d_in(&surface_curve.curve3d(), &mut state, tool, factors)?;
         } else {
             self.make_from_curve_3d_in(&curve, &mut state, tool, factors)?;
@@ -338,7 +341,8 @@ impl StepToTopoDSTranslateEdge {
         let Some(representation) = representation.get() else {
             return Ok(Handle::default());
         };
-        let curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = representation.items_value(1)?.cast();
+        let curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            representation.items_value(1)?.cast();
         let Ok(made) = StepToGeom::make_curve_2d(&curve, factors) else {
             return Ok(Handle::default());
         };

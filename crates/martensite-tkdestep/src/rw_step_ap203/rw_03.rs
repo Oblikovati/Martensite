@@ -22,8 +22,9 @@ impl RwStepAP203RwCcDesignSpecificationReference {
         if !data.check_nb_params(num, 3, ach, "cc_design_specification_reference")? {
             return Ok(());
         }
-        let mut a_document_reference_assigned_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>> =
-            Default::default();
+        let mut a_document_reference_assigned_document: Handle<
+            dyn crate::StepEntityBase<StepBasicDocument>,
+        > = Default::default();
         data.read_entity(
             num,
             1,

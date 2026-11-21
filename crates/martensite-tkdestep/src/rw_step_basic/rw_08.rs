@@ -19,7 +19,8 @@ impl RwStepBasicRwDateAndTime {
         if !data.check_nb_params(num, 2, ach, "date_and_time")? {
             return Ok(());
         }
-        let mut a_date_component: Handle<dyn crate::StepEntityBase<StepBasicDate>> = Default::default();
+        let mut a_date_component: Handle<dyn crate::StepEntityBase<StepBasicDate>> =
+            Default::default();
         data.read_entity(
             num,
             1,

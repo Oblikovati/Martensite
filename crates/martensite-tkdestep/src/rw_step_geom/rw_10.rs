@@ -30,7 +30,8 @@ impl RwStepGeomRwCurveBoundedSurface {
             ach,
             &mut a_representation_item_name,
         )?;
-        let mut a_basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = Default::default();
+        let mut a_basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         data.read_entity(
             num,
             2,
@@ -109,7 +110,8 @@ impl RwStepGeomRwCurveReplica {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_parent_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
+        let mut a_parent_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         data.read_entity(
             num,
             2,

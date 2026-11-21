@@ -129,8 +129,12 @@ impl StepShapeAngularLocation {
         a_shape_aspect_relationship_name: &Handle<HAsciiString>,
         has_shape_aspect_relationship_description: bool,
         a_shape_aspect_relationship_description: &Handle<HAsciiString>,
-        a_shape_aspect_relationship_relating_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
-        a_shape_aspect_relationship_related_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+        a_shape_aspect_relationship_relating_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
+        a_shape_aspect_relationship_related_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
         a_angle_selection: StepShapeAngleRelator,
     ) {
         self.parent.init(

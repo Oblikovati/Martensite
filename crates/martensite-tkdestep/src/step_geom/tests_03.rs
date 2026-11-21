@@ -277,7 +277,12 @@ fn init_round_trip_step_geom_offset_surface() {
     let a_distance = 2.5;
     let a_self_intersect = StepDataLogical::default();
     let object = StepGeomOffsetSurface::new();
-    object.init(&a_name, &a_basis_surface.upcast(), a_distance, a_self_intersect);
+    object.init(
+        &a_name,
+        &a_basis_surface.upcast(),
+        a_distance,
+        a_self_intersect,
+    );
     assert!(object.basis_surface() == a_basis_surface);
     assert!(object.distance() == a_distance);
     assert!(object.self_intersect() == a_self_intersect);

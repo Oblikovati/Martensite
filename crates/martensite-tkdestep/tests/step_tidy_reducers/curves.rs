@@ -16,31 +16,49 @@ use martensite_tkernel::standard::Handle;
 const CURVE_3D: StepGeomPreferredSurfaceCurveRepresentation =
     StepGeomPreferredSurfaceCurveRepresentation::PscrCurve3d;
 
-fn add_edge_curve(fixture: &Fixture, curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>) {
+fn add_edge_curve(
+    fixture: &Fixture,
+    curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>,
+) {
     let edge = Handle::new(StepShapeEdgeCurve::new());
     let (start, end) = (
         Handle::new(StepShapeVertex::new()),
         Handle::new(StepShapeVertex::new()),
     );
-    edge.init(&name(""), &start.into_upcast(), &end.into_upcast(), curve, true);
+    edge.init(
+        &name(""),
+        &start.into_upcast(),
+        &end.into_upcast(),
+        curve,
+        true,
+    );
     fixture.add(&edge);
 }
 
-fn add_surface_curve(fixture: &Fixture, curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>) {
+fn add_surface_curve(
+    fixture: &Fixture,
+    curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>,
+) {
     let surface_curve = Handle::new(StepGeomSurfaceCurve::new());
     let geometry = HArray1::<StepGeomPcurveOrSurface>::default();
     surface_curve.init(&name(""), curve, &Handle::new(geometry), CURVE_3D);
     fixture.add(&surface_curve);
 }
 
-fn add_seam_curve(fixture: &Fixture, curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>) {
+fn add_seam_curve(
+    fixture: &Fixture,
+    curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>,
+) {
     let seam = Handle::new(StepGeomSeamCurve::new());
     let geometry = HArray1::<StepGeomPcurveOrSurface>::default();
     seam.init(&name(""), curve, &Handle::new(geometry), CURVE_3D);
     fixture.add(&seam);
 }
 
-fn add_trimmed_curve(fixture: &Fixture, curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>) {
+fn add_trimmed_curve(
+    fixture: &Fixture,
+    curve: &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>,
+) {
     let trimmed = Handle::new(StepGeomTrimmedCurve::new());
     trimmed.init(
         &name(""),
@@ -73,7 +91,9 @@ mod circle {
         fixture.replaced_by(&mut StepTidyCircleReducer::new(&fixture.ws))
     }
 
-    fn assert_merged_in(share: fn(&Fixture, &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>)) {
+    fn assert_merged_in(
+        share: fn(&Fixture, &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>),
+    ) {
         let fixture = Fixture::new();
         let (first, second) = (fixture.add_circle(""), fixture.add_circle(""));
         share(&fixture, &first.cast());
@@ -114,7 +134,9 @@ mod line {
         fixture.replaced_by(&mut StepTidyLineReducer::new(&fixture.ws))
     }
 
-    fn assert_merged_in(share: fn(&Fixture, &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>)) {
+    fn assert_merged_in(
+        share: fn(&Fixture, &Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomCurve>>),
+    ) {
         let fixture = Fixture::new();
         let (first, second) = (fixture.add_line(""), fixture.add_line(""));
         share(&fixture, &first.cast());

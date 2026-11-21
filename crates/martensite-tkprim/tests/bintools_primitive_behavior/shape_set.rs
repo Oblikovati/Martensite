@@ -199,7 +199,8 @@ fn a_face_on_a_surface_keeps_its_normals_only_when_asked() {
 
 #[test]
 fn the_parameters_of_a_point_on_a_surface_are_swapped_by_a_round_trip() {
-    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
+    let plane: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     let builder = BRepBuilder::default();
     let mut face = Face::default();
     builder

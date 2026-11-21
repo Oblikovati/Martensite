@@ -12,7 +12,9 @@ pub fn install_oit_layers(scene: &ViewerScene, fixture: &str) -> Handle<Graphic3
     scene
         .group
         .set_group_primitives_aspect(&oit_fill_aspect(0, "two").cast());
-    scene.group.add_primitive_array(&oit_quad(0, "two").into_upcast(), true);
+    scene
+        .group
+        .add_primitive_array(&oit_quad(0, "two").into_upcast(), true);
     let second =
         Graphic3dStructure::new(&scene.viewer.structure_manager(), &Handle::default()).unwrap();
     second.set_z_layer(layer);

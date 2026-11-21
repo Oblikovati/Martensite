@@ -181,7 +181,8 @@ fn curve_set(shape: &Shape) -> Result<Handle<StepVisualTessellatedCurveSet>, Fai
 pub(super) fn tessellation_of(
     shape: &Shape,
 ) -> Result<Handle<StepVisualTessellatedGeometricSet>, Failure> {
-    let mut items: Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>> = vec![curve_set(shape)?.cast()];
+    let mut items: Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>> =
+        vec![curve_set(shape)?.cast()];
     let mut faces = Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)?;
     while faces.more() {
         items.push(surface_set(&topods::face(faces.current())?)?.cast());

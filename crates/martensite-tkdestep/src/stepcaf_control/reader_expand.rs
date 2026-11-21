@@ -64,10 +64,13 @@ fn collect_representation_items(
     for sharing in
         session.typed_sharings::<StepReprRepresentationRelationship>(&representation.cast())?
     {
-        let relationship = sharing.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
+        let relationship =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
         let relationship = step_live(&relationship, WHERE)?;
         if relationship.rep1() == *representation {
-            let other = relationship.rep2().cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
+            let other = relationship
+                .rep2()
+                .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
             if other.is_some() {
                 collect_representation_items(session, &other, items)?;
             }
@@ -160,11 +163,12 @@ fn expand_sbsm(
     for rank in 1..=count {
         let shell = step_array1_item(&shells, rank, WHERE)?;
         let open = shell.open_shell();
-        let face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> = if open.is_some() {
-            open.cast()
-        } else {
-            shell.closed_shell().cast()
-        };
+        let face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> =
+            if open.is_some() {
+                open.cast()
+            } else {
+                shell.closed_shell().cast()
+            };
         expand_shell(&face_set, root, tool, session)?;
     }
     Ok(())
@@ -175,7 +179,9 @@ impl ReaderState {
     fn expand_root(
         &self,
         root_shape: &martensite_tkbrep::topods::Shape,
-        product_definition: &Handle<dyn crate::StepEntityBase<crate::step_basic::StepBasicProductDefinition>>,
+        product_definition: &Handle<
+            dyn crate::StepEntityBase<crate::step_basic::StepBasicProductDefinition>,
+        >,
         tool: &XCAFDocShapeTool,
         session: &SessionGraph,
     ) -> Result<(), Failure> {
@@ -213,12 +219,16 @@ impl ReaderState {
         // Iterate over the top level representation items collecting the topological containers
         let solids: Vec<_> = items
             .iter()
-            .filter(|item| item.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_some())
+            .filter(|item| {
+                item.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+                    .is_some()
+            })
             .collect();
         let models: Vec<_> = items
             .iter()
             .filter(|item| {
-                item.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_null()
+                item.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+                    .is_null()
                     && item.cast::<StepShapeShellBasedSurfaceModel>().is_some()
             })
             .collect();

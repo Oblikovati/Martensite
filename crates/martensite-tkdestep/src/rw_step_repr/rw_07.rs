@@ -29,8 +29,10 @@ impl RwStepReprRwItemDefinedTransformation {
         if data.is_param_defined(num, 2)? {
             data.read_string(num, 2, "description", ach, &mut description)?;
         }
-        let mut ti1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
-        let mut ti2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+        let mut ti1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
+        let mut ti2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -181,7 +183,8 @@ impl RwStepReprRwMappedItem {
             StepReprRepresentationMap::static_type(),
             &mut a_mapping_source,
         )?;
-        let mut a_mapping_target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+        let mut a_mapping_target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         data.read_entity(
             num,
             3,

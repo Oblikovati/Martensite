@@ -70,15 +70,19 @@ impl RwStepShapeRwFaceBasedSurfaceModel {
             ach,
             &mut a_representation_item_name,
         )?;
-        let mut a_fbsm_faces: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>> =
-            Default::default();
+        let mut a_fbsm_faces: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>,
+        > = Default::default();
         let mut sub2: i32 = 0;
         if data.read_sub_list(num, 2, "fbsm_faces", ach, &mut sub2, false, 0, 0)? {
             let num2: i32 = sub2;
             let nb0: i32 = data.nb_params(num2)?;
-            a_fbsm_faces = step_new_array1::<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>(1, nb0)?;
+            a_fbsm_faces = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
+            >(1, nb0)?;
             for i0 in 1..=nb0 {
-                let mut an_it0: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> = Default::default();
+                let mut an_it0: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> =
+                    Default::default();
                 data.read_entity(
                     num2,
                     i0,
@@ -214,7 +218,8 @@ impl RwStepShapeRwFaceSurface {
             return Ok(());
         }
         rw_block_0077!(a_bounds, a_name, ach, anent2, data, i2, nb2, nsub2, num);
-        let mut a_face_geometry: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = Default::default();
+        let mut a_face_geometry: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         data.read_entity(
             num,
             3,

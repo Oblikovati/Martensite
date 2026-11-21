@@ -140,7 +140,9 @@ impl StepShapeFaceBasedSurfaceModel {
     pub fn init(
         &self,
         a_representation_item_name: &Handle<HAsciiString>,
-        a_fbsm_faces: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>>,
+        a_fbsm_faces: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>,
+        >,
     ) {
         self.parent.init(a_representation_item_name);
         self.state.write().the_fbsm_faces = a_fbsm_faces.clone();

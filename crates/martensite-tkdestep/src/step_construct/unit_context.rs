@@ -91,7 +91,9 @@ fn write_unit_parts(write_unit: i32) -> (Option<&'static str>, StepBasicSiPrefix
 }
 
 /// The length unit `init` writes: an SI unit, under a conversion based unit for a non-metric one.
-fn write_length_unit(write_unit: i32) -> Result<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, Failure> {
+fn write_length_unit(
+    write_unit: i32,
+) -> Result<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, Failure> {
     let (name, prefix, has_prefix, scale) = write_unit_parts(write_unit);
     let si_unit = Handle::new(StepBasicSiUnitAndLengthUnit::new());
     si_unit.init(has_prefix, prefix, StepBasicSiUnitName::SunMetre);
@@ -117,7 +119,10 @@ fn write_length_unit(write_unit: i32) -> Result<Handle<dyn crate::StepEntityBase
 }
 
 /// An SI unit without prefix, as `init` writes radians and steradians (the prefix is not written).
-fn plane_and_solid_units() -> (Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>) {
+fn plane_and_solid_units() -> (
+    Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
+    Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
+) {
     let radian = Handle::new(StepBasicSiUnitAndPlaneAngleUnit::new());
     radian.init(
         false,
@@ -267,7 +272,10 @@ impl StepConstructUnitContext {
     ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>, Failure> {
         let factor = unit.conversion_factor();
         step_live(&factor, where_called)?;
-        if factor.cast::<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>().is_some() {
+        if factor
+            .cast::<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>()
+            .is_some()
+        {
             return Ok(factor.cast());
         }
         let repr = factor.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>();
@@ -320,12 +328,18 @@ impl StepConstructUnitContext {
             return Ok(-1);
         }
         let mut status = 0;
-        let parameter = if unit.cast::<dyn crate::StepEntityBase<StepBasicConversionBasedUnit>>().is_some() {
+        let parameter = if unit
+            .cast::<dyn crate::StepEntityBase<StepBasicConversionBasedUnit>>()
+            .is_some()
+        {
             match Self::conversion_parameter(&unit.cast(), &mut status)? {
                 Ok(value) => value,
                 Err(early) => return Ok(early),
             }
-        } else if let Some(si_unit) = unit.cast::<dyn crate::StepEntityBase<StepBasicSiUnit>>().get() {
+        } else if let Some(si_unit) = unit
+            .cast::<dyn crate::StepEntityBase<StepBasicSiUnit>>()
+            .get()
+        {
             let mut name_factor = 0.;
             if !Self::si_unit_name_factor(si_unit, &mut name_factor) {
                 status = 11;

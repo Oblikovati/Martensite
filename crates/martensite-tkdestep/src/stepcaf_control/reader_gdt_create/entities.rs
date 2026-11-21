@@ -10,7 +10,11 @@ impl OldVersion<'_> {
         item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) -> Result<(), Failure> {
         let tolerance = entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>();
-        let tolerance = tolerance.get().ok_or_else(|| martensite_tkernel::standard::exceptions::null_object(&format!("{WHERE}: null tolerance")))?;
+        let tolerance = tolerance.get().ok_or_else(|| {
+            martensite_tkernel::standard::exceptions::null_object(&format!(
+                "{WHERE}: null tolerance"
+            ))
+        })?;
         // read common data for tolerance
         let magnitude = measure_with_unit(&tolerance.magnitude());
         let Some(magnitude) = magnitude.get() else {
@@ -101,10 +105,17 @@ impl OldVersion<'_> {
         if item.is_null() {
             return Ok(());
         }
-        if entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().is_some() {
+        if entity
+            .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+            .is_some()
+        {
             return self.read_dimension(entity, &item);
         }
-        if entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().get().is_some() {
+        if entity
+            .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+            .get()
+            .is_some()
+        {
             return self.read_tolerance(entity, &item);
         }
         Ok(())
@@ -179,8 +190,12 @@ impl ReaderState {
                     }
                 }
             }
-        } else if attribute.cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>().is_some()
-            || attribute.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().is_some()
+        } else if attribute
+            .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+            .is_some()
+            || attribute
+                .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+                .is_some()
         {
             // if tolerance attached to dimension
             for shared in session.shareds(attribute)? {
@@ -189,7 +204,10 @@ impl ReaderState {
                     collect_shape_aspect(&aspect, session, &mut aspects)?;
                 }
             }
-        } else if attribute.cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>().is_some() {
+        } else if attribute
+            .cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>()
+            .is_some()
+        {
             // if applied AllAround Modifier
             collected.is_all_around |= attribute.cast::<StepReprAllAroundShapeAspect>().is_some();
             // dimensions and default tolerances
@@ -207,7 +225,8 @@ impl ReaderState {
         for aspect in aspects {
             // the first sharing of either kind ends the search
             let mut usage = Handle::<StepAP242GeometricItemSpecificUsage>::default();
-            let mut definition = Handle::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>::default();
+            let mut definition =
+                Handle::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>::default();
             for sharing in old.session.sharings(&aspect.cast())? {
                 usage = sharing.cast();
                 definition = sharing.cast();
@@ -235,12 +254,18 @@ impl ReaderState {
         collected: &CollectedItems,
     ) -> Result<TdfLabel, Failure> {
         let ascii_name = |text: &str| ExtendedString::from_ascii(&AsciiString::new(text));
-        if entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().is_null() {
+        if entity
+            .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+            .is_null()
+        {
             let label = tool.add_dimension()?;
             self.gdt_map.bind(entity.clone(), label.clone());
             tool.lock(&label)?;
             XCAFDocDimension::set(&label)?;
-            let kind = if entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().is_some() {
+            let kind = if entity
+                .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+                .is_some()
+            {
                 "DGT:Dimensional_Size"
             } else {
                 "DGT:Dimensional_Location"

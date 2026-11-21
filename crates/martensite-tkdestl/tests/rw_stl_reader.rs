@@ -20,7 +20,6 @@ use support::shapes::mesh_of;
 /// A reader recording its callbacks.
 #[derive(Default)]
 struct RecordingReader {
-
     base: RwStlReaderBase,
     nodes: SharedState<Vec<[f64; 3]>>,
     triangles: SharedState<Vec<[i32; 3]>>,

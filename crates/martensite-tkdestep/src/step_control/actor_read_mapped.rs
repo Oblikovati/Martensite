@@ -124,7 +124,8 @@ impl StepControlActorRead {
         factors: &StepDataFactors,
     ) -> Result<(bool, Transform3), Failure> {
         let mut trsf = Transform3::default();
-        let target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = live.mapping_target();
+        let target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            live.mapping_target();
         let operator: Handle<StepGeomCartesianTransformationOperator3d> = target.cast();
         if operator.is_some() {
             return Ok(
@@ -184,8 +185,10 @@ impl StepControlActorRead {
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
         let mut tool = StepToTopoDSTool::new();
-        let map: DataMap<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Shape> =
-            DataMap::default();
+        let map: DataMap<
+            Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+            Shape,
+        > = DataMap::default();
         tool.init(&map, tp);
         let mut translator = StepToTopoDSTranslateFace::new();
         {

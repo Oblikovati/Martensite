@@ -107,11 +107,13 @@ impl Transient for CountingImageDestination {
     fn dynamic_type(&self) -> &'static RuntimeType {
         self.callbacks.fetch_add(1, Ordering::Relaxed);
         static TYPE: OnceLock<&'static RuntimeType> = OnceLock::new();
-        TYPE.get_or_init(|| RuntimeType::register::<Self>(
-            "Martensite_CountingImageDestination",
-            std::mem::size_of::<Self>(),
-            Some(<ImagePixMap as martensite_tkernel::standard::RuntimeTyped>::static_type()),
-        ))
+        TYPE.get_or_init(|| {
+            RuntimeType::register::<Self>(
+                "Martensite_CountingImageDestination",
+                std::mem::size_of::<Self>(),
+                Some(<ImagePixMap as martensite_tkernel::standard::RuntimeTyped>::static_type()),
+            )
+        })
     }
 }
 impl ImagePixMapSource for CountingImageDestination {

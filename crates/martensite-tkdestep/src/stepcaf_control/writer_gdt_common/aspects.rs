@@ -1,6 +1,6 @@
 //! The shape aspects and presentations of GD\&T for `STEPCAFControlWriter`.
-use crate::step_entity::StepBaseHandle;
 use super::*;
+use crate::step_entity::StepBaseHandle;
 use martensite_tkernel::standard::Transient;
 
 /// A measure of a name, a value and a unit.
@@ -221,7 +221,9 @@ impl WriterState {
         step_array1_set(&styles, 1, style_item, WHERE)?;
         let style = Handle::new(StepVisualPresentationStyleAssignment::new());
         style.init(&styles);
-        let plane_styles = step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>(1, 1)?;
+        let plane_styles = step_new_array1::<
+            Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>,
+        >(1, 1)?;
         step_array1_set(&plane_styles, 1, style.into_upcast(), WHERE)?;
         // Plane
         let plane = Handle::new(StepGeomPlane::new());

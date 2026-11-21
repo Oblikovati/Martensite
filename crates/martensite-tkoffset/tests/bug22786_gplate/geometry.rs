@@ -65,7 +65,8 @@ fn prepared_plate(edges: &[Edge]) -> Result<GeomPlateBuildPlateSurface, Failure>
 }
 
 fn c0_constraint(edge: &Edge) -> Result<Handle<dyn GeomPlateCurveConstraintSource>, Failure> {
-    let curve: Handle<dyn Adaptor3dCurve> = Handle::new(BRepAdaptorCurve::with_edge(edge)?).into_upcast();
+    let curve: Handle<dyn Adaptor3dCurve> =
+        Handle::new(BRepAdaptorCurve::with_edge(edge)?).into_upcast();
     let constraint = BRepFillCurveConstraint::with_curve(&curve, 0, 10, 1.0e-4)?;
     Ok(constraint)
 }

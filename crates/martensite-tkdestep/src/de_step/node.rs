@@ -3,11 +3,7 @@ use martensite_tkde::de::{
     DeConfigurationContext, DeConfigurationNodeBase, DeShapeFixConfigurationNodeBase,
     DeShapeFixParameters, load_shape_fix_parameters, save_shape_fix_parameters,
 };
-use martensite_tkernel::{
-    ncollection::List,
-    standard::SharedState,
-    tcollection::AsciiString,
-};
+use martensite_tkernel::{ncollection::List, standard::SharedState, tcollection::AsciiString};
 use std::ops::Deref;
 /// Configuration state of `DeStepConfigurationNode`, without a provider backend.
 /// Example: `DeStepConfigurationNode::default()`.

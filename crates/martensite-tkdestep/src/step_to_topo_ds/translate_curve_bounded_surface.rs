@@ -45,7 +45,10 @@ impl StepToTopoDSTranslateCurveBoundedSurface {
         surface: Handle<dyn GeomSurface>,
         process: &TransferTransientProcess,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
-        if step_surface.cast::<dyn crate::StepEntityBase<StepGeomBSplineSurface>>().is_null() {
+        if step_surface
+            .cast::<dyn crate::StepEntityBase<StepGeomBSplineSurface>>()
+            .is_null()
+        {
             return Ok(surface);
         }
         let algorithms = ShapeAlgo::algo_container();
@@ -103,7 +106,8 @@ impl StepToTopoDSTranslateCurveBoundedSurface {
                 rank,
                 "StepToTopoDSTranslateCurveBoundedSurface",
             )?;
-            let curve: Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>> = boundary.boundary_curve().cast();
+            let curve: Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>> =
+                boundary.boundary_curve().cast();
             if curve.is_null() {
                 continue;
             }

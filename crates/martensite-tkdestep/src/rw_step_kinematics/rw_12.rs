@@ -39,7 +39,9 @@ impl RwStepKinematicsRwPointOnPlanarCurvePairWithRange {
             the_data,
             the_num
         );
-        let mut a_point_on_planar_curve_pair_pair_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
+        let mut a_point_on_planar_curve_pair_pair_curve: Handle<
+            dyn crate::StepEntityBase<StepGeomCurve>,
+        > = Default::default();
         the_data.read_entity(
             the_num,
             7,
@@ -155,7 +157,8 @@ impl RwStepKinematicsRwPointOnSurfacePair {
             the_data,
             the_num
         );
-        let mut a_pair_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = Default::default();
+        let mut a_pair_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         the_data.read_entity(
             the_num,
             7,

@@ -158,7 +158,11 @@ impl StepBasicDerivedUnitElement {
         get exponent = the_exponent: f64;
     }
     /// `init`.
-    pub fn init(&self, a_unit: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, a_exponent: f64) {
+    pub fn init(
+        &self,
+        a_unit: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
+        a_exponent: f64,
+    ) {
         let mut state = self.state.write();
         state.the_unit = a_unit.clone();
         state.the_exponent = a_exponent;

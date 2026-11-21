@@ -3,8 +3,16 @@ use crate::step_rw::*;
 
 /// A part of the table.
 pub(super) const TABLE_SHARE_02: &[ShareRow] = &[
-    share_row!(349, StepVisualCameraImage2dWithScale, RwStepVisualRwCameraImage),
-    share_row!(350, StepVisualCameraImage3dWithScale, RwStepVisualRwCameraImage),
+    share_row!(
+        349,
+        StepVisualCameraImage2dWithScale,
+        RwStepVisualRwCameraImage
+    ),
+    share_row!(
+        350,
+        StepVisualCameraImage3dWithScale,
+        RwStepVisualRwCameraImage
+    ),
     share_row!(
         351,
         StepGeomCartesianTransformationOperator2d,

@@ -27,7 +27,8 @@ impl ReaderState {
         // Collect all links to shapes
         let mut aspects: Vec<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>> = Vec::new();
         for sharing in session.sharings(&datum.cast())? {
-            let relationship = sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
+            let relationship =
+                sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
             let Some(relationship) = relationship
                 .get()
                 .filter(|live| live.relating_shape_aspect().is_some())

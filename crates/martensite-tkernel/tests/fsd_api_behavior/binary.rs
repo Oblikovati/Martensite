@@ -4,8 +4,8 @@ use martensite_tkernel::fsd::{BinaryFile, FileHeader, MemoryFileSystem};
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::Handle;
 use martensite_tkernel::storage::{
-    BaseDriver, Data, DataSections, DriverPrimitives, HeaderSections, IoStream,
-    OpenMode, StorageError, TableSections,
+    BaseDriver, Data, DataSections, DriverPrimitives, HeaderSections, IoStream, OpenMode,
+    StorageError, TableSections,
 };
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use std::rc::Rc;

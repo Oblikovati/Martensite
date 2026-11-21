@@ -262,9 +262,10 @@ impl StepControlActorRead {
                 break;
             }
             let aspect_entry = index >= nb_not_aspect;
-            let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = step_live(sdr, "StepControlActorRead")?
-                .used_representation()
-                .cast();
+            let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
+                step_live(sdr, "StepControlActorRead")?
+                    .used_representation()
+                    .cast();
             if rep.is_null() {
                 continue;
             }
@@ -329,7 +330,8 @@ impl StepControlActorRead {
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
         let mut pd = Handle::<dyn crate::StepEntityBase<StepBasicProductDefinition>>::default();
-        let mut srr = Handle::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>::default();
+        let mut srr =
+            Handle::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>::default();
         let mut trsf = Transform3::default();
         let (mut iatrsf, mut srr_reversed, mut is_depend) = (false, false, false);
         for sharing in sharing_entities(tp, &nauo.cast())? {
@@ -343,8 +345,9 @@ impl StepControlActorRead {
                     continue;
                 };
                 is_depend = true;
-                let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> =
-                    live.representation_relation().cast();
+                let relation: Handle<
+                    dyn crate::StepEntityBase<StepReprRepresentationRelationship>,
+                > = live.representation_relation().cast();
                 let Some(live_relation) = relation.get() else {
                     continue;
                 };

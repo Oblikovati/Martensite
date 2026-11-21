@@ -87,7 +87,8 @@ impl RwStepShapeRwDimensionalSize {
         if !data.check_nb_params(num, 2, ach, "dimensional_size")? {
             return Ok(());
         }
-        let mut a_applies_to: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
+        let mut a_applies_to: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
+            Default::default();
         data.read_entity(
             num,
             1,
@@ -199,7 +200,8 @@ impl RwStepShapeRwEdge {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let mut a_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         data.read_entity(
             num,
             2,

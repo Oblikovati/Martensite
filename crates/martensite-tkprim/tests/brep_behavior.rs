@@ -190,7 +190,7 @@ fn internal_vertices_get_points_on_the_curves() {
         .unwrap();
     let points = inner
         .tshape()
-         .downcast_ref::<martensite_tkbrep::brep::BRepTVertex>()
+        .downcast_ref::<martensite_tkbrep::brep::BRepTVertex>()
         .unwrap()
         .points();
     assert!(points[0].get().unwrap().is_point_on_curve());

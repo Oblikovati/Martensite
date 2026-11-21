@@ -74,7 +74,9 @@ fn new_format_representation(
     let description = Handle::new(StepReprDescriptiveRepresentationItem::new());
     description.init(&text("data format"), &text(format));
     let representation = Handle::new(StepReprRepresentation::new());
-    let items = single::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(description.cast())?;
+    let items = single::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+        description.cast(),
+    )?;
     representation.init(&text("document format"), &items, &context.upcast());
     let mut characterized = StepReprCharacterizedDefinition::default();
     characterized.set_value(&doc_file.cast())?;
@@ -230,7 +232,8 @@ impl StepConstructExternRefs {
         // create document
         let doc_type = Handle::new(StepBasicDocumentType::new());
         doc_type.init(&text("cad_filename"));
-        let document = Handle::new(StepBasicDocument::new()).into_upcast::<dyn crate::StepEntityBase<StepBasicDocument>>();
+        let document = Handle::new(StepBasicDocument::new())
+            .into_upcast::<dyn crate::StepEntityBase<StepBasicDocument>>();
         document.init(
             &empty,
             &text(filename),
@@ -323,7 +326,8 @@ impl StepConstructExternRefs {
         // DocumentType, ProductDefinitionContext, ProductRelatedProductCategory, ProductContext
         self.check_ap214_shared()?;
         // create document
-        let document = Handle::new(StepBasicDocument::new()).into_upcast::<dyn crate::StepEntityBase<StepBasicDocument>>();
+        let document = Handle::new(StepBasicDocument::new())
+            .into_upcast::<dyn crate::StepEntityBase<StepBasicDocument>>();
         document.init(&empty, &empty, false, &empty, &self.my_shared_doc_type);
         step_live(adr, WHERE)?.init(&document, &empty, &single(reference_item)?);
         // create new product
@@ -367,7 +371,8 @@ impl StepConstructExternRefs {
         prpc.set_products(&products);
         // create new PDWAD
         let pdwad = Handle::new(StepBasicProductDefinitionWithAssociatedDocuments::new());
-        let documents = single::<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>(df.upcast())?;
+        let documents =
+            single::<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>(df.upcast())?;
         pdwad.init(
             &text("1"),
             &empty,

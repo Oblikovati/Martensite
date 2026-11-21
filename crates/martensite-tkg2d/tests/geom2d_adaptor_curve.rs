@@ -192,7 +192,8 @@ fn curve_adaptor_curve_degenerated_curve_trimmed_curve_success() {
     let f = setup();
     // Create a trimmed curve and test degenerated case
     let aTrimmedCurve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&f.myLine, 0.0, 20.0, true, true).unwrap()).into_upcast();
+        Handle::new(Geom2dTrimmedCurve::new(&f.myLine, 0.0, 20.0, true, true).unwrap())
+            .into_upcast();
 
     let aParam: f64 = 10.0;
     let anAdaptor = Geom2dAdaptorCurve::default();

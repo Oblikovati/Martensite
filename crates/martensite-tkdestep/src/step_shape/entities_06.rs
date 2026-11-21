@@ -268,12 +268,19 @@ step_entity! {
 }
 impl StepShapeSweptFaceSolid {
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
+    ) {
         self.state.write().swept_area = a_swept_area.clone();
         self.parent.parent.parent.init(a_name);
     }
     /// `set_swept_face`.
-    pub fn set_swept_face(&self, a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>) {
+    pub fn set_swept_face(
+        &self,
+        a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
+    ) {
         self.state.write().swept_area = a_swept_area.clone();
     }
     /// `swept_face`.

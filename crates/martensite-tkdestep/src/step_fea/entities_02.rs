@@ -190,8 +190,12 @@ impl StepFEAElementRepresentation {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
-        a_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        a_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        a_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         a_node_list: &Handle<HArray1<Handle<StepFEANodeRepresentation>>>,
     ) {
         self.parent.init(

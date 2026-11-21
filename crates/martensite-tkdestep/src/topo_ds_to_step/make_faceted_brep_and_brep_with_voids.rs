@@ -69,7 +69,8 @@ fn translate_shells(
             add_warning(fp, &current, text)?;
             continue;
         }
-        let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = builder.value()?.cast();
+        let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> =
+            builder.value()?.cast();
         if outer_shell.is_equal(&current) {
             results.outer = closed;
         } else {

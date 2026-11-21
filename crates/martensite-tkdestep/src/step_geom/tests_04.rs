@@ -344,7 +344,12 @@ fn init_round_trip_step_geom_reparametrised_composite_curve_segment() {
     let a_parent_curve = Handle::new(StepGeomCurve::new());
     let a_param_length = 2.5;
     let object = StepGeomReparametrisedCompositeCurveSegment::new();
-    object.init(a_transition, a_same_sense, &a_parent_curve.upcast(), a_param_length);
+    object.init(
+        a_transition,
+        a_same_sense,
+        &a_parent_curve.upcast(),
+        a_param_length,
+    );
     assert!(object.param_length() == a_param_length);
 }
 

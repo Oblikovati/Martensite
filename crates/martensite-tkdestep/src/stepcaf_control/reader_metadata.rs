@@ -120,7 +120,10 @@ fn collect_binders(
     let mut binders = Vec::new();
     for shared in session.shareds(&source.cast())? {
         // Acquire binder from StepBasicProductDefinition.
-        if shared.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>().is_some() {
+        if shared
+            .cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>()
+            .is_some()
+        {
             push_binder(&mut binders, process.find(&shared));
         } else if let Some(shape) = shared.cast::<StepReprProductDefinitionShape>().get() {
             // Acquire binder from StepReprProductDefinitionShape.
@@ -134,7 +137,10 @@ fn collect_binders(
         {
             // Acquire binder from StepReprNextAssemblyUsageOccurrence.
             push_binder(&mut binders, process.find(&shared));
-        } else if shared.cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>().is_some() {
+        } else if shared
+            .cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>()
+            .is_some()
+        {
             collect_aspect_binders(session, &shared, source, &mut binders)?;
         }
     }
@@ -307,7 +313,8 @@ fn fill_attributes(
     };
     let name = name.string().clone();
     for sharing in session.sharings(&definition.cast())? {
-        let representation = sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
+        let representation =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
         let Some(representation) = representation.get().map(|live| live.used_representation())
         else {
             continue;
@@ -431,7 +438,9 @@ impl ReaderState {
         let session = SessionGraph::of_process(ws)?;
         for i in 1..=model.nb_entities() {
             // Processing only StepBasicProductDefinition entities.
-            let definition = model.value(i)?.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>();
+            let definition = model
+                .value(i)?
+                .cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>();
             let Some(live) = definition.get() else {
                 continue;
             };

@@ -6,7 +6,6 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkservice::aspect::AspectTypeOfMarker;
 use martensite_tkservice::graphic3d::Graphic3dMarkerImage;
 
-
 /// The marker type of a corpus value (-1..=13).
 fn marker_type(value: i32) -> AspectTypeOfMarker {
     use AspectTypeOfMarker as T;

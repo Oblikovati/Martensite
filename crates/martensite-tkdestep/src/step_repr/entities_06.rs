@@ -234,8 +234,12 @@ impl StepReprSpecifiedHigherUsageOccurrence {
         a_product_definition_relationship_name: &Handle<HAsciiString>,
         has_product_definition_relationship_description: bool,
         a_product_definition_relationship_description: &Handle<HAsciiString>,
-        a_product_definition_relationship_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
-        a_product_definition_relationship_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_product_definition_relationship_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
+        a_product_definition_relationship_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
         has_assembly_component_usage_reference_designator: bool,
         a_assembly_component_usage_reference_designator: &Handle<HAsciiString>,
         a_upper_usage: &Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>>,

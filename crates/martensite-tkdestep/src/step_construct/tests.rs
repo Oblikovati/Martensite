@@ -293,7 +293,8 @@ fn the_kind_of_a_written_length_unit_is_conversion_based_only_for_non_metric() {
     made.init(0.01, &inch, &StepDataFactors::default()).unwrap();
     let context: Handle<StepReprGlobalUnitAssignedContext> =
         made.value().get().unwrap().global_unit_assigned_context();
-    let unit: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>> = context.get().unwrap().units_value(1).unwrap();
+    let unit: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>> =
+        context.get().unwrap().units_value(1).unwrap();
     assert!(
         unit.cast::<StepBasicConversionBasedUnitAndLengthUnit>()
             .is_some()

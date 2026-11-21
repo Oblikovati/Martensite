@@ -26,12 +26,17 @@ impl RwStepVisualRwCharacterizedObjAndRepresentationAndDraughtingModel {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut an_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>> = Default::default();
-        let mut an_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+        let mut an_items: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        > = Default::default();
+        let mut an_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         let mut nsub: i32 = Default::default();
         if data.read_sub_list(num, 2, "items", ach, &mut nsub, false, 0, 0)? {
             let nb: i32 = data.nb_params(nsub)?;
-            an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb)?;
+            an_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, nb)?;
             for i in 1..=nb {
                 if data.read_entity(
                     nsub,
@@ -45,7 +50,9 @@ impl RwStepVisualRwCharacterizedObjAndRepresentationAndDraughtingModel {
                 }
             }
         }
-        let mut a_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = Default::default();
+        let mut a_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         data.read_entity(
             num,
             3,

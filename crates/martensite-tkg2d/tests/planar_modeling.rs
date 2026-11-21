@@ -115,7 +115,10 @@ fn offset_curve_copy_constructor_basis_curve() {
 #[test]
 fn offset_curve_copy_method_uses_optimized_constructor() {
     let original = regular_offset_fixture();
-    let copy = original.copy().unwrap().into_downcast::<Geom2dOffsetCurve>();
+    let copy = original
+        .copy()
+        .unwrap()
+        .into_downcast::<Geom2dOffsetCurve>();
     assert!(!copy.is_null());
     EXPECT_DOUBLE_EQ(original.offset(), copy.offset());
     let mut u = original.first_parameter();

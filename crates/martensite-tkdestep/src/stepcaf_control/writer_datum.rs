@@ -317,7 +317,8 @@ fn write_target_parameters(
         XCAFDimTolObjectsDatumTargetType::Rectangle => 3,
         _ => 2,
     };
-    let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
+    let items =
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
     if kind != XCAFDimTolObjectsDatumTargetType::Point {
         if kind == XCAFDimTolObjectsDatumTargetType::Rectangle {
             // Additional value
@@ -365,23 +366,24 @@ fn link_target_to_features(
     features: &DatumFeatures,
     target: &Handle<StepDimTolDatumTarget>,
 ) -> Result<(), Failure> {
-    let relating: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = match features.aspects.as_slice() {
-        [] => return Ok(()),
-        [single] => single.clone(),
-        several => {
-            let composite = Handle::new(StepReprCompositeShapeAspect::new());
-            composite.init(
-                &empty(),
-                &empty(),
-                &features.pds,
-                step_live(&several[0], WHERE)?.product_definitional(),
-            );
-            for aspect in several {
-                relate_aspects(model, &composite.cast(), aspect, empty())?;
+    let relating: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
+        match features.aspects.as_slice() {
+            [] => return Ok(()),
+            [single] => single.clone(),
+            several => {
+                let composite = Handle::new(StepReprCompositeShapeAspect::new());
+                composite.init(
+                    &empty(),
+                    &empty(),
+                    &features.pds,
+                    step_live(&several[0], WHERE)?.product_definitional(),
+                );
+                for aspect in several {
+                    relate_aspects(model, &composite.cast(), aspect, empty())?;
+                }
+                composite.cast()
             }
-            composite.cast()
-        }
-    };
+        };
     let relationship = Handle::new(StepReprFeatureForDatumTargetRelationship::new());
     relationship.init(
         &empty(),

@@ -198,7 +198,9 @@ impl RwStepBasicRwProductDefinitionReferenceWithLocalRepresentation {
         if data.is_param_defined(num, 3)? {
             data.read_string(num, 3, "description", ach, &mut a_description)?;
         }
-        let mut a_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>> = Default::default();
+        let mut a_formation: Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        > = Default::default();
         data.read_entity(
             num,
             4,
@@ -207,8 +209,9 @@ impl RwStepBasicRwProductDefinitionReferenceWithLocalRepresentation {
             StepBasicProductDefinitionFormation::static_type(),
             &mut a_formation,
         )?;
-        let mut a_frame_of_reference: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>> =
-            Default::default();
+        let mut a_frame_of_reference: Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionContext>,
+        > = Default::default();
         data.read_entity(
             num,
             5,

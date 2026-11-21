@@ -47,7 +47,10 @@ impl StepShapeEdge {
         self.parent.init(a_name);
     }
     /// `set_edge_start`; forbidden on an oriented edge.
-    pub fn set_edge_start(&self, a_edge_start: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>) {
+    pub fn set_edge_start(
+        &self,
+        a_edge_start: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    ) {
         let mut state = self.state.write();
         if state.oriented {
             return forbidden_setup_notice();
@@ -123,7 +126,10 @@ impl StepShapeOrientedEdge {
             .init(a_name, &Handle::default(), &Handle::default());
     }
     /// `set_edge_element`.
-    pub fn set_edge_element(&self, a_edge_element: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>) {
+    pub fn set_edge_element(
+        &self,
+        a_edge_element: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
+    ) {
         self.parent.state.write().edge_element = a_edge_element.clone();
     }
     /// `edge_element`.
@@ -413,7 +419,13 @@ impl StepShapePath {
         }
     }
     /// The own list, the element of an oriented path, and its orientation.
-    fn path_parts(&self) -> (OrientedEdgeList, Option<Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>>, bool) {
+    fn path_parts(
+        &self,
+    ) -> (
+        OrientedEdgeList,
+        Option<Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>>,
+        bool,
+    ) {
         let state = self.state.read();
         let element = state.oriented.then(|| state.path_element.clone());
         (state.edge_list.clone(), element, state.orientation)
@@ -450,7 +462,10 @@ impl StepShapeOrientedPath {
         self.parent.init(a_name, &Handle::default());
     }
     /// `set_path_element`.
-    pub fn set_path_element(&self, a_path_element: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>) {
+    pub fn set_path_element(
+        &self,
+        a_path_element: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
+    ) {
         self.parent.state.write().path_element = a_path_element.clone();
     }
     /// `path_element`.

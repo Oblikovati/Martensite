@@ -154,7 +154,8 @@ fn runtime_type_step_ap203_cc_design_specification_reference() {
 
 #[test]
 fn init_round_trip_step_ap203_cc_design_specification_reference() {
-    let a_document_reference_assigned_document = Handle::new(StepBasicDocument::new()).into_upcast();
+    let a_document_reference_assigned_document =
+        Handle::new(StepBasicDocument::new()).into_upcast();
     let a_document_reference_source = Handle::new(HAsciiString::new("sample"));
     let a_items = Handle::new(HArray1::<StepAP203SpecifiedItem>::with_bounds(1, 2).unwrap());
     let object = StepAP203CcDesignSpecificationReference::new();

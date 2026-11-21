@@ -244,7 +244,8 @@ fn wrapper_cases(lines: &mut Lines) {
     let handle = registry();
     let wrapper = handle.get().expect("a wrapper");
     lines.line("wrap.order", order(wrapper));
-    let rebind = wrapper.bind(&probe_node("STEP", "Martensite", "x", false, false, "").into_upcast());
+    let rebind =
+        wrapper.bind(&probe_node("STEP", "Martensite", "x", false, false, "").into_upcast());
     lines.line("wrap.rebind", b(rebind));
     lines.line("wrap.bindnull", b(wrapper.bind(&Handle::default())));
     wrapper_lookups(lines, wrapper);

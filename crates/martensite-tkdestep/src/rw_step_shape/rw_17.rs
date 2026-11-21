@@ -27,11 +27,14 @@ impl RwStepShapeRwSeamEdge {
             ach,
             &mut a_representation_item_name,
         )?;
-        let a_edge_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let a_edge_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         data.check_derived(num, 2, "edge.edge_start", ach, false)?;
-        let a_edge_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
+        let a_edge_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         data.check_derived(num, 3, "edge.edge_end", ach, false)?;
-        let mut a_oriented_edge_edge_element: Handle<dyn crate::StepEntityBase<StepShapeEdge>> = Default::default();
+        let mut a_oriented_edge_edge_element: Handle<dyn crate::StepEntityBase<StepShapeEdge>> =
+            Default::default();
         data.read_entity(
             num,
             4,
@@ -173,7 +176,8 @@ impl RwStepShapeRwShapeDimensionRepresentation {
         if data.read_sub_list(num, 2, "representation.items", ach, &mut sub2, false, 0, 0)? {
             let num2: i32 = sub2;
             let nb0: i32 = data.nb_params(num2)?;
-            let mut an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+            let mut an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                Default::default();
             let mut an_it0_ap242: StepShapeShapeDimensionRepresentationItem = Default::default();
             if data.read_entity(
                 num2,
@@ -183,8 +187,9 @@ impl RwStepShapeRwShapeDimensionRepresentation {
                 StepReprRepresentationItem::static_type(),
                 &mut an_it0,
             )? {
-                a_representation_items =
-                    step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb0)?;
+                a_representation_items = step_new_array1::<
+                    Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+                >(1, nb0)?;
                 for i0 in 1..=nb0 {
                     data.read_entity(
                         num2,
@@ -210,8 +215,9 @@ impl RwStepShapeRwShapeDimensionRepresentation {
                 }
             }
         }
-        let mut a_representation_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> =
-            Default::default();
+        let mut a_representation_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         data.read_entity(
             num,
             3,

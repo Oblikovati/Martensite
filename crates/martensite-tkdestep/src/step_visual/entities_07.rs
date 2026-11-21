@@ -270,7 +270,9 @@ impl StepVisualTessellatedGeometricSet {
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_items: &ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>,
+        the_items: &ObjectHandle<
+            Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>,
+        >,
     ) {
         self.parent.parent.parent.init(the_name);
         self.state.write().my_items = the_items.clone();

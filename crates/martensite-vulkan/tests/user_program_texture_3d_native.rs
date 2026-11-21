@@ -158,7 +158,9 @@ fn texture_3d_dumps(
         &TEXTURE_3D_SPIRV,
     );
     let (scene, object) = shaded_scene(driver, &cube(), run);
-    let texture = Handle::new(Graphic3dTexture3D::from_pix_map(volume(top_down).into_upcast()));
+    let texture = Handle::new(Graphic3dTexture3D::from_pix_map(
+        volume(top_down).into_upcast(),
+    ));
     user_program_session::apply_texture_set(&scene.context, &object, &[texture.cast()]);
     let mut dumps = Vec::new();
     for slice in [0., 1., 2., 3., 4., 5., -1.] {
@@ -234,7 +236,9 @@ fn a_top_down_volume_flips_through_the_texture_transform() {
 fn a_3d_texture_without_a_user_program_is_refused() {
     let driver = Graphic3dRenderDriver::new(grading::validation_options()).unwrap();
     let (scene, object) = shaded_scene(&driver, &cube(), &DumpRun::plain());
-    let texture = Handle::new(Graphic3dTexture3D::from_pix_map(volume(false).into_upcast()));
+    let texture = Handle::new(Graphic3dTexture3D::from_pix_map(
+        volume(false).into_upcast(),
+    ));
     user_program_session::apply_texture_set(&scene.context, &object, &[texture.cast()]);
     let render: Handle<martensite_vulkan::Graphic3dRenderView> =
         scene.view.get().unwrap().view().cast();

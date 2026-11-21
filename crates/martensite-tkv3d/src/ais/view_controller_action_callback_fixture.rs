@@ -2,9 +2,7 @@
 use super::{AisInteractiveObject, AisInteractiveObjectBase};
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{
-    Failure, Handle, SharedState, raise_native_failure,
-};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, raise_native_failure};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::{
     Graphic3dCamera, Graphic3dStructureMembers, Graphic3dStructureSource,

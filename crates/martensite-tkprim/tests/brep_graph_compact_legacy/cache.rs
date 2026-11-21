@@ -45,9 +45,7 @@ impl CacheMeshDriver for StubMeshDriver {
 
 fn install_driver(graph: &BRepGraph, recipe: u64) -> Handle<CacheMesh> {
     let cache = graph.cache_registry().ensure::<CacheMesh>().unwrap();
-    let driver = Handle::new(StubMeshDriver {
-        recipe,
-    });
+    let driver = Handle::new(StubMeshDriver { recipe });
     cache.register_driver(0, &driver.into_upcast::<dyn CacheMeshDriver>());
     assert!(!cache.is_null());
     cache

@@ -27,7 +27,10 @@ fn assert_root_round_trip(handle: &Handle<Cache>) {
     assert!(base.is_instance_name("BSplSLib_Cache"));
     assert!(base.is_kind_name("Standard_Transient"));
     assert_eq!(base.object_address(), handle.object_address());
-    assert!(std::ptr::eq(base.downcast_ref::<Cache>().unwrap(), handle.get().unwrap()));
+    assert!(std::ptr::eq(
+        base.downcast_ref::<Cache>().unwrap(),
+        handle.get().unwrap()
+    ));
     assert_eq!(base.ref_count(), 2);
     let recovered = base.into_downcast::<Cache>();
     assert!(recovered == *handle);
