@@ -16,7 +16,6 @@ impl AllocatorObject {
     /// Derived virtual dispatch requires prior `from_handle` registration; standalone objects use
     /// only their embedded policy. Registration keeps a weak original-object alias, never a copy.
     pub fn resource(&self) -> &BaseAllocator {
-        // A borrowed policy does not acquire intrusive allocator ownership.
         &self.resource
     }
     /// The shared static common allocator handle; `AllocatorObject::common_base_allocator().ref_count()`.

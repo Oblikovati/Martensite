@@ -12,7 +12,7 @@ pub struct AllocatorInvocation {
     code: AllocatorDispatchCode,
 }
 impl AllocatorInvocation {
-    /// Capture original dynamic code without intrusive ownership; `AllocatorInvocation::from_handle(&owner)?.allocate(32)`.
+    /// Build a weak invocation from an existing owner; `AllocatorInvocation::from_handle(&owner)?.allocate(32)`.
     pub fn from_handle<T: ?Sized + AllocatorSource + HandleUpcast<dyn AllocatorSource>>(
         source: &Handle<T>,
     ) -> Result<Self, Failure> {

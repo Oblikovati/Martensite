@@ -25,7 +25,6 @@ impl<T: ?Sized + RuntimeTyped> HandleReference<T> for ScopedHandleReferenceSlot<
         }))
     }
     fn observe(&self) -> HandleObserver<'_, T> {
-        // Observer leases avoid the intrusive retain that a copied callback argument would add.
         self.slot.observe()
     }
     fn reference_address(&self) -> *const () {

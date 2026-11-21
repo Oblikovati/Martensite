@@ -1,4 +1,4 @@
-//! Erase a genuine handle-slot borrow, preserving live replacement and intrusive ownership counts.
+//! Read a handle through its original slot, including after replacement.
 use super::{
     Failure, Handle, HandleFieldRef, HandleObserver, RetainedHandleReference, RuntimeTyped,
     TransientHandleTarget,
@@ -68,7 +68,7 @@ pub trait HandleReference<T: ?Sized + RuntimeTyped> {
             ),
         ))
     }
-    /// Lease the current target without owning it; `let target=reference.observe()`.
+    /// Borrow a stable slot or acquire a snapshot of a mutable one; `reference.observe()`.
     fn observe(&self) -> HandleObserver<'_, T>;
     /// Identify the actual handle slot, independently of its target; `reference.reference_address()`.
     fn reference_address(&self) -> *const ();

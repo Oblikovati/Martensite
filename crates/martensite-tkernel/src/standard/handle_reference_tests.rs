@@ -1,4 +1,4 @@
-//! Erased aliases bind actual slots; explicit owning snapshots and noncounting leases stay distinct.
+//! Erased aliases preserve slot identity, and snapshots keep the object they observed.
 use super::*;
 use crate::standard::{SharedState, StandardTransient};
 struct ReferenceSlots {
@@ -28,7 +28,7 @@ fn erased_local_slot_preserves_identity_and_explicit_ownership() {
     assert_eq!(target.ref_count(), 1);
 }
 #[test]
-fn erased_field_alias_rereads_replacement_and_leases_do_not_own_old_targets() {
+fn erased_field_alias_rereads_replacement_while_snapshots_own_old_targets() {
     let first = Handle::new(StandardTransient);
     let next = Handle::new(StandardTransient);
     let fields = reference_slot_pair(&first);
@@ -56,7 +56,7 @@ fn reference_slot_pair(first: &Handle<StandardTransient>) -> SharedState<Referen
     })
 }
 #[test]
-fn weak_native_pointer_lease_preserves_count_for_live_null_and_destroyed_storage() {
+fn weak_upgrade_owns_live_storage_and_refuses_expired_or_null_pointers() {
     let target = Handle::new(StandardTransient);
     let weak = target.downgrade();
     let observed = weak.upgrade();
