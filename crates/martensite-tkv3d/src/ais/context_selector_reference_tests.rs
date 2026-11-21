@@ -47,11 +47,11 @@ fn original_manager_slot_reference_matches_native_replacement_null_and_restore_c
         selector_reference_row(0, &context, &reference, &first, &second).as_slice(),
         expected[0]
     );
-    for phase in 1..=3 {
+    for (phase, expected_row) in (1..).zip(&expected[1..=3]) {
         replace_selector_manager(&context, &first, &second, phase);
         assert_eq!(
             selector_reference_row(phase, &context, &reference, &first, &second).as_slice(),
-            expected[phase]
+            expected_row
         );
     }
 }
