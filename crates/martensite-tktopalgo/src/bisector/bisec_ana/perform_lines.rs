@@ -84,7 +84,7 @@ impl CurvesContext {
     // first point is too far from the apex.
     fn trim_parabola(&self, chosen: &Chosen, radius: f64) -> Result<Trimmed, Failure> {
         let curve: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dParabola::from_parab2d(chosen.solution.parabola()?)).cast();
+            Handle::new(Geom2dParabola::from_parab2d(chosen.solution.parabola()?)).into_upcast();
         let apex: Point2 = curve.value(0.)?;
         let firstpnt: Point2 = curve.value(chosen.first)?;
         let chord_len: f64 = apex.distance(firstpnt);
@@ -115,7 +115,8 @@ impl CurvesContext {
         let result = self.lines_pass(&*line_solution(line))?;
         // A solution whose status is wrong on the curve keeps the sense false.
         let sense: bool = (result.ok || !self.oncurve) && result.sense;
-        let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+        let curve: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
         half_line_like(curve, 0., sense)
     }
 
@@ -129,7 +130,8 @@ impl CurvesContext {
         };
         let line = Line2::new(self.apoint, direction);
         let result = self.sense_pass(&*line_solution(line))?;
-        let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+        let curve: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
         half_line_like(curve, result.parameter, result.sense)
     }
 }

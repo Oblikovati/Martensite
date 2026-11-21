@@ -65,7 +65,7 @@ impl BRepTopAdaptorTool {
     /// of the face; `tool.init_face(&face, 1e-9)?`.
     pub fn init_face(&mut self, face: &Face, tol_2d: f64) -> Result<(), Failure> {
         let surface = BRepAdaptorSurface::with_face(face, true)?;
-        let surface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).cast();
+        let surface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).into_upcast();
         self.init_surface(&surface, tol_2d)
     }
 

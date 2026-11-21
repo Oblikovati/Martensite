@@ -107,7 +107,7 @@ impl BRepBuilderAPISewing {
             is_prev_split,
             with_bound: SewingShapeIndexedMap::default(),
             with_sections: SewingShapeIndexedMap::default(),
-            sections_reshape: Handle::new(BRepToolsReShape::new()).cast(),
+            sections_reshape: Handle::new(BRepToolsReShape::new()).into_upcast(),
         };
         if !is_prev_split {
             let mut target = MergeTarget {

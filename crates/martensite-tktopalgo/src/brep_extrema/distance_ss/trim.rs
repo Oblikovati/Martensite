@@ -135,7 +135,7 @@ fn trimmed_edge(
     let eps_u: f64 = GeomAdaptorCurve::with_curve(curve)?.resolution(3.0 * tol)?;
     let (umin, umax) = at_least(umin, umax, eps_u);
     let trimmed: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(curve, umin, umax, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(curve, umin, umax, true, true)?).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&trimmed)?.edge()
 }
 
@@ -176,7 +176,7 @@ pub(super) fn trim_infinite_face(edge: &Edge, face: &Face) -> Result<Option<Face
         (vmin, vmax),
         (true, true),
     )?)
-    .cast();
+    .into_upcast();
     Ok(Some(
         BRepBuilderAPIMakeFace::from_surface(&trimmed, precision::confusion())?.face()?,
     ))

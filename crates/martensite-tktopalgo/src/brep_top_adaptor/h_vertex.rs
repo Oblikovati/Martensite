@@ -26,7 +26,7 @@ use martensite_tkmath::gp::{Point2, Point3, Vector3};
 /// use martensite_tktopalgo::brep_top_adaptor::BRepTopAdaptorHVertex;
 /// let vertex = BRepTopAdaptorHVertex::new(&Vertex::default(), &Handle::default());
 /// assert!(vertex.vertex().is_null());
-/// let base: Handle<dyn Adaptor3dHVertex> = Handle::new(vertex).cast();
+/// let base: Handle<dyn Adaptor3dHVertex> = Handle::new(vertex).into_upcast();
 /// assert_eq!(base.value().x(), f64::MIN);
 /// ```
 pub struct BRepTopAdaptorHVertex {

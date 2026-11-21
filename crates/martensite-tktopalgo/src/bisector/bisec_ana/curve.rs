@@ -19,7 +19,7 @@ impl Geom2dGeometry for BisecAna {
         let copy: BisecAna = BisecAna::new();
         let trimmed: Handle<Geom2dTrimmedCurve> = self.trimmed().copy()?.cast();
         copy.init(&trimmed);
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         // The class inherits Geom2d_Curve::DumpJson, whose class name is static.

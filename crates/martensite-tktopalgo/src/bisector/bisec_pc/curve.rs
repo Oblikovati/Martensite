@@ -37,7 +37,7 @@ impl Geom2dGeometry for BisecPC {
             curve: copy_curve(&state.curve)?,
             ..state
         };
-        Ok(Handle::new(BisecPC::from_state(copy)).cast())
+        Ok(Handle::new(BisecPC::from_state(copy)).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         // The class inherits Geom2d_Curve::DumpJson, whose class name is static.

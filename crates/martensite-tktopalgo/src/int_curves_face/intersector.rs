@@ -65,7 +65,7 @@ impl IntCurvesFaceIntersector {
     /// `IntCurvesFaceIntersector::new(&face, 1e-7, true, true)?`.
     pub fn new(face: &Face, tol: f64, restr: bool, use_b_toler: bool) -> Result<Self, Failure> {
         let surface = BRepAdaptorSurface::with_face(face, restr)?;
-        let hsurface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).cast();
+        let hsurface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).into_upcast();
         let topol_tool = BRepTopAdaptorTopolTool::with_surface(&hsurface)?;
         let mut intersector = Self {
             my_topol_tool: Handle::new(topol_tool),

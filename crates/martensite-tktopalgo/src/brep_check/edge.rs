@@ -191,7 +191,7 @@ impl BRepCheckEdge {
         let u1 = curve.transformed_parameter(first, transform);
         let u2 = curve.transformed_parameter(last, transform);
         let adaptor = GeomAdaptorCurve::with_range(&c3d, u1, u2)?;
-        Ok(Some(Handle::new(adaptor).cast()))
+        Ok(Some(Handle::new(adaptor).into_upcast()))
     }
 }
 
@@ -297,9 +297,9 @@ pub(super) fn curve_on_surface(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<Handle<Adaptor3dCurveOnSurface>, Failure> {
     let curve: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(pc, first, last)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(pc, first, last)?).into_upcast();
     let adapted: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surface)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
     Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(
         &curve, &adapted,
     )?))

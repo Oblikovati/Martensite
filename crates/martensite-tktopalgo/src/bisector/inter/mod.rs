@@ -179,5 +179,5 @@ fn construct_segment(
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let dir = Direction2::new(p_max.x() - p_min.x(), p_max.y() - p_min.y())?;
     let origin = Point2::new(p_min.x() - u_min * dir.x(), p_min.y() - u_min * dir.y());
-    Ok(Handle::new(Geom2dLine::from_point(origin, dir)).cast())
+    Ok(Handle::new(Geom2dLine::from_point(origin, dir)).into_upcast())
 }

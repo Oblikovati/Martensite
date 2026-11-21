@@ -21,8 +21,8 @@ use martensite_tkmath::gp::{Direction2, Point2};
 /// use martensite_tkg2d::geom2d::{Geom2dCartesianPoint, Geom2dCurve, Geom2dPoint};
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Point2, Vector2};
-/// let p1: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(0.0, 0.0)).cast();
-/// let p2: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(2.0, 0.0)).cast();
+/// let p1: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(0.0, 0.0)).into_upcast();
+/// let p2: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(2.0, 0.0)).into_upcast();
 /// let mut bisec = Bisec::new();
 /// bisec.perform_points(&p1, &p2, Point2::new(1.0, 0.0), Vector2::new(0.0, 1.0),
 ///     Vector2::new(0.0, -1.0), 1.0, 0.0, true)?;

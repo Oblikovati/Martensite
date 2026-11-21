@@ -179,6 +179,15 @@ fn topol_tool_errors_follow_the_native_exceptions() {
         tool.vertex_orientation(&base).unwrap(),
         Orientation::Reversed
     );
+    let absent = Handle::default();
+    assert_eq!(
+        tool.vertex_orientation(&absent).unwrap_err().exception_type(),
+        "Standard_NullObject"
+    );
+    assert_eq!(
+        tool.identical(&absent, &base).unwrap_err().exception_type(),
+        "Standard_NullObject"
+    );
     assert_eq!(
         tool.pnt(&base).err().unwrap().exception_type(),
         "Standard_DomainError"

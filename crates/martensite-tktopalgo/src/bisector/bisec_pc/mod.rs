@@ -30,7 +30,7 @@ use martensite_tkmath::gp::Point2;
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Axis2d, Direction2, Point2};
 /// let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?);
-/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 2.0, true)?).cast();
+/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 2.0, true)?).into_upcast();
 /// let bisector = BisecPC::with_curve(&circle, Point2::new(0.5, 0.0), 1.0, 500.0)?;
 /// assert!(!bisector.is_empty());
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())

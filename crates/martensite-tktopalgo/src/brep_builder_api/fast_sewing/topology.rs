@@ -127,8 +127,8 @@ fn get_2d_curve(
         }
     };
     let line: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_lin2d(Line2::new(origin, direction))).cast();
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, u1, u2, true, true)?).cast())
+        Handle::new(Geom2dLine::from_lin2d(Line2::new(origin, direction))).into_upcast();
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, u1, u2, true, true)?).into_upcast())
 }
 
 impl FsFace {

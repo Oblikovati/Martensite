@@ -261,7 +261,7 @@ fn controle(points: &[Point3], plane: &GeomPlane) -> Result<f64, Failure> {
 /// "If S is wire, try to orient surface according to orientation of wire": a closed
 /// wire whose face on the plane holds the infinite point reverses the plane normal.
 fn oriented_plane(shape: &Shape, plane: GeomPlane) -> Result<Handle<dyn GeomSurface>, Failure> {
-    let surface: Handle<dyn GeomSurface> = Handle::new(plane.clone()).cast();
+    let surface: Handle<dyn GeomSurface> = Handle::new(plane.clone()).into_upcast();
     if shape.shape_type()? != ShapeEnum::Wire || !shape.closed()? {
         return Ok(surface);
     }
@@ -273,5 +273,5 @@ fn oriented_plane(shape: &Shape, plane: GeomPlane) -> Result<Handle<dyn GeomSurf
     }
     let position = plane.position();
     let normal = position.direction().reversed();
-    Ok(Handle::new(GeomPlane::from_point(position.location(), normal)?).cast())
+    Ok(Handle::new(GeomPlane::from_point(position.location(), normal)?).into_upcast())
 }

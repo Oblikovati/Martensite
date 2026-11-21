@@ -88,7 +88,7 @@ impl BRepBuilderAPINurbsConvert {
     /// `BRepBuilderAPINurbsConvert::new()`.
     pub fn new() -> Self {
         let modification: Handle<dyn BRepToolsModification> =
-            Handle::new(NurbsConvertModification::new()).cast();
+            Handle::new(NurbsConvertModification::new()).into_upcast();
         Self {
             modify: BRepBuilderAPIModifyShape::with_modification(&modification),
             my_vtx_to_replace: VertexReplacements::default(),

@@ -18,22 +18,22 @@ macro_rules! gp_curve2d_constructors {
     ($gp:ty, $native:literal, $geom:expr, $plain:ident, $params:ident, $points:ident, $vertices:ident) => {
         #[doc = concat!("`BRepLib_MakeEdge2d(const ", $native, "& L)`: the whole curve; `BRepLibMakeEdge2d::", stringify!($plain), "(l)?`.")]
         pub fn $plain(curve: $gp) -> Result<Self, Failure> {
-            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve(&geom))
         }
         #[doc = concat!("`BRepLib_MakeEdge2d(const ", $native, "& L, p1, p2)`; `BRepLibMakeEdge2d::", stringify!($params), "(l, 0.0, 1.0)?`.")]
         pub fn $params(curve: $gp, p1: f64, p2: f64) -> Result<Self, Failure> {
-            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve_params(&geom, p1, p2))
         }
         #[doc = concat!("`BRepLib_MakeEdge2d(const ", $native, "& L, P1, P2)`; `BRepLibMakeEdge2d::", stringify!($points), "(l, a, b)?`.")]
         pub fn $points(curve: $gp, p1: Point2, p2: Point2) -> Result<Self, Failure> {
-            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve_points(&geom, p1, p2))
         }
         #[doc = concat!("`BRepLib_MakeEdge2d(const ", $native, "& L, V1, V2)`; `BRepLibMakeEdge2d::", stringify!($vertices), "(l, &v1, &v2)?`.")]
         pub fn $vertices(curve: $gp, v1: &Vertex, v2: &Vertex) -> Result<Self, Failure> {
-            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn Geom2dCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve_vertices(&geom, v1, v2))
         }
     };
@@ -51,7 +51,7 @@ fn segment2d(p1: Point2, p2: Point2) -> Result<Option<Segment2d>, Failure> {
     }
     let direction = Direction2::from_vector(Vector2::between(p1, p2))?;
     let line = Geom2dLine::from_lin2d(Line2::new(p1, direction));
-    Ok(Some((Handle::new(line).cast(), length)))
+    Ok(Some((Handle::new(line).into_upcast(), length)))
 }
 
 impl BRepLibMakeEdge2d {

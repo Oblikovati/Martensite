@@ -140,7 +140,7 @@ impl BRepBuilderAPISewing {
             my_cutting_node: SewingShapeListMap::default(),
             my_little_face: IndexedMapOfShape::default(),
             my_shape: Shape::default(),
-            my_re_shape: Handle::new(BRepToolsReShape::new()).cast(),
+            my_re_shape: Handle::new(BRepToolsReShape::new()).into_upcast(),
             my_face_mode: true,
             my_floating_edges_mode: false,
             my_same_parameter_mode: true,
