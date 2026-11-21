@@ -45,7 +45,8 @@ fn retained_cap_parameters(
     for (source, piece) in request.loops.iter().flatten().zip(pieces) {
         for (depth, cap) in caps.iter().enumerate() {
             let captured = BRepTool::curve_on_face(&piece.edges[depth], cap)?;
-            let curve: Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve> = captured.pcurve.cast();
+            let curve: Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve> =
+                captured.pcurve.downcast();
             let expected: Vec<_> = cap_coordinates::angular_controls(&source.poles, request.radius);
             retained_poles(&curve, &expected)?;
         }
@@ -73,7 +74,7 @@ fn retained_poles(
 }
 
 fn cap(radius: f64, tolerance: f64) -> Result<Face, Failure> {
-    let surface = Handle::new(GeomCylindricalSurface::new(Axis3::default(), radius)?).into_cast();
+    let surface = Handle::new(GeomCylindricalSurface::new(Axis3::default(), radius)?).into_upcast();
     let mut face = Face::default();
     BRepBuilder::default().make_face_on_surface(&mut face, &surface, tolerance)?;
     Ok(face)

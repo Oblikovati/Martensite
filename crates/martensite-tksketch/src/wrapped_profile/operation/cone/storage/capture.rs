@@ -66,7 +66,7 @@ fn cone_surface(
     let face = topods::face(shape).map_err(|cause| native_failure(region, cause))?;
     let (surface, location) =
         BRepTool::surface_with_location(&face).map_err(|cause| native_failure(region, cause))?;
-    Ok((surface.cast(), location.is_identity()))
+    Ok((surface.downcast(), location.is_identity()))
 }
 fn native_failure(region: SurfaceRegionId, cause: Failure) -> ConeFailure {
     failure(region, None, ConeCause::Native(Box::new(cause)))

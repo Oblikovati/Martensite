@@ -128,7 +128,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn pcurve(
         [captured.first, captured.last],
         captured.is_stored,
     )?;
-    let curve: Handle<Geom2dBezierCurve> = captured.pcurve.cast();
+    let curve: Handle<Geom2dBezierCurve> = captured.pcurve.downcast();
     let curve = retained_bezier_pcurve(edge_key, &curve)?;
     coefficients(edge_key, curve, expected)
 }

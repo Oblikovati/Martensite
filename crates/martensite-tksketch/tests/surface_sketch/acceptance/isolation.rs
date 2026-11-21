@@ -32,7 +32,7 @@ fn bound_pair(body: &DetachedNormalBody) -> (Face, Edge) {
 fn snapshot(body: &DetachedNormalBody) -> GeometrySnapshot {
     let (face, edge) = bound_pair(body);
     let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
-    let cylinder = surface.cast::<GeomCylindricalSurface>();
+    let cylinder = surface.downcast::<GeomCylindricalSurface>();
     let curve = BRepTool::curve_with_location(&edge).unwrap();
     let pcurve = BRepTool::curve_on_face(&edge, &face).unwrap();
     GeometrySnapshot {
@@ -45,7 +45,7 @@ fn snapshot(body: &DetachedNormalBody) -> GeometrySnapshot {
 fn mutate_reachable_geometry(body: &DetachedNormalBody) {
     let (face, edge) = bound_pair(body);
     let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
-    let cylinder = surface.cast::<GeomCylindricalSurface>();
+    let cylinder = surface.downcast::<GeomCylindricalSurface>();
     cylinder.get().unwrap().set_radius(37.).unwrap();
     let curve = BRepTool::curve_with_location(&edge).unwrap();
     curve
