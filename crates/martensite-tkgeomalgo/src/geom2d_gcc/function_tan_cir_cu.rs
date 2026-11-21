@@ -20,7 +20,7 @@ use martensite_tkmath::math::{Function, FunctionWithDerivative};
 /// use martensite_tkmath::gp::{Axis2d, Circle2, Direction2, Point2};
 /// use martensite_tkmath::math::Function;
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 1.0), Direction2::new(1.0, 0.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 1.0), Direction2::new(1.0, 0.0)?)).into_upcast();
 /// let adaptor = Geom2dAdaptorCurve::with_range(&line, -1.0, 1.0)?;
 /// let circle = Circle2::from_x_axis(Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?), 1.0, true)?;
 /// let mut f = FunctionTanCirCu::new(circle, &adaptor)?;

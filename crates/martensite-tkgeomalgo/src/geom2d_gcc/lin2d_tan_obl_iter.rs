@@ -20,7 +20,7 @@ use std::f64::consts::PI;
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Axis2d, Direction2, Line2, Point2};
 /// let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?);
-/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).cast();
+/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).into_upcast();
 /// let q = unqualified(&Geom2dAdaptorCurve::with_curve(&circle)?)?;
 /// let x_axis = Line2::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?);
 /// let lin = Lin2dTanOblIter::new(&q, x_axis, 1.0, 1e-9, std::f64::consts::FRAC_PI_2)?;

@@ -29,7 +29,7 @@ pub type CurveSurfaceRanges = ((f64, f64), (f64, f64), (f64, f64));
 /// use martensite_tkmath::gp::{Axis3, Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(
 ///     Point3::new(0.0, 0.0, 2.0), Direction3::new(1.0, 0.0, 1.0).unwrap())).cast();
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let e = ExtremaCurveSurface::with_curve(&line, &plane).unwrap();
 /// assert_eq!(e.nb_extrema(), 1);
 /// ```

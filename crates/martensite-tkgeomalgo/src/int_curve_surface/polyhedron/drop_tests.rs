@@ -9,7 +9,7 @@ use martensite_tkmath::gp::{Axis3, Point3};
 fn detached_grid() -> (ThePolyhedronOfHInter, WeakHandle<dyn GeomSurface>) {
     let mut frame = Axis3::default();
     frame.set_location(Point3::new(0., 0., 3.));
-    let geometry: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).cast();
+    let geometry: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).into_upcast();
     let weak = geometry.downgrade();
     let adaptor = GeomAdaptorSurface::with_bounds(&geometry, (-1., 1., -1., 1.)).unwrap();
     let grid = ThePolyhedronOfHInter::on_adaptor(&adaptor, (3, 3), [-1., -1., 1., 1.]).unwrap();

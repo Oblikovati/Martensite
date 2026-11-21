@@ -113,10 +113,10 @@ impl GeomFillLocationGuide {
                 } else {
                     GeomBSplineCurve::new(&poles, knots, mult, *deg, periodic)?
                 };
-                Handle::new(bspline).cast()
+                Handle::new(bspline).into_upcast()
             }
         };
-        Ok(Handle::new(GeomTrimmedCurve::new(&curve, uf, ul, true, true)?).cast())
+        Ok(Handle::new(GeomTrimmedCurve::new(&curve, uf, ul, true, true)?).into_upcast())
     }
 
     /// The axis direction `D` (the tangent, or the transformed third column).
@@ -293,7 +293,7 @@ impl GeomFillLocationGuide {
         let s = self.placed_section(section, sec, u, bounds)?;
         s.transform(transfo)?;
         let revol: Handle<dyn GeomSurface> =
-            Handle::new(GeomSurfaceOfRevolution::new(&s, ax)?).cast();
+            Handle::new(GeomSurfaceOfRevolution::new(&s, ax)?).into_upcast();
         let Some(contact) = self.find_contact(&revol, ii, (p, &frame, u))? else {
             self.fields.write().status = GeomFillPipeError::ImpossibleContact;
             return Ok(false);

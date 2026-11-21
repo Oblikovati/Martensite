@@ -19,7 +19,7 @@ pub(super) type Points = Vec<IntPatchPoint>;
 
 /// Appends a conic line.
 pub(super) fn push(slin: &mut Lines, line: IntPatchGLine) {
-    slin.push(Handle::new(line).cast());
+    slin.push(Handle::new(line).into_upcast());
 }
 
 /// The crossing line of the plane and the other quadric, oriented by the mixed product

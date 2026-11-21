@@ -9,8 +9,9 @@ use martensite_tkmath::gp::{Axis3, Direction3};
 fn bounded_plane(normal: [f64; 3]) -> tool::Adaptor3dSurfaceHandle {
     let direction = Direction3::new(normal[0], normal[1], normal[2]).unwrap();
     let axis = Axis3::from_normal(Default::default(), direction).unwrap();
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(axis)).cast();
-    Handle::new(GeomAdaptorSurface::with_bounds(&surface, (-1., 1., -1., 1.)).unwrap()).cast()
+    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(axis)).into_upcast();
+    Handle::new(GeomAdaptorSurface::with_bounds(&surface, (-1., 1., -1., 1.)).unwrap())
+        .into_upcast()
 }
 fn active_march() -> (IntWalkPWalking, MarchState) {
     let first = bounded_plane([0., 0., 1.]);

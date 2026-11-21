@@ -355,16 +355,20 @@ fn all_roots<F: TheArcFunction>(
 /// The Geom surface of the quadric, adapted.
 fn quadric_surface(quadric: &IntSurfQuadric) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
     let surface: Handle<dyn GeomSurface> = match quadric.type_quadric() {
-        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(quadric.plane())).cast(),
+        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(quadric.plane())).into_upcast(),
         SurfaceType::Cylinder => {
-            Handle::new(GeomCylindricalSurface::from_cylinder(quadric.cylinder()?)).cast()
+            Handle::new(GeomCylindricalSurface::from_cylinder(quadric.cylinder()?)).into_upcast()
         }
-        SurfaceType::Cone => Handle::new(GeomConicalSurface::from_cone(quadric.cone()?)).cast(),
+        SurfaceType::Cone => {
+            Handle::new(GeomConicalSurface::from_cone(quadric.cone()?)).into_upcast()
+        }
         SurfaceType::Sphere => {
-            Handle::new(GeomSphericalSurface::from_sphere(quadric.sphere()?)).cast()
+            Handle::new(GeomSphericalSurface::from_sphere(quadric.sphere()?)).into_upcast()
         }
-        SurfaceType::Torus => Handle::new(GeomToroidalSurface::from_torus(quadric.torus()?)).cast(),
+        SurfaceType::Torus => {
+            Handle::new(GeomToroidalSurface::from_torus(quadric.torus()?)).into_upcast()
+        }
         _ => Handle::default(),
     };
-    Ok(Handle::new(GeomAdaptorSurface::with_surface(&surface)?).cast())
+    Ok(Handle::new(GeomAdaptorSurface::with_surface(&surface)?).into_upcast())
 }

@@ -55,7 +55,7 @@ impl GeomPlateBuildPlateSurface {
         v2 += dv;
         let plane: Handle<dyn GeomSurface> = bap.plane()?.cast();
         let trimmed = GeomRectangularTrimmedSurface::new(&plane, (u1, u2), (v1, v2), (true, true))?;
-        self.surf_init = Handle::new(trimmed).cast();
+        self.surf_init = Handle::new(trimmed).into_upcast();
         Ok(())
     }
 
@@ -158,7 +158,7 @@ impl GeomPlateBuildPlateSurface {
         let uif: f64 = (last_par - first_par) / f64::from(NB_POINT);
         let curve: Handle<dyn Adaptor3dCurve> = lin.curve3d();
         let proj = CompProjectedCurve::with_tolerances(hsur, &curve, self.tol3d, self.tol3d)?;
-        let proj_curve: Handle<dyn Adaptor2dCurve2d> = Handle::new(proj).cast();
+        let proj_curve: Handle<dyn Adaptor2dCurve2d> = Handle::new(proj).into_upcast();
         let a_proj = Adaptor3dCurveOnSurface::with_curve(&proj_curve, hsur)?;
         let curve = live(&curve, "the curve of a constraint")?;
         for j in 1..NB_POINT {
@@ -181,7 +181,7 @@ impl GeomPlateBuildPlateSurface {
         let trimmed: Handle<GeomRectangularTrimmedSurface> = self.surf_init.cast();
         let init_plane = live(&trimmed, "the initial trimmed plane")?.basis_surface();
         let hsur: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&init_plane)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&init_plane)?).into_upcast();
         for i in 1..=self.nt_lin_cont() {
             if !self.curve_is_linear(i, &hsur)? {
                 self.is_linear = false;

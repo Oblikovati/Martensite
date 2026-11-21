@@ -60,7 +60,7 @@ fn cancelled_before_discovery_stays_cancelled_without_work() {
 }
 #[test]
 fn failed_surface_preserves_error_and_frontend_receipt() {
-    let surface: Adaptor3dSurfaceHandle = Handle::new(Adaptor3dSurfaceBase::default()).cast();
+    let surface: Adaptor3dSurfaceHandle = Handle::new(Adaptor3dSurfaceBase).into_upcast();
     let valid = plane_patch();
     let mut search = IntPatchIntersection::new();
     assert!(

@@ -1,6 +1,6 @@
 //! `GeomFill_Boundary`: the abstract boundary of a constrained filling.
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use martensite_tkmath::gp::{Point3, Vector3};
 
 /// The private tolerances of `GeomFill_Boundary` (`myT3d`, `myTang`), held by each
@@ -94,4 +94,4 @@ pub trait GeomFillBoundary: Transient {
         self.tolerances().values.write().1 = tol;
     }
 }
-impl_transient_interface!(dyn GeomFillBoundary, "GeomFill_Boundary", StandardTransient);
+impl_transient_interface!(dyn GeomFillBoundary, "GeomFill_Boundary", dyn Transient);

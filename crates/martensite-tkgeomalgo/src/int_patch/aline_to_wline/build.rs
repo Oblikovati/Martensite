@@ -242,6 +242,6 @@ impl Walk<'_> {
             return Ok(None);
         }
         wline.enable_purging(false);
-        Ok(Some(Handle::new(wline).cast()))
+        Ok(Some(Handle::new(wline).into_upcast()))
     }
 }

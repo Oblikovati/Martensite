@@ -32,7 +32,7 @@ use std::f64::consts::PI;
 /// An adaptor on a copy of `path`.
 fn copied_path(path: &Handle<dyn GeomCurve>) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
     let copy: Handle<dyn GeomCurve> = live(path, "GeomFill_Pipe::Init", "Path")?.copy()?.cast();
-    Ok(Handle::new(GeomAdaptorCurve::with_curve(&copy)?).cast())
+    Ok(Handle::new(GeomAdaptorCurve::with_curve(&copy)?).into_upcast())
 }
 
 /// `(First, Last)` of a geometric curve.
@@ -69,7 +69,7 @@ fn tangent_and_normal(
 impl GeomFillPipe {
     /// The curve-and-trihedron law of `t_law` on the path.
     fn set_curve_law(&mut self, t_law: Handle<dyn GeomFillTrihedronLaw>) -> Result<bool, Failure> {
-        self.my_loc = Handle::new(GeomFillCurveAndTrihedron::new(&t_law)).cast();
+        self.my_loc = Handle::new(GeomFillCurveAndTrihedron::new(&t_law)).into_upcast();
         live(&self.my_loc, "GeomFill_Pipe::Init", "myLoc")?.set_curve(&self.my_adp_path)
     }
 
@@ -89,7 +89,8 @@ impl GeomFillPipe {
         sect: &Handle<dyn GeomCurve>,
         range: (f64, f64),
     ) -> Result<(), Failure> {
-        self.my_sec = Handle::new(GeomFillUniformSection::new(sect, range.0, range.1)?).cast();
+        self.my_sec =
+            Handle::new(GeomFillUniformSection::new(sect, range.0, range.1)?).into_upcast();
         Ok(())
     }
 
@@ -101,13 +102,13 @@ impl GeomFillPipe {
         radius: f64,
     ) -> Result<(), Failure> {
         (self.my_type, self.my_error, self.my_radius) = (1, 0.0, radius);
-        self.my_adp_path = Handle::new(GeomAdaptorCurve::with_curve(path)?).cast();
+        self.my_adp_path = Handle::new(GeomAdaptorCurve::with_curve(path)?).into_upcast();
         let circle = GeomCircle::new(Axis2::from_standard(StandardDirection3::Z), radius)?;
         circle.rotate(Axis1::from_standard(StandardDirection3::Z), PI / 2.0)?;
-        let c: Handle<dyn GeomCurve> = Handle::new(circle).cast();
+        let c: Handle<dyn GeomCurve> = Handle::new(circle).into_upcast();
         self.set_uniform_section(&c, curve_range(path)?)?;
         let t_law: Handle<dyn GeomFillTrihedronLaw> =
-            Handle::new(GeomFillCorrectedFrenet::new()).cast();
+            Handle::new(GeomFillCorrectedFrenet::new()).into_upcast();
         self.set_curve_law(t_law)?;
         Ok(())
     }
@@ -125,10 +126,10 @@ impl GeomFillPipe {
         let (first, last) = curve_range(path)?;
         let t_law: Handle<dyn GeomFillTrihedronLaw> = match option {
             GeomFillTrihedron::IsCorrectedFrenet => {
-                Handle::new(GeomFillCorrectedFrenet::new()).cast()
+                Handle::new(GeomFillCorrectedFrenet::new()).into_upcast()
             }
             GeomFillTrihedron::IsDarboux | GeomFillTrihedron::IsFrenet => {
-                Handle::new(GeomFillFrenet::new()).cast()
+                Handle::new(GeomFillFrenet::new()).into_upcast()
             }
             GeomFillTrihedron::IsFixed => self.fixed_law(path, first)?,
             GeomFillTrihedron::IsConstantNormal => self.constant_normal_law(first_sect)?,
@@ -147,7 +148,7 @@ impl GeomFillPipe {
     ) -> Result<Handle<dyn GeomFillTrihedronLaw>, Failure> {
         let (v1, v2) = tangent_and_normal(path, param)?
             .unwrap_or((Vector3::new(0.0, 0.0, 1.0), Vector3::new(0.0, 1.0, 0.0)));
-        Ok(Handle::new(GeomFillFixed::new(v1, v2)?).cast())
+        Ok(Handle::new(GeomFillFixed::new(v1, v2)?).into_upcast())
     }
 
     /// The constant binormal of the section normal at its placement on the Frenet
@@ -156,11 +157,11 @@ impl GeomFillPipe {
         &mut self,
         first_sect: &Handle<dyn GeomCurve>,
     ) -> Result<Handle<dyn GeomFillTrihedronLaw>, Failure> {
-        self.set_curve_law(Handle::new(GeomFillFrenet::new()).cast())?;
+        self.set_curve_law(Handle::new(GeomFillFrenet::new()).into_upcast())?;
         let ponsec = self.placed_section(first_sect)?.parameter_on_section();
         let v =
             tangent_and_normal(first_sect, ponsec)?.map_or(Vector3::new(0.0, 1.0, 0.0), |(_, n)| n);
-        Ok(Handle::new(GeomFillConstantBiNormal::new(Direction3::from_vector(v)?)).cast())
+        Ok(Handle::new(GeomFillConstantBiNormal::new(Direction3::from_vector(v)?)).into_upcast())
     }
 
     /// `Init(Path, Support, FirstSect)`: a 2d path on a surface with the Darboux
@@ -171,13 +172,14 @@ impl GeomFillPipe {
         support: &Handle<dyn GeomSurface>,
         first_sect: &Handle<dyn GeomCurve>,
     ) -> Result<(), Failure> {
-        let t_law: Handle<dyn GeomFillTrihedronLaw> = Handle::new(GeomFillDarboux::new()).cast();
+        let t_law: Handle<dyn GeomFillTrihedronLaw> =
+            Handle::new(GeomFillDarboux::new()).into_upcast();
         let curve: Handle<dyn Adaptor2dCurve2d> =
-            Handle::new(Geom2dAdaptorCurve::with_curve(path)?).cast();
+            Handle::new(Geom2dAdaptorCurve::with_curve(path)?).into_upcast();
         let surface: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(support)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(support)?).into_upcast();
         let cos = Adaptor3dCurveOnSurface::with_curve(&curve, &surface)?;
-        self.my_adp_path = Handle::new(Adaptor3dCurveOnSurface::copy_of(&cos)).cast();
+        self.my_adp_path = Handle::new(Adaptor3dCurveOnSurface::copy_of(&cos)).into_upcast();
         self.set_curve_law(t_law)?;
         let mut place = GeomFillSectionPlacement::new(&self.my_loc, &first_sect.clone().cast())?;
         place.perform_on_path(&self.my_adp_path, precision::confusion())?;
@@ -199,7 +201,7 @@ impl GeomFillPipe {
         self.my_adp_path = copied_path(path)?;
         let v = Vector3::from(direction.xyz());
         let t_law: Handle<dyn GeomFillTrihedronLaw> =
-            Handle::new(GeomFillConstantBiNormal::new(Direction3::from_vector(v)?)).cast();
+            Handle::new(GeomFillConstantBiNormal::new(Direction3::from_vector(v)?)).into_upcast();
         self.set_curve_law(t_law)?;
         let sect = self.placed_section(first_sect)?.section(false)?;
         self.set_uniform_section(&sect, curve_range(path)?)
@@ -255,9 +257,9 @@ fn guided_location(
     path: &Handle<dyn Adaptor3dCurve>,
 ) -> Result<Handle<GeomFillLocationGuide>, Failure> {
     let t_law: Handle<dyn GeomFillTrihedronWithGuide> = if by_acr {
-        Handle::new(GeomFillGuideTrihedronAC::new(guide)?).cast()
+        Handle::new(GeomFillGuideTrihedronAC::new(guide)?).into_upcast()
     } else {
-        Handle::new(GeomFillGuideTrihedronPlan::new(guide)?).cast()
+        Handle::new(GeomFillGuideTrihedronPlan::new(guide)?).into_upcast()
     };
     live(&t_law, "GeomFill_Pipe::Init", "TLaw")?.set_curve(path)?;
     let the_loc = GeomFillLocationGuide::new(&t_law)?;

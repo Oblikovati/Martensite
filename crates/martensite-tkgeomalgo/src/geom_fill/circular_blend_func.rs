@@ -5,7 +5,7 @@ use super::geomfill::get_shape;
 use super::sweep_failures::live;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeombase::approx::SweepFunction;
 use martensite_tkgeombase::gcpnts::QuasiUniformDeflection;
@@ -25,7 +25,6 @@ pub(crate) struct TrimmedCurves {
 /// `GeomFill_CircularBlendFunc`: the rolling-ball blend section.
 /// `let f = GeomFillCircularBlendFunc::new(&path, &c1, &c2, 2.0, false)?;`.
 pub struct GeomFillCircularBlendFunc {
-    parent: StandardTransient,
     pub(crate) my_path: Handle<dyn Adaptor3dCurve>,
     pub(crate) my_curve1: Handle<dyn Adaptor3dCurve>,
     pub(crate) my_curve2: Handle<dyn Adaptor3dCurve>,
@@ -45,7 +44,6 @@ impl_transient!(
     GeomFillCircularBlendFunc,
     "GeomFill_CircularBlendFunc",
     dyn SweepFunction,
-    parent,
     interfaces: [dyn SweepFunction]
 );
 
@@ -209,7 +207,6 @@ impl GeomFillCircularBlendFunc {
         let mut conv = arc_parameterisation(polynomial, d.maxang);
         let (nb_poles, nb_knots, degree) = get_shape(d.maxang, &mut conv);
         Ok(Self {
-            parent: StandardTransient::default(),
             my_path: path.clone(),
             my_curve1: curve1.clone(),
             my_curve2: curve2.clone(),

@@ -3,7 +3,7 @@ use super::IntPatchIType;
 use super::failures::domain_error;
 use crate::int_surf::{IntSurfSituation, IntSurfTypeTrans};
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 
 /// The fields of `IntPatch_Line` (`typ` and the private ones).
 #[derive(Clone, Copy, Debug)]
@@ -197,4 +197,4 @@ pub trait IntPatchLine: Transient {
         self.line_base().isos()[3]
     }
 }
-impl_transient_interface!(dyn IntPatchLine, "IntPatch_Line", StandardTransient);
+impl_transient_interface!(dyn IntPatchLine, "IntPatch_Line", dyn Transient);

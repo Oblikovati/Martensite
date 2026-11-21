@@ -3,7 +3,7 @@
 use super::sweep_failures::{domain_error, not_implemented};
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::geom::{GeomBSplineSurface, GeomCurve};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Point3, Vector3};
@@ -149,8 +149,4 @@ pub trait GeomFillSectionLaw: Transient {
         Err(domain_error("GeomFill_SectionLaw::CirclSection"))
     }
 }
-impl_transient_interface!(
-    dyn GeomFillSectionLaw,
-    "GeomFill_SectionLaw",
-    StandardTransient
-);
+impl_transient_interface!(dyn GeomFillSectionLaw, "GeomFill_SectionLaw", dyn Transient);

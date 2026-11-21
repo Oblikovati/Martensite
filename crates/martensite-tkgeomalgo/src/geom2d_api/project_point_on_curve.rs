@@ -22,7 +22,7 @@ const TOL_F: f64 = 1.0e-10;
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Direction2, Point2};
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap())).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap())).into_upcast();
 /// let p = ProjectPointOnCurve::with_range(Point2::new(2.0, 3.0), &line, -10.0, 10.0).unwrap();
 /// assert_eq!(p.lower_distance_parameter().unwrap(), 2.0);
 /// ```

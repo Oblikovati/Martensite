@@ -4,7 +4,7 @@ use crate::int_surf::{IntSurfCouple, IntSurfLineOn2S, IntSurfPathPoint, IntSurfP
 use crate::int_walk::TheIWLine;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{BaseAllocator, INC_DEFAULT_BLOCK_SIZE};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkmath::gp::Vector3;
 
 /// The fields of the line besides its points.
@@ -34,15 +34,13 @@ struct IWLineState {
 /// assert!(line.first_point().is_err());
 /// ```
 pub struct IntPatchTheIWLineOfTheIWalking {
-    parent: StandardTransient,
     line: Handle<IntSurfLineOn2S>,
     state: SharedState<IWLineState>,
 }
 impl_transient!(
     IntPatchTheIWLineOfTheIWalking,
     "IntPatch_TheIWLineOfTheIWalking",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 fn not_marching() -> Failure {
@@ -69,7 +67,6 @@ impl IntPatchTheIWLineOfTheIWalking {
             istgtend: false,
         };
         Self {
-            parent: StandardTransient::default(),
             line: Handle::new(IntSurfLineOn2S::new(allocator)),
             state: SharedState::new(state),
         }

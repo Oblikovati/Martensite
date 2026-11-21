@@ -4,7 +4,7 @@ use super::sweep_failures::{live, not_implemented, sweep_failure};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomCurveD1, GeomCurveD2, GeomCurveD3};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
@@ -17,7 +17,6 @@ use martensite_tkmath::gp::{Point3, Vector3};
 /// port registers it under its own name.
 /// `let func = GeomFillSnglrFunc::new(&curve); func.set_ratio(0.5); func.value(0.0)?`.
 pub struct GeomFillSnglrFunc {
-    parent: StandardTransient,
     my_h_curve: Handle<dyn Adaptor3dCurve>,
     ratio: SharedState<f64>,
 }
@@ -25,7 +24,6 @@ impl_transient!(
     GeomFillSnglrFunc,
     "GeomFill_SnglrFunc",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
@@ -54,7 +52,6 @@ impl GeomFillSnglrFunc {
     /// `GeomFillSnglrFunc::new(&curve)`.
     pub fn new(curve: &Handle<dyn Adaptor3dCurve>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_h_curve: curve.clone(),
             ratio: SharedState::new(1.0),
         }
@@ -78,7 +75,7 @@ impl Adaptor3dCurve for GeomFillSnglrFunc {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
         let copy = GeomFillSnglrFunc::new(&self.curve()?.shallow_copy()?);
         copy.set_ratio(self.ratio());
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         self.curve()?.first_parameter()
