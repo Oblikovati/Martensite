@@ -5,7 +5,9 @@ use super::{
     label_node::TdfLabelNode,
 };
 use crate::live;
-use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeTyped, exceptions};
+use martensite_tkernel::standard::{
+    Failure, Guid, Handle, RuntimeTyped, TransientHandleTarget, exceptions,
+};
 use std::sync::Arc;
 
 impl TdfLabel {
@@ -35,7 +37,7 @@ impl TdfLabel {
     }
     /// The template `FindAttribute<T>`: found and of type `T` (the output is the down cast,
     /// null when the type differs).
-    pub fn find_attribute_as<T: RuntimeTyped + ?Sized>(
+    pub fn find_attribute_as<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
         &self,
         id: &Guid,
         attribute: &mut Handle<T>,
@@ -44,7 +46,7 @@ impl TdfLabel {
         if !self.find_attribute(id, &mut found)? {
             return Ok(false);
         }
-        *attribute = found.cast::<T>();
+        *attribute = found.into_cast::<T>();
         Ok(attribute.is_some())
     }
     /// `FindAttribute(anID, aTransaction, anAttribute)`: the version valid in `transaction`,

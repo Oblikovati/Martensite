@@ -6,7 +6,7 @@ use crate::live;
 use crate::tdf::{TdfAttribute, TdfAttributeBase, TdfAttributeState, TdfLabel};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, WeakHandle, exceptions},
+    standard::{Failure, Guid, Handle, SharedState, WeakHandle, exceptions},
 };
 
 /// `TDataStd_TreeNode::GetDefaultTreeID()`.
@@ -35,18 +35,16 @@ pub(crate) struct TreeNodeState {
 /// assert_eq!((root.nb_children(false), child.depth()), (1, 1));
 /// ```
 pub struct TDataStdTreeNode {
-    transient: StandardTransient,
     pub(crate) base: TdfAttributeBase,
     pub(crate) state: SharedState<TreeNodeState>,
 }
-impl_transient!(TDataStdTreeNode, "TDataStd_TreeNode", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdTreeNode, "TDataStd_TreeNode", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdTreeNode {
     /// `TDataStd_TreeNode()`: no links. The native constructor leaves `myTreeID`
     /// default-constructed (the null GUID); `Set` and `NewEmpty` give the tree ID.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(TreeNodeState::default()),
         }
@@ -75,7 +73,7 @@ impl TDataStdTreeNode {
         }
         let created = Handle::new(Self::new());
         live(&created, "TDataStd_TreeNode::Set")?.set_tree_id(explicit_id);
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `GetDefaultTreeID`.
@@ -88,7 +86,7 @@ impl TDataStdTreeNode {
     }
     /// `this` as a node handle; `Standard_NullObject` for a node never added to a label.
     pub(crate) fn this_node(&self) -> Result<Handle<Self>, Failure> {
-        Ok(self.base.this()?.cast())
+        Ok(self.base.this()?.into_downcast())
     }
     /// The node a link names (null when unset or dangling).
     fn linked(&self, pick: fn(&TreeNodeState) -> &WeakHandle<Self>) -> Handle<Self> {

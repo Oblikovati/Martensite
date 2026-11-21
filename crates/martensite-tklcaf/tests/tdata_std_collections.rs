@@ -214,9 +214,9 @@ fn reference_list_paste_relocates_and_drops_null_labels() {
     list.append(root.clone()).unwrap();
     let table = Handle::new(TdfRelocationTable::new(false));
     table.set_label_relocation(&source, &target);
-    let into: Handle<dyn TdfAttribute> = Handle::new(TDataStdReferenceList::new()).cast();
+    let into: Handle<dyn TdfAttribute> = Handle::new(TDataStdReferenceList::new()).into_upcast();
     list.paste(&into, &table).unwrap();
-    let pasted = into.cast::<TDataStdReferenceList>();
+    let pasted = into.downcast::<TDataStdReferenceList>();
     assert_eq!(pasted.list(), vec![target, root]);
 }
 
@@ -232,9 +232,9 @@ fn reference_array_paste_relocates_into_the_target_bounds() {
     array.set_value(1, source.clone()).unwrap();
     let table = Handle::new(TdfRelocationTable::new(false));
     table.set_label_relocation(&source, &target);
-    let into: Handle<dyn TdfAttribute> = Handle::new(TDataStdReferenceArray::new()).cast();
+    let into: Handle<dyn TdfAttribute> = Handle::new(TDataStdReferenceArray::new()).into_upcast();
     array.paste(&into, &table).unwrap();
-    let pasted = into.cast::<TDataStdReferenceArray>();
+    let pasted = into.downcast::<TDataStdReferenceArray>();
     assert_eq!((pasted.lower(), pasted.upper()), (1, 2));
     assert_eq!(pasted.value(1).unwrap(), target);
     assert!(pasted.value(2).unwrap().is_null());

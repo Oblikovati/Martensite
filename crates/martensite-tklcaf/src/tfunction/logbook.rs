@@ -9,7 +9,7 @@ use crate::tdf::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
     tcollection::AsciiString,
 };
 use std::io;
@@ -32,14 +32,13 @@ const LOGBOOK_ID: Guid = guid_from_text("CF519724-5CA4-4B90-835F-8919BE1DDE4B");
 /// ```
 #[derive(Default)]
 pub struct TFunctionLogbook {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     touched: SharedState<TdfLabelMap>,
     impacted: SharedState<TdfLabelMap>,
     valid: SharedState<TdfLabelMap>,
     is_done: SharedState<bool>,
 }
-impl_transient!(TFunctionLogbook, "TFunction_Logbook", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TFunctionLogbook, "TFunction_Logbook", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 /// Adds `label` and, with children, all its sublabels to `map`.
 fn add_with_children(
@@ -68,7 +67,7 @@ impl TFunctionLogbook {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        root.add_attribute(&created.cast(), true)?;
+        root.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `GetID`.
@@ -234,7 +233,7 @@ impl TdfAttribute for TFunctionLogbook {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Dump`: the status, then the touched, impacted and valid entries.
     fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {

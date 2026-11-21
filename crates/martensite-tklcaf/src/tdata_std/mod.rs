@@ -37,7 +37,9 @@ pub use arrays::{
 pub use ascii_string::TDataStdAsciiString;
 pub use boolean_array::TDataStdBooleanArray;
 pub use child_node_iterator::TDataStdChildNodeIterator;
-pub use expression::{TDataStdExpression, TDataStdRelation};
+pub use expression::{
+    TDataStdExpression, TDataStdExpressionBase, TDataStdExpressionSource, TDataStdRelation,
+};
 pub use generic_empty::{
     TDataStdDirectory, TDataStdGenericEmpty, TDataStdNoteBook, TDataStdTick, dump_generic_empty,
 };
@@ -58,7 +60,7 @@ pub use lists::{
 pub use name::{TDataStdComment, TDataStdName};
 pub use named_data::TDataStdNamedData;
 pub use package::TDataStd;
-pub use real::{TDataStdReal, TDataStdRealEnum};
+pub use real::{TDataStdReal, TDataStdRealBase, TDataStdRealEnum, TDataStdRealSource};
 pub use reference_array::TDataStdReferenceArray;
 pub use tree_node::TDataStdTreeNode;
 pub use u_attribute::{TDataStdCurrent, TDataStdUAttribute};
@@ -83,12 +85,12 @@ pub(crate) fn register_derived_attributes() {
     use crate::tdf::{TdfAttribute, TdfDerivedAttribute};
     use martensite_tkernel::standard::Handle;
     let creators: [fn() -> Handle<dyn TdfAttribute>; 6] = [
-        || Handle::new(TDataStdComment::new()).cast(),
-        || Handle::new(TDataStdDirectory::new()).cast(),
-        || Handle::new(TDataStdName::new()).cast(),
-        || Handle::new(TDataStdNoteBook::new()).cast(),
-        || Handle::new(TDataStdRelation::new()).cast(),
-        || Handle::new(TDataStdTick::new()).cast(),
+        || Handle::new(TDataStdComment::new()).into_upcast(),
+        || Handle::new(TDataStdDirectory::new()).into_upcast(),
+        || Handle::new(TDataStdName::new()).into_upcast(),
+        || Handle::new(TDataStdNoteBook::new()).into_upcast(),
+        || Handle::new(TDataStdRelation::new()).into_upcast(),
+        || Handle::new(TDataStdTick::new()).into_upcast(),
     ];
     for create in creators {
         TdfDerivedAttribute::register(create, None, None);

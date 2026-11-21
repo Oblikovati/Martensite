@@ -6,7 +6,7 @@ use crate::tdf::{TdfAttribute, TdfAttributeBase, TdfLabel, TdfRelocationTable, d
 use martensite_tkcdf::json_dump::{class_begin, field_string};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
     tcollection::AsciiString,
 };
 use std::io;
@@ -16,18 +16,16 @@ const ASCII_STRING_ID: Guid = guid_from_text("3bbefc60-e618-11d4-ba38-0060b0ee18
 
 /// `TDataStd_AsciiString`; `TDataStdAsciiString::set(&label, &text)`.
 pub struct TDataStdAsciiString {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     string: SharedState<AsciiString>,
     id: SharedState<Guid>,
 }
-impl_transient!(TDataStdAsciiString, "TDataStd_AsciiString", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdAsciiString, "TDataStd_AsciiString", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdAsciiString {
     /// `TDataStd_AsciiString()`: empty, default ID.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             string: SharedState::default(),
             id: SharedState::new(ASCII_STRING_ID),
@@ -97,7 +95,7 @@ impl TdfAttribute for TDataStdAsciiString {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,

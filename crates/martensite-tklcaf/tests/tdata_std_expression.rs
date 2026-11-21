@@ -1,8 +1,10 @@
 //! Behaviour tests of `TDataStd_Expression`.
 #![allow(non_snake_case)]
-use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
-use martensite_tklcaf::tdata_std::{TDataStdReal, TDataStdRelation, TDataStdVariable};
+use martensite_tklcaf::tdata_std::{
+    TDataStdExpression, TDataStdExpressionSource, TDataStdReal, TDataStdRelation, TDataStdVariable,
+};
 use martensite_tklcaf::tdf::{TdfAttributeState, TdfLabel};
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
 
@@ -24,7 +26,10 @@ fn set_relation(
 ) -> Handle<TDataStdRelation> {
     let relation = TDataStdRelation::set(label).unwrap();
     relation.set_relation(expression).unwrap();
-    relation.expression().get_variables().push(variable.cast());
+    relation
+        .expression()
+        .get_variables()
+        .push(variable.upcast());
     relation
 }
 
@@ -41,7 +46,17 @@ fn TDataStd_Expression_Test__CafBug_387_RelationUndo() {
     TDataStdReal::set(&label, 10.0).unwrap();
 
     document.new_command().unwrap();
-    relation.set_relation(&ExtendedString::new("a=20")).unwrap();
+    let expression = relation.upcast::<dyn TDataStdExpressionSource>();
+    assert_eq!(expression.object_address(), relation.object_address());
+    assert!(expression.is_kind(TDataStdExpression::static_type()));
+    assert!(expression.downcast_ref::<TDataStdExpression>().is_none());
+    assert_eq!(
+        expression.dynamic_type().unwrap().name(),
+        "TDataStd_Relation"
+    );
+    expression
+        .set_expression(&ExtendedString::new("a=20"))
+        .unwrap();
     TDataStdReal::set(&label, 20.0).unwrap();
 
     document.new_command().unwrap();

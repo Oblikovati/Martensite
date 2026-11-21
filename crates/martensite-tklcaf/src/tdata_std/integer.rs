@@ -11,7 +11,7 @@ use crate::tdf::{
 use martensite_tkcdf::json_dump::{class_begin, field_integer};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
 };
 use std::io;
 
@@ -27,18 +27,16 @@ const INTEGER_ID: Guid = guid_from_text("2a96b606-ec8b-11d0-bee7-080009dc3333");
 /// assert_eq!(TDataStdInteger::get(&attribute), 5);
 /// ```
 pub struct TDataStdInteger {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     value: SharedState<i32>,
     id: SharedState<Guid>,
 }
-impl_transient!(TDataStdInteger, "TDataStd_Integer", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdInteger, "TDataStd_Integer", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdInteger {
     /// `TDataStd_Integer()`: value -1, the default ID.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             value: SharedState::new(-1),
             id: SharedState::new(INTEGER_ID),
@@ -104,7 +102,7 @@ impl TdfAttribute for TDataStdInteger {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,

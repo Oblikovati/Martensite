@@ -2,7 +2,7 @@
 use martensite_tkernel::{standard::Handle, tcollection::AsciiString};
 use martensite_tklcaf::{
     tdata_std::TDataStdInteger,
-    tdf::{TdfData, TdfLabel, TdfTransaction},
+    tdf::{TdfData, TdfDeltaSource, TdfLabel, TdfTransaction},
 };
 use std::time::Instant;
 const DIRECT_LABELS: i32 = 100_000;
@@ -38,7 +38,7 @@ fn integer_value(label: &TdfLabel) -> i32 {
             .find_attribute(&TDataStdInteger::get_id(), &mut attribute)
             .unwrap()
     );
-    attribute.cast::<TDataStdInteger>().get().unwrap().get()
+    attribute.downcast::<TDataStdInteger>().get().unwrap().get()
 }
 fn commit_direct(data: &Handle<TdfData>, middle: &TdfLabel) -> u128 {
     let transaction = changed_attribute(data, middle, 2);
