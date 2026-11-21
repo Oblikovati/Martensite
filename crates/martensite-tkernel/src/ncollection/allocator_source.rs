@@ -1,6 +1,6 @@
 //! Overridable base-allocator dispatch through the embedded base object.
 use super::{AllocatorObject, AllocatorStorageLease};
-use crate::standard::{RuntimeType, RuntimeTyped, Transient, project_interface};
+use crate::standard::{RuntimeType, RuntimeTyped, Transient};
 /// Allocator contract; implement on a real descendant and register its interface caster.
 /// Example: `BaseAllocator::from_handle(&Handle::new(MyAllocator::default())).allocate_raw(32)`.
 ///
@@ -32,8 +32,6 @@ impl RuntimeTyped for dyn AllocatorSource {
         // The owned interface aliases the real concrete base descriptor, not a second class.
         AllocatorObject::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        let transient = object;
-        project_interface::<Self>(transient)
-    }
 }
+
+crate::impl_transient_interface_target!(dyn AllocatorSource);

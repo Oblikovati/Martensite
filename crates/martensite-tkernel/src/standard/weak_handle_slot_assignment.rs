@@ -37,7 +37,7 @@ mod tests {
     use crate::standard::{StandardTransient, WeakHandleSlotRef};
     #[test]
     fn callback_assignment_updates_readonly_alias_and_preserves_native_ownership() {
-        let target = Handle::new(StandardTransient::default());
+        let target = Handle::new(StandardTransient);
         let slot = Arc::new(SharedState::new(Handle::default()));
         let alias = WeakHandleSlotRef::new(&slot);
         let assignment = WeakHandleSlotAssignment::new(&slot);
@@ -47,7 +47,7 @@ mod tests {
         let observed = alias.observe();
         assignment.assign(&Handle::default()).unwrap();
         assert!(alias.is_null());
-        assert_eq!(target.ref_count(), 1);
+        assert_eq!(target.ref_count(), 2);
         drop(observed);
         drop(slot);
         assert!(assignment.assign(&target).is_err());

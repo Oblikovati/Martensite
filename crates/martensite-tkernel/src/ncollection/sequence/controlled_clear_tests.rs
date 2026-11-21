@@ -44,7 +44,7 @@ fn saved_next_visits_first_callback_append_and_loses_last_callback_append() {
     verify_lost_last_callback_handle();
 }
 fn verify_lost_last_callback_handle() {
-    let anchor = Handle::new(StandardTransient::default());
+    let anchor = Handle::new(StandardTransient);
     let mut sequence: Sequence<Handle<StandardTransient>> =
         [Handle::default()].into_iter().collect();
     let mut progress = sequence.begin_clear_progress();

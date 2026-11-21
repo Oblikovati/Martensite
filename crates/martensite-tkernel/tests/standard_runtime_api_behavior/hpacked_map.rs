@@ -1,6 +1,6 @@
 //! Shared packed integer map construction, sharing and runtime types.
 use martensite_tkernel::ncollection::PackedMap;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkernel::tcol_std::HPackedMapOfInteger;
 
 #[test]
@@ -26,7 +26,7 @@ fn copying_constructor_is_independent_of_its_source() {
 #[test]
 fn edits_through_one_handle_are_seen_by_every_holder() {
     let handle = Handle::new(HPackedMapOfInteger::new(1));
-    let base = handle.cast::<StandardTransient>();
+    let base = handle.upcast::<dyn Transient>();
     let other = Handle::<HPackedMapOfInteger>::down_cast(&base);
     assert!(handle.change_map().add(-7));
     assert!(other.map().contains(-7));

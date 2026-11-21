@@ -3,11 +3,11 @@ use super::context::Units;
 use super::explorer::Explorer;
 use super::quantity::Quantity;
 use super::support::{c_str, item, length, new_sequence, object, write_bytes};
-use super::unit::Unit;
 use crate::ncollection::HSequence;
 use crate::resource::{ResourceHost, ResourceManager};
 use crate::standard::{Failure, Handle, StandardTransient};
 use crate::tcollection::AsciiString;
+use crate::units::UnitObject;
 use std::io::Write;
 
 mod conversion;
@@ -16,16 +16,14 @@ mod editing;
 /// A units system; copies share the quantity and active-unit sequences, as a
 /// value copy shares its handles; `UnitsSystem::new()`.
 pub struct UnitsSystem {
-    base: StandardTransient,
     quantities: Handle<HSequence<Handle<Quantity>>>,
     active: Handle<HSequence<i32>>,
 }
-crate::impl_transient!(UnitsSystem, "Units_UnitsSystem", StandardTransient, base);
+crate::impl_transient!(UnitsSystem, "Units_UnitsSystem", StandardTransient);
 
 impl Clone for UnitsSystem {
     fn clone(&self) -> Self {
         Self {
-            base: StandardTransient::default(),
             quantities: self.quantities.clone(),
             active: self.active.clone(),
         }
@@ -47,7 +45,6 @@ impl UnitsSystem {
     /// An empty system; `UnitsSystem::new()`.
     pub fn new() -> Self {
         Self {
-            base: StandardTransient::default(),
             quantities: new_sequence(),
             active: new_sequence(),
         }
@@ -93,7 +90,7 @@ impl UnitsSystem {
             return Ok(AsciiString::default());
         }
         let units = object(&found, "Units_UnitsSystem::ActiveUnit")?.sequence();
-        let unit: Handle<Unit> = item(&units, active as usize)?;
+        let unit: Handle<dyn UnitObject> = item(&units, active as usize)?;
         item(
             &object(&unit, "Units_UnitsSystem::ActiveUnit")?.symbols_sequence(),
             1,

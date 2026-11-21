@@ -1,6 +1,6 @@
 //! Handle ownership, type projection and actual resource behavior.
 use martensite_tkernel::ncollection::{
-    AllocatorObject, HeapAllocatorObject, IncrementalAllocatorObject,
+    AllocatorObject, AllocatorSource, HeapAllocatorObject, IncrementalAllocatorObject,
 };
 use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient, Transient};
 use std::sync::{
@@ -9,10 +9,9 @@ use std::sync::{
 };
 #[repr(C)]
 struct DropTracked {
-    parent: StandardTransient,
     drops: Arc<AtomicUsize>,
 }
-martensite_tkernel::impl_transient!(DropTracked, "DropTracked", StandardTransient, parent);
+martensite_tkernel::impl_transient!(DropTracked, "DropTracked", StandardTransient);
 impl Drop for DropTracked {
     fn drop(&mut self) {
         self.drops.fetch_add(1, Ordering::Relaxed);
@@ -22,17 +21,15 @@ impl Drop for DropTracked {
 fn casts_borrowed_views_and_nullification_preserve_lifetime() {
     let drops: Arc<AtomicUsize> = Arc::default();
     let handle = Handle::new(DropTracked {
-        parent: StandardTransient::default(),
         drops: drops.clone(),
     });
     assert_eq!(handle.ref_count(), 1);
-    assert!(handle.transient_base().this().is_ok());
-    let view = handle.view::<StandardTransient>();
+    let view = handle.view::<dyn Transient>();
     assert!(!view.is_null());
     assert_eq!(handle.ref_count(), 1);
-    let mut base = handle.cast::<StandardTransient>();
+    let mut base = handle.upcast::<dyn Transient>();
     assert_eq!(handle.ref_count(), 2);
-    assert_eq!(view.as_ptr(), base.as_ptr());
+    assert_eq!(view.object_address(), base.object_address());
     assert_eq!(base.clone().ref_count(), 3);
     base.nullify();
     assert!(base.is_null());
@@ -62,11 +59,8 @@ fn descriptors_exact_names_and_failed_views() {
     assert!(!Handle::<StandardTransient>::default().is_kind_name("Standard_Transient"));
 }
 #[test]
-fn copied_transient_resets_counter_and_handle_counter_is_atomic() {
-    let object = StandardTransient::default();
-    assert!(object.this().is_err());
-    let handle = Handle::new(object);
-    assert_eq!(handle.get().unwrap().clone().ref_count(), 0);
+fn cloning_and_dropping_owner_counts_is_thread_safe() {
+    let handle = Handle::new(StandardTransient);
     std::thread::scope(|scope| {
         for _ in 0..4 {
             let borrowed = &handle;
@@ -79,16 +73,20 @@ fn copied_transient_resets_counter_and_handle_counter_is_atomic() {
         }
     });
     assert_eq!(handle.ref_count(), 1);
-    let mut copy = StandardTransient::default();
-    copy.clone_from(handle.get().unwrap());
-    assert_eq!(copy.ref_count(), 0);
+    assert_eq!(handle.downgrade().ref_count(), 1);
 }
 #[test]
 fn polymorphic_allocator_objects_own_real_allocations() {
     let incremental = Handle::new(IncrementalAllocatorObject::default());
-    let base = incremental.cast::<AllocatorObject>();
-    assert_eq!(incremental.resource(), base.resource());
-    let allocation = base.resource().allocate_value(42_i32);
+    let base = incremental.upcast::<dyn AllocatorSource>();
+    assert_eq!(
+        incremental.resource(),
+        base.allocator_object_base().resource()
+    );
+    let allocation = base
+        .allocator_object_base()
+        .resource()
+        .allocate_value(42_i32);
     assert_eq!(*allocation, 42);
     assert!(incremental.resource().reset(false).is_err());
     drop(allocation);

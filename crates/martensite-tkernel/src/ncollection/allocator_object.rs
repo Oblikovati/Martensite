@@ -9,7 +9,6 @@ use std::{ptr::NonNull, sync::OnceLock};
 /// Polymorphic allocator object; `AllocatorObject::default().resource().allocate(16)`.
 #[repr(C)]
 pub struct AllocatorObject {
-    parent: StandardTransient,
     resource: BaseAllocator,
 }
 impl AllocatorObject {
@@ -51,17 +50,13 @@ impl AllocatorObject {
         self.resource.optimal_calls_allocate()
     }
     fn wrapping(resource: BaseAllocator) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            resource,
-        }
+        Self { resource }
     }
 }
 crate::impl_transient!(
     AllocatorObject,
     "NCollection_BaseAllocator",
     StandardTransient,
-    parent,
     interfaces: [dyn AllocatorSource]
 );
 
@@ -85,7 +80,7 @@ macro_rules! allocator_subclass {
                 }
             }
         }
-        crate::impl_transient!($name, $type_name, AllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+        crate::impl_transient!($name, $type_name, AllocatorObject, interfaces: [dyn AllocatorSource]);
         // SAFETY: these concrete policies own disjoint allocations until their documented release.
         unsafe impl AllocatorSource for $name {
             fn allocator_object_base(&self) -> &AllocatorObject {

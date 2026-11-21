@@ -8,7 +8,7 @@ fn Standard_Handle_Test__OCC24533_IsNullAndPointerChecks() {
     let pointer = handle.as_ptr();
     assert!(pointer.is_null());
     assert_eq!(std::ptr::null(), pointer);
-    handle = Handle::new(StandardTransient::default());
+    handle = Handle::new(StandardTransient);
     assert!(!handle.is_null());
     let pointer = handle.as_ptr();
     assert!(!pointer.is_null());

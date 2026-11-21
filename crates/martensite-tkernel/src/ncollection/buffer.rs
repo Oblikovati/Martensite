@@ -16,7 +16,6 @@ mod raw_adoption;
 /// can be shared by `Handle<Buffer>`.
 #[repr(C)]
 pub struct Buffer {
-    parent: StandardTransient,
     allocator: Option<BaseAllocator>,
     storage: Option<AllocatedBytes>,
     logical_size: usize,
@@ -30,7 +29,6 @@ impl Buffer {
     /// Example: `Buffer::new(Some(BaseAllocator::common()), 0)?.is_empty() == false`.
     pub fn new(allocator: Option<BaseAllocator>, size: usize) -> Result<Self, Failure> {
         let mut buffer = Self {
-            parent: StandardTransient::default(),
             allocator,
             storage: None,
             logical_size: 0,
@@ -46,7 +44,6 @@ impl Buffer {
     /// never leaks. Example: `Buffer::with_data(Some(a.clone()), a.allocate(4).unwrap())`.
     pub fn with_data(allocator: Option<BaseAllocator>, data: AllocatedBytes) -> Self {
         Self {
-            parent: StandardTransient::default(),
             allocator,
             logical_size: data.as_slice().len(),
             storage: Some(data),
@@ -142,7 +139,7 @@ impl Buffer {
     }
 }
 
-crate::impl_transient!(Buffer, "NCollection_Buffer", StandardTransient, parent);
+crate::impl_transient!(Buffer, "NCollection_Buffer", StandardTransient);
 
 /// A pointer field: `"Name": "<pointer text>"`.
 fn dump_pointer(output: &mut impl DumpOutput, name: &str, address: usize) -> io::Result<()> {

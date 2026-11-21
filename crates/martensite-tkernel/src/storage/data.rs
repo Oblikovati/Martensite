@@ -1,7 +1,7 @@
 //! The picture of the data stored in, or read from, a container.
 use super::{HeaderData, InternalData, Root, RootData, SectionStatus, StorageError, TypeData};
 use crate::ncollection::{HSequence, Sequence};
-use crate::standard::{Handle, StandardPersistent, StandardTransient};
+use crate::standard::{Handle, Persistent, StandardTransient};
 use crate::tcollection::{AsciiString, ExtendedString};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
@@ -10,15 +10,14 @@ use std::sync::{Mutex, MutexGuard, PoisonError};
 /// The error status starts at `Ok`.
 ///
 /// ```
-/// use martensite_tkernel::standard::{Handle, StandardPersistent};
+/// use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
 /// use martensite_tkernel::storage::Data;
 /// use martensite_tkernel::tcollection::AsciiString;
 /// let data = Data::default();
-/// data.add_root(&Handle::new(StandardPersistent::default()));
+/// data.add_root(&Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>());
 /// assert!(data.is_root(&AsciiString::new("1")));
 /// ```
 pub struct Data {
-    parent: StandardTransient,
     header: Handle<HeaderData>,
     roots: Handle<RootData>,
     types: Handle<TypeData>,
@@ -29,7 +28,6 @@ pub struct Data {
 impl Default for Data {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             roots: Handle::new(RootData::default()),
             types: Handle::new(TypeData::default()),
             internal: Handle::new(InternalData::default()),
@@ -113,13 +111,13 @@ impl Data {
 
 impl Data {
     /// Named by the next root number; `data.add_root(&object)`.
-    pub fn add_root(&self, object: &Handle<StandardPersistent>) {
+    pub fn add_root(&self, object: &Handle<dyn Persistent>) {
         let name = AsciiString::from_integer(self.root_section().number_of_roots() + 1);
         self.add_named_root(&name, object);
     }
 
     /// Example: `data.add_named_root(&name, &object)`.
-    pub fn add_named_root(&self, name: &AsciiString, object: &Handle<StandardPersistent>) {
+    pub fn add_named_root(&self, name: &AsciiString, object: &Handle<dyn Persistent>) {
         self.root_section()
             .add_root(&Handle::new(Root::new(name, object)));
     }
@@ -242,4 +240,4 @@ impl Data {
     }
 }
 
-crate::impl_transient!(Data, "Storage_Data", StandardTransient, parent);
+crate::impl_transient!(Data, "Storage_Data", StandardTransient);

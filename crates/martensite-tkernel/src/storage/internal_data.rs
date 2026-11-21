@@ -1,12 +1,12 @@
 //! The bookkeeping a schema keeps while writing and reading.
 use super::{BucketOfPersistent, TypedCallBack};
 use crate::ncollection::{DataMap, HArray1};
-use crate::standard::{Handle, StandardPersistent, StandardTransient};
+use crate::standard::{Handle, Persistent, StandardTransient};
 use crate::tcollection::AsciiString;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 /// A handle to the array of objects read so far, indexed by reference number.
-pub type ReadArray = Handle<HArray1<Handle<StandardPersistent>>>;
+pub type ReadArray = Handle<HArray1<Handle<dyn Persistent>>>;
 
 /// The fields the schema edits.
 pub(crate) struct InternalFields {
@@ -29,14 +29,12 @@ pub(crate) struct InternalFields {
 /// assert!(internal.read_array(|array| array.is_null()));
 /// ```
 pub struct InternalData {
-    parent: StandardTransient,
     fields: Mutex<InternalFields>,
 }
 
 impl Default for InternalData {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: Mutex::new(InternalFields {
                 objects_to_add: BucketOfPersistent::default(),
                 object_id: 1,
@@ -71,9 +69,4 @@ impl InternalData {
     }
 }
 
-crate::impl_transient!(
-    InternalData,
-    "Storage_InternalData",
-    StandardTransient,
-    parent
-);
+crate::impl_transient!(InternalData, "Storage_InternalData", StandardTransient);

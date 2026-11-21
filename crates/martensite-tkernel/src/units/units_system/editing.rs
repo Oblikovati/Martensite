@@ -1,6 +1,7 @@
 //! Specifying, removing and activating units of a units system.
 use super::{UnitsSystem, no_such_type};
 use crate::standard::{Failure, Handle};
+use crate::units::UnitObject;
 use crate::units::context::Units;
 use crate::units::quantity::Quantity;
 use crate::units::support::{
@@ -136,17 +137,17 @@ impl UnitsSystem {
 /// The unit built by `Specify` from the evaluated token: shifted tokens give a shifted
 /// unit with the token's value and move.
 fn unit_from(
-    token: &Handle<crate::units::Token>,
+    token: &Handle<dyn crate::units::TokenObject>,
     spelling: &[u8],
-) -> Result<Handle<Unit>, Failure> {
+) -> Result<Handle<dyn UnitObject>, Failure> {
     let evaluated = object(token, "Units_UnitsSystem::Specify")?;
-    if let Some(shifted) = token.cast::<ShiftedToken>().get() {
+    if let Some(shifted) = token.downcast_ref::<ShiftedToken>() {
         let created = ShiftedUnit::with_symbol(spelling, spelling);
         created.unit().set_value(evaluated.value());
         created.set_movement(shifted.movement());
-        return Ok(Handle::new(created).cast());
+        return Ok(Handle::new(created).into_upcast());
     }
     let created = Unit::with_symbol(spelling, spelling);
     created.set_value(evaluated.value());
-    Ok(Handle::new(created))
+    Ok(Handle::new(created).into_upcast())
 }

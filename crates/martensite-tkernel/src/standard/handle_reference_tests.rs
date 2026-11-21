@@ -13,7 +13,7 @@ fn second_slot(slots: &ReferenceSlots) -> &Handle<StandardTransient> {
 }
 #[test]
 fn erased_local_slot_preserves_identity_and_explicit_ownership() {
-    let target = Handle::new(StandardTransient::default());
+    let target = Handle::new(StandardTransient);
     let reference: &dyn HandleReference<StandardTransient> = &target;
     assert_eq!(
         reference.reference_address(),
@@ -29,8 +29,8 @@ fn erased_local_slot_preserves_identity_and_explicit_ownership() {
 }
 #[test]
 fn erased_field_alias_rereads_replacement_and_leases_do_not_own_old_targets() {
-    let first = Handle::new(StandardTransient::default());
-    let next = Handle::new(StandardTransient::default());
+    let first = Handle::new(StandardTransient);
+    let next = Handle::new(StandardTransient);
     let fields = reference_slot_pair(&first);
     let alias = HandleFieldRef::new(&fields, first_slot);
     let other = HandleFieldRef::new(&fields, second_slot);
@@ -42,6 +42,8 @@ fn erased_field_alias_rereads_replacement_and_leases_do_not_own_old_targets() {
     assert_eq!(reference.reference_address(), address);
     assert_eq!(reference.object_address(), next.object_address());
     assert_eq!(observed.object_address(), first.object_address());
+    assert_eq!(first.ref_count(), 3);
+    drop(observed);
     assert_eq!(first.ref_count(), 2);
     fields.write().first = Handle::default();
     assert!(reference.is_null() && reference.clone_handle().is_null());
@@ -55,30 +57,30 @@ fn reference_slot_pair(first: &Handle<StandardTransient>) -> SharedState<Referen
 }
 #[test]
 fn weak_native_pointer_lease_preserves_count_for_live_null_and_destroyed_storage() {
-    let target = Handle::new(StandardTransient::default());
+    let target = Handle::new(StandardTransient);
     let weak = target.downgrade();
-    let observed = weak.observe();
-    assert_eq!(observed.ref_count(), 1);
-    assert_eq!(target.ref_count(), 1);
+    let observed = weak.upgrade();
+    assert_eq!(observed.ref_count(), 2);
+    assert_eq!(target.ref_count(), 2);
     assert_eq!(observed.object_address(), target.object_address());
     drop(observed);
     assert_eq!(target.ref_count(), 1);
     drop(target);
-    assert!(weak.observe().is_null());
+    assert!(weak.upgrade().is_null());
     assert!(
         crate::standard::WeakHandle::<StandardTransient>::default()
-            .observe()
+            .upgrade()
             .is_null()
     );
 }
 #[test]
-fn weak_static_pointer_lease_preserves_intrusive_ownership() {
-    static TARGET: std::sync::LazyLock<StandardTransient> =
-        std::sync::LazyLock::new(StandardTransient::default);
-    let target = Handle::from_static(&*TARGET);
+fn weak_static_handle_does_not_add_an_owner() {
+    static TARGET: std::sync::LazyLock<Handle<StandardTransient>> =
+        std::sync::LazyLock::new(|| Handle::new(StandardTransient));
+    let target = &*TARGET;
     let weak = target.downgrade();
-    let observed = weak.observe();
-    assert_eq!(target.ref_count(), 1);
+    let observed = weak.upgrade();
+    assert_eq!(target.ref_count(), 2);
     assert_eq!(observed.object_address(), target.object_address());
     drop(observed);
     assert_eq!(target.ref_count(), 1);
@@ -88,7 +90,7 @@ struct FakeMetadataHandleReference<'a> {
     source: &'a dyn HandleReference<StandardTransient>,
 }
 impl HandleReference<StandardTransient> for FakeMetadataHandleReference<'_> {
-    fn observe(&self) -> HandleObserver<StandardTransient> {
+    fn observe(&self) -> HandleObserver<'_, StandardTransient> {
         panic!("observed original object; expected pointer metadata only")
     }
     fn reference_address(&self) -> *const () {
@@ -103,7 +105,7 @@ impl HandleReference<StandardTransient> for FakeMetadataHandleReference<'_> {
 }
 #[test]
 fn projected_reference_metadata_never_observes_the_original_object() {
-    let target = Handle::new(StandardTransient::default());
+    let target = Handle::new(StandardTransient);
     let fields = reference_slot_pair(&target);
     let slot = HandleFieldRef::new(&fields, first_slot);
     let source = FakeMetadataHandleReference { source: &slot };

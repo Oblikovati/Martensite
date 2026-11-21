@@ -88,7 +88,7 @@ fn messenger_overloads_and_streams_reach_printers() {
     write!(messenger.send_warning(), "c").unwrap();
     write!(messenger.send_info(), "d").unwrap();
     write!(messenger.send_trace(), "e").unwrap();
-    let object: Handle<StandardTransient> = Handle::new(StandardTransient::default());
+    let object = Handle::new(StandardTransient).into_upcast();
     messenger.send_object(&object, Gravity::Info);
     messenger.send_object(&Handle::default(), Gravity::Info);
     let texts = recorder.texts();

@@ -5,7 +5,7 @@ use crate::ncollection::{
     AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource,
     IncrementalAllocatorObject,
 };
-use crate::standard::{Failure, Handle, Transient, catch_native_failure};
+use crate::standard::{Failure, Handle, catch_native_failure};
 use std::{
     alloc::Layout,
     panic::{AssertUnwindSafe, catch_unwind},
@@ -27,7 +27,7 @@ struct TypedIncFreeProbe {
     parent: IncrementalAllocatorObject,
     trace: Arc<TypedIncFreeTrace>,
 }
-crate::impl_transient!(TypedIncFreeProbe,"Martensite_TypedIncFreeProbe",IncrementalAllocatorObject,parent,interfaces:[dyn AllocatorSource]);
+crate::impl_transient!(TypedIncFreeProbe,"Martensite_TypedIncFreeProbe",IncrementalAllocatorObject,interfaces:[dyn AllocatorSource]);
 // SAFETY: allocations use the genuine incremental parent; its free is a no-op for arbitrary ranges.
 unsafe impl AllocatorSource for TypedIncFreeProbe {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -41,16 +41,17 @@ unsafe impl AllocatorSource for TypedIncFreeProbe {
         }
     }
 }
-fn capture_typed_inc_trace(source: &TypedIncFreeProbe) -> (Arc<TypedIncFreeTrace>, i32) {
+fn capture_typed_inc_trace(source: &TypedIncFreeProbe) -> Arc<TypedIncFreeTrace> {
     // Immutable field metadata capture has no callbacks and retains no logical allocator owner.
-    (source.trace.clone(), source.transient_base().ref_count())
+    source.trace.clone()
 }
 unsafe fn typed_inc_probe_free(
     invocation: &AllocatorInvocation,
     pointer: *mut u8,
 ) -> Result<(), Failure> {
+    let owners = invocation.ref_count().try_into().unwrap();
     // SAFETY: pure capture ends before executing the virtual callback body.
-    let (trace, owners) = unsafe { invocation.capture(capture_typed_inc_trace) }?;
+    let trace = unsafe { invocation.capture(capture_typed_inc_trace) }?;
     // SAFETY: the actual incremental qualified parent intentionally ignores this pointer.
     unsafe { invocation.free_base(pointer) }?;
     trace.parent_completed.store(true, Ordering::Relaxed);

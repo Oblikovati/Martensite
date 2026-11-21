@@ -43,7 +43,6 @@ pub struct HeaderFields {
 /// ```
 #[derive(Default)]
 pub struct HeaderData {
-    parent: StandardTransient,
     fields: RwLock<HeaderFields>,
 }
 
@@ -256,4 +255,4 @@ impl HeaderData {
     }
 }
 
-crate::impl_transient!(HeaderData, "Storage_HeaderData", StandardTransient, parent);
+crate::impl_transient!(HeaderData, "Storage_HeaderData", StandardTransient);

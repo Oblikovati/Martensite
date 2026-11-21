@@ -1,6 +1,6 @@
 //! An output context for text messages filtered by gravity.
 use super::Gravity;
-use crate::standard::{Failure, Handle, RuntimeType, StandardTransient};
+use crate::standard::{Failure, Handle, RuntimeType, StandardTransient, Transient};
 use crate::tcollection::{AsciiString, ExtendedString};
 use std::any::Any;
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -101,7 +101,7 @@ pub trait Printer: Any + Send + Sync {
     /// Delivers a non-null object's description; `printer.try_send_object(&object, g)?`.
     fn try_send_object(
         &self,
-        object: &Handle<StandardTransient>,
+        object: &Handle<dyn Transient>,
         gravity: Gravity,
     ) -> Result<(), Failure> {
         if !object.is_some() || gravity < self.trace_level() {
@@ -143,7 +143,7 @@ pub trait Printer: Any + Send + Sync {
         }
     }
     /// `"<type name>: <pointer>"` for a non-null object; `printer.send_object(&object, g)`.
-    fn send_object(&self, object: &Handle<StandardTransient>, gravity: Gravity) {
+    fn send_object(&self, object: &Handle<dyn Transient>, gravity: Gravity) {
         if object.is_some() && gravity >= self.trace_level() {
             self.send(&object_description(object), gravity);
         }
@@ -151,10 +151,10 @@ pub trait Printer: Any + Send + Sync {
 }
 
 /// The object's runtime type name, `": "`, and its pointer text.
-pub(crate) fn object_description(object: &Handle<StandardTransient>) -> AsciiString {
+pub(crate) fn object_description(object: &Handle<dyn Transient>) -> AsciiString {
     let name = object.dynamic_type().map_or("", RuntimeType::name);
     let mut text = AsciiString::new(name);
     text.assign_cat(": ");
-    text.assign_cat(super::json::pointer_info(object.as_ptr().cast()).as_str());
+    text.assign_cat(super::json::pointer_info(object.object_address()).as_str());
     text
 }

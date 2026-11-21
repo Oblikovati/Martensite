@@ -29,10 +29,10 @@ impl<S, T: ?Sized + RuntimeTyped> WeakHandleFieldRef<S, T> {
             slot_address,
         }
     }
-    /// Read current storage without ownership; `alias.observe().object_address()`.
-    pub fn observe(&self) -> HandleObserver<T> {
+    /// Acquire a snapshot of the current object; `alias.observe().object_address()`.
+    pub fn observe(&self) -> HandleObserver<'_, T> {
         // The locator reads the captured field; it is not an object virtual getter.
-        self.inspect_field(|| Handle::<T>::default().observe(), Handle::observe)
+        HandleObserver::Snapshot(self.clone_handle())
     }
     /// Read nullness, including safe expiration outside the valid lifetime; `alias.is_null()`.
     pub fn is_null(&self) -> bool {
@@ -79,7 +79,7 @@ impl<S, T: ?Sized + RuntimeTyped> WeakHandleFieldRef<S, T> {
     }
 }
 impl<S, T: ?Sized + RuntimeTyped> HandleReference<T> for WeakHandleFieldRef<S, T> {
-    fn observe(&self) -> HandleObserver<T> {
+    fn observe(&self) -> HandleObserver<'_, T> {
         // The source field is reread; no owning handle spans a callback.
         WeakHandleFieldRef::observe(self)
     }

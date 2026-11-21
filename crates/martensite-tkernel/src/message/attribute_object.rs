@@ -2,32 +2,32 @@
 use super::attribute::{AttributeBase, BaseAttribute, dump_attribute};
 use super::{Attribute, json};
 use crate::standard::dump::DumpStream;
-use crate::standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient};
+use crate::standard::{Handle, RuntimeType, RuntimeTyped, Transient};
 use crate::tcollection::AsciiString;
 use std::sync::Mutex;
 
 /// Attribute storing an object handle; `AttributeObject::new(object, &AsciiString::default())`.
 pub struct AttributeObject {
     base: AttributeBase,
-    object: Mutex<Handle<StandardTransient>>,
+    object: Mutex<Handle<dyn Transient>>,
 }
 impl AttributeObject {
     /// Creates the attribute; `AttributeObject::new(Handle::default(), &AsciiString::default())`.
-    pub fn new(object: Handle<StandardTransient>, name: &AsciiString) -> Self {
+    pub fn new(object: Handle<dyn Transient>, name: &AsciiString) -> Self {
         Self {
             base: AttributeBase::new(name),
             object: Mutex::new(object),
         }
     }
     /// The stored object (possibly null); `attribute.object()`.
-    pub fn object(&self) -> Handle<StandardTransient> {
+    pub fn object(&self) -> Handle<dyn Transient> {
         self.object
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
             .clone()
     }
     /// Replaces the stored object; `attribute.set_object(object)`.
-    pub fn set_object(&self, object: Handle<StandardTransient>) {
+    pub fn set_object(&self, object: Handle<dyn Transient>) {
         *self
             .object
             .lock()
@@ -48,7 +48,7 @@ impl Attribute for AttributeObject {
         json::base_class(output, depth, |output, depth| {
             dump_attribute(&self.base, output, depth)
         });
-        let pointer = json::pointer_info(self.object().as_ptr().cast());
+        let pointer = json::pointer_info(self.object().object_address());
         json::field_string(output, "Object", pointer.as_bytes());
     }
 }

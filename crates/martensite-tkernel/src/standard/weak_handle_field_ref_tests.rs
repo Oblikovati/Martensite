@@ -33,8 +33,8 @@ fn weak_alias_fields(
 }
 #[test]
 fn weak_field_alias_keeps_actual_slot_identity_across_replacement_without_ownership() {
-    let first = Handle::new(StandardTransient::default());
-    let second = Handle::new(StandardTransient::default());
+    let first = Handle::new(StandardTransient);
+    let second = Handle::new(StandardTransient);
     let fields = weak_alias_fields(&first, &second);
     let alias = WeakHandleFieldRef::new(&fields, weak_alias_target);
     assert_eq!(Arc::strong_count(&fields), 1);
@@ -56,7 +56,7 @@ fn verify_weak_alias_erased_operations(
 ) {
     let erased: &dyn HandleReference<StandardTransient> = alias;
     assert_eq!(erased.reference_address(), alias.reference_address());
-    assert_eq!(erased.observe().ref_count(), 3);
+    assert_eq!(erased.observe().ref_count(), 4);
     let copied = alias.clone_handle();
     assert_eq!(copied.ref_count(), 4);
     drop(copied);
@@ -67,7 +67,7 @@ fn verify_weak_alias_erased_operations(
 }
 #[test]
 fn weak_alias_expiration_does_not_keep_native_field_ownership_alive() {
-    let target = Handle::new(StandardTransient::default());
+    let target = Handle::new(StandardTransient);
     let fields = weak_alias_fields(&target, &Handle::default());
     let alias = WeakHandleFieldRef::new(&fields, weak_alias_target);
     drop(fields);
@@ -78,8 +78,8 @@ fn weak_alias_expiration_does_not_keep_native_field_ownership_alive() {
 }
 #[test]
 fn captured_fields_do_not_reselect_when_virtual_mode_changes() {
-    let first = Handle::new(StandardTransient::default());
-    let second = Handle::new(StandardTransient::default());
+    let first = Handle::new(StandardTransient);
+    let second = Handle::new(StandardTransient);
     let fields = weak_alias_fields(&first, &second);
     let original = WeakHandleFieldRef::new(&fields, weak_alias_target);
     fields.write().choose_alternate = true;

@@ -24,7 +24,7 @@ impl<T: ?Sized + RuntimeTyped> HandleReference<T> for ScopedHandleReferenceSlot<
             slot: Rc::downgrade(&self.slot),
         }))
     }
-    fn observe(&self) -> HandleObserver<T> {
+    fn observe(&self) -> HandleObserver<'_, T> {
         // Observer leases avoid the intrusive retain that a copied callback argument would add.
         self.slot.observe()
     }
@@ -45,10 +45,12 @@ struct ScopedSlotAlias<T: ?Sized + RuntimeTyped> {
     slot: Weak<Handle<T>>,
 }
 impl<T: ?Sized + RuntimeTyped> HandleReference<T> for ScopedSlotAlias<T> {
-    fn observe(&self) -> HandleObserver<T> {
-        self.slot
-            .upgrade()
-            .map_or_else(|| Handle::<T>::default().observe(), |slot| slot.observe())
+    fn observe(&self) -> HandleObserver<'_, T> {
+        HandleObserver::Snapshot(
+            self.slot
+                .upgrade()
+                .map_or_else(Handle::default, |slot| slot.as_ref().clone()),
+        )
     }
     fn reference_address(&self) -> *const () {
         self.slot

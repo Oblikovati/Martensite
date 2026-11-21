@@ -1,6 +1,6 @@
 //! Default-key specialization follows the static handle type, not dynamic RTTI.
 use martensite_tkernel::ncollection::{DataMap, DefaultHashPolicy, HashKey, HashPolicy};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, StandardTransient, Transient};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString};
 
 fn assert_content_map<T: martensite_tkernel::standard::RuntimeTyped>(
@@ -59,14 +59,14 @@ fn default_string_handle_keys_compare_beyond_embedded_nuls() {
 fn statically_upcast_string_handles_keep_native_identity_keys() {
     let first = Handle::new(HAsciiString::new("abc"));
     let second = Handle::new(HAsciiString::new("abc"));
-    let base_first = first.cast::<StandardTransient>();
-    let base_second = second.cast::<StandardTransient>();
+    let base_first = first.upcast::<dyn Transient>();
+    let base_second = second.upcast::<dyn Transient>();
     assert!(!DefaultHashPolicy.equal(&base_first, &base_second));
     assert_eq!(
         base_first.kernel_hash(),
         base_first.object_address() as usize
     );
-    let mut map = DataMap::<Handle<StandardTransient>, i32>::default();
+    let mut map = DataMap::<Handle<dyn Transient>, i32>::default();
     assert!(map.bind(base_first, 1));
     assert!(map.bind(base_second, 2));
     assert_eq!(map.len(), 2);
@@ -75,8 +75,8 @@ fn statically_upcast_string_handles_keep_native_identity_keys() {
 #[test]
 fn ordinary_handles_and_rust_hash_keep_identity_semantics() {
     use std::hash::{Hash, Hasher};
-    let first = Handle::new(StandardTransient::default());
-    let second = Handle::new(StandardTransient::default());
+    let first = Handle::new(StandardTransient);
+    let second = Handle::new(StandardTransient);
     assert!(!DefaultHashPolicy.equal(&first, &second));
     assert!(DefaultHashPolicy.equal(&first, &first.clone()));
     let ascii = Handle::new(HAsciiString::new("abc"));
@@ -89,7 +89,6 @@ fn ordinary_handles_and_rust_hash_keep_identity_semantics() {
 
 #[derive(Default)]
 struct PolicySelectedTransient {
-    parent: StandardTransient,
     value: u32,
 }
 #[derive(Default)]
@@ -110,7 +109,6 @@ martensite_tkernel::impl_transient!(
     PolicySelectedTransient,
     "PolicySelectedTransient",
     StandardTransient,
-    parent,
     interfaces: [],
     handle_key_policy: SelectedHandlePolicy
 );
@@ -118,13 +116,7 @@ martensite_tkernel::impl_transient!(
 #[test]
 fn downstream_macro_can_select_native_policy_without_dynamic_downcasts() {
     assert_content_map(
-        Handle::new(PolicySelectedTransient {
-            value: 7,
-            ..Default::default()
-        }),
-        Handle::new(PolicySelectedTransient {
-            value: 7,
-            ..Default::default()
-        }),
+        Handle::new(PolicySelectedTransient { value: 7 }),
+        Handle::new(PolicySelectedTransient { value: 7 }),
     );
 }

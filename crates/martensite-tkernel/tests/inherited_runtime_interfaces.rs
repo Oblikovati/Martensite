@@ -3,10 +3,7 @@ use martensite_tkernel::standard::{
     Handle, InterfaceCaster, InterfaceEntry, RuntimeType, RuntimeTyped, StandardTransient,
     Transient, project_concrete,
 };
-use std::{
-    any::{Any, TypeId},
-    sync::OnceLock,
-};
+use std::sync::{Arc, OnceLock};
 
 trait InheritedReading: Transient {
     fn reading(&self) -> i32;
@@ -23,9 +20,7 @@ martensite_tkernel::impl_transient_interface!(
     StandardTransient
 );
 #[derive(Default)]
-struct InheritedReadingObject {
-    base: StandardTransient,
-}
+struct InheritedReadingObject {}
 impl InheritedReading for InheritedReadingObject {
     fn reading(&self) -> i32 {
         42
@@ -36,46 +31,40 @@ impl RuntimeTyped for InheritedReadingObject {
     fn static_type() -> &'static RuntimeType {
         <dyn InheritedReading>::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        project_concrete(object)
-    }
 }
 impl Transient for InheritedReadingObject {
     fn dynamic_type(&self) -> &'static RuntimeType {
         Self::static_type()
     }
-    fn rust_interface_descriptor(&self) -> &RuntimeType {
+    fn rust_interface_descriptor(&self) -> &'static RuntimeType {
         inherited_reading_casters()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        if requested == TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.base.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        &self.base
     }
 }
 fn inherited_reading_casters() -> &'static RuntimeType {
-    static DESCRIPTOR: OnceLock<Handle<RuntimeType>> = OnceLock::new();
-    DESCRIPTOR
-        .get_or_init(|| {
-            RuntimeType::register_owned_with_interfaces::<InheritedReadingObject>(
-                "InheritedReadingObject Rust casters",
-                std::mem::size_of::<InheritedReadingObject>(),
-                Some(InheritedReadingObject::static_type_handle()),
-                vec![InterfaceEntry::new(
-                    InterfaceCaster::<dyn InheritedReading>::new(|object| {
-                        Some(project_concrete::<InheritedReadingObject>(object)?
-                            as &dyn InheritedReading)
-                    }),
-                )],
-            )
-        })
-        .get()
-        .unwrap()
+    static DESCRIPTOR: OnceLock<&'static RuntimeType> = OnceLock::new();
+    DESCRIPTOR.get_or_init(|| {
+        RuntimeType::register_with_interfaces::<InheritedReadingObject>(
+            "InheritedReadingObject Rust casters",
+            std::mem::size_of::<InheritedReadingObject>(),
+            Some(InheritedReadingObject::static_type()),
+            vec![InterfaceEntry::new(
+                InterfaceCaster::<dyn InheritedReading>::new(
+                    |object| {
+                        project_concrete::<InheritedReadingObject>(object)
+                            .map(|object| object as &dyn InheritedReading)
+                    },
+                    |owner| {
+                        let erased: Arc<dyn std::any::Any + Send + Sync> = owner;
+                        Arc::downcast::<InheritedReadingObject>(erased)
+                            .ok()
+                            .map(|object| object as Arc<dyn InheritedReading>)
+                    },
+                ),
+            )],
+        )
+    })
 }
+
 #[test]
 fn inherited_native_type_and_rust_projection_remain_independent() {
     let concrete = Handle::new(InheritedReadingObject::default());
@@ -96,11 +85,11 @@ fn inherited_interface_casts_back_and_rejects_unrelated_interfaces() {
     let concrete = Handle::new(InheritedReadingObject::default());
     let view = concrete.cast::<dyn InheritedReading>();
     assert_eq!(
-        view.cast::<InheritedReadingObject>().as_ptr(),
+        view.downcast::<InheritedReadingObject>().as_ptr(),
         concrete.as_ptr()
     );
     assert!(view.cast::<dyn MissingReading>().is_null());
-    assert!(!view.cast::<StandardTransient>().is_null());
+    assert!(!view.upcast::<dyn Transient>().is_null());
     let weak = view.downgrade();
     drop(view);
     assert_eq!(weak.upgrade().object_address(), concrete.object_address());
@@ -109,7 +98,7 @@ fn inherited_interface_casts_back_and_rejects_unrelated_interfaces() {
 }
 #[test]
 fn ordinary_transients_use_their_existing_dynamic_descriptor_for_casts() {
-    let object = StandardTransient::default();
+    let object = StandardTransient;
     assert!(std::ptr::eq(
         object.rust_interface_descriptor(),
         object.dynamic_type()

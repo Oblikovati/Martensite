@@ -22,7 +22,6 @@ fn status_slots<T>() -> StatusSlots<T> {
 /// Derived algorithms name their messages after their type chain; give the
 /// descriptor with [`Algorithm::with_runtime_type`].
 pub struct Algorithm {
-    parent: StandardTransient,
     runtime_type: &'static RuntimeType,
     status: SharedState<ExecStatus>,
     messenger: SharedState<Arc<Messenger>>,
@@ -46,7 +45,6 @@ impl Algorithm {
     /// `Algorithm::with_runtime_type(Algorithm::static_type())`.
     pub fn with_runtime_type(runtime_type: &'static RuntimeType) -> Self {
         Self {
-            parent: StandardTransient::default(),
             runtime_type,
             status: SharedState::new(ExecStatus::new()),
             messenger: SharedState::new(Message::default_messenger().clone()),
@@ -123,19 +121,8 @@ impl Algorithm {
     }
 }
 
-// The embedded base supports actual Handle up/down casts; message-name customization
-// alone never substitutes for a registered derived object or its base projection.
 impl Transient for Algorithm {
     fn dynamic_type(&self) -> &'static RuntimeType {
         self.runtime_type
-    }
-    fn project(&self, requested: std::any::TypeId) -> Option<&dyn std::any::Any> {
-        if requested == std::any::TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.parent.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        &self.parent
     }
 }

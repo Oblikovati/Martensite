@@ -5,7 +5,7 @@ use martensite_tkernel::{
         AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource,
         BaseAllocator, HeapAllocatorObject, IncrementalAllocatorObject,
     },
-    standard::{Handle, SharedState, Transient},
+    standard::{Handle, SharedState},
 };
 use std::ptr::NonNull;
 #[derive(Default)]
@@ -14,7 +14,7 @@ struct HeapForwardingProbe {
     events: std::sync::Arc<SharedState<Vec<String>>>,
 }
 martensite_tkernel::impl_transient!(HeapForwardingProbe, "Martensite_HeapForwardingProbe",
-    HeapAllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    HeapAllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: allocation delegates to the genuine embedded heap policy.
 unsafe impl AllocatorSource for HeapForwardingProbe {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -34,7 +34,7 @@ struct IncForwardingProbe {
     events: std::sync::Arc<SharedState<Vec<String>>>,
 }
 martensite_tkernel::impl_transient!(IncForwardingProbe, "Martensite_IncForwardingProbe",
-    IncrementalAllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    IncrementalAllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: allocation delegates to the genuine embedded incremental policy.
 unsafe impl AllocatorSource for IncForwardingProbe {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -78,25 +78,25 @@ fn custom_incremental_typed_lease_blocks_reset_until_payload_release() {
     assert_eq!(owner.ref_count(), 2);
 }
 
-fn heap_probe_count(
-    source: &HeapForwardingProbe,
-) -> (std::sync::Arc<SharedState<Vec<String>>>, i32) {
-    (source.events.clone(), source.transient_base().ref_count())
+fn heap_probe_count(source: &HeapForwardingProbe) -> std::sync::Arc<SharedState<Vec<String>>> {
+    source.events.clone()
 }
-fn inc_probe_count(source: &IncForwardingProbe) -> (std::sync::Arc<SharedState<Vec<String>>>, i32) {
-    (source.events.clone(), source.transient_base().ref_count())
+fn inc_probe_count(source: &IncForwardingProbe) -> std::sync::Arc<SharedState<Vec<String>>> {
+    source.events.clone()
 }
 fn heap_probe_allocate(invocation: &AllocatorInvocation, size: usize) -> Option<NonNull<u8>> {
+    let count = invocation.ref_count();
     // SAFETY: selectors return actual independently anchored trace storage and immediate counts.
-    let (events, count) = martensite_tkernel::standard::raise_native_failure(unsafe {
+    let events = martensite_tkernel::standard::raise_native_failure(unsafe {
         invocation.capture(heap_probe_count)
     });
     events.write().push(format!("heap-allocate {size} {count}"));
     invocation.allocate_base(size)
 }
 fn inc_probe_optimal(invocation: &AllocatorInvocation, size: usize) -> Option<NonNull<u8>> {
+    let count = invocation.ref_count();
     // SAFETY: selectors return actual independently anchored trace storage and immediate counts.
-    let (events, count) = martensite_tkernel::standard::raise_native_failure(unsafe {
+    let events = martensite_tkernel::standard::raise_native_failure(unsafe {
         invocation.capture(inc_probe_count)
     });
     events.write().push(format!("inc-optimal {size} {count}"));

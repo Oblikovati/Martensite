@@ -149,8 +149,8 @@ pub mod quantity_period;
 pub mod resource_manager;
 #[path = "../resource_manager_supplemental.rs"]
 pub mod resource_manager_supplemental;
-#[path = "../runtime_type_owning_handles.rs"]
-pub mod runtime_type_owning_handles;
+#[path = "../runtime_type_descriptors.rs"]
+pub mod runtime_type_descriptors;
 #[path = "../sequence_borrowed_assignment_contracts.rs"]
 pub mod sequence_borrowed_assignment_contracts;
 #[path = "../sequence_clear_invocation.rs"]
@@ -193,8 +193,6 @@ pub mod standard_c_string_format;
 pub mod standard_c_string_format_full;
 #[path = "../standard_character.rs"]
 pub mod standard_character;
-#[path = "../standard_descriptor_count_scope.rs"]
-pub mod standard_descriptor_count_scope;
 #[path = "../standard_dump.rs"]
 pub mod standard_dump;
 #[path = "../standard_dump_behavior.rs"]
@@ -239,8 +237,8 @@ pub mod standard_scalar_behavior;
 pub mod standard_strtod;
 #[path = "../standard_strtod_bytes.rs"]
 pub mod standard_strtod_bytes;
-#[path = "../standard_transient_delete.rs"]
-pub mod standard_transient_delete;
+#[path = "../standard_transient_drop.rs"]
+pub mod standard_transient_drop;
 #[path = "../standard_transient_registrations.rs"]
 pub mod standard_transient_registrations;
 #[path = "../standard_values_api_behavior.rs"]

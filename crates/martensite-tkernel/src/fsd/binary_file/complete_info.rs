@@ -9,7 +9,7 @@
 use super::input_source::{BinaryReadSource, OwnedReadSource};
 use super::{BinaryFile, FileHeader, input_fields, input_info};
 use crate::ncollection::{ArrayError, HArray1, Sequence};
-use crate::standard::{Failure, Handle, StandardPersistent};
+use crate::standard::{Failure, Handle, Persistent};
 use crate::storage::PersistentNumbers;
 use crate::storage::{CallBackTable, Data, InternalData, IoStream, Root, StreamException};
 use crate::tcollection::{AsciiString, ExtendedString};
@@ -214,7 +214,7 @@ fn read_references<I: BinaryReadSource>(
 fn store_object(
     internal: &InternalData,
     reference: i32,
-    object: &Handle<StandardPersistent>,
+    object: &Handle<dyn Persistent>,
 ) -> Result<(), Failure> {
     internal.read_array(|array| {
         let array = array.get().ok_or_else(|| null_failure("the read array"))?;

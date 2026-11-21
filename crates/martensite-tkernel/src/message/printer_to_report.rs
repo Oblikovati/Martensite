@@ -3,7 +3,7 @@ use super::{
     AlertExtended, AttributeMeter, AttributeObject, AttributeStream, BaseAttribute, Gravity,
     Message, Printer, PrinterBase, PrinterType, Report,
 };
-use crate::standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient};
+use crate::standard::{Handle, RuntimeType, RuntimeTyped, Transient};
 use crate::tcollection::AsciiString;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -94,7 +94,7 @@ impl Printer for PrinterToReport {
     }
     /// Ignores the trace level and null objects; the pending name is
     /// used but kept.
-    fn send_object(&self, object: &Handle<StandardTransient>, gravity: Gravity) {
+    fn send_object(&self, object: &Handle<dyn Transient>, gravity: Gravity) {
         let report = self.report();
         let name = locked(&self.name).clone();
         if !report.active_metrics().is_empty() {

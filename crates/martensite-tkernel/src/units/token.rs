@@ -1,6 +1,6 @@
 //! A word of a unit sentence with its meaning, SI factor and dimensions.
 //!
-//! Tokens are shared through `Handle<Token>` and edited in place by the sentence
+//! Tokens are shared through `Handle<dyn TokenObject>` and edited in place by the sentence
 //! analysers, so the mutable fields sit behind a lock. The virtual members
 //! and the members that return `this`
 //! dispatch on the handle through [`TokenHandle`], where shifted tokens override.
@@ -20,10 +20,9 @@ pub use shifted::ShiftedToken;
 
 /// One sentence word; `Token::with_value(b"m", b"U", 1.0)`.
 pub struct Token {
-    base: StandardTransient,
     state: RwLock<TokenState>,
 }
-crate::impl_transient!(Token, "Units_Token", StandardTransient, base);
+crate::impl_transient!(Token, "Units_Token", StandardTransient, interfaces: [dyn TokenObject]);
 
 struct TokenState {
     word: AsciiString,
@@ -47,7 +46,6 @@ fn copied_dimensions(dimensions: &Handle<Dimensions>) -> Handle<Dimensions> {
 impl Token {
     fn from_parts(word: &[u8], mean: &[u8], value: f64, dimensions: Handle<Dimensions>) -> Self {
         Self {
-            base: StandardTransient::default(),
             state: RwLock::new(TokenState {
                 word: AsciiString::from_bytes(c_str(word)),
                 mean: AsciiString::from_bytes(c_str(mean)),
@@ -85,7 +83,7 @@ impl Token {
     }
     /// Copy constructor: it shares, not copies, the dimensions
     /// object; `Token::from_token(&other)?`.
-    pub fn from_token(token: &Handle<Token>) -> Result<Self, Failure> {
+    pub fn from_token(token: &Handle<dyn TokenObject>) -> Result<Self, Failure> {
         let source = object(token, "Units_Token::Units_Token")?;
         let state = source.read();
         Ok(Self::from_parts(
@@ -162,7 +160,7 @@ impl Token {
         text.len() == word.len() && strncmp(word.as_bytes(), text, word.len()).is_eq()
     }
     /// Word equals the other token's word; `token.is_equal_token(&other)?`.
-    pub fn is_equal_token(&self, token: &Handle<Token>) -> Result<bool, Failure> {
+    pub fn is_equal_token(&self, token: &Handle<dyn TokenObject>) -> Result<bool, Failure> {
         let other = object(token, "Units_Token::IsEqual")?;
         let (left, right) = (self.word(), other.word());
         Ok(left.len() == other.length() && left.as_bytes() == right.as_bytes())
@@ -172,7 +170,7 @@ impl Token {
         !self.is_equal(text)
     }
     /// Negation of `is_equal_token`; `token.is_not_equal_token(&other)?`.
-    pub fn is_not_equal_token(&self, token: &Handle<Token>) -> Result<bool, Failure> {
+    pub fn is_not_equal_token(&self, token: &Handle<dyn TokenObject>) -> Result<bool, Failure> {
         Ok(!self.is_equal_token(token)?)
     }
     /// The word is a prefix of the C string; `token.is_less_or_equal(b"mm")`.
@@ -186,16 +184,71 @@ impl Token {
         strncmp(word.as_bytes(), c_str(text), word.len()) == Ordering::Greater
     }
     /// Token form of `is_greater`; `token.is_greater_token(&other)?`.
-    pub fn is_greater_token(&self, token: &Handle<Token>) -> Result<bool, Failure> {
+    pub fn is_greater_token(&self, token: &Handle<dyn TokenObject>) -> Result<bool, Failure> {
         let other = object(token, "Units_Token::IsGreater")?.word();
         let word = self.word();
         Ok(strncmp(word.as_bytes(), other.as_bytes(), word.len()) == Ordering::Greater)
     }
     /// `strncmp(word, other word, word length) >= 0`; `token.is_greater_or_equal(&other)?`.
-    pub fn is_greater_or_equal(&self, token: &Handle<Token>) -> Result<bool, Failure> {
+    pub fn is_greater_or_equal(&self, token: &Handle<dyn TokenObject>) -> Result<bool, Failure> {
         let other = object(token, "Units_Token::IsGreaterOrEqual")?.word();
         let word = self.word();
         Ok(strncmp(word.as_bytes(), other.as_bytes(), word.len()) != Ordering::Less)
+    }
+}
+
+/// A polymorphic token with access to its shared state.
+pub trait TokenObject: crate::standard::Transient {
+    /// Borrow this object's token state; `object.token_state()`.
+    fn token_state(&self) -> &Token;
+
+    /// Copy this object's token and its dimensions; `object.copy_token()`.
+    fn copy_token(&self) -> Handle<dyn TokenObject> {
+        let token = self.token_state();
+        Handle::new(Token::with_dimensions(
+            token.word().as_bytes(),
+            token.mean().as_bytes(),
+            token.value(),
+            &token.dimensions(),
+        ))
+        .into_upcast()
+    }
+
+    /// Convert this token's units to SI; `object.token_multiplied(2.0)`.
+    fn token_multiplied(&self, value: f64) -> f64 {
+        value * self.token_state().value()
+    }
+
+    /// Convert an SI value to this token's units; `object.token_divided(2.0)`.
+    fn token_divided(&self, value: f64) -> f64 {
+        value / self.token_state().value()
+    }
+
+    /// Write the dynamic fields after the standard token dump.
+    /// `object.dump_token_tail(0, &mut output)?`.
+    fn dump_token_tail(&self, _shift: i32, _out: &mut dyn std::io::Write) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+impl crate::standard::RuntimeTyped for dyn TokenObject {
+    const TYPE_NAME: &'static str = <Token as crate::standard::RuntimeTyped>::TYPE_NAME;
+    fn static_type() -> &'static crate::standard::RuntimeType {
+        <Token as crate::standard::RuntimeTyped>::static_type()
+    }
+}
+crate::impl_transient_interface_target!(dyn TokenObject);
+
+impl TokenObject for Token {
+    fn token_state(&self) -> &Token {
+        self
+    }
+}
+
+impl std::ops::Deref for dyn TokenObject {
+    type Target = Token;
+    fn deref(&self) -> &Self::Target {
+        self.token_state()
     }
 }
 
@@ -214,7 +267,7 @@ mod tests {
         let length = Dimensions::a_length();
         let copied = Token::with_dimensions(b"m", b"U", 1.0, &length);
         assert!(!std::ptr::eq(copied.dimensions().as_ptr(), length.as_ptr()));
-        let shared = Token::from_token(&Handle::new(copied)).unwrap();
+        let shared = Token::from_token(&Handle::new(copied).into_upcast()).unwrap();
         assert_eq!(shared.dimensions().get().unwrap().length(), 1.0);
     }
 
@@ -238,7 +291,7 @@ mod tests {
         assert!(token.is_equal(b"mm") && token.is_not_equal(b"m"));
         assert!(token.is_less_or_equal(b"mmx") && !token.is_less_or_equal(b"m"));
         assert!(token.is_greater(b"ma") && !token.is_greater(b"mmz"));
-        let other = Handle::new(Token::with_word(b"mmm"));
+        let other = Handle::new(Token::with_word(b"mmm")).into_upcast::<dyn TokenObject>();
         assert!(token.is_greater_or_equal(&other).unwrap());
         assert!(!token.is_greater_token(&other).unwrap());
         assert!(token.is_not_equal_token(&other).unwrap());

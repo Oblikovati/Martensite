@@ -1,10 +1,10 @@
 //! A tokenized unit or formula expression and its evaluation.
-use super::lexicon::Lexicon;
 use super::support::{c_str, item, length, new_sequence, object, write_bytes};
 use super::token::{Token, TokenHandle};
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle};
 use crate::tcollection::AsciiString;
+use crate::units::{LexiconObject, TokenObject};
 use std::io::Write;
 
 mod calculate;
@@ -12,16 +12,16 @@ pub(crate) use calculate::calculate_local;
 
 /// Tokens read from an expression; `Sentence::new(&lexicon, b"kg/m")?`.
 pub struct Sentence {
-    tokens: Handle<HSequence<Handle<Token>>>,
+    tokens: Handle<HSequence<Handle<dyn TokenObject>>>,
 }
 
 /// The token that would extend the match at the front of `rest`: the longest lexicon
 /// word (the last one on ties, as the `>=` comparison keeps), copied.
 fn lexicon_match(
-    lexicon: &Handle<HSequence<Handle<Token>>>,
+    lexicon: &Handle<HSequence<Handle<dyn TokenObject>>>,
     rest: &[u8],
-) -> Result<Option<Handle<Token>>, Failure> {
-    let mut best: Option<(usize, Handle<Token>)> = None;
+) -> Result<Option<Handle<dyn TokenObject>>, Failure> {
+    let mut best: Option<(usize, Handle<dyn TokenObject>)> = None;
     for index in 1..=length(lexicon)? {
         let reference = item(lexicon, index)?;
         let word = object(&reference, "Units_Sentence::Units_Sentence")?.word();
@@ -34,7 +34,7 @@ fn lexicon_match(
 }
 
 /// The first byte, then digits and at most one point.
-fn number_token(rest: &[u8]) -> Handle<Token> {
+fn number_token(rest: &[u8]) -> Handle<dyn TokenObject> {
     let mut word = vec![rest[0]];
     let mut point = false;
     for &byte in &rest[1..] {
@@ -45,7 +45,7 @@ fn number_token(rest: &[u8]) -> Handle<Token> {
             break;
         }
     }
-    Handle::new(Token::with_mean(&word, b"0"))
+    Handle::new(Token::with_mean(&word, b"0")).into_upcast::<dyn TokenObject>()
 }
 
 /// The adjacency rules rejecting an expression (`i > 0` checks).
@@ -65,19 +65,19 @@ impl Sentence {
     /// Tokenizes `text` against the lexicon; an unknown word or a forbidden
     /// neighbourhood leaves the sentence empty (not done). A lexicon whose sequence is
     /// null raises `Units_NoSuchType`; `Sentence::new(&lexicon, b"mm")?`.
-    pub fn new(lexicon: &Handle<Lexicon>, text: &[u8]) -> Result<Self, Failure> {
+    pub fn new(lexicon: &Handle<dyn LexiconObject>, text: &[u8]) -> Result<Self, Failure> {
         let words = object(lexicon, "Units_Sentence::Units_Sentence")?.sequence();
         if words.is_null() {
             return Err(super::no_such_type("BAD LEXICON descriptor"));
         }
-        let tokens = new_sequence::<Handle<Token>>();
+        let tokens = new_sequence::<Handle<dyn TokenObject>>();
         let sentence = Self { tokens };
         sentence.tokenize(&words, c_str(text))?;
         Ok(sentence)
     }
     fn tokenize(
         &self,
-        words: &Handle<HSequence<Handle<Token>>>,
+        words: &Handle<HSequence<Handle<dyn TokenObject>>>,
         text: &[u8],
     ) -> Result<(), Failure> {
         let (mut rest, mut previous) = (text, None::<(AsciiString, AsciiString)>);
@@ -122,16 +122,16 @@ impl Sentence {
         Ok(())
     }
     /// The shared token sequence; `sentence.sequence()`.
-    pub fn sequence(&self) -> Handle<HSequence<Handle<Token>>> {
+    pub fn sequence(&self) -> Handle<HSequence<Handle<dyn TokenObject>>> {
         self.tokens.clone()
     }
     /// Replaces the token sequence; `sentence.set_sequence(&tokens)`.
-    pub fn set_sequence(&mut self, tokens: &Handle<HSequence<Handle<Token>>>) {
+    pub fn set_sequence(&mut self, tokens: &Handle<HSequence<Handle<dyn TokenObject>>>) {
         self.tokens = tokens.clone();
     }
     /// Reduces the sequence in place (destructively) to one token; a null handle for an
     /// empty sentence or an operator-free remainder; `sentence.evaluate()?`.
-    pub fn evaluate(&mut self) -> Result<Handle<Token>, Failure> {
+    pub fn evaluate(&mut self) -> Result<Handle<dyn TokenObject>, Failure> {
         if length(&self.tokens)? == 0 {
             return Ok(Handle::default());
         }

@@ -2,20 +2,21 @@
 //! other operators left to right, rewriting the sequence in place.
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle};
+use crate::units::TokenObject;
 use crate::units::support::{
     CHANGE_VALUE, REMOVE_ONE, REMOVE_RANGE, edit, item, length, new_sequence, object,
 };
 use crate::units::token::{Token, TokenHandle};
 
-type Tokens = Handle<HSequence<Handle<Token>>>;
+type Tokens = Handle<HSequence<Handle<dyn TokenObject>>>;
 
-fn word_is(token: &Handle<Token>, text: &str) -> Result<bool, Failure> {
+fn word_is(token: &Handle<dyn TokenObject>, text: &str) -> Result<bool, Failure> {
     Ok(object(token, "Units_Sentence::CalculateLocal")?.word() == text)
 }
 
 /// Reduces `tokens` to its value token; a null handle when nothing reduces (the
 /// stale or never-assigned value token).
-pub(crate) fn calculate_local(tokens: &Tokens) -> Result<Handle<Token>, Failure> {
+pub(crate) fn calculate_local(tokens: &Tokens) -> Result<Handle<dyn TokenObject>, Failure> {
     match length(tokens)? {
         1 => item(tokens, 1),
         2 => unary(tokens),
@@ -25,7 +26,7 @@ pub(crate) fn calculate_local(tokens: &Tokens) -> Result<Handle<Token>, Failure>
 
 /// A two-token sequence: drops a leading `+`, folds a leading `-` into a negated
 /// plain token (a shifted operand loses its move).
-fn unary(tokens: &Tokens) -> Result<Handle<Token>, Failure> {
+fn unary(tokens: &Tokens) -> Result<Handle<dyn TokenObject>, Failure> {
     if word_is(&item(tokens, 1)?, "+")? {
         edit(tokens, REMOVE_ONE, |items| items.remove(1))?;
     }
@@ -40,13 +41,13 @@ fn unary(tokens: &Tokens) -> Result<Handle<Token>, Failure> {
         let negated = Token::with_dimensions(&word, mean.as_bytes(), value, &operand.dimensions());
         edit(tokens, REMOVE_ONE, |items| items.remove(1))?;
         edit(tokens, CHANGE_VALUE, |items| {
-            items.set_value(1, Handle::new(negated))
+            items.set_value(1, Handle::new(negated).into_upcast())
         })?;
     }
     item(tokens, 1)
 }
 
-fn reduce(tokens: &Tokens) -> Result<Handle<Token>, Failure> {
+fn reduce(tokens: &Tokens) -> Result<Handle<dyn TokenObject>, Failure> {
     let mut result = Handle::default();
     loop {
         match first_bracket(tokens)? {
@@ -67,8 +68,8 @@ fn first_bracket(tokens: &Tokens) -> Result<Option<usize>, Failure> {
 
 /// Evaluates the bracket opened at `open` and replaces it by its value; an
 /// unclosed bracket makes the removal fail.
-fn bracket(tokens: &Tokens, open: usize) -> Result<Handle<Token>, Failure> {
-    let inner = new_sequence::<Handle<Token>>();
+fn bracket(tokens: &Tokens, open: usize) -> Result<Handle<dyn TokenObject>, Failure> {
+    let inner = new_sequence::<Handle<dyn TokenObject>>();
     let total = length(tokens)?;
     let (mut depth, mut close) = (1, total + 1);
     for index in open + 1..=total {
@@ -92,15 +93,22 @@ fn bracket(tokens: &Tokens, open: usize) -> Result<Handle<Token>, Failure> {
 
 /// Step 1 folds `**` with `pow`, step 2 every other operator (meaning `O`): `/` with
 /// division, anything else with multiplication.
-fn operators(tokens: &Tokens, result: Handle<Token>) -> Result<Handle<Token>, Failure> {
-    let power = |token: &Handle<Token>| word_is(token, "**");
-    let raise = |left: &Handle<Token>, right: &Handle<Token>, _: &Handle<Token>| {
-        object(left, "pow")?.power_token(right)
-    };
+fn operators(
+    tokens: &Tokens,
+    result: Handle<dyn TokenObject>,
+) -> Result<Handle<dyn TokenObject>, Failure> {
+    let power = |token: &Handle<dyn TokenObject>| word_is(token, "**");
+    let raise =
+        |left: &Handle<dyn TokenObject>,
+         right: &Handle<dyn TokenObject>,
+         _: &Handle<dyn TokenObject>| { object(left, "pow")?.power_token(right) };
     let result = fold(tokens, result, &power, &raise)?;
-    let other =
-        |token: &Handle<Token>| Ok(object(token, "Units_Sentence::CalculateLocal")?.mean() == "O");
-    let combine = |left: &Handle<Token>, right: &Handle<Token>, operator: &Handle<Token>| {
+    let other = |token: &Handle<dyn TokenObject>| {
+        Ok(object(token, "Units_Sentence::CalculateLocal")?.mean() == "O")
+    };
+    let combine = |left: &Handle<dyn TokenObject>,
+                   right: &Handle<dyn TokenObject>,
+                   operator: &Handle<dyn TokenObject>| {
         if word_is(operator, "/")? {
             left.divide(right)
         } else {
@@ -110,16 +118,19 @@ fn operators(tokens: &Tokens, result: Handle<Token>) -> Result<Handle<Token>, Fa
     fold(tokens, result, &other, &combine)
 }
 
-type Selector<'a> = &'a dyn Fn(&Handle<Token>) -> Result<bool, Failure>;
-type Combiner<'a> =
-    &'a dyn Fn(&Handle<Token>, &Handle<Token>, &Handle<Token>) -> Result<Handle<Token>, Failure>;
+type Selector<'a> = &'a dyn Fn(&Handle<dyn TokenObject>) -> Result<bool, Failure>;
+type Combiner<'a> = &'a dyn Fn(
+    &Handle<dyn TokenObject>,
+    &Handle<dyn TokenObject>,
+    &Handle<dyn TokenObject>,
+) -> Result<Handle<dyn TokenObject>, Failure>;
 
 fn fold(
     tokens: &Tokens,
-    mut result: Handle<Token>,
+    mut result: Handle<dyn TokenObject>,
     selected: Selector<'_>,
     combine: Combiner<'_>,
-) -> Result<Handle<Token>, Failure> {
+) -> Result<Handle<dyn TokenObject>, Failure> {
     let mut index = 1;
     while index <= length(tokens)? {
         let operator = item(tokens, index)?;
@@ -137,9 +148,9 @@ fn fold(
 fn apply(
     tokens: &Tokens,
     index: usize,
-    operator: &Handle<Token>,
+    operator: &Handle<dyn TokenObject>,
     combine: Combiner<'_>,
-) -> Result<Handle<Token>, Failure> {
+) -> Result<Handle<dyn TokenObject>, Failure> {
     let left = item(tokens, index - 1)?;
     let right = item(tokens, index + 1)?;
     let value = combine(&left, &right, operator)?;

@@ -1,5 +1,5 @@
 //! A named root object of a set of stored data.
-use crate::standard::{Handle, StandardPersistent, StandardTransient};
+use crate::standard::{Handle, Persistent, StandardTransient};
 use crate::tcollection::AsciiString;
 use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -7,7 +7,7 @@ use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 struct RootFields {
     name: AsciiString,
     type_name: AsciiString,
-    object: Handle<StandardPersistent>,
+    object: Handle<dyn Persistent>,
     reference: i32,
 }
 
@@ -23,13 +23,12 @@ struct RootFields {
 /// ```
 #[derive(Default)]
 pub struct Root {
-    parent: StandardTransient,
     fields: RwLock<RootFields>,
 }
 
 impl Root {
     /// Reference 0 and an empty type; `Root::new(&name, &object)`.
-    pub fn new(name: &AsciiString, object: &Handle<StandardPersistent>) -> Self {
+    pub fn new(name: &AsciiString, object: &Handle<dyn Persistent>) -> Self {
         Self::from_fields(RootFields {
             name: name.clone(),
             object: object.clone(),
@@ -50,7 +49,6 @@ impl Root {
 
     fn from_fields(fields: RootFields) -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: RwLock::new(fields),
         }
     }
@@ -74,12 +72,12 @@ impl Root {
     }
 
     /// Example: `root.set_object(&object)`.
-    pub fn set_object(&self, object: &Handle<StandardPersistent>) {
+    pub fn set_object(&self, object: &Handle<dyn Persistent>) {
         self.write().object = object.clone();
     }
 
     /// The root's persistent object, null for a retrieved root; `root.object()`.
-    pub fn object(&self) -> Handle<StandardPersistent> {
+    pub fn object(&self) -> Handle<dyn Persistent> {
         self.read().object.clone()
     }
 
@@ -104,4 +102,4 @@ impl Root {
     }
 }
 
-crate::impl_transient!(Root, "Storage_Root", StandardTransient, parent);
+crate::impl_transient!(Root, "Storage_Root", StandardTransient);

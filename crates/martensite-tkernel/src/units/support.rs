@@ -1,7 +1,7 @@
 //! Shared helpers for the C string and sequence behavior the
 //! units types rely on, including their exception messages.
 use crate::ncollection::HSequence;
-use crate::standard::{Failure, Handle, RuntimeTyped};
+use crate::standard::{Failure, Handle};
 use std::cmp::Ordering;
 
 /// Bytes of a C string argument: everything before the first NUL.
@@ -29,10 +29,7 @@ pub(crate) fn strncmp(left: &[u8], right: &[u8], count: usize) -> Ordering {
 ///
 /// A null handle has no object; this reports
 /// `Standard_NullObject` naming the member that would have crashed.
-pub(crate) fn object<'a, T: RuntimeTyped>(
-    handle: &'a Handle<T>,
-    member: &str,
-) -> Result<&'a T, Failure> {
+pub(crate) fn object<'a, T: ?Sized>(handle: &'a Handle<T>, member: &str) -> Result<&'a T, Failure> {
     handle.get().ok_or_else(|| {
         crate::standard::exceptions::null_object(&format!(
             "{member}: null handle; expected a constructed object"
