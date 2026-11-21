@@ -10,16 +10,18 @@ impl AsciiString {
         self.as_bytes() == other.as_ref()
     }
     /// Inequality; `AsciiString::new("Test").is_different("Other")`.
-    pub fn is_different(&self, other: impl AsRef<[u8]>) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_different(&self, other: impl AsRef<[u8]>) -> bool {
         !self.is_equal(other)
     }
     /// `memcmp` over the common length, then the shorter is less;
     /// `AsciiString::new("A").is_less("B")`.
-    pub fn is_less(&self, other: impl AsRef<[u8]>) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_less(&self, other: impl AsRef<[u8]>) -> bool {
         self.as_bytes() < other.as_ref()
     }
     /// Greater-than; `AsciiString::new("B").is_greater("A")`.
-    pub fn is_greater(&self, other: impl AsRef<[u8]>) -> bool {
+    pub(crate) fn is_greater(&self, other: impl AsRef<[u8]>) -> bool {
         self.as_bytes() > other.as_ref()
     }
     /// True for an empty prefix; `AsciiString::new("Hello").starts_with("He")`.
@@ -36,7 +38,7 @@ impl AsciiString {
     }
     /// Equal lengths and bytes, optionally ignoring ASCII case;
     /// `AsciiString::same_bytes("A", "a", false)`.
-    pub fn same_bytes(
+    pub(crate) fn same_bytes(
         first: impl AsRef<[u8]>,
         second: impl AsRef<[u8]>,
         case_sensitive: bool,
@@ -50,11 +52,13 @@ impl AsciiString {
     }
     /// Byte-span equality of two strings or views;
     /// `AsciiString::strings_equal(&text, "Test")`.
-    pub fn strings_equal(first: impl AsRef<[u8]>, second: impl AsRef<[u8]>) -> bool {
+    #[cfg(test)]
+    pub(crate) fn strings_equal(first: impl AsRef<[u8]>, second: impl AsRef<[u8]>) -> bool {
         first.as_ref() == second.as_ref()
     }
     /// Every byte is printable ASCII (32..=126); `AsciiString::new("a b").is_ascii()`.
-    pub fn is_ascii(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_ascii(&self) -> bool {
         self.as_bytes()
             .iter()
             .all(|&byte| (b' '..127).contains(&byte))

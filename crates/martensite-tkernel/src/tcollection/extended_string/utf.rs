@@ -80,6 +80,7 @@ pub(super) fn utf8_to_utf16(bytes: &[u8]) -> Option<Vec<u16>> {
 
 /// Converts UTF-32 code units up to the first zero like `fromWideString` on a 4-byte
 /// `wchar_t`; `utf32_to_utf16(&[0x1F600, 0])`.
+#[cfg(test)]
 pub(super) fn utf32_to_utf16(values: &[u32]) -> Vec<u16> {
     let mut units = Vec::with_capacity(values.len());
     for &value in values.iter().take_while(|&&value| value != 0) {

@@ -8,6 +8,7 @@ pub(super) fn out_of_range(base_message: &str, detail: std::fmt::Arguments<'_>) 
 }
 
 /// `Standard_NullObject` for a null pointer argument; `null_object("…: null parameter ")`.
+#[cfg(test)]
 pub(super) fn null_object(base_message: &str, detail: std::fmt::Arguments<'_>) -> Failure {
     exceptions::null_object(&format!("{base_message} ({detail})"))
 }
@@ -30,6 +31,7 @@ pub(super) fn int_length(length: usize) -> i32 {
 /// # Panics
 /// When the slice is shorter than `length`: reading past the caller's buffer
 /// which is undefined behavior rather than an exception.
+#[cfg(test)]
 pub(super) fn leading_units(units: &[u16], length: usize) -> &[u16] {
     units.get(..length).unwrap_or_else(|| {
         panic!(

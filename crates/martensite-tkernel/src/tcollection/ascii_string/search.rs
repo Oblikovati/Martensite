@@ -14,7 +14,8 @@ impl AsciiString {
         memchr::memmem::find(self.as_bytes(), needle).map_or(-1, |index| index as i32 + 1)
     }
     /// Searches only through the first NUL; `text.search_c_string(Some(b"part\0ignored"))`.
-    pub fn search_c_string(&self, what: Option<&[u8]>) -> i32 {
+    #[cfg(test)]
+    pub(crate) fn search_c_string(&self, what: Option<&[u8]>) -> i32 {
         let Some(needle) = what else {
             return -1;
         };
@@ -31,7 +32,8 @@ impl AsciiString {
         memchr::memmem::rfind(self.as_bytes(), needle).map_or(-1, |index| index as i32 + 1)
     }
     /// Searches the NUL-terminated prefix; `text.search_from_end_c_string(Some(b"part\0ignored"))`.
-    pub fn search_from_end_c_string(&self, what: Option<&[u8]>) -> i32 {
+    #[cfg(test)]
+    pub(crate) fn search_from_end_c_string(&self, what: Option<&[u8]>) -> i32 {
         let Some(needle) = what else {
             return -1;
         };
@@ -78,7 +80,8 @@ impl AsciiString {
     }
     /// First position in `from..=to` holding a byte of `set`, 0 if none;
     /// an empty string or set gives 0 before the range is checked; `text.first_location_in_set("aeiou", 1, 5)?`.
-    pub fn first_location_in_set(
+    #[cfg(test)]
+    pub(crate) fn first_location_in_set(
         &self,
         set: impl AsRef<[u8]>,
         from: i32,
@@ -88,7 +91,8 @@ impl AsciiString {
     }
     /// Searches the array span excluding its last byte;
     /// `text.first_location_in_set_literal(b"aeiou\0", 1, text.length())?`.
-    pub fn first_location_in_set_literal<const N: usize>(
+    #[cfg(test)]
+    pub(crate) fn first_location_in_set_literal<const N: usize>(
         &self,
         set: &[u8; N],
         from: i32,
@@ -108,7 +112,8 @@ impl AsciiString {
     }
     /// Searches the array span excluding its last byte;
     /// `text.first_location_not_in_set_literal(b" \t\0", 1, text.length())?`.
-    pub fn first_location_not_in_set_literal<const N: usize>(
+    #[cfg(test)]
+    pub(crate) fn first_location_not_in_set_literal<const N: usize>(
         &self,
         set: &[u8; N],
         from: i32,

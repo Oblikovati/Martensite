@@ -78,3 +78,29 @@ boundaries. For the lenient extended-string decoder, OCCT and both Rust
 revisions decode `80 e2 82 ac bf` to `0080 20ac 00bf`. The mixed case
 distinguishes decoding the euro sign from widening each byte. All 5,603
 enabled `tkernel` tests passed, with eight ignored.
+
+## String API visibility (#591)
+
+The string-only tests now run inside the toolkit's library test target.
+This keeps byte/span, locking and ownership coverage for operations that
+have no toolkit consumer. The safe string erasure cases also moved into
+the library target. The raw `LinearVector` constructor test stays in its
+original integration target and source file.
+
+The executable parity table uses exported methods. It keeps generic ASCII
+append and search, and uses `ExtendedString::assign_cat` for the UTF-16
+append case. The previous table records the borrowed append entry
+points and remains a record of those measurements.
+
+| Still exposed | Consumer that needs migration |
+| --- | --- |
+| `AsciiString::as_bytes_with_nul` | The planned `tkv3d` filename snapshot needs the terminated borrow. |
+| `AsciiString::set_value_char` | `tkbool/tests/shape_set_name_bytes/exact.rs` mutates the input after handing off the name. The `tkv3d` filename fixture also uses this operation. |
+| `AsciiString::copy`, `move_from` and `swap` | `tkv3d/tests/textured_shape_file_buffer.rs` still exercises the old allocation observer. Retire these calls when replacing the observer with an owned filename snapshot. |
+| `AsciiString::set_value` | `tkmeshvs/tests/drawer_replay.rs` and `invariants.rs` overwrite a string after a drawer handoff. A same-owner `assign_from` with the expected bytes can keep the isolation check. |
+| `HExtendedString::is_empty` | The `tktobj` object clone and document tests can inspect the value under `string()`. |
+| `ExtendedString::from_real` | The Vulkan viewer relation support can append the `f64` through the public generic `cat` operation, which uses the same conversion. |
+
+The `HAsciiStringHasher` name is no longer reexported. Its type is still
+the associated policy of the public handle key. `HExtendedStringHasher`
+remains exported for `tktobj`'s name index.

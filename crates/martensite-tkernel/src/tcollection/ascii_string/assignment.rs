@@ -10,7 +10,8 @@ impl AsciiString {
 
     /// Models self-assignment without conflicting Rust borrows; `text.assign_self()`.
     /// The copy guard keeps the original buffer and all embedded zero bytes.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }

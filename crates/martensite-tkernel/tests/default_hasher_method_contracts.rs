@@ -1,7 +1,7 @@
 //! Default-key specialization follows the static handle type, not dynamic RTTI.
 use martensite_tkernel::ncollection::{DataMap, DefaultHashPolicy, HashKey, HashPolicy};
 use martensite_tkernel::standard::{Handle, StandardTransient, Transient};
-use martensite_tkernel::tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString};
+use martensite_tkernel::tcollection::{HAsciiString, HExtendedString};
 
 fn assert_content_map<T: martensite_tkernel::standard::RuntimeTyped>(
     first: Handle<T>,
@@ -40,20 +40,6 @@ fn default_extended_handle_keys_compare_contents_and_support_null() {
     );
 }
 
-#[test]
-fn default_string_handle_keys_compare_beyond_embedded_nuls() {
-    let first = Handle::new(HAsciiString::from(AsciiString::from_raw(b"a\0b")));
-    let second = Handle::new(HAsciiString::from(AsciiString::from_raw(b"a\0c")));
-    assert!(first.is_same_state(&second));
-    assert!(!DefaultHashPolicy.equal(&first, &second));
-    let first = Handle::new(HExtendedString::from(ExtendedString::from_raw(&[
-        65, 0, 66,
-    ])));
-    let second = Handle::new(HExtendedString::from(ExtendedString::from_raw(&[
-        65, 0, 67,
-    ])));
-    assert!(!DefaultHashPolicy.equal(&first, &second));
-}
 
 #[test]
 fn statically_upcast_string_handles_keep_native_identity_keys() {

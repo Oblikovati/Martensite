@@ -1,6 +1,6 @@
 //! Constructors, conversions to UTF-8, printing and hashing.
 use super::{class, string, units};
-use martensite_tkernel::{
+use crate::{
     ncollection::HashKey,
     tcollection::{AsciiString, ExtendedString},
 };

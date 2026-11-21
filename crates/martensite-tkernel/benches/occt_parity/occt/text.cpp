@@ -78,7 +78,7 @@ Sample ascii_format_real(long long n)
   return since(start, n, static_cast<int64_t>(sum));
 }
 
-Sample extended_cat_search(long long n)
+Sample extended_generic_cat_search(long long n)
 {
   const long long appends = n / 10;
   const auto start = Clock::now();
@@ -119,11 +119,10 @@ Sample hextended_from_ascii(long long n)
 void parity::text(std::vector<Case>& cases)
 {
   cases.push_back({"ascii_cat_search", ascii_cat_search});
-  cases.push_back({"ascii_borrowed_cat_search", ascii_cat_search});
   cases.push_back({"ascii_binary_search", ascii_binary_search});
   cases.push_back({"ascii_format_integer", ascii_format_integer});
   cases.push_back({"ascii_format_real", ascii_format_real});
-  cases.push_back({"extended_cat_search", extended_cat_search});
+  cases.push_back({"extended_generic_cat_search", extended_generic_cat_search});
   cases.push_back({"hascii_cat_search", hascii_cat_search});
   cases.push_back({"hextended_from_ascii", hextended_from_ascii});
 }

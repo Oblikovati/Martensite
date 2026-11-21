@@ -1,5 +1,5 @@
 //! Pointer overloads and string-view overloads have different NUL semantics.
-use martensite_tkernel::tcollection::AsciiString;
+use crate::tcollection::AsciiString;
 
 #[test]
 fn string_equality_operator_uses_the_native_c_string_prefix() {

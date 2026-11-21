@@ -11,12 +11,12 @@ impl AsciiString {
     }
     /// A concatenated copy. Unlike `assign_cat`, a `u8` operand is
     /// appended even when it is NUL, as appending a byte copies one byte; `text.cat("suffix")`.
-    pub fn cat(&self, input: impl CatOperand) -> Self {
+    pub(crate) fn cat(&self, input: impl CatOperand) -> Self {
         input.cat_onto(self)
     }
     /// Appends a bounded C byte buffer up to its first NUL; `text.assign_cat_c_bytes(Some(b"x\0y"))`.
     /// `None` is a no-op, like a null pointer.
-    pub fn assign_cat_c_bytes(&mut self, bytes: Option<&[u8]>) {
+    pub(crate) fn assign_cat_c_bytes(&mut self, bytes: Option<&[u8]>) {
         let Some(bytes) = bytes else {
             return;
         };
@@ -24,13 +24,14 @@ impl AsciiString {
     }
     /// Copies the string and appends a bounded C buffer; `text.cat_c_bytes(None)`.
     /// Bounding the scan permits safe Rust callers without a raw-pointer lifetime contract.
-    pub fn cat_c_bytes(&self, bytes: Option<&[u8]>) -> Self {
+    #[cfg(test)]
+    pub(crate) fn cat_c_bytes(&self, bytes: Option<&[u8]>) -> Self {
         let mut result = self.clone();
         result.assign_cat_c_bytes(bytes);
         result
     }
     /// Appends exactly one byte, NUL included; `text.cat_char(b'!')`.
-    pub fn cat_char(&self, byte: u8) -> Self {
+    pub(crate) fn cat_char(&self, byte: u8) -> Self {
         Self::joined_with_char(self, byte)
     }
     /// Appends UTF-8, or one byte per
@@ -39,7 +40,8 @@ impl AsciiString {
         self.append(&Self::from_extended(text, replacement));
     }
     /// Example: `text.cat_extended(&wide, Some(b'?'))`.
-    pub fn cat_extended(&self, text: &ExtendedString, replacement: Option<u8>) -> Self {
+    #[cfg(test)]
+    pub(crate) fn cat_extended(&self, text: &ExtendedString, replacement: Option<u8>) -> Self {
         let mut result = self.clone();
         result.assign_cat_extended(text, replacement);
         result
@@ -50,7 +52,8 @@ impl AsciiString {
     }
     /// Appending a span of this same string: appends a copy of
     /// the zero-based `source` span; `text.assign_cat_self(1..text.len())`.
-    pub fn assign_cat_self(&mut self, source: std::ops::Range<usize>) {
+    #[cfg(test)]
+    pub(crate) fn assign_cat_self(&mut self, source: std::ops::Range<usize>) {
         let copy = self.as_bytes()[source].to_vec();
         self.append_bytes(&copy);
     }
@@ -58,7 +61,7 @@ impl AsciiString {
 
 /// An operand of [`AsciiString::cat`] and `&AsciiString + operand`; each impl is one
 /// `Cat` overload. `text.cat(7_u8)` appends byte 7, `text.cat(12)` appends `"12"`.
-pub trait CatOperand {
+pub(crate) trait CatOperand {
     /// Returns `base` followed by this operand; `CatOperand::cat_onto(b'!', &text)`.
     fn cat_onto(self, base: &AsciiString) -> AsciiString;
 }

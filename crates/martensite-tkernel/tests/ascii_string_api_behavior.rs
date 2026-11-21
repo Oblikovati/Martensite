@@ -1,7 +1,7 @@
 //! Behavior of the complete ASCII string, shared ASCII string and
 //! string helper API, including the deliberate quirks.
-use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkernel::tcollection::{
+use crate::standard::{Failure, Handle};
+use crate::tcollection::{
     AsciiString, ExtendedString, HAsciiString, HExtendedString, next_prime_for_map,
 };
 

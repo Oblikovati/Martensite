@@ -1,5 +1,5 @@
 //! Copy-assignment return and chaining behavior of the extended string.
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn copy_assignment_returns_the_receiver() {

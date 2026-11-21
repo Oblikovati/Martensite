@@ -3,8 +3,11 @@
 //! Case and whitespace follow the C locale's `toupper`/`tolower`/`isspace`, which touch
 //! ASCII bytes only; high-bit bytes are never changed or trimmed.
 use super::AsciiString;
+#[cfg(test)]
 use super::raise::negative_width;
-use crate::standard::{Failure, character};
+#[cfg(test)]
+use crate::standard::Failure;
+use crate::standard::character;
 
 impl AsciiString {
     /// Maps ASCII lowercase bytes in place; `text.upper_case()`.
@@ -25,7 +28,8 @@ impl AsciiString {
     }
     /// Replaces every `from` byte by `to`, optionally ignoring ASCII case;
     /// `text.change_all(b'a', b'o', true)`.
-    pub fn change_all(&mut self, from: u8, to: u8, case_sensitive: bool) {
+    #[cfg(test)]
+    pub(crate) fn change_all(&mut self, from: u8, to: u8, case_sensitive: bool) {
         let length = self.len();
         let wanted = fold(from, case_sensitive);
         let bytes = &mut self.terminated;
@@ -36,12 +40,14 @@ impl AsciiString {
         }
     }
     /// Erases every occurrence of `byte`; `text.remove_all(b'e')`.
-    pub fn remove_all(&mut self, byte: u8) {
+    #[cfg(test)]
+    pub(crate) fn remove_all(&mut self, byte: u8) {
         self.remove_all_with_case(byte, true);
     }
     /// Erases every occurrence, optionally ignoring ASCII case;
     /// `text.remove_all_with_case(b'E', false)`.
-    pub fn remove_all_with_case(&mut self, byte: u8, case_sensitive: bool) {
+    #[cfg(test)]
+    pub(crate) fn remove_all_with_case(&mut self, byte: u8, case_sensitive: bool) {
         let wanted = fold(byte, case_sensitive);
         let length = self.len();
         let mut retained = 0;
@@ -75,7 +81,8 @@ impl AsciiString {
         self.set_length(self.len() - trailing);
     }
     /// Pads on the right with `filler` up to `width`; `text.left_justify(8, b'.')?`.
-    pub fn left_justify(&mut self, width: i32, filler: u8) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn left_justify(&mut self, width: i32, filler: u8) -> Result<(), Failure> {
         if width < 0 {
             return Err(negative_width("LeftJustify", width));
         }
@@ -90,7 +97,8 @@ impl AsciiString {
         Ok(())
     }
     /// Pads on the left with `filler` up to `width`; `text.right_justify(8, b' ')?`.
-    pub fn right_justify(&mut self, width: i32, filler: u8) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn right_justify(&mut self, width: i32, filler: u8) -> Result<(), Failure> {
         if width < 0 {
             return Err(negative_width("RightJustify", width));
         }
@@ -105,7 +113,8 @@ impl AsciiString {
     }
     /// Pads both sides up to `width`, the odd filler going left;
     /// `AsciiString::new("ab").center(5, b'*')` gives `"**ab*"`.
-    pub fn center(&mut self, width: i32, filler: u8) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn center(&mut self, width: i32, filler: u8) -> Result<(), Failure> {
         if width < 0 {
             return Err(negative_width("Center", width));
         }
@@ -119,6 +128,7 @@ impl AsciiString {
 }
 
 /// `::UpperCase` when the comparison ignores case, the byte itself otherwise.
+#[cfg(test)]
 fn fold(byte: u8, case_sensitive: bool) -> u8 {
     if case_sensitive {
         byte
