@@ -128,8 +128,8 @@ dependency level, from `cargo metadata`:
 7. `tkgeomalgo`, `tkde`
 8. `tktopalgo`
 9. `tkhlr`, `tkshhealing`, `tkprim`, `tkhelix`
-10. `tkmesh`, `tkbo`, `topology-test-support`, `tkxsbase`, `tksketch`
-11. `geometry-raster`, `tkbool`, `tkcaf`, `tkv3d`, `tkxmesh`
+10. `tkmesh`, `tkbo`, `topology-test-support`, `tkxsbase`
+11. `geometry-raster`, `tksketch`, `tkbool`, `tkcaf`, `tkv3d`, `tkxmesh`
 12. `boolean-cases`, `tkvcaf`, `tkfeat`, `tkfillet`, `tkmeshvs`
 13. `tkxcaf`, `tkoffset`
 14. `tkdeiges`, `tkrwmesh`, `tkdestep`, `tkdestl`
@@ -155,9 +155,52 @@ include `tkbo`, and `tkv3d` uses it in tests.
 5. Report the measured effect to the maintainer: the parity table for `tkernel` steps, and
    for geometry toolkits a release timing of a representative workload when one exists.
 
-The usual PR gate (`cargo xtask pr`) builds every dependent of `tkernel`, so it fails until
-the last crate is migrated. Run targeted checks per step instead, and run the full gate
-before the branch merges into `release/next`.
+### Temporary gate on the feature branch
+
+Bootstrap the feature branch with the workflow, driver, migration order and
+`migration-step` at zero before opening the first crate PR. In each crate PR,
+advance that file by one. Use the event base commit to run the gate locally on Linux.
+
+```sh
+cargo xtask object-model-pr --base <feature-base-sha> --plan
+cargo xtask object-model-pr --base <feature-base-sha>
+```
+
+The hosted job builds the driver from that base and checks the candidate merge
+commit. It refuses changes outside the next crate and its migration records,
+including changes to the driver, workflow and compiler baselines. Review the
+exact base and merge commit and verify the gate files in the PR diff before
+merging. The branch uses the standard pull request event with read-only
+permissions.
+
+For `process-policy`, `test-support`, or `topology-test-support`, a PR can record
+the audit in `<crate-short-name>-verification.md` if the crate needs no source
+changes. Its suite runs at the same point in the migration order.
+
+For a crate with an unmigrated dev dependency, the job runs Clippy and builds
+the library. Once the last required dev dependency migrates, it builds all
+targets and runs that crate's deferred suite. This also makes the crate's
+ThreadSanitizer controls eligible.
+
+| Deferred full suites | First eligible after |
+| --- | --- |
+| `tkhlr`, `tkshhealing` | `tkprim` |
+| `tkbo` | `geometry-raster` |
+| `tkbool` | `boolean-cases` |
+| `tkcaf`, `tkfeat`, `vulkan` | `tkfillet` |
+| `tkdeiges`, `tkdestep` | `tkdestl` |
+
+On source changes, the unsafe ratchet scans all toolkit source. Scoped compiler
+diagnostics go in `target/unsafe-inventory/migration/`. Their group counts must
+stay within the exact base revision's reviewed compiler inventory. A scoped
+capture can emit fewer warnings because the compiler checks fewer targets.
+Have any changes to the reviewed ceilings approved in the base before using
+them in a migration check.
+
+After all crates migrate, remove the temporary gate in a cleanup PR and use
+the normal workspace compiler inventory, package tests, and sanitizer
+selection against `release/next`. Record any compiler inventory removals in
+the reviewed full baseline before the final merge.
 
 ## Risks and open points
 

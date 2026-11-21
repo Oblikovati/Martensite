@@ -19,6 +19,8 @@ pub struct WorkspacePackage {
     pub dir: String,
     /// Names of dependencies that are path dependencies (workspace siblings).
     pub path_dependencies: Vec<String>,
+    /// Path dependencies required for production targets (including build dependencies).
+    pub library_path_dependencies: Vec<String>,
 }
 
 /// All members of the workspace rooted at the repository root.
@@ -49,6 +51,7 @@ struct MetadataPackage {
 struct MetadataDependency {
     name: String,
     path: Option<PathBuf>,
+    kind: Option<String>,
 }
 
 impl CargoWorkspace {
@@ -110,6 +113,12 @@ fn checked_target_directory(directory: PathBuf) -> BuildResult<PathBuf> {
 
 fn member(root: &Path, package: MetadataPackage) -> BuildResult<WorkspacePackage> {
     let dir = package_dir(root, &package.manifest_path)?;
+    let library_path_dependencies = package
+        .dependencies
+        .iter()
+        .filter(|dependency| dependency.path.is_some() && dependency.kind.as_deref() != Some("dev"))
+        .map(|dependency| dependency.name.clone())
+        .collect();
     let path_dependencies = package
         .dependencies
         .into_iter()
@@ -121,6 +130,7 @@ fn member(root: &Path, package: MetadataPackage) -> BuildResult<WorkspacePackage
         version: package.version,
         dir,
         path_dependencies,
+        library_path_dependencies,
     })
 }
 

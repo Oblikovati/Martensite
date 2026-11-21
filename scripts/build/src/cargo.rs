@@ -146,6 +146,21 @@ impl<'a> CargoTasks<'a> {
         self.runner.run(&spec)
     }
 
+    /// Clippy and build a library whose dev dependencies cannot yet compile.
+    pub(crate) fn check_library_targets(
+        &self,
+        selection: &PackageSelection,
+        target: &BuildTarget,
+    ) -> BuildResult<()> {
+        self.runner.run(
+            &self
+                .selected("clippy", selection, target)
+                .args(["--lib", "--", "-D", "warnings"]),
+        )?;
+        self.runner
+            .run(&self.selected("build", selection, target).arg("--lib"))
+    }
+
     /// Debug build of every target kind (lib, bins, tests, examples, benches).
     pub fn build_all_targets(
         &self,

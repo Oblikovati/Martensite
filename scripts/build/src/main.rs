@@ -17,6 +17,7 @@ mod fake_runner;
 mod git;
 mod inventory_impact;
 mod lint;
+mod object_model_pr;
 mod occt_parity;
 mod package_manifest;
 mod plan;

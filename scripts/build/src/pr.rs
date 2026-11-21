@@ -187,7 +187,7 @@ fn run_package_checks(
 }
 
 /// Runs both file linters before failing, so one run shows every problem.
-fn lint_changed_files(
+pub(crate) fn lint_changed_files(
     context: &BuildContext<'_>,
     merge_base: &str,
     changed: &[ChangedFile],
