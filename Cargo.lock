@@ -771,9 +771,11 @@ version = "0.4.5"
 dependencies = [
  "allocator-api2",
  "bytemuck",
+ "itoa",
  "libc",
  "mach2",
  "martensite-cmath",
+ "memchr",
  "nix",
  "rustix",
  "smallvec",

@@ -1,7 +1,7 @@
 //! String storage: ASCII and UTF-16 strings and their shared handles.
 mod ascii_string;
 pub(crate) use ascii_string::c_string_prefix;
-pub use ascii_string::{AsciiString, AsciiStringBufferIdentity, CatOperand};
+pub use ascii_string::{AsciiString, CatOperand};
 mod extended_string;
 pub use extended_string::ExtendedString;
 mod h_ascii_string;

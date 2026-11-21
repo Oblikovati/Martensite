@@ -59,3 +59,15 @@ fn empty_literal_set_short_circuits_before_range_validation() {
     assert_eq!(text.first_location_in_set([], 0, -1).unwrap(), 0);
     assert_eq!(text.first_location_not_in_set([], 0, -1).unwrap(), 0);
 }
+
+#[test]
+fn span_search_keeps_overlapping_matches_and_arbitrary_byte_values() {
+    let text = AsciiString::from_raw(b"\xff\0\xff\0\xff");
+    let overlapping = b"\xff\0\xff";
+    assert_eq!(text.search(overlapping), 1);
+    assert_eq!(text.search_from_end(overlapping), 3);
+    assert_eq!(text.search(b"\0"), 2);
+    assert_eq!(text.search_from_end(b"\0"), 4);
+    assert_eq!(text.search(text.as_bytes()), 1);
+    assert_eq!(text.search_from_end(b"\xff\0\xff\0\xff\0"), -1);
+}

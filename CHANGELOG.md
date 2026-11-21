@@ -76,6 +76,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
+### Changed
+
+- Replaced `AsciiString`'s shared allocation with owned bytes and removed `buffer_identity`. Borrow `as_bytes` or `as_bytes_with_nul` while the string is live, and copy the bytes when they must survive an edit (#588).
+
 ### Fixed
 
 - Shared one intersection context across the workers of parallel Boolean operations instead of building one per worker, and built missing cached services outside the cache lock; the body self-intersection check stays serial because its parallel path raised peak memory across long operations (#496, #580).

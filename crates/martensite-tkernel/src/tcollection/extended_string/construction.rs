@@ -64,7 +64,7 @@ impl ExtendedString {
     }
     /// Formats with C's `%d`; `ExtendedString::from_integer(42)`.
     pub fn from_integer(value: i32) -> Self {
-        Self::widen(value.to_string().as_bytes())
+        Self::widen(itoa::Buffer::new().format(value).as_bytes())
     }
     /// Formats with C's `%g` (six significant digits); `ExtendedString::from_real(3.14)`.
     pub fn from_real(value: f64) -> Self {
@@ -107,11 +107,12 @@ impl ExtendedString {
     }
     /// Widens bytes (zero extension of the unsigned byte).
     pub(super) fn widen(bytes: &[u8]) -> Self {
-        Self::from_raw(
-            &bytes
-                .iter()
-                .map(|&byte| u16::from(byte))
-                .collect::<Vec<_>>(),
-        )
+        if bytes.is_empty() {
+            return Self::default();
+        }
+        let mut terminated = Vec::with_capacity(super::storage::padded_unit_capacity(bytes.len()));
+        terminated.extend(bytes.iter().copied().map(u16::from));
+        terminated.push(0);
+        Self { terminated }
     }
 }

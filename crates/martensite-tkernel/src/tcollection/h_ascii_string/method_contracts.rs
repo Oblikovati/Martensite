@@ -2,7 +2,9 @@
 use super::{AsciiString, HAsciiString};
 use crate::standard::{Failure, exceptions};
 impl HAsciiString {
-    /// Returns the C-string pointer identity; later edits through any handle can invalidate it; `text.to_c_ptr()`.
+    /// Returns the current buffer address for comparison. Moves and edits
+    /// through aliases can invalidate the pointer. Use `text.string()` to borrow
+    /// the bytes under a read guard.
     pub fn to_c_ptr(&self) -> *const u8 {
         self.string().as_bytes_with_nul().as_ptr()
     }
