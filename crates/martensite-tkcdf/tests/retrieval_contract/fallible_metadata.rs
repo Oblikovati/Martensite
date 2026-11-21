@@ -6,7 +6,7 @@ use martensite_tkcdf::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
     tcollection::ExtendedString,
 };
 use std::sync::Arc;
@@ -17,12 +17,10 @@ pub type QueryHook = Arc<
         + Sync,
 >;
 pub struct FallibleRetrievalDriver {
-    transient: StandardTransient,
     legacy: FakeRetrievalMetaDataDriver,
     hook: Option<QueryHook>,
 }
-impl_transient!(FallibleRetrievalDriver, "FallibleRetrievalDriver", StandardTransient,
-    transient, interfaces: [dyn CdfMetaDataDriver]);
+impl_transient!(FallibleRetrievalDriver, "FallibleRetrievalDriver", dyn Transient, interfaces: [dyn CdfMetaDataDriver]);
 
 /// Customize query callbacks; `configured_driver(&app, meta, true, true, false, None)`.
 pub fn configured_driver(
@@ -34,7 +32,6 @@ pub fn configured_driver(
     hook: Option<QueryHook>,
 ) -> Handle<FallibleRetrievalDriver> {
     Handle::new(FallibleRetrievalDriver {
-        transient: StandardTransient::default(),
         legacy: legacy_driver(app, metadata, found, readable, fail_metadata),
         hook,
     })

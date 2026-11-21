@@ -6,7 +6,7 @@ use crate::live;
 use martensite_tkernel::{
     impl_transient_interface,
     message::Messenger,
-    standard::{Failure, Handle, StandardTransient, Transient},
+    standard::{Failure, Handle, Transient},
     storage::Data,
     tcollection::{AsciiString, ExtendedString},
 };
@@ -71,7 +71,7 @@ pub trait PcdmReadWriter: Transient {
         messenger: &Arc<Messenger>,
     ) -> Result<i32, Failure>;
 }
-impl_transient_interface!(dyn PcdmReadWriter, "PCDM_ReadWriter", StandardTransient);
+impl_transient_interface!(dyn PcdmReadWriter, "PCDM_ReadWriter", dyn Transient);
 
 /// The static members of `PCDM_ReadWriter`.
 pub struct PcdmReadWriterBase;

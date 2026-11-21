@@ -2,7 +2,7 @@
 use crate::cdm::CdmDocument;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
 };
 
 /// `CDF_TypeOfActivation`: how a retrieved document is activated, in native order.
@@ -30,10 +30,9 @@ pub enum CdfStoreSetNameStatus {
 /// `CDF_Directory`; `CdfDirectory::new()` is empty.
 #[derive(Default)]
 pub struct CdfDirectory {
-    transient: StandardTransient,
     documents: SharedState<Vec<Handle<dyn CdmDocument>>>,
 }
-impl_transient!(CdfDirectory, "CDF_Directory", StandardTransient, transient);
+impl_transient!(CdfDirectory, "CDF_Directory", dyn Transient);
 
 impl CdfDirectory {
     /// `CDF_Directory()`.

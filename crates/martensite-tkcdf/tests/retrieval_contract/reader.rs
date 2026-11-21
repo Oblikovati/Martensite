@@ -6,7 +6,7 @@ use martensite_tkcdf::{
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     storage::Data,
     tcollection::ExtendedString,
 };
@@ -19,17 +19,14 @@ use std::{
 };
 
 pub struct AvailabilityReader {
-    transient: StandardTransient,
     base: PcdmReaderBase,
     calls: Arc<AtomicUsize>,
 }
-impl_transient!(AvailabilityReader, "AvailabilityReader", dyn PcdmReader,
-    transient, interfaces: [dyn PcdmReader]);
+impl_transient!(AvailabilityReader, "AvailabilityReader", dyn PcdmReader, interfaces: [dyn PcdmReader]);
 impl AvailabilityReader {
     /// A live reader spy; `AvailabilityReader::new(Arc::new(AtomicUsize::new(0)))`.
     pub fn new(calls: Arc<AtomicUsize>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: PcdmReaderBase::default(),
             calls,
         }

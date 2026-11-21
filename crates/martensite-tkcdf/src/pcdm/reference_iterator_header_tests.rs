@@ -102,7 +102,8 @@ fn reentrant_warning_initialization_changes_the_current_member_sequence_before_o
         inner: fixture("binary-2.fsd"),
         entered: AtomicBool::new(false),
     });
-    let messenger = Arc::new(Messenger::with_printer(printer.clone()));
+    let messenger = Arc::new(Messenger::new());
+    *messenger.printers_mut() = vec![printer.clone()];
     let iterator = Handle::new(PcdmReferenceIterator::new(&messenger));
     *printer.target.lock().unwrap() = iterator.downgrade();
     iterator.init(&fixture("binary-0.fsd")).unwrap();

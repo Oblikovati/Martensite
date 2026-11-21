@@ -5,9 +5,7 @@
 use super::{CdmApplication, CdmMetaData, CdmReference};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{
-        Failure, Handle, SharedState, StandardTransient, Transient, WeakHandle, exceptions,
-    },
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, exceptions},
     tcollection::ExtendedString,
 };
 use std::sync::{OnceLock, RwLockReadGuard, RwLockWriteGuard};
@@ -21,16 +19,16 @@ pub type ModifContext<'a> = Option<&'a (dyn std::any::Any + Send + Sync)>;
 ///
 /// ```
 /// use martensite_tkcdf::cdm::{CdmDocument, CdmDocumentBase, CdmDocumentLifecycle};
-/// use martensite_tkernel::{impl_transient, standard::{Handle, StandardTransient}};
+/// use martensite_tkernel::{impl_transient, standard::Handle};
 /// use martensite_tkernel::tcollection::ExtendedString;
 /// #[derive(Default)]
-/// struct Doc { transient: StandardTransient, base: CdmDocumentBase }
-/// impl_transient!(Doc, "Doc", dyn CdmDocument, transient, interfaces: [dyn CdmDocument]);
+/// struct Doc { base: CdmDocumentBase }
+/// impl_transient!(Doc, "Doc", dyn CdmDocument, interfaces: [dyn CdmDocument]);
 /// impl CdmDocument for Doc {
 ///     fn document_base(&self) -> &CdmDocumentBase { &self.base }
 ///     fn storage_format(&self) -> ExtendedString { ExtendedString::new("Fmt") }
 /// }
-/// let doc: Handle<dyn CdmDocument> = Handle::new(Doc::default()).cast();
+/// let doc: Handle<dyn CdmDocument> = Handle::new(Doc::default()).into_upcast();
 /// doc.document_base().bind_self(&doc);
 /// doc.modify();
 /// assert_eq!(doc.modifications(), 2);
@@ -82,7 +80,7 @@ pub trait CdmDocument: Transient {
     /// `CloseReference`: a referenced document is being closed; does nothing by default.
     fn close_reference(&self, _document: &Handle<dyn CdmDocument>, _reference_identifier: i32) {}
 }
-impl_transient_interface!(dyn CdmDocument, "CDM_Document", StandardTransient);
+impl_transient_interface!(dyn CdmDocument, "CDM_Document", dyn Transient);
 
 /// The private fields of `CDM_Document`, in native order.
 pub(crate) struct DocumentState {

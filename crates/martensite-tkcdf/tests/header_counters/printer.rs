@@ -25,9 +25,13 @@ impl Printer for HeaderWarningPrinter {
     }
 }
 pub fn recorder() -> (Arc<Messenger>, Arc<HeaderWarningPrinter>) {
+    let base = PrinterBase::default();
+    base.set_trace_level(Gravity::Trace);
     let printer = Arc::new(HeaderWarningPrinter {
-        base: PrinterBase::new(Gravity::Trace),
+        base,
         messages: Mutex::new(Vec::new()),
     });
-    (Arc::new(Messenger::with_printer(printer.clone())), printer)
+    let messenger = Messenger::new();
+    *messenger.printers_mut() = vec![printer.clone()];
+    (Arc::new(messenger), printer)
 }

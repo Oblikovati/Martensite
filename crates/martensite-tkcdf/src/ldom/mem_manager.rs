@@ -8,7 +8,7 @@ use super::element_ops::compare_hashed;
 use super::store::{DocumentStore, crc_hash};
 use martensite_tkernel::{
     impl_transient,
-    standard::{SharedState, StandardTransient},
+    standard::{SharedState, Transient},
 };
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
@@ -24,18 +24,12 @@ use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 /// ```
 #[derive(Default)]
 pub struct LdomMemManager {
-    transient: StandardTransient,
     /// `myBlockSize`: the native block size in `int` units, kept for the record.
     block_size: i32,
     /// The nodes, the hash table (`myHashTable`) and the root (`myRootElement`).
     store: SharedState<DocumentStore>,
 }
-impl_transient!(
-    LdomMemManager,
-    "LDOM_MemManager",
-    StandardTransient,
-    transient
-);
+impl_transient!(LdomMemManager, "LDOM_MemManager", dyn Transient);
 
 impl LdomMemManager {
     /// `LDOM_MemManager(aBlockSize)`: an empty document storage; the block size in bytes

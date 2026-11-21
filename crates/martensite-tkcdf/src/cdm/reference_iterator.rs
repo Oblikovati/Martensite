@@ -9,15 +9,15 @@ use martensite_tkernel::standard::{Failure, Handle};
 /// ```
 /// use martensite_tkcdf::cdm::{CdmDocument, CdmReferenceIterator};
 /// # use martensite_tkcdf::cdm::CdmDocumentBase;
-/// # use martensite_tkernel::{impl_transient, standard::{Handle, StandardTransient}};
+/// # use martensite_tkernel::{impl_transient, standard::{Handle}};
 /// # use martensite_tkernel::tcollection::ExtendedString;
-/// # #[derive(Default)] struct Doc { transient: StandardTransient, base: CdmDocumentBase }
-/// # impl_transient!(Doc, "Doc", dyn CdmDocument, transient, interfaces: [dyn CdmDocument]);
+/// # #[derive(Default)] struct Doc { base: CdmDocumentBase }
+/// # impl_transient!(Doc, "Doc", dyn CdmDocument, interfaces: [dyn CdmDocument]);
 /// # impl CdmDocument for Doc {
 /// #     fn document_base(&self) -> &CdmDocumentBase { &self.base }
 /// #     fn storage_format(&self) -> ExtendedString { ExtendedString::new("Fmt") }
 /// # }
-/// let doc: Handle<dyn CdmDocument> = Handle::new(Doc::default()).cast();
+/// let doc: Handle<dyn CdmDocument> = Handle::new(Doc::default()).into_upcast();
 /// let iterator = CdmReferenceIterator::new(&doc).unwrap();
 /// assert!(!iterator.more());
 /// ```

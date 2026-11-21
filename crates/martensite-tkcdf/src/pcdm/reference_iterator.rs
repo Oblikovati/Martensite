@@ -7,7 +7,7 @@ use martensite_tkernel::{
     impl_transient,
     message::Messenger,
     osd::{CadPath, File},
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::{AsciiString, ExtendedString},
 };
 use std::sync::Arc;
@@ -25,7 +25,6 @@ struct IteratorState {
 /// Recreates stored references with overridable initialization and cursor callbacks.
 /// Use `PcdmReferenceIterator::new(messenger)` for the default native-header provider.
 pub struct PcdmReferenceIterator {
-    transient: StandardTransient,
     state: SharedState<IteratorState>,
     message_driver: Option<Arc<Messenger>>,
     hooks: Arc<dyn PcdmReferenceIteratorHooks>,
@@ -33,8 +32,7 @@ pub struct PcdmReferenceIterator {
 impl_transient!(
     PcdmReferenceIterator,
     "PCDM_ReferenceIterator",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl PcdmReferenceIterator {
@@ -56,7 +54,6 @@ impl PcdmReferenceIterator {
         hooks: Arc<dyn PcdmReferenceIteratorHooks>,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::default(),
             message_driver: Some(message_driver.clone()),
             hooks,
@@ -66,7 +63,6 @@ impl PcdmReferenceIterator {
     /// Example: `let iterator = PcdmReferenceIterator::with_optional_message_driver(None);`.
     pub fn with_optional_message_driver(message_driver: Option<&Arc<Messenger>>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::default(),
             message_driver: message_driver.cloned(),
             hooks: Arc::new(PcdmDefaultReferenceIteratorHooks),

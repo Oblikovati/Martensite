@@ -4,7 +4,7 @@ use martensite_tkcdf::pcdm::{
     PcdmReaderFilterHooks,
 };
 use martensite_tkernel::{
-    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, Transient},
     tcollection::AsciiString,
 };
 use std::sync::{Arc, Mutex};
@@ -60,7 +60,7 @@ impl PcdmReaderFilterHooks for RecordingFilterHooks {
 }
 
 fn check_predicates(filter: &PcdmReaderFilter) {
-    assert!(!filter.is_passed_type(StandardTransient::static_type()));
+    assert!(!filter.is_passed_type(<dyn Transient>::static_type()));
     assert!(!filter.is_passed_attr(&AsciiString::new("Attribute")));
     assert!(!filter.is_passed_entry(&AsciiString::new("0:7")));
     assert!(!filter.is_sub_passed_entry(&AsciiString::new("0:7")));
@@ -106,7 +106,7 @@ impl PcdmReaderFilterHooks for AttributeOnlyHooks {
 #[test]
 fn default_descriptor_predicate_calls_the_overridden_attribute_predicate() {
     let filter = PcdmReaderFilter::with_hooks(Arc::new(AttributeOnlyHooks));
-    assert!(!filter.is_passed_type(StandardTransient::static_type()));
+    assert!(!filter.is_passed_type(<dyn Transient>::static_type()));
     assert!(filter.is_passed_attr(&AsciiString::new("Other")));
 }
 
