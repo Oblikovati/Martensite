@@ -264,7 +264,7 @@ fn add_element(
             &topo,
             &nodes,
             coords,
-            &triangles,
+            triangles,
             settings.is_reflect,
             &settings.scale,
         )?;
@@ -272,7 +272,7 @@ fn add_element(
             &topo,
             &nodes,
             coords,
-            &edges,
+            edges,
             settings.is_reflect,
             &settings.scale,
         )?;
