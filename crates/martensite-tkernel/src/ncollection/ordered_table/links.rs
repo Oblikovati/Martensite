@@ -1,10 +1,6 @@
 //! Order-list append and unlink over slot indices, kept beside the slot storage.
 use super::OrderedTable;
-use crate::ncollection::slot_chains::SlotLink;
-use std::sync::atomic::{AtomicU64, Ordering};
-
-/// The next entry identity of any ordered map; identities only need uniqueness, not order.
-static NEXT_SERIAL: AtomicU64 = AtomicU64::new(0);
+use crate::ncollection::{node_revision::next_collection_serial, slot_chains::SlotLink};
 
 /// The insertion-order links of one slot and the identity of its entry.
 #[derive(Clone, Copy, Debug)]
@@ -17,7 +13,7 @@ pub(super) struct OrderSlot {
 impl<K, V, H> OrderedTable<K, V, H> {
     /// Appends the slot the storage just appended to the order list, with a fresh identity.
     pub(super) fn append_order(&mut self, slot: usize) {
-        let serial = NEXT_SERIAL.fetch_add(1, Ordering::Relaxed);
+        let serial = next_collection_serial();
         self.order.push(OrderSlot {
             previous: self.last,
             next: None,

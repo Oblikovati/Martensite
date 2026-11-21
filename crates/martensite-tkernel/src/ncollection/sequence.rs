@@ -1,18 +1,21 @@
 //! One-based sequences whose items live in individually allocated, stable nodes.
-use super::{AllocatedBox, BaseAllocator};
+use super::{AllocatedBox, BaseAllocator, node_revision::NodeRevision};
 use crate::standard::Failure;
-use owner::{SequenceNodeOwner, SequenceNodeOwners};
+use owner::SequenceNodeOwner;
 use std::marker::PhantomData;
 use topology::SequenceTopology;
 /// Allocator-owned one-based sequence; `let mut s = Sequence::default(); s.append(1);`.
 pub struct Sequence<T> {
     topology: SequenceTopology,
-    // Clearing observers need a stable registry address even when Sequence itself moves.
-    owners: owner_registry::SequenceOwnerRegistry<T>,
+    clear_nodes: Option<owner_registry::SequenceOwnerRegistry<T>>,
+    items: PhantomData<T>,
+    common_nodes: bool,
 }
+// The sequence owns allocations; moving it never moves an item.
+impl<T> Unpin for Sequence<T> {}
 /// Shared double-ended iterator in index order; `sequence.iter()`.
 pub struct SequenceIter<'a, T> {
-    owners: &'a SequenceNodeOwners<T>,
+    clear_nodes: Option<&'a owner_registry::SequenceOwnerRegistry<T>>,
     front: *mut SeqNode,
     back: *mut SeqNode,
     remaining: usize,
@@ -20,7 +23,7 @@ pub struct SequenceIter<'a, T> {
 }
 /// Exclusive double-ended iterator in index order; `sequence.iter_mut()`.
 pub struct SequenceIterMut<'a, T> {
-    owners: &'a SequenceNodeOwners<T>,
+    clear: Option<Box<iteration::ClearIteratorState<'a, T>>>,
     front: *mut SeqNode,
     back: *mut SeqNode,
     remaining: usize,
@@ -30,17 +33,25 @@ pub struct SequenceIterMut<'a, T> {
 /// and the node before it; `let cursor = sequence.cursor()`.
 ///
 /// Equality compares only the current node.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Default)]
 pub struct SequenceCursor {
-    address: Option<usize>,
-    previous: Option<usize>,
+    raw: BaseSequenceRawIterator,
+    revision: NodeRevision,
 }
+// SAFETY: these pointers are opaque positions. Dereference requires a checked Sequence borrow.
+#[allow(unsafe_code)]
+unsafe impl Send for SequenceCursor {}
+// SAFETY: a shared cursor provides identities only. Item access checks the owning Sequence.
+#[allow(unsafe_code)]
+unsafe impl Sync for SequenceCursor {}
 impl<T> Sequence<T> {
     /// Creates an empty sequence with a chosen allocator; `Sequence::<i32>::with_allocator(arena)`.
     pub fn with_allocator(resource: BaseAllocator) -> Self {
         Self {
             topology: SequenceTopology::new(resource),
-            owners: Default::default(),
+            clear_nodes: None,
+            items: PhantomData,
+            common_nodes: false,
         }
     }
     /// Returns selected allocator identity; `sequence.allocator() == &arena`.
@@ -134,7 +145,10 @@ impl<T> Sequence<T> {
 }
 impl<T> Default for Sequence<T> {
     fn default() -> Self {
-        Self::with_allocator(BaseAllocator::common())
+        let mut sequence = Self::with_allocator(BaseAllocator::common());
+        // Only the constructor-selected resource is known never to invoke custom dispatch.
+        sequence.common_nodes = true;
+        sequence
     }
 }
 impl<T> FromIterator<T> for Sequence<T> {
@@ -200,6 +214,7 @@ pub use retired_node::SequenceNodeRetirement;
 mod controlled_clear;
 pub use controlled_clear::SequenceClearProgress;
 mod copy_assignment;
+#[allow(unsafe_code)]
 mod copy_construction;
 mod cursor_contracts;
 #[allow(unsafe_code)]
@@ -233,7 +248,9 @@ pub use basic_node::{BasicSequenceNode, BasicSequenceNodeMut};
 mod access;
 #[allow(unsafe_code)]
 mod owner;
-// One raw allocation pointer keeps the clear scope's saved registry address valid.
+// The exceptional controlled-clear path keeps the saved registry address valid.
+#[allow(unsafe_code)]
+mod lookup_cache;
 #[allow(unsafe_code)]
 mod owner_registry;
 #[allow(unsafe_code)]

@@ -9,7 +9,7 @@ mod tests;
 
 pub(super) unsafe fn release<T>(
     pointer: *mut T,
-    original: BaseAllocator,
+    original: Option<BaseAllocator>,
     current: impl FnOnce() -> BaseAllocator,
 ) {
     let allocation = NonNull::new(pointer.cast()).expect("owned node is nonnull");
@@ -18,7 +18,12 @@ pub(super) unsafe fn release<T>(
     unsafe {
         release_node_payload(pointer, || {
             let current = current();
-            original.deallocate_using(allocation, layout, &current);
+            if let Some(original) = original {
+                original.deallocate_using(allocation, layout, &current);
+            } else {
+                // Default nodes came directly from the common raw heap policy.
+                crate::standard::raise_native_failure(current.free_raw(allocation));
+            }
         });
     }
 }

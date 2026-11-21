@@ -84,7 +84,7 @@ impl BaseListStorage {
     }
     /// Keeps self-append/prepend a no-op; `storage.splice_self()`.
     pub fn splice_self(&mut self) {}
-    fn reset_links(&mut self) {
+    pub(super) fn reset_links(&mut self) {
         self.first = null_mut();
         self.last = null_mut();
         self.length = 0;

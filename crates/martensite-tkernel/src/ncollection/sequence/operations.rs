@@ -87,8 +87,10 @@ impl<T: Clone> Sequence<T> {
     /// Moves (same allocator) or copies and clears (other allocator) `source` after `offset`.
     fn splice_sequence(&mut self, offset: usize, source: &mut Self) {
         if self.allocator() == source.allocator() {
-            self.owners.reserve(source.owners.len());
-            // Ownership registry order is unrelated to the link order.
+            if !source.is_empty() {
+                self.check_splice_transfer(source);
+            }
+            let transferred = self.transfer_clear_links(source);
             self.topology
                 // SAFETY: both sequences are exclusively borrowed with the same allocator
                 // (checked above), their chains are disjoint and live, and the donor's owners
@@ -97,7 +99,7 @@ impl<T: Clone> Sequence<T> {
                     base.insert_sequence_after(offset, donor)
                 })
                 .expect("checked sequence insertion index");
-            self.owners.extend(source.owners.drain());
+            self.finish_clear_transfer(source, transferred);
             return;
         }
         // Each successful copy is linked before the next copy begins.
@@ -105,6 +107,42 @@ impl<T: Clone> Sequence<T> {
             self.insert_node_with(offset + index, || value.clone());
         }
         source.clear(None);
+    }
+    fn check_splice_transfer(&self, source: &Self) {
+        let result = self
+            .check_clear_transfer("Splice")
+            .and_then(|()| source.check_clear_transfer("Splice"));
+        crate::standard::raise_native_failure(result);
+    }
+    fn transfer_clear_links(&self, source: &Self) -> Vec<*mut super::SeqNode> {
+        let mut links = Vec::new();
+        if self.clear_nodes.is_none() && source.clear_nodes.is_none() {
+            return links;
+        }
+        let mut link = source.topology.endpoints().0;
+        while !link.is_null() && links.len() < source.len() {
+            link = source.topology.resolve_transfer_link(link);
+            links.push(link);
+            // SAFETY: checked above if the source's chain can retain retired links.
+            link = unsafe { (*link).next() };
+        }
+        if !link.is_null() || links.len() != source.len() {
+            let error = crate::standard::exceptions::program_error(
+                "sequence splice encountered stale source topology during clear; expected every source node to remain live",
+            );
+            return crate::standard::raise_native_failure(Err(error));
+        }
+        links
+    }
+    fn finish_clear_transfer(&mut self, source: &mut Self, transferred: Vec<*mut super::SeqNode>) {
+        for link in transferred {
+            if let Some(nodes) = &mut source.clear_nodes {
+                nodes.release_link(link);
+            }
+            if let Some(nodes) = &mut self.clear_nodes {
+                nodes.register(link);
+            }
+        }
     }
 }
 impl<T: Clone> Clone for Sequence<T> {

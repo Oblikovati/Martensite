@@ -6,6 +6,7 @@ impl BaseSequence {
     /// Links one node at the tail; `unsafe { base.append_node(node) }`.
     /// # Safety
     /// Node must be nonnull, exclusively owned and initially detached; existing links must be valid.
+    #[inline]
     pub unsafe fn append_node(&mut self, node: *mut SeqNode) {
         if self.size == 0 {
             self.first = node;
