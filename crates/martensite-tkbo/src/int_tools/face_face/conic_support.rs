@@ -16,26 +16,30 @@ use martensite_tkgeomalgo::{
 use martensite_tkmath::gp::{Point2, Point3};
 use std::rc::Rc;
 pub(super) fn geometry(line: &Handle<dyn IntPatchLine>) -> Result<Handle<dyn GeomCurve>, Failure> {
-    let conic = line.cast::<IntPatchGLine>();
+    let conic = line.downcast::<IntPatchGLine>();
     Ok(match line.arc_type() {
-        IntPatchIType::Lin => Handle::new(GeomLine::from_lin(conic.line()?)).cast(),
-        IntPatchIType::Circle => Handle::new(GeomCircle::from_circ(conic.circle()?)).cast(),
-        IntPatchIType::Ellipse => Handle::new(GeomEllipse::from_elips(conic.ellipse()?)).cast(),
-        IntPatchIType::Parabola => Handle::new(GeomParabola::from_parab(conic.parabola()?)).cast(),
-        _ => Handle::new(GeomHyperbola::from_hypr(conic.hyperbola()?)).cast(),
+        IntPatchIType::Lin => Handle::new(GeomLine::from_lin(conic.line()?)).into_upcast(),
+        IntPatchIType::Circle => Handle::new(GeomCircle::from_circ(conic.circle()?)).into_upcast(),
+        IntPatchIType::Ellipse => {
+            Handle::new(GeomEllipse::from_elips(conic.ellipse()?)).into_upcast()
+        }
+        IntPatchIType::Parabola => {
+            Handle::new(GeomParabola::from_parab(conic.parabola()?)).into_upcast()
+        }
+        _ => Handle::new(GeomHyperbola::from_hypr(conic.hyperbola()?)).into_upcast(),
     })
 }
 pub(super) fn trimmed(
     curve: &Handle<dyn GeomCurve>,
     (first, last): (f64, f64),
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
-    Ok(Handle::new(GeomTrimmedCurve::new(curve, first, last, true, true)?).cast())
+    Ok(Handle::new(GeomTrimmedCurve::new(curve, first, last, true, true)?).into_upcast())
 }
 pub(super) fn trimmed_pcurve(
     curve: &Handle<dyn Geom2dCurve>,
     (first, last): (f64, f64),
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).into_upcast())
 }
 pub(super) fn empty_descriptor(geometry: &Handle<dyn GeomCurve>) -> Curve {
     Curve::new(geometry, &Handle::default(), &Handle::default(), 0., 0.)

@@ -288,7 +288,7 @@ fn mutate_caller_curve(shape: &martensite_tkbrep::topods::Shape) {
     use martensite_tkg3d::geom::GeomBezierCurve;
     let (curve, _, _) = BRepTool::curve(&edge(shape).unwrap()).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, martensite_tkmath::gp::Point3::new(9., 0., 0.))
         .unwrap();
 }

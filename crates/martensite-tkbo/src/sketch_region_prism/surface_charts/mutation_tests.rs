@@ -14,7 +14,7 @@ use martensite_tkmath::gp::{Direction3, Plane3, Point3};
 fn side_surface(receipt: &PrismReceipt) -> Handle<GeomSurfaceOfLinearExtrusion> {
     let face = live_face(receipt, PrismImageRole::Generated);
     let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
-    surface.cast()
+    surface.downcast()
 }
 fn live_side_trim(receipt: &PrismReceipt, role: PrismTrimRole) -> Edge {
     let chart = entry_by_role(receipt, PrismImageRole::Generated)
@@ -40,7 +40,7 @@ fn edited_side_interior_preserves_endpoints_but_invalidates_the_actual_chart() {
     let mut receipt = cubic_receipt([1., 1.], &mut progress(None, None));
     let actual = side_surface(&receipt)
         .basis_curve()
-        .cast::<GeomBezierCurve>();
+        .downcast::<GeomBezierCurve>();
     let retained = take_inspection(&mut receipt);
     actual.set_pole(2, Point3::new(5., 0., 0.)).unwrap();
     fresh_inspection(&mut receipt);
@@ -106,7 +106,7 @@ fn shared_copied_source_and_cap_edit_is_rejected_against_pre_sweep_snapshot() {
         Direction3::new(0., 0., 1.).unwrap(),
     )
     .unwrap();
-    surface.cast::<GeomPlane>().set_pln(plane);
+    surface.downcast::<GeomPlane>().set_pln(plane);
     assert_shared_support_changed(&receipt);
     fresh_inspection(&mut receipt);
     assert_identity_mismatch(&receipt, PrismImageRole::Last, PrismChartStage::CapSupportU);
@@ -145,7 +145,7 @@ fn changed_copied_source_cannot_reuse_a_previous_actual_surface_proof() {
     let raw = BRepTool::curve_with_location(&edge(&edges[0]).unwrap()).unwrap();
     let retained = take_inspection(&mut receipt);
     raw.curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, Point3::new(6., 0., 0.))
         .unwrap();
     fresh_inspection(&mut receipt);
@@ -205,12 +205,12 @@ fn assert_trim_edit_ownership(receipt: &PrismReceipt, retained: &PrismSurfaceIns
 fn assert_distinct_basis_and_trim(receipt: &PrismReceipt) {
     let basis = side_surface(receipt)
         .basis_curve()
-        .cast::<GeomBezierCurve>();
+        .downcast::<GeomBezierCurve>();
     assert_eq!(basis.pole(2).unwrap(), Point3::new(4., 0., 0.));
     let actual = live_side_trim(receipt, PrismTrimRole::First);
     let raw = BRepTool::curve_with_location(&actual).unwrap();
     assert_eq!(
-        raw.curve.cast::<GeomBezierCurve>().pole(2).unwrap(),
+        raw.curve.downcast::<GeomBezierCurve>().pole(2).unwrap(),
         Point3::new(6., 0., 0.)
     );
 }

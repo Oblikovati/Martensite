@@ -49,9 +49,9 @@ impl FaceFace {
                 self.closed_conics(line, domains, &mut tolpc)?;
                 false
             }
-            IntPatchIType::Walking => self.walking_curves(&line.cast(), retry)?,
+            IntPatchIType::Walking => self.walking_curves(&line.downcast(), retry)?,
             IntPatchIType::Restriction => {
-                self.restriction_curves(&line.cast(), tolerance)?;
+                self.restriction_curves(&line.downcast(), tolerance)?;
                 false
             }
             _ => false,
@@ -59,7 +59,7 @@ impl FaceFace {
     }
     fn construct_parts(&mut self, line: &Handle<dyn IntPatchLine>) -> Result<bool, Failure> {
         if line.arc_type() == IntPatchIType::Walking {
-            let walking = line.cast::<IntPatchWLine>();
+            let walking = line.downcast::<IntPatchWLine>();
             if walking.is_null() {
                 return Ok(false);
             }

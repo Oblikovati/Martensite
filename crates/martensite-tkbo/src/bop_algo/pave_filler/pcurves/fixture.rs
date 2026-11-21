@@ -180,7 +180,7 @@ fn prepare_periodic_curve(case: &PCurveCase) {
         Point2::new(4. * std::f64::consts::TAU, -1.),
         Direction2::new(0., 1.).unwrap(),
     ))
-    .cast();
+    .into_upcast();
     let builder = BRepBuilder::default();
     builder
         .update_edge_pcurve_on_face(&case.edges[0], &curve, &case.faces[0], 1e-7)

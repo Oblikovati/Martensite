@@ -105,7 +105,7 @@ impl Decomposition<'_> {
         }
         let line = Handle::new(IntPatchWLine::new_undecided(points, false));
         line.set_creating_way_info(self.line.get_creating_way());
-        output.push(line.into_cast());
+        output.push(line.into_upcast());
     }
 }
 fn ends_line(groups: &[WalkingGroup], index: usize) -> bool {

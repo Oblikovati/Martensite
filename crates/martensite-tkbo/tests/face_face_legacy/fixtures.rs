@@ -1,6 +1,6 @@
 fn cylinder(center: Point3, axis: Direction3, radius: f64, v: (f64, f64), u: (f64, f64)) -> Face {
     let frame = Axis2::new(center, axis).unwrap().axis3();
-    let surface = Handle::new(GeomCylindricalSurface::new(frame, radius).unwrap()).into_cast();
+    let surface = Handle::new(GeomCylindricalSurface::new(frame, radius).unwrap()).into_upcast();
     BRepBuilderAPIMakeFace::from_surface_bounds(&surface, (u.0, u.1, v.0, v.1), 1e-7)
         .unwrap()
         .face()
@@ -8,7 +8,7 @@ fn cylinder(center: Point3, axis: Direction3, radius: f64, v: (f64, f64), u: (f6
 }
 fn circular_plane(radius: f64) -> Face {
     let frame = Axis2::new(Point3::default(), Direction3::Y).unwrap();
-    let plane = Handle::new(GeomPlane::new(frame.axis3())).into_cast();
+    let plane = Handle::new(GeomPlane::new(frame.axis3())).into_upcast();
     let circle = Circle3::new(frame, radius).unwrap();
     let edge = BRepBuilderAPIMakeEdge::from_circ(circle)
         .unwrap()
@@ -41,7 +41,7 @@ fn bare_face(surface: Handle<dyn GeomSurface>) -> Face {
 }
 fn bounded_cylinder(frame: Axis3, vmax: f64) -> Face {
     let surface =
-        Handle::new(GeomCylindricalSurface::new(frame, 408.974517822893).unwrap()).into_cast();
+        Handle::new(GeomCylindricalSurface::new(frame, 408.974517822893).unwrap()).into_upcast();
     let maker = BRepBuilderAPIMakeFace::from_surface_bounds(
         &surface,
         (0., 0.0225015452057227, -146.010003766057, vmax),

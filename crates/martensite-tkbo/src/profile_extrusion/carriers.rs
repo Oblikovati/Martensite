@@ -82,5 +82,5 @@ pub(crate) fn spline(
             GeomBSplineCurve::with_weights(&poles, &weights, &knots, &mults, degree, false)?
         }
     };
-    Ok(Handle::new(curve).cast())
+    Ok(Handle::new(curve).into_upcast())
 }

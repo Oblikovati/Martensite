@@ -2,7 +2,7 @@
 #[path = "support/classification_faces.rs"]
 mod faces;
 use martensite_tkbo::int_tools::{Context, Curve};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
 use martensite_tkg3d::{
     geom::{GeomCurve, GeomLine},
@@ -16,8 +16,8 @@ fn displaced_curve() -> (Curve, Handle<dyn Geom2dCurve>) {
         Point3::new(0., 0., 10.),
         Direction3::new(1., 0., 0.).unwrap(),
     )))
-    .into_cast();
-    let pc: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::default())).into_cast();
+    .into_upcast();
+    let pc: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::default())).into_upcast();
     let mut curve = Curve::default();
     curve.set_curve(&line);
     (curve, pc)
@@ -78,7 +78,7 @@ fn bounding_boxes_keep_first_cached_configuration() {
 #[test]
 fn hatcher_settings_and_native_transient_identity() {
     let c = Handle::new(Context::default());
-    assert!(!c.cast::<StandardTransient>().is_null());
+    assert!(!c.upcast::<dyn Transient>().is_null());
     let service = c.hatcher(&faces::face(0, 2.).unwrap()).unwrap();
     let h = service.read();
     assert_eq!(h.confusion2d(), 1e-8);

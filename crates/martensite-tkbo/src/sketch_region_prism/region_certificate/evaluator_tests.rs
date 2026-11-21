@@ -16,13 +16,14 @@ pub(super) fn redirect_space(shape: &Shape) {
         Point3::new(9., 0., 0.),
         Direction3::new(0., 1., 0.).unwrap(),
     ))
-    .cast();
-    let descriptor = Handle::new(martensite_tkg3d::geom_eval::RepCurveDescFull::new(line)).cast();
-    raw.cast::<GeomBezierCurve>()
+    .into_upcast();
+    let descriptor =
+        Handle::new(martensite_tkg3d::geom_eval::RepCurveDescFull::new(line)).into_upcast();
+    raw.downcast::<GeomBezierCurve>()
         .set_eval_representation(descriptor)
         .unwrap();
     assert_eq!(
-        raw.cast::<GeomBezierCurve>().pole(2).unwrap(),
+        raw.downcast::<GeomBezierCurve>().pole(2).unwrap(),
         Point3::new(4., 0., 0.)
     );
     assert_eq!(raw.value(0.).unwrap(), Point3::new(9., 0., 0.));
@@ -33,14 +34,15 @@ pub(super) fn redirect_pcurve(shape: &Shape, face: &martensite_tkbrep::topods::F
         Point2::new(9., 0.),
         Direction2::new(0., 1.).unwrap(),
     ))
-    .cast();
-    let descriptor = Handle::new(martensite_tkg2d::geom2d_eval::RepCurveDescFull::new(line)).cast();
+    .into_upcast();
+    let descriptor =
+        Handle::new(martensite_tkg2d::geom2d_eval::RepCurveDescFull::new(line)).into_upcast();
     raw.pcurve
-        .cast::<Geom2dBezierCurve>()
+        .downcast::<Geom2dBezierCurve>()
         .set_eval_representation(descriptor)
         .unwrap();
     assert_eq!(
-        raw.pcurve.cast::<Geom2dBezierCurve>().pole(2).unwrap(),
+        raw.pcurve.downcast::<Geom2dBezierCurve>().pole(2).unwrap(),
         Point2::new(4., 0.)
     );
     assert_eq!(raw.pcurve.value(0.).unwrap(), Point2::new(9., 0.));

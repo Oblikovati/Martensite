@@ -254,8 +254,9 @@ fn pcurve_seam_edge() -> Shape {
         Point2::default(),
         Direction2::X,
     )))
-    .cast();
-    let surface = Handle::new(GeomCylindricalSurface::new(Axis3::default(), 1.0).unwrap()).cast();
+    .into_upcast();
+    let surface =
+        Handle::new(GeomCylindricalSurface::new(Axis3::default(), 1.0).unwrap()).into_upcast();
     martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge::from_pcurve_vertices_params(
         &pcurve, &surface, &vertex, &vertex, 0.0, TAU,
     )

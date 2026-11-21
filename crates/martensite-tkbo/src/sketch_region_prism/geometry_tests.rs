@@ -22,7 +22,7 @@ pub(super) fn mixed_boundary() -> Vec<Shape> {
         Point3::new(4., 3., 0.),
     ];
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomBezierCurve::new(&Array1::from_shared(&points, 1)).unwrap()).cast();
+        Handle::new(GeomBezierCurve::new(&Array1::from_shared(&points, 1)).unwrap()).into_upcast();
     let curved = BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

@@ -134,7 +134,7 @@ fn change_source_pole(source: &Shape) {
     martensite_tkbrep::brep::BRepTool::curve_with_location(&edge)
         .unwrap()
         .curve
-        .cast::<martensite_tkg3d::geom::GeomBezierCurve>()
+        .downcast::<martensite_tkg3d::geom::GeomBezierCurve>()
         .set_pole(2, martensite_tkmath::gp::Point3::new(6., 0., 0.))
         .unwrap();
 }

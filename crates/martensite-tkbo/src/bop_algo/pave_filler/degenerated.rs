@@ -179,7 +179,7 @@ impl BOPAlgoPaveFiller {
             if other.pcurve.is_null() {
                 continue;
             }
-            let other_adaptor = if other.pcurve.cast::<Geom2dLine>().is_some() {
+            let other_adaptor = if other.pcurve.downcast::<Geom2dLine>().is_some() {
                 Geom2dAdaptorCurve::with_curve(&other.pcurve)?
             } else {
                 Geom2dAdaptorCurve::with_range(&other.pcurve, other.first, other.last)?

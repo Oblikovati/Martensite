@@ -66,7 +66,7 @@ fn surface_periods(
             v: if v { bounds.3 - bounds.2 } else { 0. },
         }));
     }
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = surface.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = surface.downcast();
     let Some(trimmed) = trimmed.get() else {
         return Ok(None);
     };

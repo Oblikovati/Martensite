@@ -19,9 +19,11 @@ fn native_periodic_adjustment_matches_with_and_without_context() {
 }
 fn fixture_face(kind: usize) -> Face {
     let surface: Handle<dyn GeomSurface> = match kind {
-        0 => Handle::new(GeomPlane::new(Axis3::default())).cast(),
-        1 | 3 => Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.).unwrap()).cast(),
-        _ => Handle::new(GeomToroidalSurface::new(Axis3::default(), 5., 2.).unwrap()).cast(),
+        0 => Handle::new(GeomPlane::new(Axis3::default())).into_upcast(),
+        1 | 3 => {
+            Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.).unwrap()).into_upcast()
+        }
+        _ => Handle::new(GeomToroidalSurface::new(Axis3::default(), 5., 2.).unwrap()).into_upcast(),
     };
     let umax = if kind >= 3 { 4. * PI } else { 2. };
     let vmin = if kind == 4 { 0. } else { -1. };
@@ -42,7 +44,7 @@ fn replay(fields: &[&str], face: &Face, context: &Context) {
         Point2::new(point.x() - 0.5, point.y()),
         Direction2::new(1., 0.).unwrap(),
     )))
-    .cast();
+    .into_upcast();
     let surface = BRepAdaptorSurface::with_face(face, true).unwrap();
     let direct = algo_tools2d::adjust_pcurve_on_surface(&surface, 0., 1., &curve).unwrap();
     compare(fields, &curve, &direct);

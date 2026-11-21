@@ -166,7 +166,7 @@ fn checker_nurbs_box() -> Shape {
 }
 fn checker_torus(major: f64) -> Shape {
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomToroidalSurface::new(Axis3::default(), major, 3.).unwrap()).into_cast();
+        Handle::new(GeomToroidalSurface::new(Axis3::default(), major, 3.).unwrap()).into_upcast();
     BRepBuilderAPIMakeFace::from_surface(&surface, precision::confusion())
         .unwrap()
         .face()

@@ -42,7 +42,7 @@ fn hole_fixture(kind: usize, mode: usize) -> (martensite_tkbrep::topods::Face, W
 fn circle_wire() -> Wire {
     let curve: Handle<dyn GeomCurve> =
         Handle::new(super::super::GeomCircle::new(super::super::Axis2::default(), 1.).unwrap())
-            .cast();
+            .into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve_params(&curve, 0., 2. * std::f64::consts::PI)
         .unwrap()
         .edge()

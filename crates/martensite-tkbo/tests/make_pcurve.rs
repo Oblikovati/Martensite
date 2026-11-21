@@ -42,7 +42,7 @@ type ProjectionGeometry = (
 fn geometry(kind: usize) -> ProjectionGeometry {
     match kind {
         0 => (
-            Handle::new(GeomPlane::new(Axis3::default())).cast(),
+            Handle::new(GeomPlane::new(Axis3::default())).into_upcast(),
             line(
                 Point3::new(-1., 0.5, 0.),
                 Direction3::new(1., 0., 0.).unwrap(),
@@ -51,7 +51,7 @@ fn geometry(kind: usize) -> ProjectionGeometry {
             (-2., 2., -2., 2.),
         ),
         1 => (
-            Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.).unwrap()).cast(),
+            Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.).unwrap()).into_upcast(),
             line(
                 Point3::new(2., 0., -1.),
                 Direction3::new(0., 0., 1.).unwrap(),
@@ -60,8 +60,8 @@ fn geometry(kind: usize) -> ProjectionGeometry {
             (0., 2. * PI, -2., 2.),
         ),
         2 => (
-            Handle::new(GeomToroidalSurface::new(Axis3::default(), 5., 2.).unwrap()).cast(),
-            Handle::new(GeomCircle::new(Axis2::default(), 7.).unwrap()).cast(),
+            Handle::new(GeomToroidalSurface::new(Axis3::default(), 5., 2.).unwrap()).into_upcast(),
+            Handle::new(GeomCircle::new(Axis2::default(), 7.).unwrap()).into_upcast(),
             (-0.5, 7.),
             (0., 2. * PI, 0., 2. * PI),
         ),
@@ -70,7 +70,7 @@ fn geometry(kind: usize) -> ProjectionGeometry {
     }
 }
 fn line(point: Point3, direction: Direction3) -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::new(Axis1::new(point, direction))).cast()
+    Handle::new(GeomLine::new(Axis1::new(point, direction))).into_upcast()
 }
 fn replay(fields: &[&str], fixture: &ProjectionFixture, context: &Context) {
     assert_eq!(
@@ -96,7 +96,7 @@ fn replay(fields: &[&str], fixture: &ProjectionFixture, context: &Context) {
             )
             .unwrap(),
         )
-        .cast();
+        .into_upcast();
         algo_tools2d::make_pcurve_full_curve(
             &fixture.face,
             &trimmed,
@@ -147,7 +147,7 @@ fn revolution_geometry() -> ProjectionGeometry {
         )
         .unwrap(),
     )
-    .cast();
+    .into_upcast();
     (surface, curve, (-1., 3.), (0., 2. * PI, -2., 2.))
 }
 fn bezier_geometry() -> ProjectionGeometry {
@@ -158,7 +158,7 @@ fn bezier_geometry() -> ProjectionGeometry {
                 Point3::new(f64::from(u - 1), f64::from(v - 1), 0.);
         }
     }
-    let surface = Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast();
+    let surface = Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast();
     (
         surface,
         line(

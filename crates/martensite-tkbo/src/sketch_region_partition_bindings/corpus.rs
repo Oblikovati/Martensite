@@ -45,7 +45,7 @@ pub(super) fn circle_source() -> Shape {
     use martensite_tkmath::gp::Axis2;
     use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::new(Axis2::default(), 1.).unwrap()).cast();
+        Handle::new(GeomCircle::new(Axis2::default(), 1.).unwrap()).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

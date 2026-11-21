@@ -183,7 +183,7 @@ fn rational_fixture_curve()
     ];
     let weights = Array1::from_shared(&[1., 2., 2., 1.], 1);
     Handle::new(GeomBezierCurve::with_weights(&Array1::from_shared(&points, 1), &weights).unwrap())
-        .cast()
+        .into_upcast()
 }
 
 #[test]

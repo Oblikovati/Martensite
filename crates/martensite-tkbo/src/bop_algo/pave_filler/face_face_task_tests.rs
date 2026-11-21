@@ -69,7 +69,7 @@ fn near_plane_faces() -> [Face; 2] {
 
 fn bounded_plane(origin: Point3, normal: Direction3, x_direction: Direction3) -> Face {
     let frame = Axis3::new(origin, normal, x_direction).unwrap();
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).cast();
+    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).into_upcast();
     BRepBuilderAPIMakeFace::from_surface_bounds(&surface, (-2., 2., -2., 2.), 1e-7)
         .unwrap()
         .face()

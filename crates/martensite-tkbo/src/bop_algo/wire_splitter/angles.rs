@@ -341,7 +341,7 @@ fn refine_angle_2d(
                 martensite_cmath::sin(ray_angle),
             )?,
         ))
-        .cast();
+        .into_upcast();
         let ray = Geom2dAdaptorCurve::with_curve(&ray)?;
         intersector.perform(&curve, &domain, &ray, &Domain::new(), TOLERANCE, TOLERANCE)?;
         if !intersector.is_done() {

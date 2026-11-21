@@ -37,12 +37,12 @@ fn curve_box_blocks_vertices_and_tolerances_preserve_native_mutations() {
         Point3::new(1.0, 2.0, 3.0),
         Direction3::X,
     )))
-    .into_cast();
+    .into_upcast();
     let first_2d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::new(
         Point2::default(),
         Direction2::X,
     )))
-    .into_cast();
+    .into_upcast();
     let second_2d = first_2d.clone();
     let mut curve = Curve::new(&spatial, &first_2d, &second_2d, 1.25e-7, 2.5e-6);
     curve.set_tangential_tolerance(4.5e-5);

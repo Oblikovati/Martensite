@@ -50,7 +50,7 @@ fn inconsistent_geometry_retains_edge_face_and_all_known_source_parents() {
 fn displaced_pcurve() -> Handle<dyn Geom2dCurve> {
     let origin = Point2::new(100.0, 100.0);
     let direction = Direction2::new(1.0, 0.0).unwrap();
-    Handle::new(Geom2dLine::from_point(origin, direction)).cast()
+    Handle::new(Geom2dLine::from_point(origin, direction)).into_upcast()
 }
 
 fn check_edge_attribution(report: &super::outcome::OrderedCoverage, edge: &Shape) {

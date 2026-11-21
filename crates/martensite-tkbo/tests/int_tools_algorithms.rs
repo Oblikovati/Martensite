@@ -12,7 +12,7 @@ use martensite_tkg3d::{
 use martensite_tkmath::gp::{Axis2, Direction3, Point3};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 fn line() -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::from_point(Point3::default(), Direction3::X)).into_cast()
+    Handle::new(GeomLine::from_point(Point3::default(), Direction3::X)).into_upcast()
 }
 fn edge(curve: &Handle<dyn GeomCurve>) -> Result<Edge, Failure> {
     BRepBuilderAPIMakeEdge::from_curve_params(curve, 0., 1.)?.edge()
@@ -82,7 +82,7 @@ fn line_radius_leaves_the_output_untouched_while_circle_writes_it() -> Result<()
     assert_eq!(IntTools::get_radius(&linear, 0., 1., &mut radius)?, 1);
     assert_eq!(radius, 17.);
     let circle: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::new(Axis2::default(), 3.)?).into_cast();
+        Handle::new(GeomCircle::new(Axis2::default(), 3.)?).into_upcast();
     let circular = BRepAdaptorCurve::with_edge(&edge(&circle)?)?;
     assert_eq!(IntTools::get_radius(&circular, 0., 0., &mut radius)?, 0);
     assert_eq!(radius, 3.);
@@ -96,7 +96,8 @@ fn spline_offset_radius_failure_keeps_the_native_sentinel() -> Result<(), Failur
 }
 
 fn assert_spline_offset_radius_failure(basis: Handle<dyn GeomCurve>) -> Result<(), Failure> {
-    let offset = Handle::new(GeomOffsetCurve::new(&basis, 0.5, Direction3::Z, false)?).into_cast();
+    let offset =
+        Handle::new(GeomOffsetCurve::new(&basis, 0.5, Direction3::Z, false)?).into_upcast();
     let adaptor = BRepAdaptorCurve::with_edge(&edge(&offset)?)?;
     let mut radius = 17.0;
     assert_eq!(IntTools::get_radius(&adaptor, 0.0, 0.0, &mut radius)?, -1);
@@ -117,7 +118,7 @@ fn spline_basis() -> Result<Handle<dyn GeomCurve>, Failure> {
         2,
         false,
     )?)
-    .into_cast())
+    .into_upcast())
 }
 
 fn bezier_basis() -> Result<Handle<dyn GeomCurve>, Failure> {
@@ -127,7 +128,7 @@ fn bezier_basis() -> Result<Handle<dyn GeomCurve>, Failure> {
         Point3::new(-1.0, 2.0, 0.0),
         Point3::default(),
     ];
-    Ok(Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1))?).into_cast())
+    Ok(Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1))?).into_upcast())
 }
 
 #[test]
@@ -140,7 +141,7 @@ fn unsupported_offset_parameter_keeps_the_previous_parameter() -> Result<(), Fai
     );
     assert_eq!(parameter, 3.);
     let offset: Handle<dyn GeomCurve> =
-        Handle::new(GeomOffsetCurve::new(&curve, 0.5, Direction3::Z, false)?).into_cast();
+        Handle::new(GeomOffsetCurve::new(&curve, 0.5, Direction3::Z, false)?).into_upcast();
     assert_eq!(
         IntTools::parameter(Point3::default(), &offset, &mut parameter)?,
         1

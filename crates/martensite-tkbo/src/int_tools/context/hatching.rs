@@ -35,7 +35,7 @@ fn add_edge(hatcher: &mut Hatcher, edge: &Edge, face: &Face) -> Result<(), Failu
         true,
         true,
     )?)
-    .cast();
+    .into_upcast();
     hatcher.add_element(Geom2dAdaptorCurve::with_curve(&curve)?, edge.orientation());
     Ok(())
 }
