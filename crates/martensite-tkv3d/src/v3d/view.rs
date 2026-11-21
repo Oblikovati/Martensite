@@ -25,6 +25,8 @@ use martensite_tkservice::graphic3d::{
     Graphic3dCamera, Graphic3dGroup, Graphic3dStructureSource, Graphic3dVertex,
 };
 
+use std::sync::Arc;
+
 /// The mutable fields of a view.
 #[derive(Clone)]
 pub(crate) struct V3dViewState {
@@ -37,7 +39,8 @@ pub(crate) struct V3dViewState {
     pub(crate) immediate_update: bool,
     pub(crate) is_invalidated_immediate: bool,
     pub(crate) viewer: WeakHandle<V3dViewer>,
-    pub(crate) subviews: martensite_tkernel::ncollection::Sequence<Handle<dyn V3dViewSource>>,
+    // A callback or state snapshot can retain the original sequence entry across a rebind.
+    pub(crate) subviews: martensite_tkernel::ncollection::Sequence<Arc<Handle<dyn V3dViewSource>>>,
     pub(crate) parent_view: WeakHandle<dyn V3dViewSource>,
     pub(crate) active_lights:
         martensite_tkernel::ncollection::AllocatorList<Handle<dyn Graphic3dCLightSource>>,
@@ -368,7 +371,7 @@ impl V3dView {
         let subviews = std::mem::take(&mut self.state.write().subviews);
         subviews
             .iter()
-            .filter_map(Handle::get)
+            .filter_map(|slot| slot.get())
             .for_each(|view| view.remove());
         if let Some(viewer) = state.viewer.upgrade().get() {
             viewer.del_view(self.this.read().object_address());
@@ -399,7 +402,7 @@ impl Drop for V3dView {
         if let Some(parent) = state.parent_view.upgrade().get() {
             parent.remove_subview(self);
         }
-        for subview in state.subviews.iter().filter_map(Handle::get) {
+        for subview in state.subviews.iter().filter_map(|slot| slot.get()) {
             {
                 let mut sub_state = subview.state.write();
                 (sub_state.parent_view, sub_state.window) =

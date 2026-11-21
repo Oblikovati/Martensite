@@ -38,7 +38,10 @@ fn apply_subview_mutation(commands: &SubviewMutationCommands) {
             parent.remove_subview(removed.view_base());
             parent.add_subview(&commands.appended.upgrade());
         }
-        2 => *parent.state.write().subviews.first_mut().unwrap() = removed.clone(),
+        2 => {
+            *parent.state.write().subviews.first_mut().unwrap() =
+                std::sync::Arc::new(removed.clone())
+        }
         _ => unreachable!(),
     }
 }

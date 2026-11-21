@@ -31,9 +31,9 @@ impl<'a> V3dSubviewSequenceRef<'a> {
         self.parent.state.read().subviews.upper()
     }
     /// Identify the actual retained sequence object; `reference.reference_address()`.
-    pub fn reference_address(&self) -> *const SubviewSequence {
+    pub fn reference_address(&self) -> *const () {
         let fields = self.parent.state.read();
-        std::ptr::from_ref(&fields.subviews)
+        std::ptr::from_ref(&fields.subviews).cast()
     }
     /// Start native live-node traversal with no owning view copies; `reference.cursor()`.
     pub fn cursor(&self) -> V3dSubviewCursor<'a> {
@@ -73,7 +73,12 @@ impl<'a> V3dSubviewSequenceRef<'a> {
     /// Explicitly copy the sequence and its view owners; native equivalence uses this live reference.
     /// Example: `let copied=reference.snapshot`.
     pub fn snapshot(&self) -> SubviewSequence {
-        self.parent.state.read().subviews.clone()
+        let fields = self.parent.state.read();
+        let mut copied = SubviewSequence::with_allocator(fields.subviews.allocator().clone());
+        for slot in fields.subviews.iter() {
+            copied.append(Handle::clone(slot));
+        }
+        copied
     }
 }
 impl V3dView {

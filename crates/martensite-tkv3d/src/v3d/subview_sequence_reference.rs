@@ -4,6 +4,8 @@ use martensite_tkernel::{
     ncollection::SequenceCursor,
     standard::{Handle, HandleObserver, HandleReference, raise_native_failure},
 };
+use std::sync::Arc;
+
 /// Live native subview iterator; `let mut cursor=parent.subview_iterator(); cursor.next()`.
 pub struct V3dSubviewCursor<'a> {
     parent: &'a V3dView,
@@ -42,7 +44,7 @@ impl<'a> V3dSubviewNodeRef<'a> {
     pub(super) fn new(parent: &'a V3dView, position: SequenceCursor) -> Self {
         Self { parent, position }
     }
-    fn with_handle<R>(&self, inspect: impl FnOnce(&Handle<dyn V3dViewSource>) -> R) -> R {
+    fn with_slot<R>(&self, inspect: impl FnOnce(&Arc<Handle<dyn V3dViewSource>>) -> R) -> R {
         let state = self.parent.state.read();
         let value = self
             .position
@@ -53,16 +55,19 @@ impl<'a> V3dSubviewNodeRef<'a> {
 }
 impl HandleReference<dyn V3dViewSource> for V3dSubviewNodeRef<'_> {
     fn observe(&self) -> HandleObserver<'_, dyn V3dViewSource> {
-        HandleObserver::Snapshot(self.with_handle(Handle::clone))
+        HandleObserver::Leased(self.with_slot(Arc::clone))
     }
     fn reference_address(&self) -> *const () {
-        self.with_handle(|handle| std::ptr::from_ref(handle).cast())
+        self.with_slot(|slot| std::ptr::from_ref(slot).cast())
     }
     fn object_address(&self) -> *const () {
-        self.with_handle(Handle::object_address)
+        self.with_slot(|slot| slot.object_address())
+    }
+    fn ref_count(&self) -> usize {
+        self.with_slot(|slot| slot.ref_count())
     }
     fn is_null(&self) -> bool {
-        self.with_handle(Handle::is_null)
+        self.with_slot(|slot| slot.is_null())
     }
 }
 
