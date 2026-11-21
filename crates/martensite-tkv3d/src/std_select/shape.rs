@@ -38,11 +38,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn StdSelectShapeSource {
         // The application dispatch protocol shares the one genuine native class descriptor.
         <StdSelectShape as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Registered casters project the actual subclass base without allocating a facade.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn StdSelectShapeSource);
 /// Nonvirtual native shape-field operations; `source.set_shape(&replacement)`.
 pub trait StdSelectShapeMembers: StdSelectShapeSource {
     /// Borrow the field across later setters without retaining geometry; `let reference=source.shape_ref();`.

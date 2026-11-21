@@ -80,8 +80,5 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisShapeSource {
         // The inheritance seam shares the one genuine AisShape class descriptor.
         <super::AisShape as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Registered casters project the actual subclass base without allocating a facade.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisShapeSource);

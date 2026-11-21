@@ -20,8 +20,5 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn StdPrsIsolineSurfaceSour
         // The dispatch seam shares the actual BRep descriptor, without inventing another native ancestor.
         <BRepAdaptorSurface as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Registered application interface views preserve virtual dispatch and real embedded parent state.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn StdPrsIsolineSurfaceSource);

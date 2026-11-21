@@ -49,11 +49,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn StdSelectBRepOwnerSource
         // The application dispatch protocol shares the one genuine native class descriptor.
         <StdSelectBRepOwner as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Registered casters project the actual subclass base without allocating a facade.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn StdSelectBRepOwnerSource);
 /// Nonvirtual BRep owner operations preserve the pinned inverted HasHilightMode predicate; `owner.reset_hilight_mode()`.
 pub trait StdSelectBRepOwnerMembers: StdSelectBRepOwnerSource {
     /// Borrow the native geometry field without retaining topology; `let reference=owner.shape_ref();`.

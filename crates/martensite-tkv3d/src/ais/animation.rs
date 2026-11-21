@@ -117,11 +117,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisAnimationSource {
         // Derived Source handles must recognize the actual concrete native ancestor descriptor.
         <AisAnimation as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Projection changes the Rust interface while retaining the same live native object.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisAnimationSource);
 
 /// Native concrete animation container; `Handle::new(AisAnimation::new("timeline"))`.
 pub struct AisAnimation {

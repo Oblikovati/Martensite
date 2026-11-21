@@ -212,11 +212,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn SelectMgrEntityOwnerSour
         // One concrete parent descriptor; the Rust dispatch seam is no second class.
         <SelectMgrEntityOwner as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        // Runtime interface projection still returns the genuine inherited owner fields.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn SelectMgrEntityOwnerSource);
 
 /// The native body of `SelectMgrEntityOwner::HilightWithColor`.
 /// Example: `select_mgr_owner_hilight_with_color(&*owner, &manager, &style, 0)?`.

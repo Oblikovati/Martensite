@@ -29,11 +29,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisTexturedShapeSource {
         // Genuine source casts share the concrete class descriptor and its AisShape parent.
         <super::AisTexturedShape as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Retain application subclass overrides through the actual interface projection.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisTexturedShapeSource);
 
 /// Native nonvirtual getters/operations shared by concrete classes and application subclasses.
 /// Example: `object.texture_pix_map().read().object_address()` inspects the live handle field.
