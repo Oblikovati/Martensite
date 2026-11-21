@@ -92,9 +92,9 @@ impl ChFi3dFilBuilder {
         let bidsurf: Handle<dyn Adaptor3dSurface> = Handle::new(GeomAdaptorSurface::with_surface(
             &fac.transformed_surface().geom_surface_original(),
         )?)
-        .cast();
+        .into_upcast();
         let ifac: WalkingDomain = Rc::new(Adaptor3dTopolTool::with_surface(&bidsurf)?);
-        let isurf: WalkingDomain = Rc::new(Adaptor3dTopolTool::with_surface(&surf.clone().cast())?);
+        let isurf: WalkingDomain = Rc::new(Adaptor3dTopolTool::with_surface(&surf.upcast())?);
         let fdpiv = tc.sd(pivot, deb)?;
         let (mut choix, os1, os2) = {
             let s = lock(&tc.cd[deb]);
@@ -160,7 +160,7 @@ impl ChFi3dFilBuilder {
             coin,
         };
         let [edeb, efin, edp, _] = *ends;
-        let (gfac, gsurf) = (general(&cs.fac), cs.surf.clone().cast());
+        let (gfac, gsurf) = (general(&cs.fac), cs.surf.upcast());
         let ofac = tc.face[tc.pivot].orientation();
         let mut done = false;
         if tc.c1toric {
@@ -249,8 +249,8 @@ impl ChFi3dFilBuilder {
         soldep[3] = ps.x();
         soldep[4] = ps.y();
         let (gfac, gsurf): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (general(&cs.fac), cs.surf.clone().cast());
-        let guide: Handle<dyn Adaptor3dCurve> = cornerspine.clone().cast();
+            (general(&cs.fac), cs.surf.upcast());
+        let guide: Handle<dyn Adaptor3dCurve> = cornerspine.upcast();
         let tol_guide = cornerspine.resolution(self.base.tolapp3d)?;
         let ccall = ComputeCall {
             hguide: &cornerspine,
@@ -288,7 +288,7 @@ impl ChFi3dFilBuilder {
         } else {
             let law = LawS::new();
             law.set(wfirst, edeb.r, wlast, efin.r)?;
-            let law: Handle<dyn LawFunction> = Handle::new(law).cast();
+            let law: Handle<dyn LawFunction> = Handle::new(law).into_upcast();
             let mut func = EvolRad::new(&gfac, &gsurf, &guide, &law)?;
             let mut finv = EvolRadInv::new(&gfac, &gsurf, &guide, &law);
             func.set_choix(cs.choix);
@@ -344,7 +344,7 @@ impl ChFi3dFilBuilder {
         let (pivot, deb, fin) = (tc.pivot, tc.deb, tc.fin);
         let (t3d, ta) = (self.base.tolapp3d, 2.0e-4);
         let (gfac, gsurf): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (general(&cs.fac), cs.surf.clone().cast());
+            (general(&cs.fac), cs.surf.upcast());
         let mut bfac: Option<Handle<dyn GeomFillBoundary>> = None;
         let mut pcurve_on_face: Handle<dyn Geom2dCurve> = Handle::default();
         if !tc.c1pointu {

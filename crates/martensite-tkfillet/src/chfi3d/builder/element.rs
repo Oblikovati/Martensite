@@ -87,7 +87,7 @@ pub(super) fn concat_curves(
         let mut concat = CompCurveToBSplineCurve::new(ParameterisationType::TgtThetaOver2);
         let mut i = 0;
         while i < curves.len() {
-            let bounded: Handle<dyn GeomBoundedCurve> = curves[i].clone().cast();
+            let bounded: Handle<dyn GeomBoundedCurve> = curves[i].cast();
             let mut success = concat.add(&bounded, 1.0e-5, true, true, 0)?;
             if !success {
                 success = concat.add(&bounded, 1.0e-5, false, true, 0)?;
@@ -108,7 +108,7 @@ pub(super) fn trimmed_surface(s: &BRepAdaptorSurface) -> Result<Handle<dyn GeomS
     let gs = BRepTool::surface(&s.face())?;
     let u = (s.first_u_parameter()?, s.last_u_parameter()?);
     let v = (s.first_v_parameter()?, s.last_v_parameter()?);
-    Ok(Handle::new(GeomRectangularTrimmedSurface::new(&gs, u, v, (true, true))?).cast())
+    Ok(Handle::new(GeomRectangularTrimmedSurface::new(&gs, u, v, (true, true))?).into_upcast())
 }
 
 /// The intersection of the first face offset by `distance` with the second face, the
@@ -127,7 +127,7 @@ pub(super) fn offset_intersection(
     let make_offset_surf = GeomOffsetSurface::new(&trimmed_surface(s1)?, offset, false)?;
     let mut offset_tr_gs1 = make_offset_surf.surface()?;
     if offset_tr_gs1.is_null() {
-        offset_tr_gs1 = Handle::new(make_offset_surf).cast();
+        offset_tr_gs1 = Handle::new(make_offset_surf).into_upcast();
     }
     let inter = GeomIntIntSS::with_surfaces(
         &offset_tr_gs1,

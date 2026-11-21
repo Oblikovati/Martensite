@@ -69,7 +69,7 @@ impl ChFi3dBuilder {
             self.write_split_cork(oc, ishape, et, cork)?;
         }
         let (mut box1, mut box2) = (BoundingBox3::default(), BoundingBox3::default());
-        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.clone().cast();
+        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.upcast();
         enlarge_box_pcurve(&hbs, &cork.pc, (cork.udeb, cork.ufin), &mut box1, &mut box2)?;
         if oc.onsame {
             self.write_prolongation(oc, vtx, ishape, cork, (&mut box1, &mut box2))?;
@@ -175,12 +175,11 @@ impl ChFi3dBuilder {
         }
         let list = self.ds.change_shape_interferences_index(ishape)?.clone();
         for i in list.iter() {
-            let sci: Handle<TopOpeBRepDSSurfaceCurveInterference> = i.clone().cast();
-            let Some(s) = sci.get() else {
+            let Some(s) = i.downcast_ref::<TopOpeBRepDSSurfaceCurveInterference>() else {
                 continue;
             };
             let geom = i.get().map_or(0, |b| b.geometry());
-            let oc: Handle<GeomTrimmedCurve> = self.ds.curve(geom).curve().clone().cast();
+            let oc: Handle<GeomTrimmedCurve> = self.ds.curve(geom).curve().downcast();
             let Some(o) = oc.get() else {
                 continue;
             };
@@ -266,7 +265,7 @@ impl ChFi3dBuilder {
         };
         let (ct, _, _) = BRepTool::curve(&arc)?;
         let ct: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&ct, prm1, prm2, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&ct, prm1, prm2, true, true)?).into_upcast();
         let toled = BRepTool::edge_tolerance(&arc)?;
         let indcurv = self
             .ds
@@ -341,7 +340,7 @@ impl ChFi3dBuilder {
             ));
         }
         let (mut cd, fd) = (ec.pcurve.clone(), ec.first);
-        let tcd: Handle<Geom2dTrimmedCurve> = cd.clone().cast();
+        let tcd: Handle<Geom2dTrimmedCurve> = cd.downcast();
         if let Some(t) = tcd.get() {
             cd = t.basis_curve();
         }
@@ -388,7 +387,7 @@ impl ChFi3dBuilder {
                 true,
                 true,
             )?)
-            .cast();
+            .into_upcast();
             let i = fil_curve_in_ds(cork.icurv[k], isurf, &c, et);
             self.ds.change_surface_interferences(isurf).append(i);
         }

@@ -192,7 +192,7 @@ impl ChFi3dBuilder {
             return Ok(cl.cint.clone());
         }
         let (mut csau, _, _) = BRepTool::curve(&ae.edgesau)?;
-        let mut c1: Handle<dyn GeomBoundedCurve> = csau.clone().cast();
+        let mut c1: Handle<dyn GeomBoundedCurve> = csau.cast();
         if cl.extend && !c1.is_null() {
             let pext = BRepTool::pnt(&ae.vtx)?;
             let target = if ae.oneintersection[0] {
@@ -257,7 +257,7 @@ impl ChFi3dBuilder {
             (vtx1, vtx2) = (true, false);
         }
         let ct: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&csau, par1, par2, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&csau, par1, par2, true, true)?).into_upcast();
         let c = cl
             .cc
             .get()
@@ -303,18 +303,18 @@ impl ChFi3dBuilder {
             }
         }
         let ct: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&csau, par1, par2, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&csau, par1, par2, true, true)?).into_upcast();
         if one {
             cl.tolex = 10. * BRepTool::edge_tolerance(&ae.edgesau)?;
         }
         if cl.extend {
             let h1: Handle<dyn Adaptor3dSurface> =
-                Handle::new(GeomAdaptorSurface::with_surface(&cl.sfacemoins1)?).cast();
+                Handle::new(GeomAdaptorSurface::with_surface(&cl.sfacemoins1)?).into_upcast();
             let reached = if cl.sface.is_null() {
                 eval_tol_reached((&h1, &cl.c2dint1), (&h1, &cl.c2dint1), &ct)?
             } else {
                 let h2: Handle<dyn Adaptor3dSurface> =
-                    Handle::new(GeomAdaptorSurface::with_surface(&cl.sface)?).cast();
+                    Handle::new(GeomAdaptorSurface::with_surface(&cl.sface)?).into_upcast();
                 eval_tol_reached((&h1, &cl.c2dint1), (&h2, &cl.c2dint2), &ct)?
             };
             cl.tolex = cl.tolex.max(reached);

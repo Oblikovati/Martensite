@@ -25,12 +25,8 @@ impl WalkSide {
     /// The side `side` of a call: its surface, its restriction (null on a surface).
     pub(super) fn of(side: &BlendSide<'_>) -> Self {
         Self {
-            s: side.s.clone().cast(),
-            rst: side
-                .rst
-                .as_ref()
-                .map(|r| r.pc.clone().cast())
-                .unwrap_or_default(),
+            s: side.s.upcast(),
+            rst: side.rst.as_ref().map(|r| r.pc.upcast()).unwrap_or_default(),
         }
     }
 }

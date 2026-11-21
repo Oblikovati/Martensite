@@ -106,7 +106,7 @@ pub fn sphere(
         dddx.reverse();
     }
     let gsph: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(fil_ax3, rad)?).cast();
+        Handle::new(GeomSphericalSurface::new(fil_ax3, rad)?).into_upcast();
     set_surf(data, gsph.clone(), dstr);
     set_orientation(data, fwd_if(!(ddz.dot(df1) <= 0.)));
     let (_, vv1) = elslib::sphere_parameters(fil_ax3, rad, p2);
@@ -115,7 +115,7 @@ pub fn sphere(
         Point2::new(0., -PI / 2.),
         Direction2::X,
     ))
-    .cast();
+    .into_upcast();
     set_interference(
         data,
         1,
@@ -129,11 +129,11 @@ pub fn sphere(
         Axis2::with_x_direction(cen, ddx.crossed(ddy)?, ddx)?,
         rad,
     )?)
-    .cast();
+    .into_upcast();
     let c2d_fil = sphere_circle_pcurve(&gsph, &c, ang, (0., vv1))?;
     let v2d = Vector2::between(p1s2, p2s2);
     let c2d: Handle<dyn Geom2dCurve> = if (v2d.magnitude() - ang).abs() <= ptol {
-        Handle::new(Geom2dLine::from_point(p1s2, Direction2::from_vector(v2d)?)).cast()
+        Handle::new(Geom2dLine::from_point(p1s2, Direction2::from_vector(v2d)?)).into_upcast()
     } else {
         pcurve(p1s2, p2s2, 0., ang)?.cast()
     };
@@ -194,7 +194,7 @@ pub fn make_rotule(
     }
     set_surf(
         data,
-        Handle::new(GeomToroidalSurface::new(ppos, r, r)?).cast(),
+        Handle::new(GeomToroidalSurface::new(ppos, r, r)?).into_upcast(),
         dstr,
     );
     let (pp, du, dv) = elslib::torus_d1(0., PI / 2., ppos, r, r);
@@ -202,7 +202,7 @@ pub fn make_rotule(
     set_orientation(data, fwd_if(drot.dot(dfpl) > 0.));
     let mut circ_ax2 = ppos.ax2()?;
     circ_ax2.set_location(pcirc);
-    let gc: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(circ_ax2, r)?).cast();
+    let gc: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(circ_ax2, r)?).into_upcast();
     let (u, v) = elslib::parameters(pl, pcirc);
     let pos = pl.position();
     let dx2d = Direction2::new(dpl1.dot(pos.x_direction()), dpl1.dot(pos.y_direction()))?;
@@ -214,16 +214,16 @@ pub fn make_rotule(
         Axis22d::with_directions(Point2::new(u, v), dx2d, dy2d)?,
         r,
     )?)
-    .cast();
+    .into_upcast();
     let trans = fwd_if(drot.dot(dplnat) <= 0.);
     let gl2d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(
         Point2::new(0., PI / 2.),
         Direction2::X,
     ))
-    .cast();
+    .into_upcast();
     set_interference(data, 1, &gc, trans, (&gc2d, &gl2d), dstr);
     let gl2d_coin: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(Point2::new(0., PI), Direction2::X)).cast();
+        Handle::new(Geom2dLine::from_point(Point2::new(0., PI), Direction2::X)).into_upcast();
     set_interference(
         data,
         2,

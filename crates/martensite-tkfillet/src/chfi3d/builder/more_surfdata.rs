@@ -57,9 +57,9 @@ fn cut_ending_at(
         return Ok(None);
     }
     let h1: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(s1)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(s1)?).into_upcast();
     let h2: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(s2)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(s2)?).into_upcast();
     for i in 1..=inter.nb_lines() {
         let (c, pc1, pc2) = (inter.line(i)?, inter.line_on_s1(i)?, inter.line_on_s2(i)?);
         let tol = eval_tol_reached((&h1, &pc1), (&h2, &pc2), &c)?;
@@ -321,7 +321,7 @@ impl ChFi3dBuilder {
                 true,
                 true,
             )?)
-            .cast();
+            .into_upcast();
             return Ok(Some((None, tr)));
         };
         let (e1, _) = ends(&cracc.c3d)?;
@@ -336,7 +336,7 @@ impl ChFi3dBuilder {
             (apar, apar1)
         };
         let tr: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&cracc.c3d, lo, hi, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&cracc.c3d, lo, hi, true, true)?).into_upcast();
         let sd_prev = sd_at(seq, ind_prev)?;
         let surf = self.ds.surface(lock(&sd_prev).surf()).surface().clone();
         let Some(cint2) = cut_ending_at(surf_prev, &surf, cp2_on_arc.point())? else {

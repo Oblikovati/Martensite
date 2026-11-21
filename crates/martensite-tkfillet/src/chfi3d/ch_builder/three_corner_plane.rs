@@ -142,7 +142,7 @@ impl ChFi3dChBuilder {
             plan_ax3.y_reverse();
         }
         let gpl = Handle::new(GeomPlane::new(plan_ax3));
-        let gpl_s: Handle<dyn GeomSurface> = gpl.clone().cast();
+        let gpl_s: Handle<dyn GeomSurface> = gpl.upcast();
         let isurf = index_surface_in_ds(&gpl_s, &mut self.base.ds);
         let mut norface = pts.norpl;
         if tc.face[pivot].orientation() == Orientation::Reversed {
@@ -243,7 +243,7 @@ impl ChFi3dChBuilder {
                 &Handle::default(),
             );
         } else if let Some((gcface, facepc1, facepc2)) = face_cut {
-            let gc: Handle<dyn GeomCurve> = gcface.clone().cast();
+            let gc: Handle<dyn GeomCurve> = gcface.upcast();
             let igcface = index_curve_in_ds(&gc, &mut self.base.ds);
             let c = gcface
                 .get()
@@ -313,11 +313,11 @@ impl ChFi3dChBuilder {
         }
         let gcface = trim_curve(&inter.line(1)?, p1, p2)?;
         let gac: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&gcface.clone().cast())?).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&gcface.upcast())?).into_upcast();
         let gas: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(gpl)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(gpl)?).into_upcast();
         let gaf: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(&tc.face[tc.pivot], true)?).cast();
+            Handle::new(BRepAdaptorSurface::with_face(&tc.face[tc.pivot], true)?).into_upcast();
         let (mut facepc1, mut facepc2): (Handle<dyn Geom2dCurve>, Handle<dyn Geom2dCurve>) =
             (Handle::default(), Handle::default());
         let mut tolr = 0.;

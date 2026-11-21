@@ -119,9 +119,9 @@ fn unit_arc_weights(
 ) -> Result<Array1<'static, f64>, Failure> {
     let frame = Axis2::new(Point3::default(), Direction3::new(0., 0., 1.)?)?;
     let circle: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::from_circ(Circle3::new(frame, 1.)?)).cast();
+        Handle::new(GeomCircle::from_circ(Circle3::new(frame, 1.)?)).into_upcast();
     let arc: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(&circle, 0., angle, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(&circle, 0., angle, true, true)?).into_upcast();
     let bspline = curve_to_bspline_curve(&arc, conv)?;
     Ok(bspline.weights_array(Clone::clone))
 }

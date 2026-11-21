@@ -137,7 +137,7 @@ impl ChFi3dFilBuilder {
         let sides = [(&ws, surf_side.i), (&wr, rst_side.i)];
         let st = Storage {
             kind: LineFunction::SurfRst,
-            faces: (call.side1.s.clone().cast(), call.side2.s.clone().cast()),
+            faces: (call.side1.s.upcast(), call.side2.s.upcast()),
             or: surf_side.s.face().orientation(),
             reversed: rst_on_first,
             spine: call.spine,
@@ -192,7 +192,7 @@ impl ChFi3dFilBuilder {
         let lin = lin.ok_or_else(|| walking_failure(call.spine))?;
         let st = Storage {
             kind: LineFunction::RstRst,
-            faces: (call.side1.s.clone().cast(), call.side2.s.clone().cast()),
+            faces: (call.side1.s.upcast(), call.side2.s.upcast()),
             or: call.side1.s.face().orientation(),
             reversed: false,
             spine: call.spine,

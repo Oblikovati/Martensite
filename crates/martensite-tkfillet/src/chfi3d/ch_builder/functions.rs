@@ -113,7 +113,7 @@ pub(super) fn chamfer_functions(
     offset: Option<&Handle<ElSpine>>,
     choix: i32,
 ) -> Result<ChamferFunctions, Failure> {
-    let guide: Handle<dyn Adaptor3dCurve> = hguide.clone().cast();
+    let guide: Handle<dyn Adaptor3dCurve> = hguide.upcast();
     let classic = kind.mode == ChamfMode::ClassicChamfer;
     Ok(match kind.method {
         ChamfMethod::Sym if classic => {

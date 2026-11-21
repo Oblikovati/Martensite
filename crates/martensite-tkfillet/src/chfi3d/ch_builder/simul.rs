@@ -99,8 +99,8 @@ impl ChFi3dChBuilder {
                 .max(kind.d1 * martensite_cmath::tan(kind.angle))
                 .max(radiusspine),
         };
-        let s1: Handle<dyn Adaptor3dSurface> = call.s1.clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = call.s2.clone().cast();
+        let s1: Handle<dyn Adaptor3dSurface> = call.s1.upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = call.s2.upcast();
         let offset = if kind.method == ChamfMethod::TwoDist
             && kind.mode != crate::chfi_ds::ChamfMode::ClassicChamfer
         {

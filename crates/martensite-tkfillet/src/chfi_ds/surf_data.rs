@@ -3,7 +3,7 @@ use super::errors::standard_failure;
 use super::shared::Shared;
 use super::{CommonPoint, FaceInterference};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::Point2;
 
@@ -28,7 +28,6 @@ pub type SurfDataHandle = Shared<SurfData>;
 /// ```
 #[derive(Clone)]
 pub struct SurfData {
-    parent: StandardTransient,
     first_on_s1: CommonPoint,
     last_on_s1: CommonPoint,
     first_on_s2: CommonPoint,
@@ -43,7 +42,7 @@ pub struct SurfData {
     last_spine_param: f64,
     first_extension: f64,
     last_extension: f64,
-    simul: Handle<StandardTransient>,
+    simul: Handle<dyn Transient>,
     index_of_s1: i32,
     index_of_c1: i32,
     index_of_s2: i32,
@@ -55,12 +54,11 @@ pub struct SurfData {
     twist_on_s2: bool,
     orientation: Orientation,
 }
-impl_transient!(SurfData, "ChFiDSSurfData", StandardTransient, parent);
+impl_transient!(SurfData, "ChFiDSSurfData", dyn Transient);
 
 impl Default for SurfData {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             first_on_s1: CommonPoint::default(),
             last_on_s1: CommonPoint::default(),
             first_on_s2: CommonPoint::default(),
@@ -372,12 +370,12 @@ impl SurfData {
     }
 
     /// `Simul()`: the simulation object of the surface; `data.simul()`.
-    pub fn simul(&self) -> Handle<StandardTransient> {
+    pub fn simul(&self) -> Handle<dyn Transient> {
         self.simul.clone()
     }
 
     /// `SetSimul(S)`; `data.set_simul(&object)`.
-    pub fn set_simul(&mut self, simul: &Handle<StandardTransient>) {
+    pub fn set_simul(&mut self, simul: &Handle<dyn Transient>) {
         self.simul = simul.clone();
     }
 

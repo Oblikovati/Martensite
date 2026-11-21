@@ -3,7 +3,7 @@
 //! C3. The extensions and the final smoothing are in elspine_ends.rs.
 use super::elspine_ends::{curve_cleaner, extend_and_smooth};
 use super::smooth::{approx_by_c2, is_smooth};
-use crate::chfi_ds::{ElSpine, Spine, SpineHandle, lock};
+use crate::chfi_ds::{ElSpine, SpineData, SpineHandle, lock};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::Edge;
@@ -46,7 +46,7 @@ fn std_min(a: f64, b: f64) -> f64 {
 }
 
 impl ElSpineRange {
-    fn new(es: &ElSpine, spine: &mut Spine, tol: f64) -> Result<Self, Failure> {
+    fn new(es: &ElSpine, spine: &mut SpineData, tol: f64) -> Result<Self, Failure> {
         let (wf, wl) = (es.first_parameter()?, es.last_parameter()?);
         let (nbed, periodic) = (spine.nb_edges(), spine.is_periodic());
         let mut range = Self {
@@ -89,7 +89,7 @@ impl ElSpineRange {
 }
 
 /// The edge `index` of the spine (its offset edge when asked).
-fn spine_edge(spine: &Spine, index: i32, is_offset: bool) -> Result<Edge, Failure> {
+fn spine_edge(spine: &SpineData, index: i32, is_offset: bool) -> Result<Edge, Failure> {
     Ok(if is_offset {
         spine.offset_edges(index)?.clone()
     } else {
@@ -117,7 +117,12 @@ fn add_vertex_tangent(
 
 /// The parameter on the edge `index` of the end abscissa `w` when it falls inside the
 /// edge (`inside`), else `None`.
-fn pared_at(spine: &mut Spine, index: i32, w: f64, inside: bool) -> Result<Option<f64>, Failure> {
+fn pared_at(
+    spine: &mut SpineData,
+    index: i32,
+    w: f64,
+    inside: bool,
+) -> Result<Option<f64>, Failure> {
     if !inside {
         return Ok(None);
     }
@@ -128,7 +133,7 @@ fn pared_at(spine: &mut Spine, index: i32, w: f64, inside: bool) -> Result<Optio
 /// ends when it is also the last edge), oriented as the edge.
 fn first_edge_range(
     range: &ElSpineRange,
-    spine: &mut Spine,
+    spine: &mut SpineData,
     e: &Edge,
     (cv, first, last): (Handle<dyn GeomCurve>, f64, f64),
 ) -> Result<(Handle<dyn GeomCurve>, f64, f64), Failure> {
@@ -176,7 +181,7 @@ fn first_edge_range(
 /// tangent at the end of the spine it lies beyond.
 fn straight_elspine(
     es: &ElSpine,
-    spine: &Spine,
+    spine: &SpineData,
     range: &ElSpineRange,
     tol: f64,
 ) -> Result<(), Failure> {
@@ -191,7 +196,7 @@ fn straight_elspine(
     };
     let d = Direction3::from_vector(tangent)?;
     let olin = Point3::from(d.xyz() * -w + p.xyz());
-    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(olin, d)).cast();
+    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(olin, d)).into_upcast();
     es.set_curve(&line)
 }
 
@@ -204,7 +209,7 @@ fn smoothed_piece(
     approx_count: &mut i32,
 ) -> Result<Handle<dyn GeomBoundedCurve>, Failure> {
     let tc: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(cv, first, last, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(cv, first, last, true, true)?).into_upcast();
     let bs = geom_convert::curve_to_bspline_curve(&tc, ParameterisationType::TgtThetaOver2)?;
     curve_cleaner(&bs, wspan * 1.0e-4, 0)?;
     let continuity = tc.continuity();
@@ -220,7 +225,7 @@ fn smoothed_piece(
 /// The next edge `iedge` of the path concatenated: its range ends at the elementary
 /// spine on the last edge; the tolerance of the junction grows when the addition fails.
 fn concatenate_edge(
-    (es, spine, range): (&ElSpine, &mut Spine, &ElSpineRange),
+    (es, spine, range): (&ElSpine, &mut SpineData, &ElSpineRange),
     (iedge, eold): (i32, &Edge),
     (tol, is_offset): (f64, bool),
     concat: &mut CompCurveToBSplineCurve,
@@ -284,7 +289,7 @@ fn concatenate_edge(
     Ok(Some(e))
 }
 
-/// `ChFi3dPerformElSpine(HES, Spine, continuity, tol, IsOffset)`: the curve of the
+/// `ChFi3dPerformElSpine(HES, SpineData, continuity, tol, IsOffset)`: the curve of the
 /// elementary spine: the edges of the spine (or their offsets) on its range concatenated
 /// and reparametrized as the spine, extended beyond the spine to open ends and smoothed
 /// to `continuity` (C3, else C2); a straight line along the end tangent when the first
