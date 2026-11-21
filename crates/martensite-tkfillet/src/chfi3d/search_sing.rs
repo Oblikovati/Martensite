@@ -17,7 +17,7 @@ use martensite_tkmath::math::{Function, FunctionWithDerivative};
 /// use martensite_tkmath::gp::{Axis1, Direction3, Point3};
 /// use martensite_tkmath::math::Function;
 /// let line = |y: f64| -> Handle<dyn GeomCurve> {
-///     Handle::new(GeomLine::new(Axis1::new(Point3::new(0.0, y, 0.0), Direction3::new(1.0, 0.0, 0.0).unwrap()))).cast()
+///     Handle::new(GeomLine::new(Axis1::new(Point3::new(0.0, y, 0.0), Direction3::new(1.0, 0.0, 0.0).unwrap()))).into_upcast()
 /// };
 /// let mut f = ChFi3dSearchSing::new(&line(0.0), &line(1.0));
 /// let mut value = 1.0;

@@ -108,9 +108,9 @@ impl FilletSurfInternalBuilder {
             .ok_or_else(|| Failure::out_of_range("PerformSurf: no surface data"))?;
         let radius = radius_of(call.spine)?;
         let or = call.s1.face().orientation();
-        let s1: Handle<dyn Adaptor3dSurface> = call.s1.clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = call.s2.clone().cast();
-        let guide: Handle<dyn Adaptor3dCurve> = call.guide.clone().cast();
+        let s1: Handle<dyn Adaptor3dSurface> = call.s1.upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = call.s2.upcast();
+        let guide: Handle<dyn Adaptor3dCurve> = call.guide.upcast();
         let func = shared(ConstRad::new(&s1, &s2, &guide)?);
         let mut finv = ConstRadInv::new(&s1, &s2, &guide);
         lock(&func).set_radius(radius, call.choix);

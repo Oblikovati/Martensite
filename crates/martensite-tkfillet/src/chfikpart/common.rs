@@ -40,12 +40,12 @@ pub(super) fn oriented(mut d: Direction3, o: Orientation) -> Direction3 {
 
 /// A 3d line as a curve handle.
 pub(super) fn line3(p: Point3, d: Direction3) -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::from_point(p, d)).cast()
+    Handle::new(GeomLine::from_point(p, d)).into_upcast()
 }
 
 /// A 2d line as a curve handle.
 pub(super) fn line2(p: Point2, d: Direction2) -> Handle<dyn Geom2dCurve> {
-    Handle::new(Geom2dLine::from_point(p, d)).cast()
+    Handle::new(Geom2dLine::from_point(p, d)).into_upcast()
 }
 
 /// A surface added to the structure as the surface of the data.

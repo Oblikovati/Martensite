@@ -72,7 +72,7 @@ pub(super) fn update_on_arc(
 ) -> Result<bool, Failure> {
     let c1 = Adaptor3dCurveOnSurface::with_curve(pcfb, fb)?;
     let hpc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(fi.pcurve_on_surf())?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(fi.pcurve_on_surf())?).into_upcast();
     let c2 = Adaptor3dCurveOnSurface::with_curve(&hpc, surf)?;
     let ext = LocateExtCC::new(&c1, &c2, *pared, *wop)?;
     if ext.is_done() && ext.square_distance()? < tol * tol {
@@ -192,9 +192,9 @@ pub(super) fn inters_update_on_same(
         .get()
         .ok_or_else(|| Failure::with_message("Standard_NullObject", "IntersUpdateOnSame"))?;
     let hc3df: Handle<dyn Adaptor3dCurve> = if c.is_periodic() {
-        Handle::new(GeomAdaptorCurve::with_curve(c3d_fi)?).cast()
+        Handle::new(GeomAdaptorCurve::with_curve(c3d_fi)?).into_upcast()
     } else {
-        Handle::new(GeomAdaptorCurve::with_range(c3d_fi, uf, ul)?).cast()
+        Handle::new(GeomAdaptorCurve::with_range(c3d_fi, uf, ul)?).into_upcast()
     };
     if update_on_face(
         hbs,
@@ -217,7 +217,7 @@ pub(super) fn inters_update_on_same(
         ));
     }
     let pcprol: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(&gpcprol)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(&gpcprol)?).into_upcast();
     let mut partemp = BRepTool::parameter(vtx, eprol)?;
     update_on_arc(
         hbs,
@@ -254,7 +254,7 @@ pub(super) fn update_on_edge(
     f = (f - delta).max(pcr.first_parameter());
     l = (l + delta).min(pcr.last_parameter());
     let hpc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(&pc, f, l)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(&pc, f, l)?).into_upcast();
     let c2 = Adaptor3dCurveOnSurface::with_curve(&hpc, surf)?;
     let ext = LocateExtCC::new(&c1, &c2, cp.parameter_on_arc()?, fi.parameter(isfirst))?;
     if !ext.is_done() {
@@ -267,7 +267,7 @@ pub(super) fn update_on_edge(
     }
     let mut pconf = fi.pcurve_on_face().clone();
     if !pconf.is_null() {
-        let tr: Handle<Geom2dTrimmedCurve> = pconf.clone().cast();
+        let tr: Handle<Geom2dTrimmedCurve> = pconf.downcast();
         if let Some(t) = tr.get() {
             pconf = t.basis_curve();
         }
@@ -308,7 +308,7 @@ pub(super) fn extend_surface(
     let surf = s.get().ok_or_else(|| Failure::new("ExtendSurface"))?;
     let (umin, umax, vmin, vmax) = surf.bounds();
     let length = surf.value(umin, vmin)?.distance(&surf.value(umax, vmax)?);
-    let mut a_bs: Handle<dyn GeomBoundedSurface> = s.clone().cast();
+    let mut a_bs: Handle<dyn GeomBoundedSurface> = s.cast();
     extend_surf_by_length(&mut a_bs, length, 1, false, true)?;
     extend_surf_by_length(&mut a_bs, length, 1, true, true)?;
     extend_surf_by_length(&mut a_bs, length, 1, false, false)?;
@@ -367,7 +367,7 @@ pub(super) fn recale(
     refon1: bool,
 ) -> Result<(), Failure> {
     let mut surf = bs.transformed_surface().geom_surface_original();
-    let ts: Handle<GeomRectangularTrimmedSurface> = surf.clone().cast();
+    let ts: Handle<GeomRectangularTrimmedSurface> = surf.downcast();
     if let Some(t) = ts.get() {
         surf = t.basis_surface();
     }

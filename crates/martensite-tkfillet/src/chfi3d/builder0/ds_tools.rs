@@ -4,7 +4,7 @@ use super::traces::int_traces;
 use crate::chfi_ds::{CommonPoint, Map, SpineHandle, StripeHandle, SurfDataHandle, lock};
 use crate::chfi3d::same_side;
 use martensite_tkbool::top_ope_brep_ds::{
-    TopOpeBRepDSCurvePointInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSInterference,
+    InterferenceRecord, TopOpeBRepDSCurvePointInterference, TopOpeBRepDSDataStructure,
     TopOpeBRepDSKind, TopOpeBRepDSPoint, TopOpeBRepDSSurfaceCurveInterference,
     TopOpeBRepDSTransition,
 };
@@ -43,13 +43,13 @@ pub fn ds_geometry(
         }
         let hs = BRepAdaptorSurface::default();
         hs.initialize(&f, false)?;
-        return Ok(Handle::new(hs).cast());
+        return Ok(Handle::new(hs).into_upcast());
     }
     let s = dstr.surface(-ind).surface().clone();
     if s.is_null() {
         return Ok(Handle::default());
     }
-    Ok(Handle::new(GeomAdaptorSurface::with_surface(&s)?).cast())
+    Ok(Handle::new(GeomAdaptorSurface::with_surface(&s)?).into_upcast())
 }
 
 /// `ChFi3dSetPointTolerance(DStr, box, IP)`: the tolerance of the point set to 1.5 times
@@ -379,7 +379,7 @@ pub fn fil_curve_in_ds(
     isurf: i32,
     pcurv: &Handle<dyn Geom2dCurve>,
     et: Orientation,
-) -> Handle<TopOpeBRepDSInterference> {
+) -> Handle<dyn InterferenceRecord> {
     Handle::new(TopOpeBRepDSSurfaceCurveInterference::new(
         &TopOpeBRepDSTransition::from_orientation(et),
         TopOpeBRepDSKind::Surface,
@@ -388,7 +388,7 @@ pub fn fil_curve_in_ds(
         icurv,
         pcurv,
     ))
-    .cast()
+    .into_upcast()
 }
 
 /// `ChFi3dSolidIndex(sp, DStr, MapESo, MapESh)`: the index in the structure of the solid
@@ -440,7 +440,7 @@ pub fn fil_point_in_ds(
     ip: i32,
     par: f64,
     is_vertex: bool,
-) -> Handle<TopOpeBRepDSInterference> {
+) -> Handle<dyn InterferenceRecord> {
     let gk = if is_vertex {
         TopOpeBRepDSKind::Vertex
     } else {
@@ -454,7 +454,7 @@ pub fn fil_point_in_ds(
         ip,
         par,
     ))
-    .cast()
+    .into_upcast()
 }
 
 /// `ChFi3dFilVertexInDS(Et, Ic, Ip, Par)`: the curve/vertex interference;
@@ -464,6 +464,6 @@ pub fn fil_vertex_in_ds(
     ic: i32,
     ip: i32,
     par: f64,
-) -> Handle<TopOpeBRepDSInterference> {
+) -> Handle<dyn InterferenceRecord> {
     fil_point_in_ds(et, ic, ip, par, true)
 }

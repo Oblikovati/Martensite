@@ -251,7 +251,7 @@ impl ChFi3dBuilder {
             link.curveint = Handle::new(GeomTrimmedCurve::new(
                 &c.curv3d, pardeb, parfin, true, true,
             )?)
-            .cast();
+            .into_upcast();
         }
         let n3d = c.n3d;
         *slot(&mut c.indcurve3d, n3d)? = self.ds.add_curve(&mut TopOpeBRepDSCurve::new(

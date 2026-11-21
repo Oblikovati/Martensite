@@ -12,7 +12,7 @@ use martensite_tkgeombase::approx::{SweepD1, SweepD2, SweepFunction};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Point2, Point3};
 
-impl SweepFunction for BRepBlendAppFuncRoot {
+impl BRepBlendAppFuncRoot {
     /// `D0(Param, First, Last, Poles, Poles2d, Weigths)`: the section at the line point
     /// of `param`; false when the point is not found.
     fn d0(
@@ -159,7 +159,7 @@ macro_rules! app_func_class {
         pub struct $class {
             root: BRepBlendAppFuncRoot,
         }
-        impl_transient!($class, $name, BRepBlendAppFuncRoot, root, interfaces: [dyn SweepFunction]);
+        impl_transient!($class, $name, BRepBlendAppFuncRoot, interfaces: [dyn SweepFunction]);
 
         impl $class {
             /// The native constructor `(Line, Func, Tol3d, Tol2d)`.

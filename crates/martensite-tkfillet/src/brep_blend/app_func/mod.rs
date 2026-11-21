@@ -9,15 +9,14 @@ use super::BRepBlendLineHandle;
 use crate::blend::{BlendAppFunction, BlendPoint};
 use crate::blend_func::linalg::{vector, vget, vset};
 use crate::chfi_ds::{Shared, lock};
-use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::{Failure, RuntimeType, RuntimeTyped};
 use martensite_tkg2d::geom2d::native::{std_max, std_min};
 use martensite_tkgeombase::approx::SweepFunction;
 use martensite_tkmath::gp::Point3;
 use martensite_tkmath::math::{
     FunctionSet, FunctionSetRoot, FunctionSetWithDerivatives, Matrix, Vector,
 };
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{Mutex, MutexGuard, OnceLock, PoisonError};
 
 /// A blend function shared between its caller and the sweep function that evaluates it
 /// (natively a reference kept by `BRepBlendAppFuncRoot`).
@@ -73,20 +72,26 @@ pub(crate) struct AppFuncState {
 /// `BRepBlendAppFuncRoot`: the line, the blend function, the barycentre of the line
 /// points (rational sections) and the Newton solver of 30 iterations.
 pub struct BRepBlendAppFuncRoot {
-    parent: StandardTransient,
     line: BRepBlendLineHandle,
     func: SharedAppFunction,
     kind: LineKind,
     bary: Point3,
     state: Mutex<AppFuncState>,
 }
-impl_transient!(
-    BRepBlendAppFuncRoot,
-    "BRepBlendAppFuncRoot",
-    dyn SweepFunction,
-    parent,
-    interfaces: [dyn SweepFunction]
-);
+impl RuntimeTyped for BRepBlendAppFuncRoot {
+    const TYPE_NAME: &'static str = "BRepBlendAppFuncRoot";
+
+    fn static_type() -> &'static RuntimeType {
+        static DESCRIPTOR: OnceLock<&'static RuntimeType> = OnceLock::new();
+        DESCRIPTOR.get_or_init(|| {
+            RuntimeType::register::<Self>(
+                Self::TYPE_NAME,
+                std::mem::size_of::<Self>(),
+                Some(<dyn SweepFunction>::static_type()),
+            )
+        })
+    }
+}
 
 /// `myTolerance`: the function tolerances at `tol3d`, at most `tol2d`.
 fn clamped_tolerances(
@@ -158,7 +163,6 @@ impl BRepBlendAppFuncRoot {
             solver,
         };
         Ok(Self {
-            parent: StandardTransient::default(),
             line: line.clone(),
             func: func.clone(),
             kind,

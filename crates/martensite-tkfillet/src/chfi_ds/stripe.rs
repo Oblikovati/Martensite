@@ -4,7 +4,7 @@ use super::shared::{Shared, lock};
 use super::spine::SpineHandle;
 use super::surf_data::SurfDataHandle;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::top_abs::Orientation;
 
@@ -29,7 +29,6 @@ pub type SurfDataSequenceHandle = Shared<Vec<SurfDataHandle>>;
 /// ```
 #[derive(Clone)]
 pub struct Stripe {
-    parent: StandardTransient,
     first_params: (f64, f64),
     last_params: (f64, f64),
     spine: Option<SpineHandle>,
@@ -51,12 +50,11 @@ pub struct Stripe {
     first_pcurve_orientation: Orientation,
     last_pcurve_orientation: Orientation,
 }
-impl_transient!(Stripe, "ChFiDSStripe", StandardTransient, parent);
+impl_transient!(Stripe, "ChFiDSStripe", dyn Transient);
 
 impl Default for Stripe {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             first_params: (0.0, 0.0),
             last_params: (0.0, 0.0),
             spine: None,

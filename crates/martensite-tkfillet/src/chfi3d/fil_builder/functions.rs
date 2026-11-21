@@ -12,7 +12,7 @@ use crate::brep_blend::{
 };
 use crate::chfi_ds::{ElSpine, Shared, shared};
 use crate::chfi3d::builder::RstRef;
-use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
+use martensite_tkbrep::brep_adaptor::{BRepAdaptorCurve2d, BRepAdaptorSurface};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dCurveOnSurface, Adaptor3dSurface};
@@ -98,13 +98,11 @@ pub(super) struct FunctionSettings<'a> {
 }
 
 fn general_surface(h: &Handle<BRepAdaptorSurface>) -> Handle<dyn Adaptor3dSurface> {
-    h.clone().cast()
+    h.upcast()
 }
 
-fn general_rst<T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
-    h: &Handle<T>,
-) -> Handle<dyn Adaptor2dCurve2d> {
-    h.clone().cast()
+fn general_rst(h: &Handle<BRepAdaptorCurve2d>) -> Handle<dyn Adaptor2dCurve2d> {
+    h.upcast()
 }
 
 /// `Adaptor3dCurveOnSurface HC; HC->Load(PC, HS)`.
@@ -116,7 +114,7 @@ fn curve_on_surface(
         &general_rst(rst.pc),
         &general_surface(surf),
     )?)
-    .cast())
+    .into_upcast())
 }
 
 /// `petitchoix`: 1 (3 when the surface is reversed), plus one for an even choice.
@@ -144,7 +142,7 @@ pub(super) fn surf_rst_const(
     let (s, srst, guide) = (
         general_surface(surf),
         general_surface(side.surf),
-        settings.guide.clone().cast(),
+        settings.guide.upcast(),
     );
     let mut func = BRepBlendSurfRstConstRad::new((&s, &srst, &general_rst(side.rst.pc)), &guide)?;
     func.set_refs(
@@ -182,7 +180,7 @@ pub(super) fn surf_rst_evol(
     let (s, srst, guide) = (
         general_surface(surf),
         general_surface(side.surf),
-        settings.guide.clone().cast(),
+        settings.guide.upcast(),
     );
     let mut func =
         BRepBlendSurfRstEvolRad::new((&s, &srst, &general_rst(side.rst.pc)), &guide, law)?;
@@ -259,7 +257,7 @@ fn rst_rst_adaptors(
             curve_on_surface(sides.side1.rst, sides.side1.surf)?,
             curve_on_surface(sides.side2.rst, sides.side2.surf)?,
         ],
-        guide.clone().cast(),
+        guide.upcast(),
     ))
 }
 

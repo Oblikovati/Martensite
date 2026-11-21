@@ -61,7 +61,7 @@ impl ChFi2dBuilder {
         let rot_axe = Axis1::new(p1, Direction3::from_vector(tan.crossed(my_vec))?);
         let dir = Direction3::from_vector(my_vec.rotated(rot_axe, -ang)?)?;
         let line = GeomLine::from_point(p1, dir);
-        let handle: Handle<dyn GeomCurve> = Handle::new(line.clone()).cast();
+        let handle: Handle<dyn GeomCurve> = Handle::new(line.clone()).into_upcast();
         let (p2, param2) = self.compute_point_on_line(&handle, adj2)?;
         self.finish_chamfer(
             v,
@@ -143,7 +143,7 @@ impl ChFi2dBuilder {
         x2.set_orientation(Orientation::Reversed);
         // chamfer edge construction
         let param = elclib::line_parameter(line.lin().position(), p2);
-        let new_line: Handle<dyn GeomCurve> = Handle::new(line).cast();
+        let new_line: Handle<dyn GeomCurve> = Handle::new(line).into_upcast();
         let mut chamfer = Edge::default();
         b.make_edge_with_curve(&mut chamfer, &new_line, tol)?;
         b.range(&chamfer, 0.0, param, false)?;

@@ -136,7 +136,7 @@ pub(super) fn bon_voisin(
         }
         let hc = Handle::new(BRepAdaptorCurve::with_edge(&ecur)?);
         let tolc = hc.resolution(tol3d)?;
-        let hca: Handle<dyn Adaptor3dCurve> = hc.clone().cast();
+        let hca: Handle<dyn Adaptor3dCurve> = hc.upcast();
         let Some(winter) = inter_plane_edge(plane, &hca, true, tolc)? else {
             continue;
         };
@@ -387,7 +387,7 @@ pub(super) fn build_plane(
         let mut prop = BRepLPropSLProps::with_parameters(hs, uv.x(), uv.y(), 1, 1.0e-12)?;
         if prop.is_normal_defined()? {
             let pln: Handle<dyn GeomSurface> =
-                Handle::new(GeomPlane::from_point(prop.value(), prop.normal()?)?).cast();
+                Handle::new(GeomPlane::from_point(prop.value(), prop.normal()?)?).into_upcast();
             let mut new_f = BRepLibMakeFace::from_surface(&pln, precision::confusion())?.face()?;
             new_f.set_orientation(f.orientation());
             *pons = Point2::new(0., 0.);
@@ -401,6 +401,6 @@ pub(super) fn build_plane(
 /// A plane of the guide at `w`, normal to it, as a surface adaptor.
 pub(super) fn guide_plane(p: Point3, v: Vector3) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
     let pl: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_point(p, Direction3::from_vector(v)?)?).cast();
-    Ok(Handle::new(GeomAdaptorSurface::with_surface(&pl)?).cast())
+        Handle::new(GeomPlane::from_point(p, Direction3::from_vector(v)?)?).into_upcast();
+    Ok(Handle::new(GeomAdaptorSurface::with_surface(&pl)?).into_upcast())
 }

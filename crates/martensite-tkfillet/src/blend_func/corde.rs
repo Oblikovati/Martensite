@@ -182,13 +182,14 @@ mod tests {
 
     /// The plane z = 0 and the X axis as guide.
     fn plane_along_x() -> Corde {
-        let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+        let plane: Handle<dyn GeomSurface> =
+            Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
         let surface: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&plane).unwrap()).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&plane).unwrap()).into_upcast();
         let x_axis = Axis1::new(Point3::default(), Direction3::new(1., 0., 0.).unwrap());
-        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(x_axis)).cast();
+        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(x_axis)).into_upcast();
         let guide: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&line).unwrap()).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&line).unwrap()).into_upcast();
         Corde::new(&surface, &guide)
     }
 
