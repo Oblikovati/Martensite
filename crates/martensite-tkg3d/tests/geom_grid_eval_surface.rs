@@ -105,3 +105,6 @@ fn Adaptor<T: GeomSurface + RuntimeTyped>(theSurface: &Handle<T>) -> GeomAdaptor
 
 include!("geom_grid_eval_surface/suites_0.rs");
 include!("geom_grid_eval_surface/suites_1.rs");
+
+#[path = "geom_grid_eval_surface/transformed_source.rs"]
+mod transformed_source;

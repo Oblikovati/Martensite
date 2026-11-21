@@ -10,7 +10,7 @@ use crate::geom::{
 };
 use crate::geom_adaptor::{
     GeomAdaptorCurve, GeomAdaptorSurfaceOfLinearExtrusion, GeomAdaptorSurfaceOfRevolution,
-    GeomAdaptorTransformedSurface, GeomSurfaceAdaptor,
+    GeomSurfaceAdaptor, GeomTransformedSurfaceSource,
 };
 use martensite_tkernel::standard::{Failure, Handle, project_concrete, project_interface};
 use martensite_tkmath::geom_abs::SurfaceType;
@@ -29,7 +29,9 @@ pub(super) enum AdaptorResolution<'a> {
 pub(super) fn resolve_adaptor(
     surface: &dyn Adaptor3dSurface,
 ) -> Result<AdaptorResolution<'_>, Failure> {
-    if let Some(transformed) = project_concrete::<GeomAdaptorTransformedSurface>(surface) {
+    // #592: retain the original grid evaluator through honest composed adaptors.
+    if let Some(source) = project_interface::<dyn GeomTransformedSurfaceSource>(surface) {
+        let transformed = source.transformed_surface();
         let trsf: Transform3 = transformed.trsf();
         let kept: Option<Transform3> = (trsf.form() != TransformForm::Identity).then_some(trsf);
         let original = transformed.geom_surface_original();
