@@ -28,7 +28,7 @@ impl DeShapeFixConfigurationNodeBase {
     pub fn copied_from(node: &Handle<dyn DeShapeFixConfigurationNode>) -> Result<Self, Failure> {
         let source = live(node, "DEShapeFixConfigurationNode(theConfigurationNode)")?;
         Ok(Self {
-            node: DeConfigurationNodeBase::copied_from(&node.cast())?,
+            node: DeConfigurationNodeBase::copied_fields(source),
             parameters: SharedState::new(source.shape_fix_parameters()),
         })
     }
@@ -96,7 +96,8 @@ pub trait DeShapeFixConfigurationNode: DeConfigurationNode {
 impl_transient_interface!(
     dyn DeShapeFixConfigurationNode,
     "DEShapeFixConfigurationNode",
-    dyn DeConfigurationNode
+    dyn DeConfigurationNode,
+    upcasts: [dyn DeConfigurationNode]
 );
 
 /// `provider.FORMAT.VENDOR.healing` followed by `suffix`.

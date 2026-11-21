@@ -100,8 +100,8 @@ pub type DePluginResult = Result<(), Failure>;
 /// # use martensite_tkde::de::*;
 /// # use martensite_tkernel::{impl_transient, ncollection::List, standard::*, tcollection::AsciiString};
 /// # #[derive(Default)]
-/// # struct DocNode { transient: StandardTransient, base: DeConfigurationNodeBase }
-/// # impl_transient!(DocNode, "DocNode", dyn DeConfigurationNode, transient, interfaces: [dyn DeConfigurationNode]);
+/// # struct DocNode { base: DeConfigurationNodeBase }
+/// # impl_transient!(DocNode, "DocNode", dyn DeConfigurationNode, interfaces: [dyn DeConfigurationNode]);
 /// # impl DeConfigurationNode for DocNode {
 /// #     fn configuration_node_base(&self) -> &DeConfigurationNodeBase { &self.base }
 /// #     fn load(&self, _: &Handle<DeConfigurationContext>) -> Result<bool, Failure> { Ok(true) }
