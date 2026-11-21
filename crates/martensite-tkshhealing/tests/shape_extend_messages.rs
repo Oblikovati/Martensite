@@ -69,7 +69,7 @@ fn text_message(text: &str) -> Msg {
 fn the_registrator_keeps_messages_per_object_and_per_shape() {
     let registrator = ShapeExtendMsgRegistrator::new();
     let object: Handle<dyn Transient> =
-        Handle::new(martensite_tkernel::standard::StandardTransient::default()).into_upcast();
+        Handle::new(martensite_tkernel::standard::StandardTransient).into_upcast();
     let edge = support::square_edges().remove(0);
     registrator.send_transient(&object, &text_message("a"), Gravity::Info);
     registrator.send_transient(&object, &text_message("b"), Gravity::Fail);
