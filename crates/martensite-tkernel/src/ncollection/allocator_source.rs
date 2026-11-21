@@ -13,7 +13,8 @@ use crate::standard::{RuntimeType, RuntimeTyped, Transient};
 /// Virtual bodies execute through AllocatorInvocation; actual field-access scopes must end before
 /// callbacks can destroy the logical receiver. They must not snapshot later-reread mutable slots.
 pub unsafe trait AllocatorSource: Transient {
-    /// Borrow the genuine parent; `self.allocator_object_base().allocate_base(32)`.
+    /// Borrow the allocator policy and identity state; `let base = source.allocator_object_base()`.
+    /// Use `invocation.allocate_base(32)` for qualified base dispatch.
     fn allocator_object_base(&self) -> &AllocatorObject;
     /// Lease physical allocation memory independently; `let memory=source.physical_storage()`.
     fn physical_storage(&self) -> AllocatorStorageLease {

@@ -169,6 +169,10 @@ classes of its own. With the new TKernel ownership model at `5f4399a6`, its 13
 tests and documentation tests passed, and all-target Clippy passed with warnings
 denied. Its package source required no migration.
 
+The combined checkpoint `6cede265` passed 9,867 tests across `tkernel`, `tkmath`,
+`process-policy`, `tkcdf` and `tkexpress`, with eight existing ignores.
+All-target Clippy and the source unsafe inventory check passed on that checkpoint.
+
 ## Risks and open points
 
 - Persistence reads and writes class names; the name registry must stay complete and
