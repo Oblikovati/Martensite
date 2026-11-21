@@ -221,32 +221,58 @@ pub(super) fn geom_int(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use martensite_tkg3d::geom::GeomLine;
+    use martensite_tkg3d::geom::{GeomLine, GeomSurfaceOfLinearExtrusion, GeomSurfaceOfRevolution};
     use martensite_tkg3d::geom_adaptor::{
-        GeomAdaptorCurve, GeomAdaptorSurfaceOfLinearExtrusion, GeomAdaptorSurfaceOfRevolution,
+        GeomAdaptorCurve, GeomAdaptorSurface, GeomAdaptorSurfaceOfLinearExtrusion,
+        GeomAdaptorSurfaceOfRevolution,
     };
     use martensite_tkmath::gp::{Axis1, Direction3};
 
-    #[test]
-    fn swept_surface_views_keep_the_geometry_of_both_adaptor_families() {
+    fn swept_basis() -> (Handle<dyn GeomCurve>, Axis1) {
         let vertical = Direction3::new(0.0, 0.0, 1.0).unwrap();
         let axis = Axis1::new(Point3::default(), vertical);
-        let line =
-            Handle::new(GeomLine::from_point(Point3::new(2.0, 0.0, 0.0), vertical)).into_upcast();
+        let line = GeomLine::from_point(Point3::new(2.0, 0.0, 0.0), vertical);
+        (Handle::new(line).into_upcast(), axis)
+    }
+
+    #[test]
+    fn curve_only_sweep_adaptors_have_no_geom_surface_to_extract() {
+        let (line, axis) = swept_basis();
         let guide =
             Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).into_upcast();
-        let extruded = Handle::new(
-            GeomAdaptorSurfaceOfLinearExtrusion::with_curve_and_direction(
-                &guide,
-                Direction3::new(0.0, 1.0, 0.0).unwrap(),
-            ),
-        )
-        .into_upcast();
-        let revolved =
-            Handle::new(GeomAdaptorSurfaceOfRevolution::with_curve_and_axis(&guide, axis).unwrap())
-                .into_upcast();
-        let extruded = trsfsurf(&extruded).unwrap().unwrap();
-        let revolved = trsfsurf(&revolved).unwrap().unwrap();
+        let side = Direction3::new(0.0, 1.0, 0.0).unwrap();
+        let extruded = GeomAdaptorSurfaceOfLinearExtrusion::with_curve_and_direction(&guide, side);
+        let revolved = GeomAdaptorSurfaceOfRevolution::with_curve_and_axis(&guide, axis).unwrap();
+        // The inherited Surface member stays empty when only the basis adaptor was supplied.
+        assert!(
+            trsfsurf(&Handle::new(extruded).into_upcast())
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            trsfsurf(&Handle::new(revolved).into_upcast())
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    fn extract_loaded_sweep(surface: Handle<dyn GeomSurface>) -> Handle<dyn GeomSurface> {
+        let adaptor = GeomAdaptorSurface::with_bounds(&surface, (0.0, 1.0, 0.0, 2.0)).unwrap();
+        trsfsurf(&Handle::new(adaptor).into_upcast())
+            .unwrap()
+            .unwrap()
+    }
+
+    #[test]
+    fn swept_geometry_keeps_values_and_bounds_when_extracted_from_loaded_adaptors() {
+        let (line, axis) = swept_basis();
+        let side = Direction3::new(0.0, 1.0, 0.0).unwrap();
+        let extruded = GeomSurfaceOfLinearExtrusion::new(&line, side).unwrap();
+        let revolved = GeomSurfaceOfRevolution::new(&line, axis).unwrap();
+        let extruded = extract_loaded_sweep(Handle::new(extruded).into_upcast());
+        let revolved = extract_loaded_sweep(Handle::new(revolved).into_upcast());
+        assert_eq!(extruded.bounds(), (0.0, 1.0, 0.0, 2.0));
+        assert_eq!(revolved.bounds(), (0.0, 1.0, 0.0, 2.0));
         let along = extruded.value(0.25, 0.5).unwrap();
         let around = revolved.value(0.0, 0.5).unwrap();
         assert!(along.is_equal(&Point3::new(2.0, 0.5, 0.25), 1.0e-12));
