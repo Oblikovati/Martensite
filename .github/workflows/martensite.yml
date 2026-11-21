@@ -53,51 +53,8 @@ env:
   MARTENSITE_CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
 jobs:
-  # #592 migrations advance one toolkit at a time. Compile the gate from the
-  # event base so a PR cannot choose the packages its own gate checks.
-  object-model-migration:
-    if: github.event_name == 'pull_request' && github.base_ref == 'feature/rust-object-model'
-    name: object model migration (x86_64-unknown-linux-gnu)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          submodules: true
-          persist-credentials: false
-      - name: Compile the gate from the immutable pull request base
-        run: |
-          git worktree add --detach "$RUNNER_TEMP/object-model-base" "$MARTENSITE_CI_BASE_SHA"
-          cd "$RUNNER_TEMP/object-model-base"
-          rustup toolchain install
-          cargo build --locked --package martensite-build --target-dir "$RUNNER_TEMP/object-model-driver"
-      - name: Resolve the next authorized crate
-        id: migration
-        run: |
-          "$RUNNER_TEMP/object-model-driver/debug/martensite-build" object-model-pr --base "$MARTENSITE_CI_BASE_SHA" --plan
-      - if: steps.migration.outputs.has-renderer == 'true'
-        uses: ./.github/actions/setup-renderer-tests
-      - if: steps.migration.outputs.has-renderer != 'true'
-        uses: ./.github/actions/free-runner-disk
-      - if: steps.migration.outputs.has-sanitizer == 'true'
-        run: rustup toolchain install nightly-2026-09-25 --profile minimal --component rust-src
-      - name: Qualify the migrated crates
-        run: |
-          "$RUNNER_TEMP/object-model-driver/debug/martensite-build" object-model-pr --base "$MARTENSITE_CI_BASE_SHA"
-      - if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: object-model-migration-unsafe-inventory
-          path: |
-            target/unsafe-inventory/migration/*/latest.json
-            target/unsafe-inventory/migration/*/compiler.stdout.jsonl
-            target/unsafe-inventory/migration/*/compiler.stderr.txt
-          if-no-files-found: ignore
-
   plan:
-    if: >-
-      github.event_name != 'schedule' && inputs.mode != 'cache'
-      && (github.event_name != 'pull_request' || github.base_ref != 'feature/rust-object-model')
+    if: github.event_name != 'schedule' && inputs.mode != 'cache'
     permissions:
       contents: read
       actions: read
@@ -271,7 +228,7 @@ jobs:
       MARTENSITE_CI_BASE_SHA: ${{ needs.plan.outputs.base-sha }}
       MARTENSITE_RELEASE_HISTORY_SHA256: ${{ needs.plan.outputs.release-history }}
     needs: [plan, checks, tests, release-tests, thread-sanitizer]
-    if: always() && github.event_name != 'schedule' && inputs.mode != 'cache' && (github.event_name != 'pull_request' || github.base_ref != 'feature/rust-object-model')
+    if: always() && github.event_name != 'schedule' && inputs.mode != 'cache'
     name: ${{ needs.plan.outputs.mode == 'release' && 'release' || 'pr (x86_64-unknown-linux-gnu)' }}
     runs-on: ubuntu-24.04
     steps:
