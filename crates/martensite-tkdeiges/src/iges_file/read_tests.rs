@@ -4,7 +4,7 @@ use super::{
 };
 use crate::iges_data::IgesDataUndefinedEntitySource;
 use crate::iges_data::{
-    IgesDataIgesEntity, IgesDataIgesWriter, IgesDataProtocol, IgesDataUndefinedEntity,
+    IgesDataIgesEntity, IgesDataIgesWriter, IgesDataProtocol,
     iges_data_init, iges_data_protocol,
 };
 use crate::iges_data::{IgesDataIgesModel, IgesDataProtocolOps};

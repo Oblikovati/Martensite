@@ -15,7 +15,7 @@ use crate::iges_solid::IgesSolid;
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::TransientHandleTarget;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheckTool, InterfaceCopyTool, InterfaceInterfaceModel, InterfaceModelEntities,

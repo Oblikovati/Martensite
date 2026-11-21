@@ -259,10 +259,10 @@ fn lists_of_an_entity_stay_apart_and_are_marked_when_read() {
     );
     live.remove_property(&other).unwrap();
     assert_eq!(live.nb_properties(), 0);
-    IgesDataIgesEntity::associate(&other, &owner).unwrap();
+    IgesDataIgesEntity::associate(&other, &owner.upcast()).unwrap();
     assert_eq!(live.nb_associativities(), 1);
     assert_eq!(live.associativities().nb_entities(), 1);
-    IgesDataIgesEntity::dissociate(&other, &owner).unwrap();
+    IgesDataIgesEntity::dissociate(&other, &owner.upcast()).unwrap();
     assert_eq!(live.nb_associativities(), 0);
     let mut read = InterfaceEntityList::new();
     read.append(&other.cast()).unwrap();

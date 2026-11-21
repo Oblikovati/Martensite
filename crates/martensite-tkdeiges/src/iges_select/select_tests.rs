@@ -19,7 +19,7 @@ use crate::iges_data::{
 use crate::iges_geom::{IgesGeom, IgesGeomPlane};
 use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
-    standard::{Handle, StandardTransient},
+    standard::Handle,
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -37,7 +37,7 @@ use martensite_tkxsbase::{
 pub(super) fn plain(type_number: i32) -> Handle<dyn IgesDataEntityKind> {
     let entity = Handle::new(IgesDataIgesEntity::default());
     entity.get().unwrap().init_type_and_form(type_number, 0);
-    entity
+    entity.into_upcast()
 }
 
 pub(super) fn model_of(entities: &[&Handle<dyn IgesDataEntityKind>]) -> Handle<IgesDataIgesModel> {

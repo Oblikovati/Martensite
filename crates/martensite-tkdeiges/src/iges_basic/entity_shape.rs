@@ -215,7 +215,7 @@ pub(crate) fn spline_coefficients() -> Result<Handle<HArray2<Handle<HArray1<f64>
 /// Operands of a post-order tree: two lines, then an operation.
 #[cfg(test)]
 pub(crate) fn boolean_tree_operands()
--> Result<Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, Failure> {
+-> Result<Handle<HArray1<Handle<dyn crate::iges_data::IgesDataEntityKind>>>, Failure> {
     use crate::iges_data::{iges_array1_set, iges_new_array1};
     use crate::iges_geom::samples_01::sample_iges_geom_line;
     let operands = iges_new_array1(1, 3)?;

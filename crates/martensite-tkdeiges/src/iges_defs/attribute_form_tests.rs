@@ -1,6 +1,6 @@
 //! The forms of an attribute definition: without values, with values, and with values and templates.
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_set, iges_new_array1};
+use crate::iges_data::{iges_array1_set, iges_new_array1};
 use crate::iges_defs::{
     IgesDefsAttributeDef, IgesDefsGenericData, IgesDefsHArray1OfHArray1OfTextDisplayTemplate,
 };
@@ -11,7 +11,7 @@ use crate::iges_test_samples::{
 };
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::Transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 
 fn values() -> Result<Handle<HArray1<Handle<dyn Transient>>>, Failure> {

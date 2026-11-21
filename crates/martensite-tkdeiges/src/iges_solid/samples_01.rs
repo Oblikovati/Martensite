@@ -13,7 +13,6 @@ use crate::iges_basic::{
     IgesBasicHArray1OfHArray1OfIgesEntity, IgesBasicHArray1OfHArray1OfInteger,
 };
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::{iges_array1_set, iges_new_array1};
 use crate::iges_geom::samples_01::{
     sample_iges_geom_direction, sample_iges_geom_line, sample_iges_geom_point,

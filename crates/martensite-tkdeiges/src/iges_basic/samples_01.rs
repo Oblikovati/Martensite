@@ -15,7 +15,6 @@ use crate::iges_basic::{
     IgesBasicSingularSubfigure, IgesBasicSubfigureDef,
 };
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_geom::samples_01::sample_iges_geom_line;
 use crate::iges_test_samples::sample_list;
 use martensite_tkernel::ncollection::HArray1;

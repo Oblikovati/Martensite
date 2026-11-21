@@ -13,7 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataLineFontEntity, IgesDataViewKindEntity};
+use crate::iges_data::{IgesDataLineFontEntity, IgesDataViewKindEntity};
 use crate::iges_dimen::{
     IgesDimenGeneralNote, IgesDimenLeaderArrow, IgesDimenNewDimensionedGeometry,
     IgesDimenNewGeneralNote, IgesDimenOrdinateDimension, IgesDimenPointDimension,

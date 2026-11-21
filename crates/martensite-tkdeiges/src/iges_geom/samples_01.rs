@@ -12,7 +12,6 @@ use crate::iges_basic::nested_arrays::nested_entity_lists;
 use crate::iges_basic::samples_01::sample_iges_basic_subfigure_def;
 use crate::iges_basic::{IgesBasicHArray1OfHArray1OfIgesEntity, IgesBasicSubfigureDef};
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::{iges_array1_set, iges_new_array1, iges_new_array2};
 use crate::iges_geom::{
     IgesGeomBSplineCurve, IgesGeomBSplineSurface, IgesGeomBoundary, IgesGeomBoundedSurface,

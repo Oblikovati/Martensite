@@ -302,7 +302,8 @@ impl InterfaceInterfaceModel for IgesDataIgesModel {
 
 #[cfg(test)]
 mod tests {
-    use super::{Handle, IgesDataIgesEntity, IgesDataIgesModel, InterfaceInterfaceModel};
+    use super::{Handle, IgesDataIgesModel, InterfaceInterfaceModel};
+    use crate::iges_data::IgesDataIgesEntity;
 
     #[test]
     fn start_section_keeps_its_order() {

@@ -1,9 +1,10 @@
 //! The modifiers that rebuild the drawings and the groups a partial copy has broken.
+use martensite_tkernel::standard::project_interface;
 use super::IgesSelectModelModifier;
 use super::IgesSelectViewSorter;
 use super::modifier_bases::{iges_model_modifier, modifier_base};
 use crate::iges_basic::{
-    IgesBasicGroup, IgesBasicGroupWithoutBackP, IgesBasicOrderedGroup,
+    IgesBasicGroup, IgesBasicGroupSource, IgesBasicGroupWithoutBackP, IgesBasicOrderedGroup,
     IgesBasicOrderedGroupWithoutBackP,
 };
 use crate::iges_data::IgesDataEntityKind;
@@ -261,7 +262,8 @@ fn copied_members(
     tc: &InterfaceCopyTool,
 ) -> Result<InterfaceEntityIterator, Failure> {
     let mut newlist = InterfaceEntityIterator::new();
-    if let Some(group) = ent.cast::<IgesBasicGroup>().get() {
+    if let Some(source) = ent.get().and_then(|entity| project_interface::<dyn IgesBasicGroupSource>(entity)) {
+        let group = source.group_base();
         for rank in 1..=group.nb_entities() {
             let mut newent = Handle::default();
             if tc.search(&group.value(rank)?, &mut newent)? {

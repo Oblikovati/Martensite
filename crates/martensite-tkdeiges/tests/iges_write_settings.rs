@@ -7,7 +7,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkdeiges::iges_control::{IgesControlReader, IgesControlWriter};
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::Transient;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{
     GeomCircle, GeomConicalSurface, GeomCylindricalSurface, GeomEllipse, GeomHyperbola, GeomLine,
     GeomParabola, GeomPlane, GeomSphericalSurface, GeomToroidalSurface, GeomTrimmedCurve,

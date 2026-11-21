@@ -505,7 +505,7 @@ pub(super) use curve_and_surface_tool;
 #[cfg(test)]
 mod no_result_tests {
     use super::IgesToBRepCurveAndSurface;
-    use crate::iges_data::IgesDataIgesEntity;
+    use crate::iges_data::{IgesDataEntityKind, IgesDataIgesEntity};
     use martensite_tkernel::standard::{Failure, Handle};
 
     #[test]

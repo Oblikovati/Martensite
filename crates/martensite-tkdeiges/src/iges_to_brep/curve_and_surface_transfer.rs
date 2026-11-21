@@ -3,13 +3,13 @@ use super::{
     IgesToBRep, IgesToBRepBRepEntity, IgesToBRepCurveAndSurface, IgesToBRepTopoCurve,
     IgesToBRepTopoSurface,
 };
-use crate::iges_basic::{IgesBasicGroup, IgesBasicSingularSubfigure, IgesBasicSubfigureDef};
+use crate::iges_basic::{IgesBasicGroup, IgesBasicGroupSource, IgesBasicSingularSubfigure, IgesBasicSubfigureDef};
 use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataToolLocation, iges_live};
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Shape};
 use martensite_tkernel::message::{Msg, ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::{Failure, Handle, project_interface};
 use martensite_tkmath::gp::{Transform3, Vector3};
 use martensite_tkmath::toploc::Location;
 use martensite_tkxsbase::interface::InterfaceStatic;
@@ -210,7 +210,6 @@ impl IgesToBRepCurveAndSurface {
         let mut subfigure_placement = None;
         let singular = start.cast::<IgesBasicSingularSubfigure>();
         let definition = start.cast::<IgesBasicSubfigureDef>();
-        let group = start.cast::<IgesBasicGroup>();
         let mut result = if let Some(live) = singular.get() {
             if blanked {
                 return Ok(Shape::default());
@@ -224,11 +223,11 @@ impl IgesToBRepCurveAndSurface {
                 return Ok(shape);
             }
             shape
-        } else if let Some(live) = group.get() {
+        } else if let Some(group) = project_interface::<dyn IgesBasicGroupSource>(entity) {
             if blanked {
                 return Ok(Shape::default());
             }
-            let shape = self.group_shape(start, live, range, only_visible)?;
+            let shape = self.group_shape(start, group.group_base(), range, only_visible)?;
             if shape.is_null() {
                 return Ok(shape);
             }

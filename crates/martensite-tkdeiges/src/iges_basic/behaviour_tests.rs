@@ -1,7 +1,7 @@
 //! What the sample round can't see: derived values against closed forms, and the record of a file.
 use crate::iges_basic::{IgesBasicGroup, IgesBasicToolGroup};
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::{IgesDataIgesEntity, iges_new_array1, iges_new_array2};
+use crate::iges_data::{iges_new_array1, iges_new_array2};
 use crate::iges_geom::{
     IgesGeomBSplineSurface, IgesGeomCircularArc, IgesGeomConicArc, IgesGeomCopiousData,
     IgesGeomLine, IgesGeomPlane, IgesGeomToolConicArc, IgesGeomToolTransformationMatrix,

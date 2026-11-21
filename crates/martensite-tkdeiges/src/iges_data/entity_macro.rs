@@ -152,6 +152,9 @@ macro_rules! iges_entity {
     ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, parent $parent:ty, { $($field:ident: $ty:ty),* $(,)? }) => {
         $crate::iges_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, $parent, [], { $($field: $ty),* }, []);
     };
+    ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, parent $parent:ty, kinds [$($kind:ty),+ $(,)?], { $($field:ident: $ty:ty),* $(,)? }) => {
+        $crate::iges_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, $parent, [$($kind),+], { $($field: $ty),* }, []);
+    };
     ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, kind $kind:ty, { $($field:ident: $ty:ty),* $(,)? }) => {
         $crate::iges_entity!(@shape $(#[$meta])* $class, $state, $recorded, $kind, $crate::iges_data::IgesDataIgesEntity, [$kind], { $($field: $ty),* }, []);
     };

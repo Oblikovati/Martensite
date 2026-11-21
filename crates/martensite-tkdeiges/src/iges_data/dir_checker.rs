@@ -330,11 +330,12 @@ fn check_range(check: &InterfaceCheck, value: i32, max: i32, key: &str) {
 #[cfg(test)]
 mod tests {
     use super::{Handle, IgesDataDirChecker, IgesDataIgesEntity, InterfaceCheck};
+    use crate::iges_data::IgesDataEntityKind;
 
     fn entity_of(type_number: i32, form: i32) -> Handle<dyn IgesDataEntityKind> {
         let entity = Handle::new(IgesDataIgesEntity::default());
         entity.get().unwrap().init_type_and_form(type_number, form);
-        entity
+        entity.into_upcast()
     }
 
     #[test]

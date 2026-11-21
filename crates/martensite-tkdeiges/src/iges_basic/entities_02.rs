@@ -8,6 +8,7 @@
     reason = "the members keep the form of the rules they state, and values a reader then ignores"
 )]
 use super::IgesBasicGroup;
+use super::IgesBasicGroupSource;
 use crate::iges_basic::entity_shape::iges_array1_lower;
 use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_array1_item;
@@ -26,7 +27,7 @@ iges_entity! {
 /// maintained as a single entity, but the group is
 /// ordered.
 /// It inherits from Group
-custom_default IgesBasicOrderedGroup, IgesBasicOrderedGroupState, "IgesBasicOrderedGroup", parent IgesBasicGroup, {  }
+custom_default IgesBasicOrderedGroup, IgesBasicOrderedGroupState, "IgesBasicOrderedGroup", parent IgesBasicGroup, kinds [dyn IgesBasicGroupSource], {  }
 }
 impl Default for IgesBasicOrderedGroup {
     fn default() -> Self {
@@ -50,7 +51,7 @@ iges_entity! {
 /// maintained as a single entity, but the group is
 /// ordered and there are no back pointers.
 /// It inherits from Group
-custom_default IgesBasicOrderedGroupWithoutBackP, IgesBasicOrderedGroupWithoutBackPState, "IgesBasicOrderedGroupWithoutBackP", parent IgesBasicGroup, {  }
+custom_default IgesBasicOrderedGroupWithoutBackP, IgesBasicOrderedGroupWithoutBackPState, "IgesBasicOrderedGroupWithoutBackP", parent IgesBasicGroup, kinds [dyn IgesBasicGroupSource], {  }
 }
 impl Default for IgesBasicOrderedGroupWithoutBackP {
     fn default() -> Self {

@@ -25,7 +25,7 @@ use crate::iges_basic::{
     IgesBasicHArray1OfHArray1OfXyz, IgesBasicSubfigureDef,
 };
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::{IgesDataIgesEntity, iges_array2_set, iges_new_array2};
+use crate::iges_data::{iges_array2_set, iges_new_array2};
 use crate::iges_defs::IgesDefsTabularData;
 use crate::iges_dimen::IgesDimenGeneralNote;
 use crate::iges_draw::IgesDrawConnectPoint;

@@ -14,7 +14,7 @@
 )]
 use crate::iges_basic::{IgesBasicHArray1OfHArray1OfInteger, IgesBasicHArray1OfHArray1OfReal};
 use crate::iges_data::IgesDataEntityKind;
-use crate::iges_data::{IgesDataIgesEntity, iges_array2_set, iges_new_array2};
+use crate::iges_data::{iges_array2_set, iges_new_array2};
 use crate::iges_defs::{
     IgesDefsAssociativityDef, IgesDefsAttributeDef, IgesDefsAttributeTable, IgesDefsGenericData,
     IgesDefsMacroDef, IgesDefsTabularData, IgesDefsUnitsData,
@@ -34,7 +34,7 @@ use crate::iges_test_samples::{
 };
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::Transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::{Xy, Xyz};
 
