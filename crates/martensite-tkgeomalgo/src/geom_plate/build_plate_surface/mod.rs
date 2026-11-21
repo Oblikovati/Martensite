@@ -13,13 +13,15 @@ mod surf_init;
 mod surf_init_normals;
 mod verif;
 
-use super::curve_constraint::GeomPlateCurveConstraint;
+use super::curve_constraint::{
+    GeomPlateCurveConstraint, GeomPlateCurveConstraintSource, GeomPlateCurveConstraintState,
+};
 use super::live;
 use super::point_constraint::GeomPlatePointConstraint;
 use super::surface::GeomPlateSurface;
 use crate::plate::PlatePlate;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkg2d::geom2d::errors as geom_errors;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::GeomSurface;
@@ -38,7 +40,7 @@ use martensite_tkgeombase::extrema::ExtPS;
 /// let surface = builder.surface();
 /// ```
 pub struct GeomPlateBuildPlateSurface {
-    pub(super) lin_cont: Vec<Handle<GeomPlateCurveConstraint>>,
+    pub(super) lin_cont: Vec<Handle<dyn GeomPlateCurveConstraintSource>>,
     pub(super) par_cont: Option<Vec<Vec<f64>>>,
     pub(super) plate_cont: Option<Vec<Vec<f64>>>,
     pub(super) pnt_cont: Vec<Handle<GeomPlatePointConstraint>>,
@@ -206,7 +208,7 @@ impl GeomPlateBuildPlateSurface {
             let (curve, order) = (harray_value(tab_curve, i)?, harray_value(tang, i)?);
             let npt: i32 = harray_value(n_points, i)?;
             let cont = GeomPlateCurveConstraint::new(&curve, order, npt, 0.0001, 0.01, 0.1)?;
-            builder.lin_cont.push(Handle::new(cont));
+            builder.lin_cont.push(Handle::new(cont).into_upcast());
         }
         Ok(builder)
     }
@@ -286,8 +288,11 @@ impl GeomPlateBuildPlateSurface {
 
     /// Adds a curve constraint (`Add(GeomPlate_CurveConstraint)`);
     /// `builder.add_curve(&constraint)`.
-    pub fn add_curve(&mut self, cont: &Handle<GeomPlateCurveConstraint>) {
-        self.lin_cont.push(cont.clone());
+    pub fn add_curve<C>(&mut self, cont: &Handle<C>)
+    where
+        C: ?Sized + HandleUpcast<dyn GeomPlateCurveConstraintSource>,
+    {
+        self.lin_cont.push(cont.upcast());
     }
 
     /// The number of curves that bound the plate, all of them when 0
@@ -308,7 +313,7 @@ impl GeomPlateBuildPlateSurface {
     pub fn curve_constraint(
         &self,
         order: i32,
-    ) -> Result<Handle<GeomPlateCurveConstraint>, Failure> {
+    ) -> Result<Handle<dyn GeomPlateCurveConstraintSource>, Failure> {
         let index: usize = sequence_index(order, self.lin_cont.len(), "CurveConstraint")?;
         Ok(self.lin_cont[index].clone())
     }
@@ -324,9 +329,9 @@ impl GeomPlateBuildPlateSurface {
     }
 
     /// `myLinCont->Value(i)`, 1-based.
-    pub(super) fn lin(&self, i: i32) -> Result<&GeomPlateCurveConstraint, Failure> {
+    pub(super) fn lin(&self, i: i32) -> Result<&GeomPlateCurveConstraintState, Failure> {
         let index: usize = sequence_index(i, self.lin_cont.len(), "LinCont")?;
-        live(&self.lin_cont[index], "a curve constraint")
+        curve_state(&self.lin_cont[index])
     }
 
     /// `myPntCont->Value(i)`, 1-based.
@@ -349,4 +354,10 @@ impl GeomPlateBuildPlateSurface {
     pub(super) fn surf_init_ref(&self) -> Result<&dyn GeomSurface, Failure> {
         live(&self.surf_init, "the initial surface")
     }
+}
+
+fn curve_state(
+    constraint: &Handle<dyn GeomPlateCurveConstraintSource>,
+) -> Result<&GeomPlateCurveConstraintState, Failure> {
+    Ok(live(constraint, "a curve constraint")?.curve_constraint_state())
 }

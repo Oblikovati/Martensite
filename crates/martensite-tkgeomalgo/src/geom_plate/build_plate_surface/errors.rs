@@ -84,7 +84,7 @@ impl GeomPlateBuildPlateSurface {
         let par: Vec<f64> = self.par_cont_of(c)?.to_vec();
         let nb_pt: i32 = if par.len() < 3 { 4 } else { par.len() as i32 };
         let lin = self.lin_cont[super::sequence_index(c, self.lin_cont.len(), "LinCont")?].clone();
-        let lin_cont = live(&lin, "a curve constraint")?;
+        let lin_cont = super::curve_state(&lin)?;
         match lin_cont.order() {
             0 => self.g0_gaps(lin_cont, &par, nb_pt, gaps),
             1 => self.g1_gaps(lin_cont, &par, nb_pt, gaps),
@@ -99,7 +99,7 @@ impl GeomPlateBuildPlateSurface {
 
     fn g0_gaps(
         &mut self,
-        lin: &crate::geom_plate::GeomPlateCurveConstraint,
+        lin: &crate::geom_plate::GeomPlateCurveConstraintState,
         par: &[f64],
         nb_pt: i32,
         gaps: &mut ConstraintGaps,
@@ -118,7 +118,7 @@ impl GeomPlateBuildPlateSurface {
 
     fn g1_gaps(
         &mut self,
-        lin: &crate::geom_plate::GeomPlateCurveConstraint,
+        lin: &crate::geom_plate::GeomPlateCurveConstraintState,
         par: &[f64],
         nb_pt: i32,
         gaps: &mut ConstraintGaps,
@@ -138,7 +138,7 @@ impl GeomPlateBuildPlateSurface {
 
     fn g2_gaps(
         &mut self,
-        lin: &crate::geom_plate::GeomPlateCurveConstraint,
+        lin: &crate::geom_plate::GeomPlateCurveConstraintState,
         par: &[f64],
         nb_pt: i32,
         gaps: &mut ConstraintGaps,

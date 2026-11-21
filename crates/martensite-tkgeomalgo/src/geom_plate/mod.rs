@@ -15,6 +15,8 @@ mod build_plate_surface;
 mod criterion_patch;
 mod curve_constraint;
 mod curve_constraint_eval;
+#[cfg(test)]
+mod curve_constraint_source_tests;
 mod half_space;
 mod make_approx;
 mod make_approx_eval;
@@ -25,7 +27,9 @@ mod surface;
 pub use aij::GeomPlateAij;
 pub use build_average_plane::GeomPlateBuildAveragePlane;
 pub use build_plate_surface::GeomPlateBuildPlateSurface;
-pub use curve_constraint::GeomPlateCurveConstraint;
+pub use curve_constraint::{
+    GeomPlateCurveConstraint, GeomPlateCurveConstraintSource, GeomPlateCurveConstraintState,
+};
 pub use make_approx::GeomPlateMakeApprox;
 pub use plate_criteria::{GeomPlatePlateG0Criterion, GeomPlatePlateG1Criterion};
 pub use point_constraint::GeomPlatePointConstraint;
