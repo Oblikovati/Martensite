@@ -132,7 +132,7 @@ pub struct V3dView {
     pub(crate) this: SharedState<WeakHandle<dyn V3dViewSource>>,
     pub(crate) state: SharedState<V3dViewState>,
 }
-martensite_tkernel::impl_transient!(V3dView, "V3dView", StandardTransient, transient,
+martensite_tkernel::impl_transient!(V3dView, "V3dView", StandardTransient,
     interfaces:[dyn V3dViewSource]);
 
 /// The driver view of a viewer's driver; a missing viewer or driver is refused.

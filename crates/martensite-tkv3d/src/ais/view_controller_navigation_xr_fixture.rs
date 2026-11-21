@@ -14,7 +14,7 @@ pub(super) struct NavigationOpenSession {
     /// Scripted two-hand input of the XR handler witness; false keeps the backend input.
     hands: bool,
 }
-martensite_tkernel::impl_transient!(NavigationOpenSession,"NavigationOpenSession",dyn AspectXRSession,transient,interfaces:[dyn AspectXRSession]);
+martensite_tkernel::impl_transient!(NavigationOpenSession,"NavigationOpenSession",dyn AspectXRSession,interfaces:[dyn AspectXRSession]);
 impl AspectXRSession for NavigationOpenSession {
     fn xr_session_base(&self) -> &AspectXRSessionBase {
         // Delegate non-headset behavior to the existing Martensite backend.

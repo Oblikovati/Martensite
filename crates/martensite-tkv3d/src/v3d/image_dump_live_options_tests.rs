@@ -58,7 +58,7 @@ struct LiveOptionsView {
     base: V3dView,
     edited: Arc<AtomicBool>,
 }
-martensite_tkernel::impl_transient!(LiveOptionsView,"Martensite_LiveOptionsView",V3dView,base,
+martensite_tkernel::impl_transient!(LiveOptionsView,"Martensite_LiveOptionsView",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for LiveOptionsView {
     fn view_base(&self) -> &V3dView {

@@ -72,7 +72,7 @@ pub(super) struct CubeTransportAnimation {
     pub(super) identity: i32,
     pub(super) next: AtomicU64,
 }
-martensite_tkernel::impl_transient!(CubeTransportAnimation,"TransportAnimation",dyn AisAnimationCameraSource,transient,
+martensite_tkernel::impl_transient!(CubeTransportAnimation,"TransportAnimation",dyn AisAnimationCameraSource,
     interfaces:[dyn AisAnimationCameraSource,dyn AisAnimationSource]);
 impl CubeTransportAnimation {
     pub(super) fn new(trace: &Arc<CubeTransportTrace>, identity: i32) -> Handle<Self> {

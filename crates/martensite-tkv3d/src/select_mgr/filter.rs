@@ -86,7 +86,7 @@ macro_rules! composition_filter {
         pub struct $name {
             base: SelectMgrCompositionFilterBase,
         }
-        martensite_tkernel::impl_transient!($name, $native, dyn SelectMgrCompositionFilter, transient,
+        martensite_tkernel::impl_transient!($name, $native, dyn SelectMgrCompositionFilter,
             interfaces: [dyn SelectMgrCompositionFilter, dyn SelectMgrFilter]);
         impl SelectMgrCompositionFilter for $name {
             fn composition_base(&self) -> &SelectMgrCompositionFilterBase {

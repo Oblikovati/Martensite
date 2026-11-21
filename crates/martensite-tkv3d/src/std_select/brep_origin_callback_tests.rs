@@ -15,7 +15,7 @@ struct BrepOriginCallbackOwnerFake {
     replacement: WeakHandle<dyn crate::select3d::Select3DSensitiveEntity>,
     rows: Arc<SharedState<String>>,
 }
-martensite_tkernel::impl_transient!(BrepOriginCallbackOwnerFake,"Martensite_BRepOriginCallbackOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(BrepOriginCallbackOwnerFake,"Martensite_BRepOriginCallbackOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl BrepOriginCallbackOwnerFake {
     fn new(
         label: i32,

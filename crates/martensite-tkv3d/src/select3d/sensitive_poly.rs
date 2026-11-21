@@ -507,7 +507,7 @@ pub struct Select3DSensitivePoly {
     /// The poly state.
     pub core: Select3DSensitivePolyCore,
 }
-martensite_tkernel::impl_transient!(Select3DSensitivePoly, "Select3DSensitivePoly", dyn Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(Select3DSensitivePoly, "Select3DSensitivePoly", dyn Select3DSensitiveSet,
     interfaces: [dyn super::Select3DSensitiveEntity, dyn Select3DSensitiveSet, dyn super::Select3DSensitivePolySource]);
 impl_select3d_poly!(Select3DSensitivePoly, |_: &Select3DSensitivePoly| Ok(
     Handle::default()

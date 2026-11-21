@@ -18,7 +18,7 @@ struct StashPixels {
     stage: &'static str,
     log: StashLog,
 }
-martensite_tkernel::impl_transient!(StashPixels, "StashPixels", ImagePixMap, base);
+martensite_tkernel::impl_transient!(StashPixels, "StashPixels", ImagePixMap);
 impl Drop for StashPixels {
     fn drop(&mut self) {
         let owner = self.owner.observe();

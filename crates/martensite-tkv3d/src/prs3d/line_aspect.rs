@@ -86,7 +86,7 @@ pub struct Prs3dIsoAspect {
     line: Prs3dLineAspect,
     number: SharedState<i32>,
 }
-martensite_tkernel::impl_transient!(Prs3dIsoAspect, "Prs3dIsoAspect", Prs3dLineAspect, line,
+martensite_tkernel::impl_transient!(Prs3dIsoAspect, "Prs3dIsoAspect", Prs3dLineAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 impl Prs3dIsoAspect {

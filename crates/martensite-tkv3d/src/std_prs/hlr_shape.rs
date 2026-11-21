@@ -161,7 +161,7 @@ fn no_data() -> Failure {
 pub struct StdPrsHlrShape {
     transient: StandardTransient,
 }
-martensite_tkernel::impl_transient!(StdPrsHlrShape, "StdPrsHLRShape", dyn StdPrsHlrShapeI, transient,
+martensite_tkernel::impl_transient!(StdPrsHlrShape, "StdPrsHLRShape", dyn StdPrsHlrShapeI,
     interfaces: [dyn StdPrsHlrShapeI]);
 
 impl StdPrsHlrShapeI for StdPrsHlrShape {
@@ -235,7 +235,7 @@ fn null_camera() -> Failure {
 pub struct StdPrsHlrPolyShape {
     transient: StandardTransient,
 }
-martensite_tkernel::impl_transient!(StdPrsHlrPolyShape, "StdPrsHLRPolyShape", dyn StdPrsHlrShapeI, transient,
+martensite_tkernel::impl_transient!(StdPrsHlrPolyShape, "StdPrsHLRPolyShape", dyn StdPrsHlrShapeI,
     interfaces: [dyn StdPrsHlrShapeI]);
 
 impl StdPrsHlrShapeI for StdPrsHlrPolyShape {

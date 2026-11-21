@@ -132,7 +132,7 @@ pub struct AisSignatureFilter {
     parent: AisTypeFilter,
     signature: i32,
 }
-martensite_tkernel::impl_transient!(AisSignatureFilter, "AisSignatureFilter", AisTypeFilter, parent,
+martensite_tkernel::impl_transient!(AisSignatureFilter, "AisSignatureFilter", AisTypeFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl AisSignatureFilter {

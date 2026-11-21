@@ -14,9 +14,7 @@ pub(super) struct ColoredCompoundKeyDropFake {
 martensite_tkernel::impl_transient!(
     ColoredCompoundKeyDropFake,
     "CompoundKeyDestructorProbe",
-    AisColoredDrawer,
-    parent
-);
+    AisColoredDrawer);
 impl ColoredCompoundKeyDropFake {
     pub(super) fn new(
         parent: &Handle<Prs3dDrawer>,

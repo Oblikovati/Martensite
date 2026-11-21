@@ -144,7 +144,7 @@ macro_rules! prs_dim_relation_class {
             /// The class fields.
             pub fields: martensite_tkernel::standard::SharedState<$fields>,
         }
-        martensite_tkernel::impl_transient!($type, $native, $parent, transient,
+        martensite_tkernel::impl_transient!($type, $native, $parent,
             interfaces: [$($interface),+]);
         super::dimension_impls::prs_dim_relation_impls!($type);
         impl $crate::prs_dim::PrsDimRelationSource for $type {

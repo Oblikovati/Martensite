@@ -87,7 +87,7 @@ macro_rules! chamf_dimension {
             /// The attach point and leader direction.
             pub fields: SharedState<PrsDimChamfFields>,
         }
-        martensite_tkernel::impl_transient!($type, $native, dyn PrsDimRelationSource, transient,
+        martensite_tkernel::impl_transient!($type, $native, dyn PrsDimRelationSource,
             interfaces: [dyn PrsDimRelationSource, dyn crate::ais::AisInteractiveObject, dyn crate::select_mgr::SelectMgrSelectableObject, dyn crate::prs_mgr::PrsMgrPresentableObject]);
         prs_dim_relation_impls!($type);
         impl PrsDimRelationSource for $type {

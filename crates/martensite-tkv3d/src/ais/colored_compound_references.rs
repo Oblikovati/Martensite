@@ -4,7 +4,7 @@ use super::{
     colored_compound_map::find_colored_compound,
     colored_compound_node::{ColoredCompoundNode, colored_compound_removed},
 };
-use martensite_tkbrep::topods::{Compound, Shape, ShapeView, TopoDSShapeReadSource};
+use martensite_tkbrep::topods::{Compound, Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::{Failure, Handle};
 use std::sync::{Arc, Weak};
 /// Borrowed allocated-node fields; `let alias=map.node_ref(1)?; map.resize(1000); alias.compound_address()?`.
@@ -67,7 +67,7 @@ impl AisColoredCompoundRef<'_> {
     /// Example: `alias.with_shape(|shape| Ok(shape.nb_children()))?`.
     pub fn with_shape<R>(
         &self,
-        project: impl FnOnce(&ShapeView<'_>) -> Result<R, Failure>,
+        project: impl FnOnce(&Shape) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
         let node = self.live_node()?;
         node.compound.with_shape(project)
@@ -99,7 +99,7 @@ fn colored_compound_index(index: usize, extent: usize) -> Failure {
 impl TopoDSShapeReadSource for AisColoredCompoundRef<'_> {
     fn read_current_shape<R>(
         &self,
-        project: impl FnOnce(&ShapeView<'_>) -> Result<R, Failure>,
+        project: impl FnOnce(&Shape) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
         let reference = self;
         reference.with_shape(project)

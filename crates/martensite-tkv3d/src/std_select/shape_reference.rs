@@ -1,5 +1,5 @@
 //! Live shape fields retain native ownership once; reference adapters only lend their current contents.
-use martensite_tkbrep::topods::{Shape, ShapeView, TopoDSShapeReadSource};
+use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::{Failure, SharedState, catch_native_failure};
 use std::sync::Arc;
 /// Actual shape member storage. Example: `StdSelectShapeFields { shape: Arc::new(shape) }`.
@@ -31,7 +31,7 @@ impl StdSelectShapeRef<'_> {
 impl TopoDSShapeReadSource for StdSelectShapeRef<'_> {
     fn read_current_shape<R>(
         &self,
-        project: impl FnOnce(&ShapeView<'_>) -> Result<R, Failure>,
+        project: impl FnOnce(&Shape) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
         let shape = Arc::clone(&self.fields.read().shape);
         catch_native_failure(move || project(&shape))

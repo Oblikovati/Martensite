@@ -1,7 +1,7 @@
 //! Borrow the actual native AisShape topology field across assignments.
 use super::{AisShapeFields, AisShapeSource};
 use crate::{prs_mgr::PrsMgrPresentableObjectFields, prs3d::Prs3dDrawer};
-use martensite_tkbrep::topods::{Shape, ShapeView, TopoDSShapeReadSource};
+use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::{
     Failure, Handle, HandleFieldRef, SharedState, catch_native_failure,
 };
@@ -31,7 +31,7 @@ impl AisShapeRef<'_> {
 impl TopoDSShapeReadSource for AisShapeRef<'_> {
     fn read_current_shape<R>(
         &self,
-        project: impl FnOnce(&ShapeView<'_>) -> Result<R, Failure>,
+        project: impl FnOnce(&Shape) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
         // The callback can replace the field. Lease the value without retaining its TShape.
         let shape = Arc::clone(&self.fields.read().shape);

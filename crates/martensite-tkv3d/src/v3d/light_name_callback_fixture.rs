@@ -111,7 +111,7 @@ pub(super) struct CallbackNameView {
     pub base: V3dView,
     pub control: Arc<CallbackNameStorage>,
 }
-martensite_tkernel::impl_transient!(CallbackNameView,"Martensite_CallbackNameView",V3dView,base,
+martensite_tkernel::impl_transient!(CallbackNameView,"Martensite_CallbackNameView",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for CallbackNameView {
     fn view_base(&self) -> &V3dView {

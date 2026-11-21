@@ -211,7 +211,7 @@ pub struct Prs3dDrawer {
     attributes: Graphic3dPresentationAttributesBase,
     pub(crate) fields: SharedState<Prs3dDrawerFields>,
 }
-martensite_tkernel::impl_transient!(Prs3dDrawer, "Prs3dDrawer", Graphic3dPresentationAttributes, transient,
+martensite_tkernel::impl_transient!(Prs3dDrawer, "Prs3dDrawer", Graphic3dPresentationAttributes,
     interfaces: [dyn Graphic3dPresentationAttributesSource]);
 
 impl Graphic3dPresentationAttributesSource for Prs3dDrawer {

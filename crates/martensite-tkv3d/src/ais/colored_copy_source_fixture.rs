@@ -18,7 +18,7 @@ pub(super) struct CopySourceProbe {
     base: AisColoredShapeBase,
     input: Arc<CopySourceInput>,
 }
-martensite_tkernel::impl_transient!(CopySourceProbe,"ColoredCopySourceProbe",dyn AisShapeSource,transient,
+martensite_tkernel::impl_transient!(CopySourceProbe,"ColoredCopySourceProbe",dyn AisShapeSource,
     interfaces:[dyn AisColoredShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,
     dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl CopySourceProbe {

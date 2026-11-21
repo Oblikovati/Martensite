@@ -33,7 +33,7 @@ pub struct Select3DSensitiveTriangulation {
     pub(super) inv_init_location: GeneralTransform3,
     pub(super) state: SharedState<TriangulationState>,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveTriangulation, "Select3DSensitiveTriangulation", dyn Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveTriangulation, "Select3DSensitiveTriangulation", dyn Select3DSensitiveSet,
     interfaces: [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet]);
 
 impl Select3DSensitiveTriangulation {
