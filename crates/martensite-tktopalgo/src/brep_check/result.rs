@@ -7,7 +7,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use std::sync::Arc;
 
 /// `Handle(NCollection_Shared<NCollection_List<BRepCheck_Status>>)`: one status list,
@@ -315,4 +315,4 @@ pub trait BRepCheckResult: Transient {
     }
 }
 
-impl_transient_interface!(dyn BRepCheckResult, "BRepCheck_Result", StandardTransient);
+impl_transient_interface!(dyn BRepCheckResult, "BRepCheck_Result", dyn Transient);

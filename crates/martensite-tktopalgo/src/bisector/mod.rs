@@ -42,7 +42,7 @@ use martensite_tkmath::gp::{Point2, Vector2};
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Axis2d, Direction2, Point2};
 /// let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?);
-/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).cast();
+/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).into_upcast();
 /// assert!(is_convex(&circle, -1.0)? && !is_convex(&circle, 1.0)?);
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```

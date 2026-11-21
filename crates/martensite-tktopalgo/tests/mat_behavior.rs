@@ -1,7 +1,7 @@
 //! MAT and MAT2d regressions: the lists, the zones, the curve cutting and the bisecting
 //! locus of a rectangle (the values are the native ones, see the tp_mat* probe corpus).
 use martensite_tkernel::ncollection::Sequence;
-use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::{Handle, RuntimeType, Transient};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine, Geom2dTrimmedCurve};
 use martensite_tkmath::geom_abs::JoinType;
 use martensite_tkmath::gp::{Axis2d, Direction2, Point2};
@@ -75,6 +75,28 @@ fn empty_list_reads_are_native_null_dereferences() {
     assert!(list.is_empty());
     let failure = list.current().expect_err("a null current node");
     assert_eq!(failure.exception_type(), "Standard_NullObject");
+}
+
+#[test]
+fn mat_list_instances_keep_distinct_registered_names_and_identity() {
+    let edge_list = Handle::new(MatListOfEdge::new());
+    let bisector_list = Handle::new(MatListOfBisector::new());
+    let edge: Handle<dyn Transient> = edge_list.upcast();
+    let bisector: Handle<dyn Transient> = bisector_list.upcast();
+    for (owner, name) in [
+        (&edge, "MAT_ListOfEdge"),
+        (&bisector, "MAT_ListOfBisector"),
+    ] {
+        let descriptor = owner.dynamic_type().unwrap();
+        assert_eq!(descriptor.name(), name);
+        assert!(std::ptr::eq(
+            descriptor,
+            RuntimeType::registered_by_name(name).unwrap()
+        ));
+    }
+    assert_eq!(edge.downcast::<MatListOfEdge>(), edge_list);
+    assert_eq!(bisector.downcast::<MatListOfBisector>(), bisector_list);
+    assert!(edge.downcast::<MatListOfBisector>().is_null());
 }
 
 #[test]

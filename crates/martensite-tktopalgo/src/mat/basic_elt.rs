@@ -2,7 +2,7 @@
 //! arcs that start and end its zone of proximity.
 use super::MatArc;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Handle, SharedState, Transient, WeakHandle};
 
 struct BasicEltState {
     start_left_arc: WeakHandle<MatArc>,
@@ -20,17 +20,15 @@ struct BasicEltState {
 /// assert!(elt.start_arc().is_null());
 /// ```
 pub struct MatBasicElt {
-    parent: StandardTransient,
     state: SharedState<BasicEltState>,
 }
-impl_transient!(MatBasicElt, "MAT_BasicElt", StandardTransient, parent);
+impl_transient!(MatBasicElt, "MAT_BasicElt", dyn Transient);
 
 impl MatBasicElt {
     /// `MAT_BasicElt(anInteger)`: the element of index `an_integer`, geometry index 0;
     /// `MatBasicElt::new(1)`.
     pub fn new(an_integer: i32) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(BasicEltState {
                 start_left_arc: WeakHandle::default(),
                 end_left_arc: WeakHandle::default(),

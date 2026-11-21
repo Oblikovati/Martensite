@@ -4,7 +4,7 @@ use super::edge::BRepClassEdge;
 use super::face_explorer::WireData;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp::{self, Explorer};
-use martensite_tkbrep::topods::{Edge, Face, Shape};
+use martensite_tkbrep::topods::{Edge, EdgeView, Face, Shape};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::standard::Failure;
@@ -20,11 +20,11 @@ struct VertexEdges {
 }
 
 impl VertexEdges {
-    fn add(&mut self, edge: &Edge) {
+    fn add(&mut self, edge: &EdgeView<'_>) {
         if self.count == 0 {
-            self.first = edge.clone();
+            self.first = edge.to_edge();
         } else if self.count == 1 {
-            self.second = edge.clone();
+            self.second = edge.to_edge();
         }
         self.count += 1;
     }
@@ -80,8 +80,9 @@ impl ExplorerTopology {
     fn capture_probe_edges(&mut self, face: &Face) -> Result<(), Failure> {
         let mut edges = Explorer::new(face, ShapeEnum::Edge, ShapeEnum::Shape)?;
         while edges.more() {
-            let index = Edge::with_shape_reference(edges.current(), |edge| {
-                self.probe_edge_index(edge, face)
+            let occurrence = edges.current();
+            let index = Edge::with_shape_reference(occurrence, |edge| {
+                self.probe_edge_index(occurrence, edge, face)
             })?;
             self.probe_edges.push(index);
             edges.next()?;
@@ -114,8 +115,9 @@ impl ExplorerTopology {
     ) -> Result<(), Failure> {
         let mut edges = Explorer::new(wire, ShapeEnum::Edge, ShapeEnum::Shape)?;
         while edges.more() {
-            Edge::with_shape_reference(edges.current(), |edge| {
-                self.cache_wire_edge(edge, face, vertex_edges)
+            let occurrence = edges.current();
+            Edge::with_shape_reference(occurrence, |edge| {
+                self.cache_wire_edge(occurrence, edge, face, vertex_edges)
             })?;
             record.nb_edges += 1;
             edges.next()?;
@@ -125,13 +127,14 @@ impl ExplorerTopology {
 
     fn cache_wire_edge(
         &mut self,
-        edge: &Edge,
+        occurrence: &Shape,
+        edge: &EdgeView<'_>,
         face: &Face,
         vertex_edges: &mut DataMap<Shape, VertexEdges, ShapeMapHasher>,
     ) -> Result<(), Failure> {
         self.edges.push(cached_edge(edge, face)?);
-        self.record_occurrence(edge, self.edges.len() - 1);
-        let mut vertices = Explorer::new(edge, ShapeEnum::Vertex, ShapeEnum::Shape)?;
+        self.record_occurrence(occurrence, self.edges.len() - 1);
+        let mut vertices = Explorer::new(occurrence, ShapeEnum::Vertex, ShapeEnum::Shape)?;
         while vertices.more() {
             vertex_edges
                 .try_emplaced(vertices.current().clone(), VertexEdges::default)
@@ -142,7 +145,7 @@ impl ExplorerTopology {
     }
 
     // Chains the new index `index` of `edge` after its last occurrence.
-    fn record_occurrence(&mut self, edge: &Edge, index: usize) {
+    fn record_occurrence(&mut self, edge: &Shape, index: usize) {
         self.next_occurrence.push(None);
         let Some(occurrence) = self.occurrences.change_seek(edge) else {
             let first = EdgeOccurrences {
@@ -158,8 +161,13 @@ impl ExplorerTopology {
 
     // The index of the wire edge equal (IsEqual) to `edge`, or of a new edge
     // appended for it when no wire holds it.
-    fn probe_edge_index(&mut self, edge: &Edge, face: &Face) -> Result<usize, Failure> {
-        let mut candidate: Option<usize> = self.occurrences.seek(edge).map(|found| found.first);
+    fn probe_edge_index(
+        &mut self,
+        occurrence: &Shape,
+        edge: &EdgeView<'_>,
+        face: &Face,
+    ) -> Result<usize, Failure> {
+        let mut candidate = self.occurrences.seek(occurrence).map(|found| found.first);
         while let Some(index) = candidate {
             if self.edges[index].edge().is_equal(edge) {
                 return Ok(index);
@@ -173,8 +181,8 @@ impl ExplorerTopology {
 
 // `BRepClass_Edge(E, F)` with `cacheGeometry`: the pcurve of the edge on the face and
 // its range, when the edge has one.
-fn cached_edge(edge: &Edge, face: &Face) -> Result<BRepClassEdge, Failure> {
-    let mut data = BRepClassEdge::with_edge_face(edge.clone(), face.clone());
+fn cached_edge(edge: &EdgeView<'_>, face: &Face) -> Result<BRepClassEdge, Failure> {
+    let mut data = BRepClassEdge::with_edge_face(edge.to_edge(), face.clone());
     let pcurve = BRepTool::curve_on_face(data.edge(), data.face())?;
     if !pcurve.pcurve.is_null() {
         data.set_geometry(pcurve.pcurve, pcurve.first, pcurve.last);

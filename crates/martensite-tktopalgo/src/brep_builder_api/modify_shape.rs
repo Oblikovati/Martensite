@@ -21,7 +21,7 @@ use std::ops::{Deref, DerefMut};
 ///     BRepBuilderAPIMakeShape, BRepBuilderAPIMakeVertex, BRepBuilderAPIModifyShape,
 /// };
 /// let vertex = BRepBuilderAPIMakeVertex::new(Point3::new(1.0, 2.0, 3.0))?.vertex()?;
-/// let copy: Handle<dyn BRepToolsModification> = Handle::new(CopyModification::new(true, false)).cast();
+/// let copy: Handle<dyn BRepToolsModification> = Handle::new(CopyModification::new(true, false)).into_upcast();
 /// let mut modify = BRepBuilderAPIModifyShape::with_shape_modification(&vertex, &copy)?;
 /// assert!(modify.is_done());
 /// assert!(!modify.shape()?.is_same(&vertex));

@@ -23,17 +23,17 @@ macro_rules! gp_surface_constructors {
     ($gp:ty, $native:literal, $geom:expr, $plain:ident, $bounds:ident, $wire:ident) => {
         #[doc = concat!("`BRepLib_MakeFace(const ", $native, "& P)`: the face over the natural bounds; `BRepLibMakeFace::", stringify!($plain), "(p)?`.")]
         pub fn $plain(surface: $gp) -> Result<Self, Failure> {
-            let geom: Handle<dyn GeomSurface> = Handle::new($geom(surface)).cast();
+            let geom: Handle<dyn GeomSurface> = Handle::new($geom(surface)).into_upcast();
             Self::initialized(|maker| maker.init_surface(&geom, true, precision::confusion()))
         }
         #[doc = concat!("`BRepLib_MakeFace(const ", $native, "& P, UMin, UMax, VMin, VMax)`; `BRepLibMakeFace::", stringify!($bounds), "(p, (0.0, 1.0, 0.0, 1.0))?`.")]
         pub fn $bounds(surface: $gp, bounds: SurfaceBounds) -> Result<Self, Failure> {
-            let geom: Handle<dyn GeomSurface> = Handle::new($geom(surface)).cast();
+            let geom: Handle<dyn GeomSurface> = Handle::new($geom(surface)).into_upcast();
             Self::initialized(|maker| maker.init_surface_bounds(&geom, bounds, precision::confusion()))
         }
         #[doc = concat!("`BRepLib_MakeFace(const ", $native, "& P, W, Inside)`: the face bounded by the wire (reversed when `inside` and it bounds an infinite area); `BRepLibMakeFace::", stringify!($wire), "(p, &w, true)?`.")]
         pub fn $wire(surface: $gp, wire: &Wire, inside: bool) -> Result<Self, Failure> {
-            let geom: Handle<dyn GeomSurface> = Handle::new($geom(surface)).cast();
+            let geom: Handle<dyn GeomSurface> = Handle::new($geom(surface)).into_upcast();
             Self::from_surface_wire(&geom, wire, inside)
         }
     };

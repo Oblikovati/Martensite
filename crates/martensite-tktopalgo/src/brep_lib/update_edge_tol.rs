@@ -46,9 +46,9 @@ fn curve_on_surface(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<Adaptor3dCurveOnSurface, Failure> {
     let curve2d: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(pcurve)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(pcurve)?).into_upcast();
     let adapted: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surface)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
     Adaptor3dCurveOnSurface::with_curve(&curve2d, &adapted)
 }
 

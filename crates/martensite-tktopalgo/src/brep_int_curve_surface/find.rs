@@ -49,7 +49,7 @@ impl BRepIntCurveSurfaceInter {
             return Ok(false);
         }
         let surface: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(&face, true)?).cast();
+            Handle::new(BRepAdaptorSurface::with_face(&face, true)?).into_upcast();
         self.intcs.perform(&self.curve_handle(), &surface)?;
         self.current_nb_points = self.intcs.nb_points()?;
         if self.current_nb_points == 0 {

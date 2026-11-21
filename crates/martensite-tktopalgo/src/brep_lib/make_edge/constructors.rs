@@ -19,22 +19,22 @@ macro_rules! gp_curve_constructors {
     ($gp:ty, $native:literal, $geom:expr, $plain:ident, $params:ident, $points:ident, $vertices:ident) => {
         #[doc = concat!("`BRepLib_MakeEdge(const ", $native, "& L)`: the whole curve; `BRepLibMakeEdge::", stringify!($plain), "(l)?`.")]
         pub fn $plain(curve: $gp) -> Result<Self, Failure> {
-            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve(&geom))
         }
         #[doc = concat!("`BRepLib_MakeEdge(const ", $native, "& L, p1, p2)`; `BRepLibMakeEdge::", stringify!($params), "(l, 0.0, 1.0)?`.")]
         pub fn $params(curve: $gp, p1: f64, p2: f64) -> Result<Self, Failure> {
-            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve_params(&geom, p1, p2))
         }
         #[doc = concat!("`BRepLib_MakeEdge(const ", $native, "& L, P1, P2)`; `BRepLibMakeEdge::", stringify!($points), "(l, a, b)?`.")]
         pub fn $points(curve: $gp, p1: Point3, p2: Point3) -> Result<Self, Failure> {
-            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve_points(&geom, p1, p2))
         }
         #[doc = concat!("`BRepLib_MakeEdge(const ", $native, "& L, V1, V2)`; `BRepLibMakeEdge::", stringify!($vertices), "(l, &v1, &v2)?`.")]
         pub fn $vertices(curve: $gp, v1: &Vertex, v2: &Vertex) -> Result<Self, Failure> {
-            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).cast();
+            let geom: Handle<dyn GeomCurve> = Handle::new($geom(curve)).into_upcast();
             Self::initialized(|maker| maker.init_curve_vertices(&geom, v1, v2))
         }
     };
@@ -52,7 +52,7 @@ fn segment(p1: Point3, p2: Point3) -> Result<Option<Segment>, Failure> {
     }
     let direction = Direction3::from_vector(Vector3::between(p1, p2))?;
     let line = GeomLine::from_lin(Line3::new(p1, direction));
-    Ok(Some((Handle::new(line).cast(), length)))
+    Ok(Some((Handle::new(line).into_upcast(), length)))
 }
 
 impl BRepLibMakeEdge {

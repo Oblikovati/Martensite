@@ -3,13 +3,13 @@ use super::{MAT2D_TOLCONF, Mat2dTool2d};
 use crate::bisector::{Bisec, BisecAna, BisecCC, BisectorCurve};
 use crate::mat::MatBisector;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::{Failure, Handle, TransientHandleTarget};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dTrimmedCurve, errors};
 use martensite_tkmath::gp::{Point2, Vector2};
 use std::f64::consts::PI;
 
 // A bisector basis of the expected class; another one is a native null dereference.
-fn basis_as<T: martensite_tkernel::standard::RuntimeTyped + ?Sized>(
+fn basis_as<T: TransientHandleTarget + ?Sized>(
     curve: &Handle<dyn Geom2dCurve>,
     class: &str,
 ) -> Result<Handle<T>, Failure> {

@@ -190,25 +190,25 @@ impl BRepCheckAnalyzer {
         geom_controls: bool,
     ) -> Result<Handle<dyn BRepCheckResult>, Failure> {
         Ok(match shape.shape_type()? {
-            ShapeEnum::Vertex => Handle::new(BRepCheckVertex::new(&vertex(shape)?)?).cast(),
+            ShapeEnum::Vertex => Handle::new(BRepCheckVertex::new(&vertex(shape)?)?).into_upcast(),
             ShapeEnum::Edge => {
                 let checker = BRepCheckEdge::new(&edge(shape)?)?;
                 checker.set_geometric_controls(geom_controls);
                 checker.set_exact_method(self.is_exact);
-                Handle::new(checker).cast()
+                Handle::new(checker).into_upcast()
             }
             ShapeEnum::Wire => {
                 let checker = BRepCheckWire::new(&wire(shape)?)?;
                 checker.set_geometric_controls(geom_controls);
-                Handle::new(checker).cast()
+                Handle::new(checker).into_upcast()
             }
             ShapeEnum::Face => {
                 let checker = BRepCheckFace::new(&face(shape)?)?;
                 checker.set_geometric_controls(geom_controls);
-                Handle::new(checker).cast()
+                Handle::new(checker).into_upcast()
             }
-            ShapeEnum::Shell => Handle::new(BRepCheckShell::new(&shell(shape)?)?).cast(),
-            ShapeEnum::Solid => Handle::new(BRepCheckSolid::new(&solid(shape)?)?).cast(),
+            ShapeEnum::Shell => Handle::new(BRepCheckShell::new(&shell(shape)?)?).into_upcast(),
+            ShapeEnum::Solid => Handle::new(BRepCheckSolid::new(&solid(shape)?)?).into_upcast(),
             _ => Handle::default(),
         })
     }

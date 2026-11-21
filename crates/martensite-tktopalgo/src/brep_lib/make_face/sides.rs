@@ -63,7 +63,7 @@ fn side(
     if let Some(tol) = degenerated_tolerance(&side.curve, max_tol)? {
         (side.degenerated, side.tol) = (true, tol);
     }
-    side.line = Handle::new(Geom2dLine::from_point(origin, direction)).cast();
+    side.line = Handle::new(Geom2dLine::from_point(origin, direction)).into_upcast();
     Ok(side)
 }
 

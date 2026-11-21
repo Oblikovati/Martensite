@@ -2,7 +2,7 @@
 //! elements, with its neighbours at each node.
 use super::{MatBasicElt, MatNode, MatSide};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient, WeakHandle};
 use martensite_tkg2d::geom2d::errors;
 
 struct ArcState {
@@ -37,10 +37,9 @@ enum End {
 /// assert!(arc.first_node().is_null());
 /// ```
 pub struct MatArc {
-    parent: StandardTransient,
     state: SharedState<ArcState>,
 }
-impl_transient!(MatArc, "MAT_Arc", StandardTransient, parent);
+impl_transient!(MatArc, "MAT_Arc", dyn Transient);
 
 impl MatArc {
     /// `MAT_Arc(ArcIndex, GeomIndex, FirstElement, SecondElement)`: no nodes and no
@@ -52,7 +51,6 @@ impl MatArc {
         second_element: &Handle<MatBasicElt>,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(ArcState {
                 arc_index,
                 geom_index,

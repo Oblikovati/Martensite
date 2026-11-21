@@ -28,8 +28,8 @@ impl IntCurvesFaceIntersector {
         if !self.start_perform() {
             return Ok(());
         }
-        let geomline: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(*line)).cast();
-        let hll: HCurve = Handle::new(GeomAdaptorCurve::with_curve(&geomline)?).cast();
+        let geomline: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(*line)).into_upcast();
+        let hll: HCurve = Handle::new(GeomAdaptorCurve::with_curve(&geomline)?).into_upcast();
         let mut hics = HInter::new();
         let (mut parinf, mut parsup) = (par_min, par_max);
         if let Some(polyhedron) = &self.my_polyhedron {

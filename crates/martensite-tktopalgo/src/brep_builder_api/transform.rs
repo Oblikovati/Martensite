@@ -76,7 +76,7 @@ impl BRepBuilderAPITransform {
     /// yet; `BRepBuilderAPITransform::new(trsf)`.
     pub fn new(trsf: Transform3) -> Self {
         let modification: Handle<dyn BRepToolsModification> =
-            Handle::new(TrsfModification::new(trsf)).cast();
+            Handle::new(TrsfModification::new(trsf)).into_upcast();
         Self {
             modify: BRepBuilderAPIModifyShape::with_modification(&modification),
             my_trsf: trsf,

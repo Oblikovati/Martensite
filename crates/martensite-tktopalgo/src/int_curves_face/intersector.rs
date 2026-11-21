@@ -7,7 +7,7 @@ use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
 use martensite_tkbrep::topods::Face;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::top_abs::State;
 use martensite_tkgeomalgo::int_curve_surface::{
@@ -30,7 +30,6 @@ use martensite_tkmath::gp::{Point2, Point3};
 /// assert!(intersector.is_err() || !intersector.unwrap().is_done());
 /// ```
 pub struct IntCurvesFaceIntersector {
-    parent: StandardTransient,
     pub(super) my_topol_tool: Handle<BRepTopAdaptorTopolTool>,
     pub(super) hsurface: Handle<dyn Adaptor3dSurface>,
     pub(super) tol: f64,
@@ -48,8 +47,7 @@ pub struct IntCurvesFaceIntersector {
 impl_transient!(
     IntCurvesFaceIntersector,
     "IntCurvesFace_Intersector",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 /// The polyhedron sample limits of the constructor.
@@ -67,10 +65,9 @@ impl IntCurvesFaceIntersector {
     /// `IntCurvesFaceIntersector::new(&face, 1e-7, true, true)?`.
     pub fn new(face: &Face, tol: f64, restr: bool, use_b_toler: bool) -> Result<Self, Failure> {
         let surface = BRepAdaptorSurface::with_face(face, restr)?;
-        let hsurface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).cast();
+        let hsurface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).into_upcast();
         let topol_tool = BRepTopAdaptorTopolTool::with_surface(&hsurface)?;
         let mut intersector = Self {
-            parent: StandardTransient::default(),
             my_topol_tool: Handle::new(topol_tool),
             hsurface,
             tol,

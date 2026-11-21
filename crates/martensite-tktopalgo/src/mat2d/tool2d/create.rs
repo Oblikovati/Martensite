@@ -165,7 +165,7 @@ impl Mat2dTool2d {
 // The half line from `ori` through `p2`, trimmed to `[0, Infinite]`.
 fn half_line(ori: Point2, p2: Point2) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let dir = Direction2::new(p2.x() - ori.x(), p2.y() - ori.y())?;
-    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(ori, dir)).cast();
+    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(ori, dir)).into_upcast();
     Ok(Handle::new(Geom2dTrimmedCurve::new(
         &line,
         0.,
@@ -173,7 +173,7 @@ fn half_line(ori: Point2, p2: Point2) -> Result<Handle<dyn Geom2dCurve>, Failure
         true,
         true,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 /// `SetTrim(Bis, Line1)`: the bisector is cut at its first intersection with `line1`

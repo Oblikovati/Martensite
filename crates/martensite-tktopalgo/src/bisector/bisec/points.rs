@@ -124,7 +124,7 @@ impl Bisec {
             bis_ana.parameter_of_start_point(),
             bis_ana.parameter_of_end_point(),
         );
-        self.trim(&Handle::new(bis_ana).cast(), u_first, u_last)
+        self.trim(&Handle::new(bis_ana).into_upcast(), u_first, u_last)
     }
     // The final trim of the mixed overloads, clamped to the range of the bisector.
     fn trim_clamped(
@@ -143,7 +143,7 @@ fn ana_result(bis_ana: BisecAna) -> (Handle<dyn BisectorCurve>, f64, f64) {
         bis_ana.parameter_of_start_point(),
         bis_ana.parameter_of_end_point(),
     );
-    (Handle::new(bis_ana).cast(), u_first, u_last)
+    (Handle::new(bis_ana).into_upcast(), u_first, u_last)
 }
 
 // The bisector of a point and a curve that is not a circle or a line: a half line
@@ -195,7 +195,7 @@ fn mixed_bisector(
         );
         return half_line(input.apoint, Direction2::from_vector(v)?, rc);
     }
-    Ok((Handle::new(bis_pc).cast(), u_first, u_last))
+    Ok((Handle::new(bis_pc).into_upcast(), u_first, u_last))
 }
 
 // The curvature at `u`: 0 where the square norm of the tangent is below the
