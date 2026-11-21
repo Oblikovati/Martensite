@@ -30,7 +30,7 @@ use martensite_tkmath::math::{FunctionSet, FunctionSetRoot, Vector};
 /// use martensite_tkmath::gp::{Direction2, Line2, Point2};
 /// let curve = |y: f64| -> Result<_, martensite_tkernel::standard::Failure> {
 ///     let line: Handle<dyn Geom2dCurve> =
-///         Handle::new(Geom2dLine::from_point(Point2::new(0.0, y), Direction2::new(1.0, 0.0)?)).cast();
+///         Handle::new(Geom2dLine::from_point(Point2::new(0.0, y), Direction2::new(1.0, 0.0)?)).into_upcast();
 ///     unqualified(&Geom2dAdaptorCurve::with_range(&line, -5.0, 5.0)?)
 /// };
 /// let (q1, q2) = (curve(1.0)?, curve(-1.0)?);

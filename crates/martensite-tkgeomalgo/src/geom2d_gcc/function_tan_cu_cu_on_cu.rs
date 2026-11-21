@@ -21,7 +21,7 @@ use martensite_tkmath::math::{FunctionSet, FunctionSetWithDerivatives, Matrix, V
 /// use martensite_tkmath::gp::{Direction2, Line2, Point2};
 /// use martensite_tkmath::math::FunctionSet;
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 4.0), Direction2::new(1.0, 0.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 4.0), Direction2::new(1.0, 0.0)?)).into_upcast();
 /// let adaptor = Geom2dAdaptorCurve::with_curve(&line)?;
 /// let on = Line2::new(Point2::new(0.0, 0.0), Direction2::new(0.0, 1.0)?);
 /// let f = FunctionTanCuCuOnCu::curve_pnt_on_line(&adaptor, Point2::new(0.0, 0.0), on, 2.0);

@@ -184,7 +184,7 @@ impl GeomFillSweep {
             live(&section, "GeomFill_Sweep::BuildKPart", "Section")?.transform(tf2)?;
             let extrusion =
                 GeomSurfaceOfLinearExtrusion::new(&section, Direction3::from_vector(dp)?)?;
-            k.s = Handle::new(extrusion).cast();
+            k.s = Handle::new(extrusion).into_upcast();
             self.s_error = 0.0;
             k.ok = true;
         }
@@ -210,7 +210,7 @@ impl GeomFillSweep {
             let normal = Direction3::from_vector(ds.crossed(dp))?;
             let x = Direction3::from_vector(ds)?;
             let axis_of_plane = Axis2::with_x_direction(l.location(), normal, x)?;
-            k.s = Handle::new(GeomPlane::new(Axis3::from_axis2(axis_of_plane))).cast();
+            k.s = Handle::new(GeomPlane::new(Axis3::from_axis2(axis_of_plane))).into_upcast();
             return Ok(());
         }
         self.s_error = 0.0;
@@ -236,7 +236,7 @@ impl GeomFillSweep {
             k.ok = true;
             let dp_dir = Direction3::from_vector(dp)?;
             let axe = Axis3::new(c.location(), dp_dir, c.position().x_direction())?;
-            k.s = Handle::new(GeomCylindricalSurface::new(axe, c.radius())?).cast();
+            k.s = Handle::new(GeomCylindricalSurface::new(axe, c.radius())?).into_upcast();
             if c.position().direction().is_opposite(axe.direction(), 0.1) {
                 k.u = reversed_range(k.u);
                 self.is_u_reversed = true;
@@ -326,7 +326,7 @@ impl GeomFillSweep {
             Direction3::from_vector(dir)?,
             Direction3::from_vector(n)?,
         )?;
-        k.s = Handle::new(GeomConicalSurface::new(axis, angle, cc.radius0)?).cast();
+        k.s = Handle::new(GeomConicalSurface::new(axis, angle, cc.radius0)?).into_upcast();
         k.v = (
             self.first / martensite_cmath::cos(angle),
             self.last / martensite_cmath::cos(angle),
@@ -364,16 +364,16 @@ impl GeomFillSweep {
                 k.v,
                 (true, true),
             )?)
-            .cast(),
+            .into_upcast(),
             (true, true) => k.s,
             (true, false) => Handle::new(GeomRectangularTrimmedSurface::with_one_direction(
                 &k.s, k.v.0, k.v.1, false, true,
             )?)
-            .cast(),
+            .into_upcast(),
             (false, true) => Handle::new(GeomRectangularTrimmedSurface::with_one_direction(
                 &k.s, k.u.0, k.u.1, true, true,
             )?)
-            .cast(),
+            .into_upcast(),
         };
         Ok(())
     }

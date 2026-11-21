@@ -2,7 +2,7 @@
 //! overriding `ArcType` and the one accessor that returns its geometry.
 use super::{Bisec, IType};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2};
 
 // One native bisector class: its struct, RTTI and the Bisec overrides.
@@ -14,10 +14,9 @@ macro_rules! bisector_class {
         $(#[$doc])*
         #[derive(Default)]
         pub struct $class {
-            parent: StandardTransient,
             $field: $geometry,
         }
-        impl_transient!($class, $native, dyn Bisec, parent, interfaces: [dyn Bisec]);
+        impl_transient!($class, $native, dyn Bisec, interfaces: [dyn Bisec]);
         impl $class {
             #[doc = concat!(
                 "The ", $native, " constructor: a bisecting locus of geometry `value`; ",
@@ -25,7 +24,6 @@ macro_rules! bisector_class {
             )]
             pub fn new(value: $geometry) -> Self {
                 Self {
-                    parent: StandardTransient::default(),
                     $field: value,
                 }
             }

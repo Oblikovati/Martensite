@@ -9,7 +9,7 @@ use super::trihedron_law::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{Axis1, Direction3, Vector3};
@@ -17,7 +17,6 @@ use martensite_tkmath::gp::{Axis1, Direction3, Vector3};
 /// `GeomFill_ConstantBiNormal`: the Frenet frame re-orthogonalized on a constant
 /// binormal. `let law = GeomFillConstantBiNormal::new(dir); law.set_curve(&curve)?;`.
 pub struct GeomFillConstantBiNormal {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     bn: Vector3,
     frenet: Handle<GeomFillFrenet>,
@@ -26,7 +25,6 @@ impl_transient!(
     GeomFillConstantBiNormal,
     "GeomFill_ConstantBiNormal",
     dyn GeomFillTrihedronLaw,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw]
 );
 
@@ -34,7 +32,6 @@ impl GeomFillConstantBiNormal {
     /// `GeomFill_ConstantBiNormal(BiNormal)`; `GeomFillConstantBiNormal::new(dir)`.
     pub fn new(binormal: Direction3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             base: GeomFillTrihedronLawBase::default(),
             bn: Vector3::from(binormal),
             frenet: Handle::new(GeomFillFrenet::new()),
@@ -83,7 +80,7 @@ impl GeomFillTrihedronLaw for GeomFillConstantBiNormal {
         if curve.is_some() {
             copy.set_curve(&curve)?;
         }
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// Loads the curve and the Frenet law; false for a null curve.
     fn set_curve(&self, curve: &Handle<dyn Adaptor3dCurve>) -> Result<bool, Failure> {

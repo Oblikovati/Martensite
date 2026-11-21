@@ -28,10 +28,11 @@ use martensite_tkmath::gp::Plane3;
 /// assert!(!curve.is_null());
 /// ```
 pub fn to_2d(c: &Handle<dyn GeomCurve>, p: &Plane3) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(GeomAdaptorCurve::with_curve(c)?).cast();
-    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(*p)).cast();
+    let hc: Handle<dyn Adaptor3dCurve> =
+        Handle::new(GeomAdaptorCurve::with_curve(c)?).into_upcast();
+    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(*p)).into_upcast();
     let hs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&plane)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&plane)?).into_upcast();
     let proj: ProjectedCurve = ProjectedCurve::with_curve(&hs, &hc)?;
     let kind: CurveType = proj.get_type()?;
     if kind == CurveType::OffsetCurve || kind == CurveType::OtherCurve {
@@ -55,10 +56,11 @@ pub fn to_2d(c: &Handle<dyn GeomCurve>, p: &Plane3) -> Result<Handle<dyn Geom2dC
 /// assert!(!curve.is_null());
 /// ```
 pub fn to_3d(c: &Handle<dyn Geom2dCurve>, p: &Plane3) -> Result<Handle<dyn GeomCurve>, Failure> {
-    let ahc: Handle<dyn Adaptor2dCurve2d> = Handle::new(Geom2dAdaptorCurve::with_curve(c)?).cast();
-    let the_plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(*p)).cast();
+    let ahc: Handle<dyn Adaptor2dCurve2d> =
+        Handle::new(Geom2dAdaptorCurve::with_curve(c)?).into_upcast();
+    let the_plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(*p)).into_upcast();
     let ahs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&the_plane)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&the_plane)?).into_upcast();
     let cos = Adaptor3dCurveOnSurface::with_curve(&ahc, &ahs)?;
     geom_adaptor::make_curve(&cos)
 }

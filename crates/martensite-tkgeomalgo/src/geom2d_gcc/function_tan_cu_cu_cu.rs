@@ -25,7 +25,7 @@ pub type TanCuCuCuDerivatives = [(Point2, Vector2, Vector2); 3];
 /// use martensite_tkmath::gp::{Direction2, Line2, Point2};
 /// use martensite_tkmath::math::{FunctionSet, Vector};
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 4.0), Direction2::new(1.0, 0.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 4.0), Direction2::new(1.0, 0.0)?)).into_upcast();
 /// let adaptor = Geom2dAdaptorCurve::with_curve(&line)?;
 /// let l1 = Line2::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?);
 /// let l2 = Line2::new(Point2::new(0.0, 0.0), Direction2::new(0.0, 1.0)?);

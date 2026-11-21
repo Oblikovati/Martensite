@@ -145,7 +145,7 @@ impl GeomFillPipe {
         radius: f64,
     ) -> Result<Self, Failure> {
         let adaptor = |c: &Handle<dyn GeomCurve>| -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
-            Ok(Handle::new(GeomAdaptorCurve::with_curve(c)?).cast())
+            Ok(Handle::new(GeomAdaptorCurve::with_curve(c)?).into_upcast())
         };
         let (p, c1, c2) = (adaptor(path)?, adaptor(curve1)?, adaptor(curve2)?);
         Ok(Self::with_adaptor_rails(&p, &c1, &c2, radius))

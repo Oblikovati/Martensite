@@ -3,7 +3,10 @@
 use crate::support::brep_commands;
 use crate::support::script::{Reply, Script, ScriptStep};
 use crate::support::session::CurveColor;
-use martensite_tkbrep::{brep::BRepTool, topods};
+use martensite_tkbrep::{
+    brep::BRepTool,
+    topods::{Edge, Face},
+};
 use martensite_tkernel::{
     precision,
     standard::{Failure, Handle},
@@ -102,9 +105,10 @@ pub fn pcurve(d: &mut Script, name: &str, edge: &str, face: &str) -> ScriptStep 
     d.command(&["pcurve", name, edge, face], |d| {
         let edge_shape = d.shape(edge);
         let color = orientation_color(edge_shape.orientation());
-        let edge = topods::edge(&edge_shape)?;
-        let face = topods::face(&d.shape(face))?;
-        let found = BRepTool::curve_on_face(&edge, &face)?;
+        let face_shape = d.shape(face);
+        let found = Edge::with_shape_reference(&edge_shape, |edge| {
+            Face::with_shape_reference(&face_shape, |face| BRepTool::curve_on_face(edge, face))
+        })?;
         let curve = pcurve_variable(found.pcurve, found.first, found.last)?;
         d.set_colored(name, curve, color);
         Ok(Reply::ok(""))
@@ -144,8 +148,9 @@ fn pcurve_variable(
 pub fn mk2dcurve(d: &mut Script, name: &str, edge: &str, index: i32) -> ScriptStep {
     let index_text = index.to_string();
     d.command(&["mk2dcurve", name, edge, &index_text], |d| {
-        let edge_shape = topods::edge(&d.shape(edge))?;
-        let found = BRepTool::curve_on_surface_by_index(&edge_shape, index)?;
+        let found = Edge::with_shape_reference(&d.shape(edge), |edge| {
+            BRepTool::curve_on_surface_by_index(edge, index)
+        })?;
         if found.pcurve.is_null() {
             return Ok(Reply::error(format!("{edge} has no 2d curve\n")));
         }

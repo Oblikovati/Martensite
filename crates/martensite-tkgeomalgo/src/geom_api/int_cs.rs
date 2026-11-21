@@ -18,7 +18,7 @@ use martensite_tkmath::gp::Point3;
 /// use martensite_tkmath::gp::{Axis3, Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(
 ///     Point3::new(0.0, 0.0, 2.0), Direction3::new(0.0, 0.0, 1.0).unwrap())).cast();
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let inter = IntCS::with_curve(&line, &plane).unwrap();
 /// assert_eq!(inter.nb_points().unwrap(), 1);
 /// ```
@@ -51,8 +51,9 @@ impl IntCS {
         s: &Handle<dyn GeomSurface>,
     ) -> Result<(), Failure> {
         self.my_curve = c.clone();
-        let hc: HCurve = Handle::new(GeomAdaptorCurve::with_curve(c)?).cast();
-        let hs: Adaptor3dSurfaceHandle = Handle::new(GeomAdaptorSurface::with_surface(s)?).cast();
+        let hc: HCurve = Handle::new(GeomAdaptorCurve::with_curve(c)?).into_upcast();
+        let hs: Adaptor3dSurfaceHandle =
+            Handle::new(GeomAdaptorSurface::with_surface(s)?).into_upcast();
         self.my_int_cs.perform(&hc, &hs)
     }
     /// `IsDone()`. `inter.is_done()`.
@@ -86,7 +87,7 @@ impl IntCS {
         let (first_point, last_point) = (segment.first_point(), segment.second_point());
         let the_curve =
             GeomTrimmedCurve::new(&self.my_curve, first_point.w(), last_point.w(), true, true)?;
-        Ok(Handle::new(the_curve).cast())
+        Ok(Handle::new(the_curve).into_upcast())
     }
     /// `Parameters(Index, U1, V1, U2, V2)`: the surface parameters of the ends of the
     /// segment. `let (u1, v1, u2, v2) = inter.segment_parameters(1)?;`

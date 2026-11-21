@@ -101,7 +101,7 @@ impl GeomFillFunctionGuide {
         } else {
             GeomBSplineCurve::new(&poles, &knots, &mult, deg, law.is_u_periodic()?)?
         };
-        Ok(Handle::new(curve).cast())
+        Ok(Handle::new(curve).into_upcast())
     }
 
     /// `SetParam(Param, Centre, Dir, XDir)`: the surface of revolution of the
@@ -125,7 +125,7 @@ impl GeomFillFunctionGuide {
             Handle::new(GeomTrimmedCurve::new(
                 &copy, self.first, self.last, true, true,
             )?)
-            .cast()
+            .into_upcast()
         } else {
             self.law_section()?
         };
@@ -136,7 +136,8 @@ impl GeomFillFunctionGuide {
             "TheCurve",
         )?
         .transform(transfo)?;
-        self.the_surface = Handle::new(GeomSurfaceOfRevolution::new(&self.the_curve, axe)?).cast();
+        self.the_surface =
+            Handle::new(GeomSurfaceOfRevolution::new(&self.the_curve, axe)?).into_upcast();
         Ok(())
     }
 

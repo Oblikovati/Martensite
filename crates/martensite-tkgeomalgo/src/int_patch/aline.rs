@@ -7,7 +7,7 @@ use super::point::IntPatchPoint;
 use super::vertices::VertexList;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::List;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkgeombase::int_ana::Curve as IntAnaCurve;
 use martensite_tkmath::gp::{Point3, Vector3};
 
@@ -27,11 +27,10 @@ struct ALineState {
 /// assert!(line.first_parameter().is_err());
 /// ```
 pub struct IntPatchALine {
-    transient: StandardTransient,
     base: IntPatchLineBase,
     state: SharedState<ALineState>,
 }
-impl_transient!(IntPatchALine, "IntPatch_ALine", dyn IntPatchLine, transient,
+impl_transient!(IntPatchALine, "IntPatch_ALine", dyn IntPatchLine,
     interfaces: [dyn IntPatchLine]);
 
 pub(super) const ALINE: &str = "IntPatch_ALine";
@@ -45,7 +44,6 @@ impl IntPatchALine {
             vertices: VertexList::default(),
         };
         Self {
-            transient: StandardTransient::default(),
             base: IntPatchLineBase::new(tang, transitions, IntPatchIType::Analytic),
             state: SharedState::new(state),
         }

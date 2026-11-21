@@ -5,7 +5,7 @@ use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools,
     topexp::Explorer,
-    topods::{self, Compound, Shape, ShapeIterator},
+    topods::{Compound, Edge, Face, Shape, ShapeIterator},
     toptools::MapOfShape,
 };
 use martensite_tkernel::{precision, standard::Handle, storage::IoStream};
@@ -58,8 +58,8 @@ pub fn explode_type(shape: &Shape, kind: ShapeEnum) -> Vec<Shape> {
 /// BRepTest_CurveCommands.cxx `mkcurve c edge`: the edge's 3D curve trimmed to its
 /// range, transformed by the composed location.
 pub fn mkcurve(edge: &Shape) -> Handle<dyn GeomCurve> {
-    let edge = topods::edge(edge).expect("mkcurve: an edge");
-    let found = BRepTool::curve_with_location(&edge).unwrap();
+    let found = Edge::with_shape_reference(edge, BRepTool::curve_with_location)
+        .expect("mkcurve: an edge with a 3D curve");
     assert!(!found.curve.is_null(), "mkcurve: the edge has no 3d curve");
     let trimmed = GeomTrimmedCurve::new(&found.curve, found.first, found.last, true, true);
     let trimmed: Handle<dyn GeomCurve> = Handle::new(trimmed.unwrap()).cast();
@@ -73,8 +73,8 @@ pub fn mkcurve(edge: &Shape) -> Handle<dyn GeomCurve> {
 /// BRepTest_SurfaceCommands.cxx `mksurface s face`: the face's surface transformed by
 /// the composed location.
 pub fn mksurface(face: &Shape) -> Handle<dyn GeomSurface> {
-    let face = topods::face(face).expect("mksurface: a face");
-    let (surface, location) = BRepTool::surface_with_location(&face).unwrap();
+    let (surface, location) = Face::with_shape_reference(face, BRepTool::surface_with_location)
+        .expect("mksurface: a face with a surface");
     let copy = surface
         .get()
         .unwrap()
@@ -174,21 +174,23 @@ pub fn offset_surface(
 pub fn pcurve(face: &Shape) -> Vec<Handle<dyn Geom2dCurve>> {
     let mut forward = face.clone();
     forward.set_orientation(Orientation::Forward);
-    let face = topods::face(&forward).expect("pcurve: a face");
-    explode_all(&forward, ShapeEnum::Edge)
-        .iter()
-        .enumerate()
-        .map(|(i, edge)| {
-            let edge = topods::edge(edge).unwrap();
-            let found = BRepTool::curve_on_face(&edge, &face).unwrap();
-            assert!(
-                !found.pcurve.is_null(),
-                "Error: Edge {} does not have pcurve",
-                i + 1
-            );
-            pcurve_variable(found.pcurve, found.first, found.last)
-        })
-        .collect()
+    Face::with_shape_reference(&forward, |face| {
+        explode_all(&forward, ShapeEnum::Edge)
+            .iter()
+            .enumerate()
+            .map(|(i, edge)| {
+                let found =
+                    Edge::with_shape_reference(edge, |edge| BRepTool::curve_on_face(edge, face))?;
+                assert!(
+                    !found.pcurve.is_null(),
+                    "Error: Edge {} does not have pcurve",
+                    i + 1
+                );
+                Ok(pcurve_variable(found.pcurve, found.first, found.last))
+            })
+            .collect()
+    })
+    .expect("pcurve: a face with p-curves")
 }
 
 fn pcurve_variable(c: Handle<dyn Geom2dCurve>, f: f64, l: f64) -> Handle<dyn Geom2dCurve> {

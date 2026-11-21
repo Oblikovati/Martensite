@@ -13,7 +13,7 @@ use super::trihedron_with_guide::GeomFillTrihedronWithGuide;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, LinearVector};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::{one_based, put};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::GeomCurve;
@@ -54,7 +54,6 @@ pub(crate) struct GuideLocFields {
 /// `GeomFill_LocationGuide`: the guided location law.
 /// `let law = GeomFillLocationGuide::new(&trihedron)?; law.set_curve(&path)?;`.
 pub struct GeomFillLocationGuide {
-    parent: StandardTransient,
     pub(crate) my_law: Handle<dyn GeomFillTrihedronWithGuide>,
     pub(crate) my_guide: Handle<dyn Adaptor3dCurve>,
     pub(crate) fields: SharedState<GuideLocFields>,
@@ -63,7 +62,6 @@ impl_transient!(
     GeomFillLocationGuide,
     "GeomFill_LocationGuide",
     dyn GeomFillLocationLaw,
-    parent,
     interfaces: [dyn GeomFillLocationLaw]
 );
 
@@ -90,7 +88,6 @@ impl GeomFillLocationGuide {
         let mut trans = Matrix3::default();
         trans.set_identity();
         Ok(Self {
-            parent: StandardTransient::default(),
             my_law: triedre.clone(),
             my_guide,
             fields: SharedState::new(GuideLocFields {
@@ -318,7 +315,7 @@ impl GeomFillLocationLaw for GeomFillLocationGuide {
             f.poles2d[0][0].x(),
         )?;
         copy.set_trsf(&f.trans)?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn d0(&self, param: f64, placement: &mut LocationD0) -> Result<bool, Failure> {
         self.guide_d0(param, placement)

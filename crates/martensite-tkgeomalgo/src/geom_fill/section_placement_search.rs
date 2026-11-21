@@ -232,7 +232,7 @@ impl GeomFillSectionPlacement {
     ) -> Result<bool, Failure> {
         let surface: Handle<dyn GeomSurface> = plan.clone().cast();
         let adplan: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&surface)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&surface)?).into_upcast();
         let mut intersector = HInter::new();
         intersector.perform(path, &adplan)?;
         if !intersector.is_done() {

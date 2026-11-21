@@ -8,7 +8,6 @@ use crate::int_patch::{
 };
 use crate::intf::native_int_cast;
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkmath::geom_abs::SurfaceType;
 
 impl GeomIntLineConstructor {

@@ -58,5 +58,5 @@ pub trait GeomFillTrihedronWithGuide: GeomFillTrihedronLaw {
 impl_transient_interface!(
     dyn GeomFillTrihedronWithGuide,
     "GeomFill_TrihedronWithGuide",
-    dyn GeomFillTrihedronLaw
+    dyn GeomFillTrihedronLaw, upcasts: [dyn GeomFillTrihedronLaw]
 );

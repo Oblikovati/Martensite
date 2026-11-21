@@ -2,7 +2,7 @@
 use martensite_tkernel::{
     impl_transient,
     ncollection::Array1,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 use martensite_tkgeomalgo::{
     approx_int::{ApproxIntLine, ApproxIntMultiLine, ApproxIntMultiLineLayout, ApproxIntOffsets},
@@ -14,16 +14,10 @@ use martensite_tkmath::gp::{Point2, Point3};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 struct SnapshotCountingLine {
-    transient: StandardTransient,
     walking: IntPatchWLine,
     point_reads: AtomicUsize,
 }
-impl_transient!(
-    SnapshotCountingLine,
-    "SnapshotCountingLine",
-    StandardTransient,
-    transient
-);
+impl_transient!(SnapshotCountingLine, "SnapshotCountingLine", dyn Transient);
 
 impl ApproxIntLine for SnapshotCountingLine {
     fn nb_pnts(&self) -> Result<i32, Failure> {
@@ -37,7 +31,6 @@ impl ApproxIntLine for SnapshotCountingLine {
 
     fn from_points(line: &Handle<IntSurfLineOn2S>, tang: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             walking: ApproxIntLine::from_points(line, tang),
             point_reads: AtomicUsize::new(0),
         }

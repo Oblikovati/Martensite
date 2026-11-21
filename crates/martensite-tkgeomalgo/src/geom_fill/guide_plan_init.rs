@@ -36,9 +36,9 @@ fn nearest_intersection(
         p,
         Direction3::from_vector(frame.tangent)?,
     )?)
-    .cast();
+    .into_upcast();
     let pl: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&plan)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&plan)?).into_upcast();
     let mut int = HInter::new();
     int.perform(trim_g, &pl)?;
     if int.nb_points()? == 0 {

@@ -1,54 +1,30 @@
-//! `Law_S` and `Law_Interpol`, the two laws derived from `Law_BSpFunc`. Each embeds
-//! its `Law_BSpFunc` parent, reaches its members through `Deref` and forwards the
-//! inherited `Law_Function` members, which it does not override.
-use super::{LawBSpFunc, LawBSpline, LawFunction, LawInterpolate};
+//! Interpolated and cubic laws use the same state and evaluator as `Law_BSpFunc`.
+use super::bsp_func::{BSpFuncOwner, BSpFuncState};
+use super::{BSplineLaw, LawBSpline, LawFunction, LawInterpolate};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray1};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::arrays::{at, one_based, put};
-use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Point2;
 
-/// Implements `LawFunction` for a law derived from `Law_BSpFunc` by forwarding every
-/// member to its `parent` field.
-macro_rules! forward_bsp_func {
+macro_rules! spline_law_members {
     ($law:ty) => {
-        impl LawFunction for $law {
-            fn continuity(&self) -> Result<Shape, Failure> {
-                self.parent.continuity()
-            }
-            fn nb_intervals(&self, s: Shape) -> Result<i32, Failure> {
-                self.parent.nb_intervals(s)
-            }
-            fn intervals(&self, t: &mut Array1<'_, f64>, s: Shape) -> Result<(), Failure> {
-                self.parent.intervals(t, s)
-            }
-            fn value(&self, x: f64) -> Result<f64, Failure> {
-                self.parent.value(x)
-            }
-            fn d1(&self, x: f64) -> Result<(f64, f64), Failure> {
-                self.parent.d1(x)
-            }
-            fn d2(&self, x: f64) -> Result<(f64, f64, f64), Failure> {
-                self.parent.d2(x)
-            }
-            fn trim(
-                &self,
-                first: f64,
-                last: f64,
-                tol: f64,
-            ) -> Result<Handle<dyn LawFunction>, Failure> {
-                self.parent.trim(first, last, tol)
-            }
-            fn bounds(&self) -> Result<(f64, f64), Failure> {
-                self.parent.bounds()
+        impl BSpFuncOwner for $law {
+            fn bsp_func_state(&self) -> &BSpFuncState {
+                &self.state
             }
         }
-        impl std::ops::Deref for $law {
-            type Target = LawBSpFunc;
-            fn deref(&self) -> &LawBSpFunc {
-                &self.parent
+
+        impl $law {
+            /// The curve shared by the law; `law.curve()`.
+            pub fn curve(&self) -> Handle<LawBSpline> {
+                BSplineLaw::curve(self)
+            }
+
+            /// Replace the curve and adopt its range; `law.set_curve(&curve)?`.
+            pub fn set_curve(&self, curve: &Handle<LawBSpline>) -> Result<(), Failure> {
+                BSplineLaw::set_curve(self, curve)
             }
         }
     };
@@ -59,10 +35,10 @@ macro_rules! forward_bsp_func {
 /// `let law = LawS::new(); law.set(0.0, 1.0, 1.0, 2.0)?; law.value(0.5)?`.
 #[derive(Default)]
 pub struct LawS {
-    parent: LawBSpFunc,
+    state: BSpFuncState,
 }
-impl_transient!(LawS, "Law_S", LawBSpFunc, parent, interfaces: [dyn LawFunction]);
-forward_bsp_func!(LawS);
+impl_transient!(LawS, "Law_S", dyn BSplineLaw, interfaces: [dyn LawFunction, dyn BSplineLaw]);
+spline_law_members!(LawS);
 
 impl LawS {
     /// A law without curve (`Law_S()`); `LawS::new()`.
@@ -99,7 +75,7 @@ impl LawS {
         put(&mut knots, 2, pfin)?;
         mults.init(4);
         let curve = LawBSpline::new(&poles, &knots, &mults, 3, false)?;
-        self.parent.set_curve(&Handle::new(curve))
+        self.set_curve(&Handle::new(curve))
     }
 }
 
@@ -108,10 +84,10 @@ impl LawS {
 /// `let law = LawInterpol::new(); law.set(&par_and_rad, false)?; law.value(0.5)?`.
 #[derive(Default)]
 pub struct LawInterpol {
-    parent: LawBSpFunc,
+    state: BSpFuncState,
 }
-impl_transient!(LawInterpol, "Law_Interpol", LawBSpFunc, parent, interfaces: [dyn LawFunction]);
-forward_bsp_func!(LawInterpol);
+impl_transient!(LawInterpol, "Law_Interpol", dyn BSplineLaw, interfaces: [dyn LawFunction, dyn BSplineLaw]);
+spline_law_members!(LawInterpol);
 
 /// A shared array of reals, as `Law_Interpolate` receives them.
 type SharedReals = Handle<HArray1<f64>>;
@@ -169,7 +145,7 @@ impl LawInterpol {
             inter.load_ends(dd, df)?;
         }
         inter.perform()?;
-        self.parent.set_curve(&inter.curve()?)
+        self.set_curve(&inter.curve()?)
     }
 
     /// Interpolates the `(parameter, value)` points (`Set(ParAndRad, Periodic)`; the

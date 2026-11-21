@@ -15,7 +15,7 @@ use super::vertices::VertexList;
 use crate::int_start::TheArc;
 use crate::int_surf::{IntSurfLineOn2S, IntSurfPntOn2S, IntSurfSituation, IntSurfTypeTrans};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Point2, Point3};
 
 /// `IntPatch_WLine::IntPatch_WLType`: the algorithm that built a walking line.
@@ -56,13 +56,12 @@ pub(super) struct WLineState {
 /// assert!(line.first_point().is_err());
 /// ```
 pub struct IntPatchWLine {
-    transient: StandardTransient,
     base: IntPatchLineBase,
     // Fixed ownership permits borrowed routing; metadata leases still order multi-step edits (#294).
     curv: Handle<IntSurfLineOn2S>,
     state: SharedState<WLineState>,
 }
-impl_transient!(IntPatchWLine, "IntPatch_WLine", dyn IntPatchPointLine, transient,
+impl_transient!(IntPatchWLine, "IntPatch_WLine", dyn IntPatchPointLine,
     interfaces: [dyn IntPatchLine, dyn IntPatchPointLine]);
 
 const CLASS: &str = "IntPatch_WLine";
@@ -82,7 +81,6 @@ impl IntPatchWLine {
             creation_way: IntPatchWLType::Unknown,
         };
         Self {
-            transient: StandardTransient::default(),
             base: IntPatchLineBase::new(tang, transitions, IntPatchIType::Walking),
             curv: line.clone(),
             state: SharedState::new(state),

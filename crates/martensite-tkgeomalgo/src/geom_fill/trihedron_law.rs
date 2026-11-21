@@ -3,7 +3,7 @@ use super::pipe_error::GeomFillPipeError;
 use super::sweep_failures::{live, not_implemented};
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Vector3;
@@ -123,7 +123,7 @@ impl GeomFillTrihedronLawBase {
 /// evaluators that change the object (`D0` is not `const`). Output references are
 /// `&mut` frames, written as the native code writes them, and every member that
 /// reaches the curve returns `Result`.
-/// `let law: Handle<dyn GeomFillTrihedronLaw> = Handle::new(GeomFillFrenet::new()).cast();`
+/// `let law: Handle<dyn GeomFillTrihedronLaw> = Handle::new(GeomFillFrenet::new()).into_upcast();`
 pub trait GeomFillTrihedronLaw: Transient {
     /// The protected `myCurve`/`myTrimmed` of the base class.
     fn trihedron_base(&self) -> &GeomFillTrihedronLawBase;
@@ -191,5 +191,5 @@ pub trait GeomFillTrihedronLaw: Transient {
 impl_transient_interface!(
     dyn GeomFillTrihedronLaw,
     "GeomFill_TrihedronLaw",
-    StandardTransient
+    dyn Transient
 );

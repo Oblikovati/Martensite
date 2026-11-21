@@ -20,9 +20,9 @@ pub type CurvePair = (Handle<dyn Geom2dCurve>, Handle<dyn Geom2dCurve>);
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Direction2, Point2};
 /// let l1: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap())).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap())).into_upcast();
 /// let l2: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(1.0, -1.0), Direction2::new(0.0, 1.0).unwrap())).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(1.0, -1.0), Direction2::new(0.0, 1.0).unwrap())).into_upcast();
 /// let inter = InterCurveCurve::between(&l1, &l2, 1.0e-6).unwrap();
 /// assert_eq!(inter.nb_points(), 1);
 /// assert_eq!(inter.point(1).unwrap(), Point2::new(1.0, 0.0));
@@ -210,5 +210,5 @@ fn trimmed(
     u1: f64,
     u2: f64,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, u1, u2, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, u1, u2, true, true)?).into_upcast())
 }

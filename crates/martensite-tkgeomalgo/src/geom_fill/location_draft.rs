@@ -9,7 +9,7 @@ use super::trihedron_law::{GeomFillTrihedronLaw, TrihedronD0};
 use crate::int_curve_surface::HInter;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use martensite_tkg3d::geom::{GeomCurve, GeomLine};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
@@ -37,7 +37,6 @@ pub(crate) struct DraftFields {
 /// `GeomFill_LocationDraft`: the draft location law.
 /// `let law = GeomFillLocationDraft::new(dir, 0.1)?; law.set_curve(&path)?;`.
 pub struct GeomFillLocationDraft {
-    parent: StandardTransient,
     pub(crate) my_law: Handle<GeomFillDraftTrihedron>,
     my_dir: Direction3,
     pub(crate) fields: SharedState<DraftFields>,
@@ -46,7 +45,6 @@ impl_transient!(
     GeomFillLocationDraft,
     "GeomFill_LocationDraft",
     dyn GeomFillLocationLaw,
-    parent,
     interfaces: [dyn GeomFillLocationLaw]
 );
 
@@ -58,8 +56,8 @@ pub(crate) fn generatrix_direction(frame: &TrihedronD0, angle: f64) -> Vector3 {
 /// The adaptor of the line through `p` along `d` (`gp_Dir(D)` normalizes it).
 pub(crate) fn generatrix(p: Point3, d: Vector3) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
     let line: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::from_point(p, Direction3::from_vector(d)?)).cast();
-    Ok(Handle::new(GeomAdaptorCurve::with_curve(&line)?).cast())
+        Handle::new(GeomLine::from_point(p, Direction3::from_vector(d)?)).into_upcast();
+    Ok(Handle::new(GeomAdaptorCurve::with_curve(&line)?).into_upcast())
 }
 
 impl GeomFillLocationDraft {
@@ -67,7 +65,6 @@ impl GeomFillLocationDraft {
     /// as the null matrix (the native `gp_Mat` default), unused until `SetTrsf`.
     pub fn new(direction: Direction3, angle: f64) -> Result<Self, Failure> {
         Ok(Self {
-            parent: StandardTransient::default(),
             my_law: Handle::new(GeomFillDraftTrihedron::new(
                 Vector3::from(direction),
                 angle,
@@ -223,7 +220,7 @@ impl GeomFillLocationLaw for GeomFillLocationDraft {
         if fields.with_trans {
             copy.set_trsf(&fields.trans)?;
         }
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn d0(&self, param: f64, placement: &mut LocationD0) -> Result<bool, Failure> {
         self.draft_d0(param, placement)

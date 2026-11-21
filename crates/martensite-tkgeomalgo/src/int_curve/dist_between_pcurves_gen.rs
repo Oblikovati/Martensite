@@ -19,7 +19,7 @@ use martensite_tkmath::math::{FunctionSet, FunctionSetWithDerivatives, Matrix, V
 /// use martensite_tkmath::gp::{Direction2, Point2};
 /// use martensite_tkmath::math::{FunctionSet, Vector};
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap())).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap())).into_upcast();
 /// let a = Geom2dAdaptorCurve::with_curve(&line).unwrap();
 /// let mut f = TheDistBetweenPCurvesOfTheIntPCurvePCurveOfGInter::new(&a, &a);
 /// let x = Vector::from_xy(martensite_tkmath::gp::Xy::new(2.0, 0.5));

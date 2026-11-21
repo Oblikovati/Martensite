@@ -55,7 +55,7 @@ pub trait IntPatchPointLine: IntPatchLine {
 impl_transient_interface!(
     dyn IntPatchPointLine,
     "IntPatch_PointLine",
-    dyn IntPatchLine
+    dyn IntPatchLine, upcasts: [dyn IntPatchLine]
 );
 
 /// `IntPatch_PointLine::CurvatureRadiusOfIntersLine(theS1, theS2, theUVPoint)`: the

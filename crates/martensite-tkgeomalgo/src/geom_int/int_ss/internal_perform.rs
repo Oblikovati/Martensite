@@ -8,7 +8,6 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::adaptor3d::Adaptor3dTopolTool;
 use martensite_tkg3d::adaptor3d::h_surface_tool::Adaptor3dSurfaceHandle;
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
 use martensite_tkg3d::top_abs::State;
 use martensite_tkmath::geom_abs::SurfaceType;
 use martensite_tkmath::gp::Point2;
@@ -49,8 +48,8 @@ impl GeomIntIntSS {
         {
             deflection /= 10.0;
         }
-        let hs1: Adaptor3dSurfaceHandle = self.my_hs1.cast();
-        let hs2: Adaptor3dSurfaceHandle = self.my_hs2.cast();
+        let hs1: Adaptor3dSurfaceHandle = self.my_hs1.upcast();
+        let hs2: Adaptor3dSurfaceHandle = self.my_hs2.upcast();
         let dom1 = domain(&hs1)?;
         let dom2 = domain(&hs2)?;
         let (mut vec_hs1, mut vec_hs2): (Vec<Adaptor3dSurfaceHandle>, Vec<Adaptor3dSurfaceHandle>) =
@@ -92,10 +91,12 @@ impl GeomIntIntSS {
     ) -> Result<(), Failure> {
         let a_dom1 = domain(a_hs1)?;
         let a_dom2 = domain(a_hs2)?;
-        let g1: Handle<GeomAdaptorSurface> = a_hs1.cast();
-        let g2: Handle<GeomAdaptorSurface> = a_hs2.cast();
-        self.my_lconstruct
-            .load(a_dom1.clone(), a_dom2.clone(), &g1, &g2);
+        self.my_lconstruct.load_surface_adaptors(
+            a_dom1.clone(),
+            a_dom2.clone(),
+            a_hs1.cast(),
+            a_hs2.cast(),
+        );
         let uv_max_step: f64 =
             IntPatchIntersection::define_uv_max_step(a_hs1, &*a_dom1, a_hs2, &*a_dom2)?;
         self.my_intersector

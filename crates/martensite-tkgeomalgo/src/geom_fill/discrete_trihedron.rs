@@ -9,7 +9,7 @@ use super::trihedron_law::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::one_based;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::geom_abs::{CurveType, Shape};
@@ -28,7 +28,6 @@ struct DiscreteState {
 /// member `myPoint` only receives evaluation points and is kept local.
 /// `let law = GeomFillDiscreteTrihedron::new(); law.set_curve(&curve)?;`.
 pub struct GeomFillDiscreteTrihedron {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     my_frenet: Handle<GeomFillFrenet>,
     state: SharedState<DiscreteState>,
@@ -37,14 +36,12 @@ impl_transient!(
     GeomFillDiscreteTrihedron,
     "GeomFill_DiscreteTrihedron",
     dyn GeomFillTrihedronLaw,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw]
 );
 
 impl Default for GeomFillDiscreteTrihedron {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             base: GeomFillTrihedronLawBase::default(),
             my_frenet: Handle::new(GeomFillFrenet::new()),
             state: SharedState::new(DiscreteState::default()),
@@ -243,7 +240,7 @@ impl GeomFillTrihedronLaw for GeomFillDiscreteTrihedron {
         if curve.is_some() {
             copy.set_curve(&curve)?;
         }
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// Lines and conics use the Frenet law; other curves run `Init`. Returns
     /// `myUseFrenet`.

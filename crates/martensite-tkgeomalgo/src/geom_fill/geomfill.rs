@@ -86,9 +86,9 @@ fn arc_bspline(
 ) -> Result<Handle<GeomBSplineCurve>, Failure> {
     let z = Direction3::from_standard(StandardDirection3::Z);
     let circle = Circle3::new(Axis2::new(Point3::new(0.0, 0.0, 0.0), z)?, radius)?;
-    let basis: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(circle)).cast();
+    let basis: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(circle)).into_upcast();
     let sect: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(&basis, 0.0, angle, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(&basis, 0.0, angle, true, true)?).into_upcast();
     curve_to_bspline_curve(&sect, conv)
 }
 

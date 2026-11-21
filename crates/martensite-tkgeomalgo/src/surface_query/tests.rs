@@ -41,8 +41,12 @@ fn affine() -> Handle<GeomBSplineSurface> {
 }
 fn face(surface: &Handle<GeomBSplineSurface>) -> Face {
     let fields = Handle::new(BRepTFace::new());
-    fields.set_surface(&surface.cast());
-    let shape = Shape::from_parts(fields.cast(), Location::default(), Orientation::Forward);
+    fields.set_surface(&surface.upcast());
+    let shape = Shape::from_parts(
+        fields.into_upcast(),
+        Location::default(),
+        Orientation::Forward,
+    );
     topods::face(&shape).unwrap()
 }
 fn request() -> SurfaceSelfQuery {
@@ -148,9 +152,9 @@ fn transformed_support_is_not_silently_replaced_by_unrounded_affine_poles() {
     let mut transform = Transform3::default();
     transform.set_translation(Vector3::new(1., 0., 0.));
     let fields = Handle::new(BRepTFace::new());
-    fields.set_surface(&surface.cast());
+    fields.set_surface(&surface.upcast());
     let shape = Shape::from_parts(
-        fields.cast(),
+        fields.into_upcast(),
         Location::new(transform),
         Orientation::Forward,
     );

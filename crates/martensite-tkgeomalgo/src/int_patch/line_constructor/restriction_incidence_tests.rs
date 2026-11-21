@@ -10,8 +10,8 @@ fn boundary_arc() -> TheArc {
         Point2::new(0.0, 0.0),
         Direction2::new(1.0, 0.0).unwrap(),
     ))
-    .cast();
-    Handle::new(Geom2dAdaptorCurve::with_range(&geometry, 0.0, 1.0).unwrap()).cast()
+    .into_upcast();
+    Handle::new(Geom2dAdaptorCurve::with_range(&geometry, 0.0, 1.0).unwrap()).into_upcast()
 }
 
 fn incidence(x: f64, parameter: f64, arc: &TheArc) -> IntPatchPoint {

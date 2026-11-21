@@ -78,7 +78,7 @@ impl IntPatchIntersection {
                 false,
                 IntPatchLineTransitions::Undecided,
             )?;
-            self.slin.push(Handle::new(gl).cast());
+            self.slin.push(Handle::new(gl).into_upcast());
         }
         self.done = true;
         Ok(true)

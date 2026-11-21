@@ -2,7 +2,7 @@
 use super::bound_parameter::BoundParameter;
 use super::{GeomFillBoundary, GeomFillBoundaryTolerances};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::gp::{Point3, Vector3};
@@ -12,7 +12,6 @@ use martensite_tkmath::gp::{Point3, Vector3};
 ///
 /// `let bound = GeomFillSimpleBound::new(&curve, 1e-4, 1e-2); bound.value(0.5)?`
 pub struct GeomFillSimpleBound {
-    parent: StandardTransient,
     tolerances: GeomFillBoundaryTolerances,
     my_c3d: Handle<dyn Adaptor3dCurve>,
     my_par: BoundParameter,
@@ -21,7 +20,6 @@ impl_transient!(
     GeomFillSimpleBound,
     "GeomFill_SimpleBound",
     dyn GeomFillBoundary,
-    parent,
     interfaces: [dyn GeomFillBoundary]
 );
 
@@ -30,7 +28,6 @@ impl GeomFillSimpleBound {
     /// `GeomFillSimpleBound::new(&curve, 1e-4, 1e-2)`.
     pub fn new(curve: &Handle<dyn Adaptor3dCurve>, tol3d: f64, tolang: f64) -> Self {
         Self {
-            parent: StandardTransient::default(),
             tolerances: GeomFillBoundaryTolerances::new(tol3d, tolang),
             my_c3d: curve.clone(),
             my_par: BoundParameter::default(),

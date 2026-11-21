@@ -42,7 +42,7 @@ fn piece_2d(
         return Ok(Some(Handle::default()));
     }
     Ok(Some(
-        Handle::new(Geom2dTrimmedCurve::new(c2d, par_f, par_l, true, true)?).cast(),
+        Handle::new(Geom2dTrimmedCurve::new(c2d, par_f, par_l, true, true)?).into_upcast(),
     ))
 }
 
@@ -84,7 +84,7 @@ impl GeomIntIntSS {
                 true,
                 true,
             )?)
-            .cast();
+            .into_upcast();
             self.sline.push(curv3d);
             self.sline_s1.push(c2d1);
             self.sline_s2.push(c2d2);

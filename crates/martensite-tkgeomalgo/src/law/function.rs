@@ -1,7 +1,7 @@
 //! `Law_Function`, the abstract scalar law, and its two closed-form laws
 //! `Law_Constant` and `Law_Linear`.
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 use martensite_tkg2d::geom2d::arrays::put;
 use martensite_tkmath::geom_abs::Shape;
@@ -14,7 +14,7 @@ use martensite_tkmath::geom_abs::Shape;
 /// B-spline evaluators). The evaluators take `&self`: the laws that change state while
 /// they evaluate (the composite law caches its current piece) keep it behind a lock.
 /// output references become returned tuples.
-/// `let law: Handle<dyn LawFunction> = Handle::new(LawConstant::new()).cast(); law.value(0.5)?`.
+/// `let law: Handle<dyn LawFunction> = Handle::new(LawConstant::new()).into_upcast(); law.value(0.5)?`.
 pub trait LawFunction: Transient {
     /// The continuity of the law (`Continuity`).
     fn continuity(&self) -> Result<Shape, Failure>;
@@ -36,7 +36,7 @@ pub trait LawFunction: Transient {
     /// The parametric bounds `(PFirst, PLast)` (`Bounds`).
     fn bounds(&self) -> Result<(f64, f64), Failure>;
 }
-impl_transient_interface!(dyn LawFunction, "Law_Function", StandardTransient);
+impl_transient_interface!(dyn LawFunction, "Law_Function", dyn Transient);
 
 /// `T(T.Lower()) = first; T(T.Upper()) = last`, the `Intervals` of the one-piece laws.
 fn store_bounds(t: &mut Array1<'_, f64>, first: f64, last: f64) -> Result<(), Failure> {
@@ -58,10 +58,9 @@ struct ConstantFields {
 /// `let law = LawConstant::new(); law.set(2.0, 0.0, 1.0); law.value(0.5)? == 2.0`.
 #[derive(Default)]
 pub struct LawConstant {
-    parent: StandardTransient,
     fields: SharedState<ConstantFields>,
 }
-impl_transient!(LawConstant, "Law_Constant", dyn LawFunction, parent, interfaces: [dyn LawFunction]);
+impl_transient!(LawConstant, "Law_Constant", dyn LawFunction, interfaces: [dyn LawFunction]);
 
 impl LawConstant {
     /// The constant 0 on `[0, 0]` (`Law_Constant()`); `LawConstant::new()`.
@@ -109,7 +108,7 @@ impl LawFunction for LawConstant {
     ) -> Result<Handle<dyn LawFunction>, Failure> {
         let law = LawConstant::new();
         law.set(self.fields.read().radius, p_first, p_last);
-        Ok(Handle::new(law).cast())
+        Ok(Handle::new(law).into_upcast())
     }
     fn bounds(&self) -> Result<(f64, f64), Failure> {
         let fields: ConstantFields = *self.fields.read();
@@ -143,10 +142,9 @@ impl LinearFields {
 /// `let law = LawLinear::new(); law.set(0.0, 1.0, 1.0, 3.0); law.value(0.5)? == 2.0`.
 #[derive(Default)]
 pub struct LawLinear {
-    parent: StandardTransient,
     fields: SharedState<LinearFields>,
 }
-impl_transient!(LawLinear, "Law_Linear", dyn LawFunction, parent, interfaces: [dyn LawFunction]);
+impl_transient!(LawLinear, "Law_Linear", dyn LawFunction, interfaces: [dyn LawFunction]);
 
 impl LawLinear {
     /// The law 0 on `[0, 0]` (`Law_Linear()`); `LawLinear::new()`.
@@ -199,7 +197,7 @@ impl LawFunction for LawLinear {
         let fields: LinearFields = *self.fields.read();
         let law = LawLinear::new();
         law.set(p_first, fields.at(p_first), p_last, fields.at(p_last));
-        Ok(Handle::new(law).cast())
+        Ok(Handle::new(law).into_upcast())
     }
     fn bounds(&self) -> Result<(f64, f64), Failure> {
         let fields: LinearFields = *self.fields.read();

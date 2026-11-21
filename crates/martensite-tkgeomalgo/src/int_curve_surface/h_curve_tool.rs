@@ -24,8 +24,8 @@ pub type HCurve = Handle<dyn Adaptor3dCurve>;
 /// use martensite_tkgeomalgo::int_curve_surface::{HCurve, TheHCurveTool};
 /// use martensite_tkmath::gp::{Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> =
-///     Handle::new(GeomLine::from_point(Point3::new(0.0, 0.0, 0.0), Direction3::new(1.0, 0.0, 0.0).unwrap())).cast();
-/// let curve: HCurve = Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 1.0).unwrap()).cast();
+///     Handle::new(GeomLine::from_point(Point3::new(0.0, 0.0, 0.0), Direction3::new(1.0, 0.0, 0.0).unwrap())).into_upcast();
+/// let curve: HCurve = Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 1.0).unwrap()).into_upcast();
 /// assert_eq!(TheHCurveTool::nb_samples(&curve, 0.0, 1.0).unwrap(), 2);
 /// ```
 pub struct TheHCurveTool;
