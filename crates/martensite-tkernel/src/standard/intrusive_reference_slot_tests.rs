@@ -1,5 +1,9 @@
 //! Owned-handle and actual slot observations are separate during callback release.
 use crate::standard::{Handle, IntrusiveReferenceSlot, StandardTransient};
+
+#[path = "intrusive_reference_slot_retirement_tests.rs"]
+mod retirement;
+
 #[test]
 fn reference_slot_constructor_moves_exactly_one_existing_native_owner() {
     let target = Handle::new(StandardTransient);
@@ -46,7 +50,7 @@ fn reference_slot_retiring_pointer_is_actual_and_conflicts_fail_explicitly() {
     assert_eq!(next.ref_count(), 1);
     slot.assign(&old).unwrap();
     drop(retiring);
-    slot.finish_retirement(next.clone());
+    slot.publish_ownership(next.clone(), false);
     assert_eq!(slot.object_address(), next.object_address());
     assert_eq!(next.ref_count(), 2);
 }
@@ -89,7 +93,7 @@ fn reference_slot_retiring_projection_refuses_a_fabricated_live_pointee() {
     assert_retiring_projection_failure(&failure);
     assert_eq!(storage.ref_count(), 0);
     drop(storage);
-    slot.finish_retirement(Handle::<StandardTransient>::default());
+    slot.publish_ownership(Handle::<StandardTransient>::default(), false);
 }
 
 fn assert_retiring_projection_failure(failure: &crate::standard::Failure) {
@@ -112,5 +116,5 @@ fn reference_slot_retiring_reborrow_checks_actual_pointer_and_phase() {
             .unwrap()
     );
     drop(ownership);
-    slot.finish_retirement(Handle::<StandardTransient>::default());
+    slot.publish_ownership(Handle::<StandardTransient>::default(), false);
 }

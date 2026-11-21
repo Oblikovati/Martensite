@@ -47,7 +47,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         let incoming = source.observe().downgrade();
         let old = self.begin_retirement(pointer)?;
         drop(old);
-        self.finish_retirement(incoming.upgrade());
+        self.publish_ownership(incoming.upgrade(), false);
         Ok(())
     }
     /// Release ownership without prematurely clearing the pointer; `slot.clear()?`.
@@ -66,12 +66,13 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         members.retiring = true;
         Ok(members.ownership.take())
     }
-    fn finish_retirement(&self, ownership: Handle<T>) {
+    fn publish_ownership(&self, ownership: Handle<T>, retiring: bool) {
         let pointer = ownership.downgrade();
         let mut members = self.members.write();
         let displaced = members.ownership.replace(ownership);
         members.pointer = pointer;
-        members.retiring = false;
+        members.retiring = retiring;
+        // A displaced object's destructor can inspect the newly published slot.
         drop(members);
         drop(displaced);
     }
@@ -198,10 +199,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveRetirementBorrow<'_, T> {
         }
         let incoming = source.observe().downgrade();
         self.release_current_reference();
-        let owner = incoming.upgrade();
-        let mut members = self.slot.members.write();
-        members.pointer = owner.downgrade();
-        members.ownership = Some(owner);
+        self.slot.publish_ownership(incoming.upgrade(), true);
         Ok(())
     }
     /// Nested nullification; `borrow.clear()?`.
