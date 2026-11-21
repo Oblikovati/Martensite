@@ -55,13 +55,12 @@ impl CubeFitReferenceProbe {
     ) -> [i32; 9] {
         let fields = &self.base.fields;
         let own = HandleFieldRef::new(fields, fit_reference_end_slot);
-        let observer = camera.observe();
         [
             i32::from(camera.reference_address() == own.reference_address()),
             camera.is_null() as i32,
             i32::from(camera.object_address() == self.original_end.object_address()),
             i32::from(camera.object_address() == self.replacement.object_address()),
-            observer.ref_count().try_into().unwrap(),
+            camera.ref_count().try_into().unwrap(),
             fields.read().start.ref_count().try_into().unwrap(),
             view.ref_count().try_into().unwrap(),
             self.original_end.ref_count().try_into().unwrap(),

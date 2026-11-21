@@ -134,10 +134,10 @@ fn derived_animation_outer_lease_defers_replaced_owner_retirement() {
     let proof = CubeTransportScene::new(0);
     let alias = proof.scene.cube.view_animation_ref();
     alias.with_animation(|animation| {
-        assert!(std::ptr::eq(
-            animation.unwrap(),
-            &*proof.owners[0] as &dyn AisAnimationCameraSource
-        ));
+        assert_eq!(
+            std::ptr::from_ref(animation.unwrap()).cast::<()>(),
+            proof.owners[0].object_address()
+        );
         assert_eq!(proof.owners[0].ref_count(), 2);
         proof.trace.replace(1);
         assert_eq!(proof.owners[0].ref_count(), 2);
