@@ -6,7 +6,7 @@ use super::{
 use crate::{prs_mgr::*, prs3d::*, select_mgr::*};
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, HandleReference, SharedState, StandardTransient},
+    standard::{Failure, Handle, HandleReference, SharedState},
 };
 use martensite_tkservice::{aspect::AspectTypeOfFacingModel, graphic3d::*};
 use std::sync::Arc;
@@ -20,8 +20,8 @@ pub trait AisViewCubeAnimationEvents: Send + Sync {
 }
 /// Native protected interaction policy and camera handles; `cube.interaction.fields.read()`.
 pub struct AisViewCubeInteractionFields {
-    /// Native stopped camera animation, initially duration 0.5 seconds.
-    pub animation: Handle<dyn AisAnimationCameraSource>,
+    /// Sole native animation owner in an outer callback lease, initially duration 0.5 seconds.
+    pub animation: Arc<Handle<dyn AisAnimationCameraSource>>,
     /// Retained starting camera, copied in place at every click.
     pub start: Handle<Graphic3dCamera>,
     /// Retained ending camera, copied in place at every click.
@@ -52,7 +52,7 @@ impl AisViewCubeInteractionBase {
         let base = Self {
             presentation: AisViewCubePresentationBase::new()?,
             fields: SharedState::new(AisViewCubeInteractionFields {
-                animation: animation.cast(),
+                animation: Arc::new(animation.into_upcast()),
                 start: Handle::new(Graphic3dCamera::default()),
                 end: Handle::new(Graphic3dCamera::default()),
                 auto_start: true,
@@ -109,7 +109,8 @@ pub trait AisViewCubeSource: AisViewCubePresentationSource {
 martensite_tkernel::impl_transient_interface!(
     dyn AisViewCubeSource,
     "AisViewCube",
-    dyn AisInteractiveObject
+    dyn AisInteractiveObject,
+    upcasts: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]
 );
 /// Concrete picking/highlight/camera widget; `AisViewCube::new?`.
 /// Whole-class equivalence remains partial while generated RTTI declarations and base aliases await complete proof.

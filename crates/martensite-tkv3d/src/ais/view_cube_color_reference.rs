@@ -2,7 +2,7 @@
 use crate::prs3d::Prs3dShadingAspect;
 use martensite_tkernel::{
     quantity::Color,
-    standard::{Handle, HandleObserver},
+    standard::{Handle, WeakHandle, exceptions::null_object, raise_native_failure},
 };
 use martensite_tkservice::{aspect::AspectTypeOfFacingModel, graphic3d::*};
 use std::marker::PhantomData;
@@ -15,7 +15,7 @@ pub(super) enum CubeColorLeaf {
 }
 /// Borrow one retained native color subfield; `let alias=cube.box_color_ref(); cube.set_box_color(red)?; alias.value()`.
 pub struct AisViewCubeColorRef<'a> {
-    aspect: HandleObserver<dyn Graphic3dAspectsSource>,
+    aspect: WeakHandle<dyn Graphic3dAspectsSource>,
     leaf: CubeColorLeaf,
     scope: PhantomData<&'a super::AisViewCubePresentationBase>,
 }
@@ -28,13 +28,13 @@ impl<'a> AisViewCubeColorRef<'a> {
         let aspect = shading.aspect();
         let back = model == AspectTypeOfFacingModel::BackSide;
         let leaf = cube_shading_color_leaf(&aspect, back);
-        Self::field(&aspect.cast(), leaf, scope)
+        Self::field(&aspect.into_upcast(), leaf, scope)
     }
     pub(super) fn text(
         aspect: &Handle<Graphic3dAspectText3d>,
         scope: &'a super::AisViewCubePresentationBase,
     ) -> Self {
-        Self::field(&aspect.cast(), CubeColorLeaf::FrontInterior, scope)
+        Self::field(&aspect.upcast(), CubeColorLeaf::FrontInterior, scope)
     }
     pub(super) fn field(
         aspect: &Handle<dyn Graphic3dAspectsSource>,
@@ -42,20 +42,22 @@ impl<'a> AisViewCubeColorRef<'a> {
         _: &'a super::AisViewCubePresentationBase,
     ) -> Self {
         Self {
-            aspect: aspect.observe(),
+            aspect: aspect.downgrade(),
             leaf,
             scope: PhantomData,
         }
     }
-    /// Copy current RGB from the same bound field; `alias.value().red()`.
+    /// Copy RGB from the bound field; expired source storage raises NullObject.
+    /// Example: `alias.value().red()`.
     pub fn value(&self) -> Color {
-        let fields = self.aspect.aspects_base().fields.read();
-        match self.leaf {
-            CubeColorLeaf::FrontInterior => *fields.interior_color.rgb(),
-            CubeColorLeaf::BackInterior => *fields.back_interior_color.rgb(),
-            CubeColorLeaf::FrontMaterial => fields.front_material.color(),
-            CubeColorLeaf::BackMaterial => fields.back_material.color(),
-        }
+        let current = self.aspect.upgrade();
+        let aspect = raise_native_failure(current.get().ok_or_else(|| {
+            null_object(&format!(
+                "aspect={:p}, strong count=0; expected a live bound ViewCube color field",
+                self.aspect.object_address()
+            ))
+        }));
+        cube_bound_color(aspect, self.leaf)
     }
     /// Compare physical source object and fixed subfield; `left.is_same_reference(&right)`.
     pub fn is_same_reference(&self, other: &AisViewCubeColorRef<'_>) -> bool {
@@ -79,5 +81,15 @@ fn cube_shading_color_leaf(aspect: &Graphic3dAspectFillArea3d, back: bool) -> Cu
         (true, true) => CubeColorLeaf::BackInterior,
         (false, false) => CubeColorLeaf::FrontMaterial,
         (true, false) => CubeColorLeaf::BackMaterial,
+    }
+}
+
+fn cube_bound_color(aspect: &dyn Graphic3dAspectsSource, leaf: CubeColorLeaf) -> Color {
+    let fields = aspect.aspects_base().fields.read();
+    match leaf {
+        CubeColorLeaf::FrontInterior => *fields.interior_color.rgb(),
+        CubeColorLeaf::BackInterior => *fields.back_interior_color.rgb(),
+        CubeColorLeaf::FrontMaterial => fields.front_material.color(),
+        CubeColorLeaf::BackMaterial => fields.back_material.color(),
     }
 }

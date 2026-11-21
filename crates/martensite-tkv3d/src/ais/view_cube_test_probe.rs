@@ -3,7 +3,7 @@ use super::*;
 use crate::{prs_mgr::*, select_mgr::*, v3d::V3dViewer};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient, exceptions::program_error},
+    standard::{Failure, Handle, exceptions::program_error},
     tcollection::AsciiString,
 };
 use martensite_tkservice::{graphic3d::*, null_driver::NullGraphicDriver};

@@ -28,9 +28,9 @@ fn replace_native_animation_slot(
         1 => cube.set_view_animation(owners[1]),
         2 => cube.set_view_animation(&Handle::default()),
         3 => cube.set_view_animation(owners[0]),
-        4 => cube.interaction.fields.write().animation = owners[2].clone(),
-        5 => cube.interaction.fields.write().animation = Handle::default(),
-        6 => cube.interaction.fields.write().animation = owners[1].clone(),
+        4 => cube.interaction.fields.write().animation = std::sync::Arc::new(owners[2].clone()),
+        5 => cube.interaction.fields.write().animation = std::sync::Arc::new(Handle::default()),
+        6 => cube.interaction.fields.write().animation = std::sync::Arc::new(owners[1].clone()),
         _ => panic!("animation step={step}; expected native sequence 0..=6"),
     }
 }
