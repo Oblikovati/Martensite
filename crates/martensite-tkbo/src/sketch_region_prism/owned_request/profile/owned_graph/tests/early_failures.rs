@@ -161,8 +161,8 @@ fn callback_native_failure_inside_census_matches_live_failed_class_phase_and_tra
         point.phase
     );
     assert_eq!(
-        actual_failure,
-        super::super::super::certify::ProfileProofRefusal::Incomplete(expected)
+        actual_failure.cause,
+        super::super::super::certify::ProfileProofCause::Incomplete(expected)
     );
 }
 fn callback_at(point: OwnedPrismCheckpoint) -> CallbackFailure {

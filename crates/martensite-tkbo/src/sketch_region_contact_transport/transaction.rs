@@ -206,23 +206,25 @@ fn retain_domain_contacts(
     domain: &crate::sketch_region_certification::BoundaryDomain,
     index: usize,
 ) {
-    let Some(proof) = certificates.and_then(|current| current.certificate(domain)) else {
+    let Some(proof) = certificates.and_then(|current| current.unified_certificate(domain)) else {
         inspection
             .missing
             .push(ContactTransportGap::MissingSourceBoundDomain { domain: index });
         return;
     };
-    let crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. } =
-        domain.evidence
-    else {
-        return;
+    let report = match domain.evidence {
+        crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. }
+        | crate::sketch_region_certification::DomainEvidence::BernsteinReport { report, .. } => {
+            report
+        }
+        _ => return,
     };
     retain_report_contacts(inspection, &proof, report, index);
 }
 
 fn retain_report_contacts(
     inspection: &mut ContactTransportInspection,
-    proof: &martensite_tkmath::predicates::roots::bezier_pair::BezierPairCertificate<'_>,
+    proof: &crate::sketch_region_certification::CertifiedPairDomain<'_>,
     report: usize,
     domain_index: usize,
 ) {

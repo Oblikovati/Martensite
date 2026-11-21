@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::super::{NonFiniteCoordinate, exact_coordinate};
+use super::certificate_arithmetic::{ExactRatio, rounding::outward_binary64};
 use num_bigint::BigInt;
 use std::{cmp::Ordering, fmt};
 
@@ -18,6 +19,11 @@ impl DyadicBound {
     pub fn compare_f64(&self, value: f64) -> Result<Ordering, NonFiniteCoordinate> {
         Ok(self.cmp(&Self::from_f64(value)?))
     }
+    /// Project outward to finite binary64 endpoints, returning `None` on overflow.
+    /// Example: `assert_eq!(DyadicBound::from_f64(0.5)?.binary64_bounds(), Some([0.5; 2]));`.
+    pub fn binary64_bounds(&self) -> Option<[f64; 2]> {
+        outward_binary64(&ExactRatio::from_dyadic(self))
+    }
     pub(super) fn new(significand: BigInt, exponent: i32) -> Self {
         // Binary64 bounds plus at most u16::MAX subdivisions fit i32 exponents
         // and 32-bit shift counts, including a difference across opposite signs.
@@ -31,6 +37,9 @@ impl DyadicBound {
             significand: significand >> zeros,
             exponent: exponent + zeros as i32,
         }
+    }
+    pub(super) fn scale_pow2(&self, power: u8) -> Self {
+        Self::new(self.significand.clone(), self.exponent + i32::from(power))
     }
     pub(super) fn midpoint(&self, other: &Self) -> Self {
         let (left, right, exponent) = self.aligned(other);
@@ -72,3 +81,7 @@ impl fmt::Display for DyadicBound {
         write!(f, "{} * 2^{}", self.significand, self.exponent)
     }
 }
+
+#[cfg(test)]
+#[path = "dyadic_tests.rs"]
+mod tests;

@@ -1,0 +1,33 @@
+{
+  "scope": "Frozen geometry, history, budgets, native reports and math receipts; same named worker before and after extraction. Not performance qualification.",
+  "rows": [
+    {
+      "workload": "cylinder",
+      "bytes": 221493,
+      "before_sha256": "c95896d367f7e2c96c0bee6dd1576515420c6a4cde422a5ba57c0570227313b6",
+      "after_sha256": "c95896d367f7e2c96c0bee6dd1576515420c6a4cde422a5ba57c0570227313b6",
+      "identical": true
+    },
+    {
+      "workload": "cone",
+      "bytes": 541423,
+      "before_sha256": "56dcf56a12316b4b192729575c9a537241d1cbe39c7267be20ddf379860deb34",
+      "after_sha256": "56dcf56a12316b4b192729575c9a537241d1cbe39c7267be20ddf379860deb34",
+      "identical": true
+    }
+  ],
+  "source_head": "698820f038c2a222e98f08248ac303af54d422b1 with preserved unfinished feature working tree",
+  "source_hashes": {
+    "crates/martensite-tksketch/src/wrapped_profile/operation/topology.rs": "d6f1307292b54fa12cd861299c40d8b08b39d7a74812da026313655d0b94aef3",
+    "crates/martensite-tksketch/src/wrapped_profile/native.rs": "8076f5ec52e5f996e702754c37adbe4fe349ef87cea37f612978c42af1e86bf3",
+    "crates/martensite-tksketch/src/wrapped_profile/conical_mapping/cap_patch/contour/assembly/topology.rs": "7a3eef6b5db66c9a6f8be177215d0056467bb720c421126041d4ab5b5c28f492"
+  },
+  "source_followup": "Removed unnecessary mutable receiver after replay; final constructor/error propagation test rebuilt and passed. No runtime arithmetic or topology-order change.",
+  "validation": {
+    "assembly_test": "1passed,0failed",
+    "math_shared_profile_sweep": "43passed,0failed, includes14trim controls",
+    "math_clippy": "library/tests -Dwarnings passed; later source changes split tests only",
+    "primary_full_gate": "not run; unfinished cone remains outside integration candidates",
+    "performance": "not qualified by these replay runs"
+  }
+}

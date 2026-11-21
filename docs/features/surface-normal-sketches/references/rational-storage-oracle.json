@@ -1,0 +1,56 @@
+{
+  "operation_id": "quadratic_form.evaluate.compute",
+  "form": {
+    "domain": "QQ",
+    "axis": [
+      "X",
+      "Y",
+      "rW"
+    ],
+    "diagonal_coefficients": [
+      {
+        "num": "1",
+        "den": "1"
+      },
+      {
+        "num": "1",
+        "den": "1"
+      },
+      {
+        "num": "-1",
+        "den": "1"
+      }
+    ],
+    "cross_terms": []
+  },
+  "vector": {
+    "domain": "QQ",
+    "axis": [
+      "X",
+      "Y",
+      "rW"
+    ],
+    "coordinates": [
+      {
+        "num": "9",
+        "den": "2"
+      },
+      {
+        "num": "0",
+        "den": "1"
+      },
+      {
+        "num": "4",
+        "den": "1"
+      }
+    ]
+  },
+  "value": {
+    "num": "17",
+    "den": "4"
+  },
+  "derived_radial_upper_bound_at_radius_4": {
+    "num": "17",
+    "den": "16"
+  }
+}

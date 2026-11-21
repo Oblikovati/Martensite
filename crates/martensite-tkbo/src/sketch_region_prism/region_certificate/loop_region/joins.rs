@@ -9,9 +9,7 @@ use crate::sketch_region::RegionSourceId;
 use crate::sketch_region_certification::{
     BoundaryCensus, CertificationObligation, DomainCertificates,
 };
-use martensite_tkmath::predicates::roots::bezier_pair::{
-    BezierPairSignStage, CertifiedBezierPairContact,
-};
+use martensite_tkmath::predicates::roots::bezier_pair::CertifiedBezierPairContact;
 use std::collections::BTreeMap;
 
 const STAGE: LoopRegionStage = LoopRegionStage::Joins;
@@ -90,9 +88,9 @@ fn matched_domain(
         cause: LoopRegionCause::PairUnavailable { sources },
     };
     let proof = certificates
-        .and_then(|current| current.certificate(domain))
+        .and_then(|current| current.unified_certificate(domain))
         .ok_or(unavailable)?;
-    let carrier = proof.sign_stage() == BezierPairSignStage::SkippedCommonCarrier;
+    let carrier = proof.common_carrier();
     let wanted = expected.remove(&key(first, second)).unwrap_or_default();
     let wanted = oriented(wanted, first > second);
     let found = (0..proof.contact_count()).map(|i| proof.contact(i).expect("indexed contact"));
@@ -122,7 +120,7 @@ fn first_unavailable(
 ) -> LoopRegionCheck<()> {
     for domain in &census.domains {
         if certificates
-            .and_then(|current| current.certificate(domain))
+            .and_then(|current| current.unified_certificate(domain))
             .is_none()
         {
             let [first, second] = domain.occurrences;

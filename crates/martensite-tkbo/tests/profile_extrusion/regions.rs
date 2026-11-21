@@ -16,7 +16,12 @@ fn integrated_area(region: &PlanarRegion) -> f64 {
 }
 
 fn built(profile: &SketchProfile) -> PlanarRegionSet {
-    build_planar_regions(profile, resolution()).unwrap()
+    let regions = build_planar_regions(profile, resolution()).unwrap();
+    let work = regions.proof_work();
+    assert_eq!(work.requested_pair_bisections, 4096);
+    assert_eq!(work.effective_pair_bisections, 4096);
+    assert!(work.consumed_pair_bisections <= 4096);
+    regions
 }
 
 fn assert_area(region: &PlanarRegion, expected: f64) {

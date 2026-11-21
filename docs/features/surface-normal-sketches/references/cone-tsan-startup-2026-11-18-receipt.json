@@ -1,0 +1,23 @@
+{
+  "head": "64110e402e131afff2e3fadcbf9e2b9d4c9b245c",
+  "requested_source_snapshot": "6e8424f77f1e6556c0660d3ee8107c4368da6c71",
+  "target": "/tmp/martensite-cone-tsan-startup-target",
+  "toolchain": "nightly-2026-09-25",
+  "command": "cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml",
+  "flags": "-Zsanitizer=thread -Cforce-frame-pointers=yes",
+  "start_utc": "2026-11-18T15:57:30.152041+00:00",
+  "sanitizer_coverage_claim": false,
+  "status": "startup_failed_before_main",
+  "build_succeeded": true,
+  "build_seconds": 15.26,
+  "observed_exit_code": 139,
+  "shell_diagnostic": "Segmentation fault (core dumped)",
+  "main_entered_marker": false,
+  "completed_marker": false,
+  "instrumented_operation_controls_run": false,
+  "runtime_failure_cause": "not established by this execution",
+  "log_sha256": "3fba757bdb201843867854e15858fe755c89b513eb1dfa0982078047c2d92a8a",
+  "binary_sha256": "204940512c1e93d8c0b1ea3317a87abc5116482a496e2b4d312c3b4c54358af0",
+  "binary_bytes": 6245896,
+  "finished_utc": "2026-11-18T15:59:14.653835+00:00"
+}

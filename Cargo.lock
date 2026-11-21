@@ -1069,6 +1069,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tksketch"
+version = "0.1.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbo",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tktopalgo",
+ "static_assertions",
+]
+
+[[package]]
 name = "martensite-tktobj"
 version = "0.3.6"
 dependencies = [
@@ -1101,6 +1119,7 @@ version = "0.7.1"
 dependencies = [
  "martensite-cmath",
  "martensite-test-support",
+ "martensite-tkbo",
  "martensite-tkbrep",
  "martensite-tkernel",
  "martensite-tkg2d",
@@ -1112,6 +1131,7 @@ dependencies = [
  "martensite-tkmesh",
  "martensite-tkprim",
  "martensite-tkservice",
+ "martensite-tksketch",
  "martensite-tktopalgo",
 ]
 

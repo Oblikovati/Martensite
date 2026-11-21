@@ -72,16 +72,26 @@ pub(in crate::sketch_region_prism) enum ProfileLoopCause {
 /// Request version of a plane graph profile: edges only, no authored loops or
 /// regions; the plane graph proof derives every face.
 pub(in crate::sketch_region_prism) const GRAPH_PROFILE_VERSION: u32 = 2;
+/// Graph proof with exact Bernstein exclusions followed by the unchanged carrier solver.
+pub(in crate::sketch_region_prism) const EXCLUSION_GRAPH_PROFILE_VERSION: u32 = 3;
+/// #544: the same graph pipeline with explicit generated-sign policy version 2.
+pub(in crate::sketch_region_prism) const FILTERED_GRAPH_PROFILE_VERSION: u32 = 4;
 
-/// Admit one version-1 profile request or a version-2 plane graph; `admit(&request)?`.
+/// Admit an authored profile or a declared graph policy version; `admit(&request)?`.
 pub(super) fn admit(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissionCause> {
-    if request.version == GRAPH_PROFILE_VERSION {
+    if matches!(
+        request.version,
+        GRAPH_PROFILE_VERSION | EXCLUSION_GRAPH_PROFILE_VERSION | FILTERED_GRAPH_PROFILE_VERSION
+    ) {
         return admit_graph(request);
     }
     if request.version != 1 {
         let (actual, expected) = (request.version, 1);
         return Err(ProfileAdmissionCause::UnsupportedVersion { actual, expected });
     }
+    admit_authored(request)
+}
+fn admit_authored(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissionCause> {
     if request.edges.is_empty() || request.loops.is_empty() {
         return Err(ProfileAdmissionCause::EmptyProfile);
     }
@@ -90,6 +100,14 @@ pub(super) fn admit(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissio
     }
     finite_plane(request.declared_plane).map_err(ProfileAdmissionCause::Plane)?;
     admit_names(request)?;
+    admit_seeds(request)?;
+    for edge in &request.edges {
+        admit_edge(edge).map_err(|cause| edge_failure(edge.source, cause))?;
+    }
+    admit_vertices(request)?;
+    admit_loops(request)
+}
+fn admit_seeds(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissionCause> {
     if let Some(region) = request
         .regions
         .iter()
@@ -98,11 +116,7 @@ pub(super) fn admit(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissio
         let (region, actual) = (region.name, region.seed);
         return Err(ProfileAdmissionCause::Seed { region, actual });
     }
-    for edge in &request.edges {
-        admit_edge(edge).map_err(|cause| edge_failure(edge.source, cause))?;
-    }
-    admit_vertices(request)?;
-    admit_loops(request)
+    Ok(())
 }
 /// A plane graph: finite edges with consistent shared vertices, no authored loops.
 fn admit_graph(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissionCause> {

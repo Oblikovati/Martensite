@@ -1,7 +1,7 @@
 //! Explicit interpretation of stored analytic surface frames (#432).
 /// Selects analytic surface frame reconstruction, independently of binary format version.
 /// `SurfaceFrameReadPolicy::PreserveStoredV1` retains validated origin/main/X/Y bits.
-/// Curves and standalone directions retain legacy reconstruction under both policies.
+/// This policy alone leaves curves and standalone directions on legacy replay.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum SurfaceFrameReadPolicy {
     /// Reconstructs frames with normalization and orthogonalization for replay.

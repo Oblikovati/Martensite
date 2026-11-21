@@ -7,11 +7,13 @@ mod construction;
 mod pipeline;
 mod regions;
 mod request;
+mod selection;
 pub(in crate::sketch_region_prism) use admission::{
     ProfileAdmissionCause, ProfileEdgeCause, ProfileLoopCause,
 };
 pub(crate) use certify::{
-    ProfileGraphInput, ProfileProofRefusal, ProofEdge, certify_profile_graph,
+    ProfileGraphInput, ProfileProofCause, ProfileProofRefusal, ProofEdge, certify_profile_graph,
+    certify_profile_graph_version_with_cancel, certify_profile_graph_with_cancel,
 };
 pub(in crate::sketch_region_prism) use construction::ConstructedProfileEdge;
 pub(in crate::sketch_region_prism) use pipeline::{
@@ -35,4 +37,6 @@ use martensite_tkmath::gp::Plane3;
 mod tests;
 
 mod owned_graph;
+#[cfg(test)]
+mod preparation_work_tests;
 pub(crate) use owned_graph::OwnedGraphAccess;

@@ -16,11 +16,11 @@ impl GraphTask<'_> {
     ) -> Result<MembershipCertificate, PairOperationFailure> {
         let mut certificate = MembershipCertificate::new(roots.roots().len());
         for query in self.queries(axis, cancelled)? {
-            let evaluation = algebraic::query_evaluation(
+            let evaluation = algebraic::membership_evaluation(
                 &self.projection.cleared_originals[axis],
                 &query.polynomial,
                 roots,
-                self.signs.effective_limit,
+                self.signs,
                 cancelled,
             )
             .map_err(PairOperationFailure::Sign)?;

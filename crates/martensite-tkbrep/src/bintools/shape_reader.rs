@@ -1,13 +1,13 @@
 //! `BinTools_ShapeReader`: reads the shape-reference format back, following back
 //! references to objects read before (or, when the reader has not met them yet, by
 //! jumping to their position and back).
-use super::SurfaceFrameReadPolicy;
 use super::errors::wrap_failure;
 use super::istream::BinIStream;
 use super::object_type::ObjectType;
 use super::raw_enums::{orientation_from_raw, shape_enum_from_raw};
 use super::shape_set_base::{BinShapeSetBase, ShapeSetBaseData};
 use super::shape_set_read::apply_flags;
+use super::{LocationTransformReadPolicy, SurfaceFrameReadPolicy};
 use crate::brep::BRepBuilder;
 use crate::topods::Shape;
 use martensite_tkernel::ncollection::DataMap;
@@ -38,6 +38,8 @@ pub(super) type ObjectMap<T> = DataMap<u64, Handle<T>>;
 #[derive(Default)]
 pub struct BinShapeReader {
     pub(super) frame_policy: SurfaceFrameReadPolicy,
+    pub(super) curve_policy: super::CurveFrameReadPolicy,
+    location_policy: LocationTransformReadPolicy,
     base: ShapeSetBaseData,
     pub(super) builder: BRepBuilder,
     pub(super) shape_positions: DataMap<u64, Shape>,
@@ -61,6 +63,32 @@ impl BinShapeReader {
         Self {
             frame_policy,
             ..Self::default()
+        }
+    }
+
+    /// Creates a reader with independent surface and location semantics (#451).
+    /// `BinShapeReader::with_read_policies(surface_policy, location_policy)`.
+    pub fn with_read_policies(
+        frame_policy: SurfaceFrameReadPolicy,
+        location_policy: LocationTransformReadPolicy,
+    ) -> Self {
+        Self {
+            frame_policy,
+            location_policy,
+            ..Self::default()
+        }
+    }
+
+    /// Creates a reader with all geometry decoding policies explicit (#455).
+    /// `BinShapeReader::with_geometry_read_policies(surface, location, curve)`.
+    pub fn with_geometry_read_policies(
+        surface: SurfaceFrameReadPolicy,
+        location: LocationTransformReadPolicy,
+        curve: super::CurveFrameReadPolicy,
+    ) -> Self {
+        Self {
+            curve_policy: curve,
+            ..Self::with_read_policies(surface, location)
         }
     }
 
@@ -151,7 +179,7 @@ impl BinShapeReader {
         }
         let mut location = Location::default();
         if kind == ObjectType::SIMPLE_LOCATION {
-            location = Location::new(input.read_transform()?);
+            location = Location::new(input.read_transform_with_policy(self.location_policy)?);
         } else if kind == ObjectType::LOCATION {
             location = self.read_location_chain(input)?;
         }

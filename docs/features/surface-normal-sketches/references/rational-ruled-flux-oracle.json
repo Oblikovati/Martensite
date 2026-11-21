@@ -1,0 +1,400 @@
+{
+  "operation_id": "matrix.symbolic.determinant.compute",
+  "input": {
+    "matrix": {
+      "variables": [
+        "u",
+        "v"
+      ],
+      "row_count": 3,
+      "column_count": 3,
+      "entries": [
+        [
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    1,
+                    0
+                  ]
+                },
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    1
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    1,
+                    1
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "2"
+                  },
+                  "exponents": [
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        [
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    1
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": []
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        [
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    1,
+                    0
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "variables": [
+              "u",
+              "v"
+            ],
+            "numerator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "2"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            },
+            "denominator": {
+              "terms": [
+                {
+                  "coefficient": {
+                    "num": "1",
+                    "den": "1"
+                  },
+                  "exponents": [
+                    0,
+                    0
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      ]
+    }
+  },
+  "output": {
+    "determinant": {
+      "domain": "QQ",
+      "variables": [
+        "u",
+        "v"
+      ],
+      "numerator": {
+        "terms": [
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "2"
+            },
+            "exponents": [
+              1,
+              1
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "1"
+            },
+            "exponents": [
+              1,
+              0
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "-1",
+              "den": "1"
+            },
+            "exponents": [
+              0,
+              1
+            ]
+          }
+        ]
+      },
+      "denominator": {
+        "terms": [
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "1"
+            },
+            "exponents": [
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "derived_integration": {
+    "surface": "S(u,v)=(u+v,u*v,1+v/2)",
+    "domain": "[0,1]^2",
+    "flux_field": "F(x)=x/3",
+    "determinant": "u-v+u*v/2",
+    "signed_flux": "1/24"
+  }
+}

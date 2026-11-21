@@ -119,3 +119,12 @@ pub use carrier::BezierPairCarrierKind;
 pub use public_carrier::{BezierPairCarrierParameter, BezierPairCommonCarrier};
 
 pub(super) mod hull_separation;
+
+mod bernstein_exclusion;
+pub use bernstein_exclusion::{
+    BezierPairBernsteinExclusion, BezierPairExclusionCompletion, BezierPairExclusionFailure,
+    BezierPairExclusionPolicy, BezierPairExclusionReport,
+};
+
+#[cfg(test)]
+mod filtered_graph_tests;

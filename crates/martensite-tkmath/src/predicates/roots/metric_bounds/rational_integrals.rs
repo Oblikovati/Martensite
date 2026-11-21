@@ -2,7 +2,11 @@
 //! Certified Green and sweep integrals for positive-weight rational boundaries.
 //! Polynomial and equal-weight curves stay exact; other curves are enclosed by exact
 //! Taylor models with certified Bernstein remainders. No quadrature estimate is used.
+mod conical_reference_volume;
 mod curve;
+pub use conical_reference_volume::*;
+mod cylindrical_flux;
+pub use cylindrical_flux::*;
 mod error;
 mod face;
 mod integer_polynomial;
@@ -131,3 +135,6 @@ impl RationalRequest {
 mod closed_form_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod curve_accounting_tests;

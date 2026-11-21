@@ -124,6 +124,7 @@ impl PieceTable {
             edges: self.edges.clone(),
             plane,
             spatial_limit,
+            pair_bisections: None,
         }
     }
 

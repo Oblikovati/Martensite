@@ -7,6 +7,7 @@ pub mod bezier_line;
 pub mod bezier_pair;
 mod certificate_arithmetic;
 mod chain;
+mod coefficient_enclosure;
 mod dyadic;
 mod error;
 mod isolate;

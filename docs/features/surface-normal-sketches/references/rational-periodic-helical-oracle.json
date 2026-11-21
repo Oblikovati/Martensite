@@ -1,0 +1,333 @@
+{
+  "operation_id": "geometry.polygon.visibility_kernel.compute",
+  "input": {
+    "polygon": {
+      "points": [
+        {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "0",
+            "den": "1"
+          }
+        },
+        {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "14",
+            "den": "1"
+          }
+        },
+        {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "29",
+            "den": "2"
+          }
+        },
+        {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "1",
+            "den": "2"
+          }
+        }
+      ]
+    }
+  },
+  "output": {
+    "polygon": {
+      "points": [
+        {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "0",
+            "den": "1"
+          }
+        },
+        {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "14",
+            "den": "1"
+          }
+        },
+        {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "29",
+            "den": "2"
+          }
+        },
+        {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "1",
+            "den": "2"
+          }
+        }
+      ]
+    },
+    "interior_half_plane_convention": "a*x+b*y+c>=0",
+    "half_planes": [
+      {
+        "edge_index": 0,
+        "a": {
+          "num": "-14",
+          "den": "1"
+        },
+        "b": {
+          "num": "14",
+          "den": "1"
+        },
+        "c": {
+          "num": "0",
+          "den": "1"
+        }
+      },
+      {
+        "edge_index": 1,
+        "a": {
+          "num": "-1",
+          "den": "2"
+        },
+        "b": {
+          "num": "0",
+          "den": "1"
+        },
+        "c": {
+          "num": "7",
+          "den": "1"
+        }
+      },
+      {
+        "edge_index": 2,
+        "a": {
+          "num": "14",
+          "den": "1"
+        },
+        "b": {
+          "num": "-14",
+          "den": "1"
+        },
+        "c": {
+          "num": "7",
+          "den": "1"
+        }
+      },
+      {
+        "edge_index": 3,
+        "a": {
+          "num": "1",
+          "den": "2"
+        },
+        "b": {
+          "num": "0",
+          "den": "1"
+        },
+        "c": {
+          "num": "0",
+          "den": "1"
+        }
+      }
+    ],
+    "vertex_turns": [
+      {
+        "vertex_index": 0,
+        "cross": {
+          "num": "7",
+          "den": "1"
+        },
+        "kind": "CONVEX"
+      },
+      {
+        "vertex_index": 1,
+        "cross": {
+          "num": "7",
+          "den": "1"
+        },
+        "kind": "CONVEX"
+      },
+      {
+        "vertex_index": 2,
+        "cross": {
+          "num": "7",
+          "den": "1"
+        },
+        "kind": "CONVEX"
+      },
+      {
+        "vertex_index": 3,
+        "cross": {
+          "num": "7",
+          "den": "1"
+        },
+        "kind": "CONVEX"
+      }
+    ],
+    "reflex_vertex_indices": [],
+    "kernel_dimension": "POLYGON",
+    "kernel_boundary": [
+      {
+        "point": {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "0",
+            "den": "1"
+          }
+        },
+        "active_edge_indices": [
+          0,
+          3
+        ]
+      },
+      {
+        "point": {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "14",
+            "den": "1"
+          }
+        },
+        "active_edge_indices": [
+          0,
+          1
+        ]
+      },
+      {
+        "point": {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "29",
+            "den": "2"
+          }
+        },
+        "active_edge_indices": [
+          1,
+          2
+        ]
+      },
+      {
+        "point": {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "1",
+            "den": "2"
+          }
+        },
+        "active_edge_indices": [
+          2,
+          3
+        ]
+      }
+    ],
+    "convex_hull": {
+      "points": [
+        {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "0",
+            "den": "1"
+          }
+        },
+        {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "14",
+            "den": "1"
+          }
+        },
+        {
+          "x": {
+            "num": "14",
+            "den": "1"
+          },
+          "y": {
+            "num": "29",
+            "den": "2"
+          }
+        },
+        {
+          "x": {
+            "num": "0",
+            "den": "1"
+          },
+          "y": {
+            "num": "1",
+            "den": "2"
+          }
+        }
+      ]
+    },
+    "polygon_area": {
+      "num": "7",
+      "den": "1"
+    },
+    "kernel_area": {
+      "num": "7",
+      "den": "1"
+    },
+    "convex_hull_area": {
+      "num": "7",
+      "den": "1"
+    },
+    "kernel_to_polygon_area_ratio": {
+      "num": "1",
+      "den": "1"
+    },
+    "polygon_to_hull_area_ratio": {
+      "num": "1",
+      "den": "1"
+    }
+  },
+  "derived_normal_extrusion": {
+    "support_radius": "1",
+    "stored_radii": [
+      "9/10",
+      "6/5"
+    ],
+    "formula": "7 * ((6/5)^2 - (9/10)^2) / 2",
+    "ideal_volume": "441/200"
+  }
+}

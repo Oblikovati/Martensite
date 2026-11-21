@@ -76,18 +76,31 @@ fn complete_graph(
     poll(cancelled, LoopRegionStage::Nesting)?;
     let components = components::nesting(request, binding, graph, faces, cancelled)?;
     poll(cancelled, LoopRegionStage::Regions)?;
-    let mut certificate = GraphRegionCertificate {
-        faces: Vec::with_capacity(faces.bounded.len()),
-        components,
-        contacts: counts.0,
-        carrier_pairs: counts.1,
-        pair_domains: counts.2,
-    };
+    let mut certificate = graph_certificate(request, faces, components, counts);
     for (index, face) in faces.bounded.iter().enumerate() {
         let proof = face_proof(request, binding, &certificate, index, face, cancelled)?;
         certificate.faces.push(proof);
     }
     Ok(certificate)
+}
+
+fn graph_certificate(
+    request: &GraphRegionRequest<'_, '_>,
+    faces: &components::Faces,
+    components: Vec<GraphComponentProof>,
+    counts: (usize, usize, usize),
+) -> GraphRegionCertificate {
+    let (contacts, carrier_pairs, pair_domains) = counts;
+    GraphRegionCertificate {
+        faces: Vec::with_capacity(faces.bounded.len()),
+        components,
+        contacts,
+        carrier_pairs,
+        pair_domains,
+        work: crate::sketch_region_certification::CensusWorkReceipt::capture(
+            &request.bridge.census,
+        ),
+    }
 }
 
 /// Steps 2-3: rotation, orbits, components, certified orbit signs and the face split.

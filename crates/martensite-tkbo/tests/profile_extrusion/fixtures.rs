@@ -220,3 +220,17 @@ pub fn rational_half_disc() -> SketchProfile {
         .line(2, 1, 0)
         .build()
 }
+
+/// Authored crossing lines keep distinct caller vertex identities.
+pub fn bow_tie() -> SketchProfile {
+    SketchFixture::new()
+        .vertex(0, [0., 0.])
+        .vertex(1, [2., 2.])
+        .vertex(2, [2., 0.])
+        .vertex(3, [0., 2.])
+        .line(10, 0, 1)
+        .line(11, 1, 2)
+        .line(12, 2, 3)
+        .line(13, 3, 0)
+        .build()
+}

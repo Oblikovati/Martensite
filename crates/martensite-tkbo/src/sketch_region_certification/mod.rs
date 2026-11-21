@@ -5,16 +5,29 @@ mod capture;
 mod census;
 mod coverage;
 mod outcome;
+mod pair_root_failure;
+mod work_receipt;
 pub(crate) use candidate_coverage::inspect_candidate_coverage;
 pub(crate) use capture::capture_boundary_inputs;
 pub(crate) use census::{enumerate_boundary_census, enumerate_source_bound_line_diagnostic};
+pub(crate) use pair_root_failure::pair_root_failure;
+pub use work_receipt::CensusWorkReceipt;
+mod bernstein_binding;
+mod bernstein_execution;
+mod domain_certificate;
+mod graph_policy;
 mod paired_admission;
 mod paired_binding;
 mod paired_execution;
 mod paired_types;
 pub(crate) use coverage::inspect_contact_coverage;
+pub(crate) use domain_certificate::CertifiedPairDomain;
+pub(crate) use graph_policy::{GraphPolicyMismatch, bind_graph_policy};
 pub(crate) use outcome::*;
-pub(crate) use paired_admission::{enumerate_carrier_census, enumerate_source_bound_census};
+pub(crate) use paired_admission::{
+    enumerate_carrier_census, enumerate_exclusion_census, enumerate_filtered_exclusion_census,
+    enumerate_source_bound_census,
+};
 #[cfg(test)]
 mod tests;
 
@@ -59,7 +72,15 @@ pub(crate) use paired_tests::{
 #[cfg(test)]
 mod paired_validation_tests;
 
+#[cfg(test)]
+mod bernstein_tests;
+
+#[cfg(test)]
+mod filtered_tests;
 mod source_access;
 pub(crate) use source_access::{SourceAccess, certificate_in};
 
-pub(crate) use paired_admission::enumerate_carrier_census_with_access;
+pub(crate) use paired_admission::{
+    enumerate_carrier_census_with_access, enumerate_exclusion_census_with_access,
+    enumerate_filtered_exclusion_census_with_access,
+};

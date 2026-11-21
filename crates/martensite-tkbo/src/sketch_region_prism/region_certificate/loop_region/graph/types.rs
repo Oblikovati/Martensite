@@ -50,4 +50,6 @@ pub(crate) struct GraphRegionCertificate {
     pub carrier_pairs: usize,
     /// Pair domains certified in total.
     pub pair_domains: usize,
+    /// Actual shared census work retained for publication.
+    pub work: crate::sketch_region_certification::CensusWorkReceipt,
 }

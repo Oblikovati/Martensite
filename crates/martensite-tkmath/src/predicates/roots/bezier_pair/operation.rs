@@ -12,7 +12,6 @@ use super::{
     algebraic, equations::PairedEquations, projection::LinearFiberProjection,
     source::OwnedBezierSource,
 };
-
 pub(super) struct PairContact {
     pub candidate_index: usize,
     pub root: RootBracket,
@@ -194,7 +193,7 @@ fn constant_proof(
         evidence: PairProofEvidence::ConstantExcluded(checked.exclusion),
     }
 }
-fn validate_world_request(value: f64) -> Result<(), PairOperationFailure> {
+pub(super) fn validate_world_request(value: f64) -> Result<(), PairOperationFailure> {
     if !value.is_finite() || value <= 0. {
         return Err(PairOperationFailure::WorldRequest(value));
     }
@@ -299,7 +298,7 @@ fn prepare_constant(
 ) -> Result<PreparedEvidence, PairOperationFailure> {
     let exclusion = ConstantEquationExclusion::from_checked_equations(equations, self_domain)
         .ok_or(PairOperationFailure::NonLinearFiber)?;
-    if signs.version != 1 {
+    if !(1..=2).contains(&signs.version) {
         return Err(PairOperationFailure::SignPolicy(
             PairSignPolicyFailure::Version(signs.version),
         ));
@@ -367,7 +366,7 @@ impl PreparedProjection {
     }
 }
 
-fn checked_equations(
+pub(super) fn checked_equations(
     sources: &[OwnedBezierSource; 2],
     self_domain: bool,
     options: RootIsolationOptions,

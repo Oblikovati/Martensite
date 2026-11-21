@@ -1,0 +1,169 @@
+{
+  "operation_id": "quadratic_form.evaluate.compute",
+  "cases": [
+    {
+      "payload": {
+        "form": {
+          "axis": [
+            "s",
+            "z"
+          ],
+          "diagonal_coefficients": [
+            {
+              "num": "1",
+              "den": "1"
+            },
+            {
+              "num": "1",
+              "den": "1"
+            }
+          ],
+          "cross_terms": []
+        },
+        "vector": {
+          "axis": [
+            "s",
+            "z"
+          ],
+          "coordinates": [
+            {
+              "num": "3",
+              "den": "1"
+            },
+            {
+              "num": "4",
+              "den": "1"
+            }
+          ]
+        }
+      },
+      "result": {
+        "operation_id": "quadratic_form.evaluate.compute",
+        "runtime_ms": 0,
+        "output": {
+          "form": {
+            "domain": "QQ",
+            "axis": [
+              "s",
+              "z"
+            ],
+            "diagonal_coefficients": [
+              {
+                "num": "1",
+                "den": "1"
+              },
+              {
+                "num": "1",
+                "den": "1"
+              }
+            ],
+            "cross_terms": []
+          },
+          "vector": {
+            "domain": "QQ",
+            "axis": [
+              "s",
+              "z"
+            ],
+            "coordinates": [
+              {
+                "num": "3",
+                "den": "1"
+              },
+              {
+                "num": "4",
+                "den": "1"
+              }
+            ]
+          },
+          "value": {
+            "num": "25",
+            "den": "1"
+          }
+        }
+      }
+    },
+    {
+      "payload": {
+        "form": {
+          "axis": [
+            "s",
+            "z"
+          ],
+          "diagonal_coefficients": [
+            {
+              "num": "1",
+              "den": "1"
+            },
+            {
+              "num": "1",
+              "den": "1"
+            }
+          ],
+          "cross_terms": []
+        },
+        "vector": {
+          "axis": [
+            "s",
+            "z"
+          ],
+          "coordinates": [
+            {
+              "num": "1",
+              "den": "2"
+            },
+            {
+              "num": "-1",
+              "den": "2"
+            }
+          ]
+        }
+      },
+      "result": {
+        "operation_id": "quadratic_form.evaluate.compute",
+        "runtime_ms": 0,
+        "output": {
+          "form": {
+            "domain": "QQ",
+            "axis": [
+              "s",
+              "z"
+            ],
+            "diagonal_coefficients": [
+              {
+                "num": "1",
+                "den": "1"
+              },
+              {
+                "num": "1",
+                "den": "1"
+              }
+            ],
+            "cross_terms": []
+          },
+          "vector": {
+            "domain": "QQ",
+            "axis": [
+              "s",
+              "z"
+            ],
+            "coordinates": [
+              {
+                "num": "1",
+                "den": "2"
+              },
+              {
+                "num": "-1",
+                "den": "2"
+              }
+            ]
+          },
+          "value": {
+            "num": "1",
+            "den": "2"
+          }
+        }
+      }
+    }
+  ]
+}

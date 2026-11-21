@@ -46,6 +46,11 @@ pub(crate) enum DomainEvidence {
         // Each directed occurrence position maps to the retained report parameter axis; self keeps t/u distinct.
         source_slots: [usize; 2],
     },
+    BernsteinReport {
+        report: usize,
+        reused: bool,
+        source_slots: [usize; 2],
+    },
     Unsupported(CensusGap),
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

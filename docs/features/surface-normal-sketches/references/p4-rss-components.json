@@ -1,0 +1,46 @@
+[
+  {
+    "trial": 1,
+    "variant": "before",
+    "elapsed_s": 4.104,
+    "samples": 203,
+    "VmHWM": 54912,
+    "VmRSS": 54912,
+    "RssAnon": 21308,
+    "RssFile": 33604,
+    "RssShmem": 0
+  },
+  {
+    "trial": 2,
+    "variant": "after",
+    "elapsed_s": 4.085,
+    "samples": 202,
+    "VmHWM": 55048,
+    "VmRSS": 55048,
+    "RssAnon": 21304,
+    "RssFile": 33744,
+    "RssShmem": 0
+  },
+  {
+    "trial": 3,
+    "variant": "after",
+    "elapsed_s": 4.087,
+    "samples": 202,
+    "VmHWM": 55168,
+    "VmRSS": 55168,
+    "RssAnon": 21308,
+    "RssFile": 33860,
+    "RssShmem": 0
+  },
+  {
+    "trial": 4,
+    "variant": "before",
+    "elapsed_s": 4.025,
+    "samples": 199,
+    "VmHWM": 54912,
+    "VmRSS": 54912,
+    "RssAnon": 21312,
+    "RssFile": 33600,
+    "RssShmem": 0
+  }
+]

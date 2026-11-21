@@ -34,14 +34,70 @@ pub(super) fn curve_integral(
         return Ok(exact_curve(exact));
     }
     let squared = product(&weight, &weight, cancelled)?;
+    quotient_integral(numerator, squared, options, width_share, cancelled)
+}
+
+/// Integrate one half of a positive-denominator rational quotient on the full unit interval.
+pub(super) fn quotient_integral(
+    numerator: Vec<BigInt>,
+    denominator: Vec<BigInt>,
+    options: RationalIntegralOptions,
+    width_share: &ExactRatio,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CurveIntegral, RationalIntegralFailure> {
+    quotient_integral_accounted(numerator, denominator, options, width_share, cancelled).0
+}
+
+/// Return actual examined cells on failure without changing the ordinary quotient path's cell charges.
+pub(super) fn quotient_integral_accounted(
+    numerator: Vec<BigInt>,
+    denominator: Vec<BigInt>,
+    options: RationalIntegralOptions,
+    width_share: &ExactRatio,
+    cancelled: &mut impl FnMut() -> bool,
+) -> (Result<CurveIntegral, RationalIntegralFailure>, u64) {
+    let denominator = match nonempty_denominator(&denominator) {
+        Ok(denominator) => denominator,
+        Err(cause) => return (Err(cause), 0),
+    };
+    if denominator.len() == 1 {
+        return (constant_quotient(&numerator, &denominator[0], cancelled), 0);
+    }
     let bisection = Bisection {
         numerator,
-        denominator: squared,
+        denominator,
         width_share,
         limit: options.max_subintervals,
     };
-    bisection.integrate(cancelled)
+    let mut total = exact_curve(ExactRatio::from_finite(0.));
+    let result = bisection.integrate(&mut total, cancelled);
+    let examined = total.subintervals;
+    (result.map(|()| total), examined)
 }
+
+fn nonempty_denominator(denominator: &[BigInt]) -> Result<Vec<BigInt>, RationalIntegralFailure> {
+    if denominator.is_empty() {
+        return Err(denominator_failure());
+    }
+    Ok(trimmed(denominator))
+}
+
+fn constant_quotient(
+    numerator: &[BigInt],
+    denominator: &BigInt,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CurveIntegral, RationalIntegralFailure> {
+    if denominator.sign() != Sign::Plus {
+        return Err(denominator_failure());
+    }
+    let exact = integrate_unit(numerator, BigInt::from(2) * denominator, cancelled)?;
+    Ok(exact_curve(exact))
+}
+
+fn denominator_failure() -> RationalIntegralFailure {
+    RationalIntegralFailure::DenominatorSign { start: 0., end: 1. }
+}
+
 fn exact_curve(value: ExactRatio) -> CurveIntegral {
     CurveIntegral {
         bounds: ContributionBounds {
@@ -86,13 +142,13 @@ impl Bisection<'_> {
     /// Depth-first, left before right; the exact sum makes the order value-neutral.
     fn integrate(
         &self,
+        total: &mut CurveIntegral,
         cancelled: &mut impl FnMut() -> bool,
-    ) -> Result<CurveIntegral, RationalIntegralFailure> {
+    ) -> Result<(), RationalIntegralFailure> {
         let mut pending = vec![DyadicSpan::unit()];
-        let mut total = exact_curve(ExactRatio::from_finite(0.));
         let mut covered = ExactRatio::from_finite(0.);
         while let Some(span) = pending.pop() {
-            self.charge(&mut total, &covered)?;
+            self.charge(total, &covered)?;
             let bounds = enclose_span(&self.numerator, &self.denominator, &span, cancelled)?;
             if self.accepts(&bounds, &span) {
                 accumulate(&mut total.bounds, &bounds);
@@ -100,10 +156,9 @@ impl Bisection<'_> {
                 continue;
             }
             let [left, right] = span.halves();
-            pending.push(right);
-            pending.push(left);
+            pending.extend([right, left]);
         }
-        Ok(total)
+        Ok(())
     }
     fn charge(
         &self,

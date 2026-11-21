@@ -50,14 +50,102 @@ fn enumerate_with_pair_version(
     inputs: BoundaryInputs,
     policies: (CensusPolicy, SourceConformancePolicy),
     pair_version: u32,
+    cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_selected(
+        inputs,
+        policies,
+        pair_version,
+        None,
+        BezierPairSignOptions::derived(),
+        cancelled,
+        access,
+    )
+}
+/// Exact sign exclusions augment the carrier route without changing its released policy.
+/// Example: `enumerate_exclusion_census(inputs, policy, source_policy, || false)`.
+pub(crate) fn enumerate_exclusion_census(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_exclusion_census_with_access(
+        inputs,
+        policy,
+        source_policy,
+        cancelled,
+        super::SourceAccess::Live,
+    )
+}
+pub(crate) fn enumerate_exclusion_census_with_access(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_selected(
+        inputs,
+        (policy, source_policy),
+        2,
+        Some(1),
+        BezierPairSignOptions::derived(),
+        cancelled,
+        access,
+    )
+}
+/// #544: retain filtered signs only through the explicit new census selector.
+/// Example: `enumerate_filtered_exclusion_census(inputs, policy, source_policy, || false)`.
+pub(crate) fn enumerate_filtered_exclusion_census(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_filtered_exclusion_census_with_access(
+        inputs,
+        policy,
+        source_policy,
+        cancelled,
+        super::SourceAccess::Live,
+    )
+}
+pub(crate) fn enumerate_filtered_exclusion_census_with_access(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
+    let mut signs = BezierPairSignOptions::derived();
+    signs.version = 2;
+    enumerate_selected(
+        inputs,
+        (policy, source_policy),
+        2,
+        Some(1),
+        signs,
+        cancelled,
+        access,
+    )
+}
+fn enumerate_selected(
+    inputs: BoundaryInputs,
+    policies: (CensusPolicy, SourceConformancePolicy),
+    pair_version: u32,
+    exclusion_version: Option<u32>,
+    signs: BezierPairSignOptions,
     mut cancelled: impl FnMut() -> bool,
     access: super::SourceAccess<'_>,
 ) -> Result<BoundaryCensus, CensusCause> {
     let (policy, source_policy) = policies;
     census::validate_policy(policy).map_err(CensusCause::Policy)?;
     let mut retained = census::empty_census(inputs, policy);
-    let mut evidence = capture_pair_evidence(&retained);
+    let mut evidence = capture_pair_evidence(&retained, signs);
     evidence.requested.version = pair_version;
+    evidence.exclusion_version = exclusion_version;
     retained.paired = Some(evidence);
     if admit_source_binding(&mut retained, source_policy, &mut cancelled) {
         return Err(CensusCause::SourceCancelled {
@@ -87,12 +175,18 @@ pub(super) fn admit_source_binding(
     }
     stopped
 }
-fn capture_pair_evidence(census: &BoundaryCensus) -> PairedCensusEvidence {
+fn capture_pair_evidence(
+    census: &BoundaryCensus,
+    signs: BezierPairSignOptions,
+) -> PairedCensusEvidence {
     PairedCensusEvidence {
+        selected_signs: signs,
+        exclusion_version: None,
+        exclusions: Vec::new(),
         requested: BezierPairPolicy {
             version: 1,
             roots: census.requested.roots,
-            signs: BezierPairSignOptions::derived(),
+            signs,
             requested_world_error: census.requested.max_world_error,
         },
         occurrences: captured_occurrences(census),

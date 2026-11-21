@@ -10,9 +10,13 @@ pub enum PairSignAdmission {
     Explicit(u16),
 }
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-/// Versioned generated-sign admission request.
+/// Versioned generated-sign evaluation and admission request.
+///
+/// `let mut signs = BezierPairSignOptions::derived(); signs.version = 2;`
+/// opts graph membership into exact all-root bracket filtering with eager fallback.
+/// Version 1 remains the default; primary and exceptional-root evaluation stay unchanged.
 pub struct PairSignOptions {
-    /// Sign policy version; expected one.
+    /// Version 1 keeps the existing evaluator; version 2 first tries exact bracket signs.
     pub version: u32,
     /// Source-derived or explicit generated-sign degree admission.
     pub degree_limit: PairSignAdmission,
@@ -30,7 +34,7 @@ pub struct EffectivePairSigns {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 /// Generated-sign policy could not be admitted.
 pub enum PairSignPolicyFailure {
-    /// Offending policy version; expected one.
+    /// Offending policy version; expected 1 or 2.
     Version(u32),
     /// Actual derived degree exceeds u16 policy representation.
     DerivedDegreeOverflow(usize),
@@ -48,7 +52,7 @@ impl PairSignOptions {
         row: &LinearFiberProjection,
         self_domain: bool,
     ) -> Result<EffectivePairSigns, PairSignPolicyFailure> {
-        if self.version != 1 {
+        if !(1..=2).contains(&self.version) {
             return Err(PairSignPolicyFailure::Version(self.version));
         }
         let degree = generated_degree_bound(row, self_domain);

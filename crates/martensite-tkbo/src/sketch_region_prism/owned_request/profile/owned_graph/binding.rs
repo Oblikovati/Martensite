@@ -6,6 +6,8 @@ pub(super) fn matches(owner: &OwnedGraphAccess<'_>, census: &BoundaryCensus) -> 
     originals.len() == owner.edges.len()
         && owner.edges.len() == owner.request.edges.len()
         && policy_matches(owner, census)
+        && crate::sketch_region_certification::bind_graph_policy(census, owner.request.version)
+            .is_ok()
         && owner
             .edges
             .iter()

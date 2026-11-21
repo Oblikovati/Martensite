@@ -13,10 +13,14 @@ pub(crate) enum Control {
     OpenExtrusion,
     VertexNeighborhood,
     DocumentTransactions,
+    SurfaceSketch,
+    FontTextCapture,
+    WrappedFamily,
+    WrappedCone,
     SharedContext,
 }
 
-pub(crate) const CONTROLS: [Control; 10] = [
+pub(crate) const CONTROLS: [Control; 14] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -26,6 +30,10 @@ pub(crate) const CONTROLS: [Control; 10] = [
     Control::OpenExtrusion,
     Control::VertexNeighborhood,
     Control::DocumentTransactions,
+    Control::SurfaceSketch,
+    Control::FontTextCapture,
+    Control::WrappedFamily,
+    Control::WrappedCone,
     Control::SharedContext,
 ];
 
@@ -41,6 +49,10 @@ impl Control {
             Self::OpenExtrusion => "open-extrusion",
             Self::VertexNeighborhood => "vertex-neighborhood",
             Self::DocumentTransactions => "document-transactions",
+            Self::SurfaceSketch => "surface-sketch",
+            Self::FontTextCapture => "font-text-capture",
+            Self::WrappedFamily => "wrapped-family",
+            Self::WrappedCone => "wrapped-cone",
             Self::SharedContext => "shared-context",
         }
     }
@@ -54,6 +66,8 @@ impl Control {
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
             Self::DocumentTransactions => "martensite-tklcaf",
+            Self::SurfaceSketch | Self::WrappedFamily | Self::WrappedCone => "martensite-tksketch",
+            Self::FontTextCapture => "martensite-tkv3d",
             Self::SharedContext => "martensite-tkbo",
         }
     }
@@ -184,10 +198,31 @@ mod tests {
                 "open-extrusion",
                 "vertex-neighborhood",
                 "document-transactions",
+                "surface-sketch",
+                "font-text-capture",
+                "wrapped-family",
+                "wrapped-cone",
                 "shared-context"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());
+    }
+
+    #[test]
+    fn surface_sketch_owner_selects_control_without_unrelated_leaf_fanout() {
+        assert_eq!(
+            select(&BTreeSet::from(["martensite-tksketch".into()]), &[]),
+            [
+                Control::SurfaceSketch,
+                Control::WrappedFamily,
+                Control::WrappedCone
+            ]
+        );
+        assert!(select(&BTreeSet::from(["martensite-tkdeobj".into()]), &[]).is_empty());
+        assert_eq!(
+            select(&BTreeSet::from(["martensite-tkmath".into()]), &[]),
+            [Control::OpenExtrusion, Control::VertexNeighborhood]
+        );
     }
 
     #[test]
@@ -229,4 +264,17 @@ mod tests {
             );
         }
     }
+}
+
+#[cfg(test)]
+#[test]
+fn font_capture_selects_only_its_affected_owner() {
+    assert_eq!(
+        select(&BTreeSet::from(["martensite-tkv3d".into()]), &[]),
+        [Control::FontTextCapture]
+    );
+    assert!(
+        !select(&BTreeSet::from(["martensite-tksketch".into()]), &[])
+            .contains(&Control::FontTextCapture)
+    );
 }
