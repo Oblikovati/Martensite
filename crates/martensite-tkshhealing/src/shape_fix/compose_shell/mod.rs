@@ -55,8 +55,7 @@ impl Default for ComposeShellFields {
             status: 0,
             u_resolution: martensite_tkernel::precision::infinite(),
             v_resolution: martensite_tkernel::precision::infinite(),
-            transfer_tool: Handle::new(ShapeAnalysisTransferParametersProj::new())
-                .cast::<dyn TransferParameters>(),
+            transfer_tool: Handle::new(ShapeAnalysisTransferParametersProj::new()).into_upcast(),
             invert_edge_status: true,
             closed_mode: false,
             u_closed: false,

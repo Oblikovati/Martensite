@@ -1,4 +1,4 @@
-//! package operations support topology and contour analysis.
+//! package operations supimplementation topology and contour analysis.
 mod bounds;
 mod contour;
 use super::ShapeAnalysisCurve;

@@ -114,9 +114,14 @@ fn planar_only_and_unsplittable_edges_match_native() {
 fn dynamic_criterion_shares_native_parent_and_tool_parameter_handles() {
     let divider = Handle::new(ShapeUpgradeClosedEdgeDivide::new());
     let base = divider.upcast::<dyn EdgeDivider>();
-    let criterion = divider.cast::<dyn EdgeDivider>();
-    assert!(!base.is_null());
-    assert!(criterion.compute(&circle_edge()).unwrap());
+    assert_eq!(base.object_address(), divider.object_address());
+    let descriptor = base.dynamic_type().unwrap();
+    assert_eq!(descriptor.name(), "ShapeUpgrade_ClosedEdgeDivide");
+    assert_eq!(
+        descriptor.parent().unwrap().name(),
+        "ShapeUpgrade_EdgeDivide"
+    );
+    assert!(base.compute(&circle_edge()).unwrap());
     let knots = base.knots_3d();
     assert_eq!(
         knots.object_address(),
