@@ -13,7 +13,7 @@ fn original_infinite_line() -> Handle<dyn GeomCurve> {
         Point3::new(0., 20., 0.),
         Direction3::new(1., 0., 0.).unwrap(),
     );
-    Handle::new(GeomLine::new(axis)).into_cast()
+    Handle::new(GeomLine::new(axis)).into_upcast()
 }
 
 fn original_sphere_distance() -> f64 {

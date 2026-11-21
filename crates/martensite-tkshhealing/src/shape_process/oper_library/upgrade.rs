@@ -3,7 +3,7 @@
 use super::modifications::registrator;
 use super::{operator_messages, shape_context};
 use crate::shape_extend::{ShapeExtendMsgRegistrator, ShapeExtendStatus};
-use crate::shape_process::{ShapeProcessContext, ShapeProcessShapeContext};
+use crate::shape_process::{ShapeProcessContextSource, ShapeProcessShapeContext};
 use crate::shape_upgrade::{
     ShapeDivider, ShapeUpgradeShapeConvertToBezier, ShapeUpgradeShapeDivide,
     ShapeUpgradeShapeDivideAngle, ShapeUpgradeShapeDivideClosed,
@@ -32,7 +32,7 @@ fn finish(
 
 /// The operator SplitAngle: Angle (2 PI) and MaxTolerance (1).
 pub(super) fn split_angle(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -49,7 +49,7 @@ pub(super) fn split_angle(
 
 /// The operator ToBezier: the conversion modes, the tolerances and the edge mode.
 pub(super) fn to_bezier(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -126,7 +126,7 @@ impl BezierModes {
 
 /// The operator SplitContinuity: the tolerances, the three criteria and MaxTolerance.
 pub(super) fn split_continuity(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -155,7 +155,7 @@ pub(super) fn split_continuity(
 /// The operator SplitClosedFaces: CloseTolerance, MaxTolerance, NbSplitPoints (1) and
 /// SegmentSurfaceMode (true).
 pub(super) fn split_closed_faces(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -180,7 +180,7 @@ pub(super) fn split_closed_faces(
 
 /// The operator SplitClosedEdges: NbSplitPoints (1, ignored natively by the tool).
 pub(super) fn split_closed_edges(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);

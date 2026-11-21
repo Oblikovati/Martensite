@@ -1,7 +1,7 @@
 //! Wrapper recursion and range synchronization preserve native mutation order.
 use super::*;
 impl<G: CurveGeometry + 'static> CurveSplitKernel<G> {
-    pub(super) fn build_curves(&self, segment: bool) -> Result<(), Failure> {
+    pub(in crate::shape_upgrade) fn build_curves(&self, segment: bool) -> Result<(), Failure> {
         let values = self.split_values();
         let (first, last) = self.build_endpoints()?;
         let curve = self.state.read().curve.clone();
@@ -47,7 +47,7 @@ impl<G: CurveGeometry + 'static> CurveSplitKernel<G> {
         let nested = Self::default();
         nested.init_curve_range(basis, first, last)?;
         nested.set_split_values(&self.split_values())?;
-        nested.build(segment)?;
+        nested.build_curves(segment)?;
         self.allocate_curves(nested.curves().array1().len() as i32)?;
         Ok(nested)
     }

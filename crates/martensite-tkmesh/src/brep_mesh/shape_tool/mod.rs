@@ -20,15 +20,8 @@ mod flags;
 mod polygons;
 /// Native mesh shape utilities; `ShapeTool::box_max_dimension(&bounds, &mut size)?`.
 #[derive(Default)]
-pub struct ShapeTool {
-    transient: StandardTransient,
-}
-impl_transient!(
-    ShapeTool,
-    "BRepMesh_ShapeTool",
-    StandardTransient,
-    transient
-);
+pub struct ShapeTool {}
+impl_transient!(ShapeTool, "BRepMesh_ShapeTool", StandardTransient);
 pub(super) fn native_max(left: f64, right: f64) -> f64 {
     if left < right { right } else { left }
 }

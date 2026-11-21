@@ -4,10 +4,10 @@ use crate::shape_extend::{
     SurfaceGrid,
 };
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient,
     ncollection::{Array1, HArray2, HSequence},
     precision,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
 };
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomGeometry, GeomOffsetSurface,
@@ -134,18 +134,13 @@ pub trait SplitSurface: Transient {
         self.split_surface_data().result()
     }
 }
-impl_transient_interface!(
-    dyn SplitSurface,
-    "ShapeUpgrade_SplitSurface",
-    StandardTransient
-);
+parent_interface!(dyn SplitSurface, ShapeUpgradeSplitSurface, []);
 /// Base surface splitting implementation; `ShapeUpgradeSplitSurface::new()`.
 #[derive(Default)]
 pub struct ShapeUpgradeSplitSurface {
-    parent: StandardTransient,
     state: SplitSurfaceData,
 }
-impl_transient!(ShapeUpgradeSplitSurface,"ShapeUpgrade_SplitSurface",StandardTransient,parent,interfaces:[dyn SplitSurface]);
+impl_transient!(ShapeUpgradeSplitSurface,"ShapeUpgrade_SplitSurface",dyn Transient,interfaces:[dyn SplitSurface]);
 impl SplitSurface for ShapeUpgradeSplitSurface {
     fn split_surface_data(&self) -> &SplitSurfaceData {
         &self.state

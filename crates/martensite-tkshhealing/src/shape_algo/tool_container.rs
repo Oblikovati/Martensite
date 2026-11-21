@@ -1,7 +1,7 @@
 //! `ShapeAlgoToolContainer`: the factory of the tools the algorithm container uses.
 use crate::shape_fix::{ShapeFixEdgeProjAux, ShapeFixShape};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 
 /// `ShapeAlgoToolContainer`: returns new Shape Healing tools. The members are
 /// virtual, but no class overrides them.
@@ -13,14 +13,11 @@ use martensite_tkernel::standard::{Handle, StandardTransient};
 /// assert!(!tools.edge_proj_aux().is_null());
 /// ```
 #[derive(Default)]
-pub struct ShapeAlgoToolContainer {
-    parent: StandardTransient,
-}
+pub struct ShapeAlgoToolContainer {}
 impl_transient!(
     ShapeAlgoToolContainer,
     "ShapeAlgo_ToolContainer",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl ShapeAlgoToolContainer {

@@ -15,7 +15,7 @@ fn inc_internal_edge() -> Edge {
     edge
 }
 fn inc_plane() -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::from_pln(Plane3::default())).into_cast()
+    Handle::new(GeomPlane::from_pln(Plane3::default())).into_upcast()
 }
 fn inc_wrapped_edge() -> Shape {
     let mut face = Face::default();

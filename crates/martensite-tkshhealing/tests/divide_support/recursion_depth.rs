@@ -6,27 +6,29 @@ use martensite_tkernel::{
     standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::gp::{Plane3, Point3};
+use martensite_tkshhealing::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use martensite_tkshhealing::{
     shape_build::ShapeBuildReShape,
     shape_upgrade::{
-        ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeShapeConvertToBezier,
-        ShapeUpgradeShapeDivide, ShapeUpgradeTool, ShapeUpgradeWireDivide, WireDivideData,
-        WireDivider,
+        FaceDivider, ShapeDivider, ShapeUpgradeShapeConvertToBezier, ShapeUpgradeShapeDivide,
+        WireDivideData, WireDivider,
     },
 };
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace};
 
 #[derive(Default)]
 struct InjectedWireFailure {
-    parent: ShapeUpgradeWireDivide,
+    state: WireDivideData,
 }
-impl_transient!(InjectedWireFailure,"DepthTest_InjectedWireFailure",ShapeUpgradeWireDivide,parent,interfaces:[dyn WireDivider]);
+impl_transient!(InjectedWireFailure,"DepthTest_InjectedWireFailure",dyn WireDivider,interfaces:[dyn WireDivider, dyn UpgradeTool]);
+impl UpgradeTool for InjectedWireFailure {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state
+    }
+}
 impl WireDivider for InjectedWireFailure {
     fn wire_divide_data(&self) -> &WireDivideData {
-        self.parent.wire_divide_data()
-    }
-    fn wire_divide_base(&self) -> &ShapeUpgradeTool {
-        self.parent.wire_divide_base()
+        &self.state
     }
     fn perform(&self) -> Result<(), Failure> {
         Err(Failure::with_message(
@@ -62,7 +64,7 @@ impl ShapeDivider for ReentrantDepthPolicy {
     fn perform(&self, new_context: bool) -> Result<bool, Failure> {
         self.converter.perform_with_policy(self, new_context)
     }
-    fn split_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    fn split_face_tool(&self) -> Handle<dyn FaceDivider> {
         let modes = self.current_modes();
         self.trace.write().factories.push(modes);
         let face = ShapeDivider::split_face_tool(&self.converter);

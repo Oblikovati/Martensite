@@ -1,7 +1,7 @@
 use martensite_tkbrep::brep_graph::cache::{BRepGraphCache, CacheBase, CacheType};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Guid, StandardTransient},
+    standard::{Guid},
     tcollection::AsciiString,
 };
 use std::{
@@ -13,12 +13,12 @@ use std::{
 };
 #[derive(Default)]
 struct ViewsTestCacheService {
-    transient: StandardTransient,
     base: CacheBase,
     values: Mutex<HashMap<NodeId, i32>>,
     clear_count: AtomicI32,
 }
-impl_transient!(ViewsTestCacheService, "ViewsTestCacheService", dyn BRepGraphCache, transient, interfaces: [dyn BRepGraphCache]);
+impl_transient!(ViewsTestCacheService, "ViewsTestCacheService", dyn BRepGraphCache,
+    interfaces: [dyn BRepGraphCache]);
 impl CacheType for ViewsTestCacheService {
     fn get_id() -> Guid {
         Guid::from_ascii(b"2f9b6a5c-1f2d-4a88-9c1c-7a0c16a10020").unwrap()

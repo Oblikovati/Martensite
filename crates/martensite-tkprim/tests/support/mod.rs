@@ -36,7 +36,7 @@ pub fn make_vertex(point: Point3) -> Vertex {
 /// The line through `first` towards `last` (`gp_Lin(P1, gp_Vec(P1, P2))`).
 fn line_between(first: Point3, last: Point3) -> Handle<dyn GeomCurve> {
     let direction = Direction3::from_vector(Vector3::between(first, last)).unwrap();
-    Handle::new(GeomLine::new(Axis1::new(first, direction))).into_cast()
+    Handle::new(GeomLine::new(Axis1::new(first, direction))).into_upcast()
 }
 
 /// `BRepBuilderAPI_MakeEdge(P1, P2)`: a line edge on `[0, |P1P2|]` between two new

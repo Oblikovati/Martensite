@@ -1,7 +1,7 @@
 //! ShapeProcessAPI: `ShapeProcessAPIApplySequence`, the API that applies a
 //! ShapeProcess sequence of a resource file to a shape.
 use crate::shape_process::{
-    ShapeProcess, ShapeProcessContext, ShapeProcessOperLibrary, ShapeProcessShapeContext,
+    ShapeProcess, ShapeProcessContextSource, ShapeProcessOperLibrary, ShapeProcessShapeContext,
     ShapeProcessShapeMap,
 };
 use martensite_tkbrep::topods::Shape;
@@ -66,7 +66,7 @@ impl ShapeProcessAPIApplySequence {
         ctx.init(shape);
         let key = format!("{}.exec.op", self.sequence);
         if resource.read().find(&key) {
-            let base: Handle<ShapeProcessContext> = self.context.clone().cast();
+            let base: Handle<dyn ShapeProcessContextSource> = self.context.upcast();
             ShapeProcess::perform_sequence(&base, &self.sequence, progress)?;
         }
         Ok(ctx.result())

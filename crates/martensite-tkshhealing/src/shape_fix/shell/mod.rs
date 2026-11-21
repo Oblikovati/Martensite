@@ -2,7 +2,7 @@
 mod config;
 mod groups;
 mod orientation;
-use super::{FixRoot, FixRootData, ShapeFixFace, ShapeFixRoot};
+use super::{FixRoot, FixRootData, ShapeFixFace};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkbrep::topods::{Compound, Shape, Shell};
 use martensite_tkernel::{
@@ -11,7 +11,7 @@ use martensite_tkernel::{
 };
 /// Shell face healing and orientation; `ShapeFixShell::from_shell(&shell)`.
 pub struct ShapeFixShell {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     state: SharedState<ShellRepairState>,
     face_tool: Handle<ShapeFixFace>,
 }
@@ -27,7 +27,7 @@ struct ShellRepairState {
 impl Default for ShapeFixShell {
     fn default() -> Self {
         Self {
-            parent: ShapeFixRoot::new(),
+            root: FixRootData::default(),
             face_tool: Handle::new(ShapeFixFace::new(Shape::default())),
             state: SharedState::new(ShellRepairState {
                 shell: Shell::default(),
@@ -41,7 +41,7 @@ impl Default for ShapeFixShell {
         }
     }
 }
-impl_transient!(ShapeFixShell,"ShapeFix_Shell",ShapeFixRoot,parent,interfaces:[dyn FixRoot]);
+impl_transient!(ShapeFixShell,"ShapeFix_Shell",dyn FixRoot,interfaces:[dyn FixRoot]);
 impl ShapeFixShell {
     /// Construct an unloaded shell repair tool; `ShapeFixShell::new()`.
     pub fn new() -> Self {
@@ -55,8 +55,7 @@ impl ShapeFixShell {
     }
     /// Load the shell without clearing status; `tool.init(&shell)`.
     pub fn init(&self, shell: &Shell) {
-        self.parent
-            .fix_root_data()
+        self.root
             .with_mut(|fields| fields.shape = shell.clone().into_shape());
         let mut fields = self.state.write();
         fields.shell = shell.clone();
@@ -68,9 +67,7 @@ impl ShapeFixShell {
     }
     /// Return the shell or compound result; `let result=tool.shape()`.
     pub fn shape(&self) -> Shape {
-        self.parent
-            .fix_root_data()
-            .with(|fields| fields.shape.clone())
+        self.root.with(|fields| fields.shape.clone())
     }
     /// Return the number of resulting shells; `tool.nb_shells()`.
     pub fn nb_shells(&self) -> i32 {

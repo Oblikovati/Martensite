@@ -37,7 +37,7 @@ pub trait MeshCurve: ParametersList {
     /// Remove the point and corresponding parameter; `curve.remove_point(0)?`.
     fn remove_point(&self, index: i32) -> Result<(), Failure>;
 }
-impl_transient_interface!(dyn MeshCurve, "IMeshData_Curve", dyn ParametersList);
+impl_transient_interface!(dyn MeshCurve, "IMeshData_Curve", dyn ParametersList, upcasts: [dyn ParametersList]);
 /// Discrete face pcurve; `pcurve.is_forward()`.
 pub trait MeshPCurve: ParametersList {
     /// Insert a point with mesh index zero; `pcurve.insert_point(0, point, 0.0)?`.
@@ -67,10 +67,9 @@ pub trait MeshPCurve: ParametersList {
         self.get_orientation() == Orientation::Internal
     }
 }
-impl_transient_interface!(dyn MeshPCurve, "IMeshData_PCurve", dyn ParametersList);
+impl_transient_interface!(dyn MeshPCurve, "IMeshData_PCurve", dyn ParametersList, upcasts: [dyn ParametersList]);
 /// Array facade over any parameter-list handle; `ParametersListArrayAdaptor::new(curve)`.
 pub struct ParametersListArrayAdaptor {
-    transient: StandardTransient,
     parameters: Handle<dyn ParametersList>,
 }
 // Parameter lists share their parent runtime identity rather than introducing another type.
@@ -79,31 +78,16 @@ impl RuntimeTyped for ParametersListArrayAdaptor {
     fn static_type() -> &'static RuntimeType {
         StandardTransient::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_concrete::<Self>(object)
-    }
 }
 impl Transient for ParametersListArrayAdaptor {
     fn dynamic_type(&self) -> &'static RuntimeType {
         StandardTransient::static_type()
     }
-    fn project(&self, requested: std::any::TypeId) -> Option<&dyn std::any::Any> {
-        if requested == std::any::TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.transient.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        &self.transient
-    }
 }
 impl ParametersListArrayAdaptor {
     /// Shares parameters; `ParametersListArrayAdaptor::new(curve.cast())`.
     pub fn new(parameters: Handle<dyn ParametersList>) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            parameters,
-        }
+        Self { parameters }
     }
     /// Native zero lower bound, even when empty; `adaptor.lower() == 0`.
     pub fn lower(&self) -> i32 {

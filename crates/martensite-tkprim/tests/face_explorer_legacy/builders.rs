@@ -53,7 +53,7 @@ pub(super) fn holed_face() -> Face {
 pub(super) fn cylinder_face() -> Face {
     let frame = Axis3::from_normal(origin(), dz()).unwrap();
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomCylindricalSurface::new(frame, 2.0).unwrap()).cast();
+        Handle::new(GeomCylindricalSurface::new(frame, 2.0).unwrap()).into_upcast();
     let maker = BRepBuilderAPIMakeFace::from_surface_bounds(
         &surface,
         (0.0, 2.0 * PI, 0.0, 5.0),
@@ -66,7 +66,7 @@ pub(super) fn cylinder_face() -> Face {
 
 pub(super) fn disc_face() -> Face {
     let frame = Axis2::new(origin(), dz()).unwrap();
-    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 2.0).unwrap()).cast();
+    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 2.0).unwrap()).into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve(&circle).unwrap();
     assert!(edge.is_done());
     let wire = BRepBuilderAPIMakeWire::from_edge(&edge.edge().unwrap()).unwrap();

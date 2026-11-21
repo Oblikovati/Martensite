@@ -7,7 +7,7 @@ use crate::{
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, StandardTransient, WeakHandle},
+    standard::{Failure, WeakHandle},
 };
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::{
@@ -17,13 +17,12 @@ use martensite_tkmath::{
 };
 /// Existing edge polygon as a curve tessellator; `EdgeTessellationExtractor::new(&edge, &face)?`.
 pub struct EdgeTessellationExtractor {
-    transient: StandardTransient,
     provider: EdgeParameterProvider,
     triangulation: WeakHandle<Triangulation>,
     polygon: WeakHandle<PolygonOnTriangulation>,
     location: Location,
 }
-impl_transient!(EdgeTessellationExtractor,"BRepMesh_EdgeTessellationExtractor",dyn CurveTessellator,transient,interfaces:[dyn CurveTessellator]);
+impl_transient!(EdgeTessellationExtractor,"BRepMesh_EdgeTessellationExtractor",dyn CurveTessellator,interfaces:[dyn CurveTessellator]);
 impl EdgeTessellationExtractor {
     /// Retains native non-owning mesh/node associations; `EdgeTessellationExtractor::new(&edge, &face)?`.
     pub fn new(edge: &EdgeHandle, face: &FaceHandle) -> Result<Self, Failure> {
@@ -33,7 +32,6 @@ impl EdgeTessellationExtractor {
             BRepTool::polygon_on_triangulation(&edge.get_edge()?, &triangulation, &location)?;
         let parameters = polygon.get().ok_or_else(missing_polygon)?.parameters();
         Ok(Self {
-            transient: StandardTransient::default(),
             provider: EdgeParameterProvider::with_edge(
                 edge,
                 Orientation::Forward,

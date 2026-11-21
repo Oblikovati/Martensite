@@ -1,10 +1,10 @@
 //! Nonowning vertex-slot aliases preserve in-place changes without holding a collection lock.
 use super::{BRepMeshVertex, MeshVertexCollection};
-use martensite_tkernel::standard::{Failure, Handle, HandleObserver, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, WeakHandle};
 
 /// Read a live vertex slot while its collection and initialized slot remain valid.
 ///
-/// This operation-local alias does not change the collection's intrusive reference count.
+/// This operation-local alias does not change the collection's strong count outside each scoped access.
 /// `let retained = tool.find_key_reference(1)?; let current = retained.snapshot()?;`.
 #[derive(Clone, Debug)]
 pub struct VertexSlotRead {
@@ -36,9 +36,9 @@ impl VertexSlotRead {
         self.collection == other.collection && self.index == other.index
     }
 
-    fn lease(&self) -> Result<HandleObserver<MeshVertexCollection>, Failure> {
-        let lease = self.collection.observe();
-        if lease.ref_count() == 0 {
+    fn lease(&self) -> Result<Handle<MeshVertexCollection>, Failure> {
+        let lease = self.collection.upgrade();
+        if lease.is_null() {
             return Err(Failure::with_message(
                 "Standard_NullObject",
                 &format!(

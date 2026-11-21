@@ -2,7 +2,7 @@
 use crate::shape_analysis::ShapeAnalysisEdge;
 use crate::shape_build::{ShapeBuildEdge, ShapeBuildReShape};
 use crate::shape_extend::ShapeExtendWireData;
-use crate::shape_fix::{FixRoot, FixRootData, ShapeFixRoot};
+use crate::shape_fix::{FixRoot, FixRootData};
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_tools::ReShape;
@@ -30,10 +30,10 @@ use martensite_tkmath::gp::Point3;
 /// ```
 #[derive(Default)]
 pub struct ShapeFixSplitCommonVertex {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     shape: SharedState<Shape>,
 }
-impl_transient!(ShapeFixSplitCommonVertex, "ShapeFix_SplitCommonVertex", ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
+impl_transient!(ShapeFixSplitCommonVertex, "ShapeFix_SplitCommonVertex", dyn FixRoot, interfaces: [dyn FixRoot]);
 
 impl ShapeFixSplitCommonVertex {
     /// initializes the root precision and an empty shape;
@@ -135,7 +135,7 @@ impl ShapeFixSplitCommonVertex {
 
 impl FixRoot for ShapeFixSplitCommonVertex {
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
 }
 

@@ -21,7 +21,9 @@ fn shape_uv_setter_matches_defined_boundaries_and_all_stored_fields() {
 }
 
 fn visible_shape_state(tool: &ShapeUpgradeShapeDivideArea) -> [f64; 4] {
-    let child = tool.new_face_tool().cast::<ShapeUpgradeFaceDivideArea>();
+    let child = tool
+        .new_face_tool()
+        .into_downcast::<ShapeUpgradeFaceDivideArea>();
     [
         tool.max_area(),
         f64::from(tool.nb_parts()),

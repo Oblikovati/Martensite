@@ -68,7 +68,7 @@ pub(crate) fn copied_generating_edge(
     let found = BRepTool::curve_with_location(&gen_e)?;
     let mut curve: Handle<dyn GeomCurve> = found.curve.clone();
     if let Some(source) = found.curve.get() {
-        curve = source.copy()?.cast();
+        curve = source.copy()?.into_cast();
         let copy = curve
             .get()
             .ok_or_else(|| null_curve("MakeEmptyGeneratingEdge"))?;
@@ -104,9 +104,8 @@ pub(crate) fn set_the_pcurve(
 ) -> Result<(), Failure> {
     let (edge, face) = (topods::edge(edge)?, topods::face(face)?);
     let (surface, _) = BRepTool::surface_with_location(&face)?;
-    let plane: Handle<GeomPlane> = surface.cast();
     let mut other: Handle<dyn Geom2dCurve> = Handle::default();
-    if plane.is_null() {
+    if surface.downcast_ref::<GeomPlane>().is_none() {
         other = BRepTool::curve_on_face(&edge, &face)?.pcurve;
     }
     if other.is_null() {

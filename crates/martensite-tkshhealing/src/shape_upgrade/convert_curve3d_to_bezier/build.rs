@@ -13,7 +13,7 @@ pub(super) fn build(tool: &ShapeUpgradeConvertCurve3dToBezier) -> Result<(), Fai
     let result = HArray1::with_value(1, count, Handle::<dyn GeomCurve>::default())
         .map_err(|error| error.into_failure("ShapeUpgrade_ConvertCurve3dToBezier::Build"))?;
     let result = Handle::new(result);
-    tool.parent.set_result_curves(result.clone());
+    tool.geometry.set_result_curves(result.clone());
     fill_result(tool, &result)
 }
 

@@ -14,7 +14,7 @@ use martensite_tkernel::standard::Handle;
 #[test]
 fn cumulative_v2_preserves_original_typed_failure_and_source() {
     let mut face = Face::default();
-    face.set_tshape(&Handle::new(TFace::new()).into_cast());
+    face.set_tshape(&Handle::new(TFace::new()).into_upcast());
     let expected = BRepTool::surface_with_location(&face).unwrap_err();
     let before = face.tshape().clone();
     let mut graph = BRepGraph::new();

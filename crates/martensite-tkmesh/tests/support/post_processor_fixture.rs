@@ -17,7 +17,8 @@ pub fn post_model(v: &[i32]) -> Handle<dyn MeshModel> {
         return Handle::default();
     }
     let (_, _, ordered) = wire_fixture::order_fixture(0, 0, 0);
-    let model: Handle<dyn MeshModel> = Handle::new(DiscreteModel::new(&Shape::default())).cast();
+    let model: Handle<dyn MeshModel> =
+        Handle::new(DiscreteModel::new(&Shape::default())).into_upcast();
     let edge = model.add_edge(&ordered.edge(1).unwrap()).unwrap();
     edge.set_deflection(0.125);
     edge.status().set_status(Status(v[1]));

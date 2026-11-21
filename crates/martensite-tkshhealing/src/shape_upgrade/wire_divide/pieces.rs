@@ -2,6 +2,7 @@
 use super::*;
 use super::{perform::WireSupport, segments::DividedCurves, vertices::EdgeVertices};
 use crate::shape_build::ShapeBuildEdge;
+use crate::shape_upgrade::FixSmallCurves;
 use martensite_tkbrep::topods::Vertex;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::{geom::GeomCurve, top_abs::Orientation};
@@ -65,7 +66,7 @@ fn prepare_small<T: WireDivider + ?Sized>(
     support: &WireSupport,
     edge: &Edge,
     curves: &DividedCurves,
-) -> Result<Handle<ShapeUpgradeFixSmallCurves>, Failure> {
+) -> Result<Handle<dyn FixSmallCurves>, Failure> {
     let small = tool.wire_divide_data().with(|fields| fields.small.clone());
     state::require(&small, "small curve tool")?;
     small.set_min_tolerance(tool.wire_divide_base().min_tolerance());
@@ -80,7 +81,7 @@ fn build_piece<T: WireDivider + ?Sized>(
     support: &mut WireSupport,
     edge: &Edge,
     curves: &DividedCurves,
-    small: &Handle<ShapeUpgradeFixSmallCurves>,
+    small: &Handle<dyn FixSmallCurves>,
     cursor: &mut PieceCursor,
     index: usize,
 ) -> Result<Option<Edge>, Failure> {

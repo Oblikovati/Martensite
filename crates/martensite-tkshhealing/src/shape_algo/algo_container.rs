@@ -13,7 +13,7 @@ use crate::shape_upgrade::{
 use martensite_tkbrep::topods::{Face, Shape, Wire};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::Geom2dBSplineCurve;
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomBSplineSurface, GeomCurve, GeomSurface};
 use martensite_tkmath::geom_abs::Shape as Continuity;
@@ -28,14 +28,12 @@ use martensite_tkmath::geom_abs::Shape as Continuity;
 /// assert!(!container.tool_container().is_null());
 /// ```
 pub struct ShapeAlgoAlgoContainer {
-    parent: StandardTransient,
     tools: SharedState<Handle<ShapeAlgoToolContainer>>,
 }
 impl_transient!(
     ShapeAlgoAlgoContainer,
     "ShapeAlgo_AlgoContainer",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for ShapeAlgoAlgoContainer {
@@ -62,7 +60,6 @@ impl ShapeAlgoAlgoContainer {
     /// `ShapeAlgoAlgoContainer::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             tools: SharedState::new(Handle::new(ShapeAlgoToolContainer::new())),
         }
     }

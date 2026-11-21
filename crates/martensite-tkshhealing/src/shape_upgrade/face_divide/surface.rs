@@ -3,7 +3,7 @@ use super::{FaceDivider, ShapeExtendStatus};
 use crate::{
     shape_analysis::ShapeAnalysis,
     shape_fix::{FixRoot, ShapeFixComposeShell},
-    shape_upgrade::{SplitSurface, WireDivider},
+    shape_upgrade::SplitSurface,
 };
 use martensite_tkbrep::{
     brep::BRepTool,
@@ -22,7 +22,7 @@ pub(super) fn split_surface(
     tool: &(impl FaceDivider + ?Sized),
     area: f64,
 ) -> Result<bool, Failure> {
-    let splitter = tool.split_surface_tool().cast::<dyn SplitSurface>();
+    let splitter = tool.split_surface_tool();
     let Some(splitter) = splitter.get() else {
         return Ok(false);
     };
@@ -154,8 +154,8 @@ fn configured_composer(
     composer.set_context(&base.context());
     composer.set_max_tolerance(base.max_tolerance());
     if !tool.wire_divide_tool().is_null() {
-        let wire = tool.wire_divide_tool().cast::<dyn WireDivider>();
-        composer.set_transfer_param_tool(&wire.transfer_param_tool().cast());
+        let wire = tool.wire_divide_tool();
+        composer.set_transfer_param_tool(&wire.transfer_param_tool());
     }
     Ok(composer)
 }

@@ -2,7 +2,7 @@
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray2};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::{
     GeomBezierCurve, GeomCurve, GeomGeometry, GeomPlane, GeomRectangularTrimmedSurface,
     GeomSurface, dump_curve,
@@ -97,11 +97,10 @@ fn copy_recomputes_natural_joints_and_an_empty_surface_reports_null_objects() {
 
 /// A test complex curve: segment i of n covers `[(i - 1) / n, i / n]`.
 struct Segments {
-    parent: StandardTransient,
     curves: Vec<Handle<dyn GeomCurve>>,
     closed: SharedState<bool>,
 }
-impl_transient!(Segments, "Segments", dyn ShapeExtendComplexCurve, parent, interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn ShapeExtendComplexCurve]);
+impl_transient!(Segments, "Segments", dyn ShapeExtendComplexCurve, interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn ShapeExtendComplexCurve]);
 
 impl GeomGeometry for Segments {
     fn transform(&self, transform: Transform3) -> Result<(), Failure> {
@@ -160,7 +159,6 @@ fn bezier(points: &[(f64, f64)]) -> Handle<dyn GeomCurve> {
 
 fn segments(curves: Vec<Handle<dyn GeomCurve>>) -> Segments {
     Segments {
-        parent: StandardTransient::default(),
         curves,
         closed: SharedState::new(false),
     }

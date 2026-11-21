@@ -19,9 +19,9 @@ fn discretize_original_arc() {
     let circle: Handle<dyn GeomCurve> = Handle::new(
         GeomCircle::new(Axis2::new(Point3::default(), Direction3::Z).unwrap(), 10.0).unwrap(),
     )
-    .cast();
+    .into_upcast();
     let half: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(&circle, first, last, true, true).unwrap()).cast();
+        Handle::new(GeomTrimmedCurve::new(&circle, first, last, true, true).unwrap()).into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve(&half)
         .unwrap()
         .edge()

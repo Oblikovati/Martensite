@@ -5,7 +5,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::Point3;
 use martensite_tkshhealing::shape_build::ShapeBuildReShape;
 use martensite_tkshhealing::shape_extend::ShapeExtendWireData;
-use martensite_tkshhealing::shape_fix::{FixRoot, ShapeFixRoot, ShapeFixWire};
+use martensite_tkshhealing::shape_fix::{FixRoot, ShapeFixWire};
 
 const NATIVE_RESULT: &str = include_str!("fixtures/behavior/tkshhealing_wire_load.expected");
 
@@ -49,7 +49,7 @@ fn wire_data_load_splices_context_edges_into_the_shared_sequence() {
 #[test]
 fn wire_uses_and_shares_shape_fix_root_state() {
     let fixer = Handle::new(ShapeFixWire::new());
-    let root = fixer.cast::<ShapeFixRoot>();
+    let root = fixer.upcast::<dyn FixRoot>();
     assert!(!root.is_null());
     root.set_precision(2.5e-4);
     assert_eq!(fixer.precision(), 2.5e-4);

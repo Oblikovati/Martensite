@@ -9,7 +9,7 @@ use crate::shape_fix::{
     FixRoot, ShapeFix, ShapeFixFixSmallFace, ShapeFixFixSmallSolid, ShapeFixShapeTolerance,
     ShapeFixSplitCommonVertex, ShapeFixWireframe,
 };
-use crate::shape_process::{ShapeProcessContext, ShapeProcessShapeContext};
+use crate::shape_process::{ShapeProcessContextSource, ShapeProcessShapeContext};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::precision;
@@ -33,7 +33,7 @@ fn record_changed(
 /// The operator SameParameter: Force (false) and Tolerance3d (Precision::Confusion);
 /// the messages are recorded through an empty reshape.
 pub(super) fn same_parameter(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -60,7 +60,7 @@ pub(super) fn same_parameter(
 /// [Value / Ratio, Value * Ratio] (Ratio >= 1); then UpdateTolerances and, with a
 /// Regularity, EncodeRegularity.
 pub(super) fn set_tolerance(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -89,7 +89,7 @@ pub(super) fn set_tolerance(
 
 /// The operator FixFaceSize: Tolerance, then ShapeFixFixSmallFace.
 pub(super) fn fix_face_size(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -111,7 +111,7 @@ pub(super) fn fix_face_size(
 
 /// The operator FixWireGaps: Tolerance3d, then ShapeFixWireframe::fix_wire_gaps.
 pub(super) fn fix_wire_gaps(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -132,7 +132,7 @@ pub(super) fn fix_wire_gaps(
 /// The operator DropSmallEdges (native mergesmalledges): Tolerance3d, then
 /// ShapeFixWireframe::fix_small_edges; only the reshape is recorded (the result is kept).
 pub(super) fn merge_small_edges(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -155,7 +155,7 @@ pub(super) fn merge_small_edges(
 /// The operator DropSmallSolids: FixMode, VolumeThreshold, WidthFactorThreshold and
 /// MergeSolids (false: the small solids are removed).
 pub(super) fn drop_small_solids(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -186,7 +186,7 @@ pub(super) fn drop_small_solids(
 
 /// The operator SplitCommonVertex: ShapeFixSplitCommonVertex on the result.
 pub(super) fn split_common_vertex(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);

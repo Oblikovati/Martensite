@@ -1,5 +1,5 @@
 //! Convert spatial curves to Bezier pieces with shared split parameters.
-use super::{ShapeUpgradeSplitCurve3d, SplitCurve, SplitCurveData, SplitCurves3d};
+use super::{CurveSplit3dData, SplitCurve, SplitCurve3d, SplitCurveData, SplitCurves3d};
 use martensite_tkernel::{
     impl_transient,
     ncollection::HSequence,
@@ -32,18 +32,18 @@ impl Default for ConversionState {
 /// Convert an initialized curve to Bezier segments while retaining source parameters.
 /// `let converter = ShapeUpgradeConvertCurve3dToBezier::new();`
 pub struct ShapeUpgradeConvertCurve3dToBezier {
-    parent: ShapeUpgradeSplitCurve3d,
+    geometry: CurveSplit3dData,
     state: SharedState<ConversionState>,
 }
 impl Default for ShapeUpgradeConvertCurve3dToBezier {
     fn default() -> Self {
         Self {
-            parent: ShapeUpgradeSplitCurve3d::new(),
+            geometry: CurveSplit3dData::default(),
             state: SharedState::new(ConversionState::default()),
         }
     }
 }
-impl_transient!(ShapeUpgradeConvertCurve3dToBezier, "ShapeUpgrade_ConvertCurve3dToBezier", ShapeUpgradeSplitCurve3d, parent, interfaces: [dyn SplitCurve]);
+impl_transient!(ShapeUpgradeConvertCurve3dToBezier, "ShapeUpgrade_ConvertCurve3dToBezier", dyn SplitCurve3d, interfaces: [dyn SplitCurve, dyn SplitCurve3d]);
 
 impl ShapeUpgradeConvertCurve3dToBezier {
     /// Create a converter with native line, circle and conic modes enabled.
@@ -53,7 +53,7 @@ impl ShapeUpgradeConvertCurve3dToBezier {
     }
     /// Initialize from a curve's natural bounds; `converter.init_curve(&curve)?`.
     pub fn init_curve(&self, curve: &Handle<dyn GeomCurve>) -> Result<(), Failure> {
-        self.parent.init_curve(curve)
+        self.geometry.init_curve(curve)
     }
     /// Initialize over a caller-supplied range; `converter.init_curve_range(&curve, 0., 1.)?`.
     pub fn init_curve_range(
@@ -62,7 +62,7 @@ impl ShapeUpgradeConvertCurve3dToBezier {
         first: f64,
         last: f64,
     ) -> Result<(), Failure> {
-        self.parent.init_curve_range(curve, first, last)
+        self.geometry.init_curve_range(curve, first, last)
     }
     /// Enable or disable line conversion; `converter.set_line_mode(false)`.
     pub fn set_line_mode(&self, enabled: bool) {
@@ -95,17 +95,23 @@ impl ShapeUpgradeConvertCurve3dToBezier {
     /// Shared Bezier result geometry inherited from `ShapeUpgradeSplitCurve3d`.
     /// `let curves: SplitCurves3d = converter.curves()`.
     pub fn curves(&self) -> SplitCurves3d {
-        self.parent.curves()
+        self.geometry.curves()
     }
 }
 impl SplitCurve for ShapeUpgradeConvertCurve3dToBezier {
     fn split_curve_data(&self) -> &SplitCurveData {
-        self.parent.split_curve_data()
+        self.geometry.split_curve_data()
     }
     fn build(&self, _segment: bool) -> Result<(), Failure> {
         build::build(self)
     }
     fn compute(&self) -> Result<(), Failure> {
         compute::compute(self)
+    }
+}
+
+impl SplitCurve3d for ShapeUpgradeConvertCurve3dToBezier {
+    fn curve_geometry(&self) -> &CurveSplit3dData {
+        &self.geometry
     }
 }

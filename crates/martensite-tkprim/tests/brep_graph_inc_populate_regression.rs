@@ -82,7 +82,7 @@ fn BRepGraphInc_PopulateRegressionTest__LocatedFacePolygonOnTriangulation_IsCapt
 #[test]
 fn BRepGraphInc_PopulateRegressionTest__NoWireNaturalSphere_DegenerateBoundaryEdgesRoundTrip() {
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(Axis3::default(), 10.0).unwrap()).into_cast();
+        Handle::new(GeomSphericalSurface::new(Axis3::default(), 10.0).unwrap()).into_upcast();
     let mut face = Face::default();
     BRepBuilder::default()
         .make_face_on_surface(&mut face, &surface, precision::confusion())

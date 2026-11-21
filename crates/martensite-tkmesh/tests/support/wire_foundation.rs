@@ -51,7 +51,8 @@ pub fn order_fixture(
         builder.add(&mut wire, &edge).unwrap();
     }
     let mut face = Face::default();
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+    let surface: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     builder
         .make_face_on_surface(&mut face, &surface, 1e-7)
         .unwrap();
@@ -72,7 +73,7 @@ fn order_edge(
         let direction =
             Direction3::from_vector(Vector3::between(points[index], points[last])).unwrap();
         let curve: Handle<dyn GeomCurve> =
-            Handle::new(GeomLine::new(Axis1::new(points[index], direction))).cast();
+            Handle::new(GeomLine::new(Axis1::new(points[index], direction))).into_upcast();
         builder.update_edge_curve(&edge, &curve, 1e-7).unwrap();
         builder
             .range(&edge, 0., points[index].distance(&points[last]), false)

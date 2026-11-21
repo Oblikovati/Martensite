@@ -7,7 +7,7 @@ use martensite_tkbrep::topods::ShapeIterator;
 use martensite_tkernel::{
     impl_transient,
     message::{Gravity, Msg},
-    standard::{Handle, StandardTransient},
+    standard::{Handle, Transient},
 };
 use martensite_tkshhealing::{
     shape_build::ShapeBuildReShape, shape_extend::BasicMsgRegistrator, shape_fix::FixRoot,
@@ -18,13 +18,12 @@ use std::sync::{
 };
 
 struct OrientationContextMessages {
-    parent: StandardTransient,
     shell_tool: Weak<ShapeFixShell>,
     replacement: Handle<ShapeBuildReShape>,
     fired: Arc<AtomicBool>,
     enabled: bool,
 }
-impl_transient!(OrientationContextMessages, "OrientationContextMessages", StandardTransient, parent, interfaces:[dyn BasicMsgRegistrator]);
+impl_transient!(OrientationContextMessages, "OrientationContextMessages", dyn Transient, interfaces:[dyn BasicMsgRegistrator]);
 
 impl BasicMsgRegistrator for OrientationContextMessages {
     fn send_shape(&self, _: &Shape, _: &Msg, _: Gravity) {
@@ -56,7 +55,6 @@ fn warning_registrator(
     enabled: bool,
 ) -> Handle<dyn BasicMsgRegistrator> {
     Handle::new(OrientationContextMessages {
-        parent: StandardTransient::default(),
         shell_tool: Arc::downgrade(tool),
         replacement: next.clone(),
         fired: fired.clone(),

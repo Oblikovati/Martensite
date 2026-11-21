@@ -6,7 +6,7 @@ mod projection;
 
 use martensite_tkbrep::topods::{Edge, Face};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{SharedState, StandardTransient};
+use martensite_tkernel::standard::{SharedState, Transient};
 
 /// Project edge endpoints onto the p-curve to determine its usable parameter range.
 ///
@@ -16,15 +16,9 @@ use martensite_tkernel::standard::{SharedState, StandardTransient};
 /// assert!(!projection.is_first_done());
 /// ```
 pub struct ShapeFixEdgeProjAux {
-    parent: StandardTransient,
     state: SharedState<EdgeProjAuxState>,
 }
-impl_transient!(
-    ShapeFixEdgeProjAux,
-    "ShapeFix_EdgeProjAux",
-    StandardTransient,
-    parent
-);
+impl_transient!(ShapeFixEdgeProjAux, "ShapeFix_EdgeProjAux", dyn Transient);
 
 #[derive(Clone, Default)]
 struct EdgeProjAuxState {
@@ -39,7 +33,6 @@ struct EdgeProjAuxState {
 impl Default for ShapeFixEdgeProjAux {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(EdgeProjAuxState::default()),
         }
     }

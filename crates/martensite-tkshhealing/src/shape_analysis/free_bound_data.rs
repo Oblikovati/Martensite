@@ -3,7 +3,7 @@ use martensite_tkbrep::topods::{self, Shape, Wire};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, HSequence};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 
 /// The fields of a `ShapeAnalysisFreeBoundData`.
 struct FreeBoundFields {
@@ -32,14 +32,12 @@ struct FreeBoundFields {
 /// assert_eq!(data.nb_notches(), 0);
 /// ```
 pub struct ShapeAnalysisFreeBoundData {
-    parent: StandardTransient,
     fields: SharedState<FreeBoundFields>,
 }
 impl_transient!(
     ShapeAnalysisFreeBoundData,
     "ShapeAnalysis_FreeBoundData",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for ShapeAnalysisFreeBoundData {
@@ -55,7 +53,6 @@ impl Default for ShapeAnalysisFreeBoundData {
             notch_widths: DataMap::default(),
         };
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

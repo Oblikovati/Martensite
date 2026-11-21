@@ -6,12 +6,12 @@
 mod support;
 use martensite_tkbrep::brep_graph::compact::{self, CachePolicy, CompactResult, Options};
 use martensite_tkbrep::brep_graph::copy_remap::CopyRemap;
-use martensite_tkbrep::brep_graph::layer::{AttachedGraph, BRepGraphLayer, LayerBase, as_layer};
+use martensite_tkbrep::brep_graph::layer::{AttachedGraph, BRepGraphLayer, LayerBase};
 use martensite_tkbrep::brep_graph::layer_history::LayerHistory;
 use martensite_tkbrep::brep_graph::shapes_view::Options as AddOptions;
 use martensite_tkbrep::brep_graph::*;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::Mutex;
 use support::make_box;
@@ -133,12 +133,11 @@ fn the_shape_bindings_follow_their_nodes() {
 
 /// A layer logging its attach and detach callbacks, with a no-op `CopyTo`.
 struct CallbackLog {
-    transient: StandardTransient,
     base: LayerBase,
     name: AsciiString,
     events: Mutex<Vec<&'static str>>,
 }
-impl_transient!(CallbackLog, "CallbackLog", dyn BRepGraphLayer, transient,
+impl_transient!(CallbackLog, "CallbackLog", dyn BRepGraphLayer,
     interfaces: [dyn BRepGraphLayer]);
 
 impl BRepGraphLayer for CallbackLog {
@@ -168,14 +167,13 @@ impl BRepGraphLayer for CallbackLog {
 fn the_registry_moves_detach_reattach_then_migrate_each_layer() {
     let mut graph = box_graph(false);
     let log = Handle::new(CallbackLog {
-        transient: StandardTransient::default(),
         base: LayerBase::new(),
         name: AsciiString::new("CallbackLog"),
         events: Mutex::new(Vec::new()),
     });
     graph
         .layer_registry()
-        .register_layer(&as_layer(&log))
+        .register_layer(&log.upcast())
         .unwrap();
     remove(&mut graph, FaceId::new(5));
     compact::perform(&mut graph).unwrap();

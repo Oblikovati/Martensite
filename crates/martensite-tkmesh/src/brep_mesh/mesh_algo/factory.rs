@@ -10,7 +10,7 @@ use crate::brep_mesh::{
 };
 use crate::imesh_tools::{MeshAlgo, MeshAlgoFactory, MeshParameters};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::geom_abs::SurfaceType;
 
 /// `BRepMeshMeshAlgoFactory`: the Watson algorithm suited to each surface type.
@@ -24,14 +24,11 @@ use martensite_tkmath::geom_abs::SurfaceType;
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 #[derive(Default)]
-pub struct BRepMeshMeshAlgoFactory {
-    transient: StandardTransient,
-}
+pub struct BRepMeshMeshAlgoFactory {}
 impl_transient!(
     BRepMeshMeshAlgoFactory,
     "BRepMesh_MeshAlgoFactory",
     dyn MeshAlgoFactory,
-    transient,
     interfaces: [dyn MeshAlgoFactory]
 );
 
@@ -54,11 +51,11 @@ fn node_insertion<R: RangeSplitter + Default + Send + 'static>() -> Handle<dyn M
 
 /// Create the base Delaunay face strategy.
 fn base_algo() -> Handle<dyn MeshAlgo> {
-    Handle::new(BRepMeshDelaunayBaseMeshAlgo::new()).cast()
+    Handle::new(BRepMeshDelaunayBaseMeshAlgo::new()).into_upcast()
 }
 
 fn algo(core: impl FaceMeshingCore + 'static) -> Handle<dyn MeshAlgo> {
-    Handle::new(BRepMeshDelaunayBaseMeshAlgo::from_core(core)).cast()
+    Handle::new(BRepMeshDelaunayBaseMeshAlgo::from_core(core)).into_upcast()
 }
 
 /// The plane and cylinder choice: deflection control on all surfaces, else node

@@ -33,7 +33,7 @@ fn xLine() -> Handle<dyn GeomCurve> {
         Point3::new(0.0, 0.0, 0.0),
         Direction3::X,
     )))
-    .into_cast()
+    .into_upcast()
 }
 
 fn makeSelfLoopEdge(theGraph: &mut BRepGraph) -> EdgeId {

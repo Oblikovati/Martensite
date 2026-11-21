@@ -24,22 +24,22 @@ impl ShapeFixShell {
 }
 impl FixRoot for ShapeFixShell {
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
     fn set_msg_registrator(&self, messages: &Handle<dyn BasicMsgRegistrator>) {
-        self.parent.set_msg_registrator(messages);
+        self.root.set_msg_registrator(messages);
         self.face_tool.set_msg_registrator(messages);
     }
     fn set_precision(&self, precision: f64) {
-        self.parent.set_precision(precision);
+        self.root.set_precision(precision);
         self.face_tool.set_precision(precision);
     }
     fn set_min_tolerance(&self, tolerance: f64) {
-        self.parent.set_min_tolerance(tolerance);
+        self.root.set_min_tolerance(tolerance);
         self.face_tool.set_min_tolerance(tolerance);
     }
     fn set_max_tolerance(&self, tolerance: f64) {
-        self.parent.set_max_tolerance(tolerance);
+        self.root.set_max_tolerance(tolerance);
         self.face_tool.set_max_tolerance(tolerance);
     }
 }

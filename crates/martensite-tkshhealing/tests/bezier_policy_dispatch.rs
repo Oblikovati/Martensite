@@ -12,7 +12,7 @@ use martensite_tkernel::{
 use martensite_tkg3d::{geom::GeomBezierSurface, top_abs::ShapeEnum};
 use martensite_tkmath::gp::Plane3;
 use martensite_tkshhealing::{
-    shape_extend::{BasicMsgRegistrator, ShapeExtendBasicMsgRegistrator},
+    shape_extend::BasicMsgRegistrator,
     shape_upgrade::{ShapeDivider, ShapeUpgradeShapeConvertToBezier},
 };
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeFace;
@@ -20,12 +20,10 @@ use std::sync::{Arc, Weak};
 
 #[derive(Default)]
 struct ConversionMessages {
-    parent: ShapeExtendBasicMsgRegistrator,
     received: SharedState<Vec<String>>,
     converter: Weak<ShapeUpgradeShapeConvertToBezier>,
 }
-impl_transient!(ConversionMessages, "ConversionMessages", ShapeExtendBasicMsgRegistrator,
-    parent, interfaces: [dyn BasicMsgRegistrator]);
+impl_transient!(ConversionMessages, "ConversionMessages", dyn BasicMsgRegistrator, interfaces: [dyn BasicMsgRegistrator]);
 impl BasicMsgRegistrator for ConversionMessages {
     fn send_shape(&self, _shape: &Shape, message: &Msg, gravity: Gravity) {
         assert_eq!(gravity, Gravity::Info);

@@ -1,6 +1,6 @@
 //! `ShapeCustomRestrictionParameters`: the flags of the B-spline restriction.
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{SharedState, StandardTransient};
+use martensite_tkernel::standard::{SharedState, Transient};
 
 /// The fields, under their names.
 #[derive(Clone, Copy, Debug)]
@@ -39,14 +39,12 @@ struct RestrictionFields {
 /// assert_eq!(parameters.g_max_seg(), 20);
 /// ```
 pub struct ShapeCustomRestrictionParameters {
-    parent: StandardTransient,
     fields: SharedState<RestrictionFields>,
 }
 impl_transient!(
     ShapeCustomRestrictionParameters,
     "ShapeCustom_RestrictionParameters",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for ShapeCustomRestrictionParameters {
@@ -75,7 +73,6 @@ impl ShapeCustomRestrictionParameters {
     /// is set; `ShapeCustomRestrictionParameters::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(RestrictionFields {
                 g_max_degree: 15,
                 g_max_seg: 10000,
