@@ -17,6 +17,6 @@ include!("ncollection_local_array/lifetimes.rs");
 // Compile-time equivalents of the source's HasToArray1/return-type checks.
 // A const source maps to a Rust shared slice; mutable aliases require &mut.
 const _: fn(&mut LocalArray<i32>) -> martensite_tkernel::ncollection::Array1<'_, i32> =
-    LocalArray::to_array1;
+    LocalArray::as_array1_mut;
 const _: fn(&LocalArray<i32>) -> &[i32] = LocalArray::as_slice;
 const _: () = assert!(std::mem::needs_drop::<LocalTracked>());

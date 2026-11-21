@@ -54,13 +54,6 @@ impl<'a, K> MapIterator<'a, K> {
     pub fn key(&self) -> Result<&'a K, Failure> {
         self.current("NCollection_Map::Iterator::Key")
     }
-    /// Restarts on another map.
-    pub fn initialize<H: HashPolicy<K>>(&mut self, map: &'a Map<K, H>)
-    where
-        K: Debug,
-    {
-        *self = map.cursor();
-    }
     /// `Reset`: restarts on the map the cursor was created for.
     pub fn reset(&mut self) {
         self.keys.entries.reset();

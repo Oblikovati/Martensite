@@ -14,10 +14,12 @@ impl<T> LinearVector<T> {
 impl<T: Clone> LinearVector<T> {
     /// Copies after reserving the next slot.
     /// `vector.append_ref(&value)` leaves grown capacity visible if cloning panics.
-    pub fn append_ref(&mut self, value: &T) -> &mut T {
+    #[cfg(test)]
+    pub(crate) fn append_ref(&mut self, value: &T) -> &mut T {
         self.reserve_next_item();
         self.push_reserved_item(value.clone())
     }
+    #[cfg(test)]
     fn set_value_ref_with(
         &mut self,
         index: usize,
@@ -35,7 +37,8 @@ impl<T: Clone + Default> LinearVector<T> {
     /// Assigns a borrowed value after default extension has published its size.
     /// `vector.set_value_ref(5, &value)` uses clone_from for the copy-assignment branch.
     /// A clone_from panic retains the new size and any changes made to its target slot.
-    pub fn set_value_ref(&mut self, index: usize, value: &T) -> &mut T {
+    #[cfg(test)]
+    pub(crate) fn set_value_ref(&mut self, index: usize, value: &T) -> &mut T {
         self.set_value_ref_with(index, value, T::default)
     }
 }

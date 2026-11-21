@@ -10,15 +10,18 @@ impl<T> Array2<'_, T> {
         self.elements.data_mut_ptr()
     }
     /// Returns the row-major initialized range end; `array.data_end_ptr()`.
-    pub fn data_end_ptr(&self) -> *const T {
+    #[cfg(test)]
+    pub(crate) fn data_end_ptr(&self) -> *const T {
         self.elements.data_end_ptr()
     }
     /// Returns the writable row-major initialized range end; `array.data_end_mut_ptr()`.
-    pub fn data_end_mut_ptr(&mut self) -> *mut T {
+    #[cfg(test)]
+    pub(crate) fn data_end_mut_ptr(&mut self) -> *mut T {
         self.elements.data_end_mut_ptr()
     }
     /// Preserves storage and bounds for self assignment; `array.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
     pub(super) fn adopt_rectangle(&mut self, source: &Array2<'_, T>) {
@@ -42,7 +45,8 @@ impl<T> Array2<'_, T> {
 }
 impl<T: Clone> Array2<'_, T> {
     /// Copies equally shaped contents and returns the receiver; `array.copy_values_returning(&source)?`.
-    pub fn copy_values_returning(
+    #[cfg(test)]
+    pub(crate) fn copy_values_returning(
         &mut self,
         source: &Array2<'_, T>,
     ) -> Result<&mut Self, ArrayError> {
@@ -52,19 +56,25 @@ impl<T: Clone> Array2<'_, T> {
 }
 impl<T: Copy> Array2<'_, T> {
     /// Selects trivial copying without Clone hooks; `array.assign_trivial(&source)`.
-    pub fn assign_trivial(&mut self, source: &Array2<'_, T>) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_trivial(&mut self, source: &Array2<'_, T>) -> &mut Self {
         self.elements.assign_trivial(&source.elements);
         self.adopt_rectangle(source);
         self
     }
     /// Copies trivial values while retaining rectangle bounds; `array.copy_values_trivial(&source)?`.
-    pub fn copy_values_trivial(&mut self, source: &Array2<'_, T>) -> Result<&mut Self, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn copy_values_trivial(
+        &mut self,
+        source: &Array2<'_, T>,
+    ) -> Result<&mut Self, ArrayError> {
         self.check_rectangle(source)?;
         self.elements.copy_values_trivial(&source.elements)?;
         Ok(self)
     }
     /// Copies the rectangle without Clone hooks; `array.clone_trivial()`.
-    pub fn clone_trivial(&self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn clone_trivial(&self) -> Self {
         Self {
             elements: self.elements.clone_trivial(),
             row_lower: self.row_lower,

@@ -288,7 +288,7 @@ impl BaseAllocator {
     /// raises (`Standard_ProgramError` for an address it cannot find, including null).
     ///
     /// Example: `BaseAllocator::common().check_free(std::ptr::null()).is_ok()`.
-    pub fn check_free(&self, address: *const u8) -> Result<(), Failure> {
+    pub(crate) fn check_free(&self, address: *const u8) -> Result<(), Failure> {
         match &*self.fields.inner {
             AllocatorKind::Accumulating(engine) => {
                 locked(engine).freeable_block(address as usize).map(|_| ())

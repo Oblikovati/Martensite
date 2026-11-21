@@ -6,7 +6,7 @@ use std::fmt;
 /// `let (published, incomplete) = error.into_parts(); drop((published, incomplete));`.
 /// The pointer table is destroyed on constructor unwind but the pointed-to blocks would leak.
 /// This owner retains Rust's descriptor storage as well.
-pub struct DynamicArrayCopyConstructionFailure<T> {
+pub(crate) struct DynamicArrayCopyConstructionFailure<T> {
     published: DynamicArray<T>,
     incomplete: DynamicArrayCopyFailure<T>,
 }
@@ -19,18 +19,18 @@ impl<T> DynamicArrayCopyConstructionFailure<T> {
     }
     /// Reads the completely published prefix without performing recovery.
     /// `assert_eq!(error.published_array().size(), 2);`.
-    pub fn published_array(&self) -> &DynamicArray<T> {
+    pub(crate) fn published_array(&self) -> &DynamicArray<T> {
         &self.published
     }
     /// Reads the constructor failure and unpublished live prefix before cleanup.
     /// `error.copy_failure().incomplete_values()`.
-    pub fn copy_failure(&self) -> &DynamicArrayCopyFailure<T> {
+    pub(crate) fn copy_failure(&self) -> &DynamicArrayCopyFailure<T> {
         &self.incomplete
     }
     /// Transfers both recovery owners; dropping them destroys their values and frees blocks.
     /// `let (published, incomplete) = error.into_parts(); drop(published); drop(incomplete);`.
     /// This is explicit Rust recovery of blocks that would otherwise leak.
-    pub fn into_parts(self) -> (DynamicArray<T>, DynamicArrayCopyFailure<T>) {
+    pub(crate) fn into_parts(self) -> (DynamicArray<T>, DynamicArrayCopyFailure<T>) {
         (self.published, self.incomplete)
     }
 }

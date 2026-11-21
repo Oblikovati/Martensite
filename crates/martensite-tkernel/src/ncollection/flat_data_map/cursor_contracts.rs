@@ -44,7 +44,7 @@ impl<'a, K, V> FlatDataValues<'a, K, V> {
         self.inner.more()
     }
     /// Advances the iterator without yielding its previous value; `cursor.advance()`.
-    pub fn advance(&mut self) {
+    pub(crate) fn advance(&mut self) {
         self.inner.advance();
     }
     /// Borrows the current key; `cursor.key()?`.

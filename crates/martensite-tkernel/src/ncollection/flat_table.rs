@@ -18,7 +18,7 @@ pub(super) struct Inserted {
     pub last: usize,
 }
 impl Inserted {
-    pub fn occupied_slot(index: usize) -> Self {
+    pub(crate) fn occupied_slot(index: usize) -> Self {
         Self {
             is_new: false,
             original: index,
@@ -42,29 +42,29 @@ impl<K, V, H: HashPolicy<K>> FlatTable<K, V, H> {
         }
         table
     }
-    pub fn reserve(&mut self, count: usize) {
+    pub(crate) fn reserve(&mut self, count: usize) {
         let capacity = capacity_for(count);
         if capacity > self.slots.len() {
             self.rehash(capacity);
         }
     }
-    pub fn prepare(&mut self) {
+    pub(crate) fn prepare(&mut self) {
         if capacity_for(self.count + 1) > self.slots.len() {
             self.rehash((self.slots.len() * 2).max(8));
         }
     }
     /// Reserves before caller-visible callbacks; `table.reserve_then_hash(&key)`.
-    pub fn reserve_then_hash(&mut self, key: &K) -> usize {
+    pub(crate) fn reserve_then_hash(&mut self, key: &K) -> usize {
         self.prepare();
         self.hasher.hash(key)
     }
-    pub fn lookup(&self, key: &K) -> Option<usize> {
+    pub(crate) fn lookup(&self, key: &K) -> Option<usize> {
         if self.count == 0 {
             return None;
         }
         self.find_cached_hash_slot(key, self.hasher.hash(key))
     }
-    pub fn find_cached_hash_slot(&self, key: &K, hash: usize) -> Option<usize> {
+    pub(crate) fn find_cached_hash_slot(&self, key: &K, hash: usize) -> Option<usize> {
         let mask: usize = self.slots.len().checked_sub(1)?;
         let mut index = hash & mask;
         let mut probe = 0;
@@ -80,12 +80,18 @@ impl<K, V, H: HashPolicy<K>> FlatTable<K, V, H> {
             index = (index + 1) & mask;
         }
     }
-    pub fn insert(&mut self, key: K, value: V, replace_key: bool, replace_value: bool) -> Inserted {
+    pub(crate) fn insert(
+        &mut self,
+        key: K,
+        value: V,
+        replace_key: bool,
+        replace_value: bool,
+    ) -> Inserted {
         // The hash is kept through lookup and displacement; stateful policies see one call.
         let hash: usize = self.reserve_then_hash(&key);
         self.insert_prepared(key, value, hash, replace_key, replace_value)
     }
-    pub fn insert_prepared(
+    pub(crate) fn insert_prepared(
         &mut self,
         key: K,
         value: V,
@@ -106,7 +112,7 @@ impl<K, V, H: HashPolicy<K>> FlatTable<K, V, H> {
         self.insert_prehashed(key, value, hash)
     }
     /// Requires prepared capacity; lazy construction must retain the hash computed before it.
-    pub fn insert_prehashed(&mut self, key: K, value: V, hash: usize) -> Inserted {
+    pub(crate) fn insert_prehashed(&mut self, key: K, value: V, hash: usize) -> Inserted {
         self.insert_unchecked(FlatSlot {
             key,
             value,
@@ -136,7 +142,7 @@ impl<K, V, H: HashPolicy<K>> FlatTable<K, V, H> {
             index = (index + 1) & mask;
         }
     }
-    pub fn remove(&mut self, key: &K) -> bool {
+    pub(crate) fn remove(&mut self, key: &K) -> bool {
         let Some(index) = self.lookup(key) else {
             return false;
         };
@@ -165,7 +171,7 @@ impl<K, V, H: HashPolicy<K>> FlatTable<K, V, H> {
             self.insert_unchecked(slot);
         }
     }
-    pub fn items(&self) -> FlatItems<'_, K, V> {
+    pub(crate) fn items(&self) -> FlatItems<'_, K, V> {
         let mut iter = FlatItems {
             slots: &self.slots,
             index: 0,

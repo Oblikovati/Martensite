@@ -5,7 +5,7 @@ impl<T: Default + Send + Sync + 'static> HArray2<T> {
     /// Constructs all defaults, then assigns a borrowed donor in row-major order.
     /// Assignment panic drops initialized cells; the donor remains owned by its caller.
     /// `HArray2::with_value_ref_with_assignment(1, 2, 1, 3, &7, |slot, donor| *slot = *donor)?`.
-    pub fn with_value_ref_with_assignment(
+    pub(crate) fn with_value_ref_with_assignment(
         rl: i32,
         ru: i32,
         cl: i32,
@@ -26,7 +26,7 @@ impl<T: Default + Clone + Send + Sync + 'static> HArray2<T> {
     }
     /// Assigns a borrowed donor into every row-major cell using Clone::clone_from.
     /// `let grid = HArray2::with_value_ref(1, 2, -1, 0, &String::from("CAD"))?`.
-    pub fn with_value_ref(
+    pub(crate) fn with_value_ref(
         rl: i32,
         ru: i32,
         cl: i32,

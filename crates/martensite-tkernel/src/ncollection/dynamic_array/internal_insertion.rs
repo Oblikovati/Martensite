@@ -7,7 +7,7 @@ impl<T: Default> DynamicArray<T> {
     /// `array.insert_before_from_index_with_assignment(0, 1, std::mem::swap, |a,b| *a = *b, |_| {})?`.
     /// The source value may have changed during shifting. Equal final source/target indices invoke
     /// self_assign with one reference, giving self-assignment without Rust aliasing.
-    pub fn insert_before_from_index_with_assignment<
+    pub(crate) fn insert_before_from_index_with_assignment<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(
@@ -30,7 +30,7 @@ impl<T: Default> DynamicArray<T> {
     /// Inserts after an item and copy-assigns from the original physical source slot after shifting.
     /// `array.insert_after_from_index_with_assignment(0, 1, std::mem::swap, |a,b| *a = *b, |_| {})?`.
     /// self_assign supplies the item's copy-self-assignment behavior when the slots coincide.
-    pub fn insert_after_from_index_with_assignment<
+    pub(crate) fn insert_after_from_index_with_assignment<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(
@@ -53,7 +53,7 @@ impl<T: Default> DynamicArray<T> {
     /// Inserts before an item, then move-assigns from the internal slot as modified by shifting.
     /// `array.insert_before_moved_from_index_with_assignment(0, 1, std::mem::swap, std::mem::swap, |_| {})?`.
     /// self_assign supplies move-self-assignment; Rust cannot form two mutable aliases.
-    pub fn insert_before_moved_from_index_with_assignment<
+    pub(crate) fn insert_before_moved_from_index_with_assignment<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(
@@ -70,7 +70,7 @@ impl<T: Default> DynamicArray<T> {
     /// Inserts after an item, keeping the internal source position fixed through descending shifts.
     /// `array.insert_after_moved_from_index_with_assignment(0, 1, std::mem::swap, std::mem::swap, |_| {})?`.
     /// All callbacks leave their arguments live on unwind; committed size and mutations persist.
-    pub fn insert_after_moved_from_index_with_assignment<
+    pub(crate) fn insert_after_moved_from_index_with_assignment<
         I: TryInto<usize> + Copy + Debug,
         S: TryInto<usize> + Copy + Debug,
     >(

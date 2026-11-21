@@ -1,6 +1,7 @@
 //! One disjoint borrowing implementation serves swaps, descending shifts and aliased insertions.
 use super::DynamicArray;
 impl<T> DynamicArray<T> {
+    #[cfg(test)]
     pub(super) fn distinct_value_slots(&mut self, first: usize, second: usize) -> (&mut T, &mut T) {
         debug_assert_ne!(
             first, second,
@@ -12,6 +13,7 @@ impl<T> DynamicArray<T> {
         }
         (higher, lower)
     }
+    #[cfg(test)]
     fn ordered_value_slots(&mut self, lower: usize, higher: usize) -> (&mut T, &mut T) {
         let (lower_block, higher_block) = (lower / self.increment, higher / self.increment);
         let (lower_offset, higher_offset) = (lower % self.increment, higher % self.increment);

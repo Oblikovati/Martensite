@@ -7,7 +7,7 @@ impl<T, const M: bool> DynamicArrayCachedIterator<T, M> {
     /// Subtracts signed positions, independently of original owner identity.
     /// `let distance = cursor.positional_difference(&other)?;` permits different const specializations.
     /// Overflow is checked rather than left as a signed-arithmetic precondition.
-    pub fn positional_difference<const O: bool>(
+    pub(crate) fn positional_difference<const O: bool>(
         &self,
         other: &DynamicArrayCachedIterator<T, O>,
     ) -> Result<isize, Failure> {

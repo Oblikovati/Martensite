@@ -33,12 +33,6 @@ impl<T: Copy> Mat4<T> {
     pub fn set_column3(&mut self, column: usize, values: Vec3<T>) {
         self.columns[column][..3].copy_from_slice(&values.data());
     }
-    /// Changes the first three diagonal values; `matrix.set_diagonal3(s)`.
-    pub fn set_diagonal3(&mut self, values: Vec3<T>) {
-        for (index, value) in values.data().into_iter().enumerate() {
-            self.columns[index][index] = value;
-        }
-    }
 }
 impl<T: Copy + From<u8>> Mat4<T> {
     /// The upper-left 3x3 block; `matrix.get_mat3()`.

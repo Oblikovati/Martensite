@@ -49,10 +49,13 @@ pub use allocator::{
     IncAllocatorObservation, IncBlock, IncBlockObservation, IncBlockSizeLevel,
 };
 mod dynamic_array;
-pub use dynamic_array::DynamicArrayCachedIterator;
 pub use dynamic_array::{
-    DynamicArray, DynamicArrayClearState, DynamicArrayCopyConstructionFailure,
-    DynamicArrayCopyFailure, DynamicArrayIterator, DynamicArrayStorageExtension, DynamicCursor,
+    DynamicArray, DynamicArrayCopyFailure, DynamicArrayIterator, DynamicArrayStorageExtension,
+    DynamicCursor,
+};
+#[cfg(test)]
+pub(crate) use dynamic_array::{
+    DynamicArrayCachedIterator, DynamicArrayClearState, DynamicArrayCopyConstructionFailure,
 };
 
 mod buffer;

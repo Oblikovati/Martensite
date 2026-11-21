@@ -36,7 +36,7 @@ struct Replace {
 
 impl<K, V, H: HashPolicy<K>> OrderedTable<K, V, H> {
     /// Adds or updates `key`; returns whether it was new and its slot.
-    pub fn place(
+    pub(crate) fn place(
         &mut self,
         key: K,
         construct: impl FnOnce() -> V,
@@ -93,7 +93,7 @@ impl<K, V, H: HashPolicy<K>> OrderedTable<K, V, H> {
 
 impl<K: Clone, V, H: HashPolicy<K>> OrderedTable<K, V, H> {
     /// Adds a borrowed key, cloning it only for a new entry; a hit replaces only the value.
-    pub fn place_key_ref(
+    pub(crate) fn place_key_ref(
         &mut self,
         key: &K,
         construct: impl FnOnce() -> V,
@@ -110,7 +110,7 @@ impl<K: Clone, V, H: HashPolicy<K>> OrderedTable<K, V, H> {
 
 impl<K: Clone, V: Clone, H: HashPolicy<K>> OrderedTable<K, V, H> {
     /// OrderedDataMap copies the item before its key and never copies keys on hits.
-    pub fn place_borrowed(&mut self, key: &K, value: &V, replace: bool) -> (bool, usize) {
+    pub(crate) fn place_borrowed(&mut self, key: &K, value: &V, replace: bool) -> (bool, usize) {
         // Emplacing copy-constructs a temporary, then move-assigns it on hits.
         self.place_key_ref(key, || value.clone(), replace)
     }
@@ -119,7 +119,7 @@ impl<K: Clone, V: Clone, H: HashPolicy<K>> OrderedTable<K, V, H> {
 impl<K, H: HashPolicy<K>> OrderedTable<K, (), H> {
     /// Set emplace/try-emplace with a deferred key: emplacing resizes before
     /// constructing the temporary, even for a duplicate Try.
-    pub fn place_constructed_key(
+    pub(crate) fn place_constructed_key(
         &mut self,
         construct: impl FnOnce() -> K,
         replace: bool,

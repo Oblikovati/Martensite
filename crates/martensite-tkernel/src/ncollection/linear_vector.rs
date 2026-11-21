@@ -1,17 +1,23 @@
 //! Contiguous growable storage with explicit growth and element-lifecycle policies.
 use super::{Array1, ArrayError};
 
+#[cfg(test)]
 mod append_policy;
 mod borrowed;
 mod constructor_ownership;
 mod copy_construction;
+#[cfg(test)]
 mod erase_policy;
 mod fill_construction;
+#[cfg(test)]
 mod insert_policy;
 mod pointers;
 mod relocation;
+#[cfg(test)]
 mod resize_policy;
+#[cfg(test)]
 mod set_value_policy;
+#[cfg(test)]
 mod trivial_assignment;
 mod unpublished_tail;
 
@@ -77,7 +83,8 @@ impl<T> LinearVector<T> {
     }
     /// Constructs the next value from arguments captured by a closure; `vector.emplace_append(|| 42)`.
     /// Use `emplace_append_with_relocation` when growth callbacks are observable.
-    pub fn emplace_append(&mut self, construct: impl FnOnce() -> T) -> &mut T {
+    #[cfg(test)]
+    pub(crate) fn emplace_append(&mut self, construct: impl FnOnce() -> T) -> &mut T {
         self.reserve_next_item();
         self.push_reserved_item(construct())
     }
@@ -88,24 +95,29 @@ impl<T> LinearVector<T> {
             .ok_or_else(|| self.index_error(index))
     }
     /// Mutates a checked zero-based index; `*vector.change_value(0)? = 42`.
-    pub fn change_value(&mut self, index: usize) -> Result<&mut T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn change_value(&mut self, index: usize) -> Result<&mut T, ArrayError> {
         let error = self.index_error(index);
         self.elements.get_mut(index).ok_or(error)
     }
     /// Reads the first value; `vector.first()?`.
-    pub fn first(&self) -> Result<&T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn first(&self) -> Result<&T, ArrayError> {
         self.value(0)
     }
     /// Reads the last value; `vector.last()?`.
-    pub fn last(&self) -> Result<&T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn last(&self) -> Result<&T, ArrayError> {
         self.value(self.len().saturating_sub(1))
     }
     /// Mutates the first value; `*vector.change_first()? = 42`.
-    pub fn change_first(&mut self) -> Result<&mut T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn change_first(&mut self) -> Result<&mut T, ArrayError> {
         self.change_value(0)
     }
     /// Mutates the last value; `*vector.change_last()? = 42`.
-    pub fn change_last(&mut self) -> Result<&mut T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn change_last(&mut self) -> Result<&mut T, ArrayError> {
         self.change_value(self.len().saturating_sub(1))
     }
     /// Removes the last value in its original slot after reducing length; `vector.erase_last()`.
@@ -115,14 +127,16 @@ impl<T> LinearVector<T> {
     }
     /// Removes one checked index; `vector.erase(0)?`.
     /// Rust ownership shifts skip element move-assignment callbacks; use `erase_with_move` for those.
-    pub fn erase(&mut self, index: usize) -> Result<(), ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn erase(&mut self, index: usize) -> Result<(), ArrayError> {
         self.value(index)?;
         self.elements.remove(index);
         Ok(())
     }
     /// Removes a nonempty half-open range; `vector.erase_range(1,4)?`.
     /// Use `erase_range_with_move` when element move assignment is observable.
-    pub fn erase_range(&mut self, from: usize, to: usize) -> Result<(), ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn erase_range(&mut self, from: usize, to: usize) -> Result<(), ArrayError> {
         if from >= to || to > self.len() {
             return Err(self.index_error(to));
         }
@@ -132,7 +146,8 @@ impl<T> LinearVector<T> {
     /// Inserts before an index, including the end; `vector.insert_before(0,42)?`.
     /// Rust ownership shifts omit element move callbacks; explicit constructor policies
     /// are available through the unsafe `insert_before_with_constructors` adapter.
-    pub fn insert_before(&mut self, index: usize, value: T) -> Result<(), ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn insert_before(&mut self, index: usize, value: T) -> Result<(), ArrayError> {
         if index > self.len() {
             return Err(self.index_error(index));
         }
@@ -141,7 +156,8 @@ impl<T> LinearVector<T> {
         Ok(())
     }
     /// Inserts after an existing index; `vector.insert_after(0,42)?`.
-    pub fn insert_after(&mut self, index: usize, value: T) -> Result<(), ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn insert_after(&mut self, index: usize, value: T) -> Result<(), ArrayError> {
         self.value(index)?;
         self.insert_before(index + 1, value)
     }
@@ -154,7 +170,8 @@ impl<T> LinearVector<T> {
         self.elements.clear();
     }
     /// Transfers storage and resets the source; `dest.move_from(&mut source)`.
-    pub fn move_from(&mut self, source: &mut Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn move_from(&mut self, source: &mut Self) -> &mut Self {
         // Assignment clears the receiver before touching the source;
         // extracting first also destroys the source if a Rust destructor panics.
         self.clear(true);
@@ -164,15 +181,18 @@ impl<T> LinearVector<T> {
 
     /// Constructs by transferring the source allocation without element callbacks;
     /// `let moved = LinearVector::from_moved(&mut source)` leaves source empty.
-    pub fn from_moved(source: &mut Self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn from_moved(source: &mut Self) -> Self {
         std::mem::take(source)
     }
     /// Preserves the receiver for self assignment; `vector.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
-    /// Borrows a mutable zero-based array view; `vector.to_array1()[0] = 42`.
-    pub fn to_array1(&mut self) -> Array1<'_, T> {
+    /// Borrows a mutable zero-based array view; `vector.as_array1_mut()[0] = 42`.
+    #[cfg(test)]
+    pub(crate) fn as_array1_mut(&mut self) -> Array1<'_, T> {
         Array1::from_slice(&mut self.elements)
     }
     /// True once storage is allocated: capacity survives
@@ -207,7 +227,8 @@ impl<T> LinearVector<T> {
 }
 impl<T: Default> LinearVector<T> {
     /// Appends a default value; `*vector.appended() = 42`.
-    pub fn appended(&mut self) -> &mut T {
+    #[cfg(test)]
+    pub(crate) fn appended(&mut self) -> &mut T {
         self.reserve_next_item();
         self.push_reserved_item(T::default())
     }
@@ -250,10 +271,10 @@ impl<T: Clone> LinearVector<T> {
     ///
     /// ```
     /// let fill = 42;
-    /// let vector = martensite_tkernel::ncollection::LinearVector::with_value_ref(3, &fill);
+    /// let vector = martensite_tkernel::ncollection::LinearVector::with_value(3, fill);
     /// assert_eq!(vector.as_slice(), &[42, 42, 42]);
     /// ```
-    pub fn with_value_ref(size: usize, value: &T) -> Self {
+    pub(crate) fn with_value_ref(size: usize, value: &T) -> Self {
         Self::construct_fill(size, value)
     }
     /// Reuses sufficient destination storage during assignment; `dest.assign(&source)`.
@@ -262,7 +283,8 @@ impl<T: Clone> LinearVector<T> {
     /// live; subsequent overwrite/free omits their destructors.
     /// Insufficient-capacity copy failure leaves the receiver unchanged (the abandoned
     /// copy is freed). Throwing shrink keeps safe cleanup.
-    pub fn assign(&mut self, source: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign(&mut self, source: &Self) -> &mut Self {
         if source.len() > self.capacity() {
             *self = source.clone();
             return self;
@@ -274,12 +296,14 @@ impl<T: Clone> LinearVector<T> {
         self
     }
 
+    #[cfg(test)]
     fn clone_common_items(&mut self, source: &Self, common_len: usize) {
         for index in 0..common_len {
             self.elements[index].clone_from(&source.elements[index]);
         }
     }
 
+    #[cfg(test)]
     fn finish_assignment_tail(&mut self, source: &Self, common_len: usize, previous_len: usize) {
         if source.len() < previous_len {
             self.elements.truncate(source.len());
@@ -297,12 +321,14 @@ impl<T: Clone> LinearVector<T> {
     /// ```
     /// On clone panic, completed spare copies remain unpublished.
     /// Later overwrite and storage release omit their destructors and can leak resources.
-    pub fn resize_with_value_ref(&mut self, size: usize, value: &T) {
+    #[cfg(test)]
+    pub(crate) fn resize_with_value_ref(&mut self, size: usize, value: &T) {
         self.resize_with_constructor(size, || value.clone());
     }
 
     /// Resizes, cloning `value` into new slots; `vector.resize_with_value(5, -1)`.
-    pub fn resize_with_value(&mut self, size: usize, value: T) {
+    #[cfg(test)]
+    pub(crate) fn resize_with_value(&mut self, size: usize, value: T) {
         self.resize_with_value_ref(size, &value);
     }
 }

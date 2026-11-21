@@ -32,7 +32,7 @@ struct MultiArg {
     integer: i32,
     real: f64,
 }
-const _: fn(&mut LinearVector<i32>) -> Array1<'_, i32> = LinearVector::to_array1;
+const _: fn(&mut LinearVector<i32>) -> Array1<'_, i32> = LinearVector::as_array1_mut;
 const _: fn(&LinearVector<i32>) -> &[i32] = LinearVector::as_slice;
 include!("ncollection_linear_vector/basic.rs");
 include!("ncollection_linear_vector/mutation.rs");

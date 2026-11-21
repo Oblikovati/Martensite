@@ -12,13 +12,17 @@ impl<K, V, H> OrderedTable<K, V, H> {
         moved
     }
     /// Exchange: policies swap first, then the graphs.
-    pub fn exchange_with(&mut self, other: &mut Self, swap_policy: impl FnOnce(&mut H, &mut H)) {
+    pub(crate) fn exchange_with(
+        &mut self,
+        other: &mut Self,
+        swap_policy: impl FnOnce(&mut H, &mut H),
+    ) {
         swap_policy(&mut self.hasher, &mut other.hasher);
         self.exchange_graph(other);
     }
     /// Clearing with a borrowed allocator handle: the allocator is adopted only after
     /// every entry is dropped.
-    pub fn clear_with_borrowed_allocator(&mut self, resource: Option<&BaseAllocator>) {
+    pub(crate) fn clear_with_borrowed_allocator(&mut self, resource: Option<&BaseAllocator>) {
         self.reset_order();
         self.storage.clear_with_borrowed_allocator(resource);
     }
