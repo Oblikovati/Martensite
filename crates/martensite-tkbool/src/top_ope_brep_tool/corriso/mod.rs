@@ -242,7 +242,7 @@ impl TopOpeBRepToolCORRISO {
     fn trimmed(c2df: &TopOpeBRepToolC2DF) -> Result<(Handle<dyn Geom2dCurve>, f64), Failure> {
         let (pc, f, l, tol) = c2df.pc();
         let cu: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dTrimmedCurve::new(&pc, f, l, true, true)?).cast();
+            Handle::new(Geom2dTrimmedCurve::new(&pc, f, l, true, true)?).into_upcast();
         Ok((cu, tol))
     }
 

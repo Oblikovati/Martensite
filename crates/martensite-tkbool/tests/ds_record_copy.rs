@@ -1,4 +1,5 @@
 //! Copies retain shared geometry identity but own the enclosing record/list.
+use martensite_tkbool::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     TopOpeBRepDSGeometryData, TopOpeBRepDSInterference, TopOpeBRepDSSurface,
 };
@@ -28,13 +29,13 @@ fn surface_copy_and_assignment_retain_handle_and_copy_flags() {
 
 #[test]
 fn geometry_copy_owns_list_nodes_but_shares_interference_handles() {
-    let event = Handle::new(TopOpeBRepDSInterference::default());
+    let event = Handle::new(TopOpeBRepDSInterference::default()).into_upcast();
     let mut original = TopOpeBRepDSGeometryData::default();
     original.add_interference(&event);
     original.add_interference(&event);
     let copied = original.clone();
     let mut assigned = TopOpeBRepDSGeometryData::default();
-    assigned.add_interference(&Handle::new(TopOpeBRepDSInterference::default()));
+    assigned.add_interference(&Handle::new(TopOpeBRepDSInterference::default()).into_upcast());
     assigned.assign(&original);
     original.change_interferences().clear();
     event.get().unwrap().set_geometry_index(17);
@@ -45,7 +46,7 @@ fn geometry_copy_owns_list_nodes_but_shares_interference_handles() {
 
 fn assert_interference_aliases(
     record: &TopOpeBRepDSGeometryData,
-    event: &Handle<TopOpeBRepDSInterference>,
+    event: &Handle<dyn InterferenceRecord>,
 ) {
     let items: Vec<_> = record.interferences().iter().collect();
     assert_eq!(items.len(), 2);

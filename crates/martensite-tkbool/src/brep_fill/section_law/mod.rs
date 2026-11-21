@@ -13,7 +13,7 @@ use martensite_tkbrep::topods::{Edge, Shape, Vertex, Wire};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkgeomalgo::geom_fill::GeomFillSectionLaw;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 
@@ -142,8 +142,4 @@ pub trait BRepFillSectionLaw: Transient {
         Ok(edge)
     }
 }
-impl_transient_interface!(
-    dyn BRepFillSectionLaw,
-    "BRepFillSectionLaw",
-    StandardTransient
-);
+impl_transient_interface!(dyn BRepFillSectionLaw, "BRepFillSectionLaw", dyn Transient);

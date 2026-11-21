@@ -1,7 +1,7 @@
 //! `TopOpeBRepDSInterference`: the attachment of a new geometry (point, curve,
 //! surface or shape) on a support of the data structure, with its transition. The
-//! derived interferences embed it, so a handle of any of them casts to
-//! `Handle<TopOpeBRepDSInterference>` (and back) as natively.
+//! subtype lends its shared state through `InterferenceRecord`, so typed views
+//! of an attachment keep one owner and the original runtime descriptor.
 mod curve_point;
 mod edge_vertex;
 mod face_edge;
@@ -12,13 +12,15 @@ mod surface_curve;
 pub use curve_point::TopOpeBRepDSCurvePointInterference;
 pub use edge_vertex::TopOpeBRepDSEdgeVertexInterference;
 pub use face_edge::TopOpeBRepDSFaceEdgeInterference;
-pub use shape_shape::TopOpeBRepDSShapeShapeInterference;
+pub use shape_shape::{
+    ShapeInterferenceRecord, ShapeInterferenceState, TopOpeBRepDSShapeShapeInterference,
+};
 pub use solid_surface::TopOpeBRepDSSolidSurfaceInterference;
 pub use surface_curve::TopOpeBRepDSSurfaceCurveInterference;
 
 use super::{TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 
 /// The fields of an interference, shared by the handles of the data structure.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
@@ -33,22 +35,77 @@ struct InterferenceFields {
 /// An interference (`TopOpeBRepDSInterference`); every member takes `&self`, the
 /// interferences being shared and modified through handles;
 /// `let i = TopOpeBRepDSInterference::new(&t, TopOpeBRepDSKind::Face, 1, TopOpeBRepDSKind::Curve, 2);`.
+#[derive(Default)]
 pub struct TopOpeBRepDSInterference {
-    parent: StandardTransient,
-    fields: SharedState<InterferenceFields>,
+    record: InterferenceState,
 }
 impl_transient!(
     TopOpeBRepDSInterference,
     "TopOpeBRepDSInterference",
-    StandardTransient,
-    parent
+    dyn Transient,
+    interfaces: [dyn InterferenceRecord]
 );
+parent_interface!(dyn InterferenceRecord, TopOpeBRepDSInterference, []);
 
-impl Default for TopOpeBRepDSInterference {
-    /// `TopOpeBRepDSInterference()`: natively the indices and kinds are uninitialized;
-    /// they are 0 and POINT here (the zeroed storage).
-    fn default() -> Self {
-        Self::with_fields(InterferenceFields::default())
+/// Shared mutable attachment and transition fields. Indices and kinds default to zero and POINT.
+#[derive(Default)]
+pub struct InterferenceState {
+    fields: SharedState<InterferenceFields>,
+}
+
+/// Access to an attachment through the same owner that carries the specialized record.
+pub trait InterferenceRecord: Transient {
+    /// Borrow the common attachment state; `record.interference_state().geometry()`.
+    fn interference_state(&self) -> &InterferenceState;
+}
+
+impl InterferenceRecord for TopOpeBRepDSInterference {
+    fn interference_state(&self) -> &InterferenceState {
+        &self.record
+    }
+}
+
+impl std::ops::Deref for TopOpeBRepDSInterference {
+    type Target = InterferenceState;
+
+    fn deref(&self) -> &Self::Target {
+        &self.record
+    }
+}
+
+impl std::ops::Deref for dyn InterferenceRecord {
+    type Target = InterferenceState;
+
+    fn deref(&self) -> &Self::Target {
+        self.interference_state()
+    }
+}
+
+impl TopOpeBRepDSInterference {
+    /// Construct an attachment with the given kinds and indices; `TopOpeBRepDSInterference::new(&t, edge, 1, point, 2)`.
+    pub fn new(
+        transition: &TopOpeBRepDSTransition,
+        support_type: TopOpeBRepDSKind,
+        support: i32,
+        geometry_type: TopOpeBRepDSKind,
+        geometry: i32,
+    ) -> Self {
+        Self {
+            record: InterferenceState::new(
+                transition,
+                support_type,
+                support,
+                geometry_type,
+                geometry,
+            ),
+        }
+    }
+
+    /// Copy an attachment's common fields into an independent record; `TopOpeBRepDSInterference::from_interference(&handle)?`.
+    pub fn from_interference(source: &Handle<dyn InterferenceRecord>) -> Result<Self, Failure> {
+        Ok(Self {
+            record: InterferenceState::from_interference(source)?,
+        })
     }
 }
 
@@ -61,18 +118,17 @@ pub(crate) fn null_interference(member: &str) -> Failure {
     )
 }
 
-impl TopOpeBRepDSInterference {
+impl InterferenceState {
     /// The interference of the fields.
     fn with_fields(fields: InterferenceFields) -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }
 
     /// `TopOpeBRepDSInterference(Transition, SupportType, Support, GeometryType,
     /// Geometry)`; `TopOpeBRepDSInterference::new(&t, TopOpeBRepDSKind::Edge, 1, TopOpeBRepDSKind::Point, 1)`.
-    pub fn new(
+    fn new(
         t: &TopOpeBRepDSTransition,
         st: TopOpeBRepDSKind,
         s: i32,
@@ -91,11 +147,13 @@ impl TopOpeBRepDSInterference {
     /// `TopOpeBRepDSInterference(I)`: a copy of the transition, support and geometry
     /// of `i`; StandardNullObject for a null handle;
     /// `TopOpeBRepDSInterference::from_interference(&handle)?`.
-    pub fn from_interference(i: &Handle<TopOpeBRepDSInterference>) -> Result<Self, Failure> {
+    fn from_interference(i: &Handle<dyn InterferenceRecord>) -> Result<Self, Failure> {
         let other = i
             .get()
             .ok_or_else(|| null_interference("TopOpeBRepDSInterference"))?;
-        Ok(Self::with_fields(other.fields.snapshot()))
+        Ok(Self::with_fields(
+            other.interference_state().fields.snapshot(),
+        ))
     }
 
     /// `Transition()`; `i.transition()`.
@@ -170,7 +228,7 @@ impl TopOpeBRepDSInterference {
     /// null handle; `i.has_same_support(&other)?`.
     pub fn has_same_support(
         &self,
-        other: &Handle<TopOpeBRepDSInterference>,
+        other: &Handle<dyn InterferenceRecord>,
     ) -> Result<bool, Failure> {
         let o = other
             .get()
@@ -182,7 +240,7 @@ impl TopOpeBRepDSInterference {
     /// null handle; `i.has_same_geometry(&other)?`.
     pub fn has_same_geometry(
         &self,
-        other: &Handle<TopOpeBRepDSInterference>,
+        other: &Handle<dyn InterferenceRecord>,
     ) -> Result<bool, Failure> {
         let o = other
             .get()

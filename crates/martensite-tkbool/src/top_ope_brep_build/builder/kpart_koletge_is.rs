@@ -2,14 +2,15 @@
 use super::TopOpeBRepBuildBuilder;
 use super::kpart::kpresu::*;
 use super::kpart_koletge::fun_sortplcy;
-use crate::top_ope_brep_ds::{TopOpeBRepDSConfig, TopOpeBRepDSShapeShapeInterference};
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
+use crate::top_ope_brep_ds::TopOpeBRepDSConfig;
 use crate::top_ope_brep_tool::{fun_tool_cylinder_face, fun_tool_in_s, fun_tool_plane_face};
 use martensite_tkbrep::brep_tools::outer_wire;
 use martensite_tkbrep::topexp::{self, Explorer};
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::ncollection::{IndexedMap, List};
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{ShapeEnum, State};
 
 impl TopOpeBRepBuildBuilder {
@@ -94,7 +95,7 @@ impl TopOpeBRepBuildBuilder {
         let hds = self.hds()?;
         let li = hds.ds().shape_interferences(f1, true).clone();
         for i in li.iter() {
-            let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+            let ssi = i.view::<dyn ShapeInterferenceRecord>();
             let s = ssi.get().ok_or_else(|| {
                 Failure::with_type(
                     "Standard_NullObject",

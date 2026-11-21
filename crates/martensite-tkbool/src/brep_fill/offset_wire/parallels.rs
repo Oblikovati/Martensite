@@ -61,7 +61,7 @@ pub(super) fn make_circle(
     }
     let axis = Axis2d::new(p, Direction2::from_vector(dx)?);
     let circ: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dCircle::from_axis(axis, offset.abs(), offset < 0.)?).cast();
+        Handle::new(Geom2dCircle::from_axis(axis, offset.abs(), offset < 0.)?).into_upcast();
     let oe: Shape = BRepLibMakeEdge::from_pcurve(&circ, ref_plane)?
         .edge()?
         .into_shape();
@@ -154,10 +154,10 @@ fn circle_offset(
         return Ok(None);
     }
     let ahc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(g2d)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(g2d)?).into_upcast();
     let off = Adaptor2dOffsetCurve::with_offset(&ahc, an_offset)?;
     Ok(Some(
-        Handle::new(Geom2dCircle::from_circ2d(off.circle()?)).cast(),
+        Handle::new(Geom2dCircle::from_circ2d(off.circle()?)).into_upcast(),
     ))
 }
 
@@ -167,9 +167,9 @@ fn line_offset(
     an_offset: f64,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let ahc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(g2d)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(g2d)?).into_upcast();
     let off = Adaptor2dOffsetCurve::with_offset(&ahc, an_offset)?;
-    Ok(Handle::new(Geom2dLine::from_lin2d(off.line()?)).cast())
+    Ok(Handle::new(Geom2dLine::from_lin2d(off.line()?)).into_upcast())
 }
 
 /// The trimmed offset p-curve of an edge (None for a circle consumed by the offset).
@@ -191,7 +191,7 @@ fn offset_curve(
     let trimmed = |cc: Handle<dyn Geom2dCurve>,
                    (f, l): (f64, f64)|
      -> Result<Handle<dyn Geom2dCurve>, Failure> {
-        Ok(Handle::new(Geom2dTrimmedCurve::new(&cc, f, l, true, true)?).cast())
+        Ok(Handle::new(Geom2dTrimmedCurve::new(&cc, f, l, true, true)?).into_upcast())
     };
     match ac.get_type()? {
         CurveType::Circle => match circle_offset(&g2d, &ac, an_offset)? {
@@ -208,7 +208,7 @@ fn offset_curve(
         _ => {
             let g2d_t: Handle<dyn Geom2dCurve> = trimmed(g2d.clone(), (f, l))?;
             Ok(Some(
-                Handle::new(Geom2dOffsetCurve::new(&g2d_t, an_offset, false)?).cast(),
+                Handle::new(Geom2dOffsetCurve::new(&g2d_t, an_offset, false)?).into_upcast(),
             ))
         }
     }

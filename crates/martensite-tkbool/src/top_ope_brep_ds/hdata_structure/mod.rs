@@ -5,16 +5,17 @@ mod interferences;
 
 use super::{
     TopOpeBRepDSConfig, TopOpeBRepDSCurve, TopOpeBRepDSCurveIterator, TopOpeBRepDSDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSPoint, TopOpeBRepDSPointIterator,
-    TopOpeBRepDSSurface, TopOpeBRepDSSurfaceCurveInterference, TopOpeBRepDSSurfaceIterator,
-    is_geometry, is_topology, kind_to_shape,
+    TopOpeBRepDSKind, TopOpeBRepDSPoint, TopOpeBRepDSPointIterator, TopOpeBRepDSSurface,
+    TopOpeBRepDSSurfaceCurveInterference, TopOpeBRepDSSurfaceIterator, is_geometry, is_topology,
+    kind_to_shape,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::List;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
@@ -28,14 +29,12 @@ pub(crate) use interferences::store_interference_ds;
 /// `let hds = Handle::new(TopOpeBRepDSHDataStructure::new());`.
 #[derive(Default)]
 pub struct TopOpeBRepDSHDataStructure {
-    parent: StandardTransient,
     my_ds: SharedState<TopOpeBRepDSDataStructure>,
 }
 impl_transient!(
     TopOpeBRepDSHDataStructure,
     "TopOpeBRepDSHDataStructure",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 /// `FUN_HDS_FACESINTERFER(F1, F2, HDS)`: whether a FACE/EDGE interference of `f1` has
@@ -261,11 +260,11 @@ impl TopOpeBRepDSHDataStructure {
         cur_c: &TopOpeBRepDSCurve,
         new_c: &mut TopOpeBRepDSCurve,
     ) -> Result<i32, Failure> {
-        let copy = |i: &Handle<TopOpeBRepDSInterference>| -> Result<Handle<TopOpeBRepDSInterference>, Failure> {
+        let copy = |i: &Handle<dyn InterferenceRecord>| -> Result<Handle<dyn InterferenceRecord>, Failure> {
             if i.is_null() {
                 return Ok(Handle::default());
             }
-            Ok(Handle::new(TopOpeBRepDSSurfaceCurveInterference::from_interference(i)?).cast())
+            Ok(Handle::new(TopOpeBRepDSSurfaceCurveInterference::from_interference(i)?).into_upcast())
         };
         let (sci1, sci2) = (copy(cur_c.get_sci1())?, copy(cur_c.get_sci2())?);
         let (s1, s2) = (cur_c.shape1().clone(), cur_c.shape2().clone());

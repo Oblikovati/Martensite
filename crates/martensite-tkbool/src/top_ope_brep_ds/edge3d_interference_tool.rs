@@ -4,9 +4,9 @@
 use super::export::config::dir;
 use super::export::iref;
 use super::{
-    TopOpeBRepDSCurvePointInterference, TopOpeBRepDSEdgeVertexInterference,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind,
+    TopOpeBRepDSCurvePointInterference, TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSKind,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_tool::{
     fun_tool_nggeom_f, fun_tool_nggeom_f_on_edge, fun_tool_orient_e_in_f_forward,
     fun_tool_par_v_on_e, fun_tool_proj_pone, tggeom_e,
@@ -33,14 +33,14 @@ fn raise() -> Failure {
 
 /// `FUN_hasparam(I, paronE)` (static): the parameter of a curve/point (POINT) or
 /// edge/vertex (VERTEX) interference; `None` when of another type; 0 for other kinds.
-fn hasparam(i: &Handle<TopOpeBRepDSInterference>) -> Result<Option<f64>, Failure> {
+fn hasparam(i: &Handle<dyn InterferenceRecord>) -> Result<Option<f64>, Failure> {
     match iref(i)?.geometry_type() {
         TopOpeBRepDSKind::Point => {
-            let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.cast();
+            let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
             Ok(cpi.get().map(|c| c.parameter()))
         }
         TopOpeBRepDSKind::Vertex => {
-            let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.cast();
+            let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.downcast();
             Ok(evi.get().map(|e| e.parameter()))
         }
         _ => Ok(Some(0.)),
@@ -105,7 +105,7 @@ impl Default for TopOpeBRepDSEdge3dInterferenceTool {
 }
 
 /// Whether the transition of `i` is 2d (FORWARD or REVERSED seen from IN).
-fn is2d(i: &Handle<TopOpeBRepDSInterference>) -> Result<bool, Failure> {
+fn is2d(i: &Handle<dyn InterferenceRecord>) -> Result<bool, Failure> {
     let o = iref(i)?
         .transition()
         .orientation(State::In, ShapeEnum::Face);
@@ -146,7 +146,7 @@ impl TopOpeBRepDSEdge3dInterferenceTool {
         eref: &Shape,
         e: &Shape,
         f: &Shape,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         let (eeref, ee, ff) = (topods::edge(eref)?, topods::edge(e)?, topods::face(f)?);
         self.myrefdef = false;
@@ -178,7 +178,7 @@ impl TopOpeBRepDSEdge3dInterferenceTool {
         eref: &Shape,
         e: &Shape,
         f: &Shape,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         if !self.myrefdef {
             self.init(eref, e, f, i)?;
@@ -208,7 +208,7 @@ impl TopOpeBRepDSEdge3dInterferenceTool {
 
     /// `Transition(I)`: the face of reference as support of `i` and the accumulated
     /// states as its transition (on FACE shapes); `t.transition(&i)?`.
-    pub fn transition(&self, i: &Handle<TopOpeBRepDSInterference>) -> Result<(), Failure> {
+    pub fn transition(&self, i: &Handle<dyn InterferenceRecord>) -> Result<(), Failure> {
         let ii = iref(i)?;
         ii.set_support(self.my_face_oriented);
         let (stb, sta) = (self.my_tool.state_before(), self.my_tool.state_after());

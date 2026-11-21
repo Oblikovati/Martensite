@@ -34,12 +34,12 @@ fn located_surface(face: &Face) -> Result<Handle<dyn GeomSurface>, Failure> {
 /// The plane of a face (the basis of a rectangular trimmed surface).
 fn face_plane(face: &Face) -> Result<Handle<dyn GeomSurface>, Failure> {
     let s = located_surface(face)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     let basis = match trimmed.get() {
         Some(t) => t.basis_surface(),
         None => s,
     };
-    Ok(basis.cast::<GeomPlane>().cast())
+    Ok(basis.downcast::<GeomPlane>().cast())
 }
 
 /// The line of a p-curve through the middle iso with the 3d parameters, trimmed.
@@ -59,8 +59,8 @@ fn iso_pcurve(
             Geom2dLine::from_point(Point2::new(p1.x() + f, pmil.y()), Direction2::X.reversed())
         }
     };
-    let line: Handle<dyn Geom2dCurve> = Handle::new(line).cast();
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, f, l, true, true)?).cast())
+    let line: Handle<dyn Geom2dCurve> = Handle::new(line).into_upcast();
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, f, l, true, true)?).into_upcast())
 }
 
 impl BRepFillMultiLine {
@@ -104,7 +104,7 @@ impl BRepFillMultiLine {
         let sens: bool = a < b;
         let (lo, hi) = if sens { (a, b) } else { (b, a) };
         let curve: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&iso, lo, hi, sens, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&iso, lo, hi, sens, true)?).into_upcast();
         let c = curve.get().ok_or_else(null_geometry)?;
         let (f, l) = (c.first_parameter(), c.last_parameter());
         let pcurve1 = iso_pcurve(!self.my_iso_u1, (p1, pmil), sens, (f, l))?;
@@ -128,16 +128,16 @@ impl BRepFillMultiLine {
             Point3::new(p.x(), p.y(), 0.),
             Direction3::new(d.x(), d.y(), 0.)?,
         ))
-        .cast();
+        .into_upcast();
         let (bf, bl) = (
             self.my_bis.first_parameter()?,
             self.my_bis.last_parameter()?,
         );
         let t_line: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&line, bf, bl, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&line, bf, bl, true, true)?).into_upcast();
         let curve = geom_proj_lib::project_on_plane(
             &t_line,
-            &plane.cast::<GeomPlane>(),
+            &plane.downcast::<GeomPlane>(),
             Direction3::Z,
             false,
         )?;

@@ -16,8 +16,8 @@ pub(super) fn build_group(
     group: &[Handle<dyn IntPatchLine>],
     side: Side<'_>,
 ) -> Result<Option<Handle<IntPatchRLine>>, Failure> {
-    let first = group[0].cast::<IntPatchWLine>();
-    let last = group[group.len() - 1].cast::<IntPatchWLine>();
+    let first = group[0].downcast::<IntPatchWLine>();
+    let last = group[group.len() - 1].downcast::<IntPatchWLine>();
     let endpoints = (first.vertex(1)?, last.vertex(last.nb_vertex())?);
     let v1 = vertex(&endpoints.0, side.first)?;
     let v2 = vertex(&endpoints.1, side.first)?;
@@ -72,7 +72,7 @@ fn middles_on_arc(
     arc: &TheArc,
 ) -> Result<bool, Failure> {
     for source in group {
-        let line = source.cast::<IntPatchWLine>();
+        let line = source.downcast::<IntPatchWLine>();
         let index = line.nb_pnts()? / 2;
         if index < 1 {
             return Ok(false);
@@ -114,12 +114,12 @@ fn emulate_group(
     line.add_vertex(&first, false);
     add_coincident_vertices(
         &line,
-        &group[0].cast::<IntPatchWLine>(),
+        &group[0].downcast::<IntPatchWLine>(),
         &first,
         2,
-        group[0].cast::<IntPatchWLine>().nb_vertex(),
+        group[0].downcast::<IntPatchWLine>().nb_vertex(),
     )?;
-    let last_source = group[group.len() - 1].cast::<IntPatchWLine>();
+    let last_source = group[group.len() - 1].downcast::<IntPatchWLine>();
     add_coincident_vertices(&line, &last_source, &last, 1, last_source.nb_vertex() - 1)?;
     line.add_vertex(&last, false);
     Ok(line)
@@ -131,7 +131,7 @@ fn append_group_points(
 ) -> Result<(IntSurfTypeTrans, IntSurfTypeTrans), Failure> {
     let mut transition = (IntSurfTypeTrans::Undecided, IntSurfTypeTrans::Undecided);
     for source in group {
-        let line = source.cast::<IntPatchWLine>();
+        let line = source.downcast::<IntPatchWLine>();
         update_transition(&mut transition.0, line.transition_on_s1());
         update_transition(&mut transition.1, line.transition_on_s2());
         let first = line.vertex(1)?.parameter_on_line() as i32;

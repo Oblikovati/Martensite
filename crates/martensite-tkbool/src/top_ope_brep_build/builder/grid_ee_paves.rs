@@ -137,7 +137,7 @@ impl TopOpeBRepBuildBuilder {
     /// (None otherwise); `b.g_param_on_reference(&v, &e)?`.
     pub fn g_param_on_reference(&self, v: &Vertex, _e: &Edge) -> Result<Option<f64>, Failure> {
         let su = BRepTool::surface(&self.my_face_reference)?;
-        let suplan: Handle<GeomPlane> = su.cast();
+        let suplan: Handle<GeomPlane> = su.downcast();
         let Some(plane) = suplan.get() else {
             return Ok(None);
         };

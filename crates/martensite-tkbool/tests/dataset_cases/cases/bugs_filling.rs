@@ -20,7 +20,7 @@ use martensite_tkernel::{
 };
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeomalgo::geom_plate::{
-    GeomPlateBuildPlateSurface, GeomPlateCurveConstraint, GeomPlatePointConstraint,
+    GeomPlateBuildPlateSurface, GeomPlateCurveConstraintSource, GeomPlatePointConstraint,
 };
 use martensite_tkmath::gp::Point3;
 
@@ -46,7 +46,7 @@ fn plate_on_initial_surface(s: &dyn Session) -> GeomPlateBuildPlateSurface {
 fn add_edge_constraint(
     s: &dyn Session,
     plate: &mut GeomPlateBuildPlateSurface,
-) -> Handle<GeomPlateCurveConstraint> {
+) -> Handle<dyn GeomPlateCurveConstraintSource> {
     let edge = topods::edge(s.shape("edge_constraint").unwrap()).unwrap();
     let curve: Handle<dyn Adaptor3dCurve> =
         Handle::new(BRepAdaptorCurve::with_edge(&edge).unwrap()).cast();

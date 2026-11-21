@@ -96,7 +96,7 @@ fn shape_factories_preserve_bound_flags_configuration_and_edge_parameter() {
 
 #[test]
 fn invalid_parameter_targets_return_an_explicit_failure() {
-    let plain = Handle::new(TopOpeBRepDSInterference::default());
+    let plain = Handle::new(TopOpeBRepDSInterference::default()).into_upcast();
     for interference in [Handle::default(), plain] {
         let failure = Tool::parameter(&interference).unwrap_err();
         assert_eq!(failure.exception_type(), "Standard_NullObject");

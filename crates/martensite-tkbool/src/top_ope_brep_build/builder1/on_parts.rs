@@ -9,15 +9,14 @@ use crate::top_ope_brep_build::tools::PAR_T;
 use crate::top_ope_brep_build::{
     TopOpeBRepBuildBuilder, TopOpeBRepBuildGTopo, TopOpeBRepBuildWireEdgeSet,
 };
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_ds::export::fds_data;
-use crate::top_ope_brep_ds::{
-    TopOpeBRepDSKind, TopOpeBRepDSShapeShapeInterference, TopOpeBRepDSTransition,
-};
+use crate::top_ope_brep_ds::{TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use crate::top_ope_brep_tool::fc2d_curve_on_surface;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkbrep::toptools::IndexedMapOfShape;
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{self, Orientation, ShapeEnum, State};
 use martensite_tktopalgo::brep_top_adaptor::BRepTopAdaptorFClass2d;
 
@@ -106,7 +105,7 @@ impl TopOpeBRepBuildBuilder {
     fn on_parts_of(
         &mut self,
         for1: &Shape,
-        ssi: &TopOpeBRepDSShapeShapeInterference,
+        ssi: &dyn ShapeInterferenceRecord,
         gi: i32,
         g1: &TopOpeBRepBuildGTopo,
         ftb: State,
@@ -163,7 +162,7 @@ impl TopOpeBRepBuildBuilder {
         let (ftb, _) = Self::rank_states(g1, self.hds()?.ds().ancestor_rank(for1))?;
         let li = self.hds()?.ds().shape_interferences(for1, true).clone();
         for i in li.iter() {
-            let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+            let ssi = i.view::<dyn ShapeInterferenceRecord>();
             let Some(s) = ssi.get() else {
                 continue;
             };

@@ -124,7 +124,7 @@ fn face_plane(
     if number_of_poles(&the_wire)? <= 100 {
         let finder = BRepLibFindSurface::new(&the_wire, -1., true, false)?;
         if finder.found() {
-            plane = Some(finder.surface().cast::<GeomPlane>());
+            plane = Some(finder.surface().downcast::<GeomPlane>());
         }
     }
     let builder = BRepBuilder::default();

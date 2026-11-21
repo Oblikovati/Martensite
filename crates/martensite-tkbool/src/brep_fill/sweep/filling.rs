@@ -56,8 +56,8 @@ fn trimmed_line(
     u1: f64,
     u2: f64,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(p, d)).cast();
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, u1, u2, true, true)?).cast())
+    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(p, d)).into_upcast();
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, u1, u2, true, true)?).into_upcast())
 }
 
 /// The revolution of the first profile about the corner axis, trimmed to the angle
@@ -128,14 +128,14 @@ fn revolution(
         axe.reverse();
     }
     let rev: Handle<dyn GeomSurface> =
-        Handle::new(GeomSurfaceOfRevolution::new(&prof1, axe)?).cast();
+        Handle::new(GeomSurfaceOfRevolution::new(&prof1, axe)?).into_upcast();
     let surf: Handle<dyn GeomSurface> = Handle::new(GeomRectangularTrimmedSurface::new(
         &rev,
         (0., angle),
         (f1, l1),
         (true, true),
     )?)
-    .cast();
+    .into_upcast();
     // Control the direction of the rotation.
     let d1u: Vector3 = surf
         .get()

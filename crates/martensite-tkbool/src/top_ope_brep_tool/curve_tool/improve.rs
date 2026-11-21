@@ -190,7 +190,8 @@ pub(super) fn improve(
         mults[i] = if i == 1 || i == nb_pol { 2 } else { 1 };
     }
     let polc3d = kept_curves(&poles.c3d, &is_valid, nb_pol)?;
-    curves.c3d = Handle::new(GeomBSplineCurve::new(&polc3d, &knots, &mults, 1, false)?).cast();
+    curves.c3d =
+        Handle::new(GeomBSplineCurve::new(&polc3d, &knots, &mults, 1, false)?).into_upcast();
     if let Some(pc1) = &poles.pc1 {
         curves.pc1 = Handle::new(Geom2dBSplineCurve::new(
             &kept_curves(pc1, &is_valid, nb_pol)?,
@@ -199,7 +200,7 @@ pub(super) fn improve(
             1,
             false,
         )?)
-        .cast();
+        .into_upcast();
     }
     if let Some(pc2) = &poles.pc2 {
         curves.pc2 = Handle::new(Geom2dBSplineCurve::new(
@@ -209,7 +210,7 @@ pub(super) fn improve(
             1,
             false,
         )?)
-        .cast();
+        .into_upcast();
     }
     Ok(Some(nb_pol))
 }

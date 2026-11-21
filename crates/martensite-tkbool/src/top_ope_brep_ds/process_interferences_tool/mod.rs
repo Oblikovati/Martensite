@@ -9,9 +9,10 @@ pub use select::{
     fun_selectpure2d_i, fun_unkeep_unknown,
 };
 
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::export::iref;
 use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSDataStructure, TopOpeBRepDSInterference,
+    ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSDataStructure,
     TopOpeBRepDSInterferenceTool, TopOpeBRepDSKind, TopOpeBRepDSTransition,
 };
 use martensite_tkbrep::topods::Shape;
@@ -26,7 +27,7 @@ pub fn make_cpv_interference(
     gi: i32,
     p: f64,
     gk: TopOpeBRepDSKind,
-) -> Handle<TopOpeBRepDSInterference> {
+) -> Handle<dyn InterferenceRecord> {
     TopOpeBRepDSInterferenceTool::make_curve_interference(t, TopOpeBRepDSKind::Curve, si, gk, gi, p)
 }
 
@@ -41,7 +42,7 @@ pub fn make_epv_interference(
     p: f64,
     gk: TopOpeBRepDSKind,
     b: bool,
-) -> Handle<TopOpeBRepDSInterference> {
+) -> Handle<dyn InterferenceRecord> {
     let sk = TopOpeBRepDSKind::Edge;
     match gk {
         TopOpeBRepDSKind::Point => {
@@ -76,7 +77,7 @@ pub fn make_epv_interference_sk(
     gk: TopOpeBRepDSKind,
     sk: TopOpeBRepDSKind,
     b: bool,
-) -> Result<Handle<TopOpeBRepDSInterference>, Failure> {
+) -> Result<Handle<dyn InterferenceRecord>, Failure> {
     let i = make_epv_interference(t, s, g, p, gk, b);
     iref(&i)?.set_support_type(sk);
     Ok(i)
@@ -93,7 +94,7 @@ pub fn fun_has_state_shape(t: &TopOpeBRepDSTransition, state: State, shape: Shap
 pub(crate) fn select_by(
     l1: &mut ListOfInterference,
     l2: &mut ListOfInterference,
-    mut sel: impl FnMut(&TopOpeBRepDSInterference) -> Result<bool, Failure>,
+    mut sel: impl FnMut(&dyn InterferenceRecord) -> Result<bool, Failure>,
 ) -> Result<i32, Failure> {
     let mut err = None;
     l1.retain(|i| {
@@ -216,7 +217,7 @@ pub fn fun_select_si_interference(
 /// `fun_interfhassupport(&ds, &i, &face)?`.
 pub fn fun_interfhassupport(
     ds: &TopOpeBRepDSDataStructure,
-    i: &Handle<TopOpeBRepDSInterference>,
+    i: &Handle<dyn InterferenceRecord>,
     s: &Shape,
 ) -> Result<bool, Failure> {
     Ok(ds.shape(iref(i)?.support(), true).is_same(s))

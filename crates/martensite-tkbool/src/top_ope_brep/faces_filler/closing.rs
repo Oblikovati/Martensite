@@ -1,5 +1,6 @@
 //! Closing-edge interferences retain face and optional opposite-edge supports.
 use super::*;
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::{
     TopOpeBRepDSTransition as Transition,
     export::fds_lo_iinfsup,
@@ -120,7 +121,7 @@ impl TopOpeBRepFacesFiller<'_> {
         kind: TopOpeBRepDSKind,
         index: i32,
         _found: bool,
-        _previous: &Handle<TopOpeBRepDSInterference>,
+        _previous: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         let incidence = edge_incidence(point, side)?;
         let storage = self.hds.get().ok_or_else(missing_storage)?;

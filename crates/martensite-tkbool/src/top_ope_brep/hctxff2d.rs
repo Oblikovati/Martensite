@@ -3,13 +3,12 @@ use crate::top_ope_brep_tool::TopOpeBRepToolShapeTool;
 use martensite_tkbrep::{brep_adaptor::BRepAdaptorSurface, topods::Face};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 use martensite_tkg3d::top_abs::Orientation;
 
 /// A pair of face/surface contexts; `TopOpeBRepHctxff2d::new()`.
 pub struct TopOpeBRepHctxff2d {
-    parent: StandardTransient,
     faces: [Face; 2],
     surfaces: [Handle<BRepAdaptorSurface>; 2],
     reference_orientations: [bool; 2],
@@ -17,17 +16,11 @@ pub struct TopOpeBRepHctxff2d {
     faces_same: bool,
     tolerances: (f64, f64),
 }
-impl_transient!(
-    TopOpeBRepHctxff2d,
-    "TopOpeBRepHctxff2d",
-    StandardTransient,
-    parent
-);
+impl_transient!(TopOpeBRepHctxff2d, "TopOpeBRepHctxff2d", dyn Transient);
 
 impl Default for TopOpeBRepHctxff2d {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             faces: [Face::default(), Face::default()],
             surfaces: [Handle::default(), Handle::default()],
             reference_orientations: [true; 2],

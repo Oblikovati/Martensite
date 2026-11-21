@@ -5,10 +5,10 @@ use crate::top_ope_brep_build::globals::GLOBAL_DS2D;
 use crate::top_ope_brep_build::{
     TopOpeBRepBuildBuilder, TopOpeBRepBuildGTopo, TopOpeBRepBuildWireEdgeSet,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
+use crate::top_ope_brep_ds::TopOpeBRepDSHDataStructure;
 use crate::top_ope_brep_ds::export::{fds_data, fun_ds_share_g};
-use crate::top_ope_brep_ds::{
-    TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSShapeShapeInterference,
-};
 use crate::top_ope_brep_tool::{
     fun_tool_bounds, fun_tool_curves_so_at, fun_tool_orient_e_in_f, fun_tool_orient_e_in_f_forward,
 };
@@ -96,11 +96,11 @@ impl<'a> TopOpeBRepBuildBuilderON<'a> {
     /// operation, oriented in its face; `bon.g_fill_on_parts2d_wes2(&i, &esp)?`.
     pub fn g_fill_on_parts2d_wes2(
         &mut self,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
         esp_on: &Shape,
     ) -> Result<(), Failure> {
         let pb = self.pb()?;
-        let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+        let ssi = i.view::<dyn ShapeInterferenceRecord>();
         let s = ssi.get().ok_or_else(not_performed)?;
         self.my_pg.ok_or_else(not_performed)?.states_on()?;
         let (_, gi, _, si) = fds_data(i);

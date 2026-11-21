@@ -3,6 +3,8 @@
 use super::buffered_tokens::BufferedTokens;
 use super::common::Reader;
 use super::top_ope_brep_tool_tool::solid;
+use martensite_tkbool::top_ope_brep_ds::InterferenceRecord;
+use martensite_tkbool::top_ope_brep_ds::ShapeInterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSCurvePointInterference,
     TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSFaceEdgeInterference,
@@ -43,7 +45,7 @@ const CONFIGS: [TopOpeBRepDSConfig; 3] = [
     TopOpeBRepDSConfig::DiffOriented,
 ];
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// `BlDs`.
 pub(crate) struct Ds {
@@ -110,7 +112,7 @@ pub(crate) fn ds_i(output: &BufferedTokens, i: &H) {
         output.real(e.get().map_or(0., |e| e.parameter()));
     }
     if (1..=3).contains(&ty) {
-        let s: Handle<TopOpeBRepDSShapeShapeInterference> = i.cast();
+        let s: Handle<dyn ShapeInterferenceRecord> = i.cast();
         if let Some(s) = s.get() {
             output.flag(s.gbound());
             output.int(s.config() as i32);

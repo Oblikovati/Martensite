@@ -164,7 +164,8 @@ fn general_curve(
     let trimmed: bool = (f - stored.first_parameter()).abs() > precision::p_confusion()
         || (l - stored.last_parameter()).abs() > precision::p_confusion();
     let curve: Handle<dyn GeomCurve> = if trimmed {
-        Handle::new(GeomTrimmedCurve::new(&found.curve, f, l, true, true)?).cast::<dyn GeomCurve>()
+        Handle::new(GeomTrimmedCurve::new(&found.curve, f, l, true, true)?)
+            .into_upcast::<dyn GeomCurve>()
     } else {
         stored.copy()?.cast::<dyn GeomCurve>()
     };

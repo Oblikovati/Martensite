@@ -114,7 +114,7 @@ fn trimmed(
         (0f64.min(v), 0f64.max(v)),
         (true, true),
     )?;
-    Ok(Handle::new(surface).cast::<dyn GeomSurface>())
+    Ok(Handle::new(surface).into_upcast::<dyn GeomSurface>())
 }
 
 /// The cylinder on the first circle, its axis turned towards the second circle.
@@ -134,7 +134,7 @@ fn cylinder(
         v = -v;
     }
     let cyl = GeomCylindricalSurface::new(ac1, c1.radius())?;
-    trimmed(Handle::new(cyl).cast::<dyn GeomSurface>(), aa, bb, v)
+    trimmed(Handle::new(cyl).into_upcast::<dyn GeomSurface>(), aa, bb, v)
 }
 
 /// The cone on the first circle towards the second circle or the apex vertex.
@@ -168,7 +168,12 @@ fn cone(
     let ang: f64 = martensite_cmath::atan(rad / v);
     let cone = GeomConicalSurface::new(ak1, ang, k1.radius())?;
     v /= martensite_cmath::cos(ang);
-    trimmed(Handle::new(cone).cast::<dyn GeomSurface>(), aa, bb, v)
+    trimmed(
+        Handle::new(cone).into_upcast::<dyn GeomSurface>(),
+        aa,
+        bb,
+        v,
+    )
 }
 
 /// The cone whose apex is the degenerated first edge.
@@ -191,7 +196,12 @@ fn cone_from_apex(
     let ang: f64 = martensite_cmath::atan(rad / v);
     let cone = GeomConicalSurface::new(ak2, ang, 0.)?;
     v /= martensite_cmath::cos(ang);
-    trimmed(Handle::new(cone).cast::<dyn GeomSurface>(), aa, bb, v)
+    trimmed(
+        Handle::new(cone).into_upcast::<dyn GeomSurface>(),
+        aa,
+        bb,
+        v,
+    )
 }
 
 /// The plane through the segment (of the second edge when both have one) and the
@@ -223,5 +233,5 @@ fn plane(side1: &KPartSide, side2: &KPartSide) -> Result<Handle<dyn GeomSurface>
     // implicit), so a null P1P2 raises StandardConstructionError there.
     let normal: Direction3 = d1.crossed(Direction3::from_vector(p1p2)?)?;
     let ax = Axis3::new(a_line.location(), normal, d1)?;
-    Ok(Handle::new(GeomPlane::new(ax)).cast::<dyn GeomSurface>())
+    Ok(Handle::new(GeomPlane::new(ax)).into_upcast::<dyn GeomSurface>())
 }

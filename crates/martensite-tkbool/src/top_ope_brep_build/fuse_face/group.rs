@@ -180,7 +180,7 @@ fn support_curve(e: &Edge) -> Result<Handle<dyn GeomCurve>, Failure> {
             .cast();
     }
     if c.is_instance_name("Geom_TrimmedCurve") {
-        let t: Handle<GeomTrimmedCurve> = c.clone().cast();
+        let t: Handle<GeomTrimmedCurve> = c.downcast();
         c = t
             .get()
             .ok_or_else(|| Failure::new("SameSupport: null trimmed curve"))?

@@ -31,11 +31,11 @@ fn update_tol_from_top_or_bottom_pcurve(a_face: &Face, an_edge: &Edge) -> Result
         return Ok(());
     };
     let gahc2d: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(&found.pcurve, fpar, lpar)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(&found.pcurve, fpar, lpar)?).into_upcast();
     let gahs: Handle<dyn Adaptor3dSurface> = Handle::new(GeomAdaptorSurface::with_surface(
         &BRepTool::surface(a_face)?,
     )?)
-    .cast();
+    .into_upcast();
     let con_s = Adaptor3dCurveOnSurface::with_curve(&gahc2d, &gahs)?;
     let init_tol: f64 = BRepTool::edge_tolerance(an_edge)?;
     let mut tol_tol: f64 = init_tol * init_tol;
@@ -254,7 +254,7 @@ impl BRepFillPipe {
             &topods::vertex(the_s)?,
             true,
         )?)
-        .cast();
+        .into_upcast();
         let mk_sw = self.swept(&section, None)?;
         let result: Shape = mk_sw.shape();
         update_map(the_original_s, &result, &mut self.my_gen_map)?;
@@ -278,7 +278,7 @@ impl BRepFillPipe {
         bounds: (&Shape, &Shape),
     ) -> Result<Shape, Failure> {
         let section: Handle<dyn BRepFillSectionLaw> =
-            Handle::new(BRepFillShapeLaw::with_wire(&topods::wire(the_s)?, true)?).cast();
+            Handle::new(BRepFillShapeLaw::with_wire(&topods::wire(the_s)?, true)?).into_upcast();
         let mk_sw = self.swept(&section, Some(bounds))?;
         let result: Shape = mk_sw.shape();
         self.my_error_on_surf = mk_sw.error_on_surface();

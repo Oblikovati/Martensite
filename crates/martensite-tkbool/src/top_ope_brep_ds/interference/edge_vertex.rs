@@ -1,6 +1,8 @@
 //! `TopOpeBRepDSEdgeVertexInterference`: an interference of a vertex on an edge (or
 //! another support) at a parameter of the edge.
-use super::TopOpeBRepDSShapeShapeInterference;
+use super::{
+    InterferenceRecord, InterferenceState, ShapeInterferenceRecord, ShapeInterferenceState,
+};
 use crate::top_ope_brep_ds::{TopOpeBRepDSConfig, TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
@@ -10,21 +12,33 @@ use std::ops::Deref;
 /// shape/shape members are reached through `Deref`;
 /// `TopOpeBRepDSEdgeVertexInterference::on_edge(&t, 1, 2, true, TopOpeBRepDSConfig::UnshGeometry, 0.5)`.
 pub struct TopOpeBRepDSEdgeVertexInterference {
-    parent: TopOpeBRepDSShapeShapeInterference,
+    record: ShapeInterferenceState,
     my_param: SharedState<f64>,
 }
 impl_transient!(
     TopOpeBRepDSEdgeVertexInterference,
     "TopOpeBRepDSEdgeVertexInterference",
-    TopOpeBRepDSShapeShapeInterference,
-    parent
+    dyn ShapeInterferenceRecord,
+    interfaces: [dyn InterferenceRecord, dyn ShapeInterferenceRecord]
 );
 
-impl Deref for TopOpeBRepDSEdgeVertexInterference {
-    type Target = TopOpeBRepDSShapeShapeInterference;
+impl InterferenceRecord for TopOpeBRepDSEdgeVertexInterference {
+    fn interference_state(&self) -> &InterferenceState {
+        &self.record
+    }
+}
 
-    fn deref(&self) -> &TopOpeBRepDSShapeShapeInterference {
-        &self.parent
+impl ShapeInterferenceRecord for TopOpeBRepDSEdgeVertexInterference {
+    fn shape_interference_state(&self) -> &ShapeInterferenceState {
+        &self.record
+    }
+}
+
+impl Deref for TopOpeBRepDSEdgeVertexInterference {
+    type Target = ShapeInterferenceState;
+
+    fn deref(&self) -> &Self::Target {
+        &self.record
     }
 }
 
@@ -40,17 +54,10 @@ impl TopOpeBRepDSEdgeVertexInterference {
         c: TopOpeBRepDSConfig,
         p: f64,
     ) -> Self {
-        let parent = TopOpeBRepDSShapeShapeInterference::new(
-            t,
-            st,
-            s,
-            TopOpeBRepDSKind::Vertex,
-            g,
-            g_is_bound,
-            c,
-        );
+        let record =
+            ShapeInterferenceState::new(t, st, s, TopOpeBRepDSKind::Vertex, g, g_is_bound, c);
         Self {
-            parent,
+            record,
             my_param: SharedState::new(p),
         }
     }

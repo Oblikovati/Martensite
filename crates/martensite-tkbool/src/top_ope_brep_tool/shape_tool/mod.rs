@@ -72,11 +72,11 @@ impl TopOpeBRepToolShapeTool {
         if c.is_null() {
             return Err(null_geometry("TopOpeBRepToolShapeTool::BASISCURVE"));
         }
-        let offset: Handle<GeomOffsetCurve> = c.clone().cast();
+        let offset: Handle<GeomOffsetCurve> = c.downcast();
         if let Some(o) = offset.get() {
             return Self::basis_curve(&o.basis_curve());
         }
-        let trimmed: Handle<GeomTrimmedCurve> = c.clone().cast();
+        let trimmed: Handle<GeomTrimmedCurve> = c.downcast();
         if let Some(t) = trimmed.get() {
             return Self::basis_curve(&t.basis_curve());
         }
@@ -99,11 +99,11 @@ impl TopOpeBRepToolShapeTool {
         if s.is_null() {
             return Err(null_geometry("TopOpeBRepToolShapeTool::BASISSURFACE"));
         }
-        let offset: Handle<GeomOffsetSurface> = s.clone().cast();
+        let offset: Handle<GeomOffsetSurface> = s.downcast();
         if let Some(o) = offset.get() {
             return Self::basis_surface(&o.basis_surface());
         }
-        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.clone().cast();
+        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
         if let Some(t) = trimmed.get() {
             return Self::basis_surface(&t.basis_surface());
         }
@@ -124,7 +124,7 @@ impl TopOpeBRepToolShapeTool {
     /// `TopOpeBRepToolShapeTool::uv_bounds(&s, &mut out)?`.
     pub fn uv_bounds(s: &Handle<dyn GeomSurface>, out: &mut UvBounds) -> Result<(), Failure> {
         let bs = Self::basis_surface(s)?;
-        let revolution: Handle<GeomSurfaceOfRevolution> = bs.clone().cast();
+        let revolution: Handle<GeomSurfaceOfRevolution> = bs.downcast();
         if let Some(sr) = revolution.get() {
             let c = Self::basis_curve(&sr.basis_curve())?;
             let curve = c.get().ok_or_else(|| null_geometry("UVBOUNDS"))?;
@@ -134,7 +134,7 @@ impl TopOpeBRepToolShapeTool {
             }
             return Ok(());
         }
-        let extrusion: Handle<GeomSurfaceOfLinearExtrusion> = bs.clone().cast();
+        let extrusion: Handle<GeomSurfaceOfLinearExtrusion> = bs.downcast();
         if let Some(se) = extrusion.get() {
             let c = Self::basis_curve(&se.basis_curve())?;
             let curve = c.get().ok_or_else(|| null_geometry("UVBOUNDS"))?;

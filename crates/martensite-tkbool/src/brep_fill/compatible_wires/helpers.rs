@@ -122,7 +122,7 @@ pub(super) fn plane_of_wire(wire: &Wire) -> Result<Option<Plane3>, Failure> {
                 .transformed(location.transformation())?
                 .cast::<dyn GeomSurface>();
         }
-        let Some(plane) = surface.cast::<GeomPlane>().get().map(|p| p.pln()) else {
+        let Some(plane) = surface.downcast::<GeomPlane>().get().map(|p| p.pln()) else {
             return Err(Failure::with_type(
                 "Standard_NullObject",
                 "BRepFillCompatibleWires PlaneOfWire: the found surface is not a plane; expected Geom_Plane",

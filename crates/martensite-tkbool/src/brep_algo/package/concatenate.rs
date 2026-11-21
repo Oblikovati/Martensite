@@ -26,7 +26,7 @@ pub(super) fn edge_bspline(edge: &Edge) -> Result<(Handle<GeomBSplineCurve>, f64
         true,
         true,
     )?)
-    .cast();
+    .into_upcast();
     let mut bs =
         geom_convert::curve_to_bspline_curve(&a_tr_curve, ParameterisationType::TgtThetaOver2)?;
     bs.get()
@@ -133,8 +133,8 @@ pub fn concatenate_wire(w: &Wire, option: Continuity, tol_angular: f64) -> Resul
     let (mut closed_flag, mut closed_tolerance) = (false, 0.0);
     // The C0 continuity test at the closing point.
     if pfirst.distance(&plast) <= toler {
-        let c_last: Handle<dyn GeomCurve> = tab[edges.len() as i32 - 1].clone().cast();
-        let c_first: Handle<dyn GeomCurve> = tab[0].clone().cast();
+        let c_last: Handle<dyn GeomCurve> = tab[edges.len() as i32 - 1].cast();
+        let c_first: Handle<dyn GeomCurve> = tab[0].cast();
         if geom_lprop::continuity_with_tolerances(
             &c_last,
             &c_first,
@@ -172,8 +172,7 @@ pub fn concatenate_wire(w: &Wire, option: Continuity, tol_angular: f64) -> Resul
     let curves = concatcurve.get().ok_or_else(null_curve)?;
     let array = curves.array1();
     for index in array.lower()..=array.upper() {
-        let curve: Handle<dyn GeomCurve> =
-            array.value(index).map_err(array_failure)?.clone().cast();
+        let curve: Handle<dyn GeomCurve> = array.value(index).map_err(array_failure)?.cast();
         make_result.add_edge(&BRepLibMakeEdge::from_curve(&curve)?.edge()?)?;
     }
     make_result.wire()

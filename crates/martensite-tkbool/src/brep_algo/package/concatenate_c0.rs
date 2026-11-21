@@ -193,7 +193,7 @@ impl CurveChain {
 
 /// The basis of a trimmed curve, else the curve.
 fn untrimmed(c: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
-    let t: Handle<GeomTrimmedCurve> = c.cast();
+    let t: Handle<GeomTrimmedCurve> = c.downcast();
     t.get().map_or_else(|| c.clone(), |t| t.basis_curve())
 }
 
@@ -296,7 +296,7 @@ fn chain_bsplines(
             true,
             true,
         )?)
-        .cast();
+        .into_upcast();
         let mut bs =
             geom_convert::curve_to_bspline_curve(&a_tr_curve, ParameterisationType::TgtThetaOver2)?;
         geom_convert::c0_bspline_to_c1_bspline_curve(&mut bs, precision::confusion(), 1.0e-7)?;
@@ -325,7 +325,7 @@ fn concatenated_edge(
     let (mut closed_flag, mut closed_tolerance) = (false, 0.);
     if chain.first_vertex.is_same(last_vertex) {
         let (c0, cn): (Handle<dyn GeomCurve>, Handle<dyn GeomCurve>) =
-            (tab[0].clone().cast(), tab[nb_curve - 1].clone().cast());
+            (tab[0].cast(), tab[nb_curve - 1].cast());
         let u0 = c0.get().ok_or_else(null_curve)?.first_parameter();
         let un = cn.get().ok_or_else(null_curve)?.last_parameter();
         if geom_lprop::continuity_with_tolerances(
@@ -389,12 +389,6 @@ fn concatenated_edge(
         bs.reverse()?;
     }
     let (f, l) = (bs.first_parameter(), bs.last_parameter());
-    BRepLibMakeEdge::from_curve_vertices_params(
-        &result.clone().cast(),
-        first_final,
-        last_final,
-        f,
-        l,
-    )?
-    .edge()
+    BRepLibMakeEdge::from_curve_vertices_params(&result.cast(), first_final, last_final, f, l)?
+        .edge()
 }

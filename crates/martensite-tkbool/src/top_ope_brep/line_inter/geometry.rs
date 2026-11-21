@@ -56,11 +56,13 @@ impl TopOpeBRepLineInter {
             .get()
             .ok_or_else(|| failure("Curve", "null GLine"))?;
         Ok(match self.kind {
-            T::Line => Handle::new(GeomLine::from_lin(source.line()?)).cast(),
-            T::Circle => Handle::new(GeomCircle::from_circ(source.circle()?)).cast(),
-            T::Ellipse => Handle::new(GeomEllipse::from_elips(source.ellipse()?)).cast(),
-            T::Parabola => Handle::new(GeomParabola::from_parab(source.parabola()?)).cast(),
-            T::Hyperbola => Handle::new(GeomHyperbola::from_hypr(source.hyperbola()?)).cast(),
+            T::Line => Handle::new(GeomLine::from_lin(source.line()?)).into_upcast(),
+            T::Circle => Handle::new(GeomCircle::from_circ(source.circle()?)).into_upcast(),
+            T::Ellipse => Handle::new(GeomEllipse::from_elips(source.ellipse()?)).into_upcast(),
+            T::Parabola => Handle::new(GeomParabola::from_parab(source.parabola()?)).into_upcast(),
+            T::Hyperbola => {
+                Handle::new(GeomHyperbola::from_hypr(source.hyperbola()?)).into_upcast()
+            }
             _ => unreachable!(),
         })
     }
@@ -77,7 +79,7 @@ impl TopOpeBRepLineInter {
             true,
             true,
         )?)
-        .cast())
+        .into_upcast())
     }
     /// Returns the original restriction edge, or a null shape; `line.arc()?`.
     pub fn arc(&self) -> Result<Shape, Failure> {

@@ -116,7 +116,7 @@ fn add_degenerated(
         p,
         Direction2::from_vector(Vector2::between(p, q))?,
     ))
-    .cast();
+    .into_upcast();
     let (first, last) = (0., p.distance(q));
     let ne = BRepLibMakeEdge::from_pcurve(&c2d, &s)?.edge()?;
     let b = BRepBuilder::default();

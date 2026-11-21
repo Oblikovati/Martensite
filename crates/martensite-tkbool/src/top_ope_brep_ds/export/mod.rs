@@ -35,15 +35,14 @@ pub use same_domain::{
 };
 pub use vertex::{fun_ds_complete1d_for_se_sdm, fun_ds_point_to_vertex, fun_ds_redusamsha};
 
-use super::{TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference};
+use super::{TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
 
 /// The interference of a handle; StandardNullObject for a null handle (natively a
 /// null dereference).
-pub(crate) fn iref(
-    i: &Handle<TopOpeBRepDSInterference>,
-) -> Result<&TopOpeBRepDSInterference, Failure> {
+pub(crate) fn iref(i: &Handle<dyn InterferenceRecord>) -> Result<&dyn InterferenceRecord, Failure> {
     i.get().ok_or_else(|| {
         Failure::with_type(
             "Standard_NullObject",

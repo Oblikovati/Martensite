@@ -7,7 +7,7 @@ use martensite_tkbrep::brep_tools::WireExplorer;
 use martensite_tkbrep::topods::Wire;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
 use martensite_tkgeomalgo::geom_fill::{GeomFillLocationGuide, GeomFillLocationLaw};
@@ -16,7 +16,6 @@ use martensite_tkgeomalgo::geom_fill::{GeomFillLocationGuide, GeomFillLocationLa
 /// to the abscissas of each edge before it is copied onto the edge (the input law keeps
 /// the abscissas of the last edge, as natively); `let law = BRepFillACRLaw::new(&path, &guide)?;`.
 pub struct BRepFillACRLaw {
-    parent: StandardTransient,
     base: BRepFillLocationLawBase,
     /// `OrigParam`: the reduced abscissas of the edge ends, indices 0..=NbEdge.
     orig_param: Vec<f64>,
@@ -25,7 +24,6 @@ impl_transient!(
     BRepFillACRLaw,
     "BRepFillACRLaw",
     dyn BRepFillLocationLaw,
-    parent,
     interfaces: [dyn BRepFillLocationLaw]
 );
 
@@ -59,11 +57,7 @@ impl BRepFillACRLaw {
         compute_acr(path, &mut orig)?;
         let mut orig_param: Vec<f64> = orig.as_slice().to_vec();
         orig_param[0] = 0.;
-        let mut law = Self {
-            parent: StandardTransient::default(),
-            base,
-            orig_param,
-        };
+        let mut law = Self { base, orig_param };
         law.place_guides(the_law)?;
         Ok(law)
     }
@@ -90,7 +84,7 @@ impl BRepFillACRLaw {
             self.base.edges[ipath - 1] = edge.as_ref().clone();
             let (curve, first, last) = oriented_edge_curve(&edge)?;
             let ac: Handle<dyn Adaptor3dCurve> =
-                Handle::new(GeomAdaptorCurve::with_range(&curve, first, last)?).cast();
+                Handle::new(GeomAdaptorCurve::with_range(&curve, first, last)?).into_upcast();
             // The parameters for the case multi-edges.
             let t1: f64 = *self
                 .orig_param

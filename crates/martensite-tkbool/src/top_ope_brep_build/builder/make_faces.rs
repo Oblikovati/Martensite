@@ -354,7 +354,7 @@ impl TopOpeBRepBuildBuilder {
 
     /// The trimmed surface of the face widened to the UV bounds of the new face.
     fn widen_trim(surf: &Handle<dyn GeomSurface>, new_face: &Face) -> Result<(), Failure> {
-        let hrts: Handle<GeomRectangularTrimmedSurface> = surf.clone().cast();
+        let hrts: Handle<GeomRectangularTrimmedSurface> = surf.downcast();
         let Some(rts) = hrts
             .get()
             .filter(|_| surf.is_instance_name("Geom_RectangularTrimmedSurface"))

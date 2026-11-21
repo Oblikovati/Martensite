@@ -1,5 +1,7 @@
 //! Draft placement keeps its direct edge-law parent and projected base state.
-use martensite_tkbool::brep_fill::{BRepFillDraftLaw, BRepFillEdge3DLaw, BRepFillLocationLaw};
+use martensite_tkbool::brep_fill::{
+    BRepFillDraftLaw, BRepFillEdge3DLaw, BRepFillLocationLaw, Edge3dLocationLaw,
+};
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
 use martensite_tkgeomalgo::geom_fill::GeomFillLocationDraft;
 use martensite_tkmath::gp::{Direction3, Point3};
@@ -33,7 +35,7 @@ fn draft_runtime_descriptor_has_its_direct_edge_law_ancestor() {
 #[test]
 fn inherited_edge_law_projection_keeps_the_same_authored_unit_segment() {
     let original = Handle::new(unit_draft_placement().unwrap());
-    let base: Handle<BRepFillEdge3DLaw> = original.clone().cast();
+    let base: Handle<dyn Edge3dLocationLaw> = original.upcast();
     let projected = base
         .get()
         .expect("draft placement must project to its edge-law base");
@@ -41,7 +43,7 @@ fn inherited_edge_law_projection_keeps_the_same_authored_unit_segment() {
     assert_eq!(projected.curvilinear_bounds(1).unwrap(), (0., 1.));
     assert!(!projected.is_closed().unwrap());
     assert_eq!(base.dynamic_type().unwrap().name(), "BRepFillDraftLaw");
-    let restored: Handle<BRepFillDraftLaw> = base.cast();
+    let restored: Handle<BRepFillDraftLaw> = base.downcast();
     assert_eq!(restored.object_address(), original.object_address());
     assert_eq!(
         restored.get().unwrap().curvilinear_bounds(1).unwrap(),
@@ -51,14 +53,14 @@ fn inherited_edge_law_projection_keeps_the_same_authored_unit_segment() {
 
 #[test]
 fn projected_parent_owns_the_law_after_the_derived_handle_is_dropped() {
-    let base: Handle<BRepFillEdge3DLaw> = {
+    let base: Handle<dyn Edge3dLocationLaw> = {
         let derived = Handle::new(unit_draft_placement().unwrap());
-        let projected = derived.clone().cast();
+        let projected = derived.upcast();
         drop(derived);
         projected
     };
     assert_eq!(base.get().unwrap().curvilinear_bounds(1).unwrap(), (0., 1.));
-    let restored: Handle<BRepFillDraftLaw> = base.cast();
+    let restored: Handle<BRepFillDraftLaw> = base.downcast();
     assert_eq!(restored.dynamic_type().unwrap().name(), "BRepFillDraftLaw");
     assert_eq!(restored.get().unwrap().nb_law().unwrap(), 1);
 }

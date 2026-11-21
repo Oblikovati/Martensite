@@ -17,7 +17,7 @@ fn interference(
     parameter: f64,
     orientation: Orientation,
     support: i32,
-) -> Handle<crate::top_ope_brep_ds::TopOpeBRepDSInterference> {
+) -> Handle<dyn crate::top_ope_brep_ds::InterferenceRecord> {
     let mut transition = Transition::from_orientation(orientation);
     transition.set_index(7);
     make_cpv_interference(&transition, support, index, parameter, Kind::Point)

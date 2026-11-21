@@ -8,7 +8,7 @@ use martensite_tkbrep::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, StandardTransient},
+    standard::{Failure, Transient},
 };
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkgeomalgo::int_res2d::Domain;
@@ -18,17 +18,11 @@ mod projection;
 /// Two edges and their 2D intersection domains; `TopOpeBRepHctxee2d::new()`.
 #[derive(Default)]
 pub struct TopOpeBRepHctxee2d {
-    parent: StandardTransient,
     edges: [Edge; 2],
     curves: [Geom2dAdaptorCurve; 2],
     domains: [Domain; 2],
 }
-impl_transient!(
-    TopOpeBRepHctxee2d,
-    "TopOpeBRepHctxee2d",
-    StandardTransient,
-    parent
-);
+impl_transient!(TopOpeBRepHctxee2d, "TopOpeBRepHctxee2d", dyn Transient);
 impl TopOpeBRepHctxee2d {
     /// Starts with null edges and unbounded domains; `Self::new()`.
     pub fn new() -> Self {

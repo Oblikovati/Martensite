@@ -75,7 +75,7 @@ impl BRepFillEvolved {
         let dummy_prof = put_profil_at(&moved, axe_ref, se, &self.my_spine, true)?;
         // Copy of the profile to avoid the accumulation of locations on the edges of myProfile.
         let trsf_mod: Handle<dyn BRepToolsModification> =
-            Handle::new(TrsfModification::new(Transform3::default())).cast();
+            Handle::new(TrsfModification::new(Transform3::default())).into_upcast();
         let modif = Modifier::with_modification(dummy_prof.as_ref(), &trsf_mod)?;
         let gen_prof = topods::wire(&modif.modified_shape(dummy_prof.as_ref())?)?;
         let spine = BRepLibMakeWire::from_edge(se)?.wire()?;
@@ -198,7 +198,7 @@ impl BRepFillEvolved {
                 .transformed(l.transformation())?
                 .cast();
         }
-        let p: Handle<GeomPlane> = s.cast();
+        let p: Handle<GeomPlane> = s.downcast();
         let axis = p
             .get()
             .ok_or_else(|| {
