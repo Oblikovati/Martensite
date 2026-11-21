@@ -1,7 +1,7 @@
 //! The regularity codes of the ASCII format and the representation accessors shared
 //! by the dump and write members.
 use crate::brep::update_curves::as_gcurve;
-use crate::brep::{BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepCurveRepresentation};
+use crate::brep::{BRepCurveOnClosedSurface, BRepCurveOnSurfaceSource, BRepCurveRepresentation};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkmath::geom_abs::Shape as Continuity;
@@ -58,16 +58,12 @@ pub(super) fn gcurve_range(
 
 /// `UVPoints` of the p-curve representation (the first p-curve of a seam).
 pub(super) fn uv_points(representation: &Handle<dyn BRepCurveRepresentation>) -> (Point2, Point2) {
-    let seam = representation.cast::<BRepCurveOnClosedSurface>();
-    if let Some(seam) = seam.get() {
-        return seam.as_curve_on_surface().uv_points();
-    }
-    let pcurve = representation.cast::<BRepCurveOnSurface>();
+    let pcurve = representation.view::<dyn BRepCurveOnSurfaceSource>();
     pcurve.get().map(|p| p.uv_points()).unwrap_or_default()
 }
 
 /// `UVPoints2` of a seam representation.
 pub(super) fn uv_points2(representation: &Handle<dyn BRepCurveRepresentation>) -> (Point2, Point2) {
-    let seam = representation.cast::<BRepCurveOnClosedSurface>();
-    seam.get().map(|seam| seam.uv_points2()).unwrap_or_default()
+    let seam = representation.downcast_ref::<BRepCurveOnClosedSurface>();
+    seam.map(|seam| seam.uv_points2()).unwrap_or_default()
 }

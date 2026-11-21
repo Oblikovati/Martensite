@@ -153,7 +153,7 @@ fn purge_location(shape: &Shape) -> Result<(Shape, bool), Failure> {
         let location = Location::from_datum(datum).powered(power)?;
         if bad {
             let modification: Handle<dyn BRepToolsModification> =
-                Handle::new(TrsfModification::new(location.transformation())).cast();
+                Handle::new(TrsfModification::new(location.transformation())).into_upcast();
             let modifier = Modifier::with_modification(&result, &modification)?;
             if modifier.is_done() {
                 result = modifier.modified_shape(&result)?;

@@ -31,7 +31,7 @@ pub use builder::BRepBuilder;
 pub use builder::update_curves;
 pub use curve_on_2_surfaces::BRepCurveOn2Surfaces;
 pub use curve_on_closed_surface::BRepCurveOnClosedSurface;
-pub use curve_on_surface::BRepCurveOnSurface;
+pub use curve_on_surface::{BRepCurveOnSurface, BRepCurveOnSurfaceSource, CurveOnSurfaceState};
 pub use curve_representation::{
     BRepCurveRepresentation, CurveRepresentationBase, dump_curve_representation,
 };
@@ -45,8 +45,12 @@ pub use points_on_surface::{
     BRepPointOnCurveOnSurface, BRepPointOnSurface, BRepPointsOnSurface, PointsOnSurfaceBase,
     dump_points_on_surface,
 };
-pub use polygon_on_surface::{BRepPolygonOnClosedSurface, BRepPolygonOnSurface};
-pub use polygon_on_triangulation::{BRepPolygonOnClosedTriangulation, BRepPolygonOnTriangulation};
+pub use polygon_on_surface::{
+    BRepPolygonOnClosedSurface, BRepPolygonOnSurface, BRepPolygonOnSurfaceSource,
+};
+pub use polygon_on_triangulation::{
+    BRepPolygonOnClosedTriangulation, BRepPolygonOnTriangulation, BRepPolygonOnTriangulationSource,
+};
 pub use polygon3d::BRepPolygon3D;
 pub use tedge::BRepTEdge;
 pub use tface::BRepTFace;

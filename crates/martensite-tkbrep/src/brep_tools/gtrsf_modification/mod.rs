@@ -6,7 +6,7 @@ use super::modification::{BRepToolsModification, NewCurve, NewSurface};
 use crate::brep::BRepTool;
 use crate::topods::{Edge, Face, Vertex};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dTrimmedCurve};
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBSplineSurface, GeomBezierCurve, GeomBezierSurface, GeomCurve,
@@ -92,14 +92,12 @@ impl GTrsfFields {
 /// assert_eq!(modification.gtrsf().form(), GeneralTransform3::default().form());
 /// ```
 pub struct GTrsfModification {
-    parent: StandardTransient,
     fields: SharedState<GTrsfFields>,
 }
 impl_transient!(
     GTrsfModification,
     "BRepTools_GTrsfModification",
     dyn BRepToolsModification,
-    parent,
     interfaces: [dyn BRepToolsModification]
 );
 
@@ -107,7 +105,6 @@ impl GTrsfModification {
     /// `BRepTools_GTrsfModification(T)`; `GTrsfModification::new(gtrsf)`.
     pub fn new(gtrsf: GeneralTransform3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(GTrsfFields::new(gtrsf)),
         }
     }
@@ -150,13 +147,13 @@ fn unsupported(what: &str) -> Failure {
 impl GTrsfModification {
     /// The poles of a B-spline or Bezier surface transformed in place.
     fn transform_surface_poles(&self, surface: &Handle<dyn GeomSurface>) -> Result<(), Failure> {
-        if let Some(bspline) = surface.cast::<GeomBSplineSurface>().get() {
+        if let Some(bspline) = surface.downcast::<GeomBSplineSurface>().get() {
             for (i, j) in pole_grid(bspline.nb_u_poles(), bspline.nb_v_poles()) {
                 bspline.set_pole(i, j, self.transformed_point(bspline.pole(i, j)?))?;
             }
             return Ok(());
         }
-        if let Some(bezier) = surface.cast::<GeomBezierSurface>().get() {
+        if let Some(bezier) = surface.downcast::<GeomBezierSurface>().get() {
             for (i, j) in pole_grid(bezier.nb_u_poles(), bezier.nb_v_poles()) {
                 bezier.set_pole(i, j, self.transformed_point(bezier.pole(i, j)?))?;
             }
@@ -167,13 +164,13 @@ impl GTrsfModification {
 
     /// The poles of a B-spline or Bezier curve transformed in place.
     fn transform_curve_poles(&self, curve: &Handle<dyn GeomCurve>) -> Result<(), Failure> {
-        if let Some(bspline) = curve.cast::<GeomBSplineCurve>().get() {
+        if let Some(bspline) = curve.downcast::<GeomBSplineCurve>().get() {
             for i in 1..=bspline.nb_poles() {
                 bspline.set_pole(i, self.transformed_point(bspline.pole(i)?))?;
             }
             return Ok(());
         }
-        if let Some(bezier) = curve.cast::<GeomBezierCurve>().get() {
+        if let Some(bezier) = curve.downcast::<GeomBezierCurve>().get() {
             for i in 1..=bezier.nb_poles() {
                 bezier.set_pole(i, self.transformed_point(bezier.pole(i)?))?;
             }
@@ -230,7 +227,7 @@ impl BRepToolsModification for GTrsfModification {
                 stored.transformed(result.location.transformation())?.cast();
             self.transform_curve_poles(&moved)?;
             let trimmed = GeomTrimmedCurve::new(&moved, found.first, found.last, true, true)?;
-            result.curve = Handle::new(trimmed).cast();
+            result.curve = Handle::new(trimmed).into_upcast();
         }
         result.location = Location::default();
         Ok(!result.curve.is_null())

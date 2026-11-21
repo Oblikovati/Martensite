@@ -4,7 +4,7 @@ use super::curve_write::code;
 use super::errors::wrap_failure;
 use super::geometry_in::{read_degree, read_direction3, read_knots, read_point3, read_poles};
 use super::scalars::{get_bool, get_integer, get_real, stream_get};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBezierCurve, GeomCircle, GeomCurve, GeomEllipse, GeomHyperbola, GeomLine,
@@ -50,8 +50,8 @@ fn read_record(
 }
 
 /// `C = CC;`.
-fn upcast<C: Transient + RuntimeTyped>(curve: C) -> Handle<dyn GeomCurve> {
-    Handle::new(curve).into_cast()
+fn upcast<C: HandleUpcast<dyn GeomCurve>>(curve: C) -> Handle<dyn GeomCurve> {
+    Handle::new(curve).into_upcast()
 }
 
 fn read_line(stream: &mut IoStream, policy: CurveFrameReadPolicy) -> Result<GeomLine, Failure> {

@@ -7,7 +7,7 @@ use crate::topods::Shape;
 use crate::toptools::{IndexedMapOfShape, MapOfShape, ShapeMapHasher};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, List};
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
@@ -57,10 +57,9 @@ pub(crate) struct HistoryFields {
 /// ```
 #[derive(Default)]
 pub struct History {
-    parent: StandardTransient,
     fields: SharedState<HistoryFields>,
 }
-impl_transient!(History, "BRepTools_History", StandardTransient, parent);
+impl_transient!(History, "BRepTools_History", dyn Transient);
 
 impl History {
     /// `BRepTools_History()`; `History::new()`.

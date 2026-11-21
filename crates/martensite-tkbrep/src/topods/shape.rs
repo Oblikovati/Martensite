@@ -21,11 +21,19 @@ use std::io;
 /// assert!(reversed.is_same(&wire) && !reversed.is_equal(&wire));
 /// assert_eq!(reversed.orientation(), Orientation::Reversed);
 /// ```
-#[derive(Clone)]
-pub struct Shape {
-    pub(super) tshape: ShapeTopologyStorage,
+pub type Shape = ShapeView<'static>;
+
+/// The fields of a shape during a scoped topology read. Example: `view.to_shape()`.
+pub struct ShapeView<'a> {
+    pub(super) tshape: ShapeTopologyStorage<'a>,
     pub(super) location: Location,
     pub(super) orient: Orientation,
+}
+
+impl Clone for Shape {
+    fn clone(&self) -> Self {
+        self.to_shape()
+    }
 }
 
 impl Default for Shape {
@@ -52,6 +60,14 @@ impl Shape {
             location,
             orient: orientation,
         }
+    }
+}
+
+impl ShapeView<'_> {
+    /// Acquires an owning value with the same topology, location and orientation.
+    /// Example: `let copy: Shape = view.to_shape();`.
+    pub fn to_shape(&self) -> Shape {
+        Shape::from_parts(self.tshape().clone(), self.location.clone(), self.orient)
     }
 
     /// `IsNull()`: true when the shape references no TShape; `shape.is_null()`.
@@ -85,8 +101,8 @@ impl Shape {
 
     /// `Located(theLoc, theRaiseExc)`: a copy with the location set;
     /// `shape.located(&location, false)?`.
-    pub fn located(&self, location: &Location, raise_exc: bool) -> Result<Self, Failure> {
-        let mut shape = self.clone();
+    pub fn located(&self, location: &Location, raise_exc: bool) -> Result<Shape, Failure> {
+        let mut shape = self.to_shape();
         shape.set_location(location, raise_exc)?;
         Ok(shape)
     }
@@ -102,8 +118,8 @@ impl Shape {
     }
 
     /// `Oriented(theOrient)`: a copy with the orientation set; `shape.oriented(o)`.
-    pub fn oriented(&self, orientation: Orientation) -> Self {
-        let mut shape = self.clone();
+    pub fn oriented(&self, orientation: Orientation) -> Shape {
+        let mut shape = self.to_shape();
         shape.set_orientation(orientation);
         shape
     }
@@ -143,8 +159,8 @@ impl Shape {
     }
 
     /// `Moved(thePosition, theRaiseExc)`: a moved copy; `shape.moved(&location, false)?`.
-    pub fn moved(&self, position: &Location, raise_exc: bool) -> Result<Self, Failure> {
-        let mut shape = self.clone();
+    pub fn moved(&self, position: &Location, raise_exc: bool) -> Result<Shape, Failure> {
+        let mut shape = self.to_shape();
         shape.move_by(position, raise_exc)?;
         Ok(shape)
     }
@@ -155,8 +171,8 @@ impl Shape {
     }
 
     /// `Reversed()`; `shape.reversed()`.
-    pub fn reversed(&self) -> Self {
-        let mut shape = self.clone();
+    pub fn reversed(&self) -> Shape {
+        let mut shape = self.to_shape();
         shape.reverse();
         shape
     }
@@ -167,8 +183,8 @@ impl Shape {
     }
 
     /// `Complemented()`; `shape.complemented()`.
-    pub fn complemented(&self) -> Self {
-        let mut shape = self.clone();
+    pub fn complemented(&self) -> Shape {
+        let mut shape = self.to_shape();
         shape.complement();
         shape
     }
@@ -179,8 +195,8 @@ impl Shape {
     }
 
     /// `Composed(theOrient)`; `shape.composed(o)`.
-    pub fn composed(&self, orientation: Orientation) -> Self {
-        let mut shape = self.clone();
+    pub fn composed(&self, orientation: Orientation) -> Shape {
+        let mut shape = self.to_shape();
         shape.compose(orientation);
         shape
     }
@@ -202,8 +218,8 @@ impl Shape {
     }
 
     /// `EmptyCopied()`: a copy with an empty copy of the TShape; `shape.empty_copied()?`.
-    pub fn empty_copied(&self) -> Result<Self, Failure> {
-        let mut shape = self.clone();
+    pub fn empty_copied(&self) -> Result<Shape, Failure> {
+        let mut shape = self.to_shape();
         shape.empty_copy()?;
         Ok(shape)
     }

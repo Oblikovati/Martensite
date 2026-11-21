@@ -7,7 +7,7 @@ use super::geometry_in::{read_degree, read_direction3, read_knots, read_point3};
 use super::scalars::{get_bool, get_integer, get_real, stream_get};
 use super::surface_write::code;
 use martensite_tkernel::ncollection::{Array2, ArrayError};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface, GeomCylindricalSurface,
@@ -63,8 +63,8 @@ fn read_record(
     }
 }
 
-fn upcast<S: Transient + RuntimeTyped>(surface: S) -> Handle<dyn GeomSurface> {
-    Handle::new(surface).into_cast()
+fn upcast<S: HandleUpcast<dyn GeomSurface>>(surface: S) -> Handle<dyn GeomSurface> {
+    Handle::new(surface).into_upcast()
 }
 
 /// `IS >> gp_Ax3`: the location and the main, X and Y directions; `gp_Ax3(P, A, AX)`,

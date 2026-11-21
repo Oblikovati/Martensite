@@ -104,7 +104,7 @@ pub(super) fn owner_cells(owner: &Owner) -> Result<Vec<Cell<'_>>, Incomplete> {
     match owner {
         Owner::Topology(h) => topology_cells(h),
         Owner::Spatial(h) => spatial_cells(live(h)?),
-        Owner::Parametric(h) => Ok(parametric_cells(live(h)?)),
+        Owner::Parametric(h) => Ok(parametric_cells(&live(h)?.state)),
         Owner::Seam(h) => seam_cells(live(h)?),
         Owner::Regularity(h) => Ok(vec![
             Cell::Regularity(&live(h)?.fields),
@@ -122,12 +122,12 @@ fn spatial_cells(curve: &BRepCurve3D) -> Result<Vec<Cell<'_>>, Incomplete> {
     ])
 }
 fn seam_cells(curve: &BRepCurveOnClosedSurface) -> Result<Vec<Cell<'_>>, Incomplete> {
-    let mut cells = parametric_cells(&curve.parent);
+    let mut cells = parametric_cells(&curve.first_curve);
     cells.push(Cell::Seam(&curve.fields));
     Ok(cells)
 }
 
-fn parametric_cells(curve: &BRepCurveOnSurface) -> Vec<Cell<'_>> {
+fn parametric_cells(curve: &CurveOnSurfaceState) -> Vec<Cell<'_>> {
     vec![
         Cell::PCurve(&curve.fields),
         Cell::Range(&curve.gcurve.range),
@@ -149,9 +149,11 @@ fn topology_fields<'a>(
 ) -> Result<(), Incomplete> {
     let shape = handle.get().ok_or(Incomplete::Changed { owner: 0 })?;
     if shape.is_instance(BRepTFace::static_type()) {
-        let fields = BRepTFace::project_from(shape).ok_or(Incomplete::Changed {
-            owner: handle.object_address() as usize,
-        })?;
+        let fields = handle
+            .downcast_ref::<BRepTFace>()
+            .ok_or(Incomplete::Changed {
+                owner: handle.object_address() as usize,
+            })?;
         cells.push(Cell::Face(&fields.fields));
         return Ok(());
     }
@@ -164,9 +166,11 @@ fn topology_edge_or_vertex<'a>(
 ) -> Result<(), Incomplete> {
     let shape = handle.get().ok_or(Incomplete::Changed { owner: 0 })?;
     if shape.is_instance(BRepTEdge::static_type()) {
-        let edge = BRepTEdge::project_from(shape).ok_or(Incomplete::Changed {
-            owner: handle.object_address() as usize,
-        })?;
+        let edge = handle
+            .downcast_ref::<BRepTEdge>()
+            .ok_or(Incomplete::Changed {
+                owner: handle.object_address() as usize,
+            })?;
         cells.push(Cell::Edge(&edge.fields));
         return Ok(());
     }
@@ -179,9 +183,11 @@ fn topology_vertex_or_wire<'a>(
 ) -> Result<(), Incomplete> {
     let shape = handle.get().ok_or(Incomplete::Changed { owner: 0 })?;
     if shape.is_instance(BRepTVertex::static_type()) {
-        let vertex = BRepTVertex::project_from(shape).ok_or(Incomplete::Changed {
-            owner: handle.object_address() as usize,
-        })?;
+        let vertex = handle
+            .downcast_ref::<BRepTVertex>()
+            .ok_or(Incomplete::Changed {
+                owner: handle.object_address() as usize,
+            })?;
         cells.push(Cell::Vertex(&vertex.fields));
         return Ok(());
     }

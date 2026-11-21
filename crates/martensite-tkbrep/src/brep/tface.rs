@@ -1,12 +1,13 @@
 //! `BRep_TFace`: the face TShape with a surface, a tolerance and triangulations.
 use super::dump::{dump_base, dump_class_name, dump_flag, dump_handle, dump_location};
 use super::errors::program_error;
-use crate::topods::{self, TShape, TShapeBase, dump_tshape};
+use crate::topods::{TFaceSource, TShape, TShapeBase, dump_tshape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::{self, DumpStream};
 use martensite_tkernel::standard::real::real_epsilon;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::GeomSurface;
+use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::poly::Triangulation;
 use martensite_tkmath::poly::mesh_purpose::{self, MeshPurpose};
 use martensite_tkmath::toploc::Location;
@@ -33,10 +34,10 @@ pub(crate) struct TFaceFields {
 /// assert_eq!(face.nb_triangulations(), 0);
 /// ```
 pub struct BRepTFace {
-    parent: topods::TFace,
+    tshape: TShapeBase,
     pub(crate) fields: SharedState<TFaceFields>,
 }
-impl_transient!(BRepTFace, "BRep_TFace", topods::TFace, parent, interfaces: [dyn TShape]);
+impl_transient!(BRepTFace, "BRep_TFace", dyn TFaceSource, interfaces: [dyn TShape, dyn TFaceSource]);
 
 /// Sets or clears the `Poly_MeshPurpose_Active` bit of a non-null triangulation.
 fn mark_active(triangulation: &Handle<Triangulation>, active: bool) {
@@ -55,7 +56,7 @@ impl BRepTFace {
     /// `BRep_TFace()`: no surface, the tolerance `RealEpsilon()`; `BRepTFace::new()`.
     pub fn new() -> Self {
         Self {
-            parent: topods::TFace::new(),
+            tshape: TShapeBase::new(ShapeEnum::Face),
             fields: SharedState::new(TFaceFields {
                 triangulations: Vec::new(),
                 active: Handle::default(),
@@ -241,9 +242,11 @@ impl Default for BRepTFace {
     }
 }
 
+impl TFaceSource for BRepTFace {}
+
 impl TShape for BRepTFace {
     fn tshape_base(&self) -> &TShapeBase {
-        TShape::tshape_base(&self.parent)
+        &self.tshape
     }
     /// A new face with the same surface, location and tolerance, without triangulation.
     fn empty_copy(&self) -> Result<Handle<dyn TShape>, Failure> {
@@ -252,7 +255,7 @@ impl TShape for BRepTFace {
         copy.set_surface(&fields.surface);
         copy.set_location(&fields.location);
         copy.set_tolerance(fields.tolerance);
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// The class name, the `TopoDS_TShape` dump, the active triangulation, the surface,
     /// the location, the tolerance, the flag and each triangulation.

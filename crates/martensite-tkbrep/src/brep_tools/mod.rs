@@ -29,7 +29,7 @@ mod uv_periodicity;
 mod wire_explorer;
 
 pub use clean::{clean, clean_geometry, remove_unused_pcurves};
-pub use copy_modification::CopyModification;
+pub use copy_modification::{CopyModification, CopyModificationSource};
 pub use debug::{debug_dump, debug_dump_location, debug_write};
 pub use eval_tol::eval_and_update_tol;
 pub use gtrsf_modification::GTrsfModification;

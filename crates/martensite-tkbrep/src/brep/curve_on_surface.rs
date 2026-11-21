@@ -6,7 +6,7 @@ use super::gcurve::{BRepGCurve, GCurveBase, dump_gcurve};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkmath::gp::{Point2, Point3};
@@ -33,18 +33,46 @@ pub(crate) struct CurveOnSurfaceFields {
 /// use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 /// use martensite_tkmath::gp::{Axis2d, Axis3};
 /// use martensite_tkmath::toploc::Location;
-/// let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::default())).into_cast();
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_cast();
+/// let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::default())).into_upcast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let pcurve = BRepCurveOnSurface::new(&line, &plane, &Location::default()).unwrap();
 /// assert!(pcurve.is_curve_on_surface_at(&plane, &Location::default()));
 /// ```
 pub struct BRepCurveOnSurface {
-    transient: StandardTransient,
+    pub(crate) state: CurveOnSurfaceState,
+}
+impl_transient!(BRepCurveOnSurface, "BRep_CurveOnSurface", dyn BRepGCurve,
+    interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve, dyn BRepCurveOnSurfaceSource]);
+
+/// The location, range and first p-curve shared by ordinary and seam representations.
+pub struct CurveOnSurfaceState {
     pub(crate) gcurve: GCurveBase,
     pub(crate) fields: SharedState<CurveOnSurfaceFields>,
 }
-impl_transient!(BRepCurveOnSurface, "BRep_CurveOnSurface", dyn BRepGCurve, transient,
-    interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve]);
+
+/// The first p-curve of an ordinary or seam representation.
+/// Example: `seam.upcast::<dyn BRepCurveOnSurfaceSource>().uv_points()`.
+pub trait BRepCurveOnSurfaceSource: BRepGCurve {
+    /// Borrow the first p-curve state. Example: `curve.curve_on_surface_state()`.
+    fn curve_on_surface_state(&self) -> &CurveOnSurfaceState;
+
+    /// `SetUVPoints(P1, P2)`; `curve.set_uv_points(first, last)`.
+    fn set_uv_points(&self, first: Point2, last: Point2) {
+        self.curve_on_surface_state().set_uv_points(first, last);
+    }
+
+    /// `UVPoints(P1, P2)`; `curve.uv_points()`.
+    fn uv_points(&self) -> (Point2, Point2) {
+        self.curve_on_surface_state().uv_points()
+    }
+}
+parent_interface!(dyn BRepCurveOnSurfaceSource, BRepCurveOnSurface, [dyn BRepGCurve, dyn BRepCurveRepresentation]);
+
+impl BRepCurveOnSurfaceSource for BRepCurveOnSurface {
+    fn curve_on_surface_state(&self) -> &CurveOnSurfaceState {
+        &self.state
+    }
+}
 
 impl BRepCurveOnSurface {
     /// `BRep_CurveOnSurface(PC, S, L)`: the range is the p-curve range. A null p-curve
@@ -55,13 +83,33 @@ impl BRepCurveOnSurface {
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<Self, Failure> {
+        Ok(Self {
+            state: CurveOnSurfaceState::new(pcurve, surface, location)?,
+        })
+    }
+
+    /// `SetUVPoints(P1, P2)`; `curve.set_uv_points(first, last)`.
+    pub fn set_uv_points(&self, first: Point2, last: Point2) {
+        self.state.set_uv_points(first, last);
+    }
+
+    /// `UVPoints(P1, P2)`; `curve.uv_points()`.
+    pub fn uv_points(&self) -> (Point2, Point2) {
+        self.state.uv_points()
+    }
+}
+
+impl CurveOnSurfaceState {
+    pub(super) fn new(
+        pcurve: &Handle<dyn Geom2dCurve>,
+        surface: &Handle<dyn GeomSurface>,
+        location: &Location,
+    ) -> Result<Self, Failure> {
         let curve = pcurve
             .get()
             .ok_or_else(|| null_object("BRep_CurveOnSurface: the p-curve is null"))?;
-        let transient = StandardTransient::default();
         let gcurve = GCurveBase::new(location, curve.first_parameter(), curve.last_parameter());
         Ok(Self::from_components(
-            transient,
             gcurve,
             pcurve.clone(),
             surface.clone(),
@@ -69,13 +117,11 @@ impl BRepCurveOnSurface {
     }
 
     fn from_components(
-        transient: StandardTransient,
         gcurve: GCurveBase,
         pcurve: Handle<dyn Geom2dCurve>,
         surface: Handle<dyn GeomSurface>,
     ) -> Self {
         Self {
-            transient,
             gcurve,
             fields: SharedState::new(CurveOnSurfaceFields {
                 uv1: Point2::default(),
@@ -88,16 +134,10 @@ impl BRepCurveOnSurface {
 
     // Match the retained Linux x86-64 evaluation order; no language rule mandates it.
     pub(super) fn copy_from_current_binding(&self) -> Result<Self, Failure> {
-        let transient = StandardTransient::default();
         let last = self.parameter_from_current_binding(|curve| curve.try_last_parameter())?;
         let first = self.parameter_from_current_binding(|curve| curve.try_first_parameter())?;
-        let gcurve = GCurveBase::new(&self.location(), first, last);
-        Ok(Self::from_components(
-            transient,
-            gcurve,
-            self.pcurve()?,
-            self.surface()?,
-        ))
+        let gcurve = GCurveBase::new(&self.gcurve.representation().location(), first, last);
+        Ok(Self::from_components(gcurve, self.pcurve(), self.surface()))
     }
 
     fn parameter_from_current_binding(
@@ -112,14 +152,14 @@ impl BRepCurveOnSurface {
     }
 
     /// `SetUVPoints(P1, P2)`; `pcurve.set_uv_points(first, last)`.
-    pub fn set_uv_points(&self, first: Point2, last: Point2) {
+    pub(super) fn set_uv_points(&self, first: Point2, last: Point2) {
         let mut fields = self.fields.write();
         fields.uv1 = first;
         fields.uv2 = last;
     }
 
     /// `UVPoints(P1, P2)`; `let (first, last) = pcurve.uv_points();`.
-    pub fn uv_points(&self) -> (Point2, Point2) {
+    pub(super) fn uv_points(&self) -> (Point2, Point2) {
         let fields = self.fields.read();
         (fields.uv1, fields.uv2)
     }
@@ -165,54 +205,25 @@ impl BRepCurveOnSurface {
             c.dump_json(s, d)
         })
     }
-}
+    pub(super) fn is_on(&self, surface: &Handle<dyn GeomSurface>, location: &Location) -> bool {
+        *surface == self.fields.read().surface
+            && *location == self.gcurve.representation().location()
+    }
 
-impl BRepCurveRepresentation for BRepCurveOnSurface {
-    fn curve_representation_base(&self) -> &CurveRepresentationBase {
-        self.gcurve.representation()
+    pub(super) fn surface(&self) -> Handle<dyn GeomSurface> {
+        self.fields.read().surface.clone()
     }
-    /// Returns true.
-    fn is_curve_on_surface(&self) -> bool {
-        true
+
+    pub(super) fn pcurve(&self) -> Handle<dyn Geom2dCurve> {
+        self.fields.read().pcurve.clone()
     }
-    /// `(S == mySurface) && (L == myLocation)`.
-    fn is_curve_on_surface_at(
-        &self,
-        surface: &Handle<dyn GeomSurface>,
-        location: &Location,
-    ) -> bool {
-        *surface == self.fields.read().surface && *location == self.location()
-    }
-    fn surface(&self) -> Result<Handle<dyn GeomSurface>, Failure> {
-        Ok(self.fields.read().surface.clone())
-    }
-    fn pcurve(&self) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-        Ok(self.fields.read().pcurve.clone())
-    }
-    fn set_pcurve(&self, pcurve: &Handle<dyn Geom2dCurve>) -> Result<(), Failure> {
+
+    pub(super) fn set_pcurve(&self, pcurve: &Handle<dyn Geom2dCurve>) {
         self.fields.write().pcurve = pcurve.clone();
-        Ok(())
     }
-    /// A new representation on the same data, then `SetRange` and `SetUVPoints`.
-    fn copy(&self) -> Result<Handle<dyn BRepCurveRepresentation>, Failure> {
-        let copy = self.copy_from_current_binding()?;
-        let (first, last) = self.range();
-        copy.set_range(first, last)?;
-        let (uv1, uv2) = self.uv_points();
-        copy.set_uv_points(uv1, uv2);
-        Ok(Handle::new(copy).into_cast())
-    }
-    fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
-        self.dump_body(stream, depth)
-    }
-}
 
-impl BRepGCurve for BRepCurveOnSurface {
-    fn gcurve_base(&self) -> &GCurveBase {
-        &self.gcurve
-    }
     /// The p-curve point, evaluated on the surface and moved by the location.
-    fn d0(&self, u: f64) -> Result<Point3, Failure> {
+    pub(super) fn d0(&self, u: f64) -> Result<Point3, Failure> {
         let fields = self.fields.read().clone();
         let pcurve = fields
             .pcurve
@@ -225,10 +236,61 @@ impl BRepGCurve for BRepCurveOnSurface {
             .get()
             .ok_or_else(|| null_object("BRep_CurveOnSurface::D0: the surface is null"))?;
         let point = surface.value(uv.x(), uv.y())?;
-        Ok(point.transformed(self.location().transformation()))
+        Ok(point.transformed(self.gcurve.representation().location().transformation()))
+    }
+}
+
+impl BRepCurveRepresentation for BRepCurveOnSurface {
+    fn curve_representation_base(&self) -> &CurveRepresentationBase {
+        self.state.gcurve.representation()
+    }
+    /// Returns true.
+    fn is_curve_on_surface(&self) -> bool {
+        true
+    }
+    /// `(S == mySurface) && (L == myLocation)`.
+    fn is_curve_on_surface_at(
+        &self,
+        surface: &Handle<dyn GeomSurface>,
+        location: &Location,
+    ) -> bool {
+        self.state.is_on(surface, location)
+    }
+    fn surface(&self) -> Result<Handle<dyn GeomSurface>, Failure> {
+        Ok(self.state.surface())
+    }
+    fn pcurve(&self) -> Result<Handle<dyn Geom2dCurve>, Failure> {
+        Ok(self.state.pcurve())
+    }
+    fn set_pcurve(&self, pcurve: &Handle<dyn Geom2dCurve>) -> Result<(), Failure> {
+        self.state.set_pcurve(pcurve);
+        Ok(())
+    }
+    /// A new representation on the same data, then `SetRange` and `SetUVPoints`.
+    fn copy(&self) -> Result<Handle<dyn BRepCurveRepresentation>, Failure> {
+        let copy = Self {
+            state: self.state.copy_from_current_binding()?,
+        };
+        let (first, last) = self.range();
+        copy.set_range(first, last)?;
+        let (uv1, uv2) = self.uv_points();
+        copy.set_uv_points(uv1, uv2);
+        Ok(Handle::new(copy).into_upcast())
+    }
+    fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
+        self.state.dump_body(stream, depth)
+    }
+}
+
+impl BRepGCurve for BRepCurveOnSurface {
+    fn gcurve_base(&self) -> &GCurveBase {
+        &self.state.gcurve
+    }
+    fn d0(&self, u: f64) -> Result<Point3, Failure> {
+        self.state.d0(u)
     }
     /// `BRep_CurveOnSurface::Update`: the UV points at the finite range ends.
     fn update(&self) -> Result<(), Failure> {
-        self.update_uv_points()
+        self.state.update_uv_points()
     }
 }

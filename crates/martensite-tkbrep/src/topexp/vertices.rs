@@ -1,11 +1,12 @@
 //! The vertices of edges and wires. The casts are unchecked, as in the native file
 //! (`No_Standard_TypeMismatch`): a child of another type is returned as a vertex.
 use crate::topods::{Edge, Shape, ShapeIterator, Vertex, Wire};
+use crate::topods::{EdgeView, ShapeView};
 use crate::toptools::MapOfShape;
 use martensite_tkg3d::top_abs::Orientation;
 
 /// The first direct sub-shape of `edge` with the given orientation, or a null vertex.
-fn oriented_vertex(edge: &Shape, cum_ori: bool, wanted: Orientation) -> Vertex {
+fn oriented_vertex(edge: &ShapeView<'_>, cum_ori: bool, wanted: Orientation) -> Vertex {
     let mut iterator = ShapeIterator::new(edge, cum_ori, true);
     while let Ok(child) = iterator.value() {
         if child.orientation() == wanted {
@@ -19,13 +20,13 @@ fn oriented_vertex(edge: &Shape, cum_ori: bool, wanted: Orientation) -> Vertex {
 /// `FirstVertex(E, CumOri)`: the first FORWARD vertex of `edge` (composed with the
 /// edge orientation when `cum_ori`), or a null vertex; the native default of `CumOri`
 /// is false; `topexp::first_vertex(&edge, false)`.
-pub fn first_vertex(edge: &Edge, cum_ori: bool) -> Vertex {
+pub fn first_vertex(edge: &EdgeView<'_>, cum_ori: bool) -> Vertex {
     oriented_vertex(edge, cum_ori, Orientation::Forward)
 }
 
 /// `LastVertex(E, CumOri)`: the first REVERSED vertex of `edge`, or a null vertex;
 /// `topexp::last_vertex(&edge, false)`.
-pub fn last_vertex(edge: &Edge, cum_ori: bool) -> Vertex {
+pub fn last_vertex(edge: &EdgeView<'_>, cum_ori: bool) -> Vertex {
     oriented_vertex(edge, cum_ori, Orientation::Reversed)
 }
 
@@ -33,7 +34,7 @@ pub fn last_vertex(edge: &Edge, cum_ori: bool) -> Vertex {
 /// null when absent. Unlike [`first_vertex`], the whole list is read, so with two
 /// FORWARD vertices the last one is returned (native behaviour);
 /// `let (first, last) = topexp::vertices(&edge, false);`.
-pub fn vertices(edge: &Edge, cum_ori: bool) -> (Vertex, Vertex) {
+pub fn vertices(edge: &EdgeView<'_>, cum_ori: bool) -> (Vertex, Vertex) {
     let (mut first, mut last) = (Vertex::default(), Vertex::default());
     let mut iterator = ShapeIterator::new(edge, cum_ori, true);
     while let Ok(child) = iterator.value() {
@@ -109,7 +110,7 @@ fn map_end(ends: &MapOfShape, wanted: Orientation) -> Vertex {
 /// `CommonVertex(E1, E2, V)`: a vertex of `first` that `second` also has (same TShape
 /// and location), trying the first vertex of `first`, then its last one; `None` when
 /// there is none; `topexp::common_vertex(&e1, &e2)`.
-pub fn common_vertex(first: &Edge, second: &Edge) -> Option<Vertex> {
+pub fn common_vertex(first: &EdgeView<'_>, second: &EdgeView<'_>) -> Option<Vertex> {
     let (first1, last1) = vertices(first, false);
     let (first2, last2) = vertices(second, false);
     if first1.is_same(&first2) || first1.is_same(&last2) {
