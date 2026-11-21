@@ -113,7 +113,7 @@ impl StepFEACurveElementLocation {
 step_entity! {
     /// Representation of STEP entity DummyNode
     StepFEADummyNode, StepFEADummyNodeState, "StepFEADummyNode", StepFEANodeRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
@@ -178,7 +178,7 @@ step_entity! {
     /// Representation of STEP entity ElementRepresentation
     StepFEAElementRepresentation, StepFEAElementRepresentationState, "StepFEAElementRepresentation", StepReprRepresentation, {
         the_node_list: Handle<HArray1<Handle<StepFEANodeRepresentation>>>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 impl StepFEAElementRepresentation {
     step_methods! {
@@ -190,8 +190,8 @@ impl StepFEAElementRepresentation {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-        a_representation_context_of_items: &Handle<StepReprRepresentationContext>,
+        a_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        a_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         a_node_list: &Handle<HArray1<Handle<StepFEANodeRepresentation>>>,
     ) {
         self.parent.init(
@@ -207,7 +207,7 @@ step_entity! {
     /// Representation of STEP entity FeaAreaDensity
     StepFEAFeaAreaDensity, StepFEAFeaAreaDensityState, "StepFEAFeaAreaDensity", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constant: f64,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaAreaDensity {
     step_methods! {
@@ -227,7 +227,7 @@ step_entity! {
     StepFEAFeaAxis2Placement3d, StepFEAFeaAxis2Placement3dState, "StepFEAFeaAxis2Placement3d", StepGeomAxis2Placement3d, {
         the_system_type: StepFEACoordinateSystemType,
         the_description: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaAxis2Placement3d {
     step_methods! {

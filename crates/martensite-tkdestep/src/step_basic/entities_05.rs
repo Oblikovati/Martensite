@@ -11,7 +11,7 @@ step_entity! {
     /// Date.
     StepBasicDate, StepBasicDateState, "StepBasicDate", StandardTransient, {
         year_component: i32,
-    }
+    }, bases: [crate::step_basic::StepBasicDate]
 }
 impl StepBasicDate {
     step_methods! {
@@ -24,21 +24,21 @@ impl StepBasicDate {
 step_entity! {
     /// Date and time.
     StepBasicDateAndTime, StepBasicDateAndTimeState, "StepBasicDateAndTime", StandardTransient, {
-        date_component: Handle<StepBasicDate>,
+        date_component: Handle<dyn crate::StepEntityBase<StepBasicDate>>,
         time_component: Handle<StepBasicLocalTime>,
     }
 }
 impl StepBasicDateAndTime {
     step_methods! {
-        set set_date_component = date_component: Handle<StepBasicDate>;
-        get date_component = date_component: Handle<StepBasicDate>;
+        set set_date_component = date_component: Handle<dyn crate::StepEntityBase<StepBasicDate>>;
+        get date_component = date_component: Handle<dyn crate::StepEntityBase<StepBasicDate>>;
         set set_time_component = time_component: Handle<StepBasicLocalTime>;
         get time_component = time_component: Handle<StepBasicLocalTime>;
     }
     /// `init`.
     pub fn init(
         &self,
-        a_date_component: &Handle<StepBasicDate>,
+        a_date_component: &Handle<dyn crate::StepEntityBase<StepBasicDate>>,
         a_time_component: &Handle<StepBasicLocalTime>,
     ) {
         let mut state = self.state.write();
@@ -76,21 +76,21 @@ impl StepBasicDateAndTimeAssignment {
 step_entity! {
     /// Date assignment.
     StepBasicDateAssignment, StepBasicDateAssignmentState, "StepBasicDateAssignment", StandardTransient, {
-        assigned_date: Handle<StepBasicDate>,
+        assigned_date: Handle<dyn crate::StepEntityBase<StepBasicDate>>,
         role: Handle<StepBasicDateRole>,
     }
 }
 impl StepBasicDateAssignment {
     step_methods! {
-        set set_assigned_date = assigned_date: Handle<StepBasicDate>;
-        get assigned_date = assigned_date: Handle<StepBasicDate>;
+        set set_assigned_date = assigned_date: Handle<dyn crate::StepEntityBase<StepBasicDate>>;
+        get assigned_date = assigned_date: Handle<dyn crate::StepEntityBase<StepBasicDate>>;
         set set_role = role: Handle<StepBasicDateRole>;
         get role = role: Handle<StepBasicDateRole>;
     }
     /// `init`.
     pub fn init(
         &self,
-        a_assigned_date: &Handle<StepBasicDate>,
+        a_assigned_date: &Handle<dyn crate::StepEntityBase<StepBasicDate>>,
         a_role: &Handle<StepBasicDateRole>,
     ) {
         let mut state = self.state.write();
@@ -146,19 +146,19 @@ impl StepBasicDerivedUnit {
 step_entity! {
     /// Added from StepBasic Rev2 to Rev4
     StepBasicDerivedUnitElement, StepBasicDerivedUnitElementState, "StepBasicDerivedUnitElement", StandardTransient, {
-        the_unit: Handle<StepBasicNamedUnit>,
+        the_unit: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
         the_exponent: f64,
     }
 }
 impl StepBasicDerivedUnitElement {
     step_methods! {
-        set set_unit = the_unit: Handle<StepBasicNamedUnit>;
-        get unit = the_unit: Handle<StepBasicNamedUnit>;
+        set set_unit = the_unit: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>;
+        get unit = the_unit: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>;
         set_copy set_exponent = the_exponent: f64;
         get exponent = the_exponent: f64;
     }
     /// `init`.
-    pub fn init(&self, a_unit: &Handle<StepBasicNamedUnit>, a_exponent: f64) {
+    pub fn init(&self, a_unit: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, a_exponent: f64) {
         let mut state = self.state.write();
         state.the_unit = a_unit.clone();
         state.the_exponent = a_exponent;
@@ -168,13 +168,13 @@ impl StepBasicDerivedUnitElement {
 step_entity! {
     /// class added to Schema AP214 around April 1996
     StepBasicDesignContext, StepBasicDesignContextState, "StepBasicDesignContext", StepBasicProductDefinitionContext, {
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinitionContext]
 }
 
 step_entity! {
     /// Digital document.
     StepBasicDigitalDocument, StepBasicDigitalDocumentState, "StepBasicDigitalDocument", StepBasicDocument, {
-    }
+    }, bases: [crate::step_basic::StepBasicDocument]
 }
 
 step_entity! {
@@ -237,7 +237,7 @@ step_entity! {
         the_description: Handle<HAsciiString>,
         the_kind: Handle<StepBasicDocumentType>,
         def_description: bool,
-    }
+    }, bases: [crate::step_basic::StepBasicDocument]
 }
 impl StepBasicDocument {
     step_methods! {

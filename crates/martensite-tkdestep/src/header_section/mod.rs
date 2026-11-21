@@ -88,14 +88,12 @@ struct FileNameState {
 /// ```
 #[derive(Default)]
 pub struct HeaderSectionFileName {
-    transient: StandardTransient,
     state: SharedState<FileNameState>,
 }
 impl_transient!(
     HeaderSectionFileName,
     "HeaderSectionFileName",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl HeaderSectionFileName {
@@ -171,14 +169,12 @@ struct FileSchemaState {
 /// ```
 #[derive(Default)]
 pub struct HeaderSectionFileSchema {
-    transient: StandardTransient,
     state: SharedState<FileSchemaState>,
 }
 impl_transient!(
     HeaderSectionFileSchema,
     "HeaderSectionFileSchema",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl HeaderSectionFileSchema {
@@ -208,14 +204,12 @@ struct FileDescriptionState {
 /// ```
 #[derive(Default)]
 pub struct HeaderSectionFileDescription {
-    transient: StandardTransient,
     state: SharedState<FileDescriptionState>,
 }
 impl_transient!(
     HeaderSectionFileDescription,
     "HeaderSectionFileDescription",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl HeaderSectionFileDescription {
@@ -254,14 +248,12 @@ impl HeaderSectionFileDescription {
 /// ```
 #[derive(Default)]
 pub struct HeaderSectionProtocol {
-    transient: StandardTransient,
     tables: StepDataProtocolTables,
 }
 impl_transient!(
     HeaderSectionProtocol,
     "HeaderSectionProtocol",
     dyn StepDataProtocolOps,
-    transient,
     interfaces: [dyn InterfaceProtocol, dyn StepDataProtocolOps]
 );
 crate::impl_step_protocol!(HeaderSectionProtocol);

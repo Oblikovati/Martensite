@@ -36,7 +36,7 @@ macro_rules! rw_block_b_0169 {
             .array1()
             .length()
         {
-            let $var0: Handle<StepReprRepresentationItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&$the_ent.parent.parent.items(), $i1, "Share")?;
             $iter.add_item(&$var0.cast());
         }
@@ -49,7 +49,7 @@ pub(crate) use rw_block_b_0169;
 macro_rules! rw_block_b_0170 {
     ($ent:ident, $i1:ident, $iter:ident, $var0:ident) => {
         for $i1 in 1..=$ent.parent.parent.parent.nb_items() {
-            let $var0: Handle<StepReprRepresentationItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&$ent.parent.parent.parent.items(), $i1, "Share")?;
             $iter.add_item(&$var0.cast());
         }
@@ -205,7 +205,7 @@ macro_rules! rw_block_b_0182 {
     ($a_name:ident, $a_styles:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_styles: Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>> =
+        let mut $a_styles: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>> =
             Default::default();
     };
 }

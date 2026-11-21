@@ -101,7 +101,7 @@ impl StepControlActorRead {
         let scope = ProgressScope::unnamed(progress, 2.0, false);
         for rank in 1..=2 {
             let range = scope.next(1.0);
-            let rep: Handle<StepReprRepresentation> =
+            let rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
                 if rank == 1 { live.rep1() } else { live.rep2() };
             let Some(live_rep) = rep.get() else {
                 continue;
@@ -114,7 +114,7 @@ impl StepControlActorRead {
                 self.prepare_units(&rep, tp, &mut local)?;
                 reset_units = true;
             }
-            let shape_rep: Handle<StepShapeShapeRepresentation> = rep.cast();
+            let shape_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = rep.cast();
             let mut binder: Handle<dyn TransferBinder> = Handle::default();
             if shape_rep.is_some() {
                 binder = if live_tp.is_bound(&shape_rep.cast()) {
@@ -150,7 +150,7 @@ impl StepControlActorRead {
     pub(super) fn transfer_related_srr(
         &self,
         tp: &Handle<TransferTransientProcess>,
-        rep: &Handle<StepShapeShapeRepresentation>,
+        rep: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
         use_trsf: bool,
         read_constructive: bool,
         factors: &StepDataFactors,
@@ -159,17 +159,17 @@ impl StepControlActorRead {
     ) -> Result<Shape, Failure> {
         let builder = BRepBuilder::default();
         let mut result = Shape::default();
-        let as_rep: Handle<StepReprRepresentation> = rep.cast();
+        let as_rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = rep.cast();
         for item in sharing_entities(tp, &rep.cast())? {
             if !scope.more() {
                 break;
             }
-            if item.cast::<StepReprRepresentationRelationship>().is_null() {
+            if item.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>().is_null() {
                 continue;
             }
             let binder: Handle<dyn TransferBinder> =
                 if is_exactly::<StepReprShapeRepresentationRelationship>(&item) {
-                    let srr: Handle<StepReprShapeRepresentationRelationship> = item.cast();
+                    let srr: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> = item.cast();
                     let is_rep1 = as_rep == step_live(&srr, "StepControlActorRead")?.rep1();
                     let nb_rep = if is_rep1 { 2 } else { 1 };
                     self.transfer_srr(&srr, tp, factors, nb_rep, use_trsf, &scope.next(1.0))?

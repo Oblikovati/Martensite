@@ -32,7 +32,7 @@ impl RwStepShapeRwDimensionalLocationWithPath {
             has_shape_aspect_relationship_description,
             num
         );
-        let mut a_path: Handle<StepReprShapeAspect> = Default::default();
+        let mut a_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
         data.read_entity(
             num,
             5,
@@ -87,7 +87,7 @@ impl RwStepShapeRwDimensionalSize {
         if !data.check_nb_params(num, 2, ach, "dimensional_size")? {
             return Ok(());
         }
-        let mut a_applies_to: Handle<StepReprShapeAspect> = Default::default();
+        let mut a_applies_to: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
         data.read_entity(
             num,
             1,
@@ -145,7 +145,7 @@ impl RwStepShapeRwDimensionalSizeWithPath {
             data,
             num
         );
-        let mut a_path: Handle<StepReprShapeAspect> = Default::default();
+        let mut a_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -199,7 +199,7 @@ impl RwStepShapeRwEdge {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_edge_start: Handle<StepShapeVertex> = Default::default();
+        let mut a_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
         data.read_entity(
             num,
             2,
@@ -208,7 +208,7 @@ impl RwStepShapeRwEdge {
             StepShapeVertex::static_type(),
             &mut a_edge_start,
         )?;
-        let mut a_edge_end: Handle<StepShapeVertex> = Default::default();
+        let mut a_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
         data.read_entity(
             num,
             3,

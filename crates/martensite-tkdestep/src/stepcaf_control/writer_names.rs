@@ -40,7 +40,7 @@ fn ascii_of(value: &ExtendedString) -> Handle<HAsciiString> {
 /// The product definition of an SDR, null when it has none.
 fn product_definition_of(
     sdr: &Handle<StepShapeShapeDefinitionRepresentation>,
-) -> Result<Handle<StepBasicProductDefinition>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
     let property = step_live(sdr, WHERE)?.definition().property_definition();
     let Some(property) = property.get() else {
         return Ok(Handle::default());
@@ -192,7 +192,7 @@ fn write_named_values(
     ws: &Handle<XSControlWorkSession>,
     data: &TDataStdNamedData,
     sdr: &Handle<StepShapeShapeDefinitionRepresentation>,
-    definition: &Handle<StepBasicProductDefinition>,
+    definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
 ) -> Result<(), Failure> {
     if data.has_strings() {
         let map = data.get_strings_container();
@@ -231,8 +231,8 @@ fn write_metadata_representation_item(
     ws: &Handle<XSControlWorkSession>,
     key: &ExtendedString,
     sdr: &Handle<StepShapeShapeDefinitionRepresentation>,
-    definition: &Handle<StepBasicProductDefinition>,
-    item: &Handle<StepReprRepresentationItem>,
+    definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+    item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
 ) -> Result<(), Failure> {
     // Empty string to use for empty values:
     let empty = text("");
@@ -253,7 +253,7 @@ fn write_metadata_representation_item(
     let live_association = step_live(&association, WHERE)?;
     live_association.set_name(&empty);
     live_association.set_description(&empty);
-    live_association.set_property_definition(&property);
+    live_association.set_property_definition(&property.upcast());
     live_association.set_general_property(&general);
     // Set the definition to point to the product definition:
     let mut characterized = StepReprCharacterizedDefinition::default();
@@ -270,13 +270,13 @@ fn write_metadata_representation_item(
     let live_values = step_live(&values, WHERE)?;
     live_values.set_name(&name);
     // Add item to representation:
-    let items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, 1)?;
+    let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
     step_array1_set(&items, 1, item.clone(), WHERE)?;
     live_values.set_items(&items);
     // Set representation context (reuse from shape representation):
     let used = step_live(sdr, WHERE)?.used_representation();
     live_values.set_context_of_items(&step_live(&used, WHERE)?.context_of_items());
-    live_representation.set_used_representation(&values);
+    live_representation.set_used_representation(&values.upcast());
     // Add entities to the model:
     let model = model_of(ws)?;
     model.add_with_refs(&property.cast(), 0, false)?;

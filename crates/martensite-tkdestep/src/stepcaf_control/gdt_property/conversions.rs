@@ -314,28 +314,28 @@ impl STEPCAFControlGDTProperty {
     /// `get_geom_tolerance`: a new tolerance of the type; null for those which need a datum system.
     pub fn get_geom_tolerance(
         kind: XCAFDimTolObjectsGeomToleranceType,
-    ) -> Handle<StepDimTolGeometricTolerance> {
+    ) -> Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>> {
         match kind {
             XCAFDimTolObjectsGeomToleranceType::CircularityOrRoundness => {
-                Handle::new(StepDimTolRoundnessTolerance::new()).cast()
+                Handle::new(StepDimTolRoundnessTolerance::new()).into_upcast()
             }
             XCAFDimTolObjectsGeomToleranceType::Cylindricity => {
-                Handle::new(StepDimTolCylindricityTolerance::new()).cast()
+                Handle::new(StepDimTolCylindricityTolerance::new()).into_upcast()
             }
             XCAFDimTolObjectsGeomToleranceType::Flatness => {
-                Handle::new(StepDimTolFlatnessTolerance::new()).cast()
+                Handle::new(StepDimTolFlatnessTolerance::new()).into_upcast()
             }
             XCAFDimTolObjectsGeomToleranceType::Position => {
-                Handle::new(StepDimTolPositionTolerance::new()).cast()
+                Handle::new(StepDimTolPositionTolerance::new()).into_upcast()
             }
             XCAFDimTolObjectsGeomToleranceType::ProfileOfLine => {
-                Handle::new(StepDimTolLineProfileTolerance::new()).cast()
+                Handle::new(StepDimTolLineProfileTolerance::new()).into_upcast()
             }
             XCAFDimTolObjectsGeomToleranceType::ProfileOfSurface => {
-                Handle::new(StepDimTolSurfaceProfileTolerance::new()).cast()
+                Handle::new(StepDimTolSurfaceProfileTolerance::new()).into_upcast()
             }
             XCAFDimTolObjectsGeomToleranceType::Straightness => {
-                Handle::new(StepDimTolStraightnessTolerance::new()).cast()
+                Handle::new(StepDimTolStraightnessTolerance::new()).into_upcast()
             }
             _ => Handle::default(),
         }

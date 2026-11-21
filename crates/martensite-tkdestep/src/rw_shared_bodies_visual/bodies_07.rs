@@ -52,11 +52,11 @@ pub(crate) use rw_block_b_0054;
 macro_rules! rw_block_b_0055 {
     ($a_item:ident, $a_name:ident, $a_styles:ident, $ach:ident, $anent2:ident, $data:ident, $i2:ident, $nb2:ident, $nsub2:ident, $num:ident) => {
         rw_block_b_0182!($a_name, $a_styles, $ach, $data, $num);
-        let mut $anent2: Handle<StepVisualPresentationStyleAssignment> = Default::default();
+        let mut $anent2: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> = Default::default();
         let mut $nsub2: i32 = Default::default();
         if $data.read_sub_list($num, 2, "styles", $ach, &mut $nsub2, false, 0, 0)? {
             let $nb2: i32 = $data.nb_params($nsub2)?;
-            $a_styles = step_new_array1::<Handle<StepVisualPresentationStyleAssignment>>(1, $nb2)?;
+            $a_styles = step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>(1, $nb2)?;
             for $i2 in 1..=$nb2 {
                 if $data.read_entity(
                     $nsub2,
@@ -70,7 +70,7 @@ macro_rules! rw_block_b_0055 {
                 }
             }
         }
-        let mut $a_item: Handle<StandardTransient> = Default::default();
+        let mut $a_item: Handle<dyn martensite_tkernel::standard::Transient> = Default::default();
         $data.read_entity(
             $num,
             3,
@@ -211,7 +211,9 @@ macro_rules! rw_block_b_0060 {
             $ach,
             &mut $a_geometric_tolerance_description,
         )?;
-        let mut $a_geometric_tolerance_magnitude: Handle<StandardTransient> = Default::default();
+        let mut $a_geometric_tolerance_magnitude: Handle<
+            dyn martensite_tkernel::standard::Transient,
+        > = Default::default();
         $data.read_entity(
             $num,
             3,
@@ -245,7 +247,8 @@ macro_rules! rw_block_b_0061 {
             $ach,
             &mut $a_description,
         )?;
-        let mut $a_magnitude: Handle<StandardTransient> = Default::default();
+        let mut $a_magnitude: Handle<dyn martensite_tkernel::standard::Transient> =
+            Default::default();
         $data.read_entity(
             $num,
             3,

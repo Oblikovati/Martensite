@@ -1,12 +1,13 @@
 //! A trim point: a cartesian point, or an immediate real named `PARAMETER_VALUE`.
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other"
-)]
 use super::*;
 use crate::step_data::{StepDataSelectMember, StepDataSelectType, StepDataSelectValue};
 use crate::step_entity::*;
 use crate::{impl_step_select_storage, step_select_case};
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other"
+)]
+use martensite_tkernel::standard::Transient;
 use martensite_tkxsbase::interface::InterfaceParamType;
 
 step_fixed_name_member!(
@@ -24,7 +25,7 @@ pub struct StepGeomTrimmingSelect {
 
 impl StepDataSelectType for StepGeomTrimmingSelect {
     impl_step_select_storage!(value);
-    fn case_num(&self, ent: &Handle<StandardTransient>) -> i32 {
+    fn case_num(&self, ent: &Handle<dyn Transient>) -> i32 {
         step_select_case!(ent; StepGeomCartesianPoint)
     }
     fn new_member(&self) -> Handle<dyn StepDataSelectMember> {

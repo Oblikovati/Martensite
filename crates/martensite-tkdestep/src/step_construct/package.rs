@@ -30,7 +30,7 @@ impl StepConstruct {
     pub fn find_entity(
         finder_process: &Handle<TransferFinderProcess>,
         shape: &Shape,
-    ) -> Result<Handle<StepReprRepresentationItem>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Failure> {
         let mut item = Handle::default();
         Self::find_item_of(finder_process, shape, &mut item)?;
         Ok(item)
@@ -41,7 +41,7 @@ impl StepConstruct {
         finder_process: &Handle<TransferFinderProcess>,
         shape: &Shape,
         loc: &mut Location,
-    ) -> Result<Handle<StepReprRepresentationItem>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Failure> {
         let mut item = Handle::default();
         *loc = shape.location().clone();
         if !Self::find_item_of(finder_process, shape, &mut item)? && !loc.is_identity() {
@@ -56,7 +56,7 @@ impl StepConstruct {
     fn find_item_of(
         finder_process: &Handle<TransferFinderProcess>,
         shape: &Shape,
-        item: &mut Handle<StepReprRepresentationItem>,
+        item: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) -> Result<bool, Failure> {
         let mapper = TransferBRep::shape_mapper(finder_process, shape)?;
         let process = step_live(finder_process, "STEPConstruct::FindEntity")?;
@@ -69,7 +69,7 @@ impl StepConstruct {
     /// `find_shape`: the shape resulting from a STEP entity, null when not mapped.
     pub fn find_shape(
         transient_process: &Handle<TransferTransientProcess>,
-        item: &Handle<StepReprRepresentationItem>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) -> Result<Shape, Failure> {
         let process = step_live(transient_process, "STEPConstruct::FindShape")?;
         let binder = process.find(&item.cast());
@@ -109,7 +109,7 @@ impl StepConstruct {
 /// it is not the wanted one.
 fn binder_names_assembly(
     binder: &Handle<dyn TransferBinder>,
-    assembly_pd: &Handle<crate::step_basic::StepBasicProductDefinition>,
+    assembly_pd: &Handle<dyn crate::StepEntityBase<crate::step_basic::StepBasicProductDefinition>>,
     component_cdsr: &mut Handle<StepShapeContextDependentShapeRepresentation>,
 ) -> Result<bool, Failure> {
     let simple = binder.cast::<TransferSimpleBinderOfTransient>();

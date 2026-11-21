@@ -11,7 +11,7 @@ use crate::step_repr::*;
 
 #[test]
 fn init_round_trip_step_basic_document_usage_constraint() {
-    let a_source = Handle::new(StepBasicDocument::new());
+    let a_source = Handle::new(StepBasicDocumentFile::new()).into_upcast();
     let ase = Handle::new(HAsciiString::new("sample"));
     let asev = Handle::new(HAsciiString::new("sample"));
     let object = StepBasicDocumentUsageConstraint::new();
@@ -180,7 +180,7 @@ fn init_round_trip_step_basic_general_property_association() {
         &a_name,
         &a_description,
         &a_general_property,
-        &a_property_definition,
+        &a_property_definition.upcast(),
     );
     assert!(object.name() == a_name);
     assert!(object.description() == a_description);

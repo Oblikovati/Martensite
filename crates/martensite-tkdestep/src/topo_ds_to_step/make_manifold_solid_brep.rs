@@ -7,6 +7,7 @@ use super::{
 };
 use crate::geom_to_step::empty_step_name;
 use crate::step_data::StepDataFactors;
+use crate::step_entity::StepBaseHandle;
 use crate::step_shape::{StepShapeClosedShell, StepShapeManifoldSolidBrep, StepShapeOpenShell};
 use crate::step_visual::StepVisualTessellatedItem;
 use martensite_tkbrep::topods::{Shell, Solid};
@@ -28,13 +29,7 @@ fn make_manifold_solid_brep(
     fp: &Handle<TransferFinderProcess>,
     factors: &StepDataFactors,
     progress: &ProgressRange<'_>,
-) -> Result<
-    (
-        Handle<StepShapeManifoldSolidBrep>,
-        Handle<StepVisualTessellatedItem>,
-    ),
-    Failure,
-> {
+) -> Result<(Handle<StepShapeManifoldSolidBrep>, StepBaseHandle<StepVisualTessellatedItem>), Failure> {
     let model = step_model_of(fp)?;
     let (mode, tessellated) = {
         let parameters = model.internal_parameters();
@@ -56,14 +51,14 @@ fn make_manifold_solid_brep(
     }
     let item = builder.tessellated_value()?;
     let value = builder.value()?;
-    let mut closed: Handle<StepShapeClosedShell> = value.cast();
+    let mut closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = value.cast();
     // si OPEN on le force a CLOSED mais que c est une honte !
     if closed.is_null() {
-        let open: Handle<StepShapeOpenShell> = value.cast();
+        let open: Handle<dyn crate::StepEntityBase<StepShapeOpenShell>> = value.cast();
         let Some(live) = open.get() else {
             return Ok((Handle::default(), item));
         };
-        closed = Handle::new(StepShapeClosedShell::new());
+        closed = Handle::new(StepShapeClosedShell::new()).into_upcast();
         closed.init(&live.name(), &live.cfs_faces()?);
     }
     let brep = Handle::new(StepShapeManifoldSolidBrep::new());
@@ -114,7 +109,7 @@ impl TopoDSToStepMakeManifoldSolidBrep {
         if made.root.done {
             made.result = brep;
             if item.is_some() {
-                made.tessellated = tessellated_solid(&[item], &made.result)?;
+                made.tessellated = tessellated_solid(&[item], &made.result.upcast())?;
             }
         }
         if !made.root.done && !progress.user_break() {

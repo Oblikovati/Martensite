@@ -27,7 +27,8 @@ use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Face, Shape, Wire};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::gp::{self, Axis2, Axis3, Direction3, Point3, Transform3};
@@ -48,7 +49,7 @@ mod presentations;
 #[allow(unused_imports, reason = "what the sibling modules use")]
 pub use presentations::*;
 
-type TransientArray = Handle<HArray1<Handle<StandardTransient>>>;
+type TransientArray = Handle<HArray1<Handle<dyn Transient>>>;
 
 /// The indices of a strip or a fan.
 fn indices_at(list: &TransientArray, rank: i32) -> Result<Vec<i32>, Failure> {
@@ -147,16 +148,16 @@ fn create_mesh(
 /// The annotations of a presentation: itself, or the content of a callout, up to the first annotation
 /// occurrence. Sets the name of the presentation.
 fn annotations_of(
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     name: &mut Handle<HAsciiString>,
-) -> Result<Vec<Handle<StepVisualStyledItem>>, Failure> {
+) -> Result<Vec<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>>, Failure> {
     let mut annotations = Vec::new();
-    if entity.cast::<StepVisualAnnotationOccurrence>().is_some()
+    if entity.cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>().is_some()
         || entity
             .cast::<StepVisualTessellatedAnnotationOccurrence>()
             .is_some()
     {
-        let styled = entity.cast::<StepVisualStyledItem>();
+        let styled = entity.cast::<dyn crate::StepEntityBase<StepVisualStyledItem>>();
         if let Some(live) = styled.get() {
             *name = live.name();
             annotations.push(styled);
@@ -165,7 +166,7 @@ fn annotations_of(
         *name = callout.name();
         for rank in 1..=callout.nb_contents() {
             let content = callout.contents_value(rank)?;
-            let occurrence = content.value().cast::<StepVisualAnnotationOccurrence>();
+            let occurrence = content.value().cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>();
             if occurrence.is_some() {
                 annotations.push(occurrence.cast());
                 break;
@@ -181,7 +182,7 @@ fn annotations_of(
 
 /// The placement of a repositioned tessellated set, identity when it is the standard one.
 fn reposition_of(
-    set: &Handle<StepVisualTessellatedGeometricSet>,
+    set: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedGeometricSet>>,
     factors: &StepDataFactors,
 ) -> Result<Transform3, Failure> {
     let mut transformation = Transform3::default();
@@ -262,7 +263,7 @@ fn tessellated_annotation_shape(
     factor: f64,
     factors: &StepDataFactors,
 ) -> Result<Shape, Failure> {
-    let set = item.item().cast::<StepVisualTessellatedGeometricSet>();
+    let set = item.item().cast::<dyn crate::StepEntityBase<StepVisualTessellatedGeometricSet>>();
     let Some(live) = set.get() else {
         return Ok(Shape::default());
     };
@@ -271,7 +272,7 @@ fn tessellated_annotation_shape(
     let mut compound = Compound::default();
     builder.make_compound(&mut compound);
     let list = live.items();
-    let items: Vec<Handle<StepVisualTessellatedItem>> = list
+    let items: Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>> = list
         .get()
         .map_or_else(Vec::new, |array| array.as_slice().to_vec());
     for tessellated in items {

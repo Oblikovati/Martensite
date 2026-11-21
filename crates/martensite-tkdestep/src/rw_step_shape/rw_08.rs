@@ -81,14 +81,14 @@ impl RwStepShapeRwEdgeLoop {
             return Ok(());
         }
         let mut the_oe: Handle<StepShapeOrientedEdge> = ent.edge_list_value(1)?;
-        let the_vx_frst: Handle<StepShapeVertex> = step_live(&the_oe, "Check")?.edge_start();
-        let mut the_vx_lst: Handle<StepShapeVertex> = step_live(&the_oe, "Check")?.edge_end();
+        let the_vx_frst: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = step_live(&the_oe, "Check")?.edge_start();
+        let mut the_vx_lst: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = step_live(&the_oe, "Check")?.edge_end();
         if (nb_edg == 1) && (the_vx_frst != the_vx_lst) {
             ach.add_fail_text("Edge loop composed of single Edge : Start and End Vertex of edge are not identical", "");
         }
         for i in 2..=nb_edg {
             the_oe = ent.edge_list_value(i)?;
-            let the_vx_strt: Handle<StepShapeVertex> = step_live(&the_oe, "Check")?.edge_start();
+            let the_vx_strt: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = step_live(&the_oe, "Check")?.edge_start();
             if the_vx_strt != the_vx_lst {
                 head_to_tail = false;
             }

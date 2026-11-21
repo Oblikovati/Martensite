@@ -379,7 +379,7 @@ macro_rules! rw_block_b_0008 {
             $the_data,
             $the_num
         );
-        let mut $a_planar_curve_pair_curve1: Handle<StepGeomCurve> = Default::default();
+        let mut $a_planar_curve_pair_curve1: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
         $the_data.read_entity(
             $the_num,
             7,
@@ -388,7 +388,7 @@ macro_rules! rw_block_b_0008 {
             StepGeomCurve::static_type(),
             &mut $a_planar_curve_pair_curve1,
         )?;
-        let mut $a_planar_curve_pair_curve2: Handle<StepGeomCurve> = Default::default();
+        let mut $a_planar_curve_pair_curve2: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
         $the_data.read_entity(
             $the_num,
             8,
@@ -423,7 +423,7 @@ macro_rules! rw_block_b_0009 {
             $the_data,
             $the_num
         );
-        let mut $a_surface_pair_surface1: Handle<StepGeomSurface> = Default::default();
+        let mut $a_surface_pair_surface1: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = Default::default();
         $the_data.read_entity(
             $the_num,
             7,
@@ -432,7 +432,7 @@ macro_rules! rw_block_b_0009 {
             StepGeomSurface::static_type(),
             &mut $a_surface_pair_surface1,
         )?;
-        let mut $a_surface_pair_surface2: Handle<StepGeomSurface> = Default::default();
+        let mut $a_surface_pair_surface2: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = Default::default();
         $the_data.read_entity(
             $the_num,
             8,

@@ -15,7 +15,7 @@ step_entity! {
     /// Representation of STEP entity FeaLinearElasticity
     StepFEAFeaLinearElasticity, StepFEAFeaLinearElasticityState, "StepFEAFeaLinearElasticity", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor43d,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaLinearElasticity {
     step_methods! {
@@ -38,7 +38,7 @@ step_entity! {
     /// Representation of STEP entity FeaMassDensity
     StepFEAFeaMassDensity, StepFEAFeaMassDensityState, "StepFEAFeaMassDensity", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constant: f64,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaMassDensity {
     step_methods! {
@@ -56,13 +56,13 @@ impl StepFEAFeaMassDensity {
 step_entity! {
     /// Representation of STEP entity FeaMaterialPropertyRepresentation
     StepFEAFeaMaterialPropertyRepresentation, StepFEAFeaMaterialPropertyRepresentationState, "StepFEAFeaMaterialPropertyRepresentation", StepReprMaterialPropertyRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprPropertyDefinitionRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity FeaMaterialPropertyRepresentationItem
     StepFEAFeaMaterialPropertyRepresentationItem, StepFEAFeaMaterialPropertyRepresentationItemState, "StepFEAFeaMaterialPropertyRepresentationItem", StepReprRepresentationItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 
 step_entity! {
@@ -72,7 +72,7 @@ step_entity! {
         the_intended_analysis_code: Handle<HArray1<AsciiString>>,
         the_description: Handle<HAsciiString>,
         the_analysis_type: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 impl StepFEAFeaModel {
     step_methods! {
@@ -91,8 +91,8 @@ impl StepFEAFeaModel {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-        a_representation_context_of_items: &Handle<StepReprRepresentationContext>,
+        a_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        a_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         a_creating_software: &Handle<HAsciiString>,
         a_intended_analysis_code: &Handle<HArray1<AsciiString>>,
         a_description: &Handle<HAsciiString>,
@@ -114,20 +114,20 @@ impl StepFEAFeaModel {
 step_entity! {
     /// Representation of STEP entity FeaModel3d
     StepFEAFeaModel3d, StepFEAFeaModel3dState, "StepFEAFeaModel3d", StepFEAFeaModel, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity FeaModelDefinition
     StepFEAFeaModelDefinition, StepFEAFeaModelDefinitionState, "StepFEAFeaModelDefinition", StepReprShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 
 step_entity! {
     /// Representation of STEP entity FeaMoistureAbsorption
     StepFEAFeaMoistureAbsorption, StepFEAFeaMoistureAbsorptionState, "StepFEAFeaMoistureAbsorption", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor23d,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaMoistureAbsorption {
     step_methods! {
@@ -150,7 +150,7 @@ step_entity! {
     /// Representation of STEP entity FeaParametricPoint
     StepFEAFeaParametricPoint, StepFEAFeaParametricPointState, "StepFEAFeaParametricPoint", StepGeomPoint, {
         the_coordinates: Handle<HArray1<f64>>,
-    }
+    }, bases: [StepGeomPoint, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaParametricPoint {
     step_methods! {
@@ -172,7 +172,7 @@ impl StepFEAFeaParametricPoint {
 step_entity! {
     /// Representation of STEP entity FeaRepresentationItem
     StepFEAFeaRepresentationItem, StepFEAFeaRepresentationItemState, "StepFEAFeaRepresentationItem", StepReprRepresentationItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 
 step_entity! {
@@ -180,7 +180,7 @@ step_entity! {
     StepFEAFeaSecantCoefficientOfLinearThermalExpansion, StepFEAFeaSecantCoefficientOfLinearThermalExpansionState, "StepFEAFeaSecantCoefficientOfLinearThermalExpansion", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor23d,
         the_reference_temperature: f64,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaSecantCoefficientOfLinearThermalExpansion {
     step_methods! {
@@ -208,7 +208,7 @@ step_entity! {
     /// Representation of STEP entity FeaShellBendingStiffness
     StepFEAFeaShellBendingStiffness, StepFEAFeaShellBendingStiffnessState, "StepFEAFeaShellBendingStiffness", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor42d,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaShellBendingStiffness {
     step_methods! {
@@ -231,7 +231,7 @@ step_entity! {
     /// Representation of STEP entity FeaShellMembraneBendingCouplingStiffness
     StepFEAFeaShellMembraneBendingCouplingStiffness, StepFEAFeaShellMembraneBendingCouplingStiffnessState, "StepFEAFeaShellMembraneBendingCouplingStiffness", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor42d,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaShellMembraneBendingCouplingStiffness {
     step_methods! {
@@ -254,7 +254,7 @@ step_entity! {
     /// Representation of STEP entity FeaShellMembraneStiffness
     StepFEAFeaShellMembraneStiffness, StepFEAFeaShellMembraneStiffnessState, "StepFEAFeaShellMembraneStiffness", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor42d,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaShellMembraneStiffness {
     step_methods! {
@@ -277,7 +277,7 @@ step_entity! {
     /// Representation of STEP entity FeaShellShearStiffness
     StepFEAFeaShellShearStiffness, StepFEAFeaShellShearStiffnessState, "StepFEAFeaShellShearStiffness", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor22d,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaShellShearStiffness {
     step_methods! {

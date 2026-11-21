@@ -196,7 +196,7 @@ impl RwStepVisualRwCameraUsage {
         if !data.check_nb_params(num, 2, ach, "camera_usage")? {
             return Ok(());
         }
-        let mut a_mapping_origin: Handle<StepReprRepresentationItem> = Default::default();
+        let mut a_mapping_origin: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         data.read_entity(
             num,
             1,
@@ -205,7 +205,7 @@ impl RwStepVisualRwCameraUsage {
             StepReprRepresentationItem::static_type(),
             &mut a_mapping_origin,
         )?;
-        let mut a_mapped_representation: Handle<StepReprRepresentation> = Default::default();
+        let mut a_mapped_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = Default::default();
         data.read_entity(
             num,
             2,

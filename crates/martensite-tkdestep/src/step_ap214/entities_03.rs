@@ -54,7 +54,7 @@ impl StepAP214AutoDesignNominalDateAssignment {
     /// `init`.
     pub fn init(
         &self,
-        a_assigned_date: &Handle<StepBasicDate>,
+        a_assigned_date: &Handle<dyn crate::StepEntityBase<StepBasicDate>>,
         a_role: &Handle<StepBasicDateRole>,
         a_items: &Handle<HArray1<StepAP214AutoDesignDatedItem>>,
     ) {
@@ -241,13 +241,13 @@ impl StepAP214ExternallyDefinedGeneralProperty {
 step_entity! {
     /// Representation of STEP entity RepItemGroup
     StepAP214RepItemGroup, StepAP214RepItemGroupState, "StepAP214RepItemGroup", StepBasicGroup, {
-        the_representation_item: Handle<StepReprRepresentationItem>,
+        the_representation_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     }
 }
 impl StepAP214RepItemGroup {
     step_methods! {
-        get representation_item = the_representation_item: Handle<StepReprRepresentationItem>;
-        set set_representation_item = the_representation_item: Handle<StepReprRepresentationItem>;
+        get representation_item = the_representation_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
+        set set_representation_item = the_representation_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -262,7 +262,7 @@ impl StepAP214RepItemGroup {
             .init(a_group_name, has_group_description, a_group_description);
         let mut state = self.state.write();
         if state.the_representation_item.is_null() {
-            state.the_representation_item = Handle::new(StepReprRepresentationItem::new());
+            state.the_representation_item = Handle::new(StepReprRepresentationItem::new()).into_upcast();
         }
         drop(state);
         let field_the_representation_item = self.state.read().the_representation_item.clone();

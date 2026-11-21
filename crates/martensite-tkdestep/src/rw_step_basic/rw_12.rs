@@ -17,7 +17,7 @@ impl RwStepBasicRwExternallyDefinedItem {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepBasicExternallyDefinedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicExternallyDefinedItem>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 2, ach, "externally_defined_item")? {
             return Ok(());
@@ -40,7 +40,7 @@ impl RwStepBasicRwExternallyDefinedItem {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepBasicExternallyDefinedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicExternallyDefinedItem>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.item_id().value())?;
         sw.send_entity(&ent.source())?;
@@ -49,7 +49,7 @@ impl RwStepBasicRwExternallyDefinedItem {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepBasicExternallyDefinedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicExternallyDefinedItem>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.add_item(&ent.item_id().value());
@@ -118,7 +118,7 @@ impl RwStepBasicRwGeneralPropertyAssociation {
             StepBasicGeneralProperty::static_type(),
             &mut a_general_property,
         )?;
-        let mut a_property_definition: Handle<StepReprPropertyDefinition> = Default::default();
+        let mut a_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> = Default::default();
         the_data.read_entity(
             the_num,
             4,

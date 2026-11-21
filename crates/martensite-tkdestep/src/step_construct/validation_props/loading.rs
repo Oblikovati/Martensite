@@ -1,5 +1,6 @@
 //! Loading and reading the validation properties of `StepConstructValidationProps`.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 impl StepConstructValidationProps {
     /// `find_target`: the STEP entity validation props of a shape are assigned to, and its context.
@@ -8,7 +9,7 @@ impl StepConstructValidationProps {
         &self,
         shape: &Shape,
         target: &mut StepReprCharacterizedDefinition,
-        context: &mut Handle<StepReprRepresentationContext>,
+        context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         instance: bool,
     ) -> Result<bool, Failure> {
         // find the target STEP entity corresponding to a shape
@@ -30,8 +31,8 @@ impl StepConstructValidationProps {
     pub fn add_prop_to_target(
         &self,
         target: &StepReprCharacterizedDefinition,
-        context: &Handle<StepReprRepresentationContext>,
-        prop: &Handle<StepReprRepresentationItem>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+        prop: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         descr: &str,
     ) -> Result<bool, Failure> {
         let propdef = Handle::new(StepReprPropertyDefinition::new());
@@ -41,14 +42,14 @@ impl StepConstructValidationProps {
             &text(descr),
             target,
         );
-        let items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, 1)?;
+        let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
         step_array1_set(&items, 1, prop.clone(), WHERE)?;
         let rep = Handle::new(StepReprRepresentation::new());
         rep.init(&text(descr), &items, context);
         let pdr = Handle::new(StepReprPropertyDefinitionRepresentation::new());
         let mut represented = StepReprRepresentedDefinition::default();
         represented.set_value(&propdef.cast())?;
-        pdr.init(&represented, &rep);
+        pdr.init(&represented, &rep.upcast());
         // record SDR in order to have it written to the file
         let model = self.model()?;
         model.add_with_refs(&pdr.cast(), 0, false)?;
@@ -69,7 +70,7 @@ impl StepConstructValidationProps {
     pub fn add_prop(
         &self,
         shape: &Shape,
-        prop: &Handle<StepReprRepresentationItem>,
+        prop: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         descr: &str,
         instance: bool,
     ) -> Result<bool, Failure> {
@@ -86,7 +87,7 @@ impl StepConstructValidationProps {
         member_name: &str,
         unit: &StepBasicUnit,
         item_name: &str,
-    ) -> Result<Handle<StepReprRepresentationItem>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Failure> {
         let val = Handle::new(StepBasicMeasureValueMember::new());
         val.set_real(value);
         val.set_name(member_name);
@@ -131,12 +132,12 @@ impl StepConstructValidationProps {
         self.add_prop(shape, &point.cast(), "centroid", instance)
     }
     /// `load_props`: fills `seq` with the validation PropertyDefinitionRepresentations of the model.
-    pub fn load_props(&self, seq: &mut Vec<Handle<StandardTransient>>) -> Result<bool, Failure> {
+    pub fn load_props(&self, seq: &mut Vec<Handle<dyn Transient>>) -> Result<bool, Failure> {
         let model = self.model()?;
         for i in 1..=model.nb_entities() {
             let entity = model.value(i)?;
             let Some(pdr) = entity
-                .cast::<StepReprPropertyDefinitionRepresentation>()
+                .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>()
                 .get()
                 .map(|pdr| pdr.definition().property_definition())
             else {
@@ -153,8 +154,8 @@ impl StepConstructValidationProps {
     /// `get_prop_pd`: the product definition of a property definition, null if not found.
     pub fn get_prop_pd(
         &self,
-        pd: &Handle<StepReprPropertyDefinition>,
-    ) -> Result<Handle<StepBasicProductDefinition>, Failure> {
+        pd: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
         let cd = step_live(pd, WHERE)?.definition();
         let hgraph = self.hgraph()?;
         let hgraph = step_live(&hgraph, WHERE)?;
@@ -170,7 +171,7 @@ impl StepConstructValidationProps {
         }
         let mut prod_def = Handle::default();
         for sharing in graph.sharings(&shape_aspect.cast())?.content() {
-            let property = sharing.cast::<StepReprPropertyDefinition>();
+            let property = sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>();
             if property.is_null() {
                 return Ok(prod_def);
             }
@@ -183,7 +184,7 @@ impl StepConstructValidationProps {
     /// `get_prop_nauo`: the NAUO of a property definition, null if not found.
     pub fn get_prop_nauo(
         &self,
-        pd: &Handle<StepReprPropertyDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     ) -> Result<Handle<StepReprNextAssemblyUsageOccurrence>, Failure> {
         let pds = step_live(pd, WHERE)?
             .definition()
@@ -199,7 +200,7 @@ impl StepConstructValidationProps {
     /// `get_prop_shape(ProdDef)`: the shape of a product definition, null if not found.
     pub fn get_prop_shape(
         &self,
-        prod_def: &Handle<StepBasicProductDefinition>,
+        prod_def: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     ) -> Result<Shape, Failure> {
         // find target shape
         let binder = step_live(self.transient_process(), WHERE)?.find(&prod_def.cast());
@@ -211,7 +212,7 @@ impl StepConstructValidationProps {
     /// `get_prop_shape(PD)`: the shape of a property definition, null if not found.
     pub fn get_prop_shape_of_definition(
         &self,
-        pd: &Handle<StepReprPropertyDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     ) -> Result<Shape, Failure> {
         let prod_def = self.get_prop_pd(pd)?;
         if prod_def.is_null() {
@@ -251,7 +252,7 @@ impl StepConstructValidationProps {
     /// which it is. `val` is written before the kind is known.
     pub fn get_prop_real(
         &self,
-        item: &Handle<StepReprRepresentationItem>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         val: &mut f64,
         is_area: &mut bool,
         local_factors: &StepDataFactors,
@@ -277,7 +278,7 @@ impl StepConstructValidationProps {
     }
     /// The unit assignment of a context, null when it has none.
     fn global_unit_context(
-        context: &Handle<StepReprRepresentationContext>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) -> Handle<StepReprGlobalUnitAssignedContext> {
         if let Some(both) = context
             .cast::<StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext>()
@@ -294,8 +295,8 @@ impl StepConstructValidationProps {
     /// `get_prop_pnt`: the value of a centroid; false for another property.
     pub fn get_prop_pnt(
         &self,
-        item: &Handle<StepReprRepresentationItem>,
-        context: &Handle<StepReprRepresentationContext>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         pnt: &mut Point3,
         local_factors: &StepDataFactors,
     ) -> Result<bool, Failure> {

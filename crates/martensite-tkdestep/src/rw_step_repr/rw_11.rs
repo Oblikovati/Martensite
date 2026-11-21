@@ -14,7 +14,7 @@ impl RwStepReprRwRepresentation {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepReprRepresentation>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     ) -> Result<(), Failure> {
         rw_block_0038!(
             a_context_of_items,
@@ -35,7 +35,7 @@ impl RwStepReprRwRepresentation {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepReprRepresentation>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     ) -> Result<(), Failure> {
         rw_block_0116!(ent, i2, sw);
         Ok(())
@@ -43,7 +43,7 @@ impl RwStepReprRwRepresentation {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepReprRepresentation>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         rw_block_0190!(ent, is1, iter, nb_elem1);
@@ -170,7 +170,7 @@ impl RwStepReprRwRepresentationMap {
         if !data.check_nb_params(num, 2, ach, "representation_map")? {
             return Ok(());
         }
-        let mut a_mapping_origin: Handle<StepReprRepresentationItem> = Default::default();
+        let mut a_mapping_origin: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         data.read_entity(
             num,
             1,
@@ -179,7 +179,7 @@ impl RwStepReprRwRepresentationMap {
             StepReprRepresentationItem::static_type(),
             &mut a_mapping_origin,
         )?;
-        let mut a_mapped_representation: Handle<StepReprRepresentation> = Default::default();
+        let mut a_mapped_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = Default::default();
         data.read_entity(
             num,
             2,
@@ -276,7 +276,7 @@ impl RwStepReprRwRepresentationRelationship {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepReprRepresentationRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>,
     ) -> Result<(), Failure> {
         rw_block_0042!(a_description, a_name, a_rep1, a_rep2, ach, data, num);
         ent.init(&a_name, &a_description, &a_rep1, &a_rep2);
@@ -286,7 +286,7 @@ impl RwStepReprRwRepresentationRelationship {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepReprRepresentationRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>,
     ) -> Result<(), Failure> {
         rw_block_0165!(ent, sw);
         Ok(())
@@ -294,7 +294,7 @@ impl RwStepReprRwRepresentationRelationship {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepReprRepresentationRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.get_one_item(&ent.rep1().cast());

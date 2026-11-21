@@ -92,12 +92,12 @@ impl RwStepKinematicsRwMechanismStateRepresentation {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         the_data.read_string(the_num, 1, "name", the_arch, &mut a_name)?;
-        let mut a_items: Handle<HArray1<Handle<StepReprRepresentationItem>>> = Default::default();
-        let mut an_ent: Handle<StepReprRepresentationItem> = Default::default();
+        let mut a_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>> = Default::default();
+        let mut an_ent: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         let mut nsub: i32 = Default::default();
         if the_data.read_sub_list(the_num, 2, "items", the_arch, &mut nsub, false, 0, 0)? {
             let nb: i32 = the_data.nb_params(nsub)?;
-            a_items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, nb)?;
+            a_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb)?;
             for i in 1..=nb {
                 if the_data.read_entity(
                     nsub,
@@ -111,7 +111,7 @@ impl RwStepKinematicsRwMechanismStateRepresentation {
                 }
             }
         }
-        let mut a_context_of_items: Handle<StepReprRepresentationContext> = Default::default();
+        let mut a_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = Default::default();
         the_data.read_entity(
             the_num,
             3,
@@ -194,7 +194,7 @@ impl RwStepKinematicsRwOrientedJoint {
             the_data,
             the_num
         );
-        let mut a_oriented_edge_edge_element: Handle<StepShapeEdge> = Default::default();
+        let mut a_oriented_edge_edge_element: Handle<dyn crate::StepEntityBase<StepShapeEdge>> = Default::default();
         the_data.read_entity(
             the_num,
             4,

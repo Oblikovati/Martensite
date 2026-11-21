@@ -1,41 +1,42 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
 use crate::step_entity::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Styled item.
     StepVisualStyledItem, StepVisualStyledItemState, "StepVisualStyledItem", StepReprRepresentationItem, {
-        my_styles: Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>,
-        my_item: Handle<StandardTransient>,
-        my_repr_item: Handle<StepReprRepresentationItem>,
-    }
+        my_styles: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        my_item: Handle<dyn Transient>,
+        my_repr_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem]
 }
 impl StepVisualStyledItem {
     step_methods! {
-        set set_styles = my_styles: Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>;
-        get styles = my_styles: Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>;
-        item styles_value = my_styles: Handle<StepVisualPresentationStyleAssignment>;
+        set set_styles = my_styles: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>;
+        get styles = my_styles: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>;
+        item styles_value = my_styles: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>;
         len nb_styles = my_styles;
-        get item = my_repr_item: Handle<StepReprRepresentationItem>;
+        get item = my_repr_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_styles: &Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>,
-        a_item: &Handle<StandardTransient>,
+        a_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        a_item: &Handle<dyn Transient>,
     ) {
         let mut state = self.state.write();
         state.my_styles = a_styles.clone();
         state.my_item = a_item.clone();
-        state.my_repr_item = a_item.cast::<StepReprRepresentationItem>();
+        state.my_repr_item = a_item.cast::<dyn crate::StepEntityBase<StepReprRepresentationItem>>();
         drop(state);
         self.parent.init(a_name);
     }
@@ -156,7 +157,7 @@ step_entity! {
     /// Representation of STEP entity SurfaceStyleReflectanceAmbient
     StepVisualSurfaceStyleReflectanceAmbient, StepVisualSurfaceStyleReflectanceAmbientState, "StepVisualSurfaceStyleReflectanceAmbient", StandardTransient, {
         my_ambient_reflectance: f64,
-    }
+    }, bases: [StepVisualSurfaceStyleReflectanceAmbient]
 }
 impl StepVisualSurfaceStyleReflectanceAmbient {
     step_methods! {
@@ -170,7 +171,7 @@ step_entity! {
     /// Representation of STEP entity SurfaceStyleReflectanceAmbientDiffuse
     StepVisualSurfaceStyleReflectanceAmbientDiffuse, StepVisualSurfaceStyleReflectanceAmbientDiffuseState, "StepVisualSurfaceStyleReflectanceAmbientDiffuse", StepVisualSurfaceStyleReflectanceAmbient, {
         my_diffuse_reflectance: f64,
-    }
+    }, bases: [StepVisualSurfaceStyleReflectanceAmbient]
 }
 impl StepVisualSurfaceStyleReflectanceAmbientDiffuse {
     step_methods! {
@@ -190,8 +191,8 @@ step_entity! {
     StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular, StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecularState, "StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular", StepVisualSurfaceStyleReflectanceAmbientDiffuse, {
         my_specular_reflectance: f64,
         my_specular_exponent: f64,
-        my_specular_colour: Handle<StepVisualColour>,
-    }
+        my_specular_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    }, bases: [StepVisualSurfaceStyleReflectanceAmbient]
 }
 impl StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular {
     step_methods! {
@@ -199,8 +200,8 @@ impl StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular {
         set_copy set_specular_reflectance = my_specular_reflectance: f64;
         get specular_exponent = my_specular_exponent: f64;
         set_copy set_specular_exponent = my_specular_exponent: f64;
-        get specular_colour = my_specular_colour: Handle<StepVisualColour>;
-        set set_specular_colour = my_specular_colour: Handle<StepVisualColour>;
+        get specular_colour = my_specular_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
+        set set_specular_colour = my_specular_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -210,7 +211,7 @@ impl StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular {
         the_diffuse_reflectance: f64,
         the_specular_reflectance: f64,
         the_specular_exponent: f64,
-        the_specular_colour: &Handle<StepVisualColour>,
+        the_specular_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) {
         self.parent
             .init(the_ambient_reflectance, the_diffuse_reflectance);
@@ -225,22 +226,22 @@ step_entity! {
     /// Representation of STEP entity SurfaceStyleRendering
     StepVisualSurfaceStyleRendering, StepVisualSurfaceStyleRenderingState, "StepVisualSurfaceStyleRendering", StandardTransient, {
         my_rendering_method: StepVisualShadingSurfaceMethod,
-        my_surface_colour: Handle<StepVisualColour>,
-    }
+        my_surface_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    }, bases: [StepVisualSurfaceStyleRendering]
 }
 impl StepVisualSurfaceStyleRendering {
     step_methods! {
         get rendering_method = my_rendering_method: StepVisualShadingSurfaceMethod;
         set_copy set_rendering_method = my_rendering_method: StepVisualShadingSurfaceMethod;
-        get surface_colour = my_surface_colour: Handle<StepVisualColour>;
-        set set_surface_colour = my_surface_colour: Handle<StepVisualColour>;
+        get surface_colour = my_surface_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
+        set set_surface_colour = my_surface_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         the_rendering_method: StepVisualShadingSurfaceMethod,
-        the_surface_colour: &Handle<StepVisualColour>,
+        the_surface_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) {
         let mut state = self.state.write();
         state.my_rendering_method = the_rendering_method;
@@ -252,7 +253,7 @@ step_entity! {
     /// Representation of STEP entity SurfaceStyleRenderingWithProperties
     StepVisualSurfaceStyleRenderingWithProperties, StepVisualSurfaceStyleRenderingWithPropertiesState, "StepVisualSurfaceStyleRenderingWithProperties", StepVisualSurfaceStyleRendering, {
         my_properties: Handle<HArray1<StepVisualRenderingPropertiesSelect>>,
-    }
+    }, bases: [StepVisualSurfaceStyleRendering]
 }
 impl StepVisualSurfaceStyleRenderingWithProperties {
     step_methods! {
@@ -264,7 +265,7 @@ impl StepVisualSurfaceStyleRenderingWithProperties {
     pub fn init(
         &self,
         the_surface_style_rendering_rendering_method: StepVisualShadingSurfaceMethod,
-        the_surface_style_rendering_surface_colour: &Handle<StepVisualColour>,
+        the_surface_style_rendering_surface_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         the_properties: &Handle<HArray1<StepVisualRenderingPropertiesSelect>>,
     ) {
         self.parent.init(

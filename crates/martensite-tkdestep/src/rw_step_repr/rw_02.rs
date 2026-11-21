@@ -103,12 +103,12 @@ impl RwStepReprRwCharacterizedRepresentation {
             return Ok(());
         }
         rw_block_0149!(a_description, a_name, ach, data, num);
-        let mut an_items: Handle<HArray1<Handle<StepReprRepresentationItem>>> = Default::default();
-        let mut an_item: Handle<StepReprRepresentationItem> = Default::default();
+        let mut an_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>> = Default::default();
+        let mut an_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         let mut nsub: i32 = Default::default();
         if data.read_sub_list(num, 3, "items", ach, &mut nsub, false, 0, 0)? {
             let nb: i32 = data.nb_params(nsub)?;
-            an_items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, nb)?;
+            an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb)?;
             for i in 1..=nb {
                 if data.read_entity(
                     nsub,
@@ -122,7 +122,7 @@ impl RwStepReprRwCharacterizedRepresentation {
                 }
             }
         }
-        let mut a_context_of_items: Handle<StepReprRepresentationContext> = Default::default();
+        let mut a_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = Default::default();
         data.read_entity(
             num,
             4,

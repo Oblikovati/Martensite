@@ -121,7 +121,7 @@ fn init_round_trip_step_basic_product() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_description = Handle::new(HAsciiString::new("sample"));
     let a_frame_of_reference =
-        Handle::new(HArray1::<Handle<StepBasicProductContext>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>::with_bounds(1, 2).unwrap());
     let object = StepBasicProduct::new();
     object.init(&a_id, &a_name, &a_description, &a_frame_of_reference);
     assert!(object.id() == a_id);
@@ -167,8 +167,8 @@ fn init_round_trip_step_basic_product_category_relationship() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let has_description = true;
     let a_description = Handle::new(HAsciiString::new("sample"));
-    let a_category = Handle::new(StepBasicProductCategory::new());
-    let a_sub_category = Handle::new(StepBasicProductCategory::new());
+    let a_category = Handle::new(StepBasicProductCategory::new()).into_upcast();
+    let a_sub_category = Handle::new(StepBasicProductRelatedProductCategory::new()).into_upcast();
     let object = StepBasicProductCategoryRelationship::new();
     object.init(
         &a_name,
@@ -246,7 +246,7 @@ fn init_round_trip_step_basic_product_definition() {
     let a_formation = Handle::new(StepBasicProductDefinitionFormation::new());
     let a_frame_of_reference = Handle::new(StepBasicProductDefinitionContext::new());
     let object = StepBasicProductDefinition::new();
-    object.init(&a_id, &a_description, &a_formation, &a_frame_of_reference);
+    object.init(&a_id, &a_description, &a_formation.upcast(), &a_frame_of_reference.upcast());
     assert!(object.id() == a_id);
     assert!(object.description() == a_description);
     assert!(object.formation() == a_formation);
@@ -288,7 +288,7 @@ fn init_round_trip_step_basic_product_definition_effectivity() {
     let a_id = Handle::new(HAsciiString::new("sample"));
     let a_usage = Handle::new(StepBasicProductDefinitionRelationship::new());
     let object = StepBasicProductDefinitionEffectivity::new();
-    object.init(&a_id, &a_usage);
+    object.init(&a_id, &a_usage.upcast());
     assert!(object.usage() == a_usage);
 }
 
@@ -338,8 +338,8 @@ fn init_round_trip_step_basic_product_definition_formation_relationship() {
         &a_id,
         &a_name,
         &a_description,
-        &a_relating_product_definition_formation,
-        &a_related_product_definition_formation,
+        &a_relating_product_definition_formation.upcast(),
+        &a_related_product_definition_formation.upcast(),
     );
     assert!(object.id() == a_id);
     assert!(object.name() == a_name);

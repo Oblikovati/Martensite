@@ -8,7 +8,8 @@ use crate::step_entity::step_live;
 use crate::step_shape::StepShapeVertexLoop;
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Edge, Shape, Wire};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::Orientation;
 
 /// Translate vertex loop.
@@ -73,7 +74,7 @@ impl StepToTopoDSTranslateVertexLoop {
             StepToTopoDSTranslateVertex::with_vertex(&live.loop_vertex(), tool, nm_tool, factors)?;
         if !translated.is_done() {
             let process = tool.transient_process();
-            let entity: Handle<StandardTransient> = vertex_loop.cast();
+            let entity: Handle<dyn Transient> = vertex_loop.cast();
             step_live(&process, "StepToTopoDSTranslateVertexLoop")?.add_warning_text(
                 &entity,
                 "VertexLoop not mapped to TopoDS ",

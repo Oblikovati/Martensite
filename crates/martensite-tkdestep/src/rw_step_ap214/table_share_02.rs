@@ -3,11 +3,11 @@ use crate::step_rw::*;
 
 /// A part of the table.
 pub(super) const TABLE_SHARE_02: &[ShareRow] = &[
-    share_row!(349, StepVisualCameraImage, RwStepVisualRwCameraImage),
-    share_row!(350, StepVisualCameraImage, RwStepVisualRwCameraImage),
+    share_row!(349, StepVisualCameraImage2dWithScale, RwStepVisualRwCameraImage),
+    share_row!(350, StepVisualCameraImage3dWithScale, RwStepVisualRwCameraImage),
     share_row!(
         351,
-        StepGeomCartesianTransformationOperator,
+        StepGeomCartesianTransformationOperator2d,
         RwStepGeomRwCartesianTransformationOperator
     ),
     share_row!(352, StepBasicDerivedUnit, RwStepBasicRwDerivedUnit),
@@ -42,7 +42,7 @@ pub(super) const TABLE_SHARE_02: &[ShareRow] = &[
         RwStepAP214RwAutoDesignDocumentReference
     ),
     share_row!(367, StepBasicDocument, RwStepBasicRwDocument),
-    share_row!(368, StepBasicDocument, RwStepBasicRwDocument),
+    share_row!(368, StepBasicDigitalDocument, RwStepBasicRwDocument),
     share_row!(
         369,
         StepBasicDocumentRelationship,
@@ -92,12 +92,12 @@ pub(super) const TABLE_SHARE_02: &[ShareRow] = &[
     ),
     share_row!(
         380,
-        StepReprAssemblyComponentUsage,
+        StepReprNextAssemblyUsageOccurrence,
         RwStepReprRwAssemblyComponentUsage
     ),
     share_row!(
         381,
-        StepReprAssemblyComponentUsage,
+        StepReprPromissoryUsageOccurrence,
         RwStepReprRwAssemblyComponentUsage
     ),
     share_row!(
@@ -451,12 +451,12 @@ pub(super) const TABLE_SHARE_02: &[ShareRow] = &[
     ),
     share_row!(
         483,
-        StepReprCompoundRepresentationItem,
+        StepReprValueRange,
         RwStepReprRwCompoundRepresentationItem
     ),
     share_row!(
         484,
-        StepReprShapeAspectRelationship,
+        StepReprShapeAspectDerivingRelationship,
         RwStepReprRwShapeAspectRelationship
     ),
     share_row!(

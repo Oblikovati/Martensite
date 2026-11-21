@@ -44,7 +44,7 @@ step_entity! {
     /// Representation of STEP entity FeaTangentialCoefficientOfLinearThermalExpansion
     StepFEAFeaTangentialCoefficientOfLinearThermalExpansion, StepFEAFeaTangentialCoefficientOfLinearThermalExpansionState, "StepFEAFeaTangentialCoefficientOfLinearThermalExpansion", StepFEAFeaMaterialPropertyRepresentationItem, {
         the_fea_constants: StepFEASymmetricTensor23d,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAFeaTangentialCoefficientOfLinearThermalExpansion {
     step_methods! {
@@ -107,19 +107,19 @@ impl StepFEAFreedomsList {
 step_entity! {
     /// Representation of STEP entity GeometricNode
     StepFEAGeometricNode, StepFEAGeometricNodeState, "StepFEAGeometricNode", StepFEANodeRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity Node
     StepFEANode, StepFEANodeState, "StepFEANode", StepFEANodeRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity NodeDefinition
     StepFEANodeDefinition, StepFEANodeDefinitionState, "StepFEANodeDefinition", StepReprShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 
 step_entity! {
@@ -152,7 +152,7 @@ step_entity! {
     /// Representation of STEP entity NodeRepresentation
     StepFEANodeRepresentation, StepFEANodeRepresentationState, "StepFEANodeRepresentation", StepReprRepresentation, {
         the_model_ref: Handle<StepFEAFeaModel>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 impl StepFEANodeRepresentation {
     step_methods! {
@@ -164,8 +164,8 @@ impl StepFEANodeRepresentation {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-        a_representation_context_of_items: &Handle<StepReprRepresentationContext>,
+        a_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        a_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         a_model_ref: &Handle<StepFEAFeaModel>,
     ) {
         self.parent.init(
@@ -181,7 +181,7 @@ step_entity! {
     /// Representation of STEP entity NodeSet
     StepFEANodeSet, StepFEANodeSetState, "StepFEANodeSet", StepGeomGeometricRepresentationItem, {
         the_nodes: Handle<HArray1<Handle<StepFEANodeRepresentation>>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEANodeSet {
     step_methods! {
@@ -203,20 +203,20 @@ impl StepFEANodeSet {
 step_entity! {
     /// Representation of STEP entity NodeWithSolutionCoordinateSystem
     StepFEANodeWithSolutionCoordinateSystem, StepFEANodeWithSolutionCoordinateSystemState, "StepFEANodeWithSolutionCoordinateSystem", StepFEANode, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity NodeWithVector
     StepFEANodeWithVector, StepFEANodeWithVectorState, "StepFEANodeWithVector", StepFEANode, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity ParametricCurve3dElementCoordinateDirection
     StepFEAParametricCurve3dElementCoordinateDirection, StepFEAParametricCurve3dElementCoordinateDirectionState, "StepFEAParametricCurve3dElementCoordinateDirection", StepFEAFeaRepresentationItem, {
         the_orientation: Handle<StepGeomDirection>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAParametricCurve3dElementCoordinateDirection {
     step_methods! {
@@ -239,7 +239,7 @@ step_entity! {
     /// Representation of STEP entity ParametricCurve3dElementCoordinateSystem
     StepFEAParametricCurve3dElementCoordinateSystem, StepFEAParametricCurve3dElementCoordinateSystemState, "StepFEAParametricCurve3dElementCoordinateSystem", StepFEAFeaRepresentationItem, {
         the_direction: Handle<StepFEAParametricCurve3dElementCoordinateDirection>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAParametricCurve3dElementCoordinateSystem {
     step_methods! {
@@ -263,7 +263,7 @@ step_entity! {
     StepFEAParametricSurface3dElementCoordinateSystem, StepFEAParametricSurface3dElementCoordinateSystemState, "StepFEAParametricSurface3dElementCoordinateSystem", StepFEAFeaRepresentationItem, {
         the_axis: i32,
         the_angle: f64,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAParametricSurface3dElementCoordinateSystem {
     step_methods! {

@@ -1,7 +1,8 @@
 //! `STEPSelectionsSelectForTransfer`: the roots of the transfer process.
 use crate::step_entity::step_live;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkxsbase::if_select::{
     IFSelectSelectDeduct, IFSelectSelectDeductBase, IFSelectSelectExtract,
@@ -18,7 +19,7 @@ use martensite_tkxsbase::xs_control::{XSControlSelectForTransfer, XSControlTrans
 pub struct STEPSelectionsSelectForTransfer {
     base: XSControlSelectForTransfer,
 }
-impl_transient!(STEPSelectionsSelectForTransfer, "STEPSelectionsSelectForTransfer", XSControlSelectForTransfer, base, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+impl_transient!(STEPSelectionsSelectForTransfer, "STEPSelectionsSelectForTransfer", XSControlSelectForTransfer, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
 
 impl STEPSelectionsSelectForTransfer {
     /// `STEPSelectionsSelectForTransfer()`.
@@ -44,7 +45,7 @@ impl IFSelectSelectExtract for STEPSelectionsSelectForTransfer {
     fn sort(
         &self,
         rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         self.base.sort(rank, ent, model)

@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
@@ -10,12 +6,17 @@ use crate::step_data::*;
 use crate::step_entity::*;
 #[allow(unused_imports)]
 use crate::step_geom::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Colour specification.
     StepVisualColourSpecification, StepVisualColourSpecificationState, "StepVisualColourSpecification", StepVisualColour, {
         name: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_visual::StepVisualColour]
 }
 impl StepVisualColourSpecification {
     step_methods! {
@@ -29,9 +30,9 @@ step_entity! {
     /// Representation of STEP entity ComplexTriangulatedFace
     StepVisualComplexTriangulatedFace, StepVisualComplexTriangulatedFaceState, "StepVisualComplexTriangulatedFace", StepVisualTessellatedFace, {
         my_pnindex: Handle<HArray1<i32>>,
-        my_triangle_strips: Handle<HArray1<Handle<StandardTransient>>>,
-        my_triangle_fans: Handle<HArray1<Handle<StandardTransient>>>,
-    }
+        my_triangle_strips: Handle<HArray1<Handle<dyn Transient>>>,
+        my_triangle_fans: Handle<HArray1<Handle<dyn Transient>>>,
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedFace, crate::step_visual::StepVisualTessellatedStructuredItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualComplexTriangulatedFace {
     step_methods! {
@@ -39,11 +40,11 @@ impl StepVisualComplexTriangulatedFace {
         set set_pnindex = my_pnindex: Handle<HArray1<i32>>;
         len nb_pnindex = my_pnindex;
         item pnindex_value = my_pnindex: i32;
-        get triangle_strips = my_triangle_strips: Handle<HArray1<Handle<StandardTransient>>>;
-        set set_triangle_strips = my_triangle_strips: Handle<HArray1<Handle<StandardTransient>>>;
+        get triangle_strips = my_triangle_strips: Handle<HArray1<Handle<dyn Transient>>>;
+        set set_triangle_strips = my_triangle_strips: Handle<HArray1<Handle<dyn Transient>>>;
         len nb_triangle_strips = my_triangle_strips;
-        get triangle_fans = my_triangle_fans: Handle<HArray1<Handle<StandardTransient>>>;
-        set set_triangle_fans = my_triangle_fans: Handle<HArray1<Handle<StandardTransient>>>;
+        get triangle_fans = my_triangle_fans: Handle<HArray1<Handle<dyn Transient>>>;
+        set set_triangle_fans = my_triangle_fans: Handle<HArray1<Handle<dyn Transient>>>;
         len nb_triangle_fans = my_triangle_fans;
     }
     /// `init`.
@@ -58,8 +59,8 @@ impl StepVisualComplexTriangulatedFace {
         the_has_tessellated_face_geometric_link: bool,
         the_tessellated_face_geometric_link: &StepVisualFaceOrSurface,
         the_pnindex: &Handle<HArray1<i32>>,
-        the_triangle_strips: &Handle<HArray1<Handle<StandardTransient>>>,
-        the_triangle_fans: &Handle<HArray1<Handle<StandardTransient>>>,
+        the_triangle_strips: &Handle<HArray1<Handle<dyn Transient>>>,
+        the_triangle_fans: &Handle<HArray1<Handle<dyn Transient>>>,
     ) {
         self.parent.init(
             the_representation_item_name,
@@ -80,9 +81,9 @@ step_entity! {
     /// Representation of STEP entity ComplexTriangulatedSurfaceSet
     StepVisualComplexTriangulatedSurfaceSet, StepVisualComplexTriangulatedSurfaceSetState, "StepVisualComplexTriangulatedSurfaceSet", StepVisualTessellatedSurfaceSet, {
         my_pnindex: Handle<HArray1<i32>>,
-        my_triangle_strips: Handle<HArray1<Handle<StandardTransient>>>,
-        my_triangle_fans: Handle<HArray1<Handle<StandardTransient>>>,
-    }
+        my_triangle_strips: Handle<HArray1<Handle<dyn Transient>>>,
+        my_triangle_fans: Handle<HArray1<Handle<dyn Transient>>>,
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedSurfaceSet, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualComplexTriangulatedSurfaceSet {
     step_methods! {
@@ -90,11 +91,11 @@ impl StepVisualComplexTriangulatedSurfaceSet {
         set set_pnindex = my_pnindex: Handle<HArray1<i32>>;
         len nb_pnindex = my_pnindex;
         item pnindex_value = my_pnindex: i32;
-        get triangle_strips = my_triangle_strips: Handle<HArray1<Handle<StandardTransient>>>;
-        set set_triangle_strips = my_triangle_strips: Handle<HArray1<Handle<StandardTransient>>>;
+        get triangle_strips = my_triangle_strips: Handle<HArray1<Handle<dyn Transient>>>;
+        set set_triangle_strips = my_triangle_strips: Handle<HArray1<Handle<dyn Transient>>>;
         len nb_triangle_strips = my_triangle_strips;
-        get triangle_fans = my_triangle_fans: Handle<HArray1<Handle<StandardTransient>>>;
-        set set_triangle_fans = my_triangle_fans: Handle<HArray1<Handle<StandardTransient>>>;
+        get triangle_fans = my_triangle_fans: Handle<HArray1<Handle<dyn Transient>>>;
+        set set_triangle_fans = my_triangle_fans: Handle<HArray1<Handle<dyn Transient>>>;
         len nb_triangle_fans = my_triangle_fans;
     }
     /// `init`.
@@ -107,8 +108,8 @@ impl StepVisualComplexTriangulatedSurfaceSet {
         the_tessellated_surface_set_pnmax: i32,
         the_tessellated_surface_set_normals: &Handle<HArray2<f64>>,
         the_pnindex: &Handle<HArray1<i32>>,
-        the_triangle_strips: &Handle<HArray1<Handle<StandardTransient>>>,
-        the_triangle_fans: &Handle<HArray1<Handle<StandardTransient>>>,
+        the_triangle_strips: &Handle<HArray1<Handle<dyn Transient>>>,
+        the_triangle_fans: &Handle<HArray1<Handle<dyn Transient>>>,
     ) {
         self.parent.init(
             the_representation_item_name,
@@ -127,7 +128,7 @@ step_entity! {
     /// Composite text.
     StepVisualCompositeText, StepVisualCompositeTextState, "StepVisualCompositeText", StepGeomGeometricRepresentationItem, {
         collected_text: Handle<HArray1<StepVisualTextOrCharacter>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualCompositeText {
     step_methods! {
@@ -151,7 +152,7 @@ step_entity! {
     /// Composite text with extent.
     StepVisualCompositeTextWithExtent, StepVisualCompositeTextWithExtentState, "StepVisualCompositeTextWithExtent", StepVisualCompositeText, {
         extent: Handle<StepVisualPlanarExtent>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualCompositeTextWithExtent {
     step_methods! {
@@ -196,7 +197,7 @@ step_entity! {
     /// Context dependent over riding styled item.
     StepVisualContextDependentOverRidingStyledItem, StepVisualContextDependentOverRidingStyledItemState, "StepVisualContextDependentOverRidingStyledItem", StepVisualOverRidingStyledItem, {
         style_context: Handle<HArray1<StepVisualStyleContextSelect>>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualOverRidingStyledItem]
 }
 impl StepVisualContextDependentOverRidingStyledItem {
     step_methods! {
@@ -209,9 +210,9 @@ impl StepVisualContextDependentOverRidingStyledItem {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_styles: &Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>,
-        a_item: &Handle<StandardTransient>,
-        a_over_ridden_style: &Handle<StepVisualStyledItem>,
+        a_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        a_item: &Handle<dyn Transient>,
+        a_over_ridden_style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
         a_style_context: &Handle<HArray1<StepVisualStyleContextSelect>>,
     ) {
         self.state.write().style_context = a_style_context.clone();
@@ -224,7 +225,7 @@ step_entity! {
     /// Coordinates list.
     StepVisualCoordinatesList, StepVisualCoordinatesListState, "StepVisualCoordinatesList", StepVisualTessellatedItem, {
         my_points: Handle<HArray1<Xyz>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualCoordinatesList {
     step_methods! {
@@ -240,14 +241,14 @@ impl StepVisualCoordinatesList {
 step_entity! {
     /// Representation of STEP entity CubicBezierTessellatedEdge
     StepVisualCubicBezierTessellatedEdge, StepVisualCubicBezierTessellatedEdgeState, "StepVisualCubicBezierTessellatedEdge", StepVisualTessellatedEdge, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedStructuredItem, crate::step_visual::StepVisualTessellatedItem]
 }
 
 step_entity! {
     /// Representation of STEP entity CubicBezierTriangulatedFace
     StepVisualCubicBezierTriangulatedFace, StepVisualCubicBezierTriangulatedFaceState, "StepVisualCubicBezierTriangulatedFace", StepVisualTessellatedFace, {
         my_ctriangles: Handle<HArray2<i32>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedFace, crate::step_visual::StepVisualTessellatedStructuredItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualCubicBezierTriangulatedFace {
     step_methods! {
@@ -294,7 +295,7 @@ step_entity! {
         name: Handle<HAsciiString>,
         curve_font: StepVisualCurveStyleFontSelect,
         curve_width: StepBasicSizeSelect,
-        curve_colour: Handle<StepVisualColour>,
+        curve_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     }
 }
 impl StepVisualCurveStyle {
@@ -305,8 +306,8 @@ impl StepVisualCurveStyle {
         get curve_font = curve_font: StepVisualCurveStyleFontSelect;
         set set_curve_width = curve_width: StepBasicSizeSelect;
         get curve_width = curve_width: StepBasicSizeSelect;
-        set set_curve_colour = curve_colour: Handle<StepVisualColour>;
-        get curve_colour = curve_colour: Handle<StepVisualColour>;
+        set set_curve_colour = curve_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
+        get curve_colour = curve_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
     }
     /// `init`.
     pub fn init(
@@ -314,7 +315,7 @@ impl StepVisualCurveStyle {
         a_name: &Handle<HAsciiString>,
         a_curve_font: &StepVisualCurveStyleFontSelect,
         a_curve_width: &StepBasicSizeSelect,
-        a_curve_colour: &Handle<StepVisualColour>,
+        a_curve_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) {
         let mut state = self.state.write();
         state.name = a_name.clone();

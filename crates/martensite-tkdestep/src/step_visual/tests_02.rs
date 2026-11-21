@@ -1,13 +1,14 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
 use crate::step_entity::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 #[test]
 fn init_round_trip_step_visual_complex_triangulated_surface_set() {
@@ -18,9 +19,9 @@ fn init_round_trip_step_visual_complex_triangulated_surface_set() {
         Handle::new(HArray2::<f64>::with_bounds(1, 2, 1, 2).unwrap());
     let the_pnindex = Handle::new(HArray1::<i32>::with_bounds(1, 2).unwrap());
     let the_triangle_strips =
-        Handle::new(HArray1::<Handle<StandardTransient>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn Transient>>::with_bounds(1, 2).unwrap());
     let the_triangle_fans =
-        Handle::new(HArray1::<Handle<StandardTransient>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn Transient>>::with_bounds(1, 2).unwrap());
     let object = StepVisualComplexTriangulatedSurfaceSet::new();
     object.init(
         &the_representation_item_name,
@@ -185,7 +186,7 @@ fn init_round_trip_step_visual_curve_style() {
     let a_curve_width = StepBasicSizeSelect::default();
     let a_curve_colour = Handle::new(StepVisualColour::new());
     let object = StepVisualCurveStyle::new();
-    object.init(&a_name, &a_curve_font, &a_curve_width, &a_curve_colour);
+    object.init(&a_name, &a_curve_font, &a_curve_width, &a_curve_colour.upcast());
     assert!(object.name() == a_name);
     assert!(object.curve_colour() == a_curve_colour);
 }
@@ -347,7 +348,7 @@ fn init_round_trip_step_visual_fill_area_style_colour() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_fill_colour = Handle::new(StepVisualColour::new());
     let object = StepVisualFillAreaStyleColour::new();
-    object.init(&a_name, &a_fill_colour);
+    object.init(&a_name, &a_fill_colour.upcast());
     assert!(object.name() == a_name);
     assert!(object.fill_colour() == a_fill_colour);
 }

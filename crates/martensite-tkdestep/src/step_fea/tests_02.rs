@@ -153,7 +153,7 @@ fn runtime_type_step_fea_fea_model() {
 fn init_round_trip_step_fea_fea_model() {
     let a_representation_name = Handle::new(HAsciiString::new("sample"));
     let a_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
     let a_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let a_creating_software = Handle::new(HAsciiString::new("sample"));
     let a_intended_analysis_code = Handle::new(HArray1::<AsciiString>::with_bounds(1, 2).unwrap());
@@ -163,7 +163,7 @@ fn init_round_trip_step_fea_fea_model() {
     object.init(
         &a_representation_name,
         &a_representation_items,
-        &a_representation_context_of_items,
+        &a_representation_context_of_items.upcast(),
         &a_creating_software,
         &a_intended_analysis_code,
         &a_description,

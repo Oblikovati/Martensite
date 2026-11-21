@@ -21,7 +21,8 @@ use martensite_tkbrep::topods::{self, Compound, Shape, Solid};
 use martensite_tkbrep::toptools::IndexedMapOfShape;
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::{Axis3, Direction3, Point3, Transform3, TransformForm};
 use martensite_tkmath::toploc::Location;
@@ -34,7 +35,7 @@ impl StepControlActorRead {
     /// Whether this shape_representation reads as non-manifold, and the tool made ready for it.
     fn prepare_manifold_mode(
         &self,
-        sr: &Handle<StepShapeShapeRepresentation>,
+        sr: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
         tp: &Handle<TransferTransientProcess>,
     ) -> Result<bool, Failure> {
         let model = Self::tp_model(tp)?;
@@ -61,7 +62,7 @@ impl StepControlActorRead {
     /// `None` when the item is not such a placement and has to be transferred.
     fn root_placement_trsf(
         tp: &Handle<TransferTransientProcess>,
-        item: &Handle<StandardTransient>,
+        item: &Handle<dyn Transient>,
         factors: &StepDataFactors,
         trsf: &mut Transform3,
     ) -> Result<Option<()>, Failure> {
@@ -101,7 +102,7 @@ impl StepControlActorRead {
     /// `transfer_entity(sr, TP, local_factors, isBound, use_trsf, progress)`.
     pub(super) fn transfer_shape_representation(
         &self,
-        sr: &Handle<StepShapeShapeRepresentation>,
+        sr: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         is_bound: &mut bool,
@@ -139,7 +140,7 @@ impl StepControlActorRead {
         let mut rank = 1;
         while rank <= nb && scope.more() {
             let range = scope.next(1.0);
-            let item: Handle<StandardTransient> = live.items_value(rank)?.cast();
+            let item: Handle<dyn Transient> = live.items_value(rank)?.cast();
             rank += 1;
             if item.is_null() {
                 continue;
@@ -236,7 +237,7 @@ impl StepControlActorRead {
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
         let live = step_live(cdsr, "StepControlActorRead")?;
-        let srr: Handle<StepReprShapeRepresentationRelationship> =
+        let srr: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> =
             live.representation_relation().cast();
         let Some(live_srr) = srr.get() else {
             return Ok(Handle::default());
@@ -252,13 +253,13 @@ impl StepControlActorRead {
         } else {
             live_srr.rep1()
         };
-        let rep: Handle<StepShapeShapeRepresentation> = rep1.cast();
+        let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = rep1.cast();
         if reversed {
             let text = "SRR reverses relation defined by NAUO; NAUO definition is taken";
             live_tp.add_warning_text(&srr.cast(), text, "");
         }
         let mut trsf = Transform3::default();
-        let relation: Handle<StepReprRepresentationRelationship> = srr.cast();
+        let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> = srr.cast();
         let iatrsf = self.compute_srrwt(&relation, tp, &mut trsf, factors)?;
         let binder: Handle<dyn TransferBinder> = if live_tp.is_bound(&rep.cast()) {
             live_tp.find(&rep.cast())
@@ -283,7 +284,7 @@ impl StepControlActorRead {
     /// `transfer_entity(und, TP, local_factors, nbrep, use_trsf, progress)`.
     pub(super) fn transfer_srr(
         &self,
-        und: &Handle<StepReprShapeRepresentationRelationship>,
+        und: &Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         nb_rep: i32,
@@ -300,7 +301,7 @@ impl StepControlActorRead {
         let mut one_result = Shape::default();
         let mut nsh = 0;
         let mut trsf = Transform3::default();
-        let relation: Handle<StepReprRepresentationRelationship> = und.cast();
+        let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> = und.cast();
         let iatrsf = self.compute_srrwt(&relation, tp, &mut trsf, factors)?;
         let scope = ProgressScope::unnamed(progress, 2.0, false);
         for rank in 1..=2 {
@@ -312,7 +313,7 @@ impl StepControlActorRead {
                 continue;
             }
             let rep = if rank == 1 { live.rep1() } else { live.rep2() };
-            let item: Handle<StepShapeShapeRepresentation> = rep.cast();
+            let item: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = rep.cast();
             let binder: Handle<dyn TransferBinder> = if live_tp.is_bound(&item.cast()) {
                 live_tp.find(&item.cast())
             } else {

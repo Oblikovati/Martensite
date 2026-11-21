@@ -10,7 +10,8 @@ use crate::step_to_geom::StepToGeom;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Edge, Face, Shape, Vertex, Wire};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dLine;
 use martensite_tkg3d::geom::{GeomLine, GeomPlane, GeomPoint, GeomSurface};
 use martensite_tkg3d::top_abs::Orientation;
@@ -128,7 +129,7 @@ impl StepToTopoDSTranslatePolyLoop {
         let live = step_live(poly_loop, "StepToTopoDSTranslatePolyLoop")?;
         if surface.cast::<GeomPlane>().is_null() {
             let process = tool.transient_process();
-            let entity: Handle<StandardTransient> = poly_loop.cast();
+            let entity: Handle<dyn Transient> = poly_loop.cast();
             step_live(&process, "StepToTopoDSTranslatePolyLoop")?.add_fail_text(
                 &entity,
                 "Surface not planar in a FacetedBRep !",

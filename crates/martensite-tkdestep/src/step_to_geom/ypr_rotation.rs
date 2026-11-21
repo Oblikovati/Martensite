@@ -28,7 +28,7 @@ fn ypr_array(yaw: f64, pitch: f64, roll: f64) -> Result<Handle<HArray1<f64>>, Fa
 /// The only plane angle unit of a context, null when there is not exactly one.
 fn single_plane_angle_unit(
     context: &StepReprGlobalUnitAssignedContext,
-) -> Result<Handle<StepBasicNamedUnit>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, Failure> {
     let mut found = Vec::new();
     for index in 1..=context.nb_units() {
         let unit = context.units_value(index)?;
@@ -50,17 +50,17 @@ fn single_plane_angle_unit(
 /// The measure of a conversion based unit; a null one is the null dereference.
 fn conversion_measure(
     unit: &StepBasicConversionBasedUnitAndPlaneAngleUnit,
-) -> Result<Handle<StepBasicMeasureWithUnit>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>, Failure> {
     let factor = unit.conversion_factor();
     step_live(&factor, WHERE)?;
-    let measure = factor.cast::<StepBasicMeasureWithUnit>();
+    let measure = factor.cast::<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>();
     if measure.is_some() {
         return Ok(measure);
     }
     Ok(factor
-        .cast::<StepReprReprItemAndMeasureWithUnit>()
+        .cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>()
         .get()
-        .map(StepReprReprItemAndMeasureWithUnit::get_measure_with_unit)
+        .map(|item| item.get_measure_with_unit())
         .unwrap_or_default())
 }
 
@@ -284,7 +284,7 @@ mod tests {
             StepBasicSiPrefix::SpMilli,
             StepBasicSiUnitName::SunRadian,
         );
-        let units = step_new_array1::<Handle<StepBasicNamedUnit>>(1, 1).unwrap();
+        let units = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, 1).unwrap();
         step_array1_set(&units, 1, unit.cast(), WHERE).unwrap();
         let context = Handle::new(StepReprGlobalUnitAssignedContext::new());
         context.init(
@@ -374,7 +374,7 @@ mod tests {
                 .unwrap()
                 .is_null()
         );
-        let units = step_new_array1::<Handle<StepBasicNamedUnit>>(1, 0).unwrap();
+        let units = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, 0).unwrap();
         let context = Handle::new(StepReprGlobalUnitAssignedContext::new());
         context.init(
             &Handle::new(HAsciiString::new("")),

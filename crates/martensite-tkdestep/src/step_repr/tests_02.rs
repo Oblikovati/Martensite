@@ -85,7 +85,7 @@ fn runtime_type_step_repr_global_unit_assigned_context() {
 fn init_round_trip_step_repr_global_unit_assigned_context() {
     let a_context_identifier = Handle::new(HAsciiString::new("sample"));
     let a_context_type = Handle::new(HAsciiString::new("sample"));
-    let a_units = Handle::new(HArray1::<Handle<StepBasicNamedUnit>>::with_bounds(1, 2).unwrap());
+    let a_units = Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>::with_bounds(1, 2).unwrap());
     let object = StepReprGlobalUnitAssignedContext::new();
     object.init(&a_context_identifier, &a_context_type, &a_units);
     assert!(object.units() == a_units);
@@ -130,8 +130,8 @@ fn init_round_trip_step_repr_item_defined_transformation() {
     object.init(
         &a_name,
         &a_description,
-        &a_transform_item1,
-        &a_transform_item2,
+        &a_transform_item1.upcast(),
+        &a_transform_item2.upcast(),
     );
     assert!(object.name() == a_name);
     assert!(object.description() == a_description);
@@ -162,7 +162,7 @@ fn init_round_trip_step_repr_mapped_item() {
     let a_mapping_source = Handle::new(StepReprRepresentationMap::new());
     let a_mapping_target = Handle::new(StepReprRepresentationItem::new());
     let object = StepReprMappedItem::new();
-    object.init(&a_name, &a_mapping_source, &a_mapping_target);
+    object.init(&a_name, &a_mapping_source, &a_mapping_target.upcast());
     assert!(object.mapping_source() == a_mapping_source);
     assert!(object.mapping_target() == a_mapping_target);
 }
@@ -215,7 +215,7 @@ fn init_round_trip_step_repr_material_property_representation() {
     let object = StepReprMaterialPropertyRepresentation::new();
     object.init(
         &a_property_definition_representation_definition,
-        &a_property_definition_representation_used_representation,
+        &a_property_definition_representation_used_representation.upcast(),
         &a_dependent_environment,
     );
     assert!(object.dependent_environment() == a_dependent_environment);

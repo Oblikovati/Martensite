@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
@@ -10,15 +6,20 @@ use crate::step_data::*;
 use crate::step_entity::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Representation of STEP entity GeometricTolerance
     StepDimTolGeometricTolerance, StepDimTolGeometricToleranceState, "StepDimTolGeometricTolerance", StandardTransient, {
         my_name: Handle<HAsciiString>,
         my_description: Handle<HAsciiString>,
-        my_magnitude: Handle<StandardTransient>,
+        my_magnitude: Handle<dyn Transient>,
         my_toleranced_shape_aspect: StepDimTolGeometricToleranceTarget,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeometricTolerance {
     step_methods! {
@@ -26,8 +27,8 @@ impl StepDimTolGeometricTolerance {
         set set_name = my_name: Handle<HAsciiString>;
         get description = my_description: Handle<HAsciiString>;
         set set_description = my_description: Handle<HAsciiString>;
-        get magnitude = my_magnitude: Handle<StandardTransient>;
-        set set_magnitude = my_magnitude: Handle<StandardTransient>;
+        get magnitude = my_magnitude: Handle<dyn Transient>;
+        set set_magnitude = my_magnitude: Handle<dyn Transient>;
         get toleranced_shape_aspect = my_toleranced_shape_aspect: StepDimTolGeometricToleranceTarget;
     }
     /// `init`.
@@ -39,8 +40,8 @@ impl StepDimTolGeometricTolerance {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     ) -> Result<(), Failure> {
         let mut state = self.state.write();
         state.my_name = the_name.clone();
@@ -57,7 +58,7 @@ impl StepDimTolGeometricTolerance {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
     ) {
         let mut state = self.state.write();
@@ -73,7 +74,7 @@ impl StepDimTolGeometricTolerance {
     /// The null dereference or array index failure.
     pub fn set_toleranced_shape_aspect(
         &self,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     ) -> Result<(), Failure> {
         self.state
             .write()
@@ -96,8 +97,8 @@ step_entity! {
     StepDimTolGeometricToleranceRelationship, StepDimTolGeometricToleranceRelationshipState, "StepDimTolGeometricToleranceRelationship", StandardTransient, {
         my_name: Handle<HAsciiString>,
         my_description: Handle<HAsciiString>,
-        my_relating_geometric_tolerance: Handle<StepDimTolGeometricTolerance>,
-        my_related_geometric_tolerance: Handle<StepDimTolGeometricTolerance>,
+        my_relating_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>,
+        my_related_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>,
     }
 }
 impl StepDimTolGeometricToleranceRelationship {
@@ -106,10 +107,10 @@ impl StepDimTolGeometricToleranceRelationship {
         set set_name = my_name: Handle<HAsciiString>;
         get description = my_description: Handle<HAsciiString>;
         set set_description = my_description: Handle<HAsciiString>;
-        get relating_geometric_tolerance = my_relating_geometric_tolerance: Handle<StepDimTolGeometricTolerance>;
-        set set_relating_geometric_tolerance = my_relating_geometric_tolerance: Handle<StepDimTolGeometricTolerance>;
-        get related_geometric_tolerance = my_related_geometric_tolerance: Handle<StepDimTolGeometricTolerance>;
-        set set_related_geometric_tolerance = my_related_geometric_tolerance: Handle<StepDimTolGeometricTolerance>;
+        get relating_geometric_tolerance = my_relating_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>;
+        set set_relating_geometric_tolerance = my_relating_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>;
+        get related_geometric_tolerance = my_related_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>;
+        set set_related_geometric_tolerance = my_related_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -117,8 +118,8 @@ impl StepDimTolGeometricToleranceRelationship {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_relating_geometric_tolerance: &Handle<StepDimTolGeometricTolerance>,
-        the_related_geometric_tolerance: &Handle<StepDimTolGeometricTolerance>,
+        the_relating_geometric_tolerance: &Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>,
+        the_related_geometric_tolerance: &Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>,
     ) {
         let mut state = self.state.write();
         state.my_name = the_name.clone();
@@ -132,7 +133,7 @@ step_entity! {
     /// Representation of STEP entity GeometricToleranceWithDatumReference
     StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricToleranceWithDatumReferenceState, "StepDimTolGeometricToleranceWithDatumReference", StepDimTolGeometricTolerance, {
         my_datum_system: Handle<HArray1<StepDimTolDatumSystemOrReference>>,
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeometricToleranceWithDatumReference {
     step_methods! {
@@ -145,7 +146,7 @@ step_entity! {
     StepDimTolGeometricToleranceWithDefinedAreaUnit, StepDimTolGeometricToleranceWithDefinedAreaUnitState, "StepDimTolGeometricToleranceWithDefinedAreaUnit", StepDimTolGeometricToleranceWithDefinedUnit, {
         my_area_type: StepDimTolAreaUnitType,
         my_second_unit_size: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeometricToleranceWithDefinedAreaUnit {
     step_methods! {
@@ -161,7 +162,7 @@ impl StepDimTolGeometricToleranceWithDefinedAreaUnit {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_unit_size: &Handle<StepBasicLengthMeasureWithUnit>,
         the_unit_type: StepDimTolAreaUnitType,
@@ -194,7 +195,7 @@ step_entity! {
     /// Representation of STEP entity GeometricToleranceWithDefinedUnit
     StepDimTolGeometricToleranceWithDefinedUnit, StepDimTolGeometricToleranceWithDefinedUnitState, "StepDimTolGeometricToleranceWithDefinedUnit", StepDimTolGeometricTolerance, {
         my_unit_size: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeometricToleranceWithDefinedUnit {
     step_methods! {
@@ -210,8 +211,8 @@ impl StepDimTolGeometricToleranceWithDefinedUnit {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_unit_size: &Handle<StepBasicLengthMeasureWithUnit>,
     ) -> Result<(), Failure> {
         self.parent.init(
@@ -229,7 +230,7 @@ impl StepDimTolGeometricToleranceWithDefinedUnit {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_unit_size: &Handle<StepBasicLengthMeasureWithUnit>,
     ) {
@@ -247,7 +248,7 @@ step_entity! {
     /// Representation of STEP entity GeometricToleranceWithMaximumTolerance
     StepDimTolGeometricToleranceWithMaximumTolerance, StepDimTolGeometricToleranceWithMaximumToleranceState, "StepDimTolGeometricToleranceWithMaximumTolerance", StepDimTolGeometricToleranceWithModifiers, {
         my_maximum_upper_tolerance: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [StepDimTolGeometricToleranceWithModifiers, StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeometricToleranceWithMaximumTolerance {
     step_methods! {
@@ -260,7 +261,7 @@ impl StepDimTolGeometricToleranceWithMaximumTolerance {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_modifiers: &Handle<HArray1<StepDimTolGeometricToleranceModifier>>,
         the_maximum_upper_tolerance: &Handle<StepBasicLengthMeasureWithUnit>,
@@ -280,7 +281,7 @@ step_entity! {
     /// Representation of STEP entity GeometricToleranceWithModifiers
     StepDimTolGeometricToleranceWithModifiers, StepDimTolGeometricToleranceWithModifiersState, "StepDimTolGeometricToleranceWithModifiers", StepDimTolGeometricTolerance, {
         my_modifiers: Handle<HArray1<StepDimTolGeometricToleranceModifier>>,
-    }
+    }, bases: [StepDimTolGeometricToleranceWithModifiers, StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeometricToleranceWithModifiers {
     step_methods! {
@@ -295,7 +296,7 @@ impl StepDimTolGeometricToleranceWithModifiers {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_modifiers: &Handle<HArray1<StepDimTolGeometricToleranceModifier>>,
     ) {
@@ -331,14 +332,14 @@ impl StepDimTolGeometricToleranceWithModifiers {
 step_entity! {
     /// Representation of STEP entity LineProfileTolerance
     StepDimTolLineProfileTolerance, StepDimTolLineProfileToleranceState, "StepDimTolLineProfileTolerance", StepDimTolGeometricTolerance, {
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity ModifiedGeometricTolerance
     StepDimTolModifiedGeometricTolerance, StepDimTolModifiedGeometricToleranceState, "StepDimTolModifiedGeometricTolerance", StepDimTolGeometricTolerance, {
         my_modifier: StepDimTolLimitCondition,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolModifiedGeometricTolerance {
     step_methods! {
@@ -354,8 +355,8 @@ impl StepDimTolModifiedGeometricTolerance {
         &self,
         the_geometric_tolerance_name: &Handle<HAsciiString>,
         the_geometric_tolerance_description: &Handle<HAsciiString>,
-        the_geometric_tolerance_magnitude: &Handle<StandardTransient>,
-        the_geometric_tolerance_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_geometric_tolerance_magnitude: &Handle<dyn Transient>,
+        the_geometric_tolerance_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_modifier: StepDimTolLimitCondition,
     ) -> Result<(), Failure> {
         self.parent.init(
@@ -373,7 +374,7 @@ impl StepDimTolModifiedGeometricTolerance {
         &self,
         the_geometric_tolerance_name: &Handle<HAsciiString>,
         the_geometric_tolerance_description: &Handle<HAsciiString>,
-        the_geometric_tolerance_magnitude: &Handle<StandardTransient>,
+        the_geometric_tolerance_magnitude: &Handle<dyn Transient>,
         the_geometric_tolerance_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_modifier: StepDimTolLimitCondition,
     ) {

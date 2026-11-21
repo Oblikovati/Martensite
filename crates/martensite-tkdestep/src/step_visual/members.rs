@@ -1,9 +1,5 @@
 //! The select members of `StepVisual`, the marker select, and the two value classes whose names
 //! say select although they hold plain numbers.
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other"
-)]
 use super::*;
 use crate::impl_step_select_storage;
 use crate::step_data::{StepDataSelectMember, StepDataSelectType, StepDataSelectValue};
@@ -11,6 +7,11 @@ use crate::step_entity::*;
 use crate::step_geom::StepGeomPlane;
 use crate::step_members::{step_enum_member, step_select_case_mem};
 use crate::step_repr::StepReprRepresentationItem;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other"
+)]
+use martensite_tkernel::standard::Transient;
 use martensite_tkxsbase::interface::InterfaceParamType;
 
 step_enum_member!(
@@ -49,7 +50,7 @@ pub struct StepVisualMarkerSelect {
 
 impl StepDataSelectType for StepVisualMarkerSelect {
     impl_step_select_storage!(value);
-    fn case_num(&self, _ent: &Handle<StandardTransient>) -> i32 {
+    fn case_num(&self, _ent: &Handle<dyn Transient>) -> i32 {
         0
     }
     fn new_member(&self) -> Handle<dyn StepDataSelectMember> {
@@ -81,7 +82,7 @@ impl StepVisualMarkerSelect {
 
 impl StepVisualStyledItem {
     /// `set_item(RepresentationItem)`: the same item under both fields.
-    pub fn set_item(&self, a_item: &Handle<StepReprRepresentationItem>) {
+    pub fn set_item(&self, a_item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>) {
         let mut state = self.state.write();
         state.my_item = a_item.cast();
         state.my_repr_item = a_item.clone();
@@ -91,7 +92,7 @@ impl StepVisualStyledItem {
     pub fn set_item_styled_item_target(&self, the_item: &StepVisualStyledItemTarget) {
         let target = the_item.value();
         let mut state = self.state.write();
-        state.my_repr_item = target.cast::<StepReprRepresentationItem>();
+        state.my_repr_item = target.cast::<dyn crate::StepEntityBase<StepReprRepresentationItem>>();
         state.my_item = target;
     }
     /// `item_ap242`: the item as a target, holding nothing when it is not a kind of target.
@@ -119,7 +120,7 @@ macro_rules! step_clipping_select {
         }
         impl StepDataSelectType for $class {
             impl_step_select_storage!(value);
-            fn case_num(&self, ent: &Handle<StandardTransient>) -> i32 {
+            fn case_num(&self, ent: &Handle<dyn Transient>) -> i32 {
                 if ent.is_kind(<StepGeomPlane as RuntimeTyped>::static_type()) {
                     return 1;
                 }
@@ -275,7 +276,7 @@ mod tests {
     #[test]
     fn styled_item_keeps_a_representation_item_under_both_fields() {
         let styled = StepVisualStyledItem::new();
-        let item: Handle<StepReprRepresentationItem> = Handle::new(StepGeomPlane::new()).cast();
+        let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Handle::new(StepGeomPlane::new()).cast();
         styled.set_item(&item);
         assert_eq!(styled.item().object_address(), item.object_address());
         assert_eq!(
@@ -293,12 +294,12 @@ mod tests {
     fn clipping_select_recognizes_a_plane_and_exactly_its_clipping_class() {
         let select = StepVisualCameraModelD3MultiClippingUnionSelect::new();
         assert_eq!(select.case_num(&Handle::default()), 0);
-        let plane: Handle<StandardTransient> = Handle::new(StepGeomPlane::new()).cast();
+        let plane: Handle<dyn Transient> = Handle::new(StepGeomPlane::new()).cast();
         assert_eq!(select.case_num(&plane), 1);
-        let clipping: Handle<StandardTransient> =
+        let clipping: Handle<dyn Transient> =
             Handle::new(StepVisualCameraModelD3MultiClippingIntersection::new()).cast();
         assert_eq!(select.case_num(&clipping), 2);
-        let other: Handle<StandardTransient> =
+        let other: Handle<dyn Transient> =
             Handle::new(StepVisualCameraModelD3MultiClippingUnion::new()).cast();
         assert_eq!(select.case_num(&other), 0);
     }

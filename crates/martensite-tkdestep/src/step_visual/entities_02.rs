@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
@@ -10,26 +6,31 @@ use crate::step_entity::*;
 use crate::step_geom::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Annotation fill area occurrence.
     StepVisualAnnotationFillAreaOccurrence, StepVisualAnnotationFillAreaOccurrenceState, "StepVisualAnnotationFillAreaOccurrence", StepVisualAnnotationOccurrence, {
-        my_fill_style_target: Handle<StepGeomGeometricRepresentationItem>,
-    }
+        my_fill_style_target: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualAnnotationOccurrence]
 }
 impl StepVisualAnnotationFillAreaOccurrence {
     step_methods! {
-        get fill_style_target = my_fill_style_target: Handle<StepGeomGeometricRepresentationItem>;
-        set set_fill_style_target = my_fill_style_target: Handle<StepGeomGeometricRepresentationItem>;
+        get fill_style_target = my_fill_style_target: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>;
+        set set_fill_style_target = my_fill_style_target: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_styles: &Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>,
-        the_item: &Handle<StandardTransient>,
-        the_fill_style_target: &Handle<StepGeomGeometricRepresentationItem>,
+        the_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        the_item: &Handle<dyn Transient>,
+        the_fill_style_target: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
     ) {
         self.parent.init(the_name, the_styles, the_item);
         self.state.write().my_fill_style_target = the_fill_style_target.clone();
@@ -39,14 +40,14 @@ impl StepVisualAnnotationFillAreaOccurrence {
 step_entity! {
     /// Annotation occurrence.
     StepVisualAnnotationOccurrence, StepVisualAnnotationOccurrenceState, "StepVisualAnnotationOccurrence", StepVisualStyledItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualAnnotationOccurrence]
 }
 
 step_entity! {
     /// Annotation plane.
     StepVisualAnnotationPlane, StepVisualAnnotationPlaneState, "StepVisualAnnotationPlane", StepVisualAnnotationOccurrence, {
         my_elements: Handle<HArray1<StepVisualAnnotationPlaneElement>>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualAnnotationOccurrence]
 }
 impl StepVisualAnnotationPlane {
     step_methods! {
@@ -59,8 +60,8 @@ impl StepVisualAnnotationPlane {
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_styles: &Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>,
-        the_item: &Handle<StandardTransient>,
+        the_styles: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
+        the_item: &Handle<dyn Transient>,
         the_elements: &Handle<HArray1<StepVisualAnnotationPlaneElement>>,
     ) {
         self.parent.init(the_name, the_styles, the_item);
@@ -90,13 +91,13 @@ impl StepVisualAnnotationPlane {
 step_entity! {
     /// Annotation text.
     StepVisualAnnotationText, StepVisualAnnotationTextState, "StepVisualAnnotationText", StepReprMappedItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_repr::StepReprMappedItem]
 }
 
 step_entity! {
     /// Annotation text occurrence.
     StepVisualAnnotationTextOccurrence, StepVisualAnnotationTextOccurrenceState, "StepVisualAnnotationTextOccurrence", StepVisualAnnotationOccurrence, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualAnnotationOccurrence]
 }
 
 step_entity! {
@@ -129,7 +130,7 @@ step_entity! {
     /// Background colour.
     StepVisualBackgroundColour, StepVisualBackgroundColourState, "StepVisualBackgroundColour", StepVisualColour, {
         presentation: StepVisualAreaOrView,
-    }
+    }, bases: [crate::step_visual::StepVisualColour]
 }
 impl StepVisualBackgroundColour {
     step_methods! {
@@ -142,25 +143,25 @@ impl StepVisualBackgroundColour {
 step_entity! {
     /// Camera image.
     StepVisualCameraImage, StepVisualCameraImageState, "StepVisualCameraImage", StepReprMappedItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualCameraImage, crate::step_repr::StepReprMappedItem]
 }
 
 step_entity! {
     /// Camera image2d with scale.
     StepVisualCameraImage2dWithScale, StepVisualCameraImage2dWithScaleState, "StepVisualCameraImage2dWithScale", StepVisualCameraImage, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualCameraImage, crate::step_repr::StepReprMappedItem]
 }
 
 step_entity! {
     /// Camera image3d with scale.
     StepVisualCameraImage3dWithScale, StepVisualCameraImage3dWithScaleState, "StepVisualCameraImage3dWithScale", StepVisualCameraImage, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualCameraImage, crate::step_repr::StepReprMappedItem]
 }
 
 step_entity! {
     /// Camera model.
     StepVisualCameraModel, StepVisualCameraModelState, "StepVisualCameraModel", StepGeomGeometricRepresentationItem, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 
 step_entity! {
@@ -168,7 +169,7 @@ step_entity! {
     StepVisualCameraModelD2, StepVisualCameraModelD2State, "StepVisualCameraModelD2", StepVisualCameraModel, {
         view_window: Handle<StepVisualPlanarBox>,
         view_window_clipping: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualCameraModelD2 {
     step_methods! {
@@ -197,7 +198,7 @@ step_entity! {
     StepVisualCameraModelD3, StepVisualCameraModelD3State, "StepVisualCameraModelD3", StepVisualCameraModel, {
         view_reference_system: Handle<StepGeomAxis2Placement3d>,
         perspective_of_volume: Handle<StepVisualViewVolume>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, StepVisualCameraModelD3]
 }
 impl StepVisualCameraModelD3 {
     step_methods! {
@@ -225,7 +226,7 @@ step_entity! {
     /// Camera model D 3 multi clipping.
     StepVisualCameraModelD3MultiClipping, StepVisualCameraModelD3MultiClippingState, "StepVisualCameraModelD3MultiClipping", StepVisualCameraModelD3, {
         my_shape_clipping: Handle<HArray1<StepVisualCameraModelD3MultiClippingInterectionSelect>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, StepVisualCameraModelD3]
 }
 impl StepVisualCameraModelD3MultiClipping {
     step_methods! {
@@ -253,7 +254,7 @@ step_entity! {
     /// Camera model D 3 multi clipping intersection.
     StepVisualCameraModelD3MultiClippingIntersection, StepVisualCameraModelD3MultiClippingIntersectionState, "StepVisualCameraModelD3MultiClippingIntersection", StepGeomGeometricRepresentationItem, {
         my_shape_clipping: Handle<HArray1<StepVisualCameraModelD3MultiClippingInterectionSelect>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualCameraModelD3MultiClippingIntersection {
     step_methods! {
@@ -275,7 +276,7 @@ step_entity! {
     /// Camera model D 3 multi clipping union.
     StepVisualCameraModelD3MultiClippingUnion, StepVisualCameraModelD3MultiClippingUnionState, "StepVisualCameraModelD3MultiClippingUnion", StepGeomGeometricRepresentationItem, {
         my_shape_clipping: Handle<HArray1<StepVisualCameraModelD3MultiClippingUnionSelect>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualCameraModelD3MultiClippingUnion {
     step_methods! {
@@ -304,13 +305,13 @@ step_entity! {
     /// Complex STEP entity Characterized_Object & Characterized_Representation & Draughting_Model &
     /// Representation
     StepVisualCharacterizedObjAndRepresentationAndDraughtingModel, StepVisualCharacterizedObjAndRepresentationAndDraughtingModelState, "StepVisualCharacterizedObjAndRepresentationAndDraughtingModel", StepVisualDraughtingModel, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation, StepVisualDraughtingModel]
 }
 
 step_entity! {
     /// Colour.
     StepVisualColour, StepVisualColourState, "StepVisualColour", StandardTransient, {
-    }
+    }, bases: [crate::step_visual::StepVisualColour]
 }
 
 step_entity! {
@@ -319,7 +320,7 @@ step_entity! {
         red: f64,
         green: f64,
         blue: f64,
-    }
+    }, bases: [crate::step_visual::StepVisualColour]
 }
 impl StepVisualColourRgb {
     step_methods! {

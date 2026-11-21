@@ -4,12 +4,13 @@ use super::{
     StepDataLogical, StepDataPDescr, StepDataSelectInt, StepDataSelectMember, StepDataSelectNamed,
     StepDataSelectReal, StepDataUndefinedEntity,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{
     Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient, exceptions,
 };
 
 /// The stored value of a select: `thevalue`, the private field of the class.
-pub type StepDataSelectValue = Handle<StandardTransient>;
+pub type StepDataSelectValue = Handle<dyn Transient>;
 
 /// Implements the two storage accessors of [`StepDataSelectType`] over a field of type
 /// [`StepDataSelectValue`], inside the `impl StepDataSelectType for ...` block, so each SELECT
@@ -31,7 +32,7 @@ macro_rules! impl_step_select_storage {
 #[macro_export]
 macro_rules! step_select_case {
     ($ent:expr; $($class:ty),+ $(,)?) => {{
-        let ent: &martensite_tkernel::standard::Handle<martensite_tkernel::standard::StandardTransient> = $ent;
+        let ent: &martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient> = $ent;
         let kinds: &[fn() -> &'static martensite_tkernel::standard::RuntimeType] =
             &[$(<$class as martensite_tkernel::standard::RuntimeTyped>::static_type),+];
         $crate::step_data::step_select_case_number(ent, kinds)
@@ -41,7 +42,7 @@ macro_rules! step_select_case {
 /// The rank (from 1) of the first of `kinds` that `ent` is a kind of; 0 for null or none.
 /// `step_select_case_number(&Handle::default(), &[]) == 0`.
 pub fn step_select_case_number(
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     kinds: &[fn() -> &'static RuntimeType],
 ) -> i32 {
     if ent.is_null() {
@@ -90,12 +91,12 @@ fn select_val(
 ///
 /// ```
 /// use martensite_tkdestep::{impl_step_select_storage, step_data::{StepDataSelectType, StepDataSelectValue}};
-/// use martensite_tkernel::standard::{Handle, StandardTransient};
+/// use martensite_tkernel::standard::{Handle, Transient};
 /// #[derive(Clone, Default)]
 /// struct Open { value: StepDataSelectValue }
 /// impl StepDataSelectType for Open {
 ///     impl_step_select_storage!(value);
-///     fn case_num(&self, ent: &Handle<StandardTransient>) -> i32 { i32::from(ent.is_some()) }
+///     fn case_num(&self, ent: &Handle<dyn Transient>) -> i32 { i32::from(ent.is_some()) }
 /// }
 /// assert!(Open::default().is_null());
 /// ```
@@ -105,7 +106,7 @@ pub trait StepDataSelectType {
     /// The stored value, to replace it.
     fn select_value_mut(&mut self) -> &mut StepDataSelectValue;
     /// `case_num(ent)`: the rank of its type in the definition list, 0 when absent.
-    fn case_num(&self, ent: &Handle<StandardTransient>) -> i32;
+    fn case_num(&self, ent: &Handle<dyn Transient>) -> i32;
     /// `description`: null by default.
     fn description(&self) -> Handle<StepDataPDescr> {
         Handle::default()
@@ -119,7 +120,7 @@ pub trait StepDataSelectType {
         0
     }
     /// `matches(ent)`: `case_num` or, for a member, `case_mem` is positive.
-    fn matches(&self, ent: &Handle<StandardTransient>) -> bool {
+    fn matches(&self, ent: &Handle<dyn Transient>) -> bool {
         if self.case_num(ent) > 0 {
             return true;
         }
@@ -128,7 +129,7 @@ pub trait StepDataSelectType {
     }
     /// `set_value(ent)`: a type mismatch failure when it does not match; an undefined
     /// entity is always accepted.
-    fn set_value(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn set_value(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if ent.is_some()
             && !ent.is_kind(StepDataUndefinedEntity::static_type())
             && !self.matches(ent)
@@ -143,7 +144,7 @@ pub trait StepDataSelectType {
         self.select_value_mut().nullify();
     }
     /// `Value`.
-    fn value(&self) -> Handle<StandardTransient> {
+    fn value(&self) -> Handle<dyn Transient> {
         self.select_value().clone()
     }
     /// `is_null`.

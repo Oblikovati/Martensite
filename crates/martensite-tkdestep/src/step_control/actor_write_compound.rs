@@ -17,7 +17,8 @@ use martensite_tkbrep::topods::{self, Compound, Shape, ShapeIterator};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::ncollection::HSequence;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::Transform3;
@@ -102,16 +103,16 @@ impl StepControlActorWrite {
         let (rep_items, group) = compound_children(&the_shape, is_manifold, separate)?;
         let group_handle: Handle<HSequence<Shape>> = shared_sequence(group);
         let live_sdr = step_live(sdr0, WHERE)?;
-        let mut shape_rep: Handle<StepShapeShapeRepresentation> =
+        let mut shape_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
             live_sdr.used_representation().cast();
         if shape_rep.is_null() {
-            shape_rep = Handle::new(StepShapeShapeRepresentation::new());
+            shape_rep = Handle::new(StepShapeShapeRepresentation::new()).into_upcast();
             live_sdr.set_used_representation(&shape_rep.cast()); // to be used by MakeItem
         }
         // set SDR as first item in order to be found first (but not SDR of subshape!)
         let binder: Handle<dyn TransferBinder> = self.transient_result(&sdr0.cast()).cast();
         binder.add_result(&self.transient_result(&shape_rep.cast()).cast());
-        let mut item_seq: Vec<Handle<StepReprRepresentationItem>> =
+        let mut item_seq: Vec<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>> =
             vec![self.default_axis()?.cast()];
         self.state.write().my_context.next_level();
         let scope = ProgressScope::unnamed(progress, rep_items.len() as f64, false);
@@ -120,7 +121,7 @@ impl StepControlActorWrite {
                 break;
             }
             let subs: Handle<dyn TransferFinder> = TransferBRep::shape_mapper(fp, item)?.cast();
-            let mut ax1 = Handle::<StepGeomGeometricRepresentationItem>::default();
+            let mut ax1 = Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
             let mut bnd = self.transfer_sub_shape(
                 &subs,
                 sdr0,
@@ -160,7 +161,7 @@ impl StepControlActorWrite {
         assembly: &mut StepConstructAssembly,
         sdr: &Handle<StepShapeShapeDefinitionRepresentation>,
         sdr0: &Handle<StepShapeShapeDefinitionRepresentation>,
-        ax1: &mut Handle<StepGeomGeometricRepresentationItem>,
+        ax1: &mut Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
         location: &Transform3,
         start: &Handle<dyn TransferFinder>,
         fp: &Handle<TransferFinderProcess>,
@@ -199,7 +200,7 @@ impl StepControlActorWrite {
         &self,
         start: &Handle<dyn TransferFinder>,
         sdr0: &Handle<StepShapeShapeDefinitionRepresentation>,
-        ax1: &mut Handle<StepGeomGeometricRepresentationItem>,
+        ax1: &mut Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
         fp: &Handle<TransferFinderProcess>,
         factors: &StepDataFactors,
         shape_group: &Handle<HSequence<Shape>>,
@@ -271,7 +272,7 @@ impl StepControlActorWrite {
             live_model,
             factors,
         )?;
-        let mut roots: Vec<Handle<StandardTransient>> = roots_of(
+        let mut roots: Vec<Handle<dyn Transient>> = roots_of(
             &self
                 .state
                 .write()

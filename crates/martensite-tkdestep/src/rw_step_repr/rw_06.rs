@@ -169,12 +169,12 @@ impl RwStepReprRwGlobalUnitAssignedContext {
             return Ok(());
         }
         rw_block_0150!(a_context_identifier, a_context_type, ach, data, num);
-        let mut a_units: Handle<HArray1<Handle<StepBasicNamedUnit>>> = Default::default();
-        let mut anent3: Handle<StepBasicNamedUnit> = Default::default();
+        let mut a_units: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>> = Default::default();
+        let mut anent3: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>> = Default::default();
         let mut nsub3: i32 = Default::default();
         if data.read_sub_list(num, 3, "units", ach, &mut nsub3, false, 0, 0)? {
             let nb3: i32 = data.nb_params(nsub3)?;
-            a_units = step_new_array1::<Handle<StepBasicNamedUnit>>(1, nb3)?;
+            a_units = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, nb3)?;
             for i3 in 1..=nb3 {
                 if data.read_entity(
                     nsub3,

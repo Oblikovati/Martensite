@@ -1,13 +1,14 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
 use crate::step_entity::*;
 #[allow(unused_imports)]
 use crate::step_geom::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 #[test]
 fn runtime_type_step_visual_annotation_curve_occurrence() {
@@ -363,9 +364,9 @@ fn init_round_trip_step_visual_complex_triangulated_face() {
     let the_tessellated_face_geometric_link = StepVisualFaceOrSurface::default();
     let the_pnindex = Handle::new(HArray1::<i32>::with_bounds(1, 2).unwrap());
     let the_triangle_strips =
-        Handle::new(HArray1::<Handle<StandardTransient>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn Transient>>::with_bounds(1, 2).unwrap());
     let the_triangle_fans =
-        Handle::new(HArray1::<Handle<StandardTransient>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn Transient>>::with_bounds(1, 2).unwrap());
     let object = StepVisualComplexTriangulatedFace::new();
     object.init(
         &the_representation_item_name,

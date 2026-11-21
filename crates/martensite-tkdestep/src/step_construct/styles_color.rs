@@ -6,7 +6,8 @@ use crate::step_visual::{
     StepVisualPreDefinedColour, StepVisualPreDefinedItem,
 };
 use martensite_tkernel::quantity::{Color, ColorSpace, NamedColor};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use std::collections::HashMap;
 
@@ -54,31 +55,31 @@ fn rgb_key(values: [f64; 3]) -> [u64; 3] {
 impl StepConstructStyles {
     /// `encode_color(Col)`: a predefined colour entity when the colour is one of the colours STEP
     /// predefines, otherwise an RGB one.
-    pub fn encode_color(color: &Color) -> Result<Handle<StepVisualColour>, Failure> {
+    pub fn encode_color(color: &Color) -> Result<Handle<dyn crate::StepEntityBase<StepVisualColour>>, Failure> {
         // detect if color corresponds to one of pre-defined colors
         if let Some(name) = predefined_name(color) {
-            return Ok(new_predefined(name).cast());
+            return Ok(new_predefined(name).into_upcast());
         }
-        Ok(new_rgb(color.values(ColorSpace::Srgb)).cast())
+        Ok(new_rgb(color.values(ColorSpace::Srgb)).into_upcast())
     }
     /// `encode_color(Col, DPDCs, ColRGBs)`: as `encode_color`, sharing one entity per colour through the
     /// two maps.
     pub fn encode_color_shared(
         color: &Color,
-        dpdcs: &mut HashMap<String, Handle<StandardTransient>>,
-        col_rgbs: &mut HashMap<[u64; 3], Handle<StandardTransient>>,
-    ) -> Result<Handle<StepVisualColour>, Failure> {
+        dpdcs: &mut HashMap<String, Handle<dyn Transient>>,
+        col_rgbs: &mut HashMap<[u64; 3], Handle<dyn Transient>>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualColour>>, Failure> {
         // detect if color corresponds to one of pre-defined colors
         if let Some(name) = predefined_name(color) {
             let known = dpdcs
                 .get(name)
                 .map(|bound| bound.cast::<StepVisualDraughtingPreDefinedColour>());
             if let Some(known) = known.filter(Handle::is_some) {
-                return Ok(known.cast());
+                return Ok(known.into_upcast());
             }
             let colour = new_predefined(name);
-            dpdcs.insert(name.to_owned(), colour.cast());
-            return Ok(colour.cast());
+            dpdcs.insert(name.to_owned(), colour.upcast());
+            return Ok(colour.into_upcast());
         }
         let values = color.values(ColorSpace::Srgb);
         let key = rgb_key(values);
@@ -86,19 +87,19 @@ impl StepConstructStyles {
             .get(&key)
             .map(|bound| bound.cast::<StepVisualColourRgb>());
         if let Some(known) = known.filter(Handle::is_some) {
-            return Ok(known.cast());
+            return Ok(known.into_upcast());
         }
         let colour = new_rgb(values);
-        col_rgbs.insert(key, colour.cast());
-        Ok(colour.cast())
+        col_rgbs.insert(key, colour.upcast());
+        Ok(colour.into_upcast())
     }
     /// `decode_color`: fills `color` from a STEP colour; false when not recognized.
     pub fn decode_color(
-        colour: &Handle<StepVisualColour>,
+        colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         color: &mut Color,
     ) -> Result<bool, Failure> {
         step_live(colour, WHERE)?;
-        if let Some(rgb) = colour.cast::<StepVisualColourRgb>().get() {
+        if let Some(rgb) = colour.downcast_ref::<StepVisualColourRgb>() {
             let (red, green, blue) = (rgb.red(), rgb.green(), rgb.blue());
             if red > 1. || green > 1. || blue > 1. {
                 let norm = red.max(green).max(blue);
@@ -108,7 +109,7 @@ impl StepConstructStyles {
             }
             return Ok(true);
         }
-        let predefined = colour.cast::<StepVisualPreDefinedColour>();
+        let predefined = colour.view::<dyn crate::StepEntityBase<StepVisualPreDefinedColour>>();
         let Some(predefined) = predefined.get() else {
             return Ok(false);
         };

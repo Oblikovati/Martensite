@@ -7,10 +7,11 @@ use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{Edge, Face, Shape, Shell, Vertex, Wire};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 
 /// `DataMap<Shape, Handle<`StandardTransient`>, the shape hasher>`.
-pub type TopoDSToStepShapeMap = DataMap<Shape, Handle<StandardTransient>, ShapeMapHasher>;
+pub type TopoDSToStepShapeMap = DataMap<Shape, Handle<dyn Transient>, ShapeMapHasher>;
 
 /// Tool.
 pub struct TopoDSToStepTool {
@@ -73,7 +74,7 @@ impl TopoDSToStepTool {
         self.my_data_map.is_bound(shape)
     }
     /// `bind(S, T)`.
-    pub fn bind(&mut self, shape: &Shape, item: &Handle<StepShapeTopologicalRepresentationItem>) {
+    pub fn bind(&mut self, shape: &Shape, item: &Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>) {
         self.my_data_map.bind(shape.clone(), item.cast());
     }
     /// `find(S)`.
@@ -83,7 +84,7 @@ impl TopoDSToStepTool {
     pub fn find(
         &self,
         shape: &Shape,
-    ) -> Result<Handle<StepShapeTopologicalRepresentationItem>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure> {
         Ok(self.my_data_map.find(shape)?.cast())
     }
     /// `faceted`.

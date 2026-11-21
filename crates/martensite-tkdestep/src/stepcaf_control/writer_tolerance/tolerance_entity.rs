@@ -1,5 +1,6 @@
 //! The zone and entity of a geometric tolerance for `STEPCAFControlWriter`.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 /// A length with its unit and the given value.
 fn length_measure(
@@ -18,8 +19,8 @@ fn length_measure(
 fn write_tolerance_zone(
     ws: &Handle<XSControlWorkSession>,
     object: &XCAFDimTolObjectsGeomToleranceObject,
-    entity: &Handle<StepDimTolGeometricTolerance>,
-    context: &Handle<StepReprRepresentationContext>,
+    entity: &Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>,
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
 ) -> Result<(), Failure> {
     // Get working data
     let model = model_of(ws)?;
@@ -112,14 +113,14 @@ fn make_geometric_tolerance(
     datum_system: &Handle<HArray1<StepDimTolDatumSystemOrReference>>,
     modifiers: &Handle<HArray1<StepDimTolGeometricToleranceModifier>>,
     max_measure: &Handle<StepBasicLengthMeasureWithUnit>,
-) -> Result<Handle<StepDimTolGeometricTolerance>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>, Failure> {
     let (name, description) = (empty(), empty());
     let with_datums = Handle::new(StepDimTolGeometricToleranceWithDatumReference::new());
     with_datums.set_datum_system_fields(datum_system)?;
     let with_modifiers = Handle::new(StepDimTolGeometricToleranceWithModifiers::new());
     with_modifiers.set_modifiers(modifiers);
     let kind = STEPCAFControlGDTProperty::get_step_tolerance_type(object.get_type());
-    let measure_shared: Handle<StandardTransient> = measure.cast();
+    let measure_shared: Handle<dyn Transient> = measure.cast();
     Ok(
         match (
             modifiers.is_some(),
@@ -141,7 +142,7 @@ fn make_geometric_tolerance(
                     max_measure,
                     kind,
                 );
-                result.cast()
+                result.into_upcast()
             }
             (true, true, false) => {
                 // Geometric_Tolerance & Geometric_Tolerance_With_Maximum_Tolerance &
@@ -156,7 +157,7 @@ fn make_geometric_tolerance(
                     max_measure,
                     kind,
                 );
-                result.cast()
+                result.into_upcast()
             }
             (true, false, true) => {
                 // Geometric_Tolerance & Geometric_Tolerance_With_Datum_Reference &
@@ -171,7 +172,7 @@ fn make_geometric_tolerance(
                     &with_modifiers,
                     kind,
                 );
-                result.cast()
+                result.into_upcast()
             }
             (true, false, false) => {
                 // Geometric_Tolerance & Geometric_Tolerance_With_Modifiers
@@ -184,7 +185,7 @@ fn make_geometric_tolerance(
                     &with_modifiers,
                     kind,
                 );
-                result.cast()
+                result.into_upcast()
             }
             (false, _, true) => {
                 // Geometric_Tolerance & Geometric_Tolerance_With_Datum_Reference
@@ -197,7 +198,7 @@ fn make_geometric_tolerance(
                     &with_datums,
                     kind,
                 );
-                result.cast()
+                result.into_upcast()
             }
             (false, _, false) => {
                 // Geometric_Tolerance
@@ -224,7 +225,7 @@ impl WriterState {
         ws: &Handle<XSControlWorkSession>,
         shape_labels: &[TdfLabel],
         tolerance_label: &TdfLabel,
-    ) -> Result<Handle<StepReprShapeAspect>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
         let model = model_of(ws)?;
         let (mut context, mut usage) = (Handle::default(), Handle::default());
         let shape_of = |label: &TdfLabel| -> Result<Shape, Failure> {
@@ -276,7 +277,7 @@ impl WriterState {
         shape_labels: &[TdfLabel],
         tolerance_label: &TdfLabel,
         datum_system: &Handle<HArray1<StepDimTolDatumSystemOrReference>>,
-        context: &Handle<StepReprRepresentationContext>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
         // Get working data

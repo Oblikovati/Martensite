@@ -34,7 +34,7 @@ impl RwStepKinematicsRwPointOnSurfacePairWithRange {
             the_data,
             the_num
         );
-        let mut a_point_on_surface_pair_pair_surface: Handle<StepGeomSurface> = Default::default();
+        let mut a_point_on_surface_pair_pair_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = Default::default();
         the_data.read_entity(
             the_num,
             7,

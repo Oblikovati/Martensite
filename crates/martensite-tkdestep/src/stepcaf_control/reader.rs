@@ -16,7 +16,8 @@ use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::ncollection::{DataMap, HSequence};
 use martensite_tkernel::osd::CadPath;
 use martensite_tkernel::resource::FormatType;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString, HAsciiString};
 use martensite_tkernel::units_methods::LengthUnit;
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -44,9 +45,9 @@ pub(super) const WHERE: &str = "STEPCAFControlReader";
 pub type STEPCAFControlShapeLabelMap = DataMap<Shape, TdfLabel, ShapeMapHasher>;
 /// The product definitions of a transfer and the external files they refer to.
 pub(super) type PdFileMap =
-    DataMap<Handle<StepBasicProductDefinition>, Handle<STEPCAFControlExternFile>>;
+    DataMap<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Handle<STEPCAFControlExternFile>>;
 /// The shapes originating from SDRs and their product definitions.
-pub(super) type ShapePdMap = DataMap<Shape, Handle<StepBasicProductDefinition>, ShapeMapHasher>;
+pub(super) type ShapePdMap = DataMap<Shape, Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, ShapeMapHasher>;
 
 /// `fill_shapes_map`: all compounds and their components, without location.
 fn fill_shapes_map(shape: &Shape, map: &mut MapOfShape) -> Result<(), Failure> {
@@ -79,7 +80,7 @@ pub(super) struct ReaderState {
     gdt_mode: bool,
     mat_mode: bool,
     view_mode: bool,
-    pub(super) gdt_map: DataMap<Handle<StandardTransient>, TdfLabel>,
+    pub(super) gdt_map: DataMap<Handle<dyn Transient>, TdfLabel>,
     /// The source code page of the main model is not `NoConversion`: names are UTF-8.
     names_are_multi_byte: bool,
     /// The session of the main reader: `expand_sub_shapes` reads it, even for an external file.
@@ -347,7 +348,7 @@ struct TransferredProducts {
     new_shapes: MapOfShape,
     shape_pd: ShapePdMap,
     pd_file: PdFileMap,
-    seq_pds: Handle<HSequence<Handle<StandardTransient>>>,
+    seq_pds: Handle<HSequence<Handle<dyn Transient>>>,
 }
 
 impl ReaderState {

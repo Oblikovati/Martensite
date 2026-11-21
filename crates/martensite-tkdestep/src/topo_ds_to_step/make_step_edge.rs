@@ -38,7 +38,7 @@ const NBPT: usize = 21;
 pub struct TopoDSToStepMakeStepEdge {
     /// Root.
     pub root: TopoDSToStepRoot,
-    my_result: Handle<StepShapeTopologicalRepresentationItem>,
+    my_result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
     my_error: TopoDSToStepMakeEdgeError,
 }
 
@@ -71,8 +71,8 @@ fn is_seam_of_current_face(edge: &Edge, tool: &TopoDSToStepTool) -> Result<bool,
 
 /// The two vertices of an edge, and their swap below when the range contradicts them.
 struct EdgeEnds {
-    first: Handle<StepShapeVertex>,
-    last: Handle<StepShapeVertex>,
+    first: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    last: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
 }
 
 /// Special treatment is needed for very short edges based on periodic curves. Since edge in STEP
@@ -141,7 +141,7 @@ fn construct_curve(
     adaptor: &BRepAdaptorCurve,
     tool: &TopoDSToStepTool,
     factors: &StepDataFactors,
-) -> Result<Handle<StepGeomCurve>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepGeomCurve>>, Failure> {
     let surface = BRepAdaptorSurface::with_face(tool.current_face(), true)?;
     let (u1, u2) = (adaptor.first_parameter()?, adaptor.last_parameter()?);
     if surface.get_type()? == SurfaceType::Plane && adaptor.get_type()? == CurveType::Line {
@@ -186,9 +186,9 @@ fn polyline_through(
 
 /// The surface_curve or seam_curve on a 3D curve; its two pcurves come with the faces.
 fn on_surface_curve(
-    curve: &Handle<StepGeomCurve>,
+    curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
     seam: bool,
-) -> Result<Handle<StepGeomCurve>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepGeomCurve>>, Failure> {
     let geom = step_new_array1::<StepGeomPcurveOrSurface>(1, 2)?;
     let name = empty_step_name();
     let representation = StepGeomPreferredSurfaceCurveRepresentation::PscrPcurveS1;
@@ -218,7 +218,7 @@ impl TopoDSToStepMakeStepEdge {
         made.init(edge, tool, fp, factors)?;
         Ok(made)
     }
-    fn finish(&mut self, result: Handle<StepShapeTopologicalRepresentationItem>) {
+    fn finish(&mut self, result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>) {
         self.my_error = TopoDSToStepMakeEdgeError::EdgeDone;
         self.my_result = result;
         self.root.done = true;
@@ -240,11 +240,11 @@ impl TopoDSToStepMakeStepEdge {
         edge: &Edge,
         tool: &TopoDSToStepTool,
         fp: &Handle<TransferFinderProcess>,
-    ) -> Result<Option<Handle<StepShapeTopologicalRepresentationItem>>, Failure> {
+    ) -> Result<Option<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>>, Failure> {
         // [BEGIN] Processing non-manifold topology (ssv; 11.11.2010)
         if step_model_of(fp)?.internal_parameters().write_nonmanifold {
             let mapper = TransferBRep::shape_mapper(fp, edge)?;
-            let mut known = Handle::<StepShapeEdgeCurve>::default();
+            let mut known = Handle::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>::default();
             let atype = StepShapeEdgeCurve::static_type();
             if fp.find_typed_transient_as(&mapper.cast(), atype, &mut known) {
                 // Non-manifold topology detected
@@ -320,7 +320,7 @@ impl TopoDSToStepMakeStepEdge {
             self.fail(TopoDSToStepMakeEdgeError::EdgeOther, edge, fp, text)?;
             return Ok(None);
         }
-        let first: Handle<StepShapeVertex> = maker.value()?.cast();
+        let first: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = maker.value()?.cast();
         maker.init(vertices.1, tool, fp, factors)?;
         if !maker.is_done() {
             let text = " Last Vertex of Edge not mapped";
@@ -340,7 +340,7 @@ impl TopoDSToStepMakeStepEdge {
         ends: &mut EdgeEnds,
         tool: &TopoDSToStepTool,
         factors: &StepDataFactors,
-    ) -> Result<Handle<StepGeomCurve>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepGeomCurve>>, Failure> {
         let adaptor = BRepAdaptorCurve::with_edge(edge)?;
         let stored = adaptor.transformed_curve().geom_curve();
         let Some(live) = stored.get() else {
@@ -361,7 +361,7 @@ impl TopoDSToStepMakeStepEdge {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<StepShapeTopologicalRepresentationItem>, Failure> {
+    pub fn value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure> {
         self.root.check_done("TopoDSToStepMakeStepEdge::Value()")?;
         Ok(self.my_result.clone())
     }

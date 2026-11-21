@@ -22,7 +22,7 @@ use martensite_tkxsbase::transfer::TransferFinderProcess;
 pub struct TopoDSToStepMakeTessellatedItem {
     /// Root.
     pub root: TopoDSToStepRoot,
-    the_tessellated_item: Handle<StepVisualTessellatedItem>,
+    the_tessellated_item: Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>,
 }
 
 impl TopoDSToStepMakeTessellatedItem {
@@ -100,7 +100,7 @@ impl TopoDSToStepMakeTessellatedItem {
             faces.next()?;
         }
         let scope = ProgressScope::unnamed(progress, f64::from(count), false);
-        let mut items: Vec<Handle<StepVisualTessellatedStructuredItem>> = Vec::new();
+        let mut items: Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>> = Vec::new();
         faces.init(shell, ShapeEnum::Face, ShapeEnum::Shape)?;
         while faces.more() && scope.more() {
             let face = topods::face(faces.current())?;
@@ -116,7 +116,7 @@ impl TopoDSToStepMakeTessellatedItem {
         if items.is_empty() {
             return Ok(());
         }
-        let mut face_set = Handle::<StepShapeConnectedFaceSet>::default();
+        let mut face_set = Handle::<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>::default();
         if tool.is_bound(shell) {
             face_set = tool.find(shell)?.cast();
         }
@@ -139,7 +139,7 @@ impl TopoDSToStepMakeTessellatedItem {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<StepVisualTessellatedItem>, Failure> {
+    pub fn value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>, Failure> {
         self.root
             .check_done("TopoDSToStepMakeTessellatedItem::Value()")?;
         Ok(self.the_tessellated_item.clone())

@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(
     RwStepReprRwItemDefinedTransformation,
@@ -28,8 +29,8 @@ impl RwStepReprRwItemDefinedTransformation {
         if data.is_param_defined(num, 2)? {
             data.read_string(num, 2, "description", ach, &mut description)?;
         }
-        let mut ti1: Handle<StepReprRepresentationItem> = Default::default();
-        let mut ti2: Handle<StepReprRepresentationItem> = Default::default();
+        let mut ti1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
+        let mut ti2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -104,7 +105,7 @@ impl RwStepReprRwMakeFromUsageOption {
         data.read_integer(num, 6, "ranking", ach, &mut a_ranking)?;
         let mut a_ranking_rationale: Handle<HAsciiString> = Default::default();
         data.read_string(num, 7, "ranking_rationale", ach, &mut a_ranking_rationale)?;
-        let mut a_quantity: Handle<StandardTransient> = Default::default();
+        let mut a_quantity: Handle<dyn Transient> = Default::default();
         data.read_entity(
             num,
             8,
@@ -164,7 +165,7 @@ impl RwStepReprRwMappedItem {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepReprMappedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprMappedItem>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 3, ach, "mapped_item")? {
             return Ok(());
@@ -180,7 +181,7 @@ impl RwStepReprRwMappedItem {
             StepReprRepresentationMap::static_type(),
             &mut a_mapping_source,
         )?;
-        let mut a_mapping_target: Handle<StepReprRepresentationItem> = Default::default();
+        let mut a_mapping_target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -196,7 +197,7 @@ impl RwStepReprRwMappedItem {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepReprMappedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprMappedItem>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.name())?;
         sw.send_entity(&ent.mapping_source())?;
@@ -206,7 +207,7 @@ impl RwStepReprRwMappedItem {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepReprMappedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprMappedItem>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.get_one_item(&ent.mapping_source().cast());

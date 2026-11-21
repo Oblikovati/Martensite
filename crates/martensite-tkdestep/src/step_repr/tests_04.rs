@@ -21,8 +21,8 @@ fn init_round_trip_step_repr_shape_aspect_relationship() {
         &a_name,
         has_description,
         &a_description,
-        &a_relating_shape_aspect,
-        &a_related_shape_aspect,
+        &a_relating_shape_aspect.upcast(),
+        &a_related_shape_aspect.upcast(),
     );
     assert!(object.name() == a_name);
     assert!(object.has_description() == has_description);
@@ -92,11 +92,11 @@ fn init_round_trip_step_repr_specified_higher_usage_occurrence() {
             &a_product_definition_relationship_name,
             has_product_definition_relationship_description,
             &a_product_definition_relationship_description,
-            &a_product_definition_relationship_relating_product_definition,
-            &a_product_definition_relationship_related_product_definition,
+            &a_product_definition_relationship_relating_product_definition.upcast(),
+            &a_product_definition_relationship_related_product_definition.upcast(),
             has_assembly_component_usage_reference_designator,
             &a_assembly_component_usage_reference_designator,
-            &a_upper_usage,
+            &a_upper_usage.upcast(),
             &a_next_usage,
         )
         .unwrap();

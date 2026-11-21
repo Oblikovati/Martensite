@@ -96,7 +96,7 @@ impl StepToGeom {
     }
     /// `make_toroidal_surface`: the radii are made positive.
     pub fn make_toroidal_surface(
-        ss: &Handle<StepGeomToroidalSurface>,
+        ss: &Handle<dyn crate::StepEntityBase<StepGeomToroidalSurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<GeomToroidalSurface>, Failure> {
         let live = step_live(ss, "StepToGeom::MakeToroidalSurface")?;
@@ -112,7 +112,7 @@ impl StepToGeom {
     }
     /// `make_elementary_surface`: null for another surface.
     pub fn make_elementary_surface(
-        ss: &Handle<StepGeomElementarySurface>,
+        ss: &Handle<dyn crate::StepEntityBase<StepGeomElementarySurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomElementarySurface>, Failure> {
         let plane = ss.cast::<StepGeomPlane>();
@@ -131,7 +131,7 @@ impl StepToGeom {
         if sphere.is_some() {
             return Ok(Self::make_spherical_surface(&sphere, factors)?.cast());
         }
-        let torus = ss.cast::<StepGeomToroidalSurface>();
+        let torus = ss.cast::<dyn crate::StepEntityBase<StepGeomToroidalSurface>>();
         if torus.is_some() {
             return Ok(Self::make_toroidal_surface(&torus, factors)?.cast());
         }
@@ -219,7 +219,7 @@ impl StepToGeom {
     }
     /// `make_swept_surface`: null for another surface.
     pub fn make_swept_surface(
-        ss: &Handle<StepGeomSweptSurface>,
+        ss: &Handle<dyn crate::StepEntityBase<StepGeomSweptSurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomSweptSurface>, Failure> {
         let extrusion = ss.cast::<StepGeomSurfaceOfLinearExtrusion>();
@@ -313,7 +313,7 @@ impl StepToGeom {
     /// A surface_replica: :n7 abv 16 Feb 99; protects against cyclic references and a wrong operator.
     fn make_surface_replica(
         replica: &StepGeomSurfaceReplica,
-        surface: &Handle<StepGeomSurface>,
+        surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
         let parent = replica.parent_surface();
@@ -333,21 +333,21 @@ impl StepToGeom {
     }
     /// The conversion of a surface; the members raise and `make_surface` catches them.
     fn make_surface_guarded(
-        ss: &Handle<StepGeomSurface>,
+        ss: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
-        let bounded = ss.cast::<StepGeomBoundedSurface>();
+        let bounded = ss.cast::<dyn crate::StepEntityBase<StepGeomBoundedSurface>>();
         if bounded.is_some() {
             return Ok(Self::make_bounded_surface(&bounded, factors)?.cast());
         }
-        let elementary = ss.cast::<StepGeomElementarySurface>();
+        let elementary = ss.cast::<dyn crate::StepEntityBase<StepGeomElementarySurface>>();
         if let Some(live) = elementary.get() {
             if live.position().is_null() {
                 return Ok(Handle::default());
             }
             return Ok(Self::make_elementary_surface(&elementary, factors)?.cast());
         }
-        let swept = ss.cast::<StepGeomSweptSurface>();
+        let swept = ss.cast::<dyn crate::StepEntityBase<StepGeomSweptSurface>>();
         if swept.is_some() {
             return Ok(Self::make_swept_surface(&swept, factors)?.cast());
         }
@@ -362,7 +362,7 @@ impl StepToGeom {
     /// `make_surface`: sln 01.10.2001 BUC61003: null for a null entity. A failure inside the
     /// conversion gives a null handle, as the `catch (a failure)` does.
     pub fn make_surface(
-        ss: &Handle<StepGeomSurface>,
+        ss: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
         if ss.is_null() {

@@ -27,7 +27,7 @@ impl StepAP214AppliedDocumentReference {
     /// `init`.
     pub fn init(
         &self,
-        a_assigned_document: &Handle<StepBasicDocument>,
+        a_assigned_document: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         a_source: &Handle<HAsciiString>,
         a_items: &Handle<HArray1<StepAP214DocumentReferenceItem>>,
     ) {
@@ -219,7 +219,7 @@ impl StepAP214AutoDesignActualDateAssignment {
     /// `init`.
     pub fn init(
         &self,
-        a_assigned_date: &Handle<StepBasicDate>,
+        a_assigned_date: &Handle<dyn crate::StepEntityBase<StepBasicDate>>,
         a_role: &Handle<StepBasicDateRole>,
         a_items: &Handle<HArray1<StepAP214AutoDesignDatedItem>>,
     ) {
@@ -293,7 +293,7 @@ impl StepAP214AutoDesignDocumentReference {
     /// `init`.
     pub fn init(
         &self,
-        a_assigned_document: &Handle<StepBasicDocument>,
+        a_assigned_document: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         a_source: &Handle<HAsciiString>,
         a_items: &Handle<HArray1<StepAP214AutoDesignReferencingItem>>,
     ) {

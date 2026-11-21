@@ -146,7 +146,7 @@ macro_rules! rw_block_b_0022 {
             $has_item_defined_transformation_description = false;
             $a_item_defined_transformation_description = Default::default();
         }
-        let mut $a_item_defined_transformation_transform_item1: Handle<StepReprRepresentationItem> =
+        let mut $a_item_defined_transformation_transform_item1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
             Default::default();
         $the_data.read_entity(
             $the_num,
@@ -156,7 +156,7 @@ macro_rules! rw_block_b_0022 {
             StepReprRepresentationItem::static_type(),
             &mut $a_item_defined_transformation_transform_item1,
         )?;
-        let mut $a_item_defined_transformation_transform_item2: Handle<StepReprRepresentationItem> =
+        let mut $a_item_defined_transformation_transform_item2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
             Default::default();
         $the_data.read_entity(
             $the_num,

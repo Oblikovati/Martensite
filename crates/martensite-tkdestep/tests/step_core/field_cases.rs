@@ -5,6 +5,7 @@ use martensite_tkdestep::step_data::{
     StepDataSelectInt, StepDataSelectMember, StepDataSelectNamed, StepDataSelectReal,
     StepDataSimple,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     ncollection::{HArray1, HArray2},
     standard::{Handle, StandardTransient},
@@ -12,14 +13,14 @@ use martensite_tkernel::{
 };
 use martensite_tkxsbase::interface::{InterfaceEntityIterator, InterfaceParamType};
 
-type Transients = HArray1<Handle<StandardTransient>>;
-type TransientGrid = HArray2<Handle<StandardTransient>>;
+type Transients = HArray1<Handle<dyn Transient>>;
+type TransientGrid = HArray2<Handle<dyn Transient>>;
 
-fn entity() -> Handle<StandardTransient> {
-    Handle::new(StandardTransient::default())
+fn entity() -> Handle<dyn Transient> {
+    Handle::new(StandardTransient).into_upcast()
 }
 
-fn text(value: &str) -> Handle<StandardTransient> {
+fn text(value: &str) -> Handle<dyn Transient> {
     Handle::new(HAsciiString::new(value)).cast()
 }
 

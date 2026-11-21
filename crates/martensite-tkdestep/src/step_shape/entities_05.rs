@@ -14,13 +14,13 @@ use crate::step_repr::*;
 step_entity! {
     /// Representation of STEP entity NonManifoldSurfaceShapeRepresentation
     StepShapeNonManifoldSurfaceShapeRepresentation, StepShapeNonManifoldSurfaceShapeRepresentationState, "StepShapeNonManifoldSurfaceShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Open shell.
     StepShapeOpenShell, StepShapeOpenShellState, "StepShapeOpenShell", StepShapeConnectedFaceSet, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeConnectedFaceSet, crate::step_shape::StepShapeOpenShell, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 
 step_entity! {
@@ -52,14 +52,14 @@ impl StepShapePlusMinusTolerance {
 step_entity! {
     /// Representation of STEP entity PointRepresentation
     StepShapePointRepresentation, StepShapePointRepresentationState, "StepShapePointRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Poly loop.
     StepShapePolyLoop, StepShapePolyLoopState, "StepShapePolyLoop", StepShapeLoop, {
         polygon: Handle<HArray1<Handle<StepGeomCartesianPoint>>>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeLoop, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapePolyLoop {
     step_methods! {
@@ -97,7 +97,7 @@ step_entity! {
     /// Added for Dimensional Tolerances
     StepShapeQualifiedRepresentationItem, StepShapeQualifiedRepresentationItemState, "StepShapeQualifiedRepresentationItem", StepReprRepresentationItem, {
         the_qualifiers: Handle<HArray1<StepShapeValueQualifier>>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeQualifiedRepresentationItem {
     step_methods! {
@@ -140,7 +140,7 @@ step_entity! {
     StepShapeRevolvedAreaSolid, StepShapeRevolvedAreaSolidState, "StepShapeRevolvedAreaSolid", StepShapeSweptAreaSolid, {
         axis: Handle<StepGeomAxis1Placement>,
         angle: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeRevolvedAreaSolid {
     step_methods! {
@@ -170,7 +170,7 @@ step_entity! {
     StepShapeRevolvedFaceSolid, StepShapeRevolvedFaceSolidState, "StepShapeRevolvedFaceSolid", StepShapeSweptFaceSolid, {
         axis: Handle<StepGeomAxis1Placement>,
         angle: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeRevolvedFaceSolid {
     step_methods! {
@@ -180,14 +180,14 @@ impl StepShapeRevolvedFaceSolid {
         get angle = angle: f64;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_area: &Handle<StepShapeFaceSurface>) {
+    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>) {
         self.parent.init(a_name, a_swept_area);
     }
     /// `init`.
     pub fn init_axis1_placement(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_swept_area: &Handle<StepShapeFaceSurface>,
+        a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
         a_axis: &Handle<StepGeomAxis1Placement>,
         a_angle: f64,
     ) {
@@ -207,7 +207,7 @@ step_entity! {
         y: f64,
         z: f64,
         ltx: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeRightAngularWedge {
     step_methods! {
@@ -250,7 +250,7 @@ step_entity! {
         height: f64,
         radius: f64,
         semi_angle: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeRightCircularCone {
     step_methods! {
@@ -288,7 +288,7 @@ step_entity! {
         position: Handle<StepGeomAxis1Placement>,
         height: f64,
         radius: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeRightCircularCylinder {
     step_methods! {

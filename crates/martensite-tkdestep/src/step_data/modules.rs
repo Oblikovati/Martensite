@@ -51,14 +51,14 @@ pub trait StepDataReadWriteModule: InterfaceReaderModule {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure>;
     /// `WriteStep(CN, SW, ent)`.
     fn write_step(
         &self,
         cn: i32,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure>;
 }
 impl_transient_interface!(
@@ -97,7 +97,7 @@ pub fn step_module_read<M: StepDataReadWriteModule + ?Sized>(
     data: &Handle<dyn InterfaceFileReaderData>,
     num: i32,
     ach: &mut Handle<InterfaceCheck>,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
 ) -> Result<(), Failure> {
     let step = data.cast::<StepDataStepReaderData>();
     if step.is_null() {
@@ -133,7 +133,7 @@ macro_rules! impl_step_read_write_module {
                     martensite_tkxsbase::interface::InterfaceCheck,
                 >,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
                 $crate::step_data::step_module_read(self, casenum, data, num, ach, ent)
@@ -178,10 +178,7 @@ pub type StepDataNodeOfWriterLib = LibCtlNode<StepDataWriterLibKind>;
 /// The private fields of `StepDataFileRecognizer`; a recognizer embeds them.
 #[derive(Default)]
 pub struct StepDataFileRecognizerBase {
-    state: SharedState<(
-        Handle<StandardTransient>,
-        Handle<dyn StepDataFileRecognizer>,
-    )>,
+    state: SharedState<(Handle<dyn Transient>, Handle<dyn StepDataFileRecognizer>)>,
 }
 
 /// `StepDataFileRecognizer`, abstract (`recognizer` instantiated): `eval` is
@@ -197,7 +194,7 @@ pub trait StepDataFileRecognizer: Transient {
     /// `eval(akey)`.
     fn eval(&self, akey: &AsciiString);
     /// `evaluate(akey, res)`: its own `eval`, then the added recognizer's.
-    fn evaluate(&self, akey: &AsciiString, res: &mut Handle<StandardTransient>) -> bool {
+    fn evaluate(&self, akey: &AsciiString, res: &mut Handle<dyn Transient>) -> bool {
         self.set_ko();
         self.eval(akey);
         let (found, next) = {
@@ -211,7 +208,7 @@ pub trait StepDataFileRecognizer: Transient {
         next.get().is_some_and(|live| live.evaluate(akey, res))
     }
     /// `result`: a no such object failure when the evaluation failed.
-    fn result(&self) -> Result<Handle<StandardTransient>, Failure> {
+    fn result(&self) -> Result<Handle<dyn Transient>, Failure> {
         let (found, next) = {
             let state = self.recognizer_base().state.read();
             (state.0.clone(), state.1.clone())
@@ -231,7 +228,7 @@ pub trait StepDataFileRecognizer: Transient {
         self.recognizer_base().state.write().1 = reco.clone();
     }
     /// `set_ok(aresult)` (protected).
-    fn set_ok(&self, aresult: &Handle<StandardTransient>) {
+    fn set_ok(&self, aresult: &Handle<dyn Transient>) {
         self.recognizer_base().state.write().0 = aresult.clone();
     }
     /// `set_ko` (protected).

@@ -12,7 +12,7 @@ fn init_round_trip_step_basic_date_and_time() {
     let a_date_component = Handle::new(StepBasicDate::new());
     let a_time_component = Handle::new(StepBasicLocalTime::new());
     let object = StepBasicDateAndTime::new();
-    object.init(&a_date_component, &a_time_component);
+    object.init(&a_date_component.upcast(), &a_time_component);
     assert!(object.date_component() == a_date_component);
     assert!(object.time_component() == a_time_component);
 }
@@ -52,7 +52,7 @@ fn init_round_trip_step_basic_date_assignment() {
     let a_assigned_date = Handle::new(StepBasicDate::new());
     let a_role = Handle::new(StepBasicDateRole::new());
     let object = StepBasicDateAssignment::new();
-    object.init(&a_assigned_date, &a_role);
+    object.init(&a_assigned_date.upcast(), &a_role);
     assert!(object.assigned_date() == a_assigned_date);
     assert!(object.role() == a_role);
 }
@@ -124,7 +124,7 @@ fn init_round_trip_step_basic_derived_unit_element() {
     let a_unit = Handle::new(StepBasicNamedUnit::new());
     let a_exponent = 2.5;
     let object = StepBasicDerivedUnitElement::new();
-    object.init(&a_unit, a_exponent);
+    object.init(&a_unit.upcast(), a_exponent);
     assert!(object.unit() == a_unit);
     assert!(object.exponent() == a_exponent);
 }
@@ -260,7 +260,7 @@ fn init_round_trip_step_basic_document_product_association() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let has_description = true;
     let a_description = Handle::new(HAsciiString::new("sample"));
-    let a_relating_document = Handle::new(StepBasicDocument::new());
+    let a_relating_document = Handle::new(StepBasicDocument::new()).into_upcast();
     let a_related_product = StepBasicProductOrFormationOrDefinition::default();
     let object = StepBasicDocumentProductAssociation::new();
     object.init(
@@ -310,8 +310,8 @@ fn runtime_type_step_basic_document_relationship() {
 fn init_round_trip_step_basic_document_relationship() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_description = Handle::new(HAsciiString::new("sample"));
-    let a_relating = Handle::new(StepBasicDocument::new());
-    let a_related = Handle::new(StepBasicDocument::new());
+    let a_relating = Handle::new(StepBasicDocument::new()).into_upcast();
+    let a_related = Handle::new(StepBasicDocument::new()).into_upcast();
     let object = StepBasicDocumentRelationship::new();
     object.init(&a_name, &a_description, &a_relating, &a_related);
     assert!(object.name() == a_name);
@@ -333,7 +333,7 @@ fn runtime_type_step_basic_document_representation_type() {
 #[test]
 fn init_round_trip_step_basic_document_representation_type() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_represented_document = Handle::new(StepBasicDocument::new());
+    let a_represented_document = Handle::new(StepBasicDocument::new()).into_upcast();
     let object = StepBasicDocumentRepresentationType::new();
     object.init(&a_name, &a_represented_document);
     assert!(object.name() == a_name);

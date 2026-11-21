@@ -167,7 +167,7 @@ impl StepBasicApprovalStatus {
 step_entity! {
     /// Area unit.
     StepBasicAreaUnit, StepBasicAreaUnitState, "StepBasicAreaUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {
@@ -175,7 +175,7 @@ step_entity! {
     StepBasicCalendarDate, StepBasicCalendarDateState, "StepBasicCalendarDate", StepBasicDate, {
         day_component: i32,
         month_component: i32,
-    }
+    }, bases: [crate::step_basic::StepBasicDate]
 }
 impl StepBasicCalendarDate {
     step_methods! {

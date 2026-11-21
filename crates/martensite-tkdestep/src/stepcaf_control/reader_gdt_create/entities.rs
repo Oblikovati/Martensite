@@ -1,15 +1,16 @@
 //! The GD&T entities created by `STEPCAFControlReader`.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 impl OldVersion<'_> {
     /// A tolerance and its datums on an advanced face.
     fn read_tolerance(
         &self,
-        entity: &Handle<StandardTransient>,
-        item: &Handle<StepReprRepresentationItem>,
+        entity: &Handle<dyn Transient>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) -> Result<(), Failure> {
-        let tolerance = entity.cast::<StepDimTolGeometricTolerance>();
-        let tolerance = step_live(&tolerance, WHERE)?;
+        let tolerance = entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>();
+        let tolerance = tolerance.get().ok_or_else(|| martensite_tkernel::standard::exceptions::null_object(&format!("{WHERE}: null tolerance")))?;
         // read common data for tolerance
         let magnitude = measure_with_unit(&tolerance.magnitude());
         let Some(magnitude) = magnitude.get() else {
@@ -41,18 +42,18 @@ impl OldVersion<'_> {
                 tool.set_dim_tol_values(&label, kind, &values, &name, &description)?;
             // translate datums connected with this tolerance
             let reference = complex.get_geometric_tolerance_with_datum_reference();
-            if reference.is_some() {
+            if let Some(reference) = reference.get() {
                 read_datums(
                     self.shape_tool,
                     tool,
                     self.session,
                     &tolerance_label,
-                    &reference,
+                    reference,
                 )?;
             }
-        } else if entity
-            .cast::<StepDimTolGeometricToleranceWithDatumReference>()
-            .is_some()
+        } else if let Some(reference) = entity
+            .view::<dyn crate::StepEntityBase<StepDimTolGeometricToleranceWithDatumReference>>()
+            .get()
         {
             let kind = kind_of_reference_tolerance(entity);
             let tolerance_label =
@@ -62,7 +63,7 @@ impl OldVersion<'_> {
                 tool,
                 self.session,
                 &tolerance_label,
-                &entity.cast(),
+                reference,
             )?;
         } else if let Some(modified) = entity.cast::<StepDimTolModifiedGeometricTolerance>().get() {
             tool.set_dim_tol_values(
@@ -80,10 +81,10 @@ impl OldVersion<'_> {
     /// The property definition of the old version: dimensions and tolerances are made directly.
     fn read_property(
         &self,
-        entity: &Handle<StandardTransient>,
-        definition: &Handle<StepReprPropertyDefinition>,
+        entity: &Handle<dyn Transient>,
+        definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     ) -> Result<(), Failure> {
-        let mut item = Handle::<StepReprRepresentationItem>::default();
+        let mut item = Handle::<dyn crate::StepEntityBase<StepReprRepresentationItem>>::default();
         for sharing in self.session.sharings(&definition.cast())? {
             if let Some(sdr) = sharing
                 .cast::<StepShapeShapeDefinitionRepresentation>()
@@ -100,10 +101,10 @@ impl OldVersion<'_> {
         if item.is_null() {
             return Ok(());
         }
-        if entity.cast::<StepShapeDimensionalSize>().is_some() {
+        if entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().is_some() {
             return self.read_dimension(entity, &item);
         }
-        if entity.cast::<StepDimTolGeometricTolerance>().is_some() {
+        if entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().get().is_some() {
             return self.read_tolerance(entity, &item);
         }
         Ok(())
@@ -112,7 +113,7 @@ impl OldVersion<'_> {
 
 /// The labels of items: a wire without a label gives those of its edges.
 fn labels_of_items(
-    items: &[Handle<StandardTransient>],
+    items: &[Handle<dyn Transient>],
     session: &SessionGraph,
     tool: &XCAFDocShapeTool,
 ) -> Result<Vec<TdfLabel>, Failure> {
@@ -145,8 +146,8 @@ fn labels_of_items(
 /// What the shapes of an entity gather while it is read.
 #[derive(Default)]
 struct CollectedItems {
-    first: Vec<Handle<StandardTransient>>,
-    second: Vec<Handle<StandardTransient>>,
+    first: Vec<Handle<dyn Transient>>,
+    second: Vec<Handle<dyn Transient>>,
     is_all_around: bool,
     is_all_over: bool,
 }
@@ -155,9 +156,9 @@ impl ReaderState {
     /// The aspects of one attribute an entity shares, gathering the all-over items.
     fn aspects_of_attribute(
         session: &SessionGraph,
-        attribute: &Handle<StandardTransient>,
+        attribute: &Handle<dyn Transient>,
         collected: &mut CollectedItems,
-    ) -> Result<Vec<Handle<StepReprShapeAspect>>, Failure> {
+    ) -> Result<Vec<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>, Failure> {
         let mut aspects = Vec::new();
         if attribute.cast::<StepReprProductDefinitionShape>().is_some() {
             // if associating tolerances with part (All-Over)
@@ -178,17 +179,17 @@ impl ReaderState {
                     }
                 }
             }
-        } else if attribute.cast::<StepShapeDimensionalLocation>().is_some()
-            || attribute.cast::<StepShapeDimensionalSize>().is_some()
+        } else if attribute.cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>().is_some()
+            || attribute.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().is_some()
         {
             // if tolerance attached to dimension
             for shared in session.shareds(attribute)? {
-                let aspect = shared.cast::<StepReprShapeAspect>();
+                let aspect = shared.cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>();
                 if aspect.is_some() {
                     collect_shape_aspect(&aspect, session, &mut aspects)?;
                 }
             }
-        } else if attribute.cast::<StepReprShapeAspect>().is_some() {
+        } else if attribute.cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>().is_some() {
             // if applied AllAround Modifier
             collected.is_all_around |= attribute.cast::<StepReprAllAroundShapeAspect>().is_some();
             // dimensions and default tolerances
@@ -199,14 +200,14 @@ impl ReaderState {
     /// The representation items of the aspects; the old version of the structure is read here.
     fn items_of_aspects(
         old: &OldVersion<'_>,
-        entity: &Handle<StandardTransient>,
-        aspects: &[Handle<StepReprShapeAspect>],
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+        entity: &Handle<dyn Transient>,
+        aspects: &[Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>],
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         let mut items = Vec::new();
         for aspect in aspects {
             // the first sharing of either kind ends the search
             let mut usage = Handle::<StepAP242GeometricItemSpecificUsage>::default();
-            let mut definition = Handle::<StepReprPropertyDefinition>::default();
+            let mut definition = Handle::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>::default();
             for sharing in old.session.sharings(&aspect.cast())? {
                 usage = sharing.cast();
                 definition = sharing.cast();
@@ -227,19 +228,19 @@ impl ReaderState {
     /// The label of the entity on the shapes: a dimension or a tolerance.
     fn add_gdt_label(
         &mut self,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         tool: &XCAFDocDimTolTool,
         first: &[TdfLabel],
         second: &[TdfLabel],
         collected: &CollectedItems,
     ) -> Result<TdfLabel, Failure> {
         let ascii_name = |text: &str| ExtendedString::from_ascii(&AsciiString::new(text));
-        if entity.cast::<StepDimTolGeometricTolerance>().is_null() {
+        if entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().is_null() {
             let label = tool.add_dimension()?;
             self.gdt_map.bind(entity.clone(), label.clone());
             tool.lock(&label)?;
             XCAFDocDimension::set(&label)?;
-            let kind = if entity.cast::<StepShapeDimensionalSize>().is_some() {
+            let kind = if entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().is_some() {
                 "DGT:Dimensional_Size"
             } else {
                 "DGT:Dimensional_Location"
@@ -268,7 +269,7 @@ impl ReaderState {
     /// `createGDTObjectInXCAF`: the label of a dimension or a tolerance; null without shapes.
     pub(in crate::stepcaf_control) fn create_gdt_object_in_xcaf(
         &mut self,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         doc: &Handle<TDocStdDocument>,
         ws: &Handle<XSControlWorkSession>,
         factors: &StepDataFactors,

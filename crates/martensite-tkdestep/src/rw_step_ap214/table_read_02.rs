@@ -193,12 +193,12 @@ pub(super) const TABLE_READ_02: &[ReadRow] = &[
     ),
     read_row!(
         340,
-        StepBasicProductDefinitionContext,
+        StepBasicDesignContext,
         RwStepBasicRwProductDefinitionContext
     ),
-    read_row!(341, StepBasicMeasureWithUnit, RwStepBasicRwMeasureWithUnit),
-    read_row!(342, StepBasicNamedUnit, RwStepBasicRwNamedUnit),
-    read_row!(343, StepBasicNamedUnit, RwStepBasicRwNamedUnit),
+    read_row!(341, StepBasicTimeMeasureWithUnit, RwStepBasicRwMeasureWithUnit),
+    read_row!(342, StepBasicRatioUnit, RwStepBasicRwNamedUnit),
+    read_row!(343, StepBasicTimeUnit, RwStepBasicRwNamedUnit),
     read_row!(
         344,
         StepBasicSiUnitAndRatioUnit,
@@ -224,11 +224,11 @@ pub(super) const TABLE_READ_02: &[ReadRow] = &[
         StepBasicApprovalDateTime,
         RwStepBasicRwApprovalDateTime
     ),
-    read_row!(349, StepVisualCameraImage, RwStepVisualRwCameraImage),
-    read_row!(350, StepVisualCameraImage, RwStepVisualRwCameraImage),
+    read_row!(349, StepVisualCameraImage2dWithScale, RwStepVisualRwCameraImage),
+    read_row!(350, StepVisualCameraImage3dWithScale, RwStepVisualRwCameraImage),
     read_row!(
         351,
-        StepGeomCartesianTransformationOperator,
+        StepGeomCartesianTransformationOperator2d,
         RwStepGeomRwCartesianTransformationOperator
     ),
     read_row!(352, StepBasicDerivedUnit, RwStepBasicRwDerivedUnit),
@@ -268,7 +268,7 @@ pub(super) const TABLE_READ_02: &[ReadRow] = &[
         RwStepAP214RwAutoDesignDocumentReference
     ),
     read_row!(367, StepBasicDocument, RwStepBasicRwDocument),
-    read_row!(368, StepBasicDocument, RwStepBasicRwDocument),
+    read_row!(368, StepBasicDigitalDocument, RwStepBasicRwDocument),
     read_row!(
         369,
         StepBasicDocumentRelationship,
@@ -318,12 +318,12 @@ pub(super) const TABLE_READ_02: &[ReadRow] = &[
     ),
     read_row!(
         380,
-        StepReprAssemblyComponentUsage,
+        StepReprNextAssemblyUsageOccurrence,
         RwStepReprRwAssemblyComponentUsage
     ),
     read_row!(
         381,
-        StepReprAssemblyComponentUsage,
+        StepReprPromissoryUsageOccurrence,
         RwStepReprRwAssemblyComponentUsage
     ),
     read_row!(
@@ -699,12 +699,12 @@ pub(super) const TABLE_READ_02: &[ReadRow] = &[
     ),
     read_row!(
         483,
-        StepReprCompoundRepresentationItem,
+        StepReprValueRange,
         RwStepReprRwCompoundRepresentationItem
     ),
     read_row!(
         484,
-        StepReprShapeAspectRelationship,
+        StepReprShapeAspectDerivingRelationship,
         RwStepReprRwShapeAspectRelationship
     ),
     read_row!(

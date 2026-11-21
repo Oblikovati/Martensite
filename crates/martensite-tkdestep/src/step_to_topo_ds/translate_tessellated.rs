@@ -16,14 +16,15 @@ use crate::step_visual::{
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Face, Shape, Shell, Solid};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::transfer::TransferTransientProcess;
 use martensite_tkxsbase::transfer_brep::TransferBRepShapeBinder;
 
 /// `theTP->Find(link)` as a shape binder.
 fn shape_binder_of(
     process: &TransferTransientProcess,
-    link: &Handle<StandardTransient>,
+    link: &Handle<dyn Transient>,
 ) -> Handle<TransferBRepShapeBinder> {
     process.find(link).cast()
 }
@@ -34,7 +35,7 @@ impl StepToTopoDSTranslateFace {
         &mut self,
         face: &Face,
         mesh: &Handle<martensite_tkmath::poly::Triangulation>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         nm_tool: &mut StepToTopoDSNMTool,
     ) -> Result<(), Failure> {
         BRepBuilder::default().update_face_triangulation(face, mesh, true)?;
@@ -47,7 +48,7 @@ impl StepToTopoDSTranslateFace {
     /// `StepToTopoDSTranslateFace(theTF, theTool, theNMTool, theReadTessellatedWhenNoBRepOnly,
     /// theHasGeom, factors)`.
     pub fn with_tessellated_face(
-        tessellated: &Handle<StepVisualTessellatedFace>,
+        tessellated: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         only_no_brep: bool,
@@ -67,7 +68,7 @@ impl StepToTopoDSTranslateFace {
     }
     /// `StepToTopoDSTranslateFace(theTSS, theTool, theNMTool, factors)`.
     pub fn with_tessellated_surface_set(
-        set: &Handle<StepVisualTessellatedSurfaceSet>,
+        set: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedSurfaceSet>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -79,7 +80,7 @@ impl StepToTopoDSTranslateFace {
     /// `init(tf, tool, nm_tool, read_tessellated_when_no_b_rep_only, has_geom, factors)`.
     pub fn init_tessellated_face(
         &mut self,
-        tessellated: &Handle<StepVisualTessellatedFace>,
+        tessellated: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         only_no_brep: bool,
@@ -91,7 +92,7 @@ impl StepToTopoDSTranslateFace {
         };
         let process_handle = tool.transient_process();
         let process = step_live(&process_handle, "StepToTopoDSTranslateFace")?;
-        let entity: Handle<StandardTransient> = tessellated.cast();
+        let entity: Handle<dyn Transient> = tessellated.cast();
         let mut face = Face::default();
         if live.has_geometric_link() {
             let link = live.geometric_link().face();
@@ -133,7 +134,7 @@ impl StepToTopoDSTranslateFace {
     /// `init(tss, tool, nm_tool, factors)`.
     pub fn init_tessellated_surface_set(
         &mut self,
-        set: &Handle<StepVisualTessellatedSurfaceSet>,
+        set: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedSurfaceSet>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -143,7 +144,7 @@ impl StepToTopoDSTranslateFace {
         }
         let process_handle = tool.transient_process();
         let process = step_live(&process_handle, "StepToTopoDSTranslateFace")?;
-        let entity: Handle<StandardTransient> = set.cast();
+        let entity: Handle<dyn Transient> = set.cast();
         let mut face = Face::default();
         BRepBuilder::default().make_face(&mut face);
         if set.cast::<StepVisualTriangulatedSurfaceSet>().is_null()
@@ -174,7 +175,7 @@ impl StepToTopoDSTranslateFace {
     reason = "the two loops read each of these"
 )]
 fn translate_items(
-    items: &mut dyn FnMut(i32) -> Result<Handle<StepVisualTessellatedStructuredItem>, Failure>,
+    items: &mut dyn FnMut(i32) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>, Failure>,
     count: i32,
     translator: &mut StepToTopoDSTranslateFace,
     tool: &mut StepToTopoDSTool,
@@ -194,8 +195,8 @@ fn translate_items(
         let item = items(rank)?;
         rank += 1;
         let _ = scope.next(1.0);
-        let entity: Handle<StandardTransient> = item.cast();
-        let face: Handle<StepVisualTessellatedFace> = item.cast();
+        let entity: Handle<dyn Transient> = item.cast();
+        let face: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>> = item.cast();
         if face.is_null() {
             process.add_warning_text(&entity, texts.1, "");
             continue;

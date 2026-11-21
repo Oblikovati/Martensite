@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(
     RwStepReprRwPropertyDefinitionRepresentation,
@@ -24,7 +25,7 @@ impl RwStepReprRwPropertyDefinitionRepresentation {
         }
         let mut a_definition: StepReprRepresentedDefinition = Default::default();
         data.read_entity_select(num, 1, "definition", ach, &mut a_definition)?;
-        let mut a_used_representation: Handle<StepReprRepresentation> = Default::default();
+        let mut a_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = Default::default();
         data.read_entity(
             num,
             2,
@@ -87,7 +88,7 @@ impl RwStepReprRwQuantifiedAssemblyComponentUsage {
             has_product_definition_relationship_description,
             num
         );
-        let mut a_quantity: Handle<StandardTransient> = Default::default();
+        let mut a_quantity: Handle<dyn Transient> = Default::default();
         data.read_entity(
             num,
             7,

@@ -101,14 +101,14 @@ fn runtime_type_step_fea_node_representation() {
 fn init_round_trip_step_fea_node_representation() {
     let a_representation_name = Handle::new(HAsciiString::new("sample"));
     let a_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
     let a_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let a_model_ref = Handle::new(StepFEAFeaModel::new());
     let object = StepFEANodeRepresentation::new();
     object.init(
         &a_representation_name,
         &a_representation_items,
-        &a_representation_context_of_items,
+        &a_representation_context_of_items.upcast(),
         &a_model_ref,
     );
     assert!(object.model_ref() == a_model_ref);
@@ -224,7 +224,7 @@ fn runtime_type_step_fea_surface3d_element_representation() {
 fn init_round_trip_step_fea_surface3d_element_representation() {
     let a_representation_name = Handle::new(HAsciiString::new("sample"));
     let a_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
     let a_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let a_element_representation_node_list =
         Handle::new(HArray1::<Handle<StepFEANodeRepresentation>>::with_bounds(1, 2).unwrap());
@@ -236,7 +236,7 @@ fn init_round_trip_step_fea_surface3d_element_representation() {
     object.init(
         &a_representation_name,
         &a_representation_items,
-        &a_representation_context_of_items,
+        &a_representation_context_of_items.upcast(),
         &a_element_representation_node_list,
         &a_model_ref,
         &a_element_descriptor,
@@ -263,7 +263,7 @@ fn runtime_type_step_fea_volume3d_element_representation() {
 fn init_round_trip_step_fea_volume3d_element_representation() {
     let a_representation_name = Handle::new(HAsciiString::new("sample"));
     let a_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
     let a_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let a_element_representation_node_list =
         Handle::new(HArray1::<Handle<StepFEANodeRepresentation>>::with_bounds(1, 2).unwrap());
@@ -274,7 +274,7 @@ fn init_round_trip_step_fea_volume3d_element_representation() {
     object.init(
         &a_representation_name,
         &a_representation_items,
-        &a_representation_context_of_items,
+        &a_representation_context_of_items.upcast(),
         &a_element_representation_node_list,
         &a_model_ref,
         &a_element_descriptor,

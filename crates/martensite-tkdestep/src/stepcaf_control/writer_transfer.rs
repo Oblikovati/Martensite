@@ -315,7 +315,7 @@ impl WriterState {
         let entities = model_of(ws)?;
         for index in 1..=self.map_comp_mdgpr.extent() {
             let mdgpr = self.map_comp_mdgpr.find_from_index(index)?;
-            entities.add_with_refs(mdgpr, 0, false)?;
+            entities.add_with_refs(&mdgpr.upcast(), 0, false)?;
         }
         Ok(())
     }
@@ -463,7 +463,7 @@ fn write_sub_shape_names(
             }
             // Access the correspondent STEP Representation Item
             let mapper = TransferBRep::shape_mapper(&fp, &sub_shape)?;
-            let mut item: Handle<StepReprRepresentationItem> = Handle::default();
+            let mut item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Handle::default();
             if !process.find_typed_transient_as(
                 &mapper.cast(),
                 StepReprRepresentationItem::static_type(),

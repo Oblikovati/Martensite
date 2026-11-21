@@ -217,7 +217,7 @@ impl RwStepReprRwPropertyDefinitionRelationship {
             return Ok(());
         }
         rw_block_0149!(a_description, a_name, ach, data, num);
-        let mut a_relating_property_definition: Handle<StepReprPropertyDefinition> =
+        let mut a_relating_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> =
             Default::default();
         data.read_entity(
             num,
@@ -227,7 +227,7 @@ impl RwStepReprRwPropertyDefinitionRelationship {
             StepReprPropertyDefinition::static_type(),
             &mut a_relating_property_definition,
         )?;
-        let mut a_related_property_definition: Handle<StepReprPropertyDefinition> =
+        let mut a_related_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> =
             Default::default();
         data.read_entity(
             num,

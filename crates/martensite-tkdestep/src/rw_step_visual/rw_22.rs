@@ -34,7 +34,7 @@ impl RwStepVisualRwTessellatedShell {
             the_data,
             the_num
         );
-        let mut a_topological_link: Handle<StepShapeConnectedFaceSet> = Default::default();
+        let mut a_topological_link: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> = Default::default();
         let mut has_topological_link: bool = true;
         if the_data.is_param_defined(the_num, 3)? {
             the_data.read_entity(
@@ -113,7 +113,7 @@ impl RwStepVisualRwTessellatedSolid {
             the_data,
             the_num
         );
-        let mut a_geometric_link: Handle<StepShapeManifoldSolidBrep> = Default::default();
+        let mut a_geometric_link: Handle<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>> = Default::default();
         let mut has_geometric_link: bool = true;
         if the_data.is_param_defined(the_num, 3)? {
             the_data.read_entity(

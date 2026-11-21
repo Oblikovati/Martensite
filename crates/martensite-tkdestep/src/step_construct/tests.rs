@@ -41,7 +41,7 @@ fn part_for(schema: DeStepWriteModeStepSchema) -> StepConstructPart {
     let mut part = StepConstructPart::new();
     let sr = Handle::new(StepShapeShapeRepresentation::new());
     part.make_sdr(
-        &sr,
+        &sr.upcast(),
         &text("widget"),
         &application,
         &model_with_schema(schema),
@@ -115,7 +115,7 @@ fn an_assembly_links_two_parts_through_a_nauo_and_a_cdsr() {
         .unwrap();
     assert!(
         link.item_value()
-            .cast::<StepShapeShapeRepresentation>()
+            .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
             .is_some()
     );
     link.make_relationship().unwrap();
@@ -226,13 +226,7 @@ fn the_roots_of_a_part_add_the_management_data_of_ap203_only() {
     let creator = tool.ap203_context().get_creator();
     let items = creator.get().unwrap().items();
     let first: StepAP203PersonOrganizationItem = step_array1_item(&items, 1, "test").unwrap();
-    assert!(
-        first.value()
-            == part
-                .pdf()
-                .unwrap()
-                .cast::<martensite_tkernel::standard::StandardTransient>()
-    );
+    assert_eq!(first.value(), part.pdf().unwrap());
     let plain = part_for(DeStepWriteModeStepSchema::AP214_IS);
     let mut tool = StepConstructContextTool::with_model(&model_with_schema(
         DeStepWriteModeStepSchema::AP214_IS,
@@ -299,7 +293,7 @@ fn the_kind_of_a_written_length_unit_is_conversion_based_only_for_non_metric() {
     made.init(0.01, &inch, &StepDataFactors::default()).unwrap();
     let context: Handle<StepReprGlobalUnitAssignedContext> =
         made.value().get().unwrap().global_unit_assigned_context();
-    let unit: Handle<StepBasicNamedUnit> = context.get().unwrap().units_value(1).unwrap();
+    let unit: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>> = context.get().unwrap().units_value(1).unwrap();
     assert!(
         unit.cast::<StepBasicConversionBasedUnitAndLengthUnit>()
             .is_some()

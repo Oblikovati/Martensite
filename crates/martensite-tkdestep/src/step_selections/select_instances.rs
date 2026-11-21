@@ -10,7 +10,8 @@ use crate::step_shape::{
     StepShapeShapeRepresentation, StepShapeShellBasedSurfaceModel,
 };
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkxsbase::if_select::{
     IFSelectSelectDeduct, IFSelectSelectDeductBase, IFSelectSelectExplore,
@@ -36,7 +37,7 @@ thread_local! {
 
 /// `add_all_sharings`: every entity shared below `start`.
 fn add_all_sharings(
-    start: &Handle<StandardTransient>,
+    start: &Handle<dyn Transient>,
     graph: &InterfaceGraph,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<(), Failure> {
@@ -51,17 +52,17 @@ fn add_all_sharings(
 }
 
 /// The kinds whose whole structure goes in.
-fn is_shape_item(start: &Handle<StandardTransient>) -> bool {
+fn is_shape_item(start: &Handle<dyn Transient>) -> bool {
     start.cast::<StepShapeFacetedBrep>().is_some()
         || start.cast::<StepShapeBrepWithVoids>().is_some()
-        || start.cast::<StepShapeManifoldSolidBrep>().is_some()
+        || start.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_some()
         || start.cast::<StepShapeShellBasedSurfaceModel>().is_some()
         || start
             .cast::<StepShapeFacetedBrepAndBrepWithVoids>()
             .is_some()
-        || start.cast::<StepShapeGeometricSet>().is_some()
-        || start.cast::<StepShapeFaceSurface>().is_some()
-        || start.cast::<StepReprMappedItem>().is_some()
+        || start.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some()
+        || start.cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>().is_some()
+        || start.cast::<dyn crate::StepEntityBase<StepReprMappedItem>>().is_some()
 }
 
 /// `add_instances` on a context_dependent_shape_representation: the definitions of its part.
@@ -89,7 +90,7 @@ fn add_cdsr_instances(
 
 /// `add_instances`.
 fn add_instances(
-    start: &Handle<StandardTransient>,
+    start: &Handle<dyn Transient>,
     graph: &InterfaceGraph,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<(), Failure> {
@@ -110,7 +111,7 @@ fn add_instances(
         }
         return Ok(());
     }
-    let rep: Handle<StepShapeShapeRepresentation> = start.cast();
+    let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = start.cast();
     if let Some(live) = rep.get() {
         for rank in 1..=live.nb_items() {
             add_instances(&live.items_value(rank)?.cast(), graph, explored)?;
@@ -124,7 +125,7 @@ fn add_instances(
     if cdsr.is_some() {
         return add_cdsr_instances(&cdsr, graph, explored);
     }
-    let und: Handle<StepReprShapeRepresentationRelationship> = start.cast();
+    let und: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> = start.cast();
     if let Some(live) = und.get() {
         add_instances(&live.rep1().cast(), graph, explored)?;
         add_instances(&live.rep2().cast(), graph, explored)?;
@@ -134,15 +135,13 @@ fn add_instances(
 
 /// Select instances.
 pub struct STEPSelectionsSelectInstances {
-    transient: StandardTransient,
     base: IFSelectSelectExploreBase,
 }
-impl_transient!(STEPSelectionsSelectInstances, "STEPSelectionsSelectInstances", dyn IFSelectSelectExplore, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
+impl_transient!(STEPSelectionsSelectInstances, "STEPSelectionsSelectInstances", dyn IFSelectSelectExplore, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
 
 impl Default for STEPSelectionsSelectInstances {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(-1),
         }
     }
@@ -162,7 +161,7 @@ impl IFSelectSelectExplore for STEPSelectionsSelectInstances {
     fn explore(
         &self,
         _level: i32,
-        _start: &Handle<StandardTransient>,
+        _start: &Handle<dyn Transient>,
         _g: &InterfaceGraph,
         _explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {

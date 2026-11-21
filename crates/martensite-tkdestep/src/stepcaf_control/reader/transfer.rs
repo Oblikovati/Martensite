@@ -27,8 +27,8 @@ impl ReaderState {
                 // sequence for acceleration ReadMaterials
                 step_live(&made.seq_pds, WHERE)?.append(entity.clone());
             }
-            let pd = entity.cast::<StepBasicProductDefinition>();
-            let is_sr = entity.cast::<StepShapeShapeRepresentation>().is_some();
+            let pd = entity.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>();
+            let is_sr = entity.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some();
             if pd.is_null() && !is_sr {
                 continue;
             }

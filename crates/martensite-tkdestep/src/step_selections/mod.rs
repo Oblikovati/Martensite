@@ -17,13 +17,14 @@ pub use selects::{
     STEPSelectionsSelectAssembly, STEPSelectionsSelectFaces, STEPSelectionsSelectGSCurves,
 };
 
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::interface::InterfaceEntityIterator;
 
 /// `InterfaceEntityIterator` as a list.
 pub(crate) fn entities_of(
     iterator: InterfaceEntityIterator,
-) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+) -> Result<Vec<Handle<dyn Transient>>, Failure> {
     let mut entities = Vec::new();
     iterator.start();
     while iterator.more() {
@@ -40,14 +41,14 @@ macro_rules! explore_selection {
     ($(#[$meta:meta])* $class:ident, $recorded:literal) => {
         $(#[$meta])*
         pub struct $class {
-            transient: martensite_tkernel::standard::StandardTransient,
+
             base: martensite_tkxsbase::if_select::IFSelectSelectExploreBase,
         }
-        martensite_tkernel::impl_transient!($class, $recorded, dyn martensite_tkxsbase::if_select::IFSelectSelectExplore, transient, interfaces: [dyn martensite_tkxsbase::if_select::IFSelectSelection, dyn martensite_tkxsbase::if_select::IFSelectSelectDeduct, dyn martensite_tkxsbase::if_select::IFSelectSelectExplore]);
+        martensite_tkernel::impl_transient!($class, $recorded, dyn martensite_tkxsbase::if_select::IFSelectSelectExplore, interfaces: [dyn martensite_tkxsbase::if_select::IFSelectSelection, dyn martensite_tkxsbase::if_select::IFSelectSelectDeduct, dyn martensite_tkxsbase::if_select::IFSelectSelectExplore]);
         impl Default for $class {
             fn default() -> Self {
                 Self {
-                    transient: Default::default(),
+
                     base: martensite_tkxsbase::if_select::IFSelectSelectExploreBase::new(-1),
                 }
             }

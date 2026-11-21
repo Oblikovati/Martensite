@@ -1,19 +1,20 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
 use crate::step_entity::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Integer representation item.
     StepReprIntegerRepresentationItem, StepReprIntegerRepresentationItemState, "StepReprIntegerRepresentationItem", StepReprRepresentationItem, {
         value: i32,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepReprIntegerRepresentationItem {
     step_methods! {
@@ -32,8 +33,8 @@ step_entity! {
     StepReprItemDefinedTransformation, StepReprItemDefinedTransformationState, "StepReprItemDefinedTransformation", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_transform_item1: Handle<StepReprRepresentationItem>,
-        the_transform_item2: Handle<StepReprRepresentationItem>,
+        the_transform_item1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_transform_item2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     }
 }
 impl StepReprItemDefinedTransformation {
@@ -42,18 +43,18 @@ impl StepReprItemDefinedTransformation {
         get name = the_name: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
         get description = the_description: Handle<HAsciiString>;
-        set set_transform_item1 = the_transform_item1: Handle<StepReprRepresentationItem>;
-        get transform_item1 = the_transform_item1: Handle<StepReprRepresentationItem>;
-        set set_transform_item2 = the_transform_item2: Handle<StepReprRepresentationItem>;
-        get transform_item2 = the_transform_item2: Handle<StepReprRepresentationItem>;
+        set set_transform_item1 = the_transform_item1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
+        get transform_item1 = the_transform_item1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
+        set set_transform_item2 = the_transform_item2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
+        get transform_item2 = the_transform_item2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_transform_item1: &Handle<StepReprRepresentationItem>,
-        a_transform_item2: &Handle<StepReprRepresentationItem>,
+        a_transform_item1: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        a_transform_item2: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();
@@ -72,8 +73,8 @@ step_entity! {
     StepReprMakeFromUsageOption, StepReprMakeFromUsageOptionState, "StepReprMakeFromUsageOption", StepReprProductDefinitionUsage, {
         the_ranking: i32,
         the_ranking_rationale: Handle<HAsciiString>,
-        the_quantity: Handle<StandardTransient>,
-    }
+        the_quantity: Handle<dyn Transient>,
+    }, bases: [crate::step_basic::StepBasicProductDefinitionRelationship]
 }
 impl StepReprMakeFromUsageOption {
     step_methods! {
@@ -81,8 +82,8 @@ impl StepReprMakeFromUsageOption {
         set_copy set_ranking = the_ranking: i32;
         get ranking_rationale = the_ranking_rationale: Handle<HAsciiString>;
         set set_ranking_rationale = the_ranking_rationale: Handle<HAsciiString>;
-        get quantity = the_quantity: Handle<StandardTransient>;
-        set set_quantity = the_quantity: Handle<StandardTransient>;
+        get quantity = the_quantity: Handle<dyn Transient>;
+        set set_quantity = the_quantity: Handle<dyn Transient>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -96,15 +97,11 @@ impl StepReprMakeFromUsageOption {
         a_product_definition_relationship_name: &Handle<HAsciiString>,
         has_product_definition_relationship_description: bool,
         a_product_definition_relationship_description: &Handle<HAsciiString>,
-        a_product_definition_relationship_relating_product_definition: &Handle<
-            StepBasicProductDefinition,
-        >,
-        a_product_definition_relationship_related_product_definition: &Handle<
-            StepBasicProductDefinition,
-        >,
+        a_product_definition_relationship_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_product_definition_relationship_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         a_ranking: i32,
         a_ranking_rationale: &Handle<HAsciiString>,
-        a_quantity: &Handle<StandardTransient>,
+        a_quantity: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         self.parent.init(
             a_product_definition_relationship_id,
@@ -133,7 +130,7 @@ impl StepReprMakeFromUsageOption {
         a_product_definition_relationship_related_product_definition: &StepBasicProductDefinitionOrReference,
         a_ranking: i32,
         a_ranking_rationale: &Handle<HAsciiString>,
-        a_quantity: &Handle<StandardTransient>,
+        a_quantity: &Handle<dyn Transient>,
     ) {
         self.parent.init_product_definition_or_reference(
             a_product_definition_relationship_id,
@@ -154,22 +151,22 @@ step_entity! {
     /// Mapped item.
     StepReprMappedItem, StepReprMappedItemState, "StepReprMappedItem", StepReprRepresentationItem, {
         mapping_source: Handle<StepReprRepresentationMap>,
-        mapping_target: Handle<StepReprRepresentationItem>,
-    }
+        mapping_target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_repr::StepReprMappedItem]
 }
 impl StepReprMappedItem {
     step_methods! {
         set set_mapping_source = mapping_source: Handle<StepReprRepresentationMap>;
         get mapping_source = mapping_source: Handle<StepReprRepresentationMap>;
-        set set_mapping_target = mapping_target: Handle<StepReprRepresentationItem>;
-        get mapping_target = mapping_target: Handle<StepReprRepresentationItem>;
+        set set_mapping_target = mapping_target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
+        get mapping_target = mapping_target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
         a_mapping_source: &Handle<StepReprRepresentationMap>,
-        a_mapping_target: &Handle<StepReprRepresentationItem>,
+        a_mapping_target: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) {
         let mut state = self.state.write();
         state.mapping_source = a_mapping_source.clone();
@@ -208,14 +205,14 @@ impl StepReprMaterialDesignation {
 step_entity! {
     /// Representation of STEP entity MaterialProperty
     StepReprMaterialProperty, StepReprMaterialPropertyState, "StepReprMaterialProperty", StepReprPropertyDefinition, {
-    }
+    }, bases: [crate::step_repr::StepReprPropertyDefinition]
 }
 
 step_entity! {
     /// Representation of STEP entity MaterialPropertyRepresentation
     StepReprMaterialPropertyRepresentation, StepReprMaterialPropertyRepresentationState, "StepReprMaterialPropertyRepresentation", StepReprPropertyDefinitionRepresentation, {
         the_dependent_environment: Handle<StepReprDataEnvironment>,
-    }
+    }, bases: [crate::step_repr::StepReprPropertyDefinitionRepresentation]
 }
 impl StepReprMaterialPropertyRepresentation {
     step_methods! {
@@ -227,7 +224,7 @@ impl StepReprMaterialPropertyRepresentation {
     pub fn init(
         &self,
         a_property_definition_representation_definition: &StepReprRepresentedDefinition,
-        a_property_definition_representation_used_representation: &Handle<StepReprRepresentation>,
+        a_property_definition_representation_used_representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
         a_dependent_environment: &Handle<StepReprDataEnvironment>,
     ) {
         self.parent.init(
@@ -243,8 +240,8 @@ step_entity! {
     /// which is used for storing validation properties
     /// (e.g. area) for shapes
     custom_default StepReprMeasureRepresentationItem, StepReprMeasureRepresentationItemState, "StepReprMeasureRepresentationItem", StepReprRepresentationItem, {
-        my_measure: Handle<StepBasicMeasureWithUnit>,
-    }
+        my_measure: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl Default for StepReprMeasureRepresentationItem {
     fn default() -> Self {
@@ -253,7 +250,7 @@ impl Default for StepReprMeasureRepresentationItem {
             state: Default::default(),
         };
         {
-            object.state.write().my_measure = Handle::new(StepBasicMeasureWithUnit::new());
+            object.state.write().my_measure = Handle::new(StepBasicMeasureWithUnit::new()).into_upcast();
         }
         object
     }
@@ -266,8 +263,8 @@ impl StepReprMeasureRepresentationItem {
 }
 impl StepReprMeasureRepresentationItem {
     step_methods! {
-        set set_measure = my_measure: Handle<StepBasicMeasureWithUnit>;
-        get measure = my_measure: Handle<StepBasicMeasureWithUnit>;
+        set set_measure = my_measure: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>;
+        get measure = my_measure: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>;
     }
     /// `init`.
     /// Init all fields
@@ -291,25 +288,25 @@ impl StepReprMeasureRepresentationItem {
 step_entity! {
     /// Mechanical design and draughting relationship.
     StepReprMechanicalDesignAndDraughtingRelationship, StepReprMechanicalDesignAndDraughtingRelationshipState, "StepReprMechanicalDesignAndDraughtingRelationship", StepReprRepresentationRelationship, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationRelationship]
 }
 
 step_entity! {
     /// Representation of STEP entity NextAssemblyUsageOccurrence
     StepReprNextAssemblyUsageOccurrence, StepReprNextAssemblyUsageOccurrenceState, "StepReprNextAssemblyUsageOccurrence", StepReprAssemblyComponentUsage, {
-    }
+    }, bases: [crate::step_repr::StepReprAssemblyComponentUsage, crate::step_basic::StepBasicProductDefinitionRelationship]
 }
 
 step_entity! {
     /// Added for Dimensional Tolerances
     StepReprParallelOffset, StepReprParallelOffsetState, "StepReprParallelOffset", StepReprDerivedShapeAspect, {
-        offset: Handle<StandardTransient>,
-    }
+        offset: Handle<dyn Transient>,
+    }, bases: [crate::step_repr::StepReprShapeAspect, StepReprDerivedShapeAspect]
 }
 impl StepReprParallelOffset {
     step_methods! {
-        get offset = offset: Handle<StandardTransient>;
-        set set_offset = offset: Handle<StandardTransient>;
+        get offset = offset: Handle<dyn Transient>;
+        set set_offset = offset: Handle<dyn Transient>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -319,7 +316,7 @@ impl StepReprParallelOffset {
         the_shape_aspect_description: &Handle<HAsciiString>,
         the_shape_aspect_of_shape: &Handle<StepReprProductDefinitionShape>,
         the_shape_aspect_product_definitional: StepDataLogical,
-        the_offset: &Handle<StandardTransient>,
+        the_offset: &Handle<dyn Transient>,
     ) {
         self.parent.parent.init(
             the_shape_aspect_name,
@@ -334,11 +331,11 @@ impl StepReprParallelOffset {
 step_entity! {
     /// Parametric representation context.
     StepReprParametricRepresentationContext, StepReprParametricRepresentationContextState, "StepReprParametricRepresentationContext", StepReprRepresentationContext, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationContext]
 }
 
 step_entity! {
     /// Added for Dimensional Tolerances
     StepReprPerpendicularTo, StepReprPerpendicularToState, "StepReprPerpendicularTo", StepReprDerivedShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect, StepReprDerivedShapeAspect]
 }

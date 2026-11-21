@@ -82,7 +82,7 @@ fn runtime_type_step_visual_tessellated_shape_representation_with_accuracy_param
 fn init_round_trip_step_visual_tessellated_shape_representation_with_accuracy_parameters() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
     let the_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2).unwrap());
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_tessellation_accuracy_parameters =
         Handle::new(HArray1::<f64>::with_bounds(1, 2).unwrap());
@@ -90,7 +90,7 @@ fn init_round_trip_step_visual_tessellated_shape_representation_with_accuracy_pa
     object.init(
         &the_representation_name,
         &the_representation_items,
-        &the_representation_context_of_items,
+        &the_representation_context_of_items.upcast(),
         &the_tessellation_accuracy_parameters,
     );
     assert!(object.tessellation_accuracy_parameters() == the_tessellation_accuracy_parameters);
@@ -110,7 +110,7 @@ fn runtime_type_step_visual_tessellated_shell() {
 fn init_round_trip_step_visual_tessellated_shell() {
     let the_representation_item_name = Handle::new(HAsciiString::new("sample"));
     let the_items = Handle::new(
-        HArray1::<Handle<StepVisualTessellatedStructuredItem>>::with_bounds(1, 2).unwrap(),
+        HArray1::<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>::with_bounds(1, 2).unwrap(),
     );
     let the_has_topological_link = true;
     let the_topological_link = Handle::new(StepShapeConnectedFaceSet::new());
@@ -119,7 +119,7 @@ fn init_round_trip_step_visual_tessellated_shell() {
         &the_representation_item_name,
         &the_items,
         the_has_topological_link,
-        &the_topological_link,
+        &the_topological_link.upcast(),
     );
     assert!(object.items() == the_items);
     assert!(object.has_topological_link() == the_has_topological_link);
@@ -140,7 +140,7 @@ fn runtime_type_step_visual_tessellated_solid() {
 fn init_round_trip_step_visual_tessellated_solid() {
     let the_representation_item_name = Handle::new(HAsciiString::new("sample"));
     let the_items = Handle::new(
-        HArray1::<Handle<StepVisualTessellatedStructuredItem>>::with_bounds(1, 2).unwrap(),
+        HArray1::<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>::with_bounds(1, 2).unwrap(),
     );
     let the_has_geometric_link = true;
     let the_geometric_link = Handle::new(StepShapeManifoldSolidBrep::new());
@@ -149,7 +149,7 @@ fn init_round_trip_step_visual_tessellated_solid() {
         &the_representation_item_name,
         &the_items,
         the_has_geometric_link,
-        &the_geometric_link,
+        &the_geometric_link.upcast(),
     );
     assert!(object.items() == the_items);
     assert!(object.has_geometric_link() == the_has_geometric_link);
@@ -316,7 +316,7 @@ fn runtime_type_step_visual_text_style_for_defined_font() {
 fn init_round_trip_step_visual_text_style_for_defined_font() {
     let a_text_colour = Handle::new(StepVisualColour::new());
     let object = StepVisualTextStyleForDefinedFont::new();
-    object.init(&a_text_colour);
+    object.init(&a_text_colour.upcast());
     assert!(object.text_colour() == a_text_colour);
 }
 

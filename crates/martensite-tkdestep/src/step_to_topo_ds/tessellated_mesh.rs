@@ -7,7 +7,8 @@ use crate::step_visual::{
     StepVisualTessellatedItem, StepVisualTriangulatedFace, StepVisualTriangulatedSurfaceSet,
 };
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Direction3, Point3, Xyz};
 use martensite_tkmath::poly::{Triangle, Triangulation};
 
@@ -22,8 +23,8 @@ struct MeshElements {
     nb_normals: i32,
     nb_triangles: i32,
     pn_indices: Option<Vec<i32>>,
-    strips: Handle<HArray1<Handle<StandardTransient>>>,
-    fans: Handle<HArray1<Handle<StandardTransient>>>,
+    strips: Handle<HArray1<Handle<dyn Transient>>>,
+    fans: Handle<HArray1<Handle<dyn Transient>>>,
     nb_strips: i32,
     nb_fans: i32,
 }
@@ -70,7 +71,7 @@ macro_rules! complex_elements {
 }
 
 /// The elements of the four triangulated classes; `None` for any other class.
-fn elements_of(item: &Handle<StepVisualTessellatedItem>) -> Result<Option<MeshElements>, Failure> {
+fn elements_of(item: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>) -> Result<Option<MeshElements>, Failure> {
     if let Some(live) = item.cast::<StepVisualTriangulatedFace>().get() {
         return Ok(Some(simple_elements!(live)));
     }
@@ -88,7 +89,7 @@ fn elements_of(item: &Handle<StepVisualTessellatedItem>) -> Result<Option<MeshEl
 
 /// The indices of a strip or a fan, 1-based through `values[i - 1]`.
 fn index_list(
-    list: &Handle<HArray1<Handle<StandardTransient>>>,
+    list: &Handle<HArray1<Handle<dyn Transient>>>,
     rank: i32,
 ) -> Result<Vec<i32>, Failure> {
     let item: Handle<HArray1<i32>> = step_array1_item(list, rank, WHERE)?.cast();
@@ -211,7 +212,7 @@ fn set_normals(
 
 /// `create_poly_triangulation`: null for a null entity or a class it does not know.
 pub(super) fn create_poly_triangulation(
-    item: &Handle<StepVisualTessellatedItem>,
+    item: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>,
     factors: &StepDataFactors,
 ) -> Result<Handle<Triangulation>, Failure> {
     if item.is_null() {

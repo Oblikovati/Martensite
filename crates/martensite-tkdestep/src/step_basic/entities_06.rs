@@ -11,7 +11,7 @@ step_entity! {
     /// Representation of STEP entity DocumentFile
     custom_default StepBasicDocumentFile, StepBasicDocumentFileState, "StepBasicDocumentFile", StepBasicDocument, {
         the_characterized_object: Handle<StepBasicCharacterizedObject>,
-    }
+    }, bases: [crate::step_basic::StepBasicDocument]
 }
 impl Default for StepBasicDocumentFile {
     fn default() -> Self {
@@ -80,7 +80,7 @@ step_entity! {
     StepBasicDocumentProductAssociation, StepBasicDocumentProductAssociationState, "StepBasicDocumentProductAssociation", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_relating_document: Handle<StepBasicDocument>,
+        the_relating_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         the_related_product: StepBasicProductOrFormationOrDefinition,
         def_description: bool,
     }
@@ -92,8 +92,8 @@ impl StepBasicDocumentProductAssociation {
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
         get has_description = def_description: bool;
-        get relating_document = the_relating_document: Handle<StepBasicDocument>;
-        set set_relating_document = the_relating_document: Handle<StepBasicDocument>;
+        get relating_document = the_relating_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
+        set set_relating_document = the_relating_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
         get related_product = the_related_product: StepBasicProductOrFormationOrDefinition;
         set set_related_product = the_related_product: StepBasicProductOrFormationOrDefinition;
     }
@@ -104,7 +104,7 @@ impl StepBasicDocumentProductAssociation {
         a_name: &Handle<HAsciiString>,
         has_description: bool,
         a_description: &Handle<HAsciiString>,
-        a_relating_document: &Handle<StepBasicDocument>,
+        a_relating_document: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         a_related_product: &StepBasicProductOrFormationOrDefinition,
     ) {
         let mut state = self.state.write();
@@ -129,21 +129,21 @@ step_entity! {
 step_entity! {
     /// Document reference.
     StepBasicDocumentReference, StepBasicDocumentReferenceState, "StepBasicDocumentReference", StandardTransient, {
-        the_assigned_document: Handle<StepBasicDocument>,
+        the_assigned_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         the_source: Handle<HAsciiString>,
     }
 }
 impl StepBasicDocumentReference {
     step_methods! {
-        get assigned_document = the_assigned_document: Handle<StepBasicDocument>;
-        set set_assigned_document = the_assigned_document: Handle<StepBasicDocument>;
+        get assigned_document = the_assigned_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
+        set set_assigned_document = the_assigned_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
         get source = the_source: Handle<HAsciiString>;
         set set_source = the_source: Handle<HAsciiString>;
     }
     /// `init0`.
     pub fn init0(
         &self,
-        a_assigned_document: &Handle<StepBasicDocument>,
+        a_assigned_document: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         a_source: &Handle<HAsciiString>,
     ) {
         let mut state = self.state.write();
@@ -157,8 +157,8 @@ step_entity! {
     StepBasicDocumentRelationship, StepBasicDocumentRelationshipState, "StepBasicDocumentRelationship", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_relating: Handle<StepBasicDocument>,
-        the_related: Handle<StepBasicDocument>,
+        the_relating: Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
+        the_related: Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
     }
 }
 impl StepBasicDocumentRelationship {
@@ -167,18 +167,18 @@ impl StepBasicDocumentRelationship {
         set set_name = the_name: Handle<HAsciiString>;
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
-        get relating_document = the_relating: Handle<StepBasicDocument>;
-        set set_relating_document = the_relating: Handle<StepBasicDocument>;
-        get related_document = the_related: Handle<StepBasicDocument>;
-        set set_related_document = the_related: Handle<StepBasicDocument>;
+        get relating_document = the_relating: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
+        set set_relating_document = the_relating: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
+        get related_document = the_related: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
+        set set_related_document = the_related: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_relating: &Handle<StepBasicDocument>,
-        a_related: &Handle<StepBasicDocument>,
+        a_relating: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
+        a_related: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();
@@ -192,22 +192,22 @@ step_entity! {
     /// Representation of STEP entity DocumentRepresentationType
     StepBasicDocumentRepresentationType, StepBasicDocumentRepresentationTypeState, "StepBasicDocumentRepresentationType", StandardTransient, {
         the_name: Handle<HAsciiString>,
-        the_represented_document: Handle<StepBasicDocument>,
+        the_represented_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
     }
 }
 impl StepBasicDocumentRepresentationType {
     step_methods! {
         get name = the_name: Handle<HAsciiString>;
         set set_name = the_name: Handle<HAsciiString>;
-        get represented_document = the_represented_document: Handle<StepBasicDocument>;
-        set set_represented_document = the_represented_document: Handle<StepBasicDocument>;
+        get represented_document = the_represented_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
+        set set_represented_document = the_represented_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_represented_document: &Handle<StepBasicDocument>,
+        a_represented_document: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();
@@ -232,15 +232,15 @@ impl StepBasicDocumentType {
 step_entity! {
     /// Document usage constraint.
     StepBasicDocumentUsageConstraint, StepBasicDocumentUsageConstraintState, "StepBasicDocumentUsageConstraint", StandardTransient, {
-        the_source: Handle<StepBasicDocument>,
+        the_source: Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         the_se: Handle<HAsciiString>,
         the_sev: Handle<HAsciiString>,
     }
 }
 impl StepBasicDocumentUsageConstraint {
     step_methods! {
-        get source = the_source: Handle<StepBasicDocument>;
-        set set_source = the_source: Handle<StepBasicDocument>;
+        get source = the_source: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
+        set set_source = the_source: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
         get subject_element = the_se: Handle<HAsciiString>;
         set set_subject_element = the_se: Handle<HAsciiString>;
         get subject_element_value = the_sev: Handle<HAsciiString>;
@@ -249,7 +249,7 @@ impl StepBasicDocumentUsageConstraint {
     /// `init`.
     pub fn init(
         &self,
-        a_source: &Handle<StepBasicDocument>,
+        a_source: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         ase: &Handle<HAsciiString>,
         asev: &Handle<HAsciiString>,
     ) {

@@ -44,7 +44,7 @@ impl RwStepBasicRwDocumentProductEquivalence {
         } else {
             has_document_product_association_description = false;
         }
-        let mut a_document_product_association_relating_document: Handle<StepBasicDocument> =
+        let mut a_document_product_association_relating_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>> =
             Default::default();
         data.read_entity(
             num,
@@ -114,7 +114,7 @@ impl RwStepBasicRwDocumentRelationship {
         if data.is_param_defined(num, 2)? {
             data.read_string(num, 2, "description", ach, &mut a_descr)?;
         }
-        let mut a_relating: Handle<StepBasicDocument> = Default::default();
+        let mut a_relating: Handle<dyn crate::StepEntityBase<StepBasicDocument>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -123,7 +123,7 @@ impl RwStepBasicRwDocumentRelationship {
             StepBasicDocument::static_type(),
             &mut a_relating,
         )?;
-        let mut a_related: Handle<StepBasicDocument> = Default::default();
+        let mut a_related: Handle<dyn crate::StepEntityBase<StepBasicDocument>> = Default::default();
         data.read_entity(
             num,
             4,
@@ -177,7 +177,7 @@ impl RwStepBasicRwDocumentRepresentationType {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_represented_document: Handle<StepBasicDocument> = Default::default();
+        let mut a_represented_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>> = Default::default();
         data.read_entity(
             num,
             2,
@@ -263,7 +263,7 @@ impl RwStepBasicRwDocumentUsageConstraint {
         if !data.check_nb_params(num, 3, ach, "document_usage_constraint")? {
             return Ok(());
         }
-        let mut a_source: Handle<StepBasicDocument> = Default::default();
+        let mut a_source: Handle<dyn crate::StepEntityBase<StepBasicDocument>> = Default::default();
         data.read_entity(
             num,
             1,

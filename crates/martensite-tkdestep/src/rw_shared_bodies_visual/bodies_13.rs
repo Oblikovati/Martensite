@@ -4,8 +4,8 @@ macro_rules! rw_block_b_0109 {
     ($a_items:ident, $a_name:ident, $ach:ident, $anent2:ident, $data:ident, $nsub2:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_items: Handle<HArray1<Handle<StepReprRepresentationItem>>> = Default::default();
-        let mut $anent2: Handle<StepReprRepresentationItem> = Default::default();
+        let mut $a_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>> = Default::default();
+        let mut $anent2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         let mut $nsub2: i32 = Default::default();
     };
 }

@@ -23,7 +23,7 @@ impl RwStepShapeRwSphere {
         data.read_string(num, 1, "name", ach, &mut a_name)?;
         let mut a_radius: f64 = Default::default();
         data.read_real(num, 2, "radius", ach, &mut a_radius)?;
-        let mut a_centre: Handle<StepGeomPoint> = Default::default();
+        let mut a_centre: Handle<dyn crate::StepEntityBase<StepGeomPoint>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -78,7 +78,7 @@ impl RwStepShapeRwSubedge {
             ach,
             &mut a_representation_item_name,
         )?;
-        let mut a_edge_edge_start: Handle<StepShapeVertex> = Default::default();
+        let mut a_edge_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
         data.read_entity(
             num,
             2,
@@ -87,7 +87,7 @@ impl RwStepShapeRwSubedge {
             StepShapeVertex::static_type(),
             &mut a_edge_edge_start,
         )?;
-        let mut a_edge_edge_end: Handle<StepShapeVertex> = Default::default();
+        let mut a_edge_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -96,7 +96,7 @@ impl RwStepShapeRwSubedge {
             StepShapeVertex::static_type(),
             &mut a_edge_edge_end,
         )?;
-        let mut a_parent_edge: Handle<StepShapeEdge> = Default::default();
+        let mut a_parent_edge: Handle<dyn crate::StepEntityBase<StepShapeEdge>> = Default::default();
         data.read_entity(
             num,
             4,
@@ -159,14 +159,14 @@ impl RwStepShapeRwSubface {
             ach,
             &mut a_representation_item_name,
         )?;
-        let mut a_face_bounds: Handle<HArray1<Handle<StepShapeFaceBound>>> = Default::default();
+        let mut a_face_bounds: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>> = Default::default();
         let mut sub2: i32 = 0;
         if data.read_sub_list(num, 2, "face.bounds", ach, &mut sub2, false, 0, 0)? {
             let num2: i32 = sub2;
             let nb0: i32 = data.nb_params(num2)?;
-            a_face_bounds = step_new_array1::<Handle<StepShapeFaceBound>>(1, nb0)?;
+            a_face_bounds = step_new_array1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>(1, nb0)?;
             for i0 in 1..=nb0 {
-                let mut an_it0: Handle<StepShapeFaceBound> = Default::default();
+                let mut an_it0: Handle<dyn crate::StepEntityBase<StepShapeFaceBound>> = Default::default();
                 data.read_entity(
                     num2,
                     i0,
@@ -178,7 +178,7 @@ impl RwStepShapeRwSubface {
                 step_array1_set(&a_face_bounds, i0, an_it0.clone(), "ReadStep")?;
             }
         }
-        let mut a_parent_face: Handle<StepShapeFace> = Default::default();
+        let mut a_parent_face: Handle<dyn crate::StepEntityBase<StepShapeFace>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -202,7 +202,7 @@ impl RwStepShapeRwSubface {
             .array1()
             .length()
         {
-            let var0: Handle<StepShapeFaceBound> =
+            let var0: Handle<dyn crate::StepEntityBase<StepShapeFaceBound>> =
                 step_array1_item(&ent.parent.bounds()?, i1, "WriteStep")?;
             sw.send_entity(&var0)?;
         }
@@ -217,7 +217,7 @@ impl RwStepShapeRwSubface {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         for i1 in 1..=step_live(&ent.parent.bounds()?, "Share")?.array1().length() {
-            let var0: Handle<StepShapeFaceBound> =
+            let var0: Handle<dyn crate::StepEntityBase<StepShapeFaceBound>> =
                 step_array1_item(&ent.parent.bounds()?, i1, "Share")?;
             iter.add_item(&var0.cast());
         }

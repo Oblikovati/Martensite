@@ -23,7 +23,8 @@ use crate::step_shape::{
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Shape, ShapeIterator};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::Transform3;
 use martensite_tkxsbase::transfer::{TransferBinder, TransferTransientProcess};
@@ -31,7 +32,7 @@ use martensite_tkxsbase::transfer_brep::{TransferBRep, TransferBRepShapeBinder};
 
 /// The number `read.step.shape.repr` gives the kind of a representation (the Controller's
 /// `eval` order).
-fn find_shape_repr_type(start: &Handle<StepReprRepresentation>) -> i32 {
+fn find_shape_repr_type(start: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>) -> i32 {
     if start
         .cast::<StepShapeAdvancedBrepShapeRepresentation>()
         .is_some()
@@ -74,7 +75,7 @@ fn find_shape_repr_type(start: &Handle<StepReprRepresentation>) -> i32 {
 /// The shape_definition_representations of a shape_aspect, unless it is a datum feature or has a
 /// geometric tolerance.
 fn get_list_sdr(
-    aspect: &Handle<StepReprShapeAspect>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     list: &mut Vec<Handle<StepShapeShapeDefinitionRepresentation>>,
     tp: &Handle<TransferTransientProcess>,
 ) -> Result<(), Failure> {
@@ -89,7 +90,7 @@ fn get_list_sdr(
         return Ok(());
     }
     for ent in &sharings {
-        let definition: Handle<StepReprPropertyDefinition> = ent.cast();
+        let definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> = ent.cast();
         if definition.is_null() {
             continue;
         }
@@ -144,7 +145,7 @@ fn get_sdr(
             }
             continue;
         }
-        let aspect: Handle<StepReprShapeAspect> = sharing.cast();
+        let aspect: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> = sharing.cast();
         if aspect.is_some() {
             get_list_sdr(&aspect, &mut parts.sdr_aspect, tp)?;
             continue;
@@ -187,7 +188,7 @@ impl StepControlActorRead {
     /// `transfer_entity(PD, TP, local_factors, use_trsf, progress)`.
     pub(super) fn transfer_product_definition(
         &self,
-        pd: &Handle<StepBasicProductDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         use_trsf: bool,
@@ -243,7 +244,7 @@ impl StepControlActorRead {
                 break;
             }
             let range = scope.next(1.0);
-            let start: Handle<StandardTransient> = nauo.cast();
+            let start: Handle<dyn Transient> = nauo.cast();
             let binder: Handle<dyn TransferBinder> = if live_tp.is_bound(&start) {
                 live_tp.find(&start)
             } else {
@@ -261,7 +262,7 @@ impl StepControlActorRead {
                 break;
             }
             let aspect_entry = index >= nb_not_aspect;
-            let rep: Handle<StepShapeShapeRepresentation> = step_live(sdr, "StepControlActorRead")?
+            let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = step_live(sdr, "StepControlActorRead")?
                 .used_representation()
                 .cast();
             if rep.is_null() {
@@ -327,8 +328,8 @@ impl StepControlActorRead {
         factors: &StepDataFactors,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
-        let mut pd = Handle::<StepBasicProductDefinition>::default();
-        let mut srr = Handle::<StepReprShapeRepresentationRelationship>::default();
+        let mut pd = Handle::<dyn crate::StepEntityBase<StepBasicProductDefinition>>::default();
+        let mut srr = Handle::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>::default();
         let mut trsf = Transform3::default();
         let (mut iatrsf, mut srr_reversed, mut is_depend) = (false, false, false);
         for sharing in sharing_entities(tp, &nauo.cast())? {
@@ -342,7 +343,7 @@ impl StepControlActorRead {
                     continue;
                 };
                 is_depend = true;
-                let relation: Handle<StepReprRepresentationRelationship> =
+                let relation: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> =
                     live.representation_relation().cast();
                 let Some(live_relation) = relation.get() else {
                     continue;
@@ -406,9 +407,9 @@ impl StepControlActorRead {
     fn find_definition_of_rep(
         &self,
         tp: &Handle<TransferTransientProcess>,
-        rep: &Handle<StepReprRepresentation>,
-        pd: &mut Handle<StepBasicProductDefinition>,
-        srr: &mut Handle<StepReprShapeRepresentationRelationship>,
+        rep: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+        pd: &mut Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        srr: &mut Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>,
     ) -> Result<(), Failure> {
         for sharing in sharing_entities(tp, &rep.cast())? {
             let sdr: Handle<StepShapeShapeDefinitionRepresentation> = sharing.cast();
@@ -425,7 +426,7 @@ impl StepControlActorRead {
                     *pd = shared.cast();
                 }
             } else if sharing
-                .cast::<StepReprShapeRepresentationRelationship>()
+                .cast::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>()
                 .is_some()
             {
                 *srr = sharing.cast();

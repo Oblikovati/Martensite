@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(RwStepShapeRwLoopAndPath, "RwStepShapeRwLoopAndPath");
 impl RwStepShapeRwLoopAndPath {
@@ -100,7 +101,7 @@ impl RwStepShapeRwManifoldSolidBrep {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_outer: Handle<StepShapeConnectedFaceSet> = Default::default();
+        let mut a_outer: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> = Default::default();
         data.read_entity(
             num,
             2,
@@ -202,7 +203,7 @@ impl RwStepShapeRwMeasureQualification {
         }
         rw_block_0193!(a_descr, a_name, ach, data, num);
         data.read_string(num, 2, "description", ach, &mut a_descr)?;
-        let mut a_qm: Handle<StandardTransient> = Default::default();
+        let mut a_qm: Handle<dyn Transient> = Default::default();
         data.read_entity(
             num,
             3,

@@ -26,7 +26,9 @@ use crate::step_repr::{
 };
 use crate::step_shape::{StepShapeShapeDefinitionRepresentation, StepShapeShapeRepresentation};
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::Point3;
@@ -46,9 +48,7 @@ fn text(value: &str) -> Handle<HAsciiString> {
 }
 
 /// `transient_result`: a binder of a result, null for a null one.
-fn transient_result(
-    res: &Handle<StandardTransient>,
-) -> Result<Handle<dyn TransferBinder>, Failure> {
+fn transient_result(res: &Handle<dyn Transient>) -> Result<Handle<dyn TransferBinder>, Failure> {
     if res.is_null() {
         return Ok(Handle::default());
     }
@@ -58,7 +58,9 @@ fn transient_result(
 }
 
 /// The first of `entities` of type `T`, null without one.
-fn first_of<T: ?Sized + RuntimeTyped>(entities: &[Handle<StandardTransient>]) -> Handle<T> {
+fn first_of<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+    entities: &[Handle<dyn Transient>],
+) -> Handle<T> {
     entities
         .iter()
         .map(|entity| entity.cast::<T>())
@@ -69,7 +71,7 @@ fn first_of<T: ?Sized + RuntimeTyped>(entities: &[Handle<StandardTransient>]) ->
 /// The PDS of the first SDR among the entities sharing `rep`, null without one.
 fn pds_of_sharing_sdr(
     graph: &InterfaceGraph,
-    rep: &Handle<StandardTransient>,
+    rep: &Handle<dyn Transient>,
 ) -> Result<Handle<StepReprProductDefinitionShape>, Failure> {
     for entity in graph.sharings(rep)?.content() {
         if let Some(sdr) = entity
@@ -91,20 +93,20 @@ fn pds_of_sharing_sdr(
 /// The PDS of an SR found through a RepresentationRelationship with another SR.
 fn pds_through_relationship(
     graph: &InterfaceGraph,
-    sr: &Handle<StepShapeShapeRepresentation>,
+    sr: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
 ) -> Result<Handle<StepReprProductDefinitionShape>, Failure> {
     for entity in graph.sharings(&sr.cast())?.content() {
-        let relationship = entity.cast::<StepReprRepresentationRelationship>();
+        let relationship = entity.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
         let Some(relationship) = relationship.get() else {
             continue;
         };
-        let rep = sr.cast::<StepReprRepresentation>();
+        let rep = sr.cast::<dyn crate::StepEntityBase<StepReprRepresentation>>();
         let other = if relationship.rep1() == rep {
             relationship.rep2()
         } else {
             relationship.rep1()
         };
-        let other = other.cast::<StepShapeShapeRepresentation>();
+        let other = other.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
         if other.is_some() {
             let pds = pds_of_sharing_sdr(graph, &other.cast())?;
             if pds.is_some() {
@@ -119,11 +121,11 @@ fn pds_through_relationship(
 fn aspect_in_binder(
     binder: &Handle<dyn TransferBinder>,
     pds: &Handle<StepReprProductDefinitionShape>,
-) -> Handle<StepReprShapeAspect> {
+) -> Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> {
     let mut current = binder.clone();
     while let Some(live) = current.get() {
         if let Some(simple) = current.cast::<TransferSimpleBinderOfTransient>().get() {
-            let aspect = simple.result().cast::<StepReprShapeAspect>();
+            let aspect = simple.result().cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>();
             if aspect.get().is_some_and(|asp| asp.of_shape() == *pds) {
                 return aspect;
             }
@@ -162,7 +164,7 @@ pub struct StepConstructValidationProps {
     tool: StepConstructTool,
     area_unit: StepBasicUnit,
     vol_unit: StepBasicUnit,
-    my_assembly_pd: Handle<StepBasicProductDefinition>,
+    my_assembly_pd: Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
 }
 
 impl Deref for StepConstructValidationProps {
@@ -202,13 +204,13 @@ impl StepConstructValidationProps {
         &self,
         mapper: &Handle<dyn martensite_tkxsbase::transfer::TransferFinder>,
         target: &mut StepReprCharacterizedDefinition,
-        context: &mut Handle<StepReprRepresentationContext>,
+        context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) -> Result<(), Failure> {
         let process = step_live(self.finder_process(), WHERE)?;
         let hgraph = self.hgraph()?;
         let hgraph = step_live(&hgraph, WHERE)?;
         let graph = hgraph.graph();
-        let mut prod_def = Handle::<StepBasicProductDefinition>::default();
+        let mut prod_def = Handle::<dyn crate::StepEntityBase<StepBasicProductDefinition>>::default();
         if process.find_typed_transient_as(
             mapper,
             StepBasicProductDefinition::static_type(),
@@ -219,7 +221,7 @@ impl StepConstructValidationProps {
             target.set_value(&pds.cast())?;
             return Ok(());
         }
-        let mut sr = Handle::<StepShapeShapeRepresentation>::default();
+        let mut sr = Handle::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>::default();
         if !process.find_typed_transient_as(
             mapper,
             StepShapeShapeRepresentation::static_type(),
@@ -241,15 +243,15 @@ impl StepConstructValidationProps {
     fn pds_of_item(
         &self,
         graph: &InterfaceGraph,
-        item: &Handle<StepGeomGeometricRepresentationItem>,
-        context: &mut Handle<StepReprRepresentationContext>,
+        item: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
+        context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) -> Result<Handle<StepReprProductDefinitionShape>, Failure> {
         let mut pds = Handle::<StepReprProductDefinitionShape>::default();
         for sharing in graph.sharings(&item.cast())?.content() {
             if pds.is_some() {
                 break;
             }
-            let sr = sharing.cast::<StepShapeShapeRepresentation>();
+            let sr = sharing.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
             let Some(sr) = sr.get() else {
                 continue;
             };
@@ -272,9 +274,9 @@ impl StepConstructValidationProps {
         &self,
         binder: &Handle<dyn TransferBinder>,
         pds: &Handle<StepReprProductDefinitionShape>,
-        item: &Handle<StepGeomGeometricRepresentationItem>,
-        context: &Handle<StepReprRepresentationContext>,
-    ) -> Result<Handle<StepReprShapeAspect>, Failure> {
+        item: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
         let aspect = Handle::new(StepReprShapeAspect::new());
         aspect.init(&text(""), &text(""), pds, StepDataLogical::LFalse);
         let mut characterized = StepReprCharacterizedDefinition::default();
@@ -286,7 +288,7 @@ impl StepConstructValidationProps {
             &text("properties for subshape"),
             &characterized,
         );
-        let items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, 1)?;
+        let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 1)?;
         step_array1_set(&items, 1, item.cast(), WHERE)?;
         let sr = Handle::new(StepShapeShapeRepresentation::new());
         sr.init(&text(""), &items, context);
@@ -298,14 +300,14 @@ impl StepConstructValidationProps {
         step_live(binder, WHERE)?.add_result(&transient_result(&aspect.cast())?);
         // add SDR and all the data into model
         self.model()?.add_with_refs(&sdr.cast(), 0, false)?;
-        Ok(aspect)
+        Ok(aspect.into_upcast())
     }
     /// The context of an aspect found already: from the first SDR sharing its PDS.
     fn context_of_aspect(
         &self,
         graph: &InterfaceGraph,
         aspect: &StepReprShapeAspect,
-        context: &mut Handle<StepReprRepresentationContext>,
+        context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) -> Result<(), Failure> {
         for sharing in graph.sharings(&aspect.of_shape().cast())?.content() {
             if context.is_some() {
@@ -326,10 +328,10 @@ impl StepConstructValidationProps {
         mapper: &Handle<dyn martensite_tkxsbase::transfer::TransferFinder>,
         binder: &Handle<dyn TransferBinder>,
         target: &mut StepReprCharacterizedDefinition,
-        context: &mut Handle<StepReprRepresentationContext>,
+        context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) -> Result<(), Failure> {
         let process = step_live(self.finder_process(), WHERE)?;
-        let mut item = Handle::<StepGeomGeometricRepresentationItem>::default();
+        let mut item = Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
         if !process.find_typed_transient_as(
             mapper,
             StepGeomGeometricRepresentationItem::static_type(),

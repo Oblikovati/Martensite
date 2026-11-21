@@ -18,10 +18,9 @@ use std::sync::Mutex;
 /// assert!(STEPCAFControlController::init().unwrap());
 /// ```
 pub struct STEPCAFControlController {
-    transient: StandardTransient,
     inner: Handle<dyn XSControlController>,
 }
-impl_transient!(STEPCAFControlController, "STEPCAFControlController", StandardTransient, transient, interfaces: [dyn XSControlController]);
+impl_transient!(STEPCAFControlController, "STEPCAFControlController", StandardTransient, interfaces: [dyn XSControlController]);
 
 /// A static of two values, 0 by default.
 fn define_off_on_static(name: &str) -> Result<(), Failure> {
@@ -44,11 +43,7 @@ impl STEPCAFControlController {
         inner
             .controller_base()
             .set_adaptor_write(&Handle::new(STEPCAFControlActorWrite::new()).cast());
-        let controller: Handle<dyn XSControlController> = Handle::new(Self {
-            transient: StandardTransient::default(),
-            inner,
-        })
-        .cast();
+        let controller: Handle<dyn XSControlController> = Handle::new(Self { inner }).cast();
         controller.controller_base().bind_self(&controller);
         Ok(controller)
     }

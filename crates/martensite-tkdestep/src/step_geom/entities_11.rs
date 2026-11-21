@@ -10,15 +10,15 @@ use crate::step_entity::*;
 step_entity! {
     /// Surface curve.
     StepGeomSurfaceCurve, StepGeomSurfaceCurveState, "StepGeomSurfaceCurve", StepGeomCurve, {
-        curve3d: Handle<StepGeomCurve>,
+        curve3d: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         associated_geometry: Handle<HArray1<StepGeomPcurveOrSurface>>,
         master_representation: StepGeomPreferredSurfaceCurveRepresentation,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomSurfaceCurve]
 }
 impl StepGeomSurfaceCurve {
     step_methods! {
-        set set_curve3d = curve3d: Handle<StepGeomCurve>;
-        get curve3d = curve3d: Handle<StepGeomCurve>;
+        set set_curve3d = curve3d: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        get curve3d = curve3d: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
         set set_associated_geometry = associated_geometry: Handle<HArray1<StepGeomPcurveOrSurface>>;
         get associated_geometry = associated_geometry: Handle<HArray1<StepGeomPcurveOrSurface>>;
         item associated_geometry_value = associated_geometry: StepGeomPcurveOrSurface;
@@ -30,7 +30,7 @@ impl StepGeomSurfaceCurve {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_curve3d: &Handle<StepGeomCurve>,
+        a_curve3d: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         a_associated_geometry: &Handle<HArray1<StepGeomPcurveOrSurface>>,
         a_master_representation: StepGeomPreferredSurfaceCurveRepresentation,
     ) {
@@ -47,12 +47,12 @@ step_entity! {
     /// complex type: bounded_curve + surface_curve
     /// needed for curve_bounded_surfaces (S4132)
     StepGeomSurfaceCurveAndBoundedCurve, StepGeomSurfaceCurveAndBoundedCurveState, "StepGeomSurfaceCurveAndBoundedCurve", StepGeomSurfaceCurve, {
-        my_bounded_curve: Handle<StepGeomBoundedCurve>,
-    }
+        my_bounded_curve: Handle<dyn crate::StepEntityBase<StepGeomBoundedCurve>>,
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomSurfaceCurve]
 }
 impl StepGeomSurfaceCurveAndBoundedCurve {
     step_methods! {
-        get bounded_curve = my_bounded_curve: Handle<StepGeomBoundedCurve>;
+        get bounded_curve = my_bounded_curve: Handle<dyn crate::StepEntityBase<StepGeomBoundedCurve>>;
     }
 }
 
@@ -60,7 +60,7 @@ step_entity! {
     /// Surface of linear extrusion.
     StepGeomSurfaceOfLinearExtrusion, StepGeomSurfaceOfLinearExtrusionState, "StepGeomSurfaceOfLinearExtrusion", StepGeomSweptSurface, {
         extrusion_axis: Handle<StepGeomVector>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomSweptSurface]
 }
 impl StepGeomSurfaceOfLinearExtrusion {
     step_methods! {
@@ -71,7 +71,7 @@ impl StepGeomSurfaceOfLinearExtrusion {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_swept_curve: &Handle<StepGeomCurve>,
+        a_swept_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         a_extrusion_axis: &Handle<StepGeomVector>,
     ) {
         self.state.write().extrusion_axis = a_extrusion_axis.clone();
@@ -83,7 +83,7 @@ step_entity! {
     /// Surface of revolution.
     StepGeomSurfaceOfRevolution, StepGeomSurfaceOfRevolutionState, "StepGeomSurfaceOfRevolution", StepGeomSweptSurface, {
         axis_position: Handle<StepGeomAxis1Placement>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomSweptSurface]
 }
 impl StepGeomSurfaceOfRevolution {
     step_methods! {
@@ -94,7 +94,7 @@ impl StepGeomSurfaceOfRevolution {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_swept_curve: &Handle<StepGeomCurve>,
+        a_swept_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         a_axis_position: &Handle<StepGeomAxis1Placement>,
     ) {
         self.state.write().axis_position = a_axis_position.clone();
@@ -105,7 +105,7 @@ impl StepGeomSurfaceOfRevolution {
 step_entity! {
     /// Surface patch.
     StepGeomSurfacePatch, StepGeomSurfacePatchState, "StepGeomSurfacePatch", StandardTransient, {
-        parent_surface: Handle<StepGeomBoundedSurface>,
+        parent_surface: Handle<dyn crate::StepEntityBase<StepGeomBoundedSurface>>,
         u_transition: StepGeomTransitionCode,
         v_transition: StepGeomTransitionCode,
         u_sense: bool,
@@ -114,8 +114,8 @@ step_entity! {
 }
 impl StepGeomSurfacePatch {
     step_methods! {
-        set set_parent_surface = parent_surface: Handle<StepGeomBoundedSurface>;
-        get parent_surface = parent_surface: Handle<StepGeomBoundedSurface>;
+        set set_parent_surface = parent_surface: Handle<dyn crate::StepEntityBase<StepGeomBoundedSurface>>;
+        get parent_surface = parent_surface: Handle<dyn crate::StepEntityBase<StepGeomBoundedSurface>>;
         set_copy set_u_transition = u_transition: StepGeomTransitionCode;
         get u_transition = u_transition: StepGeomTransitionCode;
         set_copy set_v_transition = v_transition: StepGeomTransitionCode;
@@ -128,7 +128,7 @@ impl StepGeomSurfacePatch {
     /// `init`.
     pub fn init(
         &self,
-        a_parent_surface: &Handle<StepGeomBoundedSurface>,
+        a_parent_surface: &Handle<dyn crate::StepEntityBase<StepGeomBoundedSurface>>,
         a_u_transition: StepGeomTransitionCode,
         a_v_transition: StepGeomTransitionCode,
         a_u_sense: bool,
@@ -146,14 +146,14 @@ impl StepGeomSurfacePatch {
 step_entity! {
     /// Surface replica.
     StepGeomSurfaceReplica, StepGeomSurfaceReplicaState, "StepGeomSurfaceReplica", StepGeomSurface, {
-        parent_surface: Handle<StepGeomSurface>,
+        parent_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         transformation: Handle<StepGeomCartesianTransformationOperator3d>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomSurfaceReplica {
     step_methods! {
-        set set_parent_surface = parent_surface: Handle<StepGeomSurface>;
-        get parent_surface = parent_surface: Handle<StepGeomSurface>;
+        set set_parent_surface = parent_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        get parent_surface = parent_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
         set set_transformation = transformation: Handle<StepGeomCartesianTransformationOperator3d>;
         get transformation = transformation: Handle<StepGeomCartesianTransformationOperator3d>;
     }
@@ -161,7 +161,7 @@ impl StepGeomSurfaceReplica {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_parent_surface: &Handle<StepGeomSurface>,
+        a_parent_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_transformation: &Handle<StepGeomCartesianTransformationOperator3d>,
     ) {
         let mut state = self.state.write();
@@ -175,16 +175,16 @@ impl StepGeomSurfaceReplica {
 step_entity! {
     /// Swept surface.
     StepGeomSweptSurface, StepGeomSweptSurfaceState, "StepGeomSweptSurface", StepGeomSurface, {
-        swept_curve: Handle<StepGeomCurve>,
-    }
+        swept_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomSweptSurface]
 }
 impl StepGeomSweptSurface {
     step_methods! {
-        set set_swept_curve = swept_curve: Handle<StepGeomCurve>;
-        get swept_curve = swept_curve: Handle<StepGeomCurve>;
+        set set_swept_curve = swept_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        get swept_curve = swept_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_curve: &Handle<StepGeomCurve>) {
+    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>) {
         self.state.write().swept_curve = a_swept_curve.clone();
         self.parent.parent.parent.init(a_name);
     }
@@ -195,7 +195,7 @@ step_entity! {
     StepGeomToroidalSurface, StepGeomToroidalSurfaceState, "StepGeomToroidalSurface", StepGeomElementarySurface, {
         major_radius: f64,
         minor_radius: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomToroidalSurface, crate::step_geom::StepGeomElementarySurface]
 }
 impl StepGeomToroidalSurface {
     step_methods! {
@@ -223,17 +223,17 @@ impl StepGeomToroidalSurface {
 step_entity! {
     /// Trimmed curve.
     StepGeomTrimmedCurve, StepGeomTrimmedCurveState, "StepGeomTrimmedCurve", StepGeomBoundedCurve, {
-        basis_curve: Handle<StepGeomCurve>,
+        basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         trim1: Handle<HArray1<StepGeomTrimmingSelect>>,
         trim2: Handle<HArray1<StepGeomTrimmingSelect>>,
         sense_agreement: bool,
         master_representation: StepGeomTrimmingPreference,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomTrimmedCurve {
     step_methods! {
-        set set_basis_curve = basis_curve: Handle<StepGeomCurve>;
-        get basis_curve = basis_curve: Handle<StepGeomCurve>;
+        set set_basis_curve = basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        get basis_curve = basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
         set set_trim1 = trim1: Handle<HArray1<StepGeomTrimmingSelect>>;
         get trim1 = trim1: Handle<HArray1<StepGeomTrimmingSelect>>;
         item trim1_value = trim1: StepGeomTrimmingSelect;
@@ -251,7 +251,7 @@ impl StepGeomTrimmedCurve {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_curve: &Handle<StepGeomCurve>,
+        a_basis_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         a_trim1: &Handle<HArray1<StepGeomTrimmingSelect>>,
         a_trim2: &Handle<HArray1<StepGeomTrimmingSelect>>,
         a_sense_agreement: bool,
@@ -271,5 +271,5 @@ impl StepGeomTrimmedCurve {
 step_entity! {
     /// Uniform curve.
     StepGeomUniformCurve, StepGeomUniformCurveState, "StepGeomUniformCurve", StepGeomBSplineCurve, {
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }

@@ -354,19 +354,19 @@ impl StepBasicPersonalAddress {
 step_entity! {
     /// Physically modeled product definition.
     StepBasicPhysicallyModeledProductDefinition, StepBasicPhysicallyModeledProductDefinitionState, "StepBasicPhysicallyModeledProductDefinition", StepBasicProductDefinition, {
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinition]
 }
 
 step_entity! {
     /// Plane angle measure with unit.
     StepBasicPlaneAngleMeasureWithUnit, StepBasicPlaneAngleMeasureWithUnitState, "StepBasicPlaneAngleMeasureWithUnit", StepBasicMeasureWithUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 
 step_entity! {
     /// Plane angle unit.
     StepBasicPlaneAngleUnit, StepBasicPlaneAngleUnitState, "StepBasicPlaneAngleUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {
@@ -375,7 +375,7 @@ step_entity! {
         id: Handle<HAsciiString>,
         name: Handle<HAsciiString>,
         description: Handle<HAsciiString>,
-        frame_of_reference: Handle<HArray1<Handle<StepBasicProductContext>>>,
+        frame_of_reference: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>>,
     }
 }
 impl StepBasicProduct {
@@ -386,9 +386,9 @@ impl StepBasicProduct {
         get name = name: Handle<HAsciiString>;
         set set_description = description: Handle<HAsciiString>;
         get description = description: Handle<HAsciiString>;
-        set set_frame_of_reference = frame_of_reference: Handle<HArray1<Handle<StepBasicProductContext>>>;
-        get frame_of_reference = frame_of_reference: Handle<HArray1<Handle<StepBasicProductContext>>>;
-        item frame_of_reference_value = frame_of_reference: Handle<StepBasicProductContext>;
+        set set_frame_of_reference = frame_of_reference: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>>;
+        get frame_of_reference = frame_of_reference: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>>;
+        item frame_of_reference_value = frame_of_reference: Handle<dyn crate::StepEntityBase<StepBasicProductContext>>;
         len nb_frame_of_reference = frame_of_reference;
     }
     /// `init`.
@@ -397,7 +397,7 @@ impl StepBasicProduct {
         a_id: &Handle<HAsciiString>,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_frame_of_reference: &Handle<HArray1<Handle<StepBasicProductContext>>>,
+        a_frame_of_reference: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>>,
     ) {
         let mut state = self.state.write();
         state.id = a_id.clone();

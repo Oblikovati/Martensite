@@ -54,9 +54,9 @@ type LegacyDatumMap = HashMap<Vec<u8>, Handle<StepDimTolDatum>>;
 #[derive(Default)]
 struct DgtTarget {
     pds: Handle<StepReprProductDefinitionShape>,
-    context: Handle<StepReprRepresentationContext>,
+    context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     face: Handle<StepShapeAdvancedFace>,
-    edge: Handle<StepShapeEdgeCurve>,
+    edge: Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
 }
 
 /// The target of a GD&T label: `None` without a shape, an entity or a product definition shape.
@@ -95,9 +95,9 @@ fn write_characterized_chain(
     model: &Handle<dyn InterfaceInterfaceModel>,
     name: &Handle<HAsciiString>,
     description: &Handle<HAsciiString>,
-    aspect: &Handle<StepReprShapeAspect>,
-    item: &Handle<StepReprRepresentationItem>,
-    context: &Handle<StepReprRepresentationContext>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+    item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     add_representation_first: bool,
 ) -> Result<(), Failure> {
     let mut characterized = StepReprCharacterizedDefinition::default();
@@ -208,19 +208,19 @@ fn limit_item(
     let item = Handle::new(StepReprRepresentationItem::new());
     item.init(&text(name));
     let result = Handle::new(StepReprReprItemAndLengthMeasureWithUnit::new());
-    result.init(&measure, &item)?;
+    result.init(&measure.upcast(), &item.upcast())?;
     Ok(result)
 }
 
 /// Kind under 20: a dimension.
 fn write_legacy_dimension(
     model: &Handle<dyn InterfaceInterfaceModel>,
-    aspect: &Handle<StepReprShapeAspect>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     name: &Handle<HAsciiString>,
     description: &Handle<HAsciiString>,
     values: &Handle<HArray1<f64>>,
     unit: &StepBasicUnit,
-    context: &Handle<StepReprRepresentationContext>,
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
 ) -> Result<(), Failure> {
     let size = Handle::new(StepShapeDimensionalSize::new());
     size.init(aspect, description);
@@ -233,7 +233,7 @@ fn write_legacy_dimension(
     let upper = limit_item(step_array1_item(values, 2, WHERE)?, unit, "upper limit")?;
     model.add_with_refs(&lower.cast(), 0, false)?;
     model.add_with_refs(&upper.cast(), 0, false)?;
-    let limits = step_new_array1::<Handle<StepReprRepresentationItem>>(1, 2)?;
+    let limits = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, 2)?;
     step_array1_set(&limits, 1, lower.cast(), WHERE)?;
     step_array1_set(&limits, 2, upper.cast(), WHERE)?;
     let range = Handle::new(StepReprValueRange::new());
@@ -302,7 +302,7 @@ fn write_legacy_tolerance(
     tolerance_label: &TdfLabel,
     name: &Handle<HAsciiString>,
     description: &Handle<HAsciiString>,
-    aspect: &Handle<StepReprShapeAspect>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     values: &Handle<HArray1<f64>>,
     unit: &StepBasicUnit,
     datum_map: &LegacyDatumMap,
@@ -373,7 +373,7 @@ fn write_legacy_dim_tol(
     let aspect = Handle::new(StepReprShapeAspect::new());
     aspect.init(&name, &empty(), &target.pds, StepDataLogical::LTrue);
     model.add_with_refs(&aspect.cast(), 0, false)?;
-    let item: Handle<StepReprRepresentationItem> = if kind < 20 {
+    let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = if kind < 20 {
         target.edge.cast()
     } else {
         target.face.cast()
@@ -382,7 +382,7 @@ fn write_legacy_dim_tol(
         &model,
         &name,
         &description,
-        &aspect,
+        &aspect.upcast(),
         &item,
         &target.context,
         false,
@@ -393,7 +393,7 @@ fn write_legacy_dim_tol(
     if kind < 20 {
         write_legacy_dimension(
             &model,
-            &aspect,
+            &aspect.upcast(),
             &name,
             &description,
             &values,
@@ -407,7 +407,7 @@ fn write_legacy_dim_tol(
             label,
             &name,
             &description,
-            &aspect,
+            &aspect.upcast(),
             &values,
             &unit,
             datum_map,

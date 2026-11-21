@@ -1,13 +1,14 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
 use crate::step_entity::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Representation of STEP entity ProductConcept
@@ -57,19 +58,19 @@ impl StepReprProductConcept {
 step_entity! {
     /// Representation of STEP entity ProductDefinitionShape
     StepReprProductDefinitionShape, StepReprProductDefinitionShapeState, "StepReprProductDefinitionShape", StepReprPropertyDefinition, {
-    }
+    }, bases: [crate::step_repr::StepReprPropertyDefinition]
 }
 
 step_entity! {
     /// Representation of STEP entity ProductDefinitionUsage
     StepReprProductDefinitionUsage, StepReprProductDefinitionUsageState, "StepReprProductDefinitionUsage", StepBasicProductDefinitionRelationship, {
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinitionRelationship]
 }
 
 step_entity! {
     /// Promissory usage occurrence.
     StepReprPromissoryUsageOccurrence, StepReprPromissoryUsageOccurrenceState, "StepReprPromissoryUsageOccurrence", StepReprAssemblyComponentUsage, {
-    }
+    }, bases: [crate::step_repr::StepReprAssemblyComponentUsage, crate::step_basic::StepBasicProductDefinitionRelationship]
 }
 
 step_entity! {
@@ -79,7 +80,7 @@ step_entity! {
         the_description: Handle<HAsciiString>,
         the_definition: StepReprCharacterizedDefinition,
         def_description: bool,
-    }
+    }, bases: [crate::step_repr::StepReprPropertyDefinition]
 }
 impl StepReprPropertyDefinition {
     step_methods! {
@@ -117,8 +118,8 @@ step_entity! {
     StepReprPropertyDefinitionRelationship, StepReprPropertyDefinitionRelationshipState, "StepReprPropertyDefinitionRelationship", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_relating_property_definition: Handle<StepReprPropertyDefinition>,
-        the_related_property_definition: Handle<StepReprPropertyDefinition>,
+        the_relating_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
+        the_related_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     }
 }
 impl StepReprPropertyDefinitionRelationship {
@@ -127,10 +128,10 @@ impl StepReprPropertyDefinitionRelationship {
         set set_name = the_name: Handle<HAsciiString>;
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
-        get relating_property_definition = the_relating_property_definition: Handle<StepReprPropertyDefinition>;
-        set set_relating_property_definition = the_relating_property_definition: Handle<StepReprPropertyDefinition>;
-        get related_property_definition = the_related_property_definition: Handle<StepReprPropertyDefinition>;
-        set set_related_property_definition = the_related_property_definition: Handle<StepReprPropertyDefinition>;
+        get relating_property_definition = the_relating_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>;
+        set set_relating_property_definition = the_relating_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>;
+        get related_property_definition = the_related_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>;
+        set set_related_property_definition = the_related_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -138,8 +139,8 @@ impl StepReprPropertyDefinitionRelationship {
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_relating_property_definition: &Handle<StepReprPropertyDefinition>,
-        a_related_property_definition: &Handle<StepReprPropertyDefinition>,
+        a_relating_property_definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
+        a_related_property_definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();
@@ -153,22 +154,22 @@ step_entity! {
     /// Representation of STEP entity PropertyDefinitionRepresentation
     StepReprPropertyDefinitionRepresentation, StepReprPropertyDefinitionRepresentationState, "StepReprPropertyDefinitionRepresentation", StandardTransient, {
         the_definition: StepReprRepresentedDefinition,
-        the_used_representation: Handle<StepReprRepresentation>,
-    }
+        the_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+    }, bases: [crate::step_repr::StepReprPropertyDefinitionRepresentation]
 }
 impl StepReprPropertyDefinitionRepresentation {
     step_methods! {
         get definition = the_definition: StepReprRepresentedDefinition;
         set set_definition = the_definition: StepReprRepresentedDefinition;
-        get used_representation = the_used_representation: Handle<StepReprRepresentation>;
-        set set_used_representation = the_used_representation: Handle<StepReprRepresentation>;
+        get used_representation = the_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>;
+        set set_used_representation = the_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         a_definition: &StepReprRepresentedDefinition,
-        a_used_representation: &Handle<StepReprRepresentation>,
+        a_used_representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     ) {
         let mut state = self.state.write();
         state.the_definition = a_definition.clone();
@@ -179,13 +180,13 @@ impl StepReprPropertyDefinitionRepresentation {
 step_entity! {
     /// Representation of STEP entity QuantifiedAssemblyComponentUsage
     StepReprQuantifiedAssemblyComponentUsage, StepReprQuantifiedAssemblyComponentUsageState, "StepReprQuantifiedAssemblyComponentUsage", StepReprAssemblyComponentUsage, {
-        the_quantity: Handle<StandardTransient>,
-    }
+        the_quantity: Handle<dyn Transient>,
+    }, bases: [crate::step_repr::StepReprAssemblyComponentUsage, crate::step_basic::StepBasicProductDefinitionRelationship]
 }
 impl StepReprQuantifiedAssemblyComponentUsage {
     step_methods! {
-        get quantity = the_quantity: Handle<StandardTransient>;
-        set set_quantity = the_quantity: Handle<StandardTransient>;
+        get quantity = the_quantity: Handle<dyn Transient>;
+        set set_quantity = the_quantity: Handle<dyn Transient>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -199,15 +200,11 @@ impl StepReprQuantifiedAssemblyComponentUsage {
         a_product_definition_relationship_name: &Handle<HAsciiString>,
         has_product_definition_relationship_description: bool,
         a_product_definition_relationship_description: &Handle<HAsciiString>,
-        a_product_definition_relationship_relating_product_definition: &Handle<
-            StepBasicProductDefinition,
-        >,
-        a_product_definition_relationship_related_product_definition: &Handle<
-            StepBasicProductDefinition,
-        >,
+        a_product_definition_relationship_relating_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+        a_product_definition_relationship_related_product_definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         has_assembly_component_usage_reference_designator: bool,
         a_assembly_component_usage_reference_designator: &Handle<HAsciiString>,
-        a_quantity: &Handle<StandardTransient>,
+        a_quantity: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         self.parent.init(
             a_product_definition_relationship_id,
@@ -235,7 +232,7 @@ impl StepReprQuantifiedAssemblyComponentUsage {
         a_product_definition_relationship_related_product_definition: &StepBasicProductDefinitionOrReference,
         has_assembly_component_usage_reference_designator: bool,
         a_assembly_component_usage_reference_designator: &Handle<HAsciiString>,
-        a_quantity: &Handle<StandardTransient>,
+        a_quantity: &Handle<dyn Transient>,
     ) {
         self.parent.init_product_definition_or_reference(
             a_product_definition_relationship_id,
@@ -255,7 +252,7 @@ step_entity! {
     /// Real representation item.
     StepReprRealRepresentationItem, StepReprRealRepresentationItemState, "StepReprRealRepresentationItem", StepReprRepresentationItem, {
         value: f64,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepReprRealRepresentationItem {
     step_methods! {
@@ -273,7 +270,7 @@ step_entity! {
     /// Repr item and length measure with unit.
     custom_default StepReprReprItemAndLengthMeasureWithUnit, StepReprReprItemAndLengthMeasureWithUnitState, "StepReprReprItemAndLengthMeasureWithUnit", StepReprReprItemAndMeasureWithUnit, {
         my_length_measure_with_unit: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, StepReprReprItemAndMeasureWithUnit]
 }
 impl Default for StepReprReprItemAndLengthMeasureWithUnit {
     fn default() -> Self {
@@ -305,7 +302,7 @@ step_entity! {
     /// Repr item and length measure with unit and QRI.
     custom_default StepReprReprItemAndLengthMeasureWithUnitAndQRI, StepReprReprItemAndLengthMeasureWithUnitAndQRIState, "StepReprReprItemAndLengthMeasureWithUnitAndQRI", StepReprReprItemAndMeasureWithUnitAndQRI, {
         my_length_measure_with_unit: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, StepReprReprItemAndMeasureWithUnit, StepReprReprItemAndMeasureWithUnitAndQRI]
 }
 impl Default for StepReprReprItemAndLengthMeasureWithUnitAndQRI {
     fn default() -> Self {

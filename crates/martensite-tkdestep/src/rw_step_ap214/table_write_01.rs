@@ -30,8 +30,8 @@ pub(super) const TABLE_WRITE_01: &[WriteRow] = &[
         StepVisualAnnotationOccurrence,
         RwStepVisualRwAnnotationOccurrence
     ),
-    write_row!(11, StepReprMappedItem, RwStepReprRwMappedItem),
-    write_row!(12, StepVisualStyledItem, RwStepVisualRwStyledItem),
+    write_row!(11, StepVisualAnnotationText, RwStepReprRwMappedItem),
+    write_row!(12, StepVisualAnnotationTextOccurrence, RwStepVisualRwStyledItem),
     write_row!(
         13,
         StepBasicApplicationContext,
@@ -263,7 +263,7 @@ pub(super) const TABLE_WRITE_01: &[WriteRow] = &[
         RwStepBasicRwDimensionalExponents
     ),
     write_row!(105, StepGeomDirection, RwStepGeomRwDirection),
-    write_row!(106, StepVisualStyledItem, RwStepVisualRwStyledItem),
+    write_row!(106, StepVisualAnnotationOccurrence, RwStepVisualRwStyledItem),
     write_row!(
         107,
         StepVisualDraughtingCallout,
@@ -306,7 +306,7 @@ pub(super) const TABLE_WRITE_01: &[WriteRow] = &[
     ),
     write_row!(
         126,
-        StepBasicExternallyDefinedItem,
+        StepVisualExternallyDefinedTextFont,
         RwStepBasicRwExternallyDefinedItem
     ),
     write_row!(
@@ -503,7 +503,7 @@ pub(super) const TABLE_WRITE_01: &[WriteRow] = &[
         RwStepVisualRwPreDefinedCurveFont
     ),
     write_row!(211, StepVisualPreDefinedItem, RwStepVisualRwPreDefinedItem),
-    write_row!(213, StepVisualPreDefinedItem, RwStepVisualRwPreDefinedItem),
+    write_row!(213, StepVisualPreDefinedTextFont, RwStepVisualRwPreDefinedItem),
     write_row!(
         214,
         StepVisualPresentationArea,

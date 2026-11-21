@@ -7,9 +7,11 @@ use super::{
     StepDataESDescr, StepDataField, StepDataFieldKind as Kind, StepDataFieldList, StepDataLogical,
     StepDataPDescr, StepDataSelectArrReal, StepDataSelectMember, StepDataStepWriter,
 };
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     ncollection::HArray1,
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::interface::InterfaceModelEntities;
@@ -177,7 +179,7 @@ impl StepDataStepWriter {
             Kind::REAL => self.send_real(member.real())?,
             Kind::STRING => self.send_text(&member.string())?,
             Kind::ANY => {
-                let array = sm.cast::<StepDataSelectArrReal>();
+                let array = sm.cast::<dyn crate::StepEntityBase<StepDataSelectArrReal>>();
                 match array.get() {
                     Some(live) => self.send_arr_real(&live.arr_real())?,
                     None => self.send_undef()?,
@@ -303,11 +305,11 @@ impl StepDataStepWriter {
     /// `Send(Handle<`StandardTransient`>)`: a reference to an entity, by its ident. A
     /// null value is undefined with a fail; a string or member outside the model is sent
     /// as its value.
-    pub fn send_entity<T: ?Sized + RuntimeTyped>(
+    pub fn send_entity<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &mut self,
         val: &Handle<T>,
     ) -> Result<(), Failure> {
-        let val = val.cast::<StandardTransient>();
+        let val = val.cast::<dyn Transient>();
         if val.is_null() {
             return self.send_bad_reference("Null Reference", b" NUL REF ");
         }
@@ -333,7 +335,7 @@ impl StepDataStepWriter {
         self.send_comment(comment)?;
         self.comment(false)
     }
-    fn send_reference(&mut self, val: &Handle<StandardTransient>, num: i32) -> Result<(), Failure> {
+    fn send_reference(&mut self, val: &Handle<dyn Transient>, num: i32) -> Result<(), Failure> {
         let idtrue = if self.thelabmode > 0 {
             self.themodel.get().map_or(0, |live| live.ident_label(val))
         } else {

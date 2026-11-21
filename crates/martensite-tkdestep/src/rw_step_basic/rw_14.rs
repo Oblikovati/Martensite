@@ -209,7 +209,7 @@ impl RwStepBasicRwMeasureWithUnit {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepBasicMeasureWithUnit>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>,
     ) -> Result<(), Failure> {
         rw_block_0103!(a_unit_component, ach, data, mvc, num);
         ent.init(&mvc, &a_unit_component);
@@ -219,7 +219,7 @@ impl RwStepBasicRwMeasureWithUnit {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepBasicMeasureWithUnit>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.value_component_member())?;
         sw.send_entity(&ent.unit_component().value())?;
@@ -228,7 +228,7 @@ impl RwStepBasicRwMeasureWithUnit {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepBasicMeasureWithUnit>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.add_item(&ent.unit_component().value());

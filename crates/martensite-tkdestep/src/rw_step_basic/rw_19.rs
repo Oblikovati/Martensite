@@ -23,13 +23,13 @@ impl RwStepBasicRwProduct {
         if data.is_param_defined(num, 3)? {
             data.read_string(num, 3, "description", ach, &mut a_description)?;
         }
-        let mut a_frame_of_reference: Handle<HArray1<Handle<StepBasicProductContext>>> =
+        let mut a_frame_of_reference: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>> =
             Default::default();
-        let mut anent4: Handle<StepBasicProductContext> = Default::default();
+        let mut anent4: Handle<dyn crate::StepEntityBase<StepBasicProductContext>> = Default::default();
         let mut nsub4: i32 = Default::default();
         if data.read_sub_list(num, 4, "frame_of_reference", ach, &mut nsub4, false, 0, 0)? {
             let nb4: i32 = data.nb_params(nsub4)?;
-            a_frame_of_reference = step_new_array1::<Handle<StepBasicProductContext>>(1, nb4)?;
+            a_frame_of_reference = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>(1, nb4)?;
             for i4 in 1..=nb4 {
                 if data.read_entity(
                     nsub4,
@@ -120,7 +120,7 @@ impl RwStepBasicRwProductCategoryRelationship {
             return Ok(());
         }
         rw_block_0102!(a_description, a_name, ach, data, has_description, num);
-        let mut a_category: Handle<StepBasicProductCategory> = Default::default();
+        let mut a_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -129,7 +129,7 @@ impl RwStepBasicRwProductCategoryRelationship {
             StepBasicProductCategory::static_type(),
             &mut a_category,
         )?;
-        let mut a_sub_category: Handle<StepBasicProductCategory> = Default::default();
+        let mut a_sub_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>> = Default::default();
         data.read_entity(
             num,
             4,

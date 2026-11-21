@@ -10,7 +10,8 @@ use crate::step_shape::{StepShapeConnectedFaceSet, StepShapeFaceSurface};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Shape, Shell};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 
 /// Translate shell.
 #[derive(Default)]
@@ -35,7 +36,7 @@ impl StepToTopoDSTranslateShell {
     /// face that fails only gives a warning, so the shell can come out with a face missing.
     pub fn init(
         &mut self,
-        face_set: &Handle<StepShapeConnectedFaceSet>,
+        face_set: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -61,9 +62,9 @@ impl StepToTopoDSTranslateShell {
         let mut rank = 1;
         while rank <= count && scope.more() {
             let face = live.cfs_faces_value(rank)?;
-            let face_surface = face.cast::<StepShapeFaceSurface>();
+            let face_surface = face.cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>();
             if face_surface.is_null() {
-                let entity: Handle<StandardTransient> = face.cast();
+                let entity: Handle<dyn Transient> = face.cast();
                 process.add_warning_text(
                     &entity,
                     " Face is not of FaceSurface Type; not mapped to TopoDS",
@@ -76,7 +77,7 @@ impl StepToTopoDSTranslateShell {
                     builder.add(&mut shell, &made)?;
                 } else {
                     // Warning only + add FaceSurface file Identifier
-                    let entity: Handle<StandardTransient> = face_surface.cast();
+                    let entity: Handle<dyn Transient> = face_surface.cast();
                     process.add_warning_text(
                         &entity,
                         " a Face from Shell not mapped to TopoDS",

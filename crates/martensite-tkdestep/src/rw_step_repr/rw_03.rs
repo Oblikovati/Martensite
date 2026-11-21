@@ -65,7 +65,7 @@ impl RwStepReprRwCompoundRepresentationItem {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepReprCompoundRepresentationItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprCompoundRepresentationItem>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 2, ach, "compound_representation_item")? {
             return Ok(());
@@ -73,7 +73,7 @@ impl RwStepReprRwCompoundRepresentationItem {
         rw_block_0108!(a_items, a_name, ach, anent2, data, nsub2, num);
         if data.read_sub_list(num, 2, "item_element", ach, &mut nsub2, false, 0, 0)? {
             let nb2: i32 = data.nb_params(nsub2)?;
-            a_items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, nb2)?;
+            a_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb2)?;
             for i2 in 1..=nb2 {
                 if data.read_entity(
                     nsub2,
@@ -94,7 +94,7 @@ impl RwStepReprRwCompoundRepresentationItem {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepReprCompoundRepresentationItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprCompoundRepresentationItem>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.name())?;
         sw.open_sub()?;
@@ -107,7 +107,7 @@ impl RwStepReprRwCompoundRepresentationItem {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepReprCompoundRepresentationItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprCompoundRepresentationItem>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let i: i32 = Default::default();
@@ -189,9 +189,7 @@ impl RwStepReprRwConfigurationEffectivity {
         }
         let mut a_effectivity_id: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "effectivity.id", ach, &mut a_effectivity_id)?;
-        let mut a_product_definition_effectivity_usage: Handle<
-            StepBasicProductDefinitionRelationship,
-        > = Default::default();
+        let mut a_product_definition_effectivity_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>> = Default::default();
         data.read_entity(
             num,
             2,

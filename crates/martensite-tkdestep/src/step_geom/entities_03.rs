@@ -15,7 +15,7 @@ step_entity! {
         u_knots: Handle<HArray1<f64>>,
         v_knots: Handle<HArray1<f64>>,
         knot_spec: StepGeomKnotType,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomBSplineSurfaceWithKnots {
     step_methods! {

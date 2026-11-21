@@ -104,7 +104,7 @@ impl StepToTopoDSBuilder {
         // Non-manifold topology is not mapped via FaceBasedSurfaceModel (ssv; 14.11.2010)
         let mut nm_tool = StepToTopoDSNMTool::new();
         for rank in 1..=count {
-            let face_set: Handle<StepShapeConnectedFaceSet> =
+            let face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> =
                 step_array1_item(&boundary, rank, "StepToTopoDSBuilder")?;
             let Some(live_set) = face_set.get() else {
                 continue;
@@ -118,7 +118,7 @@ impl StepToTopoDSBuilder {
             for face_rank in 1..=nb_faces {
                 let face = live_set
                     .cfs_faces_value(face_rank)?
-                    .cast::<StepShapeFaceSurface>();
+                    .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>();
                 translator.init(&face, &mut tool, &mut nm_tool, factors)?;
                 if !translator.is_done() {
                     continue;

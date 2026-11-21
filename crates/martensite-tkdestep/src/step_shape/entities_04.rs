@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
@@ -12,30 +8,35 @@ use crate::step_entity::*;
 use crate::step_geom::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Geometrically bounded surface shape representation.
     StepShapeGeometricallyBoundedSurfaceShapeRepresentation, StepShapeGeometricallyBoundedSurfaceShapeRepresentationState, "StepShapeGeometricallyBoundedSurfaceShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Geometrically bounded wireframe shape representation.
     StepShapeGeometricallyBoundedWireframeShapeRepresentation, StepShapeGeometricallyBoundedWireframeShapeRepresentationState, "StepShapeGeometricallyBoundedWireframeShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Half space solid.
     StepShapeHalfSpaceSolid, StepShapeHalfSpaceSolidState, "StepShapeHalfSpaceSolid", StepGeomGeometricRepresentationItem, {
-        base_surface: Handle<StepGeomSurface>,
+        base_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         agreement_flag: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeHalfSpaceSolid {
     step_methods! {
-        set set_base_surface = base_surface: Handle<StepGeomSurface>;
-        get base_surface = base_surface: Handle<StepGeomSurface>;
+        set set_base_surface = base_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        get base_surface = base_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
         set_copy set_agreement_flag = agreement_flag: bool;
         get agreement_flag = agreement_flag: bool;
     }
@@ -43,7 +44,7 @@ impl StepShapeHalfSpaceSolid {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_base_surface: &Handle<StepGeomSurface>,
+        a_base_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_agreement_flag: bool,
     ) {
         let mut state = self.state.write();
@@ -93,20 +94,20 @@ impl StepShapeLimitsAndFits {
 step_entity! {
     /// Loop.
     StepShapeLoop, StepShapeLoopState, "StepShapeLoop", StepShapeTopologicalRepresentationItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeLoop, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 
 step_entity! {
     /// Loop and path.
     StepShapeLoopAndPath, StepShapeLoopAndPathState, "StepShapeLoopAndPath", StepShapeTopologicalRepresentationItem, {
-        loop_: Handle<StepShapeLoop>,
+        loop_: Handle<dyn crate::StepEntityBase<StepShapeLoop>>,
         path: Handle<StepShapePath>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeLoopAndPath {
     step_methods! {
-        set set_loop = loop_: Handle<StepShapeLoop>;
-        get loop_ = loop_: Handle<StepShapeLoop>;
+        set set_loop = loop_: Handle<dyn crate::StepEntityBase<StepShapeLoop>>;
+        get loop_ = loop_: Handle<dyn crate::StepEntityBase<StepShapeLoop>>;
         set set_path = path: Handle<StepShapePath>;
         get path = path: Handle<StepShapePath>;
     }
@@ -114,7 +115,7 @@ impl StepShapeLoopAndPath {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_loop: &Handle<StepShapeLoop>,
+        a_loop: &Handle<dyn crate::StepEntityBase<StepShapeLoop>>,
         a_path: &Handle<StepShapePath>,
     ) {
         let mut state = self.state.write();
@@ -130,7 +131,7 @@ impl StepShapeLoopAndPath {
         a_edge_list: &Handle<HArray1<Handle<StepShapeOrientedEdge>>>,
     ) {
         self.parent.parent.init(a_name);
-        self.state.write().loop_ = Handle::new(StepShapeLoop::new());
+        self.state.write().loop_ = Handle::new(StepShapeLoop::new()).into_upcast();
         let field_loop_ = self.state.read().loop_.clone();
         field_loop_.init(a_name);
         self.state.write().path = Handle::new(StepShapePath::new());
@@ -178,16 +179,16 @@ impl StepShapeLoopAndPath {
 step_entity! {
     /// Manifold solid brep.
     StepShapeManifoldSolidBrep, StepShapeManifoldSolidBrepState, "StepShapeManifoldSolidBrep", StepShapeSolidModel, {
-        outer: Handle<StepShapeConnectedFaceSet>,
-    }
+        outer: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeManifoldSolidBrep, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeManifoldSolidBrep {
     step_methods! {
-        set set_outer = outer: Handle<StepShapeConnectedFaceSet>;
-        get outer = outer: Handle<StepShapeConnectedFaceSet>;
+        set set_outer = outer: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>;
+        get outer = outer: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_outer: &Handle<StepShapeClosedShell>) {
+    pub fn init(&self, a_name: &Handle<HAsciiString>, a_outer: &Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>) {
         self.state.write().outer = a_outer.cast();
         self.parent.parent.parent.init(a_name);
     }
@@ -195,7 +196,7 @@ impl StepShapeManifoldSolidBrep {
     pub fn init_connected_face_set(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_outer: &Handle<StepShapeConnectedFaceSet>,
+        a_outer: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
     ) {
         self.state.write().outer = a_outer.clone();
         self.parent.parent.parent.init(a_name);
@@ -205,7 +206,7 @@ impl StepShapeManifoldSolidBrep {
 step_entity! {
     /// Manifold surface shape representation.
     StepShapeManifoldSurfaceShapeRepresentation, StepShapeManifoldSurfaceShapeRepresentationState, "StepShapeManifoldSurfaceShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
@@ -213,7 +214,7 @@ step_entity! {
     StepShapeMeasureQualification, StepShapeMeasureQualificationState, "StepShapeMeasureQualification", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_qualified_measure: Handle<StandardTransient>,
+        the_qualified_measure: Handle<dyn Transient>,
         the_qualifiers: Handle<HArray1<StepShapeValueQualifier>>,
     }
 }
@@ -223,8 +224,8 @@ impl StepShapeMeasureQualification {
         set set_name = the_name: Handle<HAsciiString>;
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
-        get qualified_measure = the_qualified_measure: Handle<StandardTransient>;
-        set set_qualified_measure = the_qualified_measure: Handle<StandardTransient>;
+        get qualified_measure = the_qualified_measure: Handle<dyn Transient>;
+        set set_qualified_measure = the_qualified_measure: Handle<dyn Transient>;
         get qualifiers = the_qualifiers: Handle<HArray1<StepShapeValueQualifier>>;
         len_checked nb_qualifiers = the_qualifiers;
         set set_qualifiers = the_qualifiers: Handle<HArray1<StepShapeValueQualifier>>;
@@ -235,7 +236,7 @@ impl StepShapeMeasureQualification {
         &self,
         name: &Handle<HAsciiString>,
         description: &Handle<HAsciiString>,
-        qualified_measure: &Handle<StandardTransient>,
+        qualified_measure: &Handle<dyn Transient>,
         qualifiers: &Handle<HArray1<StepShapeValueQualifier>>,
     ) {
         let mut state = self.state.write();
@@ -269,9 +270,9 @@ step_entity! {
     /// Complex Type between MeasureRepresentationItem and
     /// QualifiedRepresentationItem
     custom_default StepShapeMeasureRepresentationItemAndQualifiedRepresentationItem, StepShapeMeasureRepresentationItemAndQualifiedRepresentationItemState, "StepShapeMeasureRepresentationItemAndQualifiedRepresentationItem", StepReprRepresentationItem, {
-        my_measure: Handle<StepBasicMeasureWithUnit>,
+        my_measure: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>,
         the_qualifiers: Handle<HArray1<StepShapeValueQualifier>>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl Default for StepShapeMeasureRepresentationItemAndQualifiedRepresentationItem {
     fn default() -> Self {
@@ -280,7 +281,7 @@ impl Default for StepShapeMeasureRepresentationItemAndQualifiedRepresentationIte
             state: Default::default(),
         };
         {
-            object.state.write().my_measure = Handle::new(StepBasicMeasureWithUnit::new());
+            object.state.write().my_measure = Handle::new(StepBasicMeasureWithUnit::new()).into_upcast();
         }
         object
     }
@@ -293,8 +294,8 @@ impl StepShapeMeasureRepresentationItemAndQualifiedRepresentationItem {
 }
 impl StepShapeMeasureRepresentationItemAndQualifiedRepresentationItem {
     step_methods! {
-        set set_measure = my_measure: Handle<StepBasicMeasureWithUnit>;
-        get measure = my_measure: Handle<StepBasicMeasureWithUnit>;
+        set set_measure = my_measure: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>;
+        get measure = my_measure: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>;
         get qualifiers = the_qualifiers: Handle<HArray1<StepShapeValueQualifier>>;
         len_checked nb_qualifiers = the_qualifiers;
         set set_qualifiers = the_qualifiers: Handle<HArray1<StepShapeValueQualifier>>;

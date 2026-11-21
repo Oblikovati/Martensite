@@ -13,7 +13,8 @@ use crate::step_shape::{StepShapeEdgeCurve, StepShapeVertex};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Edge, Vertex};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomLine};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
@@ -31,9 +32,9 @@ impl StepToTopoDSTranslateEdge {
     #[allow(clippy::too_many_arguments, reason = "the member's parameters")]
     pub fn make_from_curve_3d(
         &mut self,
-        c3d: &Handle<StepGeomCurve>,
-        edge_curve: &Handle<StepShapeEdgeCurve>,
-        v_end: &Handle<StepShapeVertex>,
+        c3d: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+        edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
+        v_end: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
         preci: f64,
         edge: &mut Edge,
         v1: &mut Vertex,
@@ -59,7 +60,7 @@ impl StepToTopoDSTranslateEdge {
     /// `init` binds the null edge as the code does.
     pub(super) fn make_from_curve_3d_in(
         &mut self,
-        c3d: &Handle<StepGeomCurve>,
+        c3d: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         state: &mut EdgeInProgress<'_>,
         tool: &mut StepToTopoDSTool,
         factors: &StepDataFactors,
@@ -69,7 +70,7 @@ impl StepToTopoDSTranslateEdge {
             &process_handle,
             "StepToTopoDSTranslateEdge::MakeFromCurve3D",
         )?;
-        let entity: Handle<StandardTransient> = c3d.cast();
+        let entity: Handle<dyn Transient> = c3d.cast();
         let mut curve = make_curve(c3d, process, factors)?;
         let Some(live) = curve.get() else {
             process.add_fail_text(&entity, " Make GeomCurve (3D) failed", "");
@@ -162,7 +163,7 @@ impl StepToTopoDSTranslateEdge {
     pub(super) fn make_closed_with_two_vertices(
         &mut self,
         curve: &Handle<dyn GeomCurve>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         maker: &mut BRepLibMakeEdge,
         state: &mut EdgeInProgress<'_>,
         u1: f64,

@@ -4,7 +4,8 @@ use crate::step_data::{StepDataProtocolOps, StepDataReadWriteModule, StepDataWri
 use crate::step_entity::step_live;
 use crate::step_select::StepSelectStepType;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkxsbase::if_select::{IFSelectSignature, IFSelectSignatureBase};
 use martensite_tkxsbase::interface::{
@@ -18,14 +19,14 @@ pub struct STEPSelectionsSelectDerived {
     base: StepSelectStepType,
     thelib: Option<StepDataWriterLib>,
 }
-impl_transient!(STEPSelectionsSelectDerived, "STEPSelectionsSelectDerived", StepSelectStepType, base, interfaces: [dyn IFSelectSignature, dyn InterfaceSignType, dyn MoniToolSignText]);
+impl_transient!(STEPSelectionsSelectDerived, "STEPSelectionsSelectDerived", StepSelectStepType, interfaces: [dyn IFSelectSignature, dyn InterfaceSignType, dyn MoniToolSignText]);
 
 /// `GetStepType`: an entity of the named type, to test against; null when the name is not of the
 /// module.
 fn entity_of_step_type(
     module: &Handle<dyn StepDataReadWriteModule>,
     step_type: &AsciiString,
-) -> Handle<StandardTransient> {
+) -> Handle<dyn Transient> {
     let Some(live) = module.get() else {
         return Handle::default();
     };
@@ -60,11 +61,7 @@ impl MoniToolSignText for STEPSelectionsSelectDerived {
     fn name(&self) -> String {
         MoniToolSignText::name(&self.base)
     }
-    fn text(
-        &self,
-        ent: &Handle<StandardTransient>,
-        context: &Handle<StandardTransient>,
-    ) -> AsciiString {
+    fn text(&self, ent: &Handle<dyn Transient>, context: &Handle<dyn Transient>) -> AsciiString {
         self.base.text(ent, context)
     }
 }
@@ -72,7 +69,7 @@ impl MoniToolSignText for STEPSelectionsSelectDerived {
 impl InterfaceSignType for STEPSelectionsSelectDerived {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         InterfaceSignType::value(&self.base, ent, model)
@@ -86,7 +83,7 @@ impl IFSelectSignature for STEPSelectionsSelectDerived {
     /// `matches(ent, model, text, exact)`: `ent` is of the named type or derives from it.
     fn matches(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
         text: &AsciiString,
         _exact: bool,

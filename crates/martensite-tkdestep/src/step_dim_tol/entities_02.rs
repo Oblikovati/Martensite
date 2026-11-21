@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
@@ -10,12 +6,17 @@ use crate::step_data::*;
 use crate::step_entity::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Representation of STEP entity Datum
     StepDimTolDatum, StepDimTolDatumState, "StepDimTolDatum", StepReprShapeAspect, {
         my_identification: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 impl StepDimTolDatum {
     step_methods! {
@@ -45,7 +46,7 @@ impl StepDimTolDatum {
 step_entity! {
     /// Representation of STEP entity DatumFeature
     StepDimTolDatumFeature, StepDimTolDatumFeatureState, "StepDimTolDatumFeature", StepReprShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 
 step_entity! {
@@ -74,13 +75,13 @@ impl StepDimTolDatumReference {
 step_entity! {
     /// Representation of STEP entity DatumReferenceCompartment
     StepDimTolDatumReferenceCompartment, StepDimTolDatumReferenceCompartmentState, "StepDimTolDatumReferenceCompartment", StepDimTolGeneralDatumReference, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 
 step_entity! {
     /// Representation of STEP entity DatumReferenceElement
     StepDimTolDatumReferenceElement, StepDimTolDatumReferenceElementState, "StepDimTolDatumReferenceElement", StepDimTolGeneralDatumReference, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 
 step_entity! {
@@ -114,7 +115,7 @@ step_entity! {
     /// Representation of STEP entity DatumSystem
     StepDimTolDatumSystem, StepDimTolDatumSystemState, "StepDimTolDatumSystem", StepReprShapeAspect, {
         my_constituents: Handle<HArray1<Handle<StepDimTolDatumReferenceCompartment>>>,
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 impl StepDimTolDatumSystem {
     step_methods! {
@@ -166,7 +167,7 @@ step_entity! {
     /// Representation of STEP entity DatumTarget
     StepDimTolDatumTarget, StepDimTolDatumTargetState, "StepDimTolDatumTarget", StepReprShapeAspect, {
         my_target_id: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 impl StepDimTolDatumTarget {
     step_methods! {
@@ -196,7 +197,7 @@ impl StepDimTolDatumTarget {
 step_entity! {
     /// Representation of STEP entity FlatnessTolerance
     StepDimTolFlatnessTolerance, StepDimTolFlatnessToleranceState, "StepDimTolFlatnessTolerance", StepDimTolGeometricTolerance, {
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 
 step_entity! {
@@ -204,7 +205,7 @@ step_entity! {
     StepDimTolGeneralDatumReference, StepDimTolGeneralDatumReferenceState, "StepDimTolGeneralDatumReference", StepReprShapeAspect, {
         my_base: StepDimTolDatumOrCommonDatum,
         my_modifiers: Handle<HArray1<StepDimTolDatumReferenceModifier>>,
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 impl StepDimTolGeneralDatumReference {
     step_methods! {
@@ -284,7 +285,7 @@ step_entity! {
     StepDimTolGeoTolAndGeoTolWthDatRef, StepDimTolGeoTolAndGeoTolWthDatRefState, "StepDimTolGeoTolAndGeoTolWthDatRef", StepDimTolGeometricTolerance, {
         my_geometric_tolerance_with_datum_reference: Handle<StepDimTolGeometricToleranceWithDatumReference>,
         my_tolerance_type: StepDimTolGeometricToleranceType,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeoTolAndGeoTolWthDatRef {
     step_methods! {
@@ -301,8 +302,8 @@ impl StepDimTolGeoTolAndGeoTolWthDatRef {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_type: StepDimTolGeometricToleranceType,
     ) -> Result<(), Failure> {
@@ -320,7 +321,7 @@ impl StepDimTolGeoTolAndGeoTolWthDatRef {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_type: StepDimTolGeometricToleranceType,

@@ -5,10 +5,12 @@ use crate::step_data::{
     StepDataUndefinedEntity, StepDataWriterLib,
 };
 use crate::step_file::step_file_read;
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
     message::Message,
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -77,7 +79,9 @@ impl_transient_interface!(
 );
 
 /// The `StepSelectModelModifier::perform(ctx, target, protocol, TC)`.
-pub fn step_model_modifier_perform<M: StepSelectModelModifier + RuntimeTyped + ?Sized>(
+pub fn step_model_modifier_perform<
+    M: StepSelectModelModifier + RuntimeTyped + TransientHandleTarget + ?Sized,
+>(
     modifier: &Handle<M>,
     ctx: &mut IFSelectContextModif,
     target: &Handle<dyn InterfaceInterfaceModel>,
@@ -107,7 +111,6 @@ pub fn step_model_modifier_perform<M: StepSelectModelModifier + RuntimeTyped + ?
 /// assert_eq!(sign.name(), "Step Type (Schema (DEFAULT))");
 /// ```
 pub struct StepSelectStepType {
-    transient: StandardTransient,
     base: IFSelectSignatureBase,
     thelib: StepDataWriterLib,
     theproto: Handle<dyn StepDataProtocolOps>,
@@ -116,7 +119,6 @@ impl_transient!(
     StepSelectStepType,
     "StepSelectStepType",
     dyn IFSelectSignature,
-    transient,
     interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]
 );
 
@@ -130,7 +132,6 @@ impl StepSelectStepType {
     /// `StepSelectStepType()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("Step Type"),
             thelib: StepDataWriterLib::empty(),
             theproto: Handle::default(),
@@ -149,7 +150,7 @@ impl StepSelectStepType {
         self.theproto = step;
         Ok(())
     }
-    fn complex_of_undefined(ent: &Handle<StandardTransient>) -> String {
+    fn complex_of_undefined(ent: &Handle<dyn Transient>) -> String {
         let mut current = ent.cast::<StepDataUndefinedEntity>();
         let Some(first) = current.get() else {
             return String::new();
@@ -171,11 +172,7 @@ impl MoniToolSignText for StepSelectStepType {
     fn name(&self) -> String {
         String::from_utf8_lossy(self.base.thename.as_bytes()).into_owned()
     }
-    fn text(
-        &self,
-        ent: &Handle<StandardTransient>,
-        context: &Handle<StandardTransient>,
-    ) -> AsciiString {
+    fn text(&self, ent: &Handle<dyn Transient>, context: &Handle<dyn Transient>) -> AsciiString {
         interface_sign_type_text(self, ent, context)
     }
 }
@@ -184,7 +181,7 @@ impl InterfaceSignType for StepSelectStepType {
     /// `Value(ent, model)`.
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         let Some((module, cn)) = self.thelib.select(ent) else {
@@ -224,7 +221,6 @@ impl IFSelectSignature for StepSelectStepType {
 /// assert_eq!(StepSelectWorkLibrary::new(true).dump_levels(), (1, 2));
 /// ```
 pub struct StepSelectWorkLibrary {
-    transient: StandardTransient,
     base: IFSelectWorkLibraryBase,
     thecopymode: bool,
     thelabmode: martensite_tkernel::standard::SharedState<i32>,
@@ -233,7 +229,6 @@ impl_transient!(
     StepSelectWorkLibrary,
     "StepSelectWorkLibrary",
     dyn IFSelectWorkLibrary,
-    transient,
     interfaces: [dyn IFSelectWorkLibrary]
 );
 
@@ -241,7 +236,6 @@ impl StepSelectWorkLibrary {
     /// `StepSelectWorkLibrary(copymode = true)`.
     pub fn new(copymode: bool) -> Self {
         let library = Self {
-            transient: StandardTransient::default(),
             base: IFSelectWorkLibraryBase::new(),
             thecopymode: copymode,
             thelabmode: martensite_tkernel::standard::SharedState::new(0),
@@ -395,7 +389,7 @@ impl IFSelectWorkLibrary for StepSelectWorkLibrary {
         &self,
         model: &Handle<dyn InterfaceInterfaceModel>,
         protocol: &Handle<dyn InterfaceProtocol>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         s: &mut dyn Write,
         level: i32,
     ) -> Result<(), Failure> {

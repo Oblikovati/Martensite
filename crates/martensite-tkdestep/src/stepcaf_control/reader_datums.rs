@@ -22,7 +22,8 @@ use crate::step_shape::{
 };
 use crate::step_to_geom::StepToGeom;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
 use martensite_tkxcaf::NativeEnum;
@@ -60,7 +61,7 @@ impl DatumTools<'_> {
     /// The shapes of the GISU among `sharings`.
     fn labels_of_usages(
         &self,
-        sharings: &[Handle<StandardTransient>],
+        sharings: &[Handle<dyn Transient>],
         labels: &mut Vec<TdfLabel>,
     ) -> Result<bool, Failure> {
         let mut found = false;
@@ -84,7 +85,7 @@ impl DatumTools<'_> {
     /// One parameter item of a datum target: its axis, or its length or width.
     fn read_target_parameter(
         &self,
-        item: &Handle<StepReprRepresentationItem>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         parameters: &Handle<StepShapeShapeRepresentationWithParameters>,
         object: &XCAFDimTolObjectsDatumObject,
     ) -> Result<(), Failure> {
@@ -164,7 +165,7 @@ impl DatumTools<'_> {
             return Ok(Some(valid));
         }
         // Point/line/rectangle/circle datum targets
-        let definition: Handle<StepReprPropertyDefinition> =
+        let definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> =
             first_of(&self.session.sharings(&target.cast())?);
         if definition.is_null() {
             return Ok(Some(valid));

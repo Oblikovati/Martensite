@@ -29,8 +29,8 @@ pub(super) const TABLE_SHARE_01: &[ShareRow] = &[
         StepVisualAnnotationOccurrence,
         RwStepVisualRwAnnotationOccurrence
     ),
-    share_row!(11, StepReprMappedItem, RwStepReprRwMappedItem),
-    share_row!(12, StepVisualStyledItem, RwStepVisualRwStyledItem),
+    share_row!(11, StepVisualAnnotationText, RwStepReprRwMappedItem),
+    share_row!(12, StepVisualAnnotationTextOccurrence, RwStepVisualRwStyledItem),
     share_row!(
         14,
         StepBasicApplicationContextElement,
@@ -218,7 +218,7 @@ pub(super) const TABLE_SHARE_01: &[ShareRow] = &[
         StepGeomDegenerateToroidalSurface,
         RwStepGeomRwDegenerateToroidalSurface
     ),
-    share_row!(106, StepVisualStyledItem, RwStepVisualRwStyledItem),
+    share_row!(106, StepVisualAnnotationOccurrence, RwStepVisualRwStyledItem),
     share_row!(
         107,
         StepVisualDraughtingCallout,
@@ -249,7 +249,7 @@ pub(super) const TABLE_SHARE_01: &[ShareRow] = &[
     ),
     share_row!(
         126,
-        StepBasicExternallyDefinedItem,
+        StepVisualExternallyDefinedTextFont,
         RwStepBasicRwExternallyDefinedItem
     ),
     share_row!(
@@ -764,12 +764,12 @@ pub(super) const TABLE_SHARE_01: &[ShareRow] = &[
     ),
     share_row!(
         340,
-        StepBasicProductDefinitionContext,
+        StepBasicDesignContext,
         RwStepBasicRwProductDefinitionContext
     ),
-    share_row!(341, StepBasicMeasureWithUnit, RwStepBasicRwMeasureWithUnit),
-    share_row!(342, StepBasicNamedUnit, RwStepBasicRwNamedUnit),
-    share_row!(343, StepBasicNamedUnit, RwStepBasicRwNamedUnit),
+    share_row!(341, StepBasicTimeMeasureWithUnit, RwStepBasicRwMeasureWithUnit),
+    share_row!(342, StepBasicRatioUnit, RwStepBasicRwNamedUnit),
+    share_row!(343, StepBasicTimeUnit, RwStepBasicRwNamedUnit),
     share_row!(
         348,
         StepBasicApprovalDateTime,

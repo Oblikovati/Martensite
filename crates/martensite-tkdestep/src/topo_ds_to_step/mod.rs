@@ -53,7 +53,7 @@ macro_rules! topo_ds_to_step_brep_class {
             /// Root.
             pub root: $crate::topo_ds_to_step::TopoDSToStepRoot,
             result: martensite_tkernel::standard::Handle<$entity>,
-            tessellated: martensite_tkernel::standard::Handle<$crate::step_visual::StepVisualTessellatedItem>,
+            tessellated: martensite_tkernel::standard::Handle<dyn $crate::StepEntityBase<$crate::step_visual::StepVisualTessellatedItem>>,
         }
         impl $class {
             /// `is_done`.
@@ -78,7 +78,7 @@ macro_rules! topo_ds_to_step_brep_class {
             pub fn tessellated_value(
                 &self,
             ) -> Result<
-                martensite_tkernel::standard::Handle<$crate::step_visual::StepVisualTessellatedItem>,
+                martensite_tkernel::standard::Handle<dyn $crate::StepEntityBase<$crate::step_visual::StepVisualTessellatedItem>>,
                 martensite_tkernel::standard::Failure,
             > {
                 self.root.check_done(concat!($recorded, "::TessellatedValue()"))?;

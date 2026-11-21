@@ -26,12 +26,12 @@ impl RwStepVisualRwCharacterizedObjAndRepresentationAndDraughtingModel {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut an_items: Handle<HArray1<Handle<StepReprRepresentationItem>>> = Default::default();
-        let mut an_item: Handle<StepReprRepresentationItem> = Default::default();
+        let mut an_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>> = Default::default();
+        let mut an_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = Default::default();
         let mut nsub: i32 = Default::default();
         if data.read_sub_list(num, 2, "items", ach, &mut nsub, false, 0, 0)? {
             let nb: i32 = data.nb_params(nsub)?;
-            an_items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, nb)?;
+            an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, nb)?;
             for i in 1..=nb {
                 if data.read_entity(
                     nsub,
@@ -45,7 +45,7 @@ impl RwStepVisualRwCharacterizedObjAndRepresentationAndDraughtingModel {
                 }
             }
         }
-        let mut a_context_of_items: Handle<StepReprRepresentationContext> = Default::default();
+        let mut a_context_of_items: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = Default::default();
         data.read_entity(
             num,
             3,
@@ -101,7 +101,7 @@ impl RwStepVisualRwColour {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        _unused_3: &Handle<StepVisualColour>,
+        _unused_3: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 0, ach, "colour")? {
             return Ok(());
@@ -112,7 +112,7 @@ impl RwStepVisualRwColour {
     pub fn write_step(
         &self,
         _unused_0: &mut StepDataStepWriter,
-        _unused_1: &Handle<StepVisualColour>,
+        _unused_1: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) -> Result<(), Failure> {
         Ok(())
     }

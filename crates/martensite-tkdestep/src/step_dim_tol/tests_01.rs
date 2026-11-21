@@ -386,8 +386,8 @@ fn runtime_type_step_dim_tol_geometric_tolerance_relationship() {
 fn init_round_trip_step_dim_tol_geometric_tolerance_relationship() {
     let the_name = Handle::new(HAsciiString::new("sample"));
     let the_description = Handle::new(HAsciiString::new("sample"));
-    let the_relating_geometric_tolerance = Handle::new(StepDimTolGeometricTolerance::new());
-    let the_related_geometric_tolerance = Handle::new(StepDimTolGeometricTolerance::new());
+    let the_relating_geometric_tolerance = Handle::new(StepDimTolAngularityTolerance::new()).into_upcast();
+    let the_related_geometric_tolerance = Handle::new(StepDimTolFlatnessTolerance::new()).into_upcast();
     let object = StepDimTolGeometricToleranceRelationship::new();
     object.init(
         &the_name,

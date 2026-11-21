@@ -38,7 +38,7 @@ fn text(value: &str) -> Handle<HAsciiString> {
 pub struct StepConstructPart {
     my_done: bool,
     my_sdr: Handle<StepShapeShapeDefinitionRepresentation>,
-    my_prpc: Handle<StepBasicProductRelatedProductCategory>,
+    my_prpc: Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>>,
 }
 
 /// A getter and a setter of a text field of one of the chain's entities.
@@ -59,35 +59,35 @@ macro_rules! part_text_fields {
 }
 
 /// The product context of a schema: AP214 CD and AP203 write a mechanical context.
-fn new_product_context(schema: i32) -> Handle<StepBasicProductContext> {
+fn new_product_context(schema: i32) -> Handle<dyn crate::StepEntityBase<StepBasicProductContext>> {
     match schema {
-        2 | 4 | 5 => Handle::new(StepBasicProductContext::new()),
-        _ => Handle::new(StepBasicMechanicalContext::new()).cast(),
+        2 | 4 | 5 => Handle::new(StepBasicProductContext::new()).into_upcast(),
+        _ => Handle::new(StepBasicMechanicalContext::new()).into_upcast(),
     }
 }
 
 /// The formation of a schema: AP203 writes the one with a specified source.
-fn new_formation(schema: i32) -> Handle<StepBasicProductDefinitionFormation> {
+fn new_formation(schema: i32) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>> {
     if schema != 3 {
-        return Handle::new(StepBasicProductDefinitionFormation::new());
+        return Handle::new(StepBasicProductDefinitionFormation::new()).into_upcast();
     }
     let formation = StepBasicProductDefinitionFormationWithSpecifiedSource::new();
     formation.set_make_or_buy(StepBasicSource::SNotKnown);
-    Handle::new(formation).cast()
+    Handle::new(formation).into_upcast()
 }
 
 /// The definition context and its name for a schema: AP203 writes a design context without name.
 fn new_definition_context(
     schema: i32,
 ) -> (
-    Handle<StepBasicProductDefinitionContext>,
+    Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
     Handle<HAsciiString>,
 ) {
     if schema == 3 {
-        return (Handle::new(StepBasicDesignContext::new()).cast(), text(""));
+        return (Handle::new(StepBasicDesignContext::new()).into_upcast(), text(""));
     }
     (
-        Handle::new(StepBasicProductDefinitionContext::new()),
+        Handle::new(StepBasicProductDefinitionContext::new()).into_upcast(),
         text("part definition"),
     )
 }
@@ -96,21 +96,21 @@ fn new_definition_context(
 fn new_category(
     schema: i32,
 ) -> (
-    Handle<StepBasicProductRelatedProductCategory>,
+    Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>>,
     Handle<HAsciiString>,
 ) {
     match schema {
         // !!!!! or "assembly"
         3 => (
-            Handle::new(StepBasicProductRelatedProductCategory::new()),
+            Handle::new(StepBasicProductRelatedProductCategory::new()).into_upcast(),
             text("detail"),
         ),
         2 | 4 | 5 => (
-            Handle::new(StepBasicProductRelatedProductCategory::new()),
+            Handle::new(StepBasicProductRelatedProductCategory::new()).into_upcast(),
             text("part"),
         ),
         _ => (
-            Handle::new(StepBasicProductType::new()).cast(),
+            Handle::new(StepBasicProductType::new()).into_upcast(),
             text("part"),
         ),
     }
@@ -124,7 +124,7 @@ fn new_product(
 ) -> Result<Handle<StepBasicProduct>, Failure> {
     let context = new_product_context(schema);
     live_init(&context, &text(""), ac, &text("mechanical"))?;
-    let contexts = step_new_array1::<Handle<StepBasicProductContext>>(1, 1)?;
+    let contexts = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>>(1, 1)?;
     step_array1_set(&contexts, 1, context, WHERE)?;
     let product = Handle::new(StepBasicProduct::new());
     product.init(name, name, &text(""), &contexts);
@@ -132,7 +132,7 @@ fn new_product(
 }
 
 fn live_init(
-    context: &Handle<StepBasicProductContext>,
+    context: &Handle<dyn crate::StepEntityBase<StepBasicProductContext>>,
     name: &Handle<HAsciiString>,
     ac: &Handle<StepBasicApplicationContext>,
     discipline: &Handle<HAsciiString>,
@@ -146,14 +146,14 @@ fn new_definition(
     product: &Handle<StepBasicProduct>,
     ac: &Handle<StepBasicApplicationContext>,
     schema: i32,
-) -> Result<Handle<StepBasicProductDefinition>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
     let formation = new_formation(schema);
     step_live(&formation, WHERE)?.init(&text(""), &text(""), product);
     let (context, context_name) = new_definition_context(schema);
     step_live(&context, WHERE)?.init(&context_name, ac, &text("design"));
     let definition = Handle::new(StepBasicProductDefinition::new());
     definition.init(&text("design"), &text(""), &formation, &context);
-    Ok(definition)
+    Ok(definition.into_upcast())
 }
 
 impl StepConstructPart {
@@ -164,7 +164,7 @@ impl StepConstructPart {
     /// `make_sdr`: a new SDR with its product structure, and its category, for the current schema.
     pub fn make_sdr(
         &mut self,
-        sr: &Handle<StepShapeShapeRepresentation>,
+        sr: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
         name: &Handle<HAsciiString>,
         ac: &Handle<StepBasicApplicationContext>,
         step_model: &Handle<StepDataStepModel>,
@@ -177,12 +177,12 @@ impl StepConstructPart {
         let product = new_product(name, ac, schema)?;
         let definition = new_definition(&product, ac, schema)?;
         let mut characterized = StepReprCharacterizedDefinition::default();
-        characterized.set_value(&definition.cast())?;
+        characterized.set_value(&definition.into_upcast())?;
         let pds = Handle::new(StepReprProductDefinitionShape::new());
         pds.init(&text(""), true, &text(""), &characterized);
         // finally, create SDR
         let mut represented = StepReprRepresentedDefinition::default();
-        represented.set_value(&pds.cast())?;
+        represented.set_value(&pds.into_upcast())?;
         let sdr = Handle::new(StepShapeShapeDefinitionRepresentation::new());
         sdr.init(&represented, &sr.cast());
         self.my_sdr = sdr;
@@ -209,34 +209,34 @@ impl StepConstructPart {
         self.my_sdr.clone()
     }
     /// `SRValue`: `SDR->UsedRepresentation()`, null if not done.
-    pub fn sr_value(&self) -> Result<Handle<StepShapeShapeRepresentation>, Failure> {
+    pub fn sr_value(&self) -> Result<Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, Failure> {
         if !self.my_done {
             return Ok(Handle::default());
         }
-        Ok(step_live(&self.my_sdr, WHERE)?.used_representation().cast())
+        Ok(step_live(&self.my_sdr, WHERE)?.used_representation().into_cast())
     }
     /// `SDR->Definition().PropertyDefinition()`.
-    fn property(&self) -> Result<Handle<StepReprPropertyDefinition>, Failure> {
+    fn property(&self) -> Result<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>, Failure> {
         Ok(step_live(&self.my_sdr, WHERE)?
             .definition()
             .property_definition())
     }
     /// `PD`.
-    pub fn pd(&self) -> Result<Handle<StepBasicProductDefinition>, Failure> {
+    pub fn pd(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
         Ok(step_live(&self.property()?, WHERE)?
             .definition()
             .product_definition())
     }
     /// `PDS`.
     pub fn pds(&self) -> Result<Handle<StepReprProductDefinitionShape>, Failure> {
-        Ok(self.property()?.cast())
+        Ok(self.property()?.into_downcast())
     }
     /// `PDF`.
-    pub fn pdf(&self) -> Result<Handle<StepBasicProductDefinitionFormation>, Failure> {
+    pub fn pdf(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>, Failure> {
         Ok(step_live(&self.pd()?, WHERE)?.formation())
     }
     /// `PDC`.
-    pub fn pdc(&self) -> Result<Handle<StepBasicProductDefinitionContext>, Failure> {
+    pub fn pdc(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>, Failure> {
         Ok(step_live(&self.pd()?, WHERE)?.frame_of_reference())
     }
     /// `Product`.
@@ -244,7 +244,7 @@ impl StepConstructPart {
         Ok(step_live(&self.pdf()?, WHERE)?.of_product())
     }
     /// `PC`.
-    pub fn pc(&self) -> Result<Handle<StepBasicProductContext>, Failure> {
+    pub fn pc(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductContext>>, Failure> {
         step_live(&self.product()?, WHERE)?.frame_of_reference_value(1)
     }
     /// `AC`.
@@ -252,11 +252,11 @@ impl StepConstructPart {
         Ok(step_live(&self.pc()?, WHERE)?.frame_of_reference())
     }
     /// `PRPC`.
-    pub fn prpc(&self) -> Handle<StepBasicProductRelatedProductCategory> {
+    pub fn prpc(&self) -> Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>> {
         self.my_prpc.clone()
     }
     /// The category as the owner of its text fields.
-    fn category(&self) -> Result<Handle<StepBasicProductRelatedProductCategory>, Failure> {
+    fn category(&self) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>>, Failure> {
         Ok(self.my_prpc.clone())
     }
     part_text_fields! {

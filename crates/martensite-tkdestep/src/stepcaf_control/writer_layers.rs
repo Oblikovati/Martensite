@@ -8,7 +8,8 @@ use crate::step_visual::{
     StepVisualPresentationLayerAssignment,
 };
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::tdata_std::TDataStdUAttribute;
 use martensite_tklcaf::tdf::TdfLabel;
@@ -24,7 +25,7 @@ fn items_of_layer(
     ws: &Handle<XSControlWorkSession>,
     layer: &TdfLabel,
     labels: &[TdfLabel],
-) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+) -> Result<Vec<Handle<dyn Transient>>, Failure> {
     let fp = finder_process_of(ws)?;
     let mut items = Vec::new();
     for shape_label in XCAFDocLayerTool::get_shapes_of_layer(layer)? {
@@ -54,7 +55,7 @@ fn items_of_layer(
 fn write_layer(
     ws: &Handle<XSControlWorkSession>,
     layer: &TdfLabel,
-    items: &[Handle<StandardTransient>],
+    items: &[Handle<dyn Transient>],
 ) -> Result<(), Failure> {
     // name of layer: if not set, is considered as being empty
     let name = Handle::new(HAsciiString::default());

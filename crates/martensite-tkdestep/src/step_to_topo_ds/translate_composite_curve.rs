@@ -12,7 +12,8 @@ use crate::step_to_geom::StepToGeom;
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Edge, ShapeIterator, Wire};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkmath::toploc::Location;
@@ -39,7 +40,7 @@ fn is_infinite_range(first: f64, last: f64) -> bool {
 /// last (a reversed segment keeps looking).
 fn surface_curve_pcurve(
     curve: &StepGeomSurfaceCurve,
-    surface: &Handle<StepGeomSurface>,
+    surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     same_sense: bool,
 ) -> Result<Handle<StepGeomPcurve>, Failure> {
     let mut found = Handle::default();
@@ -66,7 +67,7 @@ impl StepToTopoDSTranslateCompositeCurve {
     }
     /// `StepToTopoDSTranslateCompositeCurve(CC, TP, factors)`.
     pub fn with_curve(
-        curve: &Handle<StepGeomCompositeCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
     ) -> Result<Self, Failure> {
@@ -76,9 +77,9 @@ impl StepToTopoDSTranslateCompositeCurve {
     }
     /// `StepToTopoDSTranslateCompositeCurve(CC, TP, S, Surf, factors)`.
     pub fn with_curve_on_surface(
-        curve: &Handle<StepGeomCompositeCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
         tp: &Handle<TransferTransientProcess>,
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         surface: &Handle<dyn GeomSurface>,
         factors: &StepDataFactors,
     ) -> Result<Self, Failure> {
@@ -89,7 +90,7 @@ impl StepToTopoDSTranslateCompositeCurve {
     /// `init(CC, TP, factors)`.
     pub fn init(
         &mut self,
-        curve: &Handle<StepGeomCompositeCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
     ) -> Result<bool, Failure> {
@@ -98,7 +99,7 @@ impl StepToTopoDSTranslateCompositeCurve {
     /// The surface mode: a surface is given and the file does not forbid its pcurves.
     fn surface_mode(
         process: &TransferTransientProcess,
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         surface: &Handle<dyn GeomSurface>,
     ) -> Result<bool, Failure> {
         if step_surface.is_null() || surface.is_null() {
@@ -113,9 +114,9 @@ impl StepToTopoDSTranslateCompositeCurve {
     /// `init(CC, TP, S, Surf, factors)`: false for a null curve, a null segment or no edge.
     pub fn init_on_surface(
         &mut self,
-        curve: &Handle<StepGeomCompositeCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
         tp: &Handle<TransferTransientProcess>,
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         surface: &Handle<dyn GeomSurface>,
         factors: &StepDataFactors,
     ) -> Result<bool, Failure> {
@@ -125,7 +126,7 @@ impl StepToTopoDSTranslateCompositeCurve {
             return Ok(false);
         };
         let process = step_live(tp, "StepToTopoDSTranslateCompositeCurve")?;
-        let entity: Handle<StandardTransient> = curve.cast();
+        let entity: Handle<dyn Transient> = curve.cast();
         let surf_mode = Self::surface_mode(process, step_surface, surface)?;
         let wire_data = Handle::new(ShapeExtendWireData::new());
         let edges = step_live(&wire_data, "StepToTopoDSTranslateCompositeCurve")?;
@@ -143,7 +144,7 @@ impl StepToTopoDSTranslateCompositeCurve {
             }
             is_closed = live_segment.transition() != StepGeomTransitionCode::TcDiscontinuous;
             // if segment is itself a composite_curve, translate recursively
-            let nested = parent.cast::<StepGeomCompositeCurve>();
+            let nested = parent.cast::<dyn crate::StepEntityBase<StepGeomCompositeCurve>>();
             if nested.is_some() {
                 self.add_nested_curve(
                     &nested,
@@ -182,12 +183,12 @@ impl StepToTopoDSTranslateCompositeCurve {
     #[allow(clippy::too_many_arguments, reason = "the locals of the segment loop")]
     fn add_nested_curve(
         &mut self,
-        nested: &Handle<StepGeomCompositeCurve>,
-        outer: &Handle<StepGeomCompositeCurve>,
-        segment: &Handle<StepGeomCompositeCurveSegment>,
+        nested: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
+        outer: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
+        segment: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>,
         edges: &ShapeExtendWireData,
         tp: &Handle<TransferTransientProcess>,
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         surface: &Handle<dyn GeomSurface>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
@@ -228,8 +229,8 @@ impl StepToTopoDSTranslateCompositeCurve {
     /// The 3D edge of a curve; a failure leaves the edge null, as the `catch` does.
     fn translate_3d(
         &mut self,
-        curve: &Handle<StepGeomCurve>,
-        entity: &Handle<StandardTransient>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+        entity: &Handle<dyn Transient>,
         process: &TransferTransientProcess,
         factors: &StepDataFactors,
     ) -> Result<Edge, Failure> {
@@ -254,7 +255,7 @@ impl StepToTopoDSTranslateCompositeCurve {
         pcurve: &Handle<StepGeomPcurve>,
         mut edge: Edge,
         surface: &Handle<dyn GeomSurface>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         process: &TransferTransientProcess,
         factors: &StepDataFactors,
     ) -> Result<Edge, Failure> {
@@ -287,17 +288,17 @@ impl StepToTopoDSTranslateCompositeCurve {
     #[allow(clippy::too_many_arguments, reason = "the locals of the segment loop")]
     fn add_ordinary_segment(
         &mut self,
-        parent: &Handle<StepGeomCurve>,
-        outer: &Handle<StepGeomCompositeCurve>,
+        parent: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+        outer: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
         segment: &StepGeomCompositeCurveSegment,
         surf_mode: bool,
         edges: &ShapeExtendWireData,
         process: &TransferTransientProcess,
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         surface: &Handle<dyn GeomSurface>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
-        let entity: Handle<StandardTransient> = outer.cast();
+        let entity: Handle<dyn Transient> = outer.cast();
         // detect pcurve and 3d curve
         let mut curve = parent.clone();
         let mut pcurve = parent.cast::<StepGeomPcurve>();
@@ -306,7 +307,7 @@ impl StepToTopoDSTranslateCompositeCurve {
                 pcurve = Handle::default();
             }
             curve = Handle::default();
-        } else if let Some(surface_curve) = parent.cast::<StepGeomSurfaceCurve>().get() {
+        } else if let Some(surface_curve) = parent.cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>().get() {
             curve = surface_curve.curve3d();
             if surf_mode {
                 pcurve = surface_curve_pcurve(surface_curve, step_surface, segment.same_sense())?;
@@ -339,7 +340,7 @@ impl StepToTopoDSTranslateCompositeCurve {
         &self,
         wire_data: &Handle<ShapeExtendWireData>,
         is_closed: bool,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         process: &TransferTransientProcess,
     ) -> Result<(), Failure> {
         let preci = self.root.precision();

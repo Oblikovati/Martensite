@@ -91,19 +91,19 @@ fn write_unit_parts(write_unit: i32) -> (Option<&'static str>, StepBasicSiPrefix
 }
 
 /// The length unit `init` writes: an SI unit, under a conversion based unit for a non-metric one.
-fn write_length_unit(write_unit: i32) -> Result<Handle<StepBasicNamedUnit>, Failure> {
+fn write_length_unit(write_unit: i32) -> Result<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, Failure> {
     let (name, prefix, has_prefix, scale) = write_unit_parts(write_unit);
     let si_unit = Handle::new(StepBasicSiUnitAndLengthUnit::new());
     si_unit.init(has_prefix, prefix, StepBasicSiUnitName::SunMetre);
     let Some(name) = name else {
-        return Ok(si_unit.cast());
+        return Ok(si_unit.into_upcast());
     };
     let val = Handle::new(StepBasicMeasureValueMember::new());
     val.set_name("LENGTH_UNIT");
     val.set_real(scale);
     let measure = Handle::new(StepBasicLengthMeasureWithUnit::new());
     let mut unit = StepBasicUnit::default();
-    unit.set_value(&si_unit.cast())?;
+    unit.set_value(&si_unit.into_upcast())?;
     measure.init(&val, &unit);
     let dim_exp = Handle::new(StepBasicDimensionalExponents::new());
     dim_exp.init(1., 0., 0., 0., 0., 0., 0.);
@@ -111,13 +111,13 @@ fn write_length_unit(write_unit: i32) -> Result<Handle<StepBasicNamedUnit>, Fail
     conv_unit.init(
         &dim_exp,
         &Handle::new(HAsciiString::new(name)),
-        &measure.cast(),
+        &measure.into_upcast(),
     );
-    Ok(conv_unit.cast())
+    Ok(conv_unit.into_upcast())
 }
 
 /// An SI unit without prefix, as `init` writes radians and steradians (the prefix is not written).
-fn plane_and_solid_units() -> (Handle<StepBasicNamedUnit>, Handle<StepBasicNamedUnit>) {
+fn plane_and_solid_units() -> (Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>, Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>) {
     let radian = Handle::new(StepBasicSiUnitAndPlaneAngleUnit::new());
     radian.init(
         false,
@@ -130,13 +130,13 @@ fn plane_and_solid_units() -> (Handle<StepBasicNamedUnit>, Handle<StepBasicNamed
         StepBasicSiPrefix::SpMilli,
         StepBasicSiUnitName::SunSteradian,
     );
-    (radian.cast(), steradian.cast())
+    (radian.into_upcast(), steradian.into_upcast())
 }
 
 /// The uncertainty `init` writes: the 3D confusion tolerance, in the written length unit.
 fn write_uncertainty(
     tol3d: f64,
-    length_unit: &Handle<StepBasicNamedUnit>,
+    length_unit: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
     factors: &StepDataFactors,
 ) -> Result<Handle<StepBasicUncertaintyMeasureWithUnit>, Failure> {
     let the_tol3d = Handle::new(StepBasicUncertaintyMeasureWithUnit::new());
@@ -172,7 +172,7 @@ impl StepConstructUnitContext {
             .write_unit;
         let length_unit = write_length_unit(write_unit)?;
         let (radian, steradian) = plane_and_solid_units();
-        let units = step_new_array1::<Handle<StepBasicNamedUnit>>(1, 3)?;
+        let units = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, 3)?;
         let tols = step_new_array1::<Handle<StepBasicUncertaintyMeasureWithUnit>>(1, 1)?;
         for (index, unit) in [length_unit.clone(), radian, steradian]
             .into_iter()
@@ -264,21 +264,21 @@ impl StepConstructUnitContext {
     fn conversion_measure(
         unit: &StepBasicConversionBasedUnit,
         where_called: &str,
-    ) -> Result<Handle<StepBasicMeasureWithUnit>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>, Failure> {
         let factor = unit.conversion_factor();
         step_live(&factor, where_called)?;
-        if factor.cast::<StepBasicMeasureWithUnit>().is_some() {
+        if factor.cast::<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>().is_some() {
             return Ok(factor.cast());
         }
-        let repr = factor.cast::<StepReprReprItemAndMeasureWithUnit>();
+        let repr = factor.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>();
         Ok(repr
             .get()
-            .map(StepReprReprItemAndMeasureWithUnit::get_measure_with_unit)
+            .map(|item| item.get_measure_with_unit())
             .unwrap_or_default())
     }
     /// The value of a conversion based unit, or the status that ends `compute_factors`.
     fn conversion_parameter(
-        unit: &Handle<StepBasicConversionBasedUnit>,
+        unit: &Handle<dyn crate::StepEntityBase<StepBasicConversionBasedUnit>>,
         status: &mut i32,
     ) -> Result<Result<f64, i32>, Failure> {
         const WHERE: &str = "StepConstructUnitContext::ComputeFactors";
@@ -291,7 +291,7 @@ impl StepConstructUnitContext {
         let target = measure
             .unit_component()
             .named_unit()
-            .cast::<StepBasicSiUnit>();
+            .cast::<dyn crate::StepEntityBase<StepBasicSiUnit>>();
         let Some(si_unit) = target.get() else {
             return Ok(Err(3));
         };
@@ -312,7 +312,7 @@ impl StepConstructUnitContext {
     /// `compute_factors(unit)`: the conversion factor of one unit; a status, 0 if OK.
     pub fn compute_unit_factors(
         &mut self,
-        unit: &Handle<StepBasicNamedUnit>,
+        unit: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
         local_factors: &StepDataFactors,
     ) -> Result<i32, Failure> {
         // :f3 abv 8 Apr 98: ProSTEP TR8 tr8_as_sd_sw: the case of unrecognized entity
@@ -320,12 +320,12 @@ impl StepConstructUnitContext {
             return Ok(-1);
         }
         let mut status = 0;
-        let parameter = if unit.cast::<StepBasicConversionBasedUnit>().is_some() {
+        let parameter = if unit.cast::<dyn crate::StepEntityBase<StepBasicConversionBasedUnit>>().is_some() {
             match Self::conversion_parameter(&unit.cast(), &mut status)? {
                 Ok(value) => value,
                 Err(early) => return Ok(early),
             }
-        } else if let Some(si_unit) = unit.cast::<StepBasicSiUnit>().get() {
+        } else if let Some(si_unit) = unit.cast::<dyn crate::StepEntityBase<StepBasicSiUnit>>().get() {
             let mut name_factor = 0.;
             if !Self::si_unit_name_factor(si_unit, &mut name_factor) {
                 status = 11;
@@ -340,7 +340,7 @@ impl StepConstructUnitContext {
     /// The last part of `compute_factors`: stores the value by the kind of the unit.
     fn record_parameter(
         &mut self,
-        unit: &Handle<StepBasicNamedUnit>,
+        unit: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
         parameter: f64,
         cascade_unit: f64,
         status: &mut i32,

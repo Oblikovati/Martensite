@@ -72,13 +72,13 @@ macro_rules! rw_block_0040 {
     ($a_name:ident, $a_segments:ident, $a_self_intersect:ident, $ach:ident, $anent2:ident, $data:ident, $ent:ident, $i2:ident, $nb2:ident, $nsub2:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_segments: Handle<HArray1<Handle<StepGeomCompositeCurveSegment>>> =
+        let mut $a_segments: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>>> =
             Default::default();
-        let mut $anent2: Handle<StepGeomCompositeCurveSegment> = Default::default();
+        let mut $anent2: Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>> = Default::default();
         let mut $nsub2: i32 = Default::default();
         if $data.read_sub_list($num, 2, "segments", $ach, &mut $nsub2, false, 0, 0)? {
             let $nb2: i32 = $data.nb_params($nsub2)?;
-            $a_segments = step_new_array1::<Handle<StepGeomCompositeCurveSegment>>(1, $nb2)?;
+            $a_segments = step_new_array1::<Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>>(1, $nb2)?;
             for $i2 in 1..=$nb2 {
                 if $data.read_entity(
                     $nsub2,
@@ -150,7 +150,7 @@ macro_rules! rw_block_0043 {
         } else {
             $has_shape_aspect_relationship_description = false;
         }
-        let mut $a_shape_aspect_relationship_relating_shape_aspect: Handle<StepReprShapeAspect> =
+        let mut $a_shape_aspect_relationship_relating_shape_aspect: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
             Default::default();
         $data.read_entity(
             $num,
@@ -160,7 +160,7 @@ macro_rules! rw_block_0043 {
             StepReprShapeAspect::static_type(),
             &mut $a_shape_aspect_relationship_relating_shape_aspect,
         )?;
-        let mut $a_shape_aspect_relationship_related_shape_aspect: Handle<StepReprShapeAspect> =
+        let mut $a_shape_aspect_relationship_related_shape_aspect: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
             Default::default();
         $data.read_entity(
             $num,

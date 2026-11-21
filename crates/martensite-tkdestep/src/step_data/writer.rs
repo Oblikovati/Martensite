@@ -2,8 +2,9 @@
 //! most), under the control of the model and of each entity's module. The sending of
 //! parameter values is in `writer_send`.
 use super::{StepDataProtocolOps, StepDataStepModel, StepDataUndefinedEntity, StepDataWriterLib};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::interface::{
@@ -181,7 +182,7 @@ impl StepDataStepWriter {
     }
     fn send_header_entity(
         &mut self,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         lib: &StepDataWriterLib,
     ) -> Result<(), Failure> {
         if !self.write_by_module(anent, lib)? {
@@ -196,7 +197,7 @@ impl StepDataStepWriter {
     /// The entity by its module; false when the library does not know it.
     fn write_by_module(
         &mut self,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         lib: &StepDataWriterLib,
     ) -> Result<bool, Failure> {
         let Some((module, cn)) = lib.select(anent) else {

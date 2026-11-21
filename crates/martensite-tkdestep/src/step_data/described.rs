@@ -22,7 +22,7 @@ fn field_bounds(field: &StepDataField) -> [(i32, i32); 2] {
 
 fn entities_of(
     field: &StepDataField,
-    mut each: impl FnMut(Handle<StandardTransient>),
+    mut each: impl FnMut(Handle<dyn Transient>),
 ) -> Result<(), Failure> {
     let [(low1, len1), (low2, len2)] = field_bounds(field);
     for offset1 in 0..len1 {
@@ -157,7 +157,6 @@ impl_transient_interface!(
 
 /// Simple.
 pub struct StepDataSimple {
-    transient: StandardTransient,
     thedescr: Handle<StepDataESDescr>,
     thefields: SharedState<StepDataFieldListN>,
     this: std::sync::OnceLock<martensite_tkernel::standard::WeakHandle<StepDataSimple>>,
@@ -166,7 +165,6 @@ impl_transient!(
     StepDataSimple,
     "StepDataSimple",
     dyn StepDataDescribed,
-    transient,
     interfaces: [dyn StepDataDescribed]
 );
 
@@ -175,7 +173,6 @@ impl StepDataSimple {
     pub fn new(descr: &Handle<StepDataESDescr>) -> Self {
         let nb = descr.get().map_or(0, StepDataESDescr::nb_fields);
         Self {
-            transient: StandardTransient::default(),
             thedescr: descr.clone(),
             thefields: SharedState::new(StepDataFieldListN::new(nb).unwrap_or_default()),
             this: std::sync::OnceLock::new(),
@@ -279,7 +276,6 @@ impl StepDataDescribed for StepDataSimple {
 
 /// Plex.
 pub struct StepDataPlex {
-    transient: StandardTransient,
     thedescr: Handle<StepDataECDescr>,
     themembers: SharedState<Vec<Handle<StepDataSimple>>>,
 }
@@ -287,7 +283,6 @@ impl_transient!(
     StepDataPlex,
     "StepDataPlex",
     dyn StepDataDescribed,
-    transient,
     interfaces: [dyn StepDataDescribed]
 );
 
@@ -295,7 +290,6 @@ impl StepDataPlex {
     /// `StepDataPlex(descr)`.
     pub fn new(descr: &Handle<StepDataECDescr>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             thedescr: descr.clone(),
             themembers: SharedState::new(Vec::new()),
         }

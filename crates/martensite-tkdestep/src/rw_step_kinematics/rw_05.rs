@@ -235,9 +235,7 @@ impl RwStepKinematicsRwKinematicPropertyMechanismRepresentation {
             the_arch,
             &mut a_property_definition_representation_definition,
         )?;
-        let mut a_property_definition_representation_used_representation: Handle<
-            StepReprRepresentation,
-        > = Default::default();
+        let mut a_property_definition_representation_used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = Default::default();
         the_data.read_entity(
             the_num,
             2,

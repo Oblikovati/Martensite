@@ -11,7 +11,8 @@ use crate::step_basic::{StepBasicApplicationContext, StepBasicApplicationProtoco
 use crate::step_data::{StepDataFactors, StepDataStepModel};
 use crate::step_entity::{HSequence, step_live};
 use crate::step_geom::StepGeomAxis2Placement3d;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, HAsciiString};
 use martensite_tkxsbase::interface::InterfaceModelEntities;
 
@@ -288,8 +289,8 @@ impl StepConstructContextTool {
     pub fn get_roots_for_part(
         &mut self,
         sdr_tool: &StepConstructPart,
-    ) -> Result<Handle<HSequence<Handle<StandardTransient>>>, Failure> {
-        let seq = Handle::new(HSequence::<Handle<StandardTransient>>::default());
+    ) -> Result<Handle<HSequence<Handle<dyn Transient>>>, Failure> {
+        let seq = Handle::new(HSequence::<Handle<dyn Transient>>::default());
         seq.append(sdr_tool.sdr_value().cast());
         if sdr_tool.prpc().is_some() {
             seq.append(sdr_tool.prpc().cast());
@@ -316,8 +317,8 @@ impl StepConstructContextTool {
     pub fn get_roots_for_assembly_link(
         &mut self,
         assembly: &StepConstructAssembly,
-    ) -> Result<Handle<HSequence<Handle<StandardTransient>>>, Failure> {
-        let seq = Handle::new(HSequence::<Handle<StandardTransient>>::default());
+    ) -> Result<Handle<HSequence<Handle<dyn Transient>>>, Failure> {
+        let seq = Handle::new(HSequence::<Handle<dyn Transient>>::default());
         seq.append(assembly.item_value());
         // for AP203, write required product management data
         if self.my_schema.as_raw() == 3 {

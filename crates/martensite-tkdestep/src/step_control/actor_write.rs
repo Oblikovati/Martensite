@@ -11,7 +11,8 @@ use martensite_tkbrep::topods::{self, Shape, ShapeIterator};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::ncollection::HSequence;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::{GeomLine, GeomPlane};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkxsbase::transfer::{
@@ -42,7 +43,13 @@ pub struct StepControlActorWrite {
     base: TransferActorOfFinderProcess,
     pub(super) state: SharedState<ActorWriteState>,
 }
-impl_transient!(StepControlActorWrite, "StepControlActorWrite", TransferActorOfFinderProcess, base, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps]);
+impl_transient!(StepControlActorWrite, "StepControlActorWrite", TransferActorOfFinderProcess, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps, dyn crate::StepEntityBase<StepControlActorWrite>]);
+
+impl crate::StepEntityBase<StepControlActorWrite> for StepControlActorWrite {
+    fn step_base(&self) -> &StepControlActorWrite {
+        self
+    }
+}
 
 impl Default for StepControlActorWrite {
     fn default() -> Self {
@@ -73,8 +80,8 @@ fn is_planar_with_lines(shape: &Shape) -> Result<bool, Failure> {
 
 /// The members of the list of roots.
 pub(super) fn roots_of(
-    roots: &Handle<HSequence<Handle<StandardTransient>>>,
-) -> Vec<Handle<StandardTransient>> {
+    roots: &Handle<HSequence<Handle<dyn Transient>>>,
+) -> Vec<Handle<dyn Transient>> {
     roots
         .get()
         .map(|live| live.sequence(|items| items.iter().cloned().collect()))

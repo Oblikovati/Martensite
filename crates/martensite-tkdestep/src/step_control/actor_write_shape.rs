@@ -82,7 +82,7 @@ impl StepControlActorWrite {
         &self,
         group: &Handle<martensite_tkernel::ncollection::HSequence<Shape>>,
         fp: &Handle<TransferFinderProcess>,
-    ) -> Result<(Handle<StepShapeShapeRepresentation>, bool), Failure> {
+    ) -> Result<(Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, bool), Failure> {
         let process = step_live(fp, WHERE)?;
         let shapes = group
             .get()

@@ -149,7 +149,7 @@ impl StepToGeom {
     }
     /// `make_conic`: null for another conic.
     pub fn make_conic(
-        sc: &Handle<StepGeomConic>,
+        sc: &Handle<dyn crate::StepEntityBase<StepGeomConic>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomConic>, Failure> {
         let circle = sc.cast::<StepGeomCircle>();
@@ -172,7 +172,7 @@ impl StepToGeom {
     }
     /// `MakeConic2d`: null for another conic.
     pub fn make_conic_2d(
-        sc: &Handle<StepGeomConic>,
+        sc: &Handle<dyn crate::StepEntityBase<StepGeomConic>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn Geom2dConic>, Failure> {
         let circle = sc.cast::<StepGeomCircle>();

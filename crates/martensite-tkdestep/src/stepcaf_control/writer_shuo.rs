@@ -1,6 +1,6 @@
 //! `STEPCAFControlWriter::writeSHUOs`: the styled specified higher usage occurrences of assemblies.
 use super::writer::{WHERE, WriterState};
-use super::writer_colors::{bind_mdgpr, get_styled_item, set_default_instance_color};
+use super::writer_colors::{MdgprMap, bind_mdgpr, get_styled_item, set_default_instance_color};
 use super::writer_support::{find_entities, finder_process_of, model_of, typed_result_of};
 use crate::step_basic::StepBasicProductDefinition;
 use crate::step_construct::{StepConstructRenderingProperties, StepConstructStyles};
@@ -17,13 +17,11 @@ use crate::step_shape::StepShapeContextDependentShapeRepresentation;
 use crate::step_visual::{
     StepVisualInvisibility, StepVisualInvisibleItem,
     StepVisualMechanicalDesignGeometricPresentationRepresentation,
-    StepVisualPresentationRepresentation, StepVisualStyledItem,
+    StepVisualStyledItem,
 };
 use martensite_tkbrep::topods::Shape;
-use martensite_tkbrep::toptools::ShapeMapHasher;
-use martensite_tkernel::ncollection::IndexedDataMap;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::tdf::{TdfAttribute, TdfLabel};
 use martensite_tkmath::toploc::Location;
@@ -72,7 +70,7 @@ fn get_shuo_style(label: &TdfLabel, style: &mut XCAFPrsStyle) -> Result<bool, Fa
 
 /// A product definition and the NAUO that links it.
 type ProductDefinitionOfNauo = (
-    Handle<StepBasicProductDefinition>,
+    Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     Handle<StepReprNextAssemblyUsageOccurrence>,
 );
 
@@ -124,16 +122,16 @@ fn product_definition_of_nauo(
 #[derive(Default)]
 struct ShuoWalk {
     nauo_shape: Shape,
-    relating_pd: Handle<StepBasicProductDefinition>,
+    relating_pd: Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     is_deepest: bool,
 }
 
 /// The arguments of an SHUO entity, with empty strings where the standard ones are.
 fn init_shuo(
     entity: &StepReprSpecifiedHigherUsageOccurrence,
-    relating: &Handle<StepBasicProductDefinition>,
-    related: &Handle<StepBasicProductDefinition>,
-    upper: &Handle<StepReprAssemblyComponentUsage>,
+    relating: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+    related: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+    upper: &Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>>,
     next: &Handle<StepReprNextAssemblyUsageOccurrence>,
 ) -> Result<(), Failure> {
     // set the ProductDefinitionRelationship descriptin information as empty strings.
@@ -252,9 +250,9 @@ fn add_to_mdgpr(
     ws: &Handle<XSControlWorkSession>,
     styles: &StepConstructStyles,
     top_shape: &Shape,
-    context: &Handle<crate::step_repr::StepReprRepresentationContext>,
-    styled: &Handle<StepVisualStyledItem>,
-    map_comp_mdgpr: &mut IndexedDataMap<Shape, Handle<StandardTransient>, ShapeMapHasher>,
+    context: &Handle<dyn crate::StepEntityBase<crate::step_repr::StepReprRepresentationContext>>,
+    styled: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    map_comp_mdgpr: &mut MdgprMap,
 ) -> Result<(), Failure> {
     if top_shape.is_null() {
         // add as root to the model, but it is not good
@@ -268,19 +266,18 @@ fn add_to_mdgpr(
             Handle::default();
         styles.create_mdgpr(context, &mut mdgpr, &model)?;
         if mdgpr.is_some() {
-            bind_mdgpr(map_comp_mdgpr, top_shape, mdgpr.cast())?;
+            bind_mdgpr(map_comp_mdgpr, top_shape, mdgpr)?;
         }
         return Ok(());
     }
     // get MDGPR of the top-level shape
-    let mdgpr: Handle<StepVisualPresentationRepresentation> =
-        map_comp_mdgpr.find_from_key(top_shape)?.cast();
-    let live = step_live(&mdgpr, WHERE)?;
+    let mdgpr = map_comp_mdgpr.find_from_key(top_shape)?;
+    let live = step_live(mdgpr, WHERE)?;
     // get old styled items to not lose it
     let old_items = live.items();
     let old_length = step_array1_len(&old_items);
     // create new array of styled items by an olds and new one
-    let new_items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, old_length + 1)?;
+    let new_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, old_length + 1)?;
     for index in 1..=old_length {
         step_array1_set(
             &new_items,
@@ -299,7 +296,7 @@ fn add_to_mdgpr(
 fn create_shuo_styled_item(
     target: &ShuoStyleTarget<'_>,
     ws: &Handle<XSControlWorkSession>,
-    map_comp_mdgpr: &mut IndexedDataMap<Shape, Handle<StandardTransient>, ShapeMapHasher>,
+    map_comp_mdgpr: &mut MdgprMap,
 ) -> Result<bool, Failure> {
     let ShuoStyleTarget {
         style,
@@ -357,7 +354,7 @@ fn create_shuo_styled_item(
     let mut location = Location::default();
     let mut items = Vec::new();
     find_entities(&fp, shape, &mut location, &mut items)?;
-    let item: Handle<StepReprRepresentationItem> = items
+    let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> = items
         .first()
         .ok_or_else(|| {
             martensite_tkernel::standard::exceptions::out_of_range(

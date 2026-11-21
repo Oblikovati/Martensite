@@ -90,7 +90,7 @@ impl StepControlWriter {
     }
     /// `set_tolerance(Tol)`.
     pub fn set_tolerance(&self, tolerance: f64) -> Result<(), Failure> {
-        let actor: Handle<StepControlActorWrite> = self.write_actor()?.cast();
+        let actor: Handle<dyn crate::StepEntityBase<StepControlActorWrite>> = self.write_actor()?.into_cast();
         if let Some(live) = actor.get() {
             live.set_tolerance(tolerance);
         }
@@ -142,7 +142,7 @@ impl StepControlWriter {
         }
         *live.internal_parameters_mut() = parameters.clone();
         APIHeaderSectionMakeHeader::new(0)?.apply(live)?;
-        let actor: Handle<StepControlActorWrite> = self.write_actor()?.cast();
+        let actor: Handle<dyn crate::StepEntityBase<StepControlActorWrite>> = self.write_actor()?.into_cast();
         step_live(&actor, "StepControlWriter::Transfer")?
             .set_group_mode(live.internal_parameters().write_assembly.as_raw());
         self.initialize_missing_parameters()?;

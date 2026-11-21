@@ -28,7 +28,9 @@ use crate::step_shape::{
 };
 use crate::step_visual::{StepVisualPresentationLayerAssignment, StepVisualStyledItem};
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
 use std::ops::{Deref, DerefMut};
 
@@ -108,15 +110,15 @@ macro_rules! list_replacer {
 
 /// Replaces the item where the array holds it.
 fn replace_in_items(
-    items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-    old: &Handle<StepReprRepresentationItem>,
-    new: &Handle<StepReprRepresentationItem>,
+    items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+    old: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    new: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
 ) -> Result<bool, Failure> {
     replace_in_list(items, old, new)
 }
 
 /// Replaces the entity everywhere the array holds it.
-fn replace_in_list<T: RuntimeTyped + Send + Sync + 'static>(
+fn replace_in_list<T: ?Sized + RuntimeTyped + TransientHandleTarget + Send + Sync + 'static>(
     list: &Handle<HArray1<Handle<T>>>,
     old: &Handle<T>,
     new: &Handle<T>,
@@ -137,7 +139,7 @@ fn replace_in_list<T: RuntimeTyped + Send + Sync + 'static>(
 }
 
 /// Replaces the entity everywhere the net holds it.
-fn replace_in_net<T: RuntimeTyped + Send + Sync + 'static>(
+fn replace_in_net<T: RuntimeTyped + TransientHandleTarget + Send + Sync + 'static>(
     net: &Handle<HArray2<Handle<T>>>,
     old: &Handle<T>,
     new: &Handle<T>,
@@ -166,9 +168,9 @@ fn replace_in_net<T: RuntimeTyped + Send + Sync + 'static>(
 fn point_in_geometric_set(
     old: &Handle<StepGeomCartesianPoint>,
     new: &Handle<StepGeomCartesianPoint>,
-    sharing: &Handle<StandardTransient>,
+    sharing: &Handle<dyn Transient>,
 ) -> Result<bool, Failure> {
-    let typed: Handle<StepShapeGeometricSet> = sharing.cast();
+    let typed: Handle<dyn crate::StepEntityBase<StepShapeGeometricSet>> = sharing.cast();
     let elements = step_live(&typed, WHERE)?.elements();
     let live = step_live(&elements, WHERE)?;
     let (lower, upper) = {
@@ -189,10 +191,10 @@ fn point_in_geometric_set(
 }
 
 /// The layered items of a presentation_layer_assignment.
-fn in_layer_assignment<T: RuntimeTyped>(
+fn in_layer_assignment<T: RuntimeTyped + TransientHandleTarget>(
     old: &Handle<T>,
     new: &Handle<T>,
-    sharing: &Handle<StandardTransient>,
+    sharing: &Handle<dyn Transient>,
 ) -> Result<bool, Failure> {
     let typed: Handle<StepVisualPresentationLayerAssignment> = sharing.cast();
     let items = step_live(&typed, WHERE)?.assigned_items();
@@ -214,12 +216,12 @@ fn in_layer_assignment<T: RuntimeTyped>(
 }
 
 /// The item of a styled_item: `set_item` takes a representation item.
-fn in_styled_item<T: RuntimeTyped>(
+fn in_styled_item<T: RuntimeTyped + TransientHandleTarget>(
     old: &Handle<T>,
     new: &Handle<T>,
-    sharing: &Handle<StandardTransient>,
+    sharing: &Handle<dyn Transient>,
 ) -> Result<bool, Failure> {
-    let typed: Handle<StepVisualStyledItem> = sharing.cast();
+    let typed: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> = sharing.cast();
     let live = step_live(&typed, WHERE)?;
     if live.item().object_address() == old.object_address() {
         live.set_item(&new.cast());
@@ -267,7 +269,7 @@ reducer!(
 fn direction_in_placement(
     old: &Handle<StepGeomDirection>,
     new: &Handle<StepGeomDirection>,
-    sharing: &Handle<StandardTransient>,
+    sharing: &Handle<dyn Transient>,
 ) -> Result<bool, Failure> {
     let typed: Handle<StepGeomAxis2Placement3d> = sharing.cast();
     let live = step_live(&typed, WHERE)?;
@@ -295,7 +297,7 @@ reducer!(
 fn placement_in_transformation(
     old: &Handle<StepGeomAxis2Placement3d>,
     new: &Handle<StepGeomAxis2Placement3d>,
-    sharing: &Handle<StandardTransient>,
+    sharing: &Handle<dyn Transient>,
 ) -> Result<bool, Failure> {
     let typed: Handle<StepReprItemDefinedTransformation> = sharing.cast();
     let live = step_live(&typed, WHERE)?;

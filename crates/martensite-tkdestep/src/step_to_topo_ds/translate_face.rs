@@ -18,7 +18,8 @@ use crate::step_to_geom::StepToGeom;
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Face, Shape, ShapeIterator};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomPlane, GeomSphericalSurface, GeomSurface, GeomSurfaceOfRevolution,
     GeomToroidalSurface,
@@ -39,18 +40,18 @@ fn orientation_of(forward: bool) -> Orientation {
 
 /// fix for bug 0026376: Solid Works wrote a face on a toroidal surface with a negative major radius;
 /// "Solid Works" and "ProE" seem to interpret it as a face of reversed orientation.
-fn is_reversed(surface: &Handle<StepGeomSurface>) -> Result<bool, Failure> {
+fn is_reversed(surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>) -> Result<bool, Failure> {
     if let Some(trimmed) = surface.cast::<StepGeomRectangularTrimmedSurface>().get() {
         return is_reversed(&trimmed.basis_surface());
     }
-    let torus = surface.cast::<StepGeomToroidalSurface>();
+    let torus = surface.cast::<dyn crate::StepEntityBase<StepGeomToroidalSurface>>();
     Ok(torus.get().is_some_and(|live| live.major_radius() < 0.0))
 }
 
 /// What the bounds of one face share while they are translated.
 struct FaceBuild<'a> {
-    entity: &'a Handle<StepShapeFaceSurface>,
-    step_surface: &'a Handle<StepGeomSurface>,
+    entity: &'a Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
+    step_surface: &'a Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     surface: Handle<dyn GeomSurface>,
     same_sense: bool,
     preci: f64,
@@ -74,7 +75,7 @@ impl StepToTopoDSTranslateFace {
     }
     /// `StepToTopoDSTranslateFace(FS, T, NMTool, factors)`.
     pub fn with_face_surface(
-        face_surface: &Handle<StepShapeFaceSurface>,
+        face_surface: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -94,11 +95,11 @@ impl StepToTopoDSTranslateFace {
     }
     /// The surface of the face: pdn to force a B-spline surface to be periodic. Null on failure.
     fn make_face_surface(
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         process: &TransferTransientProcess,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
-        let entity: Handle<StandardTransient> = step_surface.cast();
+        let entity: Handle<dyn Transient> = step_surface.cast();
         if step_surface.cast::<StepGeomOffsetSurface>().is_some() {
             //:d4 abv 12 Mar 98
             process.add_warning_text(&entity, " Type OffsetSurface is out of scope of AP 214", "");
@@ -108,7 +109,7 @@ impl StepToTopoDSTranslateFace {
             process.add_fail_text(&entity, " Surface has not been created", "");
             return Ok(surface);
         }
-        if step_surface.cast::<StepGeomBSplineSurface>().is_null() {
+        if step_surface.cast::<dyn crate::StepEntityBase<StepGeomBSplineSurface>>().is_null() {
             return Ok(surface);
         }
         let algorithms = ShapeAlgo::algo_container();
@@ -129,7 +130,7 @@ impl StepToTopoDSTranslateFace {
     /// `init(face_surface, topo_ds_tool, topo_ds_tool_nm, factors)`.
     pub fn init(
         &mut self,
-        face_surface: &Handle<StepShapeFaceSurface>,
+        face_surface: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -197,7 +198,7 @@ impl StepToTopoDSTranslateFace {
     /// face without that wire: "a Wire is missing, well we continue anyway" (CKY JAN-97).
     fn translate_bound(
         build: &FaceBuild<'_>,
-        bound: &Handle<StepShapeFaceBound>,
+        bound: &Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>,
         face: &mut Face,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
@@ -206,7 +207,7 @@ impl StepToTopoDSTranslateFace {
         let Some(live_bound) = bound.get() else {
             return Ok(());
         };
-        let face_loop: Handle<StepShapeLoop> = live_bound.bound();
+        let face_loop: Handle<dyn crate::StepEntityBase<StepShapeLoop>> = live_bound.bound();
         if face_loop.is_null() {
             return Ok(());
         }
@@ -225,8 +226,8 @@ impl StepToTopoDSTranslateFace {
                 factors,
             );
         }
-        let entity: Handle<StandardTransient> = face_loop.cast();
-        if face_loop.cast::<StepShapeEdgeLoop>().is_null() {
+        let entity: Handle<dyn Transient> = face_loop.cast();
+        if face_loop.cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>().is_null() {
             // Type not yet implemented or non sens
             build
                 .process
@@ -293,7 +294,7 @@ impl StepToTopoDSTranslateFace {
         if surface.cast::<GeomToroidalSurface>().is_some() {
             return Ok(());
         }
-        let entity: Handle<StandardTransient> = vertex_loop.cast();
+        let entity: Handle<dyn Transient> = vertex_loop.cast();
         if surface.cast::<GeomPlane>().is_some() {
             build
                 .process
@@ -344,7 +345,7 @@ impl StepToTopoDSTranslateFace {
         translator.root.set_max_tol(build.max_tol);
         translator.init(poly_loop, tool, &build.surface, face, factors)?;
         if !translator.is_done() {
-            let entity: Handle<StandardTransient> = poly_loop.cast();
+            let entity: Handle<dyn Transient> = poly_loop.cast();
             build
                 .process
                 .add_warning_text(&entity, " a PolyLoop not mapped to TopoDS", "");

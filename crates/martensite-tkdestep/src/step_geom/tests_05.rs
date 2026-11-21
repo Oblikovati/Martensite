@@ -61,7 +61,7 @@ fn init_round_trip_step_geom_surface_curve() {
     let object = StepGeomSurfaceCurve::new();
     object.init(
         &a_name,
-        &a_curve3d,
+        &a_curve3d.upcast(),
         &a_associated_geometry,
         a_master_representation,
     );
@@ -96,7 +96,7 @@ fn init_round_trip_step_geom_surface_of_linear_extrusion() {
     let a_swept_curve = Handle::new(StepGeomCurve::new());
     let a_extrusion_axis = Handle::new(StepGeomVector::new());
     let object = StepGeomSurfaceOfLinearExtrusion::new();
-    object.init(&a_name, &a_swept_curve, &a_extrusion_axis);
+    object.init(&a_name, &a_swept_curve.upcast(), &a_extrusion_axis);
     assert!(object.extrusion_axis() == a_extrusion_axis);
 }
 
@@ -116,7 +116,7 @@ fn init_round_trip_step_geom_surface_of_revolution() {
     let a_swept_curve = Handle::new(StepGeomCurve::new());
     let a_axis_position = Handle::new(StepGeomAxis1Placement::new());
     let object = StepGeomSurfaceOfRevolution::new();
-    object.init(&a_name, &a_swept_curve, &a_axis_position);
+    object.init(&a_name, &a_swept_curve.upcast(), &a_axis_position);
     assert!(object.axis_position() == a_axis_position);
 }
 
@@ -139,7 +139,7 @@ fn init_round_trip_step_geom_surface_patch() {
     let a_v_sense = true;
     let object = StepGeomSurfacePatch::new();
     object.init(
-        &a_parent_surface,
+        &a_parent_surface.upcast(),
         a_u_transition,
         a_v_transition,
         a_u_sense,
@@ -168,7 +168,7 @@ fn init_round_trip_step_geom_surface_replica() {
     let a_parent_surface = Handle::new(StepGeomSurface::new());
     let a_transformation = Handle::new(StepGeomCartesianTransformationOperator3d::new());
     let object = StepGeomSurfaceReplica::new();
-    object.init(&a_name, &a_parent_surface, &a_transformation);
+    object.init(&a_name, &a_parent_surface.upcast(), &a_transformation);
     assert!(object.parent_surface() == a_parent_surface);
     assert!(object.transformation() == a_transformation);
 }
@@ -188,7 +188,7 @@ fn init_round_trip_step_geom_swept_surface() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_swept_curve = Handle::new(StepGeomCurve::new());
     let object = StepGeomSweptSurface::new();
-    object.init(&a_name, &a_swept_curve);
+    object.init(&a_name, &a_swept_curve.upcast());
     assert!(object.swept_curve() == a_swept_curve);
 }
 
@@ -235,7 +235,7 @@ fn init_round_trip_step_geom_trimmed_curve() {
     let object = StepGeomTrimmedCurve::new();
     object.init(
         &a_name,
-        &a_basis_curve,
+        &a_basis_curve.upcast(),
         &a_trim1,
         &a_trim2,
         a_sense_agreement,

@@ -5,14 +5,13 @@ use martensite_tkde::de::{
 };
 use martensite_tkernel::{
     ncollection::List,
-    standard::{SharedState, StandardTransient},
+    standard::SharedState,
     tcollection::AsciiString,
 };
 use std::ops::Deref;
 /// Configuration state of `DeStepConfigurationNode`, without a provider backend.
 /// Example: `DeStepConfigurationNode::default()`.
 pub struct DeStepConfigurationNode {
-    pub(super) transient: StandardTransient,
     pub(super) base: DeShapeFixConfigurationNodeBase,
     /// STEP-specific transfer parameters, shared by every holder of the node.
     pub internal_parameters: SharedState<DeStepParameters>,
@@ -22,7 +21,6 @@ impl Default for DeStepConfigurationNode {
         let base = DeShapeFixConfigurationNodeBase::default();
         base.set_shape_fix_parameters(DeStepParameters::default_shape_fix_parameters());
         Self {
-            transient: StandardTransient::default(),
             base,
             internal_parameters: SharedState::new(DeStepParameters::default()),
         }
@@ -38,7 +36,6 @@ impl DeStepConfigurationNode {
     /// Copies independent node/healing/format settings; `DeStepConfigurationNode::copied_from(&node)`.
     pub fn copied_from(source: &Self) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: source.base.copied_state(),
             internal_parameters: SharedState::new(source.internal_parameters.snapshot()),
         }

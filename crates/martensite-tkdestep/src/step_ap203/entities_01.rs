@@ -14,8 +14,8 @@ use crate::step_repr::*;
 step_select! {
     /// Representation of STEP SELECT type ApprovedItem
     StepAP203ApprovedItem, [StepBasicProductDefinitionFormation, StepBasicProductDefinition, StepReprConfigurationEffectivity, StepReprConfigurationItem, StepBasicSecurityClassification, StepAP203ChangeRequest, StepAP203Change, StepAP203StartRequest, StepAP203StartWork, StepBasicCertification, StepBasicContract], {
-        product_definition_formation: StepBasicProductDefinitionFormation,
-        product_definition: StepBasicProductDefinition,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
         configuration_effectivity: StepReprConfigurationEffectivity,
         configuration_item: StepReprConfigurationItem,
         security_classification: StepBasicSecurityClassification,
@@ -38,14 +38,14 @@ step_select! {
 step_select! {
     /// Representation of STEP SELECT type ChangeRequestItem
     StepAP203ChangeRequestItem, [StepBasicProductDefinitionFormation], {
-        product_definition_formation: StepBasicProductDefinitionFormation,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
     }
 }
 
 step_select! {
     /// Representation of STEP SELECT type ClassifiedItem
     StepAP203ClassifiedItem, [StepBasicProductDefinitionFormation, StepReprAssemblyComponentUsage], {
-        product_definition_formation: StepBasicProductDefinitionFormation,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
         assembly_component_usage: StepReprAssemblyComponentUsage,
     }
 }
@@ -53,14 +53,14 @@ step_select! {
 step_select! {
     /// Representation of STEP SELECT type ContractedItem
     StepAP203ContractedItem, [StepBasicProductDefinitionFormation], {
-        product_definition_formation: StepBasicProductDefinitionFormation,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
     }
 }
 
 step_select! {
     /// Representation of STEP SELECT type DateTimeItem
     StepAP203DateTimeItem, [StepBasicProductDefinition, StepAP203ChangeRequest, StepAP203StartRequest, StepAP203Change, StepAP203StartWork, StepBasicApprovalPersonOrganization, StepBasicContract, StepBasicSecurityClassification, StepBasicCertification], {
-        product_definition: StepBasicProductDefinition,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
         change_request: StepAP203ChangeRequest,
         start_request: StepAP203StartRequest,
         change: StepAP203Change,
@@ -81,8 +81,8 @@ step_select! {
         start_request: StepAP203StartRequest,
         configuration_item: StepReprConfigurationItem,
         product: StepBasicProduct,
-        product_definition_formation: StepBasicProductDefinitionFormation,
-        product_definition: StepBasicProductDefinition,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
         contract: StepBasicContract,
         security_classification: StepBasicSecurityClassification,
     }
@@ -91,22 +91,22 @@ step_select! {
 step_select! {
     /// Representation of STEP SELECT type SpecifiedItem
     StepAP203SpecifiedItem, [StepBasicProductDefinition, StepReprShapeAspect], {
-        product_definition: StepBasicProductDefinition,
-        shape_aspect: StepReprShapeAspect,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
     }
 }
 
 step_select! {
     /// Representation of STEP SELECT type StartRequestItem
     StepAP203StartRequestItem, [StepBasicProductDefinitionFormation], {
-        product_definition_formation: StepBasicProductDefinitionFormation,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
     }
 }
 
 step_select! {
     /// Representation of STEP SELECT type WorkItem
     StepAP203WorkItem, [StepBasicProductDefinitionFormation], {
-        product_definition_formation: StepBasicProductDefinitionFormation,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
     }
 }
 
@@ -277,7 +277,7 @@ impl StepAP203CcDesignSpecificationReference {
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
-        a_document_reference_assigned_document: &Handle<StepBasicDocument>,
+        a_document_reference_assigned_document: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         a_document_reference_source: &Handle<HAsciiString>,
         a_items: &Handle<HArray1<StepAP203SpecifiedItem>>,
     ) {

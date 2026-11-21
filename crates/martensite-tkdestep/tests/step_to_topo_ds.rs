@@ -18,7 +18,8 @@ use martensite_tkdestep::step_visual::{
     StepVisualTriangulatedSurfaceSet,
 };
 use martensite_tkernel::ncollection::{DataMap, HArray1, HArray2};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::{Direction3, Line3, Point3, Xyz};
 use martensite_tkmath::poly::{Triangulation, mesh_purpose};
@@ -74,7 +75,7 @@ fn triangulated_face(
     normals: &[[f64; 3]],
     pnindex: &[i32],
     triangles: &[[i32; 3]],
-) -> Handle<StepVisualTessellatedFace> {
+) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualTessellatedFace>> {
     let face = Handle::new(StepVisualTriangulatedFace::new());
     let normals = if normals.is_empty() {
         Handle::default()
@@ -96,7 +97,7 @@ fn triangulated_face(
         &pnindex,
         &rows(triangles),
     );
-    face.cast()
+    face.into_upcast()
 }
 
 fn surface_set(
@@ -104,7 +105,7 @@ fn surface_set(
     pnmax: i32,
     pnindex: &[i32],
     triangles: &[[i32; 3]],
-) -> Handle<StepVisualTessellatedSurfaceSet> {
+) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualTessellatedSurfaceSet>> {
     let set = Handle::new(StepVisualTriangulatedSurfaceSet::new());
     let pnindex = if pnindex.is_empty() {
         Handle::default()
@@ -119,19 +120,19 @@ fn surface_set(
         &pnindex,
         &rows(triangles),
     );
-    set.cast()
+    set.into_upcast()
 }
 
 fn complex_face(
     points: &[[f64; 3]],
     strips: &[&[i32]],
     fans: &[&[i32]],
-) -> Handle<StepVisualTessellatedFace> {
-    let lists = |values: &[&[i32]]| -> Handle<HArray1<Handle<StandardTransient>>> {
+) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualTessellatedFace>> {
+    let lists = |values: &[&[i32]]| -> Handle<HArray1<Handle<dyn Transient>>> {
         if values.is_empty() {
             return Handle::default();
         }
-        let items: Vec<Handle<StandardTransient>> =
+        let items: Vec<Handle<dyn Transient>> =
             values.iter().map(|list| shared(list).cast()).collect();
         shared(&items)
     };
@@ -147,7 +148,7 @@ fn complex_face(
         &lists(strips),
         &lists(fans),
     );
-    face.cast()
+    face.into_upcast()
 }
 
 fn mesh_of(translator: &StepToTopoDSTranslateFace) -> Handle<Triangulation> {
@@ -158,7 +159,7 @@ fn mesh_of(translator: &StepToTopoDSTranslateFace) -> Handle<Triangulation> {
     mesh
 }
 
-fn translate_face(face: &Handle<StepVisualTessellatedFace>) -> Handle<Triangulation> {
+fn translate_face(face: &Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualTessellatedFace>>) -> Handle<Triangulation> {
     let (mut tool, mut nm_tool) = tools();
     let mut translator = StepToTopoDSTranslateFace::new();
     let mut has_geom = false;
@@ -176,7 +177,7 @@ fn translate_face(face: &Handle<StepVisualTessellatedFace>) -> Handle<Triangulat
 }
 
 fn translate_set(
-    set: &Handle<StepVisualTessellatedSurfaceSet>,
+    set: &Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualTessellatedSurfaceSet>>,
     factors: &StepDataFactors,
 ) -> Handle<Triangulation> {
     let (mut tool, mut nm_tool) = tools();
@@ -439,8 +440,8 @@ fn an_edge_is_made_on_a_3d_curve_between_its_vertices() {
     translator
         .make_from_curve_3d(
             &line.cast(),
-            &Handle::new(StepShapeEdgeCurve::new()),
-            &Handle::new(StepShapeVertex::new()),
+            &Handle::new(StepShapeEdgeCurve::new()).into_upcast(),
+            &Handle::new(StepShapeVertex::new()).into_upcast(),
             1e-7,
             &mut edge,
             &mut start,

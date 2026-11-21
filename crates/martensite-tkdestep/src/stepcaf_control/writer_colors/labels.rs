@@ -6,7 +6,7 @@ impl StyleWalk<'_> {
     fn make_styles(
         &mut self,
         shape: &Shape,
-        over: &mut Handle<StepVisualStyledItem>,
+        over: &mut Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
         inherit: Option<&XCAFPrsStyle>,
         is_component: bool,
     ) -> Result<(), Failure> {
@@ -140,7 +140,7 @@ fn append_styles(
     if count == 0 {
         return Ok(());
     }
-    let new_items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, count)?;
+    let new_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
     for index in 1..=old_length {
         step_array1_set(
             &new_items,
@@ -269,7 +269,7 @@ impl WriterState {
         &mut self,
         ws: &Handle<XSControlWorkSession>,
         top_shape: &Shape,
-        context: &Handle<StepReprRepresentationContext>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         styles: &StepConstructStyles,
     ) -> Result<(), Failure> {
         let fp = finder_process_of(ws)?;
@@ -277,7 +277,7 @@ impl WriterState {
         let mut mdgpr = Handle::default();
         styles.create_mdgpr(context, &mut mdgpr, &model)?;
         if mdgpr.is_some() {
-            bind_mdgpr(&mut self.map_comp_mdgpr, top_shape, mdgpr.cast())?;
+            bind_mdgpr(&mut self.map_comp_mdgpr, top_shape, mdgpr)?;
         }
         Ok(())
     }
@@ -288,7 +288,7 @@ impl WriterState {
         ws: &Handle<XSControlWorkSession>,
         shape: &Shape,
         top_shape: &Shape,
-        context: &Handle<StepReprRepresentationContext>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         styles: &StepConstructStyles,
     ) -> Result<bool, Failure> {
         let fp = finder_process_of(ws)?;
@@ -301,7 +301,7 @@ impl WriterState {
         // search for MDGPR of the component top-level shape
         let mdgpr: Handle<StepVisualMechanicalDesignGeometricPresentationRepresentation> =
             if self.map_comp_mdgpr.contains(top_shape) {
-                self.map_comp_mdgpr.find_from_key(top_shape)?.cast()
+                self.map_comp_mdgpr.find_from_key(top_shape)?.clone()
             } else {
                 let mdgpr = Handle::new(
                     StepVisualMechanicalDesignGeometricPresentationRepresentation::new(),
@@ -309,7 +309,7 @@ impl WriterState {
                 let live = step_live(&mdgpr, WHERE)?;
                 live.set_name(&Handle::new(HAsciiString::new("")));
                 live.set_context_of_items(context);
-                bind_mdgpr(&mut self.map_comp_mdgpr, top_shape, mdgpr.cast())?;
+                bind_mdgpr(&mut self.map_comp_mdgpr, top_shape, mdgpr.clone())?;
                 mdgpr
             };
         let items = step_live(&mdgpr, WHERE)?.items();

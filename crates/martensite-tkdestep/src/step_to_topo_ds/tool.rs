@@ -85,7 +85,7 @@ impl ContinuityCounts {
 /// their hash order.
 #[derive(Default)]
 pub struct StepToTopoDSTool {
-    my_data_map: DataMap<Handle<StepShapeTopologicalRepresentationItem>, Shape>,
+    my_data_map: DataMap<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Shape>,
     my_vertex_map: HashMap<usize, (Handle<StepGeomCartesianPoint>, Vertex)>,
     my_edge_map: HashMap<StepToTopoDSPointPair, Edge>,
     my_compute_pc: bool,
@@ -102,7 +102,7 @@ impl StepToTopoDSTool {
     }
     /// `StepToTopoDSTool(Map, TP)`.
     pub fn with_map(
-        map: &DataMap<Handle<StepShapeTopologicalRepresentationItem>, Shape>,
+        map: &DataMap<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Shape>,
         tp: &Handle<TransferTransientProcess>,
     ) -> Self {
         let mut tool = Self::new();
@@ -112,7 +112,7 @@ impl StepToTopoDSTool {
     /// `init(Map, TP)`: the maps and the statistics restart from `map`.
     pub fn init(
         &mut self,
-        map: &DataMap<Handle<StepShapeTopologicalRepresentationItem>, Shape>,
+        map: &DataMap<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Shape>,
         tp: &Handle<TransferTransientProcess>,
     ) {
         *self = Self {
@@ -122,13 +122,13 @@ impl StepToTopoDSTool {
         };
     }
     /// `is_bound(TRI)`.
-    pub fn is_bound(&self, tri: &Handle<StepShapeTopologicalRepresentationItem>) -> bool {
+    pub fn is_bound(&self, tri: &Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>) -> bool {
         self.my_data_map.is_bound(tri)
     }
     /// `bind(TRI, S)`: complement CKY: also feeds the transfer process.
     pub fn bind(
         &mut self,
-        tri: &Handle<StepShapeTopologicalRepresentationItem>,
+        tri: &Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
         shape: &Shape,
     ) -> Result<(), Failure> {
         self.my_data_map.bind(tri.clone(), shape.clone());
@@ -140,7 +140,7 @@ impl StepToTopoDSTool {
     /// a no such object failure when `tri` is not bound.
     pub fn find(
         &self,
-        tri: &Handle<StepShapeTopologicalRepresentationItem>,
+        tri: &Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
     ) -> Result<&Shape, Failure> {
         self.my_data_map.find(tri)
     }

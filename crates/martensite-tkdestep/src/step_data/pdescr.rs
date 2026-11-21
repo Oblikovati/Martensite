@@ -39,16 +39,10 @@ struct PDescrState {
 /// ```
 #[derive(Default)]
 pub struct StepDataPDescr {
-    transient: StandardTransient,
     state: SharedState<PDescrState>,
     this: OnceLock<WeakHandle<StepDataPDescr>>,
 }
-impl_transient!(
-    StepDataPDescr,
-    "StepDataPDescr",
-    StandardTransient,
-    transient
-);
+impl_transient!(StepDataPDescr, "StepDataPDescr", StandardTransient);
 
 impl StepDataPDescr {
     /// `StepDataPDescr()`, as a bound handle.

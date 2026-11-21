@@ -23,7 +23,8 @@ use crate::step_visual::{
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Shape};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::transfer::{
     TransferActorOfTransientProcessOps, TransferBinder, TransferTransientProcess,
 };
@@ -32,8 +33,8 @@ use martensite_tkxsbase::transfer_brep::{TransferBRep, TransferBRepShapeBinder};
 /// `is_need_representation`: false when the items of `rep_a` are all in another representation of
 /// the shape aspect's product (`IsSDRaspect`).
 fn is_need_representation(
-    aspect: &Handle<StepReprShapeAspect>,
-    rep_a: &Handle<StepReprRepresentation>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+    rep_a: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     tp: &Handle<TransferTransientProcess>,
 ) -> Result<bool, Failure> {
     let pds: Handle<StepReprProductDefinitionShape> =
@@ -48,9 +49,9 @@ fn is_need_representation(
             continue;
         };
         for shared in shared_entities(tp, &sdr.cast())? {
-            let mut rep2: Handle<StepReprRepresentation> = shared.cast();
+            let mut rep2: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> = shared.cast();
             if rep2.is_null() {
-                let srr: Handle<StepReprShapeRepresentationRelationship> = shared.cast();
+                let srr: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> = shared.cast();
                 let Some(live_srr) = srr.get() else {
                     continue;
                 };
@@ -70,8 +71,8 @@ fn is_need_representation(
 
 /// Every item of `inner` is an item of `outer`.
 fn every_item_is_in(
-    inner: &Handle<StepReprRepresentation>,
-    outer: &Handle<StepReprRepresentation>,
+    inner: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+    outer: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
 ) -> Result<bool, Failure> {
     let (live_inner, live_outer) = (
         step_live(inner, "IsNeedRepresentation")?,
@@ -98,7 +99,7 @@ impl StepControlActorRead {
     /// product, when `read.step.product.mode` is off.
     pub(super) fn old_way(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
@@ -179,7 +180,7 @@ impl StepControlActorRead {
     fn run_shape_builder(
         &self,
         builder: &mut StepToTopoDSBuilder,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         local: &StepDataFactors,
         is_manifold: bool,
@@ -191,7 +192,7 @@ impl StepControlActorRead {
             builder.init_faceted_brep(&start.cast(), tp, local, range)?;
         } else if start.cast::<StepShapeBrepWithVoids>().is_some() {
             builder.init_brep_with_voids(&start.cast(), tp, local, range)?;
-        } else if start.cast::<StepShapeManifoldSolidBrep>().is_some() {
+        } else if start.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_some() {
             builder.init_manifold_solid(&start.cast(), tp, local, range)?;
         } else if start.cast::<StepShapeShellBasedSurfaceModel>().is_some() {
             // The tool leaves the state for the call; the builder does not come back to the actor
@@ -211,7 +212,7 @@ impl StepControlActorRead {
             .is_some()
         {
             builder.init_faceted_brep_with_voids(&start.cast(), tp, local, range)?;
-        } else if start.cast::<StepShapeGeometricSet>().is_some() {
+        } else if start.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>().is_some() {
             builder.init_geometric_set(&start.cast(), tp, local, Some(self), is_manifold, range)?;
         } else if start.cast::<StepShapeEdgeBasedWireframeModel>().is_some() {
             builder.init_edge_based_wireframe_model(&start.cast(), tp, local)?;
@@ -235,9 +236,9 @@ impl StepControlActorRead {
                 local,
                 range,
             )?;
-        } else if start.cast::<StepVisualTessellatedFace>().is_some() {
+        } else if start.cast::<dyn crate::StepEntityBase<StepVisualTessellatedFace>>().is_some() {
             builder.init_tessellated_face(&start.cast(), tp, only_no_brep, has_geom, local)?;
-        } else if start.cast::<StepVisualTessellatedSurfaceSet>().is_some() {
+        } else if start.cast::<dyn crate::StepEntityBase<StepVisualTessellatedSurfaceSet>>().is_some() {
             builder.init_tessellated_surface_set(&start.cast(), tp, has_geom, local)?;
         } else {
             return Ok(false);
@@ -247,13 +248,13 @@ impl StepControlActorRead {
     /// `transfer_entity(start, TP, local_factors, isManifold, progress)` on a geometric item.
     pub(super) fn transfer_geometric_item(
         &self,
-        git: &Handle<StepGeomGeometricRepresentationItem>,
+        git: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         is_manifold: bool,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
-        let start: Handle<StandardTransient> = git.cast();
+        let start: Handle<dyn Transient> = git.cast();
         let live_tp = step_live(tp, "StepControlActorRead")?;
         let nb_tp_items = live_tp.nb_mapped();
         let mut local = *factors;

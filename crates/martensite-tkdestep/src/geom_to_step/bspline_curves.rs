@@ -212,7 +212,7 @@ geom_to_step_class!(
     /// `GeomToStepMakeBoundedCurve`: the dispatch over the splines and the Bezier curves.
     GeomToStepMakeBoundedCurve,
     "GeomToStepMakeBoundedCurve",
-    StepGeomBoundedCurve
+    dyn crate::StepEntityBase<StepGeomBoundedCurve>
 );
 
 impl GeomToStepMakeBoundedCurve {
@@ -225,10 +225,10 @@ impl GeomToStepMakeBoundedCurve {
             let made = GeomToStepMakeBSplineCurveWithKnotsAndRationalBSplineCurve::from_geom(
                 spline, factors,
             )?;
-            return Ok(Self::done_with(made.value()?.cast()));
+            return Ok(Self::done_with(made.value()?.into_upcast()));
         }
         let made = GeomToStepMakeBSplineCurveWithKnots::from_geom(spline, factors)?;
-        Ok(Self::done_with(made.value()?.cast()))
+        Ok(Self::done_with(made.value()?.into_upcast()))
     }
     fn from_spline2d(
         spline: &Handle<Geom2dBSplineCurve>,
@@ -239,10 +239,10 @@ impl GeomToStepMakeBoundedCurve {
             let made = GeomToStepMakeBSplineCurveWithKnotsAndRationalBSplineCurve::from_geom2d(
                 spline, factors,
             )?;
-            return Ok(Self::done_with(made.value()?.cast()));
+            return Ok(Self::done_with(made.value()?.into_upcast()));
         }
         let made = GeomToStepMakeBSplineCurveWithKnots::from_geom2d(spline, factors)?;
-        Ok(Self::done_with(made.value()?.cast()))
+        Ok(Self::done_with(made.value()?.into_upcast()))
     }
     /// A periodic spline written unperiodic on a copy; the source is untouched.
     fn unperiodic(spline: &Handle<GeomBSplineCurve>) -> Result<Handle<GeomBSplineCurve>, Failure> {
@@ -299,7 +299,7 @@ impl GeomToStepMakeBoundedCurve {
                 ParameterisationType::TgtThetaOver2,
             )?;
             let made = GeomToStepMakeBSplineCurveWithKnots::from_geom2d(&converted, factors)?;
-            return Ok(Self::done_with(made.value()?.cast()));
+            return Ok(Self::done_with(made.value()?.into_upcast()));
         }
         Ok(Self::not_done())
     }

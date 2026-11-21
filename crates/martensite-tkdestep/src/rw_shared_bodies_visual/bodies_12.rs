@@ -30,15 +30,15 @@ macro_rules! rw_block_b_0099 {
             $the_check,
             &mut $a_representation_item_name,
         )?;
-        let mut $a_items: Handle<HArray1<Handle<StepVisualTessellatedStructuredItem>>> =
+        let mut $a_items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>> =
             Default::default();
         let mut $sub2: i32 = 0;
         if $the_data.read_sub_list($the_num, 2, "items", $the_check, &mut $sub2, false, 0, 0)? {
             let $nb0: i32 = $the_data.nb_params($sub2)?;
-            $a_items = step_new_array1::<Handle<StepVisualTessellatedStructuredItem>>(1, $nb0)?;
+            $a_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>(1, $nb0)?;
             let $num2: i32 = $sub2;
             for $i0 in 1..=$nb0 {
-                let mut $an_it0: Handle<StepVisualTessellatedStructuredItem> = Default::default();
+                let mut $an_it0: Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>> = Default::default();
                 $the_data.read_entity(
                     $num2,
                     $i0,
@@ -113,7 +113,7 @@ macro_rules! rw_block_b_0104 {
         $sw.send_entity(&$ent.parent.parent.name())?;
         $sw.open_sub()?;
         for $i1 in 1..=$ent.parent.parent.nb_items() {
-            let $var0: Handle<StepReprRepresentationItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&$ent.parent.parent.items(), $i1, "WriteStep")?;
             $sw.send_entity(&$var0)?;
         }
@@ -128,7 +128,7 @@ macro_rules! rw_block_b_0105 {
         $the_sw.send_entity(&$the_ent.name())?;
         $the_sw.open_sub()?;
         for $i1 in 1..=step_live(&$the_ent.items(), "WriteStep")?.array1().length() {
-            let $var0: Handle<StepReprRepresentationItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&$the_ent.items(), $i1, "WriteStep")?;
             $the_sw.send_entity(&$var0)?;
         }
@@ -162,7 +162,7 @@ macro_rules! rw_block_b_0107 {
         $sw.send_entity(&$ent.parent.name())?;
         $sw.open_sub()?;
         for $i1 in 1..=$ent.parent.nb_items() {
-            let $var0: Handle<StepReprRepresentationItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&$ent.parent.items(), $i1, "WriteStep")?;
             $sw.send_entity(&$var0)?;
         }

@@ -100,7 +100,7 @@ impl RwStepBasicRwNamedUnit {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepBasicNamedUnit>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
     ) -> Result<(), Failure> {
         rw_block_0172!(a_dimensions, ach, data, num);
         ent.init(&a_dimensions);
@@ -110,7 +110,7 @@ impl RwStepBasicRwNamedUnit {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepBasicNamedUnit>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.dimensions())?;
         Ok(())
@@ -118,7 +118,7 @@ impl RwStepBasicRwNamedUnit {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepBasicNamedUnit>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.get_one_item(&ent.dimensions().cast());

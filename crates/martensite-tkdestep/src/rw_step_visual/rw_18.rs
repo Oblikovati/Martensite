@@ -53,7 +53,7 @@ impl RwStepVisualRwSurfaceStyleRenderingWithProperties {
                 "",
             );
         }
-        let mut a_surface_style_rendering_surface_colour: Handle<StepVisualColour> =
+        let mut a_surface_style_rendering_surface_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> =
             Default::default();
         data.read_entity(
             num,

@@ -15,7 +15,7 @@ step_entity! {
     /// Pre defined colour.
     custom_default StepVisualPreDefinedColour, StepVisualPreDefinedColourState, "StepVisualPreDefinedColour", StepVisualColour, {
         my_item: Handle<StepVisualPreDefinedItem>,
-    }
+    }, bases: [crate::step_visual::StepVisualPreDefinedColour, crate::step_visual::StepVisualColour]
 }
 impl Default for StepVisualPreDefinedColour {
     fn default() -> Self {
@@ -45,14 +45,14 @@ impl StepVisualPreDefinedColour {
 step_entity! {
     /// Pre defined curve font.
     StepVisualPreDefinedCurveFont, StepVisualPreDefinedCurveFontState, "StepVisualPreDefinedCurveFont", StepVisualPreDefinedItem, {
-    }
+    }, bases: [crate::step_visual::StepVisualPreDefinedItem]
 }
 
 step_entity! {
     /// Pre defined item.
     StepVisualPreDefinedItem, StepVisualPreDefinedItemState, "StepVisualPreDefinedItem", StandardTransient, {
         name: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_visual::StepVisualPreDefinedItem]
 }
 impl StepVisualPreDefinedItem {
     step_methods! {
@@ -65,13 +65,13 @@ impl StepVisualPreDefinedItem {
 step_entity! {
     /// Pre defined text font.
     StepVisualPreDefinedTextFont, StepVisualPreDefinedTextFontState, "StepVisualPreDefinedTextFont", StepVisualPreDefinedItem, {
-    }
+    }, bases: [crate::step_visual::StepVisualPreDefinedItem]
 }
 
 step_entity! {
     /// Presentation area.
     StepVisualPresentationArea, StepVisualPresentationAreaState, "StepVisualPresentationArea", StepVisualPresentationRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
@@ -136,7 +136,7 @@ impl StepVisualPresentationLayerUsage {
 step_entity! {
     /// Presentation representation.
     StepVisualPresentationRepresentation, StepVisualPresentationRepresentationState, "StepVisualPresentationRepresentation", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
@@ -175,7 +175,7 @@ step_entity! {
     /// Presentation style assignment.
     StepVisualPresentationStyleAssignment, StepVisualPresentationStyleAssignmentState, "StepVisualPresentationStyleAssignment", StandardTransient, {
         styles: Handle<HArray1<StepVisualPresentationStyleSelect>>,
-    }
+    }, bases: [crate::step_visual::StepVisualPresentationStyleAssignment]
 }
 impl StepVisualPresentationStyleAssignment {
     step_methods! {
@@ -207,7 +207,7 @@ step_entity! {
     /// Presentation style by context.
     StepVisualPresentationStyleByContext, StepVisualPresentationStyleByContextState, "StepVisualPresentationStyleByContext", StepVisualPresentationStyleAssignment, {
         style_context: StepVisualStyleContextSelect,
-    }
+    }, bases: [crate::step_visual::StepVisualPresentationStyleAssignment]
 }
 impl StepVisualPresentationStyleByContext {
     step_methods! {
@@ -228,7 +228,7 @@ impl StepVisualPresentationStyleByContext {
 step_entity! {
     /// Presentation view.
     StepVisualPresentationView, StepVisualPresentationViewState, "StepVisualPresentationView", StepVisualPresentationRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
@@ -267,7 +267,7 @@ step_entity! {
     /// Representation of complex STEP entity RepositionedTessellatedGeometricSet
     StepVisualRepositionedTessellatedGeometricSet, StepVisualRepositionedTessellatedGeometricSetState, "StepVisualRepositionedTessellatedGeometricSet", StepVisualTessellatedGeometricSet, {
         my_location: Handle<StepGeomAxis2Placement3d>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedGeometricSet, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualRepositionedTessellatedGeometricSet {
     step_methods! {
@@ -279,7 +279,7 @@ impl StepVisualRepositionedTessellatedGeometricSet {
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_items: &ObjectHandle<Array1<'static, Handle<StepVisualTessellatedItem>>>,
+        the_items: &ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>,
         the_location: &Handle<StepGeomAxis2Placement3d>,
     ) {
         self.parent.init(the_name, the_items);
@@ -291,7 +291,7 @@ step_entity! {
     /// Representation of STEP entity RepositionedTessellatedItem
     StepVisualRepositionedTessellatedItem, StepVisualRepositionedTessellatedItemState, "StepVisualRepositionedTessellatedItem", StepVisualTessellatedItem, {
         my_location: Handle<StepGeomAxis2Placement3d>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualRepositionedTessellatedItem {
     step_methods! {

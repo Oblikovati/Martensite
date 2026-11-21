@@ -10,14 +10,14 @@ use crate::step_entity::*;
 step_entity! {
     /// Point on curve.
     StepGeomPointOnCurve, StepGeomPointOnCurveState, "StepGeomPointOnCurve", StepGeomPoint, {
-        basis_curve: Handle<StepGeomCurve>,
+        basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         point_parameter: f64,
-    }
+    }, bases: [StepGeomPoint, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomPointOnCurve {
     step_methods! {
-        set set_basis_curve = basis_curve: Handle<StepGeomCurve>;
-        get basis_curve = basis_curve: Handle<StepGeomCurve>;
+        set set_basis_curve = basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        get basis_curve = basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
         set_copy set_point_parameter = point_parameter: f64;
         get point_parameter = point_parameter: f64;
     }
@@ -25,7 +25,7 @@ impl StepGeomPointOnCurve {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_curve: &Handle<StepGeomCurve>,
+        a_basis_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         a_point_parameter: f64,
     ) {
         let mut state = self.state.write();
@@ -39,15 +39,15 @@ impl StepGeomPointOnCurve {
 step_entity! {
     /// Point on surface.
     StepGeomPointOnSurface, StepGeomPointOnSurfaceState, "StepGeomPointOnSurface", StepGeomPoint, {
-        basis_surface: Handle<StepGeomSurface>,
+        basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         point_parameter_u: f64,
         point_parameter_v: f64,
-    }
+    }, bases: [StepGeomPoint, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomPointOnSurface {
     step_methods! {
-        set set_basis_surface = basis_surface: Handle<StepGeomSurface>;
-        get basis_surface = basis_surface: Handle<StepGeomSurface>;
+        set set_basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        get basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
         set_copy set_point_parameter_u = point_parameter_u: f64;
         get point_parameter_u = point_parameter_u: f64;
         set_copy set_point_parameter_v = point_parameter_v: f64;
@@ -57,7 +57,7 @@ impl StepGeomPointOnSurface {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_surface: &Handle<StepGeomSurface>,
+        a_basis_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_point_parameter_u: f64,
         a_point_parameter_v: f64,
     ) {
@@ -73,14 +73,14 @@ impl StepGeomPointOnSurface {
 step_entity! {
     /// Point replica.
     StepGeomPointReplica, StepGeomPointReplicaState, "StepGeomPointReplica", StepGeomPoint, {
-        parent_pt: Handle<StepGeomPoint>,
+        parent_pt: Handle<dyn crate::StepEntityBase<StepGeomPoint>>,
         transformation: Handle<StepGeomCartesianTransformationOperator>,
-    }
+    }, bases: [StepGeomPoint, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomPointReplica {
     step_methods! {
-        set set_parent_pt = parent_pt: Handle<StepGeomPoint>;
-        get parent_pt = parent_pt: Handle<StepGeomPoint>;
+        set set_parent_pt = parent_pt: Handle<dyn crate::StepEntityBase<StepGeomPoint>>;
+        get parent_pt = parent_pt: Handle<dyn crate::StepEntityBase<StepGeomPoint>>;
         set set_transformation = transformation: Handle<StepGeomCartesianTransformationOperator>;
         get transformation = transformation: Handle<StepGeomCartesianTransformationOperator>;
     }
@@ -88,7 +88,7 @@ impl StepGeomPointReplica {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_parent_pt: &Handle<StepGeomPoint>,
+        a_parent_pt: &Handle<dyn crate::StepEntityBase<StepGeomPoint>>,
         a_transformation: &Handle<StepGeomCartesianTransformationOperator>,
     ) {
         let mut state = self.state.write();
@@ -103,7 +103,7 @@ step_entity! {
     /// Polyline.
     StepGeomPolyline, StepGeomPolylineState, "StepGeomPolyline", StepGeomBoundedCurve, {
         points: Handle<HArray1<Handle<StepGeomCartesianPoint>>>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomPolyline {
     step_methods! {
@@ -126,7 +126,7 @@ impl StepGeomPolyline {
 step_entity! {
     /// Quasi uniform curve.
     StepGeomQuasiUniformCurve, StepGeomQuasiUniformCurveState, "StepGeomQuasiUniformCurve", StepGeomBSplineCurve, {
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 
 step_entity! {
@@ -134,7 +134,7 @@ step_entity! {
     StepGeomQuasiUniformCurveAndRationalBSplineCurve, StepGeomQuasiUniformCurveAndRationalBSplineCurveState, "StepGeomQuasiUniformCurveAndRationalBSplineCurve", StepGeomBSplineCurve, {
         quasi_uniform_curve: Handle<StepGeomQuasiUniformCurve>,
         rational_b_spline_curve: Handle<StepGeomRationalBSplineCurve>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomQuasiUniformCurveAndRationalBSplineCurve {
     step_methods! {
@@ -266,7 +266,7 @@ impl StepGeomQuasiUniformCurveAndRationalBSplineCurve {
 step_entity! {
     /// Quasi uniform surface.
     StepGeomQuasiUniformSurface, StepGeomQuasiUniformSurfaceState, "StepGeomQuasiUniformSurface", StepGeomBSplineSurface, {
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 
 step_entity! {
@@ -274,7 +274,7 @@ step_entity! {
     StepGeomQuasiUniformSurfaceAndRationalBSplineSurface, StepGeomQuasiUniformSurfaceAndRationalBSplineSurfaceState, "StepGeomQuasiUniformSurfaceAndRationalBSplineSurface", StepGeomBSplineSurface, {
         quasi_uniform_surface: Handle<StepGeomQuasiUniformSurface>,
         rational_b_spline_surface: Handle<StepGeomRationalBSplineSurface>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomQuasiUniformSurfaceAndRationalBSplineSurface {
     step_methods! {

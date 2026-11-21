@@ -20,16 +20,16 @@ impl RwStepReprRwDataEnvironment {
             return Ok(());
         }
         rw_block_0149!(a_description, a_name, ach, data, num);
-        let mut a_elements: Handle<HArray1<Handle<StepReprPropertyDefinitionRepresentation>>> =
+        let mut a_elements: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>> =
             Default::default();
         let mut sub3: i32 = 0;
         if data.read_sub_list(num, 3, "elements", ach, &mut sub3, false, 0, 0)? {
             let nb0: i32 = data.nb_params(sub3)?;
             a_elements =
-                step_new_array1::<Handle<StepReprPropertyDefinitionRepresentation>>(1, nb0)?;
+                step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>(1, nb0)?;
             let num2: i32 = sub3;
             for i0 in 1..=nb0 {
-                let mut an_it0: Handle<StepReprPropertyDefinitionRepresentation> =
+                let mut an_it0: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>> =
                     Default::default();
                 data.read_entity(
                     num2,
@@ -55,7 +55,7 @@ impl RwStepReprRwDataEnvironment {
         sw.send_entity(&ent.description())?;
         sw.open_sub()?;
         for i2 in 1..=step_live(&ent.elements(), "WriteStep")?.array1().length() {
-            let var0: Handle<StepReprPropertyDefinitionRepresentation> =
+            let var0: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>> =
                 step_array1_item(&ent.elements(), i2, "WriteStep")?;
             sw.send_entity(&var0)?;
         }
@@ -69,7 +69,7 @@ impl RwStepReprRwDataEnvironment {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         for i1 in 1..=step_live(&ent.elements(), "Share")?.array1().length() {
-            let var0: Handle<StepReprPropertyDefinitionRepresentation> =
+            let var0: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>> =
                 step_array1_item(&ent.elements(), i1, "Share")?;
             iter.add_item(&var0.cast());
         }

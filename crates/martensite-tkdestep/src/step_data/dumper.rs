@@ -1,6 +1,7 @@
 //! `StepDataStepDumper`: dumps entities in the form of a STEP file.
 use super::{StepDataProtocolOps, StepDataStepModel, StepDataStepWriter, StepDataWriterLib};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkxsbase::interface::{
     InterfaceEntityIterator, InterfaceGeneralLib, InterfaceModelEntities,
 };
@@ -58,7 +59,7 @@ impl StepDataStepDumper {
     pub fn dump(
         &mut self,
         s: &mut dyn Write,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         level: i32,
     ) -> Result<bool, Failure> {
         let model = self.model()?;
@@ -97,7 +98,7 @@ impl StepDataStepDumper {
     fn dump_type(
         &self,
         s: &mut dyn Write,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         num: i32,
         nlab: i32,
     ) -> std::io::Result<()> {
@@ -128,7 +129,7 @@ impl StepDataStepDumper {
         }
         Ok(())
     }
-    fn shared_of(&self, ent: &Handle<StandardTransient>) -> Vec<Handle<StandardTransient>> {
+    fn shared_of(&self, ent: &Handle<dyn Transient>) -> Vec<Handle<dyn Transient>> {
         let Some((module, cn)) = self.theslib.select(ent) else {
             return Vec::new();
         };
@@ -137,11 +138,7 @@ impl StepDataStepDumper {
         module.list_implied_case(cn, ent, &mut iter);
         iter.content()
     }
-    fn note_shared(
-        &self,
-        ent: &Handle<StandardTransient>,
-        ids: &mut DumpIds,
-    ) -> Result<(), Failure> {
+    fn note_shared(&self, ent: &Handle<dyn Transient>, ids: &mut DumpIds) -> Result<(), Failure> {
         let model = self.model()?;
         for anent in self.shared_of(ent) {
             let nlab = model.ident_label(&anent);
@@ -151,7 +148,7 @@ impl StepDataStepDumper {
     }
     fn dump_with_shared(
         &mut self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         num: i32,
         nb: usize,
         ids: &mut DumpIds,

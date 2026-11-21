@@ -1,18 +1,20 @@
 //! The shape aspects and presentations of GD\&T for `STEPCAFControlWriter`.
+use crate::step_entity::StepBaseHandle;
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 /// A measure of a name, a value and a unit.
 pub(in crate::stepcaf_control) fn measure_with_unit(
     value: f64,
     unit: &StepBasicUnit,
     measure_name: &str,
-) -> Result<Handle<StepBasicMeasureWithUnit>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>, Failure> {
     let member = Handle::new(StepBasicMeasureValueMember::new());
     member.set_name(measure_name);
     member.set_real(value);
     let measure = Handle::new(StepBasicMeasureWithUnit::new());
     measure.init(&member, unit);
-    Ok(measure)
+    Ok(measure.into_upcast())
 }
 
 /// `create_dim_value`: a value, without qualifiers.
@@ -22,20 +24,20 @@ pub(in crate::stepcaf_control) fn create_dim_value(
     name: &Handle<HAsciiString>,
     measure_name: &str,
     is_angle: bool,
-) -> Result<Handle<StepReprReprItemAndMeasureWithUnit>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>, Failure> {
     let item = Handle::new(StepReprRepresentationItem::new());
     item.init(&Handle::new(HAsciiString::copied(step_live(name, WHERE)?)));
     let measure = measure_with_unit(value, unit, measure_name)?;
     Ok(if is_angle {
         // Angle & without qualifiers
         let result = Handle::new(StepReprReprItemAndPlaneAngleMeasureWithUnit::new());
-        result.init(&measure, &item)?;
-        result.cast()
+        result.init(&measure, &item.upcast())?;
+        result.into_upcast()
     } else {
         // Length & without qualifiers
         let result = Handle::new(StepReprReprItemAndLengthMeasureWithUnit::new());
-        result.init(&measure, &item)?;
-        result.cast()
+        result.init(&measure, &item.upcast())?;
+        result.into_upcast()
     })
 }
 
@@ -47,20 +49,20 @@ pub(in crate::stepcaf_control) fn create_qualified_dim_value(
     measure_name: &str,
     is_angle: bool,
     qualified: &Handle<StepShapeQualifiedRepresentationItem>,
-) -> Result<Handle<StepReprReprItemAndMeasureWithUnit>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>, Failure> {
     let item = Handle::new(StepReprRepresentationItem::new());
     item.init(&Handle::new(HAsciiString::copied(step_live(name, WHERE)?)));
     let measure = measure_with_unit(value, unit, measure_name)?;
     Ok(if is_angle {
         // Angle & with qualifiers
         let result = Handle::new(StepReprReprItemAndPlaneAngleMeasureWithUnitAndQRI::new());
-        result.init(&measure, &item, qualified)?;
-        result.cast()
+        result.init(&measure, &item.upcast(), qualified)?;
+        result.into_upcast()
     } else {
         // Length & with qualifiers
         let result = Handle::new(StepReprReprItemAndLengthMeasureWithUnitAndQRI::new());
-        result.init(&measure, &item, qualified)?;
-        result.cast()
+        result.init(&measure, &item.upcast(), qualified)?;
+        result.into_upcast()
     })
 }
 
@@ -80,9 +82,9 @@ fn shape_aspect_name(label: &TdfLabel) -> Result<Handle<HAsciiString>, Failure> 
 
 /// The array holding one representation item.
 pub(in crate::stepcaf_control) fn one_item(
-    item: &Handle<StepReprRepresentationItem>,
-) -> Result<Handle<HArray1<Handle<StepReprRepresentationItem>>>, Failure> {
-    let items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, 1)?;
+    item: &StepBaseHandle<StepReprRepresentationItem>,
+) -> Result<Handle<HArray1<StepBaseHandle<StepReprRepresentationItem>>>, Failure> {
+    let items = step_new_array1::<StepBaseHandle<StepReprRepresentationItem>>(1, 1)?;
     step_array1_set(&items, 1, item.clone(), WHERE)?;
     Ok(items)
 }
@@ -104,9 +106,9 @@ impl WriterState {
         ws: &Handle<XSControlWorkSession>,
         label: &TdfLabel,
         shape: &Shape,
-        context: &mut Handle<StepReprRepresentationContext>,
+        context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         gisu: &mut Handle<StepAP242GeometricItemSpecificUsage>,
-    ) -> Result<Handle<StepReprShapeAspect>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
         // Get working data
         let model = model_of(ws)?;
         let fp = finder_process_of(ws)?;
@@ -146,14 +148,14 @@ impl WriterState {
         model.add_with_refs(&aspect.cast(), 0, false)?;
         model.add_with_refs(&usage.cast(), 0, false)?;
         *gisu = usage;
-        Ok(aspect)
+        Ok(aspect.into_upcast())
     }
     /// `writePresentation`: the tessellated presentation of a GD&T object and its annotation plane.
     pub(in crate::stepcaf_control) fn write_presentation(
         &mut self,
         ws: &Handle<XSControlWorkSession>,
         presentation: &GdtPresentation,
-        dimension: &Handle<StandardTransient>,
+        dimension: &Handle<dyn Transient>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
         if presentation.shape.is_null() {
@@ -219,8 +221,8 @@ impl WriterState {
         step_array1_set(&styles, 1, style_item, WHERE)?;
         let style = Handle::new(StepVisualPresentationStyleAssignment::new());
         style.init(&styles);
-        let plane_styles = step_new_array1::<Handle<StepVisualPresentationStyleAssignment>>(1, 1)?;
-        step_array1_set(&plane_styles, 1, style, WHERE)?;
+        let plane_styles = step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>(1, 1)?;
+        step_array1_set(&plane_styles, 1, style.into_upcast(), WHERE)?;
         // Plane
         let plane = Handle::new(StepGeomPlane::new());
         let axis =

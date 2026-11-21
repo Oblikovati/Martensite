@@ -89,12 +89,12 @@ macro_rules! rw_block_0019 {
         if !$data.check_nb_params($num, 1, $ach, "global_unit_assigned_context")? {
             return Ok(());
         }
-        let mut $a_units: Handle<HArray1<Handle<StepBasicNamedUnit>>> = Default::default();
-        let mut $anent2: Handle<StepBasicNamedUnit> = Default::default();
+        let mut $a_units: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>> = Default::default();
+        let mut $anent2: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>> = Default::default();
         let mut $nsub2: i32 = Default::default();
         if $data.read_sub_list($num, 1, "units", $ach, &mut $nsub2, false, 0, 0)? {
             let $nb2: i32 = $data.nb_params($nsub2)?;
-            $a_units = step_new_array1::<Handle<StepBasicNamedUnit>>(1, $nb2)?;
+            $a_units = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>(1, $nb2)?;
             for $i2 in 1..=$nb2 {
                 if $data.read_entity(
                     $nsub2,

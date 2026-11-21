@@ -1,9 +1,4 @@
 //! The select members of `StepBasic` and the selects that hold immediate values through them.
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other"
-)]
-use super::*;
 use crate::step_data::{
     StepDataSelectMember, StepDataSelectNamed, StepDataSelectReal, StepDataSelectType,
     StepDataSelectValue,
@@ -11,6 +6,11 @@ use crate::step_data::{
 use crate::step_entity::*;
 use crate::{impl_step_select_storage, step_select_case};
 use martensite_tkernel::impl_transient;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other"
+)]
+use martensite_tkernel::standard::Transient;
 
 /// The measure names by case number, from 1, in the order.
 const MEASURE_NAMES: [&str; 16] = [
@@ -45,7 +45,6 @@ impl_transient!(
     StepBasicMeasureValueMember,
     "StepBasicMeasureValueMember",
     StepDataSelectReal,
-    base,
     interfaces: [dyn StepDataSelectMember]
 );
 
@@ -95,7 +94,7 @@ pub struct StepBasicSizeSelect {
 
 impl StepDataSelectType for StepBasicSizeSelect {
     impl_step_select_storage!(value);
-    fn case_num(&self, ent: &Handle<StandardTransient>) -> i32 {
+    fn case_num(&self, ent: &Handle<dyn Transient>) -> i32 {
         step_select_case!(ent; StepBasicSizeMember)
     }
     fn new_member(&self) -> Handle<dyn StepDataSelectMember> {
@@ -133,7 +132,7 @@ pub struct StepBasicSourceItem {
 
 impl StepDataSelectType for StepBasicSourceItem {
     impl_step_select_storage!(value);
-    fn case_num(&self, ent: &Handle<StandardTransient>) -> i32 {
+    fn case_num(&self, ent: &Handle<dyn Transient>) -> i32 {
         step_select_case!(ent; StepDataSelectNamed)
     }
     fn new_member(&self) -> Handle<dyn StepDataSelectMember> {

@@ -13,14 +13,15 @@ use crate::step_shape::StepShapeContextDependentShapeRepresentation;
 use crate::step_visual::{
     StepVisualColour, StepVisualInvisibility, StepVisualInvisibleItem,
     StepVisualMechanicalDesignGeometricPresentationRepresentation,
-    StepVisualPresentationRepresentation, StepVisualPresentationStyleAssignment,
+    StepVisualPresentationStyleAssignment,
     StepVisualPresentationStyleByContext, StepVisualPresentationStyleSelect, StepVisualStyledItem,
 };
 use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkbrep::toptools::{MapOfShape, ShapeMapHasher};
 use martensite_tkernel::ncollection::IndexedDataMap;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::tdf::TdfLabel;
@@ -38,14 +39,18 @@ mod labels;
 #[allow(unused_imports, reason = "what the sibling modules use")]
 pub use labels::*;
 
-type MdgprMap = IndexedDataMap<Shape, Handle<StandardTransient>, ShapeMapHasher>;
+pub(super) type MdgprMap = IndexedDataMap<
+    Shape,
+    Handle<StepVisualMechanicalDesignGeometricPresentationRepresentation>,
+    ShapeMapHasher,
+>;
 type Settings = IndexedDataMap<Shape, XCAFPrsStyle, ShapeMapHasher>;
 
 /// `bind`: replaces the value of a shape already there.
 pub(super) fn bind_mdgpr(
     map: &mut MdgprMap,
     shape: &Shape,
-    mdgpr: Handle<StandardTransient>,
+    mdgpr: Handle<StepVisualMechanicalDesignGeometricPresentationRepresentation>,
 ) -> Result<(), Failure> {
     if map.contains(shape) {
         *map.change_from_key(shape)? = mdgpr;
@@ -58,17 +63,17 @@ pub(super) fn bind_mdgpr(
 /// The colours created so far, one entity per colour.
 #[derive(Default)]
 struct SharedColours {
-    dpdcs: HashMap<String, Handle<StandardTransient>>,
-    col_rgbs: HashMap<[u64; 3], Handle<StandardTransient>>,
+    dpdcs: HashMap<String, Handle<dyn Transient>>,
+    col_rgbs: HashMap<[u64; 3], Handle<dyn Transient>>,
 }
 
 impl SharedColours {
-    fn encode(&mut self, color: &Color) -> Result<Handle<StepVisualColour>, Failure> {
+    fn encode(&mut self, color: &Color) -> Result<Handle<dyn crate::StepEntityBase<StepVisualColour>>, Failure> {
         StepConstructStyles::encode_color_shared(color, &mut self.dpdcs, &mut self.col_rgbs)
     }
 }
 
-fn is_by_context(psa: &Handle<StepVisualPresentationStyleAssignment>) -> bool {
+fn is_by_context(psa: &Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>) -> bool {
     psa.get().is_none() || psa.cast::<StepVisualPresentationStyleByContext>().is_some()
 }
 
@@ -91,7 +96,7 @@ pub(super) fn get_styled_item(
     shape: &Shape,
     shape_tool: &Handle<XCAFDocShapeTool>,
     styles: &StepConstructStyles,
-    result: &mut Handle<StepVisualStyledItem>,
+    result: &mut Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     map_comp_mdgpr: &MdgprMap,
 ) -> Result<bool, Failure> {
     let mut top_label = TdfLabel::default();
@@ -103,9 +108,8 @@ pub(super) fn get_styled_item(
     if top_shape.is_null() || !map_comp_mdgpr.contains(&top_shape) {
         return Ok(false);
     }
-    let mdgpr: Handle<StepVisualPresentationRepresentation> =
-        map_comp_mdgpr.find_from_key(&top_shape)?.cast();
-    let items = step_live(&mdgpr, WHERE)?.items();
+    let mdgpr = map_comp_mdgpr.find_from_key(&top_shape)?;
+    let items = step_live(mdgpr, WHERE)?.items();
     if items.is_null() {
         return Ok(false);
     }
@@ -113,7 +117,7 @@ pub(super) fn get_styled_item(
     let mut found_items = Vec::new();
     let mut is_filled = false;
     for index in 1..=step_array1_len(&items) {
-        let selected: Handle<StepVisualStyledItem> = step_array1_item(&items, index, WHERE)?.cast();
+        let selected: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> = step_array1_item(&items, index, WHERE)?.cast();
         let Some(live) = selected.get() else {
             continue;
         };
@@ -130,7 +134,7 @@ pub(super) fn get_styled_item(
         }
         if !found_items.is_empty() {
             let item = live.item();
-            let same: Handle<StandardTransient> = item.cast();
+            let same: Handle<dyn Transient> = item.cast();
             if same.is_null() || !found_items.contains(&same) {
                 continue;
             }
@@ -145,8 +149,8 @@ pub(super) fn get_styled_item(
 
 /// `setDefaultInstanceColor`: the styles of the top-level PSA of a styled item into `psa`.
 pub(super) fn set_default_instance_color(
-    style_item: &Handle<StepVisualStyledItem>,
-    psa: &Handle<StepVisualPresentationStyleAssignment>,
+    style_item: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    psa: &Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>,
 ) -> Result<bool, Failure> {
     let styles = step_live(style_item, WHERE)?.styles();
     let mut is_found = false;
@@ -227,14 +231,14 @@ impl StyleWalk<'_> {
     #[allow(clippy::too_many_arguments)]
     fn style_item(
         &mut self,
-        item: &Handle<StepReprRepresentationItem>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         style: &XCAFPrsStyle,
-        surf_color: &mut Handle<StepVisualColour>,
-        curv_color: &Handle<StepVisualColour>,
+        surf_color: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+        curv_color: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         render_transp: f64,
-        over: &Handle<StepVisualStyledItem>,
+        over: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
         is_component: bool,
-    ) -> Result<Handle<StepVisualStyledItem>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         let psa = if style.is_visible()
             || surf_color.is_some()
             || curv_color.is_some()

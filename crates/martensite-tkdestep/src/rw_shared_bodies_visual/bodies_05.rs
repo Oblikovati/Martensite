@@ -255,7 +255,7 @@ macro_rules! rw_block_b_0039 {
         rw_block_b_0055!(
             $a_item, $a_name, $a_styles, $ach, $anent2, $data, $i2, $nb2, $nsub2, $num
         );
-        let mut $a_over_ridden_style: Handle<StepVisualStyledItem> = Default::default();
+        let mut $a_over_ridden_style: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> = Default::default();
         $data.read_entity(
             $num,
             4,

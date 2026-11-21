@@ -43,7 +43,7 @@ fn is_document_product(ent: &RootEntity, graph: &InterfaceGraph) -> Result<bool,
     }
     for shared in listed(graph.shareds(ent)?)? {
         if shared
-            .cast::<StepBasicProductDefinitionFormation>()
+            .cast::<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>()
             .is_null()
         {
             continue;
@@ -65,7 +65,7 @@ fn product_is_root(
     graph: &InterfaceGraph,
     model: &StepDataStepModel,
 ) -> Result<bool, Failure> {
-    let pd: Handle<StepBasicProductDefinition> = ent.cast();
+    let pd: Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> = ent.cast();
     // determinate roots used NextAssemblyUsageOccurrence
     for sharing in listed(graph.sharings(ent)?)? {
         let nauo: Handle<StepReprNextAssemblyUsageOccurrence> = sharing.cast();
@@ -88,7 +88,7 @@ fn product_is_root(
     let wanted = String::from_utf8_lossy(context_text.as_bytes()).to_ascii_lowercase();
     let mut is_root = true;
     for shared in listed(graph.shareds(ent)?)? {
-        let context: Handle<StepBasicProductDefinitionContext> = shared.cast();
+        let context: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>> = shared.cast();
         let Some(live) = context.get() else {
             continue;
         };
@@ -134,18 +134,18 @@ fn sdr_is_root(ent: &RootEntity) -> Result<bool, Failure> {
     }
     Ok(live
         .used_representation()
-        .cast::<StepShapeShapeRepresentation>()
+        .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
         .is_some())
 }
 
 /// A relationship of `sr` whose other representation has a shape_definition_representation.
 fn related_has_sdr(
-    sr: &Handle<StepShapeShapeRepresentation>,
-    relationship: &Handle<StepReprRepresentationRelationship>,
+    sr: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
+    relationship: &Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>,
     graph: &InterfaceGraph,
 ) -> Result<bool, Failure> {
     let live = step_live(relationship, "StepControlReader")?;
-    let mut other: Handle<StepShapeShapeRepresentation> = live.rep1().cast();
+    let mut other: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = live.rep1().cast();
     if *sr == other {
         other = live.rep2().cast();
     }
@@ -165,11 +165,11 @@ fn mapped_into_representation(
     graph: &InterfaceGraph,
 ) -> Result<bool, Failure> {
     for sharing in listed(graph.sharings(&map.cast())?)? {
-        if sharing.cast::<StepReprMappedItem>().is_null() {
+        if sharing.cast::<dyn crate::StepEntityBase<StepReprMappedItem>>().is_null() {
             continue;
         }
         for user in listed(graph.sharings(&sharing)?)? {
-            if user.cast::<StepShapeShapeRepresentation>().is_some() {
+            if user.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some() {
                 return Ok(true);
             }
         }
@@ -179,7 +179,7 @@ fn mapped_into_representation(
 
 /// Whether a shape_representation is a root when products are not read.
 fn shape_representation_is_root(ent: &RootEntity, graph: &InterfaceGraph) -> Result<bool, Failure> {
-    let sr: Handle<StepShapeShapeRepresentation> = ent.cast();
+    let sr: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = ent.cast();
     for sharing in listed(graph.sharings(ent)?)? {
         if sharing
             .cast::<StepShapeShapeDefinitionRepresentation>()
@@ -187,7 +187,7 @@ fn shape_representation_is_root(ent: &RootEntity, graph: &InterfaceGraph) -> Res
         {
             return Ok(false);
         }
-        let relationship: Handle<StepReprRepresentationRelationship> = sharing.cast();
+        let relationship: Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>> = sharing.cast();
         if relationship.is_some() && related_has_sdr(&sr, &relationship, graph)? {
             return Ok(false);
         }
@@ -224,13 +224,13 @@ pub(super) fn roots_for_transfer(
         let mut found = Vec::new();
         // Special case to read invalid shape_representation without links to shapes.
         if read_all
-            && (ent.cast::<StepShapeManifoldSolidBrep>().is_some()
+            && (ent.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>().is_some()
                 || ent.cast::<StepShapeShellBasedSurfaceModel>().is_some())
             && !graph.sharings(&ent)?.more()
         {
             found.push(ent.clone());
         }
-        if ent.cast::<StepBasicProductDefinition>().is_some()
+        if ent.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>().is_some()
             && !is_document_product(&ent, graph)?
             && product_is_root(&ent, graph, live_model)?
         {
@@ -244,7 +244,7 @@ pub(super) fn roots_for_transfer(
             {
                 found.push(ent.clone());
             }
-            if ent.cast::<StepShapeShapeRepresentation>().is_some()
+            if ent.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some()
                 && shape_representation_is_root(&ent, graph)?
             {
                 found.push(ent.clone());

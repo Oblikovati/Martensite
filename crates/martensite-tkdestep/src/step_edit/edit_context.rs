@@ -2,9 +2,10 @@
 //! ProductDefinition, ApplicationProtocolDefinition, ProductRelatedProductCategory.
 use crate::step_construct::StepConstructContextTool;
 use crate::step_data::{StepDataFactors, StepDataStepModel};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -20,14 +21,12 @@ use martensite_tkxsbase::{
 /// assert_eq!(editor.get().unwrap().label().as_bytes(), b"STEP : Product Definition Context");
 /// ```
 pub struct STEPEditEditContext {
-    transient: StandardTransient,
     base: IFSelectEditorBase,
 }
 impl_transient!(
     STEPEditEditContext,
     "STEPEditEditContext",
     dyn IFSelectEditor,
-    transient,
     interfaces: [dyn IFSelectEditor]
 );
 
@@ -35,7 +34,6 @@ impl STEPEditEditContext {
     /// `STEPEditEditContext()`.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let editor = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectEditorBase::new(5),
         });
         let Some(live) = editor.get() else {
@@ -120,7 +118,7 @@ impl IFSelectEditor for STEPEditEditContext {
     fn load(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let step = model.cast::<StepDataStepModel>();
@@ -141,7 +139,7 @@ impl IFSelectEditor for STEPEditEditContext {
     fn apply(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let step = model.cast::<StepDataStepModel>();

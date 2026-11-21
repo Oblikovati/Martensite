@@ -32,7 +32,7 @@ impl RwStepGeomRwSurfaceCurveAndBoundedCurve {
         if !data.check_nb_params(num1, 3, ach, "surface_curve")? {
             return Ok(());
         }
-        let mut a_curve3d: Handle<StepGeomCurve> = Default::default();
+        let mut a_curve3d: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
         data.read_entity(
             num1,
             1,
@@ -90,7 +90,7 @@ impl RwStepGeomRwSurfaceCurveAndBoundedCurve {
             &a_associated_geometry,
             a_master_representation,
         );
-        ent.state.write().my_bounded_curve = Handle::new(StepGeomBoundedCurve::new());
+        ent.state.write().my_bounded_curve = Handle::new(StepGeomBoundedCurve::new()).into_upcast();
         step_live(&ent.bounded_curve(), "ReadStep")?.init(&a_name);
         Ok(())
     }
@@ -115,9 +115,7 @@ impl RwStepGeomRwSurfaceCurveAndBoundedCurve {
         ent: &Handle<StepGeomSurfaceCurveAndBoundedCurve>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
-        let tool: RwStepGeomRwSurfaceCurve = Default::default();
-        tool.share(&ent.cast(), iter)?;
-        Ok(())
+        RwStepGeomRwSurfaceCurve::new().share(&ent.upcast(), iter)
     }
 }
 

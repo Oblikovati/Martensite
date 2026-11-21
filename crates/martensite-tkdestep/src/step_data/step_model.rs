@@ -2,10 +2,11 @@
 //! its units.
 use super::{StepData, StepDataStepWriter};
 use crate::de_step::DeStepParameters;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
     resource::FormatType,
-    standard::{Failure, Handle, RuntimeType, SharedState, StandardTransient},
+    standard::{Failure, Handle, RuntimeType, SharedState},
     tcollection::HAsciiString,
     units_methods::LengthUnit,
 };
@@ -37,7 +38,6 @@ struct StepModelState {
 /// ```
 #[derive(Default)]
 pub struct StepDataStepModel {
-    transient: StandardTransient,
     base: InterfaceModelBase,
     state: SharedState<StepModelState>,
     parameters: SharedState<DeStepParameters>,
@@ -46,7 +46,6 @@ impl_transient!(
     StepDataStepModel,
     "StepDataStepModel",
     dyn InterfaceInterfaceModel,
-    transient,
     interfaces: [dyn InterfaceInterfaceModel]
 );
 
@@ -90,7 +89,7 @@ impl StepDataStepModel {
         model
     }
     /// `entity(num)`.
-    pub fn entity(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn entity(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         self.value(num)
     }
     /// `Header`.
@@ -104,15 +103,15 @@ impl StepDataStepModel {
         self.state.read().theheader.nb_typed_entities(atype) == 1
     }
     /// `header_entity(atype)`.
-    pub fn header_entity(&self, atype: &RuntimeType) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn header_entity(&self, atype: &RuntimeType) -> Result<Handle<dyn Transient>, Failure> {
         self.state.read().theheader.typed_entity(atype, 0)
     }
     /// `add_header_entity(ent)`.
-    pub fn add_header_entity(&self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn add_header_entity(&self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         self.state.write().theheader.append(ent)
     }
     /// `set_ident_label(ent, ident)`: nothing when `ent` is not in the model.
-    pub fn set_ident_label(&self, ent: &Handle<StandardTransient>, ident: i32) {
+    pub fn set_ident_label(&self, ent: &Handle<dyn Transient>, ident: i32) {
         let num = self.number(ent);
         if num == 0 {
             return;
@@ -126,7 +125,7 @@ impl StepDataStepModel {
         labels[num as usize] = ident;
     }
     /// `ident_label(ent)`: 0 when it is not in the model.
-    pub fn ident_label(&self, ent: &Handle<StandardTransient>) -> i32 {
+    pub fn ident_label(&self, ent: &Handle<dyn Transient>) -> i32 {
         if self.state.read().theidnums.is_none() {
             return 0;
         }
@@ -140,7 +139,7 @@ impl StepDataStepModel {
             .and_then(|rank| labels.and_then(|labels| labels.get(rank).copied()))
             .unwrap_or(0)
     }
-    fn label_of_entity(&self, ent: &Handle<StandardTransient>) -> String {
+    fn label_of_entity(&self, ent: &Handle<dyn Transient>) -> String {
         let has_labels = self.state.read().theidnums.is_some();
         let num = if has_labels { self.number(ent) } else { 0 };
         label_text(self.label_of(num), num)
@@ -274,10 +273,10 @@ impl InterfaceInterfaceModel for StepDataStepModel {
         writer.print(s)?;
         Ok(())
     }
-    fn print_label(&self, ent: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()> {
+    fn print_label(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()> {
         s.write_all(self.label_of_entity(ent).as_bytes())
     }
-    fn string_label(&self, ent: &Handle<StandardTransient>) -> Handle<HAsciiString> {
+    fn string_label(&self, ent: &Handle<dyn Transient>) -> Handle<HAsciiString> {
         Handle::new(HAsciiString::new(self.label_of_entity(ent)))
     }
 }

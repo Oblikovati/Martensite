@@ -66,7 +66,7 @@ fn init_round_trip_step_visual_point_style() {
     let a_marker_size = StepBasicSizeSelect::default();
     let a_marker_colour = Handle::new(StepVisualColour::new());
     let object = StepVisualPointStyle::new();
-    object.init(&a_name, &a_marker, &a_marker_size, &a_marker_colour);
+    object.init(&a_name, &a_marker, &a_marker_size, &a_marker_colour.upcast());
     assert!(object.name() == a_name);
     assert!(object.marker_colour() == a_marker_colour);
 }

@@ -51,8 +51,8 @@ fn init_round_trip_step_basic_product_definition_reference_with_local_representa
         &the_source,
         &the_id,
         &the_description,
-        &the_formation,
-        &the_frame_of_reference,
+        &the_formation.upcast(),
+        &the_frame_of_reference.upcast(),
     );
     assert!(object.source() == the_source);
 }
@@ -82,8 +82,8 @@ fn init_round_trip_step_basic_product_definition_relationship() {
             &a_name,
             has_description,
             &a_description,
-            &a_relating_product_definition,
-            &a_related_product_definition,
+            &a_relating_product_definition.upcast(),
+            &a_related_product_definition.upcast(),
         )
         .unwrap();
     assert!(object.id() == a_id);
@@ -108,9 +108,9 @@ fn init_round_trip_step_basic_product_definition_with_associated_documents() {
     let a_description = Handle::new(HAsciiString::new("sample"));
     let a_formation = Handle::new(StepBasicProductDefinitionFormation::new());
     let a_frame = Handle::new(StepBasicProductDefinitionContext::new());
-    let a_doc_ids = Handle::new(HArray1::<Handle<StepBasicDocument>>::with_bounds(1, 2).unwrap());
+    let a_doc_ids = Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>::with_bounds(1, 2).unwrap());
     let object = StepBasicProductDefinitionWithAssociatedDocuments::new();
-    object.init(&a_id, &a_description, &a_formation, &a_frame, &a_doc_ids);
+    object.init(&a_id, &a_description, &a_formation.upcast(), &a_frame.upcast(), &a_doc_ids);
     assert!(object.doc_ids() == a_doc_ids);
 }
 

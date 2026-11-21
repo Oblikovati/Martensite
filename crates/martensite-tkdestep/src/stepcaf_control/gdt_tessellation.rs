@@ -12,7 +12,8 @@ use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Face, Shape};
 use martensite_tkernel::ncollection::{HArray1, HArray2};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomLine};
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -90,8 +91,8 @@ fn normals_array(
 /// `GenerateTriangleStrips`: a triangulation has no strips or fans, so each triangle is one strip.
 fn triangle_strips(
     triangulation: &Triangulation,
-) -> Result<Handle<HArray1<Handle<StandardTransient>>>, Failure> {
-    let strips = step_new_array1::<Handle<StandardTransient>>(1, triangulation.nb_triangles())?;
+) -> Result<Handle<HArray1<Handle<dyn Transient>>>, Failure> {
+    let strips = step_new_array1::<Handle<dyn Transient>>(1, triangulation.nb_triangles())?;
     for index in 1..=triangulation.nb_triangles() {
         let triangle = triangulation.triangle(index)?;
         let strip = step_new_array1::<i32>(1, 3)?;
@@ -120,7 +121,7 @@ fn surface_set(face: &Face) -> Result<Handle<StepVisualComplexTriangulatedSurfac
         &Handle::new(HArray1::<i32>::default()),
         &triangle_strips(triangulation)?,
         // All triangles were already written as triangle strips.
-        &Handle::new(HArray1::<Handle<StandardTransient>>::default()),
+        &Handle::new(HArray1::<Handle<dyn Transient>>::default()),
     );
     Ok(set)
 }
@@ -180,14 +181,14 @@ fn curve_set(shape: &Shape) -> Result<Handle<StepVisualTessellatedCurveSet>, Fai
 pub(super) fn tessellation_of(
     shape: &Shape,
 ) -> Result<Handle<StepVisualTessellatedGeometricSet>, Failure> {
-    let mut items: Vec<Handle<StepVisualTessellatedItem>> = vec![curve_set(shape)?.cast()];
+    let mut items: Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>> = vec![curve_set(shape)?.cast()];
     let mut faces = Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)?;
     while faces.more() {
         items.push(surface_set(&topods::face(faces.current())?)?.cast());
         faces.next()?;
     }
     let set = Handle::new(StepVisualTessellatedGeometricSet::new());
-    let items: Array1<'static, Handle<StepVisualTessellatedItem>> =
+    let items: Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>> =
         crate::geom_to_step::array1_of(items);
     set.init(&empty_name(), &ObjectHandle::new(items));
     Ok(set)

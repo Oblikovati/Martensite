@@ -310,7 +310,7 @@ impl RwStepDimTolRwGeometricToleranceRelationship {
             return Ok(());
         }
         rw_block_b_0147!(a_description, a_name, ach, data, num);
-        let mut a_relating_geometric_tolerance: Handle<StepDimTolGeometricTolerance> =
+        let mut a_relating_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>> =
             Default::default();
         data.read_entity(
             num,
@@ -320,7 +320,7 @@ impl RwStepDimTolRwGeometricToleranceRelationship {
             StepDimTolGeometricTolerance::static_type(),
             &mut a_relating_geometric_tolerance,
         )?;
-        let mut a_related_geometric_tolerance: Handle<StepDimTolGeometricTolerance> =
+        let mut a_related_geometric_tolerance: Handle<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>> =
             Default::default();
         data.read_entity(
             num,

@@ -18,7 +18,7 @@ fn with_knots_from(
     source: &StepGeomBSplineSurface,
     u: &GeneratedKnots,
     v: &GeneratedKnots,
-) -> Handle<StepGeomBSplineSurface> {
+) -> Handle<dyn crate::StepEntityBase<StepGeomBSplineSurface>> {
     let spline = StepGeomBSplineSurfaceWithKnots::new();
     spline.set_u_degree(source.u_degree());
     spline.set_v_degree(source.v_degree());
@@ -40,7 +40,7 @@ fn rational_from(
     weights: &Handle<HArray2<f64>>,
     u: &GeneratedKnots,
     v: &GeneratedKnots,
-) -> Handle<StepGeomBSplineSurface> {
+) -> Handle<dyn crate::StepEntityBase<StepGeomBSplineSurface>> {
     let spline = StepGeomBSplineSurfaceWithKnotsAndRationalBSplineSurface::new();
     spline.init_fields(
         &source.name(),
@@ -86,9 +86,9 @@ fn quasi_uniform_knots(source: &StepGeomBSplineSurface) -> (GeneratedKnots, Gene
 /// The B-spline form of a Bezier, uniform or quasi-uniform surface (they are transformed before
 /// being mapped); a null handle when `ss` is none of these.
 fn descriptor_as_bspline(
-    ss: &Handle<StepGeomBoundedSurface>,
-) -> Result<Handle<StepGeomBSplineSurface>, Failure> {
-    let base = ss.cast::<StepGeomBSplineSurface>();
+    ss: &Handle<dyn crate::StepEntityBase<StepGeomBoundedSurface>>,
+) -> Result<Handle<dyn crate::StepEntityBase<StepGeomBSplineSurface>>, Failure> {
+    let base = ss.cast::<dyn crate::StepEntityBase<StepGeomBSplineSurface>>();
     let Some(source) = base.get() else {
         return Ok(Handle::default());
     };
@@ -125,7 +125,7 @@ fn descriptor_as_bspline(
 impl StepToGeom {
     /// `make_bounded_surface`: null for another bounded surface.
     pub fn make_bounded_surface(
-        ss: &Handle<StepGeomBoundedSurface>,
+        ss: &Handle<dyn crate::StepEntityBase<StepGeomBoundedSurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomBoundedSurface>, Failure> {
         if ss

@@ -142,7 +142,7 @@ fn spline_keeps_poles_knots_and_evaluation() {
         .unwrap()
         .value()
         .unwrap();
-    let as_spline: Handle<StepGeomBSplineCurve> = entity.cast();
+    let as_spline: Handle<dyn martensite_tkdestep::StepEntityBase<StepGeomBSplineCurve>> = entity.cast();
     assert_eq!(as_spline.get().unwrap().degree(), 3);
     let round = StepToGeom::make_bspline_curve(&as_spline, &factors).unwrap();
     let live = round.get().unwrap();

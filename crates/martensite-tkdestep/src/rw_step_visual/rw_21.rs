@@ -130,7 +130,7 @@ impl RwStepVisualRwTessellatedShapeRepresentation {
                 .array1()
                 .length()
             {
-                let var0: Handle<StepReprRepresentationItem> =
+                let var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                     step_array1_item(&the_ent.parent.parent.items(), i1, "Share")?;
                 the_iter.add_item(&var0.cast());
             }
@@ -238,7 +238,7 @@ impl RwStepVisualRwTessellatedShapeRepresentationWithAccuracyParameters {
             .array1()
             .length()
         {
-            let var0: Handle<StepReprRepresentationItem> =
+            let var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&the_ent.parent.parent.parent.items(), i1, "Share")?;
             the_iter.add_item(&var0.cast());
         }

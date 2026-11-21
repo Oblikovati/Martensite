@@ -116,7 +116,7 @@ macro_rules! rw_block_0099 {
         $sw.send_entity(&$ent.parent.parent.name())?;
         $sw.open_sub()?;
         for $i1 in 1..=$ent.parent.parent.nb_items() {
-            let $var0: Handle<StepReprRepresentationItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&$ent.parent.parent.items(), $i1, "WriteStep")?;
             $sw.send_entity(&$var0)?;
         }
@@ -133,7 +133,8 @@ macro_rules! rw_block_0100 {
         }
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_conversion_factor: Handle<StandardTransient> = Default::default();
+        let mut $a_conversion_factor: Handle<dyn martensite_tkernel::standard::Transient> =
+            Default::default();
         $data.read_entity(
             $num,
             2,

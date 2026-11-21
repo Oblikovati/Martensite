@@ -47,7 +47,7 @@ fn init_round_trip_step_geom_evaluated_degenerate_pcurve() {
     let object = StepGeomEvaluatedDegeneratePcurve::new();
     object.init(
         &a_name,
-        &a_basis_surface,
+        &a_basis_surface.upcast(),
         &a_reference_to_curve,
         &a_equivalent_point,
     );
@@ -249,7 +249,7 @@ fn init_round_trip_step_geom_offset_curve3d() {
     let object = StepGeomOffsetCurve3d::new();
     object.init(
         &a_name,
-        &a_basis_curve,
+        &a_basis_curve.upcast(),
         a_distance,
         a_self_intersect,
         &a_ref_direction,
@@ -277,7 +277,7 @@ fn init_round_trip_step_geom_offset_surface() {
     let a_distance = 2.5;
     let a_self_intersect = StepDataLogical::default();
     let object = StepGeomOffsetSurface::new();
-    object.init(&a_name, &a_basis_surface, a_distance, a_self_intersect);
+    object.init(&a_name, &a_basis_surface.upcast(), a_distance, a_self_intersect);
     assert!(object.basis_surface() == a_basis_surface);
     assert!(object.distance() == a_distance);
     assert!(object.self_intersect() == a_self_intersect);
@@ -342,7 +342,7 @@ fn init_round_trip_step_geom_pcurve() {
     let a_basis_surface = Handle::new(StepGeomSurface::new());
     let a_reference_to_curve = Handle::new(StepReprDefinitionalRepresentation::new());
     let object = StepGeomPcurve::new();
-    object.init(&a_name, &a_basis_surface, &a_reference_to_curve);
+    object.init(&a_name, &a_basis_surface.upcast(), &a_reference_to_curve);
     assert!(object.basis_surface() == a_basis_surface);
     assert!(object.reference_to_curve() == a_reference_to_curve);
 }

@@ -24,20 +24,20 @@ fn forbidden_setup_notice() {
 step_entity! {
     /// Edge.
     StepShapeEdge, StepShapeEdgeState, "StepShapeEdge", StepShapeTopologicalRepresentationItem, {
-        edge_start: Handle<StepShapeVertex>,
-        edge_end: Handle<StepShapeVertex>,
+        edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+        edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
         oriented: bool,
-        edge_element: Handle<StepShapeEdge>,
+        edge_element: Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
         orientation: bool,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeEdge, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeEdge {
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_edge_start: &Handle<StepShapeVertex>,
-        a_edge_end: &Handle<StepShapeVertex>,
+        a_edge_start: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+        a_edge_end: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
     ) {
         {
             let mut state = self.state.write();
@@ -47,7 +47,7 @@ impl StepShapeEdge {
         self.parent.init(a_name);
     }
     /// `set_edge_start`; forbidden on an oriented edge.
-    pub fn set_edge_start(&self, a_edge_start: &Handle<StepShapeVertex>) {
+    pub fn set_edge_start(&self, a_edge_start: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>) {
         let mut state = self.state.write();
         if state.oriented {
             return forbidden_setup_notice();
@@ -55,11 +55,11 @@ impl StepShapeEdge {
         state.edge_start = a_edge_start.clone();
     }
     /// `EdgeStart`; an oriented edge answers its element's start or end.
-    pub fn edge_start(&self) -> Handle<StepShapeVertex> {
+    pub fn edge_start(&self) -> Handle<dyn crate::StepEntityBase<StepShapeVertex>> {
         self.oriented_vertex(true)
     }
     /// `set_edge_end`; forbidden on an oriented edge.
-    pub fn set_edge_end(&self, a_edge_end: &Handle<StepShapeVertex>) {
+    pub fn set_edge_end(&self, a_edge_end: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>) {
         let mut state = self.state.write();
         if state.oriented {
             return forbidden_setup_notice();
@@ -67,11 +67,11 @@ impl StepShapeEdge {
         state.edge_end = a_edge_end.clone();
     }
     /// `EdgeEnd`; an oriented edge answers its element's end or start.
-    pub fn edge_end(&self) -> Handle<StepShapeVertex> {
+    pub fn edge_end(&self) -> Handle<dyn crate::StepEntityBase<StepShapeVertex>> {
         self.oriented_vertex(false)
     }
     /// The start (`first`) or the end, read through the element of an oriented edge.
-    fn oriented_vertex(&self, first: bool) -> Handle<StepShapeVertex> {
+    fn oriented_vertex(&self, first: bool) -> Handle<dyn crate::StepEntityBase<StepShapeVertex>> {
         let (element, same_sense) = {
             let state = self.state.read();
             if !state.oriented {
@@ -93,7 +93,7 @@ impl StepShapeEdge {
 
 step_entity! {
     /// Oriented edge.
-    custom_default StepShapeOrientedEdge, StepShapeOrientedEdgeState, "StepShapeOrientedEdge", StepShapeEdge, {}
+    custom_default StepShapeOrientedEdge, StepShapeOrientedEdgeState, "StepShapeOrientedEdge", StepShapeEdge, {}, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeEdge, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl Default for StepShapeOrientedEdge {
     fn default() -> Self {
@@ -114,7 +114,7 @@ impl StepShapeOrientedEdge {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_edge_element: &Handle<StepShapeEdge>,
+        a_edge_element: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
         a_orientation: bool,
     ) {
         self.set_edge_element(a_edge_element);
@@ -123,11 +123,11 @@ impl StepShapeOrientedEdge {
             .init(a_name, &Handle::default(), &Handle::default());
     }
     /// `set_edge_element`.
-    pub fn set_edge_element(&self, a_edge_element: &Handle<StepShapeEdge>) {
+    pub fn set_edge_element(&self, a_edge_element: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>) {
         self.parent.state.write().edge_element = a_edge_element.clone();
     }
     /// `edge_element`.
-    pub fn edge_element(&self) -> Handle<StepShapeEdge> {
+    pub fn edge_element(&self) -> Handle<dyn crate::StepEntityBase<StepShapeEdge>> {
         self.parent.state.read().edge_element.clone()
     }
     /// `set_orientation`.
@@ -142,7 +142,7 @@ impl StepShapeOrientedEdge {
 
 /// The accessors a base with a list field shares; `$element` holds the redefining element.
 macro_rules! redefined_list {
-    ($class:ident, $recorded:literal, $item:ty, $field:ident, $set:ident, $get:ident, $value:ident, $count:ident, $count_recorded:literal) => {
+    ($class:ident, $recorded:literal, $item:ty, $element_type:ty, $field:ident, $set:ident, $get:ident, $value:ident, $count:ident, $count_recorded:literal) => {
         impl $class {
             /// Sets the list; forbidden on an oriented object.
             pub fn $set(&self, list: &Handle<HArray1<Handle<$item>>>) {
@@ -183,7 +183,7 @@ macro_rules! redefined_list {
                 }
             }
             /// The own list, or the element when the object is oriented.
-            fn list_or_element(&self) -> (Handle<HArray1<Handle<$item>>>, Option<Handle<$class>>) {
+            fn list_or_element(&self) -> (Handle<HArray1<Handle<$item>>>, Option<Handle<$element_type>>) {
                 let state = self.state.read();
                 let element = state.oriented.then(|| state.element.clone());
                 (state.$field.clone(), element)
@@ -244,18 +244,18 @@ macro_rules! oriented_class {
 step_entity! {
     /// Face.
     StepShapeFace, StepShapeFaceState, "StepShapeFace", StepShapeTopologicalRepresentationItem, {
-        bounds: Handle<HArray1<Handle<StepShapeFaceBound>>>,
+        bounds: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>>,
         oriented: bool,
-        element: Handle<StepShapeFace>,
+        element: Handle<dyn crate::StepEntityBase<StepShapeFace>>,
         orientation: bool,
-    }
+    }, bases: [crate::step_shape::StepShapeFace, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeFace {
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_bounds: &Handle<HArray1<Handle<StepShapeFaceBound>>>,
+        a_bounds: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>>,
     ) {
         self.state.write().bounds = a_bounds.clone();
         self.parent.init(a_name);
@@ -264,7 +264,8 @@ impl StepShapeFace {
 redefined_list!(
     StepShapeFace,
     "StepShapeFace",
-    StepShapeFaceBound,
+    dyn crate::StepEntityBase<StepShapeFaceBound>,
+    dyn crate::StepEntityBase<StepShapeFace>,
     bounds,
     set_bounds,
     bounds,
@@ -274,32 +275,32 @@ redefined_list!(
 );
 step_entity! {
     /// Oriented face.
-    custom_default StepShapeOrientedFace, StepShapeOrientedFaceState, "StepShapeOrientedFace", StepShapeFace, {}
+    custom_default StepShapeOrientedFace, StepShapeOrientedFaceState, "StepShapeOrientedFace", StepShapeFace, {}, bases: [crate::step_shape::StepShapeFace, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 oriented_class!(
     StepShapeOrientedFace,
     StepShapeFace,
-    StepShapeFace,
+    dyn crate::StepEntityBase<StepShapeFace>,
     set_face_element,
     face_element,
-    Handle<HArray1<Handle<StepShapeFaceBound>>>
+    Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>>
 );
 
 step_entity! {
     /// Connected face set.
     StepShapeConnectedFaceSet, StepShapeConnectedFaceSetState, "StepShapeConnectedFaceSet", StepShapeTopologicalRepresentationItem, {
-        cfs_faces: Handle<HArray1<Handle<StepShapeFace>>>,
+        cfs_faces: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>>,
         oriented: bool,
-        element: Handle<StepShapeConnectedFaceSet>,
+        element: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
         orientation: bool,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeConnectedFaceSet, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeConnectedFaceSet {
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_cfs_faces: &Handle<HArray1<Handle<StepShapeFace>>>,
+        a_cfs_faces: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>>,
     ) {
         self.state.write().cfs_faces = a_cfs_faces.clone();
         self.parent.init(a_name);
@@ -308,7 +309,8 @@ impl StepShapeConnectedFaceSet {
 redefined_list!(
     StepShapeConnectedFaceSet,
     "StepShapeConnectedFaceSet",
-    StepShapeFace,
+    dyn crate::StepEntityBase<StepShapeFace>,
+    dyn crate::StepEntityBase<StepShapeConnectedFaceSet>,
     cfs_faces,
     set_cfs_faces,
     cfs_faces,
@@ -318,27 +320,27 @@ redefined_list!(
 );
 step_entity! {
     /// Oriented closed shell.
-    custom_default StepShapeOrientedClosedShell, StepShapeOrientedClosedShellState, "StepShapeOrientedClosedShell", StepShapeConnectedFaceSet, {}
+    custom_default StepShapeOrientedClosedShell, StepShapeOrientedClosedShellState, "StepShapeOrientedClosedShell", StepShapeConnectedFaceSet, {}, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeConnectedFaceSet, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 oriented_class!(
     StepShapeOrientedClosedShell,
     StepShapeConnectedFaceSet,
-    StepShapeClosedShell,
+    dyn crate::StepEntityBase<StepShapeClosedShell>,
     set_closed_shell_element,
     closed_shell_element,
-    Handle<HArray1<Handle<StepShapeFace>>>
+    Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>>
 );
 step_entity! {
     /// Oriented open shell.
-    custom_default StepShapeOrientedOpenShell, StepShapeOrientedOpenShellState, "StepShapeOrientedOpenShell", StepShapeConnectedFaceSet, {}
+    custom_default StepShapeOrientedOpenShell, StepShapeOrientedOpenShellState, "StepShapeOrientedOpenShell", StepShapeConnectedFaceSet, {}, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeConnectedFaceSet, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 oriented_class!(
     StepShapeOrientedOpenShell,
     StepShapeConnectedFaceSet,
-    StepShapeOpenShell,
+    dyn crate::StepEntityBase<StepShapeOpenShell>,
     set_open_shell_element,
     open_shell_element,
-    Handle<HArray1<Handle<StepShapeFace>>>
+    Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>>
 );
 
 step_entity! {
@@ -346,9 +348,9 @@ step_entity! {
     StepShapePath, StepShapePathState, "StepShapePath", StepShapeTopologicalRepresentationItem, {
         edge_list: Handle<HArray1<Handle<StepShapeOrientedEdge>>>,
         oriented: bool,
-        path_element: Handle<StepShapeEdgeLoop>,
+        path_element: Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
         orientation: bool,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapePath {
     /// `init`.
@@ -411,7 +413,7 @@ impl StepShapePath {
         }
     }
     /// The own list, the element of an oriented path, and its orientation.
-    fn path_parts(&self) -> (OrientedEdgeList, Option<Handle<StepShapeEdgeLoop>>, bool) {
+    fn path_parts(&self) -> (OrientedEdgeList, Option<Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>>, bool) {
         let state = self.state.read();
         let element = state.oriented.then(|| state.path_element.clone());
         (state.edge_list.clone(), element, state.orientation)
@@ -419,7 +421,7 @@ impl StepShapePath {
 }
 step_entity! {
     /// Oriented path.
-    custom_default StepShapeOrientedPath, StepShapeOrientedPathState, "StepShapeOrientedPath", StepShapePath, {}
+    custom_default StepShapeOrientedPath, StepShapeOrientedPathState, "StepShapeOrientedPath", StepShapePath, {}, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl Default for StepShapeOrientedPath {
     fn default() -> Self {
@@ -440,7 +442,7 @@ impl StepShapeOrientedPath {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_path_element: &Handle<StepShapeEdgeLoop>,
+        a_path_element: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
         a_orientation: bool,
     ) {
         self.set_path_element(a_path_element);
@@ -448,11 +450,11 @@ impl StepShapeOrientedPath {
         self.parent.init(a_name, &Handle::default());
     }
     /// `set_path_element`.
-    pub fn set_path_element(&self, a_path_element: &Handle<StepShapeEdgeLoop>) {
+    pub fn set_path_element(&self, a_path_element: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>) {
         self.parent.state.write().path_element = a_path_element.clone();
     }
     /// `path_element`.
-    pub fn path_element(&self) -> Handle<StepShapeEdgeLoop> {
+    pub fn path_element(&self) -> Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>> {
         self.parent.state.read().path_element.clone()
     }
     /// `set_orientation`.

@@ -24,13 +24,13 @@ impl RwStepBasicRwProductDefinitionWithAssociatedDocuments {
         }
         rw_block_0148!(a_description, a_id, ach, data, num);
         rw_block_0124!(a_formation, a_frame_of_reference, ach, data, num);
-        let mut a_doc_ids: Handle<HArray1<Handle<StepBasicDocument>>> = Default::default();
-        let mut anent5: Handle<StepBasicDocument> = Default::default();
+        let mut a_doc_ids: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>> = Default::default();
+        let mut anent5: Handle<dyn crate::StepEntityBase<StepBasicDocument>> = Default::default();
         let mut nsub5: i32 = Default::default();
         if data.read_sub_list(num, 5, "frame_of_reference", ach, &mut nsub5, false, 0, 0)? {
             let nb5: i32 = data.nb_params(nsub5)?;
             if nb5 > 0 {
-                a_doc_ids = step_new_array1::<Handle<StepBasicDocument>>(1, nb5)?;
+                a_doc_ids = step_new_array1::<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>(1, nb5)?;
             }
             for i5 in 1..=nb5 {
                 if data.read_entity(

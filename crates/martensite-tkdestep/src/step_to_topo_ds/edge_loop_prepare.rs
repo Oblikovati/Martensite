@@ -11,17 +11,18 @@ use crate::step_to_geom::StepToGeom;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Vertex};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkxsbase::transfer::TransferTransientProcess;
 
 /// The 3D curve of an edge, made once for the transfer. A failure is recorded, never raised.
 fn prepare_curve(
-    entity: &Handle<StepGeomCurve>,
+    entity: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
     process: &TransferTransientProcess,
     factors: &StepDataFactors,
 ) -> Handle<dyn GeomCurve> {
-    let start: Handle<StandardTransient> = entity.cast();
+    let start: Handle<dyn Transient> = entity.cast();
     let known: Handle<dyn GeomCurve> = process.find_transient(&start).cast();
     if known.is_some() {
         return known;
@@ -49,9 +50,9 @@ fn prepare_curve(
 }
 
 /// The 3D curve entity of an edge curve: the one of a surface curve, or the geometry itself.
-fn curve_3d_entity(edge_curve: &StepShapeEdgeCurve) -> Handle<StepGeomCurve> {
+fn curve_3d_entity(edge_curve: &StepShapeEdgeCurve) -> Handle<dyn crate::StepEntityBase<StepGeomCurve>> {
     let curve = edge_curve.edge_geometry();
-    match curve.cast::<StepGeomSurfaceCurve>().get() {
+    match curve.cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>().get() {
         Some(surface_curve) => surface_curve.curve3d(),
         None => curve,
     }
@@ -62,8 +63,8 @@ fn curve_3d_entity(edge_curve: &StepShapeEdgeCurve) -> Handle<StepGeomCurve> {
 fn usable_edge(
     entry: &Handle<StepShapeOrientedEdge>,
     process: &TransferTransientProcess,
-) -> Result<Option<Handle<StepShapeEdgeCurve>>, Failure> {
-    let entity: Handle<StandardTransient> = entry.cast();
+) -> Result<Option<Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>>, Failure> {
+    let entity: Handle<dyn Transient> = entry.cast();
     let element = entry
         .get()
         .map(|live| live.edge_element())
@@ -78,13 +79,10 @@ fn usable_edge(
     }
     let nested = element.cast::<StepShapeOrientedEdge>();
     let (holder, inner) = match nested.get() {
-        Some(live) => (
-            nested.clone().cast::<StandardTransient>(),
-            live.edge_element(),
-        ),
+        Some(live) => (nested.clone().cast::<dyn Transient>(), live.edge_element()),
         None => (entity, element),
     };
-    let edge_curve = inner.cast::<StepShapeEdgeCurve>();
+    let edge_curve = inner.cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
     if edge_curve.is_null() {
         process.add_warning_text(&holder, "Edge does not contain EDGE_CURVE, skipped", "");
         return Ok(None);
@@ -96,7 +94,7 @@ fn usable_edge(
 fn merge_confused_vertices(
     edge_curve: &StepShapeEdgeCurve,
     curve: &Handle<dyn GeomCurve>,
-    list_entry: &Handle<StandardTransient>,
+    list_entry: &Handle<dyn Transient>,
     tool: &mut StepToTopoDSTool,
     nm_tool: &mut StepToTopoDSNMTool,
     process: &TransferTransientProcess,
@@ -164,10 +162,10 @@ pub(super) fn prepare_vertices_and_curves(
 
 /// The vertices at the junction of two oriented edges and at their other ends.
 struct Junction {
-    end_of_first: Handle<StepShapeVertex>,
-    start_of_second: Handle<StepShapeVertex>,
-    start_of_first: Handle<StepShapeVertex>,
-    end_of_second: Handle<StepShapeVertex>,
+    end_of_first: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    start_of_second: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    start_of_first: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    end_of_second: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
 }
 
 impl Junction {
@@ -210,7 +208,7 @@ impl Junction {
 fn bind_confused_junction(
     junction: &Junction,
     (v1, v2): (&Vertex, &Vertex),
-    (curve1, curve2): (&Handle<StepShapeEdgeCurve>, &Handle<StepShapeEdgeCurve>),
+    (curve1, curve2): (&Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>, &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>),
     preci: f64,
     tool: &mut StepToTopoDSTool,
 ) -> Result<bool, Failure> {
@@ -232,7 +230,7 @@ fn bind_confused_junction(
 /// by the same vertex; else check that the vertices confuse and make them one vertex.
 pub(super) fn connect_adjacent_edges(
     edge_loop: &StepShapeEdgeLoop,
-    loop_entity: &Handle<StandardTransient>,
+    loop_entity: &Handle<dyn Transient>,
     preci: f64,
     tool: &mut StepToTopoDSTool,
     nm_tool: &mut StepToTopoDSNMTool,
@@ -246,8 +244,8 @@ pub(super) fn connect_adjacent_edges(
         let (Some(live1), Some(live2)) = (oriented1.get(), oriented2.get()) else {
             continue;
         };
-        let curve1 = live1.edge_element().cast::<StepShapeEdgeCurve>();
-        let curve2 = live2.edge_element().cast::<StepShapeEdgeCurve>();
+        let curve1 = live1.edge_element().cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
+        let curve2 = live2.edge_element().cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
         // see #29979
         let (Some(edge1), Some(edge2)) = (curve1.get(), curve2.get()) else {
             continue;

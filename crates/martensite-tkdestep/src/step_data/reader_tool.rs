@@ -3,9 +3,10 @@ use super::{
     StepDataFileRecognizer, StepDataProtocolOps, StepDataReadWriteModule, StepDataStepModel,
     StepDataStepReaderData, StepDataUndefinedEntity,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     message::Message,
-    standard::{Failure, Handle, RuntimeTyped, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeTyped, SharedState, exceptions},
 };
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceFileReaderData, InterfaceFileReaderDataParams,
@@ -109,7 +110,7 @@ impl StepDataStepReaderTool {
     fn header_entity_read(
         &self,
         rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &StepDataStepModel,
     ) -> Result<(), Failure> {
         let data = self.data_ref()?;
@@ -135,7 +136,7 @@ impl StepDataStepReaderTool {
 /// The trace of the messages of a header entity.
 fn trace_header_messages(
     rank: i32,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     ach: &InterfaceCheck,
 ) -> Result<(), Failure> {
     let name = ent.dynamic_type().map_or("", |kind| kind.name());
@@ -169,7 +170,7 @@ impl InterfaceFileReaderTool for StepDataStepReaderTool {
         &self,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &mut Handle<StandardTransient>,
+        ent: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let reco = self.thereco.read().clone();
         if let Some(live) = reco.get() {
@@ -197,7 +198,7 @@ impl InterfaceFileReaderTool for StepDataStepReaderTool {
     fn analyse_record(
         &self,
         num: i32,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         acheck: &mut Handle<InterfaceCheck>,
     ) -> Result<bool, Failure> {
         let selected = self.libs.read().1.select(anent);

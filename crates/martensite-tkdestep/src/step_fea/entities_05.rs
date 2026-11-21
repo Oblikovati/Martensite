@@ -18,7 +18,7 @@ step_entity! {
         the_element_descriptor: Handle<StepElementSurface3dElementDescriptor>,
         the_property: Handle<StepElementSurfaceElementProperty>,
         the_material: Handle<StepElementElementMaterial>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 impl StepFEASurface3dElementRepresentation {
     step_methods! {
@@ -37,8 +37,8 @@ impl StepFEASurface3dElementRepresentation {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-        a_representation_context_of_items: &Handle<StepReprRepresentationContext>,
+        a_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        a_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         a_element_representation_node_list: &Handle<HArray1<Handle<StepFEANodeRepresentation>>>,
         a_model_ref: &Handle<StepFEAFeaModel3d>,
         a_element_descriptor: &Handle<StepElementSurface3dElementDescriptor>,
@@ -65,7 +65,7 @@ step_entity! {
         the_model_ref: Handle<StepFEAFeaModel3d>,
         the_element_descriptor: Handle<StepElementVolume3dElementDescriptor>,
         the_material: Handle<StepElementElementMaterial>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 impl StepFEAVolume3dElementRepresentation {
     step_methods! {
@@ -82,8 +82,8 @@ impl StepFEAVolume3dElementRepresentation {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-        a_representation_context_of_items: &Handle<StepReprRepresentationContext>,
+        a_representation_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        a_representation_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         a_element_representation_node_list: &Handle<HArray1<Handle<StepFEANodeRepresentation>>>,
         a_model_ref: &Handle<StepFEAFeaModel3d>,
         a_element_descriptor: &Handle<StepElementVolume3dElementDescriptor>,

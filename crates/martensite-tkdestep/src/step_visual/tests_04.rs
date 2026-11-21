@@ -114,7 +114,7 @@ fn init_round_trip_step_visual_surface_style_reflectance_ambient_diffuse_specula
         the_diffuse_reflectance,
         the_specular_reflectance,
         the_specular_exponent,
-        &the_specular_colour,
+        &the_specular_colour.upcast(),
     );
     assert!(object.specular_reflectance() == the_specular_reflectance);
     assert!(object.specular_exponent() == the_specular_exponent);
@@ -136,7 +136,7 @@ fn init_round_trip_step_visual_surface_style_rendering() {
     let the_rendering_method = StepVisualShadingSurfaceMethod::default();
     let the_surface_colour = Handle::new(StepVisualColour::new());
     let object = StepVisualSurfaceStyleRendering::new();
-    object.init(the_rendering_method, &the_surface_colour);
+    object.init(the_rendering_method, &the_surface_colour.upcast());
     assert!(object.rendering_method() == the_rendering_method);
     assert!(object.surface_colour() == the_surface_colour);
 }
@@ -160,7 +160,7 @@ fn init_round_trip_step_visual_surface_style_rendering_with_properties() {
     let object = StepVisualSurfaceStyleRenderingWithProperties::new();
     object.init(
         the_surface_style_rendering_rendering_method,
-        &the_surface_style_rendering_surface_colour,
+        &the_surface_style_rendering_surface_colour.upcast(),
         &the_properties,
     );
     assert!(object.properties() == the_properties);
@@ -285,8 +285,8 @@ fn init_round_trip_step_visual_tessellated_connecting_edge() {
     let the_tessellated_edge_geometric_link = StepVisualEdgeOrCurve::default();
     let the_tessellated_edge_line_strip = Handle::new(HArray1::<i32>::with_bounds(1, 2).unwrap());
     let the_smooth = StepDataLogical::default();
-    let the_face1 = Handle::new(StepVisualTessellatedFace::new());
-    let the_face2 = Handle::new(StepVisualTessellatedFace::new());
+    let the_face1 = Handle::new(StepVisualTessellatedFace::new()).into_upcast();
+    let the_face2 = Handle::new(StepVisualTessellatedFace::new()).into_upcast();
     let the_line_strip_face1 = Handle::new(HArray1::<i32>::with_bounds(1, 2).unwrap());
     let the_line_strip_face2 = Handle::new(HArray1::<i32>::with_bounds(1, 2).unwrap());
     let object = StepVisualTessellatedConnectingEdge::new();

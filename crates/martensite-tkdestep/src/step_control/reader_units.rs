@@ -17,7 +17,8 @@ use crate::step_repr::{
 };
 use crate::step_selections::entities_of;
 use crate::step_shape::{StepShapeShapeDefinitionRepresentation, StepShapeShapeRepresentation};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkxsbase::interface::{InterfaceGraph, InterfaceModelEntities};
 use martensite_tkxsbase::xs_control::XSControlReaderOps;
@@ -57,13 +58,13 @@ fn si_name(unit: &StepBasicSiUnit) -> String {
 }
 
 /// The measure of a conversion-based unit, from its factor.
-fn measure_of(conversion: &StepBasicConversionBasedUnit) -> Handle<StepBasicMeasureWithUnit> {
-    let factor: Handle<StandardTransient> = conversion.conversion_factor();
-    let direct: Handle<StepBasicMeasureWithUnit> = factor.cast();
+fn measure_of(conversion: &StepBasicConversionBasedUnit) -> Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>> {
+    let factor: Handle<dyn Transient> = conversion.conversion_factor();
+    let direct: Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>> = factor.cast();
     if direct.is_some() {
         return direct;
     }
-    let item: Handle<StepReprReprItemAndMeasureWithUnit> = factor.cast();
+    let item: Handle<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>> = factor.cast();
     item.get()
         .map(|live| live.get_measure_with_unit())
         .unwrap_or_default()
@@ -71,9 +72,9 @@ fn measure_of(conversion: &StepBasicConversionBasedUnit) -> Handle<StepBasicMeas
 
 /// The slot (1 length, 2 angle, 3 solid angle) and name of a unit; `None` for any other.
 fn unit_slot(
-    unit: &Handle<crate::step_basic::StepBasicNamedUnit>,
+    unit: &Handle<dyn crate::StepEntityBase<crate::step_basic::StepBasicNamedUnit>>,
 ) -> Result<Option<(usize, String)>, Failure> {
-    let conversion: Handle<StepBasicConversionBasedUnit> = unit.cast();
+    let conversion: Handle<dyn crate::StepEntityBase<StepBasicConversionBasedUnit>> = unit.cast();
     if let Some(live) = conversion.get() {
         let measure = measure_of(live);
         let slot = if measure.cast::<StepBasicLengthMeasureWithUnit>().is_some() {
@@ -98,7 +99,7 @@ fn unit_slot(
             String::from_utf8_lossy(text.as_bytes()).into_owned(),
         )));
     }
-    let si: Handle<StepBasicSiUnit> = unit.cast();
+    let si: Handle<dyn crate::StepEntityBase<StepBasicSiUnit>> = unit.cast();
     let Some(live) = si.get() else {
         return Ok(None);
     };
@@ -116,7 +117,7 @@ fn unit_slot(
 
 /// `findUnits`: the three names, empty where the context has none; `None` when it has no unit.
 fn find_units(
-    context: &Handle<StepReprRepresentationContext>,
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
 ) -> Result<Option<[String; 3]>, Failure> {
     let mut assigned = Handle::<StepReprGlobalUnitAssignedContext>::default();
     let simple: Handle<StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext> =
@@ -145,10 +146,10 @@ fn find_units(
 
 /// The shape_definition_representation of a root.
 fn sdr_of_root(
-    root: &Handle<StandardTransient>,
+    root: &Handle<dyn Transient>,
     graph: &InterfaceGraph,
 ) -> Result<Handle<StepShapeShapeDefinitionRepresentation>, Failure> {
-    if root.cast::<StepBasicProductDefinition>().is_null() {
+    if root.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>().is_null() {
         return Ok(root.cast());
     }
     for shape in entities_of(graph.sharings(root)?)? {
@@ -159,7 +160,7 @@ fn sdr_of_root(
             let sdr: Handle<StepShapeShapeDefinitionRepresentation> = sharing.cast();
             let shaped = sdr.get().is_some_and(|live| {
                 live.used_representation()
-                    .cast::<StepShapeShapeRepresentation>()
+                    .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
                     .is_some()
             });
             if shaped {
@@ -200,7 +201,7 @@ impl StepControlReader {
             let Some(live) = sdr.get() else {
                 continue;
             };
-            let rep: Handle<StepShapeShapeRepresentation> = live.used_representation().cast();
+            let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = live.used_representation().cast();
             let context = step_live(&rep, WHERE)?.context_of_items();
             if context.is_null() {
                 continue;
@@ -214,7 +215,7 @@ impl StepControlReader {
             let model = self.step_model()?;
             if let Some(live) = model.get() {
                 for rank in 1..=live.nb_entities() {
-                    let context: Handle<StepReprRepresentationContext> = live.value(rank)?.cast();
+                    let context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> = live.value(rank)?.cast();
                     if context.is_some()
                         && let Some(names) = find_units(&context)?
                     {

@@ -66,7 +66,7 @@ pub(crate) use rw_block_b_0218;
 macro_rules! rw_block_b_0219 {
     ($i1:ident, $the_ent:ident, $the_iter:ident, $var0:ident) => {
         for $i1 in 1..=step_live(&$the_ent.items(), "Share")?.array1().length() {
-            let $var0: Handle<StepVisualTessellatedStructuredItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>> =
                 step_array1_item(&$the_ent.items(), $i1, "Share")?;
             $the_iter.add_item(&$var0.cast());
         }

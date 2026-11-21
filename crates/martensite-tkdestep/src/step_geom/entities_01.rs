@@ -117,14 +117,14 @@ step_select! {
     /// Pcurve or surface.
     StepGeomPcurveOrSurface, [StepGeomPcurve, StepGeomSurface], {
         pcurve: StepGeomPcurve,
-        surface: StepGeomSurface,
+        surface: dyn crate::StepEntityBase<StepGeomSurface>,
     }
 }
 
 step_select! {
     /// Representation of STEP SELECT type SurfaceBoundary
     StepGeomSurfaceBoundary, [StepGeomBoundaryCurve, StepGeomDegeneratePcurve], {
-        boundary_curve: StepGeomBoundaryCurve,
+        boundary_curve: dyn crate::StepEntityBase<StepGeomBoundaryCurve>,
         degenerate_pcurve: StepGeomDegeneratePcurve,
     }
 }
@@ -134,7 +134,7 @@ step_entity! {
     StepGeomAxis1Placement, StepGeomAxis1PlacementState, "StepGeomAxis1Placement", StepGeomPlacement, {
         axis: Handle<StepGeomDirection>,
         has_axis: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomAxis1Placement {
     step_methods! {
@@ -164,7 +164,7 @@ step_entity! {
     StepGeomAxis2Placement2d, StepGeomAxis2Placement2dState, "StepGeomAxis2Placement2d", StepGeomPlacement, {
         ref_direction: Handle<StepGeomDirection>,
         has_ref_direction: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomAxis2Placement2d {
     step_methods! {
@@ -196,7 +196,7 @@ step_entity! {
         ref_direction: Handle<StepGeomDirection>,
         has_axis: bool,
         has_ref_direction: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomAxis2Placement3d {
     step_methods! {
@@ -237,7 +237,7 @@ step_entity! {
         curve_form: StepGeomBSplineCurveForm,
         closed_curve: StepDataLogical,
         self_intersect: StepDataLogical,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomBSplineCurve {
     step_methods! {
@@ -281,7 +281,7 @@ step_entity! {
         knot_multiplicities: Handle<HArray1<i32>>,
         knots: Handle<HArray1<f64>>,
         knot_spec: StepGeomKnotType,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomBSplineCurveWithKnots {
     step_methods! {

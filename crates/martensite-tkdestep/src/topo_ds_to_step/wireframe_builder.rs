@@ -2,6 +2,7 @@
 //! :S4134: abv 10 Mar 99: the methods below moved from package TopoDSToGBWire. :j1 modified by abv
 //! 22 Oct 98: CSR BUC60401: unused parts of code dropped; fixed trimming of circles and ellipses
 //! (radians used instead of degrees).
+use crate::step_entity::StepBaseHandle;
 use super::{TopoDSToStepBuilderError, TopoDSToStepRoot, TopoDSToStepShapeMap, TopoDSToStepTool};
 use crate::geom_to_step::{
     GeomToStepMakeCartesianPoint, GeomToStepMakeCurve, GeomToStepMakeLine, array1_of,
@@ -19,7 +20,8 @@ use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Edge, Face, Shape, ShapeIterator, Vertex};
 use martensite_tkernel::ncollection::HSequence;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dLine;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomLine, GeomPlane, GeomTrimmedCurve};
@@ -29,7 +31,7 @@ use martensite_tkmath::gp::{Direction3, Point3, Vector3};
 const NBPT: usize = 23;
 
 /// The items of the result: `HSequence<Handle<`StandardTransient`>>`.
-pub type TopoDSToStepWireframeItems = Handle<HSequence<Handle<StandardTransient>>>;
+pub type TopoDSToStepWireframeItems = Handle<HSequence<Handle<dyn Transient>>>;
 
 /// Wireframe builder.
 #[derive(Clone, Default)]
@@ -42,14 +44,14 @@ pub struct TopoDSToStepWireframeBuilder {
 
 /// `make_trimmed_curve`.
 fn make_trimmed_curve(
-    curve: &Handle<StepGeomCurve>,
+    curve: &StepBaseHandle<StepGeomCurve>,
     points: (
         &Handle<StepGeomCartesianPoint>,
         &Handle<StepGeomCartesianPoint>,
     ),
     trims: (f64, f64),
     sense: bool,
-) -> Result<Handle<StepGeomCurve>, Failure> {
+) -> Result<StepBaseHandle<StepGeomCurve>, Failure> {
     let trim_of = |point: &Handle<StepGeomCartesianPoint>, trim: f64| -> Result<_, Failure> {
         let mut by_point = StepGeomTrimmingSelect::new();
         by_point.set_value(&point.cast())?;
@@ -107,7 +109,7 @@ fn constructed_curve(
     face: &Face,
     trims: &EdgeTrims,
     factors: &StepDataFactors,
-) -> Result<Handle<StepGeomCurve>, Failure> {
+) -> Result<StepBaseHandle<StepGeomCurve>, Failure> {
     let mut on_plane = false;
     if !face.is_null() {
         let pcurve = BRepTool::curve_on_face(&adaptor.edge(), face)?;
@@ -173,7 +175,7 @@ fn stored_curve(
     adaptor: &BRepAdaptorCurve,
     trims: &mut EdgeTrims,
     factors: &StepDataFactors,
-) -> Result<Option<(Handle<StepGeomCurve>, bool)>, Failure> {
+) -> Result<Option<(StepBaseHandle<StepGeomCurve>, bool)>, Failure> {
     let (stored, first, last) = BRepTool::curve(edge)?;
     let basis = match stored.cast::<GeomTrimmedCurve>().get() {
         Some(trimmed) => trimmed.basis_curve(),
@@ -294,7 +296,7 @@ impl TopoDSToStepWireframeBuilder {
         // Takes what the map has for the edge first, and overwrites it on each path but
         // the short line, where it stays.
         let curve = match (curve.is_null(), map.seek(&forward)) {
-            (true, Some(known)) => known.cast::<StepGeomCurve>(),
+            (true, Some(known)) => known.cast::<dyn crate::StepEntityBase<StepGeomCurve>>(),
             _ => curve,
         };
         if curve.is_null() {

@@ -84,7 +84,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
             has_item_defined_transformation_description = false;
             a_item_defined_transformation_description = Default::default();
         }
-        let mut a_item_defined_transformation_transform_item1: Handle<StepReprRepresentationItem> =
+        let mut a_item_defined_transformation_transform_item1: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
             Default::default();
         the_data.read_entity(
             the_num,
@@ -94,7 +94,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
             StepReprRepresentationItem::static_type(),
             &mut a_item_defined_transformation_transform_item1,
         )?;
-        let mut a_item_defined_transformation_transform_item2: Handle<StepReprRepresentationItem> =
+        let mut a_item_defined_transformation_transform_item2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
             Default::default();
         the_data.read_entity(
             the_num,
@@ -116,7 +116,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
         )?;
         the_num = the_data.next_for_complex(the_num);
         let a_pair_super_type: Vec<u8> = the_data.c_type(the_num).into_bytes();
-        let mut a_kinematic_pair: Handle<StepKinematicsKinematicPair> = Default::default();
+        let mut a_kinematic_pair: Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>> = Default::default();
         if a_pair_super_type == b"LOW_ORDER_KINEMATIC_PAIR" {
             let mut a_low_order_kinematic_pair_tx: bool = true;
             let mut a_low_order_kinematic_pair_ty: bool = true;
@@ -182,7 +182,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
             } else {
                 the_arch.add_fail_text("The supertype of kinematic pair is not supported", "");
             }
-            a_kinematic_pair = Handle::new(StepKinematicsKinematicPair::new());
+            a_kinematic_pair = Handle::new(StepKinematicsKinematicPair::new()).into_upcast();
             a_kinematic_pair.init(
                 &a_representation_item_name,
                 &a_item_defined_transformation_name,
@@ -802,9 +802,9 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                             a_kinematic_pair =
                                                 Handle::new(StepKinematicsUniversalPair::new())
                                                     .cast();
-                                            let a_local_pair: Handle<StepKinematicsUniversalPair> =
+                                            let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsUniversalPair>> =
                                                 a_kinematic_pair
-                                                    .cast::<StepKinematicsUniversalPair>();
+                                                    .cast::<dyn crate::StepEntityBase<StepKinematicsUniversalPair>>();
                                             step_live(&a_local_pair, "ReadStep")?.init(
                                                 &a_representation_item_name,
                                                 &a_item_defined_transformation_name,
@@ -1090,8 +1090,8 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                             );
                         } else {
                             a_kinematic_pair = Handle::new(StepKinematicsGearPair::new()).cast();
-                            let a_local_pair: Handle<StepKinematicsGearPair> =
-                                a_kinematic_pair.cast::<StepKinematicsGearPair>();
+                            let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsGearPair>> =
+                                a_kinematic_pair.cast::<dyn crate::StepEntityBase<StepKinematicsGearPair>>();
                             step_live(&a_local_pair, "ReadStep")?.init(
                                 &a_representation_item_name,
                                 &a_item_defined_transformation_name,
@@ -1174,8 +1174,8 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                             } else {
                                 a_kinematic_pair =
                                     Handle::new(StepKinematicsRackAndPinionPair::new()).cast();
-                                let a_local_pair: Handle<StepKinematicsRackAndPinionPair> =
-                                    a_kinematic_pair.cast::<StepKinematicsRackAndPinionPair>();
+                                let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsRackAndPinionPair>> =
+                                    a_kinematic_pair.cast::<dyn crate::StepEntityBase<StepKinematicsRackAndPinionPair>>();
                                 step_live(&a_local_pair, "ReadStep")?.init(
                                     &a_representation_item_name,
                                     &a_item_defined_transformation_name,
@@ -1252,8 +1252,8 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                 } else {
                                     a_kinematic_pair =
                                         Handle::new(StepKinematicsScrewPair::new()).cast();
-                                    let a_local_pair: Handle<StepKinematicsScrewPair> =
-                                        a_kinematic_pair.cast::<StepKinematicsScrewPair>();
+                                    let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsScrewPair>> =
+                                        a_kinematic_pair.cast::<dyn crate::StepEntityBase<StepKinematicsScrewPair>>();
                                     step_live(&a_local_pair, "ReadStep")?.init(
                                         &a_representation_item_name,
                                         &a_item_defined_transformation_name,
@@ -1273,7 +1273,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                 the_num = the_data.next_for_complex(the_num);
                 let a_pairtype: Vec<u8> = the_data.c_type(the_num).into_bytes();
                 if a_pairtype == b"POINT_ON_PLANAR_CURVE_PAIR" {
-                    let mut a_point_on_planar_curve_pair_pair_curve: Handle<StepGeomCurve> =
+                    let mut a_point_on_planar_curve_pair_pair_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
                         Default::default();
                     the_data.read_entity(
                         the_num,
@@ -1394,8 +1394,8 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                         } else {
                             a_kinematic_pair =
                                 Handle::new(StepKinematicsPointOnPlanarCurvePair::new()).cast();
-                            let a_local_pair: Handle<StepKinematicsPointOnPlanarCurvePair> =
-                                a_kinematic_pair.cast::<StepKinematicsPointOnPlanarCurvePair>();
+                            let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsPointOnPlanarCurvePair>> =
+                                a_kinematic_pair.cast::<dyn crate::StepEntityBase<StepKinematicsPointOnPlanarCurvePair>>();
                             step_live(&a_local_pair, "ReadStep")?.init(
                                 &a_representation_item_name,
                                 &a_item_defined_transformation_name,
@@ -1411,7 +1411,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                     }
                 } else {
                     if a_pairtype == b"POINT_ON_SURFACE_PAIR" {
-                        let mut a_point_on_surface_pair_pair_surface: Handle<StepGeomSurface> =
+                        let mut a_point_on_surface_pair_pair_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
                             Default::default();
                         the_data.read_entity(
                             the_num,
@@ -1526,8 +1526,8 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                             } else {
                                 a_kinematic_pair =
                                     Handle::new(StepKinematicsPointOnSurfacePair::new()).cast();
-                                let a_local_pair: Handle<StepKinematicsPointOnSurfacePair> =
-                                    a_kinematic_pair.cast::<StepKinematicsPointOnSurfacePair>();
+                                let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsPointOnSurfacePair>> =
+                                    a_kinematic_pair.cast::<dyn crate::StepEntityBase<StepKinematicsPointOnSurfacePair>>();
                                 step_live(&a_local_pair, "ReadStep")?.init(
                                     &a_representation_item_name,
                                     &a_item_defined_transformation_name,
@@ -1542,7 +1542,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                         }
                     } else {
                         if a_pairtype == b"PLANAR_CURVE_PAIR" {
-                            let mut a_planar_curve_pair_curve1: Handle<StepGeomCurve> =
+                            let mut a_planar_curve_pair_curve1: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
                                 Default::default();
                             the_data.read_entity(
                                 the_num,
@@ -1552,7 +1552,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                 StepGeomCurve::static_type(),
                                 &mut a_planar_curve_pair_curve1,
                             )?;
-                            let mut a_planar_curve_pair_curve2: Handle<StepGeomCurve> =
+                            let mut a_planar_curve_pair_curve2: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
                                 Default::default();
                             the_data.read_entity(
                                 the_num,
@@ -1626,8 +1626,8 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                 } else {
                                     a_kinematic_pair =
                                         Handle::new(StepKinematicsPlanarCurvePair::new()).cast();
-                                    let a_local_pair: Handle<StepKinematicsPlanarCurvePair> =
-                                        a_kinematic_pair.cast::<StepKinematicsPlanarCurvePair>();
+                                    let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsPlanarCurvePair>> =
+                                        a_kinematic_pair.cast::<dyn crate::StepEntityBase<StepKinematicsPlanarCurvePair>>();
                                     step_live(&a_local_pair, "ReadStep")?.init(
                                         &a_representation_item_name,
                                         &a_item_defined_transformation_name,
@@ -1644,7 +1644,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                             }
                         } else {
                             if a_pairtype == b"SURFACE_PAIR" {
-                                let mut a_surface_pair_surface1: Handle<StepGeomSurface> =
+                                let mut a_surface_pair_surface1: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
                                     Default::default();
                                 the_data.read_entity(
                                     the_num,
@@ -1654,7 +1654,7 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                     StepGeomSurface::static_type(),
                                     &mut a_surface_pair_surface1,
                                 )?;
-                                let mut a_surface_pair_surface2: Handle<StepGeomSurface> =
+                                let mut a_surface_pair_surface2: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
                                     Default::default();
                                 the_data.read_entity(
                                     the_num,
@@ -1765,8 +1765,8 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                     } else {
                                         a_kinematic_pair =
                                             Handle::new(StepKinematicsSurfacePair::new()).cast();
-                                        let a_local_pair: Handle<StepKinematicsSurfacePair> =
-                                            a_kinematic_pair.cast::<StepKinematicsSurfacePair>();
+                                        let a_local_pair: Handle<dyn crate::StepEntityBase<StepKinematicsSurfacePair>> =
+                                            a_kinematic_pair.cast::<dyn crate::StepEntityBase<StepKinematicsSurfacePair>>();
                                         step_live(&a_local_pair, "ReadStep")?.init(
                                             &a_representation_item_name,
                                             &a_item_defined_transformation_name,

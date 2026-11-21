@@ -29,7 +29,8 @@ use crate::step_shape::{
     StepShapeDimensionalSize, StepShapeEdgeCurve, StepShapeShapeDefinitionRepresentation,
 };
 use martensite_tkbrep::topexp::Explorer;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString, HAsciiString};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::tdata_std::TDataStdName;
@@ -47,21 +48,21 @@ mod entities;
 pub use entities::*;
 
 /// The name of a GD&T entity, `None` for an entity that is invalid (protection against invalid input).
-fn semantic_name_of(entity: &Handle<StandardTransient>) -> Option<Handle<HAsciiString>> {
+fn semantic_name_of(entity: &Handle<dyn Transient>) -> Option<Handle<HAsciiString>> {
     let mut name = Handle::default();
-    if let Some(tolerance) = entity.cast::<StepDimTolGeometricTolerance>().get() {
+    if let Some(tolerance) = entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>().get() {
         if tolerance.toleranced_shape_aspect().is_null() {
             return None;
         }
         name = tolerance.name();
     }
-    if let Some(size) = entity.cast::<StepShapeDimensionalSize>().get() {
+    if let Some(size) = entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>().get() {
         if size.applies_to().is_null() {
             return None;
         }
         name = size.name();
     }
-    if let Some(location) = entity.cast::<StepShapeDimensionalLocation>().get() {
+    if let Some(location) = entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>().get() {
         if location.related_shape_aspect().is_null() || location.relating_shape_aspect().is_null() {
             return None;
         }
@@ -73,7 +74,7 @@ fn semantic_name_of(entity: &Handle<StandardTransient>) -> Option<Handle<HAsciiS
 /// The value of the rank of a value range, multiplied by the length factor when it is a length.
 /// `None` is the `continue` of the search.
 fn range_value(
-    items: &Handle<martensite_tkernel::ncollection::HArray1<Handle<StepReprRepresentationItem>>>,
+    items: &Handle<martensite_tkernel::ncollection::HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
     rank: i32,
     value: &mut f64,
     factors: &StepDataFactors,
@@ -101,7 +102,7 @@ fn range_value(
 /// The bounds of a dimensional size, from its value ranges.
 fn size_bounds(
     session: &SessionGraph,
-    size: &Handle<StandardTransient>,
+    size: &Handle<dyn Transient>,
     factors: &StepDataFactors,
 ) -> Result<(Handle<HAsciiString>, f64, f64), Failure> {
     let (mut name, mut first, mut second) = (Handle::default(), -1., -1.);
@@ -135,7 +136,7 @@ fn size_bounds(
 }
 
 /// The kind number `set_dim_tol` takes for a tolerance with a datum reference.
-fn kind_of_reference_tolerance(tolerance: &Handle<StandardTransient>) -> i32 {
+fn kind_of_reference_tolerance(tolerance: &Handle<dyn Transient>) -> i32 {
     if tolerance.cast::<StepDimTolAngularityTolerance>().is_some() {
         24
     } else if tolerance
@@ -167,7 +168,7 @@ fn kind_of_reference_tolerance(tolerance: &Handle<StandardTransient>) -> i32 {
 }
 
 /// The kind number of a tolerance without a datum reference, `None` for another kind.
-fn kind_of_plain_tolerance(tolerance: &Handle<StandardTransient>) -> Option<i32> {
+fn kind_of_plain_tolerance(tolerance: &Handle<dyn Transient>) -> Option<i32> {
     if tolerance
         .cast::<StepDimTolCylindricityTolerance>()
         .is_some()
@@ -206,7 +207,7 @@ struct OldVersion<'a> {
 
 impl OldVersion<'_> {
     /// The label of the shape an item made, `None` when not found.
-    fn label_of_item(&self, item: &Handle<StandardTransient>) -> Result<Option<TdfLabel>, Failure> {
+    fn label_of_item(&self, item: &Handle<dyn Transient>) -> Result<Option<TdfLabel>, Failure> {
         let shape = self
             .session
             .shape_at(self.session.process()?.map_index(item))?;
@@ -221,10 +222,10 @@ impl OldVersion<'_> {
     /// A dimensional size on an edge curve.
     fn read_dimension(
         &self,
-        entity: &Handle<StandardTransient>,
-        item: &Handle<StepReprRepresentationItem>,
+        entity: &Handle<dyn Transient>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) -> Result<(), Failure> {
-        let edge = item.cast::<StepShapeEdgeCurve>();
+        let edge = item.cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
         if edge.is_null() {
             return Ok(());
         }
@@ -239,7 +240,7 @@ impl OldVersion<'_> {
         let Some(label) = self.label_of_item(&edge.cast())? else {
             return Ok(());
         };
-        let size = entity.cast::<StepShapeDimensionalSize>();
+        let size = entity.cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>();
         self.dim_tol_tool.set_dim_tol_values(
             &label,
             1,

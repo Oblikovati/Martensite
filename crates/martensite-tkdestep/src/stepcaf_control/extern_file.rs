@@ -28,20 +28,17 @@ struct ExternFileState {
 /// assert!(file.get_transfer_status());
 /// ```
 pub struct STEPCAFControlExternFile {
-    transient: StandardTransient,
     state: SharedState<ExternFileState>,
 }
 impl_transient!(
     STEPCAFControlExternFile,
     "STEPCAFControlExternFile",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Default for STEPCAFControlExternFile {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(ExternFileState {
                 ws: Handle::default(),
                 load_status: IFSelectReturnStatus::RetVoid,

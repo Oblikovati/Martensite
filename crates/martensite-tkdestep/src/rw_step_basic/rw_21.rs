@@ -198,7 +198,7 @@ impl RwStepBasicRwProductDefinitionReferenceWithLocalRepresentation {
         if data.is_param_defined(num, 3)? {
             data.read_string(num, 3, "description", ach, &mut a_description)?;
         }
-        let mut a_formation: Handle<StepBasicProductDefinitionFormation> = Default::default();
+        let mut a_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>> = Default::default();
         data.read_entity(
             num,
             4,
@@ -207,7 +207,7 @@ impl RwStepBasicRwProductDefinitionReferenceWithLocalRepresentation {
             StepBasicProductDefinitionFormation::static_type(),
             &mut a_formation,
         )?;
-        let mut a_frame_of_reference: Handle<StepBasicProductDefinitionContext> =
+        let mut a_frame_of_reference: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>> =
             Default::default();
         data.read_entity(
             num,
@@ -260,7 +260,7 @@ impl RwStepBasicRwProductDefinitionRelationship {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepBasicProductDefinitionRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 5, ach, "product_definition_relationship")? {
             return Ok(());
@@ -298,7 +298,7 @@ impl RwStepBasicRwProductDefinitionRelationship {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepBasicProductDefinitionRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>,
     ) -> Result<(), Failure> {
         rw_block_0178!(ent, sw);
         sw.send_entity(&ent.relating_product_definition_ap242().value())?;
@@ -308,7 +308,7 @@ impl RwStepBasicRwProductDefinitionRelationship {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepBasicProductDefinitionRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.add_item(&ent.relating_product_definition_ap242().value());

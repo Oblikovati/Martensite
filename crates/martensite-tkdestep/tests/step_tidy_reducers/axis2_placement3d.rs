@@ -37,12 +37,12 @@ fn assert_merged_in(share: impl Fn(&Fixture, &Placement)) {
 
 fn representation_items(
     placement: &Placement,
-) -> Handle<HArray1<Handle<StepReprRepresentationItem>>> {
+) -> Handle<HArray1<Handle<dyn martensite_tkdestep::StepEntityBase<StepReprRepresentationItem>>>> {
     one_item(placement.cast())
 }
 
-fn new_context() -> Handle<StepReprRepresentationContext> {
-    Handle::new(StepReprRepresentationContext::new())
+fn new_context() -> Handle<dyn martensite_tkdestep::StepEntityBase<StepReprRepresentationContext>> {
+    Handle::new(StepReprRepresentationContext::new()).into_upcast()
 }
 
 fn add_plane_on(fixture: &Fixture, placement: &Placement) {
@@ -136,7 +136,7 @@ fn step_visual_presentation_layer_assignment() {
 #[test]
 fn step_visual_styled_item() {
     assert_merged_in(|fixture, placement| {
-        let styles = HArray1::<Handle<StepVisualPresentationStyleAssignment>>::with_bounds(1, 1);
+        let styles = HArray1::<Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualPresentationStyleAssignment>>>::with_bounds(1, 1);
         let styled = Handle::new(StepVisualStyledItem::new());
         styled.init(
             &name(""),

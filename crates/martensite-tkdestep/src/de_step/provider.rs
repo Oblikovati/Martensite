@@ -15,7 +15,7 @@ use martensite_tkernel::{
     message::{Message, ProgressRange},
     ncollection::DataMap,
     osd::{IStream, OStream},
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeTyped, exceptions},
     tcollection::AsciiString,
     units_methods::{LengthUnit, UnitsMethods},
 };
@@ -75,10 +75,9 @@ fn first_stream<T>(first: Option<T>) -> Result<T, Failure> {
 /// ```
 #[derive(Default)]
 pub struct DeStepProvider {
-    transient: StandardTransient,
     base: DeProviderBase,
 }
-impl_transient!(DeStepProvider, "DeStepProvider", dyn DeProvider, transient, interfaces: [dyn DeProvider]);
+impl_transient!(DeStepProvider, "DeStepProvider", dyn DeProvider, interfaces: [dyn DeProvider]);
 
 fn fail(text: &str) {
     let _ = writeln!(Message::send_fail(), "{text}");
@@ -119,7 +118,6 @@ impl DeStepProvider {
     pub fn with_node(node: &Handle<dyn DeConfigurationNode>) -> Self {
         Self {
             base: DeProviderBase::with_node(node),
-            ..Self::default()
         }
     }
     /// `validateNode`: the node of this provider, when it is one of STEP.

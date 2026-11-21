@@ -16,7 +16,8 @@ use crate::step_repr::{
     StepReprPropertyDefinitionRepresentation,
 };
 use crate::step_shape::StepShapeShapeRepresentation;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, exceptions};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{InterfaceGraph, InterfaceHGraph, InterfaceModelEntities};
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
@@ -43,7 +44,7 @@ pub(super) fn seq_item<T: Clone>(sequence: &[T], num: i32) -> Result<T, Failure>
 }
 
 /// The exact type test of the `dynamic_type() == STANDARD_TYPE(T)`.
-fn is_exactly<T: RuntimeTyped>(entity: &Handle<StandardTransient>) -> bool {
+fn is_exactly<T: RuntimeTyped>(entity: &Handle<dyn Transient>) -> bool {
     entity
         .dynamic_type()
         .is_some_and(|kind| std::ptr::eq(kind, T::static_type()))
@@ -54,12 +55,12 @@ fn is_exactly<T: RuntimeTyped>(entity: &Handle<StandardTransient>) -> bool {
 /// the PDWAD by ADR.
 pub(super) fn find_pdwad_and_exclude_excess(
     adr: &Handle<StepAP214AppliedDocumentReference>,
-    seq_of_pdwad: &mut Vec<Handle<StandardTransient>>,
+    seq_of_pdwad: &mut Vec<Handle<dyn Transient>>,
     graph: &InterfaceGraph,
     pdwad: &mut Handle<StepBasicProductDefinitionWithAssociatedDocuments>,
 ) -> Result<bool, Failure> {
     for doc in graph.shareds(&adr.cast())?.content() {
-        if doc.cast::<StepBasicDocument>().is_null() {
+        if doc.view::<dyn crate::StepEntityBase<StepBasicDocument>>().is_null() {
             continue;
         }
         // looking for Document Product Equivalence
@@ -69,7 +70,7 @@ pub(super) fn find_pdwad_and_exclude_excess(
             }
             // take PDF and search the same PDF by PDWAD chain
             for pdf in graph.shareds(&dpe)?.content() {
-                if pdf.cast::<StepBasicProductDefinitionFormation>().is_null() {
+                if pdf.cast::<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>().is_null() {
                     continue;
                 }
                 if exclude_pdwad_of_formation(&pdf, seq_of_pdwad, graph, pdwad)? {
@@ -83,8 +84,8 @@ pub(super) fn find_pdwad_and_exclude_excess(
 
 /// One formation of `find_pdwad_and_exclude_excess`: the last PDWAD sharing it stays in `pdwad`.
 fn exclude_pdwad_of_formation(
-    pdf: &Handle<StandardTransient>,
-    seq_of_pdwad: &mut Vec<Handle<StandardTransient>>,
+    pdf: &Handle<dyn Transient>,
+    seq_of_pdwad: &mut Vec<Handle<dyn Transient>>,
     graph: &InterfaceGraph,
     pdwad: &mut Handle<StepBasicProductDefinitionWithAssociatedDocuments>,
 ) -> Result<bool, Failure> {
@@ -117,18 +118,18 @@ fn exclude_pdwad_of_formation(
 #[derive(Clone, Default)]
 pub struct StepConstructExternRefs {
     pub(super) tool: StepConstructTool,
-    pub(super) my_aeias: Vec<Handle<StandardTransient>>,
-    pub(super) my_roles: Vec<Handle<StandardTransient>>,
-    pub(super) my_formats: Vec<Handle<StandardTransient>>,
-    pub(super) my_shapes: Vec<Handle<StandardTransient>>,
-    pub(super) my_types: Vec<Handle<StandardTransient>>,
+    pub(super) my_aeias: Vec<Handle<dyn Transient>>,
+    pub(super) my_roles: Vec<Handle<dyn Transient>>,
+    pub(super) my_formats: Vec<Handle<dyn Transient>>,
+    pub(super) my_shapes: Vec<Handle<dyn Transient>>,
+    pub(super) my_types: Vec<Handle<dyn Transient>>,
     pub(super) my_is_ap214: Vec<i32>,
     pub(super) my_replace_num: Vec<i32>,
-    pub(super) my_doc_files: Vec<Handle<StandardTransient>>,
-    pub(super) my_shared_prpc: Handle<StepBasicProductRelatedProductCategory>,
+    pub(super) my_doc_files: Vec<Handle<dyn Transient>>,
+    pub(super) my_shared_prpc: Handle<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>>,
     pub(super) my_shared_doc_type: Handle<StepBasicDocumentType>,
-    pub(super) my_shared_pdc: Handle<StepBasicProductDefinitionContext>,
-    pub(super) my_shared_pc: Handle<StepBasicProductContext>,
+    pub(super) my_shared_pdc: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
+    pub(super) my_shared_pc: Handle<dyn crate::StepEntityBase<StepBasicProductContext>>,
     pub(super) my_apd: Handle<StepBasicApplicationProtocolDefinition>,
 }
 
@@ -142,7 +143,7 @@ impl Deref for StepConstructExternRefs {
 /// What `load_extern_refs` collects around one DocumentFile.
 #[derive(Default)]
 struct DocumentFileData {
-    format: Handle<StepReprPropertyDefinitionRepresentation>,
+    format: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>,
     doc_type: Handle<StepBasicDocumentRepresentationType>,
 }
 
@@ -154,11 +155,11 @@ impl DocumentFileData {
     fn collect(
         &mut self,
         graph: &InterfaceGraph,
-        file: &Handle<StandardTransient>,
+        file: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         for sub in graph.sharings(file)?.content() {
             // PDRs of a shape and of a file format
-            if sub.cast::<StepReprPropertyDefinition>().is_some() {
+            if sub.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>().is_some() {
                 self.collect_format(graph, &sub)?;
             }
             // DocumentRepresentationType
@@ -175,16 +176,16 @@ impl DocumentFileData {
     fn collect_format(
         &mut self,
         graph: &InterfaceGraph,
-        definition: &Handle<StandardTransient>,
+        definition: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         for sharing in graph.sharings(definition)?.content() {
-            let pdr = sharing.cast::<StepReprPropertyDefinitionRepresentation>();
+            let pdr = sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
             let Some(live) = pdr.get() else {
                 continue;
             };
             let used = live.used_representation();
             step_live(&used, WHERE)?;
-            if used.cast::<StepShapeShapeRepresentation>().is_some() {
+            if used.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>().is_some() {
                 self.format = pdr;
             }
         }
@@ -235,7 +236,7 @@ impl StepConstructExternRefs {
         graph: &InterfaceGraph,
         adr: &Handle<StepAP214AppliedDocumentReference>,
         pdwad: &Handle<StepBasicProductDefinitionWithAssociatedDocuments>,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         if pdwad.is_null() {
             return Ok(graph.shareds(&adr.cast())?.content());
         }
@@ -246,7 +247,7 @@ impl StepConstructExternRefs {
         &mut self,
         graph: &InterfaceGraph,
         adr: &Handle<StepAP214AppliedDocumentReference>,
-        seq_of_pdwad: &mut Vec<Handle<StandardTransient>>,
+        seq_of_pdwad: &mut Vec<Handle<dyn Transient>>,
     ) -> Result<(), Failure> {
         // looking for Product Definition Formation and exclude excess PDWAD from aSeqOfPDWAD
         let mut pdwad = Handle::default();
@@ -259,15 +260,15 @@ impl StepConstructExternRefs {
                 role = found;
             }
         }
-        let mut shape = Handle::<StepBasicProductDefinition>::default();
+        let mut shape = Handle::<dyn crate::StepEntityBase<StepBasicProductDefinition>>::default();
         for shared in graph.shareds(&adr.cast())?.content() {
-            let found = shared.cast::<StepBasicProductDefinition>();
+            let found = shared.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>();
             if found.is_some() {
                 shape = found;
             }
         }
         // search for Document file
-        let mut doc_file = Handle::<StandardTransient>::default();
+        let mut doc_file = Handle::<dyn Transient>::default();
         let mut file_data = DocumentFileData::default();
         for candidate in Self::document_file_candidates(graph, adr, &pdwad)? {
             if candidate.cast::<StepBasicDocumentFile>().is_null() {
@@ -332,7 +333,7 @@ impl StepConstructExternRefs {
         self.my_shapes.len() as i32
     }
     /// `prod_def`: the product definition of a reference, null when it cannot be detected.
-    pub fn prod_def(&self, num: i32) -> Result<Handle<StepBasicProductDefinition>, Failure> {
+    pub fn prod_def(&self, num: i32) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
         Ok(seq_item(&self.my_shapes, num)?.cast())
     }
     /// `doc_file`: the document file of a reference, null when it cannot be detected.
@@ -345,7 +346,7 @@ impl StepConstructExternRefs {
             return Ok(Handle::default());
         }
         let pdr =
-            seq_item(&self.my_formats, num)?.cast::<StepReprPropertyDefinitionRepresentation>();
+            seq_item(&self.my_formats, num)?.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
         let Some(pdr) = pdr.get() else {
             return Ok(Handle::default());
         };

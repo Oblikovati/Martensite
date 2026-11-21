@@ -54,8 +54,8 @@ fn init_round_trip_step_shape_angular_location() {
         &a_shape_aspect_relationship_name,
         has_shape_aspect_relationship_description,
         &a_shape_aspect_relationship_description,
-        &a_shape_aspect_relationship_relating_shape_aspect,
-        &a_shape_aspect_relationship_related_shape_aspect,
+        &a_shape_aspect_relationship_relating_shape_aspect.upcast(),
+        &a_shape_aspect_relationship_related_shape_aspect.upcast(),
         a_angle_selection,
     );
     assert!(object.angle_selection() == a_angle_selection);
@@ -78,7 +78,7 @@ fn init_round_trip_step_shape_angular_size() {
     let a_angle_selection = StepShapeAngleRelator::default();
     let object = StepShapeAngularSize::new();
     object.init(
-        &a_dimensional_size_applies_to,
+        &a_dimensional_size_applies_to.upcast(),
         &a_dimensional_size_name,
         a_angle_selection,
     );
@@ -166,7 +166,7 @@ fn init_round_trip_step_shape_boxed_half_space() {
     let a_agreement_flag = true;
     let a_enclosure = Handle::new(StepShapeBoxDomain::new());
     let object = StepShapeBoxedHalfSpace::new();
-    object.init(&a_name, &a_base_surface, a_agreement_flag, &a_enclosure);
+    object.init(&a_name, &a_base_surface.upcast(), a_agreement_flag, &a_enclosure);
     assert!(object.enclosure() == a_enclosure);
 }
 
@@ -187,7 +187,7 @@ fn init_round_trip_step_shape_brep_with_voids() {
     let a_voids =
         Handle::new(HArray1::<Handle<StepShapeOrientedClosedShell>>::with_bounds(1, 2).unwrap());
     let object = StepShapeBrepWithVoids::new();
-    object.init(&a_name, &a_outer, &a_voids);
+    object.init(&a_name, &a_outer.upcast(), &a_voids);
     assert!(object.voids() == a_voids);
 }
 
@@ -224,7 +224,7 @@ fn runtime_type_step_shape_connected_edge_set() {
 #[test]
 fn init_round_trip_step_shape_connected_edge_set() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
-    let a_ces_edges = Handle::new(HArray1::<Handle<StepShapeEdge>>::with_bounds(1, 2).unwrap());
+    let a_ces_edges = Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>::with_bounds(1, 2).unwrap());
     let object = StepShapeConnectedEdgeSet::new();
     object.init(&a_representation_item_name, &a_ces_edges);
     assert!(object.ces_edges() == a_ces_edges);
@@ -254,13 +254,13 @@ fn runtime_type_step_shape_connected_face_sub_set() {
 fn init_round_trip_step_shape_connected_face_sub_set() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
     let a_connected_face_set_cfs_faces =
-        Handle::new(HArray1::<Handle<StepShapeFace>>::with_bounds(1, 2).unwrap());
+        Handle::new(HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>::with_bounds(1, 2).unwrap());
     let a_parent_face_set = Handle::new(StepShapeConnectedFaceSet::new());
     let object = StepShapeConnectedFaceSubSet::new();
     object.init(
         &a_representation_item_name,
         &a_connected_face_set_cfs_faces,
-        &a_parent_face_set,
+        &a_parent_face_set.upcast(),
     );
     assert!(object.parent_face_set() == a_parent_face_set);
 }
@@ -280,7 +280,7 @@ fn init_round_trip_step_shape_context_dependent_shape_representation() {
     let a_rep_rel = Handle::new(StepReprShapeRepresentationRelationship::new());
     let a_pro_rel = Handle::new(StepReprProductDefinitionShape::new());
     let object = StepShapeContextDependentShapeRepresentation::new();
-    object.init(&a_rep_rel, &a_pro_rel);
+    object.init(&a_rep_rel.upcast(), &a_pro_rel);
     assert!(object.representation_relation() == a_rep_rel);
     assert!(object.represented_product_relation() == a_pro_rel);
 }
@@ -372,9 +372,9 @@ fn init_round_trip_step_shape_dimensional_location_with_path() {
         &a_shape_aspect_relationship_name,
         has_shape_aspect_relationship_description,
         &a_shape_aspect_relationship_description,
-        &a_shape_aspect_relationship_relating_shape_aspect,
-        &a_shape_aspect_relationship_related_shape_aspect,
-        &a_path,
+        &a_shape_aspect_relationship_relating_shape_aspect.upcast(),
+        &a_shape_aspect_relationship_related_shape_aspect.upcast(),
+        &a_path.upcast(),
     );
     assert!(object.path() == a_path);
 }
