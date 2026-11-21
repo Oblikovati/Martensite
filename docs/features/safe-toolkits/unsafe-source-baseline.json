@@ -325,7 +325,7 @@
   "crates/martensite-tkservice/src/font/ft_font_render.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1,"kinds":{"block":3}},
   "crates/martensite-tkservice/src/font/ft_font_select.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
   "crates/martensite-tkservice/src/font/ft_library.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
-  "crates/martensite-tkservice/src/graphic3d/clip_allocator_active_loss_probe.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1,"kinds":{"block":2,"implementation":1}},
+  "crates/martensite-tkservice/src/graphic3d/clip_allocator_active_loss_probe.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":1,"implementation":1}},
   "crates/martensite-tkservice/src/graphic3d/clip_sequence_allocator_fixture.rs": {"unsafe_keywords":6,"unsafe_code_mentions":1,"kinds":{"block":4,"function":1,"implementation":1}},
   "crates/martensite-tkservice/src/graphic3d/clip_sequence_storage.rs": {"unsafe_keywords":1,"unsafe_code_mentions":1,"kinds":{"block":1}},
   "crates/martensite-tkservice/src/image/pix_map_typed_refs.rs": {"unsafe_keywords":4,"unsafe_code_mentions":1,"kinds":{"block":4}},
