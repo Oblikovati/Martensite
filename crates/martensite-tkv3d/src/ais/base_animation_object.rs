@@ -1,7 +1,7 @@
 //! Martensite's object animation base applies the context and view update policy.
 use super::{AisAnimationBase, AisAnimationSource, AisInteractiveContext, AisInteractiveObject};
 use martensite_tkernel::{
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState},
     tcollection::AsciiString,
 };
 /// Native protected handles, retained independently of context membership; `base.fields.read().object`.

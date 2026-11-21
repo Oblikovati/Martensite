@@ -4,7 +4,7 @@ use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
     quantity::*,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::{AsciiString, ExtendedString},
 };
 use martensite_tkservice::{aspect::*, graphic3d::*};

@@ -3,7 +3,7 @@ use super::*;
 use crate::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkernel::{
     ncollection::Map,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions::null_object},
+    standard::{Failure, Handle, SharedState, exceptions::null_object},
 };
 
 pub(super) type ManagedSelectable = Handle<dyn SelectMgrSelectableObject>;

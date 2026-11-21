@@ -5,7 +5,7 @@ use super::{
     ais_base_animation_object_update_transform,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkmath::gp::{Transform3, TransformNLerp};

@@ -7,7 +7,7 @@ use martensite_tkbrep::{
     brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface},
     brep_tools::WireExplorer,
     topexp::Explorer,
-    topods::{self, Face},
+    topods,
 };
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{

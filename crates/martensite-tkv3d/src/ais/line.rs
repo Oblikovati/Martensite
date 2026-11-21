@@ -2,7 +2,7 @@
 use super::{AisInteractiveObject, AisInteractiveObjectBase, AisKindOfInteractive};
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::{
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState},
     units_api::UnitsApi,
 };
 use martensite_tkg3d::geom::{GeomLine, GeomPoint};

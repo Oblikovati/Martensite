@@ -503,7 +503,6 @@ macro_rules! impl_select3d_poly {
 ///
 /// Example: `let poly = Select3DSensitivePoly::new(&owner, &points, true)?; poly.nb_sub_elements();`.
 pub struct Select3DSensitivePoly {
-    transient: martensite_tkernel::standard::StandardTransient,
     /// The poly state.
     pub core: Select3DSensitivePolyCore,
 }
@@ -556,10 +555,7 @@ impl Select3DSensitivePoly {
     }
     /// A poly of a core.
     fn of(core: Select3DSensitivePolyCore) -> Self {
-        Self {
-            transient: martensite_tkernel::standard::StandardTransient::default(),
-            core,
-        }
+        Self { core }
     }
     /// `Points3D`; `poly.points_3d()`.
     pub fn points_3d(&self) -> Vec<Point3> {

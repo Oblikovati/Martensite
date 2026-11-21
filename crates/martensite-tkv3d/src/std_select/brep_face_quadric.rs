@@ -5,7 +5,7 @@ use martensite_tkbrep::{
     brep::BRepTool,
     brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface},
     brep_tools, topexp,
-    topods::{self, Face, ShapeIterator},
+    topods::{self, ShapeIterator},
     toptools::IndexedMapOfShape,
 };
 use martensite_tkernel::standard::HandleReference;

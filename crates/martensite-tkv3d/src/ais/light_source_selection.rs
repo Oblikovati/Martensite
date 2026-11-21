@@ -3,7 +3,7 @@ use super::*;
 use crate::{prs_mgr::*, select_mgr::*, select3d::*};
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Failure, Handle, HandleReference, StandardTransient},
+    standard::{Failure, Handle, HandleReference},
 };
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::{

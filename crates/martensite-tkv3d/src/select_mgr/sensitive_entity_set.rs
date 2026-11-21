@@ -3,7 +3,7 @@ use super::{SelectMgrEntityOwnerSource, SelectMgrSelection, SelectMgrSensitiveEn
 use crate::select3d::{Select3DSensitiveEntity, Select3DSensitiveEntityMembers};
 use martensite_tkernel::{
     ncollection::{DataMap, IndexedMap},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::bvh::{
     BvhBuilderHandle, BvhObjectTransientSource, BvhPrimitiveSet3d, BvhVec3d,

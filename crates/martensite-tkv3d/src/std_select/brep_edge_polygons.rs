@@ -1,6 +1,6 @@
 //! Existing edge polygons take precedence over analytical geometry; lower bounds are normalized in native order.
+use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::EdgeView;
-use martensite_tkbrep::{brep::BRepTool, topods::Edge};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::Point3;
 pub(super) fn brep_selection_polygon_points(

@@ -3,7 +3,7 @@ use super::{AisInteractiveObject, AisInteractiveObjectBase};
 use crate::{prs_mgr::*, prs3d::*, select_mgr::*};
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkservice::{
     aspect::{AspectTypeOfFacingModel, AspectTypeOfLine},

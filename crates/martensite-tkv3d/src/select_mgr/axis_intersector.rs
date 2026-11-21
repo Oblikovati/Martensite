@@ -1,6 +1,6 @@
 //! Selecting axis state, including initialization assertions.
 use super::{SelectMgrBaseIntersectorBase, SelectMgrSelectionType};
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::gp::{Axis1, Direction3, GeneralTransform3, Point3, TransformForm, Xyz};
 
 /// A ray selector; initialize its axis before geometric queries.

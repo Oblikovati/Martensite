@@ -7,7 +7,7 @@ use crate::{
     select3d::{Select3DSensitiveEntityMembers, Select3DSensitivePrimitiveArray},
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcol_std::HPackedMapOfInteger,
 };
 use martensite_tkservice::graphic3d::*;

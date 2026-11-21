@@ -2,7 +2,7 @@
 use super::{AisInteractiveObject, AisInteractiveObjectBase};
 use crate::{prs_mgr::*, prs3d::Prs3dTextAspect, select_mgr::*};
 use martensite_tkernel::{
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState},
     tcollection::ExtendedString,
 };
 use martensite_tkmath::gp::{Axis2, Point3};

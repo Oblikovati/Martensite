@@ -4,7 +4,7 @@ use crate::{prs_mgr::*, prs3d::*};
 use martensite_tkernel::{
     ncollection::{Sequence, Vec2},
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkservice::{aspect::*, graphic3d::*};
 /// Native protected storage for subclasses; `base.fields.points.write().append(Vec2::new(1, 2))`.

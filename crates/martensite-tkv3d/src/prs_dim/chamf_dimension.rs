@@ -10,7 +10,7 @@ use crate::prs_mgr::{PrsMgrPresentableObjectMembers, prs_mgr_presentable_bind};
 use crate::select_mgr::SelectMgrSelection;
 use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
 use martensite_tkbrep::topods::{self, Shape};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::ExtendedString;
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::{GeomLine, GeomPlane};
@@ -82,7 +82,6 @@ macro_rules! chamf_dimension {
     ($type:ident, $native:literal, $doc:literal) => {
         #[doc = $doc]
         pub struct $type {
-            transient: StandardTransient,
             pub(super) base: PrsDimRelationBase,
             /// The attach point and leader direction.
             pub fields: SharedState<PrsDimChamfFields>,
@@ -111,7 +110,6 @@ macro_rules! chamf_dimension {
                 text: &ExtendedString,
             ) -> Handle<Self> {
                 let relation = Handle::new(Self {
-                    transient: StandardTransient::default(),
                     base: PrsDimRelationBase::new(crate::prs_mgr::PrsMgrTypeOfPresentation3d::AllView),
                     fields: SharedState::new(PrsDimChamfFields::default()),
                 });

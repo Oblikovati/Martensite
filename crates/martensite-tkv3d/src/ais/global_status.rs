@@ -2,7 +2,7 @@
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkernel::{
     ncollection::List,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState},
 };
 use std::sync::RwLockReadGuard;
 #[derive(Default)]

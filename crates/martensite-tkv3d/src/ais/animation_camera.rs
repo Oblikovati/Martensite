@@ -2,7 +2,7 @@
 use super::{AisAnimationBase, AisAnimationProgress, AisAnimationSource};
 use crate::v3d::V3dViewSource;
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkservice::graphic3d::Graphic3dCamera;

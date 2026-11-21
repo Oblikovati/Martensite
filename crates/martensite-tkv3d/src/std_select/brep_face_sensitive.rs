@@ -2,7 +2,7 @@
 use super::StdSelectBrepSelectionTool;
 use crate::{select_mgr::SelectMgrEntityOwnerSource, select3d::*};
 use martensite_tkbrep::topods::FaceView;
-use martensite_tkbrep::{brep::BRepTool, brep_adaptor::BRepAdaptorSurface, topods::Face};
+use martensite_tkbrep::{brep::BRepTool, brep_adaptor::BRepAdaptorSurface};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
     ncollection::Sequence,

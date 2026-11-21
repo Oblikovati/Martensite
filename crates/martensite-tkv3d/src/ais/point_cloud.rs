@@ -4,7 +4,7 @@ use crate::{prs_mgr::*, prs3d::Prs3dPointAspect};
 use martensite_tkernel::{
     ncollection::HArray1,
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::{
     bnd::BoundingBox3,

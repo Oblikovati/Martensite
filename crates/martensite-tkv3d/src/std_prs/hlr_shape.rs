@@ -158,9 +158,7 @@ fn no_data() -> Failure {
 /// curve into the current group (seen lines, then hidden ones when asked).
 /// Example: `StdPrsHlrShape::default.compute_hlr(&prs, &shape, &drawer, &camera)?`.
 #[derive(Default)]
-pub struct StdPrsHlrShape {
-    transient: StandardTransient,
-}
+pub struct StdPrsHlrShape {}
 martensite_tkernel::impl_transient!(StdPrsHlrShape, "StdPrsHLRShape", dyn StdPrsHlrShapeI,
     interfaces: [dyn StdPrsHlrShapeI]);
 
@@ -232,9 +230,7 @@ fn null_camera() -> Failure {
 /// regular lines (or are outlines) become one segment array each.
 /// Example: `StdPrsHlrPolyShape::default.compute_hlr(&prs, &shape, &drawer, &camera)?`.
 #[derive(Default)]
-pub struct StdPrsHlrPolyShape {
-    transient: StandardTransient,
-}
+pub struct StdPrsHlrPolyShape {}
 martensite_tkernel::impl_transient!(StdPrsHlrPolyShape, "StdPrsHLRPolyShape", dyn StdPrsHlrShapeI,
     interfaces: [dyn StdPrsHlrShapeI]);
 

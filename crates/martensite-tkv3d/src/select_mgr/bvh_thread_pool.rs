@@ -6,8 +6,7 @@ use martensite_tkernel::{
     ncollection::{Array1, List},
     osd::{NativeSignalHost, OsdThread, SignalHost},
     standard::{
-        Failure, Handle, NonRecursiveMutex, SharedState, StandardCondition, StandardTransient,
-        exceptions::null_object,
+        Failure, Handle, NonRecursiveMutex, SharedState, StandardCondition, exceptions::null_object,
     },
 };
 use std::sync::{

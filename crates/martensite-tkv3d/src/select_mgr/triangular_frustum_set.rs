@@ -2,7 +2,7 @@
 use super::*;
 use martensite_tkernel::{
     ncollection::{Array1, HArray1},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::gp::{Point2, Point3};
 

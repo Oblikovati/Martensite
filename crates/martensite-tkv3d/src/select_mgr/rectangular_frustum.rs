@@ -1,6 +1,6 @@
 //! Rectangular point/box selection state and construction.
 use super::*;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::gp::{Direction3, Point2, Point3, Xy};
 
 /// Stored selection bounds, independent from the last built geometry.

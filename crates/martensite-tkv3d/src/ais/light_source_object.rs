@@ -4,7 +4,7 @@ use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkservice::graphic3d::*;
 /// A native interactive light presentation; `AisLightSource::new(&light)?`.

@@ -1,7 +1,7 @@
 //! Martensite animation timelines preserve AisAnimation.
 use martensite_tkernel::{
     ncollection::Sequence,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use martensite_tkservice::media::MediaTimer;
