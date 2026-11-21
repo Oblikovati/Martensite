@@ -80,7 +80,7 @@ fn divide_child<T: WireDivider + ?Sized>(
             BRepBuilder::default().add(result, &edge)?;
             continue;
         }
-        if !support.criterion.cast::<dyn EdgeDivider>().compute(&edge)? {
+        if !support.criterion.compute(&edge)? {
             BRepBuilder::default().add(result, &edge)?;
             continue;
         }

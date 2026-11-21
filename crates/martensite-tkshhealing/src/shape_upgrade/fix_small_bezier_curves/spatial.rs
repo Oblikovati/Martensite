@@ -39,9 +39,8 @@ impl ShapeUpgradeFixSmallBezierCurves {
             .fix_small_curves_data()
             .with(|f| f.curve_3d_tool.clone());
         tool.init_curve_range(&approximation.curve().cast(), first, last)?;
-        let criterion = tool.cast::<dyn SplitCurve>();
-        criterion.perform(true)?;
-        if criterion.status_flag(ShapeExtendStatus::Fail) {
+        tool.perform(true)?;
+        if tool.status_flag(ShapeExtendStatus::Fail) {
             return Ok(true);
         }
         assign_single_segment(&tool.curves(), output)

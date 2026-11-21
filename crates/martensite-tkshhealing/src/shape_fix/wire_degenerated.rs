@@ -1,4 +1,4 @@
-//! Insert or replace wire edges that lie on a support-surface singularity.
+//! Insert or replace wire edges that lie on a supimplementation-surface singularity.
 use super::ShapeFixWire;
 use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisWire};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};

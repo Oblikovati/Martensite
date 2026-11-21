@@ -87,6 +87,9 @@ fn fix_shape_flag_runs_on_a_shape_context() {
     flags.set(ShapeProcessOperation::FixShape);
     let base = context.upcast::<dyn ShapeProcessContextSource>();
     assert_eq!(base.object_address(), context.object_address());
+    let descriptor = base.dynamic_type().unwrap();
+    assert_eq!(descriptor.name(), "ShapeProcess_ShapeContext");
+    assert_eq!(descriptor.parent().unwrap().name(), "ShapeProcess_Context");
     assert!(ShapeProcess::perform_operations(&base, flags, &ProgressRange::default()).unwrap());
     assert!(!context.result().is_null());
 }
