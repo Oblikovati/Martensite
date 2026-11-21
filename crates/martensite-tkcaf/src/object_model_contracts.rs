@@ -8,7 +8,7 @@ use martensite_tkbrep::{
     topods::{Shape, Vertex, vertex},
 };
 use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
-use martensite_tklcaf::tdf::{TdfAttribute, TdfData};
+use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeState, TdfData};
 use martensite_tkmath::gp::Point3;
 
 fn source_vertex() -> Shape {
@@ -42,7 +42,7 @@ fn assert_classic_copy(source: &Shape, copy: &Shape, map: &TNamingTransientMap) 
         copy.tshape().object_address()
     );
     assert_eq!(
-        BRepTool::point(&vertex(copy).unwrap()).unwrap(),
+        BRepTool::pnt(&vertex(copy).unwrap()).unwrap(),
         Point3::new(1., 2., 3.)
     );
 }
