@@ -2,7 +2,6 @@
 //! A named in-memory mesh data source for the Martensite MeshVS tests: a unit square split
 //! in two triangles, a link, a unit-cube prism over the first triangle and a 0D element.
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::StandardTransient;
 use martensite_tkmeshvs::flags::*;
 use martensite_tkmeshvs::{
     MeshVSDataSource, MeshVSDataSource3D, MeshVSDataSource3DBase, MeshVSEntityType,
@@ -33,11 +32,10 @@ pub const ELEMENTS: [(MeshVSEntityType, &[i32]); 6] = [
 /// The fake data source of the tests; `UnitSquareSource::default()`.
 #[derive(Default)]
 pub struct UnitSquareSource {
-    transient: StandardTransient,
+
     base: MeshVSDataSource3DBase,
 }
-martensite_tkernel::impl_transient!(UnitSquareSource, "UnitSquareSource", dyn MeshVSDataSource3D, transient,
-    interfaces: [dyn MeshVSDataSource, dyn MeshVSDataSource3D]);
+martensite_tkernel::impl_transient!(UnitSquareSource, "UnitSquareSource", dyn MeshVSDataSource3D, interfaces: [dyn MeshVSDataSource, dyn MeshVSDataSource3D]);
 
 fn element(id: i32) -> Option<(MeshVSEntityType, &'static [i32])> {
     ELEMENTS.get(usize::try_from(id - 11).ok()?).copied()

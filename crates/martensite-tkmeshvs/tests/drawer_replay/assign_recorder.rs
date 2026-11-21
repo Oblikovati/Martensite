@@ -1,27 +1,30 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Named derived override records actual intrusive counts and preserves faults after copy.
 use martensite_tkernel::standard::{
-    Handle, HandleReference, SharedState, Transient, catch_native_failure, raise_native_failure,
+    Handle, HandleReference, SharedState, catch_native_failure, raise_native_failure,
 };
 use martensite_tkmeshvs::{MeshVSDrawer, MeshVSDrawerSource, meshvs_drawer_assign};
-use std::{fmt::Write, sync::Arc};
+use std::{
+    fmt::Write,
+    sync::{Arc, Weak},
+};
 struct AssignRecorder {
     base: MeshVSDrawer,
+    owner: Weak<Self>,
     fault: Arc<SharedState<i32>>,
     rows: Arc<SharedState<String>>,
 }
-martensite_tkernel::impl_transient!(AssignRecorder,"AssignProbe",MeshVSDrawer,base,interfaces:[dyn MeshVSDrawerSource]);
+martensite_tkernel::impl_transient!(AssignRecorder,"AssignProbe",MeshVSDrawer, interfaces:[dyn MeshVSDrawerSource]);
 impl MeshVSDrawerSource for AssignRecorder {
-    fn drawer_base(&self) -> &MeshVSDrawer {
+    fn owned_drawer(&self) -> &MeshVSDrawer {
         &self.base
     }
     fn assign(&self, source: &dyn HandleReference<dyn MeshVSDrawerSource>) {
-        let observed = source.observe();
         writeln!(
             *self.rows.write(),
             "callback {} {}",
-            self.transient_base().ref_count(),
-            observed.get().unwrap().transient_base().ref_count()
+            self.owner.strong_count(),
+            source.ref_count()
         )
         .unwrap();
         meshvs_drawer_assign(&self.base, source);
@@ -44,12 +47,13 @@ struct ForeignAssignFault;
 pub(super) fn dispatch(source: &Handle<MeshVSDrawer>, rows: &mut String) {
     let shared = Arc::new(SharedState::new(String::new()));
     let fault = Arc::new(SharedState::new(0));
-    let target = Handle::new(AssignRecorder {
+    let target = Handle::from_arc(Arc::new_cyclic(|owner| AssignRecorder {
+        owner: owner.clone(),
         base: MeshVSDrawer::default(),
         fault: fault.clone(),
         rows: shared.clone(),
-    })
-    .into_cast::<dyn MeshVSDrawerSource>();
+    }))
+    .into_upcast::<dyn MeshVSDrawerSource>();
     for selected in 0..3 {
         *fault.write() = selected;
         let result = invoke_assignment(&target, source);

@@ -13,27 +13,27 @@ use martensite_tkservice::graphic3d::Graphic3dAspectsRenderMembers;
 use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
 use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfPrimitives, Graphic3dAspectFillArea3d, Graphic3dAspectLine3d,
-    Graphic3dAspectsSource, Graphic3dStructureSource,
+    Graphic3dArraySource, Graphic3dAspectFillArea3d, Graphic3dAspectLine3d, Graphic3dAspectsSource,
+    Graphic3dStructureSource,
 };
 
 /// The arrays and flags of `DrawArrays`.
 pub struct DrawArraysInput {
     /// The face triangles.
-    pub polygons: Handle<Graphic3dArrayOfPrimitives>,
+    pub polygons: Handle<dyn Graphic3dArraySource>,
     /// The edges.
-    pub lines: Handle<Graphic3dArrayOfPrimitives>,
+    pub lines: Handle<dyn Graphic3dArraySource>,
     /// The links.
-    pub link_lines: Handle<Graphic3dArrayOfPrimitives>,
+    pub link_lines: Handle<dyn Graphic3dArraySource>,
     /// The volume triangles.
-    pub volumes_in_shad: Handle<Graphic3dArrayOfPrimitives>,
+    pub volumes_in_shad: Handle<dyn Graphic3dArraySource>,
     /// `IsPolygonsEdgesOff`.
     pub is_polygons_edges_off: bool,
     /// `is_selected`.
     pub is_selected: bool,
 }
 
-fn has_items(array: &Handle<Graphic3dArrayOfPrimitives>) -> bool {
+fn has_items(array: &Handle<dyn Graphic3dArraySource>) -> bool {
     array.get().is_some_and(|a| a.item_number() > 0)
 }
 

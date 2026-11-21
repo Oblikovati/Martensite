@@ -10,7 +10,7 @@ use crate::mesh::{MeshVSMeshMembers, MeshVSMeshSource};
 use crate::selection_policy::MeshVSMeshSelectionMethod;
 use martensite_tkernel::ncollection::{Array1, Vec3};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Point3, Xyz};
 use martensite_tkv3d::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use martensite_tkv3d::select_mgr::SelectMgrEntityOwnerSource;
@@ -24,7 +24,6 @@ use std::io;
 
 /// The whole-mesh sensitive set; `MeshVSCommonSensitiveEntity::new(&owner, &mesh, MeshVSMeshSelectionMethod::Nodes)?`.
 pub struct MeshVSCommonSensitiveEntity {
-    transient: StandardTransient,
     entity: Select3DSensitiveEntityBase,
     set: Select3DSensitiveSetBase,
     data_source: Handle<dyn MeshVSDataSource>,
@@ -34,8 +33,7 @@ pub struct MeshVSCommonSensitiveEntity {
     cog: Point3,
     bnd_box: Select3DBndBox3d,
 }
-martensite_tkernel::impl_transient!(MeshVSCommonSensitiveEntity, "MeshVSCommonSensitiveEntity", dyn Select3DSensitiveSet, transient,
-    interfaces: [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet]);
+martensite_tkernel::impl_transient!(MeshVSCommonSensitiveEntity, "MeshVSCommonSensitiveEntity", dyn Select3DSensitiveSet, interfaces: [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet]);
 
 impl MeshVSCommonSensitiveEntity {
     /// The elements, the
@@ -49,7 +47,6 @@ impl MeshVSCommonSensitiveEntity {
     ) -> Result<Self, Failure> {
         let max_face_nodes = parent_max_face_nodes(parent)?;
         let mut entity = Self {
-            transient: StandardTransient::default(),
             entity: Select3DSensitiveEntityBase::new(owner),
             set: Select3DSensitiveSetBase::default(),
             data_source: parent.get_data_source(),
@@ -205,7 +202,6 @@ impl Select3DSensitiveEntity for MeshVSCommonSensitiveEntity {
     /// `get_connected`: a copy sharing the owner, data source, elements, center and box.
     fn get_connected(&self) -> Result<Handle<dyn Select3DSensitiveEntity>, Failure> {
         Ok(Handle::new(Self {
-            transient: StandardTransient::default(),
             entity: Select3DSensitiveEntityBase::new(&self.owner_id()),
             set: Select3DSensitiveSetBase::default(),
             data_source: self.data_source.clone(),

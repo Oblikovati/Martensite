@@ -264,7 +264,7 @@ fn add_element(
             &topo,
             &nodes,
             coords,
-            &triangles.clone().cast(),
+            &triangles,
             settings.is_reflect,
             &settings.scale,
         )?;
@@ -272,7 +272,7 @@ fn add_element(
             &topo,
             &nodes,
             coords,
-            &edges.clone().cast(),
+            &edges,
             settings.is_reflect,
             &settings.scale,
         )?;

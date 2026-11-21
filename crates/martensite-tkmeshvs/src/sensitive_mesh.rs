@@ -5,7 +5,7 @@
 use crate::data_source::MeshVSDataSource;
 use crate::mesh_owner::MeshVSMeshOwnerSource;
 use martensite_tkernel::ncollection::Vec3;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Point3;
 use martensite_tkv3d::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use martensite_tkv3d::select_mgr::SelectMgrEntityOwnerSource;
@@ -16,20 +16,17 @@ use martensite_tkv3d::select3d::{
 
 /// The sensitive entity of a mesh owner; `MeshVSSensitiveMesh::new(&owner, 0)?`.
 pub struct MeshVSSensitiveMesh {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     mode: i32,
     bnd_box: Select3DBndBox3d,
 }
-martensite_tkernel::impl_transient!(MeshVSSensitiveMesh, "MeshVSSensitiveMesh", dyn Select3DSensitiveEntity, transient,
-    interfaces: [dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(MeshVSSensitiveMesh, "MeshVSSensitiveMesh", dyn Select3DSensitiveEntity, interfaces: [dyn Select3DSensitiveEntity]);
 
 impl MeshVSSensitiveMesh {
     /// The box of the data source of a mesh owner;
     /// a data source without node fails the box query with a construction error.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>, mode: i32) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             mode,
             bnd_box: source_box(&data_source_of(owner))?,

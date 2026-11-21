@@ -5,7 +5,7 @@
 use crate::data_source::MeshVSDataSource;
 use crate::mesh_entity_owner::hilight_by_mesh;
 use martensite_tkernel::ncollection::packed_map_algo;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcol_std::HPackedMapOfInteger;
 use martensite_tkv3d::prs_mgr::PrsMgrPresentationManager;
 use martensite_tkv3d::prs3d::Prs3dDrawer;
@@ -198,11 +198,9 @@ pub fn meshvs_mesh_owner_is_forced_hilight<O: MeshVSMeshOwnerSource + ?Sized>(ow
 
 /// The concrete `MeshVSMeshOwner`; `MeshVSMeshOwner::new(&selectable, &source, 5)`.
 pub struct MeshVSMeshOwner {
-    transient: StandardTransient,
     base: MeshVSMeshOwnerBase,
 }
-martensite_tkernel::impl_transient!(MeshVSMeshOwner, "MeshVSMeshOwner", dyn SelectMgrEntityOwnerSource, transient,
-    interfaces: [dyn MeshVSMeshOwnerSource, dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(MeshVSMeshOwner, "MeshVSMeshOwner", dyn SelectMgrEntityOwnerSource, interfaces: [dyn MeshVSMeshOwnerSource, dyn SelectMgrEntityOwnerSource]);
 
 impl MeshVSMeshOwner {
     /// The bound handle.
@@ -212,7 +210,6 @@ impl MeshVSMeshOwner {
         priority: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: MeshVSMeshOwnerBase::new(selectable, data_source, priority),
         });
         select_mgr_entity_owner_bind(&owner.clone().cast());

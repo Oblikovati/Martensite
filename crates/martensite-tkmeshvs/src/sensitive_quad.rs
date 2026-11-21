@@ -2,7 +2,7 @@
 //! `MeshVSSensitiveQuad`: a quadrangle detected as the triangles (0,1,2)
 //! and (0,2,3); an inclusion test asks every corner (or, for a polyline, both triangles).
 use martensite_tkernel::ncollection::Vec3;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Point3, Xyz};
 use martensite_tkv3d::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use martensite_tkv3d::select_mgr::{SelectMgrEntityOwnerSource, SelectMgrSelectionType};
@@ -13,18 +13,15 @@ use martensite_tkv3d::select3d::{
 
 /// A sensitive quadrangle; `MeshVSSensitiveQuad::new(&owner, [a, b, c, d])`.
 pub struct MeshVSSensitiveQuad {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     vertices: [Point3; 4],
 }
-martensite_tkernel::impl_transient!(MeshVSSensitiveQuad, "MeshVSSensitiveQuad", dyn Select3DSensitiveEntity, transient,
-    interfaces: [dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(MeshVSSensitiveQuad, "MeshVSSensitiveQuad", dyn Select3DSensitiveEntity, interfaces: [dyn Select3DSensitiveEntity]);
 
 impl MeshVSSensitiveQuad {
     /// A quadrangle of an owner from four points.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>, vertices: [Point3; 4]) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             vertices,
         }

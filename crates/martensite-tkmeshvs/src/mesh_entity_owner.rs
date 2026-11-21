@@ -4,7 +4,7 @@
 //! highlight it.
 use crate::MeshVSEntityType;
 use crate::mesh::MeshVSMeshSource;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkv3d::prs_mgr::PrsMgrPresentationManager;
 use martensite_tkv3d::prs3d::Prs3dDrawer;
 use martensite_tkv3d::select_mgr::{
@@ -27,12 +27,10 @@ pub struct MeshVSMeshEntityOwnerFields {
 
 /// The owner of a mesh entity; `MeshVSMeshEntityOwner::new(&mesh, 3, 0, MESHVS_ET_FACE, 2, false)`.
 pub struct MeshVSMeshEntityOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     fields: MeshVSMeshEntityOwnerFields,
 }
-martensite_tkernel::impl_transient!(MeshVSMeshEntityOwner, "MeshVSMeshEntityOwner", dyn SelectMgrEntityOwnerSource, transient,
-    interfaces: [dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(MeshVSMeshEntityOwner, "MeshVSMeshEntityOwner", dyn SelectMgrEntityOwnerSource, interfaces: [dyn SelectMgrEntityOwnerSource]);
 
 impl MeshVSMeshEntityOwner {
     /// The owner of the entity `id` of a selectable object.
@@ -46,7 +44,6 @@ impl MeshVSMeshEntityOwner {
         is_group: bool,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(selectable, priority),
             fields: MeshVSMeshEntityOwnerFields {
                 addr: mesh_entity,
