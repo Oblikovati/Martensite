@@ -5,7 +5,7 @@
 use super::{ACC_DEFAULT_BLOCK_SIZE, AllocatorSource, BaseAllocator, INC_DEFAULT_BLOCK_SIZE};
 use crate::standard::Handle;
 use crate::standard::{Failure, StandardTransient};
-use std::{ptr::NonNull, sync::OnceLock};
+use std::sync::OnceLock;
 /// Polymorphic allocator object; `AllocatorObject::default().resource().allocate(16)`.
 #[repr(C)]
 pub struct AllocatorObject {
@@ -22,23 +22,6 @@ impl AllocatorObject {
     pub fn common_base_allocator() -> &'static Handle<Self> {
         static OWNER: OnceLock<Handle<AllocatorObject>> = OnceLock::new();
         OWNER.get_or_init(|| Handle::new(Self::default()))
-    }
-    /// Invoke the parent Allocate body; `object.allocate_base(16)`.
-    pub fn allocate_base(&self, size: usize) -> Option<NonNull<u8>> {
-        // Bypass derived dispatch to prevent recursive base-body calls.
-        self.resource.allocate_policy(size, true)
-    }
-    /// Invoke independent parent AllocateOptimal; `object.allocate_optimal_base(16)`.
-    pub fn allocate_optimal_base(&self, size: usize) -> Option<NonNull<u8>> {
-        // The base optimal-allocation body is independent of the overridable allocate.
-        self.resource.allocate_optimal_builtin(size)
-    }
-    /// Invoke parent Free, bypassing derived dispatch; `unsafe { object.free_base(pointer) }?`.
-    /// # Safety
-    /// The nullable pointer must belong to this parent's live allocation policy.
-    pub unsafe fn free_base(&self, pointer: *mut u8) -> Result<(), Failure> {
-        // SAFETY: the caller supplies the original nullable allocation pointer.
-        unsafe { self.resource.free_builtin_nullable(pointer) }
     }
     pub(super) fn allocate_calls_optimal(&self) -> bool {
         // Read the actual embedded policy without creating or retargeting a handled base.
@@ -170,7 +153,7 @@ unsafe impl AllocatorSource for AllocatorObject {
 }
 impl HeapAllocatorObject {
     /// Borrow the shared global heap allocator handle; `HeapAllocatorObject::global_heap_allocator()`.
-    pub fn global_heap_allocator() -> &'static Handle<Self> {
+    pub(crate) fn global_heap_allocator() -> &'static Handle<Self> {
         static OWNER: OnceLock<Handle<HeapAllocatorObject>> = OnceLock::new();
         OWNER.get_or_init(|| Handle::new(Self::default()))
     }

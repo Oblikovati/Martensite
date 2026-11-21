@@ -17,10 +17,10 @@ pub struct OrderedNodeMut<'a, K, V> {
 }
 
 impl<K, V, H> OrderedTable<K, V, H> {
-    pub fn first_node(&self) -> Option<OrderedNodeRef<'_, K, V>> {
+    pub(crate) fn first_node(&self) -> Option<OrderedNodeRef<'_, K, V>> {
         OrderedNodeRef::at(self.items())
     }
-    pub fn first_node_mut(&mut self) -> Option<OrderedNodeMut<'_, K, V>> {
+    pub(crate) fn first_node_mut(&mut self) -> Option<OrderedNodeMut<'_, K, V>> {
         let slot = self.first?;
         let (keys, values) = self.storage.payload_mut().split_mut();
         Some(OrderedNodeMut {
@@ -50,23 +50,6 @@ impl<'a, K, V> OrderedNodeRef<'a, K, V> {
     pub fn order_next(&self) -> Option<Self> {
         let mut inner = self.inner.clone();
         inner.advance();
-        Self::at(inner)
-    }
-    /// Reads the public previous-in-order link: the entry inserted before this one, `None`
-    /// for the first entry.
-    ///
-    /// ```
-    /// # use martensite_tkernel::ncollection::OrderedMap;
-    /// let mut map = OrderedMap::<i32>::default();
-    /// map.add(4);
-    /// map.add(1);
-    /// let second = map.first_node().unwrap().order_next().unwrap();
-    /// assert_eq!(second.order_previous().map(|node| *node.key()), Some(4));
-    /// assert!(map.first_node().unwrap().order_previous().is_none());
-    /// ```
-    pub fn order_previous(&self) -> Option<Self> {
-        let mut inner = self.inner.clone();
-        inner.retreat();
         Self::at(inner)
     }
 }

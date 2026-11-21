@@ -84,7 +84,7 @@ impl<T: Copy> Vec3<T> {
         Self::new(value, value, value)
     }
     /// Extends a planar vector with Z (default 0); `Vec3::from_vec2(Vec2::new(1,2), 3).z == 3`.
-    pub const fn from_vec2(planar: Vec2<T>, z: T) -> Self {
+    pub(crate) const fn from_vec2(planar: Vec2<T>, z: T) -> Self {
         Self::new(planar.x, planar.y, z)
     }
     /// Replaces the components from a planar vector and Z;
@@ -99,7 +99,7 @@ impl<T: Copy> Vec4<T> {
         Self::new(value, value, value, value)
     }
     /// Extends a spatial vector with W (default 0); `Vec4::from_vec3(Vec3::new(1,2,3), 1).w == 1`.
-    pub const fn from_vec3(spatial: Vec3<T>, w: T) -> Self {
+    pub(crate) const fn from_vec3(spatial: Vec3<T>, w: T) -> Self {
         Self::new(spatial.x, spatial.y, spatial.z, w)
     }
     /// Replaces the components from a spatial vector and W;

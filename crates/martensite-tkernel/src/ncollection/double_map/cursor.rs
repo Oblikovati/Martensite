@@ -46,16 +46,6 @@ impl<'a, A, B> DoubleMapIterator<'a, A, B> {
     pub fn value(&self) -> Result<&'a B, Failure> {
         Ok(self.pair("NCollection_DoubleMap::Iterator::Value")?.1)
     }
-    /// Restarts on another map.
-    pub fn initialize<H1: HashPolicy<A>, H2: HashPolicy<B>>(
-        &mut self,
-        map: &'a DoubleMap<A, B, H1, H2>,
-    ) where
-        A: Debug,
-        B: Debug,
-    {
-        *self = map.cursor();
-    }
     /// `Reset`: restarts on the map the cursor was created for.
     pub fn reset(&mut self) {
         self.pairs.reset();

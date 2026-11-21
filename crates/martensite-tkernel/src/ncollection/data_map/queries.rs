@@ -36,7 +36,7 @@ impl<K: Debug, V, H: HashPolicy<K>> DataMap<K, V, H> {
     /// *map.contained_mut(&1).unwrap().1 = 5;
     /// assert_eq!(map.seek(&1), Some(&5));
     /// ```
-    pub fn contained_mut(&mut self, key: &K) -> Option<(&K, &mut V)> {
+    pub(crate) fn contained_mut(&mut self, key: &K) -> Option<(&K, &mut V)> {
         let (_, slot) = self.lookup(key)?;
         Some(self.storage.payload_mut().entry_mut(slot))
     }

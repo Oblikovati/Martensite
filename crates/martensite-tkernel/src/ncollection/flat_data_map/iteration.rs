@@ -41,7 +41,7 @@ impl<K: Debug, V, H: HashPolicy<K>> FlatDataMap<K, V, H> {
         }
     }
     /// Borrows values exclusively; `map.iter_mut().for_each(|value|*value+=1)`.
-    pub fn iter_mut(&mut self) -> FlatDataValuesMut<'_, K, V> {
+    pub(crate) fn iter_mut(&mut self) -> FlatDataValuesMut<'_, K, V> {
         FlatDataValuesMut {
             slots: self.table.slots.iter_mut(),
         }

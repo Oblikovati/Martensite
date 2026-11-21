@@ -135,13 +135,6 @@ impl<'a, K, V> DataMapIteratorMut<'a, K, V> {
     pub fn key(&self) -> Result<&K, Failure> {
         Ok(self.entry("NCollection_DataMap::Iterator::Key")?.0)
     }
-    /// Rebinds to a mutable map; `cursor.initialize(&mut map)`.
-    pub fn initialize<H: HashPolicy<K>>(&mut self, map: &'a mut DataMap<K, V, H>)
-    where
-        K: Debug,
-    {
-        *self = map.cursor_mut();
-    }
     /// Restarts on this map's first node; `cursor.reset()`.
     pub fn reset(&mut self) {
         if let Some(source) = self.source.as_deref() {

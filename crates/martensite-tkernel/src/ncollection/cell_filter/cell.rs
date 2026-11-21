@@ -73,10 +73,6 @@ impl<T: Clone> CellFilterCell<T> {
     pub fn prepend_target(&mut self, target: &T) {
         self.record.prepend(target);
     }
-    /// The allocator identity given at construction or adopted by a move; `cell.allocator()`.
-    pub fn allocator(&self) -> &BaseAllocator {
-        &self.allocator
-    }
 }
 impl<T> PartialEq for CellFilterCell<T> {
     fn eq(&self, other: &Self) -> bool {
