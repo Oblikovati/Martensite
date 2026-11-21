@@ -9,12 +9,12 @@ use martensite_tkbrep::brep_graph::copy_remap::CopyRemap;
 use martensite_tkbrep::brep_graph::deferred_scope::DeferredScope;
 use martensite_tkbrep::brep_graph::editor::EdgeOps;
 use martensite_tkbrep::brep_graph::layer::{
-    AttachedGraph, BRepGraphLayer, LayerBase, as_layer, kind_bit, ref_kind_bit,
+    AttachedGraph, BRepGraphLayer, LayerBase, kind_bit, ref_kind_bit,
 };
 use martensite_tkbrep::brep_graph::*;
 use martensite_tkbrep::brep_graph_inc::ParityOrientation;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::{Mutex, MutexGuard};
 use support::make_box;
@@ -42,7 +42,6 @@ struct Tracking {
 
 // Test layer that records modification events.
 struct BRepGraph_LayerModTracking {
-    transient: StandardTransient,
     base: LayerBase,
     myName: AsciiString,
     mySubscribedKinds: i32,
@@ -51,7 +50,7 @@ struct BRepGraph_LayerModTracking {
     state: Mutex<Tracking>,
 }
 impl_transient!(BRepGraph_LayerModTracking, "BRepGraph_LayerModTracking", dyn BRepGraphLayer,
-    transient, interfaces: [dyn BRepGraphLayer]);
+    interfaces: [dyn BRepGraphLayer]);
 
 impl BRepGraph_LayerModTracking {
     fn new(theName: &str, theSubscribedKinds: i32) -> Self {
@@ -70,7 +69,6 @@ impl BRepGraph_LayerModTracking {
         theSubscribedRefKinds: i32,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: LayerBase::new(),
             myName: AsciiString::new(theName),
             mySubscribedKinds: theSubscribedKinds,
@@ -165,13 +163,12 @@ impl BRepGraphLayer for BRepGraph_LayerModTracking {
 
 // Minimal layer with default SubscribedKinds() behavior from base class.
 struct BRepGraph_LayerDefault {
-    transient: StandardTransient,
     base: LayerBase,
     myId: Guid,
     myName: AsciiString,
 }
 impl_transient!(BRepGraph_LayerDefault, "BRepGraph_LayerDefault", dyn BRepGraphLayer,
-    transient, interfaces: [dyn BRepGraphLayer]);
+    interfaces: [dyn BRepGraphLayer]);
 
 impl BRepGraph_LayerDefault {
     fn new() -> Self {
@@ -180,7 +177,6 @@ impl BRepGraph_LayerDefault {
 
     fn named(theId: &str, theName: &str) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: LayerBase::new(),
             myId: guid(theId),
             myName: AsciiString::new(theName),
@@ -234,13 +230,13 @@ fn SetUp() -> BRepGraph {
     myGraph
 }
 
-fn register<T: BRepGraphLayer + martensite_tkernel::standard::RuntimeTyped>(
+fn register<T: BRepGraphLayer + martensite_tkernel::standard::HandleUpcast<dyn BRepGraphLayer>>(
     theGraph: &BRepGraph,
     theLayer: &Handle<T>,
 ) {
     theGraph
         .layer_registry()
-        .register_layer(&as_layer(theLayer))
+        .register_layer(&theLayer.upcast())
         .unwrap();
 }
 

@@ -134,7 +134,7 @@ fn inc_runtime_pcurve(graph: &mut BRepGraph, coedge: CoEdgeId, face: FaceId) -> 
         Point2::new(0.0, 0.0),
         Direction2::new(1.0, 0.0).unwrap(),
     ))
-    .into_cast();
+    .into_upcast();
     graph
         .editor()
         .co_edges()

@@ -4,7 +4,7 @@
 mod support;
 use martensite_tkbrep::brep_graph::copy_remap::CopyRemap;
 use martensite_tkbrep::brep_graph::layer::{
-    AttachedGraph, BRepGraphLayer, LayerBase, LayerType, as_layer, kind_bit, ref_kind_bit,
+    AttachedGraph, BRepGraphLayer, LayerBase, LayerType, kind_bit, ref_kind_bit,
 };
 use martensite_tkbrep::brep_graph::layer_deferred::{
     DeferredRepresentation, LayerDeferred, RepresentationKind,
@@ -20,7 +20,7 @@ use martensite_tkbrep::brep_graph::{
 };
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
 use std::sync::Mutex;
@@ -28,19 +28,17 @@ use support::{make_box, make_vertex};
 
 /// A layer that logs its callbacks and subscribes to face and wire-reference events.
 struct EventLog {
-    transient: StandardTransient,
     base: LayerBase,
     id: Guid,
     name: AsciiString,
     events: Mutex<Vec<String>>,
 }
-impl_transient!(EventLog, "EventLog", dyn BRepGraphLayer, transient,
+impl_transient!(EventLog, "EventLog", dyn BRepGraphLayer,
     interfaces: [dyn BRepGraphLayer]);
 
 impl EventLog {
     fn new(id: &str) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: LayerBase::new(),
             id: Guid::from_ascii(id.as_bytes()).unwrap(),
             name: AsciiString::new("EventLog"),
@@ -134,11 +132,11 @@ fn registration_attaches_replaces_and_detaches() {
     let graph = BRepGraph::new();
     let first = Handle::new(EventLog::new(LOG_A));
     let registry = graph.layer_registry();
-    assert_eq!(registry.register_layer(&as_layer(&first)).unwrap(), 1);
+    assert_eq!(registry.register_layer(&first.upcast()).unwrap(), 1);
     assert_eq!(registry.subscribed_kinds_mask(), 4 | 2);
     assert_eq!(registry.subscribed_ref_kinds_mask(), 2);
     let second = Handle::new(EventLog::new(LOG_A));
-    assert_eq!(registry.register_layer(&as_layer(&second)).unwrap(), 1);
+    assert_eq!(registry.register_layer(&second.upcast()).unwrap(), 1);
     assert_eq!(first.get().unwrap().events(), vec!["attached", "detached"]);
     registry.unregister_layer(&second.get().unwrap().id());
     assert_eq!(second.get().unwrap().events(), vec!["attached", "detached"]);
@@ -155,8 +153,8 @@ fn unregistering_moves_the_last_layer_into_the_slot() {
         Handle::new(EventLog::new(LOG_A)),
         Handle::new(EventLog::new(LOG_B)),
     );
-    registry.register_layer(&as_layer(&a)).unwrap();
-    registry.register_layer(&as_layer(&b)).unwrap();
+    registry.register_layer(&a.upcast()).unwrap();
+    registry.register_layer(&b.upcast()).unwrap();
     registry.ensure::<LayerHistory>().unwrap();
     registry.unregister_layer(&a.get().unwrap().id());
     assert_eq!(registry.find_slot(&LayerHistory::new().id()), Some(0));
@@ -171,7 +169,7 @@ fn graph_mutations_dispatch_to_subscribed_layers() {
     let log = Handle::new(EventLog::new(LOG_A));
     graph
         .layer_registry()
-        .register_layer(&as_layer(&log))
+        .register_layer(&log.upcast())
         .unwrap();
     let solid = graph
         .shapes_mut()
@@ -218,7 +216,7 @@ fn dropping_the_graph_detaches_its_layers() {
         let graph = BRepGraph::new();
         graph
             .layer_registry()
-            .register_layer(&as_layer(&log))
+            .register_layer(&log.upcast())
             .unwrap();
         assert!(log.get().unwrap().layer_base().is_attached());
     }

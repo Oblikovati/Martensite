@@ -9,14 +9,14 @@ fn scenario_face_bound_fixture(graph: &mut BRepGraph) -> (EdgeId, FaceId) {
     assert!(wire.is_valid());
     let surface: Handle<dyn GeomSurface> =
         Handle::new(GeomPlane::from_point(Point3::new(0.0, 0.0, 0.0), Direction3::Z).unwrap())
-            .into_cast();
+            .into_upcast();
     let face = graph.editor().faces().add(&surface, wire, &[], 1e-7);
     assert!(face.is_valid());
     (id, face)
 }
 fn scenario_face_bound_pcurve(graph: &mut BRepGraph, edge_id: EdgeId, face_id: FaceId) -> CoEdgeId {
     let curve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::X)).into_cast();
+        Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::X)).into_upcast();
     let id = graph.editor().co_edges().add_with_pcurve(
         edge_id,
         face_id,

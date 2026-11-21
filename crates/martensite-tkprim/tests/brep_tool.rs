@@ -38,12 +38,12 @@ fn first_of(shape: &Shape, kind: ShapeEnum) -> Shape {
 /// `new Geom_Circle(gp_Ax2(Origin, DZ), radius)`.
 fn circle(radius: f64) -> Handle<dyn GeomCurve> {
     let anAx2 = Axis2::new(gp::origin(), gp::dz()).unwrap();
-    Handle::new(GeomCircle::new(anAx2, radius).unwrap()).into_cast()
+    Handle::new(GeomCircle::new(anAx2, radius).unwrap()).into_upcast()
 }
 
 /// `new Geom_Plane(gp::XOY())`.
 fn xoy_plane() -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(Axis3::from_axis2(gp::xoy()))).into_cast()
+    Handle::new(GeomPlane::new(Axis3::from_axis2(gp::xoy()))).into_upcast()
 }
 
 #[test]
@@ -165,7 +165,7 @@ fn BRep_Tool_Test__CurveOnPlane_RejectsEdgeRangeOutsideBoundedCurve() {
     ];
     let aPoles = Array1::from_shared(&aPolesBuffer, 1);
     let aCurve: Handle<dyn GeomCurve> =
-        Handle::new(GeomBezierCurve::new(&aPoles).unwrap()).into_cast();
+        Handle::new(GeomBezierCurve::new(&aPoles).unwrap()).into_upcast();
 
     let anEdgeMaker = BRepBuilderAPIMakeEdge::from_curve(&aCurve).unwrap();
     assert!(anEdgeMaker.is_done());

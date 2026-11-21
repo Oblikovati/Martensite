@@ -74,7 +74,7 @@ fn side_surface(
         .curve
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace"))?;
-    let curve: Handle<dyn GeomCurve> = source.copy()?.cast();
+    let curve: Handle<dyn GeomCurve> = source.copy()?.into_cast();
     curve
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace"))?
@@ -83,7 +83,7 @@ fn side_surface(
     let direction = Direction3::from_vector(t.vec())?.reversed();
     if !t.canonize() {
         return Ok((
-            Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, direction)?).cast(),
+            Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, direction)?).into_upcast(),
             toler,
         ));
     }
@@ -92,15 +92,15 @@ fn side_surface(
         found.first,
         found.last,
     )?)
-    .cast();
+    .into_upcast();
     let extrusion =
         GeomAdaptorSurfaceOfLinearExtrusion::with_curve_and_direction(&adapted, direction);
     let surface: Handle<dyn GeomSurface> = match extrusion.get_type()? {
-        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(extrusion.plane()?)).cast(),
+        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(extrusion.plane()?)).into_upcast(),
         SurfaceType::Cylinder => {
-            Handle::new(GeomCylindricalSurface::from_cylinder(extrusion.cylinder()?)).cast()
+            Handle::new(GeomCylindricalSurface::from_cylinder(extrusion.cylinder()?)).into_upcast()
         }
-        _ => Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, direction)?).cast(),
+        _ => Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, direction)?).into_upcast(),
     };
     Ok((surface, toler))
 }
@@ -116,7 +116,7 @@ fn cap_surface(
     let source = raw
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace (surface)"))?;
-    let surface: Handle<dyn GeomSurface> = source.copy()?.cast();
+    let surface: Handle<dyn GeomSurface> = source.copy()?.into_cast();
     let copy = surface
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace (surface)"))?;
@@ -176,7 +176,7 @@ pub(crate) fn set_generating_pcurve(
         Point2::new(0.0, v),
         Direction2::from_standard(StandardDirection2::X),
     );
-    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
     set_pcurve_at_confusion(t.brep_builder(), new_edge, new_face, orien, &pcurve)
 }
 
@@ -197,7 +197,7 @@ pub(crate) fn set_directing_pcurve(
         Point2::new(parameter, 0.0),
         Direction2::from_standard(StandardDirection2::NegY),
     );
-    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
     set_pcurve_at_confusion(builder, new_edge, new_face, orien, &pcurve)
 }
 

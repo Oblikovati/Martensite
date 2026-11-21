@@ -26,7 +26,7 @@ fn BRepGraph_ValidateTest__Synthetic_Cylinder_AuditClean() {
         synthetic_direction(0.0, 0.0, 1.0),
     );
     let frame = synthetic_frame(Point3::default(), synthetic_direction(0.0, 0.0, 1.0));
-    let lateral = Handle::new(GeomCylindricalSurface::new(frame, 5.0).unwrap()).into_cast();
+    let lateral = Handle::new(GeomCylindricalSurface::new(frame, 5.0).unwrap()).into_upcast();
     let faces = [
         synthetic_face(&mut graph, &bottom, wires[0]),
         synthetic_face(&mut graph, &top, wires[1]),
@@ -40,7 +40,7 @@ fn BRepGraph_ValidateTest__Synthetic_Sphere_AuditClean() {
     let mut graph = BRepGraph::new();
     graph.clear().unwrap();
     let wire = synthetic_sphere_wire(&mut graph);
-    let sphere = Handle::new(GeomSphericalSurface::new(Axis3::default(), 8.0).unwrap()).into_cast();
+    let sphere = Handle::new(GeomSphericalSurface::new(Axis3::default(), 8.0).unwrap()).into_upcast();
     let face = synthetic_face(&mut graph, &sphere, wire);
     synthetic_solid(&mut graph, &[face]);
     assert!(audit_graph(&graph).is_valid());

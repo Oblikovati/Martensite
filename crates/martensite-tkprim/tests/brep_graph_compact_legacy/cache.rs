@@ -3,14 +3,13 @@ use super::*;
 use martensite_tkbrep::brep_graph::cache_mesh::{CacheMesh, CacheMeshDriver, DirtySet, SlotId};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkmath::poly::{Triangle, Triangulation};
 
 struct StubMeshDriver {
-    transient: StandardTransient,
     recipe: u64,
 }
-impl_transient!(StubMeshDriver, "StubMeshDriver", dyn CacheMeshDriver, transient,
+impl_transient!(StubMeshDriver, "StubMeshDriver", dyn CacheMeshDriver,
     interfaces: [dyn CacheMeshDriver]);
 
 impl CacheMeshDriver for StubMeshDriver {
@@ -47,10 +46,9 @@ impl CacheMeshDriver for StubMeshDriver {
 fn install_driver(graph: &BRepGraph, recipe: u64) -> Handle<CacheMesh> {
     let cache = graph.cache_registry().ensure::<CacheMesh>().unwrap();
     let driver = Handle::new(StubMeshDriver {
-        transient: StandardTransient::default(),
         recipe,
     });
-    cache.register_driver(0, &driver.cast::<dyn CacheMeshDriver>());
+    cache.register_driver(0, &driver.into_upcast::<dyn CacheMeshDriver>());
     assert!(!cache.is_null());
     cache
 }

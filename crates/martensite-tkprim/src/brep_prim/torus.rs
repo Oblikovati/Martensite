@@ -64,13 +64,13 @@ impl BRepPrimTorus {
         v.scale(self.my_major);
         frame.translate(v);
         let meridian: Handle<dyn GeomCurve> =
-            Handle::new(GeomCircle::new(frame, self.my_minor)?).cast();
+            Handle::new(GeomCircle::new(frame, self.my_minor)?).into_upcast();
         let x_axis = Axis2d::new(
             Point2::new(self.my_major, 0.0),
             Direction2::from_standard(StandardDirection2::X),
         );
         let pmeridian: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dCircle::from_axis(x_axis, self.my_minor, true)?).cast();
+            Handle::new(Geom2dCircle::from_axis(x_axis, self.my_minor, true)?).into_upcast();
         self.revolution.set_meridian(meridian, pmeridian);
         Ok(())
     }
@@ -90,6 +90,6 @@ impl BRepPrimRevolutionDerived for BRepPrimTorus {
     fn derived_lateral_face(&self) -> Result<Face, Failure> {
         let axes = self.revolution.axes().axis3();
         let surface = GeomToroidalSurface::new(axes, self.my_major, self.my_minor)?;
-        lateral_face_on(&self.revolution, Handle::new(surface).cast())
+        lateral_face_on(&self.revolution, Handle::new(surface).into_upcast())
     }
 }

@@ -7,14 +7,14 @@ mod support;
 use martensite_tkbrep::brep_graph::compact;
 use martensite_tkbrep::brep_graph::copy_remap::CopyRemap;
 use martensite_tkbrep::brep_graph::layer::{
-    AttachedGraph, BRepGraphLayer, LayerBase, as_layer, kind_bit, ref_kind_bit,
+    AttachedGraph, BRepGraphLayer, LayerBase, kind_bit, ref_kind_bit,
 };
 use martensite_tkbrep::brep_graph::layer_deferred::{LayerDeferred, RepresentationKind};
 use martensite_tkbrep::brep_graph::layer_lock::LayerLock;
 use martensite_tkbrep::brep_graph::*;
 use martensite_tkbrep::brep_graph_inc::ParityOrientation;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
 use std::sync::Mutex;
@@ -94,18 +94,17 @@ struct DispatchRecords {
 }
 
 struct BRepGraph_LayerItemDispatchProbe {
-    transient: StandardTransient,
     base: LayerBase,
     myName: AsciiString,
     records: Mutex<DispatchRecords>,
 }
 impl_transient!(BRepGraph_LayerItemDispatchProbe, "BRepGraph_LayerItemDispatchProbe",
-    dyn BRepGraphLayer, transient, interfaces: [dyn BRepGraphLayer]);
+    dyn BRepGraphLayer,
+    interfaces: [dyn BRepGraphLayer]);
 
 impl BRepGraph_LayerItemDispatchProbe {
     fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: LayerBase::new(),
             myName: AsciiString::new("ItemDispatchProbe"),
             records: Mutex::new(DispatchRecords::default()),
@@ -553,7 +552,7 @@ fn BRepGraph_LockTest__ItemDispatchDelegatesToTypedCallbacks() {
     let aLayer = Handle::new(BRepGraph_LayerItemDispatchProbe::new());
     aGraph
         .layer_registry()
-        .register_layer(&as_layer(&aLayer))
+        .register_layer(&aLayer.upcast())
         .unwrap();
 
     let aFaceId = FaceId::start();

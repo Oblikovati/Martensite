@@ -86,12 +86,12 @@ impl BRepPrimCylinder {
         v.scale(self.my_radius);
         let mut axis = axes.axis();
         axis.translate(v);
-        let meridian: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(axis)).cast();
+        let meridian: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(axis)).into_upcast();
         let pmeridian: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(
             Point2::new(self.my_radius, 0.0),
             Direction2::from_standard(StandardDirection2::Y),
         ))
-        .cast();
+        .into_upcast();
         self.revolution.set_meridian(meridian, pmeridian);
     }
 }
@@ -120,6 +120,6 @@ impl BRepPrimRevolutionDerived for BRepPrimCylinder {
     /// the radius; Standard_ConstructionError for a negative radius.
     fn derived_lateral_face(&self) -> Result<Face, Failure> {
         let surface = GeomCylindricalSurface::new(self.revolution.axes().axis3(), self.my_radius)?;
-        lateral_face_on(&self.revolution, Handle::new(surface).cast())
+        lateral_face_on(&self.revolution, Handle::new(surface).into_upcast())
     }
 }

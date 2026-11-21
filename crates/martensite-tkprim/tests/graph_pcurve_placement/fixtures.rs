@@ -15,7 +15,7 @@ pub(super) fn single_use_face() -> Shape {
     let mut face = planar_face();
     let edge = authored_edge();
     let pcurve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(Point2::new(0., 0.), Direction2::X)).into_cast();
+        Handle::new(Geom2dLine::from_point(Point2::new(0., 0.), Direction2::X)).into_upcast();
     builder
         .update_edge_pcurve_on_face(&edge, &pcurve, &face, 1e-7)
         .unwrap();
@@ -34,7 +34,7 @@ fn authored_edge() -> martensite_tkbrep::topods::Edge {
 }
 fn planar_face() -> Face {
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_pln(Plane3::default())).into_cast();
+        Handle::new(GeomPlane::from_pln(Plane3::default())).into_upcast();
     let mut face = Face::default();
     BRepBuilder::default()
         .make_face_on_surface(&mut face, &surface, 1e-7)

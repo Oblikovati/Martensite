@@ -22,8 +22,8 @@ use martensite_tkmath::elclib;
 use martensite_tkmath::elslib;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
 use martensite_tkmath::gp::{
-    Axis1, Axis2, Axis22d, Circle2, Direction2, Direction3, Line2, Point2, Point3, Vector3, dx2d,
-    dy2d, origin2d,
+    Axis1, Axis2, Axis22d, Circle2, Direction2, Direction3, Line2, Line3, Point2, Point3, Vector3,
+    dx2d, dy2d, origin2d,
 };
 use std::f64::consts::PI;
 
@@ -157,7 +157,7 @@ pub(crate) fn directing_circle_edge(
     if o.is_equal(&point, precision::confusion()) {
         // A degenerated edge; the null circle is kept so that the parameters register.
         let circle: Handle<dyn GeomCurve> =
-            Handle::new(GeomCircle::new(Axis2::new(o, dirz)?, 0.0)?).cast();
+            Handle::new(GeomCircle::new(Axis2::new(o, dirz)?, 0.0)?).into_upcast();
         builder.make_edge_with_curve(&mut edge, &circle, tol)?;
         builder.degenerated(&edge, true)?;
         return Ok(edge.into());
@@ -168,7 +168,7 @@ pub(crate) fn directing_circle_edge(
         Direction3::from_vector(Vector3::between(o, point))?,
     )?;
     let circle: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::new(axis, o.distance(&point))?).cast();
+        Handle::new(GeomCircle::new(axis, o.distance(&point))?).into_upcast();
     builder.make_edge_with_curve(&mut edge, &circle, tol)?;
     Ok(edge.into())
 }
@@ -201,7 +201,7 @@ fn revolution_surface(axe: Axis1, edge: &Edge) -> Result<(Handle<dyn GeomSurface
         .curve
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace"))?;
-    let copy: Handle<dyn GeomCurve> = source.copy()?.cast();
+    let copy: Handle<dyn GeomCurve> = source.copy()?.into_cast();
     let curve: Handle<dyn GeomCurve> = Handle::new(GeomTrimmedCurve::new(
         &copy,
         found.first,
@@ -209,7 +209,7 @@ fn revolution_surface(axe: Axis1, edge: &Edge) -> Result<(Handle<dyn GeomSurface
         true,
         true,
     )?)
-    .cast();
+    .into_upcast();
     curve
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace"))?
@@ -217,22 +217,24 @@ fn revolution_surface(axe: Axis1, edge: &Edge) -> Result<(Handle<dyn GeomSurface
     let adapted = GeomAdaptorCurve::default();
     adapted.load_range(&curve, found.first, found.last)?;
     let adapted: Handle<dyn martensite_tkg3d::adaptor3d::Adaptor3dCurve> =
-        Handle::new(adapted).cast();
+        Handle::new(adapted).into_upcast();
     let revolution = GeomAdaptorSurfaceOfRevolution::with_curve_and_axis(&adapted, axe)?;
     let surface: Handle<dyn GeomSurface> = match revolution.get_type()? {
-        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(revolution.plane()?)).cast(),
+        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(revolution.plane()?)).into_upcast(),
         SurfaceType::Cylinder => Handle::new(GeomCylindricalSurface::from_cylinder(
             revolution.cylinder()?,
         ))
-        .cast(),
+        .into_upcast(),
         SurfaceType::Sphere => {
-            Handle::new(GeomSphericalSurface::from_sphere(revolution.sphere()?)).cast()
+            Handle::new(GeomSphericalSurface::from_sphere(revolution.sphere()?)).into_upcast()
         }
-        SurfaceType::Cone => Handle::new(GeomConicalSurface::from_cone(revolution.cone()?)).cast(),
+        SurfaceType::Cone => {
+            Handle::new(GeomConicalSurface::from_cone(revolution.cone()?)).into_upcast()
+        }
         SurfaceType::Torus => {
-            Handle::new(GeomToroidalSurface::from_torus(revolution.torus()?)).cast()
+            Handle::new(GeomToroidalSurface::from_torus(revolution.torus()?)).into_upcast()
         }
-        _ => Handle::new(GeomSurfaceOfRevolution::new(&curve, axe)?).cast(),
+        _ => Handle::new(GeomSurfaceOfRevolution::new(&curve, axe)?).into_upcast(),
     };
     Ok((surface, toler))
 }
@@ -248,7 +250,7 @@ fn cap_surface(
     let source = raw
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace (surface)"))?;
-    let surface: Handle<dyn GeomSurface> = source.copy()?.cast();
+    let surface: Handle<dyn GeomSurface> = source.copy()?.into_cast();
     let copy = surface
         .get()
         .ok_or_else(|| null_curve("MakeEmptyFace (surface)"))?;
@@ -293,7 +295,7 @@ pub(crate) fn set_generating_pcurve(
             Line2::new(Point2::new(angle, 0.0), dy2d())
         }
     };
-    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
     set_pcurve_computed(r.brep_builder(), new_edge, new_face, orien, &pcurve)
 }
 
@@ -302,29 +304,34 @@ pub(crate) fn set_generating_pcurve(
 fn generating_line_in_plane(adaptor: &GeomAdaptorSurface, edge: &Edge) -> Result<Line2, Failure> {
     let ax3 = adaptor.plane()?.position();
     let found = BRepTool::curve_with_location(edge)?;
-    let mut line: Handle<GeomLine> = found.curve.cast();
-    if line.is_null() {
-        let trimmed: Handle<GeomTrimmedCurve> = found.curve.cast();
-        if let Some(trimmed) = trimmed.get() {
-            line = trimmed.basis_curve().cast();
-            if line.is_null() {
-                return Err(Failure::with_message(
-                    "Standard_ConstructionError",
-                    "BRepSweep_Rotation::SetGeneratingPCurve: the trimmed curve of the new edge is not a line; expected a line in the planar face",
-                ));
-            }
-        }
-    }
-    let line = line
-        .get()
-        .ok_or_else(|| null_curve("SetGeneratingPCurve"))?;
-    let gl = line.lin().transformed(found.location.transformation());
+    let line = match found.curve.downcast_ref::<GeomLine>() {
+        Some(line) => line.lin(),
+        None => trimmed_generating_line(&found.curve)?,
+    };
+    let gl = line.transformed(found.location.transformation());
     let (u, v) = elslib::plane_parameters(ax3, gl.location());
     let dir = gl.direction();
     Ok(Line2::new(
         Point2::new(u, v),
         Direction2::new(dir.dot(ax3.x_direction()), dir.dot(ax3.y_direction()))?,
     ))
+}
+
+/// Reads the line of a trimmed sweep edge without retaining a second owner.
+fn trimmed_generating_line(curve: &Handle<dyn GeomCurve>) -> Result<Line3, Failure> {
+    let trimmed = curve
+        .downcast_ref::<GeomTrimmedCurve>()
+        .ok_or_else(|| null_curve("SetGeneratingPCurve"))?;
+    trimmed
+        .basis_curve()
+        .downcast_ref::<GeomLine>()
+        .map(GeomLine::lin)
+        .ok_or_else(|| {
+            Failure::with_message(
+                "Standard_ConstructionError",
+                "BRepSweep_Rotation::SetGeneratingPCurve: the trimmed curve of the new edge is not a line; expected a line in the planar face",
+            )
+        })
 }
 
 /// The generating p-curve on a torus: the iso-U line through the start of the new
@@ -398,7 +405,7 @@ pub(crate) fn set_directing_pcurve(
             let radius = pln.location().distance(&p2);
             let (u, v) = elslib::plane_parameters(pln.position(), p2);
             let axe = Axis22d::with_directions(origin2d(), Direction2::new(u, v)?, dy2d())?;
-            Handle::new(Geom2dCircle::from_circ2d(Circle2::new(axe, radius)?)).cast()
+            Handle::new(Geom2dCircle::from_circ2d(Circle2::new(axe, radius)?)).into_upcast()
         }
         SurfaceType::Cone => {
             let cone = adaptor.cone()?;
@@ -422,7 +429,7 @@ fn iso_v_line(v: f64) -> Handle<dyn Geom2dCurve> {
         Point2::new(0.0, v),
         dx2d(),
     )))
-    .cast()
+    .into_upcast()
 }
 
 /// The directing p-curve on a torus: the iso-V line at the V of the start (FORWARD
@@ -460,7 +467,7 @@ fn directing_line_on_torus(
         Point2::new(u1, v),
         dx2d(),
     )))
-    .cast())
+    .into_upcast())
 }
 
 /// `DirectSolid` (NIZNHY-PKV Jun 14 2011): FORWARD when the normal of the generating

@@ -84,34 +84,34 @@ pub fn circle(center: [f64; 3], radius: f64) -> Handle<dyn GeomCurve> {
 /// `circle name x y z nx ny nz r` (9 words): `Geom_Circle(gp_Ax2(P, N), r)`.
 pub fn circle_normal(center: [f64; 3], normal: [f64; 3], radius: f64) -> Handle<dyn GeomCurve> {
     let frame = Axis2::new(point(center), direction(normal)).unwrap();
-    Handle::new(GeomCircle::new(frame, radius).unwrap()).cast()
+    Handle::new(GeomCircle::new(frame, radius).unwrap()).into_upcast()
 }
 
 /// `ellipse name x y z major minor` (7 words): `Geom_Ellipse(gp_Ax2(P, Z), major, minor)`.
 pub fn ellipse(center: [f64; 3], major: f64, minor: f64) -> Handle<dyn GeomCurve> {
     let frame = Axis2::new(point(center), Direction3::Z).unwrap();
-    Handle::new(GeomEllipse::new(frame, major, minor).unwrap()).cast()
+    Handle::new(GeomEllipse::new(frame, major, minor).unwrap()).into_upcast()
 }
 
 /// `plane name` (2 words): `Geom_Plane(gp_Ax3(origin, Z, X))`.
 pub fn plane_default() -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(Axis3::default())).cast()
+    Handle::new(GeomPlane::new(Axis3::default())).into_upcast()
 }
 
 /// `plane name x y z nx ny nz` (8 words): `Geom_Plane(gp_Ax3(P, N))`.
 pub fn plane_normal(origin: [f64; 3], normal: [f64; 3]) -> Handle<dyn GeomSurface> {
     let frame = Axis3::from_normal(point(origin), direction(normal)).unwrap();
-    Handle::new(GeomPlane::new(frame)).cast()
+    Handle::new(GeomPlane::new(frame)).into_upcast()
 }
 
 /// `sphere name r` (3 words): `Geom_SphericalSurface(gp_Ax3(origin, Z, X), r)`.
 pub fn sphere(radius: f64) -> Handle<dyn GeomSurface> {
-    Handle::new(GeomSphericalSurface::new(Axis3::default(), radius).unwrap()).cast()
+    Handle::new(GeomSphericalSurface::new(Axis3::default(), radius).unwrap()).into_upcast()
 }
 
 /// `trim name curve u1 u2`: `Geom_TrimmedCurve(C, u1, u2, USense = true)`.
 pub fn trim_curve(curve: &Handle<dyn GeomCurve>, u1: f64, u2: f64) -> Handle<dyn GeomCurve> {
-    Handle::new(GeomTrimmedCurve::new(curve, u1, u2, true, true).unwrap()).cast()
+    Handle::new(GeomTrimmedCurve::new(curve, u1, u2, true, true).unwrap()).into_upcast()
 }
 
 /// `trim name surface u1 u2 v1 v2`: `Geom_RectangularTrimmedSurface(S, u1, u2, v1, v2)`.
@@ -122,7 +122,7 @@ pub fn trim_surface(
 ) -> Handle<dyn GeomSurface> {
     let trimmed =
         GeomRectangularTrimmedSurface::new(surface, (u[0], u[1]), (v[0], v[1]), (true, true));
-    Handle::new(trimmed.unwrap()).cast()
+    Handle::new(trimmed.unwrap()).into_upcast()
 }
 
 /// `BRepTest_CurveCommands` `edge name v1 v2`: `BRepBuilderAPI_MakeEdge(V1, V2)`.
