@@ -5,11 +5,12 @@ use martensite_tkservice::graphic3d::{Graphic3dCView, Graphic3dCamera};
 fn record_final(actors: &ClipRetargetActors) -> String {
     let old = actors.old.clip_probe_slot.as_ref().unwrap();
     let next = actors.next.clip_probe_slot.as_ref().unwrap();
+    let old_size = old.observe().size();
     format!(
         "final {} {} {} {} {} {} {}",
         i32::from(actors.owner.view_ref().object_address() == actors.next.object_address()),
         i32::from(old.object_address() == next.object_address()),
-        old.observe().size(),
+        old_size,
         actors.old.ref_count(),
         actors.next.ref_count(),
         old.ref_count(),

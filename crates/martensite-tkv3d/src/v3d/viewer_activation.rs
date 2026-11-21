@@ -1,6 +1,8 @@
 //! Viewer activation rereads the caller's genuine view slot after native virtual callbacks.
 use super::{V3dViewSource, V3dViewer};
-use martensite_tkernel::standard::{Failure, Handle, HandleReference, catch_native_failure};
+use martensite_tkernel::standard::{
+    Failure, Handle, HandleReference, HandleSlot, catch_native_failure,
+};
 use martensite_tkservice::aspect::AspectGridMembers as _;
 
 impl V3dViewer {
@@ -41,7 +43,10 @@ impl V3dViewer {
     fn append_active_view_reference(&self, view: &dyn HandleReference<dyn V3dViewSource>) {
         // Method-call receivers evaluate first: a native node alias must be read before this write guard.
         let activated = view.clone_handle();
-        self.state.write().active_views.append(activated);
+        self.state
+            .write()
+            .active_views
+            .append(HandleSlot::new(activated));
     }
     fn contains_active_view(&self, identity: *const ()) -> bool {
         self.state

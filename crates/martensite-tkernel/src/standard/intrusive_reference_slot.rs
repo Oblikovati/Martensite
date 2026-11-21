@@ -1,12 +1,33 @@
 //! Handle fields keep their pointer visible while the prior owner is destroyed.
 use super::{
-    Failure, Handle, HandleObserver, HandleReference, RuntimeTyped, SharedState, Transient,
-    TransientHandleTarget, WeakHandle,
+    Failure, Handle, HandleObserver, HandleReference, HandleSlot, RuntimeTyped, SharedState,
+    Transient, TransientHandleTarget, WeakHandle,
 };
 struct ReferenceSlotMembers<T: ?Sized + RuntimeTyped> {
     pointer: WeakHandle<T>,
-    ownership: Option<Handle<T>>,
+    ownership: ReferenceSlotOwnership<T>,
     retiring: bool,
+}
+enum ReferenceSlotOwnership<T: ?Sized> {
+    Direct(Handle<T>),
+    Shared(Option<HandleSlot<T>>),
+}
+impl<T: ?Sized> ReferenceSlotOwnership<T> {
+    fn take(&mut self) -> Self {
+        match self {
+            Self::Direct(handle) => Self::Direct(std::mem::take(handle)),
+            Self::Shared(slot) => Self::Shared(slot.take()),
+        }
+    }
+    fn replace(&mut self, handle: Handle<T>) -> Self {
+        match self {
+            Self::Direct(current) => Self::Direct(std::mem::replace(current, handle)),
+            Self::Shared(slot) => {
+                let incoming = (!handle.is_null()).then(|| HandleSlot::new(handle));
+                Self::Shared(std::mem::replace(slot, incoming))
+            }
+        }
+    }
 }
 /// Actual pointer slot plus its Rust ownership lease; `slot.assign(&replacement)?`.
 /// The pointer, rather than an owning snapshot, is the authoritative borrowed field value.
@@ -18,7 +39,7 @@ impl<T: ?Sized + RuntimeTyped> Default for IntrusiveReferenceSlot<T> {
         Self {
             members: SharedState::new(ReferenceSlotMembers {
                 pointer: WeakHandle::default(),
-                ownership: None,
+                ownership: ReferenceSlotOwnership::Direct(Handle::default()),
                 retiring: false,
             }),
         }
@@ -27,12 +48,24 @@ impl<T: ?Sized + RuntimeTyped> Default for IntrusiveReferenceSlot<T> {
 impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
     /// Move existing ownership into the actual slot; `IntrusiveReferenceSlot::from_owned(target)`.
     pub fn from_owned(target: Handle<T>) -> Self {
-        // Constructor transfer must not manufacture a temporary owning reference.
+        Self::with_ownership(target, false)
+    }
+    /// Share the slot's owner across unlocked callbacks; `IntrusiveReferenceSlot::from_owned_shared(target)`.
+    pub fn from_owned_shared(target: Handle<T>) -> Self {
+        Self::with_ownership(target, true)
+    }
+    fn with_ownership(target: Handle<T>, shared: bool) -> Self {
         let pointer = target.downgrade();
+        let mut ownership = if shared {
+            ReferenceSlotOwnership::Shared(None)
+        } else {
+            ReferenceSlotOwnership::Direct(Handle::default())
+        };
+        ownership.replace(target);
         Self {
             members: SharedState::new(ReferenceSlotMembers {
                 pointer,
-                ownership: Some(target),
+                ownership,
                 retiring: false,
             }),
         }
@@ -55,7 +88,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         let null = Handle::<T>::default();
         self.assign(&null)
     }
-    fn begin_retirement(&self, incoming: *const ()) -> Result<Option<Handle<T>>, Failure> {
+    fn begin_retirement(&self, incoming: *const ()) -> Result<ReferenceSlotOwnership<T>, Failure> {
         let mut members = self.members.write();
         if members.retiring {
             return Err(super::exceptions::program_error(&format!(
@@ -86,10 +119,13 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         let members = self.members.read();
         members.pointer.object_address()
     }
-    /// Acquire a snapshot of the current object; `slot.observe()`.
+    /// Lend the current slot or acquire an owning snapshot; `slot.observe()`.
     /// A retiring pointee cannot be safely projected through an expired Arc; no live facade is invented.
     pub fn observe(&self) -> HandleObserver<'_, T> {
         let members = self.members.read();
+        if let ReferenceSlotOwnership::Shared(Some(slot)) = &members.ownership {
+            return HandleObserver::Leased(slot.lease());
+        }
         let observed = members.pointer.upgrade();
         let pointer = members.pointer.object_address();
         drop(members);

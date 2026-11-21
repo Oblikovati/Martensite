@@ -35,10 +35,9 @@ fn callback_view_base(
 ) -> V3dView {
     let mut base = V3dView::new_embedded(viewer, V3dTypeOfView::Orthographic).unwrap();
     // Transfer the actual callback view owner; a copied slot would distort native callback counts.
-    base.driver_view_slot = IntrusiveReferenceSlot::from_owned(CallbackObservedView::create(
-        &viewer.structure_manager(),
-        control,
-    ));
+    base.driver_view_slot = IntrusiveReferenceSlot::from_owned_shared(
+        CallbackObservedView::create(&viewer.structure_manager(), control),
+    );
     base
 }
 

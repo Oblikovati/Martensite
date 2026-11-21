@@ -1,6 +1,6 @@
 //! Real SetLights callback reads native owner counts before changing actual retained list nodes.
 use super::viewer_light_probe_fixture::*;
-use martensite_tkernel::standard::{Failure, HandleReference, raise_native_failure};
+use martensite_tkernel::standard::{Failure, HandleReference, HandleSlot, raise_native_failure};
 use martensite_tkservice::graphic3d::Graphic3dLightSet;
 pub(super) fn record_light_set_callback(
     control: &ViewerLightProbeControl,
@@ -64,7 +64,10 @@ fn edit_light_callback(control: &ViewerLightProbeControl) {
     match control.policy {
         1 => edit_global_light_append(control),
         2 => replace_global_light_node(control),
-        5 => *control.caller.write() = control.views.read()[1].upgrade(),
+        5 => control
+            .caller
+            .assign(&control.views.read()[1].upgrade())
+            .unwrap(),
         7 => edit_active_views_callback(control),
         8 => remove_defined_light_node(control),
         9 => replace_defined_light_node(control),
@@ -104,14 +107,16 @@ fn replace_defined_light_node(control: &ViewerLightProbeControl) {
 fn replace_active_view_node(control: &ViewerLightProbeControl) {
     let viewer = control.viewer.upgrade();
     let replacement = control.views.read()[1].upgrade();
-    *viewer.state.write().active_views.first_mut().unwrap() = replacement;
+    *viewer.state.write().active_views.first_mut().unwrap() = HandleSlot::new(replacement);
 }
 fn edit_active_views_callback(control: &ViewerLightProbeControl) {
     let viewer = control.viewer.upgrade();
     let views = control.views.read();
     let mut fields = viewer.state.write();
     super::viewer::remove_view_from(&mut fields.active_views, views[1].object_address());
-    fields.active_views.append(views[2].upgrade());
+    fields
+        .active_views
+        .append(HandleSlot::new(views[2].upgrade()));
 }
 
 fn replace_caller_set_slot(control: &ViewerLightProbeControl) {

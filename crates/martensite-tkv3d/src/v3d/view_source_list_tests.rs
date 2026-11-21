@@ -2,7 +2,7 @@
 use super::view_source_fixture::*;
 use super::view_source_list_fixture::*;
 use super::*;
-use martensite_tkernel::standard::{Handle, HandleReference};
+use martensite_tkernel::standard::{Handle, HandleReference, HandleSlot};
 use martensite_tkservice::null_driver::NullGraphicDriver;
 
 #[test]
@@ -42,7 +42,7 @@ fn list_and_deprecated_node_aliases_have_same_live_slot_identity_without_ownersh
     let retained = viewer.active_view_ref();
     assert_eq!(direct.reference_address(), retained.reference_address());
     assert_eq!(first.ref_count(), 3);
-    *viewer.state.write().active_views.first_mut().unwrap() = second.clone();
+    *viewer.state.write().active_views.first_mut().unwrap() = HandleSlot::new(second.clone());
     assert_eq!(retained.object_address(), second.object_address());
     assert_eq!(list.len(), 2);
     assert_eq!((first.ref_count(), second.ref_count()), (2, 4));

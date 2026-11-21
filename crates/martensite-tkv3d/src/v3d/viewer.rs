@@ -14,7 +14,7 @@ use martensite_tkernel::ncollection::AllocatorList;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::HandleReference as _;
 use martensite_tkernel::standard::short_real::short_real_last;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, HandleSlot, SharedState, WeakHandle};
 use martensite_tkmath::gp::{Axis3, Direction3, Point3, StandardDirection3};
 use martensite_tkservice::aspect::{
     AspectBackground, AspectGenId, AspectGradientBackground, AspectGradientFillMethod,
@@ -33,8 +33,8 @@ use std::collections::BTreeSet;
 pub(crate) struct V3dViewerState {
     pub(crate) layer_ids: BTreeSet<i32>,
     pub(crate) z_layer_gen_id: AspectGenId,
-    pub(crate) defined_views: AllocatorList<Handle<dyn V3dViewSource>>,
-    pub(crate) active_views: AllocatorList<Handle<dyn V3dViewSource>>,
+    pub(crate) defined_views: AllocatorList<HandleSlot<dyn V3dViewSource>>,
+    pub(crate) active_views: AllocatorList<HandleSlot<dyn V3dViewSource>>,
     pub(crate) defined_lights: AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     pub(crate) active_lights: AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     pub(crate) background: AspectBackground,
@@ -230,8 +230,8 @@ impl V3dViewer {
     /// `AddView` (private, called by the view constructor).
     pub(crate) fn add_view(&self, view: &Handle<dyn V3dViewSource>) {
         let mut state = self.state.write();
-        if !state.defined_views.iter().any(|stored| stored == view) {
-            state.defined_views.append(view.clone());
+        if !state.defined_views.iter().any(|stored| &**stored == view) {
+            state.defined_views.append(HandleSlot::new(view.clone()));
         }
     }
     /// `DelView` (private): forgets a view, first in the active list then the defined one.
@@ -244,7 +244,7 @@ impl V3dViewer {
 
 /// Removes the first view at an address from a list (`NCollectionList::Remove`).
 pub(super) fn remove_view_from(
-    list: &mut AllocatorList<Handle<dyn V3dViewSource>>,
+    list: &mut AllocatorList<HandleSlot<dyn V3dViewSource>>,
     view: *const (),
 ) {
     let mut cursor = list.cursor();
@@ -453,7 +453,12 @@ impl V3dViewer {
     }
     /// `ActiveViews`; `viewer.active_views()`.
     pub fn active_views(&self) -> Vec<Handle<dyn V3dViewSource>> {
-        self.state.read().active_views.iter().cloned().collect()
+        self.state
+            .read()
+            .active_views
+            .iter()
+            .map(|slot| Handle::clone(slot))
+            .collect()
     }
     /// `LastActiveView`: exactly one active view; `viewer.last_active_view()`.
     pub fn last_active_view(&self) -> bool {
@@ -461,6 +466,11 @@ impl V3dViewer {
     }
     /// `DefinedViews`; `viewer.defined_views()`.
     pub fn defined_views(&self) -> Vec<Handle<dyn V3dViewSource>> {
-        self.state.read().defined_views.iter().cloned().collect()
+        self.state
+            .read()
+            .defined_views
+            .iter()
+            .map(|slot| Handle::clone(slot))
+            .collect()
     }
 }

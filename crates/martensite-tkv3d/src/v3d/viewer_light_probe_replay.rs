@@ -1,7 +1,7 @@
 //! Strong native owners outlive every borrowed alias while real callback bodies mutate live nodes.
 use super::{view_camera_alias_fixture::*, viewer_light_probe_fixture::*, *};
 use martensite_tkernel::{
-    standard::{Failure, Handle, HandleFieldRef, HandleReference, catch_native_failure},
+    standard::{Failure, Handle, HandleReference, catch_native_failure},
     tcollection::AsciiString,
 };
 use martensite_tkservice::{
@@ -25,7 +25,7 @@ pub(super) fn make_light_probe_scene(policy: usize) -> LightProbeScene {
     let views = std::array::from_fn(|index| mapped_light_probe_view(&viewer, &control, index + 1));
     *control.lights.write() = lights.each_ref().map(Handle::downgrade);
     *control.views.write() = views.each_ref().map(Handle::downgrade);
-    *control.caller.write() = views[0].clone();
+    control.caller.assign(&views[0]).unwrap();
     let scene = LightProbeScene {
         viewer,
         control,
@@ -89,8 +89,7 @@ fn execute_light_case(scene: &LightProbeScene) -> Result<(), Failure> {
     if scene.control.policy == 10 {
         return scene.viewer.set_view_on();
     }
-    let caller = HandleFieldRef::new(&scene.control.caller, |slot| slot);
-    scene.viewer.set_view_on_one(&caller)
+    scene.viewer.set_view_on_one(&scene.control.caller)
 }
 fn probe_result_row(result: Result<(), Failure>) -> String {
     match result {

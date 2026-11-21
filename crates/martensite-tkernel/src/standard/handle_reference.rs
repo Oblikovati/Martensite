@@ -88,6 +88,7 @@ pub trait HandleReference<T: ?Sized + RuntimeTyped> {
     fn ref_count(&self) -> usize {
         match self.observe() {
             HandleObserver::Borrowed(handle) => handle.ref_count(),
+            HandleObserver::Leased(slot) => slot.ref_count(),
             HandleObserver::Snapshot(handle) => handle.ref_count().saturating_sub(1),
         }
     }

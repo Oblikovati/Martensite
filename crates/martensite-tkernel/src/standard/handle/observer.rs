@@ -1,11 +1,13 @@
 use super::Handle;
-use std::ops::Deref;
+use std::{ops::Deref, sync::Arc};
 
 /// A read of a handle slot. An immutable slot is borrowed. A slot that can be
-/// reassigned while its value is read returns a short-lived owning snapshot.
+/// reassigned while its value is read lends a shared slot or returns a short-lived snapshot.
 pub enum HandleObserver<'a, T: ?Sized> {
     /// Borrow from an immutable slot.
     Borrowed(&'a Handle<T>),
+    /// Lend the current slot without adding a separate object owner.
+    Leased(Arc<Handle<T>>),
     /// Hold a snapshot from a mutable or weak slot.
     Snapshot(Handle<T>),
 }
@@ -22,6 +24,7 @@ impl<T: ?Sized> HandleObserver<'_, T> {
     pub fn into_handle(self) -> Handle<T> {
         match self {
             Self::Borrowed(handle) => handle.clone(),
+            Self::Leased(slot) => Handle::clone(&slot),
             Self::Snapshot(handle) => handle,
         }
     }
@@ -32,6 +35,7 @@ impl<T: ?Sized> Deref for HandleObserver<'_, T> {
     fn deref(&self) -> &Self::Target {
         match self {
             Self::Borrowed(handle) => handle,
+            Self::Leased(slot) => slot,
             Self::Snapshot(handle) => handle,
         }
     }

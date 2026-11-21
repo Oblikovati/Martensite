@@ -75,7 +75,9 @@ fn allocate_owned_view(
     default_camera: Graphic3dCamera,
 ) -> V3dView {
     V3dView {
-        driver_view_slot: martensite_tkernel::standard::IntrusiveReferenceSlot::from_owned(view),
+        driver_view_slot: martensite_tkernel::standard::IntrusiveReferenceSlot::from_owned_shared(
+            view,
+        ),
         default_camera: Handle::new(default_camera),
         this: SharedState::new(WeakHandle::default()),
         state: SharedState::new(super::view::V3dViewState::initial(viewer)),

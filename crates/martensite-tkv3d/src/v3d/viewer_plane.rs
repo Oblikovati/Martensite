@@ -24,7 +24,7 @@ impl V3dViewer {
         if let Some(value) = grid.get() {
             value.set_draw_mode(value.draw_mode());
         }
-        let views = self.state.read().active_views.clone();
+        let views = self.active_views();
         views
             .iter()
             .filter_map(Handle::get)

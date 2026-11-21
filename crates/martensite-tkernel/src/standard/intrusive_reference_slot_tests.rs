@@ -118,3 +118,22 @@ fn reference_slot_retiring_reborrow_checks_actual_pointer_and_phase() {
     drop(ownership);
     slot.publish_ownership(Handle::<StandardTransient>::default(), false);
 }
+
+#[test]
+fn reference_slot_lease_preserves_one_owner_through_reentrant_replacement() {
+    let first = Handle::new(StandardTransient);
+    let weak = first.downgrade();
+    let slot = IntrusiveReferenceSlot::from_owned_shared(first);
+    let old = slot.observe();
+    assert_eq!(old.ref_count(), 1);
+    let next = Handle::new(StandardTransient);
+    slot.assign(&next).unwrap();
+    assert_eq!(old.object_address(), weak.object_address());
+    assert_eq!(weak.ref_count(), 1);
+    assert_eq!(slot.observe().object_address(), next.object_address());
+    assert_eq!(next.ref_count(), 2);
+    drop(old);
+    assert_eq!(weak.ref_count(), 0);
+    slot.clear().unwrap();
+    assert_eq!(next.ref_count(), 1);
+}

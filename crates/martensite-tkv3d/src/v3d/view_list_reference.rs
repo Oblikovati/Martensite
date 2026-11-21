@@ -1,9 +1,8 @@
 //! Actual viewer view-list fields use the shared native node borrowing mechanism.
 use super::handle_chain_reference::{
-    HandleChainStorage, V3dHandleChainCursor, V3dHandleChainNodeRef, V3dHandleChainRef,
+    HandleChain, HandleChainStorage, V3dHandleChainCursor, V3dHandleChainNodeRef, V3dHandleChainRef,
 };
 use super::{V3dViewSource, V3dViewer};
-use martensite_tkernel::{ncollection::AllocatorList, standard::Handle};
 /// Borrow native ActiveViews or DefinedViews; `viewer.active_views_ref().cursor()`.
 pub type V3dViewListRef<'a> = V3dHandleChainRef<'a, dyn V3dViewSource>;
 /// Detached native view cursor; `viewer.active_view_iterator()`.
@@ -14,14 +13,14 @@ impl HandleChainStorage<dyn V3dViewSource> for V3dViewer {
     fn inspect_chain(
         &self,
         key: usize,
-        inspect: &mut dyn FnMut(&AllocatorList<Handle<dyn V3dViewSource>>),
+        inspect: &mut dyn FnMut(HandleChain<'_, dyn V3dViewSource>),
     ) {
         let fields = self.state.read();
         if key == 0 {
-            inspect(&fields.active_views);
+            inspect(HandleChain::Shared(&fields.active_views));
             return;
         }
-        inspect(&fields.defined_views);
+        inspect(HandleChain::Shared(&fields.defined_views));
     }
 }
 impl V3dViewer {

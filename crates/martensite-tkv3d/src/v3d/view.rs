@@ -168,7 +168,7 @@ impl V3dView {
     /// Read the then-current driver view; `view.driver_view_observer().redraw()`.
     pub fn driver_view_observer(&self) -> HandleObserver<'_, dyn Graphic3dCView> {
         // Native direct myView uses must reread after callbacks rather than keep an owning copy.
-        // The slot lends a short snapshot owner: drop it before callbacks may retire the view.
+        // The observer lends the original slot without taking a separate view owner.
         self.driver_view_slot.observe()
     }
     /// `Viewer`: the viewer, null after `Remove`; `view.viewer()`.

@@ -1,6 +1,8 @@
 //! Native-style callback subjects embed real view storage; controls contain nonowning native targets.
 use super::*;
-use martensite_tkernel::standard::{Handle, HandleReference, SharedState, WeakHandle};
+use martensite_tkernel::standard::{
+    Handle, HandleReference, IntrusiveReferenceSlot, SharedState, WeakHandle,
+};
 use martensite_tkservice::{
     aspect::AspectNeutralWindow,
     graphic3d::{Graphic3dCLightSource, Graphic3dLightSet},
@@ -10,7 +12,7 @@ pub(super) struct ViewerLightProbeControl {
     pub viewer: WeakHandle<V3dViewer>,
     pub lights: SharedState<[WeakHandle<dyn Graphic3dCLightSource>; 3]>,
     pub views: SharedState<[WeakHandle<dyn V3dViewSource>; 3]>,
-    pub caller: SharedState<Handle<dyn V3dViewSource>>,
+    pub caller: IntrusiveReferenceSlot<dyn V3dViewSource>,
     pub caller_set: SharedState<Handle<Graphic3dLightSet>>,
     pub replacement_set: SharedState<WeakHandle<Graphic3dLightSet>>,
     pub policy: usize,
@@ -51,7 +53,7 @@ pub(super) fn fresh_light_probe_control(
         viewer: viewer.downgrade(),
         lights: Default::default(),
         views: Default::default(),
-        caller: Default::default(),
+        caller: IntrusiveReferenceSlot::from_owned_shared(Handle::default()),
         caller_set: Default::default(),
         replacement_set: Default::default(),
         policy,
