@@ -8,10 +8,10 @@ mod borrowed;
 mod cursor;
 mod cursor_mut;
 mod cursor_position;
+#[cfg(test)]
 mod legacy_cursor;
 pub use cursor::SparseArrayCursor;
 pub use cursor_mut::SparseArrayCursorMut;
-pub use legacy_cursor::SparseArrayLegacyCursor;
 /// Sparse indexed objects; `SparseArray::new(8).set_value(1000, 42)`.
 pub struct SparseArray<T> {
     storage: TypedSparseStorage<T>,
@@ -37,7 +37,8 @@ impl<T> SparseArray<T> {
         self.storage.base.size()
     }
     /// Returns the occupied extent; `array.extent() == 2`.
-    pub fn extent(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn extent(&self) -> usize {
         self.storage.base.size()
     }
     /// Checks that every slot is unoccupied; `array.is_empty()`.
@@ -94,15 +95,18 @@ impl<T> SparseArray<T> {
         self.set_value(index, value)
     }
     /// Data-map spelling of occupancy; `array.is_bound(5)`.
-    pub fn is_bound(&self, index: usize) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_bound(&self, index: usize) -> bool {
         self.has_value(index)
     }
     /// Data-map spelling of lookup; `array.find(5)`.
-    pub fn find(&self, index: usize) -> Option<&T> {
+    #[cfg(test)]
+    pub(crate) fn find(&self, index: usize) -> Option<&T> {
         self.value(index)
     }
     /// Data-map spelling of exclusive lookup; `array.change_find(5)`.
-    pub fn change_find(&mut self, index: usize) -> Option<&mut T> {
+    #[cfg(test)]
+    pub(crate) fn change_find(&mut self, index: usize) -> Option<&mut T> {
         self.change_value(index)
     }
     /// Data-map spelling of removal; `array.unbind(5)`.

@@ -5,8 +5,6 @@ pub mod ncollection_matrix_vector_products;
 pub mod ncollection_sequence;
 #[path = "../ncollection_shared_views.rs"]
 pub mod ncollection_shared_views;
-#[path = "../ncollection_sparse_array.rs"]
-pub mod ncollection_sparse_array;
 #[path = "../ncollection_square_matrix_assignment.rs"]
 pub mod ncollection_square_matrix_assignment;
 #[path = "../ncollection_trees_api_behavior.rs"]
@@ -127,8 +125,6 @@ pub mod shared_collection_method_contracts;
 pub mod shared_state_supplemental;
 #[path = "../sparse_array_base_contracts.rs"]
 pub mod sparse_array_base_contracts;
-#[path = "../sparse_array_method_contracts.rs"]
-pub mod sparse_array_method_contracts;
 #[path = "../sparse_basic_iterator_contracts.rs"]
 pub mod sparse_basic_iterator_contracts;
 #[path = "../sparse_block_native_surface.rs"]
@@ -137,8 +133,6 @@ pub mod sparse_block_native_surface;
 pub mod sparse_cursor_contracts;
 #[path = "../sparse_supplemental.rs"]
 pub mod sparse_supplemental;
-#[path = "../sparse_typed_storage_contracts.rs"]
-pub mod sparse_typed_storage_contracts;
 #[path = "../standard_array_stream_buffer.rs"]
 pub mod standard_array_stream_buffer;
 #[path = "../standard_atomic.rs"]

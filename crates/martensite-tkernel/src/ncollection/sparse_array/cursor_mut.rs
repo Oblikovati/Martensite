@@ -66,19 +66,22 @@ impl<'a, T> SparseArrayCursorMut<'a, T> {
     }
 
     /// Returns the index alias; `cursor.index() == cursor.key()`.
-    pub fn index(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn index(&self) -> usize {
         self.key()
     }
 
     /// Advances and returns this cursor; `cursor.advance_returning().index()`.
-    pub fn advance_returning(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn advance_returning(&mut self) -> &mut Self {
         self.next();
         self
     }
 
     /// Returns a read-only reborrow of the old position before advancing; `cursor.advance_post()`.
     /// The snapshot holds the source borrow; mutable shallow aliases require a raw adapter.
-    pub fn advance_post(&mut self) -> SparseArrayCursor<'_, T> {
+    #[cfg(test)]
+    pub(crate) fn advance_post(&mut self) -> SparseArrayCursor<'_, T> {
         let previous = self.position;
         self.next();
         SparseArrayCursor::from_position(self.array.as_deref(), previous)
@@ -86,14 +89,16 @@ impl<'a, T> SparseArrayCursorMut<'a, T> {
 
     /// Reborrows a source cursor's owner and position; `target.assign_from(&mut source)`.
     /// The source remains exclusively borrowed until this destination is released.
-    pub fn assign_from(&mut self, source: &'a mut SparseArrayCursorMut<'_, T>) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_from(&mut self, source: &'a mut SparseArrayCursorMut<'_, T>) -> &mut Self {
         self.position = source.position;
         self.array = source.array.as_deref_mut();
         self
     }
 
     /// Leaves this cursor in place on self-assignment; `cursor.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 

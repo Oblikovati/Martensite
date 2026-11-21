@@ -32,3 +32,5 @@ extern crate self as martensite_tkernel;
 include!("ncollection/array_visibility_tests.rs");
 #[cfg(test)]
 include!("ncollection/map_visibility_tests.rs");
+#[cfg(test)]
+include!("ncollection/sparse_visibility_tests.rs");

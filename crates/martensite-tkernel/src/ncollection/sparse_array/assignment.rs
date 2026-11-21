@@ -2,7 +2,8 @@
 use super::SparseArray;
 impl<T> SparseArray<T> {
     /// Preserves self-assignment without conflicting Rust borrows; `array.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }

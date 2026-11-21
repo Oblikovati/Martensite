@@ -1,8 +1,12 @@
 //! Cell moves transfer the target list independently from the index's storage policy.
 use super::CellRecord;
+#[cfg(test)]
 use crate::ncollection::Array1;
-use crate::ncollection::cell_filter::{CellGeometry, CellHash, CellIndex};
+#[cfg(test)]
+use crate::ncollection::cell_filter::CellGeometry;
+use crate::ncollection::cell_filter::{CellHash, CellIndex};
 impl<T> CellRecord<T> {
+    #[cfg(test)]
     pub(in crate::ncollection::cell_filter) fn from_point<I: CellGeometry<CellTarget = T>>(
         point: &I::CellPoint,
         sizes: &Array1<'_, f64>,
