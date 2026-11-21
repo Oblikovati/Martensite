@@ -61,6 +61,11 @@ their concrete descriptor by Rust type, so lookup by their name returns
 schema. Implement `Persistent` on new persistent classes and lend their
 `StandardPersistent` fields through `persistent_state()`.
 
+An algorithm class can own an `AlgorithmState` and implement `AlgorithmSource`
+to lend that state for reporting. Initialize the state with the concrete
+class's descriptor to retain its message names. Register `dyn AlgorithmSource`
+as both its parent and a supported interface.
+
 ## References and callbacks
 
 Use `&Handle<T>` for a borrowed slot and `&T` for an object the caller already

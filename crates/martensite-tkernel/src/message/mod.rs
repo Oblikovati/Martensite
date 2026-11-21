@@ -71,7 +71,7 @@ pub use msg::Msg;
 mod msg_file;
 pub use msg_file::{MsgFile, MsgFileSource, NativeMsgFileSource};
 mod algorithm;
-pub use algorithm::Algorithm;
+pub use algorithm::{Algorithm, AlgorithmSource, AlgorithmState};
 mod defaults;
 pub use defaults::Message;
 mod lazy_progress_scope;

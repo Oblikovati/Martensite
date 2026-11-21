@@ -1,13 +1,14 @@
 //! Algorithm execution status with per-status data and message output.
 use super::{ExecStatus, Message, Messenger, Msg, Status};
 use crate::ncollection::PackedMap;
-use crate::standard::{
-    Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient,
-};
+use crate::standard::{Handle, RuntimeType, RuntimeTyped, SharedState, Transient};
 use crate::tcollection::HExtendedString;
+use std::ops::Deref;
 use std::sync::{Arc, Mutex, RwLockWriteGuard};
 mod reporting;
+mod source;
 mod strings;
+pub use source::AlgorithmSource;
 
 /// One optional entry per status index `FirstStatus..=LastStatus` (index 0 unused).
 type StatusSlots<T> = Vec<Option<T>>;
@@ -16,21 +17,10 @@ fn status_slots<T>() -> StatusSlots<T> {
     (0..=ExecStatus::LAST_STATUS).map(|_| None).collect()
 }
 
-/// Status flags plus integers, strings and custom messages recorded per status;
-/// `Algorithm::new()`.
-///
-/// Derived algorithms name their messages after their type chain; give the
-/// descriptor with [`Algorithm::with_runtime_type`].
+/// A standalone execution-status reporter; `Algorithm::new()`.
 pub struct Algorithm {
-    runtime_type: &'static RuntimeType,
-    status: SharedState<ExecStatus>,
-    messenger: SharedState<Arc<Messenger>>,
-    report_integers: SharedState<Option<StatusSlots<PackedMap<i32>>>>,
-    report_strings: SharedState<Option<StatusSlots<Vec<Handle<HExtendedString>>>>>,
-    // `get` rewrites a message while sending it from a const method.
-    report_messages: SharedState<Option<StatusSlots<Arc<Mutex<Msg>>>>>,
+    state: AlgorithmState,
 }
-message_runtime_type!(Algorithm, "Message_Algorithm", StandardTransient);
 impl Default for Algorithm {
     fn default() -> Self {
         Self::with_runtime_type(Self::static_type())
@@ -41,8 +31,46 @@ impl Algorithm {
     pub fn new() -> Self {
         Self::default()
     }
-    /// An algorithm whose messages are named after `runtime_type` and its ancestors;
+    /// A reporter whose messages use the supplied descriptor and its ancestors.
     /// `Algorithm::with_runtime_type(Algorithm::static_type())`.
+    pub fn with_runtime_type(runtime_type: &'static RuntimeType) -> Self {
+        Self {
+            state: AlgorithmState::with_runtime_type(runtime_type),
+        }
+    }
+}
+impl Deref for Algorithm {
+    type Target = AlgorithmState;
+
+    fn deref(&self) -> &Self::Target {
+        &self.state
+    }
+}
+impl AlgorithmSource for Algorithm {
+    fn algorithm_state(&self) -> &AlgorithmState {
+        &self.state
+    }
+}
+impl Transient for Algorithm {
+    fn dynamic_type(&self) -> &'static RuntimeType {
+        self.state.dynamic_type()
+    }
+}
+
+/// Status and reporting state owned by an algorithm.
+/// `AlgorithmState::with_runtime_type(Algorithm::static_type())`.
+pub struct AlgorithmState {
+    runtime_type: &'static RuntimeType,
+    status: SharedState<ExecStatus>,
+    messenger: SharedState<Arc<Messenger>>,
+    report_integers: SharedState<Option<StatusSlots<PackedMap<i32>>>>,
+    report_strings: SharedState<Option<StatusSlots<Vec<Handle<HExtendedString>>>>>,
+    // `get` rewrites a message while sending it from a const method.
+    report_messages: SharedState<Option<StatusSlots<Arc<Mutex<Msg>>>>>,
+}
+impl AlgorithmState {
+    /// An algorithm whose messages are named after `runtime_type` and its ancestors;
+    /// `AlgorithmState::with_runtime_type(Algorithm::static_type())`.
     pub fn with_runtime_type(runtime_type: &'static RuntimeType) -> Self {
         Self {
             runtime_type,
@@ -118,11 +146,5 @@ impl Algorithm {
             .as_ref()
             .filter(|_| index != 0)
             .cloned()
-    }
-}
-
-impl Transient for Algorithm {
-    fn dynamic_type(&self) -> &'static RuntimeType {
-        self.runtime_type
     }
 }
