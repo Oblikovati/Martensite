@@ -17,7 +17,7 @@ use martensite_tkernel::{
     message::ProgressRange,
     ncollection::List,
     precision,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkfillet::{brep_fillet_api::BRepFilletAPIMakeFillet, chfi3d::FilletShape};
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -34,10 +34,9 @@ use values::optional_failure as failed;
 /// Native DNaming fillet driver; `NamingFilletDriver::default()`.
 #[derive(Default)]
 pub struct NamingFilletDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingFilletDriver, "DNamingFilletDriver", dyn TFunctionDriver, transient, interfaces: [dyn TFunctionDriver]);
+impl_transient!(NamingFilletDriver, "DNamingFilletDriver", dyn TFunctionDriver, interfaces: [dyn TFunctionDriver]);
 fn section_shape(raw: i32) -> Result<FilletShape, Failure> {
     match raw {
         0 => Ok(FilletShape::Rational),

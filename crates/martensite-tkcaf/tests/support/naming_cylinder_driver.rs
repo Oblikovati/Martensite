@@ -11,7 +11,7 @@ use martensite_tkcaf::tnaming::TNaming;
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::{adaptor3d::Adaptor3dCurve, top_abs::ShapeEnum};
 use martensite_tklcaf::{
@@ -30,10 +30,9 @@ use martensite_tktopalgo::{
 /// Computes a cylinder from an edge or wire argument; `NamingCylinderDriver::default()`.
 #[derive(Default)]
 pub struct NamingCylinderDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingCylinderDriver, "DNamingCylinderDriver", dyn TFunctionDriver, transient,
+impl_transient!(NamingCylinderDriver, "DNamingCylinderDriver", dyn TFunctionDriver,
     interfaces: [dyn TFunctionDriver]);
 
 fn first_axis_edge(shape: &topods::Shape) -> Result<Option<topods::Edge>, Failure> {

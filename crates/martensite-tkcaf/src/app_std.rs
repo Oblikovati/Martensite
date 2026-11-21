@@ -3,7 +3,7 @@ use martensite_tkcdf::cdf::CdfApplication;
 use martensite_tkcdf::cdm::CdmApplication;
 use martensite_tkcdf::json_dump::{base_class, class_begin};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Handle, StandardTransient, dump::DumpStream};
+use martensite_tkernel::standard::{Handle, dump::DumpStream};
 use martensite_tklcaf::tdoc_std::{TDocStdApplication, TDocStdApplicationBase};
 use std::io;
 
@@ -17,10 +17,9 @@ use std::io;
 /// ```
 #[derive(Default)]
 pub struct AppStdApplication {
-    transient: StandardTransient,
     base: TDocStdApplicationBase,
 }
-impl_transient!(AppStdApplication, "AppStdApplication", dyn TDocStdApplication, transient,
+impl_transient!(AppStdApplication, "AppStdApplication", dyn TDocStdApplication,
     interfaces: [dyn CdmApplication, dyn CdfApplication, dyn TDocStdApplication]);
 
 impl AppStdApplication {
@@ -28,7 +27,7 @@ impl AppStdApplication {
     pub fn new() -> Handle<AppStdApplication> {
         let application = Handle::new(Self::default());
         if let Some(own) = application.get() {
-            CdmApplication::application_base(own).bind_self(&application.cast());
+            CdmApplication::application_base(own).bind_self(&application.upcast());
         }
         application
     }

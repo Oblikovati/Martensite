@@ -4,7 +4,7 @@ use super::{TNamingBuilder, TNamingEvolution, TNamingIterator, TNamingNamedShape
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tklcaf::live;
 use martensite_tklcaf::tdf::{
@@ -70,7 +70,6 @@ fn load_named_shape(
 /// `TNamingDeltaOnModification`: restores a modified named shape by rebuilding its saved
 /// evolutions.
 pub struct TNamingDeltaOnModification {
-    transient: StandardTransient,
     base: TdfAttributeDeltaBase,
     saved: SavedShapes,
 }
@@ -78,7 +77,6 @@ impl_transient!(
     TNamingDeltaOnModification,
     "TNamingDeltaOnModification",
     dyn TdfDeltaOnModification,
-    transient,
     interfaces: [dyn TdfAttributeDelta, dyn TdfDeltaOnModification]
 );
 
@@ -88,8 +86,7 @@ impl TNamingDeltaOnModification {
     pub fn new(named: &Handle<TNamingNamedShape>) -> Result<Handle<Self>, Failure> {
         let saved = SavedShapes::of(live(named, "TNamingDeltaOnModification")?)?;
         Ok(TdfAttributeDeltaBase::share(Self {
-            transient: StandardTransient::default(),
-            base: TdfAttributeDeltaBase::new(&named.cast()),
+            base: TdfAttributeDeltaBase::new(&named.upcast()),
             saved,
         }))
     }
@@ -119,7 +116,7 @@ impl TdfAttributeDelta for TNamingDeltaOnModification {
     /// the references to it stay valid), then rebuilds the saved evolutions.
     fn apply(&self) -> Result<(), Failure> {
         let attribute = self.attribute();
-        let named_handle = attribute.cast::<TNamingNamedShape>();
+        let named_handle = attribute.downcast::<TNamingNamedShape>();
         let named = live(&named_handle, "TNamingDeltaOnModification::Apply")?;
         let mut existing: Handle<dyn TdfAttribute> = Handle::default();
         if !self.label().find_attribute(&named.id(), &mut existing)? {
@@ -133,7 +130,6 @@ impl TdfDeltaOnModification for TNamingDeltaOnModification {}
 /// `TNamingDeltaOnRemoval`: restores a removed named shape through a
 /// `TNamingDeltaOnModification` made when it was removed.
 pub struct TNamingDeltaOnRemoval {
-    transient: StandardTransient,
     base: TdfAttributeDeltaBase,
     delta: Handle<TNamingDeltaOnModification>,
 }
@@ -141,7 +137,6 @@ impl_transient!(
     TNamingDeltaOnRemoval,
     "TNamingDeltaOnRemoval",
     dyn TdfDeltaOnRemoval,
-    transient,
     interfaces: [dyn TdfAttributeDelta, dyn TdfDeltaOnRemoval]
 );
 
@@ -150,8 +145,7 @@ impl TNamingDeltaOnRemoval {
     pub fn new(named: &Handle<TNamingNamedShape>) -> Result<Handle<Self>, Failure> {
         let delta = TNamingDeltaOnModification::new(named)?;
         Ok(TdfAttributeDeltaBase::share(Self {
-            transient: StandardTransient::default(),
-            base: TdfAttributeDeltaBase::new(&named.cast()),
+            base: TdfAttributeDeltaBase::new(&named.upcast()),
             delta,
         }))
     }

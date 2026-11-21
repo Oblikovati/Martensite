@@ -42,7 +42,7 @@ fn last_dynamic_attribute_owner_releases_map_keys_and_preserves_external_referen
     used.map().bind(shape.clone(), reference.clone());
     let dynamic: Handle<dyn TdfAttribute> = used.cast();
     drop(used);
-    assert_map_owners(&dynamic.cast::<TNamingUsedShapes>(), &shape, &reference);
+    assert_map_owners(&dynamic.downcast::<TNamingUsedShapes>(), &shape, &reference);
     drop(dynamic);
     assert!(weak_used.upgrade().is_null());
     release_external_reference(shape, reference);
