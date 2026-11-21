@@ -1,10 +1,9 @@
 //! Named client entity observes unlocked selector callbacks and replaces its owner slot.
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkmath::gp::{GeneralTransform3, Point3};
 use martensite_tkv3d::{select_basics::*, select_mgr::*, select3d::*};
 use std::sync::atomic::{AtomicI32, Ordering};
 pub struct OverlapSensitivePoint {
-    transient: StandardTransient,
     point: Select3DSensitivePoint,
     pub pick: SharedState<SelectBasicsPickResult>,
     pub decision: AtomicI32,
@@ -13,11 +12,10 @@ pub struct OverlapSensitivePoint {
     pub selector: SharedState<WeakHandle<dyn SelectMgrViewerSelectorSource>>,
     pub events: SharedState<Vec<i32>>,
 }
-martensite_tkernel::impl_transient!(OverlapSensitivePoint,"OverlapSensitivePoint",dyn Select3DSensitiveEntity,transient,interfaces:[dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(OverlapSensitivePoint,"OverlapSensitivePoint",dyn Select3DSensitiveEntity,interfaces:[dyn Select3DSensitiveEntity]);
 impl OverlapSensitivePoint {
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             point: Select3DSensitivePoint::new(owner, Point3::default()),
             pick: SharedState::default(),
             decision: AtomicI32::new(1),

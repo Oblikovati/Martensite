@@ -14,7 +14,8 @@ pub(super) struct ColoredCompoundKeyDropFake {
 martensite_tkernel::impl_transient!(
     ColoredCompoundKeyDropFake,
     "CompoundKeyDestructorProbe",
-    AisColoredDrawer);
+    AisColoredDrawer
+);
 impl ColoredCompoundKeyDropFake {
     pub(super) fn new(
         parent: &Handle<Prs3dDrawer>,
@@ -35,7 +36,7 @@ impl Drop for ColoredCompoundKeyDropFake {
             .upgrade()
             .expect("drop map=expired; expected live caller-owned map");
         let value_count = map.node_ref(1).unwrap().compound_ref_count().unwrap();
-        let parent_count = self.parent.link_ref().observe().ref_count();
+        let parent_count = self.parent.link_ref().ref_count();
         writeln!(
             self.rows.lock().unwrap(),
             "key-destructor {} {value_count} {parent_count}",

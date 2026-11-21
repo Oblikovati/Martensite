@@ -121,10 +121,10 @@ fn light_field_references_copy_without_owners_and_cursor_identity_survives_appen
     let cursor = original.cursor();
     let node = cursor.node_address();
     let alias = cursor.value_ref();
-    let before = alias.observe().ref_count();
+    let before = alias.ref_count();
     scene.viewer.set_light_on_one(&scene.lights[2]).unwrap();
     assert_eq!(node, cursor.node_address());
-    assert_eq!(before, alias.observe().ref_count());
+    assert_eq!(before, alias.ref_count());
     assert_eq!(copied.len(), 3);
     assert!(!copied.is_empty());
 }

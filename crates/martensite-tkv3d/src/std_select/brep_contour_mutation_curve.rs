@@ -45,9 +45,9 @@ impl BrepContourMutationCurveFake {
         self.mutate.store(true, Ordering::Relaxed);
     }
     fn remove_current_edge_vertex(&self) -> Result<(), Failure> {
-        let topology = self.edge.read().observe();
+        let topology = self.edge.read().upgrade();
         Shape::with_reference_parts(
-            &*topology,
+            &topology,
             &Default::default(),
             martensite_tkg3d::top_abs::Orientation::Forward,
             |shape| {

@@ -12,12 +12,11 @@ enum TexturedAppendTarget {
     },
 }
 pub struct TexturedAppendingGroup {
-    transient: StandardTransient,
     inner: NullGroup,
     append_once: AtomicBool,
     append_target: TexturedAppendTarget,
 }
-martensite_tkernel::impl_transient!(TexturedAppendingGroup,"TexturedAppendingGroup",StandardTransient,transient,interfaces:[dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(TexturedAppendingGroup,"TexturedAppendingGroup",StandardTransient,interfaces:[dyn Graphic3dGroup]);
 impl TexturedAppendingGroup {
     pub fn new(prs: &Handle<dyn Graphic3dStructureSource>) -> Handle<Self> {
         // The original fixture exercises a real group appended by its own callback.
@@ -39,7 +38,6 @@ impl TexturedAppendingGroup {
         target: TexturedAppendTarget,
     ) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             inner: NullGroup::new(prs),
             append_once: AtomicBool::new(true),
             append_target: target,
@@ -57,7 +55,7 @@ impl TexturedAppendingGroup {
                     .fields
                     .write()
                     .presentations
-                    .append(next.clone());
+                    .append(martensite_tkernel::standard::HandleSlot::new(next.clone()));
             }
         }
     }

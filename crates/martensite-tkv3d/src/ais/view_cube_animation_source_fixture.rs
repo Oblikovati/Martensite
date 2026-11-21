@@ -43,10 +43,10 @@ impl CubeTransportTrace {
         let count = reference.ref_count();
         let cube = reference.upgrade();
         let context_count = cube.interactive_base().fields.read().context.ref_count();
-        [context_count, count]
+        [context_count.try_into().unwrap(), count.try_into().unwrap()]
     }
     fn clicked_owner_count(&self) -> i32 {
-        self.clicked_owner.read().ref_count()
+        self.clicked_owner.read().ref_count().try_into().unwrap()
     }
     pub(super) fn replace(&self, id: usize) {
         let probe = self.probes.read()[id].upgrade();
@@ -84,11 +84,11 @@ impl CubeTransportAnimation {
         let fields = self.base.fields.read();
         [
             self.identity,
-            self.owner.get().unwrap().ref_count(),
+            self.owner.get().unwrap().ref_count().try_into().unwrap(),
             fields.view.is_null() as i32,
-            fields.camera_start.ref_count(),
-            fields.camera_end.ref_count(),
-            fields.view.ref_count(),
+            fields.camera_start.ref_count().try_into().unwrap(),
+            fields.camera_end.ref_count().try_into().unwrap(),
+            fields.view.ref_count().try_into().unwrap(),
             self.is_stopped() as i32,
         ]
     }

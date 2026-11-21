@@ -3,7 +3,7 @@
 mod retirement_fixture;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
 use retirement_fixture::*;
 use std::sync::Arc;
@@ -31,8 +31,8 @@ fn run_projection_case(
     trace: &Arc<SharedState<Vec<String>>>,
 ) {
     let owner = AisTexturedShape::new(&Shape::default());
-    let next = Handle::new(ImagePixMap::default());
-    let nested = Handle::new(ImagePixMap::default());
+    let next = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
+    let nested = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     let mut old = retirement_projection_pixels(&owner, &nested, mode, trace);
     owner.set_texture_pix_map(&old);
     old.nullify();
@@ -49,8 +49,8 @@ fn run_projection_case(
 }
 fn retirement_after_row(
     owner: &AisTexturedShape,
-    next: &Handle<ImagePixMap>,
-    nested: &Handle<ImagePixMap>,
+    next: &Handle<dyn ImagePixMapObject>,
+    nested: &Handle<dyn ImagePixMapObject>,
     mode: &str,
     outer_file: bool,
 ) -> String {

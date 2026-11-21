@@ -14,7 +14,11 @@ fn replay_aspect_slot<T: RuntimeTyped>(
     replace: impl Fn(Handle<T>),
 ) {
     let previous = slot.clone_handle();
-    let mut rows = aspect_before_row(label, slot.is_same_reference(&alias), previous.ref_count());
+    let mut rows = aspect_before_row(
+        label,
+        slot.is_same_reference(&alias),
+        previous.ref_count().try_into().unwrap(),
+    );
     replace(incoming.clone());
     rows.push_str(&aspect_replaced_row(label, slot, &previous, &incoming));
     replace(Handle::default());

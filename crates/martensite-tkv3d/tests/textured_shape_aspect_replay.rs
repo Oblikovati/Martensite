@@ -11,7 +11,7 @@ use allocation_factory::TexturedAllocationFactory;
 use martensite_tkernel::{standard::Handle, tcollection::AsciiString};
 use martensite_tkservice::{
     graphic3d::*,
-    image::{ImageFormat, ImagePixMap},
+    image::{ImageFormat, ImagePixMap, ImagePixMapObject},
     null_driver::NullGraphicDriver,
 };
 use martensite_tkv3d::{ais::*, prs_mgr::PrsMgrPresentableObjectMembers, v3d::V3dViewer};
@@ -41,7 +41,9 @@ fn configure_aspect_case(object: &TexturedStateFixture, index: i32) {
             object.set_show_triangles(true);
         }
         3 => {
-            object.set_texture_pix_map(&Handle::new(ImagePixMap::default()));
+            object.set_texture_pix_map(
+                &Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>(),
+            );
             object.set_texture_map_on();
             object.disable_texture_modulate();
         }
@@ -52,7 +54,7 @@ fn configure_aspect_case(object: &TexturedStateFixture, index: i32) {
     }
 }
 fn configure_loaded_aspect_case(object: &TexturedStateFixture) {
-    let pixels = Handle::new(ImagePixMap::default());
+    let pixels = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     assert!(pixels.init_zero(ImageFormat::Rgba, 2, 2, 0, 0));
     pixels.set_top_down(true);
     object.set_texture_pix_map(&pixels);
@@ -128,7 +130,7 @@ fn appending_textured_presentation() -> Handle<Graphic3dStructure> {
         .fields
         .write()
         .groups
-        .append(first.cast());
+        .append(martensite_tkernel::standard::HandleSlot::new(first.cast()));
     prs
 }
 fn appended_textured_aspect_flags(

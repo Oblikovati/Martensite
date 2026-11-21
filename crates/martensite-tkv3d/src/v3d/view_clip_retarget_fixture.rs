@@ -38,11 +38,13 @@ fn create_next_clip_view(
     control: &Arc<super::view_camera_alias_fixture::CameraAliasControl>,
 ) -> Result<Handle<BorrowedCameraView>, Failure> {
     let retained = Graphic3dRetainedView::new(&viewer.structure_manager(), &[])?;
-    Ok(Handle::new(BorrowedCameraView {
-        transient: Default::default(),
-        identity: 2,
-        retained,
-        clip_probe_slot: Some(new_owned_clip_probe_slot()),
-        control: control.clone(),
-    }))
+    Ok(Handle::from_arc(Arc::new_cyclic(|owner| {
+        BorrowedCameraView {
+            owner: owner.clone(),
+            identity: 2,
+            retained,
+            clip_probe_slot: Some(new_owned_clip_probe_slot()),
+            control: control.clone(),
+        }
+    })))
 }

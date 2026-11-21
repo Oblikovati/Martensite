@@ -1,7 +1,7 @@
 //! Concrete ownership and genuine interface dispatch regressions, and the inherited selection/HLR.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Handle, RuntimeTyped};
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*};
 
 #[test]
@@ -37,16 +37,13 @@ fn textured_concrete_native_parent_alias_retains_real_object_and_descriptor() {
 fn textured_concrete_virtual_source_retains_actual_pixmap_field() {
     let object = AisTexturedShape::new(&Shape::default());
     let source = object.clone().cast::<dyn AisTexturedShapeSource>();
-    let pixels = Handle::new(ImagePixMap::default());
+    let pixels = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     let retained = source.texture_pix_map();
     source.set_texture_pix_map(&pixels);
     assert_eq!(retained.read().object_address(), pixels.object_address());
     source.set_texture_file_name(&"texture.png".into()).unwrap();
     assert!(retained.read().is_null());
-    assert_eq!(
-        source.texture_file().as_bytes(),
-        b"texture.png"
-    );
+    assert_eq!(source.texture_file().as_bytes(), b"texture.png");
 }
 
 #[test]

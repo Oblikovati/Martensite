@@ -5,7 +5,7 @@ use martensite_tkernel::{
     standard::{Handle, RuntimeTyped},
     tcollection::AsciiString,
 };
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
 use state_fixture::TexturedStateFixture;
 use std::sync::atomic::Ordering;
@@ -102,7 +102,9 @@ fn native_filename_prefix_parsing_dispatch_and_source_release_are_preserved() {
     let object = TexturedStateFixture::new();
     let inherited = object.cast::<dyn AisTexturedShapeSource>();
     for (index, name) in FILE_CASES.into_iter().enumerate() {
-        inherited.set_texture_pix_map(&Handle::new(ImagePixMap::default()));
+        inherited.set_texture_pix_map(
+            &Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>(),
+        );
         inherited
             .set_texture_file_name(&AsciiString::from(name))
             .unwrap();
@@ -117,8 +119,8 @@ fn native_filename_prefix_parsing_dispatch_and_source_release_are_preserved() {
 #[test]
 fn native_const_pixmap_alias_survives_replacement_and_filename_nullification() {
     let object = TexturedStateFixture::new();
-    let first = Handle::new(ImagePixMap::default());
-    let second = Handle::new(ImagePixMap::default());
+    let first = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
+    let second = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     first.set_top_down(true);
     second.set_top_down(false);
     object.set_texture_pix_map(&first);

@@ -323,7 +323,9 @@ fn presentation_for(object: &Handle<FakeLightPresentation>) -> Handle<PrsMgrPres
         .fields
         .write()
         .presentations
-        .append(presentation.clone());
+        .append(martensite_tkernel::standard::HandleSlot::new(
+            presentation.clone(),
+        ));
     presentation
 }
 #[test]

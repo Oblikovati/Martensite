@@ -25,7 +25,7 @@ impl AddBoundarySelectionReference {
 }
 
 impl HandleReference<SelectMgrSelection> for AddBoundarySelectionReference {
-    fn observe(&self) -> HandleObserver<SelectMgrSelection> {
+    fn observe(&self) -> HandleObserver<'_, SelectMgrSelection> {
         let previous = self.reads.replace(self.reads.get() + 1);
         if previous == 0 {
             assert!(
@@ -53,7 +53,7 @@ impl HandleReference<SelectMgrSelection> for AddBoundarySelectionReference {
 
 struct ForbiddenSelectionReference;
 impl HandleReference<SelectMgrSelection> for ForbiddenSelectionReference {
-    fn observe(&self) -> HandleObserver<SelectMgrSelection> {
+    fn observe(&self) -> HandleObserver<'_, SelectMgrSelection> {
         // A nonzero mode must return before even dereferencing the argument.
         panic!("selection observed; expected no handle access for nonzero mode")
     }

@@ -10,7 +10,7 @@ use std::fmt::Write;
 struct ColoredDrawerApplicationFake {
     colored: AisColoredDrawer,
 }
-martensite_tkernel::impl_transient!(ColoredDrawerApplicationFake, "MartensiteColoredDrawerProbe", AisColoredDrawer, colored,
+martensite_tkernel::impl_transient!(ColoredDrawerApplicationFake, "MartensiteColoredDrawerProbe", AisColoredDrawer,
     interfaces: [dyn Graphic3dPresentationAttributesSource]);
 impl Graphic3dPresentationAttributesSource for ColoredDrawerApplicationFake {
     fn presentation_attributes_base(&self) -> &Graphic3dPresentationAttributesBase {

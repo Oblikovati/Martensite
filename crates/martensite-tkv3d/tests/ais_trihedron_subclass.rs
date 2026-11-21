@@ -2,17 +2,16 @@
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::geom::GeomAxis2Placement;
 use martensite_tkmath::gp::{Axis2, Point3};
 use martensite_tkservice::graphic3d::*;
 use martensite_tkv3d::{ais::*, prs_mgr::*, prs3d::*, select_mgr::*, select3d::*};
 struct ApplicationTrihedron {
-    transient: StandardTransient,
     base: AisTrihedronBase,
 }
-martensite_tkernel::impl_transient!(ApplicationTrihedron,"ApplicationTrihedron",dyn AisTrihedronSource,transient,interfaces:[dyn AisTrihedronSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(ApplicationTrihedron,"ApplicationTrihedron",dyn AisTrihedronSource,interfaces:[dyn AisTrihedronSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisTrihedronSource for ApplicationTrihedron {
     fn trihedron_base(&self) -> &AisTrihedronBase {
         &self.base
@@ -49,10 +48,9 @@ impl SelectMgrSelectableObject for ApplicationTrihedron {
     }
 }
 struct ApplicationTrihedronOwner {
-    transient: StandardTransient,
     base: AisTrihedronOwnerBase,
 }
-martensite_tkernel::impl_transient!(ApplicationTrihedronOwner,"ApplicationTrihedronOwner",dyn AisTrihedronOwnerSource,transient,interfaces:[dyn AisTrihedronOwnerSource,dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(ApplicationTrihedronOwner,"ApplicationTrihedronOwner",dyn AisTrihedronOwnerSource,interfaces:[dyn AisTrihedronOwnerSource,dyn SelectMgrEntityOwnerSource]);
 impl AisTrihedronOwnerSource for ApplicationTrihedronOwner {
     fn trihedron_owner_base(&self) -> &AisTrihedronOwnerBase {
         &self.base
@@ -74,7 +72,6 @@ impl SelectMgrEntityOwnerSource for ApplicationTrihedronOwner {
 #[test]
 fn derived_protected_cache_and_ownership_flags_reach_generic_callbacks() {
     let object = Handle::new(ApplicationTrihedron {
-        transient: StandardTransient::default(),
         base: AisTrihedronBase::new(&Handle::new(GeomAxis2Placement::new(Axis2::default())))
             .unwrap(),
     });
@@ -105,7 +102,6 @@ fn derived_protected_cache_and_ownership_flags_reach_generic_callbacks() {
 #[test]
 fn derived_owner_keeps_native_interface_and_replaceable_part() {
     let owner = Handle::new(ApplicationTrihedronOwner {
-        transient: StandardTransient::default(),
         base: AisTrihedronOwnerBase::new(&Handle::default(), Prs3dDatumParts::XAxis, 7),
     });
     select_mgr_entity_owner_bind(&owner.cast());

@@ -31,12 +31,12 @@ impl V3dViewSource for SubviewMutationProbe {
     }
 }
 fn apply_subview_mutation(commands: &SubviewMutationCommands) {
-    let parent = commands.parent.observe();
-    let removed = commands.removed.observe();
+    let parent = commands.parent.upgrade();
+    let removed = commands.removed.upgrade();
     match commands.policy {
         1 => {
             parent.remove_subview(removed.view_base());
-            parent.add_subview(&commands.appended.observe().clone());
+            parent.add_subview(&commands.appended.upgrade());
         }
         2 => *parent.state.write().subviews.first_mut().unwrap() = removed.clone(),
         _ => unreachable!(),

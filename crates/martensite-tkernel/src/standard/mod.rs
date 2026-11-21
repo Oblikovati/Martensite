@@ -31,6 +31,8 @@ mod runtime_type;
 mod shared_state;
 mod transient;
 pub use handle::{Handle, HandleObserver, HandleUpcast, HandleView, WeakHandle};
+mod handle_slot;
+pub use handle_slot::HandleSlot;
 pub(crate) use runtime_type::c_prefix;
 pub use runtime_type::{
     InterfaceCaster, InterfaceEntry, RuntimeType, RuntimeTyped, TransientHandleTarget,

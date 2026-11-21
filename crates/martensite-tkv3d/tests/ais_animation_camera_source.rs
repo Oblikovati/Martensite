@@ -1,16 +1,15 @@
 //! Derived camera atoms retain actual native base state and live handle references.
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkservice::{graphic3d::Graphic3dCamera, null_driver::NullGraphicDriver};
 use martensite_tkv3d::v3d::V3dViewSource;
 use martensite_tkv3d::{ais::*, v3d::*};
 use std::sync::atomic::{AtomicI32, Ordering};
 pub(super) struct ProtocolCameraSubclass {
-    transient: StandardTransient,
     base: AisAnimationCameraBase,
     timer_calls: AtomicI32,
     timer_failure: AtomicI32,
 }
-martensite_tkernel::impl_transient!(ProtocolCameraSubclass,"ProtocolCameraSubclass",dyn AisAnimationCameraSource,transient,interfaces:[dyn AisAnimationCameraSource,dyn AisAnimationSource]);
+martensite_tkernel::impl_transient!(ProtocolCameraSubclass,"ProtocolCameraSubclass",dyn AisAnimationCameraSource,interfaces:[dyn AisAnimationCameraSource,dyn AisAnimationSource]);
 impl AisAnimationCameraSource for ProtocolCameraSubclass {
     fn camera_animation_base(&self) -> &AisAnimationCameraBase {
         // Both static handle types expose the actual owned native camera base.
@@ -39,7 +38,6 @@ impl AisAnimationSource for ProtocolCameraSubclass {
 /// Reuse the actual derived atom in getter controls; `protocol_camera(&Handle::default())`.
 pub(super) fn protocol_camera(view: &Handle<dyn V3dViewSource>) -> Handle<ProtocolCameraSubclass> {
     Handle::new(ProtocolCameraSubclass {
-        transient: StandardTransient::default(),
         base: AisAnimationCameraBase::new("protocol", view),
         timer_calls: AtomicI32::new(0),
         timer_failure: AtomicI32::new(0),
@@ -218,8 +216,8 @@ fn protocol_endpoint_row(
         frame,
         i32::from(start.is_null()),
         i32::from(end.is_null()),
-        camera.ref_count(),
-        other.ref_count(),
+        camera.ref_count().try_into().unwrap(),
+        other.ref_count().try_into().unwrap(),
         i32::from(start.is_same_reference(&source.camera_start_ref())),
         i32::from(end.is_same_reference(&source.camera_end_ref())),
     ]

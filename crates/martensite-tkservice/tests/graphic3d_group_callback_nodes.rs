@@ -17,7 +17,7 @@ fn append_clearing_group(
         .fields
         .write()
         .groups
-        .append(active.cast());
+        .append(martensite_tkernel::standard::HandleSlot::new(active.cast()));
     active.cast()
 }
 #[test]

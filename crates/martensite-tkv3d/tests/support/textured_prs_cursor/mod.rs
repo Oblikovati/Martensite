@@ -25,9 +25,9 @@ pub struct PrsCursorTrace {
     pub name: &'static str,
     pub operation: i32,
     pub edit: PrsCursorEdit,
-    pub object: HandleObserver<TexturedStateFixture>,
+    pub object: WeakHandle<TexturedStateFixture>,
     pub manager: Handle<PrsMgrPresentationManager>,
-    pub roles: SharedState<BTreeMap<&'static str, HandleObserver<PrsMgrPresentation>>>,
+    pub roles: SharedState<BTreeMap<&'static str, WeakHandle<PrsMgrPresentation>>>,
     pub rows: SharedState<Vec<String>>,
     pub edit_pending: AtomicBool,
 }
@@ -51,7 +51,7 @@ pub fn replay_prs_cursor_case(name: &'static str, operation: i32) -> Vec<String>
         name,
         operation,
         edit: selected_edit(name),
-        object: object.observe(),
+        object: object.downgrade(),
         manager: PrsMgrPresentationManager::new(&viewer.structure_manager()),
         roles: SharedState::new(BTreeMap::new()),
         rows: SharedState::new(Vec::new()),
@@ -97,10 +97,10 @@ pub fn labelled_presentation(
     role: &'static str,
     mode: i32,
 ) -> Handle<PrsMgrPresentation> {
-    let object: Handle<dyn PrsMgrPresentableObject> = (*trace.object).clone().cast();
+    let object: Handle<dyn PrsMgrPresentableObject> = trace.object.upgrade().into_upcast();
     let prs = PrsMgrPresentation::new(&trace.manager, &object, mode).unwrap();
     drop(object);
-    trace.roles.write().insert(role, prs.observe());
+    trace.roles.write().insert(role, prs.downgrade());
     install_labelled_group(trace, &prs, role);
     prs
 }
@@ -110,13 +110,29 @@ fn append_nodes(
     repeat: bool,
 ) {
     let mut fields = object.presentable_base().fields.write();
-    fields.presentations.append(prs[0].clone());
-    fields.presentations.append(prs[1].clone());
+    fields
+        .presentations
+        .append(martensite_tkernel::standard::HandleSlot::new(
+            prs[0].clone(),
+        ));
+    fields
+        .presentations
+        .append(martensite_tkernel::standard::HandleSlot::new(
+            prs[1].clone(),
+        ));
     if repeat {
         // The same B handle in a second node, as the native Append of the same handle.
-        fields.presentations.append(prs[1].clone());
+        fields
+            .presentations
+            .append(martensite_tkernel::standard::HandleSlot::new(
+                prs[1].clone(),
+            ));
     }
-    fields.presentations.append(prs[2].clone());
+    fields
+        .presentations
+        .append(martensite_tkernel::standard::HandleSlot::new(
+            prs[2].clone(),
+        ));
 }
 fn change_appearance(object: &TexturedStateFixture, operation: i32) {
     let gold = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Gold);

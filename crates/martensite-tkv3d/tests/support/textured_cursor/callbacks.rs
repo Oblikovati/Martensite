@@ -3,27 +3,27 @@ use super::{observations, state::*};
 use martensite_tkernel::standard::*;
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::{graphic3d::*, null_driver::NullGroup};
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 pub struct TexturedCursorGroup {
-    transient: StandardTransient,
     inner: NullGroup,
     pub role: &'static str,
     trace: Arc<TexturedCursorTrace>,
+    owner: Weak<Self>,
 }
-martensite_tkernel::impl_transient!(TexturedCursorGroup,"TexturedCursorGroup",StandardTransient,transient,interfaces:[dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(TexturedCursorGroup,"TexturedCursorGroup",StandardTransient,interfaces:[dyn Graphic3dGroup]);
 /// Install a named callback using the existing null-driver storage; `append_cursor_group(trace, prs, "A")`.
 pub fn append_cursor_group(
     trace: &Arc<TexturedCursorTrace>,
     prs: &Handle<dyn Graphic3dStructureSource>,
     role: &'static str,
 ) -> Handle<TexturedCursorGroup> {
-    let group = Handle::new(TexturedCursorGroup {
-        transient: StandardTransient::default(),
+    let group = Handle::from_arc(Arc::new_cyclic(|owner| TexturedCursorGroup {
         inner: NullGroup::new(prs),
         role,
         trace: trace.clone(),
-    });
+        owner: owner.clone(),
+    }));
     append_existing_group(prs, &group);
     group
 }
@@ -38,9 +38,12 @@ pub fn append_existing_group(
         .fields
         .write()
         .groups
-        .append(group.cast());
+        .append(martensite_tkernel::standard::HandleSlot::new(group.cast()));
 }
 impl TexturedCursorGroup {
+    pub(super) fn owner_count(&self) -> usize {
+        self.owner.strong_count()
+    }
     fn edit_other_inputs(&self, argument: &dyn HandleReference<dyn Graphic3dAspectsSource>) {
         if !self.trace.take_edit(self.role) {
             return;
@@ -61,18 +64,22 @@ impl TexturedCursorGroup {
         }
     }
     fn remove_victim(&self, index: usize) {
-        let victims = self.trace.victims.read();
-        let victims = victims
+        let victim = self
+            .trace
+            .victims
+            .read()
             .as_ref()
-            .expect("callback victims=None; expected live external A/C owners");
-        victims[index].remove();
+            .expect("callback victims=None; expected live external A/C owners")[index]
+            .upgrade();
+        victim.remove();
     }
     fn rebind_aspect(&self, argument: &dyn HandleReference<dyn Graphic3dAspectsSource>) {
         let trace = &self.trace;
-        *trace.old_external.write() = trace.object.base.fields.read().aspect.clone();
+        let object = trace.object.upgrade();
+        *trace.old_external.write() = object.base.fields.read().aspect.clone();
         observations::record_binding(trace, self.role, "rebind-before", argument);
         if trace.edit == TexturedCursorEdit::CurrentAspect {
-            trace.object.base.fields.write().aspect = trace.alternate.clone();
+            object.base.fields.write().aspect = trace.alternate.clone();
         } else {
             trace.shading.set_aspect(trace.alternate.clone());
         }

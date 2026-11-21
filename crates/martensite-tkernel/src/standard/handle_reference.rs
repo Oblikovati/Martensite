@@ -54,6 +54,9 @@ impl<
         // Tests the entity, even after a virtual delete failed.
         self.source.is_null()
     }
+    fn ref_count(&self) -> usize {
+        self.source.ref_count()
+    }
 }
 /// Const handle reference contract for local slots and retained fields.
 /// Example: `let observed=reference.observe(); assert_eq!(reference.object_address(),observed.object_address())`.
@@ -79,6 +82,14 @@ pub trait HandleReference<T: ?Sized + RuntimeTyped> {
     /// Read current null assignment; `reference.is_null()`.
     fn is_null(&self) -> bool {
         self.observe().is_null()
+    }
+    /// Count owners in the referenced slot, excluding any snapshot taken for this read.
+    /// Example: `let owners = reference.ref_count();`.
+    fn ref_count(&self) -> usize {
+        match self.observe() {
+            HandleObserver::Borrowed(handle) => handle.ref_count(),
+            HandleObserver::Snapshot(handle) => handle.ref_count().saturating_sub(1),
+        }
     }
     /// Explicitly own a target snapshot; `let owned=reference.clone_handle()`.
     fn clone_handle(&self) -> Handle<T> {
@@ -111,6 +122,9 @@ impl<S, T: ?Sized + RuntimeTyped> HandleReference<T> for HandleFieldRef<'_, S, T
     }
     fn is_null(&self) -> bool {
         HandleFieldRef::is_null(self)
+    }
+    fn ref_count(&self) -> usize {
+        HandleFieldRef::ref_count(self)
     }
 }
 #[cfg(test)]

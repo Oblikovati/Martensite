@@ -53,8 +53,8 @@ fn failure_state(actors: &ClipRetargetActors) -> String {
         next.observe().size(),
         actors.old.ref_count(),
         actors.next.ref_count(),
-        old.observe().ref_count(),
-        next.observe().ref_count(),
+        old.ref_count(),
+        next.ref_count(),
         actors.plane.ref_count()
     )
 }

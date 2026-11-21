@@ -30,8 +30,7 @@ impl OriginSlotOwnerFake {
     fn record_before(&self, argument: &dyn HandleReference<dyn SelectMgrSelectableObject>) {
         let slot = HandleFieldRef::new(&self.input.slot, origin_slot_field);
         let same = i32::from(argument.reference_address() == slot.reference_address());
-        let incoming = self.input.incoming.observe();
-        let equal = i32::from(argument.object_address() == incoming.object_address());
+        let equal = i32::from(argument.object_address() == self.input.incoming.object_address());
         let count = argument.observe().ref_count();
         writeln!(
             &mut *self.input.rows.write(),
@@ -41,12 +40,11 @@ impl OriginSlotOwnerFake {
         .unwrap();
     }
     fn replace_and_record(&self, argument: &dyn HandleReference<dyn SelectMgrSelectableObject>) {
-        let incoming = self.input.incoming.observe();
         if self.label == 1 {
-            *self.input.slot.write() = Handle::clone(&incoming);
+            *self.input.slot.write() = self.input.incoming.upgrade();
         }
         let count = argument.observe().ref_count();
-        let equal = i32::from(argument.object_address() == incoming.object_address());
+        let equal = i32::from(argument.object_address() == self.input.incoming.object_address());
         writeln!(
             &mut *self.input.rows.write(),
             "origin-slot-base {} {count} {equal}",

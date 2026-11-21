@@ -1,20 +1,19 @@
 //! Named heavyweight entity makes prebuild thresholds observable without huge geometry.
 use martensite_tkernel::{
     ncollection::Vec3,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkmath::gp::Point3;
 use martensite_tkv3d::{select_basics::*, select3d::*};
 use std::sync::atomic::{AtomicUsize, Ordering};
 pub struct PrebuildEntity {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     pub count: i32,
     pub calls: AtomicUsize,
     pub fail: bool,
     completion: (std::sync::Mutex<bool>, std::sync::Condvar),
 }
-martensite_tkernel::impl_transient!(PrebuildEntity,"Test_PrebuildEntity",dyn Select3DSensitiveEntity,transient,interfaces:[dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(PrebuildEntity,"Test_PrebuildEntity",dyn Select3DSensitiveEntity,interfaces:[dyn Select3DSensitiveEntity]);
 impl PrebuildEntity {
     pub fn wait_built(&self) {
         let (lock, ready) = &self.completion;
@@ -33,7 +32,6 @@ impl PrebuildEntity {
 
     pub fn new(count: i32, fail: bool) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(&Handle::default()),
             count,
             calls: AtomicUsize::new(0),

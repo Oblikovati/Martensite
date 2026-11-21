@@ -22,7 +22,12 @@ fn native_curve_callback_replaces_const_selection_slot_before_sensitive_append()
         &edge, &owner, &reference, 0.1, 0.5, 9, 500., false,
     )
     .unwrap();
-    record_selection_slot_finish(&previous, &incoming, owner.ref_count(), &rows);
+    record_selection_slot_finish(
+        &previous,
+        &incoming,
+        owner.ref_count().try_into().unwrap(),
+        &rows,
+    );
     let native =
         include_str!("../../tests/fixtures/colored-shape-compute/native-selection-slot.txt");
     assert_eq!(*rows.read(), native);

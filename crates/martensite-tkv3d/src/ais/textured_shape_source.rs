@@ -5,7 +5,7 @@ use martensite_tkernel::{
     standard::{Failure, HandleReference},
     tcollection::AsciiString,
 };
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::ImagePixMapObject;
 
 /// Native subclassable texture-source operations; `object.set_texture_file_name(&file)?`.
 pub trait AisTexturedShapeSource: AisShapeSource {
@@ -17,7 +17,7 @@ pub trait AisTexturedShapeSource: AisShapeSource {
         super::textured_shape_sources::ais_textured_shape_set_texture_file_name(self, file)
     }
     /// Retain the exact pixmap without changing its row-order flag; `object.set_texture_pix_map(&pixmap)`.
-    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<ImagePixMap>) {
+    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<dyn ImagePixMapObject>) {
         // Forward the exact handle rather than copying image contents.
         super::textured_shape_sources::ais_textured_shape_set_texture_pix_map(self, pixmap);
     }

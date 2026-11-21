@@ -62,9 +62,9 @@ fn disabled_mapping_retains_texture_and_skips_factory_before_null_presentation_f
 fn failed_availability_still_assigns_actual_texture_and_modulation_before_null_prs() {
     let factory = Arc::new(TexturedTextureFactoryFixture::new(false, false));
     let object = prepared_textured_state(factory.clone());
-    object.set_texture_pix_map(&Handle::new(
-        martensite_tkservice::image::ImagePixMap::default(),
-    ));
+    object.set_texture_pix_map(
+        &Handle::new(martensite_tkservice::image::ImagePixMap::default()).into_upcast(),
+    );
     object.disable_texture_modulate();
     let error = ais_textured_shape_update_attributes(&*object, &Handle::default()).unwrap_err();
     assert_eq!(error.exception_type(), "Standard_NullObject");
@@ -110,10 +110,7 @@ fn textured_file_constructor_consumes_cstring_prefix_without_rewriting_stored_fi
     let AisTexturedTextureSource::File(path) = &sources[0] else {
         panic!("expected native file source");
     };
-    assert_eq!(
-        path.as_bytes(),
-        object.texture_file().as_bytes()
-    );
+    assert_eq!(path.as_bytes(), object.texture_file().as_bytes());
     assert_eq!(object.base.fields.read().texture_file, file);
     compare_native_cstring_path(path.as_bytes());
     assert_eq!(path.as_bytes(), b"texture.png");

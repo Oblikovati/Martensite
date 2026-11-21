@@ -1,6 +1,6 @@
 //! Named frustum fixture: inherited state with abstract geometry guarded against calls.
 use super::abstract_intersector;
-use martensite_tkernel::standard::{StandardTransient, dump::DumpStream};
+use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkmath::gp::{Direction3, Point3};
 use martensite_tkservice::graphic3d::Graphic3dCamera;
 use martensite_tkv3d::select_mgr::*;
@@ -8,11 +8,10 @@ use std::io;
 
 #[derive(Default)]
 pub struct FrustumDefaultsIntersector {
-    pub(crate) transient: StandardTransient,
     pub base: SelectMgrBaseFrustumBase,
     pub reject_sphere_rays: bool,
 }
-martensite_tkernel::impl_transient!(FrustumDefaultsIntersector, "FrustumDefaultsIntersector", dyn SelectMgrBaseFrustum, transient,
+martensite_tkernel::impl_transient!(FrustumDefaultsIntersector, "FrustumDefaultsIntersector", dyn SelectMgrBaseFrustum,
     interfaces: [dyn SelectMgrBaseFrustum, dyn SelectMgrBaseIntersector]);
 impl SelectMgrBaseFrustum for FrustumDefaultsIntersector {
     fn frustum_base(&self) -> &SelectMgrBaseFrustumBase {

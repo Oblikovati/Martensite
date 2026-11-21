@@ -1,14 +1,14 @@
 use super::*;
 use crate::{select_mgr::SelectMgrEntityOwner, v3d::V3dViewer};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, StandardTransient, Transient};
 use martensite_tkg3d::geom::GeomCartesianPoint;
 use martensite_tkservice::null_driver::NullGraphicDriver;
 
 struct SelectedApplicationScene {
     context: Handle<AisInteractiveContext>,
     object: Handle<AisPoint>,
-    first: Handle<StandardTransient>,
-    second: Handle<StandardTransient>,
+    first: Handle<dyn Transient>,
+    second: Handle<dyn Transient>,
 }
 
 impl SelectedApplicationScene {
@@ -21,8 +21,8 @@ impl SelectedApplicationScene {
         Self {
             context,
             object,
-            first: Handle::new(StandardTransient::default()),
-            second: Handle::new(StandardTransient::default()),
+            first: Handle::new(StandardTransient).into_upcast(),
+            second: Handle::new(StandardTransient).into_upcast(),
         }
     }
 

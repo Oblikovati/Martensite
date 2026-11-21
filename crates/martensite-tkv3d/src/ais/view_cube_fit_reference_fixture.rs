@@ -3,9 +3,7 @@ use super::super::*;
 use super::view_cube_animation_source_fixture::*;
 use crate::v3d::V3dViewSource;
 use crate::{prs_mgr::*, select_mgr::*, v3d::V3dView};
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleFieldRef, HandleReference, SharedState,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleFieldRef, HandleReference, SharedState};
 use martensite_tkservice::graphic3d::*;
 use std::sync::Arc;
 pub(super) struct CubeFitReferenceProbe {
@@ -63,11 +61,11 @@ impl CubeFitReferenceProbe {
             camera.is_null() as i32,
             i32::from(camera.object_address() == self.original_end.object_address()),
             i32::from(camera.object_address() == self.replacement.object_address()),
-            observer.ref_count(),
-            fields.read().start.ref_count(),
-            view.observe().ref_count(),
-            self.original_end.ref_count(),
-            self.replacement.ref_count(),
+            observer.ref_count().try_into().unwrap(),
+            fields.read().start.ref_count().try_into().unwrap(),
+            view.ref_count().try_into().unwrap(),
+            self.original_end.ref_count().try_into().unwrap(),
+            self.replacement.ref_count().try_into().unwrap(),
         ]
     }
     fn change_fit_arguments(

@@ -1,6 +1,6 @@
 //! Named object records callbacks, hierarchy traversal and recoverable compute failures.
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::{bnd::BoundingBox3, gp::Point3};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use martensite_tkv3d::{prs_mgr::*, select_mgr::*, select3d::*};
@@ -10,7 +10,6 @@ use std::{
 };
 
 pub struct ManagedSelectionObject {
-    transient: StandardTransient,
     presentable: PrsMgrPresentableObjectBase,
     selectable: SelectMgrSelectableObjectBase,
     pub tag: i32,
@@ -19,12 +18,11 @@ pub struct ManagedSelectionObject {
     pub empty: AtomicI32,
     pub events: Arc<SharedState<Vec<i32>>>,
 }
-martensite_tkernel::impl_transient!(ManagedSelectionObject,"Test_ManagedSelectionObject",dyn SelectMgrSelectableObject,transient,
+martensite_tkernel::impl_transient!(ManagedSelectionObject,"Test_ManagedSelectionObject",dyn SelectMgrSelectableObject,
     interfaces:[dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl ManagedSelectionObject {
     pub fn new(tag: i32, events: Arc<SharedState<Vec<i32>>>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             presentable: PrsMgrPresentableObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             selectable: SelectMgrSelectableObjectBase::default(),
             tag,

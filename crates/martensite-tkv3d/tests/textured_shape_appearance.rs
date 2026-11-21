@@ -59,8 +59,10 @@ fn appearance_presentations(
     let mode3 = PrsMgrPresentation::new(&manager, &object.cast(), 3).unwrap();
     mode0.new_group().unwrap();
     mode3.new_group().unwrap();
-    object.presentable_base().fields.write().presentations =
-        [mode0.clone(), mode3.clone()].into_iter().collect();
+    object.presentable_base().fields.write().presentations = [mode0.clone(), mode3.clone()]
+        .into_iter()
+        .map(martensite_tkernel::standard::HandleSlot::new)
+        .collect();
     (mode0, mode3)
 }
 

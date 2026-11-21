@@ -1,8 +1,9 @@
 //! Native textured appearance overrides update only already-existing mode3 presentations.
 use super::textured_group_cursor::LiveNodeCursor;
+use super::textured_shape_aspects::update_textured_attributes;
 use super::{
     AisTexturedShapeSource, ais_shape_set_color, ais_shape_set_material, ais_shape_unset_color,
-    ais_shape_unset_material, ais_textured_shape_update_attributes,
+    ais_shape_unset_material,
 };
 use crate::prs_mgr::PrsMgrPresentation;
 use martensite_tkernel::{
@@ -10,6 +11,7 @@ use martensite_tkernel::{
     standard::{Failure, Handle},
 };
 use martensite_tkservice::graphic3d::{Graphic3dMaterialAspect, Graphic3dStructureSource};
+use std::sync::Arc;
 
 /// Apply inherited color then update existing textured modes; `ais_textured_shape_set_color(&object,color)?`.
 pub fn ais_textured_shape_set_color<S: AisTexturedShapeSource + ?Sized>(
@@ -47,12 +49,11 @@ fn refresh_textured_mode_presentations<S: AisTexturedShapeSource + ?Sized>(
     let mut cursor = LiveNodeCursor::default();
     // Iterate the live presentation Sequence node by node: a group callback
     // may remove earlier or later presentations or append new ones, and the walk goes on
-    // from the same node. The guard ends before the callback; the step's snapshot is the
-    // one extra presentation owner during it (#592).
+    // from the same node. The lease retains the entry while the callback runs unlocked.
     while let Some(presentation) = next_live_presentation(object, &mut cursor)? {
-        if presentation.get().is_some_and(|p| p.mode() == 3) {
-            let structure = presentation.into_upcast::<dyn Graphic3dStructureSource>();
-            ais_textured_shape_update_attributes(object, &structure)?;
+        if let Some(presentation) = presentation.get().filter(|p| p.mode() == 3) {
+            let structure: &dyn Graphic3dStructureSource = presentation;
+            update_textured_attributes(object, Some(structure))?;
         }
     }
     Ok(())
@@ -60,7 +61,7 @@ fn refresh_textured_mode_presentations<S: AisTexturedShapeSource + ?Sized>(
 fn next_live_presentation<S: AisTexturedShapeSource + ?Sized>(
     object: &S,
     cursor: &mut LiveNodeCursor,
-) -> Result<Option<Handle<PrsMgrPresentation>>, Failure> {
+) -> Result<Option<Arc<Handle<PrsMgrPresentation>>>, Failure> {
     let fields = object.presentable_base().fields.read();
     cursor.advance(&fields.presentations)
 }

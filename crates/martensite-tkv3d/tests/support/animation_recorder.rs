@@ -1,6 +1,6 @@
 //! Named animation atoms exercise virtual calls and callback edits without held locks.
 #![allow(dead_code)]
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkv3d::ais::*;
 use std::sync::Arc;
 #[derive(Clone, Debug, PartialEq)]
@@ -10,19 +10,17 @@ pub struct RecordedAnimationFrame {
     pub stopped: bool,
 }
 pub struct RecordingAnimation {
-    transient: StandardTransient,
     base: AisAnimationBase,
     frames: Arc<SharedState<Vec<RecordedAnimationFrame>>>,
     pub stop_calls: SharedState<usize>,
     pub append_parent: SharedState<Handle<dyn AisAnimationSource>>,
     pub append_child: SharedState<Handle<dyn AisAnimationSource>>,
 }
-martensite_tkernel::impl_transient!(RecordingAnimation,"RecordingAnimation",dyn AisAnimationSource,transient,
+martensite_tkernel::impl_transient!(RecordingAnimation,"RecordingAnimation",dyn AisAnimationSource,
     interfaces:[dyn AisAnimationSource]);
 impl RecordingAnimation {
     pub fn new(name: &str, frames: Arc<SharedState<Vec<RecordedAnimationFrame>>>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisAnimationBase::new(name),
             frames,
             stop_calls: SharedState::new(0),

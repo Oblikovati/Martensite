@@ -1,7 +1,7 @@
 //! Named application subclass owns its real ColoredShape parent and forwards original Compute references.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{
-    Failure, Handle, HandleFieldRef, HandleReference, SharedState, StandardTransient, WeakHandle,
+    Failure, Handle, HandleFieldRef, HandleReference, SharedState, WeakHandle,
 };
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*};
@@ -14,17 +14,15 @@ pub struct PresentationArgumentInput {
     pub rows: Arc<SharedState<String>>,
 }
 pub struct PresentationArgumentProbe {
-    transient: StandardTransient,
     input: Arc<PresentationArgumentInput>,
     base: AisColoredShapeBase,
 }
-martensite_tkernel::impl_transient!(PresentationArgumentProbe,"PresentationArgumentProbe",dyn AisColoredShapeSource,transient,
+martensite_tkernel::impl_transient!(PresentationArgumentProbe,"PresentationArgumentProbe",dyn AisColoredShapeSource,
     interfaces:[dyn AisColoredShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl PresentationArgumentProbe {
     /// Own the actual native parent once; `PresentationArgumentProbe::new(&shape,&input)`.
     pub fn new(shape: &Shape, input: &Arc<PresentationArgumentInput>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: Default::default(),
             input: input.clone(),
             base: AisColoredShapeBase::new(shape),
         });
@@ -42,8 +40,8 @@ impl PresentationArgumentProbe {
         let manager_same =
             i32::from(manager.reference_address() == manager_field.reference_address());
         let prs_same = i32::from(prs.reference_address() == prs_field.reference_address());
-        let managers = manager.observe().ref_count();
-        let presentations = prs.observe().ref_count();
+        let managers = manager.ref_count();
+        let presentations = prs.ref_count();
         format!("compute-slot-{phase} {manager_same} {prs_same} {managers} {presentations}")
     }
     fn record_after(
@@ -76,7 +74,7 @@ impl PrsMgrPresentableObject for PresentationArgumentProbe {
     ) -> Result<(), Failure> {
         let row = self.argument_row("before", manager, prs);
         writeln!(&mut *self.input.rows.write(), "{row}").unwrap();
-        *self.input.manager.write() = self.input.incoming_manager.observe().clone();
+        *self.input.manager.write() = self.input.incoming_manager.upgrade();
         ais_colored_shape_compute(self, prs, mode)?;
         self.record_after(manager, prs);
         Ok(())

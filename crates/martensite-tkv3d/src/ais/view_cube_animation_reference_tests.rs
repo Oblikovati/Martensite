@@ -49,9 +49,9 @@ fn animation_alias_channels(
         left.is_null() as i32,
         right.is_null() as i32,
         animation_target_identity(copied.object_address(), owners),
-        owners[0].ref_count(),
-        owners[1].ref_count(),
-        owners[2].ref_count(),
+        owners[0].ref_count().try_into().unwrap(),
+        owners[1].ref_count().try_into().unwrap(),
+        owners[2].ref_count().try_into().unwrap(),
     ]
 }
 fn animation_target_identity(

@@ -7,6 +7,7 @@ use super::*;
 use crate::ais::{AisTexturedShape, AisTexturedShapeMembers as _};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Handle, WeakHandle};
+use martensite_tkservice::image::ImagePixMap;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
@@ -14,15 +15,20 @@ type StashLog = Arc<SharedState<Vec<String>>>;
 struct StashPixels {
     base: ImagePixMap,
     owner: WeakHandle<AisTexturedShape>,
-    inner: SharedState<Handle<ImagePixMap>>,
+    inner: SharedState<Handle<dyn ImagePixMapObject>>,
     stage: &'static str,
     log: StashLog,
 }
-martensite_tkernel::impl_transient!(StashPixels, "StashPixels", ImagePixMap);
+martensite_tkernel::impl_transient!(StashPixels, "StashPixels", ImagePixMap, interfaces: [dyn ImagePixMapObject]);
+impl ImagePixMapObject for StashPixels {
+    fn pix_map_base(&self) -> &ImagePixMap {
+        &self.base
+    }
+}
 impl Drop for StashPixels {
     fn drop(&mut self) {
-        let owner = self.owner.observe();
-        let source = &**owner;
+        let owner = self.owner.upgrade();
+        let source = &*owner;
         let opened = match self.stage {
             "unwind" => catch_unwind(AssertUnwindSafe(|| {
                 ais_textured_shape_with_retirement(source, self, |_| panic!("scope body unwinds"))
@@ -50,16 +56,16 @@ impl StashPixels {
         // Nullify through the virtual pixmap setter (the file setter parses through libc,
         // which Miri cannot call).
         scope
-            .set_texture_pix_map(&Handle::<ImagePixMap>::default())
+            .set_texture_pix_map(&Handle::<dyn ImagePixMapObject>::default())
             .unwrap();
     }
 }
 fn stash_pixels(
     owner: &Handle<AisTexturedShape>,
     stage: &'static str,
-    inner: Handle<ImagePixMap>,
+    inner: Handle<dyn ImagePixMapObject>,
     log: &StashLog,
-) -> Handle<ImagePixMap> {
+) -> Handle<dyn ImagePixMapObject> {
     Handle::new(StashPixels {
         base: ImagePixMap::default(),
         owner: owner.downgrade(),
@@ -69,10 +75,10 @@ fn stash_pixels(
     })
     .into_cast()
 }
-fn retire(owner: &Handle<AisTexturedShape>, mut pixels: Handle<ImagePixMap>) {
+fn retire(owner: &Handle<AisTexturedShape>, mut pixels: Handle<dyn ImagePixMapObject>) {
     owner.set_texture_pix_map(&pixels);
     pixels.nullify();
-    owner.set_texture_pix_map(&Handle::<ImagePixMap>::default());
+    owner.set_texture_pix_map(&Handle::<dyn ImagePixMapObject>::default());
 }
 #[test]
 fn retirement_stash_nested_destructor_scopes_pop_in_order() {

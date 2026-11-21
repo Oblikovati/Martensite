@@ -75,7 +75,7 @@ impl NativeStyleViewProbe {
         }
     }
     fn record(&self, operation: &str) {
-        let count = self.base.this.read().observe().ref_count();
+        let count = self.base.this.read().ref_count();
         self.trace
             .rows
             .write()

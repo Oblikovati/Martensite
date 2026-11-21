@@ -17,7 +17,7 @@ pub fn replay_cursor_case(name: &'static str) -> Vec<String> {
     object.set_texture_map_off();
     let viewer = V3dViewer::new(&NullGraphicDriver::new_handle()).unwrap();
     let prs = Graphic3dStructure::new(&viewer.structure_manager(), &Handle::default()).unwrap();
-    let trace = TexturedCursorTrace::new(name, object.observe());
+    let trace = TexturedCursorTrace::new(name, &object);
     let groups = install_cursor_groups(&trace, &prs);
     ais_textured_shape_update_attributes(&*object, &prs.cast()).unwrap();
     finish_cursor_case(&trace, &groups, &prs);
@@ -36,8 +36,8 @@ fn install_cursor_groups(
     }
     let groups = [a, b, callbacks::append_cursor_group(trace, &source, "C")];
     *trace.victims.write() = Some([
-        groups[0].observe().observe_as(),
-        groups[2].observe().observe_as(),
+        groups[0].upcast::<dyn Graphic3dGroup>().downgrade(),
+        groups[2].upcast::<dyn Graphic3dGroup>().downgrade(),
     ]);
     groups
 }

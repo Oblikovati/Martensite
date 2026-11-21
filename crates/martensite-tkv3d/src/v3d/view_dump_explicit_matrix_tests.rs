@@ -3,7 +3,7 @@ use super::{
     V3dLightName, V3dStereoDumpOptions, V3dView, V3dViewer,
     light_name_callback_fixture::CallbackNameStorage, light_name_callback_tests::callback_view,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkservice::{
     graphic3d::{Graphic3dBufferType, Graphic3dCViewMembers as _, Graphic3dCameraProjection},
     image::ImagePixMap,
@@ -77,7 +77,7 @@ fn explicit_transaction_row(
     view: &V3dView,
     image: &ImagePixMap,
     result: Result<bool, Failure>,
-    fbo: &Handle<StandardTransient>,
+    fbo: &Handle<dyn Transient>,
     consumed: &[String],
 ) -> String {
     let outcome = explicit_outcome(result);
@@ -106,7 +106,7 @@ fn explicit_consumed_json(case: ExplicitDumpCase, consumed: &[String]) -> String
 fn explicit_transaction_state(
     view: &V3dView,
     image: &ImagePixMap,
-    fbo: &Handle<StandardTransient>,
+    fbo: &Handle<dyn Transient>,
 ) -> String {
     let driver = view.view();
     format!(

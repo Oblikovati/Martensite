@@ -13,11 +13,10 @@ struct EdgeBorrowEvaluationProbe {
 }
 impl BrepCurveSlotMutation for EdgeBorrowEvaluationProbe {
     fn replace(&self) {
-        let topology = self.topology.observe();
         writeln!(
             &mut *self.rows.write(),
             "topology-current {}",
-            topology.ref_count()
+            self.topology.ref_count()
         )
         .unwrap();
     }

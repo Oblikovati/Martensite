@@ -23,7 +23,7 @@ pub fn configure_textured_capture(object: &AisTexturedShape, mode: &str) -> Resu
         .shading_aspect()
         .aspect()
         .set_shading_model(Graphic3dTypeOfShadingModel::Unlit);
-    object.set_texture_pix_map(&textured_capture_pixels(mode != "bottom-up", false));
+    object.set_texture_pix_map(&textured_capture_pixels(mode != "bottom-up", false).into_upcast());
     configure_textured_mapping(object, mode)?;
     configure_textured_aspect_flags(object, mode)
 }
@@ -70,7 +70,9 @@ pub fn mutate_textured_capture(object: &AisTexturedShape, mode: &str) -> Result<
             object.set_color(Color::named(NamedColor::RED))?;
             object.unset_color()?;
         }
-        "updated-pixels" => object.set_texture_pix_map(&textured_capture_pixels(true, true)),
+        "updated-pixels" => {
+            object.set_texture_pix_map(&textured_capture_pixels(true, true).into_upcast())
+        }
         _ => mutate_textured_material(object, mode)?,
     }
     Ok(())

@@ -63,10 +63,9 @@ fn all_matching_overloads_include_endpoints_and_reject_far_queries() {
 
 #[derive(Default)]
 struct ConstantInfiniteCurve {
-    transient: martensite_tkernel::standard::StandardTransient,
     evaluations: std::sync::atomic::AtomicUsize,
 }
-martensite_tkernel::impl_transient!(ConstantInfiniteCurve,"Martensite_TestConstantInfiniteCurve",dyn martensite_tkg3d::adaptor3d::Adaptor3dCurve,transient,
+martensite_tkernel::impl_transient!(ConstantInfiniteCurve,"Martensite_TestConstantInfiniteCurve",dyn martensite_tkg3d::adaptor3d::Adaptor3dCurve,
     interfaces:[dyn martensite_tkg3d::adaptor3d::Adaptor3dCurve]);
 impl martensite_tkg3d::adaptor3d::Adaptor3dCurve for ConstantInfiniteCurve {
     fn first_parameter(&self) -> Result<f64, martensite_tkernel::standard::Failure> {

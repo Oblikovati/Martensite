@@ -142,7 +142,11 @@ fn record_missing_and_clear(
     map.clear(false);
     map_counts(output, "clear-unused-alias", map, input);
     assert!(storage_lease.fields.read().is_none());
-    shape_drawer_row(output, "clear-last-key", &[last_key.tshape().ref_count()]);
+    shape_drawer_row(
+        output,
+        "clear-last-key",
+        &[last_key.tshape().ref_count().try_into().unwrap()],
+    );
 }
 fn map_locations_and_null(
     output: &mut String,
@@ -158,7 +162,11 @@ fn map_locations_and_null(
     let datum = location_ownership(output, map, input);
     map_counts(output, "location-counts", map, input);
     record_null_key(output, map, input);
-    shape_drawer_row(output, "location-datum-released", &[datum.ref_count()]);
+    shape_drawer_row(
+        output,
+        "location-datum-released",
+        &[datum.ref_count().try_into().unwrap()],
+    );
 }
 fn record_null_key(
     output: &mut String,
@@ -224,7 +232,11 @@ fn destruction_with_storage_lease(output: &mut String, input: &ShapeDrawerRefere
     shape_drawer_row(
         output,
         "destruction-unused-alias",
-        &[1, key_refs, value_refs],
+        &[
+            1,
+            key_refs.try_into().unwrap(),
+            value_refs.try_into().unwrap(),
+        ],
     );
 }
 
@@ -262,7 +274,11 @@ fn location_ownership(
         .unwrap();
     record_stored_location(output, &node, input, &original);
     drop(original);
-    shape_drawer_row(output, "location-datum-owned", &[datum.ref_count()]);
+    shape_drawer_row(
+        output,
+        "location-datum-owned",
+        &[datum.ref_count().try_into().unwrap()],
+    );
     datum
 }
 fn record_stored_location(

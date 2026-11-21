@@ -4,7 +4,7 @@ mod chain_fixture;
 use chain_fixture::*;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
 use std::sync::Arc;
 #[test]
@@ -22,7 +22,7 @@ fn run_texture_chain(outer_file: bool, trace: &Arc<SharedState<Vec<String>>>) {
     let control = Arc::new(SharedState::new(TextureChainControl::default()));
     seed_texture_chain(&owner, &control, trace);
     let mut old = texture_chain_pixels(&owner, &control, trace, 1);
-    let next = Handle::new(ImagePixMap::default());
+    let next = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     owner.set_texture_pix_map(&old);
     old.nullify();
     if outer_file {
@@ -49,11 +49,11 @@ fn seed_texture_chain(
 fn record_texture_chain_after(
     owner: &AisTexturedShape,
     control: &SharedState<TextureChainControl>,
-    next: &Handle<ImagePixMap>,
+    next: &Handle<dyn ImagePixMapObject>,
     trace: &SharedState<Vec<String>>,
     outer_file: bool,
 ) {
-    let count = control.read().last.observe().ref_count();
+    let count = control.read().last.ref_count();
     let file = owner.texture_file();
     trace.write().push(
         format!(

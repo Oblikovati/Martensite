@@ -7,16 +7,16 @@ mod decision_filter;
 mod declared_parents;
 #[path = "composition_filter_ancestry/observations.rs"]
 mod observations;
-use martensite_tkernel::standard::{Handle, RuntimeType, StandardTransient};
+use martensite_tkernel::standard::{Handle, RuntimeType, Transient};
 use martensite_tkv3d::select_mgr::{
     SelectMgrAndFilter, SelectMgrAndOrFilter, SelectMgrFilterType, SelectMgrOrFilter,
 };
 
-fn native_classes() -> [Handle<StandardTransient>; 3] {
+fn native_classes() -> [Handle<dyn Transient>; 3] {
     [
-        Handle::new(SelectMgrAndFilter::default()).cast(),
-        Handle::new(SelectMgrOrFilter::default()).cast(),
-        Handle::new(SelectMgrAndOrFilter::new(SelectMgrFilterType::Or)).cast(),
+        Handle::new(SelectMgrAndFilter::default()).into_upcast(),
+        Handle::new(SelectMgrOrFilter::default()).into_upcast(),
+        Handle::new(SelectMgrAndOrFilter::new(SelectMgrFilterType::Or)).into_upcast(),
     ]
 }
 

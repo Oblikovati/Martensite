@@ -344,7 +344,7 @@ impl PrsMgrPresentationManager {
             .fields
             .write()
             .presentations
-            .append(prs.clone());
+            .append(martensite_tkernel::standard::HandleSlot::new(prs.clone()));
         value.fill(&self.this(), &prs, mode)?;
         prs.set_update_status(false);
         Ok(prs)

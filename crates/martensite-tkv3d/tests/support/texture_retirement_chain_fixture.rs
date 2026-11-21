@@ -1,25 +1,31 @@
 //! Two genuine destructor levels publish a third real pixmap into the same borrowed field.
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
-use martensite_tkservice::image::{ImageFormat, ImagePixMap};
+use martensite_tkservice::image::{ImageFormat, ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 #[derive(Default)]
 pub struct TextureChainControl {
-    pub nested: Handle<ImagePixMap>,
-    pub final_pixels: Handle<ImagePixMap>,
-    pub last: WeakHandle<ImagePixMap>,
+    pub nested: Handle<dyn ImagePixMapObject>,
+    pub final_pixels: Handle<dyn ImagePixMapObject>,
+    pub last: WeakHandle<dyn ImagePixMapObject>,
 }
 pub struct TextureChainPixels {
+    pub(super) self_owner: Weak<Self>,
     base: ImagePixMap,
     owner: WeakHandle<AisTexturedShape>,
     control: Arc<SharedState<TextureChainControl>>,
     trace: Arc<SharedState<Vec<String>>>,
     stage: usize,
 }
-martensite_tkernel::impl_transient!(TextureChainPixels, "TextureChainPixels", ImagePixMap, base);
+martensite_tkernel::impl_transient!(TextureChainPixels, "TextureChainPixels", ImagePixMap, interfaces: [dyn ImagePixMapObject]);
+impl ImagePixMapObject for TextureChainPixels {
+    fn pix_map_base(&self) -> &ImagePixMap {
+        &self.base
+    }
+}
 impl Drop for TextureChainPixels {
     fn drop(&mut self) {
-        let owner = self.owner.observe();
+        let owner = self.owner.upgrade();
         let slot = owner.texture_pix_map();
         let row = slot
             .with_retiring_pointee(self, |pixels| {
@@ -35,15 +41,15 @@ impl Drop for TextureChainPixels {
             })
             .unwrap();
         self.trace.write().push(row);
-        ais_textured_shape_with_retirement(&**owner, self, |scope| self.run_chain_stage(&scope))
+        ais_textured_shape_with_retirement(&*owner, self, |scope| self.run_chain_stage(&scope))
             .unwrap();
-        let count = self.control.read().last.observe().ref_count();
+        let count = self.control.read().last.ref_count();
         let file = owner.texture_file();
         self.trace.write().push(
             format!(
                 "CHAIN {} {} {} {count} {}",
                 self.stage,
-                self.base.transient_base().ref_count(),
+                self.self_owner.strong_count(),
                 i32::from(slot.is_null()),
                 file.to_string_lossy()
             )
@@ -78,11 +84,11 @@ impl TextureChainPixels {
         drop(owner);
     }
 }
-fn chain_nested_field(control: &TextureChainControl) -> &Handle<ImagePixMap> {
+fn chain_nested_field(control: &TextureChainControl) -> &Handle<dyn ImagePixMapObject> {
     // Retain the original member's address instead of creating an owning argument snapshot.
     &control.nested
 }
-fn chain_final_field(control: &TextureChainControl) -> &Handle<ImagePixMap> {
+fn chain_final_field(control: &TextureChainControl) -> &Handle<dyn ImagePixMapObject> {
     // This actual member is nullified after native Assign has acquired its reference.
     &control.final_pixels
 }
@@ -91,16 +97,17 @@ pub fn texture_chain_pixels(
     control: &Arc<SharedState<TextureChainControl>>,
     trace: &Arc<SharedState<Vec<String>>>,
     stage: usize,
-) -> Handle<ImagePixMap> {
+) -> Handle<dyn ImagePixMapObject> {
     let base = ImagePixMap::default();
     assert!(base.init_trash(ImageFormat::Gray, stage + 2, 2, 0));
     base.change_data().data.change_data()[0] = (73 + stage) as u8;
-    Handle::new(TextureChainPixels {
+    Handle::from_arc(Arc::new_cyclic(|self_owner| TextureChainPixels {
+        self_owner: self_owner.clone(),
         base,
         owner: owner.downgrade(),
         control: control.clone(),
         trace: trace.clone(),
         stage,
-    })
-    .into_cast()
+    }))
+    .into_upcast()
 }

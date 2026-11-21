@@ -1,7 +1,7 @@
 //! Named CPU recorder observes real Graphic3d calls, without replacing scale geometry or layout.
 use martensite_tkernel::{
     ncollection::{Vec3, Vec4},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::{graphic3d::*, null_driver::*};
@@ -118,7 +118,7 @@ impl Graphic3dCStructure for ScaleRecordingStructure {
             .fields
             .write()
             .groups
-            .append(group.clone());
+            .append(martensite_tkernel::standard::HandleSlot::new(group.clone()));
         Ok(group)
     }
 }
@@ -258,12 +258,12 @@ fn wrap_existing_recording_groups(recorder: &ScaleRecordingStructure) {
         .groups
         .iter()
         .map(|group| {
-            Handle::new(ScaleRecordingGroup {
-                inner: group.clone(),
+            let recorded = Handle::new(ScaleRecordingGroup {
+                inner: Handle::clone(group),
                 trace: recorder.trace.clone(),
                 oriented: recorder.oriented,
-            })
-            .cast()
+            });
+            martensite_tkernel::standard::HandleSlot::new(recorded.into_upcast())
         })
         .collect();
 }

@@ -4,7 +4,7 @@ use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, WeakH
 use martensite_tkservice::graphic3d::{
     Graphic3dCamera, Graphic3dGraphicDriver, Graphic3dRetainedView,
 };
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 pub(super) struct CameraAliasControl {
     pub clip_probe:
         SharedState<Option<Arc<super::view_clip_retarget_probe::ViewClipRetargetProbe>>>,
@@ -22,7 +22,7 @@ pub(super) struct CameraAliasControl {
     pub replace_activation_argument: SharedState<bool>,
 }
 pub(super) struct BorrowedCameraView {
-    pub transient: StandardTransient,
+    pub owner: Weak<Self>,
     pub identity: usize,
     pub retained: Graphic3dRetainedView,
     pub clip_probe_slot: Option<super::view_clip_retarget_probe::OwnedClipProbeSlot>,
@@ -31,7 +31,7 @@ pub(super) struct BorrowedCameraView {
 martensite_tkernel::impl_transient!(BorrowedCameraView,"Martensite_BorrowedCameraView",StandardTransient,
     interfaces:[dyn martensite_tkservice::graphic3d::Graphic3dCView,dyn martensite_tkservice::graphic3d::Graphic3dDataStructureManager]);
 pub(super) struct BorrowedCameraDriver {
-    pub transient: StandardTransient,
+    pub owner: Weak<Self>,
     pub delegate: Handle<dyn Graphic3dGraphicDriver>,
     pub control: Arc<CameraAliasControl>,
 }
@@ -41,12 +41,12 @@ pub(super) fn camera_alias_driver(
     delegate: &Handle<dyn Graphic3dGraphicDriver>,
     control: &Arc<CameraAliasControl>,
 ) -> Handle<dyn Graphic3dGraphicDriver> {
-    Handle::new(BorrowedCameraDriver {
-        transient: StandardTransient::default(),
+    Handle::from_arc(Arc::new_cyclic(|owner| BorrowedCameraDriver {
+        owner: owner.clone(),
         delegate: delegate.clone(),
         control: control.clone(),
-    })
-    .cast()
+    }))
+    .into_upcast()
 }
 pub(super) fn fresh_camera_alias_control() -> Arc<CameraAliasControl> {
     Arc::new(CameraAliasControl {

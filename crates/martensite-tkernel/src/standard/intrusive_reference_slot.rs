@@ -184,6 +184,9 @@ impl<T: ?Sized + RuntimeTyped> HandleReference<T> for IntrusiveReferenceSlot<T> 
         let slot = self;
         IntrusiveReferenceSlot::is_null(slot)
     }
+    fn ref_count(&self) -> usize {
+        IntrusiveReferenceSlot::ref_count(self)
+    }
 }
 
 /// A real destructor reborrow plus its original field; `borrow.assign(&incoming)?`.
@@ -208,10 +211,9 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveRetirementBorrow<'_, T> {
         self.assign(&null)
     }
     fn release_current_reference(&self) {
-        let mut members = self.slot.members.write();
-        let ownership = members.ownership.take();
-        members.pointer = WeakHandle::default();
-        drop(members);
+        // A nested destructor still enters through the current pointer slot. Its identity
+        // remains readable until the incoming object is published, even at zero owners.
+        let ownership = self.slot.members.write().ownership.take();
         drop(ownership);
     }
 }

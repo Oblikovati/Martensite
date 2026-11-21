@@ -31,8 +31,8 @@ impl V3dViewSource for LiveLightViewSource {
     }
     fn redraw(&self) {
         if *self.control.armed.read() {
-            let owners = self.base.this.read().observe().ref_count();
-            let implementation = self.base.view_ref().observe().ref_count();
+            let owners = self.base.this.read().ref_count();
+            let implementation = self.base.view_ref().ref_count();
             self.control.rows.write().push(format!(
                 "redraw {} {owners} {implementation}{}",
                 self.identity,
@@ -85,14 +85,15 @@ pub(super) fn probe_light_counts(control: &ViewerLightProbeControl) -> String {
         .lights
         .read()
         .iter()
-        .map(|light| format!(" {}", light.observe().ref_count()))
+        .map(|light| format!(" {}", light.ref_count()))
         .collect()
 }
 pub(super) fn probe_list_light_keys(chain: V3dLightListRef<'_>) -> String {
     let mut cursor = chain.cursor();
     let mut keys = String::new();
     while cursor.more() {
-        let light = cursor.value_ref().observe();
+        let light_ref = cursor.value_ref();
+        let light = light_ref.observe();
         keys.push_str(&light.get().map_or("0".into(), |light| {
             String::from_utf8_lossy(light.name().as_bytes()).into_owned()
         }));

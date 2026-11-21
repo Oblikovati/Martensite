@@ -1,22 +1,20 @@
 //! Named callback fixture allows context mutation without holding a Rust collection guard.
 use super::context_object::ContextObject;
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*};
 type LifecycleCallback = Box<dyn Fn(&LifecycleObject) + Send + Sync>;
 pub struct LifecycleObject {
-    transient: StandardTransient,
     inner: Handle<ContextObject>,
     pub on_kind: SharedState<Option<LifecycleCallback>>,
     pub on_compute: SharedState<Option<LifecycleCallback>>,
     pub on_clear: SharedState<Option<LifecycleCallback>>,
 }
-martensite_tkernel::impl_transient!(LifecycleObject,"Martensite_LifecycleObject",dyn AisInteractiveObject,transient,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(LifecycleObject,"Martensite_LifecycleObject",dyn AisInteractiveObject,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl LifecycleObject {
     pub fn new() -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             inner: ContextObject::new(),
             on_kind: SharedState::default(),
             on_compute: SharedState::default(),

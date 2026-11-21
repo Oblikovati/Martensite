@@ -28,6 +28,11 @@ impl<'a, S, T: ?Sized + RuntimeTyped> HandleFieldRef<'a, S, T> {
         let fields = self.fields.read();
         (self.select)(&fields).object_address()
     }
+    /// Count owners without retaining a new one; `let owners = alias.ref_count();`.
+    pub fn ref_count(&self) -> usize {
+        let fields = self.fields.read();
+        (self.select)(&fields).ref_count()
+    }
     /// Compare actual slot references; `left.is_same_reference(&right)`.
     pub fn is_same_reference(&self, other: &HandleFieldRef<'_, S, T>) -> bool {
         let left = self.fields.read();

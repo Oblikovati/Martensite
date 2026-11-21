@@ -98,14 +98,14 @@ fn record_source_panic(rows: &mut String, payload: Box<dyn std::any::Any + Send>
 }
 fn record_source_after(
     rows: &mut String,
-    original: &CopySourceProbe,
+    original: &Handle<CopySourceProbe>,
     incoming: &Handle<dyn AisShapeSource>,
     input: &ColoredExpansionInputs,
 ) {
     writeln!(
         rows,
         "after-copy {} {} {} {}",
-        original.transient_base().ref_count(),
+        original.ref_count(),
         incoming.ref_count(),
         input.base.tshape().ref_count(),
         input.external.tshape().ref_count(),

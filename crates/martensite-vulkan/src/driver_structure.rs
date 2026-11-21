@@ -207,7 +207,11 @@ impl Graphic3dCStructure for Graphic3dRenderStructure {
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         let group: Handle<dyn Graphic3dGroup> =
             Graphic3dDrawGroup::with_text_source(structure, self.text_source.clone()).cast();
-        self.base.fields.write().groups.append(group.clone());
+        self.base
+            .fields
+            .write()
+            .groups
+            .append(martensite_tkernel::standard::HandleSlot::new(group.clone()));
         Ok(group)
     }
     fn remove_group(&self, group: &Handle<dyn Graphic3dGroup>) {

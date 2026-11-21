@@ -12,7 +12,7 @@ mod bvh_pool_fixture;
 use boxed_selectable::BoxedSelectable;
 use martensite_tkernel::{
     ncollection::{Array1, List},
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
 };
 use martensite_tkmath::{
     bvh::BvhObjectTransientSource,
@@ -126,11 +126,10 @@ fn clear_and_invalid_ranks_preserve_native_permutation_storage() {
     );
 }
 struct ReverseSelector {
-    transient: StandardTransient,
     base: SelectMgrViewerSelectorBase,
     calls: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(ReverseSelector, "Test_ReverseSelector", dyn SelectMgrViewerSelectorSource, transient,
+martensite_tkernel::impl_transient!(ReverseSelector, "Test_ReverseSelector", dyn SelectMgrViewerSelectorSource,
     interfaces: [dyn SelectMgrViewerSelectorSource]);
 impl SelectMgrViewerSelectorSource for ReverseSelector {
     fn viewer_selector_base(&self) -> &SelectMgrViewerSelectorBase {
@@ -151,7 +150,6 @@ impl SelectMgrViewerSelectorSource for ReverseSelector {
 #[test]
 fn lazy_access_dispatches_to_the_derived_sorter() {
     let selector = Handle::new(ReverseSelector {
-        transient: StandardTransient::default(),
         base: SelectMgrViewerSelectorBase::new(),
         calls: AtomicUsize::new(0),
     });

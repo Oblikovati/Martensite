@@ -47,7 +47,7 @@ fn append_light_callback_row(
     ordinal: usize,
 ) {
     let keys = probe_set_light_keys(lights);
-    let target_owners = lights.observe().ref_count();
+    let target_owners = lights.ref_count();
     control.rows.write().push(format!(
         "set {identity} {ordinal} {implementation_owners} {target_owners} {keys}{}",
         probe_light_counts(control)
@@ -64,7 +64,7 @@ fn edit_light_callback(control: &ViewerLightProbeControl) {
     match control.policy {
         1 => edit_global_light_append(control),
         2 => replace_global_light_node(control),
-        5 => *control.caller.write() = control.views.read()[1].observe().clone(),
+        5 => *control.caller.write() = control.views.read()[1].upgrade(),
         7 => edit_active_views_callback(control),
         8 => remove_defined_light_node(control),
         9 => replace_defined_light_node(control),
@@ -74,22 +74,22 @@ fn edit_light_callback(control: &ViewerLightProbeControl) {
     }
 }
 fn edit_global_light_append(control: &ViewerLightProbeControl) {
-    let viewer = control.viewer.observe();
+    let viewer = control.viewer.upgrade();
     let lights = control.lights.read();
     let mut fields = viewer.state.write();
     super::viewer_light_mutation::remove_light_node(
         &mut fields.active_lights,
         lights[1].object_address(),
     );
-    fields.active_lights.append(lights[2].observe().clone());
+    fields.active_lights.append(lights[2].upgrade());
 }
 fn replace_global_light_node(control: &ViewerLightProbeControl) {
-    let viewer = control.viewer.observe();
-    let replacement = control.lights.read()[1].observe().clone();
+    let viewer = control.viewer.upgrade();
+    let replacement = control.lights.read()[1].upgrade();
     *viewer.state.write().active_lights.first_mut().unwrap() = replacement;
 }
 fn remove_defined_light_node(control: &ViewerLightProbeControl) {
-    let viewer = control.viewer.observe();
+    let viewer = control.viewer.upgrade();
     let lights = control.lights.read();
     super::viewer_light_mutation::remove_light_node(
         &mut viewer.state.write().defined_lights,
@@ -97,25 +97,25 @@ fn remove_defined_light_node(control: &ViewerLightProbeControl) {
     );
 }
 fn replace_defined_light_node(control: &ViewerLightProbeControl) {
-    let viewer = control.viewer.observe();
-    let replacement = control.lights.read()[1].observe().clone();
+    let viewer = control.viewer.upgrade();
+    let replacement = control.lights.read()[1].upgrade();
     *viewer.state.write().defined_lights.first_mut().unwrap() = replacement;
 }
 fn replace_active_view_node(control: &ViewerLightProbeControl) {
-    let viewer = control.viewer.observe();
-    let replacement = control.views.read()[1].observe().clone();
+    let viewer = control.viewer.upgrade();
+    let replacement = control.views.read()[1].upgrade();
     *viewer.state.write().active_views.first_mut().unwrap() = replacement;
 }
 fn edit_active_views_callback(control: &ViewerLightProbeControl) {
-    let viewer = control.viewer.observe();
+    let viewer = control.viewer.upgrade();
     let views = control.views.read();
     let mut fields = viewer.state.write();
     super::viewer::remove_view_from(&mut fields.active_views, views[1].object_address());
-    fields.active_views.append(views[2].observe().clone());
+    fields.active_views.append(views[2].upgrade());
 }
 
 fn replace_caller_set_slot(control: &ViewerLightProbeControl) {
-    let replacement = control.replacement_set.read().observe().clone();
+    let replacement = control.replacement_set.read().upgrade();
     *control.caller_set.write() = replacement;
 }
 

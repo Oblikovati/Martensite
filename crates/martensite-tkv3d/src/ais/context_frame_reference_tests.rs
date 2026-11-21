@@ -67,10 +67,10 @@ fn context_frame_reference_state(scene: &ContextFrameReferenceScene) -> [i32; 6]
         i32::from(
             scene.context.main_prs_mgr_ref().object_address() == scene.second.object_address(),
         ),
-        scene.original.ref_count(),
-        scene.replacement.ref_count(),
-        scene.first.ref_count(),
-        scene.second.ref_count(),
+        scene.original.ref_count().try_into().unwrap(),
+        scene.replacement.ref_count().try_into().unwrap(),
+        scene.first.ref_count().try_into().unwrap(),
+        scene.second.ref_count().try_into().unwrap(),
     ]
 }
 fn apply_context_frame_reference(scene: &ContextFrameReferenceScene) -> i32 {

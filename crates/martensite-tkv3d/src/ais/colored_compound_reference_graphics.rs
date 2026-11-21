@@ -170,11 +170,9 @@ impl Graphic3dCStructure for ColoredCompoundReferenceStructureFake {
             return self.inner.new_group(prs);
         }
         let group = Handle::new(ColoredCompoundReferenceGroupFake::new(prs, &self.trace)).cast();
-        self.cstructure_base()
-            .fields
-            .write()
-            .groups
-            .append(Handle::clone(&group));
+        self.cstructure_base().fields.write().groups.append(
+            martensite_tkernel::standard::HandleSlot::new(Handle::clone(&group)),
+        );
         Ok(group)
     }
 }

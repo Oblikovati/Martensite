@@ -37,7 +37,11 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     /// `Presentations`: the presentations of the object; `object.presentations()`.
     fn presentations(&self) -> Vec<Handle<PrsMgrPresentation>> {
         let fields = self.presentable_base().fields.read();
-        fields.presentations.iter().cloned().collect()
+        fields
+            .presentations
+            .iter()
+            .map(|slot| Handle::clone(slot))
+            .collect()
     }
     /// `ZLayer`: the layer of the drawer; `object.z_layer()`.
     fn z_layer(&self) -> Graphic3dZLayerId {

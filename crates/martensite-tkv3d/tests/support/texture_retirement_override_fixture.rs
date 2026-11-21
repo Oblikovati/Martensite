@@ -2,24 +2,25 @@
 //! and a pixmap whose destructor calls those setters through a retirement scope.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
-use martensite_tkservice::{graphic3d::*, image::ImagePixMap};
+use martensite_tkservice::{
+    graphic3d::*,
+    image::{ImagePixMap, ImagePixMapObject},
+};
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Weak};
 
 pub type RoutingTrace = Arc<SharedState<Vec<String>>>;
 pub struct RoutingShape {
-    transient: StandardTransient,
     pub base: AisTexturedShapeBase,
     pub file_calls: AtomicUsize,
     pub pixel_calls: AtomicUsize,
     pub trace: RoutingTrace,
 }
-martensite_tkernel::impl_transient!(RoutingShape,"RoutingShape",dyn AisTexturedShapeSource,transient,interfaces:[dyn AisTexturedShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(RoutingShape,"RoutingShape",dyn AisTexturedShapeSource,interfaces:[dyn AisTexturedShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl RoutingShape {
     pub fn new(trace: &RoutingTrace) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisTexturedShapeBase::new(&Shape::default()),
             file_calls: AtomicUsize::new(0),
             pixel_calls: AtomicUsize::new(0),
@@ -55,7 +56,7 @@ impl AisTexturedShapeSource for RoutingShape {
         self.record("file", "leave");
         Ok(())
     }
-    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<ImagePixMap>) {
+    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<dyn ImagePixMapObject>) {
         self.pixel_calls.fetch_add(1, Ordering::SeqCst);
         self.record("pixmap", "enter");
         ais_textured_shape_set_texture_pix_map(self, pixmap);
@@ -103,16 +104,22 @@ impl SelectMgrSelectableObject for RoutingShape {
 }
 
 pub struct RoutingPixels {
+    pub(super) self_owner: Weak<Self>,
     pub base: ImagePixMap,
     owner: WeakHandle<RoutingShape>,
-    nested: WeakHandle<ImagePixMap>,
+    nested: WeakHandle<dyn ImagePixMapObject>,
     mode: &'static str,
 }
-martensite_tkernel::impl_transient!(RoutingPixels, "RoutingPixels", ImagePixMap, base);
+martensite_tkernel::impl_transient!(RoutingPixels, "RoutingPixels", ImagePixMap, interfaces: [dyn ImagePixMapObject]);
+impl ImagePixMapObject for RoutingPixels {
+    fn pix_map_base(&self) -> &ImagePixMap {
+        &self.base
+    }
+}
 impl Drop for RoutingPixels {
     fn drop(&mut self) {
-        let owner = self.owner.observe();
-        let count = self.base.transient_base().ref_count();
+        let owner = self.owner.upgrade();
+        let count = self.self_owner.strong_count();
         owner
             .trace
             .write()
@@ -127,7 +134,7 @@ impl Drop for RoutingPixels {
             owner.trace.write().push(row);
             return;
         }
-        ais_textured_shape_with_retirement(&**owner, self, |scope| {
+        ais_textured_shape_with_retirement(&*owner, self, |scope| {
             assert!(
                 owner.base.retirement.is_active(),
                 "scope open; expected an active stash"
@@ -140,16 +147,15 @@ impl Drop for RoutingPixels {
             !owner.base.retirement.is_active(),
             "scope closed; expected no stash entry"
         );
-        let nested = self.nested.observe();
         let row = format!(
             "DROP {} leave {} {} {}",
             self.mode,
-            self.base.transient_base().ref_count(),
+            self.self_owner.strong_count(),
             i32::from(owner.texture_pix_map().is_null()),
-            if nested.is_null() {
+            if self.nested.is_null() {
                 -1
             } else {
-                nested.ref_count()
+                i32::try_from(self.nested.ref_count()).unwrap()
             }
         );
         owner.trace.write().push(row);
@@ -161,7 +167,7 @@ fn routing_stage(
 ) -> Result<(), Failure> {
     match pixels.mode {
         "file" => scope.set_texture_file_name(&AsciiString::from("inner.raw")),
-        "pixmap" => scope.set_texture_pix_map(&*pixels.nested.observe()),
+        "pixmap" => scope.set_texture_pix_map(&pixels.nested.upgrade()),
         _ => Ok(()),
     }
 }
@@ -169,14 +175,15 @@ fn routing_stage(
 /// Example: `routing_pixels(&owner, &nested, "file")`.
 pub fn routing_pixels(
     owner: &Handle<RoutingShape>,
-    nested: &Handle<ImagePixMap>,
+    nested: &Handle<dyn ImagePixMapObject>,
     mode: &'static str,
-) -> Handle<ImagePixMap> {
-    Handle::new(RoutingPixels {
+) -> Handle<dyn ImagePixMapObject> {
+    Handle::from_arc(Arc::new_cyclic(|self_owner| RoutingPixels {
+        self_owner: self_owner.clone(),
         base: ImagePixMap::default(),
         owner: owner.downgrade(),
         nested: nested.downgrade(),
         mode,
-    })
-    .into_cast()
+    }))
+    .into_upcast()
 }

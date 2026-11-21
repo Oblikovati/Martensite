@@ -168,7 +168,7 @@ fn object_context_link_owner_and_default_virtual_members_are_native() {
     object.set_context(&Handle::default());
     assert!(!object.has_interactive_context());
     assert_eq!(object.attributes().link(), replacement);
-    let owner = Handle::new(StandardTransient::default());
+    let owner = Handle::new(StandardTransient).into_upcast();
     object.set_owner(&owner);
     assert!(object.has_owner());
     assert_eq!(*object.get_owner(), owner);

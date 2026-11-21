@@ -7,12 +7,11 @@ use martensite_tkv3d::prs_mgr::*;
 use std::sync::Arc;
 
 pub struct PrsCursorGroup {
-    transient: StandardTransient,
     inner: NullGroup,
     role: &'static str,
     trace: Arc<PrsCursorTrace>,
 }
-martensite_tkernel::impl_transient!(PrsCursorGroup,"PrsCursorGroup",StandardTransient,transient,interfaces:[dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(PrsCursorGroup,"PrsCursorGroup",StandardTransient,interfaces:[dyn Graphic3dGroup]);
 
 /// Append the labelled group to the presentation's group nodes, as the native NewGroup.
 /// Example: `install_labelled_group(&trace, &prs, "A")`.
@@ -23,7 +22,6 @@ pub fn install_labelled_group(
 ) {
     let structure: Handle<dyn Graphic3dStructureSource> = prs.cast();
     let group = Handle::new(PrsCursorGroup {
-        transient: StandardTransient::default(),
         inner: NullGroup::new(&structure),
         role,
         trace: trace.clone(),
@@ -34,7 +32,7 @@ pub fn install_labelled_group(
         .fields
         .write()
         .groups
-        .append(group.cast());
+        .append(martensite_tkernel::standard::HandleSlot::new(group.cast()));
 }
 impl PrsCursorGroup {
     fn record_visit(&self) {
@@ -42,6 +40,7 @@ impl PrsCursorGroup {
         let owners = trace.roles.read()[self.role].ref_count();
         let listed = trace
             .object
+            .upgrade()
             .presentable_base()
             .fields
             .read()
@@ -56,8 +55,14 @@ impl PrsCursorGroup {
         let trace = &self.trace;
         if trace.edit == PrsCursorEdit::Append {
             let appended = labelled_presentation(trace, "D", 3);
-            let fields = &trace.object.presentable_base().fields;
-            fields.write().presentations.append(appended);
+            trace
+                .object
+                .upgrade()
+                .presentable_base()
+                .fields
+                .write()
+                .presentations
+                .append(martensite_tkernel::standard::HandleSlot::new(appended));
             return;
         }
         let victim = if trace.edit == PrsCursorEdit::RemoveEarlier {
@@ -66,7 +71,8 @@ impl PrsCursorGroup {
             "C"
         };
         let address = trace.roles.read()[victim].object_address();
-        let mut fields = trace.object.presentable_base().fields.write();
+        let object = trace.object.upgrade();
+        let mut fields = object.presentable_base().fields.write();
         let offset = fields
             .presentations
             .iter()

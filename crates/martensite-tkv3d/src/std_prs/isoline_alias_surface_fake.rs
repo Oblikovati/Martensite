@@ -1,7 +1,7 @@
 //! Named direct GeomSurface application subclass mutates actual live input cells during its first iso call.
 use martensite_tkernel::{
     ncollection::Sequence,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::geom::*;
 use martensite_tkmath::{

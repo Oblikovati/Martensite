@@ -32,7 +32,11 @@ fn compound_wf_reference_rows(fail: bool) -> String {
     map.add(&key, &compound).unwrap();
     let trace = ColoredCompoundGraphicsTrace::new(&map, fail);
     let prs = compound_reference_presentation(&trace);
-    record_compound_wf_before(&trace, fail, compound.tshape().ref_count());
+    record_compound_wf_before(
+        &trace,
+        fail,
+        compound.tshape().ref_count().try_into().unwrap(),
+    );
     project_compound_wireframe(&map, &prs, &drawer, &trace);
     record_compound_wf_finish(&map, &compound, &prs, &trace);
     std::mem::take(&mut *trace.rows.lock().unwrap())

@@ -2,7 +2,7 @@
 use super::color_scale_recording::record_scale_vertices;
 use martensite_tkernel::{
     standard::Failure as XrProbeFailure,
-    standard::{Handle, SharedState, StandardTransient, raise_native_failure},
+    standard::{Handle, SharedState, raise_native_failure},
 };
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::{graphic3d::*, null_driver::NullGroup};

@@ -58,9 +58,12 @@ fn native_light_cursor_row(scene: &LightProbeScene) -> String {
     scene.views[0].next_active_lights();
     scene.viewer.next_active_lights();
     scene.viewer.next_defined_lights();
-    let view = scene.views[0].active_light_ref().observe();
-    let active = scene.viewer.active_light_ref().observe();
-    let defined = scene.viewer.defined_light_ref().observe();
+    let view_ref = scene.views[0].active_light_ref();
+    let view = view_ref.observe();
+    let active_ref = scene.viewer.active_light_ref();
+    let active = active_ref.observe();
+    let defined_ref = scene.viewer.defined_light_ref();
+    let defined = defined_ref.observe();
     format!(
         "cursors {} {} {} {} {} {}",
         light_alias_name(&view),

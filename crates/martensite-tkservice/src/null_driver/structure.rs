@@ -8,7 +8,7 @@ use crate::graphic3d::{
 };
 use martensite_tkernel::ncollection::{Sequence, SequenceCursor};
 use martensite_tkernel::standard::{
-    Failure, Handle, SharedState, StandardTransient, WeakHandle, raise_native_failure,
+    Failure, Handle, HandleSlot, SharedState, StandardTransient, WeakHandle, raise_native_failure,
 };
 use martensite_tkmath::gp::Axis2;
 
@@ -42,7 +42,10 @@ impl NullCStructure {
         let groups = &fields.groups;
         let mut cursor = groups.cursor();
         while cursor.more() {
-            if cursor.value(groups).is_some_and(|stored| stored == group) {
+            if cursor
+                .value(groups)
+                .is_some_and(|stored| &**stored == group)
+            {
                 return Some(cursor);
             }
             cursor.next(groups);
@@ -101,7 +104,11 @@ impl Graphic3dCStructure for NullCStructure {
         structure: &Handle<dyn Graphic3dStructureSource>,
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         let group: Handle<dyn Graphic3dGroup> = Handle::new(NullGroup::new(structure)).cast();
-        self.base.fields.write().groups.append(group.clone());
+        self.base
+            .fields
+            .write()
+            .groups
+            .append(HandleSlot::new(group.clone()));
         Ok(group)
     }
     /// Clears the group (without manager update) and removes it from the sequence.

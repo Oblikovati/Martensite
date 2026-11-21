@@ -90,7 +90,7 @@ impl Graphic3dCStructure for XrRecordingStructure {
             .fields
             .write()
             .groups
-            .append(group.clone());
+            .append(martensite_tkernel::standard::HandleSlot::new(group.clone()));
         Ok(group)
     }
 }

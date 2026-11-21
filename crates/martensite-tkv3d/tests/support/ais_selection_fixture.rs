@@ -1,20 +1,18 @@
 //! Named callback fixtures inspect selection state and exercise reentrant and failing filters.
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkv3d::{ais::*, select_mgr::*};
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 
 pub struct AisStateOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     pub forced: AtomicBool,
     pub selection: SharedState<WeakHandle<dyn AisSelectionSource>>,
     pub observed: SharedState<Vec<i32>>,
 }
-martensite_tkernel::impl_transient!(AisStateOwner,"Test_AisStateOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(AisStateOwner,"Test_AisStateOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl AisStateOwner {
     pub fn new(object: &Handle<dyn SelectMgrSelectableObject>, priority: i32) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(object, priority),
             forced: AtomicBool::new(false),
             selection: SharedState::default(),
@@ -36,20 +34,18 @@ impl SelectMgrEntityOwnerSource for AisStateOwner {
     }
 }
 pub struct AisStateFilter {
-    transient: StandardTransient,
     pub mode: AtomicI32,
     pub selection: WeakHandle<dyn AisSelectionSource>,
     pub extra: AisSelectedOwner,
     pub observed: SharedState<Vec<(i32, i32, i32)>>,
 }
-martensite_tkernel::impl_transient!(AisStateFilter,"Test_AisStateFilter",dyn SelectMgrFilter,transient,interfaces:[dyn SelectMgrFilter]);
+martensite_tkernel::impl_transient!(AisStateFilter,"Test_AisStateFilter",dyn SelectMgrFilter,interfaces:[dyn SelectMgrFilter]);
 impl AisStateFilter {
     pub fn new(
         selection: &Handle<dyn AisSelectionSource>,
         extra: &AisSelectedOwner,
     ) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             mode: AtomicI32::new(0),
             selection: selection.downgrade(),
             extra: extra.clone(),

@@ -125,7 +125,7 @@ fn probe_case_counts(
     format!(
         "counts{}{view_counts} {}",
         probe_light_counts(&scene.control),
-        alias.observe().ref_count()
+        alias.ref_count()
     )
 }
 fn probe_active_view_keys(scene: &LightProbeScene) -> String {

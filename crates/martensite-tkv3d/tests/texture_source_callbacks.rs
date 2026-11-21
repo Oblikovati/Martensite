@@ -4,7 +4,7 @@ mod callback_fixture;
 use callback_fixture::*;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
 use std::sync::Arc;
 #[test]
@@ -36,15 +36,15 @@ fn run_retiring_texture_case(
     record_texture_after(&owner, &incoming, label, slot_address, trace);
     pixels.nullify();
 }
-fn texture_incoming_pixels(replace: bool) -> Handle<ImagePixMap> {
+fn texture_incoming_pixels(replace: bool) -> Handle<dyn ImagePixMapObject> {
     if replace {
-        return Handle::new(ImagePixMap::default());
+        return Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     }
     Handle::default()
 }
 fn replace_callback_texture_source(
     owner: &AisTexturedShape,
-    incoming: &Handle<ImagePixMap>,
+    incoming: &Handle<dyn ImagePixMapObject>,
     replace: bool,
 ) {
     if replace {
@@ -57,7 +57,7 @@ fn replace_callback_texture_source(
 }
 fn record_texture_after(
     owner: &AisTexturedShape,
-    incoming: &Handle<ImagePixMap>,
+    incoming: &Handle<dyn ImagePixMapObject>,
     label: &str,
     slot_address: *const (),
     trace: &Arc<SharedState<Vec<String>>>,
@@ -105,18 +105,18 @@ fn texture_source_actual_callbacks_replay_all_native_retirement_records() {
     assert_eq!(actual, native);
 }
 
-fn texture_incoming_count(incoming: &Handle<ImagePixMap>) -> i32 {
+fn texture_incoming_count(incoming: &Handle<dyn ImagePixMapObject>) -> i32 {
     if incoming.is_null() {
         return -1;
     }
-    incoming.ref_count()
+    incoming.ref_count().try_into().unwrap()
 }
 
 fn run_incoming_texture_slot_mutation(trace: &Arc<SharedState<Vec<String>>>) {
     let owner = AisTexturedShape::new(&Shape::default());
     let input = AisTexturedShape::new(&Shape::default());
-    let original = Handle::new(ImagePixMap::default());
-    let next = Handle::new(ImagePixMap::default());
+    let original = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
+    let next = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     input.set_texture_pix_map(&original);
     install_mutating_texture_pixels(&owner, &input, &original, &next, trace);
     let alias = input.texture_pix_map();
@@ -134,20 +134,21 @@ fn run_incoming_texture_slot_mutation(trace: &Arc<SharedState<Vec<String>>>) {
 fn install_mutating_texture_pixels(
     owner: &Handle<AisTexturedShape>,
     input: &Handle<AisTexturedShape>,
-    original: &Handle<ImagePixMap>,
-    next: &Handle<ImagePixMap>,
+    original: &Handle<dyn ImagePixMapObject>,
+    next: &Handle<dyn ImagePixMapObject>,
     trace: &Arc<SharedState<Vec<String>>>,
 ) {
     let input = input.downgrade();
     let next = next.downgrade();
-    let callback = move || input.observe().set_texture_pix_map(&*next.observe());
-    let pixels = Handle::new(TextureSlotCallbackPixels {
+    let callback = move || input.upgrade().set_texture_pix_map(&next.upgrade());
+    let pixels = Handle::from_arc(Arc::new_cyclic(|self_owner| TextureSlotCallbackPixels {
+        self_owner: self_owner.clone(),
         base: ImagePixMap::default(),
         owner: owner.downgrade(),
         incoming: original.downgrade(),
         label: "incoming-slot".to_string(),
         trace: trace.clone(),
         callback: Some(Box::new(callback)),
-    });
-    owner.set_texture_pix_map(&pixels.cast());
+    }));
+    owner.set_texture_pix_map(&pixels.into_upcast());
 }

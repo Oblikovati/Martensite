@@ -3,12 +3,15 @@ use super::*;
 use crate::select3d::Select3DSensitiveEntityMembers;
 use crate::{ais::AisColoredShape, select_mgr::*, select3d::Select3DSensitivePoint};
 use martensite_tkbrep::topods::{Builder, Compound};
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Handle, SharedState, WeakHandle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::Point3;
-use std::{fmt::Write, sync::Arc};
+use std::{
+    fmt::Write,
+    sync::{Arc, Weak},
+};
 struct BrepOriginCallbackOwnerFake {
-    transient: StandardTransient,
+    self_owner: Weak<Self>,
     owner: SelectMgrEntityOwnerBase,
     label: i32,
     selection: WeakHandle<SelectMgrSelection>,
@@ -24,19 +27,18 @@ impl BrepOriginCallbackOwnerFake {
         rows: &Arc<SharedState<String>>,
     ) -> Handle<Self> {
         let owner = SelectMgrEntityOwnerBase::new(&Handle::default(), label);
-        Handle::new(Self {
-            transient: Default::default(),
+        Handle::from_arc(Arc::new_cyclic(|self_owner| Self {
+            self_owner: self_owner.clone(),
             owner,
             label,
             selection: selection.downgrade(),
             replacement: replacement.downgrade(),
             rows: Arc::clone(rows),
-        })
+        }))
     }
     fn replace_later_selection_slot(&self) {
-        let selection = self.selection.observe();
-        let replacement = self.replacement.observe();
-        let wrapped = Handle::new(SelectMgrSensitiveEntity::new(&replacement));
+        let selection = self.selection.upgrade();
+        let wrapped = Handle::new(SelectMgrSensitiveEntity::new(&self.replacement.upgrade()));
         selection.change_entities(&mut |entities| entities[1] = wrapped.clone());
         let owner = SelectMgrEntityOwner::new(4).into_cast();
         selection
@@ -57,8 +59,8 @@ impl SelectMgrEntityOwnerSource for BrepOriginCallbackOwnerFake {
             &mut *self.rows.write(),
             "origin-call {} {} {}",
             self.label,
-            self.transient.ref_count(),
-            object.observe().ref_count()
+            self.self_owner.strong_count(),
+            object.ref_count()
         )
         .unwrap();
         select_mgr_entity_owner_set_selectable(self, object);
@@ -148,7 +150,12 @@ fn record_origin_callback_finish(
     rows: &SharedState<String>,
 ) {
     let entities = selection.entities();
-    record_origin_callback_policy(entities.len(), object.ref_count(), owners, rows);
+    record_origin_callback_policy(
+        entities.len(),
+        object.ref_count().try_into().unwrap(),
+        owners,
+        rows,
+    );
     for row in entities {
         let owner = row.base_sensitive().owner_id();
         writeln!(

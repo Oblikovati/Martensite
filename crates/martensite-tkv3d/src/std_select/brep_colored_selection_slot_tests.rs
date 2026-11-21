@@ -41,7 +41,7 @@ fn invoke_colored_primary_selection(
     object: &Handle<AisColoredShape>,
     selection: &dyn martensite_tkernel::standard::HandleReference<SelectMgrSelection>,
 ) {
-    let source = object.observe_as::<dyn SelectMgrSelectableObject>();
+    let source: &dyn SelectMgrSelectableObject = &**object;
     source.compute_selection(selection, 0).unwrap();
 }
 fn configure_colored_selection_slot(object: &AisColoredShape, hidden: bool) {

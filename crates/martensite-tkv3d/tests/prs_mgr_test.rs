@@ -25,11 +25,10 @@ use martensite_tkv3d::v3d::V3dViewer;
 /// A presentable object drawing one segment from the origin to (length, 0, 0) per mode; it
 /// accepts the modes 0 and 1 only.
 struct SegmentObject {
-    transient: StandardTransient,
     base: PrsMgrPresentableObjectBase,
     length: f64,
 }
-martensite_tkernel::impl_transient!(SegmentObject, "Test_SegmentObject", StandardTransient, transient,
+martensite_tkernel::impl_transient!(SegmentObject, "Test_SegmentObject", StandardTransient,
     interfaces: [dyn PrsMgrPresentableObject]);
 
 impl PrsMgrPresentableObject for SegmentObject {
@@ -60,7 +59,6 @@ impl PrsMgrPresentableObject for SegmentObject {
 
 fn segment(length: f64) -> Handle<dyn PrsMgrPresentableObject> {
     let object: Handle<dyn PrsMgrPresentableObject> = Handle::new(SegmentObject {
-        transient: StandardTransient::default(),
         base: PrsMgrPresentableObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
         length,
     })
@@ -287,7 +285,9 @@ fn remove_presentation_nodes_removes_the_first_node_of_each_target() {
     manager.display(&object, 0).unwrap();
     let first = object.presentations()[0].clone();
     let mut fields = object.presentable_base().fields.write();
-    fields.presentations.append(first.clone());
+    fields
+        .presentations
+        .append(martensite_tkernel::standard::HandleSlot::new(first.clone()));
     fields.remove_presentation_nodes(std::slice::from_ref(&first));
     assert_eq!(
         fields.presentations.len(),

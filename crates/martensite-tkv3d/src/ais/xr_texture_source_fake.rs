@@ -1,6 +1,6 @@
 //! Named image dependency records native forwarding without filesystem decoding.
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient, raise_native_failure},
+    standard::{Failure, Handle, SharedState, raise_native_failure},
     tcollection::AsciiString,
 };
 use martensite_tkservice::image::*;
@@ -34,7 +34,7 @@ impl ImageTextureSource for XrImageSourceFake {
         // The wrapper snapshots this ID while retaining the actual image source.
         &self.base
     }
-    fn read_image(&self, formats: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn read_image(&self, formats: &Handle<ImageSupportedFormats>) -> Handle<dyn ImagePixMapObject> {
         *self.calls.write() += 1;
         *self.same.write() = formats == &self.expected;
         if *self.fail.read() {
@@ -42,6 +42,6 @@ impl ImageTextureSource for XrImageSourceFake {
                 "XR image fail=true; expected delegated image read",
             )));
         }
-        self.image.clone()
+        self.image.upcast()
     }
 }

@@ -5,11 +5,12 @@ use martensite_tkernel::{
     ncollection::Map,
     standard::{Failure, Handle, SharedState, exceptions::null_object},
 };
+use std::sync::Arc;
 
 pub(super) type ManagedSelectable = Handle<dyn SelectMgrSelectableObject>;
 /// Owns a selector and the set of globally loaded objects; `SelectMgrSelectionManager::new(&selector)`.
 pub struct SelectMgrSelectionManager {
-    pub(super) selector: Handle<dyn SelectMgrViewerSelectorSource>,
+    selector: Arc<Handle<dyn SelectMgrViewerSelectorSource>>,
     pub(super) global: SharedState<Map<ManagedSelectable>>,
 }
 martensite_tkernel::impl_transient!(
@@ -21,13 +22,17 @@ impl SelectMgrSelectionManager {
     /// Retain the injected selector, including a native null handle; `SelectMgrSelectionManager::new(&selector)`.
     pub fn new(selector: &Handle<dyn SelectMgrViewerSelectorSource>) -> Self {
         Self {
-            selector: selector.clone(),
+            selector: Arc::new(selector.clone()),
             global: SharedState::default(),
         }
     }
     /// Borrow the owned selector handle; `manager.selector().is_null()`.
     pub fn selector(&self) -> &Handle<dyn SelectMgrViewerSelectorSource> {
         &self.selector
+    }
+    pub(crate) fn selector_slot(&self) -> Arc<Handle<dyn SelectMgrViewerSelectorSource>> {
+        // A context reference can retain the slot without cloning either native object handle.
+        Arc::clone(&self.selector)
     }
     /// Check global membership independently of the selector; `manager.contains(&object)`.
     pub fn contains(&self, object: &ManagedSelectable) -> bool {

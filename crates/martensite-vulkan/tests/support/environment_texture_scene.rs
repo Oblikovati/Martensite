@@ -173,7 +173,7 @@ fn layer_dumps(
         .context
         .set_z_layer(sphere, GRAPHIC3D_ZLAYER_ID_DEFAULT);
     let textured = AisTexturedShape::new(&box_shape([-0.5, -0.5, 1.2], [1., 1., 0.2]));
-    textured.set_texture_pix_map(&ramp_texture(false));
+    textured.set_texture_pix_map(&ramp_texture(false).into_upcast());
     textured.set_texture_map_on();
     scene.display(&textured.cast(), 3);
     dumps.push(scene.dump());

@@ -2,7 +2,7 @@
 use super::brep_edge_sampling::brep_selection_curve_limits;
 use martensite_tkernel::{
     precision,
-    standard::{Failure, SharedState, StandardTransient},
+    standard::{Failure, SharedState},
 };
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::gp::Point3;

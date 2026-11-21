@@ -36,8 +36,8 @@ impl Drop for EdgeOutputRetiringOwner {
         let previous = self.input.previous.read();
         let same = i32::from(slot.object_address() == previous.object_address());
         // No projection of the dying sensitive entity is attempted: its ownership count has reached zero.
-        let count = previous.observe().ref_count();
-        let incoming = self.input.incoming.observe().ref_count();
+        let count = previous.ref_count();
+        let incoming = self.input.incoming.ref_count();
         writeln!(
             &mut *self.input.rows.write(),
             "output-retiring {same} {count} {incoming}"

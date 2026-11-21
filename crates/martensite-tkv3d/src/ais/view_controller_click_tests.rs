@@ -4,7 +4,7 @@ use crate::v3d::V3dViewSource;
 use crate::v3d::V3dViewer;
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkservice::null_driver::NullGraphicDriver;
 pub(super) struct ClickPauseRecorder {

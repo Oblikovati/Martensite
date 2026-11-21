@@ -37,8 +37,12 @@ fn erased_field_alias_rereads_replacement_while_snapshots_own_old_targets() {
     let reference: &dyn HandleReference<StandardTransient> = &alias;
     assert_ne!(reference.reference_address(), other.reference_address());
     let address = reference.reference_address();
+    assert_eq!(reference.ref_count(), 3);
+    let projected = ProjectedHandleReference::<StandardTransient, StandardTransient>::new(&alias);
+    assert_eq!(projected.ref_count(), 3);
     let observed = reference.observe();
     fields.write().first = next.clone();
+    assert_eq!(projected.ref_count(), 2);
     assert_eq!(reference.reference_address(), address);
     assert_eq!(reference.object_address(), next.object_address());
     assert_eq!(observed.object_address(), first.object_address());
@@ -46,6 +50,7 @@ fn erased_field_alias_rereads_replacement_while_snapshots_own_old_targets() {
     drop(observed);
     assert_eq!(first.ref_count(), 2);
     fields.write().first = Handle::default();
+    assert_eq!(projected.ref_count(), 0);
     assert!(reference.is_null() && reference.clone_handle().is_null());
 }
 

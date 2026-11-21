@@ -2,7 +2,7 @@
 use martensite_tkernel::standard::HandleReference;
 #[path = "traversal_volume.rs"]
 pub mod volume;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkmath::{bnd::BoundingBox3, gp::*};
 use martensite_tkservice::graphic3d::{Graphic3dCameraProjection, Graphic3dStructureSource};
 use martensite_tkv3d::{prs_mgr::*, select_basics::*, select_mgr::*, select3d::*};
@@ -12,15 +12,13 @@ use std::sync::{
 };
 use volume::{TraversalConfig, traversal_persistence, traversal_planes, traversal_volume};
 pub struct TraversalSelector {
-    transient: StandardTransient,
     base: SelectMgrViewerSelectorBase,
     pub sorts: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(TraversalSelector,"TraversalSelector",dyn SelectMgrViewerSelectorSource,transient,interfaces:[dyn SelectMgrViewerSelectorSource]);
+martensite_tkernel::impl_transient!(TraversalSelector,"TraversalSelector",dyn SelectMgrViewerSelectorSource,interfaces:[dyn SelectMgrViewerSelectorSource]);
 impl TraversalSelector {
     pub fn new() -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrViewerSelectorBase::new(),
             sorts: AtomicUsize::new(0),
         })
@@ -37,15 +35,13 @@ impl SelectMgrViewerSelectorSource for TraversalSelector {
     }
 }
 pub struct TraversalObject {
-    transient: StandardTransient,
     presentable: PrsMgrPresentableObjectBase,
     selectable: SelectMgrSelectableObjectBase,
 }
-martensite_tkernel::impl_transient!(TraversalObject,"TraversalObject",dyn SelectMgrSelectableObject,transient,interfaces:[dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(TraversalObject,"TraversalObject",dyn SelectMgrSelectableObject,interfaces:[dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl TraversalObject {
     pub fn new() -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             presentable: PrsMgrPresentableObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             selectable: SelectMgrSelectableObjectBase::default(),
         });
@@ -85,7 +81,6 @@ impl SelectMgrSelectableObject for TraversalObject {
     }
 }
 pub struct TraversalPoint {
-    transient: StandardTransient,
     point: Select3DSensitivePoint,
     pub tag: i32,
     pub fail: AtomicI32,
@@ -93,7 +88,7 @@ pub struct TraversalPoint {
     selector: WeakHandle<dyn SelectMgrViewerSelectorSource>,
     events: Arc<SharedState<Vec<i32>>>,
 }
-martensite_tkernel::impl_transient!(TraversalPoint,"TraversalPoint",dyn Select3DSensitiveEntity,transient,interfaces:[dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(TraversalPoint,"TraversalPoint",dyn Select3DSensitiveEntity,interfaces:[dyn Select3DSensitiveEntity]);
 impl TraversalPoint {
     pub fn new(
         owner: &Handle<dyn SelectMgrEntityOwnerSource>,
@@ -107,7 +102,6 @@ impl TraversalPoint {
             0.,
         );
         Handle::new(Self {
-            transient: StandardTransient::default(),
             point: Select3DSensitivePoint::new(owner, position),
             tag,
             fail: AtomicI32::new(0),

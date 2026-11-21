@@ -16,7 +16,7 @@ use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::{
-    Failure, Handle, SharedState, StandardTransient, Transient, WeakHandle,
+    Failure, Handle, HandleSlot, SharedState, StandardTransient, Transient, WeakHandle,
 };
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::gp::{GeneralTransform3, Transform3};
@@ -37,7 +37,7 @@ pub struct PrsMgrPresentableObjectFields {
     /// `myParent` (a raw pointer natively).
     pub parent: WeakHandle<dyn PrsMgrPresentableObject>,
     /// `myPresentations`: a node sequence, so a walk keeps its node while callbacks edit it.
-    pub presentations: Sequence<Handle<PrsMgrPresentation>>,
+    pub presentations: Sequence<HandleSlot<PrsMgrPresentation>>,
     /// `myViewAffinity`.
     pub view_affinity: Handle<Graphic3dViewAffinity>,
     /// `myClipPlanes`.
@@ -158,7 +158,7 @@ impl Drop for PrsMgrPresentableObjectBase {
     /// The destructor erases the presentations and detaches the children.
     fn drop(&mut self) {
         let fields = self.fields.read().clone();
-        for prs in fields.presentations.iter().filter_map(Handle::get) {
+        for prs in fields.presentations.iter().filter_map(|slot| slot.get()) {
             prs.erase();
             prs.forget_presentable_object();
         }

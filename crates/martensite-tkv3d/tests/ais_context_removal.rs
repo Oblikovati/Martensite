@@ -345,17 +345,15 @@ fn remove_all_uses_native_snapshot_while_callbacks_register_new_objects() {
 }
 #[test]
 fn query_callbacks_observe_no_temporary_native_owning_references() {
-    use martensite_tkernel::standard::Transient;
     let context = context();
     let object = LifecycleObject::new();
     context.load(&object.cast(), -1).unwrap();
-    let expected = object.transient_base().ref_count();
-    *object.on_kind.write() = Some(Box::new(move |object| {
-        assert_eq!(object.transient_base().ref_count(), expected)
-    }));
+    let expected = object.ref_count();
+    let owner = object.downgrade();
+    *object.on_kind.write() = Some(Box::new(move |_| assert_eq!(owner.ref_count(), expected)));
     let mut output = List::default();
     context
         .objects_inside(&mut output, AisKindOfInteractive::Shape, 7)
         .unwrap();
-    assert_eq!(object.transient_base().ref_count(), expected + 1);
+    assert_eq!(object.ref_count(), expected + 1);
 }

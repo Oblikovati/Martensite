@@ -5,15 +5,14 @@ use martensite_tkernel::standard::HandleReference;
 mod display_driver;
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkservice::{aspect::AspectTypeOfLine, graphic3d::*};
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*, v3d::V3dViewer};
 struct ApplicationRubberBand {
-    transient: StandardTransient,
     base: AisRubberBandBase,
 }
-martensite_tkernel::impl_transient!(ApplicationRubberBand,"ApplicationRubberBand",dyn AisRubberBandSource,transient,interfaces:[dyn AisRubberBandSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(ApplicationRubberBand,"ApplicationRubberBand",dyn AisRubberBandSource,interfaces:[dyn AisRubberBandSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisRubberBandSource for ApplicationRubberBand {
     fn rubber_band_base(&self) -> &AisRubberBandBase {
         &self.base
@@ -56,7 +55,6 @@ impl SelectMgrSelectableObject for ApplicationRubberBand {
 #[test]
 fn derived_cache_is_reused_and_compute_keeps_nonvirtual_triangulation() {
     let band = Handle::new(ApplicationRubberBand {
-        transient: StandardTransient::default(),
         base: AisRubberBandBase::new(
             Color::named(NamedColor::WHITE),
             AspectTypeOfLine::Solid,

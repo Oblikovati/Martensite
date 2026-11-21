@@ -1,7 +1,7 @@
 //! Named headset I/O supplies a deterministic open session; camera synchronization remains real.
 use martensite_tkernel::{
     ncollection::{Array1, Mat4, Vec2, Vec3},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkmath::gp::Vector3;
@@ -9,7 +9,6 @@ use martensite_tkservice::{aspect::*, graphic3d::Graphic3dArrayOfTriangles, imag
 use std::ffi::c_void;
 #[derive(Default)]
 pub(super) struct NavigationOpenSession {
-    transient: StandardTransient,
     backend: AspectOpenVRSession,
     /// Scripted two-hand input of the XR handler witness; false keeps the backend input.
     hands: bool,

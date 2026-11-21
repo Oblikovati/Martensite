@@ -16,7 +16,7 @@ struct ActivationAliasView {
     base: V3dView,
     trace: Arc<ActivationAliasTrace>,
 }
-martensite_tkernel::impl_transient!(ActivationAliasView,"Martensite_ActivationAliasView",V3dView,base,
+martensite_tkernel::impl_transient!(ActivationAliasView,"Martensite_ActivationAliasView",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for ActivationAliasView {
     fn view_base(&self) -> &V3dView {
@@ -24,8 +24,8 @@ impl V3dViewSource for ActivationAliasView {
     }
     fn redraw(&self) {
         if *self.trace.armed.read() {
-            let owners = self.trace.subject.read().observe().ref_count();
-            let implementation = self.base.view_ref().observe().ref_count();
+            let owners = self.trace.subject.read().ref_count();
+            let implementation = self.base.view_ref().ref_count();
             self.trace
                 .rows
                 .write()

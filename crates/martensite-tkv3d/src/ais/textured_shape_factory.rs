@@ -3,12 +3,12 @@ use martensite_tkernel::{
     standard::{Failure, Handle},
     tcollection::AsciiString,
 };
-use martensite_tkservice::{graphic3d::*, image::ImagePixMap};
+use martensite_tkservice::{graphic3d::*, image::ImagePixMapObject};
 
 /// Native priority-selected source; `AisTexturedTextureSource::PixMap(pixels.clone())` retains identity.
 pub enum AisTexturedTextureSource {
     /// Non-null custom image wins over predefined/file sources.
-    PixMap(Handle<ImagePixMap>),
+    PixMap(Handle<dyn ImagePixMapObject>),
     /// A native predefined name, resolved by Graphic3dTexture2D.
     Predefined(Graphic3dNameOfTexture2D),
     /// Native path, including the empty failed-source case.
@@ -32,9 +32,7 @@ impl AisTexturedTextureFactory for AisNativeTexturedTextureFactory {
         source: AisTexturedTextureSource,
     ) -> Result<Handle<dyn Graphic3dTexture2DSource>, Failure> {
         let texture = match source {
-            AisTexturedTextureSource::PixMap(pixels) => {
-                Graphic3dTexture2D::from_pix_map(pixels.into_upcast())
-            }
+            AisTexturedTextureSource::PixMap(pixels) => Graphic3dTexture2D::from_pix_map(pixels),
             AisTexturedTextureSource::Predefined(name) => Graphic3dTexture2D::from_name(name)?,
             AisTexturedTextureSource::File(path) => Graphic3dTexture2D::from_file(&path),
         };

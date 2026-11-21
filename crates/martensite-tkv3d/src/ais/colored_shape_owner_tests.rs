@@ -3,7 +3,7 @@ use super::*;
 use crate::select_mgr::SelectMgrEntityOwnerMembers;
 use crate::select3d::Select3DSensitiveEntityMembers;
 use crate::{prs_mgr::*, select_mgr::SelectMgrSelectableObject};
-use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient, WeakHandle};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, WeakHandle};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
 use martensite_tkservice::{graphic3d::Graphic3dStructureManager, null_driver::NullGraphicDriver};
@@ -27,7 +27,7 @@ fn colored_owner_replay() -> ColoredOwnerReplay {
         .fields
         .write()
         .presentations
-        .append(prs.clone());
+        .append(martensite_tkernel::standard::HandleSlot::new(prs.clone()));
     ColoredOwnerReplay {
         object,
         prs,
@@ -45,8 +45,7 @@ struct ColoredReleaseDrawerFake {
 martensite_tkernel::impl_transient!(
     ColoredReleaseDrawerFake,
     "MartensiteColoredReleaseDrawerProbe",
-    AisColoredDrawer,
-    colored
+    AisColoredDrawer
 );
 impl Drop for ColoredReleaseDrawerFake {
     fn drop(&mut self) {
@@ -56,9 +55,7 @@ impl Drop for ColoredReleaseDrawerFake {
         assert_eq!(owner.custom_aspects_map().is_empty(), extent == 0);
         assert_eq!(owner.change_custom_aspects_map().as_const().len(), extent);
         let keys = owner.shape_base().fields.read().shape.tshape().ref_count();
-        let links = owner
-            .attributes_ref()
-            .with_object(|drawer| drawer.unwrap().transient_base().ref_count());
+        let links = owner.attributes().ref_count().checked_sub(1).unwrap();
         writeln!(
             self.rows.lock().unwrap(),
             "{} {dirty} {extent} {keys} {links}",
@@ -228,7 +225,7 @@ fn record_drawer_assignment(scene: &ColoredOwnerReplay) {
         .set_attributes(&Handle::new(crate::prs3d::Prs3dDrawer::new()));
     let same = i32::from(alias.is_same_reference(&scene.object.attributes_ref()));
     let equal = i32::from(alias.object_address() == scene.object.attributes().object_address());
-    let count = alias.with_object(|drawer| drawer.unwrap().transient_base().ref_count());
+    let count = alias.clone_handle().ref_count().checked_sub(1).unwrap();
     writeln!(
         scene.rows.lock().unwrap(),
         "drawer-reference {same} {equal} {count}"
@@ -390,8 +387,7 @@ struct ColoredOwnerDropDrawerFake {
 martensite_tkernel::impl_transient!(
     ColoredOwnerDropDrawerFake,
     "MartensiteColoredOwnerDropDrawer",
-    AisColoredDrawer,
-    colored
+    AisColoredDrawer
 );
 impl Drop for ColoredOwnerDropDrawerFake {
     fn drop(&mut self) {
@@ -399,7 +395,10 @@ impl Drop for ColoredOwnerDropDrawerFake {
         let links = self
             .colored
             .link_ref()
-            .with_object(|link| link.unwrap().transient_base().ref_count());
+            .clone_handle()
+            .ref_count()
+            .checked_sub(1)
+            .unwrap();
         writeln!(self.rows.lock().unwrap(), "owner-release {keys} {links}").unwrap();
     }
 }

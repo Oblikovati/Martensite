@@ -20,7 +20,7 @@ pub fn prs_mgr_presentable_dump_json<O: PrsMgrPresentableObject + ?Sized>(
     class_begin(stream, "PrsMgrPresentableObject")?;
     let f = object.presentable_base().read();
     field_pointer(stream, "myParent", f.parent.object_address() as usize)?;
-    for prs in f.presentations.iter().filter_map(Handle::get) {
+    for prs in f.presentations.iter().filter_map(|slot| slot.get()) {
         field_dumped(stream, depth, "aPresentation.get()", &|s, d| {
             prs.dump_json(s, d)
         })?;

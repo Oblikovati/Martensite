@@ -14,7 +14,7 @@ impl Graphic3dGraphicDriver for BorrowedCameraDriver {
         manager: &Handle<Graphic3dStructureManager>,
     ) -> Result<Handle<dyn Graphic3dCView>, Failure> {
         let retained = Graphic3dRetainedView::new(manager, &self.delegate.layers())?;
-        let view = Handle::new(self.build_borrowed_camera_view(retained)).cast();
+        let view = self.build_borrowed_camera_view(retained).into_upcast();
         graphic3d_cview_register(&view)?;
         Ok(view)
     }
@@ -23,7 +23,7 @@ impl Graphic3dGraphicDriver for BorrowedCameraDriver {
             super::viewer_light_probe_callback::record_driver_light_limit(
                 control,
                 limit,
-                self.transient.ref_count(),
+                self.owner.strong_count().try_into().unwrap(),
             );
         }
         self.delegate.inquire_limit(limit)
@@ -96,7 +96,10 @@ impl Graphic3dGraphicDriver for BorrowedCameraDriver {
 }
 
 impl BorrowedCameraDriver {
-    fn build_borrowed_camera_view(&self, retained: Graphic3dRetainedView) -> BorrowedCameraView {
+    fn build_borrowed_camera_view(
+        &self,
+        retained: Graphic3dRetainedView,
+    ) -> Handle<BorrowedCameraView> {
         let identity = self
             .control
             .light_identity
@@ -108,12 +111,12 @@ impl BorrowedCameraDriver {
             .read()
             .is_some()
             .then(super::view_clip_retarget_probe::new_owned_clip_probe_slot);
-        BorrowedCameraView {
-            transient: Default::default(),
+        Handle::from_arc(std::sync::Arc::new_cyclic(|owner| BorrowedCameraView {
+            owner: owner.clone(),
             identity,
             retained,
             clip_probe_slot,
             control: self.control.clone(),
-        }
+        }))
     }
 }

@@ -7,7 +7,7 @@ mod face_fixture;
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::{
     graphic3d::*,
-    image::{ImageFormat, ImagePixMap},
+    image::{ImageFormat, ImagePixMap, ImagePixMapObject},
 };
 use martensite_tkv3d::{ais::*, prs_mgr::*, v3d::V3dViewer};
 
@@ -46,7 +46,7 @@ fn configure_textured_compute(object: &AisTexturedShape, scenario: i32) {
     object.set_texture_origin(scenario & 1 != 0, 0.25, -0.5);
     object.set_texture_repeat(scenario & 2 != 0, 2.0, 3.0);
     object.set_texture_scale(scenario & 4 != 0, 0.5, 2.0);
-    let pixels = Handle::new(ImagePixMap::default());
+    let pixels = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     assert!(pixels.init_zero(ImageFormat::Rgba, 2, 2, 0, 0));
     pixels.set_top_down(true);
     object.set_texture_pix_map(&pixels);

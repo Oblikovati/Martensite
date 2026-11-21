@@ -130,7 +130,7 @@ fn display(
 fn textured_scene(driver: &Handle<Graphic3dRenderDriver>) -> RaytraceScene {
     let scene = RaytraceScene::new(driver);
     let textured = AisTexturedShape::new(&box_shape([1., 2., 3.]));
-    textured.set_texture_pix_map(&ramp_texture());
+    textured.set_texture_pix_map(&ramp_texture().into_upcast());
     textured.set_texture_map_on();
     let mut floor = martensite_tkprim::brep_preview_api::BRepPreviewAPIMakeBox::new();
     floor

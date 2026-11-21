@@ -9,6 +9,7 @@ use martensite_tkernel::standard::{
 use martensite_tkmath::gp::*;
 use martensite_tkservice::graphic3d::Graphic3dCamera;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Weak};
 pub(super) struct CameraArgumentFrustum {
     pub(super) volume: SelectMgrRectangularFrustum,
     pub(super) getter_probe:
@@ -18,8 +19,9 @@ pub(super) struct CameraArgumentFrustum {
     pub(crate) armed: AtomicBool,
     mode: i32,
     pub records: SharedState<[i32; 5]>,
+    owner: Weak<Self>,
 }
-martensite_tkernel::impl_transient!(CameraArgumentFrustum,"CameraArgumentFrustum",SelectMgrRectangularFrustum,volume,
+martensite_tkernel::impl_transient!(CameraArgumentFrustum,"CameraArgumentFrustum",SelectMgrRectangularFrustum,
  interfaces:[dyn SelectMgrBaseIntersector]);
 impl CameraArgumentFrustum {
     pub(super) fn new(
@@ -27,7 +29,7 @@ impl CameraArgumentFrustum {
         replacement: &std::sync::Arc<SharedState<Handle<Graphic3dCamera>>>,
         mode: i32,
     ) -> Handle<Self> {
-        Handle::new(Self {
+        Handle::from_arc(Arc::new_cyclic(|owner| Self {
             volume: SelectMgrRectangularFrustum::new(),
             getter_probe: SharedState::new(None),
             view: view.downgrade(),
@@ -35,14 +37,15 @@ impl CameraArgumentFrustum {
             armed: AtomicBool::new(true),
             mode,
             records: SharedState::new([0; 5]),
-        })
+            owner: owner.clone(),
+        }))
     }
     fn replace_caller_camera(&self, camera: &dyn HandleReference<Graphic3dCamera>) {
-        let view = self.view.observe();
+        let view = self.view.upgrade();
         self.records.write()[..3].copy_from_slice(&[
             i32::from(camera.reference_address() == view.camera_ref().reference_address()),
-            camera.observe().ref_count(),
-            self.volume.transient.ref_count(),
+            camera.ref_count().try_into().unwrap(),
+            self.owner.strong_count().try_into().unwrap(),
         ]);
         let replacement = self.replacement.upgrade().unwrap();
         let reference =
@@ -50,7 +53,7 @@ impl CameraArgumentFrustum {
         view.set_camera(&reference).unwrap();
         self.records.write()[3..].copy_from_slice(&[
             i32::from(camera.object_address() == reference.object_address()),
-            camera.observe().ref_count(),
+            camera.ref_count().try_into().unwrap(),
         ]);
         self.raise_camera_argument_failure();
     }
