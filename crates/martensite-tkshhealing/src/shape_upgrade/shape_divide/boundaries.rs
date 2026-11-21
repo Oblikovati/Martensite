@@ -49,7 +49,7 @@ fn selected_wire(face: &Handle<dyn FaceDivider>) -> Result<Handle<dyn WireDivide
             "",
         ));
     }
-    Ok(face.cast::<dyn FaceDivider>().wire_divide_tool())
+    Ok(face.wire_divide_tool())
 }
 fn configure_wire(tool: &(impl ShapeDivider + ?Sized), wire: &Handle<dyn WireDivider>) {
     let (precision, max, min, mode) = tool
@@ -119,7 +119,7 @@ fn perform_boundary(
         wire.load_edge(&topods::edge(shape)?)?;
     }
     wire.set_context(&tool.shape_divide_base().context());
-    wire.cast::<dyn WireDivider>().perform()
+    wire.perform()
 }
 fn record_boundary(
     tool: &(impl ShapeDivider + ?Sized),

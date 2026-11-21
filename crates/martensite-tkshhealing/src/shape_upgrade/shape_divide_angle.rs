@@ -56,9 +56,8 @@ impl ShapeUpgradeShapeDivideAngle {
             return 0.;
         }
         let surface = face
-            .cast::<dyn FaceDivider>()
             .split_surface_tool()
-            .cast::<ShapeUpgradeSplitSurfaceAngle>();
+            .downcast::<ShapeUpgradeSplitSurfaceAngle>();
         surface
             .get()
             .map_or(0., ShapeUpgradeSplitSurfaceAngle::max_angle)
@@ -66,7 +65,7 @@ impl ShapeUpgradeShapeDivideAngle {
 }
 fn configure_angle_face(face: &Handle<dyn FaceDivider>, maximum_angle: f64) {
     face.set_split_surface_tool(
-        &Handle::new(ShapeUpgradeSplitSurfaceAngle::new(maximum_angle)).cast(),
+        &Handle::new(ShapeUpgradeSplitSurfaceAngle::new(maximum_angle)).into_upcast(),
     );
     face.set_wire_divide_tool(&Handle::default());
 }

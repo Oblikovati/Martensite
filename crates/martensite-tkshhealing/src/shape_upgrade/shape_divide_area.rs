@@ -113,7 +113,7 @@ impl ShapeUpgradeShapeDivideArea {
         tool.set_numbers_uv_splits(settings.u_splits, settings.v_splits)
             .expect("wrapper settings keep positive U/V products in range");
         tool.set_splitting_by_number(settings.by_number);
-        Handle::new(tool).cast()
+        Handle::new(tool).into_upcast()
     }
 }
 fn default_settings() -> AreaDivisionSettings {
