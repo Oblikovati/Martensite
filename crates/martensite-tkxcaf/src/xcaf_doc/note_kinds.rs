@@ -8,7 +8,7 @@ use super::support::{find, live};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::osd::File;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeType, RuntimeTyped, SharedState};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdf::{
@@ -39,13 +39,31 @@ const NOTE_BIN_DATA_ID: Guid = guid_from_text("E9055501-F0FC-4864-BE4B-284FDA7DD
 /// ```
 #[derive(Default)]
 pub struct XCAFDocNoteComment {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     note: XCAFDocNoteFields,
     comment: SharedState<ExtendedString>,
 }
-martensite_tkernel::impl_transient!(XCAFDocNoteComment, "XCAFDocNoteComment", dyn XCAFDocNote, transient,
-    interfaces: [dyn TdfAttribute, dyn XCAFDocNote]);
+martensite_tkernel::impl_transient!(XCAFDocNoteComment, "XCAFDocNoteComment", dyn XCAFDocNote,
+    interfaces: [dyn TdfAttribute, dyn XCAFDocNote, dyn XCAFDocNoteCommentSource]);
+/// A comment or balloon whose embedded comment is available through a typed handle.
+pub trait XCAFDocNoteCommentSource: XCAFDocNote {
+    /// Borrow the original comment; `note.comment_base().comment()`.
+    fn comment_base(&self) -> &XCAFDocNoteComment;
+}
+impl RuntimeTyped for dyn XCAFDocNoteCommentSource {
+    const TYPE_NAME: &'static str = XCAFDocNoteComment::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        XCAFDocNoteComment::static_type()
+    }
+}
+martensite_tkernel::impl_transient_interface_target!(dyn XCAFDocNoteCommentSource);
+
+impl XCAFDocNoteCommentSource for XCAFDocNoteComment {
+    fn comment_base(&self) -> &XCAFDocNoteComment {
+        self
+    }
+}
 impl XCAFDocNote for XCAFDocNoteComment {
     fn note_fields(&self) -> &XCAFDocNoteFields {
         &self.note
@@ -105,8 +123,8 @@ impl TdfAttribute for XCAFDocNoteComment {
     /// `Restore`: the note, then the comment of another comment.
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
         xcaf_doc_note_restore(self, with)?;
-        if let Some(other) = with.cast::<XCAFDocNoteComment>().get() {
-            *self.comment.write() = other.comment();
+        if let Some(other) = with.view::<dyn XCAFDocNoteCommentSource>().get() {
+            *self.comment.write() = other.comment_base().comment();
         }
         Ok(())
     }
@@ -120,8 +138,8 @@ impl TdfAttribute for XCAFDocNoteComment {
         _table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
         xcaf_doc_note_paste(self, into)?;
-        if let Some(other) = into.cast::<XCAFDocNoteComment>().get() {
-            other.set_comment(&self.comment())?;
+        if let Some(other) = into.view::<dyn XCAFDocNoteCommentSource>().get() {
+            other.comment_base().set_comment(&self.comment())?;
         }
         Ok(())
     }
@@ -147,8 +165,13 @@ impl TdfAttribute for XCAFDocNoteComment {
 pub struct XCAFDocNoteBalloon {
     comment: XCAFDocNoteComment,
 }
-martensite_tkernel::impl_transient!(XCAFDocNoteBalloon, "XCAFDocNoteBalloon", XCAFDocNoteComment, comment,
-    interfaces: [dyn TdfAttribute, dyn XCAFDocNote]);
+martensite_tkernel::impl_transient!(XCAFDocNoteBalloon, "XCAFDocNoteBalloon", XCAFDocNoteComment,
+    interfaces: [dyn TdfAttribute, dyn XCAFDocNote, dyn XCAFDocNoteCommentSource]);
+impl XCAFDocNoteCommentSource for XCAFDocNoteBalloon {
+    fn comment_base(&self) -> &XCAFDocNoteComment {
+        &self.comment
+    }
+}
 impl XCAFDocNote for XCAFDocNoteBalloon {
     fn note_fields(&self) -> &XCAFDocNoteFields {
         &self.comment.note
@@ -251,12 +274,11 @@ struct BinDataFields {
 /// `XCAFDocNoteBinData`: a note with binary data, its title and MIME type.
 #[derive(Default)]
 pub struct XCAFDocNoteBinData {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     note: XCAFDocNoteFields,
     fields: SharedState<BinDataFields>,
 }
-martensite_tkernel::impl_transient!(XCAFDocNoteBinData, "XCAFDocNoteBinData", dyn XCAFDocNote, transient,
+martensite_tkernel::impl_transient!(XCAFDocNoteBinData, "XCAFDocNoteBinData", dyn XCAFDocNote,
     interfaces: [dyn TdfAttribute, dyn XCAFDocNote]);
 impl XCAFDocNote for XCAFDocNoteBinData {
     fn note_fields(&self) -> &XCAFDocNoteFields {

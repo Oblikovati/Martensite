@@ -8,7 +8,7 @@ use martensite_tkservice::graphic3d::{
     graphic3d_convert_to_compatible,
 };
 use martensite_tkservice::image::{
-    ImageCompressedPixMap, ImagePixMap, ImageSupportedFormats, ImageTextureMembers,
+    ImageCompressedPixMap, ImagePixMapObject, ImageSupportedFormats, ImageTextureMembers,
     ImageTextureSource,
 };
 
@@ -25,8 +25,7 @@ pub struct XCAFPrsTexture {
     texture: Graphic3dTexture2D,
     image_source: Handle<dyn ImageTextureSource>,
 }
-martensite_tkernel::impl_transient!(XCAFPrsTexture, "XCAFPrsTexture", Graphic3dTexture2D,
-    texture, interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture2DSource]);
+martensite_tkernel::impl_transient!(XCAFPrsTexture, "XCAFPrsTexture", Graphic3dTexture2D, interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture2DSource]);
 
 impl Graphic3dTextureRoot for XCAFPrsTexture {
     fn texture_root_base(&self) -> &Graphic3dTextureRootBase {
@@ -44,7 +43,10 @@ impl Graphic3dTextureRoot for XCAFPrsTexture {
             })
     }
     /// `GetImage`: the image of the source converted to a supported format, null without one.
-    fn get_image(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn get_image(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn ImagePixMapObject> {
         let Some(source) = self.image_source.get() else {
             return Handle::default();
         };

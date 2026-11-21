@@ -8,7 +8,7 @@ use super::graph_links::{
 use super::support::{find, live};
 use super::{XCAFDoc, XCAFDocDatum, XCAFDocDimension, XCAFDocGeomTolerance};
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Guid, Handle};
+use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeTyped, Transient};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::tdata_std::TDataStdTreeNode;
 use martensite_tklcaf::tdf::{TdfAttributeState, TdfLabel};
@@ -312,7 +312,7 @@ impl XCAFDocDimTolTool {
 }
 
 /// The GD&T attributes with an object that has a presentation shape.
-trait GdtEntry: martensite_tkernel::standard::RuntimeTyped + Sized {
+trait GdtEntry: RuntimeTyped + Transient + Sized {
     /// `GetID`.
     fn entry_id() -> Guid;
     /// The presentation of the object, `None` without object.

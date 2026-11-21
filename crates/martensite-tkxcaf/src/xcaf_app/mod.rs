@@ -4,7 +4,7 @@ use crate::xcaf_prs::XCAFPrsDriver;
 use martensite_tkcdf::cdf::CdfApplication;
 use martensite_tkcdf::cdm::CdmDocument;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tklcaf::tdoc_std::{TDocStdApplication, TDocStdApplicationBase, TDocStdDocument};
 use martensite_tkservice::json_dump::{base_class, class_begin, field_integer};
 use martensite_tkvcaf::tprs_std::TPrsStdDriverTable;
@@ -27,10 +27,9 @@ use std::sync::OnceLock;
 /// ```
 #[derive(Default)]
 pub struct XCAFAppApplication {
-    transient: StandardTransient,
     base: TDocStdApplicationBase,
 }
-martensite_tkernel::impl_transient!(XCAFAppApplication, "XCAFAppApplication", dyn TDocStdApplication, transient,
+martensite_tkernel::impl_transient!(XCAFAppApplication, "XCAFAppApplication", dyn TDocStdApplication,
     interfaces: [dyn martensite_tkcdf::cdm::CdmApplication, dyn CdfApplication, dyn TDocStdApplication]);
 
 impl XCAFAppApplication {

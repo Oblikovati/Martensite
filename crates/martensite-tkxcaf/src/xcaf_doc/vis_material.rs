@@ -7,7 +7,7 @@ use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::quantity::{Color, ColorRgba, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::short_real::short_real_epsilon;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
@@ -65,12 +65,11 @@ impl Default for VisMaterialFields {
 /// ```
 #[derive(Default)]
 pub struct XCAFDocVisMaterial {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     pub(super) fields: SharedState<VisMaterialFields>,
     raw_name: SharedState<Handle<HAsciiString>>,
 }
-martensite_tkernel::impl_transient!(XCAFDocVisMaterial, "XCAFDocVisMaterial", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocVisMaterial, "XCAFDocVisMaterial", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocVisMaterial {
     /// `XCAFDocVisMaterial()`: undefined, blend-auto alpha with a 0.5 cut-off, automatic

@@ -53,14 +53,12 @@ struct GeomToleranceFields {
 /// ```
 #[derive(Default)]
 pub struct XCAFDimTolObjectsGeomToleranceObject {
-    transient: StandardTransient,
     fields: SharedState<GeomToleranceFields>,
 }
 martensite_tkernel::impl_transient!(
     XCAFDimTolObjectsGeomToleranceObject,
     "XCAFDimTolObjectsGeomToleranceObject",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl XCAFDimTolObjectsGeomToleranceObject {
@@ -76,7 +74,6 @@ impl XCAFDimTolObjectsGeomToleranceObject {
             .map(|o| o.fields.read().clone())
             .unwrap_or_default();
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

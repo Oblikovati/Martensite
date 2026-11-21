@@ -59,14 +59,12 @@ pub(super) struct DimensionFields {
 /// ```
 #[derive(Default)]
 pub struct XCAFDimTolObjectsDimensionObject {
-    transient: StandardTransient,
     pub(super) fields: SharedState<DimensionFields>,
 }
 martensite_tkernel::impl_transient!(
     XCAFDimTolObjectsDimensionObject,
     "XCAFDimTolObjectsDimensionObject",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 /// A new shared real array `1..=values.len()` holding `values`.
@@ -94,7 +92,6 @@ impl XCAFDimTolObjectsDimensionObject {
             .map(|o| o.fields.read().clone())
             .unwrap_or_default();
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

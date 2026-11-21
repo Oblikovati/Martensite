@@ -43,15 +43,13 @@ struct GraphData {
 
 /// `XCAFDocAssemblyGraph`.
 pub struct XCAFDocAssemblyGraph {
-    transient: StandardTransient,
     shape_tool: Handle<XCAFDocShapeTool>,
     data: SharedState<GraphData>,
 }
 martensite_tkernel::impl_transient!(
     XCAFDocAssemblyGraph,
     "XCAFDocAssemblyGraph",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl XCAFDocAssemblyGraph {
@@ -83,7 +81,6 @@ impl XCAFDocAssemblyGraph {
             ));
         }
         let graph = Self {
-            transient: StandardTransient::default(),
             shape_tool,
             data: SharedState::default(),
         };

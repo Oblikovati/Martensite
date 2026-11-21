@@ -7,10 +7,10 @@ use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::{Guid, Handle};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::tdata_std::TDataStdInteger;
-use martensite_tklcaf::tdf::{TdfAttributeState, TdfLabel, TdfTool};
+use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeState, TdfLabel, TdfTool};
 use martensite_tklcaf::tdoc_std::{TDocStdDocument, TDocStdStandardApplication};
 use martensite_tkxcaf::xcaf_doc::{
-    XCAFDocAssemblyItemId, XCAFDocDocumentTool, XCAFDocNote, XCAFDocNotesTool,
+    XCAFDocAssemblyItemId, XCAFDocDocumentTool, XCAFDocNote, XCAFDocNoteBalloon, XCAFDocNoteCommentSource, XCAFDocNotesTool,
 };
 
 struct NotesContext {
@@ -447,4 +447,18 @@ fn XCAFDocNotesToolTest__GdtNotes_D1_ReuseAnnotatedItemLabels() {
                 .unwrap()
     );
     expect_counts(&context, 3, 2, 0);
+}
+
+#[test]
+fn balloon_restore_uses_the_same_embedded_comment_across_handle_views() {
+    let (_application, document) = support::new_document("BinXCAF");
+    let label = document.main().unwrap();
+    let text = ExtendedString::from_utf8("restored balloon");
+    let source = XCAFDocNoteBalloon::set(&label, &text, &text, &text).unwrap();
+    let view = source.upcast::<dyn XCAFDocNoteCommentSource>();
+    assert_eq!(view.object_address(), source.object_address());
+    assert!(std::ptr::eq(view.comment_base(), source.note_comment()));
+    let restored = XCAFDocNoteBalloon::new();
+    restored.restore(&source.upcast::<dyn TdfAttribute>()).unwrap();
+    assert_eq!(restored.comment(), text);
 }

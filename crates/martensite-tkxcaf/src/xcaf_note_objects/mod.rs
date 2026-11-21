@@ -29,14 +29,12 @@ struct NoteFields {
 /// ```
 #[derive(Default)]
 pub struct XCAFNoteObjectsNoteObject {
-    transient: StandardTransient,
     fields: SharedState<NoteFields>,
 }
 martensite_tkernel::impl_transient!(
     XCAFNoteObjectsNoteObject,
     "XCAFNoteObjectsNoteObject",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl XCAFNoteObjectsNoteObject {
@@ -51,7 +49,6 @@ impl XCAFNoteObjectsNoteObject {
             .map(|o| o.fields.read().clone())
             .unwrap_or_default();
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

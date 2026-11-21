@@ -53,14 +53,12 @@ struct DatumFields {
 /// ```
 #[derive(Default)]
 pub struct XCAFDimTolObjectsDatumObject {
-    transient: StandardTransient,
     fields: SharedState<DatumFields>,
 }
 martensite_tkernel::impl_transient!(
     XCAFDimTolObjectsDatumObject,
     "XCAFDimTolObjectsDatumObject",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl XCAFDimTolObjectsDatumObject {
@@ -76,7 +74,6 @@ impl XCAFDimTolObjectsDatumObject {
             .map(|o| o.fields.read().clone())
             .unwrap_or_default();
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

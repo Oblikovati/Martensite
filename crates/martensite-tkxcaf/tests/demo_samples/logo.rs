@@ -23,7 +23,7 @@ use martensite_tkg3d::adaptor3d::{Adaptor3dCurve as _, Adaptor3dCurveOnSurface, 
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkg3d::top_abs::{ShapeEnum, State};
 use martensite_tkgeomalgo::geom_plate::{
-    GeomPlateBuildPlateSurface, GeomPlateCurveConstraint, GeomPlateMakeApprox,
+    GeomPlateBuildPlateSurface, GeomPlateCurveConstraintSource, GeomPlateMakeApprox,
     GeomPlatePlateG0Criterion,
 };
 use martensite_tkgeombase::adv_app2var::{AdvApp2VarCriterionRepartition, AdvApp2VarCriterionType};
@@ -134,7 +134,7 @@ fn add_front(
     face: &Shape,
 ) -> Handle<Adaptor3dCurveOnSurface> {
     let front = curve_on_face(&topods::edge(edge).unwrap(), &topods::face(face).unwrap());
-    let constraint: Handle<GeomPlateCurveConstraint> =
+    let constraint: Handle<dyn GeomPlateCurveConstraintSource> =
         BRepFillCurveConstraint::on_surface(&front, 0, 0, [0.0001, 0.01, 0.1]).unwrap();
     plate.add_curve(&constraint);
     front

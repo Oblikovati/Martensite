@@ -4,9 +4,7 @@ use super::ais_object_styles::{display_text, set_shape_material, set_style_to_dr
 use super::{XCAFPrs, XCAFPrsStyle};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkmath::toploc::Location;
@@ -43,11 +41,10 @@ struct AisObjectFields {
 
 /// `XCAFPrsAISObject`.
 pub struct XCAFPrsAISObject {
-    transient: StandardTransient,
     base: AisColoredShapeBase,
     fields: SharedState<AisObjectFields>,
 }
-martensite_tkernel::impl_transient!(XCAFPrsAISObject, "XCAFPrsAISObject", dyn AisColoredShapeSource, transient,
+martensite_tkernel::impl_transient!(XCAFPrsAISObject, "XCAFPrsAISObject", dyn AisColoredShapeSource,
     interfaces: [dyn AisColoredShapeSource, dyn AisShapeSource, dyn AisInteractiveObject,
     dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
@@ -56,7 +53,6 @@ impl XCAFPrsAISObject {
     /// syncing its styles.
     pub fn new(label: &TdfLabel) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisColoredShapeBase::new(&Shape::default()),
             fields: SharedState::new(AisObjectFields {
                 label: label.clone(),
