@@ -190,17 +190,21 @@ ThreadSanitizer controls eligible.
 | `tkcaf`, `tkfeat`, `vulkan` | `tkfillet` |
 | `tkdeiges`, `tkdestep` | `tkdestl` |
 
-On source changes, the unsafe ratchet scans all toolkit source. Scoped compiler
+The gate checks toolkit source counts against the event base per file and
+unsafe construct. Update the candidate's source baseline when counts fall. The
+gate requires that baseline to match the candidate tree. Run
+`cargo test -p martensite-build unsafe_inventory_matches_reviewed_baseline`
+to see the actual counts when they differ from the record. Scoped compiler
 diagnostics go in `target/unsafe-inventory/migration/`. Their group counts must
-stay within the exact base revision's reviewed compiler inventory. A scoped
-capture can emit fewer warnings because the compiler checks fewer targets.
-Have any changes to the reviewed ceilings approved in the base before using
-them in a migration check.
+stay within the event base's reviewed compiler inventory. A scoped capture can
+emit fewer warnings because the compiler checks fewer targets.
 
-After all crates migrate, remove the temporary gate in a cleanup PR and use
-the normal workspace compiler inventory, package tests, and sanitizer
-selection against `release/next`. Record any compiler inventory removals in
-the reviewed full baseline before the final merge.
+Once the cursor reaches the end, branch from the completed feature tip and
+remove the temporary gate and cursor on that integration branch. Open the
+integration PR to `release/next` with all feature commits as ancestors. The
+ordinary PR gate will run the workspace compiler inventory, affected package
+suites, and sanitizer controls. Record any compiler inventory removals in
+the reviewed full baseline before merging.
 
 ## Risks and open points
 

@@ -15,7 +15,6 @@ use scope::{Selection, select};
 const LEVELS: &str = include_str!("object_model_pr/levels.txt");
 const CURSOR: &str = "docs/features/rust-object-model/migration-step";
 const FEATURE_DOCS: &str = "docs/features/rust-object-model/";
-const INVENTORY_DOCS: &str = "docs/features/safe-toolkits/";
 // These packages consume migrated toolkits without declaring objects of their own.
 const VERIFICATION_ONLY: [&str; 3] = [
     "martensite-process-policy",
@@ -45,7 +44,12 @@ pub(crate) fn run(context: &BuildContext<'_>, args: &ObjectModelPrArgs) -> Build
     if args.plan {
         return emit_conditions(&selection, &controls);
     }
-    crate::pr::lint_changed_files(context, &args.base, &changed)?;
+    context
+        .reporter
+        .step("Check toolkit unsafe source against the PR base", || {
+            crate::unsafe_inventory::check_candidate_ceiling(context, &args.base)
+        })?;
+    crate::pr::lint_touched_text(context, &args.base, &changed)?;
     qualification(context, &args.base, selection, &controls)
 }
 
@@ -155,7 +159,7 @@ fn has_verification_record(changed: &[ChangedFile], name: &str) -> bool {
 fn in_step(path: &str, package_dir: &str) -> bool {
     path.starts_with(package_dir)
         || path.starts_with(FEATURE_DOCS)
-        || path == format!("{INVENTORY_DOCS}unsafe-source-baseline.json")
+        || path == crate::unsafe_inventory::SOURCE_BASELINE
         || matches!(path, "Cargo.lock" | "CHANGELOG.md" | "README.md")
 }
 

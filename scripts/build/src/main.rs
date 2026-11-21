@@ -47,7 +47,6 @@ mod suite_weights;
 mod targets;
 mod thread_sanitizer;
 mod thread_sanitizer_selection;
-#[cfg(test)]
 mod unsafe_inventory;
 mod version;
 #[cfg(test)]
