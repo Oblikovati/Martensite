@@ -14,7 +14,7 @@ use martensite_tkbrep::toptools::{IndexedDataMapOfShapeListOfShape, ShapeMapHash
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{IndexedDataMap, List};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomSweptSurface;
 use martensite_tkg3d::geom::{
@@ -112,13 +112,12 @@ pub(super) fn down_cast_basis(c: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct DraftModification {
-    parent: StandardTransient,
     state: SharedState<DraftState>,
 }
 
 impl_transient!(
     DraftModification, "Draft_Modification", dyn BRepToolsModification,
-    parent, interfaces: [dyn BRepToolsModification]
+    interfaces: [dyn BRepToolsModification]
 );
 
 impl DraftModification {
@@ -138,7 +137,6 @@ impl DraftModification {
             )?;
         }
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }
