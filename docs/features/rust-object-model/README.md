@@ -163,6 +163,16 @@ declarations, handles, and persistent objects.
 
 ## Local verification
 
+TKBrep passed 684 tests, including 89 dataset cases and 16 binary location fixtures.
+Compared with `v0.13.1`, nine paired release runs on Linux x86-64 used 56.4% less time
+for a scoped edge read, 51.6% less for an owning copy, 51.9% less for traversal and
+31.6% less for a binary round trip. Peak RSS fell by 1.6–4.1% across the four cases.
+The 256-edge fixture serialized to identical bytes, and the scoped read added no
+strong TShape owner. `Shape` and `Edge` each went from 64 to 40 bytes.
+
+TKDE passed 65 tests, including the recorded native transfer and plugin lifecycle
+cases. Its 233-line replay fixture matches `v0.13.1` byte for byte.
+
 `martensite-process-policy` uses TKernel platform adapters and has no transient
 classes of its own. With the new TKernel ownership model at `5f4399a6`, its 13
 tests and documentation tests passed, and all-target Clippy passed with warnings
