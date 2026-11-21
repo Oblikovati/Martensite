@@ -16,7 +16,7 @@ use martensite_tkcdf::{
 };
 use martensite_tkernel::{
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::ExtendedString,
 };
 use std::sync::Mutex;
@@ -46,11 +46,10 @@ const CASES: [RawCase; 3] = [
 
 fn bound_application(reader: Handle<FaultReader>) -> Handle<FaultApplication> {
     let app = Handle::new(FaultApplication {
-        transient: StandardTransient::default(),
         base: CdfApplicationBase::default(),
         reader,
     });
-    app.application_base().bind_self(&app.cast());
+    app.application_base().bind_self(&app.upcast());
     app
 }
 fn metadata(file: &ExtendedString) -> Handle<CdmMetaData> {
@@ -71,7 +70,6 @@ fn fault_reader(
     filter: &Handle<PcdmReaderFilter>,
 ) -> Handle<FaultReader> {
     Handle::new(FaultReader {
-        transient: StandardTransient::default(),
         base: PcdmReaderBase::default(),
         failure: Failure::with_type_bytes("Standard_DomainError", case.message, case.stack),
         status,
@@ -94,7 +92,7 @@ fn run_case(case: &RawCase, status: PcdmReaderStatus) {
     filter.set_mode(PcdmReaderFilterAppendMode::Protect);
     let app = bound_application(fault_reader(case, status, &document, &filter));
     let metadata = metadata(&file.path);
-    document.open(&app.cast());
+    document.open(&app.upcast());
     document.set_meta_data(&metadata).unwrap();
     check_result(&app, &metadata, &filter, case, status);
     assert!(metadata.document() == document);

@@ -8,19 +8,18 @@ use martensite_tkernel::{
     ncollection::IndexedDataMap,
     plugin::{PluginLoader, StaticPluginLibraries},
     resource::{NativeResourceEnvironment, NativeResourceIo},
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState, Transient},
     tcollection::ExtendedString,
 };
 use std::sync::{Arc, RwLockWriteGuard};
 
 /// `Plugin::Load` as the application calls it: the transient a GUID's plugin makes.
-pub type CdfPluginLoad =
-    Arc<dyn Fn(&Guid) -> Result<Handle<StandardTransient>, Failure> + Send + Sync>;
+pub type CdfPluginLoad = Arc<dyn Fn(&Guid) -> Result<Handle<dyn Transient>, Failure> + Send + Sync>;
 
 /// The native `Plugin::Load`: the "Plugin" resources of the host, libraries the port
 /// cannot open natively (none is registered), messages on standard output.
-pub fn native_plugin_load(guid: &Guid) -> Result<Handle<StandardTransient>, Failure> {
-    let mut loader: PluginLoader<Handle<StandardTransient>> = PluginLoader::new(
+pub fn native_plugin_load(guid: &Guid) -> Result<Handle<dyn Transient>, Failure> {
+    let mut loader: PluginLoader<Handle<dyn Transient>> = PluginLoader::new(
         Arc::new(NativeResourceIo),
         Arc::new(NativeResourceEnvironment),
         Box::new(StaticPluginLibraries::default()),
@@ -52,7 +51,7 @@ impl Default for CdfApplicationBase {
     fn default() -> Self {
         let cdm = CdmApplicationBase::default();
         let driver: Handle<dyn CdfMetaDataDriver> =
-            Handle::new(CdfFwosDriver::new(&cdm.shared_meta_data_look_up_table())).cast();
+            Handle::new(CdfFwosDriver::new(&cdm.shared_meta_data_look_up_table())).into_upcast();
         Self {
             cdm,
             retrievable_status: SharedState::new(PcdmReaderStatus::Ok),
@@ -112,7 +111,7 @@ impl CdfApplicationBase {
     }
     /// `Load(aGUID)`: the application a plugin makes, null when it is not one.
     pub fn load(guid: &Guid) -> Result<Handle<dyn CdfApplication>, Failure> {
-        Ok(native_plugin_load(guid)?.cast())
+        Ok(native_plugin_load(guid)?.into_cast())
     }
 }
 
@@ -156,7 +155,7 @@ pub trait CdfApplication: CdmApplication {
         Ok(())
     }
 }
-impl_transient_interface!(dyn CdfApplication, "CDF_Application", dyn CdmApplication);
+impl_transient_interface!(dyn CdfApplication, "CDF_Application", dyn CdmApplication, upcasts: [dyn CdmApplication]);
 
 /// Fills the `CdmApplication` impl of a concrete `CDF_Application`: the base accessor and
 /// the `Retrieve`/`DocumentVersion` overrides of CDF.

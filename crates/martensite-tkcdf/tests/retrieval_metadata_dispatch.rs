@@ -77,12 +77,12 @@ fn install_replacement(
         if phase == stage {
             weak.upgrade()
                 .base
-                .set_meta_data_driver(&replacement.cast());
+                .set_meta_data_driver(&replacement.upcast());
         }
         Ok(())
     });
     let first = injected_driver(app, true, Some(hook));
-    app.base.set_meta_data_driver(&first.cast());
+    app.base.set_meta_data_driver(&first.upcast());
     first
 }
 fn assert_trace(app: &FakeHeaderApplication, version: &str, phases: &[&str]) {
@@ -95,7 +95,7 @@ fn successful_metadata_queries_keep_the_retrieval_status_and_trace() {
     for version in ["v7", ""] {
         let app = prepared_application();
         let driver = injected_driver(&app, true, Some(checked_query_hook(version, |_| Ok(()))));
-        app.base.set_meta_data_driver(&driver.cast());
+        app.base.set_meta_data_driver(&driver.upcast());
         assert_eq!(
             retrieve(&app, version).unwrap(),
             PcdmReaderStatus::NoDocument
@@ -114,7 +114,7 @@ fn typed_provider_failures_stop_at_the_original_metadata_boundary() {
         ] {
             let app = prepared_application();
             let driver = injected_driver(&app, true, Some(failure_query_hook(version, stage)));
-            app.base.set_meta_data_driver(&driver.cast());
+            app.base.set_meta_data_driver(&driver.upcast());
             assert_eq!(retrieve(&app, version).unwrap_err(), callback_failure());
             assert_trace(&app, version, &phases);
         }
@@ -167,7 +167,7 @@ fn unversioned_find_forwards_empty_version_and_the_original_failure() {
             false,
             Some(hook),
         );
-        let driver: Handle<dyn CdfMetaDataDriver> = driver.cast();
+        let driver: Handle<dyn CdfMetaDataDriver> = driver.upcast();
         let outcome = driver.try_find_without_version(&text("folder"), &text("name"));
         assert_eq!(
             outcome,

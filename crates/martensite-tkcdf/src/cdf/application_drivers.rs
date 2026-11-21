@@ -50,7 +50,7 @@ pub(crate) fn reader_from_format<A: CdfApplication + ?Sized>(
 ) -> Result<Handle<dyn PcdmReader>, Failure> {
     let base = application.cdf_application_base();
     if let Ok(reader) = base.readers().find_from_key(format) {
-        return Ok(reader.cast());
+        return Ok(reader.upcast());
     }
     let (name, utf8) = resource_name(format, ".RetrievalPlugin");
     let Some(value) = resource_value(application, &utf8)? else {
@@ -63,13 +63,14 @@ pub(crate) fn reader_from_format<A: CdfApplication + ?Sized>(
     let id = plugin_id(&value)?;
     let loaded = (base.plugin_load())(&id)
         .inspect_err(|_| base.set_retrievable_status(PcdmReaderStatus::WrongResource))?;
+    // A plugin receiver may inspect the failure status when it is released.
     let reader: Handle<dyn PcdmRetrievalDriver> = loaded.cast();
     match reader.get() {
         Some(driver) => driver.set_format(format),
         None => base.set_retrievable_status(PcdmReaderStatus::WrongResource),
     }
     base.readers().add(format.clone(), reader.clone());
-    Ok(reader.cast())
+    Ok(reader.into_upcast())
 }
 
 /// `WriterFromFormat`: a missing resource or a failing plugin also records a null writer.
@@ -98,6 +99,7 @@ pub(crate) fn writer_from_format<A: CdfApplication + ?Sized>(
             return Err(failure);
         }
     };
+    // Keep the plugin alive until the failure status and cache entry are published.
     let writer: Handle<dyn PcdmStorageDriver> = loaded.cast();
     match writer.get() {
         Some(driver) => driver.set_format(format),

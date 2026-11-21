@@ -8,7 +8,7 @@
 use martensite_tkernel::{
     impl_transient,
     ncollection::Map,
-    standard::{RuntimeType, SharedState, StandardTransient},
+    standard::{RuntimeType, SharedState, Transient},
     tcollection::AsciiString,
 };
 use std::{collections::BTreeMap, sync::Arc};
@@ -60,16 +60,10 @@ struct FilterState {
 /// assert!(!filter.is_passed_entry(&AsciiString::new("0:10")));
 /// ```
 pub struct PcdmReaderFilter {
-    transient: StandardTransient,
     state: SharedState<FilterState>,
     hooks: Arc<dyn PcdmReaderFilterHooks>,
 }
-impl_transient!(
-    PcdmReaderFilter,
-    "PCDM_ReaderFilter",
-    StandardTransient,
-    transient
-);
+impl_transient!(PcdmReaderFilter, "PCDM_ReaderFilter", dyn Transient);
 
 impl Default for PcdmReaderFilter {
     fn default() -> Self {
@@ -92,7 +86,6 @@ impl PcdmReaderFilter {
     /// ```
     pub fn with_hooks(hooks: Arc<dyn PcdmReaderFilterHooks>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::default(),
             hooks,
         }

@@ -75,7 +75,7 @@ impl CdfStore {
     }
     /// The native `theMetaDataDriver` macro: the driver of the current document's application.
     fn meta_data_driver(&self) -> Result<Handle<dyn CdfMetaDataDriver>, Failure> {
-        let application: Handle<dyn CdfApplication> = self.current()?.application()?.cast();
+        let application: Handle<dyn CdfApplication> = self.current()?.application()?.into_cast();
         live(
             &application,
             "CDF_Store: the application is not a CDF_Application",
@@ -275,7 +275,7 @@ impl CdfStore {
         if current.is_stored() {
             return Ok(());
         }
-        let application: Handle<dyn CdfApplication> = current.application()?.cast();
+        let application: Handle<dyn CdfApplication> = current.application()?.into_cast();
         let folder = live(&application, "CDF_Store::FindDefault")?.default_folder()?;
         current.set_requested_folder(&folder);
         let driver = self.meta_data_driver()?;

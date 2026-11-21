@@ -14,8 +14,8 @@ pub type SharedResourceManager = Arc<SharedState<ResourceManager>>;
 ///
 /// ```
 /// use martensite_tkcdf::live;
-/// use martensite_tkernel::standard::{Handle, StandardTransient};
-/// let empty: Handle<StandardTransient> = Handle::default();
+/// use martensite_tkernel::standard::{Handle, Transient};
+/// let empty: Handle<dyn Transient> = Handle::default();
 /// assert_eq!(live(&empty, "x").err().unwrap().exception_type(), "Standard_NullObject");
 /// ```
 pub fn live<'a, T: ?Sized + RuntimeTyped>(
