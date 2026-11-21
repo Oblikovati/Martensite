@@ -50,7 +50,9 @@ pub(super) fn add_isoline_groups(
     u: &mut StdPrsIsolinePolylines,
     v: &mut StdPrsIsolinePolylines,
 ) -> Result<(), Failure> {
-    Prs3d::add_primitives_group(prs, &drawer.u_iso_aspect().cast(), u)?;
-    Prs3d::add_primitives_group(prs, &drawer.v_iso_aspect().cast(), v)?;
+    let u_aspect = drawer.u_iso_aspect();
+    Prs3d::add_primitives_group_with_line(prs, u_aspect.get().map(|iso| iso.line_aspect()), u)?;
+    let v_aspect = drawer.v_iso_aspect();
+    Prs3d::add_primitives_group_with_line(prs, v_aspect.get().map(|iso| iso.line_aspect()), v)?;
     Ok(())
 }

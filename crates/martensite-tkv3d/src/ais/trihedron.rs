@@ -44,7 +44,7 @@ pub struct AisTrihedronFields {
     /// Empty line used to retain selectable hidden planes.
     pub hidden_line_aspect: Handle<Graphic3dAspectLine3d>,
     /// Cached arrays; selection uses the last computed geometry.
-    pub primitives: [Handle<Graphic3dArrayOfPrimitives>; Prs3dDatumParts::NB],
+    pub primitives: [Handle<dyn Graphic3dArraySource>; Prs3dDatumParts::NB],
 }
 /// Embeddable inherited and native protected state; `AisTrihedronBase::new(&placement)?`.
 pub struct AisTrihedronBase {
@@ -184,7 +184,7 @@ pub trait AisTrihedronSource: AisInteractiveObject {
         self.trihedron_base().fields.write().labels[part as usize] = label.clone();
     }
     /// Last computed native array; `trihedron.array_of_primitives(Prs3dDatumParts::XAxis)`.
-    fn array_of_primitives(&self, part: Prs3dDatumParts) -> Handle<Graphic3dArrayOfPrimitives> {
+    fn array_of_primitives(&self, part: Prs3dDatumParts) -> Handle<dyn Graphic3dArraySource> {
         self.trihedron_base().fields.read().primitives[part as usize].clone()
     }
     /// Preserve native set_own_datum_aspect ownership behavior; `trihedron.set_own_datum_aspect()?`.

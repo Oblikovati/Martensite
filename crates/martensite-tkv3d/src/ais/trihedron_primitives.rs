@@ -46,7 +46,7 @@ pub fn ais_trihedron_update_primitives<O: AisTrihedronSource + ?Sized>(
 fn store_trihedron_array<O: AisTrihedronSource + ?Sized>(
     object: &O,
     part: Prs3dDatumParts,
-    array: Handle<Graphic3dArrayOfPrimitives>,
+    array: Handle<dyn Graphic3dArraySource>,
 ) {
     object.trihedron_base().fields.write().primitives[part as usize] = array;
 }
@@ -63,14 +63,14 @@ fn build_trihedron_origin<O: AisTrihedronSource + ?Sized>(
     let array = if mode == Prs3dDatumMode::WireFrame {
         let points = Handle::new(Graphic3dArrayOfPoints::new(1, 0)?);
         points.add_vertex_pnt(&origin)?;
-        points.cast()
+        points.into_upcast()
     } else {
         let mut transform = Transform3::default();
         transform.set_translation_part(Vector3::from(origin.xyz()));
         let facets = datum.attribute(Prs3dDatumAttribute::ShadingNumberOfFacettes) as i32;
         let radius = datum.axis_length(Prs3dDatumParts::XAxis)
             * datum.attribute(Prs3dDatumAttribute::ShadingOriginRadiusPercent);
-        Prs3dToolSphere::create(radius, facets, facets, &transform)?.cast()
+        Prs3dToolSphere::create(radius, facets, facets, &transform)?.into_upcast()
     };
     store_trihedron_array(object, part, array);
     Ok(())
@@ -102,7 +102,7 @@ fn build_trihedron_axis<O: AisTrihedronSource + ?Sized>(
         store_trihedron_array(
             object,
             part,
-            Prs3dArrow::draw_shaded(&axis, radius, tube_length, 0., 0., facets)?.cast(),
+            Prs3dArrow::draw_shaded(&axis, radius, tube_length, 0., 0., facets)?.into_upcast(),
         );
     }
     if datum.draw_datum_part(arrow) {
@@ -110,7 +110,7 @@ fn build_trihedron_axis<O: AisTrihedronSource + ?Sized>(
         store_trihedron_array(
             object,
             arrow,
-            Prs3dArrow::draw_shaded(&axis, 0., length, radius, cone_length, facets)?.cast(),
+            Prs3dArrow::draw_shaded(&axis, 0., length, radius, cone_length, facets)?.into_upcast(),
         );
     }
     Ok(())
@@ -127,7 +127,7 @@ fn build_trihedron_wire_axis<O: AisTrihedronSource + ?Sized>(
         let segments = Handle::new(Graphic3dArrayOfSegments::new(2, 0, 0)?);
         segments.add_vertex_pnt(&origin)?;
         segments.add_vertex_pnt(&tip)?;
-        store_trihedron_array(object, part, segments.cast());
+        store_trihedron_array(object, part, segments.into_upcast());
     }
     let arrow = Prs3dDatumAspect::arrow_part_for_axis(part);
     if datum.draw_datum_part(arrow) {
@@ -141,7 +141,7 @@ fn build_trihedron_wire_axis<O: AisTrihedronSource + ?Sized>(
             length,
             facets,
         )?;
-        store_trihedron_array(object, arrow, array.cast());
+        store_trihedron_array(object, arrow, array.into_upcast());
     }
     Ok(())
 }
@@ -158,6 +158,6 @@ fn build_trihedron_plane<O: AisTrihedronSource + ?Sized>(
     for vertex in vertices {
         lines.add_vertex_pnt(&vertex)?;
     }
-    store_trihedron_array(object, part, lines.cast());
+    store_trihedron_array(object, part, lines.into_upcast());
     Ok(())
 }

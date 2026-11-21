@@ -163,14 +163,16 @@ fn emit_wf_iso_groups(
     drawer: &Prs3dDrawer,
     polylines: &mut WfPresentationPolylines,
 ) -> Result<(), Failure> {
-    Prs3d::add_primitives_group(
+    let u_aspect = drawer.u_iso_aspect();
+    Prs3d::add_primitives_group_with_line(
         &prs.observe(),
-        &drawer.u_iso_aspect().cast(),
+        u_aspect.get().map(|iso| iso.line_aspect()),
         &mut polylines[WF_ISO_U],
     )?;
-    Prs3d::add_primitives_group(
+    let v_aspect = drawer.v_iso_aspect();
+    Prs3d::add_primitives_group_with_line(
         &prs.observe(),
-        &drawer.v_iso_aspect().cast(),
+        v_aspect.get().map(|iso| iso.line_aspect()),
         &mut polylines[WF_ISO_V],
     )
 }

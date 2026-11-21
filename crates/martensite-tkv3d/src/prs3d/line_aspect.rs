@@ -167,12 +167,18 @@ mod tests {
         );
         iso.set_number(7);
         assert_eq!(iso.number(), 7);
-        let line: Handle<Prs3dLineAspect> = iso.cast();
-        assert!(!line.is_null());
+        let line = iso.line_aspect();
         assert_eq!(
-            line.dynamic_type().unwrap().name(),
-            Prs3dIsoAspect::TYPE_NAME
+            line.aspect().object_address(),
+            iso.aspect().object_address()
         );
+        let abstract_aspect = iso.upcast::<dyn Prs3dBasicAspect>();
+        let descriptor = abstract_aspect.dynamic_type().unwrap();
+        assert_eq!(descriptor.name(), Prs3dIsoAspect::TYPE_NAME);
+        assert!(std::ptr::eq(
+            descriptor.parent().unwrap(),
+            Prs3dLineAspect::static_type()
+        ));
         let mut stream = DumpStream::default();
         iso.dump_json(&mut stream, 0).unwrap();
         assert_eq!(stream.text(), "\"className\": \"Prs3dLineAspect\"");

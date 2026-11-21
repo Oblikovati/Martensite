@@ -23,7 +23,7 @@ impl StdPrsWfShape {
     pub fn add_all_edges(
         shape: &Shape,
         drawer: &Handle<Prs3dDrawer>,
-    ) -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
+    ) -> Result<Handle<dyn Graphic3dArraySource>, Failure> {
         let deflection = StdPrsToolTriangulatedShape::get_deflection(shape, drawer)?;
         let mut polylines = List::default();
         for category in classified_wf_edges(shape)? {

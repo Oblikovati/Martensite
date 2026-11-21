@@ -35,7 +35,7 @@ impl StdPrsWfShape {
     pub fn add_edges_on_triangulation(
         shape: &Shape,
         exclude_geometric: bool,
-    ) -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
+    ) -> Result<Handle<dyn Graphic3dArraySource>, Failure> {
         let mut points = Sequence::default();
         Self::append_edges_on_triangulation(&mut points, shape, exclude_geometric)?;
         if points.length() < 2 {
@@ -45,7 +45,7 @@ impl StdPrsWfShape {
         for point in points.iter() {
             segments.add_vertex_pnt(point)?;
         }
-        Ok(segments.cast())
+        Ok(segments.into_upcast())
     }
     /// Return all or isolated/internal shape vertices in native exploration order; `Self::add_vertexes(&shape,Prs3dVertexDrawMode::All)?`.
     pub fn add_vertexes(
