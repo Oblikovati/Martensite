@@ -5,8 +5,8 @@ the workers at eight. It was merged into its stacked base branch,
 `fix/496-line-on-2s-storage`, twelve seconds after that base had merged into
 `main`. Its commits `4b013360` and `e16ee94a` never reached `main` or
 `release/next`. #577 restored them and fixed the memory cost of one check. Across
-a long operation the parallel check still raised peak memory, so the self-check is
-serial again (#580); see the last section.
+a long operation the parallel check still raised peak memory until free heap pages
+were released before each parallel check (#580); see the last section.
 
 ## What went wrong with one context per worker
 
@@ -43,7 +43,8 @@ added worker: 255 MB serial, 422 MB with two workers, 626 MB with four and
 - When the self-check runs in parallel, it uses at most four workers. `Options`
   carry the bound to every pave-filler and self-check stage, so it is part of the
   operation, not a global setting. Boolean operations keep one worker per task,
-  as before. Since #580 the production self-check is serial.
+  as before. Since #580 the check releases free heap pages before it starts its
+  workers.
 
 Parallel mode stays off by default. Only callers that enable it are affected: the
 self-intersection check and the Boolean case runner.
@@ -128,8 +129,23 @@ Debug build, CI build settings, all CPUs:
 | parallel check, `MALLOC_ARENA_MAX=1` | 59.9 s | 316,156 |
 
 With one allocator arena the time is the same and the peak returns to the
-baseline, so the growth is freed memory that glibc keeps in the worker threads'
-arenas between checks, not live data. A library cannot set the process's arena
-policy, so the production check runs serially until its parallel path fits the
-tradeoff. #580 tracks where the retained memory is allocated: long-lived cached
-services built on worker threads, or short-lived task allocations.
+baseline, so the growth is freed memory, not live data. The serial work before a
+check leaves free pages in the main glibc arena; a serial check reuses them, but
+the parallel workers allocate in their own arenas, so their working set adds to
+the peak. An isolated check showed only +5.5% because nothing large had been freed
+before it.
+
+The check now calls `HeapRelease::release_free_pages` once before it starts its
+workers. `NativeHeapRelease` calls glibc's `malloc_trim(0)` on Linux and does
+nothing on other platforms, whose allocators were not measured. The call acts on
+the whole process heap, including the host application's memory. Matched runs of
+the same test, alternating with the baseline under the same host load:
+
+| Build | API time | Peak RSS (KiB) |
+| --- | ---: | ---: |
+| before #577 (`5161ffc6`) | 109.3 s, 103.7 s | 310,408, 311,864 |
+| parallel check with heap release | 65.9 s, 65.8 s | 314,816, 315,848 |
+
+A throwaway preload library that called `malloc_trim(0)` every 100 ms gave the
+same result (60.7 s, 309,928 KiB), so the remaining 1.3% is within the spread of
+two runs or is the cost of releasing only before each check.

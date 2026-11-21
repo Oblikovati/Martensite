@@ -7,12 +7,14 @@ use super::{CadPath, OsdError, OsdErrorAccess, WhoAmI};
 use crate::{Error, quantity::Date, tcollection::AsciiString};
 
 mod environment;
+mod heap_release;
 mod host;
 mod mem_info;
 mod native;
 mod shared_library;
 mod source;
 pub use environment::{Environment, EnvironmentSource, NativeEnvironment};
+pub use heap_release::{HeapRelease, NativeHeapRelease};
 pub use host::{Host, HostSource, NativeHost, SystemNames, machine_type_of, system_id_of};
 pub use mem_info::{MemCounter, MemInfo, MemInfoSource, NativeMemInfo};
 pub use native::NativeProcess;
