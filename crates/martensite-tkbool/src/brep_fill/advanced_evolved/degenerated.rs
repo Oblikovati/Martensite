@@ -23,7 +23,7 @@ fn degenerated_edge(
 ) -> Result<Edge, Failure> {
     let a_bb = BRepBuilder::default();
     let line: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(start, direction)).cast();
+        Handle::new(Geom2dLine::from_point(start, direction)).into_upcast();
     let mut an_edegen = Edge::default();
     a_bb.make_edge(&mut an_edegen)?;
     a_bb.update_edge_pcurve_on_face(&an_edegen, &line, the_face, precision::confusion())?;

@@ -1,9 +1,8 @@
 //! The shapes of the data structure and their data. The index members ignore an index
 //! out of range and the shape members a null or unknown shape, as natively.
 use super::TopOpeBRepDSDataStructure;
-use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSInterference, TopOpeBRepDSShapeData,
-};
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::{ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSShapeData};
 use martensite_tkbrep::topods::{Edge, Shape};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::ncollection::{IndexedDataMap, List};
@@ -327,7 +326,7 @@ impl TopOpeBRepDSDataStructure {
     /// `AddShapeInterference(S, I)`: appended to the interferences of the shape (to the
     /// shared empty list for an unknown shape, as natively);
     /// `ds.add_shape_interference(&face, &i)`.
-    pub fn add_shape_interference(&mut self, s: &Shape, i: &Handle<TopOpeBRepDSInterference>) {
+    pub fn add_shape_interference(&mut self, s: &Shape, i: &Handle<dyn InterferenceRecord>) {
         self.change_shape_interferences(s).append(i.clone());
     }
 }

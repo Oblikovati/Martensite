@@ -4,9 +4,10 @@ use super::{
     TopOpeBRepPointGeomTool, TopOpeBRepTypeLineCurve, TopOpeBRepVPointInter,
     TopOpeBRepVPointInterClassifier,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSCurve, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSPoint,
+    TopOpeBRepDSKind, TopOpeBRepDSPoint,
 };
 use crate::top_ope_brep_tool::TopOpeBRepToolShapeClassifier;
 use martensite_tkbrep::topods::{self, Face, Shape};
@@ -182,7 +183,7 @@ impl<'a> TopOpeBRepFacesFiller<'a> {
     /// Creates one curve lazily and stores each interference on it; `filler.store_curve_interference(&i)?`.
     pub fn store_curve_interference(
         &mut self,
-        interference: &Handle<TopOpeBRepDSInterference>,
+        interference: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         let storage = self.hds.get().ok_or_else(missing_storage)?;
         let entry = interference.get().ok_or_else(missing_interference)?;

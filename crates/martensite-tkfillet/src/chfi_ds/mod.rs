@@ -32,6 +32,6 @@ pub use fil_spine::FilSpine;
 pub use maps::{Map, StripeMap};
 pub use regul::Regul;
 pub use shared::{Shared, lock, same_object, shared};
-pub use spine::{Spine, SpineHandle, SpineObject};
+pub use spine::{Spine, SpineData, SpineHandle, SpineObject};
 pub use stripe::{Stripe, StripeHandle, SurfDataSequenceHandle};
 pub use surf_data::{SurfData, SurfDataHandle};

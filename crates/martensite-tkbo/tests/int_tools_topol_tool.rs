@@ -8,9 +8,10 @@ use martensite_tkg3d::{
 };
 use martensite_tkmath::gp::Axis3;
 fn plane() -> Handle<dyn Adaptor3dSurface> {
-    let geometry: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+    let geometry: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     Handle::new(GeomAdaptorSurface::with_range(&geometry, ((0., 11., 0., 22.), (0., 0.))).unwrap())
-        .cast()
+        .into_upcast()
 }
 #[test]
 fn plane_counts_and_native_zero_based_interior_samples() {

@@ -3,7 +3,7 @@
 use super::errors::{array_failure, construction_error, domain_error, not_implemented};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomCurveD1, GeomCurveD2};
 use martensite_tkmath::geom_abs::Shape;
@@ -73,14 +73,12 @@ pub struct HelixParameters {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct HelixGeomHelixCurve {
-    parent: StandardTransient,
     state: SharedState<HelixCurveState>,
 }
 impl_transient!(
     HelixGeomHelixCurve,
     "HelixGeom_HelixCurve",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
@@ -94,7 +92,6 @@ impl Clone for HelixGeomHelixCurve {
     // The copy constructor: a new object with the same field values.
     fn clone(&self) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(self.state.snapshot()),
         }
     }
@@ -105,7 +102,6 @@ impl HelixGeomHelixCurve {
     /// untapered; `HelixGeomHelixCurve::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(HelixCurveState::default()),
         }
     }
@@ -155,7 +151,7 @@ impl HelixGeomHelixCurve {
     /// `new HelixGeom_HelixCurve(*this)` as the adaptor handle the approximation takes;
     /// `helix.to_adaptor()`.
     pub fn to_adaptor(&self) -> Handle<dyn Adaptor3dCurve> {
-        Handle::new(self.clone()).cast()
+        Handle::new(self.clone()).into_upcast()
     }
 
     // The point, first and second derivatives shared by the EvalD* members, in the

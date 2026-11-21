@@ -90,11 +90,11 @@ impl PlaneIntersection<'_> {
     }
 }
 fn plane_pcurve(line: Line2, range: (f64, f64)) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    let geometry = Handle::new(Geom2dLine::new(line.position())).cast();
+    let geometry = Handle::new(Geom2dLine::new(line.position())).into_upcast();
     Ok(Handle::new(Geom2dTrimmedCurve::new(
         &geometry, range.0, range.1, true, true,
     )?)
-    .cast())
+    .into_upcast())
 }
 fn surface_bounds(surface: &GeomAdaptorSurface) -> Result<[f64; 4], Failure> {
     Ok([
@@ -122,11 +122,11 @@ fn common_interval(
     }
 }
 fn spatial_line(line: Line3, range: (f64, f64)) -> Result<Curve, Failure> {
-    let geometry: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(line.position())).cast();
+    let geometry: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(line.position())).into_upcast();
     let trimmed = Handle::new(GeomTrimmedCurve::new(
         &geometry, range.0, range.1, true, true,
     )?)
-    .cast();
+    .into_upcast();
     Ok(Curve::new(
         &trimmed,
         &Handle::default(),

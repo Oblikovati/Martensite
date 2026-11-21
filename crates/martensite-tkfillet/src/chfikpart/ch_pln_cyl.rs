@@ -82,7 +82,7 @@ pub(super) fn plane_circle(
         return Ok((Handle::default(), Handle::default()));
     }
     let gc: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::from_circ(Circle3::new(cir_ax2, rad)?)).cast();
+        Handle::new(GeomCircle::from_circ(Circle3::new(cir_ax2, rad)?)).into_upcast();
     let (u, v) = elslib::plane_parameters(fr.pos_pl, pt);
     let d2d = Direction2::new(
         fr.dsp.dot(Vector3::from(fr.pos_pl.x_direction())),
@@ -95,7 +95,7 @@ pub(super) fn plane_circle(
     )?;
     Ok((
         gc,
-        Handle::new(Geom2dCircle::from_circ2d(Circle2::new(ax2d, rad)?)).cast(),
+        Handle::new(Geom2dCircle::from_circ2d(Circle2::new(ax2d, rad)?)).into_upcast(),
     ))
 }
 
@@ -173,7 +173,7 @@ fn circle_chamfer(
         con_rad,
         dedans != plandab,
     )?;
-    set_surf(data, Handle::new(gcon).cast(), dstr);
+    set_surf(data, Handle::new(gcon).into_upcast(), dstr);
     let (pt, deru, derv) = elslib::cone_d1(0., 0., con_ax3, con_rad, semi);
     let nor_con = Direction3::from_vector(deru.crossed(derv))?;
     set_orientation(data, fwd_if(nor_con.dot(fr.norf) > 0.));
@@ -192,7 +192,7 @@ fn circle_chamfer(
     );
     cir_ax2.set_location(or);
     let gcyl: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::from_circ(Circle3::new(cir_ax2, con_rad)?)).cast();
+        Handle::new(GeomCircle::from_circ(Circle3::new(cir_ax2, con_rad)?)).into_upcast();
     let (_, deru, derv) = elslib::cone_d1(0., 0., con_ax3, con_rad, semi);
     let nor_con = Direction3::from_vector(deru.crossed(derv))?;
     let p = Point3::new(

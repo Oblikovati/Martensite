@@ -11,7 +11,7 @@ use crate::xs_algo::{DEShapeFixParameters, XSAlgoParameterMap, XSAlgoProcessingF
 use martensite_tkbrep::topods::{Builder, Compound, Shape};
 use martensite_tkernel::{
     message::Message,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use martensite_tkshhealing::shape_process::ShapeProcessOperationsFlags;
 use std::fmt::Write as _;
@@ -42,7 +42,7 @@ pub struct XSControlReader {
     /// `therootsta` (protected): true when the roots for transfer are computed.
     pub therootsta: bool,
     /// `theroots` (protected): the roots for transfer.
-    pub theroots: Vec<Handle<StandardTransient>>,
+    pub theroots: Vec<Handle<dyn Transient>>,
     thesession: Handle<XSControlWorkSession>,
     theshapes: Vec<Shape>,
 }
@@ -126,7 +126,7 @@ impl XSControlReader {
     pub fn give_list_from(
         &self,
         first: &str,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<IFSelectTransientList, Failure> {
         self.session()?.give_list_from_list(first, ent)
     }
@@ -218,7 +218,7 @@ impl XSControlReader {
     /// `StandardNullObject` without process.
     pub fn get_stats_transfer(
         &self,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
     ) -> Result<XSControlTransferStats, Failure> {
         let tp = live_reader(self.session()?)?.transient_process();
         let process = tp.get().ok_or_else(|| {

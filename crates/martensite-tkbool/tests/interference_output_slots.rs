@@ -1,4 +1,5 @@
 //! Explicit caller-owned interference outputs retain their state for null inputs.
+use martensite_tkbool::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     TopOpeBRepDSInterference, TopOpeBRepDSKind as Kind, TopOpeBRepDSTransition,
     export::{
@@ -10,7 +11,7 @@ use martensite_tkernel::ncollection::List;
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::top_abs::{ShapeEnum, State};
 
-fn loaded_interference() -> Handle<TopOpeBRepDSInterference> {
+fn loaded_interference() -> Handle<dyn InterferenceRecord> {
     let mut transition =
         TopOpeBRepDSTransition::new(State::Out, State::In, ShapeEnum::Edge, ShapeEnum::Face);
     transition.set_index_before(7);
@@ -22,6 +23,7 @@ fn loaded_interference() -> Handle<TopOpeBRepDSInterference> {
         Kind::Curve,
         23,
     ))
+    .into_upcast()
 }
 
 #[test]

@@ -4,9 +4,10 @@ use super::{
     TransferSimpleBinderOfTransient, TransferStatusResult, transfer_failure,
 };
 use crate::interface::InterfaceCheck;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     message::{Gravity, Msg},
-    standard::{Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeType, Transient},
     tcollection::ExtendedString,
 };
 use std::fmt::Write as _;
@@ -129,7 +130,7 @@ impl<K: TransferProcessKind> TransferProcess<K> {
     pub fn bind_transient(
         &self,
         start: &K::Start,
-        res: &Handle<StandardTransient>,
+        res: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         if res.is_null() {
             return Ok(());
@@ -144,10 +145,10 @@ impl<K: TransferProcessKind> TransferProcess<K> {
         }
         let binder = TransferSimpleBinderOfTransient::new();
         binder.set_result(res)?;
-        self.bind(start, &Handle::new(binder).cast())
+        self.bind(start, &Handle::new(binder).into_upcast())
     }
     /// `FindTransient(start)`: the result of the simple binder of `start`, else null.
-    pub fn find_transient(&self, start: &K::Start) -> Handle<StandardTransient> {
+    pub fn find_transient(&self, start: &K::Start) -> Handle<dyn Transient> {
         let simple = self.find(start).cast::<TransferSimpleBinderOfTransient>();
         simple
             .get()
@@ -160,7 +161,10 @@ impl<K: TransferProcessKind> TransferProcess<K> {
     pub fn bind_multiple(&self, start: &K::Start) -> Result<(), Failure> {
         let binder = self.find_and_mask(start);
         if binder.is_null() {
-            return self.bind(start, &Handle::new(TransferMultipleBinder::new()).cast());
+            return self.bind(
+                start,
+                &Handle::new(TransferMultipleBinder::new()).into_upcast(),
+            );
         }
         if binder.cast::<TransferMultipleBinder>().is_some() {
             return Ok(());
@@ -174,7 +178,7 @@ impl<K: TransferProcessKind> TransferProcess<K> {
     pub fn add_multiple(
         &self,
         start: &K::Start,
-        res: &Handle<StandardTransient>,
+        res: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let binder = self.find_and_mask(start);
         let multr = binder.cast::<TransferMultipleBinder>();
@@ -197,7 +201,7 @@ impl<K: TransferProcessKind> TransferProcess<K> {
         &self,
         start: &K::Start,
         atype: &RuntimeType,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> bool {
         self.get_typed_transient(&self.find(start), atype, val)
     }
@@ -206,13 +210,13 @@ impl<K: TransferProcessKind> TransferProcess<K> {
         &self,
         binder: &Handle<dyn TransferBinder>,
         atype: &RuntimeType,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> bool {
         TransferSimpleBinderOfTransient::get_typed_result(binder, atype, val)
     }
     /// `FindTypedTransient<T>(start, atype, val)` (template): the typed result, cast to
     /// `T` (false when the cast is null; `val` is kept when nothing is found).
-    pub fn find_typed_transient_as<T: ?Sized + RuntimeTyped>(
+    pub fn find_typed_transient_as<T: ?Sized + TransientHandleTarget>(
         &self,
         start: &K::Start,
         atype: &RuntimeType,
@@ -221,13 +225,13 @@ impl<K: TransferProcessKind> TransferProcess<K> {
         self.get_typed_transient_as(&self.find(start), atype, val)
     }
     /// `GetTypedTransient<T>(binder, atype, val)` (template): the typed result, cast to `T`.
-    pub fn get_typed_transient_as<T: ?Sized + RuntimeTyped>(
+    pub fn get_typed_transient_as<T: ?Sized + TransientHandleTarget>(
         &self,
         binder: &Handle<dyn TransferBinder>,
         atype: &RuntimeType,
         val: &mut Handle<T>,
     ) -> bool {
-        let mut res: Handle<StandardTransient> = val.cast();
+        let mut res: Handle<dyn Transient> = val.cast();
         if !self.get_typed_transient(binder, atype, &mut res) {
             return false;
         }

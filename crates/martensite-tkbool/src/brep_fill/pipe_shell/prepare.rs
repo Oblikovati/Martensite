@@ -102,7 +102,7 @@ impl BRepFillPipeShell {
                 ));
             }
             let tlaw: Handle<dyn GeomFillTrihedronLaw> =
-                Handle::new(GeomFillCorrectedFrenet::new()).cast();
+                Handle::new(GeomFillCorrectedFrenet::new()).into_upcast();
             self.my_location = trihedron_law(&self.my_spine, tlaw)?;
         }
         perform_transition(self.my_transition, &self.my_location, self.angmin)?;
@@ -162,9 +162,9 @@ impl BRepFillPipeShell {
                 &self.my_law,
                 true,
             )?)
-            .cast()
+            .into_upcast()
         } else {
-            Handle::new(BRepFillShapeLaw::with_wire(&the_sect, true)?).cast()
+            Handle::new(BRepFillShapeLaw::with_wire(&the_sect, true)?).into_upcast()
         };
         self.my_section = law;
         self.w_seq.push(the_sect.as_ref().clone());
@@ -213,7 +213,7 @@ impl BRepFillPipeShell {
             v2,
             true,
         )?;
-        self.my_section = Handle::new(law).cast();
+        self.my_section = Handle::new(law).into_upcast();
         Ok(())
     }
 
@@ -321,7 +321,7 @@ impl BRepFillPipeShell {
         let mut old_angle: f64 = 0.;
         for ipath in 1..=loc.nb_law()? {
             let (f, l) = loc.curvilinear_bounds(ipath)?;
-            let guide: Handle<GeomFillLocationGuide> = loc.law(ipath)?.cast();
+            let guide: Handle<GeomFillLocationGuide> = loc.law(ipath)?.downcast();
             let guide = guide.get().ok_or_else(|| null("guide location law"))?;
             old_angle = guide.set(&sec, true, fs + f * delta, fs + l * delta, old_angle)?;
         }
@@ -354,7 +354,7 @@ impl BRepFillPipeShell {
         }
         let loc = self.location()?;
         for isec in 1..=loc.nb_law()? {
-            let guide: Handle<GeomFillLocationGuide> = loc.law(isec)?.cast();
+            let guide: Handle<GeomFillLocationGuide> = loc.law(isec)?.downcast();
             guide
                 .get()
                 .ok_or_else(|| null("guide location law"))?

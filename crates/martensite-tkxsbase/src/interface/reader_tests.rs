@@ -5,17 +5,16 @@ use super::test_norm::{FakeEntity, fake_model, fake_protocol};
 use super::*;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 use std::sync::OnceLock;
 
 /// A fake file: one record per entity, its parameters added by the test.
 struct FakeReaderData {
-    transient: StandardTransient,
     base: InterfaceFileReaderDataBase,
     nbrec: i32,
 }
-impl_transient!(FakeReaderData, "Fake_ReaderData", dyn InterfaceFileReaderData, transient, interfaces: [dyn InterfaceFileReaderData]);
+impl_transient!(FakeReaderData, "Fake_ReaderData", dyn InterfaceFileReaderData, interfaces: [dyn InterfaceFileReaderData]);
 
 impl InterfaceFileReaderData for FakeReaderData {
     fn reader_data_base(&self) -> &InterfaceFileReaderDataBase {
@@ -28,10 +27,8 @@ impl InterfaceFileReaderData for FakeReaderData {
 
 /// The reader module of the fake norm: a record whose first parameter is "?" is unknown.
 #[derive(Default)]
-struct FakeReaderModule {
-    transient: StandardTransient,
-}
-impl_transient!(FakeReaderModule, "Fake_ReaderModule", dyn InterfaceReaderModule, transient, interfaces: [dyn InterfaceReaderModule]);
+struct FakeReaderModule {}
+impl_transient!(FakeReaderModule, "Fake_ReaderModule", dyn InterfaceReaderModule, interfaces: [dyn InterfaceReaderModule]);
 
 impl InterfaceReaderModule for FakeReaderModule {
     fn case_num(&self, data: &Handle<dyn InterfaceFileReaderData>, num: i32) -> i32 {
@@ -44,7 +41,7 @@ impl InterfaceReaderModule for FakeReaderModule {
         _data: &Handle<dyn InterfaceFileReaderData>,
         _num: i32,
         _ach: &mut Handle<InterfaceCheck>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         Ok(())
     }
@@ -64,7 +61,7 @@ impl InterfaceFileReaderTool for FakeReaderTool {
         &self,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &mut Handle<StandardTransient>,
+        ent: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let (mut glib, mut rlib) = (
             InterfaceGeneralLib::new(&self.protocol()),
@@ -78,7 +75,7 @@ impl InterfaceFileReaderTool for FakeReaderTool {
     fn analyse_record(
         &self,
         num: i32,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         acheck: &mut Handle<InterfaceCheck>,
     ) -> Result<bool, Failure> {
         let data = self.data();
@@ -106,7 +103,7 @@ fn register_reader() {
     static DONE: OnceLock<()> = OnceLock::new();
     DONE.get_or_init(|| {
         let module: Handle<dyn InterfaceReaderModule> =
-            Handle::new(FakeReaderModule::default()).cast();
+            Handle::new(FakeReaderModule::default()).into_upcast();
         InterfaceReaderLib::set_global(&module, &fake_protocol());
     });
 }
@@ -114,7 +111,6 @@ fn register_reader() {
 /// A fake file of records (name, referenced records...).
 fn fake_file(records: &[(&str, &[i32])]) -> Handle<dyn InterfaceFileReaderData> {
     let data = FakeReaderData {
-        transient: StandardTransient::default(),
         base: InterfaceFileReaderDataBase::new(records.len() as i32, 20),
         nbrec: records.len() as i32,
     };
@@ -133,7 +129,7 @@ fn fake_file(records: &[(&str, &[i32])]) -> Handle<dyn InterfaceFileReaderData> 
         }
         data.init_params(num).unwrap();
     }
-    Handle::new(data).cast()
+    Handle::new(data).into_upcast()
 }
 
 fn read(records: &[(&str, &[i32])]) -> (FakeReaderTool, Handle<dyn InterfaceInterfaceModel>) {

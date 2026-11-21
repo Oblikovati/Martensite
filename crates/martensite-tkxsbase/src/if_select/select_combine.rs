@@ -6,7 +6,7 @@ use crate::if_graph::{IFGraphCompare, IFGraphCumulate};
 use crate::interface::{InterfaceEntityIterator, InterfaceGraph, InterfaceGraphContentEvaluate};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, exceptions},
     tcollection::AsciiString,
 };
 
@@ -80,7 +80,7 @@ pub trait IFSelectSelectCombine: IFSelectSelection {
 impl_transient_interface!(
     dyn IFSelectSelectCombine,
     "IFSelectSelectCombine",
-    dyn IFSelectSelection
+    dyn IFSelectSelection, upcasts: [dyn IFSelectSelection]
 );
 
 /// `IFSelectSelectCombine::FillIterator`: the inputs (null ones included).
@@ -126,7 +126,7 @@ pub trait IFSelectSelectControl: IFSelectSelection {
 impl_transient_interface!(
     dyn IFSelectSelectControl,
     "IFSelectSelectControl",
-    dyn IFSelectSelection
+    dyn IFSelectSelection, upcasts: [dyn IFSelectSelection]
 );
 
 /// `IFSelectSelectControl::FillIterator`: the main input, then the second one.
@@ -161,10 +161,9 @@ fn root_of(
 /// ```
 #[derive(Default)]
 pub struct IFSelectSelectUnion {
-    transient: StandardTransient,
     base: IFSelectSelectCombineBase,
 }
-impl_transient!(IFSelectSelectUnion, "IFSelectSelectUnion", dyn IFSelectSelectCombine, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectCombine]);
+impl_transient!(IFSelectSelectUnion, "IFSelectSelectUnion", dyn IFSelectSelectCombine, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectCombine]);
 
 impl IFSelectSelectUnion {
     /// `IFSelectSelectUnion()`: no input.
@@ -204,10 +203,9 @@ impl IFSelectSelection for IFSelectSelectUnion {
 /// `IFSelectSelectIntersection`: the entities of every input.
 #[derive(Default)]
 pub struct IFSelectSelectIntersection {
-    transient: StandardTransient,
     base: IFSelectSelectCombineBase,
 }
-impl_transient!(IFSelectSelectIntersection, "IFSelectSelectIntersection", dyn IFSelectSelectCombine, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectCombine]);
+impl_transient!(IFSelectSelectIntersection, "IFSelectSelectIntersection", dyn IFSelectSelectCombine, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectCombine]);
 
 impl IFSelectSelectIntersection {
     /// `IFSelectSelectIntersection()`: no input.
@@ -256,10 +254,9 @@ impl IFSelectSelection for IFSelectSelectIntersection {
 /// `IFSelectSelectDiff`: the entities of the main input not in the second one.
 #[derive(Default)]
 pub struct IFSelectSelectDiff {
-    transient: StandardTransient,
     base: IFSelectSelectControlBase,
 }
-impl_transient!(IFSelectSelectDiff, "IFSelectSelectDiff", dyn IFSelectSelectControl, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectControl]);
+impl_transient!(IFSelectSelectDiff, "IFSelectSelectDiff", dyn IFSelectSelectControl, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectControl]);
 
 impl IFSelectSelectDiff {
     /// `IFSelectSelectDiff()`: no input.

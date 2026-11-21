@@ -12,9 +12,10 @@ use super::process_interferences_tool::{
 use super::tool::MapOfShapeOn1State;
 use super::{
     ListOfInterference, TopOpeBRepDSCurvePointInterference, TopOpeBRepDSDataStructure,
-    TopOpeBRepDSFaceInterferenceTool, TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference,
-    TopOpeBRepDSKind, TopOpeBRepDSShapeShapeInterference,
+    TopOpeBRepDSFaceInterferenceTool, TopOpeBRepDSHDataStructure, TopOpeBRepDSKind,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_tool::{
     fsc_get_psc_with_reference, fun_tool_find_pin_bac, fun_tool_find_pin_e,
     fun_tool_orient_e_in_f_forward,
@@ -29,7 +30,7 @@ use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::top_abs::{ShapeEnum, State};
 use martensite_tkmath::gp::{Point2, Point3};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// `FUN_isPonF(LIF, P, BDS, E)`: `p` projects on each support face of `lif` where `e`
 /// is not an edge; `fun_is_p_on_f(&lif, p, &ds, &e)?`.
@@ -62,11 +63,11 @@ fn interference_par(
     i: &H,
 ) -> Result<Option<f64>, Failure> {
     let (gt1, g1, _, _) = fds_data(i);
-    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.cast();
+    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
     if let Some(c) = cpi.get() {
         return Ok(Some(c.parameter()));
     }
-    let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.cast();
+    let ssi = i.view::<dyn ShapeInterferenceRecord>();
     let Some(ssi) = ssi.get() else {
         return Ok(None);
     };
@@ -261,7 +262,7 @@ fn on_split(
     }
     if lisfin.extent() >= 2 {
         let first = lisfin.first().cloned().unwrap_or_default();
-        let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = first.cast();
+        let ssi = first.view::<dyn ShapeInterferenceRecord>();
         let gb = ssi.get().map(|s| s.gbound()).ok_or_else(|| {
             Failure::with_type(
                 "Standard_NullObject",

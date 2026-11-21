@@ -40,7 +40,7 @@ pub(super) fn check_pcurve(a_pc: &Handle<dyn Geom2dCurve>, a_face: &Face) -> Res
     let step: f64 = (lp - fp) / f64::from(NPOINTS + 1);
     // The domain adjusted for periodic surfaces.
     let (a_surf_located, _) = BRepTool::surface_with_location(a_face)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = a_surf_located.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = a_surf_located.downcast();
     let a_surf: Handle<dyn GeomSurface> = trimmed
         .get()
         .map_or(a_surf_located.clone(), |t| t.basis_surface());
@@ -128,8 +128,8 @@ impl TopOpeBRepToolCurveTool {
         };
         let (gf, gl) = (gac.first_parameter()?, gac.last_parameter()?);
         let bahs: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(&f, false)?).cast();
-        let bahc: Handle<dyn Adaptor3dCurve> = Handle::new(gac).cast();
+            Handle::new(BRepAdaptorSurface::with_face(&f, false)?).into_upcast();
+        let bahc: Handle<dyn Adaptor3dCurve> = Handle::new(gac).into_upcast();
         let projcurv = ProjectedCurve::with_curve(&bahs, &bahc)?;
         let mut c2d = make_pcurve(&projcurv)?;
         let tol_reached2d: f64 = projcurv.get_tolerance();

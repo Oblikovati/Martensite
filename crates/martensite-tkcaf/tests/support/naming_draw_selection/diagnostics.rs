@@ -23,7 +23,7 @@ fn unknown_names(object: &Handle<TDataStdUAttribute>, kind: ShapeEnum) -> Result
     let mut result = String::new();
     let mut names = TdfChildIdIterator::new(&object.label(), &TNamingNaming::get_id(), true)?;
     while names.more() {
-        let naming = names.value().cast::<TNamingNaming>();
+        let naming = names.value().downcast::<TNamingNaming>();
         if !naming.is_null() && naming.get_name().name_type() == TNamingNameType::Unknown {
             result.push_str(&format!(
                 " Selection at label = {} has UNKNOWN name type, shape type = {}",

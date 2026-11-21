@@ -12,15 +12,16 @@ use martensite_tkbrep::brep_adaptor::BRepAdaptorCurve;
 use martensite_tkbrep::topods::Edge;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkmath::gp::{Point3, Vector3};
+use std::ops::{Deref, DerefMut};
 
 /// The guideline of a fillet (`ChFiDSSpine`): the edges of the solid that are tangent
 /// to each other, the curvilinear abscissa over them, the extremity states and extensions,
 /// and the elementary spines (`ChFiDSElSpine`) cut from it for the computation.
 ///
 /// Natively the guideline is not C2 although the computation path claims it; that note
-/// of the reference header stands. [`Spine::load`] must run before any evaluation: until
+/// of the reference header stands. [`SpineData::load`] must run before any evaluation: until
 /// then the abscissa is null and the members that read it raise StandardNullObject.
 /// The native private `myOffsetCurve` and `offset_abscissa` are never read or set by
 /// any member, so they have no Rust field.
@@ -35,7 +36,26 @@ use martensite_tkmath::gp::{Point3, Vector3};
 /// assert_eq!(spine.get_tolesp(), 1e-4);
 /// ```
 pub struct Spine {
-    parent: StandardTransient,
+    guideline: SpineData,
+}
+impl_transient!(Spine, "ChFiDSSpine", dyn Transient, interfaces: [dyn SpineObject]);
+
+impl Deref for Spine {
+    type Target = SpineData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.guideline
+    }
+}
+
+impl DerefMut for Spine {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.guideline
+    }
+}
+
+/// The mutable guideline shared by plain, fillet and chamfer spines.
+pub struct SpineData {
     split_done: bool,
     el_spines: Vec<Handle<ElSpine>>,
     offset_el_spines: Vec<Handle<ElSpine>>,
@@ -52,7 +72,6 @@ pub struct Spine {
     ends: SpineEnds,
     error_state: ErrorStatus,
 }
-impl_transient!(Spine, "ChFiDSSpine", StandardTransient, parent);
 
 impl Default for Spine {
     fn default() -> Self {
@@ -71,7 +90,14 @@ impl Spine {
     /// `Spine::with_tolerance(1e-4)`.
     pub fn with_tolerance(tolerance: f64) -> Self {
         Self {
-            parent: StandardTransient::default(),
+            guideline: SpineData::with_tolerance(tolerance),
+        }
+    }
+}
+
+impl SpineData {
+    pub(super) fn with_tolerance(tolerance: f64) -> Self {
+        Self {
             split_done: false,
             el_spines: Vec::new(),
             offset_el_spines: Vec::new(),

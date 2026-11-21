@@ -271,7 +271,7 @@ impl FilletSurfInternalBuilder {
             .value(index_sec)
             .map_err(|_| Failure::out_of_range("Section"))?
             .get_circle();
-        let gc: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(c)).cast();
+        let gc: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(c)).into_upcast();
         Ok(Handle::new(GeomTrimmedCurve::new(
             &gc, deb, fin, true, true,
         )?))

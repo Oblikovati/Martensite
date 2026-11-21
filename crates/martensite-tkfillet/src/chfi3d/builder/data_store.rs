@@ -93,7 +93,7 @@ fn snap_to_arc(
 fn face_adaptor(
     s: &Handle<dyn Adaptor3dSurface>,
 ) -> Result<martensite_tkbrep::topods::Face, Failure> {
-    let bs: Handle<BRepAdaptorSurface> = s.clone().cast();
+    let bs: Handle<BRepAdaptorSurface> = s.downcast();
     let mut f = bs
         .get()
         .ok_or_else(|| Failure::with_message("Standard_NullObject", "StoreData: not a face"))?
@@ -129,7 +129,7 @@ fn extended_surface(
     lin: &BRepBlendLine,
     tolget3d: f64,
 ) -> Result<Handle<GeomBSplineSurface>, Failure> {
-    let mut a_bnd: Handle<dyn GeomBoundedSurface> = surf.clone().cast();
+    let mut a_bnd: Handle<dyn GeomBoundedSurface> = surf.upcast();
     let eps = tolget3d.max(2. * precision::confusion());
     let (mut ext1, mut ext2) = (false, false);
     let s = surf.get().ok_or_else(|| Failure::new("StoreData"))?;
@@ -175,7 +175,7 @@ fn face_pcurve(
         approx.curves2d_degree()?,
         false,
     )?;
-    Ok(Handle::new(c).cast())
+    Ok(Handle::new(c).into_upcast())
 }
 
 /// The tolerance of a 3d edge of the fillet with its pcurve on the face.
@@ -187,14 +187,14 @@ fn checked_tolerance(
     tol: f64,
 ) -> Result<f64, Failure> {
     let chc: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_range(crv, par1, par2)?).cast();
+        Handle::new(GeomAdaptorCurve::with_range(crv, par1, par2)?).into_upcast();
     let (ok, tolcheck) = check_same_parameter(&chc, pc, s, tol)?;
     Ok(if ok { tol } else { tolcheck })
 }
 
 /// The straight pcurve on the fillet of its iso `u`.
 fn iso_pcurve(u: f64) -> Handle<dyn Geom2dCurve> {
-    Handle::new(Geom2dLine::from_point(Point2::new(u, 0.), Direction2::Y)).cast()
+    Handle::new(Geom2dLine::from_point(Point2::new(u, 0.), Direction2::Y)).into_upcast()
 }
 
 impl ChFi3dBuilder {
@@ -350,7 +350,7 @@ impl ChFi3dBuilder {
             (d.first_extension_value(), d.last_extension_value())
         };
         let surf = extended_surface(approx_surface(approx)?, lengths, &lock(lin), tolget3d)?;
-        let gsurf: Handle<dyn GeomSurface> = surf.clone().cast();
+        let gsurf: Handle<dyn GeomSurface> = surf.upcast();
         let isurf = self
             .ds
             .add_surface(&TopOpeBRepDSSurface::new(&gsurf, tolget3d));

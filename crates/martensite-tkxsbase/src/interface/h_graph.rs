@@ -4,7 +4,7 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
 };
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
@@ -15,15 +15,9 @@ use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 /// fn size(hgraph: &InterfaceHGraph) -> i32 { hgraph.graph().size() }
 /// ```
 pub struct InterfaceHGraph {
-    transient: StandardTransient,
     thegraph: SharedState<InterfaceGraph>,
 }
-impl_transient!(
-    InterfaceHGraph,
-    "InterfaceHGraph",
-    StandardTransient,
-    transient
-);
+impl_transient!(InterfaceHGraph, "InterfaceHGraph", dyn Transient);
 
 impl InterfaceHGraph {
     /// `InterfaceHGraph(agraph)`: a copy of the graph.
@@ -69,7 +63,6 @@ impl InterfaceHGraph {
     }
     fn wrap(graph: InterfaceGraph) -> Self {
         Self {
-            transient: StandardTransient::default(),
             thegraph: SharedState::new(graph),
         }
     }

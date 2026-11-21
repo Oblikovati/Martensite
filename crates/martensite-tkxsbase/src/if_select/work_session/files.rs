@@ -2,7 +2,7 @@
 //! the sent files and the remaining data.
 use super::item_lists::h_text;
 use super::params::info;
-use super::{ERRHAND, IFSelectWorkSession, interrupted};
+use super::{ERRHAND, IFSelectSession, interrupted};
 use crate::if_select::{
     IFSelectDispatch, IFSelectPacketList, IFSelectRemainMode, IFSelectSelectPointed,
     IFSelectShareOut, IFSelectShareOutResult,
@@ -37,7 +37,7 @@ fn has_byte(text: &[u8], nb: usize, byte: u8) -> bool {
     text.iter().take(nb).any(|b| *b == byte)
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `FilePrefix`.
     pub fn file_prefix(&self) -> Result<Handle<HAsciiString>, Failure> {
         Ok(live(&self.share_out())?.prefix())

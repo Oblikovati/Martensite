@@ -2,14 +2,14 @@
 use super::{TopOpeBRepFacesFiller, TopOpeBRepLineInter, TopOpeBRepVPointInter};
 use crate::top_ope_brep_ds::TopOpeBRepDSKind;
 use martensite_tkbrep::{topexp::Explorer, topods::Shape};
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::{Failure, Transient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::io::Write;
 mod lines;
 mod points;
 
-/// The descriptor parent remains the standard transient base; `TopOpeBRepFFDumperBaseType::default()`.
-pub type TopOpeBRepFFDumperBaseType = StandardTransient;
+/// The descriptor parent remains the standard transient base; `<TopOpeBRepFFDumperBaseType>::static_type()`.
+pub type TopOpeBRepFFDumperBaseType = dyn Transient;
 
 /// Borrows an operation for optional diagnostics; `TopOpeBRepFFDumperView::new(None)` is silent.
 /// The release pointer is safely absent: reference leaves that pointer uninitialized.

@@ -62,7 +62,7 @@ impl ChFi3dBuilder {
         bound_fac(&oc.hbs, boite(pv1, pv2), true)?;
         bound_fac(&oc.hbop, boite(pop1, pop2), true)?;
         let (hbop, hbs): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (oc.hbop.clone().cast(), oc.hbs.clone().cast());
+            (oc.hbop.upcast(), oc.hbs.upcast());
         let mut out = IntersectionCurves::default();
         if !compute_curves(
             (&hbop, &hbs),

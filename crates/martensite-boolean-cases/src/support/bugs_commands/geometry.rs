@@ -49,7 +49,7 @@ pub fn frame_framed(at: [f64; 3], normal: [f64; 3], x: [f64; 3]) -> Axis3 {
 
 /// `plane p x y z`; `plane_at([0., 0., 5.])`.
 pub fn plane_at(at: [f64; 3]) -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(frame_at(at))).cast()
+    Handle::new(GeomPlane::new(frame_at(at))).into_upcast()
 }
 
 /// `restore [locate_data_file file] name` of a saved surface; a missing file is the script error.
@@ -88,21 +88,21 @@ pub fn restore_surface(file: &str) -> Handle<dyn GeomSurface> {
 
 /// `plane p x y z dx dy dz ux uy uz`; `plane_framed([183.6, 0., 0.], [1., 0., 0.], [0., 1., 0.])`.
 pub fn plane_framed(at: [f64; 3], normal: [f64; 3], x: [f64; 3]) -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(framed(at, normal, x))).cast()
+    Handle::new(GeomPlane::new(framed(at, normal, x))).into_upcast()
 }
 
 /// `cylinder c radius`: about Z at the origin; `cylinder(20.)`.
 pub fn cylinder(radius: f64) -> Handle<dyn GeomSurface> {
     let surface = GeomCylindricalSurface::new(frame_at([0., 0., 0.]), radius)
         .unwrap_or_else(|failure| panic!("cylinder {radius}: {failure:?}"));
-    Handle::new(surface).cast()
+    Handle::new(surface).into_upcast()
 }
 
 /// `sphere s x y z radius`; `sphere([0., 0., 0.], 10.)`.
 pub fn sphere(at: [f64; 3], radius: f64) -> Handle<dyn GeomSurface> {
     let surface = GeomSphericalSurface::new(frame_at(at), radius)
         .unwrap_or_else(|failure| panic!("sphere {radius}: {failure:?}"));
-    Handle::new(surface).cast()
+    Handle::new(surface).into_upcast()
 }
 
 /// `trim t surface u1 u2 v1 v2`; `trim_surface(&s, -5., 5., 0., 20.)`.
@@ -112,13 +112,13 @@ pub fn trim_surface(
 ) -> Handle<dyn GeomSurface> {
     let trimmed = GeomRectangularTrimmedSurface::new(surface, (u1, u2), (v1, v2), (true, true))
         .unwrap_or_else(|failure| panic!("trim {u1} {u2} {v1} {v2}: {failure:?}"));
-    Handle::new(trimmed).cast()
+    Handle::new(trimmed).into_upcast()
 }
 
 /// `line l x y z dx dy dz`; `line([0., 0., 0.], [0., 0., 1.])`.
 pub fn line(at: [f64; 3], along: [f64; 3]) -> Handle<dyn GeomCurve> {
     let axis = Axis1::new(point(at), direction(along));
-    Handle::new(GeomLine::new(axis)).cast()
+    Handle::new(GeomLine::new(axis)).into_upcast()
 }
 
 /// `circle c x y z dx dy dz ux uy uz radius`; `circle_framed([0.; 3], [0., 0., 1.], [1., 0., 0.], 5.)`.
@@ -132,7 +132,7 @@ pub fn circle_framed(
         .unwrap_or_else(|failure| panic!("circle {at:?}: {failure:?}"));
     let curve = GeomCircle::new(frame, radius)
         .unwrap_or_else(|failure| panic!("circle radius {radius}: {failure:?}"));
-    Handle::new(curve).cast()
+    Handle::new(curve).into_upcast()
 }
 
 /// `ellipse e x y z dx dy dz ux uy uz major minor`.
@@ -148,7 +148,7 @@ pub fn ellipse_framed(
         .unwrap_or_else(|failure| panic!("ellipse {at:?}: {failure:?}"));
     let curve = GeomEllipse::new(frame, major, minor)
         .unwrap_or_else(|failure| panic!("ellipse {major} {minor}: {failure:?}"));
-    Handle::new(curve).cast()
+    Handle::new(curve).into_upcast()
 }
 
 /// `ellipse e x y z dx dy dz major minor`: the frame from the normal alone.
@@ -163,7 +163,7 @@ pub fn ellipse_along(
         .unwrap_or_else(|failure| panic!("ellipse {at:?}: {failure:?}"));
     let curve = GeomEllipse::new(frame, major, minor)
         .unwrap_or_else(|failure| panic!("ellipse {major} {minor}: {failure:?}"));
-    Handle::new(curve).cast()
+    Handle::new(curve).into_upcast()
 }
 
 /// `offset o curve distance dx dy dz`; `offset_curve(&c, 10., [0., 0., 1.])`.
@@ -174,28 +174,28 @@ pub fn offset_curve(
 ) -> Handle<dyn GeomCurve> {
     let made = GeomOffsetCurve::new(curve, distance, direction(along), false)
         .unwrap_or_else(|failure| panic!("offset {distance}: {failure:?}"));
-    Handle::new(made).cast()
+    Handle::new(made).into_upcast()
 }
 
 /// `torus t r1 r2`; `torus(20., 5.)`.
 pub fn torus(major: f64, minor: f64) -> Handle<dyn GeomSurface> {
     let made = GeomToroidalSurface::new(frame_at([0., 0., 0.]), major, minor)
         .unwrap_or_else(|failure| panic!("torus {major} {minor}: {failure:?}"));
-    Handle::new(made).cast()
+    Handle::new(made).into_upcast()
 }
 
 /// `trimu t surface u1 u2`; `trim_u(&s, 3.14, 9.42)`.
 pub fn trim_u(surface: &Handle<dyn GeomSurface>, u1: f64, u2: f64) -> Handle<dyn GeomSurface> {
     let trimmed = GeomRectangularTrimmedSurface::with_one_direction(surface, u1, u2, true, true)
         .unwrap_or_else(|failure| panic!("trimu {u1} {u2}: {failure:?}"));
-    Handle::new(trimmed).cast()
+    Handle::new(trimmed).into_upcast()
 }
 
 /// `trim t curve u1 u2`; `trim_curve(&c, 4.7, 6.28)`.
 pub fn trim_curve(curve: &Handle<dyn GeomCurve>, first: f64, last: f64) -> Handle<dyn GeomCurve> {
     let trimmed = GeomTrimmedCurve::new(curve, first, last, true, true)
         .unwrap_or_else(|failure| panic!("trim {first} {last}: {failure:?}"));
-    Handle::new(trimmed).cast()
+    Handle::new(trimmed).into_upcast()
 }
 
 /// `mkedge name curve first last`; `mkedge_range(s, "e1", &l, 0., 10.)`.
@@ -276,7 +276,7 @@ pub fn mkcurve(s: &dyn Session, edge: &str) -> Handle<dyn GeomGeometry> {
         .transformed(found.location.transformation())
         .unwrap();
     assert!(
-        located.cast::<GeomTrimmedCurve>().is_some(),
+        located.downcast::<GeomTrimmedCurve>().is_some(),
         "mkcurve {edge}: expected a located trimmed curve"
     );
     located

@@ -75,7 +75,7 @@ fn line_chamfer(
         xdir.crossed(Direction3::from_vector(ydir)?)?,
         xdir,
     )?;
-    set_surf(data, Handle::new(GeomPlane::new(ax_ch)).cast(), dstr);
+    set_surf(data, Handle::new(GeomPlane::new(ax_ch)).into_upcast(), dstr);
     let pc_pln = line2(
         Point2::new(lc.uv_pln.0, lc.uv_pln.1),
         Direction2::new(

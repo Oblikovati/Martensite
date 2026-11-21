@@ -7,7 +7,7 @@ use super::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::{DataMap, IndexedDataMap},
-    standard::{Handle, RuntimeType, SharedState, StandardTransient},
+    standard::{Handle, RuntimeType, SharedState, Transient},
 };
 
 /// The cache key of an entity type: the address of its descriptor (natively the
@@ -37,15 +37,9 @@ struct GToolState {
 /// ```
 #[derive(Default)]
 pub struct InterfaceGTool {
-    transient: StandardTransient,
     state: SharedState<GToolState>,
 }
-impl_transient!(
-    InterfaceGTool,
-    "InterfaceGTool",
-    StandardTransient,
-    transient
-);
+impl_transient!(InterfaceGTool, "InterfaceGTool", dyn Transient);
 
 impl InterfaceGTool {
     /// `InterfaceGTool()`: no protocol.
@@ -78,7 +72,7 @@ impl InterfaceGTool {
     /// `SignValue(ent, model)`: the signature of `ent`, by default its class name.
     pub fn sign_value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         let Some(kind) = ent.dynamic_type() else {
@@ -140,7 +134,7 @@ impl InterfaceGTool {
     /// of `ent`, from the cache or (when not cached, or enforced) from the library.
     pub fn select(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         enforce: bool,
     ) -> Option<(Handle<dyn InterfaceGeneralModule>, i32)> {
         let key = type_key(ent.dynamic_type()?);

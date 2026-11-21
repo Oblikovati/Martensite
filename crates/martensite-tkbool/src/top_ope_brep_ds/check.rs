@@ -10,7 +10,7 @@ use crate::top_ope_brep_tool::TopOpeBRepToolShapeTool;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, IndexedMap, List};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::io::{self, Write};
 
@@ -20,19 +20,13 @@ type StatusMap = DataMap<i32, TopOpeBRepDSCheckStatus>;
 /// The checker of a data structure; `let mut c = TopOpeBRepDSCheck::with_hds(&hds);`.
 #[derive(Default)]
 pub struct TopOpeBRepDSCheck {
-    parent: StandardTransient,
     my_hds: Handle<TopOpeBRepDSHDataStructure>,
     my_map_surface_status: StatusMap,
     my_map_curve_status: StatusMap,
     my_map_point_status: StatusMap,
     my_map_shape_status: StatusMap,
 }
-impl_transient!(
-    TopOpeBRepDSCheck,
-    "TopOpeBRepDSCheck",
-    StandardTransient,
-    parent
-);
+impl_transient!(TopOpeBRepDSCheck, "TopOpeBRepDSCheck", dyn Transient);
 
 /// The status of `i` set to NOK (rebound) and false.
 fn nok(map: &mut StatusMap, i: i32) -> bool {
@@ -71,7 +65,7 @@ fn check_edge_parameter(hds: &Handle<TopOpeBRepDSHDataStructure>) -> Result<bool
     let mut is_ok = true;
     for i in 1..=ds.nb_shapes() {
         for i1 in ds.shape_interferences_index(i, true)?.iter() {
-            let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i1.cast();
+            let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i1.downcast();
             if let Some(e) = evi.get() {
                 is_ok &= f64::from(e.parameter() as i32) <= 1.0e50;
             }
@@ -79,7 +73,7 @@ fn check_edge_parameter(hds: &Handle<TopOpeBRepDSHDataStructure>) -> Result<bool
     }
     for i in 1..=ds.nb_curves() {
         for i1 in ds.curve_interferences(i).iter() {
-            let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i1.cast();
+            let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i1.downcast();
             if cpi.is_some() {
                 let p = TopOpeBRepDSInterferenceTool::parameter(i1)?;
                 is_ok &= f64::from(p as i32) <= 1.0e50;

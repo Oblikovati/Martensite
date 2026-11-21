@@ -7,7 +7,7 @@ use crate::xs_control::{XSControlTransferReader, XSControlWorkSession};
 use martensite_tkbrep::topods::{Builder, Compound, Shape};
 use martensite_tkernel::{
     message::{Message, MessageStream, ProgressRange},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
     tcollection::AsciiString,
 };
 use std::fmt::Write as _;
@@ -67,7 +67,7 @@ pub(super) fn trimport(pilot: &Handle<IFSelectSessionPilot>) -> Status {
 fn import_list(
     pilot: &Handle<IFSelectSessionPilot>,
     ws: &XSControlWorkSession,
-    list: &[Handle<StandardTransient>],
+    list: &[Handle<dyn Transient>],
     iscomp: bool,
     rnom: &str,
     sout: &mut MessageStream<'_>,
@@ -117,7 +117,7 @@ fn import_list(
 fn collect_shapes(
     pilot: &Handle<IFSelectSessionPilot>,
     reader: &XSControlTransferReader,
-    list: &[Handle<StandardTransient>],
+    list: &[Handle<dyn Transient>],
     iscomp: bool,
     rnom: &str,
 ) -> Result<(i32, Shape, Shape), Failure> {

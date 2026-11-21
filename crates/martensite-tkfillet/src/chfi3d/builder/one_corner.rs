@@ -265,8 +265,8 @@ impl ChFi3dBuilder {
     ) -> Result<Option<bool>, Failure> {
         let surf = self.ds.surface(lock(&oc.fd).surf()).surface().clone();
         let hgs: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&surf)?).cast();
-        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.clone().cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&surf)?).into_upcast();
+        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.upcast();
         let mut wop = lock(&oc.fd).interference(oc.ifad).parameter(oc.isfirst);
         if oc.onsame {
             let save_cp = lock(&oc.fd).vertex(oc.isfirst, oc.ifop).clone();
@@ -298,7 +298,8 @@ impl ChFi3dBuilder {
             };
             let cpad = lock(&oc.fd).vertex(oc.isfirst, oc.ifad).clone();
             let pced: Handle<dyn Adaptor2dCurve2d> =
-                Handle::new(BRepAdaptorCurve2d::with_edge_on_face(cpad.arc()?, &oc.fv)?).cast();
+                Handle::new(BRepAdaptorCurve2d::with_edge_on_face(cpad.arc()?, &oc.fv)?)
+                    .into_upcast();
             let (f, l) = {
                 let g = lock(&oc.fd);
                 (
@@ -334,7 +335,7 @@ impl ChFi3dBuilder {
         for ons in [1, 2] {
             let arc = lock(&oc.fd).vertex(oc.isfirst, ons).arc()?.clone();
             let pced: Handle<dyn Adaptor2dCurve2d> =
-                Handle::new(BRepAdaptorCurve2d::with_edge_on_face(&arc, &oc.fv)?).cast();
+                Handle::new(BRepAdaptorCurve2d::with_edge_on_face(&arc, &oc.fv)?).into_upcast();
             self.update_side_on_edge(&oc.fd, (oc.isfirst, ons), &hbs, &pced, &hgs)?;
         }
         Ok(Some(true))

@@ -292,7 +292,7 @@ fn add_family(
     for _ in 1..=nb {
         family.parameters.push(parameter);
         let line = Handle::new(Geom2dLine::from_point(origin(parameter), direction));
-        let curve = Geom2dAdaptorCurve::with_curve(&line.cast::<dyn Geom2dCurve>())?;
+        let curve = Geom2dAdaptorCurve::with_curve(&line.into_upcast::<dyn Geom2dCurve>())?;
         family.hatchings.push(hatcher.add_hatching(curve));
         parameter += step;
     }
@@ -426,8 +426,7 @@ fn nonperiodic_range(
     (first, last): (f64, f64),
     tolerance: f64,
 ) -> Option<(f64, f64)> {
-    let trimmed = pcurve.cast::<Geom2dTrimmedCurve>();
-    if let Some(trimmed) = trimmed.get() {
+    if let Some(trimmed) = pcurve.downcast_ref::<Geom2dTrimmedCurve>() {
         return basis_contains_range(trimmed, (u1, u2), tolerance).then_some((u1, u2));
     }
     Some((
@@ -459,6 +458,6 @@ fn trim_nonempty_pcurve(
     }
     let trimmed = Geom2dTrimmedCurve::new(&pcurve, u1, u2, true, true)?;
     Ok(PCurveRange::Trimmed(
-        Handle::new(trimmed).cast::<dyn Geom2dCurve>(),
+        Handle::new(trimmed).into_upcast::<dyn Geom2dCurve>(),
     ))
 }

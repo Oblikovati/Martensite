@@ -16,10 +16,7 @@ use martensite_tkernel::{
     impl_transient_interface,
     message::ProgressRange,
     ncollection::DataMap,
-    standard::{
-        Failure, Handle, RuntimeTyped, SharedState, StandardTransient, Transient, WeakHandle,
-        exceptions,
-    },
+    standard::{Failure, Handle, RuntimeTyped, SharedState, Transient, WeakHandle, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::sync::{OnceLock, PoisonError, RwLock, RwLockWriteGuard};
@@ -39,6 +36,9 @@ fn recorded_controllers()
 /// and the helps from it.
 type ModeWriteHelps = Option<(i32, Vec<Handle<HAsciiString>>)>;
 
+// Parameter objects and their trace modes share an index.
+type TracedParameters = (Vec<Handle<dyn Transient>>, Vec<i32>);
+
 /// The fields of `XSControlController` (the protected ones, set by the norms, through
 /// the `set_adaptor_*` members).
 pub struct XSControlControllerBase {
@@ -47,9 +47,9 @@ pub struct XSControlControllerBase {
     adaptor_protocol: SharedState<Handle<dyn InterfaceProtocol>>,
     adaptor_read: SharedState<Handle<dyn TransferActorOfTransientProcessOps>>,
     adaptor_write: SharedState<Handle<dyn TransferActorOfFinderProcessOps>>,
-    adaptor_session: SharedState<DataMap<AsciiString, Handle<StandardTransient>>>,
-    adaptor_applied: SharedState<Vec<Handle<StandardTransient>>>,
-    params: SharedState<(Vec<Handle<StandardTransient>>, Vec<i32>)>,
+    adaptor_session: SharedState<DataMap<AsciiString, Handle<dyn Transient>>>,
+    adaptor_applied: SharedState<Vec<Handle<dyn Transient>>>,
+    params: SharedState<TracedParameters>,
     mode_write_shape_n: SharedState<ModeWriteHelps>,
     this: OnceLock<WeakHandle<dyn XSControlController>>,
 }
@@ -115,7 +115,7 @@ impl XSControlControllerBase {
         params.1.push(used);
     }
     /// The traced parameters and their uses (`myParams`, `myParamUses`).
-    pub fn params(&self) -> (Vec<Handle<StandardTransient>>, Vec<i32>) {
+    pub fn params(&self) -> (Vec<Handle<dyn Transient>>, Vec<i32>) {
         self.params.read().clone()
     }
     /// The protected `myAdaptorLibrary` set.
@@ -143,7 +143,7 @@ impl XSControlControllerBase {
         self.adaptor_write.read().clone()
     }
     /// The session items (`myAdaptorSession`), in the native map order.
-    pub(super) fn session_items(&self) -> Vec<(AsciiString, Handle<StandardTransient>)> {
+    pub(super) fn session_items(&self) -> Vec<(AsciiString, Handle<dyn Transient>)> {
         self.adaptor_session
             .read()
             .items()
@@ -151,7 +151,7 @@ impl XSControlControllerBase {
             .collect()
     }
     /// The session items to apply as modifiers (`myAdaptorApplied`).
-    pub(super) fn adaptor_applied(&self) -> Vec<Handle<StandardTransient>> {
+    pub(super) fn adaptor_applied(&self) -> Vec<Handle<dyn Transient>> {
         self.adaptor_applied.read().clone()
     }
     /// `Recorded(name)`: the controller recorded under `name` (null when none).
@@ -193,7 +193,7 @@ fn transfer_finder(
     let mut stat = IFSelectReturnStatus::RetFail;
     let mut binder = process.find(mapper);
     while let Some(live) = binder.get() {
-        if let Some(bindtr) = binder.cast::<TransferSimpleBinderOfTransient>().get() {
+        if let Some(bindtr) = binder.downcast_ref::<TransferSimpleBinderOfTransient>() {
             let ent = bindtr.result();
             if ent.is_some() {
                 stat = IFSelectReturnStatus::RetDone;
@@ -227,19 +227,19 @@ pub trait XSControlController: Transient {
     }
     /// `RecognizeWriteTransient(obj, modetrans = 0)`: the writing actor recognizes the
     /// transient (false without actor).
-    fn recognize_write_transient(&self, obj: &Handle<StandardTransient>, modetrans: i32) -> bool {
+    fn recognize_write_transient(&self, obj: &Handle<dyn Transient>, modetrans: i32) -> bool {
         let actor = self.controller_base().adaptor_write();
         let Some(live) = actor.get() else {
             return false;
         };
         *live.mode_trans() = modetrans;
-        live.recognize(&Handle::new(TransferTransientMapper::new(obj)).cast())
+        live.recognize(&Handle::new(TransferTransientMapper::new(obj)).into_upcast())
     }
     /// `TransferWriteTransient(obj, FP, model, modetrans = 0, theProgress)`: the transient
     /// transferred by the writing actor (void for null).
     fn transfer_write_transient(
         &self,
-        obj: &Handle<StandardTransient>,
+        obj: &Handle<dyn Transient>,
         fp: &Handle<TransferFinderProcess>,
         model: &Handle<dyn InterfaceInterfaceModel>,
         modetrans: i32,
@@ -249,7 +249,7 @@ pub trait XSControlController: Transient {
             return Ok(IFSelectReturnStatus::RetVoid);
         }
         let mapper: Handle<dyn TransferFinder> =
-            Handle::new(TransferTransientMapper::new(obj)).cast();
+            Handle::new(TransferTransientMapper::new(obj)).into_upcast();
         transfer_finder(
             &self.controller_base().adaptor_write(),
             &mapper,
@@ -267,7 +267,7 @@ pub trait XSControlController: Transient {
             return false;
         };
         *live.mode_trans() = modetrans;
-        live.recognize(&Handle::new(TransferBRepShapeMapper::new(shape)).cast())
+        live.recognize(&Handle::new(TransferBRepShapeMapper::new(shape)).into_upcast())
     }
     /// `TransferWriteShape(shape, FP, model, modetrans = 0, theProgress)`: the shape
     /// transferred by the writing actor (void for a null shape).
@@ -283,7 +283,7 @@ pub trait XSControlController: Transient {
             return Ok(IFSelectReturnStatus::RetVoid);
         }
         let mapper: Handle<dyn TransferFinder> =
-            Handle::new(TransferBRepShapeMapper::new(shape)).cast();
+            Handle::new(TransferBRepShapeMapper::new(shape)).into_upcast();
         transfer_finder(
             &self.controller_base().adaptor_write(),
             &mapper,
@@ -406,7 +406,7 @@ pub trait XSControlController: Transient {
     }
     /// `AddSessionItem(theItem, theName, toApply = false)`: an item for the sessions (a
     /// modifier applied when `toApply`); nothing for a null item or an empty name.
-    fn add_session_item(&self, item: &Handle<StandardTransient>, name: &str, to_apply: bool) {
+    fn add_session_item(&self, item: &Handle<dyn Transient>, name: &str, to_apply: bool) {
         if item.is_null() || name.is_empty() {
             return;
         }
@@ -420,7 +420,7 @@ pub trait XSControlController: Transient {
     }
     /// `SessionItem(theName)`: null without items; `StandardNoSuchObject` for a name
     /// unknown among the items (the native `Find`).
-    fn session_item(&self, name: &str) -> Result<Handle<StandardTransient>, Failure> {
+    fn session_item(&self, name: &str) -> Result<Handle<dyn Transient>, Failure> {
         let session = self.controller_base().adaptor_session.read();
         if session.is_empty() {
             return Ok(Handle::default());
@@ -428,7 +428,7 @@ pub trait XSControlController: Transient {
         session.find(&AsciiString::new(name)).cloned()
     }
     /// `AdaptorSession`: the items for the sessions.
-    fn adaptor_session(&self) -> DataMap<AsciiString, Handle<StandardTransient>> {
+    fn adaptor_session(&self) -> DataMap<AsciiString, Handle<dyn Transient>> {
         let mut copy = DataMap::default();
         for (k, v) in self.controller_base().session_items() {
             copy.bind(k, v);
@@ -439,5 +439,5 @@ pub trait XSControlController: Transient {
 impl_transient_interface!(
     dyn XSControlController,
     "XSControlController",
-    StandardTransient
+    dyn Transient
 );

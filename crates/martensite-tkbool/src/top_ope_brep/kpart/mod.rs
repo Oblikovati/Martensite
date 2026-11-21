@@ -4,8 +4,8 @@ use super::{
     TopOpeBRepTypeLineCurve as LineKind, TopOpeBRepVPointInter as VPoint,
 };
 use crate::top_ope_brep_ds::{
-    ListOfInterference as Interferences, TopOpeBRepDSDataStructure as DS,
-    TopOpeBRepDSInterference as Interference, TopOpeBRepDSInterferenceTool as InterferenceTool,
+    InterferenceRecord as Interference, ListOfInterference as Interferences,
+    TopOpeBRepDSDataStructure as DS, TopOpeBRepDSInterferenceTool as InterferenceTool,
     TopOpeBRepDSKind as Kind, TopOpeBRepDSTransition as Transition,
 };
 use crate::top_ope_brep_tool::TopOpeBRepToolShapeTool;
@@ -26,7 +26,7 @@ pub struct TopOpeBRepKPartContext {
 }
 
 struct Pairing<'a> {
-    found: &'a Handle<Interference>,
+    found: &'a Handle<dyn Interference>,
     list: &'a Interferences,
     point: &'a VPoint<'a>,
     edge: &'a Shape,
@@ -75,7 +75,7 @@ fn exiting() -> Transition {
 #[allow(clippy::too_many_arguments)]
 pub fn funbrep_topokpart(
     context: &mut TopOpeBRepKPartContext,
-    found: &Handle<Interference>,
+    found: &Handle<dyn Interference>,
     list: &Interferences,
     line: &mut Line,
     point: &VPoint<'_>,

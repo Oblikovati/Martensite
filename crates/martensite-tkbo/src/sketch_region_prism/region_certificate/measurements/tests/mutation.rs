@@ -31,9 +31,9 @@ pub(in crate::sketch_region_prism::region_certificate) fn live_face(
 pub(super) fn side_basis(receipt: &PrismReceipt) -> Handle<GeomBezierCurve> {
     let surface = BRepTool::surface(&live_face(receipt, PrismImageRole::Generated)).unwrap();
     surface
-        .cast::<GeomSurfaceOfLinearExtrusion>()
+        .downcast::<GeomSurfaceOfLinearExtrusion>()
         .basis_curve()
-        .cast()
+        .into_downcast()
 }
 #[test]
 fn edited_original_copy_and_side_never_reuse_measured_coefficients() {

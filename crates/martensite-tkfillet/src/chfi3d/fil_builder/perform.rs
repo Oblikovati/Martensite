@@ -31,9 +31,9 @@ impl ChFi3dFilBuilder {
     ) -> Result<(bool, State, State), Failure> {
         let radius = constant_radius(spine, NOT_FILLET)?;
         let tol_guide = hguide.resolution(self.base.tolapp3d)?;
-        let s1: Handle<dyn Adaptor3dSurface> = hs1.clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = hs2.clone().cast();
-        let guide: Handle<dyn Adaptor3dCurve> = hguide.clone().cast();
+        let s1: Handle<dyn Adaptor3dSurface> = hs1.upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = hs2.upcast();
+        let guide: Handle<dyn Adaptor3dCurve> = hguide.upcast();
         let mut walk = BRepBlendWalking::new(&s1, &s2, i1, i2, hguide);
         let tols = (self.base.tolapp3d, tol_guide);
         if let Some(rad) = radius {
@@ -66,9 +66,9 @@ impl ChFi3dFilBuilder {
         let or = call.s1.face().orientation();
         let pfirst = out.first;
         self.base.extend_ends_to_spine(call.spine, out)?;
-        let s1: Handle<dyn Adaptor3dSurface> = call.s1.clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = call.s2.clone().cast();
-        let guide: Handle<dyn Adaptor3dCurve> = call.guide.clone().cast();
+        let s1: Handle<dyn Adaptor3dSurface> = call.s1.upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = call.s2.upcast();
+        let guide: Handle<dyn Adaptor3dCurve> = call.guide.upcast();
         let ccall = ComputeCall {
             hguide: call.guide,
             spine: Some(call.spine),

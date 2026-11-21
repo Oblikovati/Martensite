@@ -23,9 +23,9 @@ pub(super) fn calcul_droite(
     ydir: f64,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let dir1 = Direction2::new(xdir, ydir)?;
-    let l: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(p2d1, dir1)).cast();
+    let l: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(p2d1, dir1)).into_upcast();
     let l0 = (xdir * xdir + ydir * ydir).sqrt();
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&l, 0.0, l0, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&l, 0.0, l0, true, true)?).into_upcast())
 }
 
 /// The ends of a batten: the two points, the curves it leaves and their parameters, and

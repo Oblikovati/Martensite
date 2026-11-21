@@ -97,17 +97,17 @@ fn iso_pcurve(
 ) -> Result<(), Failure> {
     if iflag == 1 {
         let d = Direction2::from_vector(Vector2::between(uv1, uv2))?;
-        arete.pcurv = Handle::new(Geom2dLine::from_point(uv1, d)).cast();
+        arete.pcurv = Handle::new(Geom2dLine::from_point(uv1, d)).into_upcast();
         return Ok(());
     }
     let hs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surf)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surf)?).into_upcast();
     let hc: Handle<dyn Adaptor3dCurve> = Handle::new(GeomAdaptorCurve::with_range(
         &arete.c3d,
         arete.pardeb,
         arete.parfin,
     )?)
-    .cast();
+    .into_upcast();
     let range = (arete.pardeb, arete.parfin);
     arete.pcurv = compute_pcurv_on(
         &hc,
@@ -124,7 +124,7 @@ fn iso_pcurve(
 /// The straight Bezier pcurve from `UV1` to `UV2`.
 fn straight(uv1: Point2, uv2: Point2) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let mut poles = [uv1, uv2];
-    Ok(Handle::new(Geom2dBezierCurve::new(&Array1::from_slice(&mut poles))?).cast())
+    Ok(Handle::new(Geom2dBezierCurve::new(&Array1::from_slice(&mut poles))?).into_upcast())
 }
 
 /// The pcurve of a general edge: tangent to the arcs of both common points when they
@@ -143,7 +143,7 @@ fn general_pcurve(
     c1.initialize(p2.arc()?)?;
     let (_, vv2) = c1.d1(p2.parameter_on_arc()?)?;
     let hs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surf)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surf)?).into_upcast();
     let pcurv = build_pcurve_3d(&hs, uv1, vv1, uv2, vv2, true)?;
     let (umin, umax, vmin, vmax) = surf.bounds();
     let mut bs = BoundingBox2::default();
@@ -171,9 +171,9 @@ fn general_curve3d(
     arete: &mut Arete,
 ) -> Result<(), Failure> {
     let ahc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(&arete.pcurv)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(&arete.pcurv)?).into_upcast();
     let ahs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surf)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surf)?).into_upcast();
     let cs = Adaptor3dCurveOnSurface::with_curve(&ahc, &ahs)?;
     (arete.pardeb, arete.parfin) = (cs.first_parameter()?, cs.last_parameter()?);
     let (maxdev, _avdev) = geom_lib::build_curve3d(
@@ -197,13 +197,13 @@ fn projected_pcurve(
     arete: &mut Arete,
 ) -> Result<(), Failure> {
     let hs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surf)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surf)?).into_upcast();
     let hc: Handle<dyn Adaptor3dCurve> = Handle::new(GeomAdaptorCurve::with_range(
         &arete.c3d,
         arete.pardeb,
         arete.parfin,
     )?)
-    .cast();
+    .into_upcast();
     project_pcurv(&hc, &hs, &mut arete.pcurv, tol3d, &mut arete.tolreached)?;
     let p2d = arete.pcurv.value(arete.pardeb)?;
     if !uv1.is_equal(p2d, precision::p_confusion()) {

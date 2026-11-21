@@ -1,6 +1,6 @@
 //! Owned payload controls for language-managed cleanup; explicit Destroy stays callable.
 use martensite_tkernel::{
-    standard::{Handle, StandardTransient},
+    standard::{Handle, StandardTransient, Transient},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -9,7 +9,7 @@ use martensite_tkxsbase::interface::{
 
 #[test]
 fn final_iterator_owner_releases_entities_after_cursor_detachment() {
-    let entity = Handle::new(StandardTransient::default());
+    let entity = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
     let weak = entity.downgrade();
     let mut iterator = InterfaceEntityIterator::new();
     iterator.add_item(&entity);
@@ -27,7 +27,7 @@ fn final_iterator_owner_releases_entities_after_cursor_detachment() {
 
 #[test]
 fn escaped_iterator_list_retains_payload_until_its_final_owner() {
-    let entity = Handle::new(StandardTransient::default());
+    let entity = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
     let weak = entity.downgrade();
     let mut iterator = InterfaceEntityIterator::new();
     iterator.add_item(&entity);

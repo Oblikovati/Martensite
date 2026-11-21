@@ -355,8 +355,7 @@ impl TopOpeBRepBuildBuilder {
                 continue;
             }
             for it in bds.shape_interferences(&f, true).iter() {
-                let ssi: Handle<crate::top_ope_brep_ds::TopOpeBRepDSShapeShapeInterference> =
-                    it.clone().cast();
+                let ssi = it.view::<dyn crate::top_ope_brep_ds::ShapeInterferenceRecord>();
                 if let Some(s) = ssi.get() {
                     let d = crate::top_ope_brep_ds::export::fds_data(it);
                     if d.2 == crate::top_ope_brep_ds::TopOpeBRepDSKind::Face {

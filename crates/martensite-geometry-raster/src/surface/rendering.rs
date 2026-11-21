@@ -65,8 +65,9 @@ impl SurfaceRendering {
         let bounds = finite_bounds(surface, declared)?;
         let adaptor = GeomAdaptorSurface::default();
         adaptor.load_bounds(&self.surface, bounds)?;
-        let iso =
-            Adaptor3dIsoCurve::with_surface(&Handle::new(adaptor).cast::<dyn Adaptor3dSurface>());
+        let iso = Adaptor3dIsoCurve::with_surface(
+            &Handle::new(adaptor).into_upcast::<dyn Adaptor3dSurface>(),
+        );
         Ok((declared, bounds, iso))
     }
 }

@@ -3,14 +3,13 @@ use martensite_tkbrep::{topods::Shape, toptools::ShapeMapHasher};
 use martensite_tkernel::{
     impl_transient,
     ncollection::{DataMap, List},
-    standard::{Failure, StandardTransient},
+    standard::{Failure, Transient},
 };
 use std::sync::Mutex;
 mod mutation;
 use mutation::collect_common_descendants;
 /// Stores descendant and ascendant shape associations; `BRepAlgoAsDes::new()`.
 pub struct BRepAlgoAsDes {
-    parent: StandardTransient,
     relations: Mutex<Relations>,
 }
 struct Relations {
@@ -18,7 +17,7 @@ struct Relations {
     down: DataMap<Shape, List<Shape>, ShapeMapHasher>,
     unbound_descendants: List<Shape>,
 }
-impl_transient!(BRepAlgoAsDes, "BRepAlgoAsDes", StandardTransient, parent);
+impl_transient!(BRepAlgoAsDes, "BRepAlgoAsDes", dyn Transient);
 impl Default for BRepAlgoAsDes {
     fn default() -> Self {
         Self::new()
@@ -28,7 +27,6 @@ impl BRepAlgoAsDes {
     /// Creates empty bidirectional associations; `BRepAlgoAsDes::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             relations: Mutex::new(Relations {
                 up: DataMap::default(),
                 down: DataMap::default(),

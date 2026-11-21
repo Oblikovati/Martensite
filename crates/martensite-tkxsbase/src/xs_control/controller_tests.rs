@@ -4,7 +4,7 @@ use super::*;
 use crate::if_select::IFSelectIntParam;
 use crate::interface::test_norm::fake_entity;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkmath::gp::{Point2, Point3};
 
 #[test]
@@ -63,7 +63,7 @@ fn modes_of_writing_and_their_helps() {
 fn session_items_and_the_applied_modifiers() {
     let ctl = fake_controller("FAKE-ITEMS", "fi");
     assert!(ctl.session_item("any").unwrap().is_null());
-    let item: Handle<StandardTransient> = Handle::new(IFSelectIntParam::new()).cast();
+    let item: Handle<dyn Transient> = Handle::new(IFSelectIntParam::new()).into_upcast();
     ctl.add_session_item(&item, "my-param", true);
     ctl.add_session_item(&item, "", false);
     assert!(ctl.session_item("my-param").unwrap() == item);

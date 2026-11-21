@@ -60,7 +60,7 @@ fn project_on_adaptor(
     tolerance: &mut f64,
 ) -> Result<(), Failure> {
     let curve_adaptor: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_range(curve, range.0, range.1)?).cast();
+        Handle::new(GeomAdaptorCurve::with_range(curve, range.0, range.1)?).into_upcast();
     let surface_adaptor = surface.shallow_copy()?;
     let (trial_tolerance, reached) = initial_projection(
         surface,

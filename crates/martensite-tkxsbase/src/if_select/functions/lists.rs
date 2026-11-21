@@ -20,7 +20,7 @@ fn part(pilot: &Handle<IFSelectSessionPilot>, num: i32) -> String {
 /// The pointed selection `makelist` fills: the existing one cleared, or a new item;
 /// `None` (command refused, with a message) for another item.
 fn list_target(
-    ws: &crate::if_select::IFSelectWorkSession,
+    ws: &crate::if_select::IFSelectSession,
     arg1: &str,
     sout: &mut martensite_tkernel::message::MessageStream<'_>,
 ) -> Result<Option<Handle<IFSelectSelectPointed>>, martensite_tkernel::standard::Failure> {
@@ -150,7 +150,7 @@ pub(super) fn funselsuite(pilot: &Handle<IFSelectSessionPilot>) -> Status {
         }
     }
     selsuite.set_label(&part(pilot, 1));
-    Ok(pilot.record_item(&Handle::new(selsuite).cast()))
+    Ok(pilot.record_item(&Handle::new(selsuite).into_upcast()))
 }
 
 /// `fun21` (clearitems): all the items, the final modifiers and the share-out cleared.

@@ -2,7 +2,7 @@
 use super::{PaveBlock, PaveBlockHandle};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, StandardTransient},
+    standard::{Failure, Transient},
 };
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};
@@ -10,7 +10,6 @@ use std::sync::{Arc, Mutex};
 /// `BOPDSCommonBlock`; groups coincident edge intervals and incident faces.
 #[derive(Default)]
 pub struct CommonBlock {
-    parent: StandardTransient,
     pave_blocks: Vec<PaveBlockHandle>,
     faces: Vec<i32>,
     tolerance: f64,
@@ -37,7 +36,7 @@ impl martensite_tkernel::ncollection::HashPolicy<CommonBlockHandle> for CommonBl
     }
 }
 
-impl_transient!(CommonBlock, "BOPDSCommonBlock", StandardTransient, parent);
+impl_transient!(CommonBlock, "BOPDSCommonBlock", dyn Transient);
 
 impl std::fmt::Debug for CommonBlock {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

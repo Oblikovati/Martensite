@@ -5,23 +5,24 @@ use crate::interface::{InterfaceCheckStatus, InterfaceGraph, InterfaceModelEntit
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 
 /// An actor of transient processes that gives each entity itself as result.
 #[derive(Default)]
 struct EchoActor {
-    base: TransferActorOfTransientProcess,
+    base: TransferActor<TransferTransientKind>,
+    processing: TransferShapeProcessing,
 }
-impl_transient!(EchoActor, "Echo_Actor", TransferActorOfTransientProcess, base, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
+impl_transient!(EchoActor, "Echo_Actor", dyn TransferActorOfTransientProcessOps, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
 
 impl TransferActorOps<TransferTransientKind> for EchoActor {
     fn actor(&self) -> &TransferActor<TransferTransientKind> {
-        self.base.actor()
+        &self.base
     }
     fn transferring(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<dyn TransferProcessOps<TransferTransientKind>>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -31,20 +32,20 @@ impl TransferActorOps<TransferTransientKind> for EchoActor {
 
 impl TransferActorOfTransientProcessOps for EchoActor {
     fn shape_processing(&self) -> &TransferShapeProcessing {
-        self.base.shape_processing()
+        &self.processing
     }
     fn transfer_transient(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         _progress: &ProgressRange<'_>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         assert!(tp.is_some(), "the actor receives the transient process");
         Ok(start.clone())
     }
 }
 
-fn sub(start: &Handle<StandardTransient>) -> Handle<TransferResultFromTransient> {
+fn sub(start: &Handle<dyn Transient>) -> Handle<TransferResultFromTransient> {
     let res = Handle::new(TransferResultFromTransient::new());
     res.set_start(start);
     res
@@ -69,7 +70,7 @@ fn result_from_transient_tree() {
     main.fill_map(&mut map);
     assert_eq!(map.extent(), 2);
     assert!(main.check().is_some() && main.check_status() == InterfaceCheckStatus::CheckOK);
-    let binder: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).cast();
+    let binder: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).into_upcast();
     binder.add_warning("w", "");
     main.set_binder(&binder);
     assert!(main.binder() == binder && main.check_status() == InterfaceCheckStatus::CheckWarning);

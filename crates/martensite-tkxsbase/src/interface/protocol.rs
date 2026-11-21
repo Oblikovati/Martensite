@@ -3,7 +3,7 @@
 use super::{InterfaceCheck, InterfaceGraph, InterfaceInterfaceModel};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient, Transient},
+    standard::{Handle, RuntimeType, RuntimeTyped, Transient},
 };
 use std::sync::{OnceLock, PoisonError, RwLock};
 
@@ -20,24 +20,24 @@ pub trait InterfaceProtocol: Transient {
     /// `Resource(num)`.
     fn resource(&self, num: i32) -> Handle<dyn InterfaceProtocol>;
     /// `CaseNumber(obj)`: 0 for null, else `TypeNumber(Type(obj))`.
-    fn case_number(&self, obj: &Handle<StandardTransient>) -> i32 {
+    fn case_number(&self, obj: &Handle<dyn Transient>) -> i32 {
         if obj.is_null() {
             return 0;
         }
         self.type_number(self.entity_type(obj, 1))
     }
     /// `IsDynamicType(obj)`: true by default.
-    fn is_dynamic_type(&self, _obj: &Handle<StandardTransient>) -> bool {
+    fn is_dynamic_type(&self, _obj: &Handle<dyn Transient>) -> bool {
         true
     }
     /// `NbTypes(obj)`: 1 by default.
-    fn nb_types(&self, _obj: &Handle<StandardTransient>) -> i32 {
+    fn nb_types(&self, _obj: &Handle<dyn Transient>) -> i32 {
         1
     }
     /// `Type(obj, nt = 1)`: the dynamic type (`StandardTransient` for null).
-    fn entity_type(&self, obj: &Handle<StandardTransient>, _nt: i32) -> &'static RuntimeType {
+    fn entity_type(&self, obj: &Handle<dyn Transient>, _nt: i32) -> &'static RuntimeType {
         obj.dynamic_type()
-            .unwrap_or_else(StandardTransient::static_type)
+            .unwrap_or_else(<dyn Transient>::static_type)
     }
     /// `TypeNumber(atype)`: the case number of a type, 0 when not recognised.
     fn type_number(&self, atype: &RuntimeType) -> i32;
@@ -50,15 +50,11 @@ pub trait InterfaceProtocol: Transient {
     /// `IsSuitableModel(model)`.
     fn is_suitable_model(&self, model: &Handle<dyn InterfaceInterfaceModel>) -> bool;
     /// `UnknownEntity`.
-    fn unknown_entity(&self) -> Handle<StandardTransient>;
+    fn unknown_entity(&self) -> Handle<dyn Transient>;
     /// `IsUnknownEntity(ent)`.
-    fn is_unknown_entity(&self, ent: &Handle<StandardTransient>) -> bool;
+    fn is_unknown_entity(&self, ent: &Handle<dyn Transient>) -> bool;
 }
-impl_transient_interface!(
-    dyn InterfaceProtocol,
-    "InterfaceProtocol",
-    StandardTransient
-);
+impl_transient_interface!(dyn InterfaceProtocol, "InterfaceProtocol", dyn Transient);
 
 fn active_lock() -> &'static RwLock<Handle<dyn InterfaceProtocol>> {
     static ACTIVE: OnceLock<RwLock<Handle<dyn InterfaceProtocol>>> = OnceLock::new();

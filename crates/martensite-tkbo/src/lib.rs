@@ -48,3 +48,6 @@ mod sketch_region_prism;
 mod sketch_region_contact_transport;
 
 mod sketch_region_vertex_observation;
+
+#[cfg(test)]
+mod object_model_contracts;

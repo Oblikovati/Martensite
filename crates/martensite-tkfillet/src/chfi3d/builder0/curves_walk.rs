@@ -185,15 +185,15 @@ fn approximated(
             Point2::new(ends.parfin[2], ends.parfin[3]);
     }
     let (knots, mults, deg) = (mbs.knots()?, mbs.multiplicities()?, mbs.degree()?);
-    out.c3d = Handle::new(GeomBSplineCurve::new(&pol3d, &knots, &mults, deg, false)?).cast();
+    out.c3d = Handle::new(GeomBSplineCurve::new(&pol3d, &knots, &mults, deg, false)?).into_upcast();
     out.pc1 = Handle::new(Geom2dBSplineCurve::new(
         &pol2d1, &knots, &mults, deg, false,
     )?)
-    .cast();
+    .into_upcast();
     out.pc2 = Handle::new(Geom2dBSplineCurve::new(
         &pol2d2, &knots, &mults, deg, false,
     )?)
-    .cast();
+    .into_upcast();
     let tolreached = eval_tol_reached((ends.s1, &out.pc1), (ends.s2, &out.pc2), &out.c3d)?;
     let tolreached = if tolreached < ddeb { ddeb } else { tolreached };
     out.tolreached = if tolreached < dfin { dfin } else { tolreached };

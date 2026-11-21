@@ -108,8 +108,9 @@ pub(super) fn vec_of(values: &[f64]) -> Result<Vector<'static>, Failure> {
 
 /// The face of a surface adaptor when it is a face adaptor (null otherwise).
 pub(super) fn face_of(s: &Handle<dyn Adaptor3dSurface>) -> Face {
-    let hs: Handle<BRepAdaptorSurface> = s.clone().cast();
-    hs.get().map(|h| h.face()).unwrap_or_default()
+    s.downcast_ref::<BRepAdaptorSurface>()
+        .map(BRepAdaptorSurface::face)
+        .unwrap_or_default()
 }
 
 /// The offset elementary spine of `hguide` for the chamfers of constant throat with

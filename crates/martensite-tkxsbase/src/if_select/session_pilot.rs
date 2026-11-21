@@ -4,10 +4,12 @@
 //! commands (exit, help, command control, scripts, xstep, xsnew).
 //!
 //! The execution members are in `session_pilot_run`.
-use super::{IFSelectActivator, IFSelectActivatorBase, IFSelectWorkLibrary, IFSelectWorkSession};
+use super::{
+    IFSelectActivator, IFSelectActivatorBase, IFSelectWorkLibrary, IFSelectWorkSessionOps,
+};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, HandleUpcast, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -23,7 +25,7 @@ static INIT_ACTOR: AtomicBool = AtomicBool::new(false);
 
 /// The fields of `IFSelectSessionPilot`.
 pub(super) struct PilotState {
-    pub(super) thesession: Handle<IFSelectWorkSession>,
+    pub(super) thesession: Handle<dyn IFSelectWorkSessionOps>,
     pub(super) theprompt: AsciiString,
     pub(super) thecommand: Vec<u8>,
     pub(super) thenbwords: i32,
@@ -32,7 +34,7 @@ pub(super) struct PilotState {
     pub(super) thewordeb: Vec<i32>,
     pub(super) therecord: bool,
     pub(super) thenumrec: i32,
-    pub(super) theobjrec: Handle<StandardTransient>,
+    pub(super) theobjrec: Handle<dyn Transient>,
     pub(super) thecomlist: Vec<AsciiString>,
 }
 
@@ -44,11 +46,10 @@ pub(super) struct PilotState {
 /// assert_eq!(pilot.nb_words(), 0);
 /// ```
 pub struct IFSelectSessionPilot {
-    transient: StandardTransient,
     pub(super) base: IFSelectActivatorBase,
     pub(super) state: SharedState<PilotState>,
 }
-impl_transient!(IFSelectSessionPilot, "IFSelectSessionPilot", dyn IFSelectActivator, transient, interfaces: [dyn IFSelectActivator]);
+impl_transient!(IFSelectSessionPilot, "IFSelectSessionPilot", dyn IFSelectActivator, interfaces: [dyn IFSelectActivator]);
 
 /// A separator of words: a native `char` not above a blank (the bytes from 0x80 are
 /// negative `char`s natively, so separators too).
@@ -94,7 +95,6 @@ impl IFSelectSessionPilot {
             thecomlist: Vec::new(),
         };
         let pilot = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectActivatorBase::new(),
             state: SharedState::new(state),
         });
@@ -121,11 +121,11 @@ impl IFSelectSessionPilot {
         Ok(self.base.this()?.cast())
     }
     /// `Session`.
-    pub fn session(&self) -> Handle<IFSelectWorkSession> {
+    pub fn session(&self) -> Handle<dyn IFSelectWorkSessionOps> {
         self.state.read().thesession.clone()
     }
     /// The session, `StandardNullObject` when none (a native null dereference).
-    pub(super) fn live_session(&self) -> Result<Handle<IFSelectWorkSession>, Failure> {
+    pub(super) fn live_session(&self) -> Result<Handle<dyn IFSelectWorkSessionOps>, Failure> {
         let session = self.session();
         if session.is_null() {
             return Err(exceptions::null_object(
@@ -142,9 +142,12 @@ impl IFSelectSessionPilot {
     pub fn record_mode(&self) -> bool {
         self.state.read().therecord
     }
-    /// `SetSession(WS)`.
-    pub fn set_session(&self, ws: &Handle<IFSelectWorkSession>) {
-        self.state.write().thesession = ws.clone();
+    /// Set a base or norm-specific session, e.g. `pilot.set_session(&session)`.
+    pub fn set_session<S: ?Sized + HandleUpcast<dyn IFSelectWorkSessionOps>>(
+        &self,
+        ws: &Handle<S>,
+    ) {
+        self.state.write().thesession = ws.upcast();
     }
     /// `SetLibrary(WL)`: the library of the session (nothing without session).
     pub fn set_library(&self, wl: &Handle<dyn IFSelectWorkLibrary>) {
@@ -281,7 +284,7 @@ impl IFSelectSessionPilot {
             })
     }
     /// `RecordItem(item)`: the item the command creates; fail for null.
-    pub fn record_item(&self, item: &Handle<StandardTransient>) -> super::IFSelectReturnStatus {
+    pub fn record_item(&self, item: &Handle<dyn Transient>) -> super::IFSelectReturnStatus {
         self.state.write().theobjrec = item.clone();
         if item.is_null() {
             super::IFSelectReturnStatus::RetFail
@@ -290,7 +293,7 @@ impl IFSelectSessionPilot {
         }
     }
     /// `RecordedItem`.
-    pub fn recorded_item(&self) -> Handle<StandardTransient> {
+    pub fn recorded_item(&self) -> Handle<dyn Transient> {
         self.state.read().theobjrec.clone()
     }
     /// `Clear`: the recorded commands forgotten.

@@ -4,7 +4,7 @@ use super::pilot_tests::shared_pilot;
 use super::*;
 use crate::interface::{InterfaceParamType, InterfaceTypedValue};
 use martensite_tkernel::{
-    standard::{Handle, StandardTransient},
+    standard::{Handle, Transient},
     tcollection::AsciiString,
 };
 
@@ -99,7 +99,7 @@ fn functions_general_commands() {
 fn functions_signatures_and_counters() {
     let (_guard, pilot) = shared_pilot();
     let ws = pilot.session();
-    let sign: Handle<StandardTransient> = Handle::new(IFSelectSignType::new(false)).cast();
+    let sign: Handle<dyn Transient> = Handle::new(IFSelectSignType::new(false)).into_upcast();
     ws.add_named_item("type", &sign, true).unwrap();
     check(
         &pilot,
@@ -299,10 +299,10 @@ fn functions_modifiers_and_transformers() {
 fn functions_edit_forms() {
     let (_guard, pilot) = shared_pilot();
     let ws = pilot.session();
-    let count: Handle<StandardTransient> = Handle::new(
+    let count: Handle<dyn Transient> = Handle::new(
         InterfaceTypedValue::new("count", InterfaceParamType::ParamInteger, "1").unwrap(),
     )
-    .cast();
+    .into_upcast();
     ws.set_params(&[count], &[1]).unwrap();
     check(
         &pilot,
@@ -358,7 +358,7 @@ fn functions_helpers() {
             .unwrap()
             .is_null()
     );
-    let dc: Handle<StandardTransient> = Handle::new(IFSelectDispPerCount::new()).cast();
+    let dc: Handle<dyn Transient> = Handle::new(IFSelectDispPerCount::new()).into_upcast();
     ws.add_named_item("dc", &dc, false).unwrap();
     assert!(
         IFSelectFunctions::give_dispatch(&ws, "dc(0)", true)
@@ -371,5 +371,8 @@ fn functions_helpers() {
             .unwrap()
             .is_some()
     );
-    assert!(IFSelectFunctions::give_entity_number(&Handle::default(), "1").is_err());
+    assert!(
+        IFSelectFunctions::give_entity_number(&Handle::<IFSelectWorkSession>::default(), "1")
+            .is_err()
+    );
 }

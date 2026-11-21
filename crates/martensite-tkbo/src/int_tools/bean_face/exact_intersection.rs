@@ -16,8 +16,8 @@ pub(super) fn compute(bean: &mut BeanFaceIntersector) -> Result<(), Failure> {
 }
 
 fn exact_intersector(bean: &BeanFaceIntersector) -> Result<HInter, Failure> {
-    let curve: martensite_tkgeomalgo::int_curve_surface::HCurve = bean.curve.clone().cast();
-    let surface = bean.surface.clone().cast::<dyn Adaptor3dSurface>();
+    let curve: martensite_tkgeomalgo::int_curve_surface::HCurve = bean.curve.upcast();
+    let surface = bean.surface.upcast::<dyn Adaptor3dSurface>();
     let mut intersector = HInter::new();
     intersector.perform(&curve, &surface)?;
     Ok(intersector)

@@ -1,6 +1,7 @@
 //! Finalized line geometry retains both operand incidences and source tolerances.
 use super::*;
 use crate::top_ope_brep::TopOpeBRepGeomTool;
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::{TopOpeBRepDSCurve, TopOpeBRepDSInterferenceTool as Tool};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
@@ -136,7 +137,7 @@ impl TopOpeBRepFacesFiller<'_> {
 
     fn geometry_point(
         &self,
-        interference: &Handle<TopOpeBRepDSInterference>,
+        interference: &Handle<dyn InterferenceRecord>,
     ) -> Result<(Point3, f64), Failure> {
         let entry = interference.get().ok_or_else(missing_interference)?;
         let storage = self.hds.get().ok_or_else(missing_storage)?;

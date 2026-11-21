@@ -27,7 +27,7 @@ fn spline_specialized_geometry_preserves_live_handle_identity() {
     let returned = curve
         .curve_part()
         .curve()
-        .cast::<martensite_tkg3d::geom::GeomBSplineCurve>();
+        .into_downcast::<martensite_tkg3d::geom::GeomBSplineCurve>();
     assert!(std::ptr::eq(
         geometry.get().unwrap(),
         returned.get().unwrap()
@@ -59,7 +59,7 @@ fn planar_identity() {
     let returned = curve
         .curve_part()
         .curve()
-        .cast::<martensite_tkg2d::geom2d::Geom2dBSplineCurve>();
+        .into_downcast::<martensite_tkg2d::geom2d::Geom2dBSplineCurve>();
     assert!(std::ptr::eq(
         geometry.get().unwrap(),
         returned.get().unwrap()

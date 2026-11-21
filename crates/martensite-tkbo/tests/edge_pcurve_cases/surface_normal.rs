@@ -65,5 +65,5 @@ fn surface(kind: usize) -> Handle<dyn GeomSurface> {
             poles.set_value(u, v, point).unwrap();
         }
     }
-    Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast()
+    Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast()
 }

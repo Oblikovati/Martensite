@@ -57,8 +57,7 @@ fn query_add_vertex_in_edge(
     or: Orientation,
 ) {
     for cur in li.iter() {
-        let cpi: Handle<TopOpeBRepDSCurvePointInterference> = cur.clone().cast();
-        if let Some(c) = cpi.get() {
+        if let Some(c) = cur.downcast_ref::<TopOpeBRepDSCurvePointInterference>() {
             let same = iv == c.geometry()
                 && c.geometry_type() == TopOpeBRepDSKind::Vertex
                 && or == c.transition().orientation(State::In, ShapeEnum::Face)
@@ -116,11 +115,13 @@ pub(super) fn find_index_point(
         (g.vertex(false, on_s).point(), g.surf())
     };
     for sci in dstr.surface_interferences(isurf).iter() {
-        let sc: Handle<TopOpeBRepDSSurfaceCurveInterference> = sci.clone().cast();
-        let Some(sc) = sc.get() else { continue };
+        let Some(sc) = sci.downcast_ref::<TopOpeBRepDSSurfaceCurveInterference>() else {
+            continue;
+        };
         for cpi in dstr.curve_interferences(sc.geometry()).iter() {
-            let cp: Handle<TopOpeBRepDSCurvePointInterference> = cpi.clone().cast();
-            let Some(cp) = cp.get() else { continue };
+            let Some(cp) = cpi.downcast_ref::<TopOpeBRepDSCurvePointInterference>() else {
+                continue;
+            };
             let tp = dstr.point(cp.geometry())?;
             if p.is_equal(&tp.point(), tp.tolerance()) {
                 return Ok(Some(cp.geometry()));
@@ -299,7 +300,7 @@ impl FilDs {
             isurf,
         );
         dstr.change_shape_interferences_index(self.solid_index)?
-            .append(Handle::new(ssi).cast());
+            .append(Handle::new(ssi).into_upcast());
         let (v1, v2) = {
             let g = lock(&fd);
             (

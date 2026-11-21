@@ -111,7 +111,7 @@ impl BRepFillTrimSurfaceTool {
         let curve = ct.get().ok_or_else(null_curve)?;
         curve.transform(found.location.transformation())?;
         let plane: Handle<dyn GeomSurface> =
-            Handle::new(GeomPlane::from_coefficients(0., 0., 1., 0.)?).cast();
+            Handle::new(GeomPlane::from_coefficients(0., 0., 1., 0.)?).into_upcast();
         let c2d = geom_proj_lib::curve2d(&ct.cast(), &plane)?;
         ProjectPointOnCurve::with_curve(point, &c2d)?.lower_distance_parameter()
     }
@@ -121,7 +121,7 @@ impl BRepFillTrimSurfaceTool {
     /// else approximated; `let ((c, pc1, pc2), cont) = t.project(0., 1.)?;`.
     pub fn project(&self, u1: f64, u2: f64) -> Result<ProjectedCurves, Failure> {
         let ct: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dTrimmedCurve::new(&self.my_bis, u1, u2, true, true)?).cast();
+            Handle::new(Geom2dTrimmedCurve::new(&self.my_bis, u1, u2, true, true)?).into_upcast();
         let ml = BRepFillMultiLine::new(
             &self.my_face1,
             &self.my_face2,

@@ -73,7 +73,7 @@ fn extend(
 ) -> Result<Handle<GeomBSplineCurve>, Failure> {
     let mut newc: Handle<GeomBSplineCurve> = Handle::default();
     for icont in (1..=3).rev() {
-        let mut an_ext_curve: Handle<dyn GeomBoundedCurve> = bspline.clone().cast();
+        let mut an_ext_curve: Handle<dyn GeomBoundedCurve> = bspline.upcast();
         geom_lib::extend_curve_to_point(&mut an_ext_curve, bout, icont, after)?;
         newc = an_ext_curve.cast();
         let gacurve = GeomAdaptorCurve::with_curve(&newc.clone().cast::<dyn GeomCurve>())?;

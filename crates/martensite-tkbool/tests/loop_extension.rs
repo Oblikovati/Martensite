@@ -10,7 +10,7 @@ use martensite_tkernel::standard::Handle;
 struct ComposedLoop {
     base: TopOpeBRepBuildLoopBase,
 }
-impl_transient!(ComposedLoop, "ComposedLoop", TopOpeBRepBuildLoopBase, base, interfaces: [dyn TopOpeBRepBuildLoop]);
+impl_transient!(ComposedLoop, "ComposedLoop", dyn TopOpeBRepBuildLoop, interfaces: [dyn TopOpeBRepBuildLoop]);
 
 impl ComposedLoop {
     fn retained_mode(&self) -> &bool {
@@ -59,7 +59,7 @@ fn external_composition_publishes_the_edited_mode_shape_and_cursor() {
         base: TopOpeBRepBuildLoopBase::from_shape(&original),
     };
     select_block(&mut extension.base, &replacement);
-    let published: Handle<dyn TopOpeBRepBuildLoop> = Handle::new(extension).cast();
+    let published: Handle<dyn TopOpeBRepBuildLoop> = Handle::new(extension).into_upcast();
     let record = published.get().expect("published loop");
     assert!(!record.is_shape());
     assert!(record.shape().is_same(&replacement));

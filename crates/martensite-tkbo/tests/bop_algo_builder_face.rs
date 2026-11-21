@@ -171,7 +171,7 @@ fn cylinder_case(rows: &mut String) {
         Point2::new(3., 1.),
         Direction2::new(0., 1.).unwrap(),
     ))
-    .cast();
+    .into_upcast();
     both(
         &mut edges,
         BRepBuilderAPIMakeEdge::from_pcurve_params(&line, &surface, 0., 2.)

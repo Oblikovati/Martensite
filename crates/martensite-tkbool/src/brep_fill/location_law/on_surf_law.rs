@@ -7,7 +7,7 @@ use martensite_tkbrep::brep_tools::WireExplorer;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Edge, Shape, Wire};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dTrimmedCurve};
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
@@ -21,7 +21,6 @@ use martensite_tkgeomalgo::geom_fill::{
 /// trihedron on the curve on surface of each edge; no result when an edge lies on no
 /// face of the shape; `let law = BRepFillEdgeOnSurfLaw::new(&path, &support)?;`.
 pub struct BRepFillEdgeOnSurfLaw {
-    parent: StandardTransient,
     base: BRepFillLocationLawBase,
     hasresult: bool,
 }
@@ -29,7 +28,6 @@ impl_transient!(
     BRepFillEdgeOnSurfLaw,
     "BRepFillEdgeOnSurfLaw",
     dyn BRepFillLocationLaw,
-    parent,
     interfaces: [dyn BRepFillLocationLaw]
 );
 
@@ -49,7 +47,7 @@ fn curve_on_shape(edge: &Edge, surf: &Shape) -> Result<Option<FaceCurve>, Failur
         let found = BRepTool::curve_on_face(edge, &face)?;
         if !found.pcurve.is_null() {
             let adaptor: Handle<dyn Adaptor3dSurface> =
-                Handle::new(BRepAdaptorSurface::with_face(&face, true)?).cast();
+                Handle::new(BRepAdaptorSurface::with_face(&face, true)?).into_upcast();
             return Ok(Some((found.pcurve, found.first, found.last, adaptor)));
         }
     }
@@ -60,12 +58,11 @@ impl BRepFillEdgeOnSurfLaw {
     /// `BRepFillEdgeOnSurfLaw(Path, Surf)`.
     pub fn new(path: &Wire, surf: &Shape) -> Result<Self, Failure> {
         let mut law = Self {
-            parent: StandardTransient::default(),
             base: BRepFillLocationLawBase::new(path)?,
             hasresult: true,
         };
         let trihedron: Handle<dyn GeomFillTrihedronLaw> =
-            Handle::new(GeomFillDarboux::new()).cast();
+            Handle::new(GeomFillDarboux::new()).into_upcast();
         let model = GeomFillCurveAndTrihedron::new(&trihedron);
         let mut ipath: usize = 0;
         let mut explorer = WireExplorer::with_wire(&law.base.path)?;
@@ -117,11 +114,11 @@ fn on_surface(
         trimmed.reverse()?;
         first = trimmed.first_parameter();
         last = trimmed.last_parameter();
-        pcurve = Handle::new(trimmed).cast();
+        pcurve = Handle::new(trimmed).into_upcast();
     }
     let ac2d: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(&pcurve, first, last)?).cast();
-    Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(&ac2d, surface)?).cast())
+        Handle::new(Geom2dAdaptorCurve::with_range(&pcurve, first, last)?).into_upcast();
+    Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(&ac2d, surface)?).into_upcast())
 }
 
 impl BRepFillLocationLaw for BRepFillEdgeOnSurfLaw {

@@ -67,7 +67,7 @@ fn spine_range_extension_and_simul_round_trip() {
     data.set_first_extension_value(0.1);
     data.set_last_extension_value(0.2);
     *data.change_orientation() = Orientation::Reversed;
-    let simul = Handle::new(StandardTransient::default());
+    let simul = Handle::new(martensite_tkernel::standard::StandardTransient).into_upcast();
     data.set_simul(&simul);
     assert_eq!(
         (data.first_spine_param(), data.last_spine_param()),

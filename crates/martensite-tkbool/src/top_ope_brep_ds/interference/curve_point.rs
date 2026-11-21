@@ -1,6 +1,6 @@
 //! `TopOpeBRepDSCurvePointInterference`: an interference of a point (or vertex) on a
 //! curve (or edge) at a parameter.
-use super::TopOpeBRepDSInterference;
+use super::{InterferenceRecord, InterferenceState};
 use crate::top_ope_brep_ds::{TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
@@ -10,21 +10,27 @@ use std::ops::Deref;
 /// interference members are reached through `Deref`;
 /// `TopOpeBRepDSCurvePointInterference::new(&t, TopOpeBRepDSKind::Curve, 1, TopOpeBRepDSKind::Point, 2, 0.5)`.
 pub struct TopOpeBRepDSCurvePointInterference {
-    parent: TopOpeBRepDSInterference,
+    record: InterferenceState,
     my_param: SharedState<f64>,
 }
 impl_transient!(
     TopOpeBRepDSCurvePointInterference,
     "TopOpeBRepDSCurvePointInterference",
-    TopOpeBRepDSInterference,
-    parent
+    dyn InterferenceRecord,
+    interfaces: [dyn InterferenceRecord]
 );
 
-impl Deref for TopOpeBRepDSCurvePointInterference {
-    type Target = TopOpeBRepDSInterference;
+impl InterferenceRecord for TopOpeBRepDSCurvePointInterference {
+    fn interference_state(&self) -> &InterferenceState {
+        &self.record
+    }
+}
 
-    fn deref(&self) -> &TopOpeBRepDSInterference {
-        &self.parent
+impl Deref for TopOpeBRepDSCurvePointInterference {
+    type Target = InterferenceState;
+
+    fn deref(&self) -> &Self::Target {
+        &self.record
     }
 }
 
@@ -39,7 +45,7 @@ impl TopOpeBRepDSCurvePointInterference {
         p: f64,
     ) -> Self {
         Self {
-            parent: TopOpeBRepDSInterference::new(t, st, s, gt, g),
+            record: InterferenceState::new(t, st, s, gt, g),
             my_param: SharedState::new(p),
         }
     }

@@ -176,14 +176,14 @@ impl BRepFillAdvancedEvolved {
         if the_map_of_lids.is_empty() {
             return Ok(false);
         }
-        let a_pln_f: Handle<GeomPlane> = BRepTool::surface(the_f)?.cast();
+        let a_pln_f: Handle<GeomPlane> = BRepTool::surface(the_f)?.downcast();
         if a_pln_f.is_null() {
             return Ok(false);
         }
         for lid in the_map_of_lids.iter() {
             let a_plane: Handle<GeomPlane> =
-                BRepTool::surface(&martensite_tkbrep::topods::face(lid)?)?.cast();
-            if a_plane.as_ptr() == a_pln_f.as_ptr() {
+                BRepTool::surface(&martensite_tkbrep::topods::face(lid)?)?.downcast();
+            if a_plane.object_address() == a_pln_f.object_address() {
                 return Ok(true);
             }
         }

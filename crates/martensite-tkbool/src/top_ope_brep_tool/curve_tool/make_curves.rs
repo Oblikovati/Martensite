@@ -163,7 +163,7 @@ fn make_curve3d(amc: &MultiBSpCurve) -> Result<Handle<dyn GeomCurve>, Failure> {
         amc.degree()?,
         false,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 /// `MakeCurve2DfromWLineApproxAndPlane(Approx, Pl)`: the 2d B-spline of the plane
@@ -187,7 +187,7 @@ fn make_curve2d_on_plane(
         amc.degree()?,
         false,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 /// `MakeCurve2DfromWLineApprox(Approx, CI)`: the 2d B-spline of the curve `ci` (the
@@ -205,7 +205,7 @@ fn make_curve2d(amc: &MultiBSpCurve, ci: i32) -> Result<Handle<dyn Geom2dCurve>,
         amc.degree()?,
         false,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 /// The approximated curves of the done approximation, by plane case.
@@ -247,14 +247,14 @@ fn approximated_curves(
 /// The tangent fix of the ends of the made B-splines (`GeomLibCheckBSplineCurve` and
 /// `GeomLibCheck2dBSplineCurve` with TOLCHECK and TOLANGCHECK), in place.
 fn fix_tangents(curves: &SectionCurves) -> Result<(), Failure> {
-    let curve: Handle<GeomBSplineCurve> = curves.c3d.clone().cast();
+    let curve: Handle<GeomBSplineCurve> = curves.c3d.downcast();
     if !curve.is_null() {
         let mut cbsc = CheckBSplineCurve::new(&curve, TOLCHECK, TOLANGCHECK)?;
         let (bf, bl) = cbsc.need_tangent_fix();
         cbsc.fix_tangent(bf, bl)?;
     }
     for pc in [&curves.pc1, &curves.pc2] {
-        let curve2d: Handle<Geom2dBSplineCurve> = pc.clone().cast();
+        let curve2d: Handle<Geom2dBSplineCurve> = pc.downcast();
         if curve2d.is_null() {
             continue;
         }
@@ -288,9 +288,9 @@ impl TopOpeBRepToolCurveTool {
         }
         let comps = (gt.comp_pc1(), gt.comp_pc2());
         let iparmin = parmin as i32;
-        let hc3d: Handle<GeomBSplineCurve> = input.c3d.clone().cast();
-        let hpc1: Handle<Geom2dBSplineCurve> = input.pc1.clone().cast();
-        let hpc2: Handle<Geom2dBSplineCurve> = input.pc2.clone().cast();
+        let hc3d: Handle<GeomBSplineCurve> = input.c3d.downcast();
+        let hpc1: Handle<Geom2dBSplineCurve> = input.pc1.downcast();
+        let hpc2: Handle<Geom2dBSplineCurve> = input.pc2.downcast();
         let poles = input_poles(&hc3d, [(&hpc1, comps.0), (&hpc2, comps.1)])?;
         let improved = improve(&poles, gt.get_tolerances(), input)?;
         let iparmax: i32 = improved.unwrap_or(parmax as i32);

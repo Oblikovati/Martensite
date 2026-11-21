@@ -24,7 +24,7 @@ fn edit_preserving_contact(shape: &Shape) {
         curve.value(0.25).unwrap(),
         Point3::new(0.2265625, 0.0859375, 0.)
     );
-    let bezier = curve.cast::<GeomBezierCurve>();
+    let bezier = curve.downcast::<GeomBezierCurve>();
     // Opposite inner-pole changes cancel at t=1/2 and leave both endpoints unchanged.
     bezier.set_pole(2, Point3::new(0.25, 0.0625, 0.)).unwrap();
     bezier.set_pole(3, Point3::new(0.75, 0.4375, 0.)).unwrap();

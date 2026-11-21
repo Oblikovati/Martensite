@@ -39,7 +39,7 @@ fn trimmed_copy(
     Ok(Handle::new(Geom2dTrimmedCurve::new(
         &copy, range.0, range.1, true, true,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 mod periodic;

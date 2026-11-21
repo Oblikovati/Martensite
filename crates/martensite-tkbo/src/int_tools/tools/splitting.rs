@@ -50,11 +50,11 @@ impl Tools {
     }
 }
 fn unwrap_line(curve: &mut Curve) -> Result<Option<Direction3>, Failure> {
-    let trimmed = curve.curve().cast::<GeomTrimmedCurve>();
+    let trimmed = curve.curve().downcast::<GeomTrimmedCurve>();
     if !trimmed.is_null() {
         curve.set_curve(&trimmed.basis_curve());
     }
-    let line = curve.curve().cast::<GeomLine>();
+    let line = curve.curve().downcast::<GeomLine>();
     if line.is_null() {
         return Ok(None);
     }
@@ -68,7 +68,7 @@ fn trim_intersection(curve: &Curve, first: f64, last: f64) -> Result<Curve, Fail
         true,
         true,
     )?)
-    .into_cast();
+    .into_upcast();
     let a = trim_pcurve(curve.first_curve2d(), first, last)?;
     let b = trim_pcurve(curve.second_curve2d(), first, last)?;
     Ok(Curve::new(
@@ -87,5 +87,5 @@ fn trim_pcurve(
     if curve.is_null() {
         return Ok(Handle::default());
     }
-    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).into_cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).into_upcast())
 }

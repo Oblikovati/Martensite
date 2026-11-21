@@ -4,14 +4,15 @@ use super::{
     fds_data, fds_parameter, fds_si_is_gi_of_i_of_sba_of_t_of_i, fds_tdata, fun_ds_getoov,
     fun_select_traint_interference, has_same_domain, href, iref,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::process_interferences_tool::{
     fun_select_gi_interference, fun_select_itrasha_interference, fun_select_sk_interference,
     fun_select_traori_interference, fun_select_trasha_interference, make_epv_interference_sk,
 };
 use crate::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSEdgeVertexInterference,
-    TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSTKI,
-    TopOpeBRepDSTransition, fdscnx_edge_connexity_same_shape_ds, store_interference_ds,
+    TopOpeBRepDSHDataStructure, TopOpeBRepDSKind, TopOpeBRepDSTKI, TopOpeBRepDSTransition,
+    fdscnx_edge_connexity_same_shape_ds, store_interference_ds,
 };
 use crate::top_ope_brep_tool::{
     fun_tool_maxtol, fun_tool_orient_v_in_e, fun_tool_paron_ef, fun_tool_proj_pone,
@@ -24,7 +25,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::gp::Point2;
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The interferences of a list grouped by geometry in the `TopOpeBRepDSTKI` order.
 pub(crate) fn tki_groups(
@@ -59,7 +60,7 @@ pub(crate) fn tki_support_groups(
 /// `occ::down_cast<TopOpeBRepDSEdgeVertexInterference>(I)->GBound()`;
 /// StandardNullObject when `i` is no edge/vertex interference.
 pub(crate) fn evi_gbound(i: &H) -> Result<bool, Failure> {
-    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.cast();
+    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.downcast();
     evi.get().map(|e| e.gbound()).ok_or_else(|| {
         Failure::with_type(
             "Standard_NullObject",
@@ -71,7 +72,7 @@ pub(crate) fn evi_gbound(i: &H) -> Result<bool, Failure> {
 
 /// The edge/vertex GBound when `i` is one, else false (`isevi ? GBound : false`).
 fn gbound_if_evi(i: &H) -> bool {
-    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.cast();
+    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.downcast();
     evi.get().is_some_and(|e| e.gbound())
 }
 

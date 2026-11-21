@@ -1,22 +1,22 @@
 //! The parameters (integer and text), the signatures, the evaluation of the
 //! selections, the selections of the dispatches and modifiers, and the counters.
-use super::{IFSelectTransientList, IFSelectWorkSession, interrupted};
+use super::{IFSelectSession, IFSelectTransientList, interrupted};
 use crate::if_select::{
     IFSelectDispatch, IFSelectGeneralModifier, IFSelectIntParam, IFSelectSelectDeduct,
-    IFSelectSelection, IFSelectSelectionIterator, IFSelectSignCounter, IFSelectSignCounterOps,
-    IFSelectSignature,
+    IFSelectSelection, IFSelectSelectionIterator, IFSelectSignCounterOps, IFSelectSignature,
 };
 use crate::interface::{InterfaceEntityIterator, InterfaceParamType, InterfaceStatic};
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     message::Message,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::fmt::Write as _;
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// The item `param` once added under `name`, null when refused.
-    fn added_param<T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
+    fn added_param<T: ?Sized + TransientHandleTarget>(
         &self,
         name: &str,
         param: Handle<T>,
@@ -31,19 +31,19 @@ impl IFSelectWorkSession {
         &self,
         statname: &str,
         name: &str,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let stat = InterfaceStatic::static_named(statname);
         let Some(live) = stat.get() else {
             return Ok(Handle::default());
         };
-        let param: Handle<StandardTransient> =
-            if live.param_type() == InterfaceParamType::ParamInteger {
-                let intpar = IFSelectIntParam::new();
-                intpar.set_static_name(statname);
-                Handle::new(intpar).cast()
-            } else {
-                live.h_string_value().cast()
-            };
+        let param: Handle<dyn Transient> = if live.param_type() == InterfaceParamType::ParamInteger
+        {
+            let intpar = IFSelectIntParam::new();
+            intpar.set_static_name(statname);
+            Handle::new(intpar).into_upcast()
+        } else {
+            live.h_string_value().cast()
+        };
         if param.is_null() {
             return Ok(param);
         }
@@ -103,7 +103,7 @@ impl IFSelectWorkSession {
     pub fn sign_value(
         &self,
         sign: &Handle<dyn IFSelectSignature>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> String {
         let model = self.model();
         match sign.get() {
@@ -164,7 +164,7 @@ impl IFSelectWorkSession {
     pub fn selection_result_from_list(
         &self,
         sel: &Handle<dyn IFSelectSelection>,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
     ) -> Result<IFSelectTransientList, Failure> {
         let deduct = sel.cast::<dyn IFSelectSelectDeduct>();
         if list.is_none() || deduct.is_null() {
@@ -191,7 +191,7 @@ impl IFSelectWorkSession {
     /// of a modifier (both items, `sel` an item or null); false otherwise.
     pub fn set_item_selection(
         &self,
-        item: &Handle<StandardTransient>,
+        item: &Handle<dyn Transient>,
         sel: &Handle<dyn IFSelectSelection>,
     ) -> bool {
         let (disp, modif) = (
@@ -216,14 +216,11 @@ impl IFSelectWorkSession {
         true
     }
     /// `ResetItemSelection(item)`: `SetItemSelection` with a null selection.
-    pub fn reset_item_selection(&self, item: &Handle<StandardTransient>) -> bool {
+    pub fn reset_item_selection(&self, item: &Handle<dyn Transient>) -> bool {
         self.set_item_selection(item, &Handle::default())
     }
     /// `ItemSelection(item)`: the selection of a dispatch or modifier item (null else).
-    pub fn item_selection(
-        &self,
-        item: &Handle<StandardTransient>,
-    ) -> Handle<dyn IFSelectSelection> {
+    pub fn item_selection(&self, item: &Handle<dyn Transient>) -> Handle<dyn IFSelectSelection> {
         if let Some(d) = item
             .cast::<dyn IFSelectDispatch>()
             .get()
@@ -241,18 +238,17 @@ impl IFSelectWorkSession {
         Handle::default() // Null or unknown -> Null
     }
     /// `SignCounter(id)`: null when not a counter.
-    pub fn sign_counter(&self, id: i32) -> Handle<IFSelectSignCounter> {
+    pub fn sign_counter(&self, id: i32) -> Handle<dyn IFSelectSignCounterOps> {
         self.item(id).cast()
     }
     /// `ComputeCounter(counter, forced = false)`: the counter computed on its selection;
     /// false for null or without graph.
-    pub fn compute_counter(
+    pub fn compute_counter<C: ?Sized + IFSelectSignCounterOps>(
         &self,
-        counter: &Handle<IFSelectSignCounter>,
+        counter: &Handle<C>,
         forced: bool,
     ) -> Result<bool, Failure> {
-        let ops = counter.cast::<dyn IFSelectSignCounterOps>();
-        let Some(live) = ops.get() else {
+        let Some(live) = counter.get() else {
             return Ok(false);
         };
         if !self.compute_graph(false)? {
@@ -262,14 +258,13 @@ impl IFSelectWorkSession {
     }
     /// `ComputeCounterFromList(counter, list, clear = true)`: the counter computed on
     /// `list` (on its selection for a null list).
-    pub fn compute_counter_from_list(
+    pub fn compute_counter_from_list<C: ?Sized + IFSelectSignCounterOps>(
         &self,
-        counter: &Handle<IFSelectSignCounter>,
-        list: Option<&[Handle<StandardTransient>]>,
+        counter: &Handle<C>,
+        list: Option<&[Handle<dyn Transient>]>,
         clear: bool,
     ) -> Result<bool, Failure> {
-        let ops = counter.cast::<dyn IFSelectSignCounterOps>();
-        let Some(live) = ops.get() else {
+        let Some(live) = counter.get() else {
             return Ok(false);
         };
         if clear {

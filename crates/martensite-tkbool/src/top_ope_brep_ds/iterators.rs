@@ -2,9 +2,9 @@
 //! and support filters, or those on curves, points (and vertices) or surfaces.
 use super::{
     ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSCurvePointInterference,
-    TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSSurfaceCurveInterference,
+    TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSKind, TopOpeBRepDSSurfaceCurveInterference,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::top_abs::{Orientation, State};
@@ -27,7 +27,7 @@ enum MatchKind {
 /// `let mut it = TopOpeBRepDSInterferenceIterator::with_list(&l)?;`.
 #[derive(Clone, Default)]
 pub struct TopOpeBRepDSInterferenceIterator {
-    my_items: Vec<Handle<TopOpeBRepDSInterference>>,
+    my_items: Vec<Handle<dyn InterferenceRecord>>,
     my_position: usize,
     my_gk: Option<TopOpeBRepDSKind>,
     my_g: Option<i32>,
@@ -109,10 +109,7 @@ impl TopOpeBRepDSInterferenceIterator {
 
     /// `MatchInterference(I)` (virtual natively): the filters, or the curve or point
     /// kinds of the derived iterators; `it.match_interference(&i)?`.
-    pub fn match_interference(
-        &self,
-        i: &Handle<TopOpeBRepDSInterference>,
-    ) -> Result<bool, Failure> {
+    pub fn match_interference(&self, i: &Handle<dyn InterferenceRecord>) -> Result<bool, Failure> {
         let i = i.get().ok_or_else(null_item)?;
         let gt = i.geometry_type();
         Ok(match self.kind {
@@ -144,7 +141,7 @@ impl TopOpeBRepDSInterferenceIterator {
 
     /// `Value()`: the current interference; StandardNoSuchObject past the end;
     /// `it.value()?`.
-    pub fn value(&self) -> Result<&Handle<TopOpeBRepDSInterference>, Failure> {
+    pub fn value(&self) -> Result<&Handle<dyn InterferenceRecord>, Failure> {
         self.my_items.get(self.my_position).ok_or_else(|| {
             Failure::with_type(
                 "Standard_NoSuchObject",
@@ -161,7 +158,7 @@ impl TopOpeBRepDSInterferenceIterator {
     }
 
     /// The current interference, dereferenced.
-    fn current(&self) -> Result<&TopOpeBRepDSInterference, Failure> {
+    fn current(&self) -> Result<&dyn InterferenceRecord, Failure> {
         self.value()?.get().ok_or_else(null_item)
     }
 }
@@ -220,7 +217,7 @@ impl TopOpeBRepDSCurveIterator {
     /// unchecked cast; StandardNullObject for another interference here);
     /// `it.pcurve()?`.
     pub fn pcurve(&self) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-        let sci: Handle<TopOpeBRepDSSurfaceCurveInterference> = self.base.value()?.clone().cast();
+        let sci: Handle<TopOpeBRepDSSurfaceCurveInterference> = self.base.value()?.downcast();
         let sc = sci.get().ok_or_else(|| Failure::with_type("Standard_NullObject", "TopOpeBRepDSCurveIterator::PCurve: not a surface/curve interference; expected a TopOpeBRepDSSurfaceCurveInterference", "TopOpeBRepDSCurveIterator"))?;
         Ok(sc.pcurve())
     }
@@ -258,11 +255,11 @@ impl TopOpeBRepDSPointIterator {
     /// StandardProgramError for another one; `it.parameter()?`.
     pub fn parameter(&self) -> Result<f64, Failure> {
         let i = self.base.value()?;
-        let cp: Handle<TopOpeBRepDSCurvePointInterference> = i.clone().cast();
+        let cp: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
         if let Some(cp) = cp.get() {
             return Ok(cp.parameter());
         }
-        let ev: Handle<TopOpeBRepDSEdgeVertexInterference> = i.clone().cast();
+        let ev: Handle<TopOpeBRepDSEdgeVertexInterference> = i.downcast();
         ev.get()
             .map(|ev| ev.parameter())
             .ok_or_else(|| point_error("Parameter"))
@@ -280,7 +277,7 @@ impl TopOpeBRepDSPointIterator {
 
     /// The configuration of the current edge/vertex interference.
     fn config(&self, member: &str) -> Result<TopOpeBRepDSConfig, Failure> {
-        let ev: Handle<TopOpeBRepDSEdgeVertexInterference> = self.base.value()?.clone().cast();
+        let ev: Handle<TopOpeBRepDSEdgeVertexInterference> = self.base.value()?.downcast();
         ev.get()
             .map(|ev| ev.config())
             .ok_or_else(|| point_error(member))

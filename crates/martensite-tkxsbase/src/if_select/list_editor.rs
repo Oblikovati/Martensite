@@ -1,10 +1,10 @@
 //! `IFSelectListEditor`: the edition of a list of texts (the value of an editor which
 //! is a list), each item checked against the definition of the value, with the status
 //! of each item (original, modified, added).
-use crate::interface::{InterfaceInterfaceModel, InterfaceParamType, InterfaceTypedValue};
+use crate::interface::{InterfaceInterfaceModel, InterfaceParamType, InterfaceTypedValueOps};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, HandleUpcast, SharedState, Transient, exceptions},
     tcollection::HAsciiString,
 };
 
@@ -20,7 +20,7 @@ const ADDED: i32 = 2;
 #[derive(Default)]
 struct ListEditorState {
     themax: i32,
-    thedef: Handle<InterfaceTypedValue>,
+    thedef: Handle<dyn InterfaceTypedValueOps>,
     thetouc: i32,
     theorig: IFSelectTextList,
     theedit: IFSelectTextList,
@@ -48,15 +48,9 @@ impl ListEditorState {
 /// ```
 #[derive(Default)]
 pub struct IFSelectListEditor {
-    transient: StandardTransient,
     state: SharedState<ListEditorState>,
 }
-impl_transient!(
-    IFSelectListEditor,
-    "IFSelectListEditor",
-    StandardTransient,
-    transient
-);
+impl_transient!(IFSelectListEditor, "IFSelectListEditor", dyn Transient);
 
 /// `CheckValue(val, modl, thedef)`: true without value, model or definition; else the
 /// value satisfies the definition and, for an entity identifier, names an entity of the
@@ -64,7 +58,7 @@ impl_transient!(
 fn check_value(
     val: &Handle<HAsciiString>,
     modl: &Handle<dyn InterfaceInterfaceModel>,
-    thedef: &Handle<InterfaceTypedValue>,
+    thedef: &Handle<dyn InterfaceTypedValueOps>,
 ) -> bool {
     let (Some(text), Some(model), Some(def)) = (val.get(), modl.get(), thedef.get()) else {
         return true;
@@ -94,14 +88,16 @@ impl IFSelectListEditor {
     }
     /// `IFSelectListEditor(def, max = 0)`: the items checked against `def`, at most
     /// `max` of them (0: no limit).
-    pub fn with_definition(def: &Handle<InterfaceTypedValue>, max: i32) -> Self {
+    pub fn with_definition<V: ?Sized + HandleUpcast<dyn InterfaceTypedValueOps>>(
+        def: &Handle<V>,
+        max: i32,
+    ) -> Self {
         let state = ListEditorState {
             themax: max,
-            thedef: def.clone(),
+            thedef: def.upcast(),
             ..ListEditorState::default()
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

@@ -261,9 +261,9 @@ impl dyn ChFi3dBuilderOps + '_ {
         let f1: Face = topods::face(self.base().ds.shape(cursurf1, true))?;
         let f2: Face = topods::face(self.base().ds.shape(cursurf2, true))?;
         let s1: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(&f1, true)?).cast();
+            Handle::new(BRepAdaptorSurface::with_face(&f1, true)?).into_upcast();
         let s2: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(&f2, true)?).cast();
+            Handle::new(BRepAdaptorSurface::with_face(&f2, true)?).into_upcast();
         let bon1 = self.twisted_side(spine, &cursd, 0, tw1, &nb, &s1, &mut pc1)?;
         let bon2 = self.twisted_side(spine, &cursd, 1, tw2, &nb, &s2, &mut pc2)?;
         let (pointuon1, pointuon2) = (bon1.is_none() && tw1, bon2.is_none() && tw2);

@@ -1,7 +1,7 @@
 //! `InterfaceGraphContent`: an entity iterator filled from a graph, whose content can be
 //! evaluated on demand (`Evaluate`, redefined by the IFGraph tools).
 use super::{InterfaceEntityIterator, InterfaceGraph};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use std::ops::{Deref, DerefMut};
 
 /// `InterfaceGraphContent`: embeds its `InterfaceEntityIterator` (dereferences to it).
@@ -50,7 +50,7 @@ impl InterfaceGraphContent {
     /// in the graph.
     pub fn from_entity(
         agraph: &InterfaceGraph,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<Self, Failure> {
         let mut content = Self::new();
         for curent in agraph.shareds(ent)?.content() {

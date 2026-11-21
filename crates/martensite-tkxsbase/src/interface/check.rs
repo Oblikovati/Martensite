@@ -5,7 +5,7 @@ use super::InterfaceCheckStatus;
 use martensite_tkernel::{
     impl_transient,
     message::Msg,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::{AsciiString, ExtendedString, HAsciiString},
 };
 
@@ -26,7 +26,7 @@ pub(super) struct CheckState {
     pub(super) fails: (MessageList, MessageList),
     pub(super) warns: (MessageList, MessageList),
     pub(super) infos: (MessageList, MessageList),
-    pub(super) ent: Handle<StandardTransient>,
+    pub(super) ent: Handle<dyn Transient>,
 }
 
 impl CheckState {
@@ -71,15 +71,9 @@ impl CheckState {
 /// ```
 #[derive(Default)]
 pub struct InterfaceCheck {
-    transient: StandardTransient,
     pub(super) state: SharedState<CheckState>,
 }
-impl_transient!(
-    InterfaceCheck,
-    "InterfaceCheck",
-    StandardTransient,
-    transient
-);
+impl_transient!(InterfaceCheck, "InterfaceCheck", dyn Transient);
 
 fn h_text(text: &[u8]) -> Handle<HAsciiString> {
     Handle::new(HAsciiString::new(text))
@@ -97,7 +91,7 @@ impl InterfaceCheck {
         Self::default()
     }
     /// `InterfaceCheck(anentity)`.
-    pub fn with_entity(anentity: &Handle<StandardTransient>) -> Self {
+    pub fn with_entity(anentity: &Handle<dyn Transient>) -> Self {
         let check = Self::default();
         check.state.write().ent = anentity.clone();
         check
@@ -224,15 +218,15 @@ impl InterfaceCheck {
         self.state.read().ent.is_some()
     }
     /// `Entity`.
-    pub fn entity(&self) -> Handle<StandardTransient> {
+    pub fn entity(&self) -> Handle<dyn Transient> {
         self.state.read().ent.clone()
     }
     /// `SetEntity`.
-    pub fn set_entity(&self, anentity: &Handle<StandardTransient>) {
+    pub fn set_entity(&self, anentity: &Handle<dyn Transient>) {
         self.state.write().ent = anentity.clone();
     }
     /// `GetEntity`: sets the entity only when none is set.
-    pub fn get_entity(&self, anentity: &Handle<StandardTransient>) {
+    pub fn get_entity(&self, anentity: &Handle<dyn Transient>) {
         let mut state = self.state.write();
         if state.ent.is_null() {
             state.ent = anentity.clone();

@@ -223,14 +223,14 @@ impl BRepFillDraft {
         let l: f64 = l / martensite_cmath::cos(self.my_angle).abs();
         pt = pt.transformed(trsf.inverted()?);
         let plan: Handle<dyn GeomSurface> =
-            Handle::new(GeomPlane::from_point(pt, self.my_dir)?).cast();
+            Handle::new(GeomPlane::from_point(pt, self.my_dir)?).into_upcast();
         let surf: Handle<dyn GeomSurface> = Handle::new(GeomRectangularTrimmedSurface::new(
             &plan,
             (-l, l),
             (-l, l),
             (true, true),
         )?)
-        .cast();
+        .into_upcast();
         self.init(l * 1.01, &w_box)?;
         self.build_shell(&surf, false)?;
         self.fuse(stop_shape, keep_out_side)?;
@@ -250,7 +250,7 @@ impl BRepFillDraft {
     fn init(&mut self, length: f64, bbox: &BoundingBox3) -> Result<(), Failure> {
         let loc = Handle::new(GeomFillLocationDraft::new(self.my_dir, self.my_angle)?);
         self.my_loc = Handle::new(BRepFillDraftLaw::new(&self.my_wire, &loc)?);
-        let law_handle: Handle<dyn BRepFillLocationLaw> = self.my_loc.clone().cast();
+        let law_handle: Handle<dyn BRepFillLocationLaw> = self.my_loc.cast();
         let b: bool = good_orientation(bbox, &law_handle, self.my_dir)?;
         if self.is_internal ^ !b {
             self.my_angle = -self.my_angle;
@@ -274,12 +274,12 @@ impl BRepFillDraft {
             Point3::new(0., 0., 0.),
             Direction3::from_vector(d)?,
         )))
-        .cast();
+        .into_upcast();
         let tc: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&line, 0., length, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&line, 0., length, true, true)?).into_upcast();
         let eg: Edge = BRepLibMakeEdge::from_curve(&tc)?.edge()?;
         let g: Wire = BRepLibMakeWire::from_edge(&eg)?.wire()?;
-        self.my_sec = Handle::new(BRepFillShapeLaw::with_wire(&g, true)?).cast();
+        self.my_sec = Handle::new(BRepFillShapeLaw::with_wire(&g, true)?).into_upcast();
         Ok(())
     }
 
@@ -291,7 +291,7 @@ impl BRepFillDraft {
         surf: &Handle<dyn GeomSurface>,
         keep_out_side: bool,
     ) -> Result<(), Failure> {
-        let loc: Handle<dyn BRepFillLocationLaw> = self.my_loc.clone().cast();
+        let loc: Handle<dyn BRepFillLocationLaw> = self.my_loc.cast();
         let mut sweep = BRepFillSweep::new(&self.my_sec, &loc, true);
         sweep.set_tolerance(self.my_tol, 1.0, 1.0e-5, 1.0e-2);
         sweep.set_angular_control(self.angmin, self.angmax);

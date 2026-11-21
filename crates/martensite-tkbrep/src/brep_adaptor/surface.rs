@@ -11,7 +11,7 @@ use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomSurfaceD1, GeomSurfaceD2, GeomSurfaceD3,
 };
-use martensite_tkg3d::geom_adaptor::GeomAdaptorTransformedSurface;
+use martensite_tkg3d::geom_adaptor::{GeomAdaptorTransformedSurface, GeomTransformedSurfaceSource};
 use martensite_tkmath::geom_abs::{Shape, SurfaceType};
 use martensite_tkmath::gp::{
     Axis1, Cone3, Cylinder3, Direction3, Plane3, Point3, Sphere3, Torus3, Vector3,
@@ -47,7 +47,7 @@ impl_transient!(
     BRepAdaptorSurface,
     "BRepAdaptor_Surface",
     GeomAdaptorTransformedSurface,
-    interfaces: [dyn Adaptor3dSurface]
+    interfaces: [dyn Adaptor3dSurface, dyn GeomTransformedSurfaceSource]
 );
 
 impl BRepAdaptorSurface {
@@ -108,4 +108,10 @@ impl Adaptor3dSurface for BRepAdaptorSurface {
     }
 
     inherited_surface_members!();
+}
+
+impl GeomTransformedSurfaceSource for BRepAdaptorSurface {
+    fn transformed_surface(&self) -> &GeomAdaptorTransformedSurface {
+        BRepAdaptorSurface::transformed_surface(self)
+    }
 }

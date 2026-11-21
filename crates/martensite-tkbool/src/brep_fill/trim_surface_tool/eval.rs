@@ -96,7 +96,7 @@ fn projected_edge(edge: &Edge) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         .ok_or_else(null_geometry)?
         .transform(found.location.transformation())?;
     let plane: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_coefficients(0., 0., 1., 0.)?).cast();
+        Handle::new(GeomPlane::from_coefficients(0., 0., 1., 0.)?).into_upcast();
     geom_proj_lib::curve2d(&ct.cast(), &plane)
 }
 
@@ -131,7 +131,7 @@ fn intersect(
 /// The trimmed curve extended by the tolerance at both ends (its trim changed in
 /// place, as natively), as an adaptor.
 fn extended(c: &Handle<dyn Geom2dCurve>) -> Result<Geom2dAdaptorCurve, Failure> {
-    let trimmed: Handle<Geom2dTrimmedCurve> = c.cast();
+    let trimmed: Handle<Geom2dTrimmedCurve> = c.downcast();
     let t = trimmed.get().ok_or_else(null_geometry)?;
     t.set_trim(
         t.first_parameter() - TOL,
@@ -236,10 +236,10 @@ fn surface_axis(edge: &Edge, face: &Face) -> Result<(Axis3, f64), Failure> {
         SurfaceType::Torus => (gas.torus()?.position(), 0.),
         SurfaceType::Cylinder => (gas.cylinder()?.position(), 0.),
         SurfaceType::SurfaceOfRevolution => {
-            let revolution: Handle<GeomSurfaceOfRevolution> = gs.cast();
+            let revolution: Handle<GeomSurfaceOfRevolution> = gs.downcast();
             let basis = revolution.get().ok_or_else(null_geometry)?.basis_curve();
             let hc: Handle<dyn Adaptor3dCurve> =
-                Handle::new(GeomAdaptorCurve::with_curve(&basis)?).cast();
+                Handle::new(GeomAdaptorCurve::with_curve(&basis)?).into_upcast();
             let as_rev =
                 GeomAdaptorSurfaceOfRevolution::with_curve_and_axis(&hc, gas.axe_of_revolution()?)?;
             let axis = as_rev.axis();

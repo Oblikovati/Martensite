@@ -1,7 +1,7 @@
 use super::*;
 pub(super) fn same_parameter(
     line: &Line,
-    found: &Handle<Interference>,
+    found: &Handle<dyn Interference>,
     parameter: f64,
     seam: bool,
 ) -> Result<bool, Failure> {
@@ -13,7 +13,7 @@ pub(super) fn same_parameter(
 }
 pub(super) fn periodize(
     line: &mut Line,
-    found: &Handle<Interference>,
+    found: &Handle<dyn Interference>,
     parameter: &mut f64,
 ) -> Result<(), Failure> {
     let mut previous = InterferenceTool::parameter(found)?;
@@ -27,7 +27,7 @@ pub(super) fn periodize(
 }
 fn periodic_pair(
     line: &mut Line,
-    found: &Handle<Interference>,
+    found: &Handle<dyn Interference>,
     previous: &mut f64,
     parameter: &mut f64,
 ) -> Result<(), Failure> {

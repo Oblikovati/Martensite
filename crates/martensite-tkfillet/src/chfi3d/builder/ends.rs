@@ -58,12 +58,12 @@ pub(super) fn coupe_par_plan(
     let (tgt1, tgt2) = (Direction3::from_vector(t1)?, Direction3::from_vector(t2)?);
     let d12 = Direction3::from_vector(Vector3::between(p1, p2))?;
     let nor = tgt1.crossed(d12)?;
-    let plan: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_point(p1, nor)?).cast();
+    let plan: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_point(p1, nor)?).into_upcast();
     if nor.dot(tgt2).abs() >= 0.01 {
         return Ok(None);
     }
     let hplan: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&plan)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&plan)?).into_upcast();
     let a_s = GeomAdaptorSurface::with_surface(&plan)?;
     let mut ext = ExtPS::with_range(
         p1,

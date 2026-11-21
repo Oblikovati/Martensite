@@ -31,7 +31,7 @@ fn replace_with_five_poles(edge: &Edge) -> Result<(), Failure> {
     let points =
         [[0., 0.], [4., 0.], [2., 2.], [0., 4.], [0., 0.]].map(|p| Point3::new(p[0], p[1], 0.));
     let poles = Array1::from_shared(&points, 1);
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&poles)?).cast();
+    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&poles)?).into_upcast();
     BRepBuilder::default().update_edge_curve(edge, &curve, 1e-7)
 }
 #[test]

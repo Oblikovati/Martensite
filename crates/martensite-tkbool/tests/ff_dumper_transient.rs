@@ -5,7 +5,7 @@ use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient, Tran
 use martensite_tkmath::gp::{Direction3, Plane3, Point3};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeFace;
 use std::sync::{Arc, RwLock};
-type GenericHandle = Handle<StandardTransient>;
+type GenericHandle = Handle<dyn Transient>;
 
 fn face(normal: Direction3) -> Face {
     BRepBuilderAPIMakeFace::from_plane_bounds(
@@ -28,17 +28,14 @@ fn context() -> TopOpeBRepFacesFillerContext {
     Arc::new(RwLock::new(filler))
 }
 #[test]
-fn generic_and_concrete_base_handles_round_trip_the_same_diagnostic_object() {
+fn erased_handles_round_trip_the_same_diagnostic_object() {
     let context = context();
     let original = Handle::new(TopOpeBRepFFDumper::new_debug(context.clone()).unwrap());
-    let generic: GenericHandle = original.cast();
-    let base: Handle<StandardTransient> = original.cast();
-    assert!(!generic.is_null() && !base.is_null());
-    let recovered = Handle::<TopOpeBRepFFDumper>::down_cast(&generic);
-    let from_base = Handle::<TopOpeBRepFFDumper>::down_cast(&base);
+    let generic: GenericHandle = original.upcast();
+    assert!(!generic.is_null());
+    let recovered = generic.downcast::<TopOpeBRepFFDumper>();
     assert_eq!(original, recovered);
-    assert_eq!(original, from_base);
-    assert_eq!(original.as_ptr(), recovered.as_ptr());
+    assert_eq!(original.object_address(), recovered.object_address());
     assert_eq!(generic.dynamic_type().unwrap().name(), "TopOpeBRepFFDumper");
     assert!(std::ptr::eq(
         generic.dynamic_type().unwrap(),
@@ -52,11 +49,11 @@ fn generic_and_concrete_base_handles_round_trip_the_same_diagnostic_object() {
 }
 #[test]
 fn failed_downcast_is_null_and_release_mode_retains_the_same_silent_contract() {
-    let unrelated: GenericHandle = Handle::new(StandardTransient::default()).cast();
-    assert!(Handle::<TopOpeBRepFFDumper>::down_cast(&unrelated).is_null());
+    let unrelated: GenericHandle = Handle::new(StandardTransient).into_upcast();
+    assert!(unrelated.downcast::<TopOpeBRepFFDumper>().is_null());
     let release = Handle::new(TopOpeBRepFFDumper::new(Some(context())));
-    let generic: GenericHandle = release.cast();
-    let recovered = Handle::<TopOpeBRepFFDumper>::down_cast(&generic);
+    let generic: GenericHandle = release.upcast();
+    let recovered = generic.downcast::<TopOpeBRepFFDumper>();
     let mut output = b"preserved".to_vec();
     recovered.dump_line_index(-1, &mut output).unwrap();
     recovered
@@ -69,8 +66,8 @@ fn failed_downcast_is_null_and_release_mode_retains_the_same_silent_contract() {
 fn caller_mutation_of_actual_filler_storage_is_visible_after_handle_round_trip() {
     let context = context();
     let dumper = Handle::new(TopOpeBRepFFDumper::new_debug(context.clone()).unwrap());
-    let generic: GenericHandle = dumper.cast();
-    let recovered = Handle::<TopOpeBRepFFDumper>::down_cast(&generic);
+    let generic: GenericHandle = dumper.upcast();
+    let recovered = generic.downcast::<TopOpeBRepFFDumper>();
     let hds = context.read().unwrap().hdata_structure();
     let index = hds
         .change_ds()
@@ -141,8 +138,8 @@ fn shared_context_rebinding_is_visible_from_every_handle_and_releases_old_owner(
     let first = context();
     let second = context();
     let dumper = Handle::new(TopOpeBRepFFDumper::new_debug(first.clone()).unwrap());
-    let generic: GenericHandle = dumper.cast();
-    let recovered = Handle::<TopOpeBRepFFDumper>::down_cast(&generic);
+    let generic: GenericHandle = dumper.upcast();
+    let recovered = generic.downcast::<TopOpeBRepFFDumper>();
     let first_weak = Arc::downgrade(&first);
     drop(first);
     assert!(first_weak.upgrade().is_some());
@@ -163,7 +160,7 @@ fn owned_diagnostics_and_context_are_send_sync_and_survive_case_owner_drop() {
         Handle::new(TopOpeBRepFFDumper::new_debug(context.clone()).unwrap()).cast();
     drop(context);
     let output = std::thread::spawn(move || {
-        let recovered = Handle::<TopOpeBRepFFDumper>::down_cast(&generic);
+        let recovered = generic.downcast::<TopOpeBRepFFDumper>();
         let mut output = Vec::new();
         recovered.dump_line_index(1, &mut output).unwrap();
         output
@@ -219,18 +216,13 @@ fn concurrent_handle_readers_and_context_writer_preserve_complete_diagnostic_rec
 }
 
 #[test]
-fn transient_trait_object_projects_the_actual_derived_and_parent_subobjects() {
-    let concrete = Arc::new(TopOpeBRepFFDumper::new_debug(context()).unwrap());
-    let erased: Arc<dyn Transient> = concrete.clone();
-    let projection = erased
-        .project(std::any::TypeId::of::<TopOpeBRepFFDumper>())
-        .unwrap();
-    let recovered = projection.downcast_ref::<TopOpeBRepFFDumper>().unwrap();
-    assert!(std::ptr::eq(recovered, concrete.as_ref()));
-    let parent = erased
-        .project(std::any::TypeId::of::<StandardTransient>())
-        .unwrap();
-    assert!(parent.downcast_ref::<StandardTransient>().is_some());
-    assert_eq!(erased.dynamic_type().name(), "TopOpeBRepFFDumper");
-    assert!(std::ptr::eq(erased.dynamic_type(), concrete.dynamic_type()));
+fn borrowed_type_recovery_lends_the_actual_diagnostic_object() {
+    let original = Handle::new(TopOpeBRepFFDumper::new_debug(context()).unwrap());
+    let erased: GenericHandle = original.upcast();
+    let recovered = erased.downcast_ref::<TopOpeBRepFFDumper>().unwrap();
+    assert!(std::ptr::eq(recovered, original.get().unwrap()));
+    let descriptor = erased.dynamic_type().unwrap();
+    assert_eq!(descriptor.name(), "TopOpeBRepFFDumper");
+    assert!(std::ptr::eq(descriptor, original.dynamic_type().unwrap()));
+    assert_eq!(descriptor.parent().unwrap().name(), "Standard_Transient");
 }

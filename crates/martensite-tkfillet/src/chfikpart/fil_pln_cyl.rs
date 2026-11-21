@@ -133,7 +133,7 @@ pub fn make_fillet_pln_cyl_line(
     }
     set_surf(
         data,
-        Handle::new(GeomCylindricalSurface::new(ax_fil, radius)?).cast(),
+        Handle::new(GeomCylindricalSurface::new(ax_fil, radius)?).into_upcast(),
         dstr,
     );
     let pc_pln = line2(
@@ -344,10 +344,10 @@ pub(super) fn torus_plane_side(
             Direction2::from_vector(Vector2::between(tf.c2d_pln, p2d_pln))?,
             d2d,
         )?;
-        gc2d = Handle::new(Geom2dCircle::from_circ2d(Circle2::new(ax2d, tf.rad)?)).cast();
+        gc2d = Handle::new(Geom2dCircle::from_circ2d(Circle2::new(ax2d, tf.rad)?)).into_upcast();
         let mut circ_ax2 = tf.ax.ax2()?;
         circ_ax2.set_location(tf.c_pln);
-        gc = Handle::new(GeomCircle::from_circ(Circle3::new(circ_ax2, tf.rad)?)).cast();
+        gc = Handle::new(GeomCircle::from_circ(Circle3::new(circ_ax2, tf.rad)?)).into_upcast();
     } else if set_points {
         let pbid = Point2::default();
         lock(data).set_2d_points(if plandab {
@@ -430,9 +430,9 @@ pub fn make_fillet_pln_cyl_circle(
         return Ok(false);
     };
     let surf = if tf.c1sphere {
-        Handle::new(GeomSphericalSurface::new(tf.ax, radius)?).cast()
+        Handle::new(GeomSphericalSurface::new(tf.ax, radius)?).into_upcast()
     } else {
-        Handle::new(GeomToroidalSurface::new(tf.ax, tf.rad, radius)?).cast()
+        Handle::new(GeomToroidalSurface::new(tf.ax, tf.rad, radius)?).into_upcast()
     };
     set_surf(data, surf, dstr);
     let cylrad = cyl.radius();
@@ -462,7 +462,7 @@ pub fn make_fillet_pln_cyl_circle(
     let mut circ_ax2 = tf.ax.ax2()?;
     circ_ax2.set_location(tf.or);
     let gc: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::from_circ(Circle3::new(circ_ax2, cylrad)?)).cast();
+        Handle::new(GeomCircle::from_circ(Circle3::new(circ_ax2, cylrad)?)).into_upcast();
     let trans = fwd_if((nor_fil.dot(norcyl) <= 0.) != plandab);
     let pc_fil = line2(Point2::new(0., v2), Direction2::X);
     set_interference(

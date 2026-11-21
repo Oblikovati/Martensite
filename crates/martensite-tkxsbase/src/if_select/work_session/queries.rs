@@ -1,8 +1,8 @@
 //! The check status of the entities (own, or propagated from the entities they
 //! share) and the parenthood of two entities.
-use super::IFSelectWorkSession;
+use super::IFSelectSession;
 use crate::interface::{InterfaceCheckIterator, InterfaceIntList, InterfaceModelEntities};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions};
 
 /// The propagated status of a check status `val`, for a fail (`quoi` 1) or a warning.
 fn propagated(val: u8, quoi: bool) -> u8 {
@@ -103,7 +103,7 @@ fn set_status(ana: &mut [u8], num: i32, val: u8) -> Result<(), Failure> {
     Ok(())
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `QueryCheckList(chl)`: the check status of each entity ('1' warning, '2' fail),
     /// then propagated. `StandardOutOfRange` for a global check (number 0), natively a
     /// position out of the status string.
@@ -136,7 +136,7 @@ impl IFSelectWorkSession {
     }
     /// `QueryCheckStatus(ent)`: 0 none, 1 warning, 2 fail, +10 for a propagated fail and
     /// +20 for a propagated warning; -1 when unknown.
-    pub fn query_check_status(&self, ent: &Handle<StandardTransient>) -> i32 {
+    pub fn query_check_status(&self, ent: &Handle<dyn Transient>) -> i32 {
         if !self.is_loaded() {
             return -1;
         }
@@ -161,8 +161,8 @@ impl IFSelectWorkSession {
     /// `entson` through the sharing entities, -1 when not a parent.
     pub fn query_parent(
         &self,
-        entdad: &Handle<StandardTransient>,
-        entson: &Handle<StandardTransient>,
+        entdad: &Handle<dyn Transient>,
+        entson: &Handle<dyn Transient>,
     ) -> Result<i32, Failure> {
         let (ndad, nson) = (self.starting_number(entdad), self.starting_number(entson));
         if ndad < 1 || nson < 1 {

@@ -3,7 +3,7 @@
 use crate::interface::InterfaceStatic;
 use martensite_tkernel::{
     impl_transient,
-    standard::{SharedState, StandardTransient},
+    standard::{SharedState, Transient},
     tcollection::AsciiString,
 };
 
@@ -24,15 +24,9 @@ struct IntParamState {
 /// ```
 #[derive(Default)]
 pub struct IFSelectIntParam {
-    transient: StandardTransient,
     state: SharedState<IntParamState>,
 }
-impl_transient!(
-    IFSelectIntParam,
-    "IFSelectIntParam",
-    StandardTransient,
-    transient
-);
+impl_transient!(IFSelectIntParam, "IFSelectIntParam", dyn Transient);
 
 impl IFSelectIntParam {
     /// `IFSelectIntParam()`: value 0, no static.

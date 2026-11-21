@@ -1,9 +1,6 @@
 //! `TransferTransientProcess`: the process that reads the entities of an interface
 //! model, with its graph and a context of named objects.
-use super::{
-    TransferProcess, TransferProcessForTransient, TransferProcessOps, TransferTransientKind,
-    bind_new,
-};
+use super::{TransferProcess, TransferProcessOps, TransferTransientKind, bind_new};
 use crate::interface::{
     InterfaceEntityIterator, InterfaceEntityListHandle, InterfaceGraph, InterfaceHGraph,
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceModelReports, InterfaceMsg,
@@ -12,7 +9,7 @@ use crate::interface::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::DataMap,
-    standard::{Failure, Handle, RuntimeType, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeType, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::io::{self, Write};
@@ -27,10 +24,9 @@ struct TransientProcessState {
 }
 
 /// The map of named contexts.
-type ContextMap = DataMap<AsciiString, Handle<StandardTransient>>;
+type ContextMap = DataMap<AsciiString, Handle<dyn Transient>>;
 
-/// `TransferTransientProcess`: embeds its `TransferProcessForTransient` (registered as
-/// its RTTI parent) and dereferences to it.
+/// `TransferTransientProcess` shares the core of `TransferProcessForTransient`.
 ///
 /// ```
 /// use martensite_tkxsbase::transfer::TransferTransientProcess;
@@ -41,17 +37,17 @@ type ContextMap = DataMap<AsciiString, Handle<StandardTransient>>;
 /// assert!(String::from_utf8_lossy(&stats).contains("Model unknown"));
 /// ```
 pub struct TransferTransientProcess {
-    base: TransferProcessForTransient,
+    core: TransferProcess<TransferTransientKind>,
     state: SharedState<TransientProcessState>,
     thectx: SharedState<ContextMap>,
     thetrroots: InterfaceEntityListHandle,
 }
-impl_transient!(TransferTransientProcess, "TransferTransientProcess", TransferProcessForTransient, base, interfaces: [dyn TransferProcessOps<TransferTransientKind>]);
+impl_transient!(TransferTransientProcess, "TransferTransientProcess", dyn TransferProcessOps<TransferTransientKind>, interfaces: [dyn TransferProcessOps<TransferTransientKind>]);
 
 impl Deref for TransferTransientProcess {
-    type Target = TransferProcessForTransient;
-    fn deref(&self) -> &TransferProcessForTransient {
-        &self.base
+    type Target = TransferProcess<TransferTransientKind>;
+    fn deref(&self) -> &Self::Target {
+        &self.core
     }
 }
 
@@ -59,7 +55,7 @@ impl TransferTransientProcess {
     /// `TransferTransientProcess(nb = 10000)`.
     pub fn new(nb: i32) -> Handle<Self> {
         bind_new(Self {
-            base: TransferProcessForTransient::unbound(TransferProcess::new(nb)),
+            core: TransferProcess::new(nb),
             state: SharedState::default(),
             thectx: SharedState::default(),
             thetrroots: Arc::new(SharedState::new(Vec::new())),
@@ -106,7 +102,7 @@ impl TransferTransientProcess {
         Ok(GraphGuard { hgraph })
     }
     /// `SetContext(name, ctx)`.
-    pub fn set_context(&self, name: &str, ctx: &Handle<StandardTransient>) {
+    pub fn set_context(&self, name: &str, ctx: &Handle<dyn Transient>) {
         self.thectx
             .write()
             .bind(AsciiString::new(name), ctx.clone());
@@ -116,7 +112,7 @@ impl TransferTransientProcess {
         &self,
         name: &str,
         atype: Option<&RuntimeType>,
-        ctx: &mut Handle<StandardTransient>,
+        ctx: &mut Handle<dyn Transient>,
     ) -> bool {
         let map = self.thectx.read();
         if map.is_empty() {
@@ -143,7 +139,7 @@ impl TransferTransientProcess {
     /// (empty without graph).
     pub fn typed_sharings(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         atype: &RuntimeType,
     ) -> Result<InterfaceEntityIterator, Failure> {
         let hgraph = self.h_graph();
@@ -153,7 +149,7 @@ impl TransferTransientProcess {
         }
     }
     /// `IsDataLoaded(ent)`: true out of the model; false for an unknown or redefined entity.
-    pub fn is_data_loaded(&self, start: &Handle<StandardTransient>) -> bool {
+    pub fn is_data_loaded(&self, start: &Handle<dyn Transient>) -> bool {
         let model = self.model();
         let Some(live) = model.get() else { return true };
         let num = live.number(start);
@@ -163,7 +159,7 @@ impl TransferTransientProcess {
         !live.is_unknown_entity(num) && !live.is_redefined_content(num)
     }
     /// `IsDataFail(ent)`: an error entity, or a semantic check with fails.
-    pub fn is_data_fail(&self, start: &Handle<StandardTransient>) -> bool {
+    pub fn is_data_fail(&self, start: &Handle<dyn Transient>) -> bool {
         let model = self.model();
         let Some(live) = model.get() else {
             return false;
@@ -254,11 +250,11 @@ pub(super) fn print_result_counts<K: super::TransferProcessKind>(
 
 impl TransferProcessOps<TransferTransientKind> for TransferTransientProcess {
     fn process(&self) -> &TransferProcess<TransferTransientKind> {
-        &self.base
+        &self.core
     }
     /// `PrintTrace(start, S)`: "Entity " and the model print of `start` (mode 1), else
     /// "Entity Type:" and its class name.
-    fn print_trace(&self, start: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()> {
+    fn print_trace(&self, start: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()> {
         let Some(kind) = start.dynamic_type() else {
             return Ok(());
         };
@@ -276,7 +272,7 @@ impl TransferProcessOps<TransferTransientKind> for TransferTransientProcess {
         }
     }
     /// `CheckNum(ent)`: the number of `ent` in the model (0 without model).
-    fn check_num(&self, start: &Handle<StandardTransient>) -> i32 {
+    fn check_num(&self, start: &Handle<dyn Transient>) -> i32 {
         self.model().get().map_or(0, |live| live.number(start))
     }
 }

@@ -14,16 +14,16 @@ use std::f64::consts::{FRAC_PI_2, PI};
 
 fn tangent_surface_pair() -> [Adaptor3dSurfaceHandle; 2] {
     let sphere: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(z_frame(0.3), 1.0).unwrap()).cast();
-    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(z_frame(1.3))).cast();
+        Handle::new(GeomSphericalSurface::new(z_frame(0.3), 1.0).unwrap()).into_upcast();
+    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(z_frame(1.3))).into_upcast();
     [
         Handle::new(
             GeomAdaptorSurface::with_bounds(&sphere, (0.0, 2.0 * PI, -FRAC_PI_2, FRAC_PI_2))
                 .unwrap(),
         )
-        .cast(),
+        .into_upcast(),
         Handle::new(GeomAdaptorSurface::with_bounds(&plane, (-2.0, 2.0, -2.0, 2.0)).unwrap())
-            .cast(),
+            .into_upcast(),
     ]
 }
 
@@ -161,21 +161,21 @@ fn converted_box() -> martensite_tkbrep::topods::Shape {
 
 fn circle_surface_pair() -> [Adaptor3dSurfaceHandle; 2] {
     let sphere: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(z_frame(0.0), 1.0).unwrap()).cast();
+        Handle::new(GeomSphericalSurface::new(z_frame(0.0), 1.0).unwrap()).into_upcast();
     let frame = Axis3::from_normal(
         Point3::new(0.0, 0.5, 0.0),
         Direction3::new(0.0, 1.0, 0.0).unwrap(),
     )
     .unwrap();
-    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).cast();
+    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).into_upcast();
     [
         Handle::new(GeomAdaptorSurface::with_bounds(&plane, (-2.0, 2.0, -2.0, 2.0)).unwrap())
-            .cast(),
+            .into_upcast(),
         Handle::new(
             GeomAdaptorSurface::with_bounds(&sphere, (0.0, 2.0 * PI, -FRAC_PI_2, FRAC_PI_2))
                 .unwrap(),
         )
-        .cast(),
+        .into_upcast(),
     ]
 }
 

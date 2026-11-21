@@ -72,6 +72,7 @@ pub use hdata_structure::{
     TopOpeBRepDSHDataStructure, fun_hds_facesinterfer, fun_topopebrepds_sort_on_parameter,
 };
 pub use interference::{
+    InterferenceRecord, InterferenceState, ShapeInterferenceRecord, ShapeInterferenceState,
     TopOpeBRepDSCurvePointInterference, TopOpeBRepDSEdgeVertexInterference,
     TopOpeBRepDSFaceEdgeInterference, TopOpeBRepDSInterference, TopOpeBRepDSShapeShapeInterference,
     TopOpeBRepDSSolidSurfaceInterference, TopOpeBRepDSSurfaceCurveInterference,

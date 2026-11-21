@@ -1,9 +1,9 @@
 //! The loops of the area builders: a shape (an old wire, shell, ...) or a block of
 //! elements of a shape set, the sets of loops, and their classifier.
 use martensite_tkbrep::topods::Shape;
+use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::List;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::top_abs::State;
 
 /// The kind of the loops an area builder iterates (`TopOpeBRepBuildLoopEnum`);
@@ -98,16 +98,11 @@ pub trait TopOpeBRepBuildLoop: Transient {
     /// `Dump()`: nothing, as natively; `l.dump()`.
     fn dump(&self) {}
 }
-impl_transient_interface!(
-    dyn TopOpeBRepBuildLoop,
-    "TopOpeBRepBuildLoop",
-    StandardTransient
-);
+parent_interface!(dyn TopOpeBRepBuildLoop, TopOpeBRepBuildLoopBase, []);
 
 /// The loop of a shape or of a block (the concrete `TopOpeBRepBuildLoop`);
 /// `TopOpeBRepBuildLoopBase::from_shape(&wire)`.
 pub struct TopOpeBRepBuildLoopBase {
-    parent: StandardTransient,
     /// `myIsShape` (protected).
     pub(crate) my_is_shape: bool,
     /// `myShape` (protected).
@@ -115,13 +110,12 @@ pub struct TopOpeBRepBuildLoopBase {
     /// `myBlockIterator` (protected).
     pub(crate) my_block_iterator: TopOpeBRepBuildBlockIterator,
 }
-impl_transient!(TopOpeBRepBuildLoopBase, "TopOpeBRepBuildLoop", StandardTransient, parent, interfaces: [dyn TopOpeBRepBuildLoop]);
+impl_transient!(TopOpeBRepBuildLoopBase, "TopOpeBRepBuildLoop", dyn Transient, interfaces: [dyn TopOpeBRepBuildLoop]);
 
 impl TopOpeBRepBuildLoopBase {
     /// `TopOpeBRepBuildLoop(S)`: a shape loop; `TopOpeBRepBuildLoopBase::from_shape(&wire)`.
     pub fn from_shape(s: &Shape) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_is_shape: true,
             my_shape: s.clone(),
             my_block_iterator: TopOpeBRepBuildBlockIterator::new(0, 0),
@@ -131,7 +125,6 @@ impl TopOpeBRepBuildLoopBase {
     /// `TopOpeBRepBuildLoop(BI)`: a block loop; `TopOpeBRepBuildLoopBase::from_block(&bi)`.
     pub fn from_block(bi: &TopOpeBRepBuildBlockIterator) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_is_shape: false,
             my_shape: Shape::default(),
             my_block_iterator: *bi,

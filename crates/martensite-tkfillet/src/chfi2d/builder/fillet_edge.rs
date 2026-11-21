@@ -274,9 +274,11 @@ impl ChFi2dBuilder {
         if u1 > vv1 && u1 > 2.0 * PI {
             (u1, vv1) = elclib::adjust_periodic(0.0, 2.0 * PI, precision::confusion(), u1, vv1);
         }
-        let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_circ2d(cir)).cast();
+        let circle: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dCircle::from_circ2d(cir)).into_upcast();
         let plane = BRepAdaptorSurface::with_face(&self.ref_face, true)?.plane()?;
-        let ref_surf: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(plane)).cast();
+        let ref_surf: Handle<dyn GeomSurface> =
+            Handle::new(GeomPlane::from_pln(plane)).into_upcast();
         let same = (c.o1 == Orientation::Forward && c.oe1 == Orientation::Forward)
             || (c.o1 == Orientation::Reversed && c.oe1 == Orientation::Reversed);
         let make = |forward: bool| -> Result<Edge, Failure> {

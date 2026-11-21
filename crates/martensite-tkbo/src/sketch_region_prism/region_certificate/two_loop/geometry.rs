@@ -63,7 +63,7 @@ pub(super) fn space<'a>(
     let actual = edge(shape).map_err(|cause| work.failure(TwoLoopRegionCause::Native(cause)))?;
     let raw = BRepTool::curve_with_location(&actual)
         .map_err(|cause| work.failure(TwoLoopRegionCause::Native(cause)))?;
-    let handle = raw.curve.cast::<GeomBezierCurve>();
+    let handle = raw.curve.downcast::<GeomBezierCurve>();
     let curve = handle.get().ok_or_else(|| {
         work.failure(TwoLoopRegionCause::Missing {
             hypothesis: "stored polynomial Bézier evaluator",
@@ -84,7 +84,7 @@ pub(super) fn pcurve<'a>(
         face(support).map_err(|cause| work.failure(TwoLoopRegionCause::Native(cause)))?;
     let raw = BRepTool::curve_on_face(&actual, &support_face)
         .map_err(|cause| work.failure(TwoLoopRegionCause::Native(cause)))?;
-    let handle = raw.pcurve.cast::<Geom2dBezierCurve>();
+    let handle = raw.pcurve.downcast::<Geom2dBezierCurve>();
     let curve = handle.get().ok_or_else(|| {
         work.failure(TwoLoopRegionCause::Missing {
             hypothesis: "stored polynomial Bézier pcurve",

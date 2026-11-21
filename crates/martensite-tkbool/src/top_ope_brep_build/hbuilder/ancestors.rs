@@ -3,10 +3,11 @@
 //! points of the new vertices.
 use super::{HBuilderState, TopOpeBRepBuildHBuilder};
 use crate::top_ope_brep_build::builder::curve_indices;
-use crate::top_ope_brep_ds::{TopOpeBRepDSKind, TopOpeBRepDSShapeShapeInterference};
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
+use crate::top_ope_brep_ds::TopOpeBRepDSKind;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::{DataMap, List, Map};
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// The section edges and DS edges/faces of one rank.
@@ -91,7 +92,7 @@ impl HBuilderState {
                 continue;
             }
             for i in ds.shape_interferences(&fds, true).iter() {
-                let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+                let ssi = i.view::<dyn ShapeInterferenceRecord>();
                 let Some(s) = ssi.get() else { continue };
                 if s.geometry_type() != TopOpeBRepDSKind::Edge {
                     continue;

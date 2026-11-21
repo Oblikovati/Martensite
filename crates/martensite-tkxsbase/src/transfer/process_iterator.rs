@@ -14,8 +14,8 @@ use std::ops::{Deref, DerefMut};
 /// use martensite_tkxsbase::transfer::{TransferIteratorOfProcess, TransferTransientKind, TransferVoidBinder};
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let mut iter = TransferIteratorOfProcess::<TransferTransientKind>::new(true);
-/// let start = Handle::new(StandardTransient::default());
-/// iter.add_with_start(&Handle::new(TransferVoidBinder::new()).cast(), &start);
+/// let start = Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>();
+/// iter.add_with_start(&Handle::new(TransferVoidBinder::new()).into_upcast(), &start);
 /// iter.start();
 /// assert!(iter.more() && iter.starting().unwrap() == start);
 /// ```

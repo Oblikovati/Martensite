@@ -144,7 +144,7 @@ impl BRepFillOffsetWire {
     /// The plane of the work spine, moved by `Alt` along its normal (opposite for a
     /// reversed spine).
     fn reference_plane(&self, alt: f64) -> Result<Handle<dyn GeomSurface>, Failure> {
-        let ref_plane: Handle<GeomPlane> = BRepTool::surface(&self.my_work_spine)?.cast();
+        let ref_plane: Handle<GeomPlane> = BRepTool::surface(&self.my_work_spine)?.downcast();
         if alt.abs() <= gp::resolution() {
             return Ok(ref_plane.cast());
         }
@@ -156,7 +156,7 @@ impl BRepFillOffsetWire {
         let plane = ref_plane.get().ok_or_else(not_plane)?;
         let normal: Vector3 = Vector3::from(plane.pln().axis().direction());
         let moved: Handle<dyn GeomGeometry> = plane.translated(normal * an_alt)?;
-        Ok(moved.cast::<GeomPlane>().cast())
+        Ok(moved.downcast::<GeomPlane>().cast())
     }
 
     /// The end vertices of the first wire of an open result (null otherwise).

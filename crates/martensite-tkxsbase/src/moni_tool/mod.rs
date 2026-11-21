@@ -26,6 +26,9 @@ pub use real_val::MoniToolRealVal;
 pub use sign_text::{MoniToolSignText, sign_text_alone};
 pub use timer::{MoniToolTimer, MoniToolTimerAmendments};
 pub use timer_sentry::MoniToolTimerSentry;
-pub use typed_value::{MoniToolTypedValue, MoniToolValueInterpret, MoniToolValueSatisfies};
+pub use typed_value::{
+    MoniToolTypedValue, MoniToolTypedValueOps, MoniToolValue, MoniToolValueInterpret,
+    MoniToolValueSatisfies,
+};
 pub use typed_value_lib::MoniToolTypedValueMap;
 pub use value_type::MoniToolValueType;

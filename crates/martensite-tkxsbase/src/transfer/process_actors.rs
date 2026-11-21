@@ -1,15 +1,15 @@
 //! The actors of the transient and finder processes: `Transferring` calls the virtual
 //! `Transfer` with the derived process, which by default wraps `TransferTransient`.
 use super::{
-    TransferActor, TransferActorOfProcessForFinder, TransferActorOfProcessForTransient,
-    TransferActorOps, TransferBinder, TransferFinder, TransferFinderKind, TransferFinderProcess,
-    TransferProcessKind, TransferTransientKind, TransferTransientMapper, TransferTransientProcess,
+    TransferActor, TransferActorOps, TransferBinder, TransferFinder, TransferFinderKind,
+    TransferFinderProcess, TransferProcessKind, TransferTransientKind, TransferTransientMapper,
+    TransferTransientProcess,
 };
 use crate::xs_algo::{XSAlgoParameterMap, XSAlgoProcessingFlags};
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient, impl_transient_interface_target,
     message::ProgressRange,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, HandleUpcast, RuntimeType, RuntimeTyped, SharedState, Transient},
 };
 use martensite_tkshhealing::shape_process::ShapeProcessOperationsFlags;
 
@@ -61,7 +61,7 @@ pub trait TransferActorOfTransientProcessOps: TransferActorOps<TransferTransient
     /// null.
     fn transfer(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -74,32 +74,44 @@ pub trait TransferActorOfTransientProcessOps: TransferActorOps<TransferTransient
     /// `TransferTransient(start, TP, theProgress)`: by default null.
     fn transfer_transient(
         &self,
-        _start: &Handle<StandardTransient>,
+        _start: &Handle<dyn Transient>,
         _tp: &Handle<TransferTransientProcess>,
         _progress: &ProgressRange<'_>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         Ok(Handle::default())
     }
 }
-impl_transient_interface!(
-    dyn TransferActorOfTransientProcessOps,
-    "TransferActorOfTransientProcess",
-    StandardTransient
-);
+impl RuntimeTyped for dyn TransferActorOfTransientProcessOps {
+    const TYPE_NAME: &'static str = TransferActorOfTransientProcess::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        TransferActorOfTransientProcess::static_type()
+    }
+}
+impl_transient_interface_target!(dyn TransferActorOfTransientProcessOps);
+
+impl HandleUpcast<dyn TransferActorOps<TransferTransientKind>>
+    for dyn TransferActorOfTransientProcessOps
+{
+    fn upcast_arc(
+        owner: std::sync::Arc<Self>,
+    ) -> std::sync::Arc<dyn TransferActorOps<TransferTransientKind>> {
+        owner
+    }
+}
 
 /// `TransferActorOfTransientProcess::Transferring`: `Transfer` with the process cast to
 /// a transient process (null when it is not one); a derived actor's `transferring` calls it.
 pub fn transferring_by_transient_process<A: TransferActorOfTransientProcessOps + ?Sized>(
     actor: &A,
-    start: &Handle<StandardTransient>,
+    start: &Handle<dyn Transient>,
     tp: &Handle<<TransferTransientKind as TransferProcessKind>::Process>,
     progress: &ProgressRange<'_>,
 ) -> Result<Handle<dyn TransferBinder>, Failure> {
     actor.transfer(start, &tp.cast(), progress)
 }
 
-/// `TransferActorOfTransientProcess` (concrete): transfers nothing by default; embeds
-/// its `TransferActorOfProcessForTransient` (registered as its RTTI parent).
+/// `TransferActorOfTransientProcess` (concrete): transfers nothing by default.
 ///
 /// ```
 /// use martensite_tkxsbase::transfer::{TransferActorOfTransientProcess, TransferActorOfTransientProcessOps};
@@ -108,10 +120,10 @@ pub fn transferring_by_transient_process<A: TransferActorOfTransientProcessOps +
 /// ```
 #[derive(Default)]
 pub struct TransferActorOfTransientProcess {
-    base: TransferActorOfProcessForTransient,
+    core: TransferActor<TransferTransientKind>,
     processing: TransferShapeProcessing,
 }
-impl_transient!(TransferActorOfTransientProcess, "TransferActorOfTransientProcess", TransferActorOfProcessForTransient, base, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
+impl_transient!(TransferActorOfTransientProcess, "TransferActorOfTransientProcess", dyn TransferActorOps<TransferTransientKind>, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
 
 impl TransferActorOfTransientProcess {
     /// `TransferActorOfTransientProcess()`.
@@ -122,11 +134,11 @@ impl TransferActorOfTransientProcess {
 
 impl TransferActorOps<TransferTransientKind> for TransferActorOfTransientProcess {
     fn actor(&self) -> &TransferActor<TransferTransientKind> {
-        self.base.actor()
+        &self.core
     }
     fn transferring(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<<TransferTransientKind as TransferProcessKind>::Process>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -172,18 +184,31 @@ pub trait TransferActorOfFinderProcessOps: TransferActorOps<TransferFinderKind> 
     /// `TransferTransient(start, FP, theProgress)`: by default null.
     fn transfer_transient(
         &self,
-        _start: &Handle<StandardTransient>,
+        _start: &Handle<dyn Transient>,
         _fp: &Handle<TransferFinderProcess>,
         _progress: &ProgressRange<'_>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         Ok(Handle::default())
     }
 }
-impl_transient_interface!(
-    dyn TransferActorOfFinderProcessOps,
-    "TransferActorOfFinderProcess",
-    StandardTransient
-);
+impl RuntimeTyped for dyn TransferActorOfFinderProcessOps {
+    const TYPE_NAME: &'static str = TransferActorOfFinderProcess::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        TransferActorOfFinderProcess::static_type()
+    }
+}
+impl_transient_interface_target!(dyn TransferActorOfFinderProcessOps);
+
+impl HandleUpcast<dyn TransferActorOps<TransferFinderKind>>
+    for dyn TransferActorOfFinderProcessOps
+{
+    fn upcast_arc(
+        owner: std::sync::Arc<Self>,
+    ) -> std::sync::Arc<dyn TransferActorOps<TransferFinderKind>> {
+        owner
+    }
+}
 
 /// `TransferActorOfFinderProcess::Transferring`: `Transfer` with the process cast to a
 /// finder process (null when it is not one); a derived actor's `transferring` calls it.
@@ -196,8 +221,7 @@ pub fn transferring_by_finder_process<A: TransferActorOfFinderProcessOps + ?Size
     actor.transfer(start, &tp.cast(), progress)
 }
 
-/// `TransferActorOfFinderProcess` (concrete): transfers nothing by default, mode 0;
-/// embeds its `TransferActorOfProcessForFinder` (registered as its RTTI parent).
+/// `TransferActorOfFinderProcess` (concrete): transfers nothing by default, mode 0.
 ///
 /// ```
 /// use martensite_tkxsbase::transfer::{TransferActorOfFinderProcess, TransferActorOfFinderProcessOps};
@@ -207,11 +231,11 @@ pub fn transferring_by_finder_process<A: TransferActorOfFinderProcessOps + ?Size
 /// ```
 #[derive(Default)]
 pub struct TransferActorOfFinderProcess {
-    base: TransferActorOfProcessForFinder,
+    core: TransferActor<TransferFinderKind>,
     themodetrans: SharedState<i32>,
     processing: TransferShapeProcessing,
 }
-impl_transient!(TransferActorOfFinderProcess, "TransferActorOfFinderProcess", TransferActorOfProcessForFinder, base, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps]);
+impl_transient!(TransferActorOfFinderProcess, "TransferActorOfFinderProcess", dyn TransferActorOps<TransferFinderKind>, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps]);
 
 impl TransferActorOfFinderProcess {
     /// `TransferActorOfFinderProcess()`: mode 0.
@@ -222,7 +246,7 @@ impl TransferActorOfFinderProcess {
 
 impl TransferActorOps<TransferFinderKind> for TransferActorOfFinderProcess {
     fn actor(&self) -> &TransferActor<TransferFinderKind> {
-        self.base.actor()
+        &self.core
     }
     fn transferring(
         &self,

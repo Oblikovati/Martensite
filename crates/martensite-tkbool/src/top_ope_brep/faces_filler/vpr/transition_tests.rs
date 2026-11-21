@@ -94,7 +94,7 @@ fn existing_same_geometry_face_transition_wins_unknown_edge_recomputation() {
     )
     .unwrap();
     let mut source = source;
-    let arc = martensite_tkernel::standard::Handle::new(curve).cast();
+    let arc = martensite_tkernel::standard::Handle::new(curve).into_upcast();
     source.set_arc(
         true,
         &arc,

@@ -105,7 +105,7 @@ impl GeomPlateBuildPlateSurface {
     pub(super) fn load_curve(&mut self, nb_boucle: i32, order_max: i32) -> Result<(), Failure> {
         for i in 1..=self.nt_lin_cont() {
             let cc_handle = self.lin_cont[(i - 1) as usize].clone();
-            let cc = live(&cc_handle, "a curve constraint")?;
+            let cc = super::curve_state(&cc_handle)?;
             if cc.order() == -1 {
                 continue;
             }

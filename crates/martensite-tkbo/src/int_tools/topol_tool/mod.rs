@@ -21,14 +21,14 @@ struct SamplingState {
 /// `IntToolsTopolTool`; `TopolTool::with_surface(&surface)?`.
 #[derive(Default)]
 pub struct TopolTool {
-    parent: Adaptor3dTopolTool,
+    topology: Adaptor3dTopolTool,
     sampling: SharedState<SamplingState>,
 }
-impl_transient!(TopolTool, "IntToolsTopolTool", Adaptor3dTopolTool, parent);
+impl_transient!(TopolTool, "IntToolsTopolTool", Adaptor3dTopolTool);
 impl std::ops::Deref for TopolTool {
     type Target = Adaptor3dTopolTool;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.topology
     }
 }
 impl TopolTool {
@@ -51,7 +51,7 @@ impl TopolTool {
         &self,
         surface: &Handle<dyn Adaptor3dSurface>,
     ) -> Result<(), Failure> {
-        self.parent.initialize_surface(surface)?;
+        self.topology.initialize_surface(surface)?;
         let mut state = self.sampling.write();
         state.surface = surface.clone();
         state.counts = [0; 2];

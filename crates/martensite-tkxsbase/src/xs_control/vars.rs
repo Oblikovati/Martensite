@@ -4,7 +4,7 @@ use martensite_tkbrep::topods::{HShape, Shape};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
     ncollection::DataMap,
-    standard::{Handle, SharedState, StandardTransient, Transient},
+    standard::{Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use martensite_tkg2d::geom2d::{Geom2dCartesianPoint, Geom2dCurve, Geom2dPoint};
@@ -23,10 +23,9 @@ use martensite_tkmath::gp::Point3;
 /// ```
 #[derive(Default)]
 pub struct XSControlVars {
-    transient: StandardTransient,
-    thevars: SharedState<DataMap<AsciiString, Handle<StandardTransient>>>,
+    thevars: SharedState<DataMap<AsciiString, Handle<dyn Transient>>>,
 }
-impl_transient!(XSControlVars, "XSControlVars", StandardTransient, transient, interfaces: [dyn XSControlVarsOps]);
+impl_transient!(XSControlVars, "XSControlVars", dyn Transient, interfaces: [dyn XSControlVarsOps]);
 
 impl XSControlVars {
     /// `XSControlVars()`.
@@ -41,14 +40,14 @@ pub trait XSControlVarsOps: Transient {
     /// The embedded variables.
     fn vars(&self) -> &XSControlVars;
     /// `Set(name, val)`.
-    fn set(&self, name: &str, val: &Handle<StandardTransient>) {
+    fn set(&self, name: &str, val: &Handle<dyn Transient>) {
         self.vars()
             .thevars
             .write()
             .bind(AsciiString::new(name), val.clone());
     }
     /// `Get(name)`: null when unknown.
-    fn get(&self, name: &mut String) -> Handle<StandardTransient> {
+    fn get(&self, name: &mut String) -> Handle<dyn Transient> {
         self.vars()
             .thevars
             .read()
@@ -76,14 +75,14 @@ pub trait XSControlVarsOps: Transient {
     fn set_point(&self, name: &str, val: &Point3) {
         self.set(
             name,
-            &Handle::new(GeomCartesianPoint::from_pnt(*val)).cast(),
+            &Handle::new(GeomCartesianPoint::from_pnt(*val)).into_upcast(),
         );
     }
     /// `SetPoint2d(name, val)`: a 2D cartesian point.
     fn set_point2d(&self, name: &str, val: &Point2) {
         self.set(
             name,
-            &Handle::new(Geom2dCartesianPoint::from_pnt2d(*val)).cast(),
+            &Handle::new(Geom2dCartesianPoint::from_pnt2d(*val)).into_upcast(),
         );
     }
     /// `GetPoint(name, pnt)`: the point, `None` when not a cartesian point.
@@ -102,7 +101,7 @@ pub trait XSControlVarsOps: Transient {
     }
     /// `SetShape(name, val)`: the shape as a handle shape.
     fn set_shape(&self, name: &str, val: &Shape) {
-        self.set(name, &Handle::new(HShape::new(val)).cast());
+        self.set(name, &Handle::new(HShape::new(val)).into_upcast());
     }
     /// `GetShape(name)`: null when not a shape.
     fn get_shape(&self, name: &mut String) -> Shape {
@@ -113,7 +112,7 @@ pub trait XSControlVarsOps: Transient {
             .unwrap_or_default()
     }
 }
-impl_transient_interface!(dyn XSControlVarsOps, "XSControlVars", StandardTransient);
+impl_transient_interface!(dyn XSControlVarsOps, "XSControlVars", dyn Transient);
 
 impl XSControlVarsOps for XSControlVars {
     fn vars(&self) -> &XSControlVars {

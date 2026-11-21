@@ -51,7 +51,7 @@ pub(super) fn first_edge(face: &Face) -> Edge {
 pub(super) fn pole(edge: &Edge) -> Point3 {
     let (curve, _, _) = BRepTool::curve(edge).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .get()
         .unwrap()
         .pole(2)
@@ -60,7 +60,7 @@ pub(super) fn pole(edge: &Edge) -> Point3 {
 pub(super) fn set_pole(edge: &Edge, coordinate: f64) {
     let (curve, _, _) = BRepTool::curve(edge).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .get()
         .unwrap()
         .set_pole(2, Point3::new(coordinate, 0., 0.))
@@ -173,7 +173,7 @@ fn bezier_edge(body: &Shape) -> Edge {
             !BRepTool::curve(edge)
                 .unwrap()
                 .0
-                .cast::<GeomBezierCurve>()
+                .downcast::<GeomBezierCurve>()
                 .is_null()
         })
         .expect("expected actual cubic boundary, not an extrusion line")
@@ -181,7 +181,7 @@ fn bezier_edge(body: &Shape) -> Edge {
 fn pcurve(edge: &Edge, face: &Face) -> Handle<Geom2dBezierCurve> {
     let curve = BRepTool::curve_on_face(edge, face).unwrap();
     assert!(curve.is_stored);
-    let bezier = curve.pcurve.cast::<Geom2dBezierCurve>();
+    let bezier = curve.pcurve.downcast::<Geom2dBezierCurve>();
     assert!(!bezier.is_null());
     bezier
 }

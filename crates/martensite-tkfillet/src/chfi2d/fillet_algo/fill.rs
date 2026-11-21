@@ -167,7 +167,8 @@ fn is_radius_intersected(
         return Ok(false);
     }
     let dir = Direction2::from_vector(Vector2::between(start, end))?;
-    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(start, dir)).cast();
+    let line: Handle<dyn Geom2dCurve> =
+        Handle::new(Geom2dLine::from_point(start, dir)).into_upcast();
     let inter = InterCurveCurve::between(curve, &line, precision::confusion())?;
     for a in (1..=inter.nb_points()).rev() {
         let point = inter.point(a)?;

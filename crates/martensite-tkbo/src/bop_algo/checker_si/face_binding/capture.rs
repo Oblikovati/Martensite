@@ -95,7 +95,7 @@ fn capture_support(
     let source = handle.get().expect("checked extrusion handle");
     let basis = source
         .basis_curve()
-        .cast::<martensite_tkg3d::geom::GeomBSplineCurve>();
+        .downcast::<martensite_tkg3d::geom::GeomBSplineCurve>();
     let basis = spline_values(
         basis
             .get()
@@ -112,7 +112,7 @@ fn capture_support(
 fn require_extrusion(
     support: &martensite_tkernel::standard::Handle<dyn martensite_tkg3d::geom::GeomSurface>,
 ) -> Result<martensite_tkernel::standard::Handle<GeomSurfaceOfLinearExtrusion>, BindingFailure> {
-    let handle = support.cast::<GeomSurfaceOfLinearExtrusion>();
+    let handle = support.downcast::<GeomSurfaceOfLinearExtrusion>();
     let source = handle.get().ok_or_else(|| {
         unsupported(
             "surface",

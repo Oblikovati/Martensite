@@ -38,7 +38,7 @@ fn line_edge(current: Point2, plane: &Plane3, dx: f64, dy: f64, length: f64) -> 
         current,
         Direction2::new(dx, dy).unwrap(),
     ))
-    .into_cast();
+    .into_upcast();
     let spatial = geom_api::to_3d(&curve, plane).unwrap();
     BRepBuilderAPIMakeEdge::from_curve_params(&spatial, 0., length)
         .unwrap()

@@ -46,7 +46,7 @@ struct Try {
 
 /// A surface adaptor handle as a general one.
 fn adaptor(h: &Handle<BRepAdaptorSurface>) -> Handle<dyn Adaptor3dSurface> {
-    h.clone().cast()
+    h.upcast()
 }
 
 /// The start solution `(P1, P2)` in a math vector.

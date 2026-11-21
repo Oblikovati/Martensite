@@ -63,7 +63,7 @@ impl BRepFillPipeShell {
     /// spine and the guide with it nearest to the profile barycentre).
     fn automatic_law(&mut self, profile: &Shape) -> Result<(), Failure> {
         let law = self.location()?.law(1)?;
-        let loc: Handle<GeomFillLocationGuide> = law.cast();
+        let loc: Handle<GeomFillLocationGuide> = law.downcast();
         let loc = loc.get().ok_or_else(|| null("guide location law"))?;
         let (_, mut par_and_rad) = loc.compute_automatic_law()?;
         let mut global_props = GProps::new();
@@ -72,7 +72,7 @@ impl BRepFillPipeShell {
         let profile_face = BRepLibMakeFace::from_wire(&topods::wire(profile)?, true)?.face()?;
         let the_plane = BRepTool::surface(&profile_face)?;
         let ga_hplane: Adaptor3dSurfaceHandle =
-            Handle::new(GeomAdaptorSurface::with_surface(&the_plane)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&the_plane)?).into_upcast();
         let curves: [HCurve; 2] = [loc.get_curve(), loc.guide()];
         let mut points_on_spines: [Point3; 2] = [Point3::default(); 2];
         for (curve, point) in curves.iter().zip(points_on_spines.iter_mut()) {
@@ -85,7 +85,7 @@ impl BRepFillPipeShell {
         let is_periodic: bool = (first.y() - last.y()).abs() < precision::confusion();
         let interpol = LawInterpol::new();
         interpol.set(&par_and_rad, is_periodic)?;
-        self.my_law = Handle::new(interpol).cast::<dyn LawFunction>();
+        self.my_law = Handle::new(interpol).into_upcast::<dyn LawFunction>();
         Ok(())
     }
 

@@ -5,6 +5,7 @@ use super::config::mkt_states;
 use super::{
     fds_data, fds_idata, fds_parameter, fds_state_e_with_f2d, has_same_domain, href, iref,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::process_interferences_tool::{
     fun_select_gk_interference, fun_select_itrasha_interference, fun_select_si_interference,
     fun_select_sk_interference, fun_select_traori_interference, fun_select_trasha_interference,
@@ -12,8 +13,8 @@ use crate::top_ope_brep_ds::process_interferences_tool::{
 };
 use crate::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSCurvePointInterference,
-    TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference,
-    TopOpeBRepDSInterferenceTool, TopOpeBRepDSKind, TopOpeBRepDSTransition, store_interference_ds,
+    TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure, TopOpeBRepDSInterferenceTool,
+    TopOpeBRepDSKind, TopOpeBRepDSTransition, store_interference_ds,
 };
 use crate::top_ope_brep_tool::{
     fun_tool_bounds, fun_tool_curves_so, fun_tool_par_e, fun_tool_par_e_tol, fun_tool_par_v_on_e,
@@ -29,7 +30,7 @@ use martensite_tkg2d::geom2d::native::std_max;
 use martensite_tkg3d::top_abs::{self, Orientation, ShapeEnum, State};
 use martensite_tkmath::gp::Point2;
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The edge of index `i` (none for another type).
 fn edge_at(bds: &TopOpeBRepDSDataStructure, i: i32) -> Result<Option<Edge>, Failure> {
@@ -83,7 +84,7 @@ fn rewrite_on_vertex(
     let vg = topods::vertex(bds.shape(ivg, true))?;
     let gbound = bds.ancestor_rank_index(ivg) == bds.ancestor_rank(s);
     for i in loi.iter() {
-        let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.cast();
+        let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
         if cpi.is_null() {
             continue;
         }

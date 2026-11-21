@@ -5,7 +5,7 @@ use super::{TNamingEvolution, TNamingNode, TNamingNodePtr, TNamingTool, TNamingU
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, WeakHandle},
+    standard::{Failure, Guid, Handle, SharedState, WeakHandle},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeBase, TdfLabel};
@@ -33,11 +33,10 @@ pub(crate) struct NamedShapeState {
 /// assert_eq!(named.version(), 0);
 /// ```
 pub struct TNamingNamedShape {
-    transient: StandardTransient,
     pub(crate) base: TdfAttributeBase,
     pub(crate) state: SharedState<NamedShapeState>,
 }
-impl_transient!(TNamingNamedShape, "TNamingNamedShape", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TNamingNamedShape, "TNamingNamedShape", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TNamingNamedShape {
     fn default() -> Self {
@@ -53,7 +52,6 @@ impl TNamingNamedShape {
     /// `TNamingNamedShape()`: no evolution, `PRIMITIVE`, version 0.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(NamedShapeState::default()),
         }
@@ -110,7 +108,7 @@ impl TNamingNamedShape {
     }
     /// The handle `this` converts to natively (bound once the attribute is on a label).
     pub(crate) fn this_handle(&self) -> Result<Handle<TNamingNamedShape>, Failure> {
-        Ok(self.base.this()?.cast::<TNamingNamedShape>())
+        Ok(self.base.this()?.downcast::<TNamingNamedShape>())
     }
 }
 

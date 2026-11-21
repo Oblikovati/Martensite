@@ -95,7 +95,7 @@ fn spline_arc() -> Shape {
         false,
     )
     .unwrap();
-    let curve: Handle<dyn GeomCurve> = Handle::new(curve).into_cast();
+    let curve: Handle<dyn GeomCurve> = Handle::new(curve).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

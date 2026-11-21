@@ -10,7 +10,7 @@ use crate::interface::{
     InterfaceGraph, InterfaceInterfaceModel, InterfaceModelEntities, InterfaceProtocol,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
     tcollection::AsciiString,
 };
 use std::io::Write;
@@ -39,7 +39,7 @@ fn copied_numbers(
 ) -> Result<Vec<i32>, Failure> {
     let mut numbers = Vec::new();
     for ent in list.content() {
-        let mut newent: Handle<StandardTransient> = Handle::default();
+        let mut newent: Handle<dyn Transient> = Handle::default();
         if tc.search(&ent, &mut newent)? {
             let num = newmod.number(&newent);
             if num > 0 {

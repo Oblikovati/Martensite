@@ -6,7 +6,7 @@ use crate::interface::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -22,16 +22,10 @@ struct PacketState {
 
 /// `IFSelectPacketList`.
 pub struct IFSelectPacketList {
-    transient: StandardTransient,
     themodel: Handle<dyn InterfaceInterfaceModel>,
     state: SharedState<PacketState>,
 }
-impl_transient!(
-    IFSelectPacketList,
-    "IFSelectPacketList",
-    StandardTransient,
-    transient
-);
+impl_transient!(IFSelectPacketList, "IFSelectPacketList", dyn Transient);
 
 impl IFSelectPacketList {
     /// `IFSelectPacketList(model)`: named "Packets"; `StandardNullObject` for a null
@@ -50,7 +44,6 @@ impl IFSelectPacketList {
             thename: AsciiString::new("Packets"),
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             themodel: model.clone(),
             state: SharedState::new(state),
         })
@@ -91,7 +84,7 @@ impl IFSelectPacketList {
     }
     /// `Add(ent)`: an entity of the model in the current packet (once);
     /// `InterfaceInterfaceError` out of the model or before the first packet.
-    pub fn add(&self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn add(&self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         let num = self.live_model()?.number(ent);
         if num == 0 {
             return Err(interface_error("PacketList:Add, Entity not in Model"));
@@ -111,7 +104,7 @@ impl IFSelectPacketList {
         Ok(())
     }
     /// `AddList(list)`: `Add` of each entity.
-    pub fn add_list(&self, list: Option<&[Handle<StandardTransient>]>) -> Result<(), Failure> {
+    pub fn add_list(&self, list: Option<&[Handle<dyn Transient>]>) -> Result<(), Failure> {
         let Some(list) = list else { return Ok(()) };
         self.state
             .write()

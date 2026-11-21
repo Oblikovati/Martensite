@@ -4,7 +4,10 @@ use super::TDataXtdGeometry;
 use crate::tnaming::TNamingNamedShape;
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState, StandardTransient, exceptions},
+    standard::{
+        Failure, Guid, Handle, HandleUpcast, RuntimeTyped, SharedState, TransientHandleTarget,
+        exceptions,
+    },
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdata_std::support::{cast_attribute, find_or_add};
@@ -37,7 +40,7 @@ pub trait TDataXtdPattern: TdfAttribute {
         PATTERN_ID
     }
 }
-impl_transient_interface!(dyn TDataXtdPattern, "TDataXtdPattern", dyn TdfAttribute);
+impl_transient_interface!(dyn TDataXtdPattern, "TDataXtdPattern", dyn TdfAttribute, upcasts: [dyn TdfAttribute]);
 
 /// The fields of `TDataXtdPatternStd`.
 #[derive(Clone, Default)]
@@ -66,11 +69,10 @@ struct PatternStdState {
 /// assert_eq!((pattern.signature(), pattern.nb_trsfs()), (5, 1));
 /// ```
 pub struct TDataXtdPatternStd {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<PatternStdState>,
 }
-impl_transient!(TDataXtdPatternStd, "TDataXtdPatternStd", dyn TDataXtdPattern, transient,
+impl_transient!(TDataXtdPatternStd, "TDataXtdPatternStd", dyn TDataXtdPattern,
     interfaces: [dyn TdfAttribute, dyn TDataXtdPattern]);
 
 impl Default for TDataXtdPatternStd {
@@ -113,7 +115,6 @@ impl TDataXtdPatternStd {
     /// `TDataXtdPatternStd()`: signature 0, nothing set.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(PatternStdState::default()),
         }
@@ -364,12 +365,12 @@ impl TDataXtdPattern for TDataXtdPatternStd {
 }
 
 /// `RT->HasRelocation(source, target)` into a new null handle.
-fn relocated<T: RuntimeTyped + ?Sized>(
+fn relocated<T: RuntimeTyped + TransientHandleTarget + HandleUpcast<dyn TdfAttribute> + ?Sized>(
     table: &TdfRelocationTable,
     source: &Handle<T>,
 ) -> Handle<T> {
     let mut target: Handle<T> = Handle::default();
-    table.has_attribute_relocation_as(&source.cast(), &mut target);
+    table.has_attribute_relocation_as(&source.upcast(), &mut target);
     target
 }
 
@@ -410,7 +411,7 @@ impl TdfAttribute for TDataXtdPatternStd {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).upcast()
     }
     /// `Paste`: the signature and flags, then the relocated references.
     fn paste(
@@ -434,18 +435,22 @@ impl TdfAttribute for TDataXtdPatternStd {
         };
         let state = self.read();
         let references: Vec<Handle<dyn TdfAttribute>> = if state.signature >= 5 {
-            vec![state.mirror.cast()]
+            vec![state.mirror.upcast()]
         } else if state.signature > 2 {
             vec![
-                state.axis1.cast(),
-                state.value1.cast(),
-                state.nb1.cast(),
-                state.axis2.cast(),
-                state.value2.cast(),
-                state.nb2.cast(),
+                state.axis1.upcast(),
+                state.value1.upcast(),
+                state.nb1.upcast(),
+                state.axis2.upcast(),
+                state.value2.upcast(),
+                state.nb2.upcast(),
             ]
         } else {
-            vec![state.axis1.cast(), state.value1.cast(), state.nb1.cast()]
+            vec![
+                state.axis1.upcast(),
+                state.value1.upcast(),
+                state.nb1.upcast(),
+            ]
         };
         references
             .iter()

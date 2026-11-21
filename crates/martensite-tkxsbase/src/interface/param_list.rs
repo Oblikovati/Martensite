@@ -2,7 +2,7 @@
 use super::InterfaceFileParameter;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, SharedState, StandardTransient, exceptions},
+    standard::{Failure, SharedState, Transient, exceptions},
 };
 
 /// `InterfaceParamList`: a `NCollectionDynamicArray` of parameters natively; a write
@@ -16,15 +16,9 @@ use martensite_tkernel::{
 /// ```
 #[derive(Default)]
 pub struct InterfaceParamList {
-    transient: StandardTransient,
     my_vector: SharedState<Vec<InterfaceFileParameter>>,
 }
-impl_transient!(
-    InterfaceParamList,
-    "InterfaceParamList",
-    StandardTransient,
-    transient
-);
+impl_transient!(InterfaceParamList, "InterfaceParamList", dyn Transient);
 
 impl InterfaceParamList {
     /// `InterfaceParamList(theIncrement = 256)`: empty (the increment is the growth step

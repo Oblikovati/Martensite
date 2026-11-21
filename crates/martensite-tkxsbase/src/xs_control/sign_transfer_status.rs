@@ -9,7 +9,7 @@ use crate::transfer::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 
 /// `XSControlSignTransferStatus`.
@@ -20,18 +20,16 @@ use martensite_tkernel::{
 /// assert_eq!(XSControlSignTransferStatus::new().name(), "Transfer Status");
 /// ```
 pub struct XSControlSignTransferStatus {
-    transient: StandardTransient,
     base: IFSelectSignatureBase,
     the_tr: SharedState<Handle<XSControlTransferReader>>,
     the_tp: SharedState<Handle<TransferTransientProcess>>,
 }
-impl_transient!(XSControlSignTransferStatus, "XSControlSignTransferStatus", dyn IFSelectSignature, transient, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
+impl_transient!(XSControlSignTransferStatus, "XSControlSignTransferStatus", dyn IFSelectSignature, interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]);
 impl_signature_text!(XSControlSignTransferStatus);
 
 impl Default for XSControlSignTransferStatus {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("Transfer Status"),
             the_tr: SharedState::default(),
             the_tp: SharedState::default(),
@@ -110,7 +108,7 @@ impl InterfaceSignType for XSControlSignTransferStatus {
     /// "Fail on run", else the result types ("/Warning" or "/Fail" added).
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         if ent.is_null() {

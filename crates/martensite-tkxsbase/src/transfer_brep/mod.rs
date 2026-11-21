@@ -8,7 +8,8 @@ mod shape_mapper;
 mod tests;
 
 pub use binders::{
-    TransferBRepBinderOfShape, TransferBRepShapeBinder, TransferBRepShapeListBinder,
+    TransferBRepBinderOfShape, TransferBRepShapeBinder, TransferBRepShapeBinderOps,
+    TransferBRepShapeListBinder, TransferBRepShapeResult,
 };
 pub use package::TransferBRep;
 pub use shape_mapper::{

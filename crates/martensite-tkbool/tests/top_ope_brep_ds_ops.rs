@@ -13,7 +13,7 @@ use martensite_tkmath::gp::Point3;
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeBox;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The box [0, 2]^3.
 fn cube() -> Result<Shape, Failure> {
@@ -174,13 +174,16 @@ fn transitions_and_data_of_interferences() -> Result<(), Failure> {
     assert_eq!(fds_tdata(&i), (ShapeEnum::Face, 3, ShapeEnum::Face, 3));
     assert_eq!(fds_parameter(&i)?, 0.25);
     assert_eq!(
-        fds_parameter_checked(&Handle::new(TopOpeBRepDSInterference::new(
-            &t,
-            TopOpeBRepDSKind::Face,
-            1,
-            TopOpeBRepDSKind::Edge,
-            2
-        )))?,
+        fds_parameter_checked(
+            &Handle::new(TopOpeBRepDSInterference::new(
+                &t,
+                TopOpeBRepDSKind::Face,
+                1,
+                TopOpeBRepDSKind::Edge,
+                2
+            ))
+            .into_upcast()
+        )?,
         None
     );
     assert!(fun_transition_equal(&t, &t) && !fds_has_unk(&t));
