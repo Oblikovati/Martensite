@@ -159,8 +159,9 @@ fn with_curve_point<T>(
 ) -> Result<T, Failure> {
     // Native Parameter downcasts then dereferences; invalid handles have no defined
     // native result. Keep that misuse explicit instead of turning it into a panic.
-    let point: Handle<TopOpeBRepDSCurvePointInterference> = interference.downcast();
-    let point = point.get().ok_or_else(|| {
+    let point = interference
+        .downcast_ref::<TopOpeBRepDSCurvePointInterference>()
+        .ok_or_else(|| {
         Failure::with_type(
             "Standard_NullObject",
             &format!(

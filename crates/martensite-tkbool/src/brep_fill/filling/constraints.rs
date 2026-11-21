@@ -96,10 +96,14 @@ fn checked_constraint_surface(
 /// The geometric surface of a curve on surface: that of a GeomAdaptorSurface, else
 /// the located surface of the face of a BRepAdaptorSurface.
 fn surface_of(frontiere: &Adaptor3dCurveOnSurface) -> Result<Handle<dyn GeomSurface>, Failure> {
-    let surface = frontiere.get_surface();
-    if let Some(geometric) = surface.view::<dyn GeomSurfaceAdaptor>().get() {
+    if let Some(geometric) = frontiere
+        .get_surface()
+        .view::<dyn GeomSurfaceAdaptor>()
+        .get()
+    {
         return Ok(geometric.surface());
     }
+    let surface = frontiere.get_surface();
     let bs1 = surface.downcast_ref::<BRepAdaptorSurface>().ok_or_else(|| {
         Failure::with_type("Standard_NullObject", "BRepFillCurveConstraint: surface adaptor neither GeomAdaptor_Surface nor BRepAdaptor_Surface; expected one of them", "BRepFillCurveConstraint")
     })?;

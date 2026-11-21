@@ -8,7 +8,7 @@ use std::io::Write;
 mod lines;
 mod points;
 
-/// The descriptor parent remains the standard transient base; `TopOpeBRepFFDumperBaseType::default()`.
+/// The descriptor parent remains the standard transient base; `<TopOpeBRepFFDumperBaseType>::static_type()`.
 pub type TopOpeBRepFFDumperBaseType = dyn Transient;
 
 /// Borrows an operation for optional diagnostics; `TopOpeBRepFFDumperView::new(None)` is silent.
