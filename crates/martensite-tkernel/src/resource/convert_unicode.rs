@@ -3,8 +3,11 @@
 //! unsigned C arithmetic is kept with wrapping operations.
 use super::table_lookup;
 
+#[cfg(test)]
+mod tests;
+
 /// A `(high, low)` byte pair held in `unsigned int`s.
-pub type BytePair = (u32, u32);
+pub(super) type BytePair = (u32, u32);
 
 pub(super) fn is_euc(c: u32) -> bool {
     (0xa1..=0xfe).contains(&c)
@@ -77,12 +80,7 @@ fn sjis_to_euc(pair: BytePair) -> BytePair {
     (ph | 0x80, pl | 0x80)
 }
 /// Shift-JIS to Unicode.
-///
-/// ```
-/// use martensite_tkernel::resource::convert_unicode::sjis_to_unicode;
-/// assert_eq!(sjis_to_unicode((0x41, 0x42)), (0x41, 0x42));
-/// ```
-pub fn sjis_to_unicode(pair: BytePair) -> BytePair {
+pub(super) fn sjis_to_unicode(pair: BytePair) -> BytePair {
     if above_byte(pair) {
         return (0, 0);
     }
@@ -92,12 +90,7 @@ pub fn sjis_to_unicode(pair: BytePair) -> BytePair {
     split(table_lookup::sjisuni(((pair.0 << 8) | pair.1) as u16))
 }
 /// Unicode to Shift-JIS.
-///
-/// ```
-/// use martensite_tkernel::resource::convert_unicode::unicode_to_sjis;
-/// assert_eq!(unicode_to_sjis((0, 0)), (0, 0));
-/// ```
-pub fn unicode_to_sjis(pair: BytePair) -> BytePair {
+pub(super) fn unicode_to_sjis(pair: BytePair) -> BytePair {
     if above_byte(pair) {
         return (0, 0);
     }
@@ -107,12 +100,7 @@ pub fn unicode_to_sjis(pair: BytePair) -> BytePair {
     split(table_lookup::unisjis(((pair.0 << 8) | pair.1) as u16))
 }
 /// Unicode to EUC, through Shift-JIS, keeping non-SJIS results as ANSI.
-///
-/// ```
-/// use martensite_tkernel::resource::convert_unicode::unicode_to_euc;
-/// assert_eq!(unicode_to_euc((0, 0)), (0, 0));
-/// ```
-pub fn unicode_to_euc(pair: BytePair) -> BytePair {
+pub(super) fn unicode_to_euc(pair: BytePair) -> BytePair {
     if pair == (0, 0) {
         return pair;
     }
@@ -124,24 +112,14 @@ pub fn unicode_to_euc(pair: BytePair) -> BytePair {
     }
 }
 /// EUC to Unicode, through Shift-JIS.
-///
-/// ```
-/// use martensite_tkernel::resource::convert_unicode::euc_to_unicode;
-/// assert_eq!(euc_to_unicode((0x41, 0x42)), (0x41, 0x42));
-/// ```
-pub fn euc_to_unicode(pair: BytePair) -> BytePair {
+pub(super) fn euc_to_unicode(pair: BytePair) -> BytePair {
     if !is_euc(pair.0) || !is_euc(pair.1) || pair == (0, 0) {
         return pair;
     }
     sjis_to_unicode(euc_to_sjis(pair))
 }
 /// GB2312 to Unicode: the 7-bit row/cell indexes the GB table.
-///
-/// ```
-/// use martensite_tkernel::resource::convert_unicode::gb_to_unicode;
-/// assert_eq!(gb_to_unicode((0x41, 0x42)), (0x41, 0x42));
-/// ```
-pub fn gb_to_unicode(pair: BytePair) -> BytePair {
+pub(super) fn gb_to_unicode(pair: BytePair) -> BytePair {
     if above_byte(pair) {
         return (0, 0);
     }
@@ -153,12 +131,7 @@ pub fn gb_to_unicode(pair: BytePair) -> BytePair {
     ))
 }
 /// Unicode to GB2312: unmapped characters become `(0, 0)`.
-///
-/// ```
-/// use martensite_tkernel::resource::convert_unicode::unicode_to_gb;
-/// assert_eq!(unicode_to_gb((0, 0)), (0, 0));
-/// ```
-pub fn unicode_to_gb(pair: BytePair) -> BytePair {
+pub(super) fn unicode_to_gb(pair: BytePair) -> BytePair {
     if above_byte(pair) {
         return (0, 0);
     }

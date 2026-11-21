@@ -9,7 +9,7 @@ use crate::{
 use std::sync::atomic::{AtomicBool, Ordering};
 mod cjk;
 mod code_page;
-pub mod convert_unicode;
+mod convert_unicode;
 mod exceptions;
 mod format_type;
 mod host;
@@ -22,7 +22,7 @@ mod tables;
 mod unicode;
 mod values;
 pub(crate) use exceptions::RESOURCE_HIERARCHY;
-pub use exceptions::no_such_resource;
+use exceptions::no_such_resource;
 pub use format_type::FormatType;
 pub use host::{
     NativeResourceConsole, NativeResourceEnvironment, NativeResourceIo, ResourceConsole,
