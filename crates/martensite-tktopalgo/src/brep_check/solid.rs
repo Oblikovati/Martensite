@@ -12,8 +12,8 @@ use martensite_tkbrep::topods::{Edge, Shape, ShapeIterator, Solid};
 use martensite_tkbrep::toptools::MapOfShape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::real::real_small;
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum, State};
 use martensite_tkmath::gp::Point3;
 
@@ -96,10 +96,9 @@ impl ToolSolid {
 /// assert_eq!(checker.status().unwrap().first(), Some(&BRepCheckStatus::NoError));
 /// ```
 pub struct BRepCheckSolid {
-    transient: StandardTransient,
     base: ResultBase,
 }
-impl_transient!(BRepCheckSolid, "BRepCheck_Solid", dyn BRepCheckResult, transient,
+impl_transient!(BRepCheckSolid, "BRepCheck_Solid", dyn BRepCheckResult,
     interfaces: [dyn BRepCheckResult]);
 
 impl BRepCheckSolid {
@@ -107,7 +106,6 @@ impl BRepCheckSolid {
     /// `BRepCheckSolid::new(&solid)?`.
     pub fn new(solid: &Solid) -> Result<Self, Failure> {
         let checker = Self {
-            transient: StandardTransient::default(),
             base: ResultBase::new(),
         };
         checker.init(solid)?;

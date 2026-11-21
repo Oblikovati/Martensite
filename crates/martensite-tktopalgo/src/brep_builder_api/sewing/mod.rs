@@ -34,7 +34,7 @@ use martensite_tkbrep::toptools::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, IndexedDataMap, List};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::native::std_max;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
@@ -58,7 +58,6 @@ pub type SewingShapeListMap = DataMap<Shape, List<Shape>, ShapeMapHasher>;
 /// assert!(sewing.sewed_shape().is_null());
 /// ```
 pub struct BRepBuilderAPISewing {
-    parent: StandardTransient,
     pub(crate) my_tolerance: f64,
     pub(crate) my_sewing: bool,
     pub(crate) my_analysis: bool,
@@ -92,12 +91,7 @@ pub struct BRepBuilderAPISewing {
     my_max_tolerance: f64,
     pub(crate) my_merged_edges: MapOfShape,
 }
-impl_transient!(
-    BRepBuilderAPISewing,
-    "BRepBuilderAPI_Sewing",
-    StandardTransient,
-    parent
-);
+impl_transient!(BRepBuilderAPISewing, "BRepBuilderAPI_Sewing", dyn Transient);
 
 impl Default for BRepBuilderAPISewing {
     /// `BRepBuilderAPI_Sewing()`: tolerance 1e-6, sewing, analysis and cutting on,
@@ -122,7 +116,6 @@ impl BRepBuilderAPISewing {
     /// non-manifold; `BRepBuilderAPISewing::new(1e-6, true, true, true, false)`.
     pub fn new(tolerance: f64, option1: bool, option2: bool, option3: bool, option4: bool) -> Self {
         let mut sewing = Self {
-            parent: StandardTransient::default(),
             my_tolerance: 0.0,
             my_sewing: false,
             my_analysis: false,

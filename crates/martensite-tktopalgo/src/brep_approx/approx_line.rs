@@ -2,7 +2,7 @@
 //! points of an `IntSurf_LineOn2S` or the poles of three B-spline curves.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::exceptions::null_object;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::Geom2dBSplineCurve;
 use martensite_tkg3d::geom::GeomBSplineCurve;
 use martensite_tkgeomalgo::approx_int::ApproxIntLine;
@@ -23,18 +23,12 @@ use martensite_tkmath::gp::{Point2, Point3};
 /// ```
 #[derive(Default)]
 pub struct BRepApproxApproxLine {
-    parent: StandardTransient,
     curve_xyz: Handle<GeomBSplineCurve>,
     curve_uv1: Handle<Geom2dBSplineCurve>,
     curve_uv2: Handle<Geom2dBSplineCurve>,
     line_on_2s: Handle<IntSurfLineOn2S>,
 }
-impl_transient!(
-    BRepApproxApproxLine,
-    "BRepApprox_ApproxLine",
-    StandardTransient,
-    parent
-);
+impl_transient!(BRepApproxApproxLine, "BRepApprox_ApproxLine", dyn Transient);
 
 impl BRepApproxApproxLine {
     /// `BRepApprox_ApproxLine(CurveXYZ, CurveUV1, CurveUV2)`: the poles of the curves

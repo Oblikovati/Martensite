@@ -1,9 +1,6 @@
 //! The node of the doubly linked lists of MAT: an item and its two neighbours.
 use super::MatTListItem;
-use martensite_tkernel::standard::{
-    Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient, project_concrete,
-};
-use std::any::{Any, TypeId};
+use martensite_tkernel::standard::{Handle, RuntimeType, RuntimeTyped, SharedState, Transient};
 
 struct NodeLinks<I: MatTListItem> {
     next: Handle<MatTListNode<I>>,
@@ -21,7 +18,6 @@ struct NodeLinks<I: MatTListItem> {
 /// assert!(node.next().is_null() && node.get_item().is_some());
 /// ```
 pub struct MatTListNode<I: MatTListItem> {
-    parent: StandardTransient,
     links: SharedState<NodeLinks<I>>,
 }
 
@@ -39,7 +35,6 @@ impl<I: MatTListItem> MatTListNode<I> {
     /// `MAT_TListNode(anitem)`: a node of `anitem`; `MatTListNodeOfListOfEdge::with_item(&edge)`.
     pub fn with_item(anitem: &Handle<I>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             links: SharedState::new(NodeLinks {
                 next: Handle::default(),
                 previous: Handle::default(),
@@ -80,28 +75,16 @@ impl<I: MatTListItem> RuntimeTyped for MatTListNode<I> {
     fn static_type() -> &'static RuntimeType {
         // The registry is keyed by the Rust type, so each instance keeps its own
         // descriptor (a static in a generic function would be shared).
-        RuntimeType::retain_class_descriptor::<Self>(RuntimeType::register::<Self>(
+        RuntimeType::register::<Self>(
             I::NODE_NAME,
             std::mem::size_of::<Self>(),
-            Some(StandardTransient::static_type()),
-        ))
-    }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        project_concrete::<Self>(object)
+            Some(<dyn Transient>::static_type()),
+        )
     }
 }
 
 impl<I: MatTListItem> Transient for MatTListNode<I> {
     fn dynamic_type(&self) -> &'static RuntimeType {
         Self::static_type()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        if requested == TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.parent.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        &self.parent
     }
 }

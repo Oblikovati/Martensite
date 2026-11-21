@@ -10,7 +10,7 @@ use martensite_tkbrep::topods::{Edge, Shape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::real::real_last;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dTrimmedCurve};
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
@@ -44,11 +44,10 @@ pub(super) struct EdgeFields {
 /// assert_eq!(checker.status().unwrap().first(), Some(&BRepCheckStatus::No3DCurve));
 /// ```
 pub struct BRepCheckEdge {
-    transient: StandardTransient,
     base: ResultBase,
     pub(super) fields: SharedState<EdgeFields>,
 }
-impl_transient!(BRepCheckEdge, "BRepCheck_Edge", dyn BRepCheckResult, transient,
+impl_transient!(BRepCheckEdge, "BRepCheck_Edge", dyn BRepCheckResult,
     interfaces: [dyn BRepCheckResult]);
 
 impl BRepCheckEdge {
@@ -56,7 +55,6 @@ impl BRepCheckEdge {
     /// controls on, approximate method; `BRepCheckEdge::new(&edge)?`.
     pub fn new(edge: &Edge) -> Result<Self, Failure> {
         let checker = Self {
-            transient: StandardTransient::default(),
             base: ResultBase::new(),
             fields: SharedState::new(EdgeFields {
                 cref: Handle::default(),

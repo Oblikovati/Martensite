@@ -3,7 +3,7 @@
 use super::node::arc_ref;
 use super::{MatArc, MatBasicElt, MatNode, MatSide};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::errors;
 
 struct ZoneState {
@@ -20,10 +20,9 @@ struct ZoneState {
 /// assert!(!zone.no_empty_zone() && zone.limited());
 /// ```
 pub struct MatZone {
-    parent: StandardTransient,
     state: SharedState<ZoneState>,
 }
-impl_transient!(MatZone, "MAT_Zone", StandardTransient, parent);
+impl_transient!(MatZone, "MAT_Zone", dyn Transient);
 
 impl Default for MatZone {
     fn default() -> Self {
@@ -42,7 +41,6 @@ impl MatZone {
     /// `MAT_Zone()`: an empty, limited zone; `MatZone::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(ZoneState {
                 frontier: Vec::new(),
                 limited: true,

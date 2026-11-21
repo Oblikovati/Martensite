@@ -10,7 +10,7 @@ use super::BisectorCurve;
 use crate::bisector::intervals::{cout_real, dump_intervals};
 use crate::bisector::is_convex;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dGeometry};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Point2;
@@ -36,14 +36,12 @@ use martensite_tkmath::gp::Point2;
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct BisecPC {
-    parent: StandardTransient,
     state: SharedState<PcState>,
 }
 impl_transient!(
     BisecPC,
     "Bisector_BisecPC",
     dyn BisectorCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn BisectorCurve]
 );
 
@@ -63,7 +61,6 @@ impl BisecPC {
     }
     pub(crate) fn from_state(state: PcState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

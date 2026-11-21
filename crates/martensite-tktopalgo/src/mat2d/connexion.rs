@@ -1,7 +1,7 @@
 //! `MAT2d_Connexion`: the shortest link between two lines of a figure, from a point
 //! of an item of the first line to a point of an item of the second.
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState, Transient};
 use martensite_tkernel::storage::format_general;
 use martensite_tkmath::gp::{Point2, Vector2};
 
@@ -28,10 +28,9 @@ struct ConnexionState {
 /// assert_eq!((r.index_first_line(), r.index_item_on_first()), (2, 4));
 /// ```
 pub struct Mat2dConnexion {
-    parent: StandardTransient,
     state: SharedState<ConnexionState>,
 }
-impl_transient!(Mat2dConnexion, "MAT2d_Connexion", StandardTransient, parent);
+impl_transient!(Mat2dConnexion, "MAT2d_Connexion", dyn Transient);
 
 impl Default for Mat2dConnexion {
     fn default() -> Self {
@@ -62,7 +61,6 @@ impl Mat2dConnexion {
     }
     fn from_state(state: ConnexionState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

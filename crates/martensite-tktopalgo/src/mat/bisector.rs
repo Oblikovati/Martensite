@@ -3,7 +3,7 @@
 use super::{MatEdge, MatListOfBisector, MatTListItem};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::errors;
 
 // The fields that the native constructor leaves unset are 0 from the cleared
@@ -34,10 +34,9 @@ struct BisectorState {
 /// assert!(bisector.list().is_empty());
 /// ```
 pub struct MatBisector {
-    parent: StandardTransient,
     state: SharedState<BisectorState>,
 }
-impl_transient!(MatBisector, "MAT_Bisector", StandardTransient, parent);
+impl_transient!(MatBisector, "MAT_Bisector", dyn Transient);
 
 impl Default for MatBisector {
     fn default() -> Self {
@@ -66,7 +65,6 @@ impl MatBisector {
     /// `MatBisector::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(BisectorState {
                 bisector_number: -1,
                 index_number: 0,

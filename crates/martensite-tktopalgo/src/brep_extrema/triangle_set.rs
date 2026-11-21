@@ -3,8 +3,8 @@
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Edge, Face, Shape};
 use martensite_tkernel::impl_transient;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::exceptions::{no_such_object, null_object};
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::bvh::constants::{LEAF_NODE_SIZE_DEFAULT, MAX_TREE_DEPTH};
 use martensite_tkmath::bvh::{
@@ -240,7 +240,6 @@ impl BvhPrimitiveSetAccess<BvhVec3d> for TriangleSetState {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct BRepExtremaTriangleSet {
-    parent: StandardTransient,
     // A mutex, not a SharedState: the BVH primitive-set state caches its box in a Cell.
     state: Mutex<TriangleSetState>,
 }
@@ -248,7 +247,6 @@ impl_transient!(
     BRepExtremaTriangleSet,
     "BRepExtrema_TriangleSet",
     dyn BvhObjectTransientSource,
-    parent,
     interfaces: [dyn BvhObjectTransientSource]
 );
 
@@ -263,7 +261,6 @@ impl BRepExtremaTriangleSet {
     /// `BRepExtremaTriangleSet::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: Mutex::new(TriangleSetState::new()),
         }
     }

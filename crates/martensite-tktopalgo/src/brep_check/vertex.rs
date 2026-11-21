@@ -9,7 +9,7 @@ use martensite_tkbrep::brep::{
 };
 use martensite_tkbrep::topods::{Edge, Face, Shape, ShapeIterator, Vertex, edge, face, vertex};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::gp::Point3;
 use martensite_tkmath::toploc::Location;
@@ -28,10 +28,9 @@ use martensite_tkmath::toploc::Location;
 /// assert_eq!(checker.status().unwrap().first(), Some(&BRepCheckStatus::NoError));
 /// ```
 pub struct BRepCheckVertex {
-    transient: StandardTransient,
     base: ResultBase,
 }
-impl_transient!(BRepCheckVertex, "BRepCheck_Vertex", dyn BRepCheckResult, transient,
+impl_transient!(BRepCheckVertex, "BRepCheck_Vertex", dyn BRepCheckResult,
     interfaces: [dyn BRepCheckResult]);
 
 /// The frame of one InContext check: the vertex point, the squared tolerance, the list.
@@ -62,7 +61,6 @@ impl BRepCheckVertex {
     /// `BRepCheckVertex::new(&vertex)?`.
     pub fn new(vertex: &Vertex) -> Result<Self, Failure> {
         let checker = Self {
-            transient: StandardTransient::default(),
             base: ResultBase::new(),
         };
         checker.init(vertex)?;

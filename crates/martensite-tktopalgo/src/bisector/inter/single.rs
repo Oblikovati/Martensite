@@ -122,8 +122,8 @@ impl BisectorInter {
         if u_min - eps > u_max + eps {
             return Ok(());
         }
-        let bis1_curve: Handle<dyn BisectorCurve> = bis1.cast();
-        let temp_curve: Handle<dyn BisectorCurve> = bis_temp.cast();
+        let bis1_curve: Handle<dyn BisectorCurve> = bis1.upcast();
+        let temp_curve: Handle<dyn BisectorCurve> = bis_temp.upcast();
         let mut fint = BisectorFunctionInter::with_curves(&guide, &bis1_curve, &temp_curve);
         let mut solution = BissecNewton::new(tol);
         solution.perform(&mut fint, u_min, u_max, 20);
