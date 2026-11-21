@@ -21,7 +21,11 @@ fn normal_drop_releases_the_registered_node() {
     let wrapper = fresh_global();
     let holder = DePluginHolder::<PluginVendorA>::new().unwrap();
     let node = find_plugin(&wrapper);
-    assert!(!node.is_null());
+    assert!(node.is_instance_name("PluginVendorA"));
+    assert!(node.is_kind_name("ProbeNode"));
+    let recovered = node.configuration_node_base().this().unwrap();
+    assert_eq!(recovered, node);
+    drop(recovered);
     let weak = node.downgrade();
     drop(node);
     assert!(!weak.upgrade().is_null());
@@ -49,13 +53,13 @@ fn replacement_registry_is_the_destructor_target() {
     let case_node = find_plugin(&original);
     let replacement = fresh_global();
     let replacement_node = new_configuration_node(PluginVendorA::default());
-    assert!(replacement.bind(&replacement_node.cast()));
+    assert!(replacement.bind(&replacement_node.upcast()));
     drop(holder);
     assert!(find_plugin(&replacement).is_null());
     assert_eq!(find_plugin(&original), case_node);
     assert_ne!(
         case_node,
-        replacement_node.cast::<dyn DeConfigurationNode>()
+        replacement_node.into_upcast::<dyn DeConfigurationNode>()
     );
 }
 

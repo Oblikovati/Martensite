@@ -20,7 +20,7 @@ use support::scratch_folder::ScratchFolder;
 fn wrapper(streams: bool) -> (DeWrapper, TransferLog) {
     let (node, log) = RecordingNode::create(streams);
     let wrapper = DeWrapper::new();
-    assert!(wrapper.bind(&node.cast()));
+    assert!(wrapper.bind(&node.into_upcast()));
     (wrapper, log)
 }
 
@@ -41,7 +41,7 @@ fn path_transfers_reach_the_provider_of_the_extension() {
         wrapper.write_shape(&path("out.other"), &shape, &range),
         Ok(false)
     );
-    let mut session: DeWorkSession = Handle::new(StandardTransient::default());
+    let mut session: DeWorkSession = Handle::new(StandardTransient).into_upcast();
     assert_eq!(
         wrapper.write_shape_with_session(&path("a.rec"), &shape, &mut session, &range),
         Ok(true)
