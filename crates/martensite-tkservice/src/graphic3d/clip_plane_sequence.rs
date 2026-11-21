@@ -1,6 +1,6 @@
 //! `Graphic3d_SequenceOfHClipPlane`: the clipping planes of an object or a view, each plane
 //! at most once, with the flag that overrides the global planes.
-use super::Graphic3dClipPlane;
+
 use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 
 /// Genuine `Graphic3d_SequenceOfHClipPlane::base_type`; `let parent=Graphic3dClipSequenceParent::default()`.
@@ -9,7 +9,6 @@ pub type Graphic3dClipSequenceParent = StandardTransient;
 /// A sequence of distinct clip planes; `Graphic3dSequenceOfHClipPlane::default().append(plane)`.
 #[derive(Default)]
 pub struct Graphic3dSequenceOfHClipPlane {
-    transient: StandardTransient,
     /// Actual protected node storage; `planes.clip_plane_items.read().length()`.
     /// Its distinct payload handle fields retain native ownership independently of cursor leases.
     pub clip_plane_items: super::clip_sequence_storage::ClipPlaneNativeItems,
@@ -20,19 +19,18 @@ martensite_tkernel::impl_transient!(
     Graphic3dSequenceOfHClipPlane,
     "Graphic3d_SequenceOfHClipPlane",
     StandardTransient,
-    transient,
     interfaces: [dyn super::Graphic3dClipPlaneSequenceSource]
 );
 
 impl Graphic3dSequenceOfHClipPlane {
     /// The planes in order as explicitly owning convenience snapshots; `planes.items()`.
-    pub fn items(&self) -> Vec<Handle<Graphic3dClipPlane>> {
+    pub fn items(&self) -> Vec<Handle<dyn super::Graphic3dClipPlaneSource>> {
         self.clip_plane_items
             .read()
             .iter()
             .map(|field| {
                 use martensite_tkernel::standard::HandleReference;
-                field.observe().observe_as::<Graphic3dClipPlane>().clone()
+                field.observe().into_handle()
             })
             .collect()
     }

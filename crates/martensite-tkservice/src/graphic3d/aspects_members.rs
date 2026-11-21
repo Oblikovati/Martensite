@@ -151,11 +151,11 @@ pub trait Graphic3dAspectsRenderMembers: Graphic3dAspectsSource {
         self.aspects_base().fields.write().program = program;
     }
     /// The texture set; `aspects.texture_set()`.
-    fn texture_set(&self) -> Handle<Graphic3dTextureSet> {
+    fn texture_set(&self) -> Handle<dyn crate::graphic3d::Graphic3dTextureSetSource> {
         read_field!(self.texture_set).clone()
     }
     /// Sets the texture set; `aspects.set_texture_set(set)`.
-    fn set_texture_set(&self, textures: Handle<Graphic3dTextureSet>) {
+    fn set_texture_set(&self, textures: Handle<dyn crate::graphic3d::Graphic3dTextureSetSource>) {
         self.aspects_base().fields.write().texture_set = textures;
     }
     /// The first texture of a non-empty set, else null; `aspects.texture_map()`.
@@ -171,7 +171,7 @@ pub trait Graphic3dAspectsRenderMembers: Graphic3dAspectsSource {
         let set = if texture.is_null() {
             Handle::default()
         } else {
-            Handle::new(Graphic3dTextureSet::with_texture(texture))
+            Handle::new(Graphic3dTextureSet::with_texture(texture)).into_upcast()
         };
         self.aspects_base().fields.write().texture_set = set;
     }

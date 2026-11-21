@@ -70,14 +70,12 @@ pub struct Graphic3dShaderManagerFields {
 /// Example: `let manager = Graphic3dShaderManager::new(AspectGraphicsLibrary::OpenGL);
 /// manager.set_gapi_version(3, 2); manager.get_std_program_font().get_id()` is `occt_font0000`.
 pub struct Graphic3dShaderManager {
-    transient: StandardTransient,
     state: SharedState<Graphic3dShaderManagerFields>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dShaderManager,
     "Graphic3d_ShaderManager",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Graphic3dShaderManager {
@@ -96,7 +94,6 @@ impl Graphic3dShaderManager {
             srgb_state: true,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(fields),
         }
     }

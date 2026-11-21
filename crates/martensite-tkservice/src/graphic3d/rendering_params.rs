@@ -276,9 +276,9 @@ impl Default for Graphic3dStereoParams {
 #[derive(Clone)]
 pub struct Graphic3dStatsParams {
     /// `StatsPosition`.
-    pub stats_position: Handle<Graphic3dTransformPers>,
+    pub stats_position: Handle<dyn super::Graphic3dTransformPersSource>,
     /// `ChartPosition`.
-    pub chart_position: Handle<Graphic3dTransformPers>,
+    pub chart_position: Handle<dyn super::Graphic3dTransformPersSource>,
     /// `ChartSize`.
     pub chart_size: Vec2<i32>,
     /// `StatsTextAspect`.
@@ -317,7 +317,7 @@ impl Graphic3dStatsParams {
                 position,
                 Vec2::new(20, 20),
             )
-            .map(Handle::new)
+            .map(|value| Handle::new(value).into_upcast())
         };
         Ok(Self {
             stats_position: corner(AspectTypeOfTriedronPosition::LEFT_UPPER)?,

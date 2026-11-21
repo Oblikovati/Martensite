@@ -42,10 +42,9 @@ pub(crate) struct FontMgrState {
 
 /// The font manager; `FontFontMgr::get_instance().get_available_fonts()`.
 pub struct FontFontMgr {
-    transient: StandardTransient,
     pub(crate) state: SharedState<FontMgrState>,
 }
-martensite_tkernel::impl_transient!(FontFontMgr, "Font_FontMgr", StandardTransient, transient);
+martensite_tkernel::impl_transient!(FontFontMgr, "Font_FontMgr", StandardTransient);
 
 /// The process-wide `ToUseUnicodeSubsetFallback` flag (on by default).
 static UNICODE_SUBSET_FALLBACK: AtomicBool = AtomicBool::new(true);
@@ -61,7 +60,6 @@ impl FontFontMgr {
     fn new() -> Self {
         let sans = alias_sequence(&["arial", "helvetica", "freesans", "dejavu sans"]);
         let manager = Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(FontMgrState {
                 fonts: Vec::new(),
                 aliases: DataMap::default(),

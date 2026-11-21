@@ -22,15 +22,9 @@ struct TextState {
 
 /// A text primitive; `Graphic3dText::new(16.0)`.
 pub struct Graphic3dText {
-    transient: StandardTransient,
     state: SharedState<TextState>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dText,
-    "Graphic3d_Text",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dText, "Graphic3d_Text", StandardTransient);
 
 impl Graphic3dText {
     /// A text of a height, left/bottom aligned, anchored at its position, without a plane.
@@ -47,7 +41,6 @@ impl Graphic3dText {
             has_own_anchor: true,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

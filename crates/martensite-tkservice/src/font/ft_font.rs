@@ -85,11 +85,10 @@ pub(crate) struct FtFontState {
 
 /// A FreeType font; `FontFTFont::find_and_create(&"sans-serif".into(), aspect, &params, strict)`.
 pub struct FontFTFont {
-    transient: StandardTransient,
     pub(crate) state: SharedState<FtFontState>,
-    pub(crate) glyph_img: Handle<ImagePixMap>,
+    pub(crate) glyph_img: Handle<dyn crate::image::ImagePixMapObject>,
 }
-martensite_tkernel::impl_transient!(FontFTFont, "Font_FTFont", StandardTransient, transient);
+martensite_tkernel::impl_transient!(FontFTFont, "Font_FTFont", StandardTransient);
 
 /// The `FT_FaceRec` behind an address.
 pub(crate) fn face_rec<'a>(face: usize) -> Option<&'a FtFaceRec> {
@@ -136,9 +135,8 @@ impl FontFTFont {
             to_use_unicode_subset_fallback: FontFontMgr::to_use_unicode_subset_fallback(),
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
-            glyph_img: Handle::new(ImagePixMap::default()),
+            glyph_img: Handle::new(ImagePixMap::default()).into_upcast(),
         }
     }
     /// Whether a face is open; `font.is_valid()`.
@@ -146,7 +144,7 @@ impl FontFTFont {
         self.state.read().face != 0
     }
     /// The bitmap of the last rendered glyph; `font.glyph_image()`.
-    pub fn glyph_image(&self) -> &Handle<ImagePixMap> {
+    pub fn glyph_image(&self) -> &Handle<dyn crate::image::ImagePixMapObject> {
         &self.glyph_img
     }
     /// `invalidateGlyphState`: a new geometry revision and no loaded glyph.

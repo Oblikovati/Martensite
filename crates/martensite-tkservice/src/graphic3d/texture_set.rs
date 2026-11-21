@@ -8,21 +8,18 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransie
 ///
 /// Example: `let set = Graphic3dTextureSet::with_size(2); set.set_value(1, texture)?;`.
 pub struct Graphic3dTextureSet {
-    transient: StandardTransient,
     textures: SharedState<Vec<Handle<dyn Graphic3dTextureMap>>>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dTextureSet,
     "Graphic3d_TextureSet",
-    StandardTransient,
-    transient
+    StandardTransient, interfaces: [dyn super::Graphic3dTextureSetSource]
 );
 
 impl Default for Graphic3dTextureSet {
     /// An empty set.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             textures: SharedState::new(Vec::new()),
         }
     }
@@ -40,14 +37,12 @@ impl Graphic3dTextureSet {
             Failure::with_type("Standard_OutOfMemory", &message, "")
         })?;
         Ok(Self {
-            transient: StandardTransient::default(),
             textures: SharedState::new(vec![Handle::default(); length]),
         })
     }
     /// A set of one texture; `Graphic3dTextureSet::with_texture(texture).size() == 1`.
     pub fn with_texture(texture: Handle<dyn Graphic3dTextureMap>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             textures: SharedState::new(vec![texture]),
         }
     }
@@ -109,7 +104,7 @@ impl Graphic3dTextureSet {
     /// `Graphic3d_TextureSet::Iterator`: the textures in index order (none for a null set);
     /// `Graphic3dTextureSet::iter(&set)`.
     pub fn iter(
-        set: &Handle<Graphic3dTextureSet>,
+        set: &Handle<dyn crate::graphic3d::Graphic3dTextureSetSource>,
     ) -> std::vec::IntoIter<Handle<dyn Graphic3dTextureMap>> {
         set.get()
             .map(|set| set.textures.read().clone())

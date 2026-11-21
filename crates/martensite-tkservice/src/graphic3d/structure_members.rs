@@ -8,7 +8,7 @@ use super::{
     Graphic3dTransformPersSource, Graphic3dTypeOfStructure, Graphic3dZLayerId,
 };
 use martensite_tkernel::standard::exceptions::program_error;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::TransformForm;
 use martensite_tkmath::toploc::Datum3;
 
@@ -157,11 +157,11 @@ pub trait Graphic3dStructureMembers: Graphic3dStructureSource {
         self.structure_base().fields.read().visual
     }
     /// `SetOwner`; `structure.set_owner(&owner)`.
-    fn set_owner(&self, owner: &Handle<StandardTransient>) {
+    fn set_owner(&self, owner: &Handle<dyn martensite_tkernel::standard::Transient>) {
         self.structure_base().fields.write().owner = owner.downgrade();
     }
     /// `Owner`; `structure.owner()`.
-    fn owner(&self) -> Handle<StandardTransient> {
+    fn owner(&self) -> Handle<dyn martensite_tkernel::standard::Transient> {
         self.structure_base().fields.read().owner.upgrade()
     }
     /// `SetHLRValidation`; `structure.set_hlr_validation(true)`.

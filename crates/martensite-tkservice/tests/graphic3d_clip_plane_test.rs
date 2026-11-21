@@ -33,19 +33,19 @@ fn null_normal_raises_construction_error() {
 #[test]
 fn chain_loop_is_refused_without_changes() {
     let (a, b) = (plane(1.0, 0.0, 0.0, 0.0), plane(0.0, 1.0, 0.0, 0.0));
-    Graphic3dClipPlane::set_chain_next_plane(&a, b.clone()).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&a.upcast(), b.upcast()).unwrap();
     assert_eq!(a.nb_chain_next_planes(), 2);
     let counter = b.m_count_equation();
-    let error = Graphic3dClipPlane::set_chain_next_plane(&b, a.clone()).unwrap_err();
+    let error = Graphic3dClipPlane::set_chain_next_plane(&b.upcast(), a.upcast()).unwrap_err();
     assert_eq!(error.exception_type(), "Standard_ProgramError");
-    assert!(Graphic3dClipPlane::set_chain_next_plane(&a, a.clone()).is_err());
+    assert!(Graphic3dClipPlane::set_chain_next_plane(&a.upcast(), a.upcast()).is_err());
     assert_eq!((b.m_count_equation(), b.is_chain()), (counter, false));
 }
 
 #[test]
 fn chain_union_keeps_points_inside_any_plane() {
     let (a, b) = (plane(1.0, 0.0, 0.0, 0.0), plane(0.0, 1.0, 0.0, 0.0));
-    Graphic3dClipPlane::set_chain_next_plane(&a, b.clone()).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&a.upcast(), b.upcast()).unwrap();
     let point = Vec4::new(-1.0, 1.0, 0.0, 1.0);
     assert_eq!(a.probe_point(&point), Graphic3dClipState::In);
     assert_eq!(a.probe_point_halfspace(&point), Graphic3dClipState::Out);
@@ -58,7 +58,7 @@ fn destroyed_predecessor_leaves_a_null_previous_plane() {
     let b = plane(0.0, 1.0, 0.0, 0.0);
     {
         let a = plane(1.0, 0.0, 0.0, 0.0);
-        Graphic3dClipPlane::set_chain_next_plane(&a, b.clone()).unwrap();
+        Graphic3dClipPlane::set_chain_next_plane(&a.upcast(), b.upcast()).unwrap();
     }
     assert!(b.chain_previous_plane().is_null());
 }
@@ -94,7 +94,7 @@ fn slot_references_follow_replacement_without_owning() {
     let next = head.chain_next_plane_ref();
     assert!(next.is_null());
     let tail_owners = tail.ref_count();
-    Graphic3dClipPlane::set_chain_next_plane_reference(&head, &tail).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane_reference(&head.upcast(), &tail).unwrap();
     assert_eq!(next.object_address(), tail.object_address());
     assert_eq!(tail.ref_count(), tail_owners + 1);
     assert_eq!(tail.chain_previous_plane(), head);
@@ -108,7 +108,7 @@ fn capping_hatch_raises_without_a_predefined_style() {
     assert!(p.capping_hatch().is_err());
     let pattern = ImagePixMap::default();
     assert!(pattern.init_zero(ImageFormat::Gray, 32, 32, 0, 0));
-    let custom = Graphic3dHatchStyle::from_pattern(&Handle::new(pattern)).unwrap();
+    let custom = Graphic3dHatchStyle::from_pattern(&Handle::new(pattern).into_upcast()).unwrap();
     p.set_capping_custom_hatch(Handle::new(custom));
     let error = p.capping_hatch().unwrap_err();
     assert_eq!(error.exception_type(), "Standard_ProgramError");
@@ -117,7 +117,7 @@ fn capping_hatch_raises_without_a_predefined_style() {
 #[test]
 fn copy_keeps_the_aspect_but_not_the_chain_or_counters() {
     let (a, b) = (plane(1.0, 0.0, 0.0, -2.0), plane(0.0, 1.0, 0.0, 0.0));
-    Graphic3dClipPlane::set_chain_next_plane(&a, b).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&a.upcast(), b.into_upcast()).unwrap();
     a.set_capping_color(Color::named(NamedColor::RED)).unwrap();
     a.set_use_object_shader(true);
     let copy = a.clone_plane();

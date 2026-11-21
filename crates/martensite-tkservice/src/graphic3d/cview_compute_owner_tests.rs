@@ -1,18 +1,18 @@
-//! `Graphic3d_CView::Compute` walks myStructsDisplayed itself: the virtual
-//! RecomputeTransformation of a displayed structure sees no owner that the native loop lacks.
+//! Compute snapshots retain the actual receiver during virtual calls (#592).
 use super::*;
 use crate::aspect::{AspectNeutralWindow, AspectWindow};
 use crate::null_driver::{NullGraphicDriver, NullView};
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, WeakHandle};
+use std::sync::OnceLock;
 
 /// A structure whose RecomputeTransformation override records its own owner count.
 struct OwnerCountingStructure {
-    transient: StandardTransient,
     base: Graphic3dStructureBase,
-    owners_seen: SharedState<Vec<i32>>,
+    owners_seen: SharedState<Vec<usize>>,
+    identity: OnceLock<WeakHandle<OwnerCountingStructure>>,
 }
 martensite_tkernel::impl_transient!(OwnerCountingStructure, "Martensite_OwnerCountingStructure",
-    StandardTransient, transient, interfaces: [dyn Graphic3dStructureSource]);
+    StandardTransient, interfaces: [dyn Graphic3dStructureSource]);
 impl Graphic3dStructureSource for OwnerCountingStructure {
     fn structure_base(&self) -> &Graphic3dStructureBase {
         &self.base
@@ -20,12 +20,12 @@ impl Graphic3dStructureSource for OwnerCountingStructure {
     fn recompute_transformation(&self, _projector: &Handle<Graphic3dCamera>) {
         self.owners_seen
             .write()
-            .push(self.transient_base().ref_count());
+            .push(self.identity.get().unwrap().ref_count());
     }
 }
 
 #[test]
-fn compute_adds_no_owner_while_recomputing_displayed_structures() {
+fn compute_retains_one_read_snapshot_while_recomputing_displayed_structures() {
     let driver = NullGraphicDriver::new_handle();
     let manager = Handle::new(Graphic3dStructureManager::new(&driver).unwrap());
     let view = driver.create_view(&manager).unwrap();
@@ -35,10 +35,11 @@ fn compute_adds_no_owner_while_recomputing_displayed_structures() {
     view.cast::<NullView>().set_null_window(&window);
     view.activate();
     let structure = Handle::new(OwnerCountingStructure {
-        transient: StandardTransient::default(),
         base: Graphic3dStructureBase::new(&manager, &Handle::default()).unwrap(),
         owners_seen: SharedState::new(Vec::new()),
+        identity: OnceLock::new(),
     });
+    structure.identity.set(structure.downgrade()).unwrap();
     let source: Handle<dyn Graphic3dStructureSource> = structure.clone().cast();
     graphic3d_structure_bind(&source);
     drop(source);
@@ -47,6 +48,7 @@ fn compute_adds_no_owner_while_recomputing_displayed_structures() {
     let outside = structure.ref_count();
     structure.owners_seen.write().clear();
     view.compute();
-    // The native loop sees the same owners as outside it: no temporary copy of the set.
-    assert_eq!(*structure.owners_seen.read(), vec![outside]);
+    // #592: a safe Arc receiver snapshot contributes exactly one owner during the call.
+    assert_eq!(*structure.owners_seen.read(), vec![outside + 1]);
+    assert_eq!(structure.ref_count(), outside);
 }

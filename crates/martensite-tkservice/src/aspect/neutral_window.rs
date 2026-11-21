@@ -1,7 +1,7 @@
 //! `Aspect_NeutralWindow`: a window defined by its native handles and geometry only,
 //! for an application that creates and manages the real window itself.
 use super::{AspectDrawable, AspectFbConfig, AspectTypeOfResize, AspectWindow, AspectWindowBase};
-use martensite_tkernel::standard::{SharedState, StandardTransient};
+use martensite_tkernel::standard::SharedState;
 
 /// The protected fields of `Aspect_NeutralWindow`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -20,7 +20,6 @@ struct NeutralFields {
 ///
 /// Example: `let window = AspectNeutralWindow::default(); window.set_size(640, 480);`.
 pub struct AspectNeutralWindow {
-    transient: StandardTransient,
     base: AspectWindowBase,
     fields: SharedState<NeutralFields>,
 }
@@ -32,13 +31,12 @@ impl Default for AspectNeutralWindow {
             ..Default::default()
         };
         Self {
-            transient: StandardTransient::default(),
             base: AspectWindowBase::default(),
             fields: SharedState::new(fields),
         }
     }
 }
-martensite_tkernel::impl_transient!(AspectNeutralWindow, "Aspect_NeutralWindow", dyn AspectWindow, transient,
+martensite_tkernel::impl_transient!(AspectNeutralWindow, "Aspect_NeutralWindow", dyn AspectWindow,
     interfaces: [dyn AspectWindow]);
 
 impl AspectNeutralWindow {

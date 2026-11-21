@@ -46,18 +46,12 @@ pub(crate) struct LayerBvh {
 
 /// A Z layer; `Graphic3dLayer::new(GRAPHIC3D_ZLAYER_ID_DEFAULT, None)`.
 pub struct Graphic3dLayer {
-    transient: StandardTransient,
     /// `myLayerId`.
     layer_id: Graphic3dZLayerId,
     pub(crate) state: SharedState<LayerState>,
     pub(crate) bvh: Mutex<LayerBvh>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dLayer,
-    "Graphic3d_Layer",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dLayer, "Graphic3d_Layer", StandardTransient);
 
 /// The priority index of the native `std::min(std::max(priority, Bottom), Topmost)`.
 fn priority_index(priority: Graphic3dDisplayPriority) -> usize {
@@ -86,7 +80,6 @@ impl Graphic3dLayer {
             trsf_pers: Graphic3dBvhCStructureSetTrsfPers::new(builder),
         };
         Self {
-            transient: StandardTransient::default(),
             layer_id,
             state: SharedState::new(state),
             bvh: Mutex::new(bvh),

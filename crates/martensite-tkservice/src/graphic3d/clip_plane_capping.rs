@@ -35,12 +35,12 @@ const PREDEFINED_HATCHES: [AspectHatchStyle; 13] = [
 
 /// `textures` with `texture` first when it holds exactly one texture, else a new set of it.
 fn one_texture_set(
-    textures: Handle<Graphic3dTextureSet>,
+    textures: Handle<dyn crate::graphic3d::Graphic3dTextureSetSource>,
     texture: Handle<dyn Graphic3dTextureMap>,
-) -> Result<Handle<Graphic3dTextureSet>, Failure> {
+) -> Result<Handle<dyn crate::graphic3d::Graphic3dTextureSetSource>, Failure> {
     match textures.get() {
         Some(set) if set.size() == 1 => set.set_first(texture)?,
-        _ => return Ok(Handle::new(Graphic3dTextureSet::with_texture(texture))),
+        _ => return Ok(Handle::new(Graphic3dTextureSet::with_texture(texture)).into_upcast()),
     }
     Ok(textures)
 }

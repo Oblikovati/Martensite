@@ -1,6 +1,6 @@
 //! `Graphic3d_HatchStyle`: a 32x32 hatch bitmap, predefined or custom.
 use crate::aspect::AspectHatchStyle;
-use crate::image::{ImageFormat, ImagePixMap};
+use crate::image::ImageFormat;
 use crate::json_dump::{class_begin, field_dumped, field_integer};
 use martensite_tkernel::ncollection::{BaseAllocator, Buffer};
 use martensite_tkernel::standard::dump::DumpStream;
@@ -109,7 +109,6 @@ static HATCH_STYLE_COUNTER: AtomicI32 = AtomicI32::new(AspectHatchStyle::Nb as i
 
 /// A hatch pattern; `Graphic3dHatchStyle::predefined(AspectHatchStyle::Grid)`.
 pub struct Graphic3dHatchStyle {
-    transient: StandardTransient,
     /// `myPattern`: the custom bitmap, null for a predefined style.
     pattern: Handle<Buffer>,
     /// `myHatchType`: the style index (custom ones get new ids).
@@ -118,15 +117,16 @@ pub struct Graphic3dHatchStyle {
 martensite_tkernel::impl_transient!(
     Graphic3dHatchStyle,
     "Graphic3d_HatchStyle",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Graphic3dHatchStyle {
     /// A custom style from a 32x32 gray image; `Standard_ProgramError` for another image.
     ///
     /// Example: `Graphic3dHatchStyle::from_pattern(&image)?`.
-    pub fn from_pattern(pattern: &Handle<ImagePixMap>) -> Result<Self, Failure> {
+    pub fn from_pattern(
+        pattern: &Handle<dyn crate::image::ImagePixMapObject>,
+    ) -> Result<Self, Failure> {
         let Some(image) = pattern.get() else {
             return Err(program_error("Null pointer to a hatch pattern image"));
         };
@@ -143,7 +143,6 @@ impl Graphic3dHatchStyle {
         buffer.as_mut_slice()[..bytes.len()].copy_from_slice(&bytes);
         let hatch_type = HATCH_STYLE_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
         Ok(Self {
-            transient: StandardTransient::default(),
             pattern: Handle::new(buffer),
             hatch_type,
         })
@@ -151,7 +150,6 @@ impl Graphic3dHatchStyle {
     /// A predefined style; `Graphic3dHatchStyle::predefined(AspectHatchStyle::Grid)`.
     pub fn predefined(style: AspectHatchStyle) -> Self {
         Self {
-            transient: StandardTransient::default(),
             pattern: Handle::default(),
             hatch_type: style as i32,
         }
@@ -184,6 +182,7 @@ impl Graphic3dHatchStyle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::image::ImagePixMap;
 
     #[test]
     fn predefined_and_custom_patterns() {
@@ -194,7 +193,7 @@ mod tests {
         assert!(Graphic3dHatchStyle::from_pattern(&Handle::default()).is_err());
         let image = ImagePixMap::default();
         image.init_zero(ImageFormat::Gray, 32, 32, 0, 7);
-        let custom = Graphic3dHatchStyle::from_pattern(&Handle::new(image)).unwrap();
+        let custom = Graphic3dHatchStyle::from_pattern(&Handle::new(image).into_upcast()).unwrap();
         assert!(custom.hatch_type() >= AspectHatchStyle::Nb as i32);
         assert_eq!(custom.pattern().unwrap(), vec![7; 1024]);
     }

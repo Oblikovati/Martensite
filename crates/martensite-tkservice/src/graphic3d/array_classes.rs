@@ -22,7 +22,12 @@ macro_rules! array_class {
         pub struct $ty {
             base: Graphic3dArrayOfPrimitives,
         }
-        martensite_tkernel::impl_transient!($ty, $name, Graphic3dArrayOfPrimitives, base);
+        martensite_tkernel::impl_transient!($ty, $name, Graphic3dArrayOfPrimitives, interfaces: [dyn super::Graphic3dArraySource]);
+        impl super::Graphic3dArraySource for $ty {
+            fn primitive_array(&self) -> &Graphic3dArrayOfPrimitives {
+                &self.base
+            }
+        }
         impl std::ops::Deref for $ty {
             type Target = Graphic3dArrayOfPrimitives;
             fn deref(&self) -> &Graphic3dArrayOfPrimitives {
@@ -54,8 +59,8 @@ array_class!(Graphic3dArrayOfPolygons, "Graphic3d_ArrayOfPolygons");
 pub(crate) fn create_class(
     kind: Kind,
     base: Graphic3dArrayOfPrimitives,
-) -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
-    let handle: Handle<Graphic3dArrayOfPrimitives> = match kind {
+) -> Result<Handle<dyn crate::graphic3d::Graphic3dArraySource>, Failure> {
+    let handle: Handle<dyn crate::graphic3d::Graphic3dArraySource> = match kind {
         Kind::Points => Handle::new(Graphic3dArrayOfPoints { base }).cast(),
         Kind::Segments => Handle::new(Graphic3dArrayOfSegments { base }).cast(),
         Kind::Polylines => Handle::new(Graphic3dArrayOfPolylines { base }).cast(),
@@ -65,7 +70,7 @@ pub(crate) fn create_class(
         Kind::Quadrangles => Handle::new(Graphic3dArrayOfQuadrangles { base }).cast(),
         Kind::Quadranglestrips => Handle::new(Graphic3dArrayOfQuadrangleStrips { base }).cast(),
         Kind::Polygons => Handle::new(Graphic3dArrayOfPolygons { base }).cast(),
-        _ => Handle::new(base),
+        _ => Handle::new(base).into_upcast(),
     };
     Ok(handle)
 }

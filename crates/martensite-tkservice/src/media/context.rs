@@ -31,16 +31,10 @@ pub struct MediaCodecContextFields {
 
 /// A decoder of one stream; `MediaCodecContext::default().size_x() == 0`.
 pub struct MediaCodecContext {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<MediaCodecContextFields>,
 }
-martensite_tkernel::impl_transient!(
-    MediaCodecContext,
-    "Media_CodecContext",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(MediaCodecContext, "Media_CodecContext", StandardTransient);
 
 impl Default for MediaCodecContext {
     fn default() -> Self {
@@ -54,7 +48,6 @@ impl Default for MediaCodecContext {
             pixel_aspect_ratio: 1.0,
         };
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }
@@ -128,16 +121,10 @@ pub struct MediaFormatContextFields {
 /// A demuxer of a media input; `MediaFormatContext::default().nb_steams() == 0`.
 #[derive(Default)]
 pub struct MediaFormatContext {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<MediaFormatContextFields>,
 }
-martensite_tkernel::impl_transient!(
-    MediaFormatContext,
-    "Media_FormatContext",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(MediaFormatContext, "Media_FormatContext", StandardTransient);
 
 impl MediaFormatContext {
     /// `FormatAVErrorDescription`: `"AVError #<code>"` without FFmpeg;

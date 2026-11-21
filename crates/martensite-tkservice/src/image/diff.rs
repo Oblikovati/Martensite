@@ -23,9 +23,9 @@ const NEIGHBOR_PIXELS: [(i32, i32); 8] = [
 #[derive(Default)]
 pub struct ImageDiffFields {
     /// `myImageRef`: the reference image.
-    pub image_ref: Handle<ImagePixMap>,
+    pub image_ref: Handle<dyn crate::image::ImagePixMapObject>,
     /// `myImageNew`: the image compared with it.
-    pub image_new: Handle<ImagePixMap>,
+    pub image_new: Handle<dyn crate::image::ImagePixMapObject>,
     /// `myColorTolerance`: 0 (any difference) to 1 (opposite colours).
     pub color_tolerance: f64,
     /// `myIsBorderFilterOn`.
@@ -40,19 +40,17 @@ pub struct ImageDiffFields {
 
 /// An image comparison; `let diff = ImageDiff::default(); diff.init(&a, &b, false);`.
 pub struct ImageDiff {
-    transient: StandardTransient,
     fields: SharedState<ImageDiffFields>,
 }
 impl Default for ImageDiff {
     /// No images, zero tolerance, no border filter.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(ImageDiffFields::default()),
         }
     }
 }
-martensite_tkernel::impl_transient!(ImageDiff, "Image_Diff", StandardTransient, transient);
+martensite_tkernel::impl_transient!(ImageDiff, "Image_Diff", StandardTransient);
 
 /// `PackXY`: x in the high 16 bits, y in the low ones.
 pub fn image_diff_pack_xy(x: u16, y: u16) -> i32 {
@@ -160,8 +158,8 @@ impl ImageDiff {
     /// Example: `diff.init(&reference, &new, false)?`.
     pub fn init(
         &self,
-        image_ref: &Handle<ImagePixMap>,
-        image_new: &Handle<ImagePixMap>,
+        image_ref: &Handle<dyn crate::image::ImagePixMapObject>,
+        image_new: &Handle<dyn crate::image::ImagePixMapObject>,
         to_black_white: bool,
     ) -> Result<bool, Failure> {
         {
@@ -210,8 +208,8 @@ impl ImageDiff {
             fail("Error: Failed to load image(s) file(s)");
             return Ok(false);
         }
-        let image_ref: Handle<ImagePixMap> = Handle::new(image_ref).cast();
-        let image_new: Handle<ImagePixMap> = Handle::new(image_new).cast();
+        let image_ref: Handle<dyn crate::image::ImagePixMapObject> = Handle::new(image_ref).cast();
+        let image_new: Handle<dyn crate::image::ImagePixMapObject> = Handle::new(image_new).cast();
         self.init(&image_ref, &image_new, to_black_white)
     }
     /// Sets the colour tolerance; `diff.set_color_tolerance(0.1)`.

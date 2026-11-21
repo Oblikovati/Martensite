@@ -43,17 +43,16 @@ struct RetainedViewFields {
     image_style: Option<AspectFillMethod>,
     texture_env: Handle<Graphic3dTextureEnv>,
     lights: Handle<Graphic3dLightSet>,
-    fbo: Handle<StandardTransient>,
+    fbo: Handle<dyn martensite_tkernel::standard::Transient>,
 }
 
 /// Shared driver-view storage (with an intentionally non-rendering standalone adapter); `Graphic3dRetainedView::create(&manager, &layers)?`.
 pub struct Graphic3dRetainedView {
-    transient: StandardTransient,
     base: Graphic3dCViewBase,
     state: SharedState<RetainedViewFields>,
     clip_plane_slot: Arc<IntrusiveReferenceSlot<dyn super::Graphic3dClipPlaneSequenceSource>>,
 }
-martensite_tkernel::impl_transient!(Graphic3dRetainedView, "Martensite_RetainedView", StandardTransient, transient,
+martensite_tkernel::impl_transient!(Graphic3dRetainedView, "Martensite_RetainedView", StandardTransient,
     interfaces: [dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
 
 impl Graphic3dRetainedView {
@@ -74,7 +73,6 @@ impl Graphic3dRetainedView {
     ) -> Result<Self, Failure> {
         let state = retained_layer_state(layers);
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dCViewBase::new(manager)?,
             state: SharedState::new(state),
             clip_plane_slot: Arc::default(),
@@ -265,24 +263,36 @@ impl Graphic3dCView for Graphic3dRetainedView {
         }
         Ok(())
     }
-    fn fbo(&self) -> Handle<StandardTransient> {
+    fn fbo(&self) -> Handle<dyn martensite_tkernel::standard::Transient> {
         self.state.read().fbo.clone()
     }
-    fn set_fbo(&self, fbo: &Handle<StandardTransient>) {
+    fn set_fbo(&self, fbo: &Handle<dyn martensite_tkernel::standard::Transient>) {
         self.state.write().fbo = fbo.clone();
     }
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient> {
+    fn fbo_create(
+        &self,
+        width: i32,
+        height: i32,
+    ) -> Handle<dyn martensite_tkernel::standard::Transient> {
         let _ = (width, height);
         Handle::default()
     }
-    fn fbo_release(&self, fbo: &mut Handle<StandardTransient>) {
+    fn fbo_release(&self, fbo: &mut Handle<dyn martensite_tkernel::standard::Transient>) {
         *fbo = Handle::default();
     }
-    fn fbo_get_dimensions(&self, fbo: &Handle<StandardTransient>) -> [i32; 4] {
+    fn fbo_get_dimensions(
+        &self,
+        fbo: &Handle<dyn martensite_tkernel::standard::Transient>,
+    ) -> [i32; 4] {
         let _ = fbo;
         [0; 4]
     }
-    fn fbo_change_viewport(&self, fbo: &Handle<StandardTransient>, width: i32, height: i32) {
+    fn fbo_change_viewport(
+        &self,
+        fbo: &Handle<dyn martensite_tkernel::standard::Transient>,
+        width: i32,
+        height: i32,
+    ) {
         let _ = (fbo, width, height);
     }
     fn gradient_background(&self) -> AspectGradientBackground {

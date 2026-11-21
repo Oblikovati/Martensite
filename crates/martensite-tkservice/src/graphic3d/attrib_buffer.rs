@@ -6,7 +6,7 @@ use super::{
 };
 use martensite_tkernel::ncollection::BaseAllocator;
 use martensite_tkernel::standard::exceptions::{out_of_range, program_error};
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 
 /// The fields of `Graphic3d_AttribBuffer`.
 #[derive(Clone, Copy, Debug, Default)]
@@ -18,11 +18,10 @@ struct AttribBufferFields {
 
 /// An attribute buffer; `Graphic3dAttribBuffer::new(allocator)?.is_interleaved()`.
 pub struct Graphic3dAttribBuffer {
-    transient: StandardTransient,
     base: Graphic3dBufferBase,
     fields: SharedState<AttribBufferFields>,
 }
-martensite_tkernel::impl_transient!(Graphic3dAttribBuffer, "Graphic3d_AttribBuffer", dyn Graphic3dBufferSource, transient,
+martensite_tkernel::impl_transient!(Graphic3dAttribBuffer, "Graphic3d_AttribBuffer", dyn Graphic3dBufferSource,
     interfaces: [dyn Graphic3dBufferSource]);
 
 /// `Standard_OutOfRange` for a byte size past the 32-bit range of a mutable buffer.
@@ -66,7 +65,6 @@ impl Graphic3dAttribBuffer {
             ..Default::default()
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dBufferBase::new(allocator)?,
             fields: SharedState::new(fields),
         })

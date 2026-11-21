@@ -41,7 +41,7 @@ fn frames(output: &Output, code: i32) -> (Handle<MediaFrame>, Handle<MediaFrame>
     flag(output, frame.init_wrapper(&Handle::default()));
     flag(
         output,
-        frame.init_wrapper(&Handle::new(ImagePixMap::default())),
+        frame.init_wrapper(&Handle::new(ImagePixMap::default()).into_upcast()),
     );
     int(output, MediaFrame::format_from_ffmpeg(code) as i32);
     int(output, MediaFrame::format_to_ffmpeg(ImageFormat::Rgb));

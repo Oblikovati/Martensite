@@ -335,5 +335,6 @@ fn set_size<G: AspectRectangularGrid + ?Sized>(
 martensite_tkernel::impl_transient_interface!(
     dyn AspectRectangularGrid,
     "Aspect_RectangularGrid",
-    dyn AspectGrid
+    dyn AspectGrid,
+    upcasts: [dyn AspectGrid]
 );

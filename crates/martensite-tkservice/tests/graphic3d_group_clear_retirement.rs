@@ -33,7 +33,8 @@ fn install_entry_batch(trace: &Arc<GroupClearTrace>, panics: bool) {
     install_retiring_group(trace, "D", GroupDropAction::Observe);
 }
 fn assert_live_created_groups(trace: &GroupClearTrace, expected: usize) {
-    let fields = trace.structure.cstructure_base().fields.read();
+    let structure = trace.structure.upgrade();
+    let fields = structure.cstructure_base().fields.read();
     let actual: Vec<usize> = fields
         .groups
         .iter()
@@ -68,7 +69,8 @@ fn clear_retires_only_entry_groups_outside_guard_before_resetting_flags() {
     presentation.cstructure().clear();
     assert_retirement_rows(&trace, false);
     assert_live_created_groups(&trace, 1);
-    let fields = trace.structure.cstructure_base().fields.read();
+    let structure = trace.structure.upgrade();
+    let fields = structure.cstructure_base().fields.read();
     assert_eq!((fields.is_2d_text, fields.is_for_highlight), (false, false));
 }
 #[test]
@@ -86,6 +88,7 @@ fn clear_panic_preserves_new_groups_and_old_flags_while_finishing_ordered_retire
     );
     assert_retirement_rows(&trace, true);
     assert_live_created_groups(&trace, 2);
-    let fields = trace.structure.cstructure_base().fields.read();
+    let structure = trace.structure.upgrade();
+    let fields = structure.cstructure_base().fields.read();
     assert_eq!((fields.is_2d_text, fields.is_for_highlight), (true, true));
 }

@@ -29,14 +29,12 @@ struct TextureParamsFields {
 ///
 /// Example: `let params = Graphic3dTextureParams::default(); params.set_repeat(true);`.
 pub struct Graphic3dTextureParams {
-    transient: StandardTransient,
     fields: SharedState<TextureParamsFields>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dTextureParams,
     "Graphic3d_TextureParams",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Default for Graphic3dTextureParams {
@@ -59,7 +57,6 @@ impl Default for Graphic3dTextureParams {
             to_repeat: false,
         };
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

@@ -24,7 +24,7 @@ pub struct Graphic3dTextureRootFields {
     /// `myTexId`: the unique resource id.
     pub tex_id: AsciiString,
     /// `myPixMap`: the image, when the texture is defined by a pixmap.
-    pub pix_map: Handle<ImagePixMap>,
+    pub pix_map: Handle<dyn crate::image::ImagePixMapObject>,
     /// `myPath`: the image file, when the texture is defined by a file.
     pub path: CadPath,
     /// `myRevision`: the image revision.
@@ -51,7 +51,7 @@ impl Graphic3dTextureRootBase {
     /// The fields both constructors share; `TOT_2D_MIPMAP` becomes a 2D type with mipmaps.
     fn with_source(
         path: CadPath,
-        pix_map: Handle<ImagePixMap>,
+        pix_map: Handle<dyn crate::image::ImagePixMapObject>,
         kind: Graphic3dTypeOfTexture,
     ) -> Self {
         let mipmaps = kind == Graphic3dTypeOfTexture::Tot2dMipmap;
@@ -83,7 +83,10 @@ impl Graphic3dTextureRootBase {
     }
     /// `Graphic3d_TextureRoot(thePixMap, theType)`;
     /// `Graphic3dTextureRootBase::from_pix_map(pixmap, Graphic3dTypeOfTexture::TOT_2D)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>, kind: Graphic3dTypeOfTexture) -> Self {
+    pub fn from_pix_map(
+        pix_map: Handle<dyn crate::image::ImagePixMapObject>,
+        kind: Graphic3dTypeOfTexture,
+    ) -> Self {
         Self::with_source(CadPath::default(), pix_map, kind)
     }
     /// `generateId`: a new `Graphic3d_TextureRoot_<n>` id; `base.generate_id()`.
@@ -165,7 +168,7 @@ pub fn graphic3d_textures_folder() -> Result<AsciiString, Failure> {
 /// Example: `graphic3d_convert_to_compatible(&supported, &image)`.
 pub fn graphic3d_convert_to_compatible(
     supported: &Handle<ImageSupportedFormats>,
-    image: &Handle<ImagePixMap>,
+    image: &Handle<dyn crate::image::ImagePixMapObject>,
 ) {
     let (Some(formats), Some(pixmap)) = (supported.get(), image.get()) else {
         return;
@@ -221,11 +224,14 @@ pub trait Graphic3dTextureRoot: Transient {
     /// `GetImage(theSupported)`: the legacy image, else the pixmap, else the decoded file
     /// (always null without an image library); updates the row order.
     /// Example: `texture.get_image(&supported)`.
-    fn get_image(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn get_image(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         graphic3d_texture_root_get_image(self, supported)
     }
     /// The protected `GetImage() const` of the old API: null by default; `texture.legacy_image()`.
-    fn legacy_image(&self) -> Handle<ImagePixMap> {
+    fn legacy_image(&self) -> Handle<dyn crate::image::ImagePixMapObject> {
         Handle::default()
     }
 }
@@ -235,7 +241,7 @@ pub trait Graphic3dTextureRoot: Transient {
 pub fn graphic3d_texture_root_get_image<T: Graphic3dTextureRoot + ?Sized>(
     texture: &T,
     supported: &Handle<ImageSupportedFormats>,
-) -> Handle<ImagePixMap> {
+) -> Handle<dyn crate::image::ImagePixMapObject> {
     let base = texture.texture_root_base();
     // Copy the pixmap handle first: a guard in the `for` header would live through the
     // loop body and deadlock the write below.
@@ -253,7 +259,7 @@ pub fn graphic3d_texture_root_get_image<T: Graphic3dTextureRoot + ?Sized>(
 fn load_file_image(
     base: &Graphic3dTextureRootBase,
     supported: &Handle<ImageSupportedFormats>,
-) -> Handle<ImagePixMap> {
+) -> Handle<dyn crate::image::ImagePixMapObject> {
     let path = base.file_path();
     if path.is_empty() {
         return Handle::default();
@@ -262,8 +268,8 @@ fn load_file_image(
     if !image.load(&path) {
         return Handle::default();
     }
-    let pixmap: Handle<ImagePixMap> = image.cast();
-    base.fields.write().is_top_down = pixmap.get().is_some_and(ImagePixMap::is_top_down);
+    let pixmap: Handle<dyn crate::image::ImagePixMapObject> = image.cast();
+    base.fields.write().is_top_down = pixmap.get().is_some_and(|image| image.is_top_down());
     graphic3d_convert_to_compatible(supported, &pixmap);
     pixmap
 }

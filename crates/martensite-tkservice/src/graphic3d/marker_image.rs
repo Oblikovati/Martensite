@@ -14,13 +14,12 @@ static MARKER_IMAGE_COUNTER: AtomicI32 = AtomicI32::new(0);
 /// The images, built lazily from the bitmap.
 #[derive(Clone, Default)]
 struct MarkerImages {
-    image: Handle<ImagePixMap>,
-    image_alpha: Handle<ImagePixMap>,
+    image: Handle<dyn crate::image::ImagePixMapObject>,
+    image_alpha: Handle<dyn crate::image::ImagePixMapObject>,
 }
 
 /// A marker sprite; `Graphic3dMarkerImage::from_bitmap(bitmap, 8, 8)`.
 pub struct Graphic3dMarkerImage {
-    transient: StandardTransient,
     pub(crate) ids: SharedState<(AsciiString, AsciiString)>,
     bit_map: Handle<HArray1<u8>>,
     images: SharedState<MarkerImages>,
@@ -31,8 +30,7 @@ pub struct Graphic3dMarkerImage {
 martensite_tkernel::impl_transient!(
     Graphic3dMarkerImage,
     "Graphic3d_MarkerImage",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 /// The image and alpha ids of a new counter value.
@@ -49,8 +47,8 @@ fn counter_ids() -> (AsciiString, AsciiString) {
 
 /// The size of the image (natively dereferenced: a null image crashes), and the alpha checks.
 fn checked_image_size(
-    image: &Handle<ImagePixMap>,
-    alpha: &Handle<ImagePixMap>,
+    image: &Handle<dyn crate::image::ImagePixMapObject>,
+    alpha: &Handle<dyn crate::image::ImagePixMapObject>,
 ) -> Result<(i32, i32), Failure> {
     let pixmap = image
         .get()
@@ -81,7 +79,6 @@ impl Graphic3dMarkerImage {
         (width, height): (i32, i32),
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             ids: SharedState::new(ids),
             bit_map,
             images: SharedState::new(images),
@@ -94,8 +91,8 @@ impl Graphic3dMarkerImage {
     /// image raises `Standard_ProgramError`. The ids come from the counter, drawn before the
     /// checks as natively. Example: `Graphic3dMarkerImage::from_images(image, Handle::default())?`.
     pub fn from_images(
-        image: Handle<ImagePixMap>,
-        image_alpha: Handle<ImagePixMap>,
+        image: Handle<dyn crate::image::ImagePixMapObject>,
+        image_alpha: Handle<dyn crate::image::ImagePixMapObject>,
     ) -> Result<Self, Failure> {
         let ids = counter_ids();
         let size = checked_image_size(&image, &image_alpha)?;
@@ -110,8 +107,8 @@ impl Graphic3dMarkerImage {
     pub fn with_ids(
         id: AsciiString,
         alpha_id: AsciiString,
-        image: Handle<ImagePixMap>,
-        image_alpha: Handle<ImagePixMap>,
+        image: Handle<dyn crate::image::ImagePixMapObject>,
+        image_alpha: Handle<dyn crate::image::ImagePixMapObject>,
     ) -> Result<Self, Failure> {
         let size = checked_image_size(&image, &image_alpha)?;
         Ok(Self::assemble(
@@ -171,12 +168,13 @@ impl Graphic3dMarkerImage {
     }
     /// `GetImage`: the image, or the bitmap drawn into a square Alpha image with a margin.
     /// Example: `marker.get_image()`.
-    pub fn get_image(&self) -> Handle<ImagePixMap> {
+    pub fn get_image(&self) -> Handle<dyn crate::image::ImagePixMapObject> {
         let current = self.images.read().image.clone();
         if current.is_some() || self.bit_map.is_null() {
             return current;
         }
-        let image = Handle::new(self.bitmap_image());
+        let image: Handle<dyn crate::image::ImagePixMapObject> =
+            Handle::new(self.bitmap_image()).into_upcast();
         self.images.write().image = image.clone();
         image
     }
@@ -211,7 +209,7 @@ impl Graphic3dMarkerImage {
     }
     /// `GetImageAlpha`: the alpha image, the image itself when Gray or Alpha, or the alpha
     /// channel of a color image (bottom-up rows). Example: `marker.get_image_alpha()`.
-    pub fn get_image_alpha(&self) -> Handle<ImagePixMap> {
+    pub fn get_image_alpha(&self) -> Handle<dyn crate::image::ImagePixMapObject> {
         let images = self.images.read().clone();
         if images.image_alpha.is_some() {
             return images.image_alpha;
@@ -222,7 +220,7 @@ impl Graphic3dMarkerImage {
         let alpha = if matches!(image.format(), ImageFormat::Gray | ImageFormat::Alpha) {
             images.image.clone()
         } else {
-            Handle::new(alpha_channel(image))
+            Handle::new(alpha_channel(image)).into_upcast()
         };
         self.images.write().image_alpha = alpha.clone();
         alpha

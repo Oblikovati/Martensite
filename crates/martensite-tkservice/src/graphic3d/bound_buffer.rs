@@ -4,7 +4,7 @@ use super::Graphic3dBufferValue;
 use crate::json_dump::{base_class, class_begin, field_integer, field_pointer};
 use martensite_tkernel::ncollection::{BaseAllocator, Buffer, Vec4};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use std::io;
 
 /// The fields of `Graphic3d_BoundBuffer`.
@@ -21,15 +21,9 @@ pub struct Graphic3dBoundBufferState {
 
 /// A bound buffer; `let bounds = Graphic3dBoundBuffer::new(allocator)?; bounds.init(2, true)?;`.
 pub struct Graphic3dBoundBuffer {
-    transient: StandardTransient,
     state: SharedState<Graphic3dBoundBufferState>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dBoundBuffer,
-    "Graphic3d_BoundBuffer",
-    Buffer,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dBoundBuffer, "Graphic3d_BoundBuffer", Buffer);
 
 impl Graphic3dBoundBuffer {
     /// An empty bound buffer over an allocator; `Graphic3dBoundBuffer::new(allocator)?`.
@@ -41,7 +35,6 @@ impl Graphic3dBoundBuffer {
             nb_max_bounds: 0,
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }
