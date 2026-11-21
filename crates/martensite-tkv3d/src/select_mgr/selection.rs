@@ -7,7 +7,7 @@ use super::{
 use crate::select3d::{Select3DSensitiveEntity, Select3DSensitiveEntityMembers as _};
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::null_object;
-use martensite_tkernel::standard::{Failure, Handle, HandleObserver, SharedState};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::json_dump::{class_begin, field_dumped, field_integer};
 use std::io;
 
@@ -286,12 +286,11 @@ impl SelectMgrSelection {
     pub(crate) fn native_owner_at(
         &self,
         index: usize,
-    ) -> Option<HandleObserver<dyn SelectMgrEntityOwnerSource>> {
-        let state = self.state.read();
-        let entity = state.entities.get(index)?.observe();
-        drop(state);
-        let sensitive = entity.sensitive.read().observe();
-        let fields = sensitive.sensitive_base().fields.read();
-        Some(fields.owner_id.observe())
+    ) -> Option<Handle<dyn SelectMgrEntityOwnerSource>> {
+        let entity = self.state.read().entities.get(index)?.clone();
+        let sensitive = entity.base_sensitive();
+        // #592: only the owner snapshot survives into the caller's selectable setter.
+        let owner = sensitive.sensitive_base().fields.read().owner_id.clone();
+        Some(owner)
     }
 }
