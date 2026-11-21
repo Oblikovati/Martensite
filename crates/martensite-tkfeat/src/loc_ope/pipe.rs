@@ -34,14 +34,14 @@ pub struct Pipe {
 /// The located surface of a face, a rectangular trimmed surface standing for its basis.
 fn basis_surface(f: &Face) -> Result<Handle<dyn GeomSurface>, Failure> {
     let s = BRepTool::surface(f)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     Ok(trimmed.get().map_or(s.clone(), |t| t.basis_surface()))
 }
 
 /// The plane of a face known to be planar.
 fn plane_of(f: &Face) -> Result<(Plane3, Handle<dyn GeomSurface>), Failure> {
     let s = basis_surface(f)?;
-    let plane = s.cast::<GeomPlane>();
+    let plane = s.downcast::<GeomPlane>();
     let pln = plane
         .get()
         .ok_or_else(|| null_object("LocOpe_Pipe", "the fused face is not planar"))?
@@ -205,7 +205,10 @@ impl Pipe {
             if resfac.is_null() {
                 continue;
             }
-            if basis_surface(&resfac)?.cast::<GeomPlane>().is_null() {
+            if basis_surface(&resfac)?
+                .downcast_ref::<GeomPlane>()
+                .is_none()
+            {
                 faces.push(resfac.into_shape());
             } else {
                 map_fac.add(resfac.into_shape());
@@ -407,7 +410,7 @@ impl Pipe {
             tmu[ik] -= 1;
         }
         tmu[ik] += 1;
-        Ok(Handle::new(GeomBSplineCurve::new(&tpol, &tkn, &tmu, max_deg, false)?).cast())
+        Ok(Handle::new(GeomBSplineCurve::new(&tpol, &tkn, &tmu, max_deg, false)?).into_upcast())
     }
 
     /// For each point, the pipe line through it as one B-spline curve

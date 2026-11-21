@@ -53,7 +53,7 @@ impl BRepFeatMakeRevolutionForm {
     /// The bounding wire from the first cut of the axis to the second one, closed back
     /// on the first cut.
     fn cut_wire(&self, input: &ProfileInput) -> Result<Wire, Failure> {
-        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(self.axe)).cast();
+        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(self.axe)).into_upcast();
         let ln2d = geom_api::to_2d(&line, &input.plane()?.pln())?;
         let bu = BRepBuilder::default();
         let mut wiwiwi = Wire::default();

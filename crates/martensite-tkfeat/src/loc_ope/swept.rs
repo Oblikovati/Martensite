@@ -76,7 +76,7 @@ fn moved_base(base: &Shape, trsf: Transform3) -> Result<(Shape, Modifier), Failu
     let mut modif = Modifier::new(false);
     let modbase: Handle<TrsfModification> = Handle::new(TrsfModification::new(trsf));
     modif.init(base)?;
-    modif.perform(&modbase.cast(), &ProgressRange::default())?;
+    modif.perform(&modbase.upcast(), &ProgressRange::default())?;
     let moved = modif.modified_shape(base)?;
     Ok((moved, modif))
 }

@@ -76,7 +76,9 @@ fn located_curve(
         let curve = c
             .get()
             .ok_or_else(|| null_object("LocOpe_Spliter::Select", "edge without 3D curve"))?;
-        c = curve.transformed(located.location.transformation())?.cast();
+        c = curve
+            .transformed(located.location.transformation())?
+            .into_cast();
     }
     Ok((c, located.first, located.last))
 }

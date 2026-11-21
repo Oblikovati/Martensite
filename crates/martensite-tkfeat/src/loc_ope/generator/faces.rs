@@ -44,7 +44,7 @@ struct FaceWork {
 /// its basis.
 fn basis_surface(fac: &Face) -> Result<Handle<dyn GeomSurface>, Failure> {
     let s = BRepTool::surface(fac)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     Ok(trimmed.get().map_or(s.clone(), |t| t.basis_surface()))
 }
 
@@ -145,7 +145,7 @@ impl Run<'_> {
         let mut newface = topods::face(&fac.empty_copied()?)?;
         newface.set_orientation(Orientation::Forward);
         let surface = basis_surface(&fac)?;
-        let on_plane = !surface.cast::<GeomPlane>().is_null();
+        let on_plane = surface.downcast_ref::<GeomPlane>().is_some();
         Ok(FaceWork {
             fac,
             fused,
