@@ -8,7 +8,7 @@ use martensite_tkbool::top_ope_brep_ds::ShapeInterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSCurvePointInterference,
     TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSFaceEdgeInterference,
-    TopOpeBRepDSHDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSPoint,
+    TopOpeBRepDSHDataStructure, TopOpeBRepDSKind, TopOpeBRepDSPoint,
     TopOpeBRepDSShapeShapeInterference, TopOpeBRepDSTransition, fdscnx_close,
 };
 use martensite_tkbrep::brep::BRepTool;

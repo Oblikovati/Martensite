@@ -5,8 +5,8 @@ use martensite_tkbool::top_ope_brep_ds::ShapeInterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     TopOpeBRepDSConfig, TopOpeBRepDSCurvePointInterference, TopOpeBRepDSEdgeVertexInterference,
     TopOpeBRepDSFaceEdgeInterference, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSShapeShapeInterference, TopOpeBRepDSSurfaceCurveInterference,
-    TopOpeBRepDSTransition, kind_to_shape, shape_to_kind, sprint_kind_index,
+    TopOpeBRepDSSurfaceCurveInterference, TopOpeBRepDSTransition, kind_to_shape, shape_to_kind,
+    sprint_kind_index,
 };
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum, State};

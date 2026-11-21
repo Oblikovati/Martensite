@@ -11,8 +11,8 @@ use martensite_tkbool::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSBuildTool, TopOpeBRepDSConfig, TopOpeBRepDSCurve,
     TopOpeBRepDSCurvePointInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSPoint,
-    TopOpeBRepDSSurfaceCurveInterference, TopOpeBRepDSTransition,
+    TopOpeBRepDSKind, TopOpeBRepDSPoint, TopOpeBRepDSSurfaceCurveInterference,
+    TopOpeBRepDSTransition,
 };
 use martensite_tkbool::top_ope_brep_tool::{TopOpeBRepToolCurveTool, TopOpeBRepToolOutCurveType};
 use martensite_tkbrep::brep::BRepTool;
