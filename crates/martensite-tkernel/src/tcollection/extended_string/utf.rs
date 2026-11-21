@@ -57,7 +57,8 @@ pub(super) fn utf8_to_utf16(bytes: &[u8]) -> Option<Vec<u16>> {
     let mut units = Vec::with_capacity(bytes.len());
     let mut at = 0;
     while at < bytes.len() {
-        // OCCT also accepts an isolated continuation byte as one unit.
+        // Both ASCII and isolated continuation bytes have zero trailing bytes
+        // and a zero offset in the native decoder.
         let lead = bytes[at];
         if (1..0xc0).contains(&lead) {
             units.push(u16::from(lead));

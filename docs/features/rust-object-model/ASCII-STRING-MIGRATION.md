@@ -74,4 +74,7 @@ A direct byte comparison against the native real constructor matched all
 values around decimal exponent and rounding transitions. The output SHA-256
 was `609669fd73a0c332bb539182093d5137f257d842e3558d923e74cd6c321605bb`.
 The test suite also pins native ties, signed zero and the rounded exponent
-boundaries. All 5,602 enabled `tkernel` tests passed, with eight ignored.
+boundaries. For the lenient extended-string decoder, OCCT and both Rust
+revisions decode `80 e2 82 ac bf` to `0080 20ac 00bf`. The mixed case
+distinguishes decoding the euro sign from widening each byte. All 5,603
+enabled `tkernel` tests passed, with eight ignored.
