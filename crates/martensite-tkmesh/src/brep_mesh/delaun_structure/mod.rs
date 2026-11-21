@@ -43,7 +43,6 @@ struct DelaunConnectivity {
 }
 /// Shared mesh topology with native one-based indices; `BRepMeshDataStructureOfDelaun::new(&allocator,100)`.
 pub struct BRepMeshDataStructureOfDelaun {
-    transient: StandardTransient,
     allocator: MeshAllocator,
     nodes: Handle<BRepMeshVertexTool>,
     connectivity: SharedState<DelaunConnectivity>,
@@ -51,14 +50,12 @@ pub struct BRepMeshDataStructureOfDelaun {
 impl_transient!(
     BRepMeshDataStructureOfDelaun,
     "BRepMesh_DataStructureOfDelaun",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 impl BRepMeshDataStructureOfDelaun {
     /// Reserve native maps and element blocks; `BRepMeshDataStructureOfDelaun::new(&allocator,100)`.
     pub fn new(allocator: &MeshAllocator, reserved_nodes: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             allocator: allocator.clone(),
             nodes: Handle::new(BRepMeshVertexTool::new(allocator)),
             connectivity: SharedState::new(DelaunConnectivity::new(allocator, reserved_nodes)),

@@ -49,7 +49,8 @@ pub fn refinement_fixture(kind: i32, located: bool, internal: bool) -> (EdgeHand
 }
 fn refinement_surface(kind: i32) -> Handle<dyn GeomSurface> {
     if kind == 0 {
-        return Handle::new(GeomCylindricalSurface::new(Axis3::default(), 1.0).unwrap()).cast();
+        return Handle::new(GeomCylindricalSurface::new(Axis3::default(), 1.0).unwrap())
+            .into_upcast();
     }
     let mut poles = Array2::with_bounds(1, 2, 1, 2).unwrap();
     for row in 1..=2 {
@@ -63,13 +64,13 @@ fn refinement_surface(kind: i32) -> Handle<dyn GeomSurface> {
                 .unwrap();
         }
     }
-    Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast()
+    Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast()
 }
 fn refinement_edge(face: &Face, kind: i32) -> Edge {
     let builder = BRepBuilder::default();
     let mut edge = Edge::default();
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast();
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast();
     builder
         .make_edge_with_curve(&mut edge, &curve, 1e-7)
         .unwrap();
@@ -77,7 +78,7 @@ fn refinement_edge(face: &Face, kind: i32) -> Edge {
         Point2::new(0.0, 0.5),
         Direction2::X,
     )))
-    .cast();
+    .into_upcast();
     builder
         .update_edge_pcurve_on_face(&edge, &pcurve, face, 1e-7)
         .unwrap();

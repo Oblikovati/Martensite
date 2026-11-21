@@ -75,7 +75,7 @@ fn tessellate_pcurve(
 ) -> Result<(), Failure> {
     let curve = edge.get_curve();
     let face = pcurve.get_face().upgrade();
-    let array = Handle::new(ParametersListArrayAdaptor::new(curve.cast()));
+    let array = Handle::new(ParametersListArrayAdaptor::new(curve.upcast()));
     let provider = EdgeParameterProvider::with_edge(edge, pcurve.get_orientation(), &face, array)?;
     transfer_pcurve_parameters(pcurve, &provider, &curve, update_ends)
 }

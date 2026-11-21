@@ -17,11 +17,28 @@ fn concrete_context_descriptor_names_its_declared_parent() {
 fn concrete_context_dynamic_descriptor_survives_base_projection() {
     let context =
         Handle::new(BRepMeshContext::with_environment(MeshAlgoType::Watson, &|_| None).unwrap());
-    let projected: Handle<dyn MeshContext> = context.cast();
+    let projected = context.upcast::<dyn MeshContext>();
     let direct = context.dynamic_type().unwrap();
     let base_view = projected.dynamic_type().unwrap();
     assert!(std::ptr::eq(direct, BRepMeshContext::static_type()));
     assert!(std::ptr::eq(direct, base_view));
     assert!(projected.is_kind_name("IMeshTools_Context"));
     assert!(projected.is_kind_name("BRepMesh_Context"));
+}
+
+#[test]
+fn concrete_context_interface_keeps_actual_owner_and_lends_composed_state() {
+    let context =
+        Handle::new(BRepMeshContext::with_environment(MeshAlgoType::Watson, &|_| None).unwrap());
+    let original = context.object_address();
+    let projected = context.upcast::<dyn MeshContext>();
+    assert_eq!(context.ref_count(), 2);
+    assert_eq!(projected.object_address(), original);
+    assert!(projected.downcast_ref::<BRepMeshContext>().is_some());
+    assert!(projected.downcast_ref::<Context>().is_none());
+    projected.context_base().change_parameters().clean_model = false;
+    assert!(!context.context_base().get_parameters().clean_model);
+    drop(context);
+    assert_eq!(projected.ref_count(), 1);
+    assert!(!projected.context_base().get_parameters().clean_model);
 }

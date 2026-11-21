@@ -12,14 +12,16 @@ pub fn range_face(kind: i32, tolerance: f64) -> FaceHandle {
     BRepBuilder::default()
         .make_face_on_surface(&mut face, &surface, tolerance)
         .unwrap();
-    Handle::new(DiscreteFace::new(&face, &Handle::default()).unwrap()).cast()
+    Handle::new(DiscreteFace::new(&face, &Handle::default()).unwrap()).into_upcast()
 }
 fn range_surface(kind: i32) -> Handle<dyn GeomSurface> {
     if kind == 0 {
-        return Handle::new(GeomConicalSurface::new(Axis3::default(), 0.3, 2.0).unwrap()).cast();
+        return Handle::new(GeomConicalSurface::new(Axis3::default(), 0.3, 2.0).unwrap())
+            .into_upcast();
     }
     if kind == 1 {
-        return Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.0).unwrap()).cast();
+        return Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.0).unwrap())
+            .into_upcast();
     }
     let mut poles = Array2::with_bounds(1, 2, 1, 2).unwrap();
     for row in 1..=2 {
@@ -33,7 +35,7 @@ fn range_surface(kind: i32) -> Handle<dyn GeomSurface> {
                 .unwrap();
         }
     }
-    Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast()
+    Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast()
 }
 pub fn range_bounds(kind: i32) -> [f64; 4] {
     [

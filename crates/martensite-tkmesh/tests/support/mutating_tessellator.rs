@@ -1,17 +1,13 @@
 //! A tessellator callback mutating endpoints exposes the native evaluation order.
 use martensite_tkbrep::{brep::BRepBuilder, topods::Vertex};
-use martensite_tkernel::{
-    impl_transient,
-    standard::{Failure, StandardTransient},
-};
+use martensite_tkernel::{impl_transient, standard::Failure};
 use martensite_tkmath::gp::Point3;
 use martensite_tkmesh::imesh_tools::CurveTessellator;
 pub struct MutatingEndpoints {
-    pub transient: StandardTransient,
     pub first: Vertex,
     pub last: Vertex,
 }
-impl_transient!(MutatingEndpoints,"MutatingEndpoints",dyn CurveTessellator,transient,interfaces:[dyn CurveTessellator]);
+impl_transient!(MutatingEndpoints,"MutatingEndpoints",dyn CurveTessellator,interfaces:[dyn CurveTessellator]);
 impl CurveTessellator for MutatingEndpoints {
     fn points_nb(&self) -> i32 {
         2

@@ -4,14 +4,16 @@ use crate::imesh_data::MeshModel;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient_interface,
-    message::{Algorithm, Status},
-    standard::{Failure, Handle, Transient},
+    message::{AlgorithmSource, AlgorithmState, Status},
+    standard::{Failure, Handle},
 };
 
 /// Abstract model construction; `builder.perform(&shape, &parameters)`.
-pub trait ModelBuilder: Transient {
+pub trait ModelBuilder: AlgorithmSource {
     /// The actual message base subobject; `builder.algorithm().get_status()`.
-    fn algorithm(&self) -> &Algorithm;
+    fn algorithm(&self) -> &AlgorithmState {
+        self.algorithm_state()
+    }
     /// Clear old statuses and convert native failures to Fail2 and a null model.
     /// Example: `builder.perform(&shape, &MeshParameters::default())`.
     fn perform(&self, shape: &Shape, parameters: &MeshParameters) -> Handle<dyn MeshModel> {
@@ -32,9 +34,9 @@ pub trait ModelBuilder: Transient {
         parameters: &MeshParameters,
     ) -> Result<Handle<dyn MeshModel>, Failure>;
 }
-impl_transient_interface!(dyn ModelBuilder, "IMeshTools_ModelBuilder", Algorithm);
+impl_transient_interface!(dyn ModelBuilder, "IMeshTools_ModelBuilder", dyn AlgorithmSource, upcasts: [dyn AlgorithmSource]);
 impl std::ops::Deref for dyn ModelBuilder {
-    type Target = Algorithm;
+    type Target = AlgorithmState;
     fn deref(&self) -> &Self::Target {
         self.algorithm()
     }

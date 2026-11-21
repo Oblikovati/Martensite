@@ -84,21 +84,14 @@ impl NodeClassifier {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct BRepMeshMeshTool {
-    transient: StandardTransient,
     structure: Handle<BRepMeshDataStructureOfDelaun>,
 }
-impl_transient!(
-    BRepMeshMeshTool,
-    "BRepMesh_MeshTool",
-    StandardTransient,
-    transient
-);
+impl_transient!(BRepMeshMeshTool, "BRepMesh_MeshTool", StandardTransient);
 
 impl BRepMeshMeshTool {
     /// Build editing helpers over shared connectivity; `BRepMeshMeshTool::new(&mesh)`.
     pub fn new(structure: &Handle<BRepMeshDataStructureOfDelaun>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             structure: structure.clone(),
         }
     }
