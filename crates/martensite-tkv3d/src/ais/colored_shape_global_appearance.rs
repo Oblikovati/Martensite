@@ -4,10 +4,7 @@ use super::{
     AisColoredDrawer, AisColoredShapeSource,
     colored_shape_expansion_fill::visit_colored_map_entries,
 };
-use martensite_tkernel::{
-    quantity::Color,
-    standard::{Failure, Handle, HandleFieldRef, HandleReference},
-};
+use martensite_tkernel::{quantity::Color, standard::Failure};
 use martensite_tkservice::graphic3d::*;
 
 /// Apply global color only to custom slots without explicit color; `ais_colored_shape_set_color(&object,color)?`.
@@ -15,7 +12,7 @@ pub fn ais_colored_shape_set_color<S: AisColoredShapeSource + ?Sized>(
     object: &S,
     color: Color,
 ) -> Result<(), Failure> {
-    visit_custom_drawers(object, |drawer, _| {
+    visit_custom_drawers(object, |drawer| {
         propagate_colored_color(object, drawer, color)
     })?;
     super::ais_shape_set_color(object, color)
@@ -25,7 +22,7 @@ pub fn ais_colored_shape_set_width<S: AisColoredShapeSource + ?Sized>(
     object: &S,
     width: f64,
 ) -> Result<(), Failure> {
-    visit_custom_drawers(object, |drawer, _| propagate_colored_width(drawer, width))?;
+    visit_custom_drawers(object, |drawer| propagate_colored_width(drawer, width))?;
     super::ais_shape_set_width(object, width)
 }
 /// Apply global transparency to non-overridden custom shading; `ais_colored_shape_set_transparency(&object,0.5)?`.
@@ -33,7 +30,7 @@ pub fn ais_colored_shape_set_transparency<S: AisColoredShapeSource + ?Sized>(
     object: &S,
     value: f64,
 ) -> Result<(), Failure> {
-    visit_custom_drawers(object, |drawer, _| {
+    visit_custom_drawers(object, |drawer| {
         propagate_colored_transparency(object, drawer, value)
     })?;
     super::ais_shape_set_transparency(object, value)
@@ -43,24 +40,18 @@ pub fn ais_colored_shape_set_material<S: AisColoredShapeSource + ?Sized>(
     object: &S,
     material: &Graphic3dMaterialAspect,
 ) -> Result<(), Failure> {
-    visit_custom_drawers(object, |drawer, slot| {
-        propagate_colored_material(object, drawer, slot, material)
+    visit_custom_drawers(object, |drawer| {
+        propagate_colored_material(object, drawer, material)
     })?;
     super::ais_shape_set_material(object, material)
 }
 fn visit_custom_drawers<S: AisColoredShapeSource + ?Sized>(
     object: &S,
-    mut apply: impl FnMut(
-        &AisColoredDrawer,
-        &HandleFieldRef<'_, Option<Handle<AisColoredDrawer>>, AisColoredDrawer>,
-    ) -> Result<(), Failure>,
+    mut apply: impl FnMut(&AisColoredDrawer) -> Result<(), Failure>,
 ) -> Result<(), Failure> {
     visit_colored_map_entries(&object.colored_shape_base().shape_colors, |_, slot| {
         slot.with_object(|drawer| {
-            apply(
-                drawer.expect("custom drawer=None; expected a non-null native map value"),
-                slot,
-            )
+            apply(drawer.expect("custom drawer=None; expected a non-null native map value"))
         })
     })
 }
@@ -105,16 +96,13 @@ fn propagate_colored_transparency<S: AisColoredShapeSource + ?Sized>(
 fn propagate_colored_material<S: AisColoredShapeSource + ?Sized>(
     object: &S,
     drawer: &AisColoredDrawer,
-    slot: &impl HandleReference<AisColoredDrawer>,
     material: &Graphic3dMaterialAspect,
 ) -> Result<(), Failure> {
     if drawer.has_own_material() || !drawer.has_own_shading_aspect() {
         return Ok(());
     }
     let keep = (drawer.has_own_color(), drawer.has_own_transparency());
-    // The temporary native handle binds only at the protected setMaterial call, not during traversal.
-    let parent = slot.clone_handle().cast();
-    set_shape_drawer_material(object, &parent, material, keep)
+    set_shape_drawer_material(object, drawer, material, keep)
 }
 fn owned_colored_lines(
     drawer: &AisColoredDrawer,
