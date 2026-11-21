@@ -5,7 +5,7 @@ use crate::interface::{InterfaceCheck, InterfaceCheckStatus};
 use martensite_tkernel::{
     impl_transient,
     ncollection::IndexedMap,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 use std::sync::OnceLock;
 
@@ -20,9 +20,9 @@ fn void_check() -> Handle<InterfaceCheck> {
 /// The private fields of `TransferResultFromTransient`.
 #[derive(Default)]
 struct ResultState {
-    thestart: Handle<StandardTransient>,
+    thestart: Handle<dyn Transient>,
     thebinder: Handle<dyn TransferBinder>,
-    thesubs: Option<Vec<Handle<StandardTransient>>>,
+    thesubs: Option<Vec<Handle<dyn Transient>>>,
 }
 
 /// `TransferResultFromTransient`.
@@ -31,21 +31,19 @@ struct ResultState {
 /// use martensite_tkxsbase::transfer::TransferResultFromTransient;
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let main = Handle::new(TransferResultFromTransient::new());
-/// let start = Handle::new(StandardTransient::default());
+/// let start = Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>();
 /// main.set_start(&start);
 /// assert!(TransferResultFromTransient::result_from_key(&main, &start) == main);
 /// assert!(!main.has_result() && main.nb_sub_results() == 0);
 /// ```
 #[derive(Default)]
 pub struct TransferResultFromTransient {
-    transient: StandardTransient,
     state: SharedState<ResultState>,
 }
 impl_transient!(
     TransferResultFromTransient,
     "TransferResultFromTransient",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl TransferResultFromTransient {
@@ -54,7 +52,7 @@ impl TransferResultFromTransient {
         Self::default()
     }
     /// `SetStart(start)`.
-    pub fn set_start(&self, start: &Handle<StandardTransient>) {
+    pub fn set_start(&self, start: &Handle<dyn Transient>) {
         self.state.write().thestart = start.clone();
     }
     /// `SetBinder(binder)`.
@@ -62,7 +60,7 @@ impl TransferResultFromTransient {
         self.state.write().thebinder = binder.clone();
     }
     /// `Start`.
-    pub fn start(&self) -> Handle<StandardTransient> {
+    pub fn start(&self) -> Handle<dyn Transient> {
         self.state.read().thestart.clone()
     }
     /// `Binder`.
@@ -117,7 +115,7 @@ impl TransferResultFromTransient {
     }
     /// `ResultFromKey(key)`: `this` when `key` is its start, else the first sub-result
     /// (in depth) with that start, else null. `this` is the receiving handle.
-    pub fn result_from_key(this: &Handle<Self>, key: &Handle<StandardTransient>) -> Handle<Self> {
+    pub fn result_from_key(this: &Handle<Self>, key: &Handle<dyn Transient>) -> Handle<Self> {
         let Some(live) = this.get() else {
             return Handle::default();
         };
@@ -130,7 +128,7 @@ impl TransferResultFromTransient {
             .unwrap_or_default()
     }
     /// `FillMap(map)`: adds the sub-results, then their own sub-results, recursively.
-    pub fn fill_map(&self, map: &mut IndexedMap<Handle<StandardTransient>>) {
+    pub fn fill_map(&self, map: &mut IndexedMap<Handle<dyn Transient>>) {
         let subs = self.state.read().thesubs.clone().unwrap_or_default();
         for sub in &subs {
             map.add(sub.clone());

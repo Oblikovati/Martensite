@@ -3,7 +3,7 @@
 use super::{InterfaceFileParameter, InterfaceParamList, InterfaceParamType};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
 };
 
 /// The fields of a parameter set. The native character buffer (`theval`, `thelnval`,
@@ -24,15 +24,9 @@ struct ParamSetState {
 /// assert_eq!(set.param(1).unwrap().c_value(), b"12");
 /// ```
 pub struct InterfaceParamSet {
-    transient: StandardTransient,
     state: SharedState<ParamSetState>,
 }
-impl_transient!(
-    InterfaceParamSet,
-    "InterfaceParamSet",
-    StandardTransient,
-    transient
-);
+impl_transient!(InterfaceParamSet, "InterfaceParamSet", dyn Transient);
 
 impl Drop for InterfaceParamSet {
     fn drop(&mut self) {
@@ -46,7 +40,6 @@ impl InterfaceParamSet {
     /// `InterfaceParamSet(nres, nst = 1)`: room for `nres` parameters (`nst` is unused).
     pub fn new(nres: i32, _nst: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(ParamSetState {
                 thenbpar: 0,
                 themxpar: nres,

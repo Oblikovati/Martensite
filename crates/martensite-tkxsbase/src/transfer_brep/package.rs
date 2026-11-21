@@ -1,7 +1,7 @@
 //! `TransferBRep`: the shape results of the transient processes and the shapes mapped in
 //! the finder processes.
 use super::{
-    TransferBRepBinderOfShape, TransferBRepShapeBinder, TransferBRepShapeListBinder,
+    TransferBRepShapeBinder, TransferBRepShapeBinderOps, TransferBRepShapeListBinder,
     TransferBRepShapeMapper,
 };
 use crate::transfer::{
@@ -9,7 +9,7 @@ use crate::transfer::{
     TransferTransientProcess,
 };
 use martensite_tkbrep::topods::{HShape, Shape};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions};
 use martensite_tkg3d::top_abs::Orientation;
 
 /// `TransferBRep`: the package functions.
@@ -22,16 +22,16 @@ fn shape_append(
 ) -> Result<(), Failure> {
     let mut current = binder.clone();
     while let Some(live) = current.get() {
-        if let Some(shbind) = current.cast::<TransferBRepBinderOfShape>().get() {
+        if let Some(shbind) = current.view::<dyn TransferBRepShapeBinderOps>().get() {
             if shbind.has_result() {
                 shapes.push(shbind.result());
             }
-        } else if let Some(slbind) = current.cast::<TransferBRepShapeListBinder>().get() {
+        } else if let Some(slbind) = current.downcast_ref::<TransferBRepShapeListBinder>() {
             for i in 1..=slbind.nb_shapes()? {
                 shapes.push(slbind.shape(i)?);
             }
-        } else if let Some(trbind) = current.cast::<TransferSimpleBinderOfTransient>().get() {
-            shapes.extend(trbind.result().cast::<HShape>().get().map(HShape::shape));
+        } else if let Some(trbind) = current.downcast_ref::<TransferSimpleBinderOfTransient>() {
+            shapes.extend(trbind.result().downcast_ref::<HShape>().map(HShape::shape));
         }
         let next = live.next_result();
         current = next;
@@ -41,7 +41,7 @@ fn shape_append(
 
 /// The finder of a shape: a new shape mapper.
 fn mapper_of(shape: &Shape) -> Handle<dyn TransferFinder> {
-    Handle::new(TransferBRepShapeMapper::new(shape)).cast()
+    Handle::new(TransferBRepShapeMapper::new(shape)).into_upcast()
 }
 
 /// The live finder process (a native null dereference without one).
@@ -59,12 +59,11 @@ impl TransferBRep {
     pub fn shape_result(binder: &Handle<dyn TransferBinder>) -> Shape {
         let mut bnd = binder.clone();
         while let Some(live) = bnd.get() {
-            if let Some(shb) = bnd.cast::<TransferBRepBinderOfShape>().get() {
+            if let Some(shb) = bnd.view::<dyn TransferBRepShapeBinderOps>().get() {
                 return shb.result();
             }
             if let Some(hsp) = bnd
-                .cast::<TransferSimpleBinderOfTransient>()
-                .get()
+                .downcast_ref::<TransferSimpleBinderOfTransient>()
                 .map(|b| b.result().cast::<HShape>())
                 .filter(|h| h.is_some())
             {
@@ -79,7 +78,7 @@ impl TransferBRep {
     /// binder or a `TopoDSHShape`); `StandardNullObject` for a null process.
     pub fn shape_result_of(
         tp: &Handle<TransferTransientProcess>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<Shape, Failure> {
         let process = tp.get().ok_or_else(|| {
             exceptions::null_object(
@@ -94,8 +93,7 @@ impl TransferBRep {
             return Ok(Self::shape_result(&binder));
         }
         Ok(ent
-            .cast::<HShape>()
-            .get()
+            .downcast_ref::<HShape>()
             .map(HShape::shape)
             .unwrap_or_default())
     }
@@ -103,7 +101,7 @@ impl TransferBRep {
     /// argument); `TransferTransferFailure` from `Bind`.
     pub fn set_shape_result(
         tp: &Handle<TransferTransientProcess>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         result: &Shape,
     ) -> Result<(), Failure> {
         let Some(process) = tp.get().filter(|_| !result.is_null() && ent.is_some()) else {
@@ -111,7 +109,7 @@ impl TransferBRep {
         };
         process.bind(
             ent,
-            &Handle::new(TransferBRepShapeBinder::with_result(result)).cast(),
+            &Handle::new(TransferBRepShapeBinder::with_result(result)).into_upcast(),
         )
     }
     /// `Shapes(TP, rootsonly = true)`: the shapes of the root (or all) results; `None`
@@ -141,7 +139,7 @@ impl TransferBRep {
     /// `StandardNullObject`.
     pub fn shapes_of(
         tp: &Handle<TransferTransientProcess>,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
     ) -> Result<Option<Vec<Shape>>, Failure> {
         if tp.is_null() && list.is_none() {
             return Ok(None);
@@ -173,8 +171,7 @@ impl TransferBRep {
         }
         let mapped = process.mapped(index)?;
         let Some(sm) = mapped
-            .cast::<TransferBRepShapeMapper>()
-            .get()
+            .downcast_ref::<TransferBRepShapeMapper>()
             .map(|m| m.value().clone())
         else {
             return Ok(Orientation::External);
@@ -199,7 +196,7 @@ impl TransferBRep {
     pub fn transient_from_shape(
         fp: &Handle<TransferFinderProcess>,
         shape: &Shape,
-    ) -> Handle<StandardTransient> {
+    ) -> Handle<dyn Transient> {
         match fp.get().filter(|_| !shape.is_null()) {
             Some(process) => process.find_transient(&mapper_of(shape)),
             None => Handle::default(),
@@ -209,7 +206,7 @@ impl TransferBRep {
     pub fn set_transient_from_shape(
         fp: &Handle<TransferFinderProcess>,
         shape: &Shape,
-        result: &Handle<StandardTransient>,
+        result: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         match fp.get().filter(|_| !shape.is_null()) {
             Some(process) => process.bind_transient(&mapper_of(shape), result),

@@ -2,12 +2,12 @@
 //! copies of the iterator (natively two handles), so moving a copy moves the original.
 use super::InterfaceIntVal;
 use martensite_tkernel::standard::{
-    Failure, Handle, RuntimeType, SharedState, StandardTransient, exceptions,
+    Failure, Handle, RuntimeType, SharedState, Transient, exceptions,
 };
 use std::sync::Arc;
 
-/// The shared list of an iterator (`Handle<HSequence<Handle<StandardTransient>>>`).
-pub type InterfaceEntityListHandle = Arc<SharedState<Vec<Handle<StandardTransient>>>>;
+/// The shared list of an iterator (`Handle<HSequence<Handle<dyn Transient>>>`).
+pub type InterfaceEntityListHandle = Arc<SharedState<Vec<Handle<dyn Transient>>>>;
 
 /// `InterfaceEntityIterator`. No class overrides the virtual `Start`, so it is an
 /// inherent method; `InterfaceGraphContent` embeds the iterator.
@@ -16,8 +16,8 @@ pub type InterfaceEntityListHandle = Arc<SharedState<Vec<Handle<StandardTransien
 /// use martensite_tkxsbase::interface::InterfaceEntityIterator;
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let mut iter = InterfaceEntityIterator::new();
-/// iter.add_item(&Handle::new(StandardTransient::default()));
-/// iter.add_item(&Handle::new(StandardTransient::default()));
+/// iter.add_item(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>());
+/// iter.add_item(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>());
 /// let mut count = 0;
 /// iter.start();
 /// while iter.more() {
@@ -45,14 +45,14 @@ impl InterfaceEntityIterator {
         }
     }
     /// `AddList(list)`: appends the entities of `list` and resets the cursor.
-    pub fn add_list(&mut self, list: &[Handle<StandardTransient>]) {
+    pub fn add_list(&mut self, list: &[Handle<dyn Transient>]) {
         let target = self.list_or_create();
         self.cursor_or_create();
         *self.thecurr.c_value() = 0;
         target.write().extend(list.iter().cloned());
     }
     /// `AddItem(anentity)`: appends a non-null entity and resets the cursor.
-    pub fn add_item(&mut self, anentity: &Handle<StandardTransient>) {
+    pub fn add_item(&mut self, anentity: &Handle<dyn Transient>) {
         if anentity.is_null() {
             return;
         }
@@ -62,7 +62,7 @@ impl InterfaceEntityIterator {
         target.write().push(anentity.clone());
     }
     /// `GetOneItem(anentity)`: `AddItem`.
-    pub fn get_one_item(&mut self, anentity: &Handle<StandardTransient>) {
+    pub fn get_one_item(&mut self, anentity: &Handle<dyn Transient>) {
         self.add_item(anentity);
     }
     /// `Reset` (protected): a new empty list, the cursor reset.
@@ -75,7 +75,7 @@ impl InterfaceEntityIterator {
     /// new list.
     pub fn select_type(&mut self, atype: &RuntimeType, keep: bool) {
         let Some(list) = &self.thelist else { return };
-        let kept: Vec<Handle<StandardTransient>> = list
+        let kept: Vec<Handle<dyn Transient>> = list
             .read()
             .iter()
             .filter(|e| e.is_kind(atype) == keep)
@@ -133,7 +133,7 @@ impl InterfaceEntityIterator {
         }
     }
     /// `Value`: `StandardNoSuchObject` without list or out of the list.
-    pub fn value(&self) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value(&self) -> Result<Handle<dyn Transient>, Failure> {
         let no_such = || {
             exceptions::no_such_object(
                 "InterfaceEntityIterator: no current entity; expected More() to be true",
@@ -145,7 +145,7 @@ impl InterfaceEntityIterator {
         list.read().get(index).cloned().ok_or_else(no_such)
     }
     /// `Content`: a copy of the list (empty when none); prepares the iteration.
-    pub fn content(&self) -> Vec<Handle<StandardTransient>> {
+    pub fn content(&self) -> Vec<Handle<dyn Transient>> {
         if self.thecurr.get().is_some_and(|c| c.value() == 0) {
             self.start();
         }
@@ -178,6 +178,7 @@ impl InterfaceEntityIterator {
 mod tests {
     use super::*;
     use martensite_tkernel::standard::RuntimeTyped;
+    use martensite_tkernel::standard::StandardTransient;
     use martensite_tkernel::tcollection::HAsciiString;
 
     #[test]
@@ -186,8 +187,11 @@ mod tests {
         assert!(!iter.more());
         iter.add_item(&Handle::default());
         assert_eq!(iter.nb_entities(), 0);
-        let text: Handle<StandardTransient> = Handle::new(HAsciiString::new("a")).cast();
-        iter.add_list(&[Handle::new(StandardTransient::default()), text.clone()]);
+        let text: Handle<dyn Transient> = Handle::new(HAsciiString::new("a")).into_upcast();
+        iter.add_list(&[
+            Handle::new(StandardTransient).into_upcast::<dyn Transient>(),
+            text.clone(),
+        ]);
         let copy = iter.clone();
         assert!(copy.more());
         copy.next();

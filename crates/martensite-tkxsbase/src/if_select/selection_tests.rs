@@ -3,26 +3,26 @@ use super::*;
 use crate::interface::test_norm::{FakeEntity, fake_chain};
 use crate::interface::{InterfaceGraph, InterfaceInterfaceModel};
 use martensite_tkernel::{
-    standard::{Handle, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeTyped, Transient},
     tcollection::HAsciiString,
 };
 
 fn chain() -> (
     Handle<dyn InterfaceInterfaceModel>,
     InterfaceGraph,
-    Vec<Handle<StandardTransient>>,
+    Vec<Handle<dyn Transient>>,
 ) {
     let (model, ents) = fake_chain();
     let graph = InterfaceGraph::new(&model, true).unwrap();
     (model, graph, ents)
 }
 
-fn pointed(ents: &[&Handle<StandardTransient>]) -> Handle<dyn IFSelectSelection> {
+fn pointed(ents: &[&Handle<dyn Transient>]) -> Handle<dyn IFSelectSelection> {
     let sel = IFSelectSelectPointed::new();
     ents.iter().for_each(|e| {
         sel.add(e);
     });
-    Handle::new(sel).cast()
+    Handle::new(sel).into_upcast()
 }
 
 fn count(sel: &dyn IFSelectSelection, g: &InterfaceGraph) -> i32 {
@@ -113,12 +113,13 @@ fn deductions_and_extractions() {
         sharing.root_result(&g).unwrap().content(),
         vec![ents[3].clone()]
     );
-    let mut iter = IFSelectSelectionIterator::of_selection(&Handle::new(sharing).cast()).unwrap();
+    let mut iter =
+        IFSelectSelectionIterator::of_selection(&Handle::new(sharing).into_upcast()).unwrap();
     assert!(iter.more());
     iter.next();
     assert!(!iter.more() && iter.value().is_err());
     let types = IFSelectSelectType::with_type(FakeEntity::static_type());
-    types.set_input(&Handle::new(IFSelectSelectModelEntities::new()).cast());
+    types.set_input(&Handle::new(IFSelectSelectModelEntities::new()).into_upcast());
     assert_eq!(count(&types, &g), 4);
     types.set_direct(false);
     assert_eq!(
@@ -128,13 +129,13 @@ fn deductions_and_extractions() {
     types.set_type(HAsciiString::static_type());
     assert_eq!(count(&types, &g), 4);
     let errors = IFSelectSelectErrorEntities::new();
-    errors.set_input(&Handle::new(IFSelectSelectModelEntities::new()).cast());
+    errors.set_input(&Handle::new(IFSelectSelectModelEntities::new()).into_upcast());
     assert_eq!(
         (count(&errors, &g), errors.label().as_bytes()),
         (0, &b"Picked: Error Entities"[..])
     );
     let unknown = IFSelectSelectUnknownEntities::new();
-    unknown.set_input(&Handle::new(IFSelectSelectModelEntities::new()).cast());
+    unknown.set_input(&Handle::new(IFSelectSelectModelEntities::new()).into_upcast());
     assert_eq!(count(&unknown, &g), 0);
 }
 

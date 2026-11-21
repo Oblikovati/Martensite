@@ -9,7 +9,7 @@ use martensite_tkbrep::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::HashPolicy,
-    standard::{Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, SharedState, Transient},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::sync::RwLockWriteGuard;
@@ -48,17 +48,15 @@ impl TransferBRepShapeInfo {
 /// assert_eq!(mapper.value_type_name(), "TopoDS_Shape");
 /// ```
 pub struct TransferBRepShapeMapper {
-    transient: StandardTransient,
     base: TransferFinderBase,
     theval: Shape,
 }
-impl_transient!(TransferBRepShapeMapper, "TransferBRepShapeMapper", dyn TransferFinder, transient, interfaces: [dyn TransferFinder]);
+impl_transient!(TransferBRepShapeMapper, "TransferBRepShapeMapper", dyn TransferFinder, interfaces: [dyn TransferFinder]);
 
 impl TransferBRepShapeMapper {
     /// `TransferBRepShapeMapper(akey)`: the hash code of `TopToolsShapeMapHasher`.
     pub fn new(akey: &Shape) -> Self {
         let mapper = Self {
-            transient: StandardTransient::default(),
             base: TransferFinderBase::default(),
             theval: akey.clone(),
         };
@@ -113,14 +111,12 @@ impl TransferFinder for TransferBRepShapeMapper {
 /// ```
 #[derive(Default)]
 pub struct TransferBRepTransferResultInfo {
-    transient: StandardTransient,
     counts: [SharedState<i32>; 8],
 }
 impl_transient!(
     TransferBRepTransferResultInfo,
     "TransferBRepTransferResultInfo",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl TransferBRepTransferResultInfo {

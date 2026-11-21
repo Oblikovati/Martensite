@@ -3,10 +3,11 @@
 use super::{IFSelectEditForm, IFSelectEditValue, IFSelectEditor, IFSelectEditorBase};
 use crate::interface::{
     InterfaceInterfaceModel, InterfaceParamType, InterfaceStatic, InterfaceTypedValue,
+    InterfaceTypedValueOps,
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, HandleUpcast, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 
@@ -19,18 +20,17 @@ use martensite_tkernel::{
 /// assert_eq!(editor.nb_values(), 0);
 /// ```
 pub struct IFSelectParamEditor {
-    transient: StandardTransient,
     base: IFSelectEditorBase,
     thelabel: AsciiString,
 }
-impl_transient!(IFSelectParamEditor, "IFSelectParamEditor", dyn IFSelectEditor, transient, interfaces: [dyn IFSelectEditor]);
+impl_transient!(IFSelectParamEditor, "IFSelectParamEditor", dyn IFSelectEditor, interfaces: [dyn IFSelectEditor]);
 
 /// The value `num` of an editor, `StandardNullObject` when not set (a native null
 /// dereference).
 fn live_value(
     editor: &IFSelectParamEditor,
     num: i32,
-) -> Result<Handle<InterfaceTypedValue>, Failure> {
+) -> Result<Handle<dyn InterfaceTypedValueOps>, Failure> {
     let tv = editor.typed_value(num)?;
     if tv.is_null() {
         return Err(exceptions::null_object(&format!(
@@ -50,7 +50,6 @@ impl IFSelectParamEditor {
             label
         };
         let editor = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectEditorBase::new(nbmax),
             thelabel: AsciiString::new(label),
         });
@@ -60,15 +59,15 @@ impl IFSelectParamEditor {
     }
     /// `AddValue(val, shortname = "")`: one more value, editable; `StandardOutOfRange`
     /// beyond the room.
-    pub fn add_value(
+    pub fn add_value<V: ?Sized + HandleUpcast<dyn InterfaceTypedValueOps>>(
         &self,
-        val: &Handle<InterfaceTypedValue>,
+        val: &Handle<V>,
         shortname: &str,
     ) -> Result<(), Failure> {
         self.set_nb_values(self.nb_values() + 1)?;
-        self.set_value(
+        self.set_typed_value(
             self.nb_values(),
-            val,
+            val.upcast(),
             shortname,
             IFSelectEditValue::Editable,
         )
@@ -113,7 +112,7 @@ impl IFSelectParamEditor {
                 .unwrap_or_default();
             let val = InterfaceStatic::static_named(&text);
             if val.is_some() {
-                editor.add_value(&val.cast(), "")?;
+                editor.add_value(&val, "")?;
             }
         }
         Ok(editor)
@@ -144,7 +143,7 @@ impl IFSelectEditor for IFSelectParamEditor {
     fn load(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         for i in 1..=self.nb_values() {
@@ -156,7 +155,7 @@ impl IFSelectEditor for IFSelectParamEditor {
     fn apply(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         for i in 1..=self.nb_values() {

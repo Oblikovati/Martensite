@@ -1,6 +1,6 @@
 //! Exact named aliases must resolve to actual base types and support real projections.
 use crate::{if_select::*, interface::*, transfer::*};
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient, Transient};
+use martensite_tkernel::standard::{Handle, HandleUpcast, RuntimeTyped, Transient};
 use martensite_tkernel::tcollection::HAsciiString;
 use std::any::TypeId;
 
@@ -8,21 +8,20 @@ fn assert_base_alias<A: ?Sized + 'static, Expected: ?Sized + 'static>() {
     assert_eq!(TypeId::of::<A>(), TypeId::of::<Expected>());
 }
 
-fn assert_no_polymorphic_root_view<T: RuntimeTyped>(owner: Handle<T>) {
-    let embedded: Handle<StandardTransient> = owner.cast();
-    assert_eq!(embedded.dynamic_type().unwrap().name(), T::TYPE_NAME);
-    assert_eq!(
-        embedded.get().unwrap().dynamic_type().name(),
-        "Standard_Transient"
-    );
+fn assert_polymorphic_root_view<T: RuntimeTyped + Transient>(owner: Handle<T>) {
+    let root: Handle<dyn Transient> = owner.upcast();
+    assert_eq!(root.dynamic_type().unwrap().name(), T::TYPE_NAME);
+    assert_eq!(root.get().unwrap().dynamic_type().name(), T::TYPE_NAME);
+    assert_eq!(root.object_address(), owner.object_address());
+    assert_eq!(root.downcast::<T>(), owner);
 }
 
 #[test]
-fn embedded_node_root_does_not_supply_a_polymorphic_borrowed_parent_view() {
-    assert_no_polymorphic_root_view(Handle::new(InterfaceGlobalNodeOfGeneralLib::new()));
-    assert_no_polymorphic_root_view(Handle::new(InterfaceNodeOfGeneralLib::new()));
-    assert_no_polymorphic_root_view(Handle::new(InterfaceGlobalNodeOfReaderLib::new()));
-    assert_no_polymorphic_root_view(Handle::new(InterfaceNodeOfReaderLib::new()));
+fn library_node_roots_preserve_polymorphic_identity() {
+    assert_polymorphic_root_view(Handle::new(InterfaceGlobalNodeOfGeneralLib::new()));
+    assert_polymorphic_root_view(Handle::new(InterfaceNodeOfGeneralLib::new()));
+    assert_polymorphic_root_view(Handle::new(InterfaceGlobalNodeOfReaderLib::new()));
+    assert_polymorphic_root_view(Handle::new(InterfaceNodeOfReaderLib::new()));
 }
 
 #[test]
@@ -54,12 +53,12 @@ fn five_dispatch_base_aliases_project_to_live_trait_views() {
 }
 
 fn assert_dispatch_projection<
-    T: RuntimeTyped + IFSelectDispatch,
-    Base: ?Sized + RuntimeTyped + IFSelectDispatch,
+    T: RuntimeTyped + IFSelectDispatch + HandleUpcast<Base>,
+    Base: ?Sized + RuntimeTyped + IFSelectDispatch + martensite_tkernel::standard::TransientHandleTarget,
 >(
     owner: Handle<T>,
 ) {
-    let base: Handle<Base> = owner.cast();
+    let base: Handle<Base> = owner.upcast();
     let name = Handle::new(HAsciiString::new("owned root"));
     base.set_root_name(&name);
     assert_eq!(owner.root_name(), name);
@@ -68,7 +67,7 @@ fn assert_dispatch_projection<
         owner.dynamic_type().unwrap().parent().unwrap()
     ));
     assert_eq!(base.get().unwrap().dynamic_type().name(), T::TYPE_NAME);
-    assert_eq!(Handle::<T>::down_cast(&base), owner);
+    assert_eq!(base.downcast::<T>(), owner);
 }
 
 #[test]

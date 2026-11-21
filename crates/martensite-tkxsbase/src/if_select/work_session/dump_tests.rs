@@ -9,17 +9,17 @@ use crate::if_select::{
     IFSelectSignatureList,
 };
 use crate::interface::{InterfaceCheckIterator, InterfaceParamType, InterfaceTypedValue};
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 
 /// A derived session counting the calls of its `ClearData` override.
 struct CountingSession {
-    session: IFSelectWorkSession,
+    session: IFSelectSession,
     clears: SharedState<Vec<i32>>,
 }
-martensite_tkernel::impl_transient!(CountingSession, "Test_CountingSession", IFSelectWorkSession, session, interfaces: [dyn IFSelectWorkSessionOps]);
+martensite_tkernel::impl_transient!(CountingSession, "Test_CountingSession", dyn IFSelectWorkSessionOps, interfaces: [dyn IFSelectWorkSessionOps]);
 
 impl IFSelectWorkSessionOps for CountingSession {
-    fn work_session(&self) -> &IFSelectWorkSession {
+    fn work_session(&self) -> &IFSelectSession {
         &self.session
     }
     fn clear_data(&self, mode: i32) -> Result<(), martensite_tkernel::standard::Failure> {
@@ -37,10 +37,10 @@ fn dumped(f: impl FnOnce(&mut Vec<u8>)) -> String {
 #[test]
 fn session_clear_data_is_virtual() {
     let derived = Handle::new(CountingSession {
-        session: IFSelectWorkSession::new(),
+        session: IFSelectSession::default(),
         clears: SharedState::new(Vec::new()),
     });
-    derived.session.bind_self(&derived.clone().cast());
+    derived.session.bind_self(&derived.upcast());
     let (model, _) = crate::interface::test_norm::fake_chain();
     derived.session.set_model(&model, false).unwrap();
     assert_eq!(*derived.clears.read(), vec![3, 0]);
@@ -117,9 +117,10 @@ fn session_checks_and_queries() {
 #[test]
 fn session_dumps() {
     let (session, ents, _) = loaded_with(true);
-    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).cast();
+    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).into_upcast();
     session.add_named_item("glob", &disp.cast(), true).unwrap();
-    let roots: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectModelRoots::new()).cast();
+    let roots: Handle<dyn IFSelectSelection> =
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast();
     session
         .add_named_item("roots", &roots.cast(), true)
         .unwrap();
@@ -172,7 +173,7 @@ fn session_dumps() {
 fn session_listings_and_evaluations() {
     let (session, ents, _) = loaded_with(true);
     let all = session
-        .eval_selection(&Handle::new(IFSelectSelectModelEntities::new()).cast())
+        .eval_selection(&Handle::new(IFSelectSelectModelEntities::new()).into_upcast())
         .unwrap();
     let numbers = dumped(|o| session.list_entities(&all, 2, o).unwrap());
     assert_eq!(numbers, " List of 4 Entities :\n(1,2,3,4)\n");
@@ -205,14 +206,15 @@ fn session_listings_and_evaluations() {
     session
         .print_signature_list(
             &mut Vec::new(),
-            &Handle::default(),
+            &Handle::<IFSelectSignatureList>::default(),
             IFSelectPrintCount::CountByItem,
         )
         .unwrap();
-    let roots: Handle<dyn IFSelectSelection> = Handle::new(IFSelectSelectModelRoots::new()).cast();
+    let roots: Handle<dyn IFSelectSelection> =
+        Handle::new(IFSelectSelectModelRoots::new()).into_upcast();
     session.add_item(&roots.cast(), true).unwrap();
     session.evaluate_selection(&roots).unwrap();
-    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).cast();
+    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).into_upcast();
     disp.set_final_selection(&roots);
     session.add_item(&disp.cast(), true).unwrap();
     for mode in 0..=3 {
@@ -225,13 +227,13 @@ fn session_listings_and_evaluations() {
 #[test]
 fn session_params_and_statics() {
     let (session, _, _) = loaded();
-    let count: Handle<StandardTransient> = Handle::new(
+    let count: Handle<dyn Transient> = Handle::new(
         InterfaceTypedValue::new("count", InterfaceParamType::ParamInteger, "1").unwrap(),
     )
-    .cast();
-    let name: Handle<StandardTransient> =
+    .into_upcast();
+    let name: Handle<dyn Transient> =
         Handle::new(InterfaceTypedValue::new("name", InterfaceParamType::ParamText, "x").unwrap())
-            .cast();
+            .into_upcast();
     session
         .set_params(&[count, Handle::default(), name], &[1, 6, 2])
         .unwrap();

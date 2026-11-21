@@ -1,7 +1,7 @@
 //! The specification of a `MoniToolTypedValue`: definition text, `AddDef` commands,
 //! integer and real limits, enumerations, and the copy constructor.
 use super::typed_value::{EnumTexts, TypedValueState, not_kind};
-use super::{MoniToolTypedValue, MoniToolValueType};
+use super::{MoniToolTypedValue, MoniToolValue, MoniToolValueType};
 use crate::c_text::atoi;
 use martensite_tkernel::{
     standard::{Failure, Handle, c_string::atof_bytes, exceptions},
@@ -14,11 +14,11 @@ impl MoniToolTypedValue {
     /// `ObjectType()` (`StandardTransient` when not set), and the limits are read with
     /// `IntegerLimit` and `RealLimit`, which also give the natural limits
     /// (`IntegerFirst`, `RealLast`...) when not set.
-    pub fn copied(other: &MoniToolTypedValue) -> Self {
+    pub fn copied(other: &MoniToolValue) -> Self {
         let mut state = other.state.read().clone();
         let source = state.clone();
         state.thedef = source.definition();
-        state.theotyp = other.object_type();
+        state.theotyp = Some(other.object_type());
         state.thelims = 0;
         state.theenums = None;
         state.copy_limits(&source);
@@ -27,8 +27,13 @@ impl MoniToolTypedValue {
             let text = source.thehval.string().clone();
             state.thehval = Handle::new(HAsciiString::from_string(&text));
         }
-        Self::from_state(state)
+        Self {
+            value: MoniToolValue::from_state(state),
+        }
     }
+}
+
+impl MoniToolValue {
     /// `Definition`: the enforced definition, else one computed from the specification.
     pub fn definition(&self) -> AsciiString {
         self.state.read().definition()

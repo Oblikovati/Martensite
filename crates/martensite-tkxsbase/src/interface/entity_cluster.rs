@@ -3,13 +3,13 @@
 use super::InterfaceEntityIterator;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
 };
 
 /// The fields of a cluster.
 #[derive(Default)]
 struct ClusterState {
-    theents: [Handle<StandardTransient>; 4],
+    theents: [Handle<dyn Transient>; 4],
     thenext: Handle<InterfaceEntityCluster>,
 }
 
@@ -20,20 +20,18 @@ struct ClusterState {
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let cluster = InterfaceEntityCluster::new();
 /// for _ in 0..6 {
-///     cluster.append(&Handle::new(StandardTransient::default())).unwrap();
+///     cluster.append(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>()).unwrap();
 /// }
 /// assert_eq!(cluster.nb_entities(), 6);
 /// ```
 #[derive(Default)]
 pub struct InterfaceEntityCluster {
-    transient: StandardTransient,
     state: SharedState<ClusterState>,
 }
 impl_transient!(
     InterfaceEntityCluster,
     "InterfaceEntityCluster",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 fn null_entity(member: &str) -> Failure {
@@ -54,7 +52,7 @@ impl InterfaceEntityCluster {
         Self::default()
     }
     /// `InterfaceEntityCluster(ent)`: holds `ent`.
-    pub fn with_entity(ent: &Handle<StandardTransient>) -> Self {
+    pub fn with_entity(ent: &Handle<dyn Transient>) -> Self {
         Self::with_entity_and_next(ent, &Handle::default())
     }
     /// `InterfaceEntityCluster(ec)`: empty, followed by `ec`.
@@ -63,7 +61,7 @@ impl InterfaceEntityCluster {
     }
     /// `InterfaceEntityCluster(ent, ec)`.
     pub fn with_entity_and_next(
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         ec: &Handle<InterfaceEntityCluster>,
     ) -> Self {
         let cluster = Self::default();
@@ -75,7 +73,7 @@ impl InterfaceEntityCluster {
     }
     /// `Append(ent)`: in the first free place of this cluster, else in the first cluster
     /// of the chain that is not full (or the last one); `StandardNullObject` for null.
-    pub fn append(&self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn append(&self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if ent.is_null() {
             return Err(null_entity("Append"));
         }
@@ -100,7 +98,7 @@ impl InterfaceEntityCluster {
     /// `Remove(ent)`: `StandardNullObject` for null; false when not found here.
     /// Native quirks kept: a removal in a next cluster returns false (and unlinks that
     /// cluster when it became empty); see `remove_rank` for a local removal.
-    pub fn remove(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn remove(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         if ent.is_null() {
             return Err(null_entity("Remove"));
         }
@@ -161,7 +159,7 @@ impl InterfaceEntityCluster {
     }
     /// `Value(num)`: `StandardOutOfRange` out of the chain. Native quirk kept: the rank
     /// is reduced by the local count of this cluster at each step of the chain.
-    pub fn value(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let (cluster, local) = self.locate(num, "Value")?;
         match cluster {
             Some(other) => Ok(other.local_value(local)),
@@ -170,7 +168,7 @@ impl InterfaceEntityCluster {
     }
     /// `SetValue(num, ent)`: `StandardNullObject` for null, `StandardOutOfRange` out of
     /// the chain.
-    pub fn set_value(&self, num: i32, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn set_value(&self, num: i32, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if ent.is_null() {
             return Err(null_entity("SetValue"));
         }
@@ -217,7 +215,7 @@ impl InterfaceEntityCluster {
     pub(super) fn next(&self) -> Handle<InterfaceEntityCluster> {
         self.state.read().thenext.clone()
     }
-    fn local_value(&self, local: i32) -> Handle<StandardTransient> {
+    fn local_value(&self, local: i32) -> Handle<dyn Transient> {
         self.state.read().theents[(local - 1) as usize].clone()
     }
     /// The cluster (None for this one) and local rank of `num`, with the native walk.
@@ -279,15 +277,16 @@ impl Drop for InterfaceEntityCluster {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use martensite_tkernel::standard::StandardTransient;
 
-    fn entity() -> Handle<StandardTransient> {
-        Handle::new(StandardTransient::default())
+    fn entity() -> Handle<dyn Transient> {
+        Handle::new(StandardTransient).into_upcast::<dyn Transient>()
     }
 
     #[test]
     fn chain_values_and_iteration() {
         let cluster = InterfaceEntityCluster::new();
-        let all: Vec<Handle<StandardTransient>> = (0..9).map(|_| entity()).collect();
+        let all: Vec<Handle<dyn Transient>> = (0..9).map(|_| entity()).collect();
         all.iter().for_each(|e| cluster.append(e).unwrap());
         assert_eq!(cluster.nb_entities(), 9);
         assert!(cluster.value(9).unwrap() == all[8]);

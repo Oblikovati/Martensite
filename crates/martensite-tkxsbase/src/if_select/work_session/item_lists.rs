@@ -1,13 +1,13 @@
 //! The labels of the items ("Kind:label") and the lists of items by kind, by name or
 //! by label.
-use super::IFSelectWorkSession;
+use super::IFSelectSession;
 use crate::if_select::{
     IFSelectDispatch, IFSelectEditForm, IFSelectEditor, IFSelectGeneralModifier, IFSelectIntParam,
-    IFSelectModifier, IFSelectSelection, IFSelectSignature, IFSelectSignatureList,
-    IFSelectSignatureListOps, IFSelectTransformer,
+    IFSelectModifier, IFSelectSelection, IFSelectSignature, IFSelectSignatureListOps,
+    IFSelectTransformer,
 };
 use martensite_tkernel::{
-    standard::{Handle, RuntimeType, StandardTransient},
+    standard::{Handle, RuntimeType, Transient},
     tcollection::HAsciiString,
 };
 
@@ -25,7 +25,7 @@ pub(crate) fn search(text: &str, what: &str) -> i32 {
 }
 
 /// The label of a modifier, a dispatch, a transformer, an edit form or an editor.
-fn tool_label(var: &Handle<StandardTransient>) -> Option<String> {
+fn tool_label(var: &Handle<dyn Transient>) -> Option<String> {
     let text = |a: martensite_tkernel::tcollection::AsciiString| {
         String::from_utf8_lossy(a.as_bytes()).into_owned()
     };
@@ -43,11 +43,7 @@ fn tool_label(var: &Handle<StandardTransient>) -> Option<String> {
     if let Some(t) = var.cast::<dyn IFSelectTransformer>().get() {
         return Some(format!("Transformer:{}", text(t.label())));
     }
-    if let Some(l) = var
-        .cast::<IFSelectSignatureList>()
-        .cast::<dyn IFSelectSignatureListOps>()
-        .get()
-    {
+    if let Some(l) = var.view::<dyn IFSelectSignatureListOps>().get() {
         return Some(format!("Counter:{}", l.name()));
     }
     if let Some(s) = var.cast::<dyn IFSelectSignature>().get() {
@@ -61,7 +57,7 @@ fn tool_label(var: &Handle<StandardTransient>) -> Option<String> {
         .map(|e| format!("Editor:{}", text(e.label())))
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `ItemLabel(id)`: the kind and label of an item ("Text:", "Integer:",
     /// "Selection:", ... "VariableType:" and its type); null when no item.
     pub fn item_label(&self, id: i32) -> Handle<HAsciiString> {

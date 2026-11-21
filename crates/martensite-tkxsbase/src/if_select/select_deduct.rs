@@ -5,7 +5,7 @@ use super::{IFSelectSelectPointed, IFSelectSelection, IFSelectSelectionIterator}
 use crate::interface::{InterfaceEntityIterator, InterfaceGraph, InterfaceInterfaceModel};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 
@@ -67,7 +67,7 @@ pub trait IFSelectSelectDeduct: IFSelectSelection {
 impl_transient_interface!(
     dyn IFSelectSelectDeduct,
     "IFSelectSelectDeduct",
-    dyn IFSelectSelection
+    dyn IFSelectSelection, upcasts: [dyn IFSelectSelection]
 );
 
 /// `IFSelectSelectDeduct::FillIterator`: the input.
@@ -112,14 +112,14 @@ pub trait IFSelectSelectExtract: IFSelectSelectDeduct {
     fn sort(
         &self,
         rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure>;
     /// `SortInGraph(rank, ent, G)`: `Sort` with the model of the graph by default.
     fn sort_in_graph(
         &self,
         rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         g: &InterfaceGraph,
     ) -> Result<bool, Failure> {
         self.sort(rank, ent, g.model())
@@ -130,7 +130,7 @@ pub trait IFSelectSelectExtract: IFSelectSelectDeduct {
 impl_transient_interface!(
     dyn IFSelectSelectExtract,
     "IFSelectSelectExtract",
-    dyn IFSelectSelectDeduct
+    dyn IFSelectSelectDeduct, upcasts: [dyn IFSelectSelectDeduct]
 );
 
 /// `IFSelectSelectExtract::RootResult`: the input entities whose `SortInGraph` (by

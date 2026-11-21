@@ -131,7 +131,7 @@ pub use share_flags::InterfaceShareFlags;
 pub use share_tool::InterfaceShareTool;
 pub use sign_type::{InterfaceSignType, InterfaceSignTypeBase, interface_sign_type_text};
 pub use static_value::{InterfaceStatic, InterfaceStaticSatisfies};
-pub use typed_value::InterfaceTypedValue;
+pub use typed_value::{InterfaceTypedValue, InterfaceTypedValueOps};
 pub use undefined_content::InterfaceUndefinedContent;
 
 #[cfg(test)]

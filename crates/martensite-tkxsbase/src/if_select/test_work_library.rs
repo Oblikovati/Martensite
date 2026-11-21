@@ -6,18 +6,17 @@ use crate::interface::test_norm::fake_model;
 use crate::interface::{InterfaceInterfaceModel, InterfaceProtocol};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
 };
 use std::io::Write;
 
 /// The fake work library.
 #[derive(Default)]
 pub(crate) struct FakeWorkLibrary {
-    transient: StandardTransient,
     base: IFSelectWorkLibraryBase,
     pub(crate) written: SharedState<Vec<String>>,
 }
-impl_transient!(FakeWorkLibrary, "Fake_WorkLibrary", StandardTransient, transient, interfaces: [dyn IFSelectWorkLibrary]);
+impl_transient!(FakeWorkLibrary, "Fake_WorkLibrary", dyn Transient, interfaces: [dyn IFSelectWorkLibrary]);
 
 impl IFSelectWorkLibrary for FakeWorkLibrary {
     fn work_library_base(&self) -> &IFSelectWorkLibraryBase {
@@ -45,7 +44,7 @@ impl IFSelectWorkLibrary for FakeWorkLibrary {
         &self,
         _model: &Handle<dyn InterfaceInterfaceModel>,
         _protocol: &Handle<dyn InterfaceProtocol>,
-        _entity: &Handle<StandardTransient>,
+        _entity: &Handle<dyn Transient>,
         s: &mut dyn Write,
         level: i32,
     ) -> Result<(), Failure> {
@@ -56,5 +55,5 @@ impl IFSelectWorkLibrary for FakeWorkLibrary {
 
 /// A new fake work library as the abstract handle.
 pub(crate) fn fake_work_library() -> Handle<dyn IFSelectWorkLibrary> {
-    Handle::new(FakeWorkLibrary::default()).cast()
+    Handle::new(FakeWorkLibrary::default()).into_upcast()
 }

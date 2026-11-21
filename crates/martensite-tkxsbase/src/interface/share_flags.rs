@@ -5,7 +5,7 @@ use super::{
     InterfaceBitMap, InterfaceEntityIterator, InterfaceGTool, InterfaceGeneralLib, InterfaceGraph,
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceProtocol,
 };
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, exceptions};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient, exceptions};
 use std::sync::Arc;
 
 /// `InterfaceShareFlags`.
@@ -17,7 +17,7 @@ use std::sync::Arc;
 pub struct InterfaceShareFlags {
     themodel: Handle<dyn InterfaceInterfaceModel>,
     theflags: InterfaceBitMap,
-    theroots: Option<Vec<Handle<StandardTransient>>>,
+    theroots: Option<Vec<Handle<dyn Transient>>>,
 }
 
 impl InterfaceShareFlags {
@@ -122,7 +122,7 @@ impl InterfaceShareFlags {
         self.themodel.clone()
     }
     /// `IsShared(ent)`: `StandardDomainError` for an entity out of the model.
-    pub fn is_shared(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_shared(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         let num = self.themodel.number(ent);
         if num == 0 || num > self.themodel.nb_entities() {
             return Err(exceptions::domain_error(
@@ -145,7 +145,7 @@ impl InterfaceShareFlags {
         self.theroots.as_ref().map_or(0, |r| r.len() as i32)
     }
     /// `Root(num = 1)`: `StandardOutOfRange` out of the roots.
-    pub fn root(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn root(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let roots = self.theroots.as_deref().unwrap_or_default();
         let found = usize::try_from(num - 1).ok().and_then(|i| roots.get(i));
         found.cloned().ok_or_else(|| {

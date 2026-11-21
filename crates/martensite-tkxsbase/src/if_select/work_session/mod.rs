@@ -12,14 +12,15 @@ use crate::interface::{
     InterfaceProtocol,
 };
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient, impl_transient_interface_target,
     message::Message,
     ncollection::DataMap,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient, WeakHandle},
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient, WeakHandle},
     tcollection::AsciiString,
 };
 use std::cell::Cell;
 use std::fmt::Write as _;
+use std::ops::Deref;
 use std::sync::OnceLock;
 use std::sync::atomic::Ordering;
 
@@ -45,7 +46,7 @@ mod share_out;
 mod statics;
 
 /// A list of transients: `None` for a null sequence.
-pub type IFSelectTransientList = Option<Vec<Handle<StandardTransient>>>;
+pub type IFSelectTransientList = Option<Vec<Handle<dyn Transient>>>;
 
 /// The flag of the incorrect entities in the bit map of the graph (natively a define).
 pub(crate) const FLAG_INCORRECT: i32 = 2;
@@ -85,8 +86,8 @@ pub(crate) struct WorkSessionState {
     pub(crate) thecheckrun: InterfaceCheckIterator,
     /// The items with their attributes (the item itself, its name, or null once removed),
     /// by ident (natively an indexed data map).
-    pub(crate) theitems: Vec<(Handle<StandardTransient>, Handle<StandardTransient>)>,
-    pub(crate) thenames: DataMap<AsciiString, Handle<StandardTransient>>,
+    pub(crate) theitems: Vec<(Handle<dyn Transient>, Handle<dyn Transient>)>,
+    pub(crate) thenames: DataMap<AsciiString, Handle<dyn Transient>>,
     pub(crate) theerrhand: bool,
     pub(crate) theshareout: Handle<IFSelectShareOut>,
     pub(crate) thelibrary: Handle<dyn IFSelectWorkLibrary>,
@@ -101,9 +102,8 @@ pub(crate) struct WorkSessionState {
     pub(crate) themodelstat: bool,
 }
 
-/// `IFSelectWorkSession`. Its only virtual member, `ClearData`, is in
-/// [`IFSelectWorkSessionOps`]; a derived session embeds this struct and binds its
-/// handle with `bind_self`, so that the session calls its override.
+/// A work session holding a model, its graph, and the operations defined on it.
+/// Derived classes compose [`IFSelectSession`] and implement [`IFSelectWorkSessionOps`].
 ///
 /// ```
 /// use martensite_tkxsbase::if_select::IFSelectWorkSession;
@@ -111,31 +111,48 @@ pub(crate) struct WorkSessionState {
 /// assert!(!session.has_model() && session.error_handle());
 /// ```
 pub struct IFSelectWorkSession {
-    transient: StandardTransient,
-    pub(crate) state: SharedState<WorkSessionState>,
-    this: OnceLock<WeakHandle<dyn IFSelectWorkSessionOps>>,
+    session: IFSelectSession,
 }
-impl_transient!(IFSelectWorkSession, "IFSelectWorkSession", StandardTransient, transient, interfaces: [dyn IFSelectWorkSessionOps]);
+impl_transient!(IFSelectWorkSession, "IFSelectWorkSession", dyn Transient, interfaces: [dyn IFSelectWorkSessionOps]);
 
-/// The virtual members of `IFSelectWorkSession`.
+/// The state and virtual operation shared by the work-session family.
 pub trait IFSelectWorkSessionOps: Transient {
-    /// The embedded work session.
-    fn work_session(&self) -> &IFSelectWorkSession;
+    /// Borrow the shared work-session state, e.g. `session.work_session().has_model()`.
+    fn work_session(&self) -> &IFSelectSession;
     /// `ClearData(mode)`: 1 all the data, 2 the graph and the checks, 3 the checks, 4 the
     /// pointed selections, counters and edit forms (see `clear_data_base`).
     fn clear_data(&self, mode: i32) -> Result<(), Failure> {
         self.work_session().clear_data_base(mode)
     }
 }
-impl_transient_interface!(
-    dyn IFSelectWorkSessionOps,
-    "IFSelectWorkSession",
-    StandardTransient
-);
+impl RuntimeTyped for dyn IFSelectWorkSessionOps {
+    const TYPE_NAME: &'static str = IFSelectWorkSession::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        IFSelectWorkSession::static_type()
+    }
+}
+impl_transient_interface_target!(dyn IFSelectWorkSessionOps);
 
 impl IFSelectWorkSessionOps for IFSelectWorkSession {
-    fn work_session(&self) -> &IFSelectWorkSession {
-        self
+    fn work_session(&self) -> &IFSelectSession {
+        &self.session
+    }
+}
+
+impl Deref for dyn IFSelectWorkSessionOps {
+    type Target = IFSelectSession;
+
+    fn deref(&self) -> &Self::Target {
+        self.work_session()
+    }
+}
+
+impl Deref for IFSelectWorkSession {
+    type Target = IFSelectSession;
+
+    fn deref(&self) -> &Self::Target {
+        &self.session
     }
 }
 
@@ -146,9 +163,22 @@ impl Default for IFSelectWorkSession {
 }
 
 impl IFSelectWorkSession {
-    /// `IFSelectWorkSession()`: a share-out with its model copier, a general tool, the
-    /// errors handled.
+    /// Start an empty session with `IFSelectWorkSession::new()`.
     pub fn new() -> Self {
+        Self {
+            session: IFSelectSession::default(),
+        }
+    }
+}
+
+/// The state shared by base and norm-specific work sessions.
+pub struct IFSelectSession {
+    pub(crate) state: SharedState<WorkSessionState>,
+    this: OnceLock<WeakHandle<dyn IFSelectWorkSessionOps>>,
+}
+
+impl Default for IFSelectSession {
+    fn default() -> Self {
         let shareout = Handle::new(IFSelectShareOut::new());
         let copier = Handle::new(IFSelectModelCopier::new());
         copier.set_share_out(&shareout);
@@ -172,12 +202,14 @@ impl IFSelectWorkSession {
             themodelstat: false,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
             this: OnceLock::new(),
         }
     }
-    /// Records the handle of the (derived) session, through which `ClearData` is called.
+}
+
+impl IFSelectSession {
+    /// Bind virtual `ClearData` to its owner, e.g. `session.bind_self(&owner.upcast())`.
     pub fn bind_self(&self, session: &Handle<dyn IFSelectWorkSessionOps>) {
         let _ = self.this.set(session.downgrade());
     }
@@ -226,7 +258,7 @@ impl IFSelectWorkSession {
     }
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// As `guarded`, with the native defect of the sending calls kept: after a success
     /// `errhand` stays cleared (the next guarded calls raise their errors) until an error
     /// is caught or `SetErrorHandle` is called.

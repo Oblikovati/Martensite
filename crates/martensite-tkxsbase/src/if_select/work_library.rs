@@ -6,7 +6,7 @@ use crate::interface::{
 };
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::AsciiString,
 };
 use std::io::{Read, Write};
@@ -83,7 +83,7 @@ pub trait IFSelectWorkLibrary: Transient {
         &self,
         model: &Handle<dyn InterfaceInterfaceModel>,
         protocol: &Handle<dyn InterfaceProtocol>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         s: &mut dyn Write,
         level: i32,
     ) -> Result<(), Failure>;
@@ -92,7 +92,7 @@ pub trait IFSelectWorkLibrary: Transient {
         &self,
         model: &Handle<dyn InterfaceInterfaceModel>,
         protocol: &Handle<dyn InterfaceProtocol>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         s: &mut dyn Write,
     ) -> Result<(), Failure> {
         let base = self.work_library_base();
@@ -142,5 +142,5 @@ pub trait IFSelectWorkLibrary: Transient {
 impl_transient_interface!(
     dyn IFSelectWorkLibrary,
     "IFSelectWorkLibrary",
-    StandardTransient
+    dyn Transient
 );

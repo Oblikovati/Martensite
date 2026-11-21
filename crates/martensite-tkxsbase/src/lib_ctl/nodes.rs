@@ -1,7 +1,7 @@
 //! The linked lists of a library: the global list of (module, protocol) pairs, and the
 //! list of global nodes a library selected.
 use super::LibCtlKind;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState, Transient};
 use std::sync::Arc;
 
 /// The fields of a global node.
@@ -14,14 +14,12 @@ struct GlobalNodeState<K: LibCtlKind> {
 /// `LibCtlGlobalNode` (`InterfaceGlobalNodeOfGeneralLib`...): one (module, protocol)
 /// pair of the global list.
 pub struct LibCtlGlobalNode<K: LibCtlKind> {
-    transient: StandardTransient,
     state: SharedState<GlobalNodeState<K>>,
 }
 
 impl<K: LibCtlKind> Default for LibCtlGlobalNode<K> {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(GlobalNodeState {
                 themod: Handle::default(),
                 theprot: Handle::default(),
@@ -82,14 +80,12 @@ struct NodeState<K: LibCtlKind> {
 
 /// `LibCtlNode` (`InterfaceNodeOfGeneralLib`...): one global node selected by a library.
 pub struct LibCtlNode<K: LibCtlKind> {
-    transient: StandardTransient,
     state: SharedState<NodeState<K>>,
 }
 
 impl<K: LibCtlKind> Default for LibCtlNode<K> {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(NodeState {
                 thenode: None,
                 thenext: None,
@@ -146,27 +142,23 @@ impl<K: LibCtlKind> LibCtlNode<K> {
 martensite_tkernel::impl_transient!(
     crate::interface::InterfaceGlobalNodeOfGeneralLib,
     "InterfaceGlobalNodeOfGeneralLib",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 martensite_tkernel::impl_transient!(
     crate::interface::InterfaceNodeOfGeneralLib,
     "InterfaceNodeOfGeneralLib",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 martensite_tkernel::impl_transient!(
     crate::interface::InterfaceGlobalNodeOfReaderLib,
     "InterfaceGlobalNodeOfReaderLib",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 martensite_tkernel::impl_transient!(
     crate::interface::InterfaceNodeOfReaderLib,
     "InterfaceNodeOfReaderLib",
-    StandardTransient,
-    transient
+    dyn Transient
 );

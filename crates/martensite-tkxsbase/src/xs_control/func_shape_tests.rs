@@ -19,7 +19,7 @@ fn shape_pilot(transferred: bool) -> (Handle<IFSelectSessionPilot>, Handle<XSCon
     if transferred {
         ws.transfer_read_roots(&ProgressRange::default()).unwrap();
     }
-    pilot.set_session(&ws.clone().cast());
+    pilot.set_session(&ws);
     (pilot, ws)
 }
 

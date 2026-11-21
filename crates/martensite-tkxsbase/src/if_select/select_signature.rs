@@ -10,7 +10,7 @@ use crate::c_text::atoi;
 use crate::interface::{InterfaceEntityIterator, InterfaceGraph, InterfaceInterfaceModel};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -56,11 +56,10 @@ fn multsign(
 /// ```
 /// use martensite_tkxsbase::if_select::{IFSelectSelectSignature, IFSelectSelection, IFSelectSignType};
 /// use martensite_tkernel::standard::Handle;
-/// let sel = IFSelectSelectSignature::with_signature(&Handle::new(IFSelectSignType::new(true)).cast(), "Line", false);
+/// let sel = IFSelectSelectSignature::with_signature(&Handle::new(IFSelectSignType::new(true)).into_upcast(), "Line", false);
 /// assert_eq!(sel.label().as_bytes(), b"Picked: Class Type containing Line");
 /// ```
 pub struct IFSelectSelectSignature {
-    transient: StandardTransient,
     base: IFSelectSelectExtractBase,
     thematcher: Handle<dyn IFSelectSignature>,
     thecounter: Handle<dyn IFSelectSignCounterOps>,
@@ -69,7 +68,7 @@ pub struct IFSelectSelectSignature {
     thesignlist: Vec<AsciiString>,
     thesignmode: Vec<i32>,
 }
-impl_transient!(IFSelectSelectSignature, "IFSelectSelectSignature", dyn IFSelectSelectExtract, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
+impl_transient!(IFSelectSelectSignature, "IFSelectSelectSignature", dyn IFSelectSelectExtract, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]);
 
 impl IFSelectSelectSignature {
     /// The common constructor: exact (-1), else the criteria of the text.
@@ -86,7 +85,6 @@ impl IFSelectSelectSignature {
             multsign(signtext, &mut thesignlist, &mut thesignmode)
         };
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExtractBase::default(),
             thematcher: matcher,
             thecounter: counter,
@@ -140,11 +138,7 @@ impl IFSelectSelectSignature {
     }
     /// The value of `ent`: the signature value, else the computed sign of the counter;
     /// `StandardNullObject` without both (a native null dereference).
-    fn value_of(
-        &self,
-        ent: &Handle<StandardTransient>,
-        g: &InterfaceGraph,
-    ) -> Result<String, Failure> {
+    fn value_of(&self, ent: &Handle<dyn Transient>, g: &InterfaceGraph) -> Result<String, Failure> {
         if let Some(matcher) = self.thematcher.get() {
             return Ok(matcher.value(ent, g.model()));
         }
@@ -156,7 +150,7 @@ impl IFSelectSelectSignature {
     /// The text match of `ent` against `text`.
     fn text_matches(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         g: &InterfaceGraph,
         text: &AsciiString,
         exact: bool,
@@ -169,7 +163,7 @@ impl IFSelectSelectSignature {
     /// One criterion of the list (an item and its mode).
     fn criterion(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         g: &InterfaceGraph,
         text: &AsciiString,
         hmod: i32,
@@ -232,7 +226,7 @@ impl IFSelectSelectExtract for IFSelectSelectSignature {
     fn sort_in_graph(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         g: &InterfaceGraph,
     ) -> Result<bool, Failure> {
         if self.theexact <= 0 {
@@ -257,7 +251,7 @@ impl IFSelectSelectExtract for IFSelectSelectSignature {
     fn sort(
         &self,
         _rank: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         Ok(true)

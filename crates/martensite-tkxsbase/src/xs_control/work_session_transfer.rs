@@ -8,7 +8,7 @@ use crate::transfer::{TransferBinder, TransferSimpleBinderOfTransient, TransferT
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 
 /// The default size of a transient process created for the mode 2 of `InitTransferReader`.
@@ -107,9 +107,9 @@ impl XSControlWorkSession {
     /// result, 1 its binder, 2 the final result itself (mode 20).
     pub fn result(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         mode: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let (ouca, kica) = (mode % 10, mode / 10);
         let reader = self.transfer_reader();
         let live = live_reader(&reader)?;
@@ -146,7 +146,7 @@ impl XSControlWorkSession {
             return Ok(binder.cast());
         }
         Ok(
-            match binder.cast::<TransferSimpleBinderOfTransient>().get() {
+            match binder.downcast_ref::<TransferSimpleBinderOfTransient>() {
                 Some(trb) => trb.result(),
                 None => binder.cast(),
             },
@@ -157,7 +157,7 @@ impl XSControlWorkSession {
     /// (natively a null list dereference).
     pub fn transfer_read_one(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         progress: &ProgressRange<'_>,
     ) -> Result<i32, Failure> {
         if ent.object_address() == self.model().object_address() {

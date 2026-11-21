@@ -7,10 +7,9 @@ use crate::if_select::test_work_library::fake_work_library;
 use crate::interface::InterfaceInterfaceModel;
 use crate::interface::test_norm::{FakeEntity, fake_entity, fake_model, fake_protocol};
 use crate::transfer::{
-    TransferActor, TransferActorOfFinderProcess, TransferActorOfFinderProcessOps,
-    TransferActorOfTransientProcess, TransferActorOfTransientProcessOps, TransferActorOps,
-    TransferBinder, TransferFinder, TransferFinderKind, TransferFinderProcess, TransferProcessOps,
-    TransferShapeProcessing, TransferTransientKind, TransferTransientProcess,
+    TransferActor, TransferActorOfFinderProcessOps, TransferActorOfTransientProcessOps,
+    TransferActorOps, TransferBinder, TransferFinder, TransferFinderKind, TransferFinderProcess,
+    TransferProcessOps, TransferShapeProcessing, TransferTransientKind, TransferTransientProcess,
     transferring_by_finder_process, transferring_by_transient_process,
 };
 use crate::transfer_brep::TransferBRepShapeBinder;
@@ -19,7 +18,7 @@ use martensite_tkbrep::topods::{Builder, Compound, Shape, Vertex};
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
 };
 use std::sync::OnceLock;
 
@@ -47,7 +46,7 @@ pub(super) fn vertex_compound() -> Shape {
 }
 
 /// The name of a fake entity (empty for another object).
-fn entity_name(ent: &Handle<StandardTransient>) -> String {
+fn entity_name(ent: &Handle<dyn Transient>) -> String {
     ent.cast::<FakeEntity>()
         .get()
         .map(|e| e.name.read().clone())
@@ -57,20 +56,21 @@ fn entity_name(ent: &Handle<StandardTransient>) -> String {
 /// The reading actor of the fake norm.
 #[derive(Default)]
 pub(super) struct FakeReadActor {
-    base: TransferActorOfTransientProcess,
+    base: TransferActor<TransferTransientKind>,
+    processing: TransferShapeProcessing,
 }
-impl_transient!(FakeReadActor, "Fake_ReadActor", TransferActorOfTransientProcess, base, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
+impl_transient!(FakeReadActor, "Fake_ReadActor", dyn TransferActorOfTransientProcessOps, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
 
 impl TransferActorOps<TransferTransientKind> for FakeReadActor {
     fn actor(&self) -> &TransferActor<TransferTransientKind> {
-        self.base.actor()
+        &self.base
     }
-    fn recognize(&self, start: &Handle<StandardTransient>) -> bool {
+    fn recognize(&self, start: &Handle<dyn Transient>) -> bool {
         start.cast::<FakeEntity>().is_some()
     }
     fn transferring(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<dyn TransferProcessOps<TransferTransientKind>>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -80,11 +80,11 @@ impl TransferActorOps<TransferTransientKind> for FakeReadActor {
 
 impl TransferActorOfTransientProcessOps for FakeReadActor {
     fn shape_processing(&self) -> &TransferShapeProcessing {
-        self.base.shape_processing()
+        &self.processing
     }
     fn transfer(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         _tp: &Handle<TransferTransientProcess>,
         _progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -94,7 +94,7 @@ impl TransferActorOfTransientProcessOps for FakeReadActor {
         }
         if name.starts_with('s') {
             return Ok(
-                Handle::new(TransferBRepShapeBinder::with_result(&vertex_compound())).cast(),
+                Handle::new(TransferBRepShapeBinder::with_result(&vertex_compound())).into_upcast(),
             );
         }
         Ok(self.transient_result(start).cast())
@@ -104,13 +104,15 @@ impl TransferActorOfTransientProcessOps for FakeReadActor {
 /// The writing actor of the fake norm.
 #[derive(Default)]
 pub(super) struct FakeWriteActor {
-    base: TransferActorOfFinderProcess,
+    base: TransferActor<TransferFinderKind>,
+    processing: TransferShapeProcessing,
+    mode: SharedState<i32>,
 }
-impl_transient!(FakeWriteActor, "Fake_WriteActor", TransferActorOfFinderProcess, base, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps]);
+impl_transient!(FakeWriteActor, "Fake_WriteActor", dyn TransferActorOfFinderProcessOps, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps]);
 
 impl TransferActorOps<TransferFinderKind> for FakeWriteActor {
     fn actor(&self) -> &TransferActor<TransferFinderKind> {
-        self.base.actor()
+        &self.base
     }
     fn recognize(&self, _start: &Handle<dyn TransferFinder>) -> bool {
         true
@@ -127,10 +129,10 @@ impl TransferActorOps<TransferFinderKind> for FakeWriteActor {
 
 impl TransferActorOfFinderProcessOps for FakeWriteActor {
     fn shape_processing(&self) -> &TransferShapeProcessing {
-        self.base.shape_processing()
+        &self.processing
     }
     fn mode_trans_state(&self) -> &SharedState<i32> {
-        self.base.mode_trans_state()
+        &self.mode
     }
     fn transfer(
         &self,
@@ -144,10 +146,9 @@ impl TransferActorOfFinderProcessOps for FakeWriteActor {
 
 /// The fake controller.
 pub(super) struct FakeController {
-    transient: StandardTransient,
     base: XSControlControllerBase,
 }
-impl_transient!(FakeController, "Fake_Controller", StandardTransient, transient, interfaces: [dyn XSControlController]);
+impl_transient!(FakeController, "Fake_Controller", dyn Transient, interfaces: [dyn XSControlController]);
 
 impl XSControlController for FakeController {
     fn controller_base(&self) -> &XSControlControllerBase {
@@ -164,13 +165,9 @@ pub(super) fn fake_controller(long: &str, short: &str) -> Handle<dyn XSControlCo
     let base = XSControlControllerBase::new(long, short).expect("the standard statics are defined");
     base.set_adaptor_library(&fake_work_library());
     base.set_adaptor_protocol(&fake_protocol());
-    base.set_adaptor_read(&Handle::new(FakeReadActor::default()).cast());
-    base.set_adaptor_write(&Handle::new(FakeWriteActor::default()).cast());
-    let ctl: Handle<dyn XSControlController> = Handle::new(FakeController {
-        transient: StandardTransient::default(),
-        base,
-    })
-    .cast();
+    base.set_adaptor_read(&Handle::new(FakeReadActor::default()).into_upcast());
+    base.set_adaptor_write(&Handle::new(FakeWriteActor::default()).into_upcast());
+    let ctl: Handle<dyn XSControlController> = Handle::new(FakeController { base }).into_upcast();
     ctl.controller_base().bind_self(&ctl);
     ctl
 }

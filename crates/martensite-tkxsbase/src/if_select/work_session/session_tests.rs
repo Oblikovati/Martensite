@@ -11,13 +11,13 @@ use crate::if_select::{
 };
 use crate::interface::test_norm::{fake_chain, fake_protocol};
 use crate::interface::{InterfaceParamType, InterfaceStatic};
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
 use martensite_tkernel::tcollection::HAsciiString;
 
 /// A session loaded with the fake chain and the fake work library.
 pub(super) fn loaded() -> (
     IFSelectWorkSession,
-    Vec<Handle<StandardTransient>>,
+    Vec<Handle<dyn Transient>>,
     Handle<FakeWorkLibrary>,
 ) {
     loaded_with(false)
@@ -29,7 +29,7 @@ pub(super) fn loaded_with(
     stats: bool,
 ) -> (
     IFSelectWorkSession,
-    Vec<Handle<StandardTransient>>,
+    Vec<Handle<dyn Transient>>,
     Handle<FakeWorkLibrary>,
 ) {
     let session = IFSelectWorkSession::new();
@@ -117,7 +117,8 @@ fn session_settings_and_model() {
     );
     session.set_loaded_file("f.stp");
     assert_eq!(session.loaded_file().as_bytes(), b"f.stp");
-    let sign: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(false)).cast();
+    let sign: Handle<dyn IFSelectSignature> =
+        Handle::new(IFSelectSignType::new(false)).into_upcast();
     session.set_sign_type(&sign);
     assert!(session.sign_type() == sign && session.named_item("xst-sign-type").is_some());
     session.set_sign_type(&Handle::default());
@@ -150,10 +151,10 @@ fn session_reads() {
 #[test]
 fn session_items_and_names() {
     let (session, _, _) = loaded();
-    let roots: Handle<StandardTransient> = Handle::new(IFSelectSelectModelRoots::new()).cast();
+    let roots: Handle<dyn Transient> = Handle::new(IFSelectSelectModelRoots::new()).into_upcast();
     assert_eq!(session.add_named_item("roots", &roots, true).unwrap(), 1);
     assert_eq!(session.add_named_item("#x", &roots, true).unwrap(), 0);
-    let all: Handle<StandardTransient> = Handle::new(IFSelectSelectModelEntities::new()).cast();
+    let all: Handle<dyn Transient> = Handle::new(IFSelectSelectModelEntities::new()).into_upcast();
     assert_eq!(session.add_item(&all, true).unwrap(), 2);
     assert!(session.named_item("roots") == roots && session.named_item("#2") == all);
     assert_eq!(
@@ -192,7 +193,7 @@ fn session_items_and_names() {
 #[test]
 fn session_item_labels_and_lists() {
     let (session, _, _) = loaded();
-    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).cast();
+    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).into_upcast();
     session.add_named_item("glob", &disp.cast(), true).unwrap();
     assert_eq!(
         session.share_out().nb_dispatches(),
@@ -200,16 +201,28 @@ fn session_item_labels_and_lists() {
         "an active dispatch joins the share-out"
     );
     session
-        .add_item(&Handle::new(IFSelectModifReorder::new(true)).cast(), true)
+        .add_item(
+            &Handle::new(IFSelectModifReorder::new(true)).into_upcast(),
+            true,
+        )
         .unwrap();
     session
-        .add_item(&Handle::new(IFSelectTransformStandard::new()).cast(), true)
+        .add_item(
+            &Handle::new(IFSelectTransformStandard::new()).into_upcast(),
+            true,
+        )
         .unwrap();
     session
-        .add_item(&Handle::new(IFSelectSignType::new(false)).cast(), true)
+        .add_item(
+            &Handle::new(IFSelectSignType::new(false)).into_upcast(),
+            true,
+        )
         .unwrap();
     session
-        .add_item(&Handle::new(IFSelectSelectModelRoots::new()).cast(), true)
+        .add_item(
+            &Handle::new(IFSelectSelectModelRoots::new()).into_upcast(),
+            true,
+        )
         .unwrap();
     let labels: Vec<String> = (1..=5).map(|i| text(&session.item_label(i))).collect();
     assert_eq!(labels[0], "Dispatch:One File for All Input");
@@ -279,7 +292,8 @@ fn session_parameters() {
             .unwrap()
             .is_null()
     );
-    let sign: Handle<dyn IFSelectSignature> = Handle::new(IFSelectSignType::new(false)).cast();
+    let sign: Handle<dyn IFSelectSignature> =
+        Handle::new(IFSelectSignType::new(false)).into_upcast();
     session.add_item(&sign.cast(), true).unwrap();
     assert!(session.signature(session.item_ident(&sign.cast())) == sign);
     assert_eq!(session.sign_value(&sign, &ents[0]), "Fake_Entity");

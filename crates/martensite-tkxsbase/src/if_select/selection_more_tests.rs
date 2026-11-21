@@ -5,17 +5,17 @@ use crate::interface::test_norm::{FakeEntity, fake_chain};
 use crate::interface::{InterfaceEntityIterator, InterfaceGraph};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
     tcollection::AsciiString,
 };
 
-fn chain() -> (InterfaceGraph, Vec<Handle<StandardTransient>>) {
+fn chain() -> (InterfaceGraph, Vec<Handle<dyn Transient>>) {
     let (model, ents) = fake_chain();
     (InterfaceGraph::new(&model, true).unwrap(), ents)
 }
 
 fn all() -> Handle<dyn IFSelectSelection> {
-    Handle::new(IFSelectSelectModelEntities::new()).cast()
+    Handle::new(IFSelectSelectModelEntities::new()).into_upcast()
 }
 
 fn param(value: i32) -> Handle<IFSelectIntParam> {
@@ -119,10 +119,11 @@ fn suites() {
     let suite = IFSelectSelectSuite::new();
     let start = IFSelectSelectPointed::new();
     start.set_entity(&ents[3]);
-    assert!(suite.add_input(&Handle::new(start).cast()) && !suite.add_input(&all()));
-    let shared: Handle<dyn IFSelectSelectDeduct> = Handle::new(IFSelectSelectShared::new()).cast();
+    assert!(suite.add_input(&Handle::new(start).into_upcast()) && !suite.add_input(&all()));
+    let shared: Handle<dyn IFSelectSelectDeduct> =
+        Handle::new(IFSelectSelectShared::new()).into_upcast();
     suite.add_next(&shared);
-    suite.add_next(&Handle::new(IFSelectSelectShared::new()).cast());
+    suite.add_next(&Handle::new(IFSelectSelectShared::new()).into_upcast());
     assert_eq!(suite.nb_items(), 2);
     assert!(suite.item(1).unwrap() == shared && suite.item(3).is_err());
     assert_eq!(
@@ -134,16 +135,15 @@ fn suites() {
     assert_eq!(suite.label().as_bytes(), b"chain");
     let other = IFSelectSelectSuite::new();
     assert!(other.add_input(&shared.cast()) && other.nb_items() == 1 && !other.has_input());
-    other.add_previous(&Handle::new(IFSelectSelectSharing::new()).cast());
+    other.add_previous(&Handle::new(IFSelectSelectSharing::new()).into_upcast());
     assert_eq!(other.nb_items(), 2);
 }
 
 /// An exploration of the shared entities.
 struct FakeExplore {
-    transient: StandardTransient,
     base: IFSelectSelectExploreBase,
 }
-impl_transient!(FakeExplore, "Fake_Explore", dyn IFSelectSelectExplore, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
+impl_transient!(FakeExplore, "Fake_Explore", dyn IFSelectSelectExplore, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
 
 impl IFSelectSelectDeduct for FakeExplore {
     fn deduct_base(&self) -> &IFSelectSelectDeductBase {
@@ -158,7 +158,7 @@ impl IFSelectSelectExplore for FakeExplore {
     fn explore(
         &self,
         _level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
@@ -186,12 +186,11 @@ impl IFSelectSelection for FakeExplore {
 fn explorations() {
     let (g, ents) = chain();
     let recursive = FakeExplore {
-        transient: StandardTransient::default(),
         base: IFSelectSelectExploreBase::new(0),
     };
     let start = IFSelectSelectPointed::new();
     start.set_entity(&ents[3]);
-    recursive.set_input(&Handle::new(start).cast());
+    recursive.set_input(&Handle::new(start).into_upcast());
     assert_eq!(
         recursive.root_result(&g).unwrap().content(),
         vec![ents[0].clone(), ents[1].clone()],
@@ -202,7 +201,6 @@ fn explorations() {
         (0, &b"(Recursive) Shareds"[..])
     );
     let one = FakeExplore {
-        transient: StandardTransient::default(),
         base: IFSelectSelectExploreBase::new(1),
     };
     one.set_input(&all());
@@ -217,10 +215,9 @@ fn explorations() {
 /// A list selection over the entities shared by a fake entity.
 #[derive(Default)]
 struct FakeList {
-    transient: StandardTransient,
     base: IFSelectSelectAnyListBase,
 }
-impl_transient!(FakeList, "Fake_List", dyn IFSelectSelectAnyList, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectAnyList]);
+impl_transient!(FakeList, "Fake_List", dyn IFSelectSelectAnyList, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectAnyList]);
 
 impl IFSelectSelectDeduct for FakeList {
     fn deduct_base(&self) -> &IFSelectSelectDeductBase {
@@ -233,7 +230,7 @@ impl IFSelectSelectAnyList for FakeList {
         &self.base
     }
     fn keep_input_entity(&self, _iter: &mut InterfaceEntityIterator) {}
-    fn nb_items(&self, ent: &Handle<StandardTransient>) -> i32 {
+    fn nb_items(&self, ent: &Handle<dyn Transient>) -> i32 {
         ent.cast::<FakeEntity>()
             .get()
             .map_or(0, |e| e.shared.read().len() as i32)
@@ -242,7 +239,7 @@ impl IFSelectSelectAnyList for FakeList {
         &self,
         n1: i32,
         n2: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         res: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let shared = ent
@@ -285,7 +282,7 @@ fn any_lists() {
     );
     let one = IFSelectSelectPointed::new();
     one.set_entity(&ents[2]);
-    list.set_input(&Handle::new(one).cast());
+    list.set_input(&Handle::new(one).into_upcast());
     assert_eq!(list.root_result(&g).unwrap().nb_entities(), 2);
     assert_eq!(list.label().as_bytes(), b"In List Shared (no 0)");
     list.any_list_base().range.set_one(&param(2));

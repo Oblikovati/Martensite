@@ -3,16 +3,16 @@
 use super::{InterfaceCheck, InterfaceGTool, InterfaceInterfaceModel};
 use martensite_tkernel::{
     ncollection::{DataMap, IndexedMap},
-    standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::sync::{OnceLock, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// The private fields of `InterfaceInterfaceModel`, in the native order.
 pub(super) struct ModelState {
-    pub(super) theentities: IndexedMap<Handle<StandardTransient>>,
-    pub(super) thereports: DataMap<i32, Handle<StandardTransient>>,
-    pub(super) therepch: DataMap<i32, Handle<StandardTransient>>,
+    pub(super) theentities: IndexedMap<Handle<dyn Transient>>,
+    pub(super) thereports: DataMap<i32, Handle<dyn Transient>>,
+    pub(super) therepch: DataMap<i32, Handle<dyn Transient>>,
     pub(super) thecheckstx: Handle<InterfaceCheck>,
     pub(super) thechecksem: Handle<InterfaceCheck>,
     pub(super) haschecksem: bool,

@@ -3,7 +3,7 @@
 use super::MoniToolAttrList;
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Handle, RuntimeType, SharedState, StandardTransient, Transient},
+    standard::{Handle, RuntimeType, SharedState, Transient},
 };
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
@@ -18,11 +18,11 @@ pub struct MoniToolElementBase {
 /// (`Equates`) and gives the hash code stored at creation (`GetHashCode`).
 ///
 /// ```
-/// use martensite_tkernel::{impl_transient, standard::{Handle, StandardTransient}};
+/// use martensite_tkernel::{impl_transient, standard::Handle};
 /// use martensite_tkxsbase::moni_tool::{MoniToolElement, MoniToolElementBase};
 /// #[derive(Default)]
-/// struct Key { transient: StandardTransient, base: MoniToolElementBase }
-/// impl_transient!(Key, "Doc_Key", dyn MoniToolElement, transient, interfaces: [dyn MoniToolElement]);
+/// struct Key { base: MoniToolElementBase }
+/// impl_transient!(Key, "Doc_Key", dyn MoniToolElement, interfaces: [dyn MoniToolElement]);
 /// impl MoniToolElement for Key {
 ///     fn element_base(&self) -> &MoniToolElementBase { &self.base }
 ///     fn equates(&self, other: &Handle<dyn MoniToolElement>) -> bool { other.cast::<Key>().is_some() }
@@ -62,7 +62,7 @@ pub trait MoniToolElement: Transient {
         self.element_base().theattrib.write()
     }
 }
-impl_transient_interface!(dyn MoniToolElement, "MoniToolElement", StandardTransient);
+impl_transient_interface!(dyn MoniToolElement, "MoniToolElement", dyn Transient);
 
 #[cfg(test)]
 mod tests {
@@ -71,11 +71,10 @@ mod tests {
 
     #[derive(Default)]
     struct IntElement {
-        transient: StandardTransient,
         base: MoniToolElementBase,
         value: i32,
     }
-    impl_transient!(IntElement, "Test_IntElement", dyn MoniToolElement, transient, interfaces: [dyn MoniToolElement]);
+    impl_transient!(IntElement, "Test_IntElement", dyn MoniToolElement, interfaces: [dyn MoniToolElement]);
     impl MoniToolElement for IntElement {
         fn element_base(&self) -> &MoniToolElementBase {
             &self.base

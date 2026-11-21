@@ -11,13 +11,13 @@ use crate::interface::{
 };
 use martensite_tkernel::{
     message::ProgressRange,
-    standard::{Handle, StandardTransient},
+    standard::{Handle, StandardTransient, Transient},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// A session of the fake norm on a model of four roots: two giving shapes ("s1",
 /// "s2"), one giving itself ("p") and one failing ("fail").
-pub(super) fn reading_session() -> (Handle<XSControlWorkSession>, Vec<Handle<StandardTransient>>) {
+pub(super) fn reading_session() -> (Handle<XSControlWorkSession>, Vec<Handle<dyn Transient>>) {
     let ws = XSControlWorkSession::new();
     ws.set_controller(&fake_controller("FAKE-READ", "frd"))
         .unwrap();
@@ -129,11 +129,11 @@ fn select_for_transfer_keeps_the_recognized_entities() {
     let (ws, ents) = reading_session();
     let model = ws.model();
     model
-        .add_entity(&Handle::new(StandardTransient::default()))
+        .add_entity(&Handle::new(StandardTransient).into_upcast::<dyn Transient>())
         .unwrap();
     let sel = XSControlSelectForTransfer::with_reader(&reader(&ws));
     let input: Handle<dyn IFSelectSelection> =
-        Handle::new(IFSelectSelectModelEntities::new()).cast();
+        Handle::new(IFSelectSelectModelEntities::new()).into_upcast();
     sel.set_input(&input);
     let g = InterfaceGraph::new(&model, true).unwrap();
     assert_eq!(sel.root_result(&g).unwrap().content().len(), ents.len());

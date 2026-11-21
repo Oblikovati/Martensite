@@ -2,7 +2,7 @@
 use super::{InterfaceCheck, InterfaceCheckStatus};
 use martensite_tkernel::{
     message::Msg,
-    standard::{Handle, StandardTransient},
+    standard::{Handle, StandardTransient, Transient},
     tcollection::{AsciiString, HAsciiString},
 };
 
@@ -57,9 +57,10 @@ impl InterfaceCheck {
 
 #[test]
 fn entity_and_clear() {
-    let check = InterfaceCheck::with_entity(&Handle::new(StandardTransient::default()));
+    let check =
+        InterfaceCheck::with_entity(&Handle::new(StandardTransient).into_upcast::<dyn Transient>());
     assert!(check.has_entity());
-    let other = Handle::new(StandardTransient::default());
+    let other = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
     check.get_entity(&other);
     assert!(check.entity() != other);
     check.add_fail_text("x", "y");
