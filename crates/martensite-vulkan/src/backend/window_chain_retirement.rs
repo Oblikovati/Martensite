@@ -1,4 +1,4 @@
-//! Replaced swapchains stay alive until their own presentation and acquisition fences signal,
+//! Replaced swapchains stay alive until their own presentation fences signal,
 //! so a resize does not wait for the display to finish showing the old images (#594).
 use super::{frame_flight::FRAMES_IN_FLIGHT, window_chain::WindowChain};
 

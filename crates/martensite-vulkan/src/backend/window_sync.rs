@@ -8,10 +8,10 @@ pub(super) struct WindowSync {
     runtime: Arc<VulkanRuntime>,
     pub acquired: vk::Semaphore,
     pub rendered: vk::Semaphore,
-    pub acquire_fence: vk::Fence,
     pub present_fence: vk::Fence,
     pub pending: bool,
-    pub acquire_pending: bool,
+    /// The acquired semaphore has a pending signal that no queued work waits on yet.
+    pub acquired_unconsumed: bool,
     device_retired: bool,
 }
 impl WindowSync {
@@ -20,10 +20,9 @@ impl WindowSync {
             runtime: runtime.clone(),
             acquired: vk::Semaphore::null(),
             rendered: vk::Semaphore::null(),
-            acquire_fence: vk::Fence::null(),
             present_fence: vk::Fence::null(),
             pending: false,
-            acquire_pending: false,
+            acquired_unconsumed: false,
             device_retired: false,
         };
         sync.initialize_handles()?;
@@ -40,9 +39,6 @@ impl WindowSync {
             unsafe { device.create_semaphore(&vk::SemaphoreCreateInfo::default(), None) }
                 .map_err(|e| vk_error("create present semaphore", e))?;
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
-        self.acquire_fence = unsafe { device.create_fence(&vk::FenceCreateInfo::default(), None) }
-            .map_err(|e| vk_error("create acquisition fence", e))?;
-        // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         self.present_fence = unsafe { device.create_fence(&vk::FenceCreateInfo::default(), None) }
             .map_err(|e| vk_error("create presentation fence", e))?;
         Ok(())
@@ -56,15 +52,8 @@ impl WindowSync {
             WindowFenceOwner::Presentation,
         )
     }
-    pub fn wait_acquire(&mut self) -> Result<(), RenderError> {
-        super::window_sync_retirement::wait_window_fence(
-            &self.runtime,
-            self.acquire_fence,
-            &mut self.acquire_pending,
-            WindowFenceOwner::Acquisition,
-        )
-    }
-    /// Try both required completion signals once; `sync.try_retire()` preserves each unknown owner.
+    /// Try the presentation fence once and drain an unconsumed acquisition;
+    /// `sync.try_retire()` preserves each unknown owner.
     pub fn try_retire(&mut self) -> super::retirement_attempt::RetirementAttempt {
         let presented = super::window_sync_retirement::attempt_window_fence(
             &self.runtime,
@@ -72,13 +61,14 @@ impl WindowSync {
             &mut self.pending,
             WindowFenceOwner::Presentation,
         );
-        let acquired = super::window_sync_retirement::attempt_window_fence(
-            &self.runtime,
-            self.acquire_fence,
-            &mut self.acquire_pending,
-            WindowFenceOwner::Acquisition,
-        );
-        presented.join(acquired)
+        // Only an error between acquisition and submission leaves an unconsumed semaphore,
+        // and every caller on that path already waits for the device; drain it here.
+        if self.acquired_unconsumed {
+            return presented.join(super::retirement_attempt::RetirementAttempt::from(
+                self.drain_acquisition(),
+            ));
+        }
+        presented
     }
     /// Remember that the chain's graphics submissions have completed.
     fn qualify_queue_work(&mut self) {
@@ -87,6 +77,8 @@ impl WindowSync {
     }
     /// Retire both exact pending fence owners; `sync.retire_blocking()` never infers presentation from idle.
     pub fn retire_blocking(&mut self) {
+        let drained = self.drain_acquisition();
+        let _ = self.runtime.lifecycle.observe(drained);
         let outcome = super::window_sync_retirement::retire_window_fence(
             &self.runtime,
             self.present_fence,
@@ -94,13 +86,16 @@ impl WindowSync {
             WindowFenceOwner::Presentation,
         );
         let _ = self.runtime.lifecycle.observe(outcome);
-        let outcome = super::window_sync_retirement::retire_window_fence(
-            &self.runtime,
-            self.acquire_fence,
-            &mut self.acquire_pending,
-            WindowFenceOwner::Acquisition,
-        );
-        let _ = self.runtime.lifecycle.observe(outcome);
+    }
+    /// Consume an acquired semaphore that no queued work waits on, so its pending signal from
+    /// the presentation engine completes before the semaphore is reused or destroyed. Only an
+    /// error between acquisition and submission leaves one (#594); `sync.drain_acquisition()`.
+    fn drain_acquisition(&mut self) -> Result<(), RenderError> {
+        if !self.acquired_unconsumed {
+            return Ok(());
+        }
+        self.acquired_unconsumed = false;
+        super::window_acquisition_drain::drain(&self.runtime, self.acquired)
     }
 }
 
@@ -112,10 +107,10 @@ impl Drop for WindowSync {
         }
         // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
         unsafe {
-            for fence in [self.acquire_fence, self.present_fence] {
-                if fence != vk::Fence::null() {
-                    self.runtime.device().destroy_fence(fence, None);
-                }
+            if self.present_fence != vk::Fence::null() {
+                self.runtime
+                    .device()
+                    .destroy_fence(self.present_fence, None);
             }
             for semaphore in [self.acquired, self.rendered] {
                 if semaphore != vk::Semaphore::null() {

@@ -185,7 +185,7 @@ impl VulkanRenderer {
         self.encode_gui_window(frame, commands, resources, presenter, index)?;
         super::window_submission::submit(
             commands,
-            presenter.chain.as_ref().expect("acquired swapchain"),
+            presenter.chain.as_mut().expect("acquired swapchain"),
         )
     }
     /// Encode the same real window command graph; `renderer.encode_gui_window(frame, commands, resources, presenter, index)?` submits nothing itself.

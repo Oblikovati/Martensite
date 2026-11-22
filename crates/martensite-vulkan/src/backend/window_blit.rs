@@ -86,7 +86,7 @@ fn transition(
             .old_layout(vk::ImageLayout::UNDEFINED)
             .new_layout(vk::ImageLayout::TRANSFER_DST_OPTIMAL)
             // The acquired semaphore's wait is at TRANSFER; this source stage chains the
-            // layout transition after it, so no host wait on the acquire fence is needed (#594).
+            // layout transition after it; the acquire has no fence to wait on (#594).
             .src_stage_mask(vk::PipelineStageFlags2::TRANSFER)
             .dst_stage_mask(vk::PipelineStageFlags2::TRANSFER)
             .dst_access_mask(vk::AccessFlags2::TRANSFER_WRITE)

@@ -134,9 +134,7 @@ impl WindowPresenter {
     fn prepare_window_chain(&mut self, config: WindowConfig) -> Result<(), RenderError> {
         self.retiring.collect();
         if let Some(chain) = self.chain.as_mut() {
-            let slot = chain.sync.current_mut();
-            slot.wait_present()?;
-            slot.wait_acquire()?;
+            chain.sync.current_mut().wait_present()?;
         }
         if self
             .chain

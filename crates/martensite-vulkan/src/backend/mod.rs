@@ -325,6 +325,7 @@ mod gui_native_extent;
 mod line_device;
 mod point_sprite;
 mod subview_upload;
+mod window_acquisition_drain;
 mod window_blit;
 mod window_chain;
 mod window_chain_retirement;

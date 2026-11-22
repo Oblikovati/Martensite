@@ -21,7 +21,13 @@ impl WindowSubmissionSignals {
 }
 /// Queue the acquired-window frame without waiting (#594); `submit(commands, chain)?` uses one
 /// canonical semaphore layout, and the frame flight completes the work later.
-pub(super) fn submit(commands: &CommandSubmission, chain: &WindowChain) -> Result<(), RenderError> {
+pub(super) fn submit(
+    commands: &CommandSubmission,
+    chain: &mut WindowChain,
+) -> Result<(), RenderError> {
     let signals = WindowSubmissionSignals::new(chain);
-    commands.submit_synced(&signals.waits, &signals.signals)
+    commands.submit_synced(&signals.waits, &signals.signals)?;
+    // The queued submission now waits on the acquired semaphore; its completion covers it.
+    chain.sync.current_mut().acquired_unconsumed = false;
+    Ok(())
 }

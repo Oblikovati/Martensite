@@ -62,11 +62,12 @@ impl WindowConfig {
         })?;
         let format = window_support::surface_format(&formats)?;
         validate_blit(runtime, format.format)?;
+        let mode = window_support::present_mode(&modes, vsync)?;
         Ok(Self {
             extent: window_support::extent(&cap, requested)?,
             format,
-            mode: window_support::present_mode(&modes, vsync)?,
-            count: window_support::image_count(&cap),
+            mode,
+            count: window_support::image_count(&cap, mode),
             transform: cap.current_transform,
             alpha,
         })
@@ -172,10 +173,10 @@ impl WindowChain {
                 self.handle,
                 1_000_000_000,
                 sync.acquired,
-                sync.acquire_fence,
+                vk::Fence::null(),
             )
         }?;
-        sync.acquire_pending = true;
+        sync.acquired_unconsumed = true;
         self.acquired_index = Some(index);
         self.stale = suboptimal;
         Ok(index)
