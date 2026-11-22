@@ -39,6 +39,11 @@ pub(crate) fn frame_for_view(
     });
     let clear = view_clear_color(view);
     let mut frame = RenderFrame::with_layers_and_grid(extent[0], extent[1], clear, passes, grid)?;
+    // The retained main-pass key checks the opaque prefix. Immediate layers keep
+    // their original blend state, including a translucent dynamic highlight.
+    if extras.trihedron.is_none() && frame.shader_grid.is_none() {
+        frame.immediate_start = Some(main_layers);
+    }
     frame.colored_quad = colored_quad;
     frame.raytrace = raytrace;
     frame.environment = environment;

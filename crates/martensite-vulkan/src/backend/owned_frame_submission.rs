@@ -35,7 +35,7 @@ impl VulkanRenderer {
         resources
             .geometry_transfers
             .residency
-            .publish(resources.draws.is_empty());
+            .publish(resources.scene_empty());
         Ok(resources)
     }
 }

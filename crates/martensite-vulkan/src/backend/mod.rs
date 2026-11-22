@@ -202,6 +202,7 @@ mod fixed_vertex_sources;
 mod frame;
 mod frame_draw_presentation;
 mod frame_targets;
+pub(crate) mod immediate_main_record;
 #[cfg(feature = "command-state-diagnostics")]
 mod geometry_command_diagnostic;
 mod geometry_residency;
@@ -272,7 +273,9 @@ impl VulkanRenderer {
     fn render_owned_frame(&mut self, frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
         let resources = self.completed_owned_frame(frame)?;
         let _readback = self.runtime.work.enter(WorkPhase::Readback);
-        resources.capture()
+        let capture = resources.capture()?;
+        immediate_main_record::remember(frame, &resources);
+        Ok(capture)
     }
     /// Inspect persistent admission; `renderer.device_state()` never polls execution progress.
     pub fn device_state(&self) -> crate::RenderDeviceState {

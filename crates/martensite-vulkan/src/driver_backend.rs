@@ -8,6 +8,10 @@ pub(crate) enum DriverBackend {
     Injected(Box<dyn RenderBackend + Send + Sync>),
 }
 impl DriverBackend {
+    pub(super) fn allows_main_copy(&self) -> bool {
+        matches!(self, Self::Vulkan(renderer) if renderer.allows_main_copy())
+    }
+
     /// Selected device capacities; injected backends have no Vulkan device.
     pub fn device_limits(&self) -> Option<crate::RenderDeviceLimits> {
         match self {

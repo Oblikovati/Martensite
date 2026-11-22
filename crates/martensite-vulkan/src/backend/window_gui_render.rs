@@ -89,7 +89,7 @@ impl VulkanRenderer {
         if let Err(primary) = owned.resources.validate_completion() {
             return Err(owned.reject(self, operation.presenter, primary));
         }
-        let empty_frame = owned.resources.draws.is_empty();
+        let empty_frame = owned.resources.scene_empty();
         owned
             .resources
             .geometry_transfers
@@ -106,7 +106,9 @@ impl VulkanRenderer {
             return Err(owned.reject(self, operation.presenter, primary));
         }
         let _readback = self.runtime.work.enter(WorkPhase::Readback);
-        owned.resources.capture()
+        let capture = owned.resources.capture()?;
+        super::immediate_main_record::remember(frame, &owned.resources);
+        Ok(capture)
     }
     fn prepare_owned_window(
         &self,

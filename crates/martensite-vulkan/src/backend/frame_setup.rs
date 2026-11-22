@@ -1,6 +1,8 @@
 //! Frame stages retain draw-before-OIT failure cleanup and ordered target construction.
+use super::super::frame_targets::{FrameTargetPool, RasterTargetLease};
 use super::super::geometry_transfer::GeometryTransfers;
 use super::super::host_upload_pages::FrameUploadPages;
+use super::super::immediate_main_record::{MainLayerImages, MainLayerSnapshot};
 use super::super::{
     buffer::DeviceBuffer, memory_selection::HostBufferAccess, pipeline_variants::RasterPipelines,
     runtime::VulkanRuntime,
@@ -10,6 +12,7 @@ use super::super::{
     retained_submission::RetirementStore,
 };
 use super::{FrameDrawUploads, FrameResources, UploadedDraw, check_extent, upload_draw};
+use crate::immediate_main::{ImmediateMainPlan, MainSeed};
 use crate::{RenderError, RenderFrame};
 use ash::vk;
 use std::sync::Arc;
@@ -24,6 +27,14 @@ pub(super) struct PreparedFramePlan {
     stencil: crate::stencil_plan::StencilPlan,
     dimensions: FrameDimensions,
     raster: OitResourcePlan,
+    restore: Option<PreparedMainRestore>,
+    first_draw: usize,
+    can_seed_main: bool,
+}
+struct PreparedMainRestore {
+    start: usize,
+    source: MainLayerImages,
+    destination: RasterTargetLease,
 }
 struct FrameDimensions {
     extent: vk::Extent2D,
@@ -53,15 +64,63 @@ impl FrameSetup<'_> {
             .lit_only_commands
             .validate_frame(self.frame, initial_stencil)?;
         let stencil = crate::stencil_plan::StencilPlan::new(self.frame, initial_stencil);
+        let clean_alpha = alpha == Default::default();
         let fragment_alpha = FragmentAlphaPlan::new(self.frame, alpha);
         let dimensions = self.prepare_dimensions()?;
         let raster = self.raster_plan();
+        let (can_seed_main, restore) =
+            self.prepare_immediate(clean_alpha, raster.samples, &dimensions)?;
+        let first_draw = restore
+            .as_ref()
+            .map_or(0, |restore| self.first_immediate_draw(restore.start));
         Ok(PreparedFramePlan {
             stencil,
             fragment_alpha,
             dimensions,
             raster,
+            restore,
+            first_draw,
+            can_seed_main,
         })
+    }
+    fn first_immediate_draw(&self, start: usize) -> usize {
+        self.frame
+            .layers
+            .get(start)
+            .map_or(self.frame.draws.len(), |layer| layer.draw_range.start)
+    }
+    fn prepare_immediate(
+        &self,
+        clean_alpha: bool,
+        samples: vk::SampleCountFlags,
+        dimensions: &FrameDimensions,
+    ) -> Result<(bool, Option<PreparedMainRestore>), RenderError> {
+        let Some(plan) = self.frame.immediate_main.as_ref().filter(|_| {
+            !self.pipeline.stencil
+                && clean_alpha
+                && samples == vk::SampleCountFlags::TYPE_1
+                && FrameTargetPool::can_reserve_main(dimensions.bytes)
+        }) else {
+            return Ok((false, None));
+        };
+        let pool = &self.pipeline.frame_targets;
+        let Some((start, ticket, source)) = plan.restore().and_then(|(start, ticket)| {
+            pool.pin_main(ticket).map(|source| (start, ticket, source))
+        }) else {
+            return Ok((true, None));
+        };
+        if let Some(destination) = self.optional_main_targets(dimensions.attachment, false)? {
+            return Ok((
+                false,
+                Some(PreparedMainRestore {
+                    start,
+                    source,
+                    destination,
+                }),
+            ));
+        }
+        pool.revoke_main(ticket);
+        Ok((false, None))
     }
     fn prepare_dimensions(&self) -> Result<FrameDimensions, RenderError> {
         self.pipeline.surface_images.prune()?;
@@ -102,8 +161,7 @@ impl FrameSetup<'_> {
             geometry: GeometryTransfers::new(&self.pipeline.geometry_residency),
             storage: FrameUploadPages::storage(&self.pipeline.frame_storage_pages),
         };
-        let mut draws =
-            self.upload_draws(plan.dimensions.extent, plan.raster.samples, &mut uploads)?;
+        let mut draws = self.upload_draws(plan, &mut uploads)?;
         self.select_alpha_writes(&mut draws)?;
         self.select_multisample(&mut draws, plan)?;
         self.upload_oit(&mut draws, oit.as_ref())?;
@@ -125,20 +183,18 @@ impl FrameSetup<'_> {
     }
     fn upload_draws(
         &self,
-        extent: vk::Extent2D,
-        samples: vk::SampleCountFlags,
+        plan: &PreparedFramePlan,
         uploads: &mut FrameDrawUploads<'_>,
     ) -> Result<Vec<UploadedDraw>, RenderError> {
-        self.frame
-            .draws
+        self.frame.draws[plan.first_draw..]
             .iter()
             .map(|draw| {
                 upload_draw(
                     self.runtime,
                     draw,
                     self.pipeline,
-                    extent,
-                    samples,
+                    plan.dimensions.extent,
+                    plan.raster.samples,
                     self.retirements,
                     uploads,
                 )
@@ -216,7 +272,7 @@ impl FrameSetup<'_> {
             self.runtime,
             self.pipeline,
             draws,
-            &plan.fragment_alpha,
+            &plan.fragment_alpha.during[plan.first_draw..],
             oit,
             plan.raster.samples,
             self.frame.raster.alpha_to_coverage,
@@ -239,21 +295,87 @@ impl FrameSetup<'_> {
             HostBufferAccess::Readback,
         )
     }
+
+    fn snapshot_main(
+        &self,
+        start: usize,
+        dimensions: &FrameDimensions,
+    ) -> Result<Option<MainLayerSnapshot>, RenderError> {
+        let Some(targets) = self.optional_main_targets(dimensions.attachment, true)? else {
+            return Ok(None);
+        };
+        Ok(targets.main_publication.map(|ticket| MainLayerSnapshot {
+            start,
+            ticket,
+            images: MainLayerImages::new(targets.color, targets.depth),
+        }))
+    }
+    fn optional_main_targets(
+        &self,
+        extent: vk::Extent2D,
+        reserve: bool,
+    ) -> Result<Option<RasterTargetLease>, RenderError> {
+        use super::super::device_lifecycle::contains_device_loss;
+        let targets = self.pipeline.frame_targets.raster(
+            self.runtime,
+            extent,
+            false,
+            vk::SampleCountFlags::TYPE_1,
+            [true; 2],
+            reserve,
+        );
+        match self.runtime.lifecycle.observe(targets) {
+            Ok(targets) => Ok(Some(targets)),
+            Err(error) if contains_device_loss(&error) => Err(error),
+            // This is optional storage. No rendering or upload was submitted for it.
+            Err(_) => Ok(None),
+        }
+    }
+    fn frame_targets(
+        &self,
+        plan: &PreparedFramePlan,
+        seed: Option<&MainSeed>,
+    ) -> Result<(RasterTargetLease, Option<MainLayerSnapshot>), RenderError> {
+        if let Some(start) = seed.and_then(|seed| seed.snapshot_start)
+            && let Some(targets) = self.optional_main_targets(plan.dimensions.attachment, false)?
+        {
+            return Ok((targets, self.snapshot_main(start, &plan.dimensions)?));
+        }
+        let targets = self.pipeline.frame_targets.raster(
+            self.runtime,
+            plan.dimensions.attachment,
+            self.pipeline.stencil,
+            plan.raster.samples,
+            [!self.frame.subview_blits.is_empty(), false],
+            seed.is_some_and(|seed| seed.snapshot_start.is_none()),
+        )?;
+        Ok((targets, None))
+    }
 }
 
 impl PreparedFrameUploads {
     fn allocate(
         self,
         setup: &FrameSetup<'_>,
-        plan: PreparedFramePlan,
+        mut plan: PreparedFramePlan,
     ) -> Result<FrameResources, RenderError> {
-        let targets = setup.pipeline.frame_targets.raster(
-            setup.runtime,
-            plan.dimensions.attachment,
-            setup.pipeline.stencil,
-            plan.raster.samples,
-            !setup.frame.subview_blits.is_empty(),
-        )?;
+        let (targets, immediate_source, main_snapshot) = match plan.restore.take() {
+            Some(restore) => (
+                restore.destination,
+                Some((restore.start, restore.source)),
+                None,
+            ),
+            None => {
+                let seed = setup
+                    .frame
+                    .immediate_main
+                    .as_ref()
+                    .filter(|_| plan.can_seed_main)
+                    .map(ImmediateMainPlan::seed);
+                let (targets, snapshot) = setup.frame_targets(&plan, seed)?;
+                (targets, None, snapshot)
+            }
+        };
         Ok(FrameResources {
             attachment_coordinates: setup.runtime.attachment_coordinates,
             fragment_alpha: plan.fragment_alpha,
@@ -265,9 +387,13 @@ impl PreparedFrameUploads {
             attachment_extent: plan.dimensions.attachment,
             color: targets.color,
             depth: targets.depth,
+            immediate_source,
+            main_publication: targets.main_publication,
+            main_snapshot,
             color_read: setup.readback(plan.dimensions.bytes)?,
             depth_read: setup.readback(plan.dimensions.bytes)?,
             draws: self.draws,
+            first_draw: plan.first_draw,
             geometry_transfers: self.geometry_transfers,
             grid: None,
             raytrace: None,

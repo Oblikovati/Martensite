@@ -347,3 +347,45 @@ fn add_indexed_triangle(
     scene.group.add_primitive_array(&array.upcast(), true);
     array
 }
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn live_immediate_redraw_restores_main_color_and_depth_then_reuses_its_target_pair() {
+    use martensite_tkservice::graphic3d::{
+        GRAPHIC3D_ZLAYER_ID_TOPMOST, Graphic3dGroupMembers, Graphic3dStructure,
+        Graphic3dStructureMembers, Graphic3dStructureSource,
+    };
+
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    let base = view.capture().unwrap();
+    scene.cview().redraw_immediate();
+    assert_eq!(view.capture().unwrap().rgba, base.rgba);
+
+    let overlay =
+        Graphic3dStructure::new(&scene.viewer.structure_manager(), &Handle::default()).unwrap();
+    let group = overlay.new_group().unwrap();
+    group.set_group_primitives_aspect(&scene::unlit_style([0., 1., 0., 1.]));
+    group.add_primitive_array(&scene.vertices.upcast(), true);
+    overlay.set_z_layer(GRAPHIC3D_ZLAYER_ID_TOPMOST);
+    overlay.display();
+
+    scene.cview().redraw_immediate();
+    let restored = view.capture().unwrap();
+    assert_ne!(restored.rgba, base.rgba);
+    // The first restore separates the transfer destination from the retained main pair.
+    assert_eq!(view.last_frame_work().images_created, 2);
+    scene.cview().redraw_immediate();
+    assert_eq!(view.last_frame_work().images_created, 0);
+
+    view.try_redraw().unwrap();
+    let full = view.capture().unwrap();
+    assert_eq!(restored.rgba, full.rgba);
+    assert_eq!(restored.depth, full.depth);
+    assert_clean_validation(&driver);
+}

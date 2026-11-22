@@ -9,6 +9,7 @@
 #![cfg_attr(test, allow(clippy::duplicate_mod))] // Unit tests share scene fixtures by path.
 #[allow(unsafe_code)]
 mod backend;
+mod immediate_main;
 mod device_close;
 pub use device_close::RenderDeviceCloseOutcome;
 mod device_failure;

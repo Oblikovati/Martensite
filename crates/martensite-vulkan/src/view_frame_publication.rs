@@ -45,14 +45,24 @@ impl Graphic3dRenderView {
     }
     /// Render the current view and retain errors for void Graphic3d callbacks; `render_view.try_redraw()?`.
     pub fn try_redraw(&self) -> Result<(), RenderError> {
+        self.try_redraw_mode(false)
+    }
+    pub(super) fn try_redraw_mode(&self, immediate: bool) -> Result<(), RenderError> {
+        if !immediate {
+            self.immediate_main.discard();
+        }
         let target = self.redraw_target_stamp();
         let stamp = self.gui_layers.read().target_stamp();
         if self.checked_gui_policy() && stamp.extent.is_some() {
             return self.checked_gui_redraw(stamp, target);
         }
         let epoch = self.gui_layers.read().epoch.clone();
-        let outcome = self.render_current();
-        self.publish_gui_outcome(&epoch, outcome, target)
+        let outcome = self.render_current(immediate);
+        let result = self.publish_gui_outcome(&epoch, outcome, target);
+        if result.is_err() {
+            self.immediate_main.discard();
+        }
+        result
     }
     pub(super) fn publish_gui_outcome(
         &self,

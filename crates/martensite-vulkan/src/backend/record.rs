@@ -39,8 +39,17 @@ pub(super) fn record_frame(
     super::vertex_output::reset(runtime, command, resources);
     #[cfg(feature = "raytrace-input-diagnostics")]
     super::raytrace_input_diagnostic::frame(command, resources, frame);
-    transition_targets(runtime, command, resources, false);
-    super::oit_record::record_layers(runtime, command, resources, frame);
+    let start = match &resources.immediate_source {
+        Some((start, images)) => {
+            images.restore(runtime, command, resources);
+            *start
+        }
+        None => {
+            transition_targets(runtime, command, resources, false);
+            0
+        }
+    };
+    super::oit_record::record_layers(runtime, command, resources, frame, start);
     transition_targets(runtime, command, resources, true);
     #[cfg(feature = "vertex-output-diagnostics")]
     super::vertex_output::host_barrier(runtime, command, resources);
@@ -68,14 +77,18 @@ fn read_attachments(
     );
     sync::host_barrier(runtime, command);
 }
-fn image_barrier(image: &TargetImage, readback: bool) -> vk::ImageMemoryBarrier2<'static> {
+pub(super) fn image_barrier(
+    image: &TargetImage,
+    readback: bool,
+    restored: bool,
+) -> vk::ImageMemoryBarrier2<'static> {
     let barrier = vk::ImageMemoryBarrier2::default()
         .image(image.handle)
         .subresource_range(image.range())
         .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
         .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED);
     if readback {
-        return readback_transition(barrier, image.aspect);
+        return readback_transition(barrier, image.aspect, restored);
     }
     attachment_transition(barrier)
 }
@@ -97,8 +110,14 @@ fn attachment_transition(barrier: vk::ImageMemoryBarrier2<'_>) -> vk::ImageMemor
 fn readback_transition(
     barrier: vk::ImageMemoryBarrier2<'_>,
     aspect: vk::ImageAspectFlags,
+    restored: bool,
 ) -> vk::ImageMemoryBarrier2<'_> {
-    let (stage, access) = attachment_write_scope(aspect);
+    let (mut stage, mut access) = attachment_write_scope(aspect);
+    if restored {
+        // A suffix without draws still needs to make the restored pixels visible.
+        stage |= vk::PipelineStageFlags2::COPY;
+        access |= vk::AccessFlags2::TRANSFER_WRITE;
+    }
     barrier
         .old_layout(vk::ImageLayout::ATTACHMENT_OPTIMAL)
         .new_layout(vk::ImageLayout::TRANSFER_SRC_OPTIMAL)
@@ -156,7 +175,9 @@ pub(super) fn record_draws_selected(
     let mut offsets = crate::polygon_offset::PolygonOffsetState::new(layer.polygon_offset);
     let mut culling = (crate::RenderFaceCulling::None, false);
     super::capping_record::set_culling(runtime, command, culling);
-    for (index, draw) in resources.draws[layer.draw_range.clone()].iter().enumerate() {
+    let start = layer.draw_range.start - resources.first_draw;
+    let end = layer.draw_range.end - resources.first_draw;
+    for (index, draw) in resources.draws[start..end].iter().enumerate() {
         let draw_index = layer.draw_range.start + index;
         if resources.stencil.clear_before[draw_index] {
             super::capping_record::clear_stencil(runtime, command, resources.attachment_extent);
@@ -364,14 +385,15 @@ fn transition_targets(
     resources: &FrameResources,
     readback: bool,
 ) {
+    let restored = resources.immediate_source.is_some();
     let mut barriers = vec![
-        image_barrier(&resources.color, readback),
-        image_barrier(&resources.depth, readback),
+        image_barrier(&resources.color, readback, restored),
+        image_barrier(&resources.depth, readback, restored),
     ];
     if !readback && let Some(targets) = &resources.multisample {
         barriers.extend([
-            image_barrier(&targets.color, false),
-            image_barrier(&targets.depth, false),
+            image_barrier(&targets.color, false, false),
+            image_barrier(&targets.depth, false, false),
         ]);
     }
     // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.

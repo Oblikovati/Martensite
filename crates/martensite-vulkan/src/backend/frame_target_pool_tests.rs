@@ -27,6 +27,78 @@ fn target_history_bounds_retained_generations_and_allocation_bytes() {
 }
 
 #[test]
+fn live_view_tickets_do_not_extend_the_attachment_budget() {
+    use super::{FrameTargetPool, RETAINED_GENERATIONS};
+    let renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let pool = FrameTargetPool::default();
+    let extent = vk::Extent2D {
+        width: 48,
+        height: 32,
+    };
+    let checkout = || {
+        pool.raster(
+            &renderer.runtime,
+            extent,
+            false,
+            vk::SampleCountFlags::TYPE_1,
+            [false; 2],
+            true,
+        )
+        .unwrap()
+    };
+    let tickets: Vec<_> = (0..RETAINED_GENERATIONS)
+        .map(|_| checkout().main_publication.unwrap())
+        .collect();
+    let before = renderer.work_ledger().totals();
+    let replacement = checkout().main_publication.unwrap();
+    assert_eq!(
+        renderer
+            .work_ledger()
+            .totals()
+            .since(&before)
+            .images_created,
+        0
+    );
+    assert!(pool.pin_main(&tickets[0]).is_none());
+    assert!(pool.pin_main(&tickets[1]).is_some());
+    assert!(pool.pin_main(&replacement).is_some());
+    let retained = pool.raster.lock().unwrap();
+    assert_eq!(retained.color.generations.len(), RETAINED_GENERATIONS);
+    assert_eq!(retained.depth.generations.len(), RETAINED_GENERATIONS);
+}
+
+#[test]
+fn read_write_copy_targets_also_serve_ordinary_redraws() {
+    use super::FrameTargetPool;
+    let renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let pool = FrameTargetPool::default();
+    let extent = vk::Extent2D {
+        width: 48,
+        height: 32,
+    };
+    let checkout = |copy| {
+        pool.raster(
+            &renderer.runtime,
+            extent,
+            false,
+            vk::SampleCountFlags::TYPE_1,
+            [copy; 2],
+            false,
+        )
+        .unwrap()
+    };
+    drop(checkout(false));
+    let copy = checkout(true);
+    let handles = (copy.color.handle, copy.depth.handle);
+    drop(copy);
+    let ordinary = checkout(false);
+    assert_eq!((ordinary.color.handle, ordinary.depth.handle), handles);
+    let retained = pool.raster.lock().unwrap();
+    assert_eq!(retained.color.generations.len(), 1);
+    assert_eq!(retained.depth.generations.len(), 1);
+}
+
+#[test]
 fn warmed_attachments_clear_each_frame_and_resize_once() {
     let mut renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
     let first = frame([10, 8], [1., 0., 0., 1.]);

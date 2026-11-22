@@ -74,6 +74,8 @@ pub struct RenderFrame {
     /// The active subviews' colour copies (GlView::blitSubviews), applied after the scene
     /// and before the flipped output: on the GPU for a presented frame, on the host capture.
     pub(crate) subview_blits: Vec<crate::subview_composition::RenderSubviewBlit>,
+    pub(crate) immediate_start: Option<usize>,
+    pub(crate) immediate_main: Option<crate::immediate_main::ImmediateMainPlan>,
 }
 /// One frame's shader grid: its position among the layer spans and its shader block.
 #[derive(Clone, Debug, PartialEq)]
@@ -178,6 +180,8 @@ impl RenderFrame {
             raytrace_observation: None,
             shadow_maps: None,
             subview_blits: Vec::new(),
+            immediate_start: None,
+            immediate_main: None,
             stencil_context: None,
             stencil_clear_value: 0,
             shader_grid,

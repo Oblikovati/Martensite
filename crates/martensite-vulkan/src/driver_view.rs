@@ -27,6 +27,8 @@ pub struct Graphic3dRenderView {
     presenter: SharedState<Option<crate::backend::WindowPresenter>>,
     window_error: SharedState<Option<RenderError>>,
     pub(crate) outcome: SharedState<Option<FramePublication>>,
+    immediate_main: Arc<crate::immediate_main::ImmediateMainCache>,
+    immediate_main_supported: std::sync::OnceLock<bool>,
     pub(crate) gui_layers: SharedState<crate::view_gui_layer::GuiLayerSlot>,
     raster_feedback: crate::raster_feedback::RasterFailureFeedback,
     stencil_feedback: crate::stencil_feedback::StencilFeedback,
@@ -109,6 +111,8 @@ impl Graphic3dRenderView {
             presenter: SharedState::default(),
             window_error: SharedState::default(),
             outcome: SharedState::default(),
+            immediate_main: Default::default(),
+            immediate_main_supported: std::sync::OnceLock::new(),
             gui_layers: SharedState::default(),
             raster_feedback: Default::default(),
             stencil_feedback: Default::default(),
@@ -138,7 +142,7 @@ impl Graphic3dRenderView {
     pub fn stencil_context_state(&self) -> crate::RenderStencilState {
         self.stencil_feedback.current()
     }
-    fn render_current(&self) -> Result<FrameCapture, RenderError> {
+    fn render_current(&self, immediate: bool) -> Result<FrameCapture, RenderError> {
         #[cfg(feature = "raytrace-input-diagnostics")]
         let observation = self.begin_raytrace_observation()?;
         self.with_measured_frame(|work| {
@@ -147,6 +151,17 @@ impl Graphic3dRenderView {
             frame.flip_output = self.retained.flips_output(&self.rendering_params());
             // redrawImmediate blits the subviews before the swap and the flipped output blit.
             frame.subview_blits = self.subview_blits(frame.extent());
+            if immediate
+                && frame.immediate_start.is_some()
+                && !self.checked_gui_policy()
+                && self.frame_hooks.read().is_none()
+                && scaled.is_none()
+                && *self
+                    .immediate_main_supported
+                    .get_or_init(|| self.device.read().allows_main_copy())
+            {
+                frame.immediate_main = self.immediate_main.plan(&frame);
+            }
             #[cfg(feature = "raytrace-input-diagnostics")]
             self.attach_raytrace_observation(&mut frame, observation.as_ref(), scaled.is_some());
             let mut capture = self.render_target(&frame)?;
@@ -309,6 +324,7 @@ impl Graphic3dCView for Graphic3dRenderView {
         self.retained.set_to_flip_output(flip);
     }
     fn remove(&self) {
+        self.immediate_main.discard();
         self.release_presenter();
         let retired = self.gui_layers.write().retire_removed();
         drop(retired);
@@ -319,12 +335,13 @@ impl Graphic3dCView for Graphic3dRenderView {
         self.finish_redraw(self.try_redraw());
     }
     fn redraw_immediate(&self) {
-        self.finish_redraw(self.try_redraw());
+        self.finish_redraw(self.try_redraw_mode(true));
     }
     fn resized(&self) {
         if self.reject_closed_resize() {
             return;
         }
+        self.immediate_main.discard();
         if self.gui_layers.write().resized() {
             self.invalidate_gui_capture();
         }
@@ -337,6 +354,7 @@ impl Graphic3dCView for Graphic3dRenderView {
         window: &Handle<dyn AspectWindow>,
         context: AspectRenderingContext,
     ) {
+        self.immediate_main.discard();
         self.release_presenter();
         // A subview shares its parent's device and renders offscreen (blit_subviews composes
         // it); only an external GL context stays unsupported.

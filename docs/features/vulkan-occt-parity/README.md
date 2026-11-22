@@ -253,6 +253,29 @@ launches with Mesa's own shader cache disabled. Each launch successfully rendere
 first frame. The driver supplied the cache bytes, and the live-device test verifies
 that a new device with the same cache identity can reload them.
 
+## Immediate redraw measurements
+
+The first immediate redraw establishes the main color and depth at the boundary
+before overlays. Warm immediate redraws reuse those images and prepare only the
+overlays. The attachment pool owns the retained images and can reclaim them when
+it reaches its existing budget. A view with a recycled ticket renders the main
+pass again. Native unlit and shaded AIS tests compare restored RGBA and depth
+against a full redraw.
+
+Five alternating release runs on CPUs 8–15, with 18 operations each, reduced the
+400-sphere hover pair from 6.82 ms to 4.15 ms and median peak RSS from 155176 to
+154420 KiB. Ordinary 400-sphere orbiting took 3.38 ms before and 3.34 ms after.
+Each workload kept its checksum. The hover pair now allocates zero descriptor
+sets in warm redraws, down from 800. It still walks the scene twice, reads back
+14,400 KiB and uploads 2.28 KiB of overlay geometry. OCCT took 0.11 ms per hover
+pair in the separate paired 8-operation run.
+
+At 1280 × 720, the source and destination attachments total 16,039,952 bytes in
+a warm immediate redraw. Three same-binary comparisons against full redraws
+reported the same driver estimate of 69,427,200 bytes in use and the same ten
+native memory allocations for the whole scene. This is a result for the measured
+host and extent.
+
 ## Harness
 
 `cargo xtask occt-parity --toolkit vulkan --occt <prefix> --cpus 8-15` compares the cases

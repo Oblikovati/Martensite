@@ -22,6 +22,7 @@ pub(super) fn record_layers(
     command: vk::CommandBuffer,
     resources: &FrameResources,
     frame: &RenderFrame,
+    start: usize,
 ) {
     OitCommandRecorder {
         runtime,
@@ -30,10 +31,10 @@ pub(super) fn record_layers(
         frame,
         layouts: Default::default(),
     }
-    .record_all();
+    .record_all(start);
 }
 impl<'a> OitCommandRecorder<'a> {
-    fn record_all(&mut self) {
+    fn record_all(&mut self, start: usize) {
         use super::frame::FrameBackgroundDraw;
         match &self.resources.background {
             Some(FrameBackgroundDraw::Cube(background)) => {
@@ -63,8 +64,16 @@ impl<'a> OitCommandRecorder<'a> {
             }
             None => {}
         }
-        let mut index = 0;
+        let mut index = start;
         while index < self.frame.layers.len() {
+            if let Some(snapshot) = self
+                .resources
+                .main_snapshot
+                .as_ref()
+                .filter(|snapshot| snapshot.start == index)
+            {
+                snapshot.record(self.runtime, self.command, self.resources);
+            }
             self.grid_before(index);
             self.raytrace_before(index);
             if !self.transparent_layer(index) {

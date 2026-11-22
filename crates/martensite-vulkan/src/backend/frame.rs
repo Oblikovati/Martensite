@@ -97,9 +97,13 @@ pub(super) struct FrameResources {
     pub attachment_extent: vk::Extent2D,
     pub color: Arc<TargetImage>,
     pub depth: Arc<TargetImage>,
+    pub(super) immediate_source: Option<(usize, super::immediate_main_record::MainLayerImages)>,
+    pub(super) main_publication: Option<super::immediate_main_record::MainLayerTicket>,
+    pub(super) main_snapshot: Option<super::immediate_main_record::MainLayerSnapshot>,
     pub color_read: DeviceBuffer,
     pub depth_read: DeviceBuffer,
     pub draws: Vec<UploadedDraw>,
+    pub(super) first_draw: usize,
     pub(super) geometry_transfers: GeometryTransfers,
     /// The shader grid draw, attached after allocation when the frame has one.
     pub grid: Option<super::shader_grid_pass::GridFrameDraw>,
@@ -139,9 +143,20 @@ impl FrameResources {
     pub(super) fn validate_completion(&self) -> Result<(), RenderError> {
         super::window_depth_status::validate(self)
     }
+    pub(super) fn scene_empty(&self) -> bool {
+        self.first_draw == 0 && self.draws.is_empty()
+    }
     pub(super) fn attachment_bytes(&self) -> u64 {
         self.color.allocation_bytes()
             + self.depth.allocation_bytes()
+            + self
+                .immediate_source
+                .as_ref()
+                .map_or(0, |(_, main)| main.allocation_bytes())
+            + self
+                .main_snapshot
+                .as_ref()
+                .map_or(0, |snapshot| snapshot.images.allocation_bytes())
             + self
                 .multisample
                 .as_ref()

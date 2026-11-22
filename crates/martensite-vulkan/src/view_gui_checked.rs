@@ -20,7 +20,7 @@ impl Graphic3dRenderView {
         stamp: GuiTargetStamp,
         target: RedrawTargetStamp,
     ) -> Result<(), RenderError> {
-        let outcome = self.render_current();
+        let outcome = self.render_current(false);
         self.publish_checked_gui(stamp, outcome, target)
     }
     pub(super) fn publish_checked_gui(
