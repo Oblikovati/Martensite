@@ -316,29 +316,27 @@ fn validate_non_surface_lighting(
     Ok(())
 }
 pub(crate) fn aspect_material(aspect: &dyn Graphic3dAspectsSource) -> RenderMaterial {
-    let (front, back) = surface_material_pair(aspect);
+    let fields = aspect.aspects_base().fields.read();
+    let front = &fields.front_material;
+    let back = if fields.to_distinguish_materials {
+        &fields.back_material
+    } else {
+        front
+    };
     let mut material = RenderMaterial::default();
     // The target is an sRGB attachment; coefficients stay linear, matching active framebuffer sRGB.
     material.init(
         RenderMaterialColorSpace::Linear,
-        &front,
-        *aspect.interior_color_rgba().rgb(),
-        if aspect.distinguish() { &back } else { &front },
-        *aspect.back_interior_color_rgba().rgb(),
+        front,
+        *fields.interior_color.rgb(),
+        back,
+        *fields.back_interior_color.rgb(),
     );
-    material
-}
-
-fn surface_material_pair(
-    aspect: &dyn Graphic3dAspectsSource,
-) -> (Graphic3dMaterialAspect, Graphic3dMaterialAspect) {
-    let mut front = aspect.front_material();
-    let mut back = aspect.back_material();
-    if !crate::style::surface_uses_blending(aspect) {
-        front.set_transparency(0.).expect("valid opacity");
-        back.set_transparency(0.).expect("valid opacity");
+    if !crate::style::surface_fields_use_blending(&fields) {
+        // The native geometry policy forces both packed alpha coefficients to opaque.
+        material.set_alpha(1.);
     }
-    (front, back)
+    material
 }
 pub(crate) fn apply_view_lights(
     layers: &mut [RenderLayer],
@@ -443,6 +441,7 @@ mod tests {
 #[cfg(test)]
 mod opacity_tests {
     use super::*;
+    use martensite_tkernel::quantity::{Color, NamedColor};
     #[test]
     fn opaque_lighting_overrides_transparency_without_mutating_aspects() {
         let aspect = Graphic3dAspects::default();
@@ -453,5 +452,44 @@ mod opacity_tests {
         aspect.set_alpha_mode(Graphic3dAlphaMode::Opaque, 0.5);
         assert_eq!(aspect_material(&aspect).common[0].diffuse[3], 1.);
         assert_eq!(aspect.front_material().transparency(), 0.8);
+    }
+
+    #[test]
+    fn borrowed_aspects_match_cloned_material_coefficients() {
+        let aspect = Graphic3dAspects::default();
+        let mut front = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Plastified);
+        let mut back = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Gold);
+        front.set_transparency(0.25).unwrap();
+        back.set_transparency(0.75).unwrap();
+        aspect.set_front_material(front.clone());
+        aspect.set_back_material(back.clone());
+        let red = Color::named(NamedColor::RED);
+        let blue = Color::named(NamedColor::BLUE);
+        aspect.set_interior_color(red);
+        aspect.set_back_interior_color(blue);
+        for mode in [
+            Graphic3dAlphaMode::Opaque,
+            Graphic3dAlphaMode::BlendAuto,
+            Graphic3dAlphaMode::MaskBlend,
+        ] {
+            aspect.set_alpha_mode(mode, 0.5);
+            for distinguish in [false, true] {
+                aspect.set_distinguish(distinguish);
+                let (mut front, mut back) = (front.clone(), back.clone());
+                if mode != Graphic3dAlphaMode::BlendAuto {
+                    front.set_transparency(0.).unwrap();
+                    back.set_transparency(0.).unwrap();
+                }
+                let mut expected = RenderMaterial::default();
+                expected.init(
+                    RenderMaterialColorSpace::Linear,
+                    &front,
+                    red,
+                    if distinguish { &back } else { &front },
+                    blue,
+                );
+                assert_eq!(aspect_material(&aspect), expected);
+            }
+        }
     }
 }

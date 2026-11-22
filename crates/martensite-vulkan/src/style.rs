@@ -37,9 +37,10 @@ fn validated_surface_color_in_pipeline(
     pipeline: crate::RenderLightingPipeline,
     unlit_policy: crate::RenderUnlitFaceColorPolicy,
 ) -> Result<[f32; 4], RenderError> {
-    validate_shading(style, pipeline, unlit_policy)?;
-    validate_alpha_offset(style)?;
-    let color = style.interior_color_rgba();
+    let fields = style.aspects_base().fields.read();
+    validate_shading(&fields, pipeline, unlit_policy)?;
+    validate_alpha_offset(&fields)?;
+    let color = fields.interior_color;
     Ok([
         color.rgb().red() as f32,
         color.rgb().green() as f32,
@@ -48,13 +49,13 @@ fn validated_surface_color_in_pipeline(
     ])
 }
 fn validate_shading(
-    style: &dyn Graphic3dAspectsSource,
+    style: &Graphic3dAspectsFields,
     pipeline: crate::RenderLightingPipeline,
     unlit_policy: crate::RenderUnlitFaceColorPolicy,
 ) -> Result<(), RenderError> {
     // FFP structures shade PBR aspects with Phong (retained_lighting::fixed_compatible_shading).
     if !matches!(
-        style.shading_model(),
+        style.shading_model,
         Graphic3dTypeOfShadingModel::Default
             | Graphic3dTypeOfShadingModel::Unlit
             | Graphic3dTypeOfShadingModel::PhongFacet
@@ -63,7 +64,7 @@ fn validate_shading(
             | Graphic3dTypeOfShadingModel::Pbr
             | Graphic3dTypeOfShadingModel::PbrFacet
     ) || !matches!(
-        style.interior_style(),
+        style.interior_style,
         // An empty (hollow) interior is lowered like a solid one; retained_hollow then
         // keeps only its edges, as GlPrimitiveArray::Render does.
         AspectInteriorStyle::Solid
@@ -72,26 +73,26 @@ fn validate_shading(
             | AspectInteriorStyle::Point
     ) {
         return Err(rejected(
-            (style.shading_model(), style.interior_style()),
+            (style.shading_model, style.interior_style),
             "solid, hatch, empty or point Unlit, PhongFacet, Gouraud, Phong, Pbr or PbrFacet shading",
         ));
     }
     validate_style_features(style, pipeline, unlit_policy)
 }
 fn validate_style_features(
-    style: &dyn Graphic3dAspectsSource,
+    style: &Graphic3dAspectsFields,
     pipeline: crate::RenderLightingPipeline,
     unlit_policy: crate::RenderUnlitFaceColorPolicy,
 ) -> Result<(), RenderError> {
     let features = (
-        style.to_map_texture(),
-        !style.shader_program().is_null(),
-        style.to_draw_edges(),
-        style.to_draw_silhouette(),
-        style.distinguish(),
-        !style.to_use_vertex_color_for_back_faces(),
+        style.to_map_texture,
+        !style.program.is_null(),
+        style.to_draw_edges,
+        style.to_draw_silhouette,
+        style.to_distinguish_materials,
+        !style.to_use_vertex_color_for_back_faces,
     );
-    let unlit = style.shading_model() == Graphic3dTypeOfShadingModel::Unlit;
+    let unlit = style.shading_model == Graphic3dTypeOfShadingModel::Unlit;
     let programmable = pipeline == crate::RenderLightingPipeline::Programmable
         && unlit_policy == crate::RenderUnlitFaceColorPolicy::LegacyV1;
     // Silhouettes (features.3) add a front-culled outline draw (crate::silhouette_outline).
@@ -105,9 +106,9 @@ fn validate_style_features(
     }
     Ok(())
 }
-fn validate_alpha_offset(style: &dyn Graphic3dAspectsSource) -> Result<(), RenderError> {
+fn validate_alpha_offset(style: &Graphic3dAspectsFields) -> Result<(), RenderError> {
     if !matches!(
-        style.alpha_mode(),
+        style.alpha_mode,
         Graphic3dAlphaMode::Opaque
             | Graphic3dAlphaMode::BlendAuto
             | Graphic3dAlphaMode::Blend
@@ -115,20 +116,24 @@ fn validate_alpha_offset(style: &dyn Graphic3dAspectsSource) -> Result<(), Rende
             | Graphic3dAlphaMode::MaskBlend
     ) {
         return Err(rejected(
-            style.alpha_mode(),
+            style.alpha_mode,
             "opaque, automatic or explicit unordered blend alpha mode",
         ));
     }
-    let (mode, factor, units) = style.polygon_offsets();
-    crate::RenderPolygonOffset::new(mode, factor, units)?;
+    let offset = style.polygon_offset;
+    crate::RenderPolygonOffset::new(offset.mode.0, offset.factor, offset.units)?;
     Ok(())
 }
 
 pub(crate) fn surface_uses_blending(style: &dyn Graphic3dAspectsSource) -> bool {
-    style.alpha_mode() == Graphic3dAlphaMode::Blend
-        || (style.alpha_mode() == Graphic3dAlphaMode::BlendAuto
-            && (style.front_material().transparency() != 0.
-                || (style.distinguish() && style.back_material().transparency() != 0.)))
+    surface_fields_use_blending(&style.aspects_base().fields.read())
+}
+
+pub(crate) fn surface_fields_use_blending(style: &Graphic3dAspectsFields) -> bool {
+    style.alpha_mode == Graphic3dAlphaMode::Blend
+        || (style.alpha_mode == Graphic3dAlphaMode::BlendAuto
+            && (style.front_material.transparency() != 0.
+                || (style.to_distinguish_materials && style.back_material.transparency() != 0.)))
 }
 
 #[cfg(test)]
