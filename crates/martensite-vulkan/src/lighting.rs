@@ -30,6 +30,8 @@ pub struct RenderLighting {
 /// The part of a lighting snapshot that its lowering fixes; `lighting.material` reads it.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LightingBody {
+    /// Renewed on every mutable access, so a cache keyed on it sees each change (#594).
+    pub(crate) identity: LightingIdentity,
     pub(crate) normals: DrawStream<[f32; 3]>,
     pub(crate) material: RenderMaterial,
     pub(crate) world: [f32; 16],
@@ -50,7 +52,24 @@ impl std::ops::Deref for RenderLighting {
 impl std::ops::DerefMut for RenderLighting {
     /// Copies the body first when a record or another frame still shares it.
     fn deref_mut(&mut self) -> &mut LightingBody {
-        std::sync::Arc::make_mut(&mut self.body)
+        let body = std::sync::Arc::make_mut(&mut self.body);
+        body.identity = LightingIdentity::next();
+        body
+    }
+}
+/// A process-unique number for one state of a lighting body. It is not part of equality:
+/// two bodies with the same values are equal whatever their identities.
+#[derive(Clone, Copy, Debug)]
+pub struct LightingIdentity(pub(crate) u64);
+impl LightingIdentity {
+    fn next() -> Self {
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+        Self(NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+    }
+}
+impl PartialEq for LightingIdentity {
+    fn eq(&self, _: &Self) -> bool {
+        true
     }
 }
 impl RenderLighting {
@@ -72,6 +91,7 @@ impl RenderLighting {
             eye,
             lights: RenderLightSet::default(),
             body: std::sync::Arc::new(LightingBody {
+                identity: LightingIdentity::next(),
                 normals: normals.into(),
                 material,
                 world,

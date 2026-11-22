@@ -12,6 +12,7 @@ mod factorized_line_upload;
 mod frame_flight;
 mod frame_readback;
 mod frame_work_ledger;
+pub(crate) mod pipeline_memo;
 mod readback_buffer_cache;
 mod rgb_pack;
 mod rgb_readback;

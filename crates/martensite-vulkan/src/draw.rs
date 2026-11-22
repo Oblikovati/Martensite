@@ -97,6 +97,8 @@ pub struct PrimitiveDraw {
 /// The part of a draw that its lowering fixes; `draw.vertices.len()` reads it through `Deref`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DrawBody {
+    /// The pipeline this body selected on an earlier frame; empty in a copy (#594).
+    pub(crate) pipeline_memo: crate::backend::pipeline_memo::PipelineMemo,
     #[cfg(feature = "vertex-output-diagnostics")]
     pub(crate) vertex_output_target: Option<std::num::NonZeroU64>,
     pub(crate) projected_dash: Option<crate::projected_segments::PreparedAxis>,
@@ -158,8 +160,11 @@ impl std::ops::Deref for PrimitiveDraw {
 }
 impl std::ops::DerefMut for PrimitiveDraw {
     /// Copies the body first when a record or another frame still shares it.
+    /// A body changed in place also forgets its pipeline memo.
     fn deref_mut(&mut self) -> &mut DrawBody {
-        std::sync::Arc::make_mut(&mut self.body)
+        let body = std::sync::Arc::make_mut(&mut self.body);
+        body.pipeline_memo.clear();
+        body
     }
 }
 /// Compatibility name for the original submission type; `TriangleDraw::new(vertices, indices, matrix)?`.
@@ -214,6 +219,7 @@ impl PrimitiveDraw {
             lighting: None,
             depth_pass: Default::default(),
             body: std::sync::Arc::new(DrawBody {
+                pipeline_memo: Default::default(),
                 #[cfg(feature = "vertex-output-diagnostics")]
                 vertex_output_target: None,
                 projected_dash: None,
@@ -322,6 +328,7 @@ impl PrimitiveDraw {
             lighting: None,
             depth_pass: Default::default(),
             body: std::sync::Arc::new(DrawBody {
+                pipeline_memo: Default::default(),
                 #[cfg(feature = "vertex-output-diagnostics")]
                 vertex_output_target: None,
                 projected_dash: None,

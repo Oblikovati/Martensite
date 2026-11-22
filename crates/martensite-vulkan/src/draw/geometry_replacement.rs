@@ -27,7 +27,8 @@ clone_with_geometry!(
     face_culling,
     lighting,
     depth_pass;
-    body: guard_band_bounds,
+    body: pipeline_memo,
+    guard_band_bounds,
     geometry_revision,
     projected_dash,
     quad_corners,

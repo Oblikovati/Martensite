@@ -188,6 +188,9 @@ pub(super) struct RasterPipelines {
     pub(super) user_programs: super::user_program_pipeline::UserProgramPipelineCache,
     pub(super) user_program_mock_layout:
         std::sync::Mutex<Option<Arc<super::surface_image_descriptor::SurfaceImageLayout>>>,
+    /// A number no other pipeline set of the process has; a draw body's pipeline memo is
+    /// valid only for the set that filled it (#594).
+    memo_serial: usize,
 }
 impl RasterPipelines {
     pub fn new(runtime: &Arc<VulkanRuntime>, stencil: bool) -> Result<Self, RenderError> {
@@ -205,7 +208,9 @@ impl RasterPipelines {
                 None
             });
         }
+        static SETS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(1);
         Ok(Self {
+            memo_serial: SETS.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             oit: Default::default(),
             variants,
             surface_images: Default::default(),
@@ -260,7 +265,28 @@ impl RasterPipelines {
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         self.alpha_writes.twin(&self.runtime, source)
     }
+    /// The pipeline of `draw`, from its body's memo when the inputs are the memo's (#594).
     pub fn select(
+        &self,
+        draw: &PrimitiveDraw,
+        factorized: bool,
+        window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
+        dynamic_lighting: bool,
+    ) -> Result<Arc<DrawPipeline>, RenderError> {
+        let frame = (
+            factorized,
+            window_depth.map(|value| value.cache_words()),
+            dynamic_lighting,
+        );
+        let inputs = super::pipeline_memo::SelectionInputs::of(self.memo_serial, draw, frame);
+        if let Some(pipeline) = draw.pipeline_memo.get(&inputs) {
+            return Ok(pipeline);
+        }
+        let pipeline = self.select_unmemoized(draw, factorized, window_depth, dynamic_lighting)?;
+        draw.pipeline_memo.keep(inputs, pipeline.clone());
+        Ok(pipeline)
+    }
+    fn select_unmemoized(
         &self,
         draw: &PrimitiveDraw,
         factorized: bool,
