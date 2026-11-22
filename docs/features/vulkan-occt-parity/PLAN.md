@@ -162,6 +162,18 @@ sphere and text comparisons. The two traversals leave little room in the earlier
 0.175 ms parity budget. Reusing the culling traversal for the live batch check can
 avoid reading the same structures twice.
 
+A fused probe encoded each original geometry stream into staging ranges and retained
+the resulting vertex and index buffers after submission. The ordinary and streamed
+sphere orbits took 1.287 and 0.181 ms per frame on the same host, with OCCT at
+0.187 ms. Peak process memory through the timed windows was 1.0% lower, and the
+whole-process peak rose 0.02% (32 KiB). Color and depth matched at four camera angles
+and after material and visibility edits forced ordinary rendering. An abandoned
+upload kept its source streams available for retry.
+
+The probe covers the sphere fixture. Production admission still needs the complete
+live-input check and safe lock boundaries, including the state that changes how a
+layer orders, clips or shades geometry.
+
 ## Phase 2: a frame pipeline without stalls
 
 Target: `frame_empty`, `dump_1080p`, `resize_redraw` and `frame_msaa4_100k` reach parity.
