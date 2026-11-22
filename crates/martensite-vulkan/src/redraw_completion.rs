@@ -115,6 +115,12 @@ impl std::error::Error for RenderRedrawFailure {
     }
 }
 
+#[derive(Default)]
+pub(super) struct RetiredRedraw {
+    target: Option<RedrawPublicationTarget>,
+    frame: Option<crate::driver_view::FramePublication>,
+}
+
 impl Graphic3dRenderView {
     fn require_cursor_owner(&self, cursor: &RenderRedrawCursor) -> Result<(), RenderRedrawFailure> {
         let expected = self as *const Self as usize;
@@ -133,7 +139,7 @@ impl Graphic3dRenderView {
         &self,
         outcome: Result<FrameCapture, RenderError>,
         publication: &RedrawPublicationTarget,
-        retired: &mut Option<RedrawPublicationTarget>,
+        retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {
         // Both new owners and retirement live in the outer, guard-free caller scope.
         let next = publication.clone();
@@ -153,8 +159,8 @@ impl Graphic3dRenderView {
         );
         #[cfg(feature = "raytrace-input-diagnostics")]
         self.publish_raytrace_observation(&outcome);
-        *retired = target.replace(next);
-        *stored = Some(outcome);
+        retired.target = target.replace(next);
+        retired.frame = stored.replace(outcome.map(Arc::new));
         result
     }
     fn advance_redraw_serial(&self) {
@@ -201,7 +207,7 @@ fn require_fresh_serial(before: u64, observed: u64) -> Result<(), RenderRedrawFa
 }
 
 fn require_completed_outcome(
-    outcome: Option<&Result<FrameCapture, RenderError>>,
+    outcome: Option<&crate::driver_view::FramePublication>,
     publication: u64,
 ) -> Result<(), RenderRedrawFailure> {
     match outcome {

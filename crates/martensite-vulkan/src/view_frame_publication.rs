@@ -1,5 +1,5 @@
 //! Publication owns the last result and checks the accepted composition epoch.
-use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp};
+use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp, RetiredRedraw};
 use super::*;
 impl Graphic3dRenderView {
     /// Read the last frame or its error; `render_view.capture()?` never conceals a failed redraw.
@@ -24,14 +24,21 @@ impl Graphic3dRenderView {
         outcome
     }
     fn clone_capture_outcome(&self) -> Option<Result<FrameCapture, RenderError>> {
+        #[cfg(feature = "command-state-diagnostics")]
+        use std::sync::atomic::Ordering;
         let source = self.outcome.read();
-        let output = source.clone();
+        #[cfg(feature = "command-state-diagnostics")]
+        let serial = self.redraw_serial.load(Ordering::Relaxed);
+        let snapshot = source.clone();
+        drop(source);
+        let output = snapshot
+            .as_ref()
+            .map(|result| result.as_deref().cloned().map_err(Clone::clone));
         #[cfg(feature = "command-state-diagnostics")]
         crate::scene::replay_diagnostic::cloned(
             self as *const Self as usize,
-            self.redraw_serial
-                .load(std::sync::atomic::Ordering::Relaxed),
-            &source,
+            serial,
+            snapshot.as_ref().and_then(|result| result.as_deref().ok()),
             &output,
         );
         output
@@ -57,7 +64,7 @@ impl Graphic3dRenderView {
             started: target,
             published: self.redraw_target_stamp(),
         };
-        let mut retired = None;
+        let mut retired = RetiredRedraw::default();
         let result = self.commit_gui_outcome(epoch, outcome, &publication, &mut retired);
         drop(retired);
         result
@@ -67,7 +74,7 @@ impl Graphic3dRenderView {
         epoch: &std::sync::Arc<()>,
         outcome: Result<FrameCapture, RenderError>,
         publication: &RedrawPublicationTarget,
-        retired: &mut Option<RedrawPublicationTarget>,
+        retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {
         let mut gui = self.gui_layers.write();
         gui.last_draw = None;

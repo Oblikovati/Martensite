@@ -26,7 +26,7 @@ pub struct Graphic3dRenderView {
     pub(crate) lighting_selection: crate::driver_lighting_capability::SharedLightingSelection,
     presenter: SharedState<Option<crate::backend::WindowPresenter>>,
     window_error: SharedState<Option<RenderError>>,
-    pub(crate) outcome: SharedState<Option<Result<FrameCapture, RenderError>>>,
+    pub(crate) outcome: SharedState<Option<FramePublication>>,
     pub(crate) gui_layers: SharedState<crate::view_gui_layer::GuiLayerSlot>,
     raster_feedback: crate::raster_feedback::RasterFailureFeedback,
     stencil_feedback: crate::stencil_feedback::StencilFeedback,
@@ -47,6 +47,7 @@ pub struct Graphic3dRenderView {
     raytrace_observation: SharedState<crate::raytrace_input_observation::ViewRayInputs>,
     redraw_target: SharedState<Option<redraw_completion::RedrawPublicationTarget>>,
 }
+pub(crate) type FramePublication = Result<Arc<FrameCapture>, RenderError>;
 martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
 type RenderViewCreationInputs = (
     crate::view_output_modes::OutputModeRetainedView,

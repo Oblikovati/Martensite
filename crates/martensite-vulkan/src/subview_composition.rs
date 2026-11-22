@@ -51,9 +51,14 @@ impl Graphic3dRenderView {
             let Some(render) = render.get().filter(|v| v.is_active()) else {
                 continue;
             };
-            let outcome = render.outcome.read();
-            if let Some(Ok(frame)) = outcome.as_ref() {
-                blits.extend(clipped_blit(extent, frame, render.subview_top_left()));
+            let capture = render
+                .outcome
+                .read()
+                .as_ref()
+                .and_then(|result| result.as_ref().ok())
+                .cloned();
+            if let Some(frame) = capture {
+                blits.extend(clipped_blit(extent, &frame, render.subview_top_left()));
             }
         }
         blits

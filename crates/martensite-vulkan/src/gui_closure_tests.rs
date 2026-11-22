@@ -143,6 +143,31 @@ fn assert_stored_closure(view: &Graphic3dRenderView, with_fault: bool) {
         assert_eq!(stored.primary_failure(), Some(&closing_primary_fault()));
     }
 }
+
+#[test]
+fn checked_capture_keeps_one_publication_and_returns_owned_pixels() {
+    let (view, _, _) = closing_fixture();
+    let original = view
+        .outcome
+        .read()
+        .as_ref()
+        .unwrap()
+        .as_ref()
+        .unwrap()
+        .clone();
+    let mut captured = view.capture().unwrap();
+    captured.rgba[0] ^= u8::MAX;
+
+    let next = view.capture().unwrap();
+    assert_eq!([next.width, next.height], [original.width, original.height]);
+    assert_eq!(next.rgba, original.rgba);
+    assert_eq!(next.depth, original.depth);
+    let recorded = view.outcome.read();
+    assert!(Arc::ptr_eq(
+        &original,
+        recorded.as_ref().unwrap().as_ref().unwrap()
+    ));
+}
 #[test]
 fn successful_draw_followed_by_closure_replaces_previous_success() {
     let (view, _, backend) = closing_fixture();

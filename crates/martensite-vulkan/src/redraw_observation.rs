@@ -165,7 +165,7 @@ impl Graphic3dRenderView {
     fn require_recorded_completion(
         &self,
         cursor: &RenderRedrawCursor,
-        outcome: Option<&Result<FrameCapture, RenderError>>,
+        outcome: Option<&crate::driver_view::FramePublication>,
         publication: u64,
     ) -> Result<(), RenderRedrawFailure> {
         require_fresh_serial(cursor.publication, publication)?;

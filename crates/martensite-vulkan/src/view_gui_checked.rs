@@ -1,5 +1,5 @@
 //! Checked publication retains primary faults and refuses obsolete GUI targets.
-use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp};
+use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp, RetiredRedraw};
 use super::*;
 use crate::RenderGuiSurfacePhase::{Capture, Publication};
 use crate::error::gui_native_failure::reconcile_native_target;
@@ -33,7 +33,7 @@ impl Graphic3dRenderView {
             started: target,
             published: self.redraw_target_stamp(),
         };
-        let mut retired = None;
+        let mut retired = RetiredRedraw::default();
         let result = self.commit_checked_gui(stamp, outcome, &publication, &mut retired);
         drop(retired);
         result
@@ -43,7 +43,7 @@ impl Graphic3dRenderView {
         stamp: GuiTargetStamp,
         outcome: Result<FrameCapture, RenderError>,
         publication: &RedrawPublicationTarget,
-        retired: &mut Option<RedrawPublicationTarget>,
+        retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {
         let observation = self.gui_publication_observation(stamp.extent);
         let outcome = reconcile_native_target(outcome, observation.target);
@@ -91,20 +91,18 @@ impl Graphic3dRenderView {
         if let Err(target) = self.require_capture_target() {
             let refused = reconcile_native_target(outcome, Err(target));
             *self.outcome.write() = Some(refused.clone());
-            return refused;
+            return refused.map(|capture| (*capture).clone());
         }
         self.capture_current_gui(outcome)
+            .map(|capture| (*capture).clone())
     }
-    fn recorded_gui_outcome(&self) -> Result<FrameCapture, RenderError> {
+    fn recorded_gui_outcome(&self) -> FramePublication {
         self.outcome
             .read()
             .clone()
             .unwrap_or_else(|| Err(rejected("no redraw", "a successfully rendered view")))
     }
-    fn capture_current_gui(
-        &self,
-        outcome: Result<FrameCapture, RenderError>,
-    ) -> Result<FrameCapture, RenderError> {
+    fn capture_current_gui(&self, outcome: FramePublication) -> FramePublication {
         let stamp = self.gui_layers.read().capture_stamp();
         let observed = self.checked_observed_extent(stamp.extent);
         let mut slot = self.gui_layers.write();
