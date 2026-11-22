@@ -16,6 +16,17 @@ enum RenderElementPhase {
     Transparent,
 }
 
+/// The pass state a group draw record compares; `RenderElementPass::record_key`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RecordPassKey {
+    phase: RenderElementPhase,
+    use_depth_write: bool,
+    environment: Option<usize>,
+    skip_trsf_persistence: bool,
+    skip_raytraced: bool,
+    fixed_function_lighting: bool,
+}
+
 /// One layer pass; `RenderElementPass::opaque(depth_write)`.
 #[derive(Debug)]
 pub(crate) struct RenderElementPass {
@@ -33,6 +44,8 @@ pub(crate) struct RenderElementPass {
     skip_raytraced: bool,
     /// The frame's context state (device, viewport, resolution, layer polygon offset).
     context: std::sync::Arc<crate::RenderContextState>,
+    /// What the group draw records of this pass share (#594).
+    record_frame: crate::group_record_frame::RecordFrame,
 }
 
 impl RenderElementPass {
@@ -116,6 +129,7 @@ impl RenderElementPass {
             skip_trsf_persistence: false,
             skip_raytraced: false,
             context: std::sync::Arc::default(),
+            record_frame: Default::default(),
         }
     }
     /// The filter elements observe; `pass.filter() == RenderElementFilter::OPAQUE_ONLY`.
@@ -132,6 +146,32 @@ impl RenderElementPass {
     /// Transparent filling elements skipped by the opaque pass so far.
     pub fn skipped(&self) -> usize {
         self.skipped.load(Ordering::Relaxed)
+    }
+    /// Count `count` skipped filling arrays at once, as a replayed group draw record does for
+    /// the arrays its lowering counted (#594); `pass.add_skipped(record.skipped)`. The
+    /// verification build lowers every replayed group again, which counts them itself.
+    #[cfg_attr(feature = "draw-record-verification", allow(dead_code))]
+    pub(crate) fn add_skipped(&self, count: usize) {
+        self.skipped.fetch_add(count, Ordering::Relaxed);
+    }
+    /// The state the group draw records of this pass share; `pass.record_frame()`.
+    pub(crate) fn record_frame(&self) -> &crate::group_record_frame::RecordFrame {
+        &self.record_frame
+    }
+    /// The pass inputs that group lowering reads, for a group draw record (#594);
+    /// `pass.record_key() == saved`.
+    pub(crate) fn record_key(&self) -> RecordPassKey {
+        RecordPassKey {
+            phase: self.phase,
+            use_depth_write: self.use_depth_write,
+            environment: self
+                .environment
+                .as_ref()
+                .map(|texture| texture.object_address().addr()),
+            skip_trsf_persistence: self.skip_trsf_persistence,
+            skip_raytraced: self.skip_raytraced,
+            fixed_function_lighting: self.context.fixed_function_lighting,
+        }
     }
     /// Record that a user element was visited; `pass.note_element()`.
     pub fn note_element(&self) {

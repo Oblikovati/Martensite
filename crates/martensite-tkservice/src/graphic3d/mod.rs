@@ -91,6 +91,7 @@ mod presentation_attributes;
 mod render_enums;
 mod rendering_params;
 mod rendering_params_dump;
+mod revised_state;
 mod shader_manager;
 mod shader_object;
 mod shader_program;
@@ -262,6 +263,7 @@ pub use rendering_params::{
     Graphic3dRenderingParamsFrustumCulling, Graphic3dRenderingParamsPerfCounters,
     Graphic3dStatsParams, Graphic3dStereoParams,
 };
+pub use revised_state::{RevisedState, RevisedWriteGuard};
 pub use shader_manager::{
     GRAPHIC3D_GLSL_EXTENSION_NB, Graphic3dGlslExtension, Graphic3dLightingOptions,
     Graphic3dPhongVariant, Graphic3dShaderManager, Graphic3dShaderManagerFields,

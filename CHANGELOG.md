@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added `RevisedState` to tkservice: a shared cell whose writes advance a revision. A renderer reads the revision to know that the state did not change since it last read it (#594).
+
 - Added `graphic3d_cview_min_max_values_with_size`, which computes `MinMaxValues` with a window size the view supplies. The Vulkan view passes the size it keeps between resizes, so auto Z-fit no longer asks the X server for the window size on every redraw (#594).
 
 - Added `Graphic3dRenderDriver::finish_frames`, which waits for the frames that Vulkan redraws left on the GPU, as `glFinish` does, and returns the first GPU fault they reported (#594).
@@ -85,6 +87,10 @@ follows [Semantic Versioning](https://semver.org/).
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
 ### Changed
+
+- Changed `Graphic3dAspectsBase::fields` from `SharedState` to `RevisedState`. `read`, `write`, `try_read`, `try_write` and `snapshot` work as before; each write now advances `fields.revision()`. Code that names the field's type must use `RevisedState<Graphic3dAspectsFields>` (#594).
+
+- Made a Vulkan group that two passes lowered keep its lowered surfaces and replay them on later redraws while its commands, aspects, geometry, transformation and the view's rendering parameters stay the same. Only the values derived from the camera are computed again. `frame_transparent_1k` takes 2.2 ms instead of 3.2 ms (#594).
 
 - Changed a Vulkan view on a native window to keep the window size between `set_window` and `must_be_resized`, as OCCT's OpenGL view does, instead of asking the X server on every redraw. A native resize that the application does not report with `must_be_resized` now shows when the swapchain reports it out of date or suboptimal. GUI frames still check the surface on every redraw (#594).
 

@@ -103,6 +103,7 @@ mod graduated_trihedron;
 pub use graduated_trihedron::RenderGraduatedTrihedron;
 mod graphic_group;
 mod group_flipping;
+mod group_record_frame;
 mod primitive;
 mod primitive_buffer_read;
 mod primitive_cache;

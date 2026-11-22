@@ -35,6 +35,8 @@ lit-only-command-diagnostics = ["command-state-diagnostics"]
 vertex-output-diagnostics = ["command-state-diagnostics"]
 # Selects only the owned manual window proof target; production code is unchanged.
 owned-raster-x11-smoke = []
+# Lowers each recorded group again on replay and panics on any difference (#594); tests only.
+draw-record-verification = []
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }

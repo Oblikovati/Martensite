@@ -61,6 +61,19 @@ impl RenderProjectionFactors {
             && v.map(f32::to_bits) == orientation.data().map(f32::to_bits);
         Some(factors)
     }
+    /// `retained_camera` with the camera's rigid-view provenance already read, for draw
+    /// records that share one camera read per pass (#594);
+    /// `RenderProjectionFactors::retained_with_isometry(p, v, m, true)`.
+    pub(crate) fn retained_with_isometry(
+        p: [f32; 16],
+        v: [f32; 16],
+        m: [f32; 16],
+        isometry: bool,
+    ) -> Option<Self> {
+        let mut factors = Self::retained(p, v, m)?;
+        factors.camera_isometry = isometry;
+        Some(factors)
+    }
     pub(crate) fn has_camera_isometry(&self) -> bool {
         self.camera_isometry
     }

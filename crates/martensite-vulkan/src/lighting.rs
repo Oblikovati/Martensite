@@ -162,7 +162,7 @@ fn identity_normals_are_bit_identical_to_the_general_inverse() {
     );
 }
 
-fn lighting_eye(view: [f32; 16], perspective: bool) -> Result<[f32; 4], RenderError> {
+pub(crate) fn lighting_eye(view: [f32; 16], perspective: bool) -> Result<[f32; 4], RenderError> {
     let inverse = Mat4::from_data(view)
         .inverted()
         .map_err(|error| rejected((view, error), "an invertible world-view matrix"))?;

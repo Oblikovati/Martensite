@@ -8,6 +8,8 @@ use martensite_tkservice::graphic3d::*;
 use std::sync::Arc;
 #[path = "graphic_group_commands.rs"]
 mod commands;
+#[path = "graphic_group_record.rs"]
+mod draw_record;
 #[path = "graphic_group_dump.rs"]
 mod dump;
 #[path = "graphic_group_elements.rs"]
@@ -49,6 +51,8 @@ pub struct Graphic3dDrawGroup {
     pub(crate) aspect_textures: crate::retained_aspect_textures::RetainedAspectTextures,
     /// The driver's precompiled user programs (`crate::retained_user_program`).
     pub(crate) user_programs: Arc<crate::RenderUserProgramLibrary>,
+    /// What the group lowered to on an earlier frame (#594); see graphic_group_record.rs.
+    draw_record: SharedState<draw_record::RecordSlot>,
 }
 martensite_tkernel::impl_transient!(Graphic3dDrawGroup,"Martensite_Graphic3dDrawGroup",StandardTransient,interfaces:[dyn Graphic3dGroup]);
 impl Graphic3dDrawGroup {
@@ -79,6 +83,7 @@ impl Graphic3dDrawGroup {
             texture_images: crate::retained_surface_texture::driver_texture_images(structure),
             aspect_textures: Default::default(),
             user_programs: crate::retained_user_program::driver_user_programs(structure),
+            draw_record: SharedState::default(),
         })
     }
     /// Extract visible primitives using current styles, buffers and camera; `group.primitive_draws(&camera)?`.

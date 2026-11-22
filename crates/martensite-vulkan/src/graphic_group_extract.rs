@@ -34,7 +34,9 @@ impl GroupDrawPolicy {
     }
 }
 impl Graphic3dDrawGroup {
-    pub(crate) fn program_in_structure(
+    /// Lower the group's commands in `structure` with the current camera; a group draw
+    /// record calls this when it cannot replay (graphic_group_record.rs).
+    pub(super) fn lower_in_structure(
         &self,
         camera: &Graphic3dCamera,
         extent: Option<[u32; 2]>,
@@ -213,7 +215,7 @@ impl Graphic3dDrawGroup {
         }
         Ok(lowered)
     }
-    fn retained_commands(
+    pub(super) fn retained_commands(
         &self,
     ) -> (
         Handle<dyn Graphic3dAspectsSource>,
