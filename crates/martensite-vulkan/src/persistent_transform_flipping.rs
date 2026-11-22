@@ -18,13 +18,30 @@ pub(crate) fn flipping_model_state(
     incoming: Option<RenderMatrixState<f32>>,
 ) -> Result<FlippingModelState, RenderError> {
     let mut model = incoming.unwrap_or_else(|| structure_model_state(context.structure));
-    let mut transform = PersistentView::new(context.camera, Mat4::from_other(model.current()));
     let local = context.group.transform_persistence();
-    let extent = persistence_extent(context, &local)?;
+    if !context.structure.trsf_pers.is_null() || !local.is_null() {
+        return persistent_flipping_state(context, model, &local);
+    }
+    // Persistence is the only path that edits a copy of the camera.
+    let local_pops = push_group_transform(context.group, &mut model);
+    Ok(FlippingModelState {
+        model,
+        view: context.camera.orientation_matrix_f(),
+        local_pops,
+    })
+}
+
+fn persistent_flipping_state(
+    context: &crate::text_submission::TextSceneContext<'_>,
+    mut model: RenderMatrixState<f32>,
+    local: &Handle<dyn Graphic3dTransformPersSource>,
+) -> Result<FlippingModelState, RenderError> {
+    let mut transform = PersistentView::new(context.camera, Mat4::from_other(model.current()));
+    let extent = viewport_size(context.persistence_extent())?;
     transform.apply(&context.structure.trsf_pers, extent, None)?;
     let mut local_pops = push_group_transform(context.group, &mut model);
-    let anchor = push_local_anchor(&local, &mut model, &mut local_pops)?;
-    transform.apply(&local, extent, anchor.as_ref())?;
+    let anchor = push_local_anchor(local, &mut model, &mut local_pops)?;
+    transform.apply(local, extent, anchor.as_ref())?;
     Ok(FlippingModelState {
         model,
         view: transform.world_view,
@@ -64,14 +81,4 @@ fn push_local_anchor(
     model.push();
     *pops += 1;
     local_anchor(local, model.change_current())
-}
-
-fn persistence_extent(
-    context: &crate::text_submission::TextSceneContext<'_>,
-    local: &Handle<dyn Graphic3dTransformPersSource>,
-) -> Result<[i32; 2], RenderError> {
-    if context.structure.trsf_pers.is_null() && local.is_null() {
-        return Ok([1, 1]);
-    }
-    viewport_size(context.persistence_extent())
 }
