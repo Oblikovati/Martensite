@@ -67,6 +67,7 @@ impl DrawPipeline {
             super::window_depth_shader::seed_samples(kind),
             false,
             None,
+            false,
         )
     }
     pub fn new_oit(
@@ -82,6 +83,7 @@ impl DrawPipeline {
             target.samples,
             false,
             None,
+            false,
         )
     }
     pub fn new_multisample(
@@ -90,7 +92,7 @@ impl DrawPipeline {
         samples: vk::SampleCountFlags,
         alpha_coverage: bool,
     ) -> Result<Self, RenderError> {
-        Self::build(runtime, kind, None, samples, alpha_coverage, None)
+        Self::build(runtime, kind, None, samples, alpha_coverage, None, false)
     }
     pub fn new_native_alpha(
         runtime: &Arc<VulkanRuntime>,
@@ -106,8 +108,24 @@ impl DrawPipeline {
             samples,
             alpha_coverage,
             Some(layout.clone()),
+            false,
         )
     }
+    pub(super) fn new_directional_phong(
+        runtime: &Arc<VulkanRuntime>,
+        kind: super::pipeline_variants::PipelineVariant,
+    ) -> Result<Self, RenderError> {
+        Self::build(
+            runtime,
+            kind,
+            None,
+            vk::SampleCountFlags::TYPE_1,
+            false,
+            None,
+            true,
+        )
+    }
+
     fn build(
         runtime: &Arc<VulkanRuntime>,
         kind: super::pipeline_variants::PipelineVariant,
@@ -118,6 +136,7 @@ impl DrawPipeline {
         samples: vk::SampleCountFlags,
         alpha_coverage: bool,
         alpha_layout: Option<Arc<super::oit_descriptor::OitDescriptorLayout>>,
+        directional_phong: bool,
     ) -> Result<Self, RenderError> {
         let super::pipeline_variants::PipelineVariant {
             clamp: _,
@@ -241,6 +260,10 @@ impl DrawPipeline {
             for bytes in super::surface_texture_pipeline::surface_shaders(kind) {
                 pipeline.add_shader(bytes)?;
             }
+        } else if directional_phong {
+            for bytes in super::directional_phong::SHADERS {
+                pipeline.add_shader(bytes)?;
+            }
         } else {
             pipeline.load_shaders(line || kind.polygon_edges, point, text, clipped, lighting)?;
         }
@@ -259,7 +282,9 @@ impl DrawPipeline {
                 pipeline.fragment_bytes,
             )?)?;
         }
-        pipeline.apply_coordinate_fragment()?;
+        if !directional_phong {
+            pipeline.apply_coordinate_fragment()?;
+        }
         pipeline.apply_light_dot_behavior()?;
         pipeline.apply_fixed_reciprocal_fragment()?;
         pipeline.apply_sprite_fragment()?;
@@ -505,7 +530,8 @@ fn stock_base_vertex_stride(
         return None;
     }
     let [plain, _] = lighting_shaders(false, false, false);
-    (actual == plain).then_some(u64::from(super::pipeline_state::LIT_VERTEX_STRIDE))
+    (actual == plain || actual == super::directional_phong::SHADERS[0])
+        .then_some(u64::from(super::pipeline_state::LIT_VERTEX_STRIDE))
 }
 
 pub(super) fn load_shader(

@@ -40,7 +40,8 @@ fn lit_draw() -> PrimitiveDraw {
             position: [0.; 4],
             direction: [0., 0., 1., 0.],
             params: [0.; 4],
-        }],
+        }]
+        .into(),
     });
     PrimitiveDraw::new(
         points
@@ -99,8 +100,8 @@ fn changed_lit_main_state_refuses_reuse_at_float_bit_precision() {
     let cases: [fn(&mut RenderLighting); 11] = [
         |lit| lit.material.common[1].ambient[1] = -0.,
         |lit| lit.lights.ambient[1] = -0.,
-        |lit| lit.lights.sources[0].position[0] = -0.,
-        |lit| lit.lights.sources[0].cast_shadows = true,
+        |lit| lit.lights.sources.make_mut()[0].position[0] = -0.,
+        |lit| lit.lights.sources.make_mut()[0].cast_shadows = true,
         |lit| lit.world[12] = 0.5,
         |lit| lit.normal[0] = 2.,
         |lit| lit.view[1] = -0.,

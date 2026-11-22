@@ -144,3 +144,18 @@ fn layer_origin_leaves_headlights_and_directional_lights_unshifted() {
     let world = RenderLightSet::snapshot(&lights, identity_clip()).unwrap();
     assert_eq!(local, world);
 }
+
+#[test]
+fn cloned_draw_lights_share_records_and_remain_isolated_from_live_edits() {
+    let directional = source(Kind::Directional);
+    let lights = set(&[directional.clone()]);
+    let original = RenderLightSet::snapshot(&lights, identity_clip()).unwrap();
+    let cloned = original.clone();
+    assert!(original.sources.identity().is_some());
+    assert_eq!(original.sources.identity(), cloned.sources.identity());
+
+    directional.set_intensity(2.).unwrap();
+    let edited = RenderLightSet::snapshot(&lights, identity_clip()).unwrap();
+    assert_ne!(edited.sources[0].color, cloned.sources[0].color);
+    assert_eq!(original.sources[0], cloned.sources[0]);
+}

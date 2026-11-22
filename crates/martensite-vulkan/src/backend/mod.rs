@@ -200,6 +200,7 @@ mod attachment_orientation;
 mod buffer;
 #[cfg(feature = "command-state-diagnostics")]
 mod command_state_diagnostic;
+mod directional_phong;
 mod driver_identity;
 mod factorized_projection;
 mod fixed_lighting_pipeline;

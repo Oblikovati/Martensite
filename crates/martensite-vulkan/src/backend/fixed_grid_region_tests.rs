@@ -36,7 +36,7 @@ fn ordinary_lit_rectangle() -> PrimitiveDraw {
     .unwrap()
     .with_lights(crate::RenderLightSet {
         ambient: [0.; 4],
-        sources: vec![],
+        sources: Default::default(),
     });
     PrimitiveDraw::new(vertices, vec![0, 1, 2, 0, 2, 3], identity_clip())
         .unwrap()

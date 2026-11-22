@@ -29,6 +29,9 @@ vec4 litFragmentColor() {
     if(!colored)result.a=lighting.materials[frontFacing?0u:4u].a;
     return result;
 #else
+#ifdef MARTENSITE_ORTHOGRAPHIC_DIRECTIONAL_PHONG
+    return computeLighting(glslNormalize(worldNormal), glslNormalize(viewDirection), vec4(0.0), frontFacing, vec4(1.0));
+#else
     if (lighting.settings.x == 1u) {
         return frontFacing ? frontColor : backColor;
     }
@@ -69,6 +72,7 @@ vec4 litFragmentColor() {
     }
 #endif
     return computeLighting(normal, glslNormalize(viewDirection), worldPosition, frontFacing, vertexColor);
+#endif
 #endif
 }
 

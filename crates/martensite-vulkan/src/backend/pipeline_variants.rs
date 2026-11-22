@@ -332,6 +332,10 @@ impl RasterPipelines {
             factorized,
             window_depth.map(|value| value.cache_words()),
         );
+        let directional_phong = window_depth.is_none()
+            && !factorized
+            && super::directional_phong::admitted(&self.runtime, draw);
+        index.0.1 |= 64 * u8::from(directional_phong);
         index.0.1 |= line_tint.cache_bits();
         index.0.1 |= 16 * u8::from(dynamic_lighting && draw.lighting.is_some());
         let mut variants = self
@@ -353,7 +357,12 @@ impl RasterPipelines {
             != crate::RenderTriangleCoverageBehavior::HardwareV1
             && super::triangle_grid_coverage_upload::selected_phong(draw);
         validate_special_features(kind, self.runtime.depth_clamp, self.runtime.lines.bresenham)?;
-        let pipeline = Arc::new(DrawPipeline::new(&self.runtime, kind)?);
+        let pipeline = if directional_phong {
+            DrawPipeline::new_directional_phong(&self.runtime, kind)?
+        } else {
+            DrawPipeline::new(&self.runtime, kind)?
+        };
+        let pipeline = Arc::new(pipeline);
         variants.insert(index, pipeline.clone());
         Ok(pipeline)
     }

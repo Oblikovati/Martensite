@@ -216,9 +216,10 @@ fn surface_lighting(
 ) -> Result<RenderLighting, RenderError> {
     let shading = surface_algorithm(model, normals.is_some())?;
     let (world, view) = crate::persistent_transform::lighting_matrices(context)?;
+    let (material, fixed_opacity) = aspect_material_snapshot(aspects);
     let mut snapshot = RenderLighting::new(
         Vec::new(),
-        aspect_material(aspects),
+        material,
         world,
         view,
         !context.camera.is_orthographic(),
@@ -237,7 +238,7 @@ fn surface_lighting(
         view,
         !context.group.transform_persistence().is_null(),
     );
-    crate::fixed_lighting::snapshot_fixed_material_opacity(&mut snapshot, aspects);
+    snapshot.fixed_source_opacity = Some(fixed_opacity);
     Ok(snapshot)
 }
 
@@ -252,10 +253,9 @@ pub(crate) fn resolved_model(
     aspect: &dyn Graphic3dAspectsSource,
     view: Graphic3dTypeOfShadingModel,
 ) -> Graphic3dTypeOfShadingModel {
-    let model = if aspect.shading_model() == Graphic3dTypeOfShadingModel::Default {
-        view
-    } else {
-        aspect.shading_model()
+    let model = match aspect.shading_model() {
+        Graphic3dTypeOfShadingModel::Default => view,
+        selected => selected,
     };
     pbr_shading_fallback(model, is_pbr_model(view))
 }
@@ -316,6 +316,13 @@ fn validate_non_surface_lighting(
     Ok(())
 }
 pub(crate) fn aspect_material(aspect: &dyn Graphic3dAspectsSource) -> RenderMaterial {
+    aspect_material_snapshot(aspect).0
+}
+
+/// Read pass-dependent coefficients and intrinsic fixed-function opacity from the same material.
+pub(crate) fn aspect_material_snapshot(
+    aspect: &dyn Graphic3dAspectsSource,
+) -> (RenderMaterial, [f32; 2]) {
     let fields = aspect.aspects_base().fields.read();
     let front = &fields.front_material;
     let back = if fields.to_distinguish_materials {
@@ -336,7 +343,7 @@ pub(crate) fn aspect_material(aspect: &dyn Graphic3dAspectsSource) -> RenderMate
         // The native geometry policy forces both packed alpha coefficients to opaque.
         material.set_alpha(1.);
     }
-    material
+    (material, [front.alpha(), back.alpha()])
 }
 pub(crate) fn apply_view_lights(
     layers: &mut [RenderLayer],

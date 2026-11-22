@@ -418,7 +418,7 @@ impl MainViewLights {
 fn light_set_matches(left: &RenderLightSet, right: &RenderLightSet) -> bool {
     left.ambient.map(f32::to_bits) == right.ambient.map(f32::to_bits)
         && left.sources.len() == right.sources.len()
-        && left.sources.iter().zip(&right.sources).all(|(a, b)| {
+        && left.sources.iter().zip(right.sources.iter()).all(|(a, b)| {
             a.kind == b.kind
                 && a.cast_shadows == b.cast_shadows
                 && a.color.map(f32::to_bits) == b.color.map(f32::to_bits)

@@ -1,7 +1,6 @@
 //! Fixed-function GL lighting evaluates encoded materials and eye-space vertices.
 use crate::{RenderError, RenderLighting, RenderShading, error::rejected};
 use martensite_tkernel::{ncollection::Mat4, quantity::ColorRgba};
-use martensite_tkservice::graphic3d::{Graphic3dAspectsMembers, Graphic3dAspectsRenderMembers};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(u32)]
@@ -32,19 +31,6 @@ impl RenderLighting {
     pub(crate) fn is_fixed_lighting(&self) -> bool {
         self.fixed.is_some()
     }
-}
-pub(crate) fn snapshot_fixed_material_opacity(
-    lighting: &mut RenderLighting,
-    aspect: &dyn martensite_tkservice::graphic3d::Graphic3dAspectsSource,
-) {
-    let front = aspect.front_material().alpha();
-    let back = if aspect.distinguish() {
-        aspect.back_material().alpha()
-    } else {
-        front
-    };
-    // Native Material::init retains intrinsic diffuse alpha independently of pass selection.
-    lighting.fixed_source_opacity = Some([front, back]);
 }
 fn fixed_normal_matrix(world: [f32; 16]) -> Result<[f32; 16], RenderError> {
     Ok(Mat4::from_data(world)
@@ -122,7 +108,9 @@ mod tests {
         aspect.set_front_material(front);
         aspect.set_alpha_mode(Graphic3dAlphaMode::Opaque, 0.9);
         let mut lighting = scaled_fixed_state();
-        snapshot_fixed_material_opacity(&mut lighting, &aspect);
+        let (material, opacity) = crate::retained_lighting::aspect_material_snapshot(&aspect);
+        lighting.material = material;
+        lighting.fixed_source_opacity = Some(opacity);
         assert_eq!(lighting.fixed_source_opacity, Some([0.5, 0.5]));
         lighting.prepare_fixed_lighting().unwrap();
         assert_eq!(lighting.material.common[0].diffuse[3], 0.5);

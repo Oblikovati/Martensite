@@ -25,7 +25,7 @@ fn palette_draw(model: Model, size: f32) -> PrimitiveDraw {
     if let Some(lighting) = draw.lighting.as_mut() {
         lighting.lights = RenderLightSet {
             ambient: [1.; 4],
-            sources: vec![],
+            sources: Default::default(),
         };
         lighting.material.common = [ambient_material(); 2];
     }
@@ -183,7 +183,7 @@ fn missing_point_image_draw(model: Model, colors: bool) -> PrimitiveDraw {
     if let Some(lighting) = draw.lighting.as_mut() {
         lighting.lights = RenderLightSet {
             ambient: [1.; 4],
-            sources: vec![],
+            sources: Default::default(),
         };
         let mut material = ambient_material();
         material.emission = [1., 0., 0., 0.];

@@ -96,6 +96,9 @@ void main() {
 #else
     worldNormal = glslNormalize((lighting.normalFromObject * vec4(normal, 0.0)).xyz);
 #endif
+#ifdef MARTENSITE_ORTHOGRAPHIC_DIRECTIONAL_PHONG
+    viewDirection = lighting.eye.xyz;
+#else
     viewDirection = lighting.eye.w != 0.0 ? glslNormalize(lighting.eye.xyz - worldPosition.xyz) : lighting.eye.xyz;
     vertexColor = color;
     frontColor = backColor = vec4(0.0);
@@ -116,6 +119,7 @@ void main() {
     }
 #ifdef MARTENSITE_FIXED_LIGHTING
     fixedFrontColor=frontColor; fixedBackColor=backColor;
+#endif
 #endif
 #ifdef MARTENSITE_MARKER_LIGHTING
     gl_PointSize = transform.size;
@@ -139,7 +143,7 @@ void main() {
     rasterWorldClipDistances(gl_Position);
 #endif
     if (kRemapClipDepth) gl_Position.z = 0.5 * (gl_Position.z + gl_Position.w);
-#ifndef MARTENSITE_FIXED_LIGHTING
+#if !defined(MARTENSITE_FIXED_LIGHTING) && !defined(MARTENSITE_ORTHOGRAPHIC_DIRECTIONAL_PHONG)
     writeShadowPositions(worldPosition);
 #endif
 #ifdef MARTENSITE_CLIPPING

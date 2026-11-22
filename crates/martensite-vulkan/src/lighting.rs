@@ -109,7 +109,7 @@ impl RenderLighting {
                 + 2 * u32::from(self.is_fixed_lighting() && self.normalize_fixed),
         ];
         bytes.extend_from_slice(settings.map(u32::to_ne_bytes).as_flattened());
-        for light in &self.lights.sources {
+        for light in self.lights.sources.iter() {
             encode_light_source(bytes, light);
         }
     }
@@ -135,11 +135,33 @@ impl RenderLighting {
     }
 }
 fn inverse_normal_transform(world: [f32; 16]) -> Result<[f32; 16], RenderError> {
+    let identity = crate::identity_clip();
+    // A bitwise match preserves the cofactor path for signed zeros in authored matrices.
+    if world.map(f32::to_bits) == identity.map(f32::to_bits) {
+        let mut normal = identity;
+        // The general inverse's first off-diagonal cofactors produce negative zero.
+        normal[1] = -0.;
+        normal[4] = -0.;
+        return Ok(normal);
+    }
     Mat4::from_data(world)
         .inverted()
         .map(|inverse| inverse.transposed().data())
         .map_err(|error| rejected((world, error), "an invertible model matrix"))
 }
+#[cfg(test)]
+#[test]
+fn identity_normals_are_bit_identical_to_the_general_inverse() {
+    let identity = Mat4::<f32>::identity();
+    let inverse = identity.inverted().unwrap().transposed().data();
+    assert_eq!(
+        inverse_normal_transform(identity.data())
+            .unwrap()
+            .map(f32::to_bits),
+        inverse.map(f32::to_bits),
+    );
+}
+
 fn lighting_eye(view: [f32; 16], perspective: bool) -> Result<[f32; 4], RenderError> {
     let inverse = Mat4::from_data(view)
         .inverted()

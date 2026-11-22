@@ -17,7 +17,7 @@ pub(crate) fn snapshot_fixed_lights(
     set.update_revision();
     Ok(RenderLightSet {
         ambient: set.ambient_color().data(),
-        sources: fixed_enabled_sources(set, view),
+        sources: fixed_enabled_sources(set, view).into(),
     })
 }
 fn validate_fixed_light_view(view: [f32; 16]) -> Result<(), RenderError> {
