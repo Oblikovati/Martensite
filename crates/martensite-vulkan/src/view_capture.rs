@@ -7,19 +7,36 @@ use martensite_tkservice::{
 };
 use std::fmt::Write as _;
 
-/// Applies a frame's host-copy steps in GlView order: the scaled depth blit, the subview
-/// blits, then the flipped output; `finish_host_capture(&mut capture, &frame, scaled)`.
-pub(crate) fn finish_host_capture(
-    capture: &mut FrameCapture,
-    frame: &crate::RenderFrame,
-    scaled: Option<&FrameCapture>,
-) {
-    if let Some(scaled) = scaled {
-        capture.depth = crate::render_scale::blit_depth(scaled, [frame.width, frame.height]);
+/// The host-copy steps of one redraw's capture, kept until its pixels are read (#594).
+pub(crate) struct HostCaptureSteps {
+    /// The logical frame size.
+    pub size: [u32; 2],
+    /// The offscreen capture a render scale blitted, whose depth the capture takes.
+    pub scaled: Option<FrameCapture>,
+    pub subview_blits: Vec<crate::subview_composition::RenderSubviewBlit>,
+    pub flip_output: bool,
+}
+
+impl HostCaptureSteps {
+    /// Takes the subview blits of a rendered `frame`; `HostCaptureSteps::taken(&mut frame, scaled)`.
+    pub(crate) fn taken(frame: &mut crate::RenderFrame, scaled: Option<FrameCapture>) -> Self {
+        Self {
+            size: [frame.width, frame.height],
+            scaled,
+            subview_blits: std::mem::take(&mut frame.subview_blits),
+            flip_output: frame.flip_output,
+        }
     }
-    crate::subview_composition::apply_subview_blits(capture, &frame.subview_blits);
-    if frame.flip_output {
-        capture.reverse_rows();
+    /// Applies the steps in GlView order: the scaled depth blit, the subview blits, then the
+    /// flipped output; `steps.apply(&mut capture)`.
+    pub(crate) fn apply(&self, capture: &mut FrameCapture) {
+        if let Some(scaled) = &self.scaled {
+            capture.depth = crate::render_scale::blit_depth(scaled, self.size);
+        }
+        crate::subview_composition::apply_subview_blits(capture, &self.subview_blits);
+        if self.flip_output {
+            capture.reverse_rows();
+        }
     }
 }
 

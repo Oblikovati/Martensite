@@ -3,6 +3,11 @@ use crate::{FrameCapture, RenderBackend, RenderError, RenderFrame, VulkanRendere
 use martensite_tkernel::standard::SharedState;
 use std::sync::Arc;
 pub(crate) type SharedRenderDevice = Arc<SharedState<DriverBackend>>;
+/// A redraw's result: pixels already on the host, or device images a capture reads (#594).
+pub(crate) enum RenderedFrame {
+    Ready(FrameCapture),
+    Deferred(crate::backend::FrameReadback),
+}
 pub(crate) enum DriverBackend {
     Vulkan(Box<VulkanRenderer>),
     Injected(Box<dyn RenderBackend + Send + Sync>),
@@ -46,6 +51,35 @@ impl DriverBackend {
         match self {
             Self::Vulkan(device) => device.render(frame),
             Self::Injected(device) => device.render(frame),
+        }
+    }
+    /// Render a view frame; a Vulkan frame keeps its images on the device until a capture
+    /// reads them. Example: `backend.render_view_frame(&frame)?`.
+    pub fn render_view_frame(&mut self, frame: &RenderFrame) -> Result<RenderedFrame, RenderError> {
+        match self {
+            Self::Vulkan(device) => device.render_deferred(frame).map(RenderedFrame::Deferred),
+            Self::Injected(device) => device.render(frame).map(RenderedFrame::Ready),
+        }
+    }
+    /// Wait for every frame a Vulkan redraw left on the GPU; injected backends draw at once.
+    /// Example: `backend.finish_frames()?`.
+    pub fn finish_frames(&mut self) -> Result<(), RenderError> {
+        match self {
+            Self::Vulkan(device) => device.finish_frames(),
+            Self::Injected(_) => Ok(()),
+        }
+    }
+    /// Copy a deferred frame's images to the host; `backend.read_frame(&readback)?`.
+    pub fn read_frame(
+        &mut self,
+        readback: &crate::backend::FrameReadback,
+    ) -> Result<FrameCapture, RenderError> {
+        match self {
+            Self::Vulkan(device) => device.read_frame(readback),
+            Self::Injected(_) => Err(crate::error::rejected(
+                "injected backend",
+                "the Vulkan device that rendered the frame",
+            )),
         }
     }
     /// Testing only: the raw `VkInstance` handle, None for injected backends;
@@ -125,9 +159,11 @@ impl DriverBackend {
         target: &mut crate::backend::WindowPresenter,
         vsync: bool,
         policy: crate::RenderGuiSurfacePolicy,
-    ) -> Result<FrameCapture, RenderError> {
+    ) -> Result<RenderedFrame, RenderError> {
         match self {
-            Self::Vulkan(device) => device.render_window(frame, target, vsync, policy),
+            Self::Vulkan(device) => device
+                .render_window(frame, target, vsync, policy)
+                .map(RenderedFrame::Deferred),
             Self::Injected(_) => Err(crate::error::rejected(
                 "injected backend",
                 "a Vulkan window presenter",

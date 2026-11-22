@@ -159,9 +159,10 @@ fn checked_capture_keeps_one_publication_and_returns_owned_pixels() {
     captured.rgba[0] ^= u8::MAX;
 
     let next = view.capture().unwrap();
-    assert_eq!([next.width, next.height], [original.width, original.height]);
-    assert_eq!(next.rgba, original.rgba);
-    assert_eq!(next.depth, original.depth);
+    let pixels = original.pixels(&view.device).unwrap();
+    assert_eq!([next.width, next.height], [pixels.width, pixels.height]);
+    assert_eq!(next.rgba, pixels.rgba);
+    assert_eq!(next.depth, pixels.depth);
     let recorded = view.outcome.read();
     assert!(Arc::ptr_eq(
         &original,

@@ -8,7 +8,10 @@ mod device_limits_query;
 mod device_retirement;
 mod diagnostic_facts;
 mod factorized_line_upload;
+mod frame_flight;
+mod frame_readback;
 mod frame_work_ledger;
+pub(crate) use frame_readback::FrameReadback;
 pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
 mod image_memory;
 mod layer_depth_policy;
@@ -69,6 +72,8 @@ pub use validation_layer::{
 /// Vulkan 1.3 offscreen renderer; `VulkanRenderer::new(VulkanOptions::default())?`.
 pub struct VulkanRenderer {
     runtime: std::sync::Arc<VulkanRuntime>,
+    // Dropping the flight waits for its frames before the stores below are released.
+    flight: frame_flight::FrameFlight,
     retirements: retained_submission::RetirementStore,
     pipeline: pipeline_variants::RasterPipelines,
     capping_pipeline: Option<pipeline_variants::RasterPipelines>,
@@ -147,6 +152,7 @@ impl VulkanRenderer {
         let pipeline = pipeline_variants::RasterPipelines::new(&runtime, false)?;
         Ok(Self {
             runtime,
+            flight: Default::default(),
             retirements: retained_submission::RetirementStore::new()?,
             pipeline,
             capping_pipeline: None,
@@ -202,13 +208,13 @@ mod fixed_vertex_sources;
 mod frame;
 mod frame_draw_presentation;
 mod frame_targets;
-pub(crate) mod immediate_main_record;
 #[cfg(feature = "command-state-diagnostics")]
 mod geometry_command_diagnostic;
 mod geometry_residency;
 mod geometry_transfer;
 mod host_upload_pages;
 mod image;
+pub(crate) mod immediate_main_record;
 mod light_dot_renderer;
 mod light_dot_shader;
 mod light_dot_shader_table;
@@ -264,18 +270,30 @@ mod window_depth_transforms;
 mod window_depth_upload;
 impl RenderBackend for VulkanRenderer {
     fn render(&mut self, frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
+        let readback = self.render_deferred(frame)?;
+        self.read_frame(&readback)
+    }
+}
+impl VulkanRenderer {
+    /// Render a frame and keep its images on the device; `renderer.render_deferred(&frame)?`.
+    pub(crate) fn render_deferred(
+        &mut self,
+        frame: &RenderFrame,
+    ) -> Result<FrameReadback, RenderError> {
         self.runtime.lifecycle.admit("render frame")?;
         let outcome = self.render_owned_frame(frame);
         self.runtime.lifecycle.observe(outcome)
     }
-}
-impl VulkanRenderer {
-    fn render_owned_frame(&mut self, frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
-        let resources = self.completed_owned_frame(frame)?;
-        let _readback = self.runtime.work.enter(WorkPhase::Readback);
-        let capture = resources.capture()?;
-        immediate_main_record::remember(frame, &resources);
-        Ok(capture)
+    fn render_owned_frame(&mut self, frame: &RenderFrame) -> Result<FrameReadback, RenderError> {
+        self.make_flight_room()?;
+        let resources = self.prepared_owned_frame(frame)?;
+        if resources.needs_host_completion() {
+            let resources = self.complete_prepared_frame(frame, resources)?;
+            let readback = resources.completed_readback()?;
+            immediate_main_record::remember(frame, &resources);
+            return Ok(readback);
+        }
+        self.launch_owned_frame(frame, resources)
     }
     /// Inspect persistent admission; `renderer.device_state()` never polls execution progress.
     pub fn device_state(&self) -> crate::RenderDeviceState {

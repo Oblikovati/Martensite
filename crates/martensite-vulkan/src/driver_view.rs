@@ -4,7 +4,8 @@ use crate::{
     backend::WorkPhase,
     driver_backend::SharedRenderDevice,
     error::rejected,
-    view_capture::{dump_capture, finish_host_capture, report_capture_failure},
+    redraw_capture::RedrawCapture,
+    view_capture::{HostCaptureSteps, dump_capture, report_capture_failure},
     view_forward::retained_view_methods,
     view_scene::frame_for_view,
     view_target::{RenderFrameBuffer, capture_extent},
@@ -49,7 +50,7 @@ pub struct Graphic3dRenderView {
     raytrace_observation: SharedState<crate::raytrace_input_observation::ViewRayInputs>,
     redraw_target: SharedState<Option<redraw_completion::RedrawPublicationTarget>>,
 }
-pub(crate) type FramePublication = Result<Arc<FrameCapture>, RenderError>;
+pub(crate) type FramePublication = Result<Arc<RedrawCapture>, RenderError>;
 martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
 type RenderViewCreationInputs = (
     crate::view_output_modes::OutputModeRetainedView,
@@ -132,6 +133,19 @@ impl Graphic3dRenderView {
     pub(crate) fn was_redrawn(&self) -> bool {
         self.was_redrawn.load(std::sync::atomic::Ordering::Relaxed)
     }
+    /// Every redraw publishes a new outcome, so the unread images of the last frame can serve
+    /// the new one instead of a second attachment generation (#594).
+    fn release_unread_frame(&self) {
+        let published = self
+            .outcome
+            .read()
+            .as_ref()
+            .and_then(|result| result.as_ref().ok())
+            .cloned();
+        if let Some(capture) = published {
+            capture.release_unread();
+        }
+    }
     fn finish_redraw(&self, outcome: Result<(), RenderError>) {
         if outcome.is_ok() {
             self.was_redrawn
@@ -142,7 +156,8 @@ impl Graphic3dRenderView {
     pub fn stencil_context_state(&self) -> crate::RenderStencilState {
         self.stencil_feedback.current()
     }
-    fn render_current(&self, immediate: bool) -> Result<FrameCapture, RenderError> {
+    fn render_current(&self, immediate: bool) -> Result<RedrawCapture, RenderError> {
+        self.release_unread_frame();
         #[cfg(feature = "raytrace-input-diagnostics")]
         let observation = self.begin_raytrace_observation()?;
         self.with_measured_frame(|work| {
@@ -164,7 +179,7 @@ impl Graphic3dRenderView {
             }
             #[cfg(feature = "raytrace-input-diagnostics")]
             self.attach_raytrace_observation(&mut frame, observation.as_ref(), scaled.is_some());
-            let mut capture = self.render_target(&frame)?;
+            let rendered = self.render_target(&frame)?;
             #[cfg(feature = "command-state-diagnostics")]
             let observed_transforms = [
                 usize::from(scaled.is_some()),
@@ -172,15 +187,14 @@ impl Graphic3dRenderView {
                 usize::from(frame.flip_output),
                 usize::from(frame.gui_draw_start.is_some()),
             ];
-            work.phase(WorkPhase::Readback, || {
-                finish_host_capture(&mut capture, &frame, scaled.as_ref());
-            });
+            // The host steps wait for the first capture, as the readback does (#594).
+            let capture = RedrawCapture::new(rendered, HostCaptureSteps::taken(&mut frame, scaled));
             #[cfg(feature = "raytrace-input-diagnostics")]
-            self.finish_raytrace_observation(observation.as_ref(), &capture);
+            self.finish_raytrace_observation(observation.as_ref(), capture.pixels(&self.device)?);
             #[cfg(feature = "command-state-diagnostics")]
             crate::scene::replay_diagnostic::rendered(
                 self as *const Self as usize,
-                &capture,
+                capture.pixels(&self.device)?,
                 observed_transforms,
             );
             Ok(capture)
@@ -251,11 +265,14 @@ impl Graphic3dRenderView {
 #[path = "driver_view_stereo.rs"]
 mod stereo;
 impl Graphic3dRenderView {
-    fn render_target(&self, frame: &crate::RenderFrame) -> Result<FrameCapture, RenderError> {
+    fn render_target(
+        &self,
+        frame: &crate::RenderFrame,
+    ) -> Result<crate::driver_backend::RenderedFrame, RenderError> {
         let window = self.window();
         let mut device = self.device.write();
         if !self.fbo().is_null() || window.is_virtual() {
-            return device.render(frame);
+            return device.render_view_frame(frame);
         }
         if window.native_handle() == 0 {
             return Err(rejected(
@@ -265,7 +282,7 @@ impl Graphic3dRenderView {
         }
         // Native buffersNoSwap draws the frame but never swaps; dumps read the rendered frame.
         if !window.is_mapped() || self.options.read().buffers_no_swap {
-            return device.render(frame);
+            return device.render_view_frame(frame);
         }
         self.render_mapped_target(frame, &mut device)
     }
@@ -273,7 +290,7 @@ impl Graphic3dRenderView {
         &self,
         frame: &crate::RenderFrame,
         device: &mut crate::driver_backend::DriverBackend,
-    ) -> Result<FrameCapture, RenderError> {
+    ) -> Result<crate::driver_backend::RenderedFrame, RenderError> {
         let mut presenter = self.presenter.write();
         if presenter.is_none() {
             *presenter = Some(device.window_presenter(&self.window())?);

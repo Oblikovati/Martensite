@@ -1,8 +1,9 @@
 //! Swapchain images use concurrent sharing only when presentation requires another queue family.
 use super::{
+    frame_flight::FRAMES_IN_FLIGHT,
     runtime::{VulkanRuntime, vk_error},
     window_support,
-    window_sync::WindowSync,
+    window_sync::WindowSyncRing,
 };
 use crate::{RenderError, error::rejected};
 use ash::vk;
@@ -77,14 +78,14 @@ pub(super) struct WindowChain {
     pub handle: vk::SwapchainKHR,
     pub images: Vec<vk::Image>,
     pub config: WindowConfig,
-    pub sync: WindowSync,
+    pub sync: WindowSyncRing,
     pub acquired_index: Option<u32>,
     pub stale: bool,
     _surface: Arc<super::window_surface_lease::WindowSurfaceLease>,
     device_retired: bool,
 }
 struct SwapchainAllocation {
-    sync: WindowSync,
+    sync: WindowSyncRing,
     loader: ash::khr::swapchain::Device,
     handle: vk::SwapchainKHR,
 }
@@ -94,7 +95,7 @@ impl SwapchainAllocation {
         info: &vk::SwapchainCreateInfoKHR<'_>,
     ) -> Result<Self, RenderError> {
         let loader = ash::khr::swapchain::Device::new(&runtime.instance, runtime.device());
-        let sync = WindowSync::new(runtime)?;
+        let sync = WindowSyncRing::new(runtime, FRAMES_IN_FLIGHT)?;
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let handle = unsafe { loader.create_swapchain(info, None) }
             .map_err(|e| vk_error("create window swapchain", e))?;
@@ -164,15 +165,16 @@ impl WindowChain {
     }
     pub fn acquire(&mut self) -> Result<u32, vk::Result> {
         // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
+        let sync = self.sync.current_mut();
         let (index, suboptimal) = unsafe {
             self.loader.acquire_next_image(
                 self.handle,
                 1_000_000_000,
-                self.sync.acquired,
-                self.sync.acquire_fence,
+                sync.acquired,
+                sync.acquire_fence,
             )
         }?;
-        self.sync.acquire_pending = true;
+        sync.acquire_pending = true;
         self.acquired_index = Some(index);
         self.stale = suboptimal;
         Ok(index)
@@ -183,10 +185,10 @@ impl WindowChain {
         index: u32,
         contract: super::window_gui_contract::WindowGuiContract,
     ) -> Result<(), RenderError> {
-        let waits = [self.sync.rendered];
+        let waits = [self.sync.current().rendered];
         let swaps = [self.handle];
         let indices = [index];
-        let fences = [self.sync.present_fence];
+        let fences = [self.sync.current().present_fence];
         let mut fence_info = vk::SwapchainPresentFenceInfoEXT::default().fences(&fences);
         let info = vk::PresentInfoKHR::default()
             .wait_semaphores(&waits)
@@ -204,10 +206,12 @@ impl WindowChain {
     ) -> Result<(), RenderError> {
         complete_present_state(
             result,
-            &mut self.sync.pending,
+            &mut self.sync.current_mut().pending,
             &mut self.acquired_index,
             &mut self.stale,
         );
+        // The next frame uses the next set; this one returns after its presentation fence.
+        self.sync.advance();
         contract.present_result(result)
     }
 }

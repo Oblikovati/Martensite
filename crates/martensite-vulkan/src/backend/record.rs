@@ -54,27 +54,18 @@ pub(super) fn record_frame(
     #[cfg(feature = "vertex-output-diagnostics")]
     super::vertex_output::host_barrier(runtime, command, resources);
     super::window_depth_status::host_barrier(runtime, command, resources);
-    read_attachments(runtime, command, resources);
 }
-fn read_attachments(
+/// Copy the colour and depth attachments, left in `TRANSFER_SRC_OPTIMAL` by their frame, into
+/// host buffers; `record_attachment_reads(rt, command, [&color, &depth], buffers, extent)`.
+pub(super) fn record_attachment_reads(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
-    resources: &FrameResources,
+    [color, depth]: [&TargetImage; 2],
+    [color_buffer, depth_buffer]: [vk::Buffer; 2],
+    extent: vk::Extent2D,
 ) {
-    copy_attachment(
-        runtime,
-        command,
-        &resources.color,
-        resources.color_read.handle,
-        resources.attachment_extent,
-    );
-    copy_attachment(
-        runtime,
-        command,
-        &resources.depth,
-        resources.depth_read.handle,
-        resources.attachment_extent,
-    );
+    copy_attachment(runtime, command, color, color_buffer, extent);
+    copy_attachment(runtime, command, depth, depth_buffer, extent);
     sync::host_barrier(runtime, command);
 }
 pub(super) fn image_barrier(

@@ -137,7 +137,7 @@ impl Graphic3dRenderView {
 
     pub(super) fn publish_redraw_observation(
         &self,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<crate::redraw_capture::RedrawCapture, RenderError>,
         publication: &RedrawPublicationTarget,
         retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {
@@ -151,14 +151,23 @@ impl Graphic3dRenderView {
         let result = outcome.as_ref().map(|_| ()).map_err(Clone::clone);
         let mut target = self.redraw_target.write();
         self.advance_redraw_serial();
+        // Diagnostic builds read every frame when it renders, so these pixels are cached.
+        #[cfg(any(
+            feature = "command-state-diagnostics",
+            feature = "raytrace-input-diagnostics"
+        ))]
+        let observed = outcome
+            .as_ref()
+            .map_err(Clone::clone)
+            .and_then(|capture| capture.pixels(&self.device).cloned());
         #[cfg(feature = "command-state-diagnostics")]
         crate::scene::replay_diagnostic::published(
             self as *const Self as usize,
             self.redraw_serial.load(Ordering::Relaxed),
-            &outcome,
+            &observed,
         );
         #[cfg(feature = "raytrace-input-diagnostics")]
-        self.publish_raytrace_observation(&outcome);
+        self.publish_raytrace_observation(&observed);
         retired.target = target.replace(next);
         retired.frame = stored.replace(outcome.map(Arc::new));
         result

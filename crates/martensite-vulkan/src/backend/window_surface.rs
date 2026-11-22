@@ -100,12 +100,17 @@ impl WindowPresenter {
         self.prepare_window_chain(config)?;
         let result = self.chain.as_mut().unwrap().acquire();
         let index = self.resolve_window_acquire(result, extent, vsync, contract)?;
-        self.chain.as_mut().unwrap().sync.wait_acquire()?;
+        self.chain
+            .as_mut()
+            .unwrap()
+            .sync
+            .current_mut()
+            .wait_acquire()?;
         Ok(index)
     }
     fn prepare_window_chain(&mut self, config: WindowConfig) -> Result<(), RenderError> {
         if let Some(chain) = self.chain.as_mut() {
-            chain.sync.wait_present()?;
+            chain.sync.current_mut().wait_present()?;
         }
         if self
             .chain

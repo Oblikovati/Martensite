@@ -180,6 +180,8 @@ fn an_unobserved_submission_owns_its_source_after_view_invalidation() {
     let mut frame = frame(triangle(0.2, [1., 0., 0., 1.], -0.1), vec![], false);
     frame.immediate_main = cache.plan(&frame);
     renderer.render(&frame).unwrap();
+    // The owner count below concerns this submission, not the earlier frame in flight.
+    renderer.finish_frames().unwrap();
     frame.immediate_main = cache.plan(&frame);
     let resources = renderer.frame_resources(&frame).unwrap();
     let (_, source) = resources.immediate_source.as_ref().unwrap();

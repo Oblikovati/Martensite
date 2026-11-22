@@ -11,16 +11,17 @@ impl WindowSubmissionSignals {
     pub fn new(chain: &WindowChain) -> Self {
         Self {
             waits: [vk::SemaphoreSubmitInfo::default()
-                .semaphore(chain.sync.acquired)
+                .semaphore(chain.sync.current().acquired)
                 .stage_mask(vk::PipelineStageFlags2::TRANSFER)],
             signals: [vk::SemaphoreSubmitInfo::default()
-                .semaphore(chain.sync.rendered)
+                .semaphore(chain.sync.current().rendered)
                 .stage_mask(vk::PipelineStageFlags2::ALL_COMMANDS)],
         }
     }
 }
-/// Complete the same acquired-window submission; `finish(commands, chain)?` uses one canonical semaphore layout.
-pub(super) fn finish(commands: &CommandSubmission, chain: &WindowChain) -> Result<(), RenderError> {
+/// Queue the acquired-window frame without waiting (#594); `submit(commands, chain)?` uses one
+/// canonical semaphore layout, and the frame flight completes the work later.
+pub(super) fn submit(commands: &CommandSubmission, chain: &WindowChain) -> Result<(), RenderError> {
     let signals = WindowSubmissionSignals::new(chain);
-    commands.finish_synced(&signals.waits, &signals.signals)
+    commands.submit_synced(&signals.waits, &signals.signals)
 }

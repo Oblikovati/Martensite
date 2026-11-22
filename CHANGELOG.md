@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added `Graphic3dRenderDriver::finish_frames`, which waits for the frames that Vulkan redraws left on the GPU, as `glFinish` does, and returns the first GPU fault they reported (#594).
+
 - Added `Graphic3dCamera::orientation_with_axial_scale_f` to read the float view matrix and its axial scale together. Vulkan uses it to avoid copying the camera for each placement (#594).
 
 - Added Vulkan redraw counters for buffers, images, memory allocations, pipelines, descriptor sets, submissions, bytes uploaded and read back, and CPU time by phase. `Graphic3dRenderView::last_frame_work` and `Graphic3dRenderDriver::device_work` return `RenderDeviceWork`, which reports geometry buffers and geometry upload bytes separately from the device totals (#594).
@@ -81,6 +83,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
 ### Changed
+
+- Stopped waiting for the GPU and copying the frame to host memory in each Vulkan redraw. Up to two frames run on the GPU while the host prepares the next one. `Graphic3dRenderView::capture` reads the frame back the first time it is called and returns the same pixels as before. A GPU fault that a frame reports after its redraw returned now comes from the next `capture`, the next redraw that needs the frame's slot, or `Graphic3dRenderDriver::finish_frames`. The redraw counters report no read-back bytes (#594).
 
 - Reused Vulkan vertex and index buffers between redraws, including for static textured meshes, and batched geometry transfers. Shared mapped storage pages and descriptor pools across the draws of a frame (#594).
 

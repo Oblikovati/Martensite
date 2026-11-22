@@ -184,6 +184,9 @@ impl StagingBlock {
     }
 }
 
+/// The copies' writes, visible to draws and to later copies. Later copies include the
+/// preserved ranges of later frames, which may read a stream while its frame is still in
+/// flight: the queue keeps the submission order (#594).
 fn vertex_input_barrier() -> vk::MemoryBarrier2<'static> {
     vk::MemoryBarrier2::default()
         .src_stage_mask(vk::PipelineStageFlags2::COPY)

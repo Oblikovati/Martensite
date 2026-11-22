@@ -23,6 +23,13 @@ impl OwnedWindowFrame {
             resources,
         })
     }
+    /// Hand a submitted and presented frame to the frame flight; `owned.into_flight()`.
+    pub fn into_flight(self) -> super::frame_flight::InFlightFrame {
+        super::frame_flight::InFlightFrame {
+            commands: self.commands,
+            resources: self.resources,
+        }
+    }
     /// Keep unknown cleanup reachable; `owned.reject(renderer, presenter, primary)` never drops pending references early.
     pub fn reject(
         self,

@@ -120,6 +120,12 @@ Acceptance:
   test).
 - The existing suites pass with unchanged images.
 
+Phase 1 also takes items 2 and 3 of phase 2. With the geometry on the device, the mesh,
+point and segment frames spend about 0.1 ms on the CPU. The rest of their time is the
+wait for the GPU and the readback of the image. OCCT draws ten frames and waits once, so
+parity needs a redraw that returns without waiting and a capture that reads on demand.
+Both are done.
+
 ## Phase 2: a frame pipeline without stalls
 
 Target: `frame_empty`, `dump_1080p`, `resize_redraw` and `frame_msaa4_100k` reach parity.
@@ -147,6 +153,13 @@ Acceptance:
 - No readback in a static orbit (counter test).
 - The four cases at parity.
 - The error-timing decision recorded.
+
+Error timing, decided by the maintainer on 2026-11-22: an ordinary redraw does not wait
+for its GPU work. Errors that Vulkan returns at once (acquire, submit, present,
+validation) stay immediate. An error that the GPU reports later, for example a lost
+device, shows at the next `capture`, at the next redraw that reuses the frame slot, or
+at an explicit wait. `capture` reads the frame back on demand and returns the same pixels
+as before.
 
 ## Phase 3: draw submission at scale
 

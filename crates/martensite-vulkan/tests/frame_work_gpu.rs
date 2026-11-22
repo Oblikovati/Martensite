@@ -72,7 +72,46 @@ fn a_redraw_reports_the_resources_and_bytes_it_used() {
     assert!(work.buffers_created > 0, "{work:?}");
     assert!(work.uploaded_bytes > 0, "{work:?}");
     assert!(work.submissions >= 1, "{work:?}");
-    assert!(work.read_back_bytes >= READBACK_BYTES, "{work:?}");
+    // The frame stays on the device until a capture asks for it (#594).
+    assert_eq!(work.read_back_bytes, 0, "{work:?}");
+    assert_clean_validation(&driver);
+}
+
+#[test]
+fn a_redraw_returns_before_its_frame_finishes() {
+    let (scene, driver) = device_scene();
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    driver.finish_frames().unwrap();
+    view.try_redraw().unwrap();
+    let work = view.last_frame_work();
+    // An empty flight has room, so the redraw submits and waits for no fence (#594).
+    assert_eq!(work.times.waiting, Duration::ZERO, "{work:?}");
+    assert_eq!(work.submissions, 1, "{work:?}");
+    let before = driver.device_work();
+    driver.finish_frames().unwrap();
+    let finished = driver.device_work().since(&before);
+    assert!(finished.times.waiting > Duration::ZERO, "{finished:?}");
+    assert_clean_validation(&driver);
+}
+
+#[test]
+fn the_first_capture_reads_the_frame_back_once() {
+    let (scene, driver) = device_scene();
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    let before = driver.device_work();
+    let first = view.capture().unwrap();
+    let read = driver.device_work().since(&before);
+    assert!(read.read_back_bytes >= READBACK_BYTES, "{read:?}");
+    assert_eq!(read.redraws, 0, "{read:?}");
+    let after_first = driver.device_work();
+    let again = view.capture().unwrap();
+    let repeated = driver.device_work().since(&after_first);
+    assert_eq!(repeated.read_back_bytes, 0, "{repeated:?}");
+    assert_eq!(repeated.submissions, 0, "{repeated:?}");
+    assert_eq!(again.rgba, first.rgba);
+    assert_eq!(again.depth, first.depth);
     assert_clean_validation(&driver);
 }
 
@@ -105,12 +144,14 @@ fn phase_times_fit_inside_the_redraw() {
 fn counts_belong_to_one_redraw_and_do_not_accumulate() {
     let (scene, _driver) = device_scene();
     let view = scene.render_view();
-    // The first redraw also creates the pipelines and glyph images later frames reuse.
+    // The first redraw also creates the pipelines and glyph images later frames reuse; the
+    // second creates the attachments and pages of the second frame in flight (#594).
     view.try_redraw().unwrap();
     view.try_redraw().unwrap();
-    let second = counts(view.last_frame_work());
     view.try_redraw().unwrap();
-    assert_eq!(counts(view.last_frame_work()), second);
+    let third = counts(view.last_frame_work());
+    view.try_redraw().unwrap();
+    assert_eq!(counts(view.last_frame_work()), third);
 }
 
 #[cfg(not(any(
@@ -128,6 +169,8 @@ fn orbiting_a_live_triangle_keeps_geometry_on_the_device() {
     assert!(uploaded.geometry_uploaded_bytes > 0, "{uploaded:?}");
     assert!(uploaded.geometry_buffers_created > 0, "{uploaded:?}");
 
+    // The second frame in flight creates its own attachments and upload page once (#594).
+    view.try_redraw().unwrap();
     scene
         .view
         .camera()
@@ -138,6 +181,9 @@ fn orbiting_a_live_triangle_keeps_geometry_on_the_device() {
     let orbit = view.last_frame_work();
     assert_eq!(orbit.geometry_uploaded_bytes, 0, "{orbit:?}");
     assert_eq!(orbit.geometry_buffers_created, 0, "{orbit:?}");
+    // Phase 1 acceptance: a static orbit creates no buffer at all and reads nothing back.
+    assert_eq!(orbit.buffers_created, 0, "{orbit:?}");
+    assert_eq!(orbit.read_back_bytes, 0, "{orbit:?}");
     assert_clean_validation(&driver);
 }
 
@@ -380,6 +426,8 @@ fn live_immediate_redraw_restores_main_color_and_depth_then_reuses_its_target_pa
     assert_ne!(restored.rgba, base.rgba);
     // The first restore separates the transfer destination from the retained main pair.
     assert_eq!(view.last_frame_work().images_created, 2);
+    // A restore while the previous one is in flight gets its own destination pair once (#594).
+    scene.cview().redraw_immediate();
     scene.cview().redraw_immediate();
     assert_eq!(view.last_frame_work().images_created, 0);
 

@@ -29,6 +29,7 @@ impl VulkanRenderer {
         if !device.is_stopped() {
             return device;
         }
+        self.release_flight_after_idle();
         let pending = self.retirements.try_retire(&device);
         let attempt = device.join(pending);
         if attempt.is_stopped() {

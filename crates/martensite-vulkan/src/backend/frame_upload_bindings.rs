@@ -205,12 +205,15 @@ impl DrawUploadContext<'_> {
                     .lighting_layout
                     .as_ref()
                     .expect("lighting pipeline layout");
-                let retain = lighting.fixed.is_none()
-                    && !lighting.pbr
-                    && self.draw.user_program.is_none();
-                self.pipelines
-                    .lighting_bindings
-                    .bind_draw(self.runtime, layout, lighting, storage, retain)
+                let retain =
+                    lighting.fixed.is_none() && !lighting.pbr && self.draw.user_program.is_none();
+                self.pipelines.lighting_bindings.bind_draw(
+                    self.runtime,
+                    layout,
+                    lighting,
+                    storage,
+                    retain,
+                )
             })
             .transpose()
     }

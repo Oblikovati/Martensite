@@ -107,11 +107,16 @@ fn warmed_attachments_clear_each_frame_and_resize_once() {
     let red = renderer.render(&first).unwrap();
     let initial = renderer.work_ledger().totals();
     assert_eq!(initial.since(&before).images_created, 2);
+    // The first frame is still in flight, so the second gets its own pair once (#594).
     let green = renderer.render(&second).unwrap();
+    let in_flight = renderer.work_ledger().totals();
+    assert_eq!(in_flight.since(&initial).images_created, 2);
+    let red_again = renderer.render(&first).unwrap();
     let warmed = renderer.work_ledger().totals();
-    assert_eq!(warmed.since(&initial).images_created, 0);
+    assert_eq!(warmed.since(&in_flight).images_created, 0);
     assert_eq!(red.pixel(5, 4), Some([255, 0, 0, 255]));
     assert_eq!(green.pixel(5, 4), Some([0, 255, 0, 255]));
+    assert_eq!(red_again.rgba, red.rgba);
     assert_eq!(green.depth, red.depth);
     assert_resizes_once(&mut renderer, &warmed);
     assert!(renderer.validation_errors().unwrap().is_empty());
@@ -126,9 +131,17 @@ fn assert_resizes_once(
     let first = renderer.work_ledger().totals();
     assert_eq!(first.since(before_resize).images_created, 2);
     assert_eq!([capture.width, capture.height], [20, 16]);
+    // The resized frame is in flight, so the next one gets the second pair of this size.
+    renderer.render(&resized).unwrap();
+    let second = renderer.work_ledger().totals();
+    assert_eq!(second.since(&first).images_created, 2);
     let repeated = renderer.render(&resized).unwrap();
     assert_eq!(
-        renderer.work_ledger().totals().since(&first).images_created,
+        renderer
+            .work_ledger()
+            .totals()
+            .since(&second)
+            .images_created,
         0
     );
     assert_eq!(repeated.rgba, capture.rgba);
@@ -143,7 +156,10 @@ fn an_owned_frame_pins_the_exact_attachment_generation() {
     let replacement = renderer.completed_owned_frame(&second).unwrap();
     assert_ne!(held.color.handle, replacement.color.handle);
     assert_ne!(held.depth.handle, replacement.depth.handle);
-    assert_eq!(held.capture().unwrap().pixel(5, 4), Some([255, 0, 0, 255]));
+    let held_pixels = renderer
+        .read_frame(&held.completed_readback().unwrap())
+        .unwrap();
+    assert_eq!(held_pixels.pixel(5, 4), Some([255, 0, 0, 255]));
     let expected = replacement.color.handle;
     drop(replacement);
     let warmed = renderer.completed_owned_frame(&second).unwrap();
@@ -207,10 +223,10 @@ fn assert_weighted_scalar_reuse(renderer: &mut super::super::VulkanRenderer, fra
     drop(first);
     let second = renderer.completed_owned_frame(&second).unwrap();
     assert_eq!(weighted_images(&second), handles);
-    assert_eq!(
-        second.capture().unwrap().pixel(5, 4),
-        Some([0, 0, 255, 255])
-    );
+    let pixels = renderer
+        .read_frame(&second.completed_readback().unwrap())
+        .unwrap();
+    assert_eq!(pixels.pixel(5, 4), Some([0, 0, 255, 255]));
 }
 
 fn weighted_images(frame: &super::super::frame::FrameResources) -> Option<[vk::Image; 2]> {

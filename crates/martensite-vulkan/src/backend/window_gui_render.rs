@@ -1,12 +1,10 @@
 //! Operation-local presentation observations bracket native GUI submission.
 use super::window_gui_contract::{NoPresentationProbe, WindowGuiContract, WindowPresentationProbe};
 use super::{
-    VulkanRenderer, WindowPresenter, WorkPhase, frame::FrameResources,
-    submission::CommandSubmission,
+    FrameReadback, VulkanRenderer, WindowPresenter, WorkPhase, frame::FrameResources,
+    owned_window_submission::OwnedWindowFrame, submission::CommandSubmission,
 };
-use crate::{
-    FrameCapture, RenderError, RenderFrame, RenderGuiSurfacePhase, RenderGuiSurfacePolicy,
-};
+use crate::{RenderError, RenderFrame, RenderGuiSurfacePhase, RenderGuiSurfacePolicy};
 struct WindowGuiOperation<'a> {
     presenter: &'a mut WindowPresenter,
     contract: WindowGuiContract,
@@ -54,7 +52,7 @@ impl VulkanRenderer {
         presenter: &mut WindowPresenter,
         vsync: bool,
         policy: RenderGuiSurfacePolicy,
-    ) -> Result<FrameCapture, RenderError> {
+    ) -> Result<FrameReadback, RenderError> {
         let mut probe = NoPresentationProbe;
         self.render_window_with_probe(frame, presenter, vsync, policy, &mut probe)
     }
@@ -65,7 +63,7 @@ impl VulkanRenderer {
         vsync: bool,
         policy: RenderGuiSurfacePolicy,
         probe: &mut dyn WindowPresentationProbe,
-    ) -> Result<FrameCapture, RenderError> {
+    ) -> Result<FrameReadback, RenderError> {
         self.runtime.lifecycle.admit("render window")?;
         let contract = WindowGuiContract::new(frame, policy);
         let mut operation = WindowGuiOperation::new(presenter, contract, probe);
@@ -83,10 +81,37 @@ impl VulkanRenderer {
         frame: &RenderFrame,
         operation: &mut WindowGuiOperation<'_>,
         vsync: bool,
-    ) -> Result<FrameCapture, RenderError> {
-        let owned = super::owned_window_submission::OwnedWindowFrame::new(self, frame)?;
-        let (mut owned, index) = self.prepare_owned_window(frame, owned, operation, vsync)?;
-        if let Err(primary) = owned.resources.validate_completion() {
+    ) -> Result<FrameReadback, RenderError> {
+        self.make_flight_room()?;
+        let owned = OwnedWindowFrame::new(self, frame)?;
+        let (owned, index) = self.prepare_owned_window(frame, owned, operation, vsync)?;
+        let completed = owned.resources.needs_host_completion();
+        let owned = match completed {
+            true => self.complete_window_feedback(owned, operation)?,
+            false => owned,
+        };
+        self.commit_fragment_alpha(frame, owned.resources.fragment_alpha.ending);
+        self.commit_stencil(frame, owned.resources.stencil.ending);
+        let owned = self.present_window(owned, operation, index)?;
+        let readback = match completed {
+            true => owned.resources.completed_readback()?,
+            false => owned.resources.readback_ticket(),
+        };
+        super::immediate_main_record::remember(frame, &owned.resources);
+        if !completed {
+            self.launch_frame(owned.into_flight());
+        }
+        Ok(readback)
+    }
+    /// Wait for a frame whose host feedback the redraw checks, then publish its geometry;
+    /// other frames stay in flight (#594).
+    fn complete_window_feedback(
+        &self,
+        mut owned: OwnedWindowFrame,
+        operation: &mut WindowGuiOperation<'_>,
+    ) -> Result<OwnedWindowFrame, RenderError> {
+        let outcome = owned.commands.complete();
+        if let Err(primary) = outcome.and_then(|()| owned.resources.validate_completion()) {
             return Err(owned.reject(self, operation.presenter, primary));
         }
         let empty_frame = owned.resources.scene_empty();
@@ -95,8 +120,14 @@ impl VulkanRenderer {
             .geometry_transfers
             .residency
             .publish(empty_frame);
-        self.commit_fragment_alpha(frame, owned.resources.fragment_alpha.ending);
-        self.commit_stencil(frame, owned.resources.stencil.ending);
+        Ok(owned)
+    }
+    fn present_window(
+        &self,
+        owned: OwnedWindowFrame,
+        operation: &mut WindowGuiOperation<'_>,
+        index: u32,
+    ) -> Result<OwnedWindowFrame, RenderError> {
         let queue = self.runtime.queues[operation.presenter.present_family as usize];
         let presented = {
             let _submission = self.runtime.work.enter(WorkPhase::Submission);
@@ -105,18 +136,15 @@ impl VulkanRenderer {
         if let Err(primary) = presented {
             return Err(owned.reject(self, operation.presenter, primary));
         }
-        let _readback = self.runtime.work.enter(WorkPhase::Readback);
-        let capture = owned.resources.capture()?;
-        super::immediate_main_record::remember(frame, &owned.resources);
-        Ok(capture)
+        Ok(owned)
     }
     fn prepare_owned_window(
         &self,
         frame: &RenderFrame,
-        owned: super::owned_window_submission::OwnedWindowFrame,
+        owned: OwnedWindowFrame,
         operation: &mut WindowGuiOperation<'_>,
         vsync: bool,
-    ) -> Result<(super::owned_window_submission::OwnedWindowFrame, u32), RenderError> {
+    ) -> Result<(OwnedWindowFrame, u32), RenderError> {
         // Acquiring blocks until the presentation engine releases an image.
         let acquired = {
             let _waiting = self.runtime.work.enter(WorkPhase::Waiting);
@@ -131,10 +159,10 @@ impl VulkanRenderer {
     fn record_ready_window(
         &self,
         frame: &RenderFrame,
-        owned: super::owned_window_submission::OwnedWindowFrame,
+        owned: OwnedWindowFrame,
         operation: &mut WindowGuiOperation<'_>,
         index: u32,
-    ) -> Result<(super::owned_window_submission::OwnedWindowFrame, u32), RenderError> {
+    ) -> Result<(OwnedWindowFrame, u32), RenderError> {
         if let Err(primary) = self.record_gui_window(
             frame,
             &owned.commands,
@@ -155,7 +183,7 @@ impl VulkanRenderer {
         index: u32,
     ) -> Result<(), RenderError> {
         self.encode_gui_window(frame, commands, resources, presenter, index)?;
-        super::window_submission::finish(
+        super::window_submission::submit(
             commands,
             presenter.chain.as_ref().expect("acquired swapchain"),
         )

@@ -79,9 +79,9 @@ fn check_pending_lighting(policy: RenderGuiSurfacePolicy) {
         .set_lighting_pipeline(Mode::FixedFunction)
         .unwrap();
     let result = if policy == RenderGuiSurfacePolicy::CheckedV2 {
-        view.publish_checked_gui(stamp, Ok(capture_pixel()), target)
+        view.publish_checked_gui(stamp, Ok(capture_pixel().into()), target)
     } else {
-        view.publish_gui_outcome(&epoch, Ok(capture_pixel()), target)
+        view.publish_gui_outcome(&epoch, Ok(capture_pixel().into()), target)
     };
     assert!(is_lighting_failure(result) && view.capture().is_err());
 }

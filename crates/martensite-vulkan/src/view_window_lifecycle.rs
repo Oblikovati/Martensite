@@ -24,12 +24,12 @@ impl Graphic3dRenderView {
             .transpose()
     }
 
-    pub(crate) fn check_publication_target(
+    pub(crate) fn check_publication_target<T>(
         &self,
         current_epoch: &std::sync::Arc<()>,
         rendered_epoch: &std::sync::Arc<()>,
-        outcome: Result<crate::FrameCapture, RenderError>,
-    ) -> Result<crate::FrameCapture, RenderError> {
+        outcome: Result<T, RenderError>,
+    ) -> Result<T, RenderError> {
         self.require_native_target(AspectNativeWindowOperation::Redraw)?;
         if !std::sync::Arc::ptr_eq(current_epoch, rendered_epoch) {
             return Err(crate::error::rejected(

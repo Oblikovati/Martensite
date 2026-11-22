@@ -47,6 +47,41 @@ fn lit_rectangle(extent: [f32; 2], color: [f32; 4]) -> PrimitiveDraw {
         .unwrap()
 }
 
+/// Binds `lighting` once in its own frame, so that the cache has seen its bytes (#594).
+fn sight(
+    cache: &LightingBindingCache,
+    runtime: &Arc<super::VulkanRuntime>,
+    pool: &FrameStoragePool,
+    layout: &StorageDescriptorLayout,
+    lighting: &RenderLighting,
+) {
+    let mut frame = FrameUploadPages::storage(pool);
+    cache
+        .bind_draw(runtime, layout, lighting, &mut frame, true)
+        .unwrap();
+}
+
+#[test]
+fn lighting_that_changes_every_frame_creates_no_buffer_until_it_repeats() {
+    let renderer = create_resource_renderer();
+    let runtime = &renderer.runtime;
+    let pool = FrameStoragePool::default();
+    let cache = LightingBindingCache::default();
+    let layout = StorageDescriptorLayout::new(runtime, vk::ShaderStageFlags::FRAGMENT).unwrap();
+    let mut lighting = emission([1., 0., 0., 1.]);
+    sight(&cache, runtime, &pool, &layout, &lighting);
+    let before = runtime.work.totals();
+    for eye in 1..8 {
+        lighting.eye[0] = eye as f32;
+        sight(&cache, runtime, &pool, &layout, &lighting);
+    }
+    assert_eq!(runtime.work.totals().since(&before).buffers_created, 0);
+    assert!(cache.bindings.lock().unwrap().is_empty());
+    sight(&cache, runtime, &pool, &layout, &lighting);
+    assert_eq!(cache.bindings.lock().unwrap().len(), 1);
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
 #[test]
 fn identical_stock_lighting_shares_one_set_then_survives_the_frame() {
     let mut renderer = create_resource_renderer();
@@ -54,6 +89,8 @@ fn identical_stock_lighting_shares_one_set_then_survives_the_frame() {
     let draws = vec![lit_rectangle([-1., 0.], red), lit_rectangle([0., 1.], red)];
     let mut frame = RenderFrame::new(4, 4, [0., 0., 1., 1.], draws).unwrap();
     let counters = renderer.runtime.work.clone();
+    // Lighting is retained when its bytes come back, so the second frame retains it.
+    renderer.render(&frame).unwrap();
     let first = renderer.render(&frame).unwrap();
     let before = counters.totals();
     let second = renderer.render(&frame).unwrap();
@@ -88,6 +125,7 @@ fn bit_differences_and_layout_stages_do_not_alias() {
     let fragment = StorageDescriptorLayout::new(runtime, vk::ShaderStageFlags::FRAGMENT).unwrap();
     let mut positive = emission([1., 0., 0., 1.]);
     positive.eye[0] = 0.;
+    sight(&cache, runtime, &pool, &both, &positive);
     let mut frame = FrameUploadPages::storage(&pool);
     let first = cache
         .bind_draw(runtime, &equivalent, &positive, &mut frame, true)
@@ -111,6 +149,7 @@ fn assert_different_bindings(
 ) {
     let mut negative = positive.clone();
     negative.eye[0] = -0.;
+    sight(cache, runtime, pool, layout, &negative);
     let other_bits = cache
         .bind_draw(
             runtime,
@@ -120,6 +159,7 @@ fn assert_different_bindings(
             true,
         )
         .unwrap();
+    sight(cache, runtime, pool, other_layout, positive);
     let other_stage = cache
         .bind_draw(
             runtime,
@@ -143,6 +183,7 @@ fn eviction_preserves_the_owning_draws_binding() {
     let binding = |index: usize| {
         let mut lighting = emission([1., 0., 0., 1.]);
         lighting.eye[0] = index as f32;
+        sight(&cache, runtime, &pool, &layout, &lighting);
         cache
             .bind_draw(
                 runtime,
@@ -176,6 +217,8 @@ fn different_lighting_uses_one_frame_page_without_aliasing_draws() {
     let frame = RenderFrame::new(4, 4, [0., 0., 0., 1.], draws).unwrap();
     let counters = renderer.runtime.work.clone();
     let cold = renderer.render(&frame).unwrap();
+    // The second frame retains the first draw's lighting, whose bytes came back.
+    renderer.render(&frame).unwrap();
     let before = counters.totals();
     let capture = renderer.render(&frame).unwrap();
     // The first draw's retained set is warm; the other draws share one aligned range binding.

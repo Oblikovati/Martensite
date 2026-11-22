@@ -45,7 +45,6 @@ fn frame_owner_identity(
     RetainedOwnerSnapshot::Frame {
         command: commands.command.as_raw(),
         color: resources.color.handle.as_raw(),
-        readback: resources.color_read.handle.as_raw(),
     }
 }
 struct PendingFrameWitness {

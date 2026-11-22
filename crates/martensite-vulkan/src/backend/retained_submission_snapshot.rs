@@ -6,7 +6,11 @@ pub(in crate::backend) enum RetainedOwnerSnapshot {
     Frame {
         command: u64,
         color: u64,
-        readback: u64,
+    },
+    Readback {
+        command: u64,
+        color: u64,
+        buffer: u64,
     },
     Upload {
         command: u64,
@@ -27,6 +31,15 @@ impl RetainedSubmission {
                 _image,
                 _staging,
             } => upload_identity(commands, _image, _staging),
+            Self::Readback {
+                commands,
+                _readback,
+                _buffers,
+            } => RetainedOwnerSnapshot::Readback {
+                command: commands.command.as_raw(),
+                color: _readback.color.handle.as_raw(),
+                buffer: _buffers.color.handle.as_raw(),
+            },
             Self::Window {
                 commands, chain, ..
             } => window_identity(Some(commands), chain),
@@ -60,7 +73,6 @@ fn frame_identity(
     RetainedOwnerSnapshot::Frame {
         command: commands.command.as_raw(),
         color: frame.color.handle.as_raw(),
-        readback: frame.color_read.handle.as_raw(),
     }
 }
 

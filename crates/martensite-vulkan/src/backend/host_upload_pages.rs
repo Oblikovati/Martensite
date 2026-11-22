@@ -6,10 +6,12 @@ use ash::vk;
 use std::sync::{Arc, Mutex, PoisonError};
 
 const STORAGE_PAGE_BYTES: usize = 256 << 10;
+/// A frame in flight holds its page while the next frame writes another one.
+const RETAINED_PAGES: usize = super::frame_flight::FRAMES_IN_FLIGHT;
 
-/// One reusable mapped buffer per pool, with dedicated pages for larger uploads.
+/// Reusable mapped pages, one per frame in flight (#594), with dedicated pages for larger uploads.
 pub(super) struct HostUploadPool {
-    cached: Mutex<Option<Arc<DeviceBuffer>>>,
+    cached: Mutex<Vec<Arc<DeviceBuffer>>>,
     page_bytes: usize,
     usage: vk::BufferUsageFlags,
 }
@@ -18,7 +20,7 @@ impl HostUploadPool {
     /// Select the pool's usage and page size, for example a transfer source staging page.
     pub(super) fn new(page_bytes: usize, usage: vk::BufferUsageFlags) -> Self {
         Self {
-            cached: Mutex::new(None),
+            cached: Mutex::new(Vec::new()),
             page_bytes,
             usage,
         }
@@ -39,11 +41,17 @@ impl HostUploadPool {
             return self.allocate(runtime, bytes);
         }
         let mut cached = self.cached.lock().unwrap_or_else(PoisonError::into_inner);
-        if let Some(page) = cached.as_mut() {
-            return acquire_idle_page(self, page, runtime);
+        // The pool can only lend a cached page when every earlier owner has retired.
+        if let Some(idle) = cached
+            .iter_mut()
+            .position(|page| Arc::get_mut(page).is_some())
+        {
+            return Ok(Arc::clone(&cached[idle]));
         }
         let page = self.allocate(runtime, self.page_bytes)?;
-        *cached = Some(Arc::clone(&page));
+        if cached.len() < RETAINED_PAGES {
+            cached.push(Arc::clone(&page));
+        }
         Ok(page)
     }
 
@@ -54,18 +62,6 @@ impl HostUploadPool {
     ) -> Result<Arc<DeviceBuffer>, RenderError> {
         DeviceBuffer::new(runtime, bytes as u64, self.usage, HostBufferAccess::Upload).map(Arc::new)
     }
-}
-
-fn acquire_idle_page(
-    pool: &HostUploadPool,
-    page: &mut Arc<DeviceBuffer>,
-    runtime: &Arc<VulkanRuntime>,
-) -> Result<Arc<DeviceBuffer>, RenderError> {
-    // The pool can only lend a cached page when every earlier owner has retired.
-    if Arc::get_mut(page).is_some() {
-        return Ok(Arc::clone(page));
-    }
-    pool.allocate(runtime, pool.page_bytes)
 }
 
 /// The storage upload cursor of a preparing frame. Descriptors also hold their page.

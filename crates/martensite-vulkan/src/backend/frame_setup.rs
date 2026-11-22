@@ -4,13 +4,10 @@ use super::super::geometry_transfer::GeometryTransfers;
 use super::super::host_upload_pages::FrameUploadPages;
 use super::super::immediate_main_record::{MainLayerImages, MainLayerSnapshot};
 use super::super::{
-    buffer::DeviceBuffer, memory_selection::HostBufferAccess, pipeline_variants::RasterPipelines,
-    runtime::VulkanRuntime,
-};
-use super::super::{
     fragment_alpha_plan::FragmentAlphaPlan, oit_frame::OitFramePass, oit_plan::OitResourcePlan,
     retained_submission::RetirementStore,
 };
+use super::super::{pipeline_variants::RasterPipelines, runtime::VulkanRuntime};
 use super::{FrameDrawUploads, FrameResources, UploadedDraw, check_extent, upload_draw};
 use crate::immediate_main::{ImmediateMainPlan, MainSeed};
 use crate::{RenderError, RenderFrame};
@@ -189,20 +186,21 @@ impl FrameSetup<'_> {
         plan: &PreparedFramePlan,
         uploads: &mut FrameDrawUploads<'_>,
     ) -> Result<Vec<UploadedDraw>, RenderError> {
-        self.frame.draws[plan.first_draw..]
-            .iter()
-            .map(|draw| {
-                upload_draw(
-                    self.runtime,
-                    draw,
-                    self.pipeline,
-                    plan.dimensions.extent,
-                    plan.raster.samples,
-                    self.retirements,
-                    uploads,
-                )
-            })
-            .collect()
+        let sources = &self.frame.draws[plan.first_draw..];
+        // An exact capacity: frames in flight keep these records until their fence (#594).
+        let mut draws = Vec::with_capacity(sources.len());
+        for draw in sources {
+            draws.push(upload_draw(
+                self.runtime,
+                draw,
+                self.pipeline,
+                plan.dimensions.extent,
+                plan.raster.samples,
+                self.retirements,
+                uploads,
+            )?);
+        }
+        Ok(draws)
     }
     fn upload_oit(
         &self,
@@ -288,15 +286,6 @@ impl FrameSetup<'_> {
         uploads: PreparedFrameUploads,
     ) -> Result<FrameResources, RenderError> {
         uploads.allocate(self, plan)
-    }
-
-    fn readback(&self, bytes: u64) -> Result<DeviceBuffer, RenderError> {
-        DeviceBuffer::new(
-            self.runtime,
-            bytes,
-            vk::BufferUsageFlags::TRANSFER_DST,
-            HostBufferAccess::Readback,
-        )
     }
 
     fn snapshot_main(
@@ -393,8 +382,6 @@ impl PreparedFrameUploads {
             immediate_source,
             main_publication: targets.main_publication,
             main_snapshot,
-            color_read: setup.readback(plan.dimensions.bytes)?,
-            depth_read: setup.readback(plan.dimensions.bytes)?,
             draws: self.draws,
             first_draw: plan.first_draw,
             geometry_transfers: self.geometry_transfers,

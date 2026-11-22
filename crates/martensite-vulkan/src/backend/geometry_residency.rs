@@ -249,28 +249,31 @@ impl GeometryStore {
         }
     }
 
-    fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
-        let retained = self
-            .retained
+    fn retained(&self) -> std::sync::MutexGuard<'_, RetainedGeometry> {
+        self.retained
             .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        retained
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
+        self.retained()
             .entries
             .get(&key)
             .map(|lease| lease.geometry.clone())
     }
 
-    fn publish(&self, pending: &mut PendingGeometry, empty_frame: bool) {
-        let mut retained = self
-            .retained
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let budget = if empty_frame {
-            retained.entries.len()
-        } else {
-            RETIREMENT_CHECKS_PER_FRAME.max(pending.order.len().saturating_mul(2))
-        };
-        retained.retire_expired(budget);
+    /// Store a frame's pending uploads. `retire` holds whether the frame was empty and how many
+    /// uploads it made; it also checks the liveness of that many older entries, twice over.
+    fn publish(&self, pending: &mut PendingGeometry, retire: Option<(bool, usize)>) {
+        let mut retained = self.retained();
+        if let Some((empty_frame, uploads)) = retire {
+            let budget = if empty_frame {
+                retained.entries.len()
+            } else {
+                RETIREMENT_CHECKS_PER_FRAME.max(uploads.saturating_mul(2))
+            };
+            retained.retire_expired(budget);
+        }
         for key in pending.order.drain(..) {
             if let Some(lease) = pending.leases.remove(&key).filter(GeometryLease::is_live) {
                 retained.insert(key, lease, self.byte_limit);
@@ -282,6 +285,8 @@ impl GeometryStore {
 pub(super) struct FrameGeometryResidency {
     store: Arc<GeometryStore>,
     pending: PendingGeometry,
+    /// Uploads already shared at submission; they still size the retirement budget (#594).
+    shared: usize,
 }
 
 #[derive(Default)]
@@ -295,6 +300,7 @@ impl FrameGeometryResidency {
         Self {
             store: Arc::clone(store),
             pending: PendingGeometry::default(),
+            shared: 0,
         }
     }
 
@@ -305,8 +311,17 @@ impl FrameGeometryResidency {
         self.store.find(key)
     }
 
-    pub(super) fn find_completed(&self, key: GeometryKey) -> Option<ResidentGeometry> {
+    /// An entry that an earlier frame uploaded, never one of this frame's own uploads: the
+    /// copies of one frame are not ordered against each other. `residency.find_earlier(key)`.
+    pub(super) fn find_earlier(&self, key: GeometryKey) -> Option<ResidentGeometry> {
         self.store.find(key)
+    }
+
+    /// Let later frames use this frame's uploads once it is submitted (#594); the queue orders
+    /// the uploads before every later frame. `residency.share()`.
+    pub(super) fn share(&mut self) {
+        self.shared += self.pending.order.len();
+        self.store.publish(&mut self.pending, None);
     }
 
     pub(super) fn queue(
@@ -326,15 +341,17 @@ impl FrameGeometryResidency {
     }
 
     pub(super) fn publish(&mut self, empty_frame: bool) {
-        self.store.publish(&mut self.pending, empty_frame);
+        let uploads = self.pending.order.len() + std::mem::take(&mut self.shared);
+        self.store
+            .publish(&mut self.pending, Some((empty_frame, uploads)));
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        DeviceBuffer, GeometryEncoding, GeometryKey, GeometryLease, ResidentGeometry,
-        RetainedGeometry,
+        DeviceBuffer, FrameGeometryResidency, GeometryEncoding, GeometryKey, GeometryLease,
+        GeometryStore, ResidentGeometry, RetainedGeometry,
     };
     use crate::{PrimitiveDraw, RenderVertex};
     use ash::vk;
@@ -378,6 +395,22 @@ mod tests {
         assert!(cache.entries.contains_key(&second_key));
         assert_eq!(cache.bytes, budget);
         assert_eq!(Arc::strong_count(&retained_draw.vertices), 1);
+    }
+
+    #[test]
+    fn a_submitted_upload_serves_later_frames_but_not_its_own() {
+        let renderer = crate::backend::resource_lifecycle_test_support::create_resource_renderer();
+        let store = Arc::new(GeometryStore::new(&renderer.runtime));
+        let draw = test_draw();
+        let key = test_key(&draw);
+        let mut submitted = FrameGeometryResidency::new(&store);
+        submitted.queue(key, &draw, test_geometry(&renderer.runtime));
+        assert!(submitted.find(key).is_some());
+        assert!(submitted.find_earlier(key).is_none());
+        submitted.share();
+        let later = FrameGeometryResidency::new(&store);
+        assert!(later.find(key).is_some());
+        assert!(later.find_earlier(key).is_some());
     }
 
     use std::sync::Arc;

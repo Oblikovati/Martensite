@@ -317,6 +317,64 @@ and median time fell from 81.43 ms to 80.30 ms. Both cases kept their checksums
 and peak RSS was within 1 MiB in every hover pair and within 2 MiB in every
 selection pair.
 
+## Frames in flight and capture on demand
+
+A redraw now submits its frame and returns. Up to two frames run on the GPU while the host
+prepares the next one, and a frame waits only for the fence of the frame two before it.
+`capture` reads the last frame back the first time it is called, so a redraw copies nothing
+to host memory. The maintainer chose this error timing on 2026-11-22 (PLAN.md, phase 2):
+a GPU fault that comes after the redraw returned shows at the next `capture`, at the next
+redraw that needs the frame's slot, or at `Graphic3dRenderDriver::finish_frames`. The bench
+ends each timed run with `finish_frames`, as the C++ twin ends it with `glFinish`.
+
+One run of each program per case, 10 frames, CPUs 8-15, same session and OCCT build;
+milliseconds per operation:
+
+| Case | Vulkan before | Vulkan after | OCCT | Ratio before | Ratio after |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `close_10k` | 47.872 | 58.660 | 9.525 | 5.09 | 6.16 |
+| `dump_1080p` | 6.751 | 6.001 | 0.431 | 7.23 | 13.93 |
+| `frame_ais_spheres_400` | 3.520 | 2.293 | 0.177 | 21.01 | 12.96 |
+| `frame_connected_30k` | 170.905 | 174.868 | 9.021 | 19.76 | 19.38 |
+| `frame_empty` | 0.498 | 0.088 | 0.073 | 6.73 | 1.21 |
+| `frame_mesh_10m` | 3.944 | 3.597 | 1.877 | 2.07 | 1.92 |
+| `frame_mesh_1m` | 0.906 | 0.377 | 0.310 | 2.89 | 1.22 |
+| `frame_msaa4_100k` | 0.656 | 0.176 | 0.245 | 2.65 | 0.72 |
+| `frame_points_1m` | 0.753 | 0.313 | 0.300 | 2.68 | 1.04 |
+| `frame_segments_1m` | 0.897 | 0.361 | 0.272 | 3.14 | 1.33 |
+| `frame_structures_100k` | 696.322 | 695.898 | 35.782 | 17.43 | 19.45 |
+| `frame_structures_10k` | 59.851 | 56.449 | 2.032 | 28.15 | 27.77 |
+| `frame_text_1k` | 3.586 | 2.585 | 0.743 | 4.86 | 3.48 |
+| `frame_transparent_1k` | 5.027 | 3.892 | 0.326 | 15.73 | 11.94 |
+| `highlight_ais_spheres_400` | 4.928 | 3.652 | 0.099 | 44.58 | 36.98 |
+| `resize_redraw` | 1.289 | 1.003 | 0.424 | 3.21 | 2.37 |
+| `select_10k` | 77.672 | 78.119 | 4.055 | 22.75 | 19.26 |
+| `startup_first_frame` | 15.921 | 25.631 | 33.528 | 0.48 | 0.76 |
+| `upload_mesh_100k` | 1.702 | 0.961 | 0.310 | 3.38 | 3.10 |
+
+The `close_10k` and `startup_first_frame` rows come from a run before the residency fix
+below. Paired runs of the same binaries after it, alternating the order:
+`close_10k` takes the same time as before with less peak memory, and the first frame goes
+from 27.2 to 24.7 ms. `frame_structures_10k` keeps its time but peaks 7.5 MB higher
+(232.8 to 240.4 MB, 3.3%), because the frame in flight keeps its 10,000 draw records.
+Dropping those records at launch brings the peak back to 232.6 MB in a throwaway test, so
+the next change keeps only the GPU owners of a launched frame.
+
+A submitted frame shares its uploads with later frames before its fence signals. The
+residency store still retires as many entries at settle as the frame uploaded, shared
+uploads included; without that count the budget fell to its floor of 512 and `close_10k`
+took 23% longer with 50 MB more.
+
+The mesh, point and segment frames now spend about 0.1 ms on the CPU and wait for the GPU
+for the rest. Points reach parity. The 10-million-triangle frame still takes 1.9 times as
+long as OCCT, so the GPU work per triangle is the next limit for the mesh and segment cases.
+Each lit vertex has 44 bytes against OCCT's 24, because the uniform colour is in every
+vertex. The 400-sphere case is bound by the CPU (1.2 ms of scene extraction and 0.4 ms of
+upload per frame).
+
+A view's first two redraws each create one set of attachments and one upload page, one for
+each frame in flight; later redraws create none.
+
 ## Harness
 
 `cargo xtask occt-parity --toolkit vulkan --occt <prefix> --cpus 8-15` compares the cases
@@ -388,8 +446,8 @@ made while frame resources are prepared counts as submission, not as upload.
 | `upload` | creating and filling the frame's buffers, images and descriptor sets |
 | `recording` | recording command buffers |
 | `submission` | ending and submitting command buffers, and presenting |
-| `waiting` | fences and swapchain image acquisition |
-| `readback` | copying the frame to host memory and the host-copy steps (render-scale depth blit, subview blits, flipped output) |
+| `waiting` | the fence of the oldest frame in flight when the flight is full, and swapchain image acquisition |
+| `readback` | copying a frame to host memory when `capture` first asks for it, and the host-copy steps (render-scale depth blit, subview blits, flipped output); a redraw itself reads nothing back |
 | `redraw` | the whole redraw; the time in no phase (frame statistics, resource release) is the difference |
 
 The counts are device-wide differences over a redraw, so a redraw that another thread runs

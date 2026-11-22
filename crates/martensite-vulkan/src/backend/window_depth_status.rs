@@ -204,7 +204,7 @@ pub(super) fn validate(resources: &FrameResources) -> Result<(), RenderError> {
                     .is_some_and(|p| p.fragment_depth()),
                 status: loaded
                     .window_depth_status
-                    .as_ref()
+                    .as_deref()
                     .map(|s| s as &dyn super::window_depth_completion::DepthDrawCompletion),
             }
         },

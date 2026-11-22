@@ -77,15 +77,16 @@ fn capture_nonfull(renderer: &mut VulkanRenderer) -> FrameCapture {
         .viewport;
     [original.min_depth, original.max_depth] = NONFULL_DEPTH_RANGE;
     update_point_projection(&mut resources, original);
-    record_nonfull(ctx, &resources, &frame, regions, original)
+    record_nonfull(renderer, &resources, &frame, regions, original)
 }
 fn record_nonfull(
-    ctx: &std::sync::Arc<VulkanRuntime>,
+    renderer: &mut VulkanRenderer,
     resources: &FrameResources,
     frame: &RenderFrame,
     regions: [vk::Rect2D; 2],
     original: vk::Viewport,
 ) -> FrameCapture {
+    let ctx = &renderer.runtime;
     let commands = CommandSubmission::new(ctx).unwrap();
     let cmd = commands.command;
     resources.geometry_transfers.record(ctx, cmd);
@@ -97,7 +98,7 @@ fn record_nonfull(
         ctx.device().cmd_set_viewport(cmd, 0, &[original]);
     }
     draw_partial_layer(ctx, cmd, resources, &frame.layers[0]);
-    finish_partial_capture(ctx, &commands, resources)
+    finish_partial_capture(renderer, &commands, resources)
 }
 fn require_nonfull_capture(capture: &FrameCapture) {
     for y in 0..64 {

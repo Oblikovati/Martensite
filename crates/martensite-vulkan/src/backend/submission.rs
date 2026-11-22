@@ -138,6 +138,25 @@ impl CommandSubmission {
         self.completed_natively.set(true);
         Ok(())
     }
+    /// Submit without waiting; `commands.submit_synced(waits, signals)?` is later completed by
+    /// `complete` (#594).
+    pub fn submit_synced(
+        &self,
+        waits: &[vk::SemaphoreSubmitInfo<'_>],
+        signals: &[vk::SemaphoreSubmitInfo<'_>],
+    ) -> Result<(), RenderError> {
+        let mut calls = super::submission_calls::DeviceSubmissionCalls::new(self, waits, signals);
+        self.protocol
+            .submit_admitted(&self.runtime.lifecycle, &mut calls)
+    }
+    /// Wait for work queued by `submit_synced`; `commands.complete()?` reports a late fault.
+    pub fn complete(&self) -> Result<(), RenderError> {
+        let mut calls = super::submission_calls::DeviceSubmissionCalls::new(self, &[], &[]);
+        self.protocol
+            .complete_observed(&self.runtime.lifecycle, &mut calls)?;
+        self.completed_natively.set(true);
+        Ok(())
+    }
     /// Use one actual or named boundary dispatch; `commands.finish_dispatched(calls)` shares production admission/retirement.
     pub(super) fn finish_dispatched(
         &self,

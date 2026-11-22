@@ -13,7 +13,7 @@ use super::{
     host_upload_pages::FrameUploadPages, image::TargetImage, pipeline::DrawPipeline,
     pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
 };
-use crate::{FrameCapture, PrimitiveDraw, RenderError, RenderFrame, error::rejected};
+use crate::{PrimitiveDraw, RenderError, RenderFrame, error::rejected};
 use ash::vk;
 use std::sync::Arc;
 
@@ -24,7 +24,8 @@ struct FrameDrawUploads<'a> {
 }
 pub(super) struct UploadedDraw {
     pub window_depth_expected: bool,
-    pub window_depth_status: Option<super::window_depth_status::WindowDepthStatus>,
+    // Rare fields are boxed: a frame in flight keeps every draw record (#594).
+    pub window_depth_status: Option<Box<super::window_depth_status::WindowDepthStatus>>,
     #[cfg(feature = "vertex-output-diagnostics")]
     pub vertex_output: Option<super::vertex_output::VertexOutputResources>,
     #[cfg(feature = "command-state-diagnostics")]
@@ -47,7 +48,7 @@ pub(super) struct UploadedDraw {
     pub presentation: DrawPresentation,
     pub bindings: DrawBindings,
     /// The registered user program replacing the built-in pipeline (`user_program_draw`).
-    pub user_program: Option<super::user_program_draw::UploadedUserProgram>,
+    pub user_program: Option<Box<super::user_program_draw::UploadedUserProgram>>,
 }
 pub(super) struct DrawLine {
     pub width: Option<f32>,
@@ -76,13 +77,13 @@ pub(super) struct DrawPresentation {
     pub face_culling: crate::RenderFaceCulling,
 }
 pub(super) struct DrawBindings {
-    pub clipping: Option<super::storage_descriptor::UploadedStorage>,
+    pub clipping: Option<Box<super::storage_descriptor::UploadedStorage>>,
     pub lighting: Option<Arc<super::storage_descriptor::UploadedStorage>>,
-    pub sprite: Option<super::storage_descriptor::UploadedStorage>,
+    pub sprite: Option<Box<super::storage_descriptor::UploadedStorage>>,
     pub surface_image: Option<Arc<super::surface_image_descriptor::SurfaceImageBinding>>,
     pub pbr_environment: Option<Arc<super::pbr_environment::PbrEnvironment>>,
     pub material_maps: Option<Arc<super::material_map_descriptor::MaterialMapBinding>>,
-    pub sphere_map: Option<super::storage_descriptor::UploadedStorage>,
+    pub sphere_map: Option<Box<super::storage_descriptor::UploadedStorage>>,
     pub shadow_maps: Option<Arc<super::shadow_maps::ShadowMapSet>>,
 }
 pub(super) struct FrameResources {
@@ -101,8 +102,6 @@ pub(super) struct FrameResources {
     pub(super) immediate_source: Option<(usize, super::immediate_main_record::MainLayerImages)>,
     pub(super) main_publication: Option<super::immediate_main_record::MainLayerTicket>,
     pub(super) main_snapshot: Option<super::immediate_main_record::MainLayerSnapshot>,
-    pub color_read: DeviceBuffer,
-    pub depth_read: DeviceBuffer,
     pub draws: Vec<UploadedDraw>,
     pub(super) first_draw: usize,
     pub(super) geometry_transfers: GeometryTransfers,
@@ -167,71 +166,32 @@ impl FrameResources {
                 .as_ref()
                 .map_or(0, |pass| pass.targets.allocation_bytes())
     }
-    pub fn capture(&self) -> Result<FrameCapture, RenderError> {
+    /// Check completion feedback and keep the images for an on-demand read (#594);
+    /// `renderer.read_frame(&resources.completed_readback()?)?`.
+    pub(super) fn completed_readback(&self) -> Result<super::FrameReadback, RenderError> {
         self.validate_completion()?;
         if let Some(raytrace) = &self.raytrace {
             raytrace.publish_feedback()?;
         }
-        let capture = self.read_logical_capture()?;
-        #[cfg(feature = "command-state-diagnostics")]
-        self.observe_readback(&capture);
-        Ok(capture)
+        Ok(self.readback_ticket())
     }
-    fn read_logical_capture(&self) -> Result<FrameCapture, RenderError> {
-        let size =
-            self.attachment_extent.width as usize * self.attachment_extent.height as usize * 4;
-        let rgba = self.logical_capture_rows(self.color_read.read(size)?)?;
-        let depth = self.capture_depth(size)?;
-        Ok(FrameCapture {
-            width: self.extent.width,
-            height: self.extent.height,
-            rgba,
-            depth,
-        })
+    /// The images a capture reads, for a frame with no host feedback to check;
+    /// `resources.readback_ticket()`.
+    pub(super) fn readback_ticket(&self) -> super::FrameReadback {
+        super::FrameReadback::new(
+            [Arc::clone(&self.color), Arc::clone(&self.depth)],
+            [self.extent, self.attachment_extent],
+            self.attachment_coordinates,
+        )
     }
-    #[cfg(feature = "command-state-diagnostics")]
-    fn observe_readback(&self, capture: &FrameCapture) {
-        use crate::scene::replay_diagnostic::{self, ReadbackArguments};
-        let [color, depth] = self.readback_image_handles();
-        let arguments = ReadbackArguments {
-            color,
-            depth,
-            formats: [self.color.format.as_raw(), self.depth.format.as_raw()],
-            samples: [self.color.samples.as_raw(), self.depth.samples.as_raw()],
-            attachment_extent: [self.attachment_extent.width, self.attachment_extent.height],
-            leading_rows: self.attachment_coordinates.leading_rows(self.extent.height),
-            coordinates: self.attachment_coordinates,
-        };
-        replay_diagnostic::readback(capture, arguments);
-    }
-    #[cfg(feature = "command-state-diagnostics")]
-    fn readback_image_handles(&self) -> [[u64; 3]; 2] {
-        use ash::vk::Handle;
-        [
-            [
-                self.color.handle.as_raw(),
-                self.color.view.as_raw(),
-                self.color_read.handle.as_raw(),
-            ],
-            [
-                self.depth.handle.as_raw(),
-                self.depth.view.as_raw(),
-                self.depth_read.handle.as_raw(),
-            ],
-        ]
-    }
-    fn capture_depth(&self, size: usize) -> Result<Vec<f32>, RenderError> {
-        let bytes = self.logical_capture_rows(self.depth_read.read(size)?)?;
-        Ok(super::depth_equivalence::depth_plane(
-            self.depth.format,
-            bytes.as_chunks::<4>().0,
-        ))
-    }
-    /// Crop the leading attachment rows, then orient the logical rows top-left.
-    fn logical_capture_rows(&self, bytes: Vec<u8>) -> Result<Vec<u8>, RenderError> {
-        let coordinates = self.attachment_coordinates;
-        let bytes = coordinates.logical_rows(bytes, self.extent);
-        coordinates.capture_rows(bytes, self.extent.width)
+    /// Whether the host must wait for this frame to check its feedback before publishing it:
+    /// window depth status, ray-tracing feedback, and every frame of a diagnostic build.
+    pub(super) fn needs_host_completion(&self) -> bool {
+        let window_depth = self
+            .draws
+            .iter()
+            .any(|draw| draw.window_depth_expected || draw.window_depth_status.is_some());
+        cfg!(feature = "command-state-diagnostics") || self.raytrace.is_some() || window_depth
     }
     pub fn render_color(&self) -> &TargetImage {
         self.multisample

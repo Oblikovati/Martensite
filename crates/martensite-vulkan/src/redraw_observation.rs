@@ -172,7 +172,7 @@ impl Graphic3dRenderView {
         require_completed_outcome(outcome, publication)?;
         self.require_published_target(cursor, publication)?;
         if let Some(Ok(capture)) = outcome {
-            require_capture_dimensions(cursor, [capture.width, capture.height])?;
+            require_capture_dimensions(cursor, capture.size())?;
         }
         Ok(())
     }

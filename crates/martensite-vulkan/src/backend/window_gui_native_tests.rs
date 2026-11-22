@@ -149,13 +149,14 @@ fn render_native_probe(
     extent: [u32; 2],
 ) -> Result<FrameCapture, RenderError> {
     let frame = native_gui_frame(extent);
-    renderer.render_window_with_probe(
+    let readback = renderer.render_window_with_probe(
         &frame,
         presenter,
         false,
         RenderGuiSurfacePolicy::CheckedV2,
         probe,
-    )
+    )?;
+    renderer.read_frame(&readback)
 }
 fn native_same_extent_fault(renderer: &mut VulkanRenderer, phase: RenderGuiSurfacePhase) {
     let native = NativeWindow::new(64, 64);
@@ -246,14 +247,15 @@ fn present_orientation_frame(
     presenter: &mut WindowPresenter,
     extent: [u32; 2],
 ) -> FrameCapture {
-    renderer
+    let readback = renderer
         .render_window(
             &orientation_frame(extent),
             presenter,
             false,
             RenderGuiSurfacePolicy::CheckedV2,
         )
-        .unwrap()
+        .unwrap();
+    renderer.read_frame(&readback).unwrap()
 }
 fn retain_window_orientation(capture: &FrameCapture, native: &[u8], stage: usize) {
     let Some(directory) = std::env::var_os("MARTENSITE_GEOMETRY_ARTIFACT_DIR") else {

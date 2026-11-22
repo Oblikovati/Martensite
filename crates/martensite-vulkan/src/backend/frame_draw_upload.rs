@@ -208,8 +208,9 @@ impl<'a> DrawUploadContext<'a> {
                 self.runtime,
                 self.semantic_draw,
                 &uploaded.pipeline,
-            )?;
-        uploaded.user_program = user_program;
+            )?
+            .map(Box::new);
+        uploaded.user_program = user_program.map(Box::new);
         Ok(uploaded)
     }
 
@@ -418,7 +419,7 @@ impl<'a> DrawUploadContext<'a> {
         if let Some(revision) = indices {
             key = key.previous_indices(revision.previous_identity())?;
         }
-        let previous = transfers.residency.find_completed(key)?;
+        let previous = transfers.residency.find_earlier(key)?;
         // Qualify both ranges before staging either, so a rejected pair can use the full upload.
         let vertices = match vertices {
             Some(revision) => Some(encode_vertex_patch(

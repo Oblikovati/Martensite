@@ -31,16 +31,24 @@ pub struct Bench {
 
 impl Bench {
     /// Times one window of `ops` operations run by `window`; nanoseconds per operation.
+    /// The window ends when the GPU has finished its frames, as the C++ twin's `glFinish`.
     /// The device work of the window counts towards the case's work column.
     /// Example: `bench.timed(ops, || for frame in 0..ops { stage.redraw_orbit(frame) })`.
     pub fn timed(&self, ops: usize, window: impl FnOnce()) -> f64 {
         let before = self.driver.device_work();
         let start = Instant::now();
         window();
+        self.finish_frames();
         let nanos = start.elapsed().as_nanos() as f64 / ops as f64;
         let work = self.driver.device_work().since(&before);
         self.work.borrow_mut().add(work, ops);
         nanos
+    }
+    /// Waits for the frames on the GPU; a late fault fails the case.
+    pub fn finish_frames(&self) {
+        if let Err(error) = self.driver.finish_frames() {
+            panic!("frames failed on the GPU: {error:?}; expected finished frames");
+        }
     }
 }
 
@@ -143,6 +151,8 @@ pub fn timed_rebuilds<State>(
     (0..mode.repeats)
         .map(|_| {
             let state = build();
+            // The build's own GPU work must not end inside the timed window.
+            bench.finish_frames();
             bench.timed(1, || op(state))
         })
         .collect()

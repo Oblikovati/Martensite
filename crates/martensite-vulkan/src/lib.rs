@@ -9,8 +9,8 @@
 #![cfg_attr(test, allow(clippy::duplicate_mod))] // Unit tests share scene fixtures by path.
 #[allow(unsafe_code)]
 mod backend;
-mod immediate_main;
 mod device_close;
+mod immediate_main;
 pub use device_close::RenderDeviceCloseOutcome;
 mod device_failure;
 mod portability_failure;
@@ -109,7 +109,9 @@ mod primitive_cache;
 mod primitive_ranges;
 mod primitive_topology;
 pub use frame_stats::{RenderFrameStats, RenderImageMemory};
+mod driver_frame_flight;
 mod frame_work;
+mod redraw_capture;
 pub use frame_work::{RenderDeviceWork, RenderWorkTimes};
 pub use graphic_group::Graphic3dDrawGroup;
 

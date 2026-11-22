@@ -31,14 +31,16 @@ impl Graphic3dRenderView {
         let serial = self.redraw_serial.load(Ordering::Relaxed);
         let snapshot = source.clone();
         drop(source);
-        let output = snapshot
-            .as_ref()
-            .map(|result| result.as_deref().cloned().map_err(Clone::clone));
+        // The first capture of a redraw reads its frame from the device (#594).
+        let output = snapshot.as_ref().map(|result| {
+            let capture = result.as_ref().map_err(Clone::clone)?;
+            capture.pixels(&self.device).cloned()
+        });
         #[cfg(feature = "command-state-diagnostics")]
         crate::scene::replay_diagnostic::cloned(
             self as *const Self as usize,
             serial,
-            snapshot.as_ref().and_then(|result| result.as_deref().ok()),
+            output.as_ref().and_then(|result| result.as_ref().ok()),
             &output,
         );
         output
@@ -67,7 +69,7 @@ impl Graphic3dRenderView {
     pub(super) fn publish_gui_outcome(
         &self,
         epoch: &std::sync::Arc<()>,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         target: RedrawTargetStamp,
     ) -> Result<(), RenderError> {
         let publication = RedrawPublicationTarget {
@@ -82,7 +84,7 @@ impl Graphic3dRenderView {
     fn commit_gui_outcome(
         &self,
         epoch: &std::sync::Arc<()>,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         publication: &RedrawPublicationTarget,
         retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {

@@ -125,3 +125,50 @@ impl Drop for WindowSync {
         }
     }
 }
+
+/// One semaphore and fence set per frame in flight, used in turn, so a frame waits for the
+/// presentation of the frame two before it instead of the previous one (#594).
+pub(super) struct WindowSyncRing {
+    slots: Vec<WindowSync>,
+    current: usize,
+}
+
+impl WindowSyncRing {
+    /// Create `count` sets; `WindowSyncRing::new(&runtime, FRAMES_IN_FLIGHT)?`.
+    pub fn new(runtime: &Arc<VulkanRuntime>, count: usize) -> Result<Self, RenderError> {
+        let slots = (0..count.max(1))
+            .map(|_| WindowSync::new(runtime))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self { slots, current: 0 })
+    }
+    /// The set of the frame being prepared; `ring.current().acquired`.
+    pub fn current(&self) -> &WindowSync {
+        &self.slots[self.current]
+    }
+    /// The set of the frame being prepared, for its fence state; `ring.current_mut().wait_present()?`.
+    pub fn current_mut(&mut self) -> &mut WindowSync {
+        &mut self.slots[self.current]
+    }
+    /// Move to the next set once a frame was handed to presentation; `ring.advance()`.
+    pub fn advance(&mut self) {
+        self.current = (self.current + 1) % self.slots.len();
+    }
+    /// Try every set's fences once; `ring.try_retire()` keeps each unknown owner.
+    pub fn try_retire(&mut self) -> super::retirement_attempt::RetirementAttempt {
+        let mut attempt = super::retirement_attempt::RetirementAttempt::from(Ok(()));
+        for sync in &mut self.slots {
+            attempt = attempt.join(sync.try_retire());
+        }
+        attempt
+    }
+    /// Remember the owning close's device-idle proof for every set.
+    pub fn qualify_device_idle(&mut self) {
+        self.slots
+            .iter_mut()
+            .for_each(WindowSync::qualify_device_idle);
+    }
+    /// Retire every set's pending fences; `ring.retire_blocking()`.
+    pub fn retire_blocking(&mut self) {
+        self.slots.iter_mut().for_each(WindowSync::retire_blocking);
+    }
+}

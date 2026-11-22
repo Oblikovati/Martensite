@@ -26,7 +26,7 @@ impl Graphic3dRenderView {
     pub(super) fn publish_checked_gui(
         &self,
         stamp: GuiTargetStamp,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         target: RedrawTargetStamp,
     ) -> Result<(), RenderError> {
         let publication = RedrawPublicationTarget {
@@ -41,7 +41,7 @@ impl Graphic3dRenderView {
     fn commit_checked_gui(
         &self,
         stamp: GuiTargetStamp,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         publication: &RedrawPublicationTarget,
         retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {
@@ -58,9 +58,9 @@ impl Graphic3dRenderView {
         &self,
         slot: &mut GuiLayerSlot,
         stamp: GuiTargetStamp,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         observed: Result<Option<[u32; 2]>, RenderError>,
-    ) -> Result<FrameCapture, RenderError> {
+    ) -> Result<RedrawCapture, RenderError> {
         slot.retain_observed_change(&stamp, observed_target_change(&outcome, &observed, &stamp));
         let outcome = reconcile_observation(outcome, observed, &stamp, slot, Publication);
         let outcome = self.guard_gui_redraw(outcome);
@@ -81,8 +81,8 @@ impl Graphic3dRenderView {
     }
     fn guard_gui_redraw(
         &self,
-        outcome: Result<FrameCapture, RenderError>,
-    ) -> Result<FrameCapture, RenderError> {
+        outcome: Result<RedrawCapture, RenderError>,
+    ) -> Result<RedrawCapture, RenderError> {
         let target = self.require_native_target(Redraw);
         reconcile_native_target(outcome, target)
     }
@@ -91,10 +91,10 @@ impl Graphic3dRenderView {
         if let Err(target) = self.require_capture_target() {
             let refused = reconcile_native_target(outcome, Err(target));
             *self.outcome.write() = Some(refused.clone());
-            return refused.map(|capture| (*capture).clone());
+            return refused.and_then(|capture| capture.pixels(&self.device).cloned());
         }
         self.capture_current_gui(outcome)
-            .map(|capture| (*capture).clone())
+            .and_then(|capture| capture.pixels(&self.device).cloned())
     }
     fn recorded_gui_outcome(&self) -> FramePublication {
         self.outcome

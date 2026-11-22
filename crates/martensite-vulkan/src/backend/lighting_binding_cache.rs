@@ -39,6 +39,9 @@ fn stock_opaque_lighting(draw: &PrimitiveDraw) -> Option<&RenderLighting> {
 #[derive(Default)]
 pub(in crate::backend) struct LightingBindingCache {
     bindings: Mutex<VecDeque<Arc<RetainedLightingBinding>>>,
+    /// The fingerprint of the last candidate that missed. Bytes are retained only when they
+    /// come back, so an orbit, whose lighting changes every frame, creates no buffer (#594).
+    last_miss: Mutex<Option<u64>>,
 }
 
 struct RetainedLightingBinding {
@@ -129,6 +132,9 @@ impl LightingBindingCache {
         if let Some(hit) = promote_hit(&mut bindings, layout, bytes) {
             return Ok(Some(hit));
         }
+        if !self.recurs(bytes) {
+            return Ok(None);
+        }
         let Some(binding) = allocate_binding(runtime, layout, bytes)? else {
             return Ok(None);
         };
@@ -137,6 +143,19 @@ impl LightingBindingCache {
         }
         bindings.push_back(Arc::clone(&binding));
         Ok(Some(binding))
+    }
+}
+
+impl LightingBindingCache {
+    /// Whether `bytes` missed the cache last time too; remembers them otherwise.
+    fn recurs(&self, bytes: &[u8]) -> bool {
+        use std::hash::{BuildHasher, BuildHasherDefault, DefaultHasher};
+        let fingerprint = BuildHasherDefault::<DefaultHasher>::default().hash_one(bytes);
+        let mut last = self
+            .last_miss
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        last.replace(fingerprint) == Some(fingerprint)
     }
 }
 
