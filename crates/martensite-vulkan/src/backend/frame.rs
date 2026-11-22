@@ -206,12 +206,10 @@ impl FrameResources {
     }
     fn capture_depth(&self, size: usize) -> Result<Vec<f32>, RenderError> {
         let bytes = self.logical_capture_rows(self.depth_read.read(size)?)?;
-        Ok(bytes
-            .as_chunks::<4>()
-            .0
-            .iter()
-            .map(|value| super::depth_equivalence::depth_value(self.depth.format, *value))
-            .collect())
+        Ok(super::depth_equivalence::depth_plane(
+            self.depth.format,
+            bytes.as_chunks::<4>().0,
+        ))
     }
     /// Crop the leading attachment rows, then orient the logical rows top-left.
     fn logical_capture_rows(&self, bytes: Vec<u8>) -> Result<Vec<u8>, RenderError> {
