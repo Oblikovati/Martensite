@@ -34,7 +34,7 @@ fn float64_closed_form_plane_and_four_bias_terms_preserve_coverage() {
     for (factor, units) in [(0., 0.), (1., 0.), (0., 1.), (1., 1.)] {
         let mut frame = operand_frame(factor, units);
         let points = [[-0.5, -0.5, -0.5], [0.5, -0.5, 0.0], [-0.5, 0.5, 0.5]];
-        for (vertex, point) in frame.draws[0].vertices.iter_mut().zip(points) {
+        for (vertex, point) in frame.draws[0].vertices.make_mut().iter_mut().zip(points) {
             vertex.position = point;
         }
         let old = baseline.render(&frame).unwrap();
@@ -53,12 +53,12 @@ fn float64_actual_pair_uses_raw_clip_and_preserves_rational_sector_order() {
     let mut frame = operand_frame(1., 1.);
     let ring = crate::window_depth_float64_fixture::RING.map(|p| [p[0], p[1], p[2]]);
     let sector = crate::window_depth_float64_fixture::SECTOR.map(|p| [p[0], p[1], p[2]]);
-    for (vertex, p) in frame.draws[0].vertices.iter_mut().zip(ring) {
+    for (vertex, p) in frame.draws[0].vertices.make_mut().iter_mut().zip(ring) {
         vertex.position = p;
         vertex.color = [1., 0., 0., 1.];
     }
     let mut front = frame.draws[0].clone();
-    for (vertex, p) in front.vertices.iter_mut().zip(sector) {
+    for (vertex, p) in front.vertices.make_mut().iter_mut().zip(sector) {
         vertex.position = p;
         vertex.color = [0., 1., 0., 0.5];
     }
@@ -82,7 +82,7 @@ fn float64_reference_degeneracy_refuses_and_declared_empty_stays_finite() {
         [200.00048828125, 133.33349609375],
         [300.0009765625, 166.6669921875],
     ];
-    for (vertex, p) in frame.draws[0].vertices.iter_mut().zip(window) {
+    for (vertex, p) in frame.draws[0].vertices.make_mut().iter_mut().zip(window) {
         vertex.position = [
             (2. * p[0] / 409. - 1.) as f32,
             (2. * p[1] / 409. - 1.) as f32,
@@ -96,7 +96,7 @@ fn float64_reference_degeneracy_refuses_and_declared_empty_stays_finite() {
         matches!(error.window_depth_failure(),Some(crate::RenderWindowDepthFailure::GpuDraw{cause,..})
         if matches!(cause.as_ref(),crate::RenderWindowDepthFailure::GpuTriangle{flags,..} if flags&4!=0))
     );
-    for vertex in &mut frame.draws[0].vertices {
+    for vertex in frame.draws[0].vertices.make_mut() {
         vertex.position = [0.1, 0.1, 0.2];
     }
     let baseline = renderer(Depth::HardwareV1).render(&frame).unwrap();

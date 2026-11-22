@@ -41,19 +41,19 @@ mod tests {
     #[test]
     fn quad_corners_preserve_indices_and_ordinary_triangles_are_never_reinterpreted() {
         let mut draw = PrimitiveDraw::new(vec![], vec![], crate::identity_clip()).unwrap();
-        draw.indices = vec![4, 3, 2, 4, 2, 1];
+        draw.indices = vec![4, 3, 2, 4, 2, 1].into();
         assert_eq!(
             device_quad_indices(&draw, QuadDiagonal::SecondFourth).as_ref(),
-            draw.indices
+            draw.indices()
         );
-        draw.quad_corners = vec![[4, 3, 2, 1]];
+        draw.quad_corners = vec![[4, 3, 2, 1]].into();
         assert_eq!(
             device_quad_indices(&draw, QuadDiagonal::SecondFourth).as_ref(),
             [4, 3, 1, 3, 2, 1]
         );
         assert_eq!(
             device_quad_indices(&draw, QuadDiagonal::FirstThird).as_ref(),
-            draw.indices
+            draw.indices()
         );
     }
 }

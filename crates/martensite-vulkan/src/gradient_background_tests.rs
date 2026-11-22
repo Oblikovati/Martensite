@@ -27,7 +27,7 @@ fn assert_gradient_layer(method: AspectGradientFillMethod, expected: [[f32; 4]; 
         .unwrap()
         .unwrap();
     assert!(!layer.depth_test && !layer.depth_write && !layer.clear_depth);
-    assert_eq!(layer.draws[0].indices, [0, 1, 3, 1, 2, 3]);
+    assert_eq!(layer.draws[0].indices(), [0, 1, 3, 1, 2, 3]);
     let actual: Vec<_> = layer.draws[0]
         .vertices
         .iter()
@@ -128,7 +128,7 @@ fn texture_background_without_an_image_draws_its_gradient() {
             .is_none()
     );
     assert_eq!(passes.len(), 1);
-    assert_eq!(passes[0].draws[0].indices, [0, 1, 3, 1, 2, 3]);
+    assert_eq!(passes[0].draws[0].indices(), [0, 1, 3, 1, 2, 3]);
 }
 
 #[test]

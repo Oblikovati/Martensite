@@ -34,6 +34,7 @@ fn partial_capture(
     let commands = CommandSubmission::new(&renderer.runtime).unwrap();
     let ctx = &renderer.runtime;
     let cmd = commands.command;
+    resources.geometry_transfers.record(ctx, cmd);
     transition_targets(ctx, cmd, &resources, false);
     begin_partial_layer(ctx, cmd, &resources, regions);
     draw_partial_layer(ctx, cmd, &resources, &frame.layers[0]);

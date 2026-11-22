@@ -52,7 +52,7 @@ impl WindowDepthStatus {
         let (bytes, prefix_bytes, reference_tail) = initial_status(runtime, draw, pipeline)?;
         Ok(Self {
             storage: UploadedStorage::new(runtime, layout, &bytes)?,
-            indices: draw.indices.clone(),
+            indices: draw.indices.to_vec(),
             reference_tail,
             prefix_bytes,
             invocations: InvocationState::default(),

@@ -8,6 +8,9 @@ mod scene;
 #[allow(dead_code)] // Each caller uses a subset of the shared scene support.
 #[path = "support/frame_statistics_scene.rs"]
 mod statistics_scene;
+#[allow(dead_code)] // This regression uses the ordinary texture case from the shared fixture.
+#[path = "support/surface_texture_scene.rs"]
+mod surface_texture_scene;
 #[path = "support/view_setup.rs"]
 mod view_setup;
 use martensite_tkernel::standard::Handle;
@@ -84,4 +87,135 @@ fn counts_belong_to_one_redraw_and_do_not_accumulate() {
     let second = counts(view.last_frame_work());
     view.try_redraw().unwrap();
     assert_eq!(counts(view.last_frame_work()), second);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn orbiting_a_live_triangle_keeps_geometry_on_the_device() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    let first = view.capture().unwrap();
+    let uploaded = view.last_frame_work();
+    assert!(uploaded.geometry_uploaded_bytes > 0, "{uploaded:?}");
+    assert!(uploaded.geometry_buffers_created > 0, "{uploaded:?}");
+
+    scene
+        .view
+        .camera()
+        .set_eye(&martensite_tkmath::gp::Point3::new(7., 0., 19.))
+        .unwrap();
+    view.try_redraw().unwrap();
+    assert_ne!(view.capture().unwrap().rgba, first.rgba);
+    let orbit = view.last_frame_work();
+    assert_eq!(orbit.geometry_uploaded_bytes, 0, "{orbit:?}");
+    assert_eq!(orbit.geometry_buffers_created, 0, "{orbit:?}");
+    assert_clean_validation(&driver);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn ordinary_textured_orbit_retains_geometry_until_uv_transform_changes() {
+    use martensite_tkernel::ncollection::Vec2;
+    use martensite_tkservice::graphic3d::{
+        Graphic3dTextureRootMembers, Graphic3dTypeOfTextureFilter,
+    };
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let fixture = surface_texture_scene::SurfaceTextureScene::with_mode(&driver, "nearest");
+    let view = fixture.scene.render_view();
+    view.try_redraw().unwrap();
+    assert!(view.last_frame_work().geometry_uploaded_bytes > 0);
+    let first = view.capture().unwrap();
+    fixture
+        .scene
+        .view
+        .camera()
+        .set_eye(&martensite_tkmath::gp::Point3::new(7., 0., 19.))
+        .unwrap();
+    view.try_redraw().unwrap();
+    let orbit = view.capture().unwrap();
+    assert_ne!(orbit.rgba, first.rgba);
+    assert_no_geometry_work(view.last_frame_work());
+    let parameters = fixture.texture.get_params();
+    parameters.set_filter(Graphic3dTypeOfTextureFilter::Bilinear);
+    view.try_redraw().unwrap();
+    let filtered = view.capture().unwrap();
+    assert_ne!(filtered.rgba, orbit.rgba);
+    assert_no_geometry_work(view.last_frame_work());
+    parameters.set_translation(Vec2::new(0.25, 0.));
+    view.try_redraw().unwrap();
+    assert!(view.last_frame_work().geometry_uploaded_bytes > 0);
+    assert_ne!(view.capture().unwrap().rgba, filtered.rgba);
+    assert_clean_validation(&driver);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+fn assert_no_geometry_work(work: RenderDeviceWork) {
+    assert_eq!(work.geometry_uploaded_bytes, 0, "{work:?}");
+    assert_eq!(work.geometry_buffers_created, 0, "{work:?}");
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn a_mutable_triangle_transfers_only_the_edited_vertex_record() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let array = add_mutable_triangle(&scene);
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    let first = view.capture().unwrap();
+
+    array.set_vertice(3, 0., 2., 0.).unwrap();
+    view.try_redraw().unwrap();
+    let update = view.last_frame_work();
+    assert_ne!(view.capture().unwrap().rgba, first.rgba);
+    assert_eq!(update.geometry_uploaded_bytes, 32, "{update:?}");
+    assert_eq!(update.geometry_buffers_created, 1, "{update:?}");
+    assert_clean_validation(&driver);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+fn add_mutable_triangle(
+    scene: &scene::ViewerScene,
+) -> Handle<martensite_tkservice::graphic3d::Graphic3dArrayOfPrimitives> {
+    use martensite_tkservice::graphic3d::{
+        GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE, Graphic3dArrayOfPrimitives, Graphic3dGroupMembers,
+        Graphic3dTypeOfPrimitiveArray,
+    };
+    let array = Handle::new(
+        Graphic3dArrayOfPrimitives::new(
+            Graphic3dTypeOfPrimitiveArray::Triangles,
+            3,
+            0,
+            3,
+            GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE,
+        )
+        .unwrap(),
+    );
+    for (index, [x, y]) in (1..=3).zip([[-8., -8.], [8., -8.], [0., 8.]]) {
+        array.set_vertice(index, x, y, 0.).unwrap();
+    }
+    array.add_edges3(1, 2, 3).unwrap();
+    scene.group.clear(true);
+    scene
+        .group
+        .set_group_primitives_aspect(&scene::unlit_style([1., 0., 0., 1.]));
+    scene.group.add_primitive_array(&array.upcast(), true);
+    array
 }

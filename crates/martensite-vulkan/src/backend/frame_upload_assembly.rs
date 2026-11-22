@@ -4,7 +4,7 @@ use super::*;
 impl DrawUploadContext<'_> {
     pub(super) fn assemble(
         &self,
-        geometry: PreparedGeometry<'_>,
+        geometry: PreparedGeometry,
         bindings: PreparedBindings,
     ) -> UploadedDraw {
         let point_viewports = self.draw.fixed_grid_point.then(|| {
@@ -30,9 +30,9 @@ impl DrawUploadContext<'_> {
             #[cfg(feature = "command-state-diagnostics")]
             geometry_arguments: crate::backend::geometry_command_diagnostic::GeometryArguments::new(
                 self.draw,
-                &geometry._encoding.vertices,
-                &geometry._encoding.indices,
-                geometry._encoding._sources.len(),
+                &geometry.encoding.vertices,
+                &geometry.encoding.indices,
+                geometry.encoding.source_count,
             ),
             native_alpha: None,
             oit_alpha: vec![],
@@ -41,8 +41,8 @@ impl DrawUploadContext<'_> {
             bindings: bindings.into_draw(),
             presentation: self.presentation(),
             pipeline: geometry.pipeline,
-            vertices: geometry.vertices,
-            indices: geometry.indices,
+            vertices: geometry.resident.vertices,
+            indices: geometry.resident.indices,
             count: geometry.count,
             instances: if self.draw.fixed_grid_point {
                 self.draw.indices.len() as u32

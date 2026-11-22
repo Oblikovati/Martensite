@@ -205,7 +205,7 @@ mod tests {
             let bytes =
                 program.uniform_bytes(draw.lighting.as_ref().map(|lighting| &lighting.lights));
             assert_eq!(bytes.len(), 1920);
-            assert_eq!(draw.indices, [0, 1, 2]);
+            assert_eq!(draw.indices(), [0, 1, 2]);
             assert_eq!(frame.layers().len(), 1);
             assert_eq!(i32::from_ne_bytes(bytes[1904..1908].try_into().unwrap()), 0);
         }

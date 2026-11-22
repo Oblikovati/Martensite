@@ -1,5 +1,6 @@
 //! Expand only flat fixed submissions, preserving geometry and native provoking input separately.
 use crate::{PrimitiveDraw, PrimitiveTopology, fixed_lighting::FixedLightingInterpolation};
+#[cfg(test)]
 pub(super) fn fixed_vertex_sources(draw: &PrimitiveDraw, indices: &[u32]) -> Vec<(usize, usize)> {
     if !uses_fixed_flat_vertices(draw) {
         return (0..draw.vertices.len())
@@ -8,7 +9,10 @@ pub(super) fn fixed_vertex_sources(draw: &PrimitiveDraw, indices: &[u32]) -> Vec
     }
     expanded_provoking_sources(draw, indices)
 }
-fn expanded_provoking_sources(draw: &PrimitiveDraw, indices: &[u32]) -> Vec<(usize, usize)> {
+pub(super) fn expanded_provoking_sources(
+    draw: &PrimitiveDraw,
+    indices: &[u32],
+) -> Vec<(usize, usize)> {
     indices
         .as_chunks::<3>()
         .0
@@ -27,7 +31,7 @@ fn expanded_provoking_sources(draw: &PrimitiveDraw, indices: &[u32]) -> Vec<(usi
 pub(super) fn fixed_expanded_indices(draw: &PrimitiveDraw, count: usize) -> Option<Vec<u32>> {
     uses_fixed_flat_vertices(draw).then(|| (0..count as u32).collect())
 }
-fn uses_fixed_flat_vertices(draw: &PrimitiveDraw) -> bool {
+pub(super) fn uses_fixed_flat_vertices(draw: &PrimitiveDraw) -> bool {
     draw.topology() == PrimitiveTopology::Triangles
         && draw
             .lighting
@@ -63,7 +67,7 @@ mod tests {
         )
         .unwrap();
         draw.lighting = Some(fixed_test_lighting(4, crate::RenderShading::PhongFacet));
-        draw.native_flat_sources = vec![3, 3];
+        draw.native_flat_sources = vec![3, 3].into();
         draw
     }
     #[test]

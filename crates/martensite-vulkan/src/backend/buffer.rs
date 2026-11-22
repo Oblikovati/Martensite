@@ -19,6 +19,23 @@ impl DeviceBuffer {
         usage: vk::BufferUsageFlags,
         access: HostBufferAccess,
     ) -> Result<Self, RenderError> {
+        Self::allocate_buffer(runtime, size, usage, BufferMemory::Host(access))
+    }
+    /// Allocate a device-local transfer destination, for example a retained vertex buffer.
+    pub(super) fn device_local(
+        runtime: &Arc<VulkanRuntime>,
+        size: u64,
+        usage: vk::BufferUsageFlags,
+    ) -> Result<Self, RenderError> {
+        let usage = usage | vk::BufferUsageFlags::TRANSFER_DST | vk::BufferUsageFlags::TRANSFER_SRC;
+        Self::allocate_buffer(runtime, size, usage, BufferMemory::DeviceLocal)
+    }
+    fn allocate_buffer(
+        runtime: &Arc<VulkanRuntime>,
+        size: u64,
+        usage: vk::BufferUsageFlags,
+        placement: BufferMemory,
+    ) -> Result<Self, RenderError> {
         let info = vk::BufferCreateInfo::default()
             .size(size.max(4))
             .usage(usage)
@@ -33,24 +50,17 @@ impl DeviceBuffer {
             memory: None,
             size: size.max(4),
         };
-        buffer.allocate(access)?;
+        buffer.allocate(placement)?;
         Ok(buffer)
     }
-    fn allocate(&mut self, access: HostBufferAccess) -> Result<(), RenderError> {
+    fn allocate(&mut self, placement: BufferMemory) -> Result<(), RenderError> {
         // SAFETY: the instance, physical device and device handles stay valid while the runtime holds them, and the call only reads through out-parameters it owns.
         let requirements = unsafe {
             self.runtime
                 .device()
                 .get_buffer_memory_requirements(self.handle)
         };
-        let index =
-            host_buffer_memory_type(&self.runtime.memory, requirements.memory_type_bits, access)
-                .ok_or_else(|| {
-                    rejected(
-                        requirements.memory_type_bits,
-                        "a host-visible coherent Vulkan memory type",
-                    )
-                })?;
+        let index = placement.memory_type(&self.runtime, requirements.memory_type_bits)?;
         let request = MemoryRequest {
             requirements,
             type_index: index,
@@ -68,17 +78,29 @@ impl DeviceBuffer {
         .map_err(|e| vk_error("bind buffer memory", e))
     }
     pub fn write(&self, bytes: &[u8]) -> Result<(), RenderError> {
-        if bytes.len() as u64 > self.size {
-            return Err(rejected(bytes.len(), "bytes fitting allocated buffer"));
+        self.write_at(0, bytes)
+    }
+    /// Fill an unused range of a mapped staging buffer before submitting the transfer.
+    pub(super) fn write_at(&self, offset: usize, bytes: &[u8]) -> Result<(), RenderError> {
+        if (offset as u64).saturating_add(bytes.len() as u64) > self.size {
+            return Err(rejected((offset, bytes.len()), "a range within the buffer"));
         }
         let pointer = self.host_pointer()?;
         // Host-coherent memory stays mapped; writes happen only between submissions.
         // SAFETY: the destination is a live mapped allocation whose size was checked above, and it does not overlap the source.
-        unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), pointer, bytes.len()) };
+        unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), pointer.add(offset), bytes.len()) };
         self.runtime
             .work
             .add(DeviceCount::UploadedBytes, bytes.len() as u64);
         Ok(())
+    }
+
+    pub(super) fn size(&self) -> u64 {
+        self.size
+    }
+
+    pub(super) fn allocation_size(&self) -> u64 {
+        self.memory.as_ref().map_or(0, MemoryLease::size)
     }
     pub fn read(&self, size: usize) -> Result<Vec<u8>, RenderError> {
         if size as u64 > self.size {
@@ -98,6 +120,22 @@ impl DeviceBuffer {
             .as_ref()
             .and_then(MemoryLease::host_pointer)
             .ok_or_else(|| rejected(self.handle, "a buffer bound to mapped host memory"))
+    }
+}
+
+#[derive(Clone, Copy)]
+enum BufferMemory {
+    Host(HostBufferAccess),
+    DeviceLocal,
+}
+
+impl BufferMemory {
+    fn memory_type(self, runtime: &VulkanRuntime, bits: u32) -> Result<u32, RenderError> {
+        match self {
+            Self::Host(access) => host_buffer_memory_type(&runtime.memory, bits, access)
+                .ok_or_else(|| rejected(bits, "a host-visible coherent Vulkan memory type")),
+            Self::DeviceLocal => runtime.memory_type(bits, vk::MemoryPropertyFlags::DEVICE_LOCAL),
+        }
     }
 }
 impl Drop for DeviceBuffer {

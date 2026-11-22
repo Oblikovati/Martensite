@@ -71,7 +71,7 @@ fn y_major_segments_move_along_rows() {
 #[test]
 fn moved_endpoints_interpolate_colour_in_clip_space() {
     let mut draw = segment([11.7, 21.9], [52.3, 42.1]);
-    draw.vertices[1].color = [0., 0., 0., 1.];
+    draw.vertices.make_mut()[1].color = [0., 0., 0., 1.];
     let SegmentColumns::Moved([start, end]) =
         segment_columns(&draw, [0, 1], [64, 64], (true, &[-0.5, 0.5]))
     else {
@@ -110,7 +110,7 @@ fn segments_inside_one_skipped_column_cover_nothing_and_behind_eye_stay() {
         SegmentColumns::Empty
     );
     let mut behind = segment([0., 0.], [10., 0.]);
-    behind.vertices[0].weight = -1.;
+    behind.vertices.make_mut()[0].weight = -1.;
     assert_eq!(
         segment_columns(&behind, [0, 1], [64, 64], (true, &[-0.5, 0.5])),
         SegmentColumns::Unchanged

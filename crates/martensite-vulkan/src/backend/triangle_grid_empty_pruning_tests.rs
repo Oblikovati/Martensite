@@ -38,9 +38,9 @@ fn actual_1495_empty_refusal_gets_only_private_repeated_index_carrier() {
         crate::RenderTriangleGridOrigin::BottomUp,
     ] {
         let selected = prepare_test(&original, origin).unwrap().unwrap();
-        assert_eq!(selected.indices, [0, 0, 0]);
+        assert_eq!(selected.indices(), [0, 0, 0]);
         assert_eq!(selected.vertices, original.vertices);
-        assert_eq!(original.indices, [0, 1, 2]);
+        assert_eq!(original.indices(), [0, 1, 2]);
         assert_eq!(selected.clip_transform, original.clip_transform);
     }
 }
@@ -79,8 +79,8 @@ fn certified_empty_carrier_precedes_v3_phong_domain_admission() {
     )
     .unwrap()
     .unwrap();
-    assert_eq!(selected.indices, [0, 0, 0]);
-    assert_eq!(original.indices, [0, 1, 2]);
+    assert_eq!(selected.indices(), [0, 0, 0]);
+    assert_eq!(original.indices(), [0, 1, 2]);
     assert_eq!(selected.vertices, original.vertices);
     assert!(
         super::super::super::phong_interpolation_upload::admit_with_world_clip(
@@ -97,13 +97,16 @@ fn certified_empty_carrier_precedes_v3_phong_domain_admission() {
 fn prior_v2_refusal_and_following_visible_primitive_ordinal_are_preserved() {
     let mut draw = microtriangle();
     let following = phong_triangle([[-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.0, 0.5, 0.0]]);
-    draw.vertices.extend(following.vertices);
+    draw.vertices
+        .make_mut()
+        .extend_from_slice(&following.vertices);
     draw.lighting
         .as_mut()
         .unwrap()
         .normals
+        .make_mut()
         .extend([[0.0, 0.0, 1.0]; 3]);
-    draw.indices.extend([3, 4, 5]);
+    draw.indices.make_mut().extend([3, 4, 5]);
     assert!(
         admit(
             Behavior::FixedGrid12V2 {
@@ -120,7 +123,7 @@ fn prior_v2_refusal_and_following_visible_primitive_ordinal_are_preserved() {
     let selected = prepare_test(&draw, crate::RenderTriangleGridOrigin::TopDown)
         .unwrap()
         .unwrap();
-    assert_eq!(selected.indices, [0, 0, 0, 3, 4, 5]);
+    assert_eq!(selected.indices(), [0, 0, 0, 3, 4, 5]);
     assert_eq!(selected.vertices.len(), 6);
 }
 
@@ -143,9 +146,9 @@ fn domain_and_msaa_refusals_are_not_pruned() {
         Some(Failure::UnsupportedInterface { .. })
     ));
     let mut invalid = draw.clone();
-    invalid.vertices[0].position[0] = f32::NAN;
+    invalid.vertices.make_mut()[0].position[0] = f32::NAN;
     assert!(prepare_test(&invalid, crate::RenderTriangleGridOrigin::TopDown).is_err());
-    invalid.vertices[0].position[0] = 2.0;
+    invalid.vertices.make_mut()[0].position[0] = 2.0;
     assert!(prepare_test(&invalid, crate::RenderTriangleGridOrigin::TopDown).is_err());
 }
 
@@ -189,7 +192,7 @@ fn coverage_discard_precedes_any_fragment_auxiliary_effect() {
 #[test]
 fn potentially_covered_refusal_near_pixel_center_is_not_collapsed() {
     let mut draw = microtriangle();
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         vertex.position[0] += 0.45 / 204.5;
     }
     let error = prepare_test(&draw, crate::RenderTriangleGridOrigin::TopDown).unwrap_err();
@@ -215,7 +218,7 @@ fn all_three_actual_empty_refusals_keep_both_origin_contracts() {
 #[test]
 fn downstream_quad_and_fixed_point_reencoding_refuse_private_carriers() {
     let mut draw = microtriangle();
-    draw.quad_corners = vec![[0, 1, 2, 0]];
+    draw.quad_corners = vec![[0, 1, 2, 0]].into();
     assert!(prepare_test(&draw, crate::RenderTriangleGridOrigin::TopDown).is_err());
     draw.quad_corners.clear();
     draw.fixed_grid_point = true;

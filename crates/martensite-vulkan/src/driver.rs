@@ -23,6 +23,7 @@ pub struct Graphic3dRenderDriver {
     pub(crate) unlit_face_color_policy: crate::RenderUnlitFaceColorPolicy,
     pub(crate) lighting_selection: crate::driver_lighting_capability::SharedLightingSelection,
     pub(crate) texture_images: Arc<crate::retained_texture_images::RetainedTextureImages>,
+    pub(crate) primitive_sources: Arc<crate::primitive_cache::RetainedPrimitives>,
     /// The views and structures this driver created, shared with its views.
     pub(crate) objects: Arc<crate::driver_device_lost::DriverObjects>,
     limit: u32,
@@ -247,6 +248,7 @@ impl Graphic3dRenderDriver {
             )),
             unlit_face_color_policy: inputs.selection.unlit_faces,
             texture_images,
+            primitive_sources: Arc::default(),
             objects: Arc::default(),
             limit: inputs.limit,
             line_widths: inputs.line_widths,

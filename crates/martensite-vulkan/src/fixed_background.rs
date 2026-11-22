@@ -23,7 +23,7 @@ pub(crate) fn encode_fixed_gradient(layer: &mut RenderLayer, method: AspectGradi
         if method == AspectGradientFillMethod::Elliptical {
             continue;
         }
-        for vertex in &mut draw.vertices {
+        for vertex in draw.vertices.make_mut() {
             vertex.color = ColorRgba::linear_to_srgb_vec4(vertex.color);
         }
     }
@@ -34,7 +34,7 @@ pub(crate) fn encode_fixed_gradient(layer: &mut RenderLayer, method: AspectGradi
 pub(crate) fn encode_fixed_image(layer: &mut RenderLayer) {
     let color = default_interior_color();
     for draw in &mut layer.draws {
-        for vertex in &mut draw.vertices {
+        for vertex in draw.vertices.make_mut() {
             vertex.color = color;
         }
         if let Some(style) = draw.surface_texture.as_mut() {

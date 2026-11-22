@@ -185,7 +185,7 @@ pub(crate) fn fixed_texgen_snapshot(
 }
 pub(crate) fn extracted_surface_style(
     image: Arc<SurfaceTextureImage>,
-    uv: Vec<[f32; 4]>,
+    uv: SurfaceUvStream,
     parameters: &Graphic3dTextureParams,
     sampler: SurfaceSamplerPolicy,
     primitive: &PrimitiveSubmission,

@@ -189,7 +189,7 @@ fn assert_typed_v3_refusal(draw: &PrimitiveDraw, compatible: bool) {
 fn raster_v2_refuses_nonpositive_or_nonfinite_homogeneous_weights() {
     let mut draw = clipped_phong_with_model(crate::identity_clip());
     for weight in [0., -1., f32::from_bits(1), f32::NAN] {
-        draw.vertices[1].weight = weight;
+        draw.vertices.make_mut()[1].weight = weight;
         let error = selected_device()
             .admit_draw(Behavior::RasterClipDistanceV2, &draw, true)
             .unwrap_err();
@@ -203,7 +203,7 @@ fn raster_v2_refuses_nonpositive_or_nonfinite_homogeneous_weights() {
 #[test]
 fn raster_v2_accepts_positive_nonunit_homogeneous_vertices() {
     let mut draw = clipped_phong_with_model(crate::identity_clip());
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         vertex.weight = 2.;
     }
     assert_eq!(
@@ -221,7 +221,7 @@ fn raster_v2_refuses_nonopaque_material_and_vertex_sources() {
 
     let mut vertex = clipped_phong_with_model(crate::identity_clip());
     vertex.source_color_array = true;
-    vertex.vertices[0].color[3] = 0.75;
+    vertex.vertices.make_mut()[0].color[3] = 0.75;
     assert_typed_draw_refusal(&vertex);
 
     let mut fixed = fixed_phong_draw();
@@ -244,7 +244,7 @@ fn raster_v2_refuses_world_or_plane_arithmetic_that_can_overflow() {
     let mut model = crate::identity_clip();
     model[0] = f32::MAX;
     let mut draw = clipped_phong_with_model(model);
-    draw.vertices[0].position[0] = 2.;
+    draw.vertices.make_mut()[0].position[0] = 2.;
     assert_typed_draw_refusal(&draw);
 
     let mut draw = clipped_phong_with_model(crate::identity_clip());
@@ -252,7 +252,7 @@ fn raster_v2_refuses_world_or_plane_arithmetic_that_can_overflow() {
         crate::RenderClipping::new(vec![vec![[f32::MAX, 0., 0., 0.]]], crate::identity_clip())
             .unwrap(),
     );
-    draw.vertices[0].position[0] = 2.;
+    draw.vertices.make_mut()[0].position[0] = 2.;
     assert_typed_draw_refusal(&draw);
 }
 

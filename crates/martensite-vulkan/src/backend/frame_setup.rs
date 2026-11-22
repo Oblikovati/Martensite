@@ -1,4 +1,6 @@
 //! Frame stages retain draw-before-OIT failure cleanup and ordered target construction.
+use super::super::geometry_transfer::GeometryTransfers;
+use super::super::host_upload_pages::FrameUploadPages;
 use super::super::{
     buffer::DeviceBuffer, image::TargetImage, memory_selection::HostBufferAccess,
     pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
@@ -7,7 +9,7 @@ use super::super::{
     fragment_alpha_plan::FragmentAlphaPlan, oit_frame::OitFramePass, oit_plan::OitResourcePlan,
     retained_submission::RetirementStore,
 };
-use super::{FrameResources, UploadedDraw, check_extent, upload_draw};
+use super::{FrameDrawUploads, FrameResources, UploadedDraw, check_extent, upload_draw};
 use crate::{RenderError, RenderFrame};
 use ash::vk;
 use std::sync::Arc;
@@ -30,6 +32,7 @@ struct FrameDimensions {
 }
 pub(super) struct PreparedFrameUploads {
     draws: Vec<UploadedDraw>,
+    geometry_transfers: GeometryTransfers,
     oit: Option<OitFramePass>,
 }
 impl FrameSetup<'_> {
@@ -95,7 +98,12 @@ impl FrameSetup<'_> {
         self.pipeline
             .surface_images
             .observe_live_fixed_function(self.frame.raster.fixed_function);
-        let mut draws = self.upload_draws(plan.dimensions.extent, plan.raster.samples)?;
+        let mut uploads = FrameDrawUploads {
+            geometry: GeometryTransfers::new(&self.pipeline.geometry_residency),
+            storage: FrameUploadPages::storage(&self.pipeline.frame_storage_pages),
+        };
+        let mut draws =
+            self.upload_draws(plan.dimensions.extent, plan.raster.samples, &mut uploads)?;
         self.select_alpha_writes(&mut draws)?;
         self.select_multisample(&mut draws, plan)?;
         self.upload_oit(&mut draws, oit.as_ref())?;
@@ -109,12 +117,17 @@ impl FrameSetup<'_> {
         self.runtime
             .lit_only_commands
             .validate_uploads(self.frame, &draws, plan.raster.samples)?;
-        Ok(PreparedFrameUploads { draws, oit })
+        Ok(PreparedFrameUploads {
+            draws,
+            geometry_transfers: uploads.geometry,
+            oit,
+        })
     }
     fn upload_draws(
         &self,
         extent: vk::Extent2D,
         samples: vk::SampleCountFlags,
+        uploads: &mut FrameDrawUploads<'_>,
     ) -> Result<Vec<UploadedDraw>, RenderError> {
         self.frame
             .draws
@@ -127,6 +140,7 @@ impl FrameSetup<'_> {
                     extent,
                     samples,
                     self.retirements,
+                    uploads,
                 )
             })
             .collect()
@@ -279,6 +293,7 @@ impl PreparedFrameUploads {
             color_read: setup.readback(plan.dimensions.bytes)?,
             depth_read: setup.readback(plan.dimensions.bytes)?,
             draws: self.draws,
+            geometry_transfers: self.geometry_transfers,
             grid: None,
             raytrace: None,
             background: None,

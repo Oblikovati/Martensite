@@ -75,7 +75,7 @@ fn selected_behavior_refuses_nonpositive_w_outside_grid_and_degenerate_triangles
     draw.clip_transform[0] = 1000.;
     assert!(admit(Behavior::ProjectedGrid12V2, &draw, [0., 0., 10., 10.]).is_err());
     draw.clip_transform = identity_clip();
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         vertex.position[0] = 0.;
     }
     assert!(admit(Behavior::ProjectedGrid12V2, &draw, [0., 0., 10., 10.]).is_err());
@@ -84,7 +84,7 @@ fn selected_behavior_refuses_nonpositive_w_outside_grid_and_degenerate_triangles
 #[test]
 fn invalid_indices_and_nontriangle_topology_refuse_with_typed_error() {
     let mut draw = glyph_triangle();
-    draw.indices = vec![0, 1, 8];
+    draw.indices = vec![0, 1, 8].into();
     assert!(
         admit(Behavior::ProjectedGrid12V2, &draw, [0., 0., 10., 10.])
             .unwrap_err()
@@ -133,6 +133,7 @@ fn clipped_text_refuses_world_w_before_the_clipping_shader_division() {
     let mut draw = glyph_triangle();
     for (vertex, position) in
         draw.vertices
+            .make_mut()
             .iter_mut()
             .zip([[1., 1., 0.], [2., 1., 0.], [1., 2., 0.]])
     {
@@ -152,7 +153,7 @@ fn clipped_text_refuses_world_w_before_the_clipping_shader_division() {
 #[test]
 fn clipped_text_refuses_finite_world_values_that_overflow_when_divided() {
     let mut draw = glyph_triangle();
-    for (vertex, position) in draw.vertices.iter_mut().zip([
+    for (vertex, position) in draw.vertices.make_mut().iter_mut().zip([
         [f32::MAX, -1.0, -1.0],
         [f32::MAX, 1.0, -1.0],
         [f32::MAX, -1.0, 1.0],
@@ -191,7 +192,7 @@ fn core_flat_transport_preserves_inputs_and_requires_its_registered_interface() 
 #[test]
 fn core_flat_transport_refuses_corrupt_index_sources_before_packing() {
     let mut draw = glyph_triangle();
-    draw.indices[1] = 99;
+    draw.indices.make_mut()[1] = 99;
     assert!(
         admit(
             Behavior::ProjectedGrid12FlatCornersV4,

@@ -1,10 +1,7 @@
 //! Retained Graphic3d commands distinguish the group style from later primitive styles.
 use crate::line_style::primitive_style_in_pipeline;
 use crate::{PrimitiveDraw, RenderError, primitive::PrimitiveSubmission};
-use martensite_tkernel::{
-    ncollection::Vec4,
-    standard::{Handle, SharedState, StandardTransient},
-};
+use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
@@ -44,6 +41,7 @@ struct GroupSubmissionState {
 pub struct Graphic3dDrawGroup {
     base: Graphic3dGroupBase,
     submissions: SharedState<GroupSubmissionState>,
+    primitive_sources: Arc<crate::primitive_cache::RetainedPrimitives>,
     text_source: Arc<dyn crate::TextLayoutSource>,
     mesh_edge_pipeline: crate::RenderMeshEdgePipeline,
     pub(crate) texture_images: Arc<crate::retained_texture_images::RetainedTextureImages>,
@@ -65,6 +63,7 @@ impl Graphic3dDrawGroup {
         Handle::new(Self {
             base: Graphic3dGroupBase::new(structure),
             submissions: SharedState::default(),
+            primitive_sources: crate::primitive_cache::RetainedPrimitives::for_structure(structure),
             text_source,
             mesh_edge_pipeline: crate::retained_mesh_edges::driver_mesh_edge_pipeline(structure),
             texture_images: crate::retained_surface_texture::driver_texture_images(structure),
@@ -181,19 +180,17 @@ impl Graphic3dDrawGroup {
             bounds: array.bounds_ref().clone(),
             upload: Default::default(),
             uid: 0,
+            retained: None,
         };
         self.retain_primitive(primitive, false);
     }
-    fn retain_primitive(&self, primitive: PrimitiveSubmission, evaluate_bounds: bool) {
+    fn retain_primitive(&self, mut primitive: PrimitiveSubmission, evaluate_bounds: bool) {
         if self.is_deleted() {
             return;
         }
-        if evaluate_bounds && let Ok(positions) = primitive.positions() {
-            let mut fields = self.base.fields.write();
-            // Graphic3dGroup at bounds Vec4 inputs by raw xyz, ignoring w.
-            for [x, y, z, _] in positions {
-                fields.bounds.add(&Vec4::new(x, y, z, 1.));
-            }
+        primitive.retained = self.primitive_sources.entry(&primitive);
+        if evaluate_bounds && let Ok(bounds) = primitive.group_bounds() {
+            bounds.append(&mut self.base.fields.write().bounds);
         }
         self.submissions
             .write()
@@ -296,6 +293,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
             bounds: bounds.clone(),
             upload: Default::default(),
             uid,
+            retained: None,
         };
         let raytraced = crate::driver_dump::is_raytraced_primitive(&primitive);
         self.retain_primitive(primitive, evaluate_bounds);

@@ -53,7 +53,7 @@ impl FixedTextureUnit {
             return Ok(());
         };
         self.bind(&style.image, &snapshot)?;
-        style.uv = self.binding().coordinates(&snapshot, vertices)?;
+        style.uv = self.binding().coordinates(&snapshot, vertices)?.into();
         style.validate(vertices.len())
     }
     /// BindTextures: a different texture applies its parameters over the current state.

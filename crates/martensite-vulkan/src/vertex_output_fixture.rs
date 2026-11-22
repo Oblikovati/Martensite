@@ -26,7 +26,7 @@ impl RetainedPhongFixture {
         let style = Handle::new(Graphic3dAspects::default());
         style.set_shading_model(Graphic3dTypeOfShadingModel::Phong);
         group.set_group_primitives_aspect(&style.cast());
-        group.add_primitive_array(&retained_triangle_array(), false);
+        group.add_primitive_array(&retained_triangle_array().upcast(), false);
         Self {
             _driver: driver,
             _structure: structure,

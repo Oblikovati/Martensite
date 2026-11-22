@@ -1,4 +1,5 @@
 //! Resolve native material and normal policy at live Graphic3d extraction, not presentation creation.
+use crate::draw::DrawStream;
 use crate::{
     PrimitiveDraw, RenderError, RenderLayer, RenderLighting, RenderMaterial,
     RenderMaterialColorSpace, RenderShading, error::rejected,
@@ -105,7 +106,7 @@ fn apply_resolved_lighting(
     context: &TextSceneContext<'_>,
     model: Graphic3dTypeOfShadingModel,
 ) -> Result<(), RenderError> {
-    let normals = primitive.normals()?;
+    let normals = primitive.shared_normals()?;
     if draws
         .iter()
         .any(|draw| draw.topology() != crate::PrimitiveTopology::Triangles)
@@ -117,7 +118,7 @@ fn apply_resolved_lighting(
         let mut snapshot = lighting.clone();
         snapshot.normals = normals
             .clone()
-            .unwrap_or_else(|| vec![[0., 0., 1.]; draw.vertices.len()]);
+            .unwrap_or_else(|| vec![[0., 0., 1.]; draw.vertices.len()].into());
         draw.lighting = Some(snapshot);
     }
     Ok(())
@@ -128,7 +129,7 @@ fn lower_nodal_lighting(
     aspects: &Handle<dyn Graphic3dAspectsSource>,
     context: &TextSceneContext<'_>,
     model: Graphic3dTypeOfShadingModel,
-    normals: Option<Vec<[f32; 3]>>,
+    normals: Option<DrawStream<[f32; 3]>>,
 ) -> Result<(), RenderError> {
     if draws
         .iter()
@@ -163,7 +164,7 @@ fn apply_nodal_lighting(
     aspects: &Handle<dyn Graphic3dAspectsSource>,
     context: &TextSceneContext<'_>,
     model: Graphic3dTypeOfShadingModel,
-    normals: Option<Vec<[f32; 3]>>,
+    normals: Option<DrawStream<[f32; 3]>>,
 ) -> Result<(), RenderError> {
     let Some(normals) = normals else {
         return Ok(());

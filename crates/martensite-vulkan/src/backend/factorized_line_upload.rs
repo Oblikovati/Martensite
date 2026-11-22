@@ -19,7 +19,8 @@ pub(super) fn lowered(behavior: Behavior, draw: &PrimitiveDraw) -> Option<Primit
     }
     let model = factors.model();
     let world = draw.vertices.iter().map(|v| world_vertex(&model, v));
-    let mut selected = draw.with_replacement_geometry(world.collect(), draw.indices.clone());
+    let mut selected =
+        draw.with_replacement_geometry(world.collect::<Vec<_>>().into(), draw.indices.clone());
     selected.clip_transform = factors.camera_product();
     Some(selected)
 }
@@ -126,7 +127,7 @@ mod tests {
         assert_eq!(selected.vertices[0].position, [FAR, 0., 0.]);
         assert_eq!(selected.vertices[0].weight, 1.);
         assert_eq!(selected.clip_transform, translated(-FAR));
-        assert_eq!(selected.indices, [0, 1]);
+        assert_eq!(selected.indices(), [0, 1]);
     }
     #[test]
     fn a_draw_with_its_own_matrix_keeps_it() {

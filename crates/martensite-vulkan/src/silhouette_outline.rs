@@ -65,7 +65,7 @@ pub(crate) fn outline_draw(
             crate::RenderVertex::homogeneous([x, y, z, vertex.weight], color)
         })
         .collect();
-    let mut outline = PrimitiveDraw::new(vertices, draw.indices.clone(), draw.clip_transform)?
+    let mut outline = PrimitiveDraw::new(vertices, draw.indices.to_vec(), draw.clip_transform)?
         .with_face_culling(RenderFaceCulling::Front);
     outline.clipping = draw.clipping.clone();
     outline.polygon_offset = draw.polygon_offset;

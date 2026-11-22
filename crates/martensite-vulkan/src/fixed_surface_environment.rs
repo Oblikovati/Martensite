@@ -63,7 +63,7 @@ pub(crate) fn apply_sprite_replace(draw: &mut PrimitiveDraw) {
     }
     style.modulate = true;
     let texel_alpha = style.image.has_alpha;
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         let alpha = if texel_alpha { 1. } else { vertex.color[3] };
         vertex.color = [1., 1., 1., alpha];
     }
@@ -110,7 +110,7 @@ mod tests {
             pending_texgen: None,
             fixed_environment: true,
             sampler: SurfaceSamplerPolicy::read(&Graphic3dTextureParams::default()),
-            uv: vec![],
+            uv: Vec::new().into(),
             back_vertex: false,
             vertex_override: false,
             modulate: true,

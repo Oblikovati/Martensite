@@ -6,12 +6,14 @@ fn totals(seed: u64) -> RenderDeviceWork {
     RenderDeviceWork {
         redraws: seed,
         buffers_created: 2 * seed,
+        geometry_buffers_created: 10 * seed,
         images_created: 3 * seed,
         memory_allocations: 4 * seed,
         pipelines_created: 5 * seed,
         descriptor_sets_allocated: 6 * seed,
         submissions: 7 * seed,
         uploaded_bytes: 8 * seed,
+        geometry_uploaded_bytes: 11 * seed,
         read_back_bytes: 9 * seed,
         times: RenderWorkTimes {
             redraw: Duration::from_micros(10 * seed),

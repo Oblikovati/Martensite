@@ -9,12 +9,18 @@ use draw_upload::upload_draw;
 #[path = "frame_setup.rs"]
 mod frame_setup;
 use super::{
-    buffer::DeviceBuffer, image::TargetImage, memory_selection::HostBufferAccess,
-    pipeline::DrawPipeline, pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
+    buffer::DeviceBuffer, geometry_transfer::GeometryTransfers,
+    host_upload_pages::FrameUploadPages, image::TargetImage, pipeline::DrawPipeline,
+    pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
 };
 use crate::{FrameCapture, PrimitiveDraw, RenderError, RenderFrame, error::rejected};
 use ash::vk;
 use std::sync::Arc;
+
+struct FrameDrawUploads<'a> {
+    geometry: GeometryTransfers,
+    storage: FrameUploadPages<'a>,
+}
 pub(super) struct UploadedDraw {
     pub window_depth_expected: bool,
     pub window_depth_status: Option<super::window_depth_status::WindowDepthStatus>,
@@ -29,8 +35,8 @@ pub(super) struct UploadedDraw {
     )>,
     pub sample_alpha_cutoff: bool,
     pub oit: Option<super::oit_upload::OitUploadedVariants>,
-    pub vertices: DeviceBuffer,
-    pub indices: DeviceBuffer,
+    pub vertices: Arc<DeviceBuffer>,
+    pub indices: Arc<DeviceBuffer>,
     pub count: u32,
     pub instances: u32,
     pub point_viewports: Option<[vk::Viewport; 2]>,
@@ -94,6 +100,7 @@ pub(super) struct FrameResources {
     pub color_read: DeviceBuffer,
     pub depth_read: DeviceBuffer,
     pub draws: Vec<UploadedDraw>,
+    pub(super) geometry_transfers: GeometryTransfers,
     /// The shader grid draw, attached after allocation when the frame has one.
     pub grid: Option<super::shader_grid_pass::GridFrameDraw>,
     /// The ray-tracing pass, attached after allocation when the frame ray-traces.
@@ -225,22 +232,22 @@ fn check_extent(runtime: &VulkanRuntime, frame: &RenderFrame) -> Result<(), Rend
     Ok(())
 }
 
-fn upload_bytes(
-    runtime: &Arc<VulkanRuntime>,
-    bytes: &[u8],
-    usage: vk::BufferUsageFlags,
-) -> Result<DeviceBuffer, RenderError> {
-    let buffer = DeviceBuffer::new(runtime, bytes.len() as u64, usage, HostBufferAccess::Upload)?;
-    buffer.write(bytes)?;
-    Ok(buffer)
+pub(super) fn encode_vertices(draw: &PrimitiveDraw) -> Vec<u8> {
+    encode_vertex_sources(draw, (0..draw.vertices.len()).map(|index| (index, index)))
 }
 
-#[cfg(test)]
-pub(super) fn encode_vertices(draw: &PrimitiveDraw) -> Vec<u8> {
-    let sources: Vec<_> = (0..draw.vertices.len())
-        .map(|index| (index, index))
-        .collect();
-    encode_vertex_sources(draw, &sources)
+fn encode_vertex_patch(
+    draw: &PrimitiveDraw,
+    vertices: std::ops::Range<usize>,
+    full_size: u64,
+) -> Option<(u64, Vec<u8>)> {
+    let stride = VertexEncoding::from_draw(draw).stride();
+    if vertices.end > draw.vertices.len() || (draw.vertices.len() * stride) as u64 != full_size {
+        return None;
+    }
+    let offset = (vertices.start * stride) as u64;
+    let bytes = encode_vertex_sources(draw, vertices.map(|index| (index, index)));
+    Some((offset, bytes))
 }
 
 #[cfg(test)]
@@ -268,89 +275,170 @@ mod fixed_pack_tests {
         assert_eq!(f32::from_ne_bytes(bytes[72..76].try_into().unwrap()), 0.25);
     }
 }
-fn encode_vertex_sources(draw: &PrimitiveDraw, sources: &[(usize, usize)]) -> Vec<u8> {
-    let mut bytes = Vec::new();
-    for &(index, source) in sources {
-        let vertex = &draw.vertices[index];
-        bytes.extend(encoded_vertex_header(
-            vertex,
-            draw.text_logic_xor && !draw.compatibility_color_target,
-            draw.compatibility_color_target && draw.textured_style.is_some(),
-        ));
-        if let Some(style) = &draw.textured_style {
-            bytes.extend(style.uv[index].iter().flat_map(|v| v.to_ne_bytes()));
-        }
-        append_surface_coordinates(&mut bytes, draw, index);
-        append_sphere_map_normal(&mut bytes, draw, index);
-        if let Some(lighting) = &draw.lighting {
-            bytes.extend(lighting.normals[index].iter().flat_map(|v| v.to_ne_bytes()));
-            if lighting.is_fixed_lighting() {
-                let selected = &draw.vertices[source];
-                bytes.extend(
-                    selected
-                        .position
-                        .into_iter()
-                        .chain(std::iter::once(selected.weight))
-                        .chain(lighting.normals[source])
-                        .chain(selected.color)
-                        .flat_map(f32::to_ne_bytes),
-                );
-            }
-        }
+fn encode_vertex_sources(
+    draw: &PrimitiveDraw,
+    sources: impl ExactSizeIterator<Item = (usize, usize)>,
+) -> Vec<u8> {
+    let layout = VertexEncoding::from_draw(draw);
+    let mut bytes = Vec::with_capacity(sources.len() * layout.stride());
+    for (index, source) in sources {
+        layout.append(&mut bytes, &draw.vertices, index, source);
     }
     bytes
 }
-/// occNormal of the TextureEnv vertex stage, at the lit layout's normal offset.
-fn append_sphere_map_normal(bytes: &mut Vec<u8>, draw: &PrimitiveDraw, index: usize) {
-    if !super::surface_texture_pipeline::draw_uses_sphere_map(draw) {
-        return;
-    }
-    let Some(transform) = draw
-        .surface_texture
-        .as_ref()
-        .and_then(|style| style.sphere_map.as_ref())
-    else {
-        return;
-    };
-    bytes.extend(
-        transform.normals[index]
-            .iter()
-            .flat_map(|v| v.to_ne_bytes()),
-    );
-}
-fn append_surface_coordinates(bytes: &mut Vec<u8>, draw: &PrimitiveDraw, index: usize) {
-    if draw.surface_texture_binding_only
-        || (draw.surface_texture.is_none()
-            && draw.surface_cutoff.is_none()
-            && draw.surface_texture_unavailable.is_none()
-            && draw.mesh_edges.is_none()
-            && draw.unlit_back_color.is_none())
-    {
-        return;
-    }
-    let uv = draw
-        .surface_texture
-        .as_ref()
-        .map_or(draw.unlit_back_color.unwrap_or([0., 0., 0., 1.]), |style| {
-            style.uv[index]
-        });
-    bytes.extend(uv.iter().flat_map(|value| value.to_ne_bytes()));
+
+struct VertexEncoding<'a> {
+    text: Option<&'a crate::TexturedStyle>,
+    surface: Option<SurfaceCoordinates<'a>>,
+    sphere_normals: Option<&'a [[f32; 3]]>,
+    lighting: Option<&'a crate::RenderLighting>,
+    xor: bool,
+    font_replace: bool,
+    fixed_light: bool,
 }
 
-fn encoded_vertex_header(vertex: &crate::RenderVertex, xor: bool, font_replace: bool) -> Vec<u8> {
+enum SurfaceCoordinates<'a> {
+    Array(&'a [[f32; 4]]),
+    Constant([f32; 4]),
+}
+
+fn geometry_key(draw: &PrimitiveDraw) -> Option<super::geometry_residency::GeometryKey> {
+    use super::geometry_residency::{GeometryEncoding, GeometryKey};
+    if cfg!(any(
+        feature = "vertex-output-diagnostics",
+        feature = "command-state-diagnostics"
+    )) || draw.vertices.is_empty()
+    {
+        return None;
+    }
+    let layout = VertexEncoding::from_draw(draw);
+    if layout.text.is_some() {
+        return None;
+    }
+    let surface_coordinates = match layout.surface {
+        Some(SurfaceCoordinates::Constant(coordinates)) => Some(coordinates.map(f32::to_bits)),
+        _ => None,
+    };
+    Some(GeometryKey::new(
+        draw,
+        GeometryEncoding {
+            surface_coordinates,
+            surface_uv: matches!(layout.surface, Some(SurfaceCoordinates::Array(_))),
+            sphere_normals: layout.sphere_normals.is_some(),
+            topology: draw.topology() as u8,
+            has_lighting: layout.lighting.is_some(),
+            fixed_lighting: layout.fixed_light,
+            provoking_vertices: super::fixed_vertex_sources::uses_fixed_flat_vertices(draw),
+            fixed_grid_points: draw.fixed_grid_point,
+            xor_color: layout.xor,
+        },
+    ))
+}
+
+impl<'a> VertexEncoding<'a> {
+    fn from_draw(draw: &'a PrimitiveDraw) -> Self {
+        let sphere_normals = draw
+            .surface_texture
+            .as_ref()
+            .and_then(|style| style.sphere_map.as_ref())
+            .filter(|_| super::surface_texture_pipeline::draw_uses_sphere_map(draw))
+            .map(|transform| &*transform.normals);
+        let lighting = draw.lighting.as_ref();
+        Self {
+            text: draw.textured_style.as_ref(),
+            surface: surface_coordinates(draw),
+            sphere_normals,
+            lighting,
+            xor: draw.text_logic_xor && !draw.compatibility_color_target,
+            font_replace: draw.compatibility_color_target && draw.textured_style.is_some(),
+            fixed_light: lighting.is_some_and(crate::RenderLighting::is_fixed_lighting),
+        }
+    }
+
+    fn stride(&self) -> usize {
+        32 + 8 * usize::from(self.text.is_some())
+            + 16 * usize::from(self.surface.is_some())
+            + 12 * usize::from(self.sphere_normals.is_some())
+            + 12 * usize::from(self.lighting.is_some())
+            + 44 * usize::from(self.fixed_light)
+    }
+
+    fn append(
+        &self,
+        bytes: &mut Vec<u8>,
+        vertices: &[crate::RenderVertex],
+        i: usize,
+        source: usize,
+    ) {
+        let header = encoded_vertex_header(&vertices[i], self.xor, self.font_replace);
+        bytes.extend_from_slice(header.as_flattened());
+        if let Some(style) = self.text {
+            append_f32s(bytes, style.uv[i]);
+        }
+        if let Some(surface) = &self.surface {
+            append_f32s(bytes, surface.at(i));
+        }
+        if let Some(normals) = self.sphere_normals {
+            append_f32s(bytes, normals[i]);
+        }
+        if let Some(lighting) = self.lighting {
+            append_f32s(bytes, lighting.normals[i]);
+            if self.fixed_light {
+                append_fixed_light(bytes, vertices[source], lighting.normals[source]);
+            }
+        }
+    }
+}
+
+fn surface_coordinates(draw: &PrimitiveDraw) -> Option<SurfaceCoordinates<'_>> {
+    if draw.surface_texture_binding_only {
+        return None;
+    }
+    if let Some(style) = &draw.surface_texture {
+        return Some(SurfaceCoordinates::Array(&style.uv));
+    }
+    let uses_placeholder = draw.surface_cutoff.is_some()
+        || draw.surface_texture_unavailable.is_some()
+        || draw.mesh_edges.is_some()
+        || draw.unlit_back_color.is_some();
+    uses_placeholder
+        .then(|| SurfaceCoordinates::Constant(draw.unlit_back_color.unwrap_or([0., 0., 0., 1.])))
+}
+
+impl SurfaceCoordinates<'_> {
+    fn at(&self, index: usize) -> [f32; 4] {
+        match self {
+            Self::Array(values) => values[index],
+            Self::Constant(value) => *value,
+        }
+    }
+}
+
+fn append_fixed_light(bytes: &mut Vec<u8>, vertex: crate::RenderVertex, normal: [f32; 3]) {
+    append_f32s(bytes, vertex.position);
+    append_f32s(bytes, [vertex.weight]);
+    append_f32s(bytes, normal);
+    append_f32s(bytes, vertex.color);
+}
+
+fn append_f32s<const N: usize>(bytes: &mut Vec<u8>, values: [f32; N]) {
+    bytes.extend_from_slice(values.map(f32::to_ne_bytes).as_flattened());
+}
+
+fn encoded_vertex_header(
+    vertex: &crate::RenderVertex,
+    xor: bool,
+    font_replace: bool,
+) -> [[u8; 4]; 8] {
     // Native framebuffer conversion precedes XOR; public submissions remain linear RGBA.
     let mut color = crate::text_logic::text_target_rgba(xor, vertex.color);
     // Font textures use ALPHA/REPLACE, which ignores vertex alpha.
     if font_replace {
         color[3] = 1.;
     }
-    vertex
-        .position
-        .iter()
-        .chain(std::iter::once(&vertex.weight))
-        .chain(&color)
-        .flat_map(|value| value.to_ne_bytes())
-        .collect()
+    let [x, y, z] = vertex.position;
+    let [r, g, b, a] = color;
+    [x, y, z, vertex.weight, r, g, b, a].map(f32::to_ne_bytes)
 }
 
 #[cfg(test)]

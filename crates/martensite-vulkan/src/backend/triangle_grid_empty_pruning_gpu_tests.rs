@@ -40,7 +40,7 @@ fn empty_then_visible_frame() -> RenderFrame {
             .map(|p| RenderVertex::new(p, [1.0; 4])),
     );
     let mut lighting = phong_emission();
-    lighting.normals.extend([[0.0, 0.0, 1.0]; 3]);
+    lighting.normals.make_mut().extend([[0.0, 0.0, 1.0]; 3]);
     let draw = PrimitiveDraw::new(vertices, vec![0, 1, 2, 3, 4, 5], identity_clip())
         .unwrap()
         .with_lighting(lighting)

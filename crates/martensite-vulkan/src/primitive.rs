@@ -1,7 +1,14 @@
 //! Graphic3d buffers are read at frame extraction so shared buffer mutations stay visible.
+use crate::draw::DrawStream;
+use crate::primitive_buffer_read::{read_color, read_index_words, read_vector_attribute};
+use crate::primitive_cache::{
+    AttributeStamp, BoundsStamp, GeometryStamp, GeometryStyle, IndexStamp, RetainedPrimitive,
+};
 use crate::{PrimitiveDraw, RenderError, RenderVertex, error::rejected};
 use martensite_tkernel::{ncollection::Vec4, standard::Handle};
 use martensite_tkservice::graphic3d::*;
+use std::sync::Arc;
+
 #[derive(Clone)]
 pub(crate) struct PrimitiveSubmission {
     pub kind: Graphic3dTypeOfPrimitiveArray,
@@ -12,51 +19,112 @@ pub(crate) struct PrimitiveSubmission {
     pub upload: crate::element_upload::ElementUploadSlot,
     /// The driver id of the native `GlPrimitiveArray` (`GetUID`); 0 when none was taken.
     pub uid: usize,
+    /// Group presentations may share immutable lowering while the same source is live.
+    pub retained: Option<Arc<RetainedPrimitive>>,
 }
+
+#[derive(Clone, Copy)]
+struct DrawStyle<'a> {
+    color: [f32; 4],
+    matrix: [f32; 16],
+    line: Option<crate::LineStyle>,
+    point: Option<&'a crate::PointStyle>,
+}
+
+type DrawSnapshot = (Vec<PrimitiveDraw>, Option<GeometryStamp>);
+
+pub(crate) enum PrimitiveBounds {
+    Finite(Graphic3dBndBox4f),
+    Unchecked(Vec<[f32; 4]>),
+}
+
 impl PrimitiveSubmission {
     pub fn positions(&self) -> Result<Vec<[f32; 4]>, RenderError> {
-        let Some(buffer) = self.attributes.get() else {
-            return Err(rejected("null attributes", "a Graphic3d vertex buffer"));
-        };
-        validate_count(buffer.nb_elements())?;
-        let (index, offset, stride) = buffer
-            .attribute_data(Graphic3dTypeOfAttribute::Pos)
-            .ok_or_else(|| {
-                rejected(
-                    "missing position",
-                    "a Vec2, Vec3 or Vec4 position attribute",
-                )
-            })?;
-        let kind = buffer
-            .attribute(index)
-            .ok_or_else(|| rejected(index, "a valid position attribute"))?
-            .data_type;
-        (0..buffer.nb_elements())
-            .map(|i| read_position(buffer, kind, offset + stride * i as usize))
-            .collect()
+        self.position_snapshot(false)
+            .map(|(positions, _)| positions)
     }
-    pub(crate) fn normals(&self) -> Result<Option<Vec<[f32; 3]>>, RenderError> {
-        let buffer = self
-            .attributes
+
+    pub(crate) fn group_bounds(&self) -> Result<PrimitiveBounds, RenderError> {
+        let read = self.attribute_read()?;
+        let stamp = self
+            .retained
+            .as_ref()
+            .and_then(|_| AttributeStamp::capture(&read));
+        if let Some((cache, stamp)) = self.retained.as_ref().zip(stamp.as_ref())
+            && let Some(bounds) = cache.bounds.get(stamp)
+        {
+            return Ok(PrimitiveBounds::Finite(bounds));
+        }
+        let positions = read_positions(&read)?;
+        drop(read);
+        let computed = PrimitiveBounds::from_positions(positions);
+        if let (Some(cache), Some(stamp), PrimitiveBounds::Finite(bounds)) =
+            (&self.retained, stamp, &computed)
+        {
+            cache.bounds.record(stamp, *bounds);
+        }
+        Ok(computed)
+    }
+
+    fn attribute_read(&self) -> Result<Graphic3dBufferRead<'_>, RenderError> {
+        self.attributes
             .get()
-            .ok_or_else(|| rejected("null attributes", "a Graphic3d vertex buffer"))?;
-        let Some((index, offset, stride)) = buffer.attribute_data(Graphic3dTypeOfAttribute::Norm)
-        else {
-            return Ok(None);
-        };
-        validate_count(buffer.nb_elements())?;
-        let kind = buffer
-            .attribute(index)
-            .ok_or_else(|| rejected(index, "a valid normal attribute"))?
-            .data_type;
-        (0..buffer.nb_elements())
-            .map(|i| {
-                read_position(buffer, kind, offset + stride * i as usize)
-                    .map(|v| [v[0], v[1], v[2]])
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map(Some)
+            .map(Graphic3dBufferMembers::read_buffer)
+            .ok_or_else(|| rejected("null attributes", "a Graphic3d vertex buffer"))
     }
+
+    fn position_snapshot(
+        &self,
+        track: bool,
+    ) -> Result<(Vec<[f32; 4]>, Option<AttributeStamp>), RenderError> {
+        let read = self.attribute_read()?;
+        Ok((read_positions(&read)?, attribute_stamp(&read, track)))
+    }
+
+    pub(crate) fn normals(&self) -> Result<Option<Vec<[f32; 3]>>, RenderError> {
+        read_normals(&self.attribute_read()?)
+    }
+
+    pub(crate) fn shared_normals(&self) -> Result<Option<DrawStream<[f32; 3]>>, RenderError> {
+        let read = self.attribute_read()?;
+        let stamp = attribute_stamp(&read, self.retained.is_some());
+        if let Some((cache, stamp)) = self.retained.as_ref().zip(stamp.as_ref())
+            && let Some(normals) = cache.normals.get(stamp)
+        {
+            return Ok(normals);
+        }
+        let normals = read_normals(&read)?.map(DrawStream::from);
+        drop(read);
+        if let Some((cache, stamp)) = self.retained.as_ref().zip(stamp) {
+            cache.normals.record(stamp, normals.clone());
+        }
+        Ok(normals)
+    }
+
+    pub(crate) fn shared_sphere_normals(&self) -> Result<DrawStream<[f32; 3]>, RenderError> {
+        if let Some(normals) = self.shared_normals()? {
+            return Ok(normals);
+        }
+        let read = self.attribute_read()?;
+        let cache = self
+            .retained
+            .as_ref()
+            .map(|retained| &retained.texture_streams);
+        let tracked = cache.and_then(|cache| Some((cache, AttributeStamp::capture(&read)?)));
+        if let Some((cache, stamp)) = &tracked
+            && let Some(normals) = cache.zero_normals(stamp)
+        {
+            return Ok(normals);
+        }
+        let count = read_positions(&read)?.len();
+        drop(read);
+        let normals = vec![[0.; 3]; count].into();
+        Ok(match tracked {
+            Some((cache, stamp)) => cache.remember_zero_normals(stamp, normals),
+            None => normals,
+        })
+    }
+
     pub fn draws(
         &self,
         color: [f32; 4],
@@ -64,44 +132,78 @@ impl PrimitiveSubmission {
         line: Option<crate::LineStyle>,
         point: Option<crate::PointStyle>,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
-        let positions = self.positions()?;
-        let indices = self.read_indices(positions.len())?;
-        let vertices = positions
-            .into_iter()
-            .enumerate()
-            .map(|(index, position)| self.vertex(index, position, color))
-            .collect::<Result<Vec<_>, _>>()?;
-        crate::primitive_ranges::primitive_ranges(&self.bounds, &indices, color)?
-            .into_iter()
-            .map(|range| self.range_draw(range, &vertices, matrix, line, point.as_ref()))
-            .collect()
+        let style = DrawStyle {
+            color,
+            matrix,
+            line,
+            point: point.as_ref(),
+        };
+        let retained = self
+            .retained
+            .as_ref()
+            .filter(|_| matrix.iter().all(|value| value.is_finite()));
+        let key = GeometryStyle::resolve(color, line, point.is_some());
+        if let Some(cache) = retained
+            && let Some(source) = GeometryStamp::capture(self)
+            && let Some(draws) = cache.draws(&source, key, matrix, line, point.as_ref())
+        {
+            return Ok(draws);
+        }
+        let (mut draws, source) = self.lower_draws(style, retained.is_some())?;
+        if let Some((cache, source)) = retained.zip(source) {
+            let mutable = self
+                .attributes
+                .get()
+                .is_some_and(Graphic3dBufferSource::is_mutable);
+            cache.record(source, key, &mut draws, mutable);
+        }
+        Ok(draws)
     }
+
+    fn lower_draws(&self, style: DrawStyle<'_>, track: bool) -> Result<DrawSnapshot, RenderError> {
+        let (positions, position_stamp) = self.position_snapshot(track)?;
+        let (indices, index_stamp) = self.index_snapshot(positions.len(), track)?;
+        let (vertices, vertex_colors, color_stamp) =
+            self.vertices(positions, style.color, track)?;
+        let bounds = self.bounds.get().map(Graphic3dBoundBuffer::state);
+        let bounds_stamp = track
+            .then(|| match bounds.as_deref() {
+                Some(state) => BoundsStamp::capture(state).map(Some),
+                None => Some(None),
+            })
+            .flatten();
+        let ranges =
+            crate::primitive_ranges::ranges_for_state(bounds.as_deref(), &indices, style.color)?;
+        drop(bounds);
+        let source = geometry_stamp(position_stamp, color_stamp, index_stamp, bounds_stamp);
+        let draws = ranges
+            .into_iter()
+            .map(|range| self.range_draw(range, &vertices, vertex_colors, style))
+            .collect::<Result<_, _>>()?;
+        Ok((draws, source))
+    }
+
     fn range_draw(
         &self,
         range: crate::primitive_ranges::PrimitiveRange,
         vertices: &[RenderVertex],
-        matrix: [f32; 16],
-        line: Option<crate::LineStyle>,
-        point: Option<&crate::PointStyle>,
+        vertex_colors: bool,
+        style: DrawStyle<'_>,
     ) -> Result<PrimitiveDraw, RenderError> {
-        let indices = if point.is_some() {
+        let indices = if style.point.is_some() {
             range.indices.clone()
-        } else if line.is_some() {
+        } else if style.line.is_some() {
             crate::primitive_topology::line_indices(self.kind, &range.indices)?
         } else {
             crate::primitive_topology::triangle_indices(self.kind, &range.indices)?
         };
-        let colored = self
-            .attributes
-            .attribute_data(Graphic3dTypeOfAttribute::Color)
-            .is_some();
-        let vertices = range_vertices(vertices, range.color, colored);
-        if let Some(style) = point {
-            return PrimitiveDraw::points(vertices, indices, matrix, style.clone());
+        let vertices = range_vertices(vertices, range.color, vertex_colors);
+        if let Some(point) = style.point {
+            return PrimitiveDraw::points(vertices, indices, style.matrix, point.clone());
         }
-        match line {
-            Some(style) => PrimitiveDraw::segments(vertices, indices, matrix, style),
-            None => self.quad_tagged_draw(vertices, indices, matrix, &range.indices),
+        match style.line {
+            Some(line) => PrimitiveDraw::segments(vertices, indices, style.matrix, line),
+            None => self.quad_tagged_draw(vertices, indices, style.matrix, &range.indices),
         }
     }
     fn quad_tagged_draw(
@@ -113,87 +215,148 @@ impl PrimitiveSubmission {
     ) -> Result<PrimitiveDraw, RenderError> {
         let mut draw = PrimitiveDraw::new(vertices, indices, matrix)?;
         draw.native_flat_sources =
-            crate::fixed_flat_sources::native_flat_sources(self.kind, source, &draw.indices);
+            crate::fixed_flat_sources::native_flat_sources(self.kind, source, &draw.indices).into();
         if self.kind == Graphic3dTypeOfPrimitiveArray::Quadrangles {
-            draw.quad_corners = source.as_chunks::<4>().0.to_vec();
+            draw.quad_corners = source.as_chunks::<4>().0.to_vec().into();
         }
         Ok(draw)
     }
-    fn vertex(
+    fn vertices(
         &self,
-        index: usize,
-        position: [f32; 4],
+        positions: Vec<[f32; 4]>,
         fallback: [f32; 4],
-    ) -> Result<RenderVertex, RenderError> {
-        let buffer = &*self.attributes;
-        let Some((attribute, offset, stride)) =
-            buffer.attribute_data(Graphic3dTypeOfAttribute::Color)
-        else {
-            return Ok(RenderVertex::homogeneous(position, fallback));
-        };
-        let kind = buffer
-            .attribute(attribute)
-            .ok_or_else(|| rejected(attribute, "a valid color attribute"))?
-            .data_type;
-        let at = offset + stride * index;
-        let color = match kind {
-            Graphic3dTypeOfData::Vec4ub => buffer
-                .read_at::<Vec4<u8>>(at)
-                .map(|v| v.data().map(|c| f32::from(c) / 255.)),
-            Graphic3dTypeOfData::Vec4 => buffer.read_at::<Vec4<f32>>(at).map(|v| v.data()),
-            _ => return Err(rejected(kind, "Vec4ub or Vec4 vertex colors")),
-        }
-        .ok_or_else(|| rejected(at, "allocated color bytes"))?;
-        Ok(RenderVertex::homogeneous(position, color))
-    }
-    pub(crate) fn read_indices(&self, count: usize) -> Result<Vec<u32>, RenderError> {
-        if self.indices.is_null() {
-            return (0..count)
-                .map(|i| u32::try_from(i).map_err(|_| rejected(i, "a 32-bit vertex index")))
+        track: bool,
+    ) -> Result<(Vec<RenderVertex>, bool, Option<AttributeStamp>), RenderError> {
+        let read = self.attributes.read_buffer();
+        let stamp = attribute_stamp(&read, track);
+        let Some(colors) = read.attribute(Graphic3dTypeOfAttribute::Color) else {
+            let vertices = positions
+                .into_iter()
+                .map(|position| RenderVertex::homogeneous(position, fallback))
                 .collect();
-        }
-        if !matches!(self.indices.stride(), 2 | 4) {
-            return Err(rejected(self.indices.stride(), "16-bit or 32-bit indices"));
-        }
-        validate_count(self.indices.nb_elements())?;
-        (0..self.indices.nb_elements())
-            .map(|i| {
-                self.indices
-                    .index(i)
-                    .and_then(|v| u32::try_from(v).ok())
-                    .ok_or_else(|| rejected(i, "allocated nonnegative vertex index"))
+            return Ok((vertices, false, stamp));
+        };
+        let vertices = positions
+            .into_iter()
+            .enumerate()
+            .map(|(index, position)| -> Result<_, RenderError> {
+                let color = read_color(&colors, index)?;
+                Ok(RenderVertex::homogeneous(position, color))
             })
-            .collect()
+            .collect::<Result<_, _>>()?;
+        Ok((vertices, true, stamp))
+    }
+
+    pub(crate) fn read_indices(&self, count: usize) -> Result<Vec<u32>, RenderError> {
+        self.index_snapshot(count, false)
+            .map(|(indices, _)| indices)
+    }
+
+    fn index_snapshot(
+        &self,
+        count: usize,
+        track: bool,
+    ) -> Result<(Vec<u32>, Option<Option<IndexStamp>>), RenderError> {
+        if self.indices.is_null() {
+            let indices = (0..count)
+                .map(|i| u32::try_from(i).map_err(|_| rejected(i, "a 32-bit vertex index")))
+                .collect::<Result<_, _>>()?;
+            return Ok((indices, Some(None)));
+        }
+        let read = self.indices.read_buffer();
+        let stride = read.element_stride();
+        if !matches!(stride, 2 | 4) {
+            return Err(rejected(stride, "16-bit or 32-bit indices"));
+        }
+        let indices =
+            read_index_words(stride, read.bytes(), validated_count(read.element_count())?)?;
+        let stamp = track
+            .then(|| IndexStamp::capture(&read))
+            .flatten()
+            .map(Some);
+        Ok((indices, stamp))
     }
 }
 
-fn read_position(
-    buffer: &dyn Graphic3dBufferSource,
-    kind: Graphic3dTypeOfData,
-    offset: usize,
-) -> Result<[f32; 4], RenderError> {
-    let dimensions = match kind {
-        Graphic3dTypeOfData::Vec2 => 2,
-        Graphic3dTypeOfData::Vec3 => 3,
-        Graphic3dTypeOfData::Vec4 => 4,
-        _ => return Err(rejected(kind, "Vec2, Vec3 or Vec4 positions")),
+impl PrimitiveBounds {
+    fn from_positions(positions: Vec<[f32; 4]>) -> Self {
+        let mut bounds = Graphic3dBndBox4f::new();
+        for &[x, y, z, _] in &positions {
+            if ![x, y, z].into_iter().all(f32::is_finite) {
+                return Self::Unchecked(positions);
+            }
+            bounds.add(&Vec4::new(x, y, z, 1.));
+        }
+        Self::Finite(bounds)
+    }
+
+    pub(crate) fn append(self, target: &mut Graphic3dBndBox4f) {
+        match self {
+            Self::Finite(bounds) => target.combine(&bounds),
+            Self::Unchecked(positions) => {
+                // Ignore the homogeneous weight and preserve the native handling of malformed XYZ.
+                for [x, y, z, _] in positions {
+                    target.add(&Vec4::new(x, y, z, 1.));
+                }
+            }
+        }
+    }
+}
+
+fn read_positions(read: &Graphic3dBufferRead<'_>) -> Result<Vec<[f32; 4]>, RenderError> {
+    let count = validated_count(read.element_count())?;
+    let positions = read
+        .attribute(Graphic3dTypeOfAttribute::Pos)
+        .ok_or_else(|| {
+            rejected(
+                "missing position",
+                "a Vec2, Vec3 or Vec4 position attribute",
+            )
+        })?;
+    read_vector_attribute(
+        &positions,
+        count,
+        "Vec2, Vec3 or Vec4 positions",
+        "allocated position bytes",
+        |position| position,
+    )
+}
+
+fn read_normals(read: &Graphic3dBufferRead<'_>) -> Result<Option<Vec<[f32; 3]>>, RenderError> {
+    let Some(normals) = read.attribute(Graphic3dTypeOfAttribute::Norm) else {
+        return Ok(None);
     };
-    // The generated shader multiplies the full occVertex
-    // in Graphic3dShaderManager; dropping a non-unit w changes clip coordinates.
-    let mut position = [0., 0., 0., 1.];
-    for (i, value) in position.iter_mut().enumerate().take(dimensions) {
-        *value = buffer
-            .read_at::<f32>(offset + i * 4)
-            .ok_or_else(|| rejected(offset + i * 4, "allocated position bytes"))?;
-    }
-    Ok(position)
+    let count = validated_count(read.element_count())?;
+    read_vector_attribute(
+        &normals,
+        count,
+        "Vec2, Vec3 or Vec4 positions",
+        "allocated position bytes",
+        |[x, y, z, _]| [x, y, z],
+    )
+    .map(Some)
 }
 
-fn validate_count(count: i32) -> Result<(), RenderError> {
-    if count < 0 {
-        return Err(rejected(count, "a nonnegative buffer element count"));
-    }
-    Ok(())
+fn attribute_stamp(read: &Graphic3dBufferRead<'_>, track: bool) -> Option<AttributeStamp> {
+    track.then(|| AttributeStamp::capture(read)).flatten()
+}
+
+fn geometry_stamp(
+    position: Option<AttributeStamp>,
+    color: Option<AttributeStamp>,
+    indices: Option<Option<IndexStamp>>,
+    bounds: Option<Option<BoundsStamp>>,
+) -> Option<GeometryStamp> {
+    let attributes = position.filter(|source| color.as_ref() == Some(source))?;
+    Some(GeometryStamp {
+        attributes,
+        indices: indices?,
+        bounds: bounds?,
+    })
+}
+
+fn validated_count(count: i32) -> Result<usize, RenderError> {
+    usize::try_from(count).map_err(|_| rejected(count, "a nonnegative buffer element count"))
 }
 
 fn range_vertices(

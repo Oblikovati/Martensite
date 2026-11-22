@@ -9,8 +9,8 @@ fn stateful_source() -> PrimitiveDraw {
         .with_alpha_blending(true);
     let mut source =
         PrimitiveDraw::segments(vertices, vec![2, 3], crate::identity_clip(), style).unwrap();
-    source.quad_corners = vec![[3, 2, 1, 0]];
-    source.native_flat_sources = vec![2, 3, 1];
+    source.quad_corners = vec![[3, 2, 1, 0]].into();
+    source.native_flat_sources = vec![2, 3, 1].into();
     source.polygon_offset = Some(RenderPolygonOffset::new(7, 1.5, -2.).unwrap());
     source.face_culling = RenderFaceCulling::Front;
     source.capping_pass = RenderCappingPass::Surface;
@@ -45,8 +45,9 @@ fn old_prepared_result(source: &PrimitiveDraw, upload: [[f32; 4]; 2]) -> Primiti
     let mut expected = source.clone();
     expected.vertices = upload
         .map(|point| RenderVertex::homogeneous(point, source.vertices[2].color))
-        .to_vec();
-    expected.indices = vec![0, 1];
+        .to_vec()
+        .into();
+    expected.indices = vec![0, 1].into();
     expected.clip_transform = crate::identity_clip();
     expected.projected_dash = Some(PreparedAxis {
         extent: [96, 64],

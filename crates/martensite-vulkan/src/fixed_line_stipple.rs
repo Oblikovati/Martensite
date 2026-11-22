@@ -32,7 +32,7 @@ pub(crate) fn restore_fixed_line_strip(draw: &mut PrimitiveDraw) {
             .iter()
             .map(|segment| segment[1]),
     );
-    draw.indices = strip;
+    draw.indices = strip.into();
 }
 #[cfg(test)]
 mod tests {
@@ -58,6 +58,6 @@ mod tests {
         draw.source_line_strip = true;
         assert_eq!(fixed_line_stipple(&draw), Some((1, 0x00ff)));
         restore_fixed_line_strip(&mut draw);
-        assert_eq!(draw.indices, vec![0, 1, 2]);
+        assert_eq!(draw.indices(), [0, 1, 2]);
     }
 }

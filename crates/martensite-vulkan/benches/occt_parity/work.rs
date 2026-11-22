@@ -8,15 +8,21 @@ use std::time::Duration;
 type WorkColumn = (&'static str, fn(&RenderDeviceWork) -> f64);
 
 /// The columns in printed order; times in milliseconds, bytes in KiB.
-const COLUMNS: [WorkColumn; 16] = [
+const COLUMNS: [WorkColumn; 18] = [
     ("redraws", |work| work.redraws as f64),
     ("buffers", |work| work.buffers_created as f64),
+    ("geometry_buffers", |work| {
+        work.geometry_buffers_created as f64
+    }),
     ("images", |work| work.images_created as f64),
     ("allocations", |work| work.memory_allocations as f64),
     ("pipelines", |work| work.pipelines_created as f64),
     ("sets", |work| work.descriptor_sets_allocated as f64),
     ("submits", |work| work.submissions as f64),
     ("upload_kib", |work| work.uploaded_bytes as f64 / 1024.),
+    ("geometry_upload_kib", |work| {
+        work.geometry_uploaded_bytes as f64 / 1024.
+    }),
     ("readback_kib", |work| work.read_back_bytes as f64 / 1024.),
     ("redraw_ms", |work| ms(work.times.redraw)),
     ("scene_ms", |work| ms(work.times.scene)),

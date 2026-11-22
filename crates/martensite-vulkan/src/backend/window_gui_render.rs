@@ -85,10 +85,16 @@ impl VulkanRenderer {
         vsync: bool,
     ) -> Result<FrameCapture, RenderError> {
         let owned = super::owned_window_submission::OwnedWindowFrame::new(self, frame)?;
-        let (owned, index) = self.prepare_owned_window(frame, owned, operation, vsync)?;
+        let (mut owned, index) = self.prepare_owned_window(frame, owned, operation, vsync)?;
         if let Err(primary) = owned.resources.validate_completion() {
             return Err(owned.reject(self, operation.presenter, primary));
         }
+        let empty_frame = owned.resources.draws.is_empty();
+        owned
+            .resources
+            .geometry_transfers
+            .residency
+            .publish(empty_frame);
         self.commit_fragment_alpha(frame, owned.resources.fragment_alpha.ending);
         self.commit_stencil(frame, owned.resources.stencil.ending);
         let queue = self.runtime.queues[operation.presenter.present_family as usize];

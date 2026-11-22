@@ -203,6 +203,9 @@ mod frame;
 mod frame_draw_presentation;
 #[cfg(feature = "command-state-diagnostics")]
 mod geometry_command_diagnostic;
+mod geometry_residency;
+mod geometry_transfer;
+mod host_upload_pages;
 mod image;
 mod light_dot_renderer;
 mod light_dot_shader;

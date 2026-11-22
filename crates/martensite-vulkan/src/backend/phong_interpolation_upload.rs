@@ -156,7 +156,7 @@ fn admitted_clip(behavior: Behavior, clip: [[f32; 4]; 3], viewport: [f32; 4]) ->
 #[test]
 fn native_grid_coverage_does_not_apply_the_unsnapped_area_domain() {
     let mut draw = tests::phong_triangle_for_coverage();
-    draw.vertices[1] = draw.vertices[0];
+    draw.vertices.make_mut()[1] = draw.vertices[0];
     assert!(admit(Behavior::UnsnappedV2, &draw, [0., 0., 4., 4.]).is_err());
     assert!(
         admit_for_coverage(Behavior::UnsnappedV2, &draw, [0., 0., 4., 4.], false, true).is_ok()

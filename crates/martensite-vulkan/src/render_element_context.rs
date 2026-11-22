@@ -101,6 +101,7 @@ impl RenderElementContext<'_> {
             bounds: bounds.clone(),
             upload: Default::default(),
             uid: 0,
+            retained: None,
         });
     }
     /// Draw a retained submission whose residency slot records the frames that draw it.

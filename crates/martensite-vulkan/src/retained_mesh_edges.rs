@@ -114,7 +114,7 @@ fn polygon_edge_draw(
 ) -> PrimitiveDraw {
     let mut edge = face.clone();
     edge.unlit_back_color = None;
-    for vertex in &mut edge.vertices {
+    for vertex in edge.vertices.make_mut() {
         vertex.color = color;
     }
     edge.mesh_edges = None;
@@ -148,7 +148,7 @@ pub(crate) fn resolve_edge_background(draws: &mut [PrimitiveDraw], clear: [f32; 
         .iter_mut()
         .filter(|draw| draw.edge_background_fallback)
     {
-        for vertex in &mut draw.vertices {
+        for vertex in draw.vertices.make_mut() {
             vertex.color = clear;
         }
         draw.edge_background_fallback = false;

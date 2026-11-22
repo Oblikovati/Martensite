@@ -154,7 +154,9 @@ pub use buffer::{
     Graphic3dBufferState, Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
     graphic3d_buffer_dump_json,
 };
-pub use buffer_members::{Graphic3dBufferMembers, Graphic3dBufferValue};
+pub use buffer_members::{
+    Graphic3dAttributeRead, Graphic3dBufferMembers, Graphic3dBufferRead, Graphic3dBufferValue,
+};
 pub use bvh_cstructure_set::{
     Graphic3dBvhBuilder3d, Graphic3dBvhCStructureSet, Graphic3dBvhCStructureSetTrsfPers,
     Graphic3dCStructureIndexedMap, Graphic3dTrsfPersView,

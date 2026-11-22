@@ -1,7 +1,7 @@
 //! Each bound is a separate native draw, with an optional uniform color fallback.
 use crate::{RenderError, error::rejected};
 use martensite_tkernel::standard::Handle;
-use martensite_tkservice::graphic3d::Graphic3dBoundBuffer;
+use martensite_tkservice::graphic3d::{Graphic3dBoundBuffer, Graphic3dBoundBufferState};
 pub(crate) struct PrimitiveRange {
     pub indices: Vec<u32>,
     pub color: [f32; 4],
@@ -11,13 +11,22 @@ pub(crate) fn primitive_ranges(
     indices: &[u32],
     fallback: [f32; 4],
 ) -> Result<Vec<PrimitiveRange>, RenderError> {
-    let Some(bounds) = bounds.get() else {
+    let bound_state = bounds.get().map(Graphic3dBoundBuffer::state);
+    ranges_for_state(bound_state.as_deref(), indices, fallback)
+}
+
+pub(crate) fn ranges_for_state(
+    bounds: Option<&Graphic3dBoundBufferState>,
+    indices: &[u32],
+    fallback: [f32; 4],
+) -> Result<Vec<PrimitiveRange>, RenderError> {
+    let Some(bounds) = bounds else {
         return Ok(vec![PrimitiveRange {
             indices: indices.to_vec(),
             color: fallback,
         }]);
     };
-    let count = bounds.state().nb_bounds;
+    let count = bounds.nb_bounds;
     if count < 0 {
         return Err(rejected(count, "a nonnegative bound count"));
     }
@@ -31,7 +40,7 @@ pub(crate) fn primitive_ranges(
         .collect()
 }
 fn bound_range(
-    bounds: &Graphic3dBoundBuffer,
+    bounds: &Graphic3dBoundBufferState,
     index: i32,
     offset: usize,
     indices: &[u32],
@@ -53,11 +62,11 @@ fn bound_range(
     })
 }
 fn bound_color(
-    bounds: &Graphic3dBoundBuffer,
+    bounds: &Graphic3dBoundBufferState,
     index: i32,
     fallback: [f32; 4],
 ) -> Result<[f32; 4], RenderError> {
-    if !bounds.state().has_colors {
+    if !bounds.has_colors {
         return Ok(fallback);
     }
     bounds

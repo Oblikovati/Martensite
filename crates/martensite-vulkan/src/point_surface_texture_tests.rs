@@ -26,7 +26,7 @@ fn assert_model(model: Graphic3dTypeOfShadingModel) {
     assert_eq!(draw.point_style.as_ref().unwrap().size, 3.);
     let texture = draw.surface_texture.as_ref().expect("actual mapped image");
     assert_eq!(texture.image.extent, [2, 2]);
-    assert_eq!(texture.uv, [[0.25, 0.25, 0., 1.], [0.75, 0.25, 0., 1.]]);
+    assert_eq!(&*texture.uv, [[0.25, 0.25, 0., 1.], [0.75, 0.25, 0., 1.]]);
     assert!(texture.modulate);
     assert_eq!(
         draw.lighting.is_some(),
@@ -34,7 +34,7 @@ fn assert_model(model: Graphic3dTypeOfShadingModel) {
     );
     if let Some(lighting) = &draw.lighting {
         assert!(lighting.vertex_colors);
-        assert_eq!(lighting.normals, [[0., 0., 1.]; 2]);
+        assert_eq!(lighting.normals(), &[[0., 0., 1.]; 2]);
     }
 }
 #[test]
@@ -47,7 +47,7 @@ fn point_uvs_ignore_texture_matrix_and_both_image_row_flags() {
             .set_scale(martensite_tkernel::ncollection::Vec2::new(3., 4.));
         let draw = fixture.draws().unwrap().remove(0);
         let texture = draw.surface_texture.unwrap();
-        assert_eq!(texture.uv, [[0.25, 0.25, 0., 1.], [0.75, 0.25, 0., 1.]]);
+        assert_eq!(&*texture.uv, [[0.25, 0.25, 0., 1.], [0.75, 0.25, 0., 1.]]);
         assert!(texture.pending_texgen.is_none());
     }
 }
@@ -155,7 +155,7 @@ fn fresh_unavailable_point_base_is_black_before_lighting() {
         let draw = fixture.draws().unwrap().remove(0);
         assert!(draw.surface_texture_unavailable.is_some());
         assert_eq!(draw.vertices.len(), 2);
-        for vertex in &draw.vertices {
+        for vertex in draw.vertices() {
             assert_eq!(vertex.color, [0., 0., 0., 1.]);
         }
     }

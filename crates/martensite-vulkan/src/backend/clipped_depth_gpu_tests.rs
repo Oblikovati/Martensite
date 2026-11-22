@@ -231,7 +231,7 @@ fn certified_reference_empty_triangle_keeps_original_submission_and_neutral_fram
         RenderFrame::new(256, 256, [0., 0., 0., 1.], vec![source_draw(), empty]).unwrap();
     source.raster.requested_samples = 8;
     source.raster.fixed_function = true;
-    assert_eq!(source.draws[1].indices, [0, 1, 2]);
+    assert_eq!(source.draws[1].indices(), [0, 1, 2]);
     assert_eq!(source.layers()[0].draw_range(), 0..2);
     let mut baseline = renderer(Depth::HardwareV1);
     let mut selected = v6_renderer();

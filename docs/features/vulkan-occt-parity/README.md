@@ -190,6 +190,43 @@ instructions, more than three frames: `Graphic3dRenderDriver::remove_structure` 
 `Vec<WeakHandle>` with `retain` for every removal, so closing or reloading a scene is
 quadratic in its structure count.
 
+## Geometry residency measurements
+
+The paired runs used the same AMD Radeon 8060S, OCCT installation, CPUs 8–15 and
+10-frame setting as Phase 0. Scene checksums agreed. All times are milliseconds per
+operation.
+
+| Case | Phase 0 Vulkan | With retained geometry | Paired OCCT |
+| --- | ---: | ---: | ---: |
+| `frame_mesh_1m` | 175 | 1.118 | 0.309 |
+| `frame_segments_1m` | 230 | 1.075 | 0.273 |
+| `frame_points_1m` | 121 | 1.012 | 0.301 |
+| `frame_ais_spheres_400` | 86.6 | 4.158 | 0.228 |
+| `upload_mesh_100k` | 29.7 | 0.861 | 0.490 |
+
+The four orbit cases created zero geometry buffers and uploaded zero geometry bytes in
+their timed frames. The presentation case included its initial upload and then reused
+the same source array across new groups. In an intermediate run, checking the array
+and reading its indices took 90% of sampled user-space CPU cycles. The presentation
+case took 16.9 ms then. It fell to 0.861 ms after index validation began scanning
+the bytes under one read lock and reusing the result for the same revision and extent.
+
+The million-segment scene step fell from 9.51 ms to 0.05 ms after the guard-band
+check began using the retained bounds. The bounds enclose all projected segments
+under the same float operations as the clipping path. When that enclosure cannot
+prove the whole draw stays below the clipping threshold, the renderer checks each
+segment. In the 400-sphere case, sharing descriptor pools reduced the upload step
+from 3.10 ms to 0.57 ms.
+
+Peak process RSS was lower in each paired measurement, with reductions from 0.5%
+to 21%. The million-triangle, line and point frames still spend 0.8–0.9 ms on fence
+waits and readback. Phase 2 addresses that cost. The 400-sphere frame spends 1.89 ms on
+scene extraction, which Phase 3 addresses with retained draw records.
+
+The live-view tests cover static orbiting, sampler and UV edits, and a mutable
+unlit triangle. Editing one vertex in that triangle uploaded 32 bytes. The
+renderer copied the unchanged vertex records on the GPU and reused the index buffer.
+
 ## Harness
 
 `cargo xtask occt-parity --toolkit vulkan --occt <prefix> --cpus 8-15` compares the cases

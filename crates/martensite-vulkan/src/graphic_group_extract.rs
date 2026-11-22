@@ -173,13 +173,18 @@ impl Graphic3dDrawGroup {
     }
     fn lower_ordered_geometry(
         &self,
-        geometry: GroupGeometry,
+        mut geometry: GroupGeometry,
         aspects: &Handle<dyn Graphic3dAspectsSource>,
         flips: &crate::group_flipping::GroupFlipStack,
         policy: &GroupDrawPolicy,
         context: &crate::text_submission::TextSceneContext<'_>,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
         let mut active = *context;
+        if let GroupGeometry::Primitives(primitive) = &mut geometry
+            && primitive.retained.is_none()
+        {
+            primitive.retained = self.primitive_sources.entry(primitive);
+        }
         let source_primitives = matches!(&geometry, GroupGeometry::Primitives(_));
         active.model_override = flips.override_model();
         active.view_override = Some(flips.world_view());

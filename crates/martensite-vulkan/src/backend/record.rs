@@ -22,6 +22,7 @@ pub(super) fn record_frame(
     frame: &RenderFrame,
 ) {
     let _recording = runtime.work.enter(super::WorkPhase::Recording);
+    resources.geometry_transfers.record(runtime, command);
     super::window_depth_status::begin(resources);
     #[cfg(feature = "command-state-diagnostics")]
     {

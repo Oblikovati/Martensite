@@ -1,5 +1,6 @@
 //! Validated primitive submissions keep topology and line state independent of Vulkan.
 use crate::{RenderError, RenderVertex, error::rejected};
+pub(crate) use geometry_stream::DrawStream;
 /// Primitive assembly after Graphic3d lowering; `PrimitiveTopology::Lines`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PrimitiveTopology {
@@ -78,11 +79,13 @@ pub struct PrimitiveDraw {
     #[cfg(feature = "vertex-output-diagnostics")]
     pub(crate) vertex_output_target: Option<std::num::NonZeroU64>,
     pub(crate) projected_dash: Option<crate::projected_segments::PreparedAxis>,
-    pub(crate) vertices: Vec<RenderVertex>,
-    pub(crate) indices: Vec<u32>,
+    pub(crate) vertices: DrawStream<RenderVertex>,
+    pub(crate) indices: DrawStream<u32>,
+    pub(crate) vertex_revision: VertexRevisionHint,
     /// The geometry `line_guard_band` replaced; a driver that clips lines itself draws this.
     pub(crate) guard_band_source: Option<std::sync::Arc<crate::line_guard_band::GuardBandSource>>,
-    pub(crate) quad_corners: Vec<[u32; 4]>,
+    pub(crate) guard_band_bounds: crate::line_guard_band::GuardBandMemo,
+    pub(crate) quad_corners: DrawStream<[u32; 4]>,
     pub(crate) clip_transform: [f32; 16],
     pub(crate) projection_factors: Option<crate::RenderProjectionFactors>,
     /// The factors a fixed-function frame composes as `projection * (view * model)`; a capping
@@ -104,7 +107,7 @@ pub struct PrimitiveDraw {
     pub(crate) source_color_array: bool,
     pub(crate) unlit_back_color: Option<[f32; 4]>,
     pub(crate) source_line_strip: bool,
-    pub(crate) native_flat_sources: Vec<u32>,
+    pub(crate) native_flat_sources: DrawStream<u32>,
     pub(crate) annotation: bool,
     /// The stencil-only label rectangle of dimension text: no colour, no depth test.
     pub(crate) stencil_rect: bool,
@@ -183,10 +186,12 @@ impl PrimitiveDraw {
             #[cfg(feature = "vertex-output-diagnostics")]
             vertex_output_target: None,
             projected_dash: None,
-            vertices,
-            indices,
+            vertices: vertices.into(),
+            indices: indices.into(),
+            vertex_revision: Default::default(),
             guard_band_source: None,
-            quad_corners: Vec::new(),
+            guard_band_bounds: Default::default(),
+            quad_corners: DrawStream::default(),
             clip_transform,
             projection_factors: None,
             fixed_function_factors: None,
@@ -205,7 +210,7 @@ impl PrimitiveDraw {
             source_color_array: false,
             unlit_back_color: None,
             source_line_strip: false,
-            native_flat_sources: Vec::new(),
+            native_flat_sources: DrawStream::default(),
             annotation: false,
             text_shadow_bias: false,
             text_logic_xor: false,
@@ -263,14 +268,21 @@ impl PrimitiveDraw {
         validate_indices(&indices, vertices.len(), line_style.is_some())?;
         crate::scene::validate_components(&vertices, &clip_transform)?;
         let surface_blend = line_style.is_none() && vertices.iter().any(|v| v.color[3] < 1.);
+        let vertices = vertices.into();
+        let indices = indices.into();
+        let guard_band_bounds = line_style.map_or_else(Default::default, |_| {
+            crate::line_guard_band::GuardBandMemo::for_line(&vertices, &indices)
+        });
         Ok(Self {
             #[cfg(feature = "vertex-output-diagnostics")]
             vertex_output_target: None,
             projected_dash: None,
             vertices,
             indices,
+            vertex_revision: Default::default(),
             guard_band_source: None,
-            quad_corners: Vec::new(),
+            guard_band_bounds,
+            quad_corners: DrawStream::default(),
             clip_transform,
             projection_factors: None,
             fixed_function_factors: None,
@@ -289,7 +301,7 @@ impl PrimitiveDraw {
             source_color_array: false,
             unlit_back_color: None,
             source_line_strip: false,
-            native_flat_sources: Vec::new(),
+            native_flat_sources: DrawStream::default(),
             annotation: false,
             text_shadow_bias: false,
             text_logic_xor: false,
@@ -412,4 +424,7 @@ impl PrimitiveDraw {
 }
 
 mod geometry_replacement;
+mod geometry_stream;
 mod pixel_size_dependencies;
+pub(crate) mod vertex_revision;
+use vertex_revision::VertexRevisionHint;

@@ -1,12 +1,14 @@
 //! Draw upload stages preserve the original fallible allocation and cleanup sequence.
 use super::super::surface_image_descriptor::SurfaceImageBinding;
 use super::super::{
-    buffer::DeviceBuffer, pipeline::DrawPipeline, pipeline_variants::RasterPipelines,
-    runtime::VulkanRuntime, transform_constants::encode_transform,
+    geometry_residency::ResidentGeometry, geometry_transfer::GeometryTransfers,
+    pipeline::DrawPipeline, pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
+    transform_constants::encode_transform,
 };
 use super::super::{retained_submission::RetirementStore, storage_descriptor::UploadedStorage};
 use super::{
-    DrawBindings, DrawLine, DrawPresentation, UploadedDraw, encode_vertex_sources, upload_bytes,
+    DrawBindings, DrawLine, DrawPresentation, FrameDrawUploads, UploadedDraw, encode_vertex_patch,
+    encode_vertex_sources, encode_vertices, geometry_key,
 };
 use crate::{PrimitiveDraw, RenderError, error::rejected};
 use ash::vk;
@@ -22,19 +24,21 @@ struct DrawUploadContext<'a> {
     retirements: &'a RetirementStore,
 }
 // Fields follow reverse preparation order, so later-stage errors retain the original cleanup.
-struct EncodedGeometry<'a> {
+struct EncodedGeometry {
     indices: Vec<u8>,
-    _expanded: Option<Vec<u32>>,
     vertices: Vec<u8>,
-    _sources: Vec<(usize, usize)>,
-    _original_indices: std::borrow::Cow<'a, [u32]>,
+    #[cfg(feature = "command-state-diagnostics")]
+    source_count: usize,
 }
-struct PreparedGeometry<'a> {
+struct PreparedGeometry {
     pipeline: Arc<DrawPipeline>,
-    indices: DeviceBuffer,
-    vertices: DeviceBuffer,
+    resident: ResidentGeometry,
     count: u32,
-    _encoding: EncodedGeometry<'a>,
+    #[cfg(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    ))]
+    encoding: EncodedGeometry,
 }
 struct PreparedBindings {
     lighting: Option<UploadedStorage>,
@@ -46,7 +50,7 @@ struct PreparedBindings {
     material_maps: Option<Arc<super::super::material_map_descriptor::MaterialMapBinding>>,
     shadow_maps: Option<Arc<super::super::shadow_maps::ShadowMapSet>>,
 }
-/// Upload one ordered draw; `upload_draw(runtime, draw, pipelines, extent, retirements)` preserves failed owners.
+/// Prepare one ordered draw and queue its vertex and index uploads with the frame.
 pub(super) fn upload_draw(
     runtime: &Arc<VulkanRuntime>,
     draw: &PrimitiveDraw,
@@ -54,6 +58,7 @@ pub(super) fn upload_draw(
     extent: vk::Extent2D,
     samples: vk::SampleCountFlags,
     retirements: &RetirementStore,
+    uploads: &mut FrameDrawUploads<'_>,
 ) -> Result<UploadedDraw, RenderError> {
     super::super::factorized_projection::admit(runtime.projection_behavior, draw)?;
     let window_depth = super::super::window_depth_upload::prepare(runtime, draw, extent, samples)?;
@@ -121,7 +126,10 @@ pub(super) fn upload_draw(
     let wide = wide_line_replay(runtime, draw, extent);
     // Emulated wide lines upload their segments reordered by major axis.
     let reordered = wide.as_ref().map(|replay| {
-        draw.with_replacement_geometry(replay.vertices.clone(), replay.indices.clone())
+        draw.with_replacement_geometry(
+            replay.vertices.clone().into(),
+            replay.indices.clone().into(),
+        )
     });
     let context = DrawUploadContext {
         runtime,
@@ -133,17 +141,20 @@ pub(super) fn upload_draw(
         window_depth,
         retirements,
     };
-    context.upload_prepared()
+    context.upload_prepared(uploads)
 }
 impl<'a> DrawUploadContext<'a> {
-    fn upload_prepared(&self) -> Result<UploadedDraw, RenderError> {
+    fn upload_prepared(
+        &self,
+        uploads: &mut FrameDrawUploads<'_>,
+    ) -> Result<UploadedDraw, RenderError> {
         super::super::window_depth_upload::require_physical_source(
             self.window_depth,
             self.semantic_draw,
             self.draw,
         )?;
         self.validate_styles()?;
-        let geometry = self.upload_geometry()?;
+        let geometry = self.upload_geometry(&mut uploads.geometry)?;
         super::super::factorized_projection::admit_pipeline(
             self.runtime.projection_behavior,
             self.semantic_draw,
@@ -152,10 +163,10 @@ impl<'a> DrawUploadContext<'a> {
         #[cfg(feature = "vertex-output-diagnostics")]
         if let Some(request) = &self.runtime.vertex_output {
             if self.draw.vertex_output_target == request.source_token {
-                request.require_actual_indices(&geometry._encoding.indices)?;
+                request.require_actual_indices(&geometry.encoding.indices)?;
             }
         }
-        let bindings = self.upload_bindings(&geometry.pipeline)?;
+        let bindings = self.upload_bindings(&geometry.pipeline, &mut uploads.storage)?;
         let user_program = self.upload_user_program(&geometry.pipeline)?;
         let mut uploaded = self.assemble(geometry, bindings);
         uploaded.window_depth_status =
@@ -218,17 +229,14 @@ impl<'a> DrawUploadContext<'a> {
             self.extent,
         )
     }
-    fn encoded_geometry(&self) -> EncodedGeometry<'a> {
-        geometry_encoding::encoded_geometry(self.runtime, self.draw)
-    }
-
-    fn upload_geometry(&self) -> Result<PreparedGeometry<'a>, RenderError> {
+    fn upload_geometry(
+        &self,
+        geometry_transfers: &mut GeometryTransfers,
+    ) -> Result<PreparedGeometry, RenderError> {
         let runtime = self.runtime;
         let draw = self.draw;
         let pipelines = self.pipelines;
-        let encoding = self.encoded_geometry();
-        let vertex_buffer = encoding.upload_vertices(runtime)?;
-        let index_buffer = encoding.upload_indices(runtime)?;
+        let (resident, _encoding) = self.prepare_resident_geometry(geometry_transfers)?;
         let count = u32::try_from(draw.indices.len())
             .map_err(|_| rejected(draw.indices.len(), "a 32-bit index count"))?;
         let factorized = super::super::factorized_projection::enabled(
@@ -249,250 +257,71 @@ impl<'a> DrawUploadContext<'a> {
         )?;
         Ok(PreparedGeometry {
             pipeline,
-            indices: index_buffer,
-            vertices: vertex_buffer,
+            resident,
             count: if draw.fixed_grid_point { 6 } else { count },
-            _encoding: encoding,
+            #[cfg(any(
+                feature = "command-state-diagnostics",
+                feature = "vertex-output-diagnostics"
+            ))]
+            encoding: _encoding
+                .ok_or_else(|| rejected("resident geometry", "encoded diagnostic bytes"))?,
         })
     }
-    fn upload_bindings(&self, pipeline: &DrawPipeline) -> Result<PreparedBindings, RenderError> {
-        let sprite = self.upload_sprite(pipeline)?;
-        self.prepare_surface_cache()?;
-        let surface_image = self.upload_surface(pipeline)?;
-        let clipping = self.upload_clipping(pipeline)?;
-        let lighting = self.upload_lighting(pipeline)?;
-        let sphere_map = self.upload_sphere_map(pipeline)?;
-        let pbr_environment = pipeline
-            .kind
-            .pbr
-            .then(|| self.pipelines.pbr_environment(self.runtime))
-            .transpose()?;
-        let material_maps = self.upload_material_maps(pipeline)?;
-        let shadow_maps = pipeline
-            .shadow_layout
-            .is_some()
-            .then(|| self.pipelines.shadow_maps(self.runtime))
-            .transpose()?;
-        Ok(PreparedBindings {
-            shadow_maps,
-            lighting,
-            sphere_map,
-            clipping,
-            surface_image,
-            sprite,
-            pbr_environment,
-            material_maps,
-        })
-    }
-    fn upload_sprite(
+    fn prepare_resident_geometry(
         &self,
-        pipeline: &DrawPipeline,
-    ) -> Result<Option<UploadedStorage>, RenderError> {
-        let draw = self.draw;
-        if pipeline.sprite_layout.is_none() {
-            return Ok(None);
+        transfers: &mut GeometryTransfers,
+    ) -> Result<(ResidentGeometry, Option<EncodedGeometry>), RenderError> {
+        let key = geometry_key(self.draw);
+        if let Some(resident) = key.and_then(|key| transfers.residency.find(key)) {
+            return Ok((resident, None));
         }
-        let image = draw.point_style.as_ref().map(|s| &s.image);
-        image
-            .map(|image| self.selected_sprite(pipeline, image))
-            .transpose()
-    }
-    fn selected_sprite(
-        &self,
-        pipeline: &DrawPipeline,
-        image: &crate::RasterImage,
-    ) -> Result<UploadedStorage, RenderError> {
-        let layout = pipeline
-            .sprite_layout
-            .as_ref()
-            .expect("sprite pipeline layout");
-        super::super::point_sprite::upload_sprite(
-            self.runtime,
-            layout,
-            image,
-            self.draw.point_style.is_some(),
-        )
-    }
-
-    fn prepare_surface_cache(&self) -> Result<(), RenderError> {
-        let draw = self.draw;
-        if let Some(unavailable) = &draw.surface_texture_unavailable {
-            self.pipelines
-                .surface_images
-                .forget(&unavailable.resource_id)?;
-        }
-        if draw.surface_texture_binding_only
-            && let Some(style) = &draw.surface_texture
+        if let Some(key) = key
+            && let Some(resident) = self.patch_resident_geometry(transfers, key)?
         {
-            self.touch_surface(style)?;
+            transfers.residency.queue(key, self.draw, resident.clone());
+            return Ok((resident, None));
         }
-        Ok(())
-    }
-    fn touch_surface(
-        &self,
-        style: &crate::surface_texture::SurfaceTextureStyle,
-    ) -> Result<(), RenderError> {
-        self.pipelines.surface_images.touch(
-            self.runtime,
-            &style.image,
-            crate::fixed_surface_environment::uses_fixed_surface_environment(self.draw),
-            self.retirements,
-        )
-    }
-    fn upload_surface(
-        &self,
-        pipeline: &DrawPipeline,
-    ) -> Result<Option<Arc<SurfaceImageBinding>>, RenderError> {
-        if let Some(style) = &self.draw.textured_style {
-            return self.glyph_atlas(pipeline, &style.image).map(Some);
+        let encoding = geometry_encoding::encoded_geometry(self.runtime, self.draw);
+        let resident =
+            encoding.queue_transfers(self.runtime, &self.pipelines.geometry_staging, transfers)?;
+        if let Some(key) = key {
+            transfers.residency.queue(key, self.draw, resident.clone());
         }
-        self.draw
-            .surface_texture
-            .as_ref()
-            .filter(|_| !self.draw.surface_texture_binding_only)
-            .map(|style| self.selected_surface(pipeline, style))
-            .transpose()
-    }
-    fn glyph_atlas(
-        &self,
-        pipeline: &DrawPipeline,
-        atlas: &crate::RasterImage,
-    ) -> Result<Arc<SurfaceImageBinding>, RenderError> {
-        let layout = pipeline
-            .surface_layout
-            .as_ref()
-            .expect("glyph atlas image layout");
-        super::super::glyph_atlas_image::upload_glyph_atlas(
-            self.runtime,
-            layout,
-            atlas,
-            self.retirements,
-        )
+        Ok((resident, Some(encoding)))
     }
 
-    fn selected_surface(
+    fn patch_resident_geometry(
         &self,
-        pipeline: &DrawPipeline,
-        style: &crate::surface_texture::SurfaceTextureStyle,
-    ) -> Result<Arc<SurfaceImageBinding>, RenderError> {
-        let layout = pipeline
-            .surface_layout
-            .as_ref()
-            .expect("surface image layout");
-        self.pipelines.surface_images.binding(
-            self.runtime,
-            layout,
-            style,
-            crate::fixed_surface_environment::uses_fixed_surface_environment(self.draw),
-            self.retirements,
-        )
-    }
-    fn upload_material_maps(
-        &self,
-        pipeline: &DrawPipeline,
-    ) -> Result<Option<Arc<super::super::material_map_descriptor::MaterialMapBinding>>, RenderError>
-    {
-        let (Some(layout), Some(image_layout)) =
-            (&pipeline.material_map_layout, &pipeline.surface_layout)
-        else {
+        transfers: &mut GeometryTransfers,
+        key: super::super::geometry_residency::GeometryKey,
+    ) -> Result<Option<ResidentGeometry>, RenderError> {
+        let Some(revision) = self.draw.vertex_revision() else {
             return Ok(None);
         };
-        let style = self.draw.surface_texture.as_ref();
-        let Some(maps) = style.and_then(|style| style.material_maps.as_ref()) else {
+        let previous = key
+            .previous_vertices(revision.previous_identity())
+            .and_then(|key| transfers.residency.find_completed(key));
+        let Some(previous) = previous else {
             return Ok(None);
         };
-        let pipelines = self.pipelines;
-        let mocks = pipelines.material_map_mocks(self.runtime, image_layout, self.retirements)?;
-        let request = super::super::material_map_descriptor::MaterialMapRequest {
-            runtime: self.runtime,
-            layout,
-            image_layout,
-            cache: &pipelines.surface_images,
-            mocks: &mocks,
-            retirements: self.retirements,
-        };
-        request.bind(maps).map(Some)
-    }
-    fn upload_clipping(
-        &self,
-        pipeline: &DrawPipeline,
-    ) -> Result<Option<UploadedStorage>, RenderError> {
-        let bytes = if pipeline.kind.world_clip_v2 || pipeline.kind.world_clip_v3_line {
-            crate::retained_hatch::raster_world_clip_fragment_mask_bytes(
-                self.draw,
-                self.extent.height,
-            )
-        } else {
-            crate::retained_hatch::fragment_mask_bytes(self.draw, self.extent.height)
-        };
-        bytes
-            .as_ref()
-            .map(|bytes| {
-                let layout = pipeline
-                    .clipping_layout
-                    .as_ref()
-                    .expect("clipping pipeline layout");
-                UploadedStorage::new(self.runtime, layout, bytes)
-            })
-            .transpose()
-    }
-
-    fn upload_lighting(
-        &self,
-        pipeline: &DrawPipeline,
-    ) -> Result<Option<UploadedStorage>, RenderError> {
-        self.draw
-            .lighting
-            .as_ref()
-            .map(|lighting| {
-                let layout = pipeline
-                    .lighting_layout
-                    .as_ref()
-                    .expect("lighting pipeline layout");
-                UploadedStorage::new(self.runtime, layout, &lighting.encode())
-            })
-            .transpose()
-    }
-
-    fn upload_sphere_map(
-        &self,
-        pipeline: &DrawPipeline,
-    ) -> Result<Option<UploadedStorage>, RenderError> {
-        let Some(layout) = &pipeline.sphere_layout else {
-            return Ok(None);
-        };
-        let style = self.draw.surface_texture.as_ref();
-        let transform = style
-            .and_then(|style| style.sphere_map.as_ref())
-            .ok_or_else(|| rejected("no sphere map", "an environment-mapped draw"))?;
-        UploadedStorage::new(self.runtime, layout, &transform.encode()).map(Some)
-    }
-    /// The draw's registered user program with the selected variant's fixed state.
-    fn upload_user_program(
-        &self,
-        pipeline: &Arc<DrawPipeline>,
-    ) -> Result<Option<super::super::user_program_draw::UploadedUserProgram>, RenderError> {
-        let Some(program) = &self.draw.user_program else {
-            return Ok(None);
-        };
-        let variant = Arc::as_ptr(pipeline) as usize;
-        let fixed =
-            super::super::user_program_pipeline::UserPipelineState::single(pipeline.kind, variant);
-        let linked =
-            self.pipelines
-                .user_programs
-                .pipeline(self.runtime, &program.modules, fixed)?;
-        let textures =
-            self.pipelines
-                .user_program_textures(self.runtime, self.draw, self.retirements)?;
-        super::super::user_program_draw::UploadedUserProgram::new(
-            self.runtime,
-            (linked, fixed),
+        let Some((offset, bytes)) = encode_vertex_patch(
             self.draw,
-            program,
-            textures,
-        )
-        .map(Some)
+            revision.dirty_vertices(),
+            previous.vertices.size(),
+        ) else {
+            return Ok(None);
+        };
+        let vertices = transfers.patch_vertices(
+            self.runtime,
+            &self.pipelines.geometry_staging,
+            previous.vertices,
+            offset,
+            &bytes,
+        )?;
+        Ok(Some(ResidentGeometry {
+            vertices,
+            indices: previous.indices,
+        }))
     }
     fn sample_cutoff(&self) -> bool {
         let draw = self.draw;
@@ -546,6 +375,9 @@ mod geometry_encoding;
 
 #[path = "frame_upload_assembly.rs"]
 mod draw_assembly;
+
+#[path = "frame_upload_bindings.rs"]
+mod bindings;
 
 #[path = "frame_upload_bindings_result.rs"]
 mod bindings_result;

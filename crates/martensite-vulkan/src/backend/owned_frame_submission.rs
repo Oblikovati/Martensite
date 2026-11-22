@@ -23,7 +23,7 @@ impl VulkanRenderer {
     pub(super) fn settle_owned_frame(
         &self,
         commands: CommandSubmission,
-        resources: FrameResources,
+        mut resources: FrameResources,
         outcome: Result<(), RenderError>,
     ) -> Result<FrameResources, RenderError> {
         if let Err(primary) = outcome {
@@ -32,6 +32,10 @@ impl VulkanRenderer {
             }
             return Err(primary);
         }
+        resources
+            .geometry_transfers
+            .residency
+            .publish(resources.draws.is_empty());
         Ok(resources)
     }
 }

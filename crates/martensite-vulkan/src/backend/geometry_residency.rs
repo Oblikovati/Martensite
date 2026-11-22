@@ -1,0 +1,370 @@
+//! Resident streams become visible only after their frame's transfer completes.
+use super::buffer::DeviceBuffer;
+use super::runtime::VulkanRuntime;
+use crate::{PrimitiveDraw, RenderVertex};
+use ash::vk;
+use std::collections::{HashMap, VecDeque, hash_map::Entry};
+use std::num::NonZeroUsize;
+use std::sync::{Arc, Mutex, Weak};
+
+#[derive(Clone)]
+pub(super) struct ResidentGeometry {
+    pub vertices: Arc<DeviceBuffer>,
+    pub indices: Arc<DeviceBuffer>,
+}
+
+impl ResidentGeometry {
+    fn bytes(&self) -> u64 {
+        self.vertices
+            .allocation_size()
+            .saturating_add(self.indices.allocation_size())
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub(super) struct GeometryKey {
+    streams: [Option<NonZeroUsize>; 7],
+    encoding: GeometryEncoding,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub(super) struct GeometryEncoding {
+    pub(super) surface_coordinates: Option<[u32; 4]>,
+    pub(super) surface_uv: bool,
+    pub(super) sphere_normals: bool,
+    pub(super) topology: u8,
+    pub(super) has_lighting: bool,
+    pub(super) fixed_lighting: bool,
+    pub(super) provoking_vertices: bool,
+    pub(super) fixed_grid_points: bool,
+    pub(super) xor_color: bool,
+}
+
+impl GeometryKey {
+    pub(super) fn new(draw: &PrimitiveDraw, encoding: GeometryEncoding) -> Self {
+        let normals = draw
+            .lighting
+            .as_ref()
+            .and_then(|lighting| lighting.normals.identity());
+        let uv = surface_uv(draw, encoding.surface_uv)
+            .and_then(crate::surface_texture::SurfaceUvStream::identity);
+        let sphere = sphere_normals(draw, encoding.sphere_normals)
+            .and_then(crate::draw::DrawStream::identity);
+        Self {
+            streams: [
+                draw.vertices.identity(),
+                draw.indices.identity(),
+                draw.quad_corners.identity(),
+                draw.native_flat_sources.identity(),
+                normals,
+                uv,
+                sphere,
+            ],
+            encoding,
+        }
+    }
+
+    pub(super) fn previous_vertices(mut self, identity: NonZeroUsize) -> Option<Self> {
+        if self.encoding.has_lighting
+            || self.encoding.fixed_grid_points
+            || self.encoding.surface_uv
+            || self.encoding.sphere_normals
+        {
+            return None;
+        }
+        self.streams[0] = Some(identity);
+        Some(self)
+    }
+}
+
+struct GeometryLease {
+    geometry: ResidentGeometry,
+    vertices: Option<Weak<Vec<RenderVertex>>>,
+    indices: Option<Weak<Vec<u32>>>,
+    quad_corners: Option<Weak<Vec<[u32; 4]>>>,
+    flat_sources: Option<Weak<Vec<u32>>>,
+    normals: Option<Weak<Vec<[f32; 3]>>>,
+    uv: Option<Weak<Vec<[f32; 4]>>>,
+    sphere: Option<Weak<Vec<[f32; 3]>>>,
+}
+
+impl GeometryLease {
+    fn new(draw: &PrimitiveDraw, geometry: ResidentGeometry, key: GeometryKey) -> Self {
+        Self {
+            geometry,
+            vertices: draw.vertices.witness(),
+            indices: draw.indices.witness(),
+            quad_corners: draw.quad_corners.witness(),
+            flat_sources: draw.native_flat_sources.witness(),
+            normals: draw
+                .lighting
+                .as_ref()
+                .and_then(|lighting| lighting.normals.witness()),
+            uv: surface_uv(draw, key.encoding.surface_uv)
+                .and_then(crate::surface_texture::SurfaceUvStream::witness),
+            sphere: sphere_normals(draw, key.encoding.sphere_normals)
+                .and_then(crate::draw::DrawStream::witness),
+        }
+    }
+
+    fn is_live(&self) -> bool {
+        is_live(&self.vertices)
+            && is_live(&self.indices)
+            && is_live(&self.quad_corners)
+            && is_live(&self.flat_sources)
+            && is_live(&self.normals)
+            && is_live(&self.uv)
+            && is_live(&self.sphere)
+    }
+}
+
+fn surface_uv(
+    draw: &PrimitiveDraw,
+    used: bool,
+) -> Option<&crate::surface_texture::SurfaceUvStream> {
+    draw.surface_texture
+        .as_ref()
+        .filter(|_| used)
+        .map(|style| &style.uv)
+}
+
+fn sphere_normals(draw: &PrimitiveDraw, used: bool) -> Option<&crate::draw::DrawStream<[f32; 3]>> {
+    draw.surface_texture
+        .as_ref()
+        .filter(|_| used)
+        .and_then(|style| style.sphere_map.as_ref())
+        .map(|sphere| &sphere.normals)
+}
+
+fn is_live<T>(stream: &Option<Weak<Vec<T>>>) -> bool {
+    stream
+        .as_ref()
+        .is_none_or(|witness| witness.strong_count() != 0)
+}
+
+pub(super) struct GeometryStore {
+    retained: Mutex<RetainedGeometry>,
+    byte_limit: u64,
+}
+
+const RETIREMENT_CHECKS_PER_FRAME: usize = 512;
+const MAX_RESIDENT_ENTRIES: usize = 131_072;
+const MAX_RESIDENT_BYTES: u64 = 2 << 30;
+
+#[derive(Default)]
+struct RetainedGeometry {
+    entries: HashMap<GeometryKey, GeometryLease>,
+    check_order: VecDeque<GeometryKey>,
+    bytes: u64,
+}
+
+impl RetainedGeometry {
+    fn retire_expired(&mut self, budget: usize) {
+        for _ in 0..budget.min(self.check_order.len()) {
+            let Some(key) = self.check_order.pop_front() else {
+                break;
+            };
+            let Entry::Occupied(entry) = self.entries.entry(key) else {
+                continue;
+            };
+            if entry.get().is_live() {
+                self.check_order.push_back(key);
+            } else {
+                self.bytes -= entry.remove().geometry.bytes();
+            }
+        }
+    }
+
+    fn insert(&mut self, key: GeometryKey, lease: GeometryLease, byte_limit: u64) {
+        let bytes = lease.geometry.bytes();
+        if bytes > byte_limit || self.entries.contains_key(&key) {
+            return;
+        }
+        self.make_room(byte_limit - bytes);
+        self.bytes += bytes;
+        self.entries.insert(key, lease);
+        self.check_order.push_back(key);
+    }
+
+    fn make_room(&mut self, available_bytes: u64) {
+        while self.bytes > available_bytes || self.entries.len() >= MAX_RESIDENT_ENTRIES {
+            let Some(oldest) = self.check_order.pop_front() else {
+                break;
+            };
+            if let Some(lease) = self.entries.remove(&oldest) {
+                self.bytes -= lease.geometry.bytes();
+            }
+        }
+    }
+}
+
+impl GeometryStore {
+    pub(super) fn new(runtime: &VulkanRuntime) -> Self {
+        let heaps = &runtime.memory.memory_heaps[..runtime.memory.memory_heap_count as usize];
+        let local_bytes = heaps
+            .iter()
+            .filter(|heap| heap.flags.contains(vk::MemoryHeapFlags::DEVICE_LOCAL))
+            .map(|heap| heap.size)
+            .max()
+            .unwrap_or_default();
+        Self {
+            retained: Mutex::default(),
+            byte_limit: (local_bytes / 4).min(MAX_RESIDENT_BYTES),
+        }
+    }
+
+    fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
+        let retained = self
+            .retained
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        retained
+            .entries
+            .get(&key)
+            .map(|lease| lease.geometry.clone())
+    }
+
+    fn publish(&self, pending: &mut PendingGeometry, empty_frame: bool) {
+        let mut retained = self
+            .retained
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let budget = if empty_frame {
+            retained.entries.len()
+        } else {
+            RETIREMENT_CHECKS_PER_FRAME.max(pending.order.len().saturating_mul(2))
+        };
+        retained.retire_expired(budget);
+        for key in pending.order.drain(..) {
+            if let Some(lease) = pending.leases.remove(&key).filter(GeometryLease::is_live) {
+                retained.insert(key, lease, self.byte_limit);
+            }
+        }
+    }
+}
+
+pub(super) struct FrameGeometryResidency {
+    store: Arc<GeometryStore>,
+    pending: PendingGeometry,
+}
+
+#[derive(Default)]
+struct PendingGeometry {
+    leases: HashMap<GeometryKey, GeometryLease>,
+    order: Vec<GeometryKey>,
+}
+
+impl FrameGeometryResidency {
+    pub(super) fn new(store: &Arc<GeometryStore>) -> Self {
+        Self {
+            store: Arc::clone(store),
+            pending: PendingGeometry::default(),
+        }
+    }
+
+    pub(super) fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
+        if let Some(lease) = self.pending.leases.get(&key) {
+            return Some(lease.geometry.clone());
+        }
+        self.store.find(key)
+    }
+
+    pub(super) fn find_completed(&self, key: GeometryKey) -> Option<ResidentGeometry> {
+        self.store.find(key)
+    }
+
+    pub(super) fn queue(
+        &mut self,
+        key: GeometryKey,
+        draw: &PrimitiveDraw,
+        geometry: ResidentGeometry,
+    ) {
+        if self
+            .pending
+            .leases
+            .insert(key, GeometryLease::new(draw, geometry, key))
+            .is_none()
+        {
+            self.pending.order.push(key);
+        }
+    }
+
+    pub(super) fn publish(&mut self, empty_frame: bool) {
+        self.store.publish(&mut self.pending, empty_frame);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        DeviceBuffer, GeometryEncoding, GeometryKey, GeometryLease, ResidentGeometry,
+        RetainedGeometry,
+    };
+    use crate::{PrimitiveDraw, RenderVertex};
+    use ash::vk;
+
+    #[test]
+    fn device_cache_budget_evicts_a_live_key_without_releasing_its_draw_owner() {
+        let renderer = crate::backend::resource_lifecycle_test_support::create_resource_renderer();
+        let first = test_draw();
+        let second = test_draw();
+        let (first_key, second_key) = (test_key(&first), test_key(&second));
+        let retained_draw = test_geometry(&renderer.runtime);
+        let budget = retained_draw.bytes();
+        let mut cache = RetainedGeometry::default();
+        cache.insert(
+            first_key,
+            GeometryLease::new(&first, retained_draw.clone(), first_key),
+            budget,
+        );
+        assert_eq!(Arc::strong_count(&retained_draw.vertices), 2);
+        cache.insert(
+            second_key,
+            GeometryLease::new(&second, test_geometry(&renderer.runtime), second_key),
+            budget,
+        );
+        assert!(!cache.entries.contains_key(&first_key));
+        assert!(cache.entries.contains_key(&second_key));
+        assert_eq!(cache.bytes, budget);
+        assert_eq!(Arc::strong_count(&retained_draw.vertices), 1);
+    }
+
+    use std::sync::Arc;
+
+    fn test_draw() -> PrimitiveDraw {
+        PrimitiveDraw::new(
+            vec![RenderVertex::new([0.; 3], [1.; 4]); 3],
+            vec![0, 1, 2],
+            crate::identity_clip(),
+        )
+        .unwrap()
+    }
+
+    fn test_key(draw: &PrimitiveDraw) -> GeometryKey {
+        GeometryKey::new(
+            draw,
+            GeometryEncoding {
+                surface_coordinates: None,
+                surface_uv: false,
+                sphere_normals: false,
+                topology: 0,
+                has_lighting: false,
+                fixed_lighting: false,
+                provoking_vertices: false,
+                fixed_grid_points: false,
+                xor_color: false,
+            },
+        )
+    }
+
+    fn test_geometry(runtime: &Arc<crate::backend::runtime::VulkanRuntime>) -> ResidentGeometry {
+        let vertices =
+            DeviceBuffer::device_local(runtime, 96, vk::BufferUsageFlags::VERTEX_BUFFER).unwrap();
+        let indices =
+            DeviceBuffer::device_local(runtime, 12, vk::BufferUsageFlags::INDEX_BUFFER).unwrap();
+        ResidentGeometry {
+            vertices: Arc::new(vertices),
+            indices: Arc::new(indices),
+        }
+    }
+}

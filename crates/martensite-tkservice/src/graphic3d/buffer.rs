@@ -105,7 +105,7 @@ impl Graphic3dBufferBase {
     /// refuses with `Standard_ProgramError`. Example:
     /// `Graphic3dBufferBase::new(Graphic3dBufferBase::default_allocator())?`.
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
-        let data = Buffer::new(Some(allocator), 0)?;
+        let data = Buffer::new_versioned(Some(allocator), 0)?;
         let state = Graphic3dBufferState {
             data,
             stride: 0,

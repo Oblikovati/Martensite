@@ -33,7 +33,7 @@ fn palette_draw(model: Model, size: f32) -> PrimitiveDraw {
 }
 fn place_palette_points(draw: &mut PrimitiveDraw) {
     draw.clip_transform = identity_clip();
-    for (vertex, x) in draw.vertices.iter_mut().zip([16.5_f32, 48.5]) {
+    for (vertex, x) in draw.vertices.make_mut().iter_mut().zip([16.5_f32, 48.5]) {
         vertex.position = [x / 32. - 1., 1. - 32.5 / 32., 0.5];
     }
 }

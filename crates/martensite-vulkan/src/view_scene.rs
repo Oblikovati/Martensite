@@ -14,6 +14,7 @@ pub(crate) fn frame_for_view(
 ) -> Result<RenderFrame, RenderError> {
     validate_view(view)?;
     crate::retained_texture_images::prune_view_texture_snapshots(view)?;
+    crate::primitive_cache::RetainedPrimitives::prune_for_view(view);
     let camera = crate::view_render_camera::owned_render_camera(view);
     // GlView::render ray-traces at the viewport size when the scene has ray-traced data.
     crate::raytrace::admit_view_adaptive_sampling(view, extras.limits);

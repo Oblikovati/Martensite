@@ -1,5 +1,7 @@
 //! Native Phong-family shading state is immutable and independent of Vulkan handles.
-use crate::{PrimitiveDraw, RenderError, RenderLightSet, RenderMaterial, error::rejected};
+use crate::{
+    PrimitiveDraw, RenderError, RenderLightSet, RenderMaterial, draw::DrawStream, error::rejected,
+};
 use martensite_tkernel::ncollection::{Mat4, Vec4};
 /// Legacy surface algorithms; `RenderShading::Phong` interpolates normals per fragment.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -15,7 +17,7 @@ pub enum RenderShading {
 /// One snapshot of geometry normals, transforms, materials and lights; `draw.with_lighting(state)?`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RenderLighting {
-    pub(crate) normals: Vec<[f32; 3]>,
+    pub(crate) normals: DrawStream<[f32; 3]>,
     pub(crate) material: RenderMaterial,
     pub(crate) world: [f32; 16],
     pub(crate) view: [f32; 16],
@@ -44,7 +46,7 @@ impl RenderLighting {
         let normal = inverse_normal_transform(world)?;
         let eye = lighting_eye(view, perspective)?;
         Ok(Self {
-            normals,
+            normals: normals.into(),
             material,
             world,
             view,

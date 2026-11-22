@@ -15,6 +15,8 @@ pub struct RenderDeviceWork {
     pub redraws: u64,
     /// Device buffers created (`vkCreateBuffer`).
     pub buffers_created: u64,
+    /// Device-local vertex and index buffers created for raster draws.
+    pub geometry_buffers_created: u64,
     /// Device images created and bound to memory.
     pub images_created: u64,
     /// Device memory objects allocated (`vkAllocateMemory`): shared blocks and dedicated ones.
@@ -27,6 +29,8 @@ pub struct RenderDeviceWork {
     pub submissions: u64,
     /// Bytes the host wrote into device buffers: geometry, uniforms and staging copies.
     pub uploaded_bytes: u64,
+    /// Encoded vertex and index bytes queued for a raster geometry transfer.
+    pub geometry_uploaded_bytes: u64,
     /// Bytes the host read back from device buffers.
     pub read_back_bytes: u64,
     /// CPU time per redraw phase.
@@ -62,6 +66,9 @@ impl RenderDeviceWork {
         Self {
             redraws: self.redraws.saturating_sub(earlier.redraws),
             buffers_created: self.buffers_created.saturating_sub(earlier.buffers_created),
+            geometry_buffers_created: self
+                .geometry_buffers_created
+                .saturating_sub(earlier.geometry_buffers_created),
             images_created: self.images_created.saturating_sub(earlier.images_created),
             memory_allocations: self
                 .memory_allocations
@@ -73,6 +80,9 @@ impl RenderDeviceWork {
                 .saturating_sub(earlier.descriptor_sets_allocated),
             submissions: self.submissions.saturating_sub(earlier.submissions),
             uploaded_bytes: self.uploaded_bytes.saturating_sub(earlier.uploaded_bytes),
+            geometry_uploaded_bytes: self
+                .geometry_uploaded_bytes
+                .saturating_sub(earlier.geometry_uploaded_bytes),
             read_back_bytes: self.read_back_bytes.saturating_sub(earlier.read_back_bytes),
             times: self.times.since(&earlier.times),
         }

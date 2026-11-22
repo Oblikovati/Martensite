@@ -15,15 +15,17 @@ use std::time::{Duration, Instant};
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum DeviceCount {
     Buffers,
+    GeometryBuffers,
     Images,
     MemoryAllocations,
     Pipelines,
     DescriptorSets,
     Submissions,
     UploadedBytes,
+    GeometryUploadedBytes,
     ReadBackBytes,
 }
-const COUNTS: usize = 8;
+const COUNTS: usize = 10;
 
 /// The CPU phases of a redraw; `ledger.enter(WorkPhase::Upload)`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -87,12 +89,14 @@ impl FrameWorkLedger {
         RenderDeviceWork {
             redraws: self.redraws.load(Ordering::Relaxed),
             buffers_created: count(DeviceCount::Buffers),
+            geometry_buffers_created: count(DeviceCount::GeometryBuffers),
             images_created: count(DeviceCount::Images),
             memory_allocations: count(DeviceCount::MemoryAllocations),
             pipelines_created: count(DeviceCount::Pipelines),
             descriptor_sets_allocated: count(DeviceCount::DescriptorSets),
             submissions: count(DeviceCount::Submissions),
             uploaded_bytes: count(DeviceCount::UploadedBytes),
+            geometry_uploaded_bytes: count(DeviceCount::GeometryUploadedBytes),
             read_back_bytes: count(DeviceCount::ReadBackBytes),
             times: self.times(),
         }

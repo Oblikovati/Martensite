@@ -47,7 +47,7 @@ fn ordinary_lit_rectangle() -> PrimitiveDraw {
 fn nonfull_frame() -> RenderFrame {
     let mut point = lit_front_point(RenderShading::Phong, false);
     point.point_style.as_mut().unwrap().size = 7.;
-    point.vertices[0].position = [0.984375, -0.3125, 0.5];
+    point.vertices.make_mut()[0].position = [0.984375, -0.3125, 0.5];
     RenderFrame::new(
         64,
         64,
@@ -88,6 +88,7 @@ fn record_nonfull(
 ) -> FrameCapture {
     let commands = CommandSubmission::new(ctx).unwrap();
     let cmd = commands.command;
+    resources.geometry_transfers.record(ctx, cmd);
     transition_targets(ctx, cmd, resources, false);
     begin_rendering(ctx, cmd, resources, [0., 0., 0., 1.], true, true, false);
     set_raster_region(ctx, cmd, resources.extent, regions[0], regions[1]);

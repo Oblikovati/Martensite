@@ -1,16 +1,16 @@
 //! Exhaustive metadata copying keeps replacement geometry independent without cloning discarded vectors.
-use super::{PrimitiveDraw, RenderVertex};
+use super::{DrawStream, PrimitiveDraw, RenderVertex};
 
 // One complete field list makes newly added draw state a compile error until its copying is reviewed.
 macro_rules! clone_with_geometry {
     ($($field:ident),+ $(,)?) => {
         impl PrimitiveDraw {
             /// Preserve derived-Clone metadata semantics while replacing only vertex/index storage.
-            /// Example: `source.with_replacement_geometry(vertices, vec![0, 1])`.
+            /// Example: `source.with_replacement_geometry(vertices.into(), vec![0, 1].into())`.
             pub(crate) fn with_replacement_geometry(
                 &self,
-                vertices: Vec<RenderVertex>,
-                indices: Vec<u32>,
+                vertices: DrawStream<RenderVertex>,
+                indices: DrawStream<u32>,
             ) -> Self {
                 // Replaced geometry no longer derives from any retained guard-band source.
                 Self { vertices, indices, guard_band_source: None, #[cfg(feature = "vertex-output-diagnostics")] vertex_output_target: self.vertex_output_target, $($field: Clone::clone(&self.$field)),+ }
@@ -19,6 +19,8 @@ macro_rules! clone_with_geometry {
     };
 }
 clone_with_geometry!(
+    guard_band_bounds,
+    vertex_revision,
     projected_dash,
     quad_corners,
     clip_transform,

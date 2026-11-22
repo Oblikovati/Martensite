@@ -103,6 +103,8 @@ pub use graduated_trihedron::RenderGraduatedTrihedron;
 mod graphic_group;
 mod group_flipping;
 mod primitive;
+mod primitive_buffer_read;
+mod primitive_cache;
 mod primitive_ranges;
 mod primitive_topology;
 pub use frame_stats::{RenderFrameStats, RenderImageMemory};

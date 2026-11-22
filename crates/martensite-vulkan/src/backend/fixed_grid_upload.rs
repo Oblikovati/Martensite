@@ -88,7 +88,7 @@ mod tests {
         .unwrap();
         assert!(selected.fixed_grid_point);
         assert!(!selected.fixed_grid_point_unit12);
-        assert_eq!(selected.indices, vec![0, 0]);
+        assert_eq!(selected.indices(), [0, 0]);
         assert_eq!(selected.point_style.unwrap().size, 3.5);
         assert_eq!(source, before);
     }

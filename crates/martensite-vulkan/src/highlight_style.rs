@@ -46,7 +46,7 @@ pub(crate) fn apply_highlight(
     if draw.annotation || draw.topology() == crate::PrimitiveTopology::Points {
         crate::scene::validate_annotation_opacity(&vertices)?;
     }
-    draw.vertices = vertices;
+    draw.vertices = vertices.into();
     draw.unlit_back_color = draw.unlit_back_color.map(|_| rgba);
     let alpha = match highlight_fill_material(&structure.highlight_style) {
         Some((material, alpha)) => draw.lighting.as_mut().map_or(rgba[3], |lighting| {

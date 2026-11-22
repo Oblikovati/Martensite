@@ -60,9 +60,9 @@ fn target_identity_survives_existing_clone_and_geometry_preparation() {
 #[test]
 fn changed_indices_and_unsupported_vertex_stages_refuse() {
     let mut source = triangle();
-    source.indices.swap(0, 1);
+    source.indices.make_mut().swap(0, 1);
     assert!(validate_draw(&request(), &source).is_err());
-    source.indices.swap(0, 1);
+    source.indices.make_mut().swap(0, 1);
     source.polygon_points = true;
     assert!(validate_draw(&request(), &source).is_err());
     source.polygon_points = false;
@@ -142,7 +142,7 @@ fn published_contracts_and_capture_owners_are_send_sync() {
 fn vertex_output_retained_phong_flat_map_is_unused_and_admitted() {
     let source = crate::vertex_output_fixture::RetainedPhongFixture::new();
     let draw = source.draw();
-    assert_eq!(draw.native_flat_sources, [2]);
+    assert_eq!(&*draw.native_flat_sources, [2]);
     assert!(!draw.fixed_function_lighting);
     assert_eq!(
         draw.lighting.as_ref().unwrap().shading(),
@@ -157,7 +157,7 @@ fn vertex_output_nonfixed_encoder_ignores_retained_flat_sources() {
     let sources = super::super::fixed_vertex_sources::fixed_vertex_sources(&draw, &draw.indices);
     let vertices = super::super::frame::encode_vertices(&draw);
     let indices = draw.indices.clone();
-    draw.native_flat_sources = vec![0];
+    draw.native_flat_sources = vec![0].into();
     assert_eq!(
         super::super::fixed_vertex_sources::fixed_vertex_sources(&draw, &draw.indices),
         sources

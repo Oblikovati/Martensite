@@ -8,7 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added device work counters to the Vulkan renderer: `Graphic3dRenderView::last_frame_work` and `Graphic3dRenderDriver::device_work` return `RenderDeviceWork` with the buffers, images, memory allocations, pipelines, descriptor sets and submissions that redraws made, the bytes they uploaded and read back, and their CPU time per phase (#594).
+- Added Vulkan redraw counters for buffers, images, memory allocations, pipelines, descriptor sets, submissions, bytes uploaded and read back, and CPU time by phase. `Graphic3dRenderView::last_frame_work` and `Graphic3dRenderDriver::device_work` return `RenderDeviceWork`, which reports geometry buffers and geometry upload bytes separately from the device totals (#594).
 
 - Added canonical single-chart conical normal extrusion for solved polynomial profiles with holes, using shared keyed construction and returning separate reference, storage and measure bounds, authored history and detached exports (#418).
 
@@ -79,6 +79,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
 ### Changed
+
+- Reused Vulkan vertex and index buffers between redraws, including for static textured meshes, and batched geometry transfers. Shared mapped storage pages and descriptor pools across the draws of a frame (#594).
 
 - Replaced transient object ownership with typed Rust handles and static class descriptors. Callers use compile-time upcasts, checked downcasts and explicit weak references (#592).
 

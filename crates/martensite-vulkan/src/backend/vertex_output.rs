@@ -86,7 +86,7 @@ fn validate_draw(
     request: &crate::VertexOutputRequest,
     draw: &crate::PrimitiveDraw,
 ) -> Result<(), RenderError> {
-    if draw.indices == request.indices
+    if draw.indices() == request.indices
         && match request.format() {
             crate::VertexOutputFormat::TrianglesClipNormalId32 => ordinary_phong_draw(draw),
             crate::VertexOutputFormat::PointsClipId20 => ordinary_plain_point(draw),
