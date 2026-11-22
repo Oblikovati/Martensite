@@ -236,3 +236,37 @@ fn index_edits_reuse_vertices_and_record_only_the_changed_words() {
     after.indices.make_mut()[1] = 1;
     assert!(after.index_revision().is_none());
 }
+
+#[test]
+fn combined_edits_require_both_current_stream_witnesses() {
+    let store = RetainedPrimitives::default();
+    let (mut array, attributes) = mutable_source(&store);
+    let allocator = Graphic3dBufferBase::default_allocator();
+    let indices = Handle::new(Graphic3dMutableIndexBuffer::new(allocator).unwrap());
+    assert!(indices.init_indices::<u16>(3).unwrap());
+    for (offset, index) in [0, 1, 2].into_iter().enumerate() {
+        assert!(indices.set_index(offset as i32, index));
+    }
+    array.indices = indices.cast();
+    array.retained = store.entry(&array);
+    let before = draw(&array, [1.; 4]);
+    assert!(attributes.write_at(12, 2.0_f32));
+    assert!(indices.set_index(2, 1));
+    let mut after = draw(&array, [1.; 4]);
+    let (vertices, indices) = after.combined_revision().unwrap();
+    assert_eq!(
+        vertices.previous_identity(),
+        before.vertices.identity().unwrap()
+    );
+    assert_eq!(
+        indices.previous_identity(),
+        before.indices.identity().unwrap()
+    );
+    assert_eq!(
+        (vertices.dirty_range(), indices.dirty_range()),
+        (1..2, 2..3)
+    );
+    after.indices.make_mut()[2] = 2;
+    assert!(after.combined_revision().is_none());
+    assert!(after.vertex_revision().is_none());
+}

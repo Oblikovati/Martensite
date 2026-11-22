@@ -255,7 +255,7 @@ fn a_mutable_index_transfers_one_device_word_and_matches_a_fresh_upload() {
     };
     let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
     let scene = scene::ViewerScene::new(&driver);
-    let array = add_indexed_triangle(&scene, 2);
+    let array = add_indexed_triangle(&scene, 2, 8., false);
     let view = scene.render_view();
     view.try_redraw().unwrap();
     let first = view.capture().unwrap();
@@ -268,7 +268,7 @@ fn a_mutable_index_transfers_one_device_word_and_matches_a_fresh_upload() {
     assert_ne!(edited.rgba, first.rgba);
     assert_eq!(update.geometry_uploaded_bytes, 4, "{update:?}");
     assert_eq!(update.geometry_buffers_created, 1, "{update:?}");
-    assert_matches_fresh_indexed_triangle(&scene, edited.rgba);
+    assert_matches_fresh_indexed_triangle(&scene, edited, 8.);
     assert_clean_validation(&driver);
 }
 
@@ -276,12 +276,43 @@ fn a_mutable_index_transfers_one_device_word_and_matches_a_fresh_upload() {
     feature = "command-state-diagnostics",
     feature = "vertex-output-diagnostics"
 )))]
-fn assert_matches_fresh_indexed_triangle(scene: &scene::ViewerScene, edited: Vec<u8>) {
-    let _array = add_indexed_triangle(scene, 4);
+#[test]
+fn a_mutable_array_transfers_only_one_vertex_and_one_index_together() {
+    use martensite_tkservice::graphic3d::Graphic3dIndexBufferMembers;
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let array = add_indexed_triangle(&scene, 2, 8., true);
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    let first = view.capture().unwrap();
+    array.set_vertice(3, -8., 2., 0.).unwrap();
+    assert!(array.indices().set_index(1, 3));
+    view.try_redraw().unwrap();
+    let update = view.last_frame_work();
+    let edited = view.capture().unwrap();
+    assert_ne!(edited.rgba, first.rgba);
+    assert_eq!(update.geometry_uploaded_bytes, 36, "{update:?}");
+    assert_eq!(update.geometry_buffers_created, 2, "{update:?}");
+    assert_matches_fresh_indexed_triangle(&scene, edited, 2.);
+    assert_clean_validation(&driver);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+fn assert_matches_fresh_indexed_triangle(
+    scene: &scene::ViewerScene,
+    edited: martensite_vulkan::FrameCapture,
+    third_y: f32,
+) {
+    let _array = add_indexed_triangle(scene, 4, third_y, false);
     let view = scene.render_view();
     view.try_redraw().unwrap();
     assert!(view.last_frame_work().geometry_uploaded_bytes > 4);
-    assert_eq!(view.capture().unwrap().rgba, edited);
+    let fresh = view.capture().unwrap();
+    assert_eq!(fresh.rgba, edited.rgba);
+    assert_eq!(fresh.depth, edited.depth);
 }
 
 #[cfg(not(any(
@@ -291,23 +322,22 @@ fn assert_matches_fresh_indexed_triangle(scene: &scene::ViewerScene, edited: Vec
 fn add_indexed_triangle(
     scene: &scene::ViewerScene,
     middle_vertex: i32,
+    third_y: f32,
+    mutable_vertices: bool,
 ) -> Handle<martensite_tkservice::graphic3d::Graphic3dArrayOfPrimitives> {
     use martensite_tkservice::graphic3d::{
-        GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE, Graphic3dArrayOfPrimitives, Graphic3dGroupMembers,
-        Graphic3dTypeOfPrimitiveArray as Kind,
+        GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE, GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE,
+        Graphic3dArrayOfPrimitives, Graphic3dGroupMembers, Graphic3dTypeOfPrimitiveArray as Kind,
     };
-    let array = Handle::new(
-        Graphic3dArrayOfPrimitives::new(
-            Kind::Triangles,
-            4,
-            0,
-            3,
-            GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE,
-        )
-        .unwrap(),
-    );
-    for [x, y] in [[-8., -8.], [8., -8.], [-8., 8.], [8., 8.]] {
-        array.add_vertex(x, y, 0.).unwrap();
+    let mut flags = GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE;
+    if mutable_vertices {
+        flags |= GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE;
+    }
+    let array =
+        Handle::new(Graphic3dArrayOfPrimitives::new(Kind::Triangles, 4, 0, 3, flags).unwrap());
+    let positions = [[-8., -8.], [8., -8.], [-8., third_y], [8., 8.]];
+    for (rank, [x, y]) in (1..).zip(positions) {
+        array.set_vertice(rank, x, y, 0.).unwrap();
     }
     array.add_edges3(1, middle_vertex, 3).unwrap();
     scene.group.clear(true);

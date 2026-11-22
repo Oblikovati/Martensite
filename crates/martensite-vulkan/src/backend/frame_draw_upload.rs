@@ -43,6 +43,14 @@ struct PreparedGeometry {
     ))]
     encoding: EncodedGeometry,
 }
+type EncodedPatch = (u64, Vec<u8>);
+
+struct GeometryPatch {
+    previous: ResidentGeometry,
+    vertices: Option<EncodedPatch>,
+    indices: Option<EncodedPatch>,
+}
+
 struct PreparedBindings {
     lighting: Option<UploadedStorage>,
     sphere_map: Option<UploadedStorage>,
@@ -298,78 +306,75 @@ impl<'a> DrawUploadContext<'a> {
         transfers: &mut GeometryTransfers,
         key: GeometryKey,
     ) -> Result<Option<ResidentGeometry>, RenderError> {
-        if let Some(update) = self.patch_resident_vertices(transfers, key)? {
-            return Ok(Some(update));
+        let Some(patch) = self.geometry_patch(transfers, key) else {
+            return Ok(None);
+        };
+        let pool = &self.pipelines.geometry_staging;
+        let mut previous = patch.previous;
+        if let Some((offset, bytes)) = patch.vertices {
+            previous.vertices = transfers.patch_stream(
+                self.runtime,
+                pool,
+                vk::BufferUsageFlags::VERTEX_BUFFER,
+                previous.vertices,
+                offset,
+                &bytes,
+            )?;
         }
-        self.patch_resident_indices(transfers, key)
+        if let Some((offset, bytes)) = patch.indices {
+            previous.indices = transfers.patch_stream(
+                self.runtime,
+                pool,
+                vk::BufferUsageFlags::INDEX_BUFFER,
+                previous.indices,
+                offset,
+                &bytes,
+            )?;
+        }
+        Ok(Some(previous))
     }
 
-    fn patch_resident_vertices(
+    fn geometry_patch(
         &self,
-        transfers: &mut GeometryTransfers,
-        key: GeometryKey,
-    ) -> Result<Option<ResidentGeometry>, RenderError> {
-        let Some(revision) = self.draw.vertex_revision() else {
-            return Ok(None);
+        transfers: &GeometryTransfers,
+        mut key: GeometryKey,
+    ) -> Option<GeometryPatch> {
+        let (vertices, indices) = self.draw.combined_revision().map_or_else(
+            || (self.draw.vertex_revision(), self.draw.index_revision()),
+            |(vertices, indices)| (Some(vertices), Some(indices)),
+        );
+        if vertices.is_none() && indices.is_none() {
+            return None;
+        }
+        if let Some(revision) = vertices {
+            key = key.previous_vertices(revision.previous_identity())?;
+        }
+        if let Some(revision) = indices {
+            key = key.previous_indices(revision.previous_identity())?;
+        }
+        let previous = transfers.residency.find_completed(key)?;
+        // Qualify both ranges before staging either, so a rejected pair can use the full upload.
+        let vertices = match vertices {
+            Some(revision) => Some(encode_vertex_patch(
+                self.draw,
+                revision.dirty_range(),
+                previous.vertices.size(),
+            )?),
+            None => None,
         };
-        let previous = key
-            .previous_vertices(revision.previous_identity())
-            .and_then(|key| transfers.residency.find_completed(key));
-        let Some(previous) = previous else {
-            return Ok(None);
+        let indices = match indices {
+            Some(revision) => Some(geometry_encoding::encode_index_patch(
+                self.draw,
+                revision.dirty_range(),
+                previous.indices.size(),
+            )?),
+            None => None,
         };
-        let Some((offset, bytes)) =
-            encode_vertex_patch(self.draw, revision.dirty_range(), previous.vertices.size())
-        else {
-            return Ok(None);
-        };
-        let vertices = transfers.patch_stream(
-            self.runtime,
-            &self.pipelines.geometry_staging,
-            vk::BufferUsageFlags::VERTEX_BUFFER,
-            previous.vertices,
-            offset,
-            &bytes,
-        )?;
-        Ok(Some(ResidentGeometry {
+        Some(GeometryPatch {
+            previous,
             vertices,
-            indices: previous.indices,
-        }))
-    }
-
-    fn patch_resident_indices(
-        &self,
-        transfers: &mut GeometryTransfers,
-        key: GeometryKey,
-    ) -> Result<Option<ResidentGeometry>, RenderError> {
-        let Some(revision) = self.draw.index_revision() else {
-            return Ok(None);
-        };
-        let Some(previous) = key
-            .previous_indices(revision.previous_identity())
-            .and_then(|key| transfers.residency.find_completed(key))
-        else {
-            return Ok(None);
-        };
-        let Some((offset, bytes)) = geometry_encoding::encode_index_patch(
-            self.draw,
-            revision.dirty_range(),
-            previous.indices.size(),
-        ) else {
-            return Ok(None);
-        };
-        let indices = transfers.patch_stream(
-            self.runtime,
-            &self.pipelines.geometry_staging,
-            vk::BufferUsageFlags::INDEX_BUFFER,
-            previous.indices,
-            offset,
-            &bytes,
-        )?;
-        Ok(Some(ResidentGeometry {
-            vertices: previous.vertices,
             indices,
-        }))
+        })
     }
     fn sample_cutoff(&self) -> bool {
         let draw = self.draw;

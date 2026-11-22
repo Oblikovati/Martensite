@@ -65,7 +65,10 @@ impl<T> StreamRevision<T> {
 enum GeometryRevision {
     Vertices(StreamRevision<RenderVertex>),
     Indices(StreamRevision<u32>),
+    Both(StreamRevision<RenderVertex>, StreamRevision<u32>),
 }
+
+pub(crate) type CombinedRevision<'a> = (&'a StreamRevision<RenderVertex>, &'a StreamRevision<u32>);
 
 #[derive(Clone, Default)]
 pub(crate) struct GeometryRevisionHint(Option<Arc<GeometryRevision>>);
@@ -98,6 +101,14 @@ impl PrimitiveDraw {
         revision.is_current(&self.indices).then_some(revision)
     }
 
+    pub(crate) fn combined_revision(&self) -> Option<CombinedRevision<'_>> {
+        let GeometryRevision::Both(vertices, indices) = self.geometry_revision.0.as_deref()? else {
+            return None;
+        };
+        (vertices.is_current(&self.vertices) && indices.is_current(&self.indices))
+            .then_some((vertices, indices))
+    }
+
     pub(crate) fn retain_geometry_edit(&mut self, previous: &Self, mutable: MutableGeometry) {
         if self.vertices.len() != previous.vertices.len()
             || self.indices.len() != previous.indices.len()
@@ -109,12 +120,13 @@ impl PrimitiveDraw {
         let same_corners = self.quad_corners == previous.quad_corners;
         let same_sources = self.native_flat_sources == previous.native_flat_sources;
         self.share_unchanged_streams(previous, same_corners, same_sources);
+        let vertices_compatible = same_corners && (same_sources || indices_dirty.is_some());
         self.retain_edits(
             previous,
             vertices_dirty,
             indices_dirty,
             MutableGeometry {
-                vertices: mutable.vertices && same_corners && same_sources,
+                vertices: mutable.vertices && vertices_compatible,
                 indices: mutable.indices && same_corners,
             },
         );
@@ -137,11 +149,22 @@ impl PrimitiveDraw {
         mutable: MutableGeometry,
     ) {
         self.share_unchanged_bindings(previous, vertices_dirty.is_none(), indices_dirty.is_none());
-        let revision = match (vertices_dirty, indices_dirty) {
-            (None, None) => {
-                self.geometry_revision = previous.geometry_revision.clone();
-                return;
-            }
+        if vertices_dirty.is_none() && indices_dirty.is_none() {
+            self.geometry_revision = previous.geometry_revision.clone();
+            return;
+        }
+        let revision = self.edited_revision(previous, vertices_dirty, indices_dirty, mutable);
+        self.geometry_revision = GeometryRevisionHint(revision.map(Arc::new));
+    }
+
+    fn edited_revision(
+        &self,
+        previous: &Self,
+        vertices_dirty: Option<Range<usize>>,
+        indices_dirty: Option<Range<usize>>,
+        mutable: MutableGeometry,
+    ) -> Option<GeometryRevision> {
+        match (vertices_dirty, indices_dirty) {
             (Some(dirty), None) if mutable.vertices => {
                 StreamRevision::new(&previous.vertices, &self.vertices, dirty)
                     .map(GeometryRevision::Vertices)
@@ -150,9 +173,13 @@ impl PrimitiveDraw {
                 StreamRevision::new(&previous.indices, &self.indices, dirty)
                     .map(GeometryRevision::Indices)
             }
+            (Some(vertices), Some(indices)) if mutable.vertices && mutable.indices => {
+                let vertices = StreamRevision::new(&previous.vertices, &self.vertices, vertices)?;
+                let indices = StreamRevision::new(&previous.indices, &self.indices, indices)?;
+                Some(GeometryRevision::Both(vertices, indices))
+            }
             _ => None,
-        };
-        self.geometry_revision = GeometryRevisionHint(revision.map(Arc::new));
+        }
     }
 
     fn share_unchanged_bindings(&mut self, previous: &Self, vertices: bool, indices: bool) {
