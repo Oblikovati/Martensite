@@ -383,6 +383,7 @@ impl PreparedFrameUploads {
             main_publication: targets.main_publication,
             main_snapshot,
             draws: self.draws,
+            submitted_draws: Default::default(),
             first_draw: plan.first_draw,
             geometry_transfers: self.geometry_transfers,
             grid: None,

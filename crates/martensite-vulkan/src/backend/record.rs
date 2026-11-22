@@ -162,7 +162,7 @@ pub(super) fn record_draws_selected(
     mut color_scope: super::scene_color_scope::SceneColorScope,
 ) {
     let mut state = super::draw_state::DrawState::default();
-    let mut lighting = super::record_draw_bindings::LightingSlot::default();
+    let mut bindings = super::record_draw_bindings::BindingSlots::default();
     let mut bias_commands = super::depth_bias_record::DepthBiasCommands::default();
     let mut depth_policy = None;
     let mut offsets = crate::polygon_offset::PolygonOffsetState::new(layer.polygon_offset);
@@ -206,7 +206,7 @@ pub(super) fn record_draws_selected(
         let handle = user.map_or(pipeline.handle, |(_, linked)| linked.handle);
         let (bind, push) = state.advance(handle, &draw.transform);
         if bind {
-            lighting.invalidate();
+            bindings.lighting.invalidate();
             bias_commands.invalidate();
             // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
             unsafe {
@@ -287,8 +287,9 @@ pub(super) fn record_draws_selected(
         #[cfg(feature = "command-state-diagnostics")]
         super::geometry_command_diagnostic::before_draw((command, draw_index, handle), draw);
         if let Some((user, linked)) = user {
-            lighting.invalidate();
+            bindings.lighting.invalidate();
             bias_commands.invalidate();
+            bindings.invalidate_geometry();
             user.record(command, linked);
             continue;
         }
@@ -308,14 +309,14 @@ pub(super) fn record_draws_selected(
             resources.extent,
         );
         super::fixed_grid_record::begin_fixed_grid_draw(runtime, command, draw);
-        super::record_draw_bindings::record_draw(
+        let indices = super::record_draw_bindings::record_draw(
             runtime,
             command,
             draw,
             pipeline,
             push,
             alpha::selected_alpha_set(draw, selection.map(|(_, set)| set)),
-            &mut lighting,
+            &mut bindings,
         );
         if let Some(wide) = &draw.line.wide {
             super::render_target_record::record_wide_line(
@@ -327,9 +328,9 @@ pub(super) fn record_draws_selected(
             );
         } else {
             #[cfg(feature = "lit-only-command-diagnostics")]
-            indexed::controlled(runtime, command, draw, draw_index);
+            indexed::controlled(runtime, command, draw, draw_index, indices);
             #[cfg(not(feature = "lit-only-command-diagnostics"))]
-            indexed::record(runtime, command, draw);
+            indexed::record(runtime, command, draw, indices);
         }
         super::fixed_grid_record::restore_fixed_grid_draw(runtime, command, draw, culling.1);
     }

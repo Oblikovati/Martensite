@@ -64,6 +64,7 @@ pub(in crate::backend) struct FrameLightingBindings {
     scratch: Vec<u8>,
     candidate_checked: bool,
     candidate: Option<Arc<RetainedLightingBinding>>,
+    first_static: Option<RetainedLightingBinding>,
     page: Option<LightingPage>,
 }
 
@@ -91,17 +92,37 @@ impl LightingBindingCache {
         pages: &mut FrameUploadPages<'_>,
         retain: bool,
     ) -> Result<Arc<UploadedStorage>, RenderError> {
-        if retain
+        let cacheable = retain
             && !cfg!(feature = "command-state-diagnostics")
-            && bytes.len() <= MAX_CACHED_LIGHTING_BYTES
-            && let Some(binding) = self.candidate(runtime, layout, bytes, &mut pages.lighting)?
-        {
-            return Ok(binding);
+            && bytes.len() <= MAX_CACHED_LIGHTING_BYTES;
+        if cacheable {
+            if let Some(binding) = self.candidate(runtime, layout, bytes, &mut pages.lighting)? {
+                return Ok(binding);
+            }
+            if let Some(binding) = pages
+                .lighting
+                .first_static
+                .as_ref()
+                .filter(|entry| entry.matches(layout, bytes))
+            {
+                return Ok(Arc::clone(&binding.storage));
+            }
         }
         if layout.uses_dynamic_offset() {
             return bind_lighting_range(runtime, layout, bytes, pages);
         }
-        UploadedStorage::for_frame(runtime, layout, bytes, pages).map(Arc::new)
+        let binding = Arc::new(UploadedStorage::for_frame(runtime, layout, bytes, pages)?);
+        if cacheable && pages.lighting.first_static.is_none() {
+            // A camera orbit changes lighting each frame, even when all draws in that frame
+            // share it. Keep the uploaded binding local so it never occupies the device cache.
+            pages.lighting.first_static = Some(RetainedLightingBinding {
+                bytes: bytes.into(),
+                stages: layout.stages,
+                descriptor: layout.descriptor,
+                storage: Arc::clone(&binding),
+            });
+        }
+        Ok(binding)
     }
 
     fn candidate(

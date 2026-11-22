@@ -164,8 +164,9 @@ impl WindowChain {
         self.sync.qualify_device_idle();
     }
     pub fn acquire(&mut self) -> Result<u32, vk::Result> {
-        // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
         let sync = self.sync.current_mut();
+        // SAFETY: the swapchain and its current acquire synchronization objects belong
+        // to this device. The presenter waits for the slot and resets its fence before reuse.
         let (index, suboptimal) = unsafe {
             self.loader.acquire_next_image(
                 self.handle,

@@ -208,6 +208,7 @@ mod fixed_vertex_sources;
 mod frame;
 mod frame_draw_presentation;
 mod frame_targets;
+mod geometry_buffer;
 #[cfg(feature = "command-state-diagnostics")]
 mod geometry_command_diagnostic;
 mod geometry_residency;

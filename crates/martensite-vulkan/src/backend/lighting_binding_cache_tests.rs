@@ -114,6 +114,25 @@ fn identical_stock_lighting_shares_one_set_then_survives_the_frame() {
 }
 
 #[test]
+fn matching_cold_static_lighting_reuses_the_frame_upload() {
+    let renderer = create_resource_renderer();
+    let runtime = &renderer.runtime;
+    let pool = FrameStoragePool::default();
+    let cache = LightingBindingCache::default();
+    let layout = StorageDescriptorLayout::new(runtime, vk::ShaderStageFlags::FRAGMENT).unwrap();
+    let lighting = emission([1., 0., 0., 1.]);
+    let mut frame = FrameUploadPages::storage(&pool);
+    let first = cache
+        .bind_draw(runtime, &layout, &lighting, &mut frame, true)
+        .unwrap();
+    let second = cache
+        .bind_draw(runtime, &layout, &lighting, &mut frame, true)
+        .unwrap();
+    assert!(Arc::ptr_eq(&first, &second));
+    assert!(cache.bindings.lock().unwrap().is_empty());
+}
+
+#[test]
 fn bit_differences_and_layout_stages_do_not_alias() {
     let renderer = create_resource_renderer();
     let runtime = &renderer.runtime;

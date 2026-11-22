@@ -32,6 +32,7 @@ type LineTint<'a> = (&'a crate::draw::DrawStream<crate::RenderVertex>, [f32; 4])
 struct EncodedGeometry {
     indices: Vec<u8>,
     vertices: Vec<u8>,
+    vertex_alignment: Option<u64>,
     #[cfg(feature = "command-state-diagnostics")]
     source_count: usize,
 }
@@ -360,8 +361,12 @@ impl<'a> DrawUploadContext<'a> {
         key: Option<GeometryKey>,
     ) -> Result<(ResidentGeometry, Option<EncodedGeometry>), RenderError> {
         let encoding = geometry_encoding::encoded_geometry(self.runtime, draw);
-        let resident =
-            encoding.queue_transfers(self.runtime, &self.pipelines.geometry_staging, transfers)?;
+        let resident = encoding.queue_transfers(
+            self.runtime,
+            &self.pipelines.geometry_staging,
+            transfers,
+            key.is_some() && !cfg!(feature = "lit-only-command-diagnostics"),
+        )?;
         if let Some(key) = key {
             transfers.residency.queue(key, draw, resident.clone());
         }

@@ -45,6 +45,7 @@ impl VulkanRenderer {
     /// uploads; `renderer.launch_frame(frame)`.
     pub(super) fn launch_frame(&mut self, mut frame: InFlightFrame) {
         frame.resources.geometry_transfers.residency.share();
+        frame.resources.retain_submitted_draws();
         self.flight.frames().push_back(frame);
     }
     /// Wait for every submitted frame, as `glFinish` does; `renderer.finish_frames()?` settles

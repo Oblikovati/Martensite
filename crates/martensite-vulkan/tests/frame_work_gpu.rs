@@ -253,7 +253,34 @@ fn a_mutable_triangle_transfers_only_the_edited_vertex_record() {
     let update = view.last_frame_work();
     assert_ne!(view.capture().unwrap().rgba, first.rgba);
     assert_eq!(update.geometry_uploaded_bytes, 32, "{update:?}");
-    assert_eq!(update.geometry_buffers_created, 1, "{update:?}");
+    assert_eq!(
+        update.geometry_buffers_created,
+        u64::from(cfg!(feature = "lit-only-command-diagnostics")),
+        "{update:?}"
+    );
+    assert_clean_validation(&driver);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn a_shared_geometry_patch_can_follow_an_in_flight_draw() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let array = add_mutable_triangle(&scene);
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    let original = view.capture().unwrap();
+    driver.finish_frames().unwrap();
+    view.try_redraw().unwrap();
+    array.set_vertice(3, 0., 2., 0.).unwrap();
+    view.try_redraw().unwrap();
+    let update = view.last_frame_work();
+    assert_eq!(update.times.waiting, Duration::ZERO, "{update:?}");
+    assert_eq!(update.geometry_uploaded_bytes, 32, "{update:?}");
+    assert_ne!(view.capture().unwrap().rgba, original.rgba);
     assert_clean_validation(&driver);
 }
 
@@ -313,7 +340,11 @@ fn a_mutable_index_transfers_one_device_word_and_matches_a_fresh_upload() {
     let edited = view.capture().unwrap();
     assert_ne!(edited.rgba, first.rgba);
     assert_eq!(update.geometry_uploaded_bytes, 4, "{update:?}");
-    assert_eq!(update.geometry_buffers_created, 1, "{update:?}");
+    assert_eq!(
+        update.geometry_buffers_created,
+        u64::from(cfg!(feature = "lit-only-command-diagnostics")),
+        "{update:?}"
+    );
     assert_matches_fresh_indexed_triangle(&scene, edited, 8.);
     assert_clean_validation(&driver);
 }
@@ -338,7 +369,11 @@ fn a_mutable_array_transfers_only_one_vertex_and_one_index_together() {
     let edited = view.capture().unwrap();
     assert_ne!(edited.rgba, first.rgba);
     assert_eq!(update.geometry_uploaded_bytes, 36, "{update:?}");
-    assert_eq!(update.geometry_buffers_created, 2, "{update:?}");
+    assert_eq!(
+        update.geometry_buffers_created,
+        2 * u64::from(cfg!(feature = "lit-only-command-diagnostics")),
+        "{update:?}"
+    );
     assert_matches_fresh_indexed_triangle(&scene, edited, 2.);
     assert_clean_validation(&driver);
 }

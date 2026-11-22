@@ -44,3 +44,24 @@ fn a_redraw_with_room_in_the_flight_waits_for_nothing() {
     assert!(finished.times.waiting > Duration::ZERO, "{finished:?}");
     assert_eq!(renderer.flight.len(), 0);
 }
+
+#[cfg(not(feature = "command-state-diagnostics"))]
+#[test]
+fn a_submitted_draw_keeps_its_gpu_owners_through_capture() {
+    use crate::{PrimitiveDraw, RenderVertex, identity_clip};
+    let mut renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let vertices = [[-1., -1., 0.5], [1., -1., 0.5], [0., 1., 0.5]]
+        .map(|position| RenderVertex::new(position, CLEARS[0]));
+    let draw = PrimitiveDraw::new(vertices.to_vec(), vec![0, 1, 2], identity_clip()).unwrap();
+    let frame = RenderFrame::new(12, 10, CLEARS[1], vec![draw.clone(), draw]).unwrap();
+    let readback = renderer.render_deferred(&frame).unwrap();
+    let resources = &renderer.flight.frames().back().unwrap().resources;
+    assert!(resources.draws.is_empty());
+    assert!(!resources.scene_empty());
+    drop(frame);
+    assert_eq!(
+        renderer.read_frame(&readback).unwrap().pixel(5, 4),
+        Some(PIXELS[0])
+    );
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}

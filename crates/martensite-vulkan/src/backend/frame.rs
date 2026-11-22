@@ -6,15 +6,18 @@ mod draw_upload;
 #[path = "frame_upload_point.rs"]
 mod upload_point;
 use draw_upload::upload_draw;
+#[path = "frame_draw_owners.rs"]
+mod draw_owners;
 #[path = "frame_setup.rs"]
 mod frame_setup;
 use super::{
-    buffer::DeviceBuffer, geometry_transfer::GeometryTransfers,
+    geometry_buffer::GeometryBuffer, geometry_transfer::GeometryTransfers,
     host_upload_pages::FrameUploadPages, image::TargetImage, pipeline::DrawPipeline,
     pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
 };
 use crate::{PrimitiveDraw, RenderError, RenderFrame, error::rejected};
 use ash::vk;
+use draw_owners::DrawGpuOwners;
 use std::sync::Arc;
 
 struct FrameDrawUploads<'a> {
@@ -24,7 +27,6 @@ struct FrameDrawUploads<'a> {
 }
 pub(super) struct UploadedDraw {
     pub window_depth_expected: bool,
-    // Rare fields are boxed: a frame in flight keeps every draw record (#594).
     pub window_depth_status: Option<Box<super::window_depth_status::WindowDepthStatus>>,
     #[cfg(feature = "vertex-output-diagnostics")]
     pub vertex_output: Option<super::vertex_output::VertexOutputResources>,
@@ -37,8 +39,8 @@ pub(super) struct UploadedDraw {
     )>,
     pub sample_alpha_cutoff: bool,
     pub oit: Option<super::oit_upload::OitUploadedVariants>,
-    pub vertices: Arc<DeviceBuffer>,
-    pub indices: Arc<DeviceBuffer>,
+    pub vertices: Arc<GeometryBuffer>,
+    pub indices: Arc<GeometryBuffer>,
     pub count: u32,
     pub instances: u32,
     pub point_viewports: Option<[vk::Viewport; 2]>,
@@ -103,6 +105,7 @@ pub(super) struct FrameResources {
     pub(super) main_publication: Option<super::immediate_main_record::MainLayerTicket>,
     pub(super) main_snapshot: Option<super::immediate_main_record::MainLayerSnapshot>,
     pub draws: Vec<UploadedDraw>,
+    submitted_draws: DrawGpuOwners,
     pub(super) first_draw: usize,
     pub(super) geometry_transfers: GeometryTransfers,
     /// The shader grid draw, attached after allocation when the frame has one.
@@ -144,7 +147,10 @@ impl FrameResources {
         super::window_depth_status::validate(self)
     }
     pub(super) fn scene_empty(&self) -> bool {
-        self.first_draw == 0 && self.draws.is_empty()
+        self.first_draw == 0 && self.draws.is_empty() && self.submitted_draws.is_empty()
+    }
+    pub(super) fn retain_submitted_draws(&mut self) {
+        self.submitted_draws = DrawGpuOwners::from_draws(std::mem::take(&mut self.draws));
     }
     pub(super) fn attachment_bytes(&self) -> u64 {
         self.color.allocation_bytes()
