@@ -89,14 +89,14 @@ pub(super) struct FrameResources {
     pub stencil: crate::stencil_plan::StencilPlan,
     pub stencil_clear_value: u8,
     pub fragment_alpha: super::fragment_alpha_plan::FragmentAlphaPlan,
-    pub multisample: Option<super::multisample_targets::MultisampleTargets>,
+    pub multisample: Option<Arc<super::multisample_targets::MultisampleTargets>>,
     pub oit: Option<super::oit_frame::OitFramePass>,
     /// The logical frame extent: viewports, captures and shader frame sizes.
     pub extent: vk::Extent2D,
     /// The attachment extent: images, render areas and copies (see `leading_rows`).
     pub attachment_extent: vk::Extent2D,
-    pub color: TargetImage,
-    pub depth: TargetImage,
+    pub color: Arc<TargetImage>,
+    pub depth: Arc<TargetImage>,
     pub color_read: DeviceBuffer,
     pub depth_read: DeviceBuffer,
     pub draws: Vec<UploadedDraw>,
@@ -138,6 +138,18 @@ impl FrameResources {
     }
     pub(super) fn validate_completion(&self) -> Result<(), RenderError> {
         super::window_depth_status::validate(self)
+    }
+    pub(super) fn attachment_bytes(&self) -> u64 {
+        self.color.allocation_bytes()
+            + self.depth.allocation_bytes()
+            + self
+                .multisample
+                .as_ref()
+                .map_or(0, |targets| targets.allocation_bytes())
+            + self
+                .oit
+                .as_ref()
+                .map_or(0, |pass| pass.targets.allocation_bytes())
     }
     pub fn capture(&self) -> Result<FrameCapture, RenderError> {
         self.validate_completion()?;

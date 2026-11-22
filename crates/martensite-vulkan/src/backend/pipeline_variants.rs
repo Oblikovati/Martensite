@@ -140,6 +140,7 @@ pub(super) struct RasterPipelines {
     pub surface_images: super::surface_image_cache::SurfaceImageCache,
     pub geometry_staging: super::host_upload_pages::HostUploadPool,
     pub frame_storage_pages: super::host_upload_pages::FrameStoragePool,
+    pub frame_targets: super::frame_targets::FrameTargetPool,
     pub geometry_residency: Arc<super::geometry_residency::GeometryStore>,
     pub stencil: bool,
     runtime: Arc<VulkanRuntime>,
@@ -184,6 +185,7 @@ impl RasterPipelines {
             surface_images: Default::default(),
             geometry_staging: super::geometry_transfer::geometry_staging_pool(),
             frame_storage_pages: Default::default(),
+            frame_targets: Default::default(),
             geometry_residency: Arc::new(super::geometry_residency::GeometryStore::new(runtime)),
             stencil,
             runtime: runtime.clone(),
@@ -210,6 +212,7 @@ impl RasterPipelines {
         self.surface_images = Default::default();
         self.geometry_staging = super::geometry_transfer::geometry_staging_pool();
         self.frame_storage_pages = Default::default();
+        self.frame_targets = Default::default();
         self.geometry_residency =
             Arc::new(super::geometry_residency::GeometryStore::new(&self.runtime));
         self.release_pbr_environment();

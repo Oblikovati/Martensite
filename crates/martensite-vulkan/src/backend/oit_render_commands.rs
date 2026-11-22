@@ -49,7 +49,7 @@ impl OitCommandRecorder<'_> {
         self.end_rendering();
     }
     pub fn back_composite(&self, write: usize, layers: Range<usize>) {
-        let OitTargets::Peeling { back, .. } = &self.pass().targets else {
+        let OitTargets::Peeling { back, .. } = self.pass().targets.as_ref() else {
             unreachable!()
         };
         self.begin_colors(&[color_attachment(back.view, [0.; 4], false)], None);

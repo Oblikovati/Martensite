@@ -31,6 +31,30 @@ fn assert_clean_validation(driver: &Graphic3dRenderDriver) {
     assert!(messages.is_empty(), "validation messages {messages:?}");
 }
 
+#[test]
+fn alternating_live_view_extents_reuse_their_frame_attachments() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let square = scene::ViewerScene::new(&driver);
+    let wide = scene::ViewerScene::new(&driver);
+    wide.window.set_size(92, 72);
+    wide.view.must_be_resized();
+    for (scene, extent) in [(&square, [64, 64]), (&wide, [92, 72])] {
+        let view = scene.render_view();
+        view.try_redraw().unwrap();
+        let capture = view.capture().unwrap();
+        assert_eq!([capture.width, capture.height], extent);
+    }
+    for view in [
+        square.render_view(),
+        wide.render_view(),
+        square.render_view(),
+    ] {
+        view.try_redraw().unwrap();
+        assert_eq!(view.last_frame_work().images_created, 0);
+    }
+    assert_clean_validation(&driver);
+}
+
 /// The counts of `work` without its times, which differ on every redraw.
 fn counts(work: RenderDeviceWork) -> RenderDeviceWork {
     RenderDeviceWork {

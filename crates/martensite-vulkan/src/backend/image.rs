@@ -14,7 +14,7 @@ pub(super) struct TargetImage {
     pub format: vk::Format,
     pub samples: vk::SampleCountFlags,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub(super) struct AttachmentSpec {
     pub format: vk::Format,
     pub usage: vk::ImageUsageFlags,
@@ -22,20 +22,6 @@ pub(super) struct AttachmentSpec {
     pub samples: vk::SampleCountFlags,
 }
 impl TargetImage {
-    pub fn new(
-        runtime: &Arc<VulkanRuntime>,
-        extent: vk::Extent2D,
-        depth: bool,
-        stencil: bool,
-    ) -> Result<Self, RenderError> {
-        Self::new_multisample(
-            runtime,
-            extent,
-            depth,
-            stencil,
-            vk::SampleCountFlags::TYPE_1,
-        )
-    }
     pub fn new_multisample(
         runtime: &Arc<VulkanRuntime>,
         extent: vk::Extent2D,
@@ -113,9 +99,12 @@ impl TargetImage {
         let lease = super::memory_arena::bind_device_image(&self.runtime, self.handle)?;
         // Frame statistics count the resource's own requirement, not the shared block.
         self.allocation = lease.size();
-        self.runtime.image_memory.allocate_target(self.allocation);
         self.memory = Some(lease);
         Ok(())
+    }
+
+    pub fn allocation_bytes(&self) -> u64 {
+        self.allocation
     }
     fn create_view(&self, format: vk::Format) -> Result<vk::ImageView, RenderError> {
         let info = vk::ImageViewCreateInfo::default()
@@ -152,7 +141,6 @@ impl Drop for TargetImage {
             // The lease field drops after this body, once the image no longer uses its range.
             self.runtime.device().destroy_image(self.handle, None);
         }
-        self.runtime.image_memory.release_target(self.allocation);
     }
 }
 pub(super) fn check_format(

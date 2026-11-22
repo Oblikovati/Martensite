@@ -2,8 +2,8 @@
 use super::super::geometry_transfer::GeometryTransfers;
 use super::super::host_upload_pages::FrameUploadPages;
 use super::super::{
-    buffer::DeviceBuffer, image::TargetImage, memory_selection::HostBufferAccess,
-    pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
+    buffer::DeviceBuffer, memory_selection::HostBufferAccess, pipeline_variants::RasterPipelines,
+    runtime::VulkanRuntime,
 };
 use super::super::{
     fragment_alpha_plan::FragmentAlphaPlan, oit_frame::OitFramePass, oit_plan::OitResourcePlan,
@@ -231,38 +231,6 @@ impl FrameSetup<'_> {
         uploads.allocate(self, plan)
     }
 
-    fn multisample(
-        &self,
-        extent: vk::Extent2D,
-        samples: vk::SampleCountFlags,
-    ) -> Result<Option<super::super::multisample_targets::MultisampleTargets>, RenderError> {
-        super::super::multisample_targets::MultisampleTargets::new(
-            self.runtime,
-            extent,
-            self.pipeline.stencil,
-            samples,
-        )
-    }
-    /// The single-sample colour target; a frame with subview copies also receives transfers.
-    fn color_target(&self, extent: vk::Extent2D) -> Result<TargetImage, RenderError> {
-        let (format, mut usage, aspect) =
-            super::super::image::attachment_properties(self.runtime.depth.formats, false, false);
-        if !self.frame.subview_blits.is_empty() {
-            usage |= vk::ImageUsageFlags::TRANSFER_DST;
-        }
-        let samples = vk::SampleCountFlags::TYPE_1;
-        let spec = super::super::image::AttachmentSpec {
-            format,
-            usage,
-            aspect,
-            samples,
-        };
-        TargetImage::with_attachment(self.runtime, extent, spec)
-    }
-    fn depth_target(&self, extent: vk::Extent2D) -> Result<TargetImage, RenderError> {
-        // Stencil selection belongs to the existing pipeline, not a caller-specific target policy.
-        TargetImage::new(self.runtime, extent, true, self.pipeline.stencil)
-    }
     fn readback(&self, bytes: u64) -> Result<DeviceBuffer, RenderError> {
         DeviceBuffer::new(
             self.runtime,
@@ -279,17 +247,24 @@ impl PreparedFrameUploads {
         setup: &FrameSetup<'_>,
         plan: PreparedFramePlan,
     ) -> Result<FrameResources, RenderError> {
+        let targets = setup.pipeline.frame_targets.raster(
+            setup.runtime,
+            plan.dimensions.attachment,
+            setup.pipeline.stencil,
+            plan.raster.samples,
+            !setup.frame.subview_blits.is_empty(),
+        )?;
         Ok(FrameResources {
             attachment_coordinates: setup.runtime.attachment_coordinates,
             fragment_alpha: plan.fragment_alpha,
             stencil: plan.stencil,
             stencil_clear_value: setup.frame.stencil_clear_value,
-            multisample: setup.multisample(plan.dimensions.attachment, plan.raster.samples)?,
+            multisample: targets.multisample,
             oit: self.oit,
             extent: plan.dimensions.extent,
             attachment_extent: plan.dimensions.attachment,
-            color: setup.color_target(plan.dimensions.attachment)?,
-            depth: setup.depth_target(plan.dimensions.attachment)?,
+            color: targets.color,
+            depth: targets.depth,
             color_read: setup.readback(plan.dimensions.bytes)?,
             depth_read: setup.readback(plan.dimensions.bytes)?,
             draws: self.draws,

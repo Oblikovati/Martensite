@@ -201,6 +201,7 @@ mod fixed_vertex_layout;
 mod fixed_vertex_sources;
 mod frame;
 mod frame_draw_presentation;
+mod frame_targets;
 #[cfg(feature = "command-state-diagnostics")]
 mod geometry_command_diagnostic;
 mod geometry_residency;
@@ -407,7 +408,9 @@ impl VulkanRenderer {
                 },
             ),
         )?;
-        self.runtime.image_memory.sample_frame();
+        self.runtime
+            .image_memory
+            .sample_frame(resources.attachment_bytes());
         Ok(resources)
     }
     /// Image bytes for frame statistics; `renderer.image_memory().sampled_image_bytes`.

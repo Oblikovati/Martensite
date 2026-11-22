@@ -151,7 +151,7 @@ impl<'a> OitCommandRecorder<'a> {
             .expect("allocated OIT batch resources")
     }
     fn record_batch(&mut self, layers: Range<usize>) {
-        match &self.pass().targets {
+        match self.pass().targets.as_ref() {
             OitTargets::Weighted {
                 accumulation,
                 coverage,
@@ -185,7 +185,7 @@ impl<'a> OitCommandRecorder<'a> {
         for iteration in 0..iterations {
             self.peel_iteration(layers.clone(), iteration);
         }
-        let OitTargets::Peeling { back, .. } = &self.pass().targets else {
+        let OitTargets::Peeling { back, .. } = self.pass().targets.as_ref() else {
             unreachable!()
         };
         self.transition(&[back], vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL);
@@ -206,7 +206,7 @@ impl<'a> OitCommandRecorder<'a> {
         );
     }
     fn initialize_peeling_images(&mut self) {
-        let OitTargets::Peeling { ping, pong, back } = &self.pass().targets else {
+        let OitTargets::Peeling { ping, pong, back } = self.pass().targets.as_ref() else {
             unreachable!()
         };
         self.clear_peeling(ping, [-1e15, -1e15, 0., 0.]);
@@ -215,7 +215,7 @@ impl<'a> OitCommandRecorder<'a> {
         self.clear_colors(&[color_attachment(back.view, [0.; 4], true)]);
     }
     fn peeling_images(&self, index: usize) -> &'a [TargetImage; 3] {
-        let OitTargets::Peeling { ping, pong, .. } = &self.pass().targets else {
+        let OitTargets::Peeling { ping, pong, .. } = self.pass().targets.as_ref() else {
             unreachable!()
         };
         if index == 0 { ping } else { pong }
