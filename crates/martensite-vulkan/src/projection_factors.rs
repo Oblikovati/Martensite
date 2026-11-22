@@ -54,19 +54,11 @@ impl RenderProjectionFactors {
         m: [f32; 16],
         camera: &martensite_tkservice::graphic3d::Graphic3dCamera,
     ) -> Option<Self> {
-        // One locked source snapshot prevents a scale/view ABA from inventing rigid provenance.
-        Self::retained_camera_snapshot(p, v, m, camera.copy_members())
-    }
-    fn retained_camera_snapshot(
-        p: [f32; 16],
-        v: [f32; 16],
-        m: [f32; 16],
-        snapshot: martensite_tkservice::graphic3d::Graphic3dCamera,
-    ) -> Option<Self> {
         let mut factors = Self::retained(p, v, m)?;
-        let scale = snapshot.axial_scale();
+        // Read both values together so a scale/view ABA cannot invent rigid provenance.
+        let (orientation, scale) = camera.orientation_with_axial_scale_f();
         factors.camera_isometry = [scale.x(), scale.y(), scale.z()] == [1.; 3]
-            && v.map(f32::to_bits) == snapshot.orientation_matrix_f().data().map(f32::to_bits);
+            && v.map(f32::to_bits) == orientation.data().map(f32::to_bits);
         Some(factors)
     }
     pub(crate) fn has_camera_isometry(&self) -> bool {
@@ -247,13 +239,9 @@ mod tests {
         let (camera, snapshot, view) = mutated_camera_and_snapshot();
         assert_ne!(camera.orientation_matrix_f().data(), view);
         assert_eq!(snapshot.orientation_matrix_f().data(), view);
-        let factors = RenderProjectionFactors::retained_camera_snapshot(
-            identity(),
-            view,
-            identity(),
-            snapshot,
-        )
-        .unwrap();
+        let factors =
+            RenderProjectionFactors::retained_camera(identity(), view, identity(), &snapshot)
+                .unwrap();
         assert!(factors.has_camera_isometry());
         let live = RenderProjectionFactors::retained_camera(identity(), view, identity(), &camera)
             .unwrap();

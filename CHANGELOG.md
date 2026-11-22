@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added `Graphic3dCamera::orientation_with_axial_scale_f` to read the float view matrix and its axial scale together. Vulkan uses it to avoid copying the camera for each placement (#594).
+
 - Added Vulkan redraw counters for buffers, images, memory allocations, pipelines, descriptor sets, submissions, bytes uploaded and read back, and CPU time by phase. `Graphic3dRenderView::last_frame_work` and `Graphic3dRenderDriver::device_work` return `RenderDeviceWork`, which reports geometry buffers and geometry upload bytes separately from the device totals (#594).
 
 - Added canonical single-chart conical normal extrusion for solved polynomial profiles with holes, using shared keyed construction and returning separate reference, storage and measure bounds, authored history and detached exports (#418).

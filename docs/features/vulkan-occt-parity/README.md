@@ -267,6 +267,20 @@ per frame. Three pairs of the transparent 1,000-draw scene measured 5.87 ms
 without reuse and 5.42 ms with it, with peak RSS 121620 and 121740 KiB. All
 paired scene checksums matched.
 
+## Camera snapshot measurements
+
+Vulkan checks whether a placement's world-view matrix matches the camera bit for bit
+and whether the camera has unit axial scale. It reads the two values under one lock
+using `Graphic3dCamera::orientation_with_axial_scale_f`. It previously copied the
+whole camera to make the same check.
+
+Against `983bbd2a` on the same host and CPUs 8–15, the connected 30,000-part
+frame improved from 170.035 to 162.471 ms across seven alternating pairs. Scene
+extraction fell from 110.353 to 105.715 ms and peak process RSS from 310,364 to
+310,068 KiB. This comparison used the Vulkan benchmark on both sides. A separate
+10-frame run against OCCT measured 167.082 ms for Vulkan and 11.408 ms for OCCT,
+so the assembly parity gate remains open.
+
 ## Immediate redraw measurements
 
 The first immediate redraw establishes the main color and depth at the boundary

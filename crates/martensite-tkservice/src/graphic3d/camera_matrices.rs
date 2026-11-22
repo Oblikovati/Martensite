@@ -8,7 +8,7 @@ use super::{
     Graphic3dCamera, Graphic3dCameraFocusType, Graphic3dCameraIodType, Graphic3dWorldViewProjState,
 };
 use martensite_tkernel::ncollection::{ElementCast, Mat4, Vec3, Vec4};
-use martensite_tkmath::gp::Point3;
+use martensite_tkmath::gp::{Point3, Xyz};
 
 /// The projection parameters of a camera state (IOD and focus resolved in world units).
 fn projection_params(s: &Graphic3dCameraState) -> ProjectionParams {
@@ -99,6 +99,24 @@ fn matrices_f(
     })
 }
 
+// A valid orientation needs only a read lock. The cold path rechecks after upgrading.
+fn read_float_orientation<R>(
+    camera: &Graphic3dCamera,
+    read: impl Fn(&Graphic3dCameraState) -> R,
+) -> R {
+    if let Some(value) = camera.read(|s| s.matrices_f.is_orientation_valid.then(|| read(s))) {
+        return value;
+    }
+    camera.write(|s| {
+        if !s.matrices_f.is_orientation_valid {
+            let mut matrices = s.matrices_f;
+            update_orientation(s, &mut matrices);
+            s.matrices_f = matrices;
+        }
+        read(s)
+    })
+}
+
 /// The matrices and their state.
 impl Graphic3dCamera {
     /// The world-to-view matrix; `camera.orientation_matrix()`.
@@ -107,7 +125,12 @@ impl Graphic3dCamera {
     }
     /// The world-to-view matrix in float; `camera.orientation_matrix_f()`.
     pub fn orientation_matrix_f(&self) -> Mat4<f32> {
-        matrices_f(self, update_orientation).orientation
+        read_float_orientation(self, |s| s.matrices_f.orientation)
+    }
+    /// Read the float view matrix and the axial scale that produced it under one lock.
+    /// Example: `let (view, axial_scale) = camera.orientation_with_axial_scale_f();`
+    pub fn orientation_with_axial_scale_f(&self) -> (Mat4<f32>, Xyz) {
+        read_float_orientation(self, |s| (s.matrices_f.orientation, s.axial_scale))
     }
     /// The (mono) projection matrix; `camera.projection_matrix()`.
     pub fn projection_matrix(&self) -> Mat4<f64> {
@@ -274,5 +297,48 @@ impl Graphic3dCamera {
     pub fn convert_view_to_world(&self, point: &Point3) -> Point3 {
         inverse(&self.orientation_matrix())
             .map_or(Point3::new(0.0, 0.0, 0.0), |inv| transformed(point, &[inv]))
+    }
+}
+
+#[cfg(test)]
+mod orientation_snapshot_tests {
+    use super::*;
+
+    #[test]
+    fn float_orientation_snapshot_tracks_axial_scale_across_cache_invalidation() {
+        let camera = Graphic3dCamera::default();
+        let unit = Xyz::new(1., 1., 1.);
+        let scaled = Xyz::new(2., 1., 1.);
+        let (original, original_scale) = camera.orientation_with_axial_scale_f();
+        assert_eq!(original_scale, unit);
+        assert_eq!(original, camera.orientation_matrix_f());
+
+        camera.set_axial_scale(scaled).unwrap();
+        let (updated, updated_scale) = camera.orientation_with_axial_scale_f();
+        assert_eq!(updated_scale, scaled);
+        assert_ne!(updated, original);
+        assert_eq!(updated, camera.orientation_matrix_f());
+        assert_eq!(camera.orientation_with_axial_scale_f(), (updated, scaled));
+    }
+
+    #[test]
+    fn orientation_snapshot_keeps_the_matrix_and_scale_together_across_writes() {
+        let camera = Graphic3dCamera::default();
+        let unit = Xyz::new(1., 1., 1.);
+        let scaled = Xyz::new(2., 1., 1.);
+        let unscaled_matrix = camera.orientation_matrix_f();
+        camera.set_axial_scale(scaled).unwrap();
+        let scaled_matrix = camera.orientation_matrix_f();
+        std::thread::scope(|scope| {
+            scope.spawn(|| {
+                for scale in [unit, scaled].into_iter().cycle().take(4096) {
+                    camera.set_axial_scale(scale).unwrap();
+                }
+            });
+            for _ in 0..4096 {
+                let snapshot = camera.orientation_with_axial_scale_f();
+                assert!(snapshot == (unscaled_matrix, unit) || snapshot == (scaled_matrix, scaled));
+            }
+        });
     }
 }
