@@ -136,10 +136,17 @@ in draw order and used the existing directional Phong shader. The resulting draw
 kept all 496,800 triangles and exactly matched every color and depth byte. It took
 0.103 to 0.110 ms per frame after the merged geometry was prepared.
 
-The timings cover fixed-angle replay. A retained implementation must still handle
-camera changes, live visibility and style edits, and preserve the mutable range and
-resource lifetime guarantees. Measure the scope of reuse across the orbit and replace
-the corresponding per-draw device allocations when admitting a batch.
+A moving-orbit probe built the batch once and reused its geometry for the next 47
+redraws. Color and depth matched the unbatched renderer at four sampled angles.
+A live material edit made the batch ineligible. Hiding the edited object rebuilt
+the batch, and both edits matched the unbatched images. Building the live scene
+and checking the assembled draws still took 1.061 ms per frame. The full probe
+took 1.204 ms, including 0.003 ms for GPU draw preparation.
+
+Refreshing the shared transform and lights while holding the scene inputs fixed took
+0.108 ms for the moving orbit. A retained implementation must validate live inputs
+before lowering the draws, preserve mutable ranges and resource lifetimes, and
+replace the corresponding per-draw device allocations when admitting a batch.
 
 ## Phase 2: a frame pipeline without stalls
 
