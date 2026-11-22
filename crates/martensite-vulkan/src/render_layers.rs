@@ -152,15 +152,26 @@ pub(crate) fn split_blended_layer(mut layer: RenderLayer) -> (RenderLayer, Optio
     } else {
         blend_membership(&layer.draws, first_blended)
     };
-    let (blended, opaque): (Vec<_>, Vec<_>) = std::mem::take(&mut layer.draws)
-        .into_iter()
-        .partition(PrimitiveDraw::is_surface_blended);
+    let (blended, opaque) = partition_blended(std::mem::take(&mut layer.draws), first_blended);
     let transparent =
         (!blended.is_empty()).then(|| layer.stencil_partition_branch(blended, &deferred, true));
     (
         layer.stencil_partition_branch(opaque, &deferred, false),
         transparent,
     )
+}
+/// The blended and the opaque draws, in order. A layer of only blended draws moves as one
+/// vector; partitioning copied every 1.5 KB draw (#594).
+fn partition_blended(
+    draws: Vec<PrimitiveDraw>,
+    first_blended: usize,
+) -> (Vec<PrimitiveDraw>, Vec<PrimitiveDraw>) {
+    if first_blended == 0 && draws.iter().all(PrimitiveDraw::is_surface_blended) {
+        return (draws, Vec::new());
+    }
+    draws
+        .into_iter()
+        .partition(PrimitiveDraw::is_surface_blended)
 }
 fn blend_membership(draws: &[PrimitiveDraw], first_blended: usize) -> Vec<bool> {
     let mut deferred = Vec::with_capacity(draws.len());
@@ -257,6 +268,24 @@ mod tests {
             identity,
         )
         .expect("a valid triangle draw")
+    }
+
+    #[test]
+    fn an_all_blended_layer_moves_without_partitioning_and_a_mixed_one_keeps_order() {
+        let blended = || {
+            let mut draw = triangle();
+            draw.surface_blend = true;
+            draw
+        };
+        let draws = vec![blended(), blended()];
+        let address = draws.as_ptr();
+        let (moved, opaque) = partition_blended(draws, 0);
+        assert_eq!((moved.as_ptr(), moved.len(), opaque.len()), (address, 2, 0));
+        let mut mixed = vec![triangle(), blended(), triangle()];
+        mixed[2].mirrored = true;
+        let (blend, rest) = partition_blended(mixed, 1);
+        assert_eq!((blend.len(), rest.len()), (1, 2));
+        assert!(blend[0].surface_blend && !rest[0].mirrored && rest[1].mirrored);
     }
 
     #[test]

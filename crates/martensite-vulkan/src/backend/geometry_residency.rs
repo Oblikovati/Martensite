@@ -1,9 +1,10 @@
 //! Resident streams become visible only after their frame's transfer completes.
+use super::address_hasher::AddressMap;
 use super::geometry_buffer::{GeometryBuffer, GeometryBufferPool};
 use super::runtime::VulkanRuntime;
 use crate::{PrimitiveDraw, PrimitiveTopology, RenderVertex};
 use ash::vk;
-use std::collections::{HashMap, VecDeque, hash_map::Entry};
+use std::collections::{VecDeque, hash_map::Entry};
 use std::num::NonZeroUsize;
 use std::sync::{
     Arc, Mutex, Weak,
@@ -230,7 +231,7 @@ const MAX_RESIDENT_BYTES: u64 = 2 << 30;
 
 #[derive(Default)]
 struct RetainedGeometry {
-    entries: HashMap<GeometryKey, GeometryLease>,
+    entries: AddressMap<GeometryKey, GeometryLease>,
     check_order: VecDeque<GeometryKey>,
     bytes: u64,
 }
@@ -361,7 +362,7 @@ pub(super) struct FrameGeometryResidency {
 
 #[derive(Default)]
 struct PendingGeometry {
-    leases: HashMap<GeometryKey, GeometryLease>,
+    leases: AddressMap<GeometryKey, GeometryLease>,
     order: Vec<GeometryKey>,
 }
 

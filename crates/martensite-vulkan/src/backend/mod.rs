@@ -1,4 +1,5 @@
 //! Only this private boundary uses Ash or Vulkan handles.
+mod address_hasher;
 mod alpha_write_pipelines;
 mod depth_bias_device;
 mod depth_bias_record;
