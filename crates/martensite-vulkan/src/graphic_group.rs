@@ -426,13 +426,18 @@ fn lower_group_surface(
         aspects,
         context,
     )?;
+    let line_strip = primitive.kind == Graphic3dTypeOfPrimitiveArray::Polylines;
+    let color_array = !highlighted
+        && primitive
+            .attributes
+            .attribute_data(Graphic3dTypeOfAttribute::Color)
+            .is_some();
     for draw in &mut lowered {
-        draw.source_line_strip = primitive.kind == Graphic3dTypeOfPrimitiveArray::Polylines;
-        draw.source_color_array = !highlighted
-            && primitive
-                .attributes
-                .attribute_data(Graphic3dTypeOfAttribute::Color)
-                .is_some();
+        // Writing only changed flags keeps a cached template's body shared (#594).
+        if (draw.source_line_strip, draw.source_color_array) != (line_strip, color_array) {
+            draw.source_line_strip = line_strip;
+            draw.source_color_array = color_array;
+        }
     }
     crate::retained_lighting::apply_surface_lighting(&mut lowered, primitive, aspects, context)?;
     crate::retained_user_program::apply_user_program(

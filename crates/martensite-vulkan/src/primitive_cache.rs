@@ -260,8 +260,14 @@ impl RetainedPrimitive {
                 .cloned()
                 .map(|mut draw| {
                     draw.clip_transform = matrix;
-                    draw.line_style = if point.is_some() { None } else { line };
-                    draw.point_style = point.cloned();
+                    // Writing only changed styles keeps the template's body shared (#594).
+                    let line = if point.is_some() { None } else { line };
+                    if draw.line_style != line {
+                        draw.line_style = line;
+                    }
+                    if draw.point_style.as_ref() != point {
+                        draw.point_style = point.cloned();
+                    }
                     draw
                 })
                 .collect(),

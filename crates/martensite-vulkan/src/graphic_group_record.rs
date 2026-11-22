@@ -55,6 +55,10 @@ pub(super) struct GroupDrawRecord {
     _commands: Weak<Vec<GroupCommand>>,
     /// Keeps the recorded base aspects alive for the same reason.
     _aspects: Handle<dyn Graphic3dAspectsSource>,
+    /// The last pass that kept or replayed this record. Another lowering in the same pass is
+    /// another instance of the group (a connected presentation draws one group under many
+    /// transforms), which must not replace the record on every instance.
+    pass: std::sync::atomic::AtomicU64,
     #[cfg(test)]
     replays: std::sync::atomic::AtomicUsize,
 }
@@ -72,6 +76,10 @@ pub(super) struct RecordKey {
 pub(super) struct RecordScalars {
     commands: usize,
     model: [u64; 16],
+    /// Whether the structure has no transformation and the group an identity one: equal
+    /// model matrices still leave different model stacks for the next group otherwise
+    /// (`group_flipping::can_keep_implicit_stack`).
+    implicit_stack: bool,
     closed: bool,
     perspective: bool,
     extent: Option<[u32; 2]>,
@@ -127,28 +135,23 @@ impl Graphic3dDrawGroup {
         let persistence =
             extent.map(|raster| crate::render_scale::persistence_extent(raster, rendering));
         let scene = (structure, rendering, clipping, pass, persistence);
-        let Some((probe, current)) = self.record_inputs(scene, camera, carry) else {
-            return self.lower_in_structure(
+        let lower = |carry: &mut FlipCarry| {
+            self.lower_in_structure(
                 camera,
                 extent,
                 structure,
                 rendering,
                 clipping,
                 (pass, carry),
-            );
+            )
+        };
+        let Some((probe, current)) = self.record_inputs(scene, camera, carry) else {
+            return lower(carry);
         };
         if let Some(replayed) = self.recorded_program(&probe, &current, pass) {
             #[cfg(feature = "draw-record-verification")]
             return verified_replay(replayed, pass, || {
-                self.lower_in_structure(
-                    camera,
-                    extent,
-                    structure,
-                    rendering,
-                    clipping,
-                    (pass, carry),
-                )
-                .map(|program| (program, carry.clone()))
+                lower(carry).map(|program| (program, carry.clone()))
             });
             #[cfg(not(feature = "draw-record-verification"))]
             {
@@ -158,17 +161,15 @@ impl Graphic3dDrawGroup {
                 return Ok(program);
             }
         }
-        // Read before lowering: a write that ends during the lowering must not match later.
-        let sources = recorded_sources(&probe.aspects, &probe.commands);
+        // Only a group's first lowering in a pass, after another pass lowered it, may keep a
+        // record; the sources are read before lowering, so a write that ends during the
+        // lowering cannot match later.
+        let sources = self
+            .lowered_before(pass.record_frame().serial())
+            .then(|| recorded_sources(&probe.aspects, &probe.commands))
+            .flatten();
         let before = pass.skipped();
-        let program = self.lower_in_structure(
-            camera,
-            extent,
-            structure,
-            rendering,
-            clipping,
-            (pass, carry),
-        )?;
+        let program = lower(carry)?;
         let skipped = pass.skipped().saturating_sub(before);
         if let Some((aspects, geometry)) = sources {
             let key = RecordKey {
@@ -176,7 +177,7 @@ impl Graphic3dDrawGroup {
                 aspects,
                 geometry,
             };
-            let kept = (key, probe.rendering, &current, pass);
+            let kept = (key, probe.rendering, &current.get(), pass);
             self.keep_record(kept, &program, (skipped, carry.clone()));
         }
         Ok(program)
@@ -188,14 +189,14 @@ impl Graphic3dDrawGroup {
         scene: ProbeScene<'a>,
         camera: &Graphic3dCamera,
         carry: &FlipCarry,
-    ) -> Option<(RecordProbe<'a>, RecordCamera)> {
+    ) -> Option<(RecordProbe<'a>, LazyCamera<'a>)> {
         if *carry != FlipCarry::default() {
             return None;
         }
         let model = crate::persistent_transform::model_transform(self, scene.0);
         let probe = self.record_probe(scene, camera, &model)?;
         let parts = scene.3.record_frame().camera_parts(camera).ok()?;
-        Some((probe, RecordCamera::current(&parts, scene.0, model)))
+        Some((probe, LazyCamera::new(parts, scene.0, model)))
     }
 
     /// The record inputs of this group, or `None` when its lowering reads more than ordinary
@@ -217,6 +218,8 @@ impl Graphic3dDrawGroup {
         let scalars = RecordScalars {
             commands: commands.identity()?.get(),
             model: model.data().map(f64::to_bits),
+            implicit_stack: structure.trsf.is_null()
+                && self.transformation().form() == martensite_tkmath::gp::TransformForm::Identity,
             closed,
             perspective: !camera.is_orthographic(),
             extent,
@@ -242,7 +245,7 @@ impl Graphic3dDrawGroup {
     fn recorded_program(
         &self,
         probe: &RecordProbe<'_>,
-        camera: &RecordCamera,
+        camera: &LazyCamera<'_>,
         pass: &RenderElementPass,
     ) -> Option<(StencilProgram, usize, FlipCarry)> {
         let slot = self.draw_record.read();
@@ -256,7 +259,12 @@ impl Graphic3dDrawGroup {
             return None;
         }
         let mut program = record.program.clone();
+        let camera = camera.get();
         program.draws.iter_mut().for_each(|draw| camera.patch(draw));
+        record.pass.store(
+            pass.record_frame().serial(),
+            std::sync::atomic::Ordering::Relaxed,
+        );
         #[cfg(test)]
         record
             .replays
@@ -273,9 +281,7 @@ impl Graphic3dDrawGroup {
         program: &StencilProgram,
         (skipped, carry): (usize, FlipCarry),
     ) {
-        if !self.lowered_before(pass.record_frame().serial())
-            || !program.draws.iter().all(|draw| camera.certifies(draw))
-        {
+        if !program.draws.iter().all(|draw| camera.certifies(draw)) {
             return;
         }
         let (aspects, commands, _) = self.retained_commands();
@@ -295,6 +301,7 @@ impl Graphic3dDrawGroup {
             carry,
             _commands: witness,
             _aspects: aspects,
+            pass: pass.record_frame().serial().into(),
             #[cfg(test)]
             replays: Default::default(),
         }));
@@ -302,14 +309,17 @@ impl Graphic3dDrawGroup {
 }
 
 impl Graphic3dDrawGroup {
-    /// Whether another pass lowered the group before this one; the first lowering only
-    /// leaves the pass serial, since most groups lowered once are never lowered again.
+    /// Whether this is the group's first lowering in this pass and another pass lowered it
+    /// before. The first lowering only leaves the pass serial, since most groups lowered once
+    /// are never lowered again; a second lowering in the same pass is another instance.
     fn lowered_before(&self, serial: u64) -> bool {
         let mut slot = self.draw_record.write();
-        match *slot {
-            RecordSlot::Lowered(previous) if previous != serial => true,
-            RecordSlot::Kept(_) => true,
-            _ => {
+        match &*slot {
+            RecordSlot::Lowered(previous) => *previous != serial,
+            RecordSlot::Kept(record) => {
+                record.pass.load(std::sync::atomic::Ordering::Relaxed) != serial
+            }
+            RecordSlot::Empty => {
                 *slot = RecordSlot::Lowered(serial);
                 false
             }
@@ -442,6 +452,34 @@ fn plain_aspects(base: &Handle<dyn Graphic3dAspectsSource>, commands: &[GroupCom
             fields.program.is_null() && fields.texture_set.is_null() && !fields.to_map_texture
         })
     })
+}
+
+/// The camera fields of a group, computed only when a replay or a kept record needs them.
+pub(super) struct LazyCamera<'a> {
+    parts: RecordCameraParts,
+    structure: &'a Graphic3dCStructureFields,
+    model: Mat4<f64>,
+    fields: std::cell::OnceCell<RecordCamera>,
+}
+
+impl<'a> LazyCamera<'a> {
+    fn new(
+        parts: RecordCameraParts,
+        structure: &'a Graphic3dCStructureFields,
+        model: Mat4<f64>,
+    ) -> Self {
+        Self {
+            parts,
+            structure,
+            model,
+            fields: std::cell::OnceCell::new(),
+        }
+    }
+    fn get(&self) -> RecordCamera {
+        *self
+            .fields
+            .get_or_init(|| RecordCamera::current(&self.parts, self.structure, self.model))
+    }
 }
 
 impl RecordCamera {

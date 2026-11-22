@@ -275,7 +275,10 @@ impl PrimitiveDraw {
     }
     /// Retain explicit native offset state; `draw.with_polygon_offset(RenderPolygonOffset::new(1, 1., 1.)?)`.
     pub fn with_polygon_offset(mut self, offset: crate::RenderPolygonOffset) -> Self {
-        self.polygon_offset = Some(offset);
+        // An unchanged offset leaves a shared body uncopied (#594).
+        if self.polygon_offset != Some(offset) {
+            self.polygon_offset = Some(offset);
+        }
         self
     }
     /// Read optional ordered offset state; `draw.polygon_offset()`.

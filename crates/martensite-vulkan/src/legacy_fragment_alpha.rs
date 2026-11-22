@@ -30,7 +30,11 @@ pub(crate) fn capture_material_alpha(
     draw: &mut PrimitiveDraw,
     aspects: &dyn Graphic3dAspectsSource,
 ) {
-    draw.native_material_cutoff = native_material_alpha_cutoff(aspects);
+    let cutoff = native_material_alpha_cutoff(aspects);
+    // An unchanged cutoff leaves a cached template's body shared (#594).
+    if draw.native_material_cutoff != cutoff {
+        draw.native_material_cutoff = cutoff;
+    }
 }
 fn native_material_alpha_cutoff(aspects: &dyn Graphic3dAspectsSource) -> Option<f32> {
     let interior = aspects.interior_style();

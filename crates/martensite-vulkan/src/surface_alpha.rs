@@ -6,13 +6,24 @@ pub(crate) fn apply_surface_alpha(draw: &mut PrimitiveDraw, aspects: &dyn Graphi
     if draw.topology() != PrimitiveTopology::Triangles || draw.textured_style.is_some() {
         return;
     }
-    draw.surface_blend = crate::style::surface_uses_blending(aspects);
-    draw.surface_forced_blend = aspects.alpha_mode() == Graphic3dAlphaMode::MaskBlend;
-    draw.surface_cutoff = matches!(
+    let blend = crate::style::surface_uses_blending(aspects);
+    let forced = aspects.alpha_mode() == Graphic3dAlphaMode::MaskBlend;
+    let cutoff = matches!(
         aspects.alpha_mode(),
         Graphic3dAlphaMode::Mask | Graphic3dAlphaMode::MaskBlend
     )
     .then_some(aspects.alpha_cutoff());
+    // Writing only changed state keeps a cached template's body shared (#594).
+    if (
+        draw.surface_blend,
+        draw.surface_forced_blend,
+        draw.surface_cutoff,
+    ) != (blend, forced, cutoff)
+    {
+        draw.surface_blend = blend;
+        draw.surface_forced_blend = forced;
+        draw.surface_cutoff = cutoff;
+    }
 }
 #[cfg(test)]
 mod tests {

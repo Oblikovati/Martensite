@@ -434,13 +434,13 @@ fn layer_program(
     inputs: &StructureInputs<'_>,
     pass: &RenderElementPass,
 ) -> Result<crate::stencil_program::StencilProgram, RenderError> {
-    let mut programs = Vec::new();
+    let mut program = crate::stencil_program::StencilProgram::default();
     for priority in layer.array_of_structures() {
         for weak in priority.iter() {
-            programs.push(structure_draws(&weak.upgrade(), inputs, pass)?);
+            program.append(structure_draws(&weak.upgrade(), inputs, pass)?);
         }
     }
-    Ok(crate::stencil_program::StencilProgram::concat(programs))
+    Ok(program)
 }
 fn structure_draws(
     structure: &Handle<dyn Graphic3dCStructure>,

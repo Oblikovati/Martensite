@@ -49,6 +49,33 @@ impl RecordScene {
             )
             .unwrap()
     }
+    /// The draws of one lowering in `pass`.
+    fn draws_in(
+        &self,
+        pass: &crate::render_element_pass::RenderElementPass,
+    ) -> Vec<crate::PrimitiveDraw> {
+        let cstructure = self.structure.cstructure();
+        let fields = cstructure.cstructure_base().fields.read();
+        let clipping = Handle::default();
+        self.group
+            .program_in_structure(
+                &self.camera,
+                Some([64, 64]),
+                &fields,
+                &self.rendering,
+                &clipping,
+                (pass, &mut Default::default()),
+            )
+            .unwrap()
+            .draws
+    }
+    fn translate(&self, x: f64) {
+        let mut trsf = martensite_tkmath::gp::Transform3::default();
+        trsf.set_translation(martensite_tkmath::gp::Vector3::new(x, 0., 0.));
+        let datum = Handle::new(martensite_tkmath::toploc::Datum3::new(trsf));
+        let cstructure = self.structure.cstructure();
+        cstructure.cstructure_base().fields.write().trsf = datum;
+    }
     /// Lower twice, so the second pass keeps a record; the first only notes its pass.
     fn recorded(&self) -> Vec<crate::PrimitiveDraw> {
         self.draws();
@@ -176,4 +203,31 @@ fn a_group_lowered_by_one_pass_keeps_no_record() {
         *scene.group.draw_record.read(),
         super::RecordSlot::Lowered(_)
     ));
+}
+
+#[test]
+fn another_instance_in_the_same_pass_does_not_replace_the_record() {
+    use crate::render_element_pass::RenderElementPass;
+    let scene = RecordScene::new();
+    scene.recorded();
+    let pass = RenderElementPass::unfiltered();
+    scene.draws_in(&pass);
+    assert_eq!(scene.replays(), Some(1));
+    scene.translate(5.);
+    let instance = scene.draws_in(&pass);
+    let cstructure = scene.structure.cstructure();
+    cstructure.cstructure_base().fields.write().trsf = Handle::default();
+    assert_eq!(
+        scene.replays(),
+        Some(1),
+        "the instance lowered without a new record"
+    );
+    scene.draws();
+    assert_eq!(
+        scene.replays(),
+        Some(2),
+        "the next pass replays the first instance"
+    );
+    scene.translate(5.);
+    assert_eq!(instance, scene.lowered_again());
 }

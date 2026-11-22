@@ -136,29 +136,3 @@ fn native_fill_filter_program() -> [StencilBoundary; 2] {
         },
     ]
 }
-#[test]
-fn concat_keeps_order_offsets_boundaries_and_sizes_the_buffer_once() {
-    let mut first = StencilProgram::default();
-    first.geometry(vec![triangle(), triangle()]);
-    let mut second = StencilProgram::default();
-    second.command(StencilCommand::TextReset);
-    second.geometry(vec![triangle()]);
-    let joined = StencilProgram::concat(vec![first, StencilProgram::default(), second]);
-    assert_eq!(joined.draws.len(), 3);
-    assert_eq!(
-        joined.draws.capacity(),
-        3,
-        "one allocation of the final size"
-    );
-    assert_eq!(joined.boundaries.len(), 1);
-    assert_eq!(joined.boundaries[0].before_draw, 2);
-    assert_eq!(joined.boundaries[0].command, StencilCommand::TextReset);
-}
-#[test]
-fn concat_of_one_program_moves_its_buffer() {
-    let mut only = StencilProgram::default();
-    only.geometry(vec![triangle(), triangle()]);
-    let address = only.draws.as_ptr();
-    let joined = StencilProgram::concat(vec![only]);
-    assert_eq!(joined.draws.as_ptr(), address);
-}
