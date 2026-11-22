@@ -56,16 +56,17 @@ pub(super) fn record_frame(
     super::window_depth_status::host_barrier(runtime, command, resources);
 }
 /// Copy the colour and depth attachments, left in `TRANSFER_SRC_OPTIMAL` by their frame, into
-/// host buffers; `record_attachment_reads(rt, command, [&color, &depth], buffers, extent)`.
+/// host buffers; a `None` read is skipped;
+/// `record_attachment_reads(rt, command, [Some((&color, buffer)), None], extent)`.
 pub(super) fn record_attachment_reads(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
-    [color, depth]: [&TargetImage; 2],
-    [color_buffer, depth_buffer]: [vk::Buffer; 2],
+    reads: [Option<(&TargetImage, vk::Buffer)>; 2],
     extent: vk::Extent2D,
 ) {
-    copy_attachment(runtime, command, color, color_buffer, extent);
-    copy_attachment(runtime, command, depth, depth_buffer, extent);
+    for (image, buffer) in reads.into_iter().flatten() {
+        copy_attachment(runtime, command, image, buffer, extent);
+    }
     sync::host_barrier(runtime, command);
 }
 pub(super) fn image_barrier(

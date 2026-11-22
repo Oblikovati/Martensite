@@ -83,13 +83,15 @@ impl DriverBackend {
             Self::Injected(_) => Ok(()),
         }
     }
-    /// Copy a deferred frame's images to the host; `backend.read_frame(&readback)?`.
+    /// Copy the chosen images of a deferred frame to the host;
+    /// `backend.read_frame(&readback, CapturePlanes::Color)?`.
     pub fn read_frame(
         &mut self,
         readback: &crate::backend::FrameReadback,
+        planes: crate::backend::CapturePlanes,
     ) -> Result<FrameCapture, RenderError> {
         match self {
-            Self::Vulkan(device) => device.read_frame(readback),
+            Self::Vulkan(device) => device.read_frame_planes(readback, planes),
             Self::Injected(_) => Err(crate::error::rejected(
                 "injected backend",
                 "the Vulkan device that rendered the frame",

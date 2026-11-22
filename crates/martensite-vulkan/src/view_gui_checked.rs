@@ -86,15 +86,14 @@ impl Graphic3dRenderView {
         let target = self.require_native_target(Redraw);
         reconcile_native_target(outcome, target)
     }
-    pub(super) fn checked_gui_capture(&self) -> Result<FrameCapture, RenderError> {
+    pub(super) fn checked_gui_publication(&self) -> FramePublication {
         let outcome = self.recorded_gui_outcome();
         if let Err(target) = self.require_capture_target() {
             let refused = reconcile_native_target(outcome, Err(target));
             *self.outcome.write() = Some(refused.clone());
-            return refused.and_then(|capture| capture.pixels(&self.device).cloned());
+            return refused;
         }
         self.capture_current_gui(outcome)
-            .and_then(|capture| capture.pixels(&self.device).cloned())
     }
     fn recorded_gui_outcome(&self) -> FramePublication {
         self.outcome

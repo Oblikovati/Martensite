@@ -5,7 +5,7 @@ use crate::{
     driver_backend::SharedRenderDevice,
     error::rejected,
     redraw_capture::RedrawCapture,
-    view_capture::{HostCaptureSteps, dump_capture, report_capture_failure},
+    view_capture::{HostCaptureSteps, report_capture_failure},
     view_forward::retained_view_methods,
     view_scene::frame_for_view,
     view_target::{RenderFrameBuffer, capture_extent},
@@ -410,36 +410,23 @@ impl Graphic3dCView for Graphic3dRenderView {
         self.invalidate_window_binding();
     }
     fn buffer_dump(&self, image: &ImagePixMap, kind: &Graphic3dBufferType) -> bool {
+        #[cfg(not(any(
+            feature = "raytrace-input-diagnostics",
+            feature = "command-state-diagnostics"
+        )))]
+        let copied = self.with_capture(crate::view_capture::dump_planes(kind), |capture| {
+            crate::view_capture::dump_capture(image, kind, capture)
+        });
+        // The diagnostics observe the dumped frame after the copy, so they keep an owned one.
         #[cfg(any(
             feature = "raytrace-input-diagnostics",
             feature = "command-state-diagnostics"
         ))]
-        let observed_serial = self
-            .redraw_serial
-            .load(std::sync::atomic::Ordering::Relaxed);
-        let capture = match self.capture() {
-            Ok(capture) => capture,
-            Err(error) => {
-                report_capture_failure(&error);
-                return false;
-            }
-        };
-        let copied = dump_capture(image, kind, &capture);
-        #[cfg(feature = "raytrace-input-diagnostics")]
-        self.observe_raytrace_buffer_dump(observed_serial, kind, &capture, copied);
-        #[cfg(feature = "command-state-diagnostics")]
-        crate::scene::replay_diagnostic::dumped(
-            self as *const Self as usize,
-            [
-                observed_serial,
-                self.redraw_serial
-                    .load(std::sync::atomic::Ordering::Relaxed),
-            ],
-            &format!("{kind:?}"),
-            copied,
-            &capture,
-        );
-        copied
+        let copied = self.observed_buffer_dump(image, kind);
+        copied.unwrap_or_else(|error| {
+            report_capture_failure(&error);
+            false
+        })
     }
     fn fbo_create(&self, width: i32, height: i32) -> Handle<dyn Transient> {
         RenderFrameBuffer::create(width, height, self.limit)

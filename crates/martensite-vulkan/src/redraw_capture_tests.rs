@@ -1,5 +1,6 @@
 //! A published redraw applies its host steps once and keeps the pixels it returned.
 use super::RedrawCapture;
+use crate::backend::CapturePlanes;
 use crate::driver_backend::{DriverBackend, RenderedFrame, SharedRenderDevice};
 use crate::view_capture::HostCaptureSteps;
 use crate::{FrameCapture, RenderBackend, RenderError, RenderFrame};
@@ -49,4 +50,24 @@ fn host_pixels_take_the_host_steps_once() {
     let again = capture.pixels(&device).unwrap();
     assert!(std::ptr::eq(first, again));
     assert_eq!(again.pixel(0, 0), Some([2, 2, 2, 255]));
+}
+
+#[test]
+fn a_colour_request_returns_host_pixels_with_their_depth() {
+    let capture = RedrawCapture::new(RenderedFrame::Ready(two_rows()), flipped_steps());
+    let device = injected_device();
+    let color = capture.planes(CapturePlanes::Color, &device).unwrap();
+    assert_eq!(color.rgba, vec![2, 2, 2, 255, 1, 1, 1, 255]);
+    assert_eq!(color.depth, vec![0.75, 0.25]);
+}
+
+#[test]
+fn colour_steps_flip_a_capture_without_depth() {
+    let mut capture = FrameCapture {
+        depth: Vec::new(),
+        ..two_rows()
+    };
+    flipped_steps().apply_color(&mut capture);
+    assert_eq!(capture.rgba, vec![2, 2, 2, 255, 1, 1, 1, 255]);
+    assert!(capture.depth.is_empty());
 }

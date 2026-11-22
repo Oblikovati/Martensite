@@ -37,8 +37,10 @@ pub(super) fn copy_samples(
     super::record::record_attachment_reads(
         runtime,
         command,
-        [&resources.color, &resources.depth],
-        [buffers.color.handle, buffers.depth.handle],
+        [
+            Some((&*resources.color, buffers.color.handle)),
+            Some((&*resources.depth, buffers.depth.handle)),
+        ],
         resources.attachment_extent,
     );
     copy_stencil(runtime, command, resources, &buffers.stencil);

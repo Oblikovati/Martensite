@@ -1,16 +1,31 @@
 //! Publication owns the last result and checks the accepted composition epoch.
 use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp, RetiredRedraw};
 use super::*;
+use crate::backend::CapturePlanes;
 impl Graphic3dRenderView {
     /// Read the last frame or its error; `render_view.capture()?` never conceals a failed redraw.
     pub fn capture(&self) -> Result<FrameCapture, RenderError> {
+        self.with_capture(CapturePlanes::ColorAndDepth, FrameCapture::clone)
+    }
+    /// Borrow the last frame's `planes` without copying them;
+    /// `view.with_capture(CapturePlanes::Color, |frame| frame.width)?`.
+    /// A dump copies straight from this borrow instead of cloning the colour and depth (#594).
+    pub(crate) fn with_capture<R>(
+        &self,
+        planes: CapturePlanes,
+        read: impl FnOnce(&FrameCapture) -> R,
+    ) -> Result<R, RenderError> {
+        let publication = self.capture_publication(planes)?;
+        publication.planes(planes, &self.device).map(read)
+    }
+    fn capture_publication(&self, planes: CapturePlanes) -> FramePublication {
         self.require_capture_lighting()?;
         if self.checked_gui_policy() && self.gui_layers.read().capture_stamp().extent.is_some() {
-            return self.checked_gui_capture();
+            return self.checked_gui_publication();
         }
-        self.legacy_gui_capture()
+        self.legacy_gui_publication(planes)
     }
-    fn legacy_gui_capture(&self) -> Result<FrameCapture, RenderError> {
+    fn legacy_gui_publication(&self, planes: CapturePlanes) -> FramePublication {
         self.require_capture_target()?;
         let extent = self.gui_capture_extent()?;
         let gui = self.gui_layers.read();
@@ -18,12 +33,12 @@ impl Graphic3dRenderView {
             gui.snapshot(extent)?;
         }
         let outcome = self
-            .clone_capture_outcome()
+            .read_capture_outcome(planes)
             .unwrap_or_else(|| Err(rejected("no redraw", "a successfully rendered view")));
         self.require_capture_target()?;
         outcome
     }
-    fn clone_capture_outcome(&self) -> Option<Result<FrameCapture, RenderError>> {
+    fn read_capture_outcome(&self, planes: CapturePlanes) -> Option<FramePublication> {
         #[cfg(feature = "command-state-diagnostics")]
         use std::sync::atomic::Ordering;
         let source = self.outcome.read();
@@ -31,19 +46,56 @@ impl Graphic3dRenderView {
         let serial = self.redraw_serial.load(Ordering::Relaxed);
         let snapshot = source.clone();
         drop(source);
-        // The first capture of a redraw reads its frame from the device (#594).
-        let output = snapshot.as_ref().map(|result| {
-            let capture = result.as_ref().map_err(Clone::clone)?;
-            capture.pixels(&self.device).cloned()
-        });
+        // The first capture of a redraw reads its frame from the device (#594), before the
+        // second target check, as the cloning capture did; the result stays cached.
+        if let Some(Ok(capture)) = &snapshot {
+            let _ = capture.planes(planes, &self.device);
+        }
         #[cfg(feature = "command-state-diagnostics")]
-        crate::scene::replay_diagnostic::cloned(
+        {
+            let output = snapshot.as_ref().map(|result| {
+                let capture = result.as_ref().map_err(Clone::clone)?;
+                capture.pixels(&self.device).cloned()
+            });
+            crate::scene::replay_diagnostic::cloned(
+                self as *const Self as usize,
+                serial,
+                output.as_ref().and_then(|result| result.as_ref().ok()),
+                &output,
+            );
+        }
+        snapshot
+    }
+    #[cfg(any(
+        feature = "raytrace-input-diagnostics",
+        feature = "command-state-diagnostics"
+    ))]
+    /// Dump an owned copy of the frame so the diagnostics can observe it after the copy.
+    pub(super) fn observed_buffer_dump(
+        &self,
+        image: &martensite_tkservice::image::ImagePixMap,
+        kind: &martensite_tkservice::graphic3d::Graphic3dBufferType,
+    ) -> Result<bool, RenderError> {
+        let observed_serial = self
+            .redraw_serial
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let capture = self.capture()?;
+        let copied = crate::view_capture::dump_capture(image, kind, &capture);
+        #[cfg(feature = "raytrace-input-diagnostics")]
+        self.observe_raytrace_buffer_dump(observed_serial, kind, &capture, copied);
+        #[cfg(feature = "command-state-diagnostics")]
+        crate::scene::replay_diagnostic::dumped(
             self as *const Self as usize,
-            serial,
-            output.as_ref().and_then(|result| result.as_ref().ok()),
-            &output,
+            [
+                observed_serial,
+                self.redraw_serial
+                    .load(std::sync::atomic::Ordering::Relaxed),
+            ],
+            &format!("{kind:?}"),
+            copied,
+            &capture,
         );
-        output
+        Ok(copied)
     }
     /// Render the current view and retain errors for void Graphic3d callbacks; `render_view.try_redraw()?`.
     pub fn try_redraw(&self) -> Result<(), RenderError> {

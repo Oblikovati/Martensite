@@ -27,6 +27,25 @@ fn a_frame_reads_its_attachments_only_when_asked() {
 }
 
 #[test]
+fn a_colour_read_copies_only_the_colour_attachment() {
+    let mut renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let readback = renderer.render_deferred(&frame([1., 0., 0., 1.])).unwrap();
+    let before = renderer.work_ledger().totals();
+    let color = renderer
+        .read_frame_planes(&readback, super::CapturePlanes::Color)
+        .unwrap();
+    let read = renderer.work_ledger().totals().since(&before);
+    assert_eq!(read.read_back_bytes, readback.attachment_bytes() as u64);
+    assert_eq!(read.buffers_created, 1);
+    assert!(color.depth.is_empty());
+    let full = renderer.read_frame(&readback).unwrap();
+    assert_eq!((color.width, color.height), (full.width, full.height));
+    assert_eq!(color.rgba, full.rgba);
+    assert_eq!(full.depth.len(), 12 * 10);
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
+#[test]
 fn a_held_frame_keeps_its_pixels_while_later_frames_render() {
     let mut renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
     let held = renderer.render_deferred(&frame([1., 0., 0., 1.])).unwrap();

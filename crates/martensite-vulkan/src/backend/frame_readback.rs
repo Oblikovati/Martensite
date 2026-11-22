@@ -23,10 +23,19 @@ pub(crate) struct FrameReadback {
     coordinates: AttachmentCoordinates,
 }
 
-/// The host buffers one readback copies the colour and depth attachments into.
+/// The attachments one readback copies; a colour dump skips the depth copy (#594).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum CapturePlanes {
+    /// Colour and depth, as `capture` returns them.
+    ColorAndDepth,
+    /// Colour only; the capture's depth stays empty.
+    Color,
+}
+
+/// The host buffers one readback copies the colour and, when read, depth attachments into.
 pub(super) struct ReadbackBuffers {
     pub color: DeviceBuffer,
-    pub depth: DeviceBuffer,
+    pub depth: Option<DeviceBuffer>,
 }
 
 impl FrameReadback {
@@ -52,7 +61,11 @@ impl FrameReadback {
     fn attachment_bytes(&self) -> usize {
         self.attachment_extent.width as usize * self.attachment_extent.height as usize * 4
     }
-    fn buffers(&self, runtime: &Arc<VulkanRuntime>) -> Result<ReadbackBuffers, RenderError> {
+    fn buffers(
+        &self,
+        runtime: &Arc<VulkanRuntime>,
+        planes: CapturePlanes,
+    ) -> Result<ReadbackBuffers, RenderError> {
         let bytes = self.attachment_bytes() as u64;
         let buffer = || {
             DeviceBuffer::new(
@@ -64,26 +77,32 @@ impl FrameReadback {
         };
         Ok(ReadbackBuffers {
             color: buffer()?,
-            depth: buffer()?,
+            depth: match planes {
+                CapturePlanes::ColorAndDepth => Some(buffer()?),
+                CapturePlanes::Color => None,
+            },
         })
     }
     fn record(&self, runtime: &VulkanRuntime, command: vk::CommandBuffer, into: &ReadbackBuffers) {
+        let color = (&*self.color, into.color.handle);
+        let depth = into
+            .depth
+            .as_ref()
+            .map(|buffer| (&*self.depth, buffer.handle));
         super::record::record_attachment_reads(
             runtime,
             command,
-            [&self.color, &self.depth],
-            [into.color.handle, into.depth.handle],
+            [Some(color), depth],
             self.attachment_extent,
         );
     }
     fn decode(&self, buffers: &ReadbackBuffers) -> Result<FrameCapture, RenderError> {
         let size = self.attachment_bytes();
         let rgba = self.logical_capture_rows(buffers.color.read(size)?)?;
-        let depth_bytes = self.logical_capture_rows(buffers.depth.read(size)?)?;
-        let depth = super::depth_equivalence::depth_plane(
-            self.depth.format,
-            depth_bytes.as_chunks::<4>().0,
-        );
+        let depth = match &buffers.depth {
+            Some(buffer) => self.decode_depth(buffer, size)?,
+            None => Vec::new(),
+        };
         let capture = FrameCapture {
             width: self.extent.width,
             height: self.extent.height,
@@ -93,6 +112,13 @@ impl FrameReadback {
         #[cfg(feature = "command-state-diagnostics")]
         self.observe_readback(&capture, buffers);
         Ok(capture)
+    }
+    fn decode_depth(&self, buffer: &DeviceBuffer, size: usize) -> Result<Vec<f32>, RenderError> {
+        let bytes = self.logical_capture_rows(buffer.read(size)?)?;
+        Ok(super::depth_equivalence::depth_plane(
+            self.depth.format,
+            bytes.as_chunks::<4>().0,
+        ))
     }
     /// Crop the leading attachment rows, then orient the logical rows top-left.
     fn logical_capture_rows(&self, bytes: Vec<u8>) -> Result<Vec<u8>, RenderError> {
@@ -107,7 +133,14 @@ impl FrameReadback {
         let depth = [self.depth.handle.as_raw(), self.depth.view.as_raw()];
         let arguments = ReadbackArguments {
             color: [color[0], color[1], buffers.color.handle.as_raw()],
-            depth: [depth[0], depth[1], buffers.depth.handle.as_raw()],
+            depth: [
+                depth[0],
+                depth[1],
+                buffers
+                    .depth
+                    .as_ref()
+                    .map_or(0, |buffer| buffer.handle.as_raw()),
+            ],
             formats: [self.color.format.as_raw(), self.depth.format.as_raw()],
             samples: [self.color.samples.as_raw(), self.depth.samples.as_raw()],
             attachment_extent: [self.attachment_extent.width, self.attachment_extent.height],
@@ -124,13 +157,26 @@ impl VulkanRenderer {
         &mut self,
         readback: &FrameReadback,
     ) -> Result<FrameCapture, RenderError> {
+        self.read_frame_planes(readback, CapturePlanes::ColorAndDepth)
+    }
+    /// Copy the chosen images of a completed frame to the host;
+    /// `renderer.read_frame_planes(&readback, CapturePlanes::Color)?` leaves depth empty.
+    pub(crate) fn read_frame_planes(
+        &mut self,
+        readback: &FrameReadback,
+        planes: CapturePlanes,
+    ) -> Result<FrameCapture, RenderError> {
         self.runtime.lifecycle.admit("read frame")?;
-        let outcome = self.read_admitted_frame(readback);
+        let outcome = self.read_admitted_frame(readback, planes);
         self.runtime.lifecycle.observe(outcome)
     }
-    fn read_admitted_frame(&self, readback: &FrameReadback) -> Result<FrameCapture, RenderError> {
+    fn read_admitted_frame(
+        &self,
+        readback: &FrameReadback,
+        planes: CapturePlanes,
+    ) -> Result<FrameCapture, RenderError> {
         let _readback = self.runtime.work.enter(WorkPhase::Readback);
-        let buffers = readback.buffers(&self.runtime)?;
+        let buffers = readback.buffers(&self.runtime, planes)?;
         let commands = CommandSubmission::new(&self.runtime)?;
         readback.record(&self.runtime, commands.command, &buffers);
         if let Err(primary) = commands.finish() {

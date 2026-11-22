@@ -11,7 +11,7 @@ mod factorized_line_upload;
 mod frame_flight;
 mod frame_readback;
 mod frame_work_ledger;
-pub(crate) use frame_readback::FrameReadback;
+pub(crate) use frame_readback::{CapturePlanes, FrameReadback};
 pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
 mod image_memory;
 mod layer_depth_policy;

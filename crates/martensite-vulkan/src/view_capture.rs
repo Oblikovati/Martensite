@@ -33,6 +33,11 @@ impl HostCaptureSteps {
         if let Some(scaled) = &self.scaled {
             capture.depth = crate::render_scale::blit_depth(scaled, self.size);
         }
+        self.apply_color(capture);
+    }
+    /// Applies the steps that change colour, the subview blits and the flipped output, to a
+    /// capture whose depth may be empty; `steps.apply_color(&mut capture)`.
+    pub(crate) fn apply_color(&self, capture: &mut FrameCapture) {
         crate::subview_composition::apply_subview_blits(capture, &self.subview_blits);
         if self.flip_output {
             capture.reverse_rows();
@@ -82,7 +87,7 @@ pub(crate) fn dump_capture(
     kind: &Graphic3dBufferType,
     capture: &FrameCapture,
 ) -> bool {
-    if checked_capture_pixels(capture).is_none()
+    if checked_dump_pixels(kind, capture).is_none()
         || image.width() != capture.width as usize
         || image.height() != capture.height as usize
     {
@@ -192,6 +197,25 @@ fn color_channels(capture: &FrameCapture, count: usize) -> Vec<u8> {
         .iter()
         .flat_map(|pixel| pixel[..count].iter().copied())
         .collect()
+}
+/// The attachments a dump of `kind` reads; only a depth dump needs the depth copy (#594).
+pub(crate) fn dump_planes(kind: &Graphic3dBufferType) -> crate::backend::CapturePlanes {
+    match kind {
+        Graphic3dBufferType::Depth => crate::backend::CapturePlanes::ColorAndDepth,
+        _ => crate::backend::CapturePlanes::Color,
+    }
+}
+/// The pixel count of a capture whose planes hold what a dump of `kind` reads.
+fn checked_dump_pixels(kind: &Graphic3dBufferType, capture: &FrameCapture) -> Option<usize> {
+    if dump_planes(kind) == crate::backend::CapturePlanes::ColorAndDepth {
+        return checked_capture_pixels(capture);
+    }
+    // An empty depth plane was not read; any other depth must still match the colour.
+    let pixels = (capture.width as usize).checked_mul(capture.height as usize)?;
+    (pixels != 0
+        && pixels.checked_mul(4) == Some(capture.rgba.len())
+        && (capture.depth.is_empty() || capture.depth.len() == pixels))
+        .then_some(pixels)
 }
 pub(crate) fn checked_capture_pixels(capture: &FrameCapture) -> Option<usize> {
     let pixels = (capture.width as usize).checked_mul(capture.height as usize)?;
