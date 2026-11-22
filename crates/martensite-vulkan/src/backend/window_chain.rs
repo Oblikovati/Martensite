@@ -161,7 +161,7 @@ impl WindowChain {
     /// Qualify device work after the owning idle call; `chain.qualify_device_idle()` leaves fences independent.
     pub fn qualify_device_idle(&mut self) {
         self.device_retired = true;
-        self.sync.qualify_device_idle();
+        self.sync.qualify_queue_work();
     }
     pub fn acquire(&mut self) -> Result<u32, vk::Result> {
         let sync = self.sync.current_mut();
@@ -219,9 +219,12 @@ impl WindowChain {
 impl Drop for WindowChain {
     fn drop(&mut self) {
         self.sync.retire_blocking();
-        if !self.device_retired {
+        // Presentation fences also cover the ALL_COMMANDS signal of each presented frame.
+        // An acquired image left on an error path may have submitted work without that fence.
+        if !self.device_retired && self.acquired_index.is_some() {
             self.runtime.retire_device_blocking();
         }
+        self.sync.qualify_queue_work();
         // SAFETY: the loaded function pointer belongs to this device, and its arguments are live values of this scope.
         unsafe {
             if let Some(index) = self.acquired_index.take() {

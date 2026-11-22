@@ -327,6 +327,7 @@ mod point_sprite;
 mod subview_upload;
 mod window_blit;
 mod window_chain;
+mod window_chain_retirement;
 mod window_fence_retirement;
 mod window_gui_contract;
 mod window_gui_render;

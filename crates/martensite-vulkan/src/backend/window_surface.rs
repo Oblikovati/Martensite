@@ -13,6 +13,7 @@ pub(crate) struct WindowPresenter {
     surface: Arc<super::window_surface_lease::WindowSurfaceLease>,
     pub(super) chain: Option<WindowChain>,
     pub(super) present_family: u32,
+    retiring: super::window_chain_retirement::RetiringChains,
 }
 impl WindowPresenter {
     /// Transfer failed presentation ownership before unwinding; `presenter.take_failed_chain()` preserves its surface lease.
@@ -54,6 +55,7 @@ impl WindowPresenter {
             )?,
             chain: None,
             present_family: 0,
+            retiring: Default::default(),
         };
         presenter.present_family = presenter.choose_present_family()?;
         Ok(presenter)
@@ -109,6 +111,7 @@ impl WindowPresenter {
         Ok(index)
     }
     fn prepare_window_chain(&mut self, config: WindowConfig) -> Result<(), RenderError> {
+        self.retiring.collect();
         if let Some(chain) = self.chain.as_mut() {
             chain.sync.current_mut().wait_present()?;
         }
@@ -165,13 +168,16 @@ impl WindowPresenter {
             config,
             previous,
         )?);
-        drop(old);
+        if let Some(old) = old {
+            self.retiring.push(old);
+        }
         Ok(())
     }
 }
 impl Drop for WindowPresenter {
     fn drop(&mut self) {
         self.chain.take();
+        self.retiring = Default::default();
         // The last retained swapchain lease, not this facade, releases the surface.
     }
 }

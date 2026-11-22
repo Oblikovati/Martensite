@@ -80,8 +80,8 @@ impl WindowSync {
         );
         presented.join(acquired)
     }
-    /// Remember the owning close's device-idle proof; `sync.qualify_device_idle()` does not qualify fences.
-    pub fn qualify_device_idle(&mut self) {
+    /// Remember that the chain's graphics submissions have completed.
+    fn qualify_queue_work(&mut self) {
         // Fence ownership remains independently pending until its own actual signal is observed.
         self.device_retired = true;
     }
@@ -161,11 +161,11 @@ impl WindowSyncRing {
         }
         attempt
     }
-    /// Remember the owning close's device-idle proof for every set.
-    pub fn qualify_device_idle(&mut self) {
+    /// Remember the chain's graphics completion proof for every set; `ring.qualify_queue_work()`.
+    pub fn qualify_queue_work(&mut self) {
         self.slots
             .iter_mut()
-            .for_each(WindowSync::qualify_device_idle);
+            .for_each(WindowSync::qualify_queue_work);
     }
     /// Retire every set's pending fences; `ring.retire_blocking()`.
     pub fn retire_blocking(&mut self) {
