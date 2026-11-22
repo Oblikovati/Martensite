@@ -148,6 +148,20 @@ Refreshing the shared transform and lights while holding the scene inputs fixed 
 before lowering the draws, preserve mutable ranges and resource lifetimes, and
 replace the corresponding per-draw device allocations when admitting a batch.
 
+On that scene, a scan that captured fresh buffer stamps and copied the layer
+priority maps took about 81 µs in a short diagnostic. Checking the saved order in
+the existing maps and comparing saved geometry stamps took 32 µs. The saved-stamp
+check rejected direct layout writes and index or vertex edits. This timing covers
+buffer and order checks with representative structure, group and aspect reads.
+A production check still needs to compare the relevant aspect values and handle
+visibility, layer settings and clipping.
+
+Warm culling took 42 µs on its own. Borrowing the BVH and reducing the per-leaf
+locking brought it to 29 µs in a probe that increased peak process memory in the
+sphere and text comparisons. The two traversals leave little room in the earlier
+0.175 ms parity budget. Reusing the culling traversal for the live batch check can
+avoid reading the same structures twice.
+
 ## Phase 2: a frame pipeline without stalls
 
 Target: `frame_empty`, `dump_1080p`, `resize_redraw` and `frame_msaa4_100k` reach parity.
