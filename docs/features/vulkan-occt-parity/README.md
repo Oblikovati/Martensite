@@ -227,6 +227,27 @@ The live-view tests cover static orbiting, sampler and UV edits, and a mutable
 unlit triangle. Editing one vertex in that triangle uploaded 32 bytes. The
 renderer copied the unchanged vertex records on the GPU and reused the index buffer.
 
+## Attachment reuse and text residency measurements
+
+Two live views of different sizes reuse their Vulkan attachments after warmup without
+creating images. The `frame_empty` benchmark still copies 7,200 KiB to the host each
+frame. On the same host and CPUs 8–15, three alternating 28-frame runs measured
+0.581 ms before attachment pooling, 0.765 ms with pooling alone, and 0.519 ms after
+choosing the depth format once per capture. The capture tests check that both depth
+formats retain the scalar decoder's bits.
+
+The 1,000-label case used the same release harness in three alternating 8-frame runs
+with matching checksums. Median Vulkan time fell from 149.53 ms to 5.17 ms and peak RSS
+from 156 MiB to 122 MiB. OCCT took 0.73 ms. The warm Vulkan frame creates zero glyph
+images and makes one submission, down from 1,000 images and 1,001 submissions. It still
+creates 2,000 geometry buffers and uploads 718.75 KiB of glyph vertices and indices.
+
+On the startup case, the same executable took 45.59 ms with an empty Martensite
+pipeline cache and 28.92 ms with a warm one. These are medians of seven paired process
+launches with Mesa's own shader cache disabled. Each launch successfully rendered its
+first frame. The driver supplied the cache bytes, and the live-device test verifies
+that a new device with the same cache identity can reload them.
+
 ## Harness
 
 `cargo xtask occt-parity --toolkit vulkan --occt <prefix> --cpus 8-15` compares the cases
