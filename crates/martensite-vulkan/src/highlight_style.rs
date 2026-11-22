@@ -220,12 +220,7 @@ mod tests {
         let reference = renderer.render(&frame(highlighted)).unwrap();
         assert_eq!(restored.rgba, reference.rgba);
         assert_eq!(restored.depth, reference.depth);
-        assert!(
-            restored
-                .rgba
-                .chunks_exact(4)
-                .any(|pixel| pixel == [0, 255, 0, 255])
-        );
+        assert!(restored.rgba.as_chunks::<4>().0.contains(&[0, 255, 0, 255]));
         assert!(renderer.validation_errors().unwrap().is_empty());
     }
 

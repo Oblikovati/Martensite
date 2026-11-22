@@ -84,12 +84,7 @@ mod tests {
             super::super::resource_lifecycle_test_support::create_resource_renderer();
         let frame = plain_point_frame();
         let reference = crate::RenderBackend::render(&mut renderer, &frame).unwrap();
-        assert!(
-            reference
-                .rgba
-                .chunks_exact(4)
-                .any(|pixel| pixel == [255; 4])
-        );
+        assert!(reference.rgba.as_chunks::<4>().0.contains(&[255; 4]));
         let before = renderer.work_ledger().totals();
         let first = renderer.render_deferred(&frame).unwrap();
         let later = renderer.render_deferred(&frame).unwrap();

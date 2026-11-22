@@ -416,6 +416,13 @@ impl FrameGeometryResidency {
         }
     }
 
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
     pub(super) fn queue_batch(
         &mut self,
         owner: Arc<super::GeometryBatch>,

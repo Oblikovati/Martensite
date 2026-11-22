@@ -148,7 +148,7 @@ fn layer_origin_leaves_headlights_and_directional_lights_unshifted() {
 #[test]
 fn cloned_draw_lights_share_records_and_remain_isolated_from_live_edits() {
     let directional = source(Kind::Directional);
-    let lights = set(&[directional.clone()]);
+    let lights = set(std::slice::from_ref(&directional));
     let original = RenderLightSet::snapshot(&lights, identity_clip()).unwrap();
     let cloned = original.clone();
     assert!(original.sources.identity().is_some());

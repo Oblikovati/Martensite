@@ -294,6 +294,13 @@ impl RasterPipelines {
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         self.select_special(draw, false, None, (layout, false), draw.vertices.len())
     }
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
     pub(super) fn select_batch(
         &self,
         draw: &PrimitiveDraw,

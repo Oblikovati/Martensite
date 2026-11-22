@@ -116,8 +116,10 @@ mod tests {
         assert!(
             reference
                 .rgba
-                .chunks_exact(4)
-                .any(|pixel| pixel != [0, 0, 0, 255])
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .any(|pixel| *pixel != [0, 0, 0, 255])
         );
         assert_eq!(reference.rgba, result.rgba);
         assert_eq!(reference.depth, result.depth);

@@ -52,9 +52,9 @@ fn completed_main_images_preserve_color_and_occlusion_for_a_changing_overlay() {
     for depth_clear in [false, true, false] {
         let mut updated = frame(main.clone(), vec![overlay.clone()], depth_clear);
         let full = renderer.render(&updated).unwrap();
-        assert!(full.rgba.chunks_exact(4).any(|p| p == [0, 255, 0, 255]));
+        assert!(full.rgba.as_chunks::<4>().0.contains(&[0, 255, 0, 255]));
         assert_eq!(
-            full.rgba.chunks_exact(4).any(|p| p == [255, 0, 0, 255]),
+            full.rgba.as_chunks::<4>().0.contains(&[255, 0, 0, 255]),
             !depth_clear
         );
         updated.immediate_main = cache.plan(&updated);

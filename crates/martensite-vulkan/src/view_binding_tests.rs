@@ -5,7 +5,7 @@ use crate::{Graphic3dRenderDriver, RenderBackend, RenderFrame, RenderLayer};
 struct FixedBindingBackend;
 impl RenderBackend for FixedBindingBackend {
     fn render(&mut self, _frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
-        Ok(binding_capture().into())
+        Ok(binding_capture())
     }
 }
 fn binding_capture() -> FrameCapture {

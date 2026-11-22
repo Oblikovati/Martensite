@@ -20,6 +20,14 @@ use ash::vk;
 use draw_owners::DrawGpuOwners;
 use std::sync::Arc;
 
+// Diagnostic captures require individual draw streams and skip batch dispatch.
+#[cfg_attr(
+    any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    ),
+    allow(dead_code)
+)]
 #[path = "geometry_batch.rs"]
 mod geometry_batch;
 pub(crate) use geometry_batch::GeometryBatch;

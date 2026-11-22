@@ -271,12 +271,7 @@ mod compact_line_tests {
         let second = renderer.render(&frame(compact.clone())).unwrap();
         let uploaded = renderer.work_ledger().totals().since(&before);
         assert_eq!(uploaded.geometry_uploaded_bytes, 4 * 16 + 6 * 4);
-        assert!(
-            first
-                .rgba
-                .chunks_exact(4)
-                .any(|pixel| pixel == [255, 0, 0, 255])
-        );
+        assert!(first.rgba.as_chunks::<4>().0.contains(&[255, 0, 0, 255]));
         assert_eq!(second.rgba, first.rgba);
         assert_eq!(second.depth, first.depth);
         let before = renderer.work_ledger().totals();
