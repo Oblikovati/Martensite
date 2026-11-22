@@ -37,6 +37,69 @@ triangle, line and point counts of the renderer's own frame statistics, read fro
 counted frame at the start position. They draw the same scenes, including the
 tessellation of the 400 spheres by each kernel (496,800 triangles on both sides).
 
+## Phase 0 baseline
+
+The phase 0 run adds the assembly cases and the device work of each Rust case. It used the
+settings of the result above (10 frames per timed run, median of 7 runs, one round, CPUs
+8-15), and all 19 checksums agree. Phase 1 compares against this table.
+
+| Case | OpenGL ms | Vulkan ms | Ratio |
+| --- | ---: | ---: | ---: |
+| `frame_empty` | 0.062 | 0.551 | 8.92 |
+| `frame_mesh_1m` | 0.309 | 175 | 568 |
+| `frame_mesh_10m` | 1.77 | 1849 | 1,042 |
+| `frame_segments_1m` | 0.269 | 230 | 853 |
+| `frame_points_1m` | 0.264 | 121 | 461 |
+| `frame_text_1k` | 0.691 | 141 | 205 |
+| `frame_transparent_1k` | 0.311 | 27.7 | 89 |
+| `frame_msaa4_100k` | 0.236 | 17.8 | 75 |
+| `frame_structures_10k` | 2.24 | 377 | 168 |
+| `frame_structures_100k` | 43.8 | 4870 | 111 |
+| `frame_ais_spheres_400` | 0.161 | 86.6 | 536 |
+| `frame_connected_30k` | 9.83 | 2007 | 204 |
+| `highlight_ais_spheres_400` | 0.106 | 174 | 1,642 |
+| `select_10k` | 4.14 | 386 | 93 |
+| `close_10k` | 9.58 | 894 | 93 |
+| `upload_mesh_100k` | 0.308 | 29.7 | 96 |
+| `dump_1080p` | 0.436 | 22.7 | 52 |
+| `resize_redraw` | 0.391 | 17.5 | 45 |
+| `startup_first_frame` | 33.3 | 13.6 | 0.41 |
+
+The device work of one Vulkan operation, from the work column. "Outside phases" is redraw
+time that no phase holds; the release of the frame's buffers and images happens there.
+
+| Case | Buffers | Sets | Submits | Upload MiB | Scene ms | Upload ms | Record ms | Wait ms | Outside phases ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `frame_empty` | 2 | 0 | 1 | 0.0 | 0.023 | 0.005 | 0.009 | 0.152 | 0.049 |
+| `frame_mesh_1m` | 5 | 1 | 1 | 32.5 | 148 | 21.4 | 0.075 | 0.977 | 3.94 |
+| `frame_mesh_10m` | 5 | 1 | 1 | 324.5 | 1584 | 236 | 0.086 | 4.24 | 23.3 |
+| `frame_segments_1m` | 4 | 0 | 1 | 68.7 | 164 | 60.0 | 0.073 | 1.25 | 4.15 |
+| `frame_points_1m` | 5 | 1 | 1 | 34.3 | 88.9 | 30.3 | 0.076 | 1.08 | 0.390 |
+| `frame_text_1k` | 3,002 | 1,000 | 1,001 | 10.4 | 32.2 | 62.5 | 0.433 | 28.9 | 8.91 |
+| `frame_transparent_1k` | 3,002 | 1,000 | 1 | 1.5 | 8.33 | 9.53 | 0.191 | 0.279 | 8.01 |
+| `frame_msaa4_100k` | 5 | 1 | 1 | 3.3 | 14.6 | 1.55 | 0.052 | 0.801 | 0.205 |
+| `frame_structures_10k` | 30,002 | 10,000 | 1 | 15.1 | 89.6 | 107 | 18.0 | 2.48 | 149 |
+| `frame_structures_100k` | 300,002 | 100,000 | 1 | 151.1 | 1017 | 952 | 1138 | 6.54 | 1574 |
+| `frame_ais_spheres_400` | 1,202 | 400 | 1 | 16.6 | 72.2 | 10.1 | 0.127 | 0.488 | 2.81 |
+| `frame_connected_30k` | 90,002 | 30,000 | 1 | 226.9 | 963 | 404 | 124 | 12.9 | 470 |
+| `highlight_ais_spheres_400` | 2,408 | 800 | 2 | 33.2 | 145 | 20.4 | 0.247 | 1.05 | 5.66 |
+| `select_10k` | 30,004 | 10,000 | 1 | 15.1 | 91.4 | 109 | 17.8 | 2.54 | 151 |
+| `upload_mesh_100k` | 5 | 1 | 1 | 3.3 | 14.2 | 1.36 | 0.043 | 0.735 | 0.180 |
+| `dump_1080p` | 5 | 1 | 1 | 3.3 | 14.5 | 1.76 | 0.058 | 0.603 | 0.233 |
+| `resize_redraw` | 5 | 1 | 1 | 3.3 | 14.3 | 1.32 | 0.039 | 1.04 | 0.086 |
+
+The counters show causes that the first run could not separate:
+
+- Text makes one image and one submission per label on every frame: 1,002 images and 1,001
+  submissions per frame of `frame_text_1k`, with 29 ms spent waiting on them.
+- Each draw creates three buffers and one descriptor set on every frame.
+- Recording grows faster than the draw count: 18 ms for 10,000 structures, 1,138 ms for
+  100,000.
+- A selection change uploads the whole scene again: 15 MiB and 30,004 buffers per
+  operation of `select_10k`.
+- Removing 10,000 structures takes 894 ms, against 9.6 ms for OpenGL, and closing the view
+  of `frame_structures_100k` takes about 84 s.
+
 ## Method
 
 The harness pairs a Rust bench target of `martensite-vulkan` with C++ twins that build the
@@ -144,6 +207,9 @@ case is slower beyond `--tolerance`), with these differences:
 - The C++ program is linked with an RPATH (`--disable-new-dtags`) because OCCT's
   libraries carry no run path: a RUNPATH would serve only the program's direct
   dependencies, and `TKV3d` could not find `TKGeomAlgo`.
+- The Rust program adds a fourth column to each case line: the device work of the timed
+  operations, per operation (next section). The xtask prints it as a second table and
+  stores it in `report.json` as `rust_work`; the C++ twins print no such column.
 
 Without `--bench`, each program draws two frames per case, which checks that the cases
 still work. The cases are:
@@ -151,6 +217,81 @@ still work. The cases are:
 | Group | Cases |
 | --- | --- |
 | Start-up | `startup_first_frame` |
-| Frames (`frames.rs`) | `frame_empty`, `frame_mesh_1m`, `frame_structures_10k`, `frame_segments_1m`, `frame_points_1m`, `frame_text_1k`, `frame_transparent_1k`, `frame_msaa4_100k` |
-| Interactive context (`ais.rs`) | `frame_ais_spheres_400`, `highlight_ais_spheres_400` (the scene of OCCT's `perf/vis/bug24623_1` at 20 x 20) |
-| Transfers (`transfer.rs`) | `upload_mesh_100k`, `dump_1080p`, `resize_redraw` |
+| Frames (`frames.rs`) | `frame_empty`, `frame_mesh_1m`, `frame_structures_10k`, `frame_segments_1m`, `frame_points_1m`, `frame_text_1k`, `frame_transparent_1k`, `frame_msaa4_100k`, `frame_structures_100k`, `frame_mesh_10m` |
+| Interactive context (`ais.rs`) | `frame_ais_spheres_400`, `highlight_ais_spheres_400` (the scene of OCCT's `perf/vis/bug24623_1` at 20 x 20), `select_10k`, `frame_connected_30k` |
+| Transfers (`transfer.rs`) | `upload_mesh_100k`, `dump_1080p`, `resize_redraw`, `close_10k` |
+
+The assembly cases of phase 0 ([PLAN.md](PLAN.md)):
+
+| Case | Scene and operation |
+| --- | --- |
+| `frame_structures_100k` | 100,000 boxes on a 400 x 250 grid, one structure each: the per-draw cost at assembly scale |
+| `frame_mesh_10m` | one 10,000,000-triangle sphere: vertex throughput |
+| `frame_connected_30k` | 30,000 `AIS_ConnectedInteractive` occurrences of 30 parts (10 boxes, 10 cylinders, 10 cones) on a 200 x 150 grid, shaded and not selectable; 4,420,000 triangles |
+| `select_10k` | 10,000 selectable shaded `AIS_Shape` boxes; one operation selects the other of two boxes and updates the viewer |
+| `close_10k` | one operation erases, removes and releases the 10,000 box structures of `frame_structures_10k`; building and drawing them is not timed |
+
+The three orbit cases time a tenth of `--frames` per run, because a Vulkan frame of these
+scenes takes seconds. `close_10k` builds its scene again before each timed run
+(`timed_rebuilds`), so its removed count, and with it its checksum, grows with the number of
+runs; both sides count the same.
+
+## Device work counters
+
+`Graphic3dRenderView::last_frame_work()` returns the `RenderDeviceWork` of the view's last
+redraw, and `Graphic3dRenderDriver::device_work()` returns the totals of the device since it
+was created. The counts come from the backend sites that create or move something:
+
+| Counter | Counted where |
+| --- | --- |
+| `buffers_created` | `DeviceBuffer::new`, the only `vkCreateBuffer` call |
+| `images_created` | `bind_device_image`, which binds every image right after it is created |
+| `memory_allocations` | the memory arena: new shared blocks and dedicated allocations |
+| `pipelines_created` | the one `vkCreateGraphicsPipelines` call |
+| `descriptor_sets_allocated` | each of the 13 `vkAllocateDescriptorSets` calls |
+| `submissions` | the one `vkQueueSubmit2` call |
+| `uploaded_bytes`, `read_back_bytes` | `DeviceBuffer::write` and `DeviceBuffer::read`, the only host copies |
+
+`times` splits the CPU time of redraws into phases that exclude each other: a submission
+made while frame resources are prepared counts as submission, not as upload.
+
+| Phase | What it holds |
+| --- | --- |
+| `scene` | walking the layers into the frame's draws: reading the `Graphic3d` arrays and the CPU lowering, which are one pass today |
+| `upload` | creating and filling the frame's buffers, images and descriptor sets |
+| `recording` | recording command buffers |
+| `submission` | ending and submitting command buffers, and presenting |
+| `waiting` | fences and swapchain image acquisition |
+| `readback` | copying the frame to host memory and the host-copy steps (render-scale depth blit, subview blits, flipped output) |
+| `redraw` | the whole redraw; the time in no phase (frame statistics, resource release) is the difference |
+
+The counts are device-wide differences over a redraw, so a redraw that another thread runs
+on another view of the same driver at the same time adds to them. Injected backends count
+nothing.
+
+## Profiling
+
+`perf record` needs `kernel.perf_event_paranoid` at 1 or lower. This host has 2, where
+`perf stat` works but `perf record` cannot open its events. To lower it until the next
+boot:
+
+```sh
+sudo sysctl kernel.perf_event_paranoid=1
+```
+
+Then profile one case of the release bench (`cargo bench -p martensite-vulkan --bench
+occt_parity --no-run` prints the executable):
+
+```sh
+perf record -g -o target/occt-parity/vulkan/frame_mesh_1m.perf -- \
+  target/release/deps/occt_parity-<hash> --bench --frames 10 --filter frame_mesh_1m
+perf report -i target/occt-parity/vulkan/frame_mesh_1m.perf
+```
+
+Without `perf`, `callgrind` counts instructions, without the time spent waiting for the GPU:
+
+```sh
+valgrind --tool=callgrind --callgrind-out-file=target/occt-parity/vulkan/frame_mesh_1m.cg \
+  target/release/deps/occt_parity-<hash> --filter frame_mesh_1m
+callgrind_annotate target/occt-parity/vulkan/frame_mesh_1m.cg
+```

@@ -53,13 +53,21 @@ assemblies and shows what works and what does not.
 
 ## Phase 0: measurement and guards
 
-No behaviour change.
+No behaviour change. Status: done, except the host setting of item 3. The README section
+"Phase 0 baseline" is the table that phase 1 starts from.
 
 1. Frame counters and phase timings on `Graphic3dRenderView`: device buffers and
    images created, bytes uploaded, bytes read back, pipelines created and descriptor sets
    allocated per frame, and CPU time for extraction, lowering, upload, recording,
    submission and waiting. The harness and the tests read them; OCCT's
    `Graphic3d_FrameStatsTimer` values stay as they are.
+
+   Done as `Graphic3dRenderView::last_frame_work` and
+   `Graphic3dRenderDriver::device_work`, which return `RenderDeviceWork` (README,
+   "Device work counters"). Reading the `Graphic3d` arrays and the CPU lowering are one
+   pass today, so they share the `scene` phase; phase 1 splits them when lowering is
+   retained. The bench prints the counters per operation and the xtask shows them as a
+   second table.
 2. Assembly cases in the harness, each with its C++ twin:
 
    | Case | Scene |
@@ -70,8 +78,13 @@ No behaviour change.
    | `select_10k` | a selection change in a large scene; must not re-upload geometry |
    | `close_10k` | structure removal, which is quadratic today |
 
+   Done, each with its C++ twin and an equal checksum (README, "Harness").
+
 3. A CPU profiler. Allow `perf` on the measuring host (`kernel.perf_event_paranoid`
    at most 1); `callgrind` instruction counts remain the portable fallback.
+
+   The README ("Profiling") gives both procedures. The setting needs root, and this host
+   still has 2, so `perf record` fails here until it is lowered.
 
 ## Phase 1: geometry stays on the GPU
 
