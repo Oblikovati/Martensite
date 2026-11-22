@@ -12,6 +12,8 @@ mod frame_flight;
 mod frame_readback;
 mod frame_work_ledger;
 mod readback_buffer_cache;
+mod rgb_pack;
+mod rgb_readback;
 pub(crate) use frame_readback::{CapturePlanes, FrameReadback};
 pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
 mod image_memory;
@@ -76,6 +78,8 @@ pub struct VulkanRenderer {
     // Dropping the flight waits for its frames before the stores below are released.
     flight: frame_flight::FrameFlight,
     readback_buffers: readback_buffer_cache::ReadbackBufferCache,
+    rgb_pack_sources: readback_buffer_cache::ReadbackBufferCache,
+    rgb_pack: Option<rgb_pack::RgbPackPipeline>,
     retirements: retained_submission::RetirementStore,
     pipeline: pipeline_variants::RasterPipelines,
     capping_pipeline: Option<pipeline_variants::RasterPipelines>,
@@ -168,6 +172,8 @@ impl VulkanRenderer {
             runtime,
             flight: Default::default(),
             readback_buffers: Default::default(),
+            rgb_pack_sources: readback_buffer_cache::ReadbackBufferCache::device_local(),
+            rgb_pack: None,
             retirements: retained_submission::RetirementStore::new()?,
             pipeline,
             capping_pipeline: None,

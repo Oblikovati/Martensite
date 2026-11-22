@@ -142,6 +142,28 @@ impl RedrawCapture {
     }
 }
 
+impl RedrawCapture {
+    /// Write the frame's RGB rows through `write_row` straight from the device, or `None`
+    /// when the frame is already on the host, was released, or has subview blits to compose;
+    /// the caller then dumps from `planes`; `capture.dump_rgb(&device, &mut write_row)`.
+    pub fn dump_rgb(
+        &self,
+        device: &SharedRenderDevice,
+        write_row: &mut dyn FnMut(usize, &[u8]) -> bool,
+    ) -> Option<Result<bool, RenderError>> {
+        if self.pixels.get().is_some() || self.color.get().is_some() {
+            return None;
+        }
+        let deferred = self.deferred.lock().unwrap_or_else(PoisonError::into_inner);
+        let DeferredPixels { readback, steps } = deferred.as_ref()?;
+        if !steps.subview_blits.is_empty() {
+            return None;
+        }
+        let flip = steps.flip_output;
+        Some(device.write().read_frame_rgb(readback, flip, write_row))
+    }
+}
+
 impl std::fmt::Debug for RedrawCapture {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter

@@ -56,8 +56,23 @@ impl FrameReadback {
     pub(crate) fn logical_size(&self) -> [u32; 2] {
         [self.extent.width, self.extent.height]
     }
+    /// The pack rows of an RGB dump of this frame, top-left first unless `flip` (the view's
+    /// flipped output); `readback.rgb_rows(false)`.
+    pub(super) fn rgb_rows(&self, flip: bool) -> super::rgb_pack::RgbPackRows {
+        let bottom_up = self.coordinates.bottom_up_capture_rows();
+        super::rgb_pack::RgbPackRows {
+            width: self.extent.width,
+            height: self.extent.height,
+            first_row: self.coordinates.leading_rows(self.extent.height),
+            reversed: u32::from(bottom_up != flip),
+        }
+    }
+    /// The attachment extent the copies read; `readback.attachment_extent()`.
+    pub(super) fn attachment_extent(&self) -> vk::Extent2D {
+        self.attachment_extent
+    }
     /// The bytes of one attachment copy; both attachments use four bytes per texel.
-    fn attachment_bytes(&self) -> usize {
+    pub(super) fn attachment_bytes(&self) -> usize {
         self.attachment_extent.width as usize * self.attachment_extent.height as usize * 4
     }
     fn buffers(

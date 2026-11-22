@@ -11,6 +11,8 @@ use std::sync::{Arc, Mutex, PoisonError};
 #[derive(Default)]
 pub(super) struct ReadbackBufferCache {
     kept: Mutex<Option<DeviceBuffer>>,
+    /// Device-local storage instead of host-readable memory (the RGB pack's source).
+    device_local: bool,
 }
 
 impl ReadbackBufferCache {
@@ -29,7 +31,18 @@ impl ReadbackBufferCache {
         if let Some(buffer) = kept.filter(|buffer| buffer.size() >= bytes) {
             return Ok(buffer);
         }
+        if self.device_local {
+            let usage = vk::BufferUsageFlags::STORAGE_BUFFER;
+            return DeviceBuffer::device_local(runtime, bytes, usage);
+        }
         new_readback_buffer(runtime, bytes)
+    }
+    /// A cache of device-local storage buffers; `ReadbackBufferCache::device_local()`.
+    pub fn device_local() -> Self {
+        Self {
+            kept: Mutex::default(),
+            device_local: true,
+        }
     }
     /// Keep `buffer` for the next readback; its copy completed; `cache.give(buffer)`.
     pub fn give(&self, buffer: DeviceBuffer) {
@@ -45,7 +58,8 @@ pub(super) fn new_readback_buffer(
     DeviceBuffer::new(
         runtime,
         bytes,
-        vk::BufferUsageFlags::TRANSFER_DST,
+        // The RGB pack writes into a readback buffer as a storage buffer (#594).
+        vk::BufferUsageFlags::TRANSFER_DST | vk::BufferUsageFlags::STORAGE_BUFFER,
         HostBufferAccess::Readback,
     )
 }

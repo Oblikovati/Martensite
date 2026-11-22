@@ -21,6 +21,10 @@ impl AttachmentCoordinates {
     /// top attachment row down. A top-left frame of odd height therefore starts one attachment
     /// row down, so both drivers pair the same rows for `dFdx`/`dFdy`/`fwidth` and helper
     /// invocations. Legacy bottom-up frames already pair like OpenGL.
+    /// Whether `capture_rows` reverses the attachment rows; `policy.bottom_up_capture_rows()`.
+    pub(super) fn bottom_up_capture_rows(self) -> bool {
+        self == Self::LegacyBottomUpV1
+    }
     pub(super) fn leading_rows(self, height: u32) -> u32 {
         u32::from(self == Self::TopLeftLogicalV2 && height % 2 == 1)
     }

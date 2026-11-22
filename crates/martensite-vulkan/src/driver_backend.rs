@@ -83,6 +83,22 @@ impl DriverBackend {
             Self::Injected(_) => Ok(()),
         }
     }
+    /// Write the RGB rows of a deferred frame through `write_row`; `flip` reverses them;
+    /// `backend.read_frame_rgb(&readback, false, &mut |y, row| copy(y, row))?`.
+    pub fn read_frame_rgb(
+        &mut self,
+        readback: &crate::backend::FrameReadback,
+        flip: bool,
+        write_row: &mut dyn FnMut(usize, &[u8]) -> bool,
+    ) -> Result<bool, RenderError> {
+        match self {
+            Self::Vulkan(device) => device.read_frame_rgb(readback, flip, write_row),
+            Self::Injected(_) => Err(crate::error::rejected(
+                "injected backend",
+                "the Vulkan device that rendered the frame",
+            )),
+        }
+    }
     /// Copy the chosen images of a deferred frame to the host;
     /// `backend.read_frame(&readback, CapturePlanes::Color)?`.
     pub fn read_frame(

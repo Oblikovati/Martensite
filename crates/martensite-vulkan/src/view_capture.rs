@@ -147,6 +147,35 @@ fn rgb_quad(quad: &[u8; 16]) -> [u8; 12] {
     }
     out
 }
+/// Whether a dump of `kind` into `image` can take packed RGB rows from the device.
+pub(crate) fn is_direct_rgb_dump(image: &ImagePixMap, kind: &Graphic3dBufferType) -> bool {
+    (*kind, image.format()) == (Graphic3dBufferType::Rgb, ImageFormat::Rgb)
+}
+/// Copy device-packed RGB rows into `image`, or `None` when the frame must be dumped from
+/// its capture instead; `dump_rgb_rows_from(&image, &publication, &device)`.
+pub(crate) fn dump_rgb_rows_from(
+    image: &ImagePixMap,
+    publication: &crate::redraw_capture::RedrawCapture,
+    device: &crate::driver_backend::SharedRenderDevice,
+) -> Option<Result<bool, RenderError>> {
+    let [width, height] = publication.size();
+    if width == 0
+        || height == 0
+        || image.width() != width as usize
+        || image.height() != height as usize
+    {
+        return Some(Ok(false));
+    }
+    let mut target = image.change_data();
+    let mut write_row = |y: usize, row: &[u8]| {
+        target
+            .data
+            .change_row(y)
+            .map(|destination| destination[..row.len()].copy_from_slice(row))
+            .is_some()
+    };
+    publication.dump_rgb(device, &mut write_row)
+}
 pub(crate) fn copy_capture_rows(
     target: &mut ImagePixMapData,
     bytes: &[u8],

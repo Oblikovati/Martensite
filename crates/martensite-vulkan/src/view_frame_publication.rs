@@ -15,17 +15,38 @@ impl Graphic3dRenderView {
         planes: CapturePlanes,
         read: impl FnOnce(&FrameCapture) -> R,
     ) -> Result<R, RenderError> {
-        let publication = self.capture_publication(planes)?;
+        let publication = self.capture_publication(Some(planes))?;
         publication.planes(planes, &self.device).map(read)
     }
-    fn capture_publication(&self, planes: CapturePlanes) -> FramePublication {
+    /// Dump the last frame into `image`: an RGB dump of a deferred frame reads packed rows
+    /// from the device (#594), every other dump copies from the borrowed capture;
+    /// `view.dump_publication(&image, &Graphic3dBufferType::Rgb)?`.
+    pub(crate) fn dump_publication(
+        &self,
+        image: &martensite_tkservice::image::ImagePixMap,
+        kind: &martensite_tkservice::graphic3d::Graphic3dBufferType,
+    ) -> Result<bool, RenderError> {
+        let rgb = crate::view_capture::is_direct_rgb_dump(image, kind);
+        let planes = (!rgb).then(|| crate::view_capture::dump_planes(kind));
+        let publication = self.capture_publication(planes)?;
+        if rgb
+            && let Some(copied) =
+                crate::view_capture::dump_rgb_rows_from(image, &publication, &self.device)
+        {
+            return copied;
+        }
+        let planes = crate::view_capture::dump_planes(kind);
+        let capture = publication.planes(planes, &self.device)?;
+        Ok(crate::view_capture::dump_capture(image, kind, capture))
+    }
+    pub(crate) fn capture_publication(&self, planes: Option<CapturePlanes>) -> FramePublication {
         self.require_capture_lighting()?;
         if self.checked_gui_policy() && self.gui_layers.read().capture_stamp().extent.is_some() {
             return self.checked_gui_publication();
         }
         self.legacy_gui_publication(planes)
     }
-    fn legacy_gui_publication(&self, planes: CapturePlanes) -> FramePublication {
+    fn legacy_gui_publication(&self, planes: Option<CapturePlanes>) -> FramePublication {
         self.require_capture_target()?;
         let extent = self.gui_capture_extent()?;
         let gui = self.gui_layers.read();
@@ -38,7 +59,7 @@ impl Graphic3dRenderView {
         self.require_capture_target()?;
         outcome
     }
-    fn read_capture_outcome(&self, planes: CapturePlanes) -> Option<FramePublication> {
+    fn read_capture_outcome(&self, planes: Option<CapturePlanes>) -> Option<FramePublication> {
         #[cfg(feature = "command-state-diagnostics")]
         use std::sync::atomic::Ordering;
         let source = self.outcome.read();
@@ -47,8 +68,9 @@ impl Graphic3dRenderView {
         let snapshot = source.clone();
         drop(source);
         // The first capture of a redraw reads its frame from the device (#594), before the
-        // second target check, as the cloning capture did; the result stays cached.
-        if let Some(Ok(capture)) = &snapshot {
+        // second target check, as the cloning capture did; the result stays cached. An RGB dump
+        // passes no planes, because it may read the device rows itself.
+        if let (Some(Ok(capture)), Some(planes)) = (&snapshot, planes) {
             let _ = capture.planes(planes, &self.device);
         }
         #[cfg(feature = "command-state-diagnostics")]
@@ -80,7 +102,9 @@ impl Graphic3dRenderView {
             .redraw_serial
             .load(std::sync::atomic::Ordering::Relaxed);
         let capture = self.capture()?;
-        let copied = crate::view_capture::dump_capture(image, kind, &capture);
+        // Diagnostic builds read each frame as it renders, so this dump copies from the
+        // capture just taken, as before; it shares the dump path of other builds (#594).
+        let copied = self.dump_publication(image, kind)?;
         #[cfg(feature = "raytrace-input-diagnostics")]
         self.observe_raytrace_buffer_dump(observed_serial, kind, &capture, copied);
         #[cfg(feature = "command-state-diagnostics")]

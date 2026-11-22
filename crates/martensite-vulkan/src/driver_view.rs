@@ -417,9 +417,7 @@ impl Graphic3dCView for Graphic3dRenderView {
             feature = "raytrace-input-diagnostics",
             feature = "command-state-diagnostics"
         )))]
-        let copied = self.with_capture(crate::view_capture::dump_planes(kind), |capture| {
-            crate::view_capture::dump_capture(image, kind, capture)
-        });
+        let copied = self.dump_publication(image, kind);
         // The diagnostics observe the dumped frame after the copy, so they keep an owned one.
         #[cfg(any(
             feature = "raytrace-input-diagnostics",

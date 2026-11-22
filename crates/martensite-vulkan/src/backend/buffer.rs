@@ -115,6 +115,26 @@ impl DeviceBuffer {
             .add(DeviceCount::ReadBackBytes, size as u64);
         Ok(bytes)
     }
+    /// Lend the first `size` mapped bytes to `read` without copying them;
+    /// `buffer.with_mapped(64, |bytes| bytes[0])?`. A completed fence and a transfer-to-host
+    /// barrier must precede the call, as for `read`.
+    pub fn with_mapped<R>(
+        &self,
+        size: usize,
+        read: impl FnOnce(&[u8]) -> R,
+    ) -> Result<R, RenderError> {
+        if size as u64 > self.size {
+            return Err(rejected(size, "read size within the buffer allocation"));
+        }
+        let pointer = self.host_pointer()?;
+        // SAFETY: the pointer and length describe this buffer's live mapped allocation, the
+        // device finished writing it, and the borrow ends before this function returns.
+        let bytes = unsafe { std::slice::from_raw_parts(pointer, size) };
+        self.runtime
+            .work
+            .add(DeviceCount::ReadBackBytes, size as u64);
+        Ok(read(bytes))
+    }
     fn host_pointer(&self) -> Result<*mut u8, RenderError> {
         self.memory
             .as_ref()
