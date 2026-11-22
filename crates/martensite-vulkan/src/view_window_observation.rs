@@ -27,6 +27,24 @@ impl WindowObservation {
 }
 
 impl Graphic3dRenderView {
+    /// `MinMaxValues` with the kept window size, so auto Z-fit asks the X server nothing
+    /// once the window was seen mapped (#594); `view.kept_size_min_max_values(false)?`.
+    pub(crate) fn kept_size_min_max_values(
+        &self,
+        include_auxiliary: bool,
+    ) -> Result<martensite_tkmath::bnd::BoundingBox3, martensite_tkernel::standard::Failure> {
+        let size = || {
+            self.observed_window_size()
+                .map_or([0, 0], |(width, height)| [width, height])
+        };
+        martensite_tkernel::standard::catch_native_failure(|| {
+            martensite_tkservice::graphic3d::graphic3d_cview_min_max_values_with_size(
+                self,
+                include_auxiliary,
+                size,
+            )
+        })
+    }
     /// The bound window's size, read live until the window was seen mapped;
     /// `view.observed_window_size()`.
     pub(crate) fn observed_window_size(&self) -> Option<(i32, i32)> {

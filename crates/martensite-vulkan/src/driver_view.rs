@@ -340,6 +340,12 @@ impl Drop for Graphic3dRenderView {
     }
 }
 impl Graphic3dCView for Graphic3dRenderView {
+    fn min_max_values(
+        &self,
+        include_auxiliary: bool,
+    ) -> Result<martensite_tkmath::bnd::BoundingBox3, Failure> {
+        self.kept_size_min_max_values(include_auxiliary)
+    }
     retained_view_methods!();
     fn cview_base(&self) -> &Graphic3dCViewBase {
         self.retained.cview_base()
