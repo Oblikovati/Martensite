@@ -232,8 +232,15 @@ The fixed frame cost falls from 0.5 ms to OCCT's 0.07 ms.
 Acceptance:
 
 - No readback in a static orbit (counter test).
-- The four cases at parity.
+- The four cases at parity, except `resize_redraw` (see below).
 - The error-timing decision recorded.
+
+Resize exception, decided by the maintainer on 2026-11-22: `resize_redraw` is not held to
+parity on X11. A Vulkan swapchain must match the window size there, and RADV reports no
+present scaling or gravity for X11 surfaces, so every resize recreates the swapchain.
+A minimal Vulkan program that only clears and presents takes about 3.3 ms per resize on
+the benchmark window. Martensite takes about 1.1 ms. OCCT takes 0.49 ms because an OpenGL
+drawable follows the window without being recreated.
 
 Error timing, decided by the maintainer on 2026-11-22: an ordinary redraw does not wait
 for its GPU work. Errors that Vulkan returns at once (acquire, submit, present,

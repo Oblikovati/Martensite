@@ -375,6 +375,35 @@ upload per frame).
 A view's first two redraws each create one set of attachments and one upload page, one for
 each frame in flight; later redraws create none.
 
+## Phase 2 window and readback measurements
+
+Medians of alternating Rust and C++ runs on CPU 14 (1000 frames for the frame cases,
+10 for the dump and resize cases):
+
+| Case | Before phase 2 | After | OCCT |
+| --- | ---: | ---: | ---: |
+| `frame_empty` | 0.116 ms | 0.057 ms | 0.053 ms |
+| `frame_msaa4_100k` | 0.144 ms | 0.125 ms | 0.31 ms |
+| `dump_1080p` | 12.8 ms | 1.01 ms | 0.40 ms |
+| `resize_redraw` | 5.7 ms | 1.1 ms | 0.49 ms |
+
+Peak memory stayed the same or fell in every case.
+
+A minimal Vulkan program that only acquires, clears and presents set the floor for the
+window cases. On the benchmark's override-redirect window, XWayland releases presented
+images late, so with the minimum image count plus one every acquire waited about 20 µs.
+One more image without vertical sync removed the wait; FIFO keeps the old count. The
+other gains came from work OCCT's redraw does not do: surface queries and window
+attribute requests to the X server, which share a connection with the WSI threads, and a
+host wait on the acquire fence.
+
+A colour dump reads only the colour attachment, borrows the cached frame instead of
+copying it, and reuses its host buffer. The remaining dump time is mostly the RGBA to RGB
+conversion on the CPU, which memory traffic limits.
+
+Resize stays outside parity on X11 (see PLAN.md). Recreating the swapchain alone costs more
+than OCCT's whole resize.
+
 ## Harness
 
 `cargo xtask occt-parity --toolkit vulkan --occt <prefix> --cpus 8-15` compares the cases
