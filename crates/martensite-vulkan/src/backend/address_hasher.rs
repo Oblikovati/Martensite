@@ -20,7 +20,10 @@ impl AddressHasher {
 
 impl Hasher for AddressHasher {
     fn finish(&self) -> u64 {
-        self.0
+        // The multiply leaves the low bits, which pick the bucket, depending only on the low
+        // bits of aligned addresses; rotating brings the well-mixed high bits down, as
+        // rustc-hash 2 does.
+        self.0.rotate_left(26)
     }
     fn write(&mut self, bytes: &[u8]) {
         for chunk in bytes.chunks(8) {
@@ -56,6 +59,19 @@ mod tests {
         assert_ne!(
             build.hash_one(0x7f00_1000_usize),
             build.hash_one(0x7f00_1040_usize)
+        );
+    }
+
+    #[test]
+    fn aligned_addresses_spread_over_the_low_bits() {
+        let build = BuildHasherDefault::<AddressHasher>::default();
+        let buckets: std::collections::HashSet<u64> = (0..256_usize)
+            .map(|i| build.hash_one(0x7f00_0000_usize + i * 64) & 255)
+            .collect();
+        assert!(
+            buckets.len() > 128,
+            "{} of 256 low-byte values",
+            buckets.len()
         );
     }
 

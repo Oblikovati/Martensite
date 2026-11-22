@@ -131,6 +131,7 @@ pub(crate) mod tests {
             viewport: [0, 0, 64, 64],
             pixel_coordinates: false,
             zoomable_scale: 1.,
+            unview: Default::default(),
         }
     }
 }

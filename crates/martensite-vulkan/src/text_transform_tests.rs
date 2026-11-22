@@ -50,6 +50,7 @@ fn bug22368_transform() -> TextTransform {
         viewport: [0, 0, 409, 409],
         pixel_coordinates: false,
         zoomable_scale: 1.,
+        unview: Default::default(),
     }
 }
 

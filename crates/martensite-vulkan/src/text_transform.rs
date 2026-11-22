@@ -11,6 +11,9 @@ pub(crate) struct TextTransform {
     pub pixel_coordinates: bool,
     /// The model scale of zoomable text: `RenderScaleInv` under a render scale, otherwise 1.
     pub zoomable_scale: f64,
+    /// `projection` inverted on first use; each label unprojects up to three points through
+    /// it, and inverting it for each point took 18% of `frame_text_1k` (#594).
+    pub unview: std::sync::OnceLock<Option<Mat4<f64>>>,
 }
 impl TextTransform {
     pub fn clip(
@@ -69,8 +72,22 @@ impl TextTransform {
         Ok((second[1] - first[1]) / f64::from(size))
     }
     fn unproject(&self, win: [f64; 3], projection: &Mat4<f64>) -> Result<[f64; 3], RenderError> {
-        tr::un_project(win, &Mat4::identity(), projection, self.viewport)
-            .ok_or_else(|| rejected(win, "an invertible text projection"))
+        let point = if *projection == self.projection {
+            self.projection_unview()
+                .and_then(|unview| tr::un_project_inverted(win, &unview, self.viewport))
+        } else {
+            tr::un_project(win, &Mat4::identity(), projection, self.viewport)
+        };
+        point.ok_or_else(|| rejected(win, "an invertible text projection"))
+    }
+    /// The inverse `tr::un_project` computes for `projection`, computed once.
+    fn projection_unview(&self) -> Option<Mat4<f64>> {
+        *self.unview.get_or_init(|| {
+            let mut unview = Mat4::identity();
+            (self.projection * Mat4::identity())
+                .inverted_to(&mut unview)
+                .then_some(unview)
+        })
     }
     fn text_model(
         &self,

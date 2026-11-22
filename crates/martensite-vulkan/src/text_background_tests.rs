@@ -30,6 +30,7 @@ fn subtitle_fixture_transform() -> TextTransform {
         viewport: [0, 0, 128, 128],
         pixel_coordinates: false,
         zoomable_scale: 1.,
+        unview: Default::default(),
     }
 }
 fn subtitle_fixture_draws(aspect: &Graphic3dAspectText3d) -> Vec<PrimitiveDraw> {

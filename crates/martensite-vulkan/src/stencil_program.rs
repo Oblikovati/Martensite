@@ -30,19 +30,18 @@ pub(crate) struct StencilProgram {
     pub boundaries: Vec<StencilBoundary>,
 }
 impl StencilProgram {
-    /// The programs one after the other, each draw moved once into a buffer of the final size;
-    /// growing one program by `append` copied every 1.5 KB draw again at each doubling (#594).
+    /// The programs one after the other. The first program's buffer grows once to the final
+    /// size and the others move into it, so a layer of one structure copies nothing; growing
+    /// by `append` alone copied every 1.5 KB draw again at each doubling (#594).
     /// Example: `StencilProgram::concat(structure_programs)`.
     pub fn concat(programs: Vec<Self>) -> Self {
-        let draws = programs.iter().map(|program| program.draws.len()).sum();
-        let boundaries = programs.iter().map(|p| p.boundaries.len()).sum();
-        let mut joined = Self {
-            draws: Vec::with_capacity(draws),
-            boundaries: Vec::with_capacity(boundaries),
+        let draws: usize = programs.iter().map(|program| program.draws.len()).sum();
+        let mut programs = programs.into_iter();
+        let Some(mut joined) = programs.next() else {
+            return Self::default();
         };
-        programs
-            .into_iter()
-            .for_each(|program| joined.append(program));
+        joined.draws.reserve_exact(draws - joined.draws.len());
+        programs.for_each(|program| joined.append(program));
         joined
     }
     pub fn append(&mut self, mut other: Self) {

@@ -121,6 +121,7 @@ impl TextSceneContext<'_> {
             viewport: [0, 0, extent[0] as i32, extent[1] as i32],
             pixel_coordinates: false,
             zoomable_scale: crate::render_scale::zoomable_text_scale(self.rendering),
+            unview: Default::default(),
         })
     }
     fn text_scene_matrices(&self, extent: [u32; 2]) -> Result<(Mat4<f64>, Mat4<f64>), RenderError> {

@@ -123,11 +123,25 @@ where
     if !(*projection * *model_view).inverted_to(&mut unview) {
         return None;
     }
+    un_project_inverted([x, y, z], &unview, viewport)
+}
+
+/// `un_project` with `(projection * model_view)` already inverted, for callers that unproject
+/// many points through one matrix; `None` for a clip w of 0.
+/// Example: `un_project_inverted([400.0, 300.0, 0.5], &unview, viewport)`.
+pub fn un_project_inverted<T: Graphic3dTransformScalar>(
+    [x, y, z]: [T; 3],
+    unview: &Mat4<T>,
+    viewport: [i32; 4],
+) -> Option<[T; 3]>
+where
+    Mat4<T>: Mul<Vec4<T>, Output = Vec4<T>>,
+{
     let vp = viewport.map(T::from_i32_native);
     let (one, two) = (c::<T>(1.0), c::<T>(2.0));
     let nx = (x - vp[0]) / vp[2] * two - one;
     let ny = (y - vp[1]) / vp[3] * two - one;
-    let out = unview * Vec4::new(nx, ny, z * two - one, one);
+    let out = *unview * Vec4::new(nx, ny, z * two - one, one);
     if out.w == c(0.0) {
         return None;
     }
@@ -235,4 +249,28 @@ pub fn translate<T: Graphic3dTransformScalar>(output: &mut Mat4<T>, [x, y, z]: [
 /// Example: `scale_factor(&Mat4::<f64>::identity()) == 1.0`.
 pub fn scale_factor<T: Graphic3dTransformScalar>(matrix: &Mat4<T>) -> f64 {
     martensite_cmath::pow(matrix.determinant_mat3().to_f64_native(), 1.0 / 3.0)
+}
+
+#[cfg(test)]
+mod un_project_tests {
+    use super::{un_project, un_project_inverted};
+    use martensite_tkernel::ncollection::Mat4;
+
+    #[test]
+    fn a_prepared_inverse_unprojects_to_the_same_bits() {
+        let mut projection = Mat4::<f64>::identity();
+        projection.set_value(0, 0, 0.002);
+        projection.set_value(1, 1, 0.003);
+        projection.set_value(2, 3, -1.25);
+        let mut view = Mat4::<f64>::identity();
+        view.set_value(0, 3, 4.0);
+        let viewport = [0, 0, 800, 600];
+        let mut unview = Mat4::identity();
+        assert!((projection * view).inverted_to(&mut unview));
+        for win in [[400.0, 300.0, 0.5], [17.0, 593.0, 0.1], [799.0, 0.0, 0.9]] {
+            let direct = un_project(win, &view, &projection, viewport).unwrap();
+            let prepared = un_project_inverted(win, &unview, viewport).unwrap();
+            assert_eq!(direct.map(f64::to_bits), prepared.map(f64::to_bits));
+        }
+    }
 }
