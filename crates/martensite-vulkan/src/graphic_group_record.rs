@@ -27,6 +27,9 @@ pub(super) enum RecordSlot {
     #[default]
     Empty,
     Lowered(u64),
+    /// Lowered more than once in one pass: a connected presentation draws the group under
+    /// many transforms, and a record would help only the first of them.
+    Instanced,
     /// Boxed, so that the slot of a group without a record stays two words.
     Kept(Box<GroupDrawRecord>),
 }
@@ -314,16 +317,21 @@ impl Graphic3dDrawGroup {
     /// are never lowered again; a second lowering in the same pass is another instance.
     fn lowered_before(&self, serial: u64) -> bool {
         let mut slot = self.draw_record.write();
-        match &*slot {
-            RecordSlot::Lowered(previous) => *previous != serial,
+        let again_in_pass = match &*slot {
+            RecordSlot::Lowered(previous) => *previous == serial,
             RecordSlot::Kept(record) => {
-                record.pass.load(std::sync::atomic::Ordering::Relaxed) != serial
+                record.pass.load(std::sync::atomic::Ordering::Relaxed) == serial
             }
+            RecordSlot::Instanced => return false,
             RecordSlot::Empty => {
                 *slot = RecordSlot::Lowered(serial);
-                false
+                return false;
             }
+        };
+        if again_in_pass {
+            *slot = RecordSlot::Instanced;
         }
+        !again_in_pass
     }
 }
 

@@ -206,7 +206,7 @@ fn a_group_lowered_by_one_pass_keeps_no_record() {
 }
 
 #[test]
-fn another_instance_in_the_same_pass_does_not_replace_the_record() {
+fn a_group_lowered_twice_in_one_pass_drops_its_record_for_good() {
     use crate::render_element_pass::RenderElementPass;
     let scene = RecordScene::new();
     scene.recorded();
@@ -215,19 +215,17 @@ fn another_instance_in_the_same_pass_does_not_replace_the_record() {
     assert_eq!(scene.replays(), Some(1));
     scene.translate(5.);
     let instance = scene.draws_in(&pass);
-    let cstructure = scene.structure.cstructure();
-    cstructure.cstructure_base().fields.write().trsf = Handle::default();
     assert_eq!(
         scene.replays(),
-        Some(1),
-        "the instance lowered without a new record"
+        None,
+        "an instanced group keeps no copy of its draws"
     );
+    assert!(matches!(
+        *scene.group.draw_record.read(),
+        super::RecordSlot::Instanced
+    ));
     scene.draws();
-    assert_eq!(
-        scene.replays(),
-        Some(2),
-        "the next pass replays the first instance"
-    );
-    scene.translate(5.);
+    scene.draws();
+    assert_eq!(scene.replays(), None, "later passes do not record it again");
     assert_eq!(instance, scene.lowered_again());
 }
