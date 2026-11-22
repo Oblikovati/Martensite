@@ -207,7 +207,11 @@ fn a_mutable_triangle_transfers_only_the_edited_vertex_record() {
     let update = view.last_frame_work();
     assert_ne!(view.capture().unwrap().rgba, first.rgba);
     assert_eq!(update.geometry_uploaded_bytes, 32, "{update:?}");
-    assert_eq!(update.geometry_buffers_created, 1, "{update:?}");
+    assert_eq!(
+        update.geometry_buffers_created,
+        u64::from(cfg!(feature = "lit-only-command-diagnostics")),
+        "{update:?}"
+    );
     assert_clean_validation(&driver);
 }
 
@@ -267,7 +271,11 @@ fn a_mutable_index_transfers_one_device_word_and_matches_a_fresh_upload() {
     let edited = view.capture().unwrap();
     assert_ne!(edited.rgba, first.rgba);
     assert_eq!(update.geometry_uploaded_bytes, 4, "{update:?}");
-    assert_eq!(update.geometry_buffers_created, 1, "{update:?}");
+    assert_eq!(
+        update.geometry_buffers_created,
+        u64::from(cfg!(feature = "lit-only-command-diagnostics")),
+        "{update:?}"
+    );
     assert_matches_fresh_indexed_triangle(&scene, edited, 8.);
     assert_clean_validation(&driver);
 }
@@ -292,7 +300,11 @@ fn a_mutable_array_transfers_only_one_vertex_and_one_index_together() {
     let edited = view.capture().unwrap();
     assert_ne!(edited.rgba, first.rgba);
     assert_eq!(update.geometry_uploaded_bytes, 36, "{update:?}");
-    assert_eq!(update.geometry_buffers_created, 2, "{update:?}");
+    assert_eq!(
+        update.geometry_buffers_created,
+        2 * u64::from(cfg!(feature = "lit-only-command-diagnostics")),
+        "{update:?}"
+    );
     assert_matches_fresh_indexed_triangle(&scene, edited, 2.);
     assert_clean_validation(&driver);
 }

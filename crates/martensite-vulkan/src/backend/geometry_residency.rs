@@ -1,5 +1,5 @@
 //! Resident streams become visible only after their frame's transfer completes.
-use super::buffer::DeviceBuffer;
+use super::geometry_buffer::{GeometryBuffer, GeometryBufferPool};
 use super::runtime::VulkanRuntime;
 use crate::{PrimitiveDraw, RenderVertex};
 use ash::vk;
@@ -9,8 +9,8 @@ use std::sync::{Arc, Mutex, Weak};
 
 #[derive(Clone)]
 pub(super) struct ResidentGeometry {
-    pub vertices: Arc<DeviceBuffer>,
-    pub indices: Arc<DeviceBuffer>,
+    pub vertices: Arc<GeometryBuffer>,
+    pub indices: Arc<GeometryBuffer>,
 }
 
 impl ResidentGeometry {
@@ -181,6 +181,7 @@ fn is_live<T>(stream: &Option<Weak<Vec<T>>>) -> bool {
 pub(super) struct GeometryStore {
     retained: Mutex<RetainedGeometry>,
     byte_limit: u64,
+    pub(super) buffers: GeometryBufferPool,
 }
 
 const RETIREMENT_CHECKS_PER_FRAME: usize = 512;
@@ -246,6 +247,7 @@ impl GeometryStore {
         Self {
             retained: Mutex::default(),
             byte_limit: (local_bytes / 4).min(MAX_RESIDENT_BYTES),
+            buffers: GeometryBufferPool::new((local_bytes / 4).min(MAX_RESIDENT_BYTES)),
         }
     }
 
@@ -298,6 +300,10 @@ impl FrameGeometryResidency {
         }
     }
 
+    pub(super) fn buffers(&self) -> &GeometryBufferPool {
+        &self.store.buffers
+    }
+
     pub(super) fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
         if let Some(lease) = self.pending.leases.get(&key) {
             return Some(lease.geometry.clone());
@@ -333,10 +339,10 @@ impl FrameGeometryResidency {
 #[cfg(test)]
 mod tests {
     use super::{
-        DeviceBuffer, GeometryEncoding, GeometryKey, GeometryLease, ResidentGeometry,
+        GeometryBuffer, GeometryEncoding, GeometryKey, GeometryLease, ResidentGeometry,
         RetainedGeometry,
     };
-    use crate::{PrimitiveDraw, RenderVertex};
+    use crate::{PrimitiveDraw, RenderVertex, backend::buffer::DeviceBuffer};
     use ash::vk;
 
     #[test]
@@ -417,8 +423,8 @@ mod tests {
         let indices =
             DeviceBuffer::device_local(runtime, 12, vk::BufferUsageFlags::INDEX_BUFFER).unwrap();
         ResidentGeometry {
-            vertices: Arc::new(vertices),
-            indices: Arc::new(indices),
+            vertices: Arc::new(GeometryBuffer::dedicated(vertices, None)),
+            indices: Arc::new(GeometryBuffer::dedicated(indices, None)),
         }
     }
 }

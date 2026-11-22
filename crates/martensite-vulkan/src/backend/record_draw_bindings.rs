@@ -37,6 +37,20 @@ mod lighting_slot_tests {
     }
 }
 
+#[derive(Default)]
+pub(super) struct BindingSlots {
+    pub(super) lighting: LightingSlot,
+    vertex: Option<(vk::Buffer, u64)>,
+    index: Option<(vk::Buffer, u64)>,
+}
+
+impl BindingSlots {
+    pub(super) fn invalidate_geometry(&mut self) {
+        self.vertex = None;
+        self.index = None;
+    }
+}
+
 pub(super) fn record_draw(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
@@ -44,20 +58,21 @@ pub(super) fn record_draw(
     pipeline: &DrawPipeline,
     push: bool,
     oit_set: Option<vk::DescriptorSet>,
-    lighting: &mut LightingSlot,
-) {
+    slots: &mut BindingSlots,
+) -> (u32, i32) {
     super::window_depth_status::bind(runtime, command, draw, pipeline);
     line_state(runtime, command, draw);
-    bind_lighting(runtime, command, draw, pipeline, lighting);
+    bind_lighting(runtime, command, draw, pipeline, &mut slots.lighting);
     for (index, set) in remaining_descriptors(draw, pipeline, oit_set) {
         if let Some(set) = set {
             bind_descriptor(runtime, command, pipeline.layout, index, set);
         }
     }
-    bind_geometry(runtime, command, draw);
+    let indices = bind_geometry(runtime, command, draw, pipeline, slots);
     if push {
         push_draw_transform(runtime, command, draw, pipeline);
     }
+    indices
 }
 fn line_state(runtime: &VulkanRuntime, command: vk::CommandBuffer, draw: &UploadedDraw) {
     if let Some((factor, pattern)) = draw.line.stipple {
@@ -182,22 +197,61 @@ fn bind_descriptor_offsets(
         dynamic_offsets,
     );
 }
-fn bind_geometry(runtime: &VulkanRuntime, command: vk::CommandBuffer, draw: &UploadedDraw) {
-    // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
+fn bind_geometry(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    draw: &UploadedDraw,
+    pipeline: &DrawPipeline,
+    slots: &mut BindingSlots,
+) -> (u32, i32) {
+    let observe = cfg!(feature = "command-state-diagnostics");
+    let (vertex_offset, base_vertex) = vertex_location(draw, pipeline, observe);
+    let vertex = (draw.vertices.handle, vertex_offset);
+    let (offset, first) = index_location(draw, observe);
+    let index = (draw.indices.handle, offset);
+    // SAFETY: the recording frame owns both geometry ranges until retirement. The offsets and
+    // first index name the same aligned vertex and index bytes as the uploaded draw.
     unsafe {
-        runtime
-            .device()
-            .cmd_bind_vertex_buffers(command, 0, &[draw.vertices.handle], &[0]);
-        runtime.device().cmd_bind_index_buffer(
-            command,
-            draw.indices.handle,
-            0,
-            vk::IndexType::UINT32,
-        );
+        let device = runtime.device();
+        if observe || slots.vertex != Some(vertex) {
+            device.cmd_bind_vertex_buffers(command, 0, &[vertex.0], &[vertex.1]);
+        }
+        if observe || slots.index != Some(index) {
+            device.cmd_bind_index_buffer(command, index.0, index.1, vk::IndexType::UINT32);
+        }
     }
+    slots.vertex = Some(vertex);
+    slots.index = Some(index);
     #[cfg(feature = "command-state-diagnostics")]
     super::replay_raster_commands::geometry(command, draw.vertices.handle, draw.indices.handle);
+    (first, base_vertex)
 }
+
+fn index_location(draw: &UploadedDraw, observe: bool) -> (u64, u32) {
+    let offset = draw.indices.offset;
+    // Wide-line replay issues its own index offsets. Diagnostics retain the original commands.
+    if !observe
+        && draw.line.wide.is_none()
+        && let Ok(first) = u32::try_from(offset / 4)
+    {
+        return (0, first);
+    }
+    (offset, 0)
+}
+
+fn vertex_location(draw: &UploadedDraw, pipeline: &DrawPipeline, observe: bool) -> (u64, i32) {
+    let offset = draw.vertices.offset;
+    if !observe
+        && draw.line.wide.is_none()
+        && let Some(stride) = pipeline.stock_base_vertex_stride
+        && draw.vertices.alignment == Some(stride)
+        && let Ok(base) = i32::try_from(offset / stride)
+    {
+        return (0, base);
+    }
+    (offset, 0)
+}
+
 fn push_draw_transform(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,

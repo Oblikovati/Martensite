@@ -2,7 +2,7 @@
 
 /// Free byte ranges of a block, sorted by offset and never adjacent.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) struct BlockSpace {
+pub(in crate::backend) struct BlockSpace {
     size: u64,
     free: Vec<(u64, u64)>,
 }
@@ -16,15 +16,15 @@ impl BlockSpace {
         }
     }
 
-    /// Reserve `size` bytes at a multiple of `alignment` (a power of two); `space.reserve(256, 64)`.
+    /// Reserve `size` bytes at a multiple of `alignment`; `space.reserve(256, 64)`.
     pub fn reserve(&mut self, size: u64, alignment: u64) -> Option<u64> {
         let (index, offset) =
             self.free
                 .iter()
                 .enumerate()
                 .find_map(|(index, &(start, length))| {
-                    let offset = start.next_multiple_of(alignment);
-                    (offset + size <= start + length).then_some((index, offset))
+                    let offset = start.checked_next_multiple_of(alignment)?;
+                    (offset.checked_add(size)? <= start + length).then_some((index, offset))
                 })?;
         let (start, length) = self.free.remove(index);
         let tail = (offset + size, start + length - offset - size);

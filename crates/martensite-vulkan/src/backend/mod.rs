@@ -202,13 +202,14 @@ mod fixed_vertex_sources;
 mod frame;
 mod frame_draw_presentation;
 mod frame_targets;
-pub(crate) mod immediate_main_record;
+mod geometry_buffer;
 #[cfg(feature = "command-state-diagnostics")]
 mod geometry_command_diagnostic;
 mod geometry_residency;
 mod geometry_transfer;
 mod host_upload_pages;
 mod image;
+pub(crate) mod immediate_main_record;
 mod light_dot_renderer;
 mod light_dot_shader;
 mod light_dot_shader_table;

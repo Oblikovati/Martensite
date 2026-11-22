@@ -28,6 +28,7 @@ pub(super) fn encoded_geometry(runtime: &VulkanRuntime, draw: &PrimitiveDraw) ->
         super::super::super::fixed_vertex_sources::fixed_expanded_indices(draw, source_count);
     EncodedGeometry {
         indices: encoded_index_bytes(&original, expanded.as_deref()),
+        vertex_alignment: (source_count > 0).then(|| (vertices.len() / source_count) as u64),
         vertices,
         #[cfg(feature = "command-state-diagnostics")]
         source_count,
@@ -39,6 +40,7 @@ fn encoded_flat_text(vertices: Vec<u8>, original: &[u32]) -> EncodedGeometry {
     EncodedGeometry {
         indices: encoded_index_bytes(original, Some(&packed.indices)),
         vertices: packed.vertices,
+        vertex_alignment: None,
         #[cfg(feature = "command-state-diagnostics")]
         source_count: original.len(),
     }
@@ -72,17 +74,20 @@ impl EncodedGeometry {
         runtime: &Arc<VulkanRuntime>,
         pool: &super::super::super::host_upload_pages::HostUploadPool,
         transfers: &mut GeometryTransfers,
+        retained: bool,
     ) -> Result<ResidentGeometry, RenderError> {
         let vertices = transfers.upload(
             runtime,
             pool,
             vk::BufferUsageFlags::VERTEX_BUFFER,
+            self.vertex_alignment.filter(|_| retained),
             &self.vertices,
         )?;
         let indices = transfers.upload(
             runtime,
             pool,
             vk::BufferUsageFlags::INDEX_BUFFER,
+            retained.then_some(4),
             &self.indices,
         )?;
         Ok(ResidentGeometry { vertices, indices })
@@ -97,6 +102,7 @@ pub(super) fn encoded_fixed_grid_geometry(draw: &PrimitiveDraw) -> EncodedGeomet
             .flat_map(u32::to_ne_bytes)
             .collect(),
         vertices: encode_vertex_sources(draw, sources),
+        vertex_alignment: None,
         #[cfg(feature = "command-state-diagnostics")]
         source_count: draw.indices.len(),
     }

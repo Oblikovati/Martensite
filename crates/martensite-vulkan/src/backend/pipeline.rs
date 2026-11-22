@@ -25,6 +25,7 @@ pub(super) struct DrawPipeline {
     pub triangle_grid_coverage_shader: bool,
     pub world_clip_grid12_shader: bool,
     pub text_grid_interpolation_shader: bool,
+    pub(super) stock_base_vertex_stride: Option<u64>,
     #[cfg(feature = "vertex-output-diagnostics")]
     pub vertex_output_shader: bool,
     runtime: Arc<VulkanRuntime>,
@@ -134,6 +135,7 @@ impl DrawPipeline {
             triangle_grid_coverage_shader: false,
             world_clip_grid12_shader: false,
             text_grid_interpolation_shader: false,
+            stock_base_vertex_stride: None,
             #[cfg(feature = "vertex-output-diagnostics")]
             vertex_output_shader: false,
             runtime: runtime.clone(),
@@ -336,6 +338,9 @@ impl DrawPipeline {
     fn add_shader(&mut self, bytes: &'static [u8]) -> Result<(), RenderError> {
         let bytes = self.selected_builtin_vertex(bytes)?;
         let actual = self.capture_shader_source(bytes)?;
+        if self.shaders.is_empty() {
+            self.stock_base_vertex_stride = stock_base_vertex_stride(self.kind, actual);
+        }
         if self.shaders.len() == 1 {
             self.fragment_bytes = bytes;
         }
@@ -483,6 +488,26 @@ impl Drop for DrawPipeline {
         }
     }
 }
+// The packaged plain lighting vertex stage reads neither VertexIndex nor BaseVertex.
+fn stock_base_vertex_stride(
+    kind: super::pipeline_variants::PipelineVariant,
+    actual: &[u8],
+) -> Option<u64> {
+    if !kind.lighting
+        || kind.line
+        || kind.point
+        || kind.text
+        || kind.surface_texture
+        || kind.surface_alpha
+        || kind.fixed_lighting
+        || kind.mesh_edges
+    {
+        return None;
+    }
+    let [plain, _] = lighting_shaders(false, false, false);
+    (actual == plain).then_some(u64::from(super::pipeline_state::LIT_VERTEX_STRIDE))
+}
+
 pub(super) fn load_shader(
     runtime: &VulkanRuntime,
     bytes: &[u8],

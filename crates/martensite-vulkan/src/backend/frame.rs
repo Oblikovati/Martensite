@@ -9,7 +9,7 @@ use draw_upload::upload_draw;
 #[path = "frame_setup.rs"]
 mod frame_setup;
 use super::{
-    buffer::DeviceBuffer, geometry_transfer::GeometryTransfers,
+    buffer::DeviceBuffer, geometry_buffer::GeometryBuffer, geometry_transfer::GeometryTransfers,
     host_upload_pages::FrameUploadPages, image::TargetImage, pipeline::DrawPipeline,
     pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
 };
@@ -36,8 +36,8 @@ pub(super) struct UploadedDraw {
     )>,
     pub sample_alpha_cutoff: bool,
     pub oit: Option<super::oit_upload::OitUploadedVariants>,
-    pub vertices: Arc<DeviceBuffer>,
-    pub indices: Arc<DeviceBuffer>,
+    pub vertices: Arc<GeometryBuffer>,
+    pub indices: Arc<GeometryBuffer>,
     pub count: u32,
     pub instances: u32,
     pub point_viewports: Option<[vk::Viewport; 2]>,

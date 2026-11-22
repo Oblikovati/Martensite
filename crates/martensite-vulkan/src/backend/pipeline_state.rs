@@ -1,6 +1,7 @@
 //! Fixed state for the opaque unlit acceptance slice; unsupported styles fail before upload.
 use crate::depth_prepass::RenderDepthPass::{DepthEqual, DepthOnly};
 use ash::vk;
+pub(super) const LIT_VERTEX_STRIDE: u32 = 44;
 const BINDINGS: [vk::VertexInputBindingDescription; 1] = [vk::VertexInputBindingDescription {
     binding: 0,
     stride: 32,
@@ -200,7 +201,7 @@ fn vertex_state(text: bool, lighting: bool) -> vk::PipelineVertexInputStateCreat
     const LIT_BINDING: [vk::VertexInputBindingDescription; 1] =
         [vk::VertexInputBindingDescription {
             binding: 0,
-            stride: 44,
+            stride: LIT_VERTEX_STRIDE,
             input_rate: vk::VertexInputRate::VERTEX,
         }];
     const LIT_ATTRIBUTES: [vk::VertexInputAttributeDescription; 3] = [

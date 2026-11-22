@@ -10,7 +10,7 @@ use super::frame_work_ledger::DeviceCount;
 use super::runtime::{VulkanRuntime, vk_error};
 use crate::error::RenderError;
 use ash::vk;
-use block_space::BlockSpace;
+pub(super) use block_space::BlockSpace;
 use std::sync::{Arc, Mutex};
 
 const BLOCK_SIZE: u64 = 16 << 20;
