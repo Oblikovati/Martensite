@@ -54,6 +54,7 @@ pub struct Graphic3dRenderView {
     redraw_target: SharedState<Option<redraw_completion::RedrawPublicationTarget>>,
     fused_replay: SharedState<Option<ViewBatch>>,
     fused_replay_enabled: std::sync::atomic::AtomicBool,
+    pub(crate) window_observation: crate::view_window_observation::WindowObservation,
 }
 pub(crate) type FramePublication = Result<Arc<RedrawCapture>, RenderError>;
 martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
@@ -134,6 +135,7 @@ impl Graphic3dRenderView {
             redraw_target: Default::default(),
             fused_replay: Default::default(),
             fused_replay_enabled: std::sync::atomic::AtomicBool::new(true),
+            window_observation: Default::default(),
         }
     }
     /// `myWasRedrawnGL`: whether a Redraw or RedrawImmediate of this view completed.
@@ -302,7 +304,7 @@ impl Graphic3dRenderView {
             ));
         }
         // Native buffersNoSwap draws the frame but never swaps; dumps read the rendered frame.
-        if !window.is_mapped() || self.options.read().buffers_no_swap {
+        if !self.observed_window_mapped(&*window) || self.options.read().buffers_no_swap {
             return device.render_view_frame(frame);
         }
         self.render_mapped_target(frame, &mut device)
@@ -385,6 +387,7 @@ impl Graphic3dCView for Graphic3dRenderView {
         if self.gui_layers.write().resized() {
             self.invalidate_gui_capture();
         }
+        self.window_observation.forget();
         graphic3d_cview_resized(self);
         self.invalidate();
     }

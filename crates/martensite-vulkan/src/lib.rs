@@ -208,6 +208,7 @@ mod view_scene;
 mod view_target;
 pub use view_target::RenderFrameBuffer;
 mod view_window_lifecycle;
+mod view_window_observation;
 pub use driver::Graphic3dRenderDriver;
 mod driver_factory;
 pub use driver_factory::{VULKAN_DRIVER_NAME, VulkanDriverFactory};

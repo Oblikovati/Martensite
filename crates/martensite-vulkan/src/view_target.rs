@@ -129,7 +129,7 @@ impl RenderFrameBuffer {
     }
 }
 pub(crate) fn capture_extent(
-    view: &dyn Graphic3dCView,
+    view: &crate::Graphic3dRenderView,
     limit: u32,
 ) -> Result<[u32; 2], RenderError> {
     let dimensions = target_dimensions(view);
@@ -148,10 +148,10 @@ pub(crate) fn capture_extent(
     Ok([width as u32, height as u32])
 }
 
-fn target_dimensions(view: &dyn Graphic3dCView) -> Option<(i32, i32)> {
+fn target_dimensions(view: &crate::Graphic3dRenderView) -> Option<(i32, i32)> {
     let fbo = view.fbo();
     if fbo.is_null() {
-        return view.window().get().map(|window| window.size());
+        return view.observed_window_size();
     }
     fbo.cast::<RenderFrameBuffer>().get().map(|target| {
         let [width, height, max_width, max_height] = target.dimensions();
