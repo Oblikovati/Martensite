@@ -5,7 +5,7 @@ impl PreparedBindings {
         DrawBindings {
             lighting: self.lighting,
             clipping: self.clipping.map(Box::new),
-            sprite: self.sprite.map(Box::new),
+            sprite: self.sprite,
             surface_image: self.surface_image,
             pbr_environment: self.pbr_environment,
             shadow_maps: self.shadow_maps,

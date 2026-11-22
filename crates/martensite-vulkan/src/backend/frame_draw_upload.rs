@@ -59,7 +59,7 @@ struct PreparedBindings {
     sphere_map: Option<UploadedStorage>,
     clipping: Option<UploadedStorage>,
     surface_image: Option<Arc<SurfaceImageBinding>>,
-    sprite: Option<UploadedStorage>,
+    sprite: Option<Arc<UploadedStorage>>,
     pbr_environment: Option<Arc<super::super::pbr_environment::PbrEnvironment>>,
     material_maps: Option<Arc<super::super::material_map_descriptor::MaterialMapBinding>>,
     shadow_maps: Option<Arc<super::super::shadow_maps::ShadowMapSet>>,

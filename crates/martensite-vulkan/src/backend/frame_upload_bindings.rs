@@ -44,31 +44,22 @@ impl DrawUploadContext<'_> {
     fn upload_sprite(
         &self,
         pipeline: &DrawPipeline,
-    ) -> Result<Option<UploadedStorage>, RenderError> {
-        let draw = self.draw;
-        if pipeline.sprite_layout.is_none() {
+    ) -> Result<Option<Arc<UploadedStorage>>, RenderError> {
+        let (Some(layout), Some(style)) = (&pipeline.sprite_layout, &self.draw.point_style) else {
             return Ok(None);
+        };
+        if !cfg!(feature = "command-state-diagnostics")
+            && style.color_policy == crate::point_style::PointColorPolicy::Plain
+        {
+            return self
+                .pipelines
+                .plain_point_sprite
+                .binding(self.runtime, layout, &style.image)
+                .map(Some);
         }
-        let image = draw.point_style.as_ref().map(|s| &s.image);
-        image
-            .map(|image| self.selected_sprite(pipeline, image))
-            .transpose()
-    }
-    fn selected_sprite(
-        &self,
-        pipeline: &DrawPipeline,
-        image: &crate::RasterImage,
-    ) -> Result<UploadedStorage, RenderError> {
-        let layout = pipeline
-            .sprite_layout
-            .as_ref()
-            .expect("sprite pipeline layout");
-        crate::backend::point_sprite::upload_sprite(
-            self.runtime,
-            layout,
-            image,
-            self.draw.point_style.is_some(),
-        )
+        crate::backend::point_sprite::upload_sprite(self.runtime, layout, &style.image)
+            .map(Arc::new)
+            .map(Some)
     }
 
     fn prepare_surface_cache(&self) -> Result<(), RenderError> {
