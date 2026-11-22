@@ -14,7 +14,7 @@ use martensite_tkservice::image::ImagePixMap;
 use martensite_vulkan::*;
 use std::sync::{
     Arc,
-    atomic::{AtomicBool, Ordering},
+    atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
 /// Named element: emits one retained primitive array with the current aspects.
@@ -135,4 +135,30 @@ fn a_callback_append_becomes_visible_to_the_next_group_extraction() {
     let camera = scene.view.camera();
     assert!(group.primitive_draws(&camera).unwrap().is_empty());
     assert_eq!(group.primitive_draws(&camera).unwrap().len(), 1);
+}
+
+#[derive(Default)]
+struct ObserveModelStack(AtomicUsize);
+
+impl RenderElement for ObserveModelStack {
+    fn render(&self, context: &mut RenderElementContext<'_>) -> Result<(), RenderError> {
+        let depth = context.context_state().model_world_state().depth();
+        self.0.store(depth + 1, Ordering::Relaxed);
+        Ok(())
+    }
+}
+
+#[test]
+fn a_later_group_can_observe_and_pop_the_structure_stack() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let group: Handle<Graphic3dDrawGroup> = scene.structure.new_group().unwrap().cast();
+    let before = Arc::new(ObserveModelStack::default());
+    let after = Arc::new(ObserveModelStack::default());
+    group.add_element(before.clone());
+    group.set_flipping_options(false, &martensite_tkmath::gp::Axis2::default());
+    group.add_element(after.clone());
+    scene.render_view().try_redraw().unwrap();
+    assert_eq!(before.0.load(Ordering::Relaxed), 2);
+    assert_eq!(after.0.load(Ordering::Relaxed), 1);
 }

@@ -119,8 +119,12 @@ impl Graphic3dDrawGroup {
         let mut program = StencilProgram::default();
         // The transparent element pass replays commands without re-emitting their stencil state.
         let mut replayed = StencilProgram::default();
-        let mut flips =
-            crate::group_flipping::GroupFlipStack::scene(context, matrix, carry, effects.flips)?;
+        let mut flips = crate::group_flipping::GroupFlipStack::scene(
+            context,
+            matrix,
+            carry,
+            (effects.flips, effects.calls_user_code),
+        )?;
         let mut visit = ElementVisit {
             highlight: &policy.highlight,
             allow_face_culling: self.is_closed() && policy.allow_culling,
