@@ -33,7 +33,7 @@ struct GroupSubmissionState {
     #[cfg(feature = "vertex-output-diagnostics")]
     vertex_output_text: Option<(usize, std::num::NonZeroU64)>,
     aspects: Handle<dyn Graphic3dAspectsSource>,
-    commands: Vec<GroupCommand>,
+    commands: crate::draw::DrawStream<GroupCommand>,
     /// Native `myIsRaytracable`; reset by `Clear` with the commands.
     raytracable: bool,
 }
@@ -203,8 +203,7 @@ impl Graphic3dDrawGroup {
         }
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Geometry(GroupGeometry::Primitives(primitive)));
+            .push_command(GroupCommand::Geometry(GroupGeometry::Primitives(primitive)));
         self.update();
     }
 }
@@ -249,8 +248,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         self.aspect_textures.invalidate(&aspect.observe());
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Aspects(aspect.observe().clone()));
+            .push_command(GroupCommand::Aspects(aspect.observe().clone()));
         self.update();
     }
     fn synchronize_aspects(&self) {
@@ -265,11 +263,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         self.aspect_textures.synchronize();
         let mut state = self.submissions.write();
         let replaced = replace_style(&mut state.aspects, map);
-        for command in &mut state.commands {
-            if let GroupCommand::Aspects(style) = command {
-                replace_style(style, map);
-            }
-        }
+        state.replace_command_aspects(map);
         drop(state);
         if replaced {
             self.update_raytracable_structure();
@@ -320,8 +314,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         }
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Geometry(GroupGeometry::Text(
+            .push_command(GroupCommand::Geometry(GroupGeometry::Text(
                 text.clone(),
                 Default::default(),
                 crate::render_element::TextPlacement::Scene,
@@ -334,8 +327,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         }
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Stencil(enabled));
+            .push_command(GroupCommand::Stencil(enabled));
     }
     fn set_flipping_options(&self, enabled: bool, plane: &Axis2) {
         if self.is_deleted() {
@@ -343,8 +335,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         }
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Flipping(enabled.then_some(*plane)));
+            .push_command(GroupCommand::Flipping(enabled.then_some(*plane)));
         if enabled {
             self.structure().cstructure().set_group_flipping(true);
             self.base.fields.write().flipper = Handle::new(Graphic3dFlipper::new(*plane));

@@ -62,7 +62,7 @@ impl Graphic3dDrawGroup {
                 aspects_element(o, d, address, &state.aspects)
             })?;
         }
-        for command in &state.commands {
+        for command in state.commands.iter() {
             let address = address_of(command);
             field_dumped(stream, depth, "anElement", &|o, d| {
                 dump_command(command, address, o, d)
