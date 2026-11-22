@@ -24,8 +24,10 @@ struct DrawUploadContext<'a> {
     pipelines: &'a RasterPipelines,
     extent: vk::Extent2D,
     window_depth: Option<super::super::window_depth_parameters::WindowDepthPipelineParameters>,
+    line_tint: Option<LineTint<'a>>,
     retirements: &'a RetirementStore,
 }
+type LineTint<'a> = (&'a crate::draw::DrawStream<crate::RenderVertex>, [f32; 4]);
 // Fields follow reverse preparation order, so later-stage errors retain the original cleanup.
 struct EncodedGeometry {
     indices: Vec<u8>,
@@ -142,17 +144,38 @@ pub(super) fn upload_draw(
             replay.indices.clone().into(),
         )
     });
+    let draw = reordered.as_ref().unwrap_or(draw);
+    let tinted = highlighted_line_geometry(runtime, semantic_draw, draw, &wide, window_depth);
     let context = DrawUploadContext {
         runtime,
         semantic_draw,
-        draw: reordered.as_ref().unwrap_or(draw),
+        draw,
         wide: wide.as_ref(),
         pipelines,
         extent,
         window_depth,
+        line_tint: tinted,
         retirements,
     };
     context.upload_prepared(uploads)
+}
+
+fn highlighted_line_geometry<'a>(
+    runtime: &VulkanRuntime,
+    semantic: &PrimitiveDraw,
+    selected: &'a PrimitiveDraw,
+    wide: &Option<crate::wide_line::WideLineReplay>,
+    window_depth: Option<super::super::window_depth_parameters::WindowDepthPipelineParameters>,
+) -> Option<LineTint<'a>> {
+    let source = crate::highlight_style::HighlightLineSource::resolve(selected)?;
+    if runtime.projection_behavior != crate::RenderProjectionBehavior::PrecomposedV1
+        || !std::ptr::eq(semantic, selected)
+        || wide.is_some()
+        || window_depth.is_some()
+    {
+        return None;
+    }
+    Some(source)
 }
 impl<'a> DrawUploadContext<'a> {
     fn upload_prepared(
@@ -247,14 +270,19 @@ impl<'a> DrawUploadContext<'a> {
         let runtime = self.runtime;
         let draw = self.draw;
         let pipelines = self.pipelines;
-        let (resident, _encoding) = self.prepare_resident_geometry(geometry_transfers)?;
+        let tint_pipeline = self.optional_line_tint_pipeline()?;
+        let (resident, _encoding) =
+            self.prepare_resident_geometry(geometry_transfers, tint_pipeline.is_some())?;
         let count = u32::try_from(draw.indices.len())
             .map_err(|_| rejected(draw.indices.len(), "a 32-bit index count"))?;
         let factorized = super::super::factorized_projection::enabled(
             runtime.projection_behavior,
             self.semantic_draw,
         );
-        let pipeline = pipelines.select(draw, factorized, self.window_depth)?;
+        let pipeline = match tint_pipeline {
+            Some(tinted) => tinted,
+            None => pipelines.select(draw, factorized, self.window_depth)?,
+        };
         super::super::window_depth_upload::require_pipeline(self.window_depth, pipeline.kind)?;
         super::super::phong_interpolation_upload::require_interface(
             runtime.phong_interpolation,
@@ -278,13 +306,42 @@ impl<'a> DrawUploadContext<'a> {
                 .ok_or_else(|| rejected("resident geometry", "encoded diagnostic bytes"))?,
         })
     }
+
+    fn optional_line_tint_pipeline(&self) -> Result<Option<Arc<DrawPipeline>>, RenderError> {
+        if self.line_tint.is_none() {
+            return Ok(None);
+        }
+        match self.pipelines.select_highlighted_line(self.draw) {
+            Ok(pipeline) => Ok(Some(pipeline)),
+            Err(error) if super::super::device_lifecycle::contains_device_loss(&error) => {
+                Err(error)
+            }
+            // The semantic draw still has its validated, recolored vertices.
+            Err(_) => Ok(None),
+        }
+    }
+
     fn prepare_resident_geometry(
         &self,
         transfers: &mut GeometryTransfers,
+        use_line_tint: bool,
     ) -> Result<(ResidentGeometry, Option<EncodedGeometry>), RenderError> {
-        let key = geometry_key(self.runtime, self.draw);
+        let mut key = geometry_key(self.runtime, self.draw);
+        let line_source = self
+            .line_tint
+            .filter(|_| use_line_tint)
+            .map(|(source, _)| source);
+        if let Some(source) = line_source {
+            key = key.and_then(|key| key.with_unlit_vertices(source.identity()?));
+        }
         if let Some(resident) = key.and_then(|key| transfers.residency.find(key)) {
             return Ok((resident, None));
+        }
+        if let Some(source) = line_source {
+            let draw = self
+                .draw
+                .with_replacement_geometry(source.clone(), self.draw.indices.clone());
+            return self.encode_resident_geometry(transfers, &draw, key);
         }
         if let Some(key) = key
             && let Some(resident) = self.patch_resident_geometry(transfers, key)?
@@ -292,11 +349,19 @@ impl<'a> DrawUploadContext<'a> {
             transfers.residency.queue(key, self.draw, resident.clone());
             return Ok((resident, None));
         }
-        let encoding = geometry_encoding::encoded_geometry(self.runtime, self.draw);
+        self.encode_resident_geometry(transfers, self.draw, key)
+    }
+    fn encode_resident_geometry(
+        &self,
+        transfers: &mut GeometryTransfers,
+        draw: &PrimitiveDraw,
+        key: Option<GeometryKey>,
+    ) -> Result<(ResidentGeometry, Option<EncodedGeometry>), RenderError> {
+        let encoding = geometry_encoding::encoded_geometry(self.runtime, draw);
         let resident =
             encoding.queue_transfers(self.runtime, &self.pipelines.geometry_staging, transfers)?;
         if let Some(key) = key {
-            transfers.residency.queue(key, self.draw, resident.clone());
+            transfers.residency.queue(key, draw, resident.clone());
         }
         Ok((resident, Some(encoding)))
     }
@@ -347,7 +412,7 @@ impl<'a> DrawUploadContext<'a> {
             return None;
         }
         if let Some(revision) = vertices {
-            key = key.previous_vertices(revision.previous_identity())?;
+            key = key.with_unlit_vertices(revision.previous_identity())?;
         }
         if let Some(revision) = indices {
             key = key.previous_indices(revision.previous_identity())?;

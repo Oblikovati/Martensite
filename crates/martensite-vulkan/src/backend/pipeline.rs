@@ -270,24 +270,28 @@ impl DrawPipeline {
         pipeline.apply_sprite_fragment()?;
         pipeline.apply_window_depth_geometry()?;
         pipeline.add_v4_geometry_transport()?;
+        let mut transform_push = super::factorized_projection::push_range(
+            runtime.projection_behavior,
+            kind,
+            super::fixed_grid_pipeline::fixed_grid_push_range(
+                fixed_marker_push_range(
+                    line || kind.polygon_edges
+                        || point
+                        || text
+                        || kind.surface_texture
+                        || kind.surface_alpha,
+                    kind.mesh_edges,
+                    point && kind.encoded_surface,
+                ),
+                kind.fixed_grid_point,
+            ),
+        );
+        if kind.line_tint {
+            transform_push.size = 96;
+        }
         pipeline.layout = create_layout(
             runtime,
-            super::factorized_projection::push_range(
-                runtime.projection_behavior,
-                kind,
-                super::fixed_grid_pipeline::fixed_grid_push_range(
-                    fixed_marker_push_range(
-                        line || kind.polygon_edges
-                            || point
-                            || text
-                            || kind.surface_texture
-                            || kind.surface_alpha,
-                        kind.mesh_edges,
-                        point && kind.encoded_surface,
-                    ),
-                    kind.fixed_grid_point,
-                ),
-            ),
+            transform_push,
             pipeline
                 .sprite_layout
                 .as_ref()
@@ -408,10 +412,12 @@ impl DrawPipeline {
                 include_bytes!("../../shaders/point.frag.spv"),
             ]
         } else if line {
-            [
-                include_bytes!("../../shaders/line.vert.spv"),
-                include_bytes!("../../shaders/line.frag.spv"),
-            ]
+            let vertex: &[u8] = if self.kind.line_tint {
+                include_bytes!("../../shaders/line.draw-color.vert.spv")
+            } else {
+                include_bytes!("../../shaders/line.vert.spv")
+            };
+            [vertex, include_bytes!("../../shaders/line.frag.spv")]
         } else {
             [
                 include_bytes!("../../shaders/unlit.vert.spv"),

@@ -207,14 +207,15 @@ fn shaded_ais_hover_capture_matches_full_vulkan_redraw() {
     rendered.get().unwrap().redraw_immediate();
     let restored = rendered.capture().unwrap();
     let immediate = rendered.last_frame_work();
+    let retained_attachments = rendered.image_memory().frame_attachment_bytes;
     assert_ne!(restored.rgba, base.rgba);
+    assert_eq!(immediate.geometry_uploaded_bytes, 0);
+    assert_eq!(immediate.geometry_buffers_created, 0);
     rendered.try_redraw().unwrap();
     let full = rendered.capture().unwrap();
     assert_eq!(restored.rgba, full.rgba);
     assert_eq!(restored.depth, full.depth);
-    assert!(
-        immediate.descriptor_sets_allocated < rendered.last_frame_work().descriptor_sets_allocated
-    );
+    assert!(retained_attachments > rendered.image_memory().frame_attachment_bytes);
     assert!(driver.validation_errors().unwrap().is_empty());
 }
 

@@ -66,6 +66,7 @@ enum GeometryRevision {
     Vertices(StreamRevision<RenderVertex>),
     Indices(StreamRevision<u32>),
     Both(StreamRevision<RenderVertex>, StreamRevision<u32>),
+    HighlightLine(crate::highlight_style::HighlightLineSource),
 }
 
 pub(crate) type CombinedRevision<'a> = (&'a StreamRevision<RenderVertex>, &'a StreamRevision<u32>);
@@ -87,6 +88,23 @@ impl fmt::Debug for GeometryRevisionHint {
 }
 
 impl PrimitiveDraw {
+    pub(crate) fn retain_highlight_line(
+        &mut self,
+        source: crate::highlight_style::HighlightLineSource,
+    ) {
+        self.geometry_revision =
+            GeometryRevisionHint(Some(Arc::new(GeometryRevision::HighlightLine(source))));
+    }
+
+    pub(crate) fn highlight_line_source(
+        &self,
+    ) -> Option<&crate::highlight_style::HighlightLineSource> {
+        let GeometryRevision::HighlightLine(source) = self.geometry_revision.0.as_deref()? else {
+            return None;
+        };
+        Some(source)
+    }
+
     pub(crate) fn vertex_revision(&self) -> Option<&StreamRevision<RenderVertex>> {
         let GeometryRevision::Vertices(revision) = self.geometry_revision.0.as_deref()? else {
             return None;

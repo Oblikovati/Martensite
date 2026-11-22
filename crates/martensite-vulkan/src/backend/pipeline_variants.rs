@@ -32,6 +32,7 @@ pub(super) struct PipelineVariant {
     pub point_blend: bool,
     pub clamp: bool,
     pub line: bool,
+    pub line_tint: bool,
     pub point: bool,
     pub text: bool,
     pub text_blend: bool,
@@ -116,6 +117,7 @@ fn empty_variant(
         point_blend: false,
         clamp,
         line: false,
+        line_tint: false,
         point: false,
         text: false,
         text_blend: false,
@@ -244,7 +246,7 @@ impl RasterPipelines {
         // The lines of V3 and the unlit stencil masks of V4 have no ordinary raster-clip variant.
         let raster_clip = self.runtime.uses_raster_world_clipping(draw);
         if factorized || window_depth.is_some() || requires_special_pipeline(draw, raster_clip) {
-            return self.select_special(draw, factorized, window_depth);
+            return self.select_special(draw, factorized, window_depth, false);
         }
         let index = variant_index(draw);
         self.variants
@@ -255,11 +257,18 @@ impl RasterPipelines {
                 "device support for requested stencil, depth-clamp and line rasterization features")
             })
     }
+    pub(super) fn select_highlighted_line(
+        &self,
+        draw: &PrimitiveDraw,
+    ) -> Result<Arc<DrawPipeline>, RenderError> {
+        self.select_special(draw, false, None, true)
+    }
     fn select_special(
         &self,
         draw: &PrimitiveDraw,
         factorized: bool,
         window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
+        line_tint: bool,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         crate::polygon_point_raster::require_polygon_points(
             draw.polygon_points,
@@ -285,7 +294,7 @@ impl RasterPipelines {
             && self.runtime.uses_raster_world_clipping(draw);
         let world_clip_v2 = self.runtime.uses_raster_world_clipping(draw) && !world_clip_v3_line;
         let world_clip_grid12 = self.runtime.uses_grid12_world_clipping(draw);
-        let index = projection_variant_key(
+        let mut index = projection_variant_key(
             draw,
             world_clip_v2,
             world_clip_v3_line,
@@ -293,6 +302,7 @@ impl RasterPipelines {
             factorized,
             window_depth.map(|value| value.cache_words()),
         );
+        index.0.1 |= 8 * u8::from(line_tint);
         let mut variants = self
             .special_variants
             .lock()
@@ -301,6 +311,7 @@ impl RasterPipelines {
             return Ok(pipeline.clone());
         }
         let mut kind = special_variant(draw, self.stencil);
+        kind.line_tint = line_tint;
         kind.factorized_projection = factorized;
         kind.window_depth = window_depth;
         kind.world_clip_v2 = world_clip_v2;

@@ -72,7 +72,7 @@ impl GeometryKey {
         }
     }
 
-    pub(super) fn previous_vertices(mut self, identity: NonZeroUsize) -> Option<Self> {
+    pub(super) fn with_unlit_vertices(mut self, identity: NonZeroUsize) -> Option<Self> {
         if self.encoding.has_lighting
             || self.encoding.fixed_grid_points
             || self.encoding.surface_uv

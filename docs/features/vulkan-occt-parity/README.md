@@ -253,6 +253,20 @@ launches with Mesa's own shader cache disabled. Each launch successfully rendere
 first frame. The driver supplied the cache bytes, and the live-device test verifies
 that a new device with the same cache identity can reload them.
 
+## Lighting binding measurements
+
+In the stock sphere orbit, all 400 lit draws in a frame use the same packed
+lighting bytes. Materials and transforms still participate in that byte
+comparison. A bounded cache retains one candidate per frame and shares it across
+matching draws. Other inputs use the existing frame storage allocation.
+
+Five pairs with reuse enabled and disabled in the same release executable
+measured 3.01 ms without reuse and 2.84 ms with it. Peak RSS was 153680 and
+153640 KiB, respectively. Descriptor allocation fell from 400 to about one
+per frame. Three pairs of the transparent 1,000-draw scene measured 5.87 ms
+without reuse and 5.42 ms with it, with peak RSS 121620 and 121740 KiB. All
+paired scene checksums matched.
+
 ## Immediate redraw measurements
 
 The first immediate redraw establishes the main color and depth at the boundary
@@ -275,6 +289,19 @@ a warm immediate redraw. Three same-binary comparisons against full redraws
 reported the same driver estimate of 69,427,200 bytes in use and the same ten
 native memory allocations for the whole scene. This is a result for the measured
 host and extent.
+
+The stock unlit wire highlights now send their color in the draw's push
+constants. Warm hover and selection both reuse the underlying vertex and index
+buffers. The live shader check compares color and depth against the same draw
+with its highlight color baked into the vertices.
+
+Five paired 64-frame runs removed four geometry-buffer allocations and 2.28 KiB
+of uploads from each warm hover pair. Median time was 4.24 ms before and 4.23 ms
+after, with about 4% fewer user-space instructions over the process. In three
+paired four-frame `select_10k` runs, geometry uploads fell from 864 bytes to zero
+and median time fell from 81.43 ms to 80.30 ms. Both cases kept their checksums
+and peak RSS was within 1 MiB in every hover pair and within 2 MiB in every
+selection pair.
 
 ## Harness
 
