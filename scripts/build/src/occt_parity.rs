@@ -18,6 +18,9 @@ use compare::{CaseComparison, SideRuns, compare, parse_lines, render_table, verd
 pub enum ParityToolkit {
     /// `martensite-tkernel` against OCCT `TKernel`.
     Tkernel,
+    /// `martensite-vulkan` against OCCT `TKOpenGl`, both driven through `V3d`; needs an
+    /// X11 display, a GPU and an OCCT install with the Visualization module.
+    Vulkan,
 }
 
 /// Where a toolkit's two case programs come from.
@@ -39,9 +42,38 @@ impl ParityToolkit {
                 cpp_dir: "crates/martensite-tkernel/benches/occt_parity/occt",
                 libraries: &["TKernel"],
             },
+            Self::Vulkan => ToolkitCases {
+                name: "vulkan",
+                package: "martensite-vulkan",
+                bench: "occt_parity",
+                cpp_dir: "crates/martensite-vulkan/benches/occt_parity/occt",
+                libraries: &VULKAN_TWIN_LIBRARIES,
+            },
         }
     }
 }
+
+/// The libraries the `TKOpenGl` twins link: the OCCT toolkits under `TKV3d` and `TKOpenGl`,
+/// Xlib for the unmanaged window and GLX for the swap interval (see `occt/stage.cpp`).
+const VULKAN_TWIN_LIBRARIES: [&str; 17] = [
+    "TKernel",
+    "TKMath",
+    "TKG2d",
+    "TKG3d",
+    "TKGeomBase",
+    "TKGeomAlgo",
+    "TKBRep",
+    "TKTopAlgo",
+    "TKPrim",
+    "TKMesh",
+    "TKHLR",
+    "TKShHealing",
+    "TKService",
+    "TKV3d",
+    "TKOpenGl",
+    "X11",
+    "GL",
+];
 
 /// One parity run; `ParityRequest { toolkit: ParityToolkit::Tkernel, .. }`.
 pub struct ParityRequest {
@@ -57,6 +89,8 @@ pub struct ParityRequest {
     pub rounds: usize,
     /// Keeps the cases whose name contains this text.
     pub filter: Option<String>,
+    /// Frames (operations) of one timed run, for toolkits whose cases draw frames.
+    pub frames: Option<usize>,
     /// The relative difference still counted as parity, e.g. `0.05`.
     pub tolerance: f64,
 }
@@ -159,6 +193,10 @@ fn compile_command(
         .arg(format!("-I{prefix}/include/opencascade"))
         .args(sources.iter().map(|source| source.display().to_string()))
         .arg(format!("-L{prefix}/lib"))
+        // OCCT's libraries carry no run path of their own. A RUNPATH would only serve the
+        // program's direct dependencies, so TKV3d could not find TKGeomAlgo; an RPATH also
+        // serves the libraries the program loads.
+        .arg("-Wl,--disable-new-dtags")
         .arg(format!("-Wl,-rpath,{prefix}/lib"));
     for library in cases.libraries {
         spec = spec.arg(format!("-l{library}"));
@@ -196,8 +234,12 @@ fn case_command(root: &Path, request: &ParityRequest, program: &Path) -> Command
         None => CommandSpec::new(&program, root),
     };
     let spec = spec.arg("--bench");
-    match &request.filter {
+    let spec = match &request.filter {
         Some(filter) => spec.args(["--filter", filter.as_str()]),
+        None => spec,
+    };
+    match request.frames {
+        Some(frames) => spec.args(["--frames".to_owned(), frames.to_string()]),
         None => spec,
     }
 }
@@ -215,6 +257,7 @@ fn write_report(
         "cpus": request.cpus,
         "rounds": request.rounds,
         "tolerance": request.tolerance,
+        "frames": request.frames,
         "cases": comparisons,
     });
     let text =

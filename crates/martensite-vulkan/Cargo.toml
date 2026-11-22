@@ -80,6 +80,12 @@ x11-dl = "=2.21.0"
 name = "toolkit"
 path = "tests/toolkit.rs"
 
+# Paired performance cases against OCCT's OpenGL renderer; `cargo xtask occt-parity --toolkit vulkan` runs them.
+[[bench]]
+name = "occt_parity"
+path = "benches/occt_parity/main.rs"
+harness = false
+
 [[example]]
 name = "clipping_transport_performance"
 test = true

@@ -18,6 +18,7 @@ fn request(prefix: &str) -> ParityRequest {
         cpus: Some("8-15".into()),
         rounds: 2,
         filter: None,
+        frames: None,
         tolerance: 0.05,
     }
 }
@@ -83,8 +84,30 @@ fn the_compile_command_optimizes_and_links_the_toolkit_libraries() {
     assert_eq!(
         spec.display(),
         "c++ -O3 -DNDEBUG -std=c++17 -I/occt/include/opencascade /w/a.cpp /w/b.cpp \
-         -L/occt/lib -Wl,-rpath,/occt/lib -lTKernel -o /w/out/occt_parity"
+         -L/occt/lib -Wl,--disable-new-dtags -Wl,-rpath,/occt/lib -lTKernel -o /w/out/occt_parity"
     );
+}
+
+#[test]
+fn the_vulkan_twins_link_the_viewer_toolkits_xlib_and_glx() {
+    let cases = ParityToolkit::Vulkan.cases();
+    assert_eq!(cases.package, "martensite-vulkan");
+    assert_eq!(
+        cases.cpp_dir,
+        "crates/martensite-vulkan/benches/occt_parity/occt"
+    );
+    let spec = compile_command(
+        Path::new("/w"),
+        &request("/occt"),
+        &cases,
+        &[PathBuf::from("/w/main.cpp")],
+        Path::new("/w/out/occt_parity"),
+    );
+    let command = spec.display();
+    for library in ["-lTKV3d", "-lTKOpenGl", "-lTKService", "-lX11", "-lGL"] {
+        assert!(command.contains(library), "{command}; expected {library}");
+    }
+    assert!(command.ends_with("-lGL -o /w/out/occt_parity"), "{command}");
 }
 
 #[test]
@@ -100,6 +123,9 @@ fn case_programs_run_pinned_and_filtered() {
     pinned.filter = None;
     let spec = case_command(Path::new("/w"), &pinned, Path::new("/t/cases"));
     assert_eq!(spec.display(), "/t/cases --bench");
+    pinned.frames = Some(10);
+    let spec = case_command(Path::new("/w"), &pinned, Path::new("/t/cases"));
+    assert_eq!(spec.display(), "/t/cases --bench --frames 10");
 }
 
 #[test]

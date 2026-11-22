@@ -73,6 +73,9 @@ pub struct OcctParityArgs {
     /// Keeps the cases whose name contains this text.
     #[arg(long)]
     filter: Option<String>,
+    /// Frames of one timed run for the renderer cases (default 100); `--toolkit tkernel` ignores it.
+    #[arg(long, value_parser = clap::value_parser!(u32).range(1..))]
+    frames: Option<u32>,
     /// The relative difference still counted as parity.
     #[arg(long, default_value_t = 0.05)]
     tolerance: f64,
@@ -87,6 +90,7 @@ impl OcctParityArgs {
             cpus: self.cpus,
             rounds: usize::from(self.rounds),
             filter: self.filter,
+            frames: self.frames.map(|frames| frames as usize),
             tolerance: self.tolerance,
         }
     }
