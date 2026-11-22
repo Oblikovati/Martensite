@@ -188,7 +188,7 @@ impl<'a> DrawUploadContext<'a> {
             self.draw,
         )?;
         self.validate_styles()?;
-        let geometry = self.upload_geometry(&mut uploads.geometry)?;
+        let geometry = self.upload_geometry(&mut uploads.geometry, uploads.dynamic_lighting)?;
         super::super::factorized_projection::admit_pipeline(
             self.runtime.projection_behavior,
             self.semantic_draw,
@@ -266,6 +266,7 @@ impl<'a> DrawUploadContext<'a> {
     fn upload_geometry(
         &self,
         geometry_transfers: &mut GeometryTransfers,
+        dynamic_lighting: bool,
     ) -> Result<PreparedGeometry, RenderError> {
         let runtime = self.runtime;
         let draw = self.draw;
@@ -281,7 +282,7 @@ impl<'a> DrawUploadContext<'a> {
         );
         let pipeline = match tint_pipeline {
             Some(tinted) => tinted,
-            None => pipelines.select(draw, factorized, self.window_depth)?,
+            None => pipelines.select(draw, factorized, self.window_depth, dynamic_lighting)?,
         };
         super::super::window_depth_upload::require_pipeline(self.window_depth, pipeline.kind)?;
         super::super::phong_interpolation_upload::require_interface(

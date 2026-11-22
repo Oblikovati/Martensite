@@ -20,6 +20,7 @@ use std::sync::Arc;
 struct FrameDrawUploads<'a> {
     geometry: GeometryTransfers,
     storage: FrameUploadPages<'a>,
+    dynamic_lighting: bool,
 }
 pub(super) struct UploadedDraw {
     pub window_depth_expected: bool,

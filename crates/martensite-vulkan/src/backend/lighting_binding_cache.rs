@@ -1,7 +1,9 @@
 //! Stock raster draws share immutable lighting descriptors by exact encoded bytes.
-use super::{StorageDescriptorLayout, UploadedStorage};
+use super::{AllocatedStorageSet, StorageDescriptorLayout, UploadedStorage};
 use crate::backend::{host_upload_pages::FrameUploadPages, runtime::VulkanRuntime};
-use crate::{RenderDeviceFailureClass, RenderError, RenderLighting};
+use crate::{
+    PrimitiveDraw, RenderDeviceFailureClass, RenderError, RenderLighting, error::rejected,
+};
 use ash::vk;
 use std::{
     collections::VecDeque,
@@ -11,6 +13,29 @@ use std::{
 const MAX_BINDINGS: usize = 128;
 const MAX_CACHED_LIGHTING_BYTES: usize = 1024;
 
+pub(in crate::backend) fn uses_lighting_pages(draws: &[PrimitiveDraw]) -> bool {
+    if cfg!(feature = "command-state-diagnostics") {
+        return false;
+    }
+    // Common retained lighting already shares one static binding. Sample a bounded
+    // prefix for placements whose matrix differences defeat that exact reuse.
+    let mut stock = draws.iter().take(64).filter_map(stock_opaque_lighting);
+    let Some(first) = stock.next() else {
+        return false;
+    };
+    stock.any(|lighting| lighting.world != first.world)
+}
+
+fn stock_opaque_lighting(draw: &PrimitiveDraw) -> Option<&RenderLighting> {
+    let lighting = draw.lighting.as_ref()?;
+    (draw.topology() == crate::PrimitiveTopology::Triangles
+        && !draw.surface_blend
+        && !draw.surface_forced_blend
+        && lighting.fixed.is_none()
+        && !lighting.pbr)
+        .then_some(lighting)
+}
+
 #[derive(Default)]
 pub(in crate::backend) struct LightingBindingCache {
     bindings: Mutex<VecDeque<Arc<RetainedLightingBinding>>>,
@@ -19,7 +44,15 @@ pub(in crate::backend) struct LightingBindingCache {
 struct RetainedLightingBinding {
     bytes: Box<[u8]>,
     stages: vk::ShaderStageFlags,
+    descriptor: vk::DescriptorType,
     storage: Arc<UploadedStorage>,
+}
+
+struct LightingPage {
+    set: AllocatedStorageSet,
+    buffer: Arc<crate::backend::buffer::DeviceBuffer>,
+    bytes: usize,
+    stages: vk::ShaderStageFlags,
 }
 
 /// One candidate per frame keeps cold or heterogeneous scenes from churning the device cache.
@@ -28,6 +61,7 @@ pub(in crate::backend) struct FrameLightingBindings {
     scratch: Vec<u8>,
     candidate_checked: bool,
     candidate: Option<Arc<RetainedLightingBinding>>,
+    page: Option<LightingPage>,
 }
 
 impl LightingBindingCache {
@@ -60,6 +94,9 @@ impl LightingBindingCache {
             && let Some(binding) = self.candidate(runtime, layout, bytes, &mut pages.lighting)?
         {
             return Ok(binding);
+        }
+        if layout.uses_dynamic_offset() {
+            return bind_lighting_range(runtime, layout, bytes, pages);
         }
         UploadedStorage::for_frame(runtime, layout, bytes, pages).map(Arc::new)
     }
@@ -103,6 +140,36 @@ impl LightingBindingCache {
     }
 }
 
+fn bind_lighting_range(
+    runtime: &Arc<VulkanRuntime>,
+    layout: &StorageDescriptorLayout,
+    bytes: &[u8],
+    pages: &mut FrameUploadPages<'_>,
+) -> Result<Arc<UploadedStorage>, RenderError> {
+    let size = super::storage_size(runtime, bytes)?;
+    let range = pages.write_storage(runtime, bytes)?;
+    u32::try_from(range.offset)
+        .map_err(|_| rejected(range.offset, "a 32-bit dynamic lighting offset"))?;
+    let candidate = &mut pages.lighting.page;
+    if let Some(page) = candidate.as_ref()
+        && Arc::ptr_eq(&page.buffer, &range.buffer)
+        && page.bytes == bytes.len()
+        && page.stages == layout.stages
+    {
+        return UploadedStorage::shared_frame_range(range, &page.set).map(Arc::new);
+    }
+    let page = LightingPage {
+        set: pages.dynamic_sets.allocate(runtime, layout.handle)?,
+        buffer: Arc::clone(&range.buffer),
+        bytes: bytes.len(),
+        stages: layout.stages,
+    };
+    let storage = UploadedStorage::shared_frame_range(range, &page.set)?;
+    storage.bind(size, layout.descriptor);
+    *candidate = Some(page);
+    Ok(Arc::new(storage))
+}
+
 fn promote_hit(
     bindings: &mut VecDeque<Arc<RetainedLightingBinding>>,
     layout: &StorageDescriptorLayout,
@@ -131,6 +198,7 @@ fn allocate_binding(
     Ok(Some(Arc::new(RetainedLightingBinding {
         bytes: bytes.into(),
         stages: layout.stages,
+        descriptor: layout.descriptor,
         storage: Arc::new(storage),
     })))
 }
@@ -144,8 +212,9 @@ fn optional_allocation_refusal(error: &RenderError) -> bool {
 
 impl RetainedLightingBinding {
     fn matches(&self, layout: &StorageDescriptorLayout, bytes: &[u8]) -> bool {
-        // Stage visibility is the only variable in this layout's fixed one-storage-binding definition.
-        self.stages == layout.stages && &*self.bytes == bytes
+        self.stages == layout.stages
+            && self.descriptor == layout.descriptor
+            && &*self.bytes == bytes
     }
 }
 

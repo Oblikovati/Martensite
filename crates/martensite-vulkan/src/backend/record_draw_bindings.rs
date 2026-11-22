@@ -2,6 +2,41 @@
 use super::{frame::UploadedDraw, pipeline::DrawPipeline, runtime::VulkanRuntime};
 use ash::vk;
 
+#[derive(Default)]
+pub(super) struct LightingSlot(Option<vk::DescriptorSet>);
+
+impl LightingSlot {
+    pub(super) fn invalidate(&mut self) {
+        self.0 = None;
+    }
+
+    fn was_bound(&mut self, set: vk::DescriptorSet, cacheable: bool) -> bool {
+        let previous = self.0;
+        self.0 = cacheable.then_some(set);
+        self.0.is_some() && previous == self.0
+    }
+}
+
+#[cfg(test)]
+mod lighting_slot_tests {
+    use super::*;
+    use ash::vk::Handle;
+
+    #[test]
+    fn only_an_undisturbed_static_binding_can_be_reused() {
+        let mut slot = LightingSlot::default();
+        let first = vk::DescriptorSet::from_raw(1);
+        let other = vk::DescriptorSet::from_raw(2);
+        assert!(!slot.was_bound(first, true));
+        assert!(slot.was_bound(first, true));
+        assert!(!slot.was_bound(other, true));
+        assert!(!slot.was_bound(other, false));
+        assert!(!slot.was_bound(other, true));
+        slot.invalidate();
+        assert!(!slot.was_bound(other, true));
+    }
+}
+
 pub(super) fn record_draw(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
@@ -9,10 +44,11 @@ pub(super) fn record_draw(
     pipeline: &DrawPipeline,
     push: bool,
     oit_set: Option<vk::DescriptorSet>,
+    lighting: &mut LightingSlot,
 ) {
     super::window_depth_status::bind(runtime, command, draw, pipeline);
     line_state(runtime, command, draw);
-    bind_lighting(runtime, command, draw, pipeline);
+    bind_lighting(runtime, command, draw, pipeline, lighting);
     for (index, set) in remaining_descriptors(draw, pipeline, oit_set) {
         if let Some(set) = set {
             bind_descriptor(runtime, command, pipeline.layout, index, set);
@@ -50,10 +86,35 @@ fn bind_lighting(
     command: vk::CommandBuffer,
     draw: &UploadedDraw,
     pipeline: &DrawPipeline,
+    slot: &mut LightingSlot,
 ) {
     let Some(lighting) = &draw.bindings.lighting else {
+        slot.invalidate();
         return;
     };
+    if pipeline.kind.dynamic_lighting
+        && pipeline
+            .lighting_layout
+            .as_ref()
+            .is_some_and(|layout| layout.uses_dynamic_offset())
+    {
+        slot.invalidate();
+        bind_descriptor_offsets(
+            runtime,
+            command,
+            pipeline.layout,
+            0,
+            lighting.set,
+            &[lighting.dynamic_offset()],
+        );
+        return;
+    }
+    let cacheable = !cfg!(feature = "command-state-diagnostics")
+        && (pipeline.sprite_set != 0
+            || (draw.bindings.sprite.is_none() && draw.bindings.surface_image.is_none()));
+    if slot.was_bound(lighting.set, cacheable) {
+        return;
+    }
     bind_descriptor(runtime, command, pipeline.layout, 0, lighting.set);
     #[cfg(feature = "command-state-diagnostics")]
     super::command_state_diagnostic::bound(
@@ -91,7 +152,16 @@ pub(super) fn bind_descriptor(
     index: u32,
     set: vk::DescriptorSet,
 ) {
-    let dynamic_offsets = [];
+    bind_descriptor_offsets(runtime, command, layout, index, set, &[]);
+}
+fn bind_descriptor_offsets(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    layout: vk::PipelineLayout,
+    index: u32,
+    set: vk::DescriptorSet,
+    dynamic_offsets: &[u32],
+) {
     // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
     unsafe {
         runtime.device().cmd_bind_descriptor_sets(
@@ -100,7 +170,7 @@ pub(super) fn bind_descriptor(
             layout,
             index,
             &[set],
-            &dynamic_offsets,
+            dynamic_offsets,
         );
     }
     #[cfg(feature = "command-state-diagnostics")]
@@ -109,7 +179,7 @@ pub(super) fn bind_descriptor(
         layout,
         index,
         set,
-        &dynamic_offsets,
+        dynamic_offsets,
     );
 }
 fn bind_geometry(runtime: &VulkanRuntime, command: vk::CommandBuffer, draw: &UploadedDraw) {

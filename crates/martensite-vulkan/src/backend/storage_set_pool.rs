@@ -7,9 +7,9 @@ use std::sync::{Arc, Mutex, PoisonError};
 pub(super) const SETS_PER_PAGE: u32 = 512;
 const CACHED_PAGES: usize = 3;
 
-#[derive(Default)]
 pub(in crate::backend) struct StorageSetPool {
     pages: Mutex<[Option<Arc<DescriptorPage>>; CACHED_PAGES]>,
+    descriptor: vk::DescriptorType,
 }
 
 /// The pool owner is held by each allocated set until the submitting frame is retired.
@@ -29,11 +29,25 @@ struct DescriptorPage {
 }
 
 impl AllocatedStorageSet {
+    pub(super) fn share_frame(&self) -> Result<Self, RenderError> {
+        let StorageSetOwner::Frame(page) = &self.owner else {
+            return Err(crate::error::rejected(
+                self.handle,
+                "a frame-owned descriptor set",
+            ));
+        };
+        Ok(Self {
+            owner: StorageSetOwner::Frame(Arc::clone(page)),
+            handle: self.handle,
+        })
+    }
+
     pub(super) fn dedicated(
         runtime: &Arc<VulkanRuntime>,
         layout: vk::DescriptorSetLayout,
+        descriptor: vk::DescriptorType,
     ) -> Result<Self, RenderError> {
-        let page = DescriptorPage::new(runtime, 1)?;
+        let page = DescriptorPage::new(runtime, 1, descriptor)?;
         let handle = page.allocate(layout)?;
         Ok(Self {
             owner: StorageSetOwner::Dedicated(page),
@@ -58,7 +72,20 @@ impl AllocatedStorageSet {
     }
 }
 
+impl Default for StorageSetPool {
+    fn default() -> Self {
+        Self::new(vk::DescriptorType::STORAGE_BUFFER)
+    }
+}
+
 impl StorageSetPool {
+    pub(in crate::backend) fn new(descriptor: vk::DescriptorType) -> Self {
+        Self {
+            pages: Mutex::default(),
+            descriptor,
+        }
+    }
+
     fn acquire(&self, runtime: &Arc<VulkanRuntime>) -> Result<OpenStoragePage, RenderError> {
         let mut pages = self.pages.lock().unwrap_or_else(PoisonError::into_inner);
         for cached in pages.iter_mut() {
@@ -66,7 +93,11 @@ impl StorageSetPool {
                 return Ok(OpenStoragePage::new(page));
             }
         }
-        let page = Arc::new(DescriptorPage::new(runtime, SETS_PER_PAGE)?);
+        let page = Arc::new(DescriptorPage::new(
+            runtime,
+            SETS_PER_PAGE,
+            self.descriptor,
+        )?);
         if let Some(slot) = pages.iter_mut().find(|slot| slot.is_none()) {
             *slot = Some(Arc::clone(&page));
         }
@@ -147,9 +178,13 @@ impl OpenStoragePage {
 }
 
 impl DescriptorPage {
-    fn new(runtime: &Arc<VulkanRuntime>, count: u32) -> Result<Self, RenderError> {
+    fn new(
+        runtime: &Arc<VulkanRuntime>,
+        count: u32,
+        descriptor: vk::DescriptorType,
+    ) -> Result<Self, RenderError> {
         let sizes = [vk::DescriptorPoolSize {
-            ty: vk::DescriptorType::STORAGE_BUFFER,
+            ty: descriptor,
             descriptor_count: count,
         }];
         let info = vk::DescriptorPoolCreateInfo::default()

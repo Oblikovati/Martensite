@@ -3,6 +3,38 @@ use super::runtime::VulkanRuntime;
 use crate::RenderDepthBiasBehavior as Behavior;
 use ash::vk;
 const NATIVE24_UNIT: f32 = 1.0 / 8_388_608.0;
+
+#[derive(Default)]
+pub(super) struct DepthBiasCommands(Option<(bool, [u32; 2])>);
+
+impl DepthBiasCommands {
+    pub(super) fn invalidate(&mut self) {
+        self.0 = None;
+    }
+
+    pub(super) fn apply(
+        &mut self,
+        runtime: &VulkanRuntime,
+        command: vk::CommandBuffer,
+        enabled: bool,
+        [units, factor]: [f32; 2],
+    ) {
+        if !self.changed(enabled, [units, factor]) && !cfg!(feature = "command-state-diagnostics") {
+            return;
+        }
+        // SAFETY: this scope is recording the command buffer on its live device.
+        unsafe { runtime.device().cmd_set_depth_bias_enable(command, enabled) };
+        record(runtime, command, units, factor);
+        #[cfg(feature = "command-state-diagnostics")]
+        super::replay_raster_commands::hardware_bias_enable(command, enabled);
+    }
+
+    fn changed(&mut self, enabled: bool, factors: [f32; 2]) -> bool {
+        let next = (enabled, factors.map(f32::to_bits));
+        self.0.replace(next) != Some(next)
+    }
+}
+
 pub(super) fn record(runtime: &VulkanRuntime, command: vk::CommandBuffer, units: f32, factor: f32) {
     let bias = parameters(runtime.depth_bias_behavior, units, factor);
     if runtime.depth_bias_behavior == Behavior::Native24UnitsV2 {
@@ -59,6 +91,18 @@ fn exact_float_representation() -> vk::DepthBiasRepresentationInfoEXT<'static> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn repeated_bias_commands_preserve_enable_changes_and_signed_zero() {
+        let mut commands = DepthBiasCommands::default();
+        assert!(commands.changed(false, [0., 0.]));
+        assert!(!commands.changed(false, [0., 0.]));
+        assert!(commands.changed(true, [0., 0.]));
+        assert!(commands.changed(true, [-0., 0.]));
+        assert!(!commands.changed(true, [-0., 0.]));
+        commands.invalidate();
+        assert!(commands.changed(true, [-0., 0.]));
+    }
+
     #[test]
     fn absolute_units_keep_sign_slope_and_unbounded_clamp() {
         for units in [-2., -1., -0., 0., 1., 2.] {

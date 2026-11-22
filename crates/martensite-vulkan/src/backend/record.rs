@@ -171,6 +171,8 @@ pub(super) fn record_draws_selected(
     mut color_scope: super::scene_color_scope::SceneColorScope,
 ) {
     let mut state = super::draw_state::DrawState::default();
+    let mut lighting = super::record_draw_bindings::LightingSlot::default();
+    let mut bias_commands = super::depth_bias_record::DepthBiasCommands::default();
     let mut depth_policy = None;
     let mut offsets = crate::polygon_offset::PolygonOffsetState::new(layer.polygon_offset);
     let mut culling = (crate::RenderFaceCulling::None, false);
@@ -213,6 +215,8 @@ pub(super) fn record_draws_selected(
         let handle = user.map_or(pipeline.handle, |(_, linked)| linked.handle);
         let (bind, push) = state.advance(handle, &draw.transform);
         if bind {
+            lighting.invalidate();
+            bias_commands.invalidate();
             // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
             unsafe {
                 runtime
@@ -262,16 +266,8 @@ pub(super) fn record_draws_selected(
             && !kind
                 .window_depth
                 .is_some_and(|parameters| parameters.fragment_depth());
-        // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
-        unsafe {
-            // AspectPOM_Off disables offset; zero factors still bias edge-on triangles.
-            runtime
-                .device()
-                .cmd_set_depth_bias_enable(command, hardware_bias);
-            super::depth_bias_record::record(runtime, command, units, factor)
-        };
-        #[cfg(feature = "command-state-diagnostics")]
-        super::replay_raster_commands::hardware_bias_enable(command, hardware_bias);
+        // AspectPOM_Off disables offset; zero factors still bias edge-on triangles.
+        bias_commands.apply(runtime, command, hardware_bias, [units, factor]);
         super::window_depth_record::record(
             runtime,
             command,
@@ -300,6 +296,8 @@ pub(super) fn record_draws_selected(
         #[cfg(feature = "command-state-diagnostics")]
         super::geometry_command_diagnostic::before_draw((command, draw_index, handle), draw);
         if let Some((user, linked)) = user {
+            lighting.invalidate();
+            bias_commands.invalidate();
             user.record(command, linked);
             continue;
         }
@@ -326,6 +324,7 @@ pub(super) fn record_draws_selected(
             pipeline,
             push,
             alpha::selected_alpha_set(draw, selection.map(|(_, set)| set)),
+            &mut lighting,
         );
         if let Some(wide) = &draw.line.wide {
             super::render_target_record::record_wide_line(

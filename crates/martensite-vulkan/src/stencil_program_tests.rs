@@ -27,6 +27,21 @@ fn empty_and_trailing_commands_append_without_manufacturing_geometry() {
     assert_eq!(first.boundaries[1].command, StencilCommand::Options(false));
 }
 #[test]
+fn first_batch_transfers_its_draw_buffer_without_moving_stencil_boundaries() {
+    let mut program = StencilProgram::default();
+    program.command(StencilCommand::Options(true));
+    let mut child = StencilProgram {
+        draws: vec![triangle()],
+        boundaries: Vec::new(),
+    };
+    child.command(StencilCommand::CappingRestore);
+    let buffer = child.draws.as_ptr();
+    program.append(child);
+    assert_eq!(program.draws.as_ptr(), buffer);
+    assert_eq!(program.boundaries[0].before_draw, 0);
+    assert_eq!(program.boundaries[1].before_draw, 1);
+}
+#[test]
 fn native_fill_filter_rejects_options_but_keeps_cap_restoration() {
     let program = native_fill_filter_program();
     let geometry = [true, false, true];

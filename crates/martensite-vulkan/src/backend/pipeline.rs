@@ -170,14 +170,7 @@ impl DrawPipeline {
             } else {
                 None
             },
-            lighting_layout: if lighting {
-                Some(super::storage_descriptor::StorageDescriptorLayout::new(
-                    runtime,
-                    vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT,
-                )?)
-            } else {
-                None
-            },
+            lighting_layout: lighting_layout(runtime, kind)?,
             // Glyph atlases bind as combined image samplers, like surface textures.
             surface_layout: if kind.surface_texture || text {
                 Some(super::surface_image_descriptor::SurfaceImageLayout::new(
@@ -446,6 +439,33 @@ impl DrawPipeline {
         Ok(())
     }
 }
+fn lighting_layout(
+    runtime: &Arc<VulkanRuntime>,
+    kind: super::pipeline_variants::PipelineVariant,
+) -> Result<Option<super::storage_descriptor::StorageDescriptorLayout>, RenderError> {
+    use super::storage_descriptor::StorageDescriptorLayout;
+    if !kind.lighting {
+        return Ok(None);
+    }
+    let stages = vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT;
+    // Dynamic ranges are qualified for the stock opaque surface path.
+    if !kind.dynamic_lighting
+        || kind.surface_blend
+        || kind.line
+        || kind.point
+        || kind.polygon_points
+        || kind.pbr
+        || kind.fixed_lighting
+        || kind.clipped
+        || kind.mesh_edges
+        || kind.surface_texture
+        || kind.surface_alpha
+    {
+        return StorageDescriptorLayout::new(runtime, stages).map(Some);
+    }
+    StorageDescriptorLayout::lighting(runtime, stages).map(Some)
+}
+
 impl Drop for DrawPipeline {
     fn drop(&mut self) {
         // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.

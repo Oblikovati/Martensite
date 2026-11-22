@@ -16,21 +16,46 @@ pub(super) use set_pool::{FrameStorageSets, StorageSetPool};
 
 #[path = "lighting_binding_cache.rs"]
 mod lighting_bindings;
-pub(super) use lighting_bindings::{FrameLightingBindings, LightingBindingCache};
+pub(super) use lighting_bindings::{
+    FrameLightingBindings, LightingBindingCache, uses_lighting_pages,
+};
 
 pub(super) struct StorageDescriptorLayout {
     runtime: Arc<VulkanRuntime>,
     pub handle: vk::DescriptorSetLayout,
     stages: vk::ShaderStageFlags,
+    descriptor: vk::DescriptorType,
 }
 impl StorageDescriptorLayout {
     pub fn new(
         runtime: &Arc<VulkanRuntime>,
         stages: vk::ShaderStageFlags,
     ) -> Result<Self, RenderError> {
+        Self::for_type(runtime, stages, vk::DescriptorType::STORAGE_BUFFER)
+    }
+
+    pub(super) fn lighting(
+        runtime: &Arc<VulkanRuntime>,
+        stages: vk::ShaderStageFlags,
+    ) -> Result<Self, RenderError> {
+        if cfg!(feature = "command-state-diagnostics") {
+            return Self::new(runtime, stages);
+        }
+        Self::for_type(runtime, stages, vk::DescriptorType::STORAGE_BUFFER_DYNAMIC)
+    }
+
+    pub(super) fn uses_dynamic_offset(&self) -> bool {
+        self.descriptor == vk::DescriptorType::STORAGE_BUFFER_DYNAMIC
+    }
+
+    fn for_type(
+        runtime: &Arc<VulkanRuntime>,
+        stages: vk::ShaderStageFlags,
+        descriptor: vk::DescriptorType,
+    ) -> Result<Self, RenderError> {
         let bindings = [vk::DescriptorSetLayoutBinding::default()
             .binding(0)
-            .descriptor_type(vk::DescriptorType::STORAGE_BUFFER)
+            .descriptor_type(descriptor)
             .descriptor_count(1)
             .stage_flags(stages)];
         let info = vk::DescriptorSetLayoutCreateInfo::default().bindings(&bindings);
@@ -43,6 +68,7 @@ impl StorageDescriptorLayout {
             runtime: runtime.clone(),
             handle,
             stages,
+            descriptor,
         })
     }
 }
@@ -93,6 +119,26 @@ impl StorageBuffer {
 }
 
 impl UploadedStorage {
+    pub(super) fn dynamic_offset(&self) -> u32 {
+        match &self.buffer {
+            StorageBuffer::Dedicated(_) => 0,
+            StorageBuffer::FrameRange(range) => range.offset as u32,
+        }
+    }
+
+    fn shared_frame_range(
+        range: UploadRange,
+        page: &AllocatedStorageSet,
+    ) -> Result<Self, RenderError> {
+        Ok(Self {
+            owner: page.share_frame()?,
+            set: page.handle,
+            buffer: StorageBuffer::FrameRange(range),
+            #[cfg(feature = "command-state-diagnostics")]
+            diagnostic_bytes: Vec::new(),
+        })
+    }
+
     pub fn new(
         runtime: &Arc<VulkanRuntime>,
         layout: &StorageDescriptorLayout,
@@ -100,7 +146,7 @@ impl UploadedStorage {
     ) -> Result<Self, RenderError> {
         let size = storage_size(runtime, bytes)?;
         let buffer = upload_storage_bytes(runtime, bytes, size)?;
-        let set = AllocatedStorageSet::dedicated(runtime, layout.handle)?;
+        let set = AllocatedStorageSet::dedicated(runtime, layout.handle, layout.descriptor)?;
         Ok(Self::bind_buffer(
             layout,
             bytes,
@@ -150,7 +196,7 @@ impl UploadedStorage {
         };
         #[cfg(feature = "command-state-diagnostics")]
         super::replay_resource_diagnostic::allocated(set, _layout.handle);
-        sprite.bind(size);
+        sprite.bind(size, _layout.descriptor);
         sprite.observe_upload(bytes);
         sprite
     }
@@ -190,12 +236,15 @@ impl UploadedStorage {
         // Caller records shader-to-host dependency and waits for its completed fence.
         self.buffer.read(size)
     }
-    fn bind(&self, bytes: u64) {
-        let buffer = [self.buffer.info(bytes)];
+    fn bind(&self, bytes: u64, descriptor: vk::DescriptorType) {
+        let mut buffer = [self.buffer.info(bytes)];
+        if descriptor == vk::DescriptorType::STORAGE_BUFFER_DYNAMIC {
+            buffer[0].offset = 0;
+        }
         let write = [vk::WriteDescriptorSet::default()
             .dst_set(self.set)
             .dst_binding(0)
-            .descriptor_type(vk::DescriptorType::STORAGE_BUFFER)
+            .descriptor_type(descriptor)
             .buffer_info(&buffer)];
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         unsafe {

@@ -164,6 +164,35 @@ fn eviction_preserves_the_owning_draws_binding() {
 }
 
 #[test]
+fn different_lighting_uses_one_frame_page_without_aliasing_draws() {
+    let mut renderer = create_resource_renderer();
+    let mut draws = vec![
+        lit_rectangle([-1., -0.5], [1., 0., 0., 1.]),
+        lit_rectangle([-0.5, 0.], [0., 1., 0., 1.]),
+        lit_rectangle([0., 0.5], [0., 0., 1., 1.]),
+        lit_rectangle([0.5, 1.], [1., 1., 0., 1.]),
+    ];
+    draws[1].lighting.as_mut().unwrap().world[12] = 2.;
+    let frame = RenderFrame::new(4, 4, [0., 0., 0., 1.], draws).unwrap();
+    let counters = renderer.runtime.work.clone();
+    let cold = renderer.render(&frame).unwrap();
+    let before = counters.totals();
+    let capture = renderer.render(&frame).unwrap();
+    // The first draw's retained set is warm; the other draws share one aligned range binding.
+    assert_eq!(
+        counters.totals().since(&before).descriptor_sets_allocated,
+        1
+    );
+    assert_eq!(capture.rgba, cold.rgba);
+    assert_eq!(capture.depth, cold.depth);
+    assert_eq!(capture.pixel(0, 0), Some([255, 0, 0, 255]));
+    assert_eq!(capture.pixel(1, 0), Some([0, 255, 0, 255]));
+    assert_eq!(capture.pixel(2, 0), Some([0, 0, 255, 255]));
+    assert_eq!(capture.pixel(3, 0), Some([255, 255, 0, 255]));
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
+#[test]
 fn optional_storage_refusal_does_not_hide_device_loss() {
     let error = |code: vk::Result| {
         RenderError::device_backend(

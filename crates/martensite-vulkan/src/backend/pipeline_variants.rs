@@ -8,6 +8,7 @@ use index_flags::{capping_variant, ordinary_clipping};
 #[derive(Clone, Copy, Debug)]
 pub(super) struct PipelineVariant {
     pub lighting: bool,
+    pub dynamic_lighting: bool,
     pub fixed_lighting: bool,
     pub pbr: bool,           // PBR fragment; the environment binds at set 4
     pub material_maps: bool, // texture-set maps at set 5
@@ -95,6 +96,7 @@ fn empty_variant(
 ) -> PipelineVariant {
     PipelineVariant {
         lighting: false,
+        dynamic_lighting: false,
         fixed_lighting: false,
         pbr: false,
         material_maps: false,
@@ -242,11 +244,12 @@ impl RasterPipelines {
         draw: &PrimitiveDraw,
         factorized: bool,
         window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
+        dynamic_lighting: bool,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         // The lines of V3 and the unlit stencil masks of V4 have no ordinary raster-clip variant.
         let raster_clip = self.runtime.uses_raster_world_clipping(draw);
         if factorized || window_depth.is_some() || requires_special_pipeline(draw, raster_clip) {
-            return self.select_special(draw, factorized, window_depth, false);
+            return self.select_special(draw, factorized, window_depth, (false, dynamic_lighting));
         }
         let index = variant_index(draw);
         self.variants
@@ -261,14 +264,14 @@ impl RasterPipelines {
         &self,
         draw: &PrimitiveDraw,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
-        self.select_special(draw, false, None, true)
+        self.select_special(draw, false, None, (true, false))
     }
     fn select_special(
         &self,
         draw: &PrimitiveDraw,
         factorized: bool,
         window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
-        line_tint: bool,
+        (line_tint, dynamic_lighting): (bool, bool),
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         crate::polygon_point_raster::require_polygon_points(
             draw.polygon_points,
@@ -303,6 +306,7 @@ impl RasterPipelines {
             window_depth.map(|value| value.cache_words()),
         );
         index.0.1 |= 8 * u8::from(line_tint);
+        index.0.1 |= 16 * u8::from(dynamic_lighting && draw.lighting.is_some());
         let mut variants = self
             .special_variants
             .lock()
@@ -311,6 +315,7 @@ impl RasterPipelines {
             return Ok(pipeline.clone());
         }
         let mut kind = special_variant(draw, self.stencil);
+        kind.dynamic_lighting = dynamic_lighting;
         kind.line_tint = line_tint;
         kind.factorized_projection = factorized;
         kind.window_depth = window_depth;

@@ -73,6 +73,7 @@ pub(super) struct FrameUploadPages<'a> {
     pool: &'a HostUploadPool,
     current: Option<UploadPage>,
     pub(super) sets: FrameStorageSets<'a>,
+    pub(super) dynamic_sets: FrameStorageSets<'a>,
     pub(super) lighting: FrameLightingBindings,
 }
 
@@ -80,6 +81,7 @@ pub(super) struct FrameUploadPages<'a> {
 pub(super) struct FrameStoragePool {
     buffers: HostUploadPool,
     sets: StorageSetPool,
+    dynamic_sets: StorageSetPool,
 }
 
 impl Default for FrameStoragePool {
@@ -87,6 +89,7 @@ impl Default for FrameStoragePool {
         Self {
             buffers: HostUploadPool::new(STORAGE_PAGE_BYTES, vk::BufferUsageFlags::STORAGE_BUFFER),
             sets: StorageSetPool::default(),
+            dynamic_sets: StorageSetPool::new(vk::DescriptorType::STORAGE_BUFFER_DYNAMIC),
         }
     }
 }
@@ -109,6 +112,7 @@ impl<'a> FrameUploadPages<'a> {
             pool: &pool.buffers,
             current: None,
             sets: FrameStorageSets::new(&pool.sets),
+            dynamic_sets: FrameStorageSets::new(&pool.dynamic_sets),
             lighting: FrameLightingBindings::default(),
         }
     }

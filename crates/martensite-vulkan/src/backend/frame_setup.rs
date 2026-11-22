@@ -160,6 +160,9 @@ impl FrameSetup<'_> {
         let mut uploads = FrameDrawUploads {
             geometry: GeometryTransfers::new(&self.pipeline.geometry_residency),
             storage: FrameUploadPages::storage(&self.pipeline.frame_storage_pages),
+            dynamic_lighting: super::super::storage_descriptor::uses_lighting_pages(
+                &self.frame.draws[plan.first_draw..],
+            ),
         };
         let mut draws = self.upload_draws(plan, &mut uploads)?;
         self.select_alpha_writes(&mut draws)?;

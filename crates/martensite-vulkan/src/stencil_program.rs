@@ -35,7 +35,7 @@ impl StencilProgram {
         for boundary in &mut other.boundaries {
             boundary.before_draw += offset;
         }
-        self.draws.extend(other.draws);
+        self.geometry(other.draws);
         self.boundaries.extend(other.boundaries);
     }
     pub fn command(&mut self, command: StencilCommand) {
@@ -63,7 +63,13 @@ impl StencilProgram {
         self.command(StencilCommand::DimensionMaskEnd);
     }
     pub fn geometry(&mut self, draws: Vec<PrimitiveDraw>) {
-        self.draws.extend(draws);
+        // A group often contributes one already lowered draw buffer. Move it into the
+        // empty program so its records are only copied when they have to be concatenated.
+        if self.draws.capacity() == 0 {
+            self.draws = draws;
+        } else {
+            self.draws.extend(draws);
+        }
     }
 }
 pub(crate) fn filtered_boundaries(
