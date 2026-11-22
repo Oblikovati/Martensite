@@ -1,5 +1,5 @@
 //! Mapped upload ranges remain exclusive to one preparing or submitted frame.
-use super::storage_descriptor::{FrameStorageSets, StorageSetPool};
+use super::storage_descriptor::{FrameLightingBindings, FrameStorageSets, StorageSetPool};
 use super::{buffer::DeviceBuffer, memory_selection::HostBufferAccess, runtime::VulkanRuntime};
 use crate::{RenderError, error::rejected};
 use ash::vk;
@@ -73,6 +73,7 @@ pub(super) struct FrameUploadPages<'a> {
     pool: &'a HostUploadPool,
     current: Option<UploadPage>,
     pub(super) sets: FrameStorageSets<'a>,
+    pub(super) lighting: FrameLightingBindings,
 }
 
 /// The reusable data and set pages of one raster storage arena.
@@ -108,6 +109,7 @@ impl<'a> FrameUploadPages<'a> {
             pool: &pool.buffers,
             current: None,
             sets: FrameStorageSets::new(&pool.sets),
+            lighting: FrameLightingBindings::default(),
         }
     }
 

@@ -295,7 +295,7 @@ pub(super) fn record_draws_selected(
                     kind,
                 ),
             },
-            draw.bindings.lighting.as_ref(),
+            draw.bindings.lighting.as_deref(),
         );
         #[cfg(feature = "command-state-diagnostics")]
         super::geometry_command_diagnostic::before_draw((command, draw_index, handle), draw);

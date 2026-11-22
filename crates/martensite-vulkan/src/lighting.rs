@@ -91,33 +91,36 @@ impl RenderLighting {
     pub fn shading(&self) -> RenderShading {
         self.shading
     }
+    #[cfg(test)]
     pub(crate) fn encode(&self) -> Vec<u8> {
-        let mut bytes = self.encode_coefficients();
-        bytes.extend(
-            [
-                self.fixed.map_or(self.shading as u32, |mode| mode as u32),
-                self.lights.source_count() as u32,
-                u32::from(self.vertex_colors),
-                u32::from(self.front_vertex_colors_only)
-                    + 2 * u32::from(self.is_fixed_lighting() && self.normalize_fixed),
-            ]
-            .into_iter()
-            .flat_map(u32::to_ne_bytes),
-        );
-        for light in &self.lights.sources {
-            bytes.extend(encode_light_source(light));
-        }
+        let mut bytes = Vec::new();
+        self.encode_into(&mut bytes);
         bytes
     }
-    fn encode_coefficients(&self) -> Vec<u8> {
-        self.world
-            .into_iter()
-            .chain(self.normal)
-            .chain(self.eye)
-            .chain(self.lights.ambient)
-            .chain(self.packed_material_records().into_iter().flatten())
-            .flat_map(f32::to_ne_bytes)
-            .collect()
+    pub(crate) fn encode_into(&self, bytes: &mut Vec<u8>) {
+        bytes.clear();
+        bytes.reserve(304 + 80 * self.lights.source_count());
+        self.encode_coefficients(bytes);
+        let settings = [
+            self.fixed.map_or(self.shading as u32, |mode| mode as u32),
+            self.lights.source_count() as u32,
+            u32::from(self.vertex_colors),
+            u32::from(self.front_vertex_colors_only)
+                + 2 * u32::from(self.is_fixed_lighting() && self.normalize_fixed),
+        ];
+        bytes.extend_from_slice(settings.map(u32::to_ne_bytes).as_flattened());
+        for light in &self.lights.sources {
+            encode_light_source(bytes, light);
+        }
+    }
+    fn encode_coefficients(&self, bytes: &mut Vec<u8>) {
+        append_coefficients(bytes, self.world);
+        append_coefficients(bytes, self.normal);
+        append_coefficients(bytes, self.eye);
+        append_coefficients(bytes, self.lights.ambient);
+        for record in self.packed_material_records() {
+            append_coefficients(bytes, record);
+        }
     }
 }
 impl RenderLighting {
@@ -150,21 +153,16 @@ fn lighting_eye(view: [f32; 16], perspective: bool) -> Result<[f32; 4], RenderEr
     eye[3] = f32::from(perspective);
     Ok(eye)
 }
-fn encode_light_source(light: &crate::light_snapshot::PackedRenderLight) -> Vec<u8> {
-    let mut bytes: Vec<u8> = [light.kind, u32::from(light.cast_shadows), 0, 0]
-        .into_iter()
-        .flat_map(u32::to_ne_bytes)
-        .collect();
-    bytes.extend(
-        light
-            .color
-            .into_iter()
-            .chain(light.position)
-            .chain(light.direction)
-            .chain(light.params)
-            .flat_map(f32::to_ne_bytes),
-    );
-    bytes
+fn encode_light_source(bytes: &mut Vec<u8>, light: &crate::light_snapshot::PackedRenderLight) {
+    let fields = [light.kind, u32::from(light.cast_shadows), 0, 0];
+    bytes.extend_from_slice(fields.map(u32::to_ne_bytes).as_flattened());
+    append_coefficients(bytes, light.color);
+    append_coefficients(bytes, light.position);
+    append_coefficients(bytes, light.direction);
+    append_coefficients(bytes, light.params);
+}
+fn append_coefficients<const N: usize>(bytes: &mut Vec<u8>, coefficients: [f32; N]) {
+    bytes.extend_from_slice(coefficients.map(f32::to_ne_bytes).as_flattened());
 }
 fn validate_lighting_components(
     normals: &[[f32; 3]],

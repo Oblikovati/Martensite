@@ -141,6 +141,7 @@ pub(super) struct RasterPipelines {
     pub glyph_atlases: super::glyph_atlas_image::GlyphAtlasCache,
     pub geometry_staging: super::host_upload_pages::HostUploadPool,
     pub frame_storage_pages: super::host_upload_pages::FrameStoragePool,
+    pub lighting_bindings: super::storage_descriptor::LightingBindingCache,
     pub frame_targets: super::frame_targets::FrameTargetPool,
     pub geometry_residency: Arc<super::geometry_residency::GeometryStore>,
     pub stencil: bool,
@@ -187,6 +188,7 @@ impl RasterPipelines {
             glyph_atlases: Default::default(),
             geometry_staging: super::geometry_transfer::geometry_staging_pool(),
             frame_storage_pages: Default::default(),
+            lighting_bindings: Default::default(),
             frame_targets: Default::default(),
             geometry_residency: Arc::new(super::geometry_residency::GeometryStore::new(runtime)),
             stencil,
@@ -215,6 +217,7 @@ impl RasterPipelines {
         self.glyph_atlases = Default::default();
         self.geometry_staging = super::geometry_transfer::geometry_staging_pool();
         self.frame_storage_pages = Default::default();
+        self.lighting_bindings = Default::default();
         self.frame_targets = Default::default();
         self.geometry_residency =
             Arc::new(super::geometry_residency::GeometryStore::new(&self.runtime));

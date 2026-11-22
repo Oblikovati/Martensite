@@ -52,7 +52,7 @@ struct GeometryPatch {
 }
 
 struct PreparedBindings {
-    lighting: Option<UploadedStorage>,
+    lighting: Option<Arc<UploadedStorage>>,
     sphere_map: Option<UploadedStorage>,
     clipping: Option<UploadedStorage>,
     surface_image: Option<Arc<SurfaceImageBinding>>,

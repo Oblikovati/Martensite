@@ -14,9 +14,14 @@ mod set_pool;
 use set_pool::AllocatedStorageSet;
 pub(super) use set_pool::{FrameStorageSets, StorageSetPool};
 
+#[path = "lighting_binding_cache.rs"]
+mod lighting_bindings;
+pub(super) use lighting_bindings::{FrameLightingBindings, LightingBindingCache};
+
 pub(super) struct StorageDescriptorLayout {
     runtime: Arc<VulkanRuntime>,
     pub handle: vk::DescriptorSetLayout,
+    stages: vk::ShaderStageFlags,
 }
 impl StorageDescriptorLayout {
     pub fn new(
@@ -37,6 +42,7 @@ impl StorageDescriptorLayout {
         Ok(Self {
             runtime: runtime.clone(),
             handle,
+            stages,
         })
     }
 }

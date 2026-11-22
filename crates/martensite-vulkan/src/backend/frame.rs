@@ -76,7 +76,7 @@ pub(super) struct DrawPresentation {
 }
 pub(super) struct DrawBindings {
     pub clipping: Option<super::storage_descriptor::UploadedStorage>,
-    pub lighting: Option<super::storage_descriptor::UploadedStorage>,
+    pub lighting: Option<Arc<super::storage_descriptor::UploadedStorage>>,
     pub sprite: Option<super::storage_descriptor::UploadedStorage>,
     pub surface_image: Option<Arc<super::surface_image_descriptor::SurfaceImageBinding>>,
     pub pbr_environment: Option<Arc<super::pbr_environment::PbrEnvironment>>,

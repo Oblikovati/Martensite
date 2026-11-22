@@ -196,7 +196,7 @@ impl DrawUploadContext<'_> {
         &self,
         pipeline: &DrawPipeline,
         storage: &mut FrameUploadPages<'_>,
-    ) -> Result<Option<UploadedStorage>, RenderError> {
+    ) -> Result<Option<Arc<UploadedStorage>>, RenderError> {
         self.draw
             .lighting
             .as_ref()
@@ -205,7 +205,12 @@ impl DrawUploadContext<'_> {
                     .lighting_layout
                     .as_ref()
                     .expect("lighting pipeline layout");
-                UploadedStorage::for_frame(self.runtime, layout, &lighting.encode(), storage)
+                let retain = lighting.fixed.is_none()
+                    && !lighting.pbr
+                    && self.draw.user_program.is_none();
+                self.pipelines
+                    .lighting_bindings
+                    .bind_draw(self.runtime, layout, lighting, storage, retain)
             })
             .transpose()
     }
