@@ -90,9 +90,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Changed Vulkan `PrimitiveDraw` and `RenderLighting` to keep the values a frame sets on every draw inline and the rest in a shared `DrawBody` and `LightingBody`, which they dereference to. Replayed draws and the frames in flight share one body instead of copying 1.5 KB per draw (#594).
+
 - Changed `Graphic3dAspectsBase::fields` from `SharedState` to `RevisedState`. `read`, `write`, `try_read`, `try_write` and `snapshot` work as before; each write now advances `fields.revision()`. Code that names the field's type must use `RevisedState<Graphic3dAspectsFields>` (#594).
 
-- Made a Vulkan group that two passes lowered keep its lowered surfaces and replay them on later redraws while its commands, aspects, geometry, transformation and the view's rendering parameters stay the same. Only the values derived from the camera are computed again. `frame_transparent_1k` takes 2.2 ms instead of 3.2 ms (#594).
+- Made a Vulkan group that two passes lowered keep its lowered surfaces and replay them on later redraws while its commands, aspects, geometry, transformation and the view's rendering parameters stay the same. Only the values derived from the camera are computed again. `frame_transparent_1k` takes 1.5 ms instead of 2.7 ms on the same build host (#594).
 
 - Changed a Vulkan view on a native window to keep the window size between `set_window` and `must_be_resized`, as OCCT's OpenGL view does, instead of asking the X server on every redraw. A native resize that the application does not report with `must_be_resized` now shows when the swapchain reports it out of date or suboptimal. GUI frames still check the surface on every redraw (#594).
 
