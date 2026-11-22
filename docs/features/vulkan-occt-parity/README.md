@@ -239,8 +239,13 @@ formats retain the scalar decoder's bits.
 The 1,000-label case used the same release harness in three alternating 8-frame runs
 with matching checksums. Median Vulkan time fell from 149.53 ms to 5.17 ms and peak RSS
 from 156 MiB to 122 MiB. OCCT took 0.73 ms. The warm Vulkan frame creates zero glyph
-images and makes one submission, down from 1,000 images and 1,001 submissions. It still
-creates 2,000 geometry buffers and uploads 718.75 KiB of glyph vertices and indices.
+images and makes one submission, down from 1,000 images and 1,001 submissions.
+
+Retaining the glyph vertex, index and UV streams removed a further 2,000 buffer
+creations and 718.75 KiB of uploads per warm frame. A new set of three alternating runs
+with matching checksums measured 5.37 ms before that change and 4.07 ms after, with peak
+RSS 1,000 KiB lower. OCCT took 0.72 ms. A live orbit test compares the complete RGBA
+and depth against the same view using an uncached formatter.
 
 On the startup case, the same executable took 45.59 ms with an empty Martensite
 pipeline cache and 28.92 ms with a warm one. These are medians of seven paired process
