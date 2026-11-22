@@ -1,8 +1,11 @@
 //! Draw upload stages preserve the original fallible allocation and cleanup sequence.
 use super::super::surface_image_descriptor::SurfaceImageBinding;
 use super::super::{
-    geometry_residency::ResidentGeometry, geometry_transfer::GeometryTransfers,
-    pipeline::DrawPipeline, pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
+    geometry_residency::{GeometryKey, ResidentGeometry},
+    geometry_transfer::GeometryTransfers,
+    pipeline::DrawPipeline,
+    pipeline_variants::RasterPipelines,
+    runtime::VulkanRuntime,
     transform_constants::encode_transform,
 };
 use super::super::{retained_submission::RetirementStore, storage_descriptor::UploadedStorage};
@@ -293,7 +296,18 @@ impl<'a> DrawUploadContext<'a> {
     fn patch_resident_geometry(
         &self,
         transfers: &mut GeometryTransfers,
-        key: super::super::geometry_residency::GeometryKey,
+        key: GeometryKey,
+    ) -> Result<Option<ResidentGeometry>, RenderError> {
+        if let Some(update) = self.patch_resident_vertices(transfers, key)? {
+            return Ok(Some(update));
+        }
+        self.patch_resident_indices(transfers, key)
+    }
+
+    fn patch_resident_vertices(
+        &self,
+        transfers: &mut GeometryTransfers,
+        key: GeometryKey,
     ) -> Result<Option<ResidentGeometry>, RenderError> {
         let Some(revision) = self.draw.vertex_revision() else {
             return Ok(None);
@@ -304,16 +318,15 @@ impl<'a> DrawUploadContext<'a> {
         let Some(previous) = previous else {
             return Ok(None);
         };
-        let Some((offset, bytes)) = encode_vertex_patch(
-            self.draw,
-            revision.dirty_vertices(),
-            previous.vertices.size(),
-        ) else {
+        let Some((offset, bytes)) =
+            encode_vertex_patch(self.draw, revision.dirty_range(), previous.vertices.size())
+        else {
             return Ok(None);
         };
-        let vertices = transfers.patch_vertices(
+        let vertices = transfers.patch_stream(
             self.runtime,
             &self.pipelines.geometry_staging,
+            vk::BufferUsageFlags::VERTEX_BUFFER,
             previous.vertices,
             offset,
             &bytes,
@@ -321,6 +334,41 @@ impl<'a> DrawUploadContext<'a> {
         Ok(Some(ResidentGeometry {
             vertices,
             indices: previous.indices,
+        }))
+    }
+
+    fn patch_resident_indices(
+        &self,
+        transfers: &mut GeometryTransfers,
+        key: GeometryKey,
+    ) -> Result<Option<ResidentGeometry>, RenderError> {
+        let Some(revision) = self.draw.index_revision() else {
+            return Ok(None);
+        };
+        let Some(previous) = key
+            .previous_indices(revision.previous_identity())
+            .and_then(|key| transfers.residency.find_completed(key))
+        else {
+            return Ok(None);
+        };
+        let Some((offset, bytes)) = geometry_encoding::encode_index_patch(
+            self.draw,
+            revision.dirty_range(),
+            previous.indices.size(),
+        ) else {
+            return Ok(None);
+        };
+        let indices = transfers.patch_stream(
+            self.runtime,
+            &self.pipelines.geometry_staging,
+            vk::BufferUsageFlags::INDEX_BUFFER,
+            previous.indices,
+            offset,
+            &bytes,
+        )?;
+        Ok(Some(ResidentGeometry {
+            vertices: previous.vertices,
+            indices,
         }))
     }
     fn sample_cutoff(&self) -> bool {

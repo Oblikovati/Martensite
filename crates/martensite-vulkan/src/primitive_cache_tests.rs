@@ -4,8 +4,8 @@ use martensite_tkernel::{ncollection::Vec3, standard::Handle};
 use martensite_tkservice::graphic3d::{
     Graphic3dAttribBuffer, Graphic3dAttribute, Graphic3dBoundBuffer, Graphic3dBuffer,
     Graphic3dBufferBase, Graphic3dBufferMembers, Graphic3dBufferSource, Graphic3dIndexBuffer,
-    Graphic3dIndexBufferMembers, Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
-    Graphic3dTypeOfPrimitiveArray,
+    Graphic3dIndexBufferMembers, Graphic3dMutableIndexBuffer, Graphic3dTypeOfAttribute,
+    Graphic3dTypeOfData, Graphic3dTypeOfPrimitiveArray,
 };
 use std::sync::Arc;
 
@@ -188,7 +188,7 @@ fn mutable_source_edit_preserves_indices_and_covers_signed_zero() {
         edit.previous_identity(),
         before.vertices.identity().unwrap()
     );
-    assert_eq!(edit.dirty_vertices(), 0..1);
+    assert_eq!(edit.dirty_range(), 0..1);
     assert_eq!(after.indices.identity(), before.indices.identity());
     assert_eq!(
         after.vertices[0].position[0].to_bits(),
@@ -211,4 +211,28 @@ fn geometry_replacement_and_count_change_invalidate_the_partial_upload_hint() {
     let empty = draw(&array, [1.; 4]);
     assert!(empty.vertex_revision().is_none());
     assert!(empty.vertices.is_empty());
+}
+
+#[test]
+fn index_edits_reuse_vertices_and_record_only_the_changed_words() {
+    let store = RetainedPrimitives::default();
+    let (mut array, _) = source(&store);
+    let allocator = Graphic3dBufferBase::default_allocator();
+    let indices = Handle::new(Graphic3dMutableIndexBuffer::new(allocator).unwrap());
+    assert!(indices.init_indices::<u16>(3).unwrap());
+    for (offset, index) in [0, 1, 2].into_iter().enumerate() {
+        assert!(indices.set_index(offset as i32, index));
+    }
+    array.indices = indices.cast();
+    array.retained = store.entry(&array);
+    let before = draw(&array, [1.; 4]);
+    assert!(indices.set_index(1, 2));
+    let mut after = draw(&array, [1.; 4]);
+    let edit = after.index_revision().unwrap();
+    assert_eq!(edit.previous_identity(), before.indices.identity().unwrap());
+    assert_eq!(edit.dirty_range(), 1..2);
+    assert_eq!(after.vertices.identity(), before.vertices.identity());
+    assert!(after.vertex_revision().is_none());
+    after.indices.make_mut()[1] = 1;
+    assert!(after.index_revision().is_none());
 }

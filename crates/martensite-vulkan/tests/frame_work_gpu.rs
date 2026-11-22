@@ -219,3 +219,77 @@ fn add_mutable_triangle(
     scene.group.add_primitive_array(&array.upcast(), true);
     array
 }
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn a_mutable_index_transfers_one_device_word_and_matches_a_fresh_upload() {
+    use martensite_tkservice::graphic3d::{
+        Graphic3dIndexBufferMembers, Graphic3dMutableIndexBuffer,
+    };
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let array = add_indexed_triangle(&scene, 2);
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    let first = view.capture().unwrap();
+    let indices = array.indices().cast::<Graphic3dMutableIndexBuffer>();
+    assert!(indices.set_index(1, 3));
+    indices.invalidate_indices(1, 1).unwrap();
+    view.try_redraw().unwrap();
+    let update = view.last_frame_work();
+    let edited = view.capture().unwrap();
+    assert_ne!(edited.rgba, first.rgba);
+    assert_eq!(update.geometry_uploaded_bytes, 4, "{update:?}");
+    assert_eq!(update.geometry_buffers_created, 1, "{update:?}");
+    assert_matches_fresh_indexed_triangle(&scene, edited.rgba);
+    assert_clean_validation(&driver);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+fn assert_matches_fresh_indexed_triangle(scene: &scene::ViewerScene, edited: Vec<u8>) {
+    let _array = add_indexed_triangle(scene, 4);
+    let view = scene.render_view();
+    view.try_redraw().unwrap();
+    assert!(view.last_frame_work().geometry_uploaded_bytes > 4);
+    assert_eq!(view.capture().unwrap().rgba, edited);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+fn add_indexed_triangle(
+    scene: &scene::ViewerScene,
+    middle_vertex: i32,
+) -> Handle<martensite_tkservice::graphic3d::Graphic3dArrayOfPrimitives> {
+    use martensite_tkservice::graphic3d::{
+        GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE, Graphic3dArrayOfPrimitives, Graphic3dGroupMembers,
+        Graphic3dTypeOfPrimitiveArray as Kind,
+    };
+    let array = Handle::new(
+        Graphic3dArrayOfPrimitives::new(
+            Kind::Triangles,
+            4,
+            0,
+            3,
+            GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE,
+        )
+        .unwrap(),
+    );
+    for [x, y] in [[-8., -8.], [8., -8.], [-8., 8.], [8., 8.]] {
+        array.add_vertex(x, y, 0.).unwrap();
+    }
+    array.add_edges3(1, middle_vertex, 3).unwrap();
+    scene.group.clear(true);
+    scene
+        .group
+        .set_group_primitives_aspect(&scene::unlit_style([1., 0., 0., 1.]));
+    scene.group.add_primitive_array(&array.upcast(), true);
+    array
+}

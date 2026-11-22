@@ -81,7 +81,7 @@ pub struct PrimitiveDraw {
     pub(crate) projected_dash: Option<crate::projected_segments::PreparedAxis>,
     pub(crate) vertices: DrawStream<RenderVertex>,
     pub(crate) indices: DrawStream<u32>,
-    pub(crate) vertex_revision: VertexRevisionHint,
+    pub(crate) geometry_revision: GeometryRevisionHint,
     /// The geometry `line_guard_band` replaced; a driver that clips lines itself draws this.
     pub(crate) guard_band_source: Option<std::sync::Arc<crate::line_guard_band::GuardBandSource>>,
     pub(crate) guard_band_bounds: crate::line_guard_band::GuardBandMemo,
@@ -188,7 +188,7 @@ impl PrimitiveDraw {
             projected_dash: None,
             vertices: vertices.into(),
             indices: indices.into(),
-            vertex_revision: Default::default(),
+            geometry_revision: Default::default(),
             guard_band_source: None,
             guard_band_bounds: Default::default(),
             quad_corners: DrawStream::default(),
@@ -279,7 +279,7 @@ impl PrimitiveDraw {
             projected_dash: None,
             vertices,
             indices,
-            vertex_revision: Default::default(),
+            geometry_revision: Default::default(),
             guard_band_source: None,
             guard_band_bounds,
             quad_corners: DrawStream::default(),
@@ -424,7 +424,8 @@ impl PrimitiveDraw {
 }
 
 mod geometry_replacement;
+mod geometry_revision;
 mod geometry_stream;
 mod pixel_size_dependencies;
-pub(crate) mod vertex_revision;
-use vertex_revision::VertexRevisionHint;
+use geometry_revision::GeometryRevisionHint;
+pub(crate) use geometry_revision::MutableGeometry;

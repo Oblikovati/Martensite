@@ -52,6 +52,20 @@ pub(super) fn encoded_index_bytes(original: &[u32], expanded: Option<&[u32]>) ->
         .collect()
 }
 
+pub(super) fn encode_index_patch(
+    draw: &PrimitiveDraw,
+    range: std::ops::Range<usize>,
+    full_size: u64,
+) -> Option<(u64, Vec<u8>)> {
+    let stride = size_of::<u32>();
+    if u64::try_from(draw.indices.len().checked_mul(stride)?).ok()? != full_size {
+        return None;
+    }
+    let offset = u64::try_from(range.start.checked_mul(stride)?).ok()?;
+    let changed = draw.indices.get(range)?;
+    Some((offset, encoded_index_bytes(changed, None)))
+}
+
 impl EncodedGeometry {
     pub(super) fn queue_transfers(
         &self,

@@ -1,5 +1,5 @@
 //! Reuse validated local geometry across views and presentations of the same Graphic3d buffers.
-use crate::draw::DrawStream;
+use crate::draw::{DrawStream, MutableGeometry};
 use crate::primitive::PrimitiveSubmission;
 use crate::{LineStyle, PointStyle, PrimitiveDraw};
 use martensite_tkernel::standard::{Handle, SharedState, WeakHandle};
@@ -247,7 +247,7 @@ impl RetainedPrimitive {
         source: GeometryStamp,
         style: GeometryStyle,
         draws: &mut [PrimitiveDraw],
-        mutable: bool,
+        mutable: MutableGeometry,
     ) {
         self.draws.write().insert(source, style, draws, mutable);
     }
@@ -259,16 +259,16 @@ impl DrawVariants {
         source: GeometryStamp,
         style: GeometryStyle,
         draws: &mut [PrimitiveDraw],
-        mutable: bool,
+        mutable: MutableGeometry,
     ) {
         if let Some(slot) = self.0.iter().position(|variant| variant.style == style) {
             let old = &self.0[slot];
             if old.source == source {
                 return;
             }
-            if mutable && old.templates.len() == draws.len() {
+            if mutable.any() && old.templates.len() == draws.len() {
                 for (draw, previous) in draws.iter_mut().zip(&old.templates) {
-                    draw.retain_vertex_edit(previous);
+                    draw.retain_geometry_edit(previous, mutable);
                 }
             }
             self.0.remove(slot);

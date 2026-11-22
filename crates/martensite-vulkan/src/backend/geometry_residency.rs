@@ -55,7 +55,10 @@ impl GeometryKey {
                 draw.vertices.identity(),
                 draw.indices.identity(),
                 draw.quad_corners.identity(),
-                draw.native_flat_sources.identity(),
+                encoding
+                    .provoking_vertices
+                    .then(|| draw.native_flat_sources.identity())
+                    .flatten(),
                 normals,
                 uv,
                 sphere,
@@ -73,6 +76,18 @@ impl GeometryKey {
             return None;
         }
         self.streams[0] = Some(identity);
+        Some(self)
+    }
+
+    pub(super) fn previous_indices(mut self, identity: NonZeroUsize) -> Option<Self> {
+        // These paths derive vertex data or device indices from more than the packed index stream.
+        if self.encoding.provoking_vertices
+            || self.encoding.fixed_grid_points
+            || self.streams[2].is_some()
+        {
+            return None;
+        }
+        self.streams[1] = Some(identity);
         Some(self)
     }
 }
@@ -95,7 +110,11 @@ impl GeometryLease {
             vertices: draw.vertices.witness(),
             indices: draw.indices.witness(),
             quad_corners: draw.quad_corners.witness(),
-            flat_sources: draw.native_flat_sources.witness(),
+            flat_sources: key
+                .encoding
+                .provoking_vertices
+                .then(|| draw.native_flat_sources.witness())
+                .flatten(),
             normals: draw
                 .lighting
                 .as_ref()
@@ -302,6 +321,21 @@ mod tests {
     };
     use crate::{PrimitiveDraw, RenderVertex};
     use ash::vk;
+
+    #[test]
+    fn index_patches_require_a_direct_index_stream() {
+        let mut draw = test_draw();
+        let mut key = test_key(&draw);
+        let previous = draw.indices.identity().unwrap();
+        assert!(key.previous_indices(previous).is_some());
+        key.encoding.fixed_grid_points = true;
+        assert!(key.previous_indices(previous).is_none());
+        key.encoding.fixed_grid_points = false;
+        key.encoding.provoking_vertices = true;
+        assert!(key.previous_indices(previous).is_none());
+        draw.quad_corners = vec![[0, 1, 2, 0]].into();
+        assert!(test_key(&draw).previous_indices(previous).is_none());
+    }
 
     #[test]
     fn device_cache_budget_evicts_a_live_key_without_releasing_its_draw_owner() {

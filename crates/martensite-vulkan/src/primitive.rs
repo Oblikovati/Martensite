@@ -1,5 +1,5 @@
 //! Graphic3d buffers are read at frame extraction so shared buffer mutations stay visible.
-use crate::draw::DrawStream;
+use crate::draw::{DrawStream, MutableGeometry};
 use crate::primitive_buffer_read::{read_color, read_index_words, read_vector_attribute};
 use crate::primitive_cache::{
     AttributeStamp, BoundsStamp, GeometryStamp, GeometryStyle, IndexStamp, RetainedPrimitive,
@@ -151,13 +151,22 @@ impl PrimitiveSubmission {
         }
         let (mut draws, source) = self.lower_draws(style, retained.is_some())?;
         if let Some((cache, source)) = retained.zip(source) {
-            let mutable = self
-                .attributes
-                .get()
-                .is_some_and(Graphic3dBufferSource::is_mutable);
-            cache.record(source, key, &mut draws, mutable);
+            cache.record(source, key, &mut draws, self.mutable_geometry());
         }
         Ok(draws)
+    }
+
+    fn mutable_geometry(&self) -> MutableGeometry {
+        MutableGeometry {
+            vertices: self
+                .attributes
+                .get()
+                .is_some_and(Graphic3dBufferSource::is_mutable),
+            indices: self
+                .indices
+                .get()
+                .is_some_and(Graphic3dBufferSource::is_mutable),
+        }
     }
 
     fn lower_draws(&self, style: DrawStyle<'_>, track: bool) -> Result<DrawSnapshot, RenderError> {

@@ -20,7 +20,7 @@ macro_rules! clone_with_geometry {
 }
 clone_with_geometry!(
     guard_band_bounds,
-    vertex_revision,
+    geometry_revision,
     projected_dash,
     quad_corners,
     clip_transform,

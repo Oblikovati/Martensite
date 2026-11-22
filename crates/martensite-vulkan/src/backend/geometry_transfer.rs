@@ -16,7 +16,7 @@ pub(super) fn geometry_staging_pool() -> HostUploadPool {
 
 pub(super) struct GeometryTransfers {
     blocks: Vec<StagingBlock>,
-    preserved: Vec<PreservedVertices>,
+    preserved: Vec<PreservedRanges>,
     pub(super) residency: FrameGeometryResidency,
 }
 
@@ -32,7 +32,7 @@ struct GeometryCopy {
     region: vk::BufferCopy,
 }
 
-struct PreservedVertices {
+struct PreservedRanges {
     source: Arc<DeviceBuffer>,
     destination: Arc<DeviceBuffer>,
     regions: [vk::BufferCopy; 2],
@@ -65,11 +65,12 @@ impl GeometryTransfers {
         Ok(destination)
     }
 
-    /// Copy unchanged ranges from a completed buffer and stage only the new vertex records.
-    pub(super) fn patch_vertices(
+    /// Copy unchanged ranges from a completed buffer and stage only the changed records.
+    pub(super) fn patch_stream(
         &mut self,
         runtime: &Arc<VulkanRuntime>,
         pool: &HostUploadPool,
+        usage: vk::BufferUsageFlags,
         previous: Arc<DeviceBuffer>,
         offset: u64,
         bytes: &[u8],
@@ -79,14 +80,14 @@ impl GeometryTransfers {
         if range.is_empty() {
             return Ok(previous);
         }
-        let vertices = allocate_geometry(runtime, vk::BufferUsageFlags::VERTEX_BUFFER, size)?;
-        self.stage(runtime, pool, &vertices, offset, bytes)?;
-        self.preserved.push(PreservedVertices::new(
+        let destination = allocate_geometry(runtime, usage, size)?;
+        self.stage(runtime, pool, &destination, offset, bytes)?;
+        self.preserved.push(PreservedRanges::new(
             previous,
-            Arc::clone(&vertices),
+            Arc::clone(&destination),
             range,
         ));
-        Ok(vertices)
+        Ok(destination)
     }
 
     fn stage(
@@ -214,11 +215,11 @@ fn patch_range(size: u64, offset: u64, length: u64) -> Result<std::ops::Range<u6
     }
     Err(rejected(
         (size, offset, length),
-        "an aligned vertex patch inside the buffer",
+        "an aligned geometry patch inside the buffer",
     ))
 }
 
-impl PreservedVertices {
+impl PreservedRanges {
     fn new(
         source: Arc<DeviceBuffer>,
         destination: Arc<DeviceBuffer>,
