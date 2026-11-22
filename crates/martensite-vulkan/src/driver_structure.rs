@@ -96,7 +96,7 @@ impl Graphic3dRenderStructure {
         if !self.is_visible_in_view(view_id) || self.is_culled() {
             return Ok(Default::default());
         }
-        let fields = self.base.fields.read().clone();
+        let (fields, local_groups) = self.base.fields.read().snapshot_with_group_handles();
         if crate::retained_clipping::structure_is_clipped(clipping, &fields)? {
             return Ok(Default::default());
         }
@@ -115,7 +115,7 @@ impl Graphic3dRenderStructure {
             clipping,
             elements,
         }
-        .draws(self.geometry_batches()?)?;
+        .draws(self.geometry_batches(local_groups)?)?;
         #[cfg(feature = "vertex-output-diagnostics")]
         vertex_output_scope::retain_main_capture(
             &mut program.draws,
@@ -142,7 +142,8 @@ impl Graphic3dRenderStructure {
     /// An invalid reference path keeps only the structure's own groups, which it still owns.
     /// Example: `structure.instanced_group_batches()[0].len()`.
     pub(crate) fn instanced_group_batches(&self) -> Vec<Vec<Handle<dyn Graphic3dGroup>>> {
-        self.geometry_batches()
+        self.geometry_batches(self.groups())
+            .map(|batches| batches.into_batches().collect())
             .unwrap_or_else(|_| vec![self.groups()])
     }
 }
@@ -269,6 +270,7 @@ impl Graphic3dCStructure for Graphic3dRenderStructure {
 
 #[path = "connected_geometry.rs"]
 mod connected_geometry;
+pub(crate) use connected_geometry::{GeometryBatches, GroupBatch};
 #[path = "driver_structure_dump.rs"]
 mod dump;
 

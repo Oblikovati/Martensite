@@ -108,3 +108,19 @@ fn empty_group_storage_has_an_exhausted_cursor_without_failure() {
     let cursor = start_group_cursor(&presentation);
     assert!(!cursor.observer().more());
 }
+
+#[test]
+fn render_snapshot_keeps_duplicate_group_handles_in_sequence_order() {
+    let presentation = group_contract_presentation();
+    let first = presentation.new_group().unwrap();
+    let second = presentation.new_group().unwrap();
+    append_existing_group(&presentation, &first);
+    let structure = presentation.cstructure();
+    let fields = structure.cstructure_base().fields.read();
+    let (snapshot, handles) = fields.snapshot_with_group_handles();
+    assert_eq!(snapshot.id, fields.id);
+    assert_eq!(snapshot.visible, fields.visible);
+    assert!(snapshot.groups.is_empty());
+    assert_eq!(handles, [first.clone(), second, first]);
+    assert_eq!(fields.groups.len(), 3);
+}

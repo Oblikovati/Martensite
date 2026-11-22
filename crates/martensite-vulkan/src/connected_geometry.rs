@@ -5,7 +5,22 @@ use martensite_tkernel::standard::exceptions::program_error;
 use martensite_tkernel::standard::{Failure, Handle, WeakHandle, project_concrete};
 use martensite_tkservice::graphic3d::*;
 use std::collections::BTreeSet;
-type GeometryBatches = Vec<Vec<Handle<dyn Graphic3dGroup>>>;
+pub(crate) type GroupBatch = Vec<Handle<dyn Graphic3dGroup>>;
+
+pub(crate) struct GeometryBatches {
+    local: GroupBatch,
+    references: Vec<GroupBatch>,
+}
+
+impl GeometryBatches {
+    pub(crate) fn len(&self) -> usize {
+        1 + self.references.len()
+    }
+
+    pub(crate) fn into_batches(self) -> impl DoubleEndedIterator<Item = GroupBatch> {
+        std::iter::once(self.local).chain(self.references)
+    }
+}
 
 impl Graphic3dRenderStructure {
     fn connection_target(
@@ -56,37 +71,62 @@ impl Graphic3dRenderStructure {
         }
         Ok(())
     }
-    /// Gather live referenced groups under the outer state; `owner.geometry_batches()?`.
-    pub(super) fn geometry_batches(&self) -> Result<GeometryBatches, RenderError> {
-        let mut ancestors = BTreeSet::new();
-        self.collect_geometry_batches(&mut ancestors)
+    /// Gather live referenced groups under the outer state; `owner.geometry_batches(local_groups)?`.
+    pub(super) fn geometry_batches(
+        &self,
+        local: GroupBatch,
+    ) -> Result<GeometryBatches, RenderError> {
+        let mut batches = GeometryBatches {
+            local,
+            references: Vec::new(),
+        };
+        let Some(first) = self.geometry_reference()? else {
+            return Ok(batches);
+        };
+        self.collect_reference_batches(&first, &mut batches.references)?;
+        Ok(batches)
     }
-    fn collect_geometry_batches(
+
+    fn collect_reference_batches(
+        &self,
+        first: &Handle<Self>,
+        batches: &mut Vec<GroupBatch>,
+    ) -> Result<(), RenderError> {
+        let root = self.this.read().object_address();
+        let first_address = first.object_address();
+        if first_address == root {
+            return Err(first.connection_cycle());
+        }
+        batches.push(first.groups());
+        if let Some(next) = first.geometry_reference()? {
+            let mut ancestors = BTreeSet::from([root, first_address]);
+            next.append_geometry_batches(&mut ancestors, batches)?;
+        }
+        Ok(())
+    }
+
+    fn append_geometry_batches(
         &self,
         ancestors: &mut BTreeSet<*const ()>,
-    ) -> Result<GeometryBatches, RenderError> {
+        batches: &mut Vec<GroupBatch>,
+    ) -> Result<(), RenderError> {
         let identity = self.this.read().object_address();
         if !ancestors.insert(identity) {
-            return Err(rejected(
-                ("connection cycle", self.identification()),
-                "an acyclic geometry reference path",
-            ));
+            return Err(self.connection_cycle());
         }
-        let outcome = self.geometry_reference_batches(ancestors);
-        ancestors.remove(&identity);
-        outcome
+        batches.push(self.groups());
+        // A renderer structure has at most one reference, so there is no sibling path.
+        if let Some(reference) = self.geometry_reference()? {
+            reference.append_geometry_batches(ancestors, batches)?;
+        }
+        Ok(())
     }
-    fn geometry_reference_batches(
-        &self,
-        ancestors: &mut BTreeSet<*const ()>,
-    ) -> Result<GeometryBatches, RenderError> {
-        // CappingScene reverses batches for ordinary drawing, preserving instance-before-local order.
-        let mut batches = vec![self.groups()];
-        let reference = self.geometry_reference()?;
-        if let Some(reference) = reference {
-            batches.extend(reference.collect_geometry_batches(ancestors)?);
-        }
-        Ok(batches)
+
+    fn connection_cycle(&self) -> RenderError {
+        rejected(
+            ("connection cycle", self.identification()),
+            "an acyclic geometry reference path",
+        )
     }
     pub(super) fn geometry_reference(&self) -> Result<Option<Handle<Self>>, RenderError> {
         if let Some(parent) = &self.parent {
