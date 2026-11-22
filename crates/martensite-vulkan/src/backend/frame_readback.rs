@@ -4,8 +4,7 @@
 //! which pins the attachment generation it names, and `capture` records the copy on demand.
 use super::{
     VulkanRenderer, WorkPhase, attachment_coordinates::AttachmentCoordinates, buffer::DeviceBuffer,
-    image::TargetImage, memory_selection::HostBufferAccess, runtime::VulkanRuntime,
-    submission::CommandSubmission,
+    image::TargetImage, runtime::VulkanRuntime, submission::CommandSubmission,
 };
 use crate::{FrameCapture, RenderError};
 use ash::vk;
@@ -65,20 +64,15 @@ impl FrameReadback {
         &self,
         runtime: &Arc<VulkanRuntime>,
         planes: CapturePlanes,
+        cache: &super::readback_buffer_cache::ReadbackBufferCache,
     ) -> Result<ReadbackBuffers, RenderError> {
         let bytes = self.attachment_bytes() as u64;
-        let buffer = || {
-            DeviceBuffer::new(
-                runtime,
-                bytes,
-                vk::BufferUsageFlags::TRANSFER_DST,
-                HostBufferAccess::Readback,
-            )
-        };
         Ok(ReadbackBuffers {
-            color: buffer()?,
+            color: cache.take(runtime, bytes)?,
             depth: match planes {
-                CapturePlanes::ColorAndDepth => Some(buffer()?),
+                CapturePlanes::ColorAndDepth => Some(
+                    super::readback_buffer_cache::new_readback_buffer(runtime, bytes)?,
+                ),
                 CapturePlanes::Color => None,
             },
         })
@@ -176,13 +170,16 @@ impl VulkanRenderer {
         planes: CapturePlanes,
     ) -> Result<FrameCapture, RenderError> {
         let _readback = self.runtime.work.enter(WorkPhase::Readback);
-        let buffers = readback.buffers(&self.runtime, planes)?;
+        let buffers = readback.buffers(&self.runtime, planes, &self.readback_buffers)?;
         let commands = CommandSubmission::new(&self.runtime)?;
         readback.record(&self.runtime, commands.command, &buffers);
         if let Err(primary) = commands.finish() {
             return Err(self.keep_failed_readback(commands, readback, buffers, primary));
         }
-        readback.decode(&buffers)
+        let capture = readback.decode(&buffers);
+        // The copy completed, so the colour buffer can serve the next readback.
+        self.readback_buffers.give(buffers.color);
+        capture
     }
     /// Keep the copy's owners while its completion is unknown; returns the primary failure.
     fn keep_failed_readback(

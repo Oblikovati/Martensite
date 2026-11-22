@@ -22,7 +22,8 @@ fn a_frame_reads_its_attachments_only_when_asked() {
     assert_eq!(capture.pixel(5, 4), Some(RED));
     let read = renderer.work_ledger().totals().since(&before);
     assert_eq!(read.read_back_bytes, 2 * readback.attachment_bytes() as u64);
-    assert_eq!(read.buffers_created, 2);
+    // The first render's readback left its colour buffer for reuse, so only depth is new.
+    assert_eq!(read.buffers_created, 1);
     assert!(renderer.validation_errors().unwrap().is_empty());
 }
 

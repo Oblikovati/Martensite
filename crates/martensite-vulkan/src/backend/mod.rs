@@ -11,6 +11,7 @@ mod factorized_line_upload;
 mod frame_flight;
 mod frame_readback;
 mod frame_work_ledger;
+mod readback_buffer_cache;
 pub(crate) use frame_readback::{CapturePlanes, FrameReadback};
 pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
 mod image_memory;
@@ -74,6 +75,7 @@ pub struct VulkanRenderer {
     runtime: std::sync::Arc<VulkanRuntime>,
     // Dropping the flight waits for its frames before the stores below are released.
     flight: frame_flight::FrameFlight,
+    readback_buffers: readback_buffer_cache::ReadbackBufferCache,
     retirements: retained_submission::RetirementStore,
     pipeline: pipeline_variants::RasterPipelines,
     capping_pipeline: Option<pipeline_variants::RasterPipelines>,
@@ -165,6 +167,7 @@ impl VulkanRenderer {
         Ok(Self {
             runtime,
             flight: Default::default(),
+            readback_buffers: Default::default(),
             retirements: retained_submission::RetirementStore::new()?,
             pipeline,
             capping_pipeline: None,

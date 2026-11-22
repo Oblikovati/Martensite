@@ -123,7 +123,8 @@ fn completed_geometry_stays_resident_until_its_stream_changes() {
     let work = renderer.work_ledger().totals().since(&before);
     assert_eq!(first.rgba, second.rgba);
     assert_eq!(work.uploaded_bytes, 0);
-    assert_eq!(work.buffers_created, 2, "only color and depth readback");
+    // The renderer reuses the colour readback buffer of the first frame (#594).
+    assert_eq!(work.buffers_created, 1, "only the depth readback buffer");
     assert_edited_residency(&mut renderer, &frame);
 }
 

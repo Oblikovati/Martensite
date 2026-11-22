@@ -110,3 +110,22 @@ fn only_depth_dumps_read_the_depth_attachment() {
         assert_eq!(dump_planes(&kind), CapturePlanes::Color);
     }
 }
+
+#[test]
+fn word_packed_rgb_rows_match_a_per_pixel_copy_for_every_width() {
+    use super::view_capture::rgba_row_to_rgb;
+    for width in 0..23usize {
+        let rgba: Vec<u8> = (0..width * 4)
+            .map(|index| (index * 37 % 251) as u8)
+            .collect();
+        let expected: Vec<u8> = rgba
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .flat_map(|pixel| pixel[..3].to_vec())
+            .collect();
+        let mut rgb = vec![0xa5; width * 3];
+        rgba_row_to_rgb(&rgba, &mut rgb);
+        assert_eq!(rgb, expected, "width {width}");
+    }
+}

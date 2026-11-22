@@ -111,13 +111,41 @@ fn dump_rgb_rows(target: &mut ImagePixMapData, capture: &FrameCapture) -> bool {
         let Some(destination) = target.change_row(y) else {
             return false;
         };
-        let rgb = destination[..width * 3].as_chunks_mut::<3>().0;
-        for (rgb, rgba) in rgb.iter_mut().zip(source.as_chunks::<4>().0) {
-            let [red, green, blue, _] = *rgba;
-            *rgb = [red, green, blue];
-        }
+        rgba_row_to_rgb(source, &mut destination[..width * 3]);
     }
     true
+}
+/// Drop the alpha byte of every pixel in a row; `rgba_row_to_rgb(&rgba, &mut rgb)`. Four pixels
+/// become three little-endian words instead of twelve byte copies (#594).
+pub(crate) fn rgba_row_to_rgb(rgba: &[u8], rgb: &mut [u8]) {
+    let (quads, rest) = rgba.as_chunks::<16>();
+    let (triples, rgb_rest) = rgb.as_chunks_mut::<12>();
+    for (out, quad) in triples.iter_mut().zip(quads) {
+        *out = rgb_quad(quad);
+    }
+    for (out, pixel) in rgb_rest
+        .as_chunks_mut::<3>()
+        .0
+        .iter_mut()
+        .zip(rest.as_chunks::<4>().0)
+    {
+        *out = [pixel[0], pixel[1], pixel[2]];
+    }
+}
+/// Four pixels without their alpha bytes, as three little-endian words.
+fn rgb_quad(quad: &[u8; 16]) -> [u8; 12] {
+    let word = |at: usize| u32::from_le_bytes([quad[at], quad[at + 1], quad[at + 2], quad[at + 3]]);
+    let [a, b, c, d] = [word(0), word(4), word(8), word(12)];
+    let packed = [
+        (a & 0x00ff_ffff) | (b << 24),
+        ((b >> 8) & 0xffff) | (c << 16),
+        ((c >> 16) & 0xff) | (d << 8),
+    ];
+    let mut out = [0; 12];
+    for (slot, value) in out.as_chunks_mut::<4>().0.iter_mut().zip(packed) {
+        *slot = value.to_le_bytes();
+    }
+    out
 }
 pub(crate) fn copy_capture_rows(
     target: &mut ImagePixMapData,
