@@ -8,6 +8,7 @@ pub(crate) struct HighlightLineSource {
     original: DrawStream<RenderVertex>,
     recolored: Weak<Vec<RenderVertex>>,
     color: [f32; 4],
+    compact: bool,
 }
 
 impl HighlightLineSource {
@@ -23,13 +24,24 @@ impl HighlightLineSource {
             original: draw.vertices.clone(),
             recolored: recolored.witness()?,
             color,
+            compact: draw.uniform_line_color().is_some() && compact_inputs(draw),
         })
     }
 
     pub(crate) fn resolve(draw: &PrimitiveDraw) -> Option<(&DrawStream<RenderVertex>, [f32; 4])> {
-        let source = draw.highlight_line_source()?;
-        let recolored = draw.vertices.identity()?.get() == source.recolored.as_ptr().addr();
-        (recolored && native_highlight_line(draw)).then_some((&source.original, source.color))
+        if let Some(source) = draw.highlight_line_source() {
+            let recolored = draw.vertices.identity()?.get() == source.recolored.as_ptr().addr();
+            return (recolored && native_highlight_line(draw))
+                .then_some((&source.original, source.color));
+        }
+        let color = draw.uniform_line_color()?;
+        (native_highlight_line(draw) && compact_inputs(draw)).then_some((&draw.vertices, color))
+    }
+
+    /// Pick the layout of an admitted draw-color source; `HighlightLineSource::compact(draw)`.
+    pub(crate) fn compact(draw: &PrimitiveDraw) -> bool {
+        draw.highlight_line_source()
+            .is_none_or(|source| source.compact)
     }
 }
 
@@ -54,6 +66,9 @@ fn native_highlight_line(draw: &PrimitiveDraw) -> bool {
         && !draw.compatibility_color_target
         && draw.capping_pass == crate::RenderCappingPass::None
         && draw.depth_pass == Default::default()
+}
+fn compact_inputs(draw: &PrimitiveDraw) -> bool {
+    draw.polygon_edge_style.is_none() && draw.quad_corners.is_empty()
 }
 pub(crate) fn validate_structure(structure: &Graphic3dCStructureFields) -> Result<(), RenderError> {
     let style = &structure.highlight_style;

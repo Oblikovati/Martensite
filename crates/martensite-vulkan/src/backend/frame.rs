@@ -327,7 +327,7 @@ fn geometry_key(
             flat_text: layout.text.is_some()
                 && runtime.text_interpolation
                     == crate::RenderTextInterpolationBehavior::ProjectedGrid12FlatCornersV4,
-            topology: draw.topology() as u8,
+            topology: draw.topology().into(),
             has_lighting: layout.lighting.is_some(),
             fixed_lighting: layout.fixed_light,
             provoking_vertices: super::fixed_vertex_sources::uses_fixed_flat_vertices(draw),

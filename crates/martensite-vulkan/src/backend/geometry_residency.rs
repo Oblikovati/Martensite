@@ -1,7 +1,7 @@
 //! Resident streams become visible only after their frame's transfer completes.
 use super::geometry_buffer::{GeometryBuffer, GeometryBufferPool};
 use super::runtime::VulkanRuntime;
-use crate::{PrimitiveDraw, RenderVertex};
+use crate::{PrimitiveDraw, PrimitiveTopology, RenderVertex};
 use ash::vk;
 use std::collections::{HashMap, VecDeque, hash_map::Entry};
 use std::num::NonZeroUsize;
@@ -35,12 +35,31 @@ pub(super) struct GeometryEncoding {
     pub(super) text_uv: bool,
     pub(super) font_replace: bool,
     pub(super) flat_text: bool,
-    pub(super) topology: u8,
+    pub(super) topology: GeometryTopology,
     pub(super) has_lighting: bool,
     pub(super) fixed_lighting: bool,
     pub(super) provoking_vertices: bool,
     pub(super) fixed_grid_points: bool,
     pub(super) xor_color: bool,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+pub(super) enum GeometryTopology {
+    Triangles,
+    Points,
+    Lines,
+    CompactLines,
+}
+
+impl From<PrimitiveTopology> for GeometryTopology {
+    fn from(topology: PrimitiveTopology) -> Self {
+        match topology {
+            PrimitiveTopology::Triangles => Self::Triangles,
+            PrimitiveTopology::Points => Self::Points,
+            PrimitiveTopology::Lines => Self::Lines,
+        }
+    }
 }
 
 impl GeometryKey {
@@ -83,6 +102,12 @@ impl GeometryKey {
         }
         self.streams[0] = Some(identity);
         Some(self)
+    }
+
+    pub(super) fn with_compact_line(self, identity: NonZeroUsize) -> Option<Self> {
+        let mut key = self.with_unlit_vertices(identity)?;
+        key.encoding.topology = GeometryTopology::CompactLines;
+        Some(key)
     }
 
     pub(super) fn previous_indices(mut self, identity: NonZeroUsize) -> Option<Self> {
@@ -357,7 +382,7 @@ impl FrameGeometryResidency {
 mod tests {
     use super::{
         FrameGeometryResidency, GeometryBuffer, GeometryEncoding, GeometryKey, GeometryLease,
-        GeometryStore, ResidentGeometry, RetainedGeometry,
+        GeometryStore, GeometryTopology, ResidentGeometry, RetainedGeometry,
     };
     use crate::{PrimitiveDraw, RenderVertex, backend::buffer::DeviceBuffer};
     use ash::vk;
@@ -440,7 +465,7 @@ mod tests {
                 text_uv: false,
                 font_replace: false,
                 flat_text: false,
-                topology: 0,
+                topology: GeometryTopology::Triangles,
                 has_lighting: false,
                 fixed_lighting: false,
                 provoking_vertices: false,

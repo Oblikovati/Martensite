@@ -249,7 +249,23 @@ impl RetainedPrimitive {
         draws: &mut [PrimitiveDraw],
         mutable: MutableGeometry,
     ) {
+        if style.topology == crate::PrimitiveTopology::Lines
+            && !mutable.any()
+            && !source.has_vertex_colors()
+        {
+            retain_uniform_line_streams(draws);
+        }
         self.draws.write().insert(source, style, draws, mutable);
+    }
+}
+
+fn retain_uniform_line_streams(draws: &mut [PrimitiveDraw]) {
+    // Require at least 64 KiB of vertex savings to amortize a separate pipeline.
+    const MIN_COMPACT_LINE_VERTICES: usize = (64 << 10) / 16;
+    for draw in draws {
+        if draw.vertices.len() >= MIN_COMPACT_LINE_VERTICES {
+            draw.retain_uniform_line();
+        }
     }
 }
 

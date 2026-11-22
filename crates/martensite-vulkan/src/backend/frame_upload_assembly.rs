@@ -14,7 +14,7 @@ impl DrawUploadContext<'_> {
             )
         });
         let mut transform = encode_transform(self.draw, self.extent);
-        if geometry.pipeline.kind.line_tint
+        if geometry.pipeline.kind.line_tint.uses_draw_color()
             && let Some((_, color)) = self.line_tint
         {
             transform.extend_from_slice(color.map(f32::to_ne_bytes).as_flattened());

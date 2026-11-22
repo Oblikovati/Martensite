@@ -14,6 +14,10 @@ pub(crate) struct GeometryStamp {
 }
 
 impl GeometryStamp {
+    pub(super) fn has_vertex_colors(&self) -> bool {
+        self.attributes.layout[1].is_some()
+    }
+
     pub(crate) fn capture(primitive: &PrimitiveSubmission) -> Option<Self> {
         let attributes = AttributeStamp::capture(&primitive.attributes.get()?.read_buffer())?;
         let indices = match primitive.indices.get() {

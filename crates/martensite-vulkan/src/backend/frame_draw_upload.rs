@@ -4,7 +4,7 @@ use super::super::{
     geometry_residency::{GeometryKey, ResidentGeometry},
     geometry_transfer::GeometryTransfers,
     pipeline::DrawPipeline,
-    pipeline_variants::RasterPipelines,
+    pipeline_variants::{LineTintLayout, RasterPipelines},
     runtime::VulkanRuntime,
     transform_constants::encode_transform,
 };
@@ -146,7 +146,7 @@ pub(super) fn upload_draw(
         )
     });
     let draw = reordered.as_ref().unwrap_or(draw);
-    let tinted = highlighted_line_geometry(runtime, semantic_draw, draw, &wide, window_depth);
+    let tinted = retained_line_color(runtime, semantic_draw, draw, &wide, window_depth);
     let context = DrawUploadContext {
         runtime,
         semantic_draw,
@@ -161,7 +161,7 @@ pub(super) fn upload_draw(
     context.upload_prepared(uploads)
 }
 
-fn highlighted_line_geometry<'a>(
+fn retained_line_color<'a>(
     runtime: &VulkanRuntime,
     semantic: &PrimitiveDraw,
     selected: &'a PrimitiveDraw,
@@ -314,7 +314,12 @@ impl<'a> DrawUploadContext<'a> {
         if self.line_tint.is_none() {
             return Ok(None);
         }
-        match self.pipelines.select_highlighted_line(self.draw) {
+        let layout = if crate::highlight_style::HighlightLineSource::compact(self.draw) {
+            LineTintLayout::Compact
+        } else {
+            LineTintLayout::Full
+        };
+        match self.pipelines.select_draw_color_line(self.draw, layout) {
             Ok(pipeline) => Ok(Some(pipeline)),
             Err(error) if super::super::device_lifecycle::contains_device_loss(&error) => {
                 Err(error)
@@ -335,16 +340,25 @@ impl<'a> DrawUploadContext<'a> {
             .filter(|_| use_line_tint)
             .map(|(source, _)| source);
         if let Some(source) = line_source {
-            key = key.and_then(|key| key.with_unlit_vertices(source.identity()?));
-        }
-        if let Some(resident) = key.and_then(|key| transfers.residency.find(key)) {
-            return Ok((resident, None));
-        }
-        if let Some(source) = line_source {
+            let compact = crate::highlight_style::HighlightLineSource::compact(self.draw);
+            key = key.and_then(|key| {
+                let identity = source.identity()?;
+                if compact {
+                    key.with_compact_line(identity)
+                } else {
+                    key.with_unlit_vertices(identity)
+                }
+            });
+            if let Some(resident) = key.and_then(|key| transfers.residency.find(key)) {
+                return Ok((resident, None));
+            }
             let draw = self
                 .draw
                 .with_replacement_geometry(source.clone(), self.draw.indices.clone());
-            return self.encode_resident_geometry(transfers, &draw, key);
+            return self.encode_resident_geometry(transfers, &draw, key, compact);
+        }
+        if let Some(resident) = key.and_then(|key| transfers.residency.find(key)) {
+            return Ok((resident, None));
         }
         if let Some(key) = key
             && let Some(resident) = self.patch_resident_geometry(transfers, key)?
@@ -352,15 +366,20 @@ impl<'a> DrawUploadContext<'a> {
             transfers.residency.queue(key, self.draw, resident.clone());
             return Ok((resident, None));
         }
-        self.encode_resident_geometry(transfers, self.draw, key)
+        self.encode_resident_geometry(transfers, self.draw, key, false)
     }
     fn encode_resident_geometry(
         &self,
         transfers: &mut GeometryTransfers,
         draw: &PrimitiveDraw,
         key: Option<GeometryKey>,
+        compact_line: bool,
     ) -> Result<(ResidentGeometry, Option<EncodedGeometry>), RenderError> {
-        let encoding = geometry_encoding::encoded_geometry(self.runtime, draw);
+        let encoding = if compact_line {
+            geometry_encoding::compact_line_geometry(draw)
+        } else {
+            geometry_encoding::encoded_geometry(self.runtime, draw)
+        };
         let resident = encoding.queue_transfers(
             self.runtime,
             &self.pipelines.geometry_staging,

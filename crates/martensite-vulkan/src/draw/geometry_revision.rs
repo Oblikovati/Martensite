@@ -67,6 +67,7 @@ enum GeometryRevision {
     Indices(StreamRevision<u32>),
     Both(StreamRevision<RenderVertex>, StreamRevision<u32>),
     HighlightLine(crate::highlight_style::HighlightLineSource),
+    UniformLine(StreamWitness<RenderVertex>),
 }
 
 pub(crate) type CombinedRevision<'a> = (&'a StreamRevision<RenderVertex>, &'a StreamRevision<u32>);
@@ -103,6 +104,25 @@ impl PrimitiveDraw {
             return None;
         };
         Some(source)
+    }
+
+    /// Remember uniform color proven during array lowering; `draw.retain_uniform_line()`.
+    pub(crate) fn retain_uniform_line(&mut self) {
+        if let Some(witness) = StreamWitness::of(&self.vertices) {
+            self.geometry_revision =
+                GeometryRevisionHint(Some(Arc::new(GeometryRevision::UniformLine(witness))));
+        }
+    }
+
+    /// Read the uniform color of the same immutable stream; `draw.uniform_line_color()`.
+    pub(crate) fn uniform_line_color(&self) -> Option<[f32; 4]> {
+        let GeometryRevision::UniformLine(witness) = self.geometry_revision.0.as_deref()? else {
+            return None;
+        };
+        if self.vertices.identity()? != witness.identity {
+            return None;
+        }
+        self.vertices.first().map(|vertex| vertex.color)
     }
 
     pub(crate) fn vertex_revision(&self) -> Option<&StreamRevision<RenderVertex>> {

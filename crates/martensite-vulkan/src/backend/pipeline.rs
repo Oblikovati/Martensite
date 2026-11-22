@@ -281,7 +281,7 @@ impl DrawPipeline {
                 kind.fixed_grid_point,
             ),
         );
-        if kind.line_tint {
+        if kind.line_tint.uses_draw_color() {
             transform_push.size = 96;
         }
         pipeline.layout = create_layout(
@@ -410,7 +410,7 @@ impl DrawPipeline {
                 include_bytes!("../../shaders/point.frag.spv"),
             ]
         } else if line {
-            let vertex: &[u8] = if self.kind.line_tint {
+            let vertex: &[u8] = if self.kind.line_tint.uses_draw_color() {
                 include_bytes!("../../shaders/line.draw-color.vert.spv")
             } else {
                 include_bytes!("../../shaders/line.vert.spv")

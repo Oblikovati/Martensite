@@ -129,6 +129,8 @@ impl PipelineState {
                 super::surface_texture_pipeline::surface_vertex_state(
                     kind.lighting || kind.sphere_map,
                 )
+            } else if kind.line_tint == super::pipeline_variants::LineTintLayout::Compact {
+                compact_line_vertex_state()
             } else {
                 vertex_state(text, kind.lighting)
             },
@@ -191,6 +193,25 @@ impl PipelineState {
             .layout(layout)
     }
 }
+fn compact_line_vertex_state() -> vk::PipelineVertexInputStateCreateInfo<'static> {
+    const COMPACT: [vk::VertexInputBindingDescription; 1] = [vk::VertexInputBindingDescription {
+        binding: 0,
+        stride: 16,
+        input_rate: vk::VertexInputRate::VERTEX,
+    }];
+    // The packaged draw-color shader lists location 1 but never loads it.
+    const INPUTS: [vk::VertexInputAttributeDescription; 2] = [
+        ATTRIBUTES[0],
+        vk::VertexInputAttributeDescription {
+            offset: 0,
+            ..ATTRIBUTES[1]
+        },
+    ];
+    vk::PipelineVertexInputStateCreateInfo::default()
+        .vertex_binding_descriptions(&COMPACT)
+        .vertex_attribute_descriptions(&INPUTS)
+}
+
 fn vertex_state(text: bool, lighting: bool) -> vk::PipelineVertexInputStateCreateInfo<'static> {
     const TEXT_BINDING: [vk::VertexInputBindingDescription; 1] =
         [vk::VertexInputBindingDescription {

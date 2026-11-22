@@ -33,7 +33,7 @@ pub(super) struct PipelineVariant {
     pub point_blend: bool,
     pub clamp: bool,
     pub line: bool,
-    pub line_tint: bool,
+    pub line_tint: LineTintLayout,
     pub point: bool,
     pub text: bool,
     pub text_blend: bool,
@@ -48,6 +48,25 @@ pub(super) struct PipelineVariant {
     pub depth_pass: crate::depth_prepass::RenderDepthPass,
     /// Write the attachment alpha (native `buffersOpaqueAlpha` off).
     pub alpha_writes: bool,
+}
+/// Draw-color lines share a shader and select the layout of their resident vertex stream.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum LineTintLayout {
+    None,
+    Full,
+    Compact,
+}
+impl LineTintLayout {
+    pub(super) fn uses_draw_color(self) -> bool {
+        self != Self::None
+    }
+    fn cache_bits(self) -> u8 {
+        match self {
+            Self::None => 0,
+            Self::Full => 8,
+            Self::Compact => 32,
+        }
+    }
 }
 impl PipelineVariant {
     pub(super) fn uses_marker_sampler(self) -> bool {
@@ -119,7 +138,7 @@ fn empty_variant(
         point_blend: false,
         clamp,
         line: false,
-        line_tint: false,
+        line_tint: LineTintLayout::None,
         point: false,
         text: false,
         text_blend: false,
@@ -251,7 +270,12 @@ impl RasterPipelines {
         // The lines of V3 and the unlit stencil masks of V4 have no ordinary raster-clip variant.
         let raster_clip = self.runtime.uses_raster_world_clipping(draw);
         if factorized || window_depth.is_some() || requires_special_pipeline(draw, raster_clip) {
-            return self.select_special(draw, factorized, window_depth, (false, dynamic_lighting));
+            return self.select_special(
+                draw,
+                factorized,
+                window_depth,
+                (LineTintLayout::None, dynamic_lighting),
+            );
         }
         let index = variant_index(draw);
         self.variants
@@ -262,18 +286,19 @@ impl RasterPipelines {
                 "device support for requested stencil, depth-clamp and line rasterization features")
             })
     }
-    pub(super) fn select_highlighted_line(
+    pub(super) fn select_draw_color_line(
         &self,
         draw: &PrimitiveDraw,
+        layout: LineTintLayout,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
-        self.select_special(draw, false, None, (true, false))
+        self.select_special(draw, false, None, (layout, false))
     }
     fn select_special(
         &self,
         draw: &PrimitiveDraw,
         factorized: bool,
         window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
-        (line_tint, dynamic_lighting): (bool, bool),
+        (line_tint, dynamic_lighting): (LineTintLayout, bool),
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         crate::polygon_point_raster::require_polygon_points(
             draw.polygon_points,
@@ -307,7 +332,7 @@ impl RasterPipelines {
             factorized,
             window_depth.map(|value| value.cache_words()),
         );
-        index.0.1 |= 8 * u8::from(line_tint);
+        index.0.1 |= line_tint.cache_bits();
         index.0.1 |= 16 * u8::from(dynamic_lighting && draw.lighting.is_some());
         let mut variants = self
             .special_variants

@@ -35,6 +35,25 @@ pub(super) fn encoded_geometry(runtime: &VulkanRuntime, draw: &PrimitiveDraw) ->
     }
 }
 
+pub(super) fn compact_line_geometry(draw: &PrimitiveDraw) -> EncodedGeometry {
+    let mut vertices = Vec::with_capacity(draw.vertices.len() * 16);
+    for vertex in draw.vertices.iter() {
+        let [x, y, z] = vertex.position;
+        vertices.extend_from_slice(
+            [x, y, z, vertex.weight]
+                .map(f32::to_ne_bytes)
+                .as_flattened(),
+        );
+    }
+    EncodedGeometry {
+        indices: encoded_index_bytes(&draw.indices, None),
+        vertex_alignment: Some(16),
+        vertices,
+        #[cfg(feature = "command-state-diagnostics")]
+        source_count: draw.vertices.len(),
+    }
+}
+
 fn encoded_flat_text(vertices: Vec<u8>, original: &[u32]) -> EncodedGeometry {
     let packed = super::super::super::text_flat_corners::encode(&vertices, original);
     EncodedGeometry {
@@ -225,5 +244,77 @@ mod fixed_grid_encoding_tests {
                 color
             );
         }
+    }
+}
+
+#[cfg(all(
+    test,
+    not(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    ))
+))]
+mod compact_line_tests {
+    use crate::backend::resource_lifecycle_test_support::create_resource_renderer;
+    use crate::{
+        LineStyle, PrimitiveDraw, RenderBackend, RenderFrame, RenderVertex, identity_clip,
+    };
+
+    #[test]
+    fn retained_line_packing_keeps_ordered_pixels_and_depth() {
+        let mut renderer = create_resource_renderer();
+        let plain = weighted_segments();
+        let mut compact = plain.clone();
+        compact.retain_uniform_line();
+        let first = renderer.render(&frame(plain)).unwrap();
+        let before = renderer.work_ledger().totals();
+        let second = renderer.render(&frame(compact.clone())).unwrap();
+        let uploaded = renderer.work_ledger().totals().since(&before);
+        assert_eq!(uploaded.geometry_uploaded_bytes, 4 * 16 + 6 * 4);
+        assert!(
+            first
+                .rgba
+                .chunks_exact(4)
+                .any(|pixel| pixel == [255, 0, 0, 255])
+        );
+        assert_eq!(second.rgba, first.rgba);
+        assert_eq!(second.depth, first.depth);
+        let before = renderer.work_ledger().totals();
+        renderer.render_deferred(&frame(compact)).unwrap();
+        let warm = renderer.work_ledger().totals().since(&before);
+        assert_eq!((warm.geometry_uploaded_bytes, warm.buffers_created), (0, 0));
+        assert!(renderer.validation_errors().unwrap().is_empty());
+    }
+
+    #[test]
+    fn replacing_vertex_stream_removes_uniform_line_admission() {
+        let mut draw = weighted_segments();
+        draw.retain_uniform_line();
+        assert_eq!(draw.uniform_line_color(), Some([1., 0., 0., 1.]));
+        let unchanged = draw.clone();
+        draw.vertices.make_mut()[1].color = [0., 1., 0., 1.];
+        assert!(crate::highlight_style::HighlightLineSource::resolve(&draw).is_none());
+        assert!(crate::highlight_style::HighlightLineSource::resolve(&unchanged).is_some());
+    }
+
+    fn frame(draw: PrimitiveDraw) -> RenderFrame {
+        RenderFrame::new(16, 16, [0., 0., 0., 1.], vec![draw]).unwrap()
+    }
+
+    fn weighted_segments() -> PrimitiveDraw {
+        let vertices = [
+            [-0.6, -0.3, 0.2, 1.],
+            [1.2, 0.6, 1., 2.],
+            [-0.6, 0.3, 0.6, 1.],
+            [0.6, -0.3, 0.1, 1.],
+        ]
+        .map(|position| RenderVertex::homogeneous(position, [1., 0., 0., 1.]));
+        PrimitiveDraw::segments(
+            vertices.into(),
+            vec![2, 3, 0, 1, 2, 1],
+            identity_clip(),
+            LineStyle::new(1., u16::MAX, 1).unwrap(),
+        )
+        .unwrap()
     }
 }

@@ -270,3 +270,52 @@ fn combined_edits_require_both_current_stream_witnesses() {
     assert!(after.combined_revision().is_none());
     assert!(after.vertex_revision().is_none());
 }
+
+#[test]
+fn only_large_retained_lines_without_vertex_colors_or_mutability_get_uniform_witnesses() {
+    use martensite_tkservice::graphic3d::{
+        GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE, GRAPHIC3D_ARRAY_FLAGS_VERTEX_COLOR,
+    };
+    let store = RetainedPrimitives::default();
+    for (count, flags, expected) in [
+        (2, 0, None),
+        (4096, 0, Some([1.; 4])),
+        (4096, GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE, None),
+        (4096, GRAPHIC3D_ARRAY_FLAGS_VERTEX_COLOR, None),
+    ] {
+        let source = line_array(&store, count, flags);
+        for _ in 0..2 {
+            let line = crate::LineStyle::new(1., u16::MAX, 1).unwrap();
+            let draws = source
+                .draws([1.; 4], crate::identity_clip(), Some(line), None)
+                .unwrap();
+            assert_eq!(
+                draws[0].uniform_line_color(),
+                expected,
+                "count={count}, flags={flags}"
+            );
+        }
+    }
+}
+
+fn line_array(store: &RetainedPrimitives, count: i32, flags: i32) -> PrimitiveSubmission {
+    use martensite_tkservice::graphic3d::Graphic3dArrayOfPrimitives;
+    let kind = Graphic3dTypeOfPrimitiveArray::Segments;
+    let array = Graphic3dArrayOfPrimitives::new(kind, count, 0, 0, flags).unwrap();
+    for index in 1..=count {
+        array
+            .set_vertice(index, (index % 2) as f32, 0., 0.)
+            .unwrap();
+    }
+    let mut source = PrimitiveSubmission {
+        kind,
+        attributes: array.attributes(),
+        indices: array.indices(),
+        bounds: array.bounds(),
+        upload: Default::default(),
+        uid: 1,
+        retained: None,
+    };
+    source.retained = store.entry(&source);
+    source
+}

@@ -404,8 +404,8 @@ fn lower_group_surface(
 ) -> Result<Vec<PrimitiveDraw>, RenderError> {
     let program =
         crate::retained_user_program::resolve_user_program(&context.group.user_programs, aspects)?;
-    let lighting_pipeline =
-        crate::lighting_pipeline::structure_lighting_pipeline(&context.group.structure());
+    let (lighting_pipeline, unlit_face_policy) =
+        crate::lighting_pipeline::structure_surface_policies(&context.group.structure());
     let mut lowered = lower_styled_primitive(
         primitive,
         aspects,
@@ -413,7 +413,7 @@ fn lower_group_surface(
         matrix,
         highlighted,
         lighting_pipeline,
-        crate::lighting_pipeline::structure_unlit_face_policy(&context.group.structure()),
+        unlit_face_policy,
     )?;
     crate::retained_surface_texture::apply_surface_texture(
         &mut lowered,
