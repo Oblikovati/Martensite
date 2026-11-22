@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added `graphic3d_cview_min_max_values_with_size`, which computes `MinMaxValues` with a window size the view supplies. The Vulkan view passes the size it keeps between resizes, so auto Z-fit no longer asks the X server for the window size on every redraw (#594).
+
 - Added `Graphic3dRenderDriver::finish_frames`, which waits for the frames that Vulkan redraws left on the GPU, as `glFinish` does, and returns the first GPU fault they reported (#594).
 
 - Added `Graphic3dCamera::orientation_with_axial_scale_f` to read the float view matrix and its axial scale together. Vulkan uses it to avoid copying the camera for each placement (#594).
@@ -83,6 +85,16 @@ follows [Semantic Versioning](https://semver.org/).
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
 ### Changed
+
+- Changed a Vulkan view on a native window to keep the window size between `set_window` and `must_be_resized`, as OCCT's OpenGL view does, instead of asking the X server on every redraw. A native resize that the application does not report with `must_be_resized` now shows when the swapchain reports it out of date or suboptimal. GUI frames still check the surface on every redraw (#594).
+
+- Changed Vulkan swapchains without vertical sync to hold one more image than with FIFO, so acquiring an image no longer waits for XWayland to release one. FIFO keeps its image count and adds no latency (#594).
+
+- Made Vulkan colour dumps read only the colour attachment and reuse their host buffer. An RGB dump packs the rows on the GPU and copies them straight into the image; a 1080p RGB dump takes 0.46 ms instead of 12.8 ms. Captures return the same pixels as before (#594).
+
+- Stopped blocking a Vulkan resize on the destruction of the replaced swapchain; the old swapchain is destroyed once its presentation fences signal. A resize still recreates the swapchain, which RADV requires on X11, so `resize_redraw` stays about twice as slow as OCCT (#594).
+
+- Stopped waiting on an acquire fence and re-querying the surface in each Vulkan window frame (#594).
 
 - Stopped waiting for the GPU and copying the frame to host memory in each Vulkan redraw. Up to two frames run on the GPU while the host prepares the next one. `Graphic3dRenderView::capture` reads the frame back the first time it is called and returns the same pixels as before. A GPU fault that a frame reports after its redraw returned now comes from the next `capture`, the next redraw that needs the frame's slot, or `Graphic3dRenderDriver::finish_frames`. The redraw counters report no read-back bytes (#594).
 

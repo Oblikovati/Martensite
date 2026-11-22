@@ -377,29 +377,34 @@ each frame in flight; later redraws create none.
 
 ## Phase 2 window and readback measurements
 
-Medians of alternating Rust and C++ runs on CPU 14 (1000 frames for the frame cases,
-10 for the dump and resize cases):
+`cargo xtask occt-parity --toolkit vulkan --cpus 8-15 --rounds 3`, one case per run, with
+the default 100 frames:
 
-| Case | Before phase 2 | After | OCCT |
-| --- | ---: | ---: | ---: |
-| `frame_empty` | 0.116 ms | 0.057 ms | 0.053 ms |
-| `frame_msaa4_100k` | 0.144 ms | 0.125 ms | 0.31 ms |
-| `dump_1080p` | 12.8 ms | 1.01 ms | 0.40 ms |
-| `resize_redraw` | 5.7 ms | 1.1 ms | 0.49 ms |
+| Case | Before phase 2 | After | OCCT | Ratio |
+| --- | ---: | ---: | ---: | ---: |
+| `frame_empty` | 0.116 ms | 0.052 ms | 0.068 ms | 0.76 |
+| `frame_msaa4_100k` | 0.144 ms | 0.116 ms | 0.315 ms | 0.37 |
+| `dump_1080p` | 12.8 ms | 0.456 ms | 0.436 ms | 1.05 |
+| `resize_redraw` | 5.7 ms | 1.08 ms | 0.51 ms | 2.10 |
 
-Peak memory stayed the same or fell in every case.
+The "before" column is the phase 1 executable on CPU 14. Peak memory stayed the same or
+fell in every case.
 
 A minimal Vulkan program that only acquires, clears and presents set the floor for the
 window cases. On the benchmark's override-redirect window, XWayland releases presented
 images late, so with the minimum image count plus one every acquire waited about 20 µs.
-One more image without vertical sync removed the wait; FIFO keeps the old count. The
-other gains came from work OCCT's redraw does not do: surface queries and window
-attribute requests to the X server, which share a connection with the WSI threads, and a
-host wait on the acquire fence.
+One more image without vertical sync removed the wait; FIFO keeps the old count.
 
-A colour dump reads only the colour attachment, borrows the cached frame instead of
-copying it, and reuses its host buffer. The remaining dump time is mostly the RGBA to RGB
-conversion on the CPU, which memory traffic limits.
+The other gains came from X server requests that OCCT's redraw does not make or that cost
+more here. Mesa's WSI threads share the application's X connection, so a synchronous
+request from the main thread also waits for them. The surface queries, the window size and
+mapped state, and the window size that auto Z-fit reads through `MinMaxValues` (16 µs per
+frame on CPUs 8-15) now come from values the view keeps between resizes. The host no
+longer waits on an acquire fence either.
+
+A colour dump reads only the colour attachment and reuses its buffers. An RGB dump packs
+the rows with a compute pass (`shaders/rgb_pack.comp`) and copies them straight into the
+image, which halves the dump time again after the CPU conversion hit memory limits.
 
 Resize stays outside parity on X11 (see PLAN.md). Recreating the swapchain alone costs more
 than OCCT's whole resize.

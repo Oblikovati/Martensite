@@ -209,6 +209,10 @@ both Vulkan modes. Their peak RSS ranges overlapped.
 
 ## Phase 2: a frame pipeline without stalls
 
+Done. `frame_empty` and `frame_msaa4_100k` are faster than OCCT, `dump_1080p` is at parity
+and `resize_redraw` is the recorded exception below (README, "Phase 2 window and readback
+measurements").
+
 Target: `frame_empty`, `dump_1080p`, `resize_redraw` and `frame_msaa4_100k` reach parity.
 The fixed frame cost falls from 0.5 ms to OCCT's 0.07 ms.
 
