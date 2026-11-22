@@ -1,13 +1,29 @@
-//! Each submission owns its command pool and fence and finishes before frame resources drop.
+//! A submission owns its command slot until native execution is proven complete.
 use super::runtime::{VulkanRuntime, vk_error};
 use super::submission_protocol::SubmissionProtocol;
 use crate::RenderError;
 use ash::vk;
-use std::sync::Arc;
+use std::{
+    cell::Cell,
+    sync::{Arc, Mutex, PoisonError},
+};
+
+const RETAINED_COMMAND_SLOTS: usize = 3;
+
+#[derive(Default)]
+pub(super) struct CommandSlotPool(Mutex<[Option<CommandSlot>; RETAINED_COMMAND_SLOTS]>);
+
+struct CommandSlot {
+    pool: vk::CommandPool,
+    fence: vk::Fence,
+    command: vk::CommandBuffer,
+}
+
 pub(super) struct CommandSubmission {
     pub(super) runtime: Arc<VulkanRuntime>,
     pool: vk::CommandPool,
     protocol: SubmissionProtocol,
+    completed_natively: Cell<bool>,
     pub(super) fence: vk::Fence,
     pub command: vk::CommandBuffer,
 }
@@ -17,6 +33,22 @@ impl CommandSubmission {
         runtime.lifecycle.observe(Self::recording(runtime))
     }
     fn recording(runtime: &Arc<VulkanRuntime>) -> Result<Self, RenderError> {
+        let slot = runtime.command_slots.take();
+        let submission = match slot {
+            Some(slot) => Self::reopen(runtime, slot)?,
+            None => Self::fresh(runtime)?,
+        };
+        submission.begin()?;
+        #[cfg(feature = "command-state-diagnostics")]
+        super::replay_raster_commands::submission_begin(
+            runtime.device().handle(),
+            submission.command,
+            submission.fence,
+            submission.pool,
+        );
+        Ok(submission)
+    }
+    fn fresh(runtime: &Arc<VulkanRuntime>) -> Result<Self, RenderError> {
         let info = vk::CommandPoolCreateInfo::default()
             .queue_family_index(runtime.queue_family)
             .flags(vk::CommandPoolCreateFlags::TRANSIENT);
@@ -27,19 +59,32 @@ impl CommandSubmission {
             runtime: runtime.clone(),
             pool,
             protocol: Default::default(),
+            completed_natively: Cell::new(false),
             fence: vk::Fence::null(),
             command: vk::CommandBuffer::null(),
         };
         submission.allocate()?;
-        submission.begin()?;
-        #[cfg(feature = "command-state-diagnostics")]
-        super::replay_raster_commands::submission_begin(
-            runtime.device().handle(),
-            submission.command,
-            submission.fence,
-            pool,
-        );
         Ok(submission)
+    }
+    fn reopen(runtime: &Arc<VulkanRuntime>, slot: CommandSlot) -> Result<Self, RenderError> {
+        let submission = Self {
+            runtime: runtime.clone(),
+            pool: slot.pool,
+            protocol: Default::default(),
+            completed_natively: Cell::new(false),
+            fence: slot.fence,
+            command: slot.command,
+        };
+        submission.reset()?;
+        Ok(submission)
+    }
+    fn reset(&self) -> Result<(), RenderError> {
+        let device = self.runtime.device();
+        // SAFETY: the retired slot was removed from the pool and is exclusively owned here.
+        unsafe { device.reset_command_pool(self.pool, vk::CommandPoolResetFlags::empty()) }
+            .map_err(|e| vk_error("reset command pool", e))?;
+        // SAFETY: only work whose native fence wait succeeded enters the slot pool.
+        unsafe { device.reset_fences(&[self.fence]) }.map_err(|e| vk_error("reset submit fence", e))
     }
     fn begin(&self) -> Result<(), RenderError> {
         let info = vk::CommandBufferBeginInfo::default()
@@ -89,7 +134,9 @@ impl CommandSubmission {
         signals: &[vk::SemaphoreSubmitInfo<'_>],
     ) -> Result<(), RenderError> {
         let mut calls = super::submission_calls::DeviceSubmissionCalls::new(self, waits, signals);
-        self.finish_dispatched(&mut calls)
+        self.finish_dispatched(&mut calls)?;
+        self.completed_natively.set(true);
+        Ok(())
     }
     /// Use one actual or named boundary dispatch; `commands.finish_dispatched(calls)` shares production admission/retirement.
     pub(super) fn finish_dispatched(
@@ -106,12 +153,63 @@ impl Drop for CommandSubmission {
         let mut calls = super::submission_calls::DeviceSubmissionCalls::new(self, &[], &[]);
         let outcome = self.protocol.retire_blocking(&mut calls);
         let _ = self.runtime.lifecycle.observe(outcome);
-        // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
-        unsafe {
-            if self.fence != vk::Fence::null() {
-                self.runtime.device().destroy_fence(self.fence, None);
-            }
-            self.runtime.device().destroy_command_pool(self.pool, None);
+        let slot = CommandSlot {
+            pool: self.pool,
+            fence: self.fence,
+            command: self.command,
+        };
+        if let Some(discarded) = self.runtime.command_slots.return_completed(
+            slot,
+            self.completed_natively.get()
+                && self.runtime.lifecycle.state() == crate::RenderDeviceState::Ready,
+        ) {
+            discarded.destroy(self.runtime.device());
         }
     }
 }
+
+impl CommandSlotPool {
+    fn take(&self) -> Option<CommandSlot> {
+        self.0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter_mut()
+            .find_map(Option::take)
+    }
+
+    fn return_completed(&self, slot: CommandSlot, completed: bool) -> Option<CommandSlot> {
+        // A diagnostic trace keeps one distinct native handle graph per recording.
+        if !completed || cfg!(feature = "command-state-diagnostics") {
+            return Some(slot);
+        }
+        let mut slots = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let Some(vacant) = slots.iter_mut().find(|entry| entry.is_none()) else {
+            return Some(slot);
+        };
+        *vacant = Some(slot);
+        None
+    }
+
+    pub(super) fn close(&mut self, device: &ash::Device) {
+        let slots = self.0.get_mut().unwrap_or_else(PoisonError::into_inner);
+        for slot in slots.iter_mut().filter_map(Option::take) {
+            slot.destroy(device);
+        }
+    }
+}
+
+impl CommandSlot {
+    fn destroy(self, device: &ash::Device) {
+        // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
+        unsafe {
+            if self.fence != vk::Fence::null() {
+                device.destroy_fence(self.fence, None);
+            }
+            device.destroy_command_pool(self.pool, None);
+        }
+    }
+}
+
+#[cfg(all(test, not(feature = "command-state-diagnostics")))]
+#[path = "command_slot_pool_tests.rs"]
+mod tests;

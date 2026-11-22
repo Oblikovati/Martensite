@@ -24,6 +24,7 @@ pub(super) struct VulkanRuntime {
     messenger: Option<ValidationMessenger>,
     device: Option<Device>,
     pub(super) pipeline_cache: PipelineCache,
+    pub(super) command_slots: super::submission::CommandSlotPool,
     pub validation: Arc<ValidationMessages>,
     pub physical: vk::PhysicalDevice,
     pub queue: vk::Queue,
@@ -341,6 +342,7 @@ impl VulkanRuntime {
             memory_arena: Default::default(),
             work: Default::default(),
             pipeline_cache: Default::default(),
+            command_slots: Default::default(),
             #[cfg(test)]
             executable_profile: None,
         })
@@ -539,6 +541,7 @@ impl Drop for VulkanRuntime {
             }
             // Every lease holds this runtime, so all resources are gone; free the shared blocks.
             self.pipeline_cache.close(&device);
+            self.command_slots.close(&device);
             self.memory_arena.free_all(&device);
             // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
             unsafe {
