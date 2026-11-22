@@ -274,7 +274,7 @@ impl<'a> DrawUploadContext<'a> {
         &self,
         transfers: &mut GeometryTransfers,
     ) -> Result<(ResidentGeometry, Option<EncodedGeometry>), RenderError> {
-        let key = geometry_key(self.draw);
+        let key = geometry_key(self.runtime, self.draw);
         if let Some(resident) = key.and_then(|key| transfers.residency.find(key)) {
             return Ok((resident, None));
         }

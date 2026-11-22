@@ -312,7 +312,10 @@ enum SurfaceCoordinates<'a> {
     Constant([f32; 4]),
 }
 
-fn geometry_key(draw: &PrimitiveDraw) -> Option<super::geometry_residency::GeometryKey> {
+fn geometry_key(
+    runtime: &VulkanRuntime,
+    draw: &PrimitiveDraw,
+) -> Option<super::geometry_residency::GeometryKey> {
     use super::geometry_residency::{GeometryEncoding, GeometryKey};
     if cfg!(any(
         feature = "vertex-output-diagnostics",
@@ -322,7 +325,9 @@ fn geometry_key(draw: &PrimitiveDraw) -> Option<super::geometry_residency::Geome
         return None;
     }
     let layout = VertexEncoding::from_draw(draw);
-    if layout.text.is_some() {
+    // Live formatters and injected sources build one-frame geometry. Publishing a device lease
+    // for those streams would add cache traffic and retain buffers that cannot be reused.
+    if layout.text.is_some_and(|style| !style.retained_geometry) {
         return None;
     }
     let surface_coordinates = match layout.surface {
@@ -335,6 +340,11 @@ fn geometry_key(draw: &PrimitiveDraw) -> Option<super::geometry_residency::Geome
             surface_coordinates,
             surface_uv: matches!(layout.surface, Some(SurfaceCoordinates::Array(_))),
             sphere_normals: layout.sphere_normals.is_some(),
+            text_uv: layout.text.is_some(),
+            font_replace: layout.font_replace,
+            flat_text: layout.text.is_some()
+                && runtime.text_interpolation
+                    == crate::RenderTextInterpolationBehavior::ProjectedGrid12FlatCornersV4,
             topology: draw.topology() as u8,
             has_lighting: layout.lighting.is_some(),
             fixed_lighting: layout.fixed_light,

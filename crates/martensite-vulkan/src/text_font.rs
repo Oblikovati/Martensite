@@ -1,5 +1,7 @@
 //! Reuse Martensite's font adapter and formatter under one per-source font-cache lock.
-use crate::{GlyphLayout, RenderError, TextLayoutSource, error::rejected};
+use crate::{
+    GlyphLayout, RenderError, TextLayoutSource, error::rejected, text_layout::TextLayoutSnapshot,
+};
 use martensite_tkernel::{
     standard::{Handle, SharedState},
     tcollection::AsciiString,
@@ -33,6 +35,18 @@ impl TextLayoutSource for FreeTypeTextSource {
         aspects: &dyn Graphic3dAspectsSource,
         params: &Graphic3dRenderingParams,
     ) -> Result<Option<GlyphLayout>, RenderError> {
+        self.layout_for_draw(text, aspects, params)
+            .map(|layout| layout.map(TextLayoutSnapshot::into_public))
+    }
+}
+
+impl FreeTypeTextSource {
+    pub(crate) fn layout_for_draw(
+        &self,
+        text: &Graphic3dText,
+        aspects: &dyn Graphic3dAspectsSource,
+        params: &Graphic3dRenderingParams,
+    ) -> Result<Option<TextLayoutSnapshot>, RenderError> {
         let contents = text.text();
         if contents.is_empty() || text.height() < 2. {
             return Ok(None);
@@ -58,7 +72,7 @@ impl FontState {
         &mut self,
         key: LayoutKey,
         formatter: Handle<FontTextFormatter>,
-    ) -> Result<Option<GlyphLayout>, RenderError> {
+    ) -> Result<Option<TextLayoutSnapshot>, RenderError> {
         let retain = formatter.is_null();
         if retain && let Some(layout) = self.layouts.get(&key) {
             return Ok(Some(layout));
@@ -68,10 +82,13 @@ impl FontState {
             .entry(key.font.clone())
             .or_insert_with(|| LoadedFont::load(&key.font));
         let layout = loaded.layout(&key, formatter, &mut self.atlases)?;
-        if retain && let Some(layout) = &layout {
-            self.layouts.record(key, layout);
-        }
-        Ok(layout)
+        Ok(layout.map(|layout| {
+            if retain {
+                self.layouts.record(key, layout)
+            } else {
+                TextLayoutSnapshot::Live(layout)
+            }
+        }))
     }
 }
 
@@ -261,6 +278,32 @@ mod tests {
             &unwrapped.atlas.pixels,
             &restored.atlas.pixels
         ));
+    }
+
+    #[test]
+    fn moving_native_text_keeps_its_geometry_and_recolors_only_vertices() {
+        let provider = crate::text_layout::TextProvider::default();
+        let text = label("L019");
+        let style = Graphic3dAspectText3d::default();
+        let params = Graphic3dRenderingParams::new().unwrap();
+        let layout = || provider.layout(&text, &style, &params).unwrap().unwrap();
+        let clip = crate::identity_clip();
+        let first = layout().view().draw([1.; 4], clip).unwrap();
+        let mut moved = clip;
+        moved[12] = 0.5;
+        let moved_draw = layout().view().draw([1.; 4], moved).unwrap();
+        assert_eq!(moved_draw.clip_transform, moved);
+        assert_eq!(first.vertices.identity(), moved_draw.vertices.identity());
+        let exposed = layout().into_public();
+        let live = crate::text_layout::GlyphLayoutView::from(&exposed);
+        assert_eq!(moved_draw, live.draw([1.; 4], moved).unwrap());
+        let colored = layout().view().draw([0., 0., 1., 1.], moved).unwrap();
+        assert_ne!(first.vertices.identity(), colored.vertices.identity());
+        assert_eq!(first.indices.identity(), colored.indices.identity());
+        assert_eq!(
+            first.textured_style.unwrap().uv.identity(),
+            colored.textured_style.unwrap().uv.identity()
+        );
     }
 
     fn label(contents: &str) -> Graphic3dText {

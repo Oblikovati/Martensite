@@ -99,7 +99,7 @@ impl Graphic3dDrawGroup {
             extent: projection.1,
             structure,
             rendering,
-            fonts: self.text_source.as_ref(),
+            fonts: &self.text_source,
             model_override: None,
             view_override: None,
             clipping,

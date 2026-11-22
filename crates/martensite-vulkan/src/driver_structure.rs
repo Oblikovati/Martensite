@@ -1,5 +1,6 @@
 //! Renderer-created groups make ordinary Graphic3d submissions reach the draw stream.
 use crate::driver_device_lost::DriverObjects;
+use crate::text_layout::TextProvider;
 use crate::{Graphic3dDrawGroup, RenderError};
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
 use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
@@ -15,7 +16,7 @@ pub struct Graphic3dRenderStructure {
     connection: SharedState<Option<WeakHandle<Self>>>,
     this: SharedState<WeakHandle<Self>>,
     parent: Option<Handle<Self>>,
-    text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
+    text_source: TextProvider,
     raytrace: SharedState<RaytraceState>,
     registry: Option<std::sync::Weak<DriverObjects>>,
 }
@@ -34,12 +35,12 @@ impl Graphic3dRenderStructure {
         manager: &Handle<Graphic3dStructureManager>,
         text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
     ) -> Result<Handle<Self>, Failure> {
-        Self::with_parent(manager, None, text_source, None)
+        Self::with_parent(manager, None, TextProvider::Injected(text_source), None)
     }
 
     pub(crate) fn registered(
         manager: &Handle<Graphic3dStructureManager>,
-        text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
+        text_source: TextProvider,
         registry: &std::sync::Arc<DriverObjects>,
     ) -> Result<Handle<dyn Graphic3dCStructure>, Failure> {
         let structure = Self::with_parent(
@@ -56,7 +57,7 @@ impl Graphic3dRenderStructure {
     fn with_parent(
         manager: &Handle<Graphic3dStructureManager>,
         parent: Option<Handle<Self>>,
-        text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
+        text_source: TextProvider,
         registry: Option<std::sync::Weak<DriverObjects>>,
     ) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
@@ -235,7 +236,7 @@ impl Graphic3dCStructure for Graphic3dRenderStructure {
         structure: &Handle<dyn Graphic3dStructureSource>,
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         let group: Handle<dyn Graphic3dGroup> =
-            Graphic3dDrawGroup::with_text_source(structure, self.text_source.clone()).cast();
+            Graphic3dDrawGroup::with_provider(structure, self.text_source.clone()).cast();
         self.base
             .fields
             .write()

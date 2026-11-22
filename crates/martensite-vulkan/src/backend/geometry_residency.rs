@@ -23,7 +23,7 @@ impl ResidentGeometry {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) struct GeometryKey {
-    streams: [Option<NonZeroUsize>; 7],
+    streams: [Option<NonZeroUsize>; 8],
     encoding: GeometryEncoding,
 }
 
@@ -32,6 +32,9 @@ pub(super) struct GeometryEncoding {
     pub(super) surface_coordinates: Option<[u32; 4]>,
     pub(super) surface_uv: bool,
     pub(super) sphere_normals: bool,
+    pub(super) text_uv: bool,
+    pub(super) font_replace: bool,
+    pub(super) flat_text: bool,
     pub(super) topology: u8,
     pub(super) has_lighting: bool,
     pub(super) fixed_lighting: bool,
@@ -50,6 +53,7 @@ impl GeometryKey {
             .and_then(crate::surface_texture::SurfaceUvStream::identity);
         let sphere = sphere_normals(draw, encoding.sphere_normals)
             .and_then(crate::draw::DrawStream::identity);
+        let text = text_uv(draw, encoding.text_uv).and_then(crate::draw::DrawStream::identity);
         Self {
             streams: [
                 draw.vertices.identity(),
@@ -62,6 +66,7 @@ impl GeometryKey {
                 normals,
                 uv,
                 sphere,
+                text,
             ],
             encoding,
         }
@@ -72,6 +77,7 @@ impl GeometryKey {
             || self.encoding.fixed_grid_points
             || self.encoding.surface_uv
             || self.encoding.sphere_normals
+            || self.encoding.text_uv
         {
             return None;
         }
@@ -83,6 +89,7 @@ impl GeometryKey {
         // These paths derive vertex data or device indices from more than the packed index stream.
         if self.encoding.provoking_vertices
             || self.encoding.fixed_grid_points
+            || self.encoding.flat_text
             || self.streams[2].is_some()
         {
             return None;
@@ -101,6 +108,7 @@ struct GeometryLease {
     normals: Option<Weak<Vec<[f32; 3]>>>,
     uv: Option<Weak<Vec<[f32; 4]>>>,
     sphere: Option<Weak<Vec<[f32; 3]>>>,
+    text: Option<Weak<Vec<[f32; 2]>>>,
 }
 
 impl GeometryLease {
@@ -123,6 +131,7 @@ impl GeometryLease {
                 .and_then(crate::surface_texture::SurfaceUvStream::witness),
             sphere: sphere_normals(draw, key.encoding.sphere_normals)
                 .and_then(crate::draw::DrawStream::witness),
+            text: text_uv(draw, key.encoding.text_uv).and_then(crate::draw::DrawStream::witness),
         }
     }
 
@@ -134,6 +143,7 @@ impl GeometryLease {
             && is_live(&self.normals)
             && is_live(&self.uv)
             && is_live(&self.sphere)
+            && is_live(&self.text)
     }
 }
 
@@ -153,6 +163,13 @@ fn sphere_normals(draw: &PrimitiveDraw, used: bool) -> Option<&crate::draw::Draw
         .filter(|_| used)
         .and_then(|style| style.sphere_map.as_ref())
         .map(|sphere| &sphere.normals)
+}
+
+fn text_uv(draw: &PrimitiveDraw, used: bool) -> Option<&crate::draw::DrawStream<[f32; 2]>> {
+    draw.textured_style
+        .as_ref()
+        .filter(|_| used)
+        .map(|style| &style.uv)
 }
 
 fn is_live<T>(stream: &Option<Weak<Vec<T>>>) -> bool {
@@ -381,6 +398,9 @@ mod tests {
                 surface_coordinates: None,
                 surface_uv: false,
                 sphere_normals: false,
+                text_uv: false,
+                font_replace: false,
+                flat_text: false,
                 topology: 0,
                 has_lighting: false,
                 fixed_lighting: false,

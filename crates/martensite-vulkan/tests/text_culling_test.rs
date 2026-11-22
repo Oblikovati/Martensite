@@ -1,4 +1,10 @@
 //! Native-facing policy is observable through ordinary retained text extraction.
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[path = "../examples/support/device_options.rs"]
+mod device_options;
 #[path = "support/fixed_glyph_source.rs"]
 mod fixed_glyph_source;
 #[path = "support/recording_device.rs"]
@@ -17,6 +23,43 @@ use martensite_tkservice::graphic3d::{Graphic3dAspectsMembers, Graphic3dStructur
 use martensite_vulkan::*;
 use recording_device::RecordingDevice;
 use std::sync::Arc;
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn native_label_orbit_keeps_geometry_and_matches_the_uncached_capture() {
+    use martensite_tkernel::standard::Handle;
+    use martensite_tkmath::gp::Point3;
+    use martensite_tkservice::font::FontTextFormatter;
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let fixture = text_scene::TextScene::new(&driver);
+    fixture.apply("text-basic");
+    let view = fixture.scene.render_view();
+    view.try_redraw().unwrap();
+    assert!(view.last_frame_work().geometry_uploaded_bytes > 0);
+    fixture
+        .scene
+        .view
+        .camera()
+        .set_eye(&Point3::new(8., 0., 16.))
+        .unwrap();
+    view.try_redraw().unwrap();
+    let work = view.last_frame_work();
+    assert_eq!(work.geometry_uploaded_bytes, 0, "{work:?}");
+    assert_eq!(work.geometry_buffers_created, 0, "{work:?}");
+    let warm = view.capture().unwrap();
+    fixture
+        .text
+        .set_text_formatter(Handle::new(FontTextFormatter::default()));
+    view.try_redraw().unwrap();
+    assert!(view.last_frame_work().geometry_uploaded_bytes > 0);
+    let cold = view.capture().unwrap();
+    assert_eq!(warm.rgba, cold.rgba);
+    assert_eq!(warm.depth, cold.depth);
+    assert!(driver.validation_errors().unwrap().is_empty());
+}
 
 #[test]
 fn culling_modes_keep_submitted_text_and_use_retained_live_aspects() {

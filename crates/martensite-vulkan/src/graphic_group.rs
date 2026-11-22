@@ -42,7 +42,7 @@ pub struct Graphic3dDrawGroup {
     base: Graphic3dGroupBase,
     submissions: SharedState<GroupSubmissionState>,
     primitive_sources: Arc<crate::primitive_cache::RetainedPrimitives>,
-    text_source: Arc<dyn crate::TextLayoutSource>,
+    text_source: crate::text_layout::TextProvider,
     mesh_edge_pipeline: crate::RenderMeshEdgePipeline,
     pub(crate) texture_images: Arc<crate::retained_texture_images::RetainedTextureImages>,
     pub(crate) aspect_textures: crate::retained_aspect_textures::RetainedAspectTextures,
@@ -53,12 +53,21 @@ martensite_tkernel::impl_transient!(Graphic3dDrawGroup,"Martensite_Graphic3dDraw
 impl Graphic3dDrawGroup {
     /// Attach to a live Graphic3d structure; `Graphic3dDrawGroup::new(&structure)`.
     pub fn new(structure: &Handle<dyn Graphic3dStructureSource>) -> Handle<Self> {
-        Self::with_text_source(structure, Arc::new(crate::FreeTypeTextSource::default()))
+        Self::with_provider(structure, Default::default())
     }
     /// Inject font I/O and layout; `Graphic3dDrawGroup::with_text_source(&structure, fonts)`.
     pub fn with_text_source(
         structure: &Handle<dyn Graphic3dStructureSource>,
         text_source: Arc<dyn crate::TextLayoutSource>,
+    ) -> Handle<Self> {
+        Self::with_provider(
+            structure,
+            crate::text_layout::TextProvider::Injected(text_source),
+        )
+    }
+    pub(crate) fn with_provider(
+        structure: &Handle<dyn Graphic3dStructureSource>,
+        text_source: crate::text_layout::TextProvider,
     ) -> Handle<Self> {
         Handle::new(Self {
             base: Graphic3dGroupBase::new(structure),

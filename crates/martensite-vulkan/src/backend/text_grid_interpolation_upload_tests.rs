@@ -206,7 +206,7 @@ fn core_flat_transport_refuses_corrupt_index_sources_before_packing() {
 #[test]
 fn core_flat_transport_refuses_incomplete_uv_sources_before_packing() {
     let mut draw = glyph_triangle();
-    draw.textured_style.as_mut().unwrap().uv.pop();
+    draw.textured_style.as_mut().unwrap().uv.make_mut().pop();
     assert!(
         admit(
             Behavior::ProjectedGrid12FlatCornersV4,

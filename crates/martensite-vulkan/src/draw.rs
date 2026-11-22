@@ -160,7 +160,7 @@ impl PrimitiveDraw {
         indices: Vec<u32>,
         clip_transform: [f32; 16],
     ) -> Result<Self, RenderError> {
-        Self::validated(vertices, indices, clip_transform, None)
+        Self::validated(vertices, indices.into(), clip_transform, None)
     }
     /// Validate independent line segments; `PrimitiveDraw::segments(vertices, indices, matrix, style)?`.
     pub fn segments(
@@ -169,7 +169,7 @@ impl PrimitiveDraw {
         clip_transform: [f32; 16],
         style: LineStyle,
     ) -> Result<Self, RenderError> {
-        Self::validated(vertices, indices, clip_transform, Some(style))
+        Self::validated(vertices, indices.into(), clip_transform, Some(style))
     }
     /// Validate point centers and their sprite; `PrimitiveDraw::points(vertices, indices, matrix, style)?`.
     pub fn points(
@@ -259,21 +259,36 @@ impl PrimitiveDraw {
     pub fn point_style(&self) -> Option<&crate::PointStyle> {
         self.point_style.as_ref()
     }
-    fn validated(
+    pub(crate) fn validated(
         vertices: Vec<RenderVertex>,
-        indices: Vec<u32>,
+        indices: DrawStream<u32>,
         clip_transform: [f32; 16],
         line_style: Option<LineStyle>,
     ) -> Result<Self, RenderError> {
         validate_indices(&indices, vertices.len(), line_style.is_some())?;
         crate::scene::validate_components(&vertices, &clip_transform)?;
         let surface_blend = line_style.is_none() && vertices.iter().any(|v| v.color[3] < 1.);
-        let vertices = vertices.into();
-        let indices = indices.into();
+        Ok(Self::from_validated_streams(
+            vertices.into(),
+            indices,
+            clip_transform,
+            line_style,
+            surface_blend,
+        ))
+    }
+
+    /// Assemble streams already checked together by the draw constructor.
+    pub(crate) fn from_validated_streams(
+        vertices: DrawStream<RenderVertex>,
+        indices: DrawStream<u32>,
+        clip_transform: [f32; 16],
+        line_style: Option<LineStyle>,
+        surface_blend: bool,
+    ) -> Self {
         let guard_band_bounds = line_style.map_or_else(Default::default, |_| {
             crate::line_guard_band::GuardBandMemo::for_line(&vertices, &indices)
         });
-        Ok(Self {
+        Self {
             #[cfg(feature = "vertex-output-diagnostics")]
             vertex_output_target: None,
             projected_dash: None,
@@ -326,7 +341,7 @@ impl PrimitiveDraw {
             surface_texture_unavailable: None,
             point_style: None,
             depth_pass: Default::default(),
-        })
+        }
     }
     /// Distinguish triangle assembly rasterized as points; `draw.rasterizes_polygon_points()`.
     pub fn rasterizes_polygon_points(&self) -> bool {

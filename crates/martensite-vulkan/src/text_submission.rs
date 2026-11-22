@@ -1,5 +1,9 @@
 //! Retained text uses the current aspect and view resolution on every extraction.
-use crate::{Graphic3dDrawGroup, PrimitiveDraw, RenderError, TextLayoutSource, error::rejected};
+use crate::{
+    Graphic3dDrawGroup, PrimitiveDraw, RenderError,
+    error::rejected,
+    text_layout::{TextLayoutSnapshot, TextProvider},
+};
 use martensite_tkernel::{
     ncollection::{Mat4, Vec3},
     standard::Handle,
@@ -12,7 +16,7 @@ pub(crate) struct TextSceneContext<'a> {
     pub extent: Option<[u32; 2]>,
     pub structure: &'a Graphic3dCStructureFields,
     pub rendering: &'a Graphic3dRenderingParams,
-    pub fonts: &'a dyn TextLayoutSource,
+    pub fonts: &'a TextProvider,
     pub model_override: Option<Mat4<f32>>,
     /// Group persistence uses the actual incoming model for its local anchor.
     pub view_override: Option<Mat4<f32>>,
@@ -47,7 +51,7 @@ impl TextSceneContext<'_> {
         let Some((aspect, layout)) = self.recorded_layout(text, aspects, upload)? else {
             return Ok(vec![]);
         };
-        crate::text_drawing::lower_text_draws(text, aspect, &layout, &self.transform()?)
+        crate::text_drawing::lower_text_draws(text, aspect, layout.view(), &self.transform()?)
     }
     /// Draws of a 2D text element (`GlText::Set2D`): the text model replaces the
     /// world-view under the group's projection and no depth test applies.
@@ -64,7 +68,8 @@ impl TextSceneContext<'_> {
         transform.pixel_coordinates = true;
         transform.camera_rotation = Mat4::identity();
         transform.zoomable_scale = 1.;
-        let mut draws = crate::text_drawing::lower_text_draws(text, aspect, &layout, &transform)?;
+        let mut draws =
+            crate::text_drawing::lower_text_draws(text, aspect, layout.view(), &transform)?;
         for draw in &mut draws {
             draw.annotation = true;
             draw.text_shadow_bias = false;
@@ -78,7 +83,7 @@ impl TextSceneContext<'_> {
         text: &Graphic3dText,
         aspects: &'s Handle<dyn Graphic3dAspectsSource>,
         upload: Option<&crate::element_upload::ElementUploadSlot>,
-    ) -> Result<Option<(&'s dyn Graphic3dAspectsSource, crate::GlyphLayout)>, RenderError> {
+    ) -> Result<Option<(&'s dyn Graphic3dAspectsSource, TextLayoutSnapshot)>, RenderError> {
         let aspect = aspects
             .get()
             .ok_or_else(|| rejected("null text aspect", "a retained text style"))?;
@@ -89,7 +94,8 @@ impl TextSceneContext<'_> {
         if let Some(upload) = upload {
             // GlTextBuilder emits six vertices per visible glyph, like the layout indices.
             let subtitle = aspect.text_display_type() == AspectTypeOfDisplayText::Subtitle;
-            upload.record_text(layout.indices.len(), subtitle, layout.formatter_bounds);
+            let view = layout.view();
+            upload.record_text(view.index_count(), subtitle, view.formatter_bounds());
         }
         Ok(Some((aspect, layout)))
     }

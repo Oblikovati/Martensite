@@ -1,6 +1,9 @@
 //! Bound layout storage by owned vector capacity and count shared atlas pixels once.
 use super::FontKey;
-use crate::GlyphLayout;
+use crate::{
+    GlyphLayout,
+    text_layout::{RetainedGlyphLayout, TextLayoutSnapshot},
+};
 use martensite_tkernel::ncollection::String8;
 use martensite_tkservice::graphic3d::{
     Graphic3dHorizontalTextAlignment as Horizontal, Graphic3dVerticalTextAlignment as Vertical,
@@ -40,35 +43,36 @@ pub(super) struct RetainedLayouts {
 }
 
 struct StoredLayout {
-    layout: GlyphLayout,
+    layout: Arc<RetainedGlyphLayout>,
     bytes: usize,
     atlas_bytes: usize,
+    atlas_id: usize,
 }
 
 impl RetainedLayouts {
-    pub(super) fn get(&self, key: &LayoutKey) -> Option<GlyphLayout> {
-        self.entries.get(key).map(|entry| entry.layout.clone())
+    pub(super) fn get(&self, key: &LayoutKey) -> Option<TextLayoutSnapshot> {
+        self.entries
+            .get(key)
+            .map(|entry| TextLayoutSnapshot::Retained(entry.layout.clone()))
     }
 
-    pub(super) fn record(&mut self, key: LayoutKey, layout: &GlyphLayout) {
-        if vector_bytes(layout, &key) + atlas_bytes(layout) > MAX_LAYOUT_BYTES {
-            return;
+    pub(super) fn record(&mut self, key: LayoutKey, layout: GlyphLayout) -> TextLayoutSnapshot {
+        let bytes = vector_bytes(&layout, &key)
+            + RetainedGlyphLayout::reserved_geometry_bytes(layout.positions.len());
+        if bytes + atlas_bytes(&layout) > MAX_LAYOUT_BYTES {
+            return TextLayoutSnapshot::Live(layout);
         }
-        let entry = StoredLayout::new(&key, layout.clone());
-        if entry.bytes + entry.atlas_bytes > MAX_LAYOUT_BYTES {
-            return;
-        }
+        let entry = StoredLayout::new(bytes, layout);
         while !self.has_space(&entry) {
             self.evict_oldest();
         }
+        let retained = entry.layout.clone();
         self.insert(key, entry);
+        TextLayoutSnapshot::Retained(retained)
     }
 
     fn insert(&mut self, key: LayoutKey, entry: StoredLayout) {
-        let atlas = self
-            .atlas_owners
-            .entry(atlas_identity(&entry.layout))
-            .or_default();
+        let atlas = self.atlas_owners.entry(entry.atlas_id).or_default();
         if *atlas == 0 {
             self.bytes += entry.atlas_bytes;
         }
@@ -80,9 +84,7 @@ impl RetainedLayouts {
     }
 
     fn has_space(&self, entry: &StoredLayout) -> bool {
-        let already_retained = self
-            .atlas_owners
-            .contains_key(&atlas_identity(&entry.layout));
+        let already_retained = self.atlas_owners.contains_key(&entry.atlas_id);
         let atlas_bytes = if already_retained {
             0
         } else {
@@ -101,9 +103,8 @@ impl RetainedLayouts {
             return;
         };
         self.bytes -= entry.bytes;
-        let identity = atlas_identity(&entry.layout);
         if let std::collections::hash_map::Entry::Occupied(mut owners) =
-            self.atlas_owners.entry(identity)
+            self.atlas_owners.entry(entry.atlas_id)
         {
             *owners.get_mut() -= 1;
             if *owners.get() == 0 {
@@ -115,11 +116,12 @@ impl RetainedLayouts {
 }
 
 impl StoredLayout {
-    fn new(key: &LayoutKey, layout: GlyphLayout) -> Self {
+    fn new(bytes: usize, layout: GlyphLayout) -> Self {
         Self {
-            bytes: vector_bytes(&layout, key),
+            bytes,
             atlas_bytes: atlas_bytes(&layout),
-            layout,
+            atlas_id: Arc::as_ptr(&layout.atlas.pixels).addr(),
+            layout: Arc::new(RetainedGlyphLayout::new(layout)),
         }
     }
 }
@@ -129,10 +131,6 @@ fn vector_bytes(layout: &GlyphLayout, key: &LayoutKey) -> usize {
         + size_of::<u32>() * layout.indices.capacity()
         + key.font.0.capacity()
         + key.text.to_c_string().len()
-}
-
-fn atlas_identity(layout: &GlyphLayout) -> usize {
-    Arc::as_ptr(&layout.atlas.pixels).addr()
 }
 
 fn atlas_bytes(layout: &GlyphLayout) -> usize {
@@ -149,7 +147,7 @@ mod tests {
         let layout = test_layout(8192);
         let mut cache = RetainedLayouts::default();
         for index in 0..=MAX_LAYOUTS {
-            cache.record(key(index), &layout);
+            cache.record(key(index), layout.clone());
         }
         assert_eq!(cache.entries.len(), MAX_LAYOUTS);
         assert_eq!(cache.atlas_owners.len(), 1);
@@ -163,9 +161,9 @@ mod tests {
     fn the_byte_cap_evicts_unique_atlases_and_declines_oversized_layouts() {
         let pixels = MAX_LAYOUT_BYTES / size_of::<[f32; 4]>();
         let mut cache = RetainedLayouts::default();
-        cache.record(key(0), &test_layout(pixels / 2 + 1));
-        cache.record(key(1), &test_layout(pixels / 2 + 1));
-        cache.record(key(2), &test_layout(pixels + 1));
+        cache.record(key(0), test_layout(pixels / 2 + 1));
+        cache.record(key(1), test_layout(pixels / 2 + 1));
+        cache.record(key(2), test_layout(pixels + 1));
         assert_eq!(cache.entries.len(), 1);
         assert!(cache.get(&key(0)).is_none());
         assert!(cache.get(&key(1)).is_some());

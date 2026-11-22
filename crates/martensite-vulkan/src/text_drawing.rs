@@ -1,17 +1,19 @@
 //! Native text decorations precede the foreground, as GlText.
+use crate::text_layout::GlyphLayoutView;
 use crate::text_transform::TextTransform;
-use crate::{GlyphLayout, PrimitiveDraw, RenderError, RenderVertex, TexturedStyle};
+use crate::{PrimitiveDraw, RenderError};
 use martensite_tkernel::quantity::ColorRgba;
 use martensite_tkservice::{aspect::*, graphic3d::*};
 /// Lower native decoration order using per-pass state; `lower_text_draws(text, aspect, layout, transform)` shares one atlas.
-pub(crate) fn lower_text_draws(
+pub(crate) fn lower_text_draws<'a>(
     text: &Graphic3dText,
     aspect: &dyn Graphic3dAspectsSource,
-    layout: &GlyphLayout,
+    layout: impl Into<GlyphLayoutView<'a>>,
     transform: &TextTransform,
 ) -> Result<Vec<PrimitiveDraw>, RenderError> {
+    let layout = layout.into();
     let offsets = native_text_offsets(aspect.text_display_type());
-    let clips = transform.pass_clips(text, aspect, layout.point_size, offsets)?;
+    let clips = transform.pass_clips(text, aspect, layout.point_size(), offsets)?;
     let last = clips.len() - 1;
     let mut draws = clips
         .iter()
@@ -21,7 +23,7 @@ pub(crate) fn lower_text_draws(
     if aspect.text_display_type() == AspectTypeOfDisplayText::Dimension {
         draws.push(crate::text_background::dimension_rectangle(
             aspect,
-            layout,
+            layout.formatter_bounds(),
             clips[last],
         )?);
     }
@@ -39,14 +41,14 @@ fn native_text_offsets(display: AspectTypeOfDisplayText) -> &'static [[f64; 2]] 
     }
 }
 fn native_text_pass(
-    layout: &GlyphLayout,
+    layout: GlyphLayoutView<'_>,
     aspect: &dyn Graphic3dAspectsSource,
     clip: [f32; 16],
     pass: usize,
     last: usize,
 ) -> Result<PrimitiveDraw, RenderError> {
     if aspect.text_display_type() == AspectTypeOfDisplayText::Subtitle && pass == 0 {
-        return crate::text_background::subtitle_rectangle(aspect, layout, clip);
+        return crate::text_background::subtitle_rectangle(aspect, layout.formatter_bounds(), clip);
     }
     let color = if pass == last {
         aspect.interior_color_rgba()
@@ -59,30 +61,21 @@ fn native_text_pass(
     Ok(draw)
 }
 fn glyph_draw(
-    layout: &GlyphLayout,
+    layout: GlyphLayoutView<'_>,
     aspect: &dyn Graphic3dAspectsSource,
     clip: [f32; 16],
     color: ColorRgba,
 ) -> Result<PrimitiveDraw, RenderError> {
-    let vertices = glyph_vertices(layout, color);
-    // Graphic3dShaderManager::getStdProgramFont at hard-codes this cutoff.
-    let style = TexturedStyle::new(layout.atlas.clone(), layout.uv.clone(), 0.285)?
-        .with_alpha_blending(aspect.alpha_mode() == Graphic3dAlphaMode::MaskBlend);
-    let mut draw = PrimitiveDraw::textured(vertices, layout.indices.clone(), clip, style)?;
+    let mut draw = layout.draw(text_vertex_rgba(color), clip)?;
+    if let Some(style) = &mut draw.textured_style {
+        style.blend = aspect.alpha_mode() == Graphic3dAlphaMode::MaskBlend;
+    }
     let (mode, factor, units) = aspect.polygon_offsets();
     draw = draw.with_polygon_offset(crate::RenderPolygonOffset::new(mode, factor, units)?);
     draw.annotation = aspect.text_style() == AspectTypeOfStyleText::Annotation;
     Ok(draw)
 }
 
-fn glyph_vertices(layout: &GlyphLayout, color: ColorRgba) -> Vec<RenderVertex> {
-    let rgba = text_vertex_rgba(color);
-    layout
-        .positions
-        .iter()
-        .map(|p| RenderVertex::new([p[0], p[1], 0.], rgba))
-        .collect()
-}
 /// Retain linear RGB and independent alpha; `text_vertex_rgba(ColorRgba::default())` feeds native text colors.
 pub(crate) fn text_vertex_rgba(color: ColorRgba) -> [f32; 4] {
     let rgb = color.rgb();
@@ -96,6 +89,7 @@ pub(crate) fn text_vertex_rgba(color: ColorRgba) -> [f32; 4] {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
+    use crate::GlyphLayout;
     use martensite_tkernel::ncollection::Mat4;
     #[test]
     fn annotation_shadow_has_no_temporary_depth_bias_and_retains_subtitle_alpha() {

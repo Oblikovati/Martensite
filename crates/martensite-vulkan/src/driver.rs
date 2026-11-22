@@ -1,5 +1,6 @@
 //! Graphic3d factory routes ordinary structure/view creation to Martensite rendering.
 use crate::retained_texture_images::RetainedTextureImages;
+use crate::text_layout::TextProvider;
 use crate::{
     RenderBackend, RenderError, VulkanOptions, VulkanRenderer,
     driver_backend::{DriverBackend, SharedRenderDevice},
@@ -18,7 +19,7 @@ use std::sync::Arc;
 pub struct Graphic3dRenderDriver {
     base: Graphic3dGraphicDriverBase,
     pub(crate) device: SharedRenderDevice,
-    text_source: Arc<dyn crate::TextLayoutSource>,
+    text_source: TextProvider,
     pub(crate) mesh_edge_pipeline: crate::RenderMeshEdgePipeline,
     pub(crate) unlit_face_color_policy: crate::RenderUnlitFaceColorPolicy,
     pub(crate) lighting_selection: crate::driver_lighting_capability::SharedLightingSelection,
@@ -39,7 +40,7 @@ pub struct Graphic3dRenderDriver {
 struct DriverBuildInputs {
     backend: DriverBackend,
     limit: u32,
-    text_source: Arc<dyn crate::TextLayoutSource>,
+    text_source: TextProvider,
     selection: RenderPipelinePolicies,
     line_widths: crate::RenderLineWidthPolicy,
 }
@@ -267,7 +268,7 @@ impl Graphic3dRenderDriver {
         Self::build(DriverBuildInputs {
             limit: renderer.capture_limit(),
             backend: DriverBackend::Vulkan(Box::new(renderer)),
-            text_source: Arc::new(crate::FreeTypeTextSource::default()),
+            text_source: TextProvider::default(),
             selection,
             line_widths,
         })
