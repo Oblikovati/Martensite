@@ -53,8 +53,8 @@ assemblies and shows what works and what does not.
 
 ## Phase 0: measurement and guards
 
-No behaviour change. Status: done, except the host setting of item 3. The README section
-"Phase 0 baseline" is the table that phase 1 starts from.
+No behaviour change. Status: done (#594). The README section "Phase 0 baseline" is the
+table that phase 1 starts from.
 
 1. Frame counters and phase timings on `Graphic3dRenderView`: device buffers and
    images created, bytes uploaded, bytes read back, pipelines created and descriptor sets
@@ -83,8 +83,8 @@ No behaviour change. Status: done, except the host setting of item 3. The README
 3. A CPU profiler. Allow `perf` on the measuring host (`kernel.perf_event_paranoid`
    at most 1); `callgrind` instruction counts remain the portable fallback.
 
-   The README ("Profiling") gives both procedures. The setting needs root, and this host
-   still has 2, so `perf record` fails here until it is lowered.
+   The README ("Profiling") gives both procedures and the first `perf` profile. The
+   setting needs root; the maintainer lowered it to 1 on the measuring host.
 
 ## Phase 1: geometry stays on the GPU
 

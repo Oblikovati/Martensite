@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added device work counters to the Vulkan renderer: `Graphic3dRenderView::last_frame_work` and `Graphic3dRenderDriver::device_work` return `RenderDeviceWork` with the buffers, images, memory allocations, pipelines, descriptor sets and submissions that redraws made, the bytes they uploaded and read back, and their CPU time per phase (#594).
+
 - Added canonical single-chart conical normal extrusion for solved polynomial profiles with holes, using shared keyed construction and returning separate reference, storage and measure bounds, authored history and detached exports (#418).
 
 - Added opt-in exact point-root and bracket filtering for generated Bézier pair membership signs and the `FilteredBernsteinV4` planar-proof selector while retaining earlier sign and planar-proof policies for replay (#544).

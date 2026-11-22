@@ -3,7 +3,7 @@
 `martensite-vulkan` replaces OCCT's `TKOpenGl` behind the same `V3d`/`Graphic3d` driver
 interfaces. This note measures the two renderers on the same scenes, the way
 [tkernel-occt-parity](../tkernel-occt-parity/README.md) measures `tkernel` against
-`TKernel`. The improvement plan is in [PLAN.md](PLAN.md).
+`TKernel`. The improvement plan is in [PLAN.md](PLAN.md); the work is tracked by #594.
 
 Reviewed tree: `release/next` at `172f5b1f` (`martensite-vulkan` 0.7.2). OCCT:
 `master` at `4dbfdcc4` (V8_0_1-88), built with the Visualization module, `-O3 -DNDEBUG`.
@@ -271,7 +271,7 @@ nothing.
 
 ## Profiling
 
-`perf record` needs `kernel.perf_event_paranoid` at 1 or lower. This host has 2, where
+`perf record` needs `kernel.perf_event_paranoid` at 1 or lower. At 2, the default here,
 `perf stat` works but `perf record` cannot open its events. To lower it until the next
 boot:
 
@@ -287,6 +287,12 @@ perf record -g -o target/occt-parity/vulkan/frame_mesh_1m.perf -- \
   target/release/deps/occt_parity-<hash> --bench --frames 10 --filter frame_mesh_1m
 perf report -i target/occt-parity/vulkan/frame_mesh_1m.perf
 ```
+
+On this host, a `perf` profile of `frame_mesh_1m` (`--frames 2`, the whole program with its
+set-up) puts 33% of the samples in `Graphic3dIndexBufferMembers::index` called through
+`dyn`, 13% in `Graphic3dBufferMembers::read_at::<f32>` and 9% in the `read_indices` loop
+around them. Reading the arrays one element at a time is the first target of phase 1 (bulk
+accessors).
 
 Without `perf`, `callgrind` counts instructions, without the time spent waiting for the GPU:
 
