@@ -1,4 +1,5 @@
 //! Renderer-created groups make ordinary Graphic3d submissions reach the draw stream.
+use crate::driver_device_lost::DriverObjects;
 use crate::{Graphic3dDrawGroup, RenderError};
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
 use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
@@ -16,6 +17,7 @@ pub struct Graphic3dRenderStructure {
     parent: Option<Handle<Self>>,
     text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
     raytrace: SharedState<RaytraceState>,
+    registry: Option<std::sync::Weak<DriverObjects>>,
 }
 /// Native `GlStructure` ray-tracing bookkeeping: `myIsRaytracable` and
 /// `myModificationState`, which the native ray tracer compares between frames.
@@ -32,12 +34,30 @@ impl Graphic3dRenderStructure {
         manager: &Handle<Graphic3dStructureManager>,
         text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
     ) -> Result<Handle<Self>, Failure> {
-        Self::with_parent(manager, None, text_source)
+        Self::with_parent(manager, None, text_source, None)
     }
+
+    pub(crate) fn registered(
+        manager: &Handle<Graphic3dStructureManager>,
+        text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
+        registry: &std::sync::Arc<DriverObjects>,
+    ) -> Result<Handle<dyn Graphic3dCStructure>, Failure> {
+        let structure = Self::with_parent(
+            manager,
+            None,
+            text_source,
+            Some(std::sync::Arc::downgrade(registry)),
+        )?
+        .cast();
+        registry.register_structure(&structure);
+        Ok(structure)
+    }
+
     fn with_parent(
         manager: &Handle<Graphic3dStructureManager>,
         parent: Option<Handle<Self>>,
         text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
+        registry: Option<std::sync::Weak<DriverObjects>>,
     ) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
             base: Graphic3dCStructureBase::new(manager)?,
@@ -46,6 +66,7 @@ impl Graphic3dRenderStructure {
             parent,
             text_source,
             raytrace: SharedState::default(),
+            registry,
         });
         *object.this.write() = object.downgrade();
         object.inherit_shadow_state();
@@ -124,6 +145,14 @@ impl Graphic3dRenderStructure {
             .unwrap_or_else(|_| vec![self.groups()])
     }
 }
+impl Drop for Graphic3dRenderStructure {
+    fn drop(&mut self) {
+        if let Some(registry) = self.registry.as_ref().and_then(std::sync::Weak::upgrade) {
+            registry.forget_structure(self.this.read().object_address().addr());
+        }
+    }
+}
+
 impl Graphic3dCStructure for Graphic3dRenderStructure {
     fn cstructure_base(&self) -> &Graphic3dCStructureBase {
         &self.base
@@ -199,7 +228,7 @@ impl Graphic3dCStructure for Graphic3dRenderStructure {
             .parent
             .clone()
             .unwrap_or_else(|| self.this.read().upgrade());
-        Ok(Self::with_parent(manager, Some(parent), self.text_source.clone())?.cast())
+        Ok(Self::with_parent(manager, Some(parent), self.text_source.clone(), None)?.cast())
     }
     fn new_group(
         &self,

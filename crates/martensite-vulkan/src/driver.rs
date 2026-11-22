@@ -341,18 +341,13 @@ impl Graphic3dGraphicDriver for Graphic3dRenderDriver {
         &self,
         manager: &Handle<Graphic3dStructureManager>,
     ) -> Result<Handle<dyn Graphic3dCStructure>, Failure> {
-        let structure: Handle<dyn Graphic3dCStructure> =
-            Graphic3dRenderStructure::new(manager, self.text_source.clone())?.cast();
-        let mut structures = self.objects.structures.write();
-        structures.retain(|weak| !weak.upgrade().is_null());
-        structures.push(structure.downgrade());
+        let structure =
+            Graphic3dRenderStructure::registered(manager, self.text_source.clone(), &self.objects)?;
         Ok(structure)
     }
     fn remove_structure(&self, structure: &mut Handle<dyn Graphic3dCStructure>) {
         self.objects
-            .structures
-            .write()
-            .retain(|weak| weak.upgrade() != *structure && !weak.upgrade().is_null());
+            .forget_structure(structure.object_address().addr());
         if let Some(value) = structure.get() {
             value.clear();
         }
