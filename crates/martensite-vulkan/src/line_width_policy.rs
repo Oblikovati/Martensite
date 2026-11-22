@@ -15,7 +15,16 @@ impl crate::RenderFrame {
     /// Example: `frame.with_line_width_policy(RenderLineWidthPolicy::SinglePixelV1)`.
     pub fn with_line_width_policy(mut self, policy: RenderLineWidthPolicy) -> Self {
         for draw in &mut self.draws {
-            for style in [&mut draw.line_style, &mut draw.polygon_edge_style]
+            // Reading first leaves a body that a draw record shares uncopied (#594).
+            if draw.line_style.is_none_or(|s| s.raster_policy == policy)
+                && draw
+                    .polygon_edge_style
+                    .is_none_or(|s| s.raster_policy == policy)
+            {
+                continue;
+            }
+            let body = &mut **draw;
+            for style in [&mut body.line_style, &mut body.polygon_edge_style]
                 .into_iter()
                 .flatten()
             {

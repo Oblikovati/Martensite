@@ -73,9 +73,30 @@ impl LineStyle {
         (self.width, self.pattern, self.factor)
     }
 }
-/// One immutable indexed primitive submission; `PrimitiveDraw::new(vertices, indices, matrix)?`.
+/// One indexed primitive submission; `PrimitiveDraw::new(vertices, indices, matrix)?`.
+///
+/// The fields a frame sets on every draw (camera transforms, lighting view, layer depth role,
+/// view culling) are inline; everything else is in a shared [`DrawBody`] that reads reach
+/// through `Deref`. A replayed group draw record and the frames in flight share one body, so
+/// a frame copies about 600 bytes per draw instead of 1,560, and a write to a shared body
+/// copies it first (#594).
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrimitiveDraw {
+    pub(crate) clip_transform: [f32; 16],
+    pub(crate) projection_factors: Option<crate::RenderProjectionFactors>,
+    /// The factors a fixed-function frame composes as `projection * (view * model)`; a capping
+    /// plane has them too, unlike `projection_factors`, whose presence selects other routes.
+    pub(crate) fixed_function_factors: Option<crate::RenderProjectionFactors>,
+    pub(crate) depth_clamp: bool,
+    pub(crate) face_culling: crate::RenderFaceCulling,
+    pub(crate) lighting: Option<crate::RenderLighting>,
+    /// Depth role assigned when layers are flattened; see `crate::depth_prepass`.
+    pub(crate) depth_pass: crate::depth_prepass::RenderDepthPass,
+    pub(crate) body: std::sync::Arc<DrawBody>,
+}
+/// The part of a draw that its lowering fixes; `draw.vertices.len()` reads it through `Deref`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct DrawBody {
     #[cfg(feature = "vertex-output-diagnostics")]
     pub(crate) vertex_output_target: Option<std::num::NonZeroU64>,
     pub(crate) projected_dash: Option<crate::projected_segments::PreparedAxis>,
@@ -86,19 +107,11 @@ pub struct PrimitiveDraw {
     pub(crate) guard_band_source: Option<std::sync::Arc<crate::line_guard_band::GuardBandSource>>,
     pub(crate) guard_band_bounds: crate::line_guard_band::GuardBandMemo,
     pub(crate) quad_corners: DrawStream<[u32; 4]>,
-    pub(crate) clip_transform: [f32; 16],
-    pub(crate) projection_factors: Option<crate::RenderProjectionFactors>,
-    /// The factors a fixed-function frame composes as `projection * (view * model)`; a capping
-    /// plane has them too, unlike `projection_factors`, whose presence selects other routes.
-    pub(crate) fixed_function_factors: Option<crate::RenderProjectionFactors>,
-    pub(crate) depth_clamp: bool,
     pub(crate) polygon_offset: Option<crate::RenderPolygonOffset>,
     pub(crate) mirrored: bool,
-    pub(crate) face_culling: crate::RenderFaceCulling,
     pub(crate) capping_pass: crate::RenderCappingPass,
     pub(crate) clipping: Option<crate::RenderClipping>,
     pub(crate) hatch_rows: Option<[u32; 32]>,
-    pub(crate) lighting: Option<crate::RenderLighting>,
     pub(crate) fixed_function_lighting: bool,
     /// A capping stencil pass of a fixed-function frame; it has no lighting of its own.
     pub(crate) fixed_function_mask: bool,
@@ -134,10 +147,20 @@ pub struct PrimitiveDraw {
     pub(crate) surface_texture_unavailable:
         Option<crate::surface_texture::SurfaceTextureUnavailable>,
     pub(crate) point_style: Option<crate::PointStyle>,
-    /// Depth role assigned when layers are flattened; see `crate::depth_prepass`.
-    pub(crate) depth_pass: crate::depth_prepass::RenderDepthPass,
     /// The registered user program drawing this face draw (`crate::retained_user_program`).
     pub(crate) user_program: Option<std::sync::Arc<crate::user_program::UserProgramDraw>>,
+}
+impl std::ops::Deref for PrimitiveDraw {
+    type Target = DrawBody;
+    fn deref(&self) -> &DrawBody {
+        &self.body
+    }
+}
+impl std::ops::DerefMut for PrimitiveDraw {
+    /// Copies the body first when a record or another frame still shares it.
+    fn deref_mut(&mut self) -> &mut DrawBody {
+        std::sync::Arc::make_mut(&mut self.body)
+    }
 }
 /// Compatibility name for the original submission type; `TriangleDraw::new(vertices, indices, matrix)?`.
 pub type TriangleDraw = PrimitiveDraw;
@@ -183,58 +206,60 @@ impl PrimitiveDraw {
         }
         crate::scene::validate_components(&vertices, &clip_transform)?;
         Ok(Self {
-            #[cfg(feature = "vertex-output-diagnostics")]
-            vertex_output_target: None,
-            projected_dash: None,
-            vertices: vertices.into(),
-            indices: indices.into(),
-            geometry_revision: Default::default(),
-            guard_band_source: None,
-            guard_band_bounds: Default::default(),
-            quad_corners: DrawStream::default(),
             clip_transform,
             projection_factors: None,
             fixed_function_factors: None,
             depth_clamp: false,
-            polygon_offset: None,
-            capping_pass: crate::RenderCappingPass::None,
             face_culling: crate::RenderFaceCulling::None,
-            mirrored: false,
-            clipping: None,
-            hatch_rows: None,
             lighting: None,
-            fixed_function_lighting: false,
-            fixed_function_mask: false,
-            compatibility_color_target: false,
-            native_material_cutoff: None,
-            source_color_array: false,
-            unlit_back_color: None,
-            source_line_strip: false,
-            native_flat_sources: DrawStream::default(),
-            annotation: false,
-            text_shadow_bias: false,
-            text_logic_xor: false,
-            text_background_blend: false,
-            surface_blend: false,
-            surface_cutoff: None,
-            surface_forced_blend: false,
-            surface_texture_binding_only: false,
-            mesh_edges: None,
-            polygon_edge_style: None,
-            stencil_rect: false,
-            polygon_face_lines: false,
-            polygon_points: false,
-            fixed_grid_point: false,
-            fixed_grid_point_unit12: false,
-            fixed_grid_point_sprite: false,
-            user_program: None,
-            edge_background_fallback: false,
-            line_style: None,
-            textured_style: None,
-            surface_texture: None,
-            surface_texture_unavailable: None,
-            point_style: Some(style),
             depth_pass: Default::default(),
+            body: std::sync::Arc::new(DrawBody {
+                #[cfg(feature = "vertex-output-diagnostics")]
+                vertex_output_target: None,
+                projected_dash: None,
+                vertices: vertices.into(),
+                indices: indices.into(),
+                geometry_revision: Default::default(),
+                guard_band_source: None,
+                guard_band_bounds: Default::default(),
+                quad_corners: DrawStream::default(),
+                polygon_offset: None,
+                capping_pass: crate::RenderCappingPass::None,
+                mirrored: false,
+                clipping: None,
+                hatch_rows: None,
+                fixed_function_lighting: false,
+                fixed_function_mask: false,
+                compatibility_color_target: false,
+                native_material_cutoff: None,
+                source_color_array: false,
+                unlit_back_color: None,
+                source_line_strip: false,
+                native_flat_sources: DrawStream::default(),
+                annotation: false,
+                text_shadow_bias: false,
+                text_logic_xor: false,
+                text_background_blend: false,
+                surface_blend: false,
+                surface_cutoff: None,
+                surface_forced_blend: false,
+                surface_texture_binding_only: false,
+                mesh_edges: None,
+                polygon_edge_style: None,
+                stencil_rect: false,
+                polygon_face_lines: false,
+                polygon_points: false,
+                fixed_grid_point: false,
+                fixed_grid_point_unit12: false,
+                fixed_grid_point_sprite: false,
+                user_program: None,
+                edge_background_fallback: false,
+                line_style: None,
+                textured_style: None,
+                surface_texture: None,
+                surface_texture_unavailable: None,
+                point_style: Some(style),
+            }),
         })
     }
     /// Attach validated world-space clipping; `draw.with_clipping(clipping)`.
@@ -289,58 +314,60 @@ impl PrimitiveDraw {
             crate::line_guard_band::GuardBandMemo::for_line(&vertices, &indices)
         });
         Self {
-            #[cfg(feature = "vertex-output-diagnostics")]
-            vertex_output_target: None,
-            projected_dash: None,
-            vertices,
-            indices,
-            geometry_revision: Default::default(),
-            guard_band_source: None,
-            guard_band_bounds,
-            quad_corners: DrawStream::default(),
             clip_transform,
             projection_factors: None,
             fixed_function_factors: None,
             depth_clamp: false,
-            polygon_offset: None,
-            capping_pass: crate::RenderCappingPass::None,
             face_culling: crate::RenderFaceCulling::None,
-            mirrored: false,
-            clipping: None,
-            hatch_rows: None,
             lighting: None,
-            fixed_function_lighting: false,
-            fixed_function_mask: false,
-            compatibility_color_target: false,
-            native_material_cutoff: None,
-            source_color_array: false,
-            unlit_back_color: None,
-            source_line_strip: false,
-            native_flat_sources: DrawStream::default(),
-            annotation: false,
-            text_shadow_bias: false,
-            text_logic_xor: false,
-            text_background_blend: false,
-            surface_blend,
-            surface_cutoff: None,
-            surface_forced_blend: false,
-            surface_texture_binding_only: false,
-            mesh_edges: None,
-            polygon_edge_style: None,
-            stencil_rect: false,
-            polygon_face_lines: false,
-            polygon_points: false,
-            fixed_grid_point: false,
-            fixed_grid_point_unit12: false,
-            fixed_grid_point_sprite: false,
-            user_program: None,
-            edge_background_fallback: false,
-            line_style,
-            textured_style: None,
-            surface_texture: None,
-            surface_texture_unavailable: None,
-            point_style: None,
             depth_pass: Default::default(),
+            body: std::sync::Arc::new(DrawBody {
+                #[cfg(feature = "vertex-output-diagnostics")]
+                vertex_output_target: None,
+                projected_dash: None,
+                vertices,
+                indices,
+                geometry_revision: Default::default(),
+                guard_band_source: None,
+                guard_band_bounds,
+                quad_corners: DrawStream::default(),
+                polygon_offset: None,
+                capping_pass: crate::RenderCappingPass::None,
+                mirrored: false,
+                clipping: None,
+                hatch_rows: None,
+                fixed_function_lighting: false,
+                fixed_function_mask: false,
+                compatibility_color_target: false,
+                native_material_cutoff: None,
+                source_color_array: false,
+                unlit_back_color: None,
+                source_line_strip: false,
+                native_flat_sources: DrawStream::default(),
+                annotation: false,
+                text_shadow_bias: false,
+                text_logic_xor: false,
+                text_background_blend: false,
+                surface_blend,
+                surface_cutoff: None,
+                surface_forced_blend: false,
+                surface_texture_binding_only: false,
+                mesh_edges: None,
+                polygon_edge_style: None,
+                stencil_rect: false,
+                polygon_face_lines: false,
+                polygon_points: false,
+                fixed_grid_point: false,
+                fixed_grid_point_unit12: false,
+                fixed_grid_point_sprite: false,
+                user_program: None,
+                edge_background_fallback: false,
+                line_style,
+                textured_style: None,
+                surface_texture: None,
+                surface_texture_unavailable: None,
+                point_style: None,
+            }),
         }
     }
     /// Distinguish triangle assembly rasterized as points; `draw.rasterizes_polygon_points()`.
@@ -438,6 +465,9 @@ impl PrimitiveDraw {
     }
 }
 
+#[cfg(test)]
+#[path = "draw_body_tests.rs"]
+mod body_tests;
 mod geometry_replacement;
 mod geometry_revision;
 mod geometry_stream;

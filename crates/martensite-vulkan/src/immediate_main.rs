@@ -274,15 +274,26 @@ impl MainDrawKey {
 
 /// Admit only states where the keyed inputs account for every main-pass raster command.
 fn plain_triangle(draw: &PrimitiveDraw) -> bool {
-    matches!(draw, PrimitiveDraw {
+    matches!(
+        draw,
+        PrimitiveDraw {
+            clip_transform: _,
+            projection_factors: _,
+            fixed_function_factors: _,
+            depth_clamp: false,
+            face_culling: _,
+            lighting: _,
+            depth_pass: crate::depth_prepass::RenderDepthPass::Shaded,
+            body: _,
+        }
+    ) && matches!(&**draw, crate::draw::DrawBody {
         #[cfg(feature = "vertex-output-diagnostics")]
         vertex_output_target: None,
         projected_dash: None, vertices: _, indices: _, geometry_revision: _,
         guard_band_source: None, guard_band_bounds: _, quad_corners,
-        clip_transform: _, projection_factors: _, fixed_function_factors: _, depth_clamp: false,
-        polygon_offset: _, mirrored: _, face_culling: _,
+        polygon_offset: _, mirrored: _,
         capping_pass: crate::RenderCappingPass::None, clipping: None, hatch_rows: None,
-        lighting: _, fixed_function_lighting: false, fixed_function_mask: false,
+        fixed_function_lighting: false, fixed_function_mask: false,
         compatibility_color_target: false, native_material_cutoff: None, source_color_array: _,
         unlit_back_color: None, source_line_strip: false, native_flat_sources: _, annotation: false,
         stencil_rect: false, text_shadow_bias: false, text_logic_xor: false,
@@ -291,8 +302,7 @@ fn plain_triangle(draw: &PrimitiveDraw) -> bool {
         polygon_edge_style: None, polygon_face_lines: false, polygon_points: false,
         fixed_grid_point: false, fixed_grid_point_unit12: false, fixed_grid_point_sprite: false,
         edge_background_fallback: false, line_style: None, textured_style: None, surface_texture: None,
-        surface_texture_unavailable: None, point_style: None,
-        depth_pass: crate::depth_prepass::RenderDepthPass::Shaded, user_program: None,
+        surface_texture_unavailable: None, point_style: None, user_program: None,
     } if quad_corners.is_empty())
 }
 

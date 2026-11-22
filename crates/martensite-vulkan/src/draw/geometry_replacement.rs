@@ -1,9 +1,9 @@
 //! Exhaustive metadata copying keeps replacement geometry independent without cloning discarded vectors.
-use super::{DrawStream, PrimitiveDraw, RenderVertex};
+use super::{DrawBody, DrawStream, PrimitiveDraw, RenderVertex};
 
-// One complete field list makes newly added draw state a compile error until its copying is reviewed.
+// Complete field lists make newly added draw state a compile error until its copying is reviewed.
 macro_rules! clone_with_geometry {
-    ($($field:ident),+ $(,)?) => {
+    (frame: $($frame:ident),+ ; body: $($field:ident),+ $(,)?) => {
         impl PrimitiveDraw {
             /// Preserve derived-Clone metadata semantics while replacing only vertex/index storage.
             /// Example: `source.with_replacement_geometry(vertices.into(), vec![0, 1].into())`.
@@ -13,27 +13,29 @@ macro_rules! clone_with_geometry {
                 indices: DrawStream<u32>,
             ) -> Self {
                 // Replaced geometry no longer derives from any retained guard-band source.
-                Self { vertices, indices, guard_band_source: None, #[cfg(feature = "vertex-output-diagnostics")] vertex_output_target: self.vertex_output_target, $($field: Clone::clone(&self.$field)),+ }
+                let body = DrawBody { vertices, indices, guard_band_source: None, #[cfg(feature = "vertex-output-diagnostics")] vertex_output_target: self.vertex_output_target, $($field: Clone::clone(&self.$field)),+ };
+                Self { body: std::sync::Arc::new(body), $($frame: Clone::clone(&self.$frame)),+ }
             }
         }
     };
 }
 clone_with_geometry!(
-    guard_band_bounds,
-    geometry_revision,
-    projected_dash,
-    quad_corners,
-    clip_transform,
+    frame: clip_transform,
     projection_factors,
     fixed_function_factors,
     depth_clamp,
+    face_culling,
+    lighting,
+    depth_pass;
+    body: guard_band_bounds,
+    geometry_revision,
+    projected_dash,
+    quad_corners,
     polygon_offset,
     mirrored,
-    face_culling,
     capping_pass,
     clipping,
     hatch_rows,
-    lighting,
     fixed_function_lighting,
     fixed_function_mask,
     compatibility_color_target,
@@ -64,6 +66,5 @@ clone_with_geometry!(
     surface_texture,
     surface_texture_unavailable,
     point_style,
-    depth_pass,
     user_program,
 );

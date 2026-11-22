@@ -128,7 +128,7 @@ fn batch_seed_rejects_stale_draws_and_mixed_geometry_streams() {
     assert!(cache.matches_batch_streams(&stamp, &current));
 
     let mut mixed = current.clone();
-    mixed.lighting.as_mut().unwrap().normals = original.lighting.unwrap().normals;
+    mixed.lighting.as_mut().unwrap().normals = original.lighting.unwrap().normals.clone();
     assert!(!cache.matches_batch_streams(&stamp, &mixed));
 }
 

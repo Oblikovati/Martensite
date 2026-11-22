@@ -216,7 +216,9 @@ fn raster_v2_accepts_positive_nonunit_homogeneous_vertices() {
 fn raster_v2_refuses_nonopaque_material_and_vertex_sources() {
     let mut material = phong_draw();
     material.lighting.as_mut().unwrap().material.set_alpha(0.5);
-    material.clipping = clipped_phong_with_model(crate::identity_clip()).clipping;
+    material.clipping = clipped_phong_with_model(crate::identity_clip())
+        .clipping
+        .clone();
     assert_typed_draw_refusal(&material);
 
     let mut vertex = clipped_phong_with_model(crate::identity_clip());

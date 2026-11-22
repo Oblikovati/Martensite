@@ -10,15 +10,14 @@ use std::sync::{Arc, Mutex, OnceLock};
 /// The camera values that do not depend on a group's model matrix.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct RecordCameraParts {
-    pub projection: Mat4<f32>,
     pub view: Mat4<f32>,
     /// `projection * view`, in the order `ordinary_clip` multiplies.
     pub projection_view: Mat4<f32>,
     pub eye: [f32; 4],
-    /// `RenderProjectionFactors::retained_camera`'s rigid-view provenance.
-    pub isometry: bool,
     /// Whether the camera's axial scale is 1 on every axis.
     pub unit_axial_scale: bool,
+    /// The retained factors with an identity model; each draw sets only its model matrix.
+    pub factors: Option<crate::RenderProjectionFactors>,
 }
 
 /// The shared record state of one layer pass; `RenderElementPass::record_frame()`.
@@ -119,14 +118,19 @@ impl RecordCameraParts {
         // Read both values together, as RenderProjectionFactors::retained_camera does.
         let (orientation, scale) = camera.orientation_with_axial_scale_f();
         let unit_axial_scale = [scale.x(), scale.y(), scale.z()] == [1.; 3];
+        let isometry = unit_axial_scale
+            && view.data().map(f32::to_bits) == orientation.data().map(f32::to_bits);
         Ok(Self {
-            projection,
             view,
             projection_view: projection * view,
             eye: crate::lighting::lighting_eye(view.data(), !camera.is_orthographic())?,
-            isometry: unit_axial_scale
-                && view.data().map(f32::to_bits) == orientation.data().map(f32::to_bits),
             unit_axial_scale,
+            factors: crate::RenderProjectionFactors::retained_with_isometry(
+                projection.data(),
+                view.data(),
+                Mat4::<f32>::identity().data(),
+                isometry,
+            ),
         })
     }
 }

@@ -18,7 +18,8 @@ fn camera_parts_compose_the_clip_transform_of_ordinary_clip() {
     let clip = (parts.projection_view * Mat4::<f32>::from_other(&model)).data();
     let expected = crate::persistent_transform::ordinary_clip(&camera, model);
     assert_eq!(clip.map(f32::to_bits), expected.map(f32::to_bits));
-    assert!(parts.isometry && parts.unit_axial_scale);
+    assert!(parts.unit_axial_scale);
+    assert!(parts.factors.is_some_and(|f| f.has_camera_isometry()));
 }
 
 #[test]

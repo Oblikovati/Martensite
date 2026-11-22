@@ -60,12 +60,17 @@ pub(super) struct GroupDrawRecord {
 }
 
 /// The inputs of a group's lowering that do not come from the camera.
-#[derive(PartialEq)]
 pub(super) struct RecordKey {
-    commands: usize,
+    scalars: RecordScalars,
     /// The address and write revision of the base aspects, then of each aspects command.
     aspects: Vec<(usize, u64)>,
     geometry: Vec<GeometryStamp>,
+}
+
+/// The fixed-size record inputs, compared on every frame without allocating.
+#[derive(PartialEq)]
+pub(super) struct RecordScalars {
+    commands: usize,
     model: [u64; 16],
     closed: bool,
     perspective: bool,
@@ -77,10 +82,13 @@ pub(super) struct RecordKey {
     ),
 }
 
-/// A group's record inputs on this frame; `rendering` is compared without a copy.
+/// A group's record inputs on this frame; `rendering` is compared without a copy, and the
+/// aspects and geometry are compared in place against a record's.
 pub(super) struct RecordProbe<'a> {
-    key: RecordKey,
+    scalars: RecordScalars,
     rendering: &'a Graphic3dRenderingParams,
+    aspects: Handle<dyn Graphic3dAspectsSource>,
+    commands: crate::draw::DrawStream<GroupCommand>,
 }
 
 /// The camera-derived fields of an ordinary surface draw.
@@ -150,6 +158,8 @@ impl Graphic3dDrawGroup {
                 return Ok(program);
             }
         }
+        // Read before lowering: a write that ends during the lowering must not match later.
+        let sources = recorded_sources(&probe.aspects, &probe.commands);
         let before = pass.skipped();
         let program = self.lower_in_structure(
             camera,
@@ -160,7 +170,15 @@ impl Graphic3dDrawGroup {
             (pass, carry),
         )?;
         let skipped = pass.skipped().saturating_sub(before);
-        self.keep_record((probe, &current, pass), &program, (skipped, carry.clone()));
+        if let Some((aspects, geometry)) = sources {
+            let key = RecordKey {
+                scalars: probe.scalars,
+                aspects,
+                geometry,
+            };
+            let kept = (key, probe.rendering, &current, pass);
+            self.keep_record(kept, &program, (skipped, carry.clone()));
+        }
         Ok(program)
     }
 
@@ -196,11 +214,8 @@ impl Graphic3dDrawGroup {
         if effects.flips || effects.calls_user_code {
             return None;
         }
-        let (aspects, geometry) = recorded_sources(&aspects, &commands)?;
-        let key = RecordKey {
+        let scalars = RecordScalars {
             commands: commands.identity()?.get(),
-            aspects,
-            geometry,
             model: model.data().map(f64::to_bits),
             closed,
             perspective: !camera.is_orthographic(),
@@ -208,7 +223,12 @@ impl Graphic3dDrawGroup {
             pass: pass.record_key(),
             surface: crate::lighting_pipeline::structure_surface_policies(&self.structure()),
         };
-        Some(RecordProbe { key, rendering })
+        Some(RecordProbe {
+            scalars,
+            rendering,
+            aspects,
+            commands,
+        })
     }
 
     /// Whether the group has no persistence and no flipper, and then whether it is closed.
@@ -227,7 +247,8 @@ impl Graphic3dDrawGroup {
     ) -> Option<(StencilProgram, usize, FlipCarry)> {
         let slot = self.draw_record.read();
         let record = slot.record()?;
-        if record.key != probe.key
+        if record.key.scalars != probe.scalars
+            || !sources_match(&record.key, &probe.aspects, &probe.commands)
             || !pass
                 .record_frame()
                 .rendering_matches(&record.rendering, probe.rendering)
@@ -248,7 +269,7 @@ impl Graphic3dDrawGroup {
     /// `group.keep_record((probe, &camera, pass), &program, (0, carry))`.
     fn keep_record(
         &self,
-        (probe, camera, pass): (RecordProbe<'_>, &RecordCamera, &RenderElementPass),
+        (key, rendering, camera, pass): KeptInputs<'_>,
         program: &StencilProgram,
         (skipped, carry): (usize, FlipCarry),
     ) {
@@ -261,14 +282,14 @@ impl Graphic3dDrawGroup {
         let Some(witness) = commands.witness() else {
             return;
         };
-        if commands.identity().map(|id| id.get()) != Some(probe.key.commands)
+        if commands.identity().map(|id| id.get()) != Some(key.scalars.commands)
             || !plain_aspects(&aspects, &commands)
         {
             return;
         }
         *self.draw_record.write() = RecordSlot::Kept(Box::new(GroupDrawRecord {
-            key: probe.key,
-            rendering: pass.record_frame().recorded_rendering(probe.rendering),
+            key,
+            rendering: pass.record_frame().recorded_rendering(rendering),
             program: program.clone(),
             skipped,
             carry,
@@ -344,6 +365,42 @@ fn recordable_scene(
 /// The aspects addresses with their revisions, and the geometry stamps, of a group.
 type RecordedSources = (Vec<(usize, u64)>, Vec<GeometryStamp>);
 
+/// What `keep_record` stores: the key read before lowering, the parameters, the camera
+/// fields the draws must certify and the pass.
+type KeptInputs<'a> = (
+    RecordKey,
+    &'a Graphic3dRenderingParams,
+    &'a RecordCamera,
+    &'a RenderElementPass,
+);
+
+/// Whether the base aspects and the commands still have the record's aspects revisions and
+/// geometry stamps, compared in order without building new lists.
+fn sources_match(
+    key: &RecordKey,
+    base: &Handle<dyn Graphic3dAspectsSource>,
+    commands: &[GroupCommand],
+) -> bool {
+    let (mut aspects, mut geometry) = (key.aspects.iter(), key.geometry.iter());
+    if aspects.next() != aspects_revision(base).as_ref() {
+        return false;
+    }
+    for command in commands {
+        let same = match command {
+            GroupCommand::Aspects(style) => aspects.next() == aspects_revision(style).as_ref(),
+            GroupCommand::Stencil(_) => true,
+            GroupCommand::Geometry(GroupGeometry::Primitives(primitive)) => {
+                geometry.next() == GeometryStamp::capture(primitive).as_ref()
+            }
+            _ => false,
+        };
+        if !same {
+            return false;
+        }
+    }
+    aspects.next().is_none() && geometry.next().is_none()
+}
+
 /// The aspects revisions and geometry stamps of commands that hold only aspects, stencil
 /// switches and primitive arrays.
 fn recorded_sources(
@@ -397,18 +454,15 @@ impl RecordCamera {
         model: Mat4<f64>,
     ) -> Self {
         let model = Mat4::<f32>::from_other(&model);
-        let (projection, view) = (parts.projection.data(), parts.view.data());
+        let view = parts.view.data();
         Self {
             clip: (parts.projection_view * model).data(),
             depth_clamp: false,
             view,
             eye: parts.eye,
-            factors: RenderProjectionFactors::retained_with_isometry(
-                projection,
-                view,
-                model.data(),
-                parts.isometry,
-            ),
+            factors: parts
+                .factors
+                .and_then(|factors| factors.with_model_world(model.data())),
             normalize: !parts.unit_axial_scale
                 || crate::fixed_normalization::structure_scale_normalizes(structure),
         }

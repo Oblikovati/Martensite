@@ -15,22 +15,43 @@ pub enum RenderShading {
     Phong,
 }
 /// One snapshot of geometry normals, transforms, materials and lights; `draw.with_lighting(state)?`.
+///
+/// The view matrix, eye, normalization flag and lights change with the camera and the layer, so
+/// they are inline; the rest is a shared [`LightingBody`] that reads reach through `Deref`. A
+/// replayed draw record sets these four without copying the 400-byte body (#594).
 #[derive(Clone, Debug, PartialEq)]
 pub struct RenderLighting {
+    pub(crate) view: [f32; 16],
+    pub(crate) normalize_fixed: bool,
+    pub(crate) eye: [f32; 4],
+    pub(crate) lights: RenderLightSet,
+    pub(crate) body: std::sync::Arc<LightingBody>,
+}
+/// The part of a lighting snapshot that its lowering fixes; `lighting.material` reads it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LightingBody {
     pub(crate) normals: DrawStream<[f32; 3]>,
     pub(crate) material: RenderMaterial,
     pub(crate) world: [f32; 16],
-    pub(crate) view: [f32; 16],
-    pub(crate) normalize_fixed: bool,
     pub(crate) fixed: Option<crate::fixed_lighting::FixedLightingInterpolation>,
     pub(crate) fixed_source_opacity: Option<[f32; 2]>,
     pub(crate) normal: [f32; 16],
-    pub(crate) eye: [f32; 4],
     pub(crate) shading: RenderShading,
-    pub(crate) lights: RenderLightSet,
     pub(crate) vertex_colors: bool,
     pub(crate) front_vertex_colors_only: bool,
     pub(crate) pbr: bool,
+}
+impl std::ops::Deref for RenderLighting {
+    type Target = LightingBody;
+    fn deref(&self) -> &LightingBody {
+        &self.body
+    }
+}
+impl std::ops::DerefMut for RenderLighting {
+    /// Copies the body first when a record or another frame still shares it.
+    fn deref_mut(&mut self) -> &mut LightingBody {
+        std::sync::Arc::make_mut(&mut self.body)
+    }
 }
 impl RenderLighting {
     /// Snapshot world-space shading; `RenderLighting::new(normals, material, model, view, false, RenderShading::Phong)?`.
@@ -46,20 +67,22 @@ impl RenderLighting {
         let normal = inverse_normal_transform(world)?;
         let eye = lighting_eye(view, perspective)?;
         Ok(Self {
-            normals: normals.into(),
-            material,
-            world,
             view,
             normalize_fixed: false,
-            fixed: None,
-            fixed_source_opacity: None,
-            normal,
             eye,
-            shading,
             lights: RenderLightSet::default(),
-            vertex_colors: false,
-            front_vertex_colors_only: false,
-            pbr: false,
+            body: std::sync::Arc::new(LightingBody {
+                normals: normals.into(),
+                material,
+                world,
+                fixed: None,
+                fixed_source_opacity: None,
+                normal,
+                shading,
+                vertex_colors: false,
+                front_vertex_colors_only: false,
+                pbr: false,
+            }),
         })
     }
     /// Attach enabled lights without changing the geometry snapshot; `state.with_lights(lights)`.

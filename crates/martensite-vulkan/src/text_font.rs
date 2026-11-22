@@ -301,8 +301,8 @@ mod tests {
         assert_ne!(first.vertices.identity(), colored.vertices.identity());
         assert_eq!(first.indices.identity(), colored.indices.identity());
         assert_eq!(
-            first.textured_style.unwrap().uv.identity(),
-            colored.textured_style.unwrap().uv.identity()
+            first.textured_style.clone().unwrap().uv.identity(),
+            colored.textured_style.clone().unwrap().uv.identity()
         );
     }
 

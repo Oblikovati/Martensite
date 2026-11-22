@@ -160,7 +160,8 @@ pub(crate) fn apply_graphic3d_raster_widths(
 ) -> Result<(), RenderError> {
     let scale = context_line_width_scale(params);
     for draw in draws {
-        for line in [&mut draw.line_style, &mut draw.polygon_edge_style]
+        let body = &mut **draw;
+        for line in [&mut body.line_style, &mut body.polygon_edge_style]
             .into_iter()
             .flatten()
         {

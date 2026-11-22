@@ -46,7 +46,7 @@ fn point_uvs_ignore_texture_matrix_and_both_image_row_flags() {
             .get_params()
             .set_scale(martensite_tkernel::ncollection::Vec2::new(3., 4.));
         let draw = fixture.draws().unwrap().remove(0);
-        let texture = draw.surface_texture.unwrap();
+        let texture = draw.surface_texture.clone().unwrap();
         assert_eq!(&*texture.uv, [[0.25, 0.25, 0., 1.], [0.75, 0.25, 0., 1.]]);
         assert!(texture.pending_texgen.is_none());
     }
@@ -139,7 +139,7 @@ fn unavailable_point_image_does_not_demote_existing_nodal_lighting() {
         let draw = fixture.draws().unwrap().remove(0);
         assert!(draw.lighting.is_some());
         assert!(draw.surface_cutoff.is_none());
-        assert!(draw.surface_texture_unavailable.unwrap().modulate);
+        assert!(draw.surface_texture_unavailable.clone().unwrap().modulate);
     }
 }
 

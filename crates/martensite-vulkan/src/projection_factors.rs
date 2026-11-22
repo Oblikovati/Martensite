@@ -74,6 +74,16 @@ impl RenderProjectionFactors {
         factors.camera_isometry = isometry;
         Some(factors)
     }
+    /// These factors with another model matrix, `None` for a non-finite one; a pass builds
+    /// the camera factors once and each recorded draw adds its model (#594);
+    /// `camera_factors.with_model_world(model)`.
+    pub(crate) fn with_model_world(mut self, model: [f32; 16]) -> Option<Self> {
+        if !model.iter().all(|value| value.is_finite()) {
+            return None;
+        }
+        self.model_world = model;
+        Some(self)
+    }
     pub(crate) fn has_camera_isometry(&self) -> bool {
         self.camera_isometry
     }

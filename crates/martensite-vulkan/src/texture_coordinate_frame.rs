@@ -34,7 +34,18 @@ pub(crate) fn resolve_ordered_texture_coordinates(
     let mut unit = FixedTextureUnit::default();
     for draw in draws {
         crate::fixed_surface_environment::apply_sprite_replace(draw);
-        unit.resolve(draw.surface_texture.as_mut(), &draw.vertices)?;
+        // Only a pending texgen changes the draw; reading first leaves a body that a draw
+        // record shares uncopied (#594).
+        if draw
+            .surface_texture
+            .as_ref()
+            .is_none_or(|style| style.pending_texgen.is_none())
+        {
+            unit.unbind();
+            continue;
+        }
+        let body = &mut **draw;
+        unit.resolve(body.surface_texture.as_mut(), &body.vertices)?;
     }
     Ok(())
 }
