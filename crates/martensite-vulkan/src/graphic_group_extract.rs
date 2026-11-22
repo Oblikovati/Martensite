@@ -3,10 +3,11 @@ use super::elements::ElementVisit;
 use super::{Graphic3dDrawGroup, GroupCommand, GroupGeometry, apply_command_clipping};
 use crate::render_element_pass::{RenderElementPass, check_is_transparent};
 use crate::{PrimitiveDraw, RenderClipping, RenderError, stencil_program::StencilProgram};
-use martensite_tkernel::standard::Handle;
+use martensite_tkernel::{ncollection::Mat4, standard::Handle};
 use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 struct GroupSpatialSnapshot {
+    base_model: Mat4<f64>,
     matrix: [f32; 16],
     depth_clamp: bool,
     clipping: Option<RenderClipping>,
@@ -47,16 +48,13 @@ impl Graphic3dDrawGroup {
         let origin = pass.layer_origin().map(|origin| origin.coords());
         let spatial =
             self.spatial_snapshot(camera, persistence, structure, (global_clipping, origin))?;
-        let mut context = self.stencil_text_context(
-            (camera, extent),
-            structure,
-            rendering,
-            spatial.clipping.as_ref(),
-        );
+        let mut context =
+            self.stencil_text_context((camera, extent), structure, rendering, &spatial);
         context.environment = pass.environment();
         context.fixed_function_lighting = pass.context_state().fixed_function_lighting;
         let policy = GroupDrawPolicy::new(structure, spatial.clipping.is_none());
-        let mut program = self.extract_commands(spatial.matrix, policy, &context, (pass, carry))?;
+        let mut program =
+            self.extract_commands(spatial.matrix, policy, &mut context, (pass, carry))?;
         finish_group_spatial_state(&mut program.draws, spatial.depth_clamp, structure)?;
         Ok(program)
     }
@@ -71,16 +69,18 @@ impl Graphic3dDrawGroup {
         ),
     ) -> Result<GroupSpatialSnapshot, RenderError> {
         crate::highlight_style::validate_structure(structure)?;
-        let (matrix, depth_clamp) =
-            crate::persistent_transform::group_clip_transform(self, camera, extent, structure)?;
-        let model = crate::persistent_transform::clipping_model(self, structure)?;
-        let clipping = crate::retained_clipping::structure_clipping(
-            global_clipping,
-            structure,
-            model,
-            origin,
+        let base_model = crate::persistent_transform::model_transform(self, structure);
+        let (matrix, depth_clamp) = crate::persistent_transform::group_clip_transform(
+            self, camera, extent, structure, base_model,
         )?;
+        let clipping = if global_clipping.is_null() && structure.clip_planes.is_null() {
+            None
+        } else {
+            let model = crate::persistent_transform::clipping_model(self, base_model)?;
+            crate::retained_clipping::structure_clipping(global_clipping, structure, model, origin)?
+        };
         Ok(GroupSpatialSnapshot {
+            base_model,
             matrix,
             depth_clamp,
             clipping,
@@ -91,7 +91,7 @@ impl Graphic3dDrawGroup {
         projection: (&'a Graphic3dCamera, Option<[u32; 2]>),
         structure: &'a Graphic3dCStructureFields,
         rendering: &'a Graphic3dRenderingParams,
-        clipping: Option<&'a RenderClipping>,
+        spatial: &'a GroupSpatialSnapshot,
     ) -> crate::text_submission::TextSceneContext<'a> {
         crate::text_submission::TextSceneContext {
             group: self,
@@ -100,9 +100,10 @@ impl Graphic3dDrawGroup {
             structure,
             rendering,
             fonts: &self.text_source,
+            base_model: Some(&spatial.base_model),
             model_override: None,
             view_override: None,
-            clipping,
+            clipping: spatial.clipping.as_ref(),
             environment: None,
             fixed_function_lighting: false,
         }
@@ -111,20 +112,25 @@ impl Graphic3dDrawGroup {
         &self,
         matrix: [f32; 16],
         policy: GroupDrawPolicy,
-        context: &crate::text_submission::TextSceneContext<'_>,
+        context: &mut crate::text_submission::TextSceneContext<'_>,
         (pass, carry): (&RenderElementPass, &mut crate::group_flipping::FlipCarry),
     ) -> Result<StencilProgram, RenderError> {
-        let (mut aspects, commands) = self.retained_commands();
+        let (mut aspects, commands, effects) = self.retained_commands();
         let mut program = StencilProgram::default();
         // The transparent element pass replays commands without re-emitting their stencil state.
         let mut replayed = StencilProgram::default();
-        let mut flips = crate::group_flipping::GroupFlipStack::scene(context, matrix, carry)?;
+        let mut flips =
+            crate::group_flipping::GroupFlipStack::scene(context, matrix, carry, effects.flips)?;
         let mut visit = ElementVisit {
             highlight: &policy.highlight,
             allow_face_culling: self.is_closed() && policy.allow_culling,
             pass,
             context: element_context_state(self, &commands, context, pass)?,
         };
+        if effects.calls_user_code {
+            // An injected text provider or render element may edit the live group.
+            context.base_model = None;
+        }
         for command in commands.iter() {
             if let GroupCommand::Element(element) = command {
                 update_element_matrices(&mut visit, &flips);
@@ -208,9 +214,14 @@ impl Graphic3dDrawGroup {
     ) -> (
         Handle<dyn Graphic3dAspectsSource>,
         crate::draw::DrawStream<GroupCommand>,
+        super::commands::CommandEffects,
     ) {
         let state = self.submissions.read();
-        (state.aspects.clone(), state.commands.clone())
+        (
+            state.aspects.clone(),
+            state.commands.clone(),
+            state.command_effects,
+        )
     }
 }
 fn retain_projection_factors(

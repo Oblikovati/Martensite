@@ -34,6 +34,7 @@ struct GroupSubmissionState {
     vertex_output_text: Option<(usize, std::num::NonZeroU64)>,
     aspects: Handle<dyn Graphic3dAspectsSource>,
     commands: crate::draw::DrawStream<GroupCommand>,
+    command_effects: commands::CommandEffects,
     /// Native `myIsRaytracable`; reset by `Clear` with the commands.
     raytracable: bool,
 }

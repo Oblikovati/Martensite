@@ -17,6 +17,8 @@ pub(crate) struct TextSceneContext<'a> {
     pub structure: &'a Graphic3dCStructureFields,
     pub rendering: &'a Graphic3dRenderingParams,
     pub fonts: &'a TextProvider,
+    /// The group's model captured before visiting commands. Callback paths can observe edits.
+    pub base_model: Option<&'a Mat4<f64>>,
     pub model_override: Option<Mat4<f32>>,
     /// Group persistence uses the actual incoming model for its local anchor.
     pub view_override: Option<Mat4<f32>>,

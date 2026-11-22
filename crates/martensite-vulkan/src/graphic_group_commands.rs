@@ -20,8 +20,19 @@ pub(super) enum GroupGeometry {
         crate::render_element::TextPlacement,
     ),
 }
+#[derive(Clone, Copy, Default)]
+pub(super) struct CommandEffects {
+    pub flips: bool,
+    pub calls_user_code: bool,
+}
+
 impl super::GroupSubmissionState {
     pub(super) fn push_command(&mut self, command: GroupCommand) {
+        self.command_effects.flips |= matches!(command, GroupCommand::Flipping(_));
+        self.command_effects.calls_user_code |= matches!(
+            command,
+            GroupCommand::Element(_) | GroupCommand::Geometry(GroupGeometry::Text(..))
+        );
         // A single retained array needs one slot. Text and other command sequences use
         // Vec's usual growth to leave room for the following commands.
         if self.commands.is_empty()
