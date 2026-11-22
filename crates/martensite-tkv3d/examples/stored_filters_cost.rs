@@ -14,7 +14,7 @@ fn measured_collection(count: usize) -> (Handle<SelectMgrAndFilter>, Handle<dyn 
     (parent, child)
 }
 
-fn getter_step(parent: &SelectMgrAndFilter, child: &Handle<dyn SelectMgrFilter>) -> i32 {
+fn getter_step(parent: &SelectMgrAndFilter, child: &Handle<dyn SelectMgrFilter>) -> usize {
     let alias = black_box(parent.stored_filters());
     black_box(alias.len());
     child.ref_count()
@@ -24,7 +24,7 @@ fn collection_step(
     mode: &str,
     parent: &SelectMgrAndFilter,
     child: &Handle<dyn SelectMgrFilter>,
-) -> i32 {
+) -> usize {
     match mode {
         "getter" => return getter_step(parent, child),
         "all" => {
@@ -41,7 +41,7 @@ fn collection_step(
     child.ref_count()
 }
 
-fn collection_workload(mode: &str, count: usize, iterations: usize) -> (u128, i32) {
+fn collection_workload(mode: &str, count: usize, iterations: usize) -> (u128, usize) {
     let (parent, child) = measured_collection(count);
     let started = Instant::now();
     let mut references = child.ref_count();

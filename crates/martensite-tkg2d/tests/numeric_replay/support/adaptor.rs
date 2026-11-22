@@ -15,7 +15,7 @@ fn line_adaptor(kind: i32, r: &mut Reader) -> Handle<dyn Adaptor2dCurve2d> {
     let (p, d) = (r.pnt(), r.dir());
     if kind == 0 {
         let u1 = r.real();
-        return Handle::new(Adaptor2dLine2d::new(p, d, u1, r.real())).cast();
+        return Handle::new(Adaptor2dLine2d::new(p, d, u1, r.real())).into_upcast();
     }
     let line = Adaptor2dLine2d::default();
     if kind == 1 {
@@ -24,7 +24,7 @@ fn line_adaptor(kind: i32, r: &mut Reader) -> Handle<dyn Adaptor2dCurve2d> {
         let u1 = r.real();
         line.load_bounded(Line2::new(p, d), u1, r.real());
     }
-    Handle::new(line).cast()
+    Handle::new(line).into_upcast()
 }
 
 /// One adaptor specification, as a2_adaptor reads it.
@@ -32,21 +32,21 @@ pub fn adaptor(r: &mut Reader) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> 
     let kind = r.integer();
     Ok(match kind {
         0..=2 => line_adaptor(kind, r),
-        3 => Handle::new(Geom2dAdaptorCurve::with_curve(&curve(r)?)?).cast(),
+        3 => Handle::new(Geom2dAdaptorCurve::with_curve(&curve(r)?)?).into_upcast(),
         4 => {
             let (u1, u2) = (r.real(), r.real());
-            Handle::new(Geom2dAdaptorCurve::with_range(&curve(r)?, u1, u2)?).cast()
+            Handle::new(Geom2dAdaptorCurve::with_range(&curve(r)?, u1, u2)?).into_upcast()
         }
-        5 => Handle::new(Adaptor2dOffsetCurve::with_curve(&adaptor(r)?)).cast(),
+        5 => Handle::new(Adaptor2dOffsetCurve::with_curve(&adaptor(r)?)).into_upcast(),
         6 => {
             let d = r.real();
-            Handle::new(Adaptor2dOffsetCurve::with_offset(&adaptor(r)?, d)?).cast()
+            Handle::new(Adaptor2dOffsetCurve::with_offset(&adaptor(r)?, d)?).into_upcast()
         }
         7 => {
             let (d, w1, w2) = (r.real(), r.real(), r.real());
-            Handle::new(Adaptor2dOffsetCurve::with_bounds(&adaptor(r)?, d, w1, w2)).cast()
+            Handle::new(Adaptor2dOffsetCurve::with_bounds(&adaptor(r)?, d, w1, w2)).into_upcast()
         }
-        8 => Handle::new(Adaptor2dCurve2dBase::default()).cast(),
+        8 => Handle::new(Adaptor2dCurve2dBase).into_upcast(),
         _ => panic!("unknown adaptor kind {kind}"),
     })
 }

@@ -16,7 +16,7 @@ use martensite_tkservice::graphic3d::{
     Graphic3dAspectsMembers, Graphic3dMaterialAspect, Graphic3dStructureSource,
 };
 use martensite_tktopalgo::brep_bnd_lib::BRepBndLib;
-use martensite_tkv3d::ais::{AisColoredDrawer, AisShapeSource};
+use martensite_tkv3d::ais::{AisColoredDrawer, AisColoredDrawerSource, AisShapeSource};
 use martensite_tkv3d::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkv3d::prs3d::{Prs3dDrawer, Prs3dRoot, Prs3dText, Prs3dTextAspect};
 
@@ -85,12 +85,11 @@ fn style_colors(
 /// The protected static `setStyleToDrawer(theDrawer, theStyle, theDefStyle, theDefMaterial)`:
 /// own shading and line aspects with the colors and material of the style.
 pub(super) fn set_style_to_drawer(
-    drawer: &Handle<Prs3dDrawer>,
+    own: &Prs3dDrawer,
     style: &XCAFPrsStyle,
     default: &XCAFPrsStyle,
     material: &Graphic3dMaterialAspect,
 ) -> Result<(), Failure> {
-    let own = martensite_tklcaf::live(drawer, "XCAFPrsAISObject::setStyleToDrawer")?;
     own.setup_own_shading_aspect(&Handle::default())?;
     own.set_own_line_aspects(&Handle::default())?;
     let (surface, curve, material) = style_colors(own, style, default, material)?;
@@ -153,7 +152,8 @@ pub(super) fn bind_style_groups(
 ) -> Result<(), Failure> {
     let parent = object.attributes();
     for (style, compound) in style_groups(settings)? {
-        let drawer = Handle::new(AisColoredDrawer::new(&parent));
+        let drawer =
+            Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
         object
             .colored_shape_base_map()
             .bind(&group_shape(&compound)?, &drawer)?;
@@ -167,7 +167,7 @@ pub(super) fn bind_style_groups(
             own.set_own_color(Color::default());
         }
         set_style_to_drawer(
-            &drawer.clone().cast(),
+            own.colored_drawer(),
             &style,
             default,
             &front_material(&parent),

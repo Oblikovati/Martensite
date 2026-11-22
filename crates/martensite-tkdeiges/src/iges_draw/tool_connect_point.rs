@@ -13,10 +13,11 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_dump_string, iges_dump_xyz_l, iges_live,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_dump_string,
+    iges_dump_xyz_l, iges_live,
 };
 use crate::iges_draw::IgesDrawConnectPoint;
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
@@ -51,8 +52,8 @@ impl IgesDrawToolConnectPoint {
         let mut temp_point_identifier: i32 = Default::default();
         let mut temp_function_code: i32 = Default::default();
         let mut temp_swap_flag: i32 = Default::default();
-        let mut temp_display_symbol: Handle<IgesDataIgesEntity> = Default::default();
-        let mut temp_owner_subfigure: Handle<IgesDataIgesEntity> = Default::default();
+        let mut temp_display_symbol: Handle<dyn IgesDataEntityKind> = Default::default();
+        let mut temp_owner_subfigure: Handle<dyn IgesDataEntityKind> = Default::default();
         let mut temp_function_identifier: Handle<HAsciiString> = Default::default();
         let mut temp_function_name: Handle<HAsciiString> = Default::default();
         let mut temp_function_template: Handle<IgesGraphTextDisplayTemplate> = Default::default();
@@ -235,7 +236,7 @@ impl IgesDrawToolConnectPoint {
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
         let mut temp_point: Xyz = another.point().xyz();
-        let mut temp_display_symbol: Handle<IgesDataIgesEntity> =
+        let mut temp_display_symbol: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.display_symbol().cast())?.cast();
         let mut temp_type_flag: i32 = another.type_flag();
         let mut temp_function_flag: i32 = another.function_flag();
@@ -257,7 +258,7 @@ impl IgesDrawToolConnectPoint {
         let mut temp_point_identifier: i32 = another.point_identifier();
         let mut temp_function_code: i32 = another.function_code();
         let mut temp_swap_flag: i32 = if another.swap_flag() { 1 } else { 0 };
-        let mut temp_owner_subfigure: Handle<IgesDataIgesEntity> =
+        let mut temp_owner_subfigure: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.owner_subfigure().cast())?.cast();
         ent.init(
             temp_point,

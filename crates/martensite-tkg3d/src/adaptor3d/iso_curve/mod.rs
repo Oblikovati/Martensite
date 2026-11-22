@@ -7,7 +7,7 @@ use crate::geom::errors::{no_such_object, null_object};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::native::{std_max, std_min};
 use martensite_tkmath::elclib;
 use martensite_tkmath::geom_abs::IsoType;
@@ -51,14 +51,12 @@ pub(super) fn none_iso() -> Failure {
 /// an iso-V curve by U; `Adaptor3dIsoCurve::with_iso(&surface, IsoType::IsoU, 0.5)?`.
 #[derive(Default)]
 pub struct Adaptor3dIsoCurve {
-    parent: StandardTransient,
     state: SharedState<IsoState>,
 }
 impl_transient!(
     Adaptor3dIsoCurve,
     "Adaptor3d_IsoCurve",
     dyn crate::adaptor3d::Adaptor3dCurve,
-    parent,
     interfaces: [dyn crate::adaptor3d::Adaptor3dCurve]
 );
 
@@ -104,7 +102,6 @@ impl Adaptor3dIsoCurve {
     }
     fn from_state(state: IsoState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

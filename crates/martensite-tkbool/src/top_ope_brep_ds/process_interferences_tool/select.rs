@@ -2,10 +2,11 @@
 //! FUN_unkeepUNKNOWN, FUN_select2dI, FUN_selectpure2dI, FUN_select1dI,
 //! FUN_select3dinterference). The lists are walked as vectors: removing at an index
 //! is the native removal at an iterator.
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::export::{fds_data, fds_idata, fun_ds_getoov, fun_ds_sdm, iref};
 use crate::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSEdgeVertexInterference,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSTKI,
+    TopOpeBRepDSKind, TopOpeBRepDSTKI,
 };
 use crate::top_ope_brep_tool::{TopOpeBRepToolTOOL, fun_tool_maxtol};
 use martensite_tkbrep::brep::BRepTool;
@@ -15,7 +16,7 @@ use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The interferences of a list, in order.
 pub(crate) fn to_vec(l: &ListOfInterference) -> Vec<H> {

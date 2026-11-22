@@ -56,7 +56,7 @@ fn planar_free_edges(
 /// Whether a face of a lid has a vertex of the sweep above (true) or below (false)
 /// its plane; `None` when all of them are in the plane.
 fn side_of_vertices(a_f: &Face, a_map_v: &IndexedMapOfShape) -> Result<Option<bool>, Failure> {
-    let a_pln: Handle<GeomPlane> = BRepTool::surface(a_f)?.cast();
+    let a_pln: Handle<GeomPlane> = BRepTool::surface(a_f)?.downcast();
     let position = a_pln.get().ok_or_else(no_plane)?.pln().position();
     let (a_norm, a_loc_p): (Xyz, Xyz) =
         (Xyz::from(position.direction()), position.location().xyz());
@@ -92,7 +92,7 @@ impl BRepFillAdvancedEvolved {
         }
         self.my_error_status = AdvancedEvolvedStatus::NoLids;
         let a_fs = BRepLibFindSurface::new(self.my_spine.as_ref(), -1.0, true, false)?;
-        let a_surf: Handle<GeomPlane> = a_fs.surface().cast();
+        let a_surf: Handle<GeomPlane> = a_fs.surface().downcast();
         let Some(plane) = a_surf.get() else {
             self.my_error_status = AdvancedEvolvedStatus::NotPlanarSpine;
             return Ok(());

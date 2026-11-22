@@ -1,24 +1,24 @@
 //! One native actor-parent class has one descriptor across storage and virtual views.
 use super::*;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient, TransientHandleTarget};
 
 fn assert_actor_views<K, Child, Parent>(owner: Handle<Child>)
 where
     K: TransferProcessKind,
     Child: RuntimeTyped + TransferActorOps<K>,
     Parent: RuntimeTyped + TransferActorOps<K>,
-    dyn TransferActorOps<K>: RuntimeTyped,
+    dyn TransferActorOps<K>: RuntimeTyped + TransientHandleTarget,
 {
-    let erased: Handle<StandardTransient> = owner.cast();
+    let erased: Handle<dyn Transient> = owner.upcast();
     let virtual_view: Handle<dyn TransferActorOps<K>> = erased.cast();
-    let parent: Handle<Parent> = erased.cast();
-    assert!(!virtual_view.is_null() && !parent.is_null());
-    assert_eq!(Handle::<Child>::down_cast(&virtual_view), owner);
-    assert_eq!(Handle::<Parent>::down_cast(&virtual_view), parent);
+    assert_eq!(virtual_view.object_address(), owner.object_address());
+    assert_eq!(virtual_view.downcast::<Child>(), owner);
+    assert!(virtual_view.downcast::<Parent>().is_null());
+    assert!(virtual_view.is_kind(Parent::static_type()));
     virtual_view.set_last(true);
     assert!(owner.is_last());
-    parent.set_last(false);
-    assert!(!owner.is_last());
+    owner.set_last(false);
+    assert!(!virtual_view.is_last());
 }
 
 #[test]
@@ -30,12 +30,12 @@ fn transient_actor_keeps_parent_root_and_specific_interface_casters() {
     let specific: Handle<dyn TransferActorOfTransientProcessOps> = owner.cast();
     assert!(!specific.is_null());
     assert_eq!(
-        Handle::<TransferActorOfTransientProcess>::down_cast(&specific),
+        specific.downcast::<TransferActorOfTransientProcess>(),
         owner
     );
     assert!(std::ptr::eq(
-        TransferActorOfTransientProcessBaseType::static_type_ref(),
-        TransferActorOfProcessForTransient::static_type_ref()
+        TransferActorOfTransientProcessBaseType::static_type(),
+        TransferActorOfProcessForTransient::static_type()
     ));
 }
 
@@ -45,13 +45,10 @@ fn finder_actor_keeps_parent_root_and_specific_interface_casters() {
     assert_actor_views::<TransferFinderKind, _, TransferActorOfProcessForFinder>(owner.clone());
     let specific: Handle<dyn TransferActorOfFinderProcessOps> = owner.cast();
     assert!(!specific.is_null());
-    assert_eq!(
-        Handle::<TransferActorOfFinderProcess>::down_cast(&specific),
-        owner
-    );
+    assert_eq!(specific.downcast::<TransferActorOfFinderProcess>(), owner);
     assert!(std::ptr::eq(
-        TransferActorOfFinderProcessBaseType::static_type_ref(),
-        TransferActorOfProcessForFinder::static_type_ref()
+        TransferActorOfFinderProcessBaseType::static_type(),
+        TransferActorOfProcessForFinder::static_type()
     ));
 }
 
@@ -87,11 +84,11 @@ fn assert_registration_pair(class_first: bool) {
         TransferActorOfFinderProcessBaseType::static_type();
     }
     assert!(std::ptr::eq(
-        TransferActorOfProcessForTransient::static_type_ref(),
-        TransferActorOfTransientProcessBaseType::static_type_ref()
+        TransferActorOfProcessForTransient::static_type(),
+        TransferActorOfTransientProcessBaseType::static_type()
     ));
     assert!(std::ptr::eq(
-        TransferActorOfProcessForFinder::static_type_ref(),
-        TransferActorOfFinderProcessBaseType::static_type_ref()
+        TransferActorOfProcessForFinder::static_type(),
+        TransferActorOfFinderProcessBaseType::static_type()
     ));
 }

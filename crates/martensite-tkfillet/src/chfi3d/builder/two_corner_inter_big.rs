@@ -129,8 +129,8 @@ impl ChFi3dBuilder {
             reduce_surfaces(usma, ubig, &sma_hs, &big_hs)?;
             reduce_curve(usma, ubig, &hctg)?;
         }
-        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.clone().cast();
-        let Some((uvi, w)) = int_cs(&gbig, &hctg.clone().cast(), wi)? else {
+        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.upcast();
+        let Some((uvi, w)) = int_cs(&gbig, &hctg.upcast(), wi)? else {
             return Ok(false);
         };
         wi = w;
@@ -141,7 +141,7 @@ impl ChFi3dBuilder {
             .value(wi)?;
         let parfin = [uvm.x(), uvm.y(), uvi.x(), uvi.y()];
         let pmil = sma_hs.value(parfin[0], parfin[1])?;
-        let gsma: Handle<dyn Adaptor3dSurface> = sma_hs.clone().cast();
+        let gsma: Handle<dyn Adaptor3dSurface> = sma_hs.upcast();
         let Some(gc) = self.inter_fillets((&gsma, &gbig), pardeb, parfin)? else {
             return Ok(false);
         };
@@ -246,7 +246,7 @@ impl ChFi3dBuilder {
             (&mut boxes.bmil, &mut boxes.bco)
         };
         enlarge_box_ds(&self.ds, Some(&sma.stripe), &sma.fd, pair, sma.isfirst)?;
-        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.clone().cast();
+        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.upcast();
         enlarge_box_pcurve(
             &gbig,
             &gc.pc2,
@@ -301,11 +301,11 @@ impl ChFi3dBuilder {
             return Ok(false);
         }
         let c2df: Handle<dyn Adaptor2dCurve2d> =
-            Handle::new(Geom2dAdaptorCurve::with_range(&pcpc, fsma, lsma)?).cast();
-        let ghf: Handle<dyn Adaptor3dSurface> = hf.clone().cast();
+            Handle::new(Geom2dAdaptorCurve::with_range(&pcpc, fsma, lsma)?).into_upcast();
+        let ghf: Handle<dyn Adaptor3dSurface> = hf.upcast();
         let hconsf: Handle<dyn Adaptor3dCurve> =
-            Handle::new(Adaptor3dCurveOnSurface::with_curve(&c2df, &ghf)?).cast();
-        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.clone().cast();
+            Handle::new(Adaptor3dCurveOnSurface::with_curve(&c2df, &ghf)?).into_upcast();
+        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.upcast();
         let Some((uvi, wi)) = int_cs(&gbig, &hconsf, wi)? else {
             return Ok(false);
         };
@@ -437,7 +437,7 @@ impl ChFi3dBuilder {
         (wfirst, wlast): (f64, f64),
         boxes: &mut BevelBoxes,
     ) -> Result<(), Failure> {
-        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.clone().cast();
+        let gbig: Handle<dyn Adaptor3dSurface> = big_hs.upcast();
         enlarge_box_pcurve(
             &gbig,
             &gc.pc2,
@@ -445,7 +445,7 @@ impl ChFi3dBuilder {
             &mut boxes.bmil,
             &mut boxes.barc,
         )?;
-        let ghf: Handle<dyn Adaptor3dSurface> = hf.clone().cast();
+        let ghf: Handle<dyn Adaptor3dSurface> = hf.upcast();
         enlarge_box_pcurve(
             &ghf,
             &gc.pc1,

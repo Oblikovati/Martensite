@@ -48,7 +48,10 @@ fn assert_font_alias_row(
         .find(|row| row[0].parse::<i32>().unwrap() == step)
         .unwrap();
     assert_eq!(left.is_same_reference(compared), row[1] == "1");
-    assert_eq!(owner.ref_count(), row[2].parse::<i32>().unwrap());
+    assert_eq!(
+        owner.ref_count(),
+        row[2].parse::<i32>().unwrap().try_into().unwrap()
+    );
     assert_font_payload(&left.value(), &row[3..5]);
     assert_font_payload(current, &row[5..7]);
 }

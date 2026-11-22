@@ -12,7 +12,7 @@ use martensite_tkbrep::topods::{Edge, Face, Vertex};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Gravity, Msg};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{
@@ -47,7 +47,6 @@ struct ConvertModes {
 /// assert!(modification.new_surface(&Face::default(), &mut NewSurface::default()).is_err());
 /// ```
 pub struct ShapeCustomConvertToBSpline {
-    parent: StandardTransient,
     messages: ShapeCustomModificationFields,
     modes: SharedState<ConvertModes>,
 }
@@ -55,14 +54,12 @@ impl_transient!(
     ShapeCustomConvertToBSpline,
     "ShapeCustom_ConvertToBSpline",
     dyn ShapeCustomModification,
-    parent,
     interfaces: [dyn BRepToolsModification, dyn ShapeCustomModification]
 );
 
 impl Default for ShapeCustomConvertToBSpline {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             messages: ShapeCustomModificationFields::default(),
             modes: SharedState::new(ConvertModes {
                 extrusion: true,

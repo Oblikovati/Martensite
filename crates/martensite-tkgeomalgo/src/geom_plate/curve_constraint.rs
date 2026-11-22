@@ -1,16 +1,19 @@
 //! `GeomPlate_CurveConstraint`: a curve constraint of a plate. The evaluations are in
 //! `curve_constraint_eval`.
 use crate::law::LawFunction;
-use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{
+    Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient,
+};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dCurveOnSurface};
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom_adaptor::GeomSurfaceAdaptor;
 use martensite_tkgeombase::geom_lprop::SLProps;
+use std::ops::Deref;
 
 #[derive(Clone)]
-pub(super) struct CurveConstraintState {
+pub(super) struct CurveConstraintFields {
     pub(super) frontiere: Handle<Adaptor3dCurveOnSurface>,
     pub(super) nb_points: i32,
     pub(super) order: i32,
@@ -30,7 +33,7 @@ pub(super) struct CurveConstraintState {
     pub(super) tol_v: f64,
 }
 
-impl CurveConstraintState {
+impl CurveConstraintFields {
     /// The fields of the default constructor (`myTang`, never read, is left out).
     fn empty() -> Self {
         Self {
@@ -59,7 +62,7 @@ impl CurveConstraintState {
 /// surface (`Adaptor3d_CurveOnSurface` on a `GeomAdaptor_Surface`, order up to G2),
 /// the number of points to sample on it and the tolerances or criterion laws
 /// (`GeomPlate_CurveConstraint`). The builder changes the number of points and the 2d
-/// curve of a shared constraint, so the fields sit behind a lock.
+/// curve of a shared constraint, so its fields and local surface properties sit behind locks.
 ///
 /// ```
 /// use martensite_tkgeomalgo::geom_plate::GeomPlateCurveConstraint;
@@ -69,23 +72,67 @@ impl CurveConstraintState {
 /// use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
 /// use martensite_tkmath::gp::{Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> =
-///     Handle::new(GeomLine::from_point(Point3::default(), Direction3::new(1.0, 0.0, 0.0).unwrap())).cast();
+///     Handle::new(GeomLine::from_point(Point3::default(), Direction3::new(1.0, 0.0, 0.0).unwrap())).into_upcast();
 /// let curve: Handle<dyn Adaptor3dCurve> =
-///     Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).cast();
+///     Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).into_upcast();
 /// let c = GeomPlateCurveConstraint::new(&curve, 0, 10, 1e-4, 0.01, 0.1).unwrap();
 /// assert_eq!(c.length().unwrap(), 2.0);
 /// ```
 pub struct GeomPlateCurveConstraint {
-    parent: StandardTransient,
-    pub(super) state: SharedState<CurveConstraintState>,
-    pub(super) lprop: SharedState<SLProps>,
+    state: GeomPlateCurveConstraintState,
 }
 impl_transient!(
     GeomPlateCurveConstraint,
     "GeomPlate_CurveConstraint",
-    StandardTransient,
-    parent
+    dyn Transient,
+    interfaces: [dyn GeomPlateCurveConstraintSource]
 );
+
+/// The common operations and state of a plate curve constraint.
+/// A subtype exposes its own state through `handle.upcast::<dyn GeomPlateCurveConstraintSource>()`.
+pub trait GeomPlateCurveConstraintSource: Transient {
+    /// Borrows the state on the original owner; `constraint.curve_constraint_state().order()`.
+    fn curve_constraint_state(&self) -> &GeomPlateCurveConstraintState;
+}
+
+impl GeomPlateCurveConstraintSource for GeomPlateCurveConstraint {
+    fn curve_constraint_state(&self) -> &GeomPlateCurveConstraintState {
+        &self.state
+    }
+}
+
+impl RuntimeTyped for dyn GeomPlateCurveConstraintSource {
+    const TYPE_NAME: &'static str = GeomPlateCurveConstraint::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        GeomPlateCurveConstraint::static_type()
+    }
+}
+
+impl_transient_interface_target!(dyn GeomPlateCurveConstraintSource);
+
+impl Deref for dyn GeomPlateCurveConstraintSource {
+    type Target = GeomPlateCurveConstraintState;
+
+    fn deref(&self) -> &Self::Target {
+        self.curve_constraint_state()
+    }
+}
+
+impl Deref for GeomPlateCurveConstraint {
+    type Target = GeomPlateCurveConstraintState;
+
+    fn deref(&self) -> &Self::Target {
+        &self.state
+    }
+}
+
+/// Shared geometric state stored directly by a curve constraint owner.
+/// `state.set_nb_points(12)` updates the point count seen by the plate builder.
+pub struct GeomPlateCurveConstraintState {
+    pub(super) state: SharedState<CurveConstraintFields>,
+    pub(super) lprop: SharedState<SLProps>,
+}
 
 // The Standard_Failure the native members raise for a constraint without surface.
 pub(super) fn not_on_surface() -> Failure {
@@ -93,20 +140,43 @@ pub(super) fn not_on_surface() -> Failure {
 }
 
 impl GeomPlateCurveConstraint {
-    fn from_parts(state: CurveConstraintState, lprop: SLProps) -> Self {
+    /// An empty curve constraint of order zero; `GeomPlateCurveConstraint::empty()?`.
+    pub fn empty() -> Result<Self, Failure> {
+        Ok(Self {
+            state: GeomPlateCurveConstraintState::empty()?,
+        })
+    }
+
+    /// The native curve constraint with its sampling count and tolerances.
+    /// `GeomPlateCurveConstraint::new(&curve, 0, 10, 1e-4, 0.01, 0.1)?`.
+    pub fn new(
+        boundary: &Handle<dyn Adaptor3dCurve>,
+        order: i32,
+        npt: i32,
+        tol_dist: f64,
+        tol_ang: f64,
+        tol_curv: f64,
+    ) -> Result<Self, Failure> {
+        Ok(Self {
+            state: GeomPlateCurveConstraintState::new(
+                boundary, order, npt, tol_dist, tol_ang, tol_curv,
+            )?,
+        })
+    }
+}
+
+impl GeomPlateCurveConstraintState {
+    fn from_parts(state: CurveConstraintFields, lprop: SLProps) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
             lprop: SharedState::new(lprop),
         }
     }
 
-    /// An empty constraint of order 0 and no point (`GeomPlate_CurveConstraint()`); its
-    /// curve members raise Standard_NullObject (null dereferences natively).
-    /// `GeomPlateCurveConstraint::empty()?`.
-    pub fn empty() -> Result<Self, Failure> {
+    // The empty constraint has no curve, so its curve operations raise Standard_NullObject.
+    fn empty() -> Result<Self, Failure> {
         Ok(Self::from_parts(
-            CurveConstraintState::empty(),
+            CurveConstraintFields::empty(),
             SLProps::without_surface(2, 1.0e-4)?,
         ))
     }
@@ -116,7 +186,7 @@ impl GeomPlateCurveConstraint {
     /// TolCurv)`; the native defaults are 10, 1e-4, 0.01 and 0.1). A boundary that is an
     /// `Adaptor3d_CurveOnSurface` must lie on a `GeomAdaptor_Surface`. Standard_Failure
     /// for an order outside -1..=2 or another surface adaptor.
-    /// `GeomPlateCurveConstraint::new(&curve, 0, 10, 1e-4, 0.01, 0.1)?`.
+    /// `GeomPlateCurveConstraintState::new(&curve, 0, 10, 1e-4, 0.01, 0.1)?`.
     pub fn new(
         boundary: &Handle<dyn Adaptor3dCurve>,
         order: i32,
@@ -132,7 +202,7 @@ impl GeomPlateCurveConstraint {
             )));
         }
         let frontiere: Handle<Adaptor3dCurveOnSurface> = boundary.cast();
-        let mut state = CurveConstraintState {
+        let mut state = CurveConstraintFields {
             frontiere: frontiere.clone(),
             nb_points: npt,
             order,
@@ -142,7 +212,7 @@ impl GeomPlateCurveConstraint {
             tol_dist,
             tol_ang,
             tol_curv,
-            ..CurveConstraintState::empty()
+            ..CurveConstraintFields::empty()
         };
         match frontiere.get() {
             None => state.curve_3d = boundary.clone(),
@@ -157,7 +227,7 @@ impl GeomPlateCurveConstraint {
     /// `myLProp` itself, the surface of a face included): a constraint on the curve on
     /// surface whose local properties are those of `surface`; the derived class checks
     /// the order and the boundary first. `tols` is `[TolDist, TolAng, TolCurv]`;
-    /// `GeomPlateCurveConstraint::from_derived_state(&on_surface, 1, 10, [1e-4, 0.01, 0.1], &surface)?`.
+    /// `GeomPlateCurveConstraintState::from_derived_state(&on_surface, 1, 10, [1e-4, 0.01, 0.1], &surface)?`.
     pub fn from_derived_state(
         frontiere: &Handle<Adaptor3dCurveOnSurface>,
         order: i32,
@@ -167,7 +237,7 @@ impl GeomPlateCurveConstraint {
     ) -> Result<Self, Failure> {
         let [tol_dist, tol_ang, tol_curv] = tols;
         let mut lprop: SLProps = SLProps::without_surface(2, tol_dist)?;
-        let state = CurveConstraintState {
+        let state = CurveConstraintFields {
             frontiere: frontiere.clone(),
             nb_points: npt,
             order,
@@ -177,7 +247,7 @@ impl GeomPlateCurveConstraint {
             tol_dist,
             tol_ang,
             tol_curv,
-            ..CurveConstraintState::empty()
+            ..CurveConstraintFields::empty()
         };
         lprop.set_surface(surface.clone());
         Ok(Self::from_parts(state, lprop))
@@ -275,7 +345,8 @@ impl GeomPlateCurveConstraint {
 fn geom_surface_of(
     on_surface: &Adaptor3dCurveOnSurface,
 ) -> Result<Handle<dyn martensite_tkg3d::geom::GeomSurface>, Failure> {
-    let adaptor: Handle<GeomAdaptorSurface> = on_surface.get_surface().cast();
+    let surface = on_surface.get_surface();
+    let adaptor = surface.view::<dyn GeomSurfaceAdaptor>();
     let geom = adaptor.get().ok_or_else(|| {
         Failure::new("GeomPlate_CurveConstraint : Surface must be GeomAdaptor_Surface")
     })?;

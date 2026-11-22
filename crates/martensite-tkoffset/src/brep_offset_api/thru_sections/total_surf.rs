@@ -104,7 +104,7 @@ fn located_bspline(edge: &Edge) -> Result<Handle<GeomBSplineCurve>, Failure> {
         true,
     )?);
     let is_conic = live(&trim)?.basis_curve().is_kind_name("Geom_Conic");
-    let trim: Handle<dyn GeomCurve> = trim.cast();
+    let trim: Handle<dyn GeomCurve> = trim.upcast();
     let mut bs: Handle<GeomBSplineCurve> = Handle::default();
     if is_conic {
         let approx =
@@ -147,7 +147,7 @@ fn section_bspline(edges: &SectionEdges, j: usize) -> Result<Handle<GeomBSplineC
         return Ok(first);
     }
     let mut comp = CompCurveToBSplineCurve::with_curve(
-        &first.cast::<dyn GeomBoundedCurve>(),
+        &first.upcast::<dyn GeomBoundedCurve>(),
         ParameterisationType::TgtThetaOver2,
     )?;
     for i in 2..=edges.nb_edges {
@@ -158,7 +158,7 @@ fn section_bspline(edges: &SectionEdges, j: usize) -> Result<Handle<GeomBSplineC
             return Ok(curv_bs);
         }
         comp.add(
-            &curv_bs.cast::<dyn GeomBoundedCurve>(),
+            &curv_bs.upcast::<dyn GeomBoundedCurve>(),
             tol_v,
             true,
             false,
@@ -184,7 +184,7 @@ fn sections_generator(edges: &SectionEdges) -> Result<Option<GeomFillSectionGene
     let (mut jdeb, mut jfin) = (1, edges.nb_sects);
     if edges.w1_point {
         jdeb += 1;
-        section.add_curve(&degenerated_curve(&edges.edge(1)?)?.cast())?;
+        section.add_curve(&degenerated_curve(&edges.edge(1)?)?.into_upcast())?;
     }
     if edges.w2_point {
         jfin -= 1;
@@ -192,21 +192,21 @@ fn sections_generator(edges: &SectionEdges) -> Result<Option<GeomFillSectionGene
     let mut bs1: Handle<GeomBSplineCurve> = Handle::default();
     for j in jdeb..=jfin {
         if j == jfin && edges.v_closed {
-            section.add_curve(&bs1.clone().cast())?;
+            section.add_curve(&bs1.upcast())?;
             continue;
         }
         let bs = section_bspline(edges, j)?;
         if bs.is_null() {
             return Ok(None);
         }
-        section.add_curve(&bs.clone().cast())?;
+        section.add_curve(&bs.upcast())?;
         if j == jdeb && edges.v_closed {
             bs1 = bs;
         }
     }
     if edges.w2_point {
         let last = edges.edge(edges.nb_sects * edges.nb_edges)?;
-        section.add_curve(&degenerated_curve(&last)?.cast())?;
+        section.add_curve(&degenerated_curve(&last)?.into_upcast())?;
     }
     section.perform(precision::p_confusion())?;
     Ok(Some(section))

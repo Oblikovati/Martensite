@@ -51,7 +51,7 @@ fn add_trihedron_group<O: AisTrihedronSource + ?Sized>(
 ) -> Result<(), Failure> {
     let group = prs.new_group()?;
     group.set_group_primitives_aspect(&trihedron_part_aspect(object, part));
-    group.add_primitive_array(&object.array_of_primitives(part), true);
+    group.add_primitive_array(&object.array_of_primitives(part).into_upcast(), true);
     if retain {
         object.trihedron_base().fields.write().part_groups[part as usize] = group;
     }
@@ -130,7 +130,7 @@ fn add_trihedron_hidden_plane<O: AisTrihedronSource + ?Sized>(
     }
     let group = prs.new_group()?;
     // Add geometry first, then apply the invisible aspect to the whole group.
-    group.add_primitive_array(&object.array_of_primitives(part), true);
+    group.add_primitive_array(&object.array_of_primitives(part).into_upcast(), true);
     group.set_group_primitives_aspect(
         &object
             .trihedron_base()

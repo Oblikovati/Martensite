@@ -49,7 +49,7 @@ fn context_modif_without_copy() {
     );
     ctx.set_protocol(&fake_protocol());
     assert!(ctx.protocol().is_some());
-    ctx.trace_modifier(&Handle::new(IFSelectModifReorder::new(false)).cast());
+    ctx.trace_modifier(&Handle::new(IFSelectModifReorder::new(false)).into_upcast());
     ctx.add_warning(&ents[0], "w", "");
     ctx.add_fail(&ents[0], "f", "");
     assert!(ctx.c_check(1).unwrap().entity() == ents[0]);
@@ -87,11 +87,14 @@ fn context_modif_with_copy_and_reorder() {
         b"Reorder, Roots first"
     );
     assert!(!modif.has_selection() && modif.dispatch().is_null());
-    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).cast();
+    let disp: Handle<dyn IFSelectDispatch> = Handle::new(IFSelectDispGlobal::new()).into_upcast();
     assert!(modif.applies(&disp));
     modif.set_dispatch(&disp);
-    assert!(modif.applies(&disp) && !modif.applies(&Handle::new(IFSelectDispPerOne::new()).cast()));
-    modif.set_selection(&Handle::new(IFSelectSelectModelRoots::new()).cast());
+    assert!(
+        modif.applies(&disp)
+            && !modif.applies(&Handle::new(IFSelectDispPerOne::new()).into_upcast())
+    );
+    modif.set_selection(&Handle::new(IFSelectSelectModelRoots::new()).into_upcast());
     assert!(modif.has_selection());
     modif.reset_selection();
     assert!(modif.selection().is_null());
@@ -102,7 +105,7 @@ fn applied_modifiers_and_write_context() {
     let (model, ents) = fake_chain();
     let applied = Handle::new(IFSelectAppliedModifiers::new(1, 4).unwrap());
     let modif: Handle<dyn IFSelectGeneralModifier> =
-        Handle::new(IFSelectModifReorder::new(true)).cast();
+        Handle::new(IFSelectModifReorder::new(true)).into_upcast();
     assert!(
         applied.add_modif(&modif).unwrap()
             && applied.add_modif(&modif).unwrap()

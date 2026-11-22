@@ -27,7 +27,7 @@ impl ProjectPointOnSurf {
         let tolerance: f64 = precision::p_confusion();
         let adaptor = GeomAdaptorSurface::default();
         adaptor.load_bounds(surface, (umin, usup, vmin, vsup))?;
-        let adaptor: Handle<dyn Adaptor3dSurface> = Handle::new(adaptor).cast();
+        let adaptor: Handle<dyn Adaptor3dSurface> = Handle::new(adaptor).into_upcast();
         self.ext_ps.initialize_shared(
             &adaptor,
             (umin, usup),

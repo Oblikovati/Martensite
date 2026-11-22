@@ -8,7 +8,7 @@ use martensite_tkcdf::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::ExtendedString,
 };
 use std::sync::{
@@ -21,15 +21,13 @@ mod reader;
 pub type CallTrace = Arc<Mutex<Vec<String>>>;
 
 pub struct FakeRetrievalMetaDataDriver {
-    transient: StandardTransient,
     pub metadata: Handle<CdmMetaData>,
     trace: CallTrace,
     pub found: bool,
     pub readable: bool,
     pub fail_metadata: bool,
 }
-impl_transient!(FakeRetrievalMetaDataDriver, "FakeRetrievalMetaDataDriver", StandardTransient,
-    transient, interfaces: [dyn CdfMetaDataDriver]);
+impl_transient!(FakeRetrievalMetaDataDriver, "FakeRetrievalMetaDataDriver", dyn Transient, interfaces: [dyn CdfMetaDataDriver]);
 impl CdfMetaDataDriver for FakeRetrievalMetaDataDriver {
     fn find(
         &self,
@@ -90,15 +88,13 @@ impl CdfMetaDataDriver for FakeRetrievalMetaDataDriver {
 }
 
 pub struct FakeHeaderApplication {
-    transient: StandardTransient,
     pub base: CdfApplicationBase,
     pub trace: CallTrace,
     pub reader_failure: bool,
     pub live_reader: AtomicBool,
     pub read_calls: Arc<AtomicUsize>,
 }
-impl_transient!(FakeHeaderApplication, "FakeHeaderApplication", dyn CdfApplication,
-    transient, interfaces: [dyn CdmApplication, dyn CdfApplication]);
+impl_transient!(FakeHeaderApplication, "FakeHeaderApplication", dyn CdfApplication, interfaces: [dyn CdmApplication, dyn CdfApplication]);
 impl CdmApplication for FakeHeaderApplication {
     cdf_application_cdm_members!();
     fn resources(&self) -> Result<SharedResourceManager, Failure> {
@@ -129,7 +125,7 @@ impl CdfApplication for FakeHeaderApplication {
         }
         if self.live_reader.load(Ordering::SeqCst) {
             return Ok(
-                Handle::new(reader::AvailabilityReader::new(self.read_calls.clone())).cast(),
+                Handle::new(reader::AvailabilityReader::new(self.read_calls.clone())).into_upcast(),
             );
         }
         Ok(Handle::default())
@@ -164,8 +160,8 @@ pub fn application(
         readable,
         fail_metadata,
     ));
-    app.base.set_meta_data_driver(&driver.cast());
-    app.application_base().bind_self(&app.cast());
+    app.base.set_meta_data_driver(&driver.upcast());
+    app.application_base().bind_self(&app.upcast());
     app
 }
 
@@ -177,7 +173,6 @@ pub(super) fn legacy_driver(
     fail_metadata: bool,
 ) -> FakeRetrievalMetaDataDriver {
     FakeRetrievalMetaDataDriver {
-        transient: StandardTransient::default(),
         metadata,
         trace: app.trace.clone(),
         found,
@@ -188,7 +183,6 @@ pub(super) fn legacy_driver(
 
 fn bare_application(reader_failure: bool) -> Handle<FakeHeaderApplication> {
     Handle::new(FakeHeaderApplication {
-        transient: StandardTransient::default(),
         base: CdfApplicationBase::default(),
         trace: Arc::new(Mutex::new(Vec::new())),
         reader_failure,

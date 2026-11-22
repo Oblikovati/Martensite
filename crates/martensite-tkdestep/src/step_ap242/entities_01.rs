@@ -27,9 +27,9 @@ step_select! {
         geometric_tolerance: StepDimTolGeometricTolerance,
         group: StepBasicGroup,
         product_category: StepBasicProductCategory,
-        property_definition: StepReprPropertyDefinition,
-        representation: StepReprRepresentation,
-        shape_aspect: StepReprShapeAspect,
+        property_definition: dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
         shape_aspect_relationship: StepReprShapeAspectRelationship,
     }
 }
@@ -49,10 +49,10 @@ step_select! {
         dimensional_size: StepShapeDimensionalSize,
         general_property: StepBasicGeneralProperty,
         geometric_tolerance: StepDimTolGeometricTolerance,
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
-        property_definition: StepReprPropertyDefinition,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        property_definition: dyn crate::StepEntityBase<StepReprPropertyDefinition>,
         property_definition_relationship: StepReprPropertyDefinitionRelationship,
-        shape_aspect: StepReprShapeAspect,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
         shape_aspect_relationship: StepReprShapeAspectRelationship,
     }
 }
@@ -102,8 +102,8 @@ step_entity! {
         name: Handle<HAsciiString>,
         description: Handle<HAsciiString>,
         definition: StepAP242ItemIdentifiedRepresentationUsageDefinition,
-        used_representation: Handle<StepReprRepresentation>,
-        identified_item: Handle<HArray1<Handle<StepReprRepresentationItem>>>,
+        used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+        identified_item: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
     }
 }
 impl StepAP242ItemIdentifiedRepresentationUsage {
@@ -114,12 +114,12 @@ impl StepAP242ItemIdentifiedRepresentationUsage {
         get description = description: Handle<HAsciiString>;
         set set_definition = definition: StepAP242ItemIdentifiedRepresentationUsageDefinition;
         get definition = definition: StepAP242ItemIdentifiedRepresentationUsageDefinition;
-        set set_used_representation = used_representation: Handle<StepReprRepresentation>;
-        get used_representation = used_representation: Handle<StepReprRepresentation>;
-        get identified_item = identified_item: Handle<HArray1<Handle<StepReprRepresentationItem>>>;
+        set set_used_representation = used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>;
+        get used_representation = used_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>;
+        get identified_item = identified_item: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>;
         len nb_identified_item = identified_item;
-        set set_identified_item = identified_item: Handle<HArray1<Handle<StepReprRepresentationItem>>>;
-        item identified_item_value = identified_item: Handle<StepReprRepresentationItem>;
+        set set_identified_item = identified_item: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>;
+        item identified_item_value = identified_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
     }
     /// `init`.
     /// Init all fields own and inherited
@@ -128,8 +128,10 @@ impl StepAP242ItemIdentifiedRepresentationUsage {
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
         the_definition: &StepAP242ItemIdentifiedRepresentationUsageDefinition,
-        the_used_representation: &Handle<StepReprRepresentation>,
-        the_identified_item: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
+        the_used_representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+        the_identified_item: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
     ) {
         let mut state = self.state.write();
         state.name = the_name.clone();
@@ -146,7 +148,7 @@ impl StepAP242ItemIdentifiedRepresentationUsage {
     pub fn set_identified_item_value(
         &self,
         num: i32,
-        the_item: &Handle<StepReprRepresentationItem>,
+        the_item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     ) -> Result<(), Failure> {
         let field_identified_item = self.state.read().identified_item.clone();
         step_array1_set(

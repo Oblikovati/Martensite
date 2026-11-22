@@ -61,7 +61,7 @@ impl TdfAttribute for TNamingNamedShape {
         let copy_ref = live(&copy, "TNamingNamedShape::BackupCopy")?;
         Self::adopt_nodes(&taken.node, &copy.downgrade());
         *copy_ref.state.write() = taken;
-        Ok(copy.cast())
+        Ok(copy.upcast())
     }
     /// `Restore`: clears this attribute, then takes the nodes of `anAttribute` (a node is
     /// in one attribute only).
@@ -85,8 +85,8 @@ impl TdfAttribute for TNamingNamedShape {
         &self,
         old_attribute: &Handle<dyn TdfAttribute>,
     ) -> Result<Handle<dyn TdfDeltaOnModification>, Failure> {
-        let old = old_attribute.cast::<TNamingNamedShape>();
-        Ok(TNamingDeltaOnModification::new(&old)?.cast())
+        let old = old_attribute.downcast::<TNamingNamedShape>();
+        Ok(TNamingDeltaOnModification::new(&old)?.upcast())
     }
     /// `DeltaOnModification(aDelta)`: the delta applies (no backup, unlike the default).
     fn apply_delta_on_modification(
@@ -97,10 +97,10 @@ impl TdfAttribute for TNamingNamedShape {
     }
     /// `DeltaOnRemoval`: a `TNamingDeltaOnRemoval` on this attribute.
     fn delta_on_removal(&self) -> Result<Handle<dyn TdfDeltaOnRemoval>, Failure> {
-        Ok(TNamingDeltaOnRemoval::new(&self.this_handle()?)?.cast())
+        Ok(TNamingDeltaOnRemoval::new(&self.this_handle()?)?.upcast())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(TNamingNamedShape::new()).cast()
+        Handle::new(TNamingNamedShape::new()).upcast()
     }
     /// `Paste`: rebuilds the evolutions on the target label with copies of the shapes
     /// (through the relocation table's transient map).

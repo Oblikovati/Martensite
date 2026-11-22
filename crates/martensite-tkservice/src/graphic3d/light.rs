@@ -4,7 +4,9 @@ use super::Graphic3dTypeOfLightSource;
 use martensite_tkernel::ncollection::{Vec3, Vec4};
 use martensite_tkernel::quantity::{Color, ColorRgba, NamedColor};
 use martensite_tkernel::standard::exceptions::program_error;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{
+    Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient,
+};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::{Direction3, Point3};
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -34,15 +36,34 @@ pub(super) struct LightState {
 
 /// A light source; `Graphic3dCLight::new(Graphic3dTypeOfLightSource::Spot)`.
 pub struct Graphic3dCLight {
-    transient: StandardTransient,
     pub(super) state: SharedState<LightState>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dCLight,
-    "Graphic3d_CLight",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dCLight, "Graphic3d_CLight", StandardTransient,
+    interfaces: [dyn Graphic3dCLightSource]);
+
+/// A light object that lends its original properties; `light.light_base().color()`.
+pub trait Graphic3dCLightSource: Transient {
+    /// Borrow this light's actual state; `light.light_base().intensity()`.
+    fn light_base(&self) -> &Graphic3dCLight;
+}
+impl RuntimeTyped for dyn Graphic3dCLightSource {
+    const TYPE_NAME: &'static str = Graphic3dCLight::TYPE_NAME;
+    fn static_type() -> &'static RuntimeType {
+        Graphic3dCLight::static_type()
+    }
+}
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dCLightSource);
+impl std::ops::Deref for dyn Graphic3dCLightSource {
+    type Target = Graphic3dCLight;
+    fn deref(&self) -> &Self::Target {
+        self.light_base()
+    }
+}
+impl Graphic3dCLightSource for Graphic3dCLight {
+    fn light_base(&self) -> &Graphic3dCLight {
+        self
+    }
+}
 
 /// `makeId`: `Graphic3d_CLight_<amb|dir|pos|spot><n>` with the next counter value.
 fn make_id(kind: Graphic3dTypeOfLightSource) -> AsciiString {
@@ -103,7 +124,6 @@ impl Graphic3dCLight {
             to_cast_shadows: false,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -114,7 +134,7 @@ impl Graphic3dCLight {
     /// `CopyFrom`: the name, state, intensity and color, plus the members that the two
     /// light types share; a null source raises `Standard_ProgramError` (natively a null
     /// dereference). Example: `light.copy_from(&other)?`.
-    pub fn copy_from(&self, source: &Handle<Graphic3dCLight>) -> Result<(), Failure> {
+    pub fn copy_from(&self, source: &Handle<dyn Graphic3dCLightSource>) -> Result<(), Failure> {
         let Some(source) = source.get() else {
             return Err(program_error(
                 "Graphic3d_CLight::CopyFrom() - null light; expected a light to copy",

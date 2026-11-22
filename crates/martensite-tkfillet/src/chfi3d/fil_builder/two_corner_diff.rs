@@ -41,7 +41,7 @@ struct DiffFill {
 
 /// The surface of a fillet in the data structure as an adaptor.
 fn fillet_adaptor(s: &Handle<dyn GeomSurface>) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
-    Ok(Handle::new(GeomAdaptorSurface::with_surface(s)?).cast())
+    Ok(Handle::new(GeomAdaptorSurface::with_surface(s)?).into_upcast())
 }
 
 impl ChFi3dFilBuilder {
@@ -132,7 +132,7 @@ impl ChFi3dFilBuilder {
         let (_, vvfacdif) =
             BRepAdaptorCurve::with_edge(&arcopdif)?.d1(cpopdif.parameter_on_arc()?)?;
         let hbrfopsam: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(&fopsam, false)?).cast();
+            Handle::new(BRepAdaptorSurface::with_face(&fopsam, false)?).into_upcast();
         let pcfopsam = build_pcurve_3d(&hbrfopsam, ppfacsam, vvfacsam, ppfacdif, vvfacdif, true)?;
         let bfac = mkbound(&hbrfopsam, &pcfopsam, t3d, ta, false)?;
         let mut fil = GeomFillConstrainedFilling::new(8, 20);
@@ -225,7 +225,7 @@ impl ChFi3dFilBuilder {
         let il2 = if2;
         let adeb = self.diff_arete(cs, true)?;
         let hc3d: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&adeb.c3d)?).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&adeb.c3d)?).into_upcast();
         let mut tolr1 = 0.;
         same_parameter(
             &hc3d,
@@ -267,7 +267,7 @@ impl ChFi3dFilBuilder {
         }
         let afin = self.diff_arete(cs, false)?;
         let hc3d: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&afin.c3d)?).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&afin.c3d)?).into_upcast();
         let mut tolr2 = 0.;
         same_parameter(
             &hc3d,

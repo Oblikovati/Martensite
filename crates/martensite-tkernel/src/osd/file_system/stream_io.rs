@@ -39,7 +39,7 @@ pub struct StreamIo {
 }
 impl StreamIo {
     /// A good stream over `buffer`; `StreamIo::new(share_stream_buf(FileBuffer::new()))`.
-    pub fn new(buffer: SharedStreamBuf) -> Self {
+    pub(crate) fn new(buffer: SharedStreamBuf) -> Self {
         Self {
             buffer,
             state: StreamState::GOOD,

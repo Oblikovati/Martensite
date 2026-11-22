@@ -83,7 +83,10 @@ fn volume_getter_counts(scene: &GetterVolumeScene) -> CameraGetterCounts<'_> {
     CameraGetterCounts {
         first: &scene.first,
         second: &scene.second,
-        owner_counts: [scene.original.ref_count(), scene.next.ref_count()],
+        owner_counts: [
+            scene.original.ref_count().try_into().unwrap(),
+            scene.next.ref_count().try_into().unwrap(),
+        ],
     }
 }
 struct BuilderGetterScene {
@@ -131,7 +134,10 @@ fn builder_getter_row(
     let counts = CameraGetterCounts {
         first: &scene.first,
         second: &scene.second,
-        owner_counts: [scene.original.ref_count(), scene.next.ref_count()],
+        owner_counts: [
+            scene.original.ref_count().try_into().unwrap(),
+            scene.next.ref_count().try_into().unwrap(),
+        ],
     };
     camera_getter_row([0, phase, 0], fields, counts)
 }

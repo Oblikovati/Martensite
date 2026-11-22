@@ -5,7 +5,7 @@ use crate::aspect::{
     AspectWindow, AspectWindowBase,
 };
 use crate::platform::unsupported;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// The AppKit backend named by the unsupported errors.
@@ -31,12 +31,11 @@ pub struct CocoaWindowFields {
 /// An AppKit window. The backend is not implemented: both constructors raise
 /// `Standard_NotImplemented`; `CocoaWindow::new("Viewer", 0, 0, 640, 480)`.
 pub struct CocoaWindow {
-    transient: StandardTransient,
     base: AspectWindowBase,
     /// The fields, shared by every handle.
     pub fields: SharedState<CocoaWindowFields>,
 }
-martensite_tkernel::impl_transient!(CocoaWindow, "Cocoa_Window", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(CocoaWindow, "Cocoa_Window", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 
 impl CocoaWindow {
     /// `VirtualKeyFromNative`: the Aspect key of a Carbon virtual key code (unknown outside

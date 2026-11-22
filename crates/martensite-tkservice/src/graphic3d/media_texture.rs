@@ -10,7 +10,7 @@ use super::{
 use crate::image::{ImagePixMap, ImageSupportedFormats};
 use crate::media::{MediaFrame, MediaIFrameQueue, MediaPlayerContext};
 use martensite_tkernel::ncollection::Vec2;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
@@ -35,7 +35,6 @@ fn lock(mutex: &Graphic3dMediaFrameLock) -> MutexGuard<'_, Graphic3dMediaFrameSw
 
 /// One plane of a video frame as a 2D texture; made by [`Graphic3dMediaTextureSet`].
 pub struct Graphic3dMediaTexture {
-    transient: StandardTransient,
     base: Graphic3dTexture2DBase,
     /// `myMutex`.
     mutex: Graphic3dMediaFrameLock,
@@ -44,14 +43,17 @@ pub struct Graphic3dMediaTexture {
     /// `myPlane`.
     plane: i32,
     /// `myPixMapWrapper`.
-    pix_map_wrapper: SharedState<Handle<ImagePixMap>>,
+    pix_map_wrapper: SharedState<Handle<dyn crate::image::ImagePixMapObject>>,
 }
 impl Graphic3dTextureRoot for Graphic3dMediaTexture {
     fn texture_root_base(&self) -> &Graphic3dTextureRootBase {
         &self.base.root
     }
     /// `GetImage`: no image without FFmpeg (the frame is null, locked or empty).
-    fn get_image(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn get_image(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let _ = supported;
         let _guard = lock(&self.mutex);
         let frame = self.frame.read().clone();
@@ -64,7 +66,7 @@ impl Graphic3dTextureRoot for Graphic3dMediaTexture {
         let _ = frame;
         let mut wrapper = self.pix_map_wrapper.write();
         if wrapper.is_null() {
-            *wrapper = Handle::new(ImagePixMap::default());
+            *wrapper = Handle::new(ImagePixMap::default()).into_upcast();
         }
         Handle::default()
     }
@@ -75,7 +77,7 @@ impl Graphic3dTexture2DSource for Graphic3dMediaTexture {
         &self.base
     }
 }
-martensite_tkernel::impl_transient!(Graphic3dMediaTexture, "Graphic3d_MediaTexture", dyn Graphic3dTexture2DSource, transient,
+martensite_tkernel::impl_transient!(Graphic3dMediaTexture, "Graphic3d_MediaTexture", dyn Graphic3dTexture2DSource,
     interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture2DSource]);
 
 /// The texture unit of a plane 0..3 (`Graphic3d_TextureUnit_0 + thePlane`).
@@ -103,7 +105,6 @@ impl Graphic3dMediaTexture {
             params.set_texture_unit(plane_unit(plane));
         }
         Self {
-            transient: StandardTransient::default(),
             base,
             mutex: mutex.clone(),
             frame: SharedState::new(Handle::default()),
@@ -210,8 +211,7 @@ pub struct Graphic3dMediaTextureSet {
 martensite_tkernel::impl_transient!(
     Graphic3dMediaTextureSet,
     "Graphic3d_MediaTextureSet",
-    Graphic3dTextureSet,
-    set
+    Graphic3dTextureSet, interfaces: [dyn super::Graphic3dTextureSetSource]
 );
 
 impl std::ops::Deref for Graphic3dMediaTextureSet {
@@ -378,5 +378,11 @@ impl Graphic3dMediaTextureSet {
     /// `Media_IFrameQueue` the player fills); `set.frame_queue().lock_frame()`.
     pub fn frame_queue(&self) -> Arc<dyn MediaIFrameQueue> {
         self.exchange.clone()
+    }
+}
+
+impl super::Graphic3dTextureSetSource for Graphic3dMediaTextureSet {
+    fn texture_set_base(&self) -> &Graphic3dTextureSet {
+        &self.set
     }
 }

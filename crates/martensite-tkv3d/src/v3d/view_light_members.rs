@@ -6,7 +6,7 @@ use martensite_tkernel::standard::{
     raise_native_failure,
 };
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dGraphicDriverMembers as _, Graphic3dLightSet,
+    Graphic3dCLightSource, Graphic3dGraphicDriverMembers as _, Graphic3dLightSet,
 };
 impl V3dView {
     /// Send actual light keys through the borrowed virtual driver slot; `view.update_lights()`.
@@ -28,7 +28,7 @@ impl V3dView {
     /// Append the referenced target once, preserving native failure mutations; `view.set_light_on_one(&light)?`.
     pub fn set_light_on_one(
         &self,
-        light: &dyn HandleReference<Graphic3dCLight>,
+        light: &dyn HandleReference<dyn Graphic3dCLightSource>,
     ) -> Result<(), Failure> {
         let identity = light.object_address();
         if self.contains_active_light_identity(identity) {
@@ -41,7 +41,7 @@ impl V3dView {
     /// Reject global lights before removal and update; `view.set_light_off_one(&light)?`.
     pub fn set_light_off_one(
         &self,
-        light: &dyn HandleReference<Graphic3dCLight>,
+        light: &dyn HandleReference<dyn Graphic3dCLightSource>,
     ) -> Result<(), Failure> {
         if self.is_viewer_global_light(light) {
             return Err(type_mismatch("V3dView::SetLightOff, the light is global"));
@@ -54,7 +54,7 @@ impl V3dView {
         self.try_update_lights()
     }
     /// Check nonnull native target identity; `view.is_active_light(&light)`.
-    pub fn is_active_light(&self, light: &dyn HandleReference<Graphic3dCLight>) -> bool {
+    pub fn is_active_light(&self, light: &dyn HandleReference<dyn Graphic3dCLightSource>) -> bool {
         let identity = light.object_address();
         !light.is_null()
             && self
@@ -88,7 +88,7 @@ impl V3dView {
         self.update_lights();
     }
     /// Explicit owning convenience, distinct from ActiveLights reference; `view.active_lights()`.
-    pub fn active_lights(&self) -> Vec<Handle<Graphic3dCLight>> {
+    pub fn active_lights(&self) -> Vec<Handle<dyn Graphic3dCLightSource>> {
         self.state.read().active_lights.iter().cloned().collect()
     }
     /// Native detached active-light iterator; `view.active_light_iterator().value_ref()`.
@@ -123,7 +123,7 @@ impl V3dView {
         fields.active_lights_cursor = cursor;
     }
     /// Explicit owning convenience; native ActiveLight binds active_light_ref; `view.active_light()`.
-    pub fn active_light(&self) -> Handle<Graphic3dCLight> {
+    pub fn active_light(&self) -> Handle<dyn Graphic3dCLightSource> {
         self.active_light_ref().clone_handle()
     }
     fn remove_nonglobal_light_nodes(&self, viewer: &super::V3dViewer) {
@@ -139,7 +139,7 @@ impl V3dView {
             identity,
         )
     }
-    fn append_missing_active_light(&self, light: &dyn HandleReference<Graphic3dCLight>) {
+    fn append_missing_active_light(&self, light: &dyn HandleReference<dyn Graphic3dCLightSource>) {
         // Native Contains accepts null; IsActiveLight intentionally does not.
         if self.contains_active_light_identity(light.object_address()) {
             return;
@@ -147,7 +147,10 @@ impl V3dView {
         let appended = light.clone_handle();
         self.state.write().active_lights.append(appended);
     }
-    fn is_viewer_global_light(&self, light: &dyn HandleReference<Graphic3dCLight>) -> bool {
+    fn is_viewer_global_light(
+        &self,
+        light: &dyn HandleReference<dyn Graphic3dCLightSource>,
+    ) -> bool {
         self.viewer_ref_observer()
             .get()
             .is_some_and(|viewer| viewer.is_global_light(light))
@@ -158,16 +161,14 @@ impl V3dView {
             Ok(())
         })
     }
-    fn viewer_ref_observer(
-        &self,
-    ) -> martensite_tkernel::standard::HandleObserver<super::V3dViewer> {
-        self.state.read().viewer.observe()
+    fn viewer_ref_observer(&self) -> Handle<super::V3dViewer> {
+        self.viewer()
     }
 }
 
 fn advance_or_remove_view_light(
     viewer: &super::V3dViewer,
-    lights: &mut martensite_tkernel::ncollection::AllocatorList<Handle<Graphic3dCLight>>,
+    lights: &mut martensite_tkernel::ncollection::AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     cursor: &mut martensite_tkernel::ncollection::ListCursor,
 ) {
     if viewer.is_global_light(cursor.value(lights).unwrap()) {

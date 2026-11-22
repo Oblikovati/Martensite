@@ -47,7 +47,8 @@ macro_rules! rw_block_0079 {
         }
         let mut $a_same_sense: bool = Default::default();
         $data.read_boolean($num, 2, "same_sense", $ach, &mut $a_same_sense)?;
-        let mut $a_parent_curve: Handle<StepGeomCurve> = Default::default();
+        let mut $a_parent_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         $data.read_entity(
             $num,
             3,
@@ -120,7 +121,7 @@ macro_rules! rw_block_0084 {
     ($a_associated_geometry:ident, $a_associated_geometry_item:ident, $a_curve3d:ident, $a_name:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_curve3d: Handle<StepGeomCurve> = Default::default();
+        let mut $a_curve3d: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
         $data.read_entity(
             $num,
             2,
@@ -149,7 +150,8 @@ macro_rules! rw_block_0086 {
     ($a_agreement_flag:ident, $a_base_surface:ident, $a_name:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_base_surface: Handle<StepGeomSurface> = Default::default();
+        let mut $a_base_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         $data.read_entity(
             $num,
             2,
@@ -167,8 +169,8 @@ pub(crate) use rw_block_0086;
 macro_rules! rw_block_0087 {
     ($a_name:ident, $a_repr_item:ident, $ach:ident, $data:ident, $num:ident, $num0:ident) => {
         rw_block_0131!($a_name, $ach, $data, $num, $num0);
-        let $a_repr_item: Handle<StepReprRepresentationItem> =
-            Handle::new(StepReprRepresentationItem::new());
+        let $a_repr_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Handle::new(StepReprRepresentationItem::new()).into_upcast();
         $a_repr_item.init(&$a_name);
     };
 }

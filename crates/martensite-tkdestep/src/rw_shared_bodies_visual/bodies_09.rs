@@ -21,11 +21,13 @@ macro_rules! rw_block_b_0066 {
             0,
         )? {
             let $nb0: i32 = $data.nb_params($sub2)?;
-            $a_representation_items =
-                step_new_array1::<Handle<StepReprRepresentationItem>>(1, $nb0)?;
+            $a_representation_items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, $nb0)?;
             let $num2: i32 = $sub2;
             for $i0 in 1..=$nb0 {
-                let mut $an_it0: Handle<StepReprRepresentationItem> = Default::default();
+                let mut $an_it0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                    Default::default();
                 $data.read_entity(
                     $num2,
                     $i0,
@@ -37,8 +39,9 @@ macro_rules! rw_block_b_0066 {
                 step_array1_set(&$a_representation_items, $i0, $an_it0.clone(), "ReadStep")?;
             }
         }
-        let mut $a_representation_context_of_items: Handle<StepReprRepresentationContext> =
-            Default::default();
+        let mut $a_representation_context_of_items: Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        > = Default::default();
         $data.read_entity(
             $num,
             3,
@@ -159,7 +162,8 @@ macro_rules! rw_block_b_0074 {
             StepReprRepresentationMap::static_type(),
             &mut $a_mapping_source,
         )?;
-        let mut $a_mapping_target: Handle<StepReprRepresentationItem> = Default::default();
+        let mut $a_mapping_target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         $data.read_entity(
             $num,
             3,

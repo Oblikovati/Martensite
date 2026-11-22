@@ -53,7 +53,7 @@ fn appendable_textured_presentations(
         .fields
         .write()
         .presentations
-        .append(first.clone());
+        .append(martensite_tkernel::standard::HandleSlot::new(first.clone()));
     (first, next)
 }
 fn install_presentation_appending_group(
@@ -72,7 +72,7 @@ fn install_presentation_appending_group(
         .fields
         .write()
         .groups
-        .append(group.cast());
+        .append(martensite_tkernel::standard::HandleSlot::new(group.cast()));
 }
 fn change_textured_append_appearance(object: &TexturedStateFixture, operation: i32) {
     let gold = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Gold);

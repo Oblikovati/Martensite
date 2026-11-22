@@ -19,7 +19,7 @@ impl EmptyLineScene {
         aspect.set_line_type(AspectTypeOfLine::Empty);
         group.set_group_primitives_aspect(&aspect.cast());
         structure.set_visible(true);
-        group.add_primitive_array(&empty_test_array(kind), true);
+        group.add_primitive_array(&empty_test_array(kind).upcast(), true);
         Self {
             _structure: structure,
             _driver: driver,
@@ -143,7 +143,7 @@ fn hidden_wide_line_cannot_change_later_hollow_polygon_width() {
     hollow.set_draw_edges(true);
     scene.group.set_primitives_aspect(&hollow.cast());
     scene.group.add_primitive_array(
-        &empty_test_array(Graphic3dTypeOfPrimitiveArray::Triangles),
+        &empty_test_array(Graphic3dTypeOfPrimitiveArray::Triangles).upcast(),
         true,
     );
     let frame = RenderFrame::new(64, 64, [0.; 4], scene.draws().unwrap()).unwrap();

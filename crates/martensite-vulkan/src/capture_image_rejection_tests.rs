@@ -131,9 +131,7 @@ fn allocation_and_clear_errors_preserve_exact_typed_source_context_and_cause() {
 
 #[test]
 fn missing_registered_image_keeps_the_original_projection_error() {
-    let destination = MissingCaptureImage {
-        base: Default::default(),
-    };
+    let destination = MissingCaptureImage;
     let error = owned_frame_capture()
         .write_image(&destination, Graphic3dBufferType::Rgba, 0)
         .unwrap_err();

@@ -18,7 +18,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Direction3, GeneralTransform2, Point3, Transform3, Vector3, Xyz};
@@ -34,14 +34,12 @@ struct ExtrusionState {
 /// A surface of linear extrusion; the basis curve is a private copy;
 /// `Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, dir)?)`.
 pub struct GeomSurfaceOfLinearExtrusion {
-    parent: StandardTransient,
     state: SharedState<ExtrusionState>,
 }
 impl_transient!(
     GeomSurfaceOfLinearExtrusion,
     "Geom_SurfaceOfLinearExtrusion",
     dyn GeomSweptSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomSweptSurface]
 );
 
@@ -65,7 +63,6 @@ impl GeomSurfaceOfLinearExtrusion {
     pub fn new(curve: &Handle<dyn GeomCurve>, direction: Direction3) -> Result<Self, Failure> {
         let (basis, smooth) = copied_basis(curve)?;
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(ExtrusionState {
                 basis,
                 direction,
@@ -123,7 +120,7 @@ impl GeomGeometry for GeomSurfaceOfLinearExtrusion {
         state.basis.transform(transform)
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(Self::copy_of(self)?).cast())
+        Ok(Handle::new(Self::copy_of(self)?).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state = self.state.read();
@@ -198,7 +195,7 @@ impl GeomSurface for GeomSurfaceOfLinearExtrusion {
     fn u_iso(&self, u: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let point: Point3 = self.basis_curve().value(u)?;
         let line = GeomLine::from_point(point, self.direction());
-        Ok(Handle::new(line).cast())
+        Ok(Handle::new(line).into_upcast())
     }
     /// A copy of the basis translated by `v * Dir`.
     fn v_iso(&self, v: f64) -> Result<Handle<dyn GeomCurve>, Failure> {

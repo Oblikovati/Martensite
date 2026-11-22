@@ -6,7 +6,7 @@ use martensite_tkbrep::{
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::{
     geom::{GeomCurve, GeomCylindricalSurface, GeomLine, GeomPlane, GeomSurface},
@@ -23,10 +23,9 @@ use martensite_tkmesh::{
 /// Records all visits as actual topology objects.
 #[derive(Default)]
 pub struct RecordingShapeVisitor {
-    transient: StandardTransient,
     pub shapes: SharedState<Vec<Shape>>,
 }
-impl_transient!(RecordingShapeVisitor, "ReferenceShapeVisitor", dyn ShapeVisitor, transient, interfaces: [dyn ShapeVisitor]);
+impl_transient!(RecordingShapeVisitor, "ReferenceShapeVisitor", dyn ShapeVisitor, interfaces: [dyn ShapeVisitor]);
 impl ShapeVisitor for RecordingShapeVisitor {
     fn visit_face(&self, face: &Face) -> Result<(), Failure> {
         self.shapes.write().push(face.clone().into_shape());
@@ -39,16 +38,12 @@ impl ShapeVisitor for RecordingShapeVisitor {
 }
 /// ModelAlgo exception-boundary test implementation, with no simulated meshing.
 pub struct ReferenceModelAlgorithm {
-    transient: StandardTransient,
     pub outcome: i32,
 }
-impl_transient!(ReferenceModelAlgorithm, "ReferenceModelAlgorithm", dyn ModelAlgo, transient, interfaces: [dyn ModelAlgo]);
+impl_transient!(ReferenceModelAlgorithm, "ReferenceModelAlgorithm", dyn ModelAlgo, interfaces: [dyn ModelAlgo]);
 impl ReferenceModelAlgorithm {
     pub fn new(outcome: i32) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            outcome,
-        }
+        Self { outcome }
     }
 }
 impl ModelAlgo for ReferenceModelAlgorithm {
@@ -69,9 +64,9 @@ fn explorer_face(builder: &BRepBuilder, edge: &Edge, cylinder: bool) -> Face {
     builder.make_wire(&mut wire);
     builder.add(&mut wire, edge).unwrap();
     let surface: Handle<dyn GeomSurface> = if cylinder {
-        Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.0).unwrap()).cast()
+        Handle::new(GeomCylindricalSurface::new(Axis3::default(), 2.0).unwrap()).into_upcast()
     } else {
-        Handle::new(GeomPlane::new(Axis3::default())).cast()
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast()
     };
     let mut face = Face::default();
     builder
@@ -82,7 +77,7 @@ fn explorer_face(builder: &BRepBuilder, edge: &Edge, cylinder: bool) -> Face {
 }
 fn explorer_edges(builder: &BRepBuilder) -> (Edge, Edge) {
     let mut edge = Edge::default();
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).cast();
+    let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).into_upcast();
     builder
         .make_edge_with_curve(&mut edge, &curve, 1e-7)
         .unwrap();

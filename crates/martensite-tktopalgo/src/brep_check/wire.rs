@@ -8,7 +8,7 @@ use martensite_tkbrep::topods::{Edge, Shape, Wire, face};
 use martensite_tkbrep::toptools::{IndexedDataMapOfShapeListOfShape, MapOfShape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::List;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// The own fields of `BRepCheck_Wire`.
@@ -36,11 +36,10 @@ pub(super) struct WireFields {
 /// assert_eq!(checker.status().unwrap().first(), Some(&BRepCheckStatus::EmptyWire));
 /// ```
 pub struct BRepCheckWire {
-    transient: StandardTransient,
     base: ResultBase,
     pub(super) fields: SharedState<WireFields>,
 }
-impl_transient!(BRepCheckWire, "BRepCheck_Wire", dyn BRepCheckResult, transient,
+impl_transient!(BRepCheckWire, "BRepCheck_Wire", dyn BRepCheckResult,
     interfaces: [dyn BRepCheckResult]);
 
 impl BRepCheckWire {
@@ -48,7 +47,6 @@ impl BRepCheckWire {
     /// on; `BRepCheckWire::new(&wire)?`.
     pub fn new(wire: &Wire) -> Result<Self, Failure> {
         let checker = Self {
-            transient: StandardTransient::default(),
             base: ResultBase::new(),
             fields: SharedState::new(WireFields {
                 cdone: false,

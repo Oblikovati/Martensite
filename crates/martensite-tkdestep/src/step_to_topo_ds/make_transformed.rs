@@ -6,7 +6,8 @@ use crate::step_repr::StepReprMappedItem;
 use crate::step_to_geom::StepToGeom;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis3, Transform3, TransformForm};
 use martensite_tkmath::toploc::Location;
 use martensite_tkxsbase::transfer::TransferTransientProcess;
@@ -102,14 +103,14 @@ impl StepToTopoDSMakeTransformed {
     /// representation in position; a null shape with a warning when none is produced.
     pub fn translate_mapped_item(
         &mut self,
-        mapit: &Handle<StepReprMappedItem>,
+        mapit: &Handle<dyn crate::StepEntityBase<StepReprMappedItem>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         progress: &ProgressRange<'_>,
     ) -> Result<Shape, Failure> {
         let item = step_live(mapit, "StepToTopoDSMakeTransformed::TranslateMappedItem")?;
         let process = step_live(tp, "StepToTopoDSMakeTransformed::TranslateMappedItem")?;
-        let entity: Handle<StandardTransient> = mapit.cast();
+        let entity: Handle<dyn Transient> = mapit.cast();
         if !self.compute_item_placement(item, factors)? {
             process.add_warning_text(
                 &entity,
@@ -121,7 +122,7 @@ impl StepToTopoDSMakeTransformed {
         let representation =
             step_live(&source, "StepToTopoDSMakeTransformed::TranslateMappedItem")?
                 .mapped_representation();
-        let start: Handle<StandardTransient> = representation.cast();
+        let start: Handle<dyn Transient> = representation.cast();
         let mut binder = process.find(&start);
         if binder.is_null() {
             binder = process.transferring(&start, progress)?;

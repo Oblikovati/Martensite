@@ -131,7 +131,7 @@ fn emit_shaded_triangle_group(
 ) -> Result<(), Failure> {
     let group = selected_shaded_group(context)?;
     group.set_closed(closed);
-    let shading = context.drawer.shading_aspect().downgrade().observe();
+    let shading = context.drawer.shading_aspect();
     let reference = shading.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_group_primitives_aspect(&aspect);
@@ -196,7 +196,7 @@ fn emit_shaded_boundary_group(
     context: &ShadedPresentationContext<'_>,
 ) -> Result<(), Failure> {
     let group = selected_shaded_group(context)?;
-    let line = context.drawer.face_boundary_aspect().downgrade().observe();
+    let line = context.drawer.face_boundary_aspect();
     let reference = line.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_group_primitives_aspect(&aspect);

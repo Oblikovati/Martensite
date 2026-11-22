@@ -44,13 +44,13 @@ fn square_distance(gline: &IntPatchGLine, p: Point3, extr: &mut ExtPC<'_>) -> Re
 fn conic_curve(gline: &IntPatchGLine) -> Result<Option<Handle<dyn GeomCurve>>, Failure> {
     Ok(match gline.arc_type() {
         IntPatchIType::Ellipse => {
-            Some(Handle::new(GeomEllipse::from_elips(gline.ellipse()?)).cast())
+            Some(Handle::new(GeomEllipse::from_elips(gline.ellipse()?)).into_upcast())
         }
         IntPatchIType::Parabola => {
-            Some(Handle::new(GeomParabola::from_parab(gline.parabola()?)).cast())
+            Some(Handle::new(GeomParabola::from_parab(gline.parabola()?)).into_upcast())
         }
         IntPatchIType::Hyperbola => {
-            Some(Handle::new(GeomHyperbola::from_hypr(gline.hyperbola()?)).cast())
+            Some(Handle::new(GeomHyperbola::from_hypr(gline.hyperbola()?)).into_upcast())
         }
         _ => None,
     })

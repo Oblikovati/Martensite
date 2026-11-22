@@ -115,7 +115,7 @@ pub fn addCompatibleReplacementEdge(
     let aLength = aP0.distance(&aP1);
     let aDirection = Direction3::from_vector(Vector3::between(aP0, aP1)).unwrap();
     let aCurve: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(aP0, aDirection))).into_cast();
+        Handle::new(GeomLine::new(Axis1::new(aP0, aDirection))).into_upcast();
     theGraph
         .editor()
         .edges()

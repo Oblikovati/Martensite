@@ -147,7 +147,7 @@ fn evaluated_sine_wave_curve_copy_independent() {
     let aCurve = Geom2dEvalSineWaveCurve::new(anAx2d, 2.0, 3.0, 0.5).unwrap();
     let aCopy = aCurve.copy().unwrap();
     assert!(!aCopy.is_null());
-    let aCopyCurve: Handle<Geom2dEvalSineWaveCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalSineWaveCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
     EXPECT_NEAR(aCopyCurve.amplitude(), 2.0, precision::confusion());
 }

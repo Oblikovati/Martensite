@@ -1,7 +1,9 @@
 //! Array2's move-out, default-construction, publication, then assignment phases.
 use super::{Array2, ArrayError, dimension, upper};
 mod assignment;
-use assignment::{CloneResizeAssignment, MutableResizeAssignment, ResizeAssignment};
+#[cfg(test)]
+use assignment::MutableResizeAssignment;
+use assignment::{CloneResizeAssignment, ResizeAssignment};
 
 #[derive(Clone, Copy)]
 struct ResizeRectangle {
@@ -41,7 +43,8 @@ impl<T: Default> Array2<'_, T> {
     /// Donors stay valid through the callback. Owned donors drop after the assignment phase;
     /// borrowed donors remain in their buffer. An assignment panic retains the new rectangle
     /// with its assigned prefix and initialized remainder.
-    pub fn resize_with_assignment(
+    #[cfg(test)]
+    pub(crate) fn resize_with_assignment(
         &mut self,
         rows: usize,
         cols: usize,
@@ -54,7 +57,8 @@ impl<T: Default> Array2<'_, T> {
     /// Resizes the common subrectangle with an explicit mutable-donor assignment policy.
     /// `array.resize_trim_with_assignment(3, 4, true, |target, donor| *target = *donor)?`.
     /// Assignment panics retain the published destination shape and initialized cells.
-    pub fn resize_trim_with_assignment(
+    #[cfg(test)]
+    pub(crate) fn resize_trim_with_assignment(
         &mut self,
         rows: usize,
         cols: usize,
@@ -68,7 +72,8 @@ impl<T: Default> Array2<'_, T> {
     /// `array.resize_bounds_with_assignment(1, 3, 1, 4, true, |target, donor| *target = *donor)?`.
     /// Old storage moves out before defaults; the new bounds publish before assignment.
     #[allow(clippy::too_many_arguments)]
-    pub fn resize_bounds_with_assignment(
+    #[cfg(test)]
+    pub(crate) fn resize_bounds_with_assignment(
         &mut self,
         rl: i32,
         ru: i32,
@@ -90,7 +95,8 @@ impl<T: Default> Array2<'_, T> {
     /// `array.resize_trim_bounds_with_assignment(1, 3, 1, 4, true, |target, donor| *target = *donor)?`.
     /// `copy == false` performs no assignment callback and resizes without copying.
     #[allow(clippy::too_many_arguments)]
-    pub fn resize_trim_bounds_with_assignment(
+    #[cfg(test)]
+    pub(crate) fn resize_trim_bounds_with_assignment(
         &mut self,
         rl: i32,
         ru: i32,

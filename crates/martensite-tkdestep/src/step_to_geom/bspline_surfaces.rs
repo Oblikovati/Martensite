@@ -67,7 +67,7 @@ fn surface_weights(
 impl StepToGeom {
     /// `MakeBSplineSurface`: null when a point cannot be made.
     pub fn make_bspline_surface(
-        ss: &Handle<StepGeomBSplineSurface>,
+        ss: &Handle<dyn crate::StepEntityBase<StepGeomBSplineSurface>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<GeomBSplineSurface>, Failure> {
         let rational = ss.cast::<StepGeomBSplineSurfaceWithKnotsAndRationalBSplineSurface>();

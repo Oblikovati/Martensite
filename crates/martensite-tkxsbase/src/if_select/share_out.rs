@@ -4,7 +4,7 @@ use super::{IFSelectDispatch, IFSelectGeneralModifier, IFSelectModifier};
 use martensite_tkernel::{
     impl_transient,
     standard::{
-        Failure, Handle, SharedState, StandardTransient,
+        Failure, Handle, SharedState, Transient,
         c_string::{FormatArg, sprintf_into},
         exceptions,
     },
@@ -31,15 +31,9 @@ struct ShareOutState {
 /// assert_eq!(share.file_name(1, 1, 0).unwrap().as_bytes(), b"Default_1");
 /// ```
 pub struct IFSelectShareOut {
-    transient: StandardTransient,
     state: SharedState<ShareOutState>,
 }
-impl_transient!(
-    IFSelectShareOut,
-    "IFSelectShareOut",
-    StandardTransient,
-    transient
-);
+impl_transient!(IFSelectShareOut, "IFSelectShareOut", dyn Transient);
 
 impl Default for IFSelectShareOut {
     fn default() -> Self {
@@ -119,7 +113,6 @@ impl IFSelectShareOut {
             thelastrun: 0,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -142,7 +135,7 @@ impl IFSelectShareOut {
         }
     }
     /// `RemoveItem(item)`: removes a modifier or a dispatch.
-    pub fn remove_item(&self, item: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn remove_item(&self, item: &Handle<dyn Transient>) -> Result<bool, Failure> {
         let modifier: Handle<dyn IFSelectGeneralModifier> = item.cast();
         if modifier.is_some() {
             let formodel = for_model(&modifier)?;

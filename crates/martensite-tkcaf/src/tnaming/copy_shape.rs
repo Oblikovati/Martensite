@@ -3,13 +3,13 @@
 use super::TNamingTranslateTool;
 use martensite_tkbrep::topods::{Shape, ShapeIterator, TShape};
 use martensite_tkernel::ncollection::IndexedDataMap;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::toploc::{Datum3, Location};
 
 /// `NCollectionIndexedDataMap<occ::handle<StandardTransient>, occ::handle<StandardTransient>>`:
 /// source TShape (or datum) to its copy.
-pub type TNamingTransientMap = IndexedDataMap<Handle<StandardTransient>, Handle<StandardTransient>>;
+pub type TNamingTransientMap = IndexedDataMap<Handle<dyn Transient>, Handle<dyn Transient>>;
 
 /// `TNamingCopyShape`.
 ///
@@ -46,7 +46,7 @@ impl TNamingCopyShape {
             return Ok(());
         }
         let tool_ref = martensite_tklcaf::live(tool, "TNamingCopyShape::Translate")?;
-        let key: Handle<StandardTransient> = shape.tshape().cast();
+        let key: Handle<dyn Transient> = shape.tshape().upcast();
         if let Some(copied) = map.seek(&key) {
             result.set_tshape(&copied.cast::<dyn TShape>());
         } else {
@@ -81,7 +81,7 @@ fn make_translated(
     tool_ref: &TNamingTranslateTool,
 ) -> Result<(), Failure> {
     make_empty(shape, map, result, tool_ref)?;
-    map.add(shape.tshape().cast(), result.tshape().cast());
+    map.add(shape.tshape().upcast(), result.tshape().upcast());
     let mut source = shape.clone();
     source.set_orientation(Orientation::Forward);
     source.set_location(&Location::default(), true)?;
@@ -141,13 +141,13 @@ fn make_container(
 
 /// The file-static `TranslateDatum3D`.
 fn translate_datum(datum: &Handle<Datum3>, map: &mut TNamingTransientMap) -> Handle<Datum3> {
-    let key: Handle<StandardTransient> = datum.cast();
+    let key: Handle<dyn Transient> = datum.upcast();
     if let Some(copied) = map.seek(&key) {
-        return copied.cast::<Datum3>();
+        return copied.downcast::<Datum3>();
     }
     let copy = Handle::new(Datum3::new(
         datum.get().map(|d| *d.transformation()).unwrap_or_default(),
     ));
-    map.add(key, copy.cast());
+    map.add(key, copy.upcast());
     copy
 }

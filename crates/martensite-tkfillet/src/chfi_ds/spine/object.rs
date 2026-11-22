@@ -1,8 +1,11 @@
 //! The virtual members of `ChFiDSSpine`, which the fillet and chamfer spines override.
-use super::Spine;
+use super::{Spine, SpineData};
 use crate::chfi_ds::shared::Shared;
 use crate::chfi_ds::{ChamfSpine, ElSpine, FilSpine};
-use martensite_tkernel::standard::{Failure, Handle, Transient};
+use martensite_tkernel::{
+    impl_transient_interface_target,
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, Transient},
+};
 use std::ops::{Deref, DerefMut};
 
 /// A shared, mutable `occ::handle<ChFiDSSpine>` whose object may be a [`Spine`], a
@@ -11,7 +14,7 @@ pub type SpineHandle = Shared<dyn SpineObject>;
 
 /// The polymorphic interface of a guideline (the virtual members of `ChFiDSSpine`).
 ///
-/// Through `Deref`, a `dyn SpineObject` also offers every non-virtual [`Spine`] member;
+/// Through `Deref`, a `dyn SpineObject` also offers every [`SpineData`] method;
 /// the virtual ones are only here, so a call always dispatches to the override.
 ///
 /// ```
@@ -21,10 +24,10 @@ pub type SpineHandle = Shared<dyn SpineObject>;
 /// assert_eq!(lock(&spine).nb_edges(), 0);
 /// ```
 pub trait SpineObject: Transient {
-    /// The `ChFiDSSpine` part of the object.
-    fn spine(&self) -> &Spine;
-    /// The mutable `ChFiDSSpine` part of the object.
-    fn spine_mut(&mut self) -> &mut Spine;
+    /// Borrow the shared guideline, e.g. `spine.spine().nb_edges()`.
+    fn spine(&self) -> &SpineData;
+    /// Edit the shared guideline, e.g. `spine.spine_mut().set_first_status(state)`.
+    fn spine_mut(&mut self) -> &mut SpineData;
     /// `Reset(AllData)`: forgets the split (and, with `all_data`, the extensions);
     /// StandardNullObject when `all_data` before Load; `spine.reset(false)?`.
     fn reset(&mut self, all_data: bool) -> Result<(), Failure>;
@@ -52,14 +55,34 @@ pub trait SpineObject: Transient {
     }
 }
 
+impl RuntimeTyped for dyn SpineObject {
+    const TYPE_NAME: &'static str = Spine::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        Spine::static_type()
+    }
+}
+impl_transient_interface_target!(dyn SpineObject);
+
 impl SpineObject for Spine {
-    fn spine(&self) -> &Spine {
+    fn spine(&self) -> &SpineData {
         self
     }
-    fn spine_mut(&mut self) -> &mut Spine {
+    fn spine_mut(&mut self) -> &mut SpineData {
         self
     }
     fn reset(&mut self, all_data: bool) -> Result<(), Failure> {
+        self.guideline.reset_guideline(all_data)
+    }
+
+    fn append_el_spine(&mut self, el_spine: &Handle<ElSpine>) -> Result<(), Failure> {
+        self.guideline.push_el_spine(el_spine);
+        Ok(())
+    }
+}
+
+impl SpineData {
+    pub(in crate::chfi_ds) fn reset_guideline(&mut self, all_data: bool) -> Result<(), Failure> {
         self.split_done = false;
         self.el_spines.clear();
         if all_data {
@@ -70,21 +93,21 @@ impl SpineObject for Spine {
         }
         Ok(())
     }
-    fn append_el_spine(&mut self, el_spine: &Handle<ElSpine>) -> Result<(), Failure> {
+
+    pub(in crate::chfi_ds) fn push_el_spine(&mut self, el_spine: &Handle<ElSpine>) {
         self.el_spines.push(el_spine.clone());
-        Ok(())
     }
 }
 
 impl Deref for dyn SpineObject {
-    type Target = Spine;
-    fn deref(&self) -> &Spine {
+    type Target = SpineData;
+    fn deref(&self) -> &SpineData {
         self.spine()
     }
 }
 
 impl DerefMut for dyn SpineObject {
-    fn deref_mut(&mut self) -> &mut Spine {
+    fn deref_mut(&mut self) -> &mut SpineData {
         self.spine_mut()
     }
 }

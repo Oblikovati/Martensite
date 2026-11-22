@@ -48,11 +48,10 @@ pub(super) struct PolyAlgoState {
 /// assert!(!algo.more_show());
 /// ```
 pub struct PolyAlgo {
-    base: StandardTransient,
     pub(super) h_shell: SharedState<Array1<'static, Handle<PolyShellData>>>,
     pub(super) state: SharedState<PolyAlgoState>,
 }
-impl_transient!(PolyAlgo, "HLRAlgo_PolyAlgo", StandardTransient, base);
+impl_transient!(PolyAlgo, "HLRAlgo_PolyAlgo", StandardTransient);
 
 impl Default for PolyAlgo {
     fn default() -> Self {
@@ -78,7 +77,6 @@ impl PolyAlgo {
             found: false,
         };
         Self {
-            base: StandardTransient::default(),
             h_shell: SharedState::new(Array1::default()),
             state: SharedState::new(state),
         }

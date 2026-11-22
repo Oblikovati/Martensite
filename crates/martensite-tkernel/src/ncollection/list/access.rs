@@ -20,37 +20,34 @@ impl<T> List<T> {
         self.find_cursor(cursor)
             .ok_or_else(|| no_such_object(member, &format!("{cursor:?} outside this list")))
     }
-    pub(super) fn owned_node(&self, target: Option<usize>) -> Option<*mut ListLinkNode> {
-        // Return the allocation's retained pointer, never reconstruct provenance from its address.
-        self.owners.get(&target?).map(|owner| owner.link)
+    pub(super) fn owned_node(&self, cursor: ListCursor) -> Option<*mut ListLinkNode> {
+        if !cursor.more() {
+            return None;
+        }
+        if cursor.revision == self.topology.revision() {
+            return Some(cursor.raw.current);
+        }
+        self.find_link(cursor.raw.current).map(|raw| raw.current)
     }
     fn find_cursor(&self, cursor: ListCursor) -> Option<BaseListRawIterator> {
-        let current = self.owned_node(cursor.address)?;
-        let previous = if self.base_storage().first == current {
-            std::ptr::null_mut()
-        } else if let Some(previous) = self
-            .owned_node(cursor.previous)
-            // SAFETY: owned_node only returns nodes this list owns, which stay live while
-            // `&self` is held.
-            .filter(|previous| unsafe { (**previous).next() == current })
-        {
-            previous
-        } else {
-            self.find_predecessor(current)?
-        };
-        Some(BaseListRawIterator { current, previous })
+        if !cursor.more() {
+            return None;
+        }
+        if cursor.revision == self.topology.revision() {
+            return Some(cursor.raw);
+        }
+        self.find_link(cursor.raw.current)
     }
-    fn find_predecessor(&self, current: *mut ListLinkNode) -> Option<*mut ListLinkNode> {
-        // Detached safe cursors survive edits; repair only when the remembered link became stale.
-        let mut previous = self.base_storage().first;
-        while !previous.is_null() {
-            // SAFETY: `previous` is a non-null node of this list's live chain, which `&self`
-            // keeps unchanged.
-            let next = unsafe { (*previous).next() };
-            if next == current {
-                return Some(previous);
+    fn find_link(&self, target: *mut ListLinkNode) -> Option<BaseListRawIterator> {
+        let mut raw = BaseListRawIterator::new(self.base_storage());
+        while !raw.current.is_null() {
+            // Equality checks the address only. Return provenance from a live link.
+            if raw.current == target {
+                return Some(raw);
             }
-            previous = next;
+            raw.previous = raw.current;
+            // SAFETY: the List borrow protects each node reached through its owning chain.
+            raw.current = unsafe { (*raw.current).next() };
         }
         None
     }
@@ -69,11 +66,5 @@ impl<T> List<T> {
         // SAFETY: callers pass a non-null endpoint of this list, which this list owns; `&mut
         // self` bounds the exclusive borrow.
         Some(unsafe { owner::item_mut(node) })
-    }
-}
-impl ListCursor {
-    pub(super) fn update_raw(&mut self, cursor: BaseListRawIterator) {
-        self.address = super::address(cursor.current);
-        self.previous = super::address(cursor.previous);
     }
 }

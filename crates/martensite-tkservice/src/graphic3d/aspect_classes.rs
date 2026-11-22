@@ -10,18 +10,17 @@ use crate::aspect::{
     AspectInteriorStyle, AspectTypeOfDisplayText, AspectTypeOfLine, AspectTypeOfMarker,
     AspectTypeOfStyleText,
 };
-use crate::image::ImagePixMap;
+
 use crate::json_dump::{base_class, class_begin};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, HAsciiString};
 use std::io;
 
 /// The aspects of filled primitives; `Graphic3dAspectFillArea3d::default()` has an EMPTY interior.
 pub struct Graphic3dAspectFillArea3d {
-    transient: StandardTransient,
     base: Graphic3dAspectsBase,
 }
 aspects_class!(Graphic3dAspectFillArea3d, "Graphic3d_AspectFillArea3d");
@@ -29,7 +28,6 @@ aspects_class!(Graphic3dAspectFillArea3d, "Graphic3d_AspectFillArea3d");
 impl Default for Graphic3dAspectFillArea3d {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Graphic3dAspectsBase::with(|f| f.interior_style = AspectInteriorStyle::Empty),
         }
     }
@@ -55,10 +53,7 @@ impl Graphic3dAspectFillArea3d {
             f.edge_color.set_rgb(edge_color);
             (f.interior_style, f.line_type) = (interior, edge_line_type);
         });
-        let aspects = Self {
-            transient: StandardTransient::default(),
-            base,
-        };
+        let aspects = Self { base };
         aspects.set_edge_width(f64::from(edge_width as f32))?;
         Ok(aspects)
     }
@@ -80,7 +75,6 @@ fn unlit_base(edit: impl FnOnce(&mut super::Graphic3dAspectsFields)) -> Graphic3
 
 /// The aspects of line primitives; `Graphic3dAspectLine3d::default().width() == 1.0`.
 pub struct Graphic3dAspectLine3d {
-    transient: StandardTransient,
     base: Graphic3dAspectsBase,
 }
 aspects_class!(Graphic3dAspectLine3d, "Graphic3d_AspectLine3d");
@@ -89,10 +83,7 @@ impl Default for Graphic3dAspectLine3d {
     /// Unlit, yellow, solid, width 1.
     fn default() -> Self {
         let base = unlit_base(|f| (f.line_type, f.line_width) = (AspectTypeOfLine::Solid, 1.0));
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
 }
 
@@ -101,7 +92,6 @@ impl Graphic3dAspectLine3d {
     /// Example: `Graphic3dAspectLine3d::new(red, AspectTypeOfLine::Dash, 2.0)?`.
     pub fn new(color: Color, kind: AspectTypeOfLine, width: f64) -> Result<Self, Failure> {
         let aspects = Self {
-            transient: StandardTransient::default(),
             base: unlit_base(|f| f.interior_color.set_rgb(color)),
         };
         aspects.set_line_type(kind);
@@ -132,7 +122,6 @@ impl Graphic3dAspectLine3d {
 
 /// The aspects of marker primitives; `Graphic3dAspectMarker3d::default().marker_kind()` is X.
 pub struct Graphic3dAspectMarker3d {
-    transient: StandardTransient,
     base: Graphic3dAspectsBase,
 }
 aspects_class!(Graphic3dAspectMarker3d, "Graphic3d_AspectMarker3d");
@@ -141,10 +130,7 @@ impl Default for Graphic3dAspectMarker3d {
     /// Unlit, yellow, X markers of scale 1.
     fn default() -> Self {
         let base = unlit_base(|f| (f.marker_type, f.marker_scale) = (AspectTypeOfMarker::X, 1.0));
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
 }
 
@@ -153,10 +139,7 @@ impl Graphic3dAspectMarker3d {
     /// Example: `Graphic3dAspectMarker3d::new(AspectTypeOfMarker::Plus, red, 2.0)?`.
     pub fn new(kind: AspectTypeOfMarker, color: Color, scale: f64) -> Result<Self, Failure> {
         let base = unlit_base(|f| f.interior_color.set_rgb(color));
-        let aspects = Self {
-            transient: StandardTransient::default(),
-            base,
-        };
+        let aspects = Self { base };
         aspects.set_marker_type(kind);
         aspects.set_marker_scale(scale as f32)?;
         Ok(aspects)
@@ -174,23 +157,17 @@ impl Graphic3dAspectMarker3d {
                 (image, AspectTypeOfMarker::Userdefined, 1.0);
             f.interior_color.set_rgb(color);
         });
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
     /// A yellow user marker from an image; the marker image checks raise as natively.
     /// Example: `Graphic3dAspectMarker3d::from_image(pixmap)?`.
-    pub fn from_image(image: Handle<ImagePixMap>) -> Result<Self, Failure> {
+    pub fn from_image(image: Handle<dyn crate::image::ImagePixMapObject>) -> Result<Self, Failure> {
         let marker = Handle::new(Graphic3dMarkerImage::from_images(image, Handle::default())?);
         let base = unlit_base(|f| {
             (f.marker_image, f.marker_type, f.marker_scale) =
                 (marker, AspectTypeOfMarker::Userdefined, 1.0)
         });
-        Ok(Self {
-            transient: StandardTransient::default(),
-            base,
-        })
+        Ok(Self { base })
     }
     /// The scale; `marker.scale()`.
     pub fn scale(&self) -> f32 {
@@ -234,7 +211,6 @@ impl Graphic3dAspectMarker3d {
 ///
 /// Example: `Graphic3dAspectText3d::new(red, Some("Arial"), 1.0, 0.0, style, display)`.
 pub struct Graphic3dAspectText3d {
-    transient: StandardTransient,
     base: Graphic3dAspectsBase,
 }
 impl Graphic3dAspectsSource for Graphic3dAspectText3d {
@@ -249,7 +225,7 @@ impl Graphic3dAspectsSource for Graphic3dAspectText3d {
         })
     }
 }
-martensite_tkernel::impl_transient!(Graphic3dAspectText3d, "Graphic3d_AspectText3d", dyn Graphic3dAspectsSource, transient,
+martensite_tkernel::impl_transient!(Graphic3dAspectText3d, "Graphic3d_AspectText3d", dyn Graphic3dAspectsSource,
     interfaces: [dyn Graphic3dAspectsSource]);
 
 /// The text defaults on top of the unlit base.
@@ -264,7 +240,6 @@ fn text_base(edit: impl FnOnce(&mut super::Graphic3dAspectsFields)) -> Graphic3d
 impl Default for Graphic3dAspectText3d {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: text_base(|_| {}),
         }
     }
@@ -289,10 +264,7 @@ impl Graphic3dAspectText3d {
             (f.text_style, f.text_display_type, f.text_font) = (style, display_type, font);
             f.interior_color.set_rgb(color);
         });
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
     /// The font name, empty without font; `text.font()`.
     pub fn font(&self) -> AsciiString {

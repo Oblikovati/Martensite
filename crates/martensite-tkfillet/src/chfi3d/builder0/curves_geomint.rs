@@ -11,7 +11,7 @@ use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::{
     GeomCurve, GeomRectangularTrimmedSurface, GeomSurface, GeomTrimmedCurve,
 };
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom_adaptor::GeomSurfaceAdaptor;
 use martensite_tkgeomalgo::geom_api::ProjectPointOnCurve;
 use martensite_tkgeomalgo::geom_int::{GeomIntIntSS, GeomIntIntSSApprox};
 use martensite_tkmath::gp::{Point3, Vector3};
@@ -21,17 +21,16 @@ use martensite_tkmath::gp::{Point3, Vector3};
 /// own; `None` for another adaptor.
 fn trsfsurf(hs: &Handle<dyn Adaptor3dSurface>) -> Result<Option<Handle<dyn GeomSurface>>, Failure> {
     let mut res: Option<Handle<dyn GeomSurface>> = None;
-    if let Some(hbs) = hs.cast::<BRepAdaptorSurface>().get() {
+    if let Some(hbs) = hs.downcast_ref::<BRepAdaptorSurface>() {
         res = Some(hbs.transformed_surface().geom_surface_transformed()?);
-    } else if let Some(hgs) = hs.cast::<GeomAdaptorSurface>().get() {
+    } else if let Some(hgs) = hs.view::<dyn GeomSurfaceAdaptor>().get() {
         res = Some(hgs.surface());
     }
     let Some(mut res) = res.filter(|s| !s.is_null()) else {
         return Ok(None);
     };
     if let Some(basis) = res
-        .cast::<GeomRectangularTrimmedSurface>()
-        .get()
+        .downcast_ref::<GeomRectangularTrimmedSurface>()
         .map(|t| t.basis_surface())
     {
         res = basis;
@@ -58,7 +57,7 @@ fn trsfsurf(hs: &Handle<dyn Adaptor3dSurface>) -> Result<Option<Handle<dyn GeomS
             (v1, v2),
             (true, true),
         )?)
-        .cast(),
+        .into_upcast(),
     ))
 }
 
@@ -143,9 +142,9 @@ fn geom_int_line(
 
 /// The three curves trimmed to `[uf, ul]`.
 fn trim_all(out: &mut IntersectionCurves, (uf, ul): (f64, f64)) -> Result<(), Failure> {
-    out.c3d = Handle::new(GeomTrimmedCurve::new(&out.c3d, uf, ul, true, true)?).cast();
-    out.pc1 = Handle::new(Geom2dTrimmedCurve::new(&out.pc1, uf, ul, true, true)?).cast();
-    out.pc2 = Handle::new(Geom2dTrimmedCurve::new(&out.pc2, uf, ul, true, true)?).cast();
+    out.c3d = Handle::new(GeomTrimmedCurve::new(&out.c3d, uf, ul, true, true)?).into_upcast();
+    out.pc1 = Handle::new(Geom2dTrimmedCurve::new(&out.pc1, uf, ul, true, true)?).into_upcast();
+    out.pc2 = Handle::new(Geom2dTrimmedCurve::new(&out.pc2, uf, ul, true, true)?).into_upcast();
     Ok(())
 }
 
@@ -217,4 +216,66 @@ pub(super) fn geom_int(
         }
     }
     Ok(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use martensite_tkg3d::geom::{GeomLine, GeomSurfaceOfLinearExtrusion, GeomSurfaceOfRevolution};
+    use martensite_tkg3d::geom_adaptor::{
+        GeomAdaptorCurve, GeomAdaptorSurface, GeomAdaptorSurfaceOfLinearExtrusion,
+        GeomAdaptorSurfaceOfRevolution,
+    };
+    use martensite_tkmath::gp::{Axis1, Direction3};
+
+    fn swept_basis() -> (Handle<dyn GeomCurve>, Axis1) {
+        let vertical = Direction3::new(0.0, 0.0, 1.0).unwrap();
+        let axis = Axis1::new(Point3::default(), vertical);
+        let line = GeomLine::from_point(Point3::new(2.0, 0.0, 0.0), vertical);
+        (Handle::new(line).into_upcast(), axis)
+    }
+
+    #[test]
+    fn curve_only_sweep_adaptors_have_no_geom_surface_to_extract() {
+        let (line, axis) = swept_basis();
+        let guide =
+            Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).into_upcast();
+        let side = Direction3::new(0.0, 1.0, 0.0).unwrap();
+        let extruded = GeomAdaptorSurfaceOfLinearExtrusion::with_curve_and_direction(&guide, side);
+        let revolved = GeomAdaptorSurfaceOfRevolution::with_curve_and_axis(&guide, axis).unwrap();
+        // The inherited Surface member stays empty when only the basis adaptor was supplied.
+        assert!(
+            trsfsurf(&Handle::new(extruded).into_upcast())
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            trsfsurf(&Handle::new(revolved).into_upcast())
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    fn extract_loaded_sweep(surface: Handle<dyn GeomSurface>) -> Handle<dyn GeomSurface> {
+        let adaptor = GeomAdaptorSurface::with_bounds(&surface, (0.0, 1.0, 0.0, 2.0)).unwrap();
+        trsfsurf(&Handle::new(adaptor).into_upcast())
+            .unwrap()
+            .unwrap()
+    }
+
+    #[test]
+    fn swept_geometry_keeps_values_and_bounds_when_extracted_from_loaded_adaptors() {
+        let (line, axis) = swept_basis();
+        let side = Direction3::new(0.0, 1.0, 0.0).unwrap();
+        let extruded = GeomSurfaceOfLinearExtrusion::new(&line, side).unwrap();
+        let revolved = GeomSurfaceOfRevolution::new(&line, axis).unwrap();
+        let extruded = extract_loaded_sweep(Handle::new(extruded).into_upcast());
+        let revolved = extract_loaded_sweep(Handle::new(revolved).into_upcast());
+        assert_eq!(extruded.bounds(), (0.0, 1.0, 0.0, 2.0));
+        assert_eq!(revolved.bounds(), (0.0, 1.0, 0.0, 2.0));
+        let along = extruded.value(0.25, 0.5).unwrap();
+        let around = revolved.value(0.0, 0.5).unwrap();
+        assert!(along.is_equal(&Point3::new(2.0, 0.5, 0.25), 1.0e-12));
+        assert!(around.is_equal(&Point3::new(2.0, 0.0, 0.5), 1.0e-12));
+    }
 }

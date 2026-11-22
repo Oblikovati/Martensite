@@ -23,7 +23,8 @@ use crate::step_visual::{
     StepVisualTessellatedAnnotationOccurrence,
 };
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::tdata_std::TDataStdName;
 use martensite_tklcaf::tdf::TdfLabel;
@@ -40,14 +41,21 @@ use martensite_tkxsbase::interface::InterfaceModelEntities;
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
 
 /// A dimension or a tolerance.
-fn is_gdt(entity: &Handle<StandardTransient>) -> bool {
-    entity.cast::<StepShapeDimensionalSize>().is_some()
-        || entity.cast::<StepShapeDimensionalLocation>().is_some()
-        || entity.cast::<StepDimTolGeometricTolerance>().is_some()
+fn is_gdt(entity: &Handle<dyn Transient>) -> bool {
+    entity
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+        .is_some()
+        || entity
+            .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+            .is_some()
+        || entity
+            .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+            .get()
+            .is_some()
 }
 
 /// A datum, a datum target or a datum feature.
-fn is_datum_like(aspect: &Handle<StepReprShapeAspect>) -> bool {
+fn is_datum_like(aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>) -> bool {
     aspect.cast::<StepDimTolDatum>().is_some()
         || aspect.cast::<StepDimTolDatumTarget>().is_some()
         || aspect.cast::<StepDimTolDatumFeature>().is_some()
@@ -59,7 +67,7 @@ fn is_datum_like(aspect: &Handle<StepReprShapeAspect>) -> bool {
 /// Whether a definition is a datum or has a GDT applied.
 fn is_connected_to_gdt(
     session: &SessionGraph,
-    definition: &Handle<StepReprShapeAspect>,
+    definition: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
 ) -> Result<bool, Failure> {
     // Skip if definition is a datum
     if is_datum_like(definition) {
@@ -71,7 +79,7 @@ fn is_connected_to_gdt(
             return Ok(true);
         }
         let Some(relationship) = sharing
-            .cast::<StepReprShapeAspectRelationship>()
+            .cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>()
             .get()
             .map(|live| live.related_shape_aspect())
         else {
@@ -129,7 +137,7 @@ impl ReaderState {
     /// A presentation of PMI without semantic data, as a dimension on its shapes.
     fn read_presentation_only(
         &mut self,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         ws: &Handle<XSControlWorkSession>,
         session: &SessionGraph,
         shape_tool: &Handle<XCAFDocShapeTool>,
@@ -231,14 +239,20 @@ impl ReaderState {
             if is_gdt(&entity) {
                 let label = self.create_gdt_object_in_xcaf(&entity, doc, ws, factors)?;
                 if !label.is_null() {
-                    if entity.cast::<StepDimTolGeometricTolerance>().is_some() {
+                    if entity
+                        .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+                        .get()
+                        .is_some()
+                    {
                         set_geom_tol_object_to_xcaf(&entity, &label, &from_process, factors)?;
                     } else {
                         set_dim_object_to_xcaf(&entity, &label, &from_process, factors)?;
                     }
                 }
             } else if entity.cast::<StepVisualDraughtingCallout>().is_some()
-                || entity.cast::<StepVisualAnnotationOccurrence>().is_some()
+                || entity
+                    .cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>()
+                    .is_some()
                 || entity
                     .cast::<StepVisualTessellatedAnnotationOccurrence>()
                     .is_some()

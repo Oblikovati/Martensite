@@ -4,12 +4,12 @@ use super::{Sequence, SequenceCursor};
 impl SequenceCursor {
     /// Exposes the opaque current-node identity; `cursor.current_node()`.
     pub fn current_node(&self) -> Option<usize> {
-        self.address
+        super::iteration::pointer_address(self.raw.current)
     }
 
     /// Exposes the opaque previous-node identity; `cursor.previous_node()`.
     pub fn previous_node(&self) -> Option<usize> {
-        self.previous
+        super::iteration::pointer_address(self.raw.previous)
     }
 
     /// Initializes either endpoint through the initialize spelling; `cursor.initialize(&sequence, false)`.
@@ -62,5 +62,15 @@ impl SequenceCursor {
         let previous = *self;
         self.previous(sequence);
         previous
+    }
+}
+
+impl std::fmt::Debug for SequenceCursor {
+    fn fmt(&self, format: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        format
+            .debug_struct("SequenceCursor")
+            .field("address", &self.current_node())
+            .field("previous", &self.previous_node())
+            .finish()
     }
 }

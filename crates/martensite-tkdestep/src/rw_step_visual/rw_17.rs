@@ -101,7 +101,8 @@ impl RwStepVisualRwSurfaceStyleReflectanceAmbientDiffuseSpecular {
             the_ach,
             &mut a_specular_exponent,
         )?;
-        let mut a_specular_colour: Handle<StepVisualColour> = Default::default();
+        let mut a_specular_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> =
+            Default::default();
         the_data.read_entity(
             the_num,
             5,
@@ -186,7 +187,8 @@ impl RwStepVisualRwSurfaceStyleRendering {
         } else {
             ach.add_fail_text("Parameter #1 (rendering_method) is not enumeration", "");
         }
-        let mut a_surface_colour: Handle<StepVisualColour> = Default::default();
+        let mut a_surface_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> =
+            Default::default();
         data.read_entity(
             num,
             2,

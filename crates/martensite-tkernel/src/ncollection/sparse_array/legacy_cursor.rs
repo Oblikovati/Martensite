@@ -2,7 +2,7 @@
 use super::SparseArray;
 
 /// Read cursor over the base storage; `array.legacy_cursor()`.
-pub struct SparseArrayLegacyCursor<'a, T> {
+pub(crate) struct SparseArrayLegacyCursor<'a, T> {
     array: Option<&'a SparseArray<T>>,
     index: usize,
     more: bool,
@@ -20,7 +20,7 @@ impl<T> Default for SparseArrayLegacyCursor<'_, T> {
 
 impl<T> SparseArray<T> {
     /// Starts the historical base iterator; `array.legacy_cursor().index()`.
-    pub fn legacy_cursor(&self) -> SparseArrayLegacyCursor<'_, T> {
+    pub(crate) fn legacy_cursor(&self) -> SparseArrayLegacyCursor<'_, T> {
         let mut cursor = SparseArrayLegacyCursor::default();
         cursor.initialize(self);
         cursor
@@ -29,13 +29,13 @@ impl<T> SparseArray<T> {
 
 impl<'a, T> SparseArrayLegacyCursor<'a, T> {
     /// Binds the protected initialization operation; `cursor.initialize(&array)`.
-    pub fn initialize(&mut self, array: &'a SparseArray<T>) {
+    pub(crate) fn initialize(&mut self, array: &'a SparseArray<T>) {
         self.array = Some(array);
         self.restart();
     }
 
     /// Restarts on the same array; `cursor.restart()`.
-    pub fn restart(&mut self) {
+    pub(crate) fn restart(&mut self) {
         let Some(array) = self.array else {
             return;
         };
@@ -47,25 +47,25 @@ impl<'a, T> SparseArrayLegacyCursor<'a, T> {
     }
 
     /// Reports whether a live object is selected; `cursor.more()`.
-    pub fn more(&self) -> bool {
+    pub(crate) fn more(&self) -> bool {
         self.more
     }
 
     /// Returns the historical block-relative index; `cursor.index()`.
     /// A detached cursor has no block, so its default index is zero.
-    pub fn index(&self) -> usize {
+    pub(crate) fn index(&self) -> usize {
         self.index
     }
 
     /// Advances across occupied slots, preserving the exhausted offset; `cursor.next()`.
-    pub fn next(&mut self) {
+    pub(crate) fn next(&mut self) {
         if self.more {
             self.seek_legacy_key(self.index + 1);
         }
     }
 
     /// Borrows the selected slot (protected value); `cursor.value()`.
-    pub fn value(&self) -> Option<&'a T> {
+    pub(crate) fn value(&self) -> Option<&'a T> {
         if !self.more {
             return None;
         }

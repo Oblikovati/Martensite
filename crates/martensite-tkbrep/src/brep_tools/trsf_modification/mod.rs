@@ -8,7 +8,7 @@ use super::modification::{BRepToolsModification, NewCurve, NewSurface};
 use crate::brep::BRepTool;
 use crate::topods::{Edge, Face, Vertex};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkmath::geom_abs::Shape as Continuity;
@@ -63,14 +63,12 @@ struct TrsfFields {
 /// assert!(modification.is_copy_mesh());
 /// ```
 pub struct TrsfModification {
-    parent: StandardTransient,
     fields: SharedState<TrsfFields>,
 }
 impl_transient!(
     TrsfModification,
     "BRepTools_TrsfModification",
     dyn BRepToolsModification,
-    parent,
     interfaces: [dyn BRepToolsModification]
 );
 
@@ -78,7 +76,6 @@ impl TrsfModification {
     /// `BRepTools_TrsfModification(T)`: without mesh copy; `TrsfModification::new(trsf)`.
     pub fn new(trsf: Transform3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(TrsfFields {
                 trsf,
                 copy_mesh: false,

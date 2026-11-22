@@ -52,7 +52,7 @@ fn retain_shape_transparency_aspect<S: AisShapeSource + ?Sized>(object: &S) -> b
 /// `set_shape_drawer_transparency(&shape, &drawer, 0.5)?`.
 pub fn set_shape_drawer_transparency<S: AisShapeSource + ?Sized>(
     object: &S,
-    drawer: &Handle<crate::prs3d::Prs3dDrawer>,
+    drawer: &crate::prs3d::Prs3dDrawer,
     value: f64,
 ) -> Result<(), Failure> {
     drawer.setup_own_shading_aspect(&Handle::default())?;

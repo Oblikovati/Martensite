@@ -93,7 +93,7 @@ fn require_standard_pcurve(
     pcurve: &martensite_tkernel::standard::Handle<dyn martensite_tkg2d::geom2d::Geom2dCurve>,
 ) -> Result<(), PrismSurfaceCause> {
     if pcurve
-        .cast::<Geom2dBezierCurve>()
+        .downcast::<Geom2dBezierCurve>()
         .get()
         .is_some_and(|curve| curve.eval_representation().is_some())
     {

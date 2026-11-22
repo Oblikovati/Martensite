@@ -95,7 +95,7 @@ mod tests {
         use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
         use martensite_tkmath::gp::{Direction2, Point2};
         let line: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dLine::from_point(Point2::default(), Direction2::X)).cast();
+            Handle::new(Geom2dLine::from_point(Point2::default(), Direction2::X)).into_upcast();
         let curves = [Geom2dAdaptorCurve::default(), Geom2dAdaptorCurve::default()];
         for curve in &curves {
             curve.load(&line)?;

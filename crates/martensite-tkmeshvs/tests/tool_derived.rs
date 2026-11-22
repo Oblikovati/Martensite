@@ -13,8 +13,11 @@ struct DrawerAccessorControl {
     redirected: MeshVSDrawer,
     accessor_calls: Arc<AtomicUsize>,
 }
-martensite_tkernel::impl_transient!(DrawerAccessorControl,"DrawerAccessorControl",MeshVSDrawer,actual,interfaces:[dyn MeshVSDrawerSource]);
+martensite_tkernel::impl_transient!(DrawerAccessorControl,"DrawerAccessorControl",MeshVSDrawer, interfaces:[dyn MeshVSDrawerSource]);
 impl MeshVSDrawerSource for DrawerAccessorControl {
+    fn owned_drawer(&self) -> &MeshVSDrawer {
+        &self.actual
+    }
     fn drawer_base(&self) -> &MeshVSDrawer {
         self.accessor_calls.fetch_add(1, Ordering::SeqCst);
         &self.redirected

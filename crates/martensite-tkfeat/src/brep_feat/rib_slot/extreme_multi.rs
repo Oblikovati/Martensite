@@ -183,7 +183,7 @@ impl RibSlot {
             let (cur, f, l) = edge_curve(&e)?;
             let (f, l) = (f - bnd / 10000., l + bnd / 10000.);
             let curve: Handle<dyn GeomCurve> =
-                Handle::new(GeomTrimmedCurve::new(&cur, f, l, true, true)?).cast();
+                Handle::new(GeomTrimmedCurve::new(&cur, f, l, true, true)?).into_upcast();
             let ch = Choice {
                 revol_rib,
                 curve: &curve,

@@ -190,7 +190,11 @@ impl XCAFDimTolObjectsTool {
 }
 
 /// The label's attribute of `id` as a `T`, or null.
-fn find_attribute<T: martensite_tkernel::standard::RuntimeTyped + ?Sized>(
+fn find_attribute<
+    T: martensite_tkernel::standard::RuntimeTyped
+        + martensite_tkernel::standard::TransientHandleTarget
+        + ?Sized,
+>(
     label: &TdfLabel,
     id: &martensite_tkernel::standard::Guid,
 ) -> Result<Handle<T>, Failure> {

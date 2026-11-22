@@ -77,7 +77,7 @@ impl ExprIntrpParseContext<'_> {
         let name = self.result();
         let mut named: Handle<dyn ExprNamedExpression> = self.recept.get_named(&name);
         if named.is_null() {
-            named = ExprNamedUnknown::new(&name).cast();
+            named = ExprNamedUnknown::new(&name).into_upcast();
             self.recept.use_named(&named);
         }
         self.recept.push(&named.cast());

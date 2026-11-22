@@ -14,7 +14,8 @@ use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Shape};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Transform3;
 use martensite_tkxsbase::transfer::{
     TransferActorOfTransientProcessOps, TransferBinder, TransferTransientProcess,
@@ -25,7 +26,7 @@ impl StepControlActorRead {
     /// `transfer_entity(mapit, TP, local_factors, progress)`.
     pub(super) fn transfer_mapped_item(
         &self,
-        mapit: &Handle<StepReprMappedItem>,
+        mapit: &Handle<dyn crate::StepEntityBase<StepReprMappedItem>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         progress: &ProgressRange<'_>,
@@ -34,7 +35,7 @@ impl StepControlActorRead {
         let live_tp = step_live(tp, "StepControlActorRead")?;
         let source = live.mapping_source();
         let live_source = step_live(&source, "StepControlActorRead")?;
-        let maprep: Handle<StepShapeShapeRepresentation> =
+        let maprep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
             live_source.mapped_representation().cast();
         let root = ProgressScope::unnamed(progress, 2.0, false);
         let mut found: Handle<dyn TransferBinder> = live_tp.find(&maprep.cast());
@@ -118,12 +119,13 @@ impl StepControlActorRead {
         &self,
         live: &StepReprMappedItem,
         source: &crate::step_repr::StepReprRepresentationMap,
-        maprep: &Handle<StepShapeShapeRepresentation>,
+        maprep: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
     ) -> Result<(bool, Transform3), Failure> {
         let mut trsf = Transform3::default();
-        let target: Handle<StepReprRepresentationItem> = live.mapping_target();
+        let target: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            live.mapping_target();
         let operator: Handle<StepGeomCartesianTransformationOperator3d> = target.cast();
         if operator.is_some() {
             return Ok(
@@ -153,7 +155,7 @@ impl StepControlActorRead {
     /// `transfer_entity(fs, TP, local_factors, progress)`.
     pub(super) fn transfer_face_surface(
         &self,
-        fs: &Handle<StepShapeFaceSurface>,
+        fs: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         progress: &ProgressRange<'_>,
@@ -176,15 +178,17 @@ impl StepControlActorRead {
     }
     pub(super) fn translate_face_surface(
         &self,
-        fs: &Handle<StepShapeFaceSurface>,
+        fs: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         nb_tp_items: i32,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
         let mut tool = StepToTopoDSTool::new();
-        let map: DataMap<Handle<StepShapeTopologicalRepresentationItem>, Shape> =
-            DataMap::default();
+        let map: DataMap<
+            Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+            Shape,
+        > = DataMap::default();
         tool.init(&map, tp);
         let mut translator = StepToTopoDSTranslateFace::new();
         {
@@ -221,7 +225,7 @@ impl StepControlActorRead {
     /// r0701_ug.stp #4790).
     pub(super) fn factors_of_free_item(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         local: &mut StepDataFactors,
     ) -> Result<(), Failure> {

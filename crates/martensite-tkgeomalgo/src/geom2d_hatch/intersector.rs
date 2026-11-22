@@ -109,7 +109,7 @@ impl Intersector {
     ) -> Result<(), Failure> {
         let dl: Domain = segment_domain(lin, param, tolerance);
         let de: Domain = edge_domain(edge)?;
-        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(*lin)).cast();
+        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(*lin)).into_upcast();
         let cga = Geom2dAdaptorCurve::with_curve(&line)?;
         let inter = GInter::with_domains(
             &cga,

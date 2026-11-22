@@ -91,7 +91,7 @@ fn offset_trimmed(
     } else {
         return Ok(surface.clone());
     };
-    Ok(Handle::new(trimmed).cast())
+    Ok(Handle::new(trimmed).into_upcast())
 }
 
 /// "adjust periodical surface or reordonate": the bounds in the period of a periodic

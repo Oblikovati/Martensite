@@ -1,6 +1,7 @@
 //! `TopOpeBRepDSTKI`: interferences sorted by the kind and index of their geometry or
 //! support, with an iteration over the (kind, index) pairs holding interferences.
-use super::{ListOfInterference, TopOpeBRepDSInterference, TopOpeBRepDSKind};
+use super::{ListOfInterference, TopOpeBRepDSKind};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::standard::{Failure, Handle};
 
@@ -161,7 +162,7 @@ impl TopOpeBRepDSTKI {
         &mut self,
         k: TopOpeBRepDSKind,
         g: i32,
-        hi: &Handle<TopOpeBRepDSInterference>,
+        hi: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         self.add(k, g)?;
         self.change_interferences(k, g).append(hi.clone());

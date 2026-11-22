@@ -77,10 +77,6 @@ impl Chronometer {
         (self.start_cpu_user, self.start_cpu_sys) = self.read_clock();
         self.is_stopped = false;
     }
-    /// Prints [`Chronometer::show_to`] on standard output; `chrono.show()`.
-    pub fn show(&self) {
-        print!("{}", self.show_to());
-    }
     /// The two CPU lines at stream precision 12;
     /// `chrono.show_to() == "CPU user time: 0 seconds\nCPU system time: 0 seconds\n"`.
     pub fn show_to(&self) -> String {

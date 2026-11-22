@@ -1,13 +1,13 @@
 //! `TransferFinderProcess`: the process that writes objects (by finders) into an
 //! interface model.
 use super::{
-    TransferFinder, TransferFinderKind, TransferProcess, TransferProcessForFinder,
-    TransferProcessOps, TransferTransientMapper, bind_new, transient_process::print_result_counts,
+    TransferFinder, TransferFinderKind, TransferProcess, TransferProcessOps,
+    TransferTransientMapper, bind_new, transient_process::print_result_counts,
 };
 use crate::interface::InterfaceInterfaceModel;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 use std::io::{self, Write};
 use std::ops::Deref;
@@ -19,19 +19,19 @@ use std::ops::Deref;
 /// use martensite_tkxsbase::transfer::TransferFinderProcess;
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let fp = TransferFinderProcess::new(100);
-/// let mapper = fp.transient_mapper(&Handle::new(StandardTransient::default()));
+/// let mapper = fp.transient_mapper(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>());
 /// assert!(mapper.is_some() && fp.nb_mapped() == 0);
 /// ```
 pub struct TransferFinderProcess {
-    base: TransferProcessForFinder,
+    core: TransferProcess<TransferFinderKind>,
     themodel: SharedState<Handle<dyn InterfaceInterfaceModel>>,
 }
-impl_transient!(TransferFinderProcess, "TransferFinderProcess", TransferProcessForFinder, base, interfaces: [dyn TransferProcessOps<TransferFinderKind>]);
+impl_transient!(TransferFinderProcess, "TransferFinderProcess", dyn TransferProcessOps<TransferFinderKind>, interfaces: [dyn TransferProcessOps<TransferFinderKind>]);
 
 impl Deref for TransferFinderProcess {
-    type Target = TransferProcessForFinder;
-    fn deref(&self) -> &TransferProcessForFinder {
-        &self.base
+    type Target = TransferProcess<TransferFinderKind>;
+    fn deref(&self) -> &Self::Target {
+        &self.core
     }
 }
 
@@ -39,7 +39,7 @@ impl TransferFinderProcess {
     /// `TransferFinderProcess(nb = 10000)`.
     pub fn new(nb: i32) -> Handle<Self> {
         bind_new(Self {
-            base: TransferProcessForFinder::unbound(TransferProcess::new(nb)),
+            core: TransferProcess::new(nb),
             themodel: SharedState::new(Handle::default()),
         })
     }
@@ -66,10 +66,7 @@ impl TransferFinderProcess {
             .unwrap_or(0)
     }
     /// `TransientMapper(obj)`: the mapped mapper of `obj`, else a new (unmapped) one.
-    pub fn transient_mapper(
-        &self,
-        obj: &Handle<StandardTransient>,
-    ) -> Handle<TransferTransientMapper> {
+    pub fn transient_mapper(&self, obj: &Handle<dyn Transient>) -> Handle<TransferTransientMapper> {
         let mapper = Handle::new(TransferTransientMapper::new(obj));
         let index = self.map_index(&mapper.cast());
         if index == 0 {
@@ -92,7 +89,7 @@ impl TransferFinderProcess {
 
 impl TransferProcessOps<TransferFinderKind> for TransferFinderProcess {
     fn process(&self) -> &TransferProcess<TransferFinderKind> {
-        &self.base
+        &self.core
     }
     /// `PrintTrace(start, S)`: " Type:" and the value type name of the finder.
     fn print_trace(&self, start: &Handle<dyn TransferFinder>, s: &mut dyn Write) -> io::Result<()> {

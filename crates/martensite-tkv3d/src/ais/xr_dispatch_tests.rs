@@ -115,12 +115,16 @@ fn verify_xr_derived_identity(scene: &XrDispatchReplay) {
     let source = &scene.source;
     let presentable = source.clone().cast::<dyn PrsMgrPresentableObject>();
     let selectable = source.clone().cast::<dyn SelectMgrSelectableObject>();
-    let concrete = source.clone().cast::<AisXrTrackedDevice>();
+    let concrete = source.downcast_ref::<XrDerivedFake>().unwrap();
+    assert!(std::ptr::eq(concrete, scene.derived.get().unwrap()));
+    assert!(std::ptr::eq(
+        concrete.xr_tracked_device_base(),
+        source.xr_tracked_device_base()
+    ));
     assert_eq!(scene.derived.object_address(), source.object_address());
     for address in [
         presentable.object_address(),
         selectable.object_address(),
-        concrete.object_address(),
         source.presentable_base().this().object_address(),
     ] {
         assert_eq!(address, source.object_address());

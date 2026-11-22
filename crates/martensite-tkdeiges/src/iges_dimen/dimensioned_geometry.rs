@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
@@ -25,15 +26,15 @@ iges_entity! {
 /// longer be used by preprocessors.
 IgesDimenDimensionedGeometry, IgesDimenDimensionedGeometryState, "IgesDimenDimensionedGeometry", parent IgesDataIgesEntity, {
 the_nb_dimensions: i32,
-the_dimension: Handle<IgesDataIgesEntity>,
-the_geometry_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_dimension: Handle<dyn IgesDataEntityKind>,
+the_geometry_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 }
 }
 
 impl IgesDimenDimensionedGeometry {
     iges_methods! {
     get nb_dimensions = the_nb_dimensions: i32;
-    get dimension_entity = the_dimension: Handle<IgesDataIgesEntity>;
+    get dimension_entity = the_dimension: Handle<dyn IgesDataEntityKind>;
     }
     /// `init`.
     ///
@@ -42,8 +43,8 @@ impl IgesDimenDimensionedGeometry {
     pub fn init(
         &self,
         nb_dims: i32,
-        a_dimension: &Handle<IgesDataIgesEntity>,
-        entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        a_dimension: &Handle<dyn IgesDataEntityKind>,
+        entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if iges_array1_lower(entities, "IgesDimenDimensionedGeometry::init")? != 1 {
             return Err(exceptions::dimension_mismatch(
@@ -74,7 +75,7 @@ impl IgesDimenDimensionedGeometry {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn geometry_entity(&self, num: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn geometry_entity(&self, num: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_geometry_entities,
             num,

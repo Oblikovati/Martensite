@@ -40,9 +40,9 @@ impl TextureGenerationScene {
     }
 }
 fn generation_texture(mode: &str) -> Handle<Graphic3dTexture2Dplane> {
-    let texture = Handle::new(Graphic3dTexture2Dplane::from_pix_map(texture_image(
-        "nearest",
-    )));
+    let texture = Handle::new(Graphic3dTexture2Dplane::from_pix_map(
+        texture_image("nearest").into_upcast(),
+    ));
     let parameters = texture.get_params();
     parameters.set_filter(Graphic3dTypeOfTextureFilter::Nearest);
     let generation = if mode.starts_with("object") {
@@ -83,7 +83,10 @@ fn generation_geometry(group: &dyn Graphic3dGroup, mode: &str) {
         return;
     }
     if !mode.contains("no-uv") {
-        group.add_primitive_array(&geometry::surface_texture_quad("nearest"), true);
+        group.add_primitive_array(
+            &geometry::surface_texture_quad("nearest").into_upcast(),
+            true,
+        );
         return;
     }
     let array = generation_untextured_array();
@@ -93,7 +96,7 @@ fn generation_geometry(group: &dyn Graphic3dGroup, mode: &str) {
     for index in [1, 2, 3, 1, 3, 4] {
         array.add_edge(index).unwrap();
     }
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
 }
 fn generation_untextured_array() -> Handle<Graphic3dArrayOfPrimitives> {
     Handle::new(

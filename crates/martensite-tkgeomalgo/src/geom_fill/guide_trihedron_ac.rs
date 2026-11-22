@@ -9,7 +9,7 @@ use super::trihedron_with_guide::{GeomFillTrihedronWithGuide, GeomFillTrihedronW
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, LinearVector};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::one_based;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeombase::approx::CurvlinFunc;
@@ -34,7 +34,6 @@ struct AcFields {
 /// `myTrimmed` is the base member.
 /// `let law = GeomFillGuideTrihedronAC::new(&guide)?; law.set_curve(&path)?;`.
 pub struct GeomFillGuideTrihedronAC {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     guide_base: GeomFillTrihedronWithGuideBase,
     guide_ac: Handle<CurvlinFunc>,
@@ -46,7 +45,6 @@ impl_transient!(
     GeomFillGuideTrihedronAC,
     "GeomFill_GuideTrihedronAC",
     dyn GeomFillTrihedronWithGuide,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw, dyn GeomFillTrihedronWithGuide]
 );
 
@@ -60,7 +58,6 @@ impl GeomFillGuideTrihedronAC {
         let guide_ac = Handle::new(CurvlinFunc::from_curve(guide, 1.0e-7)?);
         let lguide = guide_ac.get().expect("new function").get_length();
         let law = Self {
-            parent: StandardTransient::default(),
             base: GeomFillTrihedronLawBase::default(),
             guide_base: GeomFillTrihedronWithGuideBase::default(),
             guide_ac,
@@ -151,7 +148,7 @@ impl GeomFillTrihedronLaw for GeomFillGuideTrihedronAC {
         let f = self.fields.read().clone();
         copy.set_curve(&f.my_curve)?;
         copy.origine(f.orig1, f.orig2)?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn d0(&self, param: f64, frame: &mut TrihedronD0) -> Result<bool, Failure> {
         let tg_param = self.sample(param, "GeomFill_GuideTrihedronAC::D0")?;

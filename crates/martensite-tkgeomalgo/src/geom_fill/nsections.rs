@@ -9,7 +9,7 @@ use crate::app_blend::AppBlendApprox;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray1};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::one_based;
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomBSplineSurface, GeomCurve, GeomGeometry};
 use martensite_tkgeombase::geom_convert::curve_to_bspline_curve;
@@ -34,7 +34,6 @@ pub(crate) struct NSectionsSurfaces {
 /// reparameterises it in place, as natively.
 /// `let law = GeomFillNSections::with_params(&[c1, c2], &[0.0, 1.0])?;`.
 pub struct GeomFillNSections {
-    parent: StandardTransient,
     pub(crate) my_sections: Vec<Handle<dyn GeomCurve>>,
     pub(crate) my_trsfs: Vec<Transform3>,
     pub(crate) my_params: Vec<f64>,
@@ -49,14 +48,12 @@ impl_transient!(
     GeomFillNSections,
     "GeomFill_NSections",
     dyn GeomFillSectionLaw,
-    parent,
     interfaces: [dyn GeomFillSectionLaw]
 );
 
 impl GeomFillNSections {
     fn build(nc: &[Handle<dyn GeomCurve>], np: &[f64], u: (f64, f64), v: (f64, f64)) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_sections: nc.to_vec(),
             my_trsfs: Vec::new(),
             my_params: np.to_vec(),

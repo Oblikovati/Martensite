@@ -1,8 +1,6 @@
 //! Native First aliases and diagnostics inspect live actual handle fields without owning copies.
 use super::clip_sequence_storage::ClipPlaneNodeLease;
-use super::{
-    Graphic3dClipPlane, Graphic3dSequenceOfHClipPlane, Graphic3dSequenceOfHClipPlaneIterator,
-};
+use super::{Graphic3dSequenceOfHClipPlane, Graphic3dSequenceOfHClipPlaneIterator};
 use crate::json_dump::{field_dumped, field_integer};
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::no_such_object;
@@ -16,13 +14,9 @@ impl Graphic3dSequenceOfHClipPlane {
         })
     }
     /// Explicitly owning convenience snapshot of First; `planes.first()?`.
-    pub fn first(&self) -> Result<Handle<Graphic3dClipPlane>, Failure> {
+    pub fn first(&self) -> Result<Handle<dyn super::Graphic3dClipPlaneSource>, Failure> {
         // Native const-reference coverage belongs to first_ref, never this copied convenience.
-        Ok(self
-            .first_ref()?
-            .observe()
-            .observe_as::<Graphic3dClipPlane>()
-            .clone())
+        Ok(self.first_ref()?.observe().into_handle())
     }
     /// Dispatch real plane diagnostics and read Next after callbacks; `planes.dump_json(&mut stream,-1)?`.
     pub fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {

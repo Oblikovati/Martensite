@@ -43,12 +43,9 @@ impl<T: ?Sized + RuntimeTyped> WeakHandleSlotRef<T> {
             .upgrade()
             .map_or_else(Handle::default, |slot| slot.read().clone())
     }
-    /// Observe current object storage without owning references; `alias.observe().get()`.
-    pub fn observe(&self) -> HandleObserver<T> {
-        self.slot.upgrade().map_or_else(
-            || Handle::<T>::default().observe(),
-            |slot| slot.read().observe(),
-        )
+    /// Acquire a snapshot of the current object; `alias.observe().get()`.
+    pub fn observe(&self) -> HandleObserver<'_, T> {
+        HandleObserver::Snapshot(self.clone_handle())
     }
     /// Run outside the slot lock; `alias.with_object(|object|object.is_some())`.
     pub fn with_object<R>(&self, inspect: impl FnOnce(Option<&T>) -> R) -> R {
@@ -62,8 +59,8 @@ mod tests {
     use crate::standard::StandardTransient;
     #[test]
     fn weak_alias_follows_native_slot_replacement_without_owning_target_or_storage() {
-        let first = Handle::new(StandardTransient::default());
-        let second = Handle::new(StandardTransient::default());
+        let first = Handle::new(StandardTransient);
+        let second = Handle::new(StandardTransient);
         let slot = Arc::new(SharedState::new(first.clone()));
         let alias = WeakHandleSlotRef::new(&slot);
         assert_eq!(first.ref_count(), 2);
@@ -94,7 +91,8 @@ mod tests {
         target: &Handle<StandardTransient>,
     ) {
         let observed = alias.observe();
-        assert_eq!(target.ref_count(), 2);
+        assert_eq!(target.ref_count(), 3);
         drop(observed);
+        assert_eq!(target.ref_count(), 2);
     }
 }

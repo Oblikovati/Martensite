@@ -10,7 +10,7 @@ use crate::brep_mesh::{
 };
 use crate::imesh_tools::{MeshAlgo, MeshAlgoFactory, MeshParameters};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::geom_abs::SurfaceType;
 
 /// Generator composition used by point-cloud node-insertion and deflection-control algorithms.
@@ -29,14 +29,11 @@ type DelabellaDelaunayGenerator = CustomDelaunayGenerator<CustomGenerator<Delabe
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 #[derive(Default)]
-pub struct BRepMeshDelabellaMeshAlgoFactory {
-    transient: StandardTransient,
-}
+pub struct BRepMeshDelabellaMeshAlgoFactory {}
 impl_transient!(
     BRepMeshDelabellaMeshAlgoFactory,
     "BRepMesh_DelabellaMeshAlgoFactory",
     dyn MeshAlgoFactory,
-    transient,
     interfaces: [dyn MeshAlgoFactory]
 );
 
@@ -48,7 +45,7 @@ impl BRepMeshDelabellaMeshAlgoFactory {
 }
 
 fn delabella_algo(core: impl FaceMeshingCore + 'static) -> Handle<dyn MeshAlgo> {
-    Handle::new(BRepMeshDelabellaBaseMeshAlgo::from_core(core)).cast()
+    Handle::new(BRepMeshDelabellaBaseMeshAlgo::from_core(core)).into_upcast()
 }
 
 /// Create a node-insertion strategy with optional surface-node preprocessing.
@@ -71,10 +68,10 @@ fn deflection_control<R: RangeSplitter + Default + Send + 'static>() -> Handle<d
 /// internal vertices, else `DefaultBaseMeshAlgo`).
 fn cylinder_choice(parameters: &MeshParameters) -> Handle<dyn MeshAlgo> {
     if !parameters.internal_vertices_mode {
-        return Handle::new(BRepMeshDelaunayBaseMeshAlgo::new()).cast();
+        return Handle::new(BRepMeshDelaunayBaseMeshAlgo::new()).into_upcast();
     }
     let algo = DelaunayNodeInsertionMeshAlgo::<CylinderRangeSplitter, DelaunayGenerator>::default();
-    Handle::new(BRepMeshDelaunayBaseMeshAlgo::from_core(algo)).cast()
+    Handle::new(BRepMeshDelaunayBaseMeshAlgo::from_core(algo)).into_upcast()
 }
 
 /// The plane choice: Delabella node insertion with internal vertices, else the plain
@@ -83,7 +80,7 @@ fn plane_choice(parameters: &MeshParameters) -> Handle<dyn MeshAlgo> {
     if parameters.internal_vertices_mode {
         return node_insertion::<DefaultRangeSplitter>(false);
     }
-    Handle::new(BRepMeshDelabellaBaseMeshAlgo::new()).cast()
+    Handle::new(BRepMeshDelabellaBaseMeshAlgo::new()).into_upcast()
 }
 
 impl MeshAlgoFactory for BRepMeshDelabellaMeshAlgoFactory {

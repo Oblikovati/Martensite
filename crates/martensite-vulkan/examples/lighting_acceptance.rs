@@ -33,7 +33,7 @@ fn lights(kind: Graphic3dTypeOfLightSource) -> RenderLightSet {
     if kind == Graphic3dTypeOfLightSource::Spot {
         light.set_direction_coords(0., 0., -1.).unwrap();
     }
-    set.add(&light).unwrap();
+    set.add(&light.upcast()).unwrap();
     RenderLightSet::snapshot(&set, identity_clip()).unwrap()
 }
 fn quad(

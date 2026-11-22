@@ -201,7 +201,7 @@ step_select! {
         dimensional_location: StepShapeDimensionalLocation,
         dimensional_size: StepShapeDimensionalSize,
         product_definition_shape: StepReprProductDefinitionShape,
-        shape_aspect: StepReprShapeAspect,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
     }
 }
 
@@ -210,7 +210,7 @@ step_select! {
     StepDimTolToleranceZoneTarget, [StepShapeDimensionalLocation, StepShapeDimensionalSize, StepDimTolGeometricTolerance, StepDimTolGeneralDatumReference], {
         dimensional_location: StepShapeDimensionalLocation,
         dimensional_size: StepShapeDimensionalSize,
-        geometric_tolerance: StepDimTolGeometricTolerance,
+        geometric_tolerance: dyn crate::StepEntityBase<StepDimTolGeometricTolerance>,
         general_datum_reference: StepDimTolGeneralDatumReference,
     }
 }
@@ -218,26 +218,26 @@ step_select! {
 step_entity! {
     /// Representation of STEP entity AngularityTolerance
     StepDimTolAngularityTolerance, StepDimTolAngularityToleranceState, "StepDimTolAngularityTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity CircularRunoutTolerance
     StepDimTolCircularRunoutTolerance, StepDimTolCircularRunoutToleranceState, "StepDimTolCircularRunoutTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity CoaxialityTolerance
     StepDimTolCoaxialityTolerance, StepDimTolCoaxialityToleranceState, "StepDimTolCoaxialityTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity CommonDatum
     StepDimTolCommonDatum, StepDimTolCommonDatumState, "StepDimTolCommonDatum", StepReprCompositeShapeAspect, {
         my_datum: Handle<StepDimTolDatum>,
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 impl StepDimTolCommonDatum {
     step_methods! {
@@ -284,11 +284,11 @@ impl StepDimTolCommonDatum {
 step_entity! {
     /// Representation of STEP entity ConcentricityTolerance
     StepDimTolConcentricityTolerance, StepDimTolConcentricityToleranceState, "StepDimTolConcentricityTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity CylindricityTolerance
     StepDimTolCylindricityTolerance, StepDimTolCylindricityToleranceState, "StepDimTolCylindricityTolerance", StepDimTolGeometricTolerance, {
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }

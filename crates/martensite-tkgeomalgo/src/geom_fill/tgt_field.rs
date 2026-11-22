@@ -1,7 +1,7 @@
 //! `GeomFill_TgtField`: the abstract field of tangents along a boundary.
 use crate::law::LawBSpline;
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkmath::gp::Vector3;
 
 /// A field of tangents along a boundary of a constrained filling
@@ -25,4 +25,4 @@ pub trait GeomFillTgtField: Transient {
     /// `D1(W, V, DV)`: the tangent and its derivative at `w`.
     fn d1_with_value(&self, w: f64) -> Result<(Vector3, Vector3), Failure>;
 }
-impl_transient_interface!(dyn GeomFillTgtField, "GeomFill_TgtField", StandardTransient);
+impl_transient_interface!(dyn GeomFillTgtField, "GeomFill_TgtField", dyn Transient);

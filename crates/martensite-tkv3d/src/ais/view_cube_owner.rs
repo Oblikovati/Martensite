@@ -3,17 +3,16 @@ use super::{AisViewCube, AisViewCubeSource};
 use crate::{select_mgr::*, v3d::V3dTypeOfOrientation};
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Handle, HandleObserver, SharedState, StandardTransient, raise_native_failure},
+    standard::{Handle, SharedState, raise_native_failure},
 };
 use martensite_tkservice::aspect::{AspectVKeyFlags, AspectVKeyMouse};
 /// Owner identity and orientation; `owner.main_orientation()`.
 pub struct AisViewCubeOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     /// Native protected orientation, retained for picking and camera dispatch.
     pub orientation: SharedState<V3dTypeOfOrientation>,
 }
-martensite_tkernel::impl_transient!(AisViewCubeOwner,"AisViewCubeOwner",dyn SelectMgrEntityOwnerSource,transient,
+martensite_tkernel::impl_transient!(AisViewCubeOwner,"AisViewCubeOwner",dyn SelectMgrEntityOwnerSource,
     interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl AisViewCubeOwner {
     /// Own a part with native priority five; `AisViewCubeOwner::new(&cube,orientation,5)`.
@@ -22,7 +21,7 @@ impl AisViewCubeOwner {
         orientation: V3dTypeOfOrientation,
         priority: i32,
     ) -> Handle<Self> {
-        Self::with_source(&cube.cast(), orientation, priority)
+        Self::with_source(&cube.upcast(), orientation, priority)
     }
     /// Retain a real widget subclass; `AisViewCubeOwner::with_source(&subclass.cast(),orientation,5)`.
     pub fn with_source(
@@ -31,12 +30,11 @@ impl AisViewCubeOwner {
         priority: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
-            base: SelectMgrEntityOwnerBase::new(&cube.cast(), priority),
+            base: SelectMgrEntityOwnerBase::new(&cube.upcast(), priority),
             orientation: SharedState::new(orientation),
         });
         owner.base.fields.write().from_decomposition = true;
-        select_mgr_entity_owner_bind(&owner.cast());
+        select_mgr_entity_owner_bind(&owner.upcast());
         owner
     }
     /// Read the part's target orientation; `owner.main_orientation()`.
@@ -70,16 +68,10 @@ impl SelectMgrEntityOwnerSource for AisViewCubeOwner {
 }
 
 fn cube_owner_click_argument(owner: &AisViewCubeOwner) -> Handle<AisViewCubeOwner> {
-    let current = owner.base.this();
-    let argument = current.cast();
-    drop(current);
-    argument
+    owner.base.this().into_downcast()
 }
 
-fn cube_owner_selectable_lease(owner: &AisViewCubeOwner) -> HandleObserver<dyn AisViewCubeSource> {
-    // Native Selectable's temporary is gone before raw dynamic_cast dispatches HandleClick.
-    let current = owner.selectable().cast::<dyn AisViewCubeSource>();
-    let observed = current.observe();
-    drop(current);
-    observed
+fn cube_owner_selectable_lease(owner: &AisViewCubeOwner) -> Handle<dyn AisViewCubeSource> {
+    // Application click dispatch can retire the selectable, so retain a real receiver scope.
+    owner.selectable().into_cast::<dyn AisViewCubeSource>()
 }

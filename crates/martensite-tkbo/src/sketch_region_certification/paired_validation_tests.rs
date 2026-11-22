@@ -105,7 +105,7 @@ fn mutate_aliased_curve(census: &BoundaryCensus) {
     let actual = edge(&census.inputs.segments[0].edge).unwrap();
     let (curve, _, _) = BRepTool::curve(&actual).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, Point3::new(8., 0., 1.))
         .unwrap();
 }
@@ -118,7 +118,7 @@ fn mutate_aliased_pcurve(census: &BoundaryCensus) {
     let stored = BRepTool::curve_on_face(&actual, &census.inputs.construction_support).unwrap();
     stored
         .pcurve
-        .cast::<Geom2dBezierCurve>()
+        .downcast::<Geom2dBezierCurve>()
         .set_pole(2, Point2::new(9., 8.))
         .unwrap();
 }
@@ -128,7 +128,7 @@ fn mutate_aliased_support(census: &BoundaryCensus) {
     use martensite_tkmath::gp::Point3;
     let (surface, _) =
         BRepTool::surface_with_location(&census.inputs.construction_support).unwrap();
-    let plane = surface.cast::<GeomPlane>();
+    let plane = surface.downcast::<GeomPlane>();
     let mut changed = plane.pln();
     changed.set_location(Point3::new(0., 0., 1.));
     plane.set_pln(changed);

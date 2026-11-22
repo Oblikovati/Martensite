@@ -1,12 +1,13 @@
 //! The colours and PSAs of `StepConstructStyles`.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 impl StepConstructStyles {
     /// `CreateNAUOSRD`: a shape representation and its SDR for the styles of a NAUO, added to the
     /// model. `init_pds` must be null when used for NAUO colors, and is given only for SHUO.
     pub fn create_nauo_srd(
         &self,
-        context: &Handle<StepReprRepresentationContext>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         cdsr: &Handle<StepShapeContextDependentShapeRepresentation>,
         init_pds: &Handle<StepReprProductDefinitionShape>,
     ) -> Result<bool, Failure> {
@@ -19,7 +20,7 @@ impl StepConstructStyles {
         };
         let relation = live_cdsr
             .representation_relation()
-            .cast::<StepReprRepresentationRelationshipWithTransformation>();
+            .cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationshipWithTransformation>>();
         let Some(relation) = relation.get() else {
             return Ok(false);
         };
@@ -28,7 +29,7 @@ impl StepConstructStyles {
             .transformation_operator()
             .item_defined_transformation();
         // element for axis 2 placement
-        let elems = single::<Handle<StepReprRepresentationItem>>(
+        let elems = single::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
             step_live(&defined, WHERE)?.transform_item2(),
         )?;
         // init Shape representation.
@@ -54,11 +55,11 @@ impl StepConstructStyles {
     pub fn find_context(
         &self,
         shape: &Shape,
-    ) -> Result<Handle<StepReprRepresentationContext>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>, Failure> {
         // find context of items
         let mapper = TransferBRep::shape_mapper(self.finder_process(), shape)?.cast();
         let process = step_live(self.finder_process(), WHERE)?;
-        let mut sr = Handle::<StepShapeShapeRepresentation>::default();
+        let mut sr = Handle::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>::default();
         if process.find_typed_transient_as(
             &mapper,
             StepShapeShapeRepresentation::static_type(),
@@ -66,7 +67,8 @@ impl StepConstructStyles {
         ) {
             return Ok(step_live(&sr, WHERE)?.context_of_items());
         }
-        let mut item = Handle::<StepGeomGeometricRepresentationItem>::default();
+        let mut item =
+            Handle::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>::default();
         if !process.find_typed_transient_as(
             &mapper,
             StepGeomGeometricRepresentationItem::static_type(),
@@ -77,7 +79,10 @@ impl StepConstructStyles {
         let hgraph = self.tool.graph(false)?;
         let sharings = step_live(&hgraph, WHERE)?.graph().sharings(&item.cast())?;
         for sharing in sharings.content() {
-            if let Some(sr) = sharing.cast::<StepShapeShapeRepresentation>().get() {
+            if let Some(sr) = sharing
+                .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+                .get()
+            {
                 let context = sr.context_of_items();
                 if context.is_some() {
                     return Ok(context);
@@ -89,16 +94,21 @@ impl StepConstructStyles {
     /// Whether a style is on a whole shape representation, which makes it a root style.
     fn styles_representation(style: &StepVisualStyledItem) -> Result<bool, Failure> {
         let item = style.item_ap242()?.value();
-        Ok(item.get().is_some() && item.cast::<StepShapeShapeRepresentation>().is_some())
+        Ok(item.get().is_some()
+            && item
+                .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+                .is_some())
     }
     /// The styled items of one MDGPR or DM.
     fn load_container(
         &mut self,
-        container: &Handle<StepReprRepresentation>,
+        container: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     ) -> Result<(), Failure> {
         let container = step_live(container, WHERE)?;
         for j in 1..=container.nb_items() {
-            let style = container.items_value(j)?.cast::<StepVisualStyledItem>();
+            let style = container
+                .items_value(j)?
+                .cast::<dyn crate::StepEntityBase<StepVisualStyledItem>>();
             let Some(live) = style.get() else {
                 continue;
             };
@@ -122,7 +132,10 @@ impl StepConstructStyles {
                 || is_exactly::<StepVisualDraughtingModel>(&entity)
             {
                 self.load_container(&entity.cast())?;
-            } else if let Some(style) = entity.cast::<StepVisualStyledItem>().get() {
+            } else if let Some(style) = entity
+                .cast::<dyn crate::StepEntityBase<StepVisualStyledItem>>()
+                .get()
+            {
                 if Self::styles_representation(style)? && !self.my_root_styles.contains(&entity) {
                     self.my_root_styles.add(entity);
                 } else if !self.my_styles.contains(&entity) {
@@ -136,7 +149,7 @@ impl StepConstructStyles {
     /// entities; true when it holds any.
     pub fn load_invis_styles(
         &self,
-        inv_styles: &mut Handle<HSequence<Handle<StandardTransient>>>,
+        inv_styles: &mut Handle<HSequence<Handle<dyn Transient>>>,
     ) -> Result<bool, Failure> {
         let model = self.tool.model()?;
         // search for invisibility
@@ -166,7 +179,7 @@ impl StepConstructStyles {
     }
     /// The surface part of `make_color_psa`.
     fn surface_style_usage(
-        surf_col: &Handle<StepVisualColour>,
+        surf_col: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         rendering_props: &StepConstructRenderingProperties,
     ) -> Result<Handle<StepVisualSurfaceStyleUsage>, Failure> {
         let colour = Handle::new(StepVisualFillAreaStyleColour::new());
@@ -198,7 +211,7 @@ impl StepConstructStyles {
     }
     /// The curve part of `make_color_psa`.
     fn curve_style(
-        curve_col: &Handle<StepVisualColour>,
+        curve_col: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) -> Result<Handle<StepVisualCurveStyle>, Failure> {
         let font = Handle::new(StepVisualDraughtingPreDefinedCurveFont::new());
         font.init(&text("continuous"));
@@ -217,13 +230,14 @@ impl StepConstructStyles {
     /// PresentationStyleByContext when `is_for_nauo`. Null without any colour.
     pub fn make_color_psa(
         &self,
-        _item: &Handle<StepReprRepresentationItem>,
-        surf_col: &Handle<StepVisualColour>,
-        curve_col: &Handle<StepVisualColour>,
+        _item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        surf_col: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+        curve_col: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         rendering_props: &StepConstructRenderingProperties,
         is_for_nauo: bool,
-    ) -> Result<Handle<StepVisualPresentationStyleAssignment>, Failure> {
-        let mut items: Vec<Handle<StandardTransient>> = Vec::new();
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>, Failure>
+    {
+        let mut items: Vec<Handle<dyn Transient>> = Vec::new();
         if surf_col.is_some() {
             items.push(Self::surface_style_usage(surf_col, rendering_props)?.cast());
         }
@@ -240,11 +254,12 @@ impl StepConstructStyles {
             select.set_value(item)?;
             step_array1_set(&selects, index as i32 + 1, select, WHERE)?;
         }
-        let psa: Handle<StepVisualPresentationStyleAssignment> = if is_for_nauo {
-            Handle::new(StepVisualPresentationStyleByContext::new()).cast()
-        } else {
-            Handle::new(StepVisualPresentationStyleAssignment::new())
-        };
+        let psa: Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>> =
+            if is_for_nauo {
+                Handle::new(StepVisualPresentationStyleByContext::new()).cast()
+            } else {
+                Handle::new(StepVisualPresentationStyleAssignment::new()).into_upcast()
+            };
         step_live(&psa, WHERE)?.init(&selects);
         Ok(psa)
     }
@@ -252,11 +267,12 @@ impl StepConstructStyles {
     /// map where all PSAs created here are remembered.
     pub fn get_color_psa(
         &mut self,
-        item: &Handle<StepReprRepresentationItem>,
-        col: &Handle<StepVisualColour>,
-    ) -> Result<Handle<StepVisualPresentationStyleAssignment>, Failure> {
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        col: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>, Failure>
+    {
         // if this color already was processed, just use the same PSA, else create new and add it to map
-        let key: Handle<StandardTransient> = col.cast();
+        let key: Handle<dyn Transient> = col.cast();
         if let Some((_, psa)) = self
             .my_map_of_styles
             .iter()
@@ -278,10 +294,10 @@ impl StepConstructStyles {
     /// or the last definition.
     pub fn get_colors(
         &self,
-        style: &Handle<StepVisualStyledItem>,
-        surface_colour: &mut Handle<StepVisualColour>,
-        boundary_colour: &mut Handle<StepVisualColour>,
-        curve_colour: &mut Handle<StepVisualColour>,
+        style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+        surface_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+        boundary_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+        curve_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         rendering_props: &mut StepConstructRenderingProperties,
         is_component: &mut bool,
     ) -> Result<bool, Failure> {

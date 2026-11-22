@@ -9,7 +9,7 @@ use martensite_tkbrep::topods::{Face, Shape};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, List};
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// `myMapImb`: each wire (reversed when it bounds a hole) and the wires inside it.
@@ -45,11 +45,10 @@ pub(super) struct FaceFields {
 /// assert_eq!(checker.status().unwrap().first(), Some(&BRepCheckStatus::NoSurface));
 /// ```
 pub struct BRepCheckFace {
-    transient: StandardTransient,
     base: ResultBase,
     pub(super) fields: SharedState<FaceFields>,
 }
-impl_transient!(BRepCheckFace, "BRepCheck_Face", dyn BRepCheckResult, transient,
+impl_transient!(BRepCheckFace, "BRepCheck_Face", dyn BRepCheckResult,
     interfaces: [dyn BRepCheckResult]);
 
 impl BRepCheckFace {
@@ -57,7 +56,6 @@ impl BRepCheckFace {
     /// controls on; `BRepCheckFace::new(&face)?`.
     pub fn new(face: &Face) -> Result<Self, Failure> {
         let checker = Self {
-            transient: StandardTransient::default(),
             base: ResultBase::new(),
             fields: SharedState::new(FaceFields {
                 intdone: false,

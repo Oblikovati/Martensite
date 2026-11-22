@@ -120,7 +120,7 @@ impl ChFi2dFilletAlgo {
     /// The curve of an edge in the plane (GeomProjLib::Curve2d) and its range.
     fn projected(&self, edge: &Edge) -> Result<(Handle<dyn Geom2dCurve>, f64, f64), Failure> {
         let (curve, first, last) = BRepTool::curve(edge)?;
-        let surface: Handle<dyn GeomSurface> = self.plane.clone().cast();
+        let surface: Handle<dyn GeomSurface> = self.plane.upcast();
         let c2d = geom_proj_lib::curve2d_range(&curve, (first, last), &surface)?;
         Ok((c2d, first, last))
     }

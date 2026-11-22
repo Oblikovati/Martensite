@@ -7,7 +7,7 @@ use crate::interface::InterfaceMsg;
 use martensite_tkernel::{
     message::Message,
     ncollection::{HArray1, HSequence},
-    standard::{Failure, Handle, RuntimeType, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeType, Transient, exceptions},
     tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString},
 };
 use std::fmt::Write as _;
@@ -17,7 +17,7 @@ pub type XSControlTextSeq = HSequence<Handle<HAsciiString>>;
 /// A list of extended texts.
 pub type XSControlExtTextSeq = HSequence<Handle<HExtendedString>>;
 /// A list of transients.
-pub type XSControlTransientSeq = HSequence<Handle<StandardTransient>>;
+pub type XSControlTransientSeq = HSequence<Handle<dyn Transient>>;
 
 /// `XSControlUtils`.
 ///
@@ -47,18 +47,18 @@ fn len<T: Send + Sync + 'static>(list: &HSequence<T>) -> i32 {
 
 /// The lines of a list of texts (the null texts skipped), `None` when `lines` is not a
 /// list of texts.
-fn line_texts(lines: &Handle<StandardTransient>) -> Option<Vec<String>> {
-    if let Some(l) = lines.cast::<XSControlTextSeq>().get() {
+fn line_texts(lines: &Handle<dyn Transient>) -> Option<Vec<String>> {
+    if let Some(l) = lines.downcast_ref::<XSControlTextSeq>() {
         return Some(l.sequence(|s| {
             s.iter()
                 .filter_map(|h| h.get().map(|t| text(&t.string())))
                 .collect()
         }));
     }
-    if let Some(l) = lines.cast::<HSequence<AsciiString>>().get() {
+    if let Some(l) = lines.downcast_ref::<HSequence<AsciiString>>() {
         return Some(l.sequence(|s| s.iter().map(text).collect()));
     }
-    if let Some(l) = lines.cast::<XSControlExtTextSeq>().get() {
+    if let Some(l) = lines.downcast_ref::<XSControlExtTextSeq>() {
         return Some(l.sequence(|s| {
             s.iter()
                 .filter_map(|h| h.get().map(|t| t.string().to_utf8()))
@@ -66,8 +66,7 @@ fn line_texts(lines: &Handle<StandardTransient>) -> Option<Vec<String>> {
         }));
     }
     lines
-        .cast::<HSequence<ExtendedString>>()
-        .get()
+        .downcast_ref::<HSequence<ExtendedString>>()
         .map(|l| l.sequence(|s| s.iter().map(ExtendedString::to_utf8).collect()))
 }
 
@@ -82,7 +81,7 @@ impl XSControlUtils {
     }
     /// `TraceLines(lines)`: the lines of a list of texts (one per line), or a text alone
     /// (without end of line).
-    pub fn trace_lines(&self, lines: &Handle<StandardTransient>) {
+    pub fn trace_lines(&self, lines: &Handle<dyn Transient>) {
         let mut sout = Message::send_info();
         if let Some(texts) = line_texts(lines) {
             for line in texts {
@@ -90,50 +89,42 @@ impl XSControlUtils {
             }
             return;
         }
-        if let Some(t) = lines.cast::<HAsciiString>().get() {
+        if let Some(t) = lines.downcast_ref::<HAsciiString>() {
             let _ = write!(sout, "{}", text(&t.string()));
         }
-        if let Some(t) = lines.cast::<HExtendedString>().get() {
+        if let Some(t) = lines.downcast_ref::<HExtendedString>() {
             let _ = write!(sout, "{}", t.string().to_utf8());
         }
     }
     /// `IsKind(item, what)`: false for a null item or type.
-    pub fn is_kind(&self, item: &Handle<StandardTransient>, what: Option<&RuntimeType>) -> bool {
+    pub fn is_kind(&self, item: &Handle<dyn Transient>, what: Option<&RuntimeType>) -> bool {
         what.is_some_and(|w| item.is_kind(w))
     }
-    /// `TypeName(item, nopk = false)`: the name of the type of `item` (or of `item` when
-    /// it is a type), without its package with `nopk`; empty for null.
-    pub fn type_name(&self, item: &Handle<StandardTransient>, nopk: bool) -> String {
-        if item.is_null() {
-            return String::new();
+    /// Returns the dynamic type name of an entity; `utils.type_name(&entity, true)`.
+    pub fn type_name(&self, item: &Handle<dyn Transient>, nopk: bool) -> String {
+        item.dynamic_type()
+            .map(|typ| self.type_name_from_descriptor(typ, nopk))
+            .unwrap_or_default()
+    }
+
+    /// Formats a static type name, optionally omitting its package; `utils.type_name_from_descriptor(descriptor, true)`.
+    pub fn type_name_from_descriptor(&self, descriptor: &RuntimeType, nopk: bool) -> String {
+        let name = descriptor.name();
+        if nopk && let Some((_, local)) = name.split_once('_') {
+            return local.to_owned();
         }
-        let atype = item.cast::<RuntimeType>();
-        let name = match atype.get() {
-            Some(t) => t.name().to_owned(),
-            None => item.dynamic_type().map_or("", |t| t.name()).to_owned(),
-        };
-        if !nopk {
-            return name;
-        }
-        match name.find('_') {
-            Some(i) => name[i + 1..].to_owned(),
-            None => name,
-        }
+        name.to_owned()
     }
     /// `TraValue(seqval, num)`: the item `num` of a list of texts or transients; null
     /// otherwise.
-    pub fn tra_value(
-        &self,
-        seqval: &Handle<StandardTransient>,
-        num: i32,
-    ) -> Handle<StandardTransient> {
+    pub fn tra_value(&self, seqval: &Handle<dyn Transient>, num: i32) -> Handle<dyn Transient> {
         if num < 1 {
             return Handle::default();
         }
-        if let Some(seqs) = seqval.cast::<XSControlTextSeq>().get() {
+        if let Some(seqs) = seqval.downcast_ref::<XSControlTextSeq>() {
             return nth(seqs, num).map(|h| h.cast()).unwrap_or_default();
         }
-        if let Some(seqt) = seqval.cast::<XSControlTransientSeq>().get() {
+        if let Some(seqt) = seqval.downcast_ref::<XSControlTransientSeq>() {
             return nth(seqt, num).unwrap_or_default();
         }
         Handle::default()
@@ -146,7 +137,7 @@ impl XSControlUtils {
     pub fn append_tra(
         &self,
         seqval: &Handle<XSControlTransientSeq>,
-        traval: &Handle<StandardTransient>,
+        traval: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let list = seqval
             .get()
@@ -231,7 +222,7 @@ impl XSControlUtils {
     /// `StandardOutOfRange` for a number below 1 of a list (a native out of range).
     pub fn c_str_value(
         &self,
-        list: &Handle<StandardTransient>,
+        list: &Handle<dyn Transient>,
         num: i32,
     ) -> Result<AsciiString, Failure> {
         let out_of_range = || {
@@ -239,7 +230,7 @@ impl XSControlUtils {
                 "XSControlUtils::CStrValue: {num}; expected at least 1"
             ))
         };
-        if let Some(l) = list.cast::<XSControlTextSeq>().get() {
+        if let Some(l) = list.downcast_ref::<XSControlTextSeq>() {
             return if num > len(l) {
                 Ok(AsciiString::default())
             } else {
@@ -248,14 +239,14 @@ impl XSControlUtils {
                     .ok_or_else(out_of_range)
             };
         }
-        if let Some(l) = list.cast::<HSequence<AsciiString>>().get() {
+        if let Some(l) = list.downcast_ref::<HSequence<AsciiString>>() {
             return if num > len(l) {
                 Ok(AsciiString::default())
             } else {
                 nth(l, num).ok_or_else(out_of_range)
             };
         }
-        if let Some(l) = list.cast::<XSControlExtTextSeq>().get() {
+        if let Some(l) = list.downcast_ref::<XSControlExtTextSeq>() {
             return if num > len(l) {
                 Ok(AsciiString::default())
             } else {
@@ -264,7 +255,7 @@ impl XSControlUtils {
                     .ok_or_else(out_of_range)
             };
         }
-        if let Some(l) = list.cast::<HSequence<ExtendedString>>().get() {
+        if let Some(l) = list.downcast_ref::<HSequence<ExtendedString>>() {
             return if num > len(l) {
                 Ok(AsciiString::default())
             } else {
@@ -273,27 +264,23 @@ impl XSControlUtils {
                     .ok_or_else(out_of_range)
             };
         }
-        if let Some(t) = list.cast::<HAsciiString>().get() {
+        if let Some(t) = list.downcast_ref::<HAsciiString>() {
             return Ok(t.string().clone());
         }
-        if let Some(t) = list.cast::<HExtendedString>().get() {
+        if let Some(t) = list.downcast_ref::<HExtendedString>() {
             return Ok(self.extended_to_ascii(t.string().as_utf16()));
         }
         Ok(AsciiString::default())
     }
     /// `EStrValue(list, num)`: as `CStrValue`, in extended units. Native defect kept: a
     /// list of `AsciiString` gives no units (the value computed is not returned).
-    pub fn e_str_value(
-        &self,
-        list: &Handle<StandardTransient>,
-        num: i32,
-    ) -> Result<Vec<u16>, Failure> {
+    pub fn e_str_value(&self, list: &Handle<dyn Transient>, num: i32) -> Result<Vec<u16>, Failure> {
         let out_of_range = || {
             exceptions::out_of_range(&format!(
                 "XSControlUtils::EStrValue: {num}; expected at least 1"
             ))
         };
-        if let Some(l) = list.cast::<XSControlTextSeq>().get() {
+        if let Some(l) = list.downcast_ref::<XSControlTextSeq>() {
             return if num > len(l) {
                 Ok(Vec::new())
             } else {
@@ -302,7 +289,7 @@ impl XSControlUtils {
                     .ok_or_else(out_of_range)
             };
         }
-        if let Some(l) = list.cast::<XSControlExtTextSeq>().get() {
+        if let Some(l) = list.downcast_ref::<XSControlExtTextSeq>() {
             return if num > len(l) {
                 Ok(Vec::new())
             } else {
@@ -311,7 +298,7 @@ impl XSControlUtils {
                     .ok_or_else(out_of_range)
             };
         }
-        if let Some(l) = list.cast::<HSequence<ExtendedString>>().get() {
+        if let Some(l) = list.downcast_ref::<HSequence<ExtendedString>>() {
             return if num > len(l) {
                 Ok(Vec::new())
             } else {
@@ -320,10 +307,10 @@ impl XSControlUtils {
                     .ok_or_else(out_of_range)
             };
         }
-        if let Some(t) = list.cast::<HAsciiString>().get() {
+        if let Some(t) = list.downcast_ref::<HAsciiString>() {
             return Ok(self.ascii_to_extended(&text(&t.string())));
         }
-        if let Some(t) = list.cast::<HExtendedString>().get() {
+        if let Some(t) = list.downcast_ref::<HExtendedString>() {
             return Ok(t.string().as_utf16().to_vec());
         }
         Ok(Vec::new())
@@ -362,26 +349,23 @@ impl XSControlUtils {
     }
     /// `SeqLength(list)`: the length of a list of texts, transients, shapes or integers
     /// (0 otherwise).
-    pub fn seq_length(&self, list: &Handle<StandardTransient>) -> i32 {
-        if let Some(l) = list.cast::<XSControlTextSeq>().get() {
+    pub fn seq_length(&self, list: &Handle<dyn Transient>) -> i32 {
+        if let Some(l) = list.downcast_ref::<XSControlTextSeq>() {
             return len(l);
         }
-        if let Some(l) = list.cast::<HSequence<AsciiString>>().get() {
+        if let Some(l) = list.downcast_ref::<HSequence<AsciiString>>() {
             return len(l);
         }
-        if let Some(l) = list.cast::<XSControlExtTextSeq>().get() {
+        if let Some(l) = list.downcast_ref::<XSControlExtTextSeq>() {
             return len(l);
         }
-        if let Some(l) = list.cast::<XSControlTransientSeq>().get() {
+        if let Some(l) = list.downcast_ref::<XSControlTransientSeq>() {
             return len(l);
         }
-        if let Some(l) = list
-            .cast::<HSequence<martensite_tkbrep::topods::Shape>>()
-            .get()
-        {
+        if let Some(l) = list.downcast_ref::<HSequence<martensite_tkbrep::topods::Shape>>() {
             return len(l);
         }
-        list.cast::<HSequence<i32>>().get().map_or(0, len)
+        list.downcast_ref::<HSequence<i32>>().map_or(0, len)
     }
     /// `SeqToArr(seq, first = 1)`: a list of texts or transients as an array of bounds
     /// `first..length - first + 1`, item `i` at `i - first + 1`. Native quirk kept: for
@@ -389,17 +373,17 @@ impl XSControlUtils {
     /// `StandardTypeMismatch` for another object; null for null.
     pub fn seq_to_arr(
         &self,
-        seq: &Handle<StandardTransient>,
+        seq: &Handle<dyn Transient>,
         first: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         if seq.is_null() {
             return Ok(Handle::default());
         }
-        if let Some(seqs) = seq.cast::<XSControlTextSeq>().get() {
-            return Ok(Handle::new(to_array(seqs, first)?).cast());
+        if let Some(seqs) = seq.downcast_ref::<XSControlTextSeq>() {
+            return Ok(Handle::new(to_array(seqs, first)?).into_upcast());
         }
-        if let Some(seqt) = seq.cast::<XSControlTransientSeq>().get() {
-            return Ok(Handle::new(to_array(seqt, first)?).cast());
+        if let Some(seqt) = seq.downcast_ref::<XSControlTransientSeq>() {
+            return Ok(Handle::new(to_array(seqt, first)?).into_upcast());
         }
         Err(exceptions::type_mismatch(
             "XSControlUtils::SeqToArr: expected a list of texts or transients",
@@ -409,16 +393,16 @@ impl XSControlUtils {
     /// for another object; null for null.
     pub fn arr_to_seq(
         &self,
-        arr: &Handle<StandardTransient>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+        arr: &Handle<dyn Transient>,
+    ) -> Result<Handle<dyn Transient>, Failure> {
         if arr.is_null() {
             return Ok(Handle::default());
         }
-        if let Some(arrs) = arr.cast::<HArray1<Handle<HAsciiString>>>().get() {
-            return Ok(Handle::new(to_sequence(arrs)).cast());
+        if let Some(arrs) = arr.downcast_ref::<HArray1<Handle<HAsciiString>>>() {
+            return Ok(Handle::new(to_sequence(arrs)).into_upcast());
         }
-        if let Some(arrt) = arr.cast::<HArray1<Handle<StandardTransient>>>().get() {
-            return Ok(Handle::new(to_sequence(arrt)).cast());
+        if let Some(arrt) = arr.downcast_ref::<HArray1<Handle<dyn Transient>>>() {
+            return Ok(Handle::new(to_sequence(arrt)).into_upcast());
         }
         Err(exceptions::type_mismatch(
             "XSControlUtils::ArrToSeq: expected an array of texts or transients",

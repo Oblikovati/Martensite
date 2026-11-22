@@ -1,7 +1,7 @@
 //! The checks of the plate surface against the constraints.
 use super::GeomPlateBuildPlateSurface;
 use super::errors::ConstraintGaps;
-use crate::geom_plate::{GeomPlateCurveConstraint, GeomPlatePointConstraint, live};
+use crate::geom_plate::{GeomPlateCurveConstraintState, GeomPlatePointConstraint, live};
 use crate::local_analysis::{LocalAnalysisSurfaceContinuity, SurfaceContinuityTolerances};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::errors;
@@ -28,7 +28,7 @@ impl GeomPlateBuildPlateSurface {
     /// The parameter at which gap `j` of curve `lin` is checked: the interval middle
     /// when the curve has more than 3 parameters, else a uniform sample.
     fn check_parameter(
-        lin: &GeomPlateCurveConstraint,
+        lin: &GeomPlateCurveConstraintState,
         par: &[f64],
         j: i32,
         nb_pts: i32,
@@ -43,7 +43,11 @@ impl GeomPlateBuildPlateSurface {
 
     /// Updates the global errors with the gaps of curve `i` and measures how far the
     /// gaps exceed the criteria.
-    fn curve_excess(&mut self, i: i32, lin: &GeomPlateCurveConstraint) -> Result<Excess, Failure> {
+    fn curve_excess(
+        &mut self,
+        i: i32,
+        lin: &GeomPlateCurveConstraintState,
+    ) -> Result<Excess, Failure> {
         let par: Vec<f64> = self.par_cont_of(i)?.to_vec();
         let nb_pts: i32 = if par.len() < 3 { 4 } else { par.len() as i32 };
         let mut gaps = ConstraintGaps::zeroed(nb_pts - 1)?;
@@ -86,7 +90,7 @@ impl GeomPlateBuildPlateSurface {
 
     /// Raises the number of points of a curve whose gaps exceed the criteria; false
     /// when it does.
-    fn refine_curve(lin: &GeomPlateCurveConstraint, excess: &Excess, nb_boucle: i32) -> bool {
+    fn refine_curve(lin: &GeomPlateCurveConstraintState, excess: &Excess, nb_boucle: i32) -> bool {
         let nb_points: i32 = lin.nb_points();
         let mut coef: f64;
         if excess.ndiff_dist > 0 {
@@ -126,7 +130,7 @@ impl GeomPlateBuildPlateSurface {
         (self.g0_error, self.g1_error, self.g2_error) = (0.0, 0.0, 0.0);
         for i in 1..=self.nt_lin_cont() {
             let lin_handle = self.lin_cont[(i - 1) as usize].clone();
-            let lin = live(&lin_handle, "a curve constraint")?;
+            let lin = super::curve_state(&lin_handle)?;
             if lin.order() == -1 {
                 continue;
             }

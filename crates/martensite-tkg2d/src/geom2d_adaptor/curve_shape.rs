@@ -6,7 +6,7 @@
 //! one interval.
 use super::curve::Geom2dAdaptorCurve;
 use super::curve_query::resolution;
-use super::curve_state::{AdaptorState, BSplineData, CurveData};
+use super::curve_state::{AdaptorState, BSplineData, CurveData, borrow_curve};
 use crate::adaptor2d::Adaptor2dCurve2d;
 use crate::geom2d::errors::{array_bounds, no_such_object};
 use crate::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dOffsetCurve};
@@ -30,7 +30,7 @@ pub(super) fn continuity(state: &AdaptorState) -> Result<Shape, Failure> {
 
 // An offset loses one order: C1 becomes C0; G1 and G2 stay, C0 has no continuity.
 fn offset_continuity(state: &AdaptorState) -> Result<Shape, Failure> {
-    let offset_curve: Handle<Geom2dOffsetCurve> = state.curve.cast();
+    let offset_curve: &Geom2dOffsetCurve = borrow_curve(&state.curve)?;
     knot_continuity::offset_continuity(offset_curve.basis_curve_continuity(), "Geom2dAdaptor_Curve")
 }
 
@@ -89,7 +89,8 @@ fn bspline_intervals(
 
 // A temporary adaptor on the offset basis over the same range.
 fn offset_basis_adaptor(state: &AdaptorState) -> Result<Geom2dAdaptorCurve, Failure> {
-    let basis: Handle<dyn Geom2dCurve> = state.curve.cast::<Geom2dOffsetCurve>().basis_curve();
+    let basis: Handle<dyn Geom2dCurve> =
+        borrow_curve::<Geom2dOffsetCurve>(&state.curve)?.basis_curve();
     Geom2dAdaptorCurve::with_range(&basis, state.first, state.last)
 }
 

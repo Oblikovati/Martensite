@@ -11,7 +11,7 @@ use crate::extrema::pon::POnSurf;
 use crate::extrema::surface_ref::SurfaceRef;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorSurfaceOfRevolution;
 use martensite_tkmath::elclib;
@@ -22,7 +22,6 @@ use std::f64::consts::PI;
 /// `ExtPRevS`; `ExtPRevS::with_surface(point, &revolution, 1e-9, 1e-9)?.nb_ext()?`.
 pub struct ExtPRevS {
     // Transient base: ExtPS holds the retained object by handle.
-    parent: StandardTransient,
     s: Handle<GeomAdaptorSurfaceOfRevolution>,
     vinf: f64,
     vsup: f64,
@@ -36,12 +35,11 @@ pub struct ExtPRevS {
     points: [POnSurf; 8],
 }
 
-impl_transient!(ExtPRevS, "Extrema_ExtPRevS", StandardTransient, parent);
+impl_transient!(ExtPRevS, "Extrema_ExtPRevS", dyn Transient);
 
 impl Default for ExtPRevS {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             s: Handle::default(),
             vinf: 0.0,
             vsup: 0.0,

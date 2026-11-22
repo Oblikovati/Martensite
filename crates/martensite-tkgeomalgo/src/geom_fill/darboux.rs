@@ -9,7 +9,7 @@ use super::trihedron_law::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurveOnSurface, Adaptor3dSurface};
 use martensite_tkg3d::geom::GeomSurfaceD3;
@@ -22,14 +22,12 @@ use martensite_tkmath::gp::{Vector2, Vector3};
 /// `let law = GeomFillDarboux::new(); law.set_curve(&curve_on_surface)?;`.
 #[derive(Default)]
 pub struct GeomFillDarboux {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
 }
 impl_transient!(
     GeomFillDarboux,
     "GeomFill_Darboux",
     dyn GeomFillTrihedronLaw,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw]
 );
 
@@ -112,7 +110,7 @@ impl GeomFillTrihedronLaw for GeomFillDarboux {
         if curve.is_some() {
             copy.set_curve(&curve)?;
         }
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn d0(&self, param: f64, frame: &mut TrihedronD0) -> Result<bool, Failure> {
         let (c2d, support) = curve_on_surface(self, "GeomFill_Darboux::D0")?;

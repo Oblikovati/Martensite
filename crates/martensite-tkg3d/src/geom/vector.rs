@@ -89,4 +89,4 @@ pub trait GeomVector: GeomGeometry {
         *self.vector_cell(PROTECTED).read()
     }
 }
-impl_transient_interface!(dyn GeomVector, "Geom_Vector", dyn GeomGeometry);
+impl_transient_interface!(dyn GeomVector, "Geom_Vector", dyn GeomGeometry, upcasts: [dyn GeomGeometry]);

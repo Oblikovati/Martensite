@@ -8,7 +8,7 @@ use crate::standard::strtod;
 ///
 /// A formatting failure cannot occur for a finite or
 /// non-finite double, so the Rust call always returns the text.
-pub fn real_to_c_string(value: f64) -> String {
+pub(super) fn real_to_c_string(value: f64) -> String {
     let mut text: Vec<u8> = format_e(value, 17).into_bytes();
     let Some(exponent_at) = text.iter().position(|&byte| byte == b'e') else {
         return String::from_utf8(text).expect("ASCII number text");
@@ -41,7 +41,7 @@ fn strip_fraction_zeros(mantissa: &mut Vec<u8>) {
 /// Parses with the crate's `strtod` and succeeds only when the whole
 /// text (up to a NUL) was consumed, so the empty string succeeds with 0;
 /// `c_string_to_real("2.5") == (true, 2.5)`.
-pub fn c_string_to_real(text: &str) -> (bool, f64) {
+pub(super) fn c_string_to_real(text: &str) -> (bool, f64) {
     let text: &str = text.split('\0').next().unwrap_or_default();
     let (value, end) = strtod(text);
     (end == text.len(), value)

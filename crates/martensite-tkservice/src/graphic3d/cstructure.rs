@@ -11,7 +11,9 @@ use super::{
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::program_error;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{
+    Failure, Handle, HandleSlot, SharedState, StandardTransient, Transient,
+};
 use martensite_tkmath::toploc::Datum3;
 use std::io;
 
@@ -22,8 +24,8 @@ pub struct Graphic3dCStructureFields {
     /// `myGraphicDriver`.
     pub graphic_driver: Handle<dyn Graphic3dGraphicDriver>,
     /// Each #324 entry keeps its own stable node, even when payload handles repeat.
-    /// Example: `fields.groups.append(group)` preserves one additional entry.
-    pub groups: Sequence<Handle<dyn Graphic3dGroup>>,
+    /// Example: `fields.groups.append(HandleSlot::new(group))` creates one owning entry.
+    pub groups: Sequence<HandleSlot<dyn Graphic3dGroup>>,
     /// `myBndBox`.
     pub bnd_box: Graphic3dBndBox3d,
     /// `myTrsf`.
@@ -198,7 +200,7 @@ pub trait Graphic3dCStructureMembers: Graphic3dCStructure {
             .read()
             .groups
             .iter()
-            .cloned()
+            .map(|slot| Handle::clone(slot))
             .collect()
     }
     /// `Transformation`; `cstructure.transformation().is_null()`.

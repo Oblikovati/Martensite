@@ -3,8 +3,8 @@
 use super::object_names::same_name;
 use super::{DocumentModelState, ModelObject, ModelObjectBase, ModelObjectData, ModelObjectState};
 use martensite_tkernel::{
-    impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    impl_transient,
+    standard::{Failure, Handle, SharedState},
     tcollection::{ExtendedString, HExtendedString},
 };
 use martensite_tklcaf::{
@@ -88,11 +88,6 @@ pub trait ModelPartition: ModelObject {
             .map(|_| ())
     }
 }
-impl_transient_interface!(
-    dyn ModelPartition,
-    "martensite_object_model_ModelPartition",
-    dyn ModelObject
-);
 
 impl StandardPartition {
     /// `Create(theLabel, theSetName)` (static): a new partition on the label, with the
@@ -100,7 +95,7 @@ impl StandardPartition {
     pub fn create(label: &TdfLabel, set_name: bool) -> Result<Handle<dyn ModelPartition>, Failure> {
         let partition = StandardPartition::new(label, set_name)?;
         partition.set_last_index(0)?;
-        Ok(partition.cast())
+        Ok(partition.into_upcast())
     }
     /// `GetPartition(theObject)` (static): the nearest partition above the object, null
     /// when none.
@@ -114,7 +109,7 @@ impl StandardPartition {
         while !label.is_null() {
             let mut found = Handle::default();
             if ModelObjectBase::get_obj(&label, &mut found, true)? {
-                let partition: Handle<dyn ModelPartition> = found.cast();
+                let partition: Handle<dyn ModelPartition> = found.into_cast();
                 if !partition.is_null() {
                     return Ok(partition);
                 }
@@ -145,7 +140,7 @@ pub fn partition_copy_data<T: ModelPartition + ?Sized>(
     partition: &T,
     target: &Handle<dyn ModelObject>,
 ) -> Result<bool, Failure> {
-    let target_partition: Handle<dyn ModelPartition> = target.cast();
+    let target_partition = target.view::<dyn ModelPartition>();
     let Some(target_partition) = target_partition.get() else {
         return Ok(false);
     };
@@ -183,23 +178,28 @@ macro_rules! object_model_partition_object_members {
 
 /// `martensite_object_model_ModelPartition` itself; `StandardPartition::create(&label, true)`.
 pub struct StandardPartition {
-    transient: StandardTransient,
     object: ModelObjectBase,
     partition: ModelPartitionBase,
 }
-super::canonical_runtime_type::canonical_object_model_type!(StandardPartition, dyn ModelPartition, transient, [dyn ModelObject, dyn ModelPartition]);
+impl_transient!(StandardPartition, "martensite_object_model_ModelPartition", dyn ModelObject,
+    interfaces: [dyn ModelObject, dyn ModelPartition]);
+super::canonical_runtime_type::canonical_object_model_type!(
+    dyn ModelPartition,
+    StandardPartition,
+    [dyn ModelObject]
+);
 
 impl StandardPartition {
     /// `martensite_object_model_ModelPartition(theLabel, theSetName)` (protected by the model): a partition attached
     /// to the label.
     pub fn new(label: &TdfLabel, set_name: bool) -> Result<Handle<StandardPartition>, Failure> {
         let partition = Handle::new(Self::unattached(label));
-        ModelObjectBase::attach(&partition.cast(), set_name)?;
+        ModelObjectBase::attach(&partition.upcast(), set_name)?;
         Ok(partition)
     }
     /// The persistence constructor (`DECLARE_TOBJdocument data framework_PERSISTENCE`): bound, not attached.
     pub fn persistence_new(label: &TdfLabel) -> Result<Handle<dyn ModelObject>, Failure> {
-        let partition: Handle<dyn ModelObject> = Handle::new(Self::unattached(label)).cast();
+        let partition: Handle<dyn ModelObject> = Handle::new(Self::unattached(label)).into_upcast();
         let object = martensite_tkcdf::live(
             &partition,
             "martensite_object_model_ModelPartition::Persistence_::New",
@@ -210,7 +210,6 @@ impl StandardPartition {
     }
     fn unattached(label: &TdfLabel) -> Self {
         Self {
-            transient: StandardTransient::default(),
             object: ModelObjectBase::new(label),
             partition: ModelPartitionBase::default(),
         }

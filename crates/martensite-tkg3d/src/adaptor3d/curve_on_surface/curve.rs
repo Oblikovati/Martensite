@@ -31,7 +31,7 @@ impl Adaptor3dCurve for Adaptor3dCurveOnSurface {
         if let Some(last) = copy.last_surface.get() {
             copy.last_surface = last.shallow_copy()?;
         }
-        Ok(Handle::new(Self::from_state(copy)).cast())
+        Ok(Handle::new(Self::from_state(copy)).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         self.snapshot().curve()?.first_parameter()
@@ -68,7 +68,7 @@ impl Adaptor3dCurve for Adaptor3dCurveOnSurface {
         let trimmed = Self::default();
         trimmed.load_surface(&state.surface)?;
         trimmed.load_curve(&state.curve()?.trim(first, last, tolerance)?)?;
-        Ok(Handle::new(trimmed).cast())
+        Ok(Handle::new(trimmed).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         self.snapshot().curve()?.is_closed()

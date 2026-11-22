@@ -6,7 +6,9 @@ use super::{
     StepDataESDescr, StepDataField, StepDataFieldList, StepDataPDescr, StepDataSelectMember,
     StepDataStepReaderData,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceFileReaderDataParams, InterfaceParamType as Param,
 };
@@ -22,7 +24,7 @@ impl StepDataStepReaderData {
         ach: &Handle<InterfaceCheck>,
         val: &mut Handle<dyn StepDataSelectMember>,
     ) -> Result<bool, Failure> {
-        let mut value = val.cast::<StandardTransient>();
+        let mut value = val.cast::<dyn Transient>();
         let nuldescr = Handle::default();
         if value.is_null() {
             if !self.read_any(num, nump, mess, ach, &nuldescr, &mut value)? {
@@ -32,7 +34,7 @@ impl StepDataStepReaderData {
             return Ok(val.is_some());
         }
         let result = self.read_any(num, nump, mess, ach, &nuldescr, &mut value)?;
-        if value == val.cast::<StandardTransient>() {
+        if value == val.cast::<dyn Transient>() {
             return Ok(result);
         }
         add_param_fail(
@@ -53,7 +55,7 @@ impl StepDataStepReaderData {
         val: &mut Handle<T>,
     ) -> Result<bool, Failure>
     where
-        T: ?Sized + martensite_tkernel::standard::RuntimeTyped,
+        T: ?Sized + martensite_tkernel::standard::RuntimeTyped + TransientHandleTarget,
     {
         let mut member = val.cast::<dyn StepDataSelectMember>();
         if !self.read_member(num, nump, mess, ach, &mut member)? {

@@ -12,16 +12,18 @@ use super::{
 };
 use crate::iges_basic::entity_shape::{iges_array1_fill, iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::iges_shared_035;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_live, iges_msg, iges_new_array1,
 };
 use crate::iges_geom::{IgesGeomDirection, IgesGeomPoint};
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
 };
@@ -44,7 +46,7 @@ impl IgesSolidToolManifoldSolid {
         let mut shell_flag: bool = false;
         let mut nbshells: i32 = 0;
         let mut void_shell_flags: Handle<HArray1<i32>> = Handle::default();
-        let mut shell: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut shell: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut ashell: Handle<IgesSolidShell> = Handle::default();
         let mut void_shells: Handle<HArray1<Handle<IgesSolidShell>>> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
@@ -138,9 +140,9 @@ impl IgesSolidToolManifoldSolid {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolManifoldSolid::own_shared")?;
         let nbshells: i32 = ent_live.nb_void_shells();
-        iter.get_one_item(&ent_live.shell().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.shell().cast::<dyn Transient>());
         for i in 1..=nbshells {
-            iter.get_one_item(&ent_live.void_shell(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.void_shell(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -182,7 +184,7 @@ impl IgesSolidToolManifoldSolid {
         let another_live = iges_live(another, "IgesSolidToolManifoldSolid::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolManifoldSolid::own_copy")?;
         let shell = tc
-            .transferred(&another_live.shell().cast::<StandardTransient>())?
+            .transferred(&another_live.shell().cast::<dyn Transient>())?
             .cast::<IgesSolidShell>();
         let shell_flag: bool = another_live.orientation_flag();
         let nbshells: i32 = another_live.nb_void_shells();
@@ -193,7 +195,7 @@ impl IgesSolidToolManifoldSolid {
             void_flags = iges_new_array1::<i32>(1, nbshells)?;
             for i in 1..=nbshells {
                 let voidshell = tc
-                    .transferred(&another_live.void_shell(i)?.cast::<StandardTransient>())?
+                    .transferred(&another_live.void_shell(i)?.cast::<dyn Transient>())?
                     .cast::<IgesSolidShell>();
                 iges_array1_set(
                     &void_shells,
@@ -354,9 +356,9 @@ impl IgesSolidToolPlaneSurface {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolPlaneSurface::own_shared")?;
-        iter.get_one_item(&ent_live.location_point().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.normal().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.reference_dir().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.location_point().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.normal().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.reference_dir().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -407,14 +409,14 @@ impl IgesSolidToolPlaneSurface {
         let another_live = iges_live(another, "IgesSolidToolPlaneSurface::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolPlaneSurface::own_copy")?;
         let temp_location = tc
-            .transferred(&another_live.location_point().cast::<StandardTransient>())?
+            .transferred(&another_live.location_point().cast::<dyn Transient>())?
             .cast::<IgesGeomPoint>();
         let temp_normal = tc
-            .transferred(&another_live.normal().cast::<StandardTransient>())?
+            .transferred(&another_live.normal().cast::<dyn Transient>())?
             .cast::<IgesGeomDirection>();
         if another_live.is_parametrised() {
             let temp_refdir = tc
-                .transferred(&another_live.reference_dir().cast::<StandardTransient>())?
+                .transferred(&another_live.reference_dir().cast::<dyn Transient>())?
                 .cast::<IgesGeomDirection>();
             ent_live.init(&temp_location, &temp_normal, &temp_refdir);
         } else {

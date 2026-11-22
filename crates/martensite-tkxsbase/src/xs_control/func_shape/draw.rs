@@ -10,7 +10,7 @@ use crate::xs_control::{XSControl, XSControlVarsOps};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     message::{Message, MessageStream},
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use martensite_tkg3d::geom::GeomGeometry;
 use std::fmt::Write as _;
@@ -97,7 +97,7 @@ pub(super) fn tpdraw(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     let num = if tout {
         0
     } else {
-        IFSelectFunctions::give_entity_number(&ws.clone().cast(), which)?
+        IFSelectFunctions::give_entity_number(&ws, which)?
     };
     let req = DrawRequest {
         mode,
@@ -162,7 +162,7 @@ fn locate(
     model: &Handle<dyn InterfaceInterfaceModel>,
     i: i32,
 ) -> Result<(i32, i32), Failure> {
-    let number = |ent: &Handle<StandardTransient>| model.get().map_or(0, |m| m.number(ent));
+    let number = |ent: &Handle<dyn Transient>| model.get().map_or(0, |m| m.number(ent));
     match mode {
         0 => {
             let m = model
@@ -216,11 +216,11 @@ fn draw_item(
         let _ = writeln!(sout, " -> 1 command-host Shape: {name}");
         return set_shape(req, &name, &state.sh);
     }
-    if let Some(slb) = binder.cast::<TransferBRepShapeListBinder>().get() {
+    if let Some(slb) = binder.downcast_ref::<TransferBRepShapeListBinder>() {
         req.item_prefix(i, num, index, sout);
         return draw_shape_list(req, slb, i, state, sout);
     }
-    if let Some(trb) = binder.cast::<TransferSimpleBinderOfTransient>().get() {
+    if let Some(trb) = binder.downcast_ref::<TransferSimpleBinderOfTransient>() {
         return draw_geom(req, trb, i, num, state, sout);
     }
     if !req.tout {

@@ -1,5 +1,6 @@
 //! Divide closed faces at a seam or a geometric closure.
-use super::{FaceDivideData, FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeTool};
+use super::{FaceDivideData, FaceDivider};
+use crate::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use martensite_tkernel::{
     impl_transient,
     standard::{Failure, SharedState},
@@ -20,33 +21,30 @@ mod seam;
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct ShapeUpgradeClosedFaceDivide {
-    parent: ShapeUpgradeFaceDivide,
+    state: FaceDivideData,
     split_points: SharedState<i32>,
 }
-impl_transient!(ShapeUpgradeClosedFaceDivide, "ShapeUpgrade_ClosedFaceDivide", ShapeUpgradeFaceDivide, parent, interfaces:[dyn FaceDivider]);
+impl_transient!(ShapeUpgradeClosedFaceDivide, "ShapeUpgrade_ClosedFaceDivide", dyn FaceDivider, interfaces:[dyn FaceDivider, dyn UpgradeTool]);
 
 impl Default for ShapeUpgradeClosedFaceDivide {
     fn default() -> Self {
         Self {
-            parent: ShapeUpgradeFaceDivide::empty(),
+            state: FaceDivideData::default(),
             split_points: SharedState::new(1),
         }
     }
 }
 
 impl std::ops::Deref for ShapeUpgradeClosedFaceDivide {
-    type Target = ShapeUpgradeFaceDivide;
+    type Target = FaceDivideData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.state
     }
 }
 
 impl FaceDivider for ShapeUpgradeClosedFaceDivide {
     fn face_divide_data(&self) -> &FaceDivideData {
-        self.parent.face_divide_data()
-    }
-    fn face_divide_base(&self) -> &ShapeUpgradeTool {
-        self.parent.face_divide_base()
+        &self.state
     }
     fn split_surface(&self, area: f64) -> Result<bool, Failure> {
         algorithm::split_surface(self, area)
@@ -82,5 +80,11 @@ impl ShapeUpgradeClosedFaceDivide {
     /// Split the current face by its seam or geometric closure; `divider.split_surface(0.0)?`.
     pub fn split_surface(&self, area: f64) -> Result<bool, Failure> {
         FaceDivider::split_surface(self, area)
+    }
+}
+
+impl UpgradeTool for ShapeUpgradeClosedFaceDivide {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state.tool
     }
 }

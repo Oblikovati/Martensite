@@ -18,7 +18,7 @@ use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{Shape, Wire};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::List;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeomalgo::geom_fill::{
     GeomFillConstantBiNormal, GeomFillCorrectedFrenet, GeomFillCurveAndTrihedron,
@@ -32,7 +32,6 @@ use martensite_tkmath::gp::{Axis2, Direction3, Point3, Vector3};
 /// The sweep of profiles along a spine (`BRepFillPipeShell`);
 /// `let mut pipe = BRepFillPipeShell::new(&spine)?; pipe.add(&profile, false, false)?;`.
 pub struct BRepFillPipeShell {
-    parent: StandardTransient,
     my_spine: Wire,
     my_first: Shape,
     my_last: Shape,
@@ -60,12 +59,7 @@ pub struct BRepFillPipeShell {
     my_error_on_surf: f64,
     my_is_build_history: bool,
 }
-impl_transient!(
-    BRepFillPipeShell,
-    "BRepFillPipeShell",
-    StandardTransient,
-    parent
-);
+impl_transient!(BRepFillPipeShell, "BRepFillPipeShell", dyn Transient);
 
 /// StandardNullObject for a law that is not set (a crash natively).
 pub(super) fn null(what: &str) -> Failure {
@@ -82,8 +76,8 @@ fn trihedron_law(
     tlaw: Handle<dyn GeomFillTrihedronLaw>,
 ) -> Result<Handle<dyn BRepFillLocationLaw>, Failure> {
     let loc: Handle<dyn GeomFillLocationLaw> =
-        Handle::new(GeomFillCurveAndTrihedron::new(&tlaw)).cast();
-    Ok(Handle::new(BRepFillEdge3DLaw::new(spine, &loc)?).cast())
+        Handle::new(GeomFillCurveAndTrihedron::new(&tlaw)).into_upcast();
+    Ok(Handle::new(BRepFillEdge3DLaw::new(spine, &loc)?).into_upcast())
 }
 
 impl BRepFillPipeShell {
@@ -93,7 +87,6 @@ impl BRepFillPipeShell {
     /// until SetTransition (it is uninitialized natively).
     pub fn new(spine: &Wire) -> Result<Self, Failure> {
         let mut pipe = Self {
-            parent: StandardTransient::default(),
             my_spine: spine.clone(),
             my_first: Shape::default(),
             my_last: Shape::default(),
@@ -147,9 +140,9 @@ impl BRepFillPipeShell {
     pub fn set_frenet(&mut self, is_frenet: bool) -> Result<(), Failure> {
         self.my_trihedron = GeomFillTrihedron::IsFrenet;
         let tlaw: Handle<dyn GeomFillTrihedronLaw> = if is_frenet {
-            Handle::new(GeomFillFrenet::new()).cast()
+            Handle::new(GeomFillFrenet::new()).into_upcast()
         } else {
-            Handle::new(GeomFillCorrectedFrenet::new()).cast()
+            Handle::new(GeomFillCorrectedFrenet::new()).into_upcast()
         };
         self.my_location = trihedron_law(&self.my_spine, tlaw)?;
         self.my_section = Handle::default();
@@ -160,7 +153,7 @@ impl BRepFillPipeShell {
     pub fn set_discrete(&mut self) -> Result<(), Failure> {
         self.my_trihedron = GeomFillTrihedron::IsDiscreteTrihedron;
         let tlaw: Handle<dyn GeomFillTrihedronLaw> =
-            Handle::new(GeomFillDiscreteTrihedron::new()).cast();
+            Handle::new(GeomFillDiscreteTrihedron::new()).into_upcast();
         self.my_location = trihedron_law(&self.my_spine, tlaw)?;
         self.my_section = Handle::default();
         Ok(())
@@ -173,7 +166,7 @@ impl BRepFillPipeShell {
         let v1 = Vector3::from(axe.direction().xyz());
         let v2 = Vector3::from(axe.x_direction().xyz());
         let tlaw: Handle<dyn GeomFillTrihedronLaw> =
-            Handle::new(GeomFillFixed::new(v1, v2)?).cast();
+            Handle::new(GeomFillFixed::new(v1, v2)?).into_upcast();
         self.my_location = trihedron_law(&self.my_spine, tlaw)?;
         self.my_section = Handle::default();
         Ok(())
@@ -184,7 +177,7 @@ impl BRepFillPipeShell {
     pub fn set_bi_normal(&mut self, bi_normal: Direction3) -> Result<(), Failure> {
         self.my_trihedron = GeomFillTrihedron::IsConstantNormal;
         let tlaw: Handle<dyn GeomFillTrihedronLaw> =
-            Handle::new(GeomFillConstantBiNormal::new(bi_normal)).cast();
+            Handle::new(GeomFillConstantBiNormal::new(bi_normal)).into_upcast();
         self.my_location = trihedron_law(&self.my_spine, tlaw)?;
         self.my_section = Handle::default();
         Ok(())
@@ -196,7 +189,7 @@ impl BRepFillPipeShell {
         let loc = BRepFillEdgeOnSurfLaw::new(&self.my_spine, spine_support)?;
         let b: bool = loc.has_result();
         if b {
-            self.my_location = Handle::new(loc).cast();
+            self.my_location = Handle::new(loc).into_upcast();
             self.my_trihedron = GeomFillTrihedron::IsDarboux;
             self.my_section = Handle::default();
         }
@@ -216,7 +209,7 @@ impl BRepFillPipeShell {
     ) -> Result<(), Failure> {
         let the_guide: Wire = self.reorganized_guide(auxiliary_spine, keep_contact)?;
         let guide: Handle<dyn Adaptor3dCurve> =
-            Handle::new(BRepAdaptorCompCurve::with_wire(&the_guide, false)?).cast();
+            Handle::new(BRepAdaptorCompCurve::with_wire(&the_guide, false)?).into_upcast();
         let with_contact: bool = matches!(
             keep_contact,
             TypeOfContact::Contact | TypeOfContact::ContactOnBorder
@@ -228,9 +221,10 @@ impl BRepFillPipeShell {
                 GeomFillTrihedron::IsGuideAC
             };
             let tlaw: Handle<dyn GeomFillTrihedronWithGuide> =
-                Handle::new(GeomFillGuideTrihedronAC::new(&guide)?).cast();
+                Handle::new(GeomFillGuideTrihedronAC::new(&guide)?).into_upcast();
             let loc = Handle::new(GeomFillLocationGuide::new(&tlaw)?);
-            self.my_location = Handle::new(BRepFillACRLaw::new(&self.my_spine, &loc)?).cast();
+            self.my_location =
+                Handle::new(BRepFillACRLaw::new(&self.my_spine, &loc)?).into_upcast();
         } else {
             self.my_trihedron = if with_contact {
                 GeomFillTrihedron::IsGuidePlanWithContact
@@ -238,10 +232,11 @@ impl BRepFillPipeShell {
                 GeomFillTrihedron::IsGuidePlan
             };
             let tlaw: Handle<dyn GeomFillTrihedronWithGuide> =
-                Handle::new(GeomFillGuideTrihedronPlan::new(&guide)?).cast();
+                Handle::new(GeomFillGuideTrihedronPlan::new(&guide)?).into_upcast();
             let loc: Handle<dyn GeomFillLocationLaw> =
-                Handle::new(GeomFillLocationGuide::new(&tlaw)?).cast();
-            self.my_location = Handle::new(BRepFillEdge3DLaw::new(&self.my_spine, &loc)?).cast();
+                Handle::new(GeomFillLocationGuide::new(&tlaw)?).into_upcast();
+            self.my_location =
+                Handle::new(BRepFillEdge3DLaw::new(&self.my_spine, &loc)?).into_upcast();
         }
         self.my_section = Handle::default();
         Ok(())

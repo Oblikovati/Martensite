@@ -1,5 +1,5 @@
 //! A named root object of a set of stored data.
-use crate::standard::{Handle, StandardPersistent, StandardTransient};
+use crate::standard::{Handle, Persistent, StandardTransient};
 use crate::tcollection::AsciiString;
 use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -7,29 +7,20 @@ use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 struct RootFields {
     name: AsciiString,
     type_name: AsciiString,
-    object: Handle<StandardPersistent>,
+    object: Handle<dyn Persistent>,
     reference: i32,
 }
 
 /// A root shared by handles: updating a root edits the same object that an
 /// earlier `roots()` sequence holds, so the fields sit behind a lock.
-///
-/// ```
-/// use martensite_tkernel::storage::Root;
-/// use martensite_tkernel::tcollection::AsciiString;
-/// let root = Root::with_reference(&AsciiString::new("doc"), 3, &AsciiString::new("PDoc"));
-/// assert_eq!(root.reference(), 3);
-/// assert_eq!(root.type_name().as_bytes(), b"PDoc");
-/// ```
 #[derive(Default)]
-pub struct Root {
-    parent: StandardTransient,
+pub(crate) struct Root {
     fields: RwLock<RootFields>,
 }
 
 impl Root {
     /// Reference 0 and an empty type; `Root::new(&name, &object)`.
-    pub fn new(name: &AsciiString, object: &Handle<StandardPersistent>) -> Self {
+    pub(crate) fn new(name: &AsciiString, object: &Handle<dyn Persistent>) -> Self {
         Self::from_fields(RootFields {
             name: name.clone(),
             object: object.clone(),
@@ -39,7 +30,12 @@ impl Root {
 
     /// A retrieved root without its object yet.
     /// Example: `Root::with_reference(&name, 1, &type_name)`.
-    pub fn with_reference(name: &AsciiString, reference: i32, type_name: &AsciiString) -> Self {
+    #[cfg(test)]
+    pub(crate) fn with_reference(
+        name: &AsciiString,
+        reference: i32,
+        type_name: &AsciiString,
+    ) -> Self {
         Self::from_fields(RootFields {
             name: name.clone(),
             type_name: type_name.clone(),
@@ -50,7 +46,6 @@ impl Root {
 
     fn from_fields(fields: RootFields) -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: RwLock::new(fields),
         }
     }
@@ -64,44 +59,46 @@ impl Root {
     }
 
     /// Example: `root.set_name(&AsciiString::new("doc"))`.
-    pub fn set_name(&self, name: &AsciiString) {
+    #[cfg(test)]
+    pub(crate) fn set_name(&self, name: &AsciiString) {
         self.write().name = name.clone();
     }
 
     /// Example: `root.name()`.
-    pub fn name(&self) -> AsciiString {
+    pub(crate) fn name(&self) -> AsciiString {
         self.read().name.clone()
     }
 
     /// Example: `root.set_object(&object)`.
-    pub fn set_object(&self, object: &Handle<StandardPersistent>) {
+    pub(crate) fn set_object(&self, object: &Handle<dyn Persistent>) {
         self.write().object = object.clone();
     }
 
     /// The root's persistent object, null for a retrieved root; `root.object()`.
-    pub fn object(&self) -> Handle<StandardPersistent> {
+    pub(crate) fn object(&self) -> Handle<dyn Persistent> {
         self.read().object.clone()
     }
 
     /// `Type`; `root.type_name()`.
-    pub fn type_name(&self) -> AsciiString {
+    #[cfg(test)]
+    pub(crate) fn type_name(&self) -> AsciiString {
         self.read().type_name.clone()
     }
 
     /// Example: `root.set_reference(2)`.
-    pub fn set_reference(&self, reference: i32) {
+    pub(crate) fn set_reference(&self, reference: i32) {
         self.write().reference = reference;
     }
 
     /// `Reference`; `root.reference()`.
-    pub fn reference(&self) -> i32 {
+    pub(crate) fn reference(&self) -> i32 {
         self.read().reference
     }
 
     /// Example: `root.set_type(&AsciiString::new("PDocStd_Document"))`.
-    pub fn set_type(&self, type_name: &AsciiString) {
+    pub(crate) fn set_type(&self, type_name: &AsciiString) {
         self.write().type_name = type_name.clone();
     }
 }
 
-crate::impl_transient!(Root, "Storage_Root", StandardTransient, parent);
+crate::impl_transient!(Root, "Storage_Root", StandardTransient);

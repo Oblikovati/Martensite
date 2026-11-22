@@ -6,7 +6,7 @@ use crate::geom::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3, GeomGeometry
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis2, Point3, Transform3, Vector3, Xyz};
 use std::f64::consts::PI;
 use std::io;
@@ -18,7 +18,6 @@ const CLASS: &str = "GeomEval_CircularHelixCurve";
 /// accepted). Immutable like every eval curve;
 /// `Handle::new(GeomEvalCircularHelixCurve::new(axis, 1.0, 0.5)?)`.
 pub struct GeomEvalCircularHelixCurve {
-    parent: StandardTransient,
     position: Axis2,
     radius: f64,
     pitch: f64,
@@ -27,7 +26,6 @@ impl_transient!(
     GeomEvalCircularHelixCurve,
     "GeomEval_CircularHelixCurve",
     dyn GeomCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve]
 );
 impl Clone for GeomEvalCircularHelixCurve {
@@ -54,7 +52,6 @@ impl GeomEvalCircularHelixCurve {
             ));
         }
         Ok(Self {
-            parent: StandardTransient::default(),
             position,
             radius,
             pitch,
@@ -62,10 +59,7 @@ impl GeomEvalCircularHelixCurve {
     }
     // The retained Copy() reruns the constructor on valid stored values.
     fn copied(&self) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            ..*self
-        }
+        Self { ..*self }
     }
     /// The local coordinate system (`Position`); `curve.position()`.
     pub fn position(&self) -> Axis2 {
@@ -120,7 +114,7 @@ impl GeomGeometry for GeomEvalCircularHelixCurve {
         Err(unsupported("GeomEval_CircularHelixCurve::Transform", ""))
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let fields = [("Radius", self.radius), ("Pitch", self.pitch)];

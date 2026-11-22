@@ -44,11 +44,14 @@ fn point_bitmap(size: i32) -> Graphic3dMarkerImage {
 }
 
 /// `mergeImages`: the two Alpha images OR-ed, centred in a square of the larger size.
-fn merge_images(first: &Handle<ImagePixMap>, second: &Handle<ImagePixMap>) -> Handle<ImagePixMap> {
+fn merge_images(
+    first: &Handle<dyn crate::image::ImagePixMapObject>,
+    second: &Handle<dyn crate::image::ImagePixMapObject>,
+) -> Handle<dyn crate::image::ImagePixMapObject> {
     if first.is_null() && second.is_null() {
         return Handle::default();
     }
-    let size_of = |image: &Handle<ImagePixMap>| {
+    let size_of = |image: &Handle<dyn crate::image::ImagePixMapObject>| {
         image
             .get()
             .map_or((0, 0), |i| (i.width() as i32, i.height() as i32))
@@ -63,7 +66,7 @@ fn merge_images(first: &Handle<ImagePixMap>, second: &Handle<ImagePixMap>) -> Ha
             or_into(&result, pixmap, (max_width, max_height));
         }
     }
-    Handle::new(result)
+    Handle::new(result).into_upcast()
 }
 
 /// ORs one image into the merge result at its centring offset.
@@ -183,7 +186,10 @@ fn ring_marker(
         AspectTypeOfMarker::Ring2 => scale * 0.5,
         _ => scale * 0.8,
     };
-    let (mut current, mut image) = (scale, Handle::<ImagePixMap>::default());
+    let (mut current, mut image) = (
+        scale,
+        Handle::<dyn crate::image::ImagePixMapObject>::default(),
+    );
     while current > limit && current >= 1.0 {
         image = merge_images(
             &image,
@@ -221,7 +227,12 @@ fn ball_marker(
         stamp_circle(&image, &image_alpha, pixel, current);
         current -= 0.1;
     }
-    Graphic3dMarkerImage::with_ids(key, key_alpha, Handle::new(image), Handle::new(image_alpha))
+    Graphic3dMarkerImage::with_ids(
+        key,
+        key_alpha,
+        Handle::new(image).into_upcast(),
+        Handle::new(image_alpha).into_upcast(),
+    )
 }
 
 /// Paints the circle of `scale` centred in the ball images. Native quirk: the row offset is

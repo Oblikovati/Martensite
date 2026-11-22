@@ -1,7 +1,7 @@
 //! Supplemental Triangulation regressions: sharing, storage, ranges, arrays and late loading.
 use martensite_tkernel::{
     ncollection::{Array1, Vec3},
-    standard::{Handle, dump::DumpStream},
+    standard::{Handle, RuntimeType, RuntimeTyped, Transient, dump::DumpStream},
 };
 use martensite_tkmath::{
     bnd::BoundingBox3,
@@ -22,7 +22,14 @@ fn square() -> Handle<Triangulation> {
 #[test]
 fn changes_through_one_handle_are_seen_through_every_handle() {
     let first = square();
-    let second = first.clone();
+    let root = first.upcast::<dyn Transient>();
+    let second = root.downcast::<Triangulation>();
+    let descriptor = root.dynamic_type().unwrap();
+    let persisted = RuntimeType::registered_by_name("Poly_Triangulation");
+    assert!(std::ptr::eq(descriptor, Triangulation::static_type()));
+    assert!(std::ptr::eq(descriptor, persisted.unwrap()));
+    assert!(root.is_kind(<dyn Transient>::static_type()));
+    assert!(first == second);
     first.set_deflection(0.25);
     second.set_node(2, Point3::new(2.0, 0.0, 0.0)).unwrap();
     assert_eq!(second.deflection(), 0.25);

@@ -1,11 +1,11 @@
 //! Constructor evaluation order and failed-construction ownership are observable contracts.
 use super::{IFGraphSubPartsEvaluate, IFGraphSubPartsIterator};
 use crate::interface::{InterfaceGraph, interface_error, test_norm::fake_chain};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 
 struct EvaluatedParts {
     parts: IFGraphSubPartsIterator,
-    replacement: Handle<StandardTransient>,
+    replacement: Handle<dyn Transient>,
     evaluations: usize,
     fail: bool,
 }
@@ -31,7 +31,7 @@ impl IFGraphSubPartsEvaluate for EvaluatedParts {
 
 fn evaluated_source(
     graph: &InterfaceGraph,
-    replacement: &Handle<StandardTransient>,
+    replacement: &Handle<dyn Transient>,
     fail: bool,
 ) -> EvaluatedParts {
     let mut parts = IFGraphSubPartsIterator::new(graph, false).unwrap();
@@ -44,7 +44,7 @@ fn evaluated_source(
     }
 }
 
-fn assert_evaluated_copy(copy: &IFGraphSubPartsIterator, entities: &[Handle<StandardTransient>]) {
+fn assert_evaluated_copy(copy: &IFGraphSubPartsIterator, entities: &[Handle<dyn Transient>]) {
     assert_eq!((copy.nb_parts(), copy.part_num()), (1, 0));
     assert_eq!(copy.entity_part_num(&entities[0]).unwrap(), 1);
     assert_eq!(copy.entity_part_num(&entities[1]).unwrap(), 1);
@@ -70,7 +70,7 @@ fn failed_virtual_evaluation_preserves_source_effects_without_leaking_model_owne
     let (model, entities) = fake_chain();
     let graph = InterfaceGraph::new(&model, true).unwrap();
     let mut source = evaluated_source(&graph, &entities[1], true);
-    let before = model.get().unwrap().transient_base().ref_count();
+    let before = model.ref_count();
     let error = IFGraphSubPartsIterator::from_other(&mut source)
         .err()
         .unwrap();
@@ -78,7 +78,7 @@ fn failed_virtual_evaluation_preserves_source_effects_without_leaking_model_owne
     assert_eq!(error.message(), "owned evaluation failure");
     assert_eq!(source.evaluations, 1);
     assert!(source.parts.is_loaded(&entities[1]).unwrap());
-    assert_eq!(model.get().unwrap().transient_base().ref_count(), before);
+    assert_eq!(model.ref_count(), before);
 }
 
 #[test]

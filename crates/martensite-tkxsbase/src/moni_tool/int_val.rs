@@ -1,7 +1,7 @@
 //! `MoniToolIntVal`: an integer through a handle.
 use martensite_tkernel::{
     impl_transient,
-    standard::{SharedState, StandardTransient},
+    standard::{SharedState, Transient},
 };
 use std::sync::RwLockWriteGuard;
 
@@ -16,21 +16,14 @@ use std::sync::RwLockWriteGuard;
 /// ```
 #[derive(Default)]
 pub struct MoniToolIntVal {
-    transient: StandardTransient,
     theval: SharedState<i32>,
 }
-impl_transient!(
-    MoniToolIntVal,
-    "MoniToolIntVal",
-    StandardTransient,
-    transient
-);
+impl_transient!(MoniToolIntVal, "MoniToolIntVal", dyn Transient);
 
 impl MoniToolIntVal {
     /// `MoniToolIntVal(val = 0)`.
     pub fn new(val: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             theval: SharedState::new(val),
         }
     }
@@ -48,12 +41,12 @@ impl MoniToolIntVal {
 #[cfg(test)]
 mod tests {
     use super::MoniToolIntVal;
-    use martensite_tkernel::standard::{Handle, StandardTransient};
+    use martensite_tkernel::standard::{Handle, Transient};
 
     #[test]
     fn value_is_shared_through_handles() {
         let first = Handle::new(MoniToolIntVal::default());
-        let second: Handle<StandardTransient> = first.cast();
+        let second: Handle<dyn Transient> = first.cast();
         assert_eq!(first.value(), 0);
         *second.cast::<MoniToolIntVal>().c_value() = 12;
         assert_eq!(first.value(), 12);

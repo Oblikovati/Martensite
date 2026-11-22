@@ -158,7 +158,7 @@ impl RwStepReprRwShapeAspectRelationship {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepReprShapeAspectRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 4, ach, "shape_aspect_relationship")? {
             return Ok(());
@@ -180,7 +180,7 @@ impl RwStepReprRwShapeAspectRelationship {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepReprShapeAspectRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>,
     ) -> Result<(), Failure> {
         rw_block_0144!(ent, sw);
         Ok(())
@@ -188,7 +188,7 @@ impl RwStepReprRwShapeAspectRelationship {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepReprShapeAspectRelationship>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.add_item(&ent.relating_shape_aspect().cast());

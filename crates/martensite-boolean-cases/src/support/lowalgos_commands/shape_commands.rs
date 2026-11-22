@@ -80,7 +80,7 @@ fn pcurve_geometry(
     first: f64,
     last: f64,
 ) -> Handle<dyn Geom2dCurve> {
-    let trimmed = curve.cast::<Geom2dTrimmedCurve>();
+    let trimmed = curve.downcast::<Geom2dTrimmedCurve>();
     let basis = trimmed.get().map(Geom2dTrimmedCurve::basis_curve);
     let geometry = basis.as_ref().unwrap_or(curve).get().unwrap();
     let (from, to) = (geometry.first_parameter(), geometry.last_parameter());
@@ -88,7 +88,7 @@ fn pcurve_geometry(
     if !geometry.is_periodic() && beyond {
         return curve.clone();
     }
-    Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true).unwrap()).cast()
+    Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true).unwrap()).into_upcast()
 }
 
 /// `pcurve face`: the color legend, then each edge's curve in the plane as `face_N`.

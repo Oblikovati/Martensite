@@ -165,7 +165,7 @@ macro_rules! impl_eval_elementary_surface {
                 martensite_tkernel::standard::Handle<dyn $crate::geom::GeomGeometry>,
                 martensite_tkernel::standard::Failure,
             > {
-                Ok(martensite_tkernel::standard::Handle::new(self.clone()).cast())
+                Ok(martensite_tkernel::standard::Handle::new(self.clone()).into_upcast())
             }
             fn dump_json(
                 &self,

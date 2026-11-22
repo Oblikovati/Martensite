@@ -7,7 +7,7 @@ use martensite_tkernel::{
 };
 use martensite_tkservice::{
     graphic3d::{Graphic3dNameOfTexture2D, Graphic3dTexture2DBase},
-    image::ImagePixMap,
+    image::ImagePixMapObject,
 };
 
 /// Native base body for virtual filename assignment; `ais_textured_shape_set_texture_file_name(&object,&file)?`.
@@ -37,7 +37,7 @@ fn assign_textured_file_after_retirement<S: AisTexturedShapeSource + ?Sized>(
 /// Native base body retains the exact source handle; `ais_textured_shape_set_texture_pix_map(&object,&pixmap)`.
 pub fn ais_textured_shape_set_texture_pix_map<S: AisTexturedShapeSource + ?Sized>(
     object: &S,
-    pixmap: &dyn HandleReference<ImagePixMap>,
+    pixmap: &dyn HandleReference<dyn ImagePixMapObject>,
 ) {
     reset_textured_file_for_pixmap(object);
     martensite_tkernel::standard::raise_native_failure(

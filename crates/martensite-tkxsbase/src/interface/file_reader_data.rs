@@ -8,10 +8,7 @@
 use super::{InterfaceFileParameter, InterfaceParamList, InterfaceParamSet, InterfaceParamType};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{
-        Failure, Handle, SharedState, StandardTransient, Transient, c_string::atof_bytes,
-        exceptions,
-    },
+    standard::{Failure, Handle, SharedState, Transient, c_string::atof_bytes, exceptions},
 };
 
 /// The private fields of `InterfaceFileReaderData`.
@@ -19,7 +16,7 @@ struct ReaderDataState {
     // Native reverse field destruction releases bound entities before parameters;
     // an entity destructor can observe its still-populated parameter list.
     // InterfaceFileReaderData.
-    theents: Vec<Handle<StandardTransient>>,
+    theents: Vec<Handle<dyn Transient>>,
     thenumpar: Vec<i32>,
     theparams: Handle<InterfaceParamSet>,
     therrload: i32,
@@ -79,7 +76,7 @@ pub trait InterfaceFileReaderData: Transient {
 impl_transient_interface!(
     dyn InterfaceFileReaderData,
     "InterfaceFileReaderData",
-    StandardTransient
+    dyn Transient
 );
 
 fn out_of_records(num: i32, count: usize) -> Failure {
@@ -187,7 +184,7 @@ pub trait InterfaceFileReaderDataParams: InterfaceFileReaderData {
         Ok(self.param(num, nump)?.entity_number())
     }
     /// `ParamEntity(num, nump)`: the entity bound to the record the parameter designates.
-    fn param_entity(&self, num: i32, nump: i32) -> Result<Handle<StandardTransient>, Failure> {
+    fn param_entity(&self, num: i32, nump: i32) -> Result<Handle<dyn Transient>, Failure> {
         Ok(self.bound_entity(self.param_number(num, nump)?))
     }
     /// `ParamFirstRank(num)`: the rank of the last parameter of record `num`.
@@ -201,13 +198,13 @@ pub trait InterfaceFileReaderDataParams: InterfaceFileReaderData {
             .ok_or_else(|| out_of_records(num, state.thenumpar.len()))
     }
     /// `BoundEntity(num)`: null out of the records.
-    fn bound_entity(&self, num: i32) -> Handle<StandardTransient> {
+    fn bound_entity(&self, num: i32) -> Handle<dyn Transient> {
         let state = self.reader_data_base().state.read();
         let found = usize::try_from(num).ok().and_then(|i| state.theents.get(i));
         found.cloned().unwrap_or_default()
     }
     /// `BindEntity(num, ent)`: `StandardOutOfRange` out of the records.
-    fn bind_entity(&self, num: i32, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn bind_entity(&self, num: i32, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         let mut state = self.reader_data_base().state.write();
         let len = state.theents.len();
         let slot = usize::try_from(num)

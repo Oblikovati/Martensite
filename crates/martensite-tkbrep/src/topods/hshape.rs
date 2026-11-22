@@ -1,7 +1,7 @@
 //! `TopoDS_HShape`: a shape shared by handle.
 use super::Shape;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{SharedState, StandardTransient};
+use martensite_tkernel::standard::{SharedState, Transient};
 
 /// A transient holding one shape, so that several owners share and modify it. The
 /// shape is behind the object lock: `Shape()` returns a
@@ -16,16 +16,14 @@ use martensite_tkernel::standard::{SharedState, StandardTransient};
 /// ```
 #[derive(Default)]
 pub struct HShape {
-    transient: StandardTransient,
     shape: SharedState<Shape>,
 }
-impl_transient!(HShape, "TopoDS_HShape", StandardTransient, transient);
+impl_transient!(HShape, "TopoDS_HShape", dyn Transient);
 
 impl HShape {
     /// `TopoDS_HShape(aShape)`; `HShape::new(&shape)`.
     pub fn new(shape: &Shape) -> Self {
         Self {
-            transient: StandardTransient::default(),
             shape: SharedState::new(shape.clone()),
         }
     }

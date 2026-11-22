@@ -1,10 +1,69 @@
 //! Borrow actual native handle-list nodes; internal inspection releases locks before external callbacks.
 use martensite_tkernel::ncollection::{AllocatorList, ListCursor};
-use martensite_tkernel::standard::{Handle, HandleObserver, HandleReference, RuntimeTyped};
+use martensite_tkernel::standard::{
+    Handle, HandleObserver, HandleReference, HandleSlot, RuntimeTyped,
+};
 
 pub(crate) trait HandleChainStorage<T: RuntimeTyped + ?Sized> {
-    fn inspect_chain(&self, key: usize, inspect: &mut dyn FnMut(&AllocatorList<Handle<T>>));
+    fn inspect_chain(&self, key: usize, inspect: &mut dyn FnMut(HandleChain<'_, T>));
 }
+pub(crate) enum HandleChain<'a, T: ?Sized> {
+    Direct(&'a AllocatorList<Handle<T>>),
+    Shared(&'a AllocatorList<HandleSlot<T>>),
+}
+impl<'a, T: ?Sized> HandleChain<'a, T> {
+    fn len(self) -> usize {
+        match self {
+            Self::Direct(list) => list.len(),
+            Self::Shared(list) => list.len(),
+        }
+    }
+    fn reference_address(self) -> *const () {
+        match self {
+            Self::Direct(list) => std::ptr::from_ref(list).cast(),
+            Self::Shared(list) => std::ptr::from_ref(list).cast(),
+        }
+    }
+    fn cursor(self) -> ListCursor {
+        match self {
+            Self::Direct(list) => list.cursor(),
+            Self::Shared(list) => list.cursor(),
+        }
+    }
+    fn advance(self, position: &mut ListCursor) {
+        match self {
+            Self::Direct(list) => position.next(list),
+            Self::Shared(list) => position.next(list),
+        }
+    }
+    fn entry(self, position: ListCursor) -> HandleChainEntry<'a, T> {
+        match self {
+            Self::Direct(list) => position.value(list).map(HandleChainEntry::Direct),
+            Self::Shared(list) => position.value(list).map(HandleChainEntry::Shared),
+        }
+        .unwrap_or_else(|| invalid_handle_node(position))
+    }
+}
+
+enum HandleChainEntry<'a, T: ?Sized> {
+    Direct(&'a Handle<T>),
+    Shared(&'a HandleSlot<T>),
+}
+impl<'a, T: ?Sized> HandleChainEntry<'a, T> {
+    fn handle(self) -> &'a Handle<T> {
+        match self {
+            Self::Direct(handle) => handle,
+            Self::Shared(slot) => slot,
+        }
+    }
+    fn reference_address(self) -> *const () {
+        match self {
+            Self::Direct(handle) => std::ptr::from_ref(handle).cast(),
+            Self::Shared(slot) => std::ptr::from_ref(slot).cast(),
+        }
+    }
+}
+
 /// Genuine native list-field borrow; `viewer.active_lights_ref().cursor()`.
 pub struct V3dHandleChainRef<'a, T: RuntimeTyped + ?Sized> {
     owner: &'a dyn HandleChainStorage<T>,
@@ -36,7 +95,7 @@ impl<'a, T: RuntimeTyped + ?Sized> V3dHandleChainRef<'a, T> {
             key: self.key,
         }
     }
-    fn inspect<R>(&self, inspect: impl FnOnce(&AllocatorList<Handle<T>>) -> R) -> R {
+    fn inspect<R>(&self, inspect: impl FnOnce(HandleChain<'_, T>) -> R) -> R {
         let mut inspect = Some(inspect);
         let mut result = None;
         self.owner.inspect_chain(self.key, &mut |chain| {
@@ -50,7 +109,7 @@ impl<'a, T: RuntimeTyped + ?Sized> V3dHandleChainRef<'a, T> {
     }
     /// Read the actual current extent; `viewer.active_lights_ref().len()`.
     pub fn len(&self) -> usize {
-        self.inspect(AllocatorList::len)
+        self.inspect(|chain| chain.len())
     }
     /// Read empty state without ownership; `viewer.active_lights_ref().is_empty()`.
     pub fn is_empty(&self) -> bool {
@@ -58,7 +117,7 @@ impl<'a, T: RuntimeTyped + ?Sized> V3dHandleChainRef<'a, T> {
     }
     /// Identify actual native field storage; `a.reference_address()==b.reference_address()`.
     pub fn reference_address(&self) -> *const () {
-        self.inspect(|chain| std::ptr::from_ref(chain).cast())
+        self.inspect(|chain| chain.reference_address())
     }
     pub(crate) fn node_reference(&self, position: ListCursor) -> V3dHandleChainNodeRef<'a, T> {
         V3dHandleChainNodeRef {
@@ -70,7 +129,7 @@ impl<'a, T: RuntimeTyped + ?Sized> V3dHandleChainRef<'a, T> {
     pub fn cursor(&self) -> V3dHandleChainCursor<'a, T> {
         V3dHandleChainCursor {
             chain: self.reborrow(),
-            position: self.inspect(AllocatorList::cursor),
+            position: self.inspect(|chain| chain.cursor()),
         }
     }
 }
@@ -85,7 +144,8 @@ impl<'a, T: RuntimeTyped + ?Sized> V3dHandleChainCursor<'a, T> {
     }
     /// Advance only after callbacks so edits are visible; `cursor.next()`.
     pub fn next(&mut self) {
-        self.chain.inspect(|chain| self.position.next(chain));
+        self.chain
+            .inspect(|chain| chain.advance(&mut self.position));
     }
     /// Observe stable native node identity; `cursor.node_address()`.
     pub fn node_address(&self) -> Option<usize> {
@@ -94,33 +154,30 @@ impl<'a, T: RuntimeTyped + ?Sized> V3dHandleChainCursor<'a, T> {
 }
 impl<T: RuntimeTyped + ?Sized> V3dHandleChainNodeRef<'_, T> {
     pub(crate) fn with_handle<R>(&self, inspect: impl FnOnce(&Handle<T>) -> R) -> R {
-        self.chain.inspect(|chain| {
-            inspect(
-                self.position
-                    .value(chain)
-                    .unwrap_or_else(|| invalid_handle_node(self.position)),
-            )
-        })
+        self.chain
+            .inspect(|chain| inspect(chain.entry(self.position).handle()))
     }
 }
 impl<T: RuntimeTyped + ?Sized> HandleReference<T> for V3dHandleChainNodeRef<'_, T> {
-    fn observe(&self) -> HandleObserver<T> {
-        self.chain.inspect(|chain| {
-            self.position
-                .value(chain)
-                .unwrap_or_else(|| invalid_handle_node(self.position))
-                .observe()
-        })
+    fn observe(&self) -> HandleObserver<'_, T> {
+        self.chain
+            .inspect(|chain| match chain.entry(self.position) {
+                HandleChainEntry::Direct(handle) => HandleObserver::Snapshot(handle.clone()),
+                HandleChainEntry::Shared(slot) => HandleObserver::Leased(slot.lease()),
+            })
     }
     fn reference_address(&self) -> *const () {
-        self.chain.inspect(|chain| {
-            std::ptr::from_ref(
-                self.position
-                    .value(chain)
-                    .unwrap_or_else(|| invalid_handle_node(self.position)),
-            )
-            .cast()
-        })
+        self.chain
+            .inspect(|chain| chain.entry(self.position).reference_address())
+    }
+    fn ref_count(&self) -> usize {
+        self.with_handle(Handle::ref_count)
+    }
+    fn object_address(&self) -> *const () {
+        self.with_handle(Handle::object_address)
+    }
+    fn is_null(&self) -> bool {
+        self.with_handle(Handle::is_null)
     }
 }
 fn invalid_handle_node(position: ListCursor) -> ! {

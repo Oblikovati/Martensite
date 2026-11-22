@@ -25,8 +25,10 @@ undocumented_unsafe_blocks = "warn"
 [dependencies]
 allocator-api2 = "=0.4.0"
 bytemuck = { version = "=1.25.2", default-features = false }
+itoa = "=1.0.18"
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-smallvec = { version = "1.16.3", default-features = false, features = ["const_generics"] }
+memchr = "=2.8.3"
+smallvec = { version = "1.16.3", default-features = false, features = ["const_generics", "union"] }
 
 [target.'cfg(unix)'.dependencies]
 xattr = "=1.7.0"
@@ -160,3 +162,9 @@ path = "tests/standard_services_api_behavior.rs"
 [[test]]
 name = "osd_cpu_limit_signal"
 path = "tests/osd_cpu_limit_signal.rs"
+
+# Paired performance cases against OCCT TKernel (#583); `cargo xtask occt-parity` runs them.
+[[bench]]
+name = "occt_parity"
+path = "benches/occt_parity/main.rs"
+harness = false

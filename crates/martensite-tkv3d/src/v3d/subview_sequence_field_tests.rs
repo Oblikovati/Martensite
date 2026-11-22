@@ -49,7 +49,12 @@ fn retained_subview_reference_row(
             subview_field_identity(scene, node.object_address())
         }),
     ]);
-    row.extend(scene.children.iter().map(Handle::ref_count));
+    row.extend(
+        scene
+            .children
+            .iter()
+            .map(|child| i32::try_from(child.ref_count()).unwrap()),
+    );
     row
 }
 fn subview_sequence_metadata(

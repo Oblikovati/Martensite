@@ -1,7 +1,8 @@
 //! `IgesToBRep`: which entities are curves, surfaces and BRep entities, and the default containers.
 use super::IgesToBRepAlgoContainer;
 use crate::iges_basic::IgesBasicSingleParent;
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::{
     IgesGeomBSplineCurve, IgesGeomBSplineSurface, IgesGeomBoundary, IgesGeomBoundedSurface,
     IgesGeomCircularArc, IgesGeomCompositeCurve, IgesGeomConicArc, IgesGeomCopiousData,
@@ -17,7 +18,9 @@ use crate::iges_solid::{
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{Edge, Face};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkgeombase::geom_lib;
@@ -39,17 +42,17 @@ pub(crate) fn one_transfer_at_a_time() -> MutexGuard<'static, ()> {
     ONE_TRANSFER.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-fn is_any_of<const N: usize>(start: &Handle<IgesDataIgesEntity>, kinds: [&str; N]) -> bool {
+fn is_any_of<const N: usize>(start: &Handle<dyn IgesDataEntityKind>, kinds: [&str; N]) -> bool {
     kinds.iter().any(|kind| start.is_kind_name(kind))
 }
 
 /// The tools of the package.
 ///
 /// ```
-/// use martensite_tkdeiges::iges_data::IgesDataIgesEntity;
+/// use martensite_tkdeiges::iges_data::IgesDataEntityKind;
 /// use martensite_tkdeiges::iges_to_brep::IgesToBRep;
 /// use martensite_tkernel::standard::Handle;
-/// assert!(!IgesToBRep::is_curve_and_surface(&Handle::<IgesDataIgesEntity>::default()));
+/// assert!(!IgesToBRep::is_curve_and_surface(&Handle::<dyn IgesDataEntityKind>::default()));
 /// ```
 pub struct IgesToBRep;
 
@@ -91,12 +94,12 @@ impl IgesToBRep {
         Ok(slot.lock().unwrap_or_else(PoisonError::into_inner).clone())
     }
     /// Whether the transfer of curves and surfaces takes an entity; `IgesToBRep::is_curve_and_surface(&entity)`.
-    pub fn is_curve_and_surface(start: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_curve_and_surface(start: &Handle<dyn IgesDataEntityKind>) -> bool {
         Self::is_topo_curve(start) || Self::is_topo_surface(start) || Self::is_b_rep_entity(start)
     }
     /// Whether an entity is a basic curve (types 104, 110, 100, 106, 112, 126);
     /// `IgesToBRep::is_basic_curve(&entity)`.
-    pub fn is_basic_curve(start: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_basic_curve(start: &Handle<dyn IgesDataEntityKind>) -> bool {
         is_any_of(
             start,
             [
@@ -111,7 +114,7 @@ impl IgesToBRep {
     }
     /// Whether an entity is a basic surface (types 114, 128, 190 to 198);
     /// `IgesToBRep::is_basic_surface(&entity)`.
-    pub fn is_basic_surface(start: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_basic_surface(start: &Handle<dyn IgesDataEntityKind>) -> bool {
         is_any_of(
             start,
             [
@@ -127,7 +130,7 @@ impl IgesToBRep {
     }
     /// Whether an entity is a curve (a basic one, or types 102, 116, 130, 141, 142);
     /// `IgesToBRep::is_topo_curve(&entity)`.
-    pub fn is_topo_curve(start: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_topo_curve(start: &Handle<dyn IgesDataEntityKind>) -> bool {
         Self::is_basic_curve(start)
             || is_any_of(
                 start,
@@ -141,7 +144,7 @@ impl IgesToBRep {
             )
     }
     /// A perforated face has only planes: as parent and as children.
-    fn is_perforated_plane(start: &Handle<IgesDataIgesEntity>) -> bool {
+    fn is_perforated_plane(start: &Handle<dyn IgesDataEntityKind>) -> bool {
         let parent = start.cast::<IgesBasicSingleParent>();
         let Some(live) = parent.get() else {
             return false;
@@ -157,7 +160,7 @@ impl IgesToBRep {
     }
     /// Whether an entity is a surface (a basic one, or types 108, 118, 120, 122, 140, 143, 144, or a
     /// perforated plane); `IgesToBRep::is_topo_surface(&entity)`.
-    pub fn is_topo_surface(start: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_topo_surface(start: &Handle<dyn IgesDataEntityKind>) -> bool {
         Self::is_basic_surface(start)
             || is_any_of(
                 start,
@@ -175,7 +178,7 @@ impl IgesToBRep {
     }
     /// Whether an entity is a BRep entity (types 186, 502, 504, 508, 510, 514);
     /// `IgesToBRep::is_b_rep_entity(&entity)`.
-    pub fn is_b_rep_entity(start: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_b_rep_entity(start: &Handle<dyn IgesDataEntityKind>) -> bool {
         is_any_of(
             start,
             [
@@ -191,8 +194,8 @@ impl IgesToBRep {
     /// Adds the curves of an entity to a list, a composite by its parts and without points; gives the
     /// length of the list; `IgesToBRep::iges_curve_to_sequence_of_iges_curve(&curve, &mut list)`.
     pub fn iges_curve_to_sequence_of_iges_curve(
-        curve: &Handle<IgesDataIgesEntity>,
-        sequence: &mut Vec<Handle<StandardTransient>>,
+        curve: &Handle<dyn IgesDataEntityKind>,
+        sequence: &mut Vec<Handle<dyn Transient>>,
     ) -> i32 {
         let composite = curve.cast::<crate::iges_geom::IgesGeomCompositeCurve>();
         if let Some(live) = composite.get() {
@@ -257,6 +260,8 @@ impl IgesToBRep {
 }
 
 /// The name of the class of an entity, for the messages of the translators.
-pub(super) fn entity_type_name<T: ?Sized + RuntimeTyped>(entity: &Handle<T>) -> &'static str {
+pub(super) fn entity_type_name<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+    entity: &Handle<T>,
+) -> &'static str {
     entity.dynamic_type().map_or("", |kind| kind.name())
 }

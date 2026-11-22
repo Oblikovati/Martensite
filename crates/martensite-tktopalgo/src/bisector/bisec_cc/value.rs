@@ -145,7 +145,7 @@ impl CcState {
             BisecPC::with_bounds(&self.curve2, p1, self.sign2, bracket.v_min, bracket.v_max)?;
         let bis_pc: Handle<BisecPC> = Handle::new(bis_pc);
         let nor_li: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dLine::from_point(p1, Direction2::from_vector(n1)?)).cast();
+            Handle::new(Geom2dLine::from_point(p1, Direction2::from_vector(n1)?)).into_upcast();
         let a_bis_pc = Geom2dAdaptorCurve::with_curve(&bis_pc.cast::<dyn Geom2dCurve>())?;
         let a_nor_li = Geom2dAdaptorCurve::with_curve(&nor_li)?;
         let tol: f64 = precision::confusion();

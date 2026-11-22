@@ -8,13 +8,12 @@ use std::sync::{
     atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering},
 };
 struct ClosingGuiWindow {
-    transient: StandardTransient,
     neutral: AspectNeutralWindow,
     closed: Arc<AtomicBool>,
     calls: AtomicUsize,
     close_at: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(ClosingGuiWindow, "Martensite_ClosingGuiWindow", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(ClosingGuiWindow, "Martensite_ClosingGuiWindow", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 impl ClosingGuiWindow {
     fn new(closed: Arc<AtomicBool>) -> Self {
         let neutral = AspectNeutralWindow::default();
@@ -22,7 +21,6 @@ impl ClosingGuiWindow {
         neutral.set_size(64, 64);
         neutral.set_native_handle(91);
         Self {
-            transient: Default::default(),
             neutral,
             closed,
             calls: AtomicUsize::new(0),

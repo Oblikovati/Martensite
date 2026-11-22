@@ -12,7 +12,8 @@ use crate::step_shape::{
     StepShapeGeometricSet, StepShapeManifoldSolidBrep, StepShapeShapeDefinitionRepresentation,
     StepShapeShapeRepresentation, StepShapeShellBasedSurfaceModel,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::interface::InterfaceGraph;
 use std::collections::HashSet;
 
@@ -49,7 +50,10 @@ impl STEPSelectionsCounter {
         *self = Self::default();
     }
     /// `add_shell(cfs)`.
-    fn add_shell(&mut self, shell: &Handle<StepShapeConnectedFaceSet>) -> Result<(), Failure> {
+    fn add_shell(
+        &mut self,
+        shell: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
+    ) -> Result<(), Failure> {
         self.my_map_of_shells.insert(key(shell));
         self.my_nb_shells += 1;
         let live = step_live(shell, "STEPSelectionsCounter")?;
@@ -64,13 +68,14 @@ impl STEPSelectionsCounter {
     /// `add_composite_curve(ccurve)`.
     fn add_composite_curve(
         &mut self,
-        curve: &Handle<StepGeomCompositeCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
     ) -> Result<(), Failure> {
         let live = step_live(curve, "STEPSelectionsCounter")?;
         for rank in 1..=live.nb_segments() {
             let segment = live.segments_value(rank)?;
             let parent = step_live(&segment, "STEPSelectionsCounter")?.parent_curve();
-            let composite: Handle<StepGeomCompositeCurve> = parent.cast();
+            let composite: Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>> =
+                parent.cast();
             if composite.is_some() {
                 self.add_composite_curve(&composite)?;
             } else {
@@ -83,15 +88,15 @@ impl STEPSelectionsCounter {
     /// A solid with its outer shell.
     fn add_solid(
         &mut self,
-        start: &Handle<StandardTransient>,
-        outer: &Handle<StepShapeConnectedFaceSet>,
+        start: &Handle<dyn Transient>,
+        outer: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
     ) -> Result<(), Failure> {
         self.my_map_of_solids.insert(key(start));
         self.my_nb_solids += 1;
         self.add_shell(outer)
     }
     /// The shells and the curves of a brep model, true when `start` was one.
-    fn count_brep(&mut self, start: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    fn count_brep(&mut self, start: &Handle<dyn Transient>) -> Result<bool, Failure> {
         let faceted: Handle<StepShapeFacetedBrep> = start.cast();
         if let Some(live) = faceted.get() {
             self.add_solid(start, &live.outer())?;
@@ -105,7 +110,7 @@ impl STEPSelectionsCounter {
             }
             return Ok(true);
         }
-        let manifold: Handle<StepShapeManifoldSolidBrep> = start.cast();
+        let manifold: Handle<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>> = start.cast();
         if let Some(live) = manifold.get() {
             // A faceted_brep_and_brep_with_voids stops here too, being a kind of
             // manifold_solid_brep: its branch after this one is never reached, and its voids
@@ -134,15 +139,21 @@ impl STEPSelectionsCounter {
     fn count_geometric_set(&mut self, set: &StepShapeGeometricSet) -> Result<(), Failure> {
         for rank in 1..=set.nb_elements() {
             let ent = set.elements_value(rank)?.value();
-            let composite: Handle<StepGeomCompositeCurve> = ent.cast();
+            let composite: Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>> = ent.cast();
             if composite.is_some() {
                 self.my_nb_wires += 1;
                 self.my_map_of_wires.insert(key(&composite));
                 self.add_composite_curve(&composite)?;
-            } else if ent.cast::<StepGeomCurve>().is_some() {
+            } else if ent
+                .cast::<dyn crate::StepEntityBase<StepGeomCurve>>()
+                .is_some()
+            {
                 self.my_nb_edges += 1;
                 self.my_map_of_edges.insert(key(&ent));
-            } else if ent.cast::<StepGeomSurface>().is_some() {
+            } else if ent
+                .cast::<dyn crate::StepEntityBase<StepGeomSurface>>()
+                .is_some()
+            {
                 self.my_nb_faces += 1;
                 self.my_map_of_faces.insert(key(&ent));
             }
@@ -153,11 +164,11 @@ impl STEPSelectionsCounter {
     pub fn count(
         &mut self,
         graph: &InterfaceGraph,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         if start.is_null()
             || start
-                .cast::<StepBasicProductRelatedProductCategory>()
+                .cast::<dyn crate::StepEntityBase<StepBasicProductRelatedProductCategory>>()
                 .is_some()
         {
             return Ok(());
@@ -175,7 +186,7 @@ impl STEPSelectionsCounter {
             }
             return Ok(());
         }
-        let rep: Handle<StepShapeShapeRepresentation> = start.cast();
+        let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = start.cast();
         if let Some(live) = rep.get() {
             for rank in 1..=live.nb_items() {
                 self.count(graph, &live.items_value(rank)?.cast())?;
@@ -185,12 +196,12 @@ impl STEPSelectionsCounter {
         if self.count_brep(start)? {
             return Ok(());
         }
-        let set: Handle<StepShapeGeometricSet> = start.cast();
+        let set: Handle<dyn crate::StepEntityBase<StepShapeGeometricSet>> = start.cast();
         if let Some(live) = set.get() {
             // No return here; nothing below matches a geometric_set.
             return self.count_geometric_set(live);
         }
-        let mapped: Handle<StepReprMappedItem> = start.cast();
+        let mapped: Handle<dyn crate::StepEntityBase<StepReprMappedItem>> = start.cast();
         if let Some(live) = mapped.get() {
             self.count(graph, &live.mapping_target().cast())?;
             let map = live.mapping_source();
@@ -199,7 +210,10 @@ impl STEPSelectionsCounter {
             };
             return self.count(graph, &live_map.mapped_representation().cast());
         }
-        if start.cast::<StepShapeFaceSurface>().is_some() {
+        if start
+            .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+            .is_some()
+        {
             self.my_nb_faces += 1;
             self.my_map_of_faces.insert(key(start));
             return Ok(());
@@ -226,7 +240,8 @@ impl STEPSelectionsCounter {
             }
             return Ok(());
         }
-        let und: Handle<StepReprShapeRepresentationRelationship> = start.cast();
+        let und: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>> =
+            start.cast();
         if let Some(live) = und.get() {
             self.count(graph, &live.rep1().cast())?;
             self.count(graph, &live.rep2().cast())?;

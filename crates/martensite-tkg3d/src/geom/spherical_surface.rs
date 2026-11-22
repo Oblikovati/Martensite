@@ -17,7 +17,7 @@ use super::trimmed_curve::GeomTrimmedCurve;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkmath::elslib;
 use martensite_tkmath::geom_abs::Shape;
@@ -33,14 +33,12 @@ struct SphereState {
 
 /// A sphere; `Handle::new(GeomSphericalSurface::new(frame, 2.0)?)`.
 pub struct GeomSphericalSurface {
-    parent: StandardTransient,
     state: SharedState<SphereState>,
 }
 impl_transient!(
     GeomSphericalSurface,
     "Geom_SphericalSurface",
     dyn GeomElementarySurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomElementarySurface]
 );
 impl Clone for GeomSphericalSurface {
@@ -61,7 +59,6 @@ fn checked_radius(radius: f64, member: &str) -> Result<f64, Failure> {
 impl GeomSphericalSurface {
     fn stored(state: SphereState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -129,7 +126,7 @@ impl GeomGeometry for GeomSphericalSurface {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state: SphereState = self.snapshot();
@@ -174,14 +171,15 @@ impl GeomSurface for GeomSphericalSurface {
     fn u_iso(&self, u: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let state: SphereState = self.snapshot();
         let circle = elslib::sphere_u_iso(state.pos, state.radius, u);
-        let meridian: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(circle)).cast();
+        let meridian: Handle<dyn GeomCurve> =
+            Handle::new(GeomCircle::from_circ(circle)).into_upcast();
         let iso = GeomTrimmedCurve::new(&meridian, -PI / 2., PI / 2., true, true)?;
-        Ok(Handle::new(iso).cast())
+        Ok(Handle::new(iso).into_upcast())
     }
     fn v_iso(&self, v: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let state: SphereState = self.snapshot();
         let circle = elslib::sphere_v_iso(state.pos, state.radius, v);
-        Ok(Handle::new(GeomCircle::from_circ(circle)).cast())
+        Ok(Handle::new(GeomCircle::from_circ(circle)).into_upcast())
     }
     fn continuity(&self) -> Shape {
         Shape::CN

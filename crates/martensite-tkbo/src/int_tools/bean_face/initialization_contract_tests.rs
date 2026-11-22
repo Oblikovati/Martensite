@@ -12,7 +12,7 @@ use martensite_tkmath::{
 
 fn source_edge(direction: Direction3, tolerance: f64, last: f64) -> Edge {
     let line: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(Point3::default(), direction))).cast();
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), direction))).into_upcast();
     let builder = BRepBuilder::default();
     let mut edge = Edge::default();
     builder
@@ -24,7 +24,7 @@ fn source_edge(direction: Direction3, tolerance: f64, last: f64) -> Edge {
 
 fn refusing_surface_face() -> Face {
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomEvalParaboloidSurface::new(Axis3::default(), 1.).unwrap()).cast();
+        Handle::new(GeomEvalParaboloidSurface::new(Axis3::default(), 1.).unwrap()).into_upcast();
     translated_face(&surface, 1e-7)
 }
 
@@ -49,7 +49,8 @@ fn seeded_solver() -> BeanFaceIntersector {
     bean.minimum_square_distance = 37.;
     bean.results.append(Range::new(8., 9.));
     bean.transformed_surface =
-        Handle::new(GeomPlane::from_point(Point3::new(0., 0., 3.), Direction3::Z).unwrap()).cast();
+        Handle::new(GeomPlane::from_point(Point3::new(0., 0., 3.), Direction3::Z).unwrap())
+            .into_upcast();
     bean
 }
 
@@ -125,7 +126,8 @@ fn failed_topology_init_retains_old_scalars_results_and_transformed_surface() {
 
 fn planar_sources() -> (Edge, Face) {
     let edge = source_edge(Direction3::Z, 0.125, 4.);
-    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+    let plane: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     (edge, translated_face(&plane, 0.25))
 }
 

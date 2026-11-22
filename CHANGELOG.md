@@ -76,9 +76,19 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
+### Changed
+
+- Replaced transient object ownership with typed Rust handles and static class descriptors. Callers use compile-time upcasts, checked downcasts and explicit weak references (#592).
+
+- Used Rust strong counts during TKV3D callbacks and released pixmaps displaced by reentrant texture setters (#592).
+
+- Restricted toolkit internals with no production callers outside their crate. Use the public palette lookups to access named colors whose unused constants were removed (#591).
+
+- Replaced `AsciiString`'s shared allocation with owned bytes and removed `buffer_identity`. Borrow `as_bytes` or `as_bytes_with_nul` while the string is live, and copy the bytes when they must survive an edit (#588).
+
 ### Fixed
 
-- Ran the body self-intersection check's tasks on up to four workers that share one intersection context, halving the check's time on large conical bodies with at most 5% more peak memory; parallel Boolean operations now share that context too instead of building one per worker (#496).
+- Shared one intersection context across the workers of parallel Boolean operations instead of building one per worker, and built missing cached services outside the cache lock; the body self-intersection check stays serial because its parallel path raised peak memory across long operations (#496, #580).
 
 - Reused complete native endpoint-incidence discovery across contact-cardinality reports while preserving empty-report and self-contact diagnostics (#566).
 

@@ -27,7 +27,7 @@ use martensite_tkxsbase::transfer_brep::{TransferBRep, TransferBRepShapeMapper};
 pub struct TopoDSToStepMakeStepFace {
     /// Root.
     pub root: TopoDSToStepRoot,
-    my_result: Handle<StepShapeTopologicalRepresentationItem>,
+    my_result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
     my_error: TopoDSToStepMakeFaceError,
 }
 
@@ -47,7 +47,10 @@ impl TopoDSToStepMakeStepFace {
         made.init(face, tool, fp, factors)?;
         Ok(made)
     }
-    fn finish(&mut self, result: Handle<StepShapeTopologicalRepresentationItem>) {
+    fn finish(
+        &mut self,
+        result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+    ) {
         self.my_error = TopoDSToStepMakeFaceError::FaceDone;
         self.my_result = result;
         self.root.done = true;
@@ -69,7 +72,10 @@ impl TopoDSToStepMakeStepFace {
     fn linking_face(
         face: &Face,
         fp: &Handle<TransferFinderProcess>,
-    ) -> Result<Option<Handle<StepShapeTopologicalRepresentationItem>>, Failure> {
+    ) -> Result<
+        Option<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>>,
+        Failure,
+    > {
         if !step_model_of(fp)?.internal_parameters().write_nonmanifold {
             return Ok(None);
         }
@@ -166,7 +172,7 @@ impl TopoDSToStepMakeStepFace {
         tool: &mut TopoDSToStepTool,
         fp: &Handle<TransferFinderProcess>,
         factors: &StepDataFactors,
-    ) -> Result<Vec<Handle<StepShapeFaceBound>>, Failure> {
+    ) -> Result<Vec<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>, Failure> {
         let mut bounds = Vec::new();
         let mut maker = TopoDSToStepMakeStepWire::new();
         let mut wires = Explorer::new(forward_face, ShapeEnum::Wire, ShapeEnum::Shape)?;
@@ -178,7 +184,8 @@ impl TopoDSToStepMakeStepFace {
                 add_warning(fp, face, " a Wire not mapped")?;
                 continue;
             }
-            let bound_loop: Handle<StepShapeLoop> = maker.value()?.cast();
+            let bound_loop: Handle<dyn crate::StepEntityBase<StepShapeLoop>> =
+                maker.value()?.cast();
             // CAS.CADE face orientation:
             // when a face is reversed in a shell, the orientation of the underlying
             // topology is implicitly reversed. This is not the case in Step.
@@ -201,15 +208,15 @@ impl TopoDSToStepMakeStepFace {
                 &bound_loop,
                 wire.orientation() == expected,
             );
-            bounds.push(bound);
+            bounds.push(bound.into_upcast());
         }
         Ok(bounds)
     }
     fn translate_face_entity(
         &mut self,
         face: &Face,
-        bounds: Vec<Handle<StepShapeFaceBound>>,
-        surface_entity: &Handle<StepGeomSurface>,
+        bounds: Vec<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>,
+        surface_entity: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         tool: &mut TopoDSToStepTool,
         fp: &Handle<TransferFinderProcess>,
     ) -> Result<(), Failure> {
@@ -238,7 +245,10 @@ impl TopoDSToStepMakeStepFace {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<StepShapeTopologicalRepresentationItem>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root.check_done("TopoDSToStepMakeStepFace::Value()")?;
         Ok(self.my_result.clone())
     }

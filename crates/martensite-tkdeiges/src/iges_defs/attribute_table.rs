@@ -15,11 +15,13 @@
 use crate::iges_basic::entity_shape::{
     iges_array2_lower_col, iges_array2_lower_row, iges_array2_upper_col, iges_array2_upper_row,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item, iges_array2_item, iges_live};
 use crate::iges_defs::IgesDefsAttributeDef;
 use crate::iges_entity;
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkernel::tcollection::HAsciiString;
 
 iges_entity! {
@@ -28,7 +30,7 @@ iges_entity! {
 /// Attribute Table. This Class may be independent
 /// or dependent or pointed at by other Entities.
 IgesDefsAttributeTable, IgesDefsAttributeTableState, "IgesDefsAttributeTable", parent IgesDataIgesEntity, {
-the_attributes: Handle<HArray2<Handle<StandardTransient>>>,
+the_attributes: Handle<HArray2<Handle<dyn Transient>>>,
 }
 }
 
@@ -41,10 +43,7 @@ impl IgesDefsAttributeTable {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn init(
-        &self,
-        attributes: &Handle<HArray2<Handle<StandardTransient>>>,
-    ) -> Result<(), Failure> {
+    pub fn init(&self, attributes: &Handle<HArray2<Handle<dyn Transient>>>) -> Result<(), Failure> {
         if (iges_array2_lower_col(attributes, "IgesDefsAttributeTable::init")? != 1)
             || (iges_array2_lower_row(attributes, "IgesDefsAttributeTable::init")? != 1)
         {
@@ -126,7 +125,7 @@ impl IgesDefsAttributeTable {
         &self,
         atnum: i32,
         rownum: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         iges_array2_item(
             &self.state.read().the_attributes,
             atnum,
@@ -212,7 +211,7 @@ impl IgesDefsAttributeTable {
         atnum: i32,
         rownum: i32,
         valuenum: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &iges_array2_item(
                 &self.state.read().the_attributes,
@@ -220,7 +219,7 @@ impl IgesDefsAttributeTable {
                 rownum,
                 "IgesDefsAttributeTable::attribute_as_entity",
             )?
-            .cast::<HArray1<Handle<IgesDataIgesEntity>>>(),
+            .cast::<HArray1<Handle<dyn IgesDataEntityKind>>>(),
             valuenum,
             "IgesDefsAttributeTable::attribute_as_entity",
         )

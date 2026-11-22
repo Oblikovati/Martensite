@@ -28,4 +28,4 @@ pub trait GeomPoint: GeomGeometry {
         first.square_distance(&second)
     }
 }
-impl_transient_interface!(dyn GeomPoint, "Geom_Point", dyn GeomGeometry);
+impl_transient_interface!(dyn GeomPoint, "Geom_Point", dyn GeomGeometry, upcasts: [dyn GeomGeometry]);

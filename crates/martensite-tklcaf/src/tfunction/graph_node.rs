@@ -10,7 +10,7 @@ use crate::tdf::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::Map,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
 };
 use std::io;
 use std::sync::RwLockReadGuard;
@@ -30,13 +30,12 @@ const GRAPH_NODE_ID: Guid = guid_from_text("DD51FA86-E171-41a4-A2C1-3A0FBF286798
 /// ```
 #[derive(Default)]
 pub struct TFunctionGraphNode {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     previous: SharedState<Map<i32>>,
     next: SharedState<Map<i32>>,
     status: SharedState<TFunctionExecutionStatus>,
 }
-impl_transient!(TFunctionGraphNode, "TFunction_GraphNode", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TFunctionGraphNode, "TFunction_GraphNode", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 /// The scope ID of a function label, when the scope knows it (the label overloads).
 fn function_id(function: &TdfLabel) -> Result<Option<i32>, Failure> {
@@ -53,7 +52,7 @@ impl TFunctionGraphNode {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `GetID`.
@@ -196,7 +195,7 @@ impl TdfAttribute for TFunctionGraphNode {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Dump`: the attribute dump.
     fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {

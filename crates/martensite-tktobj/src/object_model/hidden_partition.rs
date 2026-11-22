@@ -2,29 +2,28 @@
 use super::{ModelObject, ModelObjectBase, ModelPartition, ModelPartitionBase, ObjectTypeFlags};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tklcaf::tdf::TdfLabel;
 
 /// `martensite_object_model_HiddenPartition`; `HiddenPartition::new(&label)`.
 pub struct HiddenPartition {
-    transient: StandardTransient,
     object: ModelObjectBase,
     partition: ModelPartitionBase,
 }
-impl_transient!(HiddenPartition, "martensite_object_model_HiddenPartition", dyn ModelPartition, transient,
+impl_transient!(HiddenPartition, "martensite_object_model_HiddenPartition", dyn ModelPartition,
     interfaces: [dyn ModelObject, dyn ModelPartition]);
 
 impl HiddenPartition {
     /// `martensite_object_model_HiddenPartition(theLabel)`: a partition attached and named.
     pub fn new(label: &TdfLabel) -> Result<Handle<HiddenPartition>, Failure> {
         let partition = Handle::new(Self::unattached(label));
-        ModelObjectBase::attach(&partition.cast(), true)?;
+        ModelObjectBase::attach(&partition.upcast(), true)?;
         Ok(partition)
     }
     /// The persistence constructor (`DECLARE_TOBJdocument data framework_PERSISTENCE`): bound, not attached.
     pub fn persistence_new(label: &TdfLabel) -> Result<Handle<dyn ModelObject>, Failure> {
-        let partition: Handle<dyn ModelObject> = Handle::new(Self::unattached(label)).cast();
+        let partition: Handle<dyn ModelObject> = Handle::new(Self::unattached(label)).into_upcast();
         let object = martensite_tkcdf::live(
             &partition,
             "martensite_object_model_HiddenPartition::Persistence_::New",
@@ -35,7 +34,6 @@ impl HiddenPartition {
     }
     fn unattached(label: &TdfLabel) -> Self {
         Self {
-            transient: StandardTransient::default(),
             object: ModelObjectBase::new(label),
             partition: ModelPartitionBase::default(),
         }

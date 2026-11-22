@@ -122,7 +122,7 @@ fn messenger_overloads_share_failure_channel_and_object_filtering() {
     messenger
         .try_send_object(&Handle::default(), Gravity::Fail)
         .unwrap();
-    let object = Handle::<StandardTransient>::new(StandardTransient::default());
+    let object = Handle::new(StandardTransient).into_upcast();
     assert!(messenger.try_send_object(&object, Gravity::Info).is_err());
     refusal.set_trace_level(Gravity::Fail);
     messenger.try_send_object(&object, Gravity::Info).unwrap();

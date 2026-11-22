@@ -40,7 +40,7 @@ fn expect_bounds(bounds: &BoundingBox3, expected: [f64; 6]) -> Result<(), Failur
 #[test]
 fn occ30292_meshed_geometric_edge_uses_requested_representation() -> Result<(), Failure> {
     let frame = Axis2::new(Point3::new(0., 0., 0.), Direction3::new(0., 0., 1.)?)?;
-    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 1.)?).cast();
+    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 1.)?).into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve(&circle)?.edge()?;
     let mesher = BRepMeshIncrementalMesh::with_shape(&edge, 0.1, false, 0.5, false)?;
     assert!(mesher.is_done());

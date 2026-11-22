@@ -1,6 +1,6 @@
 //! Storage leases are safe Rust extensions where native dangling iterators have no valid use.
 use super::probe::{LiveProbeFilter, LiveTrace};
-use martensite_tkernel::standard::{Handle, HandleObserver};
+use martensite_tkernel::standard::Handle;
 use martensite_tkv3d::select_mgr::{
     SelectMgrAndFilter, SelectMgrCompositionFilter, SelectMgrStoredFilterIter,
     SelectMgrStoredFilters,
@@ -16,7 +16,7 @@ fn assert_send_sync<T: Send + Sync>() {
 fn public_live_collection_types_have_automatic_send_sync_contracts() {
     assert_send_sync::<SelectMgrStoredFilters>();
     assert_send_sync::<SelectMgrStoredFilterIter>();
-    assert_send_sync::<HandleObserver<dyn martensite_tkv3d::select_mgr::SelectMgrFilter>>();
+    assert_send_sync::<Arc<Handle<dyn martensite_tkv3d::select_mgr::SelectMgrFilter>>>();
 }
 
 #[test]
@@ -44,7 +44,8 @@ fn yielded_const_handle_lease_keeps_storage_without_intrusive_ownership() {
     assert_eq!(child.ref_count(), 2);
     parent.clear();
     drop(child);
-    assert_eq!(lease.ref_count(), 0);
+    // #592: the final storage lease retains one actual Arc owner; iteration adds none.
+    assert_eq!(lease.ref_count(), 1);
     assert_eq!(trace.destructions.load(Ordering::Acquire), 0);
     assert!(retained.is_empty());
     drop(lease);

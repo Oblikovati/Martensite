@@ -8,9 +8,9 @@ use martensite_tkcdf::{
     pcdm::{PcdmReaderStatus, PcdmStoreStatus},
 };
 use martensite_tkernel::{
-    impl_transient_interface,
+    impl_transient,
     message::{Gravity, Messenger, ProgressRange},
-    standard::{Failure, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Handle, SharedState, dump::DumpStream},
     tcollection::ExtendedString,
 };
 use martensite_tklcaf::tdoc_std::{
@@ -181,19 +181,15 @@ pub trait DocumentApplicationApi: TDocStdApplication {
         Ok(!is_error)
     }
 }
-impl_transient_interface!(
-    dyn DocumentApplicationApi,
-    "martensite_object_model_DocumentApplication",
-    dyn TDocStdApplication
-);
 
 /// `martensite_object_model_DocumentApplication` itself; [`DocumentApplication::get_instance`] is the process
 /// instance.
 pub struct DocumentApplication {
-    transient: StandardTransient,
     base: DocumentApplicationBase,
 }
-super::canonical_runtime_type::canonical_object_model_type!(DocumentApplication, dyn DocumentApplicationApi, transient, [dyn CdmApplication, dyn CdfApplication, dyn TDocStdApplication, dyn DocumentApplicationApi]);
+impl_transient!(DocumentApplication, "martensite_object_model_DocumentApplication", dyn TDocStdApplication,
+    interfaces: [dyn CdmApplication, dyn CdfApplication, dyn TDocStdApplication, dyn DocumentApplicationApi]);
+super::canonical_runtime_type::canonical_object_model_type!(dyn DocumentApplicationApi, DocumentApplication, [dyn CdmApplication, dyn CdfApplication, dyn TDocStdApplication]);
 
 /// The process instance of `GetInstance` (a function-local static by the model).
 static INSTANCE: OnceLock<Result<Handle<DocumentApplication>, Failure>> = OnceLock::new();
@@ -202,11 +198,10 @@ impl DocumentApplication {
     /// `martensite_object_model_DocumentApplication()`, already in its bound handle.
     pub fn new() -> Result<Handle<DocumentApplication>, Failure> {
         let application = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: DocumentApplicationBase::new()?,
         });
         if let Some(own) = application.get() {
-            CdmApplication::application_base(own).bind_self(&application.cast());
+            CdmApplication::application_base(own).bind_self(&application.upcast());
         }
         Ok(application)
     }
@@ -220,10 +215,7 @@ impl DocumentApplication {
     /// ```
     pub fn get_instance() -> Result<Handle<dyn DocumentApplicationApi>, Failure> {
         let instance = INSTANCE.get_or_init(Self::new);
-        instance
-            .as_ref()
-            .map(|application| application.cast())
-            .map_err(Clone::clone)
+        instance.as_ref().map(Handle::upcast).map_err(Clone::clone)
     }
 }
 

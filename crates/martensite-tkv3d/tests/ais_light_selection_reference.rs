@@ -1,6 +1,8 @@
 //! Light selection observes its caller only at the actual sensitive-entity Add boundaries.
 use martensite_tkernel::standard::{Handle, HandleObserver, HandleReference};
-use martensite_tkservice::graphic3d::{Graphic3dCLight, Graphic3dTypeOfLightSource};
+use martensite_tkservice::graphic3d::{
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dTypeOfLightSource,
+};
 use martensite_tkv3d::{
     ais::AisLightSource,
     select_mgr::{SelectMgrSelectableObject, SelectMgrSelection},
@@ -25,7 +27,7 @@ impl AddBoundarySelectionReference {
 }
 
 impl HandleReference<SelectMgrSelection> for AddBoundarySelectionReference {
-    fn observe(&self) -> HandleObserver<SelectMgrSelection> {
+    fn observe(&self) -> HandleObserver<'_, SelectMgrSelection> {
         let previous = self.reads.replace(self.reads.get() + 1);
         if previous == 0 {
             assert!(
@@ -53,7 +55,7 @@ impl HandleReference<SelectMgrSelection> for AddBoundarySelectionReference {
 
 struct ForbiddenSelectionReference;
 impl HandleReference<SelectMgrSelection> for ForbiddenSelectionReference {
-    fn observe(&self) -> HandleObserver<SelectMgrSelection> {
+    fn observe(&self) -> HandleObserver<'_, SelectMgrSelection> {
         // A nonzero mode must return before even dereferencing the argument.
         panic!("selection observed; expected no handle access for nonzero mode")
     }
@@ -64,7 +66,7 @@ impl HandleReference<SelectMgrSelection> for ForbiddenSelectionReference {
 }
 
 fn light(kind: Graphic3dTypeOfLightSource) -> Handle<AisLightSource> {
-    let source = Handle::new(Graphic3dCLight::new(kind));
+    let source = Handle::new(Graphic3dCLight::new(kind)).into_upcast::<dyn Graphic3dCLightSource>();
     AisLightSource::new(&source).unwrap()
 }
 

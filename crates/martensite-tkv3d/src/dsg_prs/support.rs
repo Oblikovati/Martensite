@@ -103,12 +103,15 @@ pub(super) fn polyline(points: &[Point3]) -> Result<Handle<Graphic3dArrayOfPolyl
 }
 
 /// `AddPrimitiveArray` of an array handle on the current group.
-pub(super) fn add_array<T: martensite_tkernel::standard::RuntimeTyped + ?Sized>(
-    group: &Handle<dyn Graphic3dGroup>,
-    array: &Handle<T>,
-) {
+pub(super) fn add_array<T>(group: &Handle<dyn Graphic3dGroup>, array: &Handle<T>)
+where
+    T: martensite_tkernel::standard::HandleUpcast<
+            dyn martensite_tkservice::graphic3d::Graphic3dArraySource,
+        > + ?Sized,
+{
+    // Native passes the concrete array where its base is expected: a compile-time upcast.
     if let Some(group) = group.get() {
-        group.add_primitive_array(&array.clone().cast(), true);
+        group.add_primitive_array(&array.upcast(), true);
     }
 }
 

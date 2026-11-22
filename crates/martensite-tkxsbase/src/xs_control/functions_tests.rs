@@ -12,7 +12,7 @@ fn fake_pilot() -> Handle<IFSelectSessionPilot> {
     XSControlFunctions::init().unwrap();
     let pilot = IFSelectSessionPilot::new("xs>").unwrap();
     let (ws, _) = reading_session();
-    pilot.set_session(&ws.cast());
+    pilot.set_session(&ws);
     pilot
 }
 

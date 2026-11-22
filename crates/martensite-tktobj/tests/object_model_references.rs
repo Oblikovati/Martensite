@@ -3,7 +3,7 @@
 use crate::object_model_document::{ObjectFixture, TestModelObject};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, HandleUpcast, RuntimeTyped},
 };
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tktobj::object_model::{
@@ -13,10 +13,9 @@ use martensite_tktobj::object_model::{
 
 /// A container object: it can drop its references (`CanRemoveReference` is true).
 pub struct TestContainer {
-    transient: StandardTransient,
     base: ModelObjectBase,
 }
-impl_transient!(TestContainer, "ObjectModel_TestContainer", dyn ModelObject, transient,
+impl_transient!(TestContainer, "ObjectModel_TestContainer", dyn ModelObject,
     interfaces: [dyn ModelObject]);
 impl ModelObject for TestContainer {
     fn object_base(&self) -> &ModelObjectBase {
@@ -30,10 +29,9 @@ impl TestContainer {
     /// A new container on the label.
     pub fn new(label: &TdfLabel) -> Handle<TestContainer> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: ModelObjectBase::new(label),
         });
-        ModelObjectBase::attach(&object.cast(), true).unwrap();
+        ModelObjectBase::attach(&object.upcast(), true).unwrap();
         object
     }
 }
@@ -48,8 +46,10 @@ fn visited(iterator: &Handle<dyn ObjectIterator>) -> Vec<Handle<dyn ModelObject>
     objects
 }
 
-fn dyn_object<T: ModelObject + RuntimeTyped>(object: &Handle<T>) -> Handle<dyn ModelObject> {
-    object.cast()
+fn dyn_object<T: ModelObject + HandleUpcast<dyn ModelObject>>(
+    object: &Handle<T>,
+) -> Handle<dyn ModelObject> {
+    object.upcast()
 }
 
 #[test]

@@ -4,8 +4,8 @@
 //! getters and setters. `step_entity!` declares a class (embedded parent, fields in one
 //! `SharedState`, a runtime type) and `step_methods!` its regular accessors, one line each, so the
 //! shape exists once. Classes are written by embedding: the parent
-//! is a field and a `deref`, so `Handle<StepGeomCartesianPoint>` casts to `Handle<StepGeomPoint>`
-//! and inherited members resolve through `deref`.
+//! is a field with a `Deref` implementation. Owned base views share the original allocation
+//! through `StepEntityBase`, and inherited members resolve through that same embedded parent.
 //!
 //! A null array is the null dereference, a null object failure; an index out of its bounds
 //! is an out of range failure.
@@ -18,6 +18,8 @@ use martensite_tkernel::standard::exceptions;
 pub(crate) use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, SharedState};
 pub(crate) use martensite_tkernel::tcollection::{AsciiString, HAsciiString};
 pub(crate) use martensite_tkmath::gp::Xyz;
+
+pub(crate) type StepBaseHandle<Base> = Handle<dyn crate::StepEntityBase<Base>>;
 
 /// The object of a handle, or the failure of the null dereference `where_called` makes.
 pub(crate) fn step_live<'a, T: ?Sized + RuntimeTyped>(
@@ -110,8 +112,8 @@ pub(crate) fn step_array1_len<T: Send + Sync + 'static>(array: &Handle<HArray1<T
 /// `custom_default` leaves `Default` and `new` to the class, for a constructor that does
 /// more than zero its fields (the combined classes create their sub-entities in it).
 macro_rules! step_entity {
-    ($(#[$meta:meta])* $class:ident, $state:ident, $recorded:literal, $parent:ty, { $($field:ident: $ty:ty),* $(,)? }) => {
-        $crate::step_entity::step_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, { $($field: $ty),* }, [Default]);
+    ($(#[$meta:meta])* $class:ident, $state:ident, $recorded:literal, $parent:ty, { $($field:ident: $ty:ty),* $(,)? } $(, bases: [$($base:ty),* $(,)?])?) => {
+        $crate::step_entity::step_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, { $($field: $ty),* }, [Default], [$($($base),*)?]);
         impl $class {
             #[doc = concat!("`", $recorded, "()`, with every field at its neutral value.")]
             pub fn new() -> Self {
@@ -119,10 +121,10 @@ macro_rules! step_entity {
             }
         }
     };
-    ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, $parent:ty, { $($field:ident: $ty:ty),* $(,)? }) => {
-        $crate::step_entity::step_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, { $($field: $ty),* }, []);
+    ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, $parent:ty, { $($field:ident: $ty:ty),* $(,)? } $(, bases: [$($base:ty),* $(,)?])?) => {
+        $crate::step_entity::step_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, { $($field: $ty),* }, [], [$($($base),*)?]);
     };
-    (@shape $(#[$meta:meta])* $class:ident, $state:ident, $recorded:literal, $parent:ty, { $($field:ident: $ty:ty),* }, [$($derive:ident)?]) => {
+    (@shape $(#[$meta:meta])* $class:ident, $state:ident, $recorded:literal, $parent:ty, { $($field:ident: $ty:ty),* }, [$($derive:ident)?], [$($base:ty),*]) => {
         #[doc = concat!("The fields of `", $recorded, "`.")]
         #[derive(Default)]
         #[allow(dead_code, reason = "a field can be write-only until a later package reads it")]
@@ -136,7 +138,13 @@ macro_rules! step_entity {
             #[allow(dead_code, reason = "a class without own fields never reads its empty state")]
             pub(crate) state: $crate::step_entity::SharedState<$state>,
         }
-        martensite_tkernel::impl_transient!($class, $recorded, $parent, parent);
+        martensite_tkernel::impl_transient!($class, $recorded, $parent,
+            interfaces: [$(dyn $crate::StepEntityBase<$base>),*]);
+        $(impl $crate::StepEntityBase<$base> for $class {
+            fn step_base(&self) -> &$base {
+                self
+            }
+        })*
         impl std::ops::Deref for $class {
             type Target = $parent;
             fn deref(&self) -> &Self::Target {
@@ -244,7 +252,7 @@ macro_rules! step_select {
         $crate::step_entity::step_select!(@shape $(#[$meta])* $class, { $($reader: $target),* });
         impl $crate::step_data::StepDataSelectType for $class {
             $crate::impl_step_select_storage!(value);
-            fn case_num(&self, ent: &$crate::step_entity::Handle<$crate::step_entity::StandardTransient>) -> i32 {
+            fn case_num(&self, ent: &$crate::step_entity::Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
                 $crate::step_select_case!(ent; $($case),+)
             }
         }
@@ -254,7 +262,7 @@ macro_rules! step_select {
         $crate::step_entity::step_select!(@shape $(#[$meta])* $class, { $($reader: $target),* });
         impl $crate::step_data::StepDataSelectType for $class {
             $crate::impl_step_select_storage!(value);
-            fn case_num(&self, ent: &$crate::step_entity::Handle<$crate::step_entity::StandardTransient>) -> i32 {
+            fn case_num(&self, ent: &$crate::step_entity::Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
                 if ent.is_null() {
                     return 0;
                 }
@@ -315,7 +323,6 @@ macro_rules! step_fixed_name_member {
             $class,
             $recorded,
             $crate::step_data::StepDataSelectReal,
-            base,
             interfaces: [dyn $crate::step_data::StepDataSelectMember]
         );
         impl $crate::step_data::StepDataSelectMember for $class {

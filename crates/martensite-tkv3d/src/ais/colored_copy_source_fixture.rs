@@ -3,9 +3,12 @@ use super::*;
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::quantity::Color;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Handle, SharedState, WeakHandle};
 use martensite_tkservice::graphic3d::Graphic3dNameOfMaterial;
-use std::{fmt::Write, sync::Arc};
+use std::{
+    fmt::Write,
+    sync::{Arc, Weak},
+};
 pub(super) struct CopySourceInput {
     pub slot: SharedState<Handle<dyn AisShapeSource>>,
     pub incoming: WeakHandle<dyn AisShapeSource>,
@@ -14,21 +17,21 @@ pub(super) struct CopySourceInput {
     pub failure: i32,
 }
 pub(super) struct CopySourceProbe {
-    transient: StandardTransient,
+    owner: Weak<Self>,
     base: AisColoredShapeBase,
     input: Arc<CopySourceInput>,
 }
-martensite_tkernel::impl_transient!(CopySourceProbe,"ColoredCopySourceProbe",dyn AisShapeSource,transient,
+martensite_tkernel::impl_transient!(CopySourceProbe,"ColoredCopySourceProbe",dyn AisShapeSource,
     interfaces:[dyn AisColoredShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,
     dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl CopySourceProbe {
     /// Own genuine inherited state for a live-slot probe; `CopySourceProbe::new(&shape, &input)`.
     pub fn new(shape: &Shape, input: &Arc<CopySourceInput>) -> Handle<Self> {
-        let object = Handle::new(Self {
-            transient: StandardTransient::default(),
+        let object = Handle::from_arc(Arc::new_cyclic(|owner| Self {
+            owner: owner.clone(),
             base: AisColoredShapeBase::new(shape),
             input: input.clone(),
-        });
+        }));
         prs_mgr_presentable_bind(&object.clone().cast());
         object
     }
@@ -37,13 +40,13 @@ impl CopySourceProbe {
             return;
         }
         self.record_source_counts("before", stage);
-        *self.input.slot.write() = self.input.incoming.observe().clone();
+        *self.input.slot.write() = self.input.incoming.upgrade();
         self.record_source_counts("after", stage);
         source_getter_failure(self.input.failure);
     }
     fn record_source_counts(&self, phase: &str, stage: i32) {
-        let own = self.transient.ref_count();
-        let incoming = self.input.incoming.observe().ref_count();
+        let own = self.owner.strong_count();
+        let incoming = self.input.incoming.ref_count();
         let topology = self.base.shape.fields.read().shape.tshape().ref_count();
         writeln!(
             &mut *self.input.rows.write(),

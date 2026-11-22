@@ -1,9 +1,13 @@
 //! Printing and reading over injected byte streams.
 use super::{AsciiString, c_string_length};
+#[cfg(test)]
 use crate::standard::character;
-use std::io::{BufRead, Write};
+#[cfg(test)]
+use std::io::BufRead;
+use std::io::Write;
 
 /// The read buffer: a read stores at most this many bytes minus the NUL.
+#[cfg(test)]
 const READ_BUFFER_SIZE: usize = 8190;
 
 impl AsciiString {
@@ -19,7 +23,8 @@ impl AsciiString {
     ///
     /// A stream holding only whitespace leaves nothing to read; the
     /// string becomes empty here.
-    pub fn read(&mut self, input: &mut dyn BufRead) -> std::io::Result<bool> {
+    #[cfg(test)]
+    pub(crate) fn read(&mut self, input: &mut dyn BufRead) -> std::io::Result<bool> {
         skip_spaces(input)?;
         let word = take_word(input, READ_BUFFER_SIZE - 1)?;
         *self = Self::from_bytes(&word);
@@ -28,6 +33,7 @@ impl AsciiString {
 }
 
 /// Consumes leading whitespace, as the `istream::sentry` does.
+#[cfg(test)]
 fn skip_spaces(input: &mut dyn BufRead) -> std::io::Result<()> {
     loop {
         let available = input.fill_buf()?;
@@ -44,6 +50,7 @@ fn skip_spaces(input: &mut dyn BufRead) -> std::io::Result<()> {
 }
 
 /// Consumes up to `limit` non-space bytes and returns them.
+#[cfg(test)]
 fn take_word(input: &mut dyn BufRead, limit: usize) -> std::io::Result<Vec<u8>> {
     let mut word = Vec::new();
     while word.len() < limit {

@@ -6,6 +6,7 @@
 //! until the surface or the transformation changes.
 use super::surface::GeomAdaptorSurface;
 use super::surface_state::LoadRange;
+use super::transformed_surface_source::GeomTransformedSurfaceSource;
 use crate::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use crate::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface, GeomCylindricalSurface, GeomPlane,
@@ -14,7 +15,7 @@ use crate::geom::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::geom_abs::{Shape, SurfaceType};
 use martensite_tkmath::gp::{
     Axis1, Cone3, Cylinder3, Direction3, Plane3, Point3, Sphere3, Torus3, Transform3,
@@ -31,7 +32,6 @@ struct TransformedState {
 /// A surface adaptor with a transformation (`GeomAdaptorTransformedSurface`);
 /// `GeomAdaptorTransformedSurface::with_surface(&surface, trsf)?`.
 pub struct GeomAdaptorTransformedSurface {
-    parent: StandardTransient,
     surf: Handle<GeomAdaptorSurface>,
     state: SharedState<TransformedState>,
 }
@@ -57,14 +57,12 @@ impl_transient!(
     GeomAdaptorTransformedSurface,
     "GeomAdaptor_TransformedSurface",
     dyn Adaptor3dSurface,
-    parent,
-    interfaces: [dyn Adaptor3dSurface]
+    interfaces: [dyn Adaptor3dSurface, dyn GeomTransformedSurfaceSource]
 );
 
 impl GeomAdaptorTransformedSurface {
     fn from_parts(surf: Handle<GeomAdaptorSurface>, state: TransformedState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             surf,
             state: SharedState::new(state),
         }
@@ -245,12 +243,12 @@ impl GeomAdaptorTransformedSurface {
         }
         Ok(match self.surf.get_type()? {
             SurfaceType::Plane => {
-                Handle::new(GeomPlane::from_pln(self.surf.plane()?.transformed(trsf))).cast()
+                Handle::new(GeomPlane::from_pln(self.surf.plane()?.transformed(trsf))).into_upcast()
             }
             SurfaceType::Cylinder => Handle::new(GeomCylindricalSurface::from_cylinder(
                 self.surf.cylinder()?.transformed(trsf),
             ))
-            .cast(),
+            .into_upcast(),
             _ => self.transformed_curved_geometry(original, trsf)?,
         })
     }
@@ -263,15 +261,15 @@ impl GeomAdaptorTransformedSurface {
             SurfaceType::Cone => Handle::new(GeomConicalSurface::from_cone(
                 self.surf.cone()?.transformed(trsf),
             ))
-            .cast(),
+            .into_upcast(),
             SurfaceType::Sphere => Handle::new(GeomSphericalSurface::from_sphere(
                 self.surf.sphere()?.transformed(trsf),
             ))
-            .cast(),
+            .into_upcast(),
             SurfaceType::Torus => Handle::new(GeomToroidalSurface::from_torus(
                 self.surf.torus()?.transformed(trsf),
             ))
-            .cast(),
+            .into_upcast(),
             _ => original.transformed(trsf)?.cast(),
         })
     }
@@ -325,7 +323,7 @@ fn d3_transformed(mut result: GeomSurfaceD3, trsf: Transform3) -> GeomSurfaceD3 
 
 impl Adaptor3dSurface for GeomAdaptorTransformedSurface {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
-        Ok(Handle::new(self.shallow_adaptor()?).cast())
+        Ok(Handle::new(self.shallow_adaptor()?).into_upcast())
     }
     fn first_u_parameter(&self) -> Result<f64, Failure> {
         self.surf.first_u_parameter()

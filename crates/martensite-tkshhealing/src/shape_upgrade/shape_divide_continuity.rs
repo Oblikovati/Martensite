@@ -4,6 +4,8 @@ use super::{
     ShapeUpgradeSplitCurve2dContinuity, ShapeUpgradeSplitCurve3dContinuity,
     ShapeUpgradeSplitSurfaceContinuity, ShapeUpgradeWireDivide,
 };
+use crate::shape_upgrade::FaceDivider;
+use crate::shape_upgrade::WireDivider;
 use martensite_tkernel::{precision, standard::Handle};
 use martensite_tkmath::geom_abs::Shape;
 use std::ops::Deref;
@@ -94,7 +96,7 @@ impl ShapeUpgradeShapeDivideContinuity {
         self.policies.write().pcurve = criterion;
     }
 
-    /// Set the supimplementation-surface continuity and preserve the raw criterion.
+    /// Set the support-surface continuity and preserve the raw criterion.
     /// `divider.set_surface_criterion(Shape::C2)`.
     pub fn set_surface_criterion(&self, criterion: Shape) {
         self.policies.write().surface = criterion;
@@ -123,11 +125,11 @@ impl ShapeUpgradeShapeDivideContinuity {
 
     /// Build the virtual face policy for this continuity divider.
     /// `let face_tool = divider.split_face_tool()`.
-    pub fn split_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    pub fn split_face_tool(&self) -> Handle<dyn FaceDivider> {
         self.continuity_face_tool()
     }
 
-    fn continuity_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    fn continuity_face_tool(&self) -> Handle<dyn FaceDivider> {
         let policy = *self.policies.read();
         let curve_2d = curve_2d_tool(policy);
         let curve_3d = curve_3d_tool(policy);
@@ -142,7 +144,7 @@ impl ShapeDivider for ShapeUpgradeShapeDivideContinuity {
         &self.parent
     }
 
-    fn split_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    fn split_face_tool(&self) -> Handle<dyn FaceDivider> {
         ShapeUpgradeShapeDivideContinuity::split_face_tool(self)
     }
 }
@@ -171,21 +173,21 @@ fn surface_tool(policy: ContinuityPolicies) -> Handle<ShapeUpgradeSplitSurfaceCo
 fn wire_tool(
     curve_2d: &Handle<ShapeUpgradeSplitCurve2dContinuity>,
     curve_3d: &Handle<ShapeUpgradeSplitCurve3dContinuity>,
-) -> Handle<ShapeUpgradeWireDivide> {
+) -> Handle<dyn WireDivider> {
     let wire = Handle::new(ShapeUpgradeWireDivide::new());
-    wire.set_split_curve_2d_tool(&curve_2d.cast());
-    wire.set_split_curve_3d_tool(&curve_3d.cast());
-    wire
+    wire.set_split_curve_2d_tool(&curve_2d.upcast());
+    wire.set_split_curve_3d_tool(&curve_3d.upcast());
+    wire.into_upcast()
 }
 
 fn face_tool(
     surface: &Handle<ShapeUpgradeSplitSurfaceContinuity>,
-    wire: &Handle<ShapeUpgradeWireDivide>,
-) -> Handle<ShapeUpgradeFaceDivide> {
+    wire: &Handle<dyn WireDivider>,
+) -> Handle<dyn FaceDivider> {
     let face = Handle::new(ShapeUpgradeFaceDivide::empty());
-    face.set_split_surface_tool(&surface.cast());
+    face.set_split_surface_tool(&surface.upcast());
     face.set_wire_divide_tool(wire);
-    face
+    face.into_upcast()
 }
 
 #[cfg(test)]

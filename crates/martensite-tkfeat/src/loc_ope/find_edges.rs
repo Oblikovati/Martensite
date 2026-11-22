@@ -35,9 +35,11 @@ pub(crate) fn basis_curve(edge: &Edge) -> Result<(Handle<dyn GeomCurve>, f64, f6
         let curve = c
             .get()
             .ok_or_else(|| null_object("LocOpe_FindEdges::Set", "edge without 3D curve"))?;
-        c = curve.transformed(located.location.transformation())?.cast();
+        c = curve
+            .transformed(located.location.transformation())?
+            .into_cast();
     }
-    let trimmed: Handle<GeomTrimmedCurve> = c.cast();
+    let trimmed: Handle<GeomTrimmedCurve> = c.downcast();
     if let Some(trimmed) = trimmed.get() {
         c = trimmed.basis_curve();
     }
@@ -45,19 +47,19 @@ pub(crate) fn basis_curve(edge: &Edge) -> Result<(Handle<dyn GeomCurve>, f64, f6
 }
 
 fn kind_of(c: &Handle<dyn GeomCurve>) -> Option<Kind> {
-    if !c.cast::<GeomLine>().is_null() {
+    if c.downcast_ref::<GeomLine>().is_some() {
         return Some(Kind::Line);
     }
-    if !c.cast::<GeomCircle>().is_null() {
+    if c.downcast_ref::<GeomCircle>().is_some() {
         return Some(Kind::Circle);
     }
-    if !c.cast::<GeomEllipse>().is_null() {
+    if c.downcast_ref::<GeomEllipse>().is_some() {
         return Some(Kind::Ellipse);
     }
-    if !c.cast::<GeomBSplineCurve>().is_null() {
+    if c.downcast_ref::<GeomBSplineCurve>().is_some() {
         return Some(Kind::BSpline);
     }
-    if !c.cast::<GeomBezierCurve>().is_null() {
+    if c.downcast_ref::<GeomBezierCurve>().is_some() {
         return Some(Kind::Bezier);
     }
     None
@@ -78,13 +80,11 @@ fn in_range(prm: f64, t: &EdgeCurve, tol: f64) -> bool {
 fn same_lines(cf: &EdgeCurve, ct: &EdgeCurve) -> Result<bool, Failure> {
     let mut tol = precision::confusion();
     let lif =
-        cf.c.cast::<GeomLine>()
-            .get()
+        cf.c.downcast_ref::<GeomLine>()
             .map(|l| l.lin())
             .unwrap_or_default();
     let lit =
-        ct.c.cast::<GeomLine>()
-            .get()
+        ct.c.downcast_ref::<GeomLine>()
             .map(|l| l.lin())
             .unwrap_or_default();
     let p1 = elclib::line_value(cf.f, lif.position());
@@ -141,8 +141,8 @@ fn conic_parameters(
 fn same_circles(cf: &EdgeCurve, ct: &EdgeCurve) -> Result<bool, Failure> {
     let tol = precision::confusion();
     let null = || null_object("LocOpe_FindEdges::Set", "null circle");
-    let cif = cf.c.cast::<GeomCircle>().get().ok_or_else(null)?.circ()?;
-    let cit = ct.c.cast::<GeomCircle>().get().ok_or_else(null)?.circ()?;
+    let cif = cf.c.downcast_ref::<GeomCircle>().ok_or_else(null)?.circ()?;
+    let cit = ct.c.downcast_ref::<GeomCircle>().ok_or_else(null)?.circ()?;
     if (cif.radius() - cit.radius()).abs() > tol
         || cif.location().square_distance(&cit.location()) > tol * tol
     {
@@ -166,8 +166,14 @@ fn same_circles(cf: &EdgeCurve, ct: &EdgeCurve) -> Result<bool, Failure> {
 fn same_ellipses(cf: &EdgeCurve, ct: &EdgeCurve) -> Result<bool, Failure> {
     let tol = precision::confusion();
     let null = || null_object("LocOpe_FindEdges::Set", "null ellipse");
-    let cif = cf.c.cast::<GeomEllipse>().get().ok_or_else(null)?.elips()?;
-    let cit = ct.c.cast::<GeomEllipse>().get().ok_or_else(null)?.elips()?;
+    let cif =
+        cf.c.downcast_ref::<GeomEllipse>()
+            .ok_or_else(null)?
+            .elips()?;
+    let cit =
+        ct.c.downcast_ref::<GeomEllipse>()
+            .ok_or_else(null)?
+            .elips()?;
     if (cif.major_radius() - cit.major_radius()).abs() > tol
         || (cif.minor_radius() - cit.minor_radius()).abs() > tol
         || cif.location().square_distance(&cit.location()) > tol * tol
@@ -192,8 +198,8 @@ fn same_ellipses(cf: &EdgeCurve, ct: &EdgeCurve) -> Result<bool, Failure> {
 fn same_bsplines(cf: &EdgeCurve, ct: &EdgeCurve, edgt: &Edge) -> Result<bool, Failure> {
     let tol = precision::confusion();
     let null = || null_object("LocOpe_FindEdges::Set", "null B-spline curve");
-    let bf = cf.c.cast::<GeomBSplineCurve>();
-    let bt = ct.c.cast::<GeomBSplineCurve>();
+    let bf = cf.c.downcast::<GeomBSplineCurve>();
+    let bt = ct.c.downcast::<GeomBSplineCurve>();
     let (bf, bt) = (bf.get().ok_or_else(null)?, bt.get().ok_or_else(null)?);
     let nbpoles = bf.nb_poles();
     if nbpoles != bt.nb_poles() || bf.nb_knots() != bt.nb_knots() {
@@ -229,8 +235,8 @@ fn same_bsplines(cf: &EdgeCurve, ct: &EdgeCurve, edgt: &Edge) -> Result<bool, Fa
 fn same_beziers(cf: &EdgeCurve, ct: &EdgeCurve) -> Result<bool, Failure> {
     let tol = precision::confusion();
     let null = || null_object("LocOpe_FindEdges::Set", "null Bezier curve");
-    let bf = cf.c.cast::<GeomBezierCurve>();
-    let bt = ct.c.cast::<GeomBezierCurve>();
+    let bf = cf.c.downcast::<GeomBezierCurve>();
+    let bt = ct.c.downcast::<GeomBezierCurve>();
     let (bf, bt) = (bf.get().ok_or_else(null)?, bt.get().ok_or_else(null)?);
     let nbpoles = bf.nb_poles();
     if nbpoles != bt.nb_poles() {

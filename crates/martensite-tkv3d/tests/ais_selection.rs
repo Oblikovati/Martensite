@@ -8,7 +8,7 @@ use ais_selection_fixture::{AisStateFilter, AisStateOwner};
 use boxed_selectable::BoxedSelectable;
 use martensite_tkernel::{
     ncollection::Array1,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkv3d::{ais::*, select_mgr::*};
 use std::sync::atomic::Ordering;
@@ -258,11 +258,10 @@ fn append_owner_validates_owner_before_filter_then_dispatches_add() {
     );
 }
 struct DispatchSelection {
-    transient: StandardTransient,
     base: AisSelectionBase,
     calls: SharedState<Vec<i32>>,
 }
-martensite_tkernel::impl_transient!(DispatchSelection,"Test_DispatchSelection",dyn AisSelectionSource,transient,interfaces:[dyn AisSelectionSource]);
+martensite_tkernel::impl_transient!(DispatchSelection,"Test_DispatchSelection",dyn AisSelectionSource,interfaces:[dyn AisSelectionSource]);
 impl AisSelectionSource for DispatchSelection {
     fn selection_base(&self) -> &AisSelectionBase {
         &self.base
@@ -290,7 +289,6 @@ impl AisSelectionSource for DispatchSelection {
 fn composite_virtual_members_dispatch_clear_select_and_add_to_subclasses() {
     let scene = AisScene::new();
     let derived = Handle::new(DispatchSelection {
-        transient: StandardTransient::default(),
         base: AisSelectionBase::new(),
         calls: SharedState::default(),
     });

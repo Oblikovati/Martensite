@@ -1,6 +1,6 @@
 //! An interactive object drawing one triangle array, as a viewer's primitive-array object:
 //! mode 0 draws the array with the drawer's shading aspect, selection mode 0 picks it.
-use martensite_tkernel::standard::{Failure, Handle, HandleReference, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference};
 use martensite_tkmath::toploc::Location;
 use martensite_tkservice::graphic3d::{
     Graphic3dArrayOfTriangles, Graphic3dGroupMembers as _, Graphic3dStructureMembers as _,
@@ -19,18 +19,16 @@ use martensite_tkv3d::select3d::Select3DSensitivePrimitiveArray;
 
 /// A displayed triangle array; `TriangleArrayObject::new(triangles)`.
 pub struct TriangleArrayObject {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     triangles: Handle<Graphic3dArrayOfTriangles>,
 }
-martensite_tkernel::impl_transient!(TriangleArrayObject, "TriangleArrayObject", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(TriangleArrayObject, "TriangleArrayObject", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl TriangleArrayObject {
     /// The bound object of `triangles`; `TriangleArrayObject::new(cylinder_triangles)`.
     pub fn new(triangles: Handle<Graphic3dArrayOfTriangles>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             triangles,
         });
@@ -59,7 +57,7 @@ impl PrsMgrPresentableObject for TriangleArrayObject {
         if let Some(shading) = self.attributes().shading_aspect().get() {
             group.set_group_primitives_aspect(&shading.aspect().cast());
         }
-        group.add_primitive_array(&self.triangles.clone().cast(), true);
+        group.add_primitive_array(&self.triangles.upcast(), true);
         Ok(())
     }
     martensite_tkv3d::ais_presentable_overrides!();

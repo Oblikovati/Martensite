@@ -3,7 +3,9 @@ impl<T> DynamicArray<T> {
     /// Transfers coherent blocks to a raw Clear state; `let state = array.into_clear_state();`.
     /// A rejected shape returns the unchanged array and its domain error before any transfer.
     /// Abandoning the admitted state leaks payload allocations; explicitly complete or repair it.
-    pub fn into_clear_state(self) -> Result<DynamicArrayClearState<T>, (Self, Box<Failure>)> {
+    pub(crate) fn into_clear_state(
+        self,
+    ) -> Result<DynamicArrayClearState<T>, (Self, Box<Failure>)> {
         if !self.clear_state_prefix_is_coherent() {
             let message = format!(
                 "Clear state size {}, stride {}, blocks {}: expected coherent registered prefixes (zero stride admits only retained slot0)",

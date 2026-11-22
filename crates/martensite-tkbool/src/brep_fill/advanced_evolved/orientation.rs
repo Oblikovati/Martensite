@@ -172,7 +172,7 @@ impl BRepFillAdvancedEvolved {
             return Ok(());
         }
         let a_f_spine = a_mk_f_spine.face()?;
-        let a_pln_spine: Handle<GeomPlane> = BRepTool::surface(&a_f_spine)?.cast();
+        let a_pln_spine: Handle<GeomPlane> = BRepTool::surface(&a_f_spine)?.downcast();
         let a_n1 = Vector3::from(
             a_pln_spine
                 .get()

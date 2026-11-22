@@ -6,7 +6,7 @@ use martensite_tkernel::standard::exceptions::program_error;
 use martensite_tkernel::standard::{Failure, Handle, HandleFieldRef, HandleReference};
 
 /// `myNextInChain`, the slot `ChainNextPlane` returns a reference to.
-fn next_in_chain(state: &ClipPlaneState) -> &Handle<Graphic3dClipPlane> {
+fn next_in_chain(state: &ClipPlaneState) -> &Handle<dyn super::Graphic3dClipPlaneSource> {
     &state.next
 }
 
@@ -17,17 +17,19 @@ impl Graphic3dClipPlane {
     }
     /// The previous plane of the chain, null for a head or a destroyed predecessor.
     /// Example: `plane.chain_previous_plane().is_null()`.
-    pub fn chain_previous_plane(&self) -> Handle<Self> {
+    pub fn chain_previous_plane(&self) -> Handle<dyn super::Graphic3dClipPlaneSource> {
         self.state.read().prev.upgrade()
     }
     /// The next plane of the chain, as an owning copy; `plane.chain_next_plane()`.
-    pub fn chain_next_plane(&self) -> Handle<Self> {
+    pub fn chain_next_plane(&self) -> Handle<dyn super::Graphic3dClipPlaneSource> {
         self.state.read().next.clone()
     }
     /// `ChainNextPlane()`: the `const handle&` of the plane's own `myNextInChain` slot, which
     /// owns nothing and reads the slot on each use, so it sees a later `SetChainNextPlane`.
     /// Example: `plane.chain_next_plane_ref().is_null()`.
-    pub fn chain_next_plane_ref(&self) -> Box<dyn HandleReference<Self> + '_> {
+    pub fn chain_next_plane_ref(
+        &self,
+    ) -> Box<dyn HandleReference<dyn super::Graphic3dClipPlaneSource> + '_> {
         Box::new(HandleFieldRef::new(&self.state, next_in_chain))
     }
     /// The number of planes from this one to the chain end (at least 1).
@@ -39,7 +41,10 @@ impl Graphic3dClipPlane {
     /// old next plane and updating the lengths of `this` and its predecessors. A link that
     /// would close a loop (natively an endless recursion) raises `Standard_ProgramError`
     /// before anything changes. Example: `Graphic3dClipPlane::set_chain_next_plane(&head, tail)?`.
-    pub fn set_chain_next_plane(this: &Handle<Self>, next: Handle<Self>) -> Result<(), Failure> {
+    pub fn set_chain_next_plane(
+        this: &Handle<dyn super::Graphic3dClipPlaneSource>,
+        next: Handle<dyn super::Graphic3dClipPlaneSource>,
+    ) -> Result<(), Failure> {
         Self::refuse_loop(this, &next)?;
         let old_next = {
             let mut state = this.state.write();
@@ -59,13 +64,16 @@ impl Graphic3dClipPlane {
     /// into `myNextInChain` as natively; see [`Self::set_chain_next_plane`].
     /// Example: `Graphic3dClipPlane::set_chain_next_plane_reference(&head, &tail)?`.
     pub fn set_chain_next_plane_reference(
-        this: &Handle<Self>,
-        next: &dyn HandleReference<Self>,
+        this: &Handle<dyn super::Graphic3dClipPlaneSource>,
+        next: &dyn HandleReference<dyn super::Graphic3dClipPlaneSource>,
     ) -> Result<(), Failure> {
         Self::set_chain_next_plane(this, next.clone_handle())
     }
     /// Refuses a `next` whose forward chain reaches `this`.
-    fn refuse_loop(this: &Handle<Self>, next: &Handle<Self>) -> Result<(), Failure> {
+    fn refuse_loop(
+        this: &Handle<dyn super::Graphic3dClipPlaneSource>,
+        next: &Handle<dyn super::Graphic3dClipPlaneSource>,
+    ) -> Result<(), Failure> {
         let mut cursor = next.clone();
         while let Some(plane) = cursor.get() {
             if cursor == *this {
@@ -81,7 +89,7 @@ impl Graphic3dClipPlane {
         Ok(())
     }
     /// `updateChainLen`: recomputes the forward length of `plane` and of its predecessors.
-    fn update_chain_len(start: Handle<Self>) {
+    fn update_chain_len(start: Handle<dyn super::Graphic3dClipPlaneSource>) {
         let mut cursor = start;
         while let Some(plane) = cursor.get() {
             let next = plane.chain_next_plane();

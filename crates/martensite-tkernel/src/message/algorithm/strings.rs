@@ -1,10 +1,10 @@
 //! The string variants of the algorithm status setters and the recorded strings.
-use super::{Algorithm, status_slots};
+use super::{AlgorithmState, status_slots};
 use crate::message::{ExecStatus, Status};
 use crate::standard::Handle;
 use crate::tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString};
 
-impl Algorithm {
+impl AlgorithmState {
     /// Bytes widened one per unit (no UTF-8 decoding);
     /// `algorithm.set_status_with_c_str(s, b"x", true)`.
     pub fn set_status_with_c_str(&self, status: Status, text: &[u8], no_repetitions: bool) {

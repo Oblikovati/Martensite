@@ -225,7 +225,8 @@ impl RwStepShapeRwSolidReplica {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_parent_solid: Handle<StepShapeSolidModel> = Default::default();
+        let mut a_parent_solid: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>> =
+            Default::default();
         data.read_entity(
             num,
             2,

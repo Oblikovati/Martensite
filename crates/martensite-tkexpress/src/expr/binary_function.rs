@@ -12,12 +12,11 @@ use super::operators::{expr_add, expr_multiply};
 use super::package::copy_share;
 use super::unary_kit::shallow_of;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// `f(u, v)` for a function `f` of two variables; `ExprBinaryFunction::new(&f, &u, &v)?`.
 pub struct ExprBinaryFunction {
-    parent: StandardTransient,
     core: ExprBinaryCore,
     function: ExprFunctionHandle,
 }
@@ -25,7 +24,6 @@ impl_transient!(
     ExprBinaryFunction,
     "Expr_BinaryFunction",
     dyn ExprBinaryExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression, dyn ExprBinaryExpression]
 );
 impl ExprBinaryFunction {
@@ -43,7 +41,6 @@ impl ExprBinaryFunction {
             )));
         }
         let object: Self = Self {
-            parent: StandardTransient::default(),
             core: ExprBinaryCore::new(exp1, exp2),
             function: func.clone(),
         };
@@ -82,7 +79,7 @@ impl ExprBinaryExpression for ExprBinaryFunction {
 /// The value of a numeric operand, `None` otherwise.
 fn value_of(operand: &ExprHandle) -> Option<f64> {
     operand
-        .cast::<ExprNumericValue>()
+        .downcast::<ExprNumericValue>()
         .get()
         .map(ExprNumericValue::get_value)
 }

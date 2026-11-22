@@ -195,7 +195,7 @@ impl dyn ChFi3dBuilderOps + '_ {
         let (mut or1, mut or2) = (hs1.face().orientation(), hs2.face().orientation());
         next_side(&mut or1, &mut or2, refs.0, refs.1, refs.2);
         let (g1, g2): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (hs1.clone().cast(), hs2.clone().cast());
+            (hs1.upcast(), hs2.upcast());
         its.0.initialize_surface(&g1)?;
         its.1.initialize_surface(&g2)?;
         let sd = shared(SurfData::new());

@@ -15,7 +15,6 @@ impl_transient!(
     DeIgesConfigurationNode,
     "DeIgesConfigurationNode",
     dyn DeShapeFixConfigurationNode,
-    transient,
     interfaces: [dyn DeConfigurationNode, dyn DeShapeFixConfigurationNode]
 );
 

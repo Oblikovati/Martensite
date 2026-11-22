@@ -10,7 +10,7 @@ mod load;
 
 use eval::Oblique;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
 use martensite_tkmath::geom_abs::CurveType;
@@ -97,14 +97,12 @@ impl OnPlaneState {
 /// let point = projection.value(0.5)?;
 /// ```
 pub struct ProjectOnPlane {
-    parent: StandardTransient,
     state: SharedState<OnPlaneState>,
 }
 impl_transient!(
     ProjectOnPlane,
     "ProjLib_ProjectOnPlane",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
@@ -117,7 +115,6 @@ impl Default for ProjectOnPlane {
 impl ProjectOnPlane {
     pub(super) fn from_state(state: OnPlaneState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

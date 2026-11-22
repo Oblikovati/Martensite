@@ -14,12 +14,9 @@ fn native_view_interface_and_concrete_share_descriptor_and_owned_base() {
         V3dView::static_type(),
         <dyn V3dViewSource>::static_type()
     ));
-    assert!(view.view::<NativeStyleViewProbe>().get().is_some());
-    assert!(view.view::<V3dView>().get().is_some());
-    assert!(std::ptr::eq(
-        view.get().unwrap().view_base(),
-        view.view::<V3dView>().get().unwrap()
-    ));
+    let derived = view.downcast_ref::<NativeStyleViewProbe>().unwrap();
+    assert!(view.downcast_ref::<V3dView>().is_none());
+    assert!(std::ptr::eq(view.get().unwrap().view_base(), &derived.base));
 }
 #[test]
 fn viewer_redraw_dispatches_derived_override_without_snapshot_reference_counts() {

@@ -3,11 +3,11 @@
 use super::support::{downcast, find, find_or_add, live};
 use crate::json::field_point;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
-use martensite_tklcaf::tdata_std::TDataStdReal;
+use martensite_tklcaf::tdata_std::{TDataStdReal, TDataStdRealBase, TDataStdRealSource};
 use martensite_tklcaf::tdf::{
     TdfAttribute, TdfAttributeBase, TdfAttributeState, TdfLabel, TdfRelocationTable,
 };
@@ -16,14 +16,14 @@ use martensite_tkservice::json_dump::{class_begin, field_real};
 use std::io;
 
 /// Declares a real property derived from `TDataStdReal` (`XCAFDocArea`, `XCAFDocVolume`):
-/// the embedded real is its RTTI parent, so its handle casts to `TDataStdReal`.
+/// the real interface borrows the same value and attribute state as the derived property.
 macro_rules! xcaf_real_property {
     ($(#[$doc:meta])* $name:ident, $class_name:literal, $id:literal, $word:literal) => {
         $(#[$doc])*
         pub struct $name {
             real: TDataStdReal,
         }
-        martensite_tkernel::impl_transient!($name, $class_name, TDataStdReal, real, interfaces: [dyn TdfAttribute]);
+        martensite_tkernel::impl_transient!($name, $class_name, TDataStdReal, interfaces: [dyn TdfAttribute, dyn TDataStdRealSource]);
 
         impl Default for $name {
             fn default() -> Self {
@@ -50,7 +50,7 @@ macro_rules! xcaf_real_property {
             }
             /// `Set(V)`: `TDataStdReal::Set` (backed up when it changes).
             pub fn set_value(&self, value: f64) -> Result<(), Failure> {
-                self.real.set_value(value)
+                TDataStdRealSource::set_value(self, value)
             }
             /// `Get()`.
             pub fn get(&self) -> f64 {
@@ -71,6 +71,12 @@ macro_rules! xcaf_real_property {
             }
         }
 
+        impl TDataStdRealSource for $name {
+            fn real_base(&self) -> &TDataStdRealBase {
+                self.real.real_base()
+            }
+        }
+
         impl TdfAttribute for $name {
             fn attribute_base(&self) -> &TdfAttributeBase {
                 self.real.attribute_base()
@@ -79,18 +85,18 @@ macro_rules! xcaf_real_property {
                 Self::get_id()
             }
             fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-                self.real.restore(with)
+                self.restore_real(with)
             }
             /// `NewEmpty` (from `IMPLEMENT_DERIVED_ATTRIBUTE`).
             fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-                Handle::new(Self::new()).cast()
+                Handle::new(Self::new()).into_upcast()
             }
             fn paste(
                 &self,
                 into: &Handle<dyn TdfAttribute>,
-                table: &Handle<TdfRelocationTable>,
+                _table: &Handle<TdfRelocationTable>,
             ) -> Result<(), Failure> {
-                self.real.paste(into, table)
+                self.paste_real(into)
             }
             #[doc = concat!("`Dump`: `\"", $word, " <value>\"`.")]
             fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {
@@ -131,11 +137,10 @@ const CENTROID_ID: Guid = guid_from_text("efd212f3-6dfd-11d4-b9c8-0060b0ee281b")
 /// `XCAFDocCentroid`: the center of mass of a shape.
 #[derive(Default)]
 pub struct XCAFDocCentroid {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     centroid: SharedState<Point3>,
 }
-martensite_tkernel::impl_transient!(XCAFDocCentroid, "XCAFDocCentroid", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocCentroid, "XCAFDocCentroid", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocCentroid {
     /// `XCAFDocCentroid()`: the origin.
@@ -186,12 +191,12 @@ impl TdfAttribute for XCAFDocCentroid {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,
         into: &Handle<dyn TdfAttribute>,
-        _table: &Handle<TdfRelocationTable>,
+        __table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
         let target = downcast::<XCAFDocCentroid>(into, "XCAFDocCentroid::Paste")?;
         live(&target, "XCAFDocCentroid::Paste")?.set_point(&self.get())

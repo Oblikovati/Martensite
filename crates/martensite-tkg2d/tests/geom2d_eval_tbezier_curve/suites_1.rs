@@ -4,7 +4,7 @@ fn evaluated_t_bezier_curve_copy_independent() {
     let aCurve = createSimpleCurve();
     let aCopy = aCurve.copy().unwrap();
     assert!(!aCopy.is_null());
-    let aCopyCurve: Handle<Geom2dEvalTBezierCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalTBezierCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
     assert_eq!(aCopyCurve.nb_poles(), 3);
     EXPECT_NEAR(aCopyCurve.alpha(), 1.0, precision::confusion());
@@ -21,7 +21,7 @@ fn evaluated_t_bezier_curve_copy_independent() {
 fn evaluated_t_bezier_curve_copy_modification_independent() {
     let aCurve = createSimpleCurve();
     let aCopy = aCurve.copy().unwrap();
-    let aCopyCurve: Handle<Geom2dEvalTBezierCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalTBezierCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
 
     // Transform is unsupported on the copy as well.

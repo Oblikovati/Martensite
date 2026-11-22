@@ -4,8 +4,10 @@
 mod common;
 use common::{CreateUniformParams, EXPECT_NEAR};
 use martensite_tkernel::ncollection::Array2;
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
-use martensite_tkg3d::geom::{GeomCircle, GeomLine, GeomSurface, GeomSurfaceOfRevolution};
+use martensite_tkernel::standard::{Handle, HandleUpcast};
+use martensite_tkg3d::geom::{
+    GeomCircle, GeomCurve, GeomLine, GeomSurface, GeomSurfaceOfRevolution,
+};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
 use martensite_tkg3d::geom_grid_eval::{
     GeomGridEvalSurfD1, GeomGridEvalSurfD2, GeomGridEvalSurfD3, GeomGridEvalSurface,
@@ -35,11 +37,11 @@ fn ZAxis() -> Axis1 {
 }
 
 // `new GeomSurfaceOfRevolution(theCurve, theAxis)`.
-fn Revolution<C: RuntimeTyped + ?Sized>(
+fn Revolution<C: HandleUpcast<dyn GeomCurve> + ?Sized>(
     theCurve: &Handle<C>,
     theAxis: Axis1,
 ) -> Handle<GeomSurfaceOfRevolution> {
-    Handle::new(GeomSurfaceOfRevolution::new(&theCurve.cast(), theAxis).unwrap())
+    Handle::new(GeomSurfaceOfRevolution::new(&theCurve.upcast(), theAxis).unwrap())
 }
 
 #[test]

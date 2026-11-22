@@ -6,7 +6,7 @@ use crate::brep::access::edge_tshape;
 use crate::brep::update_curves::as_gcurve;
 use crate::topods::{Edge, Face};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCurve};
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkg3d::geom::{GeomBSplineSurface, GeomBezierSurface, GeomCurve, GeomSurface};
@@ -38,8 +38,8 @@ pub(super) fn change_bounds(
 /// The conversion of `original` in `map`, if any.
 fn converted(
     map: &ConversionMap,
-    original: Handle<StandardTransient>,
-) -> Option<Handle<StandardTransient>> {
+    original: Handle<dyn Transient>,
+) -> Option<Handle<dyn Transient>> {
     map.find_from_key(&HandleKey(original)).ok().cloned()
 }
 
@@ -191,10 +191,10 @@ pub(super) fn is_convert(edge: &Edge) -> Result<bool, Failure> {
         };
         let surface = gcurve.surface()?;
         let pcurve = gcurve.pcurve()?;
-        let spline_surface = surface.cast::<GeomBSplineSurface>().is_some()
-            || surface.cast::<GeomBezierSurface>().is_some();
-        let spline_pcurve = pcurve.cast::<Geom2dBSplineCurve>().is_some()
-            || pcurve.cast::<Geom2dBezierCurve>().is_some();
+        let spline_surface = surface.downcast::<GeomBSplineSurface>().is_some()
+            || surface.downcast::<GeomBezierSurface>().is_some();
+        let spline_pcurve = pcurve.downcast::<Geom2dBSplineCurve>().is_some()
+            || pcurve.downcast::<Geom2dBezierCurve>().is_some();
         if !spline_surface || !spline_pcurve {
             return Ok(true);
         }

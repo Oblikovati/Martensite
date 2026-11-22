@@ -32,7 +32,7 @@ impl GraphicScene {
         }
         array.add_edges3(1, 2, 3).unwrap();
         array.add_bound(3).unwrap();
-        self.group.add_primitive_array(&array, true);
+        self.group.add_primitive_array(&array.upcast(), true);
         array
     }
 }

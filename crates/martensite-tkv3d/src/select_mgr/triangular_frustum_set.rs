@@ -2,7 +2,7 @@
 use super::*;
 use martensite_tkernel::{
     ncollection::{Array1, HArray1},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::gp::{Point2, Point3};
 
@@ -14,7 +14,6 @@ pub struct SelectMgrSelectionPolyline {
 }
 /// A Delaunay-decomposed polyline volume with optional boundary-crossing rejection.
 pub struct SelectMgrTriangularFrustumSet {
-    pub(super) transient: StandardTransient,
     /// Shared inherited camera and builder; `volume.base.window_size()`.
     pub base: SelectMgrBaseFrustumBase,
     pub(super) selection_polyline: SharedState<SelectMgrSelectionPolyline>,
@@ -36,7 +35,6 @@ impl SelectMgrTriangularFrustumSet {
     /// Start empty, requiring full containment; `SelectMgrTriangularFrustumSet::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: SelectMgrBaseFrustumBase::default(),
             selection_polyline: SharedState::new(SelectMgrSelectionPolyline::default()),
             frustums: SharedState::new(Vec::new()),

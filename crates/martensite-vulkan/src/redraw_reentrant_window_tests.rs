@@ -14,7 +14,6 @@ enum CallbackMutation {
     Redraw,
 }
 struct ReentrantObservationWindow {
-    transient: StandardTransient,
     neutral: AspectNeutralWindow,
     view: martensite_tkernel::standard::WeakHandle<Graphic3dRenderView>,
     point: CallbackPoint,
@@ -25,7 +24,7 @@ struct ReentrantObservationWindow {
     blocked: AtomicBool,
     performed: AtomicBool,
 }
-martensite_tkernel::impl_transient!(ReentrantObservationWindow, "Martensite_ReentrantObservationWindow", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(ReentrantObservationWindow, "Martensite_ReentrantObservationWindow", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 impl ReentrantObservationWindow {
     fn new(
         view: &Handle<Graphic3dRenderView>,
@@ -33,7 +32,6 @@ impl ReentrantObservationWindow {
         mutation: CallbackMutation,
     ) -> Self {
         Self {
-            transient: Default::default(),
             neutral: reentrant_neutral_window(),
             view: view.downgrade(),
             point,

@@ -86,15 +86,14 @@ mod tests {
     fn fixed_fixture_light_set() -> Handle<Graphic3dLightSet> {
         let lights = Handle::new(Graphic3dLightSet::default());
         lights
-            .add(&Handle::new(Graphic3dCLight::new(
-                Graphic3dTypeOfLightSource::Ambient,
-            )))
+            .add(&Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient)).upcast())
             .unwrap();
         for _ in 0..10 {
             lights
-                .add(&Handle::new(Graphic3dCLight::new(
-                    Graphic3dTypeOfLightSource::Positional,
-                )))
+                .add(
+                    &Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Positional))
+                        .upcast(),
+                )
                 .unwrap();
         }
         lights

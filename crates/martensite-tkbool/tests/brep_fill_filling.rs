@@ -193,6 +193,7 @@ fn curve_constraint_retains_derived_descriptor_through_plate_handle() -> Result<
     use martensite_tkbrep::brep_adaptor::BRepAdaptorCurve;
     use martensite_tkernel::standard::Handle;
     use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
+    use martensite_tkgeomalgo::geom_plate::GeomPlateBuildPlateSurface;
     let edge = BRepLibMakeEdge::from_points(Point3::default(), Point3::new(1., 0., 0.))?.edge()?;
     let curve: Handle<dyn Adaptor3dCurve> = Handle::new(BRepAdaptorCurve::with_edge(&edge)?).cast();
     let base = BRepFillCurveConstraint::with_curve(&curve, 0, 10, 1e-4)?;
@@ -200,7 +201,11 @@ fn curve_constraint_retains_derived_descriptor_through_plate_handle() -> Result<
         base.dynamic_type().unwrap().name(),
         "BRepFillCurveConstraint"
     );
-    let derived: Handle<BRepFillCurveConstraint> = base.cast();
+    let mut plate = GeomPlateBuildPlateSurface::new(3, 15, 2, 1e-5, 1e-4, 0.01, 0.1, false)?;
+    plate.add_curve(&base);
+    let stored = plate.curve_constraint(1)?;
+    let derived = stored.downcast::<BRepFillCurveConstraint>();
+    assert_eq!(stored.object_address(), base.object_address());
     assert_eq!(derived.object_address(), base.object_address());
     assert_eq!(derived.get().unwrap().nb_points(), 10);
     Ok(())

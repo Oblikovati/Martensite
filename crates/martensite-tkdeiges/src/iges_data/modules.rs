@@ -7,9 +7,10 @@
 //! and `impl_iges_general_module!` connect a module to the general interface, and
 //! the shared bodies are the `iges_*` functions here.
 use super::{
-    IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity, IgesDataIgesReaderData,
-    IgesDataIgesWriter, IgesDataParamReader, IgesDataProtocolOps,
+    IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData, IgesDataIgesWriter,
+    IgesDataParamReader, IgesDataProtocolOps,
 };
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkernel::{
     impl_transient_interface,
     standard::{Failure, Handle, StandardTransient, Transient},
@@ -64,7 +65,7 @@ pub trait IgesDataReadWriteModule: InterfaceReaderModule {
     fn read_own_params(
         &self,
         cn: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         ir: &Handle<IgesDataIgesReaderData>,
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure>;
@@ -75,7 +76,7 @@ pub trait IgesDataReadWriteModule: InterfaceReaderModule {
     fn write_own_params(
         &self,
         cn: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         iw: &mut IgesDataIgesWriter,
     ) -> Result<(), Failure>;
 }
@@ -125,7 +126,7 @@ macro_rules! impl_iges_read_write_module {
                     martensite_tkxsbase::interface::InterfaceCheck,
                 >,
                 _ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
                 Ok(())
@@ -152,7 +153,7 @@ pub trait IgesDataGeneralModule: InterfaceGeneralModule {
     fn own_shared_case(
         &self,
         cn: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure>;
     /// Adds the entities implied by the own parameters; none by default.
@@ -162,13 +163,13 @@ pub trait IgesDataGeneralModule: InterfaceGeneralModule {
     fn own_implied_case(
         &self,
         _cn: i32,
-        _ent: &Handle<IgesDataIgesEntity>,
+        _ent: &Handle<dyn IgesDataEntityKind>,
         _iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         Ok(())
     }
     /// The criteria on the directory entry of the case.
-    fn dir_checker(&self, cn: i32, ent: &Handle<IgesDataIgesEntity>) -> IgesDataDirChecker;
+    fn dir_checker(&self, cn: i32, ent: &Handle<dyn IgesDataEntityKind>) -> IgesDataDirChecker;
     /// Checks the own parameters.
     ///
     /// # Errors
@@ -176,12 +177,12 @@ pub trait IgesDataGeneralModule: InterfaceGeneralModule {
     fn own_check_case(
         &self,
         cn: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         shares: &InterfaceShareTool,
         ach: &mut Handle<InterfaceCheck>,
     ) -> Result<(), Failure>;
     /// An empty entity of the case; false when the case is not known.
-    fn iges_new_void(&self, cn: i32, entto: &mut Handle<StandardTransient>) -> bool;
+    fn iges_new_void(&self, cn: i32, entto: &mut Handle<dyn Transient>) -> bool;
     /// Copies the own parameters.
     ///
     /// # Errors
@@ -189,8 +190,8 @@ pub trait IgesDataGeneralModule: InterfaceGeneralModule {
     fn own_copy_case(
         &self,
         cn: i32,
-        entfrom: &Handle<IgesDataIgesEntity>,
-        entto: &Handle<IgesDataIgesEntity>,
+        entfrom: &Handle<dyn IgesDataEntityKind>,
+        entto: &Handle<dyn IgesDataEntityKind>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure>;
     /// Renews the references that were not copied; nothing by default.
@@ -200,19 +201,19 @@ pub trait IgesDataGeneralModule: InterfaceGeneralModule {
     fn own_renew_case(
         &self,
         _cn: i32,
-        _entfrom: &Handle<IgesDataIgesEntity>,
-        _entto: &Handle<IgesDataIgesEntity>,
+        _entfrom: &Handle<dyn IgesDataEntityKind>,
+        _entto: &Handle<dyn IgesDataEntityKind>,
         _tc: &InterfaceCopyTool,
     ) -> Result<(), Failure> {
         Ok(())
     }
     /// What deleting the entity implies; nothing by default.
-    fn own_delete_case(&self, _cn: i32, _ent: &Handle<IgesDataIgesEntity>) {}
+    fn own_delete_case(&self, _cn: i32, _ent: &Handle<dyn IgesDataEntityKind>) {}
     /// The category of an entity; not specified by default.
     fn iges_category_number(
         &self,
         _cn: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
     ) -> i32 {
         0
@@ -236,7 +237,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 iter: &mut martensite_tkxsbase::interface::InterfaceEntityIterator,
             ) {
@@ -246,7 +247,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 iter: &mut martensite_tkxsbase::interface::InterfaceEntityIterator,
             ) {
@@ -256,7 +257,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 shares: &martensite_tkxsbase::interface::InterfaceShareTool,
                 ach: &mut martensite_tkernel::standard::Handle<
@@ -269,7 +270,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 _cn: i32,
                 _ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> bool {
                 true
@@ -278,7 +279,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 entto: &mut martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> bool {
                 $crate::iges_data::IgesDataGeneralModule::iges_new_void(self, cn, entto)
@@ -287,10 +288,10 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 entfrom: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 entto: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 tc: &mut martensite_tkxsbase::interface::InterfaceCopyTool,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
@@ -300,10 +301,10 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 entfrom: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 entto: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 tc: &martensite_tkxsbase::interface::InterfaceCopyTool,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
@@ -313,7 +314,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 _dispatched: bool,
             ) {
@@ -323,7 +324,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 cn: i32,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 shares: &martensite_tkxsbase::interface::InterfaceShareTool,
             ) -> i32 {
@@ -335,7 +336,7 @@ macro_rules! impl_iges_general_module {
                 &self,
                 _cn: i32,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 _shares: &martensite_tkxsbase::interface::InterfaceShareTool,
             ) -> martensite_tkernel::standard::Handle<martensite_tkernel::tcollection::HAsciiString>
@@ -362,7 +363,7 @@ pub trait IgesDataSpecificModule: Transient {
     fn own_dump(
         &self,
         cn: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         dumper: &IgesDataIgesDumper,
         s: &mut dyn io::Write,
         own: i32,
@@ -371,7 +372,11 @@ pub trait IgesDataSpecificModule: Transient {
     ///
     /// # Errors
     /// A failure of an entity member.
-    fn own_correct(&self, _cn: i32, _ent: &Handle<IgesDataIgesEntity>) -> Result<bool, Failure> {
+    fn own_correct(
+        &self,
+        _cn: i32,
+        _ent: &Handle<dyn IgesDataEntityKind>,
+    ) -> Result<bool, Failure> {
         Ok(false)
     }
 }

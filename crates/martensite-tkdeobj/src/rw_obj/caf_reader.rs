@@ -4,7 +4,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, HAsciiString};
 use martensite_tkrwmesh::rw_mesh::{
     RwMeshCafReader, RwMeshCafReaderBase, RwMeshCoordinateSystem, RwMeshInputStream,
@@ -26,13 +26,12 @@ use martensite_tkxcaf::xcaf_doc::{XCAFDocVisMaterial, XCAFDocVisMaterialCommon};
 /// assert!(!reader.single_shape().unwrap().is_null());
 /// ```
 pub struct RwObjCafReader {
-    transient: StandardTransient,
     base: RwMeshCafReaderBase,
     obj_material_map: DataMap<AsciiString, Handle<XCAFDocVisMaterial>>,
     is_single_precision: bool,
 }
 
-impl_transient!(RwObjCafReader, "RwObjCafReader", dyn RwMeshCafReader, transient, interfaces: [dyn RwMeshCafReader]);
+impl_transient!(RwObjCafReader, "RwObjCafReader", dyn RwMeshCafReader, interfaces: [dyn RwMeshCafReader]);
 
 impl Default for RwObjCafReader {
     fn default() -> Self {
@@ -47,7 +46,6 @@ impl RwObjCafReader {
         base.coord_sys_converter
             .set_input_coordinate_system_kind(RwMeshCoordinateSystem::GLTF);
         Self {
-            transient: StandardTransient::default(),
             base,
             obj_material_map: DataMap::default(),
             is_single_precision: false,

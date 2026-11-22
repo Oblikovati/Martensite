@@ -33,7 +33,7 @@ pub fn install_overlay(scene: &ViewerScene, fixture: &str) {
     );
     let group = scene.structure.new_group().unwrap();
     group.set_group_primitives_aspect(&aspects.cast());
-    group.add_primitive_array(&overlay_vertices(fixture), true);
+    group.add_primitive_array(&overlay_vertices(fixture).into_upcast(), true);
 }
 fn overlay_vertices(fixture: &str) -> Handle<Graphic3dArrayOfPrimitives> {
     let points = fixture.starts_with("sprite-");

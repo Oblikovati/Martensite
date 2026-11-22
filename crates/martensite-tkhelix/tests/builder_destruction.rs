@@ -7,7 +7,7 @@ use martensite_tkhelix::helix_geom::{
 use martensite_tkmath::gp::Axis1;
 
 fn builder_with_curve() -> (HelixGeomBuilderHelixCoil, Handle<dyn GeomCurve>) {
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).cast();
+    let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).into_upcast();
     let mut builder = HelixGeomBuilderHelixCoil::new();
     builder.approx_curve_base_mut().curves.append(curve.clone());
     (builder, curve)

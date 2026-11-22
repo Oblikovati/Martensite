@@ -21,8 +21,8 @@ fn init_round_trip_step_repr_property_definition_relationship() {
     object.init(
         &a_name,
         &a_description,
-        &a_relating_property_definition,
-        &a_related_property_definition,
+        &a_relating_property_definition.upcast(),
+        &a_related_property_definition.upcast(),
     );
     assert!(object.name() == a_name);
     assert!(object.description() == a_description);
@@ -45,7 +45,7 @@ fn init_round_trip_step_repr_property_definition_representation() {
     let a_definition = StepReprRepresentedDefinition::default();
     let a_used_representation = Handle::new(StepReprRepresentation::new());
     let object = StepReprPropertyDefinitionRepresentation::new();
-    object.init(&a_definition, &a_used_representation);
+    object.init(&a_definition, &a_used_representation.upcast());
     assert!(object.used_representation() == a_used_representation);
 }
 
@@ -113,7 +113,7 @@ fn init_round_trip_step_repr_repr_item_and_measure_with_unit() {
     let a_mwu = Handle::new(StepBasicMeasureWithUnit::new());
     let a_ri = Handle::new(StepReprRepresentationItem::new());
     let object = StepReprReprItemAndMeasureWithUnit::new();
-    object.init(&a_mwu, &a_ri).unwrap();
+    object.init(&a_mwu.upcast(), &a_ri.upcast()).unwrap();
     assert!(object.get_measure_with_unit() == a_mwu);
 }
 
@@ -133,7 +133,9 @@ fn init_round_trip_step_repr_repr_item_and_measure_with_unit_and_qri() {
     let a_ri = Handle::new(StepReprRepresentationItem::new());
     let a_qri = Handle::new(StepShapeQualifiedRepresentationItem::new());
     let object = StepReprReprItemAndMeasureWithUnitAndQRI::new();
-    object.init(&a_mwu, &a_ri, &a_qri).unwrap();
+    object
+        .init(&a_mwu.upcast(), &a_ri.upcast(), &a_qri)
+        .unwrap();
     assert!(object.get_qualified_representation_item() == a_qri);
 }
 
@@ -170,11 +172,13 @@ fn runtime_type_step_repr_representation() {
 #[test]
 fn init_round_trip_step_repr_representation() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let a_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let a_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let object = StepReprRepresentation::new();
-    object.init(&a_name, &a_items, &a_context_of_items);
+    object.init(&a_name, &a_items, &a_context_of_items.upcast());
     assert!(object.name() == a_name);
     assert!(object.items() == a_items);
     assert!(object.context_of_items() == a_context_of_items);
@@ -251,7 +255,10 @@ fn init_round_trip_step_repr_representation_map() {
     let a_mapping_origin = Handle::new(StepReprRepresentationItem::new());
     let a_mapped_representation = Handle::new(StepReprRepresentation::new());
     let object = StepReprRepresentationMap::new();
-    object.init(&a_mapping_origin, &a_mapped_representation);
+    object.init(
+        &a_mapping_origin.upcast(),
+        &a_mapped_representation.upcast(),
+    );
     assert!(object.mapping_origin() == a_mapping_origin);
     assert!(object.mapped_representation() == a_mapped_representation);
 }
@@ -293,7 +300,7 @@ fn init_round_trip_step_repr_representation_relationship() {
     let a_rep1 = Handle::new(StepReprRepresentation::new());
     let a_rep2 = Handle::new(StepReprRepresentation::new());
     let object = StepReprRepresentationRelationship::new();
-    object.init(&a_name, &a_description, &a_rep1, &a_rep2);
+    object.init(&a_name, &a_description, &a_rep1.upcast(), &a_rep2.upcast());
     assert!(object.name() == a_name);
     assert!(object.description() == a_description);
     assert!(object.rep1() == a_rep1);
@@ -318,7 +325,13 @@ fn init_round_trip_step_repr_representation_relationship_with_transformation() {
     let a_rep2 = Handle::new(StepReprRepresentation::new());
     let a_trans = StepReprTransformation::default();
     let object = StepReprRepresentationRelationshipWithTransformation::new();
-    object.init(&a_name, &a_description, &a_rep1, &a_rep2, &a_trans);
+    object.init(
+        &a_name,
+        &a_description,
+        &a_rep1.upcast(),
+        &a_rep2.upcast(),
+        &a_trans,
+    );
 }
 
 #[test]

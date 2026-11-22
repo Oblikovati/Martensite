@@ -4,9 +4,7 @@ use super::ais_object_styles::{display_text, set_shape_material, set_style_to_dr
 use super::{XCAFPrs, XCAFPrsStyle};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkmath::toploc::Location;
@@ -15,7 +13,7 @@ use martensite_tkservice::graphic3d::{
     Graphic3dStructureDisplay, Graphic3dStructureSource,
 };
 use martensite_tkv3d::ais::{
-    AisColoredDrawer, AisColoredShapeBase, AisColoredShapeSource, AisInteractiveObject,
+    AisColoredDrawerSource, AisColoredShapeBase, AisColoredShapeSource, AisInteractiveObject,
     AisInteractiveObjectBase, AisKindOfInteractive, AisShapeMembers, AisShapeSource,
     ais_colored_shape_compute, ais_colored_shape_compute_selection, ais_colored_shape_set_color,
     ais_colored_shape_set_transparency, ais_colored_shape_set_width, ais_shape_color_into,
@@ -38,16 +36,15 @@ struct AisObjectFields {
     to_sync_styles: bool,
     /// The custom drawers `DispatchStyles` bound: `SetMaterial` visits them, since martensite-tkv3d
     /// keeps the iteration of `myShapeColors` private.
-    drawers: Vec<Handle<AisColoredDrawer>>,
+    drawers: Vec<Handle<dyn AisColoredDrawerSource>>,
 }
 
 /// `XCAFPrsAISObject`.
 pub struct XCAFPrsAISObject {
-    transient: StandardTransient,
     base: AisColoredShapeBase,
     fields: SharedState<AisObjectFields>,
 }
-martensite_tkernel::impl_transient!(XCAFPrsAISObject, "XCAFPrsAISObject", dyn AisColoredShapeSource, transient,
+martensite_tkernel::impl_transient!(XCAFPrsAISObject, "XCAFPrsAISObject", dyn AisColoredShapeSource,
     interfaces: [dyn AisColoredShapeSource, dyn AisShapeSource, dyn AisInteractiveObject,
     dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
@@ -56,7 +53,6 @@ impl XCAFPrsAISObject {
     /// syncing its styles.
     pub fn new(label: &TdfLabel) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisColoredShapeBase::new(&Shape::default()),
             fields: SharedState::new(AisObjectFields {
                 label: label.clone(),
@@ -122,11 +118,11 @@ impl XCAFPrsAISObject {
         &self.base.shape_colors
     }
     /// Records a drawer bound by `DispatchStyles`.
-    pub(super) fn remember_drawer(&self, drawer: &Handle<AisColoredDrawer>) {
+    pub(super) fn remember_drawer(&self, drawer: &Handle<dyn AisColoredDrawerSource>) {
         self.fields.write().drawers.push(drawer.clone());
     }
     /// The drawers bound by the last `DispatchStyles`.
-    pub(super) fn dispatched_drawers(&self) -> Vec<Handle<AisColoredDrawer>> {
+    pub(super) fn dispatched_drawers(&self) -> Vec<Handle<dyn AisColoredDrawerSource>> {
         self.fields.read().drawers.clone()
     }
 }

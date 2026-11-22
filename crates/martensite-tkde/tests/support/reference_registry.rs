@@ -51,12 +51,12 @@ pub fn registry() -> Handle<DeWrapper> {
         probe_node("STEP", "ZETA", "step", true, true, ""),
     ];
     for node in nodes {
-        object.bind(&node.cast());
+        object.bind(&node.into_upcast());
     }
     wrapper
 }
 pub fn unbind(wrapper: &DeWrapper, format: &'static str, vendor: &'static str) -> u8 {
-    b(wrapper.unbind(&probe_node(format, vendor, "", false, false, "").cast()))
+    b(wrapper.unbind(&probe_node(format, vendor, "", false, false, "").into_upcast()))
 }
 pub fn probe_value(
     wrapper: &DeWrapper,

@@ -121,7 +121,7 @@ impl GeomFillPipe {
             self.my_radius,
             polynomial,
         )?;
-        let func: Handle<dyn SweepFunction> = Handle::new(func).cast();
+        let func: Handle<dyn SweepFunction> = Handle::new(func).into_upcast();
         let mut app = SweepApproximation::new(&func);
         let path = live(&self.my_adp_path, "GeomFill_Pipe::Perform", "myAdpPath")?;
         let options = SweepOptions {
@@ -132,7 +132,7 @@ impl GeomFillPipe {
         };
         app.perform(path.first_parameter()?, path.last_parameter()?, options)?;
         if app.is_done() {
-            self.my_surface = Handle::new(sweep_surface(&app)?).cast();
+            self.my_surface = Handle::new(sweep_surface(&app)?).into_upcast();
             self.my_error = app.max_error_on_surf()?;
             self.my_status = GeomFillPipeError::PipeOk;
         }
@@ -169,7 +169,7 @@ impl GeomFillPipe {
             (app.u_degree()?, app.v_degree()?),
             (false, false),
         )?;
-        self.my_surface = Handle::new(surface).cast();
+        self.my_surface = Handle::new(surface).into_upcast();
         self.my_error = app.tol_reached()?.0;
         self.my_status = GeomFillPipeError::PipeOk;
         Ok(())

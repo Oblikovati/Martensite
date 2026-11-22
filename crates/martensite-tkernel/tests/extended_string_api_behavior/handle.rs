@@ -1,6 +1,6 @@
 //! Shared extended string members, handle sharing and the handle hash policy.
 use super::{class, string, units};
-use martensite_tkernel::{
+use crate::{
     ncollection::HashPolicy,
     standard::{Handle, RuntimeTyped},
     tcollection::{ExtendedString, HAsciiString, HExtendedString, HExtendedStringHasher},

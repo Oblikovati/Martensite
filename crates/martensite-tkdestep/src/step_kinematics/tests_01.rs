@@ -38,11 +38,11 @@ fn init_round_trip_step_kinematics_actuated_kin_pair_and_order_kin_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_joint,
         &the_actuated_kinematic_pair,
-        &the_order_kinematic_pair,
+        &the_order_kinematic_pair.upcast(),
     );
 }
 
@@ -85,8 +85,8 @@ fn init_round_trip_step_kinematics_actuated_kinematic_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         has_tx,
         the_tx,
@@ -169,7 +169,7 @@ fn init_round_trip_step_kinematics_cylindrical_pair_value() {
     let object = StepKinematicsCylindricalPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_translation,
         the_actual_rotation,
     );
@@ -218,8 +218,8 @@ fn init_round_trip_step_kinematics_cylindrical_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_low_order_kinematic_pair_tx,
         the_low_order_kinematic_pair_ty,
@@ -288,8 +288,8 @@ fn init_round_trip_step_kinematics_gear_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_radius_first_link,
         the_radius_second_link,
@@ -322,7 +322,7 @@ fn init_round_trip_step_kinematics_gear_pair_value() {
     let object = StepKinematicsGearPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_rotation1,
     );
     assert!(object.actual_rotation1() == the_actual_rotation1);
@@ -364,8 +364,8 @@ fn init_round_trip_step_kinematics_gear_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_gear_pair_radius_first_link,
         the_gear_pair_radius_second_link,
@@ -436,15 +436,17 @@ fn runtime_type_step_kinematics_kinematic_link_representation() {
 #[test]
 fn init_round_trip_step_kinematics_kinematic_link_representation() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_represented_link = Handle::new(StepKinematicsKinematicLink::new());
     let object = StepKinematicsKinematicLinkRepresentation::new();
     object.init(
         &the_representation_name,
         &the_representation_items,
-        &the_representation_context_of_items,
+        &the_representation_context_of_items.upcast(),
         &the_represented_link,
     );
     assert!(object.represented_link() == the_represented_link);

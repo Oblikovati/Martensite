@@ -66,7 +66,7 @@ fn spine_plane(spine: &Shape) -> Result<(Face, Direction3), Failure> {
             }
             _ => (Face::default(), Handle::default(), Location::default()),
         };
-    if spine.shape_type()? == ShapeEnum::Face && surface.cast::<GeomPlane>().is_null() {
+    if spine.shape_type()? == ShapeEnum::Face && surface.downcast::<GeomPlane>().is_null() {
         let finder = BRepLibFindSurface::new(&face, -1., true, false)?;
         if !finder.found() {
             return Err(Failure::with_type(
@@ -90,7 +90,7 @@ fn spine_plane(spine: &Shape) -> Result<(Face, Direction3), Failure> {
             .transformed(location.transformation())?
             .cast::<dyn GeomSurface>();
     }
-    let plane: Handle<GeomPlane> = surface.cast::<GeomPlane>();
+    let plane: Handle<GeomPlane> = surface.downcast::<GeomPlane>();
     let Some(plane) = plane.get() else {
         return Err(Failure::with_type(
             "Standard_NullObject",

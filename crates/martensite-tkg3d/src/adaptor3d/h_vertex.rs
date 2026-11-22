@@ -3,8 +3,8 @@
 //! available separately when its default behavior is required.
 use crate::top_abs::Orientation;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped, Transient};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::Point2;
@@ -19,7 +19,7 @@ use martensite_tkmath::gp::Point2;
 /// use martensite_tkg3d::top_abs::Orientation;
 /// use martensite_tkmath::gp::Point2;
 /// let base = Adaptor3dHVertexBase::new(Point2::new(0.0, 1.0), Orientation::Reversed, 1e-8);
-/// let vertex: Handle<dyn Adaptor3dHVertex> = Handle::new(base).cast();
+/// let vertex: Handle<dyn Adaptor3dHVertex> = Handle::new(base).into_upcast();
 /// assert_eq!(vertex.orientation(), Orientation::Reversed);
 /// ```
 pub trait Adaptor3dHVertex: Transient {
@@ -35,7 +35,15 @@ pub trait Adaptor3dHVertex: Transient {
     /// Whether `other` is the same vertex (`IsSame`); `vertex.is_same(&other)?`.
     fn is_same(&self, other: &Handle<dyn Adaptor3dHVertex>) -> Result<bool, Failure>;
 }
-impl_transient_interface!(dyn Adaptor3dHVertex, "Adaptor3d_HVertex", StandardTransient);
+// The constructible base and its interface are the same native class.
+impl RuntimeTyped for dyn Adaptor3dHVertex {
+    const TYPE_NAME: &'static str = Adaptor3dHVertexBase::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        Adaptor3dHVertexBase::static_type()
+    }
+}
+impl_transient_interface_target!(dyn Adaptor3dHVertex);
 
 /// An instance of the retained base class `Adaptor3dHVertex` itself: a point, a
 /// resolution and an orientation.
@@ -44,7 +52,6 @@ impl_transient_interface!(dyn Adaptor3dHVertex, "Adaptor3d_HVertex", StandardTra
 /// that the zero-filled retained allocation gives (FORWARD);
 /// `Adaptor3dHVertexBase::new(Point2::new(0.0, 1.0), Orientation::Forward, 1e-8)`.
 pub struct Adaptor3dHVertexBase {
-    parent: StandardTransient,
     point: Point2,
     tolerance: f64,
     orientation: Orientation,
@@ -57,8 +64,7 @@ impl Default for Adaptor3dHVertexBase {
 impl_transient!(
     Adaptor3dHVertexBase,
     "Adaptor3d_HVertex",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn Adaptor3dHVertex]
 );
 
@@ -67,7 +73,6 @@ impl Adaptor3dHVertexBase {
     /// `Adaptor3dHVertexBase::new(p, Orientation::Reversed, 1e-8)`.
     pub fn new(point: Point2, orientation: Orientation, resolution: f64) -> Self {
         Self {
-            parent: StandardTransient::default(),
             point,
             tolerance: resolution,
             orientation,

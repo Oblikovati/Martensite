@@ -78,11 +78,7 @@ pub(crate) fn put_in_bounds(
     let (first, last) = BRepTool::range(e)?;
     let (mut s, _) = BRepTool::surface_with_location(f)?;
     if s.is_instance_name("Geom_RectangularTrimmedSurface") {
-        s = live(
-            &s.clone().cast::<GeomRectangularTrimmedSurface>(),
-            "surface",
-        )?
-        .basis_surface();
+        s = live(&s.downcast::<GeomRectangularTrimmedSurface>(), "surface")?.basis_surface();
     }
     let surface = live(&s, "surface")?;
     if !surface.is_u_periodic() && !surface.is_v_periodic() {
@@ -169,8 +165,8 @@ pub(crate) fn build_pcurves(e: &Edge, f: &Face) -> Result<(), Failure> {
         return Ok(());
     }
     let hs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(BRepAdaptorSurface::with_face(f, false)?).cast();
-    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(ac).cast();
+        Handle::new(BRepAdaptorSurface::with_face(f, false)?).into_upcast();
+    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(ac).into_upcast();
     let proj = ProjectedCurve::with_tolerance(&hs, &hc, tolerance)?;
     let c2d = projected_pcurve(&proj)?;
     if as_surface.is_u_periodic()? || as_surface.is_v_periodic()? {
@@ -195,7 +191,7 @@ fn projected_pcurve(proj: &ProjectedCurve) -> Result<Handle<dyn Geom2dCurve>, Fa
         | CurveType::Parabola
         | CurveType::Hyperbola
         | CurveType::BSplineCurve => make_pcurve(proj),
-        CurveType::BezierCurve => Ok(proj.bezier()?.cast()),
+        CurveType::BezierCurve => Ok(proj.bezier()?.into_upcast()),
         _ => Ok(Handle::default()),
     }
 }
@@ -205,7 +201,7 @@ fn projected_pcurve(proj: &ProjectedCurve) -> Result<Handle<dyn Geom2dCurve>, Fa
 fn is_spline_surface(the_surf: &Handle<dyn GeomSurface>) -> Result<bool, Failure> {
     let mut typ = the_surf.clone();
     if typ.is_instance_name("Geom_OffsetSurface") {
-        typ = live(&typ.clone().cast::<GeomOffsetSurface>(), "surface")?.basis_surface();
+        typ = live(&typ.downcast::<GeomOffsetSurface>(), "surface")?.basis_surface();
     }
     Ok(typ.is_instance_name("Geom_BezierSurface") || typ.is_instance_name("Geom_BSplineSurface"))
 }
@@ -278,7 +274,7 @@ fn set_bound_pcurve(
     let (u1, u2) = if u2 < u1 { (u2, u1) } else { (u1, u2) };
     let basis = BRepTool::curve_on_face(the_edge, the_face)?.pcurve;
     let c2d: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&basis, u1, u2, true, true)?).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&basis, u1, u2, true, true)?).into_upcast();
     let surface = BRepTool::surface(f)?;
     let s = live(&surface, "surface")?;
     if s.is_u_periodic() || s.is_v_periodic() {

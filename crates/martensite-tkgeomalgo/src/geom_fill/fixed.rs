@@ -6,7 +6,7 @@ use super::trihedron_law::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::arrays::put;
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Vector3;
@@ -15,7 +15,6 @@ use martensite_tkmath::gp::Vector3;
 ///
 /// `let law = GeomFillFixed::new(Vector3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0))?;`
 pub struct GeomFillFixed {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     frame: TrihedronD0,
 }
@@ -23,7 +22,6 @@ impl_transient!(
     GeomFillFixed,
     "GeomFill_Fixed",
     dyn GeomFillTrihedronLaw,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw]
 );
 
@@ -40,7 +38,6 @@ impl GeomFillFixed {
         let n = normal.normalized()?;
         let b = t.crossed(n).normalized()?;
         Ok(Self {
-            parent: StandardTransient::default(),
             base: GeomFillTrihedronLawBase::default(),
             frame: TrihedronD0 {
                 tangent: t,
@@ -58,7 +55,7 @@ impl GeomFillTrihedronLaw for GeomFillFixed {
     fn copy(&self) -> Result<Handle<dyn GeomFillTrihedronLaw>, Failure> {
         let copy = GeomFillFixed::new(self.frame.tangent, self.frame.normal)?;
         copy.set_curve(&self.base.curve())?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn d0(&self, _param: f64, frame: &mut TrihedronD0) -> Result<bool, Failure> {
         *frame = self.frame;

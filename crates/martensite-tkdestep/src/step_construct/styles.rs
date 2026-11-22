@@ -4,6 +4,7 @@ use super::{StepConstruct, StepConstructRenderingProperties, StepConstructTool};
 use crate::api_header_section::APIHeaderSectionMakeHeader;
 use crate::step_basic::{StepBasicMeasureValueMember, StepBasicSizeSelect};
 use crate::step_data::{StepDataSelectMember, StepDataSelectType, StepDataStepModel};
+use crate::step_entity::StepBaseHandle;
 use crate::step_entity::{HArray1, HSequence, step_array1_set, step_live, step_new_array1};
 use crate::step_geom::StepGeomGeometricRepresentationItem;
 use crate::step_repr::{
@@ -28,7 +29,8 @@ use crate::step_visual::{
 };
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::IndexedMap;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::InterfaceModelEntities;
 use martensite_tkxsbase::transfer_brep::TransferBRep;
@@ -56,7 +58,7 @@ where
 }
 
 /// The exact type test of the `dynamic_type() == STANDARD_TYPE(T)`.
-fn is_exactly<T: RuntimeTyped>(entity: &Handle<StandardTransient>) -> bool {
+fn is_exactly<T: RuntimeTyped>(entity: &Handle<dyn Transient>) -> bool {
     entity
         .dynamic_type()
         .is_some_and(|kind| std::ptr::eq(kind, T::static_type()))
@@ -84,7 +86,7 @@ fn process_as_surface_style_rendering(
 /// colour couldn't be extracted.
 fn process_as_surface_style_boundary(
     select: &StepVisualSurfaceStyleElementSelect,
-    boundary_colour: &mut Handle<StepVisualColour>,
+    boundary_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
 ) -> bool {
     let boundary = select.surface_style_boundary();
     let Some(boundary) = boundary.get() else {
@@ -101,7 +103,7 @@ fn process_as_surface_style_boundary(
 fn process_as_surface_style_fill_area(
     select: &StepVisualSurfaceStyleElementSelect,
     side: StepVisualSurfaceSide,
-    surface_colour: &mut Handle<StepVisualColour>,
+    surface_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
 ) -> Result<bool, Failure> {
     let fill_area = select.surface_style_fill_area();
     let Some(fill_area) = fill_area.get() else {
@@ -126,8 +128,8 @@ fn process_as_surface_style_fill_area(
 /// `process_as_surface_style_usage`: true when the select is a SurfaceStyleUsage.
 fn process_as_surface_style_usage(
     select: &StepVisualPresentationStyleSelect,
-    surface_colour: &mut Handle<StepVisualColour>,
-    boundary_colour: &mut Handle<StepVisualColour>,
+    surface_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    boundary_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     rendering_props: &mut StepConstructRenderingProperties,
 ) -> Result<bool, Failure> {
     let usage = select.surface_style_usage();
@@ -150,7 +152,7 @@ fn process_as_surface_style_usage(
 /// `process_as_curve_style`: true when the select is a CurveStyle.
 fn process_as_curve_style(
     select: &StepVisualPresentationStyleSelect,
-    curve_colour: &mut Handle<StepVisualColour>,
+    curve_colour: &mut Handle<dyn crate::StepEntityBase<StepVisualColour>>,
 ) -> bool {
     let style = select.curve_style();
     let Some(style) = style.get() else {
@@ -170,12 +172,12 @@ fn process_as_curve_style(
 pub struct StepConstructStyles {
     tool: StepConstructTool,
     my_map_of_styles: Vec<(
-        Handle<StandardTransient>,
-        Handle<StepVisualPresentationStyleAssignment>,
+        Handle<dyn Transient>,
+        StepBaseHandle<StepVisualPresentationStyleAssignment>,
     )>,
-    my_styles: IndexedMap<Handle<StandardTransient>>,
-    my_root_styles: IndexedMap<Handle<StandardTransient>>,
-    my_psa: Vec<Handle<StepVisualPresentationStyleAssignment>>,
+    my_styles: IndexedMap<Handle<dyn Transient>>,
+    my_root_styles: IndexedMap<Handle<dyn Transient>>,
+    my_psa: Vec<StepBaseHandle<StepVisualPresentationStyleAssignment>>,
 }
 
 impl Default for StepConstructStyles {
@@ -221,7 +223,10 @@ impl StepConstructStyles {
         self.my_styles.extent() as i32
     }
     /// `style`.
-    pub fn style(&self, i: i32) -> Result<Handle<StepVisualStyledItem>, Failure> {
+    pub fn style(
+        &self,
+        i: i32,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         Ok(self.my_styles.find_key(i as usize)?.cast())
     }
     /// `nb_root_styles`: the number of override styles.
@@ -229,7 +234,10 @@ impl StepConstructStyles {
         self.my_root_styles.extent() as i32
     }
     /// `root_style`.
-    pub fn root_style(&self, i: i32) -> Result<Handle<StepVisualStyledItem>, Failure> {
+    pub fn root_style(
+        &self,
+        i: i32,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         Ok(self.my_root_styles.find_key(i as usize)?.cast())
     }
     /// `clear_styles`: all defined styles and the PSA sequence.
@@ -239,32 +247,33 @@ impl StepConstructStyles {
         self.my_root_styles.clear(true);
     }
     /// `add_style(style)`.
-    pub fn add_style(&mut self, style: &Handle<StepVisualStyledItem>) {
+    pub fn add_style(&mut self, style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>) {
         self.my_styles.add(style.cast());
     }
     /// `add_style(item, PSA, Override)`: a style linking the PSA to the item, stored and returned; of
     /// the subtype OverridingStyledItem when `override_style` is not null.
     pub fn add_style_for_item(
         &mut self,
-        item: &Handle<StepReprRepresentationItem>,
-        psa: &Handle<StepVisualPresentationStyleAssignment>,
-        override_style: &Handle<StepVisualStyledItem>,
-    ) -> Result<Handle<StepVisualStyledItem>, Failure> {
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        psa: &StepBaseHandle<StepVisualPresentationStyleAssignment>,
+        override_style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         let styles = single(psa.clone())?;
-        let style: Handle<StepVisualStyledItem> = if override_style.is_null() {
-            let style = Handle::new(StepVisualStyledItem::new());
-            style.init(&text("color"), &styles, &item.cast());
-            style
-        } else {
-            let style = Handle::new(StepVisualOverRidingStyledItem::new());
-            style.init(
-                &text("overriding color"),
-                &styles,
-                &item.cast(),
-                override_style,
-            );
-            style.cast()
-        };
+        let style: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>> =
+            if override_style.is_null() {
+                let style = Handle::new(StepVisualStyledItem::new());
+                style.init(&text("color"), &styles, &item.cast());
+                style.into_upcast()
+            } else {
+                let style = Handle::new(StepVisualOverRidingStyledItem::new());
+                style.init(
+                    &text("overriding color"),
+                    &styles,
+                    &item.cast(),
+                    override_style,
+                );
+                style.cast()
+            };
         self.my_styles.add(style.cast());
         // for future using
         self.my_psa.push(psa.clone());
@@ -275,9 +284,9 @@ impl StepConstructStyles {
     pub fn add_style_for_shape(
         &mut self,
         shape: &Shape,
-        psa: &Handle<StepVisualPresentationStyleAssignment>,
-        override_style: &Handle<StepVisualStyledItem>,
-    ) -> Result<Handle<StepVisualStyledItem>, Failure> {
+        psa: &StepBaseHandle<StepVisualPresentationStyleAssignment>,
+        override_style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>, Failure> {
         let item = StepConstruct::find_entity(self.finder_process(), shape)?;
         if item.is_null() {
             return Ok(Handle::default());
@@ -288,7 +297,7 @@ impl StepConstructStyles {
     /// the model.
     pub fn create_mdgpr(
         &self,
-        context: &Handle<StepReprRepresentationContext>,
+        context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
         repr: &mut Handle<StepVisualMechanicalDesignGeometricPresentationRepresentation>,
         step_model: &Handle<StepDataStepModel>,
     ) -> Result<bool, Failure> {
@@ -297,7 +306,9 @@ impl StepConstructStyles {
             return Ok(false);
         }
         // create MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION
-        let elems = step_new_array1::<Handle<StepReprRepresentationItem>>(1, count)?;
+        let elems = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+            1, count,
+        )?;
         for i in 1..=count {
             step_array1_set(
                 &elems,

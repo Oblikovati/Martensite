@@ -20,7 +20,7 @@ fn setup() -> Handle<dyn Adaptor2dCurve2d> {
         0.0,
         10.0,
     ))
-    .cast()
+    .into_upcast()
 }
 
 #[test]
@@ -155,7 +155,7 @@ fn adapted_offset_curve_load_curve_resets_offset() {
         0.0,
         5.0,
     ))
-    .cast();
+    .into_upcast();
     anOffset.load_curve(&aNewLine);
     EXPECT_DOUBLE_EQ(anOffset.offset(), 0.0);
 }

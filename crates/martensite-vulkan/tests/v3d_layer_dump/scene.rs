@@ -9,7 +9,7 @@ use martensite_tkernel::{
     tcollection::AsciiString,
 };
 use martensite_tkmath::gp::Direction3;
-use martensite_tkservice::graphic3d::{Graphic3dCLight, Graphic3dZLayerSettings};
+use martensite_tkservice::graphic3d::{Graphic3dCLightSource, Graphic3dZLayerSettings};
 use martensite_tkv3d::{
     ais::AisShape,
     prs_mgr::{PrsMgrPresentableObject, PrsMgrPresentableObjectMembers},
@@ -90,8 +90,8 @@ pub(super) fn lights(session: &mut ViewerSession) -> Outcome {
     Ok(())
 }
 
-fn directional(name: &str, [x, y, z]: [f64; 3]) -> Outcome<Handle<Graphic3dCLight>> {
-    let light: Handle<Graphic3dCLight> = Handle::new(V3dDirectionalLight::new(
+fn directional(name: &str, [x, y, z]: [f64; 3]) -> Outcome<Handle<dyn Graphic3dCLightSource>> {
+    let light: Handle<dyn Graphic3dCLightSource> = Handle::new(V3dDirectionalLight::new(
         V3dTypeOfOrientation::XposYposZpos,
         Color::named(NamedColor::WHITE),
         false,

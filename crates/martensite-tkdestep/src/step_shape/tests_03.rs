@@ -48,7 +48,7 @@ fn init_round_trip_step_shape_loop_and_path() {
     let a_loop = Handle::new(StepShapeLoop::new());
     let a_path = Handle::new(StepShapePath::new());
     let object = StepShapeLoopAndPath::new();
-    object.init(&a_name, &a_loop, &a_path);
+    object.init(&a_name, &a_loop.upcast(), &a_path);
     assert!(object.loop_() == a_loop);
     assert!(object.path() == a_path);
 }
@@ -68,7 +68,7 @@ fn init_round_trip_step_shape_manifold_solid_brep() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_outer = Handle::new(StepShapeClosedShell::new());
     let object = StepShapeManifoldSolidBrep::new();
-    object.init(&a_name, &a_outer);
+    object.init(&a_name, &a_outer.upcast());
     assert!(object.outer() == a_outer);
 }
 
@@ -252,7 +252,7 @@ fn init_round_trip_step_shape_revolved_face_solid() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_swept_area = Handle::new(StepShapeFaceSurface::new());
     let object = StepShapeRevolvedFaceSolid::new();
-    object.init(&a_name, &a_swept_area);
+    object.init(&a_name, &a_swept_area.upcast());
 }
 
 #[test]
@@ -346,7 +346,7 @@ fn init_round_trip_step_shape_seam_edge() {
     let object = StepShapeSeamEdge::new();
     object.init(
         &a_representation_item_name,
-        &a_oriented_edge_edge_element,
+        &a_oriented_edge_edge_element.upcast(),
         a_oriented_edge_orientation,
         &a_pcurve_reference,
     );

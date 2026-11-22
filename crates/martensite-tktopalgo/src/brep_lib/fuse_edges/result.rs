@@ -102,14 +102,14 @@ fn concatenated(
     chain: &List<Shape>,
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
     let first: Handle<dyn GeomBoundedCurve> =
-        Handle::new(GeomTrimmedCurve::new(c, *f, *l, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(c, *f, *l, true, true)?).into_upcast();
     let mut concat =
         CompCurveToBSplineCurve::with_curve(&first, ParameterisationType::TgtThetaOver2)?;
     for shape in chain.iter().skip(1) {
         let (curve, first, last) = BRepTool::curve(&Edge::unchecked(shape.clone()))?;
         (*f, *l) = (first, last);
         let trimmed: Handle<dyn GeomBoundedCurve> =
-            Handle::new(GeomTrimmedCurve::new(&curve, *f, *l, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&curve, *f, *l, true, true)?).into_upcast();
         if !concat.add(&trimmed, precision::confusion(), false, true, 0)? {
             // cannot merge curves
             return Err(fusion_error("FuseEdges : Concatenation failed"));

@@ -1,7 +1,7 @@
 //! Named camera-view fake forwards real retained scene operations; only its Camera slot selection differs.
 use super::view_camera_alias_fixture::BorrowedCameraView;
 use martensite_tkernel::{
-    standard::{Failure, Handle, HandleReference, StandardTransient, WeakHandleFieldRef},
+    standard::{Failure, Handle, HandleReference, Transient, WeakHandleFieldRef},
     tcollection::AsciiString,
 };
 use martensite_tkservice::{aspect::*, graphic3d::*, image::ImagePixMap};
@@ -12,13 +12,12 @@ impl Graphic3dCView for BorrowedCameraView {
         }
         self.retained.activate();
         if *self.control.replace_activation_argument.read() {
-            *self.control.view_caller.write() =
-                self.control.view_replacement.read().observe().clone();
+            *self.control.view_caller.write() = self.control.view_replacement.read().upgrade();
         }
     }
     fn set_camera(&self, camera: &dyn HandleReference<Graphic3dCamera>) {
         if *self.control.replace_camera_argument.read() {
-            *self.control.caller.write() = self.control.replacement.read().observe().clone();
+            *self.control.caller.write() = self.control.replacement.read().upgrade();
         }
         self.cview_base().fields.write().camera = camera.clone_handle();
     }
@@ -116,22 +115,22 @@ impl Graphic3dCView for BorrowedCameraView {
     ) -> Result<(), Failure> {
         self.retained.set_z_layer_settings(layer_id, settings)
     }
-    fn fbo(&self) -> Handle<StandardTransient> {
+    fn fbo(&self) -> Handle<dyn Transient> {
         self.retained.fbo()
     }
-    fn set_fbo(&self, fbo: &Handle<StandardTransient>) {
+    fn set_fbo(&self, fbo: &Handle<dyn Transient>) {
         self.retained.set_fbo(fbo)
     }
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient> {
+    fn fbo_create(&self, width: i32, height: i32) -> Handle<dyn Transient> {
         self.retained.fbo_create(width, height)
     }
-    fn fbo_release(&self, fbo: &mut Handle<StandardTransient>) {
+    fn fbo_release(&self, fbo: &mut Handle<dyn Transient>) {
         self.retained.fbo_release(fbo)
     }
-    fn fbo_get_dimensions(&self, fbo: &Handle<StandardTransient>) -> [i32; 4] {
+    fn fbo_get_dimensions(&self, fbo: &Handle<dyn Transient>) -> [i32; 4] {
         self.retained.fbo_get_dimensions(fbo)
     }
-    fn fbo_change_viewport(&self, fbo: &Handle<StandardTransient>, width: i32, height: i32) {
+    fn fbo_change_viewport(&self, fbo: &Handle<dyn Transient>, width: i32, height: i32) {
         self.retained.fbo_change_viewport(fbo, width, height)
     }
     fn gradient_background(&self) -> AspectGradientBackground {
@@ -173,7 +172,7 @@ impl Graphic3dCView for BorrowedCameraView {
             super::viewer_light_probe_callback::record_light_set_callback(
                 &control,
                 self.identity,
-                self.transient.ref_count(),
+                self.owner.strong_count().try_into().unwrap(),
                 lights,
             );
         }

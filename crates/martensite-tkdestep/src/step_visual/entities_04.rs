@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
@@ -12,6 +8,11 @@ use crate::step_entity::*;
 use crate::step_geom::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Curve style font pattern.
@@ -38,14 +39,14 @@ impl StepVisualCurveStyleFontPattern {
 step_entity! {
     /// Draughting annotation occurrence.
     StepVisualDraughtingAnnotationOccurrence, StepVisualDraughtingAnnotationOccurrenceState, "StepVisualDraughtingAnnotationOccurrence", StepVisualAnnotationOccurrence, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualAnnotationOccurrence]
 }
 
 step_entity! {
     /// Draughting callout.
     StepVisualDraughtingCallout, StepVisualDraughtingCalloutState, "StepVisualDraughtingCallout", StepGeomGeometricRepresentationItem, {
         my_contents: Handle<HArray1<StepVisualDraughtingCalloutElement>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualDraughtingCallout {
     step_methods! {
@@ -88,31 +89,31 @@ impl StepVisualDraughtingCallout {
 step_entity! {
     /// Representation of STEP entity DraughtingModel
     StepVisualDraughtingModel, StepVisualDraughtingModelState, "StepVisualDraughtingModel", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation, StepVisualDraughtingModel]
 }
 
 step_entity! {
     /// Draughting pre defined colour.
     StepVisualDraughtingPreDefinedColour, StepVisualDraughtingPreDefinedColourState, "StepVisualDraughtingPreDefinedColour", StepVisualPreDefinedColour, {
-    }
+    }, bases: [crate::step_visual::StepVisualPreDefinedColour, crate::step_visual::StepVisualColour]
 }
 
 step_entity! {
     /// Draughting pre defined curve font.
     StepVisualDraughtingPreDefinedCurveFont, StepVisualDraughtingPreDefinedCurveFontState, "StepVisualDraughtingPreDefinedCurveFont", StepVisualPreDefinedCurveFont, {
-    }
+    }, bases: [crate::step_visual::StepVisualPreDefinedItem]
 }
 
 step_entity! {
     /// Representation of STEP entity ExternallyDefinedCurveFont
     StepVisualExternallyDefinedCurveFont, StepVisualExternallyDefinedCurveFontState, "StepVisualExternallyDefinedCurveFont", StepBasicExternallyDefinedItem, {
-    }
+    }, bases: [crate::step_basic::StepBasicExternallyDefinedItem]
 }
 
 step_entity! {
     /// Representation of STEP entity ExternallyDefinedTextFont
     StepVisualExternallyDefinedTextFont, StepVisualExternallyDefinedTextFontState, "StepVisualExternallyDefinedTextFont", StepBasicExternallyDefinedItem, {
-    }
+    }, bases: [crate::step_basic::StepBasicExternallyDefinedItem]
 }
 
 step_entity! {
@@ -147,18 +148,22 @@ step_entity! {
     /// Fill area style colour.
     StepVisualFillAreaStyleColour, StepVisualFillAreaStyleColourState, "StepVisualFillAreaStyleColour", StandardTransient, {
         name: Handle<HAsciiString>,
-        fill_colour: Handle<StepVisualColour>,
+        fill_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     }
 }
 impl StepVisualFillAreaStyleColour {
     step_methods! {
         set set_name = name: Handle<HAsciiString>;
         get name = name: Handle<HAsciiString>;
-        set set_fill_colour = fill_colour: Handle<StepVisualColour>;
-        get fill_colour = fill_colour: Handle<StepVisualColour>;
+        set set_fill_colour = fill_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
+        get fill_colour = fill_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_fill_colour: &Handle<StepVisualColour>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_fill_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    ) {
         let mut state = self.state.write();
         state.name = a_name.clone();
         state.fill_colour = a_fill_colour.clone();
@@ -184,33 +189,35 @@ impl StepVisualInvisibility {
 step_entity! {
     /// Mechanical design geometric presentation area.
     StepVisualMechanicalDesignGeometricPresentationArea, StepVisualMechanicalDesignGeometricPresentationAreaState, "StepVisualMechanicalDesignGeometricPresentationArea", StepVisualPresentationArea, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Mechanical design geometric presentation representation.
     StepVisualMechanicalDesignGeometricPresentationRepresentation, StepVisualMechanicalDesignGeometricPresentationRepresentationState, "StepVisualMechanicalDesignGeometricPresentationRepresentation", StepVisualPresentationRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Over riding styled item.
     StepVisualOverRidingStyledItem, StepVisualOverRidingStyledItemState, "StepVisualOverRidingStyledItem", StepVisualStyledItem, {
-        over_ridden_style: Handle<StepVisualStyledItem>,
-    }
+        over_ridden_style: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualOverRidingStyledItem]
 }
 impl StepVisualOverRidingStyledItem {
     step_methods! {
-        set set_over_ridden_style = over_ridden_style: Handle<StepVisualStyledItem>;
-        get over_ridden_style = over_ridden_style: Handle<StepVisualStyledItem>;
+        set set_over_ridden_style = over_ridden_style: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>;
+        get over_ridden_style = over_ridden_style: Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_styles: &Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>,
-        a_item: &Handle<StandardTransient>,
-        a_over_ridden_style: &Handle<StepVisualStyledItem>,
+        a_styles: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>,
+        >,
+        a_item: &Handle<dyn Transient>,
+        a_over_ridden_style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     ) {
         self.state.write().over_ridden_style = a_over_ridden_style.clone();
         self.parent.init(a_name, a_styles, a_item);
@@ -221,7 +228,7 @@ step_entity! {
     /// Planar box.
     StepVisualPlanarBox, StepVisualPlanarBoxState, "StepVisualPlanarBox", StepVisualPlanarExtent, {
         placement: StepGeomAxis2Placement,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualPlanarBox {
     step_methods! {
@@ -246,7 +253,7 @@ step_entity! {
     StepVisualPlanarExtent, StepVisualPlanarExtentState, "StepVisualPlanarExtent", StepGeomGeometricRepresentationItem, {
         size_in_x: f64,
         size_in_y: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepVisualPlanarExtent {
     step_methods! {
@@ -271,7 +278,7 @@ step_entity! {
         name: Handle<HAsciiString>,
         marker: StepVisualMarkerSelect,
         marker_size: StepBasicSizeSelect,
-        marker_colour: Handle<StepVisualColour>,
+        marker_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     }
 }
 impl StepVisualPointStyle {
@@ -282,8 +289,8 @@ impl StepVisualPointStyle {
         get marker = marker: StepVisualMarkerSelect;
         set set_marker_size = marker_size: StepBasicSizeSelect;
         get marker_size = marker_size: StepBasicSizeSelect;
-        set set_marker_colour = marker_colour: Handle<StepVisualColour>;
-        get marker_colour = marker_colour: Handle<StepVisualColour>;
+        set set_marker_colour = marker_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
+        get marker_colour = marker_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
     }
     /// `init`.
     pub fn init(
@@ -291,7 +298,7 @@ impl StepVisualPointStyle {
         a_name: &Handle<HAsciiString>,
         a_marker: &StepVisualMarkerSelect,
         a_marker_size: &StepBasicSizeSelect,
-        a_marker_colour: &Handle<StepVisualColour>,
+        a_marker_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) {
         let mut state = self.state.write();
         state.name = a_name.clone();

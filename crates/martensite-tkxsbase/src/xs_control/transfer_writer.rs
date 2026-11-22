@@ -10,7 +10,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
 };
 use std::fmt::Write as _;
 
@@ -32,14 +32,12 @@ struct WriterState {
 /// assert!(tw.finder_process().is_some() && tw.transfer_mode() == 0);
 /// ```
 pub struct XSControlTransferWriter {
-    transient: StandardTransient,
     state: SharedState<WriterState>,
 }
 impl_transient!(
     XSControlTransferWriter,
     "XSControlTransferWriter",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl Default for XSControlTransferWriter {
@@ -50,7 +48,6 @@ impl Default for XSControlTransferWriter {
             mode: 0,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -136,7 +133,7 @@ impl XSControlTransferWriter {
     }
     /// `RecognizeTransient(theObj)`: a shape (of a binder or a handle shape) by
     /// `RecognizeShape`, else the controller recognizes the transient.
-    pub fn recognize_transient(&self, obj: &Handle<StandardTransient>) -> bool {
+    pub fn recognize_transient(&self, obj: &Handle<dyn Transient>) -> bool {
         let ctl = self.controller();
         let Some(live) = ctl.get() else {
             return false;
@@ -195,7 +192,7 @@ impl XSControlTransferWriter {
     pub fn transfer_write_transient(
         &self,
         model: &Handle<dyn InterfaceInterfaceModel>,
-        obj: &Handle<StandardTransient>,
+        obj: &Handle<dyn Transient>,
         progress: &ProgressRange<'_>,
     ) -> Result<IFSelectReturnStatus, Failure> {
         let ctl = self.controller();
@@ -294,7 +291,7 @@ impl XSControlTransferWriter {
         for (tb, i) in self.binder_checks()? {
             let ach = tb.check();
             let finder = process.mapped(i)?;
-            match finder.cast::<TransferTransientMapper>().get() {
+            match finder.downcast_ref::<TransferTransientMapper>() {
                 Some(tm) => ach.get_entity(tm.value()),
                 None => ach.get_entity(&finder.cast()),
             }

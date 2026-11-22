@@ -1,19 +1,14 @@
 //! A cursor's canonical state can be observed during removal without aliasing a mutable cursor.
-use super::{BaseListRawIterator, List, ListCursor, address, removal::resume_drop_outcome};
+use super::{BaseListRawIterator, List, ListCursor, removal::resume_drop_outcome};
 use crate::standard::Failure;
 use std::sync::{Arc, Mutex, PoisonError};
-struct NativeCursorState(Mutex<BaseListRawIterator>);
-// SAFETY: cursor links are opaque identities; dereferencing always requires an owning List borrow.
-unsafe impl Send for NativeCursorState {}
-// SAFETY: as for Send above: the state behind the Mutex holds opaque links that are only
-// dereferenced through an owning List borrow.
-unsafe impl Sync for NativeCursorState {}
+struct NativeCursorState(Mutex<ListCursor>);
 impl NativeCursorState {
-    fn read(&self) -> BaseListRawIterator {
+    fn read(&self) -> ListCursor {
         *self.0.lock().unwrap_or_else(PoisonError::into_inner)
     }
-    fn write(&self, raw: BaseListRawIterator) {
-        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = raw;
+    fn write(&self, position: ListCursor) {
+        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = position;
     }
 }
 /// Owned cursor state; unlike the Copy `ListCursor`, it supports live observer handles.
@@ -31,11 +26,11 @@ pub struct ListCursorObserver {
 impl ListNativeCursor {
     /// Starts at the owner's head, with null previous; `ListNativeCursor::new(&list)`.
     pub fn new<T>(list: &List<T>) -> Self {
-        Self::from_raw(BaseListRawIterator::new(list.base_storage()))
+        Self::from_position(list.cursor())
     }
-    fn from_raw(raw: BaseListRawIterator) -> Self {
+    fn from_position(position: ListCursor) -> Self {
         Self {
-            shared: Arc::new(NativeCursorState(Mutex::new(raw))),
+            shared: Arc::new(NativeCursorState(Mutex::new(position))),
         }
     }
     /// Creates a live read-only view without borrowing this cursor; `cursor.observer()`.
@@ -46,35 +41,31 @@ impl ListNativeCursor {
     }
     /// Returns the current detached safe cursor expression; `cursor.position().value(&list)`.
     pub fn position(&self) -> ListCursor {
-        let raw = self.shared.read();
-        ListCursor {
-            address: address(raw.current),
-            previous: address(raw.previous),
-        }
+        self.shared.read()
     }
     /// Advances the links after checking live owner membership; `cursor.next(&list)?`.
     pub fn next<T>(&mut self, list: &List<T>) -> Result<(), Failure> {
-        let mut raw = self.shared.read();
-        if raw.current.is_null() {
+        let mut position = self.position();
+        if !position.more() {
             return Ok(());
         }
-        let actual = list.locate_cursor(self.position(), "Next")?;
-        raw.previous = actual.current;
-        // SAFETY: locate_cursor proved `actual.current` is a live node owned by `list`, and
-        // `&list` keeps its link unchanged.
-        raw.current = unsafe { (*actual.current).next() };
-        self.shared.write(raw);
+        let actual = list.locate_cursor(position, "Next")?;
+        position.raw.previous = actual.current;
+        // SAFETY: locate_cursor proved actual.current belongs to the live List chain.
+        position.raw.current = unsafe { (*actual.current).next() };
+        position.revision = list.topology.revision();
+        self.shared.write(position);
         Ok(())
     }
 }
 impl Default for ListNativeCursor {
     fn default() -> Self {
-        Self::from_raw(BaseListRawIterator::default())
+        Self::from_position(ListCursor::default())
     }
 }
 impl Clone for ListNativeCursor {
     fn clone(&self) -> Self {
-        Self::from_raw(self.shared.read())
+        Self::from_position(self.shared.read())
     }
 }
 impl ListCursorObserver {
@@ -84,28 +75,31 @@ impl ListCursorObserver {
     }
     /// Reads opaque current identity; `observer.current_node()`.
     pub fn current_node(&self) -> Option<usize> {
-        address(self.shared.read().current)
+        self.shared.read().current_node()
     }
     /// Reads remembered predecessor identity, including at end; `observer.previous_node()`.
     pub fn previous_node(&self) -> Option<usize> {
-        address(self.shared.read().previous)
+        self.shared.read().previous_node()
     }
 }
 impl<T> List<T> {
     /// Removes through an observable canonical cursor; `list.remove_native(&mut cursor)?`.
     pub fn remove_native(&mut self, cursor: &mut ListNativeCursor) -> Result<(), Failure> {
-        let raw = cursor.shared.read();
-        let actual = self.locate_cursor(cursor.position(), "Remove")?;
-        if raw.previous != actual.previous {
+        let position = cursor.position();
+        let actual = self.locate_cursor(position, "Remove")?;
+        if position.raw.previous != actual.previous {
             return Err(super::no_such_object(
                 "Remove",
                 "a cursor with stale previous link",
             ));
         }
         let (next, outcome) = self.remove_in_phases(actual);
-        cursor.shared.write(BaseListRawIterator {
-            current: next,
-            previous: actual.previous,
+        cursor.shared.write(ListCursor {
+            raw: BaseListRawIterator {
+                current: next,
+                previous: actual.previous,
+            },
+            revision: self.topology.revision(),
         });
         resume_drop_outcome(outcome);
         Ok(())

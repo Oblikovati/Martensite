@@ -262,7 +262,7 @@ impl ShapeFixWire {
         self.state.read().vertex_tolerance_mode
     }
 
-    /// Loads a wire, supimplementation face, and both root/analyzer precision in native order.
+    /// Loads a wire, support face, and both root/analyzer precision in native order.
     /// Example: `fixer.init_wire_face(&wire, &face, 1e-6)?`.
     pub fn init_wire_face(&self, wire: &Wire, face: &Face, precision: f64) -> Result<(), Failure> {
         self.load(wire)?;
@@ -292,7 +292,7 @@ impl ShapeFixWire {
         self.working_analyzer().nb_edges()
     }
 
-    /// Returns the working supimplementation face.
+    /// Returns the working support face.
     /// Example: `let face = fixer.face()`.
     pub fn face(&self) -> Face {
         self.working_analyzer().face()
@@ -304,7 +304,7 @@ impl ShapeFixWire {
         self.state.write().closed_mode = enabled;
     }
 
-    /// Shares a supimplementation face and explicit surface analyzer.
+    /// Shares a support face and explicit surface analyzer.
     /// Example: `fixer.set_face_with_analysis(&face, &surface)`.
     pub fn set_face_with_analysis(&self, face: &Face, surface: &Handle<ShapeAnalysisSurface>) {
         self.working_analyzer()
@@ -317,13 +317,13 @@ impl ShapeFixWire {
         self.working_analyzer().set_surface_analysis(surface);
     }
 
-    /// Builds a supimplementation face from an unlocated surface.
+    /// Builds a support face from an unlocated surface.
     /// Example: `fixer.set_surface(&surface)?`.
     pub fn set_surface(&self, surface: &Handle<dyn GeomSurface>) -> Result<(), Failure> {
         self.working_analyzer().set_surface(surface)
     }
 
-    /// Builds a supimplementation face from a surface at the specified placement.
+    /// Builds a support face from a surface at the specified placement.
     /// Example: `fixer.set_located_surface(&surface, &location)?`.
     pub fn set_located_surface(
         &self,

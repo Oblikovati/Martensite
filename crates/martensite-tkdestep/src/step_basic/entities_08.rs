@@ -72,13 +72,13 @@ impl StepBasicIdentificationRole {
 step_entity! {
     /// Length measure with unit.
     StepBasicLengthMeasureWithUnit, StepBasicLengthMeasureWithUnitState, "StepBasicLengthMeasureWithUnit", StepBasicMeasureWithUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 
 step_entity! {
     /// Length unit.
     StepBasicLengthUnit, StepBasicLengthUnitState, "StepBasicLengthUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {
@@ -130,13 +130,13 @@ impl StepBasicLocalTime {
 step_entity! {
     /// Mass measure with unit.
     StepBasicMassMeasureWithUnit, StepBasicMassMeasureWithUnitState, "StepBasicMassMeasureWithUnit", StepBasicMeasureWithUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 
 step_entity! {
     /// Representation of STEP entity MassUnit
     StepBasicMassUnit, StepBasicMassUnitState, "StepBasicMassUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {
@@ -144,7 +144,7 @@ step_entity! {
     StepBasicMeasureWithUnit, StepBasicMeasureWithUnitState, "StepBasicMeasureWithUnit", StandardTransient, {
         value_component: Handle<StepBasicMeasureValueMember>,
         unit_component: StepBasicUnit,
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 impl StepBasicMeasureWithUnit {
     step_methods! {
@@ -187,7 +187,7 @@ impl StepBasicMeasureWithUnit {
 step_entity! {
     /// Mechanical context.
     StepBasicMechanicalContext, StepBasicMechanicalContextState, "StepBasicMechanicalContext", StepBasicProductContext, {
-    }
+    }, bases: [crate::step_basic::StepBasicProductContext]
 }
 
 step_entity! {
@@ -243,7 +243,7 @@ step_entity! {
     /// Ordinal date.
     StepBasicOrdinalDate, StepBasicOrdinalDateState, "StepBasicOrdinalDate", StepBasicDate, {
         day_component: i32,
-    }
+    }, bases: [crate::step_basic::StepBasicDate]
 }
 impl StepBasicOrdinalDate {
     step_methods! {

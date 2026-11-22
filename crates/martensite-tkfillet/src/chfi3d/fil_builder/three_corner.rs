@@ -346,5 +346,5 @@ impl ChFi3dFilBuilder {
 pub(super) fn general(
     h: &martensite_tkernel::standard::Handle<BRepAdaptorSurface>,
 ) -> martensite_tkernel::standard::Handle<dyn Adaptor3dSurface> {
-    h.clone().cast()
+    h.upcast()
 }

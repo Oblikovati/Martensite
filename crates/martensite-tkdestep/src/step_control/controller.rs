@@ -16,6 +16,7 @@ use crate::step_selections::{
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkshhealing::shape_process::{
     ShapeProcessOperation, ShapeProcessOperationsFlags, ShapeProcessShapeMap,
@@ -36,19 +37,17 @@ use std::sync::{Mutex, OnceLock};
 
 /// Controller.
 pub struct StepControlController {
-    transient: StandardTransient,
     base: XSControlControllerBase,
 }
-impl_transient!(StepControlController, "StepControlController", StandardTransient, transient, interfaces: [dyn XSControlController]);
+impl_transient!(StepControlController, "StepControlController", StandardTransient, interfaces: [dyn XSControlController]);
 
 /// The members `StepControlController` calls on its parent. The provided members of the trait
 /// cannot be reached from the overrides in the impl below, so this second implementor, on the
 /// same base, keeps them: `InheritedMembers::customise` and `transfer_write_shape`.
 struct InheritedMembers {
-    transient: StandardTransient,
     controller: Handle<dyn XSControlController>,
 }
-impl_transient!(InheritedMembers, "InheritedMembers", StandardTransient, transient, interfaces: [dyn XSControlController]);
+impl_transient!(InheritedMembers, "InheritedMembers", StandardTransient, interfaces: [dyn XSControlController]);
 
 impl XSControlController for InheritedMembers {
     fn controller_base(&self) -> &XSControlControllerBase {
@@ -63,23 +62,22 @@ impl StepControlController {
     /// The parent's members, on this controller's base.
     fn inherited(&self) -> Result<InheritedMembers, Failure> {
         Ok(InheritedMembers {
-            transient: StandardTransient::default(),
             controller: self.base.this()?,
         })
     }
 }
 
+type SessionItems = Vec<(&'static str, Handle<dyn Transient>)>;
+
 /// The items the constructor and `customise` both add: selections on `roots`, and the editors.
-fn norm_items(
-    roots: &Handle<dyn IFSelectSelection>,
-) -> Result<Vec<(&'static str, Handle<StandardTransient>)>, Failure> {
+fn norm_items(roots: &Handle<dyn IFSelectSelection>) -> Result<SessionItems, Failure> {
     let faces = Handle::new(STEPSelectionsSelectFaces::default());
     faces.set_input(roots);
     let curves = Handle::new(STEPSelectionsSelectGSCurves::default());
     curves.set_input(roots);
     let assembly = Handle::new(STEPSelectionsSelectAssembly::default());
     assembly.set_input(roots);
-    let mut items: Vec<(&'static str, Handle<StandardTransient>)> = vec![
+    let mut items: SessionItems = vec![
         ("step-faces", faces.cast()),
         (
             "step-instances",
@@ -115,7 +113,7 @@ fn norm_items(
 fn items_on_roots(
     roots: &Handle<dyn IFSelectSelection>,
     sign_type: &Handle<dyn IFSelectSignature>,
-) -> Result<Vec<(&'static str, Handle<StandardTransient>)>, Failure> {
+) -> Result<SessionItems, Failure> {
     let mut derived = STEPSelectionsSelectDerived::new();
     derived.set_protocol(&STEPEdit::protocol())?;
     let select_sdr = STEPEdit::new_select_sdr()?;
@@ -186,11 +184,7 @@ impl StepControlController {
         library.set_dump_label(1);
         base.set_adaptor_library(&Handle::new(library).cast());
         base.set_adaptor_protocol(&STEPEdit::protocol());
-        let controller: Handle<dyn XSControlController> = Handle::new(Self {
-            transient: StandardTransient::default(),
-            base,
-        })
-        .cast();
+        let controller: Handle<dyn XSControlController> = Handle::new(Self { base }).cast();
         controller.controller_base().bind_self(&controller);
         controller.set_mode_write(0, 4, true);
         controller.set_mode_write_help(0, "As Is", true);
@@ -268,7 +262,8 @@ impl XSControlController for StepControlController {
         if !(0..=4).contains(&modetrans) {
             return Ok(IFSelectReturnStatus::RetError);
         }
-        let write_actor: Handle<StepControlActorWrite> = self.base.adaptor_write().cast();
+        let write_actor: Handle<dyn crate::StepEntityBase<StepControlActorWrite>> =
+            self.base.adaptor_write().into_cast();
         let step_model: Handle<StepDataStepModel> = model.cast();
         let live_model = step_live(&step_model, "StepControlController::TransferWriteShape")?;
         if let Some(live) = write_actor.get() {

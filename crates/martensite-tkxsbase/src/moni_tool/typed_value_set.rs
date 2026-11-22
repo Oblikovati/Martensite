@@ -1,13 +1,13 @@
 //! The checks and setters of the value of a `MoniToolTypedValue`.
 use super::typed_value::TypedValueState;
-use super::{MoniToolTypedValue, MoniToolValueType};
+use super::{MoniToolValue, MoniToolValueType};
 use crate::c_text::atoi;
 use martensite_tkernel::{
     standard::{Failure, Handle, exceptions},
     tcollection::HAsciiString,
 };
 
-impl MoniToolTypedValue {
+impl MoniToolValue {
     /// `Interpret(hval, native)`: the interpret function when set; for an enumeration,
     /// the text (native) or the case number (coded) of a known value; else `hval` itself.
     pub fn interpret(&self, hval: &Handle<HAsciiString>, native: bool) -> Handle<HAsciiString> {

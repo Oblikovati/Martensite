@@ -13,7 +13,7 @@ pub trait AisColoredShapeCustomAppearance: AisColoredShapeSource {
             return Ok(());
         }
         let drawer = self.custom_aspects(shape)?;
-        set_shape_drawer_color(self, &drawer.cast(), color)?;
+        set_shape_drawer_color(self, &drawer, color)?;
         drawer.set_own_color(color);
         Ok(())
     }
@@ -23,7 +23,7 @@ pub trait AisColoredShapeCustomAppearance: AisColoredShapeSource {
             return Ok(());
         }
         let drawer = self.custom_aspects(shape)?;
-        set_shape_drawer_transparency(self, &drawer.cast(), value)?;
+        set_shape_drawer_transparency(self, &drawer, value)?;
         drawer.set_own_transparency(value);
         Ok(())
     }
@@ -33,7 +33,7 @@ pub trait AisColoredShapeCustomAppearance: AisColoredShapeSource {
             return Ok(());
         }
         let drawer = self.custom_aspects(shape)?;
-        set_shape_drawer_width(&drawer.cast(), value)?;
+        set_shape_drawer_width(&drawer, value)?;
         drawer.set_own_width(value);
         Ok(())
     }

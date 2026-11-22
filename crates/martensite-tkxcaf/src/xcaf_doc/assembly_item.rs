@@ -6,7 +6,7 @@ use martensite_tkbrep::topexp;
 use martensite_tkbrep::toptools::IndexedMapOfShape;
 use martensite_tkcaf::tnaming::TNamingNamedShape;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
@@ -128,11 +128,10 @@ struct ItemRefFields {
 /// `XCAFDocAssemblyItemRef`: a reference to an assembly item.
 #[derive(Default)]
 pub struct XCAFDocAssemblyItemRef {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     fields: SharedState<ItemRefFields>,
 }
-martensite_tkernel::impl_transient!(XCAFDocAssemblyItemRef, "XCAFDocAssemblyItemRef", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocAssemblyItemRef, "XCAFDocAssemblyItemRef", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocAssemblyItemRef {
     /// `XCAFDocAssemblyItemRef()`: no item, no extra reference.

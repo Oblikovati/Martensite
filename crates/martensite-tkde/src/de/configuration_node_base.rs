@@ -1,8 +1,8 @@
 //! The private state of `DeConfigurationNode`: `GlobalParameters`, `myIsEnabled` and the
-//! owning handle `this` converts to.
+//! weak self reference used during plugin registration.
 use super::DeConfigurationNode;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle, exceptions};
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 /// `DeConfigurationNode::DESectionGlobal`: the units of a transfer.
 ///
@@ -64,10 +64,13 @@ impl DeConfigurationNodeBase {
                 "DEConfigurationNode(theConfigurationNode): null node; expected a live node",
             )
         })?;
-        Ok(Self::with_state(
-            source.global_parameters(),
-            source.is_enabled(),
-        ))
+        Ok(Self::copied_fields(source))
+    }
+
+    /// Copies the effective node settings from an already borrowed interface.
+    /// `DeConfigurationNodeBase::copied_fields(source)`.
+    pub(super) fn copied_fields(source: &dyn DeConfigurationNode) -> Self {
+        Self::with_state(source.global_parameters(), source.is_enabled())
     }
     /// Copies enabled state and unit settings without retaining an owning handle.
     /// Example: `let copy = DeConfigurationNodeBase::default().copied_state();`.
@@ -116,11 +119,11 @@ pub fn new_configuration_node<T>(node: T) -> Handle<T>
 where
     T: DeConfigurationNode + martensite_tkernel::standard::RuntimeTyped,
 {
-    let handle: Handle<T> = Handle::new(node);
-    if let Some(object) = handle.get() {
-        object.configuration_node_base().bind_self(&handle.cast());
-    }
-    handle
+    let owner = Arc::new(node);
+    let base = owner.configuration_node_base();
+    let interface: Arc<dyn DeConfigurationNode> = owner.clone();
+    base.bind_self(&Handle::from_arc(interface));
+    Handle::from_arc(owner)
 }
 
 #[cfg(test)]

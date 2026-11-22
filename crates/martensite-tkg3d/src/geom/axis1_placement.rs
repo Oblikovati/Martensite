@@ -4,19 +4,17 @@ use super::geometry::GeomGeometry;
 use super::protected::ProtectedAccess;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis1, Direction3, Point3, Transform3};
 
 /// An axis; `Handle::new(GeomAxis1Placement::new(axis))`.
 pub struct GeomAxis1Placement {
-    parent: StandardTransient,
     state: SharedState<Axis1>,
 }
 impl_transient!(
     GeomAxis1Placement,
     "Geom_Axis1Placement",
     dyn GeomAxisPlacement,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomAxisPlacement]
 );
 impl Clone for GeomAxis1Placement {
@@ -28,7 +26,6 @@ impl GeomAxis1Placement {
     /// Placement from a gp axis (`GeomAxis1Placement(Axis1)`); `GeomAxis1Placement::new(axis)`.
     pub fn new(axis: Axis1) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(axis),
         }
     }
@@ -58,7 +55,7 @@ impl GeomGeometry for GeomAxis1Placement {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
 }
 impl GeomAxisPlacement for GeomAxis1Placement {

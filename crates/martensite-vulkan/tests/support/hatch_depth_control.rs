@@ -98,7 +98,7 @@ fn asymmetric_bitmap() -> Handle<Graphic3dHatchStyle> {
         let x = (y * 7 + 3) % 32;
         image.change_data().data.change_data()[y * 4 + x / 8] = 1 << (7 - x % 8);
     }
-    let bitmap = Graphic3dHatchStyle::from_pattern(&image).unwrap();
+    let bitmap = Graphic3dHatchStyle::from_pattern(&image.upcast()).unwrap();
     image.change_data().data.change_data().fill(0);
     Handle::new(bitmap)
 }

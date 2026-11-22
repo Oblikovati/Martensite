@@ -1,7 +1,8 @@
 //! Geometry and transition processing at an intersection with a face restriction.
 use super::TopOpeBRepFacesFiller;
 use crate::top_ope_brep::{TopOpeBRepLineInter, TopOpeBRepVPointInter};
-use crate::top_ope_brep_ds::{TopOpeBRepDSInterference, TopOpeBRepDSKind};
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::TopOpeBRepDSKind;
 use martensite_tkernel::standard::{Failure, Handle};
 
 pub(super) mod geometry;
@@ -18,11 +19,11 @@ pub struct GeometrySearch {
     /// Whether the edge interference search found existing geometry.
     pub edge_found: bool,
     /// The edge search cursor handle, which can remain null on an empty search.
-    pub edge_interference: Handle<TopOpeBRepDSInterference>,
+    pub edge_interference: Handle<dyn InterferenceRecord>,
     /// Whether the current curve interference search found existing geometry.
     pub curve_found: bool,
     /// The current curve search cursor handle, including a null empty cursor.
-    pub curve_interference: Handle<TopOpeBRepDSInterference>,
+    pub curve_interference: Handle<dyn InterferenceRecord>,
 }
 
 impl Default for GeometrySearch {

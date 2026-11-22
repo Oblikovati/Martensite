@@ -138,7 +138,7 @@ fn reusable_stream<F: FileSystem + ?Sized>(
 }
 
 /// The base output-stream opener; `default_open_ostream(fs, &url, mode)`.
-pub fn default_open_ostream<F: FileSystem + ?Sized>(
+fn default_open_ostream<F: FileSystem + ?Sized>(
     file_system: &F,
     url: &AsciiString,
     mode: IosOpenMode,

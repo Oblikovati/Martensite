@@ -1,7 +1,7 @@
 use super::{PackedInteger, PackedMap, PackedWord};
 impl<T: PackedInteger> PackedMap<T> {
     /// Return the minimum or the type maximum when empty; `map.minimal()`.
-    pub fn minimal(&self) -> T {
+    pub(crate) fn minimal(&self) -> T {
         let mut result: T = T::MAX;
         let mut selected = None;
         for block in self.buckets.nodes() {
@@ -16,7 +16,7 @@ impl<T: PackedInteger> PackedMap<T> {
         })
     }
     /// Keep the block-base selection, including the lowest-block edge case; `map.maximal()`.
-    pub fn maximal(&self) -> T {
+    pub(crate) fn maximal(&self) -> T {
         let mut result: T = T::MIN;
         let mut selected = None;
         for block in self.buckets.nodes() {

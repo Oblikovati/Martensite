@@ -7,8 +7,8 @@
 //! non-virtual members are the blanket traits of aspects_members.rs and aspects_style.rs.
 use super::{
     Graphic3dAlphaMode, Graphic3dHatchStyle, Graphic3dMarkerImage, Graphic3dMaterialAspect,
-    Graphic3dPolygonOffset, Graphic3dShaderProgram, Graphic3dTextureSet,
-    Graphic3dTypeOfBackfacingModel, Graphic3dTypeOfShadingModel,
+    Graphic3dPolygonOffset, Graphic3dShaderProgram, Graphic3dTypeOfBackfacingModel,
+    Graphic3dTypeOfShadingModel,
 };
 use crate::aspect::{
     AspectInteriorStyle, AspectTypeOfDisplayText, AspectTypeOfLine, AspectTypeOfMarker,
@@ -28,7 +28,7 @@ pub struct Graphic3dAspectsFields {
     /// `myProgram`.
     pub program: Handle<Graphic3dShaderProgram>,
     /// `myTextureSet`.
-    pub texture_set: Handle<Graphic3dTextureSet>,
+    pub texture_set: Handle<dyn crate::graphic3d::Graphic3dTextureSetSource>,
     /// `myMarkerImage`.
     pub marker_image: Handle<Graphic3dMarkerImage>,
     /// `myHatchStyle`.
@@ -174,10 +174,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn Graphic3dAspectsSource {
         // interface registration would invent an extra native ancestor and split is_kind.
         <Graphic3dAspects as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dAspectsSource);
 
 /// The body of `Graphic3d_Aspects::DumpJson`, for the classes that dump it as their base.
 ///
@@ -244,7 +242,6 @@ fn dump_alpha_and_text(f: &Graphic3dAspectsFields, stream: &mut DumpStream) -> i
 /// The native `Graphic3d_Aspects`; `Graphic3dAspects::default().interior_style()`.
 #[derive(Default)]
 pub struct Graphic3dAspects {
-    transient: StandardTransient,
     base: Graphic3dAspectsBase,
 }
 impl Graphic3dAspectsSource for Graphic3dAspects {
@@ -252,7 +249,7 @@ impl Graphic3dAspectsSource for Graphic3dAspects {
         &self.base
     }
 }
-martensite_tkernel::impl_transient!(Graphic3dAspects, "Graphic3d_Aspects", StandardTransient, transient,
+martensite_tkernel::impl_transient!(Graphic3dAspects, "Graphic3d_Aspects", StandardTransient,
     interfaces: [dyn Graphic3dAspectsSource]);
 
 /// Implements the aspects traits of a struct with `transient` and `base: Graphic3dAspectsBase`.
@@ -263,7 +260,7 @@ macro_rules! aspects_class {
                 &self.base
             }
         }
-        martensite_tkernel::impl_transient!($ty, $name, dyn $crate::graphic3d::Graphic3dAspectsSource, transient,
+        martensite_tkernel::impl_transient!($ty, $name, dyn $crate::graphic3d::Graphic3dAspectsSource,
             interfaces: [dyn $crate::graphic3d::Graphic3dAspectsSource]);
     };
 }

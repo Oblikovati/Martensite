@@ -81,7 +81,7 @@ fn approximated_curve(
     }
     let hc2d = Geom2dAdaptorCurve::with_curve(pcurv)?;
     let (first, last) = (hc2d.first_parameter()?, hc2d.last_parameter()?);
-    let hc2d: Handle<dyn Adaptor2dCurve2d> = Handle::new(hc2d).cast();
+    let hc2d: Handle<dyn Adaptor2dCurve2d> = Handle::new(hc2d).into_upcast();
     let mut app = CurveOnSurface::without_perform(&hc2d, s, first, last, precision::confusion());
     app.perform(CurveOnSurfaceOptions {
         max_segments: 10,
@@ -113,9 +113,9 @@ pub(super) fn same_parameter(
 ) -> Result<(bool, f64), Failure> {
     let (c3d, f, l) = BRepTool::curve(e)?;
     let hc3d: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_range(&c3d, f, l)?).cast();
+        Handle::new(GeomAdaptorCurve::with_range(&c3d, f, l)?).into_upcast();
     let s: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surf)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surf)?).into_upcast();
     let (c, p, ad) = (
         hc3d.get().ok_or_else(|| null("curve"))?,
         pcurv.get().ok_or_else(|| null("pcurve"))?,

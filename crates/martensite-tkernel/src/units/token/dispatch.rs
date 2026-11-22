@@ -1,51 +1,37 @@
 //! Virtual dispatch of tokens through their handle: the dynamic type decides
 //! between the base members and the shifted-token overrides.
-use super::{ShiftedToken, Token, object};
+use super::{Token, object};
 use crate::standard::{Failure, Handle};
+use crate::units::TokenObject;
 use crate::units::support::{stream_real, write_failure};
 use std::io::Write;
 
 /// Members that are virtual or that return the token itself (`this`).
 pub trait TokenHandle {
     /// A fresh copy of the dynamic type; `token.creates()?`.
-    fn creates(&self) -> Result<Handle<Token>, Failure>;
+    fn creates(&self) -> Result<Handle<dyn TokenObject>, Failure>;
     /// Converts `value` in this unit to SI; `token.multiplied(2.0)?`.
     fn multiplied(&self, value: f64) -> Result<f64, Failure>;
     /// Converts an SI `value` to this unit; `token.divided(2.0)?`.
     fn divided(&self, value: f64) -> Result<f64, Failure>;
     /// `(a)/(b)`, or this very token when `|b| < 1e-40`;
     /// `token.divide(&other)?`.
-    fn divide(&self, token: &Handle<Token>) -> Result<Handle<Token>, Failure>;
+    fn divide(&self, token: &Handle<dyn TokenObject>) -> Result<Handle<dyn TokenObject>, Failure>;
     /// Dumps to `out` at `shift` and `level`; `token.dump(0, 1, &mut std::io::stdout())?`.
     fn dump(&self, shift: i32, level: i32, out: &mut dyn Write) -> Result<(), Failure>;
 }
 
-impl TokenHandle for Handle<Token> {
-    fn creates(&self) -> Result<Handle<Token>, Failure> {
-        if let Some(shifted) = self.cast::<ShiftedToken>().get() {
-            return Ok(shifted.creates());
-        }
-        let token = object(self, "Units_Token::Creates")?;
-        Ok(Handle::new(Token::with_dimensions(
-            token.word().as_bytes(),
-            token.mean().as_bytes(),
-            token.value(),
-            &token.dimensions(),
-        )))
+impl TokenHandle for Handle<dyn TokenObject> {
+    fn creates(&self) -> Result<Handle<dyn TokenObject>, Failure> {
+        Ok(object(self, "Units_Token::Creates")?.copy_token())
     }
     fn multiplied(&self, value: f64) -> Result<f64, Failure> {
-        if let Some(shifted) = self.cast::<ShiftedToken>().get() {
-            return Ok(shifted.multiplied(value));
-        }
-        Ok(value * object(self, "Units_Token::Multiplied")?.value())
+        Ok(object(self, "Units_Token::Multiplied")?.token_multiplied(value))
     }
     fn divided(&self, value: f64) -> Result<f64, Failure> {
-        if let Some(shifted) = self.cast::<ShiftedToken>().get() {
-            return Ok(shifted.divided(value));
-        }
-        Ok(value / object(self, "Units_Token::Divided")?.value())
+        Ok(object(self, "Units_Token::Divided")?.token_divided(value))
     }
-    fn divide(&self, token: &Handle<Token>) -> Result<Handle<Token>, Failure> {
+    fn divide(&self, token: &Handle<dyn TokenObject>) -> Result<Handle<dyn TokenObject>, Failure> {
         let other = object(token, "Units_Token::Divide")?;
         let this = object(self, "Units_Token::Divide")?;
         if other.value().abs() < 1.0e-40 {
@@ -56,12 +42,7 @@ impl TokenHandle for Handle<Token> {
     fn dump(&self, shift: i32, level: i32, out: &mut dyn Write) -> Result<(), Failure> {
         let token = object(self, "Units_Token::Dump")?;
         dump_token(token, shift, level, out).map_err(write_failure)?;
-        if let Some(shifted) = self.cast::<ShiftedToken>().get() {
-            let indent = "  ".repeat(shift.max(0) as usize);
-            let line = format!("{indent}  move  : {}\n", stream_real(shifted.movement()));
-            out.write_all(line.as_bytes()).map_err(write_failure)?;
-        }
-        Ok(())
+        token.dump_token_tail(shift, out).map_err(write_failure)
     }
 }
 
@@ -88,13 +69,13 @@ fn dump_token(token: &Token, shift: i32, level: i32, out: &mut dyn Write) -> std
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::units::Dimensions;
+    use crate::units::{Dimensions, ShiftedToken};
 
     #[test]
     fn dispatch_follows_the_dynamic_type() {
         let dims = Dimensions::a_thermodynamic_temperature();
         let shifted = Handle::new(ShiftedToken::new(b"deg.C", b"U", 1.0, 273.15, &dims));
-        let token: Handle<Token> = shifted.cast();
+        let token: Handle<dyn TokenObject> = shifted.upcast();
         assert_eq!(token.multiplied(0.0).unwrap(), 273.15);
         assert_eq!(token.divided(273.15).unwrap(), 0.0);
         assert!(
@@ -103,20 +84,21 @@ mod tests {
                 .unwrap()
                 .is_instance_name("Units_ShiftedToken")
         );
-        let plain = Handle::new(Token::with_value(b"mm", b"U", 1e-3));
+        let plain =
+            Handle::new(Token::with_value(b"mm", b"U", 1e-3)).into_upcast::<dyn TokenObject>();
         assert_eq!(plain.multiplied(2.0).unwrap(), 2e-3);
         assert!(plain.creates().unwrap().is_instance_name("Units_Token"));
     }
 
     #[test]
     fn divide_by_zero_valued_token_returns_itself() {
-        let left = Handle::new(Token::with_value(b"m", b"U", 1.0));
-        let zero = Handle::new(Token::with_value(b"z", b"U", 0.0));
+        let left = Handle::new(Token::with_value(b"m", b"U", 1.0)).into_upcast::<dyn TokenObject>();
+        let zero = Handle::new(Token::with_value(b"z", b"U", 0.0)).into_upcast::<dyn TokenObject>();
         assert!(std::ptr::eq(
-            left.divide(&zero).unwrap().as_ptr(),
-            left.as_ptr()
+            left.divide(&zero).unwrap().object_address(),
+            left.object_address()
         ));
-        let two = Handle::new(Token::with_value(b"2", b"K", 2.0));
+        let two = Handle::new(Token::with_value(b"2", b"K", 2.0)).into_upcast::<dyn TokenObject>();
         let half = left.divide(&two).unwrap();
         assert_eq!(half.get().unwrap().word(), "(m)/(2)");
         assert_eq!(half.get().unwrap().value(), 0.5);
@@ -125,8 +107,8 @@ mod tests {
     #[test]
     fn dump_includes_move_for_shifted_tokens() {
         let dims = Dimensions::a_thermodynamic_temperature();
-        let token: Handle<Token> =
-            Handle::new(ShiftedToken::new(b"deg.C", b"U", 1.0, 273.15, &dims)).cast();
+        let token: Handle<dyn TokenObject> =
+            Handle::new(ShiftedToken::new(b"deg.C", b"U", 1.0, 273.15, &dims)).into_upcast();
         let mut out = Vec::new();
         token.dump(0, 0, &mut out).unwrap();
         let text = String::from_utf8(out).unwrap();

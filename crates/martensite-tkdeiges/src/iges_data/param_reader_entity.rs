@@ -4,6 +4,8 @@ use super::{
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataParamCursor, IgesDataParamReader,
     IgesDataStatus,
 };
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped};
 use martensite_tkxsbase::interface::InterfaceParamType;
 
@@ -18,7 +20,7 @@ impl IgesDataParamReader {
         ir: &Handle<IgesDataIgesReaderData>,
         pc: &IgesDataParamCursor,
         a_status: &mut IgesDataStatus,
-        val: &mut Handle<IgesDataIgesEntity>,
+        val: &mut Handle<dyn IgesDataEntityKind>,
         canbenul: bool,
     ) -> Result<bool, Failure> {
         *a_status = IgesDataStatus::EntityError;
@@ -66,7 +68,7 @@ impl IgesDataParamReader {
         ir: &Handle<IgesDataIgesReaderData>,
         pc: &IgesDataParamCursor,
         mess: &str,
-        val: &mut Handle<IgesDataIgesEntity>,
+        val: &mut Handle<dyn IgesDataEntityKind>,
         canbenul: bool,
     ) -> Result<bool, Failure> {
         if !self.prepare_read(pc, Some(mess), false, 1) {
@@ -103,7 +105,7 @@ impl IgesDataParamReader {
     ///
     /// # Errors
     /// An out of range failure when the parameter list is short.
-    pub fn read_entity_typed_status<T: ?Sized + RuntimeTyped>(
+    pub fn read_entity_typed_status<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &mut self,
         ir: &Handle<IgesDataIgesReaderData>,
         pc: &IgesDataParamCursor,
@@ -112,7 +114,7 @@ impl IgesDataParamReader {
         val: &mut Handle<T>,
         canbenul: bool,
     ) -> Result<bool, Failure> {
-        let mut read = val.cast::<IgesDataIgesEntity>();
+        let mut read = val.cast::<dyn IgesDataEntityKind>();
         let res = self.read_entity_status(ir, pc, a_status, &mut read, canbenul)?;
         if res && read.is_some() && !read.is_kind(atype) {
             *a_status = IgesDataStatus::TypeError;
@@ -128,7 +130,7 @@ impl IgesDataParamReader {
     ///
     /// # Errors
     /// An out of range failure when the parameter list is short.
-    pub fn read_entity_typed<T: ?Sized + RuntimeTyped>(
+    pub fn read_entity_typed<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &mut self,
         ir: &Handle<IgesDataIgesReaderData>,
         pc: &IgesDataParamCursor,
@@ -137,7 +139,7 @@ impl IgesDataParamReader {
         val: &mut Handle<T>,
         canbenul: bool,
     ) -> Result<bool, Failure> {
-        let mut read = val.cast::<IgesDataIgesEntity>();
+        let mut read = val.cast::<dyn IgesDataEntityKind>();
         let res = self.read_entity(ir, pc, mess, &mut read, canbenul)?;
         if res && read.is_some() && !read.is_kind(atype) {
             self.labeled(true, mess, " : Incorrect Type", "");

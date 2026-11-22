@@ -24,11 +24,11 @@ fn spatial_source() -> Handle<GeomBezierCurve> {
 #[test]
 fn spatial_capture_retains_owned_bits_and_observes_later_atomic_edit() {
     let source = spatial_source();
-    let first = coefficients(capture_space_curve(&source.clone().cast()).unwrap());
+    let first = coefficients(capture_space_curve(&source.upcast()).unwrap());
     source
         .set_pole_weighted(2, Point3::new(4., 5., 6.), 3.)
         .unwrap();
-    let next = coefficients(capture_space_curve(&source.cast()).unwrap());
+    let next = coefficients(capture_space_curve(&source.upcast()).unwrap());
     assert_eq!(first.0[0][0].to_bits(), (-0.0_f64).to_bits());
     assert_eq!(first.0[1], [1., 2., 3.]);
     assert_eq!(first.1.unwrap(), vec![1., 2., 1.]);
@@ -43,9 +43,9 @@ fn planar_capture_keeps_nonrational_weights_absent_and_remains_fresh() {
         Point2::new(2., 0.),
     ];
     let source = Handle::new(Geom2dBezierCurve::new(&Array1::from_shared(&points, 1)).unwrap());
-    let first = coefficients(capture_plane_curve(&source.clone().cast()).unwrap());
+    let first = coefficients(capture_plane_curve(&source.upcast()).unwrap());
     source.set_pole(2, Point2::new(4., 5.)).unwrap();
-    let next = coefficients(capture_plane_curve(&source.cast()).unwrap());
+    let next = coefficients(capture_plane_curve(&source.upcast()).unwrap());
     assert_eq!(first.0[0][0].to_bits(), (-0.0_f64).to_bits());
     assert_eq!(first.0[1], [1., 2.]);
     assert_eq!(next.0[1], [4., 5.]);

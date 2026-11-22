@@ -18,7 +18,8 @@ use crate::step_shape::{
     StepShapeShellBasedSurfaceModel, StepShapeSolidModel,
 };
 use crate::step_visual::{StepVisualInvisibility, StepVisualPresentationLayerAssignment};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::{ExtendedString, HAsciiString};
 use martensite_tklcaf::tdata_std::TDataStdName;
 use martensite_tklcaf::tdf::TdfLabel;
@@ -33,7 +34,7 @@ use martensite_tkxsbase::transfer_brep::TransferBRep;
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
 
 /// The exact type test of the `dynamic_type() == STANDARD_TYPE(T)`.
-pub(super) fn is_exactly<T: RuntimeTyped>(entity: &Handle<StandardTransient>) -> bool {
+pub(super) fn is_exactly<T: RuntimeTyped>(entity: &Handle<dyn Transient>) -> bool {
     entity
         .dynamic_type()
         .is_some_and(|kind| std::ptr::eq(kind, T::static_type()))
@@ -45,7 +46,10 @@ fn has_useful_text(text: &Handle<HAsciiString>) -> bool {
 }
 
 /// The label of an external file of a product definition, null when there is none.
-fn label_of_extern_file(pd: &Handle<StepBasicProductDefinition>, pd_file: &PdFileMap) -> TdfLabel {
+fn label_of_extern_file(
+    pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
+    pd_file: &PdFileMap,
+) -> TdfLabel {
     pd_file
         .find(pd)
         .ok()
@@ -68,7 +72,7 @@ fn label_of_shape(
 
 /// `GetLabelFromPD` through the transfer process.
 pub(super) fn label_from_pd(
-    pd: &Handle<StepBasicProductDefinition>,
+    pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     tool: &XCAFDocShapeTool,
     tp: &martensite_tkxsbase::transfer::TransferTransientProcess,
     pd_file: &PdFileMap,
@@ -92,7 +96,7 @@ pub(super) fn label_from_pd(
 
 /// `GetLabelFromPD` through the validation properties.
 fn label_from_pd_of_props(
-    pd: &Handle<StepBasicProductDefinition>,
+    pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     tool: &XCAFDocShapeTool,
     props: &StepConstructValidationProps,
     pd_file: &PdFileMap,
@@ -113,7 +117,7 @@ fn label_from_pd_of_props(
 /// `name` stays when no PDS has a relationship.
 fn name_of_nauo(
     graph: &InterfaceGraph,
-    nauo: &Handle<StandardTransient>,
+    nauo: &Handle<dyn Transient>,
     name: &mut Handle<HAsciiString>,
 ) -> Result<(), Failure> {
     for sharing in graph.sharings(nauo)?.content() {
@@ -194,7 +198,8 @@ impl ReaderState {
             if is_exactly::<StepBasicProductDefinition>(&entity)
                 || is_exactly::<StepBasicProductDefinitionWithAssociatedDocuments>(&entity)
             {
-                let pd: Handle<StepBasicProductDefinition> = entity.cast();
+                let pd: Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> =
+                    entity.cast();
                 let product = step_live(&pd, WHERE)?
                     .formation()
                     .get()
@@ -213,7 +218,7 @@ impl ReaderState {
     /// The label a PDS of a validation property refers to.
     fn label_of_property_pds(
         &self,
-        pds: &Handle<StandardTransient>,
+        pds: &Handle<dyn Transient>,
         ws: &Handle<XSControlWorkSession>,
         tool: &Handle<XCAFDocShapeTool>,
         props: &StepConstructValidationProps,
@@ -234,7 +239,7 @@ impl ReaderState {
         // find corresponding ProductDefinition:
         let prod_def = shareds
             .iter()
-            .map(|shared| shared.cast::<StepBasicProductDefinition>())
+            .map(|shared| shared.cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>())
             .find(Handle::is_some);
         let Some(prod_def) = prod_def else {
             return Ok(TdfLabel::default());
@@ -250,10 +255,13 @@ impl ReaderState {
     /// The first shape representation of an SDR over the properties of a shape aspect.
     fn sr_of_shape_aspect(
         graph: &InterfaceGraph,
-        aspect: &Handle<StandardTransient>,
-    ) -> Result<Handle<StepShapeShapeRepresentation>, Failure> {
+        aspect: &Handle<dyn Transient>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, Failure> {
         for sharing in graph.sharings(aspect)?.content() {
-            if sharing.cast::<StepReprPropertyDefinition>().is_null() {
+            if sharing
+                .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>()
+                .is_null()
+            {
                 continue;
             }
             for second in graph.sharings(&sharing)?.content() {
@@ -263,7 +271,7 @@ impl ReaderState {
                 {
                     let sr = sdr
                         .used_representation()
-                        .cast::<StepShapeShapeRepresentation>();
+                        .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
                     if sr.is_some() {
                         return Ok(sr);
                     }
@@ -275,7 +283,7 @@ impl ReaderState {
     /// The label a shape aspect of a validation property refers to.
     fn label_of_property_aspect(
         &self,
-        aspect: &Handle<StandardTransient>,
+        aspect: &Handle<dyn Transient>,
         ws: &Handle<XSControlWorkSession>,
         tool: &XCAFDocShapeTool,
         props: &StepConstructValidationProps,
@@ -294,9 +302,13 @@ impl ReaderState {
         while rank <= sr.nb_items() && binder.is_null() {
             let item = sr.items_value(rank)?;
             step_live(&item, WHERE)?;
-            if item.cast::<StepShapeSolidModel>().is_some()
+            if item
+                .cast::<dyn crate::StepEntityBase<StepShapeSolidModel>>()
+                .is_some()
                 || item.cast::<StepShapeShellBasedSurfaceModel>().is_some()
-                || item.cast::<StepShapeGeometricSet>().is_some()
+                || item
+                    .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+                    .is_some()
             {
                 binder = tp.find(&item.cast());
             }
@@ -319,7 +331,7 @@ impl ReaderState {
     /// The label of a property definition, from what it shares.
     fn label_of_property(
         &self,
-        definition: &Handle<StepReprPropertyDefinition>,
+        definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
         ws: &Handle<XSControlWorkSession>,
         tool: &Handle<XCAFDocShapeTool>,
         props: &StepConstructValidationProps,
@@ -341,7 +353,10 @@ impl ReaderState {
                     continue;
                 }
             }
-            if shared.cast::<StepReprShapeAspect>().is_some() {
+            if shared
+                .cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>()
+                .is_some()
+            {
                 label =
                     self.label_of_property_aspect(&shared, ws, step_live(tool, WHERE)?, props)?;
             }
@@ -357,7 +372,8 @@ impl ReaderState {
     ) -> Result<(), Failure> {
         let representation = pdr.used_representation();
         let representation = step_live(&representation, WHERE)?;
-        let context: Handle<StepReprRepresentationContext> = representation.context_of_items();
+        let context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>> =
+            representation.context_of_items();
         for j in 1..=representation.nb_items() {
             let item = representation.items_value(j)?;
             let (mut is_area, mut value) = (false, 0.);
@@ -396,7 +412,8 @@ impl ReaderState {
         }
         // interpret props one by one
         for prop in found {
-            let pdr = prop.cast::<StepReprPropertyDefinitionRepresentation>();
+            let pdr =
+                prop.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
             let Some(pdr) = pdr.get() else {
                 continue;
             };

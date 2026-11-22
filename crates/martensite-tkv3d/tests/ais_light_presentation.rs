@@ -11,7 +11,7 @@ use martensite_tkv3d::{ais::*, prs_mgr::*, v3d::V3dViewer};
 mod recording_driver;
 #[path = "support/light_presentation_snapshot.rs"]
 mod snapshot;
-fn native_light(kind: usize, flags: i32) -> Handle<Graphic3dCLight> {
+fn native_light(kind: usize, flags: i32) -> Handle<dyn Graphic3dCLightSource> {
     let light = fixture_source::fixture_light(kind);
     light.set_color(Color::new(0.2, 0.4, 0.8, ColorSpace::Rgb).unwrap());
     light.set_enabled(flags & 2 != 0);

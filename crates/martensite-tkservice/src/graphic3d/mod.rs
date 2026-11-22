@@ -113,6 +113,8 @@ mod texture_map;
 mod texture_params;
 mod texture_root;
 mod texture_set;
+mod texture_set_source;
+pub use texture_set_source::Graphic3dTextureSetSource;
 mod transform_pers;
 mod transform_pers_apply;
 mod transform_pers_scaled;
@@ -126,7 +128,9 @@ pub use array_classes::{
     Graphic3dArrayOfTriangleFans, Graphic3dArrayOfTriangleStrips, Graphic3dArrayOfTriangles,
     Graphic3dArrayOptions,
 };
+mod array_source;
 pub use array_of_primitives::{Graphic3dArrayOfPrimitives, Graphic3dAttributeSlot};
+pub use array_source::Graphic3dArraySource;
 pub use aspect_classes::{
     Graphic3dAspectFillArea3d, Graphic3dAspectLine3d, Graphic3dAspectMarker3d,
     Graphic3dAspectText3d,
@@ -230,7 +234,7 @@ pub use index_buffer::{
     Graphic3dMutableIndexBuffer,
 };
 pub use layer::{Graphic3dArrayOfIndexedMapOfStructure, Graphic3dLayer};
-pub use light::Graphic3dCLight;
+pub use light::{Graphic3dCLight, Graphic3dCLightSource};
 pub use light_set::{
     Graphic3dLightSet, Graphic3dLightSetFields, Graphic3dLightSetIterationFilter,
     Graphic3dLightSetIterator,

@@ -9,7 +9,7 @@ use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
     ncollection::Map,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::ExtendedString,
 };
 
@@ -25,17 +25,15 @@ struct StoreListState {
 
 /// `CDF_StoreList`; `CdfStoreList::new(&document)?`.
 pub struct CdfStoreList {
-    transient: StandardTransient,
     main_document: Handle<dyn CdmDocument>,
     state: SharedState<StoreListState>,
 }
-impl_transient!(CdfStoreList, "CDF_StoreList", StandardTransient, transient);
+impl_transient!(CdfStoreList, "CDF_StoreList", dyn Transient);
 
 impl CdfStoreList {
     /// `CDF_StoreList(aDocument)`: the document and, recursively, its modified references.
     pub fn new(document: &Handle<dyn CdmDocument>) -> Result<Self, Failure> {
         let list = Self {
-            transient: StandardTransient::default(),
             main_document: document.clone(),
             state: SharedState::default(),
         };
@@ -105,7 +103,7 @@ impl CdfStoreList {
         range: &ProgressRange<'_>,
     ) -> Result<PcdmStoreStatus, Failure> {
         let main = live(&self.main_document, "CDF_StoreList::Store")?;
-        let application: Handle<dyn CdfApplication> = main.application()?.cast();
+        let application: Handle<dyn CdfApplication> = main.application()?.into_cast();
         let driver = live(&application, "CDF_StoreList::Store")?.meta_data_driver()?;
         let mut status = PcdmStoreStatus::Ok;
         loop {
@@ -138,7 +136,7 @@ fn store_one(
     range: &ProgressRange<'_>,
 ) -> Result<PcdmStoreStatus, Failure> {
     let target = live(document, "CDF_StoreList::Store")?;
-    let application: Handle<dyn CdfApplication> = target.application()?.cast();
+    let application: Handle<dyn CdfApplication> = target.application()?.into_cast();
     let Some(application) = application.get() else {
         *text =
             ExtendedString::new("driver failed; reason: document has no application, cannot save!");

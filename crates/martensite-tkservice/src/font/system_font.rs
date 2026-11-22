@@ -23,17 +23,11 @@ struct FontFiles {
 
 /// A system font family; `FontSystemFont::new(&"Arial".into())?`.
 pub struct FontSystemFont {
-    transient: StandardTransient,
     font_key: AsciiString,
     font_name: AsciiString,
     files: SharedState<FontFiles>,
 }
-martensite_tkernel::impl_transient!(
-    FontSystemFont,
-    "Font_SystemFont",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(FontSystemFont, "Font_SystemFont", StandardTransient);
 
 /// The array index of an aspect, `UNDEFINED` reading as `Regular`.
 fn slot(aspect: FontFontAspect) -> usize {
@@ -55,7 +49,6 @@ impl FontSystemFont {
         let mut font_key = name.clone();
         font_key.lower_case();
         Ok(Self {
-            transient: StandardTransient::default(),
             font_key,
             font_name: name.clone(),
             files: SharedState::new(FontFiles::default()),

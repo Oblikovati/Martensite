@@ -5,12 +5,18 @@ use super::{
     IgesDataIgesReaderTool, IgesDataLabelDisplayEntity, IgesDataLevelListEntity,
     IgesDataLineFontEntity, IgesDataTransfEntity, IgesDataViewKindEntity, iges_live,
 };
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkernel::{
     message::Msg,
     standard::{Failure, Handle},
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::{InterfaceCheck, InterfaceFileReaderDataParams};
+
+type LabelDisplayField = (
+    Handle<dyn IgesDataLabelDisplayEntity>,
+    Handle<dyn IgesDataEntityKind>,
+);
 
 impl IgesDataIgesReaderTool {
     /// Reads the directory part of an entity.
@@ -19,7 +25,7 @@ impl IgesDataIgesReaderTool {
     /// A failure of the check messages or of the entity.
     pub fn read_dir(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         ir: &Handle<IgesDataIgesReaderData>,
         dp: &IgesDataDirPart,
         ach: &Handle<InterfaceCheck>,
@@ -30,7 +36,7 @@ impl IgesDataIgesReaderTool {
         let v = fields.values;
         live.init_type_and_form(v[0], v[16]);
         live.set_res_values(&fields.res1, &fields.res2);
-        let bound = |num: i32| data.bound_entity(num).cast::<IgesDataIgesEntity>();
+        let bound = |num: i32| data.bound_entity(num).cast::<dyn IgesDataEntityKind>();
         let structure = if v[2] < 0 {
             bound((1 - v[2]) / 2)
         } else {
@@ -97,8 +103,8 @@ impl IgesDataIgesReaderTool {
         &self,
         live: &IgesDataIgesEntity,
         value: i32,
-        bound: &dyn Fn(i32) -> Handle<IgesDataIgesEntity>,
-        last_field: &mut Handle<IgesDataIgesEntity>,
+        bound: &dyn Fn(i32) -> Handle<dyn IgesDataEntityKind>,
+        last_field: &mut Handle<dyn IgesDataEntityKind>,
         ach: &Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
         if value >= 0 {
@@ -120,8 +126,8 @@ impl IgesDataIgesReaderTool {
         &self,
         live: &IgesDataIgesEntity,
         value: i32,
-        bound: &dyn Fn(i32) -> Handle<IgesDataIgesEntity>,
-        last_field: &mut Handle<IgesDataIgesEntity>,
+        bound: &dyn Fn(i32) -> Handle<dyn IgesDataEntityKind>,
+        last_field: &mut Handle<dyn IgesDataEntityKind>,
         ach: &Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
         if value >= 0 {
@@ -145,16 +151,10 @@ impl IgesDataIgesReaderTool {
     fn read_label_display(
         &self,
         value: i32,
-        last_field: &Handle<IgesDataIgesEntity>,
-        bound: &dyn Fn(i32) -> Handle<IgesDataIgesEntity>,
+        last_field: &Handle<dyn IgesDataEntityKind>,
+        bound: &dyn Fn(i32) -> Handle<dyn IgesDataEntityKind>,
         ach: &Handle<InterfaceCheck>,
-    ) -> Result<
-        (
-            Handle<dyn IgesDataLabelDisplayEntity>,
-            Handle<IgesDataIgesEntity>,
-        ),
-        Failure,
-    > {
+    ) -> Result<LabelDisplayField, Failure> {
         if value == 0 {
             return Ok((Handle::default(), Handle::default()));
         }
@@ -169,7 +169,7 @@ impl IgesDataIgesReaderTool {
         &self,
         live: &IgesDataIgesEntity,
         value: i32,
-        bound: &dyn Fn(i32) -> Handle<IgesDataIgesEntity>,
+        bound: &dyn Fn(i32) -> Handle<dyn IgesDataEntityKind>,
         ach: &Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
         if value >= 0 {

@@ -3,12 +3,14 @@ use super::hash_policy::next_map_prime;
 use std::marker::PhantomData;
 mod integer;
 mod iteration;
+#[cfg(test)]
 mod legacy_algebra;
 mod node;
 mod node_cursor;
 mod object_storage;
 mod protected_helpers;
 pub use node::PackedMapNode;
+#[cfg(test)]
 mod queries;
 mod storage;
 pub use integer::{PackedInteger, PackedWord};
@@ -47,11 +49,13 @@ impl<T: PackedInteger> PackedMap<T> {
     }
     /// The signed constructor: counts below one select a single bucket, never an error;
     /// `PackedMap::<i32>::from_int(-5).bucket_count() == 1`.
-    pub fn from_int(bucket_count: i32) -> Self {
+    #[cfg(test)]
+    pub(crate) fn from_int(bucket_count: i32) -> Self {
         Self::new(usize::try_from(bucket_count).unwrap_or(0))
     }
     /// Signed resize: a negative request behaves as zero; `map.resize_int(-1)`.
-    pub fn resize_int(&mut self, requested: i32) {
+    #[cfg(test)]
+    pub(crate) fn resize_int(&mut self, requested: i32) {
         self.resize(usize::try_from(requested).unwrap_or(0));
     }
     /// Count stored values; `map.len()`.
@@ -173,11 +177,13 @@ impl<T: PackedInteger> PackedMap<T> {
         copy
     }
     /// Transfer buckets and reset the source modulus to one; `PackedMap::move_from(&mut source)`.
-    pub fn move_from(source: &mut Self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn move_from(source: &mut Self) -> Self {
         std::mem::take(source)
     }
     /// Replace contents with moved source storage; `map.move_assign(&mut source)`.
-    pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn move_assign(&mut self, source: &mut Self) -> &mut Self {
         self.clear();
         *self = Self::move_from(source);
         self
@@ -198,6 +204,7 @@ impl<T: PackedInteger> Clone for PackedMap<T> {
     }
 }
 
+#[cfg(test)]
 mod method_contracts;
 mod operands;
 pub use operands::PackedMapOperand;

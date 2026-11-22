@@ -23,7 +23,8 @@ impl RwStepElementRwAnalysisItemWithinRepresentation {
             return Ok(());
         }
         rw_block_b_0147!(a_description, a_name, ach, data, num);
-        let mut a_item: Handle<StepReprRepresentationItem> = Default::default();
+        let mut a_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -32,7 +33,8 @@ impl RwStepElementRwAnalysisItemWithinRepresentation {
             StepReprRepresentationItem::static_type(),
             &mut a_item,
         )?;
-        let mut a_rep: Handle<StepReprRepresentation> = Default::default();
+        let mut a_rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         data.read_entity(
             num,
             4,

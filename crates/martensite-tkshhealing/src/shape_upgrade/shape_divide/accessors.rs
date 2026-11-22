@@ -1,4 +1,5 @@
-use super::{ShapeUpgradeFaceDivide, ShapeUpgradeShapeDivide};
+use super::ShapeUpgradeShapeDivide;
+use crate::shape_upgrade::FaceDivider;
 use crate::{
     shape_build::ShapeBuildReShape,
     shape_extend::{BasicMsgRegistrator, ShapeExtend, ShapeExtendStatus},
@@ -56,7 +57,7 @@ impl ShapeUpgradeShapeDivide {
         self.with(|f| ShapeExtend::decode_status(f.status, flag))
     }
     /// Replace the face division criterion; `divider.set_split_face_tool(&tool)`.
-    pub fn set_split_face_tool(&self, tool: &Handle<ShapeUpgradeFaceDivide>) {
+    pub fn set_split_face_tool(&self, tool: &Handle<dyn FaceDivider>) {
         self.with_mut(|f| f.face_tool = tool.clone());
     }
     /// Choose free/shared/all 3D curve splitting; `divider.set_edge_mode(2)`.

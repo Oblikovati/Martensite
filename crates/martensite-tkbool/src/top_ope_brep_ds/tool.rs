@@ -4,8 +4,10 @@ use super::export::{fun_ds_getoov, has_same_domain, href, iref};
 use super::process_interferences_tool::fun_select_trasha_interference;
 use super::{
     ListOfInterference, TopOpeBRepDSConfig, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSListOfShapeOn1State, TopOpeBRepDSShapeShapeInterference,
+    TopOpeBRepDSListOfShapeOn1State,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_tool::{
     TopOpeBRepToolTOOL, fun_tool_bounds, fun_tool_curves_so_at_both, fun_tool_par_e_tol,
 };
@@ -33,10 +35,10 @@ pub struct TopOpeBRepDSTOOL;
 fn sort_gb(
     bds: &TopOpeBRepDSDataStructure,
     li: &ListOfInterference,
-) -> Result<[Vec<Handle<TopOpeBRepDSInterference>>; 3], Failure> {
+) -> Result<[Vec<Handle<dyn InterferenceRecord>>; 3], Failure> {
     let mut out: [Vec<_>; 3] = Default::default();
     for i in li.iter() {
-        let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.cast();
+        let ssi = i.view::<dyn ShapeInterferenceRecord>();
         let Some(ssi) = ssi.get() else {
             out[0].push(i.clone());
             continue;
@@ -58,14 +60,14 @@ fn shares_at_sd_vertex(
     bds: &TopOpeBRepDSDataStructure,
     e: &Edge,
     esd: &Edge,
-    i: &Handle<TopOpeBRepDSInterference>,
+    i: &Handle<dyn InterferenceRecord>,
 ) -> Result<bool, Failure> {
     let vg = topods::vertex(bds.shape(iref(i)?.geometry(), true))?;
     let Some(vsd) = fun_ds_getoov(&vg, bds) else {
         return Ok(false);
     };
     let vsd = topods::vertex(&vsd)?;
-    let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.cast();
+    let ssi = i.view::<dyn ShapeInterferenceRecord>();
     let gb1 = ssi.get().is_some_and(|s| s.gbound());
     let (v_e, v_esd) = if gb1 { (&vg, &vsd) } else { (&vsd, &vg) };
     let (mut ov_e, mut ov_esd) = (0, 0);

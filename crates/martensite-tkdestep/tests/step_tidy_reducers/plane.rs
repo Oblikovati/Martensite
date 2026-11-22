@@ -13,7 +13,8 @@ fn replaced(fixture: &Fixture) -> ReplacedEntities {
 
 fn add_face_on(fixture: &Fixture, plane: &Handle<StepGeomPlane>) {
     let face = Handle::new(StepShapeAdvancedFace::new());
-    let bounds = HArray1::<Handle<StepShapeFaceBound>>::default();
+    let bounds =
+        HArray1::<Handle<dyn martensite_tkdestep::StepEntityBase<StepShapeFaceBound>>>::default();
     face.init(&name(""), &Handle::new(bounds), &plane.cast(), true);
     fixture.add(&face);
 }

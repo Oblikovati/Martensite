@@ -94,8 +94,8 @@ fn bounds_camera_record_columns(
         records[0],
         records[1],
         records[2],
-        cameras.0.ref_count(),
-        cameras.1.ref_count(),
+        cameras.0.ref_count().try_into().unwrap(),
+        cameras.1.ref_count().try_into().unwrap(),
         control
             .selection
             .bounds_getter_calls

@@ -5,20 +5,18 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 use std::sync::Arc;
 
 struct CheckObservingCopyInput {
-    transient: StandardTransient,
     model_check: Handle<InterfaceCheck>,
     observations: Arc<SharedState<Vec<bool>>>,
 }
 impl_transient!(
     CheckObservingCopyInput,
     "CheckObservingCopyInput",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 impl Drop for CheckObservingCopyInput {
     fn drop(&mut self) {
@@ -31,20 +29,19 @@ impl Drop for CheckObservingCopyInput {
 fn observing_input(
     check: &Handle<InterfaceCheck>,
     observations: &Arc<SharedState<Vec<bool>>>,
-) -> Handle<StandardTransient> {
+) -> Handle<dyn Transient> {
     Handle::new(CheckObservingCopyInput {
-        transient: StandardTransient::default(),
         model_check: check.clone(),
         observations: observations.clone(),
     })
-    .cast()
+    .into_upcast()
 }
 
 fn cached_copy_input(
     observations: &Arc<SharedState<Vec<bool>>>,
 ) -> (
     InterfaceCopyTool,
-    Handle<StandardTransient>,
+    Handle<dyn Transient>,
     Handle<InterfaceCheck>,
 ) {
     let model = fake_model();

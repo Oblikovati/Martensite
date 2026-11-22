@@ -7,7 +7,7 @@ use super::BRepAdaptorCurve;
 use crate::brep::errors::null_object;
 use crate::topods::{Edge, Wire};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use std::sync::Arc;
 
@@ -108,21 +108,18 @@ impl CompState {
 /// ```
 #[derive(Default)]
 pub struct BRepAdaptorCompCurve {
-    parent: StandardTransient,
     state: SharedState<CompState>,
 }
 impl_transient!(
     BRepAdaptorCompCurve,
     "BRepAdaptor_CompCurve",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
 impl BRepAdaptorCompCurve {
     fn from_state(state: CompState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

@@ -39,7 +39,7 @@ mod tests {
     use martensite_tkmath::gp::{Axis1, Direction3};
 
     fn surface() -> GeomSurfaceOfLinearExtrusion {
-        let basis = Handle::new(GeomLine::new(Axis1::default())).cast();
+        let basis = Handle::new(GeomLine::new(Axis1::default())).into_upcast();
         GeomSurfaceOfLinearExtrusion::new(&basis, Direction3::new(0., 0., 1.).unwrap()).unwrap()
     }
 

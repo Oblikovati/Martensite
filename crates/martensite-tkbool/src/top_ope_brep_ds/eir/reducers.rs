@@ -1,5 +1,6 @@
 //! The reducers of the edge interferences (FDS_reduceONFACEinterferences,
 //! FUNReducerEdge3d, CheckInterferenceIsValid, FUNReducerEdge, FUNReducerSDEdge).
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::export::complete_se::tki_groups;
 use crate::top_ope_brep_ds::export::{fds_data, fds_tdata, fun_ds_get_vsdm, fun_ds_sdm, iref};
 use crate::top_ope_brep_ds::process_interferences_tool::fun_has_state_shape;
@@ -20,7 +21,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum, State};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// `FDS_reduceONFACEinterferences(LI, BDS, SIX)` (static): when a POINT interference
 /// is ON a FACE, the other POINT interferences are removed.
@@ -64,8 +65,8 @@ pub(crate) fn check_interference_is_valid(
     the_vertex: &Vertex,
 ) -> Result<bool, Failure> {
     let bc = BRepAdaptorCurve::with_edge(the_edge)?;
-    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.cast();
-    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.cast();
+    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
+    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.downcast();
     let pref = match (cpi.get(), evi.get()) {
         (Some(c), _) => c.parameter(),
         (None, Some(e)) => e.parameter(),
@@ -165,12 +166,12 @@ fn reduced_3d(
     ib1: i32,
     g1: i32,
 ) -> Result<Option<H>, Failure> {
-    let iibid: H = Handle::new(TopOpeBRepDSInterference::default());
+    let iibid: H = Handle::new(TopOpeBRepDSInterference::default()).into_upcast();
     tool.transition(&iibid)?;
     let mut t = iref(&iibid)?.transition();
     t.set_index(ib1);
-    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i1.cast();
-    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i1.cast();
+    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i1.downcast();
+    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i1.downcast();
     let face = TopOpeBRepDSKind::Face;
     if let Some(e) = evi.get() {
         let unsh = TopOpeBRepDSConfig::UnshGeometry;
@@ -183,12 +184,12 @@ fn reduced_3d(
             unsh,
             e.parameter(),
         );
-        return Ok(Some(Handle::new(n).cast()));
+        return Ok(Some(Handle::new(n).into_upcast()));
     }
     if let Some(c) = cpi.get() {
         let p = TopOpeBRepDSKind::Point;
         let n = TopOpeBRepDSCurvePointInterference::new(&t, face, ib1, p, g1, c.parameter());
-        return Ok(Some(Handle::new(n).cast()));
+        return Ok(Some(Handle::new(n).into_upcast()));
     }
     Ok(None)
 }
@@ -243,7 +244,7 @@ fn compare_3d(
         }
         if !is_complex || gt1 == TopOpeBRepDSKind::Vertex {
             if is_complex {
-                let ibid: H = Handle::new(TopOpeBRepDSInterference::default());
+                let ibid: H = Handle::new(TopOpeBRepDSInterference::default()).into_upcast();
                 tool.transition(&ibid)?;
                 let o = iref(&ibid)?
                     .transition()
@@ -344,7 +345,7 @@ fn sd_edge_interference(
     t: &TopOpeBRepDSTransition,
     i1: &H,
 ) -> Result<H, Failure> {
-    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i1.cast();
+    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i1.downcast();
     let evi = evi.get().ok_or_else(|| {
         Failure::with_type(
             "Standard_NullObject",
@@ -371,7 +372,7 @@ fn sd_edge_interference(
         conf,
         evi.parameter(),
     );
-    Ok(Handle::new(n).cast())
+    Ok(Handle::new(n).into_upcast())
 }
 
 /// The pair of `FUNReducerSDEdge` for `v[a]`: the transition of the pair (the other

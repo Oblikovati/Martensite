@@ -1,6 +1,6 @@
 //! The small TDocStd classes: format versions, path parsing, update context and compound
 //! deltas.
-use crate::tdf::TdfDelta;
+use crate::tdf::{TdfDeltaBase, TdfDeltaSource};
 use martensite_tkernel::{impl_transient, tcollection::ExtendedString};
 
 /// `TDocStd_FormatVersion`: the document storage format versions; `value as i32` is native.
@@ -149,25 +149,30 @@ impl TDocStdContext {
     }
 }
 
-/// `TDocStd_CompoundDelta`: a `TDF_Delta` that gathers the deltas of nested transactions;
-/// its handle casts to `Handle<TdfDelta>` through the embedded delta.
+/// `TDocStd_CompoundDelta` gathers the deltas of nested transactions.
+/// Example: `compound.upcast::<dyn TdfDeltaSource>()`.
 #[derive(Default)]
 pub struct TDocStdCompoundDelta {
-    delta: TdfDelta,
+    base: TdfDeltaBase,
 }
 impl_transient!(
     TDocStdCompoundDelta,
     "TDocStd_CompoundDelta",
-    TdfDelta,
-    delta
+    dyn TdfDeltaSource,
+    interfaces: [dyn TdfDeltaSource]
 );
+impl TdfDeltaSource for TDocStdCompoundDelta {
+    fn delta_base(&self) -> &TdfDeltaBase {
+        &self.base
+    }
+}
 impl TDocStdCompoundDelta {
     /// `TDocStd_CompoundDelta()`: an empty delta.
     pub fn new() -> Self {
         Self::default()
     }
-    /// The embedded `TDF_Delta` (the native base class).
-    pub fn delta(&self) -> &TdfDelta {
-        &self.delta
+    /// Borrow the delta operations of this compound. Example: `compound.delta().name()`.
+    pub fn delta(&self) -> &dyn TdfDeltaSource {
+        self
     }
 }

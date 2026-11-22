@@ -60,7 +60,7 @@ mod tests {
         let mults = Array1::from_shared(&[3, 3], 1);
         let curve = GeomBSplineCurve::new(&poles, &knots, &mults, 2, false).unwrap();
         GeomSurfaceOfLinearExtrusion::new(
-            &Handle::new(curve).cast(),
+            &Handle::new(curve).into_upcast(),
             Direction3::new(0., 0., 1.).unwrap(),
         )
         .unwrap()

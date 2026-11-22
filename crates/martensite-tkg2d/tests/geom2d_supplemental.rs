@@ -1,6 +1,6 @@
 //! Supplemental geometry regressions with frozen exact behavior expectations.
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
 use martensite_tkg2d::geom2d::{
     Geom2dBezierCurve, Geom2dCircle, Geom2dConic, Geom2dCurve, Geom2dDirection, Geom2dGeometry,
     Geom2dOffsetCurve, Geom2dTrimmedCurve, Geom2dVector,
@@ -19,7 +19,7 @@ fn circle(radius: f64) -> Handle<Geom2dCircle> {
 fn direction_copy_repeats_scalar_normalization() {
     let direction =
         Handle::new(Geom2dDirection::new(-8.016135604395185, -8.707126967791696).unwrap());
-    let copy: Handle<dyn Geom2dVector> = direction.copy().unwrap().cast();
+    let copy: Handle<dyn Geom2dVector> = direction.copy().unwrap().into_cast();
     // Derive normalization twice from scalar arithmetic, independently of geometry types.
     let raw: [f64; 2] = [-8.016135604395185, -8.707126967791696];
     let first_norm = (raw[0] * raw[0] + raw[1] * raw[1]).sqrt();
@@ -43,7 +43,7 @@ fn failed_set_trim_keeps_the_rejected_bounds() {
     poles[2] = Point2::new(1.0, 1.0);
     poles[3] = Point2::new(2.0, 0.0);
     let bezier: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dBezierCurve::new(&poles).unwrap()).cast();
+        Handle::new(Geom2dBezierCurve::new(&poles).unwrap()).into_upcast();
     let trimmed = Handle::new(Geom2dTrimmedCurve::new(&bezier, 0.2, 0.8, true, true).unwrap());
     let error = trimmed.set_trim(0.5, 2.0, true, true).err().unwrap();
     assert_eq!(error.exception_type(), "Standard_ConstructionError");
@@ -67,9 +67,9 @@ fn failed_set_trim_keeps_the_rejected_bounds() {
 // SetBasisCurve with the offset curve itself unwraps it and adds its own offset.
 #[test]
 fn offset_of_itself_doubles_the_offset() {
-    let basis: Handle<dyn Geom2dCurve> = circle(2.0).cast();
+    let basis: Handle<dyn Geom2dCurve> = circle(2.0).into_upcast();
     let offset = Handle::new(Geom2dOffsetCurve::new(&basis, 0.5, false).unwrap());
-    offset.set_basis_curve(&offset.cast(), false).unwrap();
+    offset.set_basis_curve(&offset.upcast(), false).unwrap();
     assert_eq!(offset.offset(), 1.0);
     assert!(
         offset
@@ -83,27 +83,53 @@ fn offset_of_itself_doubles_the_offset() {
 #[test]
 fn shared_mutation_through_base_handles() {
     let concrete = circle(2.0);
-    let conic: Handle<dyn Geom2dConic> = concrete.cast();
+    let conic: Handle<dyn Geom2dConic> = concrete.upcast();
     concrete.set_radius(5.0).unwrap();
     assert_eq!(conic.value(0.0).unwrap(), Point2::new(5.0, 0.0));
     conic.set_location(Point2::new(1.0, 0.0));
     assert_eq!(concrete.value(0.0).unwrap(), Point2::new(6.0, 0.0));
-    assert_eq!(conic.dynamic_type().unwrap().name(), "Geom2d_Circle");
+    let curve: Handle<dyn Geom2dCurve> = conic.into_upcast();
+    let geometry: Handle<dyn Geom2dGeometry> = curve.into_upcast();
+    let erased: Handle<dyn Transient> = geometry.into_upcast();
+    assert_eq!(erased.object_address(), concrete.object_address());
+    assert!(std::ptr::eq(
+        erased.downcast_ref::<Geom2dCircle>().unwrap(),
+        concrete.get().unwrap()
+    ));
+    assert_eq!(erased.ref_count(), 2);
+    assert!(erased.is_instance_name("Geom2d_Circle"));
+    for base in [
+        "Geom2d_Conic",
+        "Geom2d_Curve",
+        "Geom2d_Geometry",
+        "Standard_Transient",
+    ] {
+        assert!(erased.is_kind_name(base), "{base}");
+    }
 }
 
 // Evaluation representations: validation, mapped evaluation and clearing on Transform.
 #[test]
 fn evaluation_representation_is_validated_and_used() {
-    let owner = Handle::new(Geom2dOffsetCurve::new(&circle(1.0).cast(), 1.0, false).unwrap());
-    let own = Handle::new(RepCurveDescFull::new(owner.cast()));
-    let error = owner.set_eval_representation(own.cast()).err().unwrap();
+    let owner =
+        Handle::new(Geom2dOffsetCurve::new(&circle(1.0).into_upcast(), 1.0, false).unwrap());
+    let own = Handle::new(RepCurveDescFull::new(owner.upcast()));
+    let error = owner
+        .set_eval_representation(own.into_upcast())
+        .err()
+        .unwrap();
     assert_eq!(error.exception_type(), "Standard_ProgramError");
     let map = Map1d {
         scale: 2.0,
         offset: 0.0,
     };
-    let mapped = Handle::new(RepCurveDescMapped::new(circle(2.0).cast(), 3, None, map));
-    owner.set_eval_representation(mapped.cast()).unwrap();
+    let mapped = Handle::new(RepCurveDescMapped::new(
+        circle(2.0).into_upcast(),
+        3,
+        None,
+        map,
+    ));
+    owner.set_eval_representation(mapped.into_upcast()).unwrap();
     let d1: Vector2 = owner.dn(0.0, 1).unwrap();
     assert_eq!((d1.x(), d1.y()), (0.0, 4.0));
     owner.translate(Vector2::new(1.0, 0.0)).unwrap();

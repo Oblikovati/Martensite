@@ -61,8 +61,7 @@ pub struct DerivedSequence {
 martensite_tkernel::impl_transient!(
     DerivedSequence,
     "ProjectedAppendSequence",
-    HSequence<AppendItem>,
-    base
+    HSequence<AppendItem>
 );
 impl DerivedSequence {
     /// Models explicitly selected derived ChangeSequence lookup; `source.selected()`.

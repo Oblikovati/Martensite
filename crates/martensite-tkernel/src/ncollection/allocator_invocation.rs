@@ -1,7 +1,9 @@
 //! Overridable allocator calls carry weak identity and immutable code, never a receiver borrow through callbacks.
 #![allow(unsafe_code)] // Explicit pointer-release and callback-free receiver-capture contracts are tested.
 use super::{AllocatorDispatchCode, AllocatorSource};
-use crate::standard::{Failure, Handle, HandleObserver, RuntimeTyped, WeakHandle};
+use crate::standard::{
+    Failure, Handle, HandleUpcast, RuntimeTyped, TransientHandleTarget, WeakHandle,
+};
 use std::ptr::NonNull;
 /// A reference-free dynamic invocation; `invocation.allocate(32)`.
 /// Field capture finishes before callbacks; subsequent captures reread actual surviving storage.
@@ -10,11 +12,11 @@ pub struct AllocatorInvocation {
     code: AllocatorDispatchCode,
 }
 impl AllocatorInvocation {
-    /// Capture original dynamic code without intrusive ownership; `AllocatorInvocation::from_handle(&owner)?.allocate(32)`.
-    pub fn from_handle<T: ?Sized + RuntimeTyped + AllocatorSource>(
+    /// Build a weak invocation from an existing owner; `AllocatorInvocation::from_handle(&owner)?.allocate(32)`.
+    pub fn from_handle<T: ?Sized + AllocatorSource + HandleUpcast<dyn AllocatorSource>>(
         source: &Handle<T>,
     ) -> Result<Self, Failure> {
-        let observed = source.observe_as::<dyn AllocatorSource>();
+        let observed = source.upcast::<dyn AllocatorSource>();
         if observed.is_null() {
             return Err(crate::standard::exceptions::null_object(&format!(
                 "allocator pointer={:p}; expected live registered AllocatorSource",
@@ -23,7 +25,7 @@ impl AllocatorInvocation {
         }
         Ok(Self::from_observer(&observed))
     }
-    pub(super) fn from_observer(source: &HandleObserver<dyn AllocatorSource>) -> Self {
+    pub(super) fn from_observer(source: &Handle<dyn AllocatorSource>) -> Self {
         // Only immutable code and weak identity cross the virtual-call boundary.
         Self {
             source: source.downgrade(),
@@ -41,16 +43,32 @@ impl AllocatorInvocation {
     /// let invocation = AllocatorInvocation::from_handle(&owner).unwrap();
     /// let escaped = unsafe { invocation.capture::<AllocatorObject, _>(|receiver| receiver) };
     /// ```
-    pub unsafe fn capture<T: ?Sized + RuntimeTyped, R: 'static>(
+    pub unsafe fn capture<T: ?Sized + RuntimeTyped + TransientHandleTarget, R: 'static>(
         &self,
-        capture: fn(&T) -> R,
+        capture: impl FnOnce(&T) -> R,
     ) -> Result<R, Failure> {
-        let observed = self.source.observe().observe_as::<T>();
-        let target = observed.get().ok_or_else(|| self.expired_capture::<T>())?;
+        let observed = self.source.upgrade();
+        let view = observed.view::<T>();
+        let target = view.get().ok_or_else(|| self.expired_capture::<T>())?;
         Ok(capture(target))
     }
+    pub(super) fn with_source<R>(
+        &self,
+        inspect: fn(&dyn AllocatorSource) -> R,
+    ) -> Result<R, Failure> {
+        let observed = self.source.upgrade();
+        let source = observed
+            .get()
+            .ok_or_else(|| self.expired_capture::<dyn AllocatorSource>())?;
+        Ok(inspect(source))
+    }
+
+    /// Read current allocator ownership without borrowing the receiver; `invocation.ref_count()`.
+    pub fn ref_count(&self) -> usize {
+        self.source.ref_count()
+    }
     fn ensure_live(&self) -> Result<(), Failure> {
-        if self.source.observe().is_null() {
+        if self.source.ref_count() == 0 {
             return Err(self.expired_capture::<dyn AllocatorSource>());
         }
         Ok(())
@@ -64,8 +82,7 @@ impl AllocatorInvocation {
     }
     /// Capture only independent parent backing; `let policy=invocation.parent_policy()?`.
     pub fn parent_policy(&self) -> Result<super::AllocatorPolicyInvocation, Failure> {
-        // SAFETY: the selector reads shared physical backing and cannot call or retire allocator objects.
-        unsafe { self.capture(super::allocator_default_dispatch::default_policy) }
+        self.with_source(super::allocator_default_dispatch::default_policy)
     }
     /// Execute qualified parent Allocate on actual backing; `invocation.allocate_base(32)`.
     pub fn allocate_base(&self, size: usize) -> Option<NonNull<u8>> {

@@ -12,7 +12,7 @@ use martensite_tkernel::{
 };
 use martensite_tkg3d::{adaptor3d::Adaptor3dCurve, geom::GeomSurface};
 use martensite_tkgeomalgo::geom_plate::{
-    GeomPlateBuildPlateSurface, GeomPlateCurveConstraint, GeomPlateMakeApprox,
+    GeomPlateBuildPlateSurface, GeomPlateCurveConstraintSource, GeomPlateMakeApprox,
     GeomPlatePlateG0Criterion, GeomPlateSurface,
 };
 use martensite_tkgeombase::adv_app2var::{AdvApp2VarCriterionRepartition, AdvApp2VarCriterionType};
@@ -64,8 +64,9 @@ fn prepared_plate(edges: &[Edge]) -> Result<GeomPlateBuildPlateSurface, Failure>
     Ok(plate)
 }
 
-fn c0_constraint(edge: &Edge) -> Result<Handle<GeomPlateCurveConstraint>, Failure> {
-    let curve: Handle<dyn Adaptor3dCurve> = Handle::new(BRepAdaptorCurve::with_edge(edge)?).cast();
+fn c0_constraint(edge: &Edge) -> Result<Handle<dyn GeomPlateCurveConstraintSource>, Failure> {
+    let curve: Handle<dyn Adaptor3dCurve> =
+        Handle::new(BRepAdaptorCurve::with_edge(edge)?).into_upcast();
     let constraint = BRepFillCurveConstraint::with_curve(&curve, 0, 10, 1.0e-4)?;
     Ok(constraint)
 }

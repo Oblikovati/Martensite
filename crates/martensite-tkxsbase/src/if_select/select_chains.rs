@@ -9,7 +9,7 @@ use crate::interface::{InterfaceEntityIterator, InterfaceGraph, interface_error}
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
     ncollection::IndexedMap,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -29,11 +29,10 @@ struct SuiteState {
 /// ```
 #[derive(Default)]
 pub struct IFSelectSelectSuite {
-    transient: StandardTransient,
     base: IFSelectSelectDeductBase,
     state: SharedState<SuiteState>,
 }
-impl_transient!(IFSelectSelectSuite, "IFSelectSelectSuite", dyn IFSelectSelectDeduct, transient, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct]);
+impl_transient!(IFSelectSelectSuite, "IFSelectSelectSuite", dyn IFSelectSelectDeduct, interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct]);
 
 impl IFSelectSelectSuite {
     /// `IFSelectSelectSuite()`: empty.
@@ -162,7 +161,7 @@ pub trait IFSelectSelectExplore: IFSelectSelectDeduct {
     fn explore(
         &self,
         level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure>;
@@ -172,7 +171,7 @@ pub trait IFSelectSelectExplore: IFSelectSelectDeduct {
 impl_transient_interface!(
     dyn IFSelectSelectExplore,
     "IFSelectSelectExplore",
-    dyn IFSelectSelectDeduct
+    dyn IFSelectSelectDeduct, upcasts: [dyn IFSelectSelectDeduct]
 );
 
 /// `IFSelectSelectExplore::RootResult`: explores the input entities level by level up to
@@ -183,8 +182,8 @@ pub fn explore_root_result<S: IFSelectSelectExplore + ?Sized>(
     g: &InterfaceGraph,
 ) -> Result<InterfaceEntityIterator, Failure> {
     let nb = g.size();
-    let mut entrees: IndexedMap<Handle<StandardTransient>> = IndexedMap::new(nb.max(1) as usize);
-    let mut result: IndexedMap<Handle<StandardTransient>> = IndexedMap::new(nb.max(1) as usize);
+    let mut entrees: IndexedMap<Handle<dyn Transient>> = IndexedMap::new(nb.max(1) as usize);
+    let mut result: IndexedMap<Handle<dyn Transient>> = IndexedMap::new(nb.max(1) as usize);
     for ent in sel.input_result(g)?.content() {
         entrees.add(ent);
     }
@@ -257,13 +256,13 @@ pub trait IFSelectSelectAnyList: IFSelectSelectDeduct {
     /// `KeepInputEntity(iter)`: keeps the entities of the right type.
     fn keep_input_entity(&self, iter: &mut InterfaceEntityIterator);
     /// `NbItems(ent)`: the length of the list of `ent`.
-    fn nb_items(&self, ent: &Handle<StandardTransient>) -> i32;
+    fn nb_items(&self, ent: &Handle<dyn Transient>) -> i32;
     /// `FillResult(n1, n2, ent, res)`: the items `n1..n2` of the list of `ent`.
     fn fill_result(
         &self,
         n1: i32,
         n2: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         res: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure>;
     /// `ListLabel`.
@@ -272,7 +271,7 @@ pub trait IFSelectSelectAnyList: IFSelectSelectDeduct {
 impl_transient_interface!(
     dyn IFSelectSelectAnyList,
     "IFSelectSelectAnyList",
-    dyn IFSelectSelectDeduct
+    dyn IFSelectSelectDeduct, upcasts: [dyn IFSelectSelectDeduct]
 );
 
 /// `IFSelectSelectAnyList::RootResult`: the items of the range in the list of the only

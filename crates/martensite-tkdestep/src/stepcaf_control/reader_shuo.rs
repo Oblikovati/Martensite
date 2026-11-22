@@ -11,7 +11,8 @@ use crate::step_repr::{
 };
 use crate::step_shape::StepShapeShapeDefinitionRepresentation;
 use crate::step_visual::StepVisualStyledItem;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tklcaf::tdf::{TdfAttribute, TdfLabel};
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
 use martensite_tkxcaf::xcaf_doc::{XCAFDocDocumentTool, XCAFDocGraphNode, XCAFDocShapeTool};
@@ -99,15 +100,15 @@ impl ReaderState {
             &Handle<XCAFDocShapeTool>,
         ),
         styles: &StepConstructStyles,
-        invisible: &Handle<HSequence<Handle<StandardTransient>>>,
-        style: &Handle<StepVisualStyledItem>,
+        invisible: &Handle<HSequence<Handle<dyn Transient>>>,
+        style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     ) -> Result<(), Failure> {
         let (color_tool, shape_tool) = doc_tools;
         let Some(live_style) = style.get() else {
             return Ok(());
         };
         // check the visibility of styled item.
-        let key: Handle<StandardTransient> = style.cast();
+        let key: Handle<dyn Transient> = style.cast();
         let visible =
             !step_live(invisible, WHERE)?.sequence(|items| items.iter().any(|item| *item == key));
         let (mut surface, mut boundary, mut curve) =
@@ -192,7 +193,7 @@ impl ReaderState {
             return Ok(false);
         }
         // searching for invisible items in the model
-        let mut invisible = Handle::new(HSequence::<Handle<StandardTransient>>::default());
+        let mut invisible = Handle::new(HSequence::<Handle<dyn Transient>>::default());
         styles.load_invis_styles(&mut invisible)?;
         // parse and search for color attributes
         for i in 1..=styles.nb_styles() {

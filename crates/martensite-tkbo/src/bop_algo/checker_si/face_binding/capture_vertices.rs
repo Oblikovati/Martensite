@@ -37,7 +37,7 @@ fn vertex(
     boundary: &Shape,
     forward: &Edge,
 ) -> Result<OwnedVertexUse, BindingFailure> {
-    let handle = raw.tshape().cast::<BRepTVertex>();
+    let handle = raw.tshape().downcast::<BRepTVertex>();
     let source = handle
         .get()
         .ok_or_else(|| unsupported("vertex TShape", "not BRepTVertex"))?;
@@ -120,7 +120,7 @@ mod tests {
 
     fn edge() -> Edge {
         let mut edge = Edge::default();
-        let curve = Handle::new(GeomLine::new(Axis1::default())).cast::<dyn GeomCurve>();
+        let curve = Handle::new(GeomLine::new(Axis1::default())).into_upcast::<dyn GeomCurve>();
         BRepBuilder::default()
             .make_edge_with_curve(&mut edge, &curve, 1e-7)
             .unwrap();
@@ -227,7 +227,7 @@ mod tests {
         let (owned, _) = capture(&edge).unwrap();
         vertex
             .tshape()
-            .cast::<BRepTVertex>()
+            .downcast::<BRepTVertex>()
             .get()
             .unwrap()
             .set_pnt(Point3::new(9., 9., 9.));

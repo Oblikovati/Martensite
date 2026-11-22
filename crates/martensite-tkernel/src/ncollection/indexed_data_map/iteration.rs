@@ -8,11 +8,12 @@ impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
         IndexedDataValues::at(self.storage.payload().values(), 0)
     }
     /// Returns the exhausted value iterator; `map.iter()!=map.end()`.
-    pub fn end(&self) -> IndexedDataValues<'_, V> {
+    #[cfg(test)]
+    pub(crate) fn end(&self) -> IndexedDataValues<'_, V> {
         IndexedDataValues::at(self.storage.payload().values(), self.len())
     }
     /// Borrows all values exclusively; `map.iter_mut().for_each(|value|*value+=1)`.
-    pub fn iter_mut(&mut self) -> IndexedDataValuesMut<'_, V> {
+    pub(crate) fn iter_mut(&mut self) -> IndexedDataValuesMut<'_, V> {
         IndexedDataValuesMut {
             items: self.storage.payload_mut().split_mut().1.iter_mut(),
         }
@@ -25,14 +26,15 @@ impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
         }
     }
     /// Returns the exhausted pair iterator; `map.items()!=map.items_end()`.
-    pub fn items_end(&self) -> IndexedDataItems<'_, K, V> {
+    #[cfg(test)]
+    pub(crate) fn items_end(&self) -> IndexedDataItems<'_, K, V> {
         IndexedDataItems {
             keys: IndexedDataValues::at(self.storage.payload().keys(), self.len()),
             values: self.end(),
         }
     }
     /// Borrows values exclusively while keeping keys immutable; `for (_,value) in map.items_mut() {}`.
-    pub fn items_mut(&mut self) -> impl Iterator<Item = (&K, &mut V)> {
+    pub(crate) fn items_mut(&mut self) -> impl Iterator<Item = (&K, &mut V)> {
         let (keys, values) = self.storage.payload_mut().split_mut();
         keys.iter().zip(values.iter_mut())
     }

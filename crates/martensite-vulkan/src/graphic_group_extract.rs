@@ -4,6 +4,7 @@ use super::{Graphic3dDrawGroup, GroupCommand, GroupGeometry, apply_command_clipp
 use crate::render_element_pass::{RenderElementPass, check_is_transparent};
 use crate::{PrimitiveDraw, RenderClipping, RenderError, stencil_program::StencilProgram};
 use martensite_tkernel::standard::Handle;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 struct GroupSpatialSnapshot {
     matrix: [f32; 16],
@@ -38,7 +39,7 @@ impl Graphic3dDrawGroup {
         extent: Option<[u32; 2]>,
         structure: &Graphic3dCStructureFields,
         rendering: &Graphic3dRenderingParams,
-        global_clipping: &Handle<Graphic3dSequenceOfHClipPlane>,
+        global_clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
         (pass, carry): (&RenderElementPass, &mut crate::group_flipping::FlipCarry),
     ) -> Result<StencilProgram, RenderError> {
         let persistence =
@@ -64,7 +65,10 @@ impl Graphic3dDrawGroup {
         camera: &Graphic3dCamera,
         extent: Option<[u32; 2]>,
         structure: &Graphic3dCStructureFields,
-        (global_clipping, origin): (&Handle<Graphic3dSequenceOfHClipPlane>, Option<[f64; 3]>),
+        (global_clipping, origin): (
+            &Handle<dyn Graphic3dClipPlaneSequenceSource>,
+            Option<[f64; 3]>,
+        ),
     ) -> Result<GroupSpatialSnapshot, RenderError> {
         crate::highlight_style::validate_structure(structure)?;
         let (matrix, depth_clamp) =

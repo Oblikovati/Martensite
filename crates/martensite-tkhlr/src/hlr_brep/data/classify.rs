@@ -215,7 +215,7 @@ impl Body<'_> {
         } else {
             None
         };
-        let classifier = self.w.classifier.get().ok_or_else(null_classifier)?;
+        let classifier = self.w.classifier.as_deref().ok_or_else(null_classifier)?;
         for i in 1..=nb_points {
             let (_, mut u, mut v, w, _) = inter.cs_point(i)?.values();
             if w >= w_lim {

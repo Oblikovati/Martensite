@@ -21,9 +21,11 @@ use martensite_tkservice::aspect::{
     AspectWindow, AspectWindowMembers as _,
 };
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dCView, Graphic3dCViewMembers as _, Graphic3dCViewSubviews as _,
+    Graphic3dCLightSource, Graphic3dCView, Graphic3dCViewMembers as _, Graphic3dCViewSubviews as _,
     Graphic3dCamera, Graphic3dGroup, Graphic3dStructureSource, Graphic3dVertex,
 };
+
+use std::sync::Arc;
 
 /// The mutable fields of a view.
 #[derive(Clone)]
@@ -37,10 +39,11 @@ pub(crate) struct V3dViewState {
     pub(crate) immediate_update: bool,
     pub(crate) is_invalidated_immediate: bool,
     pub(crate) viewer: WeakHandle<V3dViewer>,
-    pub(crate) subviews: martensite_tkernel::ncollection::Sequence<Handle<dyn V3dViewSource>>,
+    // A callback or state snapshot can retain the original sequence entry across a rebind.
+    pub(crate) subviews: martensite_tkernel::ncollection::Sequence<Arc<Handle<dyn V3dViewSource>>>,
     pub(crate) parent_view: WeakHandle<dyn V3dViewSource>,
     pub(crate) active_lights:
-        martensite_tkernel::ncollection::AllocatorList<Handle<Graphic3dCLight>>,
+        martensite_tkernel::ncollection::AllocatorList<Handle<dyn Graphic3dCLightSource>>,
     pub(crate) active_lights_cursor: martensite_tkernel::ncollection::ListCursor,
     pub(crate) default_view_axis: Direction3,
     pub(crate) default_view_point: Point3,
@@ -125,14 +128,13 @@ impl V3dViewState {
 ///
 /// Example: `let view = viewer.create_view()?; view.set_window(&window, 0)?; view.fit_all(0.01, true)?;`.
 pub struct V3dView {
-    pub(crate) transient: StandardTransient,
     /// Actual protected `myView` handle field; `view.driver_view_slot.assign(&replacement)?`.
     pub driver_view_slot: IntrusiveReferenceSlot<dyn Graphic3dCView>,
     pub(crate) default_camera: Handle<Graphic3dCamera>,
     pub(crate) this: SharedState<WeakHandle<dyn V3dViewSource>>,
     pub(crate) state: SharedState<V3dViewState>,
 }
-martensite_tkernel::impl_transient!(V3dView, "V3dView", StandardTransient, transient,
+martensite_tkernel::impl_transient!(V3dView, "V3dView", StandardTransient,
     interfaces:[dyn V3dViewSource]);
 
 /// The driver view of a viewer's driver; a missing viewer or driver is refused.
@@ -164,11 +166,12 @@ impl V3dView {
     }
     /// `View`: the driver view; `view.view()`.
     pub fn view(&self) -> Handle<dyn Graphic3dCView> {
-        self.driver_view_slot.observe().clone()
+        self.driver_view_slot.observe().into_handle()
     }
-    /// Borrow the then-current driver view without ownership; `view.driver_view_observer().redraw()`.
-    pub fn driver_view_observer(&self) -> HandleObserver<dyn Graphic3dCView> {
+    /// Read the then-current driver view; `view.driver_view_observer().redraw()`.
+    pub fn driver_view_observer(&self) -> HandleObserver<'_, dyn Graphic3dCView> {
         // Native direct myView uses must reread after callbacks rather than keep an owning copy.
+        // The observer lends the original slot without taking a separate view owner.
         self.driver_view_slot.observe()
     }
     /// `Viewer`: the viewer, null after `Remove`; `view.viewer()`.
@@ -368,7 +371,7 @@ impl V3dView {
         let subviews = std::mem::take(&mut self.state.write().subviews);
         subviews
             .iter()
-            .filter_map(Handle::get)
+            .filter_map(|slot| slot.get())
             .for_each(|view| view.remove());
         if let Some(viewer) = state.viewer.upgrade().get() {
             viewer.del_view(self.this.read().object_address());
@@ -399,7 +402,7 @@ impl Drop for V3dView {
         if let Some(parent) = state.parent_view.upgrade().get() {
             parent.remove_subview(self);
         }
-        for subview in state.subviews.iter().filter_map(Handle::get) {
+        for subview in state.subviews.iter().filter_map(|slot| slot.get()) {
             {
                 let mut sub_state = subview.state.write();
                 (sub_state.parent_view, sub_state.window) =

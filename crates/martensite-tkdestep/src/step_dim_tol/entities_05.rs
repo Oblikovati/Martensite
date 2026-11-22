@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
@@ -10,6 +6,11 @@ use crate::step_data::*;
 use crate::step_entity::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Representation of STEP entity NonUniformZoneDefinition
@@ -20,38 +21,38 @@ step_entity! {
 step_entity! {
     /// Representation of STEP entity ParallelismTolerance
     StepDimTolParallelismTolerance, StepDimTolParallelismToleranceState, "StepDimTolParallelismTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity PerpendicularityTolerance
     StepDimTolPerpendicularityTolerance, StepDimTolPerpendicularityToleranceState, "StepDimTolPerpendicularityTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity PlacedDatumTargetFeature
     StepDimTolPlacedDatumTargetFeature, StepDimTolPlacedDatumTargetFeatureState, "StepDimTolPlacedDatumTargetFeature", StepDimTolDatumTarget, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 
 step_entity! {
     /// Representation of STEP entity PositionTolerance
     StepDimTolPositionTolerance, StepDimTolPositionToleranceState, "StepDimTolPositionTolerance", StepDimTolGeometricTolerance, {
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity ProjectedZoneDefinition
     StepDimTolProjectedZoneDefinition, StepDimTolProjectedZoneDefinitionState, "StepDimTolProjectedZoneDefinition", StepDimTolToleranceZoneDefinition, {
-        my_projection_end: Handle<StepReprShapeAspect>,
+        my_projection_end: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         my_projection_length: Handle<StepBasicLengthMeasureWithUnit>,
     }
 }
 impl StepDimTolProjectedZoneDefinition {
     step_methods! {
-        get projection_end = my_projection_end: Handle<StepReprShapeAspect>;
-        set set_projection_end = my_projection_end: Handle<StepReprShapeAspect>;
+        get projection_end = my_projection_end: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
+        set set_projection_end = my_projection_end: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
         get projection_length = my_projection_length: Handle<StepBasicLengthMeasureWithUnit>;
         set set_projection_length = my_projection_length: Handle<StepBasicLengthMeasureWithUnit>;
     }
@@ -60,8 +61,8 @@ impl StepDimTolProjectedZoneDefinition {
     pub fn init(
         &self,
         the_zone: &Handle<StepDimTolToleranceZone>,
-        the_boundaries: &Handle<HArray1<Handle<StepReprShapeAspect>>>,
-        the_projection_end: &Handle<StepReprShapeAspect>,
+        the_boundaries: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>>,
+        the_projection_end: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_projection_length: &Handle<StepBasicLengthMeasureWithUnit>,
     ) {
         self.parent.init(the_zone, the_boundaries);
@@ -74,7 +75,7 @@ impl StepDimTolProjectedZoneDefinition {
 step_entity! {
     /// Representation of STEP entity RoundnessTolerance
     StepDimTolRoundnessTolerance, StepDimTolRoundnessToleranceState, "StepDimTolRoundnessTolerance", StepDimTolGeometricTolerance, {
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 
 step_entity! {
@@ -93,7 +94,7 @@ impl StepDimTolRunoutZoneDefinition {
     pub fn init(
         &self,
         the_zone: &Handle<StepDimTolToleranceZone>,
-        the_boundaries: &Handle<HArray1<Handle<StepReprShapeAspect>>>,
+        the_boundaries: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>>,
         the_orientation: &Handle<StepDimTolRunoutZoneOrientation>,
     ) {
         self.parent.init(the_zone, the_boundaries);
@@ -118,19 +119,19 @@ impl StepDimTolRunoutZoneOrientation {
 step_entity! {
     /// Representation of STEP entity StraightnessTolerance
     StepDimTolStraightnessTolerance, StepDimTolStraightnessToleranceState, "StepDimTolStraightnessTolerance", StepDimTolGeometricTolerance, {
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity SurfaceProfileTolerance
     StepDimTolSurfaceProfileTolerance, StepDimTolSurfaceProfileToleranceState, "StepDimTolSurfaceProfileTolerance", StepDimTolGeometricTolerance, {
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity SymmetryTolerance
     StepDimTolSymmetryTolerance, StepDimTolSymmetryToleranceState, "StepDimTolSymmetryTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
@@ -138,7 +139,7 @@ step_entity! {
     StepDimTolToleranceZone, StepDimTolToleranceZoneState, "StepDimTolToleranceZone", StepReprShapeAspect, {
         my_defining_tolerance: Handle<HArray1<StepDimTolToleranceZoneTarget>>,
         my_form: Handle<StepDimTolToleranceZoneForm>,
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 impl StepDimTolToleranceZone {
     step_methods! {
@@ -194,16 +195,16 @@ impl StepDimTolToleranceZone {
 step_entity! {
     /// Representation of STEP entity ToleranceZoneDefinition
     StepDimTolToleranceZoneDefinition, StepDimTolToleranceZoneDefinitionState, "StepDimTolToleranceZoneDefinition", StandardTransient, {
-        my_boundaries: Handle<HArray1<Handle<StepReprShapeAspect>>>,
+        my_boundaries: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>>,
         my_zone: Handle<StepDimTolToleranceZone>,
     }
 }
 impl StepDimTolToleranceZoneDefinition {
     step_methods! {
-        get boundaries = my_boundaries: Handle<HArray1<Handle<StepReprShapeAspect>>>;
-        set set_boundaries = my_boundaries: Handle<HArray1<Handle<StepReprShapeAspect>>>;
+        get boundaries = my_boundaries: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>>;
+        set set_boundaries = my_boundaries: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>>;
         len nb_boundaries = my_boundaries;
-        item boundaries_value = my_boundaries: Handle<StepReprShapeAspect>;
+        item boundaries_value = my_boundaries: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
         get zone = my_zone: Handle<StepDimTolToleranceZone>;
         set set_zone = my_zone: Handle<StepDimTolToleranceZone>;
     }
@@ -212,7 +213,7 @@ impl StepDimTolToleranceZoneDefinition {
     pub fn init(
         &self,
         the_zone: &Handle<StepDimTolToleranceZone>,
-        the_boundaries: &Handle<HArray1<Handle<StepReprShapeAspect>>>,
+        the_boundaries: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>>,
     ) {
         let mut state = self.state.write();
         state.my_boundaries = the_boundaries.clone();
@@ -226,7 +227,7 @@ impl StepDimTolToleranceZoneDefinition {
     pub fn set_boundaries_value(
         &self,
         the_num: i32,
-        the_item: &Handle<StepReprShapeAspect>,
+        the_item: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     ) -> Result<(), Failure> {
         let field_my_boundaries = self.state.read().my_boundaries.clone();
         step_array1_set(
@@ -256,14 +257,14 @@ impl StepDimTolToleranceZoneForm {
 step_entity! {
     /// Representation of STEP entity TotalRunoutTolerance
     StepDimTolTotalRunoutTolerance, StepDimTolTotalRunoutToleranceState, "StepDimTolTotalRunoutTolerance", StepDimTolGeometricToleranceWithDatumReference, {
-    }
+    }, bases: [StepDimTolGeometricToleranceWithDatumReference, StepDimTolGeometricTolerance]
 }
 
 step_entity! {
     /// Representation of STEP entity UnequallyDisposedGeometricTolerance
     StepDimTolUnequallyDisposedGeometricTolerance, StepDimTolUnequallyDisposedGeometricToleranceState, "StepDimTolUnequallyDisposedGeometricTolerance", StepDimTolGeometricTolerance, {
         my_displacement: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolUnequallyDisposedGeometricTolerance {
     step_methods! {
@@ -276,7 +277,7 @@ impl StepDimTolUnequallyDisposedGeometricTolerance {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_displacement: &Handle<StepBasicLengthMeasureWithUnit>,
     ) {

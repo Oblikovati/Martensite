@@ -10,15 +10,17 @@
 use super::{IgesBasicAssocGroupType, IgesBasicExternalRefFile, IgesBasicExternalRefFileIndex};
 use crate::iges_basic::entity_shape::iges_tool;
 use crate::iges_basic::shared_runs::{iges_shared_023, iges_shared_031};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_string, iges_live, iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -309,11 +311,11 @@ impl IgesBasicToolExternalRefFileIndex {
         let ent_live = iges_live(ent, "IgesBasicToolExternalRefFileIndex::read_own_params")?;
         let mut num: i32 = 0;
         let mut temp_names: Handle<HArray1<Handle<HAsciiString>>> = Handle::default();
-        let mut temp_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         let st: bool = pr.read_integer_text(&pr.current(), "Number of index entries", &mut num)?;
         if st && num > 0 {
             temp_names = iges_new_array1::<Handle<HAsciiString>>(1, num)?;
-            temp_entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         } else {
             pr.add_fail("Number of index entries: Not Positive", "");
         }
@@ -328,7 +330,7 @@ impl IgesBasicToolExternalRefFileIndex {
                         "IgesBasicToolExternalRefFileIndex::read_own_params",
                     )?;
                 }
-                let mut temp_ent: Handle<IgesDataIgesEntity> = Handle::default();
+                let mut temp_ent: Handle<dyn IgesDataEntityKind> = Handle::default();
                 if pr.read_entity(ir, &pr.current(), "Internal Entity", &mut temp_ent, false)? {
                     iges_array1_set(
                         &temp_entities,
@@ -381,7 +383,7 @@ impl IgesBasicToolExternalRefFileIndex {
         let num: i32 = ent_live.nb_entries()?;
         i = 1;
         while i <= num {
-            iter.get_one_item(&ent_live.entity(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.entity(i)?.cast::<dyn Transient>());
             i += 1;
         }
         Ok(())
@@ -423,8 +425,8 @@ impl IgesBasicToolExternalRefFileIndex {
         let num: i32 = another_live.nb_entries()?;
         let temp_names: Handle<HArray1<Handle<HAsciiString>>> =
             iges_new_array1::<Handle<HAsciiString>>(1, num)?;
-        let temp_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+        let temp_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         for i in 1..=num {
             iges_array1_set(
                 &temp_names,
@@ -436,8 +438,8 @@ impl IgesBasicToolExternalRefFileIndex {
                 "IgesBasicToolExternalRefFileIndex::own_copy",
             )?;
             let new_item = tc
-                .transferred(&another_live.entity(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.entity(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &temp_entities,
                 i,

@@ -30,21 +30,21 @@ pub fn cone(at: [f64; 3], normal: [f64; 3], degrees: f64, radius: f64) -> Handle
     let angle = degrees * (std::f64::consts::PI / 180.0);
     let surface = GeomConicalSurface::new(frame, angle, radius)
         .unwrap_or_else(|failure| panic!("cone {degrees} {radius}: {failure:?}"));
-    Handle::new(surface).cast()
+    Handle::new(surface).into_upcast()
 }
 
 /// `plane p x y z dx dy dz`; `plane([0.; 3], [0., 1., 0.])`.
 pub fn plane(at: [f64; 3], normal: [f64; 3]) -> Handle<dyn GeomSurface> {
     let frame = Axis3::from_normal(point(at), direction(normal))
         .unwrap_or_else(|failure| panic!("plane {at:?} {normal:?}: {failure:?}"));
-    Handle::new(GeomPlane::new(frame)).cast()
+    Handle::new(GeomPlane::new(frame)).into_upcast()
 }
 
 /// `trimv t surface v1 v2`; `trimv(&c1, 0., 42.4264068711929)`.
 pub fn trimv(surface: &Handle<dyn GeomSurface>, v1: f64, v2: f64) -> Handle<dyn GeomSurface> {
     let trimmed = GeomRectangularTrimmedSurface::with_one_direction(surface, v1, v2, false, true)
         .unwrap_or_else(|failure| panic!("trimv {v1} {v2}: {failure:?}"));
-    Handle::new(trimmed).cast()
+    Handle::new(trimmed).into_upcast()
 }
 
 /// `mkface name surface`; `mkface(s, "f1", &tc1)`.
@@ -84,7 +84,7 @@ pub fn circle_along(at: [f64; 3], normal: [f64; 3], radius: f64) -> Handle<dyn G
 fn circle_on(frame: Axis2, radius: f64) -> Handle<dyn GeomCurve> {
     let curve = GeomCircle::new(frame, radius)
         .unwrap_or_else(|failure| panic!("circle radius {radius}: {failure:?}"));
-    Handle::new(curve).cast()
+    Handle::new(curve).into_upcast()
 }
 
 /// `mkedge name curve`; `mkedge(s, "c", &circle)`.
@@ -125,7 +125,7 @@ pub fn prism_infinite(s: &mut dyn Session, name: &str, base: &str, along: [f64; 
 
 /// `line l x y z dx dy dz`; `line([0.; 3], [0., 1., 0.])`.
 pub fn line(at: [f64; 3], along: [f64; 3]) -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::from_point(point(at), direction(along))).cast()
+    Handle::new(GeomLine::from_point(point(at), direction(along))).into_upcast()
 }
 
 /// `uiso c surface u`; `uiso(&cylinder, std::f64::consts::PI)`.
@@ -186,7 +186,7 @@ pub fn mksurface(s: &dyn Session, face: &str) -> Handle<dyn GeomSurface> {
 /// `trim name name`: with no bounds, a trimmed surface goes back to its basis.
 /// Example: `let c_in = untrimmed(&c_in);`.
 pub fn untrimmed(surface: &Handle<dyn GeomSurface>) -> Handle<dyn GeomSurface> {
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     trimmed
         .get()
         .map_or_else(|| surface.clone(), |only| only.basis_surface())
@@ -209,7 +209,7 @@ pub fn mkcurve(s: &dyn Session, edge: &str) -> EdgeCurve {
     let stored = BRepTool::curve_with_location(&topods::edge(shape).unwrap()).unwrap();
     let (first, last) = (stored.first, stored.last);
     let trimmed = GeomTrimmedCurve::new(&stored.curve, first, last, true, true).unwrap();
-    let trimmed: Handle<dyn GeomCurve> = Handle::new(trimmed).cast();
+    let trimmed: Handle<dyn GeomCurve> = Handle::new(trimmed).into_upcast();
     let curve = trimmed
         .get()
         .unwrap()

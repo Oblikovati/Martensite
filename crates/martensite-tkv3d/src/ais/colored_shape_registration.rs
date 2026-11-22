@@ -1,6 +1,8 @@
 // Keep the native AIS namespace flat while grouping the ColoredShape family registrations.
 mod colored_drawer;
-pub use colored_drawer::{AisColoredDrawer, AisColoredDrawerFlags, AisColoredDrawerParent};
+pub use colored_drawer::{
+    AisColoredDrawer, AisColoredDrawerFlags, AisColoredDrawerParent, AisColoredDrawerSource,
+};
 
 #[cfg(test)]
 mod colored_drawer_tests;

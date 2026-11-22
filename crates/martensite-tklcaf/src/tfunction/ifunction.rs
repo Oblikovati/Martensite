@@ -73,14 +73,14 @@ impl TFunctionIFunction {
     pub fn delete_function(label: &TdfLabel) -> Result<bool, Failure> {
         let mut function: Handle<TFunctionFunction> = Handle::default();
         if label.find_attribute_as(&TFunctionFunction::get_id(), &mut function)? {
-            label.forget_attribute(&function.cast())?;
+            label.forget_attribute(&function.into_upcast())?;
         }
         let scope = TFunctionScope::set(label)?;
         let function_id = id_of(&scope, label)?;
         let mut graph_node: Handle<TFunctionGraphNode> = Handle::default();
         if label.find_attribute_as(&TFunctionGraphNode::get_id(), &mut graph_node)? {
             disconnect(&scope, &graph_node, function_id)?;
-            label.forget_attribute(&graph_node.cast())?;
+            label.forget_attribute(&graph_node.into_upcast())?;
         }
         live(&scope, "TFunction_IFunction::DeleteFunction")?.remove_function_label(label)?;
         Ok(true)

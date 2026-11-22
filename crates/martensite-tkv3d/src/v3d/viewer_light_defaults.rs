@@ -5,7 +5,7 @@ use martensite_tkernel::{
     standard::{Failure, Handle},
     tcollection::AsciiString,
 };
-use martensite_tkservice::graphic3d::Graphic3dCLight;
+use martensite_tkservice::graphic3d::Graphic3dCLightSource;
 pub(super) fn define_default_viewer_lights(viewer: &V3dViewer) -> Result<(), Failure> {
     let white = Color::named(NamedColor::WHITE);
     let directional = V3dDirectionalLight::new(V3dTypeOfOrientation::Zneg, white, false)?;
@@ -13,8 +13,8 @@ pub(super) fn define_default_viewer_lights(viewer: &V3dViewer) -> Result<(), Fai
     directional.set_headlight(true)?;
     let ambient = V3dAmbientLight::new(white);
     ambient.set_name(&AsciiString::from("amblight"));
-    let directional: Handle<Graphic3dCLight> = Handle::new(directional).cast();
-    let ambient: Handle<Graphic3dCLight> = Handle::new(ambient).cast();
+    let directional: Handle<dyn Graphic3dCLightSource> = Handle::new(directional).into_upcast();
+    let ambient: Handle<dyn Graphic3dCLightSource> = Handle::new(ambient).into_upcast();
     viewer.add_light(&directional);
     viewer.add_light(&ambient);
     viewer.set_light_on_one(&directional)?;

@@ -4,12 +4,10 @@ use crate::{
     prs_mgr::PrsMgrPresentationManager, prs3d::Prs3dDrawer, select_mgr::*, v3d::V3dViewer,
 };
 use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient, WeakHandle,
-    raise_native_failure,
+    Failure, Handle, HandleReference, SharedState, WeakHandle, raise_native_failure,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 pub(super) struct ViewerManagerCallbackOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     context: WeakHandle<AisInteractiveContext>,
     replacement: WeakHandle<V3dViewer>,
@@ -18,7 +16,7 @@ pub(super) struct ViewerManagerCallbackOwner {
     armed: AtomicBool,
     pub records: SharedState<[i32; 8]>,
 }
-martensite_tkernel::impl_transient!(ViewerManagerCallbackOwner,"ViewerManagerCallbackOwner",dyn SelectMgrEntityOwnerSource,transient,
+martensite_tkernel::impl_transient!(ViewerManagerCallbackOwner,"ViewerManagerCallbackOwner",dyn SelectMgrEntityOwnerSource,
     interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl ViewerManagerCallbackOwner {
     pub(super) fn new(
@@ -28,7 +26,6 @@ impl ViewerManagerCallbackOwner {
         mode: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(&Handle::default(), 0),
             context: context.downgrade(),
             replacement: replacement.downgrade(),
@@ -41,10 +38,10 @@ impl ViewerManagerCallbackOwner {
         owner
     }
     fn replace_actual_context_fields(&self) {
-        let context = self.context.observe();
+        let context = self.context.upgrade();
         let mut fields = context.fields.write();
-        fields.viewer = self.replacement.observe().clone();
-        fields.presentation_manager = self.replacement_manager.observe().clone();
+        fields.viewer = self.replacement.upgrade();
+        fields.presentation_manager = self.replacement_manager.upgrade();
         drop(fields);
         context.set_default_drawer(&Handle::new(Prs3dDrawer::default()));
     }
@@ -53,7 +50,7 @@ impl ViewerManagerCallbackOwner {
         viewer: &dyn HandleReference<V3dViewer>,
         manager: &dyn HandleReference<PrsMgrPresentationManager>,
     ) {
-        let context = self.context.observe();
+        let context = self.context.upgrade();
         let records = [
             i32::from(
                 viewer.reference_address() == context.current_viewer_ref().reference_address(),
@@ -61,8 +58,8 @@ impl ViewerManagerCallbackOwner {
             i32::from(
                 manager.reference_address() == context.main_prs_mgr_ref().reference_address(),
             ),
-            viewer.observe().ref_count(),
-            manager.observe().ref_count(),
+            viewer.ref_count().try_into().unwrap(),
+            manager.ref_count().try_into().unwrap(),
         ];
         self.records.write()[..4].copy_from_slice(&records);
     }
@@ -74,8 +71,8 @@ impl ViewerManagerCallbackOwner {
         let records = [
             i32::from(viewer.object_address() == self.replacement.object_address()),
             i32::from(manager.object_address() == self.replacement_manager.object_address()),
-            viewer.observe().ref_count(),
-            manager.observe().ref_count(),
+            viewer.ref_count().try_into().unwrap(),
+            manager.ref_count().try_into().unwrap(),
         ];
         self.records.write()[4..].copy_from_slice(&records);
     }

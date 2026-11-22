@@ -90,7 +90,7 @@ impl Bisec {
                 bis_ana.parameter_of_start_point(),
                 bis_ana.parameter_of_end_point(),
             );
-            (Handle::new(bis_ana).cast(), u_first, u_last)
+            (Handle::new(bis_ana).into_upcast(), u_first, u_last)
         } else {
             let input = CurvesInput {
                 first: &first,
@@ -137,7 +137,7 @@ fn algorithmic_bisector(
         return empty_curves_bisector(input);
     }
     let (u_first, u_last) = (bis_cc.first_parameter(), bis_cc.last_parameter());
-    replace_by_line_if_too_small(Handle::new(bis_cc).cast(), u_first, u_last)
+    replace_by_line_if_too_small(Handle::new(bis_cc).into_upcast(), u_first, u_last)
 }
 
 // An empty curve-curve bisector (a point projects on an end of the guide curve):

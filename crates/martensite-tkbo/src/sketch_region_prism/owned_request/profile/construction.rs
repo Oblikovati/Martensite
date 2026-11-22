@@ -69,8 +69,8 @@ fn bezier(edge: &OwnedProfileEdge) -> Result<Handle<dyn GeomCurve>, Failure> {
         .collect();
     let poles = Array1::from_shared(&points, 1);
     let Some(weights) = &edge.world_weights else {
-        return Ok(Handle::new(GeomBezierCurve::new(&poles)?).cast());
+        return Ok(Handle::new(GeomBezierCurve::new(&poles)?).into_upcast());
     };
     let weights = Array1::from_shared(weights, 1);
-    Ok(Handle::new(GeomBezierCurve::with_weights(&poles, &weights)?).cast())
+    Ok(Handle::new(GeomBezierCurve::with_weights(&poles, &weights)?).into_upcast())
 }

@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
@@ -27,10 +28,10 @@ iges_entity! {
 /// and redrawn should the geometry be changed.
 IgesDimenNewDimensionedGeometry, IgesDimenNewDimensionedGeometryState, "IgesDimenNewDimensionedGeometry", parent IgesDataIgesEntity, {
 the_nb_dimensions: i32,
-the_dimension_entity: Handle<IgesDataIgesEntity>,
+the_dimension_entity: Handle<dyn IgesDataEntityKind>,
 the_dimension_orientation_flag: i32,
 the_angle_value: f64,
-the_geometry_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_geometry_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 the_dimension_location_flags: Handle<HArray1<i32>>,
 the_points: Handle<HArray1<Xyz>>,
 }
@@ -39,7 +40,7 @@ the_points: Handle<HArray1<Xyz>>,
 impl IgesDimenNewDimensionedGeometry {
     iges_methods! {
     get nb_dimensions = the_nb_dimensions: i32;
-    get dimension_entity = the_dimension_entity: Handle<IgesDataIgesEntity>;
+    get dimension_entity = the_dimension_entity: Handle<dyn IgesDataEntityKind>;
     get dimension_orientation_flag = the_dimension_orientation_flag: i32;
     get angle_value = the_angle_value: f64;
     }
@@ -60,10 +61,10 @@ impl IgesDimenNewDimensionedGeometry {
     pub fn init(
         &self,
         nb_dimens: i32,
-        a_dimen: &Handle<IgesDataIgesEntity>,
+        a_dimen: &Handle<dyn IgesDataEntityKind>,
         an_orientation: i32,
         an_angle: f64,
-        all_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         all_locations: &Handle<HArray1<i32>>,
         all_points: &Handle<HArray1<Xyz>>,
     ) -> Result<(), Failure> {
@@ -108,7 +109,7 @@ impl IgesDimenNewDimensionedGeometry {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn geometry_entity(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn geometry_entity(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_geometry_entities,
             index,

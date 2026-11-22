@@ -151,7 +151,7 @@ fn plane_cylinder_conic(
             let ufin = elclib::line_parameter(c1.position(), ends.pfin);
             let (_, vint) = elclib::line_d1(udeb, c1.position());
             (
-                Handle::new(GeomLine::from_lin(c1)).cast(),
+                Handle::new(GeomLine::from_lin(c1)).into_upcast(),
                 udeb,
                 ufin,
                 vint,
@@ -166,7 +166,7 @@ fn plane_cylinder_conic(
             );
             let (_, vint) = elclib::circle_d1(udeb, c1.position(), c1.radius());
             (
-                Handle::new(GeomCircle::from_circ(c1)).cast(),
+                Handle::new(GeomCircle::from_circ(c1)).into_upcast(),
                 udeb,
                 ufin,
                 vint,
@@ -182,7 +182,7 @@ fn plane_cylinder_conic(
             );
             let (_, vint) = elclib::ellipse_d1(udeb, pos, major, minor);
             (
-                Handle::new(GeomEllipse::from_elips(c1)).cast(),
+                Handle::new(GeomEllipse::from_elips(c1)).into_upcast(),
                 udeb,
                 ufin,
                 vint,
@@ -237,7 +237,7 @@ fn plane_cylinder(
         }
         Ok(())
     })?;
-    out.c3d = Handle::new(GeomTrimmedCurve::new(&out.c3d, udeb, ufin, true, true)?).cast();
+    out.c3d = Handle::new(GeomTrimmedCurve::new(&out.c3d, udeb, ufin, true, true)?).into_upcast();
     let tolreached = 1.5 * out.tolreached;
     let eval = eval_tol_reached((ends.s1, &out.pc1), (ends.s2, &out.pc2), &out.c3d)?;
     out.tolreached = if eval < tolreached { eval } else { tolreached };
@@ -259,7 +259,7 @@ fn project_both(
     ) -> Result<(), Failure>,
 ) -> Result<(), Failure> {
     let hc: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_range(&out.c3d, udeb, ufin)?).cast();
+        Handle::new(GeomAdaptorCurve::with_range(&out.c3d, udeb, ufin)?).into_upcast();
     let (mut tolr1, mut tolr2) = (tol3d, tol3d);
     project_pcurv(&hc, ends.s1, &mut out.pc1, tol3d, &mut tolr1)?;
     adjust(&out.pc1, ends.s1, (ends.pardeb[0], ends.pardeb[1]))?;
@@ -287,7 +287,7 @@ fn plane_plane(
         return Ok(false);
     }
     let l = lint.line(1)?;
-    out.c3d = Handle::new(GeomLine::from_lin(l)).cast();
+    out.c3d = Handle::new(GeomLine::from_lin(l)).into_upcast();
     let (mut udeb, mut ufin) = (
         elclib::line_parameter(l.position(), ends.pdeb),
         elclib::line_parameter(l.position(), ends.pfin),
@@ -300,7 +300,7 @@ fn plane_plane(
     let tolreached = out.tolreached;
     project_both(ends, (udeb, ufin), tol3d, out, |_, _, _| Ok(()))?;
     out.tolreached = tolreached;
-    out.c3d = Handle::new(GeomTrimmedCurve::new(&out.c3d, udeb, ufin, true, true)?).cast();
+    out.c3d = Handle::new(GeomTrimmedCurve::new(&out.c3d, udeb, ufin, true, true)?).into_upcast();
     Ok(true)
 }
 

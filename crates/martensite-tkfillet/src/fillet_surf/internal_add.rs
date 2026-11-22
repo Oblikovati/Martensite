@@ -33,9 +33,9 @@ fn int_plan_edge(
     let (f, l) = (ed.first_parameter()?, ed.last_parameter()?);
     let or = p.location();
     let plan: Handle<dyn Adaptor3dSurface> = Handle::new(GeomAdaptorSurface::with_surface(
-        &Handle::new(GeomPlane::from_pln(*p)).cast(),
+        &Handle::new(GeomPlane::from_pln(*p)).into_upcast(),
     )?)
-    .cast();
+    .into_upcast();
     let mut intersection = HInter::new();
     intersection.perform(ed, &plan)?;
     let (mut w, mut dist) = (None, f64::MAX);
@@ -78,7 +78,8 @@ pub(super) fn compute_edge_parameter(
     };
     let (p, v) = guide.d1(pelsp)?;
     let pln = Plane3::new(p, Direction3::from_vector(v)?)?;
-    let ed: Handle<dyn Adaptor3dCurve> = Handle::new(BRepAdaptorCurve::with_edge(&edge)?).cast();
+    let ed: Handle<dyn Adaptor3dCurve> =
+        Handle::new(BRepAdaptorCurve::with_edge(&edge)?).into_upcast();
     int_plan_edge(&ed, &pln, tol3d)
 }
 

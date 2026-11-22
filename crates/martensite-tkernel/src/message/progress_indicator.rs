@@ -66,15 +66,13 @@ impl IndicatorShared {
 /// Example: `let range = ProgressIndicator::new(Box::new(hooks)).start();` (keep the indicator bound).
 pub struct ProgressIndicator {
     // Shared by handle like other transient objects.
-    parent: StandardTransient,
     shared: Arc<IndicatorShared>,
     root: ProgressScope<'static>,
 }
 impl_transient!(
     ProgressIndicator,
     "Message_ProgressIndicator",
-    StandardTransient,
-    parent
+    StandardTransient
 );
 impl ProgressIndicator {
     /// Position 0 and an active unnamed root scope
@@ -86,11 +84,7 @@ impl ProgressIndicator {
             hooks,
         });
         let root = ProgressScope::root(Arc::clone(&shared));
-        Self {
-            parent: StandardTransient::default(),
-            shared,
-            root,
-        }
+        Self { shared, root }
     }
     /// Resets position and root value to 0, calls `reset` then `show(root, false)`,
     /// and returns the root's `Next()` range covering the whole scale; `indicator.start()`.

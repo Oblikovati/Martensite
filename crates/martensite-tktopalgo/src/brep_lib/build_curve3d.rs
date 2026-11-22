@@ -148,9 +148,9 @@ fn approximated(
         first.first,
         first.last,
     )?)
-    .cast();
+    .into_upcast();
     let surface: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&first.surface)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&first.surface)?).into_upcast();
     let curve_on_surface = Adaptor3dCurveOnSurface::with_curve(&curve2d, &surface)?;
     let mut new_curve: Handle<dyn GeomCurve> = Handle::default();
     let segments: i32 = evaluate_max_segment(max_segment, &curve_on_surface)?;

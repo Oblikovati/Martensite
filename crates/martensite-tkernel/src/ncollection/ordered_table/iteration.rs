@@ -7,6 +7,7 @@ pub(in crate::ncollection) struct OrderView<'a, K, V> {
     order: &'a [OrderSlot],
     keys: &'a [K],
     values: &'a [V],
+    #[cfg(test)]
     first: SlotLink,
 }
 
@@ -28,11 +29,12 @@ pub(in crate::ncollection) struct OrderedItems<'a, K, V> {
 pub(in crate::ncollection) type OrderedItemsMut<'a, K, V> = SlotRangeMut<'a, K, V>;
 
 impl<K, V, H> OrderedTable<K, V, H> {
-    pub fn items(&self) -> OrderedItems<'_, K, V> {
+    pub(crate) fn items(&self) -> OrderedItems<'_, K, V> {
         let view = OrderView {
             order: &self.order,
             keys: self.storage.payload().keys(),
             values: self.storage.payload().values(),
+            #[cfg(test)]
             first: self.first,
         };
         OrderedItems {
@@ -40,7 +42,7 @@ impl<K, V, H> OrderedTable<K, V, H> {
             current: self.first,
         }
     }
-    pub fn items_mut(&mut self) -> OrderedItemsMut<'_, K, V> {
+    pub(crate) fn items_mut(&mut self) -> OrderedItemsMut<'_, K, V> {
         let order = self.order_slots();
         SlotRangeMut::new(order, self.storage.payload_mut())
     }
@@ -58,27 +60,23 @@ impl<K, V, H> OrderedTable<K, V, H> {
 
 impl<'a, K, V> OrderedItems<'a, K, V> {
     /// The cursor is on an entry.
-    pub fn more(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn more(&self) -> bool {
         self.current.is_some()
     }
-    pub fn current_pair(&self) -> Option<(&'a K, &'a V)> {
+    pub(crate) fn current_pair(&self) -> Option<(&'a K, &'a V)> {
         let (view, slot) = (self.view?, self.current?);
         Some((&view.keys[slot], &view.values[slot]))
     }
     /// Back to the head the cursor was created on; a default cursor stays empty.
-    pub fn restart(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn restart(&mut self) {
         self.current = self.view.and_then(|view| view.first);
     }
     /// Follows the next order link.
-    pub fn advance(&mut self) {
+    pub(crate) fn advance(&mut self) {
         if let (Some(view), Some(slot)) = (self.view, self.current) {
             self.current = view.order[slot].next;
-        }
-    }
-    /// Steps back to the entry inserted before the current one.
-    pub fn retreat(&mut self) {
-        if let (Some(view), Some(slot)) = (self.view, self.current) {
-            self.current = view.order[slot].previous;
         }
     }
     // Node identity: the owning table plus the slot, or nothing once exhausted.

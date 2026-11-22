@@ -24,7 +24,7 @@ use martensite_tkmath::gp::Point3;
 /// use martensite_tkmath::gp::{Axis3, Direction3, Point3};
 /// let plane = |z: f64| -> Handle<dyn GeomSurface> {
 ///     let frame = Axis3::from_normal(Point3::new(0.0, 0.0, z), Direction3::new(0.0, 0.0, 1.0).unwrap()).unwrap();
-///     Handle::new(GeomPlane::new(frame)).cast()
+///     Handle::new(GeomPlane::new(frame)).into_upcast()
 /// };
 /// // Parallel planes: Extrema_ExtSS answers parallel, with their distance.
 /// let e = ExtremaSurfaceSurface::with_surfaces(&plane(0.0), &plane(4.0)).unwrap();

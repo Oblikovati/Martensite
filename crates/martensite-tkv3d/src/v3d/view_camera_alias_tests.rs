@@ -42,8 +42,8 @@ fn assert_camera_alias_stays_at_original_driver(
     let fresh_address = owner.camera_ref().reference_address();
     assert_eq!(camera_alias.reference_address(), original_address);
     assert_ne!(camera_alias.reference_address(), fresh_address);
-    assert_eq!(camera_alias.observe().ref_count(), 1);
-    assert_eq!(owner.camera_ref().observe().ref_count(), 1);
+    assert_eq!(camera_alias.ref_count(), 1);
+    assert_eq!(owner.camera_ref().ref_count(), 1);
 }
 
 #[test]
@@ -127,8 +127,8 @@ fn camera_alias_row(
     let is_next = (alias.object_address() == next.object_address()) as u8;
     format!(
         "{step} {same_retained} {same_fresh} {is_original} {is_next} {} {}",
-        retained.observe().ref_count(),
-        alias.observe().ref_count()
+        retained.ref_count(),
+        alias.ref_count()
     )
 }
 #[test]
@@ -142,8 +142,8 @@ fn dsm_view_default_and_driver_references_retain_actual_native_slot_identity() {
         view.camera_ref().reference_address(),
         cview.camera_ref().reference_address()
     );
-    assert_eq!(view.default_camera_ref().observe().ref_count(), 1);
-    assert_eq!(view.view_ref().observe().ref_count(), 1);
+    assert_eq!(view.default_camera_ref().ref_count(), 1);
+    assert_eq!(view.view_ref().ref_count(), 1);
 }
 #[test]
 fn camera_setter_override_mutates_and_rereads_the_genuine_caller_slot() {

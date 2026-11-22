@@ -58,11 +58,14 @@ fn prepared_pcurve(
 /// The pcurve entity on `surface_entity`.
 fn pcurve_entity(
     curve: &Handle<dyn Geom2dCurve>,
-    surface_entity: &Handle<StepGeomSurface>,
+    surface_entity: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     factors: &StepDataFactors,
 ) -> Result<Handle<StepGeomPcurve>, Failure> {
     let made = GeomToStepMakeCurve::from_geom2d(curve, factors)?.value()?;
-    let items = shared_array1::<Handle<StepReprRepresentationItem>>(vec![made.cast()]);
+    let items =
+        shared_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(vec![
+            made.cast(),
+        ]);
     let context = Handle::new(
         StepGeomGeometricRepresentationContextAndParametricRepresentationContext::new(),
     );
@@ -79,7 +82,7 @@ fn pcurve_entity(
 /// Records `pcurve` on the surface_curve: :a8 abv 13 Feb 98: allow seam to have two different
 /// pcurves.
 fn record_pcurve(
-    surface_curve: &Handle<StepGeomSurfaceCurve>,
+    surface_curve: &Handle<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>,
     pcurve: &Handle<StepGeomPcurve>,
 ) -> Result<(), Failure> {
     const WHERE: &str = "TopoDSToStepMakeStepFace";
@@ -109,7 +112,7 @@ fn translate_edge_pcurve(
     edge: &Edge,
     face: &Face,
     surface: &Handle<dyn GeomSurface>,
-    surface_entity: &Handle<StepGeomSurface>,
+    surface_entity: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     tool: &TopoDSToStepTool,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {
@@ -127,8 +130,8 @@ fn translate_edge_pcurve(
     if !tool.is_bound(edge) {
         return Ok(());
     }
-    let edge_curve: Handle<StepShapeEdgeCurve> = tool.find(edge)?.cast();
-    let geometry: Handle<StepGeomCurve> =
+    let edge_curve: Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>> = tool.find(edge)?.cast();
+    let geometry: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
         step_live(&edge_curve, "TopoDSToStepMakeStepFace")?.edge_geometry();
     if geometry.is_null() {
         return Ok(());
@@ -158,7 +161,7 @@ fn translate_edge_pcurve(
 pub(super) fn translate_face_pcurves(
     forward_face: &Face,
     surface: &Handle<dyn GeomSurface>,
-    surface_entity: &Handle<StepGeomSurface>,
+    surface_entity: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     tool: &TopoDSToStepTool,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {

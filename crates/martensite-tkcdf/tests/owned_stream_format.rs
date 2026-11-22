@@ -132,7 +132,8 @@ fn unknown_and_initially_failed_streams_preserve_storage() {
     unknown.assert_stream(0, 1, 7);
     unknown.assert_storage(true, true, 1, 99);
     let mut failed = FormatProbe::new(wire::ordinary_binary(0), true, 0);
-    failed.stream.set_state(state::FAIL);
+    failed.stream.seekg(-1);
+    assert_eq!(failed.stream.rdstate(), state::FAIL);
     assert!(failed.query().unwrap().is_empty());
     failed.assert_stream(state::FAIL, 0, 0);
     failed.assert_storage(true, true, 1, 99);

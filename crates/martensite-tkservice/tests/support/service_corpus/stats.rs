@@ -1,7 +1,7 @@
 //! Graphic3d_FrameStats and Graphic3d_FrameStatsData.
 use super::common::{Reader, end, flag, int, real, text};
 use super::print::Output;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::graphic3d::{
     GRAPHIC3D_FRAME_STATS_COUNTER_NB, GRAPHIC3D_FRAME_STATS_TIMER_NB, Graphic3dCView,
@@ -14,10 +14,9 @@ use martensite_tkservice::graphic3d::{
 /// The abstract statistics with an empty `updateStatistics`.
 #[derive(Default)]
 struct SvFrameStats {
-    transient: StandardTransient,
     base: Graphic3dFrameStatsBase,
 }
-martensite_tkernel::impl_transient!(SvFrameStats, "SvFrameStats", dyn Graphic3dFrameStats, transient,
+martensite_tkernel::impl_transient!(SvFrameStats, "SvFrameStats", dyn Graphic3dFrameStats,
     interfaces: [dyn Graphic3dFrameStats]);
 impl Graphic3dFrameStats for SvFrameStats {
     fn frame_stats_base(&self) -> &Graphic3dFrameStatsBase {

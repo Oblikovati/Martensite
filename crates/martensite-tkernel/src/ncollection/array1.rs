@@ -10,6 +10,7 @@ mod raw_construction;
 mod raw_copy;
 mod raw_destruction;
 mod resize_storage;
+#[cfg(test)]
 mod returning;
 mod trivial_copy;
 mod uninitialized;
@@ -236,7 +237,7 @@ impl<T: Clone> Array1<'_, T> {
 
 impl<T> Array1<'_, T> {
     /// Transfers storage and resets the source to the empty default; `dest.move_from(&mut source)`.
-    pub fn move_from(&mut self, source: &mut Self) -> &mut Self {
+    pub(crate) fn move_from(&mut self, source: &mut Self) -> &mut Self {
         *self = std::mem::take(source);
         self
     }
@@ -275,12 +276,12 @@ impl<T> Array1<'_, T> {
     }
 
     /// Mutates the first element; `*array.change_first()? = value`.
-    pub fn change_first(&mut self) -> Result<&mut T, super::ArrayError> {
+    pub(crate) fn change_first(&mut self) -> Result<&mut T, super::ArrayError> {
         self.change_at(0)
     }
 
     /// Mutates the last element; `*array.change_last()? = value`.
-    pub fn change_last(&mut self) -> Result<&mut T, super::ArrayError> {
+    pub(crate) fn change_last(&mut self) -> Result<&mut T, super::ArrayError> {
         self.change_at(self.len().saturating_sub(1))
     }
 }
@@ -299,7 +300,7 @@ impl<T: Clone> Array1<'_, T> {
     }
 
     /// Assigns from a borrowed value in storage order; `array.init_ref(&42)`.
-    pub fn init_ref(&mut self, value: &T) {
+    pub(crate) fn init_ref(&mut self, value: &T) {
         self.init_ref_with_assignment(value, T::clone_from);
     }
 }
@@ -352,7 +353,8 @@ impl<'b, T> IntoIterator for &'b mut Array1<'_, T> {
 impl<T> Array1<'_, T> {
     /// Constructs a Rust replacement; `array.emplace_value(0, || 42)?`.
     /// Use `emplace_value_with_assignment` for observable element assignment.
-    pub fn emplace_value(
+    #[cfg(test)]
+    pub(crate) fn emplace_value(
         &mut self,
         index: i32,
         construct: impl FnOnce() -> T,

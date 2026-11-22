@@ -7,7 +7,7 @@ use crate::tdf::{TdfAttribute, TdfAttributeState, TdfLabel, TdfTagSource};
 use martensite_tkcdf::json_dump::class_begin;
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Guid, Handle, RuntimeTyped, dump::DumpStream, exceptions},
+    standard::{Failure, Guid, Handle, HandleUpcast, RuntimeTyped, dump::DumpStream, exceptions},
 };
 use std::io;
 
@@ -16,7 +16,8 @@ pub trait TDataStdGenericEmpty: TdfAttribute {}
 impl_transient_interface!(
     dyn TDataStdGenericEmpty,
     "TDataStd_GenericEmpty",
-    dyn TdfAttribute
+    dyn TdfAttribute,
+    upcasts: [dyn TdfAttribute]
 );
 
 /// The native `TDataStd_GenericEmpty::DumpJson`, called by the derived attributes.
@@ -49,17 +50,15 @@ macro_rules! tdata_std_empty_attribute {
     ($(#[$doc:meta])* $name:ident, $type_name:literal, $id:expr, $text:literal, on_create: $hook:expr) => {
         $(#[$doc])*
         pub struct $name {
-            transient: ::martensite_tkernel::standard::StandardTransient,
             base: $crate::tdf::TdfAttributeBase,
         }
-        ::martensite_tkernel::impl_transient!($name, $type_name, dyn $crate::tdata_std::TDataStdGenericEmpty, transient,
+        ::martensite_tkernel::impl_transient!($name, $type_name, dyn $crate::tdata_std::TDataStdGenericEmpty,
             interfaces: [dyn $crate::tdf::TdfAttribute, dyn $crate::tdata_std::TDataStdGenericEmpty]);
         impl $crate::tdata_std::TDataStdGenericEmpty for $name {}
         impl ::std::default::Default for $name {
             fn default() -> Self {
                 ($hook)();
                 Self {
-                    transient: ::martensite_tkernel::standard::StandardTransient::default(),
                     base: $crate::tdf::TdfAttributeBase::default(),
                 }
             }
@@ -90,7 +89,7 @@ macro_rules! tdata_std_empty_attribute {
             }
             /// `NewEmpty` (from `IMPLEMENT_DERIVED_ATTRIBUTE`).
             fn new_empty(&self) -> ::martensite_tkernel::standard::Handle<dyn $crate::tdf::TdfAttribute> {
-                ::martensite_tkernel::standard::Handle::new(Self::new()).cast()
+                ::martensite_tkernel::standard::Handle::new(Self::new()).into_upcast()
             }
             /// `Paste` of `TDataStd_GenericEmpty`: nothing to paste.
             fn paste(
@@ -154,7 +153,7 @@ fn find_upward<T: TdfAttribute + RuntimeTyped>(
 
 /// The native `New(label)`: `Standard_DomainError` for a label with attributes, else the
 /// attribute plus a tag source.
-fn new_on_empty_label<T: TdfAttribute + RuntimeTyped>(
+fn new_on_empty_label<T: TdfAttribute + RuntimeTyped + HandleUpcast<dyn TdfAttribute>>(
     label: &TdfLabel,
     make: fn() -> T,
     who: &str,
@@ -165,7 +164,7 @@ fn new_on_empty_label<T: TdfAttribute + RuntimeTyped>(
         )));
     }
     let created = Handle::new(make());
-    label.add_attribute(&created.cast(), true)?;
+    label.add_attribute(&created.upcast(), true)?;
     TdfTagSource::set(label)?;
     Ok(created)
 }

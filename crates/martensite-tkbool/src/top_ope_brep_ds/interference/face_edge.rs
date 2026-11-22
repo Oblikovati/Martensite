@@ -1,5 +1,7 @@
 //! `TopOpeBRepDSFaceEdgeInterference`: an interference of an edge on a face.
-use super::TopOpeBRepDSShapeShapeInterference;
+use super::{
+    InterferenceRecord, InterferenceState, ShapeInterferenceRecord, ShapeInterferenceState,
+};
 use crate::top_ope_brep_ds::{TopOpeBRepDSConfig, TopOpeBRepDSKind, TopOpeBRepDSTransition};
 use martensite_tkernel::impl_transient;
 use std::ops::Deref;
@@ -8,20 +10,32 @@ use std::ops::Deref;
 /// FACE `s`, the geometry the EDGE `g`; the shape/shape members are reached through
 /// `Deref`; `TopOpeBRepDSFaceEdgeInterference::new(&t, 1, 2, false, TopOpeBRepDSConfig::SameOriented)`.
 pub struct TopOpeBRepDSFaceEdgeInterference {
-    parent: TopOpeBRepDSShapeShapeInterference,
+    record: ShapeInterferenceState,
 }
 impl_transient!(
     TopOpeBRepDSFaceEdgeInterference,
     "TopOpeBRepDSFaceEdgeInterference",
-    TopOpeBRepDSShapeShapeInterference,
-    parent
+    dyn ShapeInterferenceRecord,
+    interfaces: [dyn InterferenceRecord, dyn ShapeInterferenceRecord]
 );
 
-impl Deref for TopOpeBRepDSFaceEdgeInterference {
-    type Target = TopOpeBRepDSShapeShapeInterference;
+impl InterferenceRecord for TopOpeBRepDSFaceEdgeInterference {
+    fn interference_state(&self) -> &InterferenceState {
+        &self.record
+    }
+}
 
-    fn deref(&self) -> &TopOpeBRepDSShapeShapeInterference {
-        &self.parent
+impl ShapeInterferenceRecord for TopOpeBRepDSFaceEdgeInterference {
+    fn shape_interference_state(&self) -> &ShapeInterferenceState {
+        &self.record
+    }
+}
+
+impl Deref for TopOpeBRepDSFaceEdgeInterference {
+    type Target = ShapeInterferenceState;
+
+    fn deref(&self) -> &Self::Target {
+        &self.record
     }
 }
 
@@ -35,7 +49,7 @@ impl TopOpeBRepDSFaceEdgeInterference {
         c: TopOpeBRepDSConfig,
     ) -> Self {
         Self {
-            parent: TopOpeBRepDSShapeShapeInterference::new(
+            record: ShapeInterferenceState::new(
                 t,
                 TopOpeBRepDSKind::Face,
                 s,

@@ -25,7 +25,7 @@ pub fn circle_face(origin: [f64; 3], normal: [f64; 3], radius: f64, only_plane: 
     )
     .unwrap();
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::new(frame, radius).unwrap()).into_cast();
+        Handle::new(GeomCircle::new(frame, radius).unwrap()).into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()
@@ -54,7 +54,7 @@ pub fn tangent_arc(
     );
     let angle = degrees * (PI / 180.);
     let sense = (signed_radius >= 0.) == (angle >= 0.);
-    let curve = Handle::new(Geom2dCircle::from_axis(axis, radius, sense).unwrap()).into_cast();
+    let curve = Handle::new(Geom2dCircle::from_axis(axis, radius, sense).unwrap()).into_upcast();
     (curve, angle.abs())
 }
 

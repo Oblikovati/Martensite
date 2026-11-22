@@ -13,12 +13,12 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_read_real_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    IgesDataViewKindEntity, iges_array1_set, iges_dump_entities, iges_dump_xy, iges_live,
-    iges_new_array1, iges_real_text,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataViewKindEntity,
+    iges_array1_set, iges_dump_entities, iges_dump_xy, iges_live, iges_new_array1, iges_real_text,
 };
 use crate::iges_draw::IgesDrawDrawingWithRotation;
 use martensite_tkernel::ncollection::HArray1;
@@ -217,8 +217,8 @@ impl IgesDrawToolDrawingWithRotation {
             )?;
         }
         let mut nbanot: i32 = ent.nb_annotations()?;
-        let mut annotations: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbanot)?;
+        let mut annotations: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbanot)?;
         for i in 1..=nbanot {
             iges_array1_set(
                 &annotations,
@@ -272,7 +272,7 @@ impl IgesDrawToolDrawingWithRotation {
         }
         nb = ent.nb_annotations()?;
         for i in 1..=nb {
-            let mut ann: Handle<IgesDataIgesEntity> = ent.annotation(i)?;
+            let mut ann: Handle<dyn IgesDataEntityKind> = ent.annotation(i)?;
             if ann.is_null() {
                 ianul = true;
             } else {
@@ -313,9 +313,9 @@ impl IgesDrawToolDrawingWithRotation {
         view_origins = iges_new_array1::<Xy>(1, nbval)?;
         orientation_angles = iges_new_array1::<f64>(1, nbval)?;
         if nbanot > 0 {
-            annotations = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbanot)?;
+            annotations = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbanot)?;
             for i in 1..=nbanot {
-                let mut temp_annotation: Handle<IgesDataIgesEntity> =
+                let mut temp_annotation: Handle<dyn IgesDataEntityKind> =
                     tc.transferred(&another.annotation(i)?.cast())?.cast();
                 iges_array1_set(
                     &annotations,

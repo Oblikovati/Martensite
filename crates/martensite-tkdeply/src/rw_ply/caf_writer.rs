@@ -87,7 +87,6 @@ impl Export<'_> {
 /// # }
 /// ```
 pub struct RwPlyCafWriter {
-    transient: StandardTransient,
     file: AsciiString,
     cs_trsf: RwMeshCoordinateSystemConverter,
     default_style: XCAFPrsStyle,
@@ -98,18 +97,12 @@ pub struct RwPlyCafWriter {
     has_part_id: bool,
     has_face_id: bool,
 }
-impl_transient!(
-    RwPlyCafWriter,
-    "RwPlyCafWriter",
-    StandardTransient,
-    transient
-);
+impl_transient!(RwPlyCafWriter, "RwPlyCafWriter", StandardTransient);
 
 impl RwPlyCafWriter {
     /// A writer of the named file, with normals, colors and part ids; `RwPlyCafWriter::new(&file)`.
     pub fn new(file: &AsciiString) -> Self {
         Self {
-            transient: StandardTransient::default(),
             file: file.clone(),
             cs_trsf: RwMeshCoordinateSystemConverter::new(),
             default_style: XCAFPrsStyle::default(),

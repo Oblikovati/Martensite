@@ -9,14 +9,13 @@ use martensite_tkcdf::{
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     storage::Data,
     tcollection::ExtendedString,
 };
 use std::{io, sync::Mutex};
 
 pub struct FaultReader {
-    pub transient: StandardTransient,
     pub base: PcdmReaderBase,
     pub failure: Failure,
     pub status: PcdmReaderStatus,
@@ -24,8 +23,7 @@ pub struct FaultReader {
     pub expected_filter: Handle<PcdmReaderFilter>,
     pub calls: Mutex<Vec<&'static str>>,
 }
-impl_transient!(FaultReader, "FaultReader", dyn PcdmReader,
-    transient, interfaces: [dyn PcdmReader]);
+impl_transient!(FaultReader, "FaultReader", dyn PcdmReader, interfaces: [dyn PcdmReader]);
 impl PcdmReader for FaultReader {
     fn reader_base(&self) -> &PcdmReaderBase {
         &self.base
@@ -40,8 +38,7 @@ impl PcdmReader for FaultReader {
     ) -> Result<(), Failure> {
         assert!(*document == self.expected_document);
         assert!(*filter == self.expected_filter);
-        let app = application.cast::<FaultApplication>();
-        assert!(!app.is_null());
+        let app = application.downcast_ref::<FaultApplication>().unwrap();
         assert!(std::ptr::eq(app.reader.get().unwrap(), self));
         self.calls.lock().unwrap().push("read-file");
         self.base.set_status(self.status);
@@ -61,12 +58,10 @@ impl PcdmReader for FaultReader {
 }
 
 pub struct FaultApplication {
-    pub transient: StandardTransient,
     pub base: CdfApplicationBase,
     pub reader: Handle<FaultReader>,
 }
-impl_transient!(FaultApplication, "FaultApplication", dyn CdfApplication,
-    transient, interfaces: [dyn CdmApplication, dyn CdfApplication]);
+impl_transient!(FaultApplication, "FaultApplication", dyn CdfApplication, interfaces: [dyn CdmApplication, dyn CdfApplication]);
 impl CdmApplication for FaultApplication {
     cdf_application_cdm_members!();
     fn resources(&self) -> Result<SharedResourceManager, Failure> {
@@ -83,7 +78,7 @@ impl CdfApplication for FaultApplication {
     ) -> Result<Handle<dyn PcdmReader>, Failure> {
         assert_eq!(format, &ExtendedString::new("Owned"));
         self.reader.calls.lock().unwrap().push("reader:Owned");
-        Ok(self.reader.cast())
+        Ok(self.reader.upcast())
     }
     fn new_document(
         &self,

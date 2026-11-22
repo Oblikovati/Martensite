@@ -324,7 +324,7 @@ impl GeomFillSectionLaw for GeomFillNSections {
         let p2 = self.param("CirclSection", self.my_params.len())?;
         let radius = (c2.radius() - c1.radius()) * (v - p1) / (p2 - p1) + c1.radius();
         c1.set_radius(radius)?;
-        let c: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(c1)).cast();
+        let c: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(c1)).into_upcast();
         let (a_par_f, a_par_l) = (ac1.first_parameter()?, ac1.last_parameter()?);
         let a_period = if ac1.is_periodic()? {
             ac1.period()?
@@ -333,7 +333,7 @@ impl GeomFillSectionLaw for GeomFillNSections {
         };
         if a_period == 0.0 || (a_par_l - a_par_f - a_period).abs() > precision::p_confusion() {
             return Ok(
-                Handle::new(GeomTrimmedCurve::new(&c, a_par_f, a_par_l, true, true)?).cast(),
+                Handle::new(GeomTrimmedCurve::new(&c, a_par_f, a_par_l, true, true)?).into_upcast(),
             );
         }
         Ok(c)

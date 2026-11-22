@@ -7,7 +7,7 @@ use super::{
 };
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::{Array1, HArray1};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{GeneralTransform3, Point3};
 use martensite_tkmath::poly::Triangulation;
 use martensite_tkmath::toploc::Location;
@@ -64,7 +64,6 @@ impl Select3DSensitiveTriangulation {
         state: TriangulationState,
     ) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             entity: Select3DSensitiveEntityBase::new(owner),
             set: Select3DSensitiveSetBase::default(),
             triangul: triangulation.clone(),

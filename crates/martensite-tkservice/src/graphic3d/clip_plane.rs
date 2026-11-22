@@ -40,8 +40,8 @@ static THE_CLIP_PLANE_COUNTER: AtomicI32 = AtomicI32::new(0);
 pub(super) struct ClipPlaneState {
     /// The capping aspect; `SetCappingAspect` may store null, as natively.
     pub(super) aspect: Handle<Graphic3dAspectFillArea3d>,
-    pub(super) next: Handle<Graphic3dClipPlane>,
-    pub(super) prev: WeakHandle<Graphic3dClipPlane>,
+    pub(super) next: Handle<dyn super::Graphic3dClipPlaneSource>,
+    pub(super) prev: WeakHandle<dyn super::Graphic3dClipPlaneSource>,
     pub(super) id: AsciiString,
     pub(super) plane: Plane3,
     pub(super) equation: Vec4<f64>,
@@ -56,14 +56,12 @@ pub(super) struct ClipPlaneState {
 
 /// A clipping plane; `Graphic3dClipPlane::from_equation(Vec4::new(0.0, 0.0, 1.0, 0.0))?`.
 pub struct Graphic3dClipPlane {
-    transient: StandardTransient,
     pub(super) state: SharedState<ClipPlaneState>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dClipPlane,
     "Graphic3d_ClipPlane",
     StandardTransient,
-    transient,
     interfaces: [dyn super::Graphic3dClipPlaneSource]
 );
 
@@ -141,7 +139,6 @@ impl Default for Graphic3dClipPlane {
 impl Graphic3dClipPlane {
     fn with_state(state: ClipPlaneState) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

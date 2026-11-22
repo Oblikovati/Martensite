@@ -8,14 +8,18 @@ use super::plane::Plane;
 use super::revolution::SurfaceOfRevolution;
 use super::sphere::{Sphere, Torus};
 use super::spline_surface::{BSplineSurface, BezierSurface};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, exceptions};
+use martensite_tkernel::standard::{
+    Failure, Handle, RuntimeTyped, exceptions, project_concrete, project_interface,
+};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface, GeomCylindricalSurface,
     GeomOffsetSurface, GeomPlane, GeomRectangularTrimmedSurface, GeomSphericalSurface, GeomSurface,
     GeomSurfaceOfLinearExtrusion, GeomSurfaceOfRevolution, GeomToroidalSurface,
 };
-use martensite_tkg3d::geom_adaptor::{GeomAdaptorSurface, GeomAdaptorTransformedSurface};
+use martensite_tkg3d::geom_adaptor::{
+    GeomAdaptorSurface, GeomAdaptorTransformedSurface, GeomSurfaceAdaptor,
+};
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::geom_abs::SurfaceType;
 
@@ -131,10 +135,10 @@ fn exact_kind(surface: &Handle<dyn GeomSurface>) -> Option<SurfaceType> {
 // The Geom surface behind an adaptor: a GeomAdaptorSurface's surface or a
 // GeomAdaptorTransformedSurface's transformed surface, else null.
 fn adaptor_geometry(surface: &dyn Adaptor3dSurface) -> Result<Handle<dyn GeomSurface>, Failure> {
-    if let Some(geom_adaptor) = GeomAdaptorSurface::project_from(surface) {
+    if let Some(geom_adaptor) = project_interface::<dyn GeomSurfaceAdaptor>(surface) {
         return Ok(geom_adaptor.surface());
     }
-    if let Some(transformed) = GeomAdaptorTransformedSurface::project_from(surface) {
+    if let Some(transformed) = project_concrete::<GeomAdaptorTransformedSurface>(surface) {
         return transformed.geom_surface_transformed();
     }
     Ok(Handle::default())

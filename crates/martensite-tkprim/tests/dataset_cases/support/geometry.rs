@@ -22,7 +22,7 @@ pub fn line(point: [f64; 3], direction: [f64; 3]) -> Handle<dyn GeomCurve> {
     let [x, y, z] = point;
     let [dx, dy, dz] = direction;
     let lin = Line3::new(Point3::new(x, y, z), Direction3::new(dx, dy, dz).unwrap());
-    Handle::new(GeomLine::from_lin(lin)).cast()
+    Handle::new(GeomLine::from_lin(lin)).into_upcast()
 }
 
 /// `GeomliteTest_SurfaceCommands` `plane name x y z nx ny nz ux uy uz`.
@@ -36,7 +36,7 @@ pub fn plane(point: [f64; 3], normal: [f64; 3], x_dir: [f64; 3]) -> Handle<dyn G
         Direction3::new(ux, uy, uz).unwrap(),
     )
     .unwrap();
-    Handle::new(GeomPlane::new(frame)).cast()
+    Handle::new(GeomPlane::new(frame)).into_upcast()
 }
 
 /// `GeomliteTest_CurveCommands` `cvalue curve u x y z`: the point.
@@ -87,9 +87,10 @@ pub fn intersect_curve_surface(
 /// distance.
 fn ext_segment(p1: Point3, p2: Point3) -> Handle<dyn GeomCurve> {
     let direction = Direction3::from_vector(Vector3::between(p1, p2)).unwrap();
-    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(p1, direction)).cast();
+    let line: Handle<dyn GeomCurve> =
+        Handle::new(GeomLine::from_point(p1, direction)).into_upcast();
     let trimmed = GeomTrimmedCurve::new(&line, 0., p1.distance(&p2), true, true).unwrap();
-    Handle::new(trimmed).cast()
+    Handle::new(trimmed).into_upcast()
 }
 
 /// `GeometryTest_APICommands` `extrema curve surface`: GeomAPI_ExtremaCurveSurface on
@@ -197,7 +198,7 @@ pub fn mk2dcurve_on_face(edge: &Shape, face: &Shape) -> Handle<dyn Geom2dCurve> 
         "mk2dcurve: the edge has no p-curve on the face"
     );
     let trimmed = Geom2dTrimmedCurve::new(&found.pcurve, found.first, found.last, true, true);
-    Handle::new(trimmed.unwrap()).cast()
+    Handle::new(trimmed.unwrap()).into_upcast()
 }
 
 /// `GeomliteTest_API2dCommands` `2dextrema c1 c2`: Geom2dAPI_ExtremaCurveCurve on the

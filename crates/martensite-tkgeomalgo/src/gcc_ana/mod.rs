@@ -85,7 +85,7 @@ pub(crate) fn bisector<T>(
     value: T,
 ) -> martensite_tkernel::standard::Handle<dyn crate::gcc_int::Bisec>
 where
-    T: crate::gcc_int::Bisec + martensite_tkernel::standard::RuntimeTyped,
+    T: martensite_tkernel::standard::HandleUpcast<dyn crate::gcc_int::Bisec>,
 {
-    martensite_tkernel::standard::Handle::new(value).cast()
+    martensite_tkernel::standard::Handle::new(value).into_upcast()
 }

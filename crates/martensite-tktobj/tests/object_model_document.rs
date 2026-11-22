@@ -7,7 +7,7 @@ use martensite_tkernel::{
     impl_transient,
     message::Messenger,
     ncollection::HArray1,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, ExtendedString, HExtendedString},
 };
 use martensite_tklcaf::tdf::TdfLabel;
@@ -21,19 +21,17 @@ use std::sync::{Arc, Mutex, MutexGuard, Once, PoisonError};
 
 /// Minimal concrete subclass of `martensite_object_model_DocumentModel` (abstract because of `NewEmpty`).
 pub struct TestDocumentModel {
-    transient: StandardTransient,
     base: DocumentModelBase,
 }
-impl_transient!(TestDocumentModel, "TestDocumentModel", dyn DocumentModel, transient,
+impl_transient!(TestDocumentModel, "TestDocumentModel", dyn DocumentModel,
     interfaces: [dyn DocumentModel]);
 impl TestDocumentModel {
     /// `new TestDocumentModel()`, already in its bound handle.
     pub fn new() -> Handle<TestDocumentModel> {
         let model = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: DocumentModelBase::new().unwrap(),
         });
-        model.model_base().bind_self(&model.cast());
+        model.model_base().bind_self(&model.upcast());
         model
     }
 }
@@ -42,7 +40,7 @@ impl DocumentModel for TestDocumentModel {
         &self.base
     }
     fn new_empty(&self) -> Result<Handle<dyn DocumentModel>, Failure> {
-        Ok(TestDocumentModel::new().cast())
+        Ok(TestDocumentModel::new().into_upcast())
     }
 }
 
@@ -56,10 +54,9 @@ const CHILD_TAG_CHILD: i32 = ObjectChildTag::LAST + 1;
 
 /// Minimal concrete subclass of `martensite_object_model_ModelObject` (whose constructor is protected).
 pub struct TestModelObject {
-    transient: StandardTransient,
     base: ModelObjectBase,
 }
-impl_transient!(TestModelObject, "TestModelObject", dyn ModelObject, transient,
+impl_transient!(TestModelObject, "TestModelObject", dyn ModelObject,
     interfaces: [dyn ModelObject]);
 impl ModelObject for TestModelObject {
     fn object_base(&self) -> &ModelObjectBase {
@@ -69,19 +66,18 @@ impl ModelObject for TestModelObject {
 impl TestModelObject {
     fn unattached(label: &TdfLabel) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: ModelObjectBase::new(label),
         }
     }
     /// `TestModelObject(theLabel, theSetName = true)`.
     pub fn new(label: &TdfLabel) -> Handle<TestModelObject> {
         let object = Handle::new(Self::unattached(label));
-        ModelObjectBase::attach(&object.cast(), true).unwrap();
+        ModelObjectBase::attach(&object.upcast(), true).unwrap();
         object
     }
     /// The persistence constructor of `DECLARE_TOBJdocument data framework_PERSISTENCE`.
     fn persistence_new(label: &TdfLabel) -> Result<Handle<dyn ModelObject>, Failure> {
-        let object: Handle<dyn ModelObject> = Handle::new(Self::unattached(label)).cast();
+        let object: Handle<dyn ModelObject> = Handle::new(Self::unattached(label)).into_upcast();
         object.object_base().bind_self(&object);
         object.init_fields();
         Ok(object)
@@ -137,7 +133,10 @@ pub fn register_test_object_persistence() {
 pub fn find_test_object(model: &Handle<dyn DocumentModel>, name: &str) -> Handle<TestModelObject> {
     let name = Handle::new(HExtendedString::from(ExtendedString::new(name)));
     let dictionary = model.get_dictionary().unwrap();
-    model.find_object(&name, &dictionary).unwrap().cast()
+    model
+        .find_object(&name, &dictionary)
+        .unwrap()
+        .into_downcast()
 }
 
 /// GoogleTest runs the cases of a binary one after the other; the ObjectModel statics
@@ -576,7 +575,7 @@ fn model_object_nested_typed_children_are_traversed() {
     let all: Handle<dyn ObjectIterator> =
         ObjectTreeIterator::new(&object.get_child_label().unwrap(), None, true, true)
             .unwrap()
-            .cast();
+            .into_upcast();
     assert!(!all.is_null());
     let all_names = visited_names(&all);
     assert_eq!(all_names.len(), 6);

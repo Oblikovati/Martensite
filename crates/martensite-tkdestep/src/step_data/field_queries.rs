@@ -2,16 +2,17 @@
 //! an out of range failure.
 use super::field::{StringList, TransientGrid, TransientList, array_failure};
 use super::{StepDataField, StepDataFieldKind as Kind, StepDataLogical, StepDataSelectMember};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     ncollection::{HArray1, HArray2},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 
 fn list_item(
-    any: &Handle<StandardTransient>,
+    any: &Handle<dyn Transient>,
     n1: i32,
-) -> Result<Option<Handle<StandardTransient>>, Failure> {
+) -> Result<Option<Handle<dyn Transient>>, Failure> {
     let list = any.cast::<TransientList>();
     let Some(live) = list.get() else {
         return Ok(None);
@@ -21,10 +22,10 @@ fn list_item(
 }
 
 fn grid_item(
-    any: &Handle<StandardTransient>,
+    any: &Handle<dyn Transient>,
     n1: i32,
     n2: i32,
-) -> Result<Option<Handle<StandardTransient>>, Failure> {
+) -> Result<Option<Handle<dyn Transient>>, Failure> {
     let grid = any.cast::<TransientGrid>();
     let Some(live) = grid.get() else {
         return Ok(None);
@@ -293,7 +294,7 @@ impl StepDataField {
         self.string(n1, n2)
     }
     /// `entity(n1 = 1, n2 = 1)`: null for a member or a string of a list.
-    pub fn entity(&self, n1: i32, n2: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn entity(&self, n1: i32, n2: i32) -> Result<Handle<dyn Transient>, Failure> {
         if self.thekind.arity_bits() == 0 {
             if self.thekind == Kind::ENTITY {
                 return Ok(self.theany.clone());
@@ -315,7 +316,7 @@ impl StepDataField {
         Ok(if immediate { Handle::default() } else { item })
     }
     /// `Transient`.
-    pub fn transient(&self) -> Handle<StandardTransient> {
+    pub fn transient(&self) -> Handle<dyn Transient> {
         self.theany.clone()
     }
 }

@@ -58,7 +58,7 @@ fn degenerate_hyperbola(
 
 /// `new GccInt_BLine(line)` as a `GccInt_Bisec` handle.
 pub(super) fn line_solution(line: Line2) -> Handle<dyn Bisec> {
-    Handle::new(BLine::new(line)).cast()
+    Handle::new(BLine::new(line)).into_upcast()
 }
 
 /// `new Geom2d_TrimmedCurve(curve, u1, u2, sense)` (the periodic bounds adjusted).
@@ -83,7 +83,7 @@ pub(super) fn line_to_center(
     sense: bool,
 ) -> Result<Trimmed, Failure> {
     let mut second: f64 = elclib::parameter(&line, center)?;
-    let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+    let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
     if !sense {
         second = if second > first {
             -precision::infinite()
@@ -109,10 +109,11 @@ pub(super) fn trim_conic(
     sense: bool,
 ) -> Result<Option<Trimmed>, Failure> {
     let curve: Handle<dyn Geom2dCurve> = match solution.arc_type() {
-        IType::Cir => Handle::new(Geom2dCircle::from_circ2d(solution.circle()?)).cast(),
-        IType::Ell => Handle::new(Geom2dEllipse::from_elips2d(solution.ellipse()?)).cast(),
+        IType::Cir => Handle::new(Geom2dCircle::from_circ2d(solution.circle()?)).into_upcast(),
+        IType::Ell => Handle::new(Geom2dEllipse::from_elips2d(solution.ellipse()?)).into_upcast(),
         IType::Hpr => {
-            let curve = Handle::new(Geom2dHyperbola::from_hypr2d(solution.hyperbola()?)).cast();
+            let curve =
+                Handle::new(Geom2dHyperbola::from_hypr2d(solution.hyperbola()?)).into_upcast();
             return half_line_like(curve, first, sense).map(Some);
         }
         _ => return Ok(None),

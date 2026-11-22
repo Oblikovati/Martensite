@@ -16,6 +16,7 @@ use crate::step_basic::{
 use crate::step_data::{
     StepDataFactors, StepDataLogical, StepDataSelectMember, StepDataSelectType,
 };
+use crate::step_entity::StepBaseHandle;
 use crate::step_entity::{
     HArray1, step_array1_item, step_array1_len, step_array1_set, step_live, step_new_array1,
 };
@@ -44,7 +45,9 @@ use crate::step_visual::{
     StepVisualTessellatedAnnotationOccurrence,
 };
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::{AsciiString, HAsciiString};
 use martensite_tklcaf::tdata_std::{TDataStdGenericExtString, TDataStdName};
 use martensite_tklcaf::tdf::TdfLabel;
@@ -79,10 +82,10 @@ pub(super) fn graph_of(
 }
 
 /// `sharings(entity)`.
-pub(super) fn sharings_of<T: RuntimeTyped>(
+pub(super) fn sharings_of<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     graph: &Handle<InterfaceHGraph>,
     entity: &Handle<T>,
-) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+) -> Result<Vec<Handle<dyn Transient>>, Failure> {
     Ok(step_live(graph, WHERE)?
         .graph()
         .sharings(&entity.cast())?
@@ -90,7 +93,10 @@ pub(super) fn sharings_of<T: RuntimeTyped>(
 }
 
 /// The entities sharing `entity` that are of type `T`.
-fn sharing_of_type<S: RuntimeTyped, T: RuntimeTyped>(
+fn sharing_of_type<
+    S: ?Sized + RuntimeTyped + TransientHandleTarget,
+    T: ?Sized + RuntimeTyped + TransientHandleTarget,
+>(
     graph: &Handle<InterfaceHGraph>,
     entity: &Handle<S>,
 ) -> Result<Vec<Handle<T>>, Failure> {
@@ -104,11 +110,13 @@ fn sharing_of_type<S: RuntimeTyped, T: RuntimeTyped>(
 /// `FindPDSforDGT`, from an edge up to its face: the first advanced face.
 fn advanced_face_of_edge(
     graph: &Handle<InterfaceHGraph>,
-    edge: &Handle<StepShapeEdgeCurve>,
+    edge: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
 ) -> Result<Handle<StepShapeAdvancedFace>, Failure> {
     for oriented in sharing_of_type::<_, StepShapeOrientedEdge>(graph, edge)? {
         for edge_loop in sharing_of_type::<_, StepShapeEdgeLoop>(graph, &oriented)? {
-            for bound in sharing_of_type::<_, StepShapeFaceBound>(graph, &edge_loop)? {
+            for bound in sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeFaceBound>>(
+                graph, &edge_loop,
+            )? {
                 let faces = sharing_of_type::<_, StepShapeAdvancedFace>(graph, &bound)?;
                 if let Some(face) = faces.into_iter().next() {
                     return Ok(face);
@@ -132,7 +140,7 @@ fn pds_of_sdr(
 /// The product definition shape of the first SDR of a shape representation.
 fn pds_of_representation(
     graph: &Handle<InterfaceHGraph>,
-    representation: &Handle<StepShapeShapeRepresentation>,
+    representation: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
 ) -> Result<Handle<StepReprProductDefinitionShape>, Failure> {
     for sdr in sharing_of_type::<_, StepShapeShapeDefinitionRepresentation>(graph, representation)?
     {
@@ -148,11 +156,11 @@ fn pds_of_representation(
 /// face is null, and nothing found, for another entity.
 pub(super) fn find_pds_for_dgt(
     graph: &Handle<InterfaceHGraph>,
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     pds: &mut Handle<StepReprProductDefinitionShape>,
-    context: &mut Handle<StepReprRepresentationContext>,
+    context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     face: &mut Handle<StepShapeAdvancedFace>,
-    edge: &mut Handle<StepShapeEdgeCurve>,
+    edge: &mut Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
 ) -> Result<bool, Failure> {
     *face = entity.cast();
     if face.is_null() {
@@ -165,9 +173,16 @@ pub(super) fn find_pds_for_dgt(
     if face.is_null() {
         return Ok(false);
     }
-    for set in sharing_of_type::<_, StepShapeConnectedFaceSet>(graph, face)? {
-        for item in sharing_of_type::<_, StepReprRepresentationItem>(graph, &set)? {
-            for representation in sharing_of_type::<_, StepShapeShapeRepresentation>(graph, &item)?
+    for set in
+        sharing_of_type::<_, dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>(graph, face)?
+    {
+        for item in sharing_of_type::<_, dyn crate::StepEntityBase<StepReprRepresentationItem>>(
+            graph, &set,
+        )? {
+            for representation in sharing_of_type::<
+                _,
+                dyn crate::StepEntityBase<StepShapeShapeRepresentation>,
+            >(graph, &item)?
             {
                 *context = step_live(&representation, WHERE)?.context_of_items();
                 *pds = pds_of_representation(graph, &representation)?;
@@ -184,14 +199,18 @@ pub(super) fn find_pds_for_dgt(
 /// items sharing it.
 pub(super) fn find_pds(
     graph: &Handle<InterfaceHGraph>,
-    entity: &Handle<StandardTransient>,
-    context: &mut Handle<StepReprRepresentationContext>,
+    entity: &Handle<dyn Transient>,
+    context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
 ) -> Result<Handle<StepReprProductDefinitionShape>, Failure> {
     if entity.is_null() {
         return Ok(Handle::default());
     }
     // try to find shape_representation in sharings
-    for representation in sharing_of_type::<_, StepShapeShapeRepresentation>(graph, entity)? {
+    for representation in sharing_of_type::<
+        _,
+        dyn crate::StepEntityBase<StepShapeShapeRepresentation>,
+    >(graph, entity)?
+    {
         *context = step_live(&representation, WHERE)?.context_of_items();
         let pds = pds_of_representation(graph, &representation)?;
         if pds.is_some() {
@@ -200,10 +219,10 @@ pub(super) fn find_pds(
     }
     for sharing in sharings_of(graph, entity)? {
         if sharing
-            .cast::<StepShapeTopologicalRepresentationItem>()
+            .cast::<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>()
             .is_some()
             || sharing
-                .cast::<StepGeomGeometricRepresentationItem>()
+                .cast::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>()
                 .is_some()
         {
             let pds = find_pds(graph, &sharing, context)?;
@@ -217,9 +236,9 @@ pub(super) fn find_pds(
 
 /// The first unit of a context the test accepts, in either of the two context types.
 fn unit_of_context(
-    context: &Handle<StepReprRepresentationContext>,
-    accepts: impl Fn(&Handle<StepBasicNamedUnit>) -> bool,
-) -> Result<Handle<StepBasicNamedUnit>, Failure> {
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+    accepts: impl Fn(&StepBaseHandle<StepBasicNamedUnit>) -> bool,
+) -> Result<StepBaseHandle<StepBasicNamedUnit>, Failure> {
     let first: Handle<StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext> =
         context.cast();
     let mut units = first.get().map(|live| live.units()).transpose()?;
@@ -234,9 +253,9 @@ fn unit_of_context(
 }
 
 fn first_accepted(
-    units: Option<&Handle<HArray1<Handle<StepBasicNamedUnit>>>>,
-    accepts: &impl Fn(&Handle<StepBasicNamedUnit>) -> bool,
-) -> Result<Handle<StepBasicNamedUnit>, Failure> {
+    units: Option<&Handle<HArray1<StepBaseHandle<StepBasicNamedUnit>>>>,
+    accepts: &impl Fn(&StepBaseHandle<StepBasicNamedUnit>) -> bool,
+) -> Result<StepBaseHandle<StepBasicNamedUnit>, Failure> {
     let Some(units) = units else {
         return Ok(Handle::default());
     };
@@ -251,7 +270,7 @@ fn first_accepted(
 
 /// `get_unit`: the plane angle or length unit of a context, a new SI unit when it has none.
 pub(super) fn get_unit(
-    context: &Handle<StepReprRepresentationContext>,
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     is_angle: bool,
 ) -> Result<StepBasicUnit, Failure> {
     let current = if is_angle {

@@ -3,7 +3,7 @@ use super::TDocStdDocument;
 use crate::live;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::ExtendedString,
 };
 use std::{io, sync::RwLockWriteGuard};
@@ -11,15 +11,13 @@ use std::{io, sync::RwLockWriteGuard};
 /// `TDocStd_ApplicationDelta`: the documents one application command changed.
 #[derive(Default)]
 pub struct TDocStdApplicationDelta {
-    transient: StandardTransient,
     documents: SharedState<ApplicationDeltaDocuments>,
     name: SharedState<ExtendedString>,
 }
 impl_transient!(
     TDocStdApplicationDelta,
     "TDocStd_ApplicationDelta",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl TDocStdApplicationDelta {
@@ -73,14 +71,12 @@ struct ManagerState {
 /// recent application delta comes first.
 #[derive(Default)]
 pub struct TDocStdMultiTransactionManager {
-    transient: StandardTransient,
     state: SharedState<ManagerState>,
 }
 impl_transient!(
     TDocStdMultiTransactionManager,
     "TDocStd_MultiTransactionManager",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl TDocStdMultiTransactionManager {

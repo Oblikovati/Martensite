@@ -4,7 +4,7 @@ use super::common::{Reader, attempt, built_curve, end, flag, int, pnt, trsf, vec
 use super::output::Output;
 use super::shapes;
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::adaptor3d::{
     Adaptor3dCurve, Adaptor3dCurveBase, Adaptor3dCurveOnSurface, Adaptor3dIsoCurve,
 };
@@ -198,7 +198,7 @@ fn dispatch(output: &Output, e: &GeomGridEvalCurve<'_>, p: &Array1<'_, f64>) {
 }
 
 /// The specialized curve evaluators that take a typed handle and expose `geometry()`.
-trait SpecializedCurve<G: RuntimeTyped>: CurveGridEvaluator + Sized {
+trait SpecializedCurve<G: Transient>: CurveGridEvaluator + Sized {
     fn build(geometry: Handle<G>) -> Self;
     fn is_null(&self) -> bool;
 }
@@ -223,7 +223,7 @@ specialized_curve!(GeomGridEvalBezierCurve, GeomBezierCurve);
 specialized_curve!(GeomGridEvalBSplineCurve, GeomBSplineCurve);
 specialized_curve!(GeomGridEvalOffsetCurve, GeomOffsetCurve);
 
-fn direct_as<G: RuntimeTyped, E: SpecializedCurve<G>>(
+fn direct_as<G: Transient, E: SpecializedCurve<G>>(
     output: &Output,
     c: &Handle<dyn GeomCurve>,
     p: &Array1<'_, f64>,
@@ -282,7 +282,7 @@ pub fn curve_adaptor(
             )?)
             .cast())
         }
-        2 => Ok(Handle::new(Adaptor3dCurveBase::default()).cast()),
+        2 => Ok(Handle::new(Adaptor3dCurveBase).cast()),
         3 => {
             let t = trsf(r);
             Ok(Handle::new(GeomAdaptorTransformedCurve::with_curve(
@@ -332,7 +332,7 @@ pub fn grid_adaptor_case(output: &Output, values: &[f64]) {
     end(output);
 }
 
-fn null_as<G: RuntimeTyped, E: SpecializedCurve<G>>(output: &Output, p: &Array1<'_, f64>) {
+fn null_as<G: Transient, E: SpecializedCurve<G>>(output: &Output, p: &Array1<'_, f64>) {
     let e = E::build(Handle::default());
     flag(output, e.is_null());
     all(output, &e, p);

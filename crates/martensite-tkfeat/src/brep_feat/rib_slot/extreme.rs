@@ -107,7 +107,7 @@ impl RibSlot {
             }
             let (mut ccc, fff, lll) = BRepTool::curve(&e)?;
             if !revol_rib {
-                ccc = Handle::new(GeomTrimmedCurve::new(&ccc, fff, lll, true, true)?).cast();
+                ccc = Handle::new(GeomTrimmedCurve::new(&ccc, fff, lll, true, true)?).into_upcast();
             }
             let proj = ProjectPointOnCurve::with_curve(point, &ccc)?;
             let test_ok = if revol_rib {

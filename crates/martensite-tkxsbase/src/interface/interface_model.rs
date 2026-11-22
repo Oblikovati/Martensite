@@ -10,7 +10,7 @@ use crate::c_text::atoi;
 use martensite_tkernel::{
     impl_transient_interface,
     ncollection::DataMap,
-    standard::{Failure, Handle, StandardTransient, Transient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::HAsciiString,
 };
 use std::io::{self, Write};
@@ -60,7 +60,7 @@ pub trait InterfaceInterfaceModel: Transient {
     /// `AddEntity(anentity)`: adds an entity; a report entity adds its concerned entity
     /// and is recorded as its report. A null entity (dereferenced natively) is a
     /// `StandardNullObject` failure.
-    fn add_entity(&self, anentity: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn add_entity(&self, anentity: &Handle<dyn Transient>) -> Result<(), Failure> {
         if anentity.is_null() {
             return Err(exceptions::null_object(
                 "InterfaceInterfaceModel::AddEntity: null entity; expected a live entity",
@@ -88,13 +88,13 @@ pub trait InterfaceInterfaceModel: Transient {
     /// `DumpHeader(S, level = 0)`.
     fn dump_header(&self, s: &mut dyn Write, level: i32) -> io::Result<()>;
     /// `PrintLabel(ent, S)`.
-    fn print_label(&self, ent: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()>;
+    fn print_label(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()>;
     /// `PrintToLog(ent, S)`: by default `PrintLabel`.
-    fn print_to_log(&self, ent: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()> {
+    fn print_to_log(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()> {
         self.print_label(ent, s)
     }
     /// `StringLabel(ent)`.
-    fn string_label(&self, ent: &Handle<StandardTransient>) -> Handle<HAsciiString>;
+    fn string_label(&self, ent: &Handle<dyn Transient>) -> Handle<HAsciiString>;
     /// `NextNumberForLabel(label, lastnum = 0, exact = true)`: the next entity after
     /// `lastnum` whose label is `label` (case insensitive), or ends with it when not
     /// exact; when not exact and not found, a label that is a number in range is taken
@@ -127,7 +127,7 @@ pub trait InterfaceInterfaceModel: Transient {
 impl_transient_interface!(
     dyn InterfaceInterfaceModel,
     "InterfaceInterfaceModel",
-    StandardTransient
+    dyn Transient
 );
 
 /// The label test of `NextNumberForLabel` (the label is lowered in place when not exact,
@@ -164,7 +164,7 @@ pub(super) fn clear_global_checks(base: &InterfaceModelBase) {
 
 /// The growth of the report map before a new report: 1.5 times the buckets when nearly
 /// full, as natively.
-pub(super) fn grow_reports(reports: &mut DataMap<i32, Handle<StandardTransient>>) {
+pub(super) fn grow_reports(reports: &mut DataMap<i32, Handle<dyn Transient>>) {
     let max_rep = reports.bucket_count();
     if max_rep <= reports.len() + 10 {
         reports.resize(max_rep * 3 / 2);

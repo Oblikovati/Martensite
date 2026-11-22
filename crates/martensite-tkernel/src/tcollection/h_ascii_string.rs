@@ -6,7 +6,9 @@
 //! on both sides) free of deadlock. Handle parameters that are dereferenced
 //! without a check are `&HAsciiString` (a `&Handle` coerces to it); the three members that
 //! raise `Standard_NullObject` for a null handle take `&Handle<HAsciiString>`.
-use super::{AsciiString, HExtendedString};
+use super::AsciiString;
+#[cfg(test)]
+use super::HExtendedString;
 use crate::standard::{Handle, StandardTransient};
 use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -14,14 +16,12 @@ use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 #[repr(C)]
 #[derive(Default)]
 pub struct HAsciiString {
-    parent: StandardTransient,
     value: RwLock<AsciiString>,
 }
 crate::impl_transient!(
     HAsciiString,
     "TCollection_HAsciiString",
     StandardTransient,
-    parent,
     handle_key_policy: HAsciiStringHasher
 );
 impl std::fmt::Debug for HAsciiString {
@@ -36,7 +36,6 @@ impl From<AsciiString> for HAsciiString {
     /// Takes the string's storage.
     fn from(value: AsciiString) -> Self {
         Self {
-            parent: StandardTransient::default(),
             value: RwLock::new(value),
         }
     }
@@ -75,7 +74,8 @@ impl HAsciiString {
     /// The
     /// other object's `String()` as UTF-8, or `replacement` for units above 0xFF when nonzero;
     /// `HAsciiString::from_h_extended_string(&wide, b'?')`.
-    pub fn from_h_extended_string(source: &HExtendedString, replacement: u8) -> Self {
+    #[cfg(test)]
+    pub(crate) fn from_h_extended_string(source: &HExtendedString, replacement: u8) -> Self {
         AsciiString::from_extended(&source.string(), Some(replacement)).into()
     }
     /// `String`: borrows the string for as long as the guard lives; `object.string().len()`.
@@ -83,7 +83,7 @@ impl HAsciiString {
         self.value.read().unwrap_or_else(PoisonError::into_inner)
     }
     /// A copy of the bytes with their terminating NUL; `object.as_bytes_with_nul()`.
-    pub fn as_bytes_with_nul(&self) -> Vec<u8> {
+    pub(crate) fn as_bytes_with_nul(&self) -> Vec<u8> {
         self.string().as_bytes_with_nul().to_vec()
     }
     /// `Length`; `HAsciiString::new("abc").length() == 3`.
@@ -106,6 +106,7 @@ impl HAsciiString {
 }
 mod edits;
 mod hasher;
+#[cfg(test)]
 mod method_contracts;
 mod queries;
 pub use hasher::HAsciiStringHasher;

@@ -14,11 +14,10 @@ pub struct MediaTimerFields {
 
 /// A playback timer, stopped at 0 with speed 1; `MediaTimer::default().elapsed_time() == 0.0`.
 pub struct MediaTimer {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<MediaTimerFields>,
 }
-martensite_tkernel::impl_transient!(MediaTimer, "Media_Timer", StandardTransient, transient);
+martensite_tkernel::impl_transient!(MediaTimer, "Media_Timer", StandardTransient);
 
 impl Default for MediaTimer {
     fn default() -> Self {
@@ -35,7 +34,6 @@ impl MediaTimer {
             timer_speed: 1.0,
         };
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

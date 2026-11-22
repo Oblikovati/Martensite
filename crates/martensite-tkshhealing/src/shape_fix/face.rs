@@ -14,7 +14,7 @@ mod periodic_degenerated;
 mod small_area;
 mod split_face;
 
-use super::{FixRoot, FixRootData, ShapeFixRoot};
+use super::{FixRoot, FixRootData};
 use crate::shape_analysis::ShapeAnalysisSurface;
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
@@ -36,7 +36,7 @@ use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 /// assert!(!fixer.perform().unwrap());
 /// ```
 pub struct ShapeFixFace {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     face_state: SharedState<Shape>,
     result: SharedState<Shape>,
     status: SharedState<i32>,
@@ -46,12 +46,12 @@ pub struct ShapeFixFace {
     wire_tool: Handle<super::ShapeFixWire>,
 }
 
-impl_transient!(ShapeFixFace, "ShapeFix_Face", ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
+impl_transient!(ShapeFixFace, "ShapeFix_Face", dyn FixRoot, interfaces: [dyn FixRoot]);
 
 impl Default for ShapeFixFace {
     fn default() -> Self {
         Self {
-            parent: ShapeFixRoot::new(),
+            root: FixRootData::default(),
             face_state: SharedState::new(Shape::default()),
             result: SharedState::new(Shape::default()),
             status: SharedState::new(0),
@@ -78,9 +78,7 @@ impl ShapeFixFace {
 
     /// replace the root shape and working face with `face`.
     pub fn init(&self, face: Shape) {
-        self.parent
-            .fix_root_data()
-            .with_mut(|fields| fields.shape = face.clone());
+        self.root.with_mut(|fields| fields.shape = face.clone());
         *self.face_state.write() = face.clone();
         *self.status.write() = 0;
         // keeps the previous analysis surface when the new face has no surface.
@@ -214,9 +212,9 @@ impl ShapeFixFace {
 }
 
 impl std::ops::Deref for ShapeFixFace {
-    type Target = ShapeFixRoot;
+    type Target = dyn FixRoot;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        self
     }
 }
 

@@ -158,8 +158,12 @@ fn runtime_type_step_geom_composite_curve() {
 #[test]
 fn init_round_trip_step_geom_composite_curve() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_segments =
-        Handle::new(HArray1::<Handle<StepGeomCompositeCurveSegment>>::with_bounds(1, 2).unwrap());
+    let a_segments = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepGeomCompositeCurveSegment>>>::with_bounds(
+            1, 2,
+        )
+        .unwrap(),
+    );
     let a_self_intersect = StepDataLogical::default();
     let object = StepGeomCompositeCurve::new();
     object.init(&a_name, &a_segments, a_self_intersect);
@@ -193,7 +197,7 @@ fn init_round_trip_step_geom_composite_curve_segment() {
     let a_same_sense = true;
     let a_parent_curve = Handle::new(StepGeomCurve::new());
     let object = StepGeomCompositeCurveSegment::new();
-    object.init(a_transition, a_same_sense, &a_parent_curve);
+    object.init(a_transition, a_same_sense, &a_parent_curve.upcast());
     assert!(object.transition() == a_transition);
     assert!(object.same_sense() == a_same_sense);
     assert!(object.parent_curve() == a_parent_curve);
@@ -262,7 +266,7 @@ fn init_round_trip_step_geom_curve_bounded_surface() {
     let object = StepGeomCurveBoundedSurface::new();
     object.init(
         &a_representation_item_name,
-        &a_basis_surface,
+        &a_basis_surface.upcast(),
         &a_boundaries,
         a_implicit_outer,
     );
@@ -287,7 +291,7 @@ fn init_round_trip_step_geom_curve_replica() {
     let a_parent_curve = Handle::new(StepGeomCurve::new());
     let a_transformation = Handle::new(StepGeomCartesianTransformationOperator::new());
     let object = StepGeomCurveReplica::new();
-    object.init(&a_name, &a_parent_curve, &a_transformation);
+    object.init(&a_name, &a_parent_curve.upcast(), &a_transformation);
     assert!(object.parent_curve() == a_parent_curve);
     assert!(object.transformation() == a_transformation);
 }
@@ -328,7 +332,7 @@ fn init_round_trip_step_geom_degenerate_pcurve() {
     let a_basis_surface = Handle::new(StepGeomSurface::new());
     let a_reference_to_curve = Handle::new(StepReprDefinitionalRepresentation::new());
     let object = StepGeomDegeneratePcurve::new();
-    object.init(&a_name, &a_basis_surface, &a_reference_to_curve);
+    object.init(&a_name, &a_basis_surface.upcast(), &a_reference_to_curve);
     assert!(object.basis_surface() == a_basis_surface);
     assert!(object.reference_to_curve() == a_reference_to_curve);
 }

@@ -26,20 +26,20 @@ step_select! {
         mechanical_design_geometric_presentation_representation: StepVisualMechanicalDesignGeometricPresentationRepresentation,
         presentation_area: StepVisualPresentationArea,
         product: StepBasicProduct,
-        product_definition: StepBasicProductDefinition,
-        product_definition_formation: StepBasicProductDefinitionFormation,
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
-        property_definition: StepReprPropertyDefinition,
-        shape_representation: StepShapeShapeRepresentation,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        property_definition: dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        shape_representation: dyn crate::StepEntityBase<StepShapeShapeRepresentation>,
         security_classification: StepBasicSecurityClassification,
         configuration_item: StepReprConfigurationItem,
-        date: StepBasicDate,
+        date: dyn crate::StepEntityBase<StepBasicDate>,
         document: StepBasicDocument,
         effectivity: StepBasicEffectivity,
         group: StepBasicGroup,
         group_relationship: StepBasicGroupRelationship,
         product_definition_formation_relationship: StepBasicProductDefinitionFormationRelationship,
-        representation: StepReprRepresentation,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
         shape_aspect_relationship: StepReprShapeAspectRelationship,
     }
 }
@@ -49,12 +49,12 @@ step_select! {
     StepAP214AutoDesignDateAndPersonItem, [StepAP214AutoDesignOrganizationAssignment, StepBasicProduct, StepBasicProductDefinition, StepBasicProductDefinitionFormation, StepReprRepresentation, StepAP214AutoDesignDocumentReference, StepReprExternallyDefinedRepresentation, StepBasicProductDefinitionRelationship, StepBasicProductDefinitionWithAssociatedDocuments], {
         auto_design_organization_assignment: StepAP214AutoDesignOrganizationAssignment,
         product: StepBasicProduct,
-        product_definition: StepBasicProductDefinition,
-        product_definition_formation: StepBasicProductDefinitionFormation,
-        representation: StepReprRepresentation,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
         auto_design_document_reference: StepAP214AutoDesignDocumentReference,
         externally_defined_representation: StepReprExternallyDefinedRepresentation,
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
         product_definition_with_associated_documents: StepBasicProductDefinitionWithAssociatedDocuments,
     }
 }
@@ -81,11 +81,11 @@ step_select! {
     /// Auto design general org item.
     StepAP214AutoDesignGeneralOrgItem, [StepBasicProduct, StepBasicProductDefinition, StepBasicProductDefinitionFormation, StepBasicProductDefinitionRelationship, StepBasicProductDefinitionWithAssociatedDocuments, StepReprRepresentation, StepReprExternallyDefinedRepresentation, StepAP214AutoDesignDocumentReference], {
         product: StepBasicProduct,
-        product_definition: StepBasicProductDefinition,
-        product_definition_formation: StepBasicProductDefinitionFormation,
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
         product_definition_with_associated_documents: StepBasicProductDefinitionWithAssociatedDocuments,
-        representation: StepReprRepresentation,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
         externally_defined_representation: StepReprExternallyDefinedRepresentation,
         auto_design_document_reference: StepAP214AutoDesignDocumentReference,
     }
@@ -100,10 +100,10 @@ step_select! {
         geometrically_bounded_surface_shape_representation: StepShapeGeometricallyBoundedSurfaceShapeRepresentation,
         geometrically_bounded_wireframe_shape_representation: StepShapeGeometricallyBoundedWireframeShapeRepresentation,
         manifold_surface_shape_representation: StepShapeManifoldSurfaceShapeRepresentation,
-        representation: StepReprRepresentation,
-        representation_item: StepReprRepresentationItem,
-        shape_aspect: StepReprShapeAspect,
-        shape_representation: StepShapeShapeRepresentation,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
+        representation_item: dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
+        shape_representation: dyn crate::StepEntityBase<StepShapeShapeRepresentation>,
         template_instance: StepVisualTemplateInstance,
     }
 }
@@ -111,11 +111,11 @@ step_select! {
 step_select! {
     /// Auto design presented item select.
     StepAP214AutoDesignPresentedItemSelect, [StepBasicProductDefinition, StepBasicProductDefinitionRelationship, StepReprProductDefinitionShape, StepReprRepresentationRelationship, StepReprShapeAspect, StepBasicDocumentRelationship], {
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
-        product_definition: StepBasicProductDefinition,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
         product_definition_shape: StepReprProductDefinitionShape,
-        representation_relationship: StepReprRepresentationRelationship,
-        shape_aspect: StepReprShapeAspect,
+        representation_relationship: dyn crate::StepEntityBase<StepReprRepresentationRelationship>,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
         document_relationship: StepBasicDocumentRelationship,
     }
 }
@@ -126,17 +126,17 @@ step_select! {
         approval: StepBasicApproval,
         document_relationship: StepBasicDocumentRelationship,
         externally_defined_representation: StepReprExternallyDefinedRepresentation,
-        mapped_item: StepReprMappedItem,
+        mapped_item: dyn crate::StepEntityBase<StepReprMappedItem>,
         material_designation: StepReprMaterialDesignation,
         presentation_area: StepVisualPresentationArea,
         presentation_view: StepVisualPresentationView,
         product_category: StepBasicProductCategory,
-        product_definition: StepBasicProductDefinition,
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
-        property_definition: StepReprPropertyDefinition,
-        representation: StepReprRepresentation,
-        representation_relationship: StepReprRepresentationRelationship,
-        shape_aspect: StepReprShapeAspect,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        property_definition: dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
+        representation_relationship: dyn crate::StepEntityBase<StepReprRepresentationRelationship>,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
     }
 }
 
@@ -146,11 +146,11 @@ step_select! {
         approval: StepBasicApproval,
         descriptive_representation_item: StepReprDescriptiveRepresentationItem,
         material_designation: StepReprMaterialDesignation,
-        product_definition: StepBasicProductDefinition,
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
-        property_definition: StepReprPropertyDefinition,
-        representation: StepReprRepresentation,
-        shape_aspect: StepReprShapeAspect,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        property_definition: dyn crate::StepEntityBase<StepReprPropertyDefinition>,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
         shape_aspect_relationship: StepReprShapeAspectRelationship,
         applied_external_identification_assignment: StepAP214AppliedExternalIdentificationAssignment,
         assembly_component_usage: StepReprAssemblyComponentUsage,
@@ -161,8 +161,8 @@ step_select! {
         group_relationship: StepBasicGroupRelationship,
         measure_representation_item: StepReprMeasureRepresentationItem,
         product_category: StepBasicProductCategory,
-        product_definition_context: StepBasicProductDefinitionContext,
-        representation_item: StepReprRepresentationItem,
+        product_definition_context: dyn crate::StepEntityBase<StepBasicProductDefinitionContext>,
+        representation_item: dyn crate::StepEntityBase<StepReprRepresentationItem>,
     }
 }
 
@@ -172,7 +172,7 @@ step_select! {
         document_file: StepBasicDocumentFile,
         externally_defined_class: StepAP214ExternallyDefinedClass,
         externally_defined_general_property: StepAP214ExternallyDefinedGeneralProperty,
-        product_definition: StepBasicProductDefinition,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
         applied_organization_assignment: StepAP214AppliedOrganizationAssignment,
         applied_person_and_organization_assignment: StepAP214AppliedPersonAndOrganizationAssignment,
         approval: StepBasicApproval,
@@ -190,28 +190,28 @@ step_select! {
 step_select! {
     /// Group item.
     StepAP214GroupItem, [StepGeomGeometricRepresentationItem, StepBasicGroupRelationship, StepReprMappedItem, StepBasicProductDefinition, StepBasicProductDefinitionFormation, StepReprPropertyDefinitionRepresentation, StepReprRepresentation, StepReprRepresentationItem, StepReprRepresentationRelationshipWithTransformation, StepReprShapeAspect, StepReprShapeAspectRelationship, StepReprShapeRepresentationRelationship, StepVisualStyledItem, StepShapeTopologicalRepresentationItem], {
-        geometric_representation_item: StepGeomGeometricRepresentationItem,
+        geometric_representation_item: dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>,
         group_relationship: StepBasicGroupRelationship,
-        mapped_item: StepReprMappedItem,
-        product_definition: StepBasicProductDefinition,
-        product_definition_formation: StepBasicProductDefinitionFormation,
+        mapped_item: dyn crate::StepEntityBase<StepReprMappedItem>,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
         property_definition_representation: StepReprPropertyDefinitionRepresentation,
-        representation: StepReprRepresentation,
-        representation_item: StepReprRepresentationItem,
-        representation_relationship_with_transformation: StepReprRepresentationRelationshipWithTransformation,
-        shape_aspect: StepReprShapeAspect,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
+        representation_item: dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        representation_relationship_with_transformation: dyn crate::StepEntityBase<StepReprRepresentationRelationshipWithTransformation>,
+        shape_aspect: dyn crate::StepEntityBase<StepReprShapeAspect>,
         shape_aspect_relationship: StepReprShapeAspectRelationship,
-        shape_representation_relationship: StepReprShapeRepresentationRelationship,
-        styled_item: StepVisualStyledItem,
-        topological_representation_item: StepShapeTopologicalRepresentationItem,
+        shape_representation_relationship: dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>,
+        styled_item: dyn crate::StepEntityBase<StepVisualStyledItem>,
+        topological_representation_item: dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>,
     }
 }
 
 step_select! {
     /// Presented item select.
     StepAP214PresentedItemSelect, [StepBasicProductDefinition, StepBasicProductDefinitionRelationship], {
-        product_definition_relationship: StepBasicProductDefinitionRelationship,
-        product_definition: StepBasicProductDefinition,
+        product_definition_relationship: dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
     }
 }
 
@@ -280,7 +280,7 @@ impl StepAP214AppliedDateAssignment {
     /// `init`.
     pub fn init(
         &self,
-        a_assigned_date: &Handle<StepBasicDate>,
+        a_assigned_date: &Handle<dyn crate::StepEntityBase<StepBasicDate>>,
         a_role: &Handle<StepBasicDateRole>,
         a_items: &Handle<HArray1<StepAP214DateItem>>,
     ) {

@@ -3,7 +3,8 @@ use super::GeomToIgesGeomCurve;
 use super::bounded_range;
 use super::curve::EntityResult;
 use crate::iges_conv_geom::IgesConvGeomGeomBuilder;
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::{IgesGeomCircularArc, IgesGeomConicArc};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -66,7 +67,7 @@ impl GeomToIgesGeomCurve {
     /// Gives an arc the transformation of its position, unless that is the identity.
     fn positioned(
         &self,
-        entity: Handle<IgesDataIgesEntity>,
+        entity: Handle<dyn IgesDataEntityKind>,
         builder: &IgesConvGeomGeomBuilder,
     ) -> EntityResult {
         if !builder.is_identity() {

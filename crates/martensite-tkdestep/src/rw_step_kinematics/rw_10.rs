@@ -198,7 +198,7 @@ impl RwStepKinematicsRwPlanarCurvePair {
             the_data,
             the_num
         );
-        let mut a_curve1: Handle<StepGeomCurve> = Default::default();
+        let mut a_curve1: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
         the_data.read_entity(
             the_num,
             7,
@@ -207,7 +207,7 @@ impl RwStepKinematicsRwPlanarCurvePair {
             StepGeomCurve::static_type(),
             &mut a_curve1,
         )?;
-        let mut a_curve2: Handle<StepGeomCurve> = Default::default();
+        let mut a_curve2: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = Default::default();
         the_data.read_entity(
             the_num,
             8,

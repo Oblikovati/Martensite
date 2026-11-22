@@ -1,15 +1,13 @@
 //! A value made shareable by handle: a transient that owns a `T`.
 use crate::standard::{RuntimeType, RuntimeTyped, StandardTransient, Transient};
-use std::any::{Any, TypeId};
 
-/// `T` with a transient reference count, so it can live in a `Handle`; `Handle::new(Shared::new(v))`.
+/// `T` with the root class name, for use in transient interfaces; `Handle::new(Shared::new(v))`.
 ///
 /// Rust embeds `T` and dereferences to it. The type declares no
 /// runtime type of its own, so its dynamic type is the base transient. A guard against a
-/// `T` that already is a transient cannot be expressed; such a `T` simply nests its own count.
+/// `T` that already is a transient cannot be expressed; such a `T` keeps its own value semantics.
 #[repr(C)]
 pub struct Shared<T> {
-    parent: StandardTransient,
     value: T,
 }
 
@@ -17,10 +15,7 @@ impl<T> Shared<T> {
     /// Wraps a value constructed at the call
     /// site. Example: `Shared::new(vec![0; 3]).len() == 3`.
     pub fn new(value: T) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            value,
-        }
+        Self { value }
     }
 
     /// Unwraps the value; `Shared::new(4).into_inner() == 4`.
@@ -29,10 +24,7 @@ impl<T> Shared<T> {
     }
     /// Builds the wrapped base from captured reference arguments; `Shared::from_constructor(|| vec![7; 2])`.
     pub fn from_constructor(construct: impl FnOnce() -> T) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            value: construct(),
-        }
+        Self { value: construct() }
     }
 }
 impl<T: Clone> Clone for Shared<T> {
@@ -40,7 +32,6 @@ impl<T: Clone> Clone for Shared<T> {
         Self::from_constructor(|| self.value.clone())
     }
     fn clone_from(&mut self, source: &Self) {
-        // Transient assignment deliberately leaves the reference count unchanged.
         self.value.clone_from(&source.value);
     }
 }
@@ -71,22 +62,10 @@ impl<T: Send + Sync + 'static> RuntimeTyped for Shared<T> {
     fn static_type() -> &'static RuntimeType {
         StandardTransient::static_type() // no runtime type of its own
     }
-    fn project_from(object: &dyn crate::standard::Transient) -> Option<&Self> {
-        crate::standard::project_concrete::<Self>(object)
-    }
 }
 
 impl<T: Send + Sync + 'static> Transient for Shared<T> {
     fn dynamic_type(&self) -> &'static RuntimeType {
         StandardTransient::static_type()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        if requested == TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.parent.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        &self.parent
     }
 }

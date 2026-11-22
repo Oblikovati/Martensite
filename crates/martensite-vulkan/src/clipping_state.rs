@@ -2,16 +2,17 @@
 //! `GlClippingIterator`: enabled clipping, capping and chain counts, planes
 //! temporarily disabled by index, and the capping algorithm's chain filter.
 use martensite_tkernel::standard::Handle;
-use martensite_tkservice::graphic3d::{Graphic3dClipPlane, Graphic3dSequenceOfHClipPlane};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSource;
 
 /// Global (view) planes followed by local (object) planes, indexed from 1 as native
 /// `PlaneIndex`; `RenderClippingState::default().nb_clipping_or_capping_on() == 0`.
 #[derive(Clone, Debug, Default)]
 pub struct RenderClippingState {
-    global: Handle<Graphic3dSequenceOfHClipPlane>,
-    local: Handle<Graphic3dSequenceOfHClipPlane>,
+    global: Handle<dyn Graphic3dClipPlaneSequenceSource>,
+    local: Handle<dyn Graphic3dClipPlaneSequenceSource>,
     disabled: Vec<bool>,
-    capped_chain: Handle<Graphic3dClipPlane>,
+    capped_chain: Handle<dyn Graphic3dClipPlaneSource>,
     capped_sub_plane: i32,
     nb_clipping: i32,
     nb_capping: i32,
@@ -19,19 +20,21 @@ pub struct RenderClippingState {
     nb_disabled: i32,
 }
 
-fn planes(sequence: &Handle<Graphic3dSequenceOfHClipPlane>) -> Vec<Handle<Graphic3dClipPlane>> {
+fn planes(
+    sequence: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
+) -> Vec<Handle<dyn Graphic3dClipPlaneSource>> {
     sequence.get().map(|s| s.items()).unwrap_or_default()
 }
 
-fn sub_planes(plane: &Handle<Graphic3dClipPlane>) -> i32 {
+fn sub_planes(plane: &Handle<dyn Graphic3dClipPlaneSource>) -> i32 {
     plane.get().map_or(0, |p| p.nb_chain_next_planes())
 }
 
-fn is_on(plane: &Handle<Graphic3dClipPlane>) -> bool {
+fn is_on(plane: &Handle<dyn Graphic3dClipPlaneSource>) -> bool {
     plane.get().is_some_and(|p| p.is_on())
 }
 
-fn is_capping(plane: &Handle<Graphic3dClipPlane>) -> bool {
+fn is_capping(plane: &Handle<dyn Graphic3dClipPlaneSource>) -> bool {
     plane.get().is_some_and(|p| p.is_capping())
 }
 
@@ -47,7 +50,7 @@ impl RenderClippingState {
 
     /// Replace the global planes, drop the local ones, re-enable every plane and reset the
     /// capping filter; `state.reset(&view_planes)`.
-    pub fn reset(&mut self, planes: &Handle<Graphic3dSequenceOfHClipPlane>) {
+    pub fn reset(&mut self, planes: &Handle<dyn Graphic3dClipPlaneSequenceSource>) {
         let start = self.local_start();
         self.remove(&self.local.clone(), start);
         self.remove(&self.global.clone(), 1);
@@ -59,7 +62,7 @@ impl RenderClippingState {
     }
 
     /// Replace the local (object) planes after the global ones; `state.set_local_planes(&p)`.
-    pub fn set_local_planes(&mut self, planes: &Handle<Graphic3dSequenceOfHClipPlane>) {
+    pub fn set_local_planes(&mut self, planes: &Handle<dyn Graphic3dClipPlaneSequenceSource>) {
         let start = self.local_start();
         self.remove(&self.local.clone(), start);
         self.local = planes.clone();
@@ -70,7 +73,7 @@ impl RenderClippingState {
         self.global.get().map_or(1, |s| s.size() as usize + 1)
     }
 
-    fn add(&mut self, sequence: &Handle<Graphic3dSequenceOfHClipPlane>, start: usize) {
+    fn add(&mut self, sequence: &Handle<dyn Graphic3dClipPlaneSequenceSource>, start: usize) {
         for (index, plane) in (start..).zip(planes(sequence)) {
             if self.disabled.len() <= index {
                 self.disabled.resize(index + 1, false);
@@ -82,7 +85,7 @@ impl RenderClippingState {
         }
     }
 
-    fn remove(&mut self, sequence: &Handle<Graphic3dSequenceOfHClipPlane>, start: usize) {
+    fn remove(&mut self, sequence: &Handle<dyn Graphic3dClipPlaneSequenceSource>, start: usize) {
         for (index, plane) in (start..).zip(planes(sequence)) {
             if is_on(&plane) && !self.disabled.get(index).copied().unwrap_or(false) {
                 self.count(&plane, -1);
@@ -91,7 +94,7 @@ impl RenderClippingState {
     }
 
     /// Add (`sign` 1) or remove (-1) one enabled chain and its sub-planes.
-    fn count(&mut self, plane: &Handle<Graphic3dClipPlane>, sign: i32) {
+    fn count(&mut self, plane: &Handle<dyn Graphic3dClipPlaneSource>, sign: i32) {
         let nb = sign * sub_planes(plane);
         if is_capping(plane) {
             self.nb_capping += nb;
@@ -155,7 +158,7 @@ impl RenderClippingState {
         true
     }
 
-    fn plane(&self, plane_index: usize) -> Option<Handle<Graphic3dClipPlane>> {
+    fn plane(&self, plane_index: usize) -> Option<Handle<dyn Graphic3dClipPlaneSource>> {
         let mut iter = self.iter();
         while iter.more() {
             if iter.plane_index() == plane_index {
@@ -190,7 +193,7 @@ impl RenderClippingState {
     }
 
     /// The chain of the capping filter (null without one); `state.capped_chain()`.
-    pub fn capped_chain(&self) -> &Handle<Graphic3dClipPlane> {
+    pub fn capped_chain(&self) -> &Handle<dyn Graphic3dClipPlaneSource> {
         &self.capped_chain
     }
 
@@ -217,14 +220,22 @@ impl RenderClippingState {
     }
 
     /// Enable only sub-plane `sub_plane` (from 1) of `chain`; `state.disable_all_except(&c, 1)`.
-    pub fn disable_all_except(&mut self, chain: &Handle<Graphic3dClipPlane>, sub_plane: i32) {
+    pub fn disable_all_except(
+        &mut self,
+        chain: &Handle<dyn Graphic3dClipPlaneSource>,
+        sub_plane: i32,
+    ) {
         self.capped_chain = chain.clone();
         self.capped_sub_plane = sub_plane;
     }
 
     /// Enable every plane but sub-plane `sub_plane` (from 1) of `chain`;
     /// `state.enable_all_except(&c, 1)`.
-    pub fn enable_all_except(&mut self, chain: &Handle<Graphic3dClipPlane>, sub_plane: i32) {
+    pub fn enable_all_except(
+        &mut self,
+        chain: &Handle<dyn Graphic3dClipPlaneSource>,
+        sub_plane: i32,
+    ) {
         self.capped_chain = chain.clone();
         self.capped_sub_plane = -sub_plane;
     }
@@ -250,8 +261,8 @@ impl RenderClippingState {
 /// start at 1. `state.iter.more`.
 pub struct RenderClippingIterator<'a> {
     state: &'a RenderClippingState,
-    global: Vec<Handle<Graphic3dClipPlane>>,
-    local: Vec<Handle<Graphic3dClipPlane>>,
+    global: Vec<Handle<dyn Graphic3dClipPlaneSource>>,
+    local: Vec<Handle<dyn Graphic3dClipPlaneSource>>,
     index: usize,
 }
 
@@ -279,7 +290,7 @@ impl RenderClippingIterator<'_> {
     }
 
     /// The plane at the cursor (null past the end); `it.value()`.
-    pub fn value(&self) -> Handle<Graphic3dClipPlane> {
+    pub fn value(&self) -> Handle<dyn Graphic3dClipPlaneSource> {
         let local = self.index.wrapping_sub(self.global.len() + 1);
         self.global
             .get(self.index.wrapping_sub(1))

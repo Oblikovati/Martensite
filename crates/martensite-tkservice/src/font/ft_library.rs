@@ -7,16 +7,10 @@ use std::ffi::c_void;
 /// A FreeType library; invalid when FreeType is missing or fails to initialise.
 /// Example: `FontFTLibrary::new().is_valid()`.
 pub struct FontFTLibrary {
-    transient: StandardTransient,
     /// The `FT_Library` address, 0 for none.
     library: usize,
 }
-martensite_tkernel::impl_transient!(
-    FontFTLibrary,
-    "Font_FTLibrary",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(FontFTLibrary, "Font_FTLibrary", StandardTransient);
 
 impl Default for FontFTLibrary {
     fn default() -> Self {
@@ -29,7 +23,6 @@ impl FontFTLibrary {
     /// Example: `FontFTLibrary::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             library: init_freetype(),
         }
     }

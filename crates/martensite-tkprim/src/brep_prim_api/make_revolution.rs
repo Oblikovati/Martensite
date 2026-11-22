@@ -12,7 +12,7 @@ use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShapeBase;
 /// -gp::DY(), gp::DX())` (the XZ plane, normal -Y), which is the 2d meridian.
 fn project(meridian: &Handle<dyn GeomCurve>) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let frame = Axis2::with_x_direction(origin(), dy().reversed(), dx())?;
-    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame.axis3())).cast();
+    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame.axis3())).into_upcast();
     geom_proj_lib::curve2d(meridian, &plane)
 }
 
@@ -38,7 +38,7 @@ fn meridian_range(meridian: &Handle<dyn GeomCurve>) -> Result<(f64, f64), Failur
 /// use martensite_tkmath::gp::{Direction3, Point3};
 /// use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeRevolution;
 /// use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
-/// let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(Point3::new(1.0, 0.0, 0.0), Direction3::new(0.0, 0.0, 1.0)?)).cast();
+/// let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(Point3::new(1.0, 0.0, 0.0), Direction3::new(0.0, 0.0, 1.0)?)).into_upcast();
 /// let mut maker = BRepPrimAPIMakeRevolution::with_range(&line, 0.0, 2.0)?;
 /// assert!(!maker.shape()?.is_null());
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())

@@ -14,8 +14,7 @@ struct LightDumpView {
     base: V3dView,
     redraws: Arc<AtomicUsize>,
 }
-martensite_tkernel::impl_transient!(LightDumpView,"Martensite_LightDumpView",V3dView,base,
-    interfaces:[dyn V3dViewSource]);
+martensite_tkernel::impl_transient!(LightDumpView,"Martensite_LightDumpView",V3dView, interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for LightDumpView {
     fn view_base(&self) -> &V3dView {
         // Copying the view would change callback and implementation ownership.

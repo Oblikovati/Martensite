@@ -147,9 +147,9 @@ impl GeomFillSweepSectionGenerator {
 
     fn arc_bspline(&self, axis: Axis2, angle: f64) -> Result<Handle<GeomBSplineCurve>, Failure> {
         let circ: Handle<dyn GeomCurve> =
-            Handle::new(GeomCircle::new(axis, self.my_radius)?).cast();
+            Handle::new(GeomCircle::new(axis, self.my_radius)?).into_upcast();
         let ct: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&circ, 0.0, angle, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&circ, 0.0, angle, true, true)?).into_upcast();
         let conv = if self.my_polynomial {
             ParameterisationType::Polynomial
         } else {

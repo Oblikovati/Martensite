@@ -11,7 +11,7 @@ use crate::tdf::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::HArray1,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 
 /// The private fields `myIndxes`, `myValues`, `myUp1` and `myUp2`: the indexes the
@@ -97,13 +97,12 @@ fn apply<A: ArrayAttribute>(
     attribute: &Handle<dyn TdfAttribute>,
     label: &TdfLabel,
 ) -> Result<(), Failure> {
-    let backup = attribute.cast::<A>();
-    let Some(backup_attribute) = backup.get() else {
+    let Some(backup_attribute) = attribute.downcast_ref::<A>() else {
         return Ok(());
     };
     let mut current: Handle<A> = Handle::default();
     if !label.find_attribute_as(&backup_attribute.id(), &mut current)? {
-        return label.add_attribute(&backup.cast(), true);
+        return label.add_attribute(attribute, true);
     }
     let current = live(&current, A::TYPE_NAME)?;
     current.backup()?;
@@ -165,21 +164,19 @@ macro_rules! array_delta {
     ($(#[$doc:meta])* $name:ident, $type_name:literal, $attribute:ty) => {
         $(#[$doc])*
         pub struct $name {
-            transient: StandardTransient,
             base: TdfAttributeDeltaBase,
             state: ArrayDeltaState<<$attribute as ArrayAttribute>::Item>,
         }
-        impl_transient!($name, $type_name, dyn TdfDeltaOnModification, transient,
+        impl_transient!($name, $type_name, dyn TdfDeltaOnModification,
             interfaces: [dyn TdfAttributeDelta, dyn TdfDeltaOnModification]);
         impl $name {
             /// The constructor `(OldAtt)`: records what the modification of the backup
             /// `old_attribute` changed, already in its bound handle.
             pub fn new(old_attribute: &Handle<$attribute>) -> Result<Handle<Self>, Failure> {
-                let base = TdfAttributeDeltaBase::new(&old_attribute.cast());
+                let base = TdfAttributeDeltaBase::new(&old_attribute.upcast());
                 let label = old_attribute.get().map(|old| old.label()).unwrap_or_default();
                 let state = record(old_attribute, &label)?;
                 Ok(TdfAttributeDeltaBase::share(Self {
-                    transient: StandardTransient::default(),
                     base,
                     state,
                 }))

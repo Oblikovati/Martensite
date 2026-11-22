@@ -5,17 +5,16 @@ use super::{
     ais_base_animation_object_update_transform,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkmath::gp::{Transform3, TransformNLerp};
 /// Animate an object's exact local placement; `AisAnimationObject::new("move", &context, &object, start, end)`.
 pub struct AisAnimationObject {
-    transient: StandardTransient,
     base: AisBaseAnimationObjectBase,
     transform_lerp: TransformNLerp,
 }
-martensite_tkernel::impl_transient!(AisAnimationObject,"AisAnimationObject",dyn AisBaseAnimationObjectSource,transient,
+martensite_tkernel::impl_transient!(AisAnimationObject,"AisAnimationObject",dyn AisBaseAnimationObjectSource,
     interfaces:[dyn AisAnimationSource,dyn AisBaseAnimationObjectSource]);
 impl AisAnimationObject {
     /// Retain targets and copy exact local endpoints; `AisAnimationObject::new("move", &context, &object, start, end)`.
@@ -27,7 +26,6 @@ impl AisAnimationObject {
         end: Transform3,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisBaseAnimationObjectBase::new(name, context, object),
             transform_lerp: TransformNLerp::new(start, end),
         }

@@ -31,7 +31,7 @@ fn TCollection_AsciiStringTest__BUC60724_EmptyStringInitialization() {
 }
 #[test]
 fn TCollection_AsciiStringTest__BUC60773_HAsciiStringInitialization() {
-    use martensite_tkernel::tcollection::HAsciiString;
+    use crate::tcollection::HAsciiString;
     let handle = std::sync::Arc::new(HAsciiString::default());
     assert!(!std::sync::Arc::as_ptr(&handle).is_null());
     let bytes = handle.as_bytes_with_nul();

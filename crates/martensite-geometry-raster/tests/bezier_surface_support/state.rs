@@ -21,7 +21,7 @@ fn assert_geometry_identity(
     let returned = surface
         .surface_part()
         .surface()
-        .cast::<martensite_tkg3d::geom::GeomBezierSurface>();
+        .into_downcast::<martensite_tkg3d::geom::GeomBezierSurface>();
     assert!(std::ptr::eq(
         geometry.get().unwrap(),
         returned.get().unwrap()

@@ -10,8 +10,9 @@ macro_rules! rw_block_b_0154 {
             $ach,
             &mut $a_representation_name,
         )?;
-        let mut $a_representation_items: Handle<HArray1<Handle<StepReprRepresentationItem>>> =
-            Default::default();
+        let mut $a_representation_items: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        > = Default::default();
         let mut $sub2: i32 = 0;
     };
 }

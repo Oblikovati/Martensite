@@ -15,7 +15,7 @@ step_entity! {
     /// Evaluated degenerate pcurve.
     StepGeomEvaluatedDegeneratePcurve, StepGeomEvaluatedDegeneratePcurveState, "StepGeomEvaluatedDegeneratePcurve", StepGeomDegeneratePcurve, {
         equivalent_point: Handle<StepGeomCartesianPoint>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomEvaluatedDegeneratePcurve {
     step_methods! {
@@ -26,7 +26,7 @@ impl StepGeomEvaluatedDegeneratePcurve {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_surface: &Handle<StepGeomSurface>,
+        a_basis_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_reference_to_curve: &Handle<StepReprDefinitionalRepresentation>,
         a_equivalent_point: &Handle<StepGeomCartesianPoint>,
     ) {
@@ -42,7 +42,7 @@ step_entity! {
         geometric_representation_context: Handle<StepGeomGeometricRepresentationContext>,
         global_unit_assigned_context: Handle<StepReprGlobalUnitAssignedContext>,
         global_uncertainty_assigned_context: Handle<StepReprGlobalUncertaintyAssignedContext>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationContext]
 }
 impl StepGeomGeomRepContextAndGlobUnitAssCtxAndGlobUncertaintyAssCtx {
     step_methods! {
@@ -75,7 +75,7 @@ impl StepGeomGeomRepContextAndGlobUnitAssCtxAndGlobUncertaintyAssCtx {
         a_context_identifier: &Handle<HAsciiString>,
         a_context_type: &Handle<HAsciiString>,
         a_coordinate_space_dimension: i32,
-        a_units: &Handle<HArray1<Handle<StepBasicNamedUnit>>>,
+        a_units: &Handle<HArray1<StepBaseHandle<StepBasicNamedUnit>>>,
         an_uncertainty: &Handle<HArray1<Handle<StepBasicUncertaintyMeasureWithUnit>>>,
     ) {
         self.parent.init(a_context_identifier, a_context_type);
@@ -134,7 +134,7 @@ impl StepGeomGeomRepContextAndGlobUnitAssCtxAndGlobUncertaintyAssCtx {
     /// The null dereference or array index failure.
     pub fn set_units(
         &self,
-        a_units: &Handle<HArray1<Handle<StepBasicNamedUnit>>>,
+        a_units: &Handle<HArray1<StepBaseHandle<StepBasicNamedUnit>>>,
     ) -> Result<(), Failure> {
         let field_global_unit_assigned_context =
             self.state.read().global_unit_assigned_context.clone();
@@ -149,7 +149,7 @@ impl StepGeomGeomRepContextAndGlobUnitAssCtxAndGlobUncertaintyAssCtx {
     ///
     /// # Errors
     /// The null dereference or array index failure.
-    pub fn units(&self) -> Result<Handle<HArray1<Handle<StepBasicNamedUnit>>>, Failure> {
+    pub fn units(&self) -> Result<Handle<HArray1<StepBaseHandle<StepBasicNamedUnit>>>, Failure> {
         let field_global_unit_assigned_context =
             self.state.read().global_unit_assigned_context.clone();
         Ok(step_live(
@@ -162,7 +162,7 @@ impl StepGeomGeomRepContextAndGlobUnitAssCtxAndGlobUncertaintyAssCtx {
     ///
     /// # Errors
     /// The null dereference or array index failure.
-    pub fn units_value(&self, num: i32) -> Result<Handle<StepBasicNamedUnit>, Failure> {
+    pub fn units_value(&self, num: i32) -> Result<StepBaseHandle<StepBasicNamedUnit>, Failure> {
         let field_global_unit_assigned_context =
             self.state.read().global_unit_assigned_context.clone();
         step_live(
@@ -263,7 +263,7 @@ step_entity! {
     /// Geometric representation context.
     StepGeomGeometricRepresentationContext, StepGeomGeometricRepresentationContextState, "StepGeomGeometricRepresentationContext", StepReprRepresentationContext, {
         coordinate_space_dimension: i32,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationContext]
 }
 impl StepGeomGeometricRepresentationContext {
     step_methods! {
@@ -287,7 +287,7 @@ step_entity! {
     StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext, StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContextState, "StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext", StepReprRepresentationContext, {
         geometric_representation_context: Handle<StepGeomGeometricRepresentationContext>,
         global_unit_assigned_context: Handle<StepReprGlobalUnitAssignedContext>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationContext]
 }
 impl StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext {
     step_methods! {
@@ -316,7 +316,7 @@ impl StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext {
         a_context_identifier: &Handle<HAsciiString>,
         a_context_type: &Handle<HAsciiString>,
         a_coordinate_space_dimension: i32,
-        a_units: &Handle<HArray1<Handle<StepBasicNamedUnit>>>,
+        a_units: &Handle<HArray1<StepBaseHandle<StepBasicNamedUnit>>>,
     ) {
         self.parent.init(a_context_identifier, a_context_type);
         self.state.write().geometric_representation_context =
@@ -362,7 +362,7 @@ impl StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext {
     /// The null dereference or array index failure.
     pub fn set_units(
         &self,
-        a_units: &Handle<HArray1<Handle<StepBasicNamedUnit>>>,
+        a_units: &Handle<HArray1<StepBaseHandle<StepBasicNamedUnit>>>,
     ) -> Result<(), Failure> {
         let field_global_unit_assigned_context =
             self.state.read().global_unit_assigned_context.clone();
@@ -377,7 +377,7 @@ impl StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext {
     ///
     /// # Errors
     /// The null dereference or array index failure.
-    pub fn units(&self) -> Result<Handle<HArray1<Handle<StepBasicNamedUnit>>>, Failure> {
+    pub fn units(&self) -> Result<Handle<HArray1<StepBaseHandle<StepBasicNamedUnit>>>, Failure> {
         let field_global_unit_assigned_context =
             self.state.read().global_unit_assigned_context.clone();
         Ok(step_live(
@@ -390,7 +390,7 @@ impl StepGeomGeometricRepresentationContextAndGlobalUnitAssignedContext {
     ///
     /// # Errors
     /// The null dereference or array index failure.
-    pub fn units_value(&self, num: i32) -> Result<Handle<StepBasicNamedUnit>, Failure> {
+    pub fn units_value(&self, num: i32) -> Result<StepBaseHandle<StepBasicNamedUnit>, Failure> {
         let field_global_unit_assigned_context =
             self.state.read().global_unit_assigned_context.clone();
         step_live(

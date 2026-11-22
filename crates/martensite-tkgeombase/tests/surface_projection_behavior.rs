@@ -3,7 +3,7 @@
 //! with the retained kernel is the numeric expectation's job (`gpl_*` requests of
 //! tools/verify_tkgeombase_numeric.py).
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, TransientHandleTarget};
 use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dCurve, Geom2dLine, Geom2dTrimmedCurve};
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomCircle, GeomCurve, GeomCylindricalSurface, GeomLine, GeomPlane,
@@ -38,7 +38,7 @@ fn segment(origin: Point3, direction: Direction3, u1: f64, u2: f64) -> Handle<dy
     Handle::new(GeomTrimmedCurve::new(&line, u1, u2, true, true).unwrap()).cast()
 }
 
-fn name<T: ?Sized + RuntimeTyped>(handle: &Handle<T>) -> &'static str {
+fn name<T: ?Sized + TransientHandleTarget>(handle: &Handle<T>) -> &'static str {
     handle.dynamic_type().map_or("null", |kind| kind.name())
 }
 

@@ -38,7 +38,8 @@ pub(crate) use rw_block_0107;
 macro_rules! rw_block_0108 {
     ($a_items:ident, $a_name:ident, $ach:ident, $anent2:ident, $data:ident, $nsub2:ident, $num:ident) => {
         rw_block_0179!($a_items, $a_name, $ach, $data, $num);
-        let mut $anent2: Handle<StepReprRepresentationItem> = Default::default();
+        let mut $anent2: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            Default::default();
         let mut $nsub2: i32 = Default::default();
     };
 }
@@ -48,8 +49,9 @@ macro_rules! rw_block_0109 {
     ($a_bounds:ident, $a_name:ident, $ach:ident, $anent2:ident, $data:ident, $nsub2:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_bounds: Handle<HArray1<Handle<StepShapeFaceBound>>> = Default::default();
-        let mut $anent2: Handle<StepShapeFaceBound> = Default::default();
+        let mut $a_bounds: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>> =
+            Default::default();
+        let mut $anent2: Handle<dyn crate::StepEntityBase<StepShapeFaceBound>> = Default::default();
         let mut $nsub2: i32 = Default::default();
     };
 }

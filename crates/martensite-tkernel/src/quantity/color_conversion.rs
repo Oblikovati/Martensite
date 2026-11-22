@@ -35,7 +35,7 @@ impl Color {
         martensite_cmath::powf((value + 0.055) / 1.055, 2.4)
     }
     /// Converts gamma-encoded channels to HLS; `Color::srgb_to_hls([1.0,0.0,0.0])`.
-    pub fn srgb_to_hls([r, g, b]: [f32; 3]) -> [f32; 3] {
+    pub(super) fn srgb_to_hls([r, g, b]: [f32; 3]) -> [f32; 3] {
         let (mut maximum, mut plus, mut difference) = (r, 0.0, g - b);
         if g > maximum {
             maximum = g;
@@ -103,7 +103,7 @@ impl Color {
         Ok(rgb)
     }
     /// Converts linear RGB to Lab with D65 white; `Color::linear_rgb_to_lab([1.0;3])`.
-    pub fn linear_rgb_to_lab(rgb: [f32; 3]) -> [f32; 3] {
+    pub(super) fn linear_rgb_to_lab(rgb: [f32; 3]) -> [f32; 3] {
         let [r, g, b] = rgb.map(f64::from);
         let x = (r * 0.4124564 + g * 0.3575761 + b * 0.1804375) * 100.0 / 95.047;
         let y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750;
@@ -116,7 +116,7 @@ impl Color {
         ]
     }
     /// Converts Lab, reducing chroma by 0.1% steps to fit gamut; `Color::lab_to_linear_rgb([50.0,0.0,0.0])`.
-    pub fn lab_to_linear_rgb(lab: [f32; 3]) -> [f32; 3] {
+    pub(super) fn lab_to_linear_rgb(lab: [f32; 3]) -> [f32; 3] {
         for rate in (0..=1000).rev() {
             let channels = lab_rgb_at_rate(lab, rate);
             if rate == 0 || channels.iter().all(|v| *v >= 0.0 && *v <= 1.0) {
@@ -126,7 +126,7 @@ impl Color {
         unreachable!("rate zero always returns")
     }
     /// Converts Lab to cylindrical components; `Color::lab_to_lch([50.0,25.0,25.0])`.
-    pub fn lab_to_lch([light, a, b]: [f32; 3]) -> [f32; 3] {
+    pub(super) fn lab_to_lch([light, a, b]: [f32; 3]) -> [f32; 3] {
         let (a, b) = (f64::from(a), f64::from(b));
         let chroma = (a * a + b * b).sqrt();
         let mut hue = if chroma > Self::epsilon() {
@@ -140,7 +140,7 @@ impl Color {
         [light, chroma as f32, hue as f32]
     }
     /// Converts cylindrical components to Lab; `Color::lch_to_lab([50.0,25.0,45.0])`.
-    pub fn lch_to_lab([light, chroma, hue]: [f32; 3]) -> [f32; 3] {
+    pub(super) fn lch_to_lab([light, chroma, hue]: [f32; 3]) -> [f32; 3] {
         let (chroma, hue) = (f64::from(chroma), f64::from(hue) * DEG_TO_RAD);
         [
             light,

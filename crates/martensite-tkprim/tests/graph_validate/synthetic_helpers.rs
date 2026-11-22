@@ -11,7 +11,7 @@ fn synthetic_line(graph: &mut BRepGraph, first: VertexId, last: VertexId, length
     let direction =
         Direction3::from_vector(Vector3::between(start, end).normalized().unwrap()).unwrap();
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(start, direction))).into_cast();
+        Handle::new(GeomLine::new(Axis1::new(start, direction))).into_upcast();
     graph
         .editor()
         .edges()
@@ -26,7 +26,7 @@ fn synthetic_circle(
 ) -> EdgeId {
     let axis = Axis2::new(center, normal).unwrap();
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::new(axis, radius).unwrap()).into_cast();
+        Handle::new(GeomCircle::new(axis, radius).unwrap()).into_upcast();
     graph.editor().edges().add(
         vertex,
         vertex,
@@ -44,7 +44,7 @@ fn synthetic_wire(graph: &mut BRepGraph, entries: &[(EdgeId, ParityOrientation)]
     graph.editor().wires().add(&coedges)
 }
 fn synthetic_plane(point: Point3, normal: Direction3) -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(synthetic_frame(point, normal))).into_cast()
+    Handle::new(GeomPlane::new(synthetic_frame(point, normal))).into_upcast()
 }
 fn synthetic_face(
     graph: &mut BRepGraph,

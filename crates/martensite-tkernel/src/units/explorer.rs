@@ -3,11 +3,11 @@
 use super::dictionary::UnitsDictionary;
 use super::quantity::Quantity;
 use super::support::{c_str, item, length, new_sequence, object};
-use super::unit::Unit;
 use super::units_system::UnitsSystem;
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle};
 use crate::tcollection::AsciiString;
+use crate::units::UnitObject;
 
 /// A cursor over quantities and units; `Explorer::for_dictionary(&dictionary)?`.
 ///
@@ -17,7 +17,7 @@ pub struct Explorer {
     current_quantity: usize,
     quantities: Handle<HSequence<Handle<Quantity>>>,
     current_unit: usize,
-    units: Handle<HSequence<Handle<Unit>>>,
+    units: Handle<HSequence<Handle<dyn UnitObject>>>,
     active: Handle<HSequence<i32>>,
 }
 

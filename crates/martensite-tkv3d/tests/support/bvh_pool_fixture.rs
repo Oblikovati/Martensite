@@ -2,9 +2,7 @@
 use martensite_tkernel::{
     message::{Gravity, Messenger, Printer, PrinterBase, PrinterType},
     osd::{SignalHost, SignalMode},
-    standard::{
-        Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, WeakHandle,
-    },
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, WeakHandle},
     tcollection::AsciiString,
 };
 use martensite_tkmath::gp::Point3;
@@ -70,7 +68,6 @@ pub fn pool_fixture(
 }
 
 pub struct PoolBuildJob {
-    transient: StandardTransient,
     sensitive: Select3DSensitiveEntityBase,
     pub calls: AtomicUsize,
     pub buildable: AtomicBool,
@@ -82,11 +79,10 @@ pub struct PoolBuildJob {
     pub order: Arc<SharedState<Vec<i32>>>,
     pub tag: i32,
 }
-martensite_tkernel::impl_transient!(PoolBuildJob, "Test_PoolBuildJob", dyn Select3DSensitiveEntity, transient, interfaces: [dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(PoolBuildJob, "Test_PoolBuildJob", dyn Select3DSensitiveEntity, interfaces: [dyn Select3DSensitiveEntity]);
 impl PoolBuildJob {
     pub fn new(tag: i32, outcome: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             sensitive: Select3DSensitiveEntityBase::new(&Handle::default()),
             calls: AtomicUsize::new(0),
             buildable: AtomicBool::new(true),

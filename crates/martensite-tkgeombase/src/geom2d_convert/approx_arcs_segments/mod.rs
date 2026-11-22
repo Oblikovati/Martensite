@@ -101,9 +101,10 @@ impl<'a> ApproxArcsSegments<'a> {
                 start,
                 Direction2::from_vector(Vector2::between(start, end))?,
             );
-            let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(axis)).cast();
+            let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(axis)).into_upcast();
             let segment = Geom2dTrimmedCurve::new(&line, 0.0, dist, true, true)?;
-            self.my_seq_curves.append(Handle::new(segment).cast());
+            self.my_seq_curves
+                .append(Handle::new(segment).into_upcast());
             self.my_status = ApproxArcsStatus::Ok;
         }
         Ok(())

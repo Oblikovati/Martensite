@@ -46,15 +46,13 @@ pub struct NodeData {
 /// ```
 #[derive(Default)]
 pub struct PolyInternalNode {
-    base: StandardTransient,
     indices: SharedState<NodeIndices>,
     data: SharedState<NodeData>,
 }
 impl_transient!(
     PolyInternalNode,
     "HLRAlgo_PolyInternalNode",
-    StandardTransient,
-    base
+    StandardTransient
 );
 
 impl PolyInternalNode {

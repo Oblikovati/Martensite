@@ -7,7 +7,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::{Direction3, Point3};
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dNameOfMaterial, Graphic3dTypeOfShadingModel,
+    Graphic3dCLightSource, Graphic3dNameOfMaterial, Graphic3dTypeOfShadingModel,
 };
 use martensite_tkv3d::ais::AisLightSource;
 use martensite_tkv3d::v3d::{
@@ -43,7 +43,10 @@ pub(super) fn brass_box_scene(
     Ok(())
 }
 
-fn named(light: Handle<Graphic3dCLight>, name: &str) -> Handle<Graphic3dCLight> {
+fn named(
+    light: Handle<dyn Graphic3dCLightSource>,
+    name: &str,
+) -> Handle<dyn Graphic3dCLightSource> {
     light
         .get()
         .expect("a new light")
@@ -55,7 +58,7 @@ fn named(light: Handle<Graphic3dCLight>, name: &str) -> Handle<Graphic3dCLight> 
 pub(super) fn ambient_light(
     name: &str,
     color: NamedColor,
-) -> Result<Handle<Graphic3dCLight>, Failure> {
+) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
     Ok(named(
         Handle::new(V3dAmbientLight::new(Color::named(color))).cast(),
         name,
@@ -63,7 +66,7 @@ pub(super) fn ambient_light(
 }
 
 /// A spot light with the default parameters.
-pub(super) fn spot_light(name: &str) -> Result<Handle<Graphic3dCLight>, Failure> {
+pub(super) fn spot_light(name: &str) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
     let white = Color::named(NamedColor::WHITE);
     let light = V3dSpotLight::new(
         &Point3::new(0., 0., 0.),
@@ -74,20 +77,23 @@ pub(super) fn spot_light(name: &str) -> Result<Handle<Graphic3dCLight>, Failure>
 }
 
 /// A positional light with the default parameters.
-pub(super) fn positional_light(name: &str) -> Result<Handle<Graphic3dCLight>, Failure> {
+pub(super) fn positional_light(name: &str) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
     let light = V3dPositionalLight::new(&Point3::new(0., 0., 0.), Color::named(NamedColor::WHITE))?;
     Ok(named(Handle::new(light).cast(), name))
 }
 
 /// A directional light with the default parameters.
-pub(super) fn directional_light(name: &str) -> Result<Handle<Graphic3dCLight>, Failure> {
+pub(super) fn directional_light(name: &str) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
     let white = Color::named(NamedColor::WHITE);
     let light = V3dDirectionalLight::new(V3dTypeOfOrientation::XposYposZpos, white, false)?;
     Ok(named(Handle::new(light).cast(), name))
 }
 
 /// Set the position; `place(&light, [50., 25., 25.])?`.
-pub(super) fn place(light: &Handle<Graphic3dCLight>, [x, y, z]: [f64; 3]) -> Result<(), Failure> {
+pub(super) fn place(
+    light: &Handle<dyn Graphic3dCLightSource>,
+    [x, y, z]: [f64; 3],
+) -> Result<(), Failure> {
     light
         .get()
         .ok_or_else(null_light)?
@@ -95,7 +101,10 @@ pub(super) fn place(light: &Handle<Graphic3dCLight>, [x, y, z]: [f64; 3]) -> Res
 }
 
 /// Set the direction; `direct(&light, [0., 0., -1.])?`.
-pub(super) fn direct(light: &Handle<Graphic3dCLight>, [x, y, z]: [f64; 3]) -> Result<(), Failure> {
+pub(super) fn direct(
+    light: &Handle<dyn Graphic3dCLightSource>,
+    [x, y, z]: [f64; 3],
+) -> Result<(), Failure> {
     light
         .get()
         .ok_or_else(null_light)?

@@ -3,7 +3,7 @@
 //! natively.
 use super::{
     IFSelectActivator, IFSelectActivatorBase, IFSelectPrintCount, IFSelectReturnStatus,
-    IFSelectSessionPilot, IFSelectSignCounter, IFSelectSignCounterOps,
+    IFSelectSessionPilot, IFSelectSignCounterOps,
 };
 use martensite_tkernel::{
     message::Message,
@@ -192,14 +192,13 @@ impl IFSelectSessionPilot {
     }
     /// `ExecuteCounter(counter, numword, mode = IFSelectCountByItem)`: the counter on the
     /// model (without words from `numword`) or on the list the words give, printed.
-    pub fn execute_counter(
+    pub fn execute_counter<C: ?Sized + IFSelectSignCounterOps>(
         &self,
-        counter: &Handle<IFSelectSignCounter>,
+        counter: &Handle<C>,
         numword: i32,
         mode: IFSelectPrintCount,
     ) -> Result<IFSelectReturnStatus, Failure> {
-        let ops = counter.cast::<dyn IFSelectSignCounterOps>();
-        let Some(live) = ops.get() else {
+        let Some(live) = counter.get() else {
             return Ok(IFSelectReturnStatus::RetError);
         };
         live.clear();

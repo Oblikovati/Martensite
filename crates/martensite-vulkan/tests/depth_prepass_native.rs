@@ -60,7 +60,7 @@ fn add_triangles(group: &Handle<dyn Graphic3dGroup>, points: &[[f32; 3]], rgb: [
         array.add_vertex(x, y, z).unwrap();
     }
     group.set_group_primitives_aspect(&flat_style(rgb));
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
 }
 
 fn add_rect(structure: &Graphic3dStructure, corners: [f32; 4], z: f32, rgb: [f32; 3]) {

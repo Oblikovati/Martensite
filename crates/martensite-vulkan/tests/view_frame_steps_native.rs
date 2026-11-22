@@ -132,7 +132,7 @@ impl StepScene {
         let top = Graphic3dStructure::new(&manager, &Handle::default()).unwrap();
         let group = top.new_group().unwrap();
         group.set_group_primitives_aspect(&scene::unlit_style([0., 1., 0., 1.]));
-        group.add_primitive_array(&view_setup::triangle_vertices(), true);
+        group.add_primitive_array(&view_setup::triangle_vertices().upcast(), true);
         top.set_z_layer(GRAPHIC3D_ZLAYER_ID_TOP);
         top.display();
     }

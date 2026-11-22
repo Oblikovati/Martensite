@@ -15,7 +15,7 @@ use martensite_tkcdf::json_dump::{class_begin, field_integer};
 use martensite_tkernel::{
     impl_transient,
     ncollection::{DataMap, HArray1},
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
     tcollection::ExtendedString,
 };
 use std::io;
@@ -37,17 +37,15 @@ const NAMED_DATA_ID: Guid = guid_from_text("F170FD21-CBAE-4e7d-A4B4-0560A4DA2D16
 /// assert!(named.get_real(&ExtendedString::new("x")).is_err());
 /// ```
 pub struct TDataStdNamedData {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     pub(crate) state: SharedState<NamedDataState>,
 }
-impl_transient!(TDataStdNamedData, "TDataStd_NamedData", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdNamedData, "TDataStd_NamedData", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdNamedData {
     /// `TDataStd_NamedData()`: every category without map.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(NamedDataState::default()),
         }
@@ -136,7 +134,7 @@ impl TDataStdNamedData {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     category_members!(TDataStdHDataMapOfStringInteger, i32, has_any: has_integers, has: has_integer,
@@ -205,7 +203,7 @@ impl TdfAttribute for TDataStdNamedData {
     /// `Restore(With)`: every category of `With` with bindings is copied (the arrays
     /// deeply, bound over the existing ones); the categories `With` lacks are kept.
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        let other = with.cast::<Self>();
+        let other = with.downcast::<Self>();
         let Some(other) = other.get() else {
             return Ok(());
         };
@@ -217,7 +215,7 @@ impl TdfAttribute for TDataStdNamedData {
         restore_category::<TDataStdHDataMapOfStringHArray1OfReal>(self, other, false)
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste(Into, RT)`: `Into` takes every category this attribute has bindings in.
     fn paste(
@@ -225,7 +223,7 @@ impl TdfAttribute for TDataStdNamedData {
         into: &Handle<dyn TdfAttribute>,
         _table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target = into.cast::<Self>();
+        let target = into.downcast::<Self>();
         let Some(target) = target.get() else {
             return Ok(());
         };

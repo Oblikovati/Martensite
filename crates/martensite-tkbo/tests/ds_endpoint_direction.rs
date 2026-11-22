@@ -10,7 +10,7 @@ use martensite_tkmath::gp::{Axis1, Direction3, Point3};
 
 fn line_edge(first: f64, last: f64) -> Edge {
     let line: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast();
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast();
     let builder = BRepBuilder::default();
     let mut edge = Edge::default();
     builder

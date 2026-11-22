@@ -8,7 +8,7 @@ use martensite_tkde::de::{
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
@@ -25,10 +25,9 @@ use martensite_tklcaf::tdoc_std::TDocStdDocument;
 /// ```
 #[derive(Default)]
 pub struct DeStlProvider {
-    transient: StandardTransient,
     base: DeProviderBase,
 }
-impl_transient!(DeStlProvider, "DeStlProvider", dyn DeProvider, transient, interfaces: [dyn DeProvider]);
+impl_transient!(DeStlProvider, "DeStlProvider", dyn DeProvider, interfaces: [dyn DeProvider]);
 
 impl DeStlProvider {
     /// A provider on a node, keeping that node rather than a copy;
@@ -36,7 +35,6 @@ impl DeStlProvider {
     pub fn with_node(node: &Handle<dyn DeConfigurationNode>) -> Self {
         Self {
             base: DeProviderBase::with_node(node),
-            ..Self::default()
         }
     }
 }

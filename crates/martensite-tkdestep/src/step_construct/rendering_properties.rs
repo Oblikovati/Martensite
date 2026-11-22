@@ -11,7 +11,7 @@ use crate::step_visual::{
 };
 use martensite_tkernel::precision;
 use martensite_tkernel::quantity::{Color, ColorRgba, ColorSpace, NamedColor};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxcaf::xcaf_doc::{XCAFDocVisMaterial, XCAFDocVisMaterialCommon};
 
 mod conversion;
@@ -133,7 +133,7 @@ impl StepConstructRenderingProperties {
     }
     /// `StepConstructRenderingProperties(theColor, theTransparency)`.
     pub fn from_step_color(
-        color: &Handle<StepVisualColour>,
+        color: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         transparency: f64,
     ) -> Result<Self, Failure> {
         let mut made = Self::default();
@@ -170,9 +170,8 @@ impl StepConstructRenderingProperties {
         }
         // Check for ambient reflectance
         let ambient = select.surface_style_reflectance_ambient();
-        if let Some(full) = ambient
-            .cast::<StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular>()
-            .get()
+        if let Some(full) =
+            ambient.downcast_ref::<StepVisualSurfaceStyleReflectanceAmbientDiffuseSpecular>()
         {
             self.my_is_defined = true;
             self.my_ambient_reflectance.set(full.ambient_reflectance());
@@ -184,9 +183,8 @@ impl StepConstructRenderingProperties {
                 &full.specular_colour(),
                 &mut self.my_specular_colour.value,
             )?;
-        } else if let Some(both) = ambient
-            .cast::<StepVisualSurfaceStyleReflectanceAmbientDiffuse>()
-            .get()
+        } else if let Some(both) =
+            ambient.downcast_ref::<StepVisualSurfaceStyleReflectanceAmbientDiffuse>()
         {
             self.my_ambient_reflectance.set(both.ambient_reflectance());
             self.my_diffuse_reflectance.set(both.diffuse_reflectance());
@@ -235,7 +233,7 @@ impl StepConstructRenderingProperties {
     /// `init(color, transparency)`.
     pub fn init_step_color(
         &mut self,
-        color: &Handle<StepVisualColour>,
+        color: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
         transparency: f64,
     ) -> Result<(), Failure> {
         *self = Self::default();

@@ -8,16 +8,12 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{
-        Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient,
-        project_interface,
-    },
+    standard::{Handle, RuntimeType, RuntimeTyped, SharedState},
 };
 use std::sync::RwLockWriteGuard;
 
 /// Native concrete context; `Context::new()` starts with null strategies and model.
 pub struct Context {
-    transient: StandardTransient,
     shape: ShapeState,
     model_builder: SharedState<Handle<dyn ModelBuilder>>,
     model: SharedState<Handle<dyn MeshModel>>,
@@ -28,12 +24,11 @@ pub struct Context {
     post_processor: SharedState<Handle<dyn ModelAlgo>>,
     parameters: SharedState<MeshParameters>,
 }
-impl_transient!(Context, "IMeshTools_Context", dyn MeshShape, transient, interfaces: [dyn MeshShape, dyn MeshContext]);
+impl_transient!(Context, "IMeshTools_Context", dyn MeshShape, interfaces: [dyn MeshShape, dyn MeshContext]);
 mesh_shape_members!(Context);
 impl Default for Context {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             shape: ShapeState::new(&Shape::default()),
             model_builder: SharedState::default(),
             model: SharedState::default(),
@@ -212,14 +207,17 @@ impl std::ops::Deref for dyn MeshContext {
         self.context_base()
     }
 }
-// One descriptor serves both views of this concrete native class; its embedded
-// Context remains separately projectable for derived native classes.
+// One descriptor serves both views; derived classes lend their actual context state.
 impl RuntimeTyped for dyn MeshContext {
     const TYPE_NAME: &'static str = "IMeshTools_Context";
     fn static_type() -> &'static RuntimeType {
         <Context as RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        project_interface::<Self>(object)
+}
+
+martensite_tkernel::impl_transient_interface_target!(dyn MeshContext);
+impl martensite_tkernel::standard::HandleUpcast<dyn MeshShape> for dyn MeshContext {
+    fn upcast_arc(owner: std::sync::Arc<Self>) -> std::sync::Arc<dyn MeshShape> {
+        owner
     }
 }

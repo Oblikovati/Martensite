@@ -142,7 +142,7 @@ macro_rules! conic_arc {
                 sense: bool,
             ) -> Result<Self, martensite_tkernel::standard::Failure> {
                 let basis: martensite_tkernel::standard::Handle<dyn $curve> =
-                    martensite_tkernel::standard::Handle::new($geom(conic)).cast();
+                    martensite_tkernel::standard::Handle::new($geom(conic)).into_upcast();
                 Ok(Self::built($trimmed::new(&basis, alpha1, alpha2, sense, true)?))
             }
         }

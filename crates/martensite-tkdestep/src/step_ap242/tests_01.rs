@@ -64,14 +64,16 @@ fn init_round_trip_step_ap242_item_identified_representation_usage() {
     let the_description = Handle::new(HAsciiString::new("sample"));
     let the_definition = StepAP242ItemIdentifiedRepresentationUsageDefinition::default();
     let the_used_representation = Handle::new(StepReprRepresentation::new());
-    let the_identified_item =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_identified_item = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let object = StepAP242ItemIdentifiedRepresentationUsage::new();
     object.init(
         &the_name,
         &the_description,
         &the_definition,
-        &the_used_representation,
+        &the_used_representation.upcast(),
         &the_identified_item,
     );
     assert!(object.name() == the_name);

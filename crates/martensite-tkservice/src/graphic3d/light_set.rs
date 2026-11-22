@@ -1,6 +1,6 @@
 //! `Graphic3d_LightSet`: the light sources of a view with the cached per-type counters,
 //! cumulative ambient color and the shader keys of the enabled lights.
-use super::{Graphic3dCLight, Graphic3dTypeOfLightSource};
+use super::{Graphic3dCLight, Graphic3dCLightSource, Graphic3dTypeOfLightSource};
 use martensite_tkernel::ncollection::Vec4;
 use martensite_tkernel::standard::exceptions::{out_of_range, program_error};
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
@@ -39,7 +39,7 @@ pub enum Graphic3dLightSetIterationFilter {
 pub struct Graphic3dLightSetFields {
     /// `myLights`: the lights in index order, each with the light revision cached by
     /// `UpdateRevision` (the native `NCollection_IndexedDataMap<handle, size_t>`).
-    pub lights: Vec<(Handle<Graphic3dCLight>, usize)>,
+    pub lights: Vec<(Handle<dyn Graphic3dCLightSource>, usize)>,
     /// `myAmbient`: the cached cumulative ambient color.
     pub ambient: Vec4<f32>,
     /// `myKeyEnabledLong`: one letter per enabled light.
@@ -62,15 +62,9 @@ pub struct Graphic3dLightSetFields {
 
 /// A set of lights; `let set = Graphic3dLightSet::default(); set.add(&light)?;`.
 pub struct Graphic3dLightSet {
-    transient: StandardTransient,
     state: Arc<SharedState<Graphic3dLightSetFields>>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dLightSet,
-    "Graphic3d_LightSet",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dLightSet, "Graphic3d_LightSet", StandardTransient);
 
 impl Default for Graphic3dLightSetFields {
     fn default() -> Self {
@@ -92,7 +86,6 @@ impl Default for Graphic3dLightSetFields {
 impl Default for Graphic3dLightSet {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: Arc::new(SharedState::new(Graphic3dLightSetFields::default())),
         }
     }
@@ -123,7 +116,7 @@ impl Graphic3dLightSet {
     }
     /// The light at a 1-based index; an index outside `1..=Extent` raises `Standard_OutOfRange`.
     /// Example: `set.value(1)?`.
-    pub fn value(&self, index: i32) -> Result<Handle<Graphic3dCLight>, Failure> {
+    pub fn value(&self, index: i32) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
         let state = self.state.read();
         let slot = index
             .checked_sub(1)
@@ -139,7 +132,7 @@ impl Graphic3dLightSet {
     }
     /// Copies the current indexed handles; later membership changes do not change this snapshot.
     /// Example: `let snapshot = set.lights();`.
-    pub fn lights(&self) -> Vec<Handle<Graphic3dCLight>> {
+    pub fn lights(&self) -> Vec<Handle<dyn Graphic3dCLightSource>> {
         self.state
             .read()
             .lights
@@ -148,7 +141,7 @@ impl Graphic3dLightSet {
             .collect()
     }
     /// Whether the light is in the set; `set.contains(&light)`.
-    pub fn contains(&self, light: &Handle<Graphic3dCLight>) -> bool {
+    pub fn contains(&self, light: &Handle<dyn Graphic3dCLightSource>) -> bool {
         self.state
             .read()
             .lights
@@ -157,7 +150,7 @@ impl Graphic3dLightSet {
     }
     /// Adds a light (false when already present); a null light raises `Standard_ProgramError`.
     /// Example: `set.add(&light)?`.
-    pub fn add(&self, light: &Handle<Graphic3dCLight>) -> Result<bool, Failure> {
+    pub fn add(&self, light: &Handle<dyn Graphic3dCLightSource>) -> Result<bool, Failure> {
         let Some(source) = light.get() else {
             return Err(program_error(
                 "Graphic3d_LightSet::Add(), NULL argument; expected a light",
@@ -175,7 +168,7 @@ impl Graphic3dLightSet {
     }
     /// Removes a light (the last light takes its index, as `RemoveFromIndex` does); false
     /// when absent. Example: `set.remove(&light)`.
-    pub fn remove(&self, light: &Handle<Graphic3dCLight>) -> bool {
+    pub fn remove(&self, light: &Handle<dyn Graphic3dCLightSource>) -> bool {
         let mut state = self.state.write();
         let Some(position) = state.lights.iter().position(|(item, _)| item == light) else {
             return false;
@@ -306,7 +299,8 @@ mod protected_field_tests {
         let set = Graphic3dLightSet::default();
         let light = Handle::new(Graphic3dCLight::new(
             Graphic3dTypeOfLightSource::Directional,
-        ));
+        ))
+        .into_upcast::<dyn Graphic3dCLightSource>();
         assert!(set.add(&light).unwrap());
         assert_eq!(set.fields().read().lights.len(), 1);
         set.fields().write().revision = 41;

@@ -20,7 +20,7 @@ fn add_normals(scene: &scene::GraphicScene) -> Handle<Graphic3dArrayOfPrimitives
         array.add_vertex_normal(point, [0., 0., 1.]).unwrap();
     }
     array.add_edges3(1, 2, 3).unwrap();
-    scene.group.add_primitive_array(&array, true);
+    scene.group.add_primitive_array(&array.upcast(), true);
     array
 }
 #[test]

@@ -9,10 +9,14 @@ mod link_node;
 mod resize_plan;
 pub use link_node::MapLinkNode;
 pub(super) use resize_plan::{planned_bucket_count, table_slot_count};
+#[cfg(test)]
 mod indexed_cursor;
+#[cfg(test)]
 mod indexed_source;
-pub use indexed_cursor::BaseMapIndexedIterator;
-pub use indexed_source::{IndexedCursorSource, IndexedCursorSourceMut};
+#[cfg(test)]
+pub(crate) use indexed_cursor::BaseMapIndexedIterator;
+#[cfg(test)]
+pub(crate) use indexed_source::{IndexedCursorSource, IndexedCursorSourceMut};
 
 /// Bucket and size queries shared by the hashed maps.
 ///

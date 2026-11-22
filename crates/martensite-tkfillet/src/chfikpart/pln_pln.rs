@@ -91,7 +91,7 @@ pub fn make_fillet_pln_pln(
     }
     set_surf(
         data,
-        Handle::new(GeomCylindricalSurface::new(cyl_ax3, radius)?).cast(),
+        Handle::new(GeomCylindricalSurface::new(cyl_ax3, radius)?).into_upcast(),
         dstr,
     );
     let (p, deru, derv) = elslib::cylinder_d1(0., 0., cyl_ax3, radius);
@@ -218,7 +218,7 @@ fn pln_pln_chamfer_surface(
     }
     let gpl = GeomPlane::new(plan_ax3);
     let norplch = frame_normal(&gpl.pln().position())?;
-    set_surf(data, Handle::new(gpl).cast(), dstr);
+    set_surf(data, Handle::new(gpl).into_upcast(), dstr);
     let norpl = frame_normal(&pos1)?;
     let dir_ch12 = Direction3::from_vector(Vector3::between(p1, p2))?;
     let flip1 = fr.v1.dot(dir_ch12) > 0.;

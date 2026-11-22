@@ -30,7 +30,7 @@ pub fn equivalent_surface(
         (Some((u1, u2, v1, v2)), true) => {
             let wrapped =
                 GeomRectangularTrimmedSurface::new(&result, (u1, u2), (v1, v2), (true, true))?;
-            Ok(Handle::new(wrapped).cast())
+            Ok(Handle::new(wrapped).into_upcast())
         }
         _ => Ok(result),
     }
@@ -74,11 +74,11 @@ fn cylinder_offset(
     let mut axis: Axis3 = cylinder.position();
     let radius: f64 = cylinder.radius() + direct_sign(&axis)? * offset;
     if radius >= tol {
-        return Ok(Handle::new(GeomCylindricalSurface::new(axis, radius)?).cast());
+        return Ok(Handle::new(GeomCylindricalSurface::new(axis, radius)?).into_upcast());
     }
     if radius <= -tol {
         axis.x_reverse();
-        return Ok(Handle::new(GeomCylindricalSurface::new(axis, -radius)?).cast());
+        return Ok(Handle::new(GeomCylindricalSurface::new(axis, -radius)?).into_upcast());
     }
     Ok(Handle::default())
 }
@@ -95,7 +95,7 @@ fn cone_offset(cone: &GeomConicalSurface, offset: f64) -> Result<Handle<dyn Geom
     let mut z = Vector3::from(axis.direction());
     z *= -sign * offset * sin;
     axis.translate(z);
-    Ok(Handle::new(GeomConicalSurface::new(axis, alpha, radius)?).cast())
+    Ok(Handle::new(GeomConicalSurface::new(axis, alpha, radius)?).into_upcast())
 }
 
 fn sphere_offset(
@@ -106,12 +106,12 @@ fn sphere_offset(
     let mut axis: Axis3 = sphere.position();
     let radius: f64 = sphere.radius() + direct_sign(&axis)? * offset;
     if radius >= tol {
-        return Ok(Handle::new(GeomSphericalSurface::new(axis, radius)?).cast());
+        return Ok(Handle::new(GeomSphericalSurface::new(axis, radius)?).into_upcast());
     }
     if radius <= -tol {
         axis.x_reverse();
         axis.z_reverse();
-        return Ok(Handle::new(GeomSphericalSurface::new(axis, -radius)?).cast());
+        return Ok(Handle::new(GeomSphericalSurface::new(axis, -radius)?).into_upcast());
     }
     Ok(Handle::default())
 }
@@ -125,11 +125,11 @@ fn torus_offset(
     let mut axis: Axis3 = torus.position();
     let minor: f64 = torus.minor_radius() + direct_sign(&axis)? * offset;
     if minor >= tol && minor <= major {
-        return Ok(Handle::new(GeomToroidalSurface::new(axis, major, minor)?).cast());
+        return Ok(Handle::new(GeomToroidalSurface::new(axis, major, minor)?).into_upcast());
     }
     if minor <= -tol && -minor <= major {
         axis.x_reverse();
-        return Ok(Handle::new(GeomToroidalSurface::new(axis, major, -minor)?).cast());
+        return Ok(Handle::new(GeomToroidalSurface::new(axis, major, -minor)?).into_upcast());
     }
     Ok(Handle::default())
 }

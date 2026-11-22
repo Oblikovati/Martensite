@@ -249,7 +249,7 @@ impl BRepAlgoAPISection {
 }
 
 fn plane_surface(plane: Plane3) -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::from_pln(plane)).cast()
+    Handle::new(GeomPlane::from_pln(plane)).into_upcast()
 }
 
 /// A face on a C2 (or smoother) surface, else a shell (`MakeShape`).

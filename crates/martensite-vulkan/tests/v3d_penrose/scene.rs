@@ -43,8 +43,11 @@ pub(super) fn lights(session: &mut ViewerSession) -> Result<(), Failure> {
     Ok(())
 }
 
-fn directional(name: &str, [x, y, z]: [f64; 3]) -> Result<Handle<Graphic3dCLight>, Failure> {
-    let light: Handle<Graphic3dCLight> = Handle::new(V3dDirectionalLight::new(
+fn directional(
+    name: &str,
+    [x, y, z]: [f64; 3],
+) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
+    let light: Handle<dyn Graphic3dCLightSource> = Handle::new(V3dDirectionalLight::new(
         V3dTypeOfOrientation::XposYposZpos,
         Color::named(NamedColor::WHITE),
         true,

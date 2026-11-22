@@ -54,8 +54,8 @@ impl Drop for Graphic3dClipPlaneHandleField {
     }
 }
 impl HandleReference<dyn Graphic3dClipPlaneSource> for Graphic3dClipPlaneHandleField {
-    fn observe(&self) -> HandleObserver<dyn Graphic3dClipPlaneSource> {
-        // A retained field alias rereads its target instead of keeping an owning snapshot.
+    fn observe(&self) -> HandleObserver<'_, dyn Graphic3dClipPlaneSource> {
+        // Each read snapshots the current target; the alias itself cannot retain an old target.
         self.slot.observe()
     }
     fn reference_address(&self) -> *const () {
@@ -124,12 +124,12 @@ mod tests {
         assert_eq!(alias.object_address(), second.object_address());
         assert_eq!(alias.reference_address(), field.reference_address());
     }
-    fn assert_native_field_counts(phase: &str, first: i32, second: i32) {
+    fn assert_native_field_counts(phase: &str, first: usize, second: usize) {
         let fixture = include_str!("../../tests/fixtures/clip-collection-references-native.txt");
         let row = fixture.lines().find(|row| row.starts_with(phase)).unwrap();
         let columns: Vec<&str> = row.split_whitespace().collect();
         // Only native handle-field ownership is replayed here; collection/cursor bodies are next.
-        assert_eq!(first, columns[3].parse::<i32>().unwrap());
-        assert_eq!(second, columns[4].parse::<i32>().unwrap());
+        assert_eq!(first, columns[3].parse::<usize>().unwrap());
+        assert_eq!(second, columns[4].parse::<usize>().unwrap());
     }
 }

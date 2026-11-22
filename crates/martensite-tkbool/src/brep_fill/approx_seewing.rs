@@ -170,15 +170,15 @@ impl BRepFillApproxSeewing {
         (knots, mults, degree): (&Array1<'static, f64>, &Array1<'static, i32>, i32),
     ) -> Result<(), Failure> {
         self.my_curve =
-            Handle::new(GeomBSplineCurve::new(&poles, knots, mults, degree, false)?).cast();
+            Handle::new(GeomBSplineCurve::new(&poles, knots, mults, degree, false)?).into_upcast();
         self.my_p_curve1 = Handle::new(Geom2dBSplineCurve::new(
             &poles2d1, knots, mults, degree, false,
         )?)
-        .cast();
+        .into_upcast();
         self.my_p_curve2 = Handle::new(Geom2dBSplineCurve::new(
             &poles2d2, knots, mults, degree, false,
         )?)
-        .cast();
+        .into_upcast();
         self.my_is_done = true;
         Ok(())
     }

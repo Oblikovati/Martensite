@@ -13,12 +13,14 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item, iges_live};
 use crate::iges_defs::IgesDefsHArray1OfHArray1OfTextDisplayTemplate;
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkernel::tcollection::HAsciiString;
 
 iges_entity! {
@@ -32,7 +34,7 @@ the_list_type: i32,
 the_attr_types: Handle<HArray1<i32>>,
 the_attr_value_data_types: Handle<HArray1<i32>>,
 the_attr_value_counts: Handle<HArray1<i32>>,
-the_attr_values: Handle<HArray1<Handle<StandardTransient>>>,
+the_attr_values: Handle<HArray1<Handle<dyn Transient>>>,
 the_attr_value_pointers: Handle<IgesDefsHArray1OfHArray1OfTextDisplayTemplate>,
 }
 }
@@ -53,7 +55,7 @@ impl IgesDefsAttributeDef {
         attr_types: &Handle<HArray1<i32>>,
         attr_value_data_types: &Handle<HArray1<i32>>,
         attr_value_counts: &Handle<HArray1<i32>>,
-        attr_values: &Handle<HArray1<Handle<StandardTransient>>>,
+        attr_values: &Handle<HArray1<Handle<dyn Transient>>>,
         attr_value_pointers: &Handle<IgesDefsHArray1OfHArray1OfTextDisplayTemplate>,
     ) -> Result<(), Failure> {
         let mut nb: i32 = iges_array1_length(attr_types, "IgesDefsAttributeDef::init")?;
@@ -196,8 +198,8 @@ impl IgesDefsAttributeDef {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn attribute_list(&self, attr_num: i32) -> Result<Handle<StandardTransient>, Failure> {
-        let mut nulres: Handle<StandardTransient> = Default::default();
+    pub fn attribute_list(&self, attr_num: i32) -> Result<Handle<dyn Transient>, Failure> {
+        let mut nulres: Handle<dyn Transient> = Default::default();
         if !self.has_values() {
             return Ok(nulres);
         }
@@ -270,14 +272,14 @@ impl IgesDefsAttributeDef {
         &self,
         attr_num: i32,
         value_num: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &iges_array1_item(
                 &self.state.read().the_attr_values,
                 attr_num,
                 "IgesDefsAttributeDef::attribute_as_entity",
             )?
-            .cast::<HArray1<Handle<IgesDataIgesEntity>>>(),
+            .cast::<HArray1<Handle<dyn IgesDataEntityKind>>>(),
             value_num,
             "IgesDefsAttributeDef::attribute_as_entity",
         )

@@ -13,6 +13,7 @@ use crate::iges_basic::entity_shape::{
     iges_array2_lower_col, iges_array2_lower_row, iges_array2_row_length, iges_array2_upper_col,
     iges_array2_upper_row, iges_placement_methods,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::{iges_array1_item, iges_array2_item, iges_live};
 use crate::{iges_entity, iges_methods};
@@ -366,15 +367,15 @@ iges_entity! {
 /// defines IGESBoundary, Type `141` Form `0`
 /// A boundary entity identifies a surface boundary consisting
 /// of a set of curves lying on the surface
-IgesGeomBoundary, IgesGeomBoundaryState, "IgesGeomBoundary", parent IgesDataIgesEntity, { type_: i32, preference: i32, surface: Handle<IgesDataIgesEntity>, model_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>>, senses: Handle<HArray1<i32>>, parameter_curves: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> }
+IgesGeomBoundary, IgesGeomBoundaryState, "IgesGeomBoundary", parent IgesDataIgesEntity, { type_: i32, preference: i32, surface: Handle<dyn IgesDataEntityKind>, model_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, senses: Handle<HArray1<i32>>, parameter_curves: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> }
 }
 impl IgesGeomBoundary {
     iges_methods! {
     get boundary_type = type_: i32;
     get preference_type = preference: i32;
-    get surface = surface: Handle<IgesDataIgesEntity>;
+    get surface = surface: Handle<dyn IgesDataEntityKind>;
     len_checked nb_model_space_curves = model_curves;
-    item model_space_curve = model_curves: Handle<IgesDataIgesEntity>;
+    item model_space_curve = model_curves: Handle<dyn IgesDataEntityKind>;
     item sense = senses: i32;
     }
     /// This method is used to set the fields of the class
@@ -393,8 +394,8 @@ impl IgesGeomBoundary {
         &self,
         a_type: i32,
         a_preference: i32,
-        a_surface: &Handle<IgesDataIgesEntity>,
-        all_model_curves: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        a_surface: &Handle<dyn IgesDataEntityKind>,
+        all_model_curves: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         all_senses: &Handle<HArray1<i32>>,
         all_parameter_curves: &Handle<IgesBasicHArray1OfHArray1OfIgesEntity>,
     ) -> Result<(), Failure> {
@@ -449,7 +450,7 @@ impl IgesGeomBoundary {
     pub fn parameter_curves(
         &self,
         index: i32,
-    ) -> Result<Handle<HArray1<Handle<IgesDataIgesEntity>>>, Failure> {
+    ) -> Result<Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, Failure> {
         let the_parameter_curves = self.state.read().parameter_curves.clone();
         iges_live(&the_parameter_curves, "IgesGeomBoundary::parameter_curves")?.value(index)
     }
@@ -459,7 +460,7 @@ impl IgesGeomBoundary {
         &self,
         index: i32,
         num: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let the_parameter_curves = self.state.read().parameter_curves.clone();
         iges_array1_item(
             &iges_live(&the_parameter_curves, "IgesGeomBoundary::parameter_curve")?.value(index)?,

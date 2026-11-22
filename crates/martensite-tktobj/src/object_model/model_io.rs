@@ -75,7 +75,7 @@ fn attach_to_new_document<M: DocumentModel + ?Sized>(
     let label =
         martensite_tkcdf::live(document, "martensite_object_model_DocumentModel::Load")?.main()?;
     let attribute = Handle::new(ModelAttribute::new());
-    label.add_attribute(&attribute.cast(), true)?;
+    label.add_attribute(&attribute.upcast(), true)?;
     attribute.set(&model.model_base().this()?)?;
     model.set_label(&label);
     Ok(())

@@ -3,9 +3,9 @@ use super::curve::EntityResult;
 use super::surface::SurfaceRange;
 use super::{GeomToIgesGeomCurve, GeomToIgesGeomSurface, bounded_range};
 use crate::iges_conv_geom::IgesConvGeomGeomBuilder;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataIgesEntity, iges_array1_set, iges_array2_set, iges_live, iges_new_array1,
-    iges_new_array2,
+    iges_array1_set, iges_array2_set, iges_live, iges_new_array1, iges_new_array2,
 };
 use crate::iges_geom::{
     IgesGeomBSplineSurface, IgesGeomCircularArc, IgesGeomLine, IgesGeomPlane,
@@ -118,7 +118,7 @@ impl GeomToIgesGeomSurface {
     /// A surface of revolution with its own position, between reversed U parameters.
     fn revolution_entity(
         &self,
-        generatrix: &Handle<IgesDataIgesEntity>,
+        generatrix: &Handle<dyn IgesDataEntityKind>,
         (first_u, last_u): (f64, f64),
         position: Axis3,
     ) -> EntityResult {
@@ -145,7 +145,7 @@ impl GeomToIgesGeomSurface {
         &mut self,
         line: GeomLine,
         (lower, upper): (f64, f64),
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let handle = Handle::new(line);
         let generatrix = self
             .generatrix_tool()

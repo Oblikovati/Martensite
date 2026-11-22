@@ -182,7 +182,7 @@ pub trait GeomSurface: GeomGeometry {
         self.eval_d0(u, v)
     }
 }
-impl_transient_interface!(dyn GeomSurface, "Geom_Surface", dyn GeomGeometry);
+impl_transient_interface!(dyn GeomSurface, "Geom_Surface", dyn GeomGeometry, upcasts: [dyn GeomGeometry]);
 
 /// `GeomSurface::DumpJson`; `dump_surface(&mut stream, -1)?`.
 pub fn dump_surface(stream: &mut DumpStream, depth: i32) -> io::Result<()> {

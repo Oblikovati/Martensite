@@ -5,6 +5,7 @@ use super::support::{INSERT_AFTER, c_str, edit, item, length, new_sequence, obje
 use super::token::{Token, TokenHandle};
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle, StandardTransient};
+use crate::units::TokenObject;
 use std::f64::consts::PI;
 use std::io::Write;
 use std::sync::{PoisonError, RwLock};
@@ -51,17 +52,15 @@ const THE_LEXICON: &[(&[u8], &[u8], f64)] = &[
 
 /// A sorted word list; `Lexicon::new()` then `lexicon.creates()`.
 pub struct Lexicon {
-    base: StandardTransient,
-    tokens: RwLock<Handle<HSequence<Handle<Token>>>>,
+    tokens: RwLock<Handle<HSequence<Handle<dyn TokenObject>>>>,
 }
-crate::impl_transient!(Lexicon, "Units_Lexicon", StandardTransient, base);
+crate::impl_transient!(Lexicon, "Units_Lexicon", StandardTransient, interfaces: [dyn LexiconObject]);
 
 impl Lexicon {
     /// An uncreated lexicon whose sequence is still null; `Lexicon::new()`.
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
-            base: StandardTransient::default(),
             tokens: RwLock::new(Handle::default()),
         }
     }
@@ -70,11 +69,12 @@ impl Lexicon {
     /// The table has no repeated word, so `add_token` can never print its duplicate
     /// warning here and the diagnostics go to a sink.
     pub fn creates(&self) -> Result<(), Failure> {
-        let tokens = new_sequence::<Handle<Token>>();
+        let tokens = new_sequence::<Handle<dyn TokenObject>>();
         *self.tokens.write().unwrap_or_else(PoisonError::into_inner) = tokens.clone();
         for &(word, mean, value) in THE_LEXICON {
             if length(&tokens)? == 0 {
-                let token = Handle::new(Token::with_value(word, mean, value));
+                let token = Handle::new(Token::with_value(word, mean, value))
+                    .into_upcast::<dyn TokenObject>();
                 tokens.get().unwrap().change_sequence(|items| {
                     items.prepend(token);
                 });
@@ -85,7 +85,7 @@ impl Lexicon {
         Ok(())
     }
     /// The shared token sequence (null before `creates`); `lexicon.sequence()`.
-    pub fn sequence(&self) -> Handle<HSequence<Handle<Token>>> {
+    pub fn sequence(&self) -> Handle<HSequence<Handle<dyn TokenObject>>> {
         self.tokens
             .read()
             .unwrap_or_else(PoisonError::into_inner)
@@ -112,14 +112,16 @@ impl Lexicon {
                     .map_err(super::support::write_failure);
             }
             if !current.is_greater(word) {
-                let token = Handle::new(Token::with_value(word, mean, value));
+                let token = Handle::new(Token::with_value(word, mean, value))
+                    .into_upcast::<dyn TokenObject>();
                 return edit(&tokens, INSERT_AFTER, |items| {
                     items.insert_before(index, token).map(|_| ())
                 });
             }
         }
-        object(&tokens, "Units_Lexicon::AddToken")?
-            .append(Handle::new(Token::with_value(word, mean, value)));
+        object(&tokens, "Units_Lexicon::AddToken")?.append(
+            Handle::new(Token::with_value(word, mean, value)).into_upcast::<dyn TokenObject>(),
+        );
         Ok(())
     }
     /// The base `Dump`: a heading, then every token at shift 1 without dimensions.
@@ -137,7 +139,7 @@ impl Lexicon {
 pub struct UnitsLexicon {
     lexicon: Lexicon,
 }
-crate::impl_transient!(UnitsLexicon, "Units_UnitsLexicon", Lexicon, lexicon);
+crate::impl_transient!(UnitsLexicon, "Units_UnitsLexicon", Lexicon, interfaces: [dyn LexiconObject]);
 
 impl UnitsLexicon {
     /// An uncreated units lexicon; `UnitsLexicon::new()`.
@@ -169,12 +171,52 @@ pub trait LexiconHandle {
     fn dump(&self, out: &mut dyn Write) -> Result<(), Failure>;
 }
 
-impl LexiconHandle for Handle<Lexicon> {
+impl LexiconHandle for Handle<dyn LexiconObject> {
     fn dump(&self, out: &mut dyn Write) -> Result<(), Failure> {
-        if self.cast::<UnitsLexicon>().is_some() {
-            write_bytes(out, b" UNITSLEXICON : \n")?;
-        }
-        object(self, "Units_Lexicon::Dump")?.dump_tokens(out)
+        object(self, "Units_Lexicon::Dump")?.dump_lexicon(out)
+    }
+}
+
+/// A polymorphic lexicon with access to its shared state.
+pub trait LexiconObject: crate::standard::Transient {
+    /// Borrow this object's lexicon state; `object.lexicon_state()`.
+    fn lexicon_state(&self) -> &Lexicon;
+
+    /// Write this lexicon's token listing; `object.dump_lexicon(&mut output)?`.
+    fn dump_lexicon(&self, out: &mut dyn Write) -> Result<(), Failure> {
+        self.lexicon_state().dump_tokens(out)
+    }
+}
+
+impl crate::standard::RuntimeTyped for dyn LexiconObject {
+    const TYPE_NAME: &'static str = <Lexicon as crate::standard::RuntimeTyped>::TYPE_NAME;
+    fn static_type() -> &'static crate::standard::RuntimeType {
+        <Lexicon as crate::standard::RuntimeTyped>::static_type()
+    }
+}
+crate::impl_transient_interface_target!(dyn LexiconObject);
+
+impl LexiconObject for Lexicon {
+    fn lexicon_state(&self) -> &Lexicon {
+        self
+    }
+}
+
+impl std::ops::Deref for dyn LexiconObject {
+    type Target = Lexicon;
+    fn deref(&self) -> &Self::Target {
+        self.lexicon_state()
+    }
+}
+
+impl LexiconObject for UnitsLexicon {
+    fn lexicon_state(&self) -> &Lexicon {
+        &self.lexicon
+    }
+
+    fn dump_lexicon(&self, out: &mut dyn Write) -> Result<(), Failure> {
+        write_bytes(out, b" UNITSLEXICON : \n")?;
+        self.lexicon.dump_tokens(out)
     }
 }
 
@@ -220,7 +262,8 @@ mod tests {
             out,
             b"m encountered twice with the same signification : M\n"
         );
-        let dump_lexicon: Handle<Lexicon> = Handle::new(UnitsLexicon::new()).cast();
+        let dump_lexicon: Handle<dyn LexiconObject> =
+            Handle::new(UnitsLexicon::new()).into_upcast();
         dump_lexicon.get().unwrap().creates().unwrap();
         let mut text = Vec::new();
         dump_lexicon.dump(&mut text).unwrap();

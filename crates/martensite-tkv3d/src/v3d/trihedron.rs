@@ -7,7 +7,7 @@ use martensite_tkernel::ncollection::Vec2;
 use martensite_tkernel::precision::confusion;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::aspect::{
     AspectInteriorStyle, AspectTypeOfFacingModel, AspectTypeOfTriedronPosition,
@@ -48,7 +48,6 @@ pub(super) struct TrihedronState {
 ///
 /// Example: `let trihedron = V3dTrihedron::new()?; trihedron.set_scale(0.1); trihedron.display(&view)?;`.
 pub struct V3dTrihedron {
-    transient: StandardTransient,
     pub(super) sphere_shading_aspect: Handle<Prs3dShadingAspect>,
     pub(super) text_aspects: [Handle<Prs3dTextAspect>; 3],
     pub(super) arrow_shading_aspects: [Handle<Prs3dShadingAspect>; 3],
@@ -56,7 +55,7 @@ pub struct V3dTrihedron {
     this: SharedState<WeakHandle<V3dTrihedron>>,
     pub(super) state: SharedState<TrihedronState>,
 }
-martensite_tkernel::impl_transient!(V3dTrihedron, "V3dTrihedron", StandardTransient, transient,
+martensite_tkernel::impl_transient!(V3dTrihedron, "V3dTrihedron", dyn martensite_tkernel::standard::Transient,
     interfaces: [dyn V3dStructureComputer]);
 
 /// The material of the trihedron shading: no specular, aspect color.
@@ -123,7 +122,6 @@ impl V3dTrihedron {
             to_compute: true,
         };
         let trihedron = Handle::new(Self {
-            transient: StandardTransient::default(),
             sphere_shading_aspect: trihedron_shading(Color::named(NamedColor::WHITE))?,
             text_aspects: [trihedron_text(), trihedron_text(), trihedron_text()],
             arrow_shading_aspects: arrows,

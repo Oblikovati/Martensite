@@ -6,7 +6,7 @@ use crate::prs3d::Prs3dDrawer;
 use crate::select_mgr::{SelectMgrEntityOwnerSource, SelectMgrFilter, SelectMgrSelection};
 use martensite_tkbrep::brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface};
 use martensite_tkbrep::topods::{Edge, Face, Shape};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
@@ -52,17 +52,15 @@ fn brep_owner_shape(owner: &Handle<dyn SelectMgrEntityOwnerSource>) -> Option<Sh
 /// `StdSelectEdgeFilter`: accepts the edges of BRep owners, of any type, lines or circles.
 /// Example: `StdSelectEdgeFilter::new(StdSelectTypeOfEdge::Line)`.
 pub struct StdSelectEdgeFilter {
-    transient: StandardTransient,
     my_type: SharedState<StdSelectTypeOfEdge>,
 }
-martensite_tkernel::impl_transient!(StdSelectEdgeFilter, "StdSelectEdgeFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(StdSelectEdgeFilter, "StdSelectEdgeFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl StdSelectEdgeFilter {
     /// The filter of an edge type; `StdSelectEdgeFilter::new(StdSelectTypeOfEdge::Circle)`.
     pub fn new(edge: StdSelectTypeOfEdge) -> Self {
         Self {
-            transient: StandardTransient::default(),
             my_type: SharedState::new(edge),
         }
     }
@@ -104,17 +102,15 @@ impl SelectMgrFilter for StdSelectEdgeFilter {
 /// `StdSelectFaceFilter`: accepts the faces of BRep owners by surface type.
 /// Example: `StdSelectFaceFilter::new(StdSelectTypeOfFace::Plane)`.
 pub struct StdSelectFaceFilter {
-    transient: StandardTransient,
     my_type: SharedState<StdSelectTypeOfFace>,
 }
-martensite_tkernel::impl_transient!(StdSelectFaceFilter, "StdSelectFaceFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(StdSelectFaceFilter, "StdSelectFaceFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl StdSelectFaceFilter {
     /// The filter of a face type; `StdSelectFaceFilter::new(StdSelectTypeOfFace::Revol)`.
     pub fn new(type_of_face: StdSelectTypeOfFace) -> Self {
         Self {
-            transient: StandardTransient::default(),
             my_type: SharedState::new(type_of_face),
         }
     }
@@ -171,17 +167,15 @@ impl SelectMgrFilter for StdSelectFaceFilter {
 /// `StdSelectShapeTypeFilter`: accepts the BRep owners of a shape type.
 /// Example: `StdSelectShapeTypeFilter::new(ShapeEnum::Vertex)`.
 pub struct StdSelectShapeTypeFilter {
-    transient: StandardTransient,
     my_type: ShapeEnum,
 }
-martensite_tkernel::impl_transient!(StdSelectShapeTypeFilter, "StdSelectShapeTypeFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(StdSelectShapeTypeFilter, "StdSelectShapeTypeFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl StdSelectShapeTypeFilter {
     /// The filter of a shape type; `StdSelectShapeTypeFilter::new(ShapeEnum::Edge)`.
     pub fn new(shape_type: ShapeEnum) -> Self {
         Self {
-            transient: StandardTransient::default(),
             my_type: shape_type,
         }
     }

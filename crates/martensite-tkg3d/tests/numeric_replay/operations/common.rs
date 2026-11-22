@@ -3,7 +3,7 @@ use super::output::Output;
 pub use super::print::{Reader, attempt, end, flag, int, real, show};
 use super::shapes;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, TransientHandleTarget};
 use martensite_tkg3d::geom::{GeomCurve, GeomGeometry, GeomSurface};
 use martensite_tkmath::gp::{
     Axis1, Axis2, Axis3, Direction3, GeneralTransform2, Point3, Transform3, Vector3, Xyz,
@@ -40,7 +40,7 @@ pub fn ax3(output: &Output, value: Axis3) {
     dir(output, value.y_direction());
 }
 /// The class name of a handle, `null` for a null one (g3_name).
-pub fn name<T: ?Sized + RuntimeTyped>(output: &Output, handle: &Handle<T>) {
+pub fn name<T: ?Sized + TransientHandleTarget>(output: &Output, handle: &Handle<T>) {
     match handle.dynamic_type() {
         Some(kind) => replay_print!(output, "{} ", kind.name()),
         None => replay_print!(output, "null "),

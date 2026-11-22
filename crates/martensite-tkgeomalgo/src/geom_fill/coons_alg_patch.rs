@@ -2,7 +2,7 @@
 use super::GeomFillBoundary;
 use crate::law::{LawFunction, LawLinear};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkmath::gp::{Point3, Vector3, Xyz};
 
@@ -14,7 +14,6 @@ use martensite_tkmath::gp::{Point3, Vector3, Xyz};
 ///
 /// `let patch = GeomFillCoonsAlgPatch::new([&b1, &b2, &b3, &b4])?; patch.value(0.5, 0.5)?`
 pub struct GeomFillCoonsAlgPatch {
-    parent: StandardTransient,
     bound: [Handle<dyn GeomFillBoundary>; 4],
     c: [Point3; 4],
     a: SharedState<[Handle<dyn LawFunction>; 2]>,
@@ -22,8 +21,7 @@ pub struct GeomFillCoonsAlgPatch {
 impl_transient!(
     GeomFillCoonsAlgPatch,
     "GeomFill_CoonsAlgPatch",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 /// A boundary of the patch, or the Standard_NullObject of a null handle.
@@ -44,7 +42,7 @@ fn law(function: &Handle<dyn LawFunction>) -> Result<&dyn LawFunction, Failure> 
 fn linear(pdeb: f64, valdeb: f64, pfin: f64, valfin: f64) -> Handle<dyn LawFunction> {
     let function = LawLinear::new();
     function.set(pdeb, valdeb, pfin, valfin);
-    Handle::new(function).cast()
+    Handle::new(function).into_upcast()
 }
 
 /// The mean of two points (`temp = A.XYZ().Added(B.XYZ()); temp.Multiply(0.5)`).
@@ -71,7 +69,6 @@ impl GeomFillCoonsAlgPatch {
             middle(b3.value(deb0)?, b4.value(fin1)?),
         ];
         Ok(Self {
-            parent: StandardTransient::default(),
             bound: bounds.map(Handle::clone),
             c,
             a: SharedState::new([a0, a1]),

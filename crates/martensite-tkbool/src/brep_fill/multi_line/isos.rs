@@ -154,7 +154,7 @@ fn projected(
     surface_type: SurfaceType,
 ) -> Result<FaceIsos, Failure> {
     let basis_plane: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_coefficients(0., 0., 1., 0.)?).cast();
+        Handle::new(GeomPlane::from_coefficients(0., 0., 1., 0.)?).into_upcast();
     let u = Geom2dAdaptorCurve::with_range(&geom_proj_lib::curve2d(uu, &basis_plane)?, umin, umax)?;
     let (p, dz) = uu.get().ok_or_else(null_surface)?.d1(umin)?;
     let ref_plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::new(
@@ -162,7 +162,7 @@ fn projected(
         Direction3::from_vector(dz)?,
         Direction3::Z,
     )?))
-    .cast();
+    .into_upcast();
     let v = Geom2dAdaptorCurve::with_range(&geom_proj_lib::curve2d(vv, &ref_plane)?, vmin, vmax)?;
     Ok(FaceIsos { u, v, surface_type })
 }

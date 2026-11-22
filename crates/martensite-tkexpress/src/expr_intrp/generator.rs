@@ -15,14 +15,13 @@ struct GeneratorDefinitions {
 /// the functions met so far, which later texts can use; `generator.get_named(&name)`.
 #[derive(Default)]
 pub struct ExprIntrpGenerator {
-    parent: StandardTransient,
     definitions: SharedState<GeneratorDefinitions>,
 }
 impl_transient!(
     ExprIntrpGenerator,
     "ExprIntrp_Generator",
     StandardTransient,
-    parent
+    interfaces: [dyn ExprIntrpGeneratorObject]
 );
 impl ExprIntrpGenerator {
     /// An empty generator (`ExprIntrpGenerator()`, protected internally: the
@@ -92,4 +91,32 @@ pub fn first_function(
         })
         .cloned()
         .unwrap_or_default()
+}
+
+/// An interpreter object lending its shared definitions; `object.generator_state()`.
+pub trait ExprIntrpGeneratorObject: martensite_tkernel::standard::Transient {
+    /// Borrow the definitions retained by this interpreter; `object.generator_state()`.
+    fn generator_state(&self) -> &ExprIntrpGenerator;
+}
+
+impl martensite_tkernel::standard::RuntimeTyped for dyn ExprIntrpGeneratorObject {
+    const TYPE_NAME: &'static str =
+        <ExprIntrpGenerator as martensite_tkernel::standard::RuntimeTyped>::TYPE_NAME;
+    fn static_type() -> &'static martensite_tkernel::standard::RuntimeType {
+        <ExprIntrpGenerator as martensite_tkernel::standard::RuntimeTyped>::static_type()
+    }
+}
+martensite_tkernel::impl_transient_interface_target!(dyn ExprIntrpGeneratorObject);
+
+impl ExprIntrpGeneratorObject for ExprIntrpGenerator {
+    fn generator_state(&self) -> &ExprIntrpGenerator {
+        self
+    }
+}
+
+impl std::ops::Deref for dyn ExprIntrpGeneratorObject {
+    type Target = ExprIntrpGenerator;
+    fn deref(&self) -> &Self::Target {
+        self.generator_state()
+    }
 }

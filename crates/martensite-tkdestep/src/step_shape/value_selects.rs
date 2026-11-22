@@ -11,7 +11,7 @@ use crate::step_entity::*;
 /// `set_type_of_content` is the only member that records the kind.
 #[derive(Clone, Default)]
 pub struct StepShapeBooleanOperand {
-    the_solid_model: Handle<StepShapeSolidModel>,
+    the_solid_model: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>,
     the_half_space_solid: Handle<StepShapeHalfSpaceSolid>,
     the_csg_primitive: StepShapeCsgPrimitive,
     the_boolean_result: Handle<StepShapeBooleanResult>,
@@ -32,11 +32,14 @@ impl StepShapeBooleanOperand {
         self.the_type_of_content
     }
     /// `solid_model`.
-    pub fn solid_model(&self) -> Handle<StepShapeSolidModel> {
+    pub fn solid_model(&self) -> Handle<dyn crate::StepEntityBase<StepShapeSolidModel>> {
         self.the_solid_model.clone()
     }
     /// `set_solid_model`.
-    pub fn set_solid_model(&mut self, a_solid_model: &Handle<StepShapeSolidModel>) {
+    pub fn set_solid_model(
+        &mut self,
+        a_solid_model: &Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>,
+    ) {
         self.the_solid_model = a_solid_model.clone();
     }
     /// `half_space_solid`.
@@ -119,7 +122,7 @@ mod tests {
         select.set_boolean_result(&Handle::new(StepShapeBooleanResult::new()));
         assert_eq!(select.type_of_content(), 1);
         let mut operand = StepShapeBooleanOperand::new();
-        operand.set_solid_model(&Handle::new(StepShapeSolidModel::new()));
+        operand.set_solid_model(&Handle::new(StepShapeSolidModel::new()).upcast());
         assert_eq!(operand.type_of_content(), 0);
         operand.set_type_of_content(1);
         assert!(operand.solid_model().is_some());

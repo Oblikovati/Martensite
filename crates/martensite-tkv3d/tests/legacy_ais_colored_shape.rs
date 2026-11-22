@@ -9,8 +9,8 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeBox;
 use martensite_tkv3d::ais::{
-    AisColoredDrawer, AisColoredDrawerCompounds, AisColoredOpenedCompounds, AisShapeDrawerMap,
-    ais_colored_shape_dispatch_colors,
+    AisColoredDrawer, AisColoredDrawerCompounds, AisColoredDrawerSource, AisColoredOpenedCompounds,
+    AisShapeDrawerMap, ais_colored_shape_dispatch_colors,
 };
 use martensite_tkv3d::prs3d::Prs3dDrawer;
 
@@ -65,8 +65,9 @@ impl DispatchFixture {
         }
     }
 
-    fn drawer(&self) -> Handle<AisColoredDrawer> {
+    fn drawer(&self) -> Handle<dyn AisColoredDrawerSource> {
         Handle::new(AisColoredDrawer::new(&self.default_drawer))
+            .into_upcast::<dyn AisColoredDrawerSource>()
     }
 
     /// Dispatches the shell child of the box as natively (parent type solid, not closed).

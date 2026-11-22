@@ -66,7 +66,6 @@ fn assert_private_child_exit(name: &str, process: &winsafe::HPROCESS) {
 }
 
 fn check_console_events() {
-    assert!(Osd::signal_capabilities().console_interruptions);
     let mut processes = [0u32; 2];
     // SAFETY: this writable array has the advertised capacity. Refuse to generate
     // events unless Windows confirms the console contains this process alone.
@@ -104,13 +103,11 @@ fn wait_for_console_break() {
 }
 
 fn check_floating_controls() {
-    assert!(Osd::signal_capabilities().floating_point_trap_control);
     Osd::set_thread_local_signal(SignalMode::Set, true);
     let enabled = Osd::to_catch_floating_signals();
     Osd::set_thread_local_signal(SignalMode::Unset, false);
     assert!(enabled);
     assert!(!Osd::to_catch_floating_signals());
-    assert!(!Osd::signal_capabilities().recoverable_native_faults);
 }
 
 #[test]

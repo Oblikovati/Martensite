@@ -1,5 +1,6 @@
 //! A wrapped zero stride has usable retained storage, but later slots form sparse diagonals.
 use super::DynamicArray;
+#[cfg(test)]
 use crate::standard::Failure;
 impl<T> DynamicArray<T> {
     pub(super) fn prepare_append_location(&mut self) -> (usize, usize) {
@@ -46,6 +47,7 @@ impl<T> DynamicArray<T> {
             self.used
         );
     }
+    #[cfg(test)]
     pub(super) fn require_retained_erasure(&self) {
         if self.increment != 0 {
             return;
@@ -53,6 +55,7 @@ impl<T> DynamicArray<T> {
         self.validate_retained_erasure()
             .unwrap_or_else(|failure| panic!("zero-stride EraseLast: {failure}"));
     }
+    #[cfg(test)]
     pub(super) fn validate_retained_erasure(&self) -> Result<(), Failure> {
         let first = self.blocks.as_slice().first().map(|block| block.len());
         let valid = self.used == 1

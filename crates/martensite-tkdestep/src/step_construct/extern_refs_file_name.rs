@@ -7,7 +7,8 @@ use crate::step_basic::{StepBasicDocumentFile, StepBasicProductDefinitionWithAss
 use crate::step_data::{StepDataSelectMember, StepDataSelectNamed, StepDataSelectType};
 use crate::step_entity::step_live;
 use martensite_tkernel::osd::{CadPath, File};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::InterfaceGraph;
 
@@ -18,7 +19,7 @@ fn non_empty_text(value: &Handle<HAsciiString>) -> Option<String> {
 }
 
 /// The name of a document of a PDWAD, for a reference of AP203.
-fn name_in_pdwad(shape: &Handle<StandardTransient>) -> Result<String, Failure> {
+fn name_in_pdwad(shape: &Handle<dyn Transient>) -> Result<String, Failure> {
     let pdwad = shape.cast::<StepBasicProductDefinitionWithAssociatedDocuments>();
     let Some(pdwad) = pdwad.get().filter(|live| live.doc_ids().is_some()) else {
         return Ok(String::new());

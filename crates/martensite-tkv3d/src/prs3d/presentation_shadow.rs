@@ -2,7 +2,7 @@
 //! shadow link) and remembers the parent's identifier and view affinity.
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::null_object;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::{
     Graphic3dStructureBase, Graphic3dStructureManager, Graphic3dStructureMembers as _,
     Graphic3dStructureSource, Graphic3dViewAffinity, graphic3d_structure_bind,
@@ -15,12 +15,11 @@ use std::io;
 ///
 /// Example: `let shadow = Prs3dPresentationShadow::new(&manager, &prs)?; shadow.parent_id();`.
 pub struct Prs3dPresentationShadow {
-    transient: StandardTransient,
     base: Graphic3dStructureBase,
     parent_affinity: Handle<Graphic3dViewAffinity>,
     parent_struct_id: i32,
 }
-martensite_tkernel::impl_transient!(Prs3dPresentationShadow, "Prs3dPresentationShadow", dyn Graphic3dStructureSource, transient,
+martensite_tkernel::impl_transient!(Prs3dPresentationShadow, "Prs3dPresentationShadow", dyn Graphic3dStructureSource,
     interfaces: [dyn Graphic3dStructureSource]);
 
 impl Prs3dPresentationShadow {
@@ -42,7 +41,6 @@ impl Prs3dPresentationShadow {
             .map(|c| c.cstructure_base().fields.read().view_affinity.clone())
             .unwrap_or_default();
         let shadow = Handle::new(Self {
-            transient: StandardTransient::default(),
             base,
             parent_affinity: affinity,
             parent_struct_id: parent.identification(),

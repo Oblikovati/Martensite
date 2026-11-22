@@ -125,7 +125,7 @@ fn rectangular_trimmed_planes_keep_the_general_clamping_path() {
     let surface = BRepTool::surface(&face).unwrap();
     let trimmed =
         GeomRectangularTrimmedSurface::new(&surface, (-1., 1.), (-1., 1.), (true, true)).unwrap();
-    let trimmed = Handle::new(trimmed).cast();
+    let trimmed = Handle::new(trimmed).into_upcast();
     BRepBuilder::default()
         .update_face(&face, &trimmed, &Location::default(), 1e-7)
         .unwrap();

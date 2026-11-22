@@ -19,7 +19,7 @@ use martensite_tkshhealing::{
         ShapeExtendCompositeSurface, ShapeExtendParametrisation, ShapeExtendStatus,
         ShapeExtendWireData,
     },
-    shape_fix::{FixRoot, ShapeFixComposeShell, ShapeFixRoot, ShapeFixWireSegment},
+    shape_fix::{FixRoot, ShapeFixComposeShell, ShapeFixWireSegment},
 };
 use martensite_tktopalgo::brep_builder_api::{
     BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace, BRepBuilderAPIMakeVertex,
@@ -72,7 +72,7 @@ fn face_fixture() -> martensite_tkbrep::topods::Face {
 #[test]
 fn root_base_cast_shares_compose_shell_fix_state() {
     let composer = Handle::new(ShapeFixComposeShell::new());
-    let root = composer.cast::<ShapeFixRoot>();
+    let root = composer.upcast::<dyn FixRoot>();
     assert!(!root.is_null());
     root.get().unwrap().set_precision(0.125);
     assert_eq!(composer.precision(), 0.125);

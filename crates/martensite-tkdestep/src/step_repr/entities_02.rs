@@ -52,7 +52,9 @@ impl StepReprConfigurationEffectivity {
     pub fn init(
         &self,
         a_effectivity_id: &Handle<HAsciiString>,
-        a_product_definition_effectivity_usage: &Handle<StepBasicProductDefinitionRelationship>,
+        a_product_definition_effectivity_usage: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>,
+        >,
         a_configuration: &Handle<StepReprConfigurationDesign>,
     ) {
         self.parent
@@ -123,19 +125,19 @@ impl StepReprConfigurationItem {
 step_entity! {
     /// Constructive geometry representation.
     StepReprConstructiveGeometryRepresentation, StepReprConstructiveGeometryRepresentationState, "StepReprConstructiveGeometryRepresentation", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Constructive geometry representation relationship.
     StepReprConstructiveGeometryRepresentationRelationship, StepReprConstructiveGeometryRepresentationRelationshipState, "StepReprConstructiveGeometryRepresentationRelationship", StepReprRepresentationRelationship, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationRelationship]
 }
 
 step_entity! {
     /// Added for Dimensional Tolerances
     StepReprContinuosShapeAspect, StepReprContinuosShapeAspectState, "StepReprContinuosShapeAspect", StepReprCompositeShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect]
 }
 
 step_entity! {
@@ -143,7 +145,7 @@ step_entity! {
     StepReprDataEnvironment, StepReprDataEnvironmentState, "StepReprDataEnvironment", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_elements: Handle<HArray1<Handle<StepReprPropertyDefinitionRepresentation>>>,
+        the_elements: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>>,
     }
 }
 impl StepReprDataEnvironment {
@@ -152,8 +154,8 @@ impl StepReprDataEnvironment {
         set set_name = the_name: Handle<HAsciiString>;
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
-        get elements = the_elements: Handle<HArray1<Handle<StepReprPropertyDefinitionRepresentation>>>;
-        set set_elements = the_elements: Handle<HArray1<Handle<StepReprPropertyDefinitionRepresentation>>>;
+        get elements = the_elements: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>>;
+        set set_elements = the_elements: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -161,7 +163,9 @@ impl StepReprDataEnvironment {
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_elements: &Handle<HArray1<Handle<StepReprPropertyDefinitionRepresentation>>>,
+        a_elements: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>,
+        >,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();
@@ -173,20 +177,20 @@ impl StepReprDataEnvironment {
 step_entity! {
     /// Definitional representation.
     StepReprDefinitionalRepresentation, StepReprDefinitionalRepresentationState, "StepReprDefinitionalRepresentation", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Added for Dimensional Tolerances
     StepReprDerivedShapeAspect, StepReprDerivedShapeAspectState, "StepReprDerivedShapeAspect", StepReprShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect, StepReprDerivedShapeAspect]
 }
 
 step_entity! {
     /// Descriptive representation item.
     StepReprDescriptiveRepresentationItem, StepReprDescriptiveRepresentationItemState, "StepReprDescriptiveRepresentationItem", StepReprRepresentationItem, {
         description: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepReprDescriptiveRepresentationItem {
     step_methods! {
@@ -203,19 +207,19 @@ impl StepReprDescriptiveRepresentationItem {
 step_entity! {
     /// Added for Dimensional Tolerances
     StepReprExtension, StepReprExtensionState, "StepReprExtension", StepReprDerivedShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect, StepReprDerivedShapeAspect]
 }
 
 step_entity! {
     /// Externally defined representation.
     StepReprExternallyDefinedRepresentation, StepReprExternallyDefinedRepresentationState, "StepReprExternallyDefinedRepresentation", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity DimensionalLocation
     StepReprFeatureForDatumTargetRelationship, StepReprFeatureForDatumTargetRelationshipState, "StepReprFeatureForDatumTargetRelationship", StepReprShapeAspectRelationship, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspectRelationship]
 }
 
 step_entity! {
@@ -243,14 +247,14 @@ impl StepReprFunctionallyDefinedTransformation {
 step_entity! {
     /// Added for Dimensional Tolerances
     StepReprGeometricAlignment, StepReprGeometricAlignmentState, "StepReprGeometricAlignment", StepReprDerivedShapeAspect, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspect, StepReprDerivedShapeAspect]
 }
 
 step_entity! {
     /// Global uncertainty assigned context.
     StepReprGlobalUncertaintyAssignedContext, StepReprGlobalUncertaintyAssignedContextState, "StepReprGlobalUncertaintyAssignedContext", StepReprRepresentationContext, {
         uncertainty: Handle<HArray1<Handle<StepBasicUncertaintyMeasureWithUnit>>>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationContext]
 }
 impl StepReprGlobalUncertaintyAssignedContext {
     step_methods! {
@@ -274,14 +278,14 @@ impl StepReprGlobalUncertaintyAssignedContext {
 step_entity! {
     /// Global unit assigned context.
     StepReprGlobalUnitAssignedContext, StepReprGlobalUnitAssignedContextState, "StepReprGlobalUnitAssignedContext", StepReprRepresentationContext, {
-        units: Handle<HArray1<Handle<StepBasicNamedUnit>>>,
-    }
+        units: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>>,
+    }, bases: [crate::step_repr::StepReprRepresentationContext]
 }
 impl StepReprGlobalUnitAssignedContext {
     step_methods! {
-        set set_units = units: Handle<HArray1<Handle<StepBasicNamedUnit>>>;
-        get units = units: Handle<HArray1<Handle<StepBasicNamedUnit>>>;
-        item units_value = units: Handle<StepBasicNamedUnit>;
+        set set_units = units: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>>;
+        get units = units: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>>;
+        item units_value = units: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>;
         len nb_units = units;
     }
     /// `init`.
@@ -289,7 +293,7 @@ impl StepReprGlobalUnitAssignedContext {
         &self,
         a_context_identifier: &Handle<HAsciiString>,
         a_context_type: &Handle<HAsciiString>,
-        a_units: &Handle<HArray1<Handle<StepBasicNamedUnit>>>,
+        a_units: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>>>,
     ) {
         self.state.write().units = a_units.clone();
         self.parent.init(a_context_identifier, a_context_type);

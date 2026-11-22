@@ -45,15 +45,9 @@ pub(crate) struct TextFormatterState {
 
 /// A text formatter; `let f = FontTextFormatter::default(); f.append(&text, &font)?; f.format()?;`.
 pub struct FontTextFormatter {
-    transient: StandardTransient,
     pub(crate) state: SharedState<TextFormatterState>,
 }
-martensite_tkernel::impl_transient!(
-    FontTextFormatter,
-    "Font_TextFormatter",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(FontTextFormatter, "Font_TextFormatter", StandardTransient);
 
 impl Default for FontTextFormatter {
     /// Left/top alignment, tabulations of 8 spaces, word wrapping on, no wrapping width.
@@ -82,7 +76,6 @@ impl Default for FontTextFormatter {
             move_vec: Vec2::new(0.0, 0.0),
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

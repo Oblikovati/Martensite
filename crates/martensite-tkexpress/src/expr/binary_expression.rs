@@ -67,7 +67,8 @@ pub trait ExprBinaryExpression: ExprGeneralExpression {
 impl_transient_interface!(
     dyn ExprBinaryExpression,
     "Expr_BinaryExpression",
-    dyn ExprGeneralExpression
+    dyn ExprGeneralExpression,
+    upcasts: [dyn ExprGeneralExpression]
 );
 
 /// `ExprBinaryExpression::NbSubExpressions`: two operands; `binary_nb_sub_expressions() == 2`.
@@ -226,14 +227,12 @@ macro_rules! declare_binary_class {
     ($class:ident, $name:literal, $doc:literal) => {
         #[doc = $doc]
         pub struct $class {
-            parent: martensite_tkernel::standard::StandardTransient,
             core: $crate::expr::binary_expression::ExprBinaryCore,
         }
         martensite_tkernel::impl_transient!(
             $class,
             $name,
             dyn $crate::expr::ExprBinaryExpression,
-            parent,
             interfaces: [dyn $crate::expr::ExprGeneralExpression, dyn $crate::expr::ExprBinaryExpression]
         );
         impl $class {
@@ -243,7 +242,6 @@ macro_rules! declare_binary_class {
                 exp2: &$crate::expr::ExprHandle,
             ) -> martensite_tkernel::standard::Handle<Self> {
                 let object: Self = Self {
-                    parent: martensite_tkernel::standard::StandardTransient::default(),
                     core: $crate::expr::binary_expression::ExprBinaryCore::new(exp1, exp2),
                 };
                 $crate::expr::handles::adopt(object, |created| created.core.link())

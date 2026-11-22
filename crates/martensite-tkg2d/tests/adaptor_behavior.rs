@@ -1,6 +1,6 @@
 //! Adaptor evaluation, loading and exceptional-path behavior.
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped, Transient};
 use martensite_tkg2d::adaptor2d::{
     Adaptor2dCurve2d, Adaptor2dCurve2dBase, Adaptor2dLine2d, Adaptor2dOffsetCurve,
 };
@@ -21,7 +21,7 @@ fn kind<T>(result: Result<T, Failure>) -> &'static str {
 
 fn circle(radius: f64, sense: bool) -> Handle<dyn Geom2dCurve> {
     let axis = Axis2d::new(Point2::new(1.0, -1.0), Direction2::new(0.0, 1.0).unwrap());
-    Handle::new(Geom2dCircle::from_axis(axis, radius, sense).unwrap()).cast()
+    Handle::new(Geom2dCircle::from_axis(axis, radius, sense).unwrap()).into_upcast()
 }
 
 // Degree 3 with interior knots of multiplicity 1, 2 and 3.
@@ -39,22 +39,30 @@ fn knotted() -> Handle<dyn Geom2dCurve> {
     for i in 1..=10 {
         poles[i] = Point2::new(f64::from(i), f64::from(i * i % 7));
     }
-    Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 3, false).unwrap()).cast()
+    Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 3, false).unwrap()).into_upcast()
 }
 
 fn geom(curve: &Handle<dyn Geom2dCurve>) -> Handle<dyn Adaptor2dCurve2d> {
-    Handle::new(Geom2dAdaptorCurve::with_curve(curve).unwrap()).cast()
+    Handle::new(Geom2dAdaptorCurve::with_curve(curve).unwrap()).into_upcast()
 }
 
 #[test]
 fn base_class_raises_not_implemented_except_nb_samples() {
-    let base = Adaptor2dCurve2dBase::default();
+    let base = Adaptor2dCurve2dBase;
     assert_eq!(kind(base.first_parameter()), "Standard_NotImplemented");
     assert_eq!(kind(base.value(0.0)), "Standard_NotImplemented");
     assert_eq!(kind(base.nb_poles()), "Standard_NotImplemented");
     assert_eq!(base.nb_samples().unwrap(), 20);
-    let handle: Handle<dyn Adaptor2dCurve2d> = Handle::new(base).cast();
-    assert_eq!(handle.dynamic_type().unwrap().name(), "Adaptor2d_Curve2d");
+    let handle: Handle<dyn Adaptor2dCurve2d> = Handle::new(base).into_upcast();
+    let descriptor = <dyn Adaptor2dCurve2d>::static_type();
+    assert_eq!(descriptor.name(), "Adaptor2d_Curve2d");
+    assert!(handle.is_instance(descriptor));
+    let registered = RuntimeType::registered_by_name("Adaptor2d_Curve2d").unwrap();
+    assert!(std::ptr::eq(descriptor, registered));
+    let erased: Handle<dyn Transient> = handle.into_upcast();
+    assert!(erased.is_kind_name("Standard_Transient"));
+    assert!(erased.downcast_ref::<Adaptor2dCurve2dBase>().is_some());
+    assert_eq!(erased.ref_count(), 1);
 }
 
 #[test]
@@ -70,6 +78,9 @@ fn line_rejects_other_kinds_and_derivative_order_zero() {
     assert_eq!(kind(line.eval_dn(0.0, 0)), "Standard_OutOfRange");
     line.load(line.line().unwrap());
     assert!(line.first_parameter().unwrap() < -1e100 && line.last_parameter().unwrap() > 1e100);
+    let handle: Handle<dyn Adaptor2dCurve2d> = Handle::new(line).into_upcast();
+    assert!(handle.is_kind_name("Adaptor2d_Curve2d"));
+    assert!(!handle.is_instance(<dyn Adaptor2dCurve2d>::static_type()));
 }
 
 #[test]
@@ -92,7 +103,8 @@ fn offset_of_c0_basis_has_no_continuity_and_offset_dn_is_not_implemented() {
     assert_eq!(kind(offset.continuity()), "Standard_TypeMismatch");
     assert_eq!(kind(offset.eval_dn(0.5, 1)), "Standard_NotImplemented");
     // Offset of an offset: EvalD3 needs the basis EvalDN, which is not implemented.
-    let nested = Adaptor2dOffsetCurve::with_offset(&Handle::new(offset).cast(), 0.1).unwrap();
+    let nested =
+        Adaptor2dOffsetCurve::with_offset(&Handle::new(offset).into_upcast(), 0.1).unwrap();
     assert_eq!(kind(nested.eval_d3(0.5)), "Standard_NotImplemented");
 }
 
@@ -114,7 +126,7 @@ fn offset_intervals_leave_the_basis_array_outside_the_bounds() {
 #[test]
 fn offset_load_stores_the_offset_before_reading_the_basis_bounds() {
     let offset = Adaptor2dOffsetCurve::with_bounds(&geom(&circle(1.0, true)), 1.0, 0.2, 0.4);
-    offset.load_curve(&Handle::new(Adaptor2dCurve2dBase::default()).cast());
+    offset.load_curve(&Handle::new(Adaptor2dCurve2dBase).into_upcast());
     assert_eq!(offset.offset(), 0.0);
     assert_eq!(kind(offset.load_offset(3.0)), "Standard_NotImplemented");
     assert_eq!(offset.offset(), 3.0);
@@ -125,7 +137,7 @@ fn offset_load_stores_the_offset_before_reading_the_basis_bounds() {
 fn geom_adaptor_loads_the_basis_of_a_trimmed_curve() {
     let trimmed: Handle<dyn Geom2dCurve> =
         Handle::new(Geom2dTrimmedCurve::new(&circle(2.0, true), 0.5, 2.5, true, true).unwrap())
-            .cast();
+            .into_upcast();
     let adaptor = Geom2dAdaptorCurve::with_curve(&trimmed).unwrap();
     assert_eq!(adaptor.get_type().unwrap(), CurveType::Circle);
     assert!(adaptor.curve().is_instance_name("Geom2d_Circle"));
@@ -162,7 +174,7 @@ fn geom_adaptor_continuity_and_intervals_follow_the_knots_in_range() {
 fn geom_adaptor_boundary_spans_evaluate_like_the_curve() {
     let curve = knotted();
     let adaptor = Geom2dAdaptorCurve::with_range(&curve, 0.25, 0.75).unwrap();
-    let bspline: Handle<Geom2dBSplineCurve> = curve.cast();
+    let bspline: Handle<Geom2dBSplineCurve> = curve.downcast();
     assert_eq!(
         adaptor.eval_d0(0.75).unwrap(),
         bspline.local_d0(0.75, 3, 4).unwrap()
@@ -179,7 +191,7 @@ fn geom_adaptor_boundary_spans_evaluate_like_the_curve() {
 fn geom_adaptor_offset_dn3_reads_the_second_derivative_as_the_first() {
     // Regression for the EvaluateDN aliasing quirk (theD1 and theD2 are one vector).
     let offset_curve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dOffsetCurve::new(&circle(2.0, true), 0.5, false).unwrap()).cast();
+        Handle::new(Geom2dOffsetCurve::new(&circle(2.0, true), 0.5, false).unwrap()).into_upcast();
     let adaptor = Geom2dAdaptorCurve::with_curve(&offset_curve).unwrap();
     let basis = Geom2dAdaptorCurve::with_curve(&circle(2.0, true)).unwrap();
     let dn3 = adaptor.eval_dn(1.0, 3).unwrap();

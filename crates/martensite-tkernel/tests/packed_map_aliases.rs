@@ -1,7 +1,6 @@
 //! Exact bucket/traversal fixtures for every destination/source alias partition.
+use crate::packed_map_rows::{ExpectedRows, decode_expected_rows};
 use martensite_tkernel::ncollection::{PackedInteger, PackedMap, PackedMapOperand};
-mod packed_map_rows;
-use packed_map_rows::{ExpectedRows, decode_expected_rows};
 use std::sync::OnceLock;
 
 fn expected_rows() -> &'static ExpectedRows {

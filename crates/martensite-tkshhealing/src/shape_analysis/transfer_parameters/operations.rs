@@ -57,10 +57,9 @@ fn set_coefficients(
     });
 }
 
-pub(super) fn transfer_sequence<T: TransferParameters + ?Sized>(
-    tool: &T,
+pub(super) fn transfer_sequence(
     parameters: &Handle<HSequence<f64>>,
-    to_2d: bool,
+    transfer: impl Fn(f64) -> Result<f64, Failure>,
 ) -> Result<Handle<HSequence<f64>>, Failure> {
     let Some(sequence) = parameters.get() else {
         return Err(Failure::with_type(
@@ -72,7 +71,7 @@ pub(super) fn transfer_sequence<T: TransferParameters + ?Sized>(
     let values = sequence.sequence(|sequence| sequence.iter().copied().collect::<Vec<_>>());
     let result = Handle::new(HSequence::<f64>::default());
     for value in values {
-        let transferred = tool.perform_parameter(value, to_2d)?;
+        let transferred = transfer(value)?;
         result.change_sequence(|sequence| {
             sequence.append(transferred);
         });

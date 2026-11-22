@@ -1,7 +1,7 @@
 //! `XCAFPrsDriver`: the presentation driver of the XDE shape labels.
 use super::XCAFPrsAISObject;
 use crate::xcaf_doc::XCAFDocShapeTool;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkv3d::ais::AisInteractiveObject;
@@ -19,10 +19,8 @@ use martensite_tkvcaf::tprs_std::TPrsStdDriver;
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 #[derive(Default)]
-pub struct XCAFPrsDriver {
-    transient: StandardTransient,
-}
-martensite_tkernel::impl_transient!(XCAFPrsDriver, "XCAFPrsDriver", dyn TPrsStdDriver, transient,
+pub struct XCAFPrsDriver {}
+martensite_tkernel::impl_transient!(XCAFPrsDriver, "XCAFPrsDriver", dyn TPrsStdDriver,
     interfaces: [dyn TPrsStdDriver]);
 
 impl XCAFPrsDriver {

@@ -26,7 +26,7 @@ fn apply_model_modifications() {
     let fixture = named_document();
     let objects = named_objects(&fixture);
     let children = named_children(&objects);
-    objects[0].set_ref(&objects[1].cast());
+    objects[0].set_ref(&objects[1].upcast());
     children[0].set_int(200);
     children[1].set_int(110);
     objects[1].set_real_arr(&real_values(0.123));

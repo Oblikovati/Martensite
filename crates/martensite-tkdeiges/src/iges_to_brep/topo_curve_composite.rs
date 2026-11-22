@@ -1,6 +1,7 @@
 //! Composite curves as wires.
 use super::{IgesToBRep, IgesToBRepTopoCurve};
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::{IgesGeomBoundary, IgesGeomCompositeCurve, IgesGeomCurveOnSurface};
 use martensite_tkbrep::topods::{Face, Shape};
 use martensite_tkernel::message::Msg;
@@ -69,7 +70,7 @@ impl IgesToBRepTopoCurve {
     }
     fn composite_part(
         &mut self,
-        part: &Handle<IgesDataIgesEntity>,
+        part: &Handle<dyn IgesDataEntityKind>,
         target: CompositeTarget<'_>,
     ) -> Result<Shape, Failure> {
         match target.on_face {
@@ -95,7 +96,7 @@ impl IgesToBRepTopoCurve {
         target: CompositeTarget<'_>,
     ) -> Result<bool, Failure> {
         let live = iges_live(start, WHERE)?;
-        let mut previous: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut previous: Handle<dyn IgesDataEntityKind> = Handle::default();
         for rank in 1..=live.nb_curves() {
             let part = live.curve(rank)?;
             // A part given twice in a row counts once.

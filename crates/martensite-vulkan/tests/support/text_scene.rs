@@ -159,7 +159,7 @@ impl TextScene {
             .set_primitives_aspect(&super::scene::unlit_style([1., 0., 0., 1.]));
         self.scene
             .group
-            .add_primitive_array(&self.scene.vertices, true);
+            .add_primitive_array(&self.scene.vertices.upcast(), true);
         self.text.set_position(&Point3::new(-5., 0., -1.));
         if annotation {
             self.style.set_text_style(AspectTypeOfStyleText::Annotation);

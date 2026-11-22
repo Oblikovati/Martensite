@@ -112,7 +112,6 @@ macro_rules! sine_wave_members {
                 return Err(($failure)("omega", omega));
             }
             Ok(Self {
-                parent: StandardTransient::default(),
                 position,
                 amplitude,
                 omega,
@@ -121,10 +120,7 @@ macro_rules! sine_wave_members {
         }
         // The defined Copy() reruns the constructor on valid stored values.
         fn copied(&self) -> Self {
-            Self {
-                parent: StandardTransient::default(),
-                ..*self
-            }
+            Self { ..*self }
         }
         /// The local coordinate system (`Position`); `curve.position()`.
         pub fn position(&self) -> $axis {

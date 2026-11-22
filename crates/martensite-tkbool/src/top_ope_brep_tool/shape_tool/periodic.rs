@@ -103,7 +103,7 @@ impl TopOpeBRepToolShapeTool {
         if pc.is_null() {
             return Err(program_error("ShapeTool::PeriodizeParameter : no 2d curve"));
         }
-        let hl: Handle<Geom2dLine> = pc.cast();
+        let hl: Handle<Geom2dLine> = pc.downcast();
         let Some(line) = hl.get() else {
             // NYI : BSpline ...
             return Ok(par);

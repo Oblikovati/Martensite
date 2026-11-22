@@ -8,10 +8,7 @@ use martensite_tkbrep::{
     brep_adaptor::BRepAdaptorCurve,
     topods::{self, Edge},
 };
-use martensite_tkernel::{
-    impl_transient, precision,
-    standard::{Failure, StandardTransient},
-};
+use martensite_tkernel::{impl_transient, precision, standard::Failure};
 use martensite_tkg3d::{adaptor3d::Adaptor3dCurve, top_abs::Orientation};
 use martensite_tkgeombase::gcpnts::TangentialDeflection;
 use martensite_tkmath::{geom_abs::SurfaceType, gp::Point3};
@@ -19,7 +16,6 @@ mod initialize;
 mod refine;
 /// Native BRepMeshCurveTessellator; `BRepMeshCurveTessellator::new(&edge, &parameters, 2)?`.
 pub struct BRepMeshCurveTessellator {
-    transient: StandardTransient,
     edge: Edge,
     adaptor: BRepAdaptorCurve,
     distribution: TangentialDeflection,
@@ -29,7 +25,7 @@ pub struct BRepMeshCurveTessellator {
     face_range_u: [f64; 2],
     face_range_v: [f64; 2],
 }
-impl_transient!(BRepMeshCurveTessellator,"BRepMesh_CurveTessellator",dyn CurveTessellator,transient,interfaces:[dyn CurveTessellator]);
+impl_transient!(BRepMeshCurveTessellator,"BRepMesh_CurveTessellator",dyn CurveTessellator,interfaces:[dyn CurveTessellator]);
 impl BRepMeshCurveTessellator {
     /// Tessellate the edge's 3D representation; `BRepMeshCurveTessellator::new(&edge, &parameters, 2)?`.
     pub fn new(
@@ -61,7 +57,6 @@ impl BRepMeshCurveTessellator {
         minimum_points: i32,
     ) -> Result<Self, Failure> {
         let mut result = Self {
-            transient: StandardTransient::default(),
             edge: topology,
             adaptor,
             distribution: TangentialDeflection::new(),

@@ -149,7 +149,7 @@ fn source_curve(
 ) -> martensite_tkernel::standard::Handle<martensite_tkg3d::geom::GeomBezierCurve> {
     use martensite_tkbrep::{brep::BRepTool, topods::edge};
     let (curve, _, _) = BRepTool::curve(&edge(source).unwrap()).unwrap();
-    curve.cast()
+    curve.downcast()
 }
 #[test]
 fn cancellation_preserves_owned_prefix_and_actual_next_domain() {
@@ -220,7 +220,8 @@ pub(super) fn curved_crossing() -> Vec<Shape> {
         Point3::new(1., 1., 0.),
     ];
     let poles = Array1::from_shared(&points, 1);
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&poles).unwrap()).cast();
+    let curve: Handle<dyn GeomCurve> =
+        Handle::new(GeomBezierCurve::new(&poles).unwrap()).into_upcast();
     let bezier = BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

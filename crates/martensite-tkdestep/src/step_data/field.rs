@@ -5,18 +5,19 @@ use super::{
     StepDataFieldKind as Kind, StepDataLogical, StepDataSelectInt, StepDataSelectMember,
     StepDataSelectNamed, StepDataSelectReal,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     ncollection::{ArrayError, HArray1, HArray2},
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::HAsciiString,
 };
 
 /// `HArray1<Handle<`StandardTransient`>>`.
-pub(super) type TransientList = HArray1<Handle<StandardTransient>>;
+pub(super) type TransientList = HArray1<Handle<dyn Transient>>;
 /// `HArray1<Handle<HAsciiString>>`.
 pub(super) type StringList = HArray1<Handle<HAsciiString>>;
 /// `HArray2<Handle<`StandardTransient`>>`.
-pub(super) type TransientGrid = HArray2<Handle<StandardTransient>>;
+pub(super) type TransientGrid = HArray2<Handle<dyn Transient>>;
 
 /// An array failure as the exception of a field member.
 pub(super) fn array_failure(error: ArrayError) -> Failure {
@@ -38,7 +39,7 @@ pub struct StepDataField {
     pub(super) thekind: Kind,
     pub(super) theint: i32,
     pub(super) thereal: f64,
-    pub(super) theany: Handle<StandardTransient>,
+    pub(super) theany: Handle<dyn Transient>,
 }
 
 impl StepDataField {
@@ -131,7 +132,7 @@ impl StepDataField {
             self.theany = Handle::new(copy).cast();
             return Ok(());
         }
-        if let Some(copy) = copied_array::<Handle<StandardTransient>>(&self.theany)? {
+        if let Some(copy) = copied_array::<Handle<dyn Transient>>(&self.theany)? {
             self.theany = copy;
         }
         Ok(())
@@ -235,7 +236,7 @@ impl StepDataField {
         self.theany = val.cast();
     }
     /// `set_entity(val)`; a null `val` is the `set_entity()` predeclaration.
-    pub fn set_entity(&mut self, val: &Handle<StandardTransient>) {
+    pub fn set_entity(&mut self, val: &Handle<dyn Transient>) {
         self.clear(Kind::ENTITY);
         self.theany = val.clone();
     }
@@ -248,7 +249,7 @@ impl StepDataField {
             Kind::INTEGER | Kind::BOOLEAN | Kind::LOGICAL => new_list::<i32>(first, last)?,
             Kind::REAL => new_list::<f64>(first, last)?,
             Kind::ENUM | Kind::STRING => new_list::<Handle<HAsciiString>>(first, last)?,
-            _ => new_list::<Handle<StandardTransient>>(first, last)?,
+            _ => new_list::<Handle<dyn Transient>>(first, last)?,
         };
         if self.thekind == Kind::UNDEFINED {
             self.thekind = Kind::ANY;
@@ -265,7 +266,7 @@ impl StepDataField {
         self.theany = match self.thekind {
             Kind::INTEGER | Kind::BOOLEAN | Kind::LOGICAL => new_grid::<i32>(f1, r2, f2, c2)?,
             Kind::REAL => new_grid::<f64>(f1, r2, f2, c2)?,
-            _ => new_grid::<Handle<StandardTransient>>(f1, r2, f2, c2)?,
+            _ => new_grid::<Handle<dyn Transient>>(f1, r2, f2, c2)?,
         };
         if self.thekind == Kind::UNDEFINED {
             self.thekind = Kind::ANY;
@@ -274,7 +275,7 @@ impl StepDataField {
         Ok(())
     }
     /// `Set(val)`: a string, a member, an array (its size recorded), else an entity.
-    pub fn set(&mut self, val: &Handle<StandardTransient>) {
+    pub fn set(&mut self, val: &Handle<dyn Transient>) {
         let kind = self.thekind;
         self.clear(Kind::UNDEFINED);
         self.theany = val.clone();
@@ -293,7 +294,7 @@ impl StepDataField {
             self.set_grid_value(kind, val);
         }
     }
-    fn set_list_value(&mut self, kind: Kind, val: &Handle<StandardTransient>) -> bool {
+    fn set_list_value(&mut self, kind: Kind, val: &Handle<dyn Transient>) -> bool {
         let chosen = |or: Kind| if kind == Kind::UNDEFINED { or } else { kind };
         let (element, length) = if let Some(list) = val.cast::<HArray1<i32>>().get() {
             (chosen(Kind::INTEGER), list.array1().len())
@@ -310,7 +311,7 @@ impl StepDataField {
         self.theint = length as i32;
         true
     }
-    fn set_grid_value(&mut self, kind: Kind, val: &Handle<StandardTransient>) {
+    fn set_grid_value(&mut self, kind: Kind, val: &Handle<dyn Transient>) {
         let chosen = |or: Kind| if kind == Kind::UNDEFINED { or } else { kind };
         let (element, rows, columns) = if let Some(grid) = val.cast::<HArray2<i32>>().get() {
             let grid = grid.array2();
@@ -333,7 +334,7 @@ impl StepDataField {
 fn new_list<T: Default + Clone + Send + Sync + 'static>(
     first: i32,
     last: i32,
-) -> Result<Handle<StandardTransient>, Failure>
+) -> Result<Handle<dyn Transient>, Failure>
 where
     HArray1<T>: RuntimeTyped,
 {
@@ -346,7 +347,7 @@ fn new_grid<T: Default + Clone + Send + Sync + 'static>(
     r2: i32,
     c1: i32,
     c2: i32,
-) -> Result<Handle<StandardTransient>, Failure>
+) -> Result<Handle<dyn Transient>, Failure>
 where
     HArray2<T>: RuntimeTyped,
 {
@@ -356,8 +357,8 @@ where
 
 /// A new array with the bounds and values of `any`, when it is an `HArray1<T>`.
 fn copied_array<T: Default + Clone + Send + Sync + 'static>(
-    any: &Handle<StandardTransient>,
-) -> Result<Option<Handle<StandardTransient>>, Failure> {
+    any: &Handle<dyn Transient>,
+) -> Result<Option<Handle<dyn Transient>>, Failure> {
     let list = any.cast::<HArray1<T>>();
     let Some(live) = list.get() else {
         return Ok(None);

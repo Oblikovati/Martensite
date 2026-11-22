@@ -20,7 +20,7 @@ pub(super) fn split_surface(
     tool: &ShapeUpgradeClosedFaceDivide,
     _area: f64,
 ) -> Result<bool, Failure> {
-    let splitter_handle = tool.split_surface_tool().cast::<dyn SplitSurface>();
+    let splitter_handle = tool.split_surface_tool();
     let Some(splitter) = splitter_handle.get() else {
         return Ok(false);
     };

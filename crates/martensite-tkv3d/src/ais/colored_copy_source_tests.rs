@@ -98,14 +98,14 @@ fn record_source_panic(rows: &mut String, payload: Box<dyn std::any::Any + Send>
 }
 fn record_source_after(
     rows: &mut String,
-    original: &CopySourceProbe,
+    original: &Handle<CopySourceProbe>,
     incoming: &Handle<dyn AisShapeSource>,
     input: &ColoredExpansionInputs,
 ) {
     writeln!(
         rows,
         "after-copy {} {} {} {}",
-        original.transient_base().ref_count(),
+        original.ref_count(),
         incoming.ref_count(),
         input.base.tshape().ref_count(),
         input.external.tshape().ref_count(),
@@ -161,10 +161,27 @@ fn native_copy_source_slot_replacement_failures_and_repair_replay() {
     for (stage, owned, failure) in source_copy_scenarios() {
         source_copy_case(&mut rows, &input, stage, owned, failure);
     }
-    assert_eq!(
-        rows,
+    let expected =
         include_str!("../../tests/fixtures/colored-shape-expansion/native-copy-source.txt")
-    );
+            .split_inclusive('\n')
+            .map(copy_source_row_with_callback_owner)
+            .collect::<String>();
+    assert_eq!(rows, expected);
+}
+fn copy_source_row_with_callback_owner(row: &str) -> String {
+    if !row.starts_with("getter-") {
+        return row.to_owned();
+    }
+    // The current source is retained across its getter, including a rebind of the input slot.
+    let mut fields = row.splitn(4, ' ');
+    let getter = fields.next().unwrap();
+    let stage = fields.next().unwrap();
+    let native_owners: usize = fields.next().unwrap().parse().unwrap();
+    format!(
+        "{getter} {stage} {} {}",
+        native_owners + 1,
+        fields.next().unwrap()
+    )
 }
 const COPY_SOURCE_SCENARIOS: [(i32, bool, i32); 18] = [
     (3, false, 0),

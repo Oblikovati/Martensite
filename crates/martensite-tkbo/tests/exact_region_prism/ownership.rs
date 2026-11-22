@@ -49,7 +49,7 @@ fn representation_count(source: &Shape) -> usize {
 }
 fn mutate_source_pole(source: &Shape) {
     let (curve, _, _) = BRepTool::curve(&edge(source).unwrap()).unwrap();
-    let curve = curve.cast::<GeomBezierCurve>();
+    let curve = curve.downcast::<GeomBezierCurve>();
     let curve = curve.get().unwrap();
     let moved = Point3::new(8., 0., 0.);
     curve.set_pole(2, moved).unwrap();

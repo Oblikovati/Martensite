@@ -91,7 +91,10 @@ fn cap_curve(
     edge: &martensite_tkbrep::topods::Edge,
     face: &martensite_tkbrep::topods::Face,
 ) -> Handle<Geom2dBezierCurve> {
-    BRepTool::curve_on_face(edge, face).unwrap().pcurve.cast()
+    BRepTool::curve_on_face(edge, face)
+        .unwrap()
+        .pcurve
+        .into_downcast()
 }
 
 #[test]

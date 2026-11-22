@@ -33,18 +33,18 @@ pub(crate) use iges_shared_026;
 
 macro_rules! iges_shared_027 {
     ($ent_live:ident, $iter:ident) => {
-        $iter.get_one_item(&$ent_live.center().cast::<StandardTransient>());
-        $iter.get_one_item(&$ent_live.axis().cast::<StandardTransient>());
-        $iter.get_one_item(&$ent_live.reference_dir().cast::<StandardTransient>());
+        $iter.get_one_item(&$ent_live.center().cast::<dyn Transient>());
+        $iter.get_one_item(&$ent_live.axis().cast::<dyn Transient>());
+        $iter.get_one_item(&$ent_live.reference_dir().cast::<dyn Transient>());
     };
 }
 pub(crate) use iges_shared_027;
 
 macro_rules! iges_shared_028 {
     ($ent_live:ident, $iter:ident) => {
-        $iter.get_one_item(&$ent_live.location_point().cast::<StandardTransient>());
-        $iter.get_one_item(&$ent_live.axis().cast::<StandardTransient>());
-        $iter.get_one_item(&$ent_live.reference_dir().cast::<StandardTransient>());
+        $iter.get_one_item(&$ent_live.location_point().cast::<dyn Transient>());
+        $iter.get_one_item(&$ent_live.axis().cast::<dyn Transient>());
+        $iter.get_one_item(&$ent_live.reference_dir().cast::<dyn Transient>());
     };
 }
 pub(crate) use iges_shared_028;
@@ -67,9 +67,9 @@ macro_rules! iges_shared_030 {
         if $ianul == 0 {
             return Ok(false);
         }
-        let mut $ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut $ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         if $ianul < $nb {
-            $ent_array = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, $nb - $ianul)?;
+            $ent_array = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, $nb - $ianul)?;
         }
     };
 }
@@ -267,8 +267,8 @@ macro_rules! iges_shared_048 {
     ($another_live:ident, $ent_array:ident, $lower:ident, $upper:ident) => {
         let $lower: i32 = 1;
         let $upper: i32 = $another_live.nb_entities();
-        let $ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>($lower, $upper)?;
+        let $ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>($lower, $upper)?;
     };
 }
 pub(crate) use iges_shared_048;

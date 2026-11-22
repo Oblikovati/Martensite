@@ -1,22 +1,20 @@
 //! Named highlight owner verifies callbacks can read the context without a retained guard.
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkv3d::{
     ais::AisInteractiveContext, prs_mgr::PrsMgrPresentationManager, select_mgr::*, v3d::V3dViewer,
 };
 pub struct LocationOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     context: WeakHandle<AisInteractiveContext>,
     pub modes: SharedState<Vec<i32>>,
 }
-martensite_tkernel::impl_transient!(LocationOwner,"LocationOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(LocationOwner,"LocationOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl LocationOwner {
     pub fn new(
         object: &Handle<dyn SelectMgrSelectableObject>,
         context: &Handle<AisInteractiveContext>,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(object, 0),
             context: context.downgrade(),
             modes: SharedState::default(),

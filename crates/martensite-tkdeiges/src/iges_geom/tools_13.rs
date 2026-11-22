@@ -13,16 +13,18 @@ use super::{
 };
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::iges_shared_045;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_item, iges_array2_set, iges_dump_vals, iges_dump_xyz_l,
     iges_live, iges_msg, iges_new_array2, iges_real_text,
 };
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -155,7 +157,7 @@ impl IgesGeomToolSurfaceOfRevolution {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolSurfaceOfRevolution::read_own_params")?;
         let mut an_axis: Handle<IgesGeomLine> = Handle::default();
-        let mut a_generatrix: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_generatrix: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut a_start_angle: f64 = 0.0;
         let mut an_end_angle: f64 = 0.0;
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
@@ -214,8 +216,8 @@ impl IgesGeomToolSurfaceOfRevolution {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolSurfaceOfRevolution::own_shared")?;
-        iter.get_one_item(&ent_live.axis_of_revolution().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.generatrix().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.axis_of_revolution().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.generatrix().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -256,15 +258,11 @@ impl IgesGeomToolSurfaceOfRevolution {
         let another_live = iges_live(another, "IgesGeomToolSurfaceOfRevolution::own_copy")?;
         let ent_live = iges_live(ent, "IgesGeomToolSurfaceOfRevolution::own_copy")?;
         let an_axis = tc
-            .transferred(
-                &another_live
-                    .axis_of_revolution()
-                    .cast::<StandardTransient>(),
-            )?
+            .transferred(&another_live.axis_of_revolution().cast::<dyn Transient>())?
             .cast::<IgesGeomLine>();
         let a_generatrix = tc
-            .transferred(&another_live.generatrix().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.generatrix().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let a_start_angle: f64 = another_live.start_angle();
         let an_end_angle: f64 = another_live.end_angle();
         ent_live.init(&an_axis, &a_generatrix, a_start_angle, an_end_angle);
@@ -316,7 +314,7 @@ impl IgesGeomToolTabulatedCylinder {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolTabulatedCylinder::read_own_params")?;
         let msg157 = iges_msg("XSTEP_157");
-        let mut a_directrix: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_directrix: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut an_end: Xyz = Xyz::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         if !pr.read_entity_status(ir, &pr.current(), &mut a_status, &mut a_directrix, false)? {
@@ -354,7 +352,7 @@ impl IgesGeomToolTabulatedCylinder {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolTabulatedCylinder::own_shared")?;
-        iter.get_one_item(&ent_live.directrix().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.directrix().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -395,8 +393,8 @@ impl IgesGeomToolTabulatedCylinder {
         let another_live = iges_live(another, "IgesGeomToolTabulatedCylinder::own_copy")?;
         let ent_live = iges_live(ent, "IgesGeomToolTabulatedCylinder::own_copy")?;
         let a_directrix = tc
-            .transferred(&another_live.directrix().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.directrix().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let an_end: Xyz = Xyz::from(another_live.end_point());
         ent_live.init(&a_directrix, an_end);
         Ok(())

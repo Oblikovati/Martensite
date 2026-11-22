@@ -3,11 +3,11 @@
 #![allow(unsafe_code)]
 use martensite_tkernel::{
     ncollection::{
-        AccumulatingAllocatorObject, AlignedAllocatorObject, AllocatorObject, AllocatorTypes,
+        AccumulatingAllocatorObject, AlignedAllocatorObject, AllocatorSource, AllocatorTypes,
         BaseAllocator, Buffer, IncrementalAllocatorObject, ObjectHandle, Shared, StandardAllocator,
         TypedAllocator,
     },
-    standard::{Handle, StandardTransient, dump::DumpStream},
+    standard::{Handle, StandardTransient, Transient, dump::DumpStream},
 };
 
 #[test]
@@ -37,7 +37,7 @@ fn allocator_objects_chain_to_the_base_allocator_descriptor() {
     let aligned = Handle::new(AlignedAllocatorObject::new(32));
     assert!(aligned.is_instance_name("NCollection_AlignedAllocator"));
     assert_eq!(
-        aligned.cast::<AllocatorObject>().resource(),
+        aligned.allocator_object_base().resource(),
         aligned.resource()
     );
     let incremental = IncrementalAllocatorObject::new(4096);
@@ -131,13 +131,15 @@ fn standard_allocator_is_stateless_and_reallocates() {
 fn object_handle_wraps_non_transient_objects() {
     let handle = ObjectHandle::new(vec![1, 2, 3]);
     assert_eq!(handle.get().map(Vec::len), Some(3));
-    let base: Handle<StandardTransient> = handle.transient();
+    let base: Handle<dyn Transient> = handle.transient();
     assert_eq!(base.ref_count(), 2);
     assert!(base.is_instance_name("Standard_Transient"));
     let recovered = ObjectHandle::<Vec<i32>>::down_cast(&base);
     assert!(recovered == handle);
     assert!(ObjectHandle::<String>::down_cast(&base).is_null());
-    assert!(ObjectHandle::<i32>::down_cast(&Handle::new(StandardTransient::default())).is_null());
+    assert!(
+        ObjectHandle::<i32>::down_cast(&Handle::new(StandardTransient).into_upcast()).is_null()
+    );
     assert!(ObjectHandle::<i32>::default().get().is_none());
 }
 

@@ -1,6 +1,7 @@
 //! Offset curves (type 130).
 use super::{IgesToBRep, IgesToBRepTopoCurve};
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::IgesGeomOffsetCurve;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Edge, Face, Shape, ShapeIterator, Wire};
@@ -29,7 +30,7 @@ impl IgesToBRepTopoCurve {
     fn offset_base_failure(
         &self,
         start: &Handle<IgesGeomOffsetCurve>,
-        base: &Handle<IgesDataIgesEntity>,
+        base: &Handle<dyn IgesDataEntityKind>,
         what: &[u8],
     ) -> Result<(), Failure> {
         self.send_fail(start, &self.label_message(base, what)?);
@@ -40,7 +41,7 @@ impl IgesToBRepTopoCurve {
         &self,
         start: &Handle<IgesGeomOffsetCurve>,
         live: &IgesGeomOffsetCurve,
-    ) -> Option<(Handle<IgesDataIgesEntity>, f64)> {
+    ) -> Option<(Handle<dyn IgesDataEntityKind>, f64)> {
         let mut distance = live.first_offset_distance();
         let mut base = live.base_curve();
         loop {

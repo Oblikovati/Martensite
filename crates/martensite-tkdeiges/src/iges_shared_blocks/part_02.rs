@@ -47,7 +47,7 @@ macro_rules! iges_block_0030 {
     ($annotations:ident, $nbval:ident, $orientation_angles:ident, $view_origins:ident, $views:ident) => {
         let mut $nbval: i32 = Default::default();
         crate::iges_shared_blocks::iges_block_0055!($orientation_angles, $view_origins, $views);
-        let mut $annotations: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut $annotations: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
     };
 }
 pub(crate) use iges_block_0030;
@@ -57,7 +57,8 @@ macro_rules! iges_block_0031 {
         let mut $attr_types: Handle<HArray1<i32>> = Default::default();
         let mut $attr_value_data_types: Handle<HArray1<i32>> = Default::default();
         let mut $attr_value_counts: Handle<HArray1<i32>> = Default::default();
-        let mut $attr_values: Handle<HArray1<Handle<StandardTransient>>> = Default::default();
+        let mut $attr_values: Handle<HArray1<Handle<dyn martensite_tkernel::standard::Transient>>> =
+            Default::default();
         let mut $attr_value_pointers: Handle<IgesDefsHArray1OfHArray1OfTextDisplayTemplate> =
             Default::default();
     };
@@ -177,7 +178,7 @@ macro_rules! iges_block_0041 {
         let mut $nbval: i32 = Default::default();
         let mut $views: Handle<HArray1<Handle<dyn IgesDataViewKindEntity>>> = Default::default();
         let mut $view_origins: Handle<HArray1<Xy>> = Default::default();
-        let mut $annotations: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut $annotations: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
     };
 }
 pub(crate) use iges_block_0041;
@@ -286,7 +287,7 @@ macro_rules! iges_block_0051 {
         if !$res {
             return Ok($res);
         }
-        let mut $nul_display_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut $nul_display_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
         $ent.init_implied(&$nul_display_entities)?;
         return Ok($res);

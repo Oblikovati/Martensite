@@ -11,11 +11,17 @@ impl<T> Drop for IncompleteSequenceCopy<'_, T> {
         };
         // Invalidate topology before relinquishing allocation leases: no ordinary local
         // cleanup or observer may traverse nodes after their allocator can reclaim bytes.
+        let mut node = destination.topology.endpoints().0;
         destination.topology.edit(|base| {
             *base = BaseSequence::new(Some(base.allocator().clone()));
         });
-        for (_, owner) in destination.owners.drain() {
-            owner.abandon();
+        while !node.is_null() {
+            // SAFETY: the guard detached the incomplete copy's live typed chain.
+            unsafe {
+                let current = node;
+                node = (*current).next();
+                destination.take_unlinked(current).abandon();
+            }
         }
     }
 }
@@ -27,6 +33,7 @@ impl<T> Sequence<T> {
     /// Use assignment into a live receiver when ownership of a failed prefix must be retained.
     pub fn from_copied_with(source: &Self, mut construct: impl FnMut(&T) -> T) -> Self {
         let mut destination = Self::with_allocator(source.allocator().clone());
+        destination.common_nodes = source.common_nodes;
         let mut incomplete = IncompleteSequenceCopy {
             destination: Some(&mut destination),
         };

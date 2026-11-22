@@ -181,9 +181,9 @@ impl ChFi3dFilBuilder {
         let (max_step, locfleche) = simul_params(call.guide, call.spine)?;
         let pfirst = out.first;
         self.base.extend_ends_to_spine(call.spine, out)?;
-        let s1: Handle<dyn Adaptor3dSurface> = call.s1.clone().cast();
-        let s2: Handle<dyn Adaptor3dSurface> = call.s2.clone().cast();
-        let guide: Handle<dyn Adaptor3dCurve> = call.guide.clone().cast();
+        let s1: Handle<dyn Adaptor3dSurface> = call.s1.upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = call.s2.upcast();
+        let guide: Handle<dyn Adaptor3dCurve> = call.guide.upcast();
         let mut walk = call.walk;
         walk.max_step = max_step;
         walk.fleche = locfleche;

@@ -65,7 +65,7 @@ impl ChFi2dFilletAlgo {
         // create circle edge
         let center = plane_value(nearest.get_center().x(), nearest.get_center().y(), position);
         let circ = Circle3::new(Axis2::new(center, position.direction())?, self.radius)?;
-        let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(circ)).cast();
+        let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(circ)).into_upcast();
         let p1 = self.point_on(true, nearest.get_param(), position)?;
         let p2 = self.point_on(false, nearest.get_param2(), position)?;
         let ends = arc_ends(&circle, circ, point, (p1, p2))?;

@@ -20,8 +20,8 @@ use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkgeomalgo::geom_api::ProjectPointOnSurf;
 use martensite_tkgeomalgo::geom_plate::{
-    GeomPlateBuildPlateSurface, GeomPlateCurveConstraint, GeomPlateMakeApprox,
-    GeomPlatePlateG0Criterion,
+    GeomPlateBuildPlateSurface, GeomPlateCurveConstraint, GeomPlateCurveConstraintSource,
+    GeomPlateMakeApprox, GeomPlatePlateG0Criterion,
 };
 use martensite_tkgeombase::adv_app2var::{AdvApp2VarCriterionRepartition, AdvApp2VarCriterionType};
 use martensite_tkgeombase::extrema::ExtAlgo;
@@ -142,7 +142,7 @@ impl BRepFillFilling {
         seq_of_constraints: &[BRepFillEdgeFaceAndOrder],
     ) -> Result<(), Failure> {
         for c in seq_of_constraints {
-            let constr: Handle<GeomPlateCurveConstraint> = self.curve_constraint(c)?;
+            let constr: Handle<dyn GeomPlateCurveConstraintSource> = self.curve_constraint(c)?;
             if self.my_is_init_face_given {
                 let found = BRepTool::curve_on_face(&c.my_edge, &self.my_init_face)?;
                 if !found.pcurve.is_null() {
@@ -153,7 +153,7 @@ impl BRepFillFilling {
                         true,
                         true,
                     )?)
-                    .cast();
+                    .into_upcast();
                     constr
                         .get()
                         .ok_or_else(no_surface)?
@@ -169,15 +169,15 @@ impl BRepFillFilling {
     fn curve_constraint(
         &self,
         c: &BRepFillEdgeFaceAndOrder,
-    ) -> Result<Handle<GeomPlateCurveConstraint>, Failure> {
+    ) -> Result<Handle<dyn GeomPlateCurveConstraintSource>, Failure> {
         let tols: [f64; 3] = [self.my_tol3d, self.my_tol_ang, self.my_tol_curv];
         if !c.my_face.is_null() {
             let surf: Handle<dyn Adaptor3dSurface> =
-                Handle::new(BRepAdaptorSurface::with_face(&c.my_face, true)?).cast();
+                Handle::new(BRepAdaptorSurface::with_face(&c.my_face, true)?).into_upcast();
             let curve2d: Handle<dyn Adaptor2dCurve2d> = Handle::new(
                 BRepAdaptorCurve2d::with_edge_on_face(&c.my_edge, &c.my_face)?,
             )
-            .cast();
+            .into_upcast();
             let h: Handle<Adaptor3dCurveOnSurface> =
                 Handle::new(Adaptor3dCurveOnSurface::with_curve(&curve2d, &surf)?);
             return BRepFillCurveConstraint::on_surface(
@@ -189,7 +189,7 @@ impl BRepFillFilling {
         }
         if c.my_order == Continuity::C0 {
             let h_curve: Handle<dyn Adaptor3dCurve> =
-                Handle::new(BRepAdaptorCurve::with_edge(&c.my_edge)?).cast();
+                Handle::new(BRepAdaptorCurve::with_edge(&c.my_edge)?).into_upcast();
             return BRepFillCurveConstraint::with_curve(
                 &h_curve,
                 c.my_order as i32,
@@ -204,11 +204,11 @@ impl BRepFillFilling {
             .ok_or_else(no_surface)?
             .transform(on_surface.location.transformation())?;
         let surf: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&copy)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&copy)?).into_upcast();
         let curve2d: Handle<dyn Adaptor2dCurve2d> =
-            Handle::new(Geom2dAdaptorCurve::with_curve(&on_surface.pcurve)?).cast();
+            Handle::new(Geom2dAdaptorCurve::with_curve(&on_surface.pcurve)?).into_upcast();
         let h: Handle<dyn Adaptor3dCurve> =
-            Handle::new(Adaptor3dCurveOnSurface::with_curve(&curve2d, &surf)?).cast();
+            Handle::new(Adaptor3dCurveOnSurface::with_curve(&curve2d, &surf)?).into_upcast();
         Ok(Handle::new(GeomPlateCurveConstraint::new(
             &h,
             c.my_order as i32,
@@ -216,7 +216,8 @@ impl BRepFillFilling {
             self.my_tol3d,
             self.my_tol_ang,
             self.my_tol_curv,
-        )?))
+        )?)
+        .into_upcast())
     }
 
     /// The B-spline approximation of the plate (under the G0 criterion of the contour
@@ -270,7 +271,7 @@ impl BRepFillFilling {
         dmax: f64,
     ) -> Result<(), Failure> {
         let curves_on_plate = self.builder()?.curves2d()?;
-        let surf: Handle<dyn GeomSurface> = surface.clone().cast();
+        let surf: Handle<dyn GeomSurface> = surface.cast();
         let mut final_edges: Vec<Shape> = Vec::new();
         for i in 1..=self.my_boundary.len() as i32 {
             let a_curve_on_plate: Handle<dyn Geom2dCurve> = curves_on_plate
@@ -377,6 +378,7 @@ fn bezier_edge(
     let mut points: Array1<'static, Point2> = Array1::with_bounds(1, 2).map_err(table_error)?;
     *points.change_value(1).map_err(table_error)? = p1;
     *points.change_value(2).map_err(table_error)? = p2;
-    let line2d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dBezierCurve::new(&points)?).cast();
+    let line2d: Handle<dyn Geom2dCurve> =
+        Handle::new(Geom2dBezierCurve::new(&points)?).into_upcast();
     BRepLibMakeEdge::from_pcurve_vertices(&line2d, surface, first, last)?.edge()
 }

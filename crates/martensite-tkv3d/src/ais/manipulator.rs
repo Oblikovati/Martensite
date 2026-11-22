@@ -6,7 +6,7 @@ use crate::prs3d::Prs3dShadingAspect;
 use crate::select_mgr::SelectMgrSelectableObject;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::{
-    Failure, Handle, RuntimeTyped, SharedState, StandardTransient, exceptions::program_error,
+    Failure, Handle, RuntimeTyped, SharedState, exceptions::program_error,
 };
 use martensite_tkmath::gp::{self, Axis1, Axis2, Point3, Transform3};
 use martensite_tkservice::aspect::{AspectInteriorStyle, AspectTypeOfFacingModel};
@@ -144,12 +144,11 @@ pub struct AisManipulatorFields {
 
 /// `AisManipulator`; `let manipulator = AisManipulator::new?; manipulator.attach(&object, &options)?;`.
 pub struct AisManipulator {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     /// The protected fields.
     pub fields: SharedState<AisManipulatorFields>,
 }
-martensite_tkernel::impl_transient!(AisManipulator, "AisManipulator", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(AisManipulator, "AisManipulator", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl AisManipulator {
@@ -161,7 +160,6 @@ impl AisManipulator {
     /// A manipulator placed at a position; `AisManipulator::with_position(&position)?`.
     pub fn with_position(position: &Axis2) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::new(AisManipulatorFields {
                 axes: Default::default(),

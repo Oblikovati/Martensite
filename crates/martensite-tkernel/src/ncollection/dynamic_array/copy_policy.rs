@@ -1,12 +1,15 @@
 //! Public copy construction and assignment select element-copy policies explicitly.
-use super::{DynamicArray, DynamicArrayCopyConstructionFailure, DynamicArrayCopyFailure};
+#[cfg(test)]
+use super::DynamicArrayCopyConstructionFailure;
+use super::{DynamicArray, DynamicArrayCopyFailure};
 use crate::standard::Failure;
 impl<T> DynamicArray<T> {
     /// Copies using an explicit fallible copy constructor, without requiring Clone.
     /// `let copied = DynamicArray::from_copied_with(&source, |value| Ok(*value))?;`.
     /// Whole blocks publish only after their constructors succeed. On Err the returned owner keeps
     /// both published values and the incomplete block alive until explicit Rust recovery or Drop.
-    pub fn from_copied_with(
+    #[cfg(test)]
+    pub(crate) fn from_copied_with(
         source: &Self,
         construct: impl FnMut(&T) -> Result<T, Failure>,
     ) -> Result<Self, DynamicArrayCopyConstructionFailure<T>> {
@@ -18,7 +21,7 @@ impl<T> DynamicArray<T> {
     /// `target.assign_with_constructor(&source, true, |value| Ok(*value))?;`.
     /// Err leaves complete blocks published and returns ownership of the incomplete block. Report
     /// constructor failures as Err; Rust callback panics use RAII and are a separate domain.
-    pub fn assign_with_constructor(
+    pub(crate) fn assign_with_constructor(
         &mut self,
         source: &Self,
         own_allocator: bool,
@@ -30,13 +33,15 @@ impl<T> DynamicArray<T> {
     }
     /// Adopts the source allocator, as copy assignment does, with an explicit element constructor.
     /// `target.assign_operator_with_constructor(&source, |value| Ok(*value))?;`.
-    pub fn assign_operator_with_constructor(
+    #[cfg(test)]
+    pub(crate) fn assign_operator_with_constructor(
         &mut self,
         source: &Self,
         construct: impl FnMut(&T) -> Result<T, Failure>,
     ) -> Result<&mut Self, DynamicArrayCopyFailure<T>> {
         self.assign_with_constructor(source, false, construct)
     }
+    #[cfg(test)]
     fn construct_copy_policy(
         source: &Self,
         copy: impl FnOnce(&mut Self, &Self) -> Result<(), DynamicArrayCopyFailure<T>>,
@@ -65,14 +70,16 @@ impl<T> DynamicArray<T> {
 impl<T: Copy> DynamicArray<T> {
     /// Selects trivially-copyable construction, bypassing observable Clone implementations.
     /// `let copied = DynamicArray::from_copied_trivial(&source)?;`.
-    pub fn from_copied_trivial(
+    #[cfg(test)]
+    pub(crate) fn from_copied_trivial(
         source: &Self,
     ) -> Result<Self, DynamicArrayCopyConstructionFailure<T>> {
         Self::construct_copy_policy(source, Self::copy_date_bitwise)
     }
     /// Selects trivially-copyable assignment after clearing and allocator selection.
     /// `target.assign_trivial(&source, false)?;` selects copy assignment's allocator policy.
-    pub fn assign_trivial(
+    #[cfg(test)]
+    pub(crate) fn assign_trivial(
         &mut self,
         source: &Self,
         own_allocator: bool,

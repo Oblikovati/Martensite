@@ -30,7 +30,7 @@ pub struct Graphic3dStructureFields {
     /// `myDescendants`: the child structures (raw pointers natively), in index order.
     pub descendants: Vec<WeakHandle<dyn Graphic3dStructureSource>>,
     /// `myOwner`: the opaque owner (a `void*` natively).
-    pub owner: WeakHandle<StandardTransient>,
+    pub owner: WeakHandle<dyn martensite_tkernel::standard::Transient>,
     /// `myVisual`.
     pub visual: Graphic3dTypeOfStructure,
     /// `myComputeVisual`.
@@ -213,10 +213,9 @@ martensite_tkernel::impl_transient_interface!(
 
 /// The concrete `Graphic3d_Structure`; `Graphic3dStructure::new(&manager, &Handle::default())?`.
 pub struct Graphic3dStructure {
-    transient: StandardTransient,
     base: Graphic3dStructureBase,
 }
-martensite_tkernel::impl_transient!(Graphic3dStructure, "Graphic3d_Structure", StandardTransient, transient,
+martensite_tkernel::impl_transient!(Graphic3dStructure, "Graphic3d_Structure", StandardTransient,
     interfaces: [dyn Graphic3dStructureSource]);
 impl Graphic3dStructureSource for Graphic3dStructure {
     fn structure_base(&self) -> &Graphic3dStructureBase {
@@ -232,10 +231,7 @@ impl Graphic3dStructure {
         link: &Handle<dyn Graphic3dStructureSource>,
     ) -> Result<Handle<Self>, Failure> {
         let base = Graphic3dStructureBase::new(manager, link)?;
-        let handle = Handle::new(Self {
-            transient: StandardTransient::default(),
-            base,
-        });
+        let handle = Handle::new(Self { base });
         graphic3d_structure_bind(&handle.cast());
         Ok(handle)
     }

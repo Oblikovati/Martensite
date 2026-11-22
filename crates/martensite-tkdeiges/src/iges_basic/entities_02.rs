@@ -8,12 +8,15 @@
     reason = "the members keep the form of the rules they state, and values a reader then ignores"
 )]
 use super::IgesBasicGroup;
+use super::IgesBasicGroupSource;
 use crate::iges_basic::entity_shape::iges_array1_lower;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_array1_item;
 use crate::iges_data::{IgesDataIgesEntity, IgesDataSingleParentEntity};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::Xyz;
 
@@ -24,7 +27,7 @@ iges_entity! {
 /// maintained as a single entity, but the group is
 /// ordered.
 /// It inherits from Group
-custom_default IgesBasicOrderedGroup, IgesBasicOrderedGroupState, "IgesBasicOrderedGroup", parent IgesBasicGroup, {  }
+custom_default IgesBasicOrderedGroup, IgesBasicOrderedGroupState, "IgesBasicOrderedGroup", parent IgesBasicGroup, kinds [dyn IgesBasicGroupSource], {  }
 }
 impl Default for IgesBasicOrderedGroup {
     fn default() -> Self {
@@ -48,7 +51,7 @@ iges_entity! {
 /// maintained as a single entity, but the group is
 /// ordered and there are no back pointers.
 /// It inherits from Group
-custom_default IgesBasicOrderedGroupWithoutBackP, IgesBasicOrderedGroupWithoutBackPState, "IgesBasicOrderedGroupWithoutBackP", parent IgesBasicGroup, {  }
+custom_default IgesBasicOrderedGroupWithoutBackP, IgesBasicOrderedGroupWithoutBackPState, "IgesBasicOrderedGroupWithoutBackP", parent IgesBasicGroup, kinds [dyn IgesBasicGroupSource], {  }
 }
 impl Default for IgesBasicOrderedGroupWithoutBackP {
     fn default() -> Self {
@@ -71,14 +74,14 @@ iges_entity! {
 /// It defines a logical structure of one independent
 /// (parent) entity and one or more subordinate (children)
 /// entities
-IgesBasicSingleParent, IgesBasicSingleParentState, "IgesBasicSingleParent", kind dyn IgesDataSingleParentEntity, { nb_parent_entities: i32, parent_entity: Handle<IgesDataIgesEntity>, children: Handle<HArray1<Handle<IgesDataIgesEntity>>> }
+IgesBasicSingleParent, IgesBasicSingleParentState, "IgesBasicSingleParent", kind dyn IgesDataSingleParentEntity, { nb_parent_entities: i32, parent_entity: Handle<dyn IgesDataEntityKind>, children: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> }
 }
 impl IgesBasicSingleParent {
     iges_methods! {
     get nb_parent_entities = nb_parent_entities: i32;
-    get single_parent = parent_entity: Handle<IgesDataIgesEntity>;
+    get single_parent = parent_entity: Handle<dyn IgesDataEntityKind>;
     len nb_children = children;
-    item child = children: Handle<IgesDataIgesEntity>;
+    item child = children: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class
     /// SingleParent
@@ -88,8 +91,8 @@ impl IgesBasicSingleParent {
     pub fn init(
         &self,
         nb_parent_entities: i32,
-        a_parent_entity: &Handle<IgesDataIgesEntity>,
-        all_children: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        a_parent_entity: &Handle<dyn IgesDataEntityKind>,
+        all_children: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !all_children.is_null()
             && iges_array1_lower(all_children, "IgesBasicSingleParent::init")? != 1
@@ -109,13 +112,13 @@ impl IgesBasicSingleParent {
     }
 }
 impl IgesDataSingleParentEntity for IgesBasicSingleParent {
-    fn single_parent(&self) -> Handle<IgesDataIgesEntity> {
+    fn single_parent(&self) -> Handle<dyn IgesDataEntityKind> {
         IgesBasicSingleParent::single_parent(self)
     }
     fn nb_children(&self) -> Result<i32, Failure> {
         Ok(IgesBasicSingleParent::nb_children(self))
     }
-    fn child(&self, num: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    fn child(&self, num: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         IgesBasicSingleParent::child(self, num)
     }
 }
@@ -173,14 +176,14 @@ iges_entity! {
 /// This Entity permits a single definition of a detail to
 /// be utilized in multiple instances in the creation of
 /// the whole picture
-IgesBasicSubfigureDef, IgesBasicSubfigureDefState, "IgesBasicSubfigureDef", parent IgesDataIgesEntity, { depth: i32, name: Handle<HAsciiString>, assoc_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> }
+IgesBasicSubfigureDef, IgesBasicSubfigureDefState, "IgesBasicSubfigureDef", parent IgesDataIgesEntity, { depth: i32, name: Handle<HAsciiString>, assoc_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> }
 }
 impl IgesBasicSubfigureDef {
     iges_methods! {
     get depth = depth: i32;
     get name = name: Handle<HAsciiString>;
     len nb_entities = assoc_entities;
-    item associated_entity = assoc_entities: Handle<IgesDataIgesEntity>;
+    item associated_entity = assoc_entities: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class
     /// SubfigureDef
@@ -191,7 +194,7 @@ impl IgesBasicSubfigureDef {
         &self,
         a_depth: i32,
         a_name: &Handle<HAsciiString>,
-        all_assoc_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_assoc_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !all_assoc_entities.is_null()
             && iges_array1_lower(all_assoc_entities, "IgesBasicSubfigureDef::init")? != 1
@@ -211,11 +214,11 @@ impl IgesBasicSubfigureDef {
     }
     /// returns the specific entity as indicated by Index
     /// raises exception if Index `= 0 or Index ` NbEntities()
-    pub fn value(&self, index: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value(&self, index: i32) -> Result<Handle<dyn Transient>, Failure> {
         let the_assoc_entities = self.state.read().assoc_entities.clone();
         Ok(
             iges_array1_item(&the_assoc_entities, index, "IgesBasicSubfigureDef::value")?
-                .cast::<StandardTransient>(),
+                .cast::<dyn Transient>(),
         )
     }
 }

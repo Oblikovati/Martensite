@@ -83,7 +83,7 @@ fn reference_triangle(reference: &Graphic3dStructure) -> Handle<Graphic3dArrayOf
     let group = reference.new_group().unwrap();
     group.set_group_primitives_aspect(&scene::unlit_style([0., 1., 0., 1.]));
     let vertices = view_setup::triangle_vertices();
-    group.add_primitive_array(&vertices, true);
+    group.add_primitive_array(&vertices.upcast(), true);
     vertices
 }
 fn translation(x: f64) -> Handle<Datum3> {

@@ -84,7 +84,7 @@ mod isoline_surface_collect;
 mod isoline_surface_curves;
 
 mod isoline_surface_source;
-pub use isoline_surface_source::StdPrsIsolineSurfaceSource;
+pub use isoline_surface_source::{StdPrsIsolineSurfaceSource, StdPrsIsolineSurfaceTarget};
 
 mod isoline_face_api;
 

@@ -4,7 +4,7 @@ use super::ModelObjectBase;
 use super::{ModelObject, ModelObjectState, ObjectAttribute};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -31,11 +31,10 @@ type MasterAndReferred = (Handle<dyn ModelObject>, Handle<dyn ModelObject>);
 /// `martensite_object_model_ReferenceAttribute`; `ReferenceAttribute::set(&label, &referred, &master)`.
 #[derive(Default)]
 pub struct ReferenceAttribute {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     labels: SharedState<ReferenceLabels>,
 }
-impl_transient!(ReferenceAttribute, "martensite_object_model_ReferenceAttribute", dyn TdfAttribute, transient,
+impl_transient!(ReferenceAttribute, "martensite_object_model_ReferenceAttribute", dyn TdfAttribute,
     interfaces: [dyn TdfAttribute]);
 
 /// The object stored on `label` by a `martensite_object_model_ObjectAttribute`, null when none.
@@ -67,7 +66,7 @@ impl ReferenceAttribute {
         let mut reference: Handle<ReferenceAttribute> = Handle::default();
         if !label.find_attribute_as(&REFERENCE_ID, &mut reference)? {
             reference = Handle::new(ReferenceAttribute::new());
-            label.add_attribute(&reference.cast(), true)?;
+            label.add_attribute(&reference.upcast(), true)?;
         } else if let Some(old) = reference.get_object()?.get() {
             old.remove_back_reference(master, true);
         }
@@ -152,7 +151,7 @@ impl TdfAttribute for ReferenceAttribute {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste`: the relocated referred object, with the master found above the target.
     fn paste(

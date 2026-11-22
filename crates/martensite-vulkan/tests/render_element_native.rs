@@ -117,7 +117,7 @@ fn add_triangle(group: &Handle<dyn Graphic3dGroup>) {
     for [x, y] in [[-1., -1.], [1., -1.], [0., 1.]] {
         triangle.add_vertex(x, y, 0.).unwrap();
     }
-    group.add_primitive_array(&triangle, true);
+    group.add_primitive_array(&triangle.upcast(), true);
 }
 
 fn native_scene(name: &str) -> Vec<String> {

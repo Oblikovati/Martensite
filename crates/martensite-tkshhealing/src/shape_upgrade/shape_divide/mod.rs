@@ -4,6 +4,7 @@ mod boundaries;
 mod compound;
 mod perform;
 use super::ShapeUpgradeFaceDivide;
+use crate::shape_upgrade::FaceDivider;
 use crate::{shape_build::ShapeBuildReShape, shape_extend::BasicMsgRegistrator};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
@@ -29,13 +30,13 @@ pub struct ShapeDivideFields {
     pub min_tolerance: f64,
     /// Maximum tolerance passed to child tools.
     pub max_tolerance: f64,
-    /// Whether supimplementation surfaces are segmented.
+    /// Whether support surfaces are segmented.
     pub segment_mode: bool,
     /// ShapeExtend status bits.
     pub status: i32,
     /// Curve splitting mode for free/shared edges.
     pub edge_mode: i32,
-    face_tool: Handle<ShapeUpgradeFaceDivide>,
+    face_tool: Handle<dyn FaceDivider>,
 }
 impl Default for ShapeDivideFields {
     fn default() -> Self {
@@ -50,7 +51,7 @@ impl Default for ShapeDivideFields {
             segment_mode: true,
             status: 0,
             edge_mode: 2,
-            face_tool: Handle::new(ShapeUpgradeFaceDivide::empty()),
+            face_tool: Handle::new(ShapeUpgradeFaceDivide::empty()).into_upcast(),
         }
     }
 }
@@ -63,7 +64,7 @@ pub trait ShapeDivider {
         perform::perform(self, new_context)
     }
     /// Select the face criterion; `divider.split_face_tool()`.
-    fn split_face_tool(&self) -> Handle<ShapeUpgradeFaceDivide> {
+    fn split_face_tool(&self) -> Handle<dyn FaceDivider> {
         self.shape_divide_base().with(|f| f.face_tool.clone())
     }
     /// Replace the virtual message destination; `divider.set_msg_registrator(&registrator)`.

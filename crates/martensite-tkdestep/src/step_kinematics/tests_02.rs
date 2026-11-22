@@ -61,7 +61,7 @@ fn init_round_trip_step_kinematics_kinematic_property_mechanism_representation()
     let object = StepKinematicsKinematicPropertyMechanismRepresentation::new();
     object.init(
         &the_property_definition_representation_definition,
-        &the_property_definition_representation_used_representation,
+        &the_property_definition_representation_used_representation.upcast(),
         &the_base,
     );
     assert!(object.base() == the_base);
@@ -80,15 +80,17 @@ fn runtime_type_step_kinematics_kinematic_topology_directed_structure() {
 #[test]
 fn init_round_trip_step_kinematics_kinematic_topology_directed_structure() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_parent = Handle::new(StepKinematicsKinematicTopologyStructure::new());
     let object = StepKinematicsKinematicTopologyDirectedStructure::new();
     object.init(
         &the_representation_name,
         &the_representation_items,
-        &the_representation_context_of_items,
+        &the_representation_context_of_items.upcast(),
         &the_parent,
     );
     assert!(object.parent() == the_parent);
@@ -107,15 +109,17 @@ fn runtime_type_step_kinematics_kinematic_topology_network_structure() {
 #[test]
 fn init_round_trip_step_kinematics_kinematic_topology_network_structure() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_parent = Handle::new(StepKinematicsKinematicTopologyStructure::new());
     let object = StepKinematicsKinematicTopologyNetworkStructure::new();
     object.init(
         &the_representation_name,
         &the_representation_items,
-        &the_representation_context_of_items,
+        &the_representation_context_of_items.upcast(),
         &the_parent,
     );
     assert!(object.parent() == the_parent);
@@ -159,8 +163,8 @@ fn init_round_trip_step_kinematics_linear_flexible_and_pinion_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_pinion_radius,
     );
@@ -196,10 +200,10 @@ fn init_round_trip_step_kinematics_linear_flexible_and_planar_curve_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
-        &the_pair_curve,
+        &the_pair_curve.upcast(),
         the_orientation,
     );
     assert!(object.pair_curve() == the_pair_curve);
@@ -249,8 +253,8 @@ fn init_round_trip_step_kinematics_low_order_kinematic_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_tx,
         the_ty,
@@ -290,7 +294,7 @@ fn init_round_trip_step_kinematics_low_order_kinematic_pair_value() {
     let object = StepKinematicsLowOrderKinematicPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_translation_x,
         the_actual_translation_y,
         the_actual_translation_z,
@@ -373,8 +377,8 @@ fn init_round_trip_step_kinematics_low_order_kinematic_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_low_order_kinematic_pair_tx,
         the_low_order_kinematic_pair_ty,

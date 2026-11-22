@@ -1,5 +1,6 @@
 //! Sequence node prefixes retain non-owning links independently of value ownership.
 use super::{AllocatedBox, BaseAllocator};
+use std::sync::atomic::AtomicUsize;
 
 /// Non-owning bidirectional links; `let node = SeqNode::default()`.
 /// Links are never dereferenced by this type. Their pointees may outlive or precede this node.
@@ -48,18 +49,36 @@ impl SeqNode {
     }
 }
 
+// Only typed nodes participate in shared index caching. Raw custom bases keep SeqNode.
+#[repr(C)]
+pub(super) struct SequenceNodeHeader {
+    links: SeqNode,
+    pub(super) lookup_index: AtomicUsize,
+}
+
+impl SequenceNodeHeader {
+    fn new(links: SeqNode) -> Self {
+        Self {
+            links,
+            lookup_index: AtomicUsize::new(0),
+        }
+    }
+}
+
 /// A typed sequence node with a link prefix; `SequenceNode::new(7)`.
 #[repr(C)]
 pub struct SequenceNode<T> {
-    pub(super) links: SeqNode,
+    header: SequenceNodeHeader,
     pub(super) value: T,
+    pub(super) allocation: Option<BaseAllocator>,
 }
 impl<T> SequenceNode<T> {
     /// Moves an item into an initially unlinked node; `SequenceNode::new(item)`.
     pub fn new(value: T) -> Self {
         Self {
-            links: SeqNode::new(),
+            header: SequenceNodeHeader::new(SeqNode::new()),
             value,
+            allocation: None,
         }
     }
     /// Constructs an item in an initially unlinked node; `SequenceNode::with(|| Item::new())`.
@@ -68,11 +87,11 @@ impl<T> SequenceNode<T> {
     }
     /// Borrows the base prefix; `node.base().next()`.
     pub fn base(&self) -> &SeqNode {
-        &self.links
+        &self.header.links
     }
     /// Mutates a standalone node's base prefix; `node.change_base().set_next(next)`.
     pub fn change_base(&mut self) -> &mut SeqNode {
-        &mut self.links
+        &mut self.header.links
     }
     /// Borrows the contained item; `assert_eq!(node.value(), &7)`.
     pub fn value(&self) -> &T {
@@ -101,12 +120,13 @@ impl<T> SequenceNode<T> {
 impl<T: Clone> Clone for SequenceNode<T> {
     fn clone(&self) -> Self {
         Self {
-            links: self.links,
+            header: SequenceNodeHeader::new(self.header.links),
             value: self.value.clone(),
+            allocation: None,
         }
     }
     fn clone_from(&mut self, source: &Self) {
-        self.links = source.links;
+        self.header.links = source.header.links;
         self.value.clone_from(&source.value);
     }
 }

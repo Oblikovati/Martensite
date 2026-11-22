@@ -2,7 +2,9 @@
 use super::{viewer_light_probe_replay::make_light_probe_scene, *};
 use martensite_tkernel::standard::{Handle, HandleReference};
 use martensite_tkservice::{
-    graphic3d::{Graphic3dCLight, Graphic3dLightSet, Graphic3dTypeOfLightSource},
+    graphic3d::{
+        Graphic3dCLight, Graphic3dCLightSource, Graphic3dLightSet, Graphic3dTypeOfLightSource,
+    },
     null_driver::NullGraphicDriver,
 };
 #[test]
@@ -31,9 +33,10 @@ fn capture_light_node_aliases() -> Vec<String> {
     rows.push(light_node_alias_row(2, &last, &last, &lights));
     rows
 }
-fn define_alias_lights(viewer: &V3dViewer) -> [Handle<Graphic3dCLight>; 3] {
+fn define_alias_lights(viewer: &V3dViewer) -> [Handle<dyn Graphic3dCLightSource>; 3] {
     let lights = std::array::from_fn(|_| {
         Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient))
+            .into_upcast::<dyn Graphic3dCLightSource>()
     });
     for light in &lights {
         viewer.add_light(light);
@@ -44,9 +47,9 @@ fn define_alias_lights(viewer: &V3dViewer) -> [Handle<Graphic3dCLight>; 3] {
 }
 fn light_node_alias_row(
     step: usize,
-    alias: &dyn HandleReference<Graphic3dCLight>,
-    fresh: &dyn HandleReference<Graphic3dCLight>,
-    lights: &[Handle<Graphic3dCLight>; 3],
+    alias: &dyn HandleReference<dyn Graphic3dCLightSource>,
+    fresh: &dyn HandleReference<dyn Graphic3dCLightSource>,
+    lights: &[Handle<dyn Graphic3dCLightSource>; 3],
 ) -> String {
     let same_slot = (alias.reference_address() == fresh.reference_address()) as u8;
     let first = (alias.object_address() == lights[0].object_address()) as u8;
@@ -121,10 +124,10 @@ fn light_field_references_copy_without_owners_and_cursor_identity_survives_appen
     let cursor = original.cursor();
     let node = cursor.node_address();
     let alias = cursor.value_ref();
-    let before = alias.observe().ref_count();
+    let before = alias.ref_count();
     scene.viewer.set_light_on_one(&scene.lights[2]).unwrap();
     assert_eq!(node, cursor.node_address());
-    assert_eq!(before, alias.observe().ref_count());
+    assert_eq!(before, alias.ref_count());
     assert_eq!(copied.len(), 3);
     assert!(!copied.is_empty());
 }

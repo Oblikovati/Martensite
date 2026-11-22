@@ -13,11 +13,11 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    IgesDataTransfEntity, iges_array1_set, iges_dump_entities, iges_dump_xyz_l, iges_new_array1,
-    iges_real_text,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataTransfEntity,
+    iges_array1_set, iges_dump_entities, iges_dump_xyz_l, iges_new_array1, iges_real_text,
 };
 use crate::iges_dimen::IgesDimenNewDimensionedGeometry;
 use martensite_tkernel::ncollection::HArray1;
@@ -50,8 +50,9 @@ impl IgesDimenToolNewDimensionedGeometry {
         let mut temp_nb_dimens: i32 = Default::default();
         let mut temp_dim_orient_flag: i32 = Default::default();
         let mut temp_angle: f64 = Default::default();
-        let mut temp_dimen: Handle<IgesDataIgesEntity> = Default::default();
-        let mut temp_geom_ents: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut temp_dimen: Handle<dyn IgesDataEntityKind> = Default::default();
+        let mut temp_geom_ents: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            Default::default();
         let mut temp_dim_loc_flags: Handle<HArray1<i32>> = Default::default();
         let mut temp_points: Handle<HArray1<Xyz>> = Default::default();
         if pr.defined_else_skip()? {
@@ -61,7 +62,7 @@ impl IgesDimenToolNewDimensionedGeometry {
         }
         let mut st: bool = pr.read_integer_text(&pr.current(), "Number of Geometries", &mut num)?;
         if st && (num > 0) {
-            temp_geom_ents = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_geom_ents = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
             temp_dim_loc_flags = iges_new_array1::<i32>(1, num)?;
             temp_points = iges_new_array1::<Xyz>(1, num)?;
         } else {
@@ -82,7 +83,7 @@ impl IgesDimenToolNewDimensionedGeometry {
         pr.read_real_text(&pr.current(), "Angle Value", &mut temp_angle)?;
         if !temp_geom_ents.is_null() {
             for i in 1..=num {
-                let mut temp_ent: Handle<IgesDataIgesEntity> = Default::default();
+                let mut temp_ent: Handle<dyn IgesDataEntityKind> = Default::default();
                 pr.read_entity(
                     ir,
                     &pr.current(),
@@ -197,8 +198,8 @@ impl IgesDimenToolNewDimensionedGeometry {
             return Ok(res);
         }
         let mut nb: i32 = ent.nb_geometries()?;
-        let mut temp_geom_ents: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nb)?;
+        let mut temp_geom_ents: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nb)?;
         let mut temp_dim_loc_flags: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, nb)?;
         let mut temp_points: Handle<HArray1<Xyz>> = iges_new_array1::<Xyz>(1, nb)?;
         for i in 1..=nb {
@@ -273,14 +274,14 @@ impl IgesDimenToolNewDimensionedGeometry {
         let mut temp_nb_dimens: i32 = another.nb_dimensions();
         let mut temp_dim_orient_flag: i32 = another.dimension_orientation_flag();
         let mut temp_angle: f64 = another.angle_value();
-        let mut temp_dimen: Handle<IgesDataIgesEntity> =
+        let mut temp_dimen: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.dimension_entity().cast())?.cast();
-        let mut temp_geom_ents: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+        let mut temp_geom_ents: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         let mut temp_dim_loc_flags: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, num)?;
         let mut temp_points: Handle<HArray1<Xyz>> = iges_new_array1::<Xyz>(1, num)?;
         for i in 1..=num {
-            let mut temp_ent: Handle<IgesDataIgesEntity> =
+            let mut temp_ent: Handle<dyn IgesDataEntityKind> =
                 tc.transferred(&another.geometry_entity(i)?.cast())?.cast();
             iges_array1_set(
                 &temp_geom_ents,

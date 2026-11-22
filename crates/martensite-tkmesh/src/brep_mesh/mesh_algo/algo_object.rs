@@ -8,21 +8,20 @@ use crate::brep_mesh::RangeSplitter;
 use crate::imesh_data::FaceHandle;
 use crate::imesh_tools::{MeshAlgo, MeshParameters};
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 use std::sync::{Mutex, PoisonError};
 
 /// `BaseMeshAlgo` in the runtime type system (abstract).
 pub trait BaseMeshAlgo: MeshAlgo {}
-impl_transient_interface!(dyn BaseMeshAlgo, "BRepMesh_BaseMeshAlgo", dyn MeshAlgo);
+impl_transient_interface!(dyn BaseMeshAlgo, "BRepMesh_BaseMeshAlgo", dyn MeshAlgo, upcasts: [dyn MeshAlgo]);
 
 /// `ConstrainedBaseMeshAlgo` in the runtime type system (abstract).
 pub trait ConstrainedBaseMeshAlgo: BaseMeshAlgo {}
 impl_transient_interface!(
     dyn ConstrainedBaseMeshAlgo,
     "BRepMesh_ConstrainedBaseMeshAlgo",
-    dyn BaseMeshAlgo
-);
+    dyn BaseMeshAlgo, upcasts: [dyn BaseMeshAlgo, dyn MeshAlgo]);
 
 /// `CustomBaseMeshAlgo` in the runtime type system (abstract; its only
 /// native concrete descendant is `BRepMeshDelabellaBaseMeshAlgo`).
@@ -30,8 +29,7 @@ pub trait CustomBaseMeshAlgo: ConstrainedBaseMeshAlgo {}
 impl_transient_interface!(
     dyn CustomBaseMeshAlgo,
     "BRepMesh_CustomBaseMeshAlgo",
-    dyn ConstrainedBaseMeshAlgo
-);
+    dyn ConstrainedBaseMeshAlgo, upcasts: [dyn ConstrainedBaseMeshAlgo, dyn BaseMeshAlgo, dyn MeshAlgo]);
 
 /// The `Perform` of one face algorithm object (the template instance behind a
 /// handle); `core.perform_face(&face, &parameters, &range)?`.
@@ -111,14 +109,12 @@ impl LockedFaceCore {
 /// let _algo = BRepMeshDelaunayBaseMeshAlgo::new();
 /// ```
 pub struct BRepMeshDelaunayBaseMeshAlgo {
-    transient: StandardTransient,
     core: LockedFaceCore,
 }
 impl_transient!(
     BRepMeshDelaunayBaseMeshAlgo,
     "BRepMesh_DelaunayBaseMeshAlgo",
     dyn ConstrainedBaseMeshAlgo,
-    transient,
     interfaces: [dyn MeshAlgo, dyn BaseMeshAlgo, dyn ConstrainedBaseMeshAlgo]
 );
 
@@ -137,7 +133,6 @@ impl BRepMeshDelaunayBaseMeshAlgo {
     /// `BRepMeshDelaunayBaseMeshAlgo::from_core(algo)`.
     pub fn from_core(core: impl FaceMeshingCore + 'static) -> Self {
         Self {
-            transient: StandardTransient::default(),
             core: LockedFaceCore::new(core),
         }
     }

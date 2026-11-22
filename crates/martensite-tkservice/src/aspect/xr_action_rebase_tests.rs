@@ -51,8 +51,8 @@ fn rebase_action_row(
         i32::from(alias.reference_address() == address),
         i32::from(alias.object_address() == scene.first.object_address()),
         i32::from(alias.object_address() == scene.second.object_address()),
-        scene.first.ref_count(),
-        scene.second.ref_count(),
+        i32::try_from(scene.first.ref_count()).unwrap(),
+        i32::try_from(scene.second.ref_count()).unwrap(),
         i32::from(fresh_rebased_action_is_null(scene)),
     ]
 }

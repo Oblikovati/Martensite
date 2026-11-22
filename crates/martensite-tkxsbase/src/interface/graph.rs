@@ -9,7 +9,7 @@ use super::{
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceModelReports, InterfaceProtocol,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -231,7 +231,7 @@ impl InterfaceGraph {
         self.themodel.get().map_or(0, |m| m.nb_entities())
     }
     /// `EntityNumber(ent)`: its number in the model.
-    pub fn entity_number(&self, ent: &Handle<StandardTransient>) -> i32 {
+    pub fn entity_number(&self, ent: &Handle<dyn Transient>) -> i32 {
         self.themodel.get().map_or(0, |m| m.number(ent))
     }
     /// `IsPresent(num)`: false out of range or without statuses.
@@ -242,11 +242,11 @@ impl InterfaceGraph {
         self.theflags.value(num, GRAPH_PRESENT)
     }
     /// `IsPresent(ent)`.
-    pub fn is_present_entity(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_present_entity(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         self.is_present(self.entity_number(ent))
     }
     /// `Entity(num)`: `StandardOutOfRange` out of the model.
-    pub fn entity(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn entity(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         self.live_model()?.value(num)
     }
     /// `Status(num)`: 0 without statuses.
@@ -325,8 +325,8 @@ impl InterfaceGraph {
 pub(super) fn redefined_content(
     model: &Handle<dyn InterfaceInterfaceModel>,
     number: i32,
-    entity: &Handle<StandardTransient>,
-) -> Handle<StandardTransient> {
+    entity: &Handle<dyn Transient>,
+) -> Handle<dyn Transient> {
     if model.is_redefined_content(number) {
         return model.report_entity(number, false).content();
     }

@@ -2,6 +2,7 @@
 use super::decode_color;
 use crate::iges_basic::IgesBasicSubfigureDef;
 use crate::iges_control::IgesControlReader;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataDefList, IgesDataDefType, IgesDataIgesEntity, iges_live};
 use crate::iges_graph::IgesGraphColor;
 use martensite_tkbrep::brep::BRepBuilder;
@@ -244,7 +245,7 @@ impl IgesCafControlReader {
     /// The attributes of one entity with a shape, on the label of the shape.
     fn apply_entity(
         &self,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         shape: &Shape,
         (shapes, colors, layers): (
             &XCAFDocShapeTool,
@@ -306,7 +307,7 @@ impl IgesCafControlReader {
     }
     fn apply_subfigure_name(
         &self,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         shape: &Shape,
         shapes: &XCAFDocShapeTool,
     ) -> Result<(), Failure> {

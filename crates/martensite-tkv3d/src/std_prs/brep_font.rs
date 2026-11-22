@@ -9,7 +9,7 @@ use crate::brep_font::{
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::String8;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Axis3;
 use martensite_tkservice::font::{FontFontAspect, FontStrictLevel};
@@ -52,14 +52,12 @@ impl Default for StdPrsBRepFontTextOptions {
 /// `StdPrsBRepFont`: a font that builds BRep glyphs and text.
 /// Example: `let font = StdPrsBRepFont::find_and_create(&"Arial".into, FontFontAspect::Regular, 12.0, FontStrictLevel::Any);`.
 pub struct StdPrsBRepFont {
-    transient: StandardTransient,
     implementation: SharedState<Arc<StdPrsBRepFontImpl>>,
 }
 martensite_tkernel::impl_transient!(
     StdPrsBRepFont,
     "StdPrsBRepFont",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 
 impl Default for StdPrsBRepFont {
@@ -105,7 +103,6 @@ impl StdPrsBRepFont {
     /// The private constructor of `StdPrsBRepFontCache`: a handle on a shared implementation.
     pub(super) fn from_impl(implementation: Arc<StdPrsBRepFontImpl>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             implementation: SharedState::new(implementation),
         }
     }

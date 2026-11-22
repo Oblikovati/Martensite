@@ -1,5 +1,5 @@
 //! String-view construction scans for NUL while view operations preserve their full span.
-use martensite_tkernel::tcollection::AsciiString;
+use crate::tcollection::AsciiString;
 
 #[test]
 fn view_and_bounded_constructors_scan_the_first_nul() {

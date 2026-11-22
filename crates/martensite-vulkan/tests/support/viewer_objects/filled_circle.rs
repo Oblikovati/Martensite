@@ -4,7 +4,7 @@
 //! `FilledCircle`: a circle (or a circular sector) shaded as a face and selected as a filled
 //! circle.
 use martensite_tkbrep::topods::Face;
-use martensite_tkernel::standard::{Failure, Handle, HandleReference, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference};
 use martensite_tkg3d::geom::{GeomCircle, GeomConic as _, GeomCurve as _};
 use martensite_tkmath::gp::resolution;
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
@@ -26,21 +26,19 @@ use std::f64::consts::PI;
 
 /// `FilledCircle`: the circle, its parameter range and its filled selection.
 pub struct FilledCircle {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     circle: Handle<GeomCircle>,
     u_start: f64,
     u_end: f64,
     filled_status: bool,
 }
-martensite_tkernel::impl_transient!(FilledCircle, "FilledCircle", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(FilledCircle, "FilledCircle", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl FilledCircle {
     /// The filled circle of a circle between two parameters.
     pub fn new(circle: &Handle<GeomCircle>, u_start: f64, u_end: f64) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             circle: circle.clone(),
             u_start,

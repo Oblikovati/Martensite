@@ -25,7 +25,7 @@ pub(super) type SurfaceOffset = (Handle<dyn GeomSurface>, BRepOffsetStatus);
 /// use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 /// use martensite_tkmath::gp::Axis3;
 /// use martensite_tkoffset::brep_offset::{surface, BRepOffsetStatus};
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// assert_eq!(surface(&plane, 2.0, false).unwrap().1, BRepOffsetStatus::Good);
 /// ```
 pub fn surface(
@@ -38,7 +38,7 @@ pub fn surface(
         return Ok((candidate, status));
     }
     let fallback = GeomOffsetSurface::new(input, offset, allow_c0)?;
-    Ok((Handle::new(fallback).cast(), status))
+    Ok((Handle::new(fallback).into_upcast(), status))
 }
 
 pub(super) fn trimmed_surface(
@@ -49,5 +49,5 @@ pub(super) fn trimmed_surface(
     let (u1, u2, v1, v2) = input.bounds();
     let (basis, status) = surface(&input.basis_surface(), offset, allow_c0)?;
     let trimmed = GeomRectangularTrimmedSurface::new(&basis, (u1, u2), (v1, v2), (true, true))?;
-    Ok((Handle::new(trimmed).cast(), status))
+    Ok((Handle::new(trimmed).into_upcast(), status))
 }

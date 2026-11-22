@@ -1,9 +1,6 @@
 //! Full RegressionCommands OCC27700_Text computation; point-style frame and text have separate groups.
 use super::*;
-use martensite_tkernel::{
-    standard::{HandleReference, StandardTransient},
-    tcollection::ExtendedString,
-};
+use martensite_tkernel::{standard::HandleReference, tcollection::ExtendedString};
 use martensite_tkmath::gp::{Axis2, Direction3, Point3};
 use martensite_tkservice::{aspect::AspectInteriorStyle, graphic3d::*};
 use martensite_tkv3d::v3d::V3dTypeOfOrientation;
@@ -23,16 +20,13 @@ const BANNER: &[&str] = &[
 
 /// A private interactive fixture confined to its invocation's viewer thread.
 pub(super) struct PointFrameText {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
 }
-martensite_tkernel::impl_transient!(PointFrameText,"OCC27700_Text",dyn AisInteractiveObject,transient,
-    interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(PointFrameText,"OCC27700_Text",dyn AisInteractiveObject, interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl PointFrameText {
     /// Allocate the same base presentation and bind its virtual dispatch; `PointFrameText::new()`.
     pub(super) fn new() -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
         });
         prs_mgr_presentable_bind(&object.cast());

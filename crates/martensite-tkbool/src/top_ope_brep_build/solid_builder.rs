@@ -435,7 +435,7 @@ impl TopOpeBRepBuildSolidBuilder {
         ss.init_shapes();
         while ss.more_shapes() {
             let shape_loop = Handle::new(TopOpeBRepBuildLoopBase::from_shape(ss.shape()?));
-            ll.append(shape_loop.cast::<dyn TopOpeBRepBuildLoop>());
+            ll.append(shape_loop.into_upcast::<dyn TopOpeBRepBuildLoop>());
             ss.next_shape();
         }
         self.my_block_builder.init_block();
@@ -444,7 +444,7 @@ impl TopOpeBRepBuildSolidBuilder {
             let block_loop = Handle::new(TopOpeBRepBuildLoopBase::from_block(&bi));
             self.my_loop_set
                 .change_list_of_loop()
-                .append(block_loop.cast::<dyn TopOpeBRepBuildLoop>());
+                .append(block_loop.into_upcast::<dyn TopOpeBRepBuildLoop>());
             self.my_block_builder.next_block();
         }
         Ok(())

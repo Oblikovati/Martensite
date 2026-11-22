@@ -11,7 +11,7 @@ use crate::geom::{
 };
 use crate::geom_adaptor::GeomAdaptorCurve;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient, project_concrete};
 use martensite_tkg2d::geom2d_grid_eval::grid_loops::empty;
 use martensite_tkmath::geom_abs::CurveType;
 use martensite_tkmath::gp::{Point3, Vector3};
@@ -100,7 +100,7 @@ impl<'a> GeomGridEvalCurve<'a> {
     /// A failing `GetType` preserves the previous evaluator; fallback evaluation borrows
     /// `curve` for this evaluator's lifetime. Example: `eval.initialization_adaptor(&adaptor)?`.
     pub fn initialization_adaptor(&mut self, curve: &'a dyn Adaptor3dCurve) -> Result<(), Failure> {
-        if let Some(geom_adaptor) = GeomAdaptorCurve::project_from(curve) {
+        if let Some(geom_adaptor) = project_concrete::<GeomAdaptorCurve>(curve) {
             self.initialization_curve(&geom_adaptor.curve());
             return Ok(());
         }
@@ -232,7 +232,7 @@ fn classify_bounded<'a>(
 }
 
 // `occ::down_cast<T>(basis)` when it succeeds.
-fn kind<T: RuntimeTyped>(basis: &Handle<dyn GeomCurve>) -> Option<Handle<T>> {
-    let typed: Handle<T> = basis.cast::<T>();
+fn kind<T: Transient>(basis: &Handle<dyn GeomCurve>) -> Option<Handle<T>> {
+    let typed: Handle<T> = basis.downcast::<T>();
     (!typed.is_null()).then_some(typed)
 }

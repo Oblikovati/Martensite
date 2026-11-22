@@ -4,10 +4,10 @@ use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::graphic3d::*;
 use martensite_tkservice::image::{ImageFormat, ImagePixMap, ImageSupportedFormats};
 
-fn pixmap(format: ImageFormat) -> Handle<ImagePixMap> {
+fn pixmap(format: ImageFormat) -> Handle<dyn martensite_tkservice::image::ImagePixMapObject> {
     let image = ImagePixMap::default();
     image.init_zero(format, 2, 2, 0, 0);
-    Handle::new(image)
+    Handle::new(image).into_upcast()
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn texture_sets_index_from_zero() {
         set.value(2).err().unwrap().exception_type(),
         "Standard_OutOfRange"
     );
-    assert_eq!(Graphic3dTextureSet::iter(&set).count(), 2);
+    assert_eq!(Graphic3dTextureSet::iter(&set.upcast()).count(), 2);
     assert!(Graphic3dTextureSet::with_size(-1).is_err());
     assert!(Graphic3dTextureSet::default().is_empty());
 }
@@ -159,7 +159,8 @@ fn revisions_and_ids_are_per_texture() {
 
 #[test]
 fn separate_cube_maps_keep_matching_images_only() {
-    let images: Vec<Handle<ImagePixMap>> = (0..6).map(|_| pixmap(ImageFormat::Rgb)).collect();
+    let images: Vec<Handle<dyn martensite_tkservice::image::ImagePixMapObject>> =
+        (0..6).map(|_| pixmap(ImageFormat::Rgb)).collect();
     let cube = Graphic3dCubeMapSeparate::from_images(&images).unwrap();
     assert!(cube.is_done());
     let supported = Handle::new(ImageSupportedFormats::default());

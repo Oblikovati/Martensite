@@ -10,7 +10,7 @@ impl<T> LinearVector<T> {
     /// so later overwrite or storage release omits their destructors.
     /// This intentionally can leak resources. Shrink destructor panics retain Vec's safe cleanup,
     /// rather than registered dead slots. Address-dependent construction is not modeled.
-    pub fn resize_with_relocation(
+    pub(crate) fn resize_with_relocation(
         &mut self,
         size: usize,
         relocate: impl FnMut(&mut T) -> T,

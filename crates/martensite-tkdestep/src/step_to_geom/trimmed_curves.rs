@@ -113,8 +113,8 @@ fn extract_parameter(
 
 /// Is the placement of the conic a 3D one without X direction? Then the parameters mean nothing:
 /// skl 04.02.2002 for bug 133: no trimmed curve can be made from them.
-fn conic_has_no_x_direction(curve: &Handle<StepGeomCurve>) -> bool {
-    let conic = curve.cast::<StepGeomConic>();
+fn conic_has_no_x_direction(curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>) -> bool {
+    let conic = curve.cast::<dyn crate::StepEntityBase<StepGeomConic>>();
     let Some(live) = conic.get() else {
         return false;
     };
@@ -129,7 +129,7 @@ fn conic_has_no_x_direction(curve: &Handle<StepGeomCurve>) -> bool {
 }
 
 /// The shift of an ellipse with its axes out of order: :p3 abv 23 Feb 99.
-fn ellipse_shift(curve: &Handle<StepGeomCurve>) -> f64 {
+fn ellipse_shift(curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>) -> f64 {
     let ellipse = curve.cast::<StepGeomEllipse>();
     let reversed = ellipse
         .get()
@@ -272,7 +272,7 @@ impl StepToGeom {
     }
     /// The factor and the shift of a 2D basis: 2D lengths are not scaled.
     fn scale_2d(
-        basis: &Handle<StepGeomCurve>,
+        basis: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         factors: &StepDataFactors,
     ) -> Result<ParameterScale, Failure> {
         if let Some(line) = basis.cast::<StepGeomLine>().get() {

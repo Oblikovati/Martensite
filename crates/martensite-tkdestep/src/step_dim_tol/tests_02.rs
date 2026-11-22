@@ -114,15 +114,17 @@ fn runtime_type_step_dim_tol_projected_zone_definition() {
 #[test]
 fn init_round_trip_step_dim_tol_projected_zone_definition() {
     let the_zone = Handle::new(StepDimTolToleranceZone::new());
-    let the_boundaries =
-        Handle::new(HArray1::<Handle<StepReprShapeAspect>>::with_bounds(1, 2).unwrap());
+    let the_boundaries = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_projection_end = Handle::new(StepReprShapeAspect::new());
     let the_projection_length = Handle::new(StepBasicLengthMeasureWithUnit::new());
     let object = StepDimTolProjectedZoneDefinition::new();
     object.init(
         &the_zone,
         &the_boundaries,
-        &the_projection_end,
+        &the_projection_end.upcast(),
         &the_projection_length,
     );
     assert!(object.projection_end() == the_projection_end);
@@ -152,8 +154,10 @@ fn runtime_type_step_dim_tol_runout_zone_definition() {
 #[test]
 fn init_round_trip_step_dim_tol_runout_zone_definition() {
     let the_zone = Handle::new(StepDimTolToleranceZone::new());
-    let the_boundaries =
-        Handle::new(HArray1::<Handle<StepReprShapeAspect>>::with_bounds(1, 2).unwrap());
+    let the_boundaries = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_orientation = Handle::new(StepDimTolRunoutZoneOrientation::new());
     let object = StepDimTolRunoutZoneDefinition::new();
     object.init(&the_zone, &the_boundaries, &the_orientation);
@@ -253,8 +257,10 @@ fn runtime_type_step_dim_tol_tolerance_zone_definition() {
 #[test]
 fn init_round_trip_step_dim_tol_tolerance_zone_definition() {
     let the_zone = Handle::new(StepDimTolToleranceZone::new());
-    let the_boundaries =
-        Handle::new(HArray1::<Handle<StepReprShapeAspect>>::with_bounds(1, 2).unwrap());
+    let the_boundaries = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let object = StepDimTolToleranceZoneDefinition::new();
     object.init(&the_zone, &the_boundaries);
     assert!(object.boundaries() == the_boundaries);

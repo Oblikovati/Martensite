@@ -2,7 +2,7 @@
 //! a sweep section.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkgeombase::app_cont::{Function, FunctionBase};
 use martensite_tkgeombase::app_par_curves::LineTool;
 use martensite_tkgeombase::approx::{Status, SweepD1, SweepD2, SweepFunction};
@@ -206,7 +206,6 @@ impl Function for CubicFunction {
 /// an optional pcurve `(t, 0)`; D1, D2 and Resolution are left to the defaults
 /// unless `derivatives` is set.
 pub struct TwoPoleSweep {
-    parent: StandardTransient,
     pub nb2d: i32,
     pub derivatives: bool,
     pub intervals_set: Mutex<i32>,
@@ -215,14 +214,12 @@ impl_transient!(
     TwoPoleSweep,
     "TwoPoleSweep",
     dyn SweepFunction,
-    parent,
     interfaces: [dyn SweepFunction]
 );
 
 impl TwoPoleSweep {
     pub fn new(nb2d: i32, derivatives: bool) -> Self {
         Self {
-            parent: StandardTransient::default(),
             nb2d,
             derivatives,
             intervals_set: Mutex::new(0),

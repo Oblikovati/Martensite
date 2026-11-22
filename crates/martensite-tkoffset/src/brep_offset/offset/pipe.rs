@@ -41,7 +41,8 @@ fn trimmed_located(
     l: f64,
     loc: &Location,
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
-    let t: Handle<dyn GeomCurve> = Handle::new(GeomTrimmedCurve::new(c, f, l, true, true)?).cast();
+    let t: Handle<dyn GeomCurve> =
+        Handle::new(GeomTrimmedCurve::new(c, f, l, true, true)?).into_upcast();
     live(&t, "curve")?.transform(loc.transformation())?;
     Ok(t)
 }
@@ -53,7 +54,7 @@ fn rail(edge: &Edge) -> Result<Rail, Failure> {
         let cos = BRepTool::first_curve_on_surface(edge)?;
         let s1 = live(&cos.surface, "surface")?
             .transformed(cos.location.transformation())?
-            .cast::<dyn GeomSurface>();
+            .into_cast::<dyn GeomSurface>();
         let c12d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dTrimmedCurve::new(
             &cos.pcurve,
             cos.first,
@@ -61,13 +62,13 @@ fn rail(edge: &Edge) -> Result<Rail, Failure> {
             true,
             true,
         )?)
-        .cast();
+        .into_upcast();
         let hs1: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&s1)?).cast();
-        let hc1 = Handle::new(Geom2dAdaptorCurve::with_curve(&c12d)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&s1)?).into_upcast();
+        let hc1 = Handle::new(Geom2dAdaptorCurve::with_curve(&c12d)?).into_upcast();
         let cons = Adaptor3dCurveOnSurface::with_curve(&hc1, &hs1)?;
         return Ok(Rail {
-            adaptor: Handle::new(cons).cast(),
+            adaptor: Handle::new(cons).into_upcast(),
             curve: None,
             degenerated: false,
         });
@@ -77,7 +78,7 @@ fn rail(edge: &Edge) -> Result<Rail, Failure> {
     let degenerated =
         ac.get_type()? == CurveType::Circle && ac.circle()?.radius() < precision::confusion();
     Ok(Rail {
-        adaptor: Handle::new(ac).cast(),
+        adaptor: Handle::new(ac).into_upcast(),
         curve: Some(c),
         degenerated,
     })
@@ -129,7 +130,7 @@ impl BRepOffsetOffset {
         let found = BRepTool::curve_with_location(path)?;
         let cp = trimmed_located(&found.curve, found.first, found.last, &found.location)?;
         let hcp: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&cp)?).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&cp)?).into_upcast();
         let r1 = rail(edge1)?;
         let r2 = rail(edge2)?;
 
@@ -197,7 +198,7 @@ impl BRepOffsetOffset {
             }
             let (u1, u2) = flip(range.0, range.1, e3rev);
             let (c1, c2): (Handle<dyn Geom2dCurve>, Handle<dyn Geom2dCurve>) =
-                (l1c.clone().cast(), l2c.cast());
+                (l1c.upcast(), l2c.upcast());
             update_edge_pcurves(&edge3, &c1, &c2, &my_face, path_tol)?;
             builder.range_on_face(&edge3, &my_face, u1, u2)?;
             if start_degenerated {
@@ -218,7 +219,7 @@ impl BRepOffsetOffset {
                 live(&l1c, "line")?.reverse()?;
             }
             let (u1, u2) = flip(range.0, range.1, e3rev);
-            let c1: Handle<dyn Geom2dCurve> = l1c.cast();
+            let c1: Handle<dyn Geom2dCurve> = l1c.upcast();
             update_edge_pcurve(&edge3, &c1, &my_face, path_tol)?;
             builder.range_on_face(&edge3, &my_face, u1, u2)?;
             if start_degenerated {
@@ -235,7 +236,7 @@ impl BRepOffsetOffset {
                 live(&l2c, "line")?.reverse()?;
             }
             let (u1, u2) = flip(range.0, range.1, e4rev);
-            let c2: Handle<dyn Geom2dCurve> = l2c.cast();
+            let c2: Handle<dyn Geom2dCurve> = l2c.upcast();
             update_edge_pcurve(&edge4, &c2, &my_face, path_tol)?;
             builder.range_on_face(&edge4, &my_face, u1, u2)?;
             if end_degenerated {
@@ -333,7 +334,7 @@ fn update_rail(
         builder.degenerated(edge, true)?;
     }
     let mut the_tol = path_tol.max(BRepTool::edge_tolerance(edge)? + ps.error);
-    let pc: Handle<dyn Geom2dCurve> = pc.cast();
+    let pc: Handle<dyn Geom2dCurve> = pc.upcast();
     update_edge_pcurve(edge, &pc, my_face, the_tol)?;
     // The new p-curve at the same range.
     if !first {

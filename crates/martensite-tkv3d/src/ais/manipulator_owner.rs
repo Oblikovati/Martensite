@@ -1,7 +1,7 @@
 //! `AisManipulatorMode` and `AisManipulatorOwner`: the manipulation modes and the owner of
 //! one manipulator part.
 use crate::{prs_mgr::*, prs3d::Prs3dDrawer, select_mgr::*};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 
 /// `AisManipulatorMode`: the manipulation (and selection) modes of a manipulator.
 #[repr(i32)]
@@ -36,13 +36,12 @@ impl AisManipulatorMode {
 /// `AisManipulatorOwner`: the owner of a manipulator part (axis index and mode), highlighted
 /// by the manipulator itself; `AisManipulatorOwner::new(&manipulator.cast, 0, mode, 9)`.
 pub struct AisManipulatorOwner {
-    transient: StandardTransient,
     owner: SelectMgrEntityOwnerBase,
     index: i32,
     mode: AisManipulatorMode,
 }
 martensite_tkernel::impl_transient!(AisManipulatorOwner, "AisManipulatorOwner",
-    dyn SelectMgrEntityOwnerSource, transient, interfaces: [dyn SelectMgrEntityOwnerSource]);
+    dyn SelectMgrEntityOwnerSource, interfaces: [dyn SelectMgrEntityOwnerSource]);
 impl AisManipulatorOwner {
     /// The owner of an axis part of a selectable object.
     /// Example: `AisManipulatorOwner::new(&object, 1, AisManipulatorMode::Rotation, 9)`.
@@ -53,7 +52,6 @@ impl AisManipulatorOwner {
         priority: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             owner: SelectMgrEntityOwnerBase::new(object, priority),
             index,
             mode,

@@ -17,7 +17,7 @@ pub(super) fn dispatch_scene() -> Handle<ColoredDispatchFake> {
         .fields
         .write()
         .presentations
-        .append(prs.clone());
+        .append(martensite_tkernel::standard::HandleSlot::new(prs.clone()));
     *object.prs.write() = prs;
     object
 }

@@ -134,7 +134,7 @@ pub enum StepBasicSource {
 step_select! {
     /// Date time select.
     StepBasicDateTimeSelect, [StepBasicDate, StepBasicLocalTime, StepBasicDateAndTime], {
-        date: StepBasicDate,
+        date: dyn crate::StepEntityBase<StepBasicDate>,
         local_time: StepBasicLocalTime,
         date_and_time: StepBasicDateAndTime,
     }
@@ -152,7 +152,7 @@ step_select! {
 step_select! {
     /// Product definition or reference.
     StepBasicProductDefinitionOrReference, [StepBasicProductDefinition, StepBasicProductDefinitionReference, StepBasicProductDefinitionReferenceWithLocalRepresentation], {
-        product_definition: StepBasicProductDefinition,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
         product_definition_reference: StepBasicProductDefinitionReference,
         product_definition_reference_with_local_representation: StepBasicProductDefinitionReferenceWithLocalRepresentation,
     }
@@ -162,8 +162,8 @@ step_select! {
     /// Representation of STEP SELECT type ProductOrFormationOrDefinition
     StepBasicProductOrFormationOrDefinition, [StepBasicProduct, StepBasicProductDefinitionFormation, StepBasicProductDefinition], {
         product: StepBasicProduct,
-        product_definition_formation: StepBasicProductDefinitionFormation,
-        product_definition: StepBasicProductDefinition,
+        product_definition_formation: dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        product_definition: dyn crate::StepEntityBase<StepBasicProductDefinition>,
     }
 }
 
@@ -187,7 +187,7 @@ step_select! {
 step_select! {
     /// Implements a select type unit (NamedUnit or DerivedUnit)
     StepBasicUnit, [StepBasicNamedUnit, StepBasicDerivedUnit], {
-        named_unit: StepBasicNamedUnit,
+        named_unit: dyn crate::StepEntityBase<StepBasicNamedUnit>,
         derived_unit: StepBasicDerivedUnit,
     }
 }

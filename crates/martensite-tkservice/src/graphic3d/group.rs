@@ -3,11 +3,11 @@
 use super::Graphic3dVertex;
 use super::group_text::{self, Graphic3dGroupTextLayout};
 use super::{
-    Graphic3dArrayOfPrimitives, Graphic3dAspectsSource, Graphic3dBndBox4f, Graphic3dBoundBuffer,
-    Graphic3dBufferMembers as _, Graphic3dBufferSource, Graphic3dCStructureMembers as _,
-    Graphic3dFlipper, Graphic3dIndexBufferSource, Graphic3dStructureMembers as _,
-    Graphic3dStructureSource, Graphic3dText, Graphic3dTransformPersSource,
-    Graphic3dTypeOfAttribute, Graphic3dTypeOfData, Graphic3dTypeOfPrimitiveArray,
+    Graphic3dAspectsSource, Graphic3dBndBox4f, Graphic3dBoundBuffer, Graphic3dBufferMembers as _,
+    Graphic3dBufferSource, Graphic3dCStructureMembers as _, Graphic3dFlipper,
+    Graphic3dIndexBufferSource, Graphic3dStructureMembers as _, Graphic3dStructureSource,
+    Graphic3dText, Graphic3dTransformPersSource, Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
+    Graphic3dTypeOfPrimitiveArray,
 };
 use martensite_tkernel::ncollection::Vec4;
 use martensite_tkernel::standard::dump::DumpStream;
@@ -342,7 +342,7 @@ pub trait Graphic3dGroupMembers: Graphic3dGroup {
     /// `group.add_primitive_array(&array, true)`.
     fn add_primitive_array(
         &self,
-        array: &Handle<Graphic3dArrayOfPrimitives>,
+        array: &Handle<dyn crate::graphic3d::Graphic3dArraySource>,
         to_eval_min_max: bool,
     ) {
         let Some(array) = array.get().filter(|a| !self.is_deleted() && a.is_valid()) else {

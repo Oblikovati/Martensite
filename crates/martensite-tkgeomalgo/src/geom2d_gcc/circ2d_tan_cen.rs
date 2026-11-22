@@ -19,9 +19,9 @@ use martensite_tkmath::gp::{Circle2, Point2};
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Direction2, Point2};
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?)).into_upcast();
 /// let q = unqualified(&Geom2dAdaptorCurve::with_curve(&line)?)?;
-/// let center: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::from_pnt2d(Point2::new(1.0, 2.0))).cast();
+/// let center: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::from_pnt2d(Point2::new(1.0, 2.0))).into_upcast();
 /// let circ = Circ2dTanCen::new(&q, &center, 1e-9)?;
 /// assert_eq!(circ.this_solution(1)?.radius(), 2.0);
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())

@@ -18,7 +18,7 @@ use crate::step_visual::{
 };
 use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkernel::quantity::{Color, ColorRgba};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
 use martensite_tkmath::gp::{Axis3, Transform3};
@@ -38,7 +38,7 @@ pub use styles::*;
 /// `findStyledSR`: the shape representation of a component styled item, null without one.
 pub(super) fn find_styled_sr(
     style: &StepVisualStyledItem,
-) -> Result<Handle<StepShapeShapeRepresentation>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>, Failure> {
     for j in 1..=style.nb_styles() {
         let by_context = style
             .styles_value(j)?
@@ -49,7 +49,7 @@ pub(super) fn find_styled_sr(
         let current = by_context
             .style_context()
             .representation()
-            .cast::<StepShapeShapeRepresentation>();
+            .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
         if current.is_some() {
             return Ok(current);
         }
@@ -116,9 +116,9 @@ pub(super) struct DecodedColors {
 /// The colours of a style as they go to the document. A surface colour takes the rendering
 /// properties when they are defined.
 pub(super) fn decode_style_colors(
-    surface: &Handle<StepVisualColour>,
-    boundary: &Handle<StepVisualColour>,
-    curve: &Handle<StepVisualColour>,
+    surface: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    boundary: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
+    curve: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     rendering: &StepConstructRenderingProperties,
 ) -> Result<DecodedColors, Failure> {
     let mut decoded = DecodedColors::default();
@@ -229,13 +229,15 @@ fn set_assembly_component_style(
     let representation = live_style
         .item_ap242()?
         .value()
-        .cast::<StepShapeShapeRepresentation>();
+        .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
     if representation.is_null() {
         return Ok(());
     }
-    let mut relationship = Handle::<StepReprShapeRepresentationRelationship>::default();
+    let mut relationship =
+        Handle::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>::default();
     for sharing in graph.sharings(&representation.cast())?.content() {
-        let found = sharing.cast::<StepReprShapeRepresentationRelationship>();
+        let found =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>();
         if found.is_some() {
             relationship = found;
         }

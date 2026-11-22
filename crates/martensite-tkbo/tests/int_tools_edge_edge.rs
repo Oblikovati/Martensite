@@ -13,7 +13,7 @@ use martensite_tkmath::gp::{Direction3, Point3};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 fn axis_edge(direction: Direction3) -> Result<Edge, Failure> {
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::from_point(Point3::default(), direction)).into_cast();
+        Handle::new(GeomLine::from_point(Point3::default(), direction)).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve_params(&curve, -1., 1.)?.edge()
 }
 #[test]

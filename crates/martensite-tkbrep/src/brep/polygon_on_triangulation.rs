@@ -6,7 +6,7 @@ use super::curve_representation::{
 use super::dump::{dump_base, dump_class_name, dump_handle};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::poly::{PolygonOnTriangulation, Triangulation};
 use martensite_tkmath::toploc::Location;
 use std::io;
@@ -28,12 +28,26 @@ struct OnTriangulationFields {
 /// assert!(polygon.is_polygon_on_triangulation());
 /// ```
 pub struct BRepPolygonOnTriangulation {
-    transient: StandardTransient,
+    state: PolygonOnTriangulationState,
+}
+
+struct PolygonOnTriangulationState {
     representation: CurveRepresentationBase,
     fields: SharedState<OnTriangulationFields>,
 }
 impl_transient!(BRepPolygonOnTriangulation, "BRep_PolygonOnTriangulation",
-    dyn BRepCurveRepresentation, transient, interfaces: [dyn BRepCurveRepresentation]);
+    dyn BRepCurveRepresentation, interfaces: [dyn BRepCurveRepresentation, dyn BRepPolygonOnTriangulationSource]);
+
+/// Parent interface shared by ordinary and closed polygon representations.
+/// Example: `polygon.upcast::<dyn BRepPolygonOnTriangulationSource>()`.
+pub trait BRepPolygonOnTriangulationSource: BRepCurveRepresentation {}
+parent_interface!(
+    dyn BRepPolygonOnTriangulationSource,
+    BRepPolygonOnTriangulation,
+    [dyn BRepCurveRepresentation]
+);
+
+impl BRepPolygonOnTriangulationSource for BRepPolygonOnTriangulation {}
 
 impl BRepPolygonOnTriangulation {
     /// `BRep_PolygonOnTriangulation(P, T, L)`;
@@ -44,7 +58,18 @@ impl BRepPolygonOnTriangulation {
         location: &Location,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
+            state: PolygonOnTriangulationState::new(polygon, triangulation, location),
+        }
+    }
+}
+
+impl PolygonOnTriangulationState {
+    fn new(
+        polygon: &Handle<PolygonOnTriangulation>,
+        triangulation: &Handle<Triangulation>,
+        location: &Location,
+    ) -> Self {
+        Self {
             representation: CurveRepresentationBase::new(location),
             fields: SharedState::new(OnTriangulationFields {
                 polygon: polygon.clone(),
@@ -71,11 +96,27 @@ impl BRepPolygonOnTriangulation {
             |t, s, _| t.dump_json(s),
         )
     }
+    fn is_on(&self, triangulation: &Handle<Triangulation>, location: &Location) -> bool {
+        *triangulation == self.fields.read().triangulation
+            && *location == self.representation.location()
+    }
+
+    fn triangulation(&self) -> Handle<Triangulation> {
+        self.fields.read().triangulation.clone()
+    }
+
+    fn polygon(&self) -> Handle<PolygonOnTriangulation> {
+        self.fields.read().polygon.clone()
+    }
+
+    fn set_polygon(&self, polygon: &Handle<PolygonOnTriangulation>) {
+        self.fields.write().polygon = polygon.clone();
+    }
 }
 
 impl BRepCurveRepresentation for BRepPolygonOnTriangulation {
     fn curve_representation_base(&self) -> &CurveRepresentationBase {
-        &self.representation
+        &self.state.representation
     }
     /// Returns true.
     fn is_polygon_on_triangulation(&self) -> bool {
@@ -87,34 +128,34 @@ impl BRepCurveRepresentation for BRepPolygonOnTriangulation {
         triangulation: &Handle<Triangulation>,
         location: &Location,
     ) -> bool {
-        *triangulation == self.fields.read().triangulation && *location == self.location()
+        self.state.is_on(triangulation, location)
     }
     fn set_polygon_on_triangulation(
         &self,
         polygon: &Handle<PolygonOnTriangulation>,
     ) -> Result<(), Failure> {
-        self.fields.write().polygon = polygon.clone();
+        self.state.set_polygon(polygon);
         Ok(())
     }
     fn triangulation(&self) -> Result<Handle<Triangulation>, Failure> {
-        Ok(self.fields.read().triangulation.clone())
+        Ok(self.state.triangulation())
     }
     fn polygon_on_triangulation(&self) -> Result<Handle<PolygonOnTriangulation>, Failure> {
-        Ok(self.fields.read().polygon.clone())
+        Ok(self.state.polygon())
     }
     /// A new representation on the same polygon, triangulation and location.
     fn copy(&self) -> Result<Handle<dyn BRepCurveRepresentation>, Failure> {
-        let fields = self.fields.read().clone();
+        let fields = self.state.fields.read().clone();
         let copy = Self::new(&fields.polygon, &fields.triangulation, &self.location());
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
-        self.dump_body(stream, depth)
+        self.state.dump_body(stream, depth)
     }
 }
 
 /// `BRep_PolygonOnClosedTriangulation`: the two node arrays of a seam edge on a
-/// triangulation. It derives from `BRep_PolygonOnTriangulation`, which it embeds.
+/// triangulation. It derives from `BRep_PolygonOnTriangulation`, whose state it shares.
 ///
 /// ```
 /// use martensite_tkbrep::brep::{BRepCurveRepresentation, BRepPolygonOnClosedTriangulation};
@@ -125,11 +166,11 @@ impl BRepCurveRepresentation for BRepPolygonOnTriangulation {
 /// assert!(seam.is_polygon_on_closed_triangulation());
 /// ```
 pub struct BRepPolygonOnClosedTriangulation {
-    parent: BRepPolygonOnTriangulation,
+    first_polygon: PolygonOnTriangulationState,
     polygon2: SharedState<Handle<PolygonOnTriangulation>>,
 }
 impl_transient!(BRepPolygonOnClosedTriangulation, "BRep_PolygonOnClosedTriangulation",
-    BRepPolygonOnTriangulation, parent, interfaces: [dyn BRepCurveRepresentation]);
+    dyn BRepPolygonOnTriangulationSource, interfaces: [dyn BRepCurveRepresentation, dyn BRepPolygonOnTriangulationSource]);
 
 impl BRepPolygonOnClosedTriangulation {
     /// `BRep_PolygonOnClosedTriangulation(P1, P2, T, L)`;
@@ -141,7 +182,7 @@ impl BRepPolygonOnClosedTriangulation {
         location: &Location,
     ) -> Self {
         Self {
-            parent: BRepPolygonOnTriangulation::new(polygon1, triangulation, location),
+            first_polygon: PolygonOnTriangulationState::new(polygon1, triangulation, location),
             polygon2: SharedState::new(polygon2.clone()),
         }
     }
@@ -149,18 +190,17 @@ impl BRepPolygonOnClosedTriangulation {
 
 impl BRepCurveRepresentation for BRepPolygonOnClosedTriangulation {
     fn curve_representation_base(&self) -> &CurveRepresentationBase {
-        &self.parent.representation
+        &self.first_polygon.representation
     }
     fn is_polygon_on_triangulation(&self) -> bool {
-        self.parent.is_polygon_on_triangulation()
+        true
     }
     fn is_polygon_on_triangulation_at(
         &self,
         triangulation: &Handle<Triangulation>,
         location: &Location,
     ) -> bool {
-        self.parent
-            .is_polygon_on_triangulation_at(triangulation, location)
+        self.first_polygon.is_on(triangulation, location)
     }
     /// Returns true.
     fn is_polygon_on_closed_triangulation(&self) -> bool {
@@ -170,13 +210,14 @@ impl BRepCurveRepresentation for BRepPolygonOnClosedTriangulation {
         &self,
         polygon: &Handle<PolygonOnTriangulation>,
     ) -> Result<(), Failure> {
-        self.parent.set_polygon_on_triangulation(polygon)
+        self.first_polygon.set_polygon(polygon);
+        Ok(())
     }
     fn triangulation(&self) -> Result<Handle<Triangulation>, Failure> {
-        self.parent.triangulation()
+        Ok(self.first_polygon.triangulation())
     }
     fn polygon_on_triangulation(&self) -> Result<Handle<PolygonOnTriangulation>, Failure> {
-        self.parent.polygon_on_triangulation()
+        Ok(self.first_polygon.polygon())
     }
     fn polygon_on_triangulation2(&self) -> Result<Handle<PolygonOnTriangulation>, Failure> {
         Ok(self.polygon2.read().clone())
@@ -191,17 +232,17 @@ impl BRepCurveRepresentation for BRepPolygonOnClosedTriangulation {
     /// A new representation on the same polygons, triangulation and location.
     fn copy(&self) -> Result<Handle<dyn BRepCurveRepresentation>, Failure> {
         let copy = Self::new(
-            &self.parent.polygon_on_triangulation()?,
+            &self.first_polygon.polygon(),
             &self.polygon2.read(),
-            &self.parent.triangulation()?,
+            &self.first_polygon.triangulation(),
             &self.location(),
         );
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_class_name(stream, "BRep_PolygonOnClosedTriangulation")?;
         dump_base(stream, depth, |nested, nested_depth| {
-            self.parent.dump_body(nested, nested_depth)
+            self.first_polygon.dump_body(nested, nested_depth)
         })?;
         let polygon2 = self.polygon2.read().clone();
         dump_handle(stream, depth, "Polygon2", &polygon2, |p, s, _| {
@@ -209,3 +250,5 @@ impl BRepCurveRepresentation for BRepPolygonOnClosedTriangulation {
         })
     }
 }
+
+impl BRepPolygonOnTriangulationSource for BRepPolygonOnClosedTriangulation {}

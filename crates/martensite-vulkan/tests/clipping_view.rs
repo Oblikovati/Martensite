@@ -46,13 +46,7 @@ fn view_clip_planes_return_the_set_sequence() {
     scene.cview().set_clip_planes(&planes);
     assert!(scene.cview().clip_planes() == planes);
     let reference = scene.cview().clip_planes_ref();
-    assert!(
-        reference
-            .observe()
-            .observe_as::<Graphic3dSequenceOfHClipPlane>()
-            .clone()
-            == planes
-    );
+    assert_eq!(reference.object_address(), planes.object_address());
 }
 /// `GlView::Lights`: the view returns the light set it was given.
 #[test]
@@ -60,7 +54,7 @@ fn view_lights_return_the_set_light_set() {
     let (scene, _) = setup();
     let lights = Handle::new(Graphic3dLightSet::default());
     let ambient = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient));
-    lights.add(&ambient).unwrap();
+    lights.add(&ambient.upcast()).unwrap();
     scene.cview().set_lights(&lights);
     assert!(scene.cview().lights() == lights);
     assert_eq!(scene.cview().lights().get().unwrap().extent(), 1);
@@ -71,7 +65,7 @@ fn view_planes_follow_live_equations_flags_and_chain_links_without_mutating_prio
     let first = plane([1., 0., 0., 0.]);
     let second = plane([0., 1., 0., 2.]);
     second.set_on(false).unwrap();
-    Graphic3dClipPlane::set_chain_next_plane(&first, second).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&first.upcast(), second.into_upcast()).unwrap();
     scene.cview().set_clip_planes(&sequence(&first));
     scene.render_view().try_redraw().unwrap();
     let before = device.last_frame();
@@ -145,9 +139,9 @@ fn invalid_planes_fail_redraw_and_sphere_generated_cap_textures_render() {
     assert!(scene.render_view().capture().is_err());
     let cap = plane([1., 0., 0., 0.]);
     cap.set_capping(true);
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(Handle::new(
-        martensite_tkservice::image::ImagePixMap::default(),
-    )));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+        Handle::new(martensite_tkservice::image::ImagePixMap::default()).into_upcast(),
+    ));
     texture.get_params().set_gen_mode(
         Graphic3dTypeOfTextureMode::Sphere,
         martensite_tkernel::ncollection::Vec4::new(1., 0., 0., 0.),

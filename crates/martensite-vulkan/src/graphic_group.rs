@@ -6,6 +6,7 @@ use martensite_tkernel::{
     standard::{Handle, SharedState, StandardTransient},
 };
 use martensite_tkmath::gp::Axis2;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 use std::sync::Arc;
 #[path = "graphic_group_commands.rs"]
@@ -41,7 +42,6 @@ struct GroupSubmissionState {
 }
 /// A retained group feeding Martensite draw extraction; `Graphic3dDrawGroup::new(&structure)`.
 pub struct Graphic3dDrawGroup {
-    transient: StandardTransient,
     base: Graphic3dGroupBase,
     submissions: SharedState<GroupSubmissionState>,
     text_source: Arc<dyn crate::TextLayoutSource>,
@@ -51,7 +51,7 @@ pub struct Graphic3dDrawGroup {
     /// The driver's precompiled user programs (`crate::retained_user_program`).
     pub(crate) user_programs: Arc<crate::RenderUserProgramLibrary>,
 }
-martensite_tkernel::impl_transient!(Graphic3dDrawGroup,"Martensite_Graphic3dDrawGroup",StandardTransient,transient,interfaces:[dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(Graphic3dDrawGroup,"Martensite_Graphic3dDrawGroup",StandardTransient,interfaces:[dyn Graphic3dGroup]);
 impl Graphic3dDrawGroup {
     /// Attach to a live Graphic3d structure; `Graphic3dDrawGroup::new(&structure)`.
     pub fn new(structure: &Handle<dyn Graphic3dStructureSource>) -> Handle<Self> {
@@ -63,7 +63,6 @@ impl Graphic3dDrawGroup {
         text_source: Arc<dyn crate::TextLayoutSource>,
     ) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dGroupBase::new(structure),
             submissions: SharedState::default(),
             text_source,
@@ -137,7 +136,7 @@ impl Graphic3dDrawGroup {
         extent: Option<[u32; 2]>,
         structure: &Graphic3dCStructureFields,
         rendering: &Graphic3dRenderingParams,
-        global_clipping: &Handle<Graphic3dSequenceOfHClipPlane>,
+        global_clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
         Ok(self
             .program_in_structure(

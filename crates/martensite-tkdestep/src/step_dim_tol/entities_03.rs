@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_basic::*;
@@ -10,12 +6,17 @@ use crate::step_data::*;
 use crate::step_entity::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Geo tol and geo tol wth dat ref and geo tol wth max tol.
     StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol, StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTolState, "StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol", StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMod, {
         my_max_tol: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol {
     step_methods! {
@@ -31,8 +32,8 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
         the_max_tol: &Handle<StepBasicLengthMeasureWithUnit>,
@@ -56,7 +57,7 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMaxTol {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
@@ -82,7 +83,7 @@ step_entity! {
         my_geometric_tolerance_with_datum_reference: Handle<StepDimTolGeometricToleranceWithDatumReference>,
         my_geometric_tolerance_with_modifiers: Handle<StepDimTolGeometricToleranceWithModifiers>,
         my_tolerance_type: StepDimTolGeometricToleranceType,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMod {
     step_methods! {
@@ -102,8 +103,8 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMod {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
         the_type: StepDimTolGeometricToleranceType,
@@ -124,7 +125,7 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndGeoTolWthMod {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
@@ -147,7 +148,7 @@ step_entity! {
         my_geometric_tolerance_with_datum_reference: Handle<StepDimTolGeometricToleranceWithDatumReference>,
         my_modified_geometric_tolerance: Handle<StepDimTolModifiedGeometricTolerance>,
         my_position_tolerance: Handle<StepDimTolPositionTolerance>,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeoTolAndGeoTolWthDatRefAndModGeoTolAndPosTol {
     step_methods! {
@@ -166,8 +167,8 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndModGeoTolAndPosTol {
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_magnitude: &Handle<StandardTransient>,
-        a_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        a_magnitude: &Handle<dyn Transient>,
+        a_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         a_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         a_mgt: &Handle<StepDimTolModifiedGeometricTolerance>,
     ) -> Result<(), Failure> {
@@ -185,7 +186,7 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndModGeoTolAndPosTol {
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_magnitude: &Handle<StandardTransient>,
+        a_magnitude: &Handle<dyn Transient>,
         a_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         a_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         a_mgt: &Handle<StepDimTolModifiedGeometricTolerance>,
@@ -204,7 +205,7 @@ step_entity! {
     /// Geo tol and geo tol wth dat ref and uneq dis geo tol.
     StepDimTolGeoTolAndGeoTolWthDatRefAndUneqDisGeoTol, StepDimTolGeoTolAndGeoTolWthDatRefAndUneqDisGeoTolState, "StepDimTolGeoTolAndGeoTolWthDatRefAndUneqDisGeoTol", StepDimTolGeoTolAndGeoTolWthDatRef, {
         my_unequally_disposed_geometric_tolerance: Handle<StepDimTolUnequallyDisposedGeometricTolerance>,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeoTolAndGeoTolWthDatRefAndUneqDisGeoTol {
     step_methods! {
@@ -220,8 +221,8 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndUneqDisGeoTol {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_type: StepDimTolGeometricToleranceType,
         the_udgt: &Handle<StepDimTolUnequallyDisposedGeometricTolerance>,
@@ -243,7 +244,7 @@ impl StepDimTolGeoTolAndGeoTolWthDatRefAndUneqDisGeoTol {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_gtwdr: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
         the_type: StepDimTolGeometricToleranceType,
@@ -265,7 +266,7 @@ step_entity! {
     /// Geo tol and geo tol wth max tol.
     StepDimTolGeoTolAndGeoTolWthMaxTol, StepDimTolGeoTolAndGeoTolWthMaxTolState, "StepDimTolGeoTolAndGeoTolWthMaxTol", StepDimTolGeoTolAndGeoTolWthMod, {
         my_max_tol: Handle<StepBasicLengthMeasureWithUnit>,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeoTolAndGeoTolWthMaxTol {
     step_methods! {
@@ -281,8 +282,8 @@ impl StepDimTolGeoTolAndGeoTolWthMaxTol {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
         the_max_tol: &Handle<StepBasicLengthMeasureWithUnit>,
         the_type: StepDimTolGeometricToleranceType,
@@ -304,7 +305,7 @@ impl StepDimTolGeoTolAndGeoTolWthMaxTol {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
         the_max_tol: &Handle<StepBasicLengthMeasureWithUnit>,
@@ -327,7 +328,7 @@ step_entity! {
     StepDimTolGeoTolAndGeoTolWthMod, StepDimTolGeoTolAndGeoTolWthModState, "StepDimTolGeoTolAndGeoTolWthMod", StepDimTolGeometricTolerance, {
         my_geometric_tolerance_with_modifiers: Handle<StepDimTolGeometricToleranceWithModifiers>,
         my_tolerance_type: StepDimTolGeometricToleranceType,
-    }
+    }, bases: [StepDimTolGeometricTolerance]
 }
 impl StepDimTolGeoTolAndGeoTolWthMod {
     step_methods! {
@@ -344,8 +345,8 @@ impl StepDimTolGeoTolAndGeoTolWthMod {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
         the_type: StepDimTolGeometricToleranceType,
     ) -> Result<(), Failure> {
@@ -363,7 +364,7 @@ impl StepDimTolGeoTolAndGeoTolWthMod {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_gtwm: &Handle<StepDimTolGeometricToleranceWithModifiers>,
         the_type: StepDimTolGeometricToleranceType,

@@ -193,7 +193,7 @@ pub fn bug83_2(s: &mut dyn Session) {
 /// `convert`, the script's `repeat` of `insertknot`, `mkedge`, `prism`, `explode`, and `xdistef`.
 fn bug28030_workload(s: &mut dyn Session, names: [&str; 3], knots: (i32, f64), label: &str) {
     let curve = bezier_as_spline(knots.0, knots.1);
-    let geometry: Curve = Handle::clone(&curve).cast();
+    let geometry: Curve = Handle::clone(&curve).into_upcast();
     // Beyond the script: an earlier test of this case counted the whole knot workload.
     assert_eq!(curve.nb_knots(), knots.0 + 2, "{}: knots", names[0]);
     let [edge, face, third] = names;

@@ -6,7 +6,7 @@ use super::bspl::desc;
 use super::common::{Reader, attempt, built, curve, end, flag, int, pnt, vec};
 use super::output::Output;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
@@ -163,7 +163,7 @@ fn dispatch(output: &Output, e: &Geom2dGridEvalCurve<'_>, p: &Array1<'_, f64>) {
 }
 
 /// The specialized evaluators that take a typed handle and expose `geometry()`.
-trait Specialized<G: RuntimeTyped>: GridEvaluator + Sized {
+trait Specialized<G: Transient>: GridEvaluator + Sized {
     fn build(geometry: Handle<G>) -> Self;
     fn is_null(&self) -> bool;
 }
@@ -188,12 +188,12 @@ specialized!(Geom2dGridEvalBezierCurve, Geom2dBezierCurve);
 specialized!(Geom2dGridEvalBSplineCurve, Geom2dBSplineCurve);
 specialized!(Geom2dGridEvalOffsetCurve, Geom2dOffsetCurve);
 
-fn direct_as<G: RuntimeTyped, E: Specialized<G>>(
+fn direct_as<G: Transient, E: Specialized<G>>(
     output: &Output,
     c: &Handle<dyn Geom2dCurve>,
     p: &Array1<'_, f64>,
 ) -> bool {
-    let g: Handle<G> = c.cast::<G>();
+    let g: Handle<G> = c.downcast::<G>();
     if g.is_null() {
         return false;
     }
@@ -263,7 +263,7 @@ pub fn grid_evalrep_case(output: &Output, values: &[f64]) {
     end(output);
 }
 
-fn null_as<G: RuntimeTyped, E: Specialized<G>>(output: &Output, p: &Array1<'_, f64>) {
+fn null_as<G: Transient, E: Specialized<G>>(output: &Output, p: &Array1<'_, f64>) {
     let e = E::build(Handle::default());
     flag(output, e.is_null());
     all(output, &e, p);

@@ -5,7 +5,7 @@ use super::TNamingName;
 use martensite_tkcdf::json_dump::{class_begin, field_dumped};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::{AttributeIndexMap, dump_attribute_json_base};
@@ -31,11 +31,10 @@ const NAMING_ID: Guid = guid_from_text("c0a19201-5b78-11d1-8940-080009dc3333");
 /// assert!(naming.is_defined());
 /// ```
 pub struct TNamingNaming {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     name: SharedState<TNamingName>,
 }
-impl_transient!(TNamingNaming, "TNamingNaming", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TNamingNaming, "TNamingNaming", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TNamingNaming {
     fn default() -> Self {
@@ -52,13 +51,12 @@ impl TNamingNaming {
     pub fn insert(under: &TdfLabel) -> Result<Handle<TNamingNaming>, Failure> {
         let child = TdfTagSource::new_child_of(under)?;
         let naming = Handle::new(TNamingNaming::new());
-        child.add_attribute(&naming.cast(), true)?;
+        child.add_attribute(&naming.upcast(), true)?;
         Ok(naming)
     }
     /// `TNamingNaming()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             name: SharedState::new(TNamingName::new()),
         }
@@ -115,7 +113,7 @@ impl TdfAttribute for TNamingNaming {
         NAMING_ID
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(TNamingNaming::new()).cast()
+        Handle::new(TNamingNaming::new()).upcast()
     }
     /// `Restore`: the other naming's name.
     fn restore(&self, other: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
@@ -146,11 +144,11 @@ impl TdfAttribute for TNamingNaming {
         };
         let name = self.get_name();
         for argument in name.arguments() {
-            data_set.add_attribute(&argument.cast());
+            data_set.add_attribute(&argument.upcast());
         }
         let stop = name.stop_named_shape();
         if stop.is_some() {
-            data_set.add_attribute(&stop.cast());
+            data_set.add_attribute(&stop.upcast());
         }
     }
     /// `Dump`: `TNamingNaming`.

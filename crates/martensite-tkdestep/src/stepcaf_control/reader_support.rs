@@ -9,7 +9,9 @@ use crate::step_data::{StepDataFactors, StepDataSelectType};
 use crate::step_entity::step_live;
 use crate::step_repr::StepReprReprItemAndMeasureWithUnit;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::InterfaceHGraph;
 use martensite_tkxsbase::transfer::TransferTransientProcess;
 use martensite_tkxsbase::transfer_brep::TransferBRep;
@@ -42,8 +44,8 @@ impl SessionGraph {
     /// `sharings(ent)`.
     pub(super) fn sharings(
         &self,
-        entity: &Handle<StandardTransient>,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+        entity: &Handle<dyn Transient>,
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         Ok(step_live(&self.graph, WHERE)?
             .graph()
             .sharings(entity)?
@@ -52,18 +54,18 @@ impl SessionGraph {
     /// `shareds(ent)`.
     pub(super) fn shareds(
         &self,
-        entity: &Handle<StandardTransient>,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+        entity: &Handle<dyn Transient>,
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         Ok(step_live(&self.graph, WHERE)?
             .graph()
             .shareds(entity)?
             .content())
     }
     /// `typed_sharings(ent, T)`.
-    pub(super) fn typed_sharings<T: RuntimeTyped>(
+    pub(super) fn typed_sharings<T: RuntimeTyped + TransientHandleTarget>(
         &self,
-        entity: &Handle<StandardTransient>,
-    ) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+        entity: &Handle<dyn Transient>,
+    ) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         Ok(step_live(&self.graph, WHERE)?
             .graph()
             .typed_sharings(entity, T::static_type())?
@@ -85,8 +87,8 @@ impl SessionGraph {
 }
 
 /// The first of the entities that is a `T`, null without one.
-pub(super) fn first_of<T: ?Sized + RuntimeTyped>(
-    entities: &[Handle<StandardTransient>],
+pub(super) fn first_of<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+    entities: &[Handle<dyn Transient>],
 ) -> Handle<T> {
     entities
         .iter()
@@ -98,21 +100,23 @@ pub(super) fn first_of<T: ?Sized + RuntimeTyped>(
 /// `GetMeasureWithUnit`: the measure of a transient that is one or a representation item with one;
 /// null for others.
 pub(super) fn measure_with_unit(
-    measure: &Handle<StandardTransient>,
-) -> Handle<StepBasicMeasureWithUnit> {
-    let direct = measure.cast::<StepBasicMeasureWithUnit>();
+    measure: &Handle<dyn Transient>,
+) -> Handle<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>> {
+    let direct = measure.cast::<dyn crate::StepEntityBase<StepBasicMeasureWithUnit>>();
     if direct.is_some() {
         return direct;
     }
     measure
-        .cast::<StepReprReprItemAndMeasureWithUnit>()
+        .cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>()
         .get()
-        .map(StepReprReprItemAndMeasureWithUnit::get_measure_with_unit)
+        .map(|item| item.get_measure_with_unit())
         .unwrap_or_default()
 }
 
 /// The named unit of a measure's unit, `None` when it is null or not of the first case.
-pub(super) fn named_unit_of(unit: &StepBasicUnit) -> Option<Handle<StepBasicNamedUnit>> {
+pub(super) fn named_unit_of(
+    unit: &StepBasicUnit,
+) -> Option<Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>> {
     if unit.is_null() || unit.case_num(&unit.value()) != 1 {
         return None;
     }
@@ -121,7 +125,7 @@ pub(super) fn named_unit_of(unit: &StepBasicUnit) -> Option<Handle<StepBasicName
 
 /// The context of a named unit.
 pub(super) fn context_of_unit(
-    named: &Handle<StepBasicNamedUnit>,
+    named: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
     factors: &StepDataFactors,
 ) -> Result<StepConstructUnitContext, Failure> {
     let mut context = StepConstructUnitContext::new();
@@ -140,7 +144,7 @@ pub(super) fn convert_angle_value(context: &StepConstructUnitContext, value: &mu
 
 /// `GetMassConversionFactor`: the factor of a mass unit; false, with 1, for others.
 pub(super) fn mass_conversion_factor(
-    named: &Handle<StepBasicNamedUnit>,
+    named: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
     factor: &mut f64,
 ) -> Result<bool, Failure> {
     *factor = 1.;
@@ -156,7 +160,9 @@ pub(super) fn mass_conversion_factor(
     if second.case_num(&second.value()) == 1 {
         let named = second.named_unit();
         step_live(&named, WHERE)?;
-        if let Some(si_unit) = named.cast::<StepBasicSiUnit>().get()
+        if let Some(si_unit) = named
+            .cast::<dyn crate::StepEntityBase<StepBasicSiUnit>>()
+            .get()
             && si_unit.name() == StepBasicSiUnitName::SunGram
             && si_unit.has_prefix()
         {

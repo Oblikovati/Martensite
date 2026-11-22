@@ -1,5 +1,6 @@
 //! Curves on surfaces (type 142) and boundaries (type 141): wires with pcurves on a face.
 use super::{IgesToBRep, IgesToBRepTopoCurve, IgesToBRepTopoSurface};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataIgesEntity, IgesDataToolLocation, iges_array1_set, iges_live, iges_new_array1,
 };
@@ -102,7 +103,7 @@ impl IgesToBRepTopoCurve {
     fn moved_wire(
         &mut self,
         entity: &IgesDataIgesEntity,
-        handle: &Handle<IgesDataIgesEntity>,
+        handle: &Handle<dyn IgesDataEntityKind>,
         wire: &mut Wire,
     ) -> Result<(), Failure> {
         if !entity.has_transf() {
@@ -145,7 +146,7 @@ impl IgesToBRepTopoCurve {
             2 => 3,
             _ => 0,
         };
-        let curves_2d: Handle<HArray1<Handle<IgesDataIgesEntity>>> = iges_new_array1(1, 1)?;
+        let curves_2d: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = iges_new_array1(1, 1)?;
         iges_array1_set(&curves_2d, 1, live.curve_uv(), WHERE)?;
         let boundary = IgesToBRep::algo_container()?
             .tool_container()?
@@ -211,7 +212,7 @@ impl IgesToBRepTopoCurve {
     fn boundary_surface_failure(
         &self,
         start: &Handle<IgesGeomBoundary>,
-        surface: &Handle<IgesDataIgesEntity>,
+        surface: &Handle<dyn IgesDataEntityKind>,
         shape: &Shape,
     ) -> Result<Shape, Failure> {
         if shape.shape_type()? == ShapeEnum::Shell {

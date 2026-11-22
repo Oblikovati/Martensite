@@ -26,12 +26,12 @@ use martensite_tkmath::gp::{Axis1, Axis2, Direction3, Point3};
 fn bug26576_revolution(s: &mut dyn Session) -> Surface {
     let center = Point3::new(1.5, 3.125, 0.);
     let placed = Axis2::with_x_direction(center, Direction3::Z, Direction3::X).unwrap();
-    let circle: Curve = Handle::new(GeomCircle::new(placed, 0.25).unwrap()).cast();
+    let circle: Curve = Handle::new(GeomCircle::new(placed, 0.25).unwrap()).into_upcast();
     let trimmed = GeomTrimmedCurve::new(&circle, 0., 3.14159265358979, true, true).unwrap();
-    let curve: Curve = Handle::new(trimmed).cast();
+    let curve: Curve = Handle::new(trimmed).into_upcast();
     let axis = Axis1::new(center, Direction3::new(-1., 0., 0.).unwrap());
     let revolution = GeomSurfaceOfRevolution::new(&curve, axis).unwrap();
-    bound_surface(s, "ss1", Handle::new(revolution).cast())
+    bound_surface(s, "ss1", Handle::new(revolution).into_upcast())
 }
 
 /// The script's pair of `checkoverlapedges`, on both kinds of curve.
@@ -288,7 +288,7 @@ pub fn bug27780(s: &mut dyn Session) {
     let curves = pcurve(s, "p");
     let on_first = log.lines[0].first_curve2d().clone();
     let trimmed: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&on_first, 0., 1., true, true).unwrap()).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&on_first, 0., 1., true, true).unwrap()).into_upcast();
     s.bind_drawing("c", Drawing::PlaneCurve(&trimmed));
     if end_direction_dot(&on_first) < 0. {
         println!("Error: p-curve has reversed direction at its end");
@@ -370,6 +370,6 @@ fn the_end_direction_is_read_from_the_derivative() {
         Point2::new(1., 0.),
     ];
     let curve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).cast();
+        Handle::new(Geom2dBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).into_upcast();
     assert_eq!(end_direction_dot(&curve), -2.);
 }

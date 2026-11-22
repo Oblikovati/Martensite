@@ -12,8 +12,8 @@ use martensite_tkg3d::geom::{GeomCartesianPoint, GeomCircle};
 use martensite_tkgeombase::gc::MakeCircle;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfPolylines, Graphic3dArrayOfPrimitives, Graphic3dArrayOfSegments,
-    Graphic3dArrayOfTriangles, Graphic3dAspectsMembers as _,
+    Graphic3dArrayOfPolylines, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
+    Graphic3dArraySource, Graphic3dAspectsMembers as _,
 };
 use martensite_tkv3d::ais::{AisCircle, AisInteractiveObject, AisPoint};
 use martensite_tkv3d::prs_mgr::PrsMgrPresentableObjectMembers as _;
@@ -50,7 +50,7 @@ pub fn point_object([x, y, z]: [f64; 3]) -> Result<Handle<dyn AisInteractiveObje
 
 /// The object of a primitive array filled with `points`.
 fn array_object(
-    prims: Handle<Graphic3dArrayOfPrimitives>,
+    prims: Handle<dyn Graphic3dArraySource>,
     points: &[[f64; 3]],
 ) -> Result<Handle<PrimitiveArrayObject>, Failure> {
     let array = prims.get().ok_or_else(|| {
@@ -65,14 +65,14 @@ fn array_object(
 /// The triangle command's object: a triangle array of three points, drawn shaded.
 /// Example: `triangle_object([[0., 0., 0.], [50., 0., 0.], [25., 40., 0.]])?`.
 pub fn triangle_object(points: [[f64; 3]; 3]) -> Result<Handle<dyn AisInteractiveObject>, Failure> {
-    let prims = Handle::new(Graphic3dArrayOfTriangles::new(3, 0, 0)?).cast();
+    let prims = Handle::new(Graphic3dArrayOfTriangles::new(3, 0, 0)?).into_upcast();
     Ok(array_object(prims, &points)?.cast())
 }
 
 /// The segment command's object: a segment array of two points, its own shading aspect yellow.
 /// Example: `segment_object([[0., 0., 0.], [50., 0., 0.]])?`.
 pub fn segment_object(points: [[f64; 3]; 2]) -> Result<Handle<dyn AisInteractiveObject>, Failure> {
-    let prims = Handle::new(Graphic3dArrayOfSegments::new(2, 0, 0)?).cast();
+    let prims = Handle::new(Graphic3dArrayOfSegments::new(2, 0, 0)?).into_upcast();
     let object = array_object(prims, &points)?;
     let drawer = object.attributes();
     drawer.setup_own_shading_aspect(&Handle::default())?;
@@ -93,6 +93,6 @@ pub fn polyline_object(points: &[[f64; 3]]) -> Result<Handle<dyn AisInteractiveO
         0,
         0,
     )?)
-    .cast();
+    .into_upcast();
     Ok(array_object(prims, points)?.cast())
 }

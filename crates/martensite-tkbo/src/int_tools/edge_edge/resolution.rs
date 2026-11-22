@@ -16,8 +16,8 @@ pub(super) fn resolution_coefficient(
 ) -> Result<f64, Failure> {
     let geometry = curve.transformed_curve().geom_curve();
     match curve.get_type()? {
-        CurveType::Circle => Ok(1. / (2. * geometry.cast::<GeomCircle>().circ()?.radius())),
-        CurveType::Ellipse => Ok(1. / geometry.cast::<GeomEllipse>().major_radius()),
+        CurveType::Circle => Ok(1. / (2. * geometry.downcast::<GeomCircle>().circ()?.radius())),
+        CurveType::Ellipse => Ok(1. / geometry.downcast::<GeomEllipse>().major_radius()),
         CurveType::OffsetCurve => match offset_coefficient(&geometry)? {
             Some(value) => Ok(value),
             None => sampled_coefficient(curve, range),
@@ -29,7 +29,7 @@ pub(super) fn resolution_coefficient(
     }
 }
 fn offset_coefficient(curve: &Handle<dyn GeomCurve>) -> Result<Option<f64>, Failure> {
-    let offset = curve.cast::<GeomOffsetCurve>();
+    let offset = curve.downcast::<GeomOffsetCurve>();
     let basis = GeomAdaptorCurve::with_curve(&offset.basis_curve())?;
     Ok(match basis.get_type()? {
         CurveType::Line => Some(0.),
@@ -63,8 +63,8 @@ pub(super) fn curve_resolution(
     match kind {
         CurveType::Line => Ok(tolerance),
         CurveType::Circle => Ok(circle_resolution(coefficient, tolerance)),
-        CurveType::BezierCurve => curve.cast::<GeomBezierCurve>().resolution(tolerance),
-        CurveType::BSplineCurve => curve.cast::<GeomBSplineCurve>().resolution(tolerance),
+        CurveType::BezierCurve => curve.downcast::<GeomBezierCurve>().resolution(tolerance),
+        CurveType::BSplineCurve => curve.downcast::<GeomBSplineCurve>().resolution(tolerance),
         CurveType::OffsetCurve => offset_resolution(curve, coefficient, tolerance),
         _ => Ok(coefficient * tolerance),
     }
@@ -82,7 +82,7 @@ fn offset_resolution(
     coefficient: f64,
     tolerance: f64,
 ) -> Result<f64, Failure> {
-    let basis = curve.cast::<GeomOffsetCurve>().basis_curve();
+    let basis = curve.downcast::<GeomOffsetCurve>().basis_curve();
     let adaptor = GeomAdaptorCurve::with_curve(&basis)?;
     Ok(match adaptor.get_type()? {
         CurveType::Line => tolerance,

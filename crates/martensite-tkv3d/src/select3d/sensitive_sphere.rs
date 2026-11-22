@@ -9,7 +9,7 @@ use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeMa
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::standard::real::real_last;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::bvh::BvhBox;
 use martensite_tkmath::gp::Point3;
 
@@ -17,13 +17,12 @@ use martensite_tkmath::gp::Point3;
 ///
 /// Example: `let sphere = Select3DSensitiveSphere::new(&owner, center, 2.0); sphere.radius();`.
 pub struct Select3DSensitiveSphere {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     center: Point3,
     last_detected_point: SharedState<Point3>,
     radius: f64,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveSphere, "Select3DSensitiveSphere", dyn Select3DSensitiveEntity, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveSphere, "Select3DSensitiveSphere", dyn Select3DSensitiveEntity,
     interfaces: [dyn Select3DSensitiveEntity]);
 
 /// The point `(RealLast, RealLast, RealLast)` of an undetected sphere.
@@ -40,7 +39,6 @@ impl Select3DSensitiveSphere {
         radius: f64,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             center,
             last_detected_point: SharedState::new(undetected()),

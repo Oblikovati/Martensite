@@ -99,7 +99,6 @@ fn key_out_of_range(key: AspectVKey) -> Failure {
 ///
 /// Example: `let keys = AspectVKeySet::default(); keys.key_down(1, 0.0, 1.0)?;`.
 pub struct AspectVKeySet {
-    transient: StandardTransient,
     state: SharedState<AspectVKeySetState>,
 }
 impl Default for AspectVKeySet {
@@ -110,17 +109,11 @@ impl Default for AspectVKeySet {
             modifiers: ASPECT_VKEY_FLAGS_NONE,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
 }
-martensite_tkernel::impl_transient!(
-    AspectVKeySet,
-    "Aspect_VKeySet",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(AspectVKeySet, "Aspect_VKeySet", StandardTransient);
 
 impl AspectVKeySet {
     /// The active modifiers; `keys.modifiers()`.

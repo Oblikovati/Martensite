@@ -1,5 +1,7 @@
 //! Bounded Martensite edge views avoid topology copies hidden by the owned convenience cast.
-use super::{Edge, Shape, shape_reference_scope::scoped_reference_shape, typed::check_cast};
+use super::{
+    Edge, EdgeView, ShapeView, shape_reference_scope::scoped_reference_shape, typed::check_cast,
+};
 use martensite_tkernel::standard::{Failure, catch_native_failure};
 use martensite_tkg3d::top_abs::ShapeEnum;
 impl Edge {
@@ -12,24 +14,24 @@ impl Edge {
     /// let escaped=Edge::with_shape_reference(&shape,|edge|Ok(edge));
     /// ```
     pub fn with_shape_reference<R>(
-        shape: &Shape,
-        project: impl FnOnce(&Edge) -> Result<R, Failure>,
+        shape: &ShapeView<'_>,
+        project: impl FnOnce(&EdgeView<'_>) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
         with_typed_shape_reference(
             shape,
             ShapeEnum::Edge,
             "TopoDS::Edge",
-            Edge::unchecked,
+            EdgeView::scoped,
             project,
         )
     }
 }
 
-pub(super) fn with_typed_shape_reference<T, R>(
-    shape: &Shape,
+pub(super) fn with_typed_shape_reference<'a, T, R>(
+    shape: &'a ShapeView<'_>,
     kind: ShapeEnum,
     cast: &str,
-    wrap: fn(Shape) -> T,
+    wrap: fn(ShapeView<'a>) -> T,
     project: impl FnOnce(&T) -> Result<R, Failure>,
 ) -> Result<R, Failure> {
     catch_native_failure(|| {

@@ -22,7 +22,7 @@ use martensite_tkmath::gp::{Circle2, Point2};
 /// use martensite_tkmath::gp::{Axis2d, Direction2, Point2};
 /// let circle = |x: f64, y: f64| -> Result<_, martensite_tkernel::standard::Failure> {
 ///     let axis = Axis2d::new(Point2::new(x, y), Direction2::new(1.0, 0.0)?);
-///     let c: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 2.0, true)?).cast();
+///     let c: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 2.0, true)?).into_upcast();
 ///     unqualified(&Geom2dAdaptorCurve::with_curve(&c)?)
 /// };
 /// let (q1, q2, q3) = (circle(0.0, 0.0)?, circle(10.0, 0.0)?, circle(5.0, 8.0)?);

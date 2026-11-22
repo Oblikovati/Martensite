@@ -1,5 +1,8 @@
 //! Nonvirtual ColoredShape map aliases and ordered custom-drawer removal.
-use super::{AisColoredDrawer, AisColoredShapeSource, AisShapeDrawerMapMut, AisShapeDrawerMapRef};
+use super::{
+    AisColoredDrawer, AisColoredDrawerSource, AisColoredShapeSource, AisShapeDrawerMapMut,
+    AisShapeDrawerMapRef,
+};
 use crate::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -36,9 +39,9 @@ impl<S: AisColoredShapeSource + ?Sized> AisColoredShapeMembers for S {}
 
 fn colored_shape_replacement_drawer<S: AisColoredShapeSource + ?Sized>(
     object: &S,
-) -> Handle<AisColoredDrawer> {
+) -> Handle<dyn AisColoredDrawerSource> {
     // Drop the temporary owning Attributes convenience before old-value destruction.
     // Native passes its actual const handle member and has no extra transient refcount.
     let link = object.attributes();
-    Handle::new(AisColoredDrawer::new(&link))
+    Handle::new(AisColoredDrawer::new(&link)).into_upcast::<dyn AisColoredDrawerSource>()
 }

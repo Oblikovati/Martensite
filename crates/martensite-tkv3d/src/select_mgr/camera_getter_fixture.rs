@@ -26,7 +26,7 @@ impl CameraGetterSetterProbe {
         if !self.armed.swap(false, Ordering::Relaxed) {
             return;
         }
-        original.volume.set_camera(&self.next.observe().clone());
+        original.volume.set_camera(&self.next.upgrade());
         self.raise_getter_setter_failure();
     }
     fn raise_getter_setter_failure(&self) {
@@ -64,7 +64,10 @@ pub(super) fn camera_getter_row(
 ) -> String {
     let mut values = labels.to_vec();
     values.extend(camera_getter_value_codes(&fields, &counts));
-    values.extend([counts.first.ref_count(), counts.second.ref_count()]);
+    values.extend(
+        [counts.first.ref_count(), counts.second.ref_count()]
+            .map(|count| i32::try_from(count).unwrap()),
+    );
     values.extend(counts.owner_counts);
     values.extend(camera_getter_alias_identities(&fields));
     values

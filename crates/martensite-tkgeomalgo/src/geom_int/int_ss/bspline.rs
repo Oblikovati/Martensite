@@ -80,7 +80,7 @@ impl GeomIntIntSS {
             arrays::put(&mut poles, i, wl.point(ideb + i - 1)?.value())?;
         }
         let (knots, mults) = polygon_knots(nbpnt)?;
-        Ok(Handle::new(GeomBSplineCurve::new(&poles, &knots, &mults, 1, false)?).cast())
+        Ok(Handle::new(GeomBSplineCurve::new(&poles, &knots, &mults, 1, false)?).into_upcast())
     }
 
     /// `MakeBSpline2d(theWLine, ideb, ifin, onFirst)`: the polygon of degree 1 through

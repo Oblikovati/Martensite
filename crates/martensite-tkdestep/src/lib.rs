@@ -35,6 +35,8 @@ pub mod step_dim_tol;
 pub mod step_edit;
 pub mod step_element;
 pub(crate) mod step_entity;
+mod step_entity_base;
+pub use step_entity_base::StepEntityBase;
 pub mod step_fea;
 pub mod step_file;
 pub mod step_geom;

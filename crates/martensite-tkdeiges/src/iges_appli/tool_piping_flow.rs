@@ -15,6 +15,7 @@
 use crate::iges_appli::IgesAppliPipingFlow;
 use crate::iges_basic::entity_shape::iges_array1_length;
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_read_text_item;
 use crate::iges_data::{
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataParamReader, iges_array1_set,
@@ -68,7 +69,7 @@ impl IgesAppliToolPipingFlow {
             num = 0;
         }
         if num > 0 {
-            temp_flow_assocs = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_flow_assocs = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         } else {
             pr.add_fail("Number of Flow Associativities: Not Positive", "");
         }
@@ -84,7 +85,7 @@ impl IgesAppliToolPipingFlow {
             num = 0;
         }
         if num > 0 {
-            temp_joins = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_joins = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         } else {
             pr.add_fail("Number of Joins: Not Positive", "");
         }
@@ -109,7 +110,7 @@ impl IgesAppliToolPipingFlow {
             num = 0;
         }
         if num > 0 {
-            temp_cont_flow_assocs = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_cont_flow_assocs = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         } else {
             pr.add_fail("Number of Continuation Flows: Not Positive", "");
         }
@@ -126,7 +127,7 @@ impl IgesAppliToolPipingFlow {
                 )?;
                 i = 1;
                 while i <= num {
-                    let mut temp_entity: Handle<IgesDataIgesEntity> = Default::default();
+                    let mut temp_entity: Handle<dyn IgesDataEntityKind> = Default::default();
                     if pr.read_entity_typed(
                         ir,
                         &pr.current(),
@@ -179,7 +180,7 @@ impl IgesAppliToolPipingFlow {
                 num = iges_array1_length(&temp_joins, "IgesAppliToolPipingFlow::read_own_params")?;
                 i = 1;
                 while i <= num {
-                    let mut temp_entity: Handle<IgesDataIgesEntity> = Default::default();
+                    let mut temp_entity: Handle<dyn IgesDataEntityKind> = Default::default();
                     if pr.read_entity(ir, &pr.current(), "Join", &mut temp_entity, false)? {
                         iges_array1_set(
                             &temp_joins,
@@ -247,7 +248,7 @@ impl IgesAppliToolPipingFlow {
                 )?;
                 i = 1;
                 while i <= num {
-                    let mut temp_entity: Handle<IgesDataIgesEntity> = Default::default();
+                    let mut temp_entity: Handle<dyn IgesDataEntityKind> = Default::default();
                     if pr.read_entity(
                         ir,
                         &pr.current(),

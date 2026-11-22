@@ -269,7 +269,7 @@ impl ChFi3dBuilder {
             reduce_surfaces(u1, u2, hs1, hs2)?;
         }
         let (g1, g2): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (hs1.clone().cast(), hs2.clone().cast());
+            (hs1.upcast(), hs2.upcast());
         let inter = if e1.ifaco == 1 {
             self.inter_fillets((&g1, &g2), pardeb, parfin)?
         } else {

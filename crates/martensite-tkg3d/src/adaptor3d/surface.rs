@@ -5,8 +5,8 @@ use crate::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomSurfaceD1, GeomSurfaceD2, GeomSurfaceD3,
 };
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped, Transient};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkmath::geom_abs::{Shape, SurfaceType};
 use martensite_tkmath::gp::{
     Axis1, Cone3, Cylinder3, Direction3, Plane3, Point3, Sphere3, Torus3, Vector3,
@@ -245,21 +245,26 @@ pub trait Adaptor3dSurface: Transient {
         Err(not_implemented("Adaptor3d_Surface::EvalDN"))
     }
 }
-impl_transient_interface!(dyn Adaptor3dSurface, "Adaptor3d_Surface", StandardTransient);
+// The constructible base and its interface are the same native class.
+impl RuntimeTyped for dyn Adaptor3dSurface {
+    const TYPE_NAME: &'static str = Adaptor3dSurfaceBase::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        Adaptor3dSurfaceBase::static_type()
+    }
+}
+impl_transient_interface_target!(dyn Adaptor3dSurface);
 
 /// An instance of the non-abstract retained base class itself, whose members all raise
 /// StandardNotImplemented; `Handle::new(Adaptor3dSurfaceBase::default())`.
 ///
 /// Its dynamic type is `Adaptor3dSurface`, as for `new Adaptor3dSurface()`.
 #[derive(Default)]
-pub struct Adaptor3dSurfaceBase {
-    parent: StandardTransient,
-}
+pub struct Adaptor3dSurfaceBase;
 impl_transient!(
     Adaptor3dSurfaceBase,
     "Adaptor3d_Surface",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn Adaptor3dSurface]
 );
 impl Adaptor3dSurface for Adaptor3dSurfaceBase {}

@@ -12,7 +12,7 @@ use crate::law::LawFunction;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, LinearVector};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::one_based;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeombase::geom_lib;
@@ -50,7 +50,6 @@ pub(crate) struct CorrectedState {
 ///
 /// `let law = GeomFillCorrectedFrenet::new(); law.set_curve(&curve)?; law.d0(0.5, &mut frame)?`.
 pub struct GeomFillCorrectedFrenet {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     pub(crate) frenet: Handle<GeomFillFrenet>,
     pub(crate) for_evaluation: bool,
@@ -60,7 +59,6 @@ impl_transient!(
     GeomFillCorrectedFrenet,
     "GeomFill_CorrectedFrenet",
     dyn GeomFillTrihedronLaw,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw]
 );
 
@@ -80,7 +78,6 @@ impl GeomFillCorrectedFrenet {
     /// the search of the curve plane; `GeomFillCorrectedFrenet::with_evaluation(true)`.
     pub fn with_evaluation(for_evaluation: bool) -> Self {
         Self {
-            parent: StandardTransient::default(),
             base: GeomFillTrihedronLawBase::default(),
             frenet: Handle::new(GeomFillFrenet::new()),
             for_evaluation,
@@ -158,7 +155,7 @@ impl GeomFillTrihedronLaw for GeomFillCorrectedFrenet {
         if curve.is_some() {
             copy.set_curve(&curve)?;
         }
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// Loads the curve into the law and its Frenet law; any curve but a line or a
     /// conic runs `Init`. Returns `isFrenet`.

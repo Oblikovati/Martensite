@@ -1,7 +1,7 @@
 //! Concrete owner type checks and fixed-order metadata queries have separate responsibilities.
 mod observations;
 mod roster;
-use martensite_tkernel::standard::{Handle, RuntimeType, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{RuntimeType, RuntimeTyped, Transient};
 use observations::StaticObservation;
 
 struct DescriptorQuery {
@@ -32,12 +32,12 @@ impl DescriptorQuery {
 }
 
 fn register<T: RuntimeTyped>() {
-    // Parent registration completes before ownership deltas are measured.
-    let _: &'static Handle<RuntimeType> = T::static_type_ref();
+    // Register the whole roster before checking its descriptor relationships.
+    let _: &'static RuntimeType = T::static_type();
 }
 
 fn dynamic_signature<T: Transient>() {
-    let query: for<'a> fn(&'a T) -> &'static Handle<RuntimeType> = T::dynamic_type_ref;
+    let query: for<'a> fn(&'a T) -> &'static RuntimeType = T::dynamic_type;
     // This validates the concrete callable type; it does not execute a dynamic query.
     let _ = std::hint::black_box(query);
 }

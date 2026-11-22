@@ -18,7 +18,7 @@ impl NamedColor {
         self.entry().0
     }
     /// Returns the table's linear RGB floats; `NamedColor::RED.rgb() == [1.0,0.0,0.0]`.
-    pub fn rgb(self) -> [f32; 3] {
+    pub(super) fn rgb(self) -> [f32; 3] {
         self.entry().2
     }
     /// Returns the table's sRGB floats, used by the nearest-name search;

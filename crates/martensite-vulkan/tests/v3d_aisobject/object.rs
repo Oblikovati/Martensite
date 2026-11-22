@@ -1,7 +1,7 @@
 //! The tutorial's actual virtual presentation and primitive-array selection callbacks.
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, HandleReference, StandardTransient},
+    standard::{Failure, Handle, HandleReference},
 };
 use martensite_tkmath::{gp::Transform3, toploc::Location};
 use martensite_tkservice::{aspect::AspectTypeOfLine, graphic3d::*};
@@ -10,16 +10,13 @@ use martensite_tkv3d::{
 };
 
 pub(super) struct TutorialObject {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     pub animation: Handle<dyn AisAnimationSource>,
 }
-martensite_tkernel::impl_transient!(TutorialObject,"MyAisObject",dyn AisInteractiveObject,transient,
-    interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(TutorialObject,"MyAisObject",dyn AisInteractiveObject, interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl TutorialObject {
     pub(super) fn new(animation: Handle<dyn AisAnimationSource>) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             animation,
         });

@@ -26,7 +26,7 @@ fn side_scene(driver: &Handle<Graphic3dRenderDriver>, array: bool) -> scene::Vie
         .set_group_primitives_aspect(&scene::unlit_style([1., 0., 0., 1.]));
     scene
         .group
-        .add_primitive_array(&opposite_faces(array), true);
+        .add_primitive_array(&opposite_faces(array).upcast(), true);
     scene
         .group
         .aspects()

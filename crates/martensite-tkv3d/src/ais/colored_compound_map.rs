@@ -1,6 +1,6 @@
 //! Native identity-keyed compound grouping: allocated nodes plus the actual dense index pointer table.
 use super::{
-    AisColoredDrawer,
+    AisColoredDrawerSource,
     colored_compound_node::{ColoredCompoundHasher, ColoredCompoundNode},
 };
 use martensite_tkbrep::topods::Compound;
@@ -37,7 +37,7 @@ impl AisColoredDrawerCompounds {
     /// Add without replacing an existing value; `map.add(&drawer,&compound)?`.
     pub fn add(
         &self,
-        drawer: &Handle<AisColoredDrawer>,
+        drawer: &Handle<dyn AisColoredDrawerSource>,
         compound: &Compound,
     ) -> Result<usize, Failure> {
         let mut nodes = self.nodes.write();
@@ -90,7 +90,7 @@ impl Drop for AisColoredDrawerCompounds {
 }
 pub(super) fn find_colored_compound<'a>(
     nodes: &'a ColoredCompoundTable,
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
 ) -> Option<&'a Arc<ColoredCompoundNode>> {
     let address = drawer.object_address() as usize;
     nodes

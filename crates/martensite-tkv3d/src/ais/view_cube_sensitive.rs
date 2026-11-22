@@ -1,7 +1,7 @@
 //! Real primitive-array detection with the native point-only, near-tangent ray guard.
 use super::AisViewCubeOwner;
 use crate::{select_basics::*, select_mgr::*, select3d::*, v3d::V3d};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::{
     gp::{GeneralTransform3, Point3},
     toploc::Location,
@@ -9,11 +9,10 @@ use martensite_tkmath::{
 use martensite_tkservice::graphic3d::Graphic3dArrayOfTriangles;
 /// Native sensitive ViewCube facets; `AisViewCubeSensitive::new(&owner,&triangles)?`.
 pub struct AisViewCubeSensitive {
-    transient: StandardTransient,
     /// Retained real sensitive primitive array; its buffer and owner identities are shared.
     pub primitive: Select3DSensitivePrimitiveArray,
 }
-martensite_tkernel::impl_transient!(AisViewCubeSensitive,"AisViewCubeSensitive",Select3DSensitivePrimitiveArray,transient,
+martensite_tkernel::impl_transient!(AisViewCubeSensitive,"AisViewCubeSensitive",Select3DSensitivePrimitiveArray,
     interfaces:[dyn Select3DSensitiveEntity]);
 impl AisViewCubeSensitive {
     /// Initialize native indexed triangles without copying their buffers; `AisViewCubeSensitive::new(&owner,&triangles)?`.
@@ -34,10 +33,7 @@ impl AisViewCubeSensitive {
             true,
             1,
         )?;
-        Ok(Self {
-            transient: StandardTransient::default(),
-            primitive,
-        })
+        Ok(Self { primitive })
     }
     /// Reject rectangular selection and rays within ten degrees of a part tangent; `entity.is_valid_ray(&manager)?`.
     pub fn is_valid_ray(

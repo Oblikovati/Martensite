@@ -10,6 +10,7 @@ use crate::rw_header_section::RWHeaderSection;
 use crate::step_ap214::StepAP214;
 use crate::step_rw::*;
 use martensite_tkernel::impl_transient;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{
     InterfaceCategory, InterfaceCopyTool, InterfaceGeneralLib, InterfaceGeneralModule,
@@ -111,14 +112,11 @@ impl RwStepAP214 {
 
 /// `RwStepAP214ReadWriteModule`: names, reading and writing by case number.
 #[derive(Default)]
-pub struct RwStepAP214ReadWriteModule {
-    transient: StandardTransient,
-}
+pub struct RwStepAP214ReadWriteModule {}
 impl_transient!(
     RwStepAP214ReadWriteModule,
     "RwStepAP214ReadWriteModule",
     dyn StepDataReadWriteModule,
-    transient,
     interfaces: [dyn InterfaceReaderModule, dyn StepDataReadWriteModule]
 );
 crate::impl_step_read_write_module!(RwStepAP214ReadWriteModule);
@@ -199,7 +197,7 @@ impl StepDataReadWriteModule for RwStepAP214ReadWriteModule {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         if cn == 0 {
             return Ok(());
@@ -214,7 +212,7 @@ impl StepDataReadWriteModule for RwStepAP214ReadWriteModule {
         &self,
         cn: i32,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         WRITERS.get(&cn).map_or(Ok(()), |write| write(sw, ent))
     }
@@ -222,14 +220,11 @@ impl StepDataReadWriteModule for RwStepAP214ReadWriteModule {
 
 /// `RwStepAP214GeneralModule`: sharing, checks, new entities and categories by case number.
 #[derive(Default)]
-pub struct RwStepAP214GeneralModule {
-    transient: StandardTransient,
-}
+pub struct RwStepAP214GeneralModule {}
 impl_transient!(
     RwStepAP214GeneralModule,
     "RwStepAP214GeneralModule",
     dyn StepDataGeneralModule,
-    transient,
     interfaces: [dyn InterfaceGeneralModule, dyn StepDataGeneralModule]
 );
 
@@ -241,7 +236,7 @@ impl InterfaceGeneralModule for RwStepAP214GeneralModule {
     fn fill_shared_case(
         &self,
         cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         iter: &mut InterfaceEntityIterator,
     ) {
         if let Some(share) = SHARES.get(&cn) {
@@ -251,7 +246,7 @@ impl InterfaceGeneralModule for RwStepAP214GeneralModule {
     fn check_case(
         &self,
         cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         shares: &InterfaceShareTool,
         ach: &mut Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
@@ -259,7 +254,7 @@ impl InterfaceGeneralModule for RwStepAP214GeneralModule {
             .get(&cn)
             .map_or(Ok(()), |check| check(ent, shares, ach))
     }
-    fn new_void(&self, cn: i32, entto: &mut Handle<StandardTransient>) -> bool {
+    fn new_void(&self, cn: i32, entto: &mut Handle<dyn Transient>) -> bool {
         let Some(create) = NEW_ENTITIES.get(&cn) else {
             return false;
         };
@@ -270,8 +265,8 @@ impl InterfaceGeneralModule for RwStepAP214GeneralModule {
     fn copy_case(
         &self,
         _cn: i32,
-        _entfrom: &Handle<StandardTransient>,
-        _entto: &Handle<StandardTransient>,
+        _entfrom: &Handle<dyn Transient>,
+        _entto: &Handle<dyn Transient>,
         _tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
         Ok(())
@@ -279,7 +274,7 @@ impl InterfaceGeneralModule for RwStepAP214GeneralModule {
     fn category_number(
         &self,
         cn: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
     ) -> i32 {
         category_of(cn)
@@ -288,7 +283,7 @@ impl InterfaceGeneralModule for RwStepAP214GeneralModule {
     fn name(
         &self,
         _cn: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
     ) -> Handle<HAsciiString> {
         Handle::default()

@@ -98,7 +98,7 @@ fn live<'a, T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
 fn untrimmed_curve(an_edge: &Edge) -> Result<(Handle<dyn GeomCurve>, f64, f64), Failure> {
     let (mut a_curve, fpar, lpar) = BRepTool::curve(an_edge)?;
     if live(&a_curve, "curve")?.is_instance_name("Geom_TrimmedCurve") {
-        a_curve = live(&a_curve.clone().cast::<GeomTrimmedCurve>(), "curve")?.basis_curve();
+        a_curve = live(&a_curve.downcast::<GeomTrimmedCurve>(), "curve")?.basis_curve();
     }
     Ok((a_curve, fpar, lpar))
 }
@@ -109,17 +109,17 @@ fn is_linear(an_edge: &Edge) -> Result<bool, Failure> {
     let (a_curve, _, _) = untrimmed_curve(an_edge)?;
     let curve = live(&a_curve, "curve")?;
     if curve.is_kind_name("Geom_Line") {
-        live(&a_curve.clone().cast::<GeomLine>(), "line")?.lin();
+        live(&a_curve.downcast::<GeomLine>(), "line")?.lin();
         return Ok(true);
     } else if curve.is_kind_name("Geom_BezierCurve") {
-        let the_bezier = a_curve.clone().cast::<GeomBezierCurve>();
+        let the_bezier = a_curve.downcast::<GeomBezierCurve>();
         let the_bezier = live(&the_bezier, "Bezier curve")?;
         if the_bezier.nb_poles() == 2 {
             MakeLin::from_points(the_bezier.pole(1)?, the_bezier.pole(2)?)?.value()?;
             return Ok(true);
         }
     } else if curve.is_kind_name("Geom_BSplineCurve") {
-        let the_bspline = a_curve.clone().cast::<GeomBSplineCurve>();
+        let the_bspline = a_curve.downcast::<GeomBSplineCurve>();
         let the_bspline = live(&the_bspline, "B-spline curve")?;
         if the_bspline.nb_poles() == 2 {
             MakeLin::from_points(the_bspline.pole(1)?, the_bspline.pole(2)?)?.value()?;
@@ -222,7 +222,7 @@ fn line_2d(
     p1: martensite_tkmath::gp::Point2,
     p2: martensite_tkmath::gp::Point2,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-    Ok(MakeLine2d::from_points(p1, p2)?.value()?.cast())
+    Ok(MakeLine2d::from_points(p1, p2)?.value()?.into_upcast())
 }
 
 /// `BRepLibMakeEdge(line, surf, V1, V2, 0., len)` then `BRepLib::build_curve3d`.
@@ -878,7 +878,7 @@ impl BRepOffsetAPIMiddlePath {
                 interpol.perform()?;
                 // The reference code reports "Interpolation failed" on the standard output and
                 // then raises not_done from Curve().
-                let inter_curve: Handle<dyn GeomCurve> = interpol.curve()?.cast();
+                let inter_curve: Handle<dyn GeomCurve> = interpol.curve()?.into_upcast();
                 *at_mut(&mut mid_edges, i)? = BRepLibMakeEdge::from_curve(&inter_curve)?
                     .edge()?
                     .clone()
@@ -922,7 +922,7 @@ impl BRepOffsetAPIMiddlePath {
             let curve = live(&a_curve, "curve")?;
             let pnt1 = curve.value(fpar)?;
             let pnt2 = curve.value(lpar)?;
-            let a_circle = a_curve.clone().cast::<GeomCircle>();
+            let a_circle = a_curve.downcast::<GeomCircle>();
             let a_circ = live(&a_circle, "circle")?.circ()?;
             if j == 1 {
                 the_axis = a_circ.axis();
@@ -984,7 +984,7 @@ impl BRepOffsetAPIMiddlePath {
             the_ax2 = Axis2::with_x_direction(the_center_of_circ, the_axis.direction(), x_dir)?;
             the_circle = MakeCircle::new(the_ax2, vec1.magnitude())?.value()?;
         }
-        let circle: Handle<dyn GeomCurve> = the_circle.cast();
+        let circle: Handle<dyn GeomCurve> = the_circle.upcast();
         let a_me = BRepLibMakeEdge::from_curve_params(&circle, 0., the_angle)?;
         Ok(if a_me.is_done() {
             a_me.edge()?.clone().into_shape()

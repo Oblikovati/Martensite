@@ -53,7 +53,7 @@ fn lights(r: &mut Reader<'_>) -> Handle<Graphic3dLightSet> {
                 .set_cast_shadows(true)
                 .expect("corpus shadows are on directional or spot lights");
         }
-        set.add(&Handle::new(light))
+        set.add(&Handle::new(light).into_upcast())
             .expect("corpus lights are not null");
     }
     Handle::new(set)

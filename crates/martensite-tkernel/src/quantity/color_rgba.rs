@@ -55,7 +55,7 @@ impl ColorRgba {
         self.rgb.is_equal(other.rgb) && (self.alpha - other.alpha).abs() <= Color::epsilon() as f32
     }
     /// Compares RGB distance and opacity strictly above epsilon; `!rgba.is_different(rgba)`.
-    pub fn is_different(self, other: Self) -> bool {
+    fn is_different(self, other: Self) -> bool {
         self.rgb.is_different(other.rgb)
             || (self.alpha - other.alpha).abs() > Color::epsilon() as f32
     }

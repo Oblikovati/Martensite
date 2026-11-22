@@ -2,7 +2,7 @@
 use super::basic_aspect::{Prs3dBasicAspect, dump_graphic_aspects};
 use martensite_tkernel::quantity::{Color, ColorRgba};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::aspect::{
     AspectInteriorStyle, AspectTypeOfFacingModel, AspectTypeOfLine,
 };
@@ -17,10 +17,9 @@ use std::io;
 ///
 /// Example: `let aspect = Prs3dShadingAspect::new()?; aspect.set_color(red, AspectTypeOfFacingModel::BothSide)?;`.
 pub struct Prs3dShadingAspect {
-    transient: StandardTransient,
     pub(super) aspect: SharedState<Handle<Graphic3dAspectFillArea3d>>,
 }
-martensite_tkernel::impl_transient!(Prs3dShadingAspect, "Prs3dShadingAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dShadingAspect, "Prs3dShadingAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 /// Whether a facing model touches the front side.
@@ -59,7 +58,6 @@ impl Prs3dShadingAspect {
     /// Wraps an existing Graphic3d aspect; `Prs3dShadingAspect::from_aspect(aspect)`.
     pub fn from_aspect(aspect: Handle<Graphic3dAspectFillArea3d>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             aspect: SharedState::new(aspect),
         }
     }

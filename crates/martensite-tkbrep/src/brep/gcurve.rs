@@ -111,7 +111,7 @@ pub trait BRepGCurve: BRepCurveRepresentation {
         Ok(())
     }
 }
-impl_transient_interface!(dyn BRepGCurve, "BRep_GCurve", dyn BRepCurveRepresentation);
+impl_transient_interface!(dyn BRepGCurve, "BRep_GCurve", dyn BRepCurveRepresentation, upcasts: [dyn BRepCurveRepresentation]);
 
 /// The body of `BRep_GCurve::DumpJson`: the class name, the base class and the range;
 /// `dump_gcurve(base, &mut stream, -1)?`.

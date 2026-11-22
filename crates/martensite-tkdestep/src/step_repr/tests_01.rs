@@ -55,8 +55,8 @@ fn init_round_trip_step_repr_assembly_component_usage() {
             &a_product_definition_relationship_name,
             has_product_definition_relationship_description,
             &a_product_definition_relationship_description,
-            &a_product_definition_relationship_relating_product_definition,
-            &a_product_definition_relationship_related_product_definition,
+            &a_product_definition_relationship_relating_product_definition.upcast(),
+            &a_product_definition_relationship_related_product_definition.upcast(),
             has_reference_designator,
             &a_reference_designator,
         )
@@ -82,7 +82,7 @@ fn init_round_trip_step_repr_assembly_component_usage_substitute() {
     let a_base = Handle::new(StepReprAssemblyComponentUsage::new());
     let a_subs = Handle::new(StepReprAssemblyComponentUsage::new());
     let object = StepReprAssemblyComponentUsageSubstitute::new();
-    object.init(&a_name, &a_def, &a_base, &a_subs);
+    object.init(&a_name, &a_def, &a_base.upcast(), &a_subs.upcast());
     assert!(object.name() == a_name);
     assert!(object.definition() == a_def);
     assert!(object.base() == a_base);
@@ -142,15 +142,17 @@ fn runtime_type_step_repr_characterized_representation() {
 fn init_round_trip_step_repr_characterized_representation() {
     let the_name = Handle::new(HAsciiString::new("sample"));
     let the_description = Handle::new(HAsciiString::new("sample"));
-    let the_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let object = StepReprCharacterizedRepresentation::new();
     object.init(
         &the_name,
         &the_description,
         &the_items,
-        &the_context_of_items,
+        &the_context_of_items.upcast(),
     );
     assert!(object.description() == the_description);
 }
@@ -208,8 +210,10 @@ fn runtime_type_step_repr_compound_representation_item() {
 #[test]
 fn init_round_trip_step_repr_compound_representation_item() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let item_element =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let item_element = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let object = StepReprCompoundRepresentationItem::new();
     object.init(&a_name, &item_element);
     assert!(object.item_element() == item_element);
@@ -253,7 +257,7 @@ fn init_round_trip_step_repr_configuration_effectivity() {
     let object = StepReprConfigurationEffectivity::new();
     object.init(
         &a_effectivity_id,
-        &a_product_definition_effectivity_usage,
+        &a_product_definition_effectivity_usage.upcast(),
         &a_configuration,
     );
     assert!(object.configuration() == a_configuration);
@@ -342,7 +346,7 @@ fn init_round_trip_step_repr_data_environment() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_description = Handle::new(HAsciiString::new("sample"));
     let a_elements = Handle::new(
-        HArray1::<Handle<StepReprPropertyDefinitionRepresentation>>::with_bounds(1, 2).unwrap(),
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>>::with_bounds(1, 2).unwrap(),
     );
     let object = StepReprDataEnvironment::new();
     object.init(&a_name, &a_description, &a_elements);

@@ -96,8 +96,8 @@ step_entity! {
     StepElementAnalysisItemWithinRepresentation, StepElementAnalysisItemWithinRepresentationState, "StepElementAnalysisItemWithinRepresentation", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_item: Handle<StepReprRepresentationItem>,
-        the_rep: Handle<StepReprRepresentation>,
+        the_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        the_rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     }
 }
 impl StepElementAnalysisItemWithinRepresentation {
@@ -106,10 +106,10 @@ impl StepElementAnalysisItemWithinRepresentation {
         set set_name = the_name: Handle<HAsciiString>;
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
-        get item = the_item: Handle<StepReprRepresentationItem>;
-        set set_item = the_item: Handle<StepReprRepresentationItem>;
-        get rep = the_rep: Handle<StepReprRepresentation>;
-        set set_rep = the_rep: Handle<StepReprRepresentation>;
+        get item = the_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
+        set set_item = the_item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>;
+        get rep = the_rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>;
+        set set_rep = the_rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -117,8 +117,8 @@ impl StepElementAnalysisItemWithinRepresentation {
         &self,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_item: &Handle<StepReprRepresentationItem>,
-        a_rep: &Handle<StepReprRepresentation>,
+        a_item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        a_rep: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();

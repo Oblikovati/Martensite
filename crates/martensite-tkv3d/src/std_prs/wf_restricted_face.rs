@@ -2,14 +2,14 @@
 //! a face, trimmed by its p-curves with a `HatchHatcher`, drawn with a fixed number of points
 //! or with a deflection, and the point matching on the same isolines.
 use super::{
-    StdPrsCurve, StdPrsDeflectionCurve, StdPrsIsolinePolylines, StdPrsIsolineSurfaceSource,
+    StdPrsCurve, StdPrsDeflectionCurve, StdPrsIsolinePolylines, StdPrsIsolineSurfaceTarget,
     StdPrsToolRFace,
 };
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkernel::ncollection::{HSequence, Sequence};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::real::{real_first, real_last};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::native::{std_max, std_min};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dIsoCurve, Adaptor3dSurface};
 use martensite_tkg3d::geom::GeomSurface;
@@ -72,7 +72,7 @@ fn trim(
 }
 
 /// Trims by every restriction sampled with `nb_points` points (a line by its two ends).
-fn trim_by_points<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+fn trim_by_points<S: StdPrsIsolineSurfaceTarget + ?Sized>(
     hatcher: &mut Hatcher,
     tool: &StdPrsToolRFace,
     nb_points: i32,
@@ -191,7 +191,7 @@ impl StdPrsWfRestrictedFace {
     /// RealFirst or RealLast are skipped. Nothing is drawn: the points are only collected.
     /// Example: `StdPrsWfRestrictedFace::add_isos(&prs, &face, true, true, 2, 2, &drawer, &mut curves)?`.
     #[allow(clippy::too_many_arguments)]
-    pub fn add_isos<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add_isos<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         draw_u_iso: bool,
@@ -231,7 +231,7 @@ impl StdPrsWfRestrictedFace {
             [nb_u_iso, nb_v_iso],
         );
         trim_by_points::<S>(&mut hatcher, &tool, nb_points)?;
-        let iso = Adaptor3dIsoCurve::with_surface(&face.clone().into_cast());
+        let iso = Adaptor3dIsoCurve::with_surface(&face.upcast());
         let poles = pole_surface(surface)?;
         for line in 1..=hatcher.nb_lines() {
             let coordinate = hatcher.coordinate(line)?;
@@ -258,7 +258,7 @@ impl StdPrsWfRestrictedFace {
 
     /// `Add(prs, face, drawer)`: both directions with the drawer isoline numbers.
     /// Example: `StdPrsWfRestrictedFace::add(&prs, &face, &drawer)?`.
-    pub fn add<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
@@ -266,7 +266,7 @@ impl StdPrsWfRestrictedFace {
         Self::add_with(prs, face, drawer, [true, true])
     }
     /// `AddUIso`: the U isolines only; `StdPrsWfRestrictedFace::add_u_iso(&prs, &face, &drawer)?`.
-    pub fn add_u_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add_u_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
@@ -274,14 +274,14 @@ impl StdPrsWfRestrictedFace {
         Self::add_with(prs, face, drawer, [true, false])
     }
     /// `AddVIso`: the V isolines only; `StdPrsWfRestrictedFace::add_v_iso(&prs, &face, &drawer)?`.
-    pub fn add_v_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add_v_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
     ) -> Result<(), Failure> {
         Self::add_with(prs, face, drawer, [false, true])
     }
-    fn add_with<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    fn add_with<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
@@ -306,7 +306,7 @@ impl StdPrsWfRestrictedFace {
     /// infinite intervals clamped to the maximal parameter value.
     /// Example: `StdPrsWfRestrictedFace::match_isos(&p, 0.1, &face, true, true, 0.01, 2, 2, &drawer)?`.
     #[allow(clippy::too_many_arguments)]
-    pub fn match_isos<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn match_isos<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -332,7 +332,7 @@ impl StdPrsWfRestrictedFace {
             [nb_u_iso, nb_v_iso],
         );
         trim_by_points::<S>(&mut hatcher, &tool, nb_points)?;
-        let iso = Adaptor3dIsoCurve::with_surface(&face.clone().into_cast());
+        let iso = Adaptor3dIsoCurve::with_surface(&face.upcast());
         for line in 1..=hatcher.nb_lines() {
             let coordinate = hatcher.coordinate(line)?;
             for interval in 1..=hatcher.nb_intervals_on(line)? {
@@ -350,7 +350,7 @@ impl StdPrsWfRestrictedFace {
 
     /// `Match(X, Y, Z, distance, face, drawer)`: both directions with the drawer values.
     /// Example: `StdPrsWfRestrictedFace::matches(&p, 0.1, &face, &drawer)?`.
-    pub fn matches<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn matches<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -359,7 +359,7 @@ impl StdPrsWfRestrictedFace {
         Self::match_with(point, distance, face, drawer, [true, true])
     }
     /// `MatchUIso`; `StdPrsWfRestrictedFace::match_u_iso(&p, 0.1, &face, &drawer)?`.
-    pub fn match_u_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn match_u_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -368,7 +368,7 @@ impl StdPrsWfRestrictedFace {
         Self::match_with(point, distance, face, drawer, [true, false])
     }
     /// `MatchVIso`; `StdPrsWfRestrictedFace::match_v_iso(&p, 0.1, &face, &drawer)?`.
-    pub fn match_v_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn match_v_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -376,7 +376,7 @@ impl StdPrsWfRestrictedFace {
     ) -> Result<bool, Failure> {
         Self::match_with(point, distance, face, drawer, [false, true])
     }
-    fn match_with<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    fn match_with<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -473,7 +473,7 @@ impl StdPrsWfDeflectionRestrictedFace {
     /// Confusion. The points of every isoline are appended to `curves`; nothing is drawn.
     /// Example: `StdPrsWfDeflectionRestrictedFace::add_isos(&prs, &face, true, true, 0.01, 2, 2, &drawer, &mut curves)?`.
     #[allow(clippy::too_many_arguments)]
-    pub fn add_isos<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add_isos<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         draw_u_iso: bool,
@@ -569,7 +569,7 @@ impl StdPrsWfDeflectionRestrictedFace {
         for pair in segments.chunks(2) {
             hatcher.trim_segment(pair[0], pair[1], 0)?;
         }
-        let iso = Adaptor3dIsoCurve::with_surface(&face.clone().into_cast());
+        let iso = Adaptor3dIsoCurve::with_surface(&face.upcast());
         let poles = pole_surface(surface)?;
         let angle = drawer.deviation_angle();
         for line in 1..=hatcher.nb_lines() {
@@ -622,7 +622,7 @@ impl StdPrsWfDeflectionRestrictedFace {
 
     /// `Add(prs, face, drawer)`: both directions with the drawer chordial deviation.
     /// Example: `StdPrsWfDeflectionRestrictedFace::add(&prs, &face, &drawer)?`.
-    pub fn add<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
@@ -630,7 +630,7 @@ impl StdPrsWfDeflectionRestrictedFace {
         Self::add_with(prs, face, drawer, [true, true])
     }
     /// `AddUIso`; `StdPrsWfDeflectionRestrictedFace::add_u_iso(&prs, &face, &drawer)?`.
-    pub fn add_u_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add_u_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
@@ -638,14 +638,14 @@ impl StdPrsWfDeflectionRestrictedFace {
         Self::add_with(prs, face, drawer, [true, false])
     }
     /// `AddVIso`; `StdPrsWfDeflectionRestrictedFace::add_v_iso(&prs, &face, &drawer)?`.
-    pub fn add_v_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn add_v_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
     ) -> Result<(), Failure> {
         Self::add_with(prs, face, drawer, [false, true])
     }
-    fn add_with<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    fn add_with<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Handle<S>,
         drawer: &Handle<Prs3dDrawer>,
@@ -670,7 +670,7 @@ impl StdPrsWfDeflectionRestrictedFace {
     /// p-curves sampled with `deflection`, matched with the deflection curve tolerance.
     /// Example: `StdPrsWfDeflectionRestrictedFace::match_isos(&p, 0.1, &face, &drawer, true, true, 0.01, 2, 2)?`.
     #[allow(clippy::too_many_arguments)]
-    pub fn match_isos<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn match_isos<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -710,7 +710,7 @@ impl StdPrsWfDeflectionRestrictedFace {
             }
             tool.next()?;
         }
-        let iso = Adaptor3dIsoCurve::with_surface(&face.clone().into_cast());
+        let iso = Adaptor3dIsoCurve::with_surface(&face.upcast());
         let angle = drawer.deviation_angle();
         for line in 1..=hatcher.nb_lines() {
             let coordinate = hatcher.coordinate(line)?;
@@ -728,7 +728,7 @@ impl StdPrsWfDeflectionRestrictedFace {
     }
 
     /// `Match(X, Y, Z, distance, face, drawer)`; `StdPrsWfDeflectionRestrictedFace::matches(&p, 0.1, &face, &drawer)?`.
-    pub fn matches<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn matches<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -737,7 +737,7 @@ impl StdPrsWfDeflectionRestrictedFace {
         Self::match_with(point, distance, face, drawer, [true, true])
     }
     /// `MatchUIso`; `StdPrsWfDeflectionRestrictedFace::match_u_iso(&p, 0.1, &face, &drawer)?`.
-    pub fn match_u_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn match_u_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -746,7 +746,7 @@ impl StdPrsWfDeflectionRestrictedFace {
         Self::match_with(point, distance, face, drawer, [true, false])
     }
     /// `MatchVIso`; `StdPrsWfDeflectionRestrictedFace::match_v_iso(&p, 0.1, &face, &drawer)?`.
-    pub fn match_v_iso<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    pub fn match_v_iso<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,
@@ -754,7 +754,7 @@ impl StdPrsWfDeflectionRestrictedFace {
     ) -> Result<bool, Failure> {
         Self::match_with(point, distance, face, drawer, [false, true])
     }
-    fn match_with<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized>(
+    fn match_with<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         point: &Point3,
         distance: f64,
         face: &Handle<S>,

@@ -116,7 +116,7 @@ fn extract_stored_pcurve(
     if context.raw_surface.is_null() {
         return Ok(None);
     }
-    let tedge = edge.tshape().cast::<BRepTEdge>();
+    let tedge = edge.tshape().downcast::<BRepTEdge>();
     let Some(tedge) = tedge.get() else {
         return Ok(None);
     };
@@ -127,7 +127,7 @@ fn extract_stored_pcurve(
 
 /// `rawVertexPoint`: the stored `BRep_TVertex` point, without any location.
 pub(super) fn raw_vertex_point(vertex: &Vertex) -> Option<Point3> {
-    let tvertex = vertex.tshape().cast::<BRepTVertex>();
+    let tvertex = vertex.tshape().downcast::<BRepTVertex>();
     tvertex.get().map(BRepTVertex::pnt)
 }
 

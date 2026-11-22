@@ -43,7 +43,8 @@ impl<K, H: HashPolicy<K>> FlatMap<K, H> {
         self.table.count
     }
     /// Returns the key extent; `map.extent()==3`.
-    pub fn extent(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn extent(&self) -> usize {
         self.len()
     }
     /// Checks whether there are no keys; `map.is_empty()`.
@@ -51,15 +52,18 @@ impl<K, H: HashPolicy<K>> FlatMap<K, H> {
         self.len() == 0
     }
     /// Returns the number of contiguous slots; `map.capacity()`.
-    pub fn capacity(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn capacity(&self) -> usize {
         self.table.slots.len()
     }
     /// Borrows the retained policy; `map.hasher().salt`.
-    pub fn hasher(&self) -> &H {
+    #[cfg(test)]
+    pub(crate) fn hasher(&self) -> &H {
         &self.table.hasher
     }
     /// Reserves room for the requested key count at the 13/16 load limit; `map.reserve(100)`.
-    pub fn reserve(&mut self, count: usize) {
+    #[cfg(test)]
+    pub(crate) fn reserve(&mut self, count: usize) {
         self.table.reserve(count);
     }
     /// Tests membership through Robin Hood probing; `map.contains(&42)`.
@@ -67,15 +71,18 @@ impl<K, H: HashPolicy<K>> FlatMap<K, H> {
         self.table.lookup(key).is_some()
     }
     /// Borrows the stored equivalent key, if any; `map.contained(&42)`.
-    pub fn contained(&self, key: &K) -> Option<&K> {
+    #[cfg(test)]
+    pub(crate) fn contained(&self, key: &K) -> Option<&K> {
         self.seek(key)
     }
     /// Optionally borrows the stored key; `map.seek(&42)`.
-    pub fn seek(&self, key: &K) -> Option<&K> {
+    #[cfg(test)]
+    pub(crate) fn seek(&self, key: &K) -> Option<&K> {
         Some(&self.table.slots[self.table.lookup(key)?].as_ref()?.key)
     }
     /// Borrows a key exclusively; callers must preserve its hash/equality identity; `map.change_seek(&42)`.
-    pub fn change_seek(&mut self, key: &K) -> Option<&mut K> {
+    #[cfg(test)]
+    pub(crate) fn change_seek(&mut self, key: &K) -> Option<&mut K> {
         let index = self.table.lookup(key)?;
         Some(&mut self.table.slots[index].as_mut()?.key)
     }
@@ -107,7 +114,8 @@ impl<K, H: HashPolicy<K>> FlatMap<K, H> {
         &self.table.slots[result.last].as_ref().unwrap().key
     }
     /// Removes a key and shifts the probe cluster backward; `map.remove(&42)`.
-    pub fn remove(&mut self, key: &K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn remove(&mut self, key: &K) -> bool {
         self.table.remove(key)
     }
     /// Drops keys while optionally retaining slot capacity; `map.clear(false)`.
@@ -115,7 +123,8 @@ impl<K, H: HashPolicy<K>> FlatMap<K, H> {
         self.table.clear(release);
     }
     /// Swaps policies and storage; `map.exchange(&mut other)`.
-    pub fn exchange(&mut self, other: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn exchange(&mut self, other: &mut Self) {
         std::mem::swap(self, other);
     }
     /// Borrows keys in slot order; `for key in map.iter() {}`.
@@ -125,7 +134,8 @@ impl<K, H: HashPolicy<K>> FlatMap<K, H> {
         }
     }
     /// Returns an exhausted iterator; `map.iter()!=map.end()`.
-    pub fn end(&self) -> FlatMapIter<'_, K> {
+    #[cfg(test)]
+    pub(crate) fn end(&self) -> FlatMapIter<'_, K> {
         FlatMapIter {
             items: FlatItems {
                 slots: &self.table.slots,
@@ -151,12 +161,14 @@ impl<K, H: HashPolicy<K> + Default> FlatMap<K, H> {
         Self::with_hasher(H::default(), hint)
     }
     /// Moves storage and leaves an empty source; `FlatMap::move_from(&mut source)`.
-    pub fn move_from(source: &mut Self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn move_from(source: &mut Self) -> Self {
         Self::move_from_with(source, std::mem::take)
     }
     /// Move assignment: releases this storage, then takes the source's and leaves
     /// the source empty with no slots; `map.move_assign(&mut source)`.
-    pub fn move_assign(&mut self, source: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn move_assign(&mut self, source: &mut Self) {
         self.move_assign_returning(source);
     }
 }
@@ -177,7 +189,7 @@ impl<K: Clone, H: Clone> Clone for FlatMap<K, H> {
 }
 impl<K: Clone, H: Clone> FlatMap<K, H> {
     /// Copies after releasing destination keys and returns it; `map.assign_returning(&source)`.
-    pub fn assign_returning(&mut self, source: &Self) -> &mut Self {
+    pub(crate) fn assign_returning(&mut self, source: &Self) -> &mut Self {
         self.table.clone_from(&source.table);
         self
     }
@@ -217,14 +229,17 @@ impl<'a, K, H: HashPolicy<K>> IntoIterator for &'a FlatMap<K, H> {
     }
 }
 mod construction;
+#[cfg(test)]
 mod transfer;
 
+#[cfg(test)]
 mod cursor_contracts;
 mod pointer_contracts;
 
 impl<K, H> FlatMap<K, H> {
     /// Preserves self-assignment without cloning keys or policy; `map.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }

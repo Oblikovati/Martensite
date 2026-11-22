@@ -1,8 +1,10 @@
 //! Static median KD tree with leaf buckets and one-based original point indices.
+#[cfg(test)]
 use super::Array1;
 use crate::standard::Failure;
 mod array_build;
 mod build;
+#[cfg(test)]
 mod heap;
 mod nearest;
 mod radii;
@@ -46,7 +48,7 @@ impl<P: KdPoint, const D: usize, const R: bool> KDTree<P, D, R> {
         self.points.is_empty()
     }
     /// Releases the entire cloud and permutation; `tree.clear()`.
-    pub fn clear(&mut self) {
+    pub(crate) fn clear(&mut self) {
         *self = Self::default();
     }
     /// Borrows by one-based original index; `tree.point(1)?`.

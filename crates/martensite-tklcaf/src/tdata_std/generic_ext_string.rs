@@ -46,7 +46,8 @@ pub trait TDataStdGenericExtString: TdfAttribute {
 impl_transient_interface!(
     dyn TDataStdGenericExtString,
     "TDataStd_GenericExtString",
-    dyn TdfAttribute
+    dyn TdfAttribute,
+    upcasts: [dyn TdfAttribute]
 );
 
 /// The native `TDataStd_GenericExtString` overrides of `TDF_Attribute`, called by the

@@ -2,7 +2,7 @@
 use super::basic_aspect::{Prs3dBasicAspect, dump_graphic_aspects};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::aspect::{AspectTypeOfDisplayText, AspectTypeOfStyleText};
 use martensite_tkservice::graphic3d::{
@@ -40,11 +40,10 @@ impl Default for Prs3dTextLayout {
 ///
 /// Example: `let aspect = Prs3dTextAspect::new(); aspect.set_height(12.0);`.
 pub struct Prs3dTextAspect {
-    transient: StandardTransient,
     text_aspect: SharedState<Handle<Graphic3dAspectText3d>>,
     layout: SharedState<Prs3dTextLayout>,
 }
-martensite_tkernel::impl_transient!(Prs3dTextAspect, "Prs3dTextAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dTextAspect, "Prs3dTextAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 impl Default for Prs3dTextAspect {
@@ -69,7 +68,6 @@ impl Prs3dTextAspect {
     /// Wraps an existing Graphic3d text aspect; `Prs3dTextAspect::from_aspect(aspect)`.
     pub fn from_aspect(aspect: Handle<Graphic3dAspectText3d>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             text_aspect: SharedState::new(aspect),
             layout: SharedState::new(Prs3dTextLayout::default()),
         }

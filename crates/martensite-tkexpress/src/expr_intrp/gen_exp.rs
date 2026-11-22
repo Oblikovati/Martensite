@@ -1,5 +1,5 @@
 //! `ExprIntrpGenExp`: the interpreter that builds an expression from a text.
-use super::generator::ExprIntrpGenerator;
+use super::generator::{ExprIntrpGenerator, ExprIntrpGeneratorObject};
 use super::parse::{ExprIntrpParseOutcome, parse};
 use crate::expr::ExprHandle;
 use crate::expr::errors::no_such_object;
@@ -43,7 +43,7 @@ impl_transient!(
     ExprIntrpGenExp,
     "ExprIntrp_GenExp",
     ExprIntrpGenerator,
-    parent
+    interfaces: [dyn ExprIntrpGeneratorObject]
 );
 impl Deref for ExprIntrpGenExp {
     type Target = ExprIntrpGenerator;
@@ -102,11 +102,17 @@ impl ExprIntrpGenExp {
     }
     /// `ExprIntrp::Parse(me, str)` with the scanner output of this interpreter.
     fn run_parse(&self, str: &AsciiString) -> ExprIntrpParseOutcome {
-        let me: Handle<ExprIntrpGenerator> = self.link.me().unwrap_or_default();
+        let me: Handle<dyn ExprIntrpGeneratorObject> = self.link.me().unwrap_or_default();
         let mut output = self.output.write();
         match output.as_mut() {
             Some(output) => parse(&me, str, output.as_mut()),
             None => parse(&me, str, &mut std::io::stdout()),
         }
+    }
+}
+
+impl ExprIntrpGeneratorObject for ExprIntrpGenExp {
+    fn generator_state(&self) -> &ExprIntrpGenerator {
+        &self.parent
     }
 }

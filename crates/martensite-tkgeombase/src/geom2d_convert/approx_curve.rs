@@ -40,7 +40,8 @@ impl ApproxCurve {
         max_degree: i32,
     ) -> Result<Self, Failure> {
         let adaptor: Handle<dyn Adaptor2dCurve2d> =
-            Handle::new(Geom2dAdaptorCurve::with_curve(curve)?).cast::<dyn Adaptor2dCurve2d>();
+            Handle::new(Geom2dAdaptorCurve::with_curve(curve)?)
+                .into_upcast::<dyn Adaptor2dCurve2d>();
         Self::from_adaptor(&adaptor, tol2d, order, max_segments, max_degree)
     }
 

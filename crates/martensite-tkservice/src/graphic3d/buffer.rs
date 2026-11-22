@@ -9,7 +9,7 @@ use super::Graphic3dBufferRange;
 use crate::json_dump::{base_class, class_begin, field_integer};
 use martensite_tkernel::ncollection::{BaseAllocator, Buffer};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use std::io;
 use std::sync::OnceLock;
 
@@ -160,10 +160,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn Graphic3dBufferSource {
         // interface registration would invent an extra native ancestor and split is_kind.
         <Graphic3dBuffer as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dBufferSource);
 
 /// The body of `Graphic3d_Buffer::DumpJson`; `graphic3d_buffer_dump_json(base, &mut stream, -1)?`.
 pub fn graphic3d_buffer_dump_json(
@@ -181,7 +179,6 @@ pub fn graphic3d_buffer_dump_json(
 
 /// The native `Graphic3d_Buffer`; `Graphic3dBuffer::new(Graphic3dBufferBase::default_allocator())?`.
 pub struct Graphic3dBuffer {
-    transient: StandardTransient,
     base: Graphic3dBufferBase,
 }
 impl Graphic3dBufferSource for Graphic3dBuffer {
@@ -189,14 +186,13 @@ impl Graphic3dBufferSource for Graphic3dBuffer {
         &self.base
     }
 }
-martensite_tkernel::impl_transient!(Graphic3dBuffer, "Graphic3d_Buffer", Buffer, transient,
+martensite_tkernel::impl_transient!(Graphic3dBuffer, "Graphic3d_Buffer", Buffer,
     interfaces: [dyn Graphic3dBufferSource]);
 
 impl Graphic3dBuffer {
     /// An empty buffer over an allocator; `Graphic3dBuffer::new(allocator)?`.
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dBufferBase::new(allocator)?,
         })
     }

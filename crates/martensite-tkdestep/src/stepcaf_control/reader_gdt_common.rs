@@ -15,14 +15,15 @@ use crate::step_shape::{
     StepShapeAdvancedFace, StepShapeDimensionalLocation, StepShapeShapeDefinitionRepresentation,
     StepShapeTopologicalRepresentationItem,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkxcaf::xcaf_doc::{XCAFDocDimTolTool, XCAFDocShapeTool};
 
 /// `find_shape_index_for_dgt`: the index of an entity in the map of imported shapes; for a geometry item,
 /// of its topological item.
 pub(super) fn find_shape_index_for_dgt(
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     session: &SessionGraph,
 ) -> Result<i32, Failure> {
     let process = session.process()?;
@@ -34,7 +35,7 @@ pub(super) fn find_shape_index_for_dgt(
     // if theEnt is a geometry item try to find its topological item
     for sharing in session.sharings(entity)? {
         if sharing
-            .cast::<StepShapeTopologicalRepresentationItem>()
+            .cast::<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>()
             .is_some()
         {
             let index = process.map_index(&sharing);
@@ -48,15 +49,18 @@ pub(super) fn find_shape_index_for_dgt(
 
 /// `collectShapeAspect`: the simple aspects under an aspect.
 pub(super) fn collect_shape_aspect(
-    aspect: &Handle<StepReprShapeAspect>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     session: &SessionGraph,
-    aspects: &mut Vec<Handle<StepReprShapeAspect>>,
+    aspects: &mut Vec<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>,
 ) -> Result<(), Failure> {
     if aspect.is_null() {
         return Ok(());
     }
     // Retrieve Shape_Aspect, connected to Representation_Item from Derived_Shape_Aspect
-    if aspect.cast::<StepReprDerivedShapeAspect>().is_some() {
+    if aspect
+        .cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>()
+        .is_some()
+    {
         let deriving: Handle<StepReprShapeAspectDerivingRelationship> =
             first_of(&session.sharings(&aspect.cast())?);
         if let Some(deriving) = deriving.get() {
@@ -73,11 +77,13 @@ pub(super) fn collect_shape_aspect(
     // Find all children Shape_Aspect
     let mut is_simple = true;
     for sharing in session.sharings(&aspect.cast())? {
-        let relationship = sharing.cast::<StepReprShapeAspectRelationship>();
-        let Some(relationship) = relationship
-            .get()
-            .filter(|_| sharing.cast::<StepShapeDimensionalLocation>().is_null())
-        else {
+        let relationship =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
+        let Some(relationship) = relationship.get().filter(|_| {
+            sharing
+                .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+                .is_null()
+        }) else {
             continue;
         };
         let related = relationship.related_shape_aspect();
@@ -98,7 +104,7 @@ pub(super) fn collect_shape_aspect(
 
 /// `getShapeLabel`: the label of the shape of an item, null when not found.
 pub(super) fn shape_label_of(
-    item: &Handle<StepReprRepresentationItem>,
+    item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     session: &SessionGraph,
     tool: &Handle<XCAFDocShapeTool>,
 ) -> Result<TdfLabel, Failure> {
@@ -145,12 +151,9 @@ pub(super) fn read_datums(
     dim_tol_tool: &XCAFDocDimTolTool,
     session: &SessionGraph,
     tolerance_label: &TdfLabel,
-    tolerance: &Handle<StepDimTolGeometricToleranceWithDatumReference>,
+    tolerance: &StepDimTolGeometricToleranceWithDatumReference,
 ) -> Result<bool, Failure> {
-    let Some(live) = tolerance.get() else {
-        return Ok(false);
-    };
-    let Some(datums) = datums_of_system(live)? else {
+    let Some(datums) = datums_of_system(tolerance)? else {
         return Ok(false);
     };
     let process = session.process()?;
@@ -159,7 +162,8 @@ pub(super) fn read_datums(
             continue;
         };
         for sharing in session.sharings(&datum.cast())? {
-            let relationship = sharing.cast::<StepReprShapeAspectRelationship>();
+            let relationship =
+                sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
             let Some(relationship) = relationship.get() else {
                 continue;
             };
@@ -169,7 +173,7 @@ pub(super) fn read_datums(
             if feature.is_null() {
                 continue;
             }
-            let definition: Handle<StepReprPropertyDefinition> =
+            let definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>> =
                 first_of(&session.sharings(&feature.cast())?);
             let Some(live_definition) = definition.get() else {
                 continue;

@@ -5,7 +5,9 @@ use martensite_tkernel::{
     tcollection::ExtendedString,
 };
 use martensite_tkmath::gp::{self, Ellipse3};
-use martensite_tkservice::graphic3d::{Graphic3dCLight, Graphic3dTypeOfLightSource};
+use martensite_tkservice::graphic3d::{
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dTypeOfLightSource,
+};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 use martensite_tkv3d::{ais::*, prs_dim::*, select_mgr::*};
 
@@ -90,7 +92,8 @@ fn assert_radius_projection<T: PrsDimEllipseRadiusDimension + RuntimeTyped>(radi
 
 #[test]
 fn actual_light_keeps_its_live_interactive_interface_and_counter() {
-    let light = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient));
+    let light = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient))
+        .into_upcast::<dyn Graphic3dCLightSource>();
     let object = AisLightSource::new(&light).unwrap();
     let base = object.cast::<dyn AisInteractiveObject>();
     assert!(

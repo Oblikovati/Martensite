@@ -76,7 +76,7 @@ impl RwStepVisualRwPreDefinedItem {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepVisualPreDefinedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualPreDefinedItem>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 1, ach, "pre_defined_item")? {
             return Ok(());
@@ -90,7 +90,7 @@ impl RwStepVisualRwPreDefinedItem {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepVisualPreDefinedItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualPreDefinedItem>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.name())?;
         Ok(())

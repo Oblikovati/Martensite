@@ -1,6 +1,6 @@
 //! Identity, date and working directory of the running process.
 //!
-//! Every system query goes through a [`ProcessSource`]; [`NativeProcess`] reads the real
+//! Every system query goes through a [`ProcessSource`]; `NativeProcess` reads the real
 //! process, tests inject named fakes. Failures are recorded in the object's error
 //! with fixed context messages.
 use super::{CadPath, OsdError, OsdErrorAccess, WhoAmI};
@@ -13,10 +13,10 @@ mod native;
 mod shared_library;
 mod source;
 pub use environment::{Environment, EnvironmentSource, NativeEnvironment};
-pub use host::{Host, HostSource, NativeHost, SystemNames, machine_type_of, system_id_of};
-pub use mem_info::{MemCounter, MemInfo, MemInfoSource, NativeMemInfo};
-pub use native::NativeProcess;
-pub use shared_library::{SharedLibrary, SymbolAddress};
+pub use host::{Host, HostSource, SystemNames, machine_type_of, system_id_of};
+pub use mem_info::{MemCounter, MemInfo, MemInfoSource};
+use native::NativeProcess;
+pub use shared_library::SharedLibrary;
 pub use source::{LocalTime, ProcessSource};
 
 /// The running process; `Process::new().current_directory()`.

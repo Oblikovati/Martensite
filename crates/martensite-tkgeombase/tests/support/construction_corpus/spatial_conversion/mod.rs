@@ -12,7 +12,7 @@ use super::geom2d_convert::{bezier as bezier2d, bspline as bspline2d};
 use super::{
     fixture_input::GeometryFixtureInput, geometry_record_fixtures as build, print::Output,
 };
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, TransientHandleTarget};
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
     Geom2dHyperbola, Geom2dLine, Geom2dOffsetCurve, Geom2dParabola, Geom2dTrimmedCurve,
@@ -269,7 +269,7 @@ pub fn read_bspline_surface(
 
 pub use super::numeric_protocol::UNSET;
 
-pub fn name<T: ?Sized + RuntimeTyped>(output: &Output, handle: &Handle<T>) {
+pub fn name<T: ?Sized + TransientHandleTarget>(output: &Output, handle: &Handle<T>) {
     match handle.dynamic_type() {
         Some(kind) => output.write(format_args!("{} ", kind.name())),
         None => output.write(format_args!("null ")),

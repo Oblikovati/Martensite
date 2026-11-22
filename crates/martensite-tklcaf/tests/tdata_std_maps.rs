@@ -82,11 +82,11 @@ fn named_data_paste_and_dump() {
     let named = TDataStdNamedData::set(&data.root()).unwrap();
     named.set_integer(&name("i"), 1).unwrap();
     named.set_byte(&name("b"), 7).unwrap();
-    let into: Handle<dyn TdfAttribute> = Handle::new(TDataStdNamedData::new()).cast();
+    let into: Handle<dyn TdfAttribute> = Handle::new(TDataStdNamedData::new()).into_upcast();
     named
         .paste(&into, &Handle::new(TdfRelocationTable::new(false)))
         .unwrap();
-    let pasted = into.cast::<TDataStdNamedData>();
+    let pasted = into.downcast::<TDataStdNamedData>();
     assert_eq!(pasted.get_byte(&name("b")).unwrap(), 7);
     let mut text = Vec::new();
     pasted.dump(&mut text).unwrap();

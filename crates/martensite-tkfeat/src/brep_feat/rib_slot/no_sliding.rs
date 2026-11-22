@@ -167,7 +167,7 @@ impl RibSlot {
         ch: &mut Chain,
     ) -> Result<bool, Failure> {
         let (c1, c2): (Handle<dyn GeomCurve>, Handle<dyn GeomCurve>) =
-            (en.firstln.clone().cast(), en.lastln.clone().cast());
+            (en.firstln.upcast(), en.lastln.upcast());
         let (l2d1, l2d2) = (input.to_2d(&c1)?, input.to_2d(&c2)?);
         let Some([(bnd_edge1, bnd_pnt1), (bnd_edge2, bnd_pnt2)]) =
             input.bound_edges([(&c1, &l2d1), (&c2, &l2d2)])?

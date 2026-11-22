@@ -2,15 +2,15 @@
 use crate::graphic3d::Graphic3dGroup;
 use martensite_tkernel::{
     ncollection::Sequence,
-    standard::{Handle, raise_native_failure},
+    standard::{HandleSlot, raise_native_failure},
 };
 
 pub(super) struct EntryGroupRetirement {
-    groups: Sequence<Handle<dyn Graphic3dGroup>>,
+    groups: Sequence<HandleSlot<dyn Graphic3dGroup>>,
 }
 impl EntryGroupRetirement {
     /// Own the actual moved entry collection; `EntryGroupRetirement::new(groups).finish()`.
-    pub(super) fn new(groups: Sequence<Handle<dyn Graphic3dGroup>>) -> Self {
+    pub(super) fn new(groups: Sequence<HandleSlot<dyn Graphic3dGroup>>) -> Self {
         // Moving this owner preserves its original nodes and allocator; it creates no snapshot.
         Self { groups }
     }

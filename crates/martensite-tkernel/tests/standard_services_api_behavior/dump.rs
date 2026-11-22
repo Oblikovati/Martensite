@@ -60,7 +60,7 @@ fn pointer_text_keeps_the_short_form_quirk() {
             .unwrap()
             .is_empty()
     );
-    let live = Handle::new(StandardTransient::default());
+    let live = Handle::new(StandardTransient);
     let text = dump::get_handle_pointer_info(&live, false).unwrap();
     let address = live.as_ptr() as usize;
     let expected = if cfg!(target_env = "msvc") {

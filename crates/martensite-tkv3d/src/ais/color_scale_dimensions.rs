@@ -54,14 +54,16 @@ fn measure_scale_text(
     text: &ExtendedString,
     height: i32,
 ) -> Result<[i32; 3], Failure> {
-    let viewer = context.current_viewer().observe();
+    // A short viewer owner: the driver measurement runs outside the context lock (#592).
+    let viewer = context.current_viewer().clone();
     let cursor = viewer.active_view_iterator();
     if !cursor.more() {
         return Err(null_object(
             "AisColorScale active views=0; expected an active view for text metrics",
         ));
     }
-    let view = martensite_tkernel::standard::HandleReference::observe(&cursor.value_ref());
+    let node = cursor.value_ref();
+    let view = martensite_tkernel::standard::HandleReference::observe(&node);
     let view = view
         .get()
         .ok_or_else(|| null_object("AisColorScale active view=null; expected a live view"))?;

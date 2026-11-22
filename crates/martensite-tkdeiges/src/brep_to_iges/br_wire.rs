@@ -1,7 +1,8 @@
 //! `BRepToIgesBRWire`: vertices, edges and wires as IGES curves and points.
 use super::{BRepToIgesBREntity, BRepToIgesOriginMap, entity_array};
 use crate::geom_to_iges::{GeomToIgesGeomCurve, GeomToIgesGeomPoint};
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::IgesGeomCompositeCurve;
 use crate::iges_to_brep::wire_fix_on_face;
 use martensite_tkbrep::brep::BRepTool;
@@ -67,7 +68,7 @@ impl BRepToIgesBRWire {
     pub fn transfer_wire_shape(
         &self,
         start: &Shape,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -86,7 +87,10 @@ impl BRepToIgesBRWire {
     ///
     /// # Errors
     /// A failure of the point of the vertex.
-    pub fn transfer_vertex(&self, vertex: &Vertex) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn transfer_vertex(
+        &self,
+        vertex: &Vertex,
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if vertex.is_null() {
             return Ok(Handle::default());
         }
@@ -104,7 +108,7 @@ impl BRepToIgesBRWire {
         &self,
         vertex: &Vertex,
         edge: &Edge,
-    ) -> Result<(Handle<IgesDataIgesEntity>, f64), Failure> {
+    ) -> Result<(Handle<dyn IgesDataEntityKind>, f64), Failure> {
         if vertex.is_null() {
             return Ok((Handle::default(), 0.0));
         }
@@ -123,7 +127,7 @@ impl BRepToIgesBRWire {
         vertex: &Vertex,
         edge: &Edge,
         face: &Face,
-    ) -> Result<(Handle<IgesDataIgesEntity>, f64), Failure> {
+    ) -> Result<(Handle<dyn IgesDataEntityKind>, f64), Failure> {
         if vertex.is_null() {
             return Ok((Handle::default(), 0.0));
         }
@@ -139,7 +143,7 @@ impl BRepToIgesBRWire {
         &self,
         vertex: &Vertex,
         face: &Face,
-    ) -> Result<(Handle<IgesDataIgesEntity>, Point2), Failure> {
+    ) -> Result<(Handle<dyn IgesDataEntityKind>, Point2), Failure> {
         if vertex.is_null() {
             return Ok((Handle::default(), Point2::new(0.0, 0.0)));
         }
@@ -158,7 +162,7 @@ impl BRepToIgesBRWire {
         edge: &Edge,
         origins: &BRepToIgesOriginMap,
         b_rep_mode: bool,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if edge.is_null() {
             return Ok(Handle::default());
         }
@@ -191,9 +195,9 @@ impl BRepToIgesBRWire {
     }
     /// The composite of a list of curves, the curve alone when it is the last and only one.
     fn single_or_composite(
-        curves: &[Handle<IgesDataIgesEntity>],
-        last: &Handle<IgesDataIgesEntity>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+        curves: &[Handle<dyn IgesDataEntityKind>],
+        last: &Handle<dyn IgesDataEntityKind>,
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         match curves.len() {
             0 => Ok(Handle::default()),
             1 => Ok(last.clone()),
@@ -208,7 +212,7 @@ impl BRepToIgesBRWire {
     ///
     /// # Errors
     /// A failure of a curve of the wire or of the binding of the result.
-    pub fn transfer_wire(&self, wire: &Wire) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn transfer_wire(&self, wire: &Wire) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if wire.is_null() {
             return Ok(Handle::default());
         }
@@ -247,9 +251,9 @@ impl BRepToIgesBRWire {
         wire: &Wire,
         face: &Face,
         origins: &BRepToIgesOriginMap,
-        curve_2d: &mut Handle<IgesDataIgesEntity>,
+        curve_2d: &mut Handle<dyn IgesDataEntityKind>,
         length: f64,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if wire.is_null() {
             return Ok(Handle::default());
         }

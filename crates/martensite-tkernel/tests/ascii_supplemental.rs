@@ -1,5 +1,5 @@
 //! Additional exact-value checks beyond the declaration assertions.
-use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
+use crate::tcollection::{AsciiString, ExtendedString};
 #[test]
 fn view_constructor_and_copy_have_different_embedded_nul_behavior() {
     let constructed = AsciiString::from_view(b"a\0b");

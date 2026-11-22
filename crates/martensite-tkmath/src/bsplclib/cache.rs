@@ -4,7 +4,7 @@ use super::cache_params::CacheParams;
 use super::point::{CurveD3, CurvePoint};
 use crate::plib::{eval_polynomial, no_derivative_eval_polynomial, rational_derivative};
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::{Failure, Transient};
 use std::sync::{Mutex, MutexGuard};
 
 /// Cached Taylor coefficients of the span last located (`Cache`).
@@ -12,7 +12,6 @@ use std::sync::{Mutex, MutexGuard};
 /// Rows of the cache hold the point coordinates, then the weight when the curve is
 /// rational; the row length is fixed by the pole type given at construction.
 pub struct Cache {
-    base: StandardTransient,
     state: Mutex<CacheState>,
 }
 
@@ -23,7 +22,7 @@ pub(super) struct CacheState {
     row_length: usize,
     poles_weights: [f64; 128],
 }
-martensite_tkernel::impl_transient!(Cache, "BSplCLib_Cache", StandardTransient, base);
+martensite_tkernel::impl_transient!(Cache, "BSplCLib_Cache", dyn Transient);
 
 impl std::fmt::Debug for Cache {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -388,7 +387,6 @@ impl Cache {
     ) -> Result<Self, Failure> {
         let state = CacheState::new(degree, periodic, flat_knots, poles, weights)?;
         Ok(Self {
-            base: StandardTransient::default(),
             state: Mutex::new(state),
         })
     }

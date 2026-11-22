@@ -100,7 +100,7 @@ pub(super) fn fun5(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     let _ = writeln!(sout, "Nb Entities selected : {}", result.len());
     let sp = IFSelectSelectPointed::new();
     sp.set_list(Some(&result));
-    ws.send_selected(&pilot.arg(1)?, &Handle::new(sp).cast(), false)
+    ws.send_selected(&pilot.arg(1)?, &Handle::new(sp).into_upcast(), false)
 }
 
 /// `fun6` (writeent, writent): writes the entities of given numbers.
@@ -131,7 +131,7 @@ pub(super) fn fun6(pilot: &Handle<IFSelectSessionPilot>) -> Status {
         let _ = writeln!(sout, "{ko} bad arguments, abandon");
         return Ok(RetError);
     }
-    ws.send_selected(&pilot.arg(1)?, &Handle::new(sp).cast(), false)
+    ws.send_selected(&pilot.arg(1)?, &Handle::new(sp).into_upcast(), false)
 }
 
 /// `fun7` (elabel): the label of an entity.
@@ -201,7 +201,7 @@ pub(super) fn fun9(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     let ws = session_of(pilot)?;
     let mut signtype = ws.sign_type();
     if signtype.is_null() {
-        signtype = Handle::new(IFSelectSignType::new(false)).cast();
+        signtype = Handle::new(IFSelectSignType::new(false)).into_upcast();
     }
     let counter = Handle::new(IFSelectSignCounter::with_signature(
         &signtype, false, false,

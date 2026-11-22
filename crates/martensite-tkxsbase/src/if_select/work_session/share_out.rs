@@ -1,6 +1,6 @@
 //! The dispatches and the final modifiers of the share-out, the transformers and the
 //! modifiers run on the model, and the reduction of the model to a selection.
-use super::IFSelectWorkSession;
+use super::IFSelectSession;
 use crate::if_select::{
     IFSelectDispatch, IFSelectGeneralModifier, IFSelectModifier, IFSelectSelectPointed,
     IFSelectSelection, IFSelectShareOut, IFSelectTransformStandard, IFSelectTransformer,
@@ -8,7 +8,7 @@ use crate::if_select::{
 use crate::interface::{InterfaceCheckIterator, InterfaceCopyTool, InterfaceModelEntities};
 use martensite_tkernel::{
     message::Message,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use std::fmt::Write as _;
 
@@ -18,7 +18,7 @@ fn live_share_out(sho: &Handle<IFSelectShareOut>) -> Result<&IFSelectShareOut, F
         .ok_or_else(|| exceptions::null_object("IFSelectWorkSession: no share-out"))
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `AppliedDispatches`: the idents of the dispatches of the share-out.
     pub fn applied_dispatches(&self) -> Result<Vec<i32>, Failure> {
         let sho = self.share_out();
@@ -97,7 +97,7 @@ impl IFSelectWorkSession {
     pub fn set_applied_modifier(
         &self,
         modif: &Handle<dyn IFSelectGeneralModifier>,
-        item: &Handle<StandardTransient>,
+        item: &Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         if self.item_ident(&modif.cast()) == 0 || item.is_null() {
             return Ok(false);
@@ -141,7 +141,7 @@ impl IFSelectWorkSession {
     pub fn uses_applied_modifier(
         &self,
         modif: &Handle<dyn IFSelectGeneralModifier>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         if self.item_ident(&modif.cast()) == 0 {
             return Ok(Handle::default());
         }
@@ -261,7 +261,7 @@ impl IFSelectWorkSession {
         stf.set_copy_option(copy);
         stf.set_selection(sel);
         stf.add_modifier(modif, 0);
-        self.run_transformer(&Handle::new(stf).cast())
+        self.run_transformer(&Handle::new(stf).into_upcast())
     }
     /// `NewTransformStandard(copy, name = "")`: a new standard transformer added under
     /// `name` (null when refused).
@@ -272,7 +272,7 @@ impl IFSelectWorkSession {
     ) -> Result<Handle<dyn IFSelectTransformer>, Failure> {
         let stf = IFSelectTransformStandard::new();
         stf.set_copy_option(copy);
-        let handle: Handle<dyn IFSelectTransformer> = Handle::new(stf).cast();
+        let handle: Handle<dyn IFSelectTransformer> = Handle::new(stf).into_upcast();
         let added = self.add_named_item(name, &handle.cast(), true)?;
         Ok(if added == 0 {
             Handle::default()
@@ -329,7 +329,7 @@ impl IFSelectWorkSession {
 /// The entities of `list` (`keep`) or the other entities of the model, transferred.
 fn transfer_content(
     m: &dyn crate::interface::InterfaceInterfaceModel,
-    list: &[Handle<StandardTransient>],
+    list: &[Handle<dyn Transient>],
     keep: bool,
     tc: &mut InterfaceCopyTool,
 ) -> Result<(), Failure> {

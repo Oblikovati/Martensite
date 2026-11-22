@@ -22,8 +22,8 @@ use martensite_tkmath::gp::{Point3, Xyz};
 /// use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
 /// use martensite_tkgeomalgo::int_curve_surface::ThePolyhedronOfHInter;
 /// use martensite_tkmath::gp::Axis3;
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
-/// let s = Handle::new(GeomAdaptorSurface::with_bounds(&plane, (-1.0, 1.0, -1.0, 1.0)).unwrap()).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
+/// let s = Handle::new(GeomAdaptorSurface::with_bounds(&plane, (-1.0, 1.0, -1.0, 1.0)).unwrap()).into_upcast();
 /// let polyhedron = ThePolyhedronOfHInter::new(&s, 4, 4, -1.0, -1.0, 1.0, 1.0).unwrap();
 /// assert_eq!(polyhedron.nb_triangles(), 32);
 /// ```

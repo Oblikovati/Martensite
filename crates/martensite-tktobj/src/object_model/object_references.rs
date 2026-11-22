@@ -34,7 +34,7 @@ pub(crate) fn object_replace_reference<T: ModelObject + ?Sized>(
     old_object: &Handle<dyn ModelObject>,
     new_object: &Handle<dyn ModelObject>,
 ) -> Result<(), Failure> {
-    let iterator: Handle<dyn LabelIterator> = object.get_references(None)?.cast();
+    let iterator: Handle<dyn LabelIterator> = object.get_references(None)?.into_cast();
     let Some(iterator) = iterator.get() else {
         return Ok(());
     };
@@ -64,7 +64,7 @@ fn reference_attributes<T: ModelObject + ?Sized>(
     )?;
     let mut references = Vec::new();
     while iterator.more() {
-        references.push(iterator.value().cast());
+        references.push(iterator.value().into_downcast());
         iterator.next()?;
     }
     Ok(references)

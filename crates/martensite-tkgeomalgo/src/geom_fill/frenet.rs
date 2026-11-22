@@ -10,7 +10,7 @@ use super::trihedron_law::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, LinearVector};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeombase::geom_lib;
 use martensite_tkmath::geom_abs::{CurveType, Shape};
@@ -34,7 +34,6 @@ pub(crate) struct FrenetSingularities {
 /// `let law = GeomFillFrenet::new(); law.set_curve(&curve)?; law.d0(0.5, &mut frame)?`.
 #[derive(Default)]
 pub struct GeomFillFrenet {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     pub(crate) singular: SharedState<FrenetSingularities>,
 }
@@ -42,7 +41,6 @@ impl_transient!(
     GeomFillFrenet,
     "GeomFill_Frenet",
     dyn GeomFillTrihedronLaw,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw]
 );
 
@@ -272,7 +270,7 @@ impl GeomFillTrihedronLaw for GeomFillFrenet {
         if curve.is_some() {
             copy.set_curve(&curve)?;
         }
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// Loads the curve; conics and lines have no singular point, other curves run
     /// `Init`. Always true.

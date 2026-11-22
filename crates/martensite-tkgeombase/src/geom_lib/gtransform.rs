@@ -74,7 +74,7 @@ fn trimmed(
     if basis.cast::<Geom2dBSplineCurve>().is_some() || basis.cast::<Geom2dBezierCurve>().is_some() {
         let (u1, u2): (f64, f64) = (ctrim.first_parameter(), ctrim.last_parameter());
         let image: Handle<dyn Geom2dCurve> = gtransform(&basis, gtrsf)?;
-        return Ok(Handle::new(Geom2dTrimmedCurve::new(&image, u1, u2, true, true)?).cast());
+        return Ok(Handle::new(Geom2dTrimmedCurve::new(&image, u1, u2, true, true)?).into_upcast());
     }
     if basis.cast::<Geom2dLine>().is_some() {
         return trimmed_line(ctrim, &basis, gtrsf);
@@ -106,7 +106,7 @@ fn trimmed_line(
     let p2: Point2 = transformed_point(ctrim.end_point()?, gtrsf);
     let u1: f64 = elclib::line_parameter_2d(lin.position(), p1);
     let u2: f64 = elclib::line_parameter_2d(lin.position(), p2);
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&l.cast(), u1, u2, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&l.cast(), u1, u2, true, true)?).into_upcast())
 }
 
 fn transformed_point(point: Point2, gtrsf: &GeneralTransform2) -> Point2 {

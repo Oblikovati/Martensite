@@ -2,7 +2,7 @@
 //!
 //! `iges_entity!` declares a class: its fields in one `SharedState`, an embedded parent, a runtime
 //! type, `new` and `deref`, so inherited members resolve through `deref` and
-//! `Handle<IgesGeomLine>` casts to `Handle<IgesDataIgesEntity>`.
+//! `Handle<IgesGeomLine>` upcasts to `Handle<dyn IgesDataEntityKind>`.
 //! `iges_methods!` writes the regular accessors, one line each.
 use martensite_tkernel::ncollection::{HArray1, HArray2, array2_failure};
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, exceptions};
@@ -152,6 +152,9 @@ macro_rules! iges_entity {
     ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, parent $parent:ty, { $($field:ident: $ty:ty),* $(,)? }) => {
         $crate::iges_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, $parent, [], { $($field: $ty),* }, []);
     };
+    ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, parent $parent:ty, kinds [$($kind:ty),+ $(,)?], { $($field:ident: $ty:ty),* $(,)? }) => {
+        $crate::iges_entity!(@shape $(#[$meta])* $class, $state, $recorded, $parent, $parent, [$($kind),+], { $($field: $ty),* }, []);
+    };
     ($(#[$meta:meta])* custom_default $class:ident, $state:ident, $recorded:literal, kind $kind:ty, { $($field:ident: $ty:ty),* $(,)? }) => {
         $crate::iges_entity!(@shape $(#[$meta])* $class, $state, $recorded, $kind, $crate::iges_data::IgesDataIgesEntity, [$kind], { $($field: $ty),* }, []);
     };
@@ -177,7 +180,7 @@ macro_rules! iges_entity {
             #[allow(dead_code, reason = "a class without own fields never reads its empty state")]
             pub(crate) state: martensite_tkernel::standard::SharedState<$state>,
         }
-        martensite_tkernel::impl_transient!($class, $recorded, $descriptor, parent, interfaces: [$($kind),*]);
+        martensite_tkernel::impl_transient!($class, $recorded, $descriptor, interfaces: [dyn $crate::iges_data::IgesDataEntityKind $(, $kind)*]);
         impl std::ops::Deref for $class {
             type Target = $embedded;
             fn deref(&self) -> &Self::Target {

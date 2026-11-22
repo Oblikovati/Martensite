@@ -119,7 +119,7 @@ impl XCAFDocVisMaterial {
                 Handle::new(XCAFPrsTexture::new(source, unit)).cast();
             set.set_value(index as i32, texture)?;
         }
-        target.set_texture_set(Handle::new(set));
+        target.set_texture_set(Handle::new(set).into_upcast());
         target.set_texture_map_on(true);
         Ok(())
     }

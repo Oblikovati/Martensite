@@ -3,7 +3,7 @@ use super::{MatArc, MatBasicElt, MatSide};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient, WeakHandle};
 use martensite_tkg2d::geom2d::errors;
 
 struct NodeState {
@@ -23,16 +23,14 @@ struct NodeState {
 /// assert!(node.on_basic_elt() && !node.infinite());
 /// ```
 pub struct MatNode {
-    parent: StandardTransient,
     state: SharedState<NodeState>,
 }
-impl_transient!(MatNode, "MAT_Node", StandardTransient, parent);
+impl_transient!(MatNode, "MAT_Node", dyn Transient);
 
 impl MatNode {
     /// `MAT_Node(GeomIndex, LinkedArc, Distance)`: index 0; `MatNode::new(1, &arc, 2.0)`.
     pub fn new(geom_index: i32, linked_arc: &Handle<MatArc>, distance: f64) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(NodeState {
                 node_index: 0,
                 geom_index,

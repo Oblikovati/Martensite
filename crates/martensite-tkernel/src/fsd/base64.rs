@@ -30,20 +30,13 @@ const CODES: [u8; 256] = {
 };
 
 /// The Base64 codec.
-///
-/// ```
-/// use martensite_tkernel::fsd::Base64;
-/// assert_eq!(Base64::encode(b"CAD").as_bytes(), b"Q0FE");
-/// let decoded = Base64::decode(b"Q0FE");
-/// assert_eq!(decoded.get().unwrap().as_slice(), b"CAD");
-/// ```
-pub struct Base64;
+struct Base64;
 
 impl Base64 {
     /// With no destination, the encoded
     /// size; a destination shorter than that receives nothing and 0 is returned.
     /// Example: `Base64::encode_into(Some(&mut text), b"ab")`.
-    pub fn encode_into(destination: Option<&mut [u8]>, data: &[u8]) -> usize {
+    fn encode_into(destination: Option<&mut [u8]>, data: &[u8]) -> usize {
         if data.is_empty() {
             return 0;
         }
@@ -59,7 +52,7 @@ impl Base64 {
     }
 
     /// Example: `Base64::encode(b"data")`.
-    pub fn encode(data: &[u8]) -> AsciiString {
+    fn encode(data: &[u8]) -> AsciiString {
         let mut text = vec![0_u8; Self::encode_into(None, data)];
         Self::encode_into(Some(&mut text), data);
         AsciiString::from_raw(&text)
@@ -68,7 +61,7 @@ impl Base64 {
     /// With no destination, the decoded
     /// size; a destination shorter than that receives nothing and 0 is returned.
     /// Example: `Base64::decode_into(Some(&mut bytes), b"YWI=")`.
-    pub fn decode_into(destination: Option<&mut [u8]>, encoded: &[u8]) -> usize {
+    fn decode_into(destination: Option<&mut [u8]>, encoded: &[u8]) -> usize {
         if encoded.is_empty() {
             return 0;
         }
@@ -87,7 +80,7 @@ impl Base64 {
     /// A buffer from the common allocator, allocated even
     /// for an empty result; a failed allocation gives a null handle.
     /// Example: `Base64::decode(b"YWI=")`.
-    pub fn decode(encoded: &[u8]) -> Handle<Buffer> {
+    fn decode(encoded: &[u8]) -> Handle<Buffer> {
         let size = Self::decode_into(None, encoded);
         let Ok(mut buffer) = Buffer::new(Some(BaseAllocator::common()), 0) else {
             return Handle::default();
@@ -183,3 +176,6 @@ fn decode_groups(output: &mut [u8], encoded: &[u8], iterations: usize, pad: usiz
         output[written + 1] = (word >> 8) as u8;
     }
 }
+
+#[path = "../../tests/fsd_api_behavior/base64.rs"]
+mod codec_tests;

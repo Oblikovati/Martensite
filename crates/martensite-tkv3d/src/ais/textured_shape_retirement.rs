@@ -17,7 +17,7 @@ use martensite_tkernel::{
     },
     tcollection::AsciiString,
 };
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::ImagePixMapObject;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use std::thread::{self, ThreadId};
@@ -29,7 +29,7 @@ pub struct AisTexturedRetirementStash {
     // Innermost last; nested pixmap destructors open nested scopes on the same thread.
     active: SharedState<Vec<ActiveTexturedRetirement>>,
 }
-type PixMapRetirement<'a> = IntrusiveRetirementBorrow<'a, ImagePixMap>;
+type PixMapRetirement<'a> = IntrusiveRetirementBorrow<'a, dyn ImagePixMapObject>;
 struct ActiveTexturedRetirement {
     thread: ThreadId,
     // Lifetime-erased: valid only while the pushing scope frame runs (see `lend`).
@@ -84,7 +84,7 @@ impl Drop for PopRetirement<'_> {
 /// scope of this thread; `assign_textured_pix_map_slot(&object, &next)?`.
 pub(super) fn assign_textured_pix_map_slot<S: AisTexturedShapeSource + ?Sized>(
     object: &S,
-    source: &dyn HandleReference<ImagePixMap>,
+    source: &dyn HandleReference<dyn ImagePixMapObject>,
 ) -> Result<(), Failure> {
     let base = object.textured_shape_base();
     let slot = &base.texture_pix_map;
@@ -127,7 +127,7 @@ impl<S: AisTexturedShapeSource + ?Sized> AisTexturedShapeRetirement<'_, S> {
     /// The virtual `SetTexturePixMap` of the owner, its failure returned; `scope.set_texture_pix_map(&next)?`.
     pub fn set_texture_pix_map(
         &self,
-        pixels: &dyn HandleReference<ImagePixMap>,
+        pixels: &dyn HandleReference<dyn ImagePixMapObject>,
     ) -> Result<(), Failure> {
         catch_native_failure(|| {
             self.source.set_texture_pix_map(pixels);

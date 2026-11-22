@@ -53,7 +53,7 @@ impl TopOpeBRepBuildWireEdgeSet {
                 "TopOpeBRepBuildWireEdgeSet",
             ));
         }
-        let line: Handle<Geom2dLine> = pc.cast();
+        let line: Handle<Geom2dLine> = pc.downcast();
         let Some(hl) = line.get() else {
             return Ok((false, false));
         };

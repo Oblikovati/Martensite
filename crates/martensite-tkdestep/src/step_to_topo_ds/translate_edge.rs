@@ -13,7 +13,8 @@ use crate::step_to_geom::StepToGeom;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Edge, Shape, Vertex};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomLine, GeomPoint, GeomSurface};
@@ -27,7 +28,7 @@ use martensite_tkxsbase::transfer::TransferTransientProcess;
 /// The warning or the failure of an edge the maker refused; adjusts the curve when it can.
 pub(super) fn decode_make_edge_error(
     maker: &BRepLibMakeEdge,
-    orig: &Handle<StandardTransient>,
+    orig: &Handle<dyn Transient>,
     curve: &Handle<dyn GeomCurve>,
     v1: &Vertex,
     v2: &Vertex,
@@ -55,11 +56,11 @@ pub(super) fn decode_make_edge_error(
 
 /// The curve of an entity, once for each entity of the transfer.
 pub(super) fn make_curve(
-    entity: &Handle<StepGeomCurve>,
+    entity: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
     process: &TransferTransientProcess,
     factors: &StepDataFactors,
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
-    let start: Handle<StandardTransient> = entity.cast();
+    let start: Handle<dyn Transient> = entity.cast();
     let known: Handle<dyn GeomCurve> = process.find_transient(&start).cast();
     if known.is_some() {
         return Ok(known);
@@ -129,8 +130,8 @@ pub(super) fn shift_displaced_line(
 
 /// What one translation reads or changes while it makes the 3D edge.
 pub(super) struct EdgeInProgress<'a> {
-    pub(super) entity: &'a Handle<StepShapeEdgeCurve>,
-    pub(super) v_end: &'a Handle<StepShapeVertex>,
+    pub(super) entity: &'a Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
+    pub(super) v_end: &'a Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
     pub(super) preci: f64,
     pub(super) v1: Vertex,
     pub(super) v2: Vertex,
@@ -153,7 +154,7 @@ impl StepToTopoDSTranslateEdge {
     }
     /// `StepToTopoDSTranslateEdge(E, T, NMTool, factors)`.
     pub fn with_edge(
-        edge: &Handle<StepShapeEdge>,
+        edge: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -183,7 +184,7 @@ impl StepToTopoDSTranslateEdge {
     /// (ssv; 12.11.2010), or by name in an I-DEAS-like file (ssv; 15.11.2010).
     fn reuse_known_edge(
         &mut self,
-        edge_curve: &Handle<StepShapeEdgeCurve>,
+        edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
         oriented: &Handle<StepShapeOrientedEdge>,
         name: Option<&AsciiString>,
         tool: &StepToTopoDSTool,
@@ -222,8 +223,8 @@ impl StepToTopoDSTranslateEdge {
     }
     /// The vertices in the geometrical sense: the first forward, the last reversed.
     fn translate_vertices(
-        v_start: &Handle<StepShapeVertex>,
-        v_end: &Handle<StepShapeVertex>,
+        v_start: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+        v_end: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -249,7 +250,7 @@ impl StepToTopoDSTranslateEdge {
     /// built FORWARD.
     pub fn init(
         &mut self,
-        edge: &Handle<StepShapeEdge>,
+        edge: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -259,7 +260,7 @@ impl StepToTopoDSTranslateEdge {
             Some(live) => live.edge_element(),
             None => edge.clone(),
         };
-        let edge_curve = working.cast::<StepShapeEdgeCurve>();
+        let edge_curve = working.cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
         let name_handle = edge_curve.get().map(|live| live.name()).unwrap_or_default();
         let name = name_handle
             .get()
@@ -304,7 +305,10 @@ impl StepToTopoDSTranslateEdge {
             builder.make_edge(&mut state.edge)?;
             builder.add(&mut state.edge, &state.v1)?;
             builder.add(&mut state.edge, &state.v2)?;
-        } else if let Some(surface_curve) = curve.cast::<StepGeomSurfaceCurve>().get() {
+        } else if let Some(surface_curve) = curve
+            .cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>()
+            .get()
+        {
             self.make_from_curve_3d_in(&surface_curve.curve3d(), &mut state, tool, factors)?;
         } else {
             self.make_from_curve_3d_in(&curve, &mut state, tool, factors)?;
@@ -337,7 +341,8 @@ impl StepToTopoDSTranslateEdge {
         let Some(representation) = representation.get() else {
             return Ok(Handle::default());
         };
-        let curve: Handle<StepGeomCurve> = representation.items_value(1)?.cast();
+        let curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            representation.items_value(1)?.cast();
         let Ok(made) = StepToGeom::make_curve_2d(&curve, factors) else {
             return Ok(Handle::default());
         };

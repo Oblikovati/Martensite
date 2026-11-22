@@ -22,14 +22,13 @@ macro_rules! generic_empty_attribute {
     ) => {
         $(#[$doc])*
         pub struct $name {
-            transient: martensite_tkernel::standard::StandardTransient,
+
             base: martensite_tklcaf::tdf::TdfAttributeBase,
             // The tools without a cache (state `()`) never read it.
             #[allow(dead_code)]
             pub(super) state: martensite_tkernel::standard::SharedState<$state>,
         }
-        martensite_tkernel::impl_transient!($name, $class_name, dyn martensite_tklcaf::tdata_std::TDataStdGenericEmpty,
-            transient, interfaces: [dyn martensite_tklcaf::tdf::TdfAttribute,
+        martensite_tkernel::impl_transient!($name, $class_name, dyn martensite_tklcaf::tdata_std::TDataStdGenericEmpty, interfaces: [dyn martensite_tklcaf::tdf::TdfAttribute,
             dyn martensite_tklcaf::tdata_std::TDataStdGenericEmpty]);
         impl martensite_tklcaf::tdata_std::TDataStdGenericEmpty for $name {}
 
@@ -37,7 +36,7 @@ macro_rules! generic_empty_attribute {
             fn default() -> Self {
                 super::registration::register_derived_attributes();
                 Self {
-                    transient: martensite_tkernel::standard::StandardTransient::default(),
+
                     base: martensite_tklcaf::tdf::TdfAttributeBase::default(),
                     state: martensite_tkernel::standard::SharedState::default(),
                 }

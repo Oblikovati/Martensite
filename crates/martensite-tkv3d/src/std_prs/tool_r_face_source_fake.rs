@@ -9,7 +9,7 @@ pub(super) struct RFaceLifetimeSourceFake {
     decoy: Face,
     pub hidden_face_calls: SharedState<i32>,
 }
-martensite_tkernel::impl_transient!(RFaceLifetimeSourceFake,"Martensite_RFaceLifetimeSourceFake",BRepAdaptorSurface,core,interfaces:[dyn StdPrsIsolineSurfaceSource,dyn Adaptor3dSurface]);
+martensite_tkernel::impl_transient!(RFaceLifetimeSourceFake,"Martensite_RFaceLifetimeSourceFake",BRepAdaptorSurface,interfaces:[dyn StdPrsIsolineSurfaceSource,dyn Adaptor3dSurface]);
 impl RFaceLifetimeSourceFake {
     pub(super) fn new() -> Self {
         Self {

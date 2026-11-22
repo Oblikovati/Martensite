@@ -69,11 +69,11 @@ fn bound_line(
     delta: f64,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let line: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(origin, direction)).cast();
+        Handle::new(Geom2dLine::from_point(origin, direction)).into_upcast();
     if precision::is_infinite(delta) {
         return Ok(line);
     }
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, 0.0, delta, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, 0.0, delta, true, true)?).into_upcast())
 }
 
 /// The four boundaries of a box: `[0]` U = Ufirst, `[1]` U = Ulast, `[2]` V = Vfirst,

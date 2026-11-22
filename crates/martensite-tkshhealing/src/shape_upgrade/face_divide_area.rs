@@ -1,8 +1,6 @@
 //! Area-based face subdivision.
-use super::{
-    FaceDivideData, FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeSplitSurfaceArea,
-    ShapeUpgradeTool,
-};
+use super::{FaceDivideData, FaceDivider, ShapeUpgradeSplitSurfaceArea};
+use crate::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use martensite_tkbrep::topods::Face;
 use martensite_tkernel::{
     impl_transient, precision,
@@ -21,17 +19,19 @@ struct AreaDivisionSettings {
 
 /// Subdivide faces by maximum area; `ShapeUpgradeFaceDivideArea::new(face)`.
 pub struct ShapeUpgradeFaceDivideArea {
-    parent: ShapeUpgradeFaceDivide,
+    state: FaceDivideData,
     settings: SharedState<AreaDivisionSettings>,
 }
-impl_transient!(ShapeUpgradeFaceDivideArea, "ShapeUpgrade_FaceDivideArea", ShapeUpgradeFaceDivide, parent, interfaces:[dyn FaceDivider]);
+impl_transient!(ShapeUpgradeFaceDivideArea, "ShapeUpgrade_FaceDivideArea", dyn FaceDivider, interfaces:[dyn FaceDivider, dyn UpgradeTool]);
 impl Default for ShapeUpgradeFaceDivideArea {
     fn default() -> Self {
-        let parent = ShapeUpgradeFaceDivide::empty();
-        parent.set_precision(1e-5);
-        parent.set_split_surface_tool(&Handle::new(ShapeUpgradeSplitSurfaceArea::new()).cast());
+        let state = FaceDivideData::default();
+        state.set_precision(1e-5);
+        state.set_split_surface_tool(
+            &Handle::new(ShapeUpgradeSplitSurfaceArea::new()).into_upcast(),
+        );
         Self {
-            parent,
+            state,
             settings: SharedState::new(AreaDivisionSettings {
                 max_area: precision::infinite(),
                 parts: 0,
@@ -43,17 +43,14 @@ impl Default for ShapeUpgradeFaceDivideArea {
     }
 }
 impl std::ops::Deref for ShapeUpgradeFaceDivideArea {
-    type Target = ShapeUpgradeFaceDivide;
+    type Target = FaceDivideData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.state
     }
 }
 impl FaceDivider for ShapeUpgradeFaceDivideArea {
     fn face_divide_data(&self) -> &FaceDivideData {
-        self.parent.face_divide_data()
-    }
-    fn face_divide_base(&self) -> &ShapeUpgradeTool {
-        self.parent.face_divide_base()
+        &self.state
     }
     fn perform(&self, _area: f64) -> Result<bool, Failure> {
         self.perform_area_division()
@@ -116,3 +113,9 @@ impl ShapeUpgradeFaceDivideArea {
 
 #[cfg(test)]
 mod uv_setter_tests;
+
+impl UpgradeTool for ShapeUpgradeFaceDivideArea {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state.tool
+    }
+}

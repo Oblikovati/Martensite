@@ -63,30 +63,32 @@ fn surface_case(name: &str) -> Result<SurfaceCase, Failure> {
 }
 
 fn offset_plane() -> Result<Handle<dyn GeomSurface>, Failure> {
-    let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
-    Ok(Handle::new(GeomOffsetSurface::new(&plane, 0.5, false)?).cast())
+    let plane: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
+    Ok(Handle::new(GeomOffsetSurface::new(&plane, 0.5, false)?).into_upcast())
 }
 
 fn offset_sphere() -> Result<Handle<dyn GeomSurface>, Failure> {
     let sphere: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(Axis3::default(), 2.0)?).cast();
-    Ok(Handle::new(GeomOffsetSurface::new(&sphere, 0.5, false)?).cast())
+        Handle::new(GeomSphericalSurface::new(Axis3::default(), 2.0)?).into_upcast();
+    Ok(Handle::new(GeomOffsetSurface::new(&sphere, 0.5, false)?).into_upcast())
 }
 
 fn revolution_surface() -> Result<Handle<dyn GeomSurface>, Failure> {
     let center = Point3::new(2.0, 0.0, 0.0);
     let frame = Axis2::with_x_direction(center, Direction3::Y, Direction3::X)?;
-    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 0.5)?).cast();
+    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 0.5)?).into_upcast();
     Ok(Handle::new(GeomSurfaceOfRevolution::new(
         &circle,
         Axis1::new(Point3::default(), Direction3::Z),
     )?)
-    .cast())
+    .into_upcast())
 }
 
 fn extruded_surface() -> Result<Handle<dyn GeomSurface>, Failure> {
-    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(Axis2::default(), 1.0)?).cast();
-    Ok(Handle::new(GeomSurfaceOfLinearExtrusion::new(&circle, Direction3::Z)?).cast())
+    let circle: Handle<dyn GeomCurve> =
+        Handle::new(GeomCircle::new(Axis2::default(), 1.0)?).into_upcast();
+    Ok(Handle::new(GeomSurfaceOfLinearExtrusion::new(&circle, Direction3::Z)?).into_upcast())
 }
 
 fn make_face(surface: &Handle<dyn GeomSurface>, bounds: UvBounds) -> Result<Face, Failure> {

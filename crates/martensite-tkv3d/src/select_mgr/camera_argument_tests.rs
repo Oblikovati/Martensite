@@ -61,13 +61,13 @@ fn camera_argument_row(mode: i32, frame: i32, scene: &CameraArgumentScene) -> St
 fn camera_argument_state(scene: &CameraArgumentScene) -> [i32; 5] {
     // Native Camera returns a field reference; copied convenience getters would add temporary owners.
     let active = scene.manager.active_volume().observe();
-    let camera = active.intersector_base().camera.read().observe();
+    let camera = active.intersector_base().camera.read();
     [
         i32::from(camera.object_address() == scene.second.read().object_address()),
         i32::from(camera.is_null()),
-        scene.first.ref_count(),
-        scene.second.read().ref_count(),
-        scene.volume.ref_count(),
+        scene.first.ref_count().try_into().unwrap(),
+        scene.second.read().ref_count().try_into().unwrap(),
+        scene.volume.ref_count().try_into().unwrap(),
     ]
 }
 pub(super) fn apply_camera_argument(scene: &CameraArgumentScene) -> i32 {

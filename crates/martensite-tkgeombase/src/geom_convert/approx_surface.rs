@@ -48,7 +48,8 @@ impl ApproxSurface {
         precis_code: i32,
     ) -> Result<Self, Failure> {
         let adaptor: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(surf)?).cast::<dyn Adaptor3dSurface>();
+            Handle::new(GeomAdaptorSurface::with_surface(surf)?)
+                .into_upcast::<dyn Adaptor3dSurface>();
         Self::from_adaptor(
             &adaptor,
             tol3d,

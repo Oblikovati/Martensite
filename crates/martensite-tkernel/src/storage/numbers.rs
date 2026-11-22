@@ -1,5 +1,5 @@
 //! The schema's access to the type and reference numbers of persistent objects.
-use crate::standard::StandardPersistent;
+use crate::standard::Persistent;
 use std::sync::atomic::Ordering;
 
 /// Plain reads and writes of the two storage counters of a persistent object.
@@ -14,7 +14,7 @@ pub(crate) trait PersistentNumbers {
     fn set_reference_number(&self, value: i32);
 }
 
-impl PersistentNumbers for StandardPersistent {
+impl<T: Persistent + ?Sized> PersistentNumbers for T {
     fn type_number(&self) -> i32 {
         self.type_num().load(Ordering::Relaxed)
     }

@@ -122,10 +122,10 @@ impl GeomFillPipe {
         let copy: Handle<dyn GeomCurve> = live(path, "GeomFill_Pipe::Init", "Path")?.copy()?.cast();
         self.my_adp_path =
             Handle::new(martensite_tkg3d::geom_adaptor::GeomAdaptorCurve::with_curve(&copy)?)
-                .cast();
+                .into_upcast();
         let t_law: Handle<dyn GeomFillTrihedronLaw> =
-            Handle::new(GeomFillCorrectedFrenet::new()).cast();
-        self.my_loc = Handle::new(GeomFillCurveAndTrihedron::new(&t_law)).cast();
+            Handle::new(GeomFillCorrectedFrenet::new()).into_upcast();
+        self.my_loc = Handle::new(GeomFillCurveAndTrihedron::new(&t_law)).into_upcast();
         live(&self.my_loc, "GeomFill_Pipe::Init", "myLoc")?.set_curve(&self.my_adp_path)
     }
 
@@ -175,7 +175,7 @@ impl GeomFillPipe {
         )?;
         let (deb, fin) = (c.first_parameter(), c.last_parameter());
         let law = GeomFillNSections::with_domain(seq_c, seq_p, (deb, fin), (first, last))?;
-        self.my_sec = Handle::new(law).cast();
+        self.my_sec = Handle::new(law).into_upcast();
         Ok(())
     }
 

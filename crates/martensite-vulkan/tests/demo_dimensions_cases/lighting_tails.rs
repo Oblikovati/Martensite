@@ -2,7 +2,8 @@
 use super::{Outcome, ViewerSession, dimensions_sample};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dTypeOfLightSource as LightKind, Graphic3dTypeOfShadingModel,
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dTypeOfLightSource as LightKind,
+    Graphic3dTypeOfShadingModel,
 };
 
 /// Run the sample then enable fixed lighting; `dimensions_fixed_function()?`.
@@ -38,17 +39,19 @@ fn configure_pbr_tail(session: &mut ViewerSession, macos_core_request: bool) -> 
     session.add_light(&directional_light()?, None)?;
     Ok(())
 }
-fn ambient_light() -> Result<Handle<Graphic3dCLight>, martensite_tkernel::standard::Failure> {
+fn ambient_light()
+-> Result<Handle<dyn Graphic3dCLightSource>, martensite_tkernel::standard::Failure> {
     let light = Handle::new(Graphic3dCLight::new(LightKind::Ambient));
     light.set_intensity(1.)?;
-    Ok(light)
+    Ok(light.into_upcast())
 }
-fn directional_light() -> Result<Handle<Graphic3dCLight>, martensite_tkernel::standard::Failure> {
+fn directional_light()
+-> Result<Handle<dyn Graphic3dCLightSource>, martensite_tkernel::standard::Failure> {
     let light = Handle::new(Graphic3dCLight::new(LightKind::Directional));
     light.set_direction_coords(0., 0., -1.)?;
     light.set_headlight(true)?;
     light.set_intensity(1.)?;
-    Ok(light)
+    Ok(light.into_upcast())
 }
 
 #[cfg(test)]

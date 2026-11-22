@@ -17,7 +17,7 @@ impl RwStepBasicRwProductDefinition {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepBasicProductDefinition>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 4, ach, "product_definition")? {
             return Ok(());
@@ -31,7 +31,7 @@ impl RwStepBasicRwProductDefinition {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepBasicProductDefinition>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     ) -> Result<(), Failure> {
         rw_block_0212!(ent, sw);
         sw.send_entity(&ent.formation())?;
@@ -41,7 +41,7 @@ impl RwStepBasicRwProductDefinition {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepBasicProductDefinition>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.get_one_item(&ent.formation().cast());
@@ -61,7 +61,7 @@ impl RwStepBasicRwProductDefinitionContext {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepBasicProductDefinitionContext>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 3, ach, "product_definition_context")? {
             return Ok(());
@@ -76,7 +76,7 @@ impl RwStepBasicRwProductDefinitionContext {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepBasicProductDefinitionContext>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.name())?;
         sw.send_entity(&ent.frame_of_reference())?;
@@ -86,7 +86,7 @@ impl RwStepBasicRwProductDefinitionContext {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepBasicProductDefinitionContext>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.get_one_item(&ent.frame_of_reference().cast());
@@ -112,7 +112,8 @@ impl RwStepBasicRwProductDefinitionEffectivity {
         }
         let mut a_id: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "id", ach, &mut a_id)?;
-        let mut a_usage: Handle<StepBasicProductDefinitionRelationship> = Default::default();
+        let mut a_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>> =
+            Default::default();
         data.read_entity(
             num,
             2,
@@ -214,7 +215,7 @@ impl RwStepBasicRwProductDefinitionFormationRelationship {
         rw_block_0110!(a_description, a_id, a_name, ach, data, num);
         data.read_string(num, 3, "description", ach, &mut a_description)?;
         let mut a_relating_product_definition_formation: Handle<
-            StepBasicProductDefinitionFormation,
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
         > = Default::default();
         data.read_entity(
             num,
@@ -225,7 +226,7 @@ impl RwStepBasicRwProductDefinitionFormationRelationship {
             &mut a_relating_product_definition_formation,
         )?;
         let mut a_related_product_definition_formation: Handle<
-            StepBasicProductDefinitionFormation,
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
         > = Default::default();
         data.read_entity(
             num,

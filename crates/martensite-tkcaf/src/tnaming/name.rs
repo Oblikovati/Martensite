@@ -129,11 +129,11 @@ impl TNamingName {
         into.args.clear();
         let mut relocated: Handle<TNamingNamedShape> = Handle::default();
         for argument in &self.args {
-            relocation_table.has_attribute_relocation_as(&argument.cast(), &mut relocated);
+            relocation_table.has_attribute_relocation_as(&argument.upcast(), &mut relocated);
             into.args.push(relocated.clone());
         }
         if self.stop.is_some() {
-            relocation_table.has_attribute_relocation_as(&self.stop.cast(), &mut relocated);
+            relocation_table.has_attribute_relocation_as(&self.stop.upcast(), &mut relocated);
             into.stop = relocated;
         }
         if !self.context_label.is_null() {

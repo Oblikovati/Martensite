@@ -7,7 +7,7 @@ use super::{
     Select3DSensitiveSetBase, Select3DTypeOfSensitivity,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{GeneralTransform3, Point3};
 use martensite_tkmath::poly::{Triangle, Triangulation};
 use martensite_tkmath::toploc::Location;
@@ -23,7 +23,6 @@ pub(super) struct TriangulationState {
 ///
 /// Example: `let sens = Select3DSensitiveTriangulation::new(&owner, &triangulation, &Location::default(), true)?;`.
 pub struct Select3DSensitiveTriangulation {
-    pub(super) transient: StandardTransient,
     pub(super) entity: Select3DSensitiveEntityBase,
     pub(super) set: Select3DSensitiveSetBase,
     pub(super) triangul: Handle<Triangulation>,
@@ -33,7 +32,7 @@ pub struct Select3DSensitiveTriangulation {
     pub(super) inv_init_location: GeneralTransform3,
     pub(super) state: SharedState<TriangulationState>,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveTriangulation, "Select3DSensitiveTriangulation", dyn Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveTriangulation, "Select3DSensitiveTriangulation", dyn Select3DSensitiveSet,
     interfaces: [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet]);
 
 impl Select3DSensitiveTriangulation {

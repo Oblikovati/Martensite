@@ -39,7 +39,7 @@ fn line(origin: [f64; 2], direction: [f64; 2]) -> Handle<dyn Geom2dCurve> {
         Point2::new(origin[0], origin[1]),
         Direction2::new(direction[0], direction[1]).unwrap(),
     )))
-    .cast()
+    .into_upcast()
 }
 fn face_fixture() -> (Face, Handle<GeomBSplineCurve>, Edge) {
     let basis = basis();
@@ -62,9 +62,9 @@ fn face_fixture() -> (Face, Handle<GeomBSplineCurve>, Edge) {
 }
 pub(super) fn face_on_basis(basis: &Handle<GeomBSplineCurve>) -> Face {
     let surface = Handle::new(
-        GeomSurfaceOfLinearExtrusion::new(&basis.cast::<dyn GeomCurve>(), Direction3::Z).unwrap(),
+        GeomSurfaceOfLinearExtrusion::new(&basis.upcast::<dyn GeomCurve>(), Direction3::Z).unwrap(),
     )
-    .cast::<dyn GeomSurface>();
+    .into_upcast::<dyn GeomSurface>();
     let mut face = Face::default();
     BRepBuilder::default()
         .make_face_on_surface(&mut face, &surface, 0.25)
@@ -77,7 +77,7 @@ pub(super) fn make_seam(face: &Face) -> Edge {
         Point3::new(1., 0., 0.),
         Direction3::new(0., 0., -1.).unwrap(),
     )))
-    .cast::<dyn GeomCurve>();
+    .into_upcast::<dyn GeomCurve>();
     let mut edge = Edge::default();
     BRepBuilder::default()
         .make_edge_with_curve(&mut edge, &curve, 0.25)
@@ -98,7 +98,7 @@ pub(super) fn make_cap(face: &Face, basis: &Handle<GeomBSplineCurve>, v: f64) ->
     transform.set_translation(Vector3::new(0., 0., v));
     let mut edge = Edge::default();
     BRepBuilder::default()
-        .make_edge_with_located_curve(&mut edge, &basis.cast(), &Location::new(transform), 0.25)
+        .make_edge_with_located_curve(&mut edge, &basis.upcast(), &Location::new(transform), 0.25)
         .unwrap();
     BRepBuilder::default()
         .update_edge_pcurve_on_face(&edge, &line([0., v], [1., 0.]), face, 0.25)

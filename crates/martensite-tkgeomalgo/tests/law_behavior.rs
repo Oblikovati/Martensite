@@ -92,6 +92,25 @@ fn bsp_func_without_curve_raises_null_object() {
 }
 
 #[test]
+fn spline_law_view_shares_the_original_owner_and_curve() {
+    let s_law: Handle<dyn LawFunction> = Handle::new(LawS::new()).into_upcast();
+    let interpol: Handle<dyn LawFunction> = Handle::new(LawInterpol::new()).into_upcast();
+    let curve = Handle::new(cubic());
+    for function in [s_law, interpol] {
+        let owners = function.ref_count();
+        let view = function.view::<dyn BSplineLaw>();
+        assert_eq!(function.ref_count(), owners);
+        assert_eq!(view.object_address(), function.object_address());
+        assert!(function.is_kind(LawBSpFunc::static_type()));
+        let spline = view.get().unwrap();
+        spline.set_curve(&curve).unwrap();
+        assert_eq!(spline.curve().object_address(), curve.object_address());
+        assert_eq!(function.bounds().unwrap(), (0., 1.));
+        assert_eq!(function.value(0.25).unwrap(), curve.value(0.25).unwrap());
+    }
+}
+
+#[test]
 fn composite_lends_its_current_law() {
     let composite = LawComposite::new();
     for (a, b) in [(0.0, 1.0), (1.0, 2.0)] {

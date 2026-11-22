@@ -7,7 +7,7 @@ use super::{V3dImageDumpOptions, V3dImageDumpOptionsSource, V3dStereoDumpOptions
 use martensite_tkernel::message::{Gravity, Message};
 use martensite_tkernel::ncollection::Vec2;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::aspect::AspectWindowMembers as _;
 use martensite_tkservice::graphic3d::{
@@ -54,7 +54,7 @@ fn copy_tile(target: &ImagePixMap, tile: &ImagePixMap, bottom: usize, left: usiz
 }
 
 /// A dump buffer, its viewport, whether the dump is tiled and the previous buffer viewport.
-type DumpBuffer = (Handle<StandardTransient>, Vec2<i32>, bool, Vec2<i32>);
+type DumpBuffer = (Handle<dyn Transient>, Vec2<i32>, bool, Vec2<i32>);
 
 impl V3dView {
     /// `Dump`: dumps the window size into an image file; `view.dump("view.ppm", &Graphic3dBufferType::Rgb)?`.
@@ -169,7 +169,7 @@ impl V3dView {
     fn choose_dump_buffer<'anchor, O>(
         &self,
         cview: &Handle<dyn Graphic3dCView>,
-        previous: &Handle<StandardTransient>,
+        previous: &Handle<dyn Transient>,
         target: Vec2<i32>,
         params: &O,
     ) -> Result<Option<DumpBuffer>, Failure>
@@ -248,7 +248,7 @@ impl V3dView {
         &self,
         image: &ImagePixMap,
         params: &O,
-        fbo: &Handle<StandardTransient>,
+        fbo: &Handle<dyn Transient>,
         target: Vec2<i32>,
     ) -> Result<bool, Failure>
     where
@@ -286,7 +286,7 @@ impl V3dView {
         &self,
         image: &ImagePixMap,
         params: &O,
-        fbo: &Handle<StandardTransient>,
+        fbo: &Handle<dyn Transient>,
         viewport: Vec2<i32>,
         target: Vec2<i32>,
     ) -> Result<bool, Failure>

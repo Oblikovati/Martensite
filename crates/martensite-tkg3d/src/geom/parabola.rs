@@ -8,7 +8,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Axis1, Axis2, Parabola3, Point3, Transform3, Vector3};
@@ -22,14 +22,12 @@ struct ParabolaState {
 
 /// A parabola; `Handle::new(GeomParabola::new(frame, 2.0)?)`.
 pub struct GeomParabola {
-    parent: StandardTransient,
     state: SharedState<ParabolaState>,
 }
 impl_transient!(
     GeomParabola,
     "Geom_Parabola",
     dyn GeomConic,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn GeomConic]
 );
 impl Clone for GeomParabola {
@@ -50,7 +48,6 @@ fn checked_focal(member: &str, focal: f64) -> Result<f64, Failure> {
 impl GeomParabola {
     fn stored(state: ParabolaState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -120,7 +117,7 @@ impl GeomGeometry for GeomParabola {
         state.pos.transform(transform)
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state: ParabolaState = *self.state.read();

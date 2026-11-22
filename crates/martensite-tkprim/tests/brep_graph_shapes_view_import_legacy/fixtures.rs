@@ -11,13 +11,13 @@ fn import_box_graph() -> BRepGraph {
 fn import_line(origin: Point3, direction: Direction3) -> Handle<dyn GeomCurve> {
     let axis = Axis1::new(origin, direction);
     let line = GeomLine::new(axis);
-    Handle::new(line).into_cast()
+    Handle::new(line).into_upcast()
 }
 
 fn import_plane() -> Handle<dyn GeomSurface> {
     let plane = Plane3::default();
     let surface = GeomPlane::from_pln(plane);
-    Handle::new(surface).into_cast()
+    Handle::new(surface).into_upcast()
 }
 
 fn import_rectangle_edges(graph: &mut BRepGraph) -> ([VertexId; 4], [EdgeId; 4]) {

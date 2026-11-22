@@ -193,7 +193,7 @@ impl V3dView {
         &self,
         plane: &dyn martensite_tkernel::standard::HandleReference<dyn Graphic3dClipPlaneSource>,
     ) {
-        let source = self.this.read().observe();
+        let source = self.this();
         if let Some(source) = source.get() {
             source.add_clip_plane(plane);
             return;
@@ -205,7 +205,7 @@ impl V3dView {
         &self,
         plane: &dyn martensite_tkernel::standard::HandleReference<dyn Graphic3dClipPlaneSource>,
     ) {
-        let source = self.this.read().observe();
+        let source = self.this();
         if let Some(source) = source.get() {
             source.remove_clip_plane(plane);
             return;
@@ -232,8 +232,8 @@ impl V3dView {
     pub fn clip_planes(&self) -> Handle<Graphic3dSequenceOfHClipPlane> {
         self.clip_planes_ref()
             .observe()
-            .observe_as::<Graphic3dSequenceOfHClipPlane>()
-            .clone()
+            .into_handle()
+            .into_downcast()
     }
     /// `PlaneLimit`: the driver limit; `view.plane_limit()`.
     pub fn plane_limit(&self) -> i32 {

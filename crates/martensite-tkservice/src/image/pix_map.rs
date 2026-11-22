@@ -29,20 +29,18 @@ impl Default for ImageFormat {
 
 /// A pixel image shared by handles; `ImagePixMap::default().init_trash(ImageFormat::Rgba, 4, 4, 0)`.
 pub struct ImagePixMap {
-    transient: StandardTransient,
     state: SharedState<ImagePixMapState>,
 }
 impl Default for ImagePixMap {
     /// An empty gray image, as `Image_PixMap()`.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(ImagePixMapState::default()),
         }
     }
 }
-martensite_tkernel::impl_transient!(ImagePixMap, "Image_PixMap", StandardTransient, transient,
-    interfaces:[dyn super::ImagePixMapSource]);
+martensite_tkernel::impl_transient!(ImagePixMap, "Image_PixMap", StandardTransient,
+    interfaces:[dyn super::ImagePixMapSource, dyn super::ImagePixMapObject]);
 
 impl ImagePixMap {
     /// True on a big-endian host; `ImagePixMap::is_big_endian_host()`.

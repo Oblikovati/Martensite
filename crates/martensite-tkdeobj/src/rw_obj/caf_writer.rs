@@ -53,24 +53,17 @@ struct FaceSummary {
 /// # }
 /// ```
 pub struct RwObjCafWriter {
-    transient: StandardTransient,
     file: AsciiString,
     cs_trsf: RwMeshCoordinateSystemConverter,
     default_style: XCAFPrsStyle,
 }
 
-impl_transient!(
-    RwObjCafWriter,
-    "RwObjCafWriter",
-    StandardTransient,
-    transient
-);
+impl_transient!(RwObjCafWriter, "RwObjCafWriter", StandardTransient);
 
 impl RwObjCafWriter {
     /// A writer of the named file; `RwObjCafWriter::new(&file)`.
     pub fn new(file: &AsciiString) -> Self {
         Self {
-            transient: StandardTransient::default(),
             file: file.clone(),
             cs_trsf: RwMeshCoordinateSystemConverter::new(),
             default_style: XCAFPrsStyle::default(),

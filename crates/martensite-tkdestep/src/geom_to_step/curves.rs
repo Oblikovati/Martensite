@@ -268,7 +268,7 @@ geom_to_step_class!(
     /// `GeomToStepMakeConic`: the dispatch over the conics.
     GeomToStepMakeConic,
     "GeomToStepMakeConic",
-    StepGeomConic
+    dyn crate::StepEntityBase<StepGeomConic>
 );
 
 impl GeomToStepMakeConic {
@@ -282,7 +282,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeCircle::from_geom(&circle, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let ellipse = conic.cast::<GeomEllipse>();
@@ -290,7 +290,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeEllipse::from_geom(&ellipse, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let hyperbola = conic.cast::<GeomHyperbola>();
@@ -298,7 +298,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeHyperbola::from_geom(&hyperbola, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let parabola = conic.cast::<GeomParabola>();
@@ -306,7 +306,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeParabola::from_geom(&parabola, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         Ok(Self::not_done())
@@ -321,7 +321,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeCircle::from_geom2d(&circle, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let ellipse = conic.cast::<Geom2dEllipse>();
@@ -329,7 +329,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeEllipse::from_geom2d(&ellipse, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let hyperbola = conic.cast::<Geom2dHyperbola>();
@@ -337,7 +337,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeHyperbola::from_geom2d(&hyperbola, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let parabola = conic.cast::<Geom2dParabola>();
@@ -345,7 +345,7 @@ impl GeomToStepMakeConic {
             return Ok(Self::done_with(
                 GeomToStepMakeParabola::from_geom2d(&parabola, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         Ok(Self::not_done())
@@ -356,7 +356,7 @@ geom_to_step_class!(
     /// `GeomToStepMakeCurve`: the dispatch over the curves.
     GeomToStepMakeCurve,
     "GeomToStepMakeCurve",
-    StepGeomCurve
+    dyn crate::StepEntityBase<StepGeomCurve>
 );
 
 impl GeomToStepMakeCurve {

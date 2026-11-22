@@ -74,7 +74,7 @@ impl Cone<'_> {
             self.support.semi_angle,
             l0 * s + d * c,
         )?)
-        .into_cast();
+        .into_upcast();
         let mut face = Face::default();
         BRepBuilder::default().make_face_on_surface(
             &mut face,
@@ -120,7 +120,7 @@ fn check_cap_poles(
 ) -> Result<(), Failure> {
     for (edge, cap) in edges.iter().zip(caps) {
         let capture = BRepTool::curve_on_face(edge, cap)?;
-        let curve: Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve> = capture.pcurve.cast();
+        let curve: Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve> = capture.pcurve.downcast();
         let Some(curve) = curve.get() else {
             return Err(Failure::new(
                 "cone cap pcurve lost polynomial Bezier carrier",

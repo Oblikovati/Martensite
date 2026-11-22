@@ -15,7 +15,7 @@ struct ColoredParentDropVertexFake {
     vertex: BRepTVertex,
     rows: Arc<Mutex<String>>,
 }
-martensite_tkernel::impl_transient!(ColoredParentDropVertexFake,"MartensiteColoredParentDropVertex",BRepTVertex,vertex,
+martensite_tkernel::impl_transient!(ColoredParentDropVertexFake,"MartensiteColoredParentDropVertex",BRepTVertex,
     interfaces:[dyn TShape]);
 impl TShape for ColoredParentDropVertexFake {
     fn tshape_base(&self) -> &TShapeBase {

@@ -55,15 +55,9 @@ struct ViewFields {
 /// assert_eq!(view.nb_gdt_points(), 2);
 /// ```
 pub struct XCAFViewObject {
-    transient: StandardTransient,
     fields: SharedState<ViewFields>,
 }
-martensite_tkernel::impl_transient!(
-    XCAFViewObject,
-    "XCAFViewObject",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(XCAFViewObject, "XCAFViewObject", StandardTransient);
 
 impl Default for XCAFViewObject {
     fn default() -> Self {
@@ -82,7 +76,6 @@ impl XCAFViewObject {
     }
     fn with_fields(fields: ViewFields) -> Self {
         Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

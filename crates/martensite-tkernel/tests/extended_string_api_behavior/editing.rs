@@ -1,6 +1,6 @@
 //! Append, insert, replace, remove, split, copy and ownership edits.
 use super::{class, string, units};
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn append_forms_convert_their_input() {

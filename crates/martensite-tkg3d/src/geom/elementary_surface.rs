@@ -50,7 +50,7 @@ pub trait GeomElementarySurface: GeomSurface {
 impl_transient_interface!(
     dyn GeomElementarySurface,
     "Geom_ElementarySurface",
-    dyn GeomSurface
+    dyn GeomSurface, upcasts: [dyn GeomSurface]
 );
 
 /// `GeomElementarySurface::UReverse`: reverse the Y direction of the frame;

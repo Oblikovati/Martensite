@@ -153,7 +153,7 @@ impl<T> DynamicArray<T> {
         self.emplace_direct(index, construct)
     }
     /// Constructs gaps before the requested value; `array.emplace_value(5, || 42)?`.
-    pub fn emplace_value<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn emplace_value<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         construct: impl FnOnce() -> T,

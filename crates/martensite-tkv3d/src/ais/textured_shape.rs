@@ -6,7 +6,7 @@ use martensite_tkernel::{
     standard::{Handle, IntrusiveReferenceSlot, SharedState},
     tcollection::AsciiString,
 };
-use martensite_tkservice::{graphic3d::*, image::ImagePixMap};
+use martensite_tkservice::{graphic3d::*, image::ImagePixMapObject};
 use std::sync::Arc;
 
 /// Native textured presentation/source fields; `object.textured_shape_base().fields.read().texture`.
@@ -56,7 +56,7 @@ pub struct AisTexturedShapeBase {
     /// Native texture source and mapping fields.
     pub fields: SharedState<AisTexturedShapeFields>,
     /// `myTexturePixMap`: separate storage preserves const handle-reference aliases across assignments.
-    pub texture_pix_map: IntrusiveReferenceSlot<ImagePixMap>,
+    pub texture_pix_map: IntrusiveReferenceSlot<dyn ImagePixMapObject>,
     /// Native diagnostics are injected so tests can retain exact message ordering.
     pub messenger: Arc<Messenger>,
     /// Native texture construction and filesystem queries are an owned injectable boundary.

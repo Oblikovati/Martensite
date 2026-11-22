@@ -1,31 +1,34 @@
 //! Named interactive object records callbacks and reads back context state during them.
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::{
     Graphic3dCamera, Graphic3dStructureMembers, Graphic3dStructureSource,
 };
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*, select3d::Select3DSensitivePoint};
-use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::{
+    Arc, Weak,
+    atomic::{AtomicI32, Ordering},
+};
 pub struct ContextObject {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     pub events: SharedState<Vec<i32>>,
     pub fail_mode: AtomicI32,
     pub accepted_mode: AtomicI32,
     pub expected_kind_references: AtomicI32,
+    owner: Weak<Self>,
 }
-martensite_tkernel::impl_transient!(ContextObject,"ContextObject",dyn AisInteractiveObject,transient,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(ContextObject,"ContextObject",dyn AisInteractiveObject,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl ContextObject {
     pub fn new() -> Handle<Self> {
-        let object = Handle::new(Self {
-            transient: StandardTransient::default(),
+        let object = Handle::from_arc(Arc::new_cyclic(|owner| Self {
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             events: SharedState::default(),
             fail_mode: AtomicI32::new(-999),
             accepted_mode: AtomicI32::new(-999),
             expected_kind_references: AtomicI32::new(-999),
-        });
+            owner: owner.clone(),
+        }));
         prs_mgr_presentable_bind(&object.cast());
         object
     }
@@ -106,7 +109,8 @@ impl AisInteractiveObject for ContextObject {
     fn kind_of_interactive(&self) -> AisKindOfInteractive {
         let expected = self.expected_kind_references.load(Ordering::Relaxed);
         if expected != -999 {
-            self.observe_context(8000 + self.transient_base().ref_count() - expected);
+            let count = i32::try_from(self.owner.strong_count()).unwrap();
+            self.observe_context(8000 + count - expected);
         }
         AisKindOfInteractive::None
     }

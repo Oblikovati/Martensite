@@ -35,12 +35,12 @@ impl AccAlignedPtr {
     }
 
     /// Adds a rounded amount using wrapping address arithmetic; `AccAlignedPtr::default().wrapping_add(AccAlignedSize::new(1))`.
-    pub const fn wrapping_add(self, amount: AccAlignedSize) -> Self {
+    pub(crate) const fn wrapping_add(self, amount: AccAlignedSize) -> Self {
         Self(self.0.wrapping_add(amount.get()))
     }
 
     /// Subtracts a rounded amount; `AccAlignedPtr::default().wrapping_add(AccAlignedSize::new(1)).wrapping_sub(AccAlignedSize::new(1))`.
-    pub const fn wrapping_sub(self, amount: AccAlignedSize) -> Self {
+    pub(crate) const fn wrapping_sub(self, amount: AccAlignedSize) -> Self {
         Self(self.0.wrapping_sub(amount.get()))
     }
 

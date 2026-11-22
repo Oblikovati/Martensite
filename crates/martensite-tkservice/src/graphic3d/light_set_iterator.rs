@@ -1,6 +1,7 @@
 //! Live indexed-map iteration of a light set.
 use super::{
-    Graphic3dCLight, Graphic3dLightSet, Graphic3dLightSetFields, Graphic3dLightSetIterationFilter,
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dLightSet, Graphic3dLightSetFields,
+    Graphic3dLightSetIterationFilter,
 };
 use martensite_tkernel::standard::exceptions::no_such_object;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
@@ -60,7 +61,7 @@ impl Graphic3dLightSetIterator {
     }
 
     /// Reads the live key or raises `Standard_NoSuchObject`; `cursor.value()?`.
-    pub fn value(&self) -> Result<Handle<Graphic3dCLight>, Failure> {
+    pub fn value(&self) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
         let Some(source) = &self.source else {
             return Err(self.exhausted(0));
         };

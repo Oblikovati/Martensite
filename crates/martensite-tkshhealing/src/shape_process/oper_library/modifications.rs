@@ -8,7 +8,9 @@ use crate::shape_custom::{
     ShapeCustomModification, ShapeCustomRestrictionParameters, ShapeCustomSweptToElementary,
 };
 use crate::shape_extend::{BasicMsgRegistrator, ShapeExtendMsgRegistrator};
-use crate::shape_process::{ShapeProcessContext, ShapeProcessShapeContext, ShapeProcessShapeMap};
+use crate::shape_process::{
+    ShapeProcessContextSource, ShapeProcessShapeContext, ShapeProcessShapeMap,
+};
 use martensite_tkbrep::brep_tools::BRepToolsModification;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -22,7 +24,7 @@ fn apply<
         + martensite_tkernel::standard::RuntimeTyped
         + 'static,
 >(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     build: impl FnOnce(&ShapeProcessShapeContext) -> Result<M, Failure>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);
@@ -50,12 +52,12 @@ fn apply<
 pub(super) fn registrator(
     messages: &Handle<ShapeExtendMsgRegistrator>,
 ) -> Handle<dyn BasicMsgRegistrator> {
-    messages.clone().cast::<dyn BasicMsgRegistrator>()
+    messages.upcast()
 }
 
 /// The operator DirectFaces.
 pub(super) fn direct_faces(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     apply(context, |_| Ok(ShapeCustomDirectModification::new()))
@@ -63,7 +65,7 @@ pub(super) fn direct_faces(
 
 /// The operator ElementaryToRevolution.
 pub(super) fn to_revolution(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     apply(context, |_| Ok(ShapeCustomConvertToRevolution::new()))
@@ -71,7 +73,7 @@ pub(super) fn to_revolution(
 
 /// The operator SweptToElementary.
 pub(super) fn swept_to_elementary(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     apply(context, |_| Ok(ShapeCustomSweptToElementary::new()))
@@ -79,7 +81,7 @@ pub(super) fn swept_to_elementary(
 
 /// The operator SurfaceToBSpline: LinearExtrusionMode, RevolutionMode and OffsetMode.
 pub(super) fn to_bspline(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     apply(context, |ctx| {
@@ -94,7 +96,7 @@ pub(super) fn to_bspline(
 /// The operator BSplineRestriction: the restriction settings and the restriction
 /// parameters read from the context.
 pub(super) fn bspline_restriction(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     _: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     apply(context, |ctx| {

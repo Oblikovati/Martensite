@@ -13,10 +13,11 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_entities, iges_dump_string, iges_live, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_entities, iges_dump_string, iges_live, iges_new_array1,
 };
 use crate::iges_draw::{IgesDrawConnectPoint, IgesDrawNetworkSubfigureDef};
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
@@ -52,7 +53,7 @@ impl IgesDrawToolNetworkSubfigureDef {
         let mut temp_name: Handle<HAsciiString> = Default::default();
         let mut temp_designator: Handle<HAsciiString> = Default::default();
         let mut temp_template: Handle<IgesGraphTextDisplayTemplate> = Default::default();
-        let mut temp_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut temp_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         let mut temp_point_entities: Handle<HArray1<Handle<IgesDrawConnectPoint>>> =
             Default::default();
         pr.read_integer_text(&pr.current(), "Depth Of Subfigure", &mut temp_depth)?;
@@ -241,14 +242,14 @@ impl IgesDrawToolNetworkSubfigureDef {
             &another.name(),
             "IgesDrawToolNetworkSubfigureDef::own_copy",
         )?));
-        let mut temp_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut temp_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         let mut up: i32 = another.nb_entities()?;
         if up > 0 {
-            temp_entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, up)?;
+            temp_entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, up)?;
         }
         let mut i: i32 = Default::default();
         for i in 1..=up {
-            let mut temp_entity: Handle<IgesDataIgesEntity> =
+            let mut temp_entity: Handle<dyn IgesDataEntityKind> =
                 tc.transferred(&another.entity(i)?.cast())?.cast();
             iges_array1_set(
                 &temp_entities,

@@ -13,7 +13,7 @@ use martensite_tkernel::{
     impl_transient,
     message::{Message, ProgressRange},
     osd::{IStream, OStream},
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::AsciiString,
     units_methods::LengthUnit,
 };
@@ -171,17 +171,15 @@ fn unit_name(node: &DeIgesConfigurationNode) -> &'static str {
 /// ```
 #[derive(Default)]
 pub struct DeIgesProvider {
-    transient: StandardTransient,
     base: DeProviderBase,
 }
-impl_transient!(DeIgesProvider, "DeIgesProvider", dyn DeProvider, transient, interfaces: [dyn DeProvider]);
+impl_transient!(DeIgesProvider, "DeIgesProvider", dyn DeProvider, interfaces: [dyn DeProvider]);
 
 impl DeIgesProvider {
     /// A provider on a node; `DeIgesProvider::with_node(&node)`.
     pub fn with_node(node: &Handle<dyn DeConfigurationNode>) -> Self {
         Self {
             base: DeProviderBase::with_node(node),
-            ..Self::default()
         }
     }
     /// The node of this provider, when it is one of IGES.

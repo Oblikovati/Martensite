@@ -16,7 +16,8 @@ use crate::step_visual::{
     StepVisualCameraModelD3MultiClippingUnion, StepVisualCentralOrParallel,
     StepVisualDraughtingCallout, StepVisualDraughtingModel,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, HAsciiString};
 use martensite_tkg3d::geom::GeomPoint;
 use martensite_tklcaf::tdf::{TdfLabel, TdfTool};
@@ -32,7 +33,7 @@ use martensite_tkxsbase::xs_control::XSControlWorkSession;
 fn collect_view_shapes(
     session: &SessionGraph,
     tool: &XCAFDocShapeTool,
-    representation: &Handle<StepReprRepresentation>,
+    representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     shapes: &mut Vec<TdfLabel>,
 ) -> Result<(), Failure> {
     let shape = session.shape_at(session.process()?.map_index(&representation.cast()))?;
@@ -44,7 +45,8 @@ fn collect_view_shapes(
         }
     }
     for sharing in session.sharings(&representation.cast())? {
-        let relationship = sharing.cast::<StepReprRepresentationRelationship>();
+        let relationship =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
         let Some(relationship) = relationship.get() else {
             continue;
         };
@@ -60,7 +62,7 @@ fn collect_view_shapes(
 enum ClippingOperands {
     Root(Handle<StepVisualCameraModelD3MultiClippingUnion>),
     Planes(
-        Vec<Handle<StepGeomGeometricRepresentationItem>>,
+        Vec<Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>>,
         &'static str,
     ),
 }
@@ -74,7 +76,7 @@ macro_rules! planes_of_list {
             planes.push(
                 step_array1_item(&list, rank, WHERE)?
                     .value()
-                    .cast::<StepGeomGeometricRepresentationItem>(),
+                    .cast::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>(),
             );
         }
         planes
@@ -83,7 +85,7 @@ macro_rules! planes_of_list {
 
 /// The operands of a model, `None` when it has no clipping.
 fn clipping_operands(
-    model: &Handle<StepGeomGeometricRepresentationItem>,
+    model: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
 ) -> Result<Option<ClippingOperands>, Failure> {
     if let Some(camera) = model.cast::<StepVisualCameraModelD3MultiClipping>().get() {
         let list = camera.shape_clipping();
@@ -126,7 +128,7 @@ fn clipping_operands(
 /// `buildClippingPlanes`: the expression of the planes of a clipping camera model; the planes go to
 /// the document.
 fn build_clipping_planes(
-    model: &Handle<StepGeomGeometricRepresentationItem>,
+    model: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
     planes: &mut Vec<TdfLabel>,
     tool: &XCAFDocClippingPlaneTool,
     factors: &StepDataFactors,
@@ -201,7 +203,7 @@ impl ReaderState {
     fn gdts_of_annotation(
         &self,
         session: &SessionGraph,
-        annotation: &Handle<StandardTransient>,
+        annotation: &Handle<dyn Transient>,
         fallback_on_item: bool,
         gdts: &mut Vec<TdfLabel>,
     ) -> Result<(), Failure> {
@@ -223,7 +225,7 @@ impl ReaderState {
     /// One camera of `read_views`; false when it has no draughting model.
     fn read_view(
         &self,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         session: &SessionGraph,
         doc: &Handle<TDocStdDocument>,
         factors: &StepDataFactors,
@@ -234,12 +236,12 @@ impl ReaderState {
         let object = Handle::new(XCAFViewObject::new());
         let live_object = step_live(&object, WHERE)?;
         // Import attributes of view
-        let camera = entity.cast::<StepVisualCameraModelD3>();
+        let camera = entity.cast::<dyn crate::StepEntityBase<StepVisualCameraModelD3>>();
         let live_camera = step_live(&camera, WHERE)?;
         // find the proper DraughtingModel
-        let model = super::reader_support::first_of::<StepVisualDraughtingModel>(
-            &session.sharings(entity)?,
-        );
+        let model = super::reader_support::first_of::<
+            dyn crate::StepEntityBase<StepVisualDraughtingModel>,
+        >(&session.sharings(entity)?);
         let mut local = *factors;
         if model.is_some() {
             local = factors_of_representation(
@@ -271,7 +273,10 @@ impl ReaderState {
         }
         let (mut shapes, mut gdts) = (Vec::new(), Vec::new());
         for shared in session.shareds(&model.cast())? {
-            if let Some(mapped) = shared.cast::<StepReprMappedItem>().get() {
+            if let Some(mapped) = shared
+                .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+                .get()
+            {
                 let source = mapped.mapping_source();
                 let representation = step_live(&source, WHERE)?.mapped_representation();
                 if representation.is_some() {
@@ -282,7 +287,9 @@ impl ReaderState {
                         &mut shapes,
                     )?;
                 }
-            } else if shared.cast::<StepVisualAnnotationOccurrence>().is_some()
+            } else if shared
+                .cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>()
+                .is_some()
                 || shared.cast::<StepVisualDraughtingCallout>().is_some()
             {
                 self.gdts_of_annotation(session, &shared, true, &mut gdts)?;
@@ -315,7 +322,9 @@ impl ReaderState {
         let session = SessionGraph::of_process(ws)?;
         for i in 1..=model.nb_entities() {
             let entity = model.value(i)?;
-            if entity.cast::<StepVisualCameraModelD3>().is_some()
+            if entity
+                .cast::<dyn crate::StepEntityBase<StepVisualCameraModelD3>>()
+                .is_some()
                 && !self.read_view(&entity, &session, doc, factors)?
             {
                 return Ok(false);

@@ -24,7 +24,8 @@ use crate::step_visual::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkxsbase::interface::InterfaceInterfaceModel;
 use martensite_tkxsbase::transfer::{
     TransferActor, TransferActorOfTransientProcess, TransferActorOfTransientProcessOps,
@@ -40,7 +41,7 @@ pub(super) struct ActorReadState {
     pub(super) nm_tool: StepToTopoDSNMTool,
     pub(super) precision: f64,
     pub(super) max_tol: f64,
-    pub(super) sr_context: Handle<StepReprRepresentation>,
+    pub(super) sr_context: Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     pub(super) model: Handle<dyn InterfaceInterfaceModel>,
     /// `NM_DETECTED`: a file static shared by every actor, here one per actor so
     /// transfers on other threads cannot change each other's result.
@@ -59,28 +60,40 @@ pub struct StepControlActorRead {
     base: TransferActorOfTransientProcess,
     pub(super) state: SharedState<ActorReadState>,
 }
-impl_transient!(StepControlActorRead, "StepControlActorRead", TransferActorOfTransientProcess, base, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
+impl_transient!(StepControlActorRead, "StepControlActorRead", TransferActorOfTransientProcess, interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]);
 
 /// The classes `recognize` takes whatever the mode.
-fn is_recognized_item(start: &Handle<StandardTransient>) -> bool {
+fn is_recognized_item(start: &Handle<dyn Transient>) -> bool {
     start.cast::<StepShapeFacetedBrep>().is_some()
         || start.cast::<StepShapeBrepWithVoids>().is_some()
-        || start.cast::<StepShapeManifoldSolidBrep>().is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+            .is_some()
         || start.cast::<StepShapeShellBasedSurfaceModel>().is_some()
         || start
             .cast::<StepShapeFacetedBrepAndBrepWithVoids>()
             .is_some()
-        || start.cast::<StepShapeGeometricSet>().is_some()
-        || start.cast::<StepReprMappedItem>().is_some()
-        || start.cast::<StepShapeFaceSurface>().is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+            .is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+            .is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+            .is_some()
         || start.cast::<StepShapeEdgeBasedWireframeModel>().is_some()
         || start.cast::<StepShapeFaceBasedSurfaceModel>().is_some()
 }
 
 /// The classes `recognize` takes when tessellated geometry is read.
-fn is_tessellated_item(start: &Handle<StandardTransient>) -> bool {
-    start.cast::<StepVisualTessellatedFace>().is_some()
-        || start.cast::<StepVisualTessellatedSurfaceSet>().is_some()
+fn is_tessellated_item(start: &Handle<dyn Transient>) -> bool {
+    start
+        .cast::<dyn crate::StepEntityBase<StepVisualTessellatedFace>>()
+        .is_some()
+        || start
+            .cast::<dyn crate::StepEntityBase<StepVisualTessellatedSurfaceSet>>()
+            .is_some()
         || start.cast::<StepVisualTessellatedShell>().is_some()
         || start.cast::<StepVisualTessellatedSolid>().is_some()
         || start
@@ -168,7 +181,7 @@ impl StepControlActorRead {
     /// `transfer_shape(start, TP, local_factors, isManifold, use_trsf, progress)`.
     pub fn transfer_shape(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         is_manifold: bool,
@@ -186,14 +199,20 @@ impl StepControlActorRead {
                 .is_some()
         {
             self.old_way(start, tp, progress)?
-        } else if start.cast::<StepBasicProductDefinition>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>()
+            .is_some()
+        {
             self.transfer_product_definition(&start.cast(), tp, factors, use_trsf, progress)?
         } else if start
             .cast::<StepReprNextAssemblyUsageOccurrence>()
             .is_some()
         {
             self.transfer_nauo(&start.cast(), tp, factors, progress)?
-        } else if start.cast::<StepShapeShapeRepresentation>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+            .is_some()
+        {
             let mut is_bound = false;
             self.transfer_shape_representation(
                 &start.cast(),
@@ -209,18 +228,24 @@ impl StepControlActorRead {
         {
             self.transfer_cdsr(&start.cast(), tp, factors, progress)?
         } else if start
-            .cast::<StepReprShapeRepresentationRelationship>()
+            .cast::<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>()
             .is_some()
         {
             self.transfer_srr(&start.cast(), tp, factors, 0, false, progress)?
         } else if start
-            .cast::<StepGeomGeometricRepresentationItem>()
+            .cast::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>()
             .is_some()
         {
             self.transfer_geometric_item(&start.cast(), tp, factors, is_manifold, progress)?
-        } else if start.cast::<StepReprMappedItem>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+            .is_some()
+        {
             self.transfer_mapped_item(&start.cast(), tp, factors, progress)?
-        } else if start.cast::<StepShapeFaceSurface>().is_some() {
+        } else if start
+            .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+            .is_some()
+        {
             self.transfer_face_surface(&start.cast(), tp, factors, progress)?
         } else {
             Handle::<TransferBRepShapeBinder>::default()
@@ -233,11 +258,13 @@ impl TransferActorOps<TransferTransientKind> for StepControlActorRead {
     fn actor(&self) -> &TransferActor<TransferTransientKind> {
         self.base.actor()
     }
-    fn recognize(&self, start: &Handle<StandardTransient>) -> bool {
+    fn recognize(&self, start: &Handle<dyn Transient>) -> bool {
         if start.is_null() {
             return false;
         }
-        if start.cast::<StepBasicProductDefinition>().is_some()
+        if start
+            .cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>()
+            .is_some()
             || start
                 .cast::<StepReprNextAssemblyUsageOccurrence>()
                 .is_some()
@@ -262,7 +289,8 @@ impl TransferActorOps<TransferTransientKind> for StepControlActorRead {
         {
             return true;
         }
-        let representation: Handle<StepShapeShapeRepresentation> = start.cast();
+        let representation: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
+            start.cast();
         if let Some(live_rep) = representation.get() {
             let count = live_rep.nb_items();
             return (1..=count).any(|rank| {
@@ -274,7 +302,9 @@ impl TransferActorOps<TransferTransientKind> for StepControlActorRead {
         if is_recognized_item(start) || (tessellated && is_tessellated_item(start)) {
             return true;
         }
-        let relationship: Handle<StepReprShapeRepresentationRelationship> = start.cast();
+        let relationship: Handle<
+            dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>,
+        > = start.cast();
         if let Some(live_rel) = relationship.get() {
             return self.recognize(&live_rel.rep1().cast())
                 || self.recognize(&live_rel.rep2().cast());
@@ -285,7 +315,7 @@ impl TransferActorOps<TransferTransientKind> for StepControlActorRead {
     }
     fn transferring(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<dyn TransferProcessOps<TransferTransientKind>>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -299,7 +329,7 @@ impl TransferActorOfTransientProcessOps for StepControlActorRead {
     }
     fn transfer(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {

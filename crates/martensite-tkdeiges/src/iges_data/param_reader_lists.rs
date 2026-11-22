@@ -2,13 +2,15 @@
 use super::param_reader::{bound_entity, iges_atoi};
 use super::param_reader_read::label_of;
 use super::{
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataParamCursor, IgesDataParamReader,
-    IgesDataReadMessage, iges_array1_item, iges_array1_set, iges_msg, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataParamCursor, IgesDataParamReader, IgesDataReadMessage,
+    iges_array1_item, iges_array1_set, iges_msg, iges_new_array1,
 };
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     message::Msg,
     ncollection::HArray1,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::interface::{InterfaceEntityList, InterfaceParamType};
@@ -156,7 +158,7 @@ impl IgesDataParamReader {
         ir: &Handle<IgesDataIgesReaderData>,
         pc: &IgesDataParamCursor,
         mess: impl Into<IgesDataReadMessage<'a>>,
-        val: &mut Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        val: &mut Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         index: i32,
     ) -> Result<bool, Failure> {
         let mess = mess.into();
@@ -294,7 +296,7 @@ impl IgesDataParamReader {
             }
             return Ok(());
         }
-        let shared: Handle<StandardTransient> = entity.cast();
+        let shared: Handle<dyn Transient> = entity.cast();
         if ord {
             val.append(&shared)
         } else {
@@ -330,7 +332,7 @@ fn catalog_of(mess: IgesDataReadMessage<'_>) -> Option<Msg> {
 
 /// Drops the gaps of a list of references: null when nothing was read, else shorter.
 fn shrink_entities(
-    val: &mut Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+    val: &mut Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     index: i32,
     ind: i32,
     indmax: i32,

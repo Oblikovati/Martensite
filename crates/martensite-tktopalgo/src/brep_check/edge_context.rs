@@ -123,7 +123,7 @@ impl FaceCheck<'_> {
     ) -> Result<(), Failure> {
         let sb = self.moved_surface()?;
         let gahs: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&sb)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&sb)?).into_upcast();
         let ghpc = Handle::new(Geom2dAdaptorCurve::with_range(
             &r.pcurve()?,
             range.0,
@@ -187,7 +187,7 @@ impl FaceCheck<'_> {
         plane: &Handle<GeomPlane>,
     ) -> Result<Handle<Adaptor3dCurveOnSurface>, Failure> {
         let gahs: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&plane.clone().cast())?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&plane.clone().cast())?).into_upcast();
         // "Normalement myHCurve est une GeomAdaptor_Curve": a reference curve on surface
         // is a null dereference natively.
         let gac = self.hcurve.cast::<GeomAdaptorCurve>();
@@ -199,15 +199,15 @@ impl FaceCheck<'_> {
             .curve();
         let (first, last) = hcurve_range(&self.hcurve)?;
         let trimmed: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&c3d, first, last, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&c3d, first, last, true, true)?).into_upcast();
         let direction = plane.get().expect("moved plane").position().direction();
         let on_plane = geom_proj_lib::project_on_plane(&trimmed, plane, direction, true)?;
         let curve: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&on_plane)?).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&on_plane)?).into_upcast();
         let projection = ProjectedCurve::with_curve(&gahs, &curve)?;
         let pc = make_curve(&projection)?;
         let ghpc: Handle<dyn Adaptor2dCurve2d> =
-            Handle::new(Geom2dAdaptorCurve::with_range(&pc, first, last)?).cast();
+            Handle::new(Geom2dAdaptorCurve::with_range(&pc, first, last)?).into_upcast();
         Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(
             &ghpc, &gahs,
         )?))

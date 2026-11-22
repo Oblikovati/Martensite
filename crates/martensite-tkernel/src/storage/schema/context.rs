@@ -14,7 +14,7 @@ pub struct SchemaContext {
 impl SchemaContext {
     /// The process-wide current-data slot.
     /// Example: `let shared = SchemaContext::process_shared();`.
-    pub fn process_shared() -> Self {
+    pub(super) fn process_shared() -> Self {
         static CURRENT: OnceLock<SchemaContext> = OnceLock::new();
         CURRENT.get_or_init(Self::default).clone()
     }

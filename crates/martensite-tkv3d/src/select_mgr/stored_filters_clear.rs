@@ -1,6 +1,6 @@
 //! Class-local clear progress retains native cardinality without locking user destruction.
 use super::SelectMgrFilter;
-use super::{FilterCollection, FilterHandle};
+use super::{FilterCollection, FilterEntry};
 use martensite_tkernel::{
     ncollection::ListCursor,
     standard::{Failure, WeakHandle},
@@ -27,7 +27,8 @@ fn start_clear(collection: &FilterCollection) -> Result<ListCursor, Failure> {
     let cursor = state.filters.cursor();
     let target = cursor
         .value(&state.filters)
-        .map(FilterHandle::downgrade)
+        .and_then(Option::as_ref)
+        .map(|entry| entry.downgrade())
         .unwrap_or_default();
     state.clearing = Some(ClearCursor {
         current: cursor,
@@ -37,13 +38,17 @@ fn start_clear(collection: &FilterCollection) -> Result<ListCursor, Failure> {
     Ok(cursor)
 }
 
-fn stage_current(collection: &FilterCollection, current: ListCursor) -> (ListCursor, FilterHandle) {
+fn stage_current(
+    collection: &FilterCollection,
+    current: ListCursor,
+) -> (ListCursor, Option<FilterEntry>) {
     let mut state = collection.write();
     let mut next = current;
     next.next(&state.filters);
     let target = current
         .value(&state.filters)
-        .map(FilterHandle::downgrade)
+        .and_then(Option::as_ref)
+        .map(|entry| entry.downgrade())
         .unwrap_or_default();
     state.clearing = Some(ClearCursor {
         current,

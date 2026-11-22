@@ -4,7 +4,7 @@ use crate::cdm::{CdmApplication, CdmDocument};
 use martensite_tkernel::{
     impl_transient_interface,
     message::{Messenger, ProgressRange},
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
     storage::Data,
     tcollection::ExtendedString,
 };
@@ -57,7 +57,7 @@ pub trait PcdmReader: Transient {
         self.reader_base().status()
     }
 }
-impl_transient_interface!(dyn PcdmReader, "PCDM_Reader", StandardTransient);
+impl_transient_interface!(dyn PcdmReader, "PCDM_Reader", dyn Transient);
 
 /// The private `myFormat` of `PCDM_RetrievalDriver`, and its static members.
 #[derive(Default)]
@@ -109,5 +109,6 @@ pub trait PcdmRetrievalDriver: PcdmReader {
 impl_transient_interface!(
     dyn PcdmRetrievalDriver,
     "PCDM_RetrievalDriver",
-    dyn PcdmReader
+    dyn PcdmReader,
+    upcasts: [dyn PcdmReader]
 );

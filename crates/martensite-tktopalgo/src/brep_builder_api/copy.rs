@@ -64,7 +64,7 @@ impl BRepBuilderAPIMakeShape for BRepBuilderAPICopy {
 
 /// `new BRepTools_CopyModification(copyGeom, copyMesh)`.
 fn copy_modification(copy_geom: bool, copy_mesh: bool) -> Handle<dyn BRepToolsModification> {
-    Handle::new(CopyModification::new(copy_geom, copy_mesh)).cast()
+    Handle::new(CopyModification::new(copy_geom, copy_mesh)).into_upcast()
 }
 
 impl BRepBuilderAPICopy {

@@ -89,7 +89,7 @@ fn colored_closed_dispatch_output<'a>(
 pub(super) fn colored_shape_base_drawer<S: AisColoredShapeSource + ?Sized>(
     object: &S,
     shape: &martensite_tkbrep::topods::Shape,
-) -> Result<Handle<AisColoredDrawer>, Failure> {
+) -> Result<Handle<dyn AisColoredDrawerSource>, Failure> {
     let nodes = object.colored_shape_base().shape_colors.nodes.read();
     let Some(node) = super::shape_drawer_map::find_shape_drawer_node(&nodes, shape) else {
         return Ok(Handle::default());
@@ -98,7 +98,7 @@ pub(super) fn colored_shape_base_drawer<S: AisColoredShapeSource + ?Sized>(
 }
 
 fn dispatch_colored_root(
-    base: &Handle<AisColoredDrawer>,
+    base: &Handle<dyn AisColoredDrawerSource>,
     shape: &martensite_tkbrep::topods::Shape,
     styles: &AisShapeDrawerMap,
     opened: &AisColoredOpenedCompounds,

@@ -55,7 +55,7 @@ fn retained_checker_texture() -> Handle<Graphic3dTexture2D> {
     ];
     assert!(image.init_wrapper(ImageFormat::Rgba, Some(pixels), 2, 2, 8));
     image.set_top_down(true);
-    texture.set_image(image);
+    texture.set_image(image.into_upcast());
     texture
 }
 fn bilinear_checker_frame(texture: &Handle<Graphic3dTexture2D>) -> RenderFrame {
@@ -77,7 +77,7 @@ fn encoded_variants_share_revision_replacement_forgetting_and_retirement() {
     let mut renderer = texture_cache_renderer();
     render_both_texture_formats(&mut renderer, &bilinear_checker_frame(&texture));
     let prior = retained_cached_image(&renderer);
-    texture.set_image(replacement_green_image());
+    texture.set_image(replacement_green_image().into_upcast());
     texture.update_revision();
     let updated = bilinear_checker_frame(&texture);
     render_both_texture_formats(&mut renderer, &updated);
@@ -145,7 +145,7 @@ fn mapped_line_uploads_image_revisions_without_allocating_sampler_bindings() {
     assert_eq!(cached_surface_count(&renderer), 1);
     assert_eq!(cached_sampler_count(&renderer), 0);
     let before = retained_cached_image(&renderer);
-    texture.set_image(replacement_green_image());
+    texture.set_image(replacement_green_image().into_upcast());
     texture.update_revision();
     renderer
         .render(&mapped_line_frame(&sampled_texture_frame(&texture)))
@@ -191,7 +191,7 @@ fn retained_red_texture() -> Handle<Graphic3dTexture2D> {
     let image = Handle::new(ImagePixMap::default());
     assert!(image.init_wrapper(ImageFormat::Rgba, Some(vec![255, 0, 0, 255]), 1, 1, 4));
     image.set_top_down(true);
-    Handle::new(Graphic3dTexture2D::from_pix_map(image))
+    Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()))
 }
 fn sampled_texture_frame(texture: &Handle<Graphic3dTexture2D>) -> RenderFrame {
     let images = crate::retained_texture_images::RetainedTextureImages::default();
@@ -355,7 +355,7 @@ fn live_storage_revision_and_forget_allocate_using_current_mode() {
     render_live_texture(&mut renderer, &source, false);
     let original = retained_cached_image(&renderer);
     render_live_texture(&mut renderer, &source, true);
-    texture.set_image(replacement_green_image());
+    texture.set_image(replacement_green_image().into_upcast());
     texture.update_revision();
     let updated = bilinear_checker_frame(&texture);
     render_live_texture(&mut renderer, &updated, true);

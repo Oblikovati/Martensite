@@ -1,7 +1,8 @@
 //! `BRepAdaptor_Curve`: an edge seen as a 3D curve.
 use super::forward::inherited_curve_members;
 use crate::brep::BRepTool;
-use crate::topods::{Edge, Face};
+use crate::topods::Edge;
+use crate::topods::{EdgeView, FaceView};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
@@ -24,7 +25,7 @@ use martensite_tkmath::gp::{
 /// edge location.
 ///
 /// The native class derives from `GeomAdaptor_TransformedCurve`; the Rust type embeds
-/// that adaptor as its parent field and forwards every inherited member to it. The
+/// a transformed evaluator and forwards inherited evaluations to it. The
 /// members take `&self`, the edge is kept behind a lock.
 ///
 /// ```
@@ -35,7 +36,7 @@ use martensite_tkmath::gp::{
 /// use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 /// use martensite_tkg3d::geom::{GeomCurve, GeomLine};
 /// use martensite_tkmath::gp::{Axis1, Point3};
-/// let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).cast();
+/// let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).into_upcast();
 /// let mut edge = Edge::default();
 /// let builder = BRepBuilder::default();
 /// builder.make_edge_with_curve(&mut edge, &line, 1e-7)?;
@@ -46,13 +47,13 @@ use martensite_tkmath::gp::{
 /// ```
 #[derive(Default)]
 pub struct BRepAdaptorCurve {
-    parent: GeomAdaptorTransformedCurve,
+    evaluator: GeomAdaptorTransformedCurve,
     edge: SharedState<Edge>,
 }
 impl Clone for BRepAdaptorCurve {
     /// Copies edge/adaptor values while retaining nested owners; `let copied = source.clone();`.
     fn clone(&self) -> Self {
-        self.copy_with(self.parent.clone())
+        self.copy_with(self.evaluator.clone())
     }
 }
 
@@ -60,14 +61,13 @@ impl_transient!(
     BRepAdaptorCurve,
     "BRepAdaptor_Curve",
     GeomAdaptorTransformedCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
 impl BRepAdaptorCurve {
     /// `BRepAdaptor_Curve(E)`: the 3D curve of `edge`, or its first curve on a surface;
     /// Standard_NullObject when it has neither; `BRepAdaptorCurve::with_edge(&edge)?`.
-    pub fn with_edge(edge: &Edge) -> Result<Self, Failure> {
+    pub fn with_edge(edge: &EdgeView<'_>) -> Result<Self, Failure> {
         let adaptor = Self::default();
         adaptor.initialize(edge)?;
         Ok(adaptor)
@@ -75,43 +75,43 @@ impl BRepAdaptorCurve {
 
     /// `BRepAdaptor_Curve(E, F)`: the curve on `face` of `edge`;
     /// `BRepAdaptorCurve::with_edge_on_face(&edge, &face)?`.
-    pub fn with_edge_on_face(edge: &Edge, face: &Face) -> Result<Self, Failure> {
+    pub fn with_edge_on_face(edge: &EdgeView<'_>, face: &FaceView<'_>) -> Result<Self, Failure> {
         let adaptor = Self::default();
         adaptor.initialize_on_face(edge, face)?;
         Ok(adaptor)
     }
 
-    /// The embedded parent adaptor (the `GeomAdaptor_TransformedCurve` base).
+    /// The transformed evaluator. Example: `adaptor.transformed_curve()`.
     pub fn transformed_curve(&self) -> &GeomAdaptorTransformedCurve {
-        &self.parent
+        &self.evaluator
     }
 
     /// `Reset()`: unloads the curve, the curve on surface, the edge and the
     /// transformation; `adaptor.reset()`.
     pub fn reset(&self) {
-        if let Some(curve) = self.parent.change_curve().get() {
+        if let Some(curve) = self.evaluator.change_curve().get() {
             curve.reset();
         }
-        self.parent.load_curve_on_surface(&Handle::default());
+        self.evaluator.load_curve_on_surface(&Handle::default());
         *self.edge.write() = Edge::default();
-        self.parent.set_trsf(Transform3::default());
+        self.evaluator.set_trsf(Transform3::default());
     }
 
     /// `Initialize(E)`: loads the 3D curve of `edge` on its range, else its first curve on
     /// a surface; Standard_NullObject ("No geometry") when it has neither, after the
     /// edge is stored and the curve on surface dropped; `adaptor.initialize(&edge)?`.
-    pub fn initialize(&self, edge: &Edge) -> Result<(), Failure> {
-        self.parent.load_curve_on_surface(&Handle::default());
-        *self.edge.write() = edge.clone();
+    pub fn initialize(&self, edge: &EdgeView<'_>) -> Result<(), Failure> {
+        self.evaluator.load_curve_on_surface(&Handle::default());
+        *self.edge.write() = edge.to_edge();
         let found = BRepTool::curve_with_location(edge)?;
         let location = if found.curve.is_null() {
             self.load_first_curve_on_surface(edge)?
         } else {
-            self.parent
+            self.evaluator
                 .load_range(&found.curve, found.first, found.last)?;
             found.location
         };
-        self.parent.set_trsf(location.transformation());
+        self.evaluator.set_trsf(location.transformation());
         Ok(())
     }
 
@@ -119,7 +119,7 @@ impl BRepAdaptorCurve {
     /// its location.
     fn load_first_curve_on_surface(
         &self,
-        edge: &Edge,
+        edge: &EdgeView<'_>,
     ) -> Result<martensite_tkmath::toploc::Location, Failure> {
         let found = BRepTool::first_curve_on_surface(edge)?;
         if found.pcurve.is_null() {
@@ -130,20 +130,24 @@ impl BRepAdaptorCurve {
             ));
         }
         let con_surf = curve_on_surface(&found.pcurve, &found.surface, found.first, found.last)?;
-        self.parent.load_curve_on_surface(&con_surf);
+        self.evaluator.load_curve_on_surface(&con_surf);
         Ok(found.location)
     }
 
     /// `Initialize(E, F)`: loads the curve on `face` of `edge` (its p-curve on the face's
     /// surface), transformed by the face location; `adaptor.initialize_on_face(&e, &f)?`.
-    pub fn initialize_on_face(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
-        self.parent.load_curve_on_surface(&Handle::default());
-        *self.edge.write() = edge.clone();
+    pub fn initialize_on_face(
+        &self,
+        edge: &EdgeView<'_>,
+        face: &FaceView<'_>,
+    ) -> Result<(), Failure> {
+        self.evaluator.load_curve_on_surface(&Handle::default());
+        *self.edge.write() = edge.to_edge();
         let (surface, location) = BRepTool::surface_with_location(face)?;
         let found = BRepTool::curve_on_face(edge, face)?;
         let con_surf = curve_on_surface(&found.pcurve, &surface, found.first, found.last)?;
-        self.parent.load_curve_on_surface(&con_surf);
-        self.parent.set_trsf(location.transformation());
+        self.evaluator.load_curve_on_surface(&con_surf);
+        self.evaluator.set_trsf(location.transformation());
         Ok(())
     }
 
@@ -159,9 +163,9 @@ impl BRepAdaptorCurve {
 
     /// The native copy constructor: the parent adaptor copied (the 3D adaptor by value,
     /// the curve on surface shared), and the edge.
-    fn copy_with(&self, parent: GeomAdaptorTransformedCurve) -> Self {
+    fn copy_with(&self, evaluator: GeomAdaptorTransformedCurve) -> Self {
         Self {
-            parent,
+            evaluator,
             edge: SharedState::new(self.edge()),
         }
     }
@@ -180,8 +184,8 @@ fn curve_on_surface(
     let adapted_curve = Geom2dAdaptorCurve::default();
     adapted_curve.load_range(pcurve, first, last)?;
     let con_surf = Adaptor3dCurveOnSurface::default();
-    let curve: Handle<dyn Adaptor2dCurve2d> = Handle::new(adapted_curve).cast();
-    let surface: Handle<dyn Adaptor3dSurface> = Handle::new(adapted_surface).cast();
+    let curve: Handle<dyn Adaptor2dCurve2d> = Handle::new(adapted_curve).into_upcast();
+    let surface: Handle<dyn Adaptor3dSurface> = Handle::new(adapted_surface).into_upcast();
     con_surf.load(&curve, &surface)?;
     Ok(Handle::new(con_surf))
 }
@@ -190,7 +194,7 @@ impl Adaptor3dCurve for BRepAdaptorCurve {
     /// `ShallowCopy()`: shallow copies of the 3D adaptor and of the curve on surface,
     /// the transformation and the edge.
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
-        Ok(Handle::new(self.copy_with(self.parent.shallow_adaptor()?)).cast())
+        Ok(Handle::new(self.copy_with(self.evaluator.shallow_adaptor()?)).into_upcast())
     }
 
     /// `Trim(First, Last, Tol)`: a copy of this adaptor (edge and transformation kept)
@@ -203,17 +207,17 @@ impl Adaptor3dCurve for BRepAdaptorCurve {
         tolerance: f64,
     ) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
         let parent = GeomAdaptorTransformedCurve::default();
-        if self.parent.is_3d_curve() {
-            parent.load_range(&self.parent.geom_curve(), first, last)?;
+        if self.evaluator.is_3d_curve() {
+            parent.load_range(&self.evaluator.geom_curve(), first, last)?;
         } else {
             let trimmed = self
-                .parent
+                .evaluator
                 .curve_on_surface()?
                 .trim(first, last, tolerance)?;
             parent.load_curve_on_surface(&trimmed.cast());
         }
-        parent.set_trsf(self.parent.trsf());
-        Ok(Handle::new(self.copy_with(parent)).cast())
+        parent.set_trsf(self.evaluator.trsf());
+        Ok(Handle::new(self.copy_with(parent)).into_upcast())
     }
 
     inherited_curve_members!();

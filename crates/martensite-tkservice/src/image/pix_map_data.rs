@@ -9,7 +9,6 @@
 use super::pixel::ImagePixel;
 use super::pixel_bytes::PixelBytes;
 use martensite_tkernel::ncollection::{Buffer, Vec3};
-use martensite_tkernel::standard::StandardTransient;
 
 /// `size_t(-1)`: the `TopToDown` value of a bottom-up image.
 pub const IMAGE_BOTTOM_UP: usize = usize::MAX;
@@ -19,7 +18,7 @@ pub const IMAGE_BOTTOM_UP: usize = usize::MAX;
 pub struct ImagePixMapData {
     /// The `Standard_Transient` base of the native `NCollection_Buffer`; it carries the
     /// `Image_PixMapData` runtime descriptor only (a clone starts a fresh count).
-    transient: StandardTransient,
+
     /// The buffer (`myData`, `mySize`); `None` for a null buffer.
     bytes: Option<PixelBytes>,
     /// `myTopRowPtr` as an offset into the buffer.
@@ -41,7 +40,7 @@ pub struct ImagePixMapData {
 }
 
 // DEFINE_STANDARD_RTTIEXT(Image_PixMapData, NCollection_Buffer).
-martensite_tkernel::impl_transient!(ImagePixMapData, "Image_PixMapData", Buffer, transient);
+martensite_tkernel::impl_transient!(ImagePixMapData, "Image_PixMapData", Buffer);
 
 /// The buffer and layout, without the reference-count base.
 impl PartialEq for ImagePixMapData {
@@ -66,7 +65,6 @@ impl Default for ImagePixMapData {
     /// A null buffer, zero sizes and bottom-up rows, as `Image_PixMapData()`.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             bytes: None,
             top_row: 0,
             size_bpp: 0,
@@ -309,7 +307,7 @@ impl ImagePixMapData {
 #[cfg(test)]
 mod rtti_tests {
     use super::*;
-    use martensite_tkernel::standard::{RuntimeTyped, Transient};
+    use martensite_tkernel::standard::{RuntimeTyped, StandardTransient, Transient};
 
     /// `Image_PixMapData::DynamicType()` names the class, its parent `NCollection_Buffer`.
     #[test]

@@ -4,19 +4,17 @@ use super::protected::ProtectedAccess;
 use super::vector::GeomVector;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 
 /// A vector with magnitude; `Handle::new(GeomVectorWithMagnitude::new(3.0, 4.0, 0.0))`.
 pub struct GeomVectorWithMagnitude {
-    parent: StandardTransient,
     state: SharedState<Vector3>,
 }
 impl_transient!(
     GeomVectorWithMagnitude,
     "Geom_VectorWithMagnitude",
     dyn GeomVector,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomVector]
 );
 impl Clone for GeomVectorWithMagnitude {
@@ -29,7 +27,6 @@ impl GeomVectorWithMagnitude {
     /// `GeomVectorWithMagnitude::from_vec(Vector3::new(1.0, 0.0, 0.0))`.
     pub fn from_vec(vector: Vector3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(vector),
         }
     }
@@ -124,7 +121,7 @@ impl GeomGeometry for GeomVectorWithMagnitude {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
 }
 impl GeomVector for GeomVectorWithMagnitude {
@@ -145,7 +142,7 @@ impl GeomVector for GeomVectorWithMagnitude {
     fn crossed(&self, other: &dyn GeomVector) -> Result<Handle<dyn GeomVector>, Failure> {
         let mut value: Vector3 = self.vec();
         value.cross(other.vec());
-        Ok(Handle::new(Self::from_vec(value)).cast())
+        Ok(Handle::new(Self::from_vec(value)).into_upcast())
     }
     fn cross_cross(&self, v1: &dyn GeomVector, v2: &dyn GeomVector) -> Result<(), Failure> {
         let (first, second) = (v1.vec(), v2.vec());
@@ -159,6 +156,6 @@ impl GeomVector for GeomVectorWithMagnitude {
     ) -> Result<Handle<dyn GeomVector>, Failure> {
         let mut value: Vector3 = self.vec();
         value.cross_cross(v1.vec(), v2.vec());
-        Ok(Handle::new(Self::from_vec(value)).cast())
+        Ok(Handle::new(Self::from_vec(value)).into_upcast())
     }
 }

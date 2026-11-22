@@ -48,8 +48,8 @@ fn replay_emission_row(row: &str) {
 }
 struct ColoredEmissionFixture {
     object: Handle<AisColoredShape>,
-    base: Handle<AisColoredDrawer>,
-    custom: Handle<AisColoredDrawer>,
+    base: Handle<dyn AisColoredDrawerSource>,
+    custom: Handle<dyn AisColoredDrawerSource>,
     opened: AisColoredOpenedCompounds,
     closed: AisColoredDrawerCompounds,
 }
@@ -60,8 +60,10 @@ impl ColoredEmissionFixture {
         let object = AisColoredShape::new(&shape);
         object.attributes().set_auto_triangulation(false);
         object.attributes().setup_own_defaults().unwrap();
-        let base = Handle::new(AisColoredDrawer::new(&object.attributes()));
-        let custom = Handle::new(AisColoredDrawer::new(&object.attributes()));
+        let base = Handle::new(AisColoredDrawer::new(&object.attributes()))
+            .into_upcast::<dyn AisColoredDrawerSource>();
+        let custom = Handle::new(AisColoredDrawer::new(&object.attributes()))
+            .into_upcast::<dyn AisColoredDrawerSource>();
         let styles = emission_styles(&input, &shape, &custom, scenario);
         configure_emission_flags(&object, scenario);
         let scene = Self {
@@ -105,7 +107,7 @@ fn initialize_emission_custom_shading(custom: &AisColoredDrawer) {
 fn emission_styles(
     input: &geometry::ColoredExpansionInputs,
     shape: &Shape,
-    custom: &Handle<AisColoredDrawer>,
+    custom: &Handle<dyn AisColoredDrawerSource>,
     scenario: usize,
 ) -> AisShapeDrawerMap {
     let styles = AisShapeDrawerMap::default();

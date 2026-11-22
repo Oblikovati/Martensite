@@ -6,6 +6,7 @@ use crate::{
     error::rejected,
 };
 use martensite_tkernel::standard::Handle;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 struct CapGroup {
     group: Handle<Graphic3dDrawGroup>,
@@ -16,7 +17,7 @@ pub(crate) struct CappingScene<'a> {
     pub extent: [u32; 2],
     pub fields: &'a Graphic3dCStructureFields,
     pub rendering: &'a Graphic3dRenderingParams,
-    pub clipping: &'a Handle<Graphic3dSequenceOfHClipPlane>,
+    pub clipping: &'a Handle<dyn Graphic3dClipPlaneSequenceSource>,
     pub elements: &'a crate::render_element_pass::RenderElementPass,
 }
 impl CappingScene<'_> {

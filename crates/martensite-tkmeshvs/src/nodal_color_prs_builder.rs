@@ -17,7 +17,7 @@ use crate::prs_builder::{MeshVSPrsBuilder, MeshVSPrsBuilderBase, MeshVSPrsBuilde
 use crate::selection_policy::MESHVS_BP_NODAL_COLOR;
 use martensite_tkernel::ncollection::{DataMap, Sequence};
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 
 /// The private fields of `MeshVSNodalColorPrsBuilder`.
@@ -36,13 +36,11 @@ pub struct MeshVSNodalColorFields {
 
 /// The builder of node colors; `MeshVSNodalColorPrsBuilder::with_defaults(&mesh)`.
 pub struct MeshVSNodalColorPrsBuilder {
-    transient: StandardTransient,
     base: MeshVSPrsBuilderBase,
     /// The private fields; `builder.fields.read().use_texture`.
     pub fields: SharedState<MeshVSNodalColorFields>,
 }
-martensite_tkernel::impl_transient!(MeshVSNodalColorPrsBuilder, "MeshVSNodalColorPrsBuilder", dyn MeshVSPrsBuilder, transient,
-    interfaces: [dyn MeshVSPrsBuilder]);
+martensite_tkernel::impl_transient!(MeshVSNodalColorPrsBuilder, "MeshVSNodalColorPrsBuilder", dyn MeshVSPrsBuilder, interfaces: [dyn MeshVSPrsBuilder]);
 
 impl MeshVSNodalColorPrsBuilder {
     /// Colors, gray invalid
@@ -55,7 +53,6 @@ impl MeshVSNodalColorPrsBuilder {
         priority: i32,
     ) -> Self {
         let builder = Self {
-            transient: StandardTransient::default(),
             base: MeshVSPrsBuilderBase::new(parent, flags, data_source, id, priority),
             fields: SharedState::new(MeshVSNodalColorFields {
                 node_colors: DataMap::default(),

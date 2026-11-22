@@ -184,7 +184,7 @@ impl AdjacencyView {
         for [x, y] in points {
             array.add_vertex(*x, *y, 0.).unwrap();
         }
-        group.add_primitive_array(&array, true);
+        group.add_primitive_array(&array.upcast(), true);
         structure
     }
 
@@ -216,7 +216,7 @@ fn wide_segments(structure: &Handle<Graphic3dStructure>) {
     for [x, y] in WIDE_SEGMENTS {
         array.add_vertex(x, y, 0.).unwrap();
     }
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
 }
 
 /// Each case displayed alone and dumped, in `CASES` order.

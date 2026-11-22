@@ -6,7 +6,7 @@ impl<T: Default> DynamicArray<T> {
     /// Uses temporary construction and move assignment for an existing slot.
     /// `array.emplace_value_with_assignment(0, || 7, |target, donor| *target = *donor)?`.
     /// New indices default-construct gaps and construct directly without assignment.
-    pub fn emplace_value_with_assignment<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn emplace_value_with_assignment<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         construct: impl FnOnce() -> T,
@@ -34,7 +34,7 @@ impl<T: Default> DynamicArray<T> {
     /// destroy a dead slot. Even unwinding before a catch must not automatically drop the array.
     /// Transfer must leave its donor valid on unwind. A failed initial constructor leaves the
     /// old target live; callers must distinguish this from a failed transfer before repairing.
-    pub unsafe fn emplace_value_with_reconstruction<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) unsafe fn emplace_value_with_reconstruction<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         construct: impl FnOnce() -> T,
@@ -58,7 +58,7 @@ impl<T: Default> DynamicArray<T> {
     /// element access or automatic Drop, including cleanup during unwinding before a catch. Size
     /// remains queryable without accessing elements. Never
     /// read or destroy the dead slot. New-index construction retains the existing staging policy.
-    pub unsafe fn emplace_value_with_direct_replacement<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) unsafe fn emplace_value_with_direct_replacement<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         construct: impl FnOnce() -> T,

@@ -18,7 +18,7 @@ pub(super) struct CircleInputStamp {
 pub(super) fn circle_input_stamp(shape: &Shape) -> CircleInputStamp {
     use martensite_tkg3d::geom::GeomCircle;
     let (curve, first, last) = BRepTool::curve(&edge(shape).unwrap()).unwrap();
-    let circle = curve.cast::<GeomCircle>();
+    let circle = curve.downcast::<GeomCircle>();
     let geometry_bits = circle_geometry_bits(circle.get().unwrap());
     CircleInputStamp {
         representations: candidate_representation_count(shape),

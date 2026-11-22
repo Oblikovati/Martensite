@@ -34,10 +34,10 @@ impl ShapeUpgradeShapeDivideClosedEdges {
     pub fn set_nb_split_points(&self, _count: i32) {
         let edge = Handle::new(ShapeUpgradeClosedEdgeDivide::new());
         let wire = Handle::new(ShapeUpgradeWireDivide::new());
-        wire.set_edge_divide_tool(&edge.cast());
+        wire.set_edge_divide_tool(&edge.into_upcast());
         let face = Handle::new(ShapeUpgradeFaceDivide::empty());
-        face.set_wire_divide_tool(&wire);
+        face.set_wire_divide_tool(&wire.into_upcast());
         face.set_split_surface_tool(&Handle::default());
-        self.set_split_face_tool(&face);
+        self.set_split_face_tool(&face.into_upcast());
     }
 }

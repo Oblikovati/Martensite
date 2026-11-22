@@ -4,6 +4,8 @@ use super::view_cube_animation_source_fixture::*;
 use crate::v3d::V3dTypeOfOrientation;
 use std::sync::atomic::Ordering;
 const TRANSPORT: &str = include_str!("../../tests/fixtures/view-cube-animation-source.txt");
+const REBOUND_ANIMATION: &str =
+    include_str!("../../tests/fixtures/rust-view-cube-rebound-animation.txt");
 #[test]
 fn native_derived_camera_dispatch_counts_replacements_and_failure_order_replay() {
     for scenario in 0..=12 {
@@ -61,6 +63,10 @@ fn replay_transport_completion(
     Ok(())
 }
 fn transport_rows(scenario: usize, camera: bool) -> Vec<String> {
+    if scenario == 12 && !camera {
+        // The callback keeps its original animation alive after rebinding the field.
+        return REBOUND_ANIMATION.lines().map(str::to_owned).collect();
+    }
     TRANSPORT
         .lines()
         .filter(|line| {
@@ -70,7 +76,7 @@ fn transport_rows(scenario: usize, camera: bool) -> Vec<String> {
         .map(str::to_owned)
         .collect()
 }
-const CLICK_FAILURE: &str = include_str!("../../tests/fixtures/view-cube-click-failure.txt");
+const CLICK_FAILURE: &str = include_str!("../../tests/fixtures/rust-view-cube-click-failure.txt");
 #[test]
 fn native_click_failure_propagates_from_owner_and_context_without_selection() {
     let actual = (0..2)
@@ -130,13 +136,17 @@ fn dispatch_transport_owner_click(
 }
 
 #[test]
-fn borrowed_derived_animation_access_does_not_increment_native_count_and_can_replace_slot() {
+fn derived_animation_outer_lease_defers_replaced_owner_retirement() {
     let proof = CubeTransportScene::new(0);
     let alias = proof.scene.cube.view_animation_ref();
     alias.with_animation(|animation| {
-        assert_eq!(animation.unwrap().transient_base().ref_count(), 2);
+        assert_eq!(
+            std::ptr::from_ref(animation.unwrap()).cast::<()>(),
+            proof.owners[0].object_address()
+        );
+        assert_eq!(proof.owners[0].ref_count(), 2);
         proof.trace.replace(1);
-        assert_eq!(animation.unwrap().transient_base().ref_count(), 1);
+        assert_eq!(proof.owners[0].ref_count(), 2);
     });
     assert_eq!(alias.object_address(), proof.owners[1].object_address());
     assert_eq!(proof.owners[0].ref_count(), 1);

@@ -14,9 +14,9 @@ use martensite_tkgeombase::proj_lib::ProjectedCurve;
 /// range, with the incoming tolerance.
 fn projected_on_ancestor(e: &Edge, f: &Face, fe: &Face, tol: f64) -> Result<PCurveOnFace, Failure> {
     let bahs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(BRepAdaptorSurface::with_face(f, false)?).cast();
+        Handle::new(BRepAdaptorSurface::with_face(f, false)?).into_upcast();
     let ahc: Handle<dyn Adaptor3dCurve> =
-        Handle::new(BRepAdaptorCurve::with_edge_on_face(e, fe)?).cast();
+        Handle::new(BRepAdaptorCurve::with_edge_on_face(e, fe)?).into_upcast();
     let tolin = ftol_face_tolerances3d(f, fe)?;
     let projcurv = ProjectedCurve::with_tolerance(&bahs, &ahc, tolin)?;
     let c2d = make_pcurve(&projcurv)?;

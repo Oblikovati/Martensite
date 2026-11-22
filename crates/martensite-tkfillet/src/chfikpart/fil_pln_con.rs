@@ -177,9 +177,9 @@ pub fn make_fillet_pln_con(
         return Ok(false);
     };
     let surf = if tf.c1sphere {
-        Handle::new(GeomSphericalSurface::new(tf.ax, radius)?).cast()
+        Handle::new(GeomSphericalSurface::new(tf.ax, radius)?).into_upcast()
     } else {
-        Handle::new(GeomToroidalSurface::new(tf.ax, tf.rad, radius)?).cast()
+        Handle::new(GeomToroidalSurface::new(tf.ax, tf.rad, radius)?).into_upcast()
     };
     set_surf(data, surf, dstr);
     let p = Point3::new(
@@ -225,7 +225,7 @@ pub fn make_fillet_pln_con(
         circ_ax2,
         p.distance(&pp),
     )?))
-    .cast();
+    .into_upcast();
     let trans = fwd_if((nor_fil.dot(nor_con) <= 0.) != plandab);
     let pc_fil = line2(Point2::new(0., v2), Direction2::X);
     set_interference(

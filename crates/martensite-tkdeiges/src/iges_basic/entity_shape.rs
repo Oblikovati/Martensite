@@ -9,6 +9,7 @@ use crate::iges_data::{
 };
 use martensite_tkernel::message::Msg;
 use martensite_tkernel::ncollection::{HArray1, HArray2};
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped};
 use martensite_tkmath::gp::{Direction3, GeneralTransform3, Point3, Vector3, Xyz};
 
@@ -16,7 +17,7 @@ use martensite_tkmath::gp::{Direction3, GeneralTransform3, Point3, Vector3, Xyz}
 ///
 /// # Errors
 /// A null object failure for a null handle.
-pub fn iges_is_kind<T: ?Sized + RuntimeTyped>(
+pub fn iges_is_kind<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     handle: &Handle<T>,
     kind: &RuntimeType,
     where_called: &str,
@@ -213,8 +214,8 @@ pub(crate) fn spline_coefficients() -> Result<Handle<HArray2<Handle<HArray1<f64>
 
 /// Operands of a post-order tree: two lines, then an operation.
 #[cfg(test)]
-pub(crate) fn boolean_tree_operands() -> Result<Handle<HArray1<Handle<IgesDataIgesEntity>>>, Failure>
-{
+pub(crate) fn boolean_tree_operands()
+-> Result<Handle<HArray1<Handle<dyn crate::iges_data::IgesDataEntityKind>>>, Failure> {
     use crate::iges_data::{iges_array1_set, iges_new_array1};
     use crate::iges_geom::samples_01::sample_iges_geom_line;
     let operands = iges_new_array1(1, 3)?;

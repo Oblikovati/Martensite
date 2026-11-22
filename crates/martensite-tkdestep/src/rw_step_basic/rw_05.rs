@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(
     RwStepBasicRwCharacterizedObject,
@@ -209,7 +210,7 @@ impl RwStepBasicRwConversionBasedUnit {
         )?;
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 2, "name", ach, &mut a_name)?;
-        let mut a_conversion_factor: Handle<StandardTransient> = Default::default();
+        let mut a_conversion_factor: Handle<dyn Transient> = Default::default();
         data.read_entity(
             num,
             3,

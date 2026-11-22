@@ -23,7 +23,8 @@ use crate::iges_data::{
 };
 use crate::iges_data::{IgesDataDumpResult, iges_dump_xyz_l, iges_live, iges_real_text};
 use crate::iges_geom::{IgesGeomDirection, IgesGeomPoint};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -264,7 +265,7 @@ impl IgesSolidToolConicalSurface {
         temp_angle = another_live.semi_angle();
         if another_live.is_parametrised() {
             let temp_refdir = tc
-                .transferred(&another_live.reference_dir().cast::<StandardTransient>())?
+                .transferred(&another_live.reference_dir().cast::<dyn Transient>())?
                 .cast::<IgesGeomDirection>();
             ent_live.init(
                 &temp_location,

@@ -6,7 +6,7 @@ use crate::brep_graph::layer::{AttachedGraph, BRepGraphLayer, LayerBase, LayerTy
 use crate::brep_graph::{ItemId, NodeId, RefId};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Guid, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::OnceLock;
 
@@ -46,11 +46,10 @@ struct DeferredRecords {
 /// ```
 #[derive(Default)]
 pub struct LayerDeferred {
-    transient: StandardTransient,
     base: LayerBase,
     records: SharedState<DeferredRecords>,
 }
-impl_transient!(LayerDeferred, "BRepGraph_LayerDeferred", dyn BRepGraphLayer, transient,
+impl_transient!(LayerDeferred, "BRepGraph_LayerDeferred", dyn BRepGraphLayer,
     interfaces: [dyn BRepGraphLayer]);
 
 /// `GetID()`: 9b6555f8-4353-414c-a067-c96a5e47fef7.

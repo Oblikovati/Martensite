@@ -287,7 +287,8 @@ fn coincident_curve_edge(mode: i32) -> Edge {
         Point3::new(0.5, 0., 0.),
     ];
     let poles = Array1::from_shared(&points, 1);
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&poles).unwrap()).cast();
+    let curve: Handle<dyn GeomCurve> =
+        Handle::new(GeomBezierCurve::new(&poles).unwrap()).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve_params(&curve, 0., 1.)
         .unwrap()
         .edge()

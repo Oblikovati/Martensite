@@ -42,7 +42,8 @@ impl<'a> EdgeProjection<'a> {
     fn new(edge: &'a Edge, context: Option<&'a Context>) -> Result<Self, Failure> {
         let tolerance = BRepTool::edge_tolerance(edge)?;
         let (spatial, first, last) = BRepTool::curve(edge)?;
-        let trimmed = Handle::new(GeomTrimmedCurve::new(&spatial, first, last, true, true)?).cast();
+        let trimmed =
+            Handle::new(GeomTrimmedCurve::new(&spatial, first, last, true, true)?).into_upcast();
         Ok(Self {
             edge,
             spatial,

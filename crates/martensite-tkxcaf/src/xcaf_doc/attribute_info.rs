@@ -12,7 +12,7 @@ use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tklcaf::tdata_std::{
     TDataStdAsciiString, TDataStdByteArray, TDataStdComment, TDataStdGenericExtString,
-    TDataStdInteger, TDataStdIntegerArray, TDataStdName, TDataStdReal, TDataStdRealArray,
+    TDataStdInteger, TDataStdIntegerArray, TDataStdName, TDataStdRealArray, TDataStdRealSource,
     TDataStdTreeNode, TDataStdUAttribute,
 };
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeState, TdfReference, TdfTagSource};
@@ -252,7 +252,7 @@ fn standard_info(attribute: &Handle<dyn TdfAttribute>) -> Result<Option<String>,
     if let Some(integer) = attribute.cast::<TDataStdInteger>().get() {
         return Ok(Some(integer.get().to_string()));
     }
-    if let Some(value) = attribute.cast::<TDataStdReal>().get() {
+    if let Some(value) = attribute.view::<dyn TDataStdRealSource>().get() {
         return Ok(Some(real(value.get())));
     }
     Ok(text_info(attribute))

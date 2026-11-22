@@ -10,7 +10,7 @@ use martensite_tkbrep::topods::{Edge, Shape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::real::real_last;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dTrimmedCurve};
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
@@ -44,11 +44,10 @@ pub(super) struct EdgeFields {
 /// assert_eq!(checker.status().unwrap().first(), Some(&BRepCheckStatus::No3DCurve));
 /// ```
 pub struct BRepCheckEdge {
-    transient: StandardTransient,
     base: ResultBase,
     pub(super) fields: SharedState<EdgeFields>,
 }
-impl_transient!(BRepCheckEdge, "BRepCheck_Edge", dyn BRepCheckResult, transient,
+impl_transient!(BRepCheckEdge, "BRepCheck_Edge", dyn BRepCheckResult,
     interfaces: [dyn BRepCheckResult]);
 
 impl BRepCheckEdge {
@@ -56,7 +55,6 @@ impl BRepCheckEdge {
     /// controls on, approximate method; `BRepCheckEdge::new(&edge)?`.
     pub fn new(edge: &Edge) -> Result<Self, Failure> {
         let checker = Self {
-            transient: StandardTransient::default(),
             base: ResultBase::new(),
             fields: SharedState::new(EdgeFields {
                 cref: Handle::default(),
@@ -193,7 +191,7 @@ impl BRepCheckEdge {
         let u1 = curve.transformed_parameter(first, transform);
         let u2 = curve.transformed_parameter(last, transform);
         let adaptor = GeomAdaptorCurve::with_range(&c3d, u1, u2)?;
-        Ok(Some(Handle::new(adaptor).cast()))
+        Ok(Some(Handle::new(adaptor).into_upcast()))
     }
 }
 
@@ -299,9 +297,9 @@ pub(super) fn curve_on_surface(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<Handle<Adaptor3dCurveOnSurface>, Failure> {
     let curve: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(pc, first, last)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(pc, first, last)?).into_upcast();
     let adapted: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surface)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
     Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(
         &curve, &adapted,
     )?))

@@ -6,7 +6,7 @@ use super::{IFSelectEditor, IFSelectListEditor, IFSelectTextList};
 use crate::interface::InterfaceInterfaceModel;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::sync::OnceLock;
@@ -59,7 +59,7 @@ pub(super) struct FormState {
     pub(super) theorigs: Vec<FormItem>,
     pub(super) themodifs: Vec<FormItem>,
     pub(super) thestatus: Vec<i32>,
-    pub(super) theent: Handle<StandardTransient>,
+    pub(super) theent: Handle<dyn Transient>,
     pub(super) themodel: Handle<dyn InterfaceInterfaceModel>,
     pub(super) thetouched: i32,
 }
@@ -73,17 +73,11 @@ pub(super) struct FormState {
 /// assert!(IFSelectEditForm::new(&Handle::default(), false, true, "").is_err());
 /// ```
 pub struct IFSelectEditForm {
-    transient: StandardTransient,
     pub(super) theeditor: Handle<dyn IFSelectEditor>,
     pub(super) state: SharedState<FormState>,
     this: OnceLock<WeakHandle<IFSelectEditForm>>,
 }
-impl_transient!(
-    IFSelectEditForm,
-    "IFSelectEditForm",
-    StandardTransient,
-    transient
-);
+impl_transient!(IFSelectEditForm, "IFSelectEditForm", dyn Transient);
 
 /// The `StandardOutOfRange` of an array access.
 pub(super) fn slot_out_of_range(what: &str, index: i32, upper: usize) -> Failure {
@@ -132,7 +126,6 @@ impl IFSelectEditForm {
             thetouched: 0,
         };
         let form = Handle::new(Self {
-            transient: StandardTransient::default(),
             theeditor: editor.clone(),
             state: SharedState::new(state),
             this: OnceLock::new(),
@@ -191,7 +184,7 @@ impl IFSelectEditForm {
     /// `SetData(ent, model)`.
     pub fn set_data(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) {
         let mut st = self.state.write();
@@ -199,7 +192,7 @@ impl IFSelectEditForm {
         st.themodel = model.clone();
     }
     /// `SetEntity(ent)`.
-    pub fn set_entity(&self, ent: &Handle<StandardTransient>) {
+    pub fn set_entity(&self, ent: &Handle<dyn Transient>) {
         self.state.write().theent = ent.clone();
     }
     /// `SetModel(model)`.
@@ -207,7 +200,7 @@ impl IFSelectEditForm {
         self.state.write().themodel = model.clone();
     }
     /// `Entity`.
-    pub fn entity(&self) -> Handle<StandardTransient> {
+    pub fn entity(&self) -> Handle<dyn Transient> {
         self.state.read().theent.clone()
     }
     /// `Model`.
@@ -303,7 +296,7 @@ impl IFSelectEditForm {
     /// The editor loads the form from `ent` and `model`; true when loaded.
     fn load_by_editor(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         self.state.write().thetouched = 0;
@@ -312,7 +305,7 @@ impl IFSelectEditForm {
     /// `LoadData(ent, model)`: loaded from `ent` and `model`, which are recorded.
     pub fn load_data(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         if !self.load_by_editor(ent, model)? {
@@ -323,7 +316,7 @@ impl IFSelectEditForm {
         Ok(true)
     }
     /// `LoadEntity(ent)`: loaded from `ent` alone, which is recorded.
-    pub fn load_entity(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn load_entity(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         if !self.load_by_editor(ent, &Handle::default())? {
             return Ok(false);
         }

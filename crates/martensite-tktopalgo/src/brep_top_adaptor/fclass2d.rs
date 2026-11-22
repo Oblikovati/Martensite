@@ -43,7 +43,7 @@ enum ClassificationMode {
 /// # use martensite_tkmath::gp::{Direction3, Point3};
 /// # let plane = GeomPlane::from_point(Point3::new(0.0, 0.0, 0.0), Direction3::new(0.0, 0.0, 1.0).unwrap()).unwrap();
 /// # let mut face = Face::default();
-/// # BRepBuilder::default().make_face_on_surface(&mut face, &Handle::new(plane).cast(), 1e-7).unwrap();
+/// # BRepBuilder::default().make_face_on_surface(&mut face, &Handle::new(plane).into_upcast(), 1e-7).unwrap();
 /// // A face without wires is the whole surface.
 /// let classifier = BRepTopAdaptorFClass2d::new(&face, 1e-9).unwrap();
 /// assert_eq!(classifier.perform(Point2::new(3.0, 4.0), true).unwrap(), State::In);

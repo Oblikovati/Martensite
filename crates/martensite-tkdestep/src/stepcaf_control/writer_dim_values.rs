@@ -39,12 +39,15 @@ use martensite_tkxsbase::xs_control::XSControlWorkSession;
 
 /// A representation item array under construction.
 struct ValueItems {
-    items: Handle<HArray1<Handle<StepReprRepresentationItem>>>,
+    items: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
     next: i32,
 }
 
 impl ValueItems {
-    fn push(&mut self, item: Handle<StepReprRepresentationItem>) -> Result<(), Failure> {
+    fn push(
+        &mut self,
+        item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    ) -> Result<(), Failure> {
         step_array1_set(&self.items, self.next, item, WHERE)?;
         self.next += 1;
         Ok(())
@@ -96,10 +99,13 @@ fn nominal_qualifiers(
 fn modifiers_item(
     ws: &Handle<XSControlWorkSession>,
     object: &XCAFDimTolObjectsDimensionObject,
-) -> Result<Handle<StepReprRepresentationItem>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Failure> {
     let modifiers = object.get_modifiers();
     let compound = Handle::new(StepReprCompoundRepresentationItem::new());
-    let items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, modifiers.len() as i32)?;
+    let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+        1,
+        modifiers.len() as i32,
+    )?;
     for (index, modifier) in modifiers.iter().enumerate() {
         let item = Handle::new(StepReprDescriptiveRepresentationItem::new());
         item.init(
@@ -117,7 +123,7 @@ fn modifiers_item(
 fn orientation_item(
     object: &XCAFDimTolObjectsDimensionObject,
     factors: &StepDataFactors,
-) -> Result<Handle<StepReprRepresentationItem>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Failure> {
     let orientation = Handle::new(StepGeomAxis2Placement3d::new());
     let mut direction = Direction3::default();
     object.get_direction(&mut direction);
@@ -193,7 +199,7 @@ fn write_tolerances(
 pub(super) fn write_dim_values(
     ws: &Handle<XSControlWorkSession>,
     object: &XCAFDimTolObjectsDimensionObject,
-    context: &Handle<StepReprRepresentationContext>,
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     dimension: &StepShapeDimensionalCharacteristic,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {
@@ -218,7 +224,9 @@ pub(super) fn write_dim_values(
         + i32::from(is_oriented)
         + object.nb_descriptions();
     let mut values = ValueItems {
-        items: step_new_array1::<Handle<StepReprRepresentationItem>>(1, count)?,
+        items: step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+            1, count,
+        )?,
         next: 1,
     };
     // Nominal value
@@ -291,12 +299,12 @@ pub(super) fn write_dim_values(
 fn derived_point(
     ws: &Handle<XSControlWorkSession>,
     point: &Point3,
-    first: &Handle<StepReprShapeAspect>,
-    related: &Handle<StepReprShapeAspect>,
+    first: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+    related: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     representation: &Handle<StepReprConstructiveGeometryRepresentation>,
     points: &mut Vec<Handle<StepGeomCartesianPoint>>,
     factors: &StepDataFactors,
-) -> Result<Handle<StepReprShapeAspect>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
     let model = model_of(ws)?;
     let created = GeomToStepMakeCartesianPoint::from_pnt(point, factors.length_factor()).value()?;
     points.push(created.clone());
@@ -330,8 +338,8 @@ pub(super) fn write_derived_geometry(
     ws: &Handle<XSControlWorkSession>,
     object: &XCAFDimTolObjectsDimensionObject,
     representation: &Handle<StepReprConstructiveGeometryRepresentation>,
-    first: &mut Handle<StepReprShapeAspect>,
-    second: &mut Handle<StepReprShapeAspect>,
+    first: &mut Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+    second: &mut Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     points: &mut Vec<Handle<StepGeomCartesianPoint>>,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {

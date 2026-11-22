@@ -1,7 +1,7 @@
 //! `TDataXtdPosition`: a point position attribute.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdata_std::support::{cast_attribute, find_or_add};
@@ -26,11 +26,10 @@ const POSITION_ID: Guid = guid_from_text("55553252-ce0c-11d1-b5d8-00a0c9064368")
 /// assert_eq!(position, Point3::new(1.0, 2.0, 3.0));
 /// ```
 pub struct TDataXtdPosition {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     position: SharedState<Point3>,
 }
-impl_transient!(TDataXtdPosition, "TDataXtdPosition", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataXtdPosition, "TDataXtdPosition", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataXtdPosition {
     fn default() -> Self {
@@ -60,7 +59,6 @@ impl TDataXtdPosition {
     /// `TDataXtdPosition()`: at the origin.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             position: SharedState::new(Point3::new(0.0, 0.0, 0.0)),
         }
@@ -99,7 +97,7 @@ impl TdfAttribute for TDataXtdPosition {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).upcast()
     }
     fn paste(
         &self,

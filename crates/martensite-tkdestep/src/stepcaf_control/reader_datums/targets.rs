@@ -1,5 +1,6 @@
 //! The datum targets read by `STEPCAFControlReader`.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 impl ReaderState {
     /// `setDatumToXCAF`: the objects of a datum and its targets.
@@ -24,9 +25,10 @@ impl ReaderState {
         let object = Handle::new(XCAFDimTolObjectsDatumObject::new());
         let live_object = step_live(&object, WHERE)?;
         // Collect all links to shapes
-        let mut aspects: Vec<Handle<StepReprShapeAspect>> = Vec::new();
+        let mut aspects: Vec<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>> = Vec::new();
         for sharing in session.sharings(&datum.cast())? {
-            let relationship = sharing.cast::<StepReprShapeAspectRelationship>();
+            let relationship =
+                sharing.cast::<dyn crate::StepEntityBase<StepReprShapeAspectRelationship>>();
             let Some(relationship) = relationship
                 .get()
                 .filter(|live| live.relating_shape_aspect().is_some())
@@ -203,7 +205,7 @@ impl ReaderState {
     /// `readDatumsAP242`: the datums of a tolerance through its datum systems.
     pub(in crate::stepcaf_control) fn read_datums_ap242(
         &mut self,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         gdt_label: &TdfLabel,
         doc: &Handle<TDocStdDocument>,
         ws: &Handle<XSControlWorkSession>,

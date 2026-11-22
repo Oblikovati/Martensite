@@ -6,7 +6,8 @@ use super::reducers::{
 };
 use crate::step_data::StepDataStepModel;
 use crate::step_entity::step_live;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::interface::{InterfaceInterfaceModel, InterfaceModelEntities};
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
 use std::collections::HashSet;
@@ -78,7 +79,7 @@ impl StepTidyDuplicateCleaner {
         let intermediate = Self::sibling_model(live_read)?;
         let live_intermediate = step_live(&intermediate, WHERE)?;
         for rank in 1..=live_read.nb_entities() {
-            let entity: Handle<StandardTransient> = live_read.value(rank)?;
+            let entity: Handle<dyn Transient> = live_read.value(rank)?;
             if !to_remove.contains(&(entity.object_address() as usize)) {
                 live_intermediate.add_with_refs(&entity, 0, false)?;
             }

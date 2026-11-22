@@ -10,9 +10,11 @@ use martensite_tkcdf::{
 };
 use martensite_tkernel::ncollection::IndexedDataMap;
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient, impl_transient_interface_target,
     resource::{ResourceHost, ResourceManager},
-    standard::{Failure, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{
+        Failure, Handle, HandleUpcast, RuntimeType, RuntimeTyped, SharedState, dump::DumpStream,
+    },
     tcollection::{AsciiString, ExtendedString},
 };
 use std::{io, sync::Arc};
@@ -91,7 +93,7 @@ pub trait TDocStdApplication: CdfApplication {
         format: &ExtendedString,
         document: &mut Handle<dyn CdmDocument>,
     ) -> Result<(), Failure> {
-        let created: Handle<dyn CdmDocument> = TDocStdDocument::new(format)?.cast();
+        let created: Handle<dyn CdmDocument> = TDocStdDocument::new(format)?.into_upcast();
         self.init_document(&created)?;
         self.open_document(&created)?;
         *document = created;
@@ -165,7 +167,7 @@ pub trait TDocStdApplication: CdfApplication {
         while iterator.more_document() {
             current += 1;
             if current == index {
-                return Ok(iterator.document().cast());
+                return Ok(iterator.document().into_downcast());
             }
             iterator.next_document();
         }
@@ -188,7 +190,7 @@ pub trait TDocStdApplication: CdfApplication {
     ) -> Result<(), Failure> {
         let mut created: Handle<dyn CdmDocument> = Handle::default();
         self.new_document(format, &mut created)?;
-        *document = created.cast();
+        *document = created.into_downcast();
         Ok(())
     }
     /// `Close(aDoc)`: detaches the owner from the document, then closes it.
@@ -205,7 +207,7 @@ pub trait TDocStdApplication: CdfApplication {
             live(&owner, "TDocStd_Application::Close")?.set_document(&Handle::default());
         }
         target.before_close()?;
-        self.close_document(&document.cast())
+        self.close_document(&document.upcast())
     }
     /// `IsInSession(path)`: the 1-based index of the saved document with that path
     /// (separators unified), 0 when none.
@@ -230,11 +232,24 @@ pub trait TDocStdApplication: CdfApplication {
         )
     }
 }
-impl_transient_interface!(
-    dyn TDocStdApplication,
-    "TDocStd_Application",
-    dyn CdfApplication
-);
+impl RuntimeTyped for dyn TDocStdApplication {
+    const TYPE_NAME: &'static str = TDocStdStandardApplication::TYPE_NAME;
+    fn static_type() -> &'static RuntimeType {
+        TDocStdStandardApplication::static_type()
+    }
+}
+impl_transient_interface_target!(dyn TDocStdApplication);
+
+impl HandleUpcast<dyn CdfApplication> for dyn TDocStdApplication {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn CdfApplication> {
+        owner
+    }
+}
+impl HandleUpcast<dyn martensite_tkcdf::cdm::CdmApplication> for dyn TDocStdApplication {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn martensite_tkcdf::cdm::CdmApplication> {
+        owner
+    }
+}
 
 /// `/` and `\` read as `|`, as `IsInSession` compares paths.
 fn unify_separators(path: &ExtendedString) -> ExtendedString {
@@ -280,10 +295,9 @@ macro_rules! tdoc_std_application_cdf_members {
 /// `TDocStd_Application` itself (`new TDocStd_Application()`).
 #[derive(Default)]
 pub struct TDocStdStandardApplication {
-    transient: StandardTransient,
     base: TDocStdApplicationBase,
 }
-impl_transient!(TDocStdStandardApplication, "TDocStd_Application", dyn CdfApplication, transient,
+impl_transient!(TDocStdStandardApplication, "TDocStd_Application", dyn CdfApplication,
     interfaces: [dyn martensite_tkcdf::cdm::CdmApplication, dyn CdfApplication, dyn TDocStdApplication]);
 impl TDocStdStandardApplication {
     /// `TDocStd_Application()`, already in its bound handle.
@@ -300,7 +314,7 @@ impl TDocStdStandardApplication {
         let application = Handle::new(Self::default());
         if let Some(own) = application.get() {
             martensite_tkcdf::cdm::CdmApplication::application_base(own)
-                .bind_self(&application.cast());
+                .bind_self(&application.upcast());
         }
         application
     }

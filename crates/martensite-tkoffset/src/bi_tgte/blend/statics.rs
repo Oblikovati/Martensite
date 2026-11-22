@@ -204,7 +204,7 @@ pub(super) fn k_part_curve3d(
                     if d.is_opposite(dx2d, precision::angular()) {
                         circle.reverse()?;
                     }
-                    update(Handle::new(circle).cast())?;
+                    update(Handle::new(circle).into_upcast())?;
                 }
             } else if d.is_parallel(dy2d, precision::angular()) {
                 // Iso U.
@@ -228,7 +228,7 @@ pub(super) fn k_part_curve3d(
                         if d.is_opposite(dy2d, precision::angular()) {
                             circle.reverse()?;
                         }
-                        update(Handle::new(circle).cast())?;
+                        update(Handle::new(circle).into_upcast())?;
                     }
                     SurfaceType::Cylinder => {
                         let cyl = s.cylinder()?;
@@ -239,7 +239,7 @@ pub(super) fn k_part_curve3d(
                         if d.is_opposite(dy2d, precision::angular()) {
                             line.reverse()?;
                         }
-                        update(Handle::new(line).cast())?;
+                        update(Handle::new(line).into_upcast())?;
                     }
                     SurfaceType::Cone => {
                         let cone = s.cone()?;
@@ -255,7 +255,7 @@ pub(super) fn k_part_curve3d(
                         if d.is_opposite(dy2d, precision::angular()) {
                             line.reverse()?;
                         }
-                        update(Handle::new(line).cast())?;
+                        update(Handle::new(line).into_upcast())?;
                     }
                     _ => {}
                 }
@@ -330,7 +330,8 @@ impl MakeCurveFunction<'_> {
 /// curve on edge by C1 B-splines of degree 8 on its parameter range.
 pub(super) fn make_curve(hc: &BiTgteCurveOnEdge) -> Result<Handle<dyn GeomCurve>, Failure> {
     let c: Handle<dyn GeomCurve> = if hc.get_type()? == CurveType::Circle {
-        let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(hc.circle()?)).cast();
+        let circle: Handle<dyn GeomCurve> =
+            Handle::new(GeomCircle::from_circ(hc.circle()?)).into_upcast();
         Handle::new(GeomTrimmedCurve::new(
             &circle,
             hc.first_parameter()?,
@@ -338,7 +339,7 @@ pub(super) fn make_curve(hc: &BiTgteCurveOnEdge) -> Result<Handle<dyn GeomCurve>
             true,
             true,
         )?)
-        .cast()
+        .into_upcast()
     } else {
         // the approximation is done
         let mut base = FunctionBase::new();
@@ -394,7 +395,7 @@ pub(super) fn make_curve(hc: &BiTgteCurveOnEdge) -> Result<Handle<dyn GeomCurve>
             conv.degree(),
             false,
         )?)
-        .cast()
+        .into_upcast()
     };
     Ok(c)
 }
@@ -450,7 +451,7 @@ pub(super) fn make_degenerated_edge(
     let tol = precision::confusion();
     // kill trimmed curves
     let mut c = cc.clone();
-    while let Some(ct) = c.clone().cast::<GeomTrimmedCurve>().get() {
+    while let Some(ct) = c.downcast_ref::<GeomTrimmedCurve>() {
         c = ct.basis_curve();
     }
 
@@ -525,10 +526,9 @@ pub(super) fn find_created_edge(
             let et = topods::edge(et)?;
             let mut cet = BRepTool::curve_with_location(&et)?.curve;
             if live(&cet, "curve")?.is_instance_name("Geom_TrimmedCurve") {
-                cet = live(&cet.clone().cast::<GeomTrimmedCurve>(), "curve")?.basis_curve();
+                cet = live(&cet.downcast::<GeomTrimmedCurve>(), "curve")?.basis_curve();
             }
-            let circ = cet.cast::<GeomCircle>();
-            let Some(circ) = circ.get() else {
+            let Some(circ) = cet.downcast_ref::<GeomCircle>() else {
                 continue;
             };
             if (circ.radius() - radius.abs()).abs() > tol {

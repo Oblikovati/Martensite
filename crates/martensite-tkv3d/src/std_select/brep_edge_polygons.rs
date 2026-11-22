@@ -1,8 +1,11 @@
 //! Existing edge polygons take precedence over analytical geometry; lower bounds are normalized in native order.
-use martensite_tkbrep::{brep::BRepTool, topods::Edge};
+use martensite_tkbrep::brep::BRepTool;
+use martensite_tkbrep::topods::EdgeView;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::Point3;
-pub(super) fn brep_selection_polygon_points(edge: &Edge) -> Result<Option<Vec<Point3>>, Failure> {
+pub(super) fn brep_selection_polygon_points(
+    edge: &EdgeView<'_>,
+) -> Result<Option<Vec<Point3>>, Failure> {
     let (polygon, placement) = BRepTool::polygon3d(edge)?;
     if !polygon.is_null() {
         let nodes = polygon.nodes();
@@ -21,7 +24,9 @@ pub(super) fn brep_selection_polygon_points(edge: &Edge) -> Result<Option<Vec<Po
     }
     brep_selection_triangulated_polygon(edge)
 }
-fn brep_selection_triangulated_polygon(edge: &Edge) -> Result<Option<Vec<Point3>>, Failure> {
+fn brep_selection_triangulated_polygon(
+    edge: &EdgeView<'_>,
+) -> Result<Option<Vec<Point3>>, Failure> {
     let (polygon, mesh, placement) = BRepTool::first_polygon_on_triangulation(edge)?;
     if polygon.is_null() {
         return Ok(None);

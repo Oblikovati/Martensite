@@ -260,6 +260,6 @@ impl Variational {
         j_new.set_weight(w_quadratic, w_quality, self.percent)?;
         j_new.set_point_weights(tbpoid);
         j_new.set_curve(c_new)?;
-        Ok(Handle::new(j_new).cast())
+        Ok(Handle::new(j_new).into_upcast())
     }
 }

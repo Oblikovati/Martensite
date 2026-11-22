@@ -3,7 +3,7 @@ use super::{
     BRepToIgesBREntity, BRepToIgesBRShell, BRepToIgesBRWire, BRepToIgesOriginMap, entity_array,
 };
 use crate::iges_basic::IgesBasicGroup;
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, CompSolid, Compound, Shape, Solid};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
@@ -40,9 +40,9 @@ impl DerefMut for BRepToIgesBRSolid {
 
 /// The result of a list: its only entity, or a group of all of them.
 fn single_or_group(
-    entities: &[Handle<IgesDataIgesEntity>],
-    last: Handle<IgesDataIgesEntity>,
-) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    entities: &[Handle<dyn IgesDataEntityKind>],
+    last: Handle<dyn IgesDataEntityKind>,
+) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
     if entities.len() == 1 {
         return Ok(last);
     }
@@ -54,8 +54,8 @@ fn single_or_group(
 /// The entities of the subshapes of one kind, out of `avoid`, each by `transfer`.
 struct SubshapeWalk<'a> {
     owner: &'a Shape,
-    entities: Vec<Handle<IgesDataIgesEntity>>,
-    last: Handle<IgesDataIgesEntity>,
+    entities: Vec<Handle<dyn IgesDataEntityKind>>,
+    last: Handle<dyn IgesDataEntityKind>,
 }
 
 impl BRepToIgesBRSolid {
@@ -73,7 +73,10 @@ impl BRepToIgesBRSolid {
         (kind, avoid): (ShapeEnum, ShapeEnum),
         scope: &ProgressScope<'_>,
         warning: &str,
-        mut transfer: impl FnMut(&Shape, &ProgressRange) -> Result<Handle<IgesDataIgesEntity>, Failure>,
+        mut transfer: impl FnMut(
+            &Shape,
+            &ProgressRange,
+        ) -> Result<Handle<dyn IgesDataEntityKind>, Failure>,
     ) -> Result<(), Failure> {
         let mut explorer = Explorer::new(state.owner, kind, avoid)?;
         while explorer.more() && scope.more() {
@@ -100,7 +103,7 @@ impl BRepToIgesBRSolid {
         &self,
         start: &Shape,
         range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -119,7 +122,7 @@ impl BRepToIgesBRSolid {
         &self,
         start: &Solid,
         range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -151,7 +154,7 @@ impl BRepToIgesBRSolid {
         &self,
         start: &CompSolid,
         range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -182,7 +185,7 @@ impl BRepToIgesBRSolid {
         &self,
         start: &Compound,
         range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }

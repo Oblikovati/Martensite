@@ -21,7 +21,8 @@ fn actual_wf_callbacks_preserve_uncounted_compound_reference_through_failure_and
 }
 fn compound_wf_reference_rows(fail: bool) -> String {
     let drawer = compound_wf_reference_drawer();
-    let key = Handle::new(AisColoredDrawer::new(&drawer));
+    let key =
+        Handle::new(AisColoredDrawer::new(&drawer)).into_upcast::<dyn AisColoredDrawerSource>();
     let input = colored_shape_expansion_inputs::ColoredExpansionInputs::new();
     let mut compound = Compound::default();
     BRepBuilder::default().make_compound(&mut compound);
@@ -32,7 +33,11 @@ fn compound_wf_reference_rows(fail: bool) -> String {
     map.add(&key, &compound).unwrap();
     let trace = ColoredCompoundGraphicsTrace::new(&map, fail);
     let prs = compound_reference_presentation(&trace);
-    record_compound_wf_before(&trace, fail, compound.tshape().ref_count());
+    record_compound_wf_before(
+        &trace,
+        fail,
+        compound.tshape().ref_count().try_into().unwrap(),
+    );
     project_compound_wireframe(&map, &prs, &drawer, &trace);
     record_compound_wf_finish(&map, &compound, &prs, &trace);
     std::mem::take(&mut *trace.rows.lock().unwrap())
@@ -62,7 +67,7 @@ fn project_compound_wireframe(
         writeln!(trace.rows.lock().unwrap(), "wf-failed {count}").unwrap();
         trace.fail.store(false, Ordering::Relaxed);
         alias
-            .with_shape(|shape| StdPrsWfShape::add(prs, shape, drawer))
+            .with_shape(|shape| StdPrsWfShape::add_reference(prs, shape, drawer))
             .unwrap();
     }
 }

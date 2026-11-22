@@ -255,7 +255,7 @@ impl TopOpeBRepBuildFuseFace {
         let (face_lie, face_lee, face_lme, face_lw) = lists;
         let mut s: Handle<dyn GeomSurface> = BRepTool::surface(&topods::face(fac)?)?;
         if s.is_instance_name("Geom_RectangularTrimmedSurface") {
-            let t: Handle<GeomRectangularTrimmedSurface> = s.clone().cast();
+            let t: Handle<GeomRectangularTrimmedSurface> = s.downcast();
             s = t
                 .get()
                 .ok_or_else(|| Failure::new("FuseFace: null surface"))?

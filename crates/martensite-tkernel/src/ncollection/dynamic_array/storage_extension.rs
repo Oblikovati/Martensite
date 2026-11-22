@@ -1,12 +1,18 @@
 //! Typed protected storage operations; allocations remain owned by the array.
-use super::{ArrayError, DynamicArray, emplacement::forget_block_values_after};
+use super::DynamicArray;
+#[cfg(test)]
+use super::{ArrayError, emplacement::forget_block_values_after};
+#[cfg(test)]
 use crate::standard::Failure;
 
+#[cfg(test)]
 mod copy_policy;
 
 #[allow(unsafe_code)]
+#[cfg(test)]
 mod raw_lifetime;
 #[allow(unsafe_code)]
+#[cfg(test)]
 mod replacement;
 #[allow(unsafe_code)]
 mod retained_parameters;
@@ -33,7 +39,7 @@ impl<T> DynamicArray<T> {
 impl<T> DynamicArrayStorageExtension<'_, T> {
     /// Rounds with unsigned arithmetic, including overflow to zero.
     /// `DynamicArrayStorageExtension::<i32>::round_up_pow2(5) == 8`.
-    pub const fn round_up_pow2(value: usize) -> usize {
+    pub(crate) const fn round_up_pow2(value: usize) -> usize {
         let mut rounded = if value == 0 { 0 } else { value - 1 };
         let mut shift = 1;
         while shift < usize::BITS {
@@ -44,7 +50,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     }
     /// Returns the floor of log2, including zero for zero.
     /// `DynamicArrayStorageExtension::<i32>::log2_pow2(7) == 2`.
-    pub const fn log2_pow2(mut value: usize) -> usize {
+    pub(crate) const fn log2_pow2(mut value: usize) -> usize {
         let mut shift = 0;
         while value > 1 {
             value >>= 1;
@@ -65,7 +71,8 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     }
     /// Allocates typed storage through the requested index without constructing elements.
     /// `storage.ensure_storage_for_index(8, size_of::<i32>())?` leaves Size unchanged.
-    pub fn ensure_storage_for_index(
+    #[cfg(test)]
+    pub(crate) fn ensure_storage_for_index(
         &mut self,
         index: usize,
         item_size: usize,
@@ -77,7 +84,12 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     }
     /// Reserves blocks before constructing any elements; `storage.ensure_block_count(3, size_of::<i32>())?`.
     /// Item size must match T; arbitrary byte-sized blocks are a separate raw API.
-    pub fn ensure_block_count(&mut self, count: usize, item_size: usize) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn ensure_block_count(
+        &mut self,
+        count: usize,
+        item_size: usize,
+    ) -> Result<(), Failure> {
         self.validate_item_size(item_size)?;
         self.validate_block_count(count)?;
         self.array.reserve_block_count(count);
@@ -85,7 +97,8 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     }
     /// Adds exactly one typed block and returns its mutable raw address.
     /// `storage.expand_block(size_of::<i32>())?` does not initialize any T values.
-    pub fn expand_block(&mut self, item_size: usize) -> Result<*mut (), Failure> {
+    #[cfg(test)]
+    pub(crate) fn expand_block(&mut self, item_size: usize) -> Result<*mut (), Failure> {
         self.validate_item_size(item_size)?;
         let index = self.block_count();
         self.validate_block_count(index + 1)?;
@@ -94,38 +107,45 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     }
     /// Returns a const untyped block address; `storage.block_address(0)?`.
     /// Dereferencing uninitialized capacity is not authorized by this accessor.
-    pub fn block_address(&self, index: usize) -> Result<*const (), Failure> {
+    #[cfg(test)]
+    pub(crate) fn block_address(&self, index: usize) -> Result<*const (), Failure> {
         Ok(self.block_at(index)?.cast())
     }
     /// Returns a mutable untyped block address; `storage.change_block_address(0)?`.
     /// Unsafe caller access must respect allocation lifetime, initialization and aliasing.
-    pub fn change_block_address(&mut self, index: usize) -> Result<*mut (), Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_block_address(&mut self, index: usize) -> Result<*mut (), Failure> {
         Ok(self.change_block_at(index)?.cast())
     }
     /// Returns a typed const pointer to the allocated block, including empty capacity.
     /// `storage.block_at(0)?`; a pointer is not proof that any element is initialized.
-    pub fn block_at(&self, index: usize) -> Result<*const T, Failure> {
+    #[cfg(test)]
+    pub(crate) fn block_at(&self, index: usize) -> Result<*const T, Failure> {
         self.validate_block_index(index)?;
         Ok(self.array.blocks[index].as_ptr())
     }
     /// Returns a typed mutable pointer; `storage.change_block_at(0)?`.
     /// A raw write requires the caller to manage initialization and preserve ownership invariants.
-    pub fn change_block_at(&mut self, index: usize) -> Result<*mut T, Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_block_at(&mut self, index: usize) -> Result<*mut T, Failure> {
         self.validate_block_index(index)?;
         Ok(self.array.blocks[index].as_mut_ptr())
     }
     /// Reads an initialized slot; `storage.at(0)?` preserves the checked Rust boundary.
-    pub fn at(&self, index: usize) -> Result<&T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn at(&self, index: usize) -> Result<&T, ArrayError> {
         self.array.value(index)
     }
     /// Mutates an initialized slot; `*storage.change_at(0)? = 42`.
-    pub fn change_at(&mut self, index: usize) -> Result<&mut T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn change_at(&mut self, index: usize) -> Result<&mut T, ArrayError> {
         self.array.change_value(index)
     }
     /// Frees blocks without running element destructors.
     /// `storage.clear_blocks()` is distinct from `array.clear(true)` which drops values.
     /// Clearing uses this after destruction; direct use can intentionally leak element resources.
-    pub fn clear_blocks(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn clear_blocks(&mut self) {
         self.array.needs_tail_scan = true;
         for block in &mut self.array.blocks {
             forget_block_values_after(block, 0);
@@ -134,6 +154,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
         self.array.used = 0;
         self.array.needs_tail_scan = false;
     }
+    #[cfg(test)]
     pub(super) fn validate_nonzero_stride(&self) -> Result<(), Failure> {
         if self.array.increment != 0 {
             return Ok(());
@@ -144,6 +165,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
             "",
         ))
     }
+    #[cfg(test)]
     fn validate_item_size(&self, item_size: usize) -> Result<(), Failure> {
         let expected = std::mem::size_of::<T>();
         if item_size == expected && expected > 0 {
@@ -155,6 +177,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
             "",
         ))
     }
+    #[cfg(test)]
     fn validate_block_count(&self, count: usize) -> Result<(), Failure> {
         if count != 0 {
             self.validate_nonzero_stride()?;
@@ -164,6 +187,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
         }
         Err(self.storage_size_failure(count))
     }
+    #[cfg(test)]
     fn storage_size_failure(&self, value: usize) -> Failure {
         Failure::with_type(
             "Standard_OutOfRange",
@@ -174,6 +198,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
             "",
         )
     }
+    #[cfg(test)]
     fn validate_block_index(&self, index: usize) -> Result<(), Failure> {
         if index < self.block_count() {
             return Ok(());

@@ -161,18 +161,18 @@ impl BRepFillPipe {
         self.my_profile = profile.clone();
         self.define_real_segmax()?;
         let tlaw: Handle<dyn GeomFillTrihedronLaw> = match self.my_mode {
-            GeomFillTrihedron::IsFrenet => Handle::new(GeomFillFrenet::new()).cast(),
+            GeomFillTrihedron::IsFrenet => Handle::new(GeomFillFrenet::new()).into_upcast(),
             GeomFillTrihedron::IsCorrectedFrenet => {
-                Handle::new(GeomFillCorrectedFrenet::new()).cast()
+                Handle::new(GeomFillCorrectedFrenet::new()).into_upcast()
             }
             GeomFillTrihedron::IsDiscreteTrihedron => {
-                Handle::new(GeomFillDiscreteTrihedron::new()).cast()
+                Handle::new(GeomFillDiscreteTrihedron::new()).into_upcast()
             }
             _ => Handle::default(),
         };
         let loc: Handle<dyn GeomFillLocationLaw> =
-            Handle::new(GeomFillCurveAndTrihedron::new(&tlaw)).cast();
-        self.my_loc = Handle::new(BRepFillEdge3DLaw::new(&self.my_spine, &loc)?).cast();
+            Handle::new(GeomFillCurveAndTrihedron::new(&tlaw)).into_upcast();
+        self.my_loc = Handle::new(BRepFillEdge3DLaw::new(&self.my_spine, &loc)?).into_upcast();
         if self.loc()?.nb_law()? == 0 {
             return Ok(());
         }
@@ -351,7 +351,7 @@ impl BRepFillPipe {
         let p: Point3 = point.transformed(self.my_trsf);
         let vertex_section: Vertex = BRepLibMakeVertex::new(p)?.vertex()?;
         let section: Handle<dyn BRepFillSectionLaw> =
-            Handle::new(BRepFillShapeLaw::with_vertex(&vertex_section, true)?).cast();
+            Handle::new(BRepFillShapeLaw::with_vertex(&vertex_section, true)?).into_upcast();
         let mk_sw = self.swept(&section, None)?;
         let a_local_shape: Shape = mk_sw.shape();
         self.my_error_on_surf = mk_sw.error_on_surface();
@@ -400,7 +400,7 @@ impl BRepFillPipe {
                 continue;
             }
             c = basis_of(c);
-            let bc: Handle<GeomBSplineCurve> = c.cast();
+            let bc: Handle<GeomBSplineCurve> = c.downcast();
             let Some(bc) = bc.get() else {
                 continue;
             };
@@ -416,12 +416,12 @@ impl BRepFillPipe {
 /// The basis of a curve through its trimmed and offset layers.
 fn basis_of(mut c: Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
     loop {
-        let trimmed: Handle<GeomTrimmedCurve> = c.cast();
+        let trimmed: Handle<GeomTrimmedCurve> = c.downcast();
         if let Some(t) = trimmed.get() {
             c = t.basis_curve();
             continue;
         }
-        let offset: Handle<GeomOffsetCurve> = c.cast();
+        let offset: Handle<GeomOffsetCurve> = c.downcast();
         if let Some(o) = offset.get() {
             c = o.basis_curve();
             continue;

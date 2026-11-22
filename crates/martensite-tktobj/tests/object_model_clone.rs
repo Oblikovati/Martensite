@@ -3,10 +3,10 @@
 use crate::object_model_document::{ObjectFixture, TestModelObject, h_name};
 use martensite_tkernel::{
     ncollection::HArray1,
-    standard::{Handle, RuntimeTyped},
+    standard::Handle,
     tcollection::{AsciiString, ExtendedString},
 };
-use martensite_tklcaf::tdf::TdfRelocationTable;
+use martensite_tklcaf::tdf::{TdfLabel, TdfRelocationTable};
 use martensite_tktobj::object_model::{
     DocumentModel, DocumentModelState, HiddenPartition, ModelObject, ModelObjectState,
     ModelPartition, ObjectIterator, ObjectStateFlags, ObjectTypeFlags, StandardPartition,
@@ -97,7 +97,7 @@ fn a_hidden_sub_partition_is_named_and_not_visible() {
             .get_partition_of_main(3, &name, true)
             .unwrap()
     });
-    assert!(!hidden.cast::<HiddenPartition>().is_null());
+    assert!(!hidden.downcast::<HiddenPartition>().is_null());
     assert_eq!(hidden.get_type_flags() & ObjectTypeFlags::VISIBLE, 0);
     assert!(hidden.get_name().unwrap().string().is_equal(name.clone()));
     // The same index gives the same partition.
@@ -108,7 +108,7 @@ fn a_hidden_sub_partition_is_named_and_not_visible() {
             .unwrap()
     });
     assert!(again == hidden);
-    assert!(StandardPartition::get_partition(&hidden.cast()).unwrap() == fixture.my_partition);
+    assert!(StandardPartition::get_partition(&hidden.upcast()).unwrap() == fixture.my_partition);
 }
 
 #[test]
@@ -148,12 +148,10 @@ fn the_model_iterator_visits_depth_first_from_the_root() {
 }
 
 #[test]
-fn the_persistence_creates_registered_types_only() {
+fn persisted_partition_class_name_round_trips_through_the_registry() {
     let fixture = ObjectFixture::set_up();
     let label = fixture.command(|| fixture.my_partition.new_label().unwrap());
-    let created =
-        TypeRegistry::create_new_object("martensite_object_model_ModelPartition", &label).unwrap();
-    assert!(created.is_kind(<dyn ModelPartition as RuntimeTyped>::static_type()));
+    let created = recreate_partition(&fixture, &label);
     // The persistence constructor does not attach the object.
     assert!(!created.is_alive().unwrap());
     assert!(
@@ -170,6 +168,19 @@ fn the_persistence_creates_registered_types_only() {
     );
 }
 
+fn recreate_partition(fixture: &ObjectFixture, label: &TdfLabel) -> Handle<dyn ModelObject> {
+    let descriptor = fixture.my_partition.dynamic_type().unwrap();
+    let saved_name = descriptor.name().as_bytes();
+    assert_eq!(saved_name, b"martensite_object_model_ModelPartition");
+    let restored_name = std::str::from_utf8(saved_name).unwrap();
+    let created = TypeRegistry::create_new_object(restored_name, label).unwrap();
+    assert!(created.is_instance(descriptor));
+    assert!(created.downcast_ref::<StandardPartition>().is_some());
+    let partition = created.view::<dyn ModelPartition>();
+    assert_eq!(partition.get().unwrap().get_label(), *label);
+    created
+}
+
 #[test]
 fn a_clone_copies_data_children_and_references() {
     let fixture = ObjectFixture::set_up();
@@ -183,14 +194,14 @@ fn a_clone_copies_data_children_and_references() {
         child.set_name_c_str("kid").unwrap();
         child.set_int(9);
         let referred = fixture.create_object();
-        source.set_ref(&referred.cast());
+        source.set_ref(&referred.upcast());
         (source, referred)
     });
     let clone = fixture.command(|| {
         let target = fixture.my_partition.new_label().unwrap();
         source.clone_object(&target, &Handle::default()).unwrap()
     });
-    let clone: Handle<TestModelObject> = clone.cast();
+    let clone: Handle<TestModelObject> = clone.into_downcast();
     assert!(!clone.is_null() && clone.is_alive().unwrap());
     assert_eq!(clone.get_int(), 7);
     assert_eq!(clone.get_real_arr().array1().as_slice(), &[1.5, 1.5]);
@@ -198,7 +209,7 @@ fn a_clone_copies_data_children_and_references() {
     assert!(clone.get_name().unwrap().is_empty());
     let children = clone.get_children(None).unwrap();
     assert!(children.more());
-    let child: Handle<TestModelObject> = children.value().cast();
+    let child: Handle<TestModelObject> = children.value().into_downcast();
     assert_eq!(child.get_int(), 9);
     assert!(clone.get_ref() == referred);
     let back = referred.get_back_references(None);
@@ -223,17 +234,12 @@ fn a_model_pastes_its_objects_into_another() {
     other.open_command().unwrap();
     fixture.my_model().open_command().unwrap();
     let table = Handle::new(TdfRelocationTable::new(false));
-    assert!(
-        fixture
-            .my_model()
-            .paste(&other.clone().cast(), &table)
-            .unwrap()
-    );
+    assert!(fixture.my_model().paste(&other.upcast(), &table).unwrap());
     fixture.my_model().commit_command().unwrap();
     other.commit_command().unwrap();
     let children = other.get_children().unwrap();
     assert!(children.more());
-    let pasted: Handle<TestModelObject> = children.value().cast();
+    let pasted: Handle<TestModelObject> = children.value().into_downcast();
     assert_eq!(pasted.get_int(), 11);
     assert!(other.close().unwrap());
 }

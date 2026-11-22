@@ -1,9 +1,10 @@
 //! A real constructed sweep root exposes the existing owned-versus-borrowed function contract.
-use super::{BRepBlendAppFunc, SharedAppFunction};
+use super::{BRepBlendAppFunc, BRepBlendAppFuncRoot, SharedAppFunction};
 use crate::blend::BlendAppFunction;
 use crate::blend_func::ConstRad;
 use crate::brep_blend::{BRepBlendLine, BRepBlendLineHandle};
 use crate::chfi_ds::shared;
+use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkgeombase::approx::SweepFunction;
 use std::sync::{Arc, Mutex, Weak};
 
@@ -153,4 +154,15 @@ fn rust_owned_function_survives_caller_retirement_without_a_native_dangling_call
         "function_released_with_root",
         usize::from(function.upgrade().is_none()),
     );
+}
+
+#[test]
+fn sweep_view_preserves_owner_and_root_descriptor() {
+    let inputs = AppRootInputs::new();
+    let owner = Handle::new(inputs.root());
+    let sweep = owner.upcast::<dyn SweepFunction>();
+    assert_eq!(sweep.object_address(), owner.object_address());
+    assert!(sweep.is_kind(BRepBlendAppFuncRoot::static_type()));
+    assert_eq!(sweep.section_shape().unwrap(), (7, 2, 6));
+    assert_eq!(owner.ref_count(), 2);
 }

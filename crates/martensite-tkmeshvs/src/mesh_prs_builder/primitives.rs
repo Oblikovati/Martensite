@@ -7,10 +7,11 @@ use crate::data_source::MeshVSTopologyHandle;
 use crate::data_source::normals::{coord, face_polygon};
 use crate::node_pairs::{MeshVSNodePair, MeshVSSymmetricPairHasher};
 use martensite_tkernel::ncollection::{Array1, Map, Sequence};
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Vector3;
 use martensite_tkservice::graphic3d::{
     Graphic3dArrayOfPrimitives, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
+    Graphic3dArraySource,
 };
 
 /// The point `index` (one-based) of a coordinate array.
@@ -90,11 +91,11 @@ impl MeshVSMeshPrsBuilder {
     /// `add_volume_prs`: the triangles of every face (an array of triangles), the shrunk face
     /// edges (selection), else every edge once in the map order.
     #[allow(clippy::too_many_arguments)]
-    pub fn add_volume_prs(
+    pub fn add_volume_prs<A: Graphic3dArraySource + ?Sized>(
         topo: &MeshVSTopologyHandle,
         nodes: &Array1<'_, f64>,
         nb_nodes: i32,
-        array: &Handle<Graphic3dArrayOfPrimitives>,
+        array: &Handle<A>,
         is_shaded: bool,
         is_shrinked: bool,
         is_selected: bool,
@@ -103,13 +104,17 @@ impl MeshVSMeshPrsBuilder {
         let (Some(faces), Some(target)) = (topo.get(), array.get()) else {
             return Ok(());
         };
+        let triangles = target
+            .dynamic_type()
+            .is_subtype(Graphic3dArrayOfTriangles::static_type());
+        let target = target.primitive_array();
         let center = if is_shrinked {
             volume_center(nodes, nb_nodes)?
         } else {
             [0.0; 3]
         };
         let faces = faces.array1();
-        if !array.cast::<Graphic3dArrayOfTriangles>().is_null() {
+        if triangles {
             let face_shape = FaceShape {
                 center,
                 shrink_coef,

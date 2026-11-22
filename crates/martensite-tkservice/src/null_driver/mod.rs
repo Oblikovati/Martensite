@@ -19,18 +19,16 @@ use martensite_tkernel::tcollection::AsciiString;
 
 /// A driver that keeps the scene and draws nothing; `NullGraphicDriver::new_handle()`.
 pub struct NullGraphicDriver {
-    transient: StandardTransient,
     base: Graphic3dGraphicDriverBase,
     vertical_sync: SharedState<bool>,
 }
-martensite_tkernel::impl_transient!(NullGraphicDriver, "NullGraphicDriver", StandardTransient, transient,
+martensite_tkernel::impl_transient!(NullGraphicDriver, "NullGraphicDriver", StandardTransient,
     interfaces: [dyn Graphic3dGraphicDriver]);
 
 impl NullGraphicDriver {
     /// A driver without display connection, as a driver handle; `NullGraphicDriver::new_handle()`.
     pub fn new_handle() -> Handle<dyn Graphic3dGraphicDriver> {
         let driver = Self {
-            transient: StandardTransient::default(),
             base: Graphic3dGraphicDriverBase::new(&Handle::default()),
             vertical_sync: SharedState::new(true),
         };

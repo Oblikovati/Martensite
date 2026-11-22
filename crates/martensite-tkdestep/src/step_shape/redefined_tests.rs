@@ -1,8 +1,8 @@
 //! Tests of the redefined fields, through base handles.
 use super::*;
 
-fn named_vertex() -> Handle<StepShapeVertex> {
-    Handle::new(StepShapeVertex::new())
+fn named_vertex() -> Handle<dyn crate::StepEntityBase<StepShapeVertex>> {
+    Handle::new(StepShapeVertex::new()).into_upcast()
 }
 
 #[test]
@@ -11,8 +11,8 @@ fn an_oriented_edge_answers_through_its_base_handle() {
     let edge = Handle::new(StepShapeEdge::new());
     edge.init(&Handle::default(), &start, &end);
     let oriented = Handle::new(StepShapeOrientedEdge::new());
-    oriented.init(&Handle::default(), &edge, false);
-    let base = oriented.cast::<StepShapeEdge>();
+    oriented.init(&Handle::default(), &edge.upcast(), false);
+    let base = oriented.cast::<dyn crate::StepEntityBase<StepShapeEdge>>();
     assert_eq!(base.edge_start(), end);
     assert_eq!(base.edge_end(), start);
     oriented.set_orientation(true);

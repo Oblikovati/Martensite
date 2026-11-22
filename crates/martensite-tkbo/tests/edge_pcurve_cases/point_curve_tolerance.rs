@@ -37,7 +37,7 @@ fn fixture(shift: f64, located: usize) -> (Edge, Vec<Vertex>) {
     let builder = BRepBuilder::default();
     builder.make_edge(&mut edge).unwrap();
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast();
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast();
     builder.update_edge_curve(&edge, &curve, 0.001).unwrap();
     builder.range(&edge, 0., 1., false).unwrap();
     let mut vertices = Vec::new();

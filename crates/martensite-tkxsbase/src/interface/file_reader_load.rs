@@ -8,7 +8,7 @@ use super::{
 };
 use martensite_tkernel::{
     message::{Gravity, Messenger, Msg},
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::fmt::Write as _;
@@ -32,7 +32,7 @@ fn send_info(
 /// The string label of an entity in a model, for the messages.
 fn label_of(
     model: &Handle<dyn InterfaceInterfaceModel>,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
 ) -> Handle<martensite_tkernel::tcollection::HAsciiString> {
     model.get().map(|m| m.string_label(ent)).unwrap_or_default()
 }
@@ -86,7 +86,7 @@ pub trait InterfaceFileReaderToolLoad: InterfaceFileReaderTool {
     fn store_report(
         &self,
         num: i32,
-        report: &Handle<StandardTransient>,
+        report: &Handle<dyn Transient>,
         count_both: bool,
     ) -> Result<(), Failure> {
         let records = self.data().nb_records();
@@ -113,7 +113,7 @@ pub trait InterfaceFileReaderToolLoad: InterfaceFileReaderTool {
     /// `LoadedEntity(num)`: analyses record `num` into its bound entity, adds it to the
     /// model and records its report when it has messages (a failed entity gets the
     /// unknown entity as content).
-    fn loaded_entity(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    fn loaded_entity(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let reader = self.data();
         let anent = reader.bound_entity(num);
         let (mut ach, mut irep, mut rep) = self.initial_report(num, &anent);
@@ -148,7 +148,7 @@ pub trait InterfaceFileReaderToolLoad: InterfaceFileReaderTool {
     fn initial_report(
         &self,
         num: i32,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
     ) -> (Handle<InterfaceCheck>, i32, Handle<InterfaceReportEntity>) {
         let state = self.reader_tool_base().state.read();
         let fresh = Handle::new(InterfaceCheck::with_entity(anent));
@@ -167,11 +167,7 @@ pub trait InterfaceFileReaderToolLoad: InterfaceFileReaderTool {
         }
     }
     /// Replaces the report of a record already counted.
-    fn store_report_again(
-        &self,
-        irep: i32,
-        report: &Handle<StandardTransient>,
-    ) -> Result<(), Failure> {
+    fn store_report_again(&self, irep: i32, report: &Handle<dyn Transient>) -> Result<(), Failure> {
         let mut state = self.reader_tool_base().state.write();
         if let Some(slot) = state
             .thereports
@@ -183,7 +179,7 @@ pub trait InterfaceFileReaderToolLoad: InterfaceFileReaderTool {
         Ok(())
     }
     /// The "XSTEP_22" message of an unknown entity at trace level 2.
-    fn trace_unknown(&self, anent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn trace_unknown(&self, anent: &Handle<dyn Transient>) -> Result<(), Failure> {
         if self.trace_level() < 2
             || !self
                 .protocol()

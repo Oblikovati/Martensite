@@ -7,7 +7,7 @@ mod on_surf_law;
 mod positions;
 
 pub use acr_law::BRepFillACRLaw;
-pub use edge3d_law::{BRepFillDraftLaw, BRepFillEdge3DLaw};
+pub use edge3d_law::{BRepFillDraftLaw, BRepFillEdge3DLaw, Edge3dLocationLaw};
 pub use on_surf_law::BRepFillEdgeOnSurfLaw;
 
 use martensite_tkbrep::brep::BRepTool;
@@ -15,7 +15,7 @@ use martensite_tkbrep::brep_tools::WireExplorer;
 use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{self, Edge, Shape, Vertex, Wire};
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkgeomalgo::geom_fill::{GeomFillLocationLaw, GeomFillPipeError};
 
@@ -145,7 +145,7 @@ pub(crate) fn oriented_edge_curve(
     // Reversed to avoid damaging the topology.
     trimmed.reverse()?;
     let (f, l) = (trimmed.first_parameter(), trimmed.last_parameter());
-    Ok((Handle::new(trimmed).cast::<dyn GeomCurve>(), f, l))
+    Ok((Handle::new(trimmed).into_upcast::<dyn GeomCurve>(), f, l))
 }
 
 /// `BRepFillLocationLaw`: the abstract location law of a sweep, reached through
@@ -313,5 +313,5 @@ pub trait BRepFillLocationLaw: Transient {
 impl_transient_interface!(
     dyn BRepFillLocationLaw,
     "BRepFillLocationLaw",
-    StandardTransient
+    dyn Transient
 );

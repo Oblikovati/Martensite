@@ -1,8 +1,6 @@
 //! Named native-equivalent owner destructor observes pointer retirement without projecting a dying entity.
 use crate::{select_mgr::*, select3d::Select3DSensitiveEntity};
-use martensite_tkernel::standard::{
-    Handle, IntrusiveReferenceSlot, SharedState, StandardTransient, WeakHandle,
-};
+use martensite_tkernel::standard::{Handle, IntrusiveReferenceSlot, SharedState, WeakHandle};
 use std::{
     fmt::Write,
     sync::{Arc, Weak},
@@ -14,15 +12,13 @@ pub(super) struct EdgeOutputRetirementInput {
     pub rows: Arc<SharedState<String>>,
 }
 pub(super) struct EdgeOutputRetiringOwner {
-    transient: StandardTransient,
     owner: SelectMgrEntityOwnerBase,
     input: Arc<EdgeOutputRetirementInput>,
 }
-martensite_tkernel::impl_transient!(EdgeOutputRetiringOwner,"Martensite_EdgeOutputRetiringOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(EdgeOutputRetiringOwner,"Martensite_EdgeOutputRetiringOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl EdgeOutputRetiringOwner {
     pub fn new(input: &Arc<EdgeOutputRetirementInput>) -> Handle<Self> {
         Handle::new(Self {
-            transient: Default::default(),
             owner: SelectMgrEntityOwnerBase::new(&Handle::default(), 5),
             input: input.clone(),
         })
@@ -40,8 +36,8 @@ impl Drop for EdgeOutputRetiringOwner {
         let previous = self.input.previous.read();
         let same = i32::from(slot.object_address() == previous.object_address());
         // No projection of the dying sensitive entity is attempted: its ownership count has reached zero.
-        let count = previous.observe().ref_count();
-        let incoming = self.input.incoming.observe().ref_count();
+        let count = previous.ref_count();
+        let incoming = self.input.incoming.ref_count();
         writeln!(
             &mut *self.input.rows.write(),
             "output-retiring {same} {count} {incoming}"

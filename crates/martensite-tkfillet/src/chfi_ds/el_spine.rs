@@ -4,7 +4,7 @@ use super::surf_data::SurfDataHandle;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBezierCurve, GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3,
@@ -74,7 +74,6 @@ impl Default for ElSpineFields {
 /// ```
 #[derive(Default)]
 pub struct ElSpine {
-    parent: StandardTransient,
     curve: GeomAdaptorCurve,
     fields: SharedState<ElSpineFields>,
 }
@@ -82,7 +81,6 @@ impl_transient!(
     ElSpine,
     "ChFiDSElSpine",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
@@ -96,7 +94,6 @@ impl ElSpine {
     /// The ShallowCopy body: a spine sharing the curve, with copies of every field.
     pub fn shallow_spine(&self) -> Result<Self, Failure> {
         Ok(Self {
-            parent: StandardTransient::default(),
             curve: self.curve.shallow_adaptor()?,
             fields: SharedState::new(self.fields.snapshot()),
         })
@@ -241,7 +238,7 @@ impl ElSpine {
 
 impl Adaptor3dCurve for ElSpine {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
-        Ok(Handle::new(self.shallow_spine()?).cast())
+        Ok(Handle::new(self.shallow_spine()?).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         Ok(self.fields.read().first)

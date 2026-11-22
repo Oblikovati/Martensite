@@ -35,7 +35,9 @@ pub fn rendered_light(kind: usize) -> Result<Handle<AisLightSource>, Box<dyn std
     object.set_nb_splits_quadric(16);
     Ok(object)
 }
-fn capture_light(kind: usize) -> Result<Handle<Graphic3dCLight>, Box<dyn std::error::Error>> {
+fn capture_light(
+    kind: usize,
+) -> Result<Handle<dyn Graphic3dCLightSource>, Box<dyn std::error::Error>> {
     let kinds = [
         Graphic3dTypeOfLightSource::Ambient,
         Graphic3dTypeOfLightSource::Directional,
@@ -50,5 +52,5 @@ fn capture_light(kind: usize) -> Result<Handle<Graphic3dCLight>, Box<dyn std::er
     if kind >= 2 {
         light.set_range(5.0)?;
     }
-    Ok(light)
+    Ok(light.into_upcast())
 }

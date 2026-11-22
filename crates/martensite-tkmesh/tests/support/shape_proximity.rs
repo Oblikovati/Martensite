@@ -35,7 +35,7 @@ pub fn make_circular_arc(
 }
 
 pub fn circle_curve(center: Point3, normal: Direction3, radius: f64) -> Handle<dyn GeomCurve> {
-    Handle::new(GeomCircle::new(Axis2::new(center, normal).unwrap(), radius).unwrap()).cast()
+    Handle::new(GeomCircle::new(Axis2::new(center, normal).unwrap(), radius).unwrap()).into_upcast()
 }
 
 pub fn make_trimmed_circular_arc(
@@ -55,7 +55,7 @@ pub fn make_trimmed_circular_arc(
         )
         .unwrap(),
     )
-    .cast();
+    .into_upcast();
     edge_shape(
         BRepBuilderAPIMakeEdge::from_curve(&trimmed)
             .unwrap()
@@ -98,7 +98,7 @@ pub fn make_plane_patch(
 pub fn trimmed_face(surface: Handle<dyn GeomSurface>, u: (f64, f64), v: (f64, f64)) -> Shape {
     let trimmed: Handle<dyn GeomSurface> =
         Handle::new(GeomRectangularTrimmedSurface::new(&surface, u, v, (true, true)).unwrap())
-            .cast();
+            .into_upcast();
     face_shape(
         BRepBuilderAPIMakeFace::from_surface(&trimmed, precision::confusion())
             .unwrap()
@@ -116,7 +116,7 @@ pub fn make_cylinder_patch(
 ) -> Shape {
     let frame = Axis3::from_normal(location, direction).unwrap();
     trimmed_face(
-        Handle::new(GeomCylindricalSurface::new(frame, radius).unwrap()).cast(),
+        Handle::new(GeomCylindricalSurface::new(frame, radius).unwrap()).into_upcast(),
         u,
         v,
     )
@@ -124,7 +124,7 @@ pub fn make_cylinder_patch(
 
 pub fn sphere_surface(center: Point3) -> Handle<dyn GeomSurface> {
     let frame = Axis3::from_normal(center, dir(0.0, 0.0, 1.0)).unwrap();
-    Handle::new(GeomSphericalSurface::new(frame, 1.0).unwrap()).cast()
+    Handle::new(GeomSphericalSurface::new(frame, 1.0).unwrap()).into_upcast()
 }
 
 pub fn make_sphere_patch(center: Point3, first_u: f64, last_u: f64) -> Shape {
@@ -181,7 +181,8 @@ pub fn make_bezier_edge(poles: &[[f64; 3]]) -> Shape {
     for (i, p) in poles.iter().enumerate() {
         array[i as i32 + 1] = Point3::new(p[0], p[1], p[2]);
     }
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&array).unwrap()).cast();
+    let curve: Handle<dyn GeomCurve> =
+        Handle::new(GeomBezierCurve::new(&array).unwrap()).into_upcast();
     edge_shape(
         BRepBuilderAPIMakeEdge::from_curve(&curve)
             .unwrap()

@@ -2,7 +2,7 @@
 //! the attribute so that every change is backed up.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Guid, Handle, SharedState, exceptions},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdata_std::support::{cast_attribute, find_or_add};
@@ -29,11 +29,10 @@ const TRIANGULATION_ID: Guid = guid_from_text("27AE2C44-60B0-41AE-AC18-BA3FDA538
 /// assert_eq!((attribute.nb_nodes().unwrap(), attribute.nb_triangles().unwrap()), (3, 1));
 /// ```
 pub struct TDataXtdTriangulation {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     triangulation: SharedState<Handle<Triangulation>>,
 }
-impl_transient!(TDataXtdTriangulation, "TDataXtdTriangulation", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataXtdTriangulation, "TDataXtdTriangulation", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataXtdTriangulation {
     fn default() -> Self {
@@ -68,7 +67,6 @@ impl TDataXtdTriangulation {
     /// `TDataXtdTriangulation()`: without a mesh.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             triangulation: SharedState::new(Handle::default()),
         }
@@ -202,7 +200,7 @@ impl TdfAttribute for TDataXtdTriangulation {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).upcast()
     }
     /// `Paste`: a copy of the mesh (no backup, as natively).
     fn paste(

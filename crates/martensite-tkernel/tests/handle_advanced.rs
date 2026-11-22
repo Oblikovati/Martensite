@@ -2,14 +2,14 @@
 #![allow(non_snake_case, clippy::overly_complex_bool_expr)]
 include!("handles/hierarchy.rs");
 use martensite_tkernel::ncollection::{
-    AllocatorObject, HeapAllocatorObject, IncrementalAllocatorObject,
+    AllocatorSource, HeapAllocatorObject, IncrementalAllocatorObject,
 };
 use martensite_tkernel::standard::{HandleView, RuntimeType};
 use std::{any::TypeId, hint::black_box, time::Instant};
-fn test_function(object: HandleView<'_, StandardTransient>) -> bool {
+fn test_function(object: HandleView<'_, dyn Transient>) -> bool {
     !object.is_null()
 }
-fn test_overload1(_: &Handle<StandardTransient>) -> i32 {
+fn test_overload1(_: &Handle<dyn Transient>) -> i32 {
     1
 }
 fn test_overload2(_: &Handle<TransientRoot>) -> i32 {
@@ -21,11 +21,11 @@ fn HandleAdvancedTest__CompilerSpecificBehavior() {
     let root = Handle::new(TransientRoot::default());
     assert!(!root.is_null());
     let _const_root = &root;
-    let transient = root.cast::<StandardTransient>();
-    assert!(test_function(root.view::<StandardTransient>()));
+    let transient = root.upcast::<dyn Transient>();
+    assert!(test_function(root.view::<dyn Transient>()));
     assert_eq!(2, test_overload2(&root));
     assert_eq!(1, test_overload1(&transient));
-    let transient2 = root.view::<StandardTransient>();
+    let transient2 = root.view::<dyn Transient>();
     assert!(!transient2.is_null());
 }
 #[test]
@@ -38,7 +38,7 @@ fn HandleAdvancedTest__DeepHierarchyRTTI() {
         QaClass40_50::static_type(),
         QaClass50_50::static_type(),
     ];
-    let handle = Handle::new(QaClass40_50::default()).cast::<QaClass00_50>();
+    let handle = Handle::new(QaClass40_50::default()).upcast::<dyn Transient>();
     assert_eq!("QaClass40_50", handle.dynamic_type().unwrap().name());
     for descriptor in &descriptors[..5] {
         assert!(handle.is_kind(descriptor));
@@ -89,7 +89,7 @@ fn HandleAdvancedTest__TypeInfoCompatibility() {
 }
 #[test]
 fn HandleAdvancedTest__AllocatorHandlePerformance() {
-    let base = Handle::new(IncrementalAllocatorObject::default()).cast::<AllocatorObject>();
+    let base = Handle::new(IncrementalAllocatorObject::default()).upcast::<dyn AllocatorSource>();
     assert!(!base.is_null());
     let started: Instant = Instant::now();
     for _ in 0..1000 {
@@ -104,20 +104,20 @@ fn HandleAdvancedTest__AllocatorHandlePerformance() {
 }
 #[test]
 fn HandleAdvancedTest__HandleArrayOperations() {
-    let handles: Vec<Handle<QaClass00_50>> = vec![
-        Handle::new(QaClass00_50::default()),
-        Handle::new(QaClass10_50::default()).cast(),
-        Handle::new(QaClass20_50::default()).cast(),
-        Handle::new(QaClass30_50::default()).cast(),
-        Handle::new(QaClass40_50::default()).cast(),
+    let handles: Vec<Handle<dyn Transient>> = vec![
+        Handle::new(QaClass00_50::default()).into_upcast(),
+        Handle::new(QaClass10_50::default()).into_upcast(),
+        Handle::new(QaClass20_50::default()).into_upcast(),
+        Handle::new(QaClass30_50::default()).into_upcast(),
+        Handle::new(QaClass40_50::default()).into_upcast(),
     ];
     assert_eq!(5, handles.len());
     for handle in &handles {
         assert!(!handle.is_null());
         assert!(handle.is_kind_name("QaClass00_50"));
-        let cast: Handle<QaClass00_50> = handle.clone();
+        let cast: Handle<dyn Transient> = handle.clone();
         assert!(!cast.is_null());
-        assert_eq!(handle.as_ptr(), cast.as_ptr());
+        assert_eq!(handle.object_address(), cast.object_address());
     }
     assert!(!handles[4].cast::<QaClass40_50>().is_null());
     assert!(handles[0].cast::<QaClass40_50>().is_null());
@@ -130,9 +130,9 @@ fn HandleAdvancedTest__ConstHandleOperations() {
     let const_pointer = const_handle.as_ptr();
     let non_const_pointer = non_const.as_ptr();
     assert_eq!(const_pointer, non_const_pointer);
-    let const_base = const_handle.view::<QaClass00_50>();
-    let non_const_base = non_const.cast::<QaClass00_50>();
-    assert_eq!(const_base.as_ptr(), non_const_base.as_ptr());
+    let const_base = const_handle.view::<dyn Transient>();
+    let non_const_base = non_const.upcast::<dyn Transient>();
+    assert_eq!(const_base.object_address(), non_const_base.object_address());
     assert!(*const_handle == non_const);
     assert!(const_base == non_const_base);
     assert!(!(*const_handle != non_const));

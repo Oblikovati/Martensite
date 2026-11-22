@@ -118,7 +118,7 @@ pub(super) fn traccess(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     }
     let arg1 = pilot.arg(1)?;
     let num = if argc > 1 {
-        IFSelectFunctions::give_entity_number(&ws.clone().cast(), &arg1)?
+        IFSelectFunctions::give_entity_number(&ws, &arg1)?
     } else {
         0
     };

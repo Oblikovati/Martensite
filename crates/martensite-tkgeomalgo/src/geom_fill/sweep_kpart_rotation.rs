@@ -116,7 +116,7 @@ impl GeomFillSweep {
         if !k.ok {
             live(&cs.section, "GeomFill_Sweep::BuildKPart", "Section")?.transform(frame.tf2)?;
             let axis = Axis1::new(frame.centre, Direction3::from_vector(frame.dn)?);
-            k.s = Handle::new(GeomSurfaceOfRevolution::new(&cs.section, axis)?).cast();
+            k.s = Handle::new(GeomSurfaceOfRevolution::new(&cs.section, axis)?).into_upcast();
             self.my_exch_uv = true;
             self.s_error = 0.0;
             k.ok = true;
@@ -193,7 +193,7 @@ impl GeomFillSweep {
         let dn = Direction3::from_vector(f.dn)?;
         let axis_of_sphere = Axis3::new(f.centre, dn, Direction3::from_vector(f.ds)?)?;
         let the_sphere = Sphere3::new(axis_of_sphere, c.radius())?;
-        k.s = Handle::new(GeomSphericalSurface::from_sphere(the_sphere)).cast();
+        k.s = Handle::new(GeomSphericalSurface::from_sphere(the_sphere)).into_upcast();
         let (u_on_sec, (v_first, v_last)) = section_on_sphere(cs, f.tf2, &the_sphere)?;
         let (fv, lv) = if v_first < v_last {
             (v_first, v_last)
@@ -229,7 +229,7 @@ impl GeomFillSweep {
         let dn = Direction3::from_vector(f.dn)?;
         let axis_of_tore = Axis3::new(f.centre, dn, Direction3::from_vector(dc)?)?;
         let s: Handle<dyn GeomSurface> =
-            Handle::new(GeomToroidalSurface::new(axis_of_tore, radius, c.radius())?).cast();
+            Handle::new(GeomToroidalSurface::new(axis_of_tore, radius, c.radius())?).into_upcast();
         let axeiso = first_u_iso_frame(&s)?;
         if c.position()
             .direction()
@@ -303,7 +303,7 @@ impl GeomFillSweep {
                 axis.set_x_direction(Direction3::from_vector(f.ds)?)?;
             }
             let cylinder = GeomCylindricalSurface::new(axis, l.distance(centre_of_surf))?;
-            k.s = Handle::new(cylinder).cast();
+            k.s = Handle::new(cylinder).into_upcast();
             (k.ok, self.my_exch_uv) = (true, true);
             return Ok(());
         }
@@ -336,7 +336,7 @@ impl GeomFillSweep {
                 dir.direction(),
                 Direction3::from_vector(f.ds)?,
             )?;
-            k.s = Handle::new(GeomConicalSurface::new(axis, angle, radius)?).cast();
+            k.s = Handle::new(GeomConicalSurface::new(axis, angle, radius)?).into_upcast();
             (k.ok, self.my_exch_uv) = (true, true);
             return Ok(());
         }

@@ -1,6 +1,7 @@
 //! Basic curve entities as edges: a wire with a warning when the curve has to be split.
 use super::{IgesToBRepBasicCurve, IgesToBRepTopoCurve};
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::{IgesGeomCircularArc, IgesGeomSplineCurve};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Edge, Face, Shape, ShapeIterator};
@@ -30,7 +31,7 @@ pub(super) fn connected_wire(edges: &Handle<ShapeExtendWireData>) -> Result<(), 
 impl IgesToBRepTopoCurve {
     fn label_failure(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         what: &[u8],
     ) -> Result<(), Failure> {
         self.send_fail(start, &self.label_message(start, what)?);
@@ -49,7 +50,7 @@ impl IgesToBRepTopoCurve {
     /// The edges of a curve; `false` after a fail. A C0 B-spline is split, or topology cannot use it.
     fn add_curve_edges(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         curve: &Handle<dyn GeomCurve>,
         edges: &ShapeExtendWireData,
     ) -> Result<bool, Failure> {
@@ -93,7 +94,7 @@ impl IgesToBRepTopoCurve {
     /// A failure of the entity or of the construction of the shape.
     pub fn transfer_topo_basic_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Shape, Failure> {
         if start.is_null() {
             self.null_entity(start);
@@ -135,7 +136,7 @@ impl IgesToBRepTopoCurve {
         Ok(single.into_shape())
     }
     /// A curve that gave nothing is marked.
-    fn mark_bad_case(&mut self, start: &Handle<IgesDataIgesEntity>) {
+    fn mark_bad_case(&mut self, start: &Handle<dyn IgesDataEntityKind>) {
         let arc = start.cast::<IgesGeomCircularArc>();
         if arc.get().is_some_and(IgesGeomCircularArc::is_closed) {
             self.bad_case = true;
@@ -175,7 +176,7 @@ impl IgesToBRepTopoCurve {
     }
     fn add_curve_2d_edges(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         placed: (Handle<dyn Geom2dCurve>, f64, f64),
         face: &Face,
         edges: &ShapeExtendWireData,
@@ -220,7 +221,7 @@ impl IgesToBRepTopoCurve {
     /// A failure of the entity, the face or the construction of the shape.
     pub fn transfer_2d_topo_basic_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         face: &Face,
         trans: Transform2,
         u_fact: f64,

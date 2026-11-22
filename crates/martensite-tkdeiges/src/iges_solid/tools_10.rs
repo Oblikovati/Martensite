@@ -15,13 +15,15 @@ use crate::iges_basic::entity_shape::iges_tool;
 use crate::iges_basic::shared_runs::{
     iges_shared_003, iges_shared_027, iges_shared_035, iges_shared_042, iges_shared_053,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{IgesDataDumpResult, iges_live, iges_real_text};
 use crate::iges_geom::{IgesGeomDirection, IgesGeomPoint};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -159,15 +161,15 @@ impl IgesSolidToolSphericalSurface {
         let another_live = iges_live(another, "IgesSolidToolSphericalSurface::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolSphericalSurface::own_copy")?;
         let temp_center = tc
-            .transferred(&another_live.center().cast::<StandardTransient>())?
+            .transferred(&another_live.center().cast::<dyn Transient>())?
             .cast::<IgesGeomPoint>();
         let temp_radius: f64 = another_live.radius();
         if another_live.is_parametrised() {
             let temp_axis = tc
-                .transferred(&another_live.axis().cast::<StandardTransient>())?
+                .transferred(&another_live.axis().cast::<dyn Transient>())?
                 .cast::<IgesGeomDirection>();
             let temp_refdir = tc
-                .transferred(&another_live.reference_dir().cast::<StandardTransient>())?
+                .transferred(&another_live.reference_dir().cast::<dyn Transient>())?
                 .cast::<IgesGeomDirection>();
             ent_live.init(&temp_center, temp_radius, &temp_axis, &temp_refdir);
         } else {
@@ -226,7 +228,7 @@ impl IgesSolidToolToroidalSurface {
         let mut maj_rad: f64 = 0.0;
         let mut min_rad: f64 = 0.0;
         let mut temp_axis: Handle<IgesGeomDirection> = Handle::default();
-        let mut temp_refdir: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_refdir: Handle<dyn IgesDataEntityKind> = Handle::default();
         pr.read_entity_typed(
             ir,
             &pr.current(),
@@ -350,16 +352,16 @@ impl IgesSolidToolToroidalSurface {
         let another_live = iges_live(another, "IgesSolidToolToroidalSurface::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolToroidalSurface::own_copy")?;
         let temp_center = tc
-            .transferred(&another_live.center().cast::<StandardTransient>())?
+            .transferred(&another_live.center().cast::<dyn Transient>())?
             .cast::<IgesGeomPoint>();
         let temp_axis = tc
-            .transferred(&another_live.axis().cast::<StandardTransient>())?
+            .transferred(&another_live.axis().cast::<dyn Transient>())?
             .cast::<IgesGeomDirection>();
         let maj_rad: f64 = another_live.major_radius();
         let min_rad: f64 = another_live.minor_radius();
         if another_live.is_parametrised() {
             let temp_refdir = tc
-                .transferred(&another_live.reference_dir().cast::<StandardTransient>())?
+                .transferred(&another_live.reference_dir().cast::<dyn Transient>())?
                 .cast::<IgesGeomDirection>();
             ent_live.init(&temp_center, &temp_axis, maj_rad, min_rad, &temp_refdir);
         } else {

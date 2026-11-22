@@ -60,7 +60,7 @@ fn compute_bspline_grid(
     cache: &mut SurfaceRangeLocalizeData,
 ) -> Result<(), Failure> {
     let surface = bean.surface.get().expect("bean surface");
-    let geometry = bean.transformed_surface.cast::<GeomBSplineSurface>();
+    let geometry = bean.transformed_surface.downcast::<GeomBSplineSurface>();
     let spline = geometry.get().ok_or_else(|| {
         Failure::new(
             "BeanFace localized B-spline surface cast failed; expected Geom_BSplineSurface",

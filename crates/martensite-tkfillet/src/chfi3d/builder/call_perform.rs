@@ -28,7 +28,7 @@ pub(crate) struct CallFaces<'a> {
 
 /// The general handle of a face adaptor.
 fn general(h: &Handle<BRepAdaptorSurface>) -> Handle<dyn Adaptor3dSurface> {
-    h.clone().cast()
+    h.upcast()
 }
 
 impl ChFi3dBuilder {

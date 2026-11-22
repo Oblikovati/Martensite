@@ -39,10 +39,10 @@ fn init_round_trip_step_kinematics_point_on_surface_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
-        &the_pair_surface,
+        &the_pair_surface.upcast(),
     );
     assert!(object.pair_surface() == the_pair_surface);
 }
@@ -66,7 +66,7 @@ fn init_round_trip_step_kinematics_point_on_surface_pair_value() {
     let object = StepKinematicsPointOnSurfacePairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         &the_actual_point_on_surface,
         &the_input_orientation,
     );
@@ -114,10 +114,10 @@ fn init_round_trip_step_kinematics_point_on_surface_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
-        &the_point_on_surface_pair_pair_surface,
+        &the_point_on_surface_pair_pair_surface.upcast(),
         &the_range_on_pair_surface,
         has_lower_limit_yaw,
         the_lower_limit_yaw,
@@ -175,7 +175,7 @@ fn init_round_trip_step_kinematics_prismatic_pair_value() {
     let object = StepKinematicsPrismaticPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_translation,
     );
     assert!(object.actual_translation() == the_actual_translation);
@@ -218,8 +218,8 @@ fn init_round_trip_step_kinematics_prismatic_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_low_order_kinematic_pair_tx,
         the_low_order_kinematic_pair_ty,
@@ -286,8 +286,8 @@ fn init_round_trip_step_kinematics_rack_and_pinion_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_pinion_radius,
     );
@@ -312,7 +312,7 @@ fn init_round_trip_step_kinematics_rack_and_pinion_pair_value() {
     let object = StepKinematicsRackAndPinionPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_displacement,
     );
     assert!(object.actual_displacement() == the_actual_displacement);
@@ -350,8 +350,8 @@ fn init_round_trip_step_kinematics_rack_and_pinion_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_rack_and_pinion_pair_pinion_radius,
         has_lower_limit_rack_displacement,
@@ -393,7 +393,7 @@ fn init_round_trip_step_kinematics_revolute_pair_value() {
     let object = StepKinematicsRevolutePairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_rotation,
     );
     assert!(object.actual_rotation() == the_actual_rotation);

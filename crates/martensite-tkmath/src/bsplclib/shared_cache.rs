@@ -26,7 +26,7 @@ impl<T: Transient + RuntimeTyped> SharedCache<T> {
 
     /// Compares shared-object identity; `left.is_same(&right)`.
     pub fn is_same(&self, other: &Self) -> bool {
-        self.0.object_address() == other.0.object_address()
+        self.0 == other.0
     }
 
     /// Reads the shared object; `cache.with(|value| inspect(value))`.
@@ -39,7 +39,7 @@ impl<T: Transient + RuntimeTyped> SharedCache<T> {
         self.0.get().map(mutate)
     }
 
-    /// Returns an owning base-projectable handle; `let owner = cache.handle()`.
+    /// Returns an owning concrete handle; `let owner = cache.handle()`.
     pub fn handle(&self) -> Handle<T> {
         self.0.clone()
     }
@@ -49,8 +49,8 @@ impl<T: Transient + RuntimeTyped> SharedCache<T> {
         self.0.object_address()
     }
 
-    /// Reads the embedded StandardTransient count; `cache.ref_count()`.
-    pub fn ref_count(&self) -> i32 {
+    /// Counts strong owners; `cache.ref_count()`.
+    pub fn ref_count(&self) -> usize {
         self.0.ref_count()
     }
 }
@@ -72,7 +72,7 @@ impl<T: Transient + RuntimeTyped> SharedCache<T> {
         self.0.is_instance(exact)
     }
 
-    /// Checks cached-object ancestry; `cache.is_kind(StandardTransient::static_type())`.
+    /// Checks cached-object ancestry; `cache.is_kind(<dyn Transient>::static_type())`.
     pub fn is_kind(&self, base: &RuntimeType) -> bool {
         self.0.is_kind(base)
     }
@@ -90,7 +90,7 @@ mod tests {
     use crate::bsplclib::Cache;
     use crate::gp::Point3;
     use martensite_tkernel::ncollection::Array1;
-    use martensite_tkernel::standard::{Handle, StandardTransient};
+    use martensite_tkernel::standard::{Handle, Transient};
     use std::sync::{Arc, mpsc};
     use std::time::Duration;
 
@@ -104,7 +104,7 @@ mod tests {
     }
 
     #[test]
-    fn owning_casts_update_embedded_count_without_taking_payload_lock() {
+    fn owning_upcasts_share_the_owner_without_taking_payload_lock() {
         let owner = Arc::new(curve_cache());
         assert_eq!(owner.ref_count(), 1);
         let (sender, receiver) = mpsc::channel();
@@ -123,12 +123,12 @@ mod tests {
 
     fn clone_while_locked(
         owner: Arc<SharedBSplineCache>,
-        sender: mpsc::Sender<(SharedBSplineCache, Handle<StandardTransient>)>,
+        sender: mpsc::Sender<(SharedBSplineCache, Handle<dyn Transient>)>,
     ) {
         owner.with(|cache| {
             let _payload = cache.lock_state();
             let clone = owner.as_ref().clone();
-            let base = clone.handle().cast::<StandardTransient>();
+            let base = clone.handle().into_upcast::<dyn Transient>();
             sender
                 .send((clone, base))
                 .expect("receiver remains available");
@@ -173,7 +173,7 @@ impl SharedBSplineCache {
         self.0.is_same(&other.0)
     }
 
-    /// Returns an owning base-projectable handle; `let transient = cache.handle().cast::<StandardTransient>()`.
+    /// Returns an owning concrete handle; `let transient = cache.handle().into_upcast::<dyn Transient>()`.
     pub fn handle(&self) -> Handle<Cache> {
         self.0.handle()
     }
@@ -183,8 +183,8 @@ impl SharedBSplineCache {
         self.0.object_address()
     }
 
-    /// Reads the embedded StandardTransient count; `cache.ref_count()`.
-    pub fn ref_count(&self) -> i32 {
+    /// Counts strong owners; `cache.ref_count()`.
+    pub fn ref_count(&self) -> usize {
         self.0.ref_count()
     }
 
@@ -204,7 +204,7 @@ impl SharedBSplineCache {
         self.0.is_instance(exact)
     }
 
-    /// Checks underlying cache ancestry; `cache.is_kind(StandardTransient::static_type())`.
+    /// Checks underlying cache ancestry; `cache.is_kind(<dyn Transient>::static_type())`.
     pub fn is_kind(&self, base: &RuntimeType) -> bool {
         if self.is_null() {
             return false;

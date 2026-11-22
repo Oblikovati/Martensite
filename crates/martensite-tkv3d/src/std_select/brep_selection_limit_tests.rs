@@ -2,7 +2,7 @@
 use super::brep_edge_sampling::brep_selection_curve_limits;
 use martensite_tkernel::{
     precision,
-    standard::{Failure, SharedState, StandardTransient},
+    standard::{Failure, SharedState},
 };
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::gp::Point3;
@@ -13,15 +13,13 @@ struct SelectionLimitEvaluations {
     last: f64,
 }
 struct SelectionLimitCurveFake {
-    base: StandardTransient,
     scenario: usize,
     evaluations: SharedState<SelectionLimitEvaluations>,
 }
-martensite_tkernel::impl_transient!(SelectionLimitCurveFake,"SelectionLimitCurveProbe",dyn Adaptor3dCurve,base,interfaces:[dyn Adaptor3dCurve]);
+martensite_tkernel::impl_transient!(SelectionLimitCurveFake,"SelectionLimitCurveProbe",dyn Adaptor3dCurve,interfaces:[dyn Adaptor3dCurve]);
 impl SelectionLimitCurveFake {
     fn new(scenario: usize) -> Self {
         Self {
-            base: Default::default(),
             scenario,
             evaluations: Default::default(),
         }

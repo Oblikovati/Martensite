@@ -131,7 +131,9 @@ fn add_geometry(scene: &ViewerScene, mode: &str) {
     if mode == "flip-lit" {
         add_directional_lighting(scene);
     }
-    scene.group.add_primitive_array(&scene.vertices, true);
+    scene
+        .group
+        .add_primitive_array(&scene.vertices.upcast(), true);
 }
 fn add_label(scene: &ViewerScene) {
     let style = Handle::new(Graphic3dAspectText3d::new(
@@ -177,5 +179,5 @@ fn add_directional_lighting(scene: &ViewerScene) {
     light
         .set_direction(&Direction3::new(0., 0., -1.).unwrap())
         .unwrap();
-    scene.view.set_light_on_one(&light).unwrap();
+    scene.view.set_light_on_one(&light.upcast()).unwrap();
 }

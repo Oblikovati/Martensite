@@ -261,7 +261,7 @@ impl ArcSpec {
             alpha2 = circ.reversed_parameter(alpha2)?;
             circ.reverse()?;
         }
-        let basis: Handle<dyn Geom2dCurve> = Handle::new(circ).cast();
+        let basis: Handle<dyn Geom2dCurve> = Handle::new(circ).into_upcast();
         let curve = Geom2dTrimmedCurve::new(&basis, alpha1, alpha2, true, true)?;
         // Correct the direction in the opposite point.
         let rad_v: Xy = param2.point() - self.center.xy();

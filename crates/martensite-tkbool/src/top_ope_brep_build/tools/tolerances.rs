@@ -155,7 +155,7 @@ fn check_vertex_on_curve(
     }
     let orv = v.orientation();
     if matches!(orv, Orientation::Forward | Orientation::Reversed) {
-        let gc = cr.cast::<dyn BRepGCurve>();
+        let gc = cr.view::<dyn BRepGCurve>();
         let g = gc.get().ok_or_else(|| {
             Failure::with_message(
                 "Standard_NullObject",
@@ -240,14 +240,14 @@ fn curve_on_surface(
     s: &Handle<dyn GeomSurface>,
 ) -> Result<Adaptor3dCurveOnSurface, Failure> {
     let curve: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(pc, f, l)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(pc, f, l)?).into_upcast();
     let surface: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(s)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(s)?).into_upcast();
     Adaptor3dCurveOnSurface::with_curve(&curve, &surface)
 }
 
 /// A geometry moved by a location.
-fn moved<T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
+fn moved<T: ?Sized + martensite_tkernel::standard::TransientHandleTarget>(
     g: &Handle<dyn GeomSurface>,
     l: &Location,
 ) -> Result<Handle<T>, Failure> {
@@ -257,7 +257,7 @@ fn moved<T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
             "TopOpeBRepBuildTools::CorrectCurveOnSurface: null surface",
         )
     })?;
-    Ok(s.transformed(l.transformation())?.cast::<T>())
+    Ok(s.transformed(l.transformation())?.into_cast::<T>())
 }
 
 /// The adaptor of the reference curve on its range (None for an empty range).
@@ -279,12 +279,12 @@ fn reference_adaptor(
             .transformed(cref.location().transformation())?
             .cast::<dyn GeomCurve>();
         return Ok(Some(
-            Handle::new(GeomAdaptorCurve::with_range(&c3d, first, last)?).cast(),
+            Handle::new(GeomAdaptorCurve::with_range(&c3d, first, last)?).into_upcast(),
         ));
     }
     let sref = moved::<dyn GeomSurface>(&cref.surface()?, &cref.location())?;
     Ok(Some(
-        Handle::new(curve_on_surface(&cref.pcurve()?, (first, last), &sref)?).cast(),
+        Handle::new(curve_on_surface(&cref.pcurve()?, (first, last), &sref)?).into_upcast(),
     ))
 }
 
@@ -314,7 +314,7 @@ fn check_pcurves(
             continue;
         }
         found = true;
-        let gc = cr.cast::<dyn BRepGCurve>();
+        let gc = cr.view::<dyn BRepGCurve>();
         let (f, la) = gc.get().map(|g| g.range()).unwrap_or_default();
         if ctx.same_range && (f != first || la != last) {
             return Ok(None);
@@ -356,29 +356,29 @@ fn check_projection(
     su: &Handle<dyn GeomSurface>,
     l: &Location,
 ) -> Result<(), Failure> {
-    let plane = match su.cast::<GeomRectangularTrimmedSurface>().get() {
-        Some(t) => t.basis_surface().cast::<GeomPlane>(),
-        None => su.cast::<GeomPlane>(),
+    let plane = match su.downcast::<GeomRectangularTrimmedSurface>().get() {
+        Some(t) => t.basis_surface().downcast::<GeomPlane>(),
+        None => su.downcast::<GeomPlane>(),
     };
     if plane.is_null() {
         return Ok(());
     }
-    let p = moved::<GeomPlane>(&plane.clone().cast(), l)?;
+    let p = moved::<GeomPlane>(&plane.cast(), l)?;
     let gahs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&p.clone().cast())?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&p.cast())?).into_upcast();
     let hc = ctx.hcurve.get().expect("reference adaptor");
     let (first, last) = (hc.first_parameter()?, hc.last_parameter()?);
-    let gac = ctx.hcurve.cast::<GeomAdaptorCurve>();
-    let c3d = gac.get().ok_or_else(|| Failure::with_message("Standard_NullObject", "TopOpeBRepBuildTools::CorrectEdgeTolerance: the reference is not a GeomAdaptor_Curve"))?.curve();
+    let gac = ctx.hcurve.downcast_ref::<GeomAdaptorCurve>();
+    let c3d = gac.ok_or_else(|| Failure::with_message("Standard_NullObject", "TopOpeBRepBuildTools::CorrectEdgeTolerance: the reference is not a GeomAdaptor_Curve"))?.curve();
     let trimmed: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(&c3d, first, last, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(&c3d, first, last, true, true)?).into_upcast();
     let direction = p.get().expect("moved plane").position().direction();
     let on_plane = geom_proj_lib::project_on_plane(&trimmed, &p, direction, true)?;
     let curve: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_curve(&on_plane)?).cast();
+        Handle::new(GeomAdaptorCurve::with_curve(&on_plane)?).into_upcast();
     let pc = make_curve(&ProjectedCurve::with_curve(&gahs, &curve)?)?;
     let ghpc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(&pc, first, last)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(&pc, first, last)?).into_upcast();
     let acs = Adaptor3dCurveOnSurface::with_curve(&ghpc, &gahs)?;
     raise_edge(e, validate(hc, &acs, ctx.tol, true)?, ctx.max_tol)
 }
@@ -395,7 +395,7 @@ fn correct_edge_tolerance(e: &Edge, s: &Face, max_tol: f64) -> Result<(), Failur
         return Ok(());
     };
     let r = cref.get().expect("reference");
-    let gc = cref.cast::<dyn BRepGCurve>();
+    let gc = cref.view::<dyn BRepGCurve>();
     let g = gc.get().ok_or_else(|| {
         Failure::with_message(
             "Standard_NullObject",

@@ -139,7 +139,7 @@ impl BRepOffsetMakeSimpleOffset {
     fn run_shell_mapping(&mut self) -> Result<(), Failure> {
         let mapping =
             BRepOffsetSimpleOffset::new(&self.input_shape, self.offset_value, self.tolerance)?;
-        let mapping: Handle<dyn BRepToolsModification> = Handle::new(mapping).cast();
+        let mapping: Handle<dyn BRepToolsModification> = Handle::new(mapping).into_upcast();
         self.modifier.perform(&mapping, &ProgressRange::default())?;
         if !self.modifier.is_done() {
             self.error = BRepOffsetSimpleStatus::ErrorOffsetComputation;

@@ -7,9 +7,7 @@ use super::{
 use crate::select3d::{Select3DSensitiveEntity, Select3DSensitiveEntityMembers as _};
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::null_object;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleObserver, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::json_dump::{class_begin, field_dumped, field_integer};
 use std::io;
 
@@ -17,22 +15,19 @@ use std::io;
 ///
 /// Example: `let entity = SelectMgrSensitiveEntity::new(&sensitive); entity.set_active_for_selection();`.
 pub struct SelectMgrSensitiveEntity {
-    transient: StandardTransient,
     sensitive: SharedState<Handle<dyn Select3DSensitiveEntity>>,
     is_active_for_selection: SharedState<bool>,
 }
 martensite_tkernel::impl_transient!(
     SelectMgrSensitiveEntity,
     "SelectMgrSensitiveEntity",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 
 impl SelectMgrSensitiveEntity {
     /// The entity of a sensitive, inactive; `SelectMgrSensitiveEntity::new(&sensitive)`.
     pub fn new(entity: &Handle<dyn Select3DSensitiveEntity>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             sensitive: SharedState::new(entity.clone()),
             is_active_for_selection: SharedState::new(false),
         }
@@ -91,15 +86,13 @@ struct SelectionState {
 ///
 /// Example: `let selection = SelectMgrSelection::new(0); selection.add(&sensitive)?;`.
 pub struct SelectMgrSelection {
-    transient: StandardTransient,
     mode: i32,
     state: SharedState<SelectionState>,
 }
 martensite_tkernel::impl_transient!(
     SelectMgrSelection,
     "SelectMgrSelection",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 
 impl SelectMgrSelection {
@@ -115,7 +108,6 @@ impl SelectMgrSelection {
             is_custom_sens: false,
         };
         Self {
-            transient: StandardTransient::default(),
             mode: mode_idx,
             state: SharedState::new(state),
         }
@@ -294,12 +286,11 @@ impl SelectMgrSelection {
     pub(crate) fn native_owner_at(
         &self,
         index: usize,
-    ) -> Option<HandleObserver<dyn SelectMgrEntityOwnerSource>> {
-        let state = self.state.read();
-        let entity = state.entities.get(index)?.observe();
-        drop(state);
-        let sensitive = entity.sensitive.read().observe();
-        let fields = sensitive.sensitive_base().fields.read();
-        Some(fields.owner_id.observe())
+    ) -> Option<Handle<dyn SelectMgrEntityOwnerSource>> {
+        let entity = self.state.read().entities.get(index)?.clone();
+        let sensitive = entity.base_sensitive();
+        // #592: only the owner snapshot survives into the caller's selectable setter.
+        let owner = sensitive.sensitive_base().fields.read().owner_id.clone();
+        Some(owner)
     }
 }

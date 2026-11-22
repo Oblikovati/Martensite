@@ -1,9 +1,11 @@
 //! The location of entities in a model: the parents they depend on, and the result of the
 //! transformations along them.
 use super::{
-    IgesDataGeneralModule, IgesDataIgesEntity, IgesDataIgesModel, IgesDataProtocolOps,
-    IgesDataSingleParentEntity, IgesDataTransfEntity, iges_entity_of, iges_live,
+    IgesDataGeneralModule, IgesDataIgesModel, IgesDataProtocolOps, IgesDataSingleParentEntity,
+    IgesDataTransfEntity, iges_entity_of, iges_live,
 };
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     impl_transient,
     standard::{Failure, Handle, RuntimeTyped, SharedState, StandardTransient, exceptions},
@@ -32,7 +34,6 @@ struct ToolLocationFields {
 /// assert!(IgesDataToolLocation::convert_location(1e-5, &GeneralTransform3::default(), &mut result, 1.0).unwrap());
 /// ```
 pub struct IgesDataToolLocation {
-    transient: StandardTransient,
     themodel: Handle<IgesDataIgesModel>,
     thelib: SharedState<InterfaceGeneralLib>,
     state: SharedState<ToolLocationFields>,
@@ -40,8 +41,7 @@ pub struct IgesDataToolLocation {
 impl_transient!(
     IgesDataToolLocation,
     "IgesDataToolLocation",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl IgesDataToolLocation {
@@ -56,7 +56,6 @@ impl IgesDataToolLocation {
         let places = iges_live(amodel, "tool location")?.nb_entities().max(0) as usize + 1;
         let general: Handle<dyn InterfaceProtocol> = protocol.cast();
         let tool = Self {
-            transient: StandardTransient::default(),
             themodel: amodel.clone(),
             thelib: SharedState::new(InterfaceGeneralLib::new(&general)),
             state: SharedState::new(ToolLocationFields {
@@ -68,7 +67,7 @@ impl IgesDataToolLocation {
         tool.load()?;
         Ok(tool)
     }
-    fn number_of<T: ?Sized + RuntimeTyped>(&self, ent: &Handle<T>) -> i32 {
+    fn number_of<T: ?Sized + RuntimeTyped + TransientHandleTarget>(&self, ent: &Handle<T>) -> i32 {
         self.themodel
             .get()
             .map_or(0, |model| model.number(&ent.cast()))
@@ -110,23 +109,23 @@ impl IgesDataToolLocation {
     /// Records `parent` as referring to `child`; a second parent makes the location ambiguous.
     pub fn set_reference(
         &self,
-        parent: &Handle<IgesDataIgesEntity>,
-        child: &Handle<IgesDataIgesEntity>,
+        parent: &Handle<dyn IgesDataEntityKind>,
+        child: &Handle<dyn IgesDataEntityKind>,
     ) {
         self.record(parent, child, false);
     }
     /// Records `parent` as the parent of `child` by an associativity.
     pub fn set_parent_assoc(
         &self,
-        parent: &Handle<IgesDataIgesEntity>,
-        child: &Handle<IgesDataIgesEntity>,
+        parent: &Handle<dyn IgesDataEntityKind>,
+        child: &Handle<dyn IgesDataEntityKind>,
     ) {
         self.record(parent, child, true);
     }
     fn record(
         &self,
-        parent: &Handle<IgesDataIgesEntity>,
-        child: &Handle<IgesDataIgesEntity>,
+        parent: &Handle<dyn IgesDataEntityKind>,
+        child: &Handle<dyn IgesDataEntityKind>,
         assoc: bool,
     ) {
         let (np, nc) = (self.number_of(parent), self.number_of(child));
@@ -143,7 +142,7 @@ impl IgesDataToolLocation {
         *slot = if *slot > 0 { -1 } else { np };
     }
     /// Forgets the dependences of an entity.
-    pub fn reset_dependences(&self, child: &Handle<IgesDataIgesEntity>) {
+    pub fn reset_dependences(&self, child: &Handle<dyn IgesDataEntityKind>) {
         let nc = self.number_of(child);
         if nc == 0 {
             return;
@@ -156,7 +155,10 @@ impl IgesDataToolLocation {
     ///
     /// # Errors
     /// A failure of the module of the entity.
-    pub fn set_own_as_dependent(&self, ent: &Handle<IgesDataIgesEntity>) -> Result<(), Failure> {
+    pub fn set_own_as_dependent(
+        &self,
+        ent: &Handle<dyn IgesDataEntityKind>,
+    ) -> Result<(), Failure> {
         let selected = self.thelib.read().select(&ent.cast());
         let Some((gmodule, cn)) = selected else {
             return Ok(());
@@ -172,17 +174,17 @@ impl IgesDataToolLocation {
         Ok(())
     }
     /// Whether an entity is a transformation.
-    pub fn is_transf(&self, ent: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_transf(&self, ent: &Handle<dyn IgesDataEntityKind>) -> bool {
         ent.is_kind(<dyn IgesDataTransfEntity>::static_type())
     }
     /// Whether an entity is an associativity.
-    pub fn is_associativity(&self, ent: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_associativity(&self, ent: &Handle<dyn IgesDataEntityKind>) -> bool {
         ent.get()
             .is_some_and(|live| live.type_number() == TYPE_FOR_ASSOC)
     }
     /// Whether an entity has a transformation of its own.
-    pub fn has_transf(&self, ent: &Handle<IgesDataIgesEntity>) -> bool {
-        ent.get().is_some_and(IgesDataIgesEntity::has_transf)
+    pub fn has_transf(&self, ent: &Handle<dyn IgesDataEntityKind>) -> bool {
+        ent.get().is_some_and(|entity| entity.has_transf())
     }
     /// The location an entity gives by itself.
     ///
@@ -190,7 +192,7 @@ impl IgesDataToolLocation {
     /// A failure of the transformation.
     pub fn explicit_location(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<GeneralTransform3, Failure> {
         iges_live(ent, "tool location")?.location()
     }
@@ -200,7 +202,7 @@ impl IgesDataToolLocation {
         (state.therefs[num as usize], state.theassocs[num as usize])
     }
     /// Whether an entity has several parents, of one way or both.
-    pub fn is_ambiguous(&self, ent: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn is_ambiguous(&self, ent: &Handle<dyn IgesDataEntityKind>) -> bool {
         let num = self.number_of(ent);
         if num == 0 {
             return false;
@@ -221,7 +223,7 @@ impl IgesDataToolLocation {
     ///
     /// # Errors
     /// A domain failure when the entity is ambiguous.
-    pub fn has_parent(&self, ent: &Handle<IgesDataIgesEntity>) -> Result<bool, Failure> {
+    pub fn has_parent(&self, ent: &Handle<dyn IgesDataEntityKind>) -> Result<bool, Failure> {
         let num = self.number_of(ent);
         if num == 0 {
             return Ok(false);
@@ -235,8 +237,8 @@ impl IgesDataToolLocation {
     /// A domain failure when the entity is ambiguous.
     pub fn parent(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+        ent: &Handle<dyn IgesDataEntityKind>,
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let num = self.number_of(ent);
         if num == 0 {
             return Ok(Handle::default());
@@ -254,7 +256,7 @@ impl IgesDataToolLocation {
     /// A domain failure when the entity is ambiguous.
     pub fn has_parent_by_associativity(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<bool, Failure> {
         let num = self.number_of(ent);
         if num == 0 {
@@ -268,7 +270,7 @@ impl IgesDataToolLocation {
     /// A domain failure when an entity is ambiguous, a failure of a transformation.
     pub fn parent_location(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<GeneralTransform3, Failure> {
         let parent = self.parent(ent)?;
         if parent.is_null() {
@@ -282,7 +284,7 @@ impl IgesDataToolLocation {
     /// A domain failure when an entity is ambiguous, a failure of a transformation.
     pub fn effective_location(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<GeneralTransform3, Failure> {
         let mut locat = self.explicit_location(ent)?;
         locat.pre_multiply(self.parent_location(ent)?);

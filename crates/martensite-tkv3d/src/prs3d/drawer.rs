@@ -13,7 +13,7 @@ use super::{
     Prs3dLineAspect, Prs3dPlaneAspect, Prs3dPointAspect, Prs3dShadingAspect, Prs3dTextAspect,
     Prs3dTypeOfHlr, Prs3dVertexDrawMode,
 };
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkservice::aspect::AspectTypeOfDeflection;
@@ -207,11 +207,10 @@ impl Default for Prs3dDrawerFields {
 /// Example: `let drawer = Prs3dDrawer::default(); drawer.set_discretisation(50); assert_eq!(drawer.discretisation(), 50);`.
 #[derive(Default)]
 pub struct Prs3dDrawer {
-    transient: StandardTransient,
     attributes: Graphic3dPresentationAttributesBase,
     pub(crate) fields: SharedState<Prs3dDrawerFields>,
 }
-martensite_tkernel::impl_transient!(Prs3dDrawer, "Prs3dDrawer", Graphic3dPresentationAttributes, transient,
+martensite_tkernel::impl_transient!(Prs3dDrawer, "Prs3dDrawer", Graphic3dPresentationAttributes,
     interfaces: [dyn Graphic3dPresentationAttributesSource]);
 
 impl Graphic3dPresentationAttributesSource for Prs3dDrawer {

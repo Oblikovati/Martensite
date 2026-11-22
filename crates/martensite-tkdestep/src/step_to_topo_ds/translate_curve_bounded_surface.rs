@@ -9,7 +9,8 @@ use crate::step_to_geom::StepToGeom;
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::Face;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{GeomBoundedSurface, GeomSurface};
 use martensite_tkshhealing::shape_algo::ShapeAlgo;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeFace;
@@ -40,11 +41,14 @@ impl StepToTopoDSTranslateCurveBoundedSurface {
     }
     /// The surface, forced periodic: abv 30.06.00: trj4_k1_geo-tu.stp #108: do as in TranslateFace.
     fn periodic_surface(
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         surface: Handle<dyn GeomSurface>,
         process: &TransferTransientProcess,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
-        if step_surface.cast::<StepGeomBSplineSurface>().is_null() {
+        if step_surface
+            .cast::<dyn crate::StepEntityBase<StepGeomBSplineSurface>>()
+            .is_null()
+        {
             return Ok(surface);
         }
         let algorithms = ShapeAlgo::algo_container();
@@ -68,7 +72,7 @@ impl StepToTopoDSTranslateCurveBoundedSurface {
             return Ok(false);
         };
         let process = step_live(tp, "StepToTopoDSTranslateCurveBoundedSurface")?;
-        let entity: Handle<StandardTransient> = bounded.cast();
+        let entity: Handle<dyn Transient> = bounded.cast();
         let step_surface = live.basis_surface();
         let surface = StepToGeom::make_surface(&step_surface, factors)?;
         if surface.is_null() {
@@ -102,7 +106,8 @@ impl StepToTopoDSTranslateCurveBoundedSurface {
                 rank,
                 "StepToTopoDSTranslateCurveBoundedSurface",
             )?;
-            let curve: Handle<StepGeomCompositeCurve> = boundary.boundary_curve().cast();
+            let curve: Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>> =
+                boundary.boundary_curve().cast();
             if curve.is_null() {
                 continue;
             }

@@ -103,7 +103,8 @@ impl BisecAna {
         if !(result.ok || !oncurve) {
             return Ok(());
         }
-        let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+        let curve: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
         self.store(Some(half_line_like(curve, result.parameter, result.sense)?));
         Ok(())
     }
@@ -152,8 +153,8 @@ fn line_point(
     let bisector = LinPnt2dBisec::new(line, point)?;
     let solution = degenerate(bisector.this_solution()?, tolerance)?;
     let curve: Handle<dyn Geom2dCurve> = match solution.arc_type() {
-        IType::Lin => Handle::new(Geom2dLine::from_lin2d(solution.line()?)).cast(),
-        IType::Par => Handle::new(Geom2dParabola::from_parab2d(solution.parabola()?)).cast(),
+        IType::Lin => Handle::new(Geom2dLine::from_lin2d(solution.line()?)).into_upcast(),
+        IType::Par => Handle::new(Geom2dParabola::from_parab2d(solution.parabola()?)).into_upcast(),
         _ => Handle::default(),
     };
     let result: DistanceResult = distance(query, &*solution, false, false)?;

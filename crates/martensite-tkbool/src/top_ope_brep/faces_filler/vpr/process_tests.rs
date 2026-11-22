@@ -47,7 +47,7 @@ fn sample(
 ) -> IntPatchPoint {
     let curve = BRepAdaptorCurve::with_edge(edge).unwrap();
     let arc: TheArc =
-        Handle::new(BRepAdaptorCurve2d::with_edge_on_face(edge, face).unwrap()).cast();
+        Handle::new(BRepAdaptorCurve2d::with_edge_on_face(edge, face).unwrap()).into_upcast();
     let mut point = IntPatchPoint::new();
     point.set_value_tangent(curve.value(parameter).unwrap(), 1e-7, false);
     point.set_parameter(line_parameter);
@@ -90,7 +90,7 @@ pub(super) fn fixture(
     }
     let mut line = TopOpeBRepLineInter::new();
     line.set_line(
-        &Handle::new(source).cast(),
+        &Handle::new(source).into_upcast(),
         &BRepAdaptorSurface::default(),
         &BRepAdaptorSurface::default(),
     )
@@ -269,7 +269,7 @@ fn opposite_parameter_only_hit_does_not_claim_a_geometry_in_find_mode() {
     let curve = BRepAdaptorCurve::with_edge(&other).unwrap();
     let parameter = 0.5 * (curve.first_parameter().unwrap() + curve.last_parameter().unwrap());
     let arc: TheArc =
-        Handle::new(BRepAdaptorCurve2d::with_edge_on_face(&other, &second).unwrap()).cast();
+        Handle::new(BRepAdaptorCurve2d::with_edge_on_face(&other, &second).unwrap()).into_upcast();
     let mut source = point.point_of_intersection().unwrap().clone();
     source.set_arc(
         false,

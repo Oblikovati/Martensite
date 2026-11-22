@@ -13,15 +13,17 @@ use crate::iges_basic::shared_runs::iges_shared_052;
 use crate::iges_basic::{
     IgesBasicHArray1OfHArray1OfIgesEntity, IgesBasicHArray1OfHArray1OfInteger,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_live, iges_msg, iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
 };
@@ -42,9 +44,9 @@ impl IgesSolidToolLoop {
         let mut abool: bool = false;
         let mut nbedges: i32 = 0;
         let mut anint: i32 = 0;
-        let mut anent: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut anent: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut temp_types: Handle<HArray1<i32>> = Handle::default();
-        let mut temp_edges: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_edges: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         let mut temp_index: Handle<HArray1<i32>> = Handle::default();
         let mut temp_orientation: Handle<HArray1<i32>> = Handle::default();
         let mut nb_parameter_curves: Handle<HArray1<i32>> = Handle::default();
@@ -56,7 +58,7 @@ impl IgesSolidToolLoop {
             let msg180 = iges_msg("XSTEP_180");
             let msg190 = iges_msg("XSTEP_190");
             temp_types = iges_new_array1::<i32>(1, nbedges)?;
-            temp_edges = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbedges)?;
+            temp_edges = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbedges)?;
             temp_index = iges_new_array1::<i32>(1, nbedges)?;
             temp_orientation = iges_new_array1::<i32>(1, nbedges)?;
             nb_parameter_curves = iges_new_array1::<i32>(1, nbedges)?;
@@ -120,8 +122,8 @@ impl IgesSolidToolLoop {
                         anint,
                         "IgesSolidToolLoop::read_own_params",
                     )?;
-                    let tmpents: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-                        iges_new_array1::<Handle<IgesDataIgesEntity>>(1, anint)?;
+                    let tmpents: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+                        iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, anint)?;
                     let tmpints: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, anint)?;
                     for j in 1..=anint {
                         if pr.read_boolean(&pr.current(), &msg195, &mut abool, true)? {
@@ -219,9 +221,9 @@ impl IgesSolidToolLoop {
         let ent_live = iges_live(ent, "IgesSolidToolLoop::own_shared")?;
         let length: i32 = ent_live.nb_edges();
         for i in 1..=length {
-            iter.get_one_item(&ent_live.edge(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.edge(i)?.cast::<dyn Transient>());
             for j in 1..=ent_live.nb_parameter_curves(i)? {
-                iter.get_one_item(&ent_live.parametric_curve(i, j)?.cast::<StandardTransient>());
+                iter.get_one_item(&ent_live.parametric_curve(i, j)?.cast::<dyn Transient>());
             }
         }
         Ok(())
@@ -271,8 +273,8 @@ impl IgesSolidToolLoop {
         let nbedges: i32 = another_live.nb_edges();
         let mut anint: i32 = 0;
         let temp_types: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, nbedges)?;
-        let temp_edges: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbedges)?;
+        let temp_edges: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbedges)?;
         let temp_index: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, nbedges)?;
         let temp_orientation: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, nbedges)?;
         let nb_parameter_curves: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, nbedges)?;
@@ -289,8 +291,8 @@ impl IgesSolidToolLoop {
                 "IgesSolidToolLoop::own_copy",
             )?;
             let anent = tc
-                .transferred(&another_live.edge(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.edge(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(&temp_edges, i, anent.clone(), "IgesSolidToolLoop::own_copy")?;
             iges_array1_set(
                 &temp_index,
@@ -311,9 +313,9 @@ impl IgesSolidToolLoop {
                 anint,
                 "IgesSolidToolLoop::own_copy",
             )?;
-            let mut tmpents: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+            let mut tmpents: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
             if anint > 0 {
-                tmpents = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, anint)?;
+                tmpents = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, anint)?;
             }
             let mut tmpints: Handle<HArray1<i32>> = Handle::default();
             if anint > 0 {
@@ -331,12 +333,8 @@ impl IgesSolidToolLoop {
                     "IgesSolidToolLoop::own_copy",
                 )?;
                 let localent = tc
-                    .transferred(
-                        &another_live
-                            .parametric_curve(i, j)?
-                            .cast::<StandardTransient>(),
-                    )?
-                    .cast::<IgesDataIgesEntity>();
+                    .transferred(&another_live.parametric_curve(i, j)?.cast::<dyn Transient>())?
+                    .cast::<dyn IgesDataEntityKind>();
                 iges_array1_set(&tmpents, j, localent.clone(), "IgesSolidToolLoop::own_copy")?;
             }
             iges_live(&isoparametric_flags, "IgesSolidToolLoop::own_copy")?

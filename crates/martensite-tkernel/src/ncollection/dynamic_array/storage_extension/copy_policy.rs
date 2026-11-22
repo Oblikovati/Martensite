@@ -11,7 +11,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// without dropping it until recovery, so that allocation never leaks.
     /// A Rust callback panic uses ordinary RAII cleanup and is outside this failure policy.
     /// Allocation failure and pointer-vector growth failure are outside the recoverable error domain.
-    pub fn copy_date_with(
+    pub(crate) fn copy_date_with(
         &mut self,
         source: &DynamicArray<T>,
         construct: impl FnMut(&T) -> Result<T, Failure>,
@@ -22,7 +22,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// `destination.storage_extension().copy_date_trivial(&source)?;`
     /// Rust Copy makes bitwise duplication sound; the caller chooses this capability policy.
     /// The same unallocated-destination and valid matching-stride requirements apply.
-    pub fn copy_date_trivial(&mut self, source: &DynamicArray<T>) -> Result<(), Failure>
+    pub(crate) fn copy_date_trivial(&mut self, source: &DynamicArray<T>) -> Result<(), Failure>
     where
         T: Copy,
     {

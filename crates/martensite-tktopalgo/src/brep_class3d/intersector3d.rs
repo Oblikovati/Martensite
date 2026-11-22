@@ -72,12 +72,12 @@ impl BRepClass3dIntersector3d {
         tol: f64,
         face: &Face,
     ) -> Result<(), Failure> {
-        let geomline: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(*line)).cast();
+        let geomline: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(*line)).into_upcast();
         let hll: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&geomline)?).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&geomline)?).into_upcast();
         let surface = BRepAdaptorSurface::with_face(face, true)?;
         let periods = periodic_ranges(&surface)?;
-        let hsurface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).cast();
+        let hsurface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).into_upcast();
         let mut hics = HInter::new();
         hics.perform(&hll, &hsurface)?;
         self.w = f64::MAX;

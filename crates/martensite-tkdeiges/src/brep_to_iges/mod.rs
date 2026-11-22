@@ -11,7 +11,8 @@ pub use br_shell::BRepToIgesBRShell;
 pub use br_solid::BRepToIgesBRSolid;
 pub use br_wire::BRepToIgesBRWire;
 
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_set, iges_new_array1};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{iges_array1_set, iges_new_array1};
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::HArray1;
@@ -31,8 +32,8 @@ pub fn count_subshapes(shape: &Shape, kind: ShapeEnum, avoid: ShapeEnum) -> Resu
 
 /// An array from 1 of the entities of a list.
 pub fn entity_array(
-    entities: &[Handle<IgesDataIgesEntity>],
-) -> Result<Handle<HArray1<Handle<IgesDataIgesEntity>>>, Failure> {
+    entities: &[Handle<dyn IgesDataEntityKind>],
+) -> Result<Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, Failure> {
     if entities.is_empty() {
         return Ok(Handle::default());
     }

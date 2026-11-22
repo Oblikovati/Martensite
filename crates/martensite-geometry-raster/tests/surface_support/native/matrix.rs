@@ -73,7 +73,7 @@ fn configure_controls(surface: &Surface) {
 fn mutate_surface(surface: &Surface) {
     let geometry = surface
         .surface()
-        .cast::<martensite_tkg3d::geom::GeomBezierSurface>();
+        .into_downcast::<martensite_tkg3d::geom::GeomBezierSurface>();
     geometry
         .get()
         .unwrap()

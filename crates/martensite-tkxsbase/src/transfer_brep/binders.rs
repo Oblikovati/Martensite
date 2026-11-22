@@ -6,12 +6,100 @@ use martensite_tkbrep::topods::{
     self, CompSolid, Compound, Edge, Face, Shape, Shell, Solid, Vertex, Wire,
 };
 use martensite_tkernel::{
-    impl_transient,
-    standard::{Failure, RuntimeType, RuntimeTyped, SharedState, StandardTransient, exceptions},
+    impl_transient, impl_transient_interface_target,
+    standard::{Failure, HandleUpcast, RuntimeType, RuntimeTyped, SharedState, exceptions},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::ops::Deref;
-use std::sync::RwLockWriteGuard;
+use std::sync::{Arc, RwLockWriteGuard};
+
+/// The shared status and shape slot of a single-shape binder.
+#[derive(Default)]
+pub struct TransferBRepShapeResult {
+    base: TransferBinderBase,
+    shape: SharedState<Shape>,
+}
+
+impl TransferBRepShapeResult {
+    fn with_result(result: &Shape) -> Self {
+        let state = Self {
+            base: TransferBinderBase::default(),
+            shape: SharedState::new(result.clone()),
+        };
+        // New binders have no consumers, so marking the result present cannot fail.
+        let _ = state.base.set_result_present();
+        state
+    }
+
+    /// Replace the shape while it is still unused, e.g. `binder.set_result(&shape)`.
+    pub fn set_result(&self, result: &Shape) -> Result<(), Failure> {
+        *self.c_result()? = result.clone();
+        Ok(())
+    }
+
+    /// Copy the published shape, e.g. `let shape = binder.result();`.
+    pub fn result(&self) -> Shape {
+        self.shape.read().clone()
+    }
+
+    /// Mark the result present and borrow its shape for writing, e.g. `*binder.c_result()? = shape;`.
+    pub fn c_result(&self) -> Result<RwLockWriteGuard<'_, Shape>, Failure> {
+        self.base.set_result_present()?;
+        Ok(self.shape.write())
+    }
+
+    fn result_type_name(&self) -> String {
+        TransferBRepShapeInfo::type_name(&self.shape.read()).to_owned()
+    }
+}
+
+/// The shared shape-result interface of single-shape binders.
+pub trait TransferBRepShapeBinderOps:
+    TransferBinder + Deref<Target = TransferBRepShapeResult>
+{
+}
+
+impl RuntimeTyped for dyn TransferBRepShapeBinderOps {
+    const TYPE_NAME: &'static str = TransferBRepBinderOfShape::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        TransferBRepBinderOfShape::static_type()
+    }
+}
+impl_transient_interface_target!(dyn TransferBRepShapeBinderOps);
+impl HandleUpcast<dyn TransferBinder> for dyn TransferBRepShapeBinderOps {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn TransferBinder> {
+        owner
+    }
+}
+
+macro_rules! impl_shape_binder {
+    ($binder:ty) => {
+        impl Deref for $binder {
+            type Target = TransferBRepShapeResult;
+
+            fn deref(&self) -> &Self::Target {
+                &self.result
+            }
+        }
+
+        impl TransferBinder for $binder {
+            fn binder_base(&self) -> &TransferBinderBase {
+                &self.result.base
+            }
+
+            fn result_type(&self) -> &'static RuntimeType {
+                TransferBRepShapeInfo::type_of(&self.result.shape.read())
+            }
+
+            fn result_type_name(&self) -> String {
+                self.result.result_type_name()
+            }
+        }
+
+        impl TransferBRepShapeBinderOps for $binder {}
+    };
+}
 
 /// `TransferBRepBinderOfShape`: one shape result.
 ///
@@ -23,58 +111,26 @@ use std::sync::RwLockWriteGuard;
 /// ```
 #[derive(Default)]
 pub struct TransferBRepBinderOfShape {
-    transient: StandardTransient,
-    base: TransferBinderBase,
-    theres: SharedState<Shape>,
+    result: TransferBRepShapeResult,
 }
-impl_transient!(TransferBRepBinderOfShape, "TransferBRepBinderOfShape", dyn TransferBinder, transient, interfaces: [dyn TransferBinder]);
+impl_transient!(TransferBRepBinderOfShape, "TransferBRepBinderOfShape", dyn TransferBinder, interfaces: [dyn TransferBRepShapeBinderOps, dyn TransferBinder]);
+impl_shape_binder!(TransferBRepBinderOfShape);
 
 impl TransferBRepBinderOfShape {
-    /// `TransferBRepBinderOfShape()`: no result.
+    /// Construct an empty binder with `TransferBRepBinderOfShape::new()`.
     pub fn new() -> Self {
         Self::default()
     }
-    /// `TransferBRepBinderOfShape(res)`: the result `res` (present).
-    pub fn with_result(res: &Shape) -> Self {
-        let binder = Self::default();
-        *binder.theres.write() = res.clone();
-        // a new binder is never "used": SetResultPresent cannot fail
-        let _ = binder.set_result_present();
-        binder
-    }
-    /// `SetResult(res)`: `TransferTransferFailure` when the result was already used.
-    pub fn set_result(&self, res: &Shape) -> Result<(), Failure> {
-        self.set_result_present()?;
-        *self.theres.write() = res.clone();
-        Ok(())
-    }
-    /// `Result`.
-    pub fn result(&self) -> Shape {
-        self.theres.read().clone()
-    }
-    /// `CResult`: the result, modifiable (the write guard), set present first.
-    pub fn c_result(&self) -> Result<RwLockWriteGuard<'_, Shape>, Failure> {
-        self.set_result_present()?;
-        Ok(self.theres.write())
+
+    /// Construct a populated binder with `TransferBRepBinderOfShape::with_result(&shape)`.
+    pub fn with_result(result: &Shape) -> Self {
+        Self {
+            result: TransferBRepShapeResult::with_result(result),
+        }
     }
 }
 
-impl TransferBinder for TransferBRepBinderOfShape {
-    fn binder_base(&self) -> &TransferBinderBase {
-        &self.base
-    }
-    /// `ResultType`: `TopoDSTShape` (`TransferBRepShapeInfo::Type`).
-    fn result_type(&self) -> &'static RuntimeType {
-        TransferBRepShapeInfo::type_of(&self.result())
-    }
-    /// `ResultTypeName`: the name of the typed shape (`TransferBRepShapeInfo::TypeName`).
-    fn result_type_name(&self) -> String {
-        TransferBRepShapeInfo::type_name(&self.result()).to_owned()
-    }
-}
-
-/// `TransferBRepShapeBinder`: a binder of shape with the typed accessors; embeds its
-/// `TransferBRepBinderOfShape` (registered as its RTTI parent).
+/// A single-shape binder with typed accessors.
 ///
 /// ```
 /// use martensite_tkxsbase::transfer_brep::TransferBRepShapeBinder;
@@ -83,38 +139,21 @@ impl TransferBinder for TransferBRepBinderOfShape {
 /// ```
 #[derive(Default)]
 pub struct TransferBRepShapeBinder {
-    base: TransferBRepBinderOfShape,
+    result: TransferBRepShapeResult,
 }
-impl_transient!(TransferBRepShapeBinder, "TransferBRepShapeBinder", TransferBRepBinderOfShape, base, interfaces: [dyn TransferBinder]);
-
-impl Deref for TransferBRepShapeBinder {
-    type Target = TransferBRepBinderOfShape;
-    fn deref(&self) -> &TransferBRepBinderOfShape {
-        &self.base
-    }
-}
-
-impl TransferBinder for TransferBRepShapeBinder {
-    fn binder_base(&self) -> &TransferBinderBase {
-        self.base.binder_base()
-    }
-    fn result_type(&self) -> &'static RuntimeType {
-        self.base.result_type()
-    }
-    fn result_type_name(&self) -> String {
-        self.base.result_type_name()
-    }
-}
+impl_transient!(TransferBRepShapeBinder, "TransferBRepShapeBinder", dyn TransferBRepShapeBinderOps, interfaces: [dyn TransferBRepShapeBinderOps, dyn TransferBinder]);
+impl_shape_binder!(TransferBRepShapeBinder);
 
 impl TransferBRepShapeBinder {
     /// `TransferBRepShapeBinder()`.
     pub fn new() -> Self {
         Self::default()
     }
+
     /// `TransferBRepShapeBinder(res)`.
-    pub fn with_result(res: &Shape) -> Self {
+    pub fn with_result(result: &Shape) -> Self {
         Self {
-            base: TransferBRepBinderOfShape::with_result(res),
+            result: TransferBRepShapeResult::with_result(result),
         }
     }
     /// `ShapeType`: `TopAbsSHAPE` without result.
@@ -169,11 +208,10 @@ impl TransferBRepShapeBinder {
 /// assert_eq!(list.nb_shapes().unwrap(), 1);
 /// ```
 pub struct TransferBRepShapeListBinder {
-    transient: StandardTransient,
     base: TransferBinderBase,
     theres: SharedState<Option<Vec<Shape>>>,
 }
-impl_transient!(TransferBRepShapeListBinder, "TransferBRepShapeListBinder", dyn TransferBinder, transient, interfaces: [dyn TransferBinder]);
+impl_transient!(TransferBRepShapeListBinder, "TransferBRepShapeListBinder", dyn TransferBinder, interfaces: [dyn TransferBinder]);
 
 impl Default for TransferBRepShapeListBinder {
     fn default() -> Self {
@@ -196,7 +234,6 @@ impl TransferBRepShapeListBinder {
     /// `TransferBRepShapeListBinder(list)`: `None` is a null list.
     pub fn with_list(list: Option<Vec<Shape>>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TransferBinderBase::default(),
             theres: SharedState::new(list),
         }

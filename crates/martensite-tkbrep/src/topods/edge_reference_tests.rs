@@ -8,7 +8,7 @@ fn scoped_edge_reads_preserve_identity_placement_and_explicit_clone_ownership() 
     Edge::with_shape_reference(&edge, |view| {
         assert!(view.is_equal(&edge));
         assert_eq!(edge.tshape().ref_count(), 1);
-        let clone = view.clone();
+        let clone = view.to_edge();
         assert_eq!(edge.tshape().ref_count(), 2);
         drop(clone);
         assert_eq!(edge.tshape().ref_count(), 1);
@@ -69,7 +69,7 @@ fn scoped_face_reads_preserve_ownership_and_check_native_kind() {
     Face::with_shape_reference(&face, |view| {
         assert!(view.is_equal(&face));
         assert_eq!(face.tshape().ref_count(), 1);
-        let owning = view.clone();
+        let owning = view.to_face();
         assert_eq!(face.tshape().ref_count(), 2);
         drop(owning);
         Ok(())

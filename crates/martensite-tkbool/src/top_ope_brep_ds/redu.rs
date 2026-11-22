@@ -6,9 +6,9 @@ use super::process_interferences_tool::{
     fun_select_sk_interference, fun_select_traori_interference, fun_select_trasha_interference,
 };
 use super::{
-    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSTransition,
+    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSKind, TopOpeBRepDSTransition,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_tool::{
     fun_tool_in_s, fun_tool_is_closing_e, fun_tool_par_e_tol, fun_tool_paron_ef_tol,
 };
@@ -43,7 +43,7 @@ pub fn fun_scanloi(
 fn redu_closing(
     bds: &TopOpeBRepDSDataStructure,
     ise: i32,
-    i2d: &Handle<TopOpeBRepDSInterference>,
+    i2d: &Handle<dyn InterferenceRecord>,
     e: &topods::Edge,
     f: &topods::Face,
     new_t2d: &mut TopOpeBRepDSTransition,
@@ -80,7 +80,7 @@ fn redu_closing(
 pub fn fun_ds_redu2d1d(
     bds: &TopOpeBRepDSDataStructure,
     ise: i32,
-    i2d: &Handle<TopOpeBRepDSInterference>,
+    i2d: &Handle<dyn InterferenceRecord>,
     l1d: &ListOfInterference,
     new_t2d: &mut TopOpeBRepDSTransition,
 ) -> Result<bool, Failure> {

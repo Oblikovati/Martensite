@@ -121,8 +121,13 @@ pub fn validation_cases(lines: &mut Lines) {
     std::fs::write(&readable_path, "x").expect("a readable file");
     let readable = s(&text_of(&readable_path));
     let context = s("ctx");
-    let node =
-        probe_node("STEP", "Martensite", "step", true, true, "").cast::<dyn DeConfigurationNode>();
+    let derived = probe_node("STEP", "Martensite", "step", true, true, "")
+        .into_upcast::<dyn DeShapeFixConfigurationNode>();
+    let address = derived.object_address();
+    let node = derived.into_upcast::<dyn DeConfigurationNode>();
+    assert_eq!(node.object_address(), address);
+    assert_eq!(node.ref_count(), 1);
+    assert!(node.is_kind_name("DEShapeFixConfigurationNode"));
     let shape_fix = <dyn DeShapeFixConfigurationNode as RuntimeTyped>::static_type();
     let any_node = <dyn DeConfigurationNode as RuntimeTyped>::static_type();
     let checks = [
@@ -221,7 +226,7 @@ pub fn file_cases(lines: &mut Lines) {
     };
     lines.line("file.nodeload.empty", empty);
     let wrapper = DeWrapper::new();
-    wrapper.bind(&node.cast());
+    wrapper.bind(&node.into_upcast());
     let none: List<AsciiString> = List::default();
     lines.line(
         "file.wrapper.save",

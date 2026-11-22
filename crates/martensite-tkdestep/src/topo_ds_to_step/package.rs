@@ -3,7 +3,8 @@ use super::TopoDSToStepTool;
 use crate::step_data::StepDataStepModel;
 use crate::step_entity::step_live;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::transfer::{TransferFinderProcess, TransferSimpleBinderOfTransient};
 use martensite_tkxsbase::transfer_brep::{TransferBRep, TransferBRepShapeMapper};
@@ -106,7 +107,7 @@ impl TopoDSToStep {
     pub fn add_result(
         fp: &Handle<TransferFinderProcess>,
         shape: &Shape,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let result = TransferSimpleBinderOfTransient::new();
         result.set_result(ent)?;

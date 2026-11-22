@@ -100,13 +100,13 @@ pub(super) fn build_iso_edge(
             Point2::new(val_iso, v_min - iso.first_parameter()),
             Direction2::Y,
         ))
-        .cast()
+        .into_upcast()
     } else {
         Handle::new(Geom2dLine::from_point(
             Point2::new(u_min - iso.first_parameter(), val_iso),
             Direction2::X,
         ))
-        .cast()
+        .into_upcast()
     };
     builder.update_edge_pcurve(
         &e,
@@ -193,7 +193,7 @@ fn iso_pcurve(
             u_last,
         )
     };
-    Ok((Handle::new(l).cast(), f2d, l2d))
+    Ok((Handle::new(l).into_upcast(), f2d, l2d))
 }
 
 /// `UpdateEdge(E, S, isUiso, ValIso)`: an existing edge put on an iso of the surface:
@@ -217,14 +217,14 @@ pub(super) fn update_iso_edge(
     }
     let (l, mut f2d, mut l2d) = iso_pcurve(surface, is_uiso, val_iso)?;
     let mut cl: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&l, f2d, l2d, true, true)?).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&l, f2d, l2d, true, true)?).into_upcast();
     // Control the direction and the range.
     let (mut first, mut last) = BRepTool::range(e)?;
     if needs_reverse(e, surface, &cl, (f2d, first), (&vf, &vl), sing)? {
         let reversed = Geom2dTrimmedCurve::new(&l, f2d, l2d, true, true)?;
         reversed.reverse()?;
         (f2d, l2d) = (reversed.first_parameter(), reversed.last_parameter());
-        cl = Handle::new(reversed).cast();
+        cl = Handle::new(reversed).into_upcast();
     }
     if sing {
         builder.update_edge_curve(e, &Handle::default(), 0.)?;
@@ -241,7 +241,7 @@ pub(super) fn update_iso_edge(
             (first, last),
             &mut c2d,
         )?;
-        cl = Handle::new(Geom2dTrimmedCurve::new(&c2d, first, last, true, true)?).cast();
+        cl = Handle::new(Geom2dTrimmedCurve::new(&c2d, first, last, true, true)?).into_upcast();
     }
     update_end_vertices(e, surface, &cl, (first, last))?;
     if !sing {

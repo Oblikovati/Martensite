@@ -6,7 +6,7 @@ use martensite_tkbrep::brep_adaptor::{BRepAdaptorCurve2d, BRepAdaptorSurface};
 use martensite_tkbrep::topods::Vertex;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::real::real_first;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::native::{std_max, std_min};
 use martensite_tkg3d::adaptor3d::{Adaptor3dHVertex, Adaptor3dSurface};
@@ -26,11 +26,10 @@ use martensite_tkmath::gp::{Point2, Point3, Vector3};
 /// use martensite_tktopalgo::brep_top_adaptor::BRepTopAdaptorHVertex;
 /// let vertex = BRepTopAdaptorHVertex::new(&Vertex::default(), &Handle::default());
 /// assert!(vertex.vertex().is_null());
-/// let base: Handle<dyn Adaptor3dHVertex> = Handle::new(vertex).cast();
+/// let base: Handle<dyn Adaptor3dHVertex> = Handle::new(vertex).into_upcast();
 /// assert_eq!(base.value().x(), f64::MIN);
 /// ```
 pub struct BRepTopAdaptorHVertex {
-    parent: StandardTransient,
     my_vtx: Vertex,
     // Kept as natively, although no member reads it.
     _my_curve: Handle<BRepAdaptorCurve2d>,
@@ -39,7 +38,6 @@ impl_transient!(
     BRepTopAdaptorHVertex,
     "BRepTopAdaptor_HVertex",
     dyn Adaptor3dHVertex,
-    parent,
     interfaces: [dyn Adaptor3dHVertex]
 );
 
@@ -59,7 +57,6 @@ impl BRepTopAdaptorHVertex {
     /// `BRepTopAdaptorHVertex::new(&vertex, &curve)`.
     pub fn new(vertex: &Vertex, curve: &Handle<BRepAdaptorCurve2d>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_vtx: vertex.clone(),
             _my_curve: curve.clone(),
         }

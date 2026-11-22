@@ -9,7 +9,7 @@ mod perform_points;
 mod solutions;
 
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::{
     Geom2dCircle, Geom2dCurve, Geom2dEllipse, Geom2dGeometry, Geom2dHyperbola, Geom2dLine,
     Geom2dParabola, errors,
@@ -30,8 +30,8 @@ use super::BisectorCurve;
 /// use martensite_tkg2d::geom2d::{Geom2dCartesianPoint, Geom2dCurve, Geom2dPoint};
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Point2, Vector2};
-/// let p1: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(0.0, 0.0)).cast();
-/// let p2: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(2.0, 0.0)).cast();
+/// let p1: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(0.0, 0.0)).into_upcast();
+/// let p2: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(2.0, 0.0)).into_upcast();
 /// let bisector = BisecAna::new();
 /// bisector.perform_points(&p1, &p2, Point2::new(1.0, 0.0), Vector2::new(0.0, 1.0),
 ///     Vector2::new(0.0, -1.0), 1.0, 0.0, true)?;
@@ -39,14 +39,12 @@ use super::BisectorCurve;
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct BisecAna {
-    parent: StandardTransient,
     thebisector: SharedState<Trimmed>,
 }
 impl_transient!(
     BisecAna,
     "Bisector_BisecAna",
     dyn BisectorCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn BisectorCurve]
 );
 
@@ -60,7 +58,6 @@ impl BisecAna {
     /// `Bisector_BisecAna()`: no curve yet; `BisecAna::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             thebisector: SharedState::new(Handle::default()),
         }
     }

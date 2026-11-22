@@ -3,7 +3,6 @@ use super::{
     colored_shape_appearance_snapshot::*, colored_shape_expansion_inputs::ColoredExpansionInputs, *,
 };
 use crate::prs_mgr::*;
-use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
     standard::Handle,
@@ -160,19 +159,17 @@ fn native_copy_virtual_getter_failures_release_partial_objects_then_repair() {
 
 fn copy_failure_ownership(
     rows: &mut String,
-    source: &super::colored_shape_dispatch_fixture::ColoredDispatchFake,
+    source: &Handle<super::colored_shape_dispatch_fixture::ColoredDispatchFake>,
     stage: i32,
     error: &martensite_tkernel::standard::Failure,
 ) {
     let shape_count = source.shape_base().fields.read().shape.tshape().ref_count();
-    let drawer_count = source
-        .attributes_ref()
-        .with_object(|drawer| drawer.unwrap().transient_base().ref_count());
+    let drawer_count = source.attributes().ref_count().checked_sub(1).unwrap();
     writeln!(
         rows,
         "copy-failure {stage} {} {shape_count} {drawer_count} {}",
         error.exception_type(),
-        source.transient_base().ref_count()
+        source.ref_count()
     )
     .unwrap();
 }

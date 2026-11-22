@@ -22,7 +22,7 @@ struct PresentationSlotReplacementProbe {
 impl display_driver::SensitiveGroupCreationCallback for PresentationSlotReplacementProbe {
     fn group_created(&self) {
         // The source field changes while the original receiver's already allocated group stays local.
-        *self.slot.write() = self.incoming.observe().clone();
+        *self.slot.write() = self.incoming.upgrade();
     }
 }
 #[test]
@@ -137,7 +137,7 @@ fn invoke_virtual_argument_compute(
         &input.presentation,
         argument_probe::presentation_argument_field,
     );
-    let source = object.observe_as::<dyn PrsMgrPresentableObject>();
+    let source: &dyn PrsMgrPresentableObject = &**object;
     source.compute(&manager, &presentation, mode).unwrap();
 }
 fn presentation_slot_field(

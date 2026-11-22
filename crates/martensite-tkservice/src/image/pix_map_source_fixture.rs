@@ -15,8 +15,12 @@ pub(super) struct ImageAllocationProbe {
     pub clear_failure: Failure,
 }
 martensite_tkernel::impl_transient!(ImageAllocationProbe, "Martensite_ImageAllocationProbe",
-    ImagePixMap, base, interfaces:[dyn ImagePixMapSource]);
+    ImagePixMap, interfaces:[dyn ImagePixMapSource]);
 impl ImagePixMapSource for ImageAllocationProbe {
+    fn original_image_base(&self) -> Option<&ImagePixMap> {
+        Some(&self.base)
+    }
+
     fn clear_image(&self) -> Result<(), ImageSourceError> {
         self.clears.fetch_add(1, Ordering::Relaxed);
         if self.fail_clear.load(Ordering::Relaxed) {
@@ -65,9 +69,7 @@ pub(super) fn image_allocation_probe() -> ImageAllocationProbe {
     }
 }
 
-pub(super) struct MissingOriginalImage {
-    pub base: martensite_tkernel::standard::StandardTransient,
-}
+pub(super) struct MissingOriginalImage {}
 martensite_tkernel::impl_transient!(MissingOriginalImage, "Martensite_MissingOriginalImage",
-    martensite_tkernel::standard::StandardTransient, base, interfaces:[dyn ImagePixMapSource]);
+    martensite_tkernel::standard::StandardTransient, interfaces:[dyn ImagePixMapSource]);
 impl ImagePixMapSource for MissingOriginalImage {}

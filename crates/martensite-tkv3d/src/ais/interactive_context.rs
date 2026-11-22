@@ -1,19 +1,18 @@
 //! Owned context state with non-owning links from interactive objects.
-use super::{AisGlobalStatus, AisInteractiveObject, AisSelection, AisSelectionSource};
+use super::context_object_map::AisContextObjectMap;
+use super::{AisSelection, AisSelectionSource};
 use crate::v3d::V3dViewSource;
 use crate::{
     prs_mgr::PrsMgrPresentationManager, prs3d::Prs3dDrawer, select_mgr::*, v3d::V3dViewer,
 };
 use martensite_tkernel::{
-    ncollection::{DataMap, Sequence},
-    standard::{
-        Failure, Handle, SharedState, StandardTransient, WeakHandle, exceptions::null_object,
-    },
+    ncollection::Sequence,
+    standard::{Failure, Handle, SharedState, WeakHandle, exceptions::null_object},
 };
 /// Native protected context storage; `context.fields.read().objects.len()`.
 pub struct AisInteractiveContextFields {
     /// `myObjects`.
-    pub objects: DataMap<Handle<dyn AisInteractiveObject>, Handle<AisGlobalStatus>>,
+    pub objects: AisContextObjectMap,
     /// `mgrSelector`.
     pub selection_manager: Handle<SelectMgrSelectionManager>,
     /// `myMainPM`.
@@ -58,7 +57,7 @@ impl AisInteractiveContextFields {
         ));
         let styles = super::context_styles::context_default_styles()?;
         Ok(Self {
-            objects: DataMap::default(),
+            objects: AisContextObjectMap::default(),
             selection_manager,
             presentation_manager,
             viewer: viewer.clone(),
@@ -81,7 +80,6 @@ impl AisInteractiveContextFields {
 /// Interactive context; construction, detection and dynamic highlighting follow native behavior.
 /// Example: `let context=AisInteractiveContext::new(&viewer)?`.
 pub struct AisInteractiveContext {
-    transient: StandardTransient,
     pub(super) this: SharedState<WeakHandle<AisInteractiveContext>>,
     /// Protected state is shared by all handles; release its guard before callbacks.
     pub fields: SharedState<AisInteractiveContextFields>,
@@ -89,15 +87,13 @@ pub struct AisInteractiveContext {
 martensite_tkernel::impl_transient!(
     AisInteractiveContext,
     "AisInteractiveContext",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 impl AisInteractiveContext {
     /// Create all native managers, selection, filters, drawers and initial styles.
     /// Example: `AisInteractiveContext::new(&viewer)?`.
     pub fn new(viewer: &Handle<V3dViewer>) -> Result<Handle<Self>, Failure> {
         let context = Handle::new(Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(AisInteractiveContextFields::new(viewer)?),
             this: SharedState::default(),
         });

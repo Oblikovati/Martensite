@@ -1,8 +1,8 @@
 use super::{ItemLocation, Location};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Transient};
+use std::sync::Arc;
 /// `SListNodeOfItemLocation`: one shared cell of a location list; `SListNodeOfItemLocation::new(item, &tail)`.
 pub struct SListNodeOfItemLocation {
-    base: StandardTransient,
     // The tail is kept as a Location so that Location::NextLocation can lend it, as the
     // code reinterprets the tail list as a Location.
     tail: Location,
@@ -11,14 +11,12 @@ pub struct SListNodeOfItemLocation {
 martensite_tkernel::impl_transient!(
     SListNodeOfItemLocation,
     "TopLoc_SListNodeOfItemLocation",
-    StandardTransient,
-    base
+    dyn Transient
 );
 impl SListNodeOfItemLocation {
     /// Stores the item and shares the tail; `SListNodeOfItemLocation::new(item, &tail)`.
     pub fn new(item: ItemLocation, tail: &SListOfItemLocation) -> Self {
         Self {
-            base: StandardTransient::default(),
             tail: Location::from_items(tail.clone()),
             value: item,
         }
@@ -38,7 +36,7 @@ impl SListNodeOfItemLocation {
 /// `SListOfItemLocation`: a persistent singly linked list with shared tails; `SListOfItemLocation::default()`.
 #[derive(Clone, Default)]
 pub struct SListOfItemLocation {
-    node: Option<Handle<SListNodeOfItemLocation>>,
+    node: Option<Arc<SListNodeOfItemLocation>>,
 }
 impl SListOfItemLocation {
     /// Prepends an item, caching `tail transformation * item transformation` in it;
@@ -48,7 +46,7 @@ impl SListOfItemLocation {
             item.trsf.pre_multiply(head.value.trsf);
         }
         Self {
-            node: Some(Handle::new(SListNodeOfItemLocation::new(item, tail))),
+            node: Some(Arc::new(SListNodeOfItemLocation::new(item, tail))),
         }
     }
     /// Shares another list, as `Assign`; `list.assign(&other)`.
@@ -103,7 +101,7 @@ impl SListOfItemLocation {
     }
     pub(super) fn same_node(&self, other: &Self) -> bool {
         match (&self.node, &other.node) {
-            (Some(left), Some(right)) => left == right,
+            (Some(left), Some(right)) => Arc::ptr_eq(left, right),
             (None, None) => true,
             _ => false,
         }

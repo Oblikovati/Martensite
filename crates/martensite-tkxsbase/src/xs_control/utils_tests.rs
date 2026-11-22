@@ -5,7 +5,7 @@ use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkernel::{
     ncollection::{HArray1, HSequence},
-    standard::{Handle, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeTyped, Transient},
     tcollection::{AsciiString, HAsciiString, HExtendedString},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -25,16 +25,16 @@ fn face() -> Shape {
 #[test]
 fn utils_texts() {
     let xu = XSControlUtils::new();
-    let h: Handle<StandardTransient> = Handle::new(HAsciiString::new("abc")).cast();
+    let h: Handle<dyn Transient> = Handle::new(HAsciiString::new("abc")).into_upcast();
     assert_eq!(xu.type_name(&h, false), "TCollection_HAsciiString");
     assert_eq!(xu.type_name(&h, true), "HAsciiString");
     assert_eq!(
-        xu.type_name(&HAsciiString::static_type_handle().cast(), true),
+        xu.type_name_from_descriptor(HAsciiString::static_type(), true),
         "HAsciiString",
         "a type gives its name"
     );
     assert!(xu.type_name(&Handle::default(), false).is_empty());
-    assert!(xu.is_kind(&h, Some(StandardTransient::static_type())) && !xu.is_kind(&h, None));
+    assert!(xu.is_kind(&h, Some(<dyn Transient>::static_type())) && !xu.is_kind(&h, None));
     assert_eq!(xu.to_c_string(&Handle::default()).len(), 0);
     assert_eq!(xu.to_c_string(&xu.to_h_string("x")).as_bytes(), b"x");
     assert_eq!(xu.to_a_string("y").as_bytes(), b"y");
@@ -69,7 +69,7 @@ fn utils_lists() {
     let texts = xu.new_seq_c_str();
     xu.append_c_str(&texts, "one").unwrap();
     xu.append_c_str(&texts, "two").unwrap();
-    let list: Handle<StandardTransient> = texts.clone().cast();
+    let list: Handle<dyn Transient> = texts.clone().cast();
     assert_eq!(xu.seq_length(&list), 2);
     assert_eq!(xu.c_str_value(&list, 2).unwrap().as_bytes(), b"two");
     assert!(xu.c_str_value(&list, 3).unwrap().is_empty() && xu.c_str_value(&list, 0).is_err());
@@ -88,7 +88,7 @@ fn utils_lists() {
     xu.trace_lines(&list);
     let ascii = HSequence::<AsciiString>::default();
     ascii.append(AsciiString::new("a"));
-    let ascii: Handle<StandardTransient> = Handle::new(ascii).cast();
+    let ascii: Handle<dyn Transient> = Handle::new(ascii).into_upcast();
     assert_eq!(xu.c_str_value(&ascii, 1).unwrap().as_bytes(), b"a");
     assert!(
         xu.e_str_value(&ascii, 1).unwrap().is_empty(),
@@ -98,8 +98,11 @@ fn utils_lists() {
     xu.append_e_str(&ext, &[0x41]).unwrap();
     assert_eq!(xu.c_str_value(&ext.cast(), 1).unwrap().as_bytes(), b"A");
     assert_eq!(
-        xu.e_str_value(&Handle::new(HExtendedString::from_utf16(&[0x42])).cast(), 1)
-            .unwrap(),
+        xu.e_str_value(
+            &Handle::new(HExtendedString::from_utf16(&[0x42])).into_upcast(),
+            1
+        )
+        .unwrap(),
         vec![0x42]
     );
     let tra = xu.new_seq_tra();
@@ -138,11 +141,11 @@ fn utils_arrays() {
         "native quirk: items below the bounds"
     );
     assert!(
-        xu.seq_to_arr(&Handle::new(HAsciiString::new("x")).cast(), 1)
+        xu.seq_to_arr(&Handle::new(HAsciiString::new("x")).into_upcast(), 1)
             .is_err()
     );
     assert!(
-        xu.arr_to_seq(&Handle::new(HAsciiString::new("x")).cast())
+        xu.arr_to_seq(&Handle::new(HAsciiString::new("x")).into_upcast())
             .is_err()
     );
     assert!(xu.seq_to_arr(&Handle::default(), 1).unwrap().is_null());
@@ -207,7 +210,7 @@ fn utils_shapes() {
     for hs in [true, false] {
         assert!(xu.binder_shape(&xu.shape_binder(&e, hs)).is_same(&e));
     }
-    let mapper: Handle<StandardTransient> = Handle::new(TransferBRepShapeMapper::new(&e)).cast();
+    let mapper: Handle<dyn Transient> = Handle::new(TransferBRepShapeMapper::new(&e)).into_upcast();
     assert!(xu.binder_shape(&mapper).is_same(&e));
     assert!(xu.binder_shape(&Handle::default()).is_null());
 }

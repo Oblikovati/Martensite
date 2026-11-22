@@ -27,7 +27,7 @@ pub fn ais_shape_set_color<S: AisShapeSource + ?Sized>(
 /// own aspect was created; `set_shape_drawer_color(&shape, &drawer, color)?`.
 pub fn set_shape_drawer_color<S: AisShapeSource + ?Sized>(
     object: &S,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     color: Color,
 ) -> Result<bool, Failure> {
     // Native calls all three setup operations even when an earlier one creates new state.
@@ -76,7 +76,7 @@ pub fn ais_shape_set_material<S: AisShapeSource + ?Sized>(
 /// its color and transparency as asked; `set_shape_drawer_material(&shape, &drawer, &material, (true, false))?`.
 pub fn set_shape_drawer_material<S: AisShapeSource + ?Sized>(
     object: &S,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     material: &Graphic3dMaterialAspect,
     keep: (bool, bool),
 ) -> Result<(), Failure> {

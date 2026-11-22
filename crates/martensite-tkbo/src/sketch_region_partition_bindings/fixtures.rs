@@ -32,7 +32,8 @@ fn curved_line_edges(points: [Point3; 3]) -> Vec<Shape> {
 }
 pub(super) fn quadratic_edge(points: [Point3; 3]) -> Shape {
     let poles = Array1::from_shared(&points, 1);
-    let curve: Handle<dyn GeomCurve> = Handle::new(GeomBezierCurve::new(&poles).unwrap()).cast();
+    let curve: Handle<dyn GeomCurve> =
+        Handle::new(GeomBezierCurve::new(&poles).unwrap()).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

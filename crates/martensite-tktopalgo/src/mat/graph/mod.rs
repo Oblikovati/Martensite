@@ -8,7 +8,7 @@ pub use fusion::MatFusion;
 use super::{MatArc, MatBasicElt, MatNode};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::errors;
 
 /// The maps and counts of a graph.
@@ -33,10 +33,9 @@ pub(super) struct GraphState {
 /// assert!(graph.arc(1).is_err());
 /// ```
 pub struct MatGraph {
-    parent: StandardTransient,
     state: SharedState<GraphState>,
 }
-impl_transient!(MatGraph, "MAT_Graph", StandardTransient, parent);
+impl_transient!(MatGraph, "MAT_Graph", dyn Transient);
 
 impl Default for MatGraph {
     fn default() -> Self {
@@ -48,7 +47,6 @@ impl MatGraph {
     /// `MAT_Graph()`: an empty graph; `MatGraph::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(GraphState::default()),
         }
     }

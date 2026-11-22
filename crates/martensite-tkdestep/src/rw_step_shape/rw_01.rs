@@ -82,7 +82,9 @@ impl RwStepShapeRwAdvancedFace {
         if data.read_sub_list(num, 2, "bounds", ach, &mut nsub2, false, 0, 0)? {
             let nb2: i32 = data.nb_params(nsub2)?;
             if nb2 != 0 {
-                a_bounds = step_new_array1::<Handle<StepShapeFaceBound>>(1, nb2)?;
+                a_bounds = step_new_array1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>(
+                    1, nb2,
+                )?;
                 for i2 in 1..=nb2 {
                     if data.read_entity(
                         nsub2,
@@ -97,7 +99,8 @@ impl RwStepShapeRwAdvancedFace {
                 }
             }
         }
-        let mut a_face_geometry: Handle<StepGeomSurface> = Default::default();
+        let mut a_face_geometry: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         data.read_entity(
             num,
             3,

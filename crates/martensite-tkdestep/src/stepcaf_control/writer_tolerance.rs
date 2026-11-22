@@ -38,7 +38,8 @@ use crate::step_repr::{
 };
 use crate::step_shape::StepShapeShapeDefinitionRepresentation;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkxcaf::xcaf_dim_tol_objects::{
     XCAFDimTolObjectsDatumModifWithValue, XCAFDimTolObjectsDatumObject,
@@ -56,7 +57,7 @@ mod tolerance_entity;
 pub use tolerance_entity::*;
 
 /// The written datums by their names.
-pub(super) type DatumMap = HashMap<Vec<u8>, Handle<StandardTransient>>;
+pub(super) type DatumMap = HashMap<Vec<u8>, Handle<dyn Transient>>;
 
 /// The objects of the datums of a tolerance, and the largest position among them.
 fn datum_objects(
@@ -213,7 +214,7 @@ pub(super) fn write_datum_system(
     tolerance_label: &TdfLabel,
     datums: &[TdfLabel],
     datum_map: &DatumMap,
-    context: &Handle<StepReprRepresentationContext>,
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     factors: &StepDataFactors,
 ) -> Result<Handle<HArray1<StepDimTolDatumSystemOrReference>>, Failure> {
     let model = model_of(ws)?;

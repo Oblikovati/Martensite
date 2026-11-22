@@ -7,7 +7,7 @@ use super::{IFSelectAppliedModifiers, IFSelectShareOut};
 use crate::interface::{InterfaceCopyTool, InterfaceGraph, InterfaceInterfaceModel};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 
@@ -32,15 +32,9 @@ pub(super) struct CopierState {
 /// ```
 #[derive(Default)]
 pub struct IFSelectModelCopier {
-    transient: StandardTransient,
     pub(super) state: SharedState<CopierState>,
 }
-impl_transient!(
-    IFSelectModelCopier,
-    "IFSelectModelCopier",
-    StandardTransient,
-    transient
-);
+impl_transient!(IFSelectModelCopier, "IFSelectModelCopier", dyn Transient);
 
 /// The 0-based index of the 1-based `num` in a sequence of `len` items.
 fn seq_index(num: i32, len: usize) -> Option<usize> {

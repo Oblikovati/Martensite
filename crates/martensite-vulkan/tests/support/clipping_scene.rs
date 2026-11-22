@@ -90,7 +90,7 @@ fn configure_chains(
         "clip-union" | "clip-two-chains" | "clip-child-off" => {
             let child = clip_plane(0., 1., 0.);
             child.set_on(mode != "clip-child-off").unwrap();
-            Graphic3dClipPlane::set_chain_next_plane(first, child).unwrap();
+            Graphic3dClipPlane::set_chain_next_plane(&first.upcast(), child.into_upcast()).unwrap();
         }
         "clip-head-off" => first.set_on(false).unwrap(),
         "clip-outside" => first.set_equation(Vec4::new(1., 0., 0., -20.)).unwrap(),
@@ -99,7 +99,11 @@ fn configure_chains(
     }
     if mode == "clip-two-chains" {
         let second = clip_plane(-1., 0., 5.);
-        Graphic3dClipPlane::set_chain_next_plane(&second, clip_plane(0., -1., 5.)).unwrap();
+        Graphic3dClipPlane::set_chain_next_plane(
+            &second.upcast(),
+            clip_plane(0., -1., 5.).into_upcast(),
+        )
+        .unwrap();
         sequence.append(second);
     }
 }
@@ -135,7 +139,7 @@ fn configure_geometry(scene: &ViewerScene, mode: &str) {
     scene.group.set_group_primitives_aspect(&aspects);
     scene
         .group
-        .add_primitive_array(&clipped_vertices(mode), true);
+        .add_primitive_array(&clipped_vertices(mode).into_upcast(), true);
 }
 fn clipped_vertices(mode: &str) -> Handle<Graphic3dArrayOfPrimitives> {
     let kind = if mode == "clip-lines" {

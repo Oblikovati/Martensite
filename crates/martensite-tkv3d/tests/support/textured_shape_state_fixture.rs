@@ -4,7 +4,7 @@ use martensite_tkernel::standard::HandleReference;
 mod diagnostics;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{message::Messenger, standard::*, tcollection::AsciiString};
-use martensite_tkservice::{graphic3d::*, image::ImagePixMap};
+use martensite_tkservice::{graphic3d::*, image::ImagePixMapObject};
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*};
 use std::sync::{
     Arc,
@@ -12,13 +12,12 @@ use std::sync::{
 };
 
 pub struct TexturedStateFixture {
-    transient: StandardTransient,
     pub base: AisTexturedShapeBase,
     pub file_calls: AtomicUsize,
     pub pixmap_calls: AtomicUsize,
     pub diagnostics: Arc<diagnostics::TexturedDiagnosticPrinter>,
 }
-martensite_tkernel::impl_transient!(TexturedStateFixture,"TexturedStateFixture",dyn AisTexturedShapeSource,transient,interfaces:[dyn AisTexturedShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(TexturedStateFixture,"TexturedStateFixture",dyn AisTexturedShapeSource,interfaces:[dyn AisTexturedShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl TexturedStateFixture {
     pub fn new() -> Handle<Self> {
         Self::with_factory(Arc::new(AisNativeTexturedTextureFactory))
@@ -26,7 +25,6 @@ impl TexturedStateFixture {
     pub fn with_factory(factory: Arc<dyn AisTexturedTextureFactory>) -> Handle<Self> {
         let diagnostics = Arc::new(diagnostics::TexturedDiagnosticPrinter::default());
         Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisTexturedShapeBase::with_services(
                 &Shape::default(),
                 Arc::new(Messenger::with_printer(diagnostics.clone())),
@@ -46,7 +44,7 @@ impl AisTexturedShapeSource for TexturedStateFixture {
         self.file_calls.fetch_add(1, Ordering::Relaxed);
         ais_textured_shape_set_texture_file_name(self, file)
     }
-    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<ImagePixMap>) {
+    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<dyn ImagePixMapObject>) {
         self.pixmap_calls.fetch_add(1, Ordering::Relaxed);
         ais_textured_shape_set_texture_pix_map(self, pixmap);
     }

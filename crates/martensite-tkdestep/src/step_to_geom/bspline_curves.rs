@@ -112,7 +112,9 @@ struct CurveRead {
 }
 
 impl CurveRead {
-    fn new(curve: &Handle<StepGeomBSplineCurve>) -> Result<Self, Failure> {
+    fn new(
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>>,
+    ) -> Result<Self, Failure> {
         let rational = curve.cast::<StepGeomBSplineCurveWithKnotsAndRationalBSplineCurve>();
         if let Some(live) = rational.get() {
             return Ok(Self {
@@ -257,7 +259,7 @@ fn kept_poles<K: BSplineCurveKind>(
 
 /// `MakeBSplineCurveCommon`.
 fn make_bspline_curve_common<K>(
-    curve: &Handle<StepGeomBSplineCurve>,
+    curve: &Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>>,
     factors: &StepDataFactors,
 ) -> Result<Handle<K>, Failure>
 where
@@ -306,14 +308,14 @@ where
 impl StepToGeom {
     /// `MakeBSplineCurve`: null for a curve without two distinct knots, poles or valid points.
     pub fn make_bspline_curve(
-        curve: &Handle<StepGeomBSplineCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<GeomBSplineCurve>, Failure> {
         make_bspline_curve_common::<GeomBSplineCurve>(curve, factors)
     }
     /// `MakeBSplineCurve2d`: as `make_bspline_curve`, on a 2D curve.
     pub fn make_bspline_curve_2d(
-        curve: &Handle<StepGeomBSplineCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<Geom2dBSplineCurve>, Failure> {
         make_bspline_curve_common::<Geom2dBSplineCurve>(curve, factors)

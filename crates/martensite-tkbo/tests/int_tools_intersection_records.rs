@@ -102,13 +102,13 @@ fn common_part_copy_preserves_target_flags_and_points() {
     assert!(other.ranges2().is_empty());
 }
 fn line_fixture() -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::new(Axis1::default())).into_cast()
+    Handle::new(GeomLine::new(Axis1::default())).into_upcast()
 }
 #[test]
 fn curve_handles_and_tolerances_are_independent() {
     let line = line_fixture();
     let pcurve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::new(Axis2d::default())).into_cast();
+        Handle::new(Geom2dLine::new(Axis2d::default())).into_upcast();
     let mut curve = Curve::new(&line, &pcurve, &pcurve, 0.1, 0.2);
     assert_eq!(curve.tolerance(), 0.1);
     assert_eq!(curve.tangential_tolerance(), 0.2);
@@ -152,7 +152,7 @@ fn curve_bounds_preserve_outputs_for_unbounded_curves() {
 fn bounded_curve_d0_preserves_native_or_predicate() {
     let trimmed: Handle<dyn GeomCurve> =
         Handle::new(GeomTrimmedCurve::new(&line_fixture(), 2.0, 4.0, true, true).unwrap())
-            .into_cast();
+            .into_upcast();
     let curve = Curve::new(&trimmed, &Handle::default(), &Handle::default(), 0.0, 0.0);
     let (mut first, mut last) = (0.0, 0.0);
     let (mut p, mut q) = (Point3::default(), Point3::default());

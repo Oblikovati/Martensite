@@ -9,7 +9,7 @@ use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
     resource::{ResourceHost, ResourceManager},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::ExtendedString,
 };
 use std::sync::{Arc, Mutex};
@@ -17,12 +17,11 @@ use std::sync::{Arc, Mutex};
 /// A document of format "TestFormat" that records its update calls.
 #[derive(Default)]
 pub struct FakeDocument {
-    transient: StandardTransient,
     base: CdmDocumentBase,
     pub updates: Mutex<Vec<i32>>,
     pub refuse_close: Mutex<bool>,
 }
-impl_transient!(FakeDocument, "FakeDocument", dyn CdmDocument, transient, interfaces: [dyn CdmDocument]);
+impl_transient!(FakeDocument, "FakeDocument", dyn CdmDocument, interfaces: [dyn CdmDocument]);
 impl CdmDocument for FakeDocument {
     fn document_base(&self) -> &CdmDocumentBase {
         &self.base
@@ -47,20 +46,19 @@ impl CdmDocument for FakeDocument {
 /// A new bound fake document and its concrete handle.
 pub fn new_document() -> (Handle<dyn CdmDocument>, Handle<FakeDocument>) {
     let concrete = Handle::new(FakeDocument::default());
-    let document: Handle<dyn CdmDocument> = concrete.cast();
+    let document: Handle<dyn CdmDocument> = concrete.upcast();
     document.document_base().bind_self(&document);
     (document, concrete)
 }
 
 /// An application with an in-memory resource manager that retrieves a fixed document.
 pub struct FakeApplication {
-    transient: StandardTransient,
     base: CdmApplicationBase,
     pub resources: SharedResourceManager,
     pub retrieved: Mutex<Handle<dyn CdmDocument>>,
     pub stored_version: i32,
 }
-impl_transient!(FakeApplication, "FakeApplication", dyn CdmApplication, transient, interfaces: [dyn CdmApplication]);
+impl_transient!(FakeApplication, "FakeApplication", dyn CdmApplication, interfaces: [dyn CdmApplication]);
 impl CdmApplication for FakeApplication {
     fn application_base(&self) -> &CdmApplicationBase {
         &self.base
@@ -88,13 +86,12 @@ pub fn new_application(
 ) -> (Handle<dyn CdmApplication>, Handle<FakeApplication>) {
     let manager = ResourceManager::empty(ResourceHost::native());
     let concrete = Handle::new(FakeApplication {
-        transient: StandardTransient::default(),
         base: CdmApplicationBase::default(),
         resources: Arc::new(SharedState::new(manager)),
         retrieved: Mutex::new(Handle::default()),
         stored_version,
     });
-    let application: Handle<dyn CdmApplication> = concrete.cast();
+    let application: Handle<dyn CdmApplication> = concrete.upcast();
     application.application_base().bind_self(&application);
     (application, concrete)
 }

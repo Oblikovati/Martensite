@@ -4,15 +4,16 @@ use super::export::{fds_idata, fds_parameter, fds_state_e_with_f2d, fun_ds_getoo
 use super::process_interferences_tool::select::{to_list, to_vec};
 use super::{
     ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSEdgeInterferenceTool,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSPoint, TopOpeBRepDSTransition,
+    TopOpeBRepDSKind, TopOpeBRepDSPoint, TopOpeBRepDSTransition,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Edge, Shape};
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The geometry of a reduction: a point or a vertex.
 enum Geometry {

@@ -20,15 +20,15 @@ impl SelectMgrSelectableObject for PrimitiveArrayPresentation {
     }
 }
 fn select_array(
-    parray: &Handle<Graphic3dArrayOfPrimitives>,
+    parray: &Handle<dyn Graphic3dArraySource>,
     array: &Graphic3dArrayOfPrimitives,
     owner: &Handle<dyn crate::select_mgr::SelectMgrEntityOwnerSource>,
     selection: &SelectMgrSelection,
 ) -> Result<(), Failure> {
-    if !parray.cast::<Graphic3dArrayOfTriangles>().is_null() {
+    if parray.downcast_ref::<Graphic3dArrayOfTriangles>().is_some() {
         return select_triangles(array, owner, selection);
     }
-    if !parray.cast::<Graphic3dArrayOfSegments>().is_null() {
+    if parray.downcast_ref::<Graphic3dArrayOfSegments>().is_some() {
         return select_segments(array, owner, selection);
     }
     select_points(array, owner, selection)

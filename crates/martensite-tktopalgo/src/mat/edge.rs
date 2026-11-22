@@ -1,7 +1,7 @@
 //! `MAT_Edge`: an element of the contour in the MAT algorithm, between two bisectors.
 use super::{MatBisector, MatTListItem};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 
 struct EdgeState {
     edge_number: i32,
@@ -22,10 +22,9 @@ struct EdgeState {
 /// assert_eq!((edge.edge_number(), edge.distance()), (4, 0.0));
 /// ```
 pub struct MatEdge {
-    parent: StandardTransient,
     state: SharedState<EdgeState>,
 }
-impl_transient!(MatEdge, "MAT_Edge", StandardTransient, parent);
+impl_transient!(MatEdge, "MAT_Edge", dyn Transient);
 
 impl Default for MatEdge {
     fn default() -> Self {
@@ -37,7 +36,6 @@ impl MatEdge {
     /// `MAT_Edge()`: number 0, distance 0, intersection point 0; `MatEdge::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(EdgeState {
                 edge_number: 0,
                 first_bisector: Handle::default(),

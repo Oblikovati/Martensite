@@ -39,7 +39,7 @@ fn add_segment(group: &Handle<dyn Graphic3dGroup>, ends: [[f32; 3]; 2], color: N
     for [x, y, z] in ends {
         segment.add_vertex(x, y, z).unwrap();
     }
-    group.add_primitive_array(&segment, true);
+    group.add_primitive_array(&segment.upcast(), true);
 }
 
 /// The probe's label group, stencil-tested white and yellow lines, then a plain green line.

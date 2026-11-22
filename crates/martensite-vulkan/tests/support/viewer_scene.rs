@@ -23,7 +23,7 @@ impl ViewerScene {
         let group = structure.new_group().unwrap();
         group.set_group_primitives_aspect(&unlit_style([1., 0., 0., 1.]));
         let vertices = triangle_vertices();
-        group.add_primitive_array(&vertices, true);
+        group.add_primitive_array(&vertices.upcast(), true);
         structure.display();
         Self {
             viewer,

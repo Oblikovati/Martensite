@@ -21,7 +21,8 @@ pub trait IgesDataColorEntity: IgesDataEntityKind {}
 impl_transient_interface!(
     dyn IgesDataColorEntity,
     "IgesDataColorEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );
 
 /// An entity that defines how a label is displayed.
@@ -34,7 +35,8 @@ pub trait IgesDataLabelDisplayEntity: IgesDataEntityKind {}
 impl_transient_interface!(
     dyn IgesDataLabelDisplayEntity,
     "IgesDataLabelDisplayEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );
 
 /// An entity that defines a line font.
@@ -47,7 +49,8 @@ pub trait IgesDataLineFontEntity: IgesDataEntityKind {}
 impl_transient_interface!(
     dyn IgesDataLineFontEntity,
     "IgesDataLineFontEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );
 
 /// An entity that lists levels.
@@ -83,7 +86,8 @@ pub trait IgesDataLevelListEntity: IgesDataEntityKind {
 impl_transient_interface!(
     dyn IgesDataLevelListEntity,
     "IgesDataLevelListEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );
 
 /// An entity that gives a name to the entity it is a property of.
@@ -99,7 +103,8 @@ pub trait IgesDataNameEntity: IgesDataEntityKind {
 impl_transient_interface!(
     dyn IgesDataNameEntity,
     "IgesDataNameEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );
 
 /// An entity that binds one parent to its children.
@@ -110,7 +115,7 @@ impl_transient_interface!(
 /// ```
 pub trait IgesDataSingleParentEntity: IgesDataEntityKind {
     /// The parent.
-    fn single_parent(&self) -> Handle<IgesDataIgesEntity>;
+    fn single_parent(&self) -> Handle<dyn IgesDataEntityKind>;
     /// The count of children.
     ///
     /// # Errors
@@ -120,12 +125,13 @@ pub trait IgesDataSingleParentEntity: IgesDataEntityKind {
     ///
     /// # Errors
     /// An out of range failure for a bad rank.
-    fn child(&self, num: i32) -> Result<Handle<IgesDataIgesEntity>, Failure>;
+    fn child(&self, num: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure>;
 }
 impl_transient_interface!(
     dyn IgesDataSingleParentEntity,
     "IgesDataSingleParentEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );
 
 /// An entity that defines a transformation.
@@ -144,7 +150,8 @@ pub trait IgesDataTransfEntity: IgesDataEntityKind {
 impl_transient_interface!(
     dyn IgesDataTransfEntity,
     "IgesDataTransfEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );
 
 /// An entity that defines a view, or a list of views.
@@ -170,5 +177,6 @@ pub trait IgesDataViewKindEntity: IgesDataEntityKind {
 impl_transient_interface!(
     dyn IgesDataViewKindEntity,
     "IgesDataViewKindEntity",
-    IgesDataIgesEntity
+    IgesDataIgesEntity,
+    upcasts: [dyn IgesDataEntityKind]
 );

@@ -10,7 +10,7 @@ use super::{Mat2dBiInt, Mat2dFigure, Mat2dLine, Mat2dMiniPath, seq};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::{Geom2dBoundedCurve, Geom2dGeometry, Geom2dTrimmedCurve, errors};
 use martensite_tkmath::geom_abs::JoinType;
 use martensite_tkmath::gp::Point2;
@@ -37,10 +37,9 @@ pub(super) struct CircuitState {
 /// assert!(!circuit.connexion_on(1));
 /// ```
 pub struct Mat2dCircuit {
-    parent: StandardTransient,
     state: SharedState<CircuitState>,
 }
-impl_transient!(Mat2dCircuit, "MAT2d_Circuit", StandardTransient, parent);
+impl_transient!(Mat2dCircuit, "MAT2d_Circuit", dyn Transient);
 
 impl Default for Mat2dCircuit {
     fn default() -> Self {
@@ -67,7 +66,6 @@ impl Mat2dCircuit {
     /// `GeomAbs_Arc` and false); `Mat2dCircuit::new(JoinType::Arc, false)`.
     pub fn new(join_type: JoinType, is_open_result: bool) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(CircuitState {
                 direction: 0.0,
                 geom_elements: Sequence::default(),

@@ -1,7 +1,7 @@
 //! `BRep_TVertex`: the vertex TShape with a point, a tolerance and point representations.
 use super::dump::{dump_base, dump_class_name, dump_field};
 use super::point_representation::BRepPointRepresentation;
-use crate::topods::{self, TShape, TShapeBase, dump_tshape};
+use crate::topods::{self, TShape, TShapeBase, TVertexSource, dump_tshape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::{self, DumpStream};
 use martensite_tkernel::standard::real::real_epsilon;
@@ -28,16 +28,16 @@ pub(crate) struct TVertexFields {
 /// assert_eq!(vertex.tolerance(), 1e-3);
 /// ```
 pub struct BRepTVertex {
-    parent: topods::TVertex,
+    tshape: TShapeBase,
     pub(crate) fields: SharedState<TVertexFields>,
 }
-impl_transient!(BRepTVertex, "BRep_TVertex", topods::TVertex, parent, interfaces: [dyn TShape]);
+impl_transient!(BRepTVertex, "BRep_TVertex", dyn TVertexSource, interfaces: [dyn TShape, dyn TVertexSource]);
 
 impl BRepTVertex {
     /// `BRep_TVertex()`: the origin with the tolerance `RealEpsilon()`; `BRepTVertex::new()`.
     pub fn new() -> Self {
         Self {
-            parent: topods::TVertex::new(),
+            tshape: topods::TVertex::initial_base(),
             fields: SharedState::new(TVertexFields {
                 point: Point3::default(),
                 tolerance: real_epsilon(),
@@ -88,16 +88,18 @@ impl Default for BRepTVertex {
     }
 }
 
+impl TVertexSource for BRepTVertex {}
+
 impl TShape for BRepTVertex {
     fn tshape_base(&self) -> &TShapeBase {
-        self.parent.tshape_base()
+        &self.tshape
     }
     /// A new vertex with the same point and tolerance, without point representations.
     fn empty_copy(&self) -> Result<Handle<dyn TShape>, Failure> {
         let copy = Self::new();
         copy.set_pnt(self.pnt());
         copy.set_tolerance(self.tolerance());
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// The class name, the `TopoDS_TShape` dump, the point, the tolerance and each
     /// point representation.

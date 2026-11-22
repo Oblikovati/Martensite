@@ -1,7 +1,7 @@
 //! Native base construction is separated from binding the final concrete or derived object.
 use super::{V3dTypeOfView, V3dView, V3dViewSource, V3dViewer};
 use martensite_tkernel::standard::exceptions::null_object;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkservice::graphic3d::{
     Graphic3dCView, Graphic3dCViewMembers as _, Graphic3dCamera, Graphic3dCameraFocusType,
     Graphic3dCameraIodType, Graphic3dCameraProjection, Graphic3dTypeOfBackfacingModel,
@@ -75,8 +75,9 @@ fn allocate_owned_view(
     default_camera: Graphic3dCamera,
 ) -> V3dView {
     V3dView {
-        transient: StandardTransient::default(),
-        driver_view_slot: martensite_tkernel::standard::IntrusiveReferenceSlot::from_owned(view),
+        driver_view_slot: martensite_tkernel::standard::IntrusiveReferenceSlot::from_owned_shared(
+            view,
+        ),
         default_camera: Handle::new(default_camera),
         this: SharedState::new(WeakHandle::default()),
         state: SharedState::new(super::view::V3dViewState::initial(viewer)),

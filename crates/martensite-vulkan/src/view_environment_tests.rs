@@ -20,6 +20,7 @@ pub(super) fn cube_map(shade: u8) -> Handle<dyn Graphic3dCubeMap> {
             image.set_top_down(true);
             image
         })
+        .map(Handle::into_upcast)
         .collect();
     Handle::new(Graphic3dCubeMapSeparate::from_images(&sides).unwrap()).cast()
 }

@@ -190,7 +190,7 @@ impl BRepGPropFace {
         };
         let direction = Direction2::new(direction.0, direction.1)?;
         let line: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dLine::from_point(location, direction)).cast();
+            Handle::new(Geom2dLine::from_point(location, direction)).into_upcast();
         self.curve.load_range(&line, 0., length)
     }
 }

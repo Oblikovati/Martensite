@@ -3,7 +3,7 @@
 //! ```
 //! use martensite_tkernel::standard::Handle;
 //! use martensite_tkxsbase::if_select::{IFSelectDispGlobal, IFSelectDispGlobalBaseType};
-//! let base: Handle<IFSelectDispGlobalBaseType> = Handle::new(IFSelectDispGlobal::new()).cast();
+//! let base: Handle<IFSelectDispGlobalBaseType> = Handle::new(IFSelectDispGlobal::new()).into_upcast();
 //! assert!(!base.is_null());
 //! ```
 use super::IFSelectDispatch;

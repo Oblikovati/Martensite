@@ -121,7 +121,7 @@ impl StepToGeom {
     /// A curve_replica: :n7 abv 16 Feb 99; protects against cyclic references and a wrong operator.
     fn make_curve_replica(
         replica: &StepGeomCurveReplica,
-        curve: &Handle<StepGeomCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomCurve>, Failure> {
         let parent = replica.parent_curve();
@@ -144,7 +144,7 @@ impl StepToGeom {
     /// An offset_curve_3d: :o2 abv 17 Feb 99; protects against a loop.
     fn make_offset_curve(
         offset: &StepGeomOffsetCurve3d,
-        curve: &Handle<StepGeomCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomCurve>, Failure> {
         let basis = offset.basis_curve();
@@ -164,7 +164,7 @@ impl StepToGeom {
     }
     /// `make_curve`: null for a null entity or a curve that cannot be converted.
     pub fn make_curve(
-        sc: &Handle<StepGeomCurve>,
+        sc: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomCurve>, Failure> {
         if sc.is_null() {
@@ -178,11 +178,11 @@ impl StepToGeom {
         if trimmed.is_some() {
             return Ok(Self::make_trimmed_curve(&trimmed, factors)?.cast());
         }
-        let conic = sc.cast::<StepGeomConic>();
+        let conic = sc.cast::<dyn crate::StepEntityBase<StepGeomConic>>();
         if conic.is_some() {
             return Ok(Self::make_conic(&conic, factors)?.cast());
         }
-        let bounded = sc.cast::<StepGeomBoundedCurve>();
+        let bounded = sc.cast::<dyn crate::StepEntityBase<StepGeomBoundedCurve>>();
         if bounded.is_some() {
             return Ok(Self::make_bounded_curve(&bounded, factors)?.cast());
         }
@@ -192,7 +192,10 @@ impl StepToGeom {
         if let Some(offset) = sc.cast::<StepGeomOffsetCurve3d>().get() {
             return Self::make_offset_curve(offset, sc, factors);
         }
-        if let Some(surface_curve) = sc.cast::<StepGeomSurfaceCurve>().get() {
+        if let Some(surface_curve) = sc
+            .cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>()
+            .get()
+        {
             //:o5 abv 17 Feb 99
             return Self::make_curve(&surface_curve.curve3d(), factors);
         }
@@ -201,7 +204,7 @@ impl StepToGeom {
     /// A curve_replica in 2D, with the same protections.
     fn make_curve_replica_2d(
         replica: &StepGeomCurveReplica,
-        curve: &Handle<StepGeomCurve>,
+        curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         let parent = replica.parent_curve();
@@ -223,7 +226,7 @@ impl StepToGeom {
     }
     /// `make_curve2d`: null for a curve that cannot be converted.
     pub fn make_curve_2d(
-        sc: &Handle<StepGeomCurve>,
+        sc: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         step_live(sc, "StepToGeom::MakeCurve2d")?;
@@ -231,11 +234,11 @@ impl StepToGeom {
         if line.is_some() {
             return Ok(Self::make_line_2d(&line, factors)?.cast());
         }
-        let conic = sc.cast::<StepGeomConic>();
+        let conic = sc.cast::<dyn crate::StepEntityBase<StepGeomConic>>();
         if conic.is_some() {
             return Ok(Self::make_conic_2d(&conic, factors)?.cast());
         }
-        let bounded = sc.cast::<StepGeomBoundedCurve>();
+        let bounded = sc.cast::<dyn crate::StepEntityBase<StepGeomBoundedCurve>>();
         if bounded.is_some() {
             return Ok(Self::make_bounded_curve_2d(&bounded, factors)?.cast());
         }

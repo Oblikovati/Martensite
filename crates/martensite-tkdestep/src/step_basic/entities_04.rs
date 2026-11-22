@@ -1,11 +1,12 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
 use crate::step_entity::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Representation of STEP entity Contract
@@ -71,22 +72,22 @@ step_entity! {
     /// Conversion based unit.
     StepBasicConversionBasedUnit, StepBasicConversionBasedUnitState, "StepBasicConversionBasedUnit", StepBasicNamedUnit, {
         name: Handle<HAsciiString>,
-        conversion_factor: Handle<StandardTransient>,
-    }
+        conversion_factor: Handle<dyn Transient>,
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnit {
     step_methods! {
         set set_name = name: Handle<HAsciiString>;
         get name = name: Handle<HAsciiString>;
-        set set_conversion_factor = conversion_factor: Handle<StandardTransient>;
-        get conversion_factor = conversion_factor: Handle<StandardTransient>;
+        set set_conversion_factor = conversion_factor: Handle<dyn Transient>;
+        get conversion_factor = conversion_factor: Handle<dyn Transient>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_dimensions: &Handle<StepBasicDimensionalExponents>,
         a_name: &Handle<HAsciiString>,
-        a_conversion_factor: &Handle<StandardTransient>,
+        a_conversion_factor: &Handle<dyn Transient>,
     ) {
         let mut state = self.state.write();
         state.name = a_name.clone();
@@ -100,7 +101,7 @@ step_entity! {
     /// Conversion based unit and area unit.
     StepBasicConversionBasedUnitAndAreaUnit, StepBasicConversionBasedUnitAndAreaUnitState, "StepBasicConversionBasedUnitAndAreaUnit", StepBasicConversionBasedUnit, {
         area_unit: Handle<StepBasicAreaUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndAreaUnit {
     step_methods! {
@@ -113,7 +114,7 @@ step_entity! {
     /// Conversion based unit and length unit.
     StepBasicConversionBasedUnitAndLengthUnit, StepBasicConversionBasedUnitAndLengthUnitState, "StepBasicConversionBasedUnitAndLengthUnit", StepBasicConversionBasedUnit, {
         length_unit: Handle<StepBasicLengthUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndLengthUnit {
     step_methods! {
@@ -125,7 +126,7 @@ impl StepBasicConversionBasedUnitAndLengthUnit {
         &self,
         a_dimensions: &Handle<StepBasicDimensionalExponents>,
         a_name: &Handle<HAsciiString>,
-        a_conversion_factor: &Handle<StandardTransient>,
+        a_conversion_factor: &Handle<dyn Transient>,
     ) {
         self.parent.init(a_dimensions, a_name, a_conversion_factor);
         self.state.write().length_unit = Handle::new(StepBasicLengthUnit::new());
@@ -138,7 +139,7 @@ step_entity! {
     /// Conversion based unit and mass unit.
     StepBasicConversionBasedUnitAndMassUnit, StepBasicConversionBasedUnitAndMassUnitState, "StepBasicConversionBasedUnitAndMassUnit", StepBasicConversionBasedUnit, {
         mass_unit: Handle<StepBasicMassUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndMassUnit {
     step_methods! {
@@ -150,7 +151,7 @@ impl StepBasicConversionBasedUnitAndMassUnit {
         &self,
         a_dimensions: &Handle<StepBasicDimensionalExponents>,
         a_name: &Handle<HAsciiString>,
-        a_conversion_factor: &Handle<StandardTransient>,
+        a_conversion_factor: &Handle<dyn Transient>,
     ) {
         self.parent.init(a_dimensions, a_name, a_conversion_factor);
         self.state.write().mass_unit = Handle::new(StepBasicMassUnit::new());
@@ -163,7 +164,7 @@ step_entity! {
     /// Conversion based unit and plane angle unit.
     StepBasicConversionBasedUnitAndPlaneAngleUnit, StepBasicConversionBasedUnitAndPlaneAngleUnitState, "StepBasicConversionBasedUnitAndPlaneAngleUnit", StepBasicConversionBasedUnit, {
         plane_angle_unit: Handle<StepBasicPlaneAngleUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndPlaneAngleUnit {
     step_methods! {
@@ -175,7 +176,7 @@ impl StepBasicConversionBasedUnitAndPlaneAngleUnit {
         &self,
         a_dimensions: &Handle<StepBasicDimensionalExponents>,
         a_name: &Handle<HAsciiString>,
-        a_conversion_factor: &Handle<StandardTransient>,
+        a_conversion_factor: &Handle<dyn Transient>,
     ) {
         self.parent.init(a_dimensions, a_name, a_conversion_factor);
         self.state.write().plane_angle_unit = Handle::new(StepBasicPlaneAngleUnit::new());
@@ -188,7 +189,7 @@ step_entity! {
     /// Conversion based unit and ratio unit.
     StepBasicConversionBasedUnitAndRatioUnit, StepBasicConversionBasedUnitAndRatioUnitState, "StepBasicConversionBasedUnitAndRatioUnit", StepBasicConversionBasedUnit, {
         ratio_unit: Handle<StepBasicRatioUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndRatioUnit {
     step_methods! {
@@ -200,7 +201,7 @@ impl StepBasicConversionBasedUnitAndRatioUnit {
         &self,
         a_dimensions: &Handle<StepBasicDimensionalExponents>,
         a_name: &Handle<HAsciiString>,
-        a_conversion_factor: &Handle<StandardTransient>,
+        a_conversion_factor: &Handle<dyn Transient>,
     ) {
         self.parent.init(a_dimensions, a_name, a_conversion_factor);
         self.state.write().ratio_unit = Handle::new(StepBasicRatioUnit::new());
@@ -213,7 +214,7 @@ step_entity! {
     /// Conversion based unit and solid angle unit.
     StepBasicConversionBasedUnitAndSolidAngleUnit, StepBasicConversionBasedUnitAndSolidAngleUnitState, "StepBasicConversionBasedUnitAndSolidAngleUnit", StepBasicConversionBasedUnit, {
         solid_angle_unit: Handle<StepBasicSolidAngleUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndSolidAngleUnit {
     step_methods! {
@@ -225,7 +226,7 @@ impl StepBasicConversionBasedUnitAndSolidAngleUnit {
         &self,
         a_dimensions: &Handle<StepBasicDimensionalExponents>,
         a_name: &Handle<HAsciiString>,
-        a_conversion_factor: &Handle<StandardTransient>,
+        a_conversion_factor: &Handle<dyn Transient>,
     ) {
         self.parent.init(a_dimensions, a_name, a_conversion_factor);
         self.state.write().solid_angle_unit = Handle::new(StepBasicSolidAngleUnit::new());
@@ -238,7 +239,7 @@ step_entity! {
     /// Conversion based unit and time unit.
     StepBasicConversionBasedUnitAndTimeUnit, StepBasicConversionBasedUnitAndTimeUnitState, "StepBasicConversionBasedUnitAndTimeUnit", StepBasicConversionBasedUnit, {
         time_unit: Handle<StepBasicTimeUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndTimeUnit {
     step_methods! {
@@ -250,7 +251,7 @@ impl StepBasicConversionBasedUnitAndTimeUnit {
         &self,
         a_dimensions: &Handle<StepBasicDimensionalExponents>,
         a_name: &Handle<HAsciiString>,
-        a_conversion_factor: &Handle<StandardTransient>,
+        a_conversion_factor: &Handle<dyn Transient>,
     ) {
         self.parent.init(a_dimensions, a_name, a_conversion_factor);
         self.state.write().time_unit = Handle::new(StepBasicTimeUnit::new());
@@ -263,7 +264,7 @@ step_entity! {
     /// Conversion based unit and volume unit.
     StepBasicConversionBasedUnitAndVolumeUnit, StepBasicConversionBasedUnitAndVolumeUnitState, "StepBasicConversionBasedUnitAndVolumeUnit", StepBasicConversionBasedUnit, {
         volume_unit: Handle<StepBasicVolumeUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicConversionBasedUnit]
 }
 impl StepBasicConversionBasedUnitAndVolumeUnit {
     step_methods! {

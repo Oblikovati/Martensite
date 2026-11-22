@@ -1,43 +1,94 @@
-//! Construction, assignment and casts between handle types.
-use super::{Handle, HandleView, RuntimeTyped, Transient};
-impl<T: ?Sized + RuntimeTyped> Handle<T> {
-    /// Shares `other`'s object when it is a `T`, else null.
-    /// Every down-cast form (from a base, the same type or an unrelated type)
-    /// is one runtime check here; `Handle::<Derived>::down_cast(&base)`.
-    pub fn down_cast<U: ?Sized + RuntimeTyped>(other: &Handle<U>) -> Self {
-        other.cast::<T>()
+//! Ownership conversions and borrow-only queries.
+use super::{Handle, HandleView, Transient, TransientHandleTarget};
+use std::sync::Arc;
+
+/// A compile-time Arc coercion between two compatible object types.
+pub trait HandleUpcast<U: ?Sized> {
+    /// Coerce the Arc without copying its object or touching the owner count;
+    /// `HandleUpcast::<dyn Transient>::upcast_arc(Arc::new(object))`.
+    fn upcast_arc(owner: Arc<Self>) -> Arc<U>;
+}
+
+impl<T: ?Sized> HandleUpcast<T> for T {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<T> {
+        owner
     }
-    /// A handle for an object another handle already owns:
-    /// a view is Rust's non-owning pointer, and the new handle adds one reference, or is
-    /// null when the view is null or not a `T`; `Handle::<Base>::from_view(&derived.view())`.
-    pub fn from_view<U: ?Sized + RuntimeTyped>(view: &HandleView<'_, U>) -> Self {
-        Self::adopt(view.owner())
+}
+
+impl<T: Transient> HandleUpcast<dyn Transient> for T {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn Transient> {
+        owner
     }
-    /// Moves ownership into a handle of another type without touching the count, as the
-    /// converting move does; a non-`U` object gives null
-    /// and releases the reference; `derived.into_cast::<Base>()`.
-    pub fn into_cast<U: ?Sized + RuntimeTyped>(mut self) -> Handle<U> {
-        // Taking the owner leaves `self` null, so its Drop releases nothing.
-        let Some(owner) = self.owner.take() else {
+}
+
+impl<T: ?Sized> Handle<T> {
+    /// Coerce to a statically known interface and share ownership; `line.upcast::<dyn Curve>()`.
+    pub fn upcast<U: ?Sized>(&self) -> Handle<U>
+    where
+        T: HandleUpcast<U>,
+    {
+        self.clone().into_upcast()
+    }
+
+    /// Coerce to a statically known interface, moving ownership; `line.into_upcast::<dyn Curve>()`.
+    pub fn into_upcast<U: ?Sized>(self) -> Handle<U>
+    where
+        T: HandleUpcast<U>,
+    {
+        Handle(self.0.map(T::upcast_arc))
+    }
+}
+
+impl<T: ?Sized + TransientHandleTarget> Handle<T> {
+    /// Recover a concrete object by Rust type, sharing ownership; `curve.downcast::<Line>()`.
+    pub fn downcast<U: Transient>(&self) -> Handle<U> {
+        self.clone().into_downcast()
+    }
+
+    /// Recover a concrete object by moving ownership; `curve.into_downcast::<Line>()`.
+    pub fn into_downcast<U: Transient>(self) -> Handle<U> {
+        let Some(owner) = self.0.map(T::into_transient) else {
             return Handle::default();
         };
-        if U::project_from(owner.get()).is_none() {
-            owner.get().transient_base().decrement_ref_counter();
-            return Handle::default();
-        }
-        Handle {
-            owner: Some(owner),
-            projected: std::marker::PhantomData,
-        }
+        let erased: Arc<dyn std::any::Any + Send + Sync> = owner;
+        Handle(Arc::downcast(erased).ok())
     }
-    /// `reset(new U(...))`: releases the current object and owns a fresh `U`, which may be
-    /// `T` or a class derived from it; a `U` that is not a `T` leaves
-    /// the handle null; `base.reset(Derived::default())`.
-    pub fn reset<U: Transient + RuntimeTyped>(&mut self, value: U) {
-        *self = Handle::new(value).into_cast::<T>();
+
+    /// Borrow the concrete type without touching the owner count; `curve.downcast_ref::<Line>()`.
+    pub fn downcast_ref<U: Transient>(&self) -> Option<&U> {
+        super::super::project_concrete(self.get()?.as_transient())
     }
-    /// The owned object's address, 0 for null; `handle.hash_code()`.
-    pub fn hash_code(&self) -> usize {
-        self.address()
+
+    /// Cross-cast a handle when only the dynamic interface is known; `curve.cast::<dyn BoundedCurve>()`.
+    pub fn cast<U: ?Sized + TransientHandleTarget>(&self) -> Handle<U> {
+        self.clone().into_cast()
+    }
+
+    /// Move a handle to a dynamic interface implemented by its object; `curve.into_cast::<dyn BoundedCurve>()`.
+    pub fn into_cast<U: ?Sized + TransientHandleTarget>(self) -> Handle<U> {
+        Handle(self.0.map(T::into_transient).and_then(U::from_transient))
+    }
+
+    /// Borrow a concrete object or interface without additional ownership; `curve.view::<Line>()`.
+    pub fn view<U: ?Sized + TransientHandleTarget>(&self) -> HandleView<'_, U> {
+        HandleView::new(self)
+    }
+
+    /// Recover a concrete or interface handle at a checked boundary; `Handle::<Line>::down_cast(&curve)`.
+    pub fn down_cast<U: ?Sized + TransientHandleTarget>(other: &Handle<U>) -> Self {
+        other.cast()
+    }
+
+    /// Own the object from a borrowed view; `Handle::<Line>::from_view(&curve.view::<Line>())`.
+    pub fn from_view<U: ?Sized + TransientHandleTarget>(view: &HandleView<'_, U>) -> Self {
+        Handle(view.clone_owner().and_then(T::from_transient))
+    }
+
+    /// Replace the target with a new value of the same type; `handle.reset(value)`.
+    pub fn reset(&mut self, value: T)
+    where
+        T: Sized,
+    {
+        *self = Handle::new(value);
     }
 }

@@ -1,10 +1,11 @@
 //! The extended string constructors.
-use super::{
-    ExtendedString,
-    errors::{leading_units, null_object, out_of_range},
-    utf,
-};
-use crate::{standard::Failure, tcollection::AsciiString};
+#[cfg(test)]
+use super::errors::{leading_units, null_object, out_of_range};
+use super::{ExtendedString, utf};
+#[cfg(test)]
+use crate::standard::Failure;
+use crate::tcollection::AsciiString;
+#[cfg(test)]
 use std::sync::LazyLock;
 impl ExtendedString {
     /// Converts a C string: UTF-8 when `is_multi_byte` and the bytes decode, otherwise each
@@ -37,12 +38,13 @@ impl ExtendedString {
         Self::widen(bytes)
     }
     /// Creates a one-unit string, or an empty one for the zero unit; `ExtendedString::from_char(0x20AC)`.
-    pub fn from_char(unit: u16) -> Self {
+    pub(crate) fn from_char(unit: u16) -> Self {
         Self::from_utf16(&[unit])
     }
     /// Creates `length` copies of `unit` (zero units included) or raises Standard_OutOfRange
     /// for a negative length; `ExtendedString::filled(5, 88)?`.
-    pub fn filled(length: i32, unit: u16) -> Result<Self, Failure> {
+    #[cfg(test)]
+    pub(crate) fn filled(length: i32, unit: u16) -> Result<Self, Failure> {
         let Ok(count) = usize::try_from(length) else {
             return Err(out_of_range(
                 "TCollection_ExtendedString : negative length",
@@ -59,12 +61,13 @@ impl ExtendedString {
     }
     /// Converts UTF-32 `wchar_t` units through the first zero, dropping surrogates and values
     /// above U+10FFFF; `ExtendedString::from_wide(&[0x1F600, 0])`.
-    pub fn from_wide(units: &[u32]) -> Self {
+    #[cfg(test)]
+    pub(crate) fn from_wide(units: &[u32]) -> Self {
         Self::from_raw(&utf::utf32_to_utf16(units))
     }
     /// Formats with C's `%d`; `ExtendedString::from_integer(42)`.
     pub fn from_integer(value: i32) -> Self {
-        Self::widen(value.to_string().as_bytes())
+        Self::widen(itoa::Buffer::new().format(value).as_bytes())
     }
     /// Formats with C's `%g` (six significant digits); `ExtendedString::from_real(3.14)`.
     pub fn from_real(value: f64) -> Self {
@@ -83,7 +86,8 @@ impl ExtendedString {
     }
     /// The (pointer, length) constructor: a null pointer raises Standard_NullObject, a
     /// negative length Standard_OutOfRange; `ExtendedString::from_span(Some(&[65, 66]), 2)?`.
-    pub fn from_span(units: Option<&[u16]>, length: i32) -> Result<Self, Failure> {
+    #[cfg(test)]
+    pub(crate) fn from_span(units: Option<&[u16]>, length: i32) -> Result<Self, Failure> {
         let Some(units) = units else {
             return Err(null_object(
                 "TCollection_ExtendedString : null parameter ",
@@ -101,17 +105,19 @@ impl ExtendedString {
         Ok(Self::from_raw(leading_units(units, count)))
     }
     /// The shared empty string; `ExtendedString::empty_string().is_empty()`.
-    pub fn empty_string() -> &'static Self {
+    #[cfg(test)]
+    pub(crate) fn empty_string() -> &'static Self {
         static EMPTY: LazyLock<ExtendedString> = LazyLock::new(ExtendedString::default);
         &EMPTY
     }
     /// Widens bytes (zero extension of the unsigned byte).
     pub(super) fn widen(bytes: &[u8]) -> Self {
-        Self::from_raw(
-            &bytes
-                .iter()
-                .map(|&byte| u16::from(byte))
-                .collect::<Vec<_>>(),
-        )
+        if bytes.is_empty() {
+            return Self::default();
+        }
+        let mut terminated = Vec::with_capacity(super::storage::padded_unit_capacity(bytes.len()));
+        terminated.extend(bytes.iter().copied().map(u16::from));
+        terminated.push(0);
+        Self { terminated }
     }
 }

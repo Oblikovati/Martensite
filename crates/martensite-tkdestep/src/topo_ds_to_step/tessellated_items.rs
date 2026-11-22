@@ -72,7 +72,7 @@ fn triangulated_face(
     fields: &TriangulationFields,
     has_link: bool,
     link: &StepVisualFaceOrSurface,
-) -> Handle<StepVisualTessellatedItem> {
+) -> Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>> {
     let entity = Handle::new(StepVisualTriangulatedFace::new());
     entity.init(
         &empty_step_name(),
@@ -94,7 +94,7 @@ pub(super) fn face_triangulation_item(
     tool: &TopoDSToStepTool,
     to_prefer_surface_set: bool,
     factors: &StepDataFactors,
-) -> Result<Handle<StepVisualTessellatedItem>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>, Failure> {
     let fields = triangulation_fields(step_live(mesh, WHERE)?, factors)?;
     let mut link = StepVisualFaceOrSurface::default();
     if tool.is_bound(face) {
@@ -119,8 +119,8 @@ pub(super) fn face_triangulation_item(
 /// The items of the tessellated_shells a solid gathers, in their order; a null item is the recorded
 /// null dereference.
 fn items_of_shells(
-    shells: &[Handle<StepVisualTessellatedItem>],
-) -> Result<Vec<Handle<StepVisualTessellatedStructuredItem>>, Failure> {
+    shells: &[Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>],
+) -> Result<Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>, Failure> {
     let mut items = Vec::new();
     for shell in shells {
         let cast: Handle<StepVisualTessellatedShell> = shell.cast();
@@ -134,13 +134,15 @@ fn items_of_shells(
 
 /// The tessellated_solid of a solid's shells, linked to its brep when there is one.
 pub(super) fn tessellated_solid(
-    shells: &[Handle<StepVisualTessellatedItem>],
-    brep: &Handle<StepShapeManifoldSolidBrep>,
-) -> Result<Handle<StepVisualTessellatedItem>, Failure> {
+    shells: &[Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>],
+    brep: &Handle<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>,
+) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>, Failure> {
     let solid = Handle::new(StepVisualTessellatedSolid::new());
     let items = items_of_shells(shells)?;
     let array = if items.is_empty() {
-        step_new_array1::<Handle<StepVisualTessellatedStructuredItem>>(1, 0)?
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>>>(
+            1, 0,
+        )?
     } else {
         shared_array1(items)
     };

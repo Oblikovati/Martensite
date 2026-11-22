@@ -1,7 +1,7 @@
 //! Viewer lights retain native list nodes and borrow live arguments through virtual driver callbacks.
 use super::V3dViewer;
 use martensite_tkernel::standard::{Failure, Handle, HandleReference};
-use martensite_tkservice::graphic3d::Graphic3dCLight;
+use martensite_tkservice::graphic3d::Graphic3dCLightSource;
 impl V3dViewer {
     /// Reset actual defined nodes, then define the native white defaults; `viewer.set_default_lights()?`.
     pub fn set_default_lights(&self) -> Result<(), Failure> {
@@ -18,7 +18,7 @@ impl V3dViewer {
     /// Activate the live target in every live active view; `viewer.set_light_on_one(&light)?`.
     pub fn set_light_on_one(
         &self,
-        light: &dyn HandleReference<Graphic3dCLight>,
+        light: &dyn HandleReference<dyn Graphic3dCLightSource>,
     ) -> Result<(), Failure> {
         if !self.is_global_light(light) {
             let appended = light.clone_handle();
@@ -46,7 +46,7 @@ impl V3dViewer {
     /// Remove global membership before each real view update; `viewer.set_light_off_one(&light)?`.
     pub fn set_light_off_one(
         &self,
-        light: &dyn HandleReference<Graphic3dCLight>,
+        light: &dyn HandleReference<dyn Graphic3dCLightSource>,
     ) -> Result<(), Failure> {
         let identity = light.object_address();
         super::viewer_light_mutation::remove_light_node(
@@ -78,7 +78,7 @@ impl V3dViewer {
         Ok(())
     }
     /// Define the current target without activating it; `viewer.add_light(&light)`.
-    pub fn add_light(&self, light: &dyn HandleReference<Graphic3dCLight>) {
+    pub fn add_light(&self, light: &dyn HandleReference<dyn Graphic3dCLightSource>) {
         let identity = light.object_address();
         if self
             .state
@@ -93,7 +93,10 @@ impl V3dViewer {
         self.state.write().defined_lights.append(appended);
     }
     /// Deactivate before removing defined membership; `viewer.del_light(&light)?`.
-    pub fn del_light(&self, light: &dyn HandleReference<Graphic3dCLight>) -> Result<(), Failure> {
+    pub fn del_light(
+        &self,
+        light: &dyn HandleReference<dyn Graphic3dCLightSource>,
+    ) -> Result<(), Failure> {
         self.set_light_off_one(light)?;
         let identity = light.object_address();
         super::viewer_light_mutation::remove_light_node(
@@ -111,7 +114,7 @@ impl V3dViewer {
         }
     }
     /// Check actual global-list target identity; `viewer.is_global_light(&light)`.
-    pub fn is_global_light(&self, light: &dyn HandleReference<Graphic3dCLight>) -> bool {
+    pub fn is_global_light(&self, light: &dyn HandleReference<dyn Graphic3dCLightSource>) -> bool {
         let identity = light.object_address();
         self.state
             .read()
@@ -120,11 +123,11 @@ impl V3dViewer {
             .any(|stored| stored.object_address() == identity)
     }
     /// Explicit owning snapshot convenience; native ActiveLights binds active_lights_ref; `viewer.active_lights()`.
-    pub fn active_lights(&self) -> Vec<Handle<Graphic3dCLight>> {
+    pub fn active_lights(&self) -> Vec<Handle<dyn Graphic3dCLightSource>> {
         self.state.read().active_lights.iter().cloned().collect()
     }
     /// Explicit owning snapshot convenience; native DefinedLights binds defined_lights_ref; `viewer.defined_lights()`.
-    pub fn defined_lights(&self) -> Vec<Handle<Graphic3dCLight>> {
+    pub fn defined_lights(&self) -> Vec<Handle<dyn Graphic3dCLightSource>> {
         self.state.read().defined_lights.iter().cloned().collect()
     }
 }

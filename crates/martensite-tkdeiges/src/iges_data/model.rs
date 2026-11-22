@@ -1,10 +1,13 @@
 //! The model of an IGES file: its entities, start lines and global section.
 use super::model_dump::dump_global;
 use super::model_verify::verify_header;
-use super::{IgesDataGlobalSection, IgesDataIgesEntity, IgesDataTextLines};
+use super::{IgesDataGlobalSection, IgesDataTextLines};
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped, SharedState},
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -39,7 +42,6 @@ impl Default for ModelFields {
 /// ```
 #[derive(Default)]
 pub struct IgesDataIgesModel {
-    transient: StandardTransient,
     base: InterfaceModelBase,
     state: SharedState<ModelFields>,
 }
@@ -47,7 +49,6 @@ impl_transient!(
     IgesDataIgesModel,
     "IgesDataIgesModel",
     dyn InterfaceInterfaceModel,
-    transient,
     interfaces: [dyn InterfaceInterfaceModel]
 );
 
@@ -181,12 +182,12 @@ impl IgesDataIgesModel {
         true
     }
     /// The entity at a rank from 1; null when out of range or not an IGES entity.
-    pub fn entity(&self, num: i32) -> Handle<IgesDataIgesEntity> {
+    pub fn entity(&self, num: i32) -> Handle<dyn IgesDataEntityKind> {
         self.value(num)
             .map_or_else(|_| Handle::default(), |ent| ent.cast())
     }
     /// The directory number of an entity: `2 * rank - 1`, 0 when it is not in the model.
-    pub fn d_num<T: ?Sized + RuntimeTyped>(&self, ent: &Handle<T>) -> i32 {
+    pub fn d_num<T: ?Sized + RuntimeTyped + TransientHandleTarget>(&self, ent: &Handle<T>) -> i32 {
         match self.number(&ent.cast()) {
             0 => 0,
             num => 2 * num - 1,
@@ -211,8 +212,8 @@ impl IgesDataIgesModel {
     ///
     /// # Errors
     /// A failure of the stream.
-    pub fn print_info(&self, ent: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()> {
-        if ent.cast::<IgesDataIgesEntity>().is_null() {
+    pub fn print_info(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()> {
+        if ent.cast::<dyn IgesDataEntityKind>().is_null() {
             return s.write_all(b"(NOT IGES)");
         }
         match self.number(ent) {
@@ -268,8 +269,8 @@ impl InterfaceInterfaceModel for IgesDataIgesModel {
         self.dump_start(s)?;
         dump_global(s, &self.global_section())
     }
-    fn print_label(&self, ent: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()> {
-        if ent.cast::<IgesDataIgesEntity>().is_null() {
+    fn print_label(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()> {
+        if ent.cast::<dyn IgesDataEntityKind>().is_null() {
             return s.write_all(b"Null");
         }
         match self.number(ent) {
@@ -277,8 +278,8 @@ impl InterfaceInterfaceModel for IgesDataIgesModel {
             num => write!(s, "D{}", 2 * num - 1),
         }
     }
-    fn print_to_log(&self, ent: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()> {
-        let iges = ent.cast::<IgesDataIgesEntity>();
+    fn print_to_log(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()> {
+        let iges = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = iges.get() else {
             return Ok(());
         };
@@ -287,8 +288,8 @@ impl InterfaceInterfaceModel for IgesDataIgesModel {
             num => write!(s, " DE : {} type : {}", 2 * num - 1, live.type_number()),
         }
     }
-    fn string_label(&self, ent: &Handle<StandardTransient>) -> Handle<HAsciiString> {
-        if ent.cast::<IgesDataIgesEntity>().is_null() {
+    fn string_label(&self, ent: &Handle<dyn Transient>) -> Handle<HAsciiString> {
+        if ent.cast::<dyn IgesDataEntityKind>().is_null() {
             return Handle::new(HAsciiString::new("(NOT IGES)"));
         }
         let text = match self.number(ent) {
@@ -301,7 +302,8 @@ impl InterfaceInterfaceModel for IgesDataIgesModel {
 
 #[cfg(test)]
 mod tests {
-    use super::{Handle, IgesDataIgesEntity, IgesDataIgesModel, InterfaceInterfaceModel};
+    use super::{Handle, IgesDataIgesModel, InterfaceInterfaceModel};
+    use crate::iges_data::IgesDataIgesEntity;
 
     #[test]
     fn start_section_keeps_its_order() {

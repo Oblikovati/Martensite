@@ -45,7 +45,7 @@ impl IncAllocatorBlock {
     }
 
     /// Copies the fields without exposing mutable atomics; `header.observation().available`.
-    pub fn observation(&self) -> IncBlockObservation {
+    pub(crate) fn observation(&self) -> IncBlockObservation {
         IncBlockObservation {
             address: std::ptr::from_ref(self).addr(),
             current: self.current.load(Ordering::Relaxed).addr(),

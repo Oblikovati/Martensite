@@ -12,12 +12,14 @@ use super::{
     IgesSelectWorkLibrary,
 };
 use crate::iges_basic::{IgesBasic, IgesBasicGroup};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataIgesEntity, IgesDataIgesModel, IgesDataProtocolOps, iges_data_protocol,
 };
 use crate::iges_geom::{IgesGeom, IgesGeomPlane};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
-    standard::{Handle, StandardTransient},
+    standard::Handle,
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -32,13 +34,13 @@ use martensite_tkxsbase::{
     },
 };
 
-pub(super) fn plain(type_number: i32) -> Handle<IgesDataIgesEntity> {
+pub(super) fn plain(type_number: i32) -> Handle<dyn IgesDataEntityKind> {
     let entity = Handle::new(IgesDataIgesEntity::default());
     entity.get().unwrap().init_type_and_form(type_number, 0);
-    entity
+    entity.into_upcast()
 }
 
-pub(super) fn model_of(entities: &[&Handle<IgesDataIgesEntity>]) -> Handle<IgesDataIgesModel> {
+pub(super) fn model_of(entities: &[&Handle<dyn IgesDataEntityKind>]) -> Handle<IgesDataIgesModel> {
     let model = IgesDataIgesModel::new();
     for entity in entities {
         model.get().unwrap().add_entity(&entity.cast()).unwrap();
@@ -84,7 +86,7 @@ fn the_extracts_sort_on_the_directory() {
     let entity = plain(110);
     let live = entity.get().unwrap();
     live.init_status(1, 3, 0, 0);
-    let any: Handle<StandardTransient> = entity.cast();
+    let any: Handle<dyn Transient> = entity.cast();
     assert!(
         !IgesSelectSelectVisibleStatus::default()
             .sort(1, &any, &no_model())
@@ -116,7 +118,7 @@ fn the_extracts_sort_on_the_directory() {
 #[test]
 fn a_name_is_compared_without_its_last_blanks() {
     let entity = plain(110);
-    let any: Handle<StandardTransient> = entity.cast();
+    let any: Handle<dyn Transient> = entity.cast();
     let select = IgesSelectSelectName::default();
     assert!(!select.sort(1, &any, &no_model()).unwrap());
     entity
@@ -133,7 +135,7 @@ fn a_name_is_compared_without_its_last_blanks() {
 #[test]
 fn the_signatures_say_the_directory() {
     let entity = plain(110);
-    let any: Handle<StandardTransient> = entity.cast();
+    let any: Handle<dyn Transient> = entity.cast();
     let live = entity.get().unwrap();
     live.init_level(&Handle::default(), 12);
     assert_eq!(
@@ -149,7 +151,7 @@ fn the_signatures_say_the_directory() {
     let mut type_form = IgesSelectIGESTypeForm::new(true);
     type_form.set_form(false);
     assert_eq!(type_form.value(&any, &no_model()), "110");
-    let unknown: Handle<StandardTransient> =
+    let unknown: Handle<dyn Transient> =
         Handle::new(crate::iges_data::IgesDataUndefinedEntity::new()).cast();
     assert_eq!(type_form.value(&unknown, &no_model()), "0 (?)");
     live.init_status(1, 2, 3, 0);
@@ -169,7 +171,7 @@ fn the_signatures_say_the_directory() {
 #[test]
 fn the_color_signature_knows_the_standard_colors() {
     let entity = plain(110);
-    let any: Handle<StandardTransient> = entity.cast();
+    let any: Handle<dyn Transient> = entity.cast();
     entity.get().unwrap().init_color(&Handle::default(), 5);
     let value = |mode: i32| IgesSelectSignColor::new(mode).value(&any, &no_model());
     assert_eq!(value(1), "S5");
@@ -186,7 +188,7 @@ fn the_color_signature_knows_the_standard_colors() {
 fn the_level_counter_counts_lists_and_values() {
     let counter = IgesSelectCounterOfLevelNumber::new(false, false);
     let entity = plain(110);
-    let any: Handle<StandardTransient> = entity.cast();
+    let any: Handle<dyn Transient> = entity.cast();
     entity.get().unwrap().init_level(&Handle::default(), 3);
     counter.add_sign(&any, &no_model()).unwrap();
     counter.add_level(&any, 250);
@@ -289,7 +291,7 @@ fn the_label_modifier_writes_directory_numbers() {
         .set_label(&Handle::new(HAsciiString::new("KEEP")), -1);
     let model = model_of(&[&first, &second]);
     perform(&IgesSelectSetLabel::new(1, false), &model);
-    let label = |entity: &Handle<IgesDataIgesEntity>| {
+    let label = |entity: &Handle<dyn IgesDataEntityKind>| {
         entity
             .get()
             .unwrap()
@@ -381,7 +383,7 @@ fn the_explorations_go_down_the_groups_and_stop_on_geometry() {
     let model = model_of(&[&member]);
     let general: Handle<dyn InterfaceInterfaceModel> = model.cast();
     let graph = InterfaceGraph::new(&general, true).unwrap();
-    let any: Handle<StandardTransient> = group.cast();
+    let any: Handle<dyn Transient> = group.cast();
     let mut explored = InterfaceEntityIterator::new();
     assert!(
         IgesSelectSelectBypassGroup::new(0)
@@ -394,14 +396,14 @@ fn the_explorations_go_down_the_groups_and_stop_on_geometry() {
     assert!(faces.explore(1, &any, &graph, &mut explored).unwrap());
     assert_eq!(explored.nb_entities(), 1);
     let geom = IgesSelectSelectBasicGeom::new(0);
-    let line: Handle<StandardTransient> = member.cast();
+    let line: Handle<dyn Transient> = member.cast();
     assert!(geom.explore(1, &line, &graph, &mut explored).unwrap());
     assert!(
         !IgesSelectSelectBasicGeom::new(-1)
             .explore(1, &line, &graph, &mut explored)
             .unwrap()
     );
-    let plane: Handle<StandardTransient> = Handle::new(IgesGeomPlane::new()).cast();
+    let plane: Handle<dyn Transient> = Handle::new(IgesGeomPlane::new()).cast();
     assert!(!faces.explore(1, &plane, &graph, &mut explored).is_err());
     assert!(
         !IgesSelectSelectPCurves::new(false)
@@ -443,7 +445,7 @@ fn the_spline_transformer_refuses_what_it_finds() {
             .unwrap()
     );
     assert!(newmod.is_null());
-    let any: Handle<StandardTransient> = spline.cast();
+    let any: Handle<dyn Transient> = spline.cast();
     let mut updated = Handle::default();
     assert!(!transformer.updated(&any, &mut updated));
     let empty = model_of(&[]);

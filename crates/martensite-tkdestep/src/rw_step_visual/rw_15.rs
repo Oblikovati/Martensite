@@ -233,7 +233,7 @@ impl RwStepVisualRwStyledItem {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepVisualStyledItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     ) -> Result<(), Failure> {
         rw_block_b_0040!(
             a_item, a_name, a_styles, ach, anent2, data, ent, i2, nb2, nsub2, num
@@ -244,7 +244,7 @@ impl RwStepVisualRwStyledItem {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepVisualStyledItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     ) -> Result<(), Failure> {
         rw_block_b_0119!(ent, i2, sw);
         Ok(())
@@ -252,7 +252,7 @@ impl RwStepVisualRwStyledItem {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepVisualStyledItem>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         rw_block_b_0186!(ent, is1, iter, nb_elem1);

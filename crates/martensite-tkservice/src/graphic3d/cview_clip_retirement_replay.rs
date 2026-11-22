@@ -1,11 +1,12 @@
 //! Actual retained field retirement preserves pointer aliases and captures the caller before callbacks.
 use super::*;
 use martensite_tkernel::standard::{
-    Handle, HandleReference, IntrusiveReferenceSlot, SharedState, Transient, WeakHandle,
+    Handle, HandleReference, IntrusiveReferenceSlot, SharedState, WeakHandle,
 };
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 struct CViewClipRetiringPlayback {
     base: Graphic3dSequenceOfHClipPlane,
+    identity: OnceLock<WeakHandle<CViewClipRetiringPlayback>>,
     view: WeakHandle<Graphic3dRetainedView>,
     caller: Arc<IntrusiveReferenceSlot<dyn Graphic3dClipPlaneSequenceSource>>,
     replacement: WeakHandle<dyn Graphic3dClipPlaneSequenceSource>,
@@ -13,7 +14,7 @@ struct CViewClipRetiringPlayback {
     rows: Arc<SharedState<Vec<String>>>,
 }
 martensite_tkernel::impl_transient!(CViewClipRetiringPlayback,
-    "Martensite_CViewClipRetiringPlayback", Graphic3dSequenceOfHClipPlane, base,
+    "Martensite_CViewClipRetiringPlayback", Graphic3dSequenceOfHClipPlane,
     interfaces:[dyn Graphic3dClipPlaneSequenceSource]);
 impl Graphic3dClipPlaneSequenceSource for CViewClipRetiringPlayback {
     fn clip_sequence_base(&self) -> &Graphic3dSequenceOfHClipPlane {
@@ -22,17 +23,17 @@ impl Graphic3dClipPlaneSequenceSource for CViewClipRetiringPlayback {
 }
 impl Drop for CViewClipRetiringPlayback {
     fn drop(&mut self) {
-        let view = self.view.observe();
+        let view = self.view.upgrade();
         let fresh = view.clip_planes_ref();
         self.rows.write().push(format!(
             "retire {} {} {} {}",
             i32::from(fresh.object_address() == std::ptr::from_ref(self).cast::<()>()),
-            self.transient_base().ref_count(),
+            self.identity.get().unwrap().ref_count(),
             i32::from(fresh.reference_address() as usize == self.alias_address),
-            self.caller.observe().ref_count()
+            self.caller.ref_count()
         ));
         // This changes the real caller field after the outer assignment captured its raw target.
-        self.caller.assign(&*self.replacement.observe()).unwrap();
+        self.caller.assign(&self.replacement.upgrade()).unwrap();
     }
 }
 struct CViewClipRetirementActors {
@@ -68,13 +69,15 @@ fn install_retiring_collection(
 ) {
     let old = Handle::new(CViewClipRetiringPlayback {
         base: Graphic3dSequenceOfHClipPlane::default(),
+        identity: OnceLock::new(),
         view: actors.view.downgrade(),
         caller: actors.caller.clone(),
         replacement: actors.replacement.downgrade(),
         alias_address: alias.reference_address() as usize,
         rows: actors.rows.clone(),
-    })
-    .into_cast::<dyn Graphic3dClipPlaneSequenceSource>();
+    });
+    old.identity.set(old.downgrade()).unwrap();
+    let old = old.into_upcast::<dyn Graphic3dClipPlaneSequenceSource>();
     actors.view.set_clip_planes(&old);
 }
 fn slot_state(

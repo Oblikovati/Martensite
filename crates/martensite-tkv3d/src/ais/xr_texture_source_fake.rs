@@ -1,11 +1,10 @@
 //! Named image dependency records native forwarding without filesystem decoding.
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient, raise_native_failure},
+    standard::{Failure, Handle, SharedState, raise_native_failure},
     tcollection::AsciiString,
 };
 use martensite_tkservice::image::*;
 pub(super) struct XrImageSourceFake {
-    transient: StandardTransient,
     base: ImageTextureBase,
     pub calls: SharedState<i32>,
     pub fail: SharedState<bool>,
@@ -13,7 +12,7 @@ pub(super) struct XrImageSourceFake {
     pub expected: Handle<ImageSupportedFormats>,
     pub image: Handle<ImagePixMap>,
 }
-martensite_tkernel::impl_transient!(XrImageSourceFake,"Martensite_XrImageSourceFake",dyn ImageTextureSource,transient,interfaces:[dyn ImageTextureSource]);
+martensite_tkernel::impl_transient!(XrImageSourceFake,"Martensite_XrImageSourceFake",dyn ImageTextureSource,interfaces:[dyn ImageTextureSource]);
 impl XrImageSourceFake {
     pub fn new(kind: i32) -> Self {
         let mut base = ImageTextureBase::from_file(&AsciiString::default());
@@ -21,7 +20,6 @@ impl XrImageSourceFake {
             base.texture_id = AsciiString::from("xr/reference-source");
         }
         Self {
-            transient: StandardTransient::default(),
             base,
             calls: SharedState::new(0),
             fail: SharedState::new(false),
@@ -36,7 +34,7 @@ impl ImageTextureSource for XrImageSourceFake {
         // The wrapper snapshots this ID while retaining the actual image source.
         &self.base
     }
-    fn read_image(&self, formats: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn read_image(&self, formats: &Handle<ImageSupportedFormats>) -> Handle<dyn ImagePixMapObject> {
         *self.calls.write() += 1;
         *self.same.write() = formats == &self.expected;
         if *self.fail.read() {
@@ -44,6 +42,6 @@ impl ImageTextureSource for XrImageSourceFake {
                 "XR image fail=true; expected delegated image read",
             )));
         }
-        self.image.clone()
+        self.image.upcast()
     }
 }

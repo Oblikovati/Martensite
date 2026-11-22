@@ -11,7 +11,7 @@ pub fn mutate_texture_content(texture: &Graphic3dTexture2D, mode: &str) {
         _ => None,
     };
     if let Some((image, revise)) = update {
-        texture.set_image(image);
+        texture.set_image(image.into_upcast());
         if revise {
             texture.update_revision();
         }

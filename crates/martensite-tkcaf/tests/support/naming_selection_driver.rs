@@ -4,7 +4,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkcaf::tnaming::{TNamingBuilder, TNamingNamedShape, TNamingSelector, TNamingTool};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -29,11 +29,10 @@ impl NamingSelectionWarnings for StdoutSelectionWarnings {
 
 /// Real selector driver with a replaceable output boundary, not a mocked selector.
 pub struct NamingSelectionDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
     warnings: Arc<dyn NamingSelectionWarnings>,
 }
-impl_transient!(NamingSelectionDriver, "DNamingSelectionDriver", dyn TFunctionDriver, transient,
+impl_transient!(NamingSelectionDriver, "DNamingSelectionDriver", dyn TFunctionDriver,
     interfaces: [dyn TFunctionDriver]);
 impl Default for NamingSelectionDriver {
     fn default() -> Self {
@@ -44,7 +43,6 @@ impl NamingSelectionDriver {
     /// Inject only external warning I/O; `NamingSelectionDriver::with_warnings(sink)`.
     pub fn with_warnings(warnings: Arc<dyn NamingSelectionWarnings>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TFunctionDriverBase::default(),
             warnings,
         }

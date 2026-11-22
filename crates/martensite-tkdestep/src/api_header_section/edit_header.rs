@@ -1,9 +1,10 @@
 //! `APIHeaderSectionEditHeader`: the header of a model as an editor of ten values.
 use super::APIHeaderSectionMakeHeader;
 use crate::step_data::StepDataStepModel;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -24,14 +25,12 @@ fn is_time_stamp(_val: &Handle<HAsciiString>) -> bool {
 /// assert_eq!(editor.get().unwrap().nb_values(), 10);
 /// ```
 pub struct APIHeaderSectionEditHeader {
-    transient: StandardTransient,
     base: IFSelectEditorBase,
 }
 impl_transient!(
     APIHeaderSectionEditHeader,
     "APIHeaderSectionEditHeader",
     dyn IFSelectEditor,
-    transient,
     interfaces: [dyn IFSelectEditor]
 );
 
@@ -39,7 +38,6 @@ impl APIHeaderSectionEditHeader {
     /// `APIHeaderSectionEditHeader()`.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let editor = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectEditorBase::new(10),
         });
         let Some(live) = editor.get() else {
@@ -97,7 +95,7 @@ impl IFSelectEditor for APIHeaderSectionEditHeader {
     fn load(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let step = model.cast::<StepDataStepModel>();
@@ -120,7 +118,7 @@ impl IFSelectEditor for APIHeaderSectionEditHeader {
     fn apply(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let step = model.cast::<StepDataStepModel>();

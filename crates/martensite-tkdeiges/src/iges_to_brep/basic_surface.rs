@@ -2,7 +2,7 @@
 //! choice among the kinds and the elementary surfaces.
 use super::curve_and_surface::curve_and_surface_tool;
 use crate::iges_conv_geom;
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_geom::{
     IgesGeomBSplineSurface, IgesGeomDirection, IgesGeomPoint, IgesGeomSplineSurface,
 };
@@ -11,6 +11,7 @@ use crate::iges_solid::{
     IgesSolidSphericalSurface, IgesSolidToroidalSurface,
 };
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomConicalSurface, GeomCylindricalSurface, GeomPlane,
@@ -66,7 +67,7 @@ fn direction_of(direction: &Handle<IgesGeomDirection>) -> Result<Direction3, Fai
 
 impl IgesToBRepBasicSurface {
     /// The fails of a location or an axis that are not there.
-    fn placement_is_complete<T: ?Sized + RuntimeTyped>(
+    fn placement_is_complete<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         start: &Handle<T>,
         placement: &ElementaryPlacement,
@@ -89,7 +90,7 @@ impl IgesToBRepBasicSurface {
     /// A failure of the scaling of the surface.
     pub fn transfer_basic_surface(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
         if start.is_null() {
             self.fail_key(start, "IGES_1005");
@@ -106,7 +107,7 @@ impl IgesToBRepBasicSurface {
     }
     fn dispatch_basic_surface(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
         let bspline = start.cast::<IgesGeomBSplineSurface>();
         if bspline.is_some() {

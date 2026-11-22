@@ -41,7 +41,7 @@ pub fn cube(group: &dyn Graphic3dGroup, offset: f32) {
     ] {
         array.add_edges3(a, b, c).unwrap();
     }
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
     group.set_closed(true);
 }
 pub fn cap_plane(equation: [f64; 4]) -> Handle<Graphic3dClipPlane> {
@@ -115,7 +115,7 @@ fn configure_chain(
         if mode.ends_with("child") {
             child.set_on(false).unwrap();
         }
-        Graphic3dClipPlane::set_chain_next_plane(plane, child).unwrap();
+        Graphic3dClipPlane::set_chain_next_plane(&plane.upcast(), child.into_upcast()).unwrap();
     }
     if mode == "cap-intersection" {
         planes.append(cap_plane([1., 0., 0., 0.]));
@@ -228,6 +228,6 @@ fn configure_lit_cap(scene: &ViewerScene, plane: &Graphic3dClipPlane, mode: &str
         Graphic3dTypeOfLightSource::Directional,
     ));
     light.set_direction_coords(0., 0., -1.).unwrap();
-    lights.add(&light).unwrap();
+    lights.add(&light.upcast()).unwrap();
     scene.cview().set_lights(&lights);
 }

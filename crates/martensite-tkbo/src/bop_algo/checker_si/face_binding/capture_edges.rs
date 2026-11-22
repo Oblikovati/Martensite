@@ -118,7 +118,7 @@ fn source_curves(
     Vec<martensite_tkernel::standard::Handle<dyn martensite_tkbrep::brep::BRepCurveRepresentation>>,
     BindingFailure,
 > {
-    let handle = edge.tshape().cast::<BRepTEdge>();
+    let handle = edge.tshape().downcast::<BRepTEdge>();
     let source = handle
         .get()
         .ok_or_else(|| unsupported("edge TShape", "not BRepTEdge"))?;

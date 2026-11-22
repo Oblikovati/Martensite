@@ -1,7 +1,7 @@
 //! Supplemental protected-hook reinitialization checks, separate from retained tests.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dIsoCurve, Adaptor3dSurface};
 use martensite_tkg3d::geom::{
     GeomCircle, GeomCurve, GeomLine, GeomPlane, GeomSurface, GeomTrimmedCurve,
@@ -77,7 +77,7 @@ fn fallback_borrows_adaptor_and_failed_get_type_preserves_prior_curve() {
         matches!(eval.evaluator(), GeomGridEvalCurveEvaluator::Other(other) if std::ptr::eq(other.curve(), &iso as &dyn Adaptor3dCurve))
     );
     assert!((eval.evaluate_grid(&params(&[0.25])).unwrap()[1].z()).abs() < 1e-12);
-    let failing = FailingGetTypeAdaptor::default();
+    let failing = FailingGetTypeAdaptor;
     assert_eq!(
         eval.initialization_adaptor(&failing)
             .unwrap_err()
@@ -136,14 +136,11 @@ fn assert_point(actual: Point3, expected: Point3) {
 }
 
 #[derive(Default)]
-struct FailingGetTypeAdaptor {
-    parent: StandardTransient,
-}
+struct FailingGetTypeAdaptor;
 impl_transient!(
     FailingGetTypeAdaptor,
     "FailingGetTypeAdaptor",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 impl Adaptor3dCurve for FailingGetTypeAdaptor {

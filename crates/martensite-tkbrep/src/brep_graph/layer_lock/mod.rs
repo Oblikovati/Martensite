@@ -8,7 +8,7 @@ use crate::brep_graph::layer::{AttachedGraph, BRepGraphLayer, LayerBase, LayerTy
 use crate::brep_graph::{BRepGraph, ItemDomain, ItemId, NodeId, RefId};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::FlatDataMap;
-use martensite_tkernel::standard::{Failure, Guid, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::OnceLock;
 
@@ -68,11 +68,10 @@ impl RootOwners {
 /// ```
 #[derive(Default)]
 pub struct LayerLock {
-    transient: StandardTransient,
     base: LayerBase,
     owners: SharedState<RootOwners>,
 }
-impl_transient!(LayerLock, "BRepGraph_LayerLock", dyn BRepGraphLayer, transient,
+impl_transient!(LayerLock, "BRepGraph_LayerLock", dyn BRepGraphLayer,
     interfaces: [dyn BRepGraphLayer]);
 
 /// `GetID()`: 6f4f4d72-2e64-4ad9-8d02-d3833fe4b9d3.

@@ -148,7 +148,7 @@ impl BRepClassIntersector {
         let mut pfin: Point2 = adaptor.d0(fin)?;
         let dl: Domain = segment_domain(lin, param);
         let de: Domain = edge_domain(adaptor, (pdeb, deb), (pfin, fin))?;
-        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(*lin)).cast();
+        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(*lin)).into_upcast();
         let cga = Geom2dAdaptorCurve::with_curve(&line)?;
         let tolerances = (precision::p_confusion(), precision::p_intersection());
         let mut inter = GInter::with_domains(&cga, &dl, adaptor, &de, tolerances.0, tolerances.1)?;

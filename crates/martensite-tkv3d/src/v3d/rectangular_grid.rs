@@ -5,7 +5,7 @@ use super::computed_structure::{V3dComputedStructure, V3dStructureComputer};
 use super::grid_common::{V3dGridPlacement, finish_grid_group, should_rebuild};
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::aspect::{
     AspectGrid, AspectGridBase, AspectGridDrawMode, AspectGridMembers as _, AspectRectangularGrid,
@@ -47,12 +47,11 @@ struct RectGridState {
 ///
 /// Example: `let grid = V3dRectangularGrid::new(&viewer, gray50, gray70)?; grid.display();`.
 pub struct V3dRectangularGrid {
-    transient: StandardTransient,
     base: AspectRectangularGridBase,
     viewer: WeakHandle<V3dViewer>,
     state: SharedState<RectGridState>,
 }
-martensite_tkernel::impl_transient!(V3dRectangularGrid, "V3dRectangularGrid", dyn AspectRectangularGrid, transient,
+martensite_tkernel::impl_transient!(V3dRectangularGrid, "V3dRectangularGrid", dyn AspectRectangularGrid,
     interfaces: [dyn AspectGrid, dyn AspectRectangularGrid, dyn V3dStructureComputer]);
 
 impl V3dRectangularGrid {
@@ -87,7 +86,6 @@ impl V3dRectangularGrid {
             cur_off_set: 0.0,
         };
         let grid = Handle::new(Self {
-            transient: StandardTransient::default(),
             base,
             viewer: viewer.downgrade(),
             state: SharedState::new(state),

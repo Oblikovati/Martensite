@@ -13,7 +13,7 @@ fn range_curve(kind: usize) -> Handle<dyn GeomCurve> {
         Point3::new(0.5, 2., 0.)
     };
     let poles = [Point3::default(), middle, Point3::new(1., 2., 0.)];
-    Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).cast()
+    Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).into_upcast()
 }
 fn range_edge(kind: usize, tolerance: f64) -> Edge {
     let edge = BRepBuilderAPIMakeEdge::from_curve_params(&range_curve(kind), 0., 1.)

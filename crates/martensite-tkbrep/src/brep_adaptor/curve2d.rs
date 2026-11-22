@@ -2,6 +2,7 @@
 use super::forward::inherited_curve2d_members;
 use crate::brep::BRepTool;
 use crate::topods::{Edge, Face};
+use crate::topods::{EdgeView, FaceView};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
@@ -33,41 +34,40 @@ struct EdgeOnFace {
 /// ```
 #[derive(Default)]
 pub struct BRepAdaptorCurve2d {
-    parent: Geom2dAdaptorCurve,
+    evaluator: Geom2dAdaptorCurve,
     shapes: SharedState<EdgeOnFace>,
 }
 impl_transient!(
     BRepAdaptorCurve2d,
     "BRepAdaptor_Curve2d",
     Geom2dAdaptorCurve,
-    parent,
     interfaces: [dyn Adaptor2dCurve2d]
 );
 
 impl BRepAdaptorCurve2d {
     /// `BRepAdaptor_Curve2d(E, F)`; `BRepAdaptorCurve2d::with_edge_on_face(&edge, &face)?`.
-    pub fn with_edge_on_face(edge: &Edge, face: &Face) -> Result<Self, Failure> {
+    pub fn with_edge_on_face(edge: &EdgeView<'_>, face: &FaceView<'_>) -> Result<Self, Failure> {
         let adaptor = Self::default();
         adaptor.initialize(edge, face)?;
         Ok(adaptor)
     }
 
-    /// The embedded parent adaptor (the `Geom2dAdaptor_Curve` base).
+    /// The p-curve evaluator. Example: `adaptor.geom2d_adaptor()`.
     pub fn geom2d_adaptor(&self) -> &Geom2dAdaptorCurve {
-        &self.parent
+        &self.evaluator
     }
 
     /// `Initialize(E, F)`: stores the edge and the face, then loads the p-curve of the
     /// edge on the face on its range when there is one (a missing p-curve leaves the
     /// previous curve loaded); `adaptor.initialize(&edge, &face)?`.
-    pub fn initialize(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
+    pub fn initialize(&self, edge: &EdgeView<'_>, face: &FaceView<'_>) -> Result<(), Failure> {
         *self.shapes.write() = EdgeOnFace {
-            edge: edge.clone(),
-            face: face.clone(),
+            edge: edge.to_edge(),
+            face: face.to_face(),
         };
         let found = BRepTool::curve_on_face(edge, face)?;
         if !found.pcurve.is_null() {
-            self.parent
+            self.evaluator
                 .load_range(&found.pcurve, found.first, found.last)?;
         }
         Ok(())
@@ -75,12 +75,12 @@ impl BRepAdaptorCurve2d {
 
     /// `Edge()`; `adaptor.edge()`.
     pub fn edge(&self) -> Edge {
-        self.shapes.read().edge.clone()
+        self.shapes.read().edge.to_edge()
     }
 
     /// `Face()`; `adaptor.face()`.
     pub fn face(&self) -> Face {
-        self.shapes.read().face.clone()
+        self.shapes.read().face.to_face()
     }
 }
 
@@ -89,10 +89,10 @@ impl Adaptor2dCurve2d for BRepAdaptorCurve2d {
     /// demand), with the edge and the face.
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
         let copy = Self {
-            parent: self.parent.shallow_adaptor()?,
+            evaluator: self.evaluator.shallow_adaptor()?,
             shapes: SharedState::new(self.shapes.read().clone()),
         };
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
 
     inherited_curve2d_members!();

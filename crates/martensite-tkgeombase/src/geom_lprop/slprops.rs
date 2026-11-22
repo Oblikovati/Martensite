@@ -23,7 +23,7 @@ use std::marker::PhantomData;
 /// use martensite_tkgeombase::geom_lprop::SLProps;
 /// use martensite_tkmath::gp::Axis3;
 /// let sphere = GeomSphericalSurface::new(Axis3::default(), 2.0).unwrap();
-/// let surface: Handle<dyn GeomSurface> = Handle::new(sphere).cast();
+/// let surface: Handle<dyn GeomSurface> = Handle::new(sphere).into_upcast();
 /// let mut props = SLProps::with_parameters(surface, 0.3, 0.4, 2, 1e-7).unwrap();
 /// assert_eq!(props.max_curvature().unwrap(), 0.0); // the value before the computation
 /// assert_eq!(props.max_curvature().unwrap(), -0.5);

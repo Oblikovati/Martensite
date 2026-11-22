@@ -58,9 +58,9 @@ step_select! {
 step_select! {
     /// Geometric set select.
     StepShapeGeometricSetSelect, [StepGeomPoint, StepGeomCurve, StepGeomSurface, StepGeomGeometricRepresentationItem], {
-        point: StepGeomPoint,
-        curve: StepGeomCurve,
-        surface: StepGeomSurface,
+        point: dyn crate::StepEntityBase<StepGeomPoint>,
+        curve: dyn crate::StepEntityBase<StepGeomCurve>,
+        surface: dyn crate::StepEntityBase<StepGeomSurface>,
     }
 }
 
@@ -77,8 +77,8 @@ step_select! {
 step_select! {
     /// Shell.
     StepShapeShell, [StepShapeOpenShell, StepShapeClosedShell], {
-        open_shell: StepShapeOpenShell,
-        closed_shell: StepShapeClosedShell,
+        open_shell: dyn crate::StepEntityBase<StepShapeOpenShell>,
+        closed_shell: dyn crate::StepEntityBase<StepShapeClosedShell>,
     }
 }
 
@@ -102,20 +102,20 @@ step_select! {
 step_entity! {
     /// Advanced brep shape representation.
     StepShapeAdvancedBrepShapeRepresentation, StepShapeAdvancedBrepShapeRepresentationState, "StepShapeAdvancedBrepShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Advanced face.
     StepShapeAdvancedFace, StepShapeAdvancedFaceState, "StepShapeAdvancedFace", StepShapeFaceSurface, {
-    }
+    }, bases: [crate::step_shape::StepShapeFace, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeFaceSurface, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 
 step_entity! {
     /// Representation of STEP entity AngularLocation
     StepShapeAngularLocation, StepShapeAngularLocationState, "StepShapeAngularLocation", StepShapeDimensionalLocation, {
         the_angle_selection: StepShapeAngleRelator,
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspectRelationship, crate::step_shape::StepShapeDimensionalLocation]
 }
 impl StepShapeAngularLocation {
     step_methods! {
@@ -129,8 +129,12 @@ impl StepShapeAngularLocation {
         a_shape_aspect_relationship_name: &Handle<HAsciiString>,
         has_shape_aspect_relationship_description: bool,
         a_shape_aspect_relationship_description: &Handle<HAsciiString>,
-        a_shape_aspect_relationship_relating_shape_aspect: &Handle<StepReprShapeAspect>,
-        a_shape_aspect_relationship_related_shape_aspect: &Handle<StepReprShapeAspect>,
+        a_shape_aspect_relationship_relating_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
+        a_shape_aspect_relationship_related_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
         a_angle_selection: StepShapeAngleRelator,
     ) {
         self.parent.init(
@@ -148,7 +152,7 @@ step_entity! {
     /// Representation of STEP entity AngularSize
     StepShapeAngularSize, StepShapeAngularSizeState, "StepShapeAngularSize", StepShapeDimensionalSize, {
         the_angle_selection: StepShapeAngleRelator,
-    }
+    }, bases: [StepShapeDimensionalSize]
 }
 impl StepShapeAngularSize {
     step_methods! {
@@ -159,7 +163,7 @@ impl StepShapeAngularSize {
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
-        a_dimensional_size_applies_to: &Handle<StepReprShapeAspect>,
+        a_dimensional_size_applies_to: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         a_dimensional_size_name: &Handle<HAsciiString>,
         a_angle_selection: StepShapeAngleRelator,
     ) {
@@ -176,7 +180,7 @@ step_entity! {
         x: f64,
         y: f64,
         z: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeBlock {
     step_methods! {
@@ -214,7 +218,7 @@ step_entity! {
         an_operator: StepShapeBooleanOperator,
         first_operand: StepShapeBooleanOperand,
         second_operand: StepShapeBooleanOperand,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeBooleanResult {
     step_methods! {
@@ -282,7 +286,7 @@ step_entity! {
     /// Boxed half space.
     StepShapeBoxedHalfSpace, StepShapeBoxedHalfSpaceState, "StepShapeBoxedHalfSpace", StepShapeHalfSpaceSolid, {
         enclosure: Handle<StepShapeBoxDomain>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeBoxedHalfSpace {
     step_methods! {
@@ -293,7 +297,7 @@ impl StepShapeBoxedHalfSpace {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_base_surface: &Handle<StepGeomSurface>,
+        a_base_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_agreement_flag: bool,
         a_enclosure: &Handle<StepShapeBoxDomain>,
     ) {
@@ -306,7 +310,7 @@ step_entity! {
     /// Brep with voids.
     StepShapeBrepWithVoids, StepShapeBrepWithVoidsState, "StepShapeBrepWithVoids", StepShapeManifoldSolidBrep, {
         voids: Handle<HArray1<Handle<StepShapeOrientedClosedShell>>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeManifoldSolidBrep, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeBrepWithVoids {
     step_methods! {
@@ -319,7 +323,7 @@ impl StepShapeBrepWithVoids {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_outer: &Handle<StepShapeClosedShell>,
+        a_outer: &Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>,
         a_voids: &Handle<HArray1<Handle<StepShapeOrientedClosedShell>>>,
     ) {
         self.state.write().voids = a_voids.clone();

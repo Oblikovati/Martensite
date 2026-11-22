@@ -1,5 +1,5 @@
 //! Package statics on the host and the global signal state.
-use super::{NativeSignalHost, NativeSleeper, SignalCapabilities, SignalState, Sleeper, real_text};
+use super::{NativeSignalHost, NativeSleeper, SignalState, Sleeper, real_text};
 use crate::{osd::SignalMode, standard::Failure};
 
 /// Operating-system dependent statics; `Osd::real_to_c_string(1.5) == "1.5"`.
@@ -9,8 +9,9 @@ pub struct Osd;
 impl Osd {
     /// Reports available mechanisms, without installing handlers or enabling traps.
     /// Example: `assert!(!Osd::signal_capabilities().recoverable_native_faults)`.
-    pub const fn signal_capabilities() -> SignalCapabilities {
-        SignalCapabilities {
+    #[cfg(test)]
+    pub(super) const fn signal_capabilities() -> super::signal_capabilities::SignalCapabilities {
+        super::signal_capabilities::SignalCapabilities {
             console_interruptions: cfg!(any(windows, unix)),
             floating_point_trap_control: super::signal_capabilities::FLOATING_POINT_TRAP_CONTROL,
             recoverable_native_faults: false,
@@ -20,10 +21,6 @@ impl Osd {
     /// for what is implemented); `Osd::set_signal(SignalMode::Set, false)`.
     pub fn set_signal(mode: SignalMode, floating: bool) {
         SignalState::global().set_signal(&NativeSignalHost, mode, floating);
-    }
-    /// Sets the signal mode to `Set` with the floating-point switch; `Osd::set_signal_default(true)`.
-    pub fn set_signal_default(floating: bool) {
-        Self::set_signal(SignalMode::Set, floating);
     }
     /// Sets the thread-local signal mode; `Osd::set_thread_local_signal(SignalMode::Set, false)`.
     pub fn set_thread_local_signal(mode: SignalMode, floating: bool) {

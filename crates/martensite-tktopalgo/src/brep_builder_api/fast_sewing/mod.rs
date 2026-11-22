@@ -11,7 +11,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::CellFilter;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::integer::integer_last;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::native::std_max;
 use martensite_tkg3d::geom::{GeomRectangularTrimmedSurface, GeomSurface};
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -73,7 +73,6 @@ fn status_message(bit: u32) -> Option<&'static str> {
 /// assert_eq!(sewing.get_statuses(None).unwrap(), FastSewingStatus::EmptyInput as u32);
 /// ```
 pub struct BRepBuilderAPIFastSewing {
-    parent: StandardTransient,
     my_res_shape: Shape,
     my_face_vec: Vec<FsFace>,
     my_vertex_vec: Vec<FsVertex>,
@@ -84,8 +83,7 @@ pub struct BRepBuilderAPIFastSewing {
 impl_transient!(
     BRepBuilderAPIFastSewing,
     "BRepBuilderAPI_FastSewing",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for BRepBuilderAPIFastSewing {
@@ -121,7 +119,6 @@ impl BRepBuilderAPIFastSewing {
     /// status; `BRepBuilderAPIFastSewing::new(1e-6)`.
     pub fn new(tolerance: f64) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_res_shape: Shape::default(),
             my_face_vec: Vec::new(),
             my_vertex_vec: Vec::new(),

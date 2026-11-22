@@ -20,7 +20,7 @@ fn stored_plane(s: &dyn Session, face: &str) -> Plane3 {
     let (surface, location) =
         BRepTool::surface_with_location(&topods::face(shape).unwrap()).unwrap();
     assert!(location.is_identity(), "{face}: expected no location");
-    surface.cast::<GeomPlane>().get().unwrap().pln()
+    surface.downcast::<GeomPlane>().get().unwrap().pln()
 }
 
 /// Beyond the script: the frame a native run reads from the face.

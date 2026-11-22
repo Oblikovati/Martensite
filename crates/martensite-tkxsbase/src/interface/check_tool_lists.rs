@@ -8,14 +8,14 @@ use super::{
     InterfaceCheck, InterfaceCheckIterator, InterfaceCheckTool, InterfaceInterfaceModel,
     InterfaceModelEntities, InterfaceModelReports,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use std::sync::atomic::Ordering;
 
 /// The running state of a list: the result, the current check and entity.
 struct ListRun {
     res: InterfaceCheckIterator,
     ach: Handle<InterfaceCheck>,
-    ent: Handle<StandardTransient>,
+    ent: Handle<dyn Transient>,
 }
 
 impl InterfaceCheckTool {
@@ -63,7 +63,7 @@ impl InterfaceCheckTool {
         &self,
         model: &dyn InterfaceInterfaceModel,
         i: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         ach: &mut Handle<InterfaceCheck>,
         merge: bool,
     ) -> Result<(), Failure> {

@@ -30,14 +30,14 @@ impl FaceSurface {
     /// surface standing for its basis; None for the other surfaces (pour le moment).
     fn of(f: &Face) -> Result<Option<Self>, Failure> {
         let mut s = BRepTool::surface(f)?;
-        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
         if let Some(trimmed) = trimmed.get() {
             s = trimmed.basis_surface();
         }
-        if let Some(plane) = s.cast::<GeomPlane>().get() {
+        if let Some(plane) = s.downcast_ref::<GeomPlane>() {
             return Ok(Some(Self::Plane(plane.pln())));
         }
-        if let Some(cylinder) = s.cast::<GeomCylindricalSurface>().get() {
+        if let Some(cylinder) = s.downcast_ref::<GeomCylindricalSurface>() {
             return Ok(Some(Self::Cylinder(cylinder.cylinder()?)));
         }
         Ok(None)
@@ -47,7 +47,7 @@ impl FaceSurface {
     fn holds(&self, c: &Handle<dyn GeomCurve>) -> Result<bool, Failure> {
         let tol = precision::confusion();
         let tol_ang = precision::angular();
-        if let Some(line) = c.cast::<GeomLine>().get() {
+        if let Some(line) = c.downcast_ref::<GeomLine>() {
             let li = line.lin();
             return Ok(match self {
                 Self::Plane(pl) => pl.contains_line(li, tol, tol_ang),
@@ -57,7 +57,7 @@ impl FaceSurface {
                 }
             });
         }
-        let circle = c.cast::<GeomCircle>();
+        let circle = c.downcast::<GeomCircle>();
         let ci = circle
             .get()
             .ok_or_else(|| null_object("LocOpe_FindEdgesInFace::Set", "null circle"))?
@@ -90,8 +90,10 @@ fn located_basis(edg: &Edge) -> Result<(Handle<dyn GeomCurve>, f64, f64), Failur
         .curve
         .get()
         .ok_or_else(|| null_object("LocOpe_FindEdgesInFace::Set", "edge without 3D curve"))?;
-    let mut c: Handle<dyn GeomCurve> = curve.transformed(located.location.transformation())?.cast();
-    let trimmed: Handle<GeomTrimmedCurve> = c.cast();
+    let mut c: Handle<dyn GeomCurve> = curve
+        .transformed(located.location.transformation())?
+        .into_cast();
+    let trimmed: Handle<GeomTrimmedCurve> = c.downcast();
     if let Some(trimmed) = trimmed.get() {
         c = trimmed.basis_curve();
     }
@@ -155,7 +157,7 @@ impl FindEdgesInFace {
         edg: &Edge,
     ) -> Result<bool, Failure> {
         let (c, f, l) = located_basis(edg)?;
-        if c.cast::<GeomLine>().is_null() && c.cast::<GeomCircle>().is_null() {
+        if c.downcast_ref::<GeomLine>().is_none() && c.downcast_ref::<GeomCircle>().is_none() {
             return Ok(false); // pour le moment
         }
         if !surface.holds(&c)? {
@@ -174,7 +176,7 @@ impl FindEdgesInFace {
             return Ok(()); // pour le moment
         };
         let hs: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(&self.face, true)?).cast();
+            Handle::new(BRepAdaptorSurface::with_face(&self.face, true)?).into_upcast();
         let tpt = BRepTopAdaptorTopolTool::with_surface(&hs)?;
         let mut m = MapOfShape::default();
         for e in Explorer::new(&self.shape, ShapeEnum::Edge, ShapeEnum::Shape)? {

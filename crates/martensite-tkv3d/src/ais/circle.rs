@@ -1,7 +1,7 @@
 //! `AisCircle`: live geometry, full-circle/arc state and datum identity.
 use super::{AisInteractiveObject, AisInteractiveObjectBase, AisKindOfInteractive};
 use crate::{prs_mgr::*, select_mgr::*};
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkg3d::geom::GeomCircle;
 use martensite_tkmath::gp::resolution;
 use std::f64::consts::TAU;
@@ -14,11 +14,10 @@ pub(super) struct CircleGeometry {
 }
 /// A circular or arc datum with live appearance; `AisCircle::new(&circle)`.
 pub struct AisCircle {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     pub(super) geometry: SharedState<CircleGeometry>,
 }
-martensite_tkernel::impl_transient!(AisCircle,"AisCircle",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisCircle,"AisCircle",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisCircle {
     /// Retain a full circle with boundary sensitivity; `AisCircle::new(&circle)`.
@@ -33,7 +32,6 @@ impl AisCircle {
         filled: bool,
     ) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             geometry: SharedState::new(CircleGeometry {
                 component: circle.clone(),

@@ -1,6 +1,6 @@
 //! Comparisons, searches, tokens, element access and numeric parsing.
 use super::{class, string, units};
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn span_comparisons_answer_null_and_negative() {

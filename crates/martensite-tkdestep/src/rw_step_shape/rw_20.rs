@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(RwStepShapeRwSweptFaceSolid, "RwStepShapeRwSweptFaceSolid");
 impl RwStepShapeRwSweptFaceSolid {
@@ -57,7 +58,7 @@ impl RwStepShapeRwToleranceValue {
         if !data.check_nb_params(num, 2, ach, "tolerance_value")? {
             return Ok(());
         }
-        let mut a_lower_bound: Handle<StandardTransient> = Default::default();
+        let mut a_lower_bound: Handle<dyn Transient> = Default::default();
         data.read_entity(
             num,
             1,
@@ -66,7 +67,7 @@ impl RwStepShapeRwToleranceValue {
             StandardTransient::static_type(),
             &mut a_lower_bound,
         )?;
-        let mut an_upper_bound: Handle<StandardTransient> = Default::default();
+        let mut an_upper_bound: Handle<dyn Transient> = Default::default();
         data.read_entity(
             num,
             2,

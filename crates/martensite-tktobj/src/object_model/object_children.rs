@@ -76,7 +76,7 @@ pub(crate) fn object_children<T: ModelObject + ?Sized>(
     kind: Option<&'static RuntimeType>,
 ) -> Result<Handle<dyn ObjectIterator>, Failure> {
     let iterator: Handle<dyn ObjectIterator> =
-        ObjectTreeIterator::new(&object.get_child_label()?, kind, true, false)?.cast();
+        ObjectTreeIterator::new(&object.get_child_label()?, kind, true, false)?.into_upcast();
     if !object.test_flags(ObjectStateFlags::ORDERED)? {
         return Ok(iterator);
     }
@@ -94,7 +94,7 @@ pub(crate) fn object_children<T: ModelObject + ?Sized>(
         }
         iterator.next()?;
     }
-    Ok(Handle::new(TypedSequenceIterator::new(&sequence, None)).cast())
+    Ok(Handle::new(TypedSequenceIterator::new(&sequence, None)).into_upcast())
 }
 
 /// Appends the first child, then places each next one with `addObjToOrderSequence`.

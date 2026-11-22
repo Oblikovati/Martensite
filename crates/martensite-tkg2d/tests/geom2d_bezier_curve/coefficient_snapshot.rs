@@ -56,9 +56,10 @@ fn planar_snapshot_keeps_the_existing_evaluator_binding() {
     use martensite_tkg2d::{geom2d::Geom2dLine, geom2d_eval::RepCurveDescFull};
     use martensite_tkmath::gp::Axis2d;
     let curve = snapshot_planar_curve();
-    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::default())).cast();
+    let line: Handle<dyn Geom2dCurve> =
+        Handle::new(Geom2dLine::new(Axis2d::default())).into_upcast();
     curve
-        .set_eval_representation(Handle::new(RepCurveDescFull::new(line)).cast())
+        .set_eval_representation(Handle::new(RepCurveDescFull::new(line)).into_upcast())
         .unwrap();
     let binding = curve.eval_representation().object_address();
     let value = curve.d0(0.25).unwrap();

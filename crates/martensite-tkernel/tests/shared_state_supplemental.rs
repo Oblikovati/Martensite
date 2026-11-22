@@ -4,14 +4,12 @@ use std::{panic, sync::Barrier, thread};
 
 /// A transient with one mutable field, as a Geom2d or Poly class keeps it.
 struct SharedRadius {
-    base: StandardTransient,
     radius: SharedState<f64>,
 }
-martensite_tkernel::impl_transient!(SharedRadius, "SharedRadius", StandardTransient, base);
+martensite_tkernel::impl_transient!(SharedRadius, "SharedRadius", StandardTransient);
 impl SharedRadius {
     fn shared(radius: f64) -> Handle<Self> {
         Handle::new(Self {
-            base: StandardTransient::default(),
             radius: SharedState::new(radius),
         })
     }

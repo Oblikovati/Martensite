@@ -1,10 +1,7 @@
 //! Live tables preserve owned aliases, while convenience snapshots stay immutable.
 use super::test_norm::{fake_chain, fake_entity};
 use super::{InterfaceGraph, InterfaceSharingTable, InterfaceSharingTableHandle};
-use martensite_tkernel::{
-    ncollection::List,
-    standard::{Handle, Transient},
-};
+use martensite_tkernel::{ncollection::List, standard::Handle};
 use std::sync::Arc;
 
 fn append(table: &InterfaceSharingTableHandle, entity: i32, sharing: i32) {
@@ -39,11 +36,11 @@ fn borrowed_getter_does_not_acquire_ownership_but_an_explicit_copy_does() {
     let (model, _) = fake_chain();
     let graph = InterfaceGraph::new(&model, true).unwrap();
     let borrowed = graph.sharing_table_handle().unwrap();
-    assert_eq!(borrowed.get().unwrap().transient_base().ref_count(), 1);
+    assert_eq!(borrowed.ref_count(), 1);
     let owned = borrowed.clone();
-    assert_eq!(borrowed.get().unwrap().transient_base().ref_count(), 2);
+    assert_eq!(borrowed.ref_count(), 2);
     drop(owned);
-    assert_eq!(borrowed.get().unwrap().transient_base().ref_count(), 1);
+    assert_eq!(borrowed.ref_count(), 1);
 }
 
 #[test]
@@ -86,7 +83,7 @@ fn returned_handle_writes_are_visible_in_original_copies_and_assignment() {
         InterfaceGraph::from_graph(&source, true).unwrap(),
         assigned,
     ];
-    assert_eq!(handle.get().unwrap().transient_base().ref_count(), 5);
+    assert_eq!(handle.ref_count(), 5);
     append(&handle, 1, 4);
     for graph in [&source].into_iter().chain(copies.iter()) {
         assert!(graph.sharing_table_handle().unwrap() == &handle);

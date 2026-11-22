@@ -59,7 +59,7 @@ impl TopOpeBRepDSBuildTool {
         }
         self.my_builder.make_edge(&mut ee)?;
         self.my_builder.degenerated(&ee, true)?;
-        let sci: Handle<TopOpeBRepDSSurfaceCurveInterference> = c.get_sci1().clone().cast();
+        let sci: Handle<TopOpeBRepDSSurfaceCurveInterference> = c.get_sci1().downcast();
         let sci = sci.get().ok_or_else(|| Failure::with_type("Standard_NullObject", "TopOpeBRepDSBuildTool::MakeEdge: the curve has no surface/curve interference; expected a TopOpeBRepDSSurfaceCurveInterference", "TopOpeBRepDSBuildTool"))?;
         let dss = bds.surface(sci.support());
         let gs: &Handle<dyn GeomSurface> = dss.surface();

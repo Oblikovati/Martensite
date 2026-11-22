@@ -3,13 +3,13 @@
 use super::item_lists::h_text;
 use super::params::info;
 use super::statics::defined_line;
-use super::{IFSelectWorkSession, write_out};
+use super::{IFSelectSession, write_out};
 use crate::if_select::{IFSelectPrintCount, IFSelectSelection, IFSelectSelectionIterator};
 use crate::interface::{
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceMsg, InterfaceShareFlags,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::fmt::Write as _;
@@ -34,7 +34,7 @@ fn dump_check_mode(level: i32) -> IFSelectPrintCount {
 fn print_entities(
     out: &mut Vec<u8>,
     m: &dyn InterfaceInterfaceModel,
-    list: &[Handle<StandardTransient>],
+    list: &[Handle<dyn Transient>],
 ) {
     for ent in list {
         out.push(b' ');
@@ -43,7 +43,7 @@ fn print_entities(
     out.push(b'\n');
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `DumpShare`: the file names, the dispatches and the count of modifiers of the
     /// share-out.
     pub fn dump_share(&self) -> Result<(), Failure> {
@@ -309,7 +309,7 @@ impl IFSelectWorkSession {
     /// `DumpEntity(ent, level, S)`: the dump of an entity of the model by the library.
     pub fn dump_entity(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         level: i32,
         s: &mut dyn Write,
     ) -> Result<(), Failure> {
@@ -341,7 +341,7 @@ impl IFSelectWorkSession {
     /// `TraceDumpEntity(ent, level)`: `DumpEntity` on the information messenger.
     pub fn trace_dump_entity(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         level: i32,
     ) -> Result<(), Failure> {
         let mut out = Vec::new();
@@ -353,7 +353,7 @@ impl IFSelectWorkSession {
     /// sharing and shared entities of an entity of the model.
     pub fn print_entity_status(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         s: &mut dyn Write,
     ) -> Result<(), Failure> {
         if self.starting_number(ent) == 0 {
@@ -414,7 +414,7 @@ impl IFSelectWorkSession {
 fn print_relatives(
     out: &mut Vec<u8>,
     m: &dyn InterfaceInterfaceModel,
-    list: Option<Vec<Handle<StandardTransient>>>,
+    list: Option<Vec<Handle<dyn Transient>>>,
     [none, head, tail]: [&str; 3],
 ) {
     let Some(list) = list else {

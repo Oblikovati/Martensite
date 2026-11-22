@@ -63,7 +63,7 @@ pub trait Geom2dCurve: Geom2dGeometry {
     }
     /// Reversed copy (`Reversed`); `let reversed = curve.reversed()?;`.
     fn reversed(&self) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-        let copy: Handle<dyn Geom2dCurve> = self.copy()?.cast::<dyn Geom2dCurve>();
+        let copy: Handle<dyn Geom2dCurve> = self.copy()?.into_cast::<dyn Geom2dCurve>();
         copy.reverse()?;
         Ok(copy)
     }
@@ -137,7 +137,7 @@ pub trait Geom2dCurve: Geom2dGeometry {
         self.d0(u)
     }
 }
-impl_transient_interface!(dyn Geom2dCurve, "Geom2d_Curve", dyn Geom2dGeometry);
+impl_transient_interface!(dyn Geom2dCurve, "Geom2d_Curve", dyn Geom2dGeometry, upcasts: [dyn Geom2dGeometry]);
 
 /// `Geom2dCurve::DumpJson`; `dump_curve(&mut stream, -1)?`.
 pub fn dump_curve(stream: &mut DumpStream, depth: i32) -> io::Result<()> {

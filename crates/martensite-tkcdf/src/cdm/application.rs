@@ -7,10 +7,7 @@ use martensite_tkernel::{
     impl_transient_interface,
     message::{Gravity, Messenger, ProgressRange},
     ncollection::DataMap,
-    standard::{
-        Failure, Handle, SharedState, StandardTransient, Transient, WeakHandle, dump::DumpStream,
-        exceptions,
-    },
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, dump::DumpStream, exceptions},
     tcollection::{AsciiString, ExtendedString},
 };
 use std::io;
@@ -157,4 +154,4 @@ pub trait CdmApplication: Transient {
         Ok(())
     }
 }
-impl_transient_interface!(dyn CdmApplication, "CDM_Application", StandardTransient);
+impl_transient_interface!(dyn CdmApplication, "CDM_Application", dyn Transient);

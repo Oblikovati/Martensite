@@ -151,7 +151,7 @@ impl RenderBackend for GuiReplacementBackend {
         {
             self.target
                 .read()
-                .observe()
+                .upgrade()
                 .attach_gui_layer([64, 64], gui_layer())?;
         }
         let [width, height] = frame.extent();

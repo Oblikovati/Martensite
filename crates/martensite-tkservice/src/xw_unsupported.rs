@@ -8,7 +8,7 @@ use crate::aspect::{
     AspectWindowBase,
 };
 use crate::platform::unsupported;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 
 /// The Xlib backend named by the unsupported errors.
 const BACKEND: &str = "Xlib (Linux)";
@@ -34,12 +34,11 @@ pub struct XwWindowFields {
 
 /// An Xlib window; `XwWindow::create(&display, "Viewer", 0, 0, 640, 480)` raises here.
 pub struct XwWindow {
-    transient: StandardTransient,
     base: AspectWindowBase,
     /// The fields, shared by every handle.
     pub fields: SharedState<XwWindowFields>,
 }
-martensite_tkernel::impl_transient!(XwWindow, "Xw_Window", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(XwWindow, "Xw_Window", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 
 impl XwWindow {
     /// `Xw_Window(display, title, left, top, width, height)`; raises `Standard_NotImplemented`

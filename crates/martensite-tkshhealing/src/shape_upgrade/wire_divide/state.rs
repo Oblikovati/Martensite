@@ -1,5 +1,8 @@
 //! Tool handles and protected state retain their native sharing and replacement semantics.
 use super::*;
+use crate::shape_analysis::TransferParameters;
+use crate::shape_upgrade::EdgeDivider;
+use crate::shape_upgrade::FixSmallCurves;
 /// protected state; `tool.wire_divide_data().with(|fields|fields.edge_mode)`.
 pub struct WireDivideFields {
     /// Supimplementation face retained by Load.
@@ -10,11 +13,11 @@ pub struct WireDivideFields {
     pub status: i32,
     /// Zero free edges, one shared edges, two all spatial curves.
     pub edge_mode: i32,
-    pub(super) spatial: Handle<ShapeUpgradeSplitCurve3d>,
-    pub(super) planar: Handle<ShapeUpgradeSplitCurve2d>,
-    pub(super) edge_divide: Handle<ShapeUpgradeEdgeDivide>,
-    pub(super) transfer: Handle<ShapeAnalysisTransferParameters>,
-    pub(super) small: Handle<ShapeUpgradeFixSmallCurves>,
+    pub(super) spatial: Handle<dyn SplitCurve3d>,
+    pub(super) planar: Handle<dyn SplitCurve2d>,
+    pub(super) edge_divide: Handle<dyn EdgeDivider>,
+    pub(super) transfer: Handle<dyn TransferParameters>,
+    pub(super) small: Handle<dyn FixSmallCurves>,
 }
 impl Default for WireDivideFields {
     fn default() -> Self {
@@ -23,17 +26,18 @@ impl Default for WireDivideFields {
             wire: Wire::default(),
             status: 0,
             edge_mode: 2,
-            spatial: Handle::new(ShapeUpgradeSplitCurve3d::new()),
-            planar: Handle::new(ShapeUpgradeSplitCurve2d::new()),
-            edge_divide: Handle::new(ShapeUpgradeEdgeDivide::new()),
-            transfer: Handle::new(ShapeAnalysisTransferParametersProj::new()).cast(),
-            small: Handle::new(ShapeUpgradeFixSmallCurves::new()),
+            spatial: Handle::new(ShapeUpgradeSplitCurve3d::new()).into_upcast(),
+            planar: Handle::new(ShapeUpgradeSplitCurve2d::new()).into_upcast(),
+            edge_divide: Handle::new(ShapeUpgradeEdgeDivide::new()).into_upcast(),
+            transfer: Handle::new(ShapeAnalysisTransferParametersProj::new()).into_upcast(),
+            small: Handle::new(ShapeUpgradeFixSmallCurves::new()).into_upcast(),
         }
     }
 }
 /// Shared state for derived wire criteria; `WireDivideData::default()`.
 #[derive(Default)]
 pub struct WireDivideData {
+    pub(in crate::shape_upgrade) tool: UpgradeToolData,
     fields: SharedState<WireDivideFields>,
 }
 impl WireDivideData {
@@ -46,10 +50,7 @@ impl WireDivideData {
         write(&mut self.fields.write())
     }
 }
-pub(super) fn require<T: martensite_tkernel::standard::RuntimeTyped + ?Sized>(
-    handle: &Handle<T>,
-    name: &str,
-) -> Result<(), Failure> {
+pub(super) fn require<T: ?Sized>(handle: &Handle<T>, name: &str) -> Result<(), Failure> {
     if handle.is_null() {
         return Err(Failure::with_type(
             "Standard_NullObject",

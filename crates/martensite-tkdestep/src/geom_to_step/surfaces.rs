@@ -173,7 +173,7 @@ geom_to_step_class!(
     /// `GeomToStepMakeElementarySurface`: the dispatch over the elementary surfaces.
     GeomToStepMakeElementarySurface,
     "GeomToStepMakeElementarySurface",
-    StepGeomElementarySurface
+    dyn crate::StepEntityBase<StepGeomElementarySurface>
 );
 
 impl GeomToStepMakeElementarySurface {
@@ -187,7 +187,7 @@ impl GeomToStepMakeElementarySurface {
             return Ok(Self::done_with(
                 GeomToStepMakeCylindricalSurface::from_geom(&cylinder, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let cone = surface.cast::<GeomConicalSurface>();
@@ -195,7 +195,7 @@ impl GeomToStepMakeElementarySurface {
             return Ok(Self::done_with(
                 GeomToStepMakeConicalSurface::from_geom(&cone, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let sphere = surface.cast::<GeomSphericalSurface>();
@@ -203,7 +203,7 @@ impl GeomToStepMakeElementarySurface {
             return Ok(Self::done_with(
                 GeomToStepMakeSphericalSurface::from_geom(&sphere, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let torus = surface.cast::<GeomToroidalSurface>();
@@ -211,7 +211,7 @@ impl GeomToStepMakeElementarySurface {
             return Ok(Self::done_with(
                 GeomToStepMakeToroidalSurface::from_geom(&torus, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let plane = surface.cast::<GeomPlane>();
@@ -219,7 +219,7 @@ impl GeomToStepMakeElementarySurface {
             return Ok(Self::done_with(
                 GeomToStepMakePlane::from_geom(&plane, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         Ok(Self::not_done())
@@ -275,7 +275,7 @@ geom_to_step_class!(
     /// `GeomToStepMakeSweptSurface`: the dispatch over the swept surfaces.
     GeomToStepMakeSweptSurface,
     "GeomToStepMakeSweptSurface",
-    StepGeomSweptSurface
+    dyn crate::StepEntityBase<StepGeomSweptSurface>
 );
 
 impl GeomToStepMakeSweptSurface {
@@ -289,7 +289,7 @@ impl GeomToStepMakeSweptSurface {
             return Ok(Self::done_with(
                 GeomToStepMakeSurfaceOfLinearExtrusion::from_geom(&extrusion, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         let revolution = surface.cast::<GeomSurfaceOfRevolution>();
@@ -297,7 +297,7 @@ impl GeomToStepMakeSweptSurface {
             return Ok(Self::done_with(
                 GeomToStepMakeSurfaceOfRevolution::from_geom(&revolution, factors)?
                     .value()?
-                    .cast(),
+                    .into_upcast(),
             ));
         }
         Ok(Self::not_done())
@@ -366,7 +366,7 @@ geom_to_step_class!(
     /// `GeomToStepMakeBoundedSurface`: the dispatch over the bounded surfaces.
     GeomToStepMakeBoundedSurface,
     "GeomToStepMakeBoundedSurface",
-    StepGeomBoundedSurface
+    dyn crate::StepEntityBase<StepGeomBoundedSurface>
 );
 
 impl GeomToStepMakeBoundedSurface {
@@ -379,10 +379,10 @@ impl GeomToStepMakeBoundedSurface {
             let made = GeomToStepMakeBSplineSurfaceWithKnotsAndRationalBSplineSurface::from_geom(
                 spline, factors,
             )?;
-            return Ok(Self::done_with(made.value()?.cast()));
+            return Ok(Self::done_with(made.value()?.into_upcast()));
         }
         let made = GeomToStepMakeBSplineSurfaceWithKnots::from_geom(spline, factors)?;
-        Ok(Self::done_with(made.value()?.cast()))
+        Ok(Self::done_with(made.value()?.into_upcast()))
     }
     /// A periodic spline written unperiodic on a copy; the source is untouched.
     fn unperiodic(
@@ -415,7 +415,7 @@ impl GeomToStepMakeBoundedSurface {
         let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
         if trimmed.is_some() {
             let made = GeomToStepMakeRectangularTrimmedSurface::from_geom(&trimmed, factors)?;
-            return Ok(Self::done_with(made.value()?.cast()));
+            return Ok(Self::done_with(made.value()?.into_upcast()));
         }
         Ok(Self::not_done())
     }
@@ -425,7 +425,7 @@ geom_to_step_class!(
     /// `GeomToStepMakeSurface`: the dispatch over every surface.
     GeomToStepMakeSurface,
     "GeomToStepMakeSurface",
-    StepGeomSurface
+    dyn crate::StepEntityBase<StepGeomSurface>
 );
 
 impl GeomToStepMakeSurface {

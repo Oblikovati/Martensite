@@ -4,13 +4,13 @@ use crate::brep_to_iges::BRepToIgesBREntity;
 use crate::brep_to_iges_brep::BRepToIgesBRepEntity;
 use crate::de_iges::xs_shape_fix_parameters;
 use crate::geom_to_iges::{GeomToIgesGeomCurve, GeomToIgesGeomSurface};
-use crate::iges_data::{
-    IgesDataBasicEditor, IgesDataIgesEntity, IgesDataIgesModel, IgesDataIgesWriter, iges_live,
-};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataBasicEditor, IgesDataIgesModel, IgesDataIgesWriter, iges_live};
 use crate::iges_select::IgesSelectWorkLibrary;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{GeomCurve, GeomGeometry, GeomSurface};
 use martensite_tkg3d::geom_adaptor::{GeomAdaptorCurve, GeomAdaptorSurface};
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -254,7 +254,7 @@ impl IgesControlWriter {
         &self,
         shape: &Shape,
         scope: &ProgressScope<'_>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if self.write_mode != 0 {
             let mut tool = BRepToIgesBRepEntity::new();
             tool.set_transfer_process(&self.process);
@@ -271,7 +271,7 @@ impl IgesControlWriter {
     ///
     /// # Errors
     /// A failure of the translation of the geometry.
-    pub fn add_geom(&mut self, geometry: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn add_geom(&mut self, geometry: &Handle<dyn Transient>) -> Result<bool, Failure> {
         if geometry.cast::<dyn GeomGeometry>().is_null() {
             return Ok(false);
         }
@@ -303,7 +303,7 @@ impl IgesControlWriter {
     ///
     /// # Errors
     /// A failure of the reference walk.
-    pub fn add_entity(&mut self, entity: &Handle<IgesDataIgesEntity>) -> Result<bool, Failure> {
+    pub fn add_entity(&mut self, entity: &Handle<dyn IgesDataEntityKind>) -> Result<bool, Failure> {
         if entity.is_null() {
             return Ok(false);
         }

@@ -20,34 +20,27 @@ pub(super) fn allocate_default(
     invocation: &AllocatorInvocation,
     size: usize,
 ) -> Option<NonNull<u8>> {
-    // SAFETY: these internal selectors only read immutable policy/physical backing, without callbacks.
-    if raise_native_failure(unsafe { invocation.capture(forwards_optimal) }) {
+    if raise_native_failure(invocation.with_source(forwards_optimal)) {
         return invocation.allocate_optimal(size);
     }
-    // SAFETY: the backing-policy selector only reads the shared physical policy and runs no
-    // callback, so the receiver stays alive while it is captured.
-    let policy = raise_native_failure(unsafe { invocation.capture(default_policy) });
+    let policy = raise_native_failure(invocation.parent_policy());
     policy.allocate(size, true)
 }
 pub(super) fn allocate_optimal_default(
     invocation: &AllocatorInvocation,
     size: usize,
 ) -> Option<NonNull<u8>> {
-    // SAFETY: forwarding and backing selectors finish before any derived virtual body runs.
-    if raise_native_failure(unsafe { invocation.capture(forwards_allocate) }) {
+    if raise_native_failure(invocation.with_source(forwards_allocate)) {
         return invocation.allocate(size);
     }
-    // SAFETY: the backing-policy selector only reads the shared physical policy and runs no
-    // callback, so the receiver stays alive while it is captured.
-    let policy = raise_native_failure(unsafe { invocation.capture(default_policy) });
+    let policy = raise_native_failure(invocation.parent_policy());
     policy.allocate_optimal(size)
 }
 pub(super) unsafe fn free_default(
     invocation: &AllocatorInvocation,
     pointer: *mut u8,
 ) -> Result<(), Failure> {
-    // SAFETY: pure field access cannot retire the receiver; pointer validity comes from this body contract.
-    let policy = unsafe { invocation.capture(default_policy) }?;
+    let policy = invocation.parent_policy()?;
     // SAFETY: the caller of free_default guarantees that `pointer` is null or a live block of
     // this allocator's policy, which is the contract of free_nullable.
     unsafe { policy.free_nullable(pointer) }

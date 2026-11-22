@@ -71,7 +71,7 @@ fn append_control(count: u8) -> i32 {
         expected_record(1, usize::from(count))
     );
     reset_is_usable(&parent);
-    extra.ref_count()
+    extra.ref_count().try_into().unwrap()
 }
 
 #[test]

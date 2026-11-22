@@ -22,13 +22,13 @@ pub fn space(index: usize) -> Handle<GeomBSplineCurve> {
     martensite_tkgeombase::geom_tools::read_curve(&mut IoStream::from_bytes(
         SPACE[index].as_bytes().to_vec(),
     ))
-    .cast()
+    .into_downcast()
 }
 pub fn plane(index: usize) -> Handle<Geom2dBSplineCurve> {
     martensite_tkgeombase::geom_tools::read_curve2d(&mut IoStream::from_bytes(
         PLANE[index].as_bytes().to_vec(),
     ))
-    .cast()
+    .into_downcast()
 }
 pub fn look() -> Look {
     Look {

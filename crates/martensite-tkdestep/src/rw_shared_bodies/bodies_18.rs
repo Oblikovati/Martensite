@@ -83,7 +83,7 @@ pub(crate) use rw_block_0206;
 macro_rules! rw_block_0207 {
     ($ent:ident, $i1:ident, $iter:ident, $var0:ident) => {
         for $i1 in 1..=$ent.parent.parent.nb_items() {
-            let $var0: Handle<StepReprRepresentationItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&$ent.parent.parent.items(), $i1, "Share")?;
             $iter.add_item(&$var0.cast());
         }

@@ -19,7 +19,8 @@ impl RwStepGeomRwSurfacePatch {
         if !data.check_nb_params(num, 5, ach, "surface_patch")? {
             return Ok(());
         }
-        let mut a_parent_surface: Handle<StepGeomBoundedSurface> = Default::default();
+        let mut a_parent_surface: Handle<dyn crate::StepEntityBase<StepGeomBoundedSurface>> =
+            Default::default();
         data.read_entity(
             num,
             1,
@@ -102,7 +103,8 @@ impl RwStepGeomRwSurfaceReplica {
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         data.read_string(num, 1, "name", ach, &mut a_name)?;
-        let mut a_parent_surface: Handle<StepGeomSurface> = Default::default();
+        let mut a_parent_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         data.read_entity(
             num,
             2,

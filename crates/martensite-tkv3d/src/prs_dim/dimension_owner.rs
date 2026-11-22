@@ -2,7 +2,7 @@
 //! that part only.
 use super::{PrsDimComputeMode, PrsDimDimensionSelectionMode};
 use crate::{prs_mgr::*, prs3d::Prs3dDrawer, select_mgr::*};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::GRAPHIC3D_ZLAYER_ID_TOPMOST;
 
 /// `HighlightMode`: the compute mode highlighted for a selection mode.
@@ -16,12 +16,11 @@ fn highlight_mode(mode: PrsDimDimensionSelectionMode) -> i32 {
 
 /// `PrsDimDimensionOwner`; `PrsDimDimensionOwner::new(&dimension.cast, mode, 6)`.
 pub struct PrsDimDimensionOwner {
-    transient: StandardTransient,
     owner: SelectMgrEntityOwnerBase,
     selection_mode: PrsDimDimensionSelectionMode,
 }
 martensite_tkernel::impl_transient!(PrsDimDimensionOwner, "PrsDimDimensionOwner",
-    dyn SelectMgrEntityOwnerSource, transient, interfaces: [dyn SelectMgrEntityOwnerSource]);
+    dyn SelectMgrEntityOwnerSource, interfaces: [dyn SelectMgrEntityOwnerSource]);
 impl PrsDimDimensionOwner {
     /// The owner of a dimension part; `PrsDimDimensionOwner::new(&object, mode, 6)`.
     pub fn new(
@@ -30,7 +29,6 @@ impl PrsDimDimensionOwner {
         priority: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             owner: SelectMgrEntityOwnerBase::new(object, priority),
             selection_mode: mode,
         });

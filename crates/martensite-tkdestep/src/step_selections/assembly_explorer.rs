@@ -11,7 +11,8 @@ use crate::step_shape::{
     StepShapeContextDependentShapeRepresentation, StepShapeShapeDefinitionRepresentation,
     StepShapeShapeRepresentation,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::interface::InterfaceGraph;
 use std::io::{self, Write};
 
@@ -71,7 +72,7 @@ impl STEPSelectionsAssemblyExplorer {
     pub fn find_item_with_nauo(
         &self,
         nauo: &Handle<StepReprNextAssemblyUsageOccurrence>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let pds = entities_of(self.my_graph.sharings(&nauo.cast())?)?
             .into_iter()
             .find(|ent| ent.cast::<StepReprProductDefinitionShape>().is_some());
@@ -94,13 +95,17 @@ impl STEPSelectionsAssemblyExplorer {
         let Some(live) = sdr.get() else {
             return Ok(Handle::default());
         };
-        let rep: Handle<StepShapeShapeRepresentation> = live.used_representation().cast();
+        let rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
+            live.used_representation().cast();
         let Some(live_rep) = rep.get() else {
             return Ok(Handle::default());
         };
         for rank in 1..=live_rep.nb_items() {
             let item = live_rep.items_value(rank)?;
-            if item.cast::<StepReprMappedItem>().is_some() {
+            if item
+                .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+                .is_some()
+            {
                 return Ok(item.cast());
             }
         }
@@ -109,10 +114,13 @@ impl STEPSelectionsAssemblyExplorer {
     /// `find_sdr_with_product(product)`.
     pub fn find_sdr_with_product(
         &self,
-        product: &Handle<StepBasicProductDefinition>,
+        product: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     ) -> Result<Handle<StepShapeShapeDefinitionRepresentation>, Failure> {
         for sharing in entities_of(self.my_graph.sharings(&product.cast())?)? {
-            if sharing.cast::<StepReprPropertyDefinition>().is_null() {
+            if sharing
+                .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>()
+                .is_null()
+            {
                 continue;
             }
             for sub in entities_of(self.my_graph.sharings(&sharing)?)? {
@@ -236,7 +244,10 @@ impl STEPSelectionsAssemblyExplorer {
             let nauo = model.string_label(&live_link.get_nauo().cast());
             write!(os, "{tabs}NAUO :{};\t", text_of(&nauo))?;
             let item = live_link.get_item();
-            if item.cast::<StepReprMappedItem>().is_some() {
+            if item
+                .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+                .is_some()
+            {
                 write!(os, "MI ")?;
             } else if item
                 .cast::<StepShapeContextDependentShapeRepresentation>()

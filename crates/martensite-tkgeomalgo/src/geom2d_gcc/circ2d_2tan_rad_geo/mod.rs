@@ -30,7 +30,7 @@ const NB_SOL_MAX: i32 = 16;
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Direction2, Line2, Point2};
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(0.0, 1.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(0.0, 1.0)?)).into_upcast();
 /// let q2 = unqualified(&Geom2dAdaptorCurve::with_range(&line, -10.0, 10.0)?)?;
 /// let x_axis = QualifiedLin::new(Line2::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?), Position::Unqualified);
 /// let circ = Circ2d2TanRadGeo::lin_curve(x_axis, &q2, 1.0, 1e-9)?;

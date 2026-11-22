@@ -8,17 +8,15 @@ macro_rules! list_attribute_base {
     ) => {
         $(#[$doc])*
         pub struct $name {
-            transient: StandardTransient,
             base: TdfAttributeBase,
             state: SharedState<ListState<$stored>>,
         }
-        impl_transient!($name, $type_name, dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+        impl_transient!($name, $type_name, dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
         impl Default for $name {
             /// The native constructor: an empty list and the default ID.
             fn default() -> Self {
                 Self {
-                    transient: StandardTransient::default(),
                     base: TdfAttributeBase::default(),
                     state: SharedState::new(ListState::new(guid_from_text($guid))),
                 }
@@ -148,7 +146,7 @@ macro_rules! list_attribute {
                 restore(self, with)
             }
             fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-                Handle::new(Self::new()).cast()
+                Handle::new(Self::new()).into_upcast()
             }
             fn paste(&self, into: &Handle<dyn TdfAttribute>, table: &Handle<TdfRelocationTable>) -> Result<(), Failure> {
                 $paste(self, into, table)

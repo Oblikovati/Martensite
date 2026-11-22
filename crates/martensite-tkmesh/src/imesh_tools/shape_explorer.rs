@@ -12,22 +12,20 @@ use martensite_tkbrep::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::toploc::Location;
 /// Native shape traversal; `ShapeExplorer::new(&shape).accept(&visitor)?`.
 pub struct ShapeExplorer {
-    transient: StandardTransient,
     shape: ShapeState,
 }
-impl_transient!(ShapeExplorer, "IMeshTools_ShapeExplorer", dyn MeshShape, transient, interfaces: [dyn MeshShape]);
+impl_transient!(ShapeExplorer, "IMeshTools_ShapeExplorer", dyn MeshShape, interfaces: [dyn MeshShape]);
 mesh_shape_members!(ShapeExplorer);
 impl ShapeExplorer {
     /// Keep the input topology; `ShapeExplorer::new(&shape)`.
     pub fn new(shape: &Shape) -> Self {
         Self {
-            transient: StandardTransient::default(),
             shape: ShapeState::new(shape),
         }
     }

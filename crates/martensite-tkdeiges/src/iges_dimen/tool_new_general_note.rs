@@ -13,9 +13,10 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_new_array1,
 };
 use crate::iges_data::{iges_read_integer_item, iges_read_real_item, iges_read_text_item};
 use crate::iges_dimen::IgesDimenNewGeneralNote;
@@ -104,7 +105,7 @@ impl IgesDimenToolNewGeneralNote {
             box_widths = iges_new_array1::<f64>(1, nbval)?;
             box_heights = iges_new_array1::<f64>(1, nbval)?;
             char_set_codes = iges_new_array1::<i32>(1, nbval)?;
-            char_set_entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbval)?;
+            char_set_entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbval)?;
             slant_angles = iges_new_array1::<f64>(1, nbval)?;
             rotation_angles = iges_new_array1::<f64>(1, nbval)?;
             mirror_flags = iges_new_array1::<i32>(1, nbval)?;
@@ -117,7 +118,7 @@ impl IgesDimenToolNewGeneralNote {
         if !char_displays.is_null() {
             for i in 1..=nbval {
                 let mut char_set_code: i32 = Default::default();
-                let mut char_set_entity: Handle<IgesDataIgesEntity> = Default::default();
+                let mut char_set_entity: Handle<dyn IgesDataEntityKind> = Default::default();
                 let mut start_point: Xyz = Default::default();
                 iges_read_integer_item(
                     pr,

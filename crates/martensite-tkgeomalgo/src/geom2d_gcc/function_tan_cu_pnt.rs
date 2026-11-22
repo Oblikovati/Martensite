@@ -17,7 +17,7 @@ use martensite_tkmath::math::{Function, FunctionWithDerivative};
 /// use martensite_tkmath::gp::{Axis2d, Direction2, Point2};
 /// use martensite_tkmath::math::Function;
 /// let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?);
-/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).cast();
+/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).into_upcast();
 /// let adaptor = Geom2dAdaptorCurve::with_curve(&circle)?;
 /// let mut f = FunctionTanCuPnt::new(&adaptor, Point2::new(1.0, 5.0));
 /// let mut value = 1.0;

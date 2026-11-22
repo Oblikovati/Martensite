@@ -36,7 +36,7 @@ impl SurfaceTextureScene {
         lighting::texture_lighting(&scene, &*aspects);
         let vertices = geometry::surface_texture_quad(mode);
         scene.group.set_group_primitives_aspect(&aspects.cast());
-        scene.group.add_primitive_array(&vertices, true);
+        scene.group.add_primitive_array(&vertices.upcast(), true);
         if mode == "projective" {
             projective::projective_surface_group(&*scene.group);
         }
@@ -106,5 +106,7 @@ pub fn texture_handle(mode: &str) -> Handle<Graphic3dTexture2D> {
         );
         return Handle::new(Graphic3dTexture2D::from_file(&path.as_str().into()));
     }
-    Handle::new(Graphic3dTexture2D::from_pix_map(texture_image(mode)))
+    Handle::new(Graphic3dTexture2D::from_pix_map(
+        texture_image(mode).into_upcast(),
+    ))
 }

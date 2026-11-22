@@ -25,7 +25,7 @@ pub(super) fn point_presentation() -> Result<Handle<PrimitiveArrayPresentation>,
     for [x, y, z] in [[0., 0., 0.], [0., 0., 10.], [0., 10., 10.], [0., 10., 0.]] {
         array.add_vertex_pnt(&Point3::new(x, y, z))?;
     }
-    let object = PrimitiveArrayPresentation::from_array(array.cast());
+    let object = PrimitiveArrayPresentation::from_array(array.into_upcast());
     let marker = Graphic3dAspectMarker3d::new(
         AspectTypeOfMarker::Point,
         Color::named(NamedColor::YELLOW),

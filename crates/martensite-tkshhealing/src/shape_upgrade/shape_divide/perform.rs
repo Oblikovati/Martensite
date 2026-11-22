@@ -1,8 +1,6 @@
 use super::ShapeDivider;
 use crate::{
-    shape_build::ShapeBuildReShape,
-    shape_extend::ShapeExtendStatus,
-    shape_upgrade::{FaceDivider, ShapeUpgradeFaceDivide},
+    shape_build::ShapeBuildReShape, shape_extend::ShapeExtendStatus, shape_upgrade::FaceDivider,
 };
 use martensite_tkbrep::{
     brep_tools::ReShape,
@@ -52,7 +50,7 @@ fn divide_noncompound(
 fn divide_faces(
     tool: &(impl ShapeDivider + ?Sized),
     source: &Shape,
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
 ) -> Result<(), Failure> {
     configure_face(tool, face_tool);
     let message = tool.face_msg();
@@ -68,14 +66,14 @@ fn divide_faces(
     }
     Ok(())
 }
-fn configure_face(tool: &(impl ShapeDivider + ?Sized), face: &Handle<ShapeUpgradeFaceDivide>) {
+fn configure_face(tool: &(impl ShapeDivider + ?Sized), face: &Handle<dyn FaceDivider>) {
     let (precision, max, segment) = tool
         .shape_divide_base()
         .with(|f| (f.precision, f.max_tolerance, f.segment_mode));
     face.set_precision(precision);
     face.set_max_tolerance(max);
     face.set_surface_segment_mode(segment);
-    let wire = face.cast::<dyn FaceDivider>().wire_divide_tool();
+    let wire = face.wire_divide_tool();
     if !wire.is_null() {
         // The virtual wire selector may change settings; native reads these afterward.
         let (min, edge_mode) = tool
@@ -87,7 +85,7 @@ fn configure_face(tool: &(impl ShapeDivider + ?Sized), face: &Handle<ShapeUpgrad
 }
 fn divide_applied_faces(
     tool: &(impl ShapeDivider + ?Sized),
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
     applied: &Shape,
     message: &Msg,
 ) -> Result<(), Failure> {
@@ -104,19 +102,19 @@ fn divide_applied_faces(
 }
 fn divide_face(
     tool: &(impl ShapeDivider + ?Sized),
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
     source: &Shape,
     message: &Msg,
 ) -> Result<(), Failure> {
     let base = tool.shape_divide_base();
     face_tool.init(&topods::face(source)?);
     face_tool.set_context(&base.context());
-    face_tool.cast::<dyn FaceDivider>().perform(0.)?;
+    face_tool.perform(0.)?;
     record_face(tool, face_tool, source, message)
 }
 fn record_face(
     tool: &(impl ShapeDivider + ?Sized),
-    face_tool: &Handle<ShapeUpgradeFaceDivide>,
+    face_tool: &Handle<dyn FaceDivider>,
     source: &Shape,
     message: &Msg,
 ) -> Result<(), Failure> {

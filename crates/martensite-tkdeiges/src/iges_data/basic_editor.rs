@@ -3,7 +3,10 @@ use super::{
     IgesDataGeneralModule, IgesDataIgesEntity, IgesDataIgesModel, IgesDataProtocolOps,
     IgesDataSpecificLib, iges_live,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::interface::{
     InterfaceEntityIterator, InterfaceGeneralLib, InterfaceGraph, InterfaceInterfaceModel,
     InterfaceModelBase, InterfaceModelEntities, InterfaceProtocol,
@@ -202,7 +205,7 @@ impl IgesDataBasicEditor {
         let ent = model.entity(i);
         let live = iges_live(&ent, "compute status")?;
         let igt = live.type_number();
-        let transient: Handle<StandardTransient> = ent.cast();
+        let transient: Handle<dyn Transient> = ent.cast();
         if let Some(shared) = self.own_shared(&ent)? {
             shared.start();
             while shared.more() {
@@ -223,7 +226,7 @@ impl IgesDataBasicEditor {
     }
     fn own_shared(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Option<InterfaceEntityIterator>, Failure> {
         let Some((gmodule, cn)) = self.theglib.select(&ent.cast()) else {
             return Ok(None);
@@ -238,11 +241,13 @@ impl IgesDataBasicEditor {
     ///
     /// # Errors
     /// A failure of a module.
-    pub fn auto_correct<T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
+    pub fn auto_correct<
+        T: ?Sized + martensite_tkernel::standard::RuntimeTyped + TransientHandleTarget,
+    >(
         &self,
         ent: &Handle<T>,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let (Some(model), Some(live)) = (self.themodel.get(), entity.get()) else {
             return Ok(false);
         };
@@ -250,14 +255,14 @@ impl IgesDataBasicEditor {
         let associativities = live.associativities();
         associativities.start();
         while associativities.more() {
-            let sub = associativities.value()?.cast::<IgesDataIgesEntity>();
+            let sub = associativities.value()?.cast::<dyn IgesDataEntityKind>();
             if sub.is_some() && model.number(&sub.cast()) == 0 {
                 IgesDataIgesEntity::dissociate(&sub, &entity)?;
                 done = true;
             }
             associativities.next();
         }
-        let transient: Handle<StandardTransient> = entity.cast();
+        let transient: Handle<dyn Transient> = entity.cast();
         if let Some((gmodule, cn)) = self.theglib.select(&transient) {
             let module = gmodule.cast::<dyn IgesDataGeneralModule>();
             if let Some(general) = module.get() {

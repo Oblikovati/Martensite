@@ -5,7 +5,7 @@ use crate::live;
 use martensite_tkernel::{
     impl_transient,
     osd::{CadPath, Directory, Environment, File},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::ExtendedString,
 };
 
@@ -18,11 +18,10 @@ use martensite_tkernel::{
 /// assert!(!driver.find_folder(&ExtendedString::new("/no/such/folder")));
 /// ```
 pub struct CdfFwosDriver {
-    transient: StandardTransient,
     // Native `myLookUpTable`, a pointer to the application's table.
     look_up_table: SharedMetaDataLookUpTable,
 }
-impl_transient!(CdfFwosDriver, "CDF_FWOSDriver", dyn CdfMetaDataDriver, transient, interfaces: [dyn CdfMetaDataDriver]);
+impl_transient!(CdfFwosDriver, "CDF_FWOSDriver", dyn CdfMetaDataDriver, interfaces: [dyn CdfMetaDataDriver]);
 
 /// The native file-static `PutSlash`: the platform separator.
 fn put_slash(text: &mut ExtendedString) {
@@ -38,7 +37,6 @@ impl CdfFwosDriver {
     /// `CDF_FWOSDriver(theLookUpTable)`.
     pub fn new(look_up_table: &SharedMetaDataLookUpTable) -> Self {
         Self {
-            transient: StandardTransient::default(),
             look_up_table: look_up_table.clone(),
         }
     }

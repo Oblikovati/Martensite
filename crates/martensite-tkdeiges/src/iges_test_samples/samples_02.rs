@@ -13,7 +13,8 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::{IgesBasicHArray1OfHArray1OfInteger, IgesBasicHArray1OfHArray1OfReal};
-use crate::iges_data::{IgesDataIgesEntity, iges_array2_set, iges_new_array2};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{iges_array2_set, iges_new_array2};
 use crate::iges_defs::{
     IgesDefsAssociativityDef, IgesDefsAttributeDef, IgesDefsAttributeTable, IgesDefsGenericData,
     IgesDefsMacroDef, IgesDefsTabularData, IgesDefsUnitsData,
@@ -32,7 +33,8 @@ use crate::iges_test_samples::{
     sample_list,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::{Xy, Xyz};
 
@@ -50,7 +52,7 @@ pub(crate) fn sample_iges_defs_associativity_def()
 
 pub(crate) fn sample_iges_defs_attribute_def() -> Result<Handle<IgesDefsAttributeDef>, Failure> {
     let object = Handle::new(IgesDefsAttributeDef::new());
-    let values = sample_list::<Handle<StandardTransient>>([
+    let values = sample_list::<Handle<dyn Transient>>([
         sample_list::<i32>([3, 4])?.cast(),
         sample_list::<f64>([1.5, 2.5])?.cast(),
     ])?;
@@ -70,7 +72,7 @@ pub(crate) fn sample_iges_defs_attribute_table() -> Result<Handle<IgesDefsAttrib
 {
     let object = Handle::new(IgesDefsAttributeTable::new());
     let definition = sample_iges_defs_attribute_def()?;
-    let attributes = iges_new_array2::<Handle<StandardTransient>>(1, 2, 1, 1)?;
+    let attributes = iges_new_array2::<Handle<dyn Transient>>(1, 2, 1, 1)?;
     iges_array2_set(
         &attributes,
         1,
@@ -92,7 +94,7 @@ pub(crate) fn sample_iges_defs_attribute_table() -> Result<Handle<IgesDefsAttrib
 
 pub(crate) fn sample_iges_defs_generic_data() -> Result<Handle<IgesDefsGenericData>, Failure> {
     let object = Handle::new(IgesDefsGenericData::new());
-    let values = sample_list::<Handle<StandardTransient>>([
+    let values = sample_list::<Handle<dyn Transient>>([
         sample_list::<i32>([3, 4])?.cast(),
         sample_list::<f64>([1.5, 2.5])?.cast(),
     ])?;
@@ -185,8 +187,8 @@ pub(crate) fn sample_iges_dimen_curve_dimension() -> Result<Handle<IgesDimenCurv
 {
     let object = Handle::new(IgesDimenCurveDimension::new());
     let arg_0: Handle<IgesDimenGeneralNote> = sample_iges_dimen_general_note()?.cast();
-    let arg_1: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
-    let arg_2: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_1: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
+    let arg_2: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     let arg_3: Handle<IgesDimenLeaderArrow> = sample_iges_dimen_leader_arrow()?.cast();
     let arg_4: Handle<IgesDimenLeaderArrow> = sample_iges_dimen_leader_arrow()?.cast();
     let arg_5: Handle<IgesDimenWitnessLine> = sample_iges_dimen_witness_line()?.cast();
@@ -267,9 +269,9 @@ pub(crate) fn sample_iges_dimen_dimensioned_geometry()
 -> Result<Handle<IgesDimenDimensionedGeometry>, Failure> {
     let object = Handle::new(IgesDimenDimensionedGeometry::new());
     let arg_0: i32 = 2;
-    let arg_1: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
-    let arg_2: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_1: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
+    let arg_2: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -334,8 +336,8 @@ pub(crate) fn sample_iges_dimen_general_symbol() -> Result<Handle<IgesDimenGener
 {
     let object = Handle::new(IgesDimenGeneralSymbol::new());
     let arg_0: Handle<IgesDimenGeneralNote> = sample_iges_dimen_general_note()?.cast();
-    let arg_1: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_1: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;

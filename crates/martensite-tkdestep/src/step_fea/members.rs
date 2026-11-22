@@ -1,14 +1,15 @@
 //! The select members of `StepFEA` and the selects holding them. The tensor selects drop
 //! their arrays, with the code commented out; `StepFEASymmetricTensor43d` declares
 //! `SetFeaIsotropicSymmetricTensor43d` with no definition, so that member does not exist here.
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other"
-)]
 use super::*;
 use crate::step_data::{StepDataSelectArrReal, StepDataSelectNamed, StepDataSelectType};
 use crate::step_entity::*;
 use crate::step_members::{step_case_name_member, step_immediate_select, step_member_accessors};
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_case_name_member!(
     /// Degree of freedom member.
@@ -27,7 +28,8 @@ step_case_name_member!(
         "ISOTROPIC_SYMMETRIC_TENSOR2_3D",
         "ORTHOTROPIC_SYMMETRIC_TENSOR2_3D",
         "ANISOTROPIC_SYMMETRIC_TENSOR2_3D",
-    ]
+    ],
+    view: StepDataSelectArrReal
 );
 
 step_case_name_member!(
@@ -42,7 +44,8 @@ step_case_name_member!(
         "FEA_TRANSVERSE_ISOTROPIC_SYMMETRIC_TENSOR4_3D",
         "FEA_COLUMN_NORMALISED_ORTHOTROPIC_SYMMETRIC_TENSOR4_3D",
         "FEA_COLUMN_NORMALISED_MONOCLINIC_SYMMETRIC_TENSOR4_3D",
-    ]
+    ],
+    view: StepDataSelectArrReal
 );
 
 step_immediate_select!(
@@ -127,10 +130,10 @@ impl StepFEASymmetricTensor43d {
 /// The array of a stored `StepDataSelectArrReal`, or a new array of `size` when another value is
 /// held. The array is uninitialized; here it reads zero.
 fn stored_or_new_array(
-    value: &Handle<StandardTransient>,
+    value: &Handle<dyn Transient>,
     size: i32,
 ) -> Result<Handle<HArray1<f64>>, Failure> {
-    let member = value.cast::<StepDataSelectArrReal>();
+    let member = value.cast::<dyn crate::StepEntityBase<StepDataSelectArrReal>>();
     if let Some(live) = member.get() {
         return Ok(live.arr_real());
     }

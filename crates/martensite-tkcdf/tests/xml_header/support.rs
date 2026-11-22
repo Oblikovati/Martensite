@@ -3,12 +3,11 @@ use martensite_tkernel::{
     osd::{
         FileSystem, FileSystemHandle, IosOpenMode, SeekDir, SharedIStream, SharedOStream,
         SharedStreamBuf, StreamBuf, add_default_protocol, remove_default_protocol,
-        share_stream_buf,
     },
     standard::Failure,
     tcollection::{AsciiString, ExtendedString},
 };
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 struct HeaderBytes {
     bytes: Vec<u8>,
@@ -64,10 +63,11 @@ impl FileSystem for FakeHeaderFileSystem {
         _size: Option<&mut i64>,
     ) -> Result<Option<SharedStreamBuf>, Failure> {
         Ok(self.xml.as_ref().map(|bytes| {
-            share_stream_buf(HeaderBytes {
+            let buffer: SharedStreamBuf = Arc::new(Mutex::new(HeaderBytes {
                 bytes: bytes.clone(),
                 cursor: 0,
-            })
+            }));
+            buffer
         }))
     }
 }

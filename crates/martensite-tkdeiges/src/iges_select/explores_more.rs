@@ -5,7 +5,7 @@ use super::explores::{
     is_basic_curve,
 };
 use crate::iges_basic::{IgesBasicSingularSubfigure, IgesBasicSubfigureDef};
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_draw::{
     IgesDrawCircArraySubfigure, IgesDrawNetworkSubfigure, IgesDrawNetworkSubfigureDef,
     IgesDrawRectArraySubfigure,
@@ -15,9 +15,10 @@ use crate::iges_geom::{
     IgesGeomTrimmedSurface,
 };
 use crate::iges_solid::{IgesSolidFace, IgesSolidLoop};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -50,7 +51,6 @@ impl IgesSelectSelectFaces {
     /// The selection.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(-1),
         }
     }
@@ -63,11 +63,11 @@ impl IFSelectSelectExplore for IgesSelectSelectFaces {
     fn explore(
         &self,
         _level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(false);
         };
@@ -107,7 +107,6 @@ impl IgesSelectSelectPCurves {
     /// The selection.
     pub fn new(basic: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(-1),
             thebasic: basic,
         }
@@ -115,7 +114,7 @@ impl IgesSelectSelectPCurves {
     fn explore_surfaces(
         &self,
         igt: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<Option<bool>, Failure> {
         match igt {
@@ -191,11 +190,11 @@ impl IFSelectSelectExplore for IgesSelectSelectPCurves {
     fn explore(
         &self,
         level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(false);
         };
@@ -238,7 +237,6 @@ impl IgesSelectSelectBypassGroup {
     /// The selection down to a level.
     pub fn new(level: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(level),
         }
     }
@@ -251,7 +249,7 @@ impl IFSelectSelectExplore for IgesSelectSelectBypassGroup {
     fn explore(
         &self,
         _level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
@@ -278,7 +276,6 @@ impl IgesSelectSelectBypassSubfigure {
     /// The selection down to a level.
     pub fn new(level: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(level),
         }
     }
@@ -291,11 +288,11 @@ impl IFSelectSelectExplore for IgesSelectSelectBypassSubfigure {
     fn explore(
         &self,
         _level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(false);
         };

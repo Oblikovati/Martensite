@@ -124,7 +124,7 @@ impl ComputeApproxOnPolarSurface {
         let spline: Handle<Geom2dBSplineCurve> = Handle::new(spline);
         self.bspline = spline.clone();
         let adaptor = Geom2dAdaptorCurve::with_curve(&spline.cast::<dyn Geom2dCurve>())?;
-        Ok(Handle::new(adaptor).cast())
+        Ok(Handle::new(adaptor).into_upcast())
     }
 }
 

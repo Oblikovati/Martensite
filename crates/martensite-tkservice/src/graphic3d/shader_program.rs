@@ -37,14 +37,12 @@ struct ProgramState {
 
 /// A shader program; `let program = Graphic3dShaderProgram::default(); program.is_done() == false`.
 pub struct Graphic3dShaderProgram {
-    transient: StandardTransient,
     state: SharedState<ProgramState>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dShaderProgram,
     "Graphic3d_ShaderProgram",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Default for Graphic3dShaderProgram {
@@ -72,7 +70,6 @@ impl Default for Graphic3dShaderProgram {
             is_pbr: false,
         };
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

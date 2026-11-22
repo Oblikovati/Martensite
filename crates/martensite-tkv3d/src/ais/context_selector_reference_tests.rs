@@ -8,24 +8,24 @@ fn selector_reference_context() -> Handle<AisInteractiveContext> {
     AisInteractiveContext::new(&viewer).unwrap()
 }
 fn selector_reference_row(
-    phase: i32,
+    phase: usize,
     context: &AisInteractiveContext,
     reference: &AisMainSelectorRef,
     first: &Handle<SelectMgrSelectionManager>,
     second: &Handle<SelectMgrSelectionManager>,
-) -> [i32; 8] {
+) -> [usize; 8] {
     [
         phase,
-        i32::from(reference.reference_address() == std::ptr::from_ref(first.selector()).cast()),
-        i32::from(reference.object_address() == first.selector().object_address()),
+        usize::from(reference.reference_address() == std::ptr::from_ref(first.selector()).cast()),
+        usize::from(reference.object_address() == first.selector().object_address()),
         first.ref_count(),
         second.ref_count(),
-        reference.observe().ref_count(),
+        reference.ref_count(),
         second.selector().ref_count(),
-        i32::from(context.fields.read().selection_manager == *first),
+        usize::from(context.fields.read().selection_manager == *first),
     ]
 }
-fn selector_reference_native_rows() -> Vec<Vec<i32>> {
+fn selector_reference_native_rows() -> Vec<Vec<usize>> {
     include_str!("../../tests/fixtures/context-main-selector-reference-native.txt")
         .lines()
         .map(|line| {
@@ -47,11 +47,11 @@ fn original_manager_slot_reference_matches_native_replacement_null_and_restore_c
         selector_reference_row(0, &context, &reference, &first, &second).as_slice(),
         expected[0]
     );
-    for phase in 1..=3 {
+    for (phase, expected_row) in (1..).zip(&expected[1..=3]) {
         replace_selector_manager(&context, &first, &second, phase);
         assert_eq!(
             selector_reference_row(phase, &context, &reference, &first, &second).as_slice(),
-            expected[phase as usize]
+            expected_row
         );
     }
 }
@@ -73,11 +73,24 @@ fn selector_observation_releases_context_lock_before_reentrant_state_changes() {
     assert_eq!(reference.clone_handle().ref_count(), 2);
 }
 
+#[test]
+fn original_selector_slot_survives_dropping_the_manager() {
+    let context = selector_reference_context();
+    let reference = context.main_selector();
+    let selector_address = reference.object_address();
+    let manager = context.selection_manager().downgrade();
+    context.fields.write().selection_manager = Handle::default();
+    assert!(manager.upgrade().is_null());
+    assert_eq!(reference.object_address(), selector_address);
+    assert_eq!(reference.ref_count(), 1);
+    assert!(context.main_selector().is_null());
+}
+
 fn replace_selector_manager(
     context: &AisInteractiveContext,
     first: &Handle<SelectMgrSelectionManager>,
     second: &Handle<SelectMgrSelectionManager>,
-    phase: i32,
+    phase: usize,
 ) {
     context.fields.write().selection_manager = match phase {
         1 => second.clone(),

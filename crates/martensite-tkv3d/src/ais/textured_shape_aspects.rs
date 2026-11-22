@@ -20,10 +20,16 @@ pub fn ais_textured_shape_update_attributes<S: AisTexturedShapeSource + ?Sized>(
     object: &S,
     presentation: &Handle<dyn Graphic3dStructureSource>,
 ) -> Result<(), Failure> {
+    update_textured_attributes(object, presentation.get())
+}
+pub(super) fn update_textured_attributes<S: AisTexturedShapeSource + ?Sized>(
+    object: &S,
+    presentation: Option<&dyn Graphic3dStructureSource>,
+) -> Result<(), Failure> {
     fresh_textured_fill_aspect(object)?;
     let has_texture = refresh_textured_source(object)?;
     apply_textured_fill_flags(object, has_texture);
-    let presentation = presentation.get().ok_or_else(|| null_object("AisTexturedShape::updateAttributes: null presentation; expected an existing presentation"))?;
+    let presentation = presentation.ok_or_else(|| null_object("AisTexturedShape::updateAttributes: null presentation; expected an existing presentation"))?;
     update_live_textured_groups(object, presentation)?;
     Ok(())
 }
@@ -145,7 +151,7 @@ fn selected_textured_path(
     }
     (
         AisTexturedTextureSource::File(AsciiString::from_bytes(
-            super::textured_shape_source::native_textured_cstring_prefix(&fields.texture_file),
+            super::textured_shape_source::native_textured_cstring(&fields.texture_file).to_bytes(),
         )),
         textured_file_description(&fields.texture_file),
     )

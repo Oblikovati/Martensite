@@ -17,9 +17,9 @@ pub struct TexturedTextureFactoryFixture {
 impl TexturedTextureFactoryFixture {
     pub fn new(construction_failure: bool, done: bool) -> Self {
         Self {
-            texture: Handle::new(Graphic3dTexture2D::from_pix_map(Handle::new(
-                ImagePixMap::default(),
-            )))
+            texture: Handle::new(Graphic3dTexture2D::from_pix_map(
+                Handle::new(ImagePixMap::default()).into_upcast(),
+            ))
             .cast(),
             calls: AtomicUsize::new(0),
             sources: Mutex::new(Vec::new()),

@@ -99,16 +99,16 @@ pub(super) fn sens_of_prism(c: &Handle<dyn GeomCurve>, until: &Shape) -> Result<
 pub(super) fn test_curve(base: &Face) -> Result<Handle<dyn GeomCurve>, Failure> {
     let bar = sample_barycentre(base)?;
     let mut s = BRepTool::surface(base)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     if let Some(t) = trimmed.get() {
         s = t.basis_surface();
     }
-    let plane: Handle<GeomPlane> = s.cast();
+    let plane: Handle<GeomPlane> = s.downcast();
     let Some(p) = plane.get() else {
         return Ok(Handle::default());
     };
     let pln = p.pln();
     let pos = pln.position();
     let normale = pos.x_direction().crossed(pos.y_direction())?;
-    Ok(Handle::new(GeomLine::new(Axis1::new(bar, normale))).cast())
+    Ok(Handle::new(GeomLine::new(Axis1::new(bar, normale))).into_upcast())
 }

@@ -8,12 +8,15 @@ use martensite_tkdestep::step_dim_tol::{
 use martensite_tkdestep::step_repr::*;
 use martensite_tkdestep::step_shape::*;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::HAsciiString;
 
 const TOLERANCE: f64 = 1e-7;
 
-fn measure_with_unit(value: f64) -> Handle<StepBasicMeasureWithUnit> {
+fn measure_with_unit(
+    value: f64,
+) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepBasicMeasureWithUnit>> {
     let measure = Handle::new(StepBasicMeasureWithUnit::new());
     let member = Handle::new(StepBasicMeasureValueMember::new());
     member.set_name("POSITIVE_LENGTH_MEASURE");
@@ -28,7 +31,7 @@ fn measure_with_unit(value: f64) -> Handle<StepBasicMeasureWithUnit> {
     let mut unit = StepBasicUnit::default();
     unit.set_value(&si_unit.cast()).unwrap();
     measure.set_unit_component(&unit);
-    measure
+    measure.into_upcast()
 }
 
 fn repr_item_and_measure(value: f64) -> Handle<StepReprReprItemAndMeasureWithUnit> {
@@ -43,15 +46,15 @@ fn text(value: &str) -> Handle<HAsciiString> {
 }
 
 /// The two states every case checks: the field holds what was set, as its dynamic type.
-fn expect_measure_holds(field: &Handle<StandardTransient>, value: f64) {
+fn expect_measure_holds(field: &Handle<dyn Transient>, value: f64) {
     assert!(field.is_some());
     assert!(field.is_kind(StepBasicMeasureWithUnit::static_type()));
-    let measure = field.cast::<StepBasicMeasureWithUnit>();
+    let measure = field.cast::<dyn martensite_tkdestep::StepEntityBase<StepBasicMeasureWithUnit>>();
     assert!(measure.is_some());
     assert!((measure.value_component() - value).abs() < TOLERANCE);
 }
 
-fn expect_repr_item_holds(field: &Handle<StandardTransient>, value: f64) {
+fn expect_repr_item_holds(field: &Handle<dyn Transient>, value: f64) {
     assert!(field.is_some());
     assert!(field.is_kind(StepReprReprItemAndMeasureWithUnit::static_type()));
     let item = field.cast::<StepReprReprItemAndMeasureWithUnit>();
@@ -92,7 +95,7 @@ fn geometric_tolerance_works_with_both_types() {
 
 #[test]
 fn make_from_usage_option_works_with_both_types() {
-    let definition = Handle::new(StepBasicProductDefinition::new());
+    let definition = Handle::new(StepBasicProductDefinition::new()).into_upcast();
     let usage = StepReprMakeFromUsageOption::new();
     usage
         .init(
@@ -129,7 +132,7 @@ fn parallel_offset_works_with_both_types() {
 
 #[test]
 fn quantified_assembly_component_usage_works_with_both_types() {
-    let definition = Handle::new(StepBasicProductDefinition::new());
+    let definition = Handle::new(StepBasicProductDefinition::new()).into_upcast();
     let usage = StepReprQuantifiedAssemblyComponentUsage::new();
     usage
         .init(
@@ -165,7 +168,9 @@ fn measure_qualification_works_with_both_types() {
 }
 
 /// The helper the test recreates from the assembly reader.
-fn get_measure_with_unit(measure: &Handle<StandardTransient>) -> Handle<StepBasicMeasureWithUnit> {
+fn get_measure_with_unit(
+    measure: &Handle<dyn Transient>,
+) -> Handle<dyn martensite_tkdestep::StepEntityBase<StepBasicMeasureWithUnit>> {
     if measure.is_null() {
         return Handle::default();
     }

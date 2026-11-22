@@ -13,9 +13,10 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_dimen::{IgesDimenGeneralNote, IgesDimenLeaderArrow, IgesDimenPointDimension};
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
@@ -43,7 +44,7 @@ impl IgesDimenToolPointDimension {
     ) -> Result<(), Failure> {
         let mut temp_note: Handle<IgesDimenGeneralNote> = Default::default();
         let mut lead_arr: Handle<IgesDimenLeaderArrow> = Default::default();
-        let mut temp_geom: Handle<IgesDataIgesEntity> = Default::default();
+        let mut temp_geom: Handle<dyn IgesDataEntityKind> = Default::default();
         pr.read_entity_typed(
             ir,
             &pr.current(),
@@ -128,7 +129,7 @@ impl IgesDimenToolPointDimension {
             tc.transferred(&another.note().cast())?.cast();
         let mut temp_arrow: Handle<IgesDimenLeaderArrow> =
             tc.transferred(&another.leader_arrow().cast())?.cast();
-        let mut temp_geom: Handle<IgesDataIgesEntity> =
+        let mut temp_geom: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.geom().cast())?.cast();
         ent.init(&temp_note, &temp_arrow, &temp_geom);
         Ok(())

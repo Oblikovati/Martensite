@@ -13,7 +13,7 @@ type Bound = Handle<dyn GeomFillBoundary>;
 
 /// A tangent field on side `i` of the patch.
 fn tangent_field(patch: &Handle<GeomFillCoonsAlgPatch>, i: i32) -> Handle<dyn GeomFillTgtField> {
-    Handle::new(GeomFillTgtOnCoons::new(patch, i)).cast()
+    Handle::new(GeomFillTgtOnCoons::new(patch, i)).into_upcast()
 }
 
 /// Every boundary reparametrized on [0, 1], reversed as sorted.
@@ -66,7 +66,7 @@ impl GeomFillConstrainedFilling {
         let (p1, p2) = (b1.value(1.)?, b2.value(1.)?);
         let ppp = Point3::from((p1.xyz() + p2.xyz()) * 0.5);
         let t3: f64 = b1.tol3d().max(b2.tol3d());
-        Ok(Handle::new(GeomFillDegeneratedBound::new(ppp, 0., 1., t3, 10.)).cast())
+        Ok(Handle::new(GeomFillDegeneratedBound::new(ppp, 0., 1., t3, 10.)).into_upcast())
     }
     /// `Init(B1, B2, B3, B4, NoCheck)`: the boundaries are sorted into a loop
     /// (reversed and reparametrized on [0, 1]), the corners are checked (unless

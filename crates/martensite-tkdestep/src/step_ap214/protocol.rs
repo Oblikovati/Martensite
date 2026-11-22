@@ -35,14 +35,12 @@ static TYPE_NUMBERS: LazyLock<HashMap<usize, i32>> = LazyLock::new(|| {
 /// Protocol.
 #[derive(Default)]
 pub struct StepAP214Protocol {
-    transient: StandardTransient,
     tables: StepDataProtocolTables,
 }
 impl_transient!(
     StepAP214Protocol,
     "StepAP214Protocol",
     dyn StepDataProtocolOps,
-    transient,
     interfaces: [dyn InterfaceProtocol, dyn StepDataProtocolOps]
 );
 crate::impl_step_protocol!(StepAP214Protocol);

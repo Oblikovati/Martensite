@@ -28,7 +28,7 @@ fn located_curve(e: &topods::Edge) -> Result<(Handle<dyn GeomCurve>, f64, f64), 
         .get()
         .ok_or_else(|| null_object("Baryc", "edge without 3D curve"))?;
     Ok((
-        c.transformed(ec.location.transformation())?.cast(),
+        c.transformed(ec.location.transformation())?.into_cast(),
         ec.first,
         ec.last,
     ))

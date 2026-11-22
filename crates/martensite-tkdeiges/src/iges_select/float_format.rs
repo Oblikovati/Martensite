@@ -3,7 +3,7 @@ use super::IgesSelectFileModifier;
 use crate::iges_data::IgesDataIgesWriter;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, SharedState, StandardTransient},
+    standard::{Failure, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -45,7 +45,6 @@ pub struct IgesSelectFloatFormatValues {
 /// assert_eq!(format.format().mainform, "%8.6E");
 /// ```
 pub struct IgesSelectFloatFormat {
-    transient: StandardTransient,
     base: IFSelectGeneralModifierBase,
     state: SharedState<FloatFormatFields>,
 }
@@ -53,7 +52,6 @@ impl_transient!(
     IgesSelectFloatFormat,
     "IgesSelectFloatFormat",
     dyn IgesSelectFileModifier,
-    transient,
     interfaces: [dyn IFSelectGeneralModifier, dyn IgesSelectFileModifier]
 );
 
@@ -67,7 +65,6 @@ impl IgesSelectFloatFormat {
     /// The default format, zeros suppressed.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectGeneralModifierBase::new(false),
             state: SharedState::new(FloatFormatFields {
                 thezerosup: true,

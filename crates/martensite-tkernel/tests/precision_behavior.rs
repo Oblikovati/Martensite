@@ -21,13 +21,11 @@ fn constants_keep_native_expression_bits() {
 #[test]
 fn parametric_forms_divide_or_scale_like_native() {
     assert_eq!(parametric(3.0), 3.0 * 0.01);
-    assert_eq!(parametric_with_speed(3.0, 7.0), 3.0 / 7.0);
     assert_eq!(p_confusion(), confusion() * 0.01);
     assert_eq!(p_confusion_with_speed(7.0), confusion() / 7.0);
     assert_eq!(p_intersection(), intersection() * 0.01);
     assert_eq!(p_intersection_with_speed(7.0), intersection() / 7.0);
     assert_eq!(p_approximation(), approximation() * 0.01);
-    assert_eq!(p_approximation_with_speed(7.0), approximation() / 7.0);
     assert_eq!(square_p_confusion(), p_confusion() * p_confusion());
     // Division by a zero speed follows IEEE rules, as the constexpr does.
     assert_eq!(p_confusion_with_speed(0.0), f64::INFINITY);

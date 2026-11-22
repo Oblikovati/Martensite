@@ -30,14 +30,17 @@ impl RwStepShapeRwConnectedEdgeSet {
             ach,
             &mut a_representation_item_name,
         )?;
-        let mut a_ces_edges: Handle<HArray1<Handle<StepShapeEdge>>> = Default::default();
+        let mut a_ces_edges: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>> =
+            Default::default();
         let mut sub2: i32 = 0;
         if data.read_sub_list(num, 2, "ces_edges", ach, &mut sub2, false, 0, 0)? {
             let num2: i32 = sub2;
             let nb0: i32 = data.nb_params(num2)?;
-            a_ces_edges = step_new_array1::<Handle<StepShapeEdge>>(1, nb0)?;
+            a_ces_edges =
+                step_new_array1::<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>(1, nb0)?;
             for i0 in 1..=nb0 {
-                let mut an_it0: Handle<StepShapeEdge> = Default::default();
+                let mut an_it0: Handle<dyn crate::StepEntityBase<StepShapeEdge>> =
+                    Default::default();
                 data.read_entity(
                     num2,
                     i0,
@@ -61,7 +64,8 @@ impl RwStepShapeRwConnectedEdgeSet {
         sw.send_entity(&ent.parent.parent.name())?;
         sw.open_sub()?;
         for i1 in 1..=step_live(&ent.ces_edges(), "WriteStep")?.array1().length() {
-            let var0: Handle<StepShapeEdge> = step_array1_item(&ent.ces_edges(), i1, "WriteStep")?;
+            let var0: Handle<dyn crate::StepEntityBase<StepShapeEdge>> =
+                step_array1_item(&ent.ces_edges(), i1, "WriteStep")?;
             sw.send_entity(&var0)?;
         }
         sw.close_sub()?;
@@ -74,7 +78,8 @@ impl RwStepShapeRwConnectedEdgeSet {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         for i1 in 1..=step_live(&ent.ces_edges(), "Share")?.array1().length() {
-            let var0: Handle<StepShapeEdge> = step_array1_item(&ent.ces_edges(), i1, "Share")?;
+            let var0: Handle<dyn crate::StepEntityBase<StepShapeEdge>> =
+                step_array1_item(&ent.ces_edges(), i1, "Share")?;
             iter.add_item(&var0.cast());
         }
         Ok(())
@@ -175,7 +180,7 @@ impl RwStepShapeRwConnectedFaceShapeRepresentation {
         sw.send_entity(&ent.parent.name())?;
         sw.open_sub()?;
         for i1 in 1..=ent.parent.nb_items() {
-            let var0: Handle<StepReprRepresentationItem> =
+            let var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&ent.parent.items(), i1, "WriteStep")?;
             sw.send_entity(&var0)?;
         }
@@ -190,7 +195,7 @@ impl RwStepShapeRwConnectedFaceShapeRepresentation {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         for i1 in 1..=ent.parent.nb_items() {
-            let var0: Handle<StepReprRepresentationItem> =
+            let var0: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
                 step_array1_item(&ent.parent.items(), i1, "Share")?;
             iter.add_item(&var0.cast());
         }
@@ -223,8 +228,9 @@ impl RwStepShapeRwConnectedFaceSubSet {
             ach,
             &mut a_representation_item_name,
         )?;
-        let mut a_connected_face_set_cfs_faces: Handle<HArray1<Handle<StepShapeFace>>> =
-            Default::default();
+        let mut a_connected_face_set_cfs_faces: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>,
+        > = Default::default();
         let mut sub2: i32 = 0;
         if data.read_sub_list(
             num,
@@ -238,9 +244,11 @@ impl RwStepShapeRwConnectedFaceSubSet {
         )? {
             let num2: i32 = sub2;
             let nb0: i32 = data.nb_params(num2)?;
-            a_connected_face_set_cfs_faces = step_new_array1::<Handle<StepShapeFace>>(1, nb0)?;
+            a_connected_face_set_cfs_faces =
+                step_new_array1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>(1, nb0)?;
             for i0 in 1..=nb0 {
-                let mut an_it0: Handle<StepShapeFace> = Default::default();
+                let mut an_it0: Handle<dyn crate::StepEntityBase<StepShapeFace>> =
+                    Default::default();
                 data.read_entity(
                     num2,
                     i0,
@@ -257,7 +265,8 @@ impl RwStepShapeRwConnectedFaceSubSet {
                 )?;
             }
         }
-        let mut a_parent_face_set: Handle<StepShapeConnectedFaceSet> = Default::default();
+        let mut a_parent_face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -285,7 +294,7 @@ impl RwStepShapeRwConnectedFaceSubSet {
             .array1()
             .length()
         {
-            let var0: Handle<StepShapeFace> =
+            let var0: Handle<dyn crate::StepEntityBase<StepShapeFace>> =
                 step_array1_item(&ent.parent.cfs_faces()?, i1, "WriteStep")?;
             sw.send_entity(&var0)?;
         }
@@ -303,7 +312,7 @@ impl RwStepShapeRwConnectedFaceSubSet {
             .array1()
             .length()
         {
-            let var0: Handle<StepShapeFace> =
+            let var0: Handle<dyn crate::StepEntityBase<StepShapeFace>> =
                 step_array1_item(&ent.parent.cfs_faces()?, i1, "Share")?;
             iter.add_item(&var0.cast());
         }

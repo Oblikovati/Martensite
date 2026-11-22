@@ -6,7 +6,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::{
     GRAPHIC3D_ZLAYER_ID_TOP, GRAPHIC3D_ZLAYER_ID_TOP_OSD, Graphic3dArrayOfPrimitives,
-    Graphic3dArrayOfQuadrangles, Graphic3dArrayOfSegments,
+    Graphic3dArrayOfQuadrangles, Graphic3dArrayOfSegments, Graphic3dArraySource,
 };
 use martensite_tkv3d::{
     ais::{AisPoint, AisShape, PrimitiveArrayPresentation},
@@ -126,14 +126,14 @@ fn colored_array(
 /// Retain explicit red vertex channels rather than line defaults; `segment_array(&ends)?`.
 pub(super) fn segment_array(
     coords: &[[f64; 3]; 2],
-) -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
+) -> Result<Handle<dyn Graphic3dArraySource>, Failure> {
     let array = Handle::new(Graphic3dArrayOfSegments::with_options(2, 0, true)?);
     colored_array(&array, coords, NamedColor::RED)?;
-    Ok(array.cast())
+    Ok(array.into_upcast())
 }
 
 /// Retain the original quad topology and blue vertex channels; `quad_array()?`.
-pub(super) fn quad_array() -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
+pub(super) fn quad_array() -> Result<Handle<dyn Graphic3dArraySource>, Failure> {
     let array = Handle::new(Graphic3dArrayOfQuadrangles::with_options(
         4, 0, false, true, false,
     )?);
@@ -144,14 +144,14 @@ pub(super) fn quad_array() -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure
         [175., -100., 0.],
     ];
     colored_array(&array, &vertices, NamedColor::BLUE)?;
-    Ok(array.cast())
+    Ok(array.into_upcast())
 }
 
 /// Use the command-owned real primitive object, including its selection; `display_array(session,"seg1",array)?`.
 pub(super) fn display_array(
     session: &mut ViewerSession,
     name: &str,
-    array: Handle<Graphic3dArrayOfPrimitives>,
+    array: Handle<dyn Graphic3dArraySource>,
 ) -> Result<(), Failure> {
     let object = PrimitiveArrayPresentation::from_array(array.clone());
     // Parsed colored commands own the aspect before Compute so later edits reach its group.

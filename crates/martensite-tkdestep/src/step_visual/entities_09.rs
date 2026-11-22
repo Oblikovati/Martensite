@@ -38,14 +38,14 @@ impl StepVisualTextStyle {
 step_entity! {
     /// Text style for defined font.
     StepVisualTextStyleForDefinedFont, StepVisualTextStyleForDefinedFontState, "StepVisualTextStyleForDefinedFont", StandardTransient, {
-        text_colour: Handle<StepVisualColour>,
+        text_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     }
 }
 impl StepVisualTextStyleForDefinedFont {
     step_methods! {
-        set init = text_colour: Handle<StepVisualColour>;
-        set set_text_colour = text_colour: Handle<StepVisualColour>;
-        get text_colour = text_colour: Handle<StepVisualColour>;
+        set init = text_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
+        set set_text_colour = text_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
+        get text_colour = text_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>>;
     }
 }
 
@@ -79,7 +79,7 @@ step_entity! {
     StepVisualTriangulatedFace, StepVisualTriangulatedFaceState, "StepVisualTriangulatedFace", StepVisualTessellatedFace, {
         my_pnindex: Handle<HArray1<i32>>,
         my_triangles: Handle<HArray2<i32>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedFace, crate::step_visual::StepVisualTessellatedStructuredItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTriangulatedFace {
     step_methods! {
@@ -132,7 +132,7 @@ step_entity! {
     StepVisualTriangulatedSurfaceSet, StepVisualTriangulatedSurfaceSetState, "StepVisualTriangulatedSurfaceSet", StepVisualTessellatedSurfaceSet, {
         my_pnindex: Handle<HArray1<i32>>,
         my_triangles: Handle<HArray2<i32>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedSurfaceSet, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTriangulatedSurfaceSet {
     step_methods! {

@@ -14,7 +14,7 @@ use crate::int_patch::{
 };
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::real::epsilon;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, TransientHandleTarget};
 use std::f64::consts::PI;
 
 /// `GeomInt_LineTool`: static members only.
@@ -23,7 +23,7 @@ use std::f64::consts::PI;
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkgeomalgo::geom_int::GeomIntLineTool;
 /// use martensite_tkgeomalgo::int_patch::{IntPatchLine, IntPatchRLine};
-/// let line: Handle<dyn IntPatchLine> = Handle::new(IntPatchRLine::new_undecided(false)).cast();
+/// let line: Handle<dyn IntPatchLine> = Handle::new(IntPatchRLine::new_undecided(false)).into_upcast();
 /// assert_eq!(GeomIntLineTool::nb_vertex(&line)?, 0);
 /// assert!(GeomIntLineTool::first_parameter(&line)? < -1.0e99);
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
@@ -33,7 +33,7 @@ pub struct GeomIntLineTool;
 
 /// The native `occ::down_cast<T>(L)` that the code dereferences: Standard_NullObject for
 /// a line of another class, which crashes natively.
-pub(crate) fn line_as<T: RuntimeTyped + ?Sized>(
+pub(crate) fn line_as<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
     l: &Handle<dyn IntPatchLine>,
     member: &str,
 ) -> Result<Handle<T>, Failure> {

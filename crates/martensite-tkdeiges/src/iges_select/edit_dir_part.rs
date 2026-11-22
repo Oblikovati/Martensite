@@ -1,12 +1,14 @@
 //! The directory part of an entity as an editor of twenty-three values.
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataColorEntity, IgesDataDefList, IgesDataDefType, IgesDataIgesEntity, IgesDataIgesModel,
     IgesDataLevelListEntity, IgesDataLineFontEntity, IgesDataTransfEntity, IgesDataViewKindEntity,
     iges_live,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -115,14 +117,12 @@ fn int_text(value: i32) -> Handle<HAsciiString> {
 /// assert_eq!(editor.get().unwrap().label().as_bytes(), b"IGES Header");
 /// ```
 pub struct IgesSelectEditDirPart {
-    transient: StandardTransient,
     base: IFSelectEditorBase,
 }
 impl_transient!(
     IgesSelectEditDirPart,
     "IgesSelectEditDirPart",
     dyn IFSelectEditor,
-    transient,
     interfaces: [dyn IFSelectEditor]
 );
 
@@ -133,7 +133,6 @@ impl IgesSelectEditDirPart {
     /// A failure of a definition.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let editor = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectEditorBase::new(23),
         });
         let live = iges_live(&editor, "IGES edit directory part")?;
@@ -172,7 +171,7 @@ fn edited_number(form: &IFSelectEditForm, num: i32) -> Result<i32, Failure> {
 
 /// Loads the directory fields that are references and their kinds.
 fn load_references(form: &IFSelectEditForm, modl: &IgesDataIgesModel, iges: &IgesDataIgesEntity) {
-    let label = |ent: &Handle<StandardTransient>| modl.string_label(ent);
+    let label = |ent: &Handle<dyn Transient>| modl.string_label(ent);
     if iges.has_structure() {
         form.load_value(3, &label(&iges.structure().cast()));
     }
@@ -209,7 +208,7 @@ fn apply_structure_and_view(
     modl: &IgesDataIgesModel,
     iges: &IgesDataIgesEntity,
 ) -> Result<(), Failure> {
-    let entity_at = |rank: i32| -> Handle<IgesDataIgesEntity> {
+    let entity_at = |rank: i32| -> Handle<dyn IgesDataEntityKind> {
         if rank > 0 {
             modl.entity(rank)
         } else {
@@ -252,7 +251,7 @@ fn apply_rank_or_entity(
     modl: &IgesDataIgesModel,
     iges: &IgesDataIgesEntity,
 ) -> Result<(), Failure> {
-    let entity_at = |rank: i32| -> Handle<IgesDataIgesEntity> {
+    let entity_at = |rank: i32| -> Handle<dyn IgesDataEntityKind> {
         if rank > 0 {
             modl.entity(rank)
         } else {
@@ -364,11 +363,11 @@ impl IFSelectEditor for IgesSelectEditDirPart {
     fn load(
         &self,
         form: &Handle<IFSelectEditForm>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let modl = model.cast::<IgesDataIgesModel>();
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let (Some(live), Some(iges)) = (modl.get(), entity.get()) else {
             return Ok(false);
         };
@@ -425,11 +424,11 @@ impl IFSelectEditor for IgesSelectEditDirPart {
     fn apply(
         &self,
         form: &Handle<IFSelectEditForm>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let modl = model.cast::<IgesDataIgesModel>();
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let (Some(live), Some(iges)) = (modl.get(), entity.get()) else {
             return Ok(false);
         };

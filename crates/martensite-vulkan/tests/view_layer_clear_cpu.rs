@@ -41,7 +41,7 @@ fn layer_triangle(
         style.set_alpha_mode(Graphic3dAlphaMode::Blend, 0.5);
     }
     group.set_group_primitives_aspect(&style);
-    group.add_primitive_array(&view_setup::triangle_vertices(), true);
+    group.add_primitive_array(&view_setup::triangle_vertices().into_upcast(), true);
     structure.set_z_layer(layer);
     structure.display();
     structure

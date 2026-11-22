@@ -3,7 +3,7 @@
 use super::BRepTool;
 use super::curves::representations;
 use crate::brep::BRepCurveRepresentation;
-use crate::topods::{Edge, Face};
+use crate::topods::{EdgeView, FaceView};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkg3d::top_abs::Orientation;
@@ -44,7 +44,7 @@ fn ranked(
 
 /// The outputs for a found 2D polygon on surface.
 fn polygon_on_surface_of(
-    edge: &Edge,
+    edge: &EdgeView<'_>,
     representation: &dyn BRepCurveRepresentation,
 ) -> Result<EdgePolygonOnSurface, Failure> {
     Ok((
@@ -56,7 +56,7 @@ fn polygon_on_surface_of(
 
 /// The outputs for a found polygon on triangulation.
 fn polygon_on_triangulation_of(
-    edge: &Edge,
+    edge: &EdgeView<'_>,
     representation: &dyn BRepCurveRepresentation,
 ) -> Result<EdgePolygonOnTriangulation, Failure> {
     Ok((
@@ -69,9 +69,12 @@ fn polygon_on_triangulation_of(
 impl BRepTool {
     /// `PolygonOnSurface(E, F)`: the 2D polygon on the face's surface, for the edge
     /// reversed when the face is REVERSED; `BRepTool::polygon_on_face(&edge, &face)?`.
-    pub fn polygon_on_face(edge: &Edge, face: &Face) -> Result<Handle<Polygon2D>, Failure> {
+    pub fn polygon_on_face(
+        edge: &EdgeView<'_>,
+        face: &FaceView<'_>,
+    ) -> Result<Handle<Polygon2D>, Failure> {
         let (surface, location) = Self::surface_with_location(face)?;
-        let mut local = edge.clone();
+        let mut local = edge.to_edge();
         if face.orientation() == Orientation::Reversed {
             local.reverse();
         }
@@ -81,7 +84,7 @@ impl BRepTool {
     /// `PolygonOnSurface(E, S, L)`: the 2D polygon on (`surface`, `location`), the second
     /// one of a seam for a REVERSED edge; `BRepTool::polygon_on_surface(&edge, &surface, &location)?`.
     pub fn polygon_on_surface(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<Handle<Polygon2D>, Failure> {
@@ -105,7 +108,7 @@ impl BRepTool {
 
     /// `PolygonOnSurface(E, C, S, L)`: the first 2D polygon of the edge;
     /// `BRepTool::first_polygon_on_surface(&edge)?`.
-    pub fn first_polygon_on_surface(edge: &Edge) -> Result<EdgePolygonOnSurface, Failure> {
+    pub fn first_polygon_on_surface(edge: &EdgeView<'_>) -> Result<EdgePolygonOnSurface, Failure> {
         let list = representations(edge, "BRep_Tool::PolygonOnSurface")?;
         match list
             .iter()
@@ -120,7 +123,7 @@ impl BRepTool {
     /// `PolygonOnSurface(E, C, S, L, Index)`: the 2D polygon of rank `index` (a seam
     /// counts once); `BRepTool::polygon_on_surface_by_index(&edge, 1)?`.
     pub fn polygon_on_surface_by_index(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         index: i32,
     ) -> Result<EdgePolygonOnSurface, Failure> {
         let list = representations(edge, "BRep_Tool::PolygonOnSurface")?;
@@ -134,7 +137,7 @@ impl BRepTool {
     /// `location`), the second one of a seam for a REVERSED edge;
     /// `BRepTool::polygon_on_triangulation(&edge, &triangulation, &location)?`.
     pub fn polygon_on_triangulation(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         triangulation: &Handle<Triangulation>,
         location: &Location,
     ) -> Result<Handle<PolygonOnTriangulation>, Failure> {
@@ -159,7 +162,7 @@ impl BRepTool {
     /// `PolygonOnTriangulation(E, P, T, L)`: the first polygon on triangulation of the
     /// edge; `BRepTool::first_polygon_on_triangulation(&edge)?`.
     pub fn first_polygon_on_triangulation(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
     ) -> Result<EdgePolygonOnTriangulation, Failure> {
         let list = representations(edge, "BRep_Tool::PolygonOnTriangulation")?;
         match list
@@ -175,7 +178,7 @@ impl BRepTool {
     /// `PolygonOnTriangulation(E, P, T, L, Index)`: the polygon on triangulation of rank
     /// `index` (a seam counts once); `BRepTool::polygon_on_triangulation_by_index(&edge, 1)?`.
     pub fn polygon_on_triangulation_by_index(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         index: i32,
     ) -> Result<EdgePolygonOnTriangulation, Failure> {
         let list = representations(edge, "BRep_Tool::PolygonOnTriangulation")?;

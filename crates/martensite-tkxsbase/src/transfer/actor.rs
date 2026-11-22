@@ -5,12 +5,9 @@ use super::{
     TransferTransientKind,
 };
 use martensite_tkernel::{
-    impl_transient,
+    impl_transient, impl_transient_interface_target,
     message::ProgressRange,
-    standard::{
-        Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient,
-        project_interface,
-    },
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient},
 };
 
 /// The private fields of an actor: the next actor of the chain and the "last" flag.
@@ -59,7 +56,7 @@ pub trait TransferActorOps<K: TransferProcessKind>: Transient {
     /// `TransientResult(res)`: a simple binder of `res` (null for a null `res`).
     fn transient_result(
         &self,
-        res: &Handle<StandardTransient>,
+        res: &Handle<dyn Transient>,
     ) -> Handle<TransferSimpleBinderOfTransient> {
         if res.is_null() {
             return Handle::default();
@@ -113,13 +110,8 @@ macro_rules! actor_interface_descriptor {
             fn static_type() -> &'static RuntimeType {
                 <$class as RuntimeTyped>::static_type()
             }
-            fn static_type_ref() -> &'static Handle<RuntimeType> {
-                <$class as RuntimeTyped>::static_type_ref()
-            }
-            fn project_from(object: &dyn Transient) -> Option<&Self> {
-                project_interface::<Self>(object)
-            }
         }
+        impl_transient_interface_target!(dyn TransferActorOps<$kind>);
     };
 }
 actor_interface_descriptor!(TransferTransientKind, TransferActorOfProcessForTransient);
@@ -129,10 +121,9 @@ actor_interface_descriptor!(TransferFinderKind, TransferActorOfProcessForFinder)
 /// nothing.
 #[derive(Default)]
 pub struct TransferActorOfProcessForTransient {
-    transient: StandardTransient,
     core: TransferActor<TransferTransientKind>,
 }
-impl_transient!(TransferActorOfProcessForTransient, "TransferActorOfProcessForTransient", StandardTransient, transient, interfaces: [dyn TransferActorOps<TransferTransientKind>]);
+impl_transient!(TransferActorOfProcessForTransient, "TransferActorOfProcessForTransient", dyn Transient, interfaces: [dyn TransferActorOps<TransferTransientKind>]);
 
 impl TransferActorOfProcessForTransient {
     /// `TransferActorOfProcessForTransient()`.
@@ -151,10 +142,9 @@ impl TransferActorOps<TransferTransientKind> for TransferActorOfProcessForTransi
 /// nothing.
 #[derive(Default)]
 pub struct TransferActorOfProcessForFinder {
-    transient: StandardTransient,
     core: TransferActor<TransferFinderKind>,
 }
-impl_transient!(TransferActorOfProcessForFinder, "TransferActorOfProcessForFinder", StandardTransient, transient, interfaces: [dyn TransferActorOps<TransferFinderKind>]);
+impl_transient!(TransferActorOfProcessForFinder, "TransferActorOfProcessForFinder", dyn Transient, interfaces: [dyn TransferActorOps<TransferFinderKind>]);
 
 impl TransferActorOfProcessForFinder {
     /// `TransferActorOfProcessForFinder()`.

@@ -5,14 +5,14 @@ use super::{
 };
 use crate::live;
 use crate::tdf::{
-    TdfAttributeIterator, TdfAttributeState, TdfData, TdfDelta, TdfLabel, TdfLabelMap,
+    TdfAttributeIterator, TdfAttributeState, TdfData, TdfDeltaSource, TdfLabel, TdfLabelMap,
 };
 use martensite_tkcdf::cdm::{
     CdmDocument, CdmDocumentBase, CdmDocumentReferences, CdmDocumentStorage, ModifContext,
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, exceptions},
     tcollection::{AsciiString, ExtendedString},
 };
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
@@ -20,18 +20,18 @@ use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 /// The fields of `TDocStd_Document`.
 pub(crate) struct DocumentState {
     pub(crate) storage_format: ExtendedString,
-    pub(crate) undos: Vec<Handle<TdfDelta>>,
-    pub(crate) redos: Vec<Handle<TdfDelta>>,
+    pub(crate) undos: Vec<Handle<dyn TdfDeltaSource>>,
+    pub(crate) redos: Vec<Handle<dyn TdfDeltaSource>>,
     pub(crate) data: Handle<TdfData>,
     pub(crate) undo_limit: i32,
     /// The transaction number the native `myUndoTransaction` ("UNDO") opened, 0 when closed.
     pub(crate) undo_transaction: i32,
-    pub(crate) from_undo: Handle<TdfDelta>,
-    pub(crate) from_redo: Handle<TdfDelta>,
+    pub(crate) from_undo: Handle<dyn TdfDeltaSource>,
+    pub(crate) from_redo: Handle<dyn TdfDeltaSource>,
     pub(crate) save_time: i32,
     pub(crate) nested_transaction_mode: bool,
     /// Native `myUndoFILO`, its first element at index 0.
-    pub(crate) undo_filo: Vec<Handle<TdfDelta>>,
+    pub(crate) undo_filo: Vec<Handle<dyn TdfDeltaSource>>,
     pub(crate) only_transaction_modification: bool,
     pub(crate) save_empty_labels: bool,
     pub(crate) storage_format_version: TDocStdFormatVersion,
@@ -47,11 +47,10 @@ pub(crate) struct DocumentState {
 /// assert!(TDocStdDocument::get(&document.main().unwrap()).unwrap() == document);
 /// ```
 pub struct TDocStdDocument {
-    transient: StandardTransient,
     base: CdmDocumentBase,
     pub(crate) state: SharedState<DocumentState>,
 }
-impl_transient!(TDocStdDocument, "TDocStd_Document", dyn CdmDocument, transient, interfaces: [dyn CdmDocument]);
+impl_transient!(TDocStdDocument, "TDocStd_Document", dyn CdmDocument, interfaces: [dyn CdmDocument]);
 
 impl TDocStdDocument {
     /// `TDocStd_Document(astorageformat)`: a new framework owned by the document. The
@@ -60,7 +59,6 @@ impl TDocStdDocument {
     pub fn new(storage_format: &ExtendedString) -> Result<Handle<TDocStdDocument>, Failure> {
         let data = TdfData::new();
         let document = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: CdmDocumentBase::default(),
             state: SharedState::new(DocumentState {
                 storage_format: storage_format.clone(),
@@ -81,7 +79,7 @@ impl TDocStdDocument {
         });
         live(&document, "TDocStd_Document")?
             .base
-            .bind_self(&document.cast());
+            .bind_self(&document.upcast());
         TDocStdOwner::set_document_of(&data, &document)?;
         Ok(document)
     }
@@ -93,7 +91,7 @@ impl TDocStdDocument {
     }
     /// The bound handle of this document (`this`).
     pub(crate) fn this_document(&self) -> Result<Handle<TDocStdDocument>, Failure> {
-        Ok(self.base.this()?.cast())
+        Ok(self.base.this()?.into_downcast())
     }
     /// `Get(L)`: the document owning the label's framework, null when the root has no
     /// attribute (to avoid a handle to a framework being destroyed).

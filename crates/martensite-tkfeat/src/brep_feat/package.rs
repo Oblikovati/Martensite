@@ -122,7 +122,9 @@ fn transformed_curve(edg: &topods::Edge) -> Result<(Handle<dyn GeomCurve>, f64, 
         .curve
         .get()
         .ok_or_else(|| null_object("BRepFeat", "edge without 3D curve"))?;
-    let c: Handle<dyn GeomCurve> = curve.transformed(located.location.transformation())?.cast();
+    let c: Handle<dyn GeomCurve> = curve
+        .transformed(located.location.transformation())?
+        .into_cast();
     Ok((c, located.first, located.last))
 }
 

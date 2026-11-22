@@ -1,10 +1,11 @@
 //! Native analytic recognition inspects real seam/degenerated edges and preserves the face surface placement and scale.
 use crate::{select_mgr::SelectMgrEntityOwnerSource, select3d::*};
+use martensite_tkbrep::topods::FaceView;
 use martensite_tkbrep::{
     brep::BRepTool,
     brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface},
     brep_tools, topexp,
-    topods::{self, Face, ShapeIterator},
+    topods::{self, ShapeIterator},
     toptools::IndexedMapOfShape,
 };
 use martensite_tkernel::standard::HandleReference;
@@ -21,7 +22,7 @@ use martensite_tkmath::{
     toploc::Location,
 };
 pub(super) fn brep_face_analytic(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     interior: bool,
 ) -> Result<Option<Handle<dyn Select3DSensitiveEntity>>, Failure> {
@@ -33,7 +34,7 @@ pub(super) fn brep_face_analytic(
     brep_face_other_analytic(face, owner, interior, &surface, &location)
 }
 fn brep_face_other_analytic(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     interior: bool,
     surface: &Handle<dyn GeomSurface>,
@@ -46,7 +47,7 @@ fn brep_face_other_analytic(
     brep_face_cylinder_or_plane(face, owner, interior, surface, location)
 }
 fn brep_face_cylinder_or_plane(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     interior: bool,
     surface: &Handle<dyn GeomSurface>,
@@ -63,7 +64,7 @@ fn brep_face_cylinder_or_plane(
     Ok(None)
 }
 fn brep_full_sphere(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
 ) -> Result<Option<Handle<dyn Select3DSensitiveEntity>>, Failure> {
     let full = face.nb_children() == 0
@@ -79,7 +80,7 @@ fn brep_full_sphere(
     );
     Ok(Some(Handle::new(sensitive).cast()))
 }
-fn sphere_wire_counts(face: &Face) -> Result<Option<(usize, usize)>, Failure> {
+fn sphere_wire_counts(face: &FaceView<'_>) -> Result<Option<(usize, usize)>, Failure> {
     let wire = topods::wire(ShapeIterator::new(face, true, true).value()?)?;
     if wire.nb_children() != 4 {
         return Ok(None);
@@ -93,7 +94,7 @@ fn sphere_wire_counts(face: &Face) -> Result<Option<(usize, usize)>, Failure> {
     }
     Ok(Some((seams, degenerated)))
 }
-fn is_full_cone_cylinder(face: &Face) -> Result<bool, Failure> {
+fn is_full_cone_cylinder(face: &FaceView<'_>) -> Result<bool, Failure> {
     if face.nb_children() != 1 {
         return Ok(false);
     }
@@ -113,7 +114,7 @@ fn is_full_cone_cylinder(face: &Face) -> Result<bool, Failure> {
     Ok(seams == 2 && circles == 2)
 }
 fn brep_full_cone(
-    face: &Face,
+    face: &FaceView<'_>,
     cone: &GeomConicalSurface,
     location: &Location,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
@@ -133,7 +134,7 @@ fn brep_full_cone(
     )?))
 }
 fn brep_full_cylinder(
-    face: &Face,
+    face: &FaceView<'_>,
     cylinder: &GeomCylindricalSurface,
     location: &Location,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
@@ -178,7 +179,7 @@ fn placed_brep_cylinder_transform(
     Ok((transform, scale))
 }
 fn brep_planar_circle(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     interior: bool,
 ) -> Result<Option<Handle<dyn Select3DSensitiveEntity>>, Failure> {

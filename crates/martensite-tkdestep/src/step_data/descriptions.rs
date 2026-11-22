@@ -43,7 +43,6 @@ struct SimpleDescrState {
 /// assert_eq!(live.nb_fields(), 1);
 /// ```
 pub struct StepDataESDescr {
-    transient: StandardTransient,
     thenom: String,
     state: SharedState<SimpleDescrState>,
     this: OnceLock<WeakHandle<StepDataESDescr>>,
@@ -52,7 +51,6 @@ impl_transient!(
     StepDataESDescr,
     "StepDataESDescr",
     dyn StepDataEDescr,
-    transient,
     interfaces: [dyn StepDataEDescr]
 );
 
@@ -60,7 +58,6 @@ impl StepDataESDescr {
     /// `StepDataESDescr(name)`.
     pub fn new(name: &str) -> Handle<Self> {
         let descr = Handle::new(Self {
-            transient: StandardTransient::default(),
             thenom: name.to_owned(),
             state: SharedState::new(SimpleDescrState::default()),
             this: OnceLock::new(),
@@ -241,7 +238,6 @@ impl StepDataEDescr for StepDataESDescr {
 /// ```
 #[derive(Default)]
 pub struct StepDataECDescr {
-    transient: StandardTransient,
     thelist: SharedState<Vec<Handle<StepDataESDescr>>>,
     this: OnceLock<WeakHandle<StepDataECDescr>>,
 }
@@ -249,7 +245,6 @@ impl_transient!(
     StepDataECDescr,
     "StepDataECDescr",
     dyn StepDataEDescr,
-    transient,
     interfaces: [dyn StepDataEDescr]
 );
 

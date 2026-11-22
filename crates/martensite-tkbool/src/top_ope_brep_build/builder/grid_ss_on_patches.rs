@@ -1,11 +1,12 @@
 //! The ON patches of a base face and the faces touching an edge (TopOpeBRepBuildGridSS).
 use super::TopOpeBRepBuildBuilder;
 use crate::top_ope_brep_build::{TopOpeBRepBuildShapeSet, TopOpeBRepBuildWireEdgeSet};
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
+use crate::top_ope_brep_ds::TopOpeBRepDSKind;
 use crate::top_ope_brep_ds::export::fds_data;
-use crate::top_ope_brep_ds::{TopOpeBRepDSKind, TopOpeBRepDSShapeShapeInterference};
 use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkernel::ncollection::{DataMap, IndexedMap, List};
-use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 
 impl TopOpeBRepBuildBuilder {
@@ -107,7 +108,7 @@ impl TopOpeBRepBuildBuilder {
             return Ok(());
         }
         for i in bds.shape_interferences(a_face, true).iter() {
-            let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.clone().cast();
+            let ssi = i.view::<dyn ShapeInterferenceRecord>();
             let Some(s) = ssi.get() else {
                 continue;
             };

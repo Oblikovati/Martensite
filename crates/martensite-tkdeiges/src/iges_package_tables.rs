@@ -49,14 +49,11 @@ macro_rules! iges_package_tables {
     ) => {
         #[doc = concat!("What `", stringify!($package), "` knows of its entities: their case numbers and the protocols it builds on.")]
         #[derive(Default)]
-        pub struct $protocol {
-            base: martensite_tkernel::standard::StandardTransient,
-        }
+        pub struct $protocol;
         martensite_tkernel::impl_transient!(
             $protocol,
             $protocol_name,
             dyn $crate::iges_data::IgesDataProtocolOps,
-            base,
             interfaces: [dyn martensite_tkxsbase::interface::InterfaceProtocol, dyn $crate::iges_data::IgesDataProtocolOps]
         );
         $crate::impl_iges_protocol!($protocol);
@@ -83,14 +80,11 @@ macro_rules! iges_package_tables {
 
         #[doc = concat!("The reading and writing of the own parameters of the entities of `", stringify!($package), "`.")]
         #[derive(Default)]
-        pub struct $read_write {
-            base: martensite_tkernel::standard::StandardTransient,
-        }
+        pub struct $read_write;
         martensite_tkernel::impl_transient!(
             $read_write,
             $read_write_name,
             dyn $crate::iges_data::IgesDataReadWriteModule,
-            base,
             interfaces: [dyn martensite_tkxsbase::interface::InterfaceReaderModule, dyn $crate::iges_data::IgesDataReadWriteModule]
         );
         $crate::impl_iges_read_write_module!($read_write);
@@ -101,7 +95,7 @@ macro_rules! iges_package_tables {
             fn read_own_params(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                ent: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
                 ir: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesReaderData>,
                 pr: &mut $crate::iges_data::IgesDataParamReader,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
@@ -110,7 +104,7 @@ macro_rules! iges_package_tables {
             fn write_own_params(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                ent: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
                 iw: &mut $crate::iges_data::IgesDataIgesWriter,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
                 $crate::iges_case_dispatch!(cn, ent, Ok(()), Ok(()), [$($case => $entity, $class_tool;)*], |tool, typed| tool.write_own_params(&typed, iw))
@@ -119,14 +113,11 @@ macro_rules! iges_package_tables {
 
         #[doc = concat!("The sharing, checks and copies of the entities of `", stringify!($package), "`.")]
         #[derive(Default)]
-        pub struct $general {
-            base: martensite_tkernel::standard::StandardTransient,
-        }
+        pub struct $general;
         martensite_tkernel::impl_transient!(
             $general,
             $general_name,
             dyn $crate::iges_data::IgesDataGeneralModule,
-            base,
             interfaces: [dyn martensite_tkxsbase::interface::InterfaceGeneralModule, dyn $crate::iges_data::IgesDataGeneralModule]
         );
         $crate::impl_iges_general_module!($general);
@@ -134,7 +125,7 @@ macro_rules! iges_package_tables {
             fn own_shared_case(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                ent: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
                 iter: &mut martensite_tkxsbase::interface::InterfaceEntityIterator,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
                 $crate::iges_case_dispatch!(cn, ent, Ok(()), Ok(()), [$($case => $entity, $class_tool;)*], |tool, typed| tool.own_shared(&typed, iter))
@@ -142,7 +133,7 @@ macro_rules! iges_package_tables {
             fn dir_checker(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                ent: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
             ) -> $crate::iges_data::IgesDataDirChecker {
                 $crate::iges_case_dispatch!(
                     cn, ent, $crate::iges_data::IgesDataDirChecker::new(), $crate::iges_data::IgesDataDirChecker::new(),
@@ -151,7 +142,7 @@ macro_rules! iges_package_tables {
             fn own_check_case(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                ent: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
                 shares: &martensite_tkxsbase::interface::InterfaceShareTool,
                 ach: &mut martensite_tkernel::standard::Handle<martensite_tkxsbase::interface::InterfaceCheck>,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
@@ -160,7 +151,7 @@ macro_rules! iges_package_tables {
             fn iges_new_void(
                 &self,
                 cn: i32,
-                entto: &mut martensite_tkernel::standard::Handle<martensite_tkernel::standard::StandardTransient>,
+                entto: &mut martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient>,
             ) -> bool {
                 *entto = match cn {
                     $($void_case => $void,)*
@@ -171,8 +162,8 @@ macro_rules! iges_package_tables {
             fn own_copy_case(
                 &self,
                 cn: i32,
-                entfrom: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
-                entto: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                entfrom: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
+                entto: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
                 tc: &mut martensite_tkxsbase::interface::InterfaceCopyTool,
             ) -> Result<(), martensite_tkernel::standard::Failure> {
                 $crate::iges_case_dispatch!(cn, entfrom, Ok(()), Ok(()), [$($case => $entity, $class_tool;)*], |tool, typed| tool.own_copy(&typed, &entto.cast(), tc))
@@ -180,7 +171,7 @@ macro_rules! iges_package_tables {
             fn iges_category_number(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<martensite_tkernel::standard::StandardTransient>,
+                ent: &martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient>,
                 _shares: &martensite_tkxsbase::interface::InterfaceShareTool,
             ) -> i32 {
                 $category(cn, ent)
@@ -190,21 +181,18 @@ macro_rules! iges_package_tables {
 
         #[doc = concat!("The dump and the corrections of the entities of `", stringify!($package), "`.")]
         #[derive(Default)]
-        pub struct $specific {
-            base: martensite_tkernel::standard::StandardTransient,
-        }
+        pub struct $specific;
         martensite_tkernel::impl_transient!(
             $specific,
             $specific_name,
             dyn $crate::iges_data::IgesDataSpecificModule,
-            base,
             interfaces: [dyn $crate::iges_data::IgesDataSpecificModule]
         );
         impl $crate::iges_data::IgesDataSpecificModule for $specific {
             fn own_dump(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                ent: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
                 dumper: &$crate::iges_data::IgesDataIgesDumper,
                 s: &mut dyn std::io::Write,
                 own: i32,
@@ -215,7 +203,7 @@ macro_rules! iges_package_tables {
             fn own_correct(
                 &self,
                 cn: i32,
-                ent: &martensite_tkernel::standard::Handle<$crate::iges_data::IgesDataIgesEntity>,
+                ent: &martensite_tkernel::standard::Handle<dyn $crate::iges_data::IgesDataEntityKind>,
             ) -> Result<bool, martensite_tkernel::standard::Failure> {
                 $crate::iges_case_dispatch!(cn, ent, Ok(false), Ok(false), [$($fixed_case => $fixed_entity, $fixed_tool;)*], |tool, typed| tool.own_correct(&typed))
             }

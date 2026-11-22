@@ -154,8 +154,8 @@ impl CSIntersector {
         let circles: Vec<Circle3> = scir.iter().copied().collect();
         self.intersect_faces(0., circles.len(), |i| {
             let circle: Handle<dyn GeomCurve> =
-                Handle::new(GeomCircle::from_circ(circles[i])).cast();
-            let hc: HCurve = Handle::new(GeomAdaptorCurve::with_curve(&circle)?).cast();
+                Handle::new(GeomCircle::from_circ(circles[i])).into_upcast();
+            let hc: HCurve = Handle::new(GeomAdaptorCurve::with_curve(&circle)?).into_upcast();
             Ok(Some(Element::Curve(hc, 0., 2. * std::f64::consts::PI)))
         })
     }
@@ -174,7 +174,7 @@ impl CSIntersector {
             }
             let adaptor = GeomAdaptorCurve::with_curve(&curves[i])?;
             let (binf, bsup) = (adaptor.first_parameter()?, adaptor.last_parameter()?);
-            let hc: HCurve = Handle::new(adaptor).cast();
+            let hc: HCurve = Handle::new(adaptor).into_upcast();
             Ok(Some(Element::Curve(hc, binf, bsup)))
         })
     }

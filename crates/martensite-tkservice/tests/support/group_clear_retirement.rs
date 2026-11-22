@@ -21,8 +21,8 @@ pub struct GroupDropObservation {
     pub state: Option<(usize, bool, bool, bool)>,
 }
 pub struct GroupClearTrace {
-    pub presentation: HandleObserver<Graphic3dStructure>,
-    pub structure: HandleObserver<dyn Graphic3dCStructure>,
+    pub presentation: WeakHandle<Graphic3dStructure>,
+    pub structure: WeakHandle<dyn Graphic3dCStructure>,
     pub allocator: BaseAllocator,
     pub rows: SharedState<Vec<GroupDropObservation>>,
     pub created: SharedState<Vec<usize>>,
@@ -39,8 +39,8 @@ impl GroupClearTrace {
             .allocator()
             .clone();
         Arc::new(Self {
-            presentation: presentation.observe(),
-            structure: structure.observe(),
+            presentation: presentation.downgrade(),
+            structure: structure.downgrade(),
             allocator,
             rows: SharedState::default(),
             created: SharedState::default(),
@@ -48,8 +48,8 @@ impl GroupClearTrace {
     }
     fn observe_drop(&self, role: &'static str) -> bool {
         // Nonblocking access makes the pre-correction lock failure observable without hanging.
-        let state = self
-            .structure
+        let structure = self.structure.upgrade();
+        let state = structure
             .cstructure_base()
             .fields
             .try_write()
@@ -66,20 +66,25 @@ impl GroupClearTrace {
         unlocked
     }
     fn append_from_drop(&self, role: &str) {
-        let group = self.presentation.new_group().unwrap_or_else(|error| {
-            panic!("drop role={role} group creation failed={error}; expected a reachable new group")
-        });
+        let group = self
+            .presentation
+            .upgrade()
+            .new_group()
+            .unwrap_or_else(|error| {
+                panic!(
+                    "drop role={role} group creation failed={error}; expected a reachable new group"
+                )
+            });
         self.created.write().push(group.object_address() as usize);
     }
 }
 pub struct ObservedGroupRetirement {
-    transient: StandardTransient,
     inner: NullGroup,
     trace: Arc<GroupClearTrace>,
     role: &'static str,
     action: GroupDropAction,
 }
-martensite_tkernel::impl_transient!(ObservedGroupRetirement, "ObservedGroupRetirement", StandardTransient, transient, interfaces: [dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(ObservedGroupRetirement, "ObservedGroupRetirement", StandardTransient, interfaces: [dyn Graphic3dGroup]);
 impl Graphic3dGroup for ObservedGroupRetirement {
     null_group_members::forward_null_group_members!(inner);
 }
@@ -101,17 +106,17 @@ pub fn install_retiring_group(
     action: GroupDropAction,
 ) {
     let group = Handle::new(ObservedGroupRetirement {
-        transient: StandardTransient::default(),
-        inner: NullGroup::new(&trace.presentation.cast()),
+        inner: NullGroup::new(&trace.presentation.upgrade().cast()),
         trace: trace.clone(),
         role,
         action,
     });
     trace
         .structure
+        .upgrade()
         .cstructure_base()
         .fields
         .write()
         .groups
-        .append(group.cast());
+        .append(martensite_tkernel::standard::HandleSlot::new(group.cast()));
 }

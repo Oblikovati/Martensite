@@ -1,7 +1,10 @@
 //! Named actual drawer subclass observes native map/Value state from its own destructor.
-use super::{AisColoredDrawer, AisColoredDrawerCompounds};
+use super::{AisColoredDrawer, AisColoredDrawerCompounds, AisColoredDrawerSource};
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkernel::standard::Handle;
+use martensite_tkservice::graphic3d::{
+    Graphic3dPresentationAttributesBase, Graphic3dPresentationAttributesSource,
+};
 use std::{
     fmt::Write,
     sync::{Arc, Mutex, Weak},
@@ -15,8 +18,18 @@ martensite_tkernel::impl_transient!(
     ColoredCompoundKeyDropFake,
     "CompoundKeyDestructorProbe",
     AisColoredDrawer,
-    parent
+    interfaces: [dyn AisColoredDrawerSource, dyn Graphic3dPresentationAttributesSource]
 );
+impl AisColoredDrawerSource for ColoredCompoundKeyDropFake {
+    fn colored_drawer(&self) -> &AisColoredDrawer {
+        &self.parent
+    }
+}
+impl Graphic3dPresentationAttributesSource for ColoredCompoundKeyDropFake {
+    fn presentation_attributes_base(&self) -> &Graphic3dPresentationAttributesBase {
+        self.parent.presentation_attributes_base()
+    }
+}
 impl ColoredCompoundKeyDropFake {
     pub(super) fn new(
         parent: &Handle<Prs3dDrawer>,
@@ -37,7 +50,7 @@ impl Drop for ColoredCompoundKeyDropFake {
             .upgrade()
             .expect("drop map=expired; expected live caller-owned map");
         let value_count = map.node_ref(1).unwrap().compound_ref_count().unwrap();
-        let parent_count = self.parent.link_ref().observe().ref_count();
+        let parent_count = self.parent.link_ref().ref_count();
         writeln!(
             self.rows.lock().unwrap(),
             "key-destructor {} {value_count} {parent_count}",

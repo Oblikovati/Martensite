@@ -5,7 +5,7 @@ use super::{TPrsStdAISPresentation, TPrsStdAISViewer, TPrsStdDriverTable};
 use martensite_tkcaf::tdata_xtd::TDataXtdPresentation;
 use martensite_tkernel::ncollection::List;
 use martensite_tkernel::quantity::Color;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeState};
 use martensite_tkservice::graphic3d::Graphic3dMaterialAspect;
 use martensite_tkv3d::ais::{
@@ -58,7 +58,7 @@ impl TPrsStdAISPresentation {
             context.remove(&previous, false)?;
         }
         self.set_ais(object.clone());
-        let owner = self.attribute_base().this()?.cast::<StandardTransient>();
+        let owner = self.attribute_base().this()?.into_upcast::<dyn Transient>();
         martensite_tklcaf::live(&object, "TPrsStdAISPresentation::AISUpdate")?.set_owner(&owner);
         Ok(())
     }

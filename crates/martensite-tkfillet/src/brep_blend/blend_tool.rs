@@ -79,7 +79,7 @@ impl BRepBlendBlendTool {
             return Ok(None);
         }
         let d = Direction2::from_vector(v)?;
-        let bid: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(p1, d)).cast();
+        let bid: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(p1, d)).into_upcast();
         let seg = Geom2dAdaptorCurve::with_range(&bid, -0.01 * mag, 1.01 * mag)?;
         let arc = live_curve2d_of(c, "BRepBlendBlendTool::Inters")?;
         let inter = GInter::between(&seg, arc, tol, tol)?;

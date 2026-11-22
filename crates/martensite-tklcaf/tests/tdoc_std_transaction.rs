@@ -1,17 +1,17 @@
 //! Behaviour tests of `TDocStd_Transaction`.
 
 #![allow(non_snake_case)]
-use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdata_std::{
-    TDataStdComment, TDataStdCurrent, TDataStdExpression, TDataStdIntPackedMap, TDataStdInteger,
-    TDataStdIntegerArray, TDataStdName, TDataStdReal, TDataStdRealArray, TDataStdRelation,
-    TDataStdTreeNode, TDataStdVariable,
+    TDataStdComment, TDataStdCurrent, TDataStdExpression, TDataStdExpressionSource,
+    TDataStdIntPackedMap, TDataStdInteger, TDataStdIntegerArray, TDataStdName, TDataStdReal,
+    TDataStdRealArray, TDataStdRelation, TDataStdTreeNode, TDataStdVariable,
 };
-use martensite_tklcaf::tdf::{TdfLabel, TdfReference, TdfTagSource};
+use martensite_tklcaf::tdf::{TdfDelta, TdfLabel, TdfReference, TdfTagSource};
 use martensite_tklcaf::tdoc_std::{
-    TDocStdDocument, TDocStdModified, TDocStdMultiTransactionManager,
+    TDocStdCompoundDelta, TDocStdDocument, TDocStdModified, TDocStdMultiTransactionManager,
 };
 use martensite_tklcaf::tfunction::TFunctionFunction;
 
@@ -485,4 +485,38 @@ fn TDocStd_Transaction_Test__CafBug_2932_22_UnchangedFunctionKeepsRealDelta() {
         let function = TFunctionFunction::set_with_driver(label, &driver_guid).unwrap();
         function.set_failure(13).unwrap();
     });
+}
+
+#[test]
+fn compacted_undo_keeps_the_compound_owner() {
+    let document = new_transaction_document();
+    document.set_undo_limit(5).unwrap();
+    let label = document.main().unwrap();
+    document.new_command().unwrap();
+    let real = TDataStdReal::set(&label, 10.0).unwrap();
+    document.new_command().unwrap();
+    assert!(document.init_delta_compaction());
+    real.set_value(20.0).unwrap();
+    assert!(document.commit_command().unwrap());
+    assert!(document.perform_delta_compaction().unwrap());
+    assert_compound_delta(&document);
+    assert!(document.undo().unwrap());
+    assert_eq!(TDataStdReal::get(&real), 10.0);
+    assert!(document.redo().unwrap());
+    assert_eq!(TDataStdReal::get(&real), 20.0);
+}
+
+fn assert_compound_delta(document: &TDocStdDocument) {
+    let history = document.get_undos();
+    let delta = history.last().unwrap();
+    assert_eq!(
+        delta.dynamic_type().unwrap().name(),
+        "TDocStd_CompoundDelta"
+    );
+    assert!(delta.is_kind(TdfDelta::static_type()));
+    assert!(delta.downcast_ref::<TdfDelta>().is_none());
+    let compound = delta.downcast::<TDocStdCompoundDelta>();
+    assert!(compound.is_some());
+    assert_eq!(delta.object_address(), compound.object_address());
+    assert!(std::ptr::addr_eq(delta.get().unwrap(), compound.delta()));
 }

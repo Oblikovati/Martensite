@@ -35,7 +35,8 @@ impl RwStepReprRwSpecifiedHigherUsageOccurrence {
             has_product_definition_relationship_description,
             num
         );
-        let mut a_upper_usage: Handle<StepReprAssemblyComponentUsage> = Default::default();
+        let mut a_upper_usage: Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>> =
+            Default::default();
         data.read_entity(
             num,
             7,
@@ -195,7 +196,7 @@ impl RwStepReprRwStructuralResponsePropertyDefinitionRepresentation {
             return Ok(());
         }
         let mut a_property_definition_representation_definition: Handle<
-            StepReprPropertyDefinition,
+            dyn crate::StepEntityBase<StepReprPropertyDefinition>,
         > = Default::default();
         data.read_entity(
             num,
@@ -206,7 +207,7 @@ impl RwStepReprRwStructuralResponsePropertyDefinitionRepresentation {
             &mut a_property_definition_representation_definition,
         )?;
         let mut a_property_definition_representation_used_representation: Handle<
-            StepReprRepresentation,
+            dyn crate::StepEntityBase<StepReprRepresentation>,
         > = Default::default();
         data.read_entity(
             num,

@@ -15,7 +15,8 @@ use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{Compound, Face, Shape};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{
     GeomBoundedSurface, GeomCurve, GeomPoint, GeomRectangularTrimmedSurface,
 };
@@ -29,7 +30,7 @@ use martensite_tkxsbase::transfer_brep::TransferBRep;
 
 /// `translate_bounded_surf`: :i6: protection against what is not a bounded surface.
 fn translate_bounded_surf(
-    surface: &Handle<StepGeomSurface>,
+    surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     tol_degen: f64,
     factors: &StepDataFactors,
 ) -> Result<Face, Failure> {
@@ -51,7 +52,7 @@ fn translate_bounded_surf(
 
 /// The compound of the edges of a composite curve with an infinite segment, its wire otherwise.
 fn composite_curve_shape(
-    curve: &Handle<StepGeomCompositeCurve>,
+    curve: &Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>>,
     tp: &Handle<TransferTransientProcess>,
     tolerances: (f64, f64),
     factors: &StepDataFactors,
@@ -80,7 +81,7 @@ fn composite_curve_shape(
 /// A curve other than a composite one: the edge on its geometry. An exception from the geometry
 /// leaves no curve (the trace is informative only).
 fn free_curve_shape(
-    curve: &Handle<StepGeomCurve>,
+    curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
     factors: &StepDataFactors,
 ) -> Result<Shape, Failure> {
     let made: Handle<dyn GeomCurve> = StepToGeom::make_curve(curve, factors).unwrap_or_default();
@@ -111,9 +112,10 @@ fn rectangular_composite_shape(
     for i in 1..=live.nb_segments_i() {
         for j in 1..=live.nb_segments_j() {
             let patch = live.segments_value(i, j)?;
-            let parent: Handle<StepGeomSurface> = step_live(&patch, "StepToTopoDSBuilder")?
-                .parent_surface()
-                .cast();
+            let parent: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+                step_live(&patch, "StepToTopoDSBuilder")?
+                    .parent_surface()
+                    .cast();
             let face = translate_bounded_surf(&parent, precision, factors)?;
             if !face.is_null() {
                 builder.add(&mut compound, &face)?;
@@ -127,7 +129,7 @@ impl StepToTopoDSBuilder {
     /// The shape of a surface element of the set.
     fn surface_shape(
         &self,
-        surface: &Handle<StepGeomSurface>,
+        surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
     ) -> Result<Shape, Failure> {
@@ -152,16 +154,16 @@ impl StepToTopoDSBuilder {
     /// The shape of one element of the set, null when none could be made.
     fn geometric_set_element_shape(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         actor: Option<&StepControlActorRead>,
         is_manifold: bool,
         range: &ProgressRange<'_>,
     ) -> Result<Shape, Failure> {
-        let curve: Handle<StepGeomCurve> = ent.cast();
+        let curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> = ent.cast();
         if curve.is_some() {
-            let composite: Handle<StepGeomCompositeCurve> = curve.cast();
+            let composite: Handle<dyn crate::StepEntityBase<StepGeomCompositeCurve>> = curve.cast();
             if composite.is_some() {
                 let tolerances = (self.root.precision(), self.root.max_tol());
                 return composite_curve_shape(&composite, tp, tolerances, factors);
@@ -180,11 +182,14 @@ impl StepToTopoDSBuilder {
             }
             return Ok(Shape::default());
         }
-        let surface: Handle<StepGeomSurface> = ent.cast();
+        let surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> = ent.cast();
         if surface.is_some() {
             return self.surface_shape(&surface, tp, factors);
         }
-        if ent.cast::<StepGeomGeometricRepresentationItem>().is_some() {
+        if ent
+            .cast::<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>()
+            .is_some()
+        {
             let Some(actor) = actor else {
                 return Ok(Shape::default());
             };
@@ -201,7 +206,7 @@ impl StepToTopoDSBuilder {
     /// `init(GCS, TP, local_factors, RA, isManifold, progress)`.
     pub fn init_geometric_set(
         &mut self,
-        set: &Handle<StepShapeGeometricSet>,
+        set: &Handle<dyn crate::StepEntityBase<StepShapeGeometricSet>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         actor: Option<&StepControlActorRead>,

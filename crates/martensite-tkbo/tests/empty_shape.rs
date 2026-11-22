@@ -65,7 +65,8 @@ fn face_fixture(kind: usize) -> Shape {
     let mut face = Face::default();
     builder.make_face(&mut face);
     if kind == 6 {
-        let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+        let surface: Handle<dyn GeomSurface> =
+            Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
         builder
             .update_face(&face, &surface, &Location::default(), 1e-7)
             .unwrap();
@@ -90,14 +91,14 @@ fn represented_edge(edge: Edge, kind: usize) -> Shape {
             } else {
                 Handle::default()
             };
-            Handle::new(BRepPolygon3D::new(&polygon, &location)).cast()
+            Handle::new(BRepPolygon3D::new(&polygon, &location)).into_upcast()
         }
         11 => Handle::new(BRepPolygonOnSurface::new(
             &Handle::default(),
             &Handle::default(),
             &location,
         ))
-        .cast(),
+        .into_upcast(),
         _ => Handle::new(BRepCurveOn2Surfaces::new(
             &Handle::default(),
             &Handle::default(),
@@ -105,9 +106,9 @@ fn represented_edge(edge: Edge, kind: usize) -> Shape {
             &location,
             Continuity::G1,
         ))
-        .cast(),
+        .into_upcast(),
     };
-    let storage: Handle<BRepTEdge> = edge.tshape().cast();
+    let storage: Handle<BRepTEdge> = edge.tshape().downcast();
     storage.change_curves(|curves| curves.push(representation));
     edge.into()
 }

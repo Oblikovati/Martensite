@@ -11,16 +11,18 @@ use super::{IgesGeomBoundary, IgesGeomBoundedSurface, IgesGeomCircularArc, IgesG
 use crate::iges_basic::IgesBasicHArray1OfHArray1OfIgesEntity;
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::iges_shared_026;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_item, iges_array1_set, iges_dump_entities, iges_live, iges_msg,
     iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Xy;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -44,21 +46,17 @@ impl IgesGeomToolBoundary {
         let temp_preference: i32 = another_live.preference_type();
         let num1: i32 = another_live.nb_model_space_curves()?;
         let temp_surface = tc
-            .transferred(&another_live.surface().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.surface().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let temp_senses: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, num1)?;
-        let temp_model_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num1)?;
+        let temp_model_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num1)?;
         let temp_parameter_curves: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> =
             Handle::new(IgesBasicHArray1OfHArray1OfIgesEntity::with_bounds(1, num1)?);
         for i in 1..=num1 {
             let temp_ent = tc
-                .transferred(
-                    &another_live
-                        .model_space_curve(i)?
-                        .cast::<StandardTransient>(),
-                )?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.model_space_curve(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &temp_model_curves,
                 i,
@@ -72,20 +70,20 @@ impl IgesGeomToolBoundary {
                 "IgesGeomToolBoundary::own_copy",
             )?;
             let num2: i32 = another_live.nb_parameter_curves(i)?;
-            let par_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+            let par_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
                 another_live.parameter_curves(i)?;
-            let mut temp_par_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+            let mut temp_par_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
                 Handle::default();
             if num2 > 0 {
-                temp_par_curves = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num2)?;
+                temp_par_curves = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num2)?;
             }
             for j in 1..=num2 {
                 let temp_ent1 = tc
                     .transferred(
                         &iges_array1_item(&par_curves, j, "IgesGeomToolBoundary::own_copy")?
-                            .cast::<StandardTransient>(),
+                            .cast::<dyn Transient>(),
                     )?
-                    .cast::<IgesDataIgesEntity>();
+                    .cast::<dyn IgesDataEntityKind>();
                 iges_array1_set(
                     &temp_par_curves,
                     j,
@@ -154,7 +152,7 @@ impl IgesGeomToolBoundary {
                     "  Orientation Flags : {}\n  Parameter Curves : ",
                     ent_live.sense(i)?
                 )?;
-                let curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+                let curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
                     ent_live.parameter_curves(i)?;
                 if !curves.is_null() {
                     iges_dump_entities(
@@ -194,7 +192,7 @@ impl IgesGeomToolBoundedSurface {
         let ent_live = iges_live(ent, "IgesGeomToolBoundedSurface::read_own_params")?;
         let mut num: i32 = 0;
         let mut temp_type: i32 = 0;
-        let mut temp_surface: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_surface: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut temp_bounds: Handle<HArray1<Handle<IgesGeomBoundary>>> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         if !pr.read_integer(&pr.current(), &mut temp_type)? {
@@ -213,7 +211,7 @@ impl IgesGeomToolBoundedSurface {
         }
         if !temp_bounds.is_null() {
             for i in 1..=num {
-                let mut temp_ent: Handle<IgesDataIgesEntity> = Handle::default();
+                let mut temp_ent: Handle<dyn IgesDataEntityKind> = Handle::default();
                 if pr.read_entity_status(ir, &pr.current(), &mut a_status, &mut temp_ent, false)? {
                     iges_array1_set(
                         &temp_bounds,
@@ -270,11 +268,11 @@ impl IgesGeomToolBoundedSurface {
         let ent_live = iges_live(ent, "IgesGeomToolBoundedSurface::own_shared")?;
         let mut i: i32 = 0;
         let mut num: i32 = 0;
-        iter.get_one_item(&ent_live.surface().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.surface().cast::<dyn Transient>());
         num = ent_live.nb_boundaries();
         i = 1;
         while i <= num {
-            iter.get_one_item(&ent_live.boundary(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.boundary(i)?.cast::<dyn Transient>());
             i += 1;
         }
         Ok(())
@@ -326,8 +324,8 @@ impl IgesGeomToolBoundedSurface {
         let mut num: i32 = 0;
         let temp_type: i32 = another_live.representation_type();
         let temp_surface = tc
-            .transferred(&another_live.surface().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.surface().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         num = another_live.nb_boundaries();
         let mut temp_bounds: Handle<HArray1<Handle<IgesGeomBoundary>>> = Handle::default();
         if num > 0 {
@@ -335,7 +333,7 @@ impl IgesGeomToolBoundedSurface {
         }
         for i in 1..=num {
             let temp_boundary = tc
-                .transferred(&another_live.boundary(i)?.cast::<StandardTransient>())?
+                .transferred(&another_live.boundary(i)?.cast::<dyn Transient>())?
                 .cast::<IgesGeomBoundary>();
             iges_array1_set(
                 &temp_bounds,

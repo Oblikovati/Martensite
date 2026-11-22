@@ -80,7 +80,7 @@ impl V3dViewer {
             value.activate();
         }
         let plane = self.privileged_plane();
-        let views = self.state.read().active_views.clone();
+        let views = self.active_views();
         views
             .iter()
             .filter_map(Handle::get)
@@ -100,7 +100,11 @@ impl V3dViewer {
             let mut state = self.state.write();
             state.grid_type = AspectGridType::Rectangular;
             (
-                state.active_views.clone(),
+                state
+                    .active_views
+                    .iter()
+                    .map(|slot| Handle::clone(slot))
+                    .collect::<Vec<_>>(),
                 state.grid_echo,
                 state.grid_echo_structure.clone(),
             )
@@ -199,7 +203,7 @@ impl V3dViewer {
     }
     fn set_grid_in_active_views(&self, grid: &Handle<dyn AspectGrid>) {
         let plane = self.privileged_plane();
-        let views = self.state.read().active_views.clone();
+        let views = self.active_views();
         views
             .iter()
             .filter_map(Handle::get)

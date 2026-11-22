@@ -126,6 +126,6 @@ pub fn replace_lines(
     group.clear(false);
     group.set_group_primitives_aspect(&aspects);
     let array = line_array(mode, repeats);
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
     array
 }

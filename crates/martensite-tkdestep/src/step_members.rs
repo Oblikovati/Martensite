@@ -68,7 +68,7 @@ pub(crate) fn step_select_case_mem(ent: &Handle<dyn StepDataSelectMember>, names
 /// The immediate setter: names the stored member and writes it; nothing when the stored
 /// value is not an `M`.
 pub(crate) fn step_member_store<M>(
-    value: &Handle<StandardTransient>,
+    value: &Handle<dyn Transient>,
     name: &str,
     write: impl FnOnce(&M),
 ) where
@@ -83,7 +83,7 @@ pub(crate) fn step_member_store<M>(
 
 /// The immediate getter: reads the stored member when it is an `M` named `name`.
 pub(crate) fn step_member_load<M, R>(
-    value: &Handle<StandardTransient>,
+    value: &Handle<dyn Transient>,
     name: &str,
     read: impl FnOnce(&M) -> R,
 ) -> Option<R>
@@ -97,7 +97,7 @@ where
 /// The string setter: a null `val` is the null dereference, reached only when a
 /// member is stored.
 pub(crate) fn step_member_store_string<M>(
-    value: &Handle<StandardTransient>,
+    value: &Handle<dyn Transient>,
     name: &str,
     val: &Handle<HAsciiString>,
     where_called: &str,
@@ -117,7 +117,7 @@ where
 
 /// The string getter: a new string, null unless an `M` named `name` is stored.
 pub(crate) fn step_member_load_string<M>(
-    value: &Handle<StandardTransient>,
+    value: &Handle<dyn Transient>,
     name: &str,
 ) -> Handle<HAsciiString>
 where
@@ -160,7 +160,7 @@ pub(crate) use step_member_values;
 /// A member whose name is a case in a table, recorded as a number and not stored in its base.
 /// Quirk kept: `matches` of an unknown name is true while no case is set.
 macro_rules! step_case_name_member {
-    ($(#[$meta:meta])* $class:ident, $recorded:literal, $base:ty, [$($name:literal),+ $(,)?]) => {
+    ($(#[$meta:meta])* $class:ident, $recorded:literal, $base:ty, [$($name:literal),+ $(,)?] $(, view: $view:ty)?) => {
         $(#[$meta])*
         #[derive(Default)]
         pub struct $class {
@@ -171,9 +171,13 @@ macro_rules! step_case_name_member {
             $class,
             $recorded,
             $base,
-            base,
-            interfaces: [dyn $crate::step_data::StepDataSelectMember]
+            interfaces: [dyn $crate::step_data::StepDataSelectMember $(, dyn $crate::StepEntityBase<$view>)?]
         );
+        $(impl $crate::StepEntityBase<$view> for $class {
+            fn step_base(&self) -> &$view {
+                &self.base
+            }
+        })?
         impl std::ops::Deref for $class {
             type Target = $base;
             fn deref(&self) -> &Self::Target {
@@ -231,7 +235,6 @@ macro_rules! step_enum_member {
             $class,
             $recorded,
             $crate::step_data::StepDataSelectInt,
-            base,
             interfaces: [dyn $crate::step_data::StepDataSelectMember]
         );
         impl $class {
@@ -304,7 +307,7 @@ macro_rules! step_immediate_select {
         }
         impl $crate::step_data::StepDataSelectType for $class {
             $crate::impl_step_select_storage!(value);
-            fn case_num(&self, _ent: &$crate::step_entity::Handle<$crate::step_entity::StandardTransient>) -> i32 {
+            fn case_num(&self, _ent: &$crate::step_entity::Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
                 0
             }
             fn new_member(&self) -> $crate::step_entity::Handle<dyn $crate::step_data::StepDataSelectMember> {
@@ -426,7 +429,7 @@ macro_rules! step_derived_select {
             fn select_value_mut(&mut self) -> &mut $crate::step_data::StepDataSelectValue {
                 $crate::step_data::StepDataSelectType::select_value_mut(&mut self.parent)
             }
-            fn case_num(&self, ent: &$crate::step_entity::Handle<$crate::step_entity::StandardTransient>) -> i32 {
+            fn case_num(&self, ent: &$crate::step_entity::Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
                 $crate::step_select_case!(ent; $($case),+)
             }
         }

@@ -8,7 +8,7 @@ impl ResourceManager {
     ///
     /// The destination variable is read at save time, and write errors after a successful
     /// open are ignored.
-    pub fn save(&self) -> bool {
+    pub(crate) fn save(&self) -> bool {
         let Some(directory) = self.save_directory() else {
             return false;
         };
@@ -84,7 +84,7 @@ impl ResourceManager {
         Self::resource_path_with(name, user_defaults, &super::NativeResourceEnvironment)
     }
     /// `resource_path` over an injected environment; `ResourceManager::resource_path_with("App", true, &env)`.
-    pub fn resource_path_with(
+    pub(crate) fn resource_path_with(
         name: &str,
         user_defaults: bool,
         environment: &dyn ResourceEnvironment,

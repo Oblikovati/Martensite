@@ -1,12 +1,9 @@
 //! The signature of the color of an entity.
 use super::signatures::iges_signature;
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_graph::IgesGraphColor;
-use martensite_tkernel::{
-    impl_transient,
-    standard::{Handle, StandardTransient},
-    tcollection::AsciiString,
-};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::{impl_transient, standard::Handle, tcollection::AsciiString};
 use martensite_tkxsbase::{
     if_select::{IFSelectSignature, IFSelectSignatureBase},
     interface::{
@@ -65,7 +62,6 @@ impl IgesSelectSignColor {
     /// The signature of a mode.
     pub fn new(mode: i32) -> Self {
         let sign = Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new(color_name(mode)),
             themode: mode,
         };
@@ -77,15 +73,12 @@ impl IgesSelectSignColor {
 }
 
 /// The directory number of a color, 0 without model.
-fn color_number(
-    model: &Handle<dyn InterfaceInterfaceModel>,
-    color: &Handle<StandardTransient>,
-) -> i32 {
+fn color_number(model: &Handle<dyn InterfaceInterfaceModel>, color: &Handle<dyn Transient>) -> i32 {
     model.get().map_or(0, |live| 2 * live.number(color) - 1)
 }
 
 /// The intensities of a color entity, -1 for those not there.
-fn intensities(color: &Handle<StandardTransient>) -> [f64; 3] {
+fn intensities(color: &Handle<dyn Transient>) -> [f64; 3] {
     let mut rgb = [-1.0; 3];
     if let Some(live) = color.cast::<IgesGraphColor>().get() {
         let [red, green, blue] = &mut rgb;
@@ -107,7 +100,7 @@ impl IgesSelectSignColor {
     fn number_value(
         rank: i32,
         model: &Handle<dyn InterfaceInterfaceModel>,
-        color: &Handle<StandardTransient>,
+        color: &Handle<dyn Transient>,
     ) -> String {
         match rank {
             0 => "(none)".to_owned(),
@@ -121,7 +114,7 @@ impl IgesSelectSignColor {
     fn name_value(
         rank: i32,
         model: &Handle<dyn InterfaceInterfaceModel>,
-        color: &Handle<StandardTransient>,
+        color: &Handle<dyn Transient>,
     ) -> String {
         if rank == 0 {
             return "(none)".to_owned();
@@ -145,7 +138,7 @@ impl IgesSelectSignColor {
         }
     }
     /// The text of one intensity or of all; standard ranks are known, others come from the entity.
-    fn intensity_value(mode: i32, rank: i32, color: &Handle<StandardTransient>) -> String {
+    fn intensity_value(mode: i32, rank: i32, color: &Handle<dyn Transient>) -> String {
         if rank == 0 {
             return String::new();
         }
@@ -174,15 +167,15 @@ impl IgesSelectSignColor {
 impl InterfaceSignType for IgesSelectSignColor {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return String::new();
         };
         let rank = live.rank_color();
-        let color = live.color().cast::<StandardTransient>();
+        let color = live.color().cast::<dyn Transient>();
         match self.themode {
             2 => Self::name_value(rank, model, &color),
             3..=6 => Self::intensity_value(self.themode, rank, &color),

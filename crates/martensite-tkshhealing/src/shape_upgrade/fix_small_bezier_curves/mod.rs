@@ -1,8 +1,6 @@
 //! ShapeUpgradeFixSmallBezierCurves.
-use super::{
-    FixSmallCurves, FixSmallCurvesData, ShapeUpgradeFixSmallCurves, ShapeUpgradeSplitCurve2d,
-    SplitCurve,
-};
+use super::{FixSmallCurves, FixSmallCurvesData};
+use crate::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use crate::{shape_analysis::ShapeAnalysisEdge, shape_extend::ShapeExtendStatus};
 use martensite_tkbrep::{
     brep::BRepTool,
@@ -30,13 +28,13 @@ mod spatial;
 /// `let fixer = ShapeUpgradeFixSmallBezierCurves::new();`
 #[derive(Default)]
 pub struct ShapeUpgradeFixSmallBezierCurves {
-    parent: ShapeUpgradeFixSmallCurves,
+    state: FixSmallCurvesData,
 }
-impl_transient!(ShapeUpgradeFixSmallBezierCurves,"ShapeUpgrade_FixSmallBezierCurves",ShapeUpgradeFixSmallCurves,parent,interfaces:[dyn FixSmallCurves]);
+impl_transient!(ShapeUpgradeFixSmallBezierCurves,"ShapeUpgrade_FixSmallBezierCurves",dyn FixSmallCurves,interfaces:[dyn FixSmallCurves, dyn UpgradeTool]);
 impl std::ops::Deref for ShapeUpgradeFixSmallBezierCurves {
-    type Target = ShapeUpgradeFixSmallCurves;
+    type Target = FixSmallCurvesData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.state
     }
 }
 impl ShapeUpgradeFixSmallBezierCurves {
@@ -47,7 +45,7 @@ impl ShapeUpgradeFixSmallBezierCurves {
 }
 impl FixSmallCurves for ShapeUpgradeFixSmallBezierCurves {
     fn fix_small_curves_data(&self) -> &FixSmallCurvesData {
-        self.parent.fix_small_curves_data()
+        &self.state
     }
     fn approx(
         &self,
@@ -105,5 +103,11 @@ fn clamp_reversed(first: &mut f64, last: &mut f64, bounds: (f64, f64)) {
     }
     if *last > bounds.1 {
         *last = bounds.1;
+    }
+}
+
+impl UpgradeTool for ShapeUpgradeFixSmallBezierCurves {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state.tool
     }
 }

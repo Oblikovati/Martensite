@@ -1,6 +1,7 @@
 //! The attributes of a document on the entities of its shapes: colors, layers and names.
 use super::{IgesCafControlWriter, encode_color};
 use crate::iges_basic::IgesBasicName;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_live};
 use crate::iges_graph::IgesGraphColor;
 use crate::iges_solid::IgesSolidFace;
@@ -27,7 +28,7 @@ const WHERE: &str = "IgesCafControlWriter";
 fn entity_of_shape(
     process: &Handle<TransferFinderProcess>,
     shape: &Shape,
-) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
     let mapper = TransferBRep::shape_mapper(process, shape)?;
     let mut entity = Handle::default();
     let _ = iges_live(process, WHERE)?.find_typed_transient_as(
@@ -88,7 +89,7 @@ fn surface_color(style: &XCAFPrsStyle) -> Option<Color> {
 
 /// Puts a color on an entity, and on the surface of a face.
 fn color_entity(
-    entity: &Handle<IgesDataIgesEntity>,
+    entity: &Handle<dyn IgesDataEntityKind>,
     color_entity: &Handle<IgesGraphColor>,
     rank: i32,
 ) -> Result<(), Failure> {
@@ -179,7 +180,7 @@ impl IgesCafControlWriter {
             .cast::<TransferTransientListBinder>();
         if let Some(list) = binder.get() {
             for number in 1..=list.nb_transients() {
-                let item: Handle<IgesDataIgesEntity> = list.transient(number)?.cast();
+                let item: Handle<dyn IgesDataEntityKind> = list.transient(number)?.cast();
                 if item.is_some() {
                     color_entity(&item, color, rank)?;
                 }

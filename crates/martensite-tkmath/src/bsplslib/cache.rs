@@ -9,12 +9,11 @@ use crate::bsplclib::CacheParams;
 use crate::gp::{Point3, Vector3};
 use crate::plib::{eval_polynomial, no_derivative_eval_polynomial};
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::{Failure, Transient};
 use std::sync::{Mutex, MutexGuard};
 
 /// Cached Taylor coefficients of the patch last located (`Cache`).
 pub struct Cache {
-    base: StandardTransient,
     state: Mutex<CacheState>,
 }
 
@@ -24,7 +23,7 @@ pub(super) struct CacheState {
     params_v: CacheParams,
     poles_weights: Array2<'static, f64>,
 }
-martensite_tkernel::impl_transient!(Cache, "BSplSLib_Cache", StandardTransient, base);
+martensite_tkernel::impl_transient!(Cache, "BSplSLib_Cache", dyn Transient);
 
 impl CacheState {
     /// Prepares an empty cache of `(max degree + 1) x (3 or 4)*(min degree + 1)` values;
@@ -293,7 +292,6 @@ impl Cache {
             weights,
         )?;
         Ok(Self {
-            base: StandardTransient::default(),
             state: Mutex::new(state),
         })
     }

@@ -14,7 +14,7 @@ use martensite_tkbrep::brep_graph::cache_registry::CacheRegistry;
 use martensite_tkbrep::brep_graph::transform;
 use martensite_tkbrep::brep_graph::*;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::{Transform3, Vector3};
 use std::collections::HashMap;
@@ -28,23 +28,21 @@ fn guid(theText: &str) -> Guid {
 }
 
 struct TestCache {
-    transient: StandardTransient,
     base: CacheBase,
     myID: Guid,
     myName: AsciiString,
 }
-impl_transient!(TestCache, "TestCache", dyn BRepGraphCache, transient,
+impl_transient!(TestCache, "TestCache", dyn BRepGraphCache,
     interfaces: [dyn BRepGraphCache]);
 
 impl TestCache {
     fn create(theID: Guid, theName: &str) -> Handle<dyn BRepGraphCache> {
         let aCache = TestCache {
-            transient: StandardTransient::default(),
             base: CacheBase::default(),
             myID: theID,
             myName: AsciiString::from(theName),
         };
-        Handle::new(aCache).cast::<dyn BRepGraphCache>()
+        Handle::new(aCache).into_upcast::<dyn BRepGraphCache>()
     }
 }
 
@@ -71,12 +69,11 @@ struct EntryMaps {
 
 #[derive(Default)]
 struct EntryTestCache {
-    transient: StandardTransient,
     base: CacheBase,
     maps: Mutex<EntryMaps>,
     myClearCount: AtomicI32,
 }
-impl_transient!(EntryTestCache, "EntryTestCache", dyn BRepGraphCache, transient,
+impl_transient!(EntryTestCache, "EntryTestCache", dyn BRepGraphCache,
     interfaces: [dyn BRepGraphCache]);
 
 impl CacheType for EntryTestCache {

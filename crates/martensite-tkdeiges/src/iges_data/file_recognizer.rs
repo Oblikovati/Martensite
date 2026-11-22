@@ -1,5 +1,6 @@
 //! The recognition of an entity's class from its type and form.
-use super::{IgesDataIgesEntity, IgesDataIgesType};
+use super::IgesDataIgesType;
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkernel::{
     impl_transient_interface,
     standard::{Failure, Handle, SharedState, StandardTransient, Transient, exceptions},
@@ -9,7 +10,7 @@ use martensite_tkernel::{
 #[derive(Default)]
 pub struct IgesDataFileRecognizerBase {
     state: SharedState<(
-        Handle<IgesDataIgesEntity>,
+        Handle<dyn IgesDataEntityKind>,
         Handle<dyn IgesDataFileRecognizer>,
     )>,
 }
@@ -26,7 +27,7 @@ pub trait IgesDataFileRecognizer: Transient {
     /// The recognition proper to this class.
     fn eval(&self, akey: &IgesDataIgesType);
     /// Its own `eval`, then the one of the recognizer added; true when one gave a result.
-    fn evaluate(&self, akey: &IgesDataIgesType, res: &mut Handle<IgesDataIgesEntity>) -> bool {
+    fn evaluate(&self, akey: &IgesDataIgesType, res: &mut Handle<dyn IgesDataEntityKind>) -> bool {
         self.set_ko();
         self.eval(akey);
         let (found, next) = {
@@ -43,7 +44,7 @@ pub trait IgesDataFileRecognizer: Transient {
     ///
     /// # Errors
     /// A no such object failure when the evaluation gave nothing.
-    fn result(&self) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    fn result(&self) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let (found, next) = {
             let state = self.recognizer_base().state.read();
             (state.0.clone(), state.1.clone())
@@ -63,7 +64,7 @@ pub trait IgesDataFileRecognizer: Transient {
         self.recognizer_base().state.write().1 = reco.clone();
     }
     /// Records the result of the recognition.
-    fn set_ok(&self, aresult: &Handle<IgesDataIgesEntity>) {
+    fn set_ok(&self, aresult: &Handle<dyn IgesDataEntityKind>) {
         self.recognizer_base().state.write().0 = aresult.clone();
     }
     /// Records that the recognition gives no result.

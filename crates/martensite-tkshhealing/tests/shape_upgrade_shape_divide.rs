@@ -13,11 +13,12 @@ use martensite_tkmath::{
     gp::{Plane3, Point3, Transform3, Vector3},
     toploc::Location,
 };
+use martensite_tkshhealing::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use martensite_tkshhealing::{
     shape_extend::ShapeExtendStatus,
     shape_upgrade::{
         FaceDivideData, FaceDivider, ShapeDivider, ShapeUpgradeFaceDivide,
-        ShapeUpgradeFaceDivideArea, ShapeUpgradeShapeDivide, ShapeUpgradeTool,
+        ShapeUpgradeFaceDivideArea, ShapeUpgradeShapeDivide,
     },
 };
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace};
@@ -94,7 +95,7 @@ fn configure_wire_policy(divider: &ShapeUpgradeShapeDivide, mode: usize) {
     if [8, 9, 14].contains(&mode) {
         let face = Handle::new(ShapeUpgradeFaceDivide::empty());
         face.set_wire_divide_tool(&Handle::new(CopyWire::default()).cast());
-        divider.set_split_face_tool(&face);
+        divider.set_split_face_tool(&face.into_upcast());
     }
     if mode == 5 || mode == 11 {
         divider.set_split_face_tool(&Handle::new(FailingFace::default()).cast());
@@ -102,7 +103,7 @@ fn configure_wire_policy(divider: &ShapeUpgradeShapeDivide, mode: usize) {
     if mode == 13 {
         let face = Handle::new(ShapeUpgradeFaceDivide::empty());
         face.set_wire_divide_tool(&Handle::default());
-        divider.set_split_face_tool(&face);
+        divider.set_split_face_tool(&face.into_upcast());
     }
 }
 fn count(shape: &Shape, kind: ShapeEnum) -> i32 {
@@ -184,15 +185,17 @@ fn shape_subdivision_matches_native_rows() {
 }
 #[derive(Default)]
 struct FailingFace {
-    parent: ShapeUpgradeFaceDivide,
+    state: FaceDivideData,
 }
-impl_transient!(FailingFace,"ShapeDivideTest_FailingFace",ShapeUpgradeFaceDivide,parent,interfaces:[dyn FaceDivider]);
+impl_transient!(FailingFace,"ShapeDivideTest_FailingFace",dyn FaceDivider,interfaces:[dyn FaceDivider, dyn UpgradeTool]);
+impl UpgradeTool for FailingFace {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state
+    }
+}
 impl FaceDivider for FailingFace {
     fn face_divide_data(&self) -> &FaceDivideData {
-        self.parent.face_divide_data()
-    }
-    fn face_divide_base(&self) -> &ShapeUpgradeTool {
-        self.parent.face_divide_base()
+        &self.state
     }
     fn perform(&self, _area: f64) -> Result<bool, Failure> {
         Err(Failure::with_type(
@@ -208,23 +211,25 @@ use martensite_tkernel::{
     standard::SharedState,
 };
 use martensite_tkshhealing::{
-    shape_extend::{BasicMsgRegistrator, ShapeExtend, ShapeExtendBasicMsgRegistrator},
-    shape_upgrade::{ShapeUpgradeWireDivide, WireDivideData, WireDivider},
+    shape_extend::{BasicMsgRegistrator, ShapeExtend},
+    shape_upgrade::{WireDivideData, WireDivider},
 };
 #[derive(Default)]
 struct CopyWire {
-    parent: ShapeUpgradeWireDivide,
+    state: WireDivideData,
 }
-impl_transient!(CopyWire,"ShapeDivideTest_CopyWire",ShapeUpgradeWireDivide,parent,interfaces:[dyn WireDivider]);
+impl_transient!(CopyWire,"ShapeDivideTest_CopyWire",dyn WireDivider,interfaces:[dyn WireDivider, dyn UpgradeTool]);
+impl UpgradeTool for CopyWire {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state
+    }
+}
 impl WireDivider for CopyWire {
     fn wire_divide_data(&self) -> &WireDivideData {
-        self.parent.wire_divide_data()
-    }
-    fn wire_divide_base(&self) -> &ShapeUpgradeTool {
-        self.parent.wire_divide_base()
+        &self.state
     }
     fn perform(&self) -> Result<(), Failure> {
-        let wire = self.parent.wire().into_shape();
+        let wire = self.state.wire().into_shape();
         let mut copy = wire.empty_copied()?;
         for child in martensite_tkbrep::topods::ShapeIterator::new(&wire, true, true) {
             Builder.add(&mut copy, &child)?;
@@ -239,10 +244,9 @@ impl WireDivider for CopyWire {
 }
 #[derive(Default)]
 struct CountMessages {
-    parent: ShapeExtendBasicMsgRegistrator,
     count: SharedState<i32>,
 }
-impl_transient!(CountMessages,"ShapeDivideTest_CountMessages",ShapeExtendBasicMsgRegistrator,parent,interfaces:[dyn BasicMsgRegistrator]);
+impl_transient!(CountMessages,"ShapeDivideTest_CountMessages",dyn BasicMsgRegistrator,interfaces:[dyn BasicMsgRegistrator]);
 impl BasicMsgRegistrator for CountMessages {
     fn send_shape(&self, _shape: &Shape, _message: &Msg, gravity: Gravity) {
         assert_eq!(gravity, Gravity::Info);

@@ -55,14 +55,14 @@ impl SideHatch {
         it.init();
         while it.more() {
             let v = it.value()?;
-            let bc: Handle<BRepAdaptorCurve2d> = v.clone().cast();
+            let bc: Handle<BRepAdaptorCurve2d> = v.downcast();
             let ie = match bc.get() {
                 Some(b) => side.h.add_element(
                     b.geom2d_adaptor().shallow_adaptor()?,
                     b.edge().orientation(),
                 ),
                 None => {
-                    let gc: Handle<Geom2dAdaptorCurve> = v.clone().cast();
+                    let gc: Handle<Geom2dAdaptorCurve> = v.downcast();
                     let g = gc.get().ok_or_else(|| {
                         Failure::with_message("Standard_NullObject", "SplitKPart: arc")
                     })?;
@@ -318,7 +318,7 @@ fn coincident_domain_edge(
             let Some(el) = elements.get(&fe.index()) else {
                 continue;
             };
-            let an_element: Handle<BRepAdaptorCurve2d> = el.clone().cast();
+            let an_element: Handle<BRepAdaptorCurve2d> = el.downcast();
             if let Some(e) = an_element.get() {
                 let hatching_delta = a_second.parameter() - a_first.parameter();
                 let element_delta = se.parameter() - fe.parameter();

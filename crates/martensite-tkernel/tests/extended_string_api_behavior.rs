@@ -2,7 +2,7 @@
 //!
 //! Expected values are the reviewed reference values;
 //! each module covers one group.
-use martensite_tkernel::{standard::Failure, tcollection::ExtendedString};
+use crate::{standard::Failure, tcollection::ExtendedString};
 #[path = "extended_string_api_behavior/construction.rs"]
 mod construction;
 #[path = "extended_string_api_behavior/editing.rs"]

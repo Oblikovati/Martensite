@@ -12,16 +12,18 @@ use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::{
     iges_shared_010, iges_shared_017, iges_shared_044, iges_shared_046, iges_shared_051,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_dump_xyz, iges_dump_xyz_l,
     iges_live, iges_msg, iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -252,7 +254,7 @@ impl IgesSolidToolFace {
         let msg198 = iges_msg("XSTEP_198");
         let mut outer_loop_flag: bool = false;
         let mut aloop: Handle<IgesSolidLoop> = Handle::default();
-        let mut temp_surface: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_surface: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut nbloops: i32 = 0;
         let mut temp_loops: Handle<HArray1<Handle<IgesSolidLoop>>> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
@@ -328,9 +330,9 @@ impl IgesSolidToolFace {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolFace::own_shared")?;
         let upper: i32 = ent_live.nb_loops()?;
-        iter.get_one_item(&ent_live.surface().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.surface().cast::<dyn Transient>());
         for i in 1..=upper {
-            iter.get_one_item(&ent_live.loop_(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.loop_(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -374,15 +376,15 @@ impl IgesSolidToolFace {
         let another_live = iges_live(another, "IgesSolidToolFace::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolFace::own_copy")?;
         let temp_surface = tc
-            .transferred(&another_live.surface().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.surface().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let nbloops: i32 = another_live.nb_loops()?;
         let outer_loop_flag: bool = another_live.has_outer_loop();
         let temp_loops: Handle<HArray1<Handle<IgesSolidLoop>>> =
             iges_new_array1::<Handle<IgesSolidLoop>>(1, nbloops)?;
         for i in 1..=nbloops {
             let anent = tc
-                .transferred(&another_live.loop_(i)?.cast::<StandardTransient>())?
+                .transferred(&another_live.loop_(i)?.cast::<dyn Transient>())?
                 .cast::<IgesSolidLoop>();
             iges_array1_set(&temp_loops, i, anent.clone(), "IgesSolidToolFace::own_copy")?;
         }

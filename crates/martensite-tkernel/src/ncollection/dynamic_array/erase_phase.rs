@@ -44,7 +44,7 @@ impl<T> DynamicArray<T> {
     /// callback and destructor must not unwind: destruction is noexcept. Rust unwinding
     /// decrements Size and leaves the slot unowned, preventing automatic double destruction; the
     /// callback remains responsible for cleanup if it panics before ending the value's lifetime.
-    pub unsafe fn erase_last_with_destruction(
+    pub(crate) unsafe fn erase_last_with_destruction(
         &mut self,
         destroy: impl FnOnce(*mut T, &usize),
     ) -> Result<(), Failure> {

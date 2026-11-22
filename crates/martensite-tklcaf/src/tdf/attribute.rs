@@ -9,7 +9,7 @@ use super::{
 use crate::json::{AttributeIndexMap, attribute_dump_json};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Guid, Handle, StandardTransient, Transient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, Transient, dump::DumpStream},
 };
 use std::io;
 
@@ -103,7 +103,7 @@ pub trait TdfAttribute: Transient {
         &self,
         old_attribute: &Handle<dyn TdfAttribute>,
     ) -> Result<Handle<dyn TdfDeltaOnModification>, Failure> {
-        Ok(TdfDefaultDeltaOnModification::new(old_attribute).cast())
+        Ok(TdfDefaultDeltaOnModification::new(old_attribute).into_upcast())
     }
     /// `DeltaOnModification(aDelta)`: backs up, then restores the delta's attribute.
     fn apply_delta_on_modification(
@@ -116,7 +116,7 @@ pub trait TdfAttribute: Transient {
     }
     /// `DeltaOnRemoval`: a `TDF_DefaultDeltaOnRemoval` on this attribute.
     fn delta_on_removal(&self) -> Result<Handle<dyn TdfDeltaOnRemoval>, Failure> {
-        Ok(TdfDefaultDeltaOnRemoval::new(&self.attribute_base().this()?).cast())
+        Ok(TdfDefaultDeltaOnRemoval::new(&self.attribute_base().this()?).into_upcast())
     }
     /// `References`: adds nothing by default.
     fn references(&self, _data_set: &Handle<TdfDataSet>) {}
@@ -138,7 +138,7 @@ pub trait TdfAttribute: Transient {
         attribute_dump_json(self, stream, depth)
     }
 }
-impl_transient_interface!(dyn TdfAttribute, "TDF_Attribute", StandardTransient);
+impl_transient_interface!(dyn TdfAttribute, "TDF_Attribute", dyn Transient);
 
 /// The native `TDF_Attribute::Dump` (non-virtual qualified calls `att->TDF_Attribute::Dump`
 /// use it directly).

@@ -17,12 +17,12 @@ use martensite_tkmath::gp::{Axis2d, Direction2, Point2, Transform2, Vector2};
 
 fn line() -> Handle<dyn Geom2dCurve> {
     let direction = Direction2::new(0.6, 0.8).unwrap();
-    Handle::new(Geom2dLine::from_point(Point2::new(1.0, 1.0), direction)).cast()
+    Handle::new(Geom2dLine::from_point(Point2::new(1.0, 1.0), direction)).into_upcast()
 }
 
 fn circle() -> Handle<dyn Geom2dCurve> {
     let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap());
-    Handle::new(Geom2dCircle::from_axis(axis, 2.0, true).unwrap()).cast()
+    Handle::new(Geom2dCircle::from_axis(axis, 2.0, true).unwrap()).into_upcast()
 }
 
 fn bezier() -> Handle<Geom2dBezierCurve> {
@@ -36,7 +36,7 @@ fn bezier() -> Handle<Geom2dBezierCurve> {
 }
 
 fn mapped(map: Map1d, domain: Option<Domain1d>) -> Handle<dyn RepCurveDesc> {
-    Handle::new(RepCurveDescMapped::new(circle(), 3, domain, map)).cast()
+    Handle::new(RepCurveDescMapped::new(circle(), 3, domain, map)).into_upcast()
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn maps_and_domains() {
 #[test]
 fn full_descriptor_redirects_every_order() {
     let owner = bezier();
-    let full: Handle<dyn RepCurveDesc> = Handle::new(RepCurveDescFull::new(line())).cast();
+    let full: Handle<dyn RepCurveDesc> = Handle::new(RepCurveDescFull::new(line())).into_upcast();
     assert_eq!(
         (full.kind(), full.max_deriv_order(), full.mapping()),
         (RepCurveKind::Full, None, None)
@@ -87,7 +87,7 @@ fn full_descriptor_redirects_every_order() {
 fn bounded_descriptor_limits_the_order() {
     let owner = bezier();
     let desc = Handle::new(RepCurveDescDerivBounded::new(line(), 1));
-    owner.set_eval_representation(desc.cast()).unwrap();
+    owner.set_eval_representation(desc.upcast()).unwrap();
     assert_eq!(desc.max_deriv_order(), Some(1));
     assert_eq!(owner.eval_d1(0.5).unwrap(), line().eval_d1(0.5).unwrap());
     // Above the limit the Bezier evaluates itself: B''(t) = 2 (P0 - 2 P1 + P2) = (0, -8).
@@ -134,7 +134,7 @@ fn mapped_descriptor_scales_derivatives() {
     );
     assert_eq!(try_eval_curve_dn(&desc, 0.25, 4).unwrap(), None);
     assert_eq!(try_eval_curve_dn(&desc, 0.25, 0).unwrap(), None);
-    let mapped = desc.cast::<RepCurveDescMapped>();
+    let mapped = desc.downcast::<RepCurveDescMapped>();
     mapped.set_domain(Some(Domain1d {
         first: 0.0,
         last: 1.0,
@@ -162,7 +162,7 @@ fn mapped_descriptor_scales_derivatives() {
 fn validation_rejects_bad_descriptors() {
     let owner = bezier();
     let null: Handle<dyn RepCurveDesc> =
-        Handle::new(RepCurveDescFull::new(Handle::default())).cast();
+        Handle::new(RepCurveDescFull::new(Handle::default())).into_upcast();
     assert_eq!(
         owner
             .set_eval_representation(null.clone())
@@ -184,13 +184,14 @@ fn validation_rejects_bad_descriptors() {
             .exception_type(),
         "Standard_ProgramError"
     );
-    let own: Handle<dyn RepCurveDesc> = Handle::new(RepCurveDescFull::new(owner.cast())).cast();
+    let own: Handle<dyn RepCurveDesc> =
+        Handle::new(RepCurveDescFull::new(owner.upcast())).into_upcast();
     assert!(owner.set_eval_representation(own.clone()).is_err());
     assert!(validate_curve_desc(&Handle::default(), std::ptr::null()).is_ok());
     assert!(validate_curve_desc(&own, std::ptr::null()).is_ok());
     // A representation cleared after validation fails instead of crashing.
     let full = Handle::new(RepCurveDescFull::new(line()));
-    owner.set_eval_representation(full.cast()).unwrap();
+    owner.set_eval_representation(full.upcast()).unwrap();
     full.set_representation(Handle::default());
     assert_eq!(
         owner.value(0.5).unwrap_err().exception_type(),
@@ -203,7 +204,7 @@ fn validation_rejects_bad_descriptors() {
 #[test]
 fn clones_keep_the_descriptor_kind() {
     let bounded: Handle<dyn RepCurveDesc> =
-        Handle::new(RepCurveDescDerivBounded::new(line(), 2)).cast();
+        Handle::new(RepCurveDescDerivBounded::new(line(), 2)).into_upcast();
     let copy = clone_curve_desc(&bounded).unwrap();
     assert_eq!(
         (copy.kind(), copy.max_deriv_order()),
@@ -236,7 +237,7 @@ fn bspline_and_offset_accept_representations() {
     mults.init(2);
     let bspline = Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false).unwrap());
     bspline
-        .set_eval_representation(Handle::new(RepCurveDescFull::new(line())).cast())
+        .set_eval_representation(Handle::new(RepCurveDescFull::new(line())).into_upcast())
         .unwrap();
     assert_eq!(bspline.value(2.0).unwrap(), line().value(2.0).unwrap());
     // B-spline changes keep the representation, Transform included.
@@ -253,7 +254,7 @@ fn bspline_and_offset_accept_representations() {
     assert!(!bspline.has_eval_representation());
     let offset = Handle::new(Geom2dOffsetCurve::new(&circle(), 1.0, false).unwrap());
     offset
-        .set_eval_representation(Handle::new(RepCurveDescFull::new(line())).cast())
+        .set_eval_representation(Handle::new(RepCurveDescFull::new(line())).into_upcast())
         .unwrap();
     assert!(offset.eval_representation().is_some());
     assert_eq!(offset.eval_d2(0.5).unwrap(), line().eval_d2(0.5).unwrap());
@@ -265,7 +266,7 @@ fn bspline_and_offset_accept_representations() {
     offset.set_offset_value(2.0);
     assert!(!offset.has_eval_representation());
     offset
-        .set_eval_representation(Handle::new(RepCurveDescFull::new(line())).cast())
+        .set_eval_representation(Handle::new(RepCurveDescFull::new(line())).into_upcast())
         .unwrap();
     offset.clear_eval_representation();
     assert!(!offset.has_eval_representation());

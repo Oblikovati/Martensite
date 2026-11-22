@@ -2,8 +2,11 @@
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     impl_transient,
-    message::{Algorithm, ProgressIndicatorHooks, ProgressRange, ProgressScope, Status},
-    standard::{Failure, Handle, RuntimeTyped, SharedState, StandardTransient},
+    message::{
+        AlgorithmSource, AlgorithmState, ProgressIndicatorHooks, ProgressRange, ProgressScope,
+        Status,
+    },
+    standard::{Failure, Handle, RuntimeTyped, SharedState},
 };
 use martensite_tkmesh::{
     brep_mesh_data::DiscreteModel,
@@ -14,24 +17,21 @@ use std::sync::Arc;
 
 pub type PipelineCalls = Arc<SharedState<Vec<i32>>>;
 pub struct RecordingModelBuilder {
-    algorithm: Algorithm,
+    algorithm: AlgorithmState,
     pub outcome: i32,
     pub calls: PipelineCalls,
 }
-impl_transient!(RecordingModelBuilder, "RecordingModelBuilder", dyn ModelBuilder, algorithm, interfaces: [dyn ModelBuilder]);
+impl_transient!(RecordingModelBuilder, "RecordingModelBuilder", dyn ModelBuilder, interfaces: [dyn ModelBuilder, dyn AlgorithmSource]);
 impl RecordingModelBuilder {
     pub fn new(outcome: i32, calls: PipelineCalls) -> Self {
         Self {
-            algorithm: Algorithm::with_runtime_type(Self::static_type()),
+            algorithm: AlgorithmState::with_runtime_type(Self::static_type()),
             outcome,
             calls,
         }
     }
 }
 impl ModelBuilder for RecordingModelBuilder {
-    fn algorithm(&self) -> &Algorithm {
-        &self.algorithm
-    }
     fn perform_internal(
         &self,
         shape: &Shape,
@@ -49,20 +49,18 @@ impl ModelBuilder for RecordingModelBuilder {
             return Ok(Handle::default());
         }
         self.algorithm.set_status(Status::DONE1);
-        Ok(Handle::new(DiscreteModel::new(shape)).cast())
+        Ok(Handle::new(DiscreteModel::new(shape)).into_upcast())
     }
 }
 pub struct RecordingModelStage {
-    transient: StandardTransient,
     pub outcome: i32,
     pub index: i32,
     pub calls: PipelineCalls,
 }
-impl_transient!(RecordingModelStage, "RecordingModelStage", dyn ModelAlgo, transient, interfaces: [dyn ModelAlgo]);
+impl_transient!(RecordingModelStage, "RecordingModelStage", dyn ModelAlgo, interfaces: [dyn ModelAlgo]);
 impl RecordingModelStage {
     pub fn new(outcome: i32, index: i32, calls: PipelineCalls) -> Self {
         Self {
-            transient: StandardTransient::default(),
             outcome,
             index,
             calls,
@@ -106,7 +104,7 @@ pub fn pipeline_context(
     context.change_parameters().clean_model = clean;
     if builder_outcome != -3 {
         context.set_model_builder(
-            &Handle::new(RecordingModelBuilder::new(builder_outcome, calls.clone())).cast(),
+            &Handle::new(RecordingModelBuilder::new(builder_outcome, calls.clone())).into_upcast(),
         );
     }
     let algorithms: Vec<Handle<dyn ModelAlgo>> = stages
@@ -121,7 +119,7 @@ pub fn pipeline_context(
                 i as i32 + 1,
                 calls.clone(),
             ))
-            .cast()
+            .into_upcast()
         })
         .collect();
     context.set_edge_discret(&algorithms[0]);
@@ -130,4 +128,10 @@ pub fn pipeline_context(
     context.set_face_discret(&algorithms[3]);
     context.set_post_processor(&algorithms[4]);
     context
+}
+
+impl AlgorithmSource for RecordingModelBuilder {
+    fn algorithm_state(&self) -> &AlgorithmState {
+        &self.algorithm
+    }
 }

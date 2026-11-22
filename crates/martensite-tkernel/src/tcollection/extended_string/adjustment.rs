@@ -3,7 +3,7 @@ use super::errors::out_of_range;
 use crate::standard::Failure;
 impl ExtendedString {
     /// Removes leading space code units; `text.left_adjust()`.
-    pub fn left_adjust(&mut self) {
+    pub(crate) fn left_adjust(&mut self) {
         let first = self
             .as_utf16()
             .iter()
@@ -12,7 +12,7 @@ impl ExtendedString {
         self.terminated.drain(..first);
     }
     /// Removes trailing space code units; `text.right_adjust()`.
-    pub fn right_adjust(&mut self) {
+    pub(crate) fn right_adjust(&mut self) {
         if self.is_empty() {
             return;
         }
@@ -25,7 +25,7 @@ impl ExtendedString {
         self.terminated[length] = 0;
     }
     /// Appends filler up to a minimum width; `text.left_justify(10,45)?`.
-    pub fn left_justify(&mut self, width: i32, filler: u16) -> Result<(), Failure> {
+    pub(crate) fn left_justify(&mut self, width: i32, filler: u16) -> Result<(), Failure> {
         let extra = self.padding("LeftJustify", width)?;
         if extra == 0 {
             return Ok(());
@@ -37,7 +37,7 @@ impl ExtendedString {
         Ok(())
     }
     /// Prepends filler up to a minimum width; `text.right_justify(10,45)?`.
-    pub fn right_justify(&mut self, width: i32, filler: u16) -> Result<(), Failure> {
+    pub(crate) fn right_justify(&mut self, width: i32, filler: u16) -> Result<(), Failure> {
         let extra = self.padding("RightJustify", width)?;
         if extra == 0 {
             return Ok(());
@@ -48,7 +48,7 @@ impl ExtendedString {
         Ok(())
     }
     /// Centers with any extra odd filler on the right; `text.center(7,45)?`.
-    pub fn center(&mut self, width: i32, filler: u16) -> Result<(), Failure> {
+    pub(crate) fn center(&mut self, width: i32, filler: u16) -> Result<(), Failure> {
         let extra = self.padding("Center", width)?;
         if extra == 0 {
             return Ok(());
@@ -64,7 +64,7 @@ impl ExtendedString {
         Ok(())
     }
     /// Capitalizes ASCII letters without altering other code units; `text.capitalize()`.
-    pub fn capitalize(&mut self) {
+    pub(crate) fn capitalize(&mut self) {
         for (index, unit) in self.terminated.iter_mut().enumerate() {
             if index == 0 && (97..=122).contains(unit) {
                 *unit -= 32;

@@ -4,7 +4,7 @@ mod accessors;
 mod host_binding;
 mod native_access;
 pub use accessors::{
-    AccessorMetadata, AccessorPresence, AccessorSet, Missing, Present, ReadAccessor, SelectAccessor,
+    AccessorMetadata, AccessorSet, Missing, Present, ReadAccessor, SelectAccessor,
 };
 use host_binding::HostBinding;
 pub use native_access::ForwardArrowProxy;
@@ -63,7 +63,7 @@ impl<I: ForwardHost> ForwardRange<I> {
         }
     }
     /// Borrows the current position without resetting it; `range.iter()`.
-    pub fn iter(&mut self) -> ForwardRangeIter<'_, I> {
+    pub(crate) fn iter(&mut self) -> ForwardRangeIter<'_, I> {
         ForwardRangeIter::new(self.host.get_mut())
     }
     /// Borrows the shared cursor at its current position; `range.begin().next()`.
@@ -78,17 +78,17 @@ impl<I: ForwardHost> ForwardRange<I> {
         self.begin()
     }
     /// Returns the end marker; `range.end()`.
-    pub fn end(&self) -> ForwardRangeSentinel {
+    pub(crate) fn end(&self) -> ForwardRangeSentinel {
         ForwardRangeSentinel
     }
     /// Returns the const-range exhaustion marker; `range.cbegin() == range.cend()`.
-    pub fn cend(&self) -> ForwardRangeSentinel {
+    pub(crate) fn cend(&self) -> ForwardRangeSentinel {
         self.end()
     }
 }
 impl<I: ForwardHost + Clone> ForwardRange<I> {
     /// Copies a copyable host into an independent cursor; `ForwardRange::from_copy(&host)`.
-    pub fn from_copy(host: &I) -> Self {
+    pub(crate) fn from_copy(host: &I) -> Self {
         Self::new(host.clone())
     }
 }
@@ -106,16 +106,16 @@ impl<'a, I: ForwardHost> ForwardRangeIter<'a, I> {
         }
     }
     /// Reads without advancing; empty hosts yield None; `iter.current()`.
-    pub fn current(&self) -> Option<ForwardItem<I>> {
+    pub(crate) fn current(&self) -> Option<ForwardItem<I>> {
         self.host
             .read(|host| host.more().then(|| I::Accessors::read(host)))
     }
     /// Exposes reference/value field access using Rust's field projection; `iter.arrow()?.x`.
-    pub fn arrow(&self) -> Option<ForwardItem<I>> {
+    pub(crate) fn arrow(&self) -> Option<ForwardItem<I>> {
         self.current()
     }
     /// Advances a valid host; exhaustion remains safe; `iter.advance()`.
-    pub fn advance(&mut self) {
+    pub(crate) fn advance(&mut self) {
         self.host.change(|host| {
             if host.more() {
                 host.advance();
@@ -124,12 +124,12 @@ impl<'a, I: ForwardHost> ForwardRangeIter<'a, I> {
     }
     /// Calls the host's Next even at exhaustion and returns this adapter; `iter.pre_increment()`.
     /// Prefix increment delegates unconditionally; `advance` is the checked alternative.
-    pub fn pre_increment(&mut self) -> &mut Self {
+    pub(crate) fn pre_increment(&mut self) -> &mut Self {
         self.host.change(ForwardHost::advance);
         self
     }
     /// Copies the current value and advances without copying the host; `iter.post_increment()`.
-    pub fn post_increment(&mut self) -> Option<PostfixProxy<ForwardValue<I>>> {
+    pub(crate) fn post_increment(&mut self) -> Option<PostfixProxy<ForwardValue<I>>> {
         let value = I::Accessors::snapshot(self.current()?);
         self.advance();
         Some(PostfixProxy { value })

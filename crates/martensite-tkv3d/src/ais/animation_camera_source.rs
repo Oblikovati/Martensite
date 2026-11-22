@@ -86,11 +86,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisAnimationCameraSource
         // Source and concrete handles name one native class descriptor, not lookalike types.
         <super::AisAnimationCamera as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Actual registered interface casters preserve arbitrary native subclass dispatch.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisAnimationCameraSource);
 fn camera_target_field(fields: &AisAnimationCameraFields) -> &Handle<dyn V3dViewSource> {
     // Return storage directly so an alias observes future setter changes.
     &fields.view

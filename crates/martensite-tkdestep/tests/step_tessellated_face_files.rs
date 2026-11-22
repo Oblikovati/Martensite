@@ -7,7 +7,8 @@ use martensite_tkdestep::step_data::{StepDataProtocolOps, StepDataStepModel, Ste
 use martensite_tkdestep::step_file::step_file_read;
 use martensite_tkdestep::step_visual::StepVisualComplexTriangulatedFace;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::InterfaceModelEntities;
 use std::io::Cursor;
 use std::path::PathBuf;
@@ -100,7 +101,7 @@ fn faces_in_text(text: &str) -> Vec<FaceValues> {
         .collect()
 }
 
-fn lists_of(lists: &Handle<HArray1<Handle<StandardTransient>>>) -> Vec<Vec<i32>> {
+fn lists_of(lists: &Handle<HArray1<Handle<dyn Transient>>>) -> Vec<Vec<i32>> {
     let lists = lists.get().unwrap().array1();
     (1..=lists.length())
         .map(|rank| {

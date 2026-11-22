@@ -75,7 +75,8 @@ pub trait LabelIterator: ObjectIterator {
 impl_transient_interface!(
     dyn LabelIterator,
     "martensite_object_model_LabelIterator",
-    dyn ObjectIterator
+    dyn ObjectIterator,
+    upcasts: [dyn ObjectIterator]
 );
 
 /// `martensite_object_model_LabelIterator::More`: a current node.

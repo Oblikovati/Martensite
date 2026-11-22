@@ -9,7 +9,7 @@ fn points() -> Handle<PrimitiveArrayPresentation> {
     let array = Handle::new(Graphic3dArrayOfPoints::new(2, 0).unwrap());
     array.add_vertex_pnt(&Point3::new(1., 2., 3.)).unwrap();
     array.add_vertex_pnt(&Point3::new(4., 5., 6.)).unwrap();
-    PrimitiveArrayPresentation::from_array(array.cast())
+    PrimitiveArrayPresentation::from_array(array.into_upcast())
 }
 
 fn presentation() -> Handle<Graphic3dStructure> {
@@ -97,7 +97,7 @@ fn segment_object(indexed: bool) -> Handle<PrimitiveArrayPresentation> {
         array.add_edge(3).unwrap();
         array.add_edge(4).unwrap();
     }
-    PrimitiveArrayPresentation::from_array(array.cast())
+    PrimitiveArrayPresentation::from_array(array.into_upcast())
 }
 
 #[test]

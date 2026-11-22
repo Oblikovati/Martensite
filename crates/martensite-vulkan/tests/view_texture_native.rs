@@ -13,7 +13,7 @@ mod recording_device;
 #[allow(dead_code)]
 #[path = "support/view_setup.rs"]
 mod view_setup;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkservice::graphic3d::*;
 use martensite_tkv3d::v3d::V3dViewer;
 use martensite_vulkan::*;
@@ -51,7 +51,7 @@ fn texture(label: &str, texture: Option<RenderTexture>) -> String {
     )
 }
 
-fn textures(label: &str, target: &Handle<StandardTransient>) -> Vec<String> {
+fn textures(label: &str, target: &Handle<dyn Transient>) -> Vec<String> {
     let handle = target.cast::<RenderFrameBuffer>();
     let fbo = handle.get().expect("a driver framebuffer");
     vec![

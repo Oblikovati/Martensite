@@ -29,7 +29,7 @@ pub(super) fn cross_prod(
 
 // A point item at `p`.
 fn point_item(p: Point2) -> Handle<dyn Geom2dGeometry> {
-    Handle::new(Geom2dCartesianPoint::from_pnt2d(p)).cast()
+    Handle::new(Geom2dCartesianPoint::from_pnt2d(p)).into_upcast()
 }
 
 // The tangent directions `nb_test * DU` inside the end of `c1` and the start of `c2`:
@@ -155,11 +155,11 @@ fn turn_back_is_salient(
     let hc1: Handle<dyn Adaptor2dCurve2d> = Handle::new(Geom2dAdaptorCurve::with_curve(
         &c1.cast::<dyn Geom2dCurve>(),
     )?)
-    .cast();
+    .into_upcast();
     let hc2: Handle<dyn Adaptor2dCurve2d> = Handle::new(Geom2dAdaptorCurve::with_curve(
         &c2.cast::<dyn Geom2dCurve>(),
     )?)
-    .cast();
+    .into_upcast();
     let oc1 = Adaptor2dOffsetCurve::with_bounds(&hc1, d, mil_c1, c1.last_parameter());
     let oc2 = Adaptor2dOffsetCurve::with_bounds(&hc2, d, c2.first_parameter(), mil_c2);
     let mut intersect = GInter::new();

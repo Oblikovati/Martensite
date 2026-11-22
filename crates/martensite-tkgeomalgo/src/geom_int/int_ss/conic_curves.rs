@@ -81,11 +81,11 @@ impl GeomIntIntSS {
     fn open_conic(l: &Handle<dyn IntPatchLine>) -> Result<Handle<dyn GeomCurve>, Failure> {
         let gline: Handle<IntPatchGLine> = line_as::<IntPatchGLine>(l, "GeomInt_IntSS::MakeCurve")?;
         Ok(match l.arc_type() {
-            IntPatchIType::Lin => Handle::new(GeomLine::from_lin(gline.line()?)).cast(),
+            IntPatchIType::Lin => Handle::new(GeomLine::from_lin(gline.line()?)).into_upcast(),
             IntPatchIType::Parabola => {
-                Handle::new(GeomParabola::from_parab(gline.parabola()?)).cast()
+                Handle::new(GeomParabola::from_parab(gline.parabola()?)).into_upcast()
             }
-            _ => Handle::new(GeomHyperbola::from_hypr(gline.hyperbola()?)).cast(),
+            _ => Handle::new(GeomHyperbola::from_hypr(gline.hyperbola()?)).into_upcast(),
         })
     }
 
@@ -118,11 +118,11 @@ impl GeomIntIntSS {
         tolpc: &mut f64,
     ) -> Result<(), Failure> {
         let ct3d = GeomTrimmedCurve::new(newc, fprm, lprm, true, true)?;
-        self.sline.push(Handle::new(ct3d).cast());
+        self.sline.push(Handle::new(ct3d).into_upcast());
         for (k, wanted) in [(1, inputs.approx.approx_s1), (2, inputs.approx.approx_s2)] {
             let c2d = self.conic_pcurve((k, wanted), (fprm, lprm), tolpc, newc)?;
             let trimmed: Handle<dyn Geom2dCurve> = if wanted {
-                Handle::new(Geom2dTrimmedCurve::new(&c2d, fprm, lprm, true, true)?).cast()
+                Handle::new(Geom2dTrimmedCurve::new(&c2d, fprm, lprm, true, true)?).into_upcast()
             } else {
                 c2d
             };
@@ -181,9 +181,9 @@ impl GeomIntIntSS {
     fn closed_conic(l: &Handle<dyn IntPatchLine>) -> Result<Handle<dyn GeomCurve>, Failure> {
         let gline: Handle<IntPatchGLine> = line_as::<IntPatchGLine>(l, "GeomInt_IntSS::MakeCurve")?;
         Ok(if l.arc_type() == IntPatchIType::Circle {
-            Handle::new(GeomCircle::from_circ(gline.circle()?)).cast()
+            Handle::new(GeomCircle::from_circ(gline.circle()?)).into_upcast()
         } else {
-            Handle::new(GeomEllipse::from_elips(gline.ellipse()?)).cast()
+            Handle::new(GeomEllipse::from_elips(gline.ellipse()?)).into_upcast()
         })
     }
 
@@ -230,7 +230,7 @@ impl GeomIntIntSS {
     ) -> Result<(), Failure> {
         let tc3d = GeomTrimmedCurve::new(newc, fprm, lprm, true, true)?;
         let range: (f64, f64) = (tc3d.first_parameter(), tc3d.last_parameter());
-        self.sline.push(Handle::new(tc3d).cast());
+        self.sline.push(Handle::new(tc3d).into_upcast());
         self.push_pcurves(newc, range, inputs, tolpc)
     }
 

@@ -27,7 +27,7 @@ pub use eval::LocalKnots;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::arrays::{one_based, put, rebased};
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::gp::{Point3, resolution};
@@ -37,14 +37,12 @@ use state::{Direction, SurfaceState, cell, check_surface_data, surface_rational,
 /// A B-spline surface;
 /// `Handle::new(GeomBSplineSurface::new(&poles, (&uk, &um), (&vk, &vm), (3, 3), (false, false))?)`.
 pub struct GeomBSplineSurface {
-    parent: StandardTransient,
     state: SharedState<SurfaceState>,
 }
 impl_transient!(
     GeomBSplineSurface,
     "Geom_BSplineSurface",
     dyn GeomBoundedSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomBoundedSurface]
 );
 
@@ -101,7 +99,6 @@ impl GeomBSplineSurface {
     }
     fn from_state(state: SurfaceState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

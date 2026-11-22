@@ -3,7 +3,7 @@ mod apply;
 mod build_mode;
 
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
-use martensite_tkbrep::brep_tools::{BRepToolsReShape, ReShape, ReShapeData};
+use martensite_tkbrep::brep_tools::{ReShape, ReShapeData};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::Failure;
@@ -26,13 +26,12 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 /// ```
 #[derive(Default)]
 pub struct ShapeBuildReShape {
-    parent: BRepToolsReShape,
+    data: ReShapeData,
 }
 impl_transient!(
     ShapeBuildReShape,
     "ShapeBuild_ReShape",
-    BRepToolsReShape,
-    parent,
+    dyn ReShape,
     interfaces: [dyn ReShape]
 );
 
@@ -65,7 +64,7 @@ impl ShapeBuildReShape {
 
 impl ReShape for ShapeBuildReShape {
     fn reshape_data(&self) -> &ReShapeData {
-        ReShape::reshape_data(&self.parent)
+        &self.data
     }
 
     /// `Apply(shape, until)` (override): the recorded replacements applied recursively

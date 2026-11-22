@@ -18,7 +18,7 @@ pub fn ais_textured_shape_compute<S: AisTexturedShapeSource + ?Sized>(
     prs: &Handle<dyn Graphic3dStructureSource>,
     mode: i32,
 ) -> Result<(), Failure> {
-    let shape = object.shape_base().fields.read().shape.clone();
+    let shape = object.shape_base().fields.read().shape.to_shape();
     if shape.is_null() {
         return Ok(());
     }

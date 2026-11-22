@@ -2,6 +2,7 @@
 //! into its entity, and the text it writes back.
 use crate::step_rw::*;
 use martensite_tkernel::resource::FormatType;
+use martensite_tkernel::standard::Transient;
 use martensite_tkxsbase::interface::{InterfaceParamType as Kind, InterfaceProtocol};
 
 /// One parameter of a test record.
@@ -216,10 +217,7 @@ fn an_entity_reference_of_the_right_type_reads_and_shares() {
     let mut shared = InterfaceEntityIterator::new();
     rw.share(&vector, &mut shared).unwrap();
     assert_eq!(shared.nb_entities(), 1);
-    assert_eq!(
-        shared.value().unwrap(),
-        direction.cast::<StandardTransient>()
-    );
+    assert_eq!(shared.value().unwrap(), direction.cast::<dyn Transient>());
 }
 
 #[test]

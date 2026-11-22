@@ -3,7 +3,7 @@
 use super::{TransferBinder, TransferSimpleBinderOfTransient, TransferStatusExec};
 use crate::interface::InterfaceCheck;
 use martensite_tkernel::standard::{
-    Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient, exceptions,
+    Failure, Handle, RuntimeType, RuntimeTyped, Transient, exceptions,
 };
 
 /// `TransferTransferIterator`.
@@ -12,7 +12,7 @@ use martensite_tkernel::standard::{
 /// use martensite_tkxsbase::transfer::{TransferTransferIterator, TransferVoidBinder};
 /// use martensite_tkernel::standard::Handle;
 /// let mut iter = TransferTransferIterator::new();
-/// iter.add_item(&Handle::new(TransferVoidBinder::new()).cast());
+/// iter.add_item(&Handle::new(TransferVoidBinder::new()).into_upcast());
 /// iter.start();
 /// assert!(iter.more() && !iter.has_result().unwrap());
 /// assert_eq!(iter.number(), 1);
@@ -185,10 +185,10 @@ impl TransferTransferIterator {
     pub fn has_transient_result(&self) -> Result<bool, Failure> {
         Ok(self
             .result_type()?
-            .is_some_and(|t| t.is_subtype(StandardTransient::static_type())))
+            .is_some_and(|t| t.is_subtype(<dyn Transient>::static_type())))
     }
     /// `TransientResult`: the result of a simple binder, else null.
-    pub fn transient_result(&self) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn transient_result(&self) -> Result<Handle<dyn Transient>, Failure> {
         let simple = self.value()?.cast::<TransferSimpleBinderOfTransient>();
         Ok(simple
             .get()

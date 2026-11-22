@@ -83,7 +83,8 @@ fn invalidate_lazy_detection_views(
     let viewer = camera_action_view(view)?.viewer();
     let mut cursor = viewer.active_view_iterator();
     while cursor.more() {
-        let other = martensite_tkernel::standard::HandleReference::observe(&cursor.value_ref());
+        let node = cursor.value_ref();
+        let other = martensite_tkernel::standard::HandleReference::observe(&node);
         other.invalidate_immediate();
         cursor.next();
     }

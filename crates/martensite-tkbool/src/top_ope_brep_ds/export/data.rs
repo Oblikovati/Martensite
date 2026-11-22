@@ -2,10 +2,10 @@
 //! FDS_assign, FUN_ds_samRk, FDSTdata, FDS_data, FDSIdata, FDSParameter,
 //! FUN_selectTRAINTinterference).
 use super::iref;
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSCurvePointInterference, TopOpeBRepDSDataStructure,
-    TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSTransition,
+    TopOpeBRepDSEdgeVertexInterference, TopOpeBRepDSKind, TopOpeBRepDSTransition,
 };
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::ncollection::List;
@@ -66,7 +66,7 @@ pub fn fun_ds_sam_rk(
 /// `FDSTdata(I, SB, IB, SA, IA)`: the shapes and indices of the transition; a null
 /// handle leaves the outputs, (SHAPE, 0, SHAPE, 0) here as its callers initialize them;
 /// `let (sb, ib, sa, ia) = fds_tdata(&i);`.
-pub fn fds_tdata(i: &Handle<TopOpeBRepDSInterference>) -> TransitionData {
+pub fn fds_tdata(i: &Handle<dyn InterferenceRecord>) -> TransitionData {
     let mut out = (ShapeEnum::Shape, 0, ShapeEnum::Shape, 0);
     fds_tdata_into(i, &mut out);
     out
@@ -74,7 +74,7 @@ pub fn fds_tdata(i: &Handle<TopOpeBRepDSInterference>) -> TransitionData {
 
 /// Reads transition fields without overwriting caller outputs for a null handle;
 /// `fds_tdata_into(&interference, &mut transition_fields)`.
-pub fn fds_tdata_into(i: &Handle<TopOpeBRepDSInterference>, out: &mut TransitionData) {
+pub fn fds_tdata_into(i: &Handle<dyn InterferenceRecord>, out: &mut TransitionData) {
     let Some(ii) = i.get() else { return };
     let t = ii.transition();
     *out = (
@@ -87,7 +87,7 @@ pub fn fds_tdata_into(i: &Handle<TopOpeBRepDSInterference>, out: &mut Transition
 
 /// `FDS_data(I, GT1, G1, ST1, S1)`: the geometry and support; a null handle leaves the
 /// outputs, (UNKNOWN, 0, UNKNOWN, 0) here; `let (gt, g, st, s) = fds_data(&i);`.
-pub fn fds_data(i: &Handle<TopOpeBRepDSInterference>) -> KindIndices {
+pub fn fds_data(i: &Handle<dyn InterferenceRecord>) -> KindIndices {
     use TopOpeBRepDSKind::Unknown;
     let mut out = (Unknown, 0, Unknown, 0);
     fds_data_into(i, &mut out);
@@ -96,7 +96,7 @@ pub fn fds_data(i: &Handle<TopOpeBRepDSInterference>) -> KindIndices {
 
 /// Reads geometry/support fields while retaining outputs for a null handle;
 /// `fds_data_into(&interference, &mut geometry_support)`.
-pub fn fds_data_into(i: &Handle<TopOpeBRepDSInterference>, out: &mut KindIndices) {
+pub fn fds_data_into(i: &Handle<dyn InterferenceRecord>, out: &mut KindIndices) {
     let Some(ii) = i.get() else { return };
     *out = (
         ii.geometry_type(),
@@ -111,8 +111,8 @@ pub fn fds_data_into(i: &Handle<TopOpeBRepDSInterference>, out: &mut KindIndices
 /// set; whether its transition is unknown; StandardNullObject for a null current
 /// handle; `fds_data_iter(l.iter().next(), &mut i1, &mut d)?`.
 pub fn fds_data_iter(
-    cur: Option<&Handle<TopOpeBRepDSInterference>>,
-    i1: &mut Handle<TopOpeBRepDSInterference>,
+    cur: Option<&Handle<dyn InterferenceRecord>>,
+    i1: &mut Handle<dyn InterferenceRecord>,
     data: &mut KindIndices,
 ) -> Result<bool, Failure> {
     let Some(cur) = cur else {
@@ -126,14 +126,14 @@ pub fn fds_data_iter(
 
 /// `FDSIdata(I, SB, IB, SA, IA, GT1, G1, ST1, S1)`: the transition data then the
 /// geometry and support; `let ((sb, ib, sa, ia), (gt, g, st, s)) = fds_idata(&i);`.
-pub fn fds_idata(i: &Handle<TopOpeBRepDSInterference>) -> (TransitionData, KindIndices) {
+pub fn fds_idata(i: &Handle<dyn InterferenceRecord>) -> (TransitionData, KindIndices) {
     (fds_tdata(i), fds_data(i))
 }
 
 /// Reads both field groups, preserving both groups when the handle is null;
 /// `fds_idata_into(&interference, &mut transition_fields, &mut geometry_support)`.
 pub fn fds_idata_into(
-    i: &Handle<TopOpeBRepDSInterference>,
+    i: &Handle<dyn InterferenceRecord>,
     transition: &mut TransitionData,
     geometry_support: &mut KindIndices,
 ) {
@@ -143,7 +143,7 @@ pub fn fds_idata_into(
 
 /// `FDSParameter(I, par)`: the parameter of an edge/vertex or curve/point
 /// interference (`None` for another kind); `fds_parameter_checked(&i)?`.
-pub fn fds_parameter_checked(i: &Handle<TopOpeBRepDSInterference>) -> Result<Option<f64>, Failure> {
+pub fn fds_parameter_checked(i: &Handle<dyn InterferenceRecord>) -> Result<Option<f64>, Failure> {
     iref(i)?;
     let is_evi = i.is_kind_name("TopOpeBRepDSEdgeVertexInterference");
     let is_cpi = i.is_kind_name("TopOpeBRepDSCurvePointInterference");
@@ -155,13 +155,13 @@ pub fn fds_parameter_checked(i: &Handle<TopOpeBRepDSInterference>) -> Result<Opt
 
 /// `FDSParameter(I)`: the parameter of an edge/vertex or curve/point interference;
 /// StandardFailure for another kind; `fds_parameter(&i)?`.
-pub fn fds_parameter(i: &Handle<TopOpeBRepDSInterference>) -> Result<f64, Failure> {
+pub fn fds_parameter(i: &Handle<dyn InterferenceRecord>) -> Result<f64, Failure> {
     iref(i)?;
-    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.cast();
+    let evi: Handle<TopOpeBRepDSEdgeVertexInterference> = i.downcast();
     if let Some(evi) = evi.get() {
         return Ok(evi.parameter());
     }
-    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.cast();
+    let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
     if let Some(cpi) = cpi.get() {
         return Ok(cpi.parameter());
     }

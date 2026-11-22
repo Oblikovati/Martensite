@@ -4,7 +4,9 @@ use crate::step_construct::StepConstruct;
 use crate::step_entity::step_live;
 use crate::step_repr::StepReprRepresentationItem;
 use martensite_tkbrep::topods::{Shape, ShapeIterator};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::{AsciiString, HAsciiString};
 use martensite_tklcaf::tdata_std::{TDataStdGenericExtString, TDataStdName};
 use martensite_tklcaf::tdf::TdfLabel;
@@ -52,7 +54,7 @@ pub(super) fn get_label_name(
 }
 
 /// The typed result of the transfer of a shape, null when there is none.
-pub(super) fn typed_result_of<T: RuntimeTyped>(
+pub(super) fn typed_result_of<T: RuntimeTyped + TransientHandleTarget>(
     fp: &Handle<TransferFinderProcess>,
     shape: &Shape,
 ) -> Result<Handle<T>, Failure> {
@@ -68,7 +70,7 @@ pub(super) fn find_entities(
     fp: &Handle<TransferFinderProcess>,
     shape: &Shape,
     location: &mut Location,
-    items: &mut Vec<Handle<StandardTransient>>,
+    items: &mut Vec<Handle<dyn Transient>>,
 ) -> Result<i32, Failure> {
     let item = StepConstruct::find_entity_located(fp, shape, location)?;
     if item.is_some() {
@@ -87,7 +89,8 @@ pub(super) fn find_entities(
     };
     let mut count = 0;
     for index in 1..=list.nb_transients() {
-        let item: Handle<StepReprRepresentationItem> = list.transient(index)?.cast();
+        let item: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+            list.transient(index)?.cast();
         if item.is_some() {
             count += 1;
             items.push(item.cast());
@@ -100,7 +103,7 @@ fn entities_of_children(
     fp: &Handle<TransferFinderProcess>,
     shape: &Shape,
     location: &mut Location,
-    items: &mut Vec<Handle<StandardTransient>>,
+    items: &mut Vec<Handle<dyn Transient>>,
 ) -> Result<i32, Failure> {
     let mut count = 0;
     let mut children = ShapeIterator::new(shape, true, true);

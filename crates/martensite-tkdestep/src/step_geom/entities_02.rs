@@ -12,7 +12,7 @@ step_entity! {
     StepGeomBSplineCurveWithKnotsAndRationalBSplineCurve, StepGeomBSplineCurveWithKnotsAndRationalBSplineCurveState, "StepGeomBSplineCurveWithKnotsAndRationalBSplineCurve", StepGeomBSplineCurve, {
         b_spline_curve_with_knots: Handle<StepGeomBSplineCurveWithKnots>,
         rational_b_spline_curve: Handle<StepGeomRationalBSplineCurve>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomBSplineCurveWithKnotsAndRationalBSplineCurve {
     step_methods! {
@@ -284,7 +284,7 @@ step_entity! {
         u_closed: StepDataLogical,
         v_closed: StepDataLogical,
         self_intersect: StepDataLogical,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomBSplineSurface {
     step_methods! {

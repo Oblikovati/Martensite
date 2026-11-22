@@ -76,7 +76,9 @@ fn assert_input_isolated(stop_at: usize, inject_failure: bool) {
     let source = crate::closed_analytic_cubic::closed_analytic_cubic(1., false);
     let edge = martensite_tkbrep::topods::edge(&source).unwrap();
     let raw = martensite_tkbrep::brep::BRepTool::curve_with_location(&edge).unwrap();
-    let original = raw.curve.cast::<martensite_tkg3d::geom::GeomBezierCurve>();
+    let original = raw
+        .curve
+        .downcast::<martensite_tkg3d::geom::GeomBezierCurve>();
     let mut observer = stop_observer(stop_at, inject_failure);
     let mut receipt =
         retain_selected_prism(candidates(&[source]), request([1., 1.]), &mut observer);

@@ -49,14 +49,12 @@ pub(super) struct PolyInternalState {
 /// assert_eq!(t1.get().unwrap().array1().upper(), 2);
 /// ```
 pub struct PolyInternalData {
-    base: StandardTransient,
     pub(super) state: SharedState<PolyInternalState>,
 }
 impl_transient!(
     PolyInternalData,
     "HLRAlgo_PolyInternalData",
-    StandardTransient,
-    base
+    StandardTransient
 );
 
 const CREATE: &str = "HLRAlgo_PolyInternalData::HLRAlgo_PolyInternalData";
@@ -104,7 +102,6 @@ impl PolyInternalData {
             pi_nod,
         };
         Ok(Self {
-            base: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }

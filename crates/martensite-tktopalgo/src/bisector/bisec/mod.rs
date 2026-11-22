@@ -21,8 +21,8 @@ use martensite_tkmath::gp::{Direction2, Point2};
 /// use martensite_tkg2d::geom2d::{Geom2dCartesianPoint, Geom2dCurve, Geom2dPoint};
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Point2, Vector2};
-/// let p1: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(0.0, 0.0)).cast();
-/// let p2: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(2.0, 0.0)).cast();
+/// let p1: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(0.0, 0.0)).into_upcast();
+/// let p2: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(2.0, 0.0)).into_upcast();
 /// let mut bisec = Bisec::new();
 /// bisec.perform_points(&p1, &p2, Point2::new(1.0, 0.0), Vector2::new(0.0, 1.0),
 ///     Vector2::new(0.0, -1.0), 1.0, 0.0, true)?;
@@ -55,7 +55,7 @@ impl Bisec {
         u_first: f64,
         u_last: f64,
     ) -> Result<(), Failure> {
-        let basis: Handle<dyn Geom2dCurve> = bis.cast();
+        let basis: Handle<dyn Geom2dCurve> = bis.upcast();
         self.thebisector = Handle::new(Geom2dTrimmedCurve::new(
             &basis, u_first, u_last, true, true,
         )?);
@@ -71,7 +71,8 @@ pub(crate) fn half_line(
     n: Direction2,
     last: f64,
 ) -> Result<(Handle<dyn BisectorCurve>, f64, f64), Failure> {
-    let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(apoint, n)).cast();
+    let line: Handle<dyn Geom2dCurve> =
+        Handle::new(Geom2dLine::from_point(apoint, n)).into_upcast();
     let bis_l: Handle<Geom2dTrimmedCurve> =
         Handle::new(Geom2dTrimmedCurve::new(&line, 0., last, true, true)?);
     let bis_ana = BisecAna::new();
@@ -80,7 +81,7 @@ pub(crate) fn half_line(
         bis_ana.parameter_of_start_point(),
         bis_ana.parameter_of_end_point(),
     );
-    Ok((Handle::new(bis_ana).cast(), u_first, u_last))
+    Ok((Handle::new(bis_ana).into_upcast(), u_first, u_last))
 }
 
 /// A half line from `apoint` to infinity: [`half_line`] with the native

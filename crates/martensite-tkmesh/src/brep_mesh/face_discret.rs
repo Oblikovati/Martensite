@@ -5,7 +5,7 @@ use crate::imesh_data::{FaceHandle, MeshModel, Status};
 use crate::imesh_tools::{MeshAlgoFactory, MeshParameters, ModelAlgo};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 
 /// Each face that is neither failed nor
@@ -15,20 +15,18 @@ use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 /// ```
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmesh::brep_mesh::{BRepMeshFaceDiscret, BRepMeshMeshAlgoFactory};
-/// let discret = BRepMeshFaceDiscret::new(&Handle::new(BRepMeshMeshAlgoFactory::new()).cast());
+/// let discret = BRepMeshFaceDiscret::new(&Handle::new(BRepMeshMeshAlgoFactory::new()).into_upcast());
 /// assert!(!discret.algo_factory().is_null());
 /// ```
 pub struct BRepMeshFaceDiscret {
-    transient: StandardTransient,
     algo_factory: Handle<dyn MeshAlgoFactory>,
 }
-impl_transient!(BRepMeshFaceDiscret, "BRepMesh_FaceDiscret", dyn ModelAlgo, transient, interfaces: [dyn ModelAlgo]);
+impl_transient!(BRepMeshFaceDiscret, "BRepMesh_FaceDiscret", dyn ModelAlgo, interfaces: [dyn ModelAlgo]);
 
 impl BRepMeshFaceDiscret {
     /// Use the supplied factory to select each face algorithm; `BRepMeshFaceDiscret::new(&factory)`.
     pub fn new(algo_factory: &Handle<dyn MeshAlgoFactory>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             algo_factory: algo_factory.clone(),
         }
     }

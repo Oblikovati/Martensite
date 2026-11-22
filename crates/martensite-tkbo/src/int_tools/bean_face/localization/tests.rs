@@ -173,7 +173,7 @@ fn flat_bezier_face() -> Face {
     poles.set_value(1, 2, Point3::new(0.0, 1.0, 0.0)).unwrap();
     poles.set_value(2, 2, Point3::new(1.0, 1.0, 0.0)).unwrap();
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast();
+        Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast();
     BRepBuilderAPIMakeFace::from_surface_bounds(&surface, (0.0, 1.0, 0.0, 1.0), 1e-7)
         .unwrap()
         .face()
@@ -212,7 +212,7 @@ fn cubic_bspline_face() -> Face {
         (false, false),
     )
     .unwrap();
-    let surface: Handle<dyn GeomSurface> = Handle::new(surface).cast();
+    let surface: Handle<dyn GeomSurface> = Handle::new(surface).into_upcast();
     BRepBuilderAPIMakeFace::from_surface_bounds(&surface, (0.0, 1.0, 0.0, 1.0), 1e-7)
         .unwrap()
         .face()

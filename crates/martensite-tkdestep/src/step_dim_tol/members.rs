@@ -1,14 +1,15 @@
 //! The select member of `StepDimTol`, and the members of
 //! `StepDimTolGeometricToleranceWithDatumReference` that convert its two forms of datum system. A null array is the null dereference.
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other"
-)]
 use super::*;
 use crate::step_data::StepDataSelectType;
 use crate::step_entity::*;
 use crate::step_members::step_enum_member;
 use crate::step_repr::StepReprShapeAspect;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_enum_member!(
     /// `StepDimTolSimpleDatumReferenceModifierMember`: a datum modifier, of kind enumeration.
@@ -75,8 +76,8 @@ impl StepDimTolGeometricToleranceWithDatumReference {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
-        the_toleranced_shape_aspect: &Handle<StepReprShapeAspect>,
+        the_magnitude: &Handle<dyn Transient>,
+        the_toleranced_shape_aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_datum_system: &Handle<HArray1<Handle<StepDimTolDatumReference>>>,
     ) -> Result<(), Failure> {
         self.parent.init(
@@ -96,7 +97,7 @@ impl StepDimTolGeometricToleranceWithDatumReference {
         &self,
         the_name: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_magnitude: &Handle<StandardTransient>,
+        the_magnitude: &Handle<dyn Transient>,
         the_toleranced_shape_aspect: &StepDimTolGeometricToleranceTarget,
         the_datum_system: &Handle<HArray1<StepDimTolDatumSystemOrReference>>,
     ) -> Result<(), Failure> {

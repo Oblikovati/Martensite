@@ -1,6 +1,6 @@
 //! The actual indexed iterator freezes no extent and keeps node addresses through rehash.
 use super::{
-    AisColoredDrawer, AisColoredDrawerCompounds,
+    AisColoredDrawer, AisColoredDrawerCompounds, AisColoredDrawerSource,
     colored_compound_cursor::ColoredCompoundNativeCursor,
 };
 use crate::prs3d::Prs3dDrawer;
@@ -10,8 +10,10 @@ use std::fmt::Write;
 #[test]
 fn native_indexed_cursor_observes_add_resize_next_and_clear() {
     let parent = Handle::new(Prs3dDrawer::new());
-    let first = Handle::new(AisColoredDrawer::new(&parent));
-    let second = Handle::new(AisColoredDrawer::new(&parent));
+    let first =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
+    let second =
+        Handle::new(AisColoredDrawer::new(&parent)).into_upcast::<dyn AisColoredDrawerSource>();
     let mut compound = Compound::default();
     Builder.make_compound(&mut compound);
     let map = AisColoredDrawerCompounds::default();
@@ -24,8 +26,8 @@ fn native_indexed_cursor_observes_add_resize_next_and_clear() {
 }
 fn record_native_cursor_additions(
     map: &AisColoredDrawerCompounds,
-    first: &Handle<AisColoredDrawer>,
-    second: &Handle<AisColoredDrawer>,
+    first: &Handle<dyn AisColoredDrawerSource>,
+    second: &Handle<dyn AisColoredDrawerSource>,
     compound: &Compound,
     rows: &mut String,
 ) {
@@ -44,7 +46,7 @@ fn record_native_cursor_additions(
 fn record_native_cursor_resize(
     map: &AisColoredDrawerCompounds,
     cursor: &ColoredCompoundNativeCursor<'_>,
-    second: &Handle<AisColoredDrawer>,
+    second: &Handle<dyn AisColoredDrawerSource>,
     compound: &Compound,
     address: *const (),
     rows: &mut String,
@@ -58,7 +60,7 @@ fn record_native_cursor_resize(
 fn record_native_cursor_tail(
     map: &AisColoredDrawerCompounds,
     cursor: &ColoredCompoundNativeCursor<'_>,
-    second: &Handle<AisColoredDrawer>,
+    second: &Handle<dyn AisColoredDrawerSource>,
     rows: &mut String,
 ) {
     let current = cursor.current().unwrap().unwrap();

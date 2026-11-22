@@ -93,7 +93,7 @@ impl RwStepGeomRwCartesianTransformationOperator {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepGeomCartesianTransformationOperator>,
+        ent: &Handle<dyn crate::StepEntityBase<StepGeomCartesianTransformationOperator>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 7, ach, "cartesian_transformation_operator")? {
             return Ok(());
@@ -127,7 +127,7 @@ impl RwStepGeomRwCartesianTransformationOperator {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepGeomCartesianTransformationOperator>,
+        ent: &Handle<dyn crate::StepEntityBase<StepGeomCartesianTransformationOperator>>,
     ) -> Result<(), Failure> {
         rw_block_0037!(ent, has_aaxis1, has_aaxis2, has_ascale, sw);
         Ok(())
@@ -135,7 +135,7 @@ impl RwStepGeomRwCartesianTransformationOperator {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepGeomCartesianTransformationOperator>,
+        ent: &Handle<dyn crate::StepEntityBase<StepGeomCartesianTransformationOperator>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         rw_block_0173!(ent, iter);

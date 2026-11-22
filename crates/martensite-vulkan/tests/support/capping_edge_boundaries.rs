@@ -40,5 +40,8 @@ fn append_cap_shared_line(fixture: &CappingTextureScene) {
     );
     lines.add_vertex(-8., 8., -1.).unwrap();
     lines.add_vertex(8., 8., -1.).unwrap();
-    fixture.scene.group.add_primitive_array(&lines, true);
+    fixture
+        .scene
+        .group
+        .add_primitive_array(&lines.upcast(), true);
 }

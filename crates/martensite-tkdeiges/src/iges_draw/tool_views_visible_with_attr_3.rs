@@ -12,7 +12,8 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
-use crate::iges_data::{IgesDataIgesEntity, IgesDataViewKindEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataViewKindEntity, iges_live};
 use crate::iges_draw::{IgesDrawToolViewsVisibleWithAttr, IgesDrawViewsVisibleWithAttr};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -29,7 +30,7 @@ impl IgesDrawToolViewsVisibleWithAttr {
         let mut nb: i32 = ent.nb_displayed_entities()?;
         let mut entcomp: Handle<dyn IgesDataViewKindEntity> = ent.cast();
         for i in 1..=nb {
-            let mut displayed: Handle<IgesDataIgesEntity> = ent.displayed_entity(i)?;
+            let mut displayed: Handle<dyn IgesDataEntityKind> = ent.displayed_entity(i)?;
             if entcomp.object_address()
                 != iges_live(&displayed, "IgesDrawToolViewsVisibleWithAttr::own_correct")?
                     .view()

@@ -115,9 +115,10 @@ fn reversals_preserve_edge_orientation_and_original_endpoints() {
 fn inactive_edge_mode_retains_a_previously_assigned_spatial_tool() {
     let (edge, face) = aligned_edge();
     let tool = divider(&edge, &face);
-    tool.set_split_curve_2d_tool(&Handle::new(
-        martensite_tkshhealing::shape_upgrade::ShapeUpgradeSplitCurve2d::new(),
-    ));
+    tool.set_split_curve_2d_tool(
+        &Handle::new(martensite_tkshhealing::shape_upgrade::ShapeUpgradeSplitCurve2d::new())
+            .into_upcast(),
+    );
     tool.set_edge_mode(0);
     tool.perform().unwrap();
     assert_eq!(output_edges(&tool).len(), 1);
@@ -174,9 +175,9 @@ fn replacing_tools_preserves_identity_and_done_status() {
     let transfer = Handle::new(ShapeAnalysisTransferParameters::new());
     let criterion = Handle::new(ShapeUpgradeEdgeDivide::new());
     let small = Handle::new(ShapeUpgradeFixSmallCurves::new());
-    tool.set_transfer_param_tool(&transfer);
-    tool.set_edge_divide_tool(&criterion);
-    tool.set_fix_small_curve_tool(&small);
+    tool.set_transfer_param_tool(&transfer.upcast());
+    tool.set_edge_divide_tool(&criterion.upcast());
+    tool.set_fix_small_curve_tool(&small.upcast());
     assert!(tool.transfer_param_tool() == transfer);
     assert!(tool.edge_divide_tool() == criterion);
     assert!(tool.fix_small_curve_tool() == small);

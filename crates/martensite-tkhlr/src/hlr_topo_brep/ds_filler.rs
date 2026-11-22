@@ -32,15 +32,14 @@ pub(super) fn null_object(what: &str) -> Failure {
 
 // The edge of a Contap arc (`(*(BRepAdaptor_Curve2d*)(Arc.get())).Edge()`).
 pub(super) fn arc_edge(arc: &martensite_tkgeomalgo::int_start::TheArc) -> Result<Edge, Failure> {
-    let curve = arc.cast::<BRepAdaptorCurve2d>();
-    Ok(curve.get().ok_or_else(|| null_object("the arc"))?.edge())
+    let curve = arc.downcast_ref::<BRepAdaptorCurve2d>();
+    Ok(curve.ok_or_else(|| null_object("the arc"))?.edge())
 }
 
 // The vertex of a Contap vertex (`down_cast<BRepTopAdaptor_HVertex>(V)->Vertex()`).
 fn hvertex_vertex(v: &martensite_tkgeomalgo::int_start::TheVertex) -> Result<Vertex, Failure> {
-    let hv = v.cast::<BRepTopAdaptorHVertex>();
+    let hv = v.downcast_ref::<BRepTopAdaptorHVertex>();
     Ok(hv
-        .get()
         .ok_or_else(|| null_object("the vertex"))?
         .vertex()
         .clone())

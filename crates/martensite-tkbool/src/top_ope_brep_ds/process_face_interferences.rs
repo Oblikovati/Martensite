@@ -9,9 +9,10 @@ use super::process_interferences_tool::select::{to_list, to_vec};
 use super::tool::MapOfShapeOn1State;
 use super::{
     ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSFaceEdgeInterference,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSShapeShapeInterference,
-    TopOpeBRepDSTransition,
+    TopOpeBRepDSKind, TopOpeBRepDSTransition,
 };
+use crate::top_ope_brep_ds::InterferenceRecord;
+use crate::top_ope_brep_ds::ShapeInterferenceRecord;
 use crate::top_ope_brep_tool::{
     TopOpeBRepToolShapeClassifier, fun_tool_bounds, fun_tool_curves_so, fun_tool_nggeom_f,
     fun_tool_par_f, nt, tggeom_e,
@@ -23,7 +24,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum, State};
 use martensite_tkmath::gp::{Direction3, Point2};
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// `FUN_mkTonF(F, FS, E, T)`: the transition FORWARD/REVERSED on `fs` of the face `f`
 /// along its edge `e` (from the normals at an inner point); false (the transition
@@ -105,7 +106,7 @@ fn known_gbound(i: &H) -> Result<Option<bool>, Failure> {
     if iref(i)?.transition().is_unknown() {
         return Ok(None);
     }
-    let ssi: Handle<TopOpeBRepDSShapeShapeInterference> = i.cast();
+    let ssi = i.view::<dyn ShapeInterferenceRecord>();
     Ok(ssi.get().map(|s| s.gbound()))
 }
 
@@ -240,7 +241,7 @@ pub fn fun_resolve_f_unknown(
         }
         let ee = topods::edge(bds.shape(g1, true))?;
         BRepTool::range(&ee)?;
-        let fei: Handle<TopOpeBRepDSFaceEdgeInterference> = i1.cast();
+        let fei: Handle<TopOpeBRepDSFaceEdgeInterference> = i1.downcast();
         let Some(fei) = fei.get() else {
             continue;
         };

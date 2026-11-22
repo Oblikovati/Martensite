@@ -35,10 +35,8 @@ impl RuntimeTyped for dyn V3dViewSource {
         // Native base and interface handles share descriptor pointer identity.
         V3dView::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn V3dViewSource);
 impl std::ops::Deref for dyn V3dViewSource {
     type Target = V3dView;
     fn deref(&self) -> &Self::Target {

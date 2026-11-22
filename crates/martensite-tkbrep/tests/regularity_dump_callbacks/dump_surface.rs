@@ -1,7 +1,7 @@
 //! Named plane fixture with an injected virtual dump callback.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Handle, SharedState, dump::DumpStream},
 };
 use martensite_tkg3d::geom::{
     GeomCurve, GeomGeometry, GeomPlane, GeomSurface, GeomSurfaceD1, GeomSurfaceD2, GeomSurfaceD3,
@@ -14,16 +14,14 @@ use martensite_tkmath::{
 use std::{io, sync::Arc};
 
 pub struct CallbackDumpPlane {
-    parent: StandardTransient,
     plane: GeomPlane,
     hook: SharedState<Option<Arc<dyn Fn() + Send + Sync>>>,
 }
-impl_transient!(CallbackDumpPlane, "CallbackDumpPlane", dyn GeomSurface, parent,
+impl_transient!(CallbackDumpPlane, "CallbackDumpPlane", dyn GeomSurface,
     interfaces: [dyn GeomSurface, dyn GeomGeometry]);
 impl CallbackDumpPlane {
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             plane: GeomPlane::new(Axis3::default()),
             hook: SharedState::new(None),
         }

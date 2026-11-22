@@ -56,39 +56,39 @@ impl StepVisualSurfaceStyleUsage {
 step_entity! {
     /// Template.
     StepVisualTemplate, StepVisualTemplateState, "StepVisualTemplate", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Template instance.
     StepVisualTemplateInstance, StepVisualTemplateInstanceState, "StepVisualTemplateInstance", StepReprMappedItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_repr::StepReprMappedItem]
 }
 
 step_entity! {
     /// Tessellated annotation occurrence.
     StepVisualTessellatedAnnotationOccurrence, StepVisualTessellatedAnnotationOccurrenceState, "StepVisualTessellatedAnnotationOccurrence", StepVisualStyledItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem]
 }
 
 step_entity! {
     /// Representation of STEP entity TessellatedConnectingEdge
     StepVisualTessellatedConnectingEdge, StepVisualTessellatedConnectingEdgeState, "StepVisualTessellatedConnectingEdge", StepVisualTessellatedEdge, {
         my_smooth: StepDataLogical,
-        my_face1: Handle<StepVisualTessellatedFace>,
-        my_face2: Handle<StepVisualTessellatedFace>,
+        my_face1: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>,
+        my_face2: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>,
         my_line_strip_face1: Handle<HArray1<i32>>,
         my_line_strip_face2: Handle<HArray1<i32>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedStructuredItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTessellatedConnectingEdge {
     step_methods! {
         get smooth = my_smooth: StepDataLogical;
         set_copy set_smooth = my_smooth: StepDataLogical;
-        get face1 = my_face1: Handle<StepVisualTessellatedFace>;
-        set set_face1 = my_face1: Handle<StepVisualTessellatedFace>;
-        get face2 = my_face2: Handle<StepVisualTessellatedFace>;
-        set set_face2 = my_face2: Handle<StepVisualTessellatedFace>;
+        get face1 = my_face1: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>;
+        set set_face1 = my_face1: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>;
+        get face2 = my_face2: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>;
+        set set_face2 = my_face2: Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>;
         get line_strip_face1 = my_line_strip_face1: Handle<HArray1<i32>>;
         set set_line_strip_face1 = my_line_strip_face1: Handle<HArray1<i32>>;
         len nb_line_strip_face1 = my_line_strip_face1;
@@ -109,8 +109,8 @@ impl StepVisualTessellatedConnectingEdge {
         the_tessellated_edge_geometric_link: &StepVisualEdgeOrCurve,
         the_tessellated_edge_line_strip: &Handle<HArray1<i32>>,
         the_smooth: StepDataLogical,
-        the_face1: &Handle<StepVisualTessellatedFace>,
-        the_face2: &Handle<StepVisualTessellatedFace>,
+        the_face1: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>,
+        the_face2: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>,
         the_line_strip_face1: &Handle<HArray1<i32>>,
         the_line_strip_face2: &Handle<HArray1<i32>>,
     ) {
@@ -135,7 +135,7 @@ step_entity! {
     StepVisualTessellatedCurveSet, StepVisualTessellatedCurveSetState, "StepVisualTessellatedCurveSet", StepVisualTessellatedItem, {
         my_coord_list: Handle<StepVisualCoordinatesList>,
         my_curves: ObjectHandle<DynamicArray<Handle<HSequence<i32>>>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTessellatedCurveSet {
     step_methods! {
@@ -163,7 +163,7 @@ step_entity! {
         my_geometric_link: StepVisualEdgeOrCurve,
         my_line_strip: Handle<HArray1<i32>>,
         my_has_geometric_link: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedStructuredItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTessellatedEdge {
     step_methods! {
@@ -208,7 +208,7 @@ step_entity! {
         my_normals: Handle<HArray2<f64>>,
         my_geometric_link: StepVisualFaceOrSurface,
         my_has_geometric_link: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedFace, crate::step_visual::StepVisualTessellatedStructuredItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTessellatedFace {
     step_methods! {
@@ -259,18 +259,20 @@ impl StepVisualTessellatedFace {
 step_entity! {
     /// Tessellated geometric set.
     StepVisualTessellatedGeometricSet, StepVisualTessellatedGeometricSetState, "StepVisualTessellatedGeometricSet", StepVisualTessellatedItem, {
-        my_items: ObjectHandle<Array1<'static, Handle<StepVisualTessellatedItem>>>,
-    }
+        my_items: ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>,
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedGeometricSet, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTessellatedGeometricSet {
     step_methods! {
-        get items = my_items: ObjectHandle<Array1<'static, Handle<StepVisualTessellatedItem>>>;
+        get items = my_items: ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>;
     }
     /// `init`.
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_items: &ObjectHandle<Array1<'static, Handle<StepVisualTessellatedItem>>>,
+        the_items: &ObjectHandle<
+            Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>,
+        >,
     ) {
         self.parent.parent.parent.init(the_name);
         self.state.write().my_items = the_items.clone();
@@ -280,7 +282,7 @@ impl StepVisualTessellatedGeometricSet {
 step_entity! {
     /// Tessellated item.
     StepVisualTessellatedItem, StepVisualTessellatedItemState, "StepVisualTessellatedItem", StepGeomGeometricRepresentationItem, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedItem]
 }
 
 step_entity! {
@@ -288,7 +290,7 @@ step_entity! {
     StepVisualTessellatedPointSet, StepVisualTessellatedPointSetState, "StepVisualTessellatedPointSet", StepVisualTessellatedItem, {
         my_coordinates: Handle<StepVisualCoordinatesList>,
         my_point_list: Handle<HArray1<i32>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualTessellatedItem]
 }
 impl StepVisualTessellatedPointSet {
     step_methods! {
@@ -317,5 +319,5 @@ impl StepVisualTessellatedPointSet {
 step_entity! {
     /// Representation of STEP entity TessellatedShapeRepresentation
     StepVisualTessellatedShapeRepresentation, StepVisualTessellatedShapeRepresentationState, "StepVisualTessellatedShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }

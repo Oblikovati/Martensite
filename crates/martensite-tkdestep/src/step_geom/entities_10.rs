@@ -11,7 +11,7 @@ step_entity! {
     /// Rational B spline curve.
     StepGeomRationalBSplineCurve, StepGeomRationalBSplineCurveState, "StepGeomRationalBSplineCurve", StepGeomBSplineCurve, {
         weights_data: Handle<HArray1<f64>>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomRationalBSplineCurve {
     step_methods! {
@@ -48,7 +48,7 @@ step_entity! {
     /// Rational B spline surface.
     StepGeomRationalBSplineSurface, StepGeomRationalBSplineSurfaceState, "StepGeomRationalBSplineSurface", StepGeomBSplineSurface, {
         weights_data: Handle<HArray2<f64>>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomRationalBSplineSurface {
     step_methods! {
@@ -140,7 +140,7 @@ step_entity! {
     /// Rectangular composite surface.
     StepGeomRectangularCompositeSurface, StepGeomRectangularCompositeSurfaceState, "StepGeomRectangularCompositeSurface", StepGeomBoundedSurface, {
         segments: Handle<HArray2<Handle<StepGeomSurfacePatch>>>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomRectangularCompositeSurface {
     step_methods! {
@@ -194,19 +194,19 @@ impl StepGeomRectangularCompositeSurface {
 step_entity! {
     /// Rectangular trimmed surface.
     StepGeomRectangularTrimmedSurface, StepGeomRectangularTrimmedSurfaceState, "StepGeomRectangularTrimmedSurface", StepGeomBoundedSurface, {
-        basis_surface: Handle<StepGeomSurface>,
+        basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         u1: f64,
         u2: f64,
         v1: f64,
         v2: f64,
         usense: bool,
         vsense: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomRectangularTrimmedSurface {
     step_methods! {
-        set set_basis_surface = basis_surface: Handle<StepGeomSurface>;
-        get basis_surface = basis_surface: Handle<StepGeomSurface>;
+        set set_basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        get basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
         set_copy set_u1 = u1: f64;
         get u1 = u1: f64;
         set_copy set_u2 = u2: f64;
@@ -225,7 +225,7 @@ impl StepGeomRectangularTrimmedSurface {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_surface: &Handle<StepGeomSurface>,
+        a_basis_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_u1: f64,
         a_u2: f64,
         a_v1: f64,
@@ -250,7 +250,7 @@ step_entity! {
     /// Reparametrised composite curve segment.
     StepGeomReparametrisedCompositeCurveSegment, StepGeomReparametrisedCompositeCurveSegmentState, "StepGeomReparametrisedCompositeCurveSegment", StepGeomCompositeCurveSegment, {
         param_length: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomCompositeCurveSegment]
 }
 impl StepGeomReparametrisedCompositeCurveSegment {
     step_methods! {
@@ -262,7 +262,7 @@ impl StepGeomReparametrisedCompositeCurveSegment {
         &self,
         a_transition: StepGeomTransitionCode,
         a_same_sense: bool,
-        a_parent_curve: &Handle<StepGeomCurve>,
+        a_parent_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         a_param_length: f64,
     ) {
         self.state.write().param_length = a_param_length;
@@ -273,14 +273,14 @@ impl StepGeomReparametrisedCompositeCurveSegment {
 step_entity! {
     /// Seam curve.
     StepGeomSeamCurve, StepGeomSeamCurveState, "StepGeomSeamCurve", StepGeomSurfaceCurve, {
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomSurfaceCurve]
 }
 
 step_entity! {
     /// Spherical surface.
     StepGeomSphericalSurface, StepGeomSphericalSurfaceState, "StepGeomSphericalSurface", StepGeomElementarySurface, {
         radius: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomElementarySurface]
 }
 impl StepGeomSphericalSurface {
     step_methods! {
@@ -308,7 +308,7 @@ step_entity! {
         my_beta: f64,
         my_c: f64,
         my_gamma: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomSuParameters {
     step_methods! {
@@ -352,5 +352,5 @@ impl StepGeomSuParameters {
 step_entity! {
     /// Surface.
     StepGeomSurface, StepGeomSurfaceState, "StepGeomSurface", StepGeomGeometricRepresentationItem, {
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }

@@ -1,8 +1,5 @@
 //! `Graphic3d_RenderingParams::DumpJson`, in the native field order (no class name).
-use super::{
-    Graphic3dAspectsSource, Graphic3dRayTracingParams, Graphic3dRenderingParams,
-    Graphic3dTransformPersSource,
-};
+use super::{Graphic3dAspectsSource, Graphic3dRayTracingParams, Graphic3dRenderingParams};
 use crate::json_dump::{field_dumped, field_integer, field_real, field_unsigned};
 use martensite_tkernel::standard::dump::{DumpStream, dump_vector};
 use std::io;

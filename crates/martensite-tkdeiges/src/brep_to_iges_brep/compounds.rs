@@ -2,7 +2,7 @@
 use super::BRepToIgesBRepEntity;
 use crate::brep_to_iges::{BRepToIgesOriginMap, count_subshapes, entity_array};
 use crate::iges_basic::IgesBasicGroup;
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, CompSolid, Compound};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
@@ -10,8 +10,8 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 fn group_of(
-    entities: &[Handle<IgesDataIgesEntity>],
-) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    entities: &[Handle<dyn IgesDataEntityKind>],
+) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
     let group = IgesBasicGroup::new();
     group.init(&entity_array(entities)?)?;
     Ok(Handle::new(group).cast())
@@ -27,13 +27,13 @@ impl BRepToIgesBRepEntity {
         &mut self,
         start: &CompSolid,
         range: &ProgressRange<'_>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
         let count = count_subshapes(start, ShapeEnum::Solid, ShapeEnum::Shape)?;
         let scope = ProgressScope::unnamed(range, f64::from(count), false);
-        let mut solids: Vec<Handle<IgesDataIgesEntity>> = Vec::new();
+        let mut solids: Vec<Handle<dyn IgesDataEntityKind>> = Vec::new();
         let mut explorer = Explorer::new(start, ShapeEnum::Solid, ShapeEnum::Shape)?;
         while explorer.more() && scope.more() {
             let step = scope.next(1.0);
@@ -62,7 +62,7 @@ impl BRepToIgesBRepEntity {
         &mut self,
         start: &Compound,
         range: &ProgressRange<'_>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -79,7 +79,7 @@ impl BRepToIgesBRepEntity {
             count += count_subshapes(start, kind, avoid)?;
         }
         let scope = ProgressScope::unnamed(range, f64::from(count), false);
-        let mut parts: Vec<Handle<IgesDataIgesEntity>> = Vec::new();
+        let mut parts: Vec<Handle<dyn IgesDataEntityKind>> = Vec::new();
         for (kind, avoid) in kinds {
             let mut explorer = Explorer::new(start, kind, avoid)?;
             while explorer.more() && scope.more() {
@@ -91,7 +91,7 @@ impl BRepToIgesBRepEntity {
                     continue;
                 }
                 let origins = BRepToIgesOriginMap::default();
-                let part: Handle<IgesDataIgesEntity> = match kind {
+                let part: Handle<dyn IgesDataEntityKind> = match kind {
                     ShapeEnum::Solid => self.transfer_solid(&topods::solid(&shape)?, &step)?.cast(),
                     ShapeEnum::Shell => self.transfer_shell(&topods::shell(&shape)?, &step)?.cast(),
                     ShapeEnum::Face => self.transfer_face(&topods::face(&shape)?)?.cast(),

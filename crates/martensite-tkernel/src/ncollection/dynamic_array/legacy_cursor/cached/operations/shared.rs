@@ -2,17 +2,23 @@ use super::{DynamicArray, DynamicArrayCachedIterator, Failure, negate_displaceme
 impl<T> DynamicArrayCachedIterator<T, false> {
     /// Returns the previous actual cached pointers after a checked increment.
     /// `let previous = cursor.postfix_advance_with(&source)?;` requires no payload cloning.
-    pub fn postfix_advance_with(&mut self, owner: &DynamicArray<T>) -> Result<Self, Failure> {
+    pub(crate) fn postfix_advance_with(
+        &mut self,
+        owner: &DynamicArray<T>,
+    ) -> Result<Self, Failure> {
         self.postfix_operation(|cursor| cursor.advance_with(owner).map(|_| ()))
     }
     /// Returns the previous cached state after a checked decrement.
     /// `let previous = cursor.postfix_retreat_with(&source)?;` preserves transferred pointers.
-    pub fn postfix_retreat_with(&mut self, owner: &DynamicArray<T>) -> Result<Self, Failure> {
+    pub(crate) fn postfix_retreat_with(
+        &mut self,
+        owner: &DynamicArray<T>,
+    ) -> Result<Self, Failure> {
         self.postfix_operation(|cursor| cursor.retreat_with(owner).map(|_| ()))
     }
     /// Copies the cursor and reloads its displaced position from the original owner.
     /// `let copy = cursor.advanced_by_with(&source, 0)?;` reloads even a zero offset.
-    pub fn advanced_by_with(
+    pub(crate) fn advanced_by_with(
         &self,
         owner: &DynamicArray<T>,
         offset: isize,
@@ -21,7 +27,7 @@ impl<T> DynamicArrayCachedIterator<T, false> {
     }
     /// Applies subtraction after checking that signed negation is representable.
     /// `cursor.subtract_with(&source, 1)?;` preserves state when checks fail.
-    pub fn subtract_with(
+    pub(crate) fn subtract_with(
         &mut self,
         owner: &DynamicArray<T>,
         offset: isize,
@@ -31,7 +37,7 @@ impl<T> DynamicArrayCachedIterator<T, false> {
     }
     /// Copies the cursor and subtracts displacement using the original owner's current storage.
     /// `let previous = cursor.retreated_by_with(&source, 1)?;` leaves this cache unchanged.
-    pub fn retreated_by_with(
+    pub(crate) fn retreated_by_with(
         &self,
         owner: &DynamicArray<T>,
         offset: isize,
@@ -41,7 +47,7 @@ impl<T> DynamicArrayCachedIterator<T, false> {
     /// Reloads a displaced value and borrows it from the explicitly supplied original owner.
     /// `let value = cursor.subscript_with(&source, 0)?;` checks the freshly captured live slot.
     /// The reference follows Rust borrowing rules; older raw cursors must retain valid provenance.
-    pub fn subscript_with<'a>(
+    pub(crate) fn subscript_with<'a>(
         &self,
         owner: &'a DynamicArray<T>,
         offset: isize,

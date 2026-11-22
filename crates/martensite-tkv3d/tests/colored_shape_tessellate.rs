@@ -68,8 +68,12 @@ fn attach_colored_mesh_presentations(
 ) {
     let parent = object.presentable_base();
     let mut fields = parent.fields.write();
-    fields.presentations.append(wire.clone());
-    fields.presentations.append(shade.clone());
+    fields
+        .presentations
+        .append(martensite_tkernel::standard::HandleSlot::new(wire.clone()));
+    fields
+        .presentations
+        .append(martensite_tkernel::standard::HandleSlot::new(shade.clone()));
 }
 fn configure_colored_mesh(object: &AisColoredShape, automatic: bool, iso: bool) {
     let drawer = object.attributes();

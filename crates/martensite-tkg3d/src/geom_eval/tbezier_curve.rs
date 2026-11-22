@@ -13,7 +13,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkg2d::geom2d_eval::tbezier_data::TBezierData;
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
@@ -26,14 +26,12 @@ const CLASS: &str = "GeomEval_TBezierCurve";
 /// eval curve (`Reverse` and `Transform` raise StandardNotImplemented);
 /// `Handle::new(GeomEvalTBezierCurve::new(&poles, 1.0)?)`.
 pub struct GeomEvalTBezierCurve {
-    parent: StandardTransient,
     data: TBezierData<Point3>,
 }
 impl_transient!(
     GeomEvalTBezierCurve,
     "GeomEval_TBezierCurve",
     dyn GeomBoundedCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn GeomBoundedCurve]
 );
 impl Clone for GeomEvalTBezierCurve {
@@ -63,10 +61,7 @@ impl GeomEvalTBezierCurve {
         Ok(Self::stored(data))
     }
     fn stored(data: TBezierData<Point3>) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            data,
-        }
+        Self { data }
     }
     // Copy() reruns the matching constructor on valid stored values.
     fn copied(&self) -> Self {
@@ -79,7 +74,7 @@ impl GeomGeometry for GeomEvalTBezierCurve {
         Err(unsupported("GeomEval_TBezierCurve::Transform", ""))
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_class_name(stream, CLASS)?;

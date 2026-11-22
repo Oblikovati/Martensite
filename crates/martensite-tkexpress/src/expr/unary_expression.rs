@@ -51,7 +51,8 @@ pub trait ExprUnaryExpression: ExprGeneralExpression {
 impl_transient_interface!(
     dyn ExprUnaryExpression,
     "Expr_UnaryExpression",
-    dyn ExprGeneralExpression
+    dyn ExprGeneralExpression,
+    upcasts: [dyn ExprGeneralExpression]
 );
 
 /// The check of every `SetOperand`: `exp` must neither be the expression `me` nor
@@ -191,14 +192,12 @@ macro_rules! declare_unary_class {
     ($class:ident, $name:literal, $doc:literal) => {
         #[doc = $doc]
         pub struct $class {
-            parent: martensite_tkernel::standard::StandardTransient,
             core: $crate::expr::unary_expression::ExprUnaryCore,
         }
         martensite_tkernel::impl_transient!(
             $class,
             $name,
             dyn $crate::expr::ExprUnaryExpression,
-            parent,
             interfaces: [dyn $crate::expr::ExprGeneralExpression, dyn $crate::expr::ExprUnaryExpression]
         );
         impl $class {
@@ -207,7 +206,6 @@ macro_rules! declare_unary_class {
                 exp: &$crate::expr::ExprHandle,
             ) -> martensite_tkernel::standard::Handle<Self> {
                 let object: Self = Self {
-                    parent: martensite_tkernel::standard::StandardTransient::default(),
                     core: $crate::expr::unary_expression::ExprUnaryCore::new(exp),
                 };
                 $crate::expr::handles::adopt(object, |created| created.core.link())

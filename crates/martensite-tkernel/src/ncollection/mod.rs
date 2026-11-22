@@ -49,10 +49,13 @@ pub use allocator::{
     IncAllocatorObservation, IncBlock, IncBlockObservation, IncBlockSizeLevel,
 };
 mod dynamic_array;
-pub use dynamic_array::DynamicArrayCachedIterator;
 pub use dynamic_array::{
-    DynamicArray, DynamicArrayClearState, DynamicArrayCopyConstructionFailure,
-    DynamicArrayCopyFailure, DynamicArrayIterator, DynamicArrayStorageExtension, DynamicCursor,
+    DynamicArray, DynamicArrayCopyFailure, DynamicArrayIterator, DynamicArrayStorageExtension,
+    DynamicCursor,
+};
+#[cfg(test)]
+pub(crate) use dynamic_array::{
+    DynamicArrayCachedIterator, DynamicArrayClearState, DynamicArrayCopyConstructionFailure,
 };
 
 mod buffer;
@@ -73,12 +76,14 @@ pub use base_list::{
     BaseListBasicIterator, BaseListRawIterator, BaseListStorage, BasicListNode, BasicListNodeMut,
     DelListNode,
 };
+mod detached_observation;
 #[allow(unsafe_code)]
 mod list;
 #[allow(unsafe_code)]
 mod list_node;
 #[allow(unsafe_code)]
 mod node_release;
+mod node_revision;
 pub use list::List as AllocatorList;
 pub use list::{
     BaseListIterator, List, ListCursor, ListCursorObserver, ListIter, ListIterMut,
@@ -87,9 +92,7 @@ pub use list::{
 pub use list_node::{ListLinkNode, ListValueNode};
 
 mod sparse_array;
-pub use sparse_array::{
-    SparseArray, SparseArrayCursor, SparseArrayCursorMut, SparseArrayLegacyCursor,
-};
+pub use sparse_array::{SparseArray, SparseArrayCursor, SparseArrayCursorMut};
 
 mod sequence;
 pub use sequence::{
@@ -104,9 +107,9 @@ pub use h_sequence::HSequence;
 mod hash_policy;
 pub use hash_policy::{DefaultHashPolicy, HashKey, HashPolicy, buckets_from_int, next_map_prime};
 mod base_map;
-pub use base_map::{
-    BaseMap, BaseMapIndexedIterator, IndexedCursorSource, IndexedCursorSourceMut, MapLinkNode,
-};
+pub use base_map::{BaseMap, MapLinkNode};
+#[cfg(test)]
+pub(crate) use base_map::{BaseMapIndexedIterator, IndexedCursorSource};
 mod chained_slots;
 mod slot_chains;
 pub use slot_chains::{HashBucketChain, HashBucketTable};
@@ -142,7 +145,8 @@ pub use flat_data_map::{
 mod ordered_map;
 mod ordered_table;
 pub use ordered_map::{OrderedMap, OrderedMapIter};
-pub use ordered_table::{OrderedNodeMut, OrderedNodeRef};
+#[cfg(test)]
+pub(crate) use ordered_table::{OrderedNodeMut, OrderedNodeRef};
 
 mod ordered_data_map;
 pub use ordered_data_map::{
@@ -150,7 +154,8 @@ pub use ordered_data_map::{
     OrderedDataValuesMut,
 };
 
-pub mod forward_range;
+#[cfg(test)]
+pub(crate) mod forward_range;
 
 mod cell_filter;
 pub use cell_filter::{

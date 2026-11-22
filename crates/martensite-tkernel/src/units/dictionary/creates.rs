@@ -3,6 +3,7 @@
 use super::UnitsDictionary;
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle};
+use crate::units::UnitObject;
 use crate::units::context::Units;
 use crate::units::dimensions::Dimensions;
 use crate::units::quantity::Quantity;
@@ -23,7 +24,7 @@ const UNITS_DAT: &[u8] = include_bytes!("../Units.dat");
 struct Reader<'a> {
     units: &'a Units,
     quantities: Handle<HSequence<Handle<Quantity>>>,
-    section: Handle<HSequence<Handle<Unit>>>,
+    section: Handle<HSequence<Handle<dyn UnitObject>>>,
     quantity: Handle<Quantity>,
     matrix: ConversionMatrix,
     count: usize,
@@ -106,7 +107,7 @@ impl<'a> Reader<'a> {
         let exponents = std::array::from_fn(|i| c_string_to_real(fields[i + 1]));
         let dimensions = Dimensions::handle(exponents);
         self.count = 0;
-        self.section = new_sequence::<Handle<Unit>>();
+        self.section = new_sequence::<Handle<dyn UnitObject>>();
         let name = right_adjust(fields[0]);
         self.quantity = Handle::new(Quantity::new(name, &dimensions, &self.section));
         object(&self.quantities, "Units_UnitsDictionary::Creates")?.append(self.quantity.clone());
@@ -149,16 +150,16 @@ impl<'a> Reader<'a> {
             return Ok(());
         }
         self.count += 1;
-        let unit: Handle<Unit> = if shifted {
-            Handle::new(ShiftedUnit::with_name(name)).cast()
+        let unit: Handle<dyn UnitObject> = if shifted {
+            Handle::new(ShiftedUnit::with_name(name)).into_upcast()
         } else {
-            Handle::new(Unit::with_name(name))
+            Handle::new(Unit::with_name(name)).into_upcast::<dyn UnitObject>()
         };
         object(&unit, "Units_UnitsDictionary::Creates")?.set_quantity(&self.quantity);
         object(&self.section, "Units_UnitsDictionary::Creates")?.append(unit);
         Ok(())
     }
-    fn last_unit(&self) -> Result<Handle<Unit>, Failure> {
+    fn last_unit(&self) -> Result<Handle<dyn UnitObject>, Failure> {
         item(&self.section, length(&self.section)?)
     }
     fn add_symbol(&mut self, symbol: &[u8]) -> Result<(), Failure> {
@@ -196,7 +197,7 @@ impl<'a> Reader<'a> {
         Ok(object(&token, "Units_UnitsDictionary::Creates")?.value())
     }
     fn apply_move(&self) -> Result<(), Failure> {
-        let shifted = self.last_unit()?.cast::<ShiftedUnit>();
+        let shifted = self.last_unit()?.downcast::<ShiftedUnit>();
         object(&shifted, "Units_UnitsDictionary::Creates")?.set_movement(self.movement);
         Ok(())
     }

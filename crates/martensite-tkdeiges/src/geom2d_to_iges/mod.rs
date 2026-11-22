@@ -1,6 +1,7 @@
 //! Translation of curves in the plane into IGES curves.
 use crate::geom_to_iges::GeomToIgesGeomCurve;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkgeomalgo::geom_api;
@@ -97,7 +98,7 @@ impl Geom2dToIgesGeom2dCurve {
         start: &Handle<dyn Geom2dCurve>,
         first: f64,
         last: f64,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }

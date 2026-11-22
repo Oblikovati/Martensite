@@ -2,7 +2,7 @@
 //! `IFSelectGraphCounter`: by the size of the result of a deduction on each entity;
 //! `IFSelectCheckCounter`: counts the messages of a check list.
 use super::{
-    IFSelectSelectDeduct, IFSelectSelection, IFSelectSignature, IFSelectSignatureList,
+    IFSelectSelectDeduct, IFSelectSelection, IFSelectSignature, IFSelectSignatureListData,
     IFSelectSignatureListOps,
 };
 use crate::interface::{
@@ -11,18 +11,22 @@ use crate::interface::{
 };
 use crate::moni_tool::MoniToolSignText;
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface,
+    impl_transient, impl_transient_interface_target,
     ncollection::IndexedMap,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{
+        Failure, Handle, HandleUpcast, RuntimeType, RuntimeTyped, SharedState, Transient,
+        exceptions,
+    },
     tcollection::{AsciiString, HAsciiString},
 };
 use std::ops::Deref;
+use std::sync::Arc;
 
 /// The fields of `IFSelectSignCounter`.
 #[derive(Default)]
 struct CounterState {
     themapstat: bool,
-    themap: IndexedMap<Handle<StandardTransient>>,
+    themap: IndexedMap<Handle<dyn Transient>>,
     thematcher: Handle<dyn IFSelectSignature>,
     theselect: Handle<dyn IFSelectSelection>,
     theselmode: i32,
@@ -30,8 +34,7 @@ struct CounterState {
     thenbcomp2: i32,
 }
 
-/// `IFSelectSignCounter`: embeds its `IFSelectSignatureList` (registered as its RTTI
-/// parent, the dereference target); its virtual members are [`IFSelectSignCounterOps`].
+/// A counter that groups entities by the value of a signature.
 ///
 /// ```
 /// use martensite_tkxsbase::if_select::{IFSelectSignCounter, IFSelectSignCounterOps};
@@ -41,30 +44,26 @@ struct CounterState {
 /// assert_eq!(counter.nb_nulls(), 1);
 /// ```
 pub struct IFSelectSignCounter {
-    base: IFSelectSignatureList,
-    state: SharedState<CounterState>,
+    counter: IFSelectSignCounterData,
 }
-impl_transient!(IFSelectSignCounter, "IFSelectSignCounter", IFSelectSignatureList, base, interfaces: [dyn IFSelectSignatureListOps, dyn IFSelectSignCounterOps]);
+impl_transient!(IFSelectSignCounter, "IFSelectSignCounter", dyn IFSelectSignatureListOps, interfaces: [dyn IFSelectSignatureListOps, dyn IFSelectSignCounterOps]);
 
 impl Deref for IFSelectSignCounter {
-    type Target = IFSelectSignatureList;
-    fn deref(&self) -> &IFSelectSignatureList {
-        &self.base
+    type Target = IFSelectSignCounterData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.counter
     }
 }
 
 impl IFSelectSignCounter {
-    /// `IFSelectSignCounter(withmap = true, withlist = false)`: no signature.
+    /// Construct a counter without a signature, e.g. `IFSelectSignCounter::new(true, false)`.
     pub fn new(withmap: bool, withlist: bool) -> Self {
-        let state = CounterState {
-            themapstat: withmap,
-            ..CounterState::default()
-        };
         Self {
-            base: IFSelectSignatureList::new(withlist),
-            state: SharedState::new(state),
+            counter: IFSelectSignCounterData::new(withmap, withlist),
         }
     }
+
     /// `IFSelectSignCounter(matcher, withmap = true, withlist = false)`: named after the
     /// signature; `StandardNullObject` for a null one (a native null dereference).
     pub fn with_signature(
@@ -80,6 +79,36 @@ impl IFSelectSignCounter {
         counter.set_name(&live.name());
         Ok(counter)
     }
+}
+
+/// The accumulator shared by signature counters and graph counters.
+pub struct IFSelectSignCounterData {
+    list: IFSelectSignatureListData,
+    state: SharedState<CounterState>,
+}
+
+impl Deref for IFSelectSignCounterData {
+    type Target = IFSelectSignatureListData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.list
+    }
+}
+
+impl IFSelectSignCounterData {
+    /// Construct the accumulator for a signature counter, e.g.
+    /// `IFSelectSignCounterData::new(true, false)` counts each entity once.
+    pub fn new(withmap: bool, withlist: bool) -> Self {
+        let state = CounterState {
+            themapstat: withmap,
+            ..CounterState::default()
+        };
+        Self {
+            list: IFSelectSignatureListData::new(withlist),
+            state: SharedState::new(state),
+        }
+    }
+
     /// `Signature`.
     pub fn signature(&self) -> Handle<dyn IFSelectSignature> {
         self.state.read().thematcher.clone()
@@ -117,7 +146,7 @@ impl IFSelectSignCounter {
         self.state.read().theselmode
     }
     /// The map of `AddEntity`: false when `ent` is already counted (and records it).
-    fn record(&self, ent: &Handle<StandardTransient>) -> bool {
+    fn record(&self, ent: &Handle<dyn Transient>) -> bool {
         let mut st = self.state.write();
         if !st.themapstat || ent.is_null() {
             return true;
@@ -131,20 +160,20 @@ impl IFSelectSignCounter {
 }
 
 impl IFSelectSignatureListOps for IFSelectSignCounter {
-    fn signature_list(&self) -> &IFSelectSignatureList {
-        &self.base
+    fn signature_list(&self) -> &IFSelectSignatureListData {
+        &self.counter.list
     }
 }
 
 /// The virtual members of `IFSelectSignCounter` and the members that call them.
 pub trait IFSelectSignCounterOps: IFSelectSignatureListOps {
-    /// The embedded counter.
-    fn sign_counter(&self) -> &IFSelectSignCounter;
+    /// Borrow the accumulator, e.g. `counter.sign_counter().set_map(false)`.
+    fn sign_counter(&self) -> &IFSelectSignCounterData;
     /// `AddEntity(ent, model)`: counts `ent` once (with the map); false when already
     /// counted.
     fn add_entity(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         if !self.sign_counter().record(ent) {
@@ -156,7 +185,7 @@ pub trait IFSelectSignCounterOps: IFSelectSignatureListOps {
     /// `AddSign(ent, model)`: counts the value of the signature for `ent` (a null).
     fn add_sign(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<(), Failure> {
         let counter = self.sign_counter();
@@ -170,7 +199,7 @@ pub trait IFSelectSignCounterOps: IFSelectSignatureListOps {
     /// `AddList(list, model)`: `AddEntity` of each entity.
     fn add_list(
         &self,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<(), Failure> {
         for ent in list.unwrap_or_default() {
@@ -181,7 +210,7 @@ pub trait IFSelectSignCounterOps: IFSelectSignatureListOps {
     /// `AddWithGraph(list, graph)`: `AddList` with the model of the graph.
     fn add_with_graph(
         &self,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         graph: &InterfaceGraph,
     ) -> Result<(), Failure> {
         self.add_list(list, graph.model())
@@ -236,7 +265,7 @@ pub trait IFSelectSignCounterOps: IFSelectSignatureListOps {
     /// `Sign(ent, model)`: the value of the signature (null without signature or entity).
     fn sign(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Handle<HAsciiString> {
         let matcher = self.sign_counter().signature();
@@ -248,7 +277,7 @@ pub trait IFSelectSignCounterOps: IFSelectSignatureListOps {
     /// `ComputedSign(ent, G)`: the value `AddWithGraph` gives for `ent` alone.
     fn computed_sign(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         g: &InterfaceGraph,
     ) -> Result<AsciiString, Failure> {
         let counter = self.sign_counter();
@@ -259,29 +288,45 @@ pub trait IFSelectSignCounterOps: IFSelectSignatureListOps {
         result.map(|_| val)
     }
 }
-impl_transient_interface!(
-    dyn IFSelectSignCounterOps,
-    "IFSelectSignCounter",
-    dyn IFSelectSignatureListOps
-);
+impl RuntimeTyped for dyn IFSelectSignCounterOps {
+    const TYPE_NAME: &'static str = IFSelectSignCounter::TYPE_NAME;
 
-impl IFSelectSignCounterOps for IFSelectSignCounter {
-    fn sign_counter(&self) -> &IFSelectSignCounter {
-        self
+    fn static_type() -> &'static RuntimeType {
+        IFSelectSignCounter::static_type()
+    }
+}
+impl_transient_interface_target!(dyn IFSelectSignCounterOps);
+
+impl HandleUpcast<dyn IFSelectSignatureListOps> for dyn IFSelectSignCounterOps {
+    fn upcast_arc(owner: Arc<Self>) -> Arc<dyn IFSelectSignatureListOps> {
+        owner
     }
 }
 
-/// `IFSelectGraphCounter`: counts by the size of the result of a deduction applied to
-/// each entity; embeds its `IFSelectSignCounter` (RTTI parent, dereference target).
+impl IFSelectSignCounterOps for IFSelectSignCounter {
+    fn sign_counter(&self) -> &IFSelectSignCounterData {
+        &self.counter
+    }
+}
+
+impl Deref for dyn IFSelectSignCounterOps {
+    type Target = IFSelectSignCounterData;
+
+    fn deref(&self) -> &Self::Target {
+        self.sign_counter()
+    }
+}
+
+/// Counts by the size of the result of a deduction applied to each entity.
 pub struct IFSelectGraphCounter {
-    base: IFSelectSignCounter,
+    base: IFSelectSignCounterData,
     theapplied: SharedState<Handle<dyn IFSelectSelectDeduct>>,
 }
-impl_transient!(IFSelectGraphCounter, "IFSelectGraphCounter", IFSelectSignCounter, base, interfaces: [dyn IFSelectSignatureListOps, dyn IFSelectSignCounterOps]);
+impl_transient!(IFSelectGraphCounter, "IFSelectGraphCounter", dyn IFSelectSignCounterOps, interfaces: [dyn IFSelectSignatureListOps, dyn IFSelectSignCounterOps]);
 
 impl Deref for IFSelectGraphCounter {
-    type Target = IFSelectSignCounter;
-    fn deref(&self) -> &IFSelectSignCounter {
+    type Target = IFSelectSignCounterData;
+    fn deref(&self) -> &IFSelectSignCounterData {
         &self.base
     }
 }
@@ -290,7 +335,7 @@ impl IFSelectGraphCounter {
     /// `IFSelectGraphCounter(withmap = true, withlist = false)`.
     pub fn new(withmap: bool, withlist: bool) -> Self {
         Self {
-            base: IFSelectSignCounter::new(withmap, withlist),
+            base: IFSelectSignCounterData::new(withmap, withlist),
             theapplied: SharedState::new(Handle::default()),
         }
     }
@@ -305,20 +350,20 @@ impl IFSelectGraphCounter {
 }
 
 impl IFSelectSignatureListOps for IFSelectGraphCounter {
-    fn signature_list(&self) -> &IFSelectSignatureList {
-        &self.base.base
+    fn signature_list(&self) -> &IFSelectSignatureListData {
+        &self.base.list
     }
 }
 
 impl IFSelectSignCounterOps for IFSelectGraphCounter {
-    fn sign_counter(&self) -> &IFSelectSignCounter {
+    fn sign_counter(&self) -> &IFSelectSignCounterData {
         &self.base
     }
     /// `AddWithGraph(list, graph)`: without deduction, `AddList`; else each entity counted
     /// by the size of the unique result of the deduction from it.
     fn add_with_graph(
         &self,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         graph: &InterfaceGraph,
     ) -> Result<(), Failure> {
         let applied = self.applied();
@@ -335,22 +380,22 @@ impl IFSelectSignCounterOps for IFSelectGraphCounter {
 }
 
 /// `IFSelectCheckCounter`: counts the messages of a check list ("F:" for fails, "W:"
-/// for warnings, with the type of the entity); embeds its `IFSelectSignatureList`.
+/// for warnings, with the type of the entity).
 pub struct IFSelectCheckCounter {
-    base: IFSelectSignatureList,
+    base: IFSelectSignatureListData,
     thesign: SharedState<Handle<dyn MoniToolSignText>>,
 }
-impl_transient!(IFSelectCheckCounter, "IFSelectCheckCounter", IFSelectSignatureList, base, interfaces: [dyn IFSelectSignatureListOps]);
+impl_transient!(IFSelectCheckCounter, "IFSelectCheckCounter", dyn IFSelectSignatureListOps, interfaces: [dyn IFSelectSignatureListOps]);
 
 impl Deref for IFSelectCheckCounter {
-    type Target = IFSelectSignatureList;
-    fn deref(&self) -> &IFSelectSignatureList {
+    type Target = IFSelectSignatureListData;
+    fn deref(&self) -> &IFSelectSignatureListData {
         &self.base
     }
 }
 
 impl IFSelectSignatureListOps for IFSelectCheckCounter {
-    fn signature_list(&self) -> &IFSelectSignatureList {
+    fn signature_list(&self) -> &IFSelectSignatureListData {
         &self.base
     }
 }
@@ -359,7 +404,7 @@ impl IFSelectCheckCounter {
     /// `IFSelectCheckCounter(withlist = false)`: named "Check".
     pub fn new(withlist: bool) -> Self {
         let counter = Self {
-            base: IFSelectSignatureList::new(withlist),
+            base: IFSelectSignatureListData::new(withlist),
             thesign: SharedState::new(Handle::default()),
         };
         counter.set_name("Check");
@@ -377,7 +422,7 @@ impl IFSelectCheckCounter {
     /// else the class name.
     fn type_text(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         let sign = self.signature();

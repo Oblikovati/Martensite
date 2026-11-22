@@ -55,7 +55,7 @@ fn square(scene: &FingerprintScene, style: &Handle<Graphic3dAspects>, min: f32, 
     let structure = scene.structure();
     let group = structure.new_group().unwrap();
     group.set_group_primitives_aspect(&style.cast());
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
     structure.display();
 }
 

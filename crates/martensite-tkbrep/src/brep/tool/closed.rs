@@ -2,7 +2,8 @@
 use super::BRepTool;
 use super::curves::representations;
 use crate::topexp::{self, Explorer};
-use crate::topods::{Edge, Face, Shape};
+use crate::topods::{Edge, Shape, ShapeView};
+use crate::topods::{EdgeView, FaceView};
 use crate::toptools::MapOfShape;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{
@@ -15,15 +16,15 @@ use martensite_tkmath::toploc::Location;
 /// The static `IsPlane`: a plane, or the plane basis of an offset or rectangular
 /// trimmed surface (NIZNHY-PKV, 2008-10-17).
 fn is_plane(surface: &Handle<dyn GeomSurface>) -> bool {
-    let offset = surface.cast::<GeomOffsetSurface>();
+    let offset = surface.downcast::<GeomOffsetSurface>();
     if let Some(offset) = offset.get() {
-        return offset.basis_surface().cast::<GeomPlane>().is_some();
+        return offset.basis_surface().downcast::<GeomPlane>().is_some();
     }
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     if let Some(trimmed) = trimmed.get() {
-        return trimmed.basis_surface().cast::<GeomPlane>().is_some();
+        return trimmed.basis_surface().downcast::<GeomPlane>().is_some();
     }
-    surface.cast::<GeomPlane>().is_some()
+    surface.downcast::<GeomPlane>().is_some()
 }
 
 /// Whether an INTERNAL or EXTERNAL orientation hides the boundary element.
@@ -34,7 +35,7 @@ fn is_inner_or_outer(orientation: Orientation) -> bool {
 /// The shell and wire test of `IsClosed(S)`: every boundary element of type `kind`
 /// (skipped when `skipped` says so) is met an even number of times, and one is met.
 fn has_no_free_boundary(
-    shape: &Shape,
+    shape: &ShapeView<'_>,
     kind: ShapeEnum,
     skipped: impl Fn(&Shape) -> Result<bool, Failure>,
 ) -> Result<bool, Failure> {
@@ -65,14 +66,14 @@ impl BRepTool {
     /// (INTERNAL and EXTERNAL elements and degenerated edges ignored), an edge whose
     /// two vertices are the same, or else the shape's Closed flag;
     /// `BRepTool::is_closed(&shape)?`.
-    pub fn is_closed(shape: &Shape) -> Result<bool, Failure> {
+    pub fn is_closed(shape: &ShapeView<'_>) -> Result<bool, Failure> {
         match shape.shape_type()? {
             ShapeEnum::Shell => has_no_free_boundary(shape, ShapeEnum::Edge, |edge| {
                 Self::degenerated(&Edge::unchecked(edge.clone()))
             }),
             ShapeEnum::Wire => has_no_free_boundary(shape, ShapeEnum::Vertex, |_| Ok(false)),
             ShapeEnum::Edge => {
-                let (first, last) = topexp::vertices(&Edge::unchecked(shape.clone()), false);
+                let (first, last) = topexp::vertices(&Edge::unchecked(shape.to_shape()), false);
                 Ok(!first.is_null() && first.is_same(&last))
             }
             _ => shape.closed(),
@@ -81,7 +82,7 @@ impl BRepTool {
 
     /// `IsClosed(E, F)`: the edge is a seam of the face's surface or of its active
     /// triangulation; `BRepTool::is_closed_on_face(&edge, &face)?`.
-    pub fn is_closed_on_face(edge: &Edge, face: &Face) -> Result<bool, Failure> {
+    pub fn is_closed_on_face(edge: &EdgeView<'_>, face: &FaceView<'_>) -> Result<bool, Failure> {
         let (surface, location) = Self::surface_with_location(face)?;
         if Self::is_closed_on_surface(edge, &surface, &location)? {
             return Ok(true);
@@ -93,7 +94,7 @@ impl BRepTool {
     /// `IsClosed(E, S, L)`: false on a plane; else whether the edge has a seam
     /// representation on (`surface`, `location`); `BRepTool::is_closed_on_surface(&edge, &surface, &location)?`.
     pub fn is_closed_on_surface(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<bool, Failure> {
@@ -111,7 +112,7 @@ impl BRepTool {
     /// `location`); false for a null triangulation;
     /// `BRepTool::is_closed_on_triangulation(&edge, &triangulation, &location)?`.
     pub fn is_closed_on_triangulation(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         triangulation: &Handle<Triangulation>,
         location: &Location,
     ) -> Result<bool, Failure> {

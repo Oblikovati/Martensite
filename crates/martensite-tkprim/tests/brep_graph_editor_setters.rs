@@ -25,11 +25,11 @@ fn box_graph() -> BRepGraph {
 
 fn line2d() -> Handle<dyn Geom2dCurve> {
     let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap());
-    Handle::new(Geom2dLine::new(axis)).cast()
+    Handle::new(Geom2dLine::new(axis)).into_upcast()
 }
 
 fn line3d() -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_cast()
+    Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast()
 }
 
 fn own_gen_of_co_edge(graph: &BRepGraph, co_edge: CoEdgeId) -> u32 {

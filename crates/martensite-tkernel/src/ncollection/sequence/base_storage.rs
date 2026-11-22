@@ -6,8 +6,10 @@ mod iterator;
 mod node_liveness;
 mod removal;
 mod reorder;
+mod search;
 pub use iterator::BaseSequenceRawIterator;
 pub(super) use node_liveness::SequenceNodeLiveness;
+pub(super) use search::SequenceSearch;
 
 /// Node deletion callback type; `let delete: DelSeqNode = Sequence::<i32>::del_node`.
 pub type DelSeqNode = unsafe fn(*mut SeqNode, &mut BaseAllocator);
@@ -100,32 +102,14 @@ impl BaseSequence {
     /// # Safety
     /// Index must be in 1..=size, all links live, and the cached node/index consistent.
     pub unsafe fn find(&self, index: usize) -> *mut SeqNode {
-        let (mut node, start) = self.search_origin(index);
-        for _ in index..start {
-            // SAFETY: find's caller guarantees every link is live, and the walk stays within
-            // the `index` steps from a live origin.
-            node = unsafe { self.guarded_link(node).previous() };
-        }
-        for _ in start..index {
-            // SAFETY: find's caller guarantees every link is live, and the walk stays within
-            // the `index` steps from a live origin.
-            node = unsafe { self.guarded_link(node).next() };
-        }
-        self.require_live_link(node);
-        node
-    }
-    fn search_origin(&self, index: usize) -> (*mut SeqNode, usize) {
-        if index <= self.current_index {
-            return if index < self.current_index / 2 {
-                (self.first, 1)
-            } else {
-                (self.current, self.current_index)
-            };
-        }
-        if index < self.current_index.wrapping_add(self.size) / 2 {
-            return (self.current, self.current_index);
-        }
-        (self.last, self.size)
+        let available = SequenceSearch {
+            first: self.first,
+            last: self.last,
+            size: self.size,
+            clear_scope: self.clear_node_scope.as_ref(),
+        };
+        // SAFETY: raw caller owns the live links and supplies a consistent cache.
+        unsafe { available.find(index, self.current, self.current_index) }
     }
     fn check_index(&self, index: usize) -> Result<(), Failure> {
         if index == 0 || index > self.size {

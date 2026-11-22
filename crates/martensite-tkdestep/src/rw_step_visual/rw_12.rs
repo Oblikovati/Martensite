@@ -31,7 +31,9 @@ impl RwStepVisualRwMechanicalDesignGeometricPresentationRepresentation {
         if data.read_sub_list(num, 2, "items", ach, &mut nsub2, false, 0, 0)? {
             let nb2: i32 = data.nb_params(nsub2)?;
             if nb2 > 0 {
-                a_items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, nb2)?;
+                a_items = step_new_array1::<
+                    Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+                >(1, nb2)?;
             }
             for i2 in 1..=nb2 {
                 if data.read_entity(
@@ -212,7 +214,8 @@ impl RwStepVisualRwPointStyle {
         data.read_entity_select(num, 2, "marker", ach, &mut a_marker)?;
         let mut a_marker_size: StepBasicSizeSelect = Default::default();
         data.read_entity_select(num, 3, "marker_size", ach, &mut a_marker_size)?;
-        let mut a_marker_colour: Handle<StepVisualColour> = Default::default();
+        let mut a_marker_colour: Handle<dyn crate::StepEntityBase<StepVisualColour>> =
+            Default::default();
         data.read_entity(
             num,
             4,

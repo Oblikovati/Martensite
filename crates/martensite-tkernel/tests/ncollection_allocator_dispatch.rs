@@ -4,7 +4,7 @@ use martensite_tkernel::{
     ncollection::{
         AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource, BaseAllocator,
     },
-    standard::{Failure, Handle, RuntimeTyped, SharedState, Transient},
+    standard::{Failure, Handle, RuntimeTyped, SharedState},
 };
 use std::{ptr::NonNull, sync::Arc};
 #[derive(Default)]
@@ -12,8 +12,7 @@ struct AllocatorProbe {
     parent: AllocatorObject,
     events: Arc<SharedState<Vec<String>>>,
 }
-martensite_tkernel::impl_transient!(AllocatorProbe, "Martensite_AllocatorProbe", AllocatorObject,
-    parent, interfaces: [dyn AllocatorSource]);
+martensite_tkernel::impl_transient!(AllocatorProbe, "Martensite_AllocatorProbe", AllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: the test allocator forwards every range to its genuine standard allocator parent.
 unsafe impl AllocatorSource for AllocatorProbe {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -57,7 +56,7 @@ fn repeated_registration_preserves_identity_without_self_cycles() {
     drop((first, second));
     assert_eq!(owner.ref_count(), 1);
     drop(owner);
-    assert!(weak.observe().is_null());
+    assert!(weak.upgrade().is_null());
 }
 #[test]
 fn source_descriptor_and_cast_keep_actual_derived_identity() {
@@ -99,15 +98,13 @@ fn virtual_typed_alignment_returns_original_free_pointer() {
     assert_eq!(&*owner.events.read(), &["allocate 255 2", "free 2"]);
 }
 
-fn capture_probe_events(source: &AllocatorProbe) -> (Arc<SharedState<Vec<String>>>, i32) {
-    (
-        source.events.clone(),
-        source.parent.transient_base().ref_count(),
-    )
+fn capture_probe_events(source: &AllocatorProbe) -> Arc<SharedState<Vec<String>>> {
+    source.events.clone()
 }
 fn record_probe_event(invocation: &AllocatorInvocation, operation: &str) {
+    let count = invocation.ref_count();
     // SAFETY: the selector captures independently anchored trace storage and an immediate count.
-    let (events, count) = martensite_tkernel::standard::raise_native_failure(unsafe {
+    let events = martensite_tkernel::standard::raise_native_failure(unsafe {
         invocation.capture(capture_probe_events)
     });
     events.write().push(format!("{operation} {count}"));
@@ -144,8 +141,9 @@ fn invocation_capture_rejects_expired_and_wrong_actual_receivers() {
     let owner = Handle::new(AllocatorProbe::default());
     let invocation = AllocatorInvocation::from_handle(&owner).unwrap();
     // SAFETY: these selectors only inspect actual immutable receiver fields.
-    let actual = unsafe { invocation.capture::<AllocatorProbe, _>(probe_count) }.unwrap();
-    assert_eq!(actual, 1);
+    let actual = unsafe { invocation.capture::<AllocatorProbe, _>(probe_address) }.unwrap();
+    assert_eq!(actual, owner.object_address() as usize);
+    assert_eq!(invocation.ref_count(), 1);
     assert!(
         // SAFETY: the selector only inspects immutable receiver fields and runs no callback.
         unsafe {
@@ -156,9 +154,8 @@ fn invocation_capture_rejects_expired_and_wrong_actual_receivers() {
     drop(owner);
     // SAFETY: the selector only inspects immutable receiver fields; the expired receiver is
     // rejected first.
-    assert!(unsafe { invocation.capture::<AllocatorProbe, _>(probe_count) }.is_err());
+    assert!(unsafe { invocation.capture::<AllocatorProbe, _>(probe_address) }.is_err());
 }
-fn probe_count(probe: &AllocatorProbe) -> i32 {
-    // Count reads do not invoke callbacks or retain the actual receiver.
-    probe.transient_base().ref_count()
+fn probe_address(probe: &AllocatorProbe) -> usize {
+    std::ptr::from_ref(probe) as usize
 }

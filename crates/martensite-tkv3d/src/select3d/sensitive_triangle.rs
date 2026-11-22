@@ -7,7 +7,7 @@ use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeMa
 use crate::select_mgr::{SelectMgrEntityOwnerSource, SelectMgrSelectionType};
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::bvh::{BvhBox, std_max, std_min};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::json_dump::{base_class, class_begin, field_dumped, field_integer};
@@ -43,13 +43,12 @@ pub(crate) fn points_box(points: &[Point3; 3]) -> Select3DBndBox3d {
 ///
 /// Example: `let tri = Select3DSensitiveTriangle::new(&owner, a, b, c, Select3DTypeOfSensitivity::Interior);`.
 pub struct Select3DSensitiveTriangle {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     sens_type: Select3DTypeOfSensitivity,
     centroid: Point3,
     points: [Point3; 3],
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveTriangle, "Select3DSensitiveTriangle", dyn Select3DSensitiveEntity, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveTriangle, "Select3DSensitiveTriangle", dyn Select3DSensitiveEntity,
     interfaces: [dyn Select3DSensitiveEntity]);
 
 impl Select3DSensitiveTriangle {
@@ -62,7 +61,6 @@ impl Select3DSensitiveTriangle {
         sens_type: Select3DTypeOfSensitivity,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             sens_type,
             centroid: Point3::from((p0.xyz() + p1.xyz() + p2.xyz()) * (1.0 / 3.0)),

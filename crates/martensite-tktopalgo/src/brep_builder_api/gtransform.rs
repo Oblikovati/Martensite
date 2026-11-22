@@ -81,7 +81,7 @@ impl BRepBuilderAPIGTransform {
     /// yet; `BRepBuilderAPIGTransform::new(gtrsf)`.
     pub fn new(gtrsf: GeneralTransform3) -> Self {
         let modification: Handle<dyn BRepToolsModification> =
-            Handle::new(GTrsfModification::new(gtrsf)).cast();
+            Handle::new(GTrsfModification::new(gtrsf)).into_upcast();
         Self {
             modify: BRepBuilderAPIModifyShape::with_modification(&modification),
             my_gtrsf: gtrsf,

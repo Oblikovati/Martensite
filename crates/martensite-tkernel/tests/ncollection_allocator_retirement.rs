@@ -6,7 +6,7 @@ use martensite_tkernel::{
         AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource,
         BaseAllocator, HeapAllocatorObject,
     },
-    standard::{Failure, Handle, SharedState, Transient, WeakHandle},
+    standard::{Failure, Handle, SharedState, WeakHandle},
 };
 use std::{
     alloc::Layout,
@@ -26,7 +26,7 @@ struct CurrentHeapResource {
     scene: Weak<SharedState<AllocatorRetirementScene>>,
 }
 martensite_tkernel::impl_transient!(CurrentHeapResource, "Martensite_CurrentHeapResource",
-    HeapAllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    HeapAllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: this genuine heap descendant accepts the original heap pointer from either source.
 unsafe impl AllocatorSource for CurrentHeapResource {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -47,7 +47,7 @@ struct RetiringHeapResource {
     current: WeakHandle<CurrentHeapResource>,
 }
 martensite_tkernel::impl_transient!(RetiringHeapResource, "Martensite_RetiringHeapResource",
-    HeapAllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    HeapAllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: allocation always delegates to the original genuine heap backend.
 unsafe impl AllocatorSource for RetiringHeapResource {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -66,12 +66,7 @@ impl Drop for RetiringHeapResource {
         let scene = self.scene.upgrade().unwrap();
         let mut scene = scene.write();
         scene.retired = true;
-        let row = format!(
-            "retired {} {} {}",
-            scene.size,
-            self.transient_base().ref_count(),
-            self.current.observe().ref_count()
-        );
+        let row = format!("retired {} {} {}", scene.size, 0, self.current.ref_count());
         scene.rows.push(row);
     }
 }
@@ -126,13 +121,13 @@ fn original_heap_allocator_retires_before_current_resource_free() {
     assert_eq!(actual, native);
 }
 
-fn record_current_heap_free(source: &CurrentHeapResource) {
+fn record_current_heap_free(source: &CurrentHeapResource, owners: usize) {
     let scene = source.scene.upgrade().unwrap();
     let mut scene = scene.write();
     let row = format!(
         "current-free {} {} {}",
         scene.size,
-        source.transient_base().ref_count(),
+        owners,
         i32::from(scene.retired)
     );
     scene.rows.push(row);
@@ -141,9 +136,10 @@ unsafe fn current_heap_free(
     invocation: &AllocatorInvocation,
     pointer: *mut u8,
 ) -> Result<(), Failure> {
+    let owners = invocation.ref_count();
     // SAFETY: plain trace mutation cannot retire resources; original provenance is accepted here.
     martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(record_current_heap_free)
+        invocation.capture(|source| record_current_heap_free(source, owners))
     });
     // SAFETY: the caller passes a block this allocator's base allocated, which free_base
     // requires.
@@ -151,44 +147,43 @@ unsafe fn current_heap_free(
 }
 fn capture_retiring_heap(
     source: &RetiringHeapResource,
+    owners: usize,
 ) -> (
     Arc<SharedState<AllocatorRetirementScene>>,
     WeakHandle<CurrentHeapResource>,
 ) {
     let scene = source.scene.upgrade().unwrap();
     let mut fields = scene.write();
-    let row = format!(
-        "allocate {} {}",
-        fields.size,
-        source.transient_base().ref_count()
-    );
+    let row = format!("allocate {} {}", fields.size, owners);
     fields.rows.push(row);
     drop(fields);
     (scene, source.current.clone())
 }
-fn record_replaced_heap(source: &RetiringHeapResource) {
+fn record_replaced_heap(source: &RetiringHeapResource, owners: usize) {
     let scene = source.scene.upgrade().unwrap();
     let mut scene = scene.write();
     let row = format!(
         "replaced {} {} {}",
         scene.size,
-        source.transient_base().ref_count(),
-        source.current.observe().ref_count()
+        owners,
+        source.current.ref_count()
     );
     scene.rows.push(row);
 }
 fn retiring_heap_allocate(invocation: &AllocatorInvocation, size: usize) -> Option<NonNull<u8>> {
+    let owners = invocation.ref_count();
     // SAFETY: actual field selectors have no callbacks; the replaced owner is dropped outside both guards.
     let (scene, current) = martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(capture_retiring_heap)
+        invocation.capture(|source| capture_retiring_heap(source, owners))
     });
-    let replacement = BaseAllocator::from_handle(&current.observe());
+    let replacement = BaseAllocator::from_handle(&current.upgrade());
     let old = scene.write().current.replace(replacement);
     drop(old);
+    let owners = invocation.ref_count();
     // SAFETY: the trace selector only records the call and runs no callback, so the receiver
     // stays alive while captured.
     martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(record_replaced_heap)
+        invocation.capture(|source| record_replaced_heap(source, owners))
     });
     invocation.allocate_base(size)
 }

@@ -177,8 +177,8 @@ pub(super) fn concavity(
     }
     let mut pt = Point3::default();
     if test_ok {
-        let c1: Handle<dyn GeomCurve> = ln1.clone().cast();
-        let c2: Handle<dyn GeomCurve> = ln2.clone().cast();
+        let c1: Handle<dyn GeomCurve> = ln1.upcast();
+        let c2: Handle<dyn GeomCurve> = ln2.upcast();
         if let Some(p) = input.meet(&input.to_2d(&c1)?, &input.to_2d(&c2)?)? {
             pt = p;
             if int_par(&c1, pt)? > 0. {
@@ -320,7 +320,7 @@ impl RibSlot {
         if parallel {
             add_segment(&mut ww, self.last_pnt, self.first_pnt)?;
         }
-        let (c1, c2): (Handle<dyn GeomCurve>, Handle<dyn GeomCurve>) = (ln1.cast(), ln2.cast());
+        let (c1, c2): (Handle<dyn GeomCurve>, Handle<dyn GeomCurve>) = (ln1.upcast(), ln2.upcast());
         if *concavite == 1 {
             // if concave: it is possible to extend first and last edges of the wire to
             // the bounding box

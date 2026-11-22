@@ -10,6 +10,7 @@ pub(crate) fn out_of_range(member: &str, detail: String) -> Failure {
 }
 
 /// `Standard_NegativeValue` for a negative width; `negative_width("Center", -1)`.
+#[cfg(test)]
 pub(crate) fn negative_width(member: &str, width: i32) -> Failure {
     exceptions::negative_value(&format!(
         "TCollection_AsciiString::{member}: width {width}; expected >= 0"

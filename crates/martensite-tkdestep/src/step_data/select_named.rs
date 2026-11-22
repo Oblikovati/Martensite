@@ -4,7 +4,7 @@ use super::{StepDataField, StepDataFieldKind, StepDataSelectMember};
 use martensite_tkernel::{
     impl_transient,
     ncollection::HArray1,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState},
     tcollection::AsciiString,
 };
 
@@ -23,14 +23,12 @@ struct NamedState {
 /// ```
 #[derive(Default)]
 pub struct StepDataSelectNamed {
-    transient: StandardTransient,
     state: SharedState<NamedState>,
 }
 impl_transient!(
     StepDataSelectNamed,
     "StepDataSelectNamed",
     dyn StepDataSelectMember,
-    transient,
     interfaces: [dyn StepDataSelectMember]
 );
 
@@ -97,9 +95,14 @@ impl_transient!(
     StepDataSelectArrReal,
     "StepDataSelectArrReal",
     StepDataSelectNamed,
-    named,
-    interfaces: [dyn StepDataSelectMember]
+    interfaces: [dyn StepDataSelectMember, dyn crate::StepEntityBase<StepDataSelectArrReal>]
 );
+
+impl crate::StepEntityBase<StepDataSelectArrReal> for StepDataSelectArrReal {
+    fn step_base(&self) -> &StepDataSelectArrReal {
+        self
+    }
+}
 
 impl StepDataSelectArrReal {
     /// `arr_real`.

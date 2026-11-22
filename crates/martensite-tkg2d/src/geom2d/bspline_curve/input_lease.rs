@@ -204,10 +204,13 @@ mod tests {
 
         let curve = curve();
         let replacement: martensite_tkernel::standard::Handle<dyn Geom2dCurve> =
-            martensite_tkernel::standard::Handle::new(Geom2dLine::new(Axis2d::default())).cast();
+            martensite_tkernel::standard::Handle::new(Geom2dLine::new(Axis2d::default()))
+                .into_upcast();
         let descriptor = RepCurveDescFull::new(replacement);
         curve
-            .set_eval_representation(martensite_tkernel::standard::Handle::new(descriptor).cast())
+            .set_eval_representation(
+                martensite_tkernel::standard::Handle::new(descriptor).into_upcast(),
+            )
             .unwrap();
         assert!(
             curve

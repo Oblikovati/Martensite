@@ -150,7 +150,8 @@ impl BRepOffsetMakeOffset {
                 let an_ax = Axis1::new(a_pln.position().location(), a_pln_norm);
                 a_pln.set_axis(an_ax)?;
             }
-            let a_plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(a_pln)).cast();
+            let a_plane: Handle<dyn GeomSurface> =
+                Handle::new(GeomPlane::from_pln(a_pln)).into_upcast();
             let mut a_planar_face = Face::default();
             builder.make_face_on_surface(&mut a_planar_face, &a_plane, a_tol_for_face)?;
             let a_face_forward = fs.oriented(Orientation::Forward);

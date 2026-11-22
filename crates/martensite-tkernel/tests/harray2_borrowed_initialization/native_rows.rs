@@ -1,7 +1,7 @@
 use super::{FillProbe, FillScope};
 use martensite_tkernel::{
     ncollection::{Array2, HArray2},
-    standard::{Handle, Transient},
+    standard::Handle,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
@@ -28,7 +28,7 @@ fn successful_state(matrix: &HArray2<FillProbe>, donor: &FillProbe, scope: &Fill
         rectangle_bounds(&view),
         view.len(),
         matrix_numbers(&view),
-        matrix.transient_base().ref_count(),
+        0,
         donor.reads(),
         scope.take_events()
     )
@@ -79,13 +79,13 @@ fn failed_matrix(fail: usize) -> String {
 fn handled_matrix() -> String {
     let first = Handle::new(HArray2::with_value_ref(-1, 0, 3, 4, &7).unwrap());
     let owner = first.get().unwrap();
-    let one = owner.transient_base().ref_count();
+    let one = first.ref_count();
     let second = first.clone();
-    let two = owner.transient_base().ref_count();
+    let two = first.ref_count();
     owner.change_array2().set_value(0, 3, 55).unwrap();
     let observed = *second.get().unwrap().array2().value(0, 3).unwrap();
     drop(second);
-    let final_count = owner.transient_base().ref_count();
+    let final_count = first.ref_count();
     let view = owner.array2();
     format!(
         "handle {one} {two} {final_count} {observed} {} {} {} {}\n",

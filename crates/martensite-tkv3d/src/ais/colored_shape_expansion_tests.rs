@@ -7,8 +7,8 @@ use std::fmt::Write;
 fn expansion_style(
     map: &AisShapeDrawerMap,
     key: &Shape,
-    first: &Handle<AisColoredDrawer>,
-    second: &Handle<AisColoredDrawer>,
+    first: &Handle<dyn AisColoredDrawerSource>,
+    second: &Handle<dyn AisColoredDrawerSource>,
 ) -> i32 {
     if !map.is_bound(key) {
         return 0;
@@ -27,8 +27,8 @@ fn expansion_row(
     label: &str,
     map: &AisShapeDrawerMap,
     input: &ColoredExpansionInputs,
-    first: &Handle<AisColoredDrawer>,
-    second: &Handle<AisColoredDrawer>,
+    first: &Handle<dyn AisColoredDrawerSource>,
+    second: &Handle<dyn AisColoredDrawerSource>,
 ) {
     write!(rows, "{label} {}", map.len()).unwrap();
     for key in input.report_keys() {
@@ -131,8 +131,8 @@ fn append_explicit_vertices(
     input: &ColoredExpansionInputs,
     object: &AisColoredShape,
     output: &AisShapeDrawerMap,
-    first: &Handle<AisColoredDrawer>,
-    second: &Handle<AisColoredDrawer>,
+    first: &Handle<dyn AisColoredDrawerSource>,
+    second: &Handle<dyn AisColoredDrawerSource>,
 ) {
     object.bind_sub_shapes(output, &input.own, second).unwrap();
     object

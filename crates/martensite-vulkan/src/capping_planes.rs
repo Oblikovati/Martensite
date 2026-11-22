@@ -4,13 +4,15 @@ use crate::{
     retained_clipping::{snapshot_chain, structure_planes},
 };
 use martensite_tkernel::standard::Handle;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSource;
 use martensite_tkservice::graphic3d::*;
 pub(crate) struct CapPlane {
-    pub plane: Handle<Graphic3dClipPlane>,
+    pub plane: Handle<dyn Graphic3dClipPlaneSource>,
     pub remaining: Vec<Vec<[f32; 4]>>,
 }
 pub(crate) fn capping_planes(
-    global: &Handle<Graphic3dSequenceOfHClipPlane>,
+    global: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     fields: &Graphic3dCStructureFields,
 ) -> Result<Vec<CapPlane>, RenderError> {
     let planes = structure_planes(global, fields)?;
@@ -27,7 +29,7 @@ pub(crate) fn capping_planes(
 }
 fn append_chain_caps(
     caps: &mut Vec<CapPlane>,
-    head: Handle<Graphic3dClipPlane>,
+    head: Handle<dyn Graphic3dClipPlaneSource>,
     chains: &[Vec<[f32; 4]>],
     chain: usize,
 ) {

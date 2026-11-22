@@ -70,7 +70,7 @@ fn surface_count(
     counts: &mut Vec<i32>,
 ) -> AnnularCheck<'static> {
     let (surface, _) = BRepTool::surface_with_location(&face(shape)?)?;
-    if surface.cast::<GeomPlane>().is_some() {
+    if surface.downcast::<GeomPlane>().is_some() {
         counts.push(0);
         return Ok(());
     }
@@ -78,13 +78,13 @@ fn surface_count(
 }
 
 fn space_count(curve: &Handle<dyn GeomCurve>) -> AnnularCheck<'static, i32> {
-    let handle = curve.cast::<GeomBezierCurve>();
+    let handle = curve.downcast::<GeomBezierCurve>();
     if let Some(curve) = handle.get() {
         polynomial("space Bézier", curve.is_rational())?;
         no_alternate("Bézier curve", curve.eval_representation().is_some())?;
         return Ok(curve.nb_poles());
     }
-    if curve.cast::<GeomLine>().is_some() {
+    if curve.downcast::<GeomLine>().is_some() {
         return Ok(0);
     }
     Err(representation(
@@ -95,13 +95,13 @@ fn space_count(curve: &Handle<dyn GeomCurve>) -> AnnularCheck<'static, i32> {
     ))
 }
 fn plane_count(curve: &Handle<dyn Geom2dCurve>) -> AnnularCheck<'static, i32> {
-    let handle = curve.cast::<Geom2dBezierCurve>();
+    let handle = curve.downcast::<Geom2dBezierCurve>();
     if let Some(curve) = handle.get() {
         polynomial("trim Bézier pcurve", curve.is_rational())?;
         no_alternate("trim Bézier pcurve", curve.eval_representation().is_some())?;
         return Ok(curve.nb_poles());
     }
-    if curve.cast::<Geom2dLine>().is_some() {
+    if curve.downcast::<Geom2dLine>().is_some() {
         return Ok(0);
     }
     Err(representation(
@@ -193,7 +193,7 @@ fn extrusion_count(
     surface: &Handle<dyn martensite_tkg3d::geom::GeomSurface>,
     counts: &mut Vec<i32>,
 ) -> AnnularCheck<'static> {
-    let handle = surface.cast::<GeomSurfaceOfLinearExtrusion>();
+    let handle = surface.downcast::<GeomSurfaceOfLinearExtrusion>();
     let extrusion = handle.get().ok_or_else(|| {
         representation(
             "plane or stored linear extrusion",

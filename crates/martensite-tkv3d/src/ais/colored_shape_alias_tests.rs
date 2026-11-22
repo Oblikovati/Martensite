@@ -28,7 +28,7 @@ fn real_geometry_same_map_expansion_replays_native_live_aliases() {
 fn replay_live_alias(
     input: &ColoredAliasInputs,
     map: &AisShapeDrawerMap,
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     output: &mut String,
 ) {
     let mut cursor = ShapeDrawerNativeCursor::new(map).unwrap();
@@ -44,7 +44,7 @@ fn replay_live_alias(
 }
 fn record_alias_borrowed(
     input: &ColoredAliasInputs,
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     output: &mut String,
 ) {
     let keys = input.wire.tshape().ref_count();
@@ -78,7 +78,7 @@ fn record_cursor_remainder(
 fn record_alias_inserted(
     input: &ColoredAliasInputs,
     reference: &AisShapeDrawerNodeRef<'_>,
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     addresses: (*const (), *const ()),
     output: &mut String,
 ) {

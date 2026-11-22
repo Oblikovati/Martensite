@@ -51,8 +51,9 @@ macro_rules! rw_block_b_0139 {
             $the_arch,
             &mut $a_representation_item_name,
         )?;
-        let mut $a_pair_value_applies_to_pair: Handle<StepKinematicsKinematicPair> =
-            Default::default();
+        let mut $a_pair_value_applies_to_pair: Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        > = Default::default();
         $the_data.read_entity(
             $the_num,
             2,
@@ -67,7 +68,7 @@ pub(crate) use rw_block_b_0139;
 
 macro_rules! rw_block_b_0140 {
     ($ach:ident, $adoc:ident, $asource:ident, $data:ident, $num:ident) => {
-        let mut $adoc: Handle<StepBasicDocument> = Default::default();
+        let mut $adoc: Handle<dyn crate::StepEntityBase<StepBasicDocument>> = Default::default();
         $data.read_entity(
             $num,
             1,

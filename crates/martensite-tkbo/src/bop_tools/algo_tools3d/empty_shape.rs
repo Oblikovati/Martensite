@@ -34,7 +34,7 @@ fn shape_geometry(shape: &Shape) -> Result<bool, Failure> {
     }
 }
 fn edge_geometry(shape: &Shape) -> Result<bool, Failure> {
-    let edge: Handle<BRepTEdge> = shape.tshape().cast();
+    let edge: Handle<BRepTEdge> = shape.tshape().downcast();
     let edge = edge.get().ok_or_else(|| missing_representation("edge"))?;
     for curve in edge.curves() {
         if curve_geometry(&*curve)? {
@@ -57,7 +57,7 @@ fn curve_geometry(curve: &dyn BRepCurveRepresentation) -> Result<bool, Failure> 
     Ok(curve.is_polygon_on_triangulation() || curve.is_polygon_on_surface())
 }
 fn face_geometry(shape: &Shape) -> Result<bool, Failure> {
-    let face: Handle<BRepTFace> = shape.tshape().cast();
+    let face: Handle<BRepTFace> = shape.tshape().downcast();
     let face = face.get().ok_or_else(|| missing_representation("face"))?;
     Ok(!face.surface().is_null() || !face.active_triangulation().is_null())
 }

@@ -1,6 +1,6 @@
 //! Bind the existing shaded sphere presentation through exact aspect identity.
 use super::*;
-use martensite_tkv3d::ais::{AisShape, AisShapeSource};
+use martensite_tkv3d::ais::{AisShape, AisShapeParameters};
 use martensite_tkv3d::prs_mgr::PrsMgrPresentableObjectMembers;
 
 pub(super) struct SphereAspectRole {
@@ -22,13 +22,7 @@ impl SphereAspectRole {
     }
     /// Borrow the actual shape identity for mesh checks; `role.shape()`.
     pub fn shape(&self) -> martensite_tkbrep::topods::Shape {
-        self.object
-            .cast::<AisShape>()
-            .shape_base()
-            .fields
-            .read()
-            .shape
-            .clone()
+        self.object.cast::<AisShape>().shape()
     }
     /// Apply an exact clone with Unlit shading; `let scope = role.begin()?`.
     pub fn begin(&self) -> io::Result<role_scope::PresentationAspectRoleScope> {

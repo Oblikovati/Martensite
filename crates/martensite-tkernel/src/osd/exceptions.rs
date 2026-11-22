@@ -8,19 +8,22 @@ use crate::standard::Failure;
 
 /// Raises `OSD_Exception`, the base of the structured-exception (Windows SEH)
 /// translations; `osd::exception("message")`.
-pub fn exception(message: &str) -> Failure {
+#[cfg(test)]
+fn exception(message: &str) -> Failure {
     Failure::with_type("OSD_Exception", message, "")
 }
 
 /// Raises `OSD_Exception_ACCESS_VIOLATION` (Windows EXCEPTION_ACCESS_VIOLATION);
 /// `osd::exception_access_violation("message")`.
-pub fn exception_access_violation(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_access_violation(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_ACCESS_VIOLATION", message, "")
 }
 
 /// Raises `OSD_Exception_ARRAY_BOUNDS_EXCEEDED` (Windows EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
 /// `osd::exception_array_bounds_exceeded("message")`.
-pub fn exception_array_bounds_exceeded(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_array_bounds_exceeded(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_ARRAY_BOUNDS_EXCEEDED", message, "")
 }
 
@@ -32,84 +35,99 @@ pub fn exception_ctrl_break(message: &str) -> Failure {
 
 /// Raises `OSD_Exception_ILLEGAL_INSTRUCTION` (Windows EXCEPTION_ILLEGAL_INSTRUCTION);
 /// `osd::exception_illegal_instruction("message")`.
-pub fn exception_illegal_instruction(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_illegal_instruction(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_ILLEGAL_INSTRUCTION", message, "")
 }
 
 /// Raises `OSD_Exception_IN_PAGE_ERROR` (Windows EXCEPTION_IN_PAGE_ERROR);
 /// `osd::exception_in_page_error("message")`.
-pub fn exception_in_page_error(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_in_page_error(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_IN_PAGE_ERROR", message, "")
 }
 
 /// Raises `OSD_Exception_INT_OVERFLOW` (Windows EXCEPTION_INT_OVERFLOW);
 /// `osd::exception_int_overflow("message")`.
-pub fn exception_int_overflow(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_int_overflow(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_INT_OVERFLOW", message, "")
 }
 
 /// Raises `OSD_Exception_INVALID_DISPOSITION` (Windows EXCEPTION_INVALID_DISPOSITION);
 /// `osd::exception_invalid_disposition("message")`.
-pub fn exception_invalid_disposition(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_invalid_disposition(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_INVALID_DISPOSITION", message, "")
 }
 
 /// Raises `OSD_Exception_NONCONTINUABLE_EXCEPTION` (Windows
 /// EXCEPTION_NONCONTINUABLE_EXCEPTION); `osd::exception_noncontinuable_exception("message")`.
-pub fn exception_noncontinuable_exception(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_noncontinuable_exception(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_NONCONTINUABLE_EXCEPTION", message, "")
 }
 
 /// Raises `OSD_Exception_PRIV_INSTRUCTION` (Windows EXCEPTION_PRIV_INSTRUCTION);
 /// `osd::exception_priv_instruction("message")`.
-pub fn exception_priv_instruction(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_priv_instruction(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_PRIV_INSTRUCTION", message, "")
 }
 
 /// Raises `OSD_Exception_STACK_OVERFLOW` (Windows EXCEPTION_STACK_OVERFLOW);
 /// `osd::exception_stack_overflow("message")`.
-pub fn exception_stack_overflow(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_stack_overflow(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_STACK_OVERFLOW", message, "")
 }
 
 /// Raises `OSD_Exception_STATUS_NO_MEMORY` (Windows STATUS_NO_MEMORY);
 /// `osd::exception_status_no_memory("message")`.
-pub fn exception_status_no_memory(message: &str) -> Failure {
+#[cfg(test)]
+fn exception_status_no_memory(message: &str) -> Failure {
     Failure::with_type("OSD_Exception_STATUS_NO_MEMORY", message, "")
 }
 
 /// Raises `OSD_Signal`, the base of the Unix signal translations; `osd::signal("message")`.
-pub fn signal(message: &str) -> Failure {
+#[cfg(test)]
+fn signal(message: &str) -> Failure {
     Failure::with_type("OSD_Signal", message, "")
 }
 
 /// Raises `OSD_SIGBUS` (Unix SIGBUS); `osd::sigbus("message")`.
-pub fn sigbus(message: &str) -> Failure {
+#[cfg(test)]
+fn sigbus(message: &str) -> Failure {
     Failure::with_type("OSD_SIGBUS", message, "")
 }
 
 /// Raises `OSD_SIGHUP` (Unix SIGHUP); `osd::sighup("message")`.
-pub fn sighup(message: &str) -> Failure {
+#[cfg(test)]
+fn sighup(message: &str) -> Failure {
     Failure::with_type("OSD_SIGHUP", message, "")
 }
 
 /// Raises `OSD_SIGILL` (Unix SIGILL); `osd::sigill("message")`.
-pub fn sigill(message: &str) -> Failure {
+#[cfg(test)]
+fn sigill(message: &str) -> Failure {
     Failure::with_type("OSD_SIGILL", message, "")
 }
 
 /// Raises `OSD_SIGINT` (Unix SIGINT); `osd::sigint("message")`.
-pub fn sigint(message: &str) -> Failure {
+#[cfg(test)]
+fn sigint(message: &str) -> Failure {
     Failure::with_type("OSD_SIGINT", message, "")
 }
 
 /// Raises `OSD_SIGKILL` (Unix SIGKILL); `osd::sigkill("message")`.
-pub fn sigkill(message: &str) -> Failure {
+#[cfg(test)]
+fn sigkill(message: &str) -> Failure {
     Failure::with_type("OSD_SIGKILL", message, "")
 }
 
 /// Raises `OSD_SIGQUIT` (Unix SIGQUIT); `osd::sigquit("message")`.
-pub fn sigquit(message: &str) -> Failure {
+#[cfg(test)]
+fn sigquit(message: &str) -> Failure {
     Failure::with_type("OSD_SIGQUIT", message, "")
 }
 
@@ -119,7 +137,8 @@ pub fn sigsegv(message: &str) -> Failure {
 }
 
 /// Raises `OSD_SIGSYS` (Unix SIGSYS); `osd::sigsys("message")`.
-pub fn sigsys(message: &str) -> Failure {
+#[cfg(test)]
+fn sigsys(message: &str) -> Failure {
     Failure::with_type("OSD_SIGSYS", message, "")
 }
 

@@ -94,7 +94,8 @@ pub trait ExprPolyExpression: ExprGeneralExpression {
 impl_transient_interface!(
     dyn ExprPolyExpression,
     "Expr_PolyExpression",
-    dyn ExprGeneralExpression
+    dyn ExprGeneralExpression,
+    upcasts: [dyn ExprGeneralExpression]
 );
 
 /// The operands in order, copied out of the lock so that calls on them cannot meet it;

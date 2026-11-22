@@ -48,7 +48,7 @@ fn shift_domain(
     bounds: &mut [f64; 4],
 ) -> Result<(), Failure> {
     let (mut surface, _) = BRepTool::surface_with_location(face)?;
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     if !trimmed.is_null() {
         surface = trimmed.basis_surface();
     }

@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(
     RwStepReprRwMaterialPropertyRepresentation,
@@ -141,7 +142,8 @@ impl RwStepReprRwMechanicalDesignAndDraughtingRelationship {
         if the_data.is_param_defined(the_num, 2)? {
             the_data.read_string(the_num, 2, "description", the_ach, &mut a_description)?;
         }
-        let mut a_rep1: Handle<StepReprRepresentation> = Default::default();
+        let mut a_rep1: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         the_data.read_entity(
             the_num,
             3,
@@ -150,7 +152,8 @@ impl RwStepReprRwMechanicalDesignAndDraughtingRelationship {
             StepReprRepresentation::static_type(),
             &mut a_rep1,
         )?;
-        let mut a_rep2: Handle<StepReprRepresentation> = Default::default();
+        let mut a_rep2: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         the_data.read_entity(
             the_num,
             4,
@@ -208,7 +211,7 @@ impl RwStepReprRwParallelOffset {
             data,
             num
         );
-        let mut an_offset: Handle<StandardTransient> = Default::default();
+        let mut an_offset: Handle<dyn Transient> = Default::default();
         data.read_entity(
             num,
             5,

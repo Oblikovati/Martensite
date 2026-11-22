@@ -154,7 +154,7 @@ fn compute_brep_face_entities(
     })
 }
 fn append_borrowed_brep_face_entities(
-    face: &martensite_tkbrep::topods::Face,
+    face: &martensite_tkbrep::topods::FaceView<'_>,
     build: &BrepSensitiveBuild<'_>,
 ) -> Result<(), Failure> {
     let entities = martensite_tkernel::standard::SharedState::new(

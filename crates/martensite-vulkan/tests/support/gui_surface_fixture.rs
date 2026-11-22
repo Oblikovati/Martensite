@@ -52,7 +52,7 @@ impl ResizeAndFailBackend {
         {
             return Ok(());
         }
-        let target = self.target.read().observe();
+        let target = self.target.read().upgrade();
         let (width, height) = self.window.read().size();
         target.attach_gui_layer([width as u32, height as u32], empty_gui_packet())
     }
@@ -61,7 +61,7 @@ impl ResizeAndFailBackend {
             return;
         };
         let window = self.window.read().clone();
-        let target = self.target.read().observe();
+        let target = self.target.read().upgrade();
         window.set_size(80, 72);
         target.resized();
         if return_to_case {

@@ -1,19 +1,17 @@
 //! `Geom2dAxisPlacement`: an oriented axis (origin and unit direction).
 use super::geometry::Geom2dGeometry;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Axis2d, Direction2, Point2, Transform2};
 
 /// An axis placement; `Handle::new(Geom2dAxisPlacement::new(axis))`.
 pub struct Geom2dAxisPlacement {
-    parent: StandardTransient,
     state: SharedState<Axis2d>,
 }
 impl_transient!(
     Geom2dAxisPlacement,
     "Geom2d_AxisPlacement",
     dyn Geom2dGeometry,
-    parent,
     interfaces: [dyn Geom2dGeometry]
 );
 impl Clone for Geom2dAxisPlacement {
@@ -25,7 +23,6 @@ impl Geom2dAxisPlacement {
     /// Placement from a gp axis (`Geom2dAxisPlacement(Axis2d)`); `Geom2dAxisPlacement::new(axis)`.
     pub fn new(axis: Axis2d) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(axis),
         }
     }
@@ -80,6 +77,6 @@ impl Geom2dGeometry for Geom2dAxisPlacement {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
 }

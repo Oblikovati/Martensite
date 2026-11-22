@@ -1,13 +1,14 @@
 //! The modifiers of the header of a model, and those that apply the edits of the model.
 use super::IgesSelectModelModifier;
 use super::modifier_bases::{add_fail, add_warning, iges_model_modifier, modifier_base};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::global_section_dates::system_date;
 use crate::iges_data::{
-    IgesDataBasicEditor, IgesDataGlobalSection, IgesDataIgesEntity, IgesDataIgesModel,
-    IgesDataProtocolOps, iges_atoi, iges_live,
+    IgesDataBasicEditor, IgesDataGlobalSection, IgesDataIgesModel, IgesDataProtocolOps, iges_atoi,
+    iges_live,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -34,7 +35,7 @@ macro_rules! plain_modifier {
             #[doc = concat!("A `", $recorded, "`.")]
             pub fn new() -> Self {
                 Self {
-                    transient: StandardTransient::default(),
+
                     base: modifier_base($may_change),
                 }
             }
@@ -81,7 +82,7 @@ impl IgesSelectModelModifier for IgesSelectAutoCorrect {
         let corrector = IgesDataBasicEditor::with_model(target, &protocol);
         ctx.start();
         while ctx.more() {
-            let entity = ctx.value_result()?.cast::<IgesDataIgesEntity>();
+            let entity = ctx.value_result()?.cast::<dyn IgesDataEntityKind>();
             if corrector.auto_correct(&entity)? {
                 ctx.trace("")?;
             }
@@ -137,7 +138,6 @@ impl IgesSelectSetGlobalParameter {
     /// A modifier of the parameter `numpar`.
     pub fn new(numpar: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: modifier_base(false),
             thenum: SharedState::new(numpar),
             theval: SharedState::new(Handle::default()),
@@ -223,7 +223,6 @@ impl IgesSelectSetLabel {
     /// A modifier of the mode 0 to clear, 1 for the directory number; `enforce` replaces any label.
     pub fn new(mode: i32, enforce: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: modifier_base(false),
             themode: SharedState::new(mode),
             theforce: SharedState::new(enforce),
@@ -263,7 +262,7 @@ impl IgesSelectModelModifier for IgesSelectSetLabel {
         let force = *self.theforce.read();
         ctx.start();
         while ctx.more() {
-            let entity = ctx.value_result()?.cast::<IgesDataIgesEntity>();
+            let entity = ctx.value_result()?.cast::<dyn IgesDataEntityKind>();
             if let Some(iges) = entity.get() {
                 if mode == 0 {
                     iges.set_label(&Handle::default(), -1);

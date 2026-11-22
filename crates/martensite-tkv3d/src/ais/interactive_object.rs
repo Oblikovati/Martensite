@@ -11,7 +11,7 @@ use crate::{
 };
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Handle, SharedState, StandardTransient, WeakHandle},
+    standard::{Handle, SharedState, Transient, WeakHandle},
 };
 /// Native protected object fields; `object.interactive_base().fields.read().context.is_null()`.
 #[derive(Default)]
@@ -19,7 +19,7 @@ pub struct AisInteractiveObjectFields {
     /// `myCTXPtr`: never owns the context.
     pub context: WeakHandle<AisInteractiveContext>,
     /// `myOwner`: application-specific retained owner.
-    pub owner: Handle<StandardTransient>,
+    pub owner: Handle<dyn Transient>,
 }
 /// Base state embedded by concrete interactive objects; `AisInteractiveObjectBase::new(kind)`.
 pub struct AisInteractiveObjectBase {

@@ -1,6 +1,8 @@
 //! Cross-schema bindings share current data; injected contexts isolate tests.
 use super::super::fakes::{FixedClock, ScriptedDriver};
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardPersistent, StandardTransient};
+use martensite_tkernel::standard::{
+    Handle, Persistent, RuntimeTyped, StandardPersistent, StandardTransient, Transient,
+};
 use martensite_tkernel::storage::{
     BaseDriver, CallBack, Data, DefaultCallBack, OpenMode, Schema, SchemaContext, StreamException,
 };
@@ -13,7 +15,6 @@ use std::{
 };
 
 struct DispatchCallBack {
-    parent: StandardTransient,
     calls: AtomicUsize,
 }
 
@@ -21,19 +22,18 @@ martensite_tkernel::impl_transient!(
     DispatchCallBack,
     "TestDispatchCallBack",
     dyn CallBack,
-    parent,
     interfaces: [dyn CallBack]
 );
 
 impl CallBack for DispatchCallBack {
-    fn new_persistent(&self) -> Handle<StandardPersistent> {
+    fn new_persistent(&self) -> Handle<dyn Persistent> {
         self.record_call();
-        Handle::new(StandardPersistent::default())
+        Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>()
     }
 
     fn add(
         &self,
-        _: &Handle<StandardPersistent>,
+        _: &Handle<dyn Persistent>,
         _: &Schema,
     ) -> Result<(), martensite_tkernel::standard::Failure> {
         self.record_call();
@@ -42,7 +42,7 @@ impl CallBack for DispatchCallBack {
 
     fn write(
         &self,
-        _: &Handle<StandardPersistent>,
+        _: &Handle<dyn Persistent>,
         _: &mut dyn BaseDriver,
         _: &Schema,
     ) -> Result<(), martensite_tkernel::standard::Failure> {
@@ -52,7 +52,7 @@ impl CallBack for DispatchCallBack {
 
     fn read(
         &self,
-        _: &Handle<StandardPersistent>,
+        _: &Handle<dyn Persistent>,
         _: &mut dyn BaseDriver,
         _: &Schema,
     ) -> Result<(), martensite_tkernel::standard::Failure> {
@@ -160,10 +160,10 @@ fn invoke_all_callback_overrides(bound: &Handle<dyn CallBack>, schema: &Schema) 
 
 fn callback_runtime_report(
     bound: &Handle<dyn CallBack>,
-    binding_count: i32,
-    copied_count: i32,
+    binding_count: usize,
+    copied_count: usize,
     this_matches: bool,
-    cast_count: i32,
+    cast_count: usize,
     derived_matches: bool,
     base_matches: bool,
 ) -> String {
@@ -247,10 +247,9 @@ fn custom_callback_binding_preserves_rtti_identity_and_virtual_dispatch() {
     let schema = Schema::with_context(Arc::new(FixedClock), SchemaContext::default());
     let _current = retained_write(&schema);
     let concrete = Handle::new(DispatchCallBack {
-        parent: StandardTransient::default(),
         calls: AtomicUsize::new(0),
     });
-    let callback = concrete.cast::<dyn CallBack>();
+    let callback = concrete.upcast::<dyn CallBack>();
     schema.bind_type(&"dispatch".into(), &callback).unwrap();
     let binding_count = callback.ref_count();
     let bound = schema.type_binding(&"dispatch".into()).unwrap();
@@ -258,10 +257,9 @@ fn custom_callback_binding_preserves_rtti_identity_and_virtual_dispatch() {
     assert_callback_runtime(&bound, &concrete);
     let copied_count = bound.ref_count();
     assert_eq!(copied_count, 4);
-    let transient = bound.get().unwrap().transient_base();
-    let this_matches = std::ptr::eq(transient.this().unwrap(), transient);
+    let this_matches = bound.view::<dyn Transient>().object_address() == concrete.object_address();
     let derived = bound.cast::<DispatchCallBack>();
-    let base = bound.cast::<StandardTransient>();
+    let base = bound.upcast::<dyn Transient>();
     let cast_count = bound.ref_count();
     let derived_matches = derived == concrete;
     let base_matches = base == bound;

@@ -30,8 +30,12 @@ pub(super) const TABLE_READ_01: &[ReadRow] = &[
         StepVisualAnnotationOccurrence,
         RwStepVisualRwAnnotationOccurrence
     ),
-    read_row!(11, StepReprMappedItem, RwStepReprRwMappedItem),
-    read_row!(12, StepVisualStyledItem, RwStepVisualRwStyledItem),
+    read_row!(11, StepVisualAnnotationText, RwStepReprRwMappedItem),
+    read_row!(
+        12,
+        StepVisualAnnotationTextOccurrence,
+        RwStepVisualRwStyledItem
+    ),
     read_row!(
         13,
         StepBasicApplicationContext,
@@ -263,7 +267,11 @@ pub(super) const TABLE_READ_01: &[ReadRow] = &[
         RwStepBasicRwDimensionalExponents
     ),
     read_row!(105, StepGeomDirection, RwStepGeomRwDirection),
-    read_row!(106, StepVisualStyledItem, RwStepVisualRwStyledItem),
+    read_row!(
+        106,
+        StepVisualAnnotationOccurrence,
+        RwStepVisualRwStyledItem
+    ),
     read_row!(
         107,
         StepVisualDraughtingCallout,
@@ -306,7 +314,7 @@ pub(super) const TABLE_READ_01: &[ReadRow] = &[
     ),
     read_row!(
         126,
-        StepBasicExternallyDefinedItem,
+        StepVisualExternallyDefinedTextFont,
         RwStepBasicRwExternallyDefinedItem
     ),
     read_row!(
@@ -503,7 +511,11 @@ pub(super) const TABLE_READ_01: &[ReadRow] = &[
         RwStepVisualRwPreDefinedCurveFont
     ),
     read_row!(211, StepVisualPreDefinedItem, RwStepVisualRwPreDefinedItem),
-    read_row!(213, StepVisualPreDefinedItem, RwStepVisualRwPreDefinedItem),
+    read_row!(
+        213,
+        StepVisualPreDefinedTextFont,
+        RwStepVisualRwPreDefinedItem
+    ),
     read_row!(
         214,
         StepVisualPresentationArea,

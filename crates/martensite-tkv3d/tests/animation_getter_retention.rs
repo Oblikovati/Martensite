@@ -18,8 +18,8 @@ impl GetterViewScene {
         let second = viewer.create_view().unwrap();
         Self {
             _viewer: viewer,
-            first_count: first.ref_count(),
-            second_count: second.ref_count(),
+            first_count: first.ref_count().try_into().unwrap(),
+            second_count: second.ref_count().try_into().unwrap(),
             first,
             second,
         }
@@ -76,10 +76,10 @@ fn target_observation(
         i32::from(alias.object_address() == scene.first.object_address()),
         i32::from(alias.object_address() == scene.second.object_address()),
         i32::from(source.target_view_ref().reference_address() == alias.reference_address()),
-        scene.first.ref_count() - scene.first_count,
-        scene.second.ref_count() - scene.second_count,
-        scene.first.ref_count(),
-        scene.second.ref_count(),
+        i32::try_from(scene.first.ref_count()).unwrap() - scene.first_count,
+        i32::try_from(scene.second.ref_count()).unwrap() - scene.second_count,
+        scene.first.ref_count().try_into().unwrap(),
+        scene.second.ref_count().try_into().unwrap(),
     ]
 }
 
@@ -155,8 +155,8 @@ fn endpoint_observation(
         frame,
         i32::from(aliases.0.is_null()),
         i32::from(aliases.1.is_null()),
-        first.ref_count(),
-        second.ref_count(),
+        first.ref_count().try_into().unwrap(),
+        second.ref_count().try_into().unwrap(),
         i32::from(aliases.0.reference_address() == source.camera_start_ref().reference_address()),
         i32::from(aliases.1.reference_address() == source.camera_end_ref().reference_address()),
     ]

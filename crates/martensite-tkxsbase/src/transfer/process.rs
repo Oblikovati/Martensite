@@ -43,8 +43,8 @@ pub(super) struct ProcessState<K: TransferProcessKind> {
 /// use martensite_tkxsbase::transfer::{TransferBinder, TransferProcessForTransient};
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let tp = TransferProcessForTransient::new(100);
-/// let ent = Handle::new(StandardTransient::default());
-/// tp.bind_transient(&ent, &Handle::new(StandardTransient::default())).unwrap();
+/// let ent = Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>();
+/// tp.bind_transient(&ent, &Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>()).unwrap();
 /// assert!(tp.is_bound(&ent) && tp.nb_mapped() == 1);
 /// ```
 pub struct TransferProcess<K: TransferProcessKind> {
@@ -296,7 +296,8 @@ impl<K: TransferProcessKind> TransferProcess<K> {
     }
     /// Binds a new void binder to an unmapped (masked) `start`: `Bind` cannot fail then.
     pub(super) fn bind_void(&self, start: &K::Start) -> Handle<dyn TransferBinder> {
-        let binder: Handle<dyn TransferBinder> = Handle::new(TransferVoidBinder::new()).cast();
+        let binder: Handle<dyn TransferBinder> =
+            Handle::new(TransferVoidBinder::new()).into_upcast();
         self.store_binder(start, &binder);
         binder
     }

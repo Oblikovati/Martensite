@@ -1,5 +1,8 @@
 //! Map-only ColoredShape transitions; the genuine AisShape caller owns presentation invalidation.
-use super::{AisColoredDrawer, AisShapeDrawerMap, shape_drawer_map::find_shape_drawer_node};
+use super::{
+    AisColoredDrawer, AisColoredDrawerSource, AisShapeDrawerMap,
+    shape_drawer_map::find_shape_drawer_node,
+};
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -10,13 +13,14 @@ impl AisShapeDrawerMap {
         &self,
         key: &Shape,
         link: &Handle<Prs3dDrawer>,
-    ) -> Result<(Handle<AisColoredDrawer>, bool), Failure> {
+    ) -> Result<(Handle<dyn AisColoredDrawerSource>, bool), Failure> {
         if let Some(value) = self.existing_drawer(key)?
             && !value.is_null()
         {
             return Ok((value, false));
         }
-        let drawer = Handle::new(AisColoredDrawer::new(link));
+        let drawer =
+            Handle::new(AisColoredDrawer::new(link)).into_upcast::<dyn AisColoredDrawerSource>();
         self.bind(key, &drawer)?;
         Ok((drawer, true))
     }
@@ -34,7 +38,8 @@ impl AisShapeDrawerMap {
         if unregister {
             return Ok(self.unbind(key));
         }
-        let drawer = Handle::new(AisColoredDrawer::new(link));
+        let drawer =
+            Handle::new(AisColoredDrawer::new(link)).into_upcast::<dyn AisColoredDrawerSource>();
         self.bind(key, &drawer)?;
         Ok(true)
     }
@@ -47,7 +52,10 @@ impl AisShapeDrawerMap {
         self.clear(false);
         true
     }
-    fn existing_drawer(&self, key: &Shape) -> Result<Option<Handle<AisColoredDrawer>>, Failure> {
+    fn existing_drawer(
+        &self,
+        key: &Shape,
+    ) -> Result<Option<Handle<dyn AisColoredDrawerSource>>, Failure> {
         let nodes = self.nodes.read();
         let Some(node) = find_shape_drawer_node(&nodes, key) else {
             return Ok(None);

@@ -21,7 +21,7 @@ impl AsciiString {
     ///
     /// A sequence whose announced continuation bytes run past the terminator would read
     /// allocation padding; the scan stops there instead.
-    pub fn useful_length(&self) -> i32 {
+    pub(crate) fn useful_length(&self) -> i32 {
         let bytes = self.as_bytes_with_nul();
         let (mut position, mut graphic_end) = (0, 0);
         while let Some((code, next)) = read_utf8(bytes, position) {

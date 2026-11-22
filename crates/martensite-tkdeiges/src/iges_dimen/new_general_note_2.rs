@@ -12,7 +12,8 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_array1_item;
 use crate::iges_dimen::IgesDimenNewGeneralNote;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
@@ -176,7 +177,7 @@ impl IgesDimenNewGeneralNote {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn char_set_entity(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn char_set_entity(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_char_set_entities,
             index,

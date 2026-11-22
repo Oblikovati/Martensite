@@ -23,11 +23,7 @@ impl DrawerValues<'_> {
         let source = observed.get().ok_or_else(|| {
             program_error("MeshVSTool drawer=null/expired: expected a live original drawer slot")
         })?;
-        let found = getter(
-            crate::drawer::registered_drawer(source)?,
-            key as i32,
-            &mut output,
-        );
+        let found = getter(source.owned_drawer(), key as i32, &mut output);
         Ok((found || self.defaults).then_some(output))
     }
 }

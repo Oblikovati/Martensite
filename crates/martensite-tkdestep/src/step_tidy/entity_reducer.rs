@@ -2,7 +2,9 @@
 //! are shared.
 use crate::step_entity::step_live;
 use martensite_tkernel::ncollection::{DataMap, HashPolicy};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped};
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
 use std::collections::HashSet;
 use std::fmt;
@@ -10,18 +12,18 @@ use std::fmt;
 /// `ReplacerFunction`: puts the new entity in the sharing entity; false when it did not hold the
 /// old one.
 pub type StepTidyReplacer<T> =
-    fn(&Handle<T>, &Handle<T>, &Handle<StandardTransient>) -> Result<bool, Failure>;
+    fn(&Handle<T>, &Handle<T>, &Handle<dyn Transient>) -> Result<bool, Failure>;
 
 /// The first entity of a class of duplicates, with the map's key type's `debug` satisfied.
-pub struct DuplicateKey<T: RuntimeTyped>(pub(super) Handle<T>);
+pub struct DuplicateKey<T: RuntimeTyped + TransientHandleTarget>(pub(super) Handle<T>);
 
-impl<T: RuntimeTyped> Clone for DuplicateKey<T> {
+impl<T: RuntimeTyped + TransientHandleTarget> Clone for DuplicateKey<T> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-impl<T: RuntimeTyped> fmt::Debug for DuplicateKey<T> {
+impl<T: RuntimeTyped + TransientHandleTarget> fmt::Debug for DuplicateKey<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}@{:?}", T::TYPE_NAME, self.0.object_address())
     }
@@ -31,7 +33,9 @@ impl<T: RuntimeTyped> fmt::Debug for DuplicateKey<T> {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct KeyPolicy<H>(H);
 
-impl<T: RuntimeTyped, H: HashPolicy<Handle<T>>> HashPolicy<DuplicateKey<T>> for KeyPolicy<H> {
+impl<T: RuntimeTyped + TransientHandleTarget, H: HashPolicy<Handle<T>>> HashPolicy<DuplicateKey<T>>
+    for KeyPolicy<H>
+{
     fn hash(&self, key: &DuplicateKey<T>) -> usize {
         self.0.hash(&key.0)
     }
@@ -41,13 +45,18 @@ impl<T: RuntimeTyped, H: HashPolicy<Handle<T>>> HashPolicy<DuplicateKey<T>> for 
 }
 
 /// `StepTidyEntityReducer<ProcessedType, ProcessedTypeHasher>`.
-pub struct StepTidyEntityReducer<T: RuntimeTyped, H: HashPolicy<Handle<T>> + Default> {
+pub struct StepTidyEntityReducer<
+    T: RuntimeTyped + TransientHandleTarget,
+    H: HashPolicy<Handle<T>> + Default,
+> {
     my_ws: Handle<XSControlWorkSession>,
     my_replacers: Vec<(&'static RuntimeType, StepTidyReplacer<T>)>,
     my_duplicates: DataMap<DuplicateKey<T>, Vec<Handle<T>>, KeyPolicy<H>>,
 }
 
-impl<T: RuntimeTyped, H: HashPolicy<Handle<T>> + Default> StepTidyEntityReducer<T, H> {
+impl<T: RuntimeTyped + TransientHandleTarget, H: HashPolicy<Handle<T>> + Default>
+    StepTidyEntityReducer<T, H>
+{
     /// `StepTidyEntityReducer(theWS)`.
     pub fn new(ws: &Handle<XSControlWorkSession>) -> Self {
         Self {
@@ -60,7 +69,7 @@ impl<T: RuntimeTyped, H: HashPolicy<Handle<T>> + Default> StepTidyEntityReducer<
     pub fn register_replacer(&mut self, kind: &'static RuntimeType, replacer: StepTidyReplacer<T>) {
         self.my_replacers.push((kind, replacer));
     }
-    fn replacer_of(&self, ent: &Handle<StandardTransient>) -> Option<StepTidyReplacer<T>> {
+    fn replacer_of(&self, ent: &Handle<dyn Transient>) -> Option<StepTidyReplacer<T>> {
         let kind = ent.dynamic_type()?;
         self.my_replacers
             .iter()
@@ -68,10 +77,7 @@ impl<T: RuntimeTyped, H: HashPolicy<Handle<T>> + Default> StepTidyEntityReducer<
             .map(|(_, replacer)| *replacer)
     }
     /// `get_sharings(ent)` of the session's graph; `None` when the graph has no such entity.
-    fn sharings_of(
-        &self,
-        ent: &Handle<T>,
-    ) -> Result<Option<Vec<Handle<StandardTransient>>>, Failure> {
+    fn sharings_of(&self, ent: &Handle<T>) -> Result<Option<Vec<Handle<dyn Transient>>>, Failure> {
         let session = step_live(&self.my_ws, "StepTidyEntityReducer")?;
         let hgraph = session.graph()?;
         let holder = step_live(&hgraph, "StepTidyEntityReducer")?.graph();
@@ -79,7 +85,7 @@ impl<T: RuntimeTyped, H: HashPolicy<Handle<T>> + Default> StepTidyEntityReducer<
     }
     /// `process_entity(entity)`: true when the entity is of the class. It is a duplicate
     /// candidate when every entity that shares it has a replacer.
-    pub fn process_entity(&mut self, entity: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn process_entity(&mut self, entity: &Handle<dyn Transient>) -> Result<bool, Failure> {
         let typed: Handle<T> = entity.cast();
         if typed.is_null() {
             return Ok(false);
@@ -101,7 +107,7 @@ impl<T: RuntimeTyped, H: HashPolicy<Handle<T>> + Default> StepTidyEntityReducer<
     /// `perform(replaced_entities)`: the addresses of the replaced entities are added.
     pub fn perform(
         &self,
-        replaced: &mut Vec<Handle<StandardTransient>>,
+        replaced: &mut Vec<Handle<dyn Transient>>,
         seen: &mut HashSet<usize>,
     ) -> Result<(), Failure> {
         for (key, duplicates) in self.my_duplicates.items() {
@@ -123,7 +129,7 @@ impl<T: RuntimeTyped, H: HashPolicy<Handle<T>> + Default> StepTidyEntityReducer<
         &self,
         old: &Handle<T>,
         new: &Handle<T>,
-        sharings: &[Handle<StandardTransient>],
+        sharings: &[Handle<dyn Transient>],
     ) -> Result<bool, Failure> {
         let mut all_replaced = true;
         for sharing in sharings {

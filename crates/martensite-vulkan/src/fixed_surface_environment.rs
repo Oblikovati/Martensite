@@ -97,7 +97,7 @@ mod tests {
     ) -> std::sync::Arc<SurfaceTextureImage> {
         let image = Handle::new(ImagePixMap::default());
         assert!(image.init_wrapper(format, Some(pixels.clone()), 1, 1, pixels.len()));
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()));
         crate::retained_texture_images::RetainedTextureImages::default()
             .snapshot(&texture.cast())
             .unwrap()

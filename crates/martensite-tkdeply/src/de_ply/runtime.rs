@@ -11,7 +11,7 @@ use martensite_tkernel::{
     tcollection::AsciiString,
 };
 
-impl_transient!(DePlyConfigurationNode, "DePlyConfigurationNode", dyn DeConfigurationNode, transient, interfaces: [dyn DeConfigurationNode]);
+impl_transient!(DePlyConfigurationNode, "DePlyConfigurationNode", dyn DeConfigurationNode, interfaces: [dyn DeConfigurationNode]);
 
 impl DeConfigurationNode for DePlyConfigurationNode {
     fn configuration_node_base(&self) -> &DeConfigurationNodeBase {

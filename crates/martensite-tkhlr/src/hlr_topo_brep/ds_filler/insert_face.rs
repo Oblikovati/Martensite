@@ -121,7 +121,8 @@ impl DSFiller {
     ) -> Result<ContourCurves, Failure> {
         match line.type_contour() {
             ContapIType::Lin => {
-                let c: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line.line()?)).cast();
+                let c: Handle<dyn GeomCurve> =
+                    Handle::new(GeomLine::from_lin(line.line()?)).into_upcast();
                 let c2d = if with_p_curve {
                     let s = BRepTool::surface(f)?;
                     curve2d_range_tolerance(&c, (first, last), &s, 1e-7)?.0
@@ -132,7 +133,7 @@ impl DSFiller {
             }
             ContapIType::Circle => {
                 let c: Handle<dyn GeomCurve> =
-                    Handle::new(GeomCircle::from_circ(line.circle()?)).cast();
+                    Handle::new(GeomCircle::from_circ(line.circle()?)).into_upcast();
                 let c2d = if with_p_curve {
                     curve2d_range_tolerance(&c, (first, last), &located_surface(f)?, 1e-7)?.0
                 } else {
@@ -184,7 +185,7 @@ fn located_surface(f: &Face) -> Result<Handle<dyn GeomSurface>, Failure> {
         .ok_or_else(|| super::null_object("the face surface"))?;
     Ok(surface
         .transformed(loc.transformation())?
-        .cast::<dyn GeomSurface>())
+        .into_cast::<dyn GeomSurface>())
 }
 
 // The edge of a contour part between `vf` (made FORWARD) and `vl` (made REVERSED),

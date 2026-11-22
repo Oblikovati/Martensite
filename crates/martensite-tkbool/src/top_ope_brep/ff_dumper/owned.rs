@@ -11,7 +11,6 @@ pub type TopOpeBRepFacesFillerContext = Arc<RwLock<TopOpeBRepFacesFiller<'static
 
 /// Handle-capable diagnostics with shared operation identity; `Handle::new(TopOpeBRepFFDumper::new(None))`.
 pub struct TopOpeBRepFFDumper {
-    parent: StandardTransient,
     state: Mutex<OwnedDiagnosticState>,
 }
 #[derive(Default)]
@@ -19,18 +18,12 @@ struct OwnedDiagnosticState {
     context: Option<TopOpeBRepFacesFillerContext>,
     cache: DiagnosticCache,
 }
-impl_transient!(
-    TopOpeBRepFFDumper,
-    "TopOpeBRepFFDumper",
-    StandardTransient,
-    parent
-);
+impl_transient!(TopOpeBRepFFDumper, "TopOpeBRepFFDumper", dyn Transient);
 
 impl TopOpeBRepFFDumper {
     /// Creates the native silent release configuration; `Self::new(None)` retains no filler.
     pub fn new(_context: Option<TopOpeBRepFacesFillerContext>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: Mutex::new(OwnedDiagnosticState::default()),
         }
     }

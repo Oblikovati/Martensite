@@ -6,7 +6,7 @@ mod modifications;
 mod upgrade;
 
 use super::{
-    ShapeProcess, ShapeProcessContext, ShapeProcessOperFunc, ShapeProcessOperator,
+    ShapeProcess, ShapeProcessContextSource, ShapeProcessOperFunc, ShapeProcessOperator,
     ShapeProcessShapeContext, ShapeProcessShapeMap, ShapeProcessUOperator,
 };
 use crate::shape_extend::{ShapeExtend, ShapeExtendMsgRegistrator};
@@ -146,8 +146,10 @@ impl ShapeProcessOperLibrary {
 }
 
 /// Require a shape-processing context before running an operator.
-fn shape_context(context: &Handle<ShapeProcessContext>) -> Handle<ShapeProcessShapeContext> {
-    context.cast::<ShapeProcessShapeContext>()
+fn shape_context(
+    context: &Handle<dyn ShapeProcessContextSource>,
+) -> Handle<ShapeProcessShapeContext> {
+    context.downcast()
 }
 
 /// A new message registrator when the context keeps messages, else a null one.

@@ -2,23 +2,23 @@
 use super::MeshContext;
 use martensite_tkernel::{
     impl_transient,
-    message::{Algorithm, ProgressRange, ProgressScope, Status},
+    message::{AlgorithmSource, AlgorithmState, ProgressRange, ProgressScope, Status},
     standard::{Handle, RuntimeTyped, SharedState},
 };
 
 /// Native orchestration over an assigned context; `MeshBuilder::with_context(&context)`.
 pub struct MeshBuilder {
-    algorithm: Algorithm,
+    algorithm: AlgorithmState,
     context: SharedState<Handle<dyn MeshContext>>,
 }
-impl_transient!(MeshBuilder, "IMeshTools_MeshBuilder", Algorithm, algorithm);
+impl_transient!(MeshBuilder, "IMeshTools_MeshBuilder", dyn AlgorithmSource, interfaces: [dyn AlgorithmSource]);
 impl Default for MeshBuilder {
     fn default() -> Self {
         Self::with_context(&Handle::default())
     }
 }
 impl std::ops::Deref for MeshBuilder {
-    type Target = Algorithm;
+    type Target = AlgorithmState;
     fn deref(&self) -> &Self::Target {
         &self.algorithm
     }
@@ -31,7 +31,7 @@ impl MeshBuilder {
     /// Retain the supplied context; `MeshBuilder::with_context(&context)`.
     pub fn with_context(context: &Handle<dyn MeshContext>) -> Self {
         Self {
-            algorithm: Algorithm::with_runtime_type(Self::static_type()),
+            algorithm: AlgorithmState::with_runtime_type(Self::static_type()),
             context: SharedState::new(context.clone()),
         }
     }
@@ -93,5 +93,11 @@ impl MeshBuilder {
             return Status::WARN1;
         }
         Status::FAIL2
+    }
+}
+
+impl AlgorithmSource for MeshBuilder {
+    fn algorithm_state(&self) -> &AlgorithmState {
+        &self.algorithm
     }
 }

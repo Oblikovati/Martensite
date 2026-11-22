@@ -5,7 +5,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::*;
 use martensite_tkservice::graphic3d::*;
 type Presentation = Handle<dyn Graphic3dStructureSource>;
-type Array = Handle<Graphic3dArrayOfPrimitives>;
+type Array = Handle<dyn Graphic3dArraySource>;
 pub(super) fn light_group(
     prs: &Presentation,
     aspect: Handle<dyn Graphic3dAspectsSource>,
@@ -25,7 +25,7 @@ pub(super) fn light_point(
 ) -> Result<(), Failure> {
     let points = Handle::new(Graphic3dArrayOfPoints::new(1, GRAPHIC3D_ARRAY_FLAGS_NONE)?);
     points.add_vertex_pnt(&point)?;
-    light_group(prs, aspect, &points.cast(), false)
+    light_group(prs, aspect, &points.into_upcast(), false)
 }
 pub(super) fn light_sphere<O: AisLightSourceSource + ?Sized>(
     object: &O,
@@ -41,7 +41,7 @@ pub(super) fn light_sphere<O: AisLightSourceSource + ?Sized>(
     light_group(
         prs,
         object.attributes().shading_aspect().aspect().cast(),
-        &array.cast(),
+        &array.into_upcast(),
         true,
     )
 }
@@ -105,8 +105,9 @@ fn spot_lines<O: AisLightSourceSource + ?Sized>(
     )?);
     lines.add_vertex_pnt(&Point3::default())?;
     lines.add_vertex_pnt(&Point3::new(0.0, 0.0, -distance))?;
-    light_group(prs, light_shadow_aspect(object), &lines.cast(), true)?;
-    light_group(prs, light_arrow_aspect(object), &lines.cast(), true)
+    let lines = lines.into_upcast();
+    light_group(prs, light_shadow_aspect(object), &lines, true)?;
+    light_group(prs, light_arrow_aspect(object), &lines, true)
 }
 fn spot_cone<O: AisLightSourceSource + ?Sized>(
     object: &O,
@@ -117,7 +118,7 @@ fn spot_cone<O: AisLightSourceSource + ?Sized>(
     light_group(
         prs,
         object.attributes().shading_aspect().aspect().cast(),
-        &array.cast(),
+        &array.into_upcast(),
         true,
     )
 }

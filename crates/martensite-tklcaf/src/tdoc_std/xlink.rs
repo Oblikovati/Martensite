@@ -10,9 +10,7 @@ use crate::tdf::{
 use martensite_tkcdf::cdm::CdmDocumentReferences;
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Guid, Handle, RuntimeTyped, SharedState, StandardTransient, WeakHandle, exceptions,
-    },
+    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState, WeakHandle, exceptions},
     tcollection::AsciiString,
 };
 use std::io;
@@ -33,11 +31,10 @@ struct XLinkState {
 /// `TDocStd_XLink`; `TDocStdXLink::set(&label)`.
 #[derive(Default)]
 pub struct TDocStdXLink {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<XLinkState>,
 }
-impl_transient!(TDocStdXLink, "TDocStd_XLink", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDocStdXLink, "TDocStd_XLink", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TDocStdXLink {
     /// `GetID`.
@@ -55,7 +52,7 @@ impl TDocStdXLink {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `Update`: sets a `TDF_Reference` on the link's label to the linked label of the
@@ -63,8 +60,9 @@ impl TDocStdXLink {
     pub fn update(&self) -> Result<Handle<TdfReference>, Failure> {
         let entry = self.document_entry().integer_value()?;
         let own = TDocStdDocument::get(&self.label())?;
-        let referenced: Handle<TDocStdDocument> =
-            live(&own, "TDocStd_XLink::Update")?.document(entry)?.cast();
+        let referenced: Handle<TDocStdDocument> = live(&own, "TDocStd_XLink::Update")?
+            .document(entry)?
+            .into_downcast();
         let data = live(&referenced, "TDocStd_XLink::Update")?.get_data();
         let mut target = TdfLabel::default();
         TdfTool::label_from_entry(&data, &self.label_entry(), &mut target, false)?;
@@ -105,7 +103,7 @@ impl TDocStdXLink {
         self.state.read().next.clone()
     }
     fn this_link(&self) -> Result<Handle<TDocStdXLink>, Failure> {
-        Ok(self.base.this()?.cast())
+        Ok(self.base.this()?.into_downcast())
     }
 }
 
@@ -170,12 +168,12 @@ impl TdfAttribute for TDocStdXLink {
         let copy = Self::new();
         copy.set_document_entry(&self.document_entry())?;
         copy.set_label_entry(&self.label_entry())?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// `Restore`: the entries of another link (nothing for another type).
     fn restore(&self, with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
         let Some(other) = with
-            .cast::<TDocStdXLink>()
+            .downcast::<TDocStdXLink>()
             .get()
             .map(|o| (o.document_entry(), o.label_entry()))
         else {
@@ -187,7 +185,7 @@ impl TdfAttribute for TDocStdXLink {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste`: the entries into another link (nothing for another type).
     fn paste(
@@ -195,7 +193,7 @@ impl TdfAttribute for TDocStdXLink {
         into: &Handle<dyn TdfAttribute>,
         _table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target = into.cast::<TDocStdXLink>();
+        let target = into.downcast::<TDocStdXLink>();
         let Some(target) = target.get() else {
             return Ok(());
         };
@@ -211,11 +209,10 @@ impl TdfAttribute for TDocStdXLink {
 /// `TDocStd_XLinkRoot`: the head of the link list of a framework, on its root.
 #[derive(Default)]
 pub struct TDocStdXLinkRoot {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     first: SharedState<WeakHandle<TDocStdXLink>>,
 }
-impl_transient!(TDocStdXLinkRoot, "TDocStd_XLinkRoot", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDocStdXLinkRoot, "TDocStd_XLinkRoot", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TDocStdXLinkRoot {
     /// `GetID`.
@@ -230,7 +227,7 @@ impl TDocStdXLinkRoot {
             return Ok(found);
         }
         let created = Handle::new(Self::default());
-        root.add_attribute(&created.cast(), true)?;
+        root.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `Insert(anXLinkPtr)`: at the head of the list (the order is not significant).
@@ -288,14 +285,14 @@ impl TdfAttribute for TDocStdXLinkRoot {
     }
     /// `BackupCopy`: an empty root (does nothing).
     fn backup_copy(&self) -> Result<Handle<dyn TdfAttribute>, Failure> {
-        Ok(Handle::new(Self::default()).cast())
+        Ok(Handle::new(Self::default()).into_upcast())
     }
     /// `Restore`: does nothing.
     fn restore(&self, _with: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::default()).cast()
+        Handle::new(Self::default()).into_upcast()
     }
     /// `Paste`: does nothing.
     fn paste(

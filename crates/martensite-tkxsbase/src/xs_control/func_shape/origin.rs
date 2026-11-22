@@ -10,7 +10,7 @@ use crate::xs_control::{XSControlConnectedShapes, XSControlTransferReader, XSCon
 use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkernel::{
     message::{Message, MessageStream},
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::toploc::Location;
@@ -47,7 +47,7 @@ struct FromShape {
 /// `StandardNullObject` without model (a native null dereference).
 fn print_entity(
     ws: &XSControlWorkSession,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     sout: &mut MessageStream<'_>,
 ) -> Result<(), Failure> {
     let model = ws.model();
@@ -106,11 +106,14 @@ pub(super) fn fromshape(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     Ok(RetVoid)
 }
 
+// The recorded entity and its origin mode.
+type ShapeOrigin = (Handle<dyn Transient>, i32);
+
 /// The entity of a shape result: as recorded (1), else as last transferred (-1).
 fn entity_of_result(
     reader: &XSControlTransferReader,
     shape: &Shape,
-) -> Result<(Handle<StandardTransient>, i32), Failure> {
+) -> Result<ShapeOrigin, Failure> {
     let ent = reader.entity_from_shape_result(shape, 1)?;
     if ent.is_some() {
         return Ok((ent, 1));
@@ -124,7 +127,7 @@ fn search_map(
     process: &TransferTransientProcess,
     tp: &Handle<TransferTransientProcess>,
     req: &FromShape,
-) -> Result<Option<(Handle<StandardTransient>, i32)>, Failure> {
+) -> Result<Option<ShapeOrigin>, Failure> {
     let s0 = req.shape.located(&Location::default(), false)?;
     for i in 1..=process.nb_mapped() {
         let ent = process.mapped(i)?;

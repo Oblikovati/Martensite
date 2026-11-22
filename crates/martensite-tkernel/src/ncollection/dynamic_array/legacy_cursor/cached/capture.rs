@@ -2,7 +2,7 @@ use super::{DynamicArray, DynamicArrayCachedIterator, DynamicArrayIterator, Fail
 impl<T> DynamicArrayCachedIterator<T, false> {
     /// Captures a shared pointer and iteration-end snapshot; no Clone bound is required.
     /// `let cursor = DynamicArrayCachedIterator::from_shared(&array, 0)?;`.
-    pub fn from_shared(array: &DynamicArray<T>, index: usize) -> Result<Self, Failure> {
+    pub(crate) fn from_shared(array: &DynamicArray<T>, index: usize) -> Result<Self, Failure> {
         let position = DynamicArrayIterator::new(array, index);
         let (current, block_end) = capture_shared(array, index, position.end)?;
         Ok(Self {
@@ -15,7 +15,7 @@ impl<T> DynamicArrayCachedIterator<T, false> {
 impl<T> DynamicArrayCachedIterator<T, true> {
     /// Captures writable raw provenance without retaining an exclusive container borrow.
     /// `let cursor = DynamicArrayCachedIterator::from_mutable(&mut array, 0)?;`.
-    pub fn from_mutable(array: &mut DynamicArray<T>, index: usize) -> Result<Self, Failure> {
+    pub(crate) fn from_mutable(array: &mut DynamicArray<T>, index: usize) -> Result<Self, Failure> {
         let position = DynamicArrayIterator::new(array, index);
         let (current, block_end) = capture_mutable(array, index, position.end)?;
         Ok(Self {

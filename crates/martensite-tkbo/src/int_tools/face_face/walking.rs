@@ -58,7 +58,7 @@ impl FaceFace {
             if self.approximation[index + 1] {
                 *pcurve =
                     GeomIntIntSS::make_bspline2d(&part.line, part.first, part.last, index == 0)?
-                        .cast();
+                        .into_upcast();
             }
         }
         let curve = match early {
@@ -154,7 +154,7 @@ impl FaceFace {
         let mut parts = Vec::new();
         if decomposed {
             for line in lines {
-                let line = line.cast::<IntPatchWLine>();
+                let line = line.downcast::<IntPatchWLine>();
                 let last = line.nb_pnts()?;
                 parts.push(WalkingPart {
                     line,

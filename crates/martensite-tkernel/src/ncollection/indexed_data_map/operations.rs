@@ -45,7 +45,8 @@ impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
 }
 impl<K: Debug, V: Clone, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
     /// Copies a found value into the output, preserving it when absent; `map.find_copy(&42,&mut value)`.
-    pub fn find_copy(&self, key: &K, output: &mut V) -> bool {
+    #[cfg(test)]
+    pub(crate) fn find_copy(&self, key: &K, output: &mut V) -> bool {
         let Some(value) = self.seek(key) else {
             return false;
         };
@@ -55,7 +56,7 @@ impl<K: Debug, V: Clone, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
 }
 impl<K: Debug + Clone, V: Clone, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
     /// Copies bindings while retaining destination policy and allocator; `map.assign(&source)`.
-    pub fn assign(&mut self, source: &Self) -> &mut Self {
+    pub(crate) fn assign(&mut self, source: &Self) -> &mut Self {
         self.clear(false);
         if source.is_empty() {
             return self;
@@ -83,7 +84,13 @@ impl<K: Debug + Clone, V: Clone, H: HashPolicy<K> + Clone> Clone for IndexedData
 
 impl<K: Debug + Clone, V: Clone, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
     /// Assigns key then item into an existing binding; `map.substitute_ref(1,&7,&42)?`.
-    pub fn substitute_ref(&mut self, index: usize, key: &K, value: &V) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn substitute_ref(
+        &mut self,
+        index: usize,
+        key: &K,
+        value: &V,
+    ) -> Result<(), Failure> {
         let place = self
             .storage
             .prepare_substitute(index, key, &self.hasher, "IndexedDataMap")?;

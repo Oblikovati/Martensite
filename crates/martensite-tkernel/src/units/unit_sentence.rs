@@ -4,10 +4,10 @@ use super::context::Units;
 use super::quantity::Quantity;
 use super::sentence::Sentence;
 use super::support::{CHANGE_VALUE, edit, item, length, object};
-use super::token::Token;
 use super::unit::UnitHandle;
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle};
+use crate::units::TokenObject;
 use std::ops::{Deref, DerefMut};
 
 mod analyse;
@@ -64,7 +64,7 @@ impl UnitSentence {
     }
     /// Binds `unit` wherever its symbol names an unresolved word; true when no
     /// unresolved word was left unmatched (`istheend`).
-    fn bind_unit(&self, unit: &Handle<super::unit::Unit>) -> Result<bool, Failure> {
+    fn bind_unit(&self, unit: &Handle<dyn crate::units::UnitObject>) -> Result<bool, Failure> {
         let tokens = self.sequence();
         let mut complete = true;
         for index in 1..=length(&tokens)? {
@@ -75,7 +75,7 @@ impl UnitSentence {
             }
             let symbol = current.word();
             if object(unit, "Units_UnitSentence::SetUnits")?.is_equal(symbol.as_bytes())? {
-                let token: Handle<Token> = unit.token()?;
+                let token: Handle<dyn TokenObject> = unit.token()?;
                 edit(&tokens, CHANGE_VALUE, |items| items.set_value(index, token))?;
             } else {
                 complete = false;

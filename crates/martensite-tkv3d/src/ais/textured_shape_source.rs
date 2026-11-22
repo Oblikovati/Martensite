@@ -5,7 +5,7 @@ use martensite_tkernel::{
     standard::{Failure, HandleReference},
     tcollection::AsciiString,
 };
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::ImagePixMapObject;
 
 /// Native subclassable texture-source operations; `object.set_texture_file_name(&file)?`.
 pub trait AisTexturedShapeSource: AisShapeSource {
@@ -17,7 +17,7 @@ pub trait AisTexturedShapeSource: AisShapeSource {
         super::textured_shape_sources::ais_textured_shape_set_texture_file_name(self, file)
     }
     /// Retain the exact pixmap without changing its row-order flag; `object.set_texture_pix_map(&pixmap)`.
-    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<ImagePixMap>) {
+    fn set_texture_pix_map(&self, pixmap: &dyn HandleReference<dyn ImagePixMapObject>) {
         // Forward the exact handle rather than copying image contents.
         super::textured_shape_sources::ais_textured_shape_set_texture_pix_map(self, pixmap);
     }
@@ -29,11 +29,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisTexturedShapeSource {
         // Genuine source casts share the concrete class descriptor and its AisShape parent.
         <super::AisTexturedShape as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Retain application subclass overrides through the actual interface projection.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisTexturedShapeSource);
 
 /// Native nonvirtual getters/operations shared by concrete classes and application subclasses.
 /// Example: `object.texture_pix_map().read().object_address()` inspects the live handle field.
@@ -58,10 +55,11 @@ pub trait AisTexturedShapeMembers: AisTexturedShapeSource {
         let mut fields = self.textured_shape_base().fields.write();
         fields.map_texture = false;
     }
-    /// Borrow the actual current filename allocation; `object.texture_file().read()?.as_bytes()`.
-    fn texture_file(&self) -> super::AisTexturedShapeFileRef {
-        // Capture once, so later allocation replacement cannot silently retarget an old alias.
-        super::AisTexturedShapeFileRef::new(&self.textured_shape_base().fields)
+    /// Copy the current native filename prefix for use outside the field's read scope.
+    /// Example: `let filename = object.texture_file();`.
+    fn texture_file(&self) -> std::ffi::CString {
+        let fields = self.textured_shape_base().fields.read();
+        native_textured_cstring(&fields.texture_file).to_owned()
     }
     /// Borrow genuine native handle storage across assignments; `let source=object.texture_pix_map(); object.set_texture_pix_map(&next);`.
     fn texture_pix_map(&self) -> super::textured_shape_pixmap_ref::AisTexturedShapePixMapRef<'_> {
@@ -98,13 +96,8 @@ pub trait AisTexturedShapeMembers: AisTexturedShapeSource {
 impl<T: AisTexturedShapeSource + ?Sized> AisTexturedShapeMembers for T {}
 
 // Native TextureFile and the file constructor both consume myTextureFile.ToCString().
-pub(super) fn native_textured_cstring_prefix(
+pub(super) fn native_textured_cstring(
     file: &martensite_tkernel::tcollection::AsciiString,
-) -> &[u8] {
-    let bytes = file.as_bytes();
-    let end = bytes
-        .iter()
-        .position(|byte| *byte == 0)
-        .unwrap_or(bytes.len());
-    &bytes[..end]
+) -> &std::ffi::CStr {
+    std::ffi::CStr::from_bytes_until_nul(file.as_bytes_with_nul()).unwrap_or(c"")
 }

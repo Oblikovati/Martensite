@@ -1,5 +1,6 @@
 //! The members of `TopOpeBRepDSFaceInterferenceTool`.
 use super::*;
+use crate::top_ope_brep_ds::InterferenceRecord;
 
 /// The UV of the point of the edge on the face: on its pcurve when `on_face`, else
 /// (or failing) by projection; StandardProgramError when both fail.
@@ -49,7 +50,7 @@ impl<'a> TopOpeBRepDSFaceInterferenceTool<'a> {
         ffi: &Shape,
         ee: &Shape,
         ee_is_new: bool,
-        iin: &Handle<TopOpeBRepDSInterference>,
+        iin: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         let i = ssi(iin);
         let Some(ii) = i.get() else {
@@ -117,7 +118,7 @@ impl<'a> TopOpeBRepDSFaceInterferenceTool<'a> {
         fft: &Shape,
         ee: &Shape,
         ee_is_new: bool,
-        iin: &Handle<TopOpeBRepDSInterference>,
+        iin: &Handle<dyn InterferenceRecord>,
     ) -> Result<(), Failure> {
         let i = ssi(iin);
         if i.is_null() {
@@ -128,7 +129,7 @@ impl<'a> TopOpeBRepDSFaceInterferenceTool<'a> {
         if !e.is_same(&self.my_edge) {
             return Err(raise());
         }
-        let i: Handle<TopOpeBRepDSInterference> = i.cast();
+        let i: Handle<dyn InterferenceRecord> = i.cast();
         if !self.myrefdef {
             return self.init(&fi, &e, ee_is_new, &i);
         }
@@ -160,14 +161,14 @@ impl<'a> TopOpeBRepDSFaceInterferenceTool<'a> {
         &mut self,
         _e: &Shape,
         _c: &TopOpeBRepDSCurve,
-        _i: &Handle<TopOpeBRepDSInterference>,
+        _i: &Handle<dyn InterferenceRecord>,
     ) {
     }
 
     /// `Transition(I)`: the transition of `i` set to IN/IN (INTERNAL face), OUT/OUT
     /// (EXTERNAL) or the accumulated states with the reference face as support
     /// (complemented after an opposite `Init`); `t.transition(&i)?`.
-    pub fn transition(&self, i: &Handle<TopOpeBRepDSInterference>) -> Result<(), Failure> {
+    pub fn transition(&self, i: &Handle<dyn InterferenceRecord>) -> Result<(), Failure> {
         let ii = iref(i)?;
         let face = ShapeEnum::Face;
         match self.my_face_orientation {

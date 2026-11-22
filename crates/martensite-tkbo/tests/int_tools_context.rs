@@ -132,9 +132,9 @@ fn context_compute_face_rejects_on_boundary_after_writing_outputs() {
     assert_eq!((u, v, tolerance), (0., 1., 1e-7));
 }
 fn trimmed_line() -> Handle<dyn GeomCurve> {
-    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).into_cast();
+    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(Axis1::default())).into_upcast();
     let trimmed: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(&line, 2., 4., true, true).unwrap()).into_cast();
+        Handle::new(GeomTrimmedCurve::new(&line, 2., 4., true, true).unwrap()).into_upcast();
     trimmed
 }
 #[test]

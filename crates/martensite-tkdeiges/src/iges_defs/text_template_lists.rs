@@ -13,14 +13,12 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransie
 /// assert!(lists.value(2).unwrap().is_null());
 /// ```
 pub struct IgesDefsHArray1OfHArray1OfTextDisplayTemplate {
-    base: StandardTransient,
     lists: SharedState<Array1<'static, Handle<HArray1<Handle<IgesGraphTextDisplayTemplate>>>>>,
 }
 impl_transient!(
     IgesDefsHArray1OfHArray1OfTextDisplayTemplate,
     "IgesDefsHArray1OfHArray1OfTextDisplayTemplate",
-    StandardTransient,
-    base
+    StandardTransient
 );
 
 impl IgesDefsHArray1OfHArray1OfTextDisplayTemplate {
@@ -32,7 +30,6 @@ impl IgesDefsHArray1OfHArray1OfTextDisplayTemplate {
         let lists = Array1::with_bounds(low, up)
             .map_err(|error| error.into_failure("IgesDefsHArray1OfHArray1OfTextDisplayTemplate"))?;
         Ok(Self {
-            base: StandardTransient::default(),
             lists: SharedState::new(lists),
         })
     }

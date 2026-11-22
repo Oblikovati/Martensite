@@ -36,7 +36,7 @@ fn replay_live_compound(shaded: bool) -> String {
     let map = Arc::new(AisColoredDrawerCompounds::default());
     let drawer = live_compound_drawer();
     map.add(
-        &Handle::new(AisColoredDrawer::new(&drawer)),
+        &Handle::new(AisColoredDrawer::new(&drawer)).into_upcast::<dyn AisColoredDrawerSource>(),
         &fixture.original,
     )
     .unwrap();

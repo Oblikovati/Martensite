@@ -2,9 +2,9 @@
 use super::{
     Diagnostics, iges_file_read, iges_file_read_stream, iges_file_read_stream_with, parse_records,
 };
+use crate::iges_data::IgesDataUndefinedEntitySource;
 use crate::iges_data::{
-    IgesDataIgesEntity, IgesDataIgesWriter, IgesDataProtocol, IgesDataUndefinedEntity,
-    iges_data_init, iges_data_protocol,
+    IgesDataIgesEntity, IgesDataIgesWriter, IgesDataProtocol, iges_data_init, iges_data_protocol,
 };
 use crate::iges_data::{IgesDataIgesModel, IgesDataProtocolOps};
 use crate::iges_file::structure::IgesFileParam;
@@ -70,7 +70,7 @@ fn an_unknown_entity_keeps_its_parameters_and_directory() {
     let live = model.get().unwrap();
     assert_eq!(live.nb_entities(), 1);
     let entity = live.entity(1);
-    let undefined = entity.cast::<IgesDataUndefinedEntity>();
+    let undefined = entity.cast::<dyn IgesDataUndefinedEntitySource>();
     let body = undefined.get().unwrap();
     assert_eq!(body.type_number(), 5001);
     assert_eq!(body.form_number(), 7);
@@ -195,7 +195,7 @@ fn check_real_file_goes_round(name: &str) {
     let mut first = Vec::new();
     for rank in 1..=live.nb_entities() {
         let entity = live.entity(rank);
-        unknown += i32::from(entity.cast::<IgesDataUndefinedEntity>().is_some());
+        unknown += i32::from(entity.cast::<dyn IgesDataUndefinedEntitySource>().is_some());
         first.push(signature(entity.get().unwrap()));
     }
     let mut writer = IgesDataIgesWriter::new(&model);

@@ -305,9 +305,9 @@ impl GeomFillSweepSectionGenerator {
         let (pref, d1ref) = path.d1(path.first_parameter())?;
         let circle_axis = Axis2::new(pref, Direction3::from_vector(d1ref)?)?;
         let circle: Handle<dyn GeomCurve> =
-            Handle::new(GeomCircle::new(circle_axis, self.my_radius)?).cast();
+            Handle::new(GeomCircle::new(circle_axis, self.my_radius)?).into_upcast();
         let circ: Handle<dyn GeomCurve> =
-            Handle::new(GeomTrimmedCurve::new(&circle, 0.0, 2.0 * PI, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&circle, 0.0, 2.0 * PI, true, true)?).into_upcast();
         self.my_first_sect = curve_to_bspline_curve(&circ, ParameterisationType::QuasiAngular)?;
         Ok(())
     }

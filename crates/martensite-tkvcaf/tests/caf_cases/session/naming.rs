@@ -9,7 +9,7 @@ use martensite_tkcaf::tnaming::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::ExtendedString;
 use martensite_tkg3d::top_abs::{ShapeEnum, shape_orientation_to_string, shape_type_to_string};
 use martensite_tklcaf::guid_from_text;
@@ -299,10 +299,9 @@ impl CafSession {
 /// The box computation behind `ComputeFun` of a box function.
 #[derive(Default)]
 struct CaseBoxDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(CaseBoxDriver, "DNamingBoxDriver", dyn TFunctionDriver, transient,
+impl_transient!(CaseBoxDriver, "DNamingBoxDriver", dyn TFunctionDriver,
     interfaces: [dyn TFunctionDriver]);
 
 fn real_argument(function: &Handle<TFunctionFunction>, position: i32) -> Result<f64, Failure> {

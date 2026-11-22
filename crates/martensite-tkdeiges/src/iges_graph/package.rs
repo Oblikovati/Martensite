@@ -83,7 +83,7 @@ fn case_iges(typenum: i32, formnum: i32) -> i32 {
     return 0;
 }
 
-fn category(_cn: i32, _ent: &Handle<martensite_tkernel::standard::StandardTransient>) -> i32 {
+fn category(_cn: i32, _ent: &Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
     return InterfaceCategory::number("Drawing");
 }
 

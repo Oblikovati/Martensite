@@ -1,6 +1,6 @@
 //! Native iterator links observe original clipping nodes rather than an owning Vec snapshot.
 use super::clip_sequence_storage::ClipPlaneNodeLease;
-use super::{Graphic3dClipPlane, Graphic3dClipPlaneSequenceSource, Graphic3dSequenceOfHClipPlane};
+use super::{Graphic3dClipPlaneSequenceSource, Graphic3dSequenceOfHClipPlane};
 use martensite_tkernel::ncollection::{Sequence, SequenceNativeCursor};
 use martensite_tkernel::standard::{
     Failure, Handle, HandleReference, RuntimeTyped, SharedState, exceptions::no_such_object,
@@ -84,11 +84,9 @@ impl Graphic3dSequenceOfHClipPlaneIterator {
         Ok(field.storage_lease())
     }
     /// Explicitly owning convenience snapshot, null at end; `iterator.value()`.
-    pub fn value(&self) -> Handle<Graphic3dClipPlane> {
-        self.value_ref().map_or_else(
-            |_| Handle::default(),
-            |field| field.observe().observe_as::<Graphic3dClipPlane>().clone(),
-        )
+    pub fn value(&self) -> Handle<dyn super::Graphic3dClipPlaneSource> {
+        self.value_ref()
+            .map_or_else(|_| Handle::default(), |field| field.observe().into_handle())
     }
 }
 fn missing_clip_cursor() -> Failure {

@@ -2,6 +2,7 @@
 use crate::standard::Failure;
 mod access;
 mod legacy;
+#[cfg(test)]
 mod pointers;
 mod validation;
 use validation::access_failure;
@@ -63,7 +64,8 @@ impl<'a> AliasedArray<'a> {
         self.count
     }
     /// Return the signed length; `array.length()`.
-    pub fn length(&self) -> i32 {
+    #[cfg(test)]
+    pub(crate) fn length(&self) -> i32 {
         self.count as i32
     }
     /// Check zero length; `array.is_empty()`.
@@ -99,7 +101,7 @@ impl<'a> AliasedArray<'a> {
         self
     }
     /// Return logical byte length, excluding alignment padding; `array.size_bytes()`.
-    pub fn size_bytes(&self) -> usize {
+    pub(crate) fn size_bytes(&self) -> usize {
         self.stride * self.count
     }
     /// Reallocate unless the element count is unchanged; `array.resize(4, true)?`.
@@ -141,7 +143,8 @@ impl<'a> AliasedArray<'a> {
         Ok(self)
     }
     /// Preserve the destination for self-assignment and self-move; `array.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
     fn bytes(&self) -> &[u8] {

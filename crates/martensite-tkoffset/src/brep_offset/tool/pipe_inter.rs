@@ -265,7 +265,7 @@ fn located_trimmed_curve(cur_e: &Edge) -> Result<Option<Handle<dyn GeomCurve>>, 
         true,
         true,
     )?)
-    .cast();
+    .into_upcast();
     if !found.location.is_identity() {
         live(&c, "curve")?.transform(found.location.transformation())?;
     }
@@ -277,7 +277,7 @@ fn untrimmed_plane(s: Handle<dyn GeomSurface>) -> Result<Handle<dyn GeomSurface>
     if !s.is_instance_name("Geom_RectangularTrimmedSurface") {
         return Ok(s);
     }
-    let rts = s.clone().cast::<GeomRectangularTrimmedSurface>();
+    let rts = s.downcast::<GeomRectangularTrimmedSurface>();
     let basis = live(&rts, "surface")?.basis_surface();
     if basis.is_instance_name("Geom_Plane") {
         return Ok(basis);

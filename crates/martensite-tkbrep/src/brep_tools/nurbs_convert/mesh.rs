@@ -6,7 +6,6 @@ use super::helpers::{
     new_uv,
 };
 use crate::brep::BRepTool;
-use crate::brep_tools::modification::BRepToolsModification;
 use crate::topods::{Edge, Face};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
@@ -22,10 +21,7 @@ impl NurbsConvertModification {
         face: &Face,
         triangulation: &mut Handle<Triangulation>,
     ) -> Result<bool, Failure> {
-        if !self
-            .copy_modification()
-            .new_triangulation(face, triangulation)?
-        {
+        if !self.copy_options().new_triangulation(face, triangulation)? {
             return Ok(false);
         }
         let Some(mesh) = triangulation.get().filter(|m| m.has_uv_nodes()) else {
@@ -55,7 +51,7 @@ impl NurbsConvertModification {
         edge: &Edge,
         polygon: &mut Handle<Polygon3D>,
     ) -> Result<bool, Failure> {
-        if !self.copy_modification().new_polygon(edge, polygon)? {
+        if !self.copy_options().new_polygon(edge, polygon)? {
             return Ok(false);
         }
         let Some(copy) = polygon.get().filter(|p| p.has_parameters()) else {
@@ -89,7 +85,7 @@ impl NurbsConvertModification {
         polygon: &mut Handle<PolygonOnTriangulation>,
     ) -> Result<bool, Failure> {
         if !self
-            .copy_modification()
+            .copy_options()
             .new_polygon_on_triangulation(edge, face, polygon)?
         {
             return Ok(false);

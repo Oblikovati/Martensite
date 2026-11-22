@@ -57,7 +57,7 @@ impl<'a, T, const N: usize> MatrixViewMut<'a, T, N> {
     }
 
     /// Borrows an element by row and column, as `view.element(1, 2)`.
-    pub fn element(&self, row: usize, column: usize) -> &T {
+    pub(crate) fn element(&self, row: usize, column: usize) -> &T {
         &self.elements[flat_index::<N>(row, column)]
     }
 

@@ -328,7 +328,7 @@ impl ChFi3dBuilder {
     /// Whether a side of the fillet shrinks to a point at the vertex, and the iso it lies
     /// on.
     fn at_end_shrink(&self, ae: &mut AtEnd) -> Result<(), Failure> {
-        let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.clone().cast();
+        let hgs: Handle<dyn Adaptor3dSurface> = ae.hgs.upcast();
         let s = hgs
             .get()
             .ok_or_else(|| Failure::new("PerformIntersectionAtEnd"))?;

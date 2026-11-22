@@ -1,24 +1,29 @@
 //! Genuine ImagePixMap Drop reborrows, not copied pixmap state or owning handle snapshots.
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
-use martensite_tkservice::image::{ImageFormat, ImagePixMap};
+use martensite_tkservice::image::{ImageFormat, ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 pub struct RetirementProjectionPixels {
+    pub(super) self_owner: Weak<Self>,
     pub base: ImagePixMap,
     pub owner: WeakHandle<AisTexturedShape>,
-    pub nested: WeakHandle<ImagePixMap>,
+    pub nested: WeakHandle<dyn ImagePixMapObject>,
     pub mode: &'static str,
     pub trace: Arc<SharedState<Vec<String>>>,
 }
 martensite_tkernel::impl_transient!(
     RetirementProjectionPixels,
     "RetirementProjectionPixels",
-    ImagePixMap,
-    base
+    ImagePixMap, interfaces: [dyn ImagePixMapObject]
 );
+impl ImagePixMapObject for RetirementProjectionPixels {
+    fn pix_map_base(&self) -> &ImagePixMap {
+        &self.base
+    }
+}
 impl Drop for RetirementProjectionPixels {
     fn drop(&mut self) {
-        let owner = self.owner.observe();
+        let owner = self.owner.upgrade();
         let slot = owner.texture_pix_map();
         let row = slot
             .with_retiring_pointee(self, |pixels| {
@@ -34,7 +39,7 @@ impl Drop for RetirementProjectionPixels {
             })
             .unwrap();
         self.trace.write().push(row);
-        ais_textured_shape_with_retirement(&**owner, self, |scope| {
+        ais_textured_shape_with_retirement(&*owner, self, |scope| {
             run_nested_retirement(&scope, self)
         })
         .unwrap()
@@ -47,23 +52,23 @@ fn run_nested_retirement(
     pixels: &RetirementProjectionPixels,
 ) -> Result<(), Failure> {
     match pixels.mode {
-        "same" => scope.set_texture_pix_map(&pixels.owner.observe().texture_pix_map()),
+        "same" => scope.set_texture_pix_map(&pixels.owner.upgrade().texture_pix_map()),
         "file" => scope.set_texture_file_name(&AsciiString::from("inner.raw")),
-        "pixmap" => scope.set_texture_pix_map(&*pixels.nested.observe()),
+        "pixmap" => scope.set_texture_pix_map(&pixels.nested.upgrade()),
         "none" => Ok(()),
         offending => panic!("mode={offending}; expected none/same/file/pixmap"),
     }
 }
 fn retirement_nested_row(owner: &AisTexturedShape, pixels: &RetirementProjectionPixels) -> String {
     let slot = owner.texture_pix_map();
-    let file = owner.texture_file().read().unwrap();
+    let file = owner.texture_file();
     format!(
         "NESTED {} {} {} {} {} {}",
         pixels.mode,
-        pixels.base.transient_base().ref_count(),
+        pixels.self_owner.strong_count(),
         i32::from(slot.object_address() == std::ptr::from_ref(pixels).cast()),
         i32::from(slot.is_null()),
-        pixels.nested.observe().ref_count(),
+        pixels.nested.ref_count(),
         file.to_string_lossy()
     )
     .trim_end()
@@ -71,19 +76,20 @@ fn retirement_nested_row(owner: &AisTexturedShape, pixels: &RetirementProjection
 }
 pub fn retirement_projection_pixels(
     owner: &Handle<AisTexturedShape>,
-    nested: &Handle<ImagePixMap>,
+    nested: &Handle<dyn ImagePixMapObject>,
     mode: &'static str,
     trace: &Arc<SharedState<Vec<String>>>,
-) -> Handle<ImagePixMap> {
+) -> Handle<dyn ImagePixMapObject> {
     let base = ImagePixMap::default();
     assert!(base.init_trash(ImageFormat::Gray, 3, 2, 0));
     base.change_data().data.change_data()[0] = 73;
-    Handle::new(RetirementProjectionPixels {
+    Handle::from_arc(Arc::new_cyclic(|self_owner| RetirementProjectionPixels {
+        self_owner: self_owner.clone(),
         base,
         owner: owner.downgrade(),
         nested: nested.downgrade(),
         mode,
         trace: trace.clone(),
-    })
-    .into_cast()
+    }))
+    .into_upcast()
 }

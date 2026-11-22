@@ -62,12 +62,12 @@ pub fn mkcurve(edge: &Shape) -> Handle<dyn GeomCurve> {
     let found = BRepTool::curve_with_location(&edge).unwrap();
     assert!(!found.curve.is_null(), "mkcurve: the edge has no 3d curve");
     let trimmed = GeomTrimmedCurve::new(&found.curve, found.first, found.last, true, true);
-    let trimmed: Handle<dyn GeomCurve> = Handle::new(trimmed.unwrap()).cast();
+    let trimmed: Handle<dyn GeomCurve> = Handle::new(trimmed.unwrap()).into_upcast();
     let copy = trimmed
         .get()
         .unwrap()
         .transformed(found.location.transformation());
-    copy.unwrap().cast()
+    copy.unwrap().into_cast()
 }
 
 /// `BRepTest_SurfaceCommands` `mksurface s face`: the face's surface transformed by
@@ -79,7 +79,7 @@ pub fn mksurface(face: &Shape) -> Handle<dyn GeomSurface> {
         .get()
         .unwrap()
         .transformed(location.transformation());
-    copy.unwrap().cast()
+    copy.unwrap().into_cast()
 }
 
 /// `GeometryTest_CurveCommands` `project result c3d surf [-t tol]`:
@@ -132,8 +132,7 @@ pub fn dump_surface(name: &str, surface: &Handle<dyn GeomSurface>) -> String {
 /// `GeomliteTest_SurfaceCommands` `trim result c` (three words): the basis curve of a
 /// trimmed curve, the curve itself otherwise; the variable shares the handle.
 pub fn trim_to_basis(curve: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
-    let trimmed = curve.cast::<GeomTrimmedCurve>();
-    match trimmed.get() {
+    match curve.downcast_ref::<GeomTrimmedCurve>() {
         Some(trimmed) => trimmed.basis_curve(),
         None => curve.clone(),
     }
@@ -143,12 +142,12 @@ pub fn trim_to_basis(curve: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
 /// B-spline curve (a Bezier curve segments without tolerance); any other curve makes the
 /// command fail, which the cases see as a script error.
 pub fn segment(curve: &Handle<dyn GeomCurve>, first: f64, last: f64) -> Result<(), String> {
-    if let Some(bspline) = curve.cast::<GeomBSplineCurve>().get() {
+    if let Some(bspline) = curve.downcast_ref::<GeomBSplineCurve>() {
         return bspline
             .segment(first, last, precision::p_confusion())
             .map_err(|failure| format!("{failure:?}"));
     }
-    if let Some(bezier) = curve.cast::<GeomBezierCurve>().get() {
+    if let Some(bezier) = curve.downcast_ref::<GeomBezierCurve>() {
         return bezier
             .segment(first, last)
             .map_err(|failure| format!("{failure:?}"));
@@ -164,7 +163,7 @@ pub fn offset_surface(
 ) -> Result<Handle<dyn GeomSurface>, String> {
     let offset = GeomOffsetSurface::new(surface, distance, false);
     let offset = offset.map_err(|failure| format!("{failure:?}"))?;
-    Ok(Handle::new(offset).cast())
+    Ok(Handle::new(offset).into_upcast())
 }
 
 /// `BRepTest_SurfaceCommands` `pcurve face`: the p-curve of every explored edge of the
@@ -198,7 +197,7 @@ fn pcurve_variable(c: Handle<dyn Geom2dCurve>, f: f64, l: f64) -> Handle<dyn Geo
         curve.last_parameter(),
         curve.is_periodic(),
     );
-    if let Some(trimmed) = c.cast::<Geom2dTrimmedCurve>().get() {
+    if let Some(trimmed) = c.downcast_ref::<Geom2dTrimmedCurve>() {
         let basis = trimmed.basis_curve();
         let basis = basis.get().unwrap();
         (fr, lr, periodic) = (
@@ -211,7 +210,7 @@ fn pcurve_variable(c: Handle<dyn Geom2dCurve>, f: f64, l: f64) -> Handle<dyn Geo
     if !periodic && (fr - f > tolerance || l - lr > tolerance) {
         return c;
     }
-    Handle::new(Geom2dTrimmedCurve::new(&c, f, l, true, true).unwrap()).cast()
+    Handle::new(Geom2dTrimmedCurve::new(&c, f, l, true, true).unwrap()).into_upcast()
 }
 
 /// Every sub-shape of `kind` in exploration order, repeats included (TopExp_Explorer).

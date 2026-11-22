@@ -1,6 +1,6 @@
 //! Original AsciiString declarations retain byte-level checks and one-based offsets.
 #![allow(non_snake_case, clippy::approx_constant, useless_ptr_null_checks)]
-use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
+use crate::tcollection::{AsciiString, ExtendedString};
 fn text(actual: &AsciiString, expected: &str) {
     assert_eq!(actual.as_bytes(), expected.as_bytes());
 }

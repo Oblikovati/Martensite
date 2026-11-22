@@ -275,7 +275,7 @@ pub fn mkedge_line(
     let direction = Direction3::new(along[0], along[1], along[2])
         .unwrap_or_else(|failure| panic!("line {along:?}: {failure:?}"));
     let axis = Axis1::new(Point3::new(at[0], at[1], at[2]), direction);
-    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(axis)).cast();
+    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(axis)).into_upcast();
     let maker = BRepBuilderAPIMakeEdge::from_curve_params(&line, range.0, range.1)
         .unwrap_or_else(|failure| panic!("mkedge {name} {range:?}: {failure:?}"));
     s.bind(name, &maker.edge().unwrap().into_shape());

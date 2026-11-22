@@ -7,23 +7,16 @@ use martensite_tkernel::tcollection::AsciiString;
 
 /// An XR input or output action; `AspectXRAction::new(&"/actions/menu".into(), AspectXRActionType::InputDigital)`.
 pub struct AspectXRAction {
-    transient: StandardTransient,
     id: AsciiString,
     action_type: AspectXRActionType,
     raw_handle: SharedState<u64>,
 }
-martensite_tkernel::impl_transient!(
-    AspectXRAction,
-    "Aspect_XRAction",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(AspectXRAction, "Aspect_XRAction", StandardTransient);
 
 impl AspectXRAction {
     /// An action without a backend handle; `AspectXRAction::new(&id, AspectXRActionType::InputPose)`.
     pub fn new(id: &AsciiString, action_type: AspectXRActionType) -> Self {
         Self {
-            transient: StandardTransient::default(),
             id: id.clone(),
             action_type,
             raw_handle: SharedState::new(0),
@@ -59,22 +52,15 @@ struct XRActionSetState {
 
 /// A set of XR actions; `AspectXRActionSet::new(&"/actions/main".into())`.
 pub struct AspectXRActionSet {
-    transient: StandardTransient,
     id: AsciiString,
     state: SharedState<XRActionSetState>,
 }
-martensite_tkernel::impl_transient!(
-    AspectXRActionSet,
-    "Aspect_XRActionSet",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(AspectXRActionSet, "Aspect_XRActionSet", StandardTransient);
 
 impl AspectXRActionSet {
     /// An empty set; `AspectXRActionSet::new(&id)`.
     pub fn new(id: &AsciiString) -> Self {
         Self {
-            transient: StandardTransient::default(),
             id: id.clone(),
             state: SharedState::new(XRActionSetState {
                 raw_handle: 0,

@@ -22,7 +22,9 @@ impl RwStepShapeRwContextDependentShapeRepresentation {
         if !data.check_nb_params(num, 2, ach, "context_dependent_shape_representation")? {
             return Ok(());
         }
-        let mut a_rep_rel: Handle<StepReprShapeRepresentationRelationship> = Default::default();
+        let mut a_rep_rel: Handle<
+            dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>,
+        > = Default::default();
         data.read_entity(
             num,
             1,
@@ -284,7 +286,7 @@ impl RwStepShapeRwDimensionalLocation {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepShapeDimensionalLocation>,
+        ent: &Handle<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 4, ach, "dimensional_location")? {
             return Ok(());
@@ -306,7 +308,7 @@ impl RwStepShapeRwDimensionalLocation {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepShapeDimensionalLocation>,
+        ent: &Handle<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>,
     ) -> Result<(), Failure> {
         rw_block_0128!(ent, sw);
         Ok(())
@@ -314,7 +316,7 @@ impl RwStepShapeRwDimensionalLocation {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepShapeDimensionalLocation>,
+        ent: &Handle<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.add_item(&ent.parent.relating_shape_aspect().cast());

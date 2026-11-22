@@ -8,7 +8,7 @@ mod state;
 use crate::native_failure::array_failure;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray1};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkmath::plib::HermitJacobi;
 use state::CurveState;
 use std::sync::RwLockWriteGuard;
@@ -25,14 +25,13 @@ use std::sync::RwLockWriteGuard;
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct Curve {
-    parent: StandardTransient,
     nb_elements: i32,
     dimension: i32,
     base: HermitJacobi,
     knots: Handle<HArray1<f64>>,
     state: SharedState<CurveState>,
 }
-impl_transient!(Curve, "FEmTool_Curve", StandardTransient, parent);
+impl_transient!(Curve, "FEmTool_Curve", dyn Transient);
 
 impl Curve {
     /// `Curve(Dimension, NbElements, TheBase, Tolerance)`: the tolerance is
@@ -48,7 +47,6 @@ impl Curve {
         let knots: HArray1<f64> = HArray1::with_value(1, nb_elements + 1, 0.)
             .map_err(|error| array_failure(error, "FEmTool_Curve"))?;
         Ok(Self {
-            parent: StandardTransient::default(),
             nb_elements,
             dimension,
             base: *base,

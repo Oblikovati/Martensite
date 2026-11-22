@@ -17,7 +17,7 @@ use martensite_tkg3d::adv_approx::{
 use martensite_tkg3d::geom::{
     GeomCurve, GeomElementarySurface, GeomPlane, GeomRectangularTrimmedSurface, GeomSurface,
 };
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom_adaptor::GeomSurfaceAdaptor;
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Point3;
 
@@ -71,9 +71,9 @@ fn exact_curve(
 ) -> Result<bool, Failure> {
     let surface_handle: Handle<dyn Adaptor3dSurface> = curve.get_surface();
     let curve_handle: Handle<dyn Adaptor2dCurve2d> = curve.get_curve();
-    let geom_surface: Handle<GeomAdaptorSurface> = surface_handle.cast();
-    let geom_curve: Handle<Geom2dAdaptorCurve> = curve_handle.cast();
-    let (Some(geom_surface), Some(geom_curve)) = (geom_surface.get(), geom_curve.get()) else {
+    let geom_surface = surface_handle.view::<dyn GeomSurfaceAdaptor>();
+    let geom_curve = curve_handle.downcast_ref::<Geom2dAdaptorCurve>();
+    let (Some(geom_surface), Some(geom_curve)) = (geom_surface.get(), geom_curve) else {
         return Ok(false);
     };
     let surface: Handle<dyn GeomSurface> = geom_surface.surface();

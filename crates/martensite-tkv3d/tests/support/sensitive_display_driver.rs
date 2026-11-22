@@ -35,11 +35,10 @@ pub struct SensitiveDisplayTrace {
 }
 pub type DisplayTrace = Arc<SharedState<SensitiveDisplayTrace>>;
 pub struct SensitiveDisplayDriver {
-    transient: StandardTransient,
     inner: Handle<dyn Graphic3dGraphicDriver>,
     trace: DisplayTrace,
 }
-martensite_tkernel::impl_transient!(SensitiveDisplayDriver, "SensitiveDisplayDriver", StandardTransient, transient, interfaces: [dyn Graphic3dGraphicDriver]);
+martensite_tkernel::impl_transient!(SensitiveDisplayDriver, "SensitiveDisplayDriver", StandardTransient, interfaces: [dyn Graphic3dGraphicDriver]);
 impl SensitiveDisplayDriver {
     pub fn new_handle(fail_group: i32) -> (Handle<dyn Graphic3dGraphicDriver>, DisplayTrace) {
         let trace = Arc::new(SharedState::new(SensitiveDisplayTrace {
@@ -47,7 +46,6 @@ impl SensitiveDisplayDriver {
             ..Default::default()
         }));
         let driver = Self {
-            transient: StandardTransient::default(),
             inner: NullGraphicDriver::new_handle(),
             trace: trace.clone(),
         };
@@ -135,18 +133,16 @@ impl Graphic3dGraphicDriver for SensitiveDisplayDriver {
     }
 }
 struct SensitiveDisplayStructure {
-    transient: StandardTransient,
     inner: Handle<NullCStructure>,
     trace: DisplayTrace,
 }
-martensite_tkernel::impl_transient!(SensitiveDisplayStructure, "SensitiveDisplayStructure", StandardTransient, transient, interfaces: [dyn Graphic3dCStructure]);
+martensite_tkernel::impl_transient!(SensitiveDisplayStructure, "SensitiveDisplayStructure", StandardTransient, interfaces: [dyn Graphic3dCStructure]);
 impl SensitiveDisplayStructure {
     fn new(
         manager: &Handle<Graphic3dStructureManager>,
         trace: DisplayTrace,
     ) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             inner: NullCStructure::new(manager)?,
             trace,
         })
@@ -203,13 +199,13 @@ impl Graphic3dCStructure for SensitiveDisplayStructure {
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         self.record_group_creation()?;
         let group: Handle<dyn Graphic3dGroup> =
-            Handle::new(SensitiveDisplayGroup::new(structure, self.trace.clone())).cast();
+            SensitiveDisplayGroup::new_handle(structure, self.trace.clone());
         self.inner
             .cstructure_base()
             .fields
             .write()
             .groups
-            .append(group.clone());
+            .append(martensite_tkernel::standard::HandleSlot::new(group.clone()));
         self.notify_group_creation();
         Ok(group)
     }

@@ -7,7 +7,7 @@ use super::{
 };
 use martensite_tkernel::{
     message::{Message, Messenger},
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
 };
 use std::sync::Arc;
 
@@ -16,7 +16,7 @@ pub(super) struct ReaderToolState {
     // Native reverse member destruction releases the model before reader data;
     // a reader destructor can observe its model's remaining lifetime.
     // InterfaceFileReaderTool.
-    pub(super) thereports: Option<Vec<Handle<StandardTransient>>>,
+    pub(super) thereports: Option<Vec<Handle<dyn Transient>>>,
     pub(super) themessenger: Option<Arc<Messenger>>,
     pub(super) themodel: Handle<dyn InterfaceInterfaceModel>,
     pub(super) thereader: Handle<dyn InterfaceFileReaderData>,
@@ -71,7 +71,7 @@ pub trait InterfaceFileReaderTool {
         &self,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &mut Handle<StandardTransient>,
+        ent: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure>;
     /// `BeginRead(amodel)`: reads the header.
     fn begin_read(&self, amodel: &Handle<dyn InterfaceInterfaceModel>) -> Result<(), Failure>;
@@ -79,7 +79,7 @@ pub trait InterfaceFileReaderTool {
     fn analyse_record(
         &self,
         num: i32,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         acheck: &mut Handle<InterfaceCheck>,
     ) -> Result<bool, Failure>;
     /// `EndRead(amodel)`: nothing by default.
@@ -150,7 +150,7 @@ pub trait InterfaceFileReaderToolOps: InterfaceFileReaderTool {
         glib: &mut InterfaceGeneralLib,
         rlib: &mut InterfaceReaderLib,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &mut Handle<StandardTransient>,
+        ent: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let reader = self.data();
         let Some((rmod, cn, typrot)) = reader_case(rlib, &reader, num)? else {
@@ -173,7 +173,7 @@ pub trait InterfaceFileReaderToolOps: InterfaceFileReaderTool {
         Ok(false)
     }
     /// `UnknownEntity`: from the protocol.
-    fn unknown_entity(&self) -> Result<Handle<StandardTransient>, Failure> {
+    fn unknown_entity(&self) -> Result<Handle<dyn Transient>, Failure> {
         Ok(live_protocol(&self.protocol())?.unknown_entity())
     }
     /// `NewModel`: from the protocol.

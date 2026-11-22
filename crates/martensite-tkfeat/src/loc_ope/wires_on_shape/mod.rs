@@ -14,7 +14,7 @@ use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Compound, Edge, Face, Shape, Vertex, Wire};
 use martensite_tkbrep::toptools::{MapOfShape, ShapeMapHasher};
 use martensite_tkernel::ncollection::{DataMap, IndexedDataMap};
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::{Failure, Transient};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use project::{project_2d, project_on_edge};
@@ -31,8 +31,6 @@ pub(crate) type EdgeFaceMap = IndexedDataMap<Shape, Shape, ShapeMapHasher>;
 /// assert!(!wires.is_done());
 /// ```
 pub struct WiresOnShape {
-    // Runtime handles will borrow this base without changing any shape/map ownership.
-    transient: StandardTransient,
     shape: Shape,
     map_ef: EdgeFaceMap,
     faces_with_section: MapOfShape,
@@ -45,10 +43,9 @@ pub struct WiresOnShape {
 }
 
 impl Clone for WiresOnShape {
-    /// Copy state into a fresh zero-counter owner; `let copied = wires.clone()`.
+    /// Copy every field; `let copied = wires.clone()`.
     fn clone(&self) -> Self {
         Self {
-            transient: self.transient.clone(),
             shape: self.shape.clone(),
             map_ef: self.map_ef.clone(),
             faces_with_section: self.faces_with_section.clone(),
@@ -59,10 +56,10 @@ impl Clone for WiresOnShape {
         }
     }
 
-    /// Preserve the target counter during assignment; `target.clone_from(&source)`.
+    /// Assign field by field; `target.clone_from(&source)`.
     fn clone_from(&mut self, source: &Self) {
-        // f452af042 exposed counters: reference StandardTransient assignment preserves them.
-        self.transient.clone_from(&source.transient);
+        // f452af042 mirrored the reference assignment field by field; the native handle owns
+        // the count now, and each collection keeps its own `clone_from` (allocator reuse).
         self.shape.clone_from(&source.shape);
         self.map_ef.clone_from(&source.map_ef);
         self.faces_with_section
@@ -74,19 +71,13 @@ impl Clone for WiresOnShape {
     }
 }
 
-martensite_tkernel::impl_transient!(
-    WiresOnShape,
-    "LocOpe_WiresOnShape",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(WiresOnShape, "LocOpe_WiresOnShape", dyn Transient);
 
 impl WiresOnShape {
     /// No edge bound yet, the internal intersections checked;
     /// `WiresOnShape::new(&shape)`.
     pub fn new(s: &Shape) -> Self {
         Self {
-            transient: StandardTransient::default(),
             shape: s.clone(),
             map_ef: IndexedDataMap::default(),
             faces_with_section: MapOfShape::default(),

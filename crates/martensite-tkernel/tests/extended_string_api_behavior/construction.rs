@@ -1,6 +1,6 @@
 //! Constructors, conversions to UTF-8, printing and hashing.
 use super::{class, string, units};
-use martensite_tkernel::{
+use crate::{
     ncollection::HashKey,
     tcollection::{AsciiString, ExtendedString},
 };
@@ -20,6 +20,16 @@ fn c_string_constructor_decodes_like_the_lenient_utf_iterator() {
     // An encoded surrogate is dropped, not rejected.
     assert_eq!(decode(b"\xED\xA0\x80Z").as_utf16(), &[0x5A]);
 }
+#[test]
+fn constructors_keep_decoding_after_an_isolated_continuation_byte() {
+    let bytes = b"\x80\xE2\x82\xAC\xBF";
+    let expected = [0x80, 0x20AC, 0xBF];
+    let c_string = ExtendedString::from_c_string(bytes, true);
+    let ascii = AsciiString::from_raw(bytes);
+    assert_eq!(c_string.as_utf16(), &expected);
+    assert_eq!(ExtendedString::from_ascii(&ascii).as_utf16(), &expected);
+}
+
 #[test]
 fn c_string_constructor_widens_what_is_not_utf8() {
     let widened = ExtendedString::from_c_string(b"\xF4\x90\x80\x80", true);

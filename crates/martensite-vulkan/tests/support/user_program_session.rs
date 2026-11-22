@@ -136,7 +136,7 @@ impl UserProgramSession {
                 false,
             )
             .unwrap();
-            let light: Handle<Graphic3dCLight> = Handle::new(light).cast();
+            let light: Handle<dyn Graphic3dCLightSource> = Handle::new(light).cast();
             let value = light.get().unwrap();
             value
                 .set_direction(&Direction3::new(direction, 0., 0.).unwrap())
@@ -145,7 +145,7 @@ impl UserProgramSession {
             self.add_light(light);
         }
     }
-    fn add_light(&self, light: Handle<Graphic3dCLight>) {
+    fn add_light(&self, light: Handle<dyn Graphic3dCLightSource>) {
         self.viewer.add_light(&light);
         self.viewer.set_light_on_one(&light).unwrap();
     }
@@ -190,7 +190,7 @@ pub fn apply_texture_set(
     let aspect = drawer.shading_aspect().get().unwrap().aspect();
     let aspect = aspect.get().unwrap();
     aspect.set_texture_map_on(true);
-    aspect.set_texture_set(Handle::new(set));
+    aspect.set_texture_set(Handle::new(set).into_upcast());
     value.set_to_update(1);
     context.display(object, false).unwrap();
     value.synchronize_aspects();

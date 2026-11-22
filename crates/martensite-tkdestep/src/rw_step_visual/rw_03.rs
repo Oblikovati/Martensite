@@ -55,7 +55,7 @@ impl RwStepVisualRwCameraImage {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepVisualCameraImage>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualCameraImage>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 3, ach, "camera_image")? {
             return Ok(());
@@ -75,7 +75,7 @@ impl RwStepVisualRwCameraImage {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepVisualCameraImage>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualCameraImage>>,
     ) -> Result<(), Failure> {
         sw.send_entity(&ent.name())?;
         sw.send_entity(&ent.mapping_source())?;
@@ -85,7 +85,7 @@ impl RwStepVisualRwCameraImage {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepVisualCameraImage>,
+        ent: &Handle<dyn crate::StepEntityBase<StepVisualCameraImage>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.get_one_item(&ent.mapping_source().cast());

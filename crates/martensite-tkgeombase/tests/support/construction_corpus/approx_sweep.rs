@@ -4,7 +4,7 @@ use super::geometry_adaptor_fixtures::shape;
 use super::print::Output;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkgeombase::approx::{
     SweepApproximation, SweepD1, SweepD2, SweepFunction, SweepOptions,
 };
@@ -39,7 +39,6 @@ struct Record {
 
 /// GbAxSweep.
 struct AxSweep {
-    parent: StandardTransient,
     settings: Settings,
     record: Mutex<Record>,
 }
@@ -47,7 +46,6 @@ impl_transient!(
     AxSweep,
     "GbAxSweep",
     dyn SweepFunction,
-    parent,
     interfaces: [dyn SweepFunction]
 );
 
@@ -338,7 +336,6 @@ pub fn sweep_case(output: &Output, values: &[f64]) {
     (options.degmax, options.segmax) = (r.integer(), r.integer());
     let count = r.integer();
     let f = Handle::new(AxSweep {
-        parent: StandardTransient::default(),
         settings,
         record: Mutex::new(Record::default()),
     });

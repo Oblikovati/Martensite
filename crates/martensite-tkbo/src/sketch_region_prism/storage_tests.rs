@@ -21,7 +21,7 @@ fn actual_cap(body: &Shape) -> Face {
         .find(|f| {
             BRepTool::surface(f)
                 .unwrap()
-                .cast::<GeomPlane>()
+                .downcast::<GeomPlane>()
                 .get()
                 .is_some_and(|p| p.location().z() == 0.)
         })
@@ -86,8 +86,8 @@ fn assert_polygon_isolation(original: &Handle<Polygon3D>, copied: &Handle<Polygo
     assert_eq!(original.deflection(), 9.);
 }
 fn assert_plane_isolation(original: &Face, copied: &Face) {
-    let old = BRepTool::surface(original).unwrap().cast::<GeomPlane>();
-    let new = BRepTool::surface(copied).unwrap().cast::<GeomPlane>();
+    let old = BRepTool::surface(original).unwrap().downcast::<GeomPlane>();
+    let new = BRepTool::surface(copied).unwrap().downcast::<GeomPlane>();
     let before = new.get().unwrap().location();
     old.get().unwrap().set_location(Point3::new(9., 9., 9.));
     assert_eq!(new.get().unwrap().location(), before);

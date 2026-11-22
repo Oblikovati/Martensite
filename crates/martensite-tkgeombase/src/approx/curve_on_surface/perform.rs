@@ -87,7 +87,7 @@ impl CurveOnSurface {
         }
         let hcons: Handle<dyn Adaptor3dCurve> =
             Handle::new(Adaptor3dCurveOnSurface::with_curve(&trimmed, &self.surf)?)
-                .cast::<dyn Adaptor3dCurve>();
+                .into_upcast::<dyn Adaptor3dCurve>();
         let mut evaluator: Evaluator = self.evaluator(&hcons, &trimmed, options);
         let tolerances: Tolerances = self.tolerances(options)?;
         let cut_tool: Box<dyn AdvApproxCutting> = self.cut_tool(&hcons, continuity)?;

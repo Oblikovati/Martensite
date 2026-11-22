@@ -81,21 +81,25 @@ impl<K, V> Default for FlatDataCursorMut<'_, K, V> {
 
 impl<K, V> FlatDataCursorMut<'_, K, V> {
     /// Returns the current value address, read-only; `cursor.value_ptr()?`.
-    pub fn value_ptr(&self) -> Result<*const V, Failure> {
+    #[cfg(test)]
+    pub(crate) fn value_ptr(&self) -> Result<*const V, Failure> {
         self.value().map(std::ptr::from_ref)
     }
     /// Returns the current writable value address; `cursor.change_value_ptr()?`.
-    pub fn change_value_ptr(&mut self) -> Result<*mut V, Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_value_ptr(&mut self) -> Result<*mut V, Failure> {
         self.change_value().map(std::ptr::from_mut)
     }
     /// Advances and returns this writable cursor; `cursor.advance_returning().change_value()`.
-    pub fn advance_returning(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn advance_returning(&mut self) -> &mut Self {
         self.advance();
         self
     }
     /// Returns a read-only previous position while advancing; `cursor.advance_post().value()`.
     /// The snapshot borrows this cursor to prevent aliased writable item references.
-    pub fn advance_post(&mut self) -> FlatDataItems<'_, K, V> {
+    #[cfg(test)]
+    pub(crate) fn advance_post(&mut self) -> FlatDataItems<'_, K, V> {
         let index = self.index;
         self.advance();
         FlatDataItems {
@@ -106,7 +110,8 @@ impl<K, V> FlatDataCursorMut<'_, K, V> {
         }
     }
     /// Preserves writable cursor self-assignment without aliasing; `cursor.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }
