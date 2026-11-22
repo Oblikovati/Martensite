@@ -11,16 +11,37 @@ mod native_window;
 mod stage;
 #[path = "transfer.rs"]
 mod transfer;
+#[path = "work.rs"]
+mod work;
 
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::Graphic3dGraphicDriver as _;
 use martensite_vulkan::{Graphic3dRenderDriver, VulkanOptions};
+use std::cell::RefCell;
 use std::time::Instant;
+use work::TimedWork;
 
 /// The shared driver every case draws with; startup cases make their own.
 pub struct Bench {
     /// One Vulkan device for the process, as one OpenGL driver serves the C++ twins.
     pub driver: Handle<Graphic3dRenderDriver>,
+    /// The device work of the current case's timed windows.
+    work: RefCell<TimedWork>,
+}
+
+impl Bench {
+    /// Times one window of `ops` operations run by `window`; nanoseconds per operation.
+    /// The device work of the window counts towards the case's work column.
+    /// Example: `bench.timed(ops, || for frame in 0..ops { stage.redraw_orbit(frame) })`.
+    pub fn timed(&self, ops: usize, window: impl FnOnce()) -> f64 {
+        let before = self.driver.device_work();
+        let start = Instant::now();
+        window();
+        let nanos = start.elapsed().as_nanos() as f64 / ops as f64;
+        let work = self.driver.device_work().since(&before);
+        self.work.borrow_mut().add(work, ops);
+        nanos
+    }
 }
 
 /// The sizes of one program run: `--bench` measures, otherwise a two-frame smoke test.
@@ -94,25 +115,46 @@ fn frame_count(text: &str) -> usize {
 }
 
 /// Times `mode.repeats` runs of `ops` calls of `op`, which receives a running index.
-/// Example: `timed_runs(mode, mode.frames, |frame| stage.redraw_orbit(frame))`.
-pub fn timed_runs(mode: &Mode, ops: usize, mut op: impl FnMut(usize)) -> Vec<f64> {
+/// Example: `timed_runs(bench, mode, mode.frames, |frame| stage.redraw_orbit(frame))`.
+pub fn timed_runs(bench: &Bench, mode: &Mode, ops: usize, mut op: impl FnMut(usize)) -> Vec<f64> {
     (0..mode.repeats)
         .map(|repeat| {
-            let start = Instant::now();
-            for index in 0..ops {
-                op(repeat * ops + index);
-            }
-            start.elapsed().as_nanos() as f64 / ops as f64
+            bench.timed(ops, || {
+                for index in 0..ops {
+                    op(repeat * ops + index);
+                }
+            })
         })
         .collect()
 }
 
-/// Runs a case and prints `name<TAB>median ns per op<TAB>checksum`.
+/// Times `mode.repeats` single operations, each on a new state that `build` makes before
+/// the timed window; one untimed build and operation run first, as the warm-up.
+/// Example: `timed_rebuilds(bench, mode, || box_grid(&stage, GRID_10K), remove_all)`.
+pub fn timed_rebuilds<State>(
+    bench: &Bench,
+    mode: &Mode,
+    mut build: impl FnMut() -> State,
+    mut op: impl FnMut(State),
+) -> Vec<f64> {
+    for _ in 0..mode.warmup.min(1) {
+        op(build());
+    }
+    (0..mode.repeats)
+        .map(|_| {
+            let state = build();
+            bench.timed(1, || op(state))
+        })
+        .collect()
+}
+
+/// Runs a case and prints `name<TAB>median ns per op<TAB>checksum<TAB>work`.
 fn report(bench: &Bench, case: &Case, mode: &Mode) {
     let mut measured = (case.run)(bench, mode);
     measured.nanos.sort_by(f64::total_cmp);
     let median = measured.nanos[measured.nanos.len() / 2];
-    println!("{}\t{:.3}\t{}", case.name, median, measured.checksum);
+    let work = bench.work.take().column();
+    println!("{}\t{median:.3}\t{}\t{work}", case.name, measured.checksum);
 }
 
 fn cases() -> Vec<Case> {
@@ -142,6 +184,7 @@ pub fn run() {
     let mode = Mode::from_args();
     let bench = Bench {
         driver: new_driver(),
+        work: RefCell::default(),
     };
     for case in cases().iter().filter(|case| mode.selects(case)) {
         report(&bench, case, &mode);

@@ -100,6 +100,32 @@ Measured resize_redraw(const Bench& theBench, const Mode& theMode)
   aStage.close();
   return aMeasured;
 }
+Measured close_10k(const Bench& theBench, const Mode& theMode)
+{
+  Stage     aStage(theBench, gp_Pnt(0, 0, 0), box_grid_radius(GRID_10K_COLUMNS, GRID_10K_ROWS));
+  Kept      aKept;
+  long long aRemoved = 0;
+  Measured  aMeasured;
+  aMeasured.nanos = timed_rebuilds(
+    theMode,
+    [&]() {
+      aKept = box_grid(aStage, GRID_10K_COLUMNS, GRID_10K_ROWS);
+      aStage.redraw_orbit(0);
+    },
+    [&]() {
+      for (const Handle(Graphic3d_Structure)& aStructure : aKept)
+      {
+        aStructure->Erase();
+        aStructure->Remove();
+      }
+      aRemoved += (long long)aKept.size();
+      aKept.clear();
+    },
+    [&]() { aStage.finish(); });
+  aMeasured.checksum = fold({aRemoved, aStage.counted_frame()});
+  aStage.close();
+  return aMeasured;
+}
 } // namespace
 
 void startup(std::vector<Case>& theCases)
@@ -112,6 +138,7 @@ void transfer(std::vector<Case>& theCases)
   theCases.insert(theCases.end(),
                   {{"upload_mesh_100k", upload_mesh_100k},
                    {"dump_1080p", dump_1080p},
-                   {"resize_redraw", resize_redraw}});
+                   {"resize_redraw", resize_redraw},
+                   {"close_10k", close_10k}});
 }
 } // namespace parity

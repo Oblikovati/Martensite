@@ -1,9 +1,11 @@
 //! Case lines, medians and the parity verdict of `cargo xtask occt-parity` (#583).
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::work::{WorkValue, parse_work};
 use crate::error::{BuildError, BuildResult};
 
-/// One printed case line: `name<TAB>nanoseconds per operation<TAB>checksum`.
+/// One printed case line: `name<TAB>nanoseconds per operation<TAB>checksum`, optionally
+/// followed by `<TAB>` and the case's work counters (`super::work`).
 #[derive(Debug, Clone, PartialEq)]
 pub struct CaseLine {
     /// The case name, shared by both sides.
@@ -12,6 +14,8 @@ pub struct CaseLine {
     pub nanos: f64,
     /// The work checksum; both sides must agree.
     pub checksum: i64,
+    /// The work counters per operation, when the program reports them.
+    pub work: Vec<WorkValue>,
 }
 
 /// Parses a cases program's stdout; `parse_lines("OCCT", "a\t1.5\t7\n")?`.
@@ -26,16 +30,21 @@ pub fn parse_lines(origin: &str, stdout: &str) -> BuildResult<Vec<CaseLine>> {
 fn parse_line(origin: &str, line: &str) -> BuildResult<CaseLine> {
     let unexpected = || BuildError::UnexpectedOutput {
         origin: origin.to_owned(),
-        detail: format!("{line:?}; expected `name<TAB>nanoseconds<TAB>checksum`"),
+        detail: format!(
+            "{line:?}; expected `name<TAB>nanoseconds<TAB>checksum`, then optionally `<TAB>name=value ...`"
+        ),
     };
     let fields: Vec<&str> = line.split('\t').collect();
-    let [name, nanos, checksum] = fields.as_slice() else {
-        return Err(unexpected());
+    let (name, nanos, checksum, work) = match fields.as_slice() {
+        [name, nanos, checksum] => (name, nanos, checksum, ""),
+        [name, nanos, checksum, work] => (name, nanos, checksum, *work),
+        _ => return Err(unexpected()),
     };
     Ok(CaseLine {
         name: (*name).to_owned(),
         nanos: nanos.parse().map_err(|_| unexpected())?,
         checksum: checksum.parse().map_err(|_| unexpected())?,
+        work: parse_work(work).ok_or_else(unexpected)?,
     })
 }
 
@@ -49,6 +58,8 @@ pub struct SideRuns {
 struct CaseRuns {
     nanos: Vec<f64>,
     checksum: i64,
+    /// The work counters of the latest round.
+    work: Vec<WorkValue>,
 }
 
 impl SideRuns {
@@ -63,6 +74,7 @@ impl SideRuns {
         let runs = self.cases.entry(line.name.clone()).or_insert(CaseRuns {
             nanos: Vec::new(),
             checksum: line.checksum,
+            work: Vec::new(),
         });
         if runs.checksum != line.checksum {
             return Err(BuildError::ParityFailed(format!(
@@ -71,6 +83,7 @@ impl SideRuns {
             )));
         }
         runs.nanos.push(line.nanos);
+        runs.work = line.work;
         Ok(())
     }
 }
@@ -102,6 +115,9 @@ pub struct CaseComparison {
     pub checksum: i64,
     /// The verdict at the requested tolerance.
     pub standing: Standing,
+    /// The work counters the Rust program reported for the case, per operation.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub rust_work: Vec<WorkValue>,
 }
 
 /// Compares the medians of both sides; `compare(&occt, &rust, 0.05)?`.
@@ -152,6 +168,7 @@ fn compare_case(
         ratio,
         checksum: occt.checksum,
         standing: standing(ratio, tolerance),
+        rust_work: rust.work.clone(),
     })
 }
 

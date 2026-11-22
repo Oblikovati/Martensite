@@ -12,6 +12,7 @@
 #include <GL/glx.h>
 #include <X11/Xlib.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <stdexcept>
@@ -70,6 +71,30 @@ std::vector<double> timed_runs(const Mode&                     theMode,
     theFinish();
     const auto anElapsed = std::chrono::duration<double, std::nano>(std::chrono::steady_clock::now() - aStart);
     aNanos.push_back(anElapsed.count() / theOps);
+  }
+  return aNanos;
+}
+
+std::vector<double> timed_rebuilds(const Mode&                  theMode,
+                                   const std::function<void()>& theBuild,
+                                   const std::function<void()>& theOp,
+                                   const std::function<void()>& theFinish)
+{
+  for (int aWarmup = 0; aWarmup < std::min(theMode.warmup, 1); ++aWarmup)
+  {
+    theBuild();
+    theOp();
+    theFinish();
+  }
+  Mode aSingle    = theMode;
+  aSingle.repeats = 1;
+  std::vector<double> aNanos;
+  for (int aRepeat = 0; aRepeat < theMode.repeats; ++aRepeat)
+  {
+    theBuild();
+    // The build's own GPU work must not end inside the timed window.
+    theFinish();
+    aNanos.push_back(timed_runs(aSingle, 1, [&](int) { theOp(); }, theFinish).front());
   }
   return aNanos;
 }
@@ -217,18 +242,32 @@ void Stage::close()
   window.Nullify();
 }
 
-Measured measure_orbit(const Stage& theStage, const Mode& theMode)
+namespace
 {
-  for (int aFrame = 0; aFrame < theMode.warmup; ++aFrame)
+//! Warms up, then times `theFrames` orbit frames per run and counts the start frame.
+Measured measure_orbit_frames(const Stage& theStage, const Mode& theMode, int theFrames)
+{
+  for (int aFrame = 0; aFrame < std::min(theMode.warmup, theFrames); ++aFrame)
   {
     theStage.redraw_orbit(aFrame);
   }
   Measured aMeasured;
   aMeasured.nanos = timed_runs(
-    theMode, theMode.frames, [&](int theFrame) { theStage.redraw_orbit(theFrame); },
+    theMode, theFrames, [&](int theFrame) { theStage.redraw_orbit(theFrame); },
     [&]() { theStage.finish(); });
   aMeasured.checksum = theStage.counted_frame();
   return aMeasured;
+}
+} // namespace
+
+Measured measure_orbit(const Stage& theStage, const Mode& theMode)
+{
+  return measure_orbit_frames(theStage, theMode, theMode.frames);
+}
+
+Measured measure_heavy_orbit(const Stage& theStage, const Mode& theMode)
+{
+  return measure_orbit_frames(theStage, theMode, theMode.scaled(10));
 }
 
 Handle(Graphic3d_Structure) display_array(const Stage&                               theStage,

@@ -61,6 +61,14 @@ std::vector<double> timed_runs(const Mode&                    theMode,
                                const std::function<void(int)>& theOp,
                                const std::function<void()>&    theFinish);
 
+//! Times `repeats` single operations `op`, each on a new state that `build` makes before the
+//! timed window; one untimed build and operation run first, as the warm-up. Each window ends
+//! when the GPU has finished (`finish`).
+std::vector<double> timed_rebuilds(const Mode&                  theMode,
+                                   const std::function<void()>& theBuild,
+                                   const std::function<void()>& theOp,
+                                   const std::function<void()>& theFinish);
+
 //! Folds counters into one checksum, as the Rust `fold_counts` does.
 long long fold(const std::vector<long long>& theCounts);
 
@@ -108,6 +116,24 @@ private:
 
 //! Warms up, then times `mode.frames` orbit frames per run and counts the start frame.
 Measured measure_orbit(const Stage& theStage, const Mode& theMode);
+
+//! `measure_orbit` with a tenth of the frames per run, for the scenes whose Vulkan frame takes
+//! seconds, so that a round stays within minutes.
+Measured measure_heavy_orbit(const Stage& theStage, const Mode& theMode);
+
+//! The structures a case keeps displayed until it ends.
+using Kept = std::vector<Handle(Graphic3d_Structure)>;
+
+//! The columns and rows of the box grid of `frame_structures_10k` and `close_10k`.
+const int GRID_10K_COLUMNS = 100;
+const int GRID_10K_ROWS    = 100;
+
+//! Displays `theColumns` x `theRows` boxes of half size 1 three units apart, centred on the
+//! origin, one structure each (twin of the Rust `box_grid`).
+Kept box_grid(const Stage& theStage, int theColumns, int theRows);
+
+//! The radius that frames `box_grid`: the half diagonal of its cells, rounded up.
+double box_grid_radius(int theColumns, int theRows);
 
 //! Displays one structure whose one group draws `theArray` with `theAspect`.
 Handle(Graphic3d_Structure) display_array(const Stage&                              theStage,

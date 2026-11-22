@@ -1,9 +1,9 @@
 //! Start-up, upload, readback and resize cases, twins of `occt/transfer.cpp`.
-use super::frames::display_array;
+use super::frames::{GRID_10K, Kept, box_grid, box_grid_radius, display_array};
 use super::geometry::{self, Array, Aspect};
 use super::native_window::NativeWindow;
 use super::stage::{HEIGHT, Stage, WIDTH, fold_counts};
-use super::{Bench, Case, Measured, Mode, new_driver, timed_runs};
+use super::{Bench, Case, Measured, Mode, new_driver, timed_rebuilds, timed_runs};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::{
     Graphic3dBufferType, Graphic3dStructureNetwork as _, Graphic3dStructureSource as _,
@@ -30,13 +30,17 @@ pub const CASES: &[Case] = &[
         name: "resize_redraw",
         run: resize_redraw,
     },
+    Case {
+        name: "close_10k",
+        run: close_10k,
+    },
 ];
 
 /// One operation opens a window and a new driver, draws the first (empty) frame and closes
 /// everything again: what an application pays before its first picture.
-fn startup_first_frame(_: &Bench, mode: &Mode) -> Measured {
+fn startup_first_frame(bench: &Bench, mode: &Mode) -> Measured {
     let mut started = 0i64;
-    let nanos = timed_runs(mode, 1, |_| started += i64::from(start_once()));
+    let nanos = timed_runs(bench, mode, 1, |_| started += i64::from(start_once()));
     Measured {
         nanos,
         checksum: started,
@@ -71,7 +75,7 @@ fn transfer_scene() -> (Array, Aspect) {
 fn upload_mesh_100k(bench: &Bench, mode: &Mode) -> Measured {
     let stage = Stage::new(&bench.driver, [0.; 3], 10.);
     let (array, aspect) = transfer_scene();
-    let nanos = timed_runs(mode, mode.scaled(4), |frame| {
+    let nanos = timed_runs(bench, mode, mode.scaled(4), |frame| {
         let structure = display_array(&stage, &array, &aspect);
         stage.redraw_orbit(frame);
         structure.erase();
@@ -92,7 +96,7 @@ fn dump_1080p(bench: &Bench, mode: &Mode) -> Measured {
     stage.redraw_orbit(0);
     let image = ImagePixMap::default();
     let mut dumped = 0i64;
-    let nanos = timed_runs(mode, mode.scaled(4), |_| {
+    let nanos = timed_runs(bench, mode, mode.scaled(4), |_| {
         let done = stage
             .view
             .to_pix_map_sized(&image, 1920, 1080, Graphic3dBufferType::Rgb, true);
@@ -117,7 +121,7 @@ fn resize_redraw(bench: &Bench, mode: &Mode) -> Measured {
     let (array, aspect) = transfer_scene();
     let kept = display_array(&stage, &array, &aspect);
     stage.redraw_orbit(0);
-    let nanos = timed_runs(mode, mode.scaled(2), |index| {
+    let nanos = timed_runs(bench, mode, mode.scaled(2), |index| {
         let small = index % 2 == 0;
         resize(&stage, if small { (1024, 576) } else { (WIDTH, HEIGHT) });
         stage.view.redraw();
@@ -127,4 +131,29 @@ fn resize_redraw(bench: &Bench, mode: &Mode) -> Measured {
     drop(kept);
     stage.close();
     Measured { nanos, checksum }
+}
+
+/// One operation erases and removes the 10,000 boxes of `frame_structures_10k` and releases
+/// them. Displaying them and drawing them once, so they are on the device, is not timed.
+fn close_10k(bench: &Bench, mode: &Mode) -> Measured {
+    let stage = Stage::new(&bench.driver, [0.; 3], box_grid_radius(GRID_10K));
+    let build = || {
+        let kept = box_grid(&stage, GRID_10K);
+        stage.redraw_orbit(0);
+        kept
+    };
+    let mut removed = 0i64;
+    let nanos = timed_rebuilds(bench, mode, build, |kept| removed += remove_all(kept));
+    let checksum = fold_counts(&[removed, stage.counted_frame()]);
+    stage.close();
+    Measured { nanos, checksum }
+}
+
+/// Erases and removes every structure of `kept`, then releases them; the number removed.
+fn remove_all(kept: Kept) -> i64 {
+    for structure in &kept {
+        structure.erase();
+        structure.remove();
+    }
+    kept.len() as i64
 }

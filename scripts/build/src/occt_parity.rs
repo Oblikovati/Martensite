@@ -11,6 +11,7 @@ use crate::error::{BuildError, BuildResult, io_error};
 use crate::process::CommandSpec;
 
 mod compare;
+mod work;
 use compare::{CaseComparison, SideRuns, compare, parse_lines, render_table, verdict};
 
 /// A toolkit with paired cases.
@@ -107,9 +108,21 @@ pub fn run_occt_parity(context: &BuildContext<'_>, request: &ParityRequest) -> B
         reporter.step("Measure", || measure(context, request, &occt, &rust))?;
     let comparisons = compare(&occt_runs, &rust_runs, request.tolerance)?;
     println!("{}", render_table(&comparisons));
+    print_rust_work(&comparisons);
     let report = write_report(context, request, &cases, &comparisons)?;
     reporter.note(&format!("report: {}", report.display()));
     verdict(&comparisons)
+}
+
+/// Prints the work counters the Rust program reported, when it reported any.
+fn print_rust_work(comparisons: &[CaseComparison]) {
+    let rows: Vec<(&str, &[work::WorkValue])> = comparisons
+        .iter()
+        .map(|item| (item.case.as_str(), item.rust_work.as_slice()))
+        .collect();
+    if let Some(table) = work::render_work_table(&rows) {
+        println!("Rust work per operation:\n\n{table}");
+    }
 }
 
 fn build_rust_cases(context: &BuildContext<'_>, cases: &ToolkitCases) -> BuildResult<PathBuf> {
