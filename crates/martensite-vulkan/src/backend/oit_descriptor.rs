@@ -111,6 +111,7 @@ impl OitPassDescriptors {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         self.set = unsafe { self.layout.runtime.device().allocate_descriptor_sets(&info) }
             .map_err(|e| vk_error("allocate OIT pass descriptors", e))?[0];
+        self.layout.runtime.work.add_sets(&info);
         #[cfg(feature = "command-state-diagnostics")]
         super::replay_resource_diagnostic::allocated(self.set, self.layout.handle);
         Ok(())

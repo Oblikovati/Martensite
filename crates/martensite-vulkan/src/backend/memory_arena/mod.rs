@@ -6,6 +6,7 @@
 //! `bufferImageGranularity` never applies within a block. Host-visible blocks are mapped once,
 //! for their lifetime; every selected host type is coherent, so no flush is needed.
 mod block_space;
+use super::frame_work_ledger::DeviceCount;
 use super::runtime::{VulkanRuntime, vk_error};
 use crate::error::RenderError;
 use ash::vk;
@@ -124,6 +125,7 @@ fn allocate_block(
     // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
     let memory = unsafe { device.allocate_memory(&info, None) }
         .map_err(|error| vk_error("allocate device memory block", error))?;
+    runtime.work.add(DeviceCount::MemoryAllocations, 1);
     let flags = runtime.memory.memory_types[type_index as usize].property_flags;
     if !flags.contains(vk::MemoryPropertyFlags::HOST_VISIBLE) {
         return Ok((memory, None));
@@ -235,5 +237,7 @@ pub(super) fn bind_device_image(
             .bind_image_memory(image, lease.memory, lease.offset)
     }
     .map_err(|error| vk_error("bind image memory", error))?;
+    // Every image of the backend is bound here, once, right after it is created.
+    runtime.work.add(DeviceCount::Images, 1);
     Ok(lease)
 }

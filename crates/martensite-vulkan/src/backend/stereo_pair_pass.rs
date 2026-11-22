@@ -219,6 +219,7 @@ impl StereoPairSet {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         self.set = unsafe { device.allocate_descriptor_sets(&info) }
             .map_err(|e| vk_error("allocate stereo pair set", e))?[0];
+        self.layout.runtime.work.add_sets(&info);
         self.write();
         Ok(())
     }

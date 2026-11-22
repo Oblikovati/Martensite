@@ -1,5 +1,6 @@
 //! Thin device dispatch for the same one-shot submission protocol used by fault controls.
 use super::device_retirement::{CompletionDispatch, DeviceIdleCalls, retirement_retry_pause};
+use super::frame_work_ledger::{DeviceCount, WorkPhase};
 use super::{
     runtime::vk_error, submission::CommandSubmission, submission_protocol::SubmissionDispatch,
 };
@@ -28,6 +29,7 @@ impl<'a, 'b> DeviceSubmissionCalls<'a, 'b> {
 impl SubmissionDispatch for DeviceSubmissionCalls<'_, '_> {
     fn end_commands(&mut self) -> Result<(), RenderError> {
         let submission = self.submission;
+        let _submission = submission.runtime.work.enter(WorkPhase::Submission);
         // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
         unsafe {
             submission
@@ -39,6 +41,7 @@ impl SubmissionDispatch for DeviceSubmissionCalls<'_, '_> {
     }
     fn submit_commands(&mut self) -> Result<(), RenderError> {
         let submission = self.submission;
+        let _submission = submission.runtime.work.enter(WorkPhase::Submission);
         let commands = [vk::CommandBufferSubmitInfo::default().command_buffer(submission.command)];
         let submits = [vk::SubmitInfo2::default()
             .command_buffer_infos(&commands)
@@ -53,6 +56,7 @@ impl SubmissionDispatch for DeviceSubmissionCalls<'_, '_> {
             )
         }
         .map_err(|error| vk_error("submit frame", error))?;
+        submission.runtime.work.add(DeviceCount::Submissions, 1);
         #[cfg(feature = "command-state-diagnostics")]
         super::replay_raster_commands::submitted(
             submission.command,
@@ -65,6 +69,7 @@ impl SubmissionDispatch for DeviceSubmissionCalls<'_, '_> {
     }
     fn wait_fence(&mut self) -> Result<(), RenderError> {
         let submission = self.submission;
+        let _waiting = submission.runtime.work.enter(WorkPhase::Waiting);
         // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
         unsafe {
             submission

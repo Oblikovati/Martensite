@@ -17,7 +17,7 @@ use std::sync::Arc;
 /// A Graphic3d driver with an injected device; `Graphic3dRenderDriver::new(VulkanOptions::default())?`.
 pub struct Graphic3dRenderDriver {
     base: Graphic3dGraphicDriverBase,
-    device: SharedRenderDevice,
+    pub(crate) device: SharedRenderDevice,
     text_source: Arc<dyn crate::TextLayoutSource>,
     pub(crate) mesh_edge_pipeline: crate::RenderMeshEdgePipeline,
     pub(crate) unlit_face_color_policy: crate::RenderUnlitFaceColorPolicy,

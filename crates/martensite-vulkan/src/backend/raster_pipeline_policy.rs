@@ -131,6 +131,9 @@ fn create_located_pipeline(
             .create_graphics_pipelines(vk::PipelineCache::null(), &[info], None)
     } {
         Ok(pipelines) => {
+            runtime
+                .work
+                .add(super::frame_work_ledger::DeviceCount::Pipelines, 1);
             #[cfg(any(
                 feature = "vertex-output-diagnostics",
                 feature = "command-state-diagnostics"

@@ -21,6 +21,7 @@ pub(super) fn record_frame(
     resources: &FrameResources,
     frame: &RenderFrame,
 ) {
+    let _recording = runtime.work.enter(super::WorkPhase::Recording);
     super::window_depth_status::begin(resources);
     #[cfg(feature = "command-state-diagnostics")]
     {

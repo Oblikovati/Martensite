@@ -30,6 +30,14 @@ impl DriverBackend {
             Self::Injected(_) => crate::RenderImageMemory::default(),
         }
     }
+    /// The work counters of the Vulkan device; injected backends count nothing.
+    /// Example: `backend.work_ledger().map(|ledger| ledger.totals())`.
+    pub fn work_ledger(&self) -> Option<Arc<crate::backend::FrameWorkLedger>> {
+        match self {
+            Self::Vulkan(device) => Some(device.work_ledger()),
+            Self::Injected(_) => None,
+        }
+    }
     pub fn render(&mut self, frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
         match self {
             Self::Vulkan(device) => device.render(frame),

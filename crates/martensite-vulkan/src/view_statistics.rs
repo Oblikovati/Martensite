@@ -27,6 +27,8 @@ pub(crate) struct RenderRetainedView {
     pub(crate) environment: SharedState<crate::view_environment::ViewEnvironmentState>,
     /// The light cameras and last rendered shadow maps (GlShadowMapArray, shadow_maps.rs).
     pub(crate) shadow_cameras: SharedState<crate::shadow_maps::ShadowCameras>,
+    /// The device work of the last redraw (frame_work.rs).
+    pub(crate) frame_work: SharedState<crate::RenderDeviceWork>,
 }
 
 impl RenderRetainedView {
@@ -42,6 +44,7 @@ impl RenderRetainedView {
             graduated_trihedron_shown: Default::default(),
             environment: Default::default(),
             shadow_cameras: Default::default(),
+            frame_work: Default::default(),
         }
     }
     /// Keep forwarded FBO bindings observable, including same-owner round trips.

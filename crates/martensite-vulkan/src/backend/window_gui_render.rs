@@ -1,7 +1,8 @@
 //! Operation-local presentation observations bracket native GUI submission.
 use super::window_gui_contract::{NoPresentationProbe, WindowGuiContract, WindowPresentationProbe};
 use super::{
-    VulkanRenderer, WindowPresenter, frame::FrameResources, submission::CommandSubmission,
+    VulkanRenderer, WindowPresenter, WorkPhase, frame::FrameResources,
+    submission::CommandSubmission,
 };
 use crate::{
     FrameCapture, RenderError, RenderFrame, RenderGuiSurfacePhase, RenderGuiSurfacePolicy,
@@ -91,9 +92,14 @@ impl VulkanRenderer {
         self.commit_fragment_alpha(frame, owned.resources.fragment_alpha.ending);
         self.commit_stencil(frame, owned.resources.stencil.ending);
         let queue = self.runtime.queues[operation.presenter.present_family as usize];
-        if let Err(primary) = operation.present(queue, index) {
+        let presented = {
+            let _submission = self.runtime.work.enter(WorkPhase::Submission);
+            operation.present(queue, index)
+        };
+        if let Err(primary) = presented {
             return Err(owned.reject(self, operation.presenter, primary));
         }
+        let _readback = self.runtime.work.enter(WorkPhase::Readback);
         owned.resources.capture()
     }
     fn prepare_owned_window(
@@ -103,7 +109,12 @@ impl VulkanRenderer {
         operation: &mut WindowGuiOperation<'_>,
         vsync: bool,
     ) -> Result<(super::owned_window_submission::OwnedWindowFrame, u32), RenderError> {
-        let index = match operation.acquire(frame.extent(), vsync) {
+        // Acquiring blocks until the presentation engine releases an image.
+        let acquired = {
+            let _waiting = self.runtime.work.enter(WorkPhase::Waiting);
+            operation.acquire(frame.extent(), vsync)
+        };
+        let index = match acquired {
             Ok(index) => index,
             Err(primary) => return Err(owned.reject(self, operation.presenter, primary)),
         };
@@ -150,6 +161,7 @@ impl VulkanRenderer {
         presenter: &mut WindowPresenter,
         index: u32,
     ) -> Result<(), RenderError> {
+        let _recording = self.runtime.work.enter(WorkPhase::Recording);
         let chain = presenter.chain.as_mut().expect("acquired swapchain");
         super::gui_native_extent::validate(frame, chain.config.extent)?;
         super::record::record_frame(&self.runtime, commands.command, resources, frame);

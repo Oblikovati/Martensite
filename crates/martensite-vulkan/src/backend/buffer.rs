@@ -1,4 +1,5 @@
 //! Buffer allocations are released on every construction, recording and readback failure.
+use super::frame_work_ledger::DeviceCount;
 use super::memory_arena::{MemoryLease, MemoryRequest, ResourceTiling};
 use super::memory_selection::{HostBufferAccess, host_buffer_memory_type};
 use super::runtime::{VulkanRuntime, vk_error};
@@ -25,6 +26,7 @@ impl DeviceBuffer {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let handle = unsafe { runtime.device().create_buffer(&info, None) }
             .map_err(|e| vk_error("create buffer", e))?;
+        runtime.work.add(DeviceCount::Buffers, 1);
         let mut buffer = Self {
             runtime: runtime.clone(),
             handle,
@@ -73,6 +75,9 @@ impl DeviceBuffer {
         // Host-coherent memory stays mapped; writes happen only between submissions.
         // SAFETY: the destination is a live mapped allocation whose size was checked above, and it does not overlap the source.
         unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), pointer, bytes.len()) };
+        self.runtime
+            .work
+            .add(DeviceCount::UploadedBytes, bytes.len() as u64);
         Ok(())
     }
     pub fn read(&self, size: usize) -> Result<Vec<u8>, RenderError> {
@@ -82,7 +87,11 @@ impl DeviceBuffer {
         let pointer = self.host_pointer()?;
         // A completed fence and a transfer-to-host barrier precede all readbacks.
         // SAFETY: the pointer and length describe a live allocation or Vulkan output array of this scope, and the view does not outlive it.
-        Ok(unsafe { std::slice::from_raw_parts(pointer, size) }.to_vec())
+        let bytes = unsafe { std::slice::from_raw_parts(pointer, size) }.to_vec();
+        self.runtime
+            .work
+            .add(DeviceCount::ReadBackBytes, size as u64);
+        Ok(bytes)
     }
     fn host_pointer(&self) -> Result<*mut u8, RenderError> {
         self.memory

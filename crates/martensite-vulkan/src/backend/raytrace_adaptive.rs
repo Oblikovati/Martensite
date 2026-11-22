@@ -131,6 +131,7 @@ impl AdaptiveTargets {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let sets = unsafe { device.allocate_descriptor_sets(&info) }
             .map_err(|e| vk_error("allocate adaptive-sampling sets", e))?;
+        self.runtime.work.add_sets(&info);
         (self.render_set, self.display_set) = (sets[0], sets[1]);
         self.write_sets();
         Ok(())

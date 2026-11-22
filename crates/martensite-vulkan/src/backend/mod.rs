@@ -8,6 +8,8 @@ mod device_limits_query;
 mod device_retirement;
 mod diagnostic_facts;
 mod factorized_line_upload;
+mod frame_work_ledger;
+pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
 mod image_memory;
 mod layer_depth_policy;
 mod line_clip_device;
@@ -264,6 +266,7 @@ impl RenderBackend for VulkanRenderer {
 impl VulkanRenderer {
     fn render_owned_frame(&mut self, frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
         let resources = self.completed_owned_frame(frame)?;
+        let _readback = self.runtime.work.enter(WorkPhase::Readback);
         resources.capture()
     }
     /// Inspect persistent admission; `renderer.device_state()` never polls execution progress.
@@ -329,6 +332,8 @@ impl VulkanRenderer {
         &mut self,
         frame: &RenderFrame,
     ) -> Result<frame::FrameResources, RenderError> {
+        let work = self.runtime.work.clone();
+        let _upload = work.enter(WorkPhase::Upload);
         let initial_stencil = frame.initial_stencil(self.stencil);
         let capped = needs_stencil_pipeline(frame, initial_stencil);
         self.prepare_capping_pipeline(capped)?;

@@ -106,6 +106,8 @@ mod primitive;
 mod primitive_ranges;
 mod primitive_topology;
 pub use frame_stats::{RenderFrameStats, RenderImageMemory};
+mod frame_work;
+pub use frame_work::{RenderDeviceWork, RenderWorkTimes};
 pub use graphic_group::Graphic3dDrawGroup;
 
 mod style;

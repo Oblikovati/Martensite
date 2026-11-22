@@ -7,6 +7,22 @@ use martensite_tkservice::{
 };
 use std::fmt::Write as _;
 
+/// Applies a frame's host-copy steps in GlView order: the scaled depth blit, the subview
+/// blits, then the flipped output; `finish_host_capture(&mut capture, &frame, scaled)`.
+pub(crate) fn finish_host_capture(
+    capture: &mut FrameCapture,
+    frame: &crate::RenderFrame,
+    scaled: Option<&FrameCapture>,
+) {
+    if let Some(scaled) = scaled {
+        capture.depth = crate::render_scale::blit_depth(scaled, [frame.width, frame.height]);
+    }
+    crate::subview_composition::apply_subview_blits(capture, &frame.subview_blits);
+    if frame.flip_output {
+        capture.reverse_rows();
+    }
+}
+
 pub(crate) fn report_capture_failure(error: &RenderError) {
     eprintln!("{}", capture_failure_record(error));
 }

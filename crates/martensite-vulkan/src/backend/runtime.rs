@@ -90,6 +90,8 @@ pub(super) struct VulkanRuntime {
     pub(super) attachment_coordinates: super::attachment_coordinates::AttachmentCoordinates,
     pub(super) image_memory: super::image_memory::ImageMemoryLedger,
     pub(super) memory_arena: super::memory_arena::MemoryArena,
+    /// Resource, transfer and phase counters behind `Graphic3dRenderView::last_frame_work`.
+    pub(crate) work: Arc<super::frame_work_ledger::FrameWorkLedger>,
 }
 impl VulkanRuntime {
     pub(super) fn admit_world_clip_interpolation(
@@ -335,6 +337,7 @@ impl VulkanRuntime {
             attachment_coordinates: Default::default(),
             image_memory: Default::default(),
             memory_arena: Default::default(),
+            work: Default::default(),
             #[cfg(test)]
             executable_profile: None,
         })

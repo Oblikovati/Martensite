@@ -166,14 +166,12 @@ fn allocate_storage_set(
     layout: vk::DescriptorSetLayout,
 ) -> Result<vk::DescriptorSet, RenderError> {
     let layouts = [layout];
+    let info = vk::DescriptorSetAllocateInfo::default()
+        .descriptor_pool(pool)
+        .set_layouts(&layouts);
     // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
-    unsafe {
-        runtime.device().allocate_descriptor_sets(
-            &vk::DescriptorSetAllocateInfo::default()
-                .descriptor_pool(pool)
-                .set_layouts(&layouts),
-        )
-    }
-    .map(|sets| sets[0])
-    .map_err(|e| vk_error("allocate storage descriptor", e))
+    let sets = unsafe { runtime.device().allocate_descriptor_sets(&info) }
+        .map_err(|e| vk_error("allocate storage descriptor", e))?;
+    runtime.work.add_sets(&info);
+    Ok(sets[0])
 }

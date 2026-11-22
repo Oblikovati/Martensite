@@ -217,6 +217,7 @@ fn allocate_map_set(
     // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
     let sets = unsafe { runtime.device().allocate_descriptor_sets(&info) }
         .map_err(|e| vk_error("allocate material map set", e))?;
+    runtime.work.add_sets(&info);
     Ok(sets[0])
 }
 fn write_map_descriptors(

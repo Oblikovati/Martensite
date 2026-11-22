@@ -1,9 +1,10 @@
 //! A real Graphic3d view owns capture results while TKService owns common scene bookkeeping.
 use crate::{
     FrameCapture, RenderError,
+    backend::WorkPhase,
     driver_backend::SharedRenderDevice,
     error::rejected,
-    view_capture::{dump_capture, report_capture_failure},
+    view_capture::{dump_capture, finish_host_capture, report_capture_failure},
     view_forward::retained_view_methods,
     view_scene::frame_for_view,
     view_target::{RenderFrameBuffer, capture_extent},
@@ -139,8 +140,9 @@ impl Graphic3dRenderView {
     fn render_current(&self) -> Result<FrameCapture, RenderError> {
         #[cfg(feature = "raytrace-input-diagnostics")]
         let observation = self.begin_raytrace_observation()?;
-        self.with_frame_stats(|| {
-            let (mut frame, scaled) = self.prepare_current_frame()?;
+        self.with_measured_frame(|work| {
+            let (mut frame, scaled) =
+                work.phase(WorkPhase::Scene, || self.prepare_current_frame())?;
             frame.flip_output = self.retained.flips_output(&self.rendering_params());
             // redrawImmediate blits the subviews before the swap and the flipped output blit.
             frame.subview_blits = self.subview_blits(frame.extent());
@@ -154,14 +156,9 @@ impl Graphic3dRenderView {
                 usize::from(frame.flip_output),
                 usize::from(frame.gui_draw_start.is_some()),
             ];
-            if let Some(scaled) = scaled {
-                capture.depth =
-                    crate::render_scale::blit_depth(&scaled, [frame.width, frame.height]);
-            }
-            crate::subview_composition::apply_subview_blits(&mut capture, &frame.subview_blits);
-            if frame.flip_output {
-                capture.reverse_rows();
-            }
+            work.phase(WorkPhase::Readback, || {
+                finish_host_capture(&mut capture, &frame, scaled.as_ref());
+            });
             #[cfg(feature = "raytrace-input-diagnostics")]
             self.finish_raytrace_observation(observation.as_ref(), &capture);
             #[cfg(feature = "command-state-diagnostics")]
