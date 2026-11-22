@@ -2,7 +2,7 @@
 use super::PrimitiveSubmission;
 use martensite_tkernel::ncollection::BufferRevision;
 use martensite_tkservice::graphic3d::{
-    Graphic3dBoundBufferState, Graphic3dBufferMembers, Graphic3dBufferRead,
+    Graphic3dAttribute, Graphic3dBoundBufferState, Graphic3dBufferMembers, Graphic3dBufferRead,
     Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
 };
 
@@ -33,6 +33,69 @@ impl GeometryStamp {
             indices,
             bounds,
         })
+    }
+}
+
+pub(crate) struct BatchGeometryStamp {
+    revision: BufferRevision,
+    count: i32,
+    stride: i32,
+    interleaved: bool,
+    layout: [Graphic3dAttribute; 2],
+    indices: IndexStamp,
+}
+
+impl BatchGeometryStamp {
+    pub(crate) fn capture(primitive: &PrimitiveSubmission) -> Option<Self> {
+        if !primitive.bounds.is_null() {
+            return None;
+        }
+        let attributes = primitive.attributes.get()?;
+        let indices = primitive.indices.get()?;
+        let read = attributes.read_immutable_buffer()?;
+        let (interleaved, layout) = read.attribute_layout();
+        let layout = layout.try_into().ok()?;
+        let (revision, count, stride) = (
+            read.content_revision()?,
+            read.element_count(),
+            read.element_stride(),
+        );
+        drop(read);
+        Some(Self {
+            revision,
+            count,
+            stride,
+            interleaved,
+            layout,
+            indices: IndexStamp::capture(&indices.read_immutable_buffer()?)?,
+        })
+    }
+
+    pub(crate) fn probe_matches(&self, primitive: &PrimitiveSubmission) -> bool {
+        let Some(attributes) = primitive.attributes.get() else {
+            return false;
+        };
+        let Some(indices) = primitive.indices.get() else {
+            return false;
+        };
+        attributes
+            .read_immutable_buffer()
+            .as_ref()
+            .is_some_and(|read| self.matches_attributes(read))
+            && indices
+                .read_immutable_buffer()
+                .as_ref()
+                .is_some_and(|read| self.indices.probe_matches(read))
+            && primitive.bounds.is_null()
+    }
+
+    fn matches_attributes(&self, read: &Graphic3dBufferRead<'_>) -> bool {
+        let (interleaved, layout) = read.attribute_layout();
+        interleaved == self.interleaved
+            && layout == self.layout
+            && read.element_count() == self.count
+            && read.element_stride() == self.stride
+            && read.matches_content_revision(&self.revision)
     }
 }
 
@@ -97,6 +160,12 @@ pub(crate) struct IndexStamp {
 }
 
 impl IndexStamp {
+    fn probe_matches(&self, read: &Graphic3dBufferRead<'_>) -> bool {
+        read.matches_content_revision(&self.revision)
+            && self.count == read.element_count()
+            && self.stride == read.element_stride()
+    }
+
     pub(crate) fn capture(read: &Graphic3dBufferRead<'_>) -> Option<Self> {
         Some(Self {
             revision: read.content_revision()?,

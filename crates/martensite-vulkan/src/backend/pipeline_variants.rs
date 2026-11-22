@@ -275,6 +275,7 @@ impl RasterPipelines {
                 factorized,
                 window_depth,
                 (LineTintLayout::None, dynamic_lighting),
+                draw.vertices.len(),
             );
         }
         let index = variant_index(draw);
@@ -291,7 +292,20 @@ impl RasterPipelines {
         draw: &PrimitiveDraw,
         layout: LineTintLayout,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
-        self.select_special(draw, false, None, (layout, false))
+        self.select_special(draw, false, None, (layout, false), draw.vertices.len())
+    }
+    pub(super) fn select_batch(
+        &self,
+        draw: &PrimitiveDraw,
+        vertex_count: usize,
+    ) -> Result<Arc<DrawPipeline>, RenderError> {
+        self.select_special(
+            draw,
+            false,
+            None,
+            (LineTintLayout::None, false),
+            vertex_count,
+        )
     }
     fn select_special(
         &self,
@@ -299,6 +313,7 @@ impl RasterPipelines {
         factorized: bool,
         window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
         (line_tint, dynamic_lighting): (LineTintLayout, bool),
+        vertex_count: usize,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         crate::polygon_point_raster::require_polygon_points(
             draw.polygon_points,
@@ -334,7 +349,7 @@ impl RasterPipelines {
         );
         let directional_phong = window_depth.is_none()
             && !factorized
-            && super::directional_phong::admitted(&self.runtime, draw);
+            && super::directional_phong::admitted_for_vertices(&self.runtime, draw, vertex_count);
         index.0.1 |= 64 * u8::from(directional_phong);
         index.0.1 |= line_tint.cache_bits();
         index.0.1 |= 16 * u8::from(dynamic_lighting && draw.lighting.is_some());

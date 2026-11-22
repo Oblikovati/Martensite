@@ -137,6 +137,14 @@ pub trait Graphic3dBufferSource: Transient {
     fn is_mutable(&self) -> bool {
         false
     }
+    /// Read the layout flag of a buffer that currently has no mutable upload ranges.
+    /// Example: `source.immutable_interleaving() == Some(true)`.
+    fn immutable_interleaving(&self) -> Option<bool> {
+        if self.is_mutable() {
+            return None;
+        }
+        Some(self.is_interleaved())
+    }
     /// The invalidated byte range (empty); `buffer.invalidated_range()`.
     fn invalidated_range(&self) -> Graphic3dBufferRange {
         Graphic3dBufferRange::default()

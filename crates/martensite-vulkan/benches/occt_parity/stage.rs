@@ -55,6 +55,9 @@ impl Stage {
             radius,
         };
         stage.frame_camera();
+        if std::env::var_os("MARTENSITE_594_DISABLE_BATCH").is_some() {
+            stage.render_view().enable_fused_replay(false);
+        }
         stage
     }
 

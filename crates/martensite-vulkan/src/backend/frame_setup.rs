@@ -155,6 +155,7 @@ impl FrameSetup<'_> {
             .surface_images
             .observe_live_fixed_function(self.frame.raster.fixed_function);
         let mut uploads = FrameDrawUploads {
+            geometry_batch: self.frame.geometry_batch.as_ref(),
             geometry: GeometryTransfers::new(&self.pipeline.geometry_residency),
             storage: FrameUploadPages::storage(&self.pipeline.frame_storage_pages),
             dynamic_lighting: super::super::storage_descriptor::uses_lighting_pages(

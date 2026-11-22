@@ -13,6 +13,20 @@ pub(crate) enum DriverBackend {
     Injected(Box<dyn RenderBackend + Send + Sync>),
 }
 impl DriverBackend {
+    pub(crate) fn prepare_batch(
+        &self,
+        draws: Vec<crate::PrimitiveDraw>,
+    ) -> Result<Option<crate::backend::GeometryBatch>, RenderError> {
+        match self {
+            Self::Vulkan(renderer) => renderer.prepare_batch(draws),
+            Self::Injected(_) => Ok(None),
+        }
+    }
+
+    pub(crate) fn supports_phong_batching(&self) -> bool {
+        matches!(self, Self::Vulkan(renderer) if renderer.supports_phong_batching())
+    }
+
     pub(super) fn allows_main_copy(&self) -> bool {
         matches!(self, Self::Vulkan(renderer) if renderer.allows_main_copy())
     }

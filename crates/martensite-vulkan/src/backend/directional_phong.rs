@@ -13,16 +13,27 @@ pub(super) const SHADERS: [&[u8]; 2] = [
 
 // Amortize the extra pipeline for large resident streams. The transfer runs with a
 // 51,471-vertex mesh regressed when it selected this variant (#594).
-const MIN_VERTICES: usize = (4 << 20) / super::pipeline_state::LIT_VERTEX_STRIDE as usize;
+pub(crate) const MIN_VERTICES: usize =
+    (4 << 20) / super::pipeline_state::LIT_VERTEX_STRIDE as usize;
 
+#[cfg(test)]
 pub(super) fn admitted(runtime: &VulkanRuntime, draw: &PrimitiveDraw) -> bool {
-    draw.vertices.len() >= MIN_VERTICES
-        && supported_behavior(runtime)
-        && ordinary_surface(draw)
-        && draw.lighting.as_ref().is_some_and(directional_material)
+    admitted_for_vertices(runtime, draw, draw.vertices.len())
 }
 
-fn supported_behavior(runtime: &VulkanRuntime) -> bool {
+pub(super) fn admitted_for_vertices(
+    runtime: &VulkanRuntime,
+    draw: &PrimitiveDraw,
+    vertex_count: usize,
+) -> bool {
+    vertex_count >= MIN_VERTICES && supported_behavior(runtime) && directional_phong_draw(draw)
+}
+
+pub(crate) fn directional_phong_draw(draw: &PrimitiveDraw) -> bool {
+    ordinary_surface(draw) && draw.lighting.as_ref().is_some_and(directional_material)
+}
+
+pub(super) fn supported_behavior(runtime: &VulkanRuntime) -> bool {
     !cfg!(any(
         feature = "command-state-diagnostics",
         feature = "vertex-output-diagnostics",
@@ -60,9 +71,13 @@ fn directional_material(state: &RenderLighting) -> bool {
         && !state.pbr
         && !state.vertex_colors
         && state.eye[3] == 0.
-        && state.lights.sources.iter().all(|source| {
-            source.kind == Graphic3dTypeOfLightSource::Directional as u32 && !source.cast_shadows
-        })
+        && directional_lights(&state.lights)
+}
+
+pub(crate) fn directional_lights(lights: &crate::RenderLightSet) -> bool {
+    lights.sources.iter().all(|source| {
+        source.kind == Graphic3dTypeOfLightSource::Directional as u32 && !source.cast_shadows
+    })
 }
 
 #[cfg(all(

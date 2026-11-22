@@ -119,7 +119,7 @@ impl PartialEq for RenderMaterial {
 }
 impl Eq for RenderMaterial {}
 
-fn common_coefficients(
+pub(crate) fn common_coefficients(
     space: RenderMaterialColorSpace,
     source: &Graphic3dMaterialAspect,
     interior: Color,

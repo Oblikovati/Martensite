@@ -126,9 +126,10 @@ wait for the GPU and the readback of the image. OCCT draws ten frames and waits 
 parity needs a redraw that returns without waiting and a capture that reads on demand.
 Both are done.
 
-The 400-sphere orbit still takes 1.204 ms per frame on the Radeon 8060S host, against
-0.167 ms for OCCT. At two fixed orbit angles, replaying the same extracted frame took
-0.396 to 0.406 ms. Reusing the prepared GPU bindings as well took 0.245 to 0.270 ms.
+Before batching, the 400-sphere orbit took 1.204 ms per frame on the Radeon 8060S
+host, against 0.167 ms for OCCT. At two fixed orbit angles, replaying the same
+extracted frame took 0.396 to 0.406 ms. Reusing the prepared GPU bindings as well
+took 0.245 to 0.270 ms.
 
 At those angles, all 400 draws shared the same transform and lighting inputs apart
 from their geometry streams. A probe concatenated the vertices, normals and indices
@@ -153,8 +154,8 @@ priority maps took about 81 µs in a short diagnostic. Checking the saved order 
 the existing maps and comparing saved geometry stamps took 32 µs. The saved-stamp
 check rejected direct layout writes and index or vertex edits. This timing covers
 buffer and order checks with representative structure, group and aspect reads.
-A production check still needs to compare the relevant aspect values and handle
-visibility, layer settings and clipping.
+This measurement preceded the checks for live material values, visibility,
+layer settings and clipping.
 
 Warm culling took 42 µs on its own. Borrowing the BVH and reducing the per-leaf
 locking brought it to 29 µs in a probe that increased peak process memory in the
@@ -170,9 +171,39 @@ whole-process peak rose 0.02% (32 KiB). Color and depth matched at four camera a
 and after material and visibility edits forced ordinary rendering. An abandoned
 upload kept its source streams available for retry.
 
-The probe covers the sphere fixture. Production admission still needs the complete
-live-input check and safe lock boundaries, including the state that changes how a
-layer orders, clips or shades geometry.
+The native redraw path now batches compatible opaque directional Phong draws.
+The ordinary frame supplies the draw order and geometry streams. Batch admission
+checks the layer span and the recorded vertex, index, normal and material inputs.
+On warm redraws, culling and the live input checks decide whether to reuse those
+buffers. A changed input uses the ordinary path. Mutable buffers keep the existing
+partial upload path. Batch buffers share the device geometry budget with the
+ordinary cache, and submitted frames keep their buffer owners until retirement.
+
+The native sphere check matched ordinary Vulkan color and depth at four camera
+angles. It also matched ordinary rendering after material, visibility, background,
+priority and connection edits, during immediate redraw, and after a group was
+destroyed. Warm orbit frames created zero buffers and uploaded zero geometry
+bytes. The TkService and Vulkan library and toolkit suites passed 3,503 tests,
+with 31 ignored.
+
+The equal-window comparison on the Radeon 8060S used the same executable for
+the default and batch-disabled Vulkan runs. Each renderer used ten frames per
+orbit window. The upload setting timed six display, redraw and removal
+operations per window. The first attempt timed only two uploads, and its GPU
+wait varied enough to put the case outside the tolerance. The six-operation
+rerun passed in all five pairs.
+
+| Case | Ordinary Vulkan (ms) | Default Vulkan (ms) | OCCT (ms) | Default peak RSS vs ordinary |
+| --- | ---: | ---: | ---: | ---: |
+| `frame_ais_spheres_400` | 1.253 | 0.171 | 0.182 | −0.31% |
+| `frame_mesh_1m` | 0.305 | 0.301 | 0.306 | −0.05% |
+| `frame_segments_1m` | 0.237 | 0.247 | 0.270 | +0.04% |
+| `frame_points_1m` | 0.270 | 0.270 | 0.283 | +0.01% |
+| `upload_mesh_100k` | 0.141 | 0.136 | 0.277 | −0.22% |
+
+The rendering counts matched in every run. The median for each case was below
+OCCT's. The point and segment scenes went through the same single-draw path in
+both Vulkan modes. Their peak RSS ranges overlapped.
 
 ## Phase 2: a frame pipeline without stalls
 

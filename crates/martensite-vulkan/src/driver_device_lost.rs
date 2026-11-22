@@ -8,6 +8,7 @@
 use martensite_tkernel::standard::{Handle, SharedState, WeakHandle};
 use martensite_tkservice::graphic3d::{Graphic3dCStructure, Graphic3dCView, Graphic3dCViewMembers};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// The views and structures a driver created (`myMapOfView`, `myMapOfStructure`), shared with
 /// its views; `DriverObjects::default()`.
@@ -15,9 +16,22 @@ use std::collections::HashMap;
 pub(crate) struct DriverObjects {
     pub views: SharedState<Vec<WeakHandle<dyn Graphic3dCView>>>,
     structures: SharedState<HashMap<usize, WeakHandle<dyn Graphic3dCStructure>>>,
+    connection_revision: SharedState<Arc<()>>,
 }
 
 impl DriverObjects {
+    pub(crate) fn connection_revision(&self) -> Arc<()> {
+        self.connection_revision.read().clone()
+    }
+
+    pub(crate) fn connections_match(&self, revision: &Arc<()>) -> bool {
+        Arc::ptr_eq(&self.connection_revision.read(), revision)
+    }
+
+    pub(crate) fn connection_changed(&self) {
+        *self.connection_revision.write() = Arc::new(());
+    }
+
     pub(crate) fn register_structure(&self, structure: &Handle<dyn Graphic3dCStructure>) {
         self.structures
             .write()

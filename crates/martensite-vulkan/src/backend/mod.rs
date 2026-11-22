@@ -84,6 +84,18 @@ pub struct VulkanRenderer {
     environments: view_environments::ViewEnvironments,
 }
 impl VulkanRenderer {
+    pub(crate) fn prepare_batch(
+        &self,
+        draws: Vec<crate::PrimitiveDraw>,
+    ) -> Result<Option<GeometryBatch>, RenderError> {
+        self.runtime.lifecycle.admit("allocate retained batch")?;
+        GeometryBatch::prepare(draws, &self.runtime, &self.pipeline.geometry_residency)
+    }
+
+    pub(crate) fn supports_phong_batching(&self) -> bool {
+        directional_phong::supported_behavior(&self.runtime)
+    }
+
     /// Load Vulkan and select a capable graphics device; `VulkanRenderer::new(options)?`.
     pub fn new(options: VulkanOptions) -> Result<Self, RenderError> {
         let runtime = VulkanRuntime::create(options)?;
@@ -201,12 +213,16 @@ mod buffer;
 #[cfg(feature = "command-state-diagnostics")]
 mod command_state_diagnostic;
 mod directional_phong;
+pub(crate) use directional_phong::{
+    MIN_VERTICES as MIN_PHONG_BATCH_VERTICES, directional_lights, directional_phong_draw,
+};
 mod driver_identity;
 mod factorized_projection;
 mod fixed_lighting_pipeline;
 mod fixed_vertex_layout;
 mod fixed_vertex_sources;
 mod frame;
+pub(crate) use frame::GeometryBatch;
 mod frame_draw_presentation;
 mod frame_targets;
 mod geometry_buffer;

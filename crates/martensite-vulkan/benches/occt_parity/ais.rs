@@ -139,9 +139,236 @@ fn sphere_grid(bench: &Bench) -> ShapeGrid {
 
 fn frame_ais_spheres_400(bench: &Bench, mode: &Mode) -> Measured {
     let grid = sphere_grid(bench);
-    let measured = measure_orbit(bench, &grid.stage, mode);
+    if std::env::var_os("MARTENSITE_594_VERIFY_COLD_MIXED").is_some() {
+        check_cold_mixed_material(&grid);
+    }
+    let measured = if std::env::var_os("MARTENSITE_594_REPORT_PEAK").is_some()
+        || std::env::var_os("MARTENSITE_594_FUSED_REPLAY").is_some()
+    {
+        measure_fused_replay(bench, &grid.stage, mode)
+    } else {
+        measure_orbit(bench, &grid.stage, mode)
+    };
+    if std::env::var_os("MARTENSITE_594_VERIFY_STREAM_EDITS").is_some() {
+        check_fused_edit_fallback(&grid);
+    }
     grid.close();
+    if std::env::var_os("MARTENSITE_594_VERIFY_EXPIRED_BATCH").is_some() {
+        check_expired_batch(bench);
+    }
     measured
+}
+
+fn check_expired_batch(bench: &Bench) {
+    use martensite_tkservice::graphic3d::Graphic3dCView;
+    let grid = sphere_grid(bench);
+    let view = grid.stage.render_view();
+    grid.stage.redraw_orbit(17);
+    grid.stage.redraw_orbit(17);
+    grid.stage.redraw_orbit(18);
+    let warm = view.last_frame_work();
+    assert_eq!(warm.buffers_created, 0, "{warm:?}");
+    assert_eq!(warm.geometry_uploaded_bytes, 0, "{warm:?}");
+    assert!(view.fused_replay_hits() > 0);
+    let layer = view
+        .layers()
+        .into_iter()
+        .find(|layer| layer.nb_structures() > 0)
+        .unwrap();
+    let source = layer
+        .array_of_structures()
+        .iter()
+        .flat_map(|sources| sources.iter())
+        .next()
+        .unwrap()
+        .upgrade();
+    source.clear();
+    compare_fused_edit(&grid.stage, "destroyed group");
+    assert_eq!(view.fused_replay_hits(), 0);
+    grid.close();
+}
+
+fn check_cold_mixed_material(grid: &ShapeGrid) {
+    use martensite_tkernel::quantity::{Color, NamedColor};
+    let stage = &grid.stage;
+    let view = stage.render_view();
+    let object = &grid.objects[0];
+    assert_eq!(view.fused_replay_hits(), 0);
+    grid.context
+        .set_color(object, Color::named(NamedColor::RED), false)
+        .unwrap();
+    compare_fused_edit(stage, "cold mixed material");
+    grid.context.unset_color(object, false).unwrap();
+    let retain = std::env::var_os("MARTENSITE_594_FUSED_REPLAY").is_some();
+    view.enable_fused_replay(retain);
+    stage.redraw_orbit(17);
+    stage.redraw_orbit(17);
+    assert_eq!(view.fused_replay_hits() > 0, retain);
+}
+
+fn check_fused_edit_fallback(grid: &ShapeGrid) {
+    use martensite_tkernel::quantity::{Color, NamedColor};
+    use martensite_tkservice::graphic3d::{Graphic3dMaterialAspect, Graphic3dNameOfMaterial};
+    let stage = &grid.stage;
+    let view = stage.render_view();
+    let object = &grid.objects[0];
+    stage.redraw_orbit(17);
+    let original = view.capture().unwrap();
+    check_fused_immediate_fallback(stage);
+    check_fused_background_fallback(stage);
+    check_fused_connection_fallback(stage);
+    check_fused_priority_fallback(stage);
+    view.enable_fused_replay(true);
+    let accepted = view.fused_replay_hits();
+    stage.redraw_orbit(17);
+    assert_eq!(view.fused_replay_hits(), accepted + 1);
+    view.enable_fused_replay(false);
+    let gold = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Gold);
+    grid.context.set_material(object, &gold, false).unwrap();
+    let changed = compare_fused_edit(stage, "material coefficients");
+    assert_ne!(changed.rgba, original.rgba);
+    grid.context
+        .set_color(object, Color::named(NamedColor::RED), false)
+        .unwrap();
+    let recolored = compare_fused_edit(stage, "interior color");
+    assert_ne!(recolored.rgba, changed.rgba);
+    grid.context.erase(object, false).unwrap();
+    let hidden = compare_fused_edit(stage, "visibility");
+    assert_ne!(hidden.rgba, recolored.rgba);
+}
+
+fn check_fused_immediate_fallback(stage: &Stage) {
+    use martensite_tkservice::graphic3d::Graphic3dCView;
+    stage.orbit(17);
+    compare_fused_redraw(stage, "immediate redraw", || {
+        stage.render_view().redraw_immediate();
+    });
+}
+
+fn check_fused_background_fallback(stage: &Stage) {
+    use martensite_tkernel::quantity::{Color, NamedColor};
+    use martensite_tkservice::{aspect::AspectBackground, graphic3d::Graphic3dCView};
+    let view = stage.render_view();
+    let original = view.background();
+    view.set_background(&AspectBackground::new(Color::named(NamedColor::RED)));
+    compare_fused_edit(stage, "background color");
+    view.set_background(&original);
+}
+
+fn check_fused_connection_fallback(stage: &Stage) {
+    use martensite_tkservice::graphic3d::Graphic3dCView;
+    let layer = stage
+        .render_view()
+        .layers()
+        .into_iter()
+        .find(|layer| layer.nb_structures() > 1)
+        .unwrap();
+    let source_order = layer.array_of_structures();
+    let mut sources = source_order
+        .iter()
+        .flat_map(|sources| sources.iter())
+        .map(|link| link.upgrade());
+    let first = sources.next().unwrap();
+    let second = sources.next().unwrap();
+    first.connect(&*second);
+    compare_fused_edit(stage, "structure connection");
+    first.disconnect(&*second);
+}
+
+fn check_fused_priority_fallback(stage: &Stage) {
+    use martensite_tkservice::graphic3d::{Graphic3dCView, Graphic3dDisplayPriority};
+    let layer = stage
+        .render_view()
+        .layers()
+        .into_iter()
+        .find(|layer| layer.nb_structures() > 0)
+        .unwrap();
+    let source = layer
+        .array_of_structures()
+        .iter()
+        .flat_map(|sources| sources.iter())
+        .last()
+        .unwrap()
+        .upgrade();
+    let priority = layer.remove(&source, true);
+    assert_ne!(priority, Graphic3dDisplayPriority::Invalid);
+    assert_ne!(priority, Graphic3dDisplayPriority::Topmost);
+    layer.add(&source, Graphic3dDisplayPriority::Topmost, true);
+    compare_fused_edit(stage, "draw priority");
+    layer.remove(&source, true);
+    layer.add(&source, priority, true);
+}
+
+fn compare_fused_edit(stage: &Stage, edit: &str) -> martensite_vulkan::FrameCapture {
+    compare_fused_redraw(stage, edit, || stage.redraw_orbit(17))
+}
+
+fn compare_fused_redraw(
+    stage: &Stage,
+    edit: &str,
+    redraw: impl Fn(),
+) -> martensite_vulkan::FrameCapture {
+    let view = stage.render_view();
+    let accepted = view.fused_replay_hits();
+    view.enable_fused_replay(true);
+    redraw();
+    assert!(view.fused_replay_hits() <= accepted, "{edit}");
+    let captured = view.capture().unwrap();
+    view.enable_fused_replay(false);
+    redraw();
+    let normal = view.capture().unwrap();
+    assert_eq!(captured.rgba, normal.rgba, "{edit}");
+    assert!(
+        captured
+            .depth
+            .iter()
+            .map(|z| z.to_bits())
+            .eq(normal.depth.iter().map(|z| z.to_bits()))
+    );
+    eprintln!("{edit} edit fell back to the exact ordinary result");
+    captured
+}
+
+fn measure_fused_replay(bench: &Bench, stage: &Stage, mode: &Mode) -> Measured {
+    for angle in 0..mode.warmup.min(mode.frames) {
+        stage.redraw_orbit(angle);
+    }
+    let nanos = timed_runs(bench, mode, mode.frames, |angle| stage.redraw_orbit(angle));
+    let status = std::fs::read_to_string("/proc/self/status").unwrap();
+    let peak = status
+        .lines()
+        .find(|line| line.starts_with("VmHWM:"))
+        .unwrap();
+    eprintln!("end timed windows {peak}");
+    let view = stage.render_view();
+    if std::env::var_os("MARTENSITE_594_REPORT_PEAK").is_none() {
+        for angle in [0, 17, 41, 47] {
+            let accepted = view.fused_replay_hits();
+            view.enable_fused_replay(true);
+            stage.redraw_orbit(angle);
+            assert!(view.fused_replay_hits() > accepted, "angle {angle}");
+            let fused = view.capture().expect("retained fused probe frame");
+            view.enable_fused_replay(false);
+            stage.redraw_orbit(angle);
+            let normal = view.capture().expect("ordinary frame");
+            assert_eq!(fused.rgba, normal.rgba, "angle {angle}");
+            assert!(
+                fused
+                    .depth
+                    .iter()
+                    .map(|z| z.to_bits())
+                    .eq(normal.depth.iter().map(|z| z.to_bits())),
+                "angle {angle}"
+            );
+            eprintln!("fused replay angle {angle} matched color and depth bytes");
+        }
+    }
+    view.enable_fused_replay(false);
+    stage.require_rendered();
+    Measured {
+        nanos,
+        checksum: stage.counted_frame(),
+    }
 }
 
 /// One operation moves the cursor onto the grid centre, then off the grid: two

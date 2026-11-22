@@ -5,7 +5,10 @@ use crate::{PrimitiveDraw, PrimitiveTopology, RenderVertex};
 use ash::vk;
 use std::collections::{HashMap, VecDeque, hash_map::Entry};
 use std::num::NonZeroUsize;
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{
+    Arc, Mutex, Weak,
+    atomic::{AtomicU64, Ordering},
+};
 
 #[derive(Clone)]
 pub(super) struct ResidentGeometry {
@@ -206,7 +209,19 @@ fn is_live<T>(stream: &Option<Weak<Vec<T>>>) -> bool {
 pub(super) struct GeometryStore {
     retained: Mutex<RetainedGeometry>,
     byte_limit: u64,
+    pinned_batch_bytes: Arc<AtomicU64>,
     pub(super) buffers: GeometryBufferPool,
+}
+
+pub(super) struct BatchCharge {
+    pinned_bytes: Arc<AtomicU64>,
+    bytes: u64,
+}
+
+impl Drop for BatchCharge {
+    fn drop(&mut self) {
+        self.pinned_bytes.fetch_sub(self.bytes, Ordering::Relaxed);
+    }
 }
 
 const RETIREMENT_CHECKS_PER_FRAME: usize = 512;
@@ -272,6 +287,7 @@ impl GeometryStore {
         Self {
             retained: Mutex::default(),
             byte_limit: (local_bytes / 4).min(MAX_RESIDENT_BYTES),
+            pinned_batch_bytes: Arc::default(),
             buffers: GeometryBufferPool::new((local_bytes / 4).min(MAX_RESIDENT_BYTES)),
         }
     }
@@ -280,6 +296,29 @@ impl GeometryStore {
         self.retained
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    pub(super) fn can_pin_batch(&self, bytes: u64) -> bool {
+        let retained = self.retained();
+        bytes <= self.batch_capacity(&retained)
+    }
+
+    pub(super) fn pin_batch(&self, bytes: u64) -> Option<Arc<BatchCharge>> {
+        let retained = self.retained();
+        if bytes > self.batch_capacity(&retained) {
+            return None;
+        }
+        self.pinned_batch_bytes.fetch_add(bytes, Ordering::Relaxed);
+        Some(Arc::new(BatchCharge {
+            pinned_bytes: self.pinned_batch_bytes.clone(),
+            bytes,
+        }))
+    }
+
+    fn batch_capacity(&self, retained: &RetainedGeometry) -> u64 {
+        self.byte_limit
+            .saturating_sub(self.pinned_batch_bytes.load(Ordering::Relaxed))
+            .saturating_sub(retained.bytes)
     }
 
     fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
@@ -301,9 +340,12 @@ impl GeometryStore {
             };
             retained.retire_expired(budget);
         }
+        let available = self
+            .byte_limit
+            .saturating_sub(self.pinned_batch_bytes.load(Ordering::Relaxed));
         for key in pending.order.drain(..) {
             if let Some(lease) = pending.leases.remove(&key).filter(GeometryLease::is_live) {
-                retained.insert(key, lease, self.byte_limit);
+                retained.insert(key, lease, available);
             }
         }
     }
@@ -314,6 +356,7 @@ pub(super) struct FrameGeometryResidency {
     pending: PendingGeometry,
     /// Uploads already shared at submission; they still size the retirement budget (#594).
     shared: usize,
+    pending_batch: Option<(Arc<super::GeometryBatch>, ResidentGeometry)>,
 }
 
 #[derive(Default)]
@@ -328,6 +371,7 @@ impl FrameGeometryResidency {
             store: Arc::clone(store),
             pending: PendingGeometry::default(),
             shared: 0,
+            pending_batch: None,
         }
     }
 
@@ -351,6 +395,7 @@ impl FrameGeometryResidency {
     /// Let later frames use this frame's uploads once it is submitted (#594); the queue orders
     /// the uploads before every later frame. `residency.share()`.
     pub(super) fn share(&mut self) {
+        self.publish_batch();
         self.shared += self.pending.order.len();
         self.store.publish(&mut self.pending, None);
     }
@@ -371,7 +416,23 @@ impl FrameGeometryResidency {
         }
     }
 
+    pub(super) fn queue_batch(
+        &mut self,
+        owner: Arc<super::GeometryBatch>,
+        geometry: ResidentGeometry,
+    ) {
+        assert!(self.pending_batch.is_none());
+        self.pending_batch = Some((owner, geometry));
+    }
+
+    fn publish_batch(&mut self) {
+        if let Some((owner, geometry)) = self.pending_batch.take() {
+            owner.publish(geometry);
+        }
+    }
+
     pub(super) fn publish(&mut self, empty_frame: bool) {
+        self.publish_batch();
         let uploads = self.pending.order.len() + std::mem::take(&mut self.shared);
         self.store
             .publish(&mut self.pending, Some((empty_frame, uploads)));
@@ -426,6 +487,35 @@ mod tests {
         assert!(cache.entries.contains_key(&second_key));
         assert_eq!(cache.bytes, budget);
         assert_eq!(Arc::strong_count(&retained_draw.vertices), 1);
+    }
+
+    #[test]
+    fn batch_budget_counts_regular_cache_and_retained_buffer_owners() {
+        let renderer = crate::backend::resource_lifecycle_test_support::create_resource_renderer();
+        let regular = test_geometry(&renderer.runtime);
+        let draw = test_draw();
+        let regular_key = test_key(&draw);
+        let mut store = GeometryStore::new(&renderer.runtime);
+        let buffer =
+            DeviceBuffer::device_local(&renderer.runtime, 96, vk::BufferUsageFlags::VERTEX_BUFFER)
+                .unwrap();
+        let batch_bytes = buffer.allocation_size();
+        store.byte_limit = regular.bytes() + batch_bytes;
+        let store = Arc::new(store);
+        let mut uploads = FrameGeometryResidency::new(&store);
+        uploads.queue(regular_key, &draw, regular);
+        uploads.share();
+
+        assert!(!store.can_pin_batch(batch_bytes + 1));
+        let charge = store.pin_batch(batch_bytes).unwrap();
+        let batch = Arc::new(GeometryBuffer::charged(buffer, charge));
+        let flight_owner = Arc::clone(&batch);
+        assert!(store.find(regular_key).is_some());
+        assert!(store.pin_batch(1).is_none());
+        drop(batch);
+        assert!(!store.can_pin_batch(1));
+        drop(flight_owner);
+        assert!(store.can_pin_batch(batch_bytes));
     }
 
     #[test]

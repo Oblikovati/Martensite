@@ -100,7 +100,7 @@ impl GeometryTransfers {
         Ok(destination)
     }
 
-    fn stage(
+    pub(super) fn stage(
         &mut self,
         runtime: &Arc<VulkanRuntime>,
         pool: &HostUploadPool,

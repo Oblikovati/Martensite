@@ -497,3 +497,7 @@ fn apply_view_culling(layers: &mut [RenderLayer], mode: Graphic3dTypeOfBackfacin
 #[cfg(test)]
 #[path = "ffp_texcoord_tests.rs"]
 mod ffp_texcoord_tests;
+
+#[path = "view_scene_batch.rs"]
+mod batch;
+pub(crate) use batch::{BatchSceneSources, match_batch_sources};

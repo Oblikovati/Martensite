@@ -29,6 +29,15 @@ struct RaytraceState {
 }
 martensite_tkernel::impl_transient!(Graphic3dRenderStructure, "Martensite_RenderStructure", StandardTransient, interfaces:[dyn Graphic3dCStructure]);
 impl Graphic3dRenderStructure {
+    pub(crate) fn has_only_local_geometry(&self, driver: &std::sync::Arc<DriverObjects>) -> bool {
+        self.parent.is_none()
+            && self
+                .registry
+                .as_ref()
+                .is_some_and(|owner| owner.ptr_eq(&std::sync::Arc::downgrade(driver)))
+            && self.connection.read().is_none()
+    }
+
     /// A structure of `manager` whose groups lay out text with `text_source`; e.g.
     /// `Graphic3dRenderStructure::new(&manager, Arc::new(FreeTypeTextSource::default()))?`.
     pub fn new(

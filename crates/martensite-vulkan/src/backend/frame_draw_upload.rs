@@ -189,7 +189,10 @@ impl<'a> DrawUploadContext<'a> {
             self.draw,
         )?;
         self.validate_styles()?;
-        let geometry = self.upload_geometry(&mut uploads.geometry, uploads.dynamic_lighting)?;
+        let geometry = match uploads.geometry_batch {
+            Some(batch) => self.upload_geometry_batch(batch, &mut uploads.geometry)?,
+            None => self.upload_geometry(&mut uploads.geometry, uploads.dynamic_lighting)?,
+        };
         super::super::factorized_projection::admit_pipeline(
             self.runtime.projection_behavior,
             self.semantic_draw,
@@ -265,6 +268,41 @@ impl<'a> DrawUploadContext<'a> {
             self.extent,
         )
     }
+    #[cfg(not(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    )))]
+    fn upload_geometry_batch(
+        &self,
+        batch: &Arc<super::GeometryBatch>,
+        transfers: &mut GeometryTransfers,
+    ) -> Result<PreparedGeometry, RenderError> {
+        let resident = batch.resident(self.runtime, &self.pipelines.geometry_staging, transfers)?;
+        let pipeline = self
+            .pipelines
+            .select_batch(self.draw, batch.vertex_count())?;
+        Ok(PreparedGeometry {
+            pipeline,
+            resident,
+            count: batch.index_count(),
+        })
+    }
+
+    #[cfg(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    ))]
+    fn upload_geometry_batch(
+        &self,
+        _batch: &Arc<super::GeometryBatch>,
+        _transfers: &mut GeometryTransfers,
+    ) -> Result<PreparedGeometry, RenderError> {
+        Err(rejected(
+            "retained geometry batch",
+            "individual draws for capture diagnostics",
+        ))
+    }
+
     fn upload_geometry(
         &self,
         geometry_transfers: &mut GeometryTransfers,

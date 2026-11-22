@@ -12,7 +12,9 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Weak};
 
 mod source;
-pub(crate) use source::{AttributeStamp, BoundsStamp, GeometryStamp, IndexStamp, UvStamp};
+pub(crate) use source::{
+    AttributeStamp, BatchGeometryStamp, BoundsStamp, GeometryStamp, IndexStamp, UvStamp,
+};
 
 const SOURCE_LIMIT: usize = 131_072;
 const SOURCES_CHECKED_PER_INSERT: usize = 4;
@@ -214,6 +216,30 @@ impl GeometryStyle {
 }
 
 impl RetainedPrimitive {
+    pub(crate) fn matches_batch_streams(
+        &self,
+        source: &GeometryStamp,
+        draw: &PrimitiveDraw,
+    ) -> bool {
+        let Some(normals) = draw
+            .lighting
+            .as_ref()
+            .and_then(|lighting| lighting.normals.identity())
+        else {
+            return false;
+        };
+        self.normals
+            .get(&source.attributes)
+            .flatten()
+            .is_some_and(|current| current.identity() == Some(normals))
+            && self.draws.read().0.iter().any(|variant| {
+                &variant.source == source
+                    && matches!(&variant.templates[..], [template]
+                        if template.vertices.identity() == draw.vertices.identity()
+                            && template.indices.identity() == draw.indices.identity())
+            })
+    }
+
     pub(crate) fn draws(
         &self,
         source: &GeometryStamp,

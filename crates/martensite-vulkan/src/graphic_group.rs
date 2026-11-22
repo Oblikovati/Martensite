@@ -490,3 +490,5 @@ fn lower_group_edges(
         crate::persistent_transform::group_projection_only(context)?,
     )
 }
+#[path = "graphic_group_batch.rs"]
+pub(crate) mod batch_probe;

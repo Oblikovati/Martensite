@@ -15,6 +15,9 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransie
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::{aspect::*, graphic3d::*, image::ImagePixMap};
 use std::sync::Arc;
+#[path = "view_batch.rs"]
+mod batch;
+use batch::ViewBatch;
 /// Renderer-backed Graphic3d view; `view.cast::<Graphic3dRenderView>().capture()?`.
 pub struct Graphic3dRenderView {
     pub(crate) retained: crate::view_statistics::RenderRetainedView,
@@ -49,6 +52,8 @@ pub struct Graphic3dRenderView {
     #[cfg(feature = "raytrace-input-diagnostics")]
     raytrace_observation: SharedState<crate::raytrace_input_observation::ViewRayInputs>,
     redraw_target: SharedState<Option<redraw_completion::RedrawPublicationTarget>>,
+    fused_replay: SharedState<Option<ViewBatch>>,
+    fused_replay_enabled: std::sync::atomic::AtomicBool,
 }
 pub(crate) type FramePublication = Result<Arc<RedrawCapture>, RenderError>;
 martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
@@ -127,6 +132,8 @@ impl Graphic3dRenderView {
             #[cfg(feature = "raytrace-input-diagnostics")]
             raytrace_observation: SharedState::default(),
             redraw_target: Default::default(),
+            fused_replay: Default::default(),
+            fused_replay_enabled: std::sync::atomic::AtomicBool::new(true),
         }
     }
     /// `myWasRedrawnGL`: whether a Redraw or RedrawImmediate of this view completed.
@@ -162,7 +169,7 @@ impl Graphic3dRenderView {
         let observation = self.begin_raytrace_observation()?;
         self.with_measured_frame(|work| {
             let (mut frame, scaled) =
-                work.phase(WorkPhase::Scene, || self.prepare_current_frame())?;
+                work.phase(WorkPhase::Scene, || self.prepare_current_frame(!immediate))?;
             frame.flip_output = self.retained.flips_output(&self.rendering_params());
             // redrawImmediate blits the subviews before the swap and the flipped output blit.
             frame.subview_blits = self.subview_blits(frame.extent());
@@ -203,6 +210,7 @@ impl Graphic3dRenderView {
     /// The frame to render on the target, and the scaled scene capture it blits, if any.
     fn prepare_current_frame(
         &self,
+        allow_batch: bool,
     ) -> Result<(crate::RenderFrame, Option<FrameCapture>), RenderError> {
         self.require_native_target(AspectNativeWindowOperation::Redraw)?;
         if !self.is_defined() || self.is_removed() {
@@ -217,12 +225,25 @@ impl Graphic3dRenderView {
         } else {
             self.gui_layers.read().snapshot(extent)?
         };
+        // The immediate-main cache keys ordinary draw streams, which do not encode a batch.
+        let allow_batch = allow_batch && packet.is_none();
+        if allow_batch && let Some(frame) = self.try_replay_batch(extent)? {
+            return Ok((frame, None));
+        }
         let (mut frame, scaled) = self.composed_scene(extent)?;
         if let Some(packet) = packet {
             crate::view_gui_composition::append_gui_packet(&mut frame, packet)?;
         }
-        Ok((frame.with_line_width_policy(self.line_widths), scaled))
+        let frame = frame.with_line_width_policy(self.line_widths);
+        if allow_batch
+            && scaled.is_none()
+            && let Some(first) = self.try_seed_batch(&frame)?
+        {
+            return Ok((first, None));
+        }
+        Ok((frame, scaled))
     }
+
     /// The scene frame with the view's feedback attached.
     fn fed_scene_frame(&self, extent: [u32; 2]) -> Result<crate::RenderFrame, RenderError> {
         let mut frame = self.scene_frame(extent)?;
@@ -342,6 +363,7 @@ impl Graphic3dCView for Graphic3dRenderView {
     }
     fn remove(&self) {
         self.immediate_main.discard();
+        self.discard_batch();
         self.release_presenter();
         let retired = self.gui_layers.write().retire_removed();
         drop(retired);
@@ -359,6 +381,7 @@ impl Graphic3dCView for Graphic3dRenderView {
             return;
         }
         self.immediate_main.discard();
+        self.discard_batch();
         if self.gui_layers.write().resized() {
             self.invalidate_gui_capture();
         }
@@ -372,6 +395,7 @@ impl Graphic3dCView for Graphic3dRenderView {
         context: AspectRenderingContext,
     ) {
         self.immediate_main.discard();
+        self.discard_batch();
         self.release_presenter();
         // A subview shares its parent's device and renders offscreen (blit_subviews composes
         // it); only an external GL context stays unsupported.

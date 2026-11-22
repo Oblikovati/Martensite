@@ -96,6 +96,78 @@ fn direct_byte_and_layout_writes_are_visible_without_explicit_invalidation() {
     assert_ne!(edited.vertices.identity(), relocated.vertices.identity());
 }
 
+fn lit_draw(source: &PrimitiveSubmission) -> crate::PrimitiveDraw {
+    let mut draw = draw(source, [1.; 4]);
+    let mut lighting = crate::RenderLighting::new(
+        Vec::new(),
+        crate::RenderMaterial::default(),
+        crate::identity_clip(),
+        crate::identity_clip(),
+        false,
+        crate::RenderShading::Phong,
+    )
+    .unwrap();
+    lighting.normals = source.shared_normals().unwrap().unwrap();
+    draw.lighting = Some(lighting);
+    draw
+}
+
+#[test]
+fn batch_seed_rejects_stale_draws_and_mixed_geometry_streams() {
+    use super::GeometryStamp;
+    let (source, attributes) = source(&RetainedPrimitives::default());
+    let cache = source.retained.as_ref().unwrap();
+    let original = lit_draw(&source);
+    assert!(cache.matches_batch_streams(&GeometryStamp::capture(&source).unwrap(), &original));
+
+    assert!(attributes.write_at(0, Vec3::new(0.5_f32, 0., 0.)));
+    assert!(attributes.write_at(12, Vec3::new(0.0_f32, 0., 1.)));
+    let stamp = GeometryStamp::capture(&source).unwrap();
+    assert!(!cache.matches_batch_streams(&stamp, &original));
+    let current = lit_draw(&source);
+    assert!(cache.matches_batch_streams(&stamp, &current));
+
+    let mut mixed = current.clone();
+    mixed.lighting.as_mut().unwrap().normals = original.lighting.unwrap().normals;
+    assert!(!cache.matches_batch_streams(&stamp, &mixed));
+}
+
+#[test]
+fn batch_residency_leaves_newly_mutable_attributes_on_the_partial_upload_path() {
+    use super::BatchGeometryStamp;
+    let (mut source, layout_source) = source(&RetainedPrimitives::default());
+    let allocator = Graphic3dBufferBase::default_allocator();
+    let attributes = Handle::new(Graphic3dAttribBuffer::new(allocator.clone()).unwrap());
+    let read = layout_source.read_buffer();
+    assert!(attributes.init(3, read.attribute_layout().1).unwrap());
+    let indices = Handle::new(Graphic3dIndexBuffer::new(allocator).unwrap());
+    assert!(indices.init_indices::<u16>(3).unwrap());
+    source.attributes = attributes.cast();
+    source.indices = indices.cast();
+    let stamp = BatchGeometryStamp::capture(&source).unwrap();
+    assert!(stamp.probe_matches(&source));
+    attributes.set_mutable(true).unwrap();
+    assert!(BatchGeometryStamp::capture(&source).is_none());
+    assert!(!stamp.probe_matches(&source));
+}
+
+#[test]
+fn batch_residency_leaves_mutable_indices_on_the_partial_upload_path() {
+    use super::BatchGeometryStamp;
+    let (mut source, _) = source(&RetainedPrimitives::default());
+    let allocator = Graphic3dBufferBase::default_allocator();
+    let immutable = Handle::new(Graphic3dIndexBuffer::new(allocator.clone()).unwrap());
+    assert!(immutable.init_indices::<u16>(3).unwrap());
+    source.indices = immutable.cast();
+    let stamp = BatchGeometryStamp::capture(&source).unwrap();
+    assert!(stamp.probe_matches(&source));
+    let mutable = Handle::new(Graphic3dMutableIndexBuffer::new(allocator).unwrap());
+    assert!(mutable.init_indices::<u16>(3).unwrap());
+    source.indices = mutable.cast();
+    assert!(BatchGeometryStamp::capture(&source).is_none());
+    assert!(!stamp.probe_matches(&source));
+}
+
 #[test]
 fn index_and_bound_changes_select_new_streams() {
     let store = RetainedPrimitives::default();

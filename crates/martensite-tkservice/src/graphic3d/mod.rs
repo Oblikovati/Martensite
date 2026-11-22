@@ -236,6 +236,7 @@ pub use index_buffer::{
     Graphic3dMutableIndexBuffer,
 };
 pub use layer::{Graphic3dArrayOfIndexedMapOfStructure, Graphic3dLayer};
+pub use layer_culling::Graphic3dBatchEntry;
 pub use light::{Graphic3dCLight, Graphic3dCLightSource};
 pub use light_set::{
     Graphic3dLightSet, Graphic3dLightSetFields, Graphic3dLightSetIterationFilter,

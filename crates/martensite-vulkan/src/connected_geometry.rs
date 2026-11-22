@@ -56,7 +56,10 @@ impl Graphic3dRenderStructure {
                 "the already connected target identity",
             ));
         }
-        *stored = Some(target);
+        if stored.is_none() {
+            self.notify_connection_change();
+            *stored = Some(target);
+        }
         Ok(())
     }
     /// Forget only the matching target identity; `owner.disconnect_geometry(target)?`.
@@ -67,10 +70,17 @@ impl Graphic3dRenderStructure {
         let target = self.connection_target(other)?;
         let mut stored = self.connection.write();
         if stored.as_ref() == Some(&target) {
+            self.notify_connection_change();
             *stored = None;
         }
         Ok(())
     }
+    fn notify_connection_change(&self) {
+        if let Some(driver) = self.registry.as_ref().and_then(std::sync::Weak::upgrade) {
+            driver.connection_changed();
+        }
+    }
+
     /// Gather live referenced groups under the outer state; `owner.geometry_batches(local_groups)?`.
     pub(super) fn geometry_batches(
         &self,

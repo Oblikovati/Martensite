@@ -131,6 +131,18 @@ impl Graphic3dBufferRead<'_> {
         self.state.data.content_revision()
     }
 
+    /// Compare the guarded bytes' revision without taking a second content lease.
+    /// Example: `read.matches_content_revision(&saved_revision)`.
+    pub fn matches_content_revision(&self, saved: &BufferRevision) -> bool {
+        self.state.data.matches_content_revision(saved)
+    }
+
+    /// Borrow the layout used to interpret the bytes; `let (interleaved, layout) = read.attribute_layout();`.
+    pub fn attribute_layout(&self) -> (bool, &[Graphic3dAttribute]) {
+        let count = (self.state.nb_attributes.max(0) as usize).min(self.state.attributes.len());
+        (self.interleaved, &self.state.attributes[..count])
+    }
+
     /// A strided attribute in the guarded bytes; `read.attribute(Graphic3dTypeOfAttribute::Pos)`.
     pub fn attribute(&self, role: Graphic3dTypeOfAttribute) -> Option<Graphic3dAttributeRead<'_>> {
         let (index, offset, stride) = attribute_data_of(&self.state, self.interleaved, role)?;
@@ -176,6 +188,16 @@ pub trait Graphic3dBufferMembers: Graphic3dBufferSource {
             state: self.buffer_base().state.read(),
             interleaved,
         }
+    }
+
+    /// Read packed bytes when the buffer has no mutable upload range protocol.
+    /// Example: `let read = source.read_immutable_buffer();`.
+    fn read_immutable_buffer(&self) -> Option<Graphic3dBufferRead<'_>> {
+        let interleaved = self.immutable_interleaving()?;
+        Some(Graphic3dBufferRead {
+            state: self.buffer_base().state.read(),
+            interleaved,
+        })
     }
     /// The allocated element count, `size / Stride`; `buffer.nb_max_elements()`.
     fn nb_max_elements(&self) -> i32 {

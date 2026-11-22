@@ -243,3 +243,140 @@ impl Graphic3dLayer {
         Ok(None)
     }
 }
+
+/// A visible ordinary structure and its sole group after the culling guards are released.
+pub struct Graphic3dBatchEntry {
+    /// The structure's display identifier.
+    pub id: i32,
+    /// The actual culled structure if requested, otherwise a null handle.
+    pub structure: Handle<dyn Graphic3dCStructure>,
+    /// The sole group captured from the same structure lock.
+    pub group: Handle<dyn super::Graphic3dGroup>,
+}
+
+impl Graphic3dLayer {
+    /// Collect eligible visible structures along with their groups.
+    /// Example: `layer.collect_batch_groups(view_id, &selector, true, &mut groups)?`.
+    pub fn collect_batch_groups(
+        &self,
+        view_id: i32,
+        selector: &Graphic3dCullingTool,
+        include_structure: bool,
+        groups: &mut Vec<Graphic3dBatchEntry>,
+    ) -> Result<Option<usize>, Failure> {
+        self.update_bvh();
+        if !self.state.read().always_rendered.is_empty() {
+            return Ok(None);
+        }
+        let settings = self.layer_settings();
+        let mut ctx = Graphic3dCullingContext::default();
+        selector.set_culling_distance(&mut ctx, settings.culling_distance());
+        selector.set_culling_size(&mut ctx, settings.culling_size());
+        let pass = CullingPass {
+            selector,
+            ctx,
+            view_id,
+        };
+        let mut sets = self.bvh_sets();
+        if sets.trsf_pers.structures().extent() != 0 {
+            return Ok(None);
+        }
+        let count = sets.primitives.structures().extent();
+        if count == 0 {
+            return Ok(Some(0));
+        }
+        let tree = sets.primitives.bvh()?;
+        let leaf_ids = self.traverse(&pass, &tree)?;
+        drop(tree);
+        let mut reached = vec![false; count];
+        for id in leaf_ids {
+            let Some(reached) = usize::try_from(id).ok().and_then(|id| reached.get_mut(id)) else {
+                return Ok(None);
+            };
+            *reached = true;
+        }
+        let mut visible = 0;
+        let mut compatible = true;
+        for (weak, reached) in sets.primitives.structures().iter().zip(reached) {
+            let lease = weak.upgrade();
+            let Some(structure) = lease.get() else {
+                continue;
+            };
+            let mut fields = structure.cstructure_base().fields.write();
+            let displayed = reached
+                && fields.visible
+                && fields
+                    .view_affinity
+                    .get()
+                    .is_none_or(|a| a.is_visible(view_id));
+            fields.is_culled = !displayed;
+            if displayed {
+                visible += 1;
+                if let Some(group) = ordinary_probe_group(&fields) {
+                    let (id, group) = (fields.id, group.clone());
+                    drop(fields);
+                    let structure = if include_structure {
+                        lease
+                    } else {
+                        Handle::default()
+                    };
+                    groups.push(Graphic3dBatchEntry {
+                        id,
+                        structure,
+                        group,
+                    });
+                } else {
+                    compatible = false;
+                }
+            }
+        }
+        drop(sets);
+        let mut state = self.state.write();
+        state.nb_structures_not_culled = visible as i32;
+        Ok(compatible.then_some(visible))
+    }
+}
+
+type ProbeStructure = WeakHandle<dyn Graphic3dCStructure>;
+
+impl Graphic3dLayer {
+    /// Capture structure identities in draw priority order; `layer.batch_structure_order()`.
+    pub fn batch_structure_order(&self) -> Vec<(usize, ProbeStructure)> {
+        probe_order(&self.state.read())
+            .map(|(priority, source)| (priority, source.clone()))
+            .collect()
+    }
+
+    /// Compare current submission order with a previous capture; `layer.matches_batch_structure_order(&order)`.
+    pub fn matches_batch_structure_order(&self, order: &[(usize, ProbeStructure)]) -> bool {
+        probe_order(&self.state.read())
+            .eq(order.iter().map(|(priority, source)| (*priority, source)))
+    }
+}
+
+fn probe_order(state: &super::layer::LayerState) -> impl Iterator<Item = (usize, &ProbeStructure)> {
+    state
+        .array
+        .iter()
+        .enumerate()
+        .flat_map(|(priority, sources)| sources.iter().map(move |source| (priority, source)))
+}
+
+fn ordinary_probe_group(
+    fields: &super::Graphic3dCStructureFields,
+) -> Option<&Handle<dyn super::Graphic3dGroup>> {
+    if fields.highlight
+        || fields.has_group_flipping
+        || fields.has_group_trsf
+        || !fields.trsf_pers.is_null()
+        || !fields.clip_planes.is_null()
+        || fields
+            .trsf
+            .get()
+            .is_some_and(|datum| !datum.transformation().is_identity())
+        || fields.groups.len() != 1
+    {
+        return None;
+    }
+    fields.groups.first().map(|slot| &**slot)
+}

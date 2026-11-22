@@ -41,6 +41,10 @@ impl Graphic3dBufferSource for Graphic3dAttribBuffer {
     fn is_mutable(&self) -> bool {
         self.fields.read().is_mutable
     }
+    fn immutable_interleaving(&self) -> Option<bool> {
+        let flags = self.fields.read();
+        (!flags.is_mutable).then_some(flags.is_interleaved)
+    }
     fn invalidated_range(&self) -> Graphic3dBufferRange {
         self.fields.read().invalidated_range
     }

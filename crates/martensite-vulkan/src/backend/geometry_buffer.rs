@@ -1,7 +1,7 @@
 //! Small geometry streams share a buffer. A range is reusable only when its last owner drops.
 use super::{
-    buffer::DeviceBuffer, frame_work_ledger::DeviceCount, memory_arena::BlockSpace,
-    runtime::VulkanRuntime,
+    buffer::DeviceBuffer, frame_work_ledger::DeviceCount, geometry_residency::BatchCharge,
+    memory_arena::BlockSpace, runtime::VulkanRuntime,
 };
 use crate::{RenderDeviceFailureClass, RenderError};
 use ash::vk;
@@ -23,7 +23,13 @@ pub(super) struct GeometryBuffer {
 
 enum GeometryBacking {
     Dedicated(DeviceBuffer),
+    Batch(Box<ChargedBatchBuffer>),
     Shared(Arc<GeometryPage>),
+}
+
+struct ChargedBatchBuffer {
+    buffer: DeviceBuffer,
+    _charge: Arc<BatchCharge>,
 }
 
 struct GeometryPage {
@@ -103,7 +109,7 @@ impl GeometryBufferPool {
         };
         let buffer = match create_geometry_buffer(runtime, usage, PAGE_BYTES) {
             Ok(buffer) => buffer,
-            Err(error) if optional_page_refusal(&error) => return Ok(None),
+            Err(error) if optional_geometry_refusal(&error) => return Ok(None),
             Err(error) => return Err(error),
         };
         Ok(Some(Arc::new(GeometryPage {
@@ -125,6 +131,19 @@ impl GeometryBuffer {
         }
     }
 
+    pub(super) fn charged(buffer: DeviceBuffer, charge: Arc<BatchCharge>) -> Self {
+        Self {
+            handle: buffer.handle,
+            offset: 0,
+            size: buffer.size(),
+            alignment: None,
+            backing: GeometryBacking::Batch(Box::new(ChargedBatchBuffer {
+                buffer,
+                _charge: charge,
+            })),
+        }
+    }
+
     pub(super) fn size(&self) -> u64 {
         self.size
     }
@@ -136,6 +155,7 @@ impl GeometryBuffer {
     pub(super) fn allocation_size(&self) -> u64 {
         match &self.backing {
             GeometryBacking::Dedicated(buffer) => buffer.allocation_size(),
+            GeometryBacking::Batch(batch) => batch.buffer.allocation_size(),
             GeometryBacking::Shared(_) => self.size,
         }
     }
@@ -186,7 +206,7 @@ impl Drop for PageCharge {
     }
 }
 
-fn create_geometry_buffer(
+pub(super) fn create_geometry_buffer(
     runtime: &Arc<VulkanRuntime>,
     usage: vk::BufferUsageFlags,
     size: u64,
@@ -196,7 +216,7 @@ fn create_geometry_buffer(
     Ok(buffer)
 }
 
-fn optional_page_refusal(error: &RenderError) -> bool {
+pub(super) fn optional_geometry_refusal(error: &RenderError) -> bool {
     error.device_failure().is_some_and(|failure| {
         failure.class() == RenderDeviceFailureClass::OutOfMemory
             || failure.result_code() == Some(vk::Result::ERROR_TOO_MANY_OBJECTS.as_raw())

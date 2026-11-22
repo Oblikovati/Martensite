@@ -20,7 +20,12 @@ use ash::vk;
 use draw_owners::DrawGpuOwners;
 use std::sync::Arc;
 
+#[path = "geometry_batch.rs"]
+mod geometry_batch;
+pub(crate) use geometry_batch::GeometryBatch;
+
 struct FrameDrawUploads<'a> {
+    geometry_batch: Option<&'a Arc<GeometryBatch>>,
     geometry: GeometryTransfers,
     storage: FrameUploadPages<'a>,
     dynamic_lighting: bool,

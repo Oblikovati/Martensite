@@ -42,6 +42,7 @@ pub fn identity_clip() -> [f32; 16] {
 /// Immutable frame input; `RenderFrame::new(64,64,[0.,0.,0.,1.],draws)?`.
 #[derive(Clone, Debug)]
 pub struct RenderFrame {
+    pub(crate) geometry_batch: Option<std::sync::Arc<crate::backend::GeometryBatch>>,
     #[cfg(feature = "raytrace-input-diagnostics")]
     pub(crate) raytrace_observation:
         Option<std::sync::Arc<crate::raytrace_input_observation::RayInputObservation>>,
@@ -162,6 +163,7 @@ impl RenderFrame {
             return Err(rejected(clear_color, "finite clear color"));
         }
         Ok(Self {
+            geometry_batch: None,
             width,
             height,
             clear_color,
