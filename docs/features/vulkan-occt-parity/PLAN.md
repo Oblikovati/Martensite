@@ -126,6 +126,21 @@ wait for the GPU and the readback of the image. OCCT draws ten frames and waits 
 parity needs a redraw that returns without waiting and a capture that reads on demand.
 Both are done.
 
+The 400-sphere orbit still takes 1.204 ms per frame on the Radeon 8060S host, against
+0.167 ms for OCCT. At two fixed orbit angles, replaying the same extracted frame took
+0.396 to 0.406 ms. Reusing the prepared GPU bindings as well took 0.245 to 0.270 ms.
+
+At those angles, all 400 draws shared the same transform and lighting inputs apart
+from their geometry streams. A probe concatenated the vertices, normals and indices
+in draw order and used the existing directional Phong shader. The resulting draw
+kept all 496,800 triangles and exactly matched every color and depth byte. It took
+0.103 to 0.110 ms per frame after the merged geometry was prepared.
+
+The timings cover fixed-angle replay. A retained implementation must still handle
+camera changes, live visibility and style edits, and preserve the mutable range and
+resource lifetime guarantees. Measure the scope of reuse across the orbit and replace
+the corresponding per-draw device allocations when admitting a batch.
+
 ## Phase 2: a frame pipeline without stalls
 
 Target: `frame_empty`, `dump_1080p`, `resize_redraw` and `frame_msaa4_100k` reach parity.
