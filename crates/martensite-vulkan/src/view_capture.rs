@@ -88,12 +88,31 @@ pub(crate) fn dump_capture(
     {
         return false;
     }
-    let Some(bytes) = capture_bytes(kind, image.format(), capture) else {
+    let format = image.format();
+    if (*kind, format) == (Graphic3dBufferType::Rgb, ImageFormat::Rgb) {
+        return dump_rgb_rows(&mut image.change_data().data, capture);
+    }
+    let Some(bytes) = capture_bytes(kind, format, capture) else {
         return false;
     };
     let row_size = capture.width as usize * image.size_pixel_bytes();
     let mut target = image.change_data();
     copy_capture_rows(&mut target.data, &bytes, row_size)
+}
+
+fn dump_rgb_rows(target: &mut ImagePixMapData, capture: &FrameCapture) -> bool {
+    let width = capture.width as usize;
+    for (y, source) in capture.rgba.chunks_exact(width * 4).enumerate() {
+        let Some(destination) = target.change_row(y) else {
+            return false;
+        };
+        let rgb = destination[..width * 3].as_chunks_mut::<3>().0;
+        for (rgb, rgba) in rgb.iter_mut().zip(source.as_chunks::<4>().0) {
+            let [red, green, blue, _] = *rgba;
+            *rgb = [red, green, blue];
+        }
+    }
+    true
 }
 pub(crate) fn copy_capture_rows(
     target: &mut ImagePixMapData,
