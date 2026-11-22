@@ -14,6 +14,8 @@ pub(crate) struct WindowPresenter {
     pub(super) chain: Option<WindowChain>,
     pub(super) present_family: u32,
     retiring: super::window_chain_retirement::RetiringChains,
+    /// The requested extent and vsync of the last surface query, and its result.
+    last_query: Option<(([u32; 2], bool), WindowConfig)>,
 }
 impl WindowPresenter {
     /// Transfer failed presentation ownership before unwinding; `presenter.take_failed_chain()` preserves its surface lease.
@@ -56,6 +58,7 @@ impl WindowPresenter {
             chain: None,
             present_family: 0,
             retiring: Default::default(),
+            last_query: None,
         };
         presenter.present_family = presenter.choose_present_family()?;
         Ok(presenter)
@@ -88,6 +91,36 @@ impl WindowPresenter {
         vsync: bool,
         contract: super::window_gui_contract::WindowGuiContract,
     ) -> Result<u32, RenderError> {
+        let config = self.window_config(extent, vsync, contract)?;
+        contract.validate(
+            [config.extent.width, config.extent.height],
+            crate::RenderGuiSurfacePhase::Acquire,
+        )?;
+        self.prepare_window_chain(config)?;
+        let result = self.chain.as_mut().unwrap().acquire();
+        // The submission waits on the acquired semaphore; the host waits on the acquire
+        // fence only when this slot is used again (#594).
+        self.resolve_window_acquire(result, extent, vsync, contract)
+    }
+    /// The surface configuration for this frame. A frame without GUI that asks for the same extent
+    /// and vsync as the last query reuses it while the chain is not stale: the surface queries
+    /// are X server round trips that OCCT's redraw does not make, and a window change still
+    /// marks the chain stale through a suboptimal or out-of-date result (#594). A GUI frame
+    /// observes the surface every time, so it still detects a native resize the view missed.
+    fn window_config(
+        &mut self,
+        extent: [u32; 2],
+        vsync: bool,
+        contract: super::window_gui_contract::WindowGuiContract,
+    ) -> Result<WindowConfig, RenderError> {
+        let fresh_chain = self.chain.as_ref().is_some_and(|chain| !chain.stale);
+        if let Some((key, config)) = self.last_query
+            && key == (extent, vsync)
+            && fresh_chain
+            && !contract.observes_surface()
+        {
+            return Ok(config);
+        }
         let config = WindowConfig::query(
             &self.runtime,
             &self.surface.loader,
@@ -95,25 +128,15 @@ impl WindowPresenter {
             extent,
             vsync,
         )?;
-        contract.validate(
-            [config.extent.width, config.extent.height],
-            crate::RenderGuiSurfacePhase::Acquire,
-        )?;
-        self.prepare_window_chain(config)?;
-        let result = self.chain.as_mut().unwrap().acquire();
-        let index = self.resolve_window_acquire(result, extent, vsync, contract)?;
-        self.chain
-            .as_mut()
-            .unwrap()
-            .sync
-            .current_mut()
-            .wait_acquire()?;
-        Ok(index)
+        self.last_query = Some(((extent, vsync), config));
+        Ok(config)
     }
     fn prepare_window_chain(&mut self, config: WindowConfig) -> Result<(), RenderError> {
         self.retiring.collect();
         if let Some(chain) = self.chain.as_mut() {
-            chain.sync.current_mut().wait_present()?;
+            let slot = chain.sync.current_mut();
+            slot.wait_present()?;
+            slot.wait_acquire()?;
         }
         if self
             .chain

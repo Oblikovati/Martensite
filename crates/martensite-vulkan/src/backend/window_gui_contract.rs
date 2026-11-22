@@ -5,13 +5,21 @@ use crate::{
 #[derive(Clone, Copy)]
 pub(super) struct WindowGuiContract {
     accepted: Option<[u32; 2]>,
+    /// The frame draws GUI layers, whose acceptance compares against the observed surface.
+    gui: bool,
 }
 impl WindowGuiContract {
     pub fn new(frame: &RenderFrame, policy: RenderGuiSurfacePolicy) -> Self {
         let checked = policy == RenderGuiSurfacePolicy::CheckedV2 && frame.gui_draw_start.is_some();
         Self {
             accepted: checked.then_some(frame.extent()),
+            gui: frame.gui_draw_start.is_some(),
         }
+    }
+    /// Whether this frame must observe the surface instead of reusing the last query;
+    /// `contract.observes_surface()` holds for every frame that draws GUI layers.
+    pub fn observes_surface(self) -> bool {
+        self.gui || self.accepted.is_some()
     }
     pub fn validate(
         self,
