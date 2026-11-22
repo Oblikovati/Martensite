@@ -183,8 +183,10 @@ The native sphere check matched ordinary Vulkan color and depth at four camera
 angles. It also matched ordinary rendering after material, visibility, background,
 priority and connection edits, during immediate redraw, and after a group was
 destroyed. Warm orbit frames created zero buffers and uploaded zero geometry
-bytes. The TkService and Vulkan library and toolkit suites passed 3,503 tests,
-with 31 ignored.
+bytes. The TkService and Vulkan suites and doctests passed 33,871 tests,
+with 40 ignored. That total includes 30,366 passes across the other 125
+registered Vulkan integration targets and three test-enabled examples.
+Default all-targets Clippy passed for both crates.
 
 The equal-window comparison on the Radeon 8060S used the same executable for
 the default and batch-disabled Vulkan runs. Each renderer used ten frames per
