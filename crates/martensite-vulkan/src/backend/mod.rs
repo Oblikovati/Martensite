@@ -216,6 +216,7 @@ pub(crate) mod lit_only_commands;
 mod memory_arena;
 mod memory_selection;
 mod pipeline;
+mod pipeline_cache;
 mod pipeline_shader_sources;
 mod pipeline_shader_stages;
 mod pipeline_state;

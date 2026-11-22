@@ -1,4 +1,5 @@
 //! Runtime ownership keeps the loader, instance and device alive until all resources drop.
+use super::pipeline_cache::{CacheIdentity, CacheStorage, PipelineCache};
 use super::validation::{ValidationMessages, ValidationMessenger};
 use crate::error::{RenderError, rejected};
 use ash::{Device, Entry, Instance, vk};
@@ -22,6 +23,7 @@ pub(super) struct VulkanRuntime {
     pub instance: Instance,
     messenger: Option<ValidationMessenger>,
     device: Option<Device>,
+    pub(super) pipeline_cache: PipelineCache,
     pub validation: Arc<ValidationMessages>,
     pub physical: vk::PhysicalDevice,
     pub queue: vk::Queue,
@@ -338,6 +340,7 @@ impl VulkanRuntime {
             image_memory: Default::default(),
             memory_arena: Default::default(),
             work: Default::default(),
+            pipeline_cache: Default::default(),
             #[cfg(test)]
             executable_profile: None,
         })
@@ -385,7 +388,7 @@ impl VulkanRuntime {
                 request.format(),
             )?;
         }
-        self.initialize_device_properties(physical);
+        let cache_identity = self.initialize_device_properties(physical);
         self.initialize_core_features(physical);
         self.initialize_format_features(physical)?;
         self.world_clip
@@ -396,7 +399,10 @@ impl VulkanRuntime {
                 .get_physical_device_memory_properties(physical)
         };
         self.window_support &= super::window_support::device_supported(&self.instance, physical)?;
-        self.install_selected_device(physical, family)
+        self.install_selected_device(physical, family)?;
+        self.pipeline_cache =
+            PipelineCache::new(self.device(), CacheStorage::platform(cache_identity));
+        Ok(())
     }
     fn admit_triangle_coverage(&self, physical: vk::PhysicalDevice) -> Result<(), RenderError> {
         #[cfg(feature = "vertex-output-diagnostics")]
@@ -415,7 +421,7 @@ impl VulkanRuntime {
             self.phong_interpolation,
         )
     }
-    fn initialize_device_properties(&mut self, physical: vk::PhysicalDevice) {
+    fn initialize_device_properties(&mut self, physical: vk::PhysicalDevice) -> CacheIdentity {
         // SAFETY: the instance, physical device and device handles stay valid while the runtime holds them, and the call only reads through out-parameters it owns.
         let properties = unsafe { self.instance.get_physical_device_properties(physical) };
         // SAFETY: the pointer names a live NUL-terminated buffer that outlives this view.
@@ -424,6 +430,7 @@ impl VulkanRuntime {
             .into_owned();
         self.limits = properties.limits;
         self.quad_diagonal = crate::quad_assembly::QuadDiagonal::for_vendor(properties.vendor_id);
+        CacheIdentity::from_properties(&properties)
     }
     fn initialize_core_features(&mut self, physical: vk::PhysicalDevice) {
         self.depth_clamp =
@@ -531,6 +538,7 @@ impl Drop for VulkanRuntime {
                 let _ = super::device_retirement::retire_until_stopped(&mut calls);
             }
             // Every lease holds this runtime, so all resources are gone; free the shared blocks.
+            self.pipeline_cache.close(&device);
             self.memory_arena.free_all(&device);
             // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
             unsafe {
