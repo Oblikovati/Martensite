@@ -119,12 +119,9 @@ impl DrawUploadContext<'_> {
             .surface_layout
             .as_ref()
             .expect("glyph atlas image layout");
-        crate::backend::glyph_atlas_image::upload_glyph_atlas(
-            self.runtime,
-            layout,
-            atlas,
-            self.retirements,
-        )
+        self.pipelines
+            .glyph_atlases
+            .binding(self.runtime, layout, atlas, self.retirements)
     }
 
     fn selected_surface(

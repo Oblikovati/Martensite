@@ -2,6 +2,8 @@
 use crate::{GlyphLayout, RasterImage, RenderError, error::rejected};
 use martensite_tkservice::font::*;
 use std::collections::BTreeMap;
+mod retained_atlases;
+pub(crate) use retained_atlases::RetainedGlyphAtlases;
 struct GlyphBitmap {
     rect: FontRect,
     extent: [u32; 2],
@@ -38,13 +40,14 @@ pub(crate) fn build_glyph_layout(
     font: &FontFTFont,
     formatter: &FontTextFormatter,
     columns: &mut NativeTileColumns,
+    atlases: Option<(&mut RetainedGlyphAtlases, usize)>,
 ) -> Result<Option<GlyphLayout>, RenderError> {
     let (glyphs, instances) = collect_glyphs(font, formatter)?;
     if instances.is_empty() {
         return Ok(None);
     }
     let order: Vec<u32> = instances.iter().map(|instance| instance.symbol).collect();
-    let (atlas, tiles) = pack_glyphs(&glyphs, &order, columns)?;
+    let (atlas, tiles) = pack_glyphs(&glyphs, &order, columns, atlases)?;
     let mut layout = initial_native_glyph_layout(font, formatter, atlas);
     append_native_instances(&mut layout, &glyphs, &tiles, instances);
     Ok(Some(layout))
@@ -131,8 +134,19 @@ fn pack_glyphs(
     glyphs: &BTreeMap<u32, GlyphBitmap>,
     order: &[u32],
     columns: &mut NativeTileColumns,
+    atlases: Option<(&mut RetainedGlyphAtlases, usize)>,
 ) -> Result<(RasterImage, BTreeMap<u32, [u32; 2]>), RenderError> {
     let tiles = tile_positions(glyphs, order, columns);
+    let extent = atlas_extent(glyphs, &tiles);
+    let pack = || pack_pixels(glyphs, &tiles, extent);
+    let atlas = match atlases {
+        Some((cache, font)) => cache.get_or_pack(font, extent, glyphs, &tiles, pack),
+        None => pack(),
+    }?;
+    Ok((atlas, tiles))
+}
+
+fn atlas_extent(glyphs: &BTreeMap<u32, GlyphBitmap>, tiles: &BTreeMap<u32, [u32; 2]>) -> [u32; 2] {
     let used = || tiles.iter().map(|(symbol, tile)| (tile, &glyphs[symbol]));
     let right = used()
         .map(|(tile, g)| tile[0] + g.extent[0])
@@ -140,13 +154,22 @@ fn pack_glyphs(
         .unwrap_or(0);
     let tallest = used().map(|(_, g)| g.extent[1]).max().unwrap_or(0);
     // Zero texels stay right of and below every tile, as in the native texture.
-    let width = (right + NativeTileColumns::GAP).next_power_of_two();
-    let height = (tallest + 1).next_power_of_two();
+    [
+        (right + NativeTileColumns::GAP).next_power_of_two(),
+        (tallest + 1).next_power_of_two(),
+    ]
+}
+
+fn pack_pixels(
+    glyphs: &BTreeMap<u32, GlyphBitmap>,
+    tiles: &BTreeMap<u32, [u32; 2]>,
+    [width, height]: [u32; 2],
+) -> Result<RasterImage, RenderError> {
     let mut pixels = vec![[1., 1., 1., 0.]; (width * height) as usize];
-    for (tile, glyph) in used() {
-        copy_tile(&mut pixels, width, *tile, glyph);
+    for (symbol, tile) in tiles {
+        copy_tile(&mut pixels, width, *tile, &glyphs[symbol]);
     }
-    Ok((RasterImage::new([width, height], pixels)?, tiles))
+    RasterImage::new([width, height], pixels)
 }
 /// Tiles on the texture's top row, so the top edge samples clamped edge texels as the
 /// native first tile row does; columns come from the font's allocation in first-use order.
@@ -219,7 +242,7 @@ mod tests {
             ),
         ]);
         let mut columns = NativeTileColumns::default();
-        let (atlas, tiles) = pack_glyphs(&glyphs, &[66, 65, 66], &mut columns).unwrap();
+        let (atlas, tiles) = pack_glyphs(&glyphs, &[66, 65, 66], &mut columns, None).unwrap();
         // 3 + 130 + 3 + 130 + 3 texels wide, one zero row below the 2-texel glyphs.
         assert_eq!(atlas.extent(), [512, 4]);
         assert_eq!(tiles[&66], [3, 0]);
@@ -229,7 +252,7 @@ mod tests {
         assert_eq!(atlas.pixels()[136][3], 0.5);
         assert_eq!(atlas.pixels()[2 * 512 + 3][3], 0.);
         // A later text reuses the columns allocated first.
-        let (_, again) = pack_glyphs(&glyphs, &[65], &mut columns).unwrap();
+        let (_, again) = pack_glyphs(&glyphs, &[65], &mut columns, None).unwrap();
         assert_eq!(again[&65], [136, 0]);
         let mut layout = GlyphLayout {
             positions: vec![],

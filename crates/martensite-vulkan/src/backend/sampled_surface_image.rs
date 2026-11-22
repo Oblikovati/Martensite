@@ -21,6 +21,9 @@ pub(super) struct SampledSurfaceImage {
     allocation: u64,
 }
 impl SampledSurfaceImage {
+    pub(super) fn allocation_bytes(&self) -> u64 {
+        self.allocation
+    }
     pub fn new(
         runtime: &Arc<VulkanRuntime>,
         source: &SurfaceTextureImage,
