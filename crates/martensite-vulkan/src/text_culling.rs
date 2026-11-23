@@ -8,11 +8,19 @@ pub(crate) fn apply_text_face_culling(
     aspects: &dyn Graphic3dAspectsSource,
     closed: bool,
 ) {
-    let automatic = closed && text_allows_automatic_culling(aspects);
-    let culling = resolve_culling(aspects.face_culling(), automatic);
+    let culling = text_face_culling(aspects, closed);
     for draw in draws {
         draw.face_culling = culling;
     }
+}
+/// The face culling of text drawn with `aspects` in a closed or open group;
+/// `text_face_culling(&aspects, closed)`.
+pub(crate) fn text_face_culling(
+    aspects: &dyn Graphic3dAspectsSource,
+    closed: bool,
+) -> crate::RenderFaceCulling {
+    let automatic = closed && text_allows_automatic_culling(aspects);
+    resolve_culling(aspects.face_culling(), automatic)
 }
 
 // Font coverage is blended independently, but native automatic culling still uses aspect alpha mode.

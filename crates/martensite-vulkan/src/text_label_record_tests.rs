@@ -80,3 +80,27 @@ fn inputs_read_before_an_edit_leave_a_stale_record() {
     kept(&slot, before);
     assert!(slot.unchanged(&text, &aspects, &params).is_none());
 }
+
+#[test]
+fn a_run_style_read_once_matches_each_unchanged_label() {
+    let (text, aspects, params) = label();
+    let slot = LabelSlot::default();
+    kept(
+        &slot,
+        LabelInputs::current(&text, &aspects, &params).unwrap(),
+    );
+    let style = LabelStyle::current(&aspects, &params).unwrap();
+    assert!(slot.unchanged_in(&text, &style).is_some());
+    text.set_height(20.);
+    assert!(slot.unchanged_in(&text, &style).is_none(), "a text edit");
+    kept(
+        &slot,
+        LabelInputs::current(&text, &aspects, &params).unwrap(),
+    );
+    aspects.get().unwrap().set_text_angle(30.);
+    let edited = LabelStyle::current(&aspects, &params).unwrap();
+    assert!(
+        slot.unchanged_in(&text, &edited).is_none(),
+        "an aspects edit"
+    );
+}

@@ -32,11 +32,38 @@ pub(crate) struct LabelReplay {
 #[derive(Clone, PartialEq)]
 pub(crate) struct LabelInputs {
     text: u64,
+    style: LabelStyle,
+}
+
+/// The inputs the labels of a run share: their aspects, font and resolution. A run of labels
+/// reads them once instead of through the shared aspects lock for every label (#594).
+#[derive(Clone, PartialEq)]
+pub(crate) struct LabelStyle {
     aspects: (usize, u64),
     /// The font name's own bytes: the name is a shared string that can change in place.
     font_name: Option<Vec<u8>>,
     resolution: u32,
     hinting: i32,
+}
+
+impl LabelStyle {
+    /// The current style of labels drawn with `aspects`; `LabelStyle::current(&aspects, &params)`.
+    pub(crate) fn current(
+        aspects: &Handle<dyn Graphic3dAspectsSource>,
+        rendering: &Graphic3dRenderingParams,
+    ) -> Option<Self> {
+        let aspect = aspects.get()?;
+        let name = aspect.text_font();
+        Some(Self {
+            aspects: (
+                aspects.object_address().addr(),
+                aspect.aspects_base().fields.revision(),
+            ),
+            font_name: name.get().map(|name| name.string().as_bytes().to_vec()),
+            resolution: rendering.resolution,
+            hinting: rendering.font_hinting.0,
+        })
+    }
 }
 
 impl LabelInputs {
@@ -46,17 +73,10 @@ impl LabelInputs {
         aspects: &Handle<dyn Graphic3dAspectsSource>,
         rendering: &Graphic3dRenderingParams,
     ) -> Option<Self> {
-        let aspect = aspects.get()?;
-        let name = aspect.text_font();
+        let text = text.revision();
         Some(Self {
-            text: text.revision(),
-            aspects: (
-                aspects.object_address().addr(),
-                aspect.aspects_base().fields.revision(),
-            ),
-            font_name: name.get().map(|name| name.string().as_bytes().to_vec()),
-            resolution: rendering.resolution,
-            hinting: rendering.font_hinting.0,
+            text,
+            style: LabelStyle::current(aspects, rendering)?,
         })
     }
 
@@ -71,18 +91,19 @@ impl LabelInputs {
             return false;
         };
         let name = aspect.text_font();
+        let style = &self.style;
         self.text == text.revision()
-            && self.aspects
+            && style.aspects
                 == (
                     aspects.object_address().addr(),
                     aspect.aspects_base().fields.revision(),
                 )
-            && match (&self.font_name, name.get()) {
+            && match (&style.font_name, name.get()) {
                 (None, None) => true,
                 (Some(kept), Some(name)) => kept.as_slice() == name.string().as_bytes(),
                 _ => false,
             }
-            && (self.resolution, self.hinting) == (rendering.resolution, rendering.font_hinting.0)
+            && (style.resolution, style.hinting) == (rendering.resolution, rendering.font_hinting.0)
     }
 }
 
@@ -98,6 +119,19 @@ impl LabelSlot {
         let slot = self.0.lock().ok()?;
         slot.as_ref()
             .filter(|record| record.inputs.still_hold(text, aspects, rendering))
+            .map(|record| record.replay.clone())
+    }
+
+    /// The kept draws when the label's text is unchanged and its record has `style`, which the
+    /// caller read once for a run of labels; `slot.unchanged_in(&text, &style)`.
+    pub(crate) fn unchanged_in(
+        &self,
+        text: &Graphic3dText,
+        style: &LabelStyle,
+    ) -> Option<LabelReplay> {
+        let slot = self.0.lock().ok()?;
+        slot.as_ref()
+            .filter(|record| record.inputs.text == text.revision() && record.inputs.style == *style)
             .map(|record| record.replay.clone())
     }
 

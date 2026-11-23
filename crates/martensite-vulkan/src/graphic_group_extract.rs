@@ -142,7 +142,26 @@ impl Graphic3dDrawGroup {
             // An injected text provider or render element may edit the live group.
             context.base_model = None;
         }
-        for command in commands.iter() {
+        let mut index = 0;
+        while let Some(command) = commands.get(index) {
+            index += 1;
+            let run = if pass.lowers_group_geometry() {
+                text_run::parallel_text_run(&commands[index - 1..])
+            } else {
+                0
+            };
+            if run > 0 {
+                let labels = &commands[index - 1..index - 1 + run];
+                self.append_text_run(
+                    &mut program,
+                    labels,
+                    (&aspects, &flips, &policy),
+                    context,
+                    pass,
+                )?;
+                index += run - 1;
+                continue;
+            }
             if let GroupCommand::Element(element) = command {
                 update_element_matrices(&mut visit, &flips);
                 for (style, geometry) in
@@ -307,3 +326,6 @@ fn update_element_matrices(
     context.model_world = flips.model_state().clone();
     context.world_view.set_current(&flips.world_view());
 }
+
+#[path = "graphic_group_text_run.rs"]
+mod text_run;

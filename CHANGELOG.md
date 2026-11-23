@@ -94,7 +94,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Changed Vulkan `PrimitiveDraw` and `RenderLighting` to keep the values a frame sets on every draw inline and the rest in a shared `DrawBody` and `LightingBody`, which they dereference to. Replayed draws, the frames in flight and the instances of a connected presentation share one body instead of copying 1.5 KB per draw (#594).
 
-- Changed the Vulkan renderer to assemble a layer of 256 structures or more on `rayon` worker threads when every group of a chunk of structures replays a draw record; lowering and user callbacks stay on the calling thread, and the merged program keeps the structure order. `frame_transparent_1k` takes 0.68 ms instead of 0.87 ms on the same host (#594).
+- Changed the Vulkan renderer to assemble a layer of 256 structures or more on `rayon` worker threads when every group of a chunk of structures replays a draw record; lowering and user callbacks stay on the calling thread, and the merged program keeps the structure order. Runs of 256 scene text labels or more replay their label records on the workers in the same way. `frame_transparent_1k` takes 0.68 ms instead of 0.87 ms, and `frame_text_1k` 0.68 ms instead of 0.88 ms, on the same host (#594).
 
 - Changed `Graphic3dAspectsBase::fields` from `SharedState` to `RevisedState`. `read`, `write`, `try_read`, `try_write` and `snapshot` work as before; each write now advances `fields.revision()`. Code that names the field's type must use `RevisedState<Graphic3dAspectsFields>` (#594).
 

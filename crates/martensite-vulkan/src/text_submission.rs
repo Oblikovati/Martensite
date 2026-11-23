@@ -88,27 +88,16 @@ impl TextSceneContext<'_> {
         upload: Option<&crate::element_upload::ElementUploadSlot>,
         label: Option<&crate::text_label_record::LabelSlot>,
     ) -> Result<Option<Vec<PrimitiveDraw>>, RenderError> {
-        let Some(mut replay) = label.and_then(|slot| slot.unchanged(text, aspects, self.rendering))
+        let Some(replay) = label.and_then(|slot| slot.unchanged(text, aspects, self.rendering))
         else {
             return Ok(None);
         };
-        let Some(aspect) = aspects.get() else {
-            return Ok(None);
-        };
-        let offsets = crate::text_drawing::native_text_offsets(aspect.text_display_type());
-        let clips =
-            self.transform()?
-                .pass_clips(replay.placement, aspect, replay.point_size, offsets)?;
-        if !crate::text_drawing::place_text_draws(&mut replay.draws, &clips) {
-            return Ok(None);
-        }
-        if let Some(upload) = upload {
-            let (indices, subtitle, bounds) = replay.upload;
-            upload.record_text(indices, subtitle, bounds);
-        }
+        let draws = placed_label(replay, &self.transform()?, aspects, upload)?;
         #[cfg(feature = "draw-record-verification")]
-        self.verify_label(text, aspects, &replay.draws)?;
-        Ok(Some(replay.draws))
+        if let Some(draws) = &draws {
+            self.verify_label(text, aspects, draws)?;
+        }
+        Ok(draws)
     }
 
     /// Lower the label again and require the replay to equal it.
@@ -172,7 +161,8 @@ impl TextSceneContext<'_> {
         }
         Ok(Some((aspect, layout)))
     }
-    fn transform(&self) -> Result<crate::text_transform::TextTransform, RenderError> {
+    /// The text transform of this context's group lowering; `context.transform()?`.
+    pub(crate) fn transform(&self) -> Result<crate::text_transform::TextTransform, RenderError> {
         let Some(memo) = self.text_transform else {
             return self.built_transform();
         };
@@ -231,6 +221,30 @@ impl TextSceneContext<'_> {
         Ok((projection, model_view))
     }
 }
+/// A kept label's draws placed with the clip transforms of `transform`, recording its glyph
+/// upload; `None` when the clips cannot place them, and the label lowers again.
+/// `placed_label(replay, &transform, &aspects, Some(&upload))?`
+pub(crate) fn placed_label(
+    mut replay: crate::text_label_record::LabelReplay,
+    transform: &crate::text_transform::TextTransform,
+    aspects: &Handle<dyn Graphic3dAspectsSource>,
+    upload: Option<&crate::element_upload::ElementUploadSlot>,
+) -> Result<Option<Vec<PrimitiveDraw>>, RenderError> {
+    let Some(aspect) = aspects.get() else {
+        return Ok(None);
+    };
+    let offsets = crate::text_drawing::native_text_offsets(aspect.text_display_type());
+    let clips = transform.pass_clips(replay.placement, aspect, replay.point_size, offsets)?;
+    if !crate::text_drawing::place_text_draws(&mut replay.draws, &clips) {
+        return Ok(None);
+    }
+    if let Some(upload) = upload {
+        let (indices, subtitle, bounds) = replay.upload;
+        upload.record_text(indices, subtitle, bounds);
+    }
+    Ok(Some(replay.draws))
+}
+
 /// What a label replay needs besides its inputs; `label_replay(aspect, layout, &draws)`.
 fn label_replay(
     (aspect, placement): (

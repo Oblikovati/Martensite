@@ -354,15 +354,18 @@ fn apply_command_clipping(
     flips: &crate::group_flipping::GroupFlipStack,
     clipping: Option<&crate::RenderClipping>,
 ) -> Result<(), RenderError> {
-    let clipping = command_clipping(flips, clipping)?;
+    apply_clipping(draws, &command_clipping(flips, clipping)?);
+    Ok(())
+}
+/// Give draws the command clipping, except glyphs: the standard font shader has no planes.
+fn apply_clipping(draws: &mut [PrimitiveDraw], clipping: &Option<crate::RenderClipping>) {
     for draw in draws {
         // The standard font shader advertises zero clipping planes.
         // Writing only changed planes keeps a cached template's body shared (#594).
-        if draw.textured_style.is_none() && draw.clipping != clipping {
+        if draw.textured_style.is_none() && draw.clipping != *clipping {
             draw.clipping = clipping.clone();
         }
     }
-    Ok(())
 }
 fn command_clipping(
     flips: &crate::group_flipping::GroupFlipStack,
