@@ -167,6 +167,7 @@ impl<'a> ViewLayerInputs<'a> {
         extent: [u32; 2],
         camera: &'a Graphic3dCamera,
         (clipping, limits): ShadowPassInputs<'_>,
+        kept_window: Option<&crate::Graphic3dRenderView>,
     ) -> Result<Self, RenderError> {
         let raster = scene_extent(view, extent)?;
         let rendering =
@@ -175,7 +176,12 @@ impl<'a> ViewLayerInputs<'a> {
         Ok(Self {
             camera,
             clipping: clipping.clone_handle(),
-            context: frame_context_state(view, raster, &rendering, limits),
+            context: frame_context_state(
+                view,
+                raster,
+                &rendering,
+                (limits, frame_window_size(view, kept_window)),
+            ),
             rendering,
             extent: raster,
             view_id: view.identification(),
@@ -204,11 +210,22 @@ impl<'a> ViewLayerInputs<'a> {
 /// The context state of a frame: `SetResolution` with the
 /// render scale, `ResizeViewport` to the scene framebuffer, the line feather, the view's
 /// backfacing model and alpha-to-coverage allowed only for a multisampled scene.
+/// The bound window's size: the size a render view keeps once it saw the window mapped, as
+/// its auto Z-fit does, or a live read. A live read is an X server round trip, and every frame
+/// made one here (#594).
+fn frame_window_size(
+    view: &dyn Graphic3dCView,
+    kept: Option<&crate::Graphic3dRenderView>,
+) -> (i32, i32) {
+    kept.and_then(crate::Graphic3dRenderView::observed_window_size)
+        .or_else(|| view.window().get().map(|window| window.size()))
+        .unwrap_or_default()
+}
 fn frame_context_state(
     view: &dyn Graphic3dCView,
     raster: [u32; 2],
     rendering: &Graphic3dRenderingParams,
-    limits: Option<crate::RenderDeviceLimits>,
+    (limits, window_size): (Option<crate::RenderDeviceLimits>, (i32, i32)),
 ) -> crate::RenderContextState {
     let params = view.rendering_params();
     let scale = crate::render_scale::active_render_scale(&params).unwrap_or(1.);
@@ -217,7 +234,7 @@ fn frame_context_state(
     let mut state = crate::RenderContextState {
         limits,
         camera: view.camera(),
-        window_size: view.window().get().map_or([0; 2], |w| w.size().into()),
+        window_size: window_size.into(),
         // GlView::render: PBRShadingModelFallback(model, checkPBRAvailability).
         shading_model: crate::RenderContextState::pbr_shading_model_fallback(
             params.shading_model,
@@ -274,7 +291,7 @@ fn view_layer_passes(
         None => culling()?,
     }
     // Culling keeps the target size, as GlView passes the window size to its BVH selector.
-    let mut inputs = ViewLayerInputs::new(view, extent, camera, (clipping, limits))?;
+    let mut inputs = ViewLayerInputs::new(view, extent, camera, (clipping, limits), steps)?;
     inputs.skip_trsf_persistence = shadow.is_some();
     if let Some((light_camera, _)) = shadow {
         // GlView::renderShadowMap sets the light camera on the context.
@@ -373,7 +390,7 @@ fn layer_pass(
             .map_or([0.; 3], |o| o.coords()),
         ..context.clone()
     });
-    let inputs = StructureInputs {
+    let inputs = layer_scene::StructureInputs {
         camera,
         view_id,
         extent,
@@ -392,10 +409,14 @@ fn layer_pass(
         .with_skip_trsf_persistence(skip_trsf_persistence)
         .with_skip_raytraced(raytraced)
         .with_context_state(context);
-    let mut program = layer_program(layer, &inputs, &opaque)?;
+    let mut program = layer_scene::layer_program(layer, &inputs, &opaque)?;
     if opaque.needs_transparent_pass() {
         // GlLayerList::renderTransparent revisits layers whose opaque pass skipped elements.
-        program.append(layer_program(layer, &inputs, &opaque.transparent())?);
+        program.append(layer_scene::layer_program(
+            layer,
+            &inputs,
+            &opaque.transparent(),
+        )?);
     }
     let offset = settings.polygon_offset();
     let mut pass = RenderLayer::from_stencil_program(
@@ -422,49 +443,6 @@ type LayerPassFrame<'a> = (
     bool,
     &'a crate::RenderContextState,
 );
-struct StructureInputs<'a> {
-    camera: &'a Graphic3dCamera,
-    view_id: i32,
-    extent: [u32; 2],
-    rendering: &'a Graphic3dRenderingParams,
-    clipping: &'a Handle<dyn Graphic3dClipPlaneSequenceSource>,
-}
-fn layer_program(
-    layer: &Graphic3dLayer,
-    inputs: &StructureInputs<'_>,
-    pass: &RenderElementPass,
-) -> Result<crate::stencil_program::StencilProgram, RenderError> {
-    let mut program = crate::stencil_program::StencilProgram::default();
-    for priority in layer.array_of_structures() {
-        for weak in priority.iter() {
-            append_structure(&weak.upgrade(), inputs, pass, &mut program)?;
-        }
-    }
-    Ok(program)
-}
-/// Append a structure's draws straight to the layer's program (#594).
-fn append_structure(
-    structure: &Handle<dyn Graphic3dCStructure>,
-    inputs: &StructureInputs<'_>,
-    pass: &RenderElementPass,
-    program: &mut crate::stencil_program::StencilProgram,
-) -> Result<(), RenderError> {
-    if structure.is_null() {
-        return Ok(());
-    }
-    let retained = structure.cast::<Graphic3dRenderStructure>();
-    let scene = (
-        inputs.camera,
-        inputs.extent,
-        inputs.rendering,
-        inputs.clipping,
-        pass,
-    );
-    retained
-        .get()
-        .ok_or_else(|| rejected(structure.object_address(), "a Martensite driver structure"))?
-        .draws_into(inputs.view_id, scene, program)
-}
 fn validate_raster_params(view: &dyn Graphic3dCView) -> Result<(), RenderError> {
     let params = view.rendering_params();
     // Ray tracing renders the ray-traced layers itself (crate::raytrace), the rest rasterizes.
@@ -503,3 +481,6 @@ mod ffp_texcoord_tests;
 #[path = "view_scene_batch.rs"]
 mod batch;
 pub(crate) use batch::{BatchSceneSources, match_batch_sources};
+
+#[path = "view_scene_layer.rs"]
+mod layer_scene;

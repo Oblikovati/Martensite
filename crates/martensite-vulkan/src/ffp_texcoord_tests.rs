@@ -46,7 +46,12 @@ impl CapCoordinateFixture {
     }
     fn draw(&self) -> crate::PrimitiveDraw {
         let rendering = self.view.rendering_params();
-        let context = frame_context_state(self.view.get().unwrap(), [1, 1], &rendering, None);
+        let context = frame_context_state(
+            self.view.get().unwrap(),
+            [1, 1],
+            &rendering,
+            (None, frame_window_size(self.view.get().unwrap(), None)),
+        );
         let pass = crate::render_element_pass::RenderElementPass::opaque(true)
             .with_context_state(Arc::new(context));
         let mut draw = self.source.clone();

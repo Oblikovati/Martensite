@@ -54,6 +54,20 @@ impl Graphic3dRenderStructure {
         Some(skipped)
     }
 
+    /// `replayed_groups` for a structure in a view: `Some(0)` and nothing appended when the
+    /// view does not draw it; `structure.replayed_in_view(view_id, scene, &mut target)`.
+    pub(crate) fn replayed_in_view(
+        &self,
+        view_id: i32,
+        scene: StructureFrame<'_>,
+        target: &mut StencilProgram,
+    ) -> Option<usize> {
+        if !self.is_visible_in_view(view_id) || self.is_culled() {
+            return Some(0);
+        }
+        self.replayed_groups(scene, target)
+    }
+
     /// Whether the structure draws only its own groups, in a pass and view that move none of
     /// them off the camera.
     fn replays_local_groups(
