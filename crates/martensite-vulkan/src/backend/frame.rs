@@ -76,6 +76,7 @@ pub(super) struct WideLineDraw {
     pub x_major: u32,
     pub offsets: Vec<f32>,
 }
+#[cfg_attr(feature = "draw-record-verification", derive(PartialEq))]
 pub(super) struct DrawPresentation {
     pub annotation: bool,
     /// Dimension label rectangle: stencil writes only, depth test off.

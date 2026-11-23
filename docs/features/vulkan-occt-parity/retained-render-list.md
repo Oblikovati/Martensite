@@ -40,11 +40,15 @@ path holds per level.
 2. **Group and label records.** These exist (phase 3 items 2 and 5). A
    structure record asks each group record only whether its sources still
    hold.
-3. **Retained uploads.** A draw body keeps the `UploadedDraw` that its last
-   upload produced in each frame slot, with the inputs of that upload. A
-   draw with the same body and inputs re-encodes only its push constants
-   and its lighting block. This skips the admission checks, the pipeline
-   selection, the geometry lookup and the binding preparation.
+3. **Retained uploads.** A draw body keeps what its last upload selected:
+   the pipeline, a weak hold on its resident geometry and the index count,
+   with the inputs of that upload. A draw with the same body and inputs
+   encodes its push constants and binds again what follows the view: the
+   lighting block, the PBR environment and the shadow maps. Getting the PBR
+   environment refreshes it when the view's image-based lighting changes,
+   so a replay that kept the old binding drew with IBL after it was turned
+   off; the bindings that follow the view are never kept. This skips the
+   admission checks, the pipeline selection and the geometry lookup.
 4. **Shared camera block, then multi-draw indirect.** The view, eye and
    lights are the same for every draw of a pass. Moving them into one
    per-frame block, and the per-draw data into a storage buffer, lets

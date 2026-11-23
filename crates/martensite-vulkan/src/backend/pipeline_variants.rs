@@ -286,6 +286,17 @@ impl RasterPipelines {
         draw.pipeline_memo.keep(inputs, pipeline.clone());
         Ok(pipeline)
     }
+    /// The serial a pipeline memo keys its selections by; `pipelines.selection_serial()`.
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
+    pub(super) fn selection_serial(&self) -> usize {
+        self.memo_serial
+    }
     fn select_unmemoized(
         &self,
         draw: &PrimitiveDraw,

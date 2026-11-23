@@ -99,6 +99,8 @@ pub struct PrimitiveDraw {
 pub struct DrawBody {
     /// The pipeline this body selected on an earlier frame; empty in a copy (#594).
     pub(crate) pipeline_memo: crate::backend::pipeline_memo::PipelineMemo,
+    /// The upload this body made on an earlier frame; empty in a copy (#594).
+    pub(crate) upload_memo: crate::backend::upload_memo::UploadMemo,
     #[cfg(feature = "vertex-output-diagnostics")]
     pub(crate) vertex_output_target: Option<std::num::NonZeroU64>,
     pub(crate) projected_dash: Option<crate::projected_segments::PreparedAxis>,
@@ -164,6 +166,7 @@ impl std::ops::DerefMut for PrimitiveDraw {
     fn deref_mut(&mut self) -> &mut DrawBody {
         let body = std::sync::Arc::make_mut(&mut self.body);
         body.pipeline_memo.clear();
+        body.upload_memo.clear();
         body
     }
 }
@@ -220,6 +223,7 @@ impl PrimitiveDraw {
             depth_pass: Default::default(),
             body: std::sync::Arc::new(DrawBody {
                 pipeline_memo: Default::default(),
+                upload_memo: Default::default(),
                 #[cfg(feature = "vertex-output-diagnostics")]
                 vertex_output_target: None,
                 projected_dash: None,
@@ -332,6 +336,7 @@ impl PrimitiveDraw {
             depth_pass: Default::default(),
             body: std::sync::Arc::new(DrawBody {
                 pipeline_memo: Default::default(),
+                upload_memo: Default::default(),
                 #[cfg(feature = "vertex-output-diagnostics")]
                 vertex_output_target: None,
                 projected_dash: None,

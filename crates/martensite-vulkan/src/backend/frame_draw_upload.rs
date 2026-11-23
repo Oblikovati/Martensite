@@ -64,7 +64,8 @@ struct PreparedBindings {
     material_maps: Option<Arc<super::super::material_map_descriptor::MaterialMapBinding>>,
     shadow_maps: Option<Arc<super::super::shadow_maps::ShadowMapSet>>,
 }
-/// Prepare one ordered draw and queue its vertex and index uploads with the frame.
+/// Prepare one ordered draw and queue its vertex and index uploads with the frame: the body's
+/// kept upload when it has one for these inputs, otherwise a fresh upload.
 pub(super) fn upload_draw(
     runtime: &Arc<VulkanRuntime>,
     draw: &PrimitiveDraw,
@@ -72,6 +73,40 @@ pub(super) fn upload_draw(
     extent: vk::Extent2D,
     samples: vk::SampleCountFlags,
     retirements: &RetirementStore,
+    uploads: &mut FrameDrawUploads<'_>,
+) -> Result<UploadedDraw, RenderError> {
+    #[cfg(not(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    )))]
+    {
+        let frame = (extent, samples, retirements);
+        if let Some(kept) = retained::replayed(runtime, draw, pipelines, frame, uploads)? {
+            #[cfg(feature = "draw-record-verification")]
+            {
+                let fresh = upload_fresh(runtime, draw, pipelines, frame, uploads)?;
+                retained::verify(&kept, &fresh);
+                return Ok(fresh);
+            }
+            #[cfg(not(feature = "draw-record-verification"))]
+            return Ok(kept);
+        }
+    }
+    upload_fresh(
+        runtime,
+        draw,
+        pipelines,
+        (extent, samples, retirements),
+        uploads,
+    )
+}
+
+/// Upload one draw through every admission, selection and binding step.
+fn upload_fresh(
+    runtime: &Arc<VulkanRuntime>,
+    draw: &PrimitiveDraw,
+    pipelines: &RasterPipelines,
+    (extent, samples, retirements): (vk::Extent2D, vk::SampleCountFlags, &RetirementStore),
     uploads: &mut FrameDrawUploads<'_>,
 ) -> Result<UploadedDraw, RenderError> {
     super::super::factorized_projection::admit(runtime.projection_behavior, draw)?;
@@ -158,7 +193,13 @@ pub(super) fn upload_draw(
         line_tint: tinted,
         retirements,
     };
-    context.upload_prepared(uploads)
+    let uploaded = context.upload_prepared(uploads)?;
+    #[cfg(not(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    )))]
+    retained::keep(&context, samples, uploads, &uploaded);
+    Ok(uploaded)
 }
 
 fn retained_line_color<'a>(
@@ -557,6 +598,13 @@ mod geometry_encoding;
 
 #[path = "frame_upload_assembly.rs"]
 mod draw_assembly;
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[path = "frame_retained_upload.rs"]
+mod retained;
 
 #[path = "frame_upload_bindings.rs"]
 mod bindings;

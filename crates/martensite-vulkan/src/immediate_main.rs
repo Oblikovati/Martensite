@@ -304,6 +304,7 @@ fn plain_triangle(draw: &PrimitiveDraw) -> bool {
         edge_background_fallback: false, line_style: None, textured_style: None, surface_texture: None,
         surface_texture_unavailable: None, point_style: None, user_program: None,
         pipeline_memo: _,
+        upload_memo: _,
     } if quad_corners.is_empty())
 }
 

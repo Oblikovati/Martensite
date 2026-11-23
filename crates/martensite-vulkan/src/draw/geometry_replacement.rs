@@ -28,6 +28,7 @@ clone_with_geometry!(
     lighting,
     depth_pass;
     body: pipeline_memo,
+    upload_memo,
     guard_band_bounds,
     geometry_revision,
     projected_dash,

@@ -16,6 +16,7 @@ pub(crate) mod pipeline_memo;
 mod readback_buffer_cache;
 mod rgb_pack;
 mod rgb_readback;
+pub(crate) mod upload_memo;
 pub(crate) use frame_readback::{CapturePlanes, FrameReadback};
 pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
 mod image_memory;

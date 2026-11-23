@@ -2,6 +2,21 @@
 //! Assemble prepared draw owners without changing allocation or command order.
 use super::*;
 impl DrawUploadContext<'_> {
+    /// The draw's push constants before any point viewports; `context.push_constants(&pipeline)`.
+    pub(super) fn push_constants(&self, pipeline: &DrawPipeline) -> Vec<u8> {
+        let mut transform = encode_transform(self.draw, self.extent);
+        if pipeline.kind.line_tint.uses_draw_color()
+            && let Some((_, color)) = self.line_tint
+        {
+            transform.extend_from_slice(color.map(f32::to_ne_bytes).as_flattened());
+        }
+        crate::backend::factorized_projection::transform(
+            self.runtime.projection_behavior,
+            self.semantic_draw,
+            transform,
+        )
+    }
+
     pub(super) fn assemble(
         &self,
         geometry: PreparedGeometry,
@@ -13,17 +28,7 @@ impl DrawUploadContext<'_> {
                 self.extent,
             )
         });
-        let mut transform = encode_transform(self.draw, self.extent);
-        if geometry.pipeline.kind.line_tint.uses_draw_color()
-            && let Some((_, color)) = self.line_tint
-        {
-            transform.extend_from_slice(color.map(f32::to_ne_bytes).as_flattened());
-        }
-        transform = crate::backend::factorized_projection::transform(
-            self.runtime.projection_behavior,
-            self.semantic_draw,
-            transform,
-        );
+        let mut transform = self.push_constants(&geometry.pipeline);
         if let Some(viewports) = point_viewports {
             crate::backend::fixed_grid_viewport::append_viewports(&mut transform, viewports);
         }

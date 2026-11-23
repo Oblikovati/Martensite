@@ -205,7 +205,7 @@ impl DrawUploadContext<'_> {
             .transpose()
     }
 
-    fn upload_lighting(
+    pub(super) fn upload_lighting(
         &self,
         pipeline: &DrawPipeline,
         storage: &mut FrameUploadPages<'_>,
