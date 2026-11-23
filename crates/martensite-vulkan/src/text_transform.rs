@@ -2,6 +2,7 @@
 use crate::{RenderError, error::rejected};
 use martensite_tkernel::ncollection::{Mat4, Vec3};
 use martensite_tkservice::graphic3d::{transform_utils as tr, *};
+#[derive(Clone)]
 pub(crate) struct TextTransform {
     pub projection: Mat4<f64>,
     pub model_view: Mat4<f64>,
@@ -114,6 +115,11 @@ fn invert_projection(projection: &Mat4<f64>) -> Option<Mat4<f64>> {
         .inverted_to(&mut unview)
         .then_some(unview)
 }
+
+/// The text transform of one group lowering with the model and view overrides it was built
+/// for. Each label of a group asked for it, and building it took 19% of a text frame (#594).
+pub(crate) type GroupTextTransform =
+    std::cell::RefCell<Option<((Option<[u32; 16]>, Option<[u32; 16]>), TextTransform)>>;
 
 /// The inverse of the last text projection of a pass. The labels of a pass share the camera
 /// projection, and inverting it once per label took 10% of `frame_text_1k` (#594).

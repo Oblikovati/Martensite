@@ -28,6 +28,8 @@ pub(crate) struct TextSceneContext<'a> {
     pub fixed_function_lighting: bool,
     /// The pass's shared inverse of the text projection, when a pass lowers the group.
     pub text_unview: Option<&'a crate::text_transform::SharedTextUnview>,
+    /// The group lowering's text transform, built for its first label.
+    pub text_transform: Option<&'a crate::text_transform::GroupTextTransform>,
 }
 impl TextSceneContext<'_> {
     /// Choose the binding path before lowering UVs; `context.texture_coordinates(aspect)`.
@@ -163,6 +165,21 @@ impl TextSceneContext<'_> {
         Ok(Some((aspect, layout)))
     }
     fn transform(&self) -> Result<crate::text_transform::TextTransform, RenderError> {
+        let Some(memo) = self.text_transform else {
+            return self.built_transform();
+        };
+        let bits = |matrix: Option<Mat4<f32>>| matrix.map(|m| m.data().map(f32::to_bits));
+        let key = (bits(self.model_override), bits(self.view_override));
+        if let Some((kept, transform)) = memo.borrow().as_ref()
+            && *kept == key
+        {
+            return Ok(transform.clone());
+        }
+        let transform = self.built_transform()?;
+        *memo.borrow_mut() = Some((key, transform.clone()));
+        Ok(transform)
+    }
+    fn built_transform(&self) -> Result<crate::text_transform::TextTransform, RenderError> {
         let extent = self
             .extent
             .ok_or_else(|| rejected(self.extent, "a viewport for text rendering"))?;

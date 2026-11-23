@@ -71,6 +71,18 @@ pub(super) struct FrameUploadPages<'a> {
     pub(super) sets: FrameStorageSets<'a>,
     pub(super) dynamic_sets: FrameStorageSets<'a>,
     pub(super) lighting: FrameLightingBindings,
+    /// The last glyph atlas this frame bound, with its pixels and image layout.
+    pub(super) glyph_atlas: Option<FrameGlyphAtlas>,
+}
+
+/// A glyph atlas binding that the following text draws of a frame reuse without the cache
+/// lock; one lock per label took 5% of `frame_text_1k` (#594). It keeps the pixels, so their
+/// address cannot name another atlas while it lives.
+pub(super) struct FrameGlyphAtlas {
+    pub pixels: Arc<Vec<[f32; 4]>>,
+    pub extent: [u32; 2],
+    pub layout: usize,
+    pub binding: Arc<super::surface_image_descriptor::SurfaceImageBinding>,
 }
 
 /// The reusable data and set pages of one raster storage arena.
@@ -110,6 +122,7 @@ impl<'a> FrameUploadPages<'a> {
             sets: FrameStorageSets::new(&pool.sets),
             dynamic_sets: FrameStorageSets::new(&pool.dynamic_sets),
             lighting: FrameLightingBindings::default(),
+            glyph_atlas: None,
         }
     }
 

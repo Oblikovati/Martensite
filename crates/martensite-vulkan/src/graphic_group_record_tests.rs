@@ -260,3 +260,26 @@ fn a_pass_reads_the_surface_policies_of_each_structure_manager() {
         );
     }
 }
+
+#[test]
+fn the_labels_of_a_group_share_its_transform_but_keep_their_own_anchor() {
+    let scene = RecordScene::new();
+    for (index, x) in [0., 0.5].into_iter().enumerate() {
+        let text = Handle::new(Graphic3dText::new(10.));
+        text.set_text_str(&format!("label {index}"));
+        text.set_position(&Point3::new(x, 0., 0.));
+        scene.group.add_text(&text, true);
+    }
+    let labels = |draws: Vec<crate::PrimitiveDraw>| -> Vec<[u32; 16]> {
+        draws
+            .iter()
+            .filter(|draw| draw.textured_style.is_some())
+            .map(|draw| draw.clip_transform.map(f32::to_bits))
+            .collect()
+    };
+    let first = labels(scene.draws());
+    assert_eq!(first.len(), 2);
+    assert_ne!(first[0], first[1], "each label keeps its anchor");
+    // The second frame replays the kept labels with the camera of this frame.
+    assert_eq!(labels(scene.draws()), first);
+}

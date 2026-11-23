@@ -15,7 +15,7 @@ impl DrawUploadContext<'_> {
     ) -> Result<PreparedBindings, RenderError> {
         let sprite = self.upload_sprite(pipeline)?;
         self.prepare_surface_cache()?;
-        let surface_image = self.upload_surface(pipeline)?;
+        let surface_image = self.upload_surface(pipeline, storage)?;
         let clipping = self.upload_clipping(pipeline, storage)?;
         let lighting = self.upload_lighting(pipeline, storage)?;
         let sphere_map = self.upload_sphere_map(pipeline, storage)?;
@@ -90,9 +90,12 @@ impl DrawUploadContext<'_> {
     fn upload_surface(
         &self,
         pipeline: &DrawPipeline,
+        storage: &mut FrameUploadPages<'_>,
     ) -> Result<Option<Arc<SurfaceImageBinding>>, RenderError> {
         if let Some(style) = &self.draw.textured_style {
-            return self.glyph_atlas(pipeline, &style.image).map(Some);
+            return self
+                .frame_glyph_atlas(pipeline, &style.image, storage)
+                .map(Some);
         }
         self.draw
             .surface_texture
@@ -101,18 +104,37 @@ impl DrawUploadContext<'_> {
             .map(|style| self.selected_surface(pipeline, style))
             .transpose()
     }
-    fn glyph_atlas(
+    /// The frame's last atlas binding when this draw uses the same atlas and layout.
+    fn frame_glyph_atlas(
         &self,
         pipeline: &DrawPipeline,
         atlas: &crate::RasterImage,
+        storage: &mut FrameUploadPages<'_>,
     ) -> Result<Arc<SurfaceImageBinding>, RenderError> {
         let layout = pipeline
             .surface_layout
             .as_ref()
             .expect("glyph atlas image layout");
-        self.pipelines
-            .glyph_atlases
-            .binding(self.runtime, layout, atlas, self.retirements)
+        let layout_address = std::ptr::from_ref(layout).addr();
+        if let Some(kept) = &storage.glyph_atlas
+            && Arc::ptr_eq(&kept.pixels, &atlas.pixels)
+            && (kept.extent, kept.layout) == (atlas.extent, layout_address)
+        {
+            return Ok(Arc::clone(&kept.binding));
+        }
+        let binding =
+            self.pipelines
+                .glyph_atlases
+                .binding(self.runtime, layout, atlas, self.retirements)?;
+        if !cfg!(feature = "command-state-diagnostics") {
+            storage.glyph_atlas = Some(crate::backend::host_upload_pages::FrameGlyphAtlas {
+                pixels: Arc::clone(&atlas.pixels),
+                extent: atlas.extent,
+                layout: layout_address,
+                binding: Arc::clone(&binding),
+            });
+        }
+        Ok(binding)
     }
 
     fn selected_surface(
