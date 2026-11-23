@@ -20,7 +20,6 @@ struct NodeInStack {
 struct CullingPass<'a> {
     selector: &'a Graphic3dCullingTool,
     ctx: Graphic3dCullingContext,
-    view_id: i32,
 }
 
 impl CullingPass<'_> {
@@ -104,47 +103,61 @@ impl Graphic3dLayer {
         self.update_bvh();
         let nb_structures = self.state.read().nb_structures;
         self.state.write().nb_structures_not_culled = nb_structures;
-        if state != Culling::NoUpdate {
-            let sets = self.bvh_sets();
-            let all = sets
-                .primitives
-                .structures()
-                .iter()
-                .chain(sets.trsf_pers.structures().iter());
-            for structure in all.map(WeakHandle::upgrade) {
-                if let Some(structure) = structure.get() {
-                    structure.set_culled(state == Culling::On);
-                }
-            }
-        }
         let empty = {
             let sets = self.bvh_sets();
             sets.primitives.structures().extent() == 0 && sets.trsf_pers.structures().extent() == 0
         };
         if state != Culling::On || empty {
+            if state != Culling::NoUpdate {
+                self.mark_all_culled(state == Culling::On);
+            }
             return Ok(());
         }
         let always = self.state.read().always_rendered.extent() as i32;
-        self.state.write().nb_structures_not_culled = always;
         let settings = self.layer_settings();
         let mut ctx = Graphic3dCullingContext::default();
         selector.set_culling_distance(&mut ctx, settings.culling_distance());
         selector.set_culling_size(&mut ctx, settings.culling_size());
-        let pass = CullingPass {
-            selector,
-            ctx,
-            view_id,
-        };
-        self.cull_tree(&pass, false)?;
-        self.cull_tree(&pass, true)
+        let pass = CullingPass { selector, ctx };
+        let reached = [
+            self.reached_leaves(&pass, false)?,
+            self.reached_leaves(&pass, true)?,
+        ];
+        let visible = self.mark_reached(&reached, view_id);
+        self.state.write().nb_structures_not_culled = always + visible;
+        Ok(())
     }
-    /// Traverses the tree of one BVH set and marks its visible leaves as not culled.
-    fn cull_tree(&self, pass: &CullingPass<'_>, is_trsf_pers: bool) -> Result<(), Failure> {
-        let mut sets = self.bvh_sets();
-        let tree = if is_trsf_pers {
-            if sets.trsf_pers.structures().extent() == 0 {
-                return Ok(());
+    /// Sets the culled flag of every structure of both BVH sets.
+    fn mark_all_culled(&self, culled: bool) {
+        let sets = self.bvh_sets();
+        let all = sets
+            .primitives
+            .structures()
+            .iter()
+            .chain(sets.trsf_pers.structures().iter());
+        for structure in all.map(WeakHandle::upgrade) {
+            if let Some(structure) = structure.get() {
+                structure.set_culled(culled);
             }
+        }
+    }
+    /// Which leaves of one BVH set the traversal reaches, by structure id.
+    fn reached_leaves(
+        &self,
+        pass: &CullingPass<'_>,
+        is_trsf_pers: bool,
+    ) -> Result<Vec<bool>, Failure> {
+        let mut sets = self.bvh_sets();
+        let count = if is_trsf_pers {
+            sets.trsf_pers.structures().extent()
+        } else {
+            sets.primitives.structures().extent()
+        };
+        let mut reached = vec![false; count];
+        if count == 0 {
+            return Ok(reached);
+        }
+        let tree = if is_trsf_pers {
             let camera = pass.selector.camera().clone();
             let view = Graphic3dTrsfPersView {
                 camera: &camera,
@@ -158,29 +171,25 @@ impl Graphic3dLayer {
             };
             sets.trsf_pers.bvh(&view)?.clone()
         } else {
-            if sets.primitives.structures().extent() == 0 {
-                return Ok(());
-            }
             sets.primitives.bvh()?.clone()
         };
-        let leaves = self.traverse(pass, &tree)?;
-        for id in leaves {
-            let structure = if is_trsf_pers {
-                sets.trsf_pers.get_structure_by_id(id)
-            } else {
-                sets.primitives.get_structure_by_id(id)
-            };
-            self.mark_visible(&structure, pass.view_id);
-        }
         drop(sets);
-        Ok(())
-    }
-    /// Marks a visible structure of a reached leaf as not culled and counts it.
-    fn mark_visible(&self, structure: &Handle<dyn Graphic3dCStructure>, view_id: i32) {
-        if let Some(structure) = structure.get().filter(|s| s.is_visible_in_view(view_id)) {
-            structure.mark_as_not_culled();
-            self.state.write().nb_structures_not_culled += 1;
+        for id in self.traverse(pass, &tree)? {
+            if let Some(leaf) = usize::try_from(id).ok().and_then(|id| reached.get_mut(id)) {
+                *leaf = true;
+            }
         }
+        Ok(reached)
+    }
+    /// Marks each structure of both sets culled unless the traversal reached it and it is
+    /// visible in the view, writing only the flags that change: one write per structure and
+    /// frame took 4% of a 1,000-structure Vulkan frame (#594). Returns how many it marked
+    /// visible.
+    fn mark_reached(&self, reached: &[Vec<bool>; 2], view_id: i32) -> i32 {
+        let sets = self.bvh_sets();
+        let primitive = |id| sets.primitives.get_structure_by_id(id);
+        let persistent = |id| sets.trsf_pers.get_structure_by_id(id);
+        mark_set(&reached[0], primitive, view_id) + mark_set(&reached[1], persistent, view_id)
     }
     /// The native stack traversal: the primitive indices of the reached leaves, in order;
     /// the queue order alternates between the left and the right child.
@@ -272,11 +281,7 @@ impl Graphic3dLayer {
         let mut ctx = Graphic3dCullingContext::default();
         selector.set_culling_distance(&mut ctx, settings.culling_distance());
         selector.set_culling_size(&mut ctx, settings.culling_size());
-        let pass = CullingPass {
-            selector,
-            ctx,
-            view_id,
-        };
+        let pass = CullingPass { selector, ctx };
         let mut sets = self.bvh_sets();
         if sets.trsf_pers.structures().extent() != 0 {
             return Ok(None);
@@ -335,6 +340,27 @@ impl Graphic3dLayer {
         state.nb_structures_not_culled = visible as i32;
         Ok(compatible.then_some(visible))
     }
+}
+
+/// Marks the structures of one BVH set as `Layer::mark_reached` describes; the number shown.
+fn mark_set(
+    reached: &[bool],
+    structure_at: impl Fn(i32) -> Handle<dyn Graphic3dCStructure>,
+    view_id: i32,
+) -> i32 {
+    let mut visible = 0;
+    for (id, reached) in reached.iter().enumerate() {
+        let structure = structure_at(id as i32);
+        let Some(structure) = structure.get() else {
+            continue;
+        };
+        let shown = *reached && structure.is_visible_in_view(view_id);
+        if structure.is_culled() == shown {
+            structure.set_culled(!shown);
+        }
+        visible += i32::from(shown);
+    }
+    visible
 }
 
 type ProbeStructure = WeakHandle<dyn Graphic3dCStructure>;
