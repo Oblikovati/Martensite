@@ -125,12 +125,16 @@ impl PrimitiveSubmission {
         })
     }
 
-    pub fn draws(
+    /// Lower the draws and apply `style` to each; the cache keeps the styled bodies so the
+    /// next lowering with the same style shares them (#594).
+    /// `primitive.styled_draws(color, matrix, None, None, |draw| draw.with_polygon_offset(offset))`
+    pub(crate) fn styled_draws(
         &self,
         color: [f32; 4],
         matrix: [f32; 16],
         line: Option<crate::LineStyle>,
         point: Option<crate::PointStyle>,
+        style_draw: impl FnMut(PrimitiveDraw) -> PrimitiveDraw,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
         let style = DrawStyle {
             color,
@@ -147,13 +151,18 @@ impl PrimitiveSubmission {
             && let Some(source) = GeometryStamp::capture(self)
             && let Some(draws) = cache.draws(&source, key, matrix, line, point.as_ref())
         {
-            return Ok(draws);
+            let styled: Vec<_> = draws.into_iter().map(style_draw).collect();
+            cache.adopt_styled(&source, key, &styled);
+            return Ok(styled);
         }
         let (mut draws, source) = self.lower_draws(style, retained.is_some())?;
-        if let Some((cache, source)) = retained.zip(source) {
-            cache.record(source, key, &mut draws, self.mutable_geometry());
-        }
-        Ok(draws)
+        let Some((cache, source)) = retained.zip(source) else {
+            return Ok(draws.into_iter().map(style_draw).collect());
+        };
+        cache.record(source.clone(), key, &mut draws, self.mutable_geometry());
+        let styled: Vec<_> = draws.into_iter().map(style_draw).collect();
+        cache.adopt_styled(&source, key, &styled);
+        Ok(styled)
     }
 
     fn mutable_geometry(&self) -> MutableGeometry {

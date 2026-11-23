@@ -19,16 +19,11 @@ pub(super) fn lower_styled_primitive(
             aspects.face_culling(),
             closed && crate::face_culling::allow_surface_auto_culling(&**aspects),
         );
-        return primitive.draws(color, matrix, line, None).map(|draws| {
-            draws
-                .into_iter()
-                .map(|draw| {
-                    surface_alpha_policy(
-                        draw.with_face_culling(culling).with_polygon_offset(offset),
-                        aspects,
-                    )
-                })
-                .collect()
+        return primitive.styled_draws(color, matrix, line, None, |draw| {
+            surface_alpha_policy(
+                draw.with_face_culling(culling).with_polygon_offset(offset),
+                aspects,
+            )
         });
     }
     if aspects.marker_type() == martensite_tkservice::aspect::AspectTypeOfMarker::Empty {
@@ -40,14 +35,9 @@ pub(super) fn lower_styled_primitive(
         .attribute_data(Graphic3dTypeOfAttribute::Color)
         .is_some();
     let sprite = crate::point_style::marker_style(&**aspects, highlighted, vertex_colors)?;
-    primitive
-        .draws(color, matrix, line, Some(sprite))
-        .map(|draws| {
-            draws
-                .into_iter()
-                .map(|draw| surface_alpha_policy(draw.with_polygon_offset(offset), aspects))
-                .collect()
-        })
+    primitive.styled_draws(color, matrix, line, Some(sprite), |draw| {
+        surface_alpha_policy(draw.with_polygon_offset(offset), aspects)
+    })
 }
 
 /// GlPrimitiveArray::Render builds buffers before drawing, except for empty line types.

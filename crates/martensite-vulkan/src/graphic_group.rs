@@ -356,7 +356,8 @@ fn apply_command_clipping(
     let clipping = command_clipping(flips, clipping)?;
     for draw in draws {
         // The standard font shader advertises zero clipping planes.
-        if draw.textured_style.is_none() {
+        // Writing only changed planes keeps a cached template's body shared (#594).
+        if draw.textured_style.is_none() && draw.clipping != clipping {
             draw.clipping = clipping.clone();
         }
     }

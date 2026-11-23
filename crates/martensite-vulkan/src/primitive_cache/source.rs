@@ -6,7 +6,7 @@ use martensite_tkservice::graphic3d::{
     Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
 };
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct GeometryStamp {
     pub(crate) attributes: AttributeStamp,
     pub(crate) indices: Option<IndexStamp>,
@@ -99,14 +99,14 @@ impl BatchGeometryStamp {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct AttributeStamp {
     revision: BufferRevision,
     count: i32,
     layout: [Option<AttributePlacement>; 3],
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 struct AttributePlacement {
     kind: Graphic3dTypeOfData,
     first: Option<usize>,
@@ -135,7 +135,7 @@ impl AttributePlacement {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct UvStamp {
     revision: BufferRevision,
     count: i32,
@@ -152,7 +152,7 @@ impl UvStamp {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct IndexStamp {
     revision: BufferRevision,
     count: i32,
@@ -175,7 +175,7 @@ impl IndexStamp {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct BoundsStamp {
     revision: BufferRevision,
     count: i32,

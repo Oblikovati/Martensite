@@ -224,6 +224,8 @@ mod buffer;
 #[cfg(feature = "command-state-diagnostics")]
 mod command_state_diagnostic;
 mod directional_phong;
+#[cfg(test)]
+pub(crate) mod directional_phong_fixture;
 pub(crate) use directional_phong::{
     MIN_VERTICES as MIN_PHONG_BATCH_VERTICES, directional_lights, directional_phong_draw,
 };

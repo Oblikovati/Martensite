@@ -279,10 +279,14 @@ fn finish_group_spatial_state(
 ) -> Result<(), RenderError> {
     for draw in draws {
         draw.depth_clamp = clamp;
-        draw.mirrored = structure
+        let mirrored = structure
             .trsf
             .get()
             .is_some_and(|datum| datum.transformation().is_negative());
+        // Writing only a changed winding keeps a cached template's body shared (#594).
+        if draw.mirrored != mirrored {
+            draw.mirrored = mirrored;
+        }
         crate::highlight_style::apply_highlight(draw, structure)?;
     }
     Ok(())

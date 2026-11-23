@@ -90,7 +90,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- Changed Vulkan `PrimitiveDraw` and `RenderLighting` to keep the values a frame sets on every draw inline and the rest in a shared `DrawBody` and `LightingBody`, which they dereference to. Replayed draws and the frames in flight share one body instead of copying 1.5 KB per draw (#594).
+- Changed Vulkan `PrimitiveDraw` and `RenderLighting` to keep the values a frame sets on every draw inline and the rest in a shared `DrawBody` and `LightingBody`, which they dereference to. Replayed draws, the frames in flight and the instances of a connected presentation share one body instead of copying 1.5 KB per draw (#594).
 
 - Changed `Graphic3dAspectsBase::fields` from `SharedState` to `RevisedState`. `read`, `write`, `try_read`, `try_write` and `snapshot` work as before; each write now advances `fields.revision()`. Code that names the field's type must use `RevisedState<Graphic3dAspectsFields>` (#594).
 

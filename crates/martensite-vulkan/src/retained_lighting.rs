@@ -113,13 +113,19 @@ fn apply_resolved_lighting(
     {
         return lower_nodal_lighting(draws, primitive, aspects, context, model, normals);
     }
-    let lighting = surface_lighting(primitive, &**aspects, context, model, normals.as_deref())?;
+    let mut lighting = surface_lighting(primitive, &**aspects, context, model, normals.as_deref())?;
+    let Some(normals) = normals else {
+        for draw in draws {
+            let mut snapshot = lighting.clone();
+            snapshot.normals = vec![[0., 0., 1.]; draw.vertices.len()].into();
+            draw.lighting = Some(snapshot);
+        }
+        return Ok(());
+    };
+    // One body for the shared normals, so the draws of the primitive share it (#594).
+    lighting.normals = normals;
     for draw in draws {
-        let mut snapshot = lighting.clone();
-        snapshot.normals = normals
-            .clone()
-            .unwrap_or_else(|| vec![[0., 0., 1.]; draw.vertices.len()].into());
-        draw.lighting = Some(snapshot);
+        draw.lighting = Some(lighting.clone());
     }
     Ok(())
 }

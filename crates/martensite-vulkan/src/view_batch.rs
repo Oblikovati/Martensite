@@ -315,23 +315,58 @@ fn compatible_draws(draws: &[crate::PrimitiveDraw], packet: &crate::PrimitiveDra
         };
         size = (vertices, indices);
         draw.clip_transform.map(f32::to_bits) == packet.clip_transform.map(f32::to_bits)
-            && probe_packet(draw).as_ref() == Some(packet)
+            && shares_packet(draw, packet)
     });
     shares_packet && size.0 as usize >= crate::backend::MIN_PHONG_BATCH_VERTICES
 }
 
+/// The draw without its geometry streams: the state every draw of a batch must share.
 fn probe_packet(draw: &crate::PrimitiveDraw) -> Option<crate::PrimitiveDraw> {
     if !crate::backend::directional_phong_draw(draw) {
         return None;
     }
-    let mut draw = draw.clone();
-    draw.vertices.clear();
-    draw.indices.clear();
-    draw.native_flat_sources.clear();
-    draw.guard_band_bounds = Default::default();
-    draw.geometry_revision = Default::default();
-    draw.lighting.as_mut()?.normals.clear();
-    Some(draw)
+    let mut packet = draw.clone();
+    packet.body = std::sync::Arc::new(packet_body(&draw.body));
+    let lighting = packet.lighting.as_mut()?;
+    lighting.body = std::sync::Arc::new(packet_lighting(&lighting.body));
+    Some(packet)
+}
+
+/// Whether `draw` equals `packet` apart from its geometry. The stripped bodies stay on the
+/// stack, so checking ten thousand draws allocates nothing (#594).
+fn shares_packet(draw: &crate::PrimitiveDraw, packet: &crate::PrimitiveDraw) -> bool {
+    let (Some(lighting), Some(packed)) = (draw.lighting.as_ref(), packet.lighting.as_ref()) else {
+        return false;
+    };
+    if !crate::backend::directional_phong_draw(draw)
+        || packet_body(&draw.body) != *packet.body
+        || packet_lighting(&lighting.body) != *packed.body
+    {
+        return false;
+    }
+    // The bodies match, so the packet's bodies stand in for them to compare the rest.
+    let mut probe = draw.clone();
+    probe.body = std::sync::Arc::clone(&packet.body);
+    if let Some(lighting) = probe.lighting.as_mut() {
+        lighting.body = std::sync::Arc::clone(&packed.body);
+    }
+    probe == *packet
+}
+
+fn packet_body(body: &crate::draw::DrawBody) -> crate::draw::DrawBody {
+    let mut body = body.clone();
+    body.vertices.clear();
+    body.indices.clear();
+    body.native_flat_sources.clear();
+    body.guard_band_bounds = Default::default();
+    body.geometry_revision = Default::default();
+    body
+}
+
+fn packet_lighting(body: &crate::lighting::LightingBody) -> crate::lighting::LightingBody {
+    let mut body = body.clone();
+    body.normals.clear();
+    body
 }
 
 fn batch_camera_matches(
@@ -344,3 +379,7 @@ fn batch_camera_matches(
         && !current.is_world_view_changed(&previous)
         && *camera == crate::view_render_camera::owned_render_camera(view)
 }
+
+#[cfg(test)]
+#[path = "view_batch_tests.rs"]
+mod tests;

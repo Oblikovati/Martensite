@@ -229,3 +229,16 @@ fn a_group_lowered_twice_in_one_pass_drops_its_record_for_good() {
     assert_eq!(scene.replays(), None, "later passes do not record it again");
     assert_eq!(instance, scene.lowered_again());
 }
+
+#[test]
+fn lowering_a_group_again_shares_the_bodies_of_the_first_lowering() {
+    let scene = RecordScene::new();
+    let first = scene.lowered_again();
+    let second = scene.lowered_again();
+    assert_eq!(first.len(), second.len());
+    // A connected presentation lowers one group for every instance, every frame; a copied
+    // body per instance cost 5% more peak memory in frame_connected_30k (#594).
+    for (earlier, later) in first.iter().zip(&second) {
+        assert!(std::sync::Arc::ptr_eq(&earlier.body, &later.body));
+    }
+}

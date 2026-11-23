@@ -249,10 +249,7 @@ impl RetainedPrimitive {
         point: Option<&PointStyle>,
     ) -> Option<Vec<PrimitiveDraw>> {
         let cell = self.draws.read();
-        let cached = cell
-            .0
-            .iter()
-            .find(|draw| draw.style == style && &draw.source == source)?;
+        let cached = cell.variant(source, style)?;
         Some(
             cached
                 .templates
@@ -289,6 +286,23 @@ impl RetainedPrimitive {
         }
         self.draws.write().insert(source, style, draws, mutable);
     }
+
+    /// Keeps the bodies a lowering styled as the templates of their variant.
+    ///
+    /// The next lowering then styles equal values and shares these bodies instead of copying
+    /// one per draw, which a connected presentation does for every instance (#594).
+    /// `cache.adopt_styled(&source, style, &styled)`
+    pub(crate) fn adopt_styled(
+        &self,
+        source: &GeometryStamp,
+        style: GeometryStyle,
+        draws: &[PrimitiveDraw],
+    ) {
+        if self.draws.read().shares_bodies(source, style, draws) {
+            return;
+        }
+        self.draws.write().adopt_bodies(source, style, draws);
+    }
 }
 
 fn retain_uniform_line_streams(draws: &mut [PrimitiveDraw]) {
@@ -302,6 +316,49 @@ fn retain_uniform_line_streams(draws: &mut [PrimitiveDraw]) {
 }
 
 impl DrawVariants {
+    fn variant(&self, source: &GeometryStamp, style: GeometryStyle) -> Option<&DrawVariant> {
+        self.0.iter().find(|variant| variant.holds(source, style))
+    }
+
+    /// True when no variant matches, so there is nothing to adopt, or when every template
+    /// already holds the body of its draw.
+    fn shares_bodies(
+        &self,
+        source: &GeometryStamp,
+        style: GeometryStyle,
+        draws: &[PrimitiveDraw],
+    ) -> bool {
+        self.variant(source, style).is_none_or(|variant| {
+            variant.templates.len() != draws.len()
+                || variant
+                    .templates
+                    .iter()
+                    .zip(draws)
+                    .all(|(template, draw)| Arc::ptr_eq(&template.body, &draw.body))
+        })
+    }
+
+    fn adopt_bodies(
+        &mut self,
+        source: &GeometryStamp,
+        style: GeometryStyle,
+        draws: &[PrimitiveDraw],
+    ) {
+        let Some(variant) = self
+            .0
+            .iter_mut()
+            .find(|variant| variant.holds(source, style))
+        else {
+            return;
+        };
+        if variant.templates.len() != draws.len() {
+            return;
+        }
+        for (template, draw) in variant.templates.iter_mut().zip(draws) {
+            template.body = Arc::clone(&draw.body);
+        }
+    }
+
     fn insert(
         &mut self,
         source: GeometryStamp,
@@ -328,14 +385,21 @@ impl DrawVariants {
 }
 
 impl DrawVariant {
+    fn holds(&self, source: &GeometryStamp, style: GeometryStyle) -> bool {
+        self.style == style && &self.source == source
+    }
+
     fn new(source: GeometryStamp, style: GeometryStyle, draws: &[PrimitiveDraw]) -> Self {
         let templates = draws
             .iter()
             .cloned()
             .map(|mut draw| {
                 // Marker pixmaps and line policies are live even when vertices are shared.
-                draw.point_style = None;
-                draw.line_style = None;
+                // Clearing only what is set keeps the lowered body shared (#594).
+                if draw.point_style.is_some() || draw.line_style.is_some() {
+                    draw.point_style = None;
+                    draw.line_style = None;
+                }
                 draw
             })
             .collect();

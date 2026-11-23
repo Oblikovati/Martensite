@@ -38,9 +38,29 @@ fn source(store: &RetainedPrimitives) -> (PrimitiveSubmission, Handle<Graphic3dB
     (primitive, attributes)
 }
 
+#[test]
+fn styled_lowerings_share_one_body_per_style() {
+    let store = RetainedPrimitives::default();
+    let (primitive, _attributes) = source(&store);
+    let offset = crate::RenderPolygonOffset::new(1, 1., 1.).unwrap();
+    let styled = || {
+        primitive
+            .styled_draws([1.; 4], crate::identity_clip(), None, None, |draw| {
+                draw.with_polygon_offset(offset)
+            })
+            .unwrap()
+            .remove(0)
+    };
+    let first = styled();
+    let second = styled();
+    assert_eq!(second.polygon_offset(), Some(offset));
+    // A connected presentation lowers one group per instance; each must not copy (#594).
+    assert!(Arc::ptr_eq(&first.body, &second.body));
+}
+
 fn draw(primitive: &PrimitiveSubmission, color: [f32; 4]) -> crate::PrimitiveDraw {
     primitive
-        .draws(color, crate::identity_clip(), None, None)
+        .styled_draws(color, crate::identity_clip(), None, None, |draw| draw)
         .unwrap()
         .remove(0)
 }
@@ -62,7 +82,10 @@ fn new_presentations_share_geometry_and_keep_live_transform_and_color() {
     ));
     let mut matrix = crate::identity_clip();
     matrix[12] = 0.25;
-    let moved = second.draws([1.; 4], matrix, None, None).unwrap().remove(0);
+    let moved = second
+        .styled_draws([1.; 4], matrix, None, None, |draw| draw)
+        .unwrap()
+        .remove(0);
     assert_eq!(moved.clip_transform, matrix);
     assert_eq!(first.vertices.identity(), moved.vertices.identity());
     assert_eq!(first.indices.identity(), moved.indices.identity());
@@ -70,7 +93,11 @@ fn new_presentations_share_geometry_and_keep_live_transform_and_color() {
     assert_eq!(recolored.vertices[0].color, [0.5, 0.0, 0.0, 1.0]);
     assert_ne!(first.vertices.identity(), recolored.vertices.identity());
     matrix[0] = f32::NAN;
-    assert!(second.draws([1.; 4], matrix, None, None).is_err());
+    assert!(
+        second
+            .styled_draws([1.; 4], matrix, None, None, |draw| draw)
+            .is_err()
+    );
 }
 
 #[test]
@@ -192,7 +219,7 @@ fn index_and_bound_changes_select_new_streams() {
     bounds.set_nb_bounds(0);
     assert!(
         array
-            .draws([1.; 4], crate::identity_clip(), None, None)
+            .styled_draws([1.; 4], crate::identity_clip(), None, None, |draw| draw)
             .unwrap()
             .is_empty()
     );
@@ -359,7 +386,9 @@ fn only_large_retained_lines_without_vertex_colors_or_mutability_get_uniform_wit
         for _ in 0..2 {
             let line = crate::LineStyle::new(1., u16::MAX, 1).unwrap();
             let draws = source
-                .draws([1.; 4], crate::identity_clip(), Some(line), None)
+                .styled_draws([1.; 4], crate::identity_clip(), Some(line), None, |draw| {
+                    draw
+                })
                 .unwrap();
             assert_eq!(
                 draws[0].uniform_line_color(),
