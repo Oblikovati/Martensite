@@ -31,6 +31,7 @@ pub(crate) struct RecordFrame {
     matched: Mutex<Option<(usize, usize)>>,
     /// The structure manager address and the surface policies of its driver.
     surface: OnceLock<(usize, SurfacePolicies)>,
+    text_unview: crate::text_transform::SharedTextUnview,
 }
 
 /// The lighting pipeline and unlit face policy of a structure's driver.
@@ -59,6 +60,7 @@ impl Default for RecordFrame {
             rendering: OnceLock::new(),
             matched: Mutex::new(None),
             surface: OnceLock::new(),
+            text_unview: Default::default(),
         }
     }
 }
@@ -108,6 +110,12 @@ impl RecordFrame {
             return *policies;
         }
         crate::lighting_pipeline::manager_surface_policies(manager)
+    }
+
+    /// The inverse of the text projection that the labels of this pass share;
+    /// `frame.text_unview().inverse(&projection)`.
+    pub(crate) fn text_unview(&self) -> &crate::text_transform::SharedTextUnview {
+        &self.text_unview
     }
 
     /// The parameters the records built in this pass keep, one copy for all of them;

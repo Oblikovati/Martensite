@@ -95,3 +95,19 @@ fn gpu_clip_rounds_both_matrices_before_multiplying() {
     let clip = gpu_clip(&projection, &world_view);
     assert_eq!(clip[0], 1., "1 + 1e-9 rounds to 1 in float");
 }
+
+#[test]
+fn a_shared_unview_inverts_each_projection_as_a_label_would() {
+    let shared = SharedTextUnview::default();
+    let first = Mat4::from_data(BUG22368_PROJECTION);
+    let mut second = first;
+    second.set_value(0, 0, 0.004);
+    for projection in [first, first, second, first] {
+        assert_eq!(
+            shared
+                .inverse(&projection)
+                .map(|m| m.data().map(f64::to_bits)),
+            invert_projection(&projection).map(|m| m.data().map(f64::to_bits)),
+        );
+    }
+}

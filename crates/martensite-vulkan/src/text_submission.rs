@@ -26,6 +26,8 @@ pub(crate) struct TextSceneContext<'a> {
     /// The view's environment texture while the layer uses it (`GlWorkspace`).
     pub environment: Option<&'a Handle<Graphic3dTextureEnv>>,
     pub fixed_function_lighting: bool,
+    /// The pass's shared inverse of the text projection, when a pass lowers the group.
+    pub text_unview: Option<&'a crate::text_transform::SharedTextUnview>,
 }
 impl TextSceneContext<'_> {
     /// Choose the binding path before lowering UVs; `context.texture_coordinates(aspect)`.
@@ -121,7 +123,10 @@ impl TextSceneContext<'_> {
             viewport: [0, 0, extent[0] as i32, extent[1] as i32],
             pixel_coordinates: false,
             zoomable_scale: crate::render_scale::zoomable_text_scale(self.rendering),
-            unview: Default::default(),
+            unview: self
+                .text_unview
+                .map(|shared| std::sync::OnceLock::from(shared.inverse(&projection)))
+                .unwrap_or_default(),
         })
     }
     fn text_scene_matrices(&self, extent: [u32; 2]) -> Result<(Mat4<f64>, Mat4<f64>), RenderError> {

@@ -53,6 +53,7 @@ impl Graphic3dDrawGroup {
         let mut context =
             self.stencil_text_context((camera, extent), structure, rendering, &spatial);
         context.environment = pass.environment();
+        context.text_unview = Some(pass.record_frame().text_unview());
         context.fixed_function_lighting = pass.context_state().fixed_function_lighting;
         let policy = GroupDrawPolicy::new(structure, spatial.clipping.is_none());
         let mut program =
@@ -108,6 +109,7 @@ impl Graphic3dDrawGroup {
             clipping: spatial.clipping.as_ref(),
             environment: None,
             fixed_function_lighting: false,
+            text_unview: None,
         }
     }
     fn extract_commands(

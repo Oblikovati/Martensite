@@ -82,12 +82,9 @@ impl TextTransform {
     }
     /// The inverse `tr::un_project` computes for `projection`, computed once.
     fn projection_unview(&self) -> Option<Mat4<f64>> {
-        *self.unview.get_or_init(|| {
-            let mut unview = Mat4::identity();
-            (self.projection * Mat4::identity())
-                .inverted_to(&mut unview)
-                .then_some(unview)
-        })
+        *self
+            .unview
+            .get_or_init(|| invert_projection(&self.projection))
     }
     fn text_model(
         &self,
@@ -110,6 +107,38 @@ impl TextTransform {
         Ok(model)
     }
 }
+/// The inverse `tr::un_project` computes for `projection`.
+fn invert_projection(projection: &Mat4<f64>) -> Option<Mat4<f64>> {
+    let mut unview = Mat4::identity();
+    (*projection * Mat4::identity())
+        .inverted_to(&mut unview)
+        .then_some(unview)
+}
+
+/// The inverse of the last text projection of a pass. The labels of a pass share the camera
+/// projection, and inverting it once per label took 10% of `frame_text_1k` (#594).
+#[derive(Debug, Default)]
+pub(crate) struct SharedTextUnview(std::sync::Mutex<Option<([u64; 16], Option<Mat4<f64>>)>>);
+
+impl SharedTextUnview {
+    /// The inverse of `projection`, computed again only for another projection;
+    /// `shared.inverse(&projection)`.
+    pub(crate) fn inverse(&self, projection: &Mat4<f64>) -> Option<Mat4<f64>> {
+        let bits = projection.data().map(f64::to_bits);
+        if let Ok(slot) = self.0.lock()
+            && let Some((kept, unview)) = slot.as_ref()
+            && *kept == bits
+        {
+            return *unview;
+        }
+        let unview = invert_projection(projection);
+        if let Ok(mut slot) = self.0.lock() {
+            *slot = Some((bits, unview));
+        }
+        unview
+    }
+}
+
 /// The clip transform the native font program applies: `setupMatrix` stores the double
 /// projection and world-view in the float ProjectionState and WorldViewState,
 /// `ApplyWorldViewMatrix` resets the model-world to identity, and the vertex shader multiplies
