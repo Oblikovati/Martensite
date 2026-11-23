@@ -71,9 +71,16 @@ fn glyph_clip_is_the_float_product_of_the_float_projection_and_world_view() {
     let aspect = Graphic3dAspectText3d::default();
     let transform = bug22368_transform();
     let clip = transform.clip(&text, &aspect, 16).unwrap();
-    let win = transform.projected_anchor(&text).unwrap();
+    let win = transform
+        .projected_anchor(&LabelPlacement::of(&text))
+        .unwrap();
     let model = transform
-        .text_model(&text, &aspect, win, &transform.projection)
+        .text_model(
+            &LabelPlacement::of(&text),
+            &aspect,
+            win,
+            &transform.projection,
+        )
         .unwrap();
     let mut scaled = model;
     tr::scale(&mut scaled, [transform.pixel_scale(win, 16).unwrap(); 3]);

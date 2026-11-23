@@ -2,6 +2,47 @@
 use crate::{RenderError, error::rejected};
 use martensite_tkernel::ncollection::{Mat4, Vec3};
 use martensite_tkservice::graphic3d::{transform_utils as tr, *};
+/// Where a text sits, read once: a label read its text's lock for these up to six times
+/// on every frame, 7% of `frame_text_1k` (#594). A label record keeps it with the text
+/// revision. `LabelPlacement::of(&text).has_plane()`
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct LabelPlacement {
+    orientation: martensite_tkmath::gp::Axis2,
+    has_plane: bool,
+    has_own_anchor: bool,
+}
+impl From<&Graphic3dText> for LabelPlacement {
+    fn from(text: &Graphic3dText) -> Self {
+        Self::of(text)
+    }
+}
+impl From<&LabelPlacement> for LabelPlacement {
+    fn from(placement: &LabelPlacement) -> Self {
+        *placement
+    }
+}
+impl LabelPlacement {
+    /// The placement of `text` now.
+    pub(crate) fn of(text: &Graphic3dText) -> Self {
+        Self {
+            orientation: text.orientation(),
+            has_plane: text.has_plane(),
+            has_own_anchor: text.has_own_anchor_point(),
+        }
+    }
+    pub(crate) fn orientation(&self) -> martensite_tkmath::gp::Axis2 {
+        self.orientation
+    }
+    pub(crate) fn position(&self) -> martensite_tkmath::gp::Point3 {
+        self.orientation.location()
+    }
+    pub(crate) fn has_plane(&self) -> bool {
+        self.has_plane
+    }
+    pub(crate) fn has_own_anchor_point(&self) -> bool {
+        self.has_own_anchor
+    }
+}
 #[derive(Clone)]
 pub(crate) struct TextTransform {
     pub projection: Mat4<f64>,
@@ -19,7 +60,7 @@ pub(crate) struct TextTransform {
 impl TextTransform {
     pub fn clip(
         &self,
-        text: &Graphic3dText,
+        text: impl Into<LabelPlacement>,
         aspect: &dyn Graphic3dAspectsSource,
         size: u32,
     ) -> Result<[f32; 16], RenderError> {
@@ -27,11 +68,13 @@ impl TextTransform {
     }
     pub fn clip_offset(
         &self,
-        text: &Graphic3dText,
+        text: impl Into<LabelPlacement>,
         aspect: &dyn Graphic3dAspectsSource,
         size: u32,
         offset: [f64; 2],
     ) -> Result<[f32; 16], RenderError> {
+        let placement = text.into();
+        let text = &placement;
         if self.pixel_coordinates {
             return Ok(self.pixel_clip(text, aspect, offset));
         }
@@ -50,7 +93,7 @@ impl TextTransform {
         }
         Ok(gpu_clip(&projection, &model))
     }
-    fn projected_anchor(&self, text: &Graphic3dText) -> Result<[f64; 3], RenderError> {
+    fn projected_anchor(&self, text: &LabelPlacement) -> Result<[f64; 3], RenderError> {
         let p = text.position();
         tr::project(
             [p.x(), p.y(), p.z()],
@@ -60,7 +103,7 @@ impl TextTransform {
         )
         .ok_or_else(|| rejected(p, "a projectable text anchor"))
     }
-    fn glyph_projection(&self, text: &Graphic3dText) -> Mat4<f64> {
+    fn glyph_projection(&self, text: &LabelPlacement) -> Mat4<f64> {
         if text.has_plane() && text.has_own_anchor_point() {
             return self.projection * self.camera_rotation;
         }
@@ -89,7 +132,7 @@ impl TextTransform {
     }
     fn text_model(
         &self,
-        text: &Graphic3dText,
+        text: &LabelPlacement,
         aspect: &dyn Graphic3dAspectsSource,
         mut win: [f64; 3],
         projection: &Mat4<f64>,
@@ -157,7 +200,7 @@ impl SharedTextUnview {
 pub(crate) fn gpu_clip(projection: &Mat4<f64>, world_view: &Mat4<f64>) -> [f32; 16] {
     (Mat4::<f32>::from_other(projection) * Mat4::<f32>::from_other(world_view)).data()
 }
-fn plane_model(text: &Graphic3dText, anchor: [f64; 3]) -> Mat4<f64> {
+fn plane_model(text: &LabelPlacement, anchor: [f64; 3]) -> Mat4<f64> {
     let orientation = text.orientation();
     let mut model = Mat4::identity();
     for (i, dir) in [

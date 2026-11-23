@@ -62,12 +62,20 @@ impl TextSceneContext<'_> {
         let Some((aspect, layout)) = self.recorded_layout(text, aspects, upload)? else {
             return Ok(vec![]);
         };
-        let draws =
-            crate::text_drawing::lower_text_draws(text, aspect, layout.view(), &self.transform()?)?;
+        let placement = crate::text_transform::LabelPlacement::of(text);
+        let draws = crate::text_drawing::lower_text_draws(
+            placement,
+            aspect,
+            layout.view(),
+            &self.transform()?,
+        )?;
         if let (Some(slot), Some(inputs)) = (label, inputs)
             && text.text_formatter().is_null()
         {
-            slot.keep(inputs, label_replay(aspect, layout.view(), &draws));
+            slot.keep(
+                inputs,
+                label_replay((aspect, placement), layout.view(), &draws),
+            );
         }
         Ok(draws)
     }
@@ -88,9 +96,9 @@ impl TextSceneContext<'_> {
             return Ok(None);
         };
         let offsets = crate::text_drawing::native_text_offsets(aspect.text_display_type());
-        let clips = self
-            .transform()?
-            .pass_clips(text, aspect, replay.point_size, offsets)?;
+        let clips =
+            self.transform()?
+                .pass_clips(replay.placement, aspect, replay.point_size, offsets)?;
         if !crate::text_drawing::place_text_draws(&mut replay.draws, &clips) {
             return Ok(None);
         }
@@ -225,12 +233,16 @@ impl TextSceneContext<'_> {
 }
 /// What a label replay needs besides its inputs; `label_replay(aspect, layout, &draws)`.
 fn label_replay(
-    aspect: &dyn Graphic3dAspectsSource,
+    (aspect, placement): (
+        &dyn Graphic3dAspectsSource,
+        crate::text_transform::LabelPlacement,
+    ),
     layout: crate::text_layout::GlyphLayoutView<'_>,
     draws: &[PrimitiveDraw],
 ) -> crate::text_label_record::LabelReplay {
     let subtitle = aspect.text_display_type() == AspectTypeOfDisplayText::Subtitle;
     crate::text_label_record::LabelReplay {
+        placement,
         point_size: layout.point_size(),
         upload: (layout.index_count(), subtitle, layout.formatter_bounds()),
         draws: draws.to_vec(),

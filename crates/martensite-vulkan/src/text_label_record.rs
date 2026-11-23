@@ -18,6 +18,8 @@ struct LabelRecord {
 /// The draws a label lowered and what a replay needs besides them.
 #[derive(Clone)]
 pub(crate) struct LabelReplay {
+    /// Where the text sits; the text revision proves it current.
+    pub placement: crate::text_transform::LabelPlacement,
     /// The layout's point size, which the clip transforms scale by.
     pub point_size: u32,
     /// What the element upload slot recorded: glyph indices, subtitle and formatter bounds.

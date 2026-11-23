@@ -17,6 +17,7 @@ fn kept(slot: &LabelSlot, inputs: LabelInputs) {
     slot.keep(
         inputs,
         LabelReplay {
+            placement: crate::text_transform::LabelPlacement::of(&Graphic3dText::new(16.)),
             point_size: 16,
             upload: (6, false, Default::default()),
             draws: Vec::new(),

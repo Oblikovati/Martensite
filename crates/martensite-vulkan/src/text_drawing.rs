@@ -6,7 +6,7 @@ use martensite_tkernel::quantity::ColorRgba;
 use martensite_tkservice::{aspect::*, graphic3d::*};
 /// Lower native decoration order using per-pass state; `lower_text_draws(text, aspect, layout, transform)` shares one atlas.
 pub(crate) fn lower_text_draws<'a>(
-    text: &Graphic3dText,
+    text: impl Into<crate::text_transform::LabelPlacement>,
     aspect: &dyn Graphic3dAspectsSource,
     layout: impl Into<GlyphLayoutView<'a>>,
     transform: &TextTransform,
