@@ -407,9 +407,9 @@ fn sources_match(
         let same = match command {
             GroupCommand::Aspects(style) => aspects.next() == aspects_revision(style).as_ref(),
             GroupCommand::Stencil(_) => true,
-            GroupCommand::Geometry(GroupGeometry::Primitives(primitive)) => {
-                geometry.next() == GeometryStamp::capture(primitive).as_ref()
-            }
+            GroupCommand::Geometry(GroupGeometry::Primitives(primitive)) => geometry
+                .next()
+                .is_some_and(|stamp| stamp.matches(primitive)),
             _ => false,
         };
         if !same {

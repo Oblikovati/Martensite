@@ -420,3 +420,20 @@ fn line_array(store: &RetainedPrimitives, count: i32, flags: i32) -> PrimitiveSu
     source.retained = store.entry(&source);
     source
 }
+
+#[test]
+fn an_in_place_stamp_check_agrees_with_a_new_capture() {
+    use super::source::GeometryStamp;
+    let store = RetainedPrimitives::default();
+    let (primitive, attributes) = source(&store);
+    let stamp = GeometryStamp::capture(&primitive).unwrap();
+    assert!(stamp.matches(&primitive));
+    assert!(attributes.write_at(0, Vec3::new(0.5_f32, 0.0, 0.0)));
+    let fresh = GeometryStamp::capture(&primitive);
+    assert_eq!(stamp.matches(&primitive), fresh.as_ref() == Some(&stamp));
+    assert!(
+        !stamp.matches(&primitive),
+        "a vertex write changes the content revision"
+    );
+    assert!(fresh.unwrap().matches(&primitive));
+}

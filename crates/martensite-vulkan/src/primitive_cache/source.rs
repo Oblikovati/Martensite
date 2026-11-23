@@ -34,6 +34,31 @@ impl GeometryStamp {
             bounds,
         })
     }
+
+    /// Whether `capture(primitive)` would equal this stamp, compared in place: a group record
+    /// checks every primitive on every frame, and building and dropping the captured revisions
+    /// took 11% of the structure draws of `frame_transparent_1k` (#594).
+    pub(crate) fn matches(&self, primitive: &PrimitiveSubmission) -> bool {
+        let Some(attributes) = primitive.attributes.get() else {
+            return false;
+        };
+        if !self.attributes.matches(&attributes.read_buffer()) {
+            return false;
+        }
+        let indices = match (&self.indices, primitive.indices.get()) {
+            (None, None) => true,
+            (Some(stamp), Some(buffer)) => stamp.probe_matches(&buffer.read_buffer()),
+            _ => false,
+        };
+        indices
+            && match (&self.bounds, primitive.bounds.get()) {
+                (None, None) => true,
+                (Some(stamp), Some(buffer)) => {
+                    BoundsStamp::capture(&buffer.state()).as_ref() == Some(stamp)
+                }
+                _ => false,
+            }
+    }
 }
 
 pub(crate) struct BatchGeometryStamp {
@@ -114,6 +139,14 @@ struct AttributePlacement {
 }
 
 impl AttributeStamp {
+    /// Whether `capture(read)` would equal this stamp, without copying the revision.
+    fn matches(&self, read: &Graphic3dBufferRead<'_>) -> bool {
+        use Graphic3dTypeOfAttribute::{Color, Norm, Pos};
+        read.matches_content_revision(&self.revision)
+            && read.element_count() == self.count
+            && self.layout == [Pos, Color, Norm].map(|role| AttributePlacement::capture(read, role))
+    }
+
     pub(crate) fn capture(read: &Graphic3dBufferRead<'_>) -> Option<Self> {
         use Graphic3dTypeOfAttribute::{Color, Norm, Pos};
         Some(Self {
