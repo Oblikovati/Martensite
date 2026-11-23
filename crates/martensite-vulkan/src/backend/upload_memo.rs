@@ -36,6 +36,9 @@ pub(super) struct KeptUpload {
     pub indices: Weak<GeometryBuffer>,
     pub count: u32,
     pub sample_alpha_cutoff: bool,
+    /// The geometry store, pinned by the weak reference, and its eviction count.
+    pub store: Weak<super::geometry_residency::GeometryStore>,
+    pub evictions: u64,
 }
 
 /// A body's last kept upload. A copied body starts empty, and two memos always compare

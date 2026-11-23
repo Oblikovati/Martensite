@@ -129,7 +129,7 @@ impl DrawUploadContext<'_> {
             .transpose()
     }
     /// The frame's last atlas binding when this draw uses the same atlas and layout.
-    fn frame_glyph_atlas(
+    pub(super) fn frame_glyph_atlas(
         &self,
         pipeline: &DrawPipeline,
         atlas: &crate::RasterImage,

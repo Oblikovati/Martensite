@@ -24,7 +24,7 @@ pub(super) fn replayed(
     (extent, samples, retirements): FrameUpload<'_>,
     uploads: &mut FrameDrawUploads<'_>,
 ) -> Result<Option<UploadedDraw>, RenderError> {
-    if uploads.geometry_batch.is_some() || !plain_body(draw) || !plain_runtime(runtime) {
+    if uploads.geometry_batch.is_some() || !plain_body(draw) || !plain_runtime(runtime, draw) {
         return Ok(None);
     }
     let context = DrawUploadContext {
@@ -39,7 +39,10 @@ pub(super) fn replayed(
         retirements,
     };
     let inputs = upload_inputs(&context, samples, uploads.dynamic_lighting);
-    let Some(kept) = draw.upload_memo.get(&inputs) else {
+    let Some(kept) = draw.upload_memo.get(&inputs).filter(|kept| {
+        let residency = &uploads.geometry.residency;
+        residency.is_store(&kept.store) && residency.evictions() == kept.evictions
+    }) else {
         return Ok(None);
     };
     let (Some(vertices), Some(indices)) = (kept.vertices.upgrade(), kept.indices.upgrade()) else {
@@ -56,9 +59,12 @@ pub(super) fn keep(
     uploads: &FrameDrawUploads<'_>,
     uploaded: &UploadedDraw,
 ) {
+    // A draw without a geometry key uploads its geometry on every frame; a kept upload would
+    // reuse an earlier frame's copy, which the fresh upload never does.
     if uploads.geometry_batch.is_some()
         || !plain_body(context.semantic_draw)
         || !plain_upload(context, uploaded)
+        || super::super::geometry_key(context.runtime, context.draw).is_none()
     {
         return;
     }
@@ -69,16 +75,19 @@ pub(super) fn keep(
         indices: Arc::downgrade(&uploaded.indices),
         count: uploaded.count,
         sample_alpha_cutoff: uploaded.sample_alpha_cutoff,
+        store: uploads.geometry.residency.store(),
+        evictions: uploads.geometry.residency.evictions(),
     };
     context.semantic_draw.upload_memo.keep(inputs, kept);
 }
 
-/// Whether the draw's own fields leave it a plain surface: a glyph, sprite, line, texture,
-/// clipped or user-program draw is told apart before any upload input is computed.
+/// Whether the draw's own fields leave it a plain surface or glyph run: a sprite, line,
+/// surface texture, clipped or user-program draw is told apart before any upload input is
+/// computed.
 fn plain_body(draw: &PrimitiveDraw) -> bool {
     draw.topology() == crate::PrimitiveTopology::Triangles
-        && draw.textured_style.is_none()
         && draw.surface_texture.is_none()
+        && draw.surface_texture_unavailable.is_none()
         && draw.point_style.is_none()
         && draw.line_style.is_none()
         && draw.polygon_edge_style.is_none()
@@ -86,17 +95,21 @@ fn plain_body(draw: &PrimitiveDraw) -> bool {
         && draw.user_program.is_none()
 }
 
-/// Whether the runtime uploads surfaces without emulation, so that the admission checks of a
-/// kept upload hold on every frame.
-fn plain_runtime(runtime: &VulkanRuntime) -> bool {
+/// Whether the runtime uploads this draw without emulation, so that the admission checks of
+/// a kept upload hold on every frame: emulated window depth and grid-interpolated glyphs read
+/// the projected vertices.
+fn plain_runtime(runtime: &VulkanRuntime, draw: &PrimitiveDraw) -> bool {
     crate::backend::directional_phong::supported_behavior(runtime)
+        && !crate::backend::window_depth_upload::enabled(runtime.window_depth_behavior, draw)
+        && (draw.textured_style.is_none()
+            || runtime.text_interpolation == crate::RenderTextInterpolationBehavior::HardwareV1)
 }
 
 /// Whether an upload replaced no geometry and bound nothing but lighting, PBR environment and
 /// shadow maps.
 fn plain_upload(context: &DrawUploadContext<'_>, uploaded: &UploadedDraw) -> bool {
     let bindings = &uploaded.bindings;
-    plain_runtime(context.runtime)
+    plain_runtime(context.runtime, context.draw)
         && std::ptr::eq(context.semantic_draw, context.draw)
         && context.wide.is_none()
         && context.window_depth.is_none()
@@ -111,7 +124,7 @@ fn plain_upload(context: &DrawUploadContext<'_>, uploaded: &UploadedDraw) -> boo
         && uploaded.line.wide.is_none()
         && bindings.clipping.is_none()
         && bindings.sprite.is_none()
-        && bindings.surface_image.is_none()
+        && (bindings.surface_image.is_none() || context.draw.textured_style.is_some())
         && bindings.material_maps.is_none()
         && bindings.sphere_map.is_none()
 }
@@ -136,7 +149,7 @@ fn upload_inputs(
 
 impl DrawUploadContext<'_> {
     /// The bindings that follow the view, as the fresh upload binds them: lighting, PBR
-    /// environment and shadow maps.
+    /// environment, shadow maps and a glyph run's atlas.
     fn view_bindings(
         &self,
         pipeline: &crate::backend::pipeline::DrawPipeline,
@@ -145,11 +158,17 @@ impl DrawUploadContext<'_> {
         let lighting = self.upload_lighting(pipeline, storage)?;
         let pbr_environment = self.frame_pbr_environment(pipeline, storage)?;
         let shadow_maps = self.frame_shadow_maps(pipeline, storage)?;
+        let surface_image = self
+            .draw
+            .textured_style
+            .as_ref()
+            .map(|style| self.frame_glyph_atlas(pipeline, &style.image, storage))
+            .transpose()?;
         Ok(DrawBindings {
             clipping: None,
             lighting,
             sprite: None,
-            surface_image: None,
+            surface_image,
             pbr_environment,
             material_maps: None,
             sphere_map: None,
@@ -197,24 +216,39 @@ pub(super) fn verify(kept: &UploadedDraw, fresh: &UploadedDraw) {
             && a.pbr_environment.as_ref().map(Arc::as_ptr)
                 == b.pbr_environment.as_ref().map(Arc::as_ptr)
             && a.shadow_maps.as_ref().map(Arc::as_ptr) == b.shadow_maps.as_ref().map(Arc::as_ptr)
+            && a.surface_image.as_ref().map(Arc::as_ptr)
+                == b.surface_image.as_ref().map(Arc::as_ptr)
             && b.clipping.is_none()
             && b.sprite.is_none()
-            && b.surface_image.is_none()
             && b.material_maps.is_none()
             && b.sphere_map.is_none()
     };
+    let checks = [
+        ("pipeline", Arc::ptr_eq(&kept.pipeline, &fresh.pipeline)),
+        ("vertices", Arc::ptr_eq(&kept.vertices, &fresh.vertices)),
+        ("indices", Arc::ptr_eq(&kept.indices, &fresh.indices)),
+        (
+            "counts",
+            (kept.count, kept.instances) == (fresh.count, fresh.instances),
+        ),
+        ("push constants", kept.transform == fresh.transform),
+        (
+            "alpha cutoff",
+            kept.sample_alpha_cutoff == fresh.sample_alpha_cutoff,
+        ),
+        ("presentation", kept.presentation == fresh.presentation),
+        ("user program", fresh.user_program.is_none()),
+        ("window depth", fresh.window_depth_status.is_none()),
+        ("bindings", same_bindings(&kept.bindings, &fresh.bindings)),
+    ];
+    let differing: Vec<_> = checks
+        .iter()
+        .filter(|(_, same)| !same)
+        .map(|(name, _)| *name)
+        .collect();
     assert!(
-        Arc::ptr_eq(&kept.pipeline, &fresh.pipeline)
-            && Arc::ptr_eq(&kept.vertices, &fresh.vertices)
-            && Arc::ptr_eq(&kept.indices, &fresh.indices)
-            && (kept.count, kept.instances) == (fresh.count, fresh.instances)
-            && kept.transform == fresh.transform
-            && kept.sample_alpha_cutoff == fresh.sample_alpha_cutoff
-            && kept.presentation == fresh.presentation
-            && fresh.user_program.is_none()
-            && fresh.window_depth_status.is_none()
-            && same_bindings(&kept.bindings, &fresh.bindings),
-        "a kept upload differs from uploading the draw again"
+        differing.is_empty(),
+        "a kept upload differs from uploading the draw again in {differing:?}"
     );
 }
 

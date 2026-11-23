@@ -209,6 +209,10 @@ fn is_live<T>(stream: &Option<Weak<Vec<T>>>) -> bool {
 
 pub(super) struct GeometryStore {
     retained: Mutex<RetainedGeometry>,
+    /// Live entries evicted for the budget. Expired entries leave without counting: a kept
+    /// upload holds live streams, so only an eviction or another store can take its buffers
+    /// from it (#594).
+    evictions: AtomicU64,
     byte_limit: u64,
     pinned_batch_bytes: Arc<AtomicU64>,
     pub(super) buffers: GeometryBufferPool,
@@ -253,26 +257,31 @@ impl RetainedGeometry {
         }
     }
 
-    fn insert(&mut self, key: GeometryKey, lease: GeometryLease, byte_limit: u64) {
+    /// Store a lease and return how many live entries it evicted.
+    fn insert(&mut self, key: GeometryKey, lease: GeometryLease, byte_limit: u64) -> u64 {
         let bytes = lease.geometry.bytes();
         if bytes > byte_limit || self.entries.contains_key(&key) {
-            return;
+            return 0;
         }
-        self.make_room(byte_limit - bytes);
+        let evicted = self.make_room(byte_limit - bytes);
         self.bytes += bytes;
         self.entries.insert(key, lease);
         self.check_order.push_back(key);
+        evicted
     }
 
-    fn make_room(&mut self, available_bytes: u64) {
+    fn make_room(&mut self, available_bytes: u64) -> u64 {
+        let mut evicted = 0;
         while self.bytes > available_bytes || self.entries.len() >= MAX_RESIDENT_ENTRIES {
             let Some(oldest) = self.check_order.pop_front() else {
                 break;
             };
             if let Some(lease) = self.entries.remove(&oldest) {
                 self.bytes -= lease.geometry.bytes();
+                evicted += 1;
             }
         }
+        evicted
     }
 }
 
@@ -287,6 +296,7 @@ impl GeometryStore {
             .unwrap_or_default();
         Self {
             retained: Mutex::default(),
+            evictions: AtomicU64::new(0),
             byte_limit: (local_bytes / 4).min(MAX_RESIDENT_BYTES),
             pinned_batch_bytes: Arc::default(),
             buffers: GeometryBufferPool::new((local_bytes / 4).min(MAX_RESIDENT_BYTES)),
@@ -344,11 +354,13 @@ impl GeometryStore {
         let available = self
             .byte_limit
             .saturating_sub(self.pinned_batch_bytes.load(Ordering::Relaxed));
+        let mut evicted = 0;
         for key in pending.order.drain(..) {
             if let Some(lease) = pending.leases.remove(&key).filter(GeometryLease::is_live) {
-                retained.insert(key, lease, available);
+                evicted += retained.insert(key, lease, available);
             }
         }
+        self.evictions.fetch_add(evicted, Ordering::Release);
     }
 }
 
@@ -378,6 +390,22 @@ impl FrameGeometryResidency {
 
     pub(super) fn buffers(&self) -> &GeometryBufferPool {
         &self.store.buffers
+    }
+
+    /// How many live entries the store has evicted: a kept upload's geometry is still the
+    /// store's while this and the store are unchanged; `residency.evictions()`.
+    pub(super) fn evictions(&self) -> u64 {
+        self.store.evictions.load(Ordering::Acquire)
+    }
+
+    /// Whether `store` is this frame's store; a weak reference pins the address it compares.
+    pub(super) fn is_store(&self, store: &std::sync::Weak<GeometryStore>) -> bool {
+        std::sync::Weak::as_ptr(store) == Arc::as_ptr(&self.store)
+    }
+
+    /// A weak reference to the store, for a kept upload to compare later.
+    pub(super) fn store(&self) -> std::sync::Weak<GeometryStore> {
+        Arc::downgrade(&self.store)
     }
 
     pub(super) fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
