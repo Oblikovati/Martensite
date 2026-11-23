@@ -38,6 +38,33 @@ impl StencilProgram {
         self.geometry(other.draws);
         self.boundaries.extend(other.boundaries);
     }
+    /// Append copies of `other`'s draws, each changed by `patch`, and its boundaries: a
+    /// replayed record goes straight into the layer's program instead of through a program of
+    /// its own (#594); `program.append_patched(&record.program, |draw| camera.patch(draw))`.
+    pub fn append_patched(&mut self, other: &Self, mut patch: impl FnMut(&mut PrimitiveDraw)) {
+        let offset = self.draws.len();
+        self.draws.reserve(other.draws.len());
+        for draw in &other.draws {
+            self.draws.push(draw.clone());
+            if let Some(added) = self.draws.last_mut() {
+                patch(added);
+            }
+        }
+        self.boundaries
+            .extend(other.boundaries.iter().map(|boundary| StencilBoundary {
+                before_draw: boundary.before_draw + offset,
+                command: boundary.command,
+            }));
+    }
+    /// The program's draw and boundary counts, to restore with `truncate`.
+    pub fn mark(&self) -> (usize, usize) {
+        (self.draws.len(), self.boundaries.len())
+    }
+    /// Drop what was appended after `mark`; `program.truncate(mark)`.
+    pub fn truncate(&mut self, (draws, boundaries): (usize, usize)) {
+        self.draws.truncate(draws);
+        self.boundaries.truncate(boundaries);
+    }
     pub fn command(&mut self, command: StencilCommand) {
         self.boundaries.push(StencilBoundary {
             before_draw: self.draws.len(),

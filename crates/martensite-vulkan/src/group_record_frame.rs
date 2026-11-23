@@ -73,19 +73,18 @@ impl RecordFrame {
 
     /// The camera parts of `camera`, computed on the first call of the pass;
     /// `frame.camera_parts(&camera)?`.
-    pub(crate) fn camera_parts(
-        &self,
-        camera: &Graphic3dCamera,
-    ) -> Result<RecordCameraParts, RenderError> {
+    /// `None` for a camera that cannot be inverted, or for a second camera in one pass, whose
+    /// groups then lower; borrowing saves copying the parts for every group (#594).
+    pub(crate) fn camera_parts(&self, camera: &Graphic3dCamera) -> Option<&RecordCameraParts> {
         let address = std::ptr::from_ref(camera).addr();
-        if let Some((key, parts)) = self.camera.get()
-            && *key == address
-        {
-            return Ok(*parts);
-        }
-        let parts = RecordCameraParts::of(camera)?;
-        let _ = self.camera.set((address, parts));
-        Ok(parts)
+        let (key, parts) = match self.camera.get() {
+            Some(kept) => kept,
+            None => {
+                let parts = RecordCameraParts::of(camera).ok()?;
+                self.camera.get_or_init(|| (address, parts))
+            }
+        };
+        (*key == address).then_some(parts)
     }
 
     /// The surface policies of `structure`'s driver, looked up once per pass for the

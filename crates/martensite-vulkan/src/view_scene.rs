@@ -437,31 +437,33 @@ fn layer_program(
     let mut program = crate::stencil_program::StencilProgram::default();
     for priority in layer.array_of_structures() {
         for weak in priority.iter() {
-            program.append(structure_draws(&weak.upgrade(), inputs, pass)?);
+            append_structure(&weak.upgrade(), inputs, pass, &mut program)?;
         }
     }
     Ok(program)
 }
-fn structure_draws(
+/// Append a structure's draws straight to the layer's program (#594).
+fn append_structure(
     structure: &Handle<dyn Graphic3dCStructure>,
     inputs: &StructureInputs<'_>,
     pass: &RenderElementPass,
-) -> Result<crate::stencil_program::StencilProgram, RenderError> {
+    program: &mut crate::stencil_program::StencilProgram,
+) -> Result<(), RenderError> {
     if structure.is_null() {
-        return Ok(Default::default());
+        return Ok(());
     }
     let retained = structure.cast::<Graphic3dRenderStructure>();
+    let scene = (
+        inputs.camera,
+        inputs.extent,
+        inputs.rendering,
+        inputs.clipping,
+        pass,
+    );
     retained
         .get()
         .ok_or_else(|| rejected(structure.object_address(), "a Martensite driver structure"))?
-        .draws(
-            inputs.camera,
-            inputs.view_id,
-            inputs.extent,
-            inputs.rendering,
-            inputs.clipping,
-            pass,
-        )
+        .draws_into(inputs.view_id, scene, program)
 }
 fn validate_raster_params(view: &dyn Graphic3dCView) -> Result<(), RenderError> {
     let params = view.rendering_params();

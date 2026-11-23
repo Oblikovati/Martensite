@@ -104,19 +104,43 @@ impl Graphic3dRenderStructure {
         clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
         elements: &crate::render_element_pass::RenderElementPass,
     ) -> Result<crate::stencil_program::StencilProgram, RenderError> {
-        if !self.is_visible_in_view(view_id) || self.is_culled() {
-            return Ok(Default::default());
-        }
+        let mut program = crate::stencil_program::StencilProgram::default();
         let scene = (camera, extent, rendering, clipping, elements);
-        let Some((program, skipped)) = self.replayed_groups(scene) else {
-            return self.lowered_draws(scene);
-        };
+        self.draws_into(view_id, scene, &mut program)?;
+        Ok(program)
+    }
+
+    /// Append the structure's program for this pass to `target`: its groups' records
+    /// replayed in place when all hold, otherwise its groups lowered;
+    /// `structure.draws_into(view_id, scene, &mut layer_program)?`.
+    pub(crate) fn draws_into(
+        &self,
+        view_id: i32,
+        scene: structure_replay::StructureFrame<'_>,
+        target: &mut crate::stencil_program::StencilProgram,
+    ) -> Result<(), RenderError> {
+        if !self.is_visible_in_view(view_id) || self.is_culled() {
+            return Ok(());
+        }
         #[cfg(feature = "draw-record-verification")]
-        return structure_replay::verified(program, skipped, self.lowered_draws(scene));
+        {
+            let mut replayed = crate::stencil_program::StencilProgram::default();
+            let replay = self.replayed_groups(scene, &mut replayed);
+            let lowered = self.lowered_draws(scene)?;
+            if replay.is_some() {
+                structure_replay::verify(&replayed, &lowered);
+            }
+            target.append(lowered);
+            Ok(())
+        }
         #[cfg(not(feature = "draw-record-verification"))]
         {
-            elements.add_skipped(skipped);
-            Ok(program)
+            if let Some(skipped) = self.replayed_groups(scene, target) {
+                scene.4.add_skipped(skipped);
+                return Ok(());
+            }
+            target.append(self.lowered_draws(scene)?);
+            Ok(())
         }
     }
 

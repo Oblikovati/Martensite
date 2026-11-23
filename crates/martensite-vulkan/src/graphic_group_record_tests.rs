@@ -90,10 +90,9 @@ impl RecordScene {
         let pass = crate::render_element_pass::RenderElementPass::unfiltered();
         let clipping = Handle::default();
         let scene = (&self.camera, [64, 64], &self.rendering, &clipping, &pass);
-        render
-            .get()?
-            .replayed_groups(scene)
-            .map(|(program, _)| program.draws)
+        let mut program = crate::stencil_program::StencilProgram::default();
+        render.get()?.replayed_groups(scene, &mut program)?;
+        Some(program.draws)
     }
     /// The draws a group without a record lowers for the current camera.
     fn lowered_again(&self) -> Vec<crate::PrimitiveDraw> {

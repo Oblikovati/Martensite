@@ -162,12 +162,20 @@ pub(crate) fn model_transform(
     group: &Graphic3dDrawGroup,
     structure: &Graphic3dCStructureFields,
 ) -> Mat4<f64> {
+    model_with_local(structure, &group.transformation())
+}
+/// The structure's transformation times a group transformation already read;
+/// `model_with_local(&fields, &group_trsf)`.
+pub(crate) fn model_with_local(
+    structure: &Graphic3dCStructureFields,
+    group: &martensite_tkmath::gp::Transform3,
+) -> Mat4<f64> {
     let mut model = Mat4::<f64>::identity();
     let mut local = Mat4::<f64>::identity();
     if let Some(datum) = structure.trsf.get() {
         datum.transformation().get_mat4(&mut model);
     }
-    group.transformation().get_mat4(&mut local);
+    group.get_mat4(&mut local);
     model * local
 }
 pub(crate) fn clipping_model(

@@ -187,28 +187,30 @@ impl Graphic3dDrawGroup {
                 aspects,
                 geometry,
             };
-            let kept = (key, probe.rendering, &current.get(), pass);
+            let kept = (key, probe.rendering, current.get(), pass);
             self.keep_record(kept, &program, (skipped, carry.clone()));
         }
         Ok(program)
     }
 
-    /// The group's recorded program in `structure` with this camera, its skip count and the
-    /// carry it leaves, or `None` when the group has no valid record. It never lowers, so a
-    /// structure can try every group before it commits to the replayed draws;
-    /// `group.replayed_in_structure(&camera, extent, (&fields, &params, &clipping), (&pass, &carry))`.
+    /// The group's recorded program in `structure` with this camera, appended to `target`,
+    /// with its skip count and the carry it leaves, or `None` with nothing appended when the
+    /// group has no valid record. It never lowers, so a structure can try every group before
+    /// it commits to the replayed draws;
+    /// `group.replayed_in_structure(&camera, extent, (&fields, &params, &clipping), (&pass, &carry), &mut target)`.
     pub(crate) fn replayed_in_structure(
         &self,
         camera: &Graphic3dCamera,
         extent: Option<[u32; 2]>,
         (structure, rendering, clipping): StructureScene<'_>,
         (pass, carry): (&RenderElementPass, &FlipCarry),
-    ) -> Option<(StencilProgram, usize, FlipCarry)> {
+        target: &mut StencilProgram,
+    ) -> Option<(usize, FlipCarry)> {
         let persistence =
             extent.map(|raster| crate::render_scale::persistence_extent(raster, rendering));
         let scene = (structure, rendering, clipping, pass, persistence);
         let (probe, current) = self.record_inputs(scene, camera, carry)?;
-        self.recorded_program(&probe, &current, pass)
+        self.recorded_program_into(&probe, &current, pass, target)
     }
 
     /// The probe and camera fields of a group that starts without inherited flips.
@@ -218,27 +220,25 @@ impl Graphic3dDrawGroup {
         camera: &Graphic3dCamera,
         carry: &FlipCarry,
     ) -> Option<(RecordProbe<'a>, LazyCamera<'a>)> {
-        if *carry != FlipCarry::default() {
+        if *carry != FlipCarry::default() || !recordable_scene(scene.0, scene.2, scene.3) {
             return None;
         }
-        let model = crate::persistent_transform::model_transform(self, scene.0);
-        let probe = self.record_probe(scene, camera, &model)?;
-        let parts = scene.3.record_frame().camera_parts(camera).ok()?;
+        // One read of the group fields gives the record state and the model (#594).
+        let (closed, local) = self.recordable_group_state()?;
+        let model = crate::persistent_transform::model_with_local(scene.0, &local);
+        let probe = self.record_probe(scene, camera, (&model, closed, &local))?;
+        let parts = scene.3.record_frame().camera_parts(camera)?;
         Some((probe, LazyCamera::new(parts, scene.0, model)))
     }
 
     /// The record inputs of this group, or `None` when its lowering reads more than ordinary
-    /// commands, aspects and geometry; `group.record_probe(scene, &camera, &model)`.
+    /// commands, aspects and geometry; `group.record_probe(scene, &camera, (&model, closed, &local))`.
     fn record_probe<'a>(
         &self,
-        (structure, rendering, clipping, pass, extent): ProbeScene<'a>,
+        (structure, rendering, _, pass, extent): ProbeScene<'a>,
         camera: &Graphic3dCamera,
-        model: &Mat4<f64>,
+        (model, closed, local): (&Mat4<f64>, bool, &martensite_tkmath::gp::Transform3),
     ) -> Option<RecordProbe<'a>> {
-        if !recordable_scene(structure, clipping, pass) {
-            return None;
-        }
-        let closed = self.recordable_group_state()?;
         let (aspects, commands, effects) = self.retained_commands();
         if effects.flips || effects.calls_user_code {
             return None;
@@ -247,7 +247,7 @@ impl Graphic3dDrawGroup {
             commands: commands.identity()?.get(),
             model: model.data().map(f64::to_bits),
             implicit_stack: structure.trsf.is_null()
-                && self.transformation().form() == martensite_tkmath::gp::TransformForm::Identity,
+                && local.form() == martensite_tkmath::gp::TransformForm::Identity,
             closed,
             perspective: !camera.is_orthographic(),
             extent,
@@ -262,10 +262,12 @@ impl Graphic3dDrawGroup {
         })
     }
 
-    /// Whether the group has no persistence and no flipper, and then whether it is closed.
-    fn recordable_group_state(&self) -> Option<bool> {
+    /// Whether the group has no persistence and no flipper, and then whether it is closed and
+    /// its transformation.
+    fn recordable_group_state(&self) -> Option<(bool, martensite_tkmath::gp::Transform3)> {
         let fields = self.base.fields.read();
-        (fields.trsf_pers.is_null() && fields.flipper.is_null()).then_some(fields.is_closed)
+        (fields.trsf_pers.is_null() && fields.flipper.is_null())
+            .then_some((fields.is_closed, fields.trsf))
     }
 
     /// The recorded program with `camera`, its skip count and the carry it leaves, when the
@@ -276,6 +278,19 @@ impl Graphic3dDrawGroup {
         camera: &LazyCamera<'_>,
         pass: &RenderElementPass,
     ) -> Option<(StencilProgram, usize, FlipCarry)> {
+        let mut program = StencilProgram::default();
+        let (skipped, carry) = self.recorded_program_into(probe, camera, pass, &mut program)?;
+        Some((program, skipped, carry))
+    }
+
+    /// `recorded_program` appended to `target`; it appends nothing without a match.
+    fn recorded_program_into(
+        &self,
+        probe: &RecordProbe<'_>,
+        camera: &LazyCamera<'_>,
+        pass: &RenderElementPass,
+        target: &mut StencilProgram,
+    ) -> Option<(usize, FlipCarry)> {
         let slot = self.draw_record.read();
         let record = slot.record()?;
         if record.key.scalars != probe.scalars
@@ -286,9 +301,8 @@ impl Graphic3dDrawGroup {
         {
             return None;
         }
-        let mut program = record.program.clone();
         let camera = camera.get();
-        program.draws.iter_mut().for_each(|draw| camera.patch(draw));
+        target.append_patched(&record.program, |draw| camera.patch(draw));
         record.pass.store(
             pass.record_frame().serial(),
             std::sync::atomic::Ordering::Relaxed,
@@ -297,7 +311,7 @@ impl Graphic3dDrawGroup {
         record
             .replays
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        Some((program, record.skipped, record.carry.clone()))
+        Some((record.skipped, record.carry.clone()))
     }
 
     /// Keep `program` as this group's record when each draw certifies `camera`, the commands
@@ -489,7 +503,7 @@ fn plain_aspects(base: &Handle<dyn Graphic3dAspectsSource>, commands: &[GroupCom
 
 /// The camera fields of a group, computed only when a replay or a kept record needs them.
 pub(super) struct LazyCamera<'a> {
-    parts: RecordCameraParts,
+    parts: &'a RecordCameraParts,
     structure: &'a Graphic3dCStructureFields,
     model: Mat4<f64>,
     fields: std::cell::OnceCell<RecordCamera>,
@@ -497,7 +511,7 @@ pub(super) struct LazyCamera<'a> {
 
 impl<'a> LazyCamera<'a> {
     fn new(
-        parts: RecordCameraParts,
+        parts: &'a RecordCameraParts,
         structure: &'a Graphic3dCStructureFields,
         model: Mat4<f64>,
     ) -> Self {
@@ -508,10 +522,9 @@ impl<'a> LazyCamera<'a> {
             fields: std::cell::OnceCell::new(),
         }
     }
-    fn get(&self) -> RecordCamera {
-        *self
-            .fields
-            .get_or_init(|| RecordCamera::current(&self.parts, self.structure, self.model))
+    fn get(&self) -> &RecordCamera {
+        self.fields
+            .get_or_init(|| RecordCamera::current(self.parts, self.structure, self.model))
     }
 }
 

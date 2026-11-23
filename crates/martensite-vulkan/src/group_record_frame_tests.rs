@@ -13,7 +13,8 @@ fn moved_camera() -> Graphic3dCamera {
 #[test]
 fn camera_parts_compose_the_clip_transform_of_ordinary_clip() {
     let camera = moved_camera();
-    let parts = RecordFrame::default().camera_parts(&camera).unwrap();
+    let frame = RecordFrame::default();
+    let parts = frame.camera_parts(&camera).unwrap();
     let model = Mat4::<f64>::identity();
     let clip = (parts.projection_view * Mat4::<f32>::from_other(&model)).data();
     let expected = crate::persistent_transform::ordinary_clip(&camera, model);
@@ -23,21 +24,15 @@ fn camera_parts_compose_the_clip_transform_of_ordinary_clip() {
 }
 
 #[test]
-fn camera_parts_are_read_once_per_camera() {
+fn camera_parts_are_read_once_per_pass_for_its_camera() {
     let camera = moved_camera();
     let frame = RecordFrame::default();
-    let first = frame.camera_parts(&camera).unwrap();
+    let first = *frame.camera_parts(&camera).unwrap();
     camera.set_eye(&Point3::new(-4., 1., 2.)).unwrap();
     let kept = frame.camera_parts(&camera).unwrap();
     assert_eq!(first.view.data(), kept.view.data(), "one read per pass");
-    let other = moved_camera();
-    other.set_eye(&Point3::new(-4., 1., 2.)).unwrap();
-    let fresh = frame.camera_parts(&other).unwrap();
-    assert_ne!(
-        fresh.view.data(),
-        first.view.data(),
-        "another camera is read again"
-    );
+    // The groups of a second camera in the same pass lower instead of replaying.
+    assert!(frame.camera_parts(&moved_camera()).is_none());
 }
 
 #[test]

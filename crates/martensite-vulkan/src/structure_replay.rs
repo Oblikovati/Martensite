@@ -20,12 +20,14 @@ pub(crate) type StructureFrame<'a> = (
 );
 
 impl Graphic3dRenderStructure {
-    /// The replayed program of every group and the skips they counted, or `None` when the
-    /// structure or one of its groups needs lowering; `structure.replayed_groups(scene)`.
+    /// Append the replayed program of every group to `target` and return the skips they
+    /// counted, or `None` with `target` unchanged when the structure or one of its groups
+    /// needs lowering; `structure.replayed_groups(scene, &mut target)`.
     pub(crate) fn replayed_groups(
         &self,
         (camera, extent, rendering, clipping, pass): StructureFrame<'_>,
-    ) -> Option<(StencilProgram, usize)> {
+        target: &mut StencilProgram,
+    ) -> Option<usize> {
         if !self.replays_local_groups(clipping, pass) {
             return None;
         }
@@ -33,24 +35,23 @@ impl Graphic3dRenderStructure {
         if fields.highlight || !fields.trsf_pers.is_null() || !fields.clip_planes.is_null() {
             return None;
         }
-        let mut program = StencilProgram::default();
+        let mark = target.mark();
         let mut carry = crate::group_flipping::FlipCarry::default();
         let mut skipped = 0;
         for slot in fields.groups.iter() {
             let group = slot.cast::<Graphic3dDrawGroup>();
-            let group = group.get()?;
-            // GlWorkspace::ShouldRender: the shadow-map pass skips groups with persistence.
-            if pass.skips_trsf_persistence() && !group.transform_persistence().is_null() {
-                continue;
-            }
-            let scene = (&*fields, rendering, clipping);
-            let (replayed, skips, next) =
-                group.replayed_in_structure(camera, Some(extent), scene, (pass, &carry))?;
-            program.append(replayed);
+            let replay = group.get().and_then(|group| {
+                let scene = (&*fields, rendering, clipping);
+                group.replayed_in_structure(camera, Some(extent), scene, (pass, &carry), target)
+            });
+            let Some((skips, next)) = replay else {
+                target.truncate(mark);
+                return None;
+            };
             skipped += skips;
             carry = next;
         }
-        Some((program, skipped))
+        Some(skipped)
     }
 
     /// Whether the structure draws only its own groups, in a pass and view that move none of
@@ -69,15 +70,10 @@ impl Graphic3dRenderStructure {
     }
 }
 
-/// Require the replay to equal the lowering path and return the lowered program, as group
-/// records do under the `draw-record-verification` feature.
+/// Require the replay to equal the lowering path, as group records do under the
+/// `draw-record-verification` feature.
 #[cfg(feature = "draw-record-verification")]
-pub(super) fn verified(
-    replayed: StencilProgram,
-    _skipped: usize,
-    lowered: Result<StencilProgram, crate::RenderError>,
-) -> Result<StencilProgram, crate::RenderError> {
-    let lowered = lowered?;
+pub(super) fn verify(replayed: &StencilProgram, lowered: &StencilProgram) {
     assert_eq!(
         replayed.draws, lowered.draws,
         "a structure replayed stale draws"
@@ -86,5 +82,4 @@ pub(super) fn verified(
         replayed.boundaries, lowered.boundaries,
         "a structure replayed stale stencil boundaries"
     );
-    Ok(lowered)
 }
