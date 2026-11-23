@@ -58,9 +58,15 @@ impl std::ops::DerefMut for RenderLighting {
     }
 }
 /// A process-unique number for one state of a lighting body. It is not part of equality:
-/// two bodies with the same values are equal whatever their identities.
-#[derive(Clone, Copy, Debug)]
+/// two bodies with the same values are equal whatever their identities. Nor is it part of the
+/// debug text, which tests compare to prove that a restored scene draws the same (#594).
+#[derive(Clone, Copy)]
 pub struct LightingIdentity(pub(crate) u64);
+impl std::fmt::Debug for LightingIdentity {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("LightingIdentity")
+    }
+}
 impl LightingIdentity {
     fn next() -> Self {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
