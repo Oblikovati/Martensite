@@ -51,11 +51,70 @@ impl TextSceneContext<'_> {
         text: &Graphic3dText,
         aspects: &Handle<dyn Graphic3dAspectsSource>,
         upload: Option<&crate::element_upload::ElementUploadSlot>,
+        label: Option<&crate::text_label_record::LabelSlot>,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
+        if let Some(draws) = self.replayed_label(text, aspects, upload, label)? {
+            return Ok(draws);
+        }
+        let inputs = crate::text_label_record::LabelInputs::current(text, aspects, self.rendering);
         let Some((aspect, layout)) = self.recorded_layout(text, aspects, upload)? else {
             return Ok(vec![]);
         };
-        crate::text_drawing::lower_text_draws(text, aspect, layout.view(), &self.transform()?)
+        let draws =
+            crate::text_drawing::lower_text_draws(text, aspect, layout.view(), &self.transform()?)?;
+        if let (Some(slot), Some(inputs)) = (label, inputs)
+            && text.text_formatter().is_null()
+        {
+            slot.keep(inputs, label_replay(aspect, layout.view(), &draws));
+        }
+        Ok(draws)
+    }
+
+    /// The kept draws of an unchanged label, placed for the current camera.
+    fn replayed_label(
+        &self,
+        text: &Graphic3dText,
+        aspects: &Handle<dyn Graphic3dAspectsSource>,
+        upload: Option<&crate::element_upload::ElementUploadSlot>,
+        label: Option<&crate::text_label_record::LabelSlot>,
+    ) -> Result<Option<Vec<PrimitiveDraw>>, RenderError> {
+        let Some(mut replay) = label.and_then(|slot| slot.unchanged(text, aspects, self.rendering))
+        else {
+            return Ok(None);
+        };
+        let Some(aspect) = aspects.get() else {
+            return Ok(None);
+        };
+        let offsets = crate::text_drawing::native_text_offsets(aspect.text_display_type());
+        let clips = self
+            .transform()?
+            .pass_clips(text, aspect, replay.point_size, offsets)?;
+        if !crate::text_drawing::place_text_draws(&mut replay.draws, &clips) {
+            return Ok(None);
+        }
+        if let Some(upload) = upload {
+            let (indices, subtitle, bounds) = replay.upload;
+            upload.record_text(indices, subtitle, bounds);
+        }
+        #[cfg(feature = "draw-record-verification")]
+        self.verify_label(text, aspects, &replay.draws)?;
+        Ok(Some(replay.draws))
+    }
+
+    /// Lower the label again and require the replay to equal it.
+    #[cfg(feature = "draw-record-verification")]
+    fn verify_label(
+        &self,
+        text: &Graphic3dText,
+        aspects: &Handle<dyn Graphic3dAspectsSource>,
+        replayed: &[PrimitiveDraw],
+    ) -> Result<(), RenderError> {
+        let lowered = self.draws(text, aspects, None, None)?;
+        assert!(
+            lowered.as_slice() == replayed,
+            "a replayed text label differs from lowering it again"
+        );
+        Ok(())
     }
     /// Draws of a 2D text element (`GlText::Set2D`): the text model replaces the
     /// world-view under the group's projection and no depth test applies.
@@ -147,6 +206,20 @@ impl TextSceneContext<'_> {
         Ok((projection, model_view))
     }
 }
+/// What a label replay needs besides its inputs; `label_replay(aspect, layout, &draws)`.
+fn label_replay(
+    aspect: &dyn Graphic3dAspectsSource,
+    layout: crate::text_layout::GlyphLayoutView<'_>,
+    draws: &[PrimitiveDraw],
+) -> crate::text_label_record::LabelReplay {
+    let subtitle = aspect.text_display_type() == AspectTypeOfDisplayText::Subtitle;
+    crate::text_label_record::LabelReplay {
+        point_size: layout.point_size(),
+        upload: (layout.index_count(), subtitle, layout.formatter_bounds()),
+        draws: draws.to_vec(),
+    }
+}
+
 /// Reject unsupported shader requests; `validate_text_style(&aspect)?` preserves native paths.
 /// Every display type is drawn: GlText::render has no default branch, so the values outside
 /// AspectTypeOfDisplayText (Native6, Native7) draw only the main pass, as Normal does

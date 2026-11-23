@@ -9,7 +9,7 @@ impl Graphic3dDrawGroup {
             .commands
             .iter()
             .filter_map(|command| match command {
-                GroupCommand::Geometry(GroupGeometry::Text(text, _, _)) => {
+                GroupCommand::Geometry(GroupGeometry::Text(text, _, _, _)) => {
                     Some(text.object_address() as usize)
                 }
                 _ => None,

@@ -87,7 +87,7 @@ fn group_geometry(
     let geometry = match geometry {
         RenderElementGeometry::Primitives(primitive) => GroupGeometry::Primitives(primitive),
         RenderElementGeometry::Text(text, upload, placement) => {
-            GroupGeometry::Text(text, upload, placement)
+            GroupGeometry::Text(text, upload, placement, Default::default())
         }
     };
     (aspects, geometry)

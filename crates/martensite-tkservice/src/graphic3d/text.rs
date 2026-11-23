@@ -3,7 +3,7 @@
 use super::{Graphic3dHorizontalTextAlignment, Graphic3dVerticalTextAlignment};
 use crate::font::FontTextFormatter;
 use martensite_tkernel::ncollection::String8;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, StandardTransient};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::{Axis2, Point3};
 
@@ -22,7 +22,7 @@ struct TextState {
 
 /// A text primitive; `Graphic3dText::new(16.0)`.
 pub struct Graphic3dText {
-    state: SharedState<TextState>,
+    state: super::RevisedState<TextState>,
 }
 martensite_tkernel::impl_transient!(Graphic3dText, "Graphic3d_Text", StandardTransient);
 
@@ -41,8 +41,13 @@ impl Graphic3dText {
             has_own_anchor: true,
         };
         Self {
-            state: SharedState::new(state),
+            state: super::RevisedState::new(state),
         }
+    }
+    /// The number of edits made to this text. A renderer that kept what it built from the
+    /// text compares it to know that no edit happened since; `text.revision()`.
+    pub fn revision(&self) -> u64 {
+        self.state.revision()
     }
     /// The UTF-8 text; `text.text()`.
     pub fn text(&self) -> String8 {

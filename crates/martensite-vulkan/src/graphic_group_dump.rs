@@ -89,7 +89,7 @@ fn dump_command(
         GroupCommand::Geometry(GroupGeometry::Primitives(primitive)) => {
             primitive_array(stream, depth, address, primitive, primitive.uid)
         }
-        GroupCommand::Geometry(GroupGeometry::Text(_, upload, _)) => {
+        GroupCommand::Geometry(GroupGeometry::Text(_, upload, _, _)) => {
             text(stream, depth, address, upload.current())
         }
         GroupCommand::Element(element) => element.dump_json(stream, depth),

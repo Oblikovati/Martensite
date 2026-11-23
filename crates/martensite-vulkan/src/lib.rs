@@ -246,6 +246,7 @@ mod text_atlas;
 mod text_background;
 mod text_culling;
 mod text_drawing;
+mod text_label_record;
 mod text_submission;
 mod text_transform;
 

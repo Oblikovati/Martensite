@@ -25,7 +25,7 @@ fn command_stats(command: &GroupCommand) -> Option<CountedElement> {
 
 fn geometry_stats(geometry: &GroupGeometry) -> Option<GroupElementStats> {
     match geometry {
-        GroupGeometry::Text(_, upload, _) => Some(GroupElementStats::Text(upload.current())),
+        GroupGeometry::Text(_, upload, _, _) => Some(GroupElementStats::Text(upload.current())),
         // GlGroup::AddPrimitiveArray creates no element for null attributes.
         GroupGeometry::Primitives(primitive) if primitive.attributes.is_null() => None,
         GroupGeometry::Primitives(primitive) => Some(GroupElementStats::Primitive {

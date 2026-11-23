@@ -29,10 +29,29 @@ pub(crate) fn lower_text_draws<'a>(
     }
     Ok(draws)
 }
+/// Place draws that `lower_text_draws` built with other clip transforms: pass `i` takes
+/// `clips[i]` and a dimension rectangle the last one; anything else returns `false`.
+/// `place_text_draws(&mut kept, &clips)`
+pub(crate) fn place_text_draws(draws: &mut [PrimitiveDraw], clips: &[[f32; 16]]) -> bool {
+    let Some(last) = clips.last() else {
+        return false;
+    };
+    if !(draws.len() == clips.len() || draws.len() == clips.len() + 1)
+        || clips.iter().flatten().any(|value| !value.is_finite())
+    {
+        return false;
+    }
+    for (index, draw) in draws.iter_mut().enumerate() {
+        draw.clip_transform = *clips.get(index).unwrap_or(last);
+    }
+    true
+}
 // GlText::render at preserves this exact outline order before the foreground.
 #[cfg(test)]
 const DECAL_PIXEL_OFFSETS: [[f64; 2]; 4] = [[1., 1.], [-1., -1.], [-1., 1.], [1., -1.]];
-fn native_text_offsets(display: AspectTypeOfDisplayText) -> &'static [[f64; 2]] {
+/// The pixel offset of each pass of a display type, in drawing order;
+/// `native_text_offsets(AspectTypeOfDisplayText::Shadow).len() == 2`.
+pub(crate) fn native_text_offsets(display: AspectTypeOfDisplayText) -> &'static [[f64; 2]] {
     match display {
         AspectTypeOfDisplayText::Dekale => &[[1., 1.], [-1., -1.], [-1., 1.], [1., -1.], [0., 0.]],
         AspectTypeOfDisplayText::Shadow => &[[1., -1.], [0., 0.]],
@@ -111,6 +130,28 @@ pub(crate) mod tests {
         let draws = lower_text_draws(&text, &aspect, &layout, &transform).unwrap();
         assert!(draws[0].text_shadow_bias);
         assert!(!draws[1].text_shadow_bias);
+    }
+    #[test]
+    fn placed_draws_take_the_clips_lowering_would_give_them() {
+        let aspect = Graphic3dAspectText3d::default();
+        aspect.set_text_display_type(AspectTypeOfDisplayText::Dimension);
+        let text = Graphic3dText::new(16.);
+        let layout = minimal_glyph_layout();
+        let moved = |shift: f32| {
+            let mut transform = identity_text_transform();
+            transform.model_view.set_value(0, 3, f64::from(shift));
+            transform
+        };
+        let mut kept = lower_text_draws(&text, &aspect, &layout, &moved(0.)).unwrap();
+        let expected = lower_text_draws(&text, &aspect, &layout, &moved(0.5)).unwrap();
+        let offsets = native_text_offsets(aspect.text_display_type());
+        let clips = moved(0.5).pass_clips(&text, &aspect, 16, offsets).unwrap();
+        assert!(place_text_draws(&mut kept, &clips));
+        assert!(
+            kept == expected,
+            "the dimension rectangle takes the last clip"
+        );
+        assert!(!place_text_draws(&mut kept, &[[f32::NAN; 16]]));
     }
     pub(crate) fn minimal_glyph_layout() -> GlyphLayout {
         GlyphLayout {

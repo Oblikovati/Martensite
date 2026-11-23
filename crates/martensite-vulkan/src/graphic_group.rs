@@ -324,6 +324,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
                 text.clone(),
                 Default::default(),
                 crate::render_element::TextPlacement::Scene,
+                Default::default(),
             )));
         self.record_text_bounds(text, evaluate_bounds);
     }

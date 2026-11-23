@@ -10,6 +10,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added `transform_utils::un_project_inverted`, which unprojects a point through an already inverted matrix with the same arithmetic as `un_project`. Vulkan text inverts its projection once per label instead of once per point (#594).
 
+- Added `Graphic3dText::revision`, the number of edits made to a text. Vulkan keeps the draws of each text label and lowers a label again only after its text, aspects, font or resolution change; `frame_text_1k` takes 1.23 ms instead of 1.86 ms on the same host (#594).
+
 - Added `RevisedState` to tkservice: a shared cell whose writes advance a revision. A renderer reads the revision to know that the state did not change since it last read it (#594).
 
 - Added `graphic3d_cview_min_max_values_with_size`, which computes `MinMaxValues` with a window size the view supplies. The Vulkan view passes the size it keeps between resizes, so auto Z-fit no longer asks the X server for the window size on every redraw (#594).

@@ -18,6 +18,7 @@ pub(super) enum GroupGeometry {
         Handle<Graphic3dText>,
         crate::element_upload::ElementUploadSlot,
         crate::render_element::TextPlacement,
+        crate::text_label_record::LabelSlot,
     ),
 }
 #[derive(Clone, Copy, Default)]
@@ -112,9 +113,14 @@ impl GroupGeometry {
             return Ok(Vec::new());
         }
         match self {
-            Self::Text(text, upload, placement) => {
-                let draws =
-                    lower_ordered_text(context, (text, *placement), upload, aspects, closed)?;
+            Self::Text(text, upload, placement, label) => {
+                let draws = lower_ordered_text(
+                    context,
+                    (text, *placement, label),
+                    upload,
+                    aspects,
+                    closed,
+                )?;
                 #[cfg(feature = "vertex-output-diagnostics")]
                 return context.group.tag_vertex_output_text(text, draws);
                 #[cfg(not(feature = "vertex-output-diagnostics"))]
@@ -168,13 +174,19 @@ fn empty_line_geometry(
 
 fn lower_ordered_text(
     context: &crate::text_submission::TextSceneContext<'_>,
-    (text, placement): (&Graphic3dText, crate::render_element::TextPlacement),
+    (text, placement, label): (
+        &Graphic3dText,
+        crate::render_element::TextPlacement,
+        &crate::text_label_record::LabelSlot,
+    ),
     upload: &crate::element_upload::ElementUploadSlot,
     aspects: &Handle<dyn Graphic3dAspectsSource>,
     closed: bool,
 ) -> Result<Vec<PrimitiveDraw>, RenderError> {
     let draws = match placement {
-        crate::render_element::TextPlacement::Scene => context.draws(text, aspects, Some(upload)),
+        crate::render_element::TextPlacement::Scene => {
+            context.draws(text, aspects, Some(upload), Some(label))
+        }
         crate::render_element::TextPlacement::Pixel => context.pixel_draws(text, aspects, upload),
     };
     draws.map(|mut draws| {
