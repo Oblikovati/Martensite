@@ -227,7 +227,7 @@ impl Graphic3dDrawGroup {
             perspective: !camera.is_orthographic(),
             extent,
             pass: pass.record_key(),
-            surface: crate::lighting_pipeline::structure_surface_policies(&self.structure()),
+            surface: pass.record_frame().surface_policies(&self.structure()),
         };
         Some(RecordProbe {
             scalars,

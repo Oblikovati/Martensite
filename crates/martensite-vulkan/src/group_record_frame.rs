@@ -29,7 +29,15 @@ pub(crate) struct RecordFrame {
     rendering: OnceLock<Arc<Graphic3dRenderingParams>>,
     /// The (recorded, current) parameter addresses last found identical.
     matched: Mutex<Option<(usize, usize)>>,
+    /// The structure manager address and the surface policies of its driver.
+    surface: OnceLock<(usize, SurfacePolicies)>,
 }
+
+/// The lighting pipeline and unlit face policy of a structure's driver.
+pub(crate) type SurfacePolicies = (
+    crate::RenderLightingPipeline,
+    crate::RenderUnlitFaceColorPolicy,
+);
 
 impl std::fmt::Debug for RecordFrame {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -50,6 +58,7 @@ impl Default for RecordFrame {
             camera: OnceLock::new(),
             rendering: OnceLock::new(),
             matched: Mutex::new(None),
+            surface: OnceLock::new(),
         }
     }
 }
@@ -75,6 +84,30 @@ impl RecordFrame {
         let parts = RecordCameraParts::of(camera)?;
         let _ = self.camera.set((address, parts));
         Ok(parts)
+    }
+
+    /// The surface policies of `structure`'s driver, looked up once per pass for the
+    /// structures of one manager; each group asked through three locks before (#594).
+    /// `frame.surface_policies(&group.structure())`
+    pub(crate) fn surface_policies(
+        &self,
+        structure: &martensite_tkernel::standard::Handle<dyn Graphic3dStructureSource>,
+    ) -> SurfacePolicies {
+        let manager = structure.structure_manager();
+        let Some(manager) = manager.get() else {
+            return Default::default();
+        };
+        let address = std::ptr::from_ref(manager).addr();
+        let (kept, policies) = self.surface.get_or_init(|| {
+            (
+                address,
+                crate::lighting_pipeline::manager_surface_policies(manager),
+            )
+        });
+        if *kept == address {
+            return *policies;
+        }
+        crate::lighting_pipeline::manager_surface_policies(manager)
     }
 
     /// The parameters the records built in this pass keep, one copy for all of them;

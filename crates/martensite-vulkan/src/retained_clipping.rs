@@ -83,7 +83,8 @@ fn effective_planes(
 fn enabled_planes(
     sequence: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
 ) -> Result<ClipPlanes, RenderError> {
-    let Some(sequence) = sequence.get() else {
+    // An empty sequence skips the copy of its members; each structure asks every frame (#594).
+    let Some(sequence) = sequence.get().filter(|sequence| !sequence.is_empty()) else {
         return Ok(Vec::new());
     };
     let mut planes = Vec::new();

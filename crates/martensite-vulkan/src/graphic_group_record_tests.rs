@@ -242,3 +242,21 @@ fn lowering_a_group_again_shares_the_bodies_of_the_first_lowering() {
         assert!(std::sync::Arc::ptr_eq(&earlier.body, &later.body));
     }
 }
+
+#[test]
+fn a_pass_reads_the_surface_policies_of_each_structure_manager() {
+    let programmable = RecordScene::new();
+    let fixed = RecordScene::new();
+    fixed
+        ._driver
+        .set_lighting_pipeline(crate::RenderLightingPipeline::FixedFunction)
+        .unwrap();
+    let frame = crate::group_record_frame::RecordFrame::default();
+    for scene in [&programmable, &fixed, &programmable, &fixed] {
+        let structure = scene.group.structure();
+        assert_eq!(
+            frame.surface_policies(&structure),
+            crate::lighting_pipeline::structure_surface_policies(&structure),
+        );
+    }
+}

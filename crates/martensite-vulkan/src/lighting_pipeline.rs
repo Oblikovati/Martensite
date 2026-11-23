@@ -33,11 +33,22 @@ pub(crate) fn structure_surface_policies(
         dyn martensite_tkservice::graphic3d::Graphic3dStructureSource,
     >,
 ) -> (RenderLightingPipeline, crate::RenderUnlitFaceColorPolicy) {
-    structure_render_driver(structure)
+    let manager = structure.structure_manager();
+    manager
         .get()
-        .map_or_else(Default::default, |driver| {
-            (driver.lighting_pipeline(), driver.unlit_face_color_policy)
-        })
+        .map_or_else(Default::default, manager_surface_policies)
+}
+
+/// The surface policies of the driver behind `manager`;
+/// `manager_surface_policies(&manager)`.
+pub(crate) fn manager_surface_policies(
+    manager: &martensite_tkservice::graphic3d::Graphic3dStructureManager,
+) -> (RenderLightingPipeline, crate::RenderUnlitFaceColorPolicy) {
+    let driver: martensite_tkernel::standard::Handle<crate::Graphic3dRenderDriver> =
+        manager.graphic_driver().cast();
+    driver.get().map_or_else(Default::default, |driver| {
+        (driver.lighting_pipeline(), driver.unlit_face_color_policy)
+    })
 }
 
 fn structure_render_driver(
