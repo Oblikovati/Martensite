@@ -113,6 +113,13 @@ pub(super) struct RecordCamera {
     normalize: bool,
 }
 
+/// The structure, rendering parameters and view clipping a structure lowers its groups with.
+pub(crate) type StructureScene<'a> = (
+    &'a Graphic3dCStructureFields,
+    &'a Graphic3dRenderingParams,
+    &'a Handle<dyn Graphic3dClipPlaneSequenceSource>,
+);
+
 /// The structure-level inputs of a probe: `(structure, rendering, clipping, pass, extent)`.
 pub(super) type ProbeScene<'a> = (
     &'a Graphic3dCStructureFields,
@@ -184,6 +191,24 @@ impl Graphic3dDrawGroup {
             self.keep_record(kept, &program, (skipped, carry.clone()));
         }
         Ok(program)
+    }
+
+    /// The group's recorded program in `structure` with this camera, its skip count and the
+    /// carry it leaves, or `None` when the group has no valid record. It never lowers, so a
+    /// structure can try every group before it commits to the replayed draws;
+    /// `group.replayed_in_structure(&camera, extent, (&fields, &params, &clipping), (&pass, &carry))`.
+    pub(crate) fn replayed_in_structure(
+        &self,
+        camera: &Graphic3dCamera,
+        extent: Option<[u32; 2]>,
+        (structure, rendering, clipping): StructureScene<'_>,
+        (pass, carry): (&RenderElementPass, &FlipCarry),
+    ) -> Option<(StencilProgram, usize, FlipCarry)> {
+        let persistence =
+            extent.map(|raster| crate::render_scale::persistence_extent(raster, rendering));
+        let scene = (structure, rendering, clipping, pass, persistence);
+        let (probe, current) = self.record_inputs(scene, camera, carry)?;
+        self.recorded_program(&probe, &current, pass)
     }
 
     /// The probe and camera fields of a group that starts without inherited flips.

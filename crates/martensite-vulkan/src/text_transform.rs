@@ -124,7 +124,10 @@ pub(crate) type GroupTextTransform =
 /// The inverse of the last text projection of a pass. The labels of a pass share the camera
 /// projection, and inverting it once per label took 10% of `frame_text_1k` (#594).
 #[derive(Debug, Default)]
-pub(crate) struct SharedTextUnview(std::sync::Mutex<Option<([u64; 16], Option<Mat4<f64>>)>>);
+pub(crate) struct SharedTextUnview(std::sync::Mutex<Option<KeptUnview>>);
+
+/// A projection's bits with its inverse, `None` when it has none.
+type KeptUnview = ([u64; 16], Option<Mat4<f64>>);
 
 impl SharedTextUnview {
     /// The inverse of `projection`, computed again only for another projection;

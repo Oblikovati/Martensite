@@ -28,6 +28,8 @@ struct RaytraceState {
     modification: usize,
 }
 martensite_tkernel::impl_transient!(Graphic3dRenderStructure, "Martensite_RenderStructure", StandardTransient, interfaces:[dyn Graphic3dCStructure]);
+#[path = "structure_replay.rs"]
+pub(crate) mod structure_replay;
 impl Graphic3dRenderStructure {
     pub(crate) fn has_only_local_geometry(&self, driver: &std::sync::Arc<DriverObjects>) -> bool {
         self.parent.is_none()
@@ -105,6 +107,24 @@ impl Graphic3dRenderStructure {
         if !self.is_visible_in_view(view_id) || self.is_culled() {
             return Ok(Default::default());
         }
+        let scene = (camera, extent, rendering, clipping, elements);
+        let Some((program, skipped)) = self.replayed_groups(scene) else {
+            return self.lowered_draws(scene);
+        };
+        #[cfg(feature = "draw-record-verification")]
+        return structure_replay::verified(program, skipped, self.lowered_draws(scene));
+        #[cfg(not(feature = "draw-record-verification"))]
+        {
+            elements.add_skipped(skipped);
+            Ok(program)
+        }
+    }
+
+    /// The structure's groups lowered (or replayed one by one) through the capping scene.
+    fn lowered_draws(
+        &self,
+        (camera, extent, rendering, clipping, elements): structure_replay::StructureFrame<'_>,
+    ) -> Result<crate::stencil_program::StencilProgram, RenderError> {
         let (fields, local_groups) = self.base.fields.read().snapshot_with_group_handles();
         if crate::retained_clipping::structure_is_clipped(clipping, &fields)? {
             return Ok(Default::default());

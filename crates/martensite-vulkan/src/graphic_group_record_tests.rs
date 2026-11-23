@@ -21,7 +21,7 @@ impl RecordScene {
         let driver = record_test_driver();
         let manager = Handle::new(Graphic3dStructureManager::new(&driver.cast()).unwrap());
         let structure = Graphic3dStructure::new(&manager, &Handle::default()).unwrap();
-        let group = Graphic3dDrawGroup::new(&structure.cast());
+        let group = structure.new_group().unwrap().cast::<Graphic3dDrawGroup>();
         let aspect = Handle::new(Graphic3dAspects::default());
         aspect.set_interior_color(Color::named(NamedColor::RED));
         group.set_group_primitives_aspect(&aspect.clone().cast());
@@ -80,6 +80,20 @@ impl RecordScene {
     fn recorded(&self) -> Vec<crate::PrimitiveDraw> {
         self.draws();
         self.draws()
+    }
+    /// The structure-level replay of all groups, or `None` when it takes the lowering path.
+    fn structure_replay(&self) -> Option<Vec<crate::PrimitiveDraw>> {
+        let render = self
+            .structure
+            .cstructure()
+            .cast::<crate::Graphic3dRenderStructure>();
+        let pass = crate::render_element_pass::RenderElementPass::unfiltered();
+        let clipping = Handle::default();
+        let scene = (&self.camera, [64, 64], &self.rendering, &clipping, &pass);
+        render
+            .get()?
+            .replayed_groups(scene)
+            .map(|(program, _)| program.draws)
     }
     /// The draws a group without a record lowers for the current camera.
     fn lowered_again(&self) -> Vec<crate::PrimitiveDraw> {
@@ -282,4 +296,28 @@ fn the_labels_of_a_group_share_its_transform_but_keep_their_own_anchor() {
     assert_ne!(first[0], first[1], "each label keeps its anchor");
     // The second frame replays the kept labels with the camera of this frame.
     assert_eq!(labels(scene.draws()), first);
+}
+
+#[test]
+fn a_structure_whose_groups_have_records_replays_them_as_lowering_would() {
+    let scene = RecordScene::new();
+    assert!(scene.structure_replay().is_none(), "no record yet");
+    scene.recorded();
+    scene.camera.set_eye(&Point3::new(3., -2., 5.)).unwrap();
+    let replayed = scene.structure_replay().expect("every group has a record");
+    assert_eq!(replayed, scene.lowered_again());
+}
+
+#[test]
+fn a_highlighted_or_stale_structure_takes_the_lowering_path() {
+    let scene = RecordScene::new();
+    scene.recorded();
+    scene
+        .aspect
+        .set_interior_color(Color::named(NamedColor::BLUE));
+    assert!(scene.structure_replay().is_none(), "an aspects write");
+    scene.recorded();
+    let cstructure = scene.structure.cstructure();
+    cstructure.cstructure_base().fields.write().highlight = true;
+    assert!(scene.structure_replay().is_none(), "a highlight");
 }
