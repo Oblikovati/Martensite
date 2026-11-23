@@ -1,17 +1,11 @@
 //! The cases, their timing protocol and the output line shared with `occt/main.cpp`.
-#[path = "ais.rs"]
 mod ais;
-#[path = "frames.rs"]
 mod frames;
-#[path = "geometry.rs"]
 mod geometry;
-#[path = "../../examples/support/native_window.rs"]
+#[path = "../../../examples/support/native_window.rs"]
 mod native_window;
-#[path = "stage.rs"]
 mod stage;
-#[path = "transfer.rs"]
 mod transfer;
-#[path = "work.rs"]
 mod work;
 
 use martensite_tkernel::standard::Handle;
