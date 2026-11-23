@@ -37,16 +37,7 @@ pub(super) fn layer_program(
     inputs: &StructureInputs<'_>,
     pass: &RenderElementPass,
 ) -> Result<StencilProgram, RenderError> {
-    let structures: Vec<_> = layer
-        .array_of_structures()
-        .iter()
-        .flat_map(|priority| {
-            priority
-                .iter()
-                .map(|weak| weak.upgrade())
-                .collect::<Vec<_>>()
-        })
-        .collect();
+    let structures = layer.structure_handles();
     if structures.len() < PARALLEL_STRUCTURES {
         return sequential_program(&structures, inputs, pass);
     }

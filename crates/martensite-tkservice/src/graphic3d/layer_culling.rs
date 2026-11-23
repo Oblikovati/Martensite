@@ -157,8 +157,13 @@ impl Graphic3dLayer {
         if count == 0 {
             return Ok(reached);
         }
+        // The traversal reads the tree under the sets lock: a copy of the whole tree on every
+        // frame took 2% of a 1,000-structure Vulkan frame (#594). It takes only the layer
+        // state lock below this one, in the same order as `update_bvh`.
+        let camera;
+        let primitive_tree;
         let tree = if is_trsf_pers {
-            let camera = pass.selector.camera().clone();
+            camera = pass.selector.camera().clone();
             let view = Graphic3dTrsfPersView {
                 camera: &camera,
                 projection: pass.selector.projection_matrix(),
@@ -169,12 +174,12 @@ impl Graphic3dLayer {
                 ],
                 state: pass.selector.world_view_proj_state(),
             };
-            sets.trsf_pers.bvh(&view)?.clone()
+            sets.trsf_pers.bvh(&view)?
         } else {
-            sets.primitives.bvh()?.clone()
+            primitive_tree = sets.primitives.bvh()?;
+            &*primitive_tree
         };
-        drop(sets);
-        for id in self.traverse(pass, &tree)? {
+        for id in self.traverse(pass, tree)? {
             if let Some(leaf) = usize::try_from(id).ok().and_then(|id| reached.get_mut(id)) {
                 *leaf = true;
             }
@@ -207,10 +212,13 @@ impl Graphic3dLayer {
             return Ok(leaves);
         }
         let mut stack: Vec<NodeInStack> = Vec::new();
+        // The queue order carries over between traversals; it is read and stored once, not
+        // under the layer lock at every inner node (#594).
+        let mut left_first = self.state.read().bvh_is_left_child_queued_first;
         loop {
             if tree.is_outer(node.id)? {
                 leaves.extend(tree.beg_primitive(node.id)?..=tree.end_primitive(node.id)?);
-            } else if let Some(next) = self.descend(pass, tree, &node, &mut stack)? {
+            } else if let Some(next) = descend(pass, tree, &node, &mut stack, &mut left_first)? {
                 node = next;
                 continue;
             }
@@ -219,38 +227,43 @@ impl Graphic3dLayer {
                 None => break,
             }
         }
+        self.state.write().bvh_is_left_child_queued_first = left_first;
         Ok(leaves)
     }
-    /// The next node below an inner node (`None` when both children are culled), pushing the
-    /// second child when both are in.
-    fn descend(
-        &self,
-        pass: &CullingPass<'_>,
-        tree: &BvhTree<BvhVec3d>,
-        node: &NodeInStack,
-        stack: &mut Vec<NodeInStack>,
-    ) -> Result<Option<NodeInStack>, Failure> {
-        let mut left = NodeInStack {
-            id: tree.child::<0>(node.id)?,
-            is_full_inside: true,
+}
+
+/// The next node below an inner node (`None` when both children are culled), pushing the
+/// second child when both are in; the queue order alternates on each push.
+fn descend(
+    pass: &CullingPass<'_>,
+    tree: &BvhTree<BvhVec3d>,
+    node: &NodeInStack,
+    stack: &mut Vec<NodeInStack>,
+    left_first: &mut bool,
+) -> Result<Option<NodeInStack>, Failure> {
+    let mut left = NodeInStack {
+        id: tree.child::<0>(node.id)?,
+        is_full_inside: true,
+    };
+    let mut right = NodeInStack {
+        id: tree.child::<1>(node.id)?,
+        is_full_inside: true,
+    };
+    let (left_in, right_in) = pass.children_in(tree, node, &mut left, &mut right)?;
+    if left_in && right_in {
+        let (first, second) = if *left_first {
+            (left, right)
+        } else {
+            (right, left)
         };
-        let mut right = NodeInStack {
-            id: tree.child::<1>(node.id)?,
-            is_full_inside: true,
-        };
-        let (left_in, right_in) = pass.children_in(tree, node, &mut left, &mut right)?;
-        if left_in && right_in {
-            let mut state = self.state.write();
-            let left_first = state.bvh_is_left_child_queued_first;
-            stack.push(if left_first { right } else { left });
-            state.bvh_is_left_child_queued_first = !left_first;
-            return Ok(Some(if left_first { left } else { right }));
-        }
-        if left_in || right_in {
-            return Ok(Some(if left_in { left } else { right }));
-        }
-        Ok(None)
+        stack.push(second);
+        *left_first = !*left_first;
+        return Ok(Some(first));
     }
+    if left_in || right_in {
+        return Ok(Some(if left_in { left } else { right }));
+    }
+    Ok(None)
 }
 
 /// A visible ordinary structure and its sole group after the culling guards are released.
@@ -354,13 +367,28 @@ fn mark_set(
         let Some(structure) = structure.get() else {
             continue;
         };
-        let shown = *reached && structure.is_visible_in_view(view_id);
-        if structure.is_culled() == shown {
-            structure.set_culled(!shown);
-        }
-        visible += i32::from(shown);
+        visible += i32::from(mark_culled(structure, *reached, view_id));
     }
     visible
+}
+
+/// Marks one structure culled unless it was reached and is visible in the view; whether it is
+/// shown. It reads the flags under one shared lock and writes only a change: three structure
+/// locks per frame took 4% of a 1,000-structure Vulkan frame (#594).
+fn mark_culled(structure: &dyn Graphic3dCStructure, reached: bool, view_id: i32) -> bool {
+    let fields = structure.cstructure_base().fields.read();
+    let shown = reached
+        && fields.visible
+        && fields
+            .view_affinity
+            .get()
+            .is_none_or(|affinity| affinity.is_visible(view_id));
+    let changed = fields.is_culled == shown;
+    drop(fields);
+    if changed {
+        structure.set_culled(!shown);
+    }
+    shown
 }
 
 type ProbeStructure = WeakHandle<dyn Graphic3dCStructure>;

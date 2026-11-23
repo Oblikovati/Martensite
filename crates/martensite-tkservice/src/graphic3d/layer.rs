@@ -219,6 +219,17 @@ impl Graphic3dLayer {
     pub fn array_of_structures(&self) -> Graphic3dArrayOfIndexedMapOfStructure {
         self.state.read().array.clone()
     }
+    /// The structures of every priority in draw order, read under the layer lock without
+    /// copying its maps: a renderer lists them on every frame (#594). A structure that no
+    /// longer exists is a null handle; `layer.structure_handles().len()`.
+    pub fn structure_handles(&self) -> Vec<Handle<dyn Graphic3dCStructure>> {
+        let state = self.state.read();
+        let priorities = state.array.iter();
+        priorities
+            .flat_map(|map| map.iter())
+            .map(WeakHandle::upgrade)
+            .collect()
+    }
     /// `Structures(priority)` (a copy); `layer.structures(Graphic3dDisplayPriority::Normal)`.
     pub fn structures(&self, priority: Graphic3dDisplayPriority) -> Graphic3dCStructureIndexedMap {
         self.state.read().array[priority_index(priority)].clone()
@@ -291,3 +302,7 @@ pub(crate) fn swap_remove_key(
 fn xyz_equal(first: &Xyz, second: &Xyz) -> bool {
     first.is_equal(second, martensite_tkmath::gp::resolution())
 }
+
+#[cfg(test)]
+#[path = "layer_structure_handles_tests.rs"]
+mod structure_handles_tests;

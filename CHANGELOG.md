@@ -11,6 +11,7 @@ follows [Semantic Versioning](https://semver.org/).
 - Added `transform_utils::un_project_inverted`, which unprojects a point through an already inverted matrix with the same arithmetic as `un_project`. Vulkan text inverts its projection once per label instead of once per point (#594).
 
 - Added `Graphic3dText::revision`, the number of edits made to a text. Vulkan keeps the draws of each text label and lowers a label again only after its text, aspects, font or resolution change; `frame_text_1k` takes 1.23 ms instead of 1.86 ms on the same host (#594).
+- Added `Graphic3dLayer::structure_handles`, which lists a layer's structures in draw order without copying its maps. Frustum culling no longer copies the layer's BVH tree on each frame and locks each structure once to update its culled flag; `frame_transparent_1k` takes 0.59 ms instead of 0.62 ms on the same host (#594).
 
 - Added `RevisedState` to tkservice: a shared cell whose writes advance a revision. A renderer reads the revision to know that the state did not change since it last read it (#594).
 
