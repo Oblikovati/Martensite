@@ -409,6 +409,46 @@ image, which halves the dump time again after the CPU conversion hit memory limi
 Resize stays outside parity on X11 (see PLAN.md). Recreating the swapchain alone costs more
 than OCCT's whole resize.
 
+## Phase 3 draw submission measurements
+
+Phase 3 keeps what a frame lowered and uploaded, and reuses it while its inputs are
+unchanged ([retained-render-list.md](retained-render-list.md)):
+
+- A group keeps its draws, and a structure keeps its program, while the group's commands,
+  aspects, transform, camera parts and pass are unchanged.
+- A text label keeps its glyph draws while its text revision, aspects revision, font and
+  resolution are unchanged.
+- A plain surface draw keeps its pipeline and its resident geometry, and binds again only
+  the bindings that follow the view.
+- Layers of 256 structures or more, and runs of 256 scene text labels or more, replay on
+  `rayon` worker threads. Any structure or label that must lower again lowers on the
+  calling thread, so lowering and user callbacks stay on the view's thread.
+- Culling borrows the layer's BVH tree and updates each structure under one lock.
+
+The `draw-record-verification` feature runs the lowering path beside each reuse and fails
+on any difference. All library tests and suites pass with and without it.
+
+`cargo xtask occt-parity --toolkit vulkan --cpus 8-15 --frames 10`, one round, against the
+same OCCT build. "Phase 3 start" is the base of this work on the same host:
+
+| Case | Phase 3 start | Vulkan | OCCT | Ratio |
+| --- | ---: | ---: | ---: | ---: |
+| `frame_structures_10k` | 1.674 ms | 1.811 ms | 1.911 ms | 0.95 |
+| `frame_text_1k` | 2.029 ms | 0.675 ms | 0.739 ms | 0.91 |
+| `frame_transparent_1k` | 3.02 ms | 0.654 ms | 0.329 ms | 1.99 |
+
+Against the phase 3 start, `select_10k` went from 49.179 to 14.349 ms and
+`highlight_ais_spheres_400` from 1.867 to 0.562 ms. The other cases kept their
+time within run-to-run noise. Peak memory grew by 6 to 7% in the text, transparent and
+selection cases, which are 69 to 78% faster, and fell by 6 to 14% in the large structure
+cases.
+
+`frame_transparent_1k` stays outside parity. Its frame costs about 40 ns per draw in each
+of culling, assembly, upload and settling, and no single step can close the gap. Reusing a
+whole unchanged frame would close it, but needs a change counter over every scene input.
+The maintainer chose on 2026-11-23 not to build it
+([global-change-tracking.md](global-change-tracking.md)).
+
 ## Harness
 
 `cargo xtask occt-parity --toolkit vulkan --occt <prefix> --cpus 8-15` compares the cases

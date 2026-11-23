@@ -76,6 +76,9 @@ Each step is a commit with its measurements:
 3. The shared camera block.
 4. Multi-draw indirect for the ordinary pipelines.
 
+Progress (2026-11-23): steps 1 and 2 are done. Parallel replay of large layers and of long
+text runs was added after them. Steps 3 and 4 are open (PLAN.md, phase 3).
+
 Acceptance is the phase 3 acceptance: `frame_transparent_1k` and
 `frame_text_1k` at parity, no other case slower, and peak memory within
 the rule (up to 10% more only with at least a 50% speedup).

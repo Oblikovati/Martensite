@@ -255,6 +255,18 @@ as before.
 
 ## Phase 3: draw submission at scale
 
+Done, with one exception. `frame_structures_10k` and `frame_text_1k` are faster than OCCT,
+and `close_10k` is linear: the driver keeps its structures in a map keyed by address.
+`frame_transparent_1k` takes about twice OCCT's time (README, "Phase 3 draw submission
+measurements").
+
+Transparent exception, decided by the maintainer on 2026-11-23: no whole-frame reuse. It
+would need one change counter over every input of a frame, and the simple design is a
+process-wide counter that the rule against global mutable state forbids
+([global-change-tracking.md](global-change-tracking.md)). Item 4 below (multi-draw
+indirect) and steps 3 and 4 of [retained-render-list.md](retained-render-list.md) remain
+open; phase 5 takes multi-draw again with instancing.
+
 Target: `frame_structures_10k`, `frame_transparent_1k` and `frame_text_1k` reach parity.
 `frame_structures_10k` then goes from 388 ms to below OCCT's 2.1 ms; the aim is 0.5 ms.
 
