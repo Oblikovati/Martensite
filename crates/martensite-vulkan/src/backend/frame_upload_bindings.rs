@@ -19,17 +19,9 @@ impl DrawUploadContext<'_> {
         let clipping = self.upload_clipping(pipeline, storage)?;
         let lighting = self.upload_lighting(pipeline, storage)?;
         let sphere_map = self.upload_sphere_map(pipeline, storage)?;
-        let pbr_environment = pipeline
-            .kind
-            .pbr
-            .then(|| self.pipelines.pbr_environment(self.runtime))
-            .transpose()?;
+        let pbr_environment = self.frame_pbr_environment(pipeline, storage)?;
         let material_maps = self.upload_material_maps(pipeline)?;
-        let shadow_maps = pipeline
-            .shadow_layout
-            .is_some()
-            .then(|| self.pipelines.shadow_maps(self.runtime))
-            .transpose()?;
+        let shadow_maps = self.frame_shadow_maps(pipeline, storage)?;
         Ok(PreparedBindings {
             shadow_maps,
             lighting,
@@ -40,6 +32,38 @@ impl DrawUploadContext<'_> {
             pbr_environment,
             material_maps,
         })
+    }
+    /// The frame's PBR environment when the pipeline binds one.
+    pub(super) fn frame_pbr_environment(
+        &self,
+        pipeline: &DrawPipeline,
+        storage: &mut FrameUploadPages<'_>,
+    ) -> Result<Option<Arc<crate::backend::pbr_environment::PbrEnvironment>>, RenderError> {
+        if !pipeline.kind.pbr {
+            return Ok(None);
+        }
+        if let Some(environment) = &storage.pbr_environment {
+            return Ok(Some(Arc::clone(environment)));
+        }
+        let environment = self.pipelines.pbr_environment(self.runtime)?;
+        storage.pbr_environment = Some(Arc::clone(&environment));
+        Ok(Some(environment))
+    }
+    /// The frame's shadow maps when the pipeline binds them.
+    pub(super) fn frame_shadow_maps(
+        &self,
+        pipeline: &DrawPipeline,
+        storage: &mut FrameUploadPages<'_>,
+    ) -> Result<Option<Arc<crate::backend::shadow_maps::ShadowMapSet>>, RenderError> {
+        if pipeline.shadow_layout.is_none() {
+            return Ok(None);
+        }
+        if let Some(maps) = &storage.shadow_maps {
+            return Ok(Some(Arc::clone(maps)));
+        }
+        let maps = self.pipelines.shadow_maps(self.runtime)?;
+        storage.shadow_maps = Some(Arc::clone(&maps));
+        Ok(Some(maps))
     }
     fn upload_sprite(
         &self,

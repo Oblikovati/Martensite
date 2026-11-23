@@ -73,6 +73,10 @@ pub(super) struct FrameUploadPages<'a> {
     pub(super) lighting: FrameLightingBindings,
     /// The last glyph atlas this frame bound, with its pixels and image layout.
     pub(super) glyph_atlas: Option<FrameGlyphAtlas>,
+    /// The frame's PBR environment and shadow maps, read for the first draw that binds them:
+    /// each draw read them through two locks, 5% of a 1,000-draw frame (#594).
+    pub(super) pbr_environment: Option<Arc<super::pbr_environment::PbrEnvironment>>,
+    pub(super) shadow_maps: Option<Arc<super::shadow_maps::ShadowMapSet>>,
 }
 
 /// A glyph atlas binding that the following text draws of a frame reuse without the cache
@@ -123,6 +127,8 @@ impl<'a> FrameUploadPages<'a> {
             dynamic_sets: FrameStorageSets::new(&pool.dynamic_sets),
             lighting: FrameLightingBindings::default(),
             glyph_atlas: None,
+            pbr_environment: None,
+            shadow_maps: None,
         }
     }
 

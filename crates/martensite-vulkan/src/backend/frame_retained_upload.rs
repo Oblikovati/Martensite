@@ -143,16 +143,8 @@ impl DrawUploadContext<'_> {
         storage: &mut crate::backend::host_upload_pages::FrameUploadPages<'_>,
     ) -> Result<DrawBindings, RenderError> {
         let lighting = self.upload_lighting(pipeline, storage)?;
-        let pbr_environment = pipeline
-            .kind
-            .pbr
-            .then(|| self.pipelines.pbr_environment(self.runtime))
-            .transpose()?;
-        let shadow_maps = pipeline
-            .shadow_layout
-            .is_some()
-            .then(|| self.pipelines.shadow_maps(self.runtime))
-            .transpose()?;
+        let pbr_environment = self.frame_pbr_environment(pipeline, storage)?;
+        let shadow_maps = self.frame_shadow_maps(pipeline, storage)?;
         Ok(DrawBindings {
             clipping: None,
             lighting,
