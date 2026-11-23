@@ -394,16 +394,37 @@ impl FrameGeometryResidency {
 
     /// How many live entries the store has evicted: a kept upload's geometry is still the
     /// store's while this and the store are unchanged; `residency.evictions()`.
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
     pub(super) fn evictions(&self) -> u64 {
         self.store.evictions.load(Ordering::Acquire)
     }
 
     /// Whether `store` is this frame's store; a weak reference pins the address it compares.
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
     pub(super) fn is_store(&self, store: &std::sync::Weak<GeometryStore>) -> bool {
         std::sync::Weak::as_ptr(store) == Arc::as_ptr(&self.store)
     }
 
     /// A weak reference to the store, for a kept upload to compare later.
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
     pub(super) fn store(&self) -> std::sync::Weak<GeometryStore> {
         Arc::downgrade(&self.store)
     }

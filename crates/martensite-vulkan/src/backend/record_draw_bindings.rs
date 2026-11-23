@@ -42,12 +42,35 @@ pub(super) struct BindingSlots {
     pub(super) lighting: LightingSlot,
     vertex: Option<(vk::Buffer, u64)>,
     index: Option<(vk::Buffer, u64)>,
+    /// The set bound at each index with the layout it was bound for: glyph runs that share
+    /// one atlas bound its set again for every label (#594).
+    sets: [Option<(vk::PipelineLayout, vk::DescriptorSet)>; 8],
 }
 
 impl BindingSlots {
     pub(super) fn invalidate_geometry(&mut self) {
         self.vertex = None;
         self.index = None;
+    }
+    /// Forget the bound sets: a pipeline bind may disturb them.
+    pub(super) fn invalidate_sets(&mut self) {
+        self.sets = [None; 8];
+    }
+    /// Whether `set` must be bound at `index`, and remember it as bound.
+    fn needs_set(
+        &mut self,
+        layout: vk::PipelineLayout,
+        index: u32,
+        set: vk::DescriptorSet,
+    ) -> bool {
+        let Some(slot) = self.sets.get_mut(index as usize) else {
+            return true;
+        };
+        if cfg!(feature = "command-state-diagnostics") || *slot != Some((layout, set)) {
+            *slot = Some((layout, set));
+            return true;
+        }
+        false
     }
 }
 
@@ -64,7 +87,9 @@ pub(super) fn record_draw(
     line_state(runtime, command, draw);
     bind_lighting(runtime, command, draw, pipeline, &mut slots.lighting);
     for (index, set) in remaining_descriptors(draw, pipeline, oit_set) {
-        if let Some(set) = set {
+        if let Some(set) = set
+            && slots.needs_set(pipeline.layout, index, set)
+        {
             bind_descriptor(runtime, command, pipeline.layout, index, set);
         }
     }
@@ -276,4 +301,42 @@ fn push_draw_transform(
         0,
         &draw.transform,
     );
+}
+
+#[cfg(all(test, not(feature = "command-state-diagnostics")))]
+mod set_tracking_tests {
+    use super::BindingSlots;
+    use ash::vk::{self, Handle};
+
+    #[test]
+    fn a_set_is_bound_again_only_after_a_change_or_a_pipeline_bind() {
+        let mut slots = BindingSlots::default();
+        let (layout, other_layout) = (
+            vk::PipelineLayout::from_raw(1),
+            vk::PipelineLayout::from_raw(2),
+        );
+        let (atlas, other_atlas) = (
+            vk::DescriptorSet::from_raw(10),
+            vk::DescriptorSet::from_raw(11),
+        );
+        assert!(slots.needs_set(layout, 3, atlas));
+        assert!(
+            !slots.needs_set(layout, 3, atlas),
+            "the same set stays bound"
+        );
+        assert!(slots.needs_set(layout, 3, other_atlas));
+        assert!(
+            slots.needs_set(other_layout, 3, other_atlas),
+            "another layout binds again"
+        );
+        slots.invalidate_sets();
+        assert!(
+            slots.needs_set(other_layout, 3, other_atlas),
+            "a pipeline bind forgets sets"
+        );
+        assert!(
+            slots.needs_set(layout, 99, atlas),
+            "an index past the slots always binds"
+        );
+    }
 }

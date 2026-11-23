@@ -171,16 +171,19 @@ pub(super) fn record_draws_selected(
     super::capping_record::set_culling(runtime, command, culling);
     let start = layer.draw_range.start - resources.first_draw;
     let end = layer.draw_range.end - resources.first_draw;
+    // Every built-in pipeline takes stencil as dynamic state, so a state recorded once holds
+    // until it changes; each draw recorded five stencil commands before (#594).
+    let mut stencil = None;
     for (index, draw) in resources.draws[start..end].iter().enumerate() {
         let draw_index = layer.draw_range.start + index;
         if resources.stencil.clear_before[draw_index] {
             super::capping_record::clear_stencil(runtime, command, resources.attachment_extent);
         }
-        super::ordered_stencil_record::apply(
-            runtime,
-            command,
-            resources.stencil.during[draw_index],
-        );
+        let next_stencil = resources.stencil.during[draw_index];
+        if cfg!(feature = "command-state-diagnostics") || stencil != Some(next_stencil) {
+            super::ordered_stencil_record::apply(runtime, command, next_stencil);
+            stencil = Some(next_stencil);
+        }
         let pipeline = selection
             .map(|(phase, _)| {
                 draw.oit
@@ -208,6 +211,7 @@ pub(super) fn record_draws_selected(
         let (bind, push) = state.advance(handle, &draw.transform);
         if bind {
             bindings.lighting.invalidate();
+            bindings.invalidate_sets();
             bias_commands.invalidate();
             // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
             unsafe {
@@ -291,6 +295,10 @@ pub(super) fn record_draws_selected(
             bindings.lighting.invalidate();
             bias_commands.invalidate();
             bindings.invalidate_geometry();
+            bindings.invalidate_sets();
+            // A user pipeline may hold static stencil state, which leaves the dynamic state
+            // undefined for the next draw.
+            stencil = None;
             user.record(command, linked);
             continue;
         }
@@ -327,6 +335,8 @@ pub(super) fn record_draws_selected(
                 wide,
                 resources.extent,
             );
+            stencil = None;
+            bindings.invalidate_sets();
         } else {
             #[cfg(feature = "lit-only-command-diagnostics")]
             indexed::controlled(runtime, command, draw, draw_index, indices);
