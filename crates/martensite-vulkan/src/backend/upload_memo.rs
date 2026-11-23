@@ -41,6 +41,22 @@ pub(super) struct KeptUpload {
     pub evictions: u64,
 }
 
+/// A kept upload whose geometry is still alive, ready for this frame.
+#[cfg_attr(
+    any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    ),
+    allow(dead_code)
+)]
+pub(super) struct LiveUpload {
+    pub pipeline: Arc<DrawPipeline>,
+    pub vertices: Arc<GeometryBuffer>,
+    pub indices: Arc<GeometryBuffer>,
+    pub count: u32,
+    pub sample_alpha_cutoff: bool,
+}
+
 /// A body's last kept upload. A copied body starts empty, and two memos always compare
 /// equal, so the memo never changes what a draw is.
 #[derive(Default)]
@@ -55,12 +71,26 @@ pub(crate) struct UploadMemo(Mutex<Option<Box<(UploadInputs, KeptUpload)>>>);
     allow(dead_code)
 )]
 impl UploadMemo {
-    /// The upload kept with `inputs`; `memo.get(&inputs)`.
-    pub(super) fn get(&self, inputs: &UploadInputs) -> Option<KeptUpload> {
+    /// The upload kept with `inputs` while `current` accepts it, with its geometry upgraded
+    /// under the lock: cloning the weak references first cost three more atomic pairs per
+    /// draw (#594); `memo.live(&inputs, |kept| store_unchanged(kept))`.
+    pub(super) fn live(
+        &self,
+        inputs: &UploadInputs,
+        current: impl FnOnce(&KeptUpload) -> bool,
+    ) -> Option<LiveUpload> {
         let slot = self.0.lock().ok()?;
-        slot.as_deref()
-            .filter(|(kept, _)| kept == inputs)
-            .map(|(_, upload)| upload.clone())
+        let (kept_inputs, upload) = slot.as_deref()?;
+        if kept_inputs != inputs || !current(upload) {
+            return None;
+        }
+        Some(LiveUpload {
+            pipeline: Arc::clone(&upload.pipeline),
+            vertices: upload.vertices.upgrade()?,
+            indices: upload.indices.upgrade()?,
+            count: upload.count,
+            sample_alpha_cutoff: upload.sample_alpha_cutoff,
+        })
     }
     /// Keep an upload made with `inputs`; `memo.keep(inputs, upload)`.
     pub(super) fn keep(&self, inputs: UploadInputs, upload: KeptUpload) {

@@ -7,7 +7,7 @@ use crate::backend::pipeline_memo::SelectionInputs;
 use crate::backend::pipeline_variants::RasterPipelines;
 use crate::backend::retained_submission::RetirementStore;
 use crate::backend::runtime::VulkanRuntime;
-use crate::backend::upload_memo::{KeptUpload, UploadInputs};
+use crate::backend::upload_memo::{KeptUpload, LiveUpload, UploadInputs};
 use crate::{PrimitiveDraw, RenderError};
 use ash::vk;
 use std::sync::Arc;
@@ -39,17 +39,14 @@ pub(super) fn replayed(
         retirements,
     };
     let inputs = upload_inputs(&context, samples, uploads.dynamic_lighting);
-    let Some(kept) = draw.upload_memo.get(&inputs).filter(|kept| {
-        let residency = &uploads.geometry.residency;
+    let residency = &uploads.geometry.residency;
+    let Some(kept) = draw.upload_memo.live(&inputs, |kept| {
         residency.is_store(&kept.store) && residency.evictions() == kept.evictions
     }) else {
         return Ok(None);
     };
-    let (Some(vertices), Some(indices)) = (kept.vertices.upgrade(), kept.indices.upgrade()) else {
-        return Ok(None);
-    };
     let bindings = context.view_bindings(&kept.pipeline, &mut uploads.storage)?;
-    Ok(Some(context.kept_draw(kept, (vertices, indices), bindings)))
+    Ok(Some(context.kept_draw(kept, bindings)))
 }
 
 /// Keep a fresh upload when it is a plain surface's; `retained::keep(&context, samples, uploads, &uploaded)`.
@@ -177,15 +174,7 @@ impl DrawUploadContext<'_> {
     }
 
     /// The kept upload with this frame's push constants and view bindings.
-    fn kept_draw(
-        &self,
-        kept: KeptUpload,
-        (vertices, indices): (
-            Arc<crate::backend::geometry_buffer::GeometryBuffer>,
-            Arc<crate::backend::geometry_buffer::GeometryBuffer>,
-        ),
-        bindings: DrawBindings,
-    ) -> UploadedDraw {
+    fn kept_draw(&self, kept: LiveUpload, bindings: DrawBindings) -> UploadedDraw {
         UploadedDraw {
             window_depth_expected: false,
             window_depth_status: None,
@@ -197,8 +186,8 @@ impl DrawUploadContext<'_> {
             presentation: self.presentation(),
             transform: self.push_constants(&kept.pipeline),
             pipeline: kept.pipeline,
-            vertices,
-            indices,
+            vertices: kept.vertices,
+            indices: kept.indices,
             count: kept.count,
             instances: 1,
             line: self.line_state(),
