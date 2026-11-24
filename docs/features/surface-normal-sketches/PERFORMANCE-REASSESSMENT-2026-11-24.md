@@ -325,6 +325,27 @@ pocket from 23.501 to 20.878 s, with effectively flat peak RSS. The
 proof receipt records the reduction in authored pair work. The decoded
 solid, tool, footprint and histories matched the legacy output.
 
+Twenty fresh processes per V8 text case measured absolute API latency on
+separate pinned physical cores. The warm fixture retains the first result and
+changes only its depth. It times the edited call.
+
+| 239-curve text fixture | Median | p95 |
+| --- | ---: | ---: |
+| Cold boss | 18.410 s | 19.782 s |
+| Cold pocket | 18.509 s | 19.791 s |
+| Warm 2% depth edit | 18.575 s | 21.520 s |
+
+Run the three public-operation fixtures with the release profile. For a
+fresh-process p95 sample, select one test by its full function name per run
+and keep CPU affinity fixed. `conical_text_attached_api` records the cold
+call. `conical_text_depth_edit_api` records the second call of the warm test.
+Each process runs material, history and archive assertions.
+
+```sh
+cargo test --release --locked -p martensite-tkv3d --test toolkit \
+  authored_planar_latency -- --ignored --nocapture --test-threads=1
+```
+
 ### Projection workspace reuse
 
 The scratch checker shares a bounded number of operation-owned buffers

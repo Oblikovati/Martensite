@@ -21,24 +21,54 @@ const SEAM: f64 = 2.5;
 
 #[test]
 fn multiline_cone_boss_retains_all_selected_caps() {
-    attached_text(WrappedFeatureKind::Boss, NormalSense::Outward);
+    attached_text(WrappedFeatureKind::Boss, NormalSense::Outward, selection());
 }
 
 #[test]
 fn multiline_cone_pocket_retains_all_selected_caps() {
-    attached_text(WrappedFeatureKind::Pocket, NormalSense::Inward);
+    attached_text(WrappedFeatureKind::Pocket, NormalSense::Inward, selection());
 }
 
 #[test]
 #[ignore = "latency fixture for exact recomputation after an edit"]
 fn multiline_cone_boss_depth_edit_retains_all_selected_caps() {
+    boss_depth_edit(selection());
+}
+
+#[test]
+#[ignore = "latency fixture for the complete authored planar boss"]
+fn multiline_cone_boss_authored_planar_latency() {
+    attached_text(
+        WrappedFeatureKind::Boss,
+        NormalSense::Outward,
+        authored_planar_selection(),
+    );
+}
+
+#[test]
+#[ignore = "latency fixture for the complete authored planar pocket"]
+fn multiline_cone_pocket_authored_planar_latency() {
+    attached_text(
+        WrappedFeatureKind::Pocket,
+        NormalSense::Inward,
+        authored_planar_selection(),
+    );
+}
+
+#[test]
+#[ignore = "latency fixture for an authored planar boss depth edit"]
+fn multiline_cone_depth_edit_authored_planar_latency() {
+    boss_depth_edit(authored_planar_selection());
+}
+
+fn boss_depth_edit(execution: WrappedConeExecutionSelection) {
     let attachment = text_attachment();
     let mut request = attached_request(&attachment, NormalSense::Outward);
-    let previous = apply_boss(&attachment, &request);
+    let previous = apply_boss(&attachment, &request, execution);
     let previous_bytes = previous.encoded_brep().to_vec();
     request.depths[1] *= 0.98;
     let started = std::time::Instant::now();
-    let edited = apply_boss(&attachment, &request);
+    let edited = apply_boss(&attachment, &request, execution);
     eprintln!(
         r#"{{"event":"conical_text_depth_edit_api","seconds":{}}}"#,
         started.elapsed().as_secs_f64()
@@ -49,15 +79,10 @@ fn multiline_cone_boss_depth_edit_retains_all_selected_caps() {
 fn apply_boss(
     attachment: &ConeFaceAttachment,
     request: &WrappedConeNormalRequest,
+    execution: WrappedConeExecutionSelection,
 ) -> ConeFeatureResult {
     attachment
-        .apply_wrapped_profile(
-            REVISION,
-            SEAM,
-            WrappedFeatureKind::Boss,
-            request,
-            selection(),
-        )
+        .apply_wrapped_profile(REVISION, SEAM, WrappedFeatureKind::Boss, request, execution)
         .unwrap_or_else(|cause| panic!("attached cone text refused: {cause:?}"))
 }
 
@@ -88,13 +113,26 @@ fn selection() -> WrappedConeExecutionSelection {
     }
 }
 
-fn attached_text(kind: WrappedFeatureKind, normal: NormalSense) {
+fn authored_planar_selection() -> WrappedConeExecutionSelection {
+    WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarV8 {
+        domain: WrappedConeDomainPolicy::PositiveXFamilyChartV3,
+        arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
+        authored_max_components: 64,
+        authored_max_subintervals: 1024,
+    }
+}
+
+fn attached_text(
+    kind: WrappedFeatureKind,
+    normal: NormalSense,
+    execution: WrappedConeExecutionSelection,
+) {
     let attachment = text_attachment();
     let before = attachment.record().clone();
     let request = attached_request(&attachment, normal);
     let original = request.clone();
     let started = std::time::Instant::now();
-    let outcome = attachment.apply_wrapped_profile(REVISION, SEAM, kind, &request, selection());
+    let outcome = attachment.apply_wrapped_profile(REVISION, SEAM, kind, &request, execution);
     eprintln!(
         r#"{{"event":"conical_text_attached_api","normal":"{normal:?}","seconds":{}}}"#,
         started.elapsed().as_secs_f64()
