@@ -31,7 +31,12 @@ impl ExactRatio {
     }
     pub(in crate::predicates::roots) fn from_dyadic(bound: &DyadicBound) -> Self {
         let (numerator, denominator) = bound.ratio();
-        Self::new(numerator, denominator)
+        // Canonical dyadics give either a unit denominator or an odd numerator
+        // over a positive power of two. Both forms are already reduced.
+        Self {
+            numerator,
+            denominator,
+        }
     }
     pub(in crate::predicates::roots) fn from_finite(value: f64) -> Self {
         let bound = DyadicBound::from_f64(value).expect("finite input already validated");
@@ -104,6 +109,24 @@ mod tests {
         assert_eq!(half.multiply(&third), ExactRatio::new(1.into(), 6.into()));
         assert_eq!(half.divide(&third), ExactRatio::new(3.into(), 2.into()));
         assert_eq!(third.negated().sign(), Ordering::Less);
+    }
+    #[test]
+    fn canonical_dyadics_match_general_ratio_reduction() {
+        let low = DyadicBound::new((-8).into(), -66609);
+        let high = DyadicBound::new(12.into(), 1022);
+        let middle = low.midpoint(&high);
+        for bound in [
+            DyadicBound::from_f64(-0.).unwrap(),
+            low.scale_pow2(32),
+            high.difference(&middle),
+            middle.difference(&high),
+        ] {
+            let (numerator, denominator) = bound.ratio();
+            assert_eq!(
+                ExactRatio::from_dyadic(&bound),
+                ExactRatio::new(numerator, denominator)
+            );
+        }
     }
     #[test]
     fn exact_binary64_conversion_preserves_subnormal_and_extreme_values() {

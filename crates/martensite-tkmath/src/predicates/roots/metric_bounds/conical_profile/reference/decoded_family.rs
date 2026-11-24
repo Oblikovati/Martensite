@@ -333,8 +333,9 @@ fn strict_gap(
     lower: num_bigint::BigInt,
     arithmetic: &Arithmetic<'_>,
 ) -> Result<DyadicBound, ConicalReferenceFailure> {
+    let positive = lower.sign() == num_bigint::Sign::Plus;
     let gap = DyadicBound::new(lower, -i32::from(arithmetic.fractional_bits()));
-    if gap.significand <= 0.into() {
+    if !positive {
         return Err(ConicalReferenceFailure::Bound {
             field: "positive decoded cone solid separation",
             actual: upper(&gap)?,

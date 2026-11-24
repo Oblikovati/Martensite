@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::super::{NonFiniteCoordinate, exact_coordinate};
+use super::super::{NonFiniteCoordinate, binary64_parts};
 use super::certificate_arithmetic::{ExactRatio, rounding::outward_binary64};
 use num_bigint::BigInt;
 use std::{cmp::Ordering, fmt};
@@ -7,13 +7,32 @@ use std::{cmp::Ordering, fmt};
 /// An exact number `significand * 2^exponent`; integer storage stays private.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DyadicBound {
-    pub(super) significand: BigInt,
+    significand: BigInt,
     exponent: i32,
 }
 impl DyadicBound {
-    /// Preserve every finite binary64 bit, including subnormals. Example: `DyadicBound::from_f64(0.5)?`.
+    /// Convert a finite binary64 exactly, with either signed zero represented by zero.
+    /// Example: `DyadicBound::from_f64(0.5)?`.
     pub fn from_f64(value: f64) -> Result<Self, NonFiniteCoordinate> {
-        Ok(Self::new(exact_coordinate(value, 0, 0)?, -1074))
+        let parts = binary64_parts(value, 0, 0)?;
+        if parts.significand == 0 {
+            return Ok(Self {
+                significand: 0.into(),
+                exponent: 0,
+            });
+        }
+        let zeros = parts.significand.trailing_zeros();
+        let magnitude = (parts.significand >> zeros) as i64;
+        let signed = if parts.negative {
+            -magnitude
+        } else {
+            magnitude
+        };
+        // Strip powers of two in the machine word before constructing the BigInt.
+        Ok(Self {
+            significand: signed.into(),
+            exponent: parts.shift as i32 + zeros as i32 - 1074,
+        })
     }
     /// Compare a root bound to an exact binary64 value. Example: `bound.compare_f64(0.)?`.
     pub fn compare_f64(&self, value: f64) -> Result<Ordering, NonFiniteCoordinate> {
