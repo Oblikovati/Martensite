@@ -36,6 +36,10 @@ pub(in crate::surface_sketch::wrapped_profile) fn capture_with_selection(
             domain: WrappedConeDomainPolicy::LegacySectorV1
                 | WrappedConeDomainPolicy::PositiveXConnectedAtlasV6,
             ..
+        } | WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarV8 {
+            domain: WrappedConeDomainPolicy::LegacySectorV1
+                | WrappedConeDomainPolicy::PositiveXConnectedAtlasV6,
+            ..
         }
     ) {
         return Err(transport_domain().public());

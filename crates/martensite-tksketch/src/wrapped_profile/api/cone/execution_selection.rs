@@ -49,6 +49,18 @@ pub enum WrappedConeExecutionSelection {
         /// Finite aggregate arithmetic admission.
         arithmetic: WrappedConeArithmeticGrantPolicy,
     },
+    /// Transported placement with GeometricCompositeV6 for the authored planar selection.
+    /// The authored program shares the operation integration allowance with the decoded UV proof.
+    DirectedTransportedAuthoredPlanarV8 {
+        /// Any of the directed chart domains, V2 through V5.
+        domain: WrappedConeDomainPolicy,
+        /// Finite aggregate arithmetic admission.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+        /// Maximum components in each complete authored integral program.
+        authored_max_components: u16,
+        /// Maximum authored integration cells, subject to the original operation allowance.
+        authored_max_subintervals: u64,
+    },
 }
 impl WrappedConeExecutionSelection {
     pub(in crate::surface_sketch::wrapped_profile) fn is_connected_atlas(self) -> bool {
@@ -62,6 +74,7 @@ impl WrappedConeExecutionSelection {
             self,
             Self::DirectedTransportedPlacementV5 { .. }
                 | Self::DirectedConnectedChartAtlasV7 { .. }
+                | Self::DirectedTransportedAuthoredPlanarV8 { .. }
         )
     }
 
@@ -74,6 +87,25 @@ impl WrappedConeExecutionSelection {
                 | Self::DirectedRegionAtlasRequireCertifiedV4 { .. }
                 | Self::DirectedTransportedPlacementV5 { .. }
                 | Self::DirectedConnectedChartAtlasV7 { .. }
+                | Self::DirectedTransportedAuthoredPlanarV8 { .. }
+        )
+    }
+    pub(in crate::surface_sketch::wrapped_profile) fn authored_planar_program(
+        self,
+    ) -> Option<martensite_tkbo::profile_extrusion::PlanarProofVersion> {
+        let Self::DirectedTransportedAuthoredPlanarV8 {
+            authored_max_components,
+            authored_max_subintervals,
+            ..
+        } = self
+        else {
+            return None;
+        };
+        Some(
+            martensite_tkbo::profile_extrusion::PlanarProofVersion::GeometricCompositeV6 {
+                max_components: authored_max_components,
+                max_total_subintervals: authored_max_subintervals,
+            },
         )
     }
 }

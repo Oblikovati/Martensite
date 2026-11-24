@@ -241,7 +241,7 @@ fn validate_member(
         .planar
         .get(&region)
         .ok_or_else(|| storage::failure(region, None, ConeCause::Missing(region)))?;
-    if !original.matches_request(&material.original) {
+    if !selection.authored_member_matches(original, &material.original) {
         return Err(mismatch(region, None, "filled-material original binding"));
     }
     binding::validate(prepared, &geometry.spans, material)
@@ -271,6 +271,7 @@ pub(super) fn mismatch(
 
 mod developed;
 mod program;
+pub(super) use program::capture_planar_program;
 #[cfg(test)]
 pub(super) use program::capture_program_uv as capture_periodic_program;
 use program::capture_program_uv;

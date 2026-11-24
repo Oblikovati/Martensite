@@ -46,7 +46,7 @@ pub(super) fn select_with_execution(
     directed::admit(request, execution)?;
     let policy = execution_domain(execution);
     let started = work.consumed;
-    let planar = selection::planar(request, originals, work, cancelled)?;
+    let planar = selection::planar(request, originals, execution, work, cancelled)?;
     let domain = domain::certify(request, originals, policy, work, cancelled)?;
     let mut prepared = prepare_regions(request, originals, &domain, execution, work, cancelled)?;
     let clearance = clearance::certify(originals, &prepared, work, cancelled)?;
@@ -271,7 +271,10 @@ fn common_center(request: &ConeRun<'_>, wedge: ConicalSectorWedge) -> ConeChecke
 fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDomainPolicy {
     match execution {
         WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain }
-        | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { domain, .. } => domain,
+        | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { domain, .. }
+        | WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarV8 { domain, .. } => {
+            domain
+        }
         WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1 => {
             WrappedConeDomainPolicy::PositiveXCommonChartV2
         }

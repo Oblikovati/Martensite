@@ -46,7 +46,7 @@ fn validate_original(
         .planar
         .get(&region)
         .ok_or_else(|| mismatch(region, None, "reference original planar owner"))?;
-    if !planar.matches_request(original) {
+    if !family.selection.authored_member_matches(planar, original) {
         return Err(mismatch(
             region,
             None,

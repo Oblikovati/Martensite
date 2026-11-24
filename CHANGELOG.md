@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added an opt-in transported cone extrusion selector that certifies authored planar material with GeometricCompositeV6 and reports its share of the integration allowance (#425).
+
 - Added borrowed comparison methods for captured Bézier pair and self-query sources, so planar certificate rebinding can compare the operands without recopying their control points or weights (#419).
 
 - Added a caller-owned `CylinderAuthoringChart` that opens the selected support once and reuses its face and radius for repeated hit development during sketch editing (#420).

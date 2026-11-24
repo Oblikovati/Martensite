@@ -176,6 +176,15 @@ effective leaf policies and actual work/error receipts are retained separately.
 
 ### Candidate evidence and performance
 
+`DirectedTransportedAuthoredPlanarV8` uses GeometricCompositeV6 to certify the
+authored planar material before fitting. Set its authored component and cell
+caps explicitly. The authored program draws cells from the operation-wide
+integration allowance before the decoded UV, reference volume and proxy flux
+checks. `WrappedConeNormalResult::authored_planar_receipt` reports the request,
+effective loan and consumed cells. `DirectedTransportedPlacementV5` retains
+CarrierV2 for authored material. Both selectors read the decoded UV proof
+policy from `WrappedConeProofOptions::planar_proof`.
+
 The v0.14.0 rebase has a new local performance baseline for the 239-curve
 tool and attached boss, and the connected `O.` fixture. The stage profiles
 include a matched Linux/glibc comparison of serial and four-worker

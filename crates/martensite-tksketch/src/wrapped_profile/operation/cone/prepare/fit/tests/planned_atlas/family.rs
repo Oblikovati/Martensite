@@ -206,8 +206,14 @@ fn freeze_family(
 ) -> (Vec<Prepared>, Vec<storage::Stored>) {
     let run = ConeRun::from(request);
     let inputs = input::capture(request, &mut || false).unwrap();
-    super::super::super::super::selection::planar(&run, &inputs.originals, work, &mut || false)
-        .unwrap();
+    super::super::super::super::selection::planar(
+        &run,
+        &inputs.originals,
+        atlas_selection(),
+        work,
+        &mut || false,
+    )
+    .unwrap();
     let owner = inputs
         .originals
         .iter()

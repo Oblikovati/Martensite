@@ -8,6 +8,26 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn capture_progr
     integration: CylindricalFluxOptions,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<martensite_tkbo::profile_extrusion::PlanarRegionSet> {
+    capture_planar_program(
+        sources,
+        requested,
+        version,
+        work,
+        integration,
+        cancelled,
+        planar_failure,
+    )
+}
+
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn capture_planar_program(
+    sources: &[impl AsRef<DevelopedRegionRequest>],
+    requested: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
+    version: PlanarProofVersion,
+    work: &mut storage::Work,
+    integration: CylindricalFluxOptions,
+    cancelled: &mut CancelPoll<'_>,
+    capture_failure: impl FnOnce(SurfaceRegionId, planar::PlanarFailure) -> ConeFailure,
+) -> ConeChecked<martensite_tkbo::profile_extrusion::PlanarRegionSet> {
     let source = sources.first().map(AsRef::as_ref).ok_or_else(|| {
         ConeFailure::new(
             None,
@@ -31,7 +51,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn capture_progr
     );
     let (planar, cells) = observed(&result);
     let charged = charge(work, source.region, planar, cells, integration);
-    let captured = result.map_err(|cause| planar_failure(source.region, cause))?;
+    let captured = result.map_err(|cause| capture_failure(source.region, cause))?;
     charged?;
     validate_requested_program(source.region, &captured, version)?;
     Ok(captured)
@@ -78,7 +98,9 @@ pub(super) fn validate_family(family: &ConeBudgeted, limit: u64) -> ConeChecked<
     if !has_program_members(family) {
         return Ok(());
     }
-    let mut consumed = 0u64;
+    let region = family.family.selection.prepared[0].source.region;
+    let authored = family.family.selection.authored_program.as_ref();
+    let mut consumed = authored_cells(authored, region, limit)?;
     for prepared in &family.family.selection.prepared {
         let region = prepared.source.region;
         consumed = validate_member_loan(family, region, limit, consumed)?;
@@ -92,6 +114,21 @@ pub(super) fn validate_family(family: &ConeBudgeted, limit: u64) -> ConeChecked<
     }
     Ok(())
 }
+
+fn authored_cells(
+    program: Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence>,
+    first: SurfaceRegionId,
+    limit: u64,
+) -> ConeChecked<u64> {
+    let Some(program) = program else {
+        return Ok(0);
+    };
+    validate_entry(first, program, limit, 0)?;
+    Ok(program.integration_subintervals())
+}
+
+#[cfg(test)]
+mod tests;
 pub(super) fn validate_entry(
     region: SurfaceRegionId,
     proof: &martensite_tkbo::profile_extrusion::PlanarIntegralEvidence,

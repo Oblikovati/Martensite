@@ -40,6 +40,7 @@ impl SupportStages for ConeStages<'_> {
             | WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. }
             | WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. }
             | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { .. }
+            | WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarV8 { .. }
             | WrappedConeExecutionSelection::ConnectedChartAtlasV6 { .. }
             | WrappedConeExecutionSelection::DirectedConnectedChartAtlasV7 { .. } => {
                 prepare::select_with_execution(

@@ -1,5 +1,6 @@
 //! Owned curved outer material and a clockwise hole exercise the actual public input path.
 use super::*;
+mod authored_planar;
 mod completed;
 pub(in crate::surface_sketch::wrapped_profile) use completed::atlas::separated_request as atlas_request;
 mod frozen;

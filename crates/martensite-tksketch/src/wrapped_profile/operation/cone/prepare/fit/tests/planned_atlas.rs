@@ -116,10 +116,19 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     let inputs = input::capture(&request, &mut || false).unwrap();
     let original = &inputs.originals[0];
     let mut work = Work::new(request.proof.arithmetic);
-    let planar =
-        super::super::super::selection::planar(&run, &inputs.originals, &mut work, &mut || false)
-            .unwrap();
-    assert!(planar.members[&original.region].area.encloses(5445. / 256.));
+    let planar = super::super::super::selection::planar(
+        &run,
+        &inputs.originals,
+        atlas_selection(),
+        &mut work,
+        &mut || false,
+    )
+    .unwrap();
+    assert!(
+        planar.evidence.members[&original.region]
+            .area
+            .encloses(5445. / 256.)
+    );
     let prepared = prepare_local(&run, original, None, &mut work);
     assert_closed_wide_uv(&prepared);
     let clearance = super::super::super::clearance::certify(

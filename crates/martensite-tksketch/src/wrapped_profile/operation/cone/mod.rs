@@ -65,9 +65,25 @@ pub(in crate::surface_sketch::wrapped_profile) struct Selection {
     pub planar: BTreeMap<SurfaceRegionId, planar::PlanarEvidence>,
     pub census: martensite_tkbo::profile_extrusion::RegionCertificate,
     pub work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
+    pub authored_program: Option<martensite_tkbo::profile_extrusion::PlanarIntegralEvidence>,
     pub domain: domain::DomainEvidence,
     pub clearance: CertifiedCylindricalClearance,
     pub arithmetic_operations: u32,
+}
+impl Selection {
+    fn authored_member_matches(
+        &self,
+        member: &planar::PlanarEvidence,
+        source: &DevelopedRegionRequest,
+    ) -> bool {
+        let Some(program) = &self.authored_program else {
+            return member.matches_request(source);
+        };
+        member.matches_member(source)
+            && member
+                .integral_program_evidence()
+                .is_some_and(|proof| program.shares_issuance(proof))
+    }
 }
 pub(in crate::surface_sketch::wrapped_profile) struct Geometry {
     pub coverage: coverage::CoverageEvidence,

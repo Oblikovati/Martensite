@@ -63,6 +63,13 @@ impl WrappedConeNormalResult {
     pub fn depths(&self) -> [f64; 2] {
         self.depths
     }
+    /// Full-family authored planar program, with requested caps, its loan and actual cell count.
+    /// Example: `result.authored_planar_receipt().map(|proof| proof.integration_subintervals())`.
+    pub fn authored_planar_receipt(
+        &self,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {
+        self.family.family.selection.authored_program.as_ref()
+    }
     /// Requested limits, without replacement by achieved bounds; `result.options().spatial_error`.
     pub fn options(&self) -> WrappedNormalOptions {
         self.options
@@ -81,7 +88,7 @@ impl WrappedConeNormalResult {
     pub fn boundary_flux_origin(&self) -> [f64; 3] {
         self.support.apex
     }
-    /// Executed whole-orbit and face integral programs, present only for explicit V5.
+    /// Decoded UV whole-orbit and face integral receipt for planar proof versions V5 and V6.
     /// Example: `result.planar_integral_receipt(region).map(|proof| proof.entry_allowance())`.
     pub fn planar_integral_receipt(
         &self,
