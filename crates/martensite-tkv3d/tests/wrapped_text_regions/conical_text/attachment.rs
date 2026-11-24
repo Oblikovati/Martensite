@@ -29,17 +29,72 @@ fn multiline_cone_pocket_retains_all_selected_caps() {
     attached_text(WrappedFeatureKind::Pocket, NormalSense::Inward);
 }
 
+#[test]
+#[ignore = "latency fixture for exact recomputation after an edit"]
+fn multiline_cone_boss_depth_edit_retains_all_selected_caps() {
+    let attachment = text_attachment();
+    let mut request = attached_request(&attachment, NormalSense::Outward);
+    let previous = apply_boss(&attachment, &request);
+    let previous_bytes = previous.encoded_brep().to_vec();
+    request.depths[1] *= 0.98;
+    let started = std::time::Instant::now();
+    let edited = apply_boss(&attachment, &request);
+    eprintln!(
+        r#"{{"event":"conical_text_depth_edit_api","seconds":{}}}"#,
+        started.elapsed().as_secs_f64()
+    );
+    check_boss_depth_edit(&previous, &edited, &previous_bytes, &request);
+}
+
+fn apply_boss(
+    attachment: &ConeFaceAttachment,
+    request: &WrappedConeNormalRequest,
+) -> ConeFeatureResult {
+    attachment
+        .apply_wrapped_profile(
+            REVISION,
+            SEAM,
+            WrappedFeatureKind::Boss,
+            request,
+            selection(),
+        )
+        .unwrap_or_else(|cause| panic!("attached cone text refused: {cause:?}"))
+}
+
+fn check_boss_depth_edit(
+    previous: &ConeFeatureResult,
+    edited: &ConeFeatureResult,
+    previous_bytes: &[u8],
+    request: &WrappedConeNormalRequest,
+) {
+    assert_eq!(previous.encoded_brep(), previous_bytes);
+    assert_ne!(edited.encoded_brep(), previous_bytes);
+    assert!(edited.validation().is_valid());
+    check_intersection_modes(edited, CheckMode::Exact);
+    let detached = edited.export_native().unwrap();
+    let before = previous.export_native().unwrap();
+    assert_eq!(detached.body.shape_type().unwrap(), ShapeEnum::Solid);
+    assert_eq!(
+        exposed_cap_regions(edited.history(), &detached),
+        request.selections.iter().map(|item| item.region).collect()
+    );
+    assert!(body_volume_estimate(&detached.body) < body_volume_estimate(&before.body));
+}
+
+fn selection() -> WrappedConeExecutionSelection {
+    WrappedConeExecutionSelection::DirectedTransportedPlacementV5 {
+        domain: WrappedConeDomainPolicy::PositiveXFamilyChartV3,
+        arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
+    }
+}
+
 fn attached_text(kind: WrappedFeatureKind, normal: NormalSense) {
     let attachment = text_attachment();
     let before = attachment.record().clone();
     let request = attached_request(&attachment, normal);
     let original = request.clone();
-    let selection = WrappedConeExecutionSelection::DirectedTransportedPlacementV5 {
-        domain: WrappedConeDomainPolicy::PositiveXFamilyChartV3,
-        arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
-    };
     let started = std::time::Instant::now();
-    let outcome = attachment.apply_wrapped_profile(REVISION, SEAM, kind, &request, selection);
+    let outcome = attachment.apply_wrapped_profile(REVISION, SEAM, kind, &request, selection());
     eprintln!(
         r#"{{"event":"conical_text_attached_api","normal":"{normal:?}","seconds":{}}}"#,
         started.elapsed().as_secs_f64()
