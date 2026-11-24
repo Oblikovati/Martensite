@@ -20,7 +20,8 @@ fn independent_threads_retain_identical_reports() {
 #[test]
 fn independent_processes_retain_identical_reports() {
     if std::env::var_os("MARTENSITE_OPEN_EXTRUSION_REPORT_CHILD").is_some() {
-        println!("{MARKER}{}", complete_report());
+        // A single-threaded test runner can print the test name on the same line.
+        println!("\n{MARKER}{}", complete_report());
         return;
     }
     assert_eq!(child_report(), child_report());
