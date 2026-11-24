@@ -157,6 +157,43 @@ full Boolean and independent material and history oracles. Measure
 cold creation separately so background work during editing cannot
 conceal its cost.
 
+### Direct conical attachment
+
+Begin with a single-shell frustum bounded by the selected cone and two
+analytic end faces. The frozen tool publishes its side faces and last-depth
+caps. A direct assembly replaces the selected support face with its remainder
+and a separate positive face for each retained counter. Bind the former
+first-depth edges through native topology IDs. The two incident coedges must
+use the same edge with opposite orientations after the archive is decoded.
+
+Prove three obligations on the actual decoded geometry before replacing the
+native self-intersection search.
+
+1. The support pcurves replay on a single native periodic sheet, match the
+   stored 3D edge at the same parameter within `sew`, and form embedded loops
+   with the intended material and counter winding. Rebind their exact stored
+   knots, controls and endpoints. Qualify a sparse exact planar census to
+   reduce the repeated pair work on separated hulls.
+2. The retained tool surfaces stay on the correct side of the stock cone over
+   their complete parameter domains and clear both end planes. Evaluate the
+   signed implicit carrier polynomial on the stored homogeneous controls
+   using outward enclosures. Replay unresolved signs with exact arithmetic
+   under a bounded policy.
+3. The decoded topology binds every retained tool patch and support incidence
+   to its proof and history. Use the checked native edge and face tolerances
+   in the seam contract. Require the ordered topology, geometry and tolerance
+   stages before publishing. Keep the full native checker as an independent
+   oracle for the admitted fixtures.
+
+The prototype establishes the first two geometric obligations on the frozen
+239-curve tool and assembles one curved-counter member in each sense. The
+production proof must bind native incidence identity through freezing. A
+request that fails a direct admission condition goes through the existing
+Boolean path. Compare both senses, including the counter island, with the
+existing material witnesses and typed history controls. Add red controls for
+changed side coefficients, a same-endpoint UV loop, an exhausted arithmetic
+bound, and contacts with a rim or periodic seam.
+
 ## Qualification
 
 - Pair baseline and candidate in fresh processes on the same physical
