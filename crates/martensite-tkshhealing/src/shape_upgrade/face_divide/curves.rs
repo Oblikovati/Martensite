@@ -1,6 +1,6 @@
 //! Context-aware boundary wire subdivision after surface composition.
 use super::{FaceDivider, ShapeExtendStatus};
-use crate::shape_upgrade::{ShapeUpgradeWireDivide, WireDivider};
+use crate::shape_upgrade::WireDivider;
 use martensite_tkbrep::{
     brep_tools::ReShape,
     topexp::Explorer,
@@ -32,7 +32,7 @@ pub(super) fn split_curves(tool: &(impl FaceDivider + ?Sized)) -> Result<bool, F
 
 fn split_face_wires(
     tool: &(impl FaceDivider + ?Sized),
-    wire_tool: &Handle<ShapeUpgradeWireDivide>,
+    wire_tool: &Handle<dyn WireDivider>,
     face: &Face,
 ) -> Result<(), Failure> {
     wire_tool.set_face(face);
@@ -43,8 +43,7 @@ fn split_face_wires(
         let wire = topods::wire(&child)?;
         wire_tool.load_wire(&wire);
         wire_tool.set_context(&tool.face_divide_base().context());
-        let dispatch = wire_tool.cast::<dyn WireDivider>();
-        dispatch.perform()?;
+        wire_tool.perform()?;
         record_wire_result(tool, wire_tool, &child)?;
     }
     Ok(())
@@ -52,7 +51,7 @@ fn split_face_wires(
 
 fn record_wire_result(
     tool: &(impl FaceDivider + ?Sized),
-    wire_tool: &ShapeUpgradeWireDivide,
+    wire_tool: &Handle<dyn WireDivider>,
     original: &martensite_tkbrep::topods::Shape,
 ) -> Result<(), Failure> {
     if wire_tool.status_flag(ShapeExtendStatus::Fail) {

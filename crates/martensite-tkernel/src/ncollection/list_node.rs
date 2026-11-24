@@ -10,6 +10,7 @@ pub type ListLinkNode = MapLinkNode;
 pub struct ListValueNode<T> {
     link: ListLinkNode,
     pub(super) value: T,
+    pub(super) allocation: Option<BaseAllocator>,
 }
 impl<T> ListValueNode<T> {
     /// Stores an owned value and successor; `ListValueNode::new(7, next)`.
@@ -17,6 +18,7 @@ impl<T> ListValueNode<T> {
         Self {
             link: ListLinkNode::new(successor),
             value,
+            allocation: None,
         }
     }
     /// Constructs the value after establishing its link prefix; `ListValueNode::construct(next, || 7)`.
@@ -24,6 +26,7 @@ impl<T> ListValueNode<T> {
         Self {
             link: ListLinkNode::new(successor),
             value: construct(),
+            allocation: None,
         }
     }
     /// Borrows the immutable value; `assert_eq!(node.value(), &7)`.

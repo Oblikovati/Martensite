@@ -83,7 +83,7 @@ fn reference_triangle(reference: &Graphic3dStructure) -> Handle<Graphic3dArrayOf
     let group = reference.new_group().unwrap();
     group.set_group_primitives_aspect(&scene::unlit_style([0., 1., 0., 1.]));
     let vertices = view_setup::triangle_vertices();
-    group.add_primitive_array(&vertices, true);
+    group.add_primitive_array(&vertices.upcast(), true);
     vertices
 }
 fn translation(x: f64) -> Handle<Datum3> {
@@ -197,6 +197,25 @@ fn unchecked_cycles_refuse_redraw_and_clear_cached_success_until_disconnected() 
     disconnect_driver(&fixture.reference, &fixture.scene.structure).unwrap();
     fixture.scene.render_view().try_redraw().unwrap();
     assert_connected_frame(&fixture.device.last_frame(), [-8., -8., 0.]);
+}
+
+#[test]
+fn a_reference_chain_draws_deepest_first_and_keeps_cycle_detection() {
+    let fixture = ConnectedGeometryFixture::new();
+    fixture.connect();
+    let deepest = new_reference(&fixture.scene);
+    let vertices = reference_triangle(&deepest);
+    vertices.set_vertice(1, -3., -2., 0.).unwrap();
+    connect_driver(&fixture.reference, &deepest).unwrap();
+    fixture.scene.render_view().try_redraw().unwrap();
+    let frame = fixture.device.last_frame();
+    assert_eq!(frame.draws().len(), 3);
+    assert_eq!(frame.draws()[0].vertices()[0].position, [-3., -2., 0.]);
+    assert_eq!(frame.draws()[1].vertices()[0].position, [-8., -8., 0.]);
+    assert_eq!(frame.draws()[2].vertices()[0].color, [1., 0., 0., 1.]);
+    connect_driver(&deepest, &fixture.reference).unwrap();
+    let error = fixture.scene.render_view().try_redraw().unwrap_err();
+    assert!(error.to_string().contains("connection cycle"));
 }
 #[test]
 fn a_connected_target_is_not_kept_alive_by_the_render_reference() {

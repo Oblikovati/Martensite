@@ -1,7 +1,7 @@
 //! Owning allocator handles are separate from noncounting physical allocation leases.
 use super::BaseAllocator;
 use crate::ncollection::AllocatorSource;
-use crate::standard::{Handle, HandleObserver, RuntimeTyped};
+use crate::standard::{Handle, HandleObserver, HandleUpcast};
 pub(super) enum AllocatorReference {
     Policy,
     Owned(Handle<dyn AllocatorSource>),
@@ -10,8 +10,10 @@ pub(super) enum AllocatorReference {
 impl BaseAllocator {
     /// Acquire the SAME derived allocator; `BaseAllocator::from_handle(&allocator)`.
     /// This factory registers only a weak compatibility alias in the genuine embedded base.
-    pub fn from_handle<T: ?Sized + RuntimeTyped + AllocatorSource>(handle: &Handle<T>) -> Self {
-        let source = handle.cast::<dyn AllocatorSource>();
+    pub fn from_handle<T: ?Sized + AllocatorSource + HandleUpcast<dyn AllocatorSource>>(
+        handle: &Handle<T>,
+    ) -> Self {
+        let source = handle.upcast::<dyn AllocatorSource>();
         assert!(
             !source.is_null(),
             "allocator={:?}; expected registered AllocatorSource interface",
@@ -44,11 +46,10 @@ impl BaseAllocator {
             }),
         }
     }
-    pub(super) fn source_observer(&self) -> Option<HandleObserver<dyn AllocatorSource>> {
+    pub(super) fn source_observer(&self) -> Option<HandleObserver<'_, dyn AllocatorSource>> {
         let observed = match &self.fields.reference {
             AllocatorReference::Owned(owner) => owner.observe(),
-            AllocatorReference::Storage(_) => self.fields.registration.read().observe(),
-            AllocatorReference::Policy => self.fields.registration.read().observe(),
+            _ => HandleObserver::Snapshot(self.fields.registration.read().upgrade()),
         };
         (!observed.is_null()).then_some(observed)
     }
@@ -74,7 +75,7 @@ impl Clone for BaseAllocator {
             _ => self
                 .source_observer()
                 .map_or(AllocatorReference::Policy, |source| {
-                    AllocatorReference::Owned(source.clone())
+                    AllocatorReference::Owned(source.into_handle())
                 }),
         };
         self.facade_with_reference(reference)

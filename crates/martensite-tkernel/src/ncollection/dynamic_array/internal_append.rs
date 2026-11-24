@@ -1,12 +1,16 @@
 //! Index-based internal sources allow self-append while respecting Rust exclusive access.
-use super::{ArrayError, DynamicArray, checked_index};
+use super::DynamicArray;
+#[cfg(test)]
+use super::{ArrayError, checked_index};
+#[cfg(test)]
 use std::fmt::Debug;
 
 impl<T> DynamicArray<T> {
     /// Appends a copy of an existing logical item after allocating its destination block.
     /// `array.append_from_index_with_constructor(0, |source| *source)?`.
     /// This appends a copy of `array[index]`; no Clone or Default bound is required.
-    pub fn append_from_index_with_constructor<I: TryInto<usize> + Copy + Debug>(
+    #[cfg(test)]
+    pub(crate) fn append_from_index_with_constructor<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         source_index: I,
         copy_construct: impl FnOnce(&T) -> T,
@@ -23,7 +27,8 @@ impl<T> DynamicArray<T> {
     /// `array.append_moved_from_index_with_constructor(0, std::mem::take)?`.
     /// This appends a value moved out of `array[index]`. A constructor panic retains
     /// the old logical size and any donor mutation; its block allocation is retained for retry.
-    pub fn append_moved_from_index_with_constructor<I: TryInto<usize> + Copy + Debug>(
+    #[cfg(test)]
+    pub(crate) fn append_moved_from_index_with_constructor<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         source_index: I,
         move_construct: impl FnOnce(&mut T) -> T,
@@ -36,6 +41,7 @@ impl<T> DynamicArray<T> {
         }))
     }
 
+    #[cfg(test)]
     pub(super) fn logical_source_index<I: TryInto<usize> + Copy + Debug>(
         &self,
         source_index: I,

@@ -13,7 +13,7 @@ fn normal_segments(scene: &scene::GraphicScene) -> Handle<Graphic3dArrayOfPrimit
             .add_vertex_normal([x, 0., 0.], [0., 0., 1.])
             .unwrap();
     }
-    scene.group.add_primitive_array(&vertices, true);
+    scene.group.add_primitive_array(&vertices.upcast(), true);
     vertices
 }
 

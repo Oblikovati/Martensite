@@ -3,10 +3,10 @@
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_extend::{BasicMsgRegistrator, ShapeExtendBasicMsgRegistrator};
 use martensite_tkbrep::topods::Shape;
+use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Gravity, Msg};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Handle, SharedState, Transient};
 
 /// The fields of a `ShapeFixRoot` (the private ones and the protected `myShape`).
 #[derive(Clone)]
@@ -40,7 +40,7 @@ impl Default for FixRootData {
             fields: SharedState::new(FixRootFields {
                 shape: Shape::default(),
                 context: Handle::default(),
-                msg_reg: registrator.cast::<dyn BasicMsgRegistrator>(),
+                msg_reg: registrator.into_upcast(),
                 precision: confusion,
                 min_tol: confusion,
                 max_tol: confusion,
@@ -50,6 +50,30 @@ impl Default for FixRootData {
 }
 
 impl FixRootData {
+    pub(super) fn set_msg_registrator(&self, msgreg: &Handle<dyn BasicMsgRegistrator>) {
+        self.with_mut(|fields| fields.msg_reg = msgreg.clone());
+    }
+
+    pub(super) fn set_precision(&self, preci: f64) {
+        self.with_mut(|fields| {
+            fields.precision = preci;
+            if fields.max_tol < preci {
+                fields.max_tol = preci;
+            }
+            if fields.min_tol > preci {
+                fields.min_tol = preci;
+            }
+        });
+    }
+
+    pub(super) fn set_min_tolerance(&self, mintol: f64) {
+        self.with_mut(|fields| fields.min_tol = mintol);
+    }
+
+    pub(super) fn set_max_tolerance(&self, maxtol: f64) {
+        self.with_mut(|fields| fields.max_tol = maxtol);
+    }
+
     /// Lends the fields for reading; `data.with(|f| f.precision)`.
     pub fn with<R>(&self, read: impl FnOnce(&FixRootFields) -> R) -> R {
         read(&self.fields.read())
@@ -97,8 +121,7 @@ pub trait FixRoot: Transient {
 
     /// `SetMsgRegistrator(msgreg)` (virtual); `tool.set_msg_registrator(&registrator)`.
     fn set_msg_registrator(&self, msgreg: &Handle<dyn BasicMsgRegistrator>) {
-        self.fix_root_data()
-            .with_mut(|fields| fields.msg_reg = msgreg.clone());
+        self.fix_root_data().set_msg_registrator(msgreg);
     }
 
     /// `MsgRegistrator()`; `tool.msg_registrator()`.
@@ -109,15 +132,7 @@ pub trait FixRoot: Transient {
     /// `SetPrecision(preci)` (virtual): the precision, raising the maximal tolerance to it
     /// and lowering the minimal one to it; `tool.set_precision(1e-3)`.
     fn set_precision(&self, preci: f64) {
-        self.fix_root_data().with_mut(|fields| {
-            fields.precision = preci;
-            if fields.max_tol < preci {
-                fields.max_tol = preci;
-            }
-            if fields.min_tol > preci {
-                fields.min_tol = preci;
-            }
-        });
+        self.fix_root_data().set_precision(preci);
     }
 
     /// `Precision()`; `tool.precision()`.
@@ -127,8 +142,7 @@ pub trait FixRoot: Transient {
 
     /// `SetMinTolerance(mintol)` (virtual); `tool.set_min_tolerance(1e-7)`.
     fn set_min_tolerance(&self, mintol: f64) {
-        self.fix_root_data()
-            .with_mut(|fields| fields.min_tol = mintol);
+        self.fix_root_data().set_min_tolerance(mintol);
     }
 
     /// `MinTolerance()`; `tool.min_tolerance()`.
@@ -138,8 +152,7 @@ pub trait FixRoot: Transient {
 
     /// `SetMaxTolerance(maxtol)` (virtual); `tool.set_max_tolerance(1.0)`.
     fn set_max_tolerance(&self, maxtol: f64) {
-        self.fix_root_data()
-            .with_mut(|fields| fields.max_tol = maxtol);
+        self.fix_root_data().set_max_tolerance(maxtol);
     }
 
     /// `MaxTolerance()`; `tool.max_tolerance()`.
@@ -193,7 +206,7 @@ pub trait FixRoot: Transient {
         self.send_msg_on_shape(message, Gravity::Fail);
     }
 }
-impl_transient_interface!(dyn FixRoot, "ShapeFix_Root", StandardTransient);
+parent_interface!(dyn FixRoot, ShapeFixRoot, []);
 
 /// The protected static `NeedFix(flag, def)`: a three-position mode (-1 default, 0 off,
 /// above 0 on) decides whether a fix runs; the default takes `def`;
@@ -205,14 +218,12 @@ pub fn need_fix(flag: i32, def: bool) -> bool {
 /// The base class `ShapeFixRoot` itself (no fixing member of its own).
 #[derive(Default)]
 pub struct ShapeFixRoot {
-    parent: StandardTransient,
     root: FixRootData,
 }
 impl_transient!(
     ShapeFixRoot,
     "ShapeFix_Root",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn FixRoot]
 );
 

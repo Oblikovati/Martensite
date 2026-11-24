@@ -2,14 +2,14 @@
 use martensite_tkernel::standard::{
     Failure, Handle, HandleObserver, HandleReference, IntrusiveReferenceSlot, Transient,
 };
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 /// Borrowed actual pointer slot; `object.texture_pix_map().object_address()`.
 #[derive(Clone, Copy)]
 pub struct AisTexturedShapePixMapRef<'a> {
-    pixels: &'a IntrusiveReferenceSlot<ImagePixMap>,
+    pixels: &'a IntrusiveReferenceSlot<dyn ImagePixMapObject>,
 }
 impl<'a> AisTexturedShapePixMapRef<'a> {
-    pub(super) fn new(pixels: &'a IntrusiveReferenceSlot<ImagePixMap>) -> Self {
+    pub(super) fn new(pixels: &'a IntrusiveReferenceSlot<dyn ImagePixMapObject>) -> Self {
         // Keep the original slot reference rather than a pointer-value snapshot.
         Self { pixels }
     }
@@ -28,10 +28,10 @@ impl<'a> AisTexturedShapePixMapRef<'a> {
         let pixels = self.pixels;
         pixels.object_address()
     }
-    /// Current native count without retaining the target; `alias.ref_count()`.
+    /// Current strong count without retaining the target; `alias.ref_count()`.
     pub fn ref_count(&self) -> i32 {
         let pixels = self.pixels;
-        pixels.ref_count()
+        i32::try_from(pixels.ref_count()).unwrap_or(i32::MAX)
     }
     /// Inspect the real destructor borrow; `alias.with_retiring_pointee(self, |p| p.width())?`.
     /// The original field identity is checked and no native owning count is acquired.
@@ -41,16 +41,16 @@ impl<'a> AisTexturedShapePixMapRef<'a> {
         inspect: impl FnOnce(&ImagePixMap) -> R,
     ) -> Result<R, Failure> {
         // Rust Drop already owns the valid reborrow; an expired Arc must not be resurrected.
-        self.pixels.with_retiring_pointee(retiring, inspect)
+        self.pixels
+            .with_retiring_pointee(retiring, |pixels| inspect(pixels.pix_map_base()))
     }
     /// Acquire ownership explicitly, independently of the native const field alias; `alias.clone_handle()`.
-    pub fn clone_handle(&self) -> Handle<ImagePixMap> {
-        let observed = self.pixels.observe();
-        observed.clone()
+    pub fn clone_handle(&self) -> Handle<dyn ImagePixMapObject> {
+        self.pixels.observe().into_handle()
     }
 }
-impl HandleReference<ImagePixMap> for AisTexturedShapePixMapRef<'_> {
-    fn observe(&self) -> HandleObserver<ImagePixMap> {
+impl HandleReference<dyn ImagePixMapObject> for AisTexturedShapePixMapRef<'_> {
+    fn observe(&self) -> HandleObserver<'_, dyn ImagePixMapObject> {
         let pixels = self.pixels;
         pixels.observe()
     }

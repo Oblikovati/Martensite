@@ -1,7 +1,7 @@
 //! Named CPU recorder observes real Graphic3d calls, without replacing scale geometry or layout.
 use martensite_tkernel::{
     ncollection::{Vec3, Vec4},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::{graphic3d::*, null_driver::*};
@@ -59,7 +59,6 @@ pub(super) fn install_scale_recording(
     oriented: bool,
 ) {
     let recorder = Handle::new(ScaleRecordingStructure {
-        transient: StandardTransient::default(),
         inner: prs.cstructure(),
         trace: trace.clone(),
         oriented,
@@ -69,12 +68,11 @@ pub(super) fn install_scale_recording(
 }
 
 struct ScaleRecordingStructure {
-    transient: StandardTransient,
     inner: Handle<dyn Graphic3dCStructure>,
     trace: ScaleDrawTrace,
     oriented: bool,
 }
-martensite_tkernel::impl_transient!(ScaleRecordingStructure,"ScaleRecordingStructure",StandardTransient,transient,interfaces:[dyn Graphic3dCStructure]);
+martensite_tkernel::impl_transient!(ScaleRecordingStructure,"ScaleRecordingStructure",dyn martensite_tkernel::standard::Transient,interfaces:[dyn Graphic3dCStructure]);
 impl Graphic3dCStructure for ScaleRecordingStructure {
     fn cstructure_base(&self) -> &Graphic3dCStructureBase {
         self.inner.cstructure_base()
@@ -111,7 +109,6 @@ impl Graphic3dCStructure for ScaleRecordingStructure {
         structure: &Handle<dyn Graphic3dStructureSource>,
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         let group: Handle<dyn Graphic3dGroup> = Handle::new(ScaleRecordingGroup {
-            transient: StandardTransient::default(),
             inner: Handle::new(NullGroup::new(structure)).cast(),
             trace: self.trace.clone(),
             oriented: self.oriented,
@@ -121,17 +118,16 @@ impl Graphic3dCStructure for ScaleRecordingStructure {
             .fields
             .write()
             .groups
-            .append(group.clone());
+            .append(martensite_tkernel::standard::HandleSlot::new(group.clone()));
         Ok(group)
     }
 }
 struct ScaleRecordingGroup {
-    transient: StandardTransient,
     inner: Handle<dyn Graphic3dGroup>,
     trace: ScaleDrawTrace,
     oriented: bool,
 }
-martensite_tkernel::impl_transient!(ScaleRecordingGroup,"ScaleRecordingGroup",StandardTransient,transient,interfaces:[dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(ScaleRecordingGroup,"ScaleRecordingGroup",dyn martensite_tkernel::standard::Transient,interfaces:[dyn Graphic3dGroup]);
 impl Graphic3dGroup for ScaleRecordingGroup {
     fn group_base(&self) -> &Graphic3dGroupBase {
         self.inner.group_base()
@@ -262,13 +258,12 @@ fn wrap_existing_recording_groups(recorder: &ScaleRecordingStructure) {
         .groups
         .iter()
         .map(|group| {
-            Handle::new(ScaleRecordingGroup {
-                transient: StandardTransient::default(),
-                inner: group.clone(),
+            let recorded = Handle::new(ScaleRecordingGroup {
+                inner: Handle::clone(group),
                 trace: recorder.trace.clone(),
                 oriented: recorder.oriented,
-            })
-            .cast()
+            });
+            martensite_tkernel::standard::HandleSlot::new(recorded.into_upcast())
         })
         .collect();
 }

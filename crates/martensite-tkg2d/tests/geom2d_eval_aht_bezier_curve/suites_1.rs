@@ -4,7 +4,7 @@ fn evaluated_aht_bezier_curve_copy_independent() {
     let aCurve = createFullBasisCurve();
     let aCopy = aCurve.copy().unwrap();
     assert!(!aCopy.is_null());
-    let aCopyCurve: Handle<Geom2dEvalAHTBezierCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalAHTBezierCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
     assert_eq!(aCopyCurve.nb_poles(), 6);
     assert_eq!(aCopyCurve.alg_degree(), 1);
@@ -21,11 +21,10 @@ fn evaluated_aht_bezier_curve_copy_independent() {
     // Verify behavior: transformation is not supported on the copy either.
     let mut aTrsf = Transform2::default();
     aTrsf.set_translation(Vector2::new(10.0, 10.0));
-    let aCopyHandle: Handle<Geom2dEvalAHTBezierCurve> = aCopy.cast();
-    EXPECT_THROW(aCopyHandle.transform(aTrsf), "Standard_NotImplemented");
+    EXPECT_THROW(aCopyCurve.transform(aTrsf), "Standard_NotImplemented");
 
     let aOrigMid: Point2 = aCurve.eval_d0(0.5).unwrap();
-    let aCopyMid: Point2 = aCopyHandle.eval_d0(0.5).unwrap();
+    let aCopyMid: Point2 = aCopyCurve.eval_d0(0.5).unwrap();
     EXPECT_NEAR(aOrigMid.distance(aCopyMid), 0.0, precision::confusion());
 }
 
@@ -34,7 +33,7 @@ fn evaluated_aht_bezier_curve_copy_independent() {
 fn evaluated_aht_bezier_curve_copy_rational() {
     let aCurve = createRationalCurve();
     let aCopy = aCurve.copy().unwrap();
-    let aCopyCurve: Handle<Geom2dEvalAHTBezierCurve> = aCopy.cast();
+    let aCopyCurve: Handle<Geom2dEvalAHTBezierCurve> = aCopy.into_downcast();
     assert!(!aCopyCurve.is_null());
     assert!(aCopyCurve.is_rational());
 }

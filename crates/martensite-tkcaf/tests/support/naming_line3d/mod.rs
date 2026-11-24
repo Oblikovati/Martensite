@@ -7,7 +7,7 @@ use martensite_tkbrep::topods::{self, Shape, Wire};
 use martensite_tkcaf::tnaming::TNaming;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::tfunction::{
@@ -19,10 +19,9 @@ use martensite_tktopalgo::brep_builder_api::{
 /// Builds named open/closed polylines from actual point references; `NamingLine3dDriver::default()`.
 #[derive(Default)]
 pub struct NamingLine3dDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingLine3dDriver,"DNamingLine3DDriver",dyn TFunctionDriver,transient,interfaces:[dyn TFunctionDriver]);
+impl_transient!(NamingLine3dDriver,"DNamingLine3DDriver",dyn TFunctionDriver,interfaces:[dyn TFunctionDriver]);
 fn referenced_shape(function: &Handle<TFunctionFunction>, position: i32) -> Result<Shape, Failure> {
     let named = argument_value(function, position)?;
     if named.is_null() {

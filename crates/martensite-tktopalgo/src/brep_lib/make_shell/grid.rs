@@ -50,7 +50,7 @@ fn isolines(bounds: &[f64], u_direction: bool) -> Vec<Handle<dyn Geom2dCurve>> {
                     Direction2::from_standard(StandardDirection2::X),
                 )
             };
-            Handle::new(line).cast()
+            Handle::new(line).into_upcast()
         })
         .collect()
 }

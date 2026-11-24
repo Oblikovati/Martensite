@@ -85,7 +85,7 @@ step_entity! {
     StepGeomCartesianPoint, StepGeomCartesianPointState, "StepGeomCartesianPoint", StepGeomPoint, {
         my_nb_coord: i32,
         my_coords: [f64; 3],
-    }
+    }, bases: [StepGeomPoint, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 inline_coordinates!(
     StepGeomCartesianPoint,
@@ -103,7 +103,7 @@ step_entity! {
     StepGeomDirection, StepGeomDirectionState, "StepGeomDirection", StepGeomGeometricRepresentationItem, {
         my_nb_coord: i32,
         my_coords: [f64; 3],
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 inline_coordinates!(
     StepGeomDirection,
@@ -165,6 +165,12 @@ mod tests {
     fn a_point_casts_to_its_ancestors() {
         let point = Handle::new(StepGeomCartesianPoint::new());
         assert!(point.is_kind_name("StepReprRepresentationItem"));
-        assert!(point.cast::<StepGeomPoint>().is_some());
+        let base: Handle<dyn crate::StepEntityBase<StepGeomPoint>> = point.upcast();
+        let erased: Handle<dyn martensite_tkernel::standard::Transient> = base.upcast();
+        let restored: Handle<dyn crate::StepEntityBase<StepGeomPoint>> = erased.cast();
+        assert_eq!(restored, base);
+        assert_eq!(restored.cast::<StepGeomCartesianPoint>(), point);
+        assert!(std::ptr::eq(restored.step_base(), &point.parent));
+        assert!(point.cast::<StepGeomPoint>().is_null());
     }
 }

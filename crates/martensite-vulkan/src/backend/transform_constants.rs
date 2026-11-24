@@ -1,12 +1,13 @@
 //! Push-constant variants keep native line parameters separate from sampled surfaces.
 use crate::PrimitiveDraw;
 use ash::vk;
+/// The largest push-constant block a draw records; one reservation covers every append.
+const PUSH_CONSTANT_CAPACITY: usize = 256;
+
 pub(super) fn encode_transform(draw: &PrimitiveDraw, extent: vk::Extent2D) -> Vec<u8> {
-    let mut bytes: Vec<u8> = draw
-        .clip_transform
-        .iter()
-        .flat_map(|value| value.to_ne_bytes())
-        .collect();
+    // Whole floats copied into one reservation; a byte iterator cost 2% of a frame (#594).
+    let mut bytes = Vec::with_capacity(PUSH_CONSTANT_CAPACITY);
+    bytes.extend_from_slice(draw.clip_transform.map(f32::to_ne_bytes).as_flattened());
     append_line_constants(&mut bytes, draw, extent);
     append_sprite_constants(&mut bytes, draw);
     append_surface_constants(&mut bytes, draw);

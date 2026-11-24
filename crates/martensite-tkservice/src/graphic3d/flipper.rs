@@ -14,15 +14,9 @@ use std::ops::{Div, Sub};
 
 /// A flipper of a reference plane; `Graphic3dFlipper::new(axis2)`.
 pub struct Graphic3dFlipper {
-    transient: StandardTransient,
     ref_plane: SharedState<Axis2>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dFlipper,
-    "Graphic3d_Flipper",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dFlipper, "Graphic3d_Flipper", StandardTransient);
 
 fn vec4<T: Graphic3dCameraScalar>(direction: Direction3) -> Vec4<T> {
     Vec4::new(
@@ -48,7 +42,6 @@ impl Graphic3dFlipper {
     /// A flipper of `ref_plane`; `Graphic3dFlipper::new(axis2)`.
     pub fn new(ref_plane: Axis2) -> Self {
         Self {
-            transient: StandardTransient::default(),
             ref_plane: SharedState::new(ref_plane),
         }
     }

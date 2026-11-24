@@ -3,7 +3,7 @@ use crate::interface::{
     InterfaceGlobalNodeOfGeneralLib, InterfaceGlobalNodeOfReaderLib, InterfaceNodeOfGeneralLib,
     InterfaceNodeOfReaderLib,
 };
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient, Transient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
 
 fn check_descriptor<T: Default + RuntimeTyped + Transient>(name: &str) {
     let owned = Handle::new(T::default());
@@ -17,16 +17,12 @@ fn check_descriptor<T: Default + RuntimeTyped + Transient>(name: &str) {
         owned.get().unwrap().dynamic_type(),
         T::static_type()
     ));
-    assert!(std::ptr::eq(
-        owned.get().unwrap().dynamic_type_ref(),
-        T::static_type_ref()
-    ));
     check_handle_roundtrip(&owned);
 }
 
 fn check_handle_roundtrip<T: RuntimeTyped + Transient>(owned: &Handle<T>) {
-    let erased: Handle<StandardTransient> = owned.cast();
-    let restored = Handle::<T>::down_cast(&erased);
+    let erased: Handle<dyn Transient> = owned.cast();
+    let restored = erased.downcast::<T>();
     assert!(!restored.is_null());
     assert_eq!(&restored, owned);
     assert!(erased.is_kind_name("Standard_Transient"));
@@ -55,9 +51,14 @@ fn reader_node_has_its_concrete_descriptor() {
 
 #[test]
 fn distinct_node_kinds_never_downcast_to_each_other() {
-    let general: Handle<StandardTransient> = Handle::new(InterfaceNodeOfGeneralLib::new()).cast();
-    assert!(Handle::<InterfaceNodeOfReaderLib>::down_cast(&general).is_null());
-    assert!(Handle::<InterfaceGlobalNodeOfGeneralLib>::down_cast(&general).is_null());
+    let general: Handle<dyn Transient> =
+        Handle::new(InterfaceNodeOfGeneralLib::new()).into_upcast();
+    assert!(general.downcast::<InterfaceNodeOfReaderLib>().is_null());
+    assert!(
+        general
+            .downcast::<InterfaceGlobalNodeOfGeneralLib>()
+            .is_null()
+    );
     assert!(!std::ptr::eq(
         InterfaceNodeOfGeneralLib::static_type(),
         InterfaceNodeOfReaderLib::static_type()

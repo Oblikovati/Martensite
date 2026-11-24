@@ -178,11 +178,11 @@ pub fn face_until(sbase: &Shape, f_until: &mut Face) -> Result<(), Failure> {
     BRepBndLib::add(sbase, &mut b, true)?;
     let diam = 10. * b.square_extent().sqrt();
     let mut s = BRepTool::surface(f_until)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     if let Some(t) = trimmed.get() {
         s = t.basis_surface();
     }
-    let str = if let Some(plane) = s.cast::<GeomPlane>().get() {
+    let str = if let Some(plane) = s.downcast_ref::<GeomPlane>() {
         let pln = plane.pln();
         let (umin, umax, vmin, vmax) = corner_parameters(&b, |p| elslib::parameters(&pln, p))?;
         GeomRectangularTrimmedSurface::new(
@@ -191,7 +191,7 @@ pub fn face_until(sbase: &Shape, f_until: &mut Face) -> Result<(), Failure> {
             (vmin - diam, vmax + diam),
             (true, true),
         )?
-    } else if let Some(cyl) = s.cast::<GeomCylindricalSurface>().get() {
+    } else if let Some(cyl) = s.downcast_ref::<GeomCylindricalSurface>() {
         let cylinder = cyl.cylinder()?;
         let (_, _, vmin, vmax) = corner_parameters(&b, |p| elslib::parameters(&cylinder, p))?;
         GeomRectangularTrimmedSurface::with_one_direction(
@@ -201,7 +201,7 @@ pub fn face_until(sbase: &Shape, f_until: &mut Face) -> Result<(), Failure> {
             false,
             true,
         )?
-    } else if let Some(con) = s.cast::<GeomConicalSurface>().get() {
+    } else if let Some(con) = s.downcast_ref::<GeomConicalSurface>() {
         let cone = con.cone()?;
         let (_, _, vmin, vmax) = corner_parameters(&b, |p| elslib::parameters(&cone, p))?;
         GeomRectangularTrimmedSurface::with_one_direction(
@@ -215,7 +215,7 @@ pub fn face_until(sbase: &Shape, f_until: &mut Face) -> Result<(), Failure> {
         f_until.nullify();
         return Ok(());
     };
-    let str: Handle<dyn GeomSurface> = Handle::new(str).cast();
+    let str: Handle<dyn GeomSurface> = Handle::new(str).into_upcast();
     *f_until = BRepLibMakeFace::from_surface(&str, precision::confusion())?.face()?;
     Ok(())
 }

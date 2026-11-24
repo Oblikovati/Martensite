@@ -34,11 +34,13 @@ fn runtime_type_step_shape_shape_dimension_representation() {
 #[test]
 fn init_round_trip_step_shape_shape_dimension_representation() {
     let the_name = Handle::new(HAsciiString::new("sample"));
-    let the_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let object = StepShapeShapeDimensionRepresentation::new();
-    object.init(&the_name, &the_items, &the_context_of_items);
+    object.init(&the_name, &the_items, &the_context_of_items.upcast());
 }
 
 #[test]
@@ -103,7 +105,7 @@ fn init_round_trip_step_shape_solid_replica() {
     let a_parent_solid = Handle::new(StepShapeSolidModel::new());
     let a_transformation = Handle::new(StepGeomCartesianTransformationOperator3d::new());
     let object = StepShapeSolidReplica::new();
-    object.init(&a_name, &a_parent_solid, &a_transformation);
+    object.init(&a_name, &a_parent_solid.upcast(), &a_transformation);
     assert!(object.parent_solid() == a_parent_solid);
     assert!(object.transformation() == a_transformation);
 }
@@ -119,7 +121,7 @@ fn runtime_type_step_shape_sphere() {
 fn init_round_trip_step_shape_sphere() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_radius = 2.5;
-    let a_centre = Handle::new(StepGeomPoint::new());
+    let a_centre = Handle::new(StepGeomPoint::new()).into_upcast();
     let object = StepShapeSphere::new();
     object.init(&a_name, a_radius, &a_centre);
     assert!(object.radius() == a_radius);
@@ -142,9 +144,9 @@ fn init_round_trip_step_shape_subedge() {
     let object = StepShapeSubedge::new();
     object.init(
         &a_representation_item_name,
-        &a_edge_edge_start,
-        &a_edge_edge_end,
-        &a_parent_edge,
+        &a_edge_edge_start.upcast(),
+        &a_edge_edge_end.upcast(),
+        &a_parent_edge.upcast(),
     );
     assert!(object.parent_edge() == a_parent_edge);
 }
@@ -159,11 +161,17 @@ fn runtime_type_step_shape_subface() {
 #[test]
 fn init_round_trip_step_shape_subface() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
-    let a_face_bounds =
-        Handle::new(HArray1::<Handle<StepShapeFaceBound>>::with_bounds(1, 2).unwrap());
+    let a_face_bounds = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let a_parent_face = Handle::new(StepShapeFace::new());
     let object = StepShapeSubface::new();
-    object.init(&a_representation_item_name, &a_face_bounds, &a_parent_face);
+    object.init(
+        &a_representation_item_name,
+        &a_face_bounds,
+        &a_parent_face.upcast(),
+    );
     assert!(object.parent_face() == a_parent_face);
 }
 
@@ -201,7 +209,7 @@ fn init_round_trip_step_shape_swept_face_solid() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_swept_area = Handle::new(StepShapeFaceSurface::new());
     let object = StepShapeSweptFaceSolid::new();
-    object.init(&a_name, &a_swept_area);
+    object.init(&a_name, &a_swept_area.upcast());
     assert!(object.swept_face() == a_swept_area);
 }
 
@@ -310,7 +318,7 @@ fn init_round_trip_step_shape_vertex_loop() {
     let a_name = Handle::new(HAsciiString::new("sample"));
     let a_loop_vertex = Handle::new(StepShapeVertex::new());
     let object = StepShapeVertexLoop::new();
-    object.init(&a_name, &a_loop_vertex);
+    object.init(&a_name, &a_loop_vertex.upcast());
     assert!(object.loop_vertex() == a_loop_vertex);
 }
 
@@ -327,7 +335,7 @@ fn runtime_type_step_shape_vertex_point() {
 #[test]
 fn init_round_trip_step_shape_vertex_point() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_vertex_geometry = Handle::new(StepGeomPoint::new());
+    let a_vertex_geometry = Handle::new(StepGeomPoint::new()).into_upcast();
     let object = StepShapeVertexPoint::new();
     object.init(&a_name, &a_vertex_geometry);
     assert!(object.vertex_geometry() == a_vertex_geometry);

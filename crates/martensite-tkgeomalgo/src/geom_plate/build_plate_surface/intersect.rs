@@ -1,7 +1,7 @@
 //! The intersections of the 2d curves on the initial surface: the parameter zones
 //! where points would duplicate or where the G1 constraints disagree.
 use super::GeomPlateBuildPlateSurface;
-use crate::geom_plate::GeomPlateCurveConstraint;
+use crate::geom_plate::GeomPlateCurveConstraintState;
 use crate::geom2d_int::GInter;
 use crate::int_res2d::IntersectionPoint;
 use martensite_tkernel::standard::Failure;
@@ -21,8 +21,8 @@ struct CurvePair<'a> {
     j: usize,
     ci: &'a Geom2dAdaptorCurve,
     cj: &'a Geom2dAdaptorCurve,
-    lin_i: &'a GeomPlateCurveConstraint,
-    lin_j: &'a GeomPlateCurveConstraint,
+    lin_i: &'a GeomPlateCurveConstraintState,
+    lin_j: &'a GeomPlateCurveConstraintState,
     point: IntersectionPoint,
 }
 
@@ -263,7 +263,7 @@ impl GeomPlateBuildPlateSurface {
 }
 
 /// The tangent at `u` of the 3d curve of `lin` (`theCurve->D1`).
-fn curve_tangent(lin: &GeomPlateCurveConstraint, u: f64) -> Result<Vector3, Failure> {
+fn curve_tangent(lin: &GeomPlateCurveConstraintState, u: f64) -> Result<Vector3, Failure> {
     let curve = lin.curve3d();
     Ok(
         crate::geom_plate::live(&curve, "the 3d curve of a constraint")?

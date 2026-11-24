@@ -17,7 +17,7 @@ pub fn show_segment(
     let structure = Graphic3dStructure::new(manager, &Handle::default()).unwrap();
     let group = structure.new_group().unwrap();
     group.set_group_primitives_aspect(&width_aspect(width));
-    group.add_primitive_array(&width_endpoints([from, to]), true);
+    group.add_primitive_array(&width_endpoints([from, to]).into_upcast(), true);
     structure.display();
     structure
 }

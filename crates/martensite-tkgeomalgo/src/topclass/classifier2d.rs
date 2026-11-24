@@ -25,7 +25,7 @@ use martensite_tkmath::gp::{Direction3, Line2};
 /// use martensite_tkmath::gp::{Direction2, Line2, Point2};
 /// let up = Direction2::new(0.0, 1.0).unwrap();
 /// let edge: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(1.0, -1.0), up)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(1.0, -1.0), up)).into_upcast();
 /// let edge = Geom2dAdaptorCurve::with_range(&edge, 0.0, 2.0).unwrap();
 /// let mut classifier = FClass2dOfClassifier::new();
 /// let x_axis = Direction2::new(1.0, 0.0).unwrap();

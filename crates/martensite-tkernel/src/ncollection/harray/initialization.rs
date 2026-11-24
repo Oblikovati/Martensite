@@ -5,7 +5,7 @@ impl<T: Default + Send + Sync + 'static> HArray1<T> {
     /// Constructs defaults then assigns a borrowed donor without requiring copy construction.
     /// Assignment panic drops all initialized slots; the borrowed donor remains owned by its caller.
     /// `HArray1::with_value_ref_with_assignment(1, 3, &42, |slot, donor| *slot = *donor)?`.
-    pub fn with_value_ref_with_assignment(
+    pub(crate) fn with_value_ref_with_assignment(
         lower: i32,
         upper: i32,
         donor: &T,
@@ -25,7 +25,7 @@ impl<T: Default + Clone + Send + Sync + 'static> HArray1<T> {
 
     /// Uses Clone::clone_from as the copy-assignment policy while retaining the donor.
     /// `let shared = HArray1::with_value_ref(1, 3, &String::from("CAD"))?`.
-    pub fn with_value_ref(lower: i32, upper: i32, donor: &T) -> Result<Self, ArrayError> {
+    pub(crate) fn with_value_ref(lower: i32, upper: i32, donor: &T) -> Result<Self, ArrayError> {
         Self::with_value_ref_with_assignment(lower, upper, donor, T::clone_from)
     }
 }

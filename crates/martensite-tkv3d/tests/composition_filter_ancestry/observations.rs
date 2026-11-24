@@ -1,14 +1,14 @@
 //! Native-owned observations expose real descriptor, owner and callback behavior.
 use super::{ancestry, native_classes};
 use crate::decision_filter::ReadinessDecisionFilter;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, SharedState, Transient};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkv3d::select_mgr::{
     SelectMgrCompositionFilter, SelectMgrEntityOwner, SelectMgrFilter,
 };
 use std::sync::Arc;
 
-fn projected_owner(root: &Handle<StandardTransient>) -> String {
+fn projected_owner(root: &Handle<dyn Transient>) -> String {
     let before = root.ref_count();
     let projected: Handle<dyn SelectMgrCompositionFilter> = root.cast();
     assert!(!projected.is_null());

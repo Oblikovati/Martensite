@@ -13,9 +13,9 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_appli::{IgesAppliFlow, IgesAppliToolFlow};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesEntity, iges_array1_set, iges_live,
-    iges_new_array1,
+    IgesDataDefType, IgesDataDirChecker, iges_array1_set, iges_live, iges_new_array1,
 };
 use crate::iges_draw::IgesDrawConnectPoint;
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
@@ -76,12 +76,13 @@ impl IgesAppliToolFlow {
         let mut i: i32 = Default::default();
         let mut num: i32 = Default::default();
         num = another.nb_flow_associativities()?;
-        let mut temp_flow_assocs: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut temp_flow_assocs: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            Default::default();
         if num > 0 {
-            temp_flow_assocs = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_flow_assocs = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         }
         for i in 1..=num {
-            let mut new_item: Handle<IgesDataIgesEntity> = tc
+            let mut new_item: Handle<dyn IgesDataEntityKind> = tc
                 .transferred(&another.flow_associativity(i)?.cast())?
                 .cast();
             iges_array1_set(
@@ -108,12 +109,12 @@ impl IgesAppliToolFlow {
             )?;
         }
         num = another.nb_joins()?;
-        let mut temp_joins: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut temp_joins: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         if num > 0 {
-            temp_joins = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_joins = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         }
         for i in 1..=num {
-            let mut new_item: Handle<IgesDataIgesEntity> =
+            let mut new_item: Handle<dyn IgesDataEntityKind> =
                 tc.transferred(&another.join(i)?.cast())?.cast();
             iges_array1_set(
                 &temp_joins,
@@ -157,13 +158,13 @@ impl IgesAppliToolFlow {
             )?;
         }
         num = another.nb_cont_flow_associativities()?;
-        let mut temp_cont_flow_assocs: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut temp_cont_flow_assocs: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
         if num > 0 {
-            temp_cont_flow_assocs = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_cont_flow_assocs = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         }
         for i in 1..=num {
-            let mut new_item: Handle<IgesDataIgesEntity> = tc
+            let mut new_item: Handle<dyn IgesDataEntityKind> = tc
                 .transferred(&another.cont_flow_associativity(i)?.cast())?
                 .cast();
             iges_array1_set(

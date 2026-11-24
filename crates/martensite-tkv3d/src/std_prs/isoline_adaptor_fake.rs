@@ -14,7 +14,7 @@ pub(super) struct IsolineAdaptorFake {
     pub unrelated_panic: SharedState<bool>,
     replacement: SharedState<Option<IsolineSourceReplacement>>,
 }
-martensite_tkernel::impl_transient!(IsolineAdaptorFake,"Martensite_IsolineAdaptorFake",BRepAdaptorSurface,core,interfaces:[dyn Adaptor3dSurface,dyn StdPrsIsolineSurfaceSource]);
+martensite_tkernel::impl_transient!(IsolineAdaptorFake,"Martensite_IsolineAdaptorFake",BRepAdaptorSurface,interfaces:[dyn Adaptor3dSurface,dyn StdPrsIsolineSurfaceSource]);
 impl IsolineAdaptorFake {
     pub(super) fn new() -> Self {
         Self {

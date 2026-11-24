@@ -82,7 +82,7 @@ fn edge_case(mode: usize) -> Edge {
             Point3::new(0.5, 0.5, 1.),
             Direction3::X,
         )))
-        .cast();
+        .into_upcast();
         builder.update_edge_curve(&edge, &curve, 1e-7).unwrap();
         builder
             .range(

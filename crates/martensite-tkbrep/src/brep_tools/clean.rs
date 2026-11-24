@@ -2,7 +2,7 @@
 use crate::brep::access::edge_tshape;
 use crate::brep::{BRepBuilder, BRepCurveRepresentation, BRepTool};
 use crate::topexp::{self, Explorer};
-use crate::topods::{self, Edge, Face, Shape, TShape};
+use crate::topods::{self, Edge, Face, Shape, ShapeView, TShape};
 use crate::toptools::{IndexedMapOfShape, MapOfShape};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dCurve;
@@ -16,7 +16,7 @@ use martensite_tkmath::toploc::Location;
 /// edge; with `force`, also every polygon on triangulation of the edges. Faces and
 /// edges are processed once per TShape and orientation-free identity, whatever their
 /// location; `clean(&shape, false)?`.
-pub fn clean(shape: &Shape, force: bool) -> Result<(), Failure> {
+pub fn clean(shape: &ShapeView<'_>, force: bool) -> Result<(), Failure> {
     if shape.is_null() {
         return Ok(());
     }

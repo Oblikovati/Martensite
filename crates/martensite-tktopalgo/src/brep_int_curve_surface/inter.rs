@@ -108,7 +108,7 @@ impl BRepIntCurveSurfaceInter {
         line: Line3,
         tolerance: f64,
     ) -> Result<(), Failure> {
-        let geomline: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).cast();
+        let geomline: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).into_upcast();
         let curve = GeomAdaptorCurve::with_curve(&geomline)?;
         self.load(shape, tolerance)?;
         self.init(&curve)

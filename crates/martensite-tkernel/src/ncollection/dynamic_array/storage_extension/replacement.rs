@@ -11,7 +11,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// Slot must be aligned, writable, exclusively accessible, and contain one live T. No active
     /// references may alias the target. The assignment hook must leave both arguments valid even
     /// on unwind. Destructors must not unwind, so destruction stays noexcept.
-    pub unsafe fn replace_at_assign(
+    pub(crate) unsafe fn replace_at_assign(
         slot: *mut T,
         construct: impl FnOnce() -> T,
         assign: impl FnOnce(&mut T, &mut T),
@@ -32,7 +32,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// read, destroy or republish that slot until reconstruction. A constructor panic leaves it live.
     /// Transfer must leave its donor valid on unwind; destructors must not unwind. Address-dependent
     /// in-place constructors are outside this value-returning transfer contract.
-    pub unsafe fn replace_at_reconstruct(
+    pub(crate) unsafe fn replace_at_reconstruct(
         slot: *mut T,
         construct: impl FnOnce() -> T,
         transfer: impl FnOnce(&mut T) -> T,
@@ -52,7 +52,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// its automatic Drop ownership: a constructor panic leaves the slot dead. Never read, destroy
     /// or republish it without reconstruction. Destructors must not unwind. Returning a Rust value
     /// does not model an address-dependent in-place constructor or an implicit user move hook.
-    pub unsafe fn replace_at_direct(slot: *mut T, construct: impl FnOnce() -> T) {
+    pub(crate) unsafe fn replace_at_direct(slot: *mut T, construct: impl FnOnce() -> T) {
         // SAFETY: the caller guarantees `slot` is a live, aligned, exclusive value with suspended Drop ownership. Only this capability branch destroys before constructing.
         unsafe { Self::destroy_at(slot) };
         // SAFETY: the target is now uninitialized and remains caller-owned on constructor panic.

@@ -6,7 +6,7 @@
 use crate::geom::GeomSurface;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 
 /// Descriptor kind used for dispatch (`Base::Kind`), the same enumeration as the
@@ -113,19 +113,17 @@ pub trait RepSurfaceDesc: Transient {
     /// Domain and parameter map of a mapped descriptor; `desc.mapping()`.
     fn mapping(&self) -> Option<(Option<Domain2d>, Map2d)>;
 }
-impl_transient_interface!(dyn RepSurfaceDesc, "Base", StandardTransient);
+impl_transient_interface!(dyn RepSurfaceDesc, "Base", dyn Transient);
 
 /// `GeomEvalRepSurfaceDesc::Full`; `Handle::new(RepSurfaceDescFull::new(surface))`.
 pub struct RepSurfaceDescFull {
-    parent: StandardTransient,
     representation: SharedState<Handle<dyn GeomSurface>>,
 }
-impl_transient!(RepSurfaceDescFull, "Full", dyn RepSurfaceDesc, parent, interfaces: [dyn RepSurfaceDesc]);
+impl_transient!(RepSurfaceDescFull, "Full", dyn RepSurfaceDesc, interfaces: [dyn RepSurfaceDesc]);
 impl RepSurfaceDescFull {
     /// Descriptor evaluating through `representation`; `RepSurfaceDescFull::new(surface)`.
     pub fn new(representation: Handle<dyn GeomSurface>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             representation: SharedState::new(representation),
         }
     }
@@ -151,21 +149,18 @@ impl RepSurfaceDesc for RepSurfaceDescFull {
 /// `GeomEvalRepSurfaceDesc::DerivBounded` (default `MaxDerivOrder` 3);
 /// `Handle::new(RepSurfaceDescDerivBounded::new(surface, 2))`.
 pub struct RepSurfaceDescDerivBounded {
-    parent: StandardTransient,
     state: SharedState<(Handle<dyn GeomSurface>, usize)>,
 }
 impl_transient!(
     RepSurfaceDescDerivBounded,
     "DerivBounded",
     dyn RepSurfaceDesc,
-    parent,
     interfaces: [dyn RepSurfaceDesc]
 );
 impl RepSurfaceDescDerivBounded {
     /// Descriptor limited to `max_deriv_order`; `RepSurfaceDescDerivBounded::new(surface, 3)`.
     pub fn new(representation: Handle<dyn GeomSurface>, max_deriv_order: usize) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new((representation, max_deriv_order)),
         }
     }
@@ -202,14 +197,12 @@ struct MappedState {
 /// `GeomEvalRepSurfaceDesc::Mapped`: optional bounded domain and parameter map;
 /// `Handle::new(RepSurfaceDescMapped::new(surface, 3, None, Map2d::default()))`.
 pub struct RepSurfaceDescMapped {
-    parent: StandardTransient,
     state: SharedState<MappedState>,
 }
 impl_transient!(
     RepSurfaceDescMapped,
     "Mapped",
     dyn RepSurfaceDesc,
-    parent,
     interfaces: [dyn RepSurfaceDesc]
 );
 impl RepSurfaceDescMapped {
@@ -228,7 +221,6 @@ impl RepSurfaceDescMapped {
             param_map,
         };
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

@@ -3,7 +3,7 @@ use super::{RwStlReader, RwStlReaderBase};
 use martensite_tkernel::{
     impl_transient,
     ncollection::Sequence,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::{
     gp::{Point3, Xyz},
@@ -13,14 +13,13 @@ use martensite_tkmath::{
 /// Collects nodes and triangles; `keeps_domains` selects `MultiDomainReader`.
 #[derive(Default)]
 pub(super) struct MeshCollector {
-    transient: StandardTransient,
     base: RwStlReaderBase,
     nodes: SharedState<Vec<Xyz>>,
     triangles: SharedState<Vec<Triangle>>,
     keeps_domains: bool,
     domains: SharedState<Vec<Handle<Triangulation>>>,
 }
-impl_transient!(MeshCollector, "MeshCollector", dyn RwStlReader, transient, interfaces: [dyn RwStlReader]);
+impl_transient!(MeshCollector, "MeshCollector", dyn RwStlReader, interfaces: [dyn RwStlReader]);
 
 impl MeshCollector {
     /// A reader for one mesh; `MeshCollector::with_merge_angle(FRAC_PI_2)`.

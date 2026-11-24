@@ -159,7 +159,7 @@ fn perform_ve_rebuilds_open_common_blocks_for_matching_split_ranges() {
 fn perform_ve_rebuilds_closed_common_blocks_without_cross_pair_grouping() {
     let circle =
         Handle::new(GeomCircle::new(Axis2::new(gp::origin(), gp::dz()).unwrap(), 1.0).unwrap())
-            .into_cast::<dyn GeomCurve>();
+            .into_upcast::<dyn GeomCurve>();
     let first = BRepBuilderAPIMakeEdge::from_curve(&circle)
         .unwrap()
         .edge()

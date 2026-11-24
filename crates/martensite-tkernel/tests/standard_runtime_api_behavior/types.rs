@@ -7,10 +7,8 @@ use martensite_tkernel::standard::{
 use martensite_tkernel::tcol_std::HPackedMapOfInteger;
 
 #[derive(Default)]
-struct RegistryProbe {
-    parent: StandardTransient,
-}
-impl_transient!(RegistryProbe, "RegistryProbe", StandardTransient, parent);
+struct RegistryProbe {}
+impl_transient!(RegistryProbe, "RegistryProbe", StandardTransient);
 
 #[test]
 fn register_returns_the_first_descriptor_of_a_class() {
@@ -68,13 +66,13 @@ fn sub_type_walks_the_parent_chain() {
     assert!(!incremental.is_subtype_name(""));
 }
 #[test]
-fn sub_type_stops_at_an_ancestor_smaller_than_the_base() {
-    // A (fake) base registered larger than its derived class is never reached.
+fn sub_type_uses_declared_ancestry_regardless_of_rust_layout() {
+    // A Rust interface or composed class can be smaller than its descriptor parent.
     struct HugeBase;
     struct SmallDerived;
     let huge = RuntimeType::register::<HugeBase>("HugeBase", 1 << 20, None);
     let small = RuntimeType::register::<SmallDerived>("SmallDerived", 8, Some(huge));
-    assert!(!small.is_subtype(huge));
+    assert!(small.is_subtype(huge));
     assert!(small.is_subtype_name("HugeBase"));
 }
 #[test]

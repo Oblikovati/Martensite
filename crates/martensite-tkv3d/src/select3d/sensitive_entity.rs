@@ -129,11 +129,11 @@ martensite_tkernel::impl_transient_interface!(
 pub trait Select3DSensitiveEntityMembers: Select3DSensitiveEntity {
     /// `OwnerId`; `entity.owner_id()`.
     fn owner_id(&self) -> Handle<dyn SelectMgrEntityOwnerSource> {
-        self.sensitive_base().read().owner_id
+        self.sensitive_base().fields.read().owner_id.clone()
     }
     /// `SensitivityFactor`; `entity.sensitivity_factor()`.
     fn sensitivity_factor(&self) -> i32 {
-        self.sensitive_base().read().sensitivity_factor
+        self.sensitive_base().fields.read().sensitivity_factor
     }
     /// `SetSensitivityFactor`: a negative factor raises `Standard_ProgramError`.
     /// Example: `entity.set_sensitivity_factor(4)?`.
@@ -148,11 +148,11 @@ pub trait Select3DSensitiveEntityMembers: Select3DSensitiveEntity {
     }
     /// `TransformPersistence`; `entity.transform_persistence()`.
     fn transform_persistence(&self) -> Handle<dyn Graphic3dTransformPersSource> {
-        self.sensitive_base().read().trsf_pers
+        self.sensitive_base().fields.read().trsf_pers.clone()
     }
     /// `Flipper`; `entity.flipper()`.
     fn flipper(&self) -> Handle<Graphic3dFlipper> {
-        self.sensitive_base().read().flipper
+        self.sensitive_base().fields.read().flipper.clone()
     }
 }
 impl<T: Select3DSensitiveEntity + ?Sized> Select3DSensitiveEntityMembers for T {}

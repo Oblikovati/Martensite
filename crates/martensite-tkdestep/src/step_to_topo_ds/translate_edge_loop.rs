@@ -17,7 +17,8 @@ use crate::step_shape::{
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Edge, Face, Shape, ShapeIterator, Wire};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomPlane, GeomRectangularTrimmedSurface, GeomSurface};
 use martensite_tkg3d::top_abs::Orientation;
@@ -28,9 +29,9 @@ use martensite_tkxsbase::transfer::TransferTransientProcess;
 /// The surfaces and the senses of one translation, read once.
 pub(super) struct FaceContext<'a> {
     pub(super) face: &'a Face,
-    pub(super) step_surface: &'a Handle<StepGeomSurface>,
+    pub(super) step_surface: &'a Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     pub(super) converted_surface: Handle<dyn GeomSurface>,
-    pub(super) edge_loop: &'a Handle<StepShapeEdgeLoop>,
+    pub(super) edge_loop: &'a Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
     pub(super) same_sense: bool,
     pub(super) forward_wire: bool,
     pub(super) is_plane: bool,
@@ -65,10 +66,10 @@ impl StepToTopoDSTranslateEdgeLoop {
     /// `StepToTopoDSTranslateEdgeLoop(FB, Face, GeomSurf, StepSurf, sameSense, T, NMTool, factors)`.
     #[allow(clippy::too_many_arguments, reason = "the constructor")]
     pub fn with_bound(
-        face_bound: &Handle<StepShapeFaceBound>,
+        face_bound: &Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>,
         face: &Face,
         surface: &Handle<dyn GeomSurface>,
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         same_sense: bool,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
@@ -104,10 +105,10 @@ impl StepToTopoDSTranslateEdgeLoop {
     #[allow(clippy::too_many_arguments, reason = "the member")]
     pub fn init(
         &mut self,
-        face_bound: &Handle<StepShapeFaceBound>,
+        face_bound: &Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>,
         face: &Face,
         surface: &Handle<dyn GeomSurface>,
-        step_surface: &Handle<StepGeomSurface>,
+        step_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         same_sense: bool,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
@@ -115,7 +116,9 @@ impl StepToTopoDSTranslateEdgeLoop {
     ) -> Result<(), Failure> {
         self.root.done = true;
         let bound = step_live(face_bound, "StepToTopoDSTranslateEdgeLoop")?;
-        let edge_loop = bound.bound().cast::<StepShapeEdgeLoop>();
+        let edge_loop = bound
+            .bound()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>();
         if tool.is_bound(&edge_loop.cast()) {
             self.my_result = topods::wire(tool.find(&edge_loop.cast())?)?.into_shape();
             self.my_error = StepToTopoDSTranslateEdgeLoopError::Done;
@@ -125,7 +128,7 @@ impl StepToTopoDSTranslateEdgeLoop {
         let process = step_live(&process_handle, "StepToTopoDSTranslateEdgeLoop")?;
         let is_c3d_only = Self::reads_c3d_only(process)?;
         let live_loop = step_live(&edge_loop, "StepToTopoDSTranslateEdgeLoop")?;
-        let loop_entity: Handle<StandardTransient> = edge_loop.cast();
+        let loop_entity: Handle<dyn Transient> = edge_loop.cast();
         if live_loop.nb_edge_list() == 0 {
             process.add_warning_text(
                 &loop_entity,
@@ -250,13 +253,15 @@ impl StepToTopoDSTranslateEdgeLoop {
             oriented.clone()
         };
         live_oriented = step_live(&working, "StepToTopoDSTranslateEdgeLoop")?;
-        let edge_curve = live_oriented.edge_element().cast::<StepShapeEdgeCurve>();
+        let edge_curve = live_oriented
+            .edge_element()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeCurve>>();
         let Some(live_curve) = edge_curve.get() else {
             return Ok(());
         };
         let process_handle = tool.transient_process();
         let process = step_live(&process_handle, "StepToTopoDSTranslateEdgeLoop")?;
-        let curve_entity: Handle<StandardTransient> = edge_curve.cast();
+        let curve_entity: Handle<dyn Transient> = edge_curve.cast();
         // Map the StepEdge
         let mut translator = StepToTopoDSTranslateEdge::new();
         translator.root.set_precision(context.preci);

@@ -3,7 +3,7 @@ use super::*;
 use crate::{prs_mgr::*, select_mgr::*, select3d::*};
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Failure, Handle, HandleReference, StandardTransient},
+    standard::{Failure, Handle, HandleReference},
 };
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::{
@@ -58,16 +58,14 @@ fn light_sensitive_sphere<O: AisLightSourceSource + ?Sized>(
 }
 /// Native light selection owner; `AisLightSourceOwner::new(&light.cast(),5)`.
 pub struct AisLightSourceOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
 }
-martensite_tkernel::impl_transient!(AisLightSourceOwner,"AisLightSourceOwner",dyn SelectMgrEntityOwnerSource,transient,
+martensite_tkernel::impl_transient!(AisLightSourceOwner,"AisLightSourceOwner",dyn SelectMgrEntityOwnerSource,
     interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl AisLightSourceOwner {
     /// Observe a selectable light without retaining it; `AisLightSourceOwner::new(&light.cast(),15)`.
     pub fn new(object: &Handle<dyn SelectMgrSelectableObject>, priority: i32) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(object, priority),
         });
         select_mgr_entity_owner_bind(&owner.cast());

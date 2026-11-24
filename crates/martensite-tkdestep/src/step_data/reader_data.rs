@@ -8,7 +8,7 @@ use martensite_tkernel::{
     message::Message,
     ncollection::{DataMap, IndexedMap},
     resource::FormatType,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -63,7 +63,6 @@ pub(crate) fn c_atoi(text: &[u8]) -> i32 {
 /// assert_eq!(data.find_next_record(0), 1);
 /// ```
 pub struct StepDataStepReaderData {
-    transient: StandardTransient,
     base: InterfaceFileReaderDataBase,
     pub(super) state: SharedState<ReaderState>,
     pub(super) thecheck: Handle<InterfaceCheck>,
@@ -73,7 +72,6 @@ impl_transient!(
     StepDataStepReaderData,
     "StepDataStepReaderData",
     dyn InterfaceFileReaderData,
-    transient,
     interfaces: [dyn InterfaceFileReaderData]
 );
 
@@ -105,7 +103,6 @@ impl StepDataStepReaderData {
     pub fn new(nbheader: i32, nbtotal: i32, nbpar: i32, source_code_page: FormatType) -> Self {
         let places = nbtotal.max(0) as usize + 1;
         Self {
-            transient: StandardTransient::default(),
             base: InterfaceFileReaderDataBase::new(nbtotal, nbpar),
             state: SharedState::new(ReaderState {
                 theidents: vec![0; places],

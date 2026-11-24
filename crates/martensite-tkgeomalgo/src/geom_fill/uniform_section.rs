@@ -6,7 +6,7 @@ use super::sweep_failures::live;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::array2_failure;
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::arrays::one_based;
 use martensite_tkg3d::geom::{GeomBSplineSurface, GeomCurve};
 use martensite_tkmath::geom_abs::Shape;
@@ -16,7 +16,6 @@ use martensite_tkmath::gp::{Point3, Vector3};
 /// `[First, Last]`. A B-spline input is shared, not copied, as natively.
 /// `let law = GeomFillUniformSection::new(&circle, 0.0, 1.0)?;`.
 pub struct GeomFillUniformSection {
-    parent: StandardTransient,
     first: f64,
     last: f64,
     curve: SectionCurve,
@@ -25,7 +24,6 @@ impl_transient!(
     GeomFillUniformSection,
     "GeomFill_UniformSection",
     dyn GeomFillSectionLaw,
-    parent,
     interfaces: [dyn GeomFillSectionLaw]
 );
 
@@ -37,7 +35,6 @@ impl GeomFillUniformSection {
         last_parameter: f64,
     ) -> Result<Self, Failure> {
         Ok(Self {
-            parent: StandardTransient::default(),
             first: first_parameter,
             last: last_parameter,
             curve: SectionCurve::new(c)?,

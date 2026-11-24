@@ -1,10 +1,12 @@
 //! TopOpeBRepDS kinds, transitions and interferences: the package names, the
 //! transition orientations and the interference hierarchy shared through handles.
+use martensite_tkbool::top_ope_brep_ds::InterferenceRecord;
+use martensite_tkbool::top_ope_brep_ds::ShapeInterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     TopOpeBRepDSConfig, TopOpeBRepDSCurvePointInterference, TopOpeBRepDSEdgeVertexInterference,
     TopOpeBRepDSFaceEdgeInterference, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSShapeShapeInterference, TopOpeBRepDSSurfaceCurveInterference,
-    TopOpeBRepDSTransition, kind_to_shape, shape_to_kind, sprint_kind_index,
+    TopOpeBRepDSSurfaceCurveInterference, TopOpeBRepDSTransition, kind_to_shape, shape_to_kind,
+    sprint_kind_index,
 };
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum, State};
@@ -74,7 +76,7 @@ fn different_indices_have_no_common_index() {
 #[test]
 fn derived_interferences_cast_to_their_bases_and_back() {
     let t = TopOpeBRepDSTransition::from_orientation(Orientation::Reversed);
-    let ev: Handle<TopOpeBRepDSInterference> =
+    let ev: Handle<dyn InterferenceRecord> =
         Handle::new(TopOpeBRepDSEdgeVertexInterference::on_edge(
             &t,
             2,
@@ -83,20 +85,25 @@ fn derived_interferences_cast_to_their_bases_and_back() {
             TopOpeBRepDSConfig::SameOriented,
             0.5,
         ))
-        .cast();
+        .into_upcast();
     let base = ev.get().map(|i| i.gkgsks());
     assert_eq!(
         base,
         Some((TopOpeBRepDSKind::Vertex, 7, TopOpeBRepDSKind::Edge, 2))
     );
-    let ss: Handle<TopOpeBRepDSShapeShapeInterference> = ev.cast();
+    let ss: Handle<dyn ShapeInterferenceRecord> = ev.cast();
+    assert_eq!(ss.object_address(), ev.object_address());
+    assert_eq!(
+        ss.dynamic_type().unwrap().parent().unwrap().name(),
+        "TopOpeBRepDSShapeShapeInterference"
+    );
     assert_eq!(
         ss.get().map(|i| (i.gbound(), i.config())),
         Some((true, TopOpeBRepDSConfig::SameOriented))
     );
-    let back: Handle<TopOpeBRepDSEdgeVertexInterference> = ev.cast();
+    let back: Handle<TopOpeBRepDSEdgeVertexInterference> = ev.downcast();
     assert_eq!(back.get().map(|i| i.parameter()), Some(0.5));
-    let cp: Handle<TopOpeBRepDSCurvePointInterference> = ev.cast();
+    let cp: Handle<TopOpeBRepDSCurvePointInterference> = ev.downcast();
     assert!(cp.is_null());
 }
 
@@ -110,7 +117,7 @@ fn interferences_are_modified_through_any_handle() -> Result<(), Failure> {
         false,
         TopOpeBRepDSConfig::DiffOriented,
     ));
-    let base: Handle<TopOpeBRepDSInterference> = fe.clone().cast();
+    let base: Handle<dyn InterferenceRecord> = fe.upcast();
     base.get()
         .ok_or_else(|| Failure::new("null"))?
         .set_support(9);
@@ -119,13 +126,14 @@ fn interferences_are_modified_through_any_handle() -> Result<(), Failure> {
         .change_transition(|t| t.set_index(6));
     let f = fe.get().ok_or_else(|| Failure::new("null"))?;
     assert_eq!((f.support(), f.transition().index()?), (9, 6));
-    let other: Handle<TopOpeBRepDSInterference> = Handle::new(TopOpeBRepDSInterference::new(
+    let other: Handle<dyn InterferenceRecord> = Handle::new(TopOpeBRepDSInterference::new(
         &t,
         TopOpeBRepDSKind::Face,
         9,
         TopOpeBRepDSKind::Curve,
         3,
-    ));
+    ))
+    .into_upcast();
     assert!(f.has_same_support(&other)?);
     assert!(!f.has_same_geometry(&other)?);
     Ok(())
@@ -134,13 +142,14 @@ fn interferences_are_modified_through_any_handle() -> Result<(), Failure> {
 #[test]
 fn a_surface_curve_copy_has_no_pcurve() -> Result<(), Failure> {
     let t = TopOpeBRepDSTransition::default();
-    let i: Handle<TopOpeBRepDSInterference> = Handle::new(TopOpeBRepDSInterference::new(
+    let i: Handle<dyn InterferenceRecord> = Handle::new(TopOpeBRepDSInterference::new(
         &t,
         TopOpeBRepDSKind::Surface,
         1,
         TopOpeBRepDSKind::Curve,
         2,
-    ));
+    ))
+    .into_upcast();
     let sc = TopOpeBRepDSSurfaceCurveInterference::from_interference(&i)?;
     assert!(sc.pcurve().is_null());
     assert_eq!((sc.support(), sc.geometry()), (1, 2));

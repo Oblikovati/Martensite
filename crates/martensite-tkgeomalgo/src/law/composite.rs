@@ -2,7 +2,7 @@
 use super::LawFunction;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, List};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::{at, one_based, put};
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkmath::elclib;
@@ -31,10 +31,9 @@ struct CompositeFields {
 ///
 /// `let law = LawComposite::new(); law.change_laws(|laws| { laws.append(piece); });`
 pub struct LawComposite {
-    parent: StandardTransient,
     fields: SharedState<CompositeFields>,
 }
-impl_transient!(LawComposite, "Law_Composite", dyn LawFunction, parent, interfaces: [dyn LawFunction]);
+impl_transient!(LawComposite, "Law_Composite", dyn LawFunction, interfaces: [dyn LawFunction]);
 
 impl Default for LawComposite {
     fn default() -> Self {
@@ -70,7 +69,6 @@ impl LawComposite {
     /// (`Law_Composite(First, Last, Tol)`); `LawComposite::with_range(0.0, 1.0, 1e-9)`.
     pub fn with_range(first: f64, last: f64, tol: f64) -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(CompositeFields {
                 first: -1.0e100,
                 last: 1.0e100,
@@ -233,7 +231,7 @@ impl LawFunction for LawComposite {
         let trimmed = LawComposite::with_range(p_first, p_last, tol);
         let list: List<LawHandle> = self.fields.read().funclist.clone();
         trimmed.change_laws(|laws| *laws = list);
-        Ok(Handle::new(trimmed).cast())
+        Ok(Handle::new(trimmed).into_upcast())
     }
     /// The bounds of the whole list, `(-1e100, 1e100)` before the first evaluation.
     fn bounds(&self) -> Result<(f64, f64), Failure> {

@@ -14,43 +14,39 @@ use crate::select3d::{
 };
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkmath::toploc::Location;
 use martensite_tkservice::aspect::AspectTypeOfFacingModel;
 use martensite_tkservice::graphic3d::{
     Graphic3dArrayOfPrimitives, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
-    Graphic3dAspectMarker3d, Graphic3dAspectsMembers as _, Graphic3dAspectsReplaceMap,
-    Graphic3dAspectsSource, Graphic3dAttribBuffer, Graphic3dBufferMembers as _,
-    Graphic3dGroupMembers as _, Graphic3dMaterialAspect, Graphic3dNameOfMaterial,
-    Graphic3dPresentationAttributesSource as _, Graphic3dStructureMembers as _,
-    Graphic3dStructureSource, Graphic3dTypeOfPrimitiveArray,
+    Graphic3dArraySource, Graphic3dAspectMarker3d, Graphic3dAspectsMembers as _,
+    Graphic3dAspectsReplaceMap, Graphic3dAspectsSource, Graphic3dAttribBuffer,
+    Graphic3dBufferMembers as _, Graphic3dGroupMembers as _, Graphic3dMaterialAspect,
+    Graphic3dNameOfMaterial, Graphic3dPresentationAttributesSource as _,
+    Graphic3dStructureMembers as _, Graphic3dStructureSource, Graphic3dTypeOfPrimitiveArray,
 };
 
 /// The array and the marker aspect of the object.
 #[derive(Default)]
 struct PArrayFields {
     marker_aspect: Handle<Graphic3dAspectMarker3d>,
-    parray: Handle<Graphic3dArrayOfPrimitives>,
+    parray: Handle<dyn Graphic3dArraySource>,
 }
 
 /// Retain a primitive array with its marker/shading presentation and sensitive entities.
 /// This mutable AIS owner is confined to its viewer invocation; it is not a published result.
 /// Example: `let object = PrimitiveArrayPresentation::from_array(vertices);`.
 pub struct PrimitiveArrayPresentation {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     fields: SharedState<PArrayFields>,
 }
-martensite_tkernel::impl_transient!(PrimitiveArrayPresentation, "MyPArrayObject", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(PrimitiveArrayPresentation, "MyPArrayObject", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl PrimitiveArrayPresentation {
     /// The object of an existing array.
-    fn allocate(parray: Handle<Graphic3dArrayOfPrimitives>) -> Handle<Self> {
+    fn allocate(parray: Handle<dyn Graphic3dArraySource>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::new(PArrayFields {
                 marker_aspect: Handle::default(),
@@ -61,16 +57,16 @@ impl PrimitiveArrayPresentation {
         object
     }
     /// Bind an existing array without altering its material; `PrimitiveArrayPresentation::from_array(array)`.
-    pub fn from_array(parray: Handle<Graphic3dArrayOfPrimitives>) -> Handle<Self> {
+    pub fn from_array(parray: Handle<dyn Graphic3dArraySource>) -> Handle<Self> {
         Self::allocate(parray)
     }
 
     /// Read the retained array without replacing its identity; `object.primitive_array()`.
-    pub fn primitive_array(&self) -> Handle<Graphic3dArrayOfPrimitives> {
+    pub fn primitive_array(&self) -> Handle<dyn Graphic3dArraySource> {
         self.fields.read().parray.clone()
     }
     /// Retain a replacement array before a presentation is computed; `object.replace_primitive_array(array)`.
-    pub fn replace_primitive_array(&self, array: Handle<Graphic3dArrayOfPrimitives>) {
+    pub fn replace_primitive_array(&self, array: Handle<dyn Graphic3dArraySource>) {
         self.fields.write().parray = array;
     }
     /// Retain the marker aspect independently of geometry; `object.set_marker_aspect(&marker)`.

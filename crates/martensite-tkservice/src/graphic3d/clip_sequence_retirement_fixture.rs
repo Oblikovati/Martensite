@@ -4,8 +4,8 @@ use super::{
     Graphic3dSequenceOfHClipPlane,
 };
 use martensite_tkernel::ncollection::SequencePreparedNode;
-use martensite_tkernel::standard::{Handle, SharedState, Transient, WeakHandle};
-use std::sync::{Arc, Weak};
+use martensite_tkernel::standard::{Handle, SharedState, WeakHandle};
+use std::sync::{Arc, OnceLock, Weak};
 #[derive(Default)]
 pub(super) struct ClipRetirementTranscript {
     pub(super) rows: SharedState<Vec<String>>,
@@ -18,16 +18,17 @@ pub(super) struct ClipRetirementAppend {
 }
 pub(super) struct ClipRetirementPlane {
     parent: Graphic3dClipPlane,
+    identity: OnceLock<WeakHandle<ClipRetirementPlane>>,
     collection: Weak<Graphic3dSequenceOfHClipPlane>,
     transcript: Weak<ClipRetirementTranscript>,
     phase: &'static str,
     ordinal: i32,
 }
 martensite_tkernel::impl_transient!(ClipRetirementPlane,"Martensite_ClipRetirementPlane",
-    Graphic3dClipPlane,parent,interfaces:[dyn Graphic3dClipPlaneSource]);
+    Graphic3dClipPlane,interfaces:[dyn Graphic3dClipPlaneSource]);
 impl Graphic3dClipPlaneSource for ClipRetirementPlane {
     fn clip_plane_base(&self) -> &Graphic3dClipPlane {
-        // This actual parent supplies all inherited fields and the shared intrusive counter.
+        // This actual parent supplies the original inherited fields.
         &self.parent
     }
 }
@@ -47,18 +48,24 @@ impl ClipRetirementPlane {
             self.ordinal,
             collection.size(),
             i32::from(collection.is_empty()),
-            self.transient_base().ref_count()
+            self.identity.get().unwrap().ref_count()
         )
     }
-    fn first_retirement_state(&self, collection: &Graphic3dSequenceOfHClipPlane) -> (bool, i32) {
+    fn first_retirement_state(&self, collection: &Graphic3dSequenceOfHClipPlane) -> (bool, usize) {
         let first = collection.first_ref().unwrap();
         let same = first.object_address() == std::ptr::from_ref(self).cast::<()>();
         let count = if same {
-            first
-                .with_retiring_pointee(self, |plane| plane.transient_base().ref_count())
-                .unwrap()
+            assert!(
+                first
+                    .with_retiring_pointee(self, |plane| std::ptr::eq(
+                        plane.clip_plane_base(),
+                        &self.parent
+                    ))
+                    .unwrap()
+            );
+            first.ref_count()
         } else {
-            first.observe().ref_count()
+            first.ref_count()
         };
         (same, count)
     }
@@ -98,20 +105,22 @@ pub(super) fn append_retiring_plane(
 ) {
     let plane = Handle::new(ClipRetirementPlane {
         parent: Graphic3dClipPlane::default(),
+        identity: OnceLock::new(),
         collection: Arc::downgrade(collection),
         transcript: Arc::downgrade(transcript),
         phase,
         ordinal,
     });
-    let source = plane.observe_as::<dyn Graphic3dClipPlaneSource>();
-    collection.append_reference(&*source);
+    plane.identity.set(plane.downgrade()).unwrap();
+    let source = plane.upcast::<dyn Graphic3dClipPlaneSource>();
+    collection.append_reference(&source);
 }
 
 impl ClipRetirementAppend {
     fn execute(&self, collection: &Graphic3dSequenceOfHClipPlane) {
-        let plane = self.plane.observe();
+        let plane = self.plane.upgrade();
         if !self.direct {
-            collection.append_reference(&*plane);
+            collection.append_reference(&plane);
             return;
         }
         append_protected_node(collection, &plane);

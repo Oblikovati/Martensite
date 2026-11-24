@@ -1,7 +1,7 @@
 use super::fixture::{AppendItem, AppendJournal, DerivedSequence, base_handle, values, wrapper};
 use martensite_tkernel::{
     ncollection::{BaseAllocator, HSequence},
-    standard::{Handle, Transient},
+    standard::Handle,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
@@ -16,7 +16,7 @@ fn invoke(receiver: &HSequence<AppendItem>, source: &Handle<DerivedSequence>) ->
 fn transfer_state(
     name: &str,
     target: &HSequence<AppendItem>,
-    source: &DerivedSequence,
+    source: &Handle<DerivedSequence>,
     state: (bool, bool),
     journal: &AppendJournal,
 ) -> String {
@@ -26,7 +26,7 @@ fn transfer_state(
         values(&source.base),
         u8::from(state.0),
         u8::from(state.1),
-        source.transient_base().ref_count(),
+        source.ref_count(),
         journal.events()
     )
 }
@@ -45,7 +45,7 @@ fn transfer_case(name: &str, same: bool, failure: i32) -> String {
     journal.reset(failure);
     let caught = invoke(&target, &source);
     let stable = target.sequence(|s| s.value(2).is_ok_and(|x| std::ptr::eq(x, before)));
-    let row = transfer_state(name, &target, owner, (caught, stable), &journal);
+    let row = transfer_state(name, &target, &source, (caught, stable), &journal);
     journal.reset(0);
     row
 }
@@ -82,7 +82,7 @@ fn simple_case(name: &str, itself: bool, empty: bool, redirect: bool, fail: bool
         values(&owner.base),
         values(&owner.alternate),
         u8::from(caught),
-        owner.transient_base().ref_count(),
+        source.ref_count(),
         journal.events()
     )
 }
@@ -97,7 +97,7 @@ fn base_case() -> String {
         "base {} {} {} -\n",
         values(&target),
         values(source.get().unwrap()),
-        source.get().unwrap().transient_base().ref_count()
+        source.ref_count()
     )
 }
 /// Derives every line from current Rust state; `all_rows()`.

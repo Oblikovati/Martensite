@@ -206,7 +206,7 @@ macro_rules! scalar_copy_multiplication {
 }
 impl<T: VectorArithmeticComponent + Mul<Output = T>> Vec2<T> {
     /// Returns a scaled copy; `Vec2::new(1, 2).multiplied(3)`.
-    pub fn multiplied(&self, factor: T) -> Self {
+    pub(crate) fn multiplied(&self, factor: T) -> Self {
         Self::new(
             self.x.vector_multiply(factor),
             self.y.vector_multiply(factor),
@@ -249,10 +249,6 @@ impl<T: Copy + PartialOrd> Vec2<T> {
     /// Returns the larger component, preferring y on ties; `Vec2::new(1,2).max_comp() == 2`.
     pub fn max_comp(&self) -> T {
         if self.x > self.y { self.x } else { self.y }
-    }
-    /// Returns the smaller component, preferring y on ties; `Vec2::new(1,2).min_comp() == 1`.
-    pub fn min_comp(&self) -> T {
-        if self.x < self.y { self.x } else { self.y }
     }
 }
 impl<T: Copy + PartialOrd> Vec3<T> {

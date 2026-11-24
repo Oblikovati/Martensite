@@ -53,17 +53,23 @@ fn fixed_vertex_override(draw: &PrimitiveDraw) -> Option<bool> {
 /// alpha) colour instead, which is exact; alpha-only textures keep the alpha-replace flag.
 /// Example: `apply_sprite_replace(&mut draw)`.
 pub(crate) fn apply_sprite_replace(draw: &mut PrimitiveDraw) {
-    let Some(style) = draw.surface_texture.as_mut() else {
+    // Reading first keeps a body that a draw record shares from being copied for nothing.
+    if draw.surface_texture.is_none() {
+        return;
+    }
+    let lit = draw.lighting.is_some();
+    let body = &mut **draw;
+    let Some(style) = body.surface_texture.as_mut() else {
         return;
     };
     let sprite = style.native_gen_mode
         == martensite_tkservice::graphic3d::Graphic3dTypeOfTextureMode::Sprite;
-    if !sprite || !style.fixed_environment || style.image.alpha_only || draw.lighting.is_some() {
+    if !sprite || !style.fixed_environment || style.image.alpha_only || lit {
         return;
     }
     style.modulate = true;
     let texel_alpha = style.image.has_alpha;
-    for vertex in &mut draw.vertices {
+    for vertex in body.vertices.make_mut() {
         let alpha = if texel_alpha { 1. } else { vertex.color[3] };
         vertex.color = [1., 1., 1., alpha];
     }
@@ -97,7 +103,7 @@ mod tests {
     ) -> std::sync::Arc<SurfaceTextureImage> {
         let image = Handle::new(ImagePixMap::default());
         assert!(image.init_wrapper(format, Some(pixels.clone()), 1, 1, pixels.len()));
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()));
         crate::retained_texture_images::RetainedTextureImages::default()
             .snapshot(&texture.cast())
             .unwrap()
@@ -110,7 +116,7 @@ mod tests {
             pending_texgen: None,
             fixed_environment: true,
             sampler: SurfaceSamplerPolicy::read(&Graphic3dTextureParams::default()),
-            uv: vec![],
+            uv: Vec::new().into(),
             back_vertex: false,
             vertex_override: false,
             modulate: true,

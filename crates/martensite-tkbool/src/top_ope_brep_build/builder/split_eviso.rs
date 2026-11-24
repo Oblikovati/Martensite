@@ -37,7 +37,7 @@ fn fun_get_g(
 ) -> Result<(i32, i32), Failure> {
     let mut i_einterf = 0;
     for i in li.iter() {
-        let ssi: Handle<TopOpeBRepDSCurvePointInterference> = i.clone().cast();
+        let ssi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
         let Some(s) = ssi.get() else {
             continue;
         };
@@ -90,7 +90,7 @@ fn fun_epi_for_eviso_on_periodic_f(
         ig,
         parone,
     );
-    locpi.append(Handle::new(cpi).cast());
+    locpi.append(Handle::new(cpi).into_upcast());
     Ok(true)
 }
 
@@ -106,7 +106,7 @@ fn fun_get_epi_on_eds(
             continue;
         }
         for i in hds.ds().shape_interferences(&e, true).iter() {
-            let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.clone().cast();
+            let cpi: Handle<TopOpeBRepDSCurvePointInterference> = i.downcast();
             if cpi.get().is_none() {
                 continue;
             }

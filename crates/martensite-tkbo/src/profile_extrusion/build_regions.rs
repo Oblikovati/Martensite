@@ -47,15 +47,146 @@ const DECLINE: Decliner = Decliner {
 /// # Ok::<(), OperationDecline>(())
 /// ```
 pub fn build_planar_regions(profile: &SketchProfile, resolution: Resolution) -> PlanarRegionResult {
-    let profile =
-        admit_profile(profile, resolution).map_err(|c| DECLINE.at(Stage::Admission, c))?;
-    require_closed(&profile).map_err(|c| DECLINE.at(Stage::Loops, c))?;
-    let certified = certify_regions(&profile).map_err(|c| DECLINE.at(Stage::Certification, c))?;
-    let topology = build_topology(&profile)
+    build_with_work(
+        profile,
+        resolution,
+        super::PlanarProofWorkLimit::CurrentDefault,
+    )
+    .map_err(super::PlanarRegionWorkFailure::into_decline)
+}
+/// Build every bounded region with an explicit finite shared pair-work choice.
+/// Example: `build_planar_regions_with_work(&profile, resolution, PlanarProofWorkLimit::PairBisections(8192))?`.
+pub fn build_planar_regions_with_work(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+) -> super::PlanarRegionWorkResult {
+    build_with_work(profile, resolution, requested)
+}
+
+/// Build bounded planar regions with a finite work limit and cooperative cancellation.
+/// Example: `build_planar_regions_with_work_and_cancel(&profile, resolution, limit, || false)?`.
+pub fn build_planar_regions_with_work_and_cancel(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+    cancelled: impl FnMut() -> bool + Send,
+) -> super::PlanarRegionWorkResult {
+    build_planar_regions_with_proof_and_cancel(
+        profile,
+        resolution,
+        requested,
+        super::PlanarProofVersion::CarrierV2,
+        cancelled,
+    )
+}
+/// Build planar regions with an explicit versioned exact proof route and finite work.
+/// Example: `build_planar_regions_with_proof_and_cancel(&profile, resolution, limit, PlanarProofVersion::BernsteinV3, || false)?`.
+pub fn build_planar_regions_with_proof_and_cancel(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+    version: super::PlanarProofVersion,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> super::PlanarRegionWorkResult {
+    if cancelled() {
+        return Err(cancelled_failure(requested, Stage::Admission, None));
+    }
+    let profile = admit_closed_profile(profile, resolution, requested)?;
+    let certified = certified_for_work_with_cancel(&profile, requested, version, &mut cancelled)?;
+    if cancelled() {
+        return Err(cancelled_failure(
+            requested,
+            Stage::Construction,
+            Some(certified.work),
+        ));
+    }
+    construct_regions_with_cancel(&profile, &certified, requested, &mut cancelled)
+}
+
+fn admit_closed_profile(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+) -> Result<AdmittedProfile, super::PlanarRegionWorkFailure> {
+    let unobserved = |decline| super::PlanarRegionWorkFailure::new(requested, decline, None);
+    let profile = admit_profile(profile, resolution)
+        .map_err(|cause| unobserved(DECLINE.at(Stage::Admission, cause)))?;
+    require_closed(&profile).map_err(|cause| unobserved(DECLINE.at(Stage::Loops, cause)))?;
+    Ok(profile)
+}
+
+fn certified_for_work_with_cancel(
+    profile: &AdmittedProfile,
+    requested: super::PlanarProofWorkLimit,
+    version: super::PlanarProofVersion,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<CertifiedRegions, super::PlanarRegionWorkFailure> {
+    super::proof::certify_regions_version_with_cancel(
+        profile,
+        requested.override_limit(),
+        version,
+        cancelled,
+    )
+    .map_err(|failure| {
+        super::PlanarRegionWorkFailure::new(
+            requested,
+            DECLINE.at(Stage::Certification, failure.cause),
+            failure.work,
+        )
+        .with_root_failure(failure.root_failure)
+        .with_cancelled(failure.cancelled)
+    })
+}
+
+fn cancelled_failure(
+    requested: super::PlanarProofWorkLimit,
+    stage: Stage,
+    work: Option<super::PlanarProofWorkReceipt>,
+) -> super::PlanarRegionWorkFailure {
+    let cause = super::DeclineCause::IncompleteCertification {
+        reason: "cancelled".into(),
+    };
+    super::PlanarRegionWorkFailure::new(requested, DECLINE.at(stage, cause), work)
+        .with_cancelled(true)
+}
+fn build_with_work(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+) -> super::PlanarRegionWorkResult {
+    let unobserved = |decline| super::PlanarRegionWorkFailure::new(requested, decline, None);
+    let profile = admit_profile(profile, resolution)
+        .map_err(|cause| unobserved(DECLINE.at(Stage::Admission, cause)))?;
+    require_closed(&profile).map_err(|cause| unobserved(DECLINE.at(Stage::Loops, cause)))?;
+    let certified = certified_for_work(&profile, requested)?;
+    construct_regions(&profile, &certified).map_err(|decline| {
+        super::PlanarRegionWorkFailure::new(requested, decline, Some(certified.work))
+    })
+}
+fn certified_for_work(
+    profile: &AdmittedProfile,
+    requested: super::PlanarProofWorkLimit,
+) -> Result<CertifiedRegions, super::PlanarRegionWorkFailure> {
+    certify_regions(profile, requested.override_limit()).map_err(|failure| {
+        super::PlanarRegionWorkFailure::new(
+            requested,
+            DECLINE.at(Stage::Certification, failure.cause),
+            failure.work,
+        )
+        .with_root_failure(failure.root_failure)
+    })
+}
+
+fn construct_regions(
+    profile: &AdmittedProfile,
+    certified: &CertifiedRegions,
+) -> PlanarRegionResult {
+    let topology = build_topology(profile)
         .map_err(|f| DECLINE.native(Stage::Construction, "profile topology", f))?;
     let context = RegionContext {
-        profile: &profile,
-        certified: &certified,
+        profile,
+        certified,
         topology: &topology,
     };
     let regions = certified
@@ -67,6 +198,43 @@ pub fn build_planar_regions(profile: &SketchProfile, resolution: Resolution) -> 
     Ok(context.publish(regions))
 }
 
+fn construct_regions_with_cancel(
+    profile: &AdmittedProfile,
+    certified: &CertifiedRegions,
+    requested: super::PlanarProofWorkLimit,
+    cancelled: &mut impl FnMut() -> bool,
+) -> super::PlanarRegionWorkResult {
+    let work = Some(certified.work);
+    let topology = topology_with_receipt(profile, requested, work)?;
+    let context = RegionContext {
+        profile,
+        certified,
+        topology: &topology,
+    };
+    let mut regions = Vec::with_capacity(certified.faces.len());
+    for (index, face) in certified.faces.iter().enumerate() {
+        if cancelled() {
+            return Err(cancelled_failure(requested, Stage::Construction, work));
+        }
+        regions.push(context.region_with_receipt(index, face, requested, work)?);
+    }
+    if cancelled() {
+        return Err(cancelled_failure(requested, Stage::Construction, work));
+    }
+    Ok(context.publish(regions))
+}
+
+fn topology_with_receipt(
+    profile: &AdmittedProfile,
+    requested: super::PlanarProofWorkLimit,
+    work: Option<super::PlanarProofWorkReceipt>,
+) -> Result<ProfileTopology, super::PlanarRegionWorkFailure> {
+    build_topology(profile).map_err(|failure| {
+        let decline = DECLINE.native(Stage::Construction, "profile topology", failure);
+        super::PlanarRegionWorkFailure::new(requested, decline, work)
+    })
+}
+
 struct RegionContext<'a> {
     profile: &'a AdmittedProfile,
     certified: &'a CertifiedRegions,
@@ -74,6 +242,17 @@ struct RegionContext<'a> {
 }
 
 impl RegionContext<'_> {
+    fn region_with_receipt(
+        &self,
+        index: usize,
+        face: &CertifiedFace,
+        requested: super::PlanarProofWorkLimit,
+        work: Option<super::PlanarProofWorkReceipt>,
+    ) -> Result<PlanarRegion, super::PlanarRegionWorkFailure> {
+        self.region(index, face)
+            .map_err(|decline| super::PlanarRegionWorkFailure::new(requested, decline, work))
+    }
+
     fn publish(&self, regions: Vec<PlanarRegion>) -> PlanarRegionSet {
         let certificate = RegionCertificate {
             pair_domains: self.certified.pair_domains,
@@ -87,6 +266,8 @@ impl RegionContext<'_> {
             curve_edges,
             resolution: self.profile.resolution,
             certificate,
+            proof_work: self.certified.work,
+            proof_version: self.certified.version,
         }
     }
 

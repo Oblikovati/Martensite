@@ -1,7 +1,7 @@
 //! Null failure state and live borrowed argument replacements use real owner fields.
 use super::{viewer_light_probe_replay::make_light_probe_scene, *};
 use martensite_tkernel::standard::{Handle, HandleFieldRef, catch_native_failure};
-use martensite_tkservice::graphic3d::{Graphic3dCLight, Graphic3dLightSet};
+use martensite_tkservice::graphic3d::{Graphic3dCLightSource, Graphic3dLightSet};
 #[test]
 fn null_membership_and_set_lights_caller_replacement_replay_native() {
     let mut rows = capture_repeated_null_membership();
@@ -17,7 +17,7 @@ fn capture_repeated_null_membership() -> Vec<String> {
     scene.viewer.state.write().defined_lights.clear();
     scene
         .viewer
-        .add_light(&Handle::<Graphic3dCLight>::default());
+        .add_light(&Handle::<dyn Graphic3dCLightSource>::default());
     (0..2)
         .map(|step| null_failure_row(step, &scene.views[0]))
         .collect()
@@ -29,7 +29,7 @@ fn null_failure_row(step: usize, view: &Handle<dyn V3dViewSource>) -> String {
     })
     .unwrap_err();
     assert_eq!(failure.exception_type(), "Standard_ProgramError");
-    let member = view.is_active_light(&Handle::<Graphic3dCLight>::default()) as u8;
+    let member = view.is_active_light(&Handle::<dyn Graphic3dCLightSource>::default()) as u8;
     let null_set = view.view_ref().observe().lights_ref().is_null() as u8;
     format!(
         "null {step} {} {member} {null_set}",

@@ -15,7 +15,7 @@ step_entity! {
         position: Handle<StepGeomAxis1Placement>,
         major_radius: f64,
         minor_radius: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeTorus {
     step_methods! {
@@ -46,7 +46,7 @@ impl StepShapeTorus {
 step_entity! {
     /// Transitional shape representation.
     StepShapeTransitionalShapeRepresentation, StepShapeTransitionalShapeRepresentationState, "StepShapeTransitionalShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
@@ -80,22 +80,26 @@ impl StepShapeValueFormatTypeQualifier {
 step_entity! {
     /// Vertex.
     StepShapeVertex, StepShapeVertexState, "StepShapeVertex", StepShapeTopologicalRepresentationItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeVertex, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 
 step_entity! {
     /// Vertex loop.
     StepShapeVertexLoop, StepShapeVertexLoopState, "StepShapeVertexLoop", StepShapeLoop, {
-        loop_vertex: Handle<StepShapeVertex>,
-    }
+        loop_vertex: Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeLoop, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeVertexLoop {
     step_methods! {
-        set set_loop_vertex = loop_vertex: Handle<StepShapeVertex>;
-        get loop_vertex = loop_vertex: Handle<StepShapeVertex>;
+        set set_loop_vertex = loop_vertex: Handle<dyn crate::StepEntityBase<StepShapeVertex>>;
+        get loop_vertex = loop_vertex: Handle<dyn crate::StepEntityBase<StepShapeVertex>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_loop_vertex: &Handle<StepShapeVertex>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_loop_vertex: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+    ) {
         self.state.write().loop_vertex = a_loop_vertex.clone();
         self.parent.parent.parent.init(a_name);
     }
@@ -104,16 +108,20 @@ impl StepShapeVertexLoop {
 step_entity! {
     /// Vertex point.
     StepShapeVertexPoint, StepShapeVertexPointState, "StepShapeVertexPoint", StepShapeVertex, {
-        vertex_geometry: Handle<StepGeomPoint>,
-    }
+        vertex_geometry: Handle<dyn crate::StepEntityBase<StepGeomPoint>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeVertex, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeVertexPoint {
     step_methods! {
-        set set_vertex_geometry = vertex_geometry: Handle<StepGeomPoint>;
-        get vertex_geometry = vertex_geometry: Handle<StepGeomPoint>;
+        set set_vertex_geometry = vertex_geometry: Handle<dyn crate::StepEntityBase<StepGeomPoint>>;
+        get vertex_geometry = vertex_geometry: Handle<dyn crate::StepEntityBase<StepGeomPoint>>;
     }
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_vertex_geometry: &Handle<StepGeomPoint>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_vertex_geometry: &Handle<dyn crate::StepEntityBase<StepGeomPoint>>,
+    ) {
         self.state.write().vertex_geometry = a_vertex_geometry.clone();
         self.parent.parent.parent.init(a_name);
     }

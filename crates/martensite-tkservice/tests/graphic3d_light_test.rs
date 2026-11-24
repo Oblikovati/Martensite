@@ -52,7 +52,7 @@ fn copy_from_null_raises() {
     let error = light.copy_from(&Handle::default()).unwrap_err();
     assert_eq!(error.exception_type(), "Standard_ProgramError");
     light
-        .copy_from(&Handle::new(Graphic3dCLight::new(T::Ambient)))
+        .copy_from(&Handle::new(Graphic3dCLight::new(T::Ambient)).into_upcast())
         .unwrap();
 }
 

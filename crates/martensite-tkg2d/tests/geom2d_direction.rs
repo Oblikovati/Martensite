@@ -138,7 +138,7 @@ fn direction_crossed_with_vector_with_magnitude() {
 fn direction_copy() {
     let aDir = direction(1.0, 0.0);
     let aCopyGeom: Handle<dyn Geom2dGeometry> = aDir.copy().unwrap();
-    let aCopy: Handle<Geom2dDirection> = aCopyGeom.cast::<Geom2dDirection>();
+    let aCopy: Handle<Geom2dDirection> = aCopyGeom.into_downcast::<Geom2dDirection>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.x(), 1.0, precision::confusion());

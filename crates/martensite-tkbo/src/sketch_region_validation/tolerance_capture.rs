@@ -82,7 +82,7 @@ fn captured_curves(edge: &Edge, face: &Face) -> Result<CapturedEdgeCurves, Plana
 }
 fn plane_frame(face: &Face) -> Result<(MetricEmbedding<2>, MetricEmbedding<3>), PlanarMetricCause> {
     let (surface, location) = BRepTool::surface_with_location(face)?;
-    let planar = surface.cast::<GeomPlane>();
+    let planar = surface.downcast::<GeomPlane>();
     let Some(planar) = planar.get() else {
         return Err(PlanarMetricCause::Unsupported {
             representation: "surface",

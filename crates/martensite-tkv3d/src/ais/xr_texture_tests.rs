@@ -36,7 +36,7 @@ fn xr_texture_read_outcome(
     source: &Handle<XrImageSourceFake>,
     texture: &Handle<dyn Graphic3dTextureMap>,
     ordinal: (i32, i32),
-    output: Result<Handle<ImagePixMap>, martensite_tkernel::standard::Failure>,
+    output: Result<Handle<dyn ImagePixMapObject>, martensite_tkernel::standard::Failure>,
 ) -> String {
     let failure = output.is_err();
     let image = output.unwrap_or_default();
@@ -60,7 +60,7 @@ fn xr_texture_row(
     kind: i32,
     step: i32,
     failure: bool,
-    output: Handle<ImagePixMap>,
+    output: Handle<dyn ImagePixMapObject>,
 ) -> String {
     let prefix = xr_texture_identity_row(source, texture, kind, step, failure, output);
     format!(
@@ -75,7 +75,7 @@ fn xr_texture_identity_row(
     kind: i32,
     step: i32,
     failure: bool,
-    output: Handle<ImagePixMap>,
+    output: Handle<dyn ImagePixMapObject>,
 ) -> String {
     format!(
         "{kind} {step} {} {} {} {} {} {} {}",

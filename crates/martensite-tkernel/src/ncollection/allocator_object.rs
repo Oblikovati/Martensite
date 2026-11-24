@@ -5,11 +5,10 @@
 use super::{ACC_DEFAULT_BLOCK_SIZE, AllocatorSource, BaseAllocator, INC_DEFAULT_BLOCK_SIZE};
 use crate::standard::Handle;
 use crate::standard::{Failure, StandardTransient};
-use std::{ptr::NonNull, sync::OnceLock};
+use std::sync::OnceLock;
 /// Polymorphic allocator object; `AllocatorObject::default().resource().allocate(16)`.
 #[repr(C)]
 pub struct AllocatorObject {
-    parent: StandardTransient,
     resource: BaseAllocator,
 }
 impl AllocatorObject {
@@ -17,30 +16,12 @@ impl AllocatorObject {
     /// Derived virtual dispatch requires prior `from_handle` registration; standalone objects use
     /// only their embedded policy. Registration keeps a weak original-object alias, never a copy.
     pub fn resource(&self) -> &BaseAllocator {
-        // A borrowed policy does not acquire intrusive allocator ownership.
         &self.resource
     }
     /// The shared static common allocator handle; `AllocatorObject::common_base_allocator().ref_count()`.
     pub fn common_base_allocator() -> &'static Handle<Self> {
         static OWNER: OnceLock<Handle<AllocatorObject>> = OnceLock::new();
         OWNER.get_or_init(|| Handle::new(Self::default()))
-    }
-    /// Invoke the parent Allocate body; `object.allocate_base(16)`.
-    pub fn allocate_base(&self, size: usize) -> Option<NonNull<u8>> {
-        // Bypass derived dispatch to prevent recursive base-body calls.
-        self.resource.allocate_policy(size, true)
-    }
-    /// Invoke independent parent AllocateOptimal; `object.allocate_optimal_base(16)`.
-    pub fn allocate_optimal_base(&self, size: usize) -> Option<NonNull<u8>> {
-        // The base optimal-allocation body is independent of the overridable allocate.
-        self.resource.allocate_optimal_builtin(size)
-    }
-    /// Invoke parent Free, bypassing derived dispatch; `unsafe { object.free_base(pointer) }?`.
-    /// # Safety
-    /// The nullable pointer must belong to this parent's live allocation policy.
-    pub unsafe fn free_base(&self, pointer: *mut u8) -> Result<(), Failure> {
-        // SAFETY: the caller supplies the original nullable allocation pointer.
-        unsafe { self.resource.free_builtin_nullable(pointer) }
     }
     pub(super) fn allocate_calls_optimal(&self) -> bool {
         // Read the actual embedded policy without creating or retargeting a handled base.
@@ -51,17 +32,13 @@ impl AllocatorObject {
         self.resource.optimal_calls_allocate()
     }
     fn wrapping(resource: BaseAllocator) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            resource,
-        }
+        Self { resource }
     }
 }
 crate::impl_transient!(
     AllocatorObject,
     "NCollection_BaseAllocator",
     StandardTransient,
-    parent,
     interfaces: [dyn AllocatorSource]
 );
 
@@ -85,7 +62,7 @@ macro_rules! allocator_subclass {
                 }
             }
         }
-        crate::impl_transient!($name, $type_name, AllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+        crate::impl_transient!($name, $type_name, AllocatorObject, interfaces: [dyn AllocatorSource]);
         // SAFETY: these concrete policies own disjoint allocations until their documented release.
         unsafe impl AllocatorSource for $name {
             fn allocator_object_base(&self) -> &AllocatorObject {
@@ -176,7 +153,7 @@ unsafe impl AllocatorSource for AllocatorObject {
 }
 impl HeapAllocatorObject {
     /// Borrow the shared global heap allocator handle; `HeapAllocatorObject::global_heap_allocator()`.
-    pub fn global_heap_allocator() -> &'static Handle<Self> {
+    pub(crate) fn global_heap_allocator() -> &'static Handle<Self> {
         static OWNER: OnceLock<Handle<HeapAllocatorObject>> = OnceLock::new();
         OWNER.get_or_init(|| Handle::new(Self::default()))
     }

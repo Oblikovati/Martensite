@@ -13,7 +13,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::offset_curve_utils::offset_curve_continuity;
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name, dump_field};
 use martensite_tkmath::geom_abs::Shape;
@@ -33,14 +33,12 @@ struct OffsetState {
 /// The basis curve is a private copy of the curve given to the constructor or to
 /// `SetBasisCurve`, as natively.
 pub struct GeomOffsetCurve {
-    parent: StandardTransient,
     state: SharedState<OffsetState>,
 }
 impl_transient!(
     GeomOffsetCurve,
     "Geom_OffsetCurve",
     dyn GeomCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve]
 );
 
@@ -106,7 +104,7 @@ fn resolve_basis(
     check_c0(&checking, not_check_c0, (uf, ul), resolved)?;
     if is_trimmed {
         let trimmed = GeomTrimmedCurve::new(&checking, uf, ul, true, true)?;
-        return Ok(Handle::new(trimmed).cast());
+        return Ok(Handle::new(trimmed).into_upcast());
     }
     Ok(checking)
 }
@@ -160,7 +158,6 @@ impl GeomOffsetCurve {
     }
     fn stored(state: OffsetState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -247,7 +244,7 @@ impl GeomGeometry for GeomOffsetCurve {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(Self::copy_of(self)?).cast())
+        Ok(Handle::new(Self::copy_of(self)?).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state = self.state.read();

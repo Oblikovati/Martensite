@@ -3,7 +3,7 @@ use crate::gp::Point3;
 use martensite_tkernel::{
     ncollection::{Array1, HArray1OfReal},
     standard::{
-        Failure, Handle, SharedState, StandardTransient,
+        Failure, Handle, SharedState, Transient,
         dump::{self, DumpOutput},
     },
 };
@@ -15,10 +15,9 @@ struct Polygon3DFields {
 }
 /// `Polygon3D`: one-based 3D nodes with optional curve parameters; `Polygon3D::new(4, true)?`.
 pub struct Polygon3D {
-    base: StandardTransient,
     fields: SharedState<Polygon3DFields>,
 }
-martensite_tkernel::impl_transient!(Polygon3D, "Poly_Polygon3D", StandardTransient, base);
+martensite_tkernel::impl_transient!(Polygon3D, "Poly_Polygon3D", dyn Transient);
 impl Polygon3D {
     /// Allocates nodes and, if asked, parameters at `1..=nb_nodes`; `Polygon3D::new(4, true)?`.
     pub fn new(nb_nodes: i32, has_parameters: bool) -> Result<Self, Failure> {
@@ -58,7 +57,6 @@ impl Polygon3D {
         parameters: Option<Handle<HArray1OfReal>>,
     ) -> Self {
         Self {
-            base: StandardTransient::default(),
             fields: SharedState::new(Polygon3DFields {
                 deflection: 0.0,
                 nodes,

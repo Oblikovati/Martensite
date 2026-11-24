@@ -125,6 +125,7 @@ impl PbrEnvironment {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let set = unsafe { self.runtime.device().allocate_descriptor_sets(&info) }
             .map_err(|e| vk_error("allocate PBR environment set", e))?[0];
+        self.runtime.work.add_sets(&info);
         let views = self.images.each_ref().map(|image| image.view);
         layout::write_set(&self.runtime, set, views, self.samplers);
         Ok(set)

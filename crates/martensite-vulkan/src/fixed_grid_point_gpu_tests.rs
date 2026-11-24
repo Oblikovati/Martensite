@@ -161,7 +161,7 @@ pub(crate) fn lit_front_point(shading: RenderShading, mirrored: bool) -> Primiti
     .unwrap()
     .with_lights(RenderLightSet {
         ambient: [0.; 4],
-        sources: vec![],
+        sources: Default::default(),
     });
     draw.with_lighting(lighting).unwrap()
 }

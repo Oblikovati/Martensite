@@ -155,7 +155,7 @@ fn populate_oit_groups(scene: &ViewerScene, reverse: bool, fixture: &str) {
         let aspects = oit_fill_aspect(rank, fixture);
         interaction::configure_interaction(scene, &aspects, rank, fixture);
         group.set_group_primitives_aspect(&aspects.cast());
-        group.add_primitive_array(&oit_quad(rank, fixture), true);
+        group.add_primitive_array(&oit_quad(rank, fixture).into_upcast(), true);
     }
 }
 pub fn oit_fill_aspect(rank: usize, fixture: &str) -> Handle<Graphic3dAspects> {

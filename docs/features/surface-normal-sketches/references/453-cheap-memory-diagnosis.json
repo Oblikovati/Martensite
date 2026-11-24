@@ -1,0 +1,229 @@
+{
+  "listing": [
+    {
+      "binary": "before",
+      "trial": 0,
+      "snapshot_kib": {
+        "Rss": 16036,
+        "Pss": 11953,
+        "Shared_Clean": 4096,
+        "Shared_Dirty": 0,
+        "Private_Clean": 8192,
+        "Private_Dirty": 3748,
+        "Anonymous": 3748
+      },
+      "exit": 0,
+      "listing_sha256": "25e1a4b9c067754af2ecafde0db5d29c75570f116a0405b6d760da5cad764caa",
+      "tail": "690 tests, 0 benchmarks"
+    },
+    {
+      "binary": "before",
+      "trial": 1,
+      "snapshot_kib": {
+        "Rss": 16056,
+        "Pss": 12001,
+        "Shared_Clean": 4068,
+        "Shared_Dirty": 0,
+        "Private_Clean": 8240,
+        "Private_Dirty": 3748,
+        "Anonymous": 3748
+      },
+      "exit": 0,
+      "listing_sha256": "25e1a4b9c067754af2ecafde0db5d29c75570f116a0405b6d760da5cad764caa",
+      "tail": "690 tests, 0 benchmarks"
+    },
+    {
+      "binary": "before",
+      "trial": 2,
+      "snapshot_kib": {
+        "Rss": 15996,
+        "Pss": 11949,
+        "Shared_Clean": 4060,
+        "Shared_Dirty": 0,
+        "Private_Clean": 8192,
+        "Private_Dirty": 3744,
+        "Anonymous": 3744
+      },
+      "exit": 0,
+      "listing_sha256": "25e1a4b9c067754af2ecafde0db5d29c75570f116a0405b6d760da5cad764caa",
+      "tail": "690 tests, 0 benchmarks"
+    },
+    {
+      "binary": "after",
+      "trial": 0,
+      "snapshot_kib": {
+        "Rss": 15936,
+        "Pss": 11845,
+        "Shared_Clean": 4104,
+        "Shared_Dirty": 0,
+        "Private_Clean": 8084,
+        "Private_Dirty": 3748,
+        "Anonymous": 3748
+      },
+      "exit": 0,
+      "listing_sha256": "25e1a4b9c067754af2ecafde0db5d29c75570f116a0405b6d760da5cad764caa",
+      "tail": "690 tests, 0 benchmarks"
+    },
+    {
+      "binary": "after",
+      "trial": 1,
+      "snapshot_kib": {
+        "Rss": 15800,
+        "Pss": 11713,
+        "Shared_Clean": 4100,
+        "Shared_Dirty": 0,
+        "Private_Clean": 7952,
+        "Private_Dirty": 3748,
+        "Anonymous": 3748
+      },
+      "exit": 0,
+      "listing_sha256": "25e1a4b9c067754af2ecafde0db5d29c75570f116a0405b6d760da5cad764caa",
+      "tail": "690 tests, 0 benchmarks"
+    },
+    {
+      "binary": "after",
+      "trial": 2,
+      "snapshot_kib": {
+        "Rss": 15640,
+        "Pss": 11549,
+        "Shared_Clean": 4104,
+        "Shared_Dirty": 0,
+        "Private_Clean": 7788,
+        "Private_Dirty": 3748,
+        "Anonymous": 3748
+      },
+      "exit": 0,
+      "listing_sha256": "25e1a4b9c067754af2ecafde0db5d29c75570f116a0405b6d760da5cad764caa",
+      "tail": "690 tests, 0 benchmarks"
+    }
+  ],
+  "first_glyph": [
+    {
+      "binary": "before",
+      "wall_s": 4.067693575001613,
+      "exit": 0,
+      "sampled_peaks_kib": {
+        "Rss": 64192,
+        "Shared_Clean": 4400,
+        "Private_Clean": 44340,
+        "Private_Dirty": 15452,
+        "Anonymous": 15452
+      },
+      "samples": 730,
+      "test_output": "running 1 test\ntest wrapped_text_regions::wrapped::first_glyph_wraps_normalized_material_orientation ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 689 filtered out; finished in 4.06s"
+    },
+    {
+      "binary": "after",
+      "wall_s": 3.450669811994885,
+      "exit": 0,
+      "sampled_peaks_kib": {
+        "Rss": 63984,
+        "Shared_Clean": 4400,
+        "Private_Clean": 44136,
+        "Private_Dirty": 15448,
+        "Anonymous": 15448
+      },
+      "samples": 616,
+      "test_output": "running 1 test\ntest wrapped_text_regions::wrapped::first_glyph_wraps_normalized_material_orientation ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 689 filtered out; finished in 3.44s"
+    },
+    {
+      "binary": "after",
+      "wall_s": 4.395630001999962,
+      "exit": 0,
+      "sampled_peaks_kib": {
+        "Rss": 63888,
+        "Shared_Clean": 4356,
+        "Private_Clean": 44088,
+        "Private_Dirty": 15444,
+        "Anonymous": 15444
+      },
+      "samples": 780,
+      "test_output": "running 1 test\ntest wrapped_text_regions::wrapped::first_glyph_wraps_normalized_material_orientation ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 689 filtered out; finished in 4.38s"
+    },
+    {
+      "binary": "before",
+      "wall_s": 3.9723356969989254,
+      "exit": 0,
+      "sampled_peaks_kib": {
+        "Rss": 64408,
+        "Shared_Clean": 4364,
+        "Private_Clean": 44584,
+        "Private_Dirty": 15460,
+        "Anonymous": 15460
+      },
+      "samples": 712,
+      "test_output": "running 1 test\ntest wrapped_text_regions::wrapped::first_glyph_wraps_normalized_material_orientation ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 689 filtered out; finished in 3.96s"
+    },
+    {
+      "binary": "before",
+      "wall_s": 3.932147869003529,
+      "exit": 0,
+      "sampled_peaks_kib": {
+        "Rss": 64412,
+        "Shared_Clean": 4356,
+        "Private_Clean": 44604,
+        "Private_Dirty": 15452,
+        "Anonymous": 15452
+      },
+      "samples": 663,
+      "test_output": "running 1 test\ntest wrapped_text_regions::wrapped::first_glyph_wraps_normalized_material_orientation ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 689 filtered out; finished in 3.92s"
+    },
+    {
+      "binary": "after",
+      "wall_s": 3.74479588700342,
+      "exit": 0,
+      "sampled_peaks_kib": {
+        "Rss": 63980,
+        "Shared_Clean": 4392,
+        "Private_Clean": 44132,
+        "Private_Dirty": 15456,
+        "Anonymous": 15456
+      },
+      "samples": 639,
+      "test_output": "running 1 test\ntest wrapped_text_regions::wrapped::first_glyph_wraps_normalized_material_orientation ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 689 filtered out; finished in 3.73s"
+    }
+  ],
+  "method": {
+    "listing": "stdout pipe explicitly F_SETPIPE_SZ=4096; wait150ms for blocked listing then /proc/PID/smaps_rollup; drain and assert exit0",
+    "runtime": "six alternating standalone processes, exact first-glyph filter, test_threads=1; /proc/PID/smaps_rollup sampled every5ms; maxima per field independently, not simultaneous",
+    "limitations": "Sampled RSS/Anonymous maxima are not GNU ru_maxrss nor allocation counts. Polling adds overhead. Cheap workloads cannot establish full239 peak-memory parity; no full239 repetition performed.",
+    "source_edits": false
+  },
+  "binaries": {
+    "before": {
+      "path": "target/qualification/p5-before-proof-ordering-toolkit",
+      "sha256": "761fe244985d4ec022c539172a156e39ae67a659f6ede340ede6676673de88ce",
+      "size_bytes": 129723048
+    },
+    "after": {
+      "path": "target/debug/deps/toolkit-d77abad3fe1d3275",
+      "sha256": "78d011414429e2f0bbc894e57ce4b8092f4739d20699071bcce03835329f0918",
+      "size_bytes": 130117288
+    }
+  },
+  "summary": {
+    "before": {
+      "wall_median_s": 3.9723356969989254,
+      "sampled_peak_anonymous_range_kib": [
+        15452,
+        15460
+      ],
+      "sampled_peak_rss_range_kib": [
+        64192,
+        64412
+      ]
+    },
+    "after": {
+      "wall_median_s": 3.74479588700342,
+      "sampled_peak_anonymous_range_kib": [
+        15444,
+        15456
+      ],
+      "sampled_peak_rss_range_kib": [
+        63888,
+        63984
+      ]
+    }
+  },
+  "interpretation": "No increased anonymous-memory footprint reproduced in blocked listing or first-glyph controls. First-glyph RSS was lower in all current trials; most resident difference is file-backed mapping residency. This does not explain or disprove the single full239 +1864KiB GNU peak difference and does not establish strict full-workload memory parity."
+}

@@ -37,7 +37,7 @@ impl GeomGeometry for GeomEvalTBezierSurface {
         refuse(CLASS, "Transform", "")
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_bounded_surface_base(stream, depth, CLASS)?;

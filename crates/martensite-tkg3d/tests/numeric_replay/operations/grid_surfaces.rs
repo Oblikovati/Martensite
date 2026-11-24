@@ -5,7 +5,7 @@ use super::grid::{array2, curve_adaptor, null_curves, params};
 use super::output::Output;
 use super::shapes;
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface, GeomCylindricalSurface,
@@ -132,7 +132,7 @@ fn dispatch(output: &Output, e: &GeomGridEvalSurface<'_>, uv: Params<'_>, full: 
 }
 
 /// The specialized surface evaluators that take a typed handle and expose `geometry()`.
-trait SpecializedSurface<G: RuntimeTyped>: SurfaceGridEvaluator + Sized {
+trait SpecializedSurface<G: Transient>: SurfaceGridEvaluator + Sized {
     fn build(geometry: Handle<G>) -> Self;
     fn is_null(&self) -> bool;
 }
@@ -159,7 +159,7 @@ specialized_surface!(GeomGridEvalOffsetSurface, GeomOffsetSurface);
 specialized_surface!(GeomGridEvalSurfaceOfRevolution, GeomSurfaceOfRevolution);
 specialized_surface!(GeomGridEvalSurfaceOfExtrusion, GeomSurfaceOfLinearExtrusion);
 
-fn direct_as<G: RuntimeTyped, E: SpecializedSurface<G>>(
+fn direct_as<G: Transient, E: SpecializedSurface<G>>(
     output: &Output,
     s: &Handle<dyn GeomSurface>,
     uv: Params<'_>,
@@ -295,7 +295,7 @@ pub fn grid_surface_adaptor_case(output: &Output, values: &[f64]) {
     end(output);
 }
 
-fn null_as<G: RuntimeTyped, E: SpecializedSurface<G>>(output: &Output, uv: Params<'_>) {
+fn null_as<G: Transient, E: SpecializedSurface<G>>(output: &Output, uv: Params<'_>) {
     let e = E::build(Handle::default());
     flag(output, e.is_null());
     all(output, &e, uv, true);

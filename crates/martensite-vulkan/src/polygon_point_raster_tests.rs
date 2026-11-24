@@ -32,7 +32,7 @@ fn ordinary_aspects_do_not_change_raster_state() {
     let mut draws = vec![triangle()];
     apply_polygon_points(&mut draws, &Graphic3dAspectFillArea3d::default()).unwrap();
     assert!(!draws[0].rasterizes_polygon_points());
-    let changed = draws[0].with_replacement_geometry(vec![], vec![]);
+    let changed = draws[0].with_replacement_geometry(Default::default(), Default::default());
     assert!(!changed.rasterizes_polygon_points());
 }
 #[test]
@@ -41,7 +41,7 @@ fn point_raster_metadata_survives_geometry_replacement() {
     source.polygon_points = true;
     assert!(
         source
-            .with_replacement_geometry(vec![], vec![])
+            .with_replacement_geometry(Default::default(), Default::default())
             .rasterizes_polygon_points()
     );
 }

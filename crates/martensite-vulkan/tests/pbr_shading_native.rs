@@ -79,12 +79,13 @@ fn replace_lights(scene: &PbrScene) {
 }
 /// ambient 0.3; positional (2,0,2) x4; spot (-2,0,2) dir (1,0,-1) x6, 60 deg, exp 0.5;
 /// positional (0,-2,1) x3 with range 3.
-fn script_lights() -> Vec<Handle<Graphic3dCLight>> {
+fn script_lights() -> Vec<Handle<dyn Graphic3dCLightSource>> {
     let white = Color::named(NamedColor::WHITE);
-    let ambient: Handle<Graphic3dCLight> = Handle::new(V3dAmbientLight::new(white)).cast();
+    let ambient: Handle<dyn Graphic3dCLightSource> =
+        Handle::new(V3dAmbientLight::new(white)).cast();
     ambient.set_intensity(0.3).unwrap();
     let positional = positional_light([2., 0., 2.], 4.);
-    let spot: Handle<Graphic3dCLight> = Handle::new(
+    let spot: Handle<dyn Graphic3dCLightSource> = Handle::new(
         V3dSpotLight::new(
             &Point3::new(0., 0., 0.),
             V3dTypeOfOrientation::XnegYnegZpos,
@@ -104,9 +105,9 @@ fn script_lights() -> Vec<Handle<Graphic3dCLight>> {
     ranged.set_range(3.).unwrap();
     vec![ambient, positional, spot, ranged]
 }
-fn positional_light(position: [f64; 3], intensity: f32) -> Handle<Graphic3dCLight> {
+fn positional_light(position: [f64; 3], intensity: f32) -> Handle<dyn Graphic3dCLightSource> {
     let white = Color::named(NamedColor::WHITE);
-    let light: Handle<Graphic3dCLight> =
+    let light: Handle<dyn Graphic3dCLightSource> =
         Handle::new(V3dPositionalLight::new(&Point3::new(0., 0., 0.), white).unwrap()).cast();
     let [x, y, z] = position;
     light.set_position(&Point3::new(x, y, z)).unwrap();

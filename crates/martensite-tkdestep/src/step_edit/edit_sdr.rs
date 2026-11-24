@@ -3,9 +3,10 @@
 use crate::step_construct::StepConstructPart;
 use crate::step_data::StepDataStepModel;
 use crate::step_shape::StepShapeShapeDefinitionRepresentation;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -21,14 +22,12 @@ use martensite_tkxsbase::{
 /// assert_eq!(editor.get().unwrap().label().as_bytes(), b"STEP : Product Data (SDR)");
 /// ```
 pub struct STEPEditEditSDR {
-    transient: StandardTransient,
     base: IFSelectEditorBase,
 }
 impl_transient!(
     STEPEditEditSDR,
     "STEPEditEditSDR",
     dyn IFSelectEditor,
-    transient,
     interfaces: [dyn IFSelectEditor]
 );
 
@@ -36,7 +35,6 @@ impl STEPEditEditSDR {
     /// `STEPEditEditSDR()`.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let editor = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectEditorBase::new(11),
         });
         let Some(live) = editor.get() else {
@@ -71,7 +69,7 @@ impl STEPEditEditSDR {
 
 /// The part tool of an SDR of a STEP model, `None` for other entities or models.
 fn part_of(
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     model: &Handle<dyn InterfaceInterfaceModel>,
 ) -> Option<StepConstructPart> {
     let sdr = ent.cast::<StepShapeShapeDefinitionRepresentation>();
@@ -115,7 +113,7 @@ impl IFSelectEditor for STEPEditEditSDR {
     fn load(
         &self,
         form: &Handle<IFSelectEditForm>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let (Some(ctx), Some(form)) = (part_of(ent, model), form.get()) else {
@@ -137,7 +135,7 @@ impl IFSelectEditor for STEPEditEditSDR {
     fn apply(
         &self,
         form: &Handle<IFSelectEditForm>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let (Some(ctx), Some(form)) = (part_of(ent, model), form.get()) else {

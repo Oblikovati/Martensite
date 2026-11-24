@@ -9,7 +9,7 @@ use martensite_tkcdf::{
 use martensite_tkernel::{
     impl_transient,
     resource::{ResourceHost, ResourceManager},
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, exceptions},
     tcollection::ExtendedString,
 };
 use std::sync::{
@@ -18,14 +18,12 @@ use std::sync::{
 };
 
 struct SequencedResourceApplication {
-    transient: StandardTransient,
     base: CdfApplicationBase,
     managers: Vec<SharedResourceManager>,
     calls: AtomicUsize,
     fail_on: Option<usize>,
 }
-impl_transient!(SequencedResourceApplication, "SequencedResourceApplication", dyn CdfApplication,
-    transient, interfaces: [dyn CdmApplication, dyn CdfApplication]);
+impl_transient!(SequencedResourceApplication, "SequencedResourceApplication", dyn CdfApplication, interfaces: [dyn CdmApplication, dyn CdfApplication]);
 
 impl CdmApplication for SequencedResourceApplication {
     cdf_application_cdm_members!();
@@ -58,7 +56,6 @@ fn application(
     fail_on: Option<usize>,
 ) -> SequencedResourceApplication {
     SequencedResourceApplication {
-        transient: StandardTransient::default(),
         base: CdfApplicationBase::default(),
         managers,
         calls: AtomicUsize::new(0),

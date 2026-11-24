@@ -1,6 +1,6 @@
 //! Named interactive fixture observes callbacks and replaces the native drawer slots.
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::{
     Graphic3dPresentationAttributesMembers, Graphic3dPresentationAttributesSource,
     Graphic3dStructureMembers, Graphic3dStructureSource,
@@ -21,15 +21,13 @@ pub struct DetectionTrace {
 }
 pub type DetectionEvents = Arc<SharedState<DetectionTrace>>;
 pub struct DetectionObject {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     pub trace: DetectionEvents,
 }
-martensite_tkernel::impl_transient!(DetectionObject,"DetectionObject",dyn AisInteractiveObject,transient,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(DetectionObject,"DetectionObject",dyn AisInteractiveObject,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl DetectionObject {
     pub fn new(trace: DetectionEvents) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             trace,
         });
@@ -123,11 +121,10 @@ impl AisInteractiveObject for DetectionObject {
     }
 }
 pub struct DetectionOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     pub trace: DetectionEvents,
 }
-martensite_tkernel::impl_transient!(DetectionOwner,"DetectionOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(DetectionOwner,"DetectionOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl DetectionOwner {
     pub fn new_handle(
         object: &Handle<dyn SelectMgrSelectableObject>,
@@ -135,7 +132,6 @@ impl DetectionOwner {
         trace: DetectionEvents,
     ) -> Handle<dyn SelectMgrEntityOwnerSource> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(object, id),
             trace,
         })
@@ -208,17 +204,12 @@ impl SelectMgrEntityOwnerSource for DetectionOwner {
     }
 }
 pub struct DetectionFilter {
-    transient: StandardTransient,
     trace: DetectionEvents,
 }
-martensite_tkernel::impl_transient!(DetectionFilter,"DetectionFilter",dyn SelectMgrFilter,transient,interfaces:[dyn SelectMgrFilter]);
+martensite_tkernel::impl_transient!(DetectionFilter,"DetectionFilter",dyn SelectMgrFilter,interfaces:[dyn SelectMgrFilter]);
 impl DetectionFilter {
     pub fn new_handle(trace: DetectionEvents) -> Handle<dyn SelectMgrFilter> {
-        Handle::new(Self {
-            transient: StandardTransient::default(),
-            trace,
-        })
-        .cast()
+        Handle::new(Self { trace }).cast()
     }
 }
 impl SelectMgrFilter for DetectionFilter {

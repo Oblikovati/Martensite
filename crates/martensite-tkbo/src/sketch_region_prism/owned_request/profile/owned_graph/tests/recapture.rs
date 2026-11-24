@@ -46,7 +46,7 @@ fn change_curve(census: &BoundaryCensus) {
     let native = edge(&census.inputs.segments[0].edge).unwrap();
     let (curve, _, _) = BRepTool::curve(&native).unwrap();
     curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, Point3::new(0.5, -0.25, 0.))
         .unwrap();
 }

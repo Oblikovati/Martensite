@@ -9,10 +9,11 @@ use super::{
     StepDataDescribed, StepDataECDescr, StepDataEDescr, StepDataESDescr, StepDataPDescr,
     StepDataStepModel, StepDataUndefinedEntity,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
     ncollection::DataMap,
-    standard::{Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -27,7 +28,7 @@ pub struct StepDataProtocolTables {
 
 #[derive(Default)]
 struct ProtocolState {
-    thedscnum: DataMap<Handle<StandardTransient>, i32>,
+    thedscnum: DataMap<Handle<dyn Transient>, i32>,
     thedscnam: DataMap<AsciiString, Handle<dyn StepDataEDescr>>,
     thepdescr: DataMap<AsciiString, Handle<StepDataPDescr>>,
     thedscbas: DataMap<AsciiString, Handle<StepDataESDescr>>,
@@ -224,7 +225,7 @@ impl_transient_interface!(
 /// entity `descr_number`.
 pub fn step_protocol_case_number<P: StepDataProtocolOps + ?Sized>(
     protocol: &P,
-    obj: &Handle<StandardTransient>,
+    obj: &Handle<dyn Transient>,
 ) -> i32 {
     let Some(kind) = obj.dynamic_type() else {
         return 0;
@@ -250,12 +251,12 @@ pub fn step_protocol_is_suitable_model(model: &Handle<dyn InterfaceInterfaceMode
 }
 
 /// The `unknown_entity` of a STEP protocol.
-pub fn step_protocol_unknown_entity() -> Handle<StandardTransient> {
+pub fn step_protocol_unknown_entity() -> Handle<dyn Transient> {
     Handle::new(StepDataUndefinedEntity::new(false)).cast()
 }
 
 /// The `is_unknown_entity(ent)` of a STEP protocol.
-pub fn step_protocol_is_unknown_entity(ent: &Handle<StandardTransient>) -> bool {
+pub fn step_protocol_is_unknown_entity(ent: &Handle<dyn Transient>) -> bool {
     ent.is_kind(StepDataUndefinedEntity::static_type())
 }
 
@@ -279,7 +280,7 @@ macro_rules! impl_step_protocol {
             fn case_number(
                 &self,
                 obj: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> i32 {
                 $crate::step_data::step_protocol_case_number(self, obj)
@@ -313,15 +314,14 @@ macro_rules! impl_step_protocol {
             }
             fn unknown_entity(
                 &self,
-            ) -> martensite_tkernel::standard::Handle<
-                martensite_tkernel::standard::StandardTransient,
-            > {
+            ) -> martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient>
+            {
                 $crate::step_data::step_protocol_unknown_entity()
             }
             fn is_unknown_entity(
                 &self,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> bool {
                 $crate::step_data::step_protocol_is_unknown_entity(ent)
@@ -337,14 +337,12 @@ macro_rules! impl_step_protocol {
 /// ```
 #[derive(Default)]
 pub struct StepDataProtocol {
-    transient: StandardTransient,
     tables: StepDataProtocolTables,
 }
 impl_transient!(
     StepDataProtocol,
     "StepDataProtocolOps",
     dyn StepDataProtocolOps,
-    transient,
     interfaces: [dyn InterfaceProtocol, dyn StepDataProtocolOps]
 );
 crate::impl_step_protocol!(StepDataProtocol);
@@ -367,7 +365,6 @@ impl StepDataProtocolOps for StepDataProtocol {
 /// ```
 #[derive(Default)]
 pub struct StepDataFileProtocol {
-    transient: StandardTransient,
     tables: StepDataProtocolTables,
     thecomps: SharedState<Vec<Handle<dyn StepDataProtocolOps>>>,
 }
@@ -375,7 +372,6 @@ impl_transient!(
     StepDataFileProtocol,
     "StepDataFileProtocol",
     dyn StepDataProtocolOps,
-    transient,
     interfaces: [dyn InterfaceProtocol, dyn StepDataProtocolOps]
 );
 crate::impl_step_protocol!(StepDataFileProtocol);

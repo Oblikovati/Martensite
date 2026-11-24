@@ -12,7 +12,7 @@ step_entity! {
     StepGeomUniformCurveAndRationalBSplineCurve, StepGeomUniformCurveAndRationalBSplineCurveState, "StepGeomUniformCurveAndRationalBSplineCurve", StepGeomBSplineCurve, {
         uniform_curve: Handle<StepGeomUniformCurve>,
         rational_b_spline_curve: Handle<StepGeomRationalBSplineCurve>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomUniformCurveAndRationalBSplineCurve {
     step_methods! {
@@ -144,7 +144,7 @@ impl StepGeomUniformCurveAndRationalBSplineCurve {
 step_entity! {
     /// Uniform surface.
     StepGeomUniformSurface, StepGeomUniformSurfaceState, "StepGeomUniformSurface", StepGeomBSplineSurface, {
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 
 step_entity! {
@@ -152,7 +152,7 @@ step_entity! {
     StepGeomUniformSurfaceAndRationalBSplineSurface, StepGeomUniformSurfaceAndRationalBSplineSurfaceState, "StepGeomUniformSurfaceAndRationalBSplineSurface", StepGeomBSplineSurface, {
         uniform_surface: Handle<StepGeomUniformSurface>,
         rational_b_spline_surface: Handle<StepGeomRationalBSplineSurface>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomUniformSurfaceAndRationalBSplineSurface {
     step_methods! {
@@ -310,7 +310,7 @@ step_entity! {
     StepGeomVector, StepGeomVectorState, "StepGeomVector", StepGeomGeometricRepresentationItem, {
         orientation: Handle<StepGeomDirection>,
         magnitude: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomVector {
     step_methods! {

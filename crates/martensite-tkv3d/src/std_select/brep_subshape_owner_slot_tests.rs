@@ -34,7 +34,8 @@ fn invoke_subshape_owner_slot(
     slot: &SharedState<Handle<StdSelectBRepOwner>>,
 ) -> Handle<SelectMgrSelection> {
     let selection = Handle::new(SelectMgrSelection::new(0));
-    let parent = Handle::new(AisColoredDrawer::new(&object.attributes()));
+    let parent = Handle::new(AisColoredDrawer::new(&object.attributes()))
+        .into_upcast::<dyn AisColoredDrawerSource>();
     let styles = AisShapeDrawerMap::default();
     let owner = HandleFieldRef::new(slot, subshape_owner_slot_field);
     invoke_subshape_owner_arguments(object, (&parent, &styles, shape, &owner, &selection));
@@ -65,7 +66,7 @@ fn record_subshape_owner_slot(
 }
 
 type SubshapeOwnerArguments<'a> = (
-    &'a Handle<AisColoredDrawer>,
+    &'a Handle<dyn AisColoredDrawerSource>,
     &'a AisShapeDrawerMap,
     &'a martensite_tkbrep::topods::Shape,
     &'a dyn martensite_tkernel::standard::HandleReference<StdSelectBRepOwner>,

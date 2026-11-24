@@ -59,7 +59,8 @@ impl CurvesContext {
         let pmil = Point2::new((p1.x() + p2.x()) / 2., (p1.y() + p2.y()) / 2.);
         let line: Line2 = mixed_circles_line(c1, p1, pmil)?;
         let result = self.sense_pass(&*line_solution(line))?;
-        let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+        let curve: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
         if !result.sense {
             return trimmed(curve, result.parameter, -precision::infinite(), true);
         }
@@ -144,7 +145,8 @@ impl CurvesContext {
     // A line solution of two circles, cut between them when they are tangent.
     fn trim_circles_line(&self, chosen: &Chosen, reframed: &Reframed) -> Result<Trimmed, Failure> {
         let gpline: Line2 = chosen.solution.line()?;
-        let mut curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(gpline)).cast();
+        let mut curve: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_lin2d(gpline)).into_upcast();
         let mut first: f64 = chosen.first;
         let mut second: f64 = if chosen.sense {
             precision::infinite()
@@ -153,7 +155,7 @@ impl CurvesContext {
         };
         if self.oncurve && reframed.tangent {
             if let Some((line, parameter)) = self.corrected_line(chosen, &reframed.circle2)? {
-                curve = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+                curve = Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
                 first = parameter;
             }
             if self.tan1.dot(self.tan2) < 0. {

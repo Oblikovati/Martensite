@@ -3,12 +3,13 @@ use super::DisplayTrace;
 use martensite_tkernel::standard::{Handle, StandardTransient};
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::{graphic3d::*, null_driver::*};
+use std::sync::{Arc, Weak};
 pub(super) struct SensitiveDisplayGroup {
-    transient: StandardTransient,
     inner: NullGroup,
     trace: DisplayTrace,
+    owner: Weak<Self>,
 }
-martensite_tkernel::impl_transient!(SensitiveDisplayGroup, "SensitiveDisplayGroup", StandardTransient, transient, interfaces: [dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(SensitiveDisplayGroup, "SensitiveDisplayGroup", StandardTransient, interfaces: [dyn Graphic3dGroup]);
 impl SensitiveDisplayGroup {
     fn apply_aspect_argument_callback(
         &self,
@@ -19,12 +20,19 @@ impl SensitiveDisplayGroup {
             callback.aspect_received(argument);
         }
     }
-    pub fn new(structure: &Handle<dyn Graphic3dStructureSource>, trace: DisplayTrace) -> Self {
-        Self {
-            transient: StandardTransient::default(),
+    pub fn new_handle(
+        structure: &Handle<dyn Graphic3dStructureSource>,
+        trace: DisplayTrace,
+    ) -> Handle<dyn Graphic3dGroup> {
+        let group = Arc::new_cyclic(|owner| Self {
             inner: NullGroup::new(structure),
             trace,
-        }
+            owner: owner.clone(),
+        });
+        Handle::from_arc(group).into_upcast()
+    }
+    fn owner_count(&self) -> i32 {
+        i32::try_from(self.owner.strong_count()).unwrap()
     }
     fn record_buffer_counts(
         &self,
@@ -34,10 +42,10 @@ impl SensitiveDisplayGroup {
     ) {
         self.trace.write().ownership_counts.push([
             2,
-            self.transient.ref_count(),
-            indices.ref_count(),
-            attribs.ref_count(),
-            bounds.ref_count(),
+            self.owner_count(),
+            i32::try_from(indices.ref_count()).unwrap(),
+            i32::try_from(attribs.ref_count()).unwrap(),
+            i32::try_from(bounds.ref_count()).unwrap(),
         ]);
     }
     fn record_buffer_values(
@@ -122,8 +130,8 @@ impl Graphic3dGroup for SensitiveDisplayGroup {
         self.apply_aspect_argument_callback(aspect);
         self.trace.write().ownership_counts.push([
             1,
-            self.transient.ref_count(),
-            aspect.observe().ref_count(),
+            self.owner_count(),
+            i32::try_from(aspect.ref_count()).unwrap(),
             0,
             0,
         ]);
@@ -138,8 +146,8 @@ impl Graphic3dGroup for SensitiveDisplayGroup {
         self.apply_aspect_argument_callback(aspect);
         self.trace.write().ownership_counts.push([
             1,
-            self.transient.ref_count(),
-            aspect.observe().ref_count(),
+            self.owner_count(),
+            i32::try_from(aspect.ref_count()).unwrap(),
             0,
             0,
         ]);

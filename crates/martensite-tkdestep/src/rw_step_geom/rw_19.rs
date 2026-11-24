@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(RwStepGeomRwSeamCurve, "RwStepGeomRwSeamCurve");
 impl RwStepGeomRwSeamCurve {
@@ -28,7 +29,7 @@ impl RwStepGeomRwSeamCurve {
             data,
             num
         );
-        let mut assgeomval: Handle<StandardTransient> = Default::default();
+        let mut assgeomval: Handle<dyn Transient> = Default::default();
         let mut nsub3: i32 = Default::default();
         if data.read_sub_list(num, 3, "associated_geometry", ach, &mut nsub3, false, 0, 0)? {
             let nb3: i32 = data.nb_params(nsub3)?;
@@ -269,7 +270,7 @@ impl RwStepGeomRwSurfaceCurve {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepGeomSurfaceCurve>,
+        ent: &Handle<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         rw_block_0187!(ent, is2, iter, nb_elem2);

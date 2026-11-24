@@ -1,6 +1,7 @@
 //! `StepDataUndefinedEntity`: an entity the protocol does not know, its type read from the
 //! file and its parameters kept in an `InterfaceUndefinedContent`.
 use super::{StepDataStepReaderData, StepDataStepWriter};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
     standard::{Failure, Handle, SharedState, StandardTransient},
@@ -26,21 +27,18 @@ struct UndefinedState {
 /// ```
 #[derive(Default)]
 pub struct StepDataUndefinedEntity {
-    transient: StandardTransient,
     state: SharedState<UndefinedState>,
 }
 impl_transient!(
     StepDataUndefinedEntity,
     "StepDataUndefinedEntity",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl StepDataUndefinedEntity {
     /// `StepDataUndefinedEntity(issub = false)`.
     pub fn new(issub: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(UndefinedState {
                 thetype: Handle::default(),
                 thecont: Handle::new(InterfaceUndefinedContent::new()),
@@ -187,7 +185,7 @@ fn read_param(
 ) -> Result<(), Failure> {
     let value = sr.param_c_value(num, rank)?;
     let mut partyp = sr.param_type(num, rank)?;
-    let mut anent = Handle::<StandardTransient>::default();
+    let mut anent = Handle::<dyn Transient>::default();
     let mut nume = 0;
     let mut hval = Handle::<HAsciiString>::default();
     match partyp {

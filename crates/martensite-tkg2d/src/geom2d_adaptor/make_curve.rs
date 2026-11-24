@@ -7,7 +7,7 @@ use crate::geom2d::{
     Geom2dCircle, Geom2dCurve, Geom2dEllipse, Geom2dHyperbola, Geom2dLine, Geom2dParabola,
     Geom2dTrimmedCurve,
 };
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, project_concrete};
 use martensite_tkmath::geom_abs::CurveType;
 
 /// A Geom2d curve equal to the adapted curve `adaptor` (`Geom2dAdaptor::MakeCurve`).
@@ -43,24 +43,28 @@ pub fn make_curve(adaptor: &dyn Adaptor2dCurve2d) -> Result<Handle<dyn Geom2dCur
         let end: f64 = std_min(adaptor.last_parameter()?, built.last_parameter());
         Geom2dTrimmedCurve::new(&curve, start, end, true, true)?
     };
-    Ok(Handle::new(trimmed).cast())
+    Ok(Handle::new(trimmed).into_upcast())
 }
 
 // The untrimmed curve of the adaptor's kind.
 fn curve_of_kind(adaptor: &dyn Adaptor2dCurve2d) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     Ok(match adaptor.get_type()? {
-        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(adaptor.line()?)).cast(),
-        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(adaptor.circle()?)).cast(),
-        CurveType::Ellipse => Handle::new(Geom2dEllipse::from_elips2d(adaptor.ellipse()?)).cast(),
+        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(adaptor.line()?)).into_upcast(),
+        CurveType::Circle => {
+            Handle::new(Geom2dCircle::from_circ2d(adaptor.circle()?)).into_upcast()
+        }
+        CurveType::Ellipse => {
+            Handle::new(Geom2dEllipse::from_elips2d(adaptor.ellipse()?)).into_upcast()
+        }
         CurveType::Parabola => {
-            Handle::new(Geom2dParabola::from_parab2d(adaptor.parabola()?)).cast()
+            Handle::new(Geom2dParabola::from_parab2d(adaptor.parabola()?)).into_upcast()
         }
         CurveType::Hyperbola => {
-            Handle::new(Geom2dHyperbola::from_hypr2d(adaptor.hyperbola()?)).cast()
+            Handle::new(Geom2dHyperbola::from_hypr2d(adaptor.hyperbola()?)).into_upcast()
         }
-        CurveType::BezierCurve => adaptor.bezier()?.cast(),
-        CurveType::BSplineCurve => adaptor.bspline()?.cast(),
-        CurveType::OffsetCurve => match Geom2dAdaptorCurve::project_from(adaptor) {
+        CurveType::BezierCurve => adaptor.bezier()?.into_upcast(),
+        CurveType::BSplineCurve => adaptor.bspline()?.into_upcast(),
+        CurveType::OffsetCurve => match project_concrete::<Geom2dAdaptorCurve>(adaptor) {
             Some(geom_adaptor) => geom_adaptor.curve(),
             None => return Err(domain("Geom2dAdaptor::MakeCurve, Not Geom2dAdaptor_Curve")),
         },

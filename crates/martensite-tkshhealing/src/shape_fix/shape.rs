@@ -24,7 +24,7 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState};
 /// assert!(!fixer.shape().is_null());
 /// ```
 pub struct ShapeFixShape {
-    parent: super::ShapeFixRoot,
+    root: FixRootData,
     result: SharedState<Shape>,
     status: SharedState<i32>,
     solid_tool: Handle<super::ShapeFixSolid>,
@@ -32,7 +32,7 @@ pub struct ShapeFixShape {
     visited: SharedState<MapOfShape>,
 }
 
-impl_transient!(ShapeFixShape, "ShapeFix_Shape", super::ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
+impl_transient!(ShapeFixShape, "ShapeFix_Shape", dyn FixRoot, interfaces: [dyn FixRoot]);
 
 impl ShapeFixShape {
     /// Construct an unloaded shape repair tool; `ShapeFixShape::empty()`.
@@ -58,7 +58,7 @@ impl ShapeFixShape {
     /// fixer.init(Shape::default());
     /// ```
     pub fn init(&self, shape: Shape) {
-        self.parent.fix_root_data().with_mut(|fields| {
+        self.root.with_mut(|fields| {
             fields.shape = shape.clone();
             if fields.context.is_null() {
                 let context = Handle::new(ShapeBuildReShape::new());

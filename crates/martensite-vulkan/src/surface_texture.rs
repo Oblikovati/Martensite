@@ -2,6 +2,8 @@
 use crate::{RenderError, error::rejected};
 use martensite_tkservice::graphic3d::*;
 use std::sync::Arc;
+mod coordinates;
+pub(crate) use coordinates::SurfaceUvStream;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum SurfaceImageEncoding {
     Srgb8,
@@ -66,7 +68,7 @@ pub(crate) struct SurfaceTextureStyle {
     pub pending_texgen: Option<Box<crate::surface_texgen::SurfaceTexgen>>,
     pub fixed_environment: bool,
     pub sampler: SurfaceSamplerPolicy,
-    pub uv: Vec<[f32; 4]>,
+    pub uv: SurfaceUvStream,
     pub back_vertex: bool,
     pub vertex_override: bool,
     pub modulate: bool,
@@ -85,11 +87,7 @@ impl SurfaceTextureStyle {
                 "one texture coordinate per vertex",
             ));
         }
-        if let Some(uv) = self
-            .uv
-            .iter()
-            .find(|uv| uv.iter().any(|value| !value.is_finite()))
-        {
+        if let Some(uv) = self.uv.invalid() {
             return Err(rejected(uv, "finite Vec4 texture coordinates"));
         }
         Ok(())

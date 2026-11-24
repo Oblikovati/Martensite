@@ -34,7 +34,18 @@ pub(crate) fn resolve_ordered_texture_coordinates(
     let mut unit = FixedTextureUnit::default();
     for draw in draws {
         crate::fixed_surface_environment::apply_sprite_replace(draw);
-        unit.resolve(draw.surface_texture.as_mut(), &draw.vertices)?;
+        // Only a pending texgen changes the draw; reading first leaves a body that a draw
+        // record shares uncopied (#594).
+        if draw
+            .surface_texture
+            .as_ref()
+            .is_none_or(|style| style.pending_texgen.is_none())
+        {
+            unit.unbind();
+            continue;
+        }
+        let body = &mut **draw;
+        unit.resolve(body.surface_texture.as_mut(), &body.vertices)?;
     }
     Ok(())
 }
@@ -53,7 +64,7 @@ impl FixedTextureUnit {
             return Ok(());
         };
         self.bind(&style.image, &snapshot)?;
-        style.uv = self.binding().coordinates(&snapshot, vertices)?;
+        style.uv = self.binding().coordinates(&snapshot, vertices)?.into();
         style.validate(vertices.len())
     }
     /// BindTextures: a different texture applies its parameters over the current state.
@@ -131,7 +142,7 @@ mod tests {
     fn binding_identity_texture() -> Handle<Graphic3dTexture2D> {
         let image = Handle::new(ImagePixMap::default());
         assert!(image.init_wrapper(ImageFormat::Rgba, Some(vec![255; 4]), 1, 1, 4));
-        Handle::new(Graphic3dTexture2D::from_pix_map(image))
+        Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()))
     }
     /// A distinct one-texel texture image.
     fn texture_image(

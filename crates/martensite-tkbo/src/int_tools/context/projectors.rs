@@ -20,7 +20,7 @@ impl CurveCache {
         }
     }
     fn get(&self, curve: &Handle<dyn GeomCurve>) -> Result<Cached<ProjectPointOnCurve>, Failure> {
-        let key = curve.cast::<StandardTransient>().as_ptr() as usize;
+        let key = curve.object_address() as usize;
         if let Some((_, projector)) = self.entries.read().seek(&key) {
             return Ok(projector.clone());
         }

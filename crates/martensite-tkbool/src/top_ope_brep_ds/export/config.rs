@@ -105,7 +105,7 @@ fn loi_sans_gds(
     loi: &ListOfInterference,
     kds: TopOpeBRepDSKind,
     gds: i32,
-) -> Result<Vec<Handle<crate::top_ope_brep_ds::TopOpeBRepDSInterference>>, Failure> {
+) -> Result<Vec<Handle<dyn crate::top_ope_brep_ds::InterferenceRecord>>, Failure> {
     let mut out = Vec::new();
     let mut tki = TopOpeBRepDSTKI::new();
     tki.fill_on_geometry(loi)?;

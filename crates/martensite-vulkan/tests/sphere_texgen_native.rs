@@ -220,7 +220,7 @@ impl SphereScene {
         let structure = structure.unwrap();
         let group = structure.new_group().unwrap();
         group.set_group_primitives_aspect(&aspect.cast());
-        group.add_primitive_array(&uv_sphere(), true);
+        group.add_primitive_array(&uv_sphere().upcast(), true);
         structure.set_transformation(&sphere_transform());
         structure.display();
         Self {
@@ -248,7 +248,7 @@ impl SphereScene {
 
 /// A bilinear texture of `image`, as the probe's textures.
 fn bilinear_texture(image: Handle<ImagePixMap>) -> Handle<Graphic3dTexture2D> {
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()));
     texture
         .get_params()
         .set_filter(Graphic3dTypeOfTextureFilter::Bilinear);

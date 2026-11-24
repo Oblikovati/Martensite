@@ -1,0 +1,464 @@
+//! Freeze once; native evidence cannot satisfy the missing publication certificates.
+use super::*;
+use crate::surface_sketch::encoding;
+use martensite_tkbo::{
+    body_check::{ValidationReport, validate_body},
+    profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap},
+};
+use martensite_tkgeombase::gprop::GProps;
+use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
+use std::collections::BTreeSet;
+
+use martensite_tkmath::predicates::roots::metric_bounds::{
+    CertifiedCylindricalFlux, CertifiedCylindricalMeasureComparison,
+};
+
+// The native API requests a relative quadrature tolerance, independently of certified bounds.
+pub(in crate::surface_sketch::wrapped_profile) const NATIVE_VOLUME_RELATIVE_TOLERANCE: f64 = 1e-8;
+
+mod qualification;
+pub(super) use qualification::{NativeQualification, qualify_native};
+#[cfg(test)]
+type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
+
+pub(super) struct MeasureEvidence {
+    pub comparison: CertifiedCylindricalMeasureComparison,
+    pub spans: Vec<CurveSpan>,
+}
+
+// Geometric receipts do not claim a native pass on any frame (#527).
+pub(super) struct MemberGeometry {
+    pub coverage: coverage::CoverageEvidence,
+    pub measures: MeasureEvidence,
+    pub storage: Vec<storage::StoredProof>,
+    pub cones: planar_cones::ConeEvidence,
+}
+pub(super) type RetainedMember = operation::stages::QualifiedMember<MemberGeometry>;
+pub(super) struct StoredMember {
+    shape: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+    coverage: coverage::CoverageEvidence,
+    pub storage: Vec<storage::StoredProof>,
+}
+#[cfg(test)]
+pub(super) struct Unqualified {
+    pub bytes: Vec<u8>,
+    pub keys: Vec<BindingKey>,
+    pub member: RetainedMember,
+    pub planar: planar::PlanarEvidence,
+    pub clearance: planar_clearance::OriginalClearance,
+}
+
+fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> Result<T, Refusal> {
+    result.map_err(|cause| Refusal {
+        stage,
+        region,
+        cause: RefusalCause::Native(Box::new(cause)),
+    })
+}
+
+#[cfg(test)]
+pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
+    at(request.region, Stage::Admission, admit(request))?;
+    let planar = planar_stage(request)?;
+    let prepared = planning_stage(request)?;
+    let clearance = clearance_stage(request, &prepared)?;
+    let (bytes, keys, decoded, bindings) = construct_frozen(&prepared)?;
+    let stored = store_member(request, &prepared, decoded, bindings)?;
+    bind_clearance(&clearance, request, &prepared, &stored.storage)?;
+    let member = finish_member(request, &prepared, stored)?;
+    Ok(Unqualified {
+        bytes,
+        keys,
+        member,
+        planar,
+        clearance,
+    })
+}
+#[cfg(test)]
+pub(super) fn store_member(
+    original: &Request,
+    prepared: &Request,
+    shape: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+) -> Result<StoredMember, Refusal> {
+    store_member_with_cancel(original, prepared, shape, bindings, || false)
+}
+pub(super) fn store_member_with_cancel(
+    original: &Request,
+    prepared: &Request,
+    shape: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<StoredMember, Refusal> {
+    let coverage = coverage_stage(prepared, &shape, &bindings)?;
+    let storage = storage_stage(original, prepared, &bindings, &mut cancelled)?;
+    Ok(StoredMember {
+        shape,
+        bindings,
+        coverage,
+        storage,
+    })
+}
+#[cfg(test)]
+pub(super) fn finish_member(
+    original: &Request,
+    prepared: &Request,
+    stored: StoredMember,
+) -> Result<RetainedMember, Refusal> {
+    let (geometry, shape) = certify_geometry(original, prepared, stored, &mut || false)?;
+    let native = qualify_native(original, &shape)?;
+    Ok(RetainedMember { geometry, native })
+}
+
+pub(super) fn certify_geometry(
+    original: &Request,
+    prepared: &Request,
+    stored: StoredMember,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<(MemberGeometry, Shape), Refusal> {
+    let (bindings, proofs) = (&stored.bindings, stored.storage.as_slice());
+    let cones = cone_stage(original, prepared, proofs, &mut *cancelled)?;
+    let measures = measure_stage(original, prepared, bindings, proofs, &mut *cancelled)?;
+    let geometry = MemberGeometry {
+        coverage: stored.coverage,
+        measures,
+        storage: stored.storage,
+        cones,
+    };
+    Ok((geometry, stored.shape))
+}
+
+fn coverage_stage(
+    request: &Request,
+    root: &Shape,
+    bindings: &[(BindingKey, Shape)],
+) -> Result<coverage::CoverageEvidence, Refusal> {
+    coverage::certify(request, root, bindings).map_err(|cause| Refusal {
+        stage: Stage::Coverage,
+        region: request.region,
+        cause: RefusalCause::Coverage(Box::new(cause)),
+    })
+}
+
+#[cfg(test)]
+fn construct_frozen(request: &Request) -> Result<FrozenParts, Refusal> {
+    let constructed = at(
+        request.region,
+        Stage::Construction,
+        native::construct(request),
+    )?;
+    frozen_parts(request.region, &constructed)
+}
+
+#[cfg(test)]
+fn frozen_parts(
+    region: SurfaceRegionId,
+    constructed: &Constructed,
+) -> Result<FrozenParts, Refusal> {
+    let bytes = at(region, Stage::Freeze, freeze(constructed))?;
+    let keys: Vec<_> = constructed.bindings.iter().map(|(key, _)| *key).collect();
+    let (shape, bindings) = at(region, Stage::Freeze, decode(&bytes, &keys))?;
+    Ok((bytes, keys, shape, bindings))
+}
+
+#[cfg(test)]
+fn clearance_stage(
+    original: &Request,
+    prepared: &Request,
+) -> Result<planar_clearance::OriginalClearance, Refusal> {
+    planar_clearance::certify(original, prepared).map_err(|cause| Refusal {
+        stage: Stage::Clearance,
+        region: original.region,
+        cause: RefusalCause::Clearance(Box::new(cause)),
+    })
+}
+
+#[cfg(test)]
+fn bind_clearance(
+    evidence: &planar_clearance::OriginalClearance,
+    original: &Request,
+    prepared: &Request,
+    stored: &[storage::StoredProof],
+) -> Result<(), Refusal> {
+    planar_clearance::bind(evidence, original, prepared, stored).map_err(|cause| Refusal {
+        stage: Stage::Clearance,
+        region: original.region,
+        cause: RefusalCause::Clearance(Box::new(cause)),
+    })
+}
+
+fn measure_stage(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<MeasureEvidence, Refusal> {
+    let flux = flux_stage(original, prepared, bindings, proofs, &mut *cancelled)?;
+    let normal = ideal_stage(original, prepared, proofs, &mut *cancelled)?;
+    compare_stage(
+        original,
+        prepared,
+        bindings,
+        proofs,
+        (flux, normal),
+        cancelled,
+    )
+}
+fn ideal_stage(
+    original: &Request,
+    prepared: &Request,
+    proofs: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<normal_measure::NormalMeasureEvidence, Refusal> {
+    normal_at(
+        original.region,
+        normal_measure::certify_with_cancel(original, prepared, proofs, cancelled),
+    )
+}
+fn compare_stage(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[storage::StoredProof],
+    completed: (
+        CertifiedCylindricalFlux,
+        normal_measure::NormalMeasureEvidence,
+    ),
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<MeasureEvidence, Refusal> {
+    normal_at(
+        original.region,
+        normal_measure::compare_with_cancel(
+            original, prepared, bindings, proofs, completed, cancelled,
+        ),
+    )
+}
+
+fn normal_at<T>(
+    region: SurfaceRegionId,
+    result: Result<T, normal_measure::NormalMeasureFailure>,
+) -> Result<T, Refusal> {
+    result.map_err(|cause| Refusal {
+        stage: Stage::Measure,
+        region,
+        cause: RefusalCause::NormalMeasure(Box::new(cause)),
+    })
+}
+
+fn flux_stage(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<CertifiedCylindricalFlux, Refusal> {
+    storage::certify_flux_with_cancel(original, prepared, bindings, proofs, cancelled).map_err(
+        |cause| Refusal {
+            stage: Stage::Measure,
+            region: original.region,
+            cause: RefusalCause::Storage(Box::new(cause)),
+        },
+    )
+}
+
+fn cone_stage(
+    original: &Request,
+    prepared: &Request,
+    stored: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<planar_cones::ConeEvidence, Refusal> {
+    planar_cones::certify_with_cancel(original, prepared, stored, cancelled).map_err(|cause| {
+        Refusal {
+            stage: Stage::Cones,
+            region: original.region,
+            cause: RefusalCause::Cones(Box::new(cause)),
+        }
+    })
+}
+
+#[cfg(test)]
+fn planar_stage(request: &Request) -> Result<planar::PlanarEvidence, Refusal> {
+    planar::certify(request).map_err(|cause| Refusal {
+        stage: Stage::Planar,
+        region: request.region,
+        cause: RefusalCause::Planar(Box::new(cause)),
+    })
+}
+
+#[cfg(test)]
+fn planning_stage(request: &Request) -> Result<Request, Refusal> {
+    subdivision::prepare(request).map_err(|cause| Refusal {
+        stage: Stage::Planning,
+        region: request.region,
+        cause: RefusalCause::Planning(Box::new(cause)),
+    })
+}
+
+fn storage_stage(
+    original: &Request,
+    request: &Request,
+    bindings: &[(BindingKey, Shape)],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<Vec<storage::StoredProof>, Refusal> {
+    storage::certify_with_cancel(original, request, bindings, cancelled).map_err(|cause| Refusal {
+        stage: Stage::Storage,
+        region: original.region,
+        cause: RefusalCause::Storage(Box::new(cause)),
+    })
+}
+
+pub(super) fn ordered_checks(shape: &Shape, tolerance: f64) -> Result<ValidationReport, Failure> {
+    validate_body(shape, &resolution(tolerance)).map_err(|e| {
+        Failure::new(&format!(
+            "{}={} must be finite and positive",
+            e.field, e.value
+        ))
+    })
+}
+
+#[cfg(test)]
+fn freeze(constructed: &Constructed) -> Result<Vec<u8>, Failure> {
+    encoding::encode(&constructed.solid, &constructed.bindings)
+        .map_err(|e| Failure::new(&format!("freeze failed: {e:?}")))
+}
+
+pub(super) fn decode(
+    bytes: &[u8],
+    keys: &[BindingKey],
+) -> Result<(Shape, Vec<(BindingKey, Shape)>), Failure> {
+    // #432/#451: bind both stored support frames and rigid locations without reconstruction.
+    encoding::decode_with_policies(
+        bytes,
+        keys,
+        martensite_tkbrep::bintools::SurfaceFrameReadPolicy::PreserveStoredV1,
+        martensite_tkbrep::bintools::LocationTransformReadPolicy::PreserveStoredRigidV1,
+    )
+    .map_err(|e| Failure::new(&format!("decode failed: {e:?}")))
+}
+
+pub(super) fn resolution(tolerance: f64) -> Resolution {
+    Resolution::new(
+        tolerance,
+        1e-7,
+        1e-9,
+        DisplayTolerance {
+            chordal: 1e-3,
+            angular: 0.1,
+        },
+        ToleranceCap::Refuse(tolerance),
+    )
+}
+
+pub(super) fn estimate(shape: &Shape) -> Result<(f64, f64), Failure> {
+    let mut props = GProps::new();
+    let status = BRepGProp::volume_properties_gk(
+        shape,
+        &mut props,
+        NATIVE_VOLUME_RELATIVE_TOLERANCE,
+        true,
+        VolumeGKFlags::default(),
+    )?;
+    let value = props.mass();
+    if !value.is_finite() || !status.is_finite() || status < 0. {
+        return Err(Failure::new(&format!(
+            "volume={value}, integration status={status}; expected finite value and nonnegative estimate"
+        )));
+    }
+    Ok((value, status))
+}
+
+#[derive(Default)]
+struct AdmissionIds {
+    curves: BTreeSet<SurfaceCurveId>,
+    vertices: BTreeSet<CornerSource>,
+}
+
+pub(super) fn admit(request: &Request) -> Result<(), Failure> {
+    admit_limits(request)?;
+    let mut ids = AdmissionIds::default();
+    for contour in &request.loops {
+        admit_contour(contour, request.radius, &mut ids)?;
+    }
+    Ok(())
+}
+
+fn admit_limits(request: &Request) -> Result<(), Failure> {
+    let values = request_values(request);
+    let invalid = values.iter().any(|v| !v.is_finite())
+        || request.radius <= 0.
+        || request.radius + request.depths[0] <= 0.
+        || request.depths[0] >= request.depths[1]
+        || request.tolerance <= 0.
+        || request.loops.is_empty()
+        || request.max_fit_level > 8;
+    if invalid {
+        return Err(Failure::new(&format!(
+            "radius/depths/tolerance={values:?}, loops={}, fit level={}; expected positive radii, ordered depths, positive tolerance, contours and level <= 8",
+            request.loops.len(),
+            request.max_fit_level
+        )));
+    }
+    Ok(())
+}
+
+fn admit_contour(
+    contour: &[AuthoredPiece],
+    radius: f64,
+    ids: &mut AdmissionIds,
+) -> Result<(), Failure> {
+    if contour.len() < 3 {
+        return Err(Failure::new(&format!(
+            "contour has {} pieces; expected at least 3",
+            contour.len()
+        )));
+    }
+    for (i, piece) in contour.iter().enumerate() {
+        admit_piece(piece, radius)?;
+        admit_join(piece, &contour[(i + 1) % contour.len()], ids)?;
+    }
+    Ok(())
+}
+
+fn admit_join(
+    piece: &AuthoredPiece,
+    next: &AuthoredPiece,
+    ids: &mut AdmissionIds,
+) -> Result<(), Failure> {
+    if !ids.curves.insert(piece.span.curve)
+        || !ids.vertices.insert(piece.start)
+        || piece.end != next.start
+        || piece.poles.last() != next.poles.first()
+    {
+        return Err(Failure::new(&format!(
+            "curve {:?}, endpoints {:?}/{:?}; expected unique authored IDs and exact closed joins",
+            piece.span.curve, piece.start, piece.end
+        )));
+    }
+    Ok(())
+}
+
+fn admit_piece(piece: &AuthoredPiece, radius: f64) -> Result<(), Failure> {
+    let valid = (2..=4).contains(&piece.poles.len())
+        && piece
+            .poles
+            .iter()
+            .all(|[s, z]| s.is_finite() && z.is_finite() && (s / radius).is_finite());
+    if !valid {
+        return Err(Failure::new(&format!(
+            "curve {:?} has poles {:?}; expected 2..=4 finite poles with finite s/radius",
+            piece.span.curve, piece.poles
+        )));
+    }
+    Ok(())
+}
+
+fn request_values(request: &Request) -> [f64; 4] {
+    [
+        request.radius,
+        request.depths[0],
+        request.depths[1],
+        request.tolerance,
+    ]
+}

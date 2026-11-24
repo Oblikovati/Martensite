@@ -1,4 +1,4 @@
-//! Presentation/acquisition fences are independent from device queue-idle completion.
+//! Presentation fences are independent from device queue-idle completion.
 use super::{
     device_retirement::{CompletionDispatch, retirement_retry_pause},
     runtime::{VulkanRuntime, vk_error},
@@ -8,19 +8,16 @@ use ash::vk;
 #[derive(Clone, Copy)]
 pub(super) enum WindowFenceOwner {
     Presentation,
-    Acquisition,
 }
 impl WindowFenceOwner {
     fn wait_operation(self) -> &'static str {
         match self {
             Self::Presentation => "wait for presentation resources",
-            Self::Acquisition => "wait for window acquisition",
         }
     }
     fn reset_operation(self) -> &'static str {
         match self {
             Self::Presentation => "reset presentation fence",
-            Self::Acquisition => "reset acquisition fence",
         }
     }
 }
@@ -78,14 +75,6 @@ mod tests {
         assert_eq!(
             WindowFenceOwner::Presentation.reset_operation(),
             "reset presentation fence"
-        );
-        assert_eq!(
-            WindowFenceOwner::Acquisition.wait_operation(),
-            "wait for window acquisition"
-        );
-        assert_eq!(
-            WindowFenceOwner::Acquisition.reset_operation(),
-            "reset acquisition fence"
         );
     }
 }

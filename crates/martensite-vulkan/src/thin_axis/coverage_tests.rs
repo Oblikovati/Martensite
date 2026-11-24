@@ -94,9 +94,9 @@ fn scissor_intersection_keeps_original_cell_ownership() {
 #[test]
 fn independent_projective_interpolation_matches_all_quad_corners() {
     let mut source = frame_loop();
-    source.indices = vec![0, 3];
-    source.vertices[0] = RenderVertex::homogeneous([-1.5, -1.6, -0.8, 2.], [0.; 4]);
-    source.vertices[3] = RenderVertex::homogeneous([-3., 2.4, 1.6, 4.], [1.; 4]);
+    source.indices = vec![0, 3].into();
+    source.vertices.make_mut()[0] = RenderVertex::homogeneous([-1.5, -1.6, -0.8, 2.], [0.; 4]);
+    source.vertices.make_mut()[3] = RenderVertex::homogeneous([-3., 2.4, 1.6, 4.], [1.; 4]);
     let mode = RenderThinAxisCoverage::FixedGridV2 {
         grid: Fractional12,
         origin: BottomUp,
@@ -104,7 +104,7 @@ fn independent_projective_interpolation_matches_all_quad_corners() {
     let output = selected_draw(mode, &source, [400, 400], true)
         .unwrap()
         .unwrap();
-    for v in &output.vertices {
+    for v in output.vertices() {
         let y = (v.position[1] as f64 / v.weight as f64 + 1.) * 200.;
         let screen_t = (y - 40.) / 280.;
         let parameter = 2. * screen_t / (4. - 2. * screen_t);

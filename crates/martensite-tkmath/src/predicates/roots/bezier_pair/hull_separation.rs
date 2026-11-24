@@ -77,12 +77,15 @@ fn independent_witness(
 }
 
 fn normal_candidates(left: &ExactHull, right: &ExactHull) -> Vec<ExactPoint> {
-    [left, right].into_iter().flat_map(hull_normals).collect()
+    [left, right]
+        .into_iter()
+        .flat_map(|hull| hull_normals(hull))
+        .collect()
 }
 
-fn hull_normals(hull: &ExactHull) -> Vec<ExactPoint> {
+pub(in crate::predicates::roots) fn hull_normals(hull: &[ExactPoint]) -> Vec<ExactPoint> {
     let mut result = Vec::new();
-    for i in 0..3 {
+    for i in 0..hull.len() {
         for j in 0..i {
             let difference = subtract(&hull[i], &hull[j]);
             result.push(difference.clone());
@@ -139,6 +142,17 @@ mod tests {
     fn hull(points: [[f64; 2]; 3]) -> ExactHull {
         points.map(|p| p.map(ExactRatio::from_finite))
     }
+    #[test]
+    fn direction_candidates_cover_a_variable_size_control_hull() {
+        let points =
+            [[0., 0.], [2., 0.], [2., 1.], [0., 1.]].map(|p| p.map(ExactRatio::from_finite));
+        let directions = hull_normals(&points);
+        assert_eq!(directions.len(), 12);
+        assert!(directions.contains(&[-1., 0.].map(ExactRatio::from_finite)));
+        assert!(directions.contains(&[0., 2.].map(ExactRatio::from_finite)));
+        assert_eq!(hull_normals(&points[..3]).len(), 6);
+    }
+
     #[test]
     fn two_independent_weak_lines_prove_only_the_actual_shared_endpoint() {
         let a = hull([[0., 0.], [1., 0.], [2., 0.]]);

@@ -6,7 +6,7 @@ use super::{
     InterfaceShareTool,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
     tcollection::AsciiString,
 };
 use std::sync::{Mutex, OnceLock, PoisonError};
@@ -72,7 +72,7 @@ impl InterfaceCategory {
         self.my_g_tool.set_protocol(protocol, false);
     }
     /// `CatNum(ent, shares)`: the category number its module gives, 0 when none.
-    pub fn cat_num(&self, ent: &Handle<StandardTransient>, shares: &InterfaceShareTool) -> i32 {
+    pub fn cat_num(&self, ent: &Handle<dyn Transient>, shares: &InterfaceShareTool) -> i32 {
         let Some((module, cn)) = self.my_g_tool.select(ent, false) else {
             return 0;
         };

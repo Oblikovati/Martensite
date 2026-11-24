@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::iges_draw::IgesDrawConnectPoint;
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
@@ -36,7 +37,7 @@ iges_entity! {
 IgesDrawNetworkSubfigureDef, IgesDrawNetworkSubfigureDefState, "IgesDrawNetworkSubfigureDef", parent IgesDataIgesEntity, {
 the_depth: i32,
 the_name: Handle<HAsciiString>,
-the_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 the_type_flag: i32,
 the_designator: Handle<HAsciiString>,
 the_designator_template: Handle<IgesGraphTextDisplayTemplate>,
@@ -72,7 +73,7 @@ impl IgesDrawNetworkSubfigureDef {
         &self,
         a_depth: i32,
         a_name: &Handle<HAsciiString>,
-        all_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         a_type_flag: i32,
         a_designator: &Handle<HAsciiString>,
         a_template: &Handle<IgesGraphTextDisplayTemplate>,
@@ -117,7 +118,7 @@ impl IgesDrawNetworkSubfigureDef {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn entity(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn entity(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_entities,
             index,

@@ -14,6 +14,55 @@ fn pr_base_defaults_to_origin_main() {
 }
 
 #[test]
+fn occt_parity_defaults_to_tkernel_two_rounds_and_five_percent() {
+    let cli = Cli::try_parse_from(["cargo xtask", "occt-parity", "--occt", "/opt/occt"]).unwrap();
+    let BuildCommand::OcctParity(args) = cli.command else {
+        panic!("expected occt-parity");
+    };
+    let request = args.request();
+    assert_eq!(request.toolkit, crate::occt_parity::ParityToolkit::Tkernel);
+    assert_eq!(request.occt_prefix, PathBuf::from("/opt/occt"));
+    assert_eq!(
+        (request.rounds, request.tolerance, request.cpus),
+        (2, 0.05, None)
+    );
+}
+
+#[test]
+fn occt_parity_selects_the_vulkan_renderer_cases() {
+    let arguments = [
+        "cargo xtask",
+        "occt-parity",
+        "--toolkit",
+        "vulkan",
+        "--occt",
+        "/o",
+    ];
+    let cli = Cli::try_parse_from(arguments).unwrap();
+    let BuildCommand::OcctParity(args) = cli.command else {
+        panic!("expected occt-parity");
+    };
+    assert_eq!(
+        args.request().toolkit,
+        crate::occt_parity::ParityToolkit::Vulkan
+    );
+}
+
+#[test]
+fn occt_parity_requires_the_occt_prefix_and_one_round() {
+    assert!(Cli::try_parse_from(["cargo xtask", "occt-parity"]).is_err());
+    let zero = [
+        "cargo xtask",
+        "occt-parity",
+        "--occt",
+        "/o",
+        "--rounds",
+        "0",
+    ];
+    assert!(Cli::try_parse_from(zero).is_err());
+}
+
+#[test]
 fn ci_run_requires_a_target() {
     assert!(Cli::try_parse_from(["cargo xtask", "ci", "run"]).is_err());
 }

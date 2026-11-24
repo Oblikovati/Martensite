@@ -151,7 +151,7 @@ fn replacement(
     vertices: Vec<crate::RenderVertex>,
     indices: Vec<u32>,
 ) -> PrimitiveDraw {
-    let mut selected = draw.with_replacement_geometry(vertices, indices);
+    let mut selected = draw.with_replacement_geometry(vertices.into(), indices.into());
     selected.clip_transform = crate::identity_clip();
     selected.line_style = None;
     selected.source_line_strip = false;

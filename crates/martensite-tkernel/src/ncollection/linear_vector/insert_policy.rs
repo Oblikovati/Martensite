@@ -24,7 +24,7 @@ impl<T> LinearVector<T> {
     /// Never read/drop a dead slot or leak the extra tail.
     /// Returning a value does not model address-dependent in-place constructors. Failed growth
     /// (see reserve_with_relocation) leaves the receiver unchanged before any destructive shift.
-    pub unsafe fn insert_before_with_constructors(
+    pub(crate) unsafe fn insert_before_with_constructors(
         &mut self,
         index: usize,
         relocate: impl FnMut(&mut T) -> T,
@@ -45,7 +45,7 @@ impl<T> LinearVector<T> {
     /// # Safety
     /// All lifetime, no-unwinding destruction, donor exclusivity and ManuallyDrop recovery
     /// obligations of `insert_before_with_constructors` apply at insertion index `index + 1`.
-    pub unsafe fn insert_after_with_constructors(
+    pub(crate) unsafe fn insert_after_with_constructors(
         &mut self,
         index: usize,
         relocate: impl FnMut(&mut T) -> T,

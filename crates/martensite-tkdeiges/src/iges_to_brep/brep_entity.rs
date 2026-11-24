@@ -2,7 +2,8 @@
 use super::curve_and_surface::curve_and_surface_tool;
 use super::{BoundaryFlags, IgesToBRep, IgesToBRepTopoCurve, IgesToBRepTopoSurface};
 use crate::iges_basic::IgesBasicSingleParent;
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_set, iges_live, iges_new_array1};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{iges_array1_set, iges_live, iges_new_array1};
 use crate::iges_geom::{
     IgesGeomBoundary, IgesGeomBoundedSurface, IgesGeomCurveOnSurface, IgesGeomPlane,
     IgesGeomTrimmedSurface,
@@ -18,6 +19,7 @@ use martensite_tkbrep::topods::{self, Edge, Face, Shape, Vertex};
 use martensite_tkernel::message::{Msg, ProgressRange};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg3d::geom::GeomTrimmedCurve;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
@@ -41,7 +43,7 @@ curve_and_surface_tool!(
 );
 
 impl IgesToBRepBRepEntity {
-    fn warn_label<T: ?Sized + RuntimeTyped>(
+    fn warn_label<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         entity: &Handle<T>,
         what: &[u8],
@@ -49,7 +51,7 @@ impl IgesToBRepBRepEntity {
         self.send_warning(entity, &self.label_message(entity, what)?);
         Ok(())
     }
-    pub(super) fn fail_label<T: ?Sized + RuntimeTyped>(
+    pub(super) fn fail_label<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         entity: &Handle<T>,
         what: &[u8],
@@ -63,7 +65,7 @@ impl IgesToBRepBRepEntity {
     /// A failure of the entity or of the construction of the shape.
     pub fn transfer_b_rep_entity(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         range: &ProgressRange,
     ) -> Result<Shape, Failure> {
         let face = start.cast::<IgesSolidFace>();
@@ -91,7 +93,7 @@ impl IgesToBRepBRepEntity {
         start: &Handle<IgesSolidVertexList>,
         index: i32,
     ) -> Result<Vertex, Failure> {
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         if self.nb_shape_result(&entity)? == 0 {
             let live = iges_live(start, WHERE)?;
             let builder = BRepBuilder::default();
@@ -156,7 +158,7 @@ impl IgesToBRepBRepEntity {
         rank: i32,
     ) -> Result<(), Failure> {
         let live = iges_live(start, WHERE)?;
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         let v1 = self.transfer_vertex(
             &live.start_vertex_list(rank)?,
             live.start_vertex_index(rank)?,
@@ -203,7 +205,7 @@ impl IgesToBRepBRepEntity {
         start: &Handle<IgesSolidEdgeList>,
         index: i32,
     ) -> Result<Shape, Failure> {
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         if self.nb_shape_result(&entity)? == 0 {
             let mut tool = IgesToBRepTopoCurve::with_base(self);
             for rank in 1..=iges_live(start, WHERE)?.nb_edges() {
@@ -261,7 +263,7 @@ impl IgesToBRepBRepEntity {
         live: &IgesSolidLoop,
         rank: i32,
         nb_3d: i32,
-    ) -> Result<Handle<HArray1<Handle<IgesDataIgesEntity>>>, Failure> {
+    ) -> Result<Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, Failure> {
         let nb_parameter = live.nb_parameter_curves(rank)?;
         if nb_3d != 1 || nb_parameter != 1 {
             return Ok(Handle::default());
@@ -286,7 +288,7 @@ impl IgesToBRepBRepEntity {
         trans: Transform2,
         u_fact: f64,
     ) -> Result<Shape, Failure> {
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         if !self.has_shape_result(&entity)? {
             let wire = self.built_loop(start, face, trans, u_fact)?;
             self.set_shape_result(&entity, &wire)?;
@@ -354,7 +356,7 @@ impl IgesToBRepBRepEntity {
     fn face_surface(
         &self,
         start: &Handle<IgesSolidFace>,
-        surface: &Handle<IgesDataIgesEntity>,
+        surface: &Handle<dyn IgesDataEntityKind>,
     ) -> bool {
         let allowed = surface.is_some()
             && IgesToBRep::is_topo_surface(surface)
@@ -399,7 +401,7 @@ impl IgesToBRepBRepEntity {
     /// # Errors
     /// A failure of the entity or of the construction of the face.
     pub fn transfer_face(&self, start: &Handle<IgesSolidFace>) -> Result<Shape, Failure> {
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         if !self.has_shape_result(&entity)? {
             let live = iges_live(start, WHERE)?;
             let surface = live.surface();

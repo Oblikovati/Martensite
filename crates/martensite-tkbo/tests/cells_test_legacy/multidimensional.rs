@@ -299,7 +299,7 @@ fn CellsTest__J4() {
 
 fn cylinder_surface() -> Handle<dyn GeomSurface> {
     Handle::new(GeomCylindricalSurface::new(Axis3::from_axis2(gp::xoy()), 10.0).unwrap())
-        .into_cast()
+        .into_upcast()
 }
 
 fn cylinder_face_edge(range: Option<(f64, f64)>) -> (BOPAlgoCellsBuilder, [Shape; 2]) {

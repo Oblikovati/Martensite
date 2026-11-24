@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Sturm–Tarski sign determination without approximate root evaluation.
 mod error;
+mod filtered;
 mod tarski;
 use super::{RootIsolation, RootIsolationOptions, chain, isolate, polynomial::IntegerPolynomial};
 pub use error::{RootSignError, RootSignStage};
@@ -65,4 +66,13 @@ pub(super) fn evaluate_isolated(
 fn query_polynomial(coefficients: &[f64], limit: u16) -> Result<IntegerPolynomial, RootSignError> {
     IntegerPolynomial::accept_zero(IntegerPolynomial::from_binary64(coefficients, limit))
         .map_err(|cause| RootSignStage::Query.failure(cause))
+}
+
+pub(super) fn evaluate_isolated_filtered(
+    source: IntegerPolynomial,
+    query: IntegerPolynomial,
+    isolation: RootIsolation,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<RootSignEvaluation, RootSignError> {
+    filtered::evaluate(source, query, isolation, cancelled)
 }

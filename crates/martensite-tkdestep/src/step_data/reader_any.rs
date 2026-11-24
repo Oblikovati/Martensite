@@ -5,9 +5,10 @@ use super::{
     StepDataLogical, StepDataPDescr, StepDataSelectArrReal, StepDataSelectInt,
     StepDataSelectMember, StepDataSelectNamed, StepDataSelectReal, StepDataStepReaderData,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     ncollection::{ArrayError, HArray1},
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, exceptions},
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -15,7 +16,7 @@ use martensite_tkxsbase::interface::{
     InterfaceFileReaderDataParams, InterfaceParamType as Param,
 };
 
-type TransientList = HArray1<Handle<StandardTransient>>;
+type TransientList = HArray1<Handle<dyn Transient>>;
 
 fn array_failure(error: ArrayError) -> Failure {
     error.into_failure("StepDataStepReaderData")
@@ -67,8 +68,8 @@ impl SubArrays {
         &mut self,
         nbp: i32,
         ip: i32,
-    ) -> Result<Handle<StandardTransient>, Failure> {
-        let list = new_array::<Handle<StandardTransient>>(nbp)?;
+    ) -> Result<Handle<dyn Transient>, Failure> {
+        let list = new_array::<Handle<dyn Transient>>(nbp)?;
         let live = list.get().expect("a new array");
         for jp in 1..ip {
             if let Some(ints) = self.hin.get() {
@@ -102,7 +103,7 @@ impl StepDataStepReaderData {
         mess: &str,
         ach: &Handle<InterfaceCheck>,
         descr: &Handle<StepDataPDescr>,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> Result<i32, Failure> {
         let nbp = self.nb_params(numsub)?;
         if nbp == 0 {
@@ -114,7 +115,7 @@ impl StepDataStepReaderData {
             *val = named.cast();
             let live = named.get().expect("a new member");
             live.set_name(&String::from_utf8_lossy(rectyp.as_bytes()));
-            let mut member = named.cast::<StandardTransient>();
+            let mut member = named.cast::<dyn Transient>();
             if self.read_any(numsub, 1, mess, ach, descr, &mut member)? {
                 return Ok(live.kind());
             }
@@ -144,7 +145,7 @@ impl StepDataStepReaderData {
                 *val = arrays.hst.cast();
             }
             _ => {
-                arrays.htr = new_array::<Handle<StandardTransient>>(nbp)?;
+                arrays.htr = new_array::<Handle<dyn Transient>>(nbp)?;
                 *val = arrays.htr.cast();
             }
         }
@@ -258,7 +259,7 @@ impl StepDataStepReaderData {
         mess: &str,
         ach: &Handle<InterfaceCheck>,
         descr: &Handle<StepDataPDescr>,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let param = self.param(num, nump)?;
         let text = param.c_value();
@@ -310,7 +311,7 @@ impl StepDataStepReaderData {
         mess: &str,
         ach: &Handle<InterfaceCheck>,
         descr: &Handle<StepDataPDescr>,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let numsub = self.sub_list_number(num, nump, false)?;
         if self.nb_params(numsub)? != 1 {
@@ -343,9 +344,9 @@ impl StepDataStepReaderData {
         mess: &str,
         ach: &Handle<InterfaceCheck>,
         descr: &Handle<StepDataPDescr>,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
-        let target = val.cast::<StepDataSelectArrReal>();
+        let target = val.cast::<dyn crate::StepEntityBase<StepDataSelectArrReal>>();
         let Some(live) = target.get() else {
             return Ok(false);
         };
@@ -383,7 +384,7 @@ impl StepDataStepReaderData {
 }
 
 fn existing_member(
-    val: &Handle<StandardTransient>,
+    val: &Handle<dyn Transient>,
 ) -> Result<Handle<dyn StepDataSelectMember>, Failure> {
     let member = val.cast::<dyn StepDataSelectMember>();
     if member.is_null() {
@@ -396,7 +397,7 @@ fn existing_member(
 
 /// The enumeration case of `read_any`: a logical or a named enumeration. Quirk kept:
 /// the enumeration value is -1, its text carries the meaning.
-fn read_any_enum(text: &[u8], val: &mut Handle<StandardTransient>) {
+fn read_any_enum(text: &[u8], val: &mut Handle<dyn Transient>) {
     let member = val.cast::<dyn StepDataSelectMember>();
     let logical = logical_of(text);
     if let Some(live) = member.get() {

@@ -21,7 +21,7 @@ impl Graphic3dRenderDriver {
         Ok(Self::build(DriverBuildInputs {
             limit: renderer.capture_limit(),
             backend: DriverBackend::Vulkan(Box::new(renderer)),
-            text_source: Arc::new(crate::FreeTypeTextSource::default()),
+            text_source: TextProvider::default(),
             selection,
             line_widths,
         }))

@@ -99,7 +99,7 @@ impl ChFi3dBuilder {
         );
         self.ds
             .change_shape_interferences_index(sol_ind)?
-            .append(Handle::new(ssi).cast());
+            .append(Handle::new(ssi).into_upcast());
         let orien = self.pcurve_orientation(c, orplate)?;
         let plate = Plate {
             isurf,

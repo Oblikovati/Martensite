@@ -7,7 +7,7 @@ impl<T: Default, const N: usize> LocalArray<T, N> {
     /// `array.reallocate_with_move(8, true, |item| std::mem::take(item))`.
     /// The callback must leave its source valid for destruction. Non-panicking
     /// callbacks and defaults stay in the successful construction domain.
-    pub fn reallocate_with_move<F>(&mut self, size: usize, copy: bool, mut construct: F)
+    pub(crate) fn reallocate_with_move<F>(&mut self, size: usize, copy: bool, mut construct: F)
     where
         F: FnMut(&mut T) -> T,
     {
@@ -30,7 +30,7 @@ impl<T, const N: usize> LocalArray<T, N> {
     /// `LocalArray::move_construct_with(&mut source, |item| std::mem::take(item))`.
     /// Heap storage transfers directly. Inline sources remain valid until all
     /// callbacks complete, then their moved-from values are destroyed in order.
-    pub fn move_construct_with<F>(source: &mut Self, mut construct: F) -> Self
+    pub(crate) fn move_construct_with<F>(source: &mut Self, mut construct: F) -> Self
     where
         F: FnMut(&mut T) -> T,
     {
@@ -49,7 +49,7 @@ impl<T, const N: usize> LocalArray<T, N> {
     /// `destination.move_from_with(&mut source, |item| std::mem::take(item))`.
     /// The callback models a nonthrowing move constructor and must leave
     /// its source valid for destruction. Self assignment uses `move_self()`.
-    pub fn move_from_with<F>(&mut self, source: &mut Self, construct: F) -> &mut Self
+    pub(crate) fn move_from_with<F>(&mut self, source: &mut Self, construct: F) -> &mut Self
     where
         F: FnMut(&mut T) -> T,
     {

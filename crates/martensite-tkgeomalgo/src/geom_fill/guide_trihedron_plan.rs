@@ -12,7 +12,7 @@ use super::trihedron_with_guide::{GeomFillTrihedronWithGuide, GeomFillTrihedronW
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::elclib;
 use martensite_tkmath::geom_abs::{CurveType, Shape};
@@ -42,7 +42,6 @@ pub(crate) struct PlanFields {
 /// its `D2` always answers false, and it never sets the current guide point.
 /// `let law = GeomFillGuideTrihedronPlan::new(&guide)?; law.set_curve(&path)?;`.
 pub struct GeomFillGuideTrihedronPlan {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     guide_base: GeomFillTrihedronWithGuideBase,
     x_tol: f64,
@@ -53,7 +52,6 @@ impl_transient!(
     GeomFillGuideTrihedronPlan,
     "GeomFill_GuideTrihedronPlan",
     dyn GeomFillTrihedronWithGuide,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw, dyn GeomFillTrihedronWithGuide]
 );
 
@@ -66,7 +64,6 @@ impl GeomFillGuideTrihedronPlan {
     pub fn new(guide: &Handle<dyn Adaptor3dCurve>) -> Result<Self, Failure> {
         let x_tol = live(guide, "GeomFill_GuideTrihedronPlan", "theGuide")?.resolution(1.0e-6)?;
         let law = Self {
-            parent: StandardTransient::default(),
             base: GeomFillTrihedronLawBase::default(),
             guide_base: GeomFillTrihedronWithGuideBase::default(),
             x_tol,
@@ -190,7 +187,7 @@ impl GeomFillTrihedronLaw for GeomFillGuideTrihedronPlan {
     fn copy(&self) -> Result<Handle<dyn GeomFillTrihedronLaw>, Failure> {
         let copy = GeomFillGuideTrihedronPlan::new(&self.guide_base.fields().guide)?;
         copy.set_curve(&self.fields.read().my_curve.clone())?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn error_status(&self) -> GeomFillPipeError {
         self.fields.read().status

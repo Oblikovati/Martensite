@@ -5,8 +5,7 @@ use martensite_tkcdf::json_dump::{class_begin, field_dumped};
 use martensite_tkernel::{
     impl_transient_interface,
     standard::{
-        Failure, Guid, Handle, RuntimeTyped, StandardTransient, Transient, WeakHandle,
-        dump::DumpStream, exceptions,
+        Failure, Guid, Handle, HandleUpcast, Transient, WeakHandle, dump::DumpStream, exceptions,
     },
 };
 use std::{io, sync::OnceLock};
@@ -43,9 +42,11 @@ impl TdfAttributeDeltaBase {
     }
     /// Puts a new delta in its handle and binds the self handle;
     /// `TdfAttributeDeltaBase::share(TdfDeltaOnAddition { .. })`.
-    pub fn share<T: TdfAttributeDelta + RuntimeTyped>(delta: T) -> Handle<T> {
+    pub fn share<T: TdfAttributeDelta + HandleUpcast<dyn TdfAttributeDelta>>(
+        delta: T,
+    ) -> Handle<T> {
         let handle = Handle::new(delta);
-        let shared: Handle<dyn TdfAttributeDelta> = handle.cast();
+        let shared: Handle<dyn TdfAttributeDelta> = handle.upcast();
         if let Some(delta) = handle.get() {
             let _ = delta.attribute_delta_base().this.set(shared.downgrade());
         }
@@ -90,11 +91,7 @@ pub trait TdfAttributeDelta: Transient {
         dump_attribute_delta(self, stream, depth)
     }
 }
-impl_transient_interface!(
-    dyn TdfAttributeDelta,
-    "TDF_AttributeDelta",
-    StandardTransient
-);
+impl_transient_interface!(dyn TdfAttributeDelta, "TDF_AttributeDelta", dyn Transient);
 
 /// The native `TDF_AttributeDelta::DumpJson`, also called as the base-class dump.
 pub fn dump_attribute_delta<D: TdfAttributeDelta + ?Sized>(

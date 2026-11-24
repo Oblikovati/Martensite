@@ -262,9 +262,8 @@ fn extrusion_line_converts_to_a_bezier_surface_patch() {
 
 #[test]
 fn surface_converter_parent_cast_shares_state_and_preserves_virtual_dispatch() {
-    use martensite_tkshhealing::shape_upgrade::ShapeUpgradeSplitSurface;
     let converter = Handle::new(ShapeUpgradeConvertSurfaceToBezierBasis::new());
-    let parent = converter.cast::<ShapeUpgradeSplitSurface>();
+    let parent = converter.upcast::<dyn SplitSurface>();
     assert!(!parent.is_null());
     parent
         .init_surface_bounds(&plane(), (0., 1., 0., 1.), 0.)

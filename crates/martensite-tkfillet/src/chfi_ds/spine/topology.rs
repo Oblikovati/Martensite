@@ -1,5 +1,5 @@
 //! The edges of a guideline, their vertices and the elementary spines cut from them.
-use super::Spine;
+use super::SpineData;
 use crate::chfi_ds::ElSpine;
 use crate::chfi_ds::errors::{null_object, out_of_range};
 use martensite_tkbrep::topexp;
@@ -9,7 +9,7 @@ use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::elclib;
 
-impl Spine {
+impl SpineData {
     /// `SetEdges(E)`: appends `edge` to the guideline; `spine.set_edges(&edge)`.
     pub fn set_edges(&mut self, edge: &Edge) {
         self.edges.push(edge.clone());

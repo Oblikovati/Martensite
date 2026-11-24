@@ -10,13 +10,15 @@
 use super::{IgesGeomCurveOnSurface, IgesGeomDirection, IgesGeomFlash, IgesGeomToolCurveOnSurface};
 use crate::iges_basic::entity_shape::iges_tool;
 use crate::iges_basic::shared_runs::iges_shared_047;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataLineFontEntity, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataLineFontEntity, IgesDataParamReader,
 };
 use crate::iges_data::{IgesDataDumpResult, iges_dump_xyz_l, iges_live, iges_msg};
 use martensite_tkernel::message::Msg;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Xy, Xyz};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -30,7 +32,7 @@ impl IgesGeomToolCurveOnSurface {
     /// A failure of a parameter list or an entity member.
     pub fn own_correct(&self, ent: &Handle<IgesGeomCurveOnSurface>) -> Result<bool, Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolCurveOnSurface::own_correct")?;
-        let c2d: Handle<IgesDataIgesEntity> = ent_live.curve_uv();
+        let c2d: Handle<dyn IgesDataEntityKind> = ent_live.curve_uv();
         if c2d.is_null() {
             return Ok(false);
         }
@@ -78,14 +80,14 @@ impl IgesGeomToolCurveOnSurface {
         let another_live = iges_live(another, "IgesGeomToolCurveOnSurface::own_copy")?;
         let ent_live = iges_live(ent, "IgesGeomToolCurveOnSurface::own_copy")?;
         let a_surface = tc
-            .transferred(&another_live.surface().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.surface().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let a_curve_uv = tc
-            .transferred(&another_live.curve_uv().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.curve_uv().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let a_curve3d = tc
-            .transferred(&another_live.curve3d().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.curve3d().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let a_mode: i32 = another_live.creation_mode();
         let a_preference: i32 = another_live.preference_mode();
         ent_live.init(a_mode, &a_surface, &a_curve_uv, &a_curve3d, a_preference);
@@ -295,7 +297,7 @@ impl IgesGeomToolFlash {
         let mut a_dim1: f64 = 0.0;
         let mut a_dim2: f64 = 0.0;
         let mut a_rotation: f64 = 0.0;
-        let mut a_reference: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_reference: Handle<dyn IgesDataEntityKind> = Handle::default();
         let fn_: i32 = ent_live.form_number();
         a_rotation = 0.0;
         a_dim2 = a_rotation;
@@ -359,7 +361,7 @@ impl IgesGeomToolFlash {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolFlash::own_shared")?;
-        iter.get_one_item(&ent_live.reference_entity().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.reference_entity().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -386,7 +388,7 @@ impl IgesGeomToolFlash {
             ent_live.init_line_font(&nulfont, 1);
         }
         let mut res1: bool = false;
-        let mut ref_: Handle<IgesDataIgesEntity> = ent_live.reference_entity();
+        let mut ref_: Handle<dyn IgesDataEntityKind> = ent_live.reference_entity();
         if fn_ != 0 && !ref_.is_null() {
             ref_.nullify();
             res1 = true;
@@ -460,8 +462,8 @@ impl IgesGeomToolFlash {
         let a_dim2: f64 = another_live.dimension2();
         let a_rotation: f64 = another_live.rotation();
         let a_reference = tc
-            .transferred(&another_live.reference_entity().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.reference_entity().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         ent_live.init(a_point, a_dim1, a_dim2, a_rotation, &a_reference);
         Ok(())
     }

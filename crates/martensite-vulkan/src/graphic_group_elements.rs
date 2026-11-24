@@ -30,15 +30,14 @@ impl Graphic3dDrawGroup {
         let raytraced = element.is_raytraced_element();
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Element(element));
+            .push_command(GroupCommand::Element(element));
         if raytraced {
             self.note_raytraced_element();
         }
         self.update();
     }
     pub(super) fn synchronize_elements(&self) {
-        for command in &self.submissions.read().commands {
+        for command in self.submissions.read().commands.iter() {
             if let GroupCommand::Element(element) = command {
                 element.synchronize_aspects();
             }
@@ -88,7 +87,7 @@ fn group_geometry(
     let geometry = match geometry {
         RenderElementGeometry::Primitives(primitive) => GroupGeometry::Primitives(primitive),
         RenderElementGeometry::Text(text, upload, placement) => {
-            GroupGeometry::Text(text, upload, placement)
+            GroupGeometry::Text(text, upload, placement, Default::default())
         }
     };
     (aspects, geometry)

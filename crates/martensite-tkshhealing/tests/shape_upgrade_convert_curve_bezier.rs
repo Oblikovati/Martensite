@@ -8,11 +8,11 @@ use martensite_tkg3d::geom::{
     GeomBezierCurve, GeomCircle, GeomCurve, GeomEllipse, GeomLine, GeomTrimmedCurve,
 };
 use martensite_tkmath::gp::{Axis1, Axis2, Direction2, Direction3, Point2, Point3};
+use martensite_tkshhealing::shape_upgrade::SplitCurve3d;
 use martensite_tkshhealing::{
     shape_extend::ShapeExtendStatus,
     shape_upgrade::{
-        ShapeUpgradeConvertCurve2dToBezier, ShapeUpgradeConvertCurve3dToBezier,
-        ShapeUpgradeSplitCurve3d, SplitCurve,
+        ShapeUpgradeConvertCurve2dToBezier, ShapeUpgradeConvertCurve3dToBezier, SplitCurve,
     },
 };
 
@@ -291,7 +291,7 @@ fn native_2d_linear_approximation_and_circle_arcs_match() {
 #[test]
 fn native_rtti_parent_and_virtual_compute_build_share_result_state() {
     let tool = Handle::new(ShapeUpgradeConvertCurve3dToBezier::new());
-    let base = tool.cast::<ShapeUpgradeSplitCurve3d>();
+    let base = tool.upcast::<dyn SplitCurve3d>();
     let dispatch = tool.cast::<dyn SplitCurve>();
     let axis = Axis1::new(Point3::default(), Direction3::X);
     let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(axis)).cast();

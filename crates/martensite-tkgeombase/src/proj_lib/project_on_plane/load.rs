@@ -84,7 +84,8 @@ impl OnPlaneState {
         }
         self.curve_type = CurveType::Line;
         let projected: Line3 = Line3::new(origin, Direction3::from_vector(xc)?);
-        let geom_line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(projected)).cast();
+        let geom_line: Handle<dyn GeomCurve> =
+            Handle::new(GeomLine::from_lin(projected)).into_upcast();
         let (first, last) = self.curve_bounds()?;
         if (xc.magnitude() - 1.).abs() < precision::confusion() {
             (self.first_par, self.last_par) = (first, last);
@@ -142,7 +143,7 @@ impl OnPlaneState {
         let mut knots: Array1<'static, f64> = new_array(2)?;
         (knots[1], knots[2]) = (first, last);
         let bsp: Handle<dyn GeomCurve> =
-            Handle::new(GeomBSplineCurve::new(&poles, &knots, &mults, 1, false)?).cast();
+            Handle::new(GeomBSplineCurve::new(&poles, &knots, &mults, 1, false)?).into_upcast();
         self.result = Handle::new(GeomAdaptorCurve::with_curve(&bsp)?);
         Ok(())
     }
@@ -155,7 +156,7 @@ impl OnPlaneState {
         last: f64,
     ) -> Result<(), Failure> {
         let trimmed = GeomTrimmedCurve::new(geom_line, self.first_par, self.last_par, true, true)?;
-        let trimmed: Handle<dyn GeomCurve> = Handle::new(trimmed).cast();
+        let trimmed: Handle<dyn GeomCurve> = Handle::new(trimmed).into_upcast();
         let converted = curve_to_bspline_curve(&trimmed, ParameterisationType::TgtThetaOver2)?;
         let spline: &GeomBSplineCurve = converted.get().ok_or_else(null_curve)?;
         let mut knots: Array1<'static, f64> = spline.knots();
@@ -266,14 +267,15 @@ impl OnPlaneState {
         if (major - minor).abs() < precision::confusion() {
             self.curve_type = CurveType::Circle;
             let circle: Handle<dyn GeomCurve> =
-                Handle::new(GeomCircle::from_circ(Circle3::new(axe, major)?)).cast();
+                Handle::new(GeomCircle::from_circ(Circle3::new(axe, major)?)).into_upcast();
             self.result = Handle::new(GeomAdaptorCurve::with_curve(&circle)?);
             return Ok(circle);
         }
         if major > minor {
             self.curve_type = CurveType::Ellipse;
             let ellipse: Handle<dyn GeomCurve> =
-                Handle::new(GeomEllipse::from_elips(Ellipse3::new(axe, major, minor)?)).cast();
+                Handle::new(GeomEllipse::from_elips(Ellipse3::new(axe, major, minor)?))
+                    .into_upcast();
             self.result = Handle::new(GeomAdaptorCurve::with_curve(&ellipse)?);
             return Ok(ellipse);
         }

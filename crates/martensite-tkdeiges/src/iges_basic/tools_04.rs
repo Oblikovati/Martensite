@@ -13,16 +13,18 @@ use super::{
 };
 use crate::iges_basic::entity_shape::iges_tool;
 use crate::iges_basic::shared_runs::{iges_shared_005, iges_shared_048};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_dump_string, iges_live,
     iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -45,8 +47,8 @@ impl IgesBasicToolGroupWithoutBackP {
         iges_shared_048!(another_live, ent_array, lower, upper);
         for i in lower..=upper {
             let myentity = tc
-                .transferred(&another_live.entity(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.entity(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &ent_array,
                 i,
@@ -467,7 +469,7 @@ impl IgesBasicToolOrderedGroup {
         let ent_live = iges_live(ent, "IgesBasicToolOrderedGroup::own_shared")?;
         let upper: i32 = ent_live.nb_entities();
         for i in 1..=upper {
-            iter.get_one_item(&ent_live.entity(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.entity(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }

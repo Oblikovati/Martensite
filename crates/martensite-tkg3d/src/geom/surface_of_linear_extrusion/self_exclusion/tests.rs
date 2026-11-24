@@ -37,7 +37,7 @@ fn diamond_points() -> [Point3; 9] {
 }
 
 fn surface() -> GeomSurfaceOfLinearExtrusion {
-    let basis = Handle::new(curve()).cast::<dyn GeomCurve>();
+    let basis = Handle::new(curve()).into_upcast::<dyn GeomCurve>();
     GeomSurfaceOfLinearExtrusion::new(&basis, Direction3::new(0., 0., 1.).unwrap()).unwrap()
 }
 fn snapshot(surface: &GeomSurfaceOfLinearExtrusion) -> ClosedSplineExtrusionSnapshot {
@@ -130,7 +130,9 @@ fn replace_curve_evaluator(surface: &GeomSurfaceOfLinearExtrusion) {
     basis
         .get()
         .unwrap()
-        .set_eval_representation(Handle::new(RepCurveDescFull::new(replacement.cast())).cast())
+        .set_eval_representation(
+            Handle::new(RepCurveDescFull::new(replacement.cast())).into_upcast(),
+        )
         .unwrap();
 }
 
@@ -139,7 +141,7 @@ fn an_actual_surface_evaluator_override_is_explicitly_inconclusive() {
     let surface = surface();
     let other = surface_copy_with_changed_direction();
     surface
-        .set_eval_representation(Handle::new(RepSurfaceDescFull::new(other)).cast())
+        .set_eval_representation(Handle::new(RepSurfaceDescFull::new(other)).into_upcast())
         .unwrap();
     assert!(matches!(
         surface
@@ -153,7 +155,7 @@ fn an_actual_surface_evaluator_override_is_explicitly_inconclusive() {
 fn surface_copy_with_changed_direction() -> Handle<dyn GeomSurface> {
     let other = surface();
     other.set_direction(Direction3::new(1., 0., 0.).unwrap());
-    Handle::new(other).cast()
+    Handle::new(other).into_upcast()
 }
 
 #[test]
@@ -161,7 +163,7 @@ fn higher_degree_and_periodic_real_supports_are_not_admitted() {
     let basis = curve();
     basis.increase_degree(3).unwrap();
     let elevated = GeomSurfaceOfLinearExtrusion::new(
-        &Handle::new(basis).cast(),
+        &Handle::new(basis).into_upcast(),
         Direction3::new(0., 0., 1.).unwrap(),
     )
     .unwrap();
@@ -180,7 +182,7 @@ fn a_real_periodic_basis_is_not_admitted() {
     let basis = curve();
     basis.set_periodic().unwrap();
     let periodic = GeomSurfaceOfLinearExtrusion::new(
-        &Handle::new(basis).cast(),
+        &Handle::new(basis).into_upcast(),
         Direction3::new(0., 0., 1.).unwrap(),
     )
     .unwrap();
@@ -235,7 +237,7 @@ fn other_actual_basis_types_are_explicitly_unsupported() {
     let line =
         crate::geom::GeomLine::from_point(Point3::default(), Direction3::new(1., 0., 0.).unwrap());
     let other = GeomSurfaceOfLinearExtrusion::new(
-        &Handle::new(line).cast(),
+        &Handle::new(line).into_upcast(),
         Direction3::new(0., 0., 1.).unwrap(),
     )
     .unwrap();
@@ -251,7 +253,7 @@ fn other_actual_basis_types_are_explicitly_unsupported() {
 
 fn extrusion_from(curve: GeomBSplineCurve) -> GeomSurfaceOfLinearExtrusion {
     GeomSurfaceOfLinearExtrusion::new(
-        &Handle::new(curve).cast(),
+        &Handle::new(curve).into_upcast(),
         Direction3::new(0., 0., 1.).unwrap(),
     )
     .unwrap()

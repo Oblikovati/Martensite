@@ -60,14 +60,19 @@ fn revolution_of(
 /// torus. If the surface is offset it is necessary to check the base surface.
 pub(super) fn degenerate_torus_as_revolution(
     surface: &Handle<dyn GeomSurface>,
-    made: Handle<StepGeomSurface>,
+    made: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
     face: &Face,
     factors: &StepDataFactors,
-) -> Result<Handle<StepGeomSurface>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepGeomSurface>>, Failure> {
     let offset = surface.cast::<GeomOffsetSurface>();
     let torus: Handle<GeomToroidalSurface> = match offset.get() {
         Some(live) => live.basis_surface().cast(),
-        None if made.cast::<StepGeomToroidalSurface>().is_some() => surface.cast(),
+        None if made
+            .cast::<dyn crate::StepEntityBase<StepGeomToroidalSurface>>()
+            .is_some() =>
+        {
+            surface.cast()
+        }
         None => return Ok(made),
     };
     let Some(live) = torus.get() else {

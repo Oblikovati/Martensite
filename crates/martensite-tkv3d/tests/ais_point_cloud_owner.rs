@@ -5,7 +5,7 @@ use martensite_tkernel::standard::HandleReference;
 mod display_driver;
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::{
     bnd::BoundingBox3,
@@ -111,13 +111,12 @@ fn owner_rejects_wrong_selectable_and_clears_empty_subset_geometry() {
     owner.unhilight(&Handle::default(), 0);
 }
 struct DynamicPointCloud {
-    transient: StandardTransient,
     base: AisPointCloudBase,
     points: Handle<Graphic3dArrayOfPoints>,
     bounds: BoundingBox3,
     point_reads: SharedState<usize>,
 }
-martensite_tkernel::impl_transient!(DynamicPointCloud,"DynamicPointCloud",dyn AisPointCloudSource,transient,
+martensite_tkernel::impl_transient!(DynamicPointCloud,"DynamicPointCloud",dyn AisPointCloudSource,
  interfaces:[dyn AisPointCloudSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisPointCloudSource for DynamicPointCloud {
     fn point_cloud_base(&self) -> &AisPointCloudBase {
@@ -168,7 +167,6 @@ impl SelectMgrSelectableObject for DynamicPointCloud {
 fn derived_virtual_provider_supplies_points_and_bounds_to_native_hooks() {
     let cloud = cloud();
     let derived = Handle::new(DynamicPointCloud {
-        transient: StandardTransient::default(),
         base: AisPointCloudBase::new().unwrap(),
         points: cloud.get_points(),
         point_reads: SharedState::new(0),
@@ -207,10 +205,9 @@ fn derived_virtual_provider_supplies_points_and_bounds_to_native_hooks() {
     assert_eq!(prs.groups().len(), 1);
 }
 struct DerivedSubsetOwner {
-    transient: StandardTransient,
     base: AisPointCloudOwnerBase,
 }
-martensite_tkernel::impl_transient!(DerivedSubsetOwner,"DerivedSubsetOwner",dyn AisPointCloudOwnerSource,transient,
+martensite_tkernel::impl_transient!(DerivedSubsetOwner,"DerivedSubsetOwner",dyn AisPointCloudOwnerSource,
  interfaces:[dyn AisPointCloudOwnerSource,dyn SelectMgrEntityOwnerSource]);
 impl AisPointCloudOwnerSource for DerivedSubsetOwner {
     fn point_cloud_owner_base(&self) -> &AisPointCloudOwnerBase {
@@ -237,7 +234,6 @@ impl SelectMgrEntityOwnerSource for DerivedSubsetOwner {
 fn derived_subset_owner_embeds_native_protected_maps_and_shared_highlight_body() {
     let cloud = cloud();
     let owner = Handle::new(DerivedSubsetOwner {
-        transient: StandardTransient::default(),
         base: AisPointCloudOwnerBase::new(&cloud.cast()),
     });
     select_mgr_entity_owner_bind(&owner.cast());

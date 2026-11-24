@@ -198,7 +198,7 @@ static RULES: &[PerrorRule] = &[
 ///
 /// A known errno whose arms do not name `from` leaves only the frame text and
 /// `ERR_SURPRISE`; an unknown errno reads "Unknowm error #n" (spelling kept on purpose).
-pub fn unix_perror_report(errno: i32, from: i32, message: &[u8]) -> (String, i32) {
+pub(super) fn unix_perror_report(errno: i32, from: i32, message: &[u8]) -> (String, i32) {
     let mut buffer: String = String::from(" :\n ");
     let mut code: i32 = ERR_SURPRISE;
     let mut arms = RULES.iter().filter(|arm| arm.errno == errno).peekable();

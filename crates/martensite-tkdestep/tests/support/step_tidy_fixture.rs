@@ -12,7 +12,8 @@ use martensite_tkdestep::step_geom::{
 };
 use martensite_tkdestep::step_tidy::StepTidyEntityReducer;
 use martensite_tkernel::ncollection::{HArray1, HashPolicy};
-use martensite_tkernel::standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Handle, RuntimeType, RuntimeTyped, TransientHandleTarget};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::InterfaceModelEntities;
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
@@ -27,7 +28,7 @@ pub fn name(text: &str) -> Handle<HAsciiString> {
 }
 
 /// One entity of a one-item array of handles, as every array-holding sharing entity is built.
-pub fn one_item<T: RuntimeTyped + Send + Sync + 'static>(
+pub fn one_item<T: ?Sized + RuntimeTyped + Send + Sync + 'static>(
     item: Handle<T>,
 ) -> Handle<HArray1<Handle<T>>> {
     let items = HArray1::with_bounds(1, 1).expect("bounds");
@@ -36,7 +37,7 @@ pub fn one_item<T: RuntimeTyped + Send + Sync + 'static>(
 }
 
 /// The entities a reducer reported as replaced.
-pub struct ReplacedEntities(Vec<Handle<StandardTransient>>);
+pub struct ReplacedEntities(Vec<Handle<dyn Transient>>);
 
 impl ReplacedEntities {
     fn holds<T: RuntimeTyped>(&self, entity: &Handle<T>) -> bool {
@@ -73,7 +74,7 @@ impl Fixture {
         self.ws.model().cast()
     }
     /// `addToModel`: the entity and what it references.
-    pub fn add<T: RuntimeTyped>(&self, entity: &Handle<T>) {
+    pub fn add<T: RuntimeTyped + TransientHandleTarget>(&self, entity: &Handle<T>) {
         let model = self.model();
         model
             .add_with_refs(&entity.cast(), 0, false)
@@ -160,7 +161,7 @@ impl Fixture {
     /// Every model entity through the reducer, then `perform`.
     pub fn replaced_by<T, H>(&self, reducer: &mut StepTidyEntityReducer<T, H>) -> ReplacedEntities
     where
-        T: RuntimeTyped,
+        T: RuntimeTyped + TransientHandleTarget,
         H: HashPolicy<Handle<T>> + Default,
     {
         let model = self.model();

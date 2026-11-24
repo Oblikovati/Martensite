@@ -202,9 +202,8 @@ impl ChFi3dBuilder {
             nb += 1;
         }
         let cend = self.ds.curve(cl.indcurve[nb]).curve().clone();
-        let sci: Handle<TopOpeBRepDSSurfaceCurveInterference> = cl.interf_ps[nb].clone().cast();
-        let pcend = sci
-            .get()
+        let pcend = cl.interf_ps[nb]
+            .downcast_ref::<TopOpeBRepDSSurfaceCurveInterference>()
             .ok_or_else(|| Failure::with_message("Standard_NullObject", "IntersectionAtEnd"))?
             .pcurve();
         let (pvert, mut tol) = {

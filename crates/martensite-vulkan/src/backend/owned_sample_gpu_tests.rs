@@ -1,7 +1,7 @@
 //! Explicit ignored executable adapter: stdin is output-directory, declared row, device index.
 use super::{
     frame::FrameResources,
-    owned_sample_readback::{self, OwnedResult},
+    owned_sample_readback::{self, OwnedResult, OwnedSampleBuffers},
     pipeline_variants::RasterPipelines,
     retained_submission::RetirementStore,
     runtime::{VulkanOptions, VulkanRuntime},
@@ -77,8 +77,8 @@ impl OwnedCaptureSession {
             self.runtime.attachment_coordinates,
             resources.draws[0].presentation.mirrored,
         )?;
-        let stencil = self.submit(&resources)?;
-        self.write_phase(directory, phase, &resources, &stencil)
+        let buffers = self.submit(&resources)?;
+        self.write_phase(directory, phase, &resources, &buffers)
     }
     fn resources(&self, phase: &str) -> OwnedResult<FrameResources> {
         let alpha = Default::default();
@@ -93,23 +93,23 @@ impl OwnedCaptureSession {
         )?;
         Ok(resources)
     }
-    fn submit(&self, resources: &FrameResources) -> OwnedResult<super::buffer::DeviceBuffer> {
-        let stencil = owned_sample_readback::stencil_buffer(&self.runtime)?;
+    fn submit(&self, resources: &FrameResources) -> OwnedResult<OwnedSampleBuffers> {
+        let buffers = owned_sample_readback::sample_buffers(&self.runtime)?;
         let commands = CommandSubmission::new(&self.runtime)?;
         super::record::record_frame(&self.runtime, commands.command, resources, &self.frame);
-        owned_sample_readback::copy_stencil(&self.runtime, commands.command, resources, &stencil);
+        owned_sample_readback::copy_samples(&self.runtime, commands.command, resources, &buffers);
         commands.finish()?;
-        Ok(stencil)
+        Ok(buffers)
     }
     fn write_phase(
         &self,
         directory: &Path,
         phase: &str,
         resources: &FrameResources,
-        stencil: &super::buffer::DeviceBuffer,
+        buffers: &OwnedSampleBuffers,
     ) -> OwnedResult<()> {
         let phase_directory = directory.join(phase);
-        owned_sample_readback::write_images(&phase_directory, resources, stencil)?;
+        owned_sample_readback::write_images(&phase_directory, buffers)?;
         self.write_uploads(directory, phase, resources)?;
         let runtime = &self.runtime;
         super::owned_sample_metadata::write_events(

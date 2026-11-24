@@ -5,6 +5,8 @@ mod entities_01;
 mod entities_02;
 pub mod entity_shape;
 mod group_counted;
+mod group_source;
+pub(crate) use group_source::IgesBasicGroupSource;
 pub(crate) mod nested_arrays;
 #[cfg(test)]
 pub(crate) mod samples_01;

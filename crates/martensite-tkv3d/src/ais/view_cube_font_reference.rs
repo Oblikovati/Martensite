@@ -1,13 +1,13 @@
 //! Font() aliases the HAsciiString payload chosen once, rather than the replaceable TextFont slot.
 use martensite_tkernel::{
-    standard::{Handle, HandleObserver},
+    standard::{Handle, WeakHandle, exceptions::null_object, raise_native_failure},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::marker::PhantomData;
 /// Retained native font-string alias; `let old=cube.font_ref(); cube.set_font(&next); old.value()`.
 /// Replacing TextFont does not redirect this view; editing the retained original string does.
 pub struct AisViewCubeFontRef<'a> {
-    font: Option<HandleObserver<HAsciiString>>,
+    font: Option<WeakHandle<HAsciiString>>,
     scope: PhantomData<&'a super::AisViewCubePresentationBase>,
 }
 impl<'a> AisViewCubeFontRef<'a> {
@@ -16,15 +16,24 @@ impl<'a> AisViewCubeFontRef<'a> {
         _: &'a super::AisViewCubePresentationBase,
     ) -> Self {
         Self {
-            font: (!font.is_null()).then(|| font.observe()),
+            font: (!font.is_null()).then(|| font.downgrade()),
             scope: PhantomData,
         }
     }
-    /// Copy the current bound payload or the immutable native empty string; `alias.value()`.
+    /// Copy the bound payload or static empty string; expired nonempty payloads raise NullObject.
+    /// Example: `alias.value()`.
     pub fn value(&self) -> AsciiString {
-        self.font
-            .as_ref()
-            .map_or_else(AsciiString::default, |font| font.string().clone())
+        let Some(font) = &self.font else {
+            return AsciiString::default();
+        };
+        let current = font.upgrade();
+        let font = raise_native_failure(current.get().ok_or_else(|| {
+            null_object(&format!(
+                "font={:p}, strong count=0; expected a live bound ViewCube font payload",
+                font.object_address()
+            ))
+        }));
+        font.string().clone()
     }
     /// Compare actual string storage, with all native static-empty aliases equal; `left.is_same_reference(&right)`.
     pub fn is_same_reference(&self, other: &AisViewCubeFontRef<'_>) -> bool {

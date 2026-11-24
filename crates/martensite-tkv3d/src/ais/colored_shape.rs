@@ -1,5 +1,5 @@
 //! Martensite's owned AisColoredShape lifecycle; geometry computation remains partial.
-use super::{AisColoredDrawer, AisShapeBase, AisShapeDrawerMap, AisShapeSource};
+use super::{AisColoredDrawerSource, AisShapeBase, AisShapeDrawerMap, AisShapeSource};
 use crate::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -44,7 +44,7 @@ pub trait AisColoredShapeSource: AisShapeSource {
     /// Borrow owned native subclass fields; `object.colored_shape_base().shape_colors.len()`.
     fn colored_shape_base(&self) -> &AisColoredShapeBase;
     /// Reuse or allocate a linked custom drawer, then invalidate presentations; `object.custom_aspects(&shape)?`.
-    fn custom_aspects(&self, shape: &Shape) -> Result<Handle<AisColoredDrawer>, Failure> {
+    fn custom_aspects(&self, shape: &Shape) -> Result<Handle<dyn AisColoredDrawerSource>, Failure> {
         // A native subclass can override this virtual, while explicitly invoking the core body.
         ais_colored_shape_custom_aspects(self, shape)
     }
@@ -64,7 +64,7 @@ martensite_tkernel::impl_transient_interface!(
 pub fn ais_colored_shape_custom_aspects<S: AisColoredShapeSource + ?Sized>(
     object: &S,
     shape: &Shape,
-) -> Result<Handle<AisColoredDrawer>, Failure> {
+) -> Result<Handle<dyn AisColoredDrawerSource>, Failure> {
     let map = &object.colored_shape_base().shape_colors;
     let (drawer, created) = map.custom_aspects(shape, &object.attributes())?;
     if created {

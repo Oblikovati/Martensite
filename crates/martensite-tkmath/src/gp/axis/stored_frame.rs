@@ -91,3 +91,23 @@ fn check_membership(stored: [[f64; 3]; 3], rebuilt: [VectorBounds; 3]) -> Result
     }
     Ok(())
 }
+
+impl Direction3 {
+    /// Retains a direction enclosed by outward unit normalization (#455).
+    /// `Direction3::from_stored_coefficients([1.,0.,0.])?`.
+    pub fn from_stored_coefficients(coordinates: [f64; 3]) -> Result<Self, Failure> {
+        let vector = coordinates.map(Bounds::point);
+        let accepted = check_norm(vector).ok().and_then(|()| normalize(vector));
+        if accepted.is_some_and(|bounds| {
+            coordinates
+                .into_iter()
+                .zip(bounds)
+                .all(|(v, b)| b.contains(v))
+        }) {
+            return Ok(Self { coordinates });
+        }
+        Err(construction(&format!(
+            "stored direction {coordinates:?}: expected outward unit normalization enclosure"
+        )))
+    }
+}

@@ -1,8 +1,7 @@
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 /// `TriangulationParameters`: the settings a mesh was built for, `-1` when undefined;
 /// `TriangulationParameters::new(0.1, 0.5, -1.0)`.
 pub struct TriangulationParameters {
-    base: StandardTransient,
     deflection: f64,
     angle: f64,
     min_size: f64,
@@ -10,8 +9,7 @@ pub struct TriangulationParameters {
 martensite_tkernel::impl_transient!(
     TriangulationParameters,
     "Poly_TriangulationParameters",
-    StandardTransient,
-    base
+    dyn Transient
 );
 impl Default for TriangulationParameters {
     fn default() -> Self {
@@ -22,7 +20,6 @@ impl TriangulationParameters {
     /// Stores linear deflection, angular deflection and minimum size; `TriangulationParameters::new(0.1, -1.0, -1.0)`.
     pub fn new(deflection: f64, angle: f64, min_size: f64) -> Self {
         Self {
-            base: StandardTransient::default(),
             deflection,
             angle,
             min_size,

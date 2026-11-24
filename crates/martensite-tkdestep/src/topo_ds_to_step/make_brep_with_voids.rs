@@ -40,27 +40,29 @@ pub(super) fn shells_of(solid: &Solid) -> Result<Vec<Shape>, Failure> {
 }
 
 /// The closed shell of a builder's result: si OPEN on le force a CLOSED mais que c est une honte !
-fn closed_shell_of(builder: &TopoDSToStepBuilder) -> Result<Handle<StepShapeClosedShell>, Failure> {
+fn closed_shell_of(
+    builder: &TopoDSToStepBuilder,
+) -> Result<Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>, Failure> {
     let value = builder.value()?;
-    let closed: Handle<StepShapeClosedShell> = value.cast();
+    let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = value.cast();
     if closed.is_some() {
         return Ok(closed);
     }
-    let open: Handle<StepShapeOpenShell> = value.cast();
+    let open: Handle<dyn crate::StepEntityBase<StepShapeOpenShell>> = value.cast();
     let Some(live) = open.get() else {
         return Ok(Handle::default());
     };
     let forced = Handle::new(StepShapeClosedShell::new());
     forced.init(&live.name(), &live.cfs_faces()?);
-    Ok(forced)
+    Ok(forced.into_upcast())
 }
 
 /// What the shells of the solid gave.
 #[derive(Default)]
 struct ShellResults {
-    outer: Handle<StepShapeClosedShell>,
-    voids: Vec<Handle<StepShapeClosedShell>>,
-    tessellated: Vec<Handle<StepVisualTessellatedItem>>,
+    outer: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>,
+    voids: Vec<Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>>,
+    tessellated: Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>,
 }
 
 /// BRepClass3d::outer_shell requires geometry when the solid has voids: a null shell when it
@@ -162,8 +164,8 @@ fn translate_shells(
 
 /// The brep over the outer shell and the voids, oriented false (:e0).
 fn brep_with_voids(
-    outer: &Handle<StepShapeClosedShell>,
-    voids: &[Handle<StepShapeClosedShell>],
+    outer: &Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>,
+    voids: &[Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>],
 ) -> Result<Handle<StepShapeBrepWithVoids>, Failure> {
     let name = empty_step_name();
     let mut oriented = Vec::with_capacity(voids.len());

@@ -13,11 +13,12 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_vals, iges_dump_xyz_l, iges_new_array1, iges_real_text,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_vals, iges_dump_xyz_l, iges_new_array1, iges_real_text,
 };
 use crate::iges_draw::IgesDrawRectArraySubfigure;
 use martensite_tkernel::ncollection::HArray1;
@@ -47,7 +48,7 @@ impl IgesDrawToolRectArraySubfigure {
     ) -> Result<(), Failure> {
         let mut temp_lower_left_corner: Xyz = Default::default();
         let mut temp_scale_factor: f64 = Default::default();
-        let mut temp_base_entity: Handle<IgesDataIgesEntity> = Default::default();
+        let mut temp_base_entity: Handle<dyn IgesDataEntityKind> = Default::default();
         let mut temp_positions: Handle<HArray1<i32>> = Default::default();
         let mut temp_column_separation: f64 = Default::default();
         let mut temp_row_separation: f64 = Default::default();
@@ -187,7 +188,7 @@ impl IgesDrawToolRectArraySubfigure {
         ent: &Handle<IgesDrawRectArraySubfigure>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
-        let mut temp_base_entity: Handle<IgesDataIgesEntity> =
+        let mut temp_base_entity: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.base_entity().cast())?.cast();
         let mut temp_scale_factor: f64 = another.scale_factor();
         let mut temp_lower_left_corner: Xyz = another.lower_left_corner().xyz();

@@ -5,9 +5,10 @@ use super::{
     StepDataField, StepDataFieldKind as Kind, StepDataLogical, StepDataSelectInt,
     StepDataSelectMember, StepDataSelectNamed, StepDataSelectReal,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     ncollection::HArray1,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::HAsciiString,
 };
 
@@ -121,11 +122,7 @@ impl StepDataField {
     }
     /// `set_entity(num, val)`: a list of immediates becomes a list of transients.
     /// That new list is not stored in the field, only the kind changes.
-    pub fn set_entity_at(
-        &mut self,
-        num: i32,
-        val: &Handle<StandardTransient>,
-    ) -> Result<(), Failure> {
+    pub fn set_entity_at(&mut self, num: i32, val: &Handle<dyn Transient>) -> Result<(), Failure> {
         if let Some(list) = self.theany.cast::<TransientList>().get() {
             return set_item(list, num, val.clone());
         }

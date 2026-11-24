@@ -1,10 +1,12 @@
 //! `IgesControlReader`: reads an IGES file into a work session and transfers its roots.
 use super::IgesControlController;
 use crate::de_iges::DeIgesParameters;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live};
 use crate::iges_to_brep::{IgesToBRepActor, one_transfer_at_a_time};
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkshhealing::shape_process::{ShapeProcessOperation, ShapeProcessOperationsFlags};
 use martensite_tkxsbase::if_select::IFSelectReturnStatus;
 use martensite_tkxsbase::interface::{
@@ -121,7 +123,7 @@ impl IgesControlReader {
         let shares = InterfaceShareFlags::with_protocol(&generic, &protocol)?;
         InterfaceStatic::set_i_val("read.iges.onlyvisible", i32::from(self.read_only_visible))?;
         for rank in 1..=live.nb_entities() {
-            let entity: Handle<IgesDataIgesEntity> = live.entity(rank);
+            let entity: Handle<dyn IgesDataEntityKind> = live.entity(rank);
             if shares.is_shared(&entity.cast())? || !actor_live.recognize(&entity.cast()) {
                 continue;
             }
@@ -194,7 +196,7 @@ impl XSControlReaderOps for IgesControlReader {
     }
     fn transfer_entity(
         &mut self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         progress: &ProgressRange<'_>,
     ) -> Result<bool, Failure> {
         let _only_one = self.locked_on_own_model()?;
@@ -202,7 +204,7 @@ impl XSControlReaderOps for IgesControlReader {
     }
     fn transfer_list(
         &mut self,
-        list: Option<&[Handle<StandardTransient>]>,
+        list: Option<&[Handle<dyn Transient>]>,
         progress: &ProgressRange<'_>,
     ) -> Result<i32, Failure> {
         let _only_one = self.locked_on_own_model()?;

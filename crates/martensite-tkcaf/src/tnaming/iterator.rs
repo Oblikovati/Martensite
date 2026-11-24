@@ -55,7 +55,7 @@ impl TNamingIterator {
             transaction,
             &mut found,
         )?;
-        let attribute = found.cast::<TNamingNamedShape>();
+        let attribute = found.downcast::<TNamingNamedShape>();
         Ok(Self {
             node: attribute.get().and_then(TNamingNamedShape::first_node),
             transaction,

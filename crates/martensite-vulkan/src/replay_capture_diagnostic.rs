@@ -45,7 +45,7 @@ fn publication_json(
 pub(crate) fn cloned(
     view: usize,
     serial: u64,
-    source: &Option<Result<FrameCapture, RenderError>>,
+    source: Option<&FrameCapture>,
     output: &Option<Result<FrameCapture, RenderError>>,
 ) {
     eprintln!("{}", clone_json(view, serial, source, output));
@@ -53,11 +53,11 @@ pub(crate) fn cloned(
 fn clone_json(
     view: usize,
     serial: u64,
-    source: &Option<Result<FrameCapture, RenderError>>,
+    source: Option<&FrameCapture>,
     output: &Option<Result<FrameCapture, RenderError>>,
 ) -> Value {
     json!({"kind":"view-capture-owned-clone", "view":view, "publication":serial,
-        "source":source.as_ref().and_then(|value|value.as_ref().ok()).map(capture_json),
+        "source":source.map(capture_json),
         "output":output.as_ref().and_then(|value|value.as_ref().ok()).map(capture_json)})
 }
 pub(crate) fn dumped(

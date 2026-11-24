@@ -125,16 +125,14 @@ martensite_tkernel::impl_transient_interface!(
 
 /// Concrete selector; `let selector = SelectMgrViewerSelector::new()`.
 pub struct SelectMgrViewerSelector {
-    transient: StandardTransient,
     base: SelectMgrViewerSelectorBase,
 }
-martensite_tkernel::impl_transient!(SelectMgrViewerSelector, "SelectMgrViewerSelector", StandardTransient, transient,
+martensite_tkernel::impl_transient!(SelectMgrViewerSelector, "SelectMgrViewerSelector", dyn martensite_tkernel::standard::Transient,
     interfaces: [dyn SelectMgrViewerSelectorSource]);
 impl SelectMgrViewerSelector {
     /// Creates the native empty selector state; `SelectMgrViewerSelector::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: SelectMgrViewerSelectorBase::new(),
         }
     }

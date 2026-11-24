@@ -19,9 +19,15 @@ out gl_PerVertex {
 #ifdef MARTENSITE_FLOAT64_WINDOW_DEPTH_V5
 layout(location=11) out vec4 windowDepthRawGLClip;
 #endif
+#ifdef MARTENSITE_QUANTIZED_MESH_VERTICES
+layout(location=0) in uvec2 packedPosition;
+layout(location=2) in uint packedNormal;
+layout(location=1) in vec4 color;
+#else
 layout(location=0) in vec4 position;
 layout(location=1) in vec4 color;
 layout(location=2) in vec3 normal;
+#endif
 #ifdef MARTENSITE_FIXED_LIGHTING
 layout(location=4) in vec4 fixedPosition;
 layout(location=5) in vec3 fixedNormal;
@@ -29,6 +35,10 @@ layout(location=6) in vec4 fixedColor;
 #endif
 layout(push_constant) uniform Transform {
     mat4 clipFromObject;
+#ifdef MARTENSITE_QUANTIZED_MESH_VERTICES
+    vec4 positionOrigin;
+    vec4 positionStep;
+#endif
 #ifdef MARTENSITE_FACTORIZED_TRIANGLES_V2
     mat4 modelFromObject;
 #endif
@@ -43,6 +53,14 @@ layout(push_constant) uniform Transform {
     vec4 pointRasterViewport;
 #endif
 } transform;
+#ifdef MARTENSITE_DRAW_TABLE
+invariant gl_Position;
+#include "draw_table.glsl"
+#else
+#define DRAW_CLIP_FROM_OBJECT transform.clipFromObject
+#define DRAW_WORLD_FROM_OBJECT lighting.worldFromObject
+#define DRAW_NORMAL_FROM_OBJECT lighting.normalFromObject
+#endif
 layout(location=0) out vec4 vertexColor;
 #ifdef MARTENSITE_CLIPPED_FAN_DEPTH_V4
 #ifndef MARTENSITE_FIXED_LIGHTING
@@ -72,7 +90,17 @@ layout(location=10) out vec3 phongView;
 layout(location=12) out vec4 phongColor;
 #endif
 #include "fixed_grid_point.glsl"
+#ifdef MARTENSITE_QUANTIZED_MESH_VERTICES
+#include "mesh_vertex_decode.glsl"
+#endif
 void main() {
+#ifdef MARTENSITE_INDEXED_DRAW_MATERIALS
+    drawMaterialOffset = drawMaterials.words[gl_InstanceIndex];
+#endif
+#ifdef MARTENSITE_QUANTIZED_MESH_VERTICES
+    vec4 position = decodeMeshPosition();
+    vec3 normal = decodeMeshNormal();
+#endif
 #ifdef MARTENSITE_VERTEX_OUTPUT_CAPTURE
     capturedVertexIndex = uint(gl_VertexIndex);
 #endif
@@ -85,7 +113,7 @@ void main() {
 #ifdef MARTENSITE_FACTORIZED_TRIANGLES_V2
     worldPosition = clipPosition(transform.modelFromObject, position);
 #else
-    worldPosition = lighting.worldFromObject * position;
+    worldPosition = DRAW_WORLD_FROM_OBJECT * position;
 #endif
 #ifdef MARTENSITE_FIXED_LIGHTING
     worldNormal = lighting.settings.x>=3u?fixedLightingNormal(normal):glslNormalize((lighting.normalFromObject * vec4(normal, 0.0)).xyz);
@@ -94,8 +122,11 @@ void main() {
     worldNormal = glslNormalize(((lighting.normalFromObject[1].xyz * normal.y
         + lighting.normalFromObject[0].xyz * normal.x) + lighting.normalFromObject[2].xyz * normal.z));
 #else
-    worldNormal = glslNormalize((lighting.normalFromObject * vec4(normal, 0.0)).xyz);
+    worldNormal = glslNormalize((DRAW_NORMAL_FROM_OBJECT * vec4(normal, 0.0)).xyz);
 #endif
+#ifdef MARTENSITE_ORTHOGRAPHIC_DIRECTIONAL_PHONG
+    viewDirection = lighting.eye.xyz;
+#else
     viewDirection = lighting.eye.w != 0.0 ? glslNormalize(lighting.eye.xyz - worldPosition.xyz) : lighting.eye.xyz;
     vertexColor = color;
     frontColor = backColor = vec4(0.0);
@@ -117,13 +148,14 @@ void main() {
 #ifdef MARTENSITE_FIXED_LIGHTING
     fixedFrontColor=frontColor; fixedBackColor=backColor;
 #endif
+#endif
 #ifdef MARTENSITE_MARKER_LIGHTING
     gl_PointSize = transform.size;
 #endif
 #ifdef MARTENSITE_FACTORIZED_TRIANGLES_V2
     gl_Position = clipPosition(transform.clipFromObject, worldPosition);
 #else
-    gl_Position = clipPosition(transform.clipFromObject, position);
+    gl_Position = clipPosition(DRAW_CLIP_FROM_OBJECT, position);
 #endif
 #ifdef MARTENSITE_NATIVE_LINE_XY_CLIP
     nativeLineViewportClip(gl_Position);
@@ -139,7 +171,7 @@ void main() {
     rasterWorldClipDistances(gl_Position);
 #endif
     if (kRemapClipDepth) gl_Position.z = 0.5 * (gl_Position.z + gl_Position.w);
-#ifndef MARTENSITE_FIXED_LIGHTING
+#if !defined(MARTENSITE_FIXED_LIGHTING) && !defined(MARTENSITE_ORTHOGRAPHIC_DIRECTIONAL_PHONG)
     writeShadowPositions(worldPosition);
 #endif
 #ifdef MARTENSITE_CLIPPING

@@ -41,7 +41,7 @@ pub fn curve_intervals(output: &Output, a: &dyn Adaptor3dCurve) {
     }
 }
 
-fn named<T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
+fn named<T: ?Sized + martensite_tkernel::standard::TransientHandleTarget>(
     output: &Output,
     handle: Result<Handle<T>, Failure>,
     tail: impl FnOnce(&T),

@@ -1,0 +1,308 @@
+[
+  {
+    "index": 1,
+    "case": "cylinder_before",
+    "exit_code": 0,
+    "load_before": [
+      4.6552734375,
+      4.45068359375,
+      4.3798828125
+    ],
+    "load_after": [
+      4.68310546875,
+      4.4599609375,
+      4.38330078125
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/01-cylinder_before.log",
+    "metrics": {
+      "wall_seconds": 3.82,
+      "user_seconds": 3.8,
+      "system_seconds": 0.01,
+      "max_rss_kib": 54860,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "replay_sha256": "ca2e7ed51f75ba57caced69ce679d3a0f87afecf9c70205bb1de0cc5dea00841",
+    "accepted_replay_equal": true
+  },
+  {
+    "index": 2,
+    "case": "cylinder_after",
+    "exit_code": 0,
+    "load_before": [
+      4.68310546875,
+      4.4599609375,
+      4.38330078125
+    ],
+    "load_after": [
+      4.68310546875,
+      4.4599609375,
+      4.38330078125
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/02-cylinder_after.log",
+    "metrics": {
+      "wall_seconds": 3.98,
+      "user_seconds": 3.97,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56680,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "replay_sha256": "ca2e7ed51f75ba57caced69ce679d3a0f87afecf9c70205bb1de0cc5dea00841",
+    "accepted_replay_equal": true
+  },
+  {
+    "index": 3,
+    "case": "cylinder_after",
+    "exit_code": 0,
+    "load_before": [
+      4.68310546875,
+      4.4599609375,
+      4.38330078125
+    ],
+    "load_after": [
+      4.70849609375,
+      4.46923828125,
+      4.38671875
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/03-cylinder_after.log",
+    "metrics": {
+      "wall_seconds": 3.9,
+      "user_seconds": 3.88,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56624,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "replay_sha256": "ca2e7ed51f75ba57caced69ce679d3a0f87afecf9c70205bb1de0cc5dea00841",
+    "accepted_replay_equal": true
+  },
+  {
+    "index": 4,
+    "case": "cylinder_before",
+    "exit_code": 0,
+    "load_before": [
+      4.70849609375,
+      4.46923828125,
+      4.38671875
+    ],
+    "load_after": [
+      5.05224609375,
+      4.544921875,
+      4.41162109375
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/04-cylinder_before.log",
+    "metrics": {
+      "wall_seconds": 3.99,
+      "user_seconds": 3.98,
+      "system_seconds": 0.01,
+      "max_rss_kib": 54736,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "replay_sha256": "ca2e7ed51f75ba57caced69ce679d3a0f87afecf9c70205bb1de0cc5dea00841",
+    "accepted_replay_equal": true
+  },
+  {
+    "index": 5,
+    "case": "cylinder_before",
+    "exit_code": 0,
+    "load_before": [
+      5.05224609375,
+      4.544921875,
+      4.41162109375
+    ],
+    "load_after": [
+      5.0478515625,
+      4.552734375,
+      4.4150390625
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/05-cylinder_before.log",
+    "metrics": {
+      "wall_seconds": 3.95,
+      "user_seconds": 3.94,
+      "system_seconds": 0.01,
+      "max_rss_kib": 54872,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "replay_sha256": "ca2e7ed51f75ba57caced69ce679d3a0f87afecf9c70205bb1de0cc5dea00841",
+    "accepted_replay_equal": true
+  },
+  {
+    "index": 6,
+    "case": "cylinder_after",
+    "exit_code": 0,
+    "load_before": [
+      5.0478515625,
+      4.552734375,
+      4.4150390625
+    ],
+    "load_after": [
+      4.9638671875,
+      4.54345703125,
+      4.41259765625
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/06-cylinder_after.log",
+    "metrics": {
+      "wall_seconds": 3.84,
+      "user_seconds": 3.82,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56304,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "replay_sha256": "ca2e7ed51f75ba57caced69ce679d3a0f87afecf9c70205bb1de0cc5dea00841",
+    "accepted_replay_equal": true
+  },
+  {
+    "index": 7,
+    "case": "cone_v3",
+    "exit_code": 0,
+    "load_before": [
+      4.9638671875,
+      4.54345703125,
+      4.41259765625
+    ],
+    "load_after": [
+      4.80615234375,
+      4.517578125,
+      4.40478515625
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/07-cone_v3.log",
+    "metrics": {
+      "wall_seconds": 9.21,
+      "user_seconds": 9.19,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56560,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "api_seconds": 9.177975
+  },
+  {
+    "index": 8,
+    "case": "cone_v4",
+    "exit_code": 0,
+    "load_before": [
+      4.80615234375,
+      4.517578125,
+      4.40478515625
+    ],
+    "load_after": [
+      4.82177734375,
+      4.52587890625,
+      4.408203125
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/08-cone_v4.log",
+    "metrics": {
+      "wall_seconds": 4.77,
+      "user_seconds": 4.76,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56404,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "api_seconds": 4.741645
+  },
+  {
+    "index": 9,
+    "case": "cone_v4",
+    "exit_code": 0,
+    "load_before": [
+      4.82177734375,
+      4.52587890625,
+      4.408203125
+    ],
+    "load_after": [
+      4.83642578125,
+      4.5341796875,
+      4.41162109375
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/09-cone_v4.log",
+    "metrics": {
+      "wall_seconds": 4.85,
+      "user_seconds": 4.84,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56608,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "api_seconds": 4.822891
+  },
+  {
+    "index": 10,
+    "case": "cone_v3",
+    "exit_code": 0,
+    "load_before": [
+      4.83642578125,
+      4.5341796875,
+      4.41162109375
+    ],
+    "load_after": [
+      5.095703125,
+      4.599609375,
+      4.4345703125
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/10-cone_v3.log",
+    "metrics": {
+      "wall_seconds": 9.35,
+      "user_seconds": 9.33,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56324,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "api_seconds": 9.315035
+  },
+  {
+    "index": 11,
+    "case": "cone_v3",
+    "exit_code": 0,
+    "load_before": [
+      5.095703125,
+      4.599609375,
+      4.4345703125
+    ],
+    "load_after": [
+      5.3955078125,
+      4.67919921875,
+      4.462890625
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/11-cone_v3.log",
+    "metrics": {
+      "wall_seconds": 9.73,
+      "user_seconds": 9.72,
+      "system_seconds": 0.0,
+      "max_rss_kib": 56080,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "api_seconds": 9.701001
+  },
+  {
+    "index": 12,
+    "case": "cone_v4",
+    "exit_code": 0,
+    "load_before": [
+      5.3955078125,
+      4.67919921875,
+      4.462890625
+    ],
+    "load_after": [
+      5.6845703125,
+      4.7509765625,
+      4.4873046875
+    ],
+    "log": "/tmp/martensite-544-final-workload-benchmark/12-cone_v4.log",
+    "metrics": {
+      "wall_seconds": 5.01,
+      "user_seconds": 4.99,
+      "system_seconds": 0.01,
+      "max_rss_kib": 56524,
+      "exit": 0
+    },
+    "one_test_passed": true,
+    "api_seconds": 4.973667
+  }
+]

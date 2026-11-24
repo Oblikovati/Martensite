@@ -43,7 +43,7 @@ struct MapPolicyAllocator {
     calls: Arc<MapPolicyCalls>,
 }
 martensite_tkernel::impl_transient!(MapPolicyAllocator, "Martensite_MapPolicyAllocator",
-    AllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    AllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: the fake retains the qualified heap's original allocation/free convention.
 unsafe impl AllocatorSource for MapPolicyAllocator {
     fn allocator_object_base(&self) -> &AllocatorObject {

@@ -23,36 +23,48 @@ impl<T> Default for DynamicArray<T> {
     }
 }
 mod block_table;
+#[cfg(test)]
 mod borrowed;
+#[cfg(test)]
 #[allow(unsafe_code)]
 mod clear_state;
+#[cfg(test)]
 mod copy_construction_failure;
 mod copy_date;
 mod copy_policy;
-pub use clear_state::DynamicArrayClearState;
+#[cfg(test)]
+pub(crate) use clear_state::DynamicArrayClearState;
 mod increment;
-pub use copy_construction_failure::DynamicArrayCopyConstructionFailure;
+#[cfg(test)]
+pub(crate) use copy_construction_failure::DynamicArrayCopyConstructionFailure;
 mod initialized_tail;
 pub use copy_date::DynamicArrayCopyFailure;
 mod emplacement;
+#[cfg(test)]
 #[allow(unsafe_code)]
 mod erase_phase;
+#[cfg(test)]
 mod insertion;
 mod internal_append;
+#[cfg(test)]
 mod internal_insertion;
 #[allow(unsafe_code)]
+#[cfg(test)]
 mod internal_reconstruction;
 mod internal_setvalue;
 mod legacy_cursor;
 mod method_tail;
 mod moving;
 #[allow(unsafe_code)]
+#[cfg(test)]
 mod replacement_policy;
 #[allow(unsafe_code)]
 mod retained_zero;
 mod slots;
 mod storage_extension;
-pub use legacy_cursor::{DynamicArrayCachedIterator, DynamicArrayIterator};
+#[cfg(test)]
+pub(crate) use legacy_cursor::DynamicArrayCachedIterator;
+pub use legacy_cursor::DynamicArrayIterator;
 pub use storage_extension::DynamicArrayStorageExtension;
 impl<T> DynamicArray<T> {
     /// Selects initial block size, rounded up to a power of two; `DynamicArray::<i32>::with_increment(5)`.
@@ -109,7 +121,7 @@ impl<T> DynamicArray<T> {
         self.emplace_append(|| value)
     }
     /// Reserves storage before constructing the appended value; `array.emplace_append(||42)`.
-    pub fn emplace_append(&mut self, construct: impl FnOnce() -> T) -> &mut T {
+    pub(crate) fn emplace_append(&mut self, construct: impl FnOnce() -> T) -> &mut T {
         self.append_constructed_with(|_| construct())
     }
     fn append_constructed_with(&mut self, construct: impl FnOnce(&mut Self) -> T) -> &mut T {
@@ -157,23 +169,28 @@ impl<T> DynamicArray<T> {
             .ok_or(error)
     }
     /// Reads the first value; `array.first()?`.
-    pub fn first(&self) -> Result<&T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn first(&self) -> Result<&T, ArrayError> {
         self.value(0)
     }
     /// Reads the last logical value; `array.last()?`.
-    pub fn last(&self) -> Result<&T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn last(&self) -> Result<&T, ArrayError> {
         self.value(self.used.wrapping_sub(1))
     }
     /// Mutates the first value; `*array.change_first()? = 42`.
-    pub fn change_first(&mut self) -> Result<&mut T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn change_first(&mut self) -> Result<&mut T, ArrayError> {
         self.change_value(0)
     }
     /// Mutates the last logical value; `*array.change_last()? = 42`.
-    pub fn change_last(&mut self) -> Result<&mut T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn change_last(&mut self) -> Result<&mut T, ArrayError> {
         self.change_value(self.used.wrapping_sub(1))
     }
     /// Removes the last logical value, retaining its block; `array.erase_last()`.
-    pub fn erase_last(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn erase_last(&mut self) {
         if self.used == 0 {
             return;
         }
@@ -198,7 +215,8 @@ impl<T> DynamicArray<T> {
         self.needs_tail_scan = false;
     }
     /// Transfers blocks and empties the source; `dest.move_from(&mut source)`.
-    pub fn move_from(&mut self, source: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn move_from(&mut self, source: &mut Self) {
         // Move assignment destroys the receiver before touching the source.
         self.clear(true);
         *self = Self::from_moved(source);
@@ -215,15 +233,18 @@ impl<T> DynamicArray<T> {
             .take(self.used)
     }
     /// Returns a detached first position; `array.begin_cursor()`.
-    pub const fn begin_cursor(&self) -> DynamicCursor {
+    #[cfg(test)]
+    pub(crate) const fn begin_cursor(&self) -> DynamicCursor {
         DynamicCursor { index: 0 }
     }
     /// Returns a snapshot of the current end; `array.end_cursor()`.
-    pub const fn end_cursor(&self) -> DynamicCursor {
+    #[cfg(test)]
+    pub(crate) const fn end_cursor(&self) -> DynamicCursor {
         DynamicCursor { index: self.used }
     }
     /// Reverses values while retaining block storage; `array.reverse()`.
-    pub fn reverse(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn reverse(&mut self) {
         for index in 0..self.used / 2 {
             self.swap(index, self.used - 1 - index);
         }
@@ -241,6 +262,7 @@ impl<T> DynamicArray<T> {
             upper: self.used as i64 - 1,
         }
     }
+    #[cfg(test)]
     fn swap(&mut self, first: usize, second: usize) {
         if first == second {
             return;
@@ -283,18 +305,21 @@ impl<T: Clone> DynamicArray<T> {
     }
 
     /// Copies values and returns the destination for chaining; `dest.assign_returning(&source,false)`.
-    pub fn assign_returning(&mut self, source: &Self, own_allocator: bool) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_returning(&mut self, source: &Self, own_allocator: bool) -> &mut Self {
         self.assign(source, own_allocator);
         self
     }
 
     /// Uses the default allocator policy and returns this array; `dest.assign_default_returning(&source)`.
-    pub fn assign_default_returning(&mut self, source: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_default_returning(&mut self, source: &Self) -> &mut Self {
         self.assign_returning(source, true)
     }
 
     /// Copies values and adopts the source allocator, as copy assignment does; `dest.assign_operator_returning(&source)`.
-    pub fn assign_operator_returning(&mut self, source: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_operator_returning(&mut self, source: &Self) -> &mut Self {
         self.assign_returning(source, false)
     }
 
@@ -307,14 +332,16 @@ impl<T: Clone> DynamicArray<T> {
 }
 impl<T> DynamicArray<T> {
     /// Transfers blocks and returns the destination for move-assignment chaining; `dest.move_from_returning(&mut source)`.
-    pub fn move_from_returning(&mut self, source: &mut Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn move_from_returning(&mut self, source: &mut Self) -> &mut Self {
         self.move_from(source);
         self
     }
 }
 impl<T: Ord> DynamicArray<T> {
     /// Sorts the logical sequence without replacing its blocks; `array.sort()`.
-    pub fn sort(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn sort(&mut self) {
         for index in 1..self.used {
             let mut position = index;
             while position > 0 && self[position] < self[position - 1] {
@@ -337,7 +364,8 @@ impl<T: Default> std::ops::IndexMut<usize> for DynamicArray<T> {
 }
 impl DynamicCursor {
     /// Reads this position from an array after any appends; `cursor.value(&array)?`.
-    pub fn value<T>(self, array: &DynamicArray<T>) -> Result<&T, ArrayError> {
+    #[cfg(test)]
+    pub(crate) fn value<T>(self, array: &DynamicArray<T>) -> Result<&T, ArrayError> {
         array.value(self.index)
     }
 }

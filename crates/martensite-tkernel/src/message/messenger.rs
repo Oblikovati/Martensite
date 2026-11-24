@@ -1,7 +1,7 @@
 //! Dispatches each message to every printer of an ordered sequence.
 use super::{Gravity, MessageStream, PrinterHandle, PrinterOStream};
 use crate::standard::dump::DumpStream;
-use crate::standard::{Handle, RuntimeType, StandardTransient};
+use crate::standard::{Handle, RuntimeType, StandardTransient, Transient};
 use crate::tcollection::{AsciiString, ExtendedString};
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -113,7 +113,7 @@ impl Messenger {
         }
     }
     /// Sends a shared object; `messenger.send_object(&object, g)`.
-    pub fn send_object(&self, object: &Handle<StandardTransient>, gravity: Gravity) {
+    pub fn send_object(&self, object: &Handle<dyn Transient>, gravity: Gravity) {
         for printer in self.snapshot() {
             printer.send_object(object, gravity);
         }

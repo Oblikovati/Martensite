@@ -3,8 +3,10 @@
 //! range is an out of range failure, raised by the parameter access.
 use super::reader_data::c_atoi;
 use super::{StepDataLogical, StepDataSelectType, StepDataStepReaderData, StepDataUndefinedEntity};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
-    standard::{Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped},
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -189,7 +191,7 @@ impl StepDataStepReaderData {
         mess: &str,
         ach: &Handle<InterfaceCheck>,
         atype: &RuntimeType,
-        ent: &mut Handle<StandardTransient>,
+        ent: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let errmess = match self.present_param(num, nump)? {
             None => Some("Parameter n0.%d (%s) absent"),
@@ -216,7 +218,7 @@ impl StepDataStepReaderData {
     }
     /// `ReadEntity<T>(num, nump, mess, ach, atype, ent)`: `ent` is only assigned on success,
     /// and false when the entity does not cast to `T`.
-    pub fn read_entity<T: ?Sized + RuntimeTyped>(
+    pub fn read_entity<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         num: i32,
         nump: i32,
@@ -225,7 +227,7 @@ impl StepDataStepReaderData {
         atype: &RuntimeType,
         ent: &mut Handle<T>,
     ) -> Result<bool, Failure> {
-        let mut found = ent.cast::<StandardTransient>();
+        let mut found = ent.cast::<dyn Transient>();
         if !self.read_entity_transient(num, nump, mess, ach, atype, &mut found)? {
             return Ok(false);
         }
@@ -279,7 +281,7 @@ impl StepDataStepReaderData {
         ach: &Handle<InterfaceCheck>,
         sel: &mut dyn StepDataSelectType,
     ) -> Result<Option<&'static str>, Failure> {
-        let mut member = sel.new_member().cast::<StandardTransient>();
+        let mut member = sel.new_member().cast::<dyn Transient>();
         let mut errmess = None;
         if !self.read_any(num, nump, mess, ach, &sel.description(), &mut member)? {
             errmess = Some("Parameter n0.%d (%s) : could not be read");

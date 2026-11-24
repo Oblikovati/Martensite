@@ -95,7 +95,12 @@ fn face_polygon_lines(draws: &mut Vec<PrimitiveDraw>, width: f32) -> Result<(), 
 pub(crate) fn resolve_ordered_line_widths(draws: &mut [PrimitiveDraw]) {
     let mut current = None;
     for draw in draws {
-        for style in [&mut draw.line_style, &mut draw.polygon_edge_style]
+        // Reading first leaves a body that a draw record shares uncopied (#594).
+        if draw.line_style.is_none() && draw.polygon_edge_style.is_none() {
+            continue;
+        }
+        let body = &mut **draw;
+        for style in [&mut body.line_style, &mut body.polygon_edge_style]
             .into_iter()
             .flatten()
         {

@@ -5,7 +5,7 @@ use super::{
 use crate::{prs_mgr::*, prs3d::*, select_mgr::*};
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::AsciiString,
     units_api::UnitsApi,
 };
@@ -14,14 +14,13 @@ use martensite_tkmath::gp::Axis1;
 use std::sync::Arc;
 /// A selectable XY frame on a plane; `AisPlaneTrihedron::new(&plane, units)?`.
 pub struct AisPlaneTrihedron {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     component: SharedState<Handle<GeomPlane>>,
     pub(super) children: SharedState<[Handle<dyn SelectMgrSelectableObject>; 3]>,
     pub(super) labels: SharedState<[AsciiString; 2]>,
     units: Arc<SharedState<UnitsApi>>,
 }
-martensite_tkernel::impl_transient!(AisPlaneTrihedron,"AisPlaneTrihedron",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisPlaneTrihedron,"AisPlaneTrihedron",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisPlaneTrihedron {
     /// Retain a live plane and snapshot child owner objects; `AisPlaneTrihedron::new(&plane, units)?`.
@@ -30,7 +29,6 @@ impl AisPlaneTrihedron {
         units: Arc<SharedState<UnitsApi>>,
     ) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             component: SharedState::new(plane.clone()),
             children: SharedState::new(std::array::from_fn(|_| Handle::default())),

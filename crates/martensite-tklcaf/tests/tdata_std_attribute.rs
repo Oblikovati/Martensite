@@ -79,69 +79,77 @@ fn TDataStd_Attribute_Test__OCC29371_AttributeGUIDsNotNull() {
     let null_guid = guid("00000000-0000-0000-0000-000000000000");
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdAsciiString::new()).cast(),
+        Handle::new(TDataStdAsciiString::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdBooleanArray::new()).cast(),
+        Handle::new(TDataStdBooleanArray::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdBooleanList::new()).cast(),
+        Handle::new(TDataStdBooleanList::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdByteArray::new()).cast(),
+        Handle::new(TDataStdByteArray::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdExtStringArray::new()).cast(),
+        Handle::new(TDataStdExtStringArray::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdExtStringList::new()).cast(),
+        Handle::new(TDataStdExtStringList::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdInteger::new()).cast(),
+        Handle::new(TDataStdInteger::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdIntegerArray::new()).cast(),
+        Handle::new(TDataStdIntegerArray::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdIntegerList::new()).cast(),
-        &null_guid,
-    );
-    expect_added_with_guid(&label, Handle::new(TDataStdName::new()).cast(), &null_guid);
-    expect_added_with_guid(&label, Handle::new(TDataStdReal::new()).cast(), &null_guid);
-    expect_added_with_guid(
-        &label,
-        Handle::new(TDataStdRealArray::new()).cast(),
+        Handle::new(TDataStdIntegerList::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdRealList::new()).cast(),
+        Handle::new(TDataStdName::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdReferenceArray::new()).cast(),
+        Handle::new(TDataStdReal::new()).into_upcast(),
         &null_guid,
     );
     expect_added_with_guid(
         &label,
-        Handle::new(TDataStdReferenceList::new()).cast(),
+        Handle::new(TDataStdRealArray::new()).into_upcast(),
+        &null_guid,
+    );
+    expect_added_with_guid(
+        &label,
+        Handle::new(TDataStdRealList::new()).into_upcast(),
+        &null_guid,
+    );
+    expect_added_with_guid(
+        &label,
+        Handle::new(TDataStdReferenceArray::new()).into_upcast(),
+        &null_guid,
+    );
+    expect_added_with_guid(
+        &label,
+        Handle::new(TDataStdReferenceList::new()).into_upcast(),
         &null_guid,
     );
     application.close_tdoc_std_document(&document).unwrap();

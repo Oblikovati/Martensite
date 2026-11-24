@@ -151,7 +151,7 @@ macro_rules! rw_block_b_0131 {
         $the_sw.send_entity(&$the_ent.name())?;
         $the_sw.open_sub()?;
         for $i1 in 1..=step_live(&$the_ent.items(), "WriteStep")?.array1().length() {
-            let $var0: Handle<StepVisualTessellatedStructuredItem> =
+            let $var0: Handle<dyn crate::StepEntityBase<StepVisualTessellatedStructuredItem>> =
                 step_array1_item(&$the_ent.items(), $i1, "WriteStep")?;
             $the_sw.send_entity(&$var0)?;
         }
@@ -212,7 +212,8 @@ pub(crate) use rw_block_b_0133;
 
 macro_rules! rw_block_b_0134 {
     ($a_assigned_date:ident, $a_role:ident, $ach:ident, $data:ident, $num:ident) => {
-        let mut $a_assigned_date: Handle<StepBasicDate> = Default::default();
+        let mut $a_assigned_date: Handle<dyn crate::StepEntityBase<StepBasicDate>> =
+            Default::default();
         $data.read_entity(
             $num,
             1,

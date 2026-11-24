@@ -35,7 +35,7 @@ fn configure_edge_image(fixture: &SurfaceTextureScene, mode: &str) {
     if mode.contains("mask") || mode.contains("blend") {
         fixture
             .texture
-            .set_image(super::texture_scene::texture_image("mask"));
+            .set_image(super::texture_scene::texture_image("mask").into_upcast());
         fixture.texture.update_revision();
     }
     fixture
@@ -112,7 +112,7 @@ fn install_edge_geometry(fixture: &SurfaceTextureScene, mode: &str) {
     } else {
         geometry::edge_triangle_array(mode)
     };
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
 }
 fn configure_edge_view(fixture: &SurfaceTextureScene, mode: &str) {
     let cview = fixture.scene.cview();

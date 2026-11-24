@@ -301,7 +301,7 @@ impl Variational {
             options,
             niv_cont,
             percent: [0.4, 0.2, 0.4],
-            smooth_criterion: Handle::new(line.criterion).cast(),
+            smooth_criterion: Handle::new(line.criterion).into_upcast(),
             parameters: Handle::new(line.parameters),
             knots: Handle::new(HArray1::from_owned(knots)),
             results: VariationalResults::default(),

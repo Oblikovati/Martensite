@@ -49,8 +49,8 @@ fn iso_pcurve(
     let mut mults: Array1<'static, i32> = Array1::with_bounds(1, 2).map_err(array_failure)?;
     (poles[1], poles[2], knots[1], knots[2], mults[1], mults[2]) = (pdeb, pfin, udeb, ufin, 2, 2);
     let bs2d: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).cast();
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&bs2d, udeb, ufin, true, true)?).cast())
+        Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).into_upcast();
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&bs2d, udeb, ufin, true, true)?).into_upcast())
 }
 
 /// The barycentre of `nb` points of the curve at equal steps, and whether they all
@@ -129,10 +129,10 @@ impl ProjectedPiece {
         ) = if projector.is_u_iso(k)?.0 || projector.is_v_iso(k)?.0 {
             let pcur = iso_pcurve(projector, (udeb, ufin))?;
             let hp: Handle<dyn Adaptor2dCurve2d> =
-                Handle::new(Geom2dAdaptorCurve::with_curve(&pcur)?).cast();
+                Handle::new(Geom2dAdaptorCurve::with_curve(&pcur)?).into_upcast();
             (pcur, hp, true)
         } else {
-            (Handle::default(), h_projector.clone().cast(), false)
+            (Handle::default(), h_projector.cast(), false)
         };
         let only2d: bool =
             (!np.my_with3d || elementary) && projector.max_distance(k)? <= np.my_tol3d;

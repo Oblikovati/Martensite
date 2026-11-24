@@ -17,7 +17,7 @@ impl StdPrsIsolines {
     /// Select the real surface or mesh path with caller-owned lists; `StdPrsIsolines::add_native_polylines(&face,&drawer,0.1,output)?`.
     pub fn add_native_polylines(
         face: &Face,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         deflection: f64,
         output: StdPrsIsolineDestination<'_>,
     ) -> Result<(), Failure> {
@@ -30,7 +30,7 @@ impl StdPrsIsolines {
     pub fn add(
         prs: &Handle<dyn Graphic3dStructureSource>,
         face: &Face,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         deflection: f64,
     ) -> Result<(), Failure> {
         let [mut u, mut v] = super::isoline_outputs::empty_isoline_lists();
@@ -45,7 +45,7 @@ impl StdPrsIsolines {
     /// Append copied convenience polylines while retaining native partial failures; `StdPrsIsolines::add_polylines(&face,&drawer,0.1,&mut u,&mut v)?`.
     pub fn add_polylines(
         face: &Face,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         deflection: f64,
         u: &mut Vec<Vec<Point3>>,
         v: &mut Vec<Vec<Point3>>,

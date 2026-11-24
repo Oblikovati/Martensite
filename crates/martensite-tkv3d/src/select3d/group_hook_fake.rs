@@ -3,17 +3,11 @@ use super::{
     Select3DBndBox3d, Select3DSensitiveEntity, Select3DSensitiveEntityBase, Select3DSensitiveGroup,
     Select3DSensitiveGroupSource, Select3DSensitiveSet, Select3DSensitiveSetBase,
 };
+use crate::inherited_native_type::inherited_native_type;
 use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{
-    Failure, Handle, InterfaceCaster, InterfaceEntry, RuntimeType, RuntimeTyped, SharedState,
-    StandardTransient, Transient,
-};
-use std::{
-    any::{Any, TypeId},
-    io,
-    sync::OnceLock,
-};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
+use std::io;
 pub(super) struct GroupHookFake {
     pub(super) core: Select3DSensitiveGroup,
     pub(super) trace: SharedState<Vec<i32>>,
@@ -40,49 +34,13 @@ impl GroupHookFake {
         Ok(())
     }
 }
-impl RuntimeTyped for GroupHookFake {
-    const TYPE_NAME: &'static str = "Martensite_GroupHookFake";
-    fn static_type() -> &'static RuntimeType {
-        static RUST_INTERFACES: OnceLock<Handle<RuntimeType>> = OnceLock::new();
-        // A separate Rust caster descriptor must not replace the inherited native descriptor.
-        RUST_INTERFACES
-            .get_or_init(register_group_hook_interfaces)
-            .get()
-            .unwrap()
-    }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        // Projection recovers the real wrapper for all registered virtual interface casters.
-        martensite_tkernel::standard::project_concrete::<Self>(object)
-    }
-}
-fn register_group_hook_interfaces() -> Handle<RuntimeType> {
-    RuntimeType::register_owned_with_interfaces::<GroupHookFake>(
-        GroupHookFake::TYPE_NAME,
-        std::mem::size_of::<GroupHookFake>(),
-        Some(Select3DSensitiveGroup::static_type_handle()),
-        group_hook_interfaces(),
-    )
-}
-impl Transient for GroupHookFake {
-    fn dynamic_type(&self) -> &'static RuntimeType {
-        // Match native subclasses that inherit DynamicType rather than redeclaring RTTI.
-        Select3DSensitiveGroup::static_type()
-    }
-    fn rust_interface_descriptor(&self) -> &RuntimeType {
-        // Typed Rust views retain this wrapper's actual virtual hook implementations.
-        Self::static_type()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        if requested == TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.core.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        // All interface projections own the same inherited reference-count subobject.
-        self.core.transient_base()
-    }
-}
+inherited_native_type!(
+    GroupHookFake,
+    Select3DSensitiveGroup,
+    "Martensite_GroupHookFake",
+    named,
+    [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet, dyn Select3DSensitiveGroupSource]
+);
 impl Select3DSensitiveGroupSource for GroupHookFake {
     fn sensitive_group(&self) -> &Select3DSensitiveGroup {
         // One composed state holds the same membership/cache/owner semantics as the native subobject.
@@ -209,28 +167,4 @@ impl Select3DSensitiveSet for GroupHookFake {
         self.check_hook_failure(3)?;
         Ok(distance + 17.)
     }
-}
-
-fn group_hook_interfaces() -> Vec<InterfaceEntry> {
-    vec![
-        InterfaceEntry::new(InterfaceCaster::<dyn Select3DSensitiveEntity>::new(
-            |object| {
-                Some(martensite_tkernel::standard::project_concrete::<
-                    GroupHookFake,
-                >(object)?)
-            },
-        )),
-        InterfaceEntry::new(InterfaceCaster::<dyn Select3DSensitiveSet>::new(|object| {
-            Some(martensite_tkernel::standard::project_concrete::<
-                GroupHookFake,
-            >(object)?)
-        })),
-        InterfaceEntry::new(InterfaceCaster::<dyn Select3DSensitiveGroupSource>::new(
-            |object| {
-                Some(martensite_tkernel::standard::project_concrete::<
-                    GroupHookFake,
-                >(object)?)
-            },
-        )),
-    ]
 }

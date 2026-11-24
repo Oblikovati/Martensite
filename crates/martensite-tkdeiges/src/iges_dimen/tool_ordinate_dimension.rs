@@ -13,9 +13,10 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_live,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_live,
 };
 use crate::iges_dimen::{
     IgesDimenGeneralNote, IgesDimenLeaderArrow, IgesDimenOrdinateDimension, IgesDimenWitnessLine,
@@ -58,7 +59,7 @@ impl IgesDimenToolOrdinateDimension {
         if (iges_live(the_ent, "IgesDimenToolOrdinateDimension::read_own_params")?.form_number())
             == 0
         {
-            let mut ent: Handle<IgesDataIgesEntity> = Default::default();
+            let mut ent: Handle<dyn IgesDataEntityKind> = Default::default();
             if !(pr.read_entity(ir, &pr.current(), "Line or Leader", &mut ent, false)?) {
             } else {
                 if ent.is_kind(<IgesDimenWitnessLine>::static_type()) {

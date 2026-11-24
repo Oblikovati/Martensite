@@ -3,20 +3,20 @@ use super::{Debug, FlatDataMap, HashPolicy, Inserted};
 
 impl<K: Debug + Clone, V, H: HashPolicy<K>> FlatDataMap<K, V, H> {
     /// Copies a borrowed key after hashing and constructs a replacement; `map.emplace_ref(&1, || 42)`.
-    pub fn emplace_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> bool {
+    pub(crate) fn emplace_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> bool {
         self.place_borrowed(key, construct, true).is_new
     }
     /// Returns the original key's item after borrowed-key forwarding; `map.emplaced_ref(&1, || 42)`.
-    pub fn emplaced_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> &mut V {
+    pub(crate) fn emplaced_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> &mut V {
         let inserted = self.place_borrowed(key, construct, true);
         self.value_at(inserted.original)
     }
     /// Copies a lookup key on every call, constructing a value only on a miss; `map.try_emplace_ref(&1, || 42)`.
-    pub fn try_emplace_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> bool {
+    pub(crate) fn try_emplace_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> bool {
         self.place_borrowed(key, construct, false).is_new
     }
     /// Copies the key and borrows an existing or newly constructed value; `map.try_emplaced_ref(&1, || 42)`.
-    pub fn try_emplaced_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> &mut V {
+    pub(crate) fn try_emplaced_ref(&mut self, key: &K, construct: impl FnOnce() -> V) -> &mut V {
         let inserted = self.place_borrowed(key, construct, false);
         self.value_at(inserted.original)
     }

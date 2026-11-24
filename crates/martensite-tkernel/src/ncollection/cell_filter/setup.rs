@@ -26,7 +26,8 @@ impl<I: CellGeometry> CellFilter<I> {
         Self::assemble(dimension, sizes, allocator)
     }
     /// Anisotropic sizes, one per axis, in an injected arena; `with_sizes(vec![1.0, 2.0], arena)`.
-    pub fn with_sizes(sizes: Vec<f64>, resource: BaseAllocator) -> Self {
+    #[cfg(test)]
+    pub(crate) fn with_sizes(sizes: Vec<f64>, resource: BaseAllocator) -> Self {
         let upper: i32 = i32::try_from(sizes.len()).expect("cell dimension fits int") - 1;
         let mut array: Array1<'static, f64> = Array1::with_bounds(0, upper).unwrap();
         array.as_mut_slice().copy_from_slice(&sizes);
@@ -72,7 +73,7 @@ impl<I: CellGeometry> CellFilter<I> {
     }
     /// Protected allocator reset; `filter.reset_allocator(None)` clears targets and
     /// replaces the arena while preserving the dimension and cell sizes.
-    pub fn reset_allocator(&mut self, allocator: Option<BaseAllocator>) {
+    pub(crate) fn reset_allocator(&mut self, allocator: Option<BaseAllocator>) {
         self.resource = arena_or_default(allocator);
         // Clears through the new arena without resetting the bucket count.
         self.cells.clear_with_allocator(Some(self.resource.clone()));

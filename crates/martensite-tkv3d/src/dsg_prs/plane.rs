@@ -17,8 +17,8 @@ impl DsgPrsXYZPlanePresentation {
     ) -> Result<(), Failure> {
         let group = plane_group(prs, drawer)?;
         let vertices = Handle::new(Graphic3dArrayOfPolylines::new(4, 0, 0, 0)?);
-        append_plane_loop(&vertices.cast(), first, second, third)?;
-        group.add_primitive_array(&vertices.cast(), true);
+        append_plane_loop(&vertices, first, second, third)?;
+        group.add_primitive_array(&vertices.into_upcast(), true);
         Ok(())
     }
 }
@@ -36,8 +36,8 @@ impl DsgPrsShadedPlanePresentation {
         let group = plane_group(prs, drawer)?;
         group.set_primitives_aspect(&drawer.shading_aspect().aspect().cast());
         let vertices = Handle::new(Graphic3dArrayOfPolygons::new(4, 0, 0, 0)?);
-        append_plane_loop(&vertices.cast(), first, second, third)?;
-        group.add_primitive_array(&vertices.cast(), true);
+        append_plane_loop(&vertices, first, second, third)?;
+        group.add_primitive_array(&vertices.into_upcast(), true);
         Ok(())
     }
 }
@@ -50,7 +50,7 @@ fn plane_group(
     Ok(group)
 }
 fn append_plane_loop(
-    vertices: &Handle<Graphic3dArrayOfPrimitives>,
+    vertices: &Graphic3dArrayOfPrimitives,
     first: &Point3,
     second: &Point3,
     third: &Point3,

@@ -4,7 +4,6 @@ use martensite_tkbrep::topods::{Compound, Face, Shape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::StandardTransient;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::tdata_std::TDataStdNamedData;
@@ -44,7 +43,6 @@ fn compound_of(children: &[Shape]) -> Shape {
 
 /// A reader of the shapes it holds, which can report a partial read.
 struct HandReader {
-    transient: StandardTransient,
     base: RwMeshCafReaderBase,
     shapes: Vec<(Shape, &'static str)>,
     roots: Vec<Shape>,
@@ -54,7 +52,6 @@ struct HandReader {
 impl HandReader {
     fn new(roots: Vec<Shape>, named: Vec<(Shape, &'static str)>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: RwMeshCafReaderBase::default(),
             shapes: named,
             roots,
@@ -63,7 +60,7 @@ impl HandReader {
     }
 }
 
-impl_transient!(HandReader, "HandReader", dyn RwMeshCafReader, transient, interfaces: [dyn RwMeshCafReader]);
+impl_transient!(HandReader, "HandReader", dyn RwMeshCafReader, interfaces: [dyn RwMeshCafReader]);
 
 impl RwMeshCafReader for HandReader {
     fn caf_base(&self) -> &RwMeshCafReaderBase {

@@ -1,12 +1,14 @@
 //! `IgesToBRepBasicCurve`: the curve entities with a direct geometric form. This file holds the
 //! choice among the kinds, lines and matrices.
 use super::curve_and_surface::curve_and_surface_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, IgesDataToolLocation};
 use crate::iges_geom::{
     IgesGeomBSplineCurve, IgesGeomCircularArc, IgesGeomConicArc, IgesGeomCopiousData, IgesGeomLine,
     IgesGeomSplineCurve, IgesGeomTransformationMatrix,
 };
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine, Geom2dTrimmedCurve};
 use martensite_tkg3d::geom::{GeomCurve, GeomLine, GeomTransformation, GeomTrimmedCurve};
@@ -66,7 +68,10 @@ impl IgesToBRepBasicCurve {
         !self.get_mode_transfer() && start.has_transf()
     }
     /// The fail of a null entity.
-    pub(super) fn null_entity<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>) {
+    pub(super) fn null_entity<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        start: &Handle<T>,
+    ) {
         self.fail_key(start, "IGES_1005");
     }
     /// The curve of any basic curve entity, scaled to the file unit; null on a failure, which has
@@ -77,7 +82,7 @@ impl IgesToBRepBasicCurve {
     /// A failure of the scaling of the curve.
     pub fn transfer_basic_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Handle<dyn GeomCurve>, Failure> {
         if start.is_null() {
             self.null_entity(start);
@@ -94,7 +99,7 @@ impl IgesToBRepBasicCurve {
     }
     fn dispatch_basic_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Handle<dyn GeomCurve>, Failure> {
         let bspline = start.cast::<IgesGeomBSplineCurve>();
         if bspline.is_some() {
@@ -126,7 +131,7 @@ impl IgesToBRepBasicCurve {
     /// `tool.transfer_2d_basic_curve(&entity)`.
     pub fn transfer_2d_basic_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Handle<dyn Geom2dCurve> {
         if start.is_null() {
             self.null_entity(start);
@@ -138,7 +143,7 @@ impl IgesToBRepBasicCurve {
     }
     fn dispatch_2d_basic_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         let bspline = start.cast::<IgesGeomBSplineCurve>();
         if bspline.is_some() {

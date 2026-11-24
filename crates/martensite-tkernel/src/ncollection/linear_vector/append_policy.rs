@@ -9,7 +9,7 @@ impl<T> LinearVector<T> {
     /// the old length. A growth panic keeps the receiver unchanged (see
     /// `reserve_with_relocation`). Callbacks returning
     /// values do not promise address-dependent in-place construction.
-    pub fn emplace_append_with_relocation(
+    pub(crate) fn emplace_append_with_relocation(
         &mut self,
         relocate: impl FnMut(&mut T) -> T,
         construct: impl FnOnce() -> T,

@@ -95,7 +95,7 @@ step_select! {
     /// Annotation plane element.
     StepVisualAnnotationPlaneElement, [StepVisualDraughtingCallout, StepVisualStyledItem], {
         draughting_callout: StepVisualDraughtingCallout,
-        styled_item: StepVisualStyledItem,
+        styled_item: dyn crate::StepEntityBase<StepVisualStyledItem>,
     }
 }
 
@@ -129,16 +129,16 @@ step_select! {
 step_select! {
     /// Representation of STEP SELECT type EdgeOrCurve
     StepVisualEdgeOrCurve, [StepGeomCurve, StepShapeEdge], {
-        curve: StepGeomCurve,
-        edge: StepShapeEdge,
+        curve: dyn crate::StepEntityBase<StepGeomCurve>,
+        edge: dyn crate::StepEntityBase<StepShapeEdge>,
     }
 }
 
 step_select! {
     /// Representation of STEP SELECT type FaceOrSurface
     StepVisualFaceOrSurface, [StepShapeFace, StepGeomSurface], {
-        face: StepShapeFace,
-        surface: StepGeomSurface,
+        face: dyn crate::StepEntityBase<StepShapeFace>,
+        surface: dyn crate::StepEntityBase<StepGeomSurface>,
     }
 }
 
@@ -169,7 +169,7 @@ step_select! {
 step_select! {
     /// Invisible item.
     StepVisualInvisibleItem, [StepVisualStyledItem, StepVisualPresentationLayerAssignment, StepVisualPresentationRepresentation], {
-        styled_item: StepVisualStyledItem,
+        styled_item: dyn crate::StepEntityBase<StepVisualStyledItem>,
         presentation_layer_assignment: StepVisualPresentationLayerAssignment,
         presentation_representation: StepVisualPresentationRepresentation,
     }
@@ -179,7 +179,7 @@ step_select! {
     /// Layered item.
     StepVisualLayeredItem, [StepVisualPresentationRepresentation, StepReprRepresentationItem], {
         presentation_representation: StepVisualPresentationRepresentation,
-        representation_item: StepReprRepresentationItem,
+        representation_item: dyn crate::StepEntityBase<StepReprRepresentationItem>,
     }
 }
 
@@ -221,7 +221,7 @@ step_select! {
 step_select! {
     /// Representation of STEP SELECT type RenderingPropertiesSelect
     StepVisualRenderingPropertiesSelect, [StepVisualSurfaceStyleReflectanceAmbient, StepVisualSurfaceStyleTransparent], {
-        surface_style_reflectance_ambient: StepVisualSurfaceStyleReflectanceAmbient,
+        surface_style_reflectance_ambient: dyn crate::StepEntityBase<StepVisualSurfaceStyleReflectanceAmbient>,
         surface_style_transparent: StepVisualSurfaceStyleTransparent,
     }
 }
@@ -229,8 +229,8 @@ step_select! {
 step_select! {
     /// Style context select.
     StepVisualStyleContextSelect, [StepReprRepresentation, StepReprRepresentationItem, StepVisualPresentationSet], {
-        representation: StepReprRepresentation,
-        representation_item: StepReprRepresentationItem,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
+        representation_item: dyn crate::StepEntityBase<StepReprRepresentationItem>,
         presentation_set: StepVisualPresentationSet,
     }
 }
@@ -238,10 +238,10 @@ step_select! {
 step_select! {
     /// Styled item target.
     StepVisualStyledItemTarget, [StepGeomGeometricRepresentationItem, StepReprMappedItem, StepReprRepresentation, StepShapeTopologicalRepresentationItem], {
-        geometric_representation_item: StepGeomGeometricRepresentationItem,
-        mapped_item: StepReprMappedItem,
-        representation: StepReprRepresentation,
-        topological_representation_item: StepShapeTopologicalRepresentationItem,
+        geometric_representation_item: dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>,
+        mapped_item: dyn crate::StepEntityBase<StepReprMappedItem>,
+        representation: dyn crate::StepEntityBase<StepReprRepresentation>,
+        topological_representation_item: dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>,
     }
 }
 
@@ -251,7 +251,7 @@ step_select! {
         surface_style_fill_area: StepVisualSurfaceStyleFillArea,
         surface_style_boundary: StepVisualSurfaceStyleBoundary,
         surface_style_parameter_line: StepVisualSurfaceStyleParameterLine,
-        surface_style_rendering: StepVisualSurfaceStyleRendering,
+        surface_style_rendering: dyn crate::StepEntityBase<StepVisualSurfaceStyleRendering>,
     }
 }
 
@@ -275,7 +275,7 @@ step_select! {
 step_entity! {
     /// Annotation curve occurrence.
     StepVisualAnnotationCurveOccurrence, StepVisualAnnotationCurveOccurrenceState, "StepVisualAnnotationCurveOccurrence", StepVisualAnnotationOccurrence, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualAnnotationOccurrence]
 }
 
 step_entity! {
@@ -283,11 +283,11 @@ step_entity! {
     /// Complex STEP entity AnnotationCurveOccurrence & AnnotationOccurrence &
     /// GeometricRepresentationItem & RepresentationItem & StyledItem
     StepVisualAnnotationCurveOccurrenceAndGeomReprItem, StepVisualAnnotationCurveOccurrenceAndGeomReprItemState, "StepVisualAnnotationCurveOccurrenceAndGeomReprItem", StepVisualAnnotationCurveOccurrence, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_visual::StepVisualStyledItem, crate::step_visual::StepVisualAnnotationOccurrence]
 }
 
 step_entity! {
     /// Annotation fill area.
     StepVisualAnnotationFillArea, StepVisualAnnotationFillAreaState, "StepVisualAnnotationFillArea", StepShapeGeometricCurveSet, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }

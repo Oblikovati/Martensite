@@ -1,5 +1,5 @@
 //! The curvilinear abscissa of a guideline: edge bounds, extensions, period and indices.
-use super::Spine;
+use super::SpineData;
 use crate::chfi_ds::State;
 use crate::chfi_ds::errors::{null_object, out_of_range, standard_failure};
 use martensite_tkernel::precision;
@@ -9,8 +9,8 @@ use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeombase::gcpnts::AbscissaPoint;
 use martensite_tkmath::elclib;
 
-impl Spine {
-    /// The loaded abscissa: StandardNullObject before [`Spine::load`].
+impl SpineData {
+    /// The loaded abscissa: StandardNullObject before [`SpineData::load`].
     pub(super) fn loaded_abscissa(&self) -> Result<&[f64], Failure> {
         self.abscissa
             .as_deref()
@@ -47,7 +47,7 @@ impl Spine {
     }
 
     /// `LastParameter()`: the end extension, else the length of the guideline;
-    /// StandardNullObject before [`Spine::load`]; `spine.last_parameter()?`.
+    /// StandardNullObject before [`SpineData::load`]; `spine.last_parameter()?`.
     pub fn last_parameter(&self) -> Result<f64, Failure> {
         if self.ends.last_prolon {
             return Ok(self.ends.last_param);

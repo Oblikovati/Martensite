@@ -26,7 +26,8 @@ use crate::step_repr::{
     StepReprPropertyDefinition, StepReprPropertyDefinitionRepresentation, StepReprRepresentation,
     StepReprRepresentationContext, StepReprRepresentationItem, StepReprRepresentedDefinition,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{InterfaceInterfaceModel, InterfaceModelEntities};
 
@@ -73,8 +74,10 @@ fn new_format_representation(
     let description = Handle::new(StepReprDescriptiveRepresentationItem::new());
     description.init(&text("data format"), &text(format));
     let representation = Handle::new(StepReprRepresentation::new());
-    let items = single::<Handle<StepReprRepresentationItem>>(description.cast())?;
-    representation.init(&text("document format"), &items, &context);
+    let items = single::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
+        description.cast(),
+    )?;
+    representation.init(&text("document format"), &items, &context.upcast());
     let mut characterized = StepReprCharacterizedDefinition::default();
     characterized.set_value(&doc_file.cast())?;
     let property = Handle::new(StepReprPropertyDefinition::new());
@@ -82,14 +85,14 @@ fn new_format_representation(
     let mut represented = StepReprRepresentedDefinition::default();
     represented.set_value(&property.cast())?;
     let pdr = Handle::new(StepReprPropertyDefinitionRepresentation::new());
-    pdr.init(&represented, &representation);
+    pdr.init(&represented, &representation.upcast());
     Ok(pdr)
 }
 
 /// A select equal to `product_definition` is replaced by `pdwad`, in place, in one array.
 fn replace_in_items<S>(
     items: &Handle<HArray1<S>>,
-    product_definition_of: impl Fn(&S) -> Handle<StepBasicProductDefinition>,
+    product_definition_of: impl Fn(&S) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     model: &Handle<dyn InterfaceInterfaceModel>,
     num_prod_def: i32,
     pdwad: &Handle<StepBasicProductDefinitionWithAssociatedDocuments>,
@@ -114,7 +117,7 @@ impl StepConstructExternRefs {
     fn add_ap214_reference(
         &mut self,
         filename: &str,
-        pd: &Handle<StepBasicProductDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         format: &str,
     ) -> Result<(), Failure> {
         let empty = text("");
@@ -166,7 +169,7 @@ impl StepConstructExternRefs {
     /// PDS and NAUOs.
     fn replace_by_pdwad(
         &self,
-        pd: &Handle<StepBasicProductDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         pdwad: &Handle<StepBasicProductDefinitionWithAssociatedDocuments>,
         num_prod_def: i32,
     ) -> Result<(), Failure> {
@@ -222,14 +225,15 @@ impl StepConstructExternRefs {
     fn add_ap203_reference(
         &mut self,
         filename: &str,
-        pd: &Handle<StepBasicProductDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     ) -> Result<(), Failure> {
         let empty = text("");
         let definition = step_live(pd, WHERE)?;
         // create document
         let doc_type = Handle::new(StepBasicDocumentType::new());
         doc_type.init(&text("cad_filename"));
-        let document = Handle::new(StepBasicDocument::new());
+        let document = Handle::new(StepBasicDocument::new())
+            .into_upcast::<dyn crate::StepEntityBase<StepBasicDocument>>();
         document.init(
             &empty,
             &text(filename),
@@ -260,7 +264,7 @@ impl StepConstructExternRefs {
     pub fn add_extern_ref(
         &mut self,
         filename: &str,
-        pd: &Handle<StepBasicProductDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         format: &str,
     ) -> Result<i32, Failure> {
         if format.contains("203") {
@@ -271,7 +275,7 @@ impl StepConstructExternRefs {
         Ok(self.my_aeias.len() as i32)
     }
     /// `add_with_refs` of one optional root.
-    fn add_root(&self, root: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn add_root(&self, root: &Handle<dyn Transient>) -> Result<(), Failure> {
         if root.is_some() {
             self.tool.model()?.add_with_refs(root, 0, false)?;
         }
@@ -311,7 +315,7 @@ impl StepConstructExternRefs {
     pub fn add_ap214_exter_ref(
         &mut self,
         adr: &Handle<StepAP214AppliedDocumentReference>,
-        pd: &Handle<StepBasicProductDefinition>,
+        pd: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
         df: &Handle<StepBasicDocumentFile>,
         filename: &str,
     ) -> Result<bool, Failure> {
@@ -322,7 +326,8 @@ impl StepConstructExternRefs {
         // DocumentType, ProductDefinitionContext, ProductRelatedProductCategory, ProductContext
         self.check_ap214_shared()?;
         // create document
-        let document = Handle::new(StepBasicDocument::new());
+        let document = Handle::new(StepBasicDocument::new())
+            .into_upcast::<dyn crate::StepEntityBase<StepBasicDocument>>();
         document.init(&empty, &empty, false, &empty, &self.my_shared_doc_type);
         step_live(adr, WHERE)?.init(&document, &empty, &single(reference_item)?);
         // create new product
@@ -366,11 +371,12 @@ impl StepConstructExternRefs {
         prpc.set_products(&products);
         // create new PDWAD
         let pdwad = Handle::new(StepBasicProductDefinitionWithAssociatedDocuments::new());
-        let documents = single::<Handle<StepBasicDocument>>(df.cast())?;
+        let documents =
+            single::<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>(df.upcast())?;
         pdwad.init(
             &text("1"),
             &empty,
-            &formation,
+            &formation.upcast(),
             &self.my_shared_pdc,
             &documents,
         );
@@ -385,7 +391,7 @@ impl StepConstructExternRefs {
             // create new ProductRelatedProductCategory for all extern files.
             let prpc = Handle::new(StepBasicProductRelatedProductCategory::new());
             prpc.init(&text("document"), false, &empty, &Handle::default());
-            self.my_shared_prpc = prpc;
+            self.my_shared_prpc = prpc.into_upcast();
         }
         if self.my_shared_doc_type.is_null() {
             // create new shared Document Type
@@ -398,14 +404,14 @@ impl StepConstructExternRefs {
             let application = step_live(&self.get_ap214_apd()?, WHERE)?.application();
             let pdc = Handle::new(StepBasicProductDefinitionContext::new());
             pdc.init(&text("digital document definition"), &application, &empty);
-            self.my_shared_pdc = pdc;
+            self.my_shared_pdc = pdc.into_upcast();
         }
         if self.my_shared_pc.is_null() {
             // create new shared ProductContext
             let application = step_live(&self.get_ap214_apd()?, WHERE)?.application();
             let pc = Handle::new(StepBasicProductContext::new());
             pc.init(&empty, &application, &empty);
-            self.my_shared_pc = pc;
+            self.my_shared_pc = pc.into_upcast();
         }
         Ok(())
     }

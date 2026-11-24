@@ -24,7 +24,6 @@ use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 /// assert_eq!(*shared.get().unwrap().array1().value(2).unwrap(), 1.5);
 /// ```
 pub struct HArray1<T: Send + Sync + 'static> {
-    base: StandardTransient,
     values: RwLock<Array1<'static, T>>,
 }
 
@@ -36,7 +35,6 @@ pub struct HArray1<T: Send + Sync + 'static> {
 /// assert_eq!(grid.array2().upper_col(), 3);
 /// ```
 pub struct HArray2<T: Send + Sync + 'static> {
-    base: StandardTransient,
     values: RwLock<Array2<'static, T>>,
 }
 
@@ -50,7 +48,6 @@ impl<T: Send + Sync + 'static> HArray1<T> {
     /// Wraps an array without copying it; `HArray1::from_owned(Array1::<i32>::with_size(2))`.
     pub fn from_owned(values: Array1<'static, T>) -> Self {
         Self {
-            base: StandardTransient::default(),
             values: RwLock::new(values),
         }
     }
@@ -162,7 +159,6 @@ impl<T: Send + Sync + 'static> HArray2<T> {
     /// Wraps a rectangle without copying it; `HArray2::from_owned(Array2::<i32>::with_size(2, 2))`.
     pub fn from_owned(values: Array2<'static, T>) -> Self {
         Self {
-            base: StandardTransient::default(),
             values: RwLock::new(values),
         }
     }

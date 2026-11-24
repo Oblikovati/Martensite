@@ -55,7 +55,7 @@ step_entity! {
     StepBasicExternallyDefinedItem, StepBasicExternallyDefinedItemState, "StepBasicExternallyDefinedItem", StandardTransient, {
         the_item_id: StepBasicSourceItem,
         the_source: Handle<StepBasicExternalSource>,
-    }
+    }, bases: [crate::step_basic::StepBasicExternallyDefinedItem]
 }
 impl StepBasicExternallyDefinedItem {
     step_methods! {
@@ -123,7 +123,7 @@ step_entity! {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
         the_general_property: Handle<StepBasicGeneralProperty>,
-        the_property_definition: Handle<StepReprPropertyDefinition>,
+        the_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     }
 }
 impl StepBasicGeneralPropertyAssociation {
@@ -134,8 +134,8 @@ impl StepBasicGeneralPropertyAssociation {
         set set_description = the_description: Handle<HAsciiString>;
         get general_property = the_general_property: Handle<StepBasicGeneralProperty>;
         set set_general_property = the_general_property: Handle<StepBasicGeneralProperty>;
-        get property_definition = the_property_definition: Handle<StepReprPropertyDefinition>;
-        set set_property_definition = the_property_definition: Handle<StepReprPropertyDefinition>;
+        get property_definition = the_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>;
+        set set_property_definition = the_property_definition: Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -144,7 +144,7 @@ impl StepBasicGeneralPropertyAssociation {
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
         a_general_property: &Handle<StepBasicGeneralProperty>,
-        a_property_definition: &Handle<StepReprPropertyDefinition>,
+        a_property_definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();

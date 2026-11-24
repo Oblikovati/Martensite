@@ -4,6 +4,7 @@ use crate::standard::Failure;
 use std::fmt;
 
 #[allow(unsafe_code)]
+#[cfg(test)]
 mod copy_bits;
 
 /// Retains an unpublished copy block until explicit recovery or ordinary Rust Drop.
@@ -16,22 +17,24 @@ pub struct DynamicArrayCopyFailure<T> {
 }
 impl<T> DynamicArrayCopyFailure<T> {
     /// Borrows the explicit constructor or storage-domain failure; `error.failure().message()`.
-    pub fn failure(&self) -> &Failure {
+    #[cfg(test)]
+    pub(crate) fn failure(&self) -> &Failure {
         &self.failure
     }
     /// Reports whether a detached allocation was retained, even with no initialized values.
     /// `assert!(error.has_incomplete_block());`
-    pub fn has_incomplete_block(&self) -> bool {
+    pub(crate) fn has_incomplete_block(&self) -> bool {
         self.incomplete.is_some()
     }
     /// Borrows only fully constructed values in the unpublished block; `error.incomplete_values()`.
     /// The failed construction contributes no value and no destructor obligation.
-    pub fn incomplete_values(&self) -> &[T] {
+    pub(crate) fn incomplete_values(&self) -> &[T] {
         self.incomplete.as_deref().unwrap_or(&[])
     }
     /// Cleans the unpublished block and returns its failure; `let reason = error.into_failure();`.
     /// Cleanup is explicit Rust recovery.
-    pub fn into_failure(self) -> Failure {
+    #[cfg(test)]
+    pub(crate) fn into_failure(self) -> Failure {
         *self.failure
     }
     fn domain(failure: Failure) -> Self {
@@ -80,6 +83,7 @@ impl<T> DynamicArray<T> {
             Ok(())
         })
     }
+    #[cfg(test)]
     pub(super) fn copy_date_bitwise(
         &mut self,
         source: &Self,

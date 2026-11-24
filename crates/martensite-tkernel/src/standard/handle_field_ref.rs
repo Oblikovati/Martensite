@@ -28,6 +28,11 @@ impl<'a, S, T: ?Sized + RuntimeTyped> HandleFieldRef<'a, S, T> {
         let fields = self.fields.read();
         (self.select)(&fields).object_address()
     }
+    /// Count owners without retaining a new one; `let owners = alias.ref_count();`.
+    pub fn ref_count(&self) -> usize {
+        let fields = self.fields.read();
+        (self.select)(&fields).ref_count()
+    }
     /// Compare actual slot references; `left.is_same_reference(&right)`.
     pub fn is_same_reference(&self, other: &HandleFieldRef<'_, S, T>) -> bool {
         let left = self.fields.read();
@@ -44,10 +49,9 @@ impl<'a, S, T: ?Sized + RuntimeTyped> HandleFieldRef<'a, S, T> {
         let fields = self.fields.read();
         (self.select)(&fields).clone()
     }
-    /// Lease current storage without target ownership; `let observed=alias.observe()`.
-    pub fn observe(&self) -> HandleObserver<T> {
-        let fields = self.fields.read();
-        (self.select)(&fields).observe()
+    /// Acquire a snapshot of current storage; `let observed=alias.observe()`.
+    pub fn observe(&self) -> HandleObserver<'_, T> {
+        HandleObserver::Snapshot(self.clone_handle())
     }
     /// Inspect outside the field lock; `alias.with_object(|target|target.is_some())`.
     pub fn with_object<R>(&self, inspect: impl FnOnce(Option<&T>) -> R) -> R {
@@ -68,8 +72,8 @@ mod tests {
     }
     #[test]
     fn actual_slot_alias_observes_replacement_without_retaining_a_target() {
-        let first = Handle::new(StandardTransient::default());
-        let next = Handle::new(StandardTransient::default());
+        let first = Handle::new(StandardTransient);
+        let next = Handle::new(StandardTransient);
         let fields = SharedState::new(HandleAliasFixture {
             target: first.clone(),
         });
@@ -88,13 +92,13 @@ mod tests {
     }
     #[test]
     fn inspecting_a_live_target_releases_the_field_lock_before_callback() {
-        let target = Handle::new(StandardTransient::default());
+        let target = Handle::new(StandardTransient);
         let fields = SharedState::new(HandleAliasFixture {
             target: target.clone(),
         });
         let alias = HandleFieldRef::new(&fields, alias_target);
         alias.with_object(|current| {
-            assert_eq!(target.ref_count(), 2);
+            assert_eq!(target.ref_count(), 3);
             assert!(current.is_some());
             fields.write().target = Handle::default();
         });

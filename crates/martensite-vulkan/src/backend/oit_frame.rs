@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 pub(super) struct OitFramePass {
     pub mode: RenderTransparency,
-    pub targets: OitTargets,
+    pub targets: Arc<OitTargets>,
     pub geometry: Vec<OitPassDescriptors>,
     pub composite: Arc<OitCompositePipeline>,
     pub composite_sets: Vec<OitPassDescriptors>,
@@ -55,10 +55,12 @@ impl OitFramePass {
         extent: vk::Extent2D,
         plan: OitResourcePlan,
     ) -> Result<Option<Self>, RenderError> {
-        if plan.transparency == RenderTransparency::Unordered {
-            return Ok(None);
-        }
-        let targets = OitTargets::create(runtime, extent, plan.transparency, plan.samples)?;
+        let targets = pipelines.frame_targets.transparency(
+            runtime,
+            extent,
+            plan.samples,
+            plan.transparency,
+        )?;
         targets
             .map(|targets| Self::prepare(runtime, frame, pipelines, plan.transparency, targets))
             .transpose()
@@ -68,7 +70,7 @@ impl OitFramePass {
         frame: &RenderFrame,
         pipelines: &RasterPipelines,
         mode: RenderTransparency,
-        targets: OitTargets,
+        targets: Arc<OitTargets>,
     ) -> Result<Self, RenderError> {
         let geometry = geometry_descriptors(runtime, pipelines, &targets, mode)?;
         let composite = scene_composite(runtime, frame, pipelines, &targets)?;
@@ -80,7 +82,7 @@ impl OitFramePass {
     }
     fn allocated(
         mode: RenderTransparency,
-        targets: OitTargets,
+        targets: Arc<OitTargets>,
         geometry: Vec<OitPassDescriptors>,
         composite: Arc<OitCompositePipeline>,
     ) -> Self {
@@ -130,7 +132,7 @@ impl OitFramePass {
     }
     pub fn geometry_target(&self, phase: OitGeometryPhase) -> OitPipelineTarget {
         let (formats, samples) = self.targets.geometry_shape();
-        let count = if matches!(self.targets, OitTargets::Weighted { .. }) {
+        let count = if matches!(self.targets.as_ref(), OitTargets::Weighted { .. }) {
             2
         } else if phase == OitGeometryPhase::Initial {
             1

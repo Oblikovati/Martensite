@@ -5,11 +5,7 @@ mod provider_documents;
 mod provider_shapes;
 mod runtime;
 use martensite_tkde::de::{DeConfigurationContext, DeConfigurationNodeBase, render_configuration};
-use martensite_tkernel::{
-    ncollection::List,
-    standard::{SharedState, StandardTransient},
-    tcollection::AsciiString,
-};
+use martensite_tkernel::{ncollection::List, standard::SharedState, tcollection::AsciiString};
 pub use parameters::DeStlInternalSection;
 pub use provider::DeStlProvider;
 
@@ -19,7 +15,6 @@ pub use provider::DeStlProvider;
 /// building a provider: a standalone settings value has no owning self.
 #[derive(Default)]
 pub struct DeStlConfigurationNode {
-    transient: StandardTransient,
     base: DeConfigurationNodeBase,
     /// Public internal settings, mutable before transfer.
     pub internal_parameters: SharedState<DeStlInternalSection>,
@@ -34,7 +29,6 @@ impl DeStlConfigurationNode {
     /// Copy values without sharing mutable configuration; `let copy = Self::copied_from(&node);`.
     pub fn copied_from(node: &Self) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: node.base.copied_state(),
             internal_parameters: SharedState::new(node.internal_parameters.snapshot()),
         }

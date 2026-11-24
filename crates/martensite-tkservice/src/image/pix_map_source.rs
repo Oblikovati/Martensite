@@ -3,13 +3,17 @@ use super::{ImageAlienPixMap, ImageAllocationRequest, ImageFormat, ImagePixMap, 
 use super::{ImageSourceFailureClass, ImageSourceOperation};
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::standard::{RuntimeType, RuntimeTyped, Transient};
-use std::any::TypeId;
 
 /// Mutable image builder dispatch; `source.allocate_image(request)?`.
 ///
 /// This adapter does not publish geometry or certify it. Implementations retain the
 /// existing `Transient` Send/Sync bounds and image storage synchronization.
 pub trait ImagePixMapSource: Transient {
+    /// Lend the original image storage, when declared; `source.original_image_base()`.
+    fn original_image_base(&self) -> Option<&ImagePixMap> {
+        None
+    }
+
     /// Allocate the requested image through its derived hooks; `source.allocate_image(request)?`.
     fn allocate_image(&self, request: ImageAllocationRequest) -> Result<(), ImageSourceError> {
         image_pix_map_allocate(self, request)
@@ -53,12 +57,18 @@ impl RuntimeTyped for dyn ImagePixMapSource {
     fn static_type() -> &'static RuntimeType {
         ImagePixMap::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
+}
+martensite_tkernel::impl_transient_interface_target!(dyn ImagePixMapSource);
+impl ImagePixMapSource for ImagePixMap {
+    fn original_image_base(&self) -> Option<&ImagePixMap> {
+        Some(self)
     }
 }
-impl ImagePixMapSource for ImagePixMap {}
 impl ImagePixMapSource for ImageAlienPixMap {
+    fn original_image_base(&self) -> Option<&ImagePixMap> {
+        Some(self)
+    }
+
     fn clear_image(&self) -> Result<(), ImageSourceError> {
         // Configured USE_FREEIMAGE=OFF: native Alien Clear has only its qualified base release.
         ImageAlienPixMap::clear(self);
@@ -94,17 +104,14 @@ impl ImagePixMapSource for ImageAlienPixMap {
 pub fn image_pix_map_original_base<S: ImagePixMapSource + ?Sized>(
     source: &S,
 ) -> Result<&ImagePixMap, ImageSourceError> {
-    source
-        .project(TypeId::of::<ImagePixMap>())
-        .and_then(|field| field.downcast_ref())
-        .ok_or_else(|| {
-            image_source_failure(
-                source,
-                ImageSourceOperation::Project,
-                ImageSourceFailureClass::MissingRegisteredBase,
-                None,
-            )
-        })
+    source.original_image_base().ok_or_else(|| {
+        image_source_failure(
+            source,
+            ImageSourceOperation::Project,
+            ImageSourceFailureClass::MissingRegisteredBase,
+            None,
+        )
+    })
 }
 /// Clear registered base storage without reentering a derived hook; `image_pix_map_clear(source)?`.
 pub fn image_pix_map_clear<S: ImagePixMapSource + ?Sized>(

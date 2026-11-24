@@ -67,7 +67,7 @@ fn nested_wire(edge: &Edge, placement: &Location) -> Wire {
 }
 fn nested_plane() -> Face {
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_pln(Plane3::default())).into_cast();
+        Handle::new(GeomPlane::from_pln(Plane3::default())).into_upcast();
     let mut face = Face::default();
     BRepBuilder::default()
         .make_face_on_surface(&mut face, &surface, 1e-7)
@@ -76,7 +76,7 @@ fn nested_plane() -> Face {
 }
 fn attach_nested_pcurve(edge: &Edge, face: &Face) {
     let pcurve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(Point2::new(-3., 0.), Direction2::Y)).into_cast();
+        Handle::new(Geom2dLine::from_point(Point2::new(-3., 0.), Direction2::Y)).into_upcast();
     let builder = BRepBuilder::default();
     builder
         .update_edge_pcurve_on_face(edge, &pcurve, face, 1e-7)

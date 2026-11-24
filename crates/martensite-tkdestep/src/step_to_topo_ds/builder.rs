@@ -18,7 +18,8 @@ use martensite_tkbrep::topods::{self, Compound, Shape, Solid};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::shape_fix::ShapeFixShapeTolerance;
 use martensite_tkxsbase::transfer::TransferTransientProcess;
@@ -105,7 +106,7 @@ impl StepToTopoDSBuilder {
     fn outer_solid(
         &mut self,
         translator: &mut StepToTopoDSTranslateShell,
-        outer: &Handle<StepShapeConnectedFaceSet>,
+        outer: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
         warning: &str,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
@@ -115,7 +116,7 @@ impl StepToTopoDSBuilder {
     ) -> Result<Option<Solid>, Failure> {
         translator.init(outer, tool, nm_tool, factors, progress)?;
         if !translator.is_done() {
-            let entity: Handle<StandardTransient> = outer.cast();
+            let entity: Handle<dyn Transient> = outer.cast();
             process.add_warning_text(&entity, warning, "");
             self.fail();
             return Ok(None);
@@ -131,7 +132,7 @@ impl StepToTopoDSBuilder {
     /// `init(StepShapeManifoldSolidBrep, TP, factors, progress)`.
     pub fn init_manifold_solid(
         &mut self,
-        solid_brep: &Handle<StepShapeManifoldSolidBrep>,
+        solid_brep: &Handle<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &StepDataFactors,
         progress: &ProgressRange<'_>,
@@ -210,7 +211,7 @@ impl StepToTopoDSBuilder {
                 }
                 builder.add(&mut solid, &shape)?;
             } else {
-                let entity: Handle<StandardTransient> = shell.cast();
+                let entity: Handle<dyn Transient> = shell.cast();
                 process.add_warning_text(
                     &entity,
                     " A Void from BrepWithVoids not mapped to TopoDS",
@@ -305,7 +306,7 @@ impl StepToTopoDSBuilder {
                 shape.set_closed(true)?;
                 builder.add(&mut solid, &shape)?;
             } else {
-                let entity: Handle<StandardTransient> = shell.cast();
+                let entity: Handle<dyn Transient> = shell.cast();
                 process.add_warning_text(
                     &entity,
                     " A Void from FacetedBrepAndBrepWithVoids not mapped to TopoDS",
@@ -343,7 +344,7 @@ impl StepToTopoDSBuilder {
             let boundary = live.sbsm_boundary_value(rank)?;
             let (open, closed) = (boundary.open_shell(), boundary.closed_shell());
             let (shell_entity, is_closed, warning): (
-                Handle<StepShapeConnectedFaceSet>,
+                Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
                 bool,
                 &str,
             ) = if open.is_some() {
@@ -369,7 +370,7 @@ impl StepToTopoDSBuilder {
                 shell_shape.set_closed(is_closed)?;
                 builder.add(&mut compound, &shell_shape)?;
             } else {
-                let entity: Handle<StandardTransient> = shell_entity.cast();
+                let entity: Handle<dyn Transient> = shell_entity.cast();
                 process.add_warning_text(&entity, warning, "");
             }
         }

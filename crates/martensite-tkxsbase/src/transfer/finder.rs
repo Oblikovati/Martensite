@@ -6,7 +6,7 @@ use crate::interface::{InterfaceIntVal, InterfaceParamType};
 use martensite_tkernel::{
     impl_transient_interface,
     ncollection::HashPolicy,
-    standard::{Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient},
+    standard::{Handle, RuntimeType, RuntimeTyped, SharedState, Transient},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkg2d::geom2d::{Geom2dCartesianPoint, Geom2dPoint};
@@ -24,24 +24,23 @@ pub struct TransferFinderBase {
 struct TransferBoxes;
 
 impl AttributeBoxes for TransferBoxes {
-    fn new_integer(value: i32) -> Handle<StandardTransient> {
+    fn new_integer(value: i32) -> Handle<dyn Transient> {
         let ival = InterfaceIntVal::new();
         *ival.c_value() = value;
-        Handle::new(ival).cast()
+        Handle::new(ival).into_upcast()
     }
-    fn integer_of(atr: &Handle<StandardTransient>) -> Option<i32> {
-        atr.cast::<InterfaceIntVal>()
-            .get()
+    fn integer_of(atr: &Handle<dyn Transient>) -> Option<i32> {
+        atr.downcast_ref::<InterfaceIntVal>()
             .map(InterfaceIntVal::value)
     }
     fn integer_type() -> &'static RuntimeType {
         InterfaceIntVal::static_type()
     }
-    fn new_real(value: f64) -> Handle<StandardTransient> {
-        Handle::new(Geom2dCartesianPoint::new(value, 0.0)).cast()
+    fn new_real(value: f64) -> Handle<dyn Transient> {
+        Handle::new(Geom2dCartesianPoint::new(value, 0.0)).into_upcast()
     }
-    fn real_of(atr: &Handle<StandardTransient>) -> Option<f64> {
-        atr.cast::<Geom2dCartesianPoint>().get().map(|p| p.x())
+    fn real_of(atr: &Handle<dyn Transient>) -> Option<f64> {
+        atr.downcast_ref::<Geom2dCartesianPoint>().map(|p| p.x())
     }
     fn real_type() -> &'static RuntimeType {
         Geom2dCartesianPoint::static_type()
@@ -53,7 +52,7 @@ impl AttributeBoxes for TransferBoxes {
 /// ```
 /// use martensite_tkxsbase::transfer::{TransferFinder, TransferTransientMapper};
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
-/// let mapper = TransferTransientMapper::new(&Handle::new(StandardTransient::default()));
+/// let mapper = TransferTransientMapper::new(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>());
 /// mapper.set_integer_attribute("n", 4);
 /// assert_eq!(mapper.integer_attribute("n"), 4);
 /// ```
@@ -79,7 +78,7 @@ pub trait TransferFinder: Transient {
         *self.finder_base().thecode.write() = code;
     }
     /// `SetAttribute(name, val)`.
-    fn set_attribute(&self, name: &str, val: &Handle<StandardTransient>) {
+    fn set_attribute(&self, name: &str, val: &Handle<dyn Transient>) {
         self.finder_base()
             .theattrib
             .write()
@@ -94,12 +93,12 @@ pub trait TransferFinder: Transient {
         &self,
         name: &str,
         atype: &RuntimeType,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> bool {
         attr_core::get_attribute(&self.finder_base().theattrib.read(), name, atype, val)
     }
     /// `Attribute(name)`.
-    fn attribute(&self, name: &str) -> Handle<StandardTransient> {
+    fn attribute(&self, name: &str) -> Handle<dyn Transient> {
         attr_core::attribute(&self.finder_base().theattrib.read(), name)
     }
     /// `AttributeType(name)`: integer, real (a `Geom2dCartesianPoint`), text, ident or
@@ -144,7 +143,7 @@ pub trait TransferFinder: Transient {
     }
     /// `SetStringAttribute(name, val)`.
     fn set_string_attribute(&self, name: &str, val: &str) {
-        self.set_attribute(name, &Handle::new(HAsciiString::new(val)).cast());
+        self.set_attribute(name, &Handle::new(HAsciiString::new(val)).into_upcast());
     }
     /// `GetStringAttribute(name, val)`.
     fn get_string_attribute(&self, name: &str, val: &mut AsciiString) -> bool {
@@ -178,7 +177,7 @@ pub trait TransferFinder: Transient {
         );
     }
 }
-impl_transient_interface!(dyn TransferFinder, "TransferFinder", StandardTransient);
+impl_transient_interface!(dyn TransferFinder, "TransferFinder", dyn Transient);
 
 /// `TransferFindHasher`: the hash code of a finder, and `Equates` (false for a null
 /// first finder).

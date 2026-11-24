@@ -1,14 +1,13 @@
 //! wire division.
 use super::{
-    EdgeDivider, FixSmallCurves, ShapeUpgradeEdgeDivide, ShapeUpgradeFixSmallCurves,
-    ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d, ShapeUpgradeTool, SplitCurve,
-    SplitCurves2d, SplitCurves3d,
+    EdgeDivider, ShapeUpgradeEdgeDivide, ShapeUpgradeFixSmallCurves, ShapeUpgradeSplitCurve2d,
+    ShapeUpgradeSplitCurve3d, SplitCurve, SplitCurves2d, SplitCurves3d,
 };
+use crate::shape_upgrade::SplitCurve2d;
+use crate::shape_upgrade::SplitCurve3d;
+use crate::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use crate::{
-    shape_analysis::{
-        ShapeAnalysisEdge, ShapeAnalysisTransferParameters, ShapeAnalysisTransferParametersProj,
-        TransferParameters,
-    },
+    shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisTransferParametersProj, TransferParameters},
     shape_build::ShapeBuildReShape,
     shape_extend::{ShapeExtend, ShapeExtendStatus},
 };
@@ -18,8 +17,8 @@ use martensite_tkbrep::{
     topods::{Edge, Face, Wire},
 };
 use martensite_tkernel::{
-    impl_transient, impl_transient_interface, precision,
-    standard::{Failure, Handle, SharedState, Transient},
+    impl_transient, precision,
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkmath::toploc::Location;
@@ -32,55 +31,60 @@ mod state;
 mod vertices;
 pub use state::{WireDivideData, WireDivideFields};
 /// Virtual splitting policy and parameter transfer; `tool.perform()?`.
-pub trait WireDivider: Transient {
+pub trait WireDivider: UpgradeTool {
     /// Shared protected fields; `tool.wire_divide_data()`.
     fn wire_divide_data(&self) -> &WireDivideData;
     /// Inherited tolerance and context storage; `tool.wire_divide_base().precision()`.
-    fn wire_divide_base(&self) -> &ShapeUpgradeTool;
+    fn wire_divide_base(&self) -> &UpgradeToolData {
+        self.upgrade_tool_data()
+    }
     /// Split the loaded wire without mutating its original topology; `tool.perform()?`.
     fn perform(&self) -> Result<(), Failure> {
         perform::perform(self)
     }
     /// Virtual spatial splitter selection; `tool.split_curve_3d_tool()`.
-    fn split_curve_3d_tool(&self) -> Handle<ShapeUpgradeSplitCurve3d> {
+    fn split_curve_3d_tool(&self) -> Handle<dyn SplitCurve3d> {
         self.wire_divide_data()
             .with(|fields| fields.spatial.clone())
     }
     /// Virtual pcurve splitter selection; `tool.split_curve_2d_tool()`.
-    fn split_curve_2d_tool(&self) -> Handle<ShapeUpgradeSplitCurve2d> {
+    fn split_curve_2d_tool(&self) -> Handle<dyn SplitCurve2d> {
         self.wire_divide_data().with(|fields| fields.planar.clone())
     }
     /// Virtual edge criterion accessor; `tool.edge_divide_tool()`.
-    fn edge_divide_tool(&self) -> Handle<ShapeUpgradeEdgeDivide> {
+    fn edge_divide_tool(&self) -> Handle<dyn EdgeDivider> {
         self.wire_divide_data()
             .with(|fields| fields.edge_divide.clone())
     }
     /// Virtual transfer selection; `tool.transfer_param_tool()`.
-    fn transfer_param_tool(&self) -> Handle<ShapeAnalysisTransferParameters> {
+    fn transfer_param_tool(&self) -> Handle<dyn TransferParameters> {
         self.wire_divide_data()
             .with(|fields| fields.transfer.clone())
     }
 }
-impl_transient_interface!(dyn WireDivider, "ShapeUpgrade_WireDivide", ShapeUpgradeTool);
-/// Wire, free-edge and supimplementation-face division; `ShapeUpgradeWireDivide::new()`.
+impl std::ops::Deref for dyn WireDivider {
+    type Target = WireDivideData;
+    fn deref(&self) -> &Self::Target {
+        self.wire_divide_data()
+    }
+}
+
+parent_interface!(dyn WireDivider, ShapeUpgradeWireDivide, [dyn UpgradeTool]);
+/// Wire, free-edge and support-face division; `ShapeUpgradeWireDivide::new()`.
 #[derive(Default)]
 pub struct ShapeUpgradeWireDivide {
-    parent: ShapeUpgradeTool,
     state: WireDivideData,
 }
-impl_transient!(ShapeUpgradeWireDivide,"ShapeUpgrade_WireDivide",ShapeUpgradeTool,parent,interfaces:[dyn WireDivider]);
+impl_transient!(ShapeUpgradeWireDivide,"ShapeUpgrade_WireDivide",dyn UpgradeTool,interfaces:[dyn WireDivider, dyn UpgradeTool]);
 impl WireDivider for ShapeUpgradeWireDivide {
     fn wire_divide_data(&self) -> &WireDivideData {
         &self.state
     }
-    fn wire_divide_base(&self) -> &ShapeUpgradeTool {
-        &self.parent
-    }
 }
 impl std::ops::Deref for ShapeUpgradeWireDivide {
-    type Target = ShapeUpgradeTool;
+    type Target = WireDivideData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.state
     }
 }
 impl ShapeUpgradeWireDivide {
@@ -88,9 +92,11 @@ impl ShapeUpgradeWireDivide {
     pub fn new() -> Self {
         Self::default()
     }
+}
+impl WireDivideData {
     /// Initialize by existing face and reset status; `tool.init(&wire,&face)`.
     pub fn init(&self, wire: &Wire, face: &Face) {
-        self.state.with_mut(|fields| {
+        self.with_mut(|fields| {
             fields.wire = wire.clone();
             fields.face = face.clone();
             fields.status = 0;
@@ -104,12 +110,12 @@ impl ShapeUpgradeWireDivide {
     ) -> Result<(), Failure> {
         self.load_wire(wire);
         self.set_surface(surface)?;
-        self.state.with_mut(|fields| fields.status = 0);
+        self.with_mut(|fields| fields.status = 0);
         Ok(())
     }
     /// Load a wire while retaining status and support; `tool.load_wire(&wire)`.
     pub fn load_wire(&self, wire: &Wire) {
-        self.state.with_mut(|fields| fields.wire = wire.clone());
+        self.with_mut(|fields| fields.wire = wire.clone());
     }
     /// Build a single-edge wire and load it when construction succeeds; `tool.load_edge(&edge)?`.
     pub fn load_edge(&self, edge: &Edge) -> Result<(), Failure> {
@@ -119,9 +125,9 @@ impl ShapeUpgradeWireDivide {
         }
         Ok(())
     }
-    /// Change the supimplementation face without resetting state; `tool.set_face(&face)`.
+    /// Change the support face without resetting state; `tool.set_face(&face)`.
     pub fn set_face(&self, face: &Face) {
-        self.state.with_mut(|fields| fields.face = face.clone());
+        self.with_mut(|fields| fields.face = face.clone());
     }
     /// Build the natural surface face; `tool.set_surface(&surface)?`.
     pub fn set_surface(&self, surface: &Handle<dyn GeomSurface>) -> Result<(), Failure> {
@@ -138,7 +144,7 @@ impl ShapeUpgradeWireDivide {
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<(), Failure> {
-        let mut face = self.state.with(|fields| fields.face.clone());
+        let mut face = self.with(|fields| fields.face.clone());
         let result = BRepBuilder::default().make_face_on_located_surface(
             &mut face,
             surface,
@@ -147,5 +153,18 @@ impl ShapeUpgradeWireDivide {
         );
         self.set_face(&face);
         result
+    }
+}
+
+impl UpgradeTool for ShapeUpgradeWireDivide {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.state.tool
+    }
+}
+
+impl std::ops::Deref for WireDivideData {
+    type Target = UpgradeToolData;
+    fn deref(&self) -> &Self::Target {
+        &self.tool
     }
 }

@@ -3,7 +3,7 @@ use super::{AisInteractiveObject, AisInteractiveObjectBase};
 use crate::{prs_mgr::*, prs3d::*};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::ExtendedString,
 };
 use martensite_tkg3d::geom::GeomAxis2Placement;
@@ -44,7 +44,7 @@ pub struct AisTrihedronFields {
     /// Empty line used to retain selectable hidden planes.
     pub hidden_line_aspect: Handle<Graphic3dAspectLine3d>,
     /// Cached arrays; selection uses the last computed geometry.
-    pub primitives: [Handle<Graphic3dArrayOfPrimitives>; Prs3dDatumParts::NB],
+    pub primitives: [Handle<dyn Graphic3dArraySource>; Prs3dDatumParts::NB],
 }
 /// Embeddable inherited and native protected state; `AisTrihedronBase::new(&placement)?`.
 pub struct AisTrihedronBase {
@@ -184,7 +184,7 @@ pub trait AisTrihedronSource: AisInteractiveObject {
         self.trihedron_base().fields.write().labels[part as usize] = label.clone();
     }
     /// Last computed native array; `trihedron.array_of_primitives(Prs3dDatumParts::XAxis)`.
-    fn array_of_primitives(&self, part: Prs3dDatumParts) -> Handle<Graphic3dArrayOfPrimitives> {
+    fn array_of_primitives(&self, part: Prs3dDatumParts) -> Handle<dyn Graphic3dArraySource> {
         self.trihedron_base().fields.read().primitives[part as usize].clone()
     }
     /// Preserve native set_own_datum_aspect ownership behavior; `trihedron.set_own_datum_aspect()?`.
@@ -251,15 +251,13 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// Selectable wire/shaded datum; `AisTrihedron::new(&placement)?`.
 pub struct AisTrihedron {
-    transient: StandardTransient,
     base: AisTrihedronBase,
 }
-martensite_tkernel::impl_transient!(AisTrihedron,"AisTrihedron",dyn AisInteractiveObject,transient,interfaces:[dyn AisTrihedronSource,dyn AisInteractiveObject,dyn crate::select_mgr::SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(AisTrihedron,"AisTrihedron",dyn AisInteractiveObject,interfaces:[dyn AisTrihedronSource,dyn AisInteractiveObject,dyn crate::select_mgr::SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisTrihedron {
     /// Bind the native datum constructor; `AisTrihedron::new(&placement)?`.
     pub fn new(component: &Handle<GeomAxis2Placement>) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisTrihedronBase::new(component)?,
         });
         prs_mgr_presentable_bind(&object.cast());

@@ -5,9 +5,10 @@ use super::curves::representations;
 use super::face::floored_tolerance;
 use crate::brep::access::edge_tshape;
 use crate::brep::builder::update_curves::as_gcurve;
-use crate::brep::{BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepCurveRepresentation};
+use crate::brep::{BRepCurveOnClosedSurface, BRepCurveOnSurfaceSource, BRepCurveRepresentation};
 use crate::topexp;
-use crate::topods::{Edge, Face, TShape, Vertex};
+use crate::topods::{Edge, TShape, Vertex};
+use crate::topods::{EdgeView, FaceView};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkg3d::top_abs::Orientation;
@@ -16,8 +17,8 @@ use martensite_tkmath::gp::{Plane3, Point2};
 use martensite_tkmath::toploc::Location;
 
 /// The edge reversed when the face is REVERSED, as the face overloads use it.
-fn edge_on_face(edge: &Edge, face: &Face) -> Edge {
-    let mut local = edge.clone();
+fn edge_on_face(edge: &EdgeView<'_>, face: &FaceView<'_>) -> Edge {
+    let mut local = edge.to_edge();
     if face.orientation() == Orientation::Reversed {
         local.reverse();
     }
@@ -29,12 +30,12 @@ fn stored_uv_points(
     representation: &Handle<dyn BRepCurveRepresentation>,
     reversed: bool,
 ) -> (Point2, Point2) {
-    let closed = representation.cast::<BRepCurveOnClosedSurface>();
-    if let Some(closed) = closed.get().filter(|_| reversed) {
+    let closed = representation.downcast_ref::<BRepCurveOnClosedSurface>();
+    if let Some(closed) = closed.filter(|_| reversed) {
         return closed.uv_points2();
     }
     representation
-        .cast::<BRepCurveOnSurface>()
+        .view::<dyn BRepCurveOnSurfaceSource>()
         .get()
         .map_or_else(Default::default, |r| r.uv_points())
 }
@@ -52,30 +53,30 @@ fn vertex_on_plane(vertex: &Vertex, inverse: &Location, plane: &Plane3) -> Resul
 impl BRepTool {
     /// `Tolerance(E)`: the stored tolerance, at least `Precision::Confusion()`;
     /// `BRepTool::edge_tolerance(&edge)?`.
-    pub fn edge_tolerance(edge: &Edge) -> Result<f64, Failure> {
+    pub fn edge_tolerance(edge: &EdgeView<'_>) -> Result<f64, Failure> {
         Ok(floored_tolerance(
             edge_tshape(edge, "BRep_Tool::Tolerance")?.tolerance(),
         ))
     }
 
     /// `SameParameter(E)`; `BRepTool::same_parameter(&edge)?`.
-    pub fn same_parameter(edge: &Edge) -> Result<bool, Failure> {
+    pub fn same_parameter(edge: &EdgeView<'_>) -> Result<bool, Failure> {
         Ok(edge_tshape(edge, "BRep_Tool::SameParameter")?.same_parameter())
     }
 
     /// `SameRange(E)`; `BRepTool::same_range(&edge)?`.
-    pub fn same_range(edge: &Edge) -> Result<bool, Failure> {
+    pub fn same_range(edge: &EdgeView<'_>) -> Result<bool, Failure> {
         Ok(edge_tshape(edge, "BRep_Tool::SameRange")?.same_range())
     }
 
     /// `Degenerated(E)`; `BRepTool::degenerated(&edge)?`.
-    pub fn degenerated(edge: &Edge) -> Result<bool, Failure> {
+    pub fn degenerated(edge: &EdgeView<'_>) -> Result<bool, Failure> {
         Ok(edge_tshape(edge, "BRep_Tool::Degenerated")?.degenerated())
     }
 
     /// `Range(E, First, Last)`: the range of the first non-null 3D curve or curve on
     /// surface, `0, 0` without one; `let (first, last) = BRepTool::range(&edge)?;`.
-    pub fn range(edge: &Edge) -> Result<(f64, f64), Failure> {
+    pub fn range(edge: &EdgeView<'_>) -> Result<(f64, f64), Failure> {
         for representation in representations(edge, "BRep_Tool::Range")? {
             let Some(r) = representation.get() else {
                 continue;
@@ -95,7 +96,7 @@ impl BRepTool {
     /// `location`), else `Range(E)`. It also sets the Modified flag of the edge, as
     /// natively; `BRepTool::range_on_surface(&edge, &surface, &location)?`.
     pub fn range_on_surface(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<(f64, f64), Failure> {
@@ -115,7 +116,7 @@ impl BRepTool {
 
     /// `Range(E, F, First, Last)`: the range on the face's located surface;
     /// `BRepTool::range_on_face(&edge, &face)?`.
-    pub fn range_on_face(edge: &Edge, face: &Face) -> Result<(f64, f64), Failure> {
+    pub fn range_on_face(edge: &EdgeView<'_>, face: &FaceView<'_>) -> Result<(f64, f64), Failure> {
         let (surface, location) = Self::surface_with_location(face)?;
         Self::range_on_surface(edge, &surface, &location)
     }
@@ -125,7 +126,7 @@ impl BRepTool {
     /// one, on a plane, the vertices projected on the plane; else `(0, 0)` twice;
     /// `BRepTool::uv_points(&edge, &surface, &location)?`.
     pub fn uv_points(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> Result<(Point2, Point2), Failure> {
@@ -153,7 +154,10 @@ impl BRepTool {
 
     /// `UVPoints(E, F, PFirst, PLast)`: the UV points on the face's surface, for the edge
     /// reversed when the face is REVERSED; `BRepTool::uv_points_on_face(&edge, &face)?`.
-    pub fn uv_points_on_face(edge: &Edge, face: &Face) -> Result<(Point2, Point2), Failure> {
+    pub fn uv_points_on_face(
+        edge: &EdgeView<'_>,
+        face: &FaceView<'_>,
+    ) -> Result<(Point2, Point2), Failure> {
         let (surface, location) = Self::surface_with_location(face)?;
         Self::uv_points(&edge_on_face(edge, face), &surface, &location)
     }
@@ -162,7 +166,7 @@ impl BRepTool {
     /// (`surface`, `location`) (the second pair of a seam for a REVERSED edge);
     /// `BRepTool::set_uv_points(&edge, &surface, &location, first, last)?`.
     pub fn set_uv_points(
-        edge: &Edge,
+        edge: &EdgeView<'_>,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
         first: Point2,
@@ -177,8 +181,8 @@ impl BRepTool {
             {
                 continue;
             }
-            let closed = representation.cast::<BRepCurveOnClosedSurface>();
-            match closed.get().filter(|_| reversed) {
+            let closed = representation.downcast_ref::<BRepCurveOnClosedSurface>();
+            match closed.filter(|_| reversed) {
                 Some(closed) => closed.set_uv_points2(first, last),
                 None => set_first_uv_points(&representation, first, last),
             }
@@ -189,8 +193,8 @@ impl BRepTool {
     /// `SetUVPoints(E, F, PFirst, PLast)`: on the face's located surface, for the edge
     /// reversed when the face is REVERSED; `BRepTool::set_uv_points_on_face(&edge, &face, first, last)?`.
     pub fn set_uv_points_on_face(
-        edge: &Edge,
-        face: &Face,
+        edge: &EdgeView<'_>,
+        face: &FaceView<'_>,
         first: Point2,
         last: Point2,
     ) -> Result<(), Failure> {
@@ -205,7 +209,7 @@ fn set_first_uv_points(
     first: Point2,
     last: Point2,
 ) {
-    if let Some(curve) = representation.cast::<BRepCurveOnSurface>().get() {
+    if let Some(curve) = representation.view::<dyn BRepCurveOnSurfaceSource>().get() {
         curve.set_uv_points(first, last);
     }
 }

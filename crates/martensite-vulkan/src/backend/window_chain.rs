@@ -1,8 +1,9 @@
 //! Swapchain images use concurrent sharing only when presentation requires another queue family.
 use super::{
+    frame_flight::FRAMES_IN_FLIGHT,
     runtime::{VulkanRuntime, vk_error},
     window_support,
-    window_sync::WindowSync,
+    window_sync::WindowSyncRing,
 };
 use crate::{RenderError, error::rejected};
 use ash::vk;
@@ -61,11 +62,12 @@ impl WindowConfig {
         })?;
         let format = window_support::surface_format(&formats)?;
         validate_blit(runtime, format.format)?;
+        let mode = window_support::present_mode(&modes, vsync)?;
         Ok(Self {
             extent: window_support::extent(&cap, requested)?,
             format,
-            mode: window_support::present_mode(&modes, vsync)?,
-            count: window_support::image_count(&cap),
+            mode,
+            count: window_support::image_count(&cap, mode),
             transform: cap.current_transform,
             alpha,
         })
@@ -77,14 +79,14 @@ pub(super) struct WindowChain {
     pub handle: vk::SwapchainKHR,
     pub images: Vec<vk::Image>,
     pub config: WindowConfig,
-    pub sync: WindowSync,
+    pub sync: WindowSyncRing,
     pub acquired_index: Option<u32>,
     pub stale: bool,
     _surface: Arc<super::window_surface_lease::WindowSurfaceLease>,
     device_retired: bool,
 }
 struct SwapchainAllocation {
-    sync: WindowSync,
+    sync: WindowSyncRing,
     loader: ash::khr::swapchain::Device,
     handle: vk::SwapchainKHR,
 }
@@ -94,7 +96,7 @@ impl SwapchainAllocation {
         info: &vk::SwapchainCreateInfoKHR<'_>,
     ) -> Result<Self, RenderError> {
         let loader = ash::khr::swapchain::Device::new(&runtime.instance, runtime.device());
-        let sync = WindowSync::new(runtime)?;
+        let sync = WindowSyncRing::new(runtime, FRAMES_IN_FLIGHT)?;
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let handle = unsafe { loader.create_swapchain(info, None) }
             .map_err(|e| vk_error("create window swapchain", e))?;
@@ -160,40 +162,55 @@ impl WindowChain {
     /// Qualify device work after the owning idle call; `chain.qualify_device_idle()` leaves fences independent.
     pub fn qualify_device_idle(&mut self) {
         self.device_retired = true;
-        self.sync.qualify_device_idle();
+        self.sync.qualify_queue_work();
     }
     pub fn acquire(&mut self) -> Result<u32, vk::Result> {
-        // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
+        let sync = self.sync.current_mut();
+        // SAFETY: the swapchain and its current acquire synchronization objects belong
+        // to this device. The presenter waits for the slot and resets its fence before reuse.
         let (index, suboptimal) = unsafe {
             self.loader.acquire_next_image(
                 self.handle,
                 1_000_000_000,
-                self.sync.acquired,
-                self.sync.acquire_fence,
+                sync.acquired,
+                vk::Fence::null(),
             )
         }?;
-        self.sync.acquire_pending = true;
+        sync.acquired_unconsumed = true;
         self.acquired_index = Some(index);
         self.stale = suboptimal;
         Ok(index)
     }
+    /// Present in a queue turn of its own; `chain.present(queue, index, contract)?`.
     pub fn present(
         &mut self,
         queue: vk::Queue,
         index: u32,
         contract: super::window_gui_contract::WindowGuiContract,
     ) -> Result<(), RenderError> {
-        let waits = [self.sync.rendered];
+        let order = Arc::clone(&self.runtime.queue_order);
+        let turn = order.next_turn();
+        self.present_within(queue, (index, contract), &turn)
+    }
+    /// Present inside the caller's queue turn, as the presentation thread does (#594);
+    /// `chain.present_within(queue, (index, contract), &turn)?`.
+    pub fn present_within(
+        &mut self,
+        queue: vk::Queue,
+        (index, contract): (u32, super::window_gui_contract::WindowGuiContract),
+        _turn: &super::queue_order::QueueTurn,
+    ) -> Result<(), RenderError> {
+        let waits = [self.sync.current().rendered];
         let swaps = [self.handle];
         let indices = [index];
-        let fences = [self.sync.present_fence];
+        let fences = [self.sync.current().present_fence];
         let mut fence_info = vk::SwapchainPresentFenceInfoEXT::default().fences(&fences);
         let info = vk::PresentInfoKHR::default()
             .wait_semaphores(&waits)
             .swapchains(&swaps)
             .image_indices(&indices)
             .push_next(&mut fence_info);
-        // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
+        // SAFETY: the queue, swapchain, semaphore and fence belong to this device, and the caller's queue turn keeps every other queue operation out.
         let result = unsafe { self.loader.queue_present(queue, &info) };
         self.complete_present(result, contract)
     }
@@ -204,19 +221,24 @@ impl WindowChain {
     ) -> Result<(), RenderError> {
         complete_present_state(
             result,
-            &mut self.sync.pending,
+            &mut self.sync.current_mut().pending,
             &mut self.acquired_index,
             &mut self.stale,
         );
+        // The next frame uses the next set; this one returns after its presentation fence.
+        self.sync.advance();
         contract.present_result(result)
     }
 }
 impl Drop for WindowChain {
     fn drop(&mut self) {
         self.sync.retire_blocking();
-        if !self.device_retired {
+        // Presentation fences also cover the ALL_COMMANDS signal of each presented frame.
+        // An acquired image left on an error path may have submitted work without that fence.
+        if !self.device_retired && self.acquired_index.is_some() {
             self.runtime.retire_device_blocking();
         }
+        self.sync.qualify_queue_work();
         // SAFETY: the loaded function pointer belongs to this device, and its arguments are live values of this scope.
         unsafe {
             if let Some(index) = self.acquired_index.take() {

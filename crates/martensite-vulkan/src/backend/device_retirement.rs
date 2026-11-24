@@ -1,6 +1,8 @@
 //! Last-owner teardown may block, but never destroys resources with unqualified execution.
+use super::queue_order::{QueueOrder, QueueTurn};
 use super::{device_lifecycle::contains_device_loss, runtime::vk_error};
 use crate::{RenderError, error::gui_observed_failure::combine_observed_result};
+use std::sync::Arc;
 
 pub(super) trait CompletionDispatch {
     fn wait_completion(&mut self) -> Result<(), RenderError>;
@@ -27,17 +29,32 @@ pub(super) fn retirement_retry_pause() {
 }
 pub(super) struct DeviceIdleCalls<'a> {
     device: &'a ash::Device,
+    order: &'a Arc<QueueOrder>,
+    held: Option<&'a QueueTurn>,
 }
 impl<'a> DeviceIdleCalls<'a> {
-    /// Borrow the real device dispatch; `DeviceIdleCalls::new(device)` never takes its ownership.
-    pub fn new(device: &'a ash::Device) -> Self {
+    /// Borrow the real device dispatch; `DeviceIdleCalls::new(device, &runtime.queue_order)`
+    /// never takes its ownership.
+    pub fn new(device: &'a ash::Device, order: &'a Arc<QueueOrder>) -> Self {
         // Destruction stays with the runtime, after its actual resource leases end.
-        Self { device }
+        Self {
+            device,
+            order,
+            held: None,
+        }
+    }
+    /// Wait inside a queue turn the caller already holds, as the presentation thread does;
+    /// `DeviceIdleCalls::new(device, order).within(Some(&turn))`.
+    pub fn within(mut self, held: Option<&'a QueueTurn>) -> Self {
+        self.held = held;
+        self
     }
 }
 impl CompletionDispatch for DeviceIdleCalls<'_> {
     fn wait_completion(&mut self) -> Result<(), RenderError> {
-        // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
+        // An idle wait synchronizes every queue, so it also takes its place in the queue order.
+        let _turn = self.held.is_none().then(|| self.order.next_turn());
+        // SAFETY: the device is live, and the queue turn above or the caller's held turn keeps every other queue operation out.
         unsafe { self.device.device_wait_idle() }
             .map_err(|error| vk_error("retire device resources", error))
     }

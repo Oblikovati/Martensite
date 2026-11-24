@@ -7,7 +7,7 @@ use crate::ncollection::next_map_prime;
 /// The conversions are part of the result: -1 becomes `SIZE_MAX`, whose `+ 1` wraps to 0,
 /// so it maps to 101; other negative values and values above the last table prime come
 /// back as `value + 1`, which for `i32::MAX` wraps to `i32::MIN`.
-pub fn next_prime_for_map(value: i32) -> i32 {
+pub(crate) fn next_prime_for_map(value: i32) -> i32 {
     let size = value as isize as usize;
     // The table lookup finds the first table prime >= size + 1 in wrapping size_t
     // arithmetic; `next_map_prime(n)` answers "first prime > n", i.e. ">= n + 1".

@@ -4,7 +4,7 @@ use super::modifications::registrator;
 use super::{operator_messages, shape_context};
 use crate::shape_extend::ShapeExtendMsgRegistrator;
 use crate::shape_fix::{FixRoot, ShapeFixFace, ShapeFixShape, ShapeFixWire};
-use crate::shape_process::{ShapeProcessContext, ShapeProcessShapeContext};
+use crate::shape_process::{ShapeProcessContextSource, ShapeProcessShapeContext};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -14,7 +14,7 @@ type ModeSetter<T> = fn(&T, i32);
 
 /// The operator FixShape.
 pub(super) fn fix_shape(
-    context: &Handle<ShapeProcessContext>,
+    context: &Handle<dyn ShapeProcessContextSource>,
     progress: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
     let ctx = shape_context(context);

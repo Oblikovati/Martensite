@@ -3,9 +3,7 @@ use super::{CdmApplication, CdmDocument, MetaDataLookUpTable};
 use crate::json_dump::{class_begin, field_integer, field_pointer, field_string};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Handle, SharedState, StandardTransient, WeakHandle, dump::DumpStream, exceptions,
-    },
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, dump::DumpStream, exceptions},
     tcollection::ExtendedString,
 };
 use std::io;
@@ -29,10 +27,9 @@ struct MetaDataState {
 /// application's look-up table; `CdmMetaData::look_up(&mut table, &folder, &name, &path,
 /// &file, false)`.
 pub struct CdmMetaData {
-    transient: StandardTransient,
     state: SharedState<MetaDataState>,
 }
-impl_transient!(CdmMetaData, "CDM_MetaData", StandardTransient, transient);
+impl_transient!(CdmMetaData, "CDM_MetaData", dyn Transient);
 
 /// The fields of a new meta-data, as the two private constructors take them.
 struct MetaDataFields<'a> {
@@ -47,7 +44,6 @@ struct MetaDataFields<'a> {
 impl CdmMetaData {
     fn create(fields: &MetaDataFields<'_>) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(MetaDataState {
                 folder: fields.folder.clone(),
                 name: fields.name.clone(),

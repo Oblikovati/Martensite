@@ -4,12 +4,11 @@ use super::general_expression::{ExprGeneralExpression, ExprValues, ExprVariables
 use super::handles::{ExprHandle, ExprSelfLink, adopt, deref};
 use super::named_unknown::ExprNamedUnknown;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A real value; `ExprNumericValue::new(2.5).get_value() == 2.5`.
 pub struct ExprNumericValue {
-    parent: StandardTransient,
     value: SharedState<f64>,
     link: ExprSelfLink,
 }
@@ -17,14 +16,12 @@ impl_transient!(
     ExprNumericValue,
     "Expr_NumericValue",
     dyn ExprGeneralExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression]
 );
 impl ExprNumericValue {
     /// `new ExprNumericValue(val)`; `let two: Handle<ExprNumericValue> = ExprNumericValue::new(2.0);`.
     pub fn new(val: f64) -> Handle<Self> {
         let object: Self = Self {
-            parent: StandardTransient::default(),
             value: SharedState::new(val),
             link: ExprSelfLink::default(),
         };
@@ -32,7 +29,7 @@ impl ExprNumericValue {
     }
     /// The same object as a general expression; `ExprNumericValue::expression(0.0)`.
     pub fn expression(val: f64) -> ExprHandle {
-        Self::new(val).cast()
+        Self::new(val).into_upcast()
     }
     /// The value (`GetValue`); `value.get_value()`.
     pub fn get_value(&self) -> f64 {

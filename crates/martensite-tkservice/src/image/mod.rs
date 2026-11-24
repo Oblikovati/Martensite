@@ -44,8 +44,10 @@ pub use diff::{
 pub use formats::{
     IMAGE_COMPRESSED_FORMAT_NB, IMAGE_FORMAT_NB, ImageCompressedFormat, ImageFormat,
 };
+mod pix_map_object;
 pub use pix_map::{ImagePixMap, ImagePixMapState};
 pub use pix_map_data::{IMAGE_BOTTOM_UP, ImagePixMapData};
+pub use pix_map_object::ImagePixMapObject;
 pub use pix_map_source::{
     ImagePixMapSource, image_pix_map_allocate, image_pix_map_clear, image_pix_map_original_base,
 };

@@ -4,7 +4,7 @@
 use super::V3dViewer;
 use crate::v3d::V3dViewSource;
 use martensite_tkernel::standard::{Handle, HandleReference as _};
-use martensite_tkservice::graphic3d::Graphic3dCLight;
+use martensite_tkservice::graphic3d::Graphic3dCLightSource;
 
 /// Native view cursor slots remain distinct from the light cursor storage.
 const ACTIVE_VIEWS: usize = 0;
@@ -68,7 +68,7 @@ impl V3dViewer {
         fields.light_cursors[0] = cursor;
     }
     /// Explicit owning convenience; native ActiveLight binds active_light_ref; `viewer.active_light()`.
-    pub fn active_light(&self) -> Handle<Graphic3dCLight> {
+    pub fn active_light(&self) -> Handle<dyn Graphic3dCLightSource> {
         self.active_light_ref().clone_handle()
     }
     /// Initialize native defined-light node; `viewer.init_defined_lights()`.
@@ -88,7 +88,7 @@ impl V3dViewer {
         fields.light_cursors[1] = cursor;
     }
     /// Explicit owning convenience; native DefinedLight binds defined_light_ref; `viewer.defined_light()`.
-    pub fn defined_light(&self) -> Handle<Graphic3dCLight> {
+    pub fn defined_light(&self) -> Handle<dyn Graphic3dCLightSource> {
         self.defined_light_ref().clone_handle()
     }
     /// `ActiveViewIterator`: the active views to iterate; `viewer.active_view_iterator()`.

@@ -193,7 +193,7 @@ fn stop_first(analyzer: &mut BOPAlgoArgumentAnalyzer) {
 }
 
 fn xoy_plane() -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(Axis3::from_axis2(gp::xoy()))).into_cast()
+    Handle::new(GeomPlane::new(Axis3::from_axis2(gp::xoy()))).into_upcast()
 }
 
 /// A planar face whose edge lies 0.01 above the plane while its p-curve is on it.
@@ -208,14 +208,14 @@ fn lifted_edge_face() -> Shape {
         Point3::new(0.0, 5.0, 0.01),
         gp::dx(),
     )))
-    .into_cast();
+    .into_upcast();
     let mut edge = Edge::default();
     builder
         .make_edge_with_curve(&mut edge, &line, 1.0e-7)
         .unwrap();
     builder.range(&edge, 0.0, 10.0, false).unwrap();
     let axis = Axis2d::new(Point2::new(0.0, 5.0), Direction2::new(1.0, 0.0).unwrap());
-    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(axis)).into_cast();
+    let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(axis)).into_upcast();
     builder
         .update_edge_pcurve_on_face(&edge, &pcurve, &face, 1.0e-7)
         .unwrap();
@@ -279,7 +279,7 @@ fn c0_edge() -> Shape {
         false,
     )
     .unwrap();
-    let curve: Handle<dyn GeomCurve> = Handle::new(curve).into_cast();
+    let curve: Handle<dyn GeomCurve> = Handle::new(curve).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

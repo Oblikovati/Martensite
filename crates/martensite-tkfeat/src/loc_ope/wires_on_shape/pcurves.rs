@@ -34,23 +34,23 @@ type SeamPCurves = (Handle<dyn Geom2dCurve>, Handle<dyn Geom2dCurve>);
 /// trimmed surface standing for its basis.
 fn is_planar(fac: &Face) -> Result<bool, Failure> {
     let (mut s, _) = BRepTool::surface_with_location(fac)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     if let Some(trimmed) = trimmed.get() {
         s = trimmed.basis_surface();
     }
-    let plane: Handle<GeomPlane> = s.cast();
+    let plane: Handle<GeomPlane> = s.downcast();
     Ok(!plane.is_null())
 }
 
 /// The located 3D curve of `edg`, trimmed to its range unless it is already trimmed.
 fn trimmed_curve(edg: &Edge) -> Result<(Handle<dyn GeomCurve>, f64, f64), Failure> {
     let (c, f, l) = located_curve(edg)?;
-    let as_trimmed: Handle<GeomTrimmedCurve> = c.cast();
+    let as_trimmed: Handle<GeomTrimmedCurve> = c.downcast();
     if !as_trimmed.is_null() {
         return Ok((c, f, l));
     }
     Ok((
-        Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).cast(),
+        Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).into_upcast(),
         f,
         l,
     ))
@@ -214,7 +214,7 @@ fn faces_of(eto: &Edge, my_shape: &Shape) -> Result<Vec<Shape>, Failure> {
 /// The basis surface of a face surface, a rectangular trimmed surface standing for its
 /// basis.
 fn basis_of(s: Handle<dyn GeomSurface>) -> Handle<dyn GeomSurface> {
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     match trimmed.get() {
         Some(trimmed) => trimmed.basis_surface(),
         None => s,
@@ -297,7 +297,7 @@ fn shifted(
     } else {
         Vector2::new(0., shift)
     };
-    Ok(curve.translated(vector)?.cast())
+    Ok(curve.translated(vector)?.into_cast())
 }
 
 /// Whether `efrom` and `eto` run in the same direction, comparing the tangent of `efrom`

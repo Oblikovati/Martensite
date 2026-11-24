@@ -306,7 +306,10 @@ pub trait SelectMgrBaseIntersectorMembers: SelectMgrBaseIntersector {
     }
     /// Whether the camera is orthographic (false without camera, natively a null dereference).
     fn is_orthographic(&self) -> bool {
-        self.camera()
+        // Borrow the handle: a clone and its drop cost two atomic updates per box test (#594).
+        self.intersector_base()
+            .camera
+            .read()
             .get()
             .is_some_and(Graphic3dCamera::is_orthographic)
     }

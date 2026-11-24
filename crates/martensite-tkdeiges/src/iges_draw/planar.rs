@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::iges_geom::IgesGeomTransformationMatrix;
 use crate::{iges_entity, iges_methods};
@@ -27,7 +28,7 @@ iges_entity! {
 IgesDrawPlanar, IgesDrawPlanarState, "IgesDrawPlanar", parent IgesDataIgesEntity, {
 the_nb_matrices: i32,
 the_transformation_matrix: Handle<IgesGeomTransformationMatrix>,
-the_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 }
 }
 
@@ -47,7 +48,7 @@ impl IgesDrawPlanar {
         &self,
         nb_mats: i32,
         a_transformation_matrix: &Handle<IgesGeomTransformationMatrix>,
-        all_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !all_entities.is_null() {
             if iges_array1_lower(all_entities, "IgesDrawPlanar::init")? != 1 {
@@ -89,7 +90,7 @@ impl IgesDrawPlanar {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn entity(&self, entity_index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn entity(&self, entity_index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_entities,
             entity_index,

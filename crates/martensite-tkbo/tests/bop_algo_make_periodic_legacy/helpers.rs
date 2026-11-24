@@ -233,7 +233,7 @@ pub fn GetFace(shape: &Shape, index: usize) -> Face {
 fn BasisCurve(edge: &Edge) -> Handle<dyn GeomCurve> {
     let mut curve = BRepTool::curve(edge).unwrap().0;
     loop {
-        let trimmed: Handle<GeomTrimmedCurve> = curve.cast();
+        let trimmed: Handle<GeomTrimmedCurve> = curve.downcast();
         let Some(trimmed) = trimmed.get() else {
             return curve;
         };
@@ -246,13 +246,13 @@ pub fn CurveTypeName(edge: &Edge) -> Option<&'static str> {
 }
 
 pub fn IsBSplineCurve(edge: &Edge) -> bool {
-    !BasisCurve(edge).cast::<GeomBSplineCurve>().is_null()
+    !BasisCurve(edge).downcast::<GeomBSplineCurve>().is_null()
 }
 
 fn BasisSurface(face: &Face) -> Handle<dyn GeomSurface> {
     let mut surface = BRepTool::surface(face).unwrap();
     loop {
-        let trimmed: Handle<GeomRectangularTrimmedSurface> = surface.cast();
+        let trimmed: Handle<GeomRectangularTrimmedSurface> = surface.downcast();
         let Some(trimmed) = trimmed.get() else {
             return surface;
         };
@@ -265,7 +265,9 @@ pub fn SurfaceTypeName(face: &Face) -> Option<&'static str> {
 }
 
 pub fn IsBSplineSurface(face: &Face) -> bool {
-    !BasisSurface(face).cast::<GeomBSplineSurface>().is_null()
+    !BasisSurface(face)
+        .downcast::<GeomBSplineSurface>()
+        .is_null()
 }
 
 pub fn MakeVolume(

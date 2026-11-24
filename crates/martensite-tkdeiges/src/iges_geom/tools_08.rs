@@ -10,14 +10,16 @@
 use super::{IgesGeomFlash, IgesGeomLine, IgesGeomOffsetCurve, IgesGeomToolFlash};
 use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::{iges_shared_036, iges_shared_045};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_dump_xy_l, iges_dump_xyz_l, iges_live, iges_msg, iges_real_text,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -248,8 +250,8 @@ impl IgesGeomToolOffsetCurve {
         let mut an_offset_param: f64 = 0.0;
         let mut another_offset_param: f64 = 0.0;
         let mut a_normal_vec: Xyz = Xyz::default();
-        let mut a_base_curve: Handle<IgesDataIgesEntity> = Handle::default();
-        let mut a_function: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_base_curve: Handle<dyn IgesDataEntityKind> = Handle::default();
+        let mut a_function: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         if !pr.read_entity_status(ir, &pr.current(), &mut a_status, &mut a_base_curve, false)? {
             let mut msg110 = iges_msg("XSTEP_110");
@@ -352,8 +354,8 @@ impl IgesGeomToolOffsetCurve {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolOffsetCurve::own_shared")?;
-        iter.get_one_item(&ent_live.base_curve().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.function().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.base_curve().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.function().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -376,7 +378,7 @@ impl IgesGeomToolOffsetCurve {
         if ent_live.offset_type() == 3 {
             return Ok(false);
         }
-        let mut func: Handle<IgesDataIgesEntity> = ent_live.function();
+        let mut func: Handle<dyn IgesDataEntityKind> = ent_live.function();
         if func.is_null() {
             return Ok(false);
         }
@@ -445,12 +447,12 @@ impl IgesGeomToolOffsetCurve {
         let mut an_offset_param1: f64 = 0.0;
         let mut an_offset_param2: f64 = 0.0;
         let a_base_curve = tc
-            .transferred(&another_live.base_curve().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.base_curve().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         an_offset_type = another_live.offset_type();
         let a_function = tc
-            .transferred(&another_live.function().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.function().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         a_function_coord = another_live.function_parameter();
         a_tapered_offset_type = another_live.tapered_offset_type();
         off_distance1 = another_live.first_offset_distance();

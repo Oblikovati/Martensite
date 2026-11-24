@@ -69,12 +69,12 @@ fn vertical_cells_retain_source_and_reverse_half_open_ends() {
 #[test]
 fn interpolation_retains_homogeneous_depth_and_vertex_colors() {
     let mut source = segment([4.25, 10.25], [4.25, 20.25]);
-    source.vertices[0].position[2] = -0.5;
-    source.vertices[1].position[2] = 0.5;
-    source.vertices[0].color = [0.; 4];
-    source.vertices[1].color = [1.; 4];
+    source.vertices.make_mut()[0].position[2] = -0.5;
+    source.vertices.make_mut()[1].position[2] = 0.5;
+    source.vertices.make_mut()[0].color = [0.; 4];
+    source.vertices.make_mut()[1].color = [1.; 4];
     let output = selected(&source);
-    for vertex in &output.vertices {
+    for vertex in output.vertices() {
         let y = (vertex.position[1] / vertex.weight + 1.) * 32.;
         assert!((vertex.position[2] - ((y - 10.25) / 10. - 0.5)).abs() < 1e-6);
         assert!((vertex.color[0] - (y - 10.25) / 10.).abs() < 1e-6);
@@ -122,7 +122,7 @@ fn unsupported_projection_or_style_refuses_without_mutation() {
     let mut behind = source.clone();
     behind.clip_transform[15] = -1.;
     let mut clipped = source.clone();
-    clipped.vertices[0].position[2] = -2.;
+    clipped.vertices.make_mut()[0].position[2] = -2.;
     let mut blend = source.clone();
     blend.line_style.as_mut().unwrap().alpha_blend = true;
     for invalid in [behind, clipped, blend] {
@@ -149,7 +149,7 @@ fn projected_line_interpolation_uses_perspective_parameter() {
 #[test]
 fn nonaxis_style_and_clip_state_stay_on_the_legacy_path() {
     let mut source = segment([4.25, 10.25], [5.25, 20.25]);
-    source.vertices[0].position[2] = -2.;
+    source.vertices.make_mut()[0].position[2] = -2.;
     source.line_style.as_mut().unwrap().alpha_blend = true;
     let before = source.clone();
     let output = selected_draw(mode(Fractional12, BottomUp), &source, [64, 64], true).unwrap();
@@ -167,7 +167,7 @@ fn semantic_surface_blending_refuses_axis_encoding() {
 #[test]
 fn semantic_depth_clamp_preserves_outside_z_bits_but_not_xy_clipping() {
     let mut source = segment([4.25, 10.25], [4.25, 20.25]);
-    for v in &mut source.vertices {
+    for v in source.vertices.make_mut() {
         v.position[2] = -1.000_000_2;
     }
     assert!(selected_draw(mode(Fractional12, BottomUp), &source, [64, 64], true).is_err());
@@ -180,8 +180,8 @@ fn semantic_depth_clamp_preserves_outside_z_bits_but_not_xy_clipping() {
             .iter()
             .all(|v| v.position[2].to_bits() == source.vertices[0].position[2].to_bits())
     );
-    source.vertices[0].position[0] = -2.;
-    source.vertices[1].position[0] = -2.;
+    source.vertices.make_mut()[0].position[0] = -2.;
+    source.vertices.make_mut()[1].position[0] = -2.;
     assert!(selected_draw(mode(Fractional12, BottomUp), &source, [64, 64], true).is_err());
 }
 #[test]

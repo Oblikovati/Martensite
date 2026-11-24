@@ -2,7 +2,7 @@
 use super::runtime::{VulkanRuntime, vk_error};
 use crate::error::{RenderError, rejected};
 use ash::vk;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, PoisonError};
 pub(super) struct TargetImage {
     runtime: Arc<VulkanRuntime>,
     pub handle: vk::Image,
@@ -13,8 +13,10 @@ pub(super) struct TargetImage {
     pub aspect: vk::ImageAspectFlags,
     pub format: vk::Format,
     pub samples: vk::SampleCountFlags,
+    /// The sampled-image set that a main restore reads this image through, made on first use.
+    restore_set: Mutex<Option<super::target_sample_set::TargetSampleSet>>,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub(super) struct AttachmentSpec {
     pub format: vk::Format,
     pub usage: vk::ImageUsageFlags,
@@ -22,20 +24,6 @@ pub(super) struct AttachmentSpec {
     pub samples: vk::SampleCountFlags,
 }
 impl TargetImage {
-    pub fn new(
-        runtime: &Arc<VulkanRuntime>,
-        extent: vk::Extent2D,
-        depth: bool,
-        stencil: bool,
-    ) -> Result<Self, RenderError> {
-        Self::new_multisample(
-            runtime,
-            extent,
-            depth,
-            stencil,
-            vk::SampleCountFlags::TYPE_1,
-        )
-    }
     pub fn new_multisample(
         runtime: &Arc<VulkanRuntime>,
         extent: vk::Extent2D,
@@ -65,6 +53,7 @@ impl TargetImage {
             spec.format,
             spec.aspect.contains(vk::ImageAspectFlags::DEPTH),
         )?;
+        check_sampled(runtime, spec.format, spec.usage)?;
         let mut info = image_description(extent, spec.format, spec.usage).samples(spec.samples);
         info.flags |= super::mirrored_sample_locations::depth_flags(
             runtime.mirrored_samples,
@@ -95,6 +84,7 @@ impl TargetImage {
             aspect: spec.aspect,
             format: spec.format,
             samples: spec.samples,
+            restore_set: Mutex::new(None),
         };
         image.allocate()?;
         image.view = image.create_view(spec.format)?;
@@ -113,9 +103,35 @@ impl TargetImage {
         let lease = super::memory_arena::bind_device_image(&self.runtime, self.handle)?;
         // Frame statistics count the resource's own requirement, not the shared block.
         self.allocation = lease.size();
-        self.runtime.image_memory.allocate_target(self.allocation);
         self.memory = Some(lease);
         Ok(())
+    }
+
+    pub fn allocation_bytes(&self) -> u64 {
+        self.allocation
+    }
+    /// The set of `layout` that samples this image, colour through its UNORM alias; the set
+    /// lives as long as the image. `image.restore_set(layout)?`.
+    pub fn restore_set(
+        &self,
+        layout: vk::DescriptorSetLayout,
+    ) -> Result<vk::DescriptorSet, RenderError> {
+        let mut slot = self
+            .restore_set
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if let Some(set) = slot.as_ref() {
+            return Ok(set.handle);
+        }
+        let view = if self.xor_view == vk::ImageView::null() {
+            self.view
+        } else {
+            self.xor_view
+        };
+        let set = super::target_sample_set::TargetSampleSet::new(&self.runtime, layout, view)?;
+        let handle = set.handle;
+        *slot = Some(set);
+        Ok(handle)
     }
     fn create_view(&self, format: vk::Format) -> Result<vk::ImageView, RenderError> {
         let info = vk::ImageViewCreateInfo::default()
@@ -139,6 +155,13 @@ impl TargetImage {
 }
 impl Drop for TargetImage {
     fn drop(&mut self) {
+        // The set names the views below, so its pool goes first.
+        drop(
+            self.restore_set
+                .get_mut()
+                .unwrap_or_else(PoisonError::into_inner)
+                .take(),
+        );
         // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
         unsafe {
             if self.view != vk::ImageView::null() {
@@ -152,7 +175,6 @@ impl Drop for TargetImage {
             // The lease field drops after this body, once the image no longer uses its range.
             self.runtime.device().destroy_image(self.handle, None);
         }
-        self.runtime.image_memory.release_target(self.allocation);
     }
 }
 pub(super) fn check_format(
@@ -182,6 +204,32 @@ pub(super) fn check_format(
     Ok(())
 }
 
+/// A sampled target needs the sampled-image feature of its format.
+fn check_sampled(
+    runtime: &VulkanRuntime,
+    format: vk::Format,
+    usage: vk::ImageUsageFlags,
+) -> Result<(), RenderError> {
+    if !usage.contains(vk::ImageUsageFlags::SAMPLED) || supports_sampling(runtime, format) {
+        return Ok(());
+    }
+    Err(rejected(
+        format,
+        "a sampled-image format for a main copy target",
+    ))
+}
+/// Whether optimal-tiling images of `format` can be sampled; `supports_sampling(rt, f)`.
+pub(super) fn supports_sampling(runtime: &VulkanRuntime, format: vk::Format) -> bool {
+    // SAFETY: the instance and physical device stay valid while the runtime holds them.
+    let features = unsafe {
+        runtime
+            .instance
+            .get_physical_device_format_properties(runtime.physical, format)
+    };
+    features
+        .optimal_tiling_features
+        .contains(vk::FormatFeatureFlags::SAMPLED_IMAGE)
+}
 pub(super) fn attachment_properties(
     formats: super::depth_equivalence::DepthFormats,
     depth: bool,

@@ -158,7 +158,7 @@ fn bounded(
     if as_bounded.is_some() {
         return Ok(as_bounded);
     }
-    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).into_upcast())
 }
 
 /// The p-curve concatenated with the p-curves of the other chain edges on the same

@@ -1,0 +1,241 @@
+//! Exercise retained color, depth and transparency attachments on the actual Vulkan device.
+use crate::{RenderBackend, RenderFrame, RenderTransparency};
+use ash::vk;
+use std::sync::Arc;
+
+fn frame(extent: [u32; 2], clear: [f32; 4]) -> RenderFrame {
+    RenderFrame::new(extent[0], extent[1], clear, Vec::new()).unwrap()
+}
+
+#[test]
+fn target_history_bounds_retained_generations_and_allocation_bytes() {
+    use super::{RETAINED_BYTES_PER_FAMILY, RETAINED_GENERATIONS, TargetSlot};
+    let mut slot = TargetSlot::<usize, u64>::default();
+    let pinned = slot.retain(0, Arc::new(0), 1);
+    for key in 1..=RETAINED_GENERATIONS {
+        slot.retain(key, Arc::new(0), 1);
+    }
+    assert_eq!(slot.generations.len(), RETAINED_GENERATIONS);
+    assert_eq!(Arc::strong_count(&pinned), 1);
+    let large = RETAINED_BYTES_PER_FAMILY + 1;
+    slot.retain(10, Arc::new(0), large);
+    assert_eq!(slot.generations.len(), 1);
+    assert_eq!(slot.bytes, large);
+    slot.retain(11, Arc::new(0), 1);
+    assert_eq!(slot.generations.len(), 1);
+    assert_eq!(slot.bytes, 1);
+}
+
+#[test]
+fn live_view_tickets_do_not_extend_the_attachment_budget() {
+    use super::{FrameTargetPool, RETAINED_GENERATIONS};
+    let renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let pool = FrameTargetPool::default();
+    let extent = vk::Extent2D {
+        width: 48,
+        height: 32,
+    };
+    let checkout = || {
+        pool.raster(
+            &renderer.runtime,
+            extent,
+            false,
+            vk::SampleCountFlags::TYPE_1,
+            [false; 2],
+            true,
+        )
+        .unwrap()
+    };
+    let tickets: Vec<_> = (0..RETAINED_GENERATIONS)
+        .map(|_| checkout().main_publication.unwrap())
+        .collect();
+    let before = renderer.work_ledger().totals();
+    let replacement = checkout().main_publication.unwrap();
+    assert_eq!(
+        renderer
+            .work_ledger()
+            .totals()
+            .since(&before)
+            .images_created,
+        0
+    );
+    assert!(pool.pin_main(&tickets[0]).is_none());
+    assert!(pool.pin_main(&tickets[1]).is_some());
+    assert!(pool.pin_main(&replacement).is_some());
+    let retained = pool.raster.lock().unwrap();
+    assert_eq!(retained.color.generations.len(), RETAINED_GENERATIONS);
+    assert_eq!(retained.depth.generations.len(), RETAINED_GENERATIONS);
+}
+
+#[test]
+fn read_write_copy_targets_also_serve_ordinary_redraws() {
+    use super::FrameTargetPool;
+    let renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let pool = FrameTargetPool::default();
+    let extent = vk::Extent2D {
+        width: 48,
+        height: 32,
+    };
+    let checkout = |copy| {
+        pool.raster(
+            &renderer.runtime,
+            extent,
+            false,
+            vk::SampleCountFlags::TYPE_1,
+            [copy; 2],
+            false,
+        )
+        .unwrap()
+    };
+    drop(checkout(false));
+    let copy = checkout(true);
+    let handles = (copy.color.handle, copy.depth.handle);
+    drop(copy);
+    let ordinary = checkout(false);
+    assert_eq!((ordinary.color.handle, ordinary.depth.handle), handles);
+    let retained = pool.raster.lock().unwrap();
+    assert_eq!(retained.color.generations.len(), 1);
+    assert_eq!(retained.depth.generations.len(), 1);
+}
+
+#[test]
+fn warmed_attachments_clear_each_frame_and_resize_once() {
+    let mut renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let first = frame([10, 8], [1., 0., 0., 1.]);
+    let second = frame([10, 8], [0., 1., 0., 1.]);
+    let before = renderer.work_ledger().totals();
+    let red = renderer.render(&first).unwrap();
+    let initial = renderer.work_ledger().totals();
+    assert_eq!(initial.since(&before).images_created, 2);
+    // The first frame is still in flight, so the second gets its own pair once (#594).
+    let green = renderer.render(&second).unwrap();
+    let in_flight = renderer.work_ledger().totals();
+    assert_eq!(in_flight.since(&initial).images_created, 2);
+    let red_again = renderer.render(&first).unwrap();
+    let warmed = renderer.work_ledger().totals();
+    assert_eq!(warmed.since(&in_flight).images_created, 0);
+    assert_eq!(red.pixel(5, 4), Some([255, 0, 0, 255]));
+    assert_eq!(green.pixel(5, 4), Some([0, 255, 0, 255]));
+    assert_eq!(red_again.rgba, red.rgba);
+    assert_eq!(green.depth, red.depth);
+    assert_resizes_once(&mut renderer, &warmed);
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
+fn assert_resizes_once(
+    renderer: &mut super::super::VulkanRenderer,
+    before_resize: &crate::RenderDeviceWork,
+) {
+    let resized = frame([20, 16], [0., 0., 1., 1.]);
+    let capture = renderer.render(&resized).unwrap();
+    let first = renderer.work_ledger().totals();
+    assert_eq!(first.since(before_resize).images_created, 2);
+    assert_eq!([capture.width, capture.height], [20, 16]);
+    // The resized frame is in flight, so the next one gets the second pair of this size.
+    renderer.render(&resized).unwrap();
+    let second = renderer.work_ledger().totals();
+    assert_eq!(second.since(&first).images_created, 2);
+    let repeated = renderer.render(&resized).unwrap();
+    assert_eq!(
+        renderer
+            .work_ledger()
+            .totals()
+            .since(&second)
+            .images_created,
+        0
+    );
+    assert_eq!(repeated.rgba, capture.rgba);
+}
+
+#[test]
+fn an_owned_frame_pins_the_exact_attachment_generation() {
+    let mut renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let first = frame([12, 10], [1., 0., 0., 1.]);
+    let second = frame([12, 10], [0., 1., 0., 1.]);
+    let held = renderer.completed_owned_frame(&first).unwrap();
+    let replacement = renderer.completed_owned_frame(&second).unwrap();
+    assert_ne!(held.color.handle, replacement.color.handle);
+    assert_ne!(held.depth.handle, replacement.depth.handle);
+    let held_pixels = renderer
+        .read_frame(&held.completed_readback().unwrap())
+        .unwrap();
+    assert_eq!(held_pixels.pixel(5, 4), Some([255, 0, 0, 255]));
+    let expected = replacement.color.handle;
+    drop(replacement);
+    let warmed = renderer.completed_owned_frame(&second).unwrap();
+    assert_eq!(warmed.color.handle, expected);
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
+#[test]
+fn supported_multisample_and_weighted_images_follow_effective_attachment_shapes() {
+    let mut renderer = super::super::resource_lifecycle_test_support::create_resource_renderer();
+    let single = frame([12, 10], [0., 0., 1., 1.]);
+    let mut multisampled = single.clone();
+    multisampled.raster.requested_samples = 4;
+    let selected_samples =
+        super::super::frame_raster_plan::frame_raster_plan(&renderer.runtime, &multisampled, false)
+            .samples;
+    let single_resources = renderer.completed_owned_frame(&single).unwrap();
+    let resolve_color = single_resources.color.handle;
+    drop(single_resources);
+    let first = renderer.completed_owned_frame(&multisampled).unwrap();
+    assert_eq!(first.color.handle, resolve_color);
+    let attachments = first
+        .multisample
+        .as_ref()
+        .map(|targets| [targets.color.handle, targets.depth.handle]);
+    assert_eq!(
+        attachments.is_some(),
+        selected_samples != vk::SampleCountFlags::TYPE_1
+    );
+    drop(first);
+    let second = renderer.completed_owned_frame(&multisampled).unwrap();
+    assert_eq!(
+        second
+            .multisample
+            .as_ref()
+            .map(|targets| [targets.color.handle, targets.depth.handle]),
+        attachments
+    );
+    drop(second);
+    assert_weighted_scalar_reuse(&mut renderer, single);
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
+fn assert_weighted_scalar_reuse(renderer: &mut super::super::VulkanRenderer, frame: RenderFrame) {
+    let first = frame
+        .clone()
+        .with_transparency(RenderTransparency::Weighted { depth_factor: 0. })
+        .unwrap();
+    let second = frame
+        .with_transparency(RenderTransparency::Weighted { depth_factor: 1. })
+        .unwrap();
+    let mode =
+        super::super::frame_raster_plan::frame_raster_plan(&renderer.runtime, &second, false)
+            .transparency;
+    let first = renderer.completed_owned_frame(&first).unwrap();
+    let handles = weighted_images(&first);
+    assert_eq!(
+        handles.is_some(),
+        matches!(mode, RenderTransparency::Weighted { .. })
+    );
+    drop(first);
+    let second = renderer.completed_owned_frame(&second).unwrap();
+    assert_eq!(weighted_images(&second), handles);
+    let pixels = renderer
+        .read_frame(&second.completed_readback().unwrap())
+        .unwrap();
+    assert_eq!(pixels.pixel(5, 4), Some([0, 0, 255, 255]));
+}
+
+fn weighted_images(frame: &super::super::frame::FrameResources) -> Option<[vk::Image; 2]> {
+    let targets = frame.oit.as_ref()?.targets.as_ref();
+    match targets {
+        super::super::oit_targets::OitTargets::Weighted {
+            accumulation,
+            coverage,
+        } => Some([accumulation.handle, coverage.handle]),
+        super::super::oit_targets::OitTargets::Peeling { .. } => None,
+    }
+}

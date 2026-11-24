@@ -11,16 +11,11 @@ use martensite_tkde::de::{
     DeConfigurationContext, DeConfigurationNodeBase, DeShapeFixConfigurationNodeBase,
     DeShapeFixParameters, load_shape_fix_parameters, save_shape_fix_parameters,
 };
-use martensite_tkernel::{
-    ncollection::List,
-    standard::{SharedState, StandardTransient},
-    tcollection::AsciiString,
-};
+use martensite_tkernel::{ncollection::List, standard::SharedState, tcollection::AsciiString};
 use std::ops::Deref;
 /// The settings of the IGES format, and the provider they make.
 /// Example: `DeIgesConfigurationNode::default()`.
 pub struct DeIgesConfigurationNode {
-    pub(super) transient: StandardTransient,
     pub(super) base: DeShapeFixConfigurationNodeBase,
     /// IGES-specific transfer parameters, shared by every holder of the node.
     pub internal_parameters: SharedState<DeIgesParameters>,
@@ -30,7 +25,6 @@ impl Default for DeIgesConfigurationNode {
         let base = DeShapeFixConfigurationNodeBase::default();
         base.set_shape_fix_parameters(DeIgesParameters::default_shape_fix_parameters());
         Self {
-            transient: StandardTransient::default(),
             base,
             internal_parameters: SharedState::new(DeIgesParameters::default()),
         }
@@ -46,7 +40,6 @@ impl DeIgesConfigurationNode {
     /// Copies independent node/healing/format settings; `DeIgesConfigurationNode::copied_from(&node)`.
     pub fn copied_from(source: &Self) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: source.base.copied_state(),
             internal_parameters: SharedState::new(source.internal_parameters.snapshot()),
         }

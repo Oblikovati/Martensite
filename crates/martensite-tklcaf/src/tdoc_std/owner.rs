@@ -10,10 +10,7 @@ use crate::tdf::{
 use martensite_tkcdf::json_dump::{class_begin, field_dumped};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Guid, Handle, SharedState, StandardTransient, WeakHandle, dump::DumpStream,
-        exceptions,
-    },
+    standard::{Failure, Guid, Handle, SharedState, WeakHandle, dump::DumpStream, exceptions},
 };
 use std::io;
 
@@ -25,11 +22,10 @@ const MODIFIED_ID: Guid = guid_from_text("2a96b622-ec8b-11d0-bee7-080009dc3333")
 /// `TDocStd_Owner`: keeps a raw pointer to its document natively, a weak handle here.
 #[derive(Default)]
 pub struct TDocStdOwner {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     document: SharedState<WeakHandle<TDocStdDocument>>,
 }
-impl_transient!(TDocStdOwner, "TDocStd_Owner", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDocStdOwner, "TDocStd_Owner", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TDocStdOwner {
     /// `GetID`.
@@ -54,7 +50,7 @@ impl TDocStdOwner {
         }
         let owner = Handle::new(Self::new());
         crate::live(&owner, "TDocStd_Owner::SetDocument")?.set_document(document);
-        root.add_attribute(&owner.cast(), true)
+        root.add_attribute(&owner.into_upcast(), true)
     }
     /// `GetDocument(ofdata)` (static): `Standard_DomainError` when the root has no owner.
     pub fn get_document_of(data: &Handle<TdfData>) -> Result<Handle<TDocStdDocument>, Failure> {
@@ -115,11 +111,10 @@ impl TdfAttribute for TDocStdOwner {
 /// `TDocStd_Modified`: the labels marked modified in a framework.
 #[derive(Default)]
 pub struct TDocStdModified {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     modified: SharedState<TdfLabelMap>,
 }
-impl_transient!(TDocStdModified, "TDocStd_Modified", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDocStdModified, "TDocStd_Modified", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TDocStdModified {
     /// `GetID`.
@@ -145,7 +140,7 @@ impl TDocStdModified {
         let mut modified = Self::of(label)?;
         if modified.is_null() {
             modified = Handle::new(Self::new());
-            label.root()?.add_attribute(&modified.cast(), true)?;
+            label.root()?.add_attribute(&modified.upcast(), true)?;
         }
         crate::live(&modified, "TDocStd_Modified::Add")?.add_label(label)
     }
@@ -216,7 +211,7 @@ impl TdfAttribute for TDocStdModified {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,

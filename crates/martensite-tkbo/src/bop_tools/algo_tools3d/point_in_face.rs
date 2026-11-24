@@ -90,7 +90,7 @@ pub fn point_in_face(
             Point2::new(coordinate, 0.),
             Direction2::Y,
         )))
-        .cast();
+        .into_upcast();
         status = point_in_face_curve(face, &curve, point, uv, context, 0.)?;
         if status == 0 {
             break;
@@ -118,7 +118,7 @@ pub fn point_in_face_from_edge(
     let direction =
         super::near_edge::interior_direction(tangent, edge.orientation(), face.orientation())?;
     let ray: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::new(Axis2d::new(origin, direction))).cast();
+        Handle::new(Geom2dLine::new(Axis2d::new(origin, direction))).into_upcast();
     let ray: Handle<dyn Geom2dCurve> =
         Handle::new(martensite_tkg2d::geom2d::Geom2dTrimmedCurve::new(
             &ray,
@@ -127,6 +127,6 @@ pub fn point_in_face_from_edge(
             true,
             true,
         )?)
-        .cast();
+        .into_upcast();
     point_in_face_curve(face, &ray, point, uv, context, step)
 }

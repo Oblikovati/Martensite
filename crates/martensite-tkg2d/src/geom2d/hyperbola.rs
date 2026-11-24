@@ -6,7 +6,7 @@ use super::geometry::{Geom2dGeometry, dump_base, dump_class_name};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{
     Axis2d, Axis22d, Hyperbola2, Point2, Transform2, Vector2, Xy, resolution,
@@ -22,14 +22,12 @@ struct HyperbolaState {
 
 /// A hyperbola branch; `Handle::new(Geom2dHyperbola::from_axis(axis, 3.0, 2.0, true)?)`.
 pub struct Geom2dHyperbola {
-    parent: StandardTransient,
     state: SharedState<HyperbolaState>,
 }
 impl_transient!(
     Geom2dHyperbola,
     "Geom2d_Hyperbola",
     dyn Geom2dConic,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn Geom2dConic]
 );
 impl Clone for Geom2dHyperbola {
@@ -60,7 +58,6 @@ fn check_major_for_ratio(major_radius: f64, member: &str) -> Result<(), Failure>
 impl Geom2dHyperbola {
     fn stored(state: HyperbolaState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -197,7 +194,7 @@ impl Geom2dGeometry for Geom2dHyperbola {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state: HyperbolaState = *self.state.read();

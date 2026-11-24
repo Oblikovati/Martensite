@@ -9,7 +9,7 @@ use martensite_tkmath::gp::{Direction2, Point2};
 type Tool = TopOpeBRepDSInterferenceTool;
 type Kind = TopOpeBRepDSKind;
 
-fn interference_fields(output: &BufferedTokens, interference: &Handle<TopOpeBRepDSInterference>) {
+fn interference_fields(output: &BufferedTokens, interference: &Handle<dyn InterferenceRecord>) {
     let value = interference.get().unwrap();
     output.text(interference.dynamic_type().unwrap().name().as_bytes());
     output.int(value.support_type() as i32);

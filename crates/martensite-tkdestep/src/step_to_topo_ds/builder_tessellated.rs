@@ -13,7 +13,8 @@ use crate::step_visual::{
 };
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::transfer::TransferTransientProcess;
 
 impl StepToTopoDSBuilder {
@@ -21,7 +22,7 @@ impl StepToTopoDSBuilder {
     fn finish_tessellated(
         &mut self,
         tp: &Handle<TransferTransientProcess>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         made: Option<Shape>,
         warning: &str,
     ) -> Result<(), Failure> {
@@ -112,7 +113,7 @@ impl StepToTopoDSBuilder {
     /// `init(tf, tp, read_tessellated_when_no_b_rep_only, has_geom, factors)`.
     pub fn init_tessellated_face(
         &mut self,
-        face: &Handle<StepVisualTessellatedFace>,
+        face: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedFace>>,
         tp: &Handle<TransferTransientProcess>,
         only_no_brep: bool,
         has_geom: &mut bool,
@@ -146,7 +147,7 @@ impl StepToTopoDSBuilder {
     /// `init(tss, tp, has_geom, factors)`.
     pub fn init_tessellated_surface_set(
         &mut self,
-        set: &Handle<StepVisualTessellatedSurfaceSet>,
+        set: &Handle<dyn crate::StepEntityBase<StepVisualTessellatedSurfaceSet>>,
         tp: &Handle<TransferTransientProcess>,
         has_geom: &mut bool,
         factors: &StepDataFactors,

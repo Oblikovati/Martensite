@@ -48,8 +48,8 @@ mod tests {
         let mut draw =
             PrimitiveDraw::segments(band, vec![0, 1], crate::identity_clip(), style).unwrap();
         draw.guard_band_source = Some(Arc::new(GuardBandSource {
-            vertices: source.clone(),
-            indices: vec![0, 1],
+            vertices: source.clone().into(),
+            indices: vec![0, 1].into(),
         }));
         (draw, source)
     }
@@ -73,8 +73,8 @@ mod tests {
     fn restoration_returns_the_source_bits_and_keeps_draw_state() {
         let (draw, source) = guarded();
         let restored = source_geometry(&draw, true).unwrap();
-        assert_eq!(restored.vertices, source);
-        assert_eq!(restored.indices, [0, 1]);
+        assert_eq!(restored.vertices(), source);
+        assert_eq!(restored.indices(), [0, 1]);
         assert_eq!(restored.line_style, draw.line_style);
         assert_eq!(restored.clip_transform, draw.clip_transform);
         assert_eq!(restored.guard_band_source, None);

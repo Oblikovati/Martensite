@@ -6,7 +6,7 @@ fn white_image_with_black_pixels(
     width: usize,
     height: usize,
     black: &[(usize, usize)],
-) -> Handle<ImagePixMap> {
+) -> Handle<dyn martensite_tkservice::image::ImagePixMapObject> {
     let mut bytes = vec![255; width * height * 3];
     for &(x, y) in black {
         let offset = (y * width + x) * 3;
@@ -15,12 +15,12 @@ fn white_image_with_black_pixels(
     let image = ImagePixMap::default();
     assert!(image.init_wrapper(ImageFormat::Rgb, Some(bytes), width, height, 0));
     image.set_top_down(true);
-    Handle::new(image)
+    Handle::new(image).into_upcast()
 }
 
 fn assert_difference_counts(
-    first: &Handle<ImagePixMap>,
-    second: &Handle<ImagePixMap>,
+    first: &Handle<dyn martensite_tkservice::image::ImagePixMapObject>,
+    second: &Handle<dyn martensite_tkservice::image::ImagePixMapObject>,
     pixels: i32,
     regions: i32,
 ) -> Result<(), Failure> {

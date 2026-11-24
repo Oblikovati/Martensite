@@ -72,7 +72,7 @@ fn apply_ordinary_stencil_mode(scene: &ViewerScene, mode: &str) {
     group.set_group_primitives_aspect(&super::oit_scene::oit_fill_aspect(0, "two").cast());
     group.set_stencil_test_options(mode != "disable");
     if mode != "leading-empty" {
-        group.add_primitive_array(&super::oit_scene::oit_quad(0, "two"), true);
+        group.add_primitive_array(&super::oit_scene::oit_quad(0, "two").into_upcast(), true);
     }
     if mode == "toggle" {
         group.set_stencil_test_options(false);

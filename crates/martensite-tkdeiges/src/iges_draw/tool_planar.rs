@@ -13,10 +13,11 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_entities, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_entities, iges_new_array1,
 };
 use crate::iges_draw::IgesDrawPlanar;
 use crate::iges_geom::IgesGeomTransformationMatrix;
@@ -48,7 +49,7 @@ impl IgesDrawToolPlanar {
         let mut nbval: i32 = Default::default();
         let mut nb_matrices: i32 = Default::default();
         let mut transformation_matrix: Handle<IgesGeomTransformationMatrix> = Default::default();
-        let mut entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         st = pr.read_integer_text(
             &pr.current(),
             "No. of Transformation matrices",
@@ -130,8 +131,8 @@ impl IgesDrawToolPlanar {
             return Ok(false);
         }
         let mut nb: i32 = ent.nb_entities()?;
-        let mut ents: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nb)?;
+        let mut ents: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nb)?;
         for i in 1..=nb {
             iges_array1_set(&ents, i, ent.entity(i)?, "IgesDrawToolPlanar::own_correct")?;
         }
@@ -173,14 +174,14 @@ impl IgesDrawToolPlanar {
     ) -> Result<(), Failure> {
         let mut nbval: i32 = Default::default();
         let mut nb_matrices: i32 = Default::default();
-        let mut entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         nbval = another.nb_entities()?;
         nb_matrices = another.nb_matrices();
         let mut transformation_matrix: Handle<IgesGeomTransformationMatrix> =
             tc.transferred(&another.transform_matrix().cast())?.cast();
-        entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbval)?;
+        entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbval)?;
         for i in 1..=nbval {
-            let mut temp_entity: Handle<IgesDataIgesEntity> =
+            let mut temp_entity: Handle<dyn IgesDataEntityKind> =
                 tc.transferred(&another.entity(i)?.cast())?.cast();
             iges_array1_set(
                 &entities,

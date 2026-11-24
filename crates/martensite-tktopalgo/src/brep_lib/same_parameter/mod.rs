@@ -205,8 +205,8 @@ fn get_edge_tol(edge: &Edge, face: &Face) -> Result<Option<f64>, Failure> {
     }
     let plane_surface: Handle<dyn GeomSurface> = plane.cast();
     let hs: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&plane_surface)?).cast();
-    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(hc).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&plane_surface)?).into_upcast();
+    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(hc).into_upcast();
     let projection = ProjectedCurve::with_curve(&hs, &hc)?;
     let pc = make_curve(&projection)?;
     let pln = hs.get().expect("a surface adaptor").plane()?;

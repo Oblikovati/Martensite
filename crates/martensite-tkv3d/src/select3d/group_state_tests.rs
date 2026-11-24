@@ -103,11 +103,7 @@ fn group_rtti_flags(
         entity.is_kind(descriptor),
         entity.is_kind(<dyn Select3DSensitiveSet>::static_type()),
         entity.is_kind(<dyn Select3DSensitiveEntity>::static_type()),
-        entity
-            .clone()
-            .cast::<Select3DSensitiveGroup>()
-            .object_address()
-            == entity.object_address(),
+        super::select3d_group_downcast(entity).object_address() == entity.object_address(),
         native_group_alias_is_parent(descriptor),
     ]
 }

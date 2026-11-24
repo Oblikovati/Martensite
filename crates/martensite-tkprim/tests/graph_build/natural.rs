@@ -28,7 +28,7 @@ fn natural_trim(
     v: (f64, f64),
     senses: (bool, bool),
 ) -> Handle<dyn GeomSurface> {
-    Handle::new(GeomRectangularTrimmedSurface::new(&surface, u, v, senses).unwrap()).into_cast()
+    Handle::new(GeomRectangularTrimmedSurface::new(&surface, u, v, senses).unwrap()).into_upcast()
 }
 fn assert_natural_counts(graph: &BRepGraph) {
     assert!(graph.topo().wires().nb() > 0);
@@ -57,16 +57,16 @@ fn assert_face_wires(graph: &BRepGraph) {
 fn BRepGraph_BuildTest__NaturalBound_FiniteNoWireNaturalFaces_SynthesizeTopology() {
     let frame = natural_frame();
     assert_finite_natural_topology(
-        Handle::new(GeomSphericalSurface::new(frame, 10.0).unwrap()).into_cast(),
+        Handle::new(GeomSphericalSurface::new(frame, 10.0).unwrap()).into_upcast(),
     );
     assert_finite_natural_topology(
-        Handle::new(GeomToroidalSurface::new(frame, 10.0, 3.0).unwrap()).into_cast(),
+        Handle::new(GeomToroidalSurface::new(frame, 10.0, 3.0).unwrap()).into_upcast(),
     );
-    let cylinder = Handle::new(GeomCylindricalSurface::new(frame, 5.0).unwrap()).into_cast();
+    let cylinder = Handle::new(GeomCylindricalSurface::new(frame, 5.0).unwrap()).into_upcast();
     assert_finite_natural_topology(natural_periodic_trim(cylinder));
-    let cone = Handle::new(GeomConicalSurface::new(frame, 0.2, 5.0).unwrap()).into_cast();
+    let cone = Handle::new(GeomConicalSurface::new(frame, 0.2, 5.0).unwrap()).into_upcast();
     assert_finite_natural_topology(natural_periodic_trim(cone));
-    let plane = Handle::new(GeomPlane::new(frame)).into_cast();
+    let plane = Handle::new(GeomPlane::new(frame)).into_upcast();
     assert_finite_natural_topology(natural_trim(plane, (0.0, 3.0), (0.0, 4.0), (true, true)));
 }
 #[test]
@@ -105,7 +105,7 @@ fn BRepGraph_BuildTest__NaturalBound_Torus_HasWiresAndEdges() {
 #[test]
 fn BRepGraph_BuildTest__NaturalBound_InfinitePlane_ProducesWarnings() {
     // Infinite UV bounds preserve the unbounded face with the original warning.
-    let surface = Handle::new(GeomPlane::new(natural_frame())).into_cast();
+    let surface = Handle::new(GeomPlane::new(natural_frame())).into_upcast();
     let face = no_wire_natural_face(&surface);
     let mut graph = BRepGraph::new();
     graph.clear().unwrap();
@@ -138,7 +138,7 @@ fn BRepGraph_BuildTest__NaturalBound_PreservesExplicitWires() {
 }
 #[test]
 fn BRepGraph_BuildTest__NaturalBound_PlaneSynthesis_SkipsPCurves() {
-    let plane = Handle::new(GeomPlane::new(natural_frame())).into_cast();
+    let plane = Handle::new(GeomPlane::new(natural_frame())).into_upcast();
     let trimmed = natural_trim(plane, (-10.0, 10.0), (-10.0, 10.0), (false, false));
     let face = no_wire_natural_face(&trimmed);
     let mut graph = BRepGraph::new();

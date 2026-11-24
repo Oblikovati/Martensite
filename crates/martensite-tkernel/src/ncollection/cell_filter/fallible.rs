@@ -10,7 +10,8 @@ impl<I: CellGeometry> CellFilter<I> {
         self.try_inspect_with_cell(&self.indices(point), inspect)
     }
     /// Visit a range in axis order, stopping at failure; `filter.try_inspect_range_with(&min,&max, |target| Ok::<_, ()>(CellAction::Purge))?`.
-    pub fn try_inspect_range_with<E>(
+    #[cfg(test)]
+    pub(crate) fn try_inspect_range_with<E>(
         &mut self,
         min: &I::CellPoint,
         max: &I::CellPoint,

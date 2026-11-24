@@ -20,7 +20,7 @@ fn spatial_cubic(height: f64) -> Handle<dyn GeomCurve> {
         Point3::new(0., 4., height),
         Point3::new(0., 0., height),
     ];
-    Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).cast()
+    Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).into_upcast()
 }
 fn planar_cubic() -> Handle<dyn Geom2dCurve> {
     let poles = [
@@ -29,7 +29,7 @@ fn planar_cubic() -> Handle<dyn Geom2dCurve> {
         Point2::new(0., 4.),
         Point2::new(0., 0.),
     ];
-    Handle::new(Geom2dBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).cast()
+    Handle::new(Geom2dBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).into_upcast()
 }
 pub(super) fn metric_fixture(height: f64) -> (Edge, Face) {
     let space = spatial_cubic(height);
@@ -41,7 +41,8 @@ pub(super) fn metric_fixture(height: f64) -> (Edge, Face) {
     (edge, face)
 }
 pub(super) fn attach_planar_curve(edge: &Edge, curve: &Handle<dyn Geom2dCurve>) -> Face {
-    let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+    let surface: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     let mut face = Face::default();
     let builder = BRepBuilder::default();
     builder

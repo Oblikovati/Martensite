@@ -15,7 +15,7 @@ impl Graphic3dRenderDriver {
         Ok(Self::build(DriverBuildInputs {
             backend: DriverBackend::Vulkan(Box::new(renderer)),
             limit,
-            text_source: Arc::new(crate::FreeTypeTextSource::default()),
+            text_source: TextProvider::default(),
             selection,
             line_widths,
         }))
@@ -34,7 +34,7 @@ impl Graphic3dRenderDriver {
         Ok(Self::build(DriverBuildInputs {
             backend: DriverBackend::Injected(Box::new(backend)),
             limit,
-            text_source: fonts,
+            text_source: TextProvider::Injected(fonts),
             selection,
             line_widths,
         }))

@@ -71,7 +71,7 @@ pub fn replace_surface(
     group.clear(false);
     group.set_group_primitives_aspect(&aspects);
     let array = surface_array(mode, repeats);
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
     array
 }
 

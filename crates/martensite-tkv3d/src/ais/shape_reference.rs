@@ -1,8 +1,12 @@
 //! Borrow the actual native AisShape topology field across assignments.
 use super::{AisShapeFields, AisShapeSource};
-use crate::{prs_mgr::PrsMgrPresentableObjectFields, prs3d::Prs3dDrawer};
+use crate::prs_mgr::{PrsMgrPresentableObjectFields, PrsMgrPresentableObjectMembers};
+use crate::prs3d::Prs3dDrawer;
 use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
-use martensite_tkernel::standard::{Failure, Handle, HandleFieldRef, SharedState};
+use martensite_tkernel::standard::{
+    Failure, Handle, HandleFieldRef, SharedState, catch_native_failure,
+};
+use std::sync::Arc;
 /// Non-owning live `Shape()` reference; `let alias=object.shape_ref();`.
 #[derive(Clone, Copy)]
 pub struct AisShapeRef<'a> {
@@ -22,7 +26,7 @@ impl AisShapeRef<'_> {
     /// Explicitly retain an owning snapshot; `let copied=alias.clone_shape();`.
     pub fn clone_shape(&self) -> Shape {
         let fields = self.fields.read();
-        fields.shape.clone()
+        fields.shape.to_shape()
     }
 }
 impl TopoDSShapeReadSource for AisShapeRef<'_> {
@@ -30,12 +34,9 @@ impl TopoDSShapeReadSource for AisShapeRef<'_> {
         &self,
         project: impl FnOnce(&Shape) -> Result<R, Failure>,
     ) -> Result<R, Failure> {
-        let fields = self.fields.read();
-        let topology = fields.shape.tshape().observe();
-        let location = fields.shape.location().clone();
-        let orientation = fields.shape.orientation();
-        drop(fields);
-        Shape::with_reference_parts(&*topology, &location, orientation, project)
+        // The callback can replace the field. Lease the value without retaining its TShape.
+        let shape = Arc::clone(&self.fields.read().shape);
+        catch_native_failure(move || project(&shape))
     }
 }
 /// Nonvirtual parent topology methods; `object.set_shape(&replacement)`.
@@ -57,9 +58,16 @@ pub trait AisShapeMembers: AisShapeSource {
     }
     /// Assign before enabling lazy bounds recomputation; `object.set_shape(&shape)`.
     fn set_shape(&self, shape: &Shape) {
+        let replacement = Arc::new(shape.to_shape());
         let mut fields = self.shape_base().fields.write();
-        fields.shape = shape.clone();
+        let previous = std::mem::replace(&mut fields.shape, replacement);
         fields.recompute_bounds = true;
+        let had_mesh_lod = fields.mesh_lod.take().is_some();
+        drop(fields);
+        drop(previous);
+        if had_mesh_lod {
+            self.set_to_update(1);
+        }
     }
 }
 impl<S: AisShapeSource + ?Sized> AisShapeMembers for S {}
@@ -67,4 +75,24 @@ impl<S: AisShapeSource + ?Sized> AisShapeMembers for S {}
 fn shape_drawer_slot(fields: &PrsMgrPresentableObjectFields) -> &Handle<Prs3dDrawer> {
     // Select the actual native parent member rather than create a temporary owning getter.
     &fields.drawer
+}
+
+#[cfg(test)]
+mod lod_tests {
+    use super::*;
+    use crate::std_prs::{StdPrsMeshLevelRequest, StdPrsMeshLod};
+
+    #[test]
+    fn assigning_a_shape_withdraws_the_previous_mesh_approval() {
+        let part = super::super::AisShape::new(&Shape::default());
+        let request = StdPrsMeshLevelRequest {
+            linear_deflection: 0.1,
+            angular_deflection: 0.5,
+            maximum_deviation: 0.2,
+        };
+        part.set_presentation_mesh_lod(Some(StdPrsMeshLod::new(vec![request], 0.5).unwrap()));
+        assert!(part.shape_base().fields.read().mesh_lod.is_some());
+        part.set_shape(&Shape::default());
+        assert!(part.shape_base().fields.read().mesh_lod.is_none());
+    }
 }

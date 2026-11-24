@@ -4,13 +4,14 @@ use super::support::{c_str, item, object, stream_real};
 use super::token::{Token, TokenHandle};
 use super::unit_sentence::UnitSentence;
 use crate::standard::{Failure, Handle};
+use crate::units::TokenObject;
 use std::io::Write;
 
 /// A value and its unit; `Measurement::with_unit(&units, 2.0, b"mm")?`.
 #[derive(Clone, Default)]
 pub struct Measurement {
     measurement: f64,
-    token: Handle<Token>,
+    token: Handle<dyn TokenObject>,
 }
 
 impl Measurement {
@@ -19,7 +20,7 @@ impl Measurement {
         Self::default()
     }
     /// Value and shared token; `Measurement::with_token(1.0, &token)`.
-    pub fn with_token(value: f64, token: &Handle<Token>) -> Self {
+    pub fn with_token(value: f64, token: &Handle<dyn TokenObject>) -> Self {
         Self {
             measurement: value,
             token: token.clone(),
@@ -76,7 +77,7 @@ impl Measurement {
         let token = Token::with_mean(unit, b"U");
         token.set_value(first.value());
         token.set_dimensions(&first.dimensions());
-        self.token = Handle::new(token);
+        self.token = Handle::new(token).into_upcast();
         Ok(())
     }
     /// The value truncated toward zero (`(int)` cast), same token; `m.integer()`.
@@ -93,7 +94,7 @@ impl Measurement {
         self.measurement
     }
     /// The stored token (possibly null); `m.token()`.
-    pub fn token(&self) -> Handle<Token> {
+    pub fn token(&self) -> Handle<dyn TokenObject> {
         self.token.clone()
     }
     /// True when a token is present; `m.has_token()`.

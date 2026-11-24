@@ -1,5 +1,5 @@
 //! Supplemental source-bound checks; original legacy declaration counts stay unchanged.
-use martensite_tkernel::tcollection::{AsciiString, CatOperand, ExtendedString};
+use crate::tcollection::{AsciiString, CatOperand, ExtendedString};
 
 fn verify_ascii_operand<T: Clone + CatOperand + Into<AsciiString>>(
     operand: T,

@@ -53,8 +53,10 @@ fn texture_maps_wrap_into_a_set() {
     assert!(aspects.texture_map().is_null());
     let pixmap = ImagePixMap::default();
     pixmap.init_zero(ImageFormat::Rgb, 2, 2, 0, 0);
-    let texture: Handle<dyn Graphic3dTextureMap> =
-        Handle::new(Graphic3dTexture2D::from_pix_map(Handle::new(pixmap))).cast();
+    let texture: Handle<dyn Graphic3dTextureMap> = Handle::new(Graphic3dTexture2D::from_pix_map(
+        Handle::new(pixmap).into_upcast(),
+    ))
+    .cast();
     aspects.set_texture_map(texture.clone());
     assert!(aspects.texture_map() == texture);
     aspects.set_texture_map(Handle::default());

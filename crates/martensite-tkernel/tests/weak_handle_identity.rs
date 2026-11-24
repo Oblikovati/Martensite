@@ -5,7 +5,7 @@ use martensite_tkernel::{
 };
 #[test]
 fn weak_identity_and_hash_survive_owner_destruction() {
-    let owner = Handle::new(StandardTransient::default());
+    let owner = Handle::new(StandardTransient);
     let pointer = owner.downgrade();
     let alias = pointer.clone();
     let address = owner.object_address();
@@ -26,8 +26,8 @@ fn null_and_distinct_weak_pointers_compare_by_native_identity() {
     let null = WeakHandle::<StandardTransient>::default();
     assert_eq!(null.object_address(), std::ptr::null());
     assert_eq!(null.kernel_hash(), 0);
-    let first = Handle::new(StandardTransient::default());
-    let second = Handle::new(StandardTransient::default());
+    let first = Handle::new(StandardTransient);
+    let second = Handle::new(StandardTransient);
     assert_ne!(first.downgrade(), second.downgrade());
     assert_ne!(null, first.downgrade());
 }

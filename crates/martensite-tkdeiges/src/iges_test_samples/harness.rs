@@ -13,7 +13,9 @@ use crate::iges_file::iges_file_read_stream;
 use crate::iges_select::IgesSelectWorkLibrary;
 use crate::iges_solid::IgesSolid;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheckTool, InterfaceCopyTool, InterfaceInterfaceModel, InterfaceModelEntities,
@@ -71,8 +73,8 @@ fn protocol() -> Handle<dyn IgesDataProtocolOps> {
 }
 
 fn model_of(
-    prior: &Handle<StandardTransient>,
-    entity: &Handle<StandardTransient>,
+    prior: &Handle<dyn Transient>,
+    entity: &Handle<dyn Transient>,
 ) -> Result<Handle<IgesDataIgesModel>, Failure> {
     let model = IgesDataIgesModel::new();
     let any: Handle<dyn InterfaceProtocol> = protocol().cast();
@@ -200,14 +202,14 @@ fn copied_model(model: &Handle<IgesDataIgesModel>) -> Result<Handle<IgesDataIges
 }
 
 /// The file an entity and what it refers to make.
-pub(crate) fn iges_written_file<T: ?Sized + RuntimeTyped>(
+pub(crate) fn iges_written_file<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     object: &Handle<T>,
 ) -> Result<Vec<u8>, Failure> {
     file_of(&model_of(&Handle::default(), &object.cast())?)
 }
 
 /// The model read back from the file an entity makes.
-pub(crate) fn iges_round_read<T: ?Sized + RuntimeTyped>(
+pub(crate) fn iges_round_read<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     object: &Handle<T>,
 ) -> Result<Handle<IgesDataIgesModel>, Failure> {
     read_file(&iges_written_file(object)?)
@@ -218,16 +220,19 @@ pub(crate) fn iges_round_read<T: ?Sized + RuntimeTyped>(
 /// A file written from what was read is the file that was read: no field is lost or changed by the
 /// reader or the writer. A copy writes the same parameters. A dump names the class at every level, and
 /// a check runs to its end.
-pub(crate) fn assert_entity_round<T: ?Sized + RuntimeTyped>(
+pub(crate) fn assert_entity_round<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     object: &Handle<T>,
     name: &str,
 ) -> Result<(), Failure> {
-    assert_entity_round_after(&Handle::<StandardTransient>::default(), object, name)
+    assert_entity_round_after(&Handle::<dyn Transient>::default(), object, name)
 }
 
 /// [`assert_entity_round`] with an entity that must come first in the file: a reader takes an
 /// attribute table's layout from its definition, loaded before it.
-pub(crate) fn assert_entity_round_after<P: ?Sized + RuntimeTyped, T: ?Sized + RuntimeTyped>(
+pub(crate) fn assert_entity_round_after<
+    P: ?Sized + RuntimeTyped + TransientHandleTarget,
+    T: ?Sized + RuntimeTyped + TransientHandleTarget,
+>(
     prior: &Handle<P>,
     object: &Handle<T>,
     name: &str,

@@ -5,7 +5,7 @@ use super::errors;
 use super::geometry::{Geom2dGeometry, dump_base, dump_class_name};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Axis2d, Axis22d, Ellipse2, Point2, Transform2, Vector2};
 use std::io;
@@ -19,14 +19,12 @@ struct EllipseState {
 
 /// An ellipse; `Handle::new(Geom2dEllipse::from_axis(axis, 3.0, 2.0, true)?)`.
 pub struct Geom2dEllipse {
-    parent: StandardTransient,
     state: SharedState<EllipseState>,
 }
 impl_transient!(
     Geom2dEllipse,
     "Geom2d_Ellipse",
     dyn Geom2dConic,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn Geom2dConic]
 );
 impl Clone for Geom2dEllipse {
@@ -48,7 +46,6 @@ fn check_radii(major_radius: f64, minor_radius: f64) -> Result<(), Failure> {
 impl Geom2dEllipse {
     fn stored(state: EllipseState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -186,7 +183,7 @@ impl Geom2dGeometry for Geom2dEllipse {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state: EllipseState = *self.state.read();

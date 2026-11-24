@@ -18,7 +18,7 @@ use martensite_tkxsbase::transfer_brep::TransferBRep;
 
 /// `settle_shape_data`: a named item as a sub-shape label with its name.
 fn settle_shape_data(
-    item: &Handle<StepReprRepresentationItem>,
+    item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     label: &TdfLabel,
     tool: &XCAFDocShapeTool,
     session: &SessionGraph,
@@ -51,8 +51,8 @@ fn settle_shape_data(
 /// `collectRepresentationItems`: the items of a representation and of those related to it.
 fn collect_representation_items(
     session: &SessionGraph,
-    representation: &Handle<StepShapeShapeRepresentation>,
-    items: &mut Vec<Handle<StepReprRepresentationItem>>,
+    representation: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
+    items: &mut Vec<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
 ) -> Result<(), Failure> {
     let live = step_live(representation, WHERE)?;
     for rank in 1..=live.nb_items() {
@@ -64,11 +64,13 @@ fn collect_representation_items(
     for sharing in
         session.typed_sharings::<StepReprRepresentationRelationship>(&representation.cast())?
     {
-        let relationship = sharing.cast::<StepReprRepresentationRelationship>();
+        let relationship =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
         let relationship = step_live(&relationship, WHERE)?;
-        if relationship.rep1() == representation.cast::<crate::step_repr::StepReprRepresentation>()
-        {
-            let other = relationship.rep2().cast::<StepShapeShapeRepresentation>();
+        if relationship.rep1() == *representation {
+            let other = relationship
+                .rep2()
+                .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
             if other.is_some() {
                 collect_representation_items(session, &other, items)?;
             }
@@ -79,7 +81,7 @@ fn collect_representation_items(
 
 /// `expand_shell`: the shell, its faces, loops, edges and vertices. Only edge loops have edges.
 fn expand_shell(
-    shell: &Handle<StepShapeConnectedFaceSet>,
+    shell: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
     root: &TdfLabel,
     tool: &XCAFDocShapeTool,
     session: &SessionGraph,
@@ -123,7 +125,7 @@ fn expand_shell(
 
 /// The edges of an edge loop with their vertices.
 fn expand_edge_loop(
-    edge_loop: &Handle<StepShapeEdgeLoop>,
+    edge_loop: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
     root: &TdfLabel,
     tool: &XCAFDocShapeTool,
     session: &SessionGraph,
@@ -150,7 +152,7 @@ fn expand_edge_loop(
 
 /// `expand_sbsm`: the boundary shells of a shell based surface model.
 fn expand_sbsm(
-    item: &Handle<StepReprRepresentationItem>,
+    item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     root: &TdfLabel,
     tool: &XCAFDocShapeTool,
     session: &SessionGraph,
@@ -161,11 +163,12 @@ fn expand_sbsm(
     for rank in 1..=count {
         let shell = step_array1_item(&shells, rank, WHERE)?;
         let open = shell.open_shell();
-        let face_set: Handle<StepShapeConnectedFaceSet> = if open.is_some() {
-            open.cast()
-        } else {
-            shell.closed_shell().cast()
-        };
+        let face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> =
+            if open.is_some() {
+                open.cast()
+            } else {
+                shell.closed_shell().cast()
+            };
         expand_shell(&face_set, root, tool, session)?;
     }
     Ok(())
@@ -176,7 +179,9 @@ impl ReaderState {
     fn expand_root(
         &self,
         root_shape: &martensite_tkbrep::topods::Shape,
-        product_definition: &Handle<crate::step_basic::StepBasicProductDefinition>,
+        product_definition: &Handle<
+            dyn crate::StepEntityBase<crate::step_basic::StepBasicProductDefinition>,
+        >,
         tool: &XCAFDocShapeTool,
         session: &SessionGraph,
     ) -> Result<(), Failure> {
@@ -193,7 +198,7 @@ impl ReaderState {
         // Access shape representation
         let representation = sdr
             .used_representation()
-            .cast::<StepShapeShapeRepresentation>();
+            .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
         if representation.is_null() {
             return Ok(());
         }
@@ -214,12 +219,16 @@ impl ReaderState {
         // Iterate over the top level representation items collecting the topological containers
         let solids: Vec<_> = items
             .iter()
-            .filter(|item| item.cast::<StepShapeManifoldSolidBrep>().is_some())
+            .filter(|item| {
+                item.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+                    .is_some()
+            })
             .collect();
         let models: Vec<_> = items
             .iter()
             .filter(|item| {
-                item.cast::<StepShapeManifoldSolidBrep>().is_null()
+                item.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+                    .is_null()
                     && item.cast::<StepShapeShellBasedSurfaceModel>().is_some()
             })
             .collect();
@@ -232,7 +241,7 @@ impl ReaderState {
                 settle_shape_data(solid, root, tool, session)?;
             }
             // Access outer shell, and expand its contents to CAF tree: ExpandManifoldSolidBrep
-            let brep = solid.cast::<StepShapeManifoldSolidBrep>();
+            let brep = solid.cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>();
             expand_shell(
                 &step_live(&brep, WHERE)?.outer().cast(),
                 root,

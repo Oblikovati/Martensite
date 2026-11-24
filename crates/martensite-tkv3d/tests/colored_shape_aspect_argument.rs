@@ -15,19 +15,19 @@ struct ColoredAspectFieldReplacementProbe {
 }
 impl display_driver::SensitiveAspectArgumentCallback for ColoredAspectFieldReplacementProbe {
     fn aspect_received(&self, argument: &dyn HandleReference<dyn Graphic3dAspectsSource>) {
-        let shading = self.shading.observe();
+        let shading = self.shading.upgrade();
         let reference = shading.aspect_ref();
         let same = i32::from(argument.reference_address() == reference.reference_address());
         self.record_before(argument, same);
-        shading.set_aspect(self.incoming.observe().clone());
+        shading.set_aspect(self.incoming.upgrade());
         self.record_after(argument, same);
     }
 }
 impl ColoredAspectFieldReplacementProbe {
     fn record_before(&self, argument: &dyn HandleReference<dyn Graphic3dAspectsSource>, same: i32) {
-        let actual = argument.observe().ref_count();
-        let previous = self.previous.observe().ref_count();
-        let incoming = self.incoming.observe().ref_count();
+        let actual = argument.ref_count();
+        let previous = self.previous.ref_count();
+        let incoming = self.incoming.ref_count();
         writeln!(
             &mut *self.rows.write(),
             "aspect-argument-before {same} {actual} {previous} {incoming}"
@@ -36,9 +36,9 @@ impl ColoredAspectFieldReplacementProbe {
     }
     fn record_after(&self, argument: &dyn HandleReference<dyn Graphic3dAspectsSource>, same: i32) {
         let equal = i32::from(argument.object_address() == self.incoming.object_address());
-        let actual = argument.observe().ref_count();
-        let previous = self.previous.observe().ref_count();
-        let incoming = self.incoming.observe().ref_count();
+        let actual = argument.ref_count();
+        let previous = self.previous.ref_count();
+        let incoming = self.incoming.ref_count();
         writeln!(
             &mut *self.rows.write(),
             "aspect-argument-after {same} {equal} {actual} {previous} {incoming}"

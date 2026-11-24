@@ -77,8 +77,8 @@ fn explicit_uv_texel_centers_preserve_asymmetric_rows_across_viewport_signs() {
 fn selection_preserves_centers_depth_clamp_styles_and_source_ownership() {
     let mut source = sprite();
     source.depth_clamp = true;
-    source.vertices[0].weight = 2.;
-    source.vertices[0].position[2] = -3.;
+    source.vertices.make_mut()[0].weight = 2.;
+    source.vertices.make_mut()[0].position[2] = -3.;
     let before = source.clone();
     let selected = selected_draw(&source, vk::SampleCountFlags::TYPE_1)
         .unwrap()

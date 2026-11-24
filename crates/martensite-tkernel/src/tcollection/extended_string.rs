@@ -25,7 +25,7 @@ impl ExtendedString {
         &self.terminated[..self.len()]
     }
     /// Returns the length in code units; `ExtendedString::new("Hello").len() == 5`.
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.terminated.len().saturating_sub(1)
     }
     /// Checks for no code units; `ExtendedString::default().is_empty()`.
@@ -55,7 +55,8 @@ impl From<&ExtendedString> for super::AsciiString {
 }
 impl super::AsciiString {
     /// Appends wide Unicode scalar input through its first zero; `text.assign_cat_wide(&[32,0x20AC,0])`.
-    pub fn assign_cat_wide(&mut self, units: &[u32]) {
+    #[cfg(test)]
+    pub(crate) fn assign_cat_wide(&mut self, units: &[u32]) {
         let text: String = units
             .iter()
             .copied()
@@ -65,12 +66,14 @@ impl super::AsciiString {
         self.assign_cat(text.as_str());
     }
     /// Returns a copy with wide scalar input appended; `text.cat_wide(&[32,87,0])`.
-    pub fn cat_wide(&self, units: &[u32]) -> Self {
+    #[cfg(test)]
+    pub(crate) fn cat_wide(&self, units: &[u32]) -> Self {
         let mut result = self.clone();
         result.assign_cat_wide(units);
         result
     }
 }
+#[cfg(test)]
 mod adjustment;
 mod append;
 mod comparison;
@@ -80,9 +83,11 @@ mod editing;
 mod errors;
 mod queries;
 mod search;
+#[cfg(test)]
 mod spans;
 mod traits;
 mod utf;
 
+#[cfg(test)]
 mod method_contracts;
 mod storage;

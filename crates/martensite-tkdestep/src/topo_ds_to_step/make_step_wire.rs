@@ -30,7 +30,7 @@ use martensite_tkxsbase::transfer::TransferFinderProcess;
 pub struct TopoDSToStepMakeStepWire {
     /// Root.
     pub root: TopoDSToStepRoot,
-    my_result: Handle<StepShapeTopologicalRepresentationItem>,
+    my_result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
     my_error: TopoDSToStepMakeWireError,
 }
 
@@ -109,7 +109,10 @@ impl TopoDSToStepMakeStepWire {
         made.init(wire, tool, fp, factors)?;
         Ok(made)
     }
-    fn finish(&mut self, result: Handle<StepShapeTopologicalRepresentationItem>) {
+    fn finish(
+        &mut self,
+        result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+    ) {
         self.my_error = TopoDSToStepMakeWireError::WireDone;
         self.my_result = result;
         self.root.done = true;
@@ -206,7 +209,8 @@ impl TopoDSToStepMakeStepWire {
             // make vertex_loop
             let vertex = ShapeAnalysisEdge::new().first_vertex(&seam.edge(1)?);
             let maker = TopoDSToStepMakeStepVertex::with_vertex(&vertex, tool, fp, factors)?;
-            let loop_vertex: Handle<StepShapeVertex> = maker.value()?.cast();
+            let loop_vertex: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+                maker.value()?.cast();
             let vertex_loop = Handle::new(StepShapeVertexLoop::new());
             vertex_loop.init(&empty_step_name(), &loop_vertex);
             tool.bind(wire, &vertex_loop.cast());
@@ -251,7 +255,7 @@ impl TopoDSToStepMakeStepWire {
                 self.fail(TopoDSToStepMakeWireError::WireOther, wire, fp, text)?;
                 return Ok(None);
             }
-            let element: Handle<StepShapeEdge> = maker.value()?.cast();
+            let element: Handle<dyn crate::StepEntityBase<StepShapeEdge>> = maker.value()?.cast();
             let oriented = Handle::new(StepShapeOrientedEdge::new());
             oriented.init(
                 &empty_step_name(),
@@ -270,7 +274,10 @@ impl TopoDSToStepMakeStepWire {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<StepShapeTopologicalRepresentationItem>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root.check_done("TopoDSToStepMakeStepWire::Value()")?;
         Ok(self.my_result.clone())
     }

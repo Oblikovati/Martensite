@@ -35,8 +35,8 @@ pub(super) fn clip_probe_getter(
     probe.rows.write().push(format!(
         "get {} {} {}",
         view.identity,
-        view.transient.ref_count(),
-        slot.observe().ref_count()
+        view.owner.strong_count(),
+        slot.ref_count()
     ));
     replace_probe_driver_view(probe);
     fail_clip_probe_stage(view, probe, 1);
@@ -47,7 +47,7 @@ fn replace_probe_driver_view(probe: &ViewClipRetargetProbe) {
     if !replace {
         return;
     }
-    let owner = probe.owner.read().observe();
+    let owner = probe.owner.read().upgrade();
     let incoming = HandleFieldRef::new(&probe.replacement, |slot| slot);
     raise_native_failure(owner.view_base().driver_view_slot.assign(&incoming));
 }
@@ -57,7 +57,7 @@ pub(super) fn clip_probe_setter(
     incoming: &dyn HandleReference<dyn Graphic3dClipPlaneSequenceSource>,
 ) {
     fail_clip_probe_stage(view, probe, 2);
-    let before = incoming.observe().ref_count();
+    let before = incoming.ref_count();
     let slot = view
         .clip_probe_slot
         .as_ref()
@@ -66,9 +66,9 @@ pub(super) fn clip_probe_setter(
     probe.rows.write().push(format!(
         "set {} {} {} {}",
         view.identity,
-        view.transient.ref_count(),
+        view.owner.strong_count(),
         before,
-        incoming.observe().ref_count()
+        incoming.ref_count()
     ));
     fail_clip_probe_stage(view, probe, 3);
 }

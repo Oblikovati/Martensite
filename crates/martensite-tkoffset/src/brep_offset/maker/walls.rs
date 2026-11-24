@@ -36,7 +36,7 @@ use std::f64::consts::FRAC_PI_4;
 
 /// A 2d line through a point along a direction.
 fn line2d(x: f64, y: f64, d: Direction2) -> Handle<dyn Geom2dCurve> {
-    Handle::new(Geom2dLine::from_point(Point2::new(x, y), d)).cast()
+    Handle::new(Geom2dLine::from_point(Point2::new(x, y), d)).into_upcast()
 }
 
 /// `BRepLibMakeEdge(V1, V2)`.
@@ -53,14 +53,15 @@ fn connect_on_surface(
     the_surf: &Handle<dyn GeomSurface>,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let builder = BRepBuilder::default();
-    let a_line: Handle<dyn Geom2dCurve> = MakeLine2d::from_points(p2d, p2d_oe)?.value()?.cast();
+    let a_line: Handle<dyn Geom2dCurve> =
+        MakeLine2d::from_points(p2d, p2d_oe)?.value()?.into_upcast();
     let (first_par, last_par) = (0., p2d.distance(p2d_oe));
     let hc2d: Handle<dyn Adaptor2dCurve2d> = Handle::new(Geom2dAdaptorCurve::with_range(
         &a_line, first_par, last_par,
     )?)
-    .cast();
+    .into_upcast();
     let hsurf: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(the_surf)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(the_surf)?).into_upcast();
     let con_s = Adaptor3dCurveOnSurface::with_curve(&hc2d, &hsurf)?;
     let mut a_curve: Handle<dyn GeomCurve> = Handle::default();
     let (max_deviation, _) = geom_lib::build_curve3d(
@@ -290,7 +291,9 @@ impl BRepOffsetMakeOffset {
                 // A cylinder, a plane or a cone.
                 if (a_circ.radius() - a_circ_oe.radius()).abs() <= precision::confusion() {
                     // A cylinder.
-                    the_surf = MakeCylindricalSurface::from_circ(a_circ)?.value()?.cast();
+                    the_surf = MakeCylindricalSurface::from_circ(a_circ)?
+                        .value()?
+                        .into_upcast();
                 } else if a_circ.location().distance(&a_circ_oe.location())
                     <= precision::confusion()
                 {
@@ -321,7 +324,7 @@ impl BRepOffsetMakeOffset {
                         circ_axis_dir.reverse();
                     }
                     the_cone.set_position(the_ax3);
-                    the_surf = Handle::new(GeomConicalSurface::from_cone(the_cone)).cast();
+                    the_surf = Handle::new(GeomConicalSurface::from_cone(the_cone)).into_upcast();
                 }
                 if !is_planar {
                     edge_line2d = line2d(0., 0., Direction2::X);
@@ -422,7 +425,7 @@ impl BRepOffsetMakeOffset {
             is_planar = false;
             if a_find_plane.found() && a_find_plane.tolerance_reached() <= an_edge_tol {
                 let (a_gc, f, l) = BRepTool::curve(an_edge)?;
-                let a_pln_h = a_find_plane.surface().cast::<GeomPlane>();
+                let a_pln_h = a_find_plane.surface().into_downcast::<GeomPlane>();
                 let a_pln = live(&a_pln_h, "plane")?.pln();
                 let a_max_dist = compute_max_dist(&a_pln, &a_gc, f, l)?;
                 if a_max_dist <= an_edge_tol
@@ -449,7 +452,8 @@ impl BRepOffsetMakeOffset {
                 // An extrusion (by thru sections).
                 let (edge_curve, fp, lp) = BRepTool::curve(an_edge)?;
                 let tr_edge_curve: Handle<dyn GeomCurve> =
-                    Handle::new(GeomTrimmedCurve::new(&edge_curve, fp, lp, true, true)?).cast();
+                    Handle::new(GeomTrimmedCurve::new(&edge_curve, fp, lp, true, true)?)
+                        .into_upcast();
                 let (offset_curve, fpar_oe, lpar_oe) = BRepTool::curve(&oe)?;
                 let tr_offset_curve: Handle<dyn GeomCurve> = Handle::new(GeomTrimmedCurve::new(
                     &offset_curve,
@@ -458,7 +462,7 @@ impl BRepOffsetMakeOffset {
                     true,
                     true,
                 )?)
-                .cast();
+                .into_upcast();
                 let mut thrusec_generator = GeomFillGenerator::new();
                 thrusec_generator.add_curve(&tr_edge_curve)?;
                 thrusec_generator.add_curve(&tr_offset_curve)?;
@@ -650,7 +654,7 @@ fn planar_annulus(
         (oe.clone(), an_edge.clone())
     };
     let a_pl: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_point(center, axis_dir)?).cast();
+        Handle::new(GeomPlane::from_point(center, axis_dir)?).into_upcast();
     let mut wires = Vec::new();
     for (i, a_e) in [&a_e1, &a_e2].into_iter().enumerate() {
         let mut aw = Wire::default();

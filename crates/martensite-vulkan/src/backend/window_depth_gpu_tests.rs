@@ -73,7 +73,7 @@ fn compare_operation(
 #[test]
 fn physical_empty_triangle_completes_with_unchanged_color_and_depth() {
     let mut frame = operand_frame(0., 0.);
-    for vertex in &mut frame.draws[0].vertices {
+    for vertex in frame.draws[0].vertices.make_mut() {
         vertex.position = [0.0001, 0.0001, 0.2];
     }
     let mut baseline = renderer(Bias::HardwareFormatV1, Depth::HardwareV1);
@@ -115,7 +115,7 @@ fn invalid_actual_reference_plane_refuses_before_capture_publication() {
         [200.00048828125, 133.33349609375],
         [300.0009765625, 166.6669921875],
     ];
-    for (vertex, point) in frame.draws[0].vertices.iter_mut().zip(window) {
+    for (vertex, point) in frame.draws[0].vertices.make_mut().iter_mut().zip(window) {
         vertex.position = [
             (2. * point[0] / 409. - 1.) as f32,
             (2. * point[1] / 409. - 1.) as f32,
@@ -148,7 +148,7 @@ fn overflowing_effective_bias_refuses_but_disabled_bias_does_not_leak_failure() 
         [185.01, 185., 0.8],
         [185., 185.01, -0.8],
     ];
-    for (vertex, p) in frame.draws[0].vertices.iter_mut().zip(window) {
+    for (vertex, p) in frame.draws[0].vertices.make_mut().iter_mut().zip(window) {
         vertex.position = [
             (2. * p[0] / 409. - 1.) as f32,
             (2. * p[1] / 409. - 1.) as f32,

@@ -1,12 +1,12 @@
 //! The parameter editor and forms of the session (`SetParams`) and the trace of the
 //! parameters by use (`TraceStatics`).
-use super::IFSelectWorkSession;
+use super::IFSelectSession;
 use super::item_lists::h_text;
 use super::params::info;
 use crate::if_select::{IFSelectEditForm, IFSelectEditor, IFSelectParamEditor};
-use crate::interface::InterfaceTypedValue;
+use crate::interface::InterfaceTypedValueOps;
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
     tcollection::HAsciiString,
 };
 use std::fmt::Write as _;
@@ -49,7 +49,7 @@ pub(crate) fn defined_line(
     }
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `SetParams(params, uselist)`: a parameter editor of the typed values of `params`
     /// ("xst-params-edit"), its complete form ("xst-params-all") and a form by use
     /// (1 general, 3 send, 4 split, 2 and 5 read, 6 write). Native quirks kept: the forms
@@ -57,7 +57,7 @@ impl IFSelectWorkSession {
     /// empty.
     pub fn set_params(
         &self,
-        params: &[Handle<StandardTransient>],
+        params: &[Handle<dyn Transient>],
         uselist: &[i32],
     ) -> Result<(), Failure> {
         let editor = IFSelectParamEditor::new(
@@ -65,7 +65,7 @@ impl IFSelectWorkSession {
             "Parameter Editor",
         )?;
         for param in params {
-            let val = param.cast::<InterfaceTypedValue>();
+            let val = param.cast::<dyn InterfaceTypedValueOps>();
             if val.is_some() {
                 editor.add_value(&val, "")?;
             }

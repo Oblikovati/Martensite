@@ -43,8 +43,8 @@ fn unchanged_public_framebuffer_binding_completes_without_copying_pixels() {
 
 fn capture_pixel_address(view: &Graphic3dRenderView) -> *const u8 {
     let capture = view.outcome.read();
-    let pixels = &capture.as_ref().unwrap().as_ref().unwrap().rgba;
-    pixels.as_ptr()
+    let published = capture.as_ref().unwrap().as_ref().unwrap();
+    published.pixels(&view.device).unwrap().rgba.as_ptr()
 }
 
 #[test]
@@ -77,7 +77,10 @@ fn assert_public_round_trip_refused(selection: u8) {
 fn selected_public_targets(
     api: &dyn Graphic3dCView,
     selection: u8,
-) -> (Handle<StandardTransient>, Handle<StandardTransient>) {
+) -> (
+    Handle<dyn martensite_tkernel::standard::Transient>,
+    Handle<dyn martensite_tkernel::standard::Transient>,
+) {
     let target = |window| {
         if window {
             Handle::default()
@@ -124,7 +127,7 @@ fn cursor_retains_the_replaced_actual_framebuffer_owner() {
 }
 
 struct RebindBeforeSubmission {
-    replacement: Handle<StandardTransient>,
+    replacement: Handle<dyn martensite_tkernel::standard::Transient>,
     cursor_during_redraw: SharedState<Option<RenderRedrawCursor>>,
 }
 impl crate::RenderViewFrameHooks for RebindBeforeSubmission {

@@ -69,14 +69,14 @@ impl BRepLibCheckCurveOnSurface {
         }
         // 3D curve initialization
         let curve3d: Handle<dyn Adaptor3dCurve> =
-            Handle::new(BRepAdaptorCurve::with_edge(edge)?).cast();
+            Handle::new(BRepAdaptorCurve::with_edge(edge)?).into_upcast();
         // Surface initialization
         let pcurve = BRepTool::curve_on_face(edge, face)?;
         let geom_surface = BRepTool::surface(face)?;
         // 2D curves initialization
         let curve2d = pcurve_adaptor(&pcurve)?;
         let surface: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&geom_surface)?).cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&geom_surface)?).into_upcast();
         self.my_adaptor_curve_on_surface =
             Handle::new(Adaptor3dCurveOnSurface::with_curve(&curve2d, &surface)?);
         if BRepTool::is_closed_on_face(edge, face)? {
@@ -158,5 +158,5 @@ impl BRepLibCheckCurveOnSurface {
 /// The adaptor of a p-curve over its range (Standard_NullObject for a null p-curve).
 fn pcurve_adaptor(pcurve: &EdgePCurve) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
     let adaptor = Geom2dAdaptorCurve::with_range(&pcurve.pcurve, pcurve.first, pcurve.last)?;
-    Ok(Handle::new(adaptor).cast())
+    Ok(Handle::new(adaptor).into_upcast())
 }

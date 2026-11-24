@@ -2,7 +2,7 @@
 //! drivers read and write child labels, its dependency graph, the iterator in both modes,
 //! the logbook and the driver table.
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdf::{TdfData, TdfLabel, TdfLabelMap};
 use martensite_tklcaf::tfunction::{
@@ -15,10 +15,9 @@ use std::sync::{Mutex, MutexGuard};
 /// the result is child 2 of the function label (`output`), keyed by tags.
 #[derive(Default)]
 struct ChainDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(ChainDriver, "ChainDriver", dyn TFunctionDriver, transient, interfaces: [dyn TFunctionDriver]);
+impl_transient!(ChainDriver, "ChainDriver", dyn TFunctionDriver, interfaces: [dyn TFunctionDriver]);
 
 impl TFunctionDriver for ChainDriver {
     fn driver_base(&self) -> &TFunctionDriverBase {
@@ -48,7 +47,7 @@ const CHAIN_DRIVER_ID: Guid = guid_from_text("0f2a9a10-1111-4000-8000-0000000000
 
 fn register_driver() {
     let table = TFunctionDriverTable::get();
-    let driver: Handle<dyn TFunctionDriver> = Handle::new(ChainDriver::default()).cast();
+    let driver: Handle<dyn TFunctionDriver> = Handle::new(ChainDriver::default()).into_upcast();
     table.add_driver(&CHAIN_DRIVER_ID, &driver, 0);
 }
 
@@ -194,7 +193,7 @@ fn driver_executes_and_validates_through_the_logbook() {
 #[test]
 fn thread_tables_grow_and_remove_returns_false() {
     let table = TFunctionDriverTable::new();
-    let driver: Handle<dyn TFunctionDriver> = Handle::new(ChainDriver::default()).cast();
+    let driver: Handle<dyn TFunctionDriver> = Handle::new(ChainDriver::default()).into_upcast();
     let id = guid_from_text("0f2a9a10-1111-4000-8000-0000000000bb");
     assert!(table.add_driver(&id, &driver, 3));
     assert!(table.has_driver(&id, 3) && !table.has_driver(&id, 1) && !table.has_driver(&id, 0));

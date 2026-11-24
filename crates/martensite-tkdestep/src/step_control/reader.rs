@@ -4,7 +4,8 @@ use crate::api_header_section::APIHeaderSectionMakeHeader;
 use crate::de_step::DeStepParameters;
 use crate::step_data::StepDataStepModel;
 use crate::step_entity::step_live;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkshhealing::shape_process::{ShapeProcessOperation, ShapeProcessOperationsFlags};
 use martensite_tkxsbase::if_select::IFSelectReturnStatus;
 use martensite_tkxsbase::interface::{InterfaceInterfaceModel, InterfaceProtocol};
@@ -205,4 +206,4 @@ impl XSControlReaderOps for StepControlReader {
 }
 
 /// Roots are `StandardTransient`.
-pub(super) type RootEntity = Handle<StandardTransient>;
+pub(super) type RootEntity = Handle<dyn Transient>;

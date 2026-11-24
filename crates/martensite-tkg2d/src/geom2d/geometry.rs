@@ -1,7 +1,7 @@
 //! `Geom2dGeometry`: the root of the 2D transient geometry hierarchy.
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkmath::gp::{Axis2d, Point2, Transform2, Vector2};
 use std::io;
 
@@ -107,7 +107,7 @@ pub trait Geom2dGeometry: Transient {
         Ok(copy)
     }
 }
-impl_transient_interface!(dyn Geom2dGeometry, "Geom2d_Geometry", StandardTransient);
+impl_transient_interface!(dyn Geom2dGeometry, "Geom2d_Geometry", dyn Transient);
 
 /// `Geom2dGeometry::DumpJson`: the class name only; `dump_geometry(&mut stream, -1)?`.
 pub fn dump_geometry(stream: &mut DumpStream, _depth: i32) -> io::Result<()> {

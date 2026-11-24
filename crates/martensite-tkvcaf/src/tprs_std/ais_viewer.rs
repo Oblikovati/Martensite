@@ -5,9 +5,7 @@ use martensite_tkcaf::tdata_xtd::TDataXtdPresentation;
 use martensite_tkcdf::json_dump::{class_begin, field_pointer};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream, exceptions,
-    },
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream, exceptions},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
@@ -30,11 +28,10 @@ const INTERACTIVE_VIEWER_ID: Guid = guid_from_text("04fb4d05-5690-11d1-8940-0800
 /// assert!(!TPrsStdAISViewer::has(&data.root()).unwrap());
 /// ```
 pub struct TPrsStdAISViewer {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     interactive_context: SharedState<Handle<AisInteractiveContext>>,
 }
-impl_transient!(TPrsStdAISViewer, "TPrsStdAISViewer", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TPrsStdAISViewer, "TPrsStdAISViewer", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TPrsStdAISViewer {
     fn default() -> Self {
@@ -46,7 +43,6 @@ impl TPrsStdAISViewer {
     /// `TPrsStdAISViewer()`: no interactive context.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             interactive_context: SharedState::new(Handle::default()),
         }
@@ -153,7 +149,7 @@ fn install_viewer(
 ) -> Result<Handle<TPrsStdAISViewer>, Failure> {
     let viewer = Handle::new(TPrsStdAISViewer::new());
     viewer.set_interactive_context(context);
-    root.add_attribute(&viewer.clone().cast(), true)?;
+    root.add_attribute(&viewer.upcast(), true)?;
     set_presentations_below(root)?;
     Ok(viewer)
 }
@@ -186,7 +182,7 @@ impl TdfAttribute for TPrsStdAISViewer {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste`: does nothing.
     fn paste(

@@ -12,7 +12,7 @@ step_entity! {
     StepBasicUncertaintyMeasureWithUnit, StepBasicUncertaintyMeasureWithUnitState, "StepBasicUncertaintyMeasureWithUnit", StepBasicMeasureWithUnit, {
         name: Handle<HAsciiString>,
         description: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 impl StepBasicUncertaintyMeasureWithUnit {
     step_methods! {
@@ -85,7 +85,7 @@ impl StepBasicVersionedActionRequest {
 step_entity! {
     /// Volume unit.
     StepBasicVolumeUnit, StepBasicVolumeUnitState, "StepBasicVolumeUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {
@@ -94,7 +94,7 @@ step_entity! {
         week_component: i32,
         day_component: i32,
         has_day_component: bool,
-    }
+    }, bases: [crate::step_basic::StepBasicDate]
 }
 impl StepBasicWeekOfYearAndDayDate {
     step_methods! {

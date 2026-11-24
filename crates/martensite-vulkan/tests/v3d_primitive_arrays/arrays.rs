@@ -2,12 +2,12 @@ use super::specification::ArraySpec;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::{
     GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_DEINTERLEAVED, GRAPHIC3D_ARRAY_FLAGS_VERTEX_COLOR,
-    GRAPHIC3D_ARRAY_FLAGS_VERTEX_NORMAL, Graphic3dArrayOfPrimitives,
+    GRAPHIC3D_ARRAY_FLAGS_VERTEX_NORMAL, Graphic3dArrayOfPrimitives, Graphic3dArraySource,
 };
 pub(super) fn build(
     spec: &ArraySpec,
     non_interleaved: bool,
-) -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
+) -> Result<Handle<dyn Graphic3dArraySource>, Failure> {
     let flags = layout_flags(non_interleaved);
     let array = Graphic3dArrayOfPrimitives::create_array_with_bounds(
         spec.kind,

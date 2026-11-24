@@ -3,7 +3,7 @@
 use crate::native_failure::failure;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Transient};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Point2, Point3, Vector2, Vector3};
 
@@ -52,7 +52,7 @@ pub struct SweepD2<'a, 'b> {
 /// ```ignore
 /// struct Section { /* ... */ }
 /// impl SweepFunction for Section { /* d0, nb_2d_curves, section_shape... */ }
-/// let approx = SweepApproximation::new(&Handle::new(Section::new()).cast());
+/// let approx = SweepApproximation::new(&Handle::new(Section::new()).into_upcast());
 /// ```
 pub trait SweepFunction: Transient {
     /// `D0(Param, First, Last, Poles, Poles2d, Weigths)`: the section at `param` of
@@ -155,4 +155,4 @@ pub trait SweepFunction: Transient {
     }
 }
 
-impl_transient_interface!(dyn SweepFunction, "Approx_SweepFunction", StandardTransient);
+impl_transient_interface!(dyn SweepFunction, "Approx_SweepFunction", dyn Transient);

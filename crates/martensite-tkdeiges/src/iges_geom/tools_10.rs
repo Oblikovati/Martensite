@@ -11,16 +11,18 @@ use super::{IgesGeomPoint, IgesGeomRuledSurface, IgesGeomSplineCurve, IgesGeomTo
 use crate::iges_basic::IgesBasicSubfigureDef;
 use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::{iges_shared_021, iges_shared_047};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_item, iges_array1_set, iges_array2_set, iges_dump_xyz_l,
     iges_live, iges_msg, iges_new_array1, iges_new_array2,
 };
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -52,7 +54,7 @@ impl IgesGeomToolPoint {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolPoint::own_shared")?;
-        iter.get_one_item(&ent_live.display_symbol().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.display_symbol().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -99,7 +101,7 @@ impl IgesGeomToolPoint {
         let ent_live = iges_live(ent, "IgesGeomToolPoint::own_copy")?;
         let a_point: Xyz = Xyz::from(another_live.value());
         let a_symbol = tc
-            .transferred(&another_live.display_symbol().cast::<StandardTransient>())?
+            .transferred(&another_live.display_symbol().cast::<dyn Transient>())?
             .cast::<IgesBasicSubfigureDef>();
         ent_live.init(a_point, &a_symbol);
         Ok(())
@@ -154,8 +156,8 @@ impl IgesGeomToolRuledSurface {
         let ent_live = iges_live(ent, "IgesGeomToolRuledSurface::read_own_params")?;
         let mut a_dir_flag: i32 = 0;
         let mut a_dev_flag: i32 = 0;
-        let mut a_curve: Handle<IgesDataIgesEntity> = Handle::default();
-        let mut another_curve: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_curve: Handle<dyn IgesDataEntityKind> = Handle::default();
+        let mut another_curve: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         if !pr.read_entity_status(ir, &pr.current(), &mut a_status, &mut a_curve, false)? {
             let mut msg148 = iges_msg("XSTEP_148");
@@ -205,8 +207,8 @@ impl IgesGeomToolRuledSurface {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolRuledSurface::own_shared")?;
-        iter.get_one_item(&ent_live.first_curve().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.second_curve().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.first_curve().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.second_curve().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -247,11 +249,11 @@ impl IgesGeomToolRuledSurface {
         let another_live = iges_live(another, "IgesGeomToolRuledSurface::own_copy")?;
         let ent_live = iges_live(ent, "IgesGeomToolRuledSurface::own_copy")?;
         let a_curve = tc
-            .transferred(&another_live.first_curve().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.first_curve().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let another_curve = tc
-            .transferred(&another_live.second_curve().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.second_curve().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let a_dir_flag: i32 = another_live.direction_flag();
         let a_dev_flag: i32 = if another_live.is_developable() { 1 } else { 0 };
         ent_live.init(&a_curve, &another_curve, a_dir_flag, a_dev_flag);

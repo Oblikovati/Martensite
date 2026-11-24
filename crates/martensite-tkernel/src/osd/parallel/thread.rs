@@ -19,7 +19,7 @@ use callback::ThreadEntry;
 
 /// The thread function (`void* (*)(void*)`): the opaque pointer-sized argument and
 /// result travel as `usize`; `fn double(data: usize) -> usize { data * 2 }`.
-pub type ThreadFunction = fn(usize) -> usize;
+pub(crate) type ThreadFunction = fn(usize) -> usize;
 
 /// One started thread, shared by the `OsdThread` copies that refer to it.
 struct RunningThread {
@@ -171,7 +171,7 @@ impl OsdThread {
         true
     }
     /// Lets the thread run on unjoined, for every copy; `thread.detach()`.
-    pub fn detach(&self) {
+    fn detach(&self) {
         if let Some(thread) = self.thread.write().take() {
             // Dropping the JoinHandle is pthread_detach.
             drop(thread.handle().take());

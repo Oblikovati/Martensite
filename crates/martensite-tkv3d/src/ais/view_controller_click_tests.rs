@@ -4,21 +4,19 @@ use crate::v3d::V3dViewSource;
 use crate::v3d::V3dViewer;
 use martensite_tkernel::{
     ncollection::Vec2,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkservice::null_driver::NullGraphicDriver;
 pub(super) struct ClickPauseRecorder {
-    transient: StandardTransient,
     base: AisAnimationBase,
     pauses: SharedState<i32>,
     fail_pause: bool,
 }
 martensite_tkernel::impl_transient!(ClickPauseRecorder,"ClickPauseRecorder",
-    dyn AisAnimationSource,transient,interfaces:[dyn AisAnimationSource]);
+    dyn AisAnimationSource,interfaces:[dyn AisAnimationSource]);
 impl ClickPauseRecorder {
     pub(super) fn new(fail_pause: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisAnimationBase::new("click"),
             pauses: SharedState::new(0),
             fail_pause,

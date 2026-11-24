@@ -2,12 +2,13 @@
 use super::SelectMgrFilter;
 use martensite_tkernel::{
     ncollection::{List, ListCursor},
-    standard::{Failure, Handle, HandleObserver, SharedState},
+    standard::{Failure, Handle, SharedState},
 };
 use std::sync::Arc;
 
 type FilterHandle = Handle<dyn SelectMgrFilter>;
-type FilterList = List<FilterHandle>;
+type FilterEntry = Arc<FilterHandle>;
+type FilterList = List<Option<FilterEntry>>;
 #[path = "stored_filters_clear.rs"]
 mod clear;
 
@@ -56,8 +57,8 @@ impl SelectMgrStoredFilters {
 
     /// Preserve duplicate source entries; `filters.add(&filter)`.
     pub(super) fn add(&self, filter: &FilterHandle) {
-        let retained = filter.clone();
-        self.collection.write().filters.append(retained);
+        let retained = Arc::new(filter.clone());
+        self.collection.write().filters.append(Some(retained));
     }
 
     /// Remove only the first equal source handle, dropping it unlocked; `filters.remove(&filter)`.
@@ -97,7 +98,8 @@ fn slot_match(
     let matched = visible
         && cursor
             .value(&state.filters)
-            .is_some_and(|value| value == filter);
+            .and_then(Option::as_ref)
+            .is_some_and(|value| value.as_ref() == filter);
     (matched, visible)
 }
 
@@ -132,7 +134,7 @@ fn checked_removal(state: &StoredFilterState, cursor: ListCursor) -> Result<(), 
 fn remove_first(
     state: &mut StoredFilterState,
     filter: &FilterHandle,
-) -> Result<Option<FilterHandle>, Failure> {
+) -> Result<Option<FilterEntry>, Failure> {
     let Some(mut cursor) = matching_cursor(state, filter) else {
         return Ok(None);
     };
@@ -145,10 +147,17 @@ fn remove_first(
         .filters
         .remove(&mut cursor)
         .expect("cursor invalid; expected matched removable slot");
-    Ok(Some(removed))
+    Ok(removed)
 }
 
-/// An owned live cursor whose yielded leases retain storage without adding intrusive ownership.
+/// An owned live cursor whose leases share a stored handle without another target owner.
+/// After removing the slot, its last lease keeps one actual owner until it drops (#592).
+/// This replaces the former zero-count storage observer without a synthetic owner count.
+///
+/// Each lease clones the entry's outer `Arc`, so iteration leaves the target count unchanged
+/// while the list still holds the entry. Only after Remove or Clear takes the entry out of the
+/// list, and every other owner has dropped, is the lease the target's one real inner owner;
+/// the target then retires when that lease drops, not when Remove or Clear returns.
 ///
 /// Example: `let first = filters.iter().next();`. Each step takes a short read lock; no
 /// lock survives into callbacks. Concurrent mutation is memory-safe, with per-step visibility;
@@ -162,7 +171,7 @@ pub struct SelectMgrStoredFilterIter {
 
 impl SelectMgrStoredFilterIter {
     /// Report a clear-invalidated traversal without exposing staged slots; `cursor.try_next()?`.
-    pub fn try_next(&mut self) -> Result<Option<HandleObserver<dyn SelectMgrFilter>>, Failure> {
+    pub fn try_next(&mut self) -> Result<Option<Arc<Handle<dyn SelectMgrFilter>>>, Failure> {
         if self.completed {
             return Ok(None);
         }
@@ -174,14 +183,18 @@ impl SelectMgrStoredFilterIter {
             self.position.next(&state.filters);
         }
         self.yielded = true;
-        let observed = self.position.value(&state.filters).map(Handle::observe);
+        let observed = self
+            .position
+            .value(&state.filters)
+            .and_then(Option::as_ref)
+            .cloned();
         self.completed = observed.is_none();
         Ok(observed)
     }
 }
 
 impl Iterator for SelectMgrStoredFilterIter {
-    type Item = HandleObserver<dyn SelectMgrFilter>;
+    type Item = Arc<Handle<dyn SelectMgrFilter>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Standard Iterator cannot return the typed traversal failure; retain its payload on panic.

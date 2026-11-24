@@ -17,11 +17,11 @@ use std::f64::consts::PI;
 /// for its basis, moved by the face location.
 fn located_plane(f: &Face) -> Result<Option<martensite_tkmath::gp::Plane3>, Failure> {
     let (mut s, loc) = BRepTool::surface_with_location(f)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     if let Some(trimmed) = trimmed.get() {
         s = trimmed.basis_surface();
     }
-    let plane: Handle<GeomPlane> = s.cast();
+    let plane: Handle<GeomPlane> = s.downcast();
     Ok(plane
         .get()
         .map(|p| p.pln().transformed(loc.transformation())))
@@ -48,7 +48,7 @@ pub(super) fn to_fuse_edges(e1: &Edge, e2: &Edge) -> Result<bool, Failure> {
     }
     let (c1, _, _) = basis_curve(e1)?;
     let (c2, _, _) = basis_curve(e2)?;
-    let (l1, l2) = (c1.cast::<GeomLine>(), c2.cast::<GeomLine>());
+    let (l1, l2) = (c1.downcast::<GeomLine>(), c2.downcast::<GeomLine>());
     let (Some(l1), Some(l2)) = (l1.get(), l2.get()) else {
         return Ok(false);
     };
@@ -90,10 +90,10 @@ pub(super) fn new_parameter(
 ) -> Result<f64, Failure> {
     let p = BRepTool::pnt(new_vtx)?;
     let (c, _, _) = basis_curve(edg)?;
-    if let Some(line) = c.cast::<GeomLine>().get() {
+    if let Some(line) = c.downcast_ref::<GeomLine>() {
         return Ok(elclib::line_parameter(line.lin().position(), p));
     }
-    let circle = c.cast::<GeomCircle>();
+    let circle = c.downcast::<GeomCircle>();
     let Some(circle) = circle.get() else {
         return Ok(0.);
     };

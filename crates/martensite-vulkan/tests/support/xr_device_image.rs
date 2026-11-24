@@ -1,15 +1,11 @@
 //! Named no-I/O source preserves the actual XR texture delegation in rendering fixtures.
-use martensite_tkernel::{
-    standard::{Handle, StandardTransient},
-    tcollection::AsciiString,
-};
+use martensite_tkernel::{standard::Handle, tcollection::AsciiString};
 use martensite_tkservice::image::*;
 pub struct XrCaptureImage {
-    transient: StandardTransient,
     base: ImageTextureBase,
-    image: Handle<ImagePixMap>,
+    image: Handle<dyn ImagePixMapObject>,
 }
-martensite_tkernel::impl_transient!(XrCaptureImage,"Martensite_XrCaptureImage",dyn ImageTextureSource,transient,interfaces:[dyn ImageTextureSource]);
+martensite_tkernel::impl_transient!(XrCaptureImage,"Martensite_XrCaptureImage",dyn ImageTextureSource, interfaces:[dyn ImageTextureSource]);
 impl XrCaptureImage {
     /// Supply deterministic pixels without a decoder; `XrCaptureImage::new()`.
     pub fn new() -> Self {
@@ -25,9 +21,8 @@ impl XrCaptureImage {
         ));
         image.set_top_down(true);
         Self {
-            transient: StandardTransient::default(),
             base: ImageTextureBase::from_file(&AsciiString::from("Martensite-XR-capture")),
-            image,
+            image: image.into_upcast(),
         }
     }
 }
@@ -36,7 +31,10 @@ impl ImageTextureSource for XrCaptureImage {
         // The constructor snapshots the native source identity and keeps this source alive.
         &self.base
     }
-    fn read_image(&self, _formats: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn read_image(
+        &self,
+        _formats: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn ImagePixMapObject> {
         // No external decoding should affect the renderer differential fixture.
         self.image.clone()
     }

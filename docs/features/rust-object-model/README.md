@@ -1,0 +1,208 @@
+# Rust-native object model
+
+The maintainer approved the migration on 2026-11-21.
+Tracking issue: #592.
+
+Martensite's object model copies C++: classes inherit by embedding their parent struct
+(`parent: StandardTransient`), abstract classes are traits, and `Handle<T>` stores a
+type-erased `Arc<dyn Transient>` with OCCT's intrusive reference count beside it. Every
+access must find the `&T` again at run time (a `TypeId` walk through the embedded parents,
+or a search in a table of interface casters), and every copy updates two counts. This
+feature replaces that with Rust's own model: plain structs in `Arc<T>`, traits in
+`Arc<dyn Trait>`, compile-time upcasts and `Any` downcasts.
+
+The migration started in `martensite-tkernel` and moved through the toolkits in
+dependency order. Pull request #593 integrates the complete migration into
+`release/next`. A release and its version require separate maintainer approval.
+
+## Why
+
+The parity work of #583 measured `tkernel` against OCCT 8.0 `TKernel`
+([inventory](../tkernel-occt-parity/README.md)). Handles were 3-5 times slower than OCCT.
+Two designs were measured on the same operations, in one process, on CPUs 8-15, median of 7
+runs, Linux x86_64, release:
+
+- Option 1 keeps the current API and stores the projected pointer in each handle (branch
+  `perf/585-handle-count`, parked).
+- Option 3 is the Rust-native model described here.
+
+| Operation | Option 1 (ns) | Option 3 (ns) |
+| --- | ---: | ---: |
+| Create a concrete object (and drop it) | 42.9 | 14.2 |
+| Clone and drop an abstract handle | 21.9 | 9.9 |
+| Upcast to an abstract handle | 24.4 | 9.6 |
+| Down-cast to a new handle | 16.5 | 10.6 |
+| Down-cast by reference | 3.8 | 2.6 |
+| Virtual call through an abstract handle | 1.09 | 2.61 |
+| Kind check | 1.33 | 2.62 |
+| `dynamic_type` | 1.11 | 2.57 |
+| `get` on a concrete handle | 0.22 | 0.21 |
+| Mixed workload, per curve | 124 | 55 |
+
+The mixed workload builds a million curves of two classes, evaluates each, copies the set
+and counts one class by down-casting. Handle sizes: option 1 40 bytes for a `dyn` handle,
+option 3 16 bytes. Option 3 is slower on access through `Arc<dyn Trait>` because `std::sync::Arc`
+reads the object's alignment from the vtable to find the data; a custom `Arc` with a fixed
+data offset removes that.
+
+A census counted the handle operations of two real workloads (temporary counters on the
+handle API, debug build, CI settings):
+
+| Operation | Cone-text attachment (#419), 57 s | Complex Boolean fuse, 115 cases, 9 s |
+| --- | ---: | ---: |
+| `get`, concrete handle | 211.0 M | 1.56 M |
+| clone | 95.3 M | 0.83 M |
+| drop (not the last) | 87.1 M | 0.87 M |
+| `get`, `dyn` handle | 85.3 M | 1.02 M |
+| cast | 15.9 M | 0.17 M |
+| observe | 9.2 M | 0.12 M |
+| `is_instance` and `is_kind` | 6.5 M | 0.07 M |
+| create (with its last drop) | 2.6 M | 0.05 M |
+| `dynamic_type` | 1.4 M | 0.02 M |
+
+Weighted by the costs above, handle work in the cone-text run takes 2,696 ms in option 1
+and 1,137 ms in option 3. Option 3 saves about 1,700 ms on clone, cast, create and observe and
+loses about 140 ms on `dyn` access and kind checks. The Boolean fuse cases give the same ratio
+(26.0 ms against 11.3 ms). By count, the operations where option 3 is slower are 22-29% of
+all handle operations; by time they are about a tenth of what option 3 saves.
+
+## Target model in `tkernel`
+
+These are the design decisions. Names are proposals; keep each public name distinct and
+greppable.
+
+- `Handle<T>`: a nullable shared pointer, a newtype over `Option<Arc<T>>`, 8 bytes for a
+  concrete `T` and 16 for `dyn Trait`. Equality, ordering and hashing compare the object
+  address (`Arc::ptr_eq`), because OCCT maps key handles by identity. Clone and drop are one
+  atomic update each.
+- Upcast is a compile-time coercion: `Handle<Line>` to `Handle<dyn Curve>` through the
+  `Arc` coercion, wrapped as `handle.upcast::<dyn Curve>()` (a small per-trait impl, or a
+  closure helper such as `handle.map_arc(|arc| arc)`), because `CoerceUnsized` is unstable.
+- Down-cast to a concrete class goes through `Any`: every transient trait has `Any` as a
+  supertrait, so `Arc<dyn Trait>` upcasts to `Arc<dyn Any + Send + Sync>` and
+  `Arc::downcast::<C>()` checks one `TypeId`. A borrowed form (`downcast_ref`) costs no count.
+- Cross-cast to another abstract trait (for example `dyn GeomCurve` to
+  `dyn GeomBoundedCurve`) is the only case that needs a table: each class declares the traits
+  it implements, and the cast looks them up once per cast, never per access. Prefer trait
+  upcasting (sub-trait to super-trait is a compile-time coercion) where the hierarchy allows.
+- `Transient`: `Any + Send + Sync` plus `dynamic_type() -> &'static RuntimeType` and the
+  provided `is_kind`, `is_kind_name`, `is_instance`. No embedded `StandardTransient`, no
+  `project`, no `transient_base`, no `delete` hook, no intrusive count.
+- `RuntimeType`: a static descriptor per class (name, parent, size, `TypeId`), returned as
+  `&'static RuntimeType` and cached per class (one atomic load). Keep the name registry,
+  because persistence (`storage`, `fsd`) and `is_kind_name` look classes up by name. Descriptor
+  handles (`Handle<RuntimeType>`) become `&'static RuntimeType`, so `Handle::from_static` goes.
+- `WeakHandle<T>`: a newtype over `std::sync::Weak<T>`. `HandleObserver` and the other
+  non-counting views become borrows (`&Handle<T>` or `&T`).
+- `ref_count` becomes `Arc::strong_count`. OCCT's `GetRefCount` excludes const-reference
+  upcasts and raw pointers (`Standard_Handle.hxx`); check each caller of `ref_count` against
+  the OCCT code it ports and keep its intent (most are copy-on-write tests).
+- Concrete classes with subclasses (`StandardTransient` as the universal root,
+  `AllocatorObject`, the message alerts) become a trait plus concrete types, or composition.
+  `Handle<StandardTransient>` used as "any object" becomes `Handle<dyn Transient>`.
+- Class declaration: one short declarative macro or a manual impl per class gives the
+  descriptor and the declared traits. The maintainer allows removing macros where they limit
+  the design.
+- Optional: a project-owned `Arc` with a fixed data offset (as `triomphe` does) to bring
+  `dyn` access to the cost of a concrete one. Measure first; it needs `unsafe` in `tkernel`
+  under the crate's exception.
+
+## Callback ownership
+
+TKV3D keeps a callback target alive until the callback returns, even if application code
+replaces its slot. `ref_count` includes any temporary Arc owner used for that call. Code
+running inside a callback should use the count as a snapshot of Rust ownership.
+
+A reentrant texture setter releases each displaced pixmap while the texture slot still
+identifies that pixmap. A destructor can inspect it at strong count zero and make scoped
+setter calls. The outer setter then publishes its requested value. The Rust regression
+fixtures record these counts and the additional destructor that runs when Rust releases
+the owner OCCT leaked. The OCCT captures remain available for comparison.
+
+## Related API changes
+
+The accepted API changes of #583 still apply and are best done in the same pass: public items
+that no other toolkit calls become crate-private (#591, list in
+[consumed-public-api.tsv](../tkernel-occt-parity/consumed-public-api.tsv)),
+[`AsciiString` loses its buffer identity](ASCII-STRING-MIGRATION.md) (#588),
+and measurements guide the raw `Sequence` and `List` node changes (#586).
+
+## Migration order
+
+Each step migrates one crate and runs its own suite once its workspace dependencies have
+migrated. The order below follows dependency levels from `cargo metadata`.
+
+1. `martensite-tkernel` (`martensite-cmath` has no object model)
+2. `tkmath`, `process-policy`, `tkcdf`, `tkexpress`
+3. `tkg2d`, `tkservice`, `tklcaf`
+4. `raster-core`, `tkg3d`, `tktobj`, `vulkan`
+5. `tkgeombase`
+6. `tkbrep`, `test-support`
+7. `tkgeomalgo`, `tkde`
+8. `tktopalgo`
+9. `tkhlr`, `tkshhealing`, `tkprim`, `tkhelix`
+10. `tkmesh`, `tkbo`, `topology-test-support`, `tkxsbase`
+11. `geometry-raster`, `tksketch`, `tkbool`, `tkcaf`, `tkv3d`, `tkxmesh`
+12. `boolean-cases`, `tkvcaf`, `tkfeat`, `tkfillet`, `tkmeshvs`
+13. `tkxcaf`, `tkoffset`
+14. `tkdeiges`, `tkrwmesh`, `tkdestep`, `tkdestl`
+15. `tkdeobj`, `tkdeply`
+
+`martensite-build` (the xtask driver) has no object model. The release candidate
+added `tksketch` after this migration was planned. Its normal dependencies
+include `tkbo` and `geometry-raster`. `tkv3d` uses it in tests.
+
+## Procedure per crate
+
+1. Convert the class declarations, casts, observers and weak references; replace
+   `Handle<StandardTransient>` with `Handle<dyn Transient>`.
+2. Keep observable behavior: output, traversal order (`tests/map_traversal_order.rs`), error
+   types and messages. When a ported behavior looks like a bug, check the OCCT source before
+   changing it (maintainer instruction).
+3. Build, lint and test only the toolkit under active migration. Reuse the
+   recorded results for completed toolkits. If a suite needs workspace
+   dev-dependencies that still use the old model, run that suite once those
+   dependencies have migrated. Run `occt-parity` when qualifying a `tkernel`
+   change.
+4. Commit each crate locally and integrate it into `feature/rust-object-model`
+   in dependency order.
+5. Report the measured effect to the maintainer: the parity table for `tkernel` steps, and
+   for geometry toolkits a release timing of a representative workload when one exists.
+
+Run crate-scoped checks during the migration. Before opening the integration PR,
+run `cargo xtask pr --base origin/release/next` for the full workspace gate.
+The [TKernel migration guide](TKERNEL-MIGRATION.md) shows how to convert class
+declarations, handles, and persistent objects.
+
+## Local verification
+
+TKBrep passed 684 tests, including 89 dataset cases and 16 binary location fixtures.
+Compared with `v0.13.1`, nine paired release runs on Linux x86-64 used 56.4% less time
+for a scoped edge read, 51.6% less for an owning copy, 51.9% less for traversal and
+31.6% less for a binary round trip. Peak RSS fell by 1.6–4.1% across the four cases.
+The 256-edge fixture serialized to identical bytes, and the scoped read added no
+strong TShape owner. `Shape` and `Edge` each went from 64 to 40 bytes.
+
+TKDE passed 65 tests, including the recorded native transfer and plugin lifecycle
+cases. Its 233-line replay fixture matches `v0.13.1` byte for byte.
+
+`martensite-process-policy` uses TKernel platform adapters and has no transient
+classes of its own. With the new TKernel ownership model at `5f4399a6`, its 13
+tests and documentation tests passed, and all-target Clippy passed with warnings
+denied. Its package source required no migration.
+
+The combined checkpoint `6cede265` passed 9,867 tests across `tkernel`, `tkmath`,
+`process-policy`, `tkcdf` and `tkexpress`, with eight existing ignores.
+All-target Clippy and the source unsafe inventory check passed on that checkpoint.
+
+## Risks and open points
+
+- Persistence reads and writes class names; the name registry must stay complete and
+  deterministic.
+- Recursive types (for example `units::Quantity` and `units::Unit`) need `Send`/`Sync` to come
+  from auto traits; an explicit `unsafe impl` with bounds on `T` overflows the trait solver.
+- `Arc::strong_count` counts temporary clones that OCCT's count does not; review callers.
+- Removing the `delete` hook: only a `tkernel` test overrides it today.
+- Peak memory: objects lose the 8-byte native counter and handles shrink, so memory should
+  fall; record it per step.
+- The branch lives long. Forward-merge `release/next` into it regularly.

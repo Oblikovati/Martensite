@@ -1,0 +1,67 @@
+{
+  "all_nine_asserted_successes": true,
+  "all_native_outputs_identical": true,
+  "all_public_evidence_identical": true,
+  "before": {
+    "api_seconds": [
+      3.743821219,
+      3.778889621,
+      3.774414419
+    ],
+    "median_api_seconds": 3.774414419,
+    "wall_seconds": [
+      3.75,
+      3.79,
+      3.78
+    ],
+    "median_wall_seconds": 3.78,
+    "peak_rss_kib": [
+      51140,
+      51328,
+      51360
+    ],
+    "median_peak_rss_kib": 51328
+  },
+  "after": {
+    "api_seconds": [
+      3.78706002,
+      3.709611647,
+      4.86130112
+    ],
+    "median_api_seconds": 3.78706002,
+    "wall_seconds": [
+      3.8,
+      3.72,
+      4.88
+    ],
+    "median_wall_seconds": 3.8,
+    "peak_rss_kib": [
+      51604,
+      51648,
+      51412
+    ],
+    "median_peak_rss_kib": 51604
+  },
+  "fixed": {
+    "api_seconds": [
+      3.683161061,
+      3.666095793,
+      3.728206596
+    ],
+    "median_api_seconds": 3.683161061,
+    "wall_seconds": [
+      3.69,
+      3.68,
+      3.74
+    ],
+    "median_wall_seconds": 3.69,
+    "peak_rss_kib": [
+      51300,
+      51532,
+      51484
+    ],
+    "median_peak_rss_kib": 51484
+  },
+  "unfixed_median_peak_rss_delta_kib": 276,
+  "fixed_median_peak_rss_delta_kib": 156
+}

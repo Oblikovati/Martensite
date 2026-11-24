@@ -2,8 +2,8 @@
 use martensite_tkernel::{standard::Handle, tcollection::AsciiString};
 use martensite_tklcaf::tdf::{
     Tdf, TdfAttribute, TdfAttributeIterator, TdfAttributeState, TdfChildIdIterator,
-    TdfChildIterator, TdfClosureTool, TdfCopyLabel, TdfData, TdfDataSet, TdfIdFilter, TdfLabel,
-    TdfReference, TdfRelocationTable, TdfTagSource, TdfTool, TdfTransaction,
+    TdfChildIterator, TdfClosureTool, TdfCopyLabel, TdfData, TdfDataSet, TdfDeltaSource,
+    TdfIdFilter, TdfLabel, TdfReference, TdfRelocationTable, TdfTagSource, TdfTool, TdfTransaction,
 };
 
 fn entry_of(label: &TdfLabel) -> String {
@@ -191,7 +191,7 @@ fn modification_outside_transactions_can_be_forbidden() {
     assert_eq!(error.exception_type(), "Standard_ImmutableObject");
     data.allow_modification(true);
     let source = TdfTagSource::set(&data.root()).unwrap();
-    let duplicate: Handle<dyn TdfAttribute> = Handle::new(TdfTagSource::new()).cast();
+    let duplicate: Handle<dyn TdfAttribute> = Handle::new(TdfTagSource::new()).into_upcast();
     assert_eq!(
         data.root()
             .add_attribute(&duplicate, true)
@@ -199,7 +199,7 @@ fn modification_outside_transactions_can_be_forbidden() {
             .exception_type(),
         "Standard_DomainError"
     );
-    let attached: Handle<dyn TdfAttribute> = source.cast();
+    let attached: Handle<dyn TdfAttribute> = source.into_upcast();
     let other = data.root().find_child(1, true).unwrap();
     assert_eq!(
         other

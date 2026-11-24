@@ -53,12 +53,12 @@ fn qualified_volume_allocation_dispatches_clear_without_recursive_allocation() {
 
 #[test]
 fn projection_borrows_original_field_without_acquiring_ownership() {
-    let image = image_allocation_probe();
-    let source: &dyn ImagePixMapSource = &image;
+    let image = martensite_tkernel::standard::Handle::new(image_allocation_probe());
+    let source: &dyn ImagePixMapSource = &*image;
     let base = image_pix_map_original_base(source).unwrap();
     assert!(std::ptr::eq(base, &image.base));
     assert_eq!(base.width(), 4);
-    assert_eq!(image.transient_base().ref_count(), 0);
+    assert_eq!(image.ref_count(), 1);
 }
 
 #[test]
@@ -77,9 +77,7 @@ fn declined_dynamic_allocation_preserves_pixels_and_reports_request() {
 
 #[test]
 fn missing_image_registration_reports_typed_dynamic_source_context() {
-    let source = MissingOriginalImage {
-        base: Default::default(),
-    };
+    let source = MissingOriginalImage {};
     let argument: &dyn ImagePixMapSource = &source;
     let error = image_pix_map_original_base(argument).err().unwrap();
     assert_eq!(error.operation, ImageSourceOperation::Project);
@@ -92,9 +90,7 @@ fn missing_image_registration_reports_typed_dynamic_source_context() {
 
 #[test]
 fn missing_base_clear_and_allocate_report_operation_and_request() {
-    let source = MissingOriginalImage {
-        base: Default::default(),
-    };
+    let source = MissingOriginalImage {};
     let clear_error = source.clear_image().unwrap_err();
     assert_eq!(clear_error.operation, ImageSourceOperation::Clear);
     let allocate_error = source.allocate_image(RGB_REQUEST).unwrap_err();

@@ -11,18 +11,20 @@ use std::f64::consts::FRAC_PI_2;
 
 #[test]
 fn point_distances_through_the_point_interface() {
-    let a: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(1.0, 1.0)).cast();
+    let a: Handle<dyn Geom2dPoint> = Handle::new(Geom2dCartesianPoint::new(1.0, 1.0)).into_upcast();
     let b = Handle::new(Geom2dCartesianPoint::from_pnt2d(Point2::new(4.0, 5.0)));
     assert_eq!((a.distance(&*b), a.square_distance(&*b)), (5.0, 25.0));
     assert_eq!((a.coord(), a.x(), a.y()), ((1.0, 1.0), 1.0, 1.0));
-    let copy: Handle<dyn Geom2dPoint> = a.copy().unwrap().cast();
+    let copy: Handle<dyn Geom2dPoint> = a.copy().unwrap().into_cast();
     assert_eq!(copy.pnt2d(), Point2::new(1.0, 1.0));
 }
 
 #[test]
 fn vector_interface_members() {
-    let v: Handle<dyn Geom2dVector> = Handle::new(Geom2dVectorWithMagnitude::new(3.0, 4.0)).cast();
-    let d: Handle<dyn Geom2dVector> = Handle::new(Geom2dDirection::new(0.0, 2.0).unwrap()).cast();
+    let v: Handle<dyn Geom2dVector> =
+        Handle::new(Geom2dVectorWithMagnitude::new(3.0, 4.0)).into_upcast();
+    let d: Handle<dyn Geom2dVector> =
+        Handle::new(Geom2dDirection::new(0.0, 2.0).unwrap()).into_upcast();
     assert_eq!(
         (v.coord(), v.x(), v.y(), v.magnitude()),
         ((3.0, 4.0), 3.0, 4.0, 5.0)

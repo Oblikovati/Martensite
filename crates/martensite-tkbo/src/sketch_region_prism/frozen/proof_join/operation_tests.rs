@@ -302,7 +302,7 @@ fn source_coefficients_changed_at_final_callback_refuse_and_keep_owned_replay() 
     let curve = martensite_tkbrep::brep::BRepTool::curve_with_location(&source)
         .unwrap()
         .curve
-        .cast::<GeomBezierCurve>();
+        .downcast::<GeomBezierCurve>();
     let mut current = 0;
     assert!(
         fixture

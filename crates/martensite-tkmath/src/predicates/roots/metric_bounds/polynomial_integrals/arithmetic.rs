@@ -72,7 +72,7 @@ pub(in super::super) fn native_plane() -> MetricEmbedding<2> {
         scale: 1.,
     }
 }
-pub(super) fn curve_integral(
+pub(in super::super) fn curve_integral(
     source: MetricCurve<'_, 2>,
     options: PolynomialIntegralOptions,
     cancelled: &mut impl FnMut() -> bool,

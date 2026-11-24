@@ -5,6 +5,8 @@ use martensite_tkernel::ncollection::Vec4;
 use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::aspect::AspectTypeOfTriedronPosition as Corner;
+use martensite_tkservice::graphic3d::Graphic3dArraySource;
+use martensite_tkservice::graphic3d::Graphic3dTransformPersSource;
 use martensite_tkservice::graphic3d::{
     Graphic3dArrayOfPrimitives, Graphic3dFrameStatsMembers as _, Graphic3dFrameStatsTimer as Timer,
     Graphic3dHorizontalTextAlignment as HAlign, Graphic3dRenderingParams,
@@ -22,8 +24,8 @@ const CHART_TIMERS: [(Timer, [u8; 4]); 4] = [
 
 /// The chart content in corner-relative pixels; `ChartContent::build(&stats, &params, [w, h])`.
 pub(crate) struct ChartContent {
-    pub bins: Handle<Graphic3dArrayOfPrimitives>,
-    pub frame_lines: Handle<Graphic3dArrayOfPrimitives>,
+    pub bins: Handle<dyn Graphic3dArraySource>,
+    pub frame_lines: Handle<dyn Graphic3dArraySource>,
     /// Label text, position and horizontal alignment, top label first.
     pub labels: [(String, Point3, HAlign); 3],
     pub label_vertical: VAlign,
@@ -107,9 +109,7 @@ pub(crate) fn chart_layout(
     }
 }
 
-fn chart_corner(
-    position: &Handle<martensite_tkservice::graphic3d::Graphic3dTransformPers>,
-) -> Option<Corner> {
+fn chart_corner(position: &Handle<dyn Graphic3dTransformPersSource>) -> Option<Corner> {
     let pers = position.get().filter(|pers| pers.is_trihedron_or_2d())?;
     pers.corner_2d().ok()
 }
@@ -136,7 +136,7 @@ fn chart_bins(
     stats: &RenderFrameStats,
     layout: &ChartLayout,
     max_duration: f64,
-) -> Handle<Graphic3dArrayOfPrimitives> {
+) -> Handle<dyn Graphic3dArraySource> {
     let frames = stats.data_frames();
     let count = frames.len();
     let quads = count * CHART_TIMERS.len();
@@ -159,7 +159,7 @@ fn chart_bins(
             stacked_heights(times, max_duration, layout.bin[1]),
         );
     }
-    Handle::new(array)
+    Handle::new(array).into_upcast()
 }
 
 /// Bottom and top of each timer bar: CPU timers stack, the elapsed bar starts at zero.
@@ -207,7 +207,7 @@ fn add_colored(array: &Graphic3dArrayOfPrimitives, [x, y]: [f64; 2], color: [u8;
 }
 
 /// The top and bottom chart borders as two white segments.
-fn chart_frame_lines(layout: &ChartLayout) -> Handle<Graphic3dArrayOfPrimitives> {
+fn chart_frame_lines(layout: &ChartLayout) -> Handle<dyn Graphic3dArraySource> {
     let array =
         Graphic3dArrayOfPrimitives::new(Kind::Segments, 4, 0, 0, 0).expect("chart frame lines");
     let [x, y] = layout.offset.map(f64::from);
@@ -218,7 +218,7 @@ fn chart_frame_lines(layout: &ChartLayout) -> Handle<Graphic3dArrayOfPrimitives>
         let point = Point3::new(f64::from(px as f32), f64::from(py as f32), 0.0);
         array.add_vertex_pnt(&point).expect("chart frame vertex");
     }
-    Handle::new(array)
+    Handle::new(array).into_upcast()
 }
 
 fn chart_labels(layout: &ChartLayout, max_duration: f64) -> [(String, Point3, HAlign); 3] {

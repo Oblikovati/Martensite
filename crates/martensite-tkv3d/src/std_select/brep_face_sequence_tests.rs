@@ -25,16 +25,18 @@ impl BrepCurveSlotMutation for FaceSequenceAppendProbe {
         if std::mem::replace(&mut *self.appended.write(), true) {
             return;
         }
-        let owner = self.owner.observe();
-        self.record("before", owner.ref_count());
-        let entity =
-            Handle::new(Select3DSensitivePoint::new(&owner, Point3::new(7., 8., 9.))).cast();
+        self.record("before", self.owner.ref_count());
+        let entity = Handle::new(Select3DSensitivePoint::new(
+            &self.owner.upgrade(),
+            Point3::new(7., 8., 9.),
+        ))
+        .into_upcast();
         self.sequence.write().append(entity);
-        self.record("appended", owner.ref_count());
+        self.record("appended", self.owner.ref_count());
     }
 }
 impl FaceSequenceAppendProbe {
-    fn record(&self, phase: &str, count: i32) {
+    fn record(&self, phase: &str, count: usize) {
         let length = self.sequence.read().len();
         writeln!(
             &mut *self.rows.write(),

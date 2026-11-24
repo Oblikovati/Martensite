@@ -2,8 +2,8 @@
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkmesh::brep_mesh::{
-    BRepMeshDiscretAlgoFactory as _, BRepMeshDiscretRoot as _, BRepMeshIncrementalMesh,
-    default_factory, factories, find_factory, unregister_factory,
+    BRepMeshDiscretAlgoFactory, BRepMeshDiscretRoot as _, BRepMeshIncrementalMesh, default_factory,
+    factories, find_factory, unregister_factory,
 };
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeBox;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape as _;
@@ -62,10 +62,13 @@ fn unregistering_removes_it_from_the_registry() {
 
 #[test]
 fn creates_an_unperformed_mesher_with_the_deflections_and_the_shape() {
+    let _turn = REGISTRY_TURN.lock().unwrap();
     let factory = XBRepMeshFactory::new();
-    let algorithm = factory.create_algorithm(&box_shape(), 0.1, 0.5);
-    let mesher = algorithm.cast::<BRepMeshIncrementalMesh>();
-    assert!(!mesher.is_null());
+    let shape = box_shape();
+    let algorithm = factory.create_algorithm(&shape, 0.1, 0.5);
+    let mesher = algorithm.downcast_ref::<BRepMeshIncrementalMesh>().unwrap();
+    assert_eq!(algorithm.ref_count(), 1);
+    assert!(mesher.shape().is_equal(&shape));
     assert!(!mesher.is_done());
     let parameters = mesher.parameters();
     assert_eq!(parameters.deflection, 0.1);
@@ -75,8 +78,26 @@ fn creates_an_unperformed_mesher_with_the_deflections_and_the_shape() {
 
 #[test]
 fn the_created_mesher_meshes_a_box() {
+    let _turn = REGISTRY_TURN.lock().unwrap();
     let factory = XBRepMeshFactory::new();
     let algorithm = factory.create_algorithm(&box_shape(), 0.1, 0.5);
     algorithm.perform(&ProgressRange::default()).unwrap();
     assert!(algorithm.is_done());
+}
+
+#[test]
+fn factory_interface_retains_actual_owner_and_native_descriptor() {
+    let _turn = REGISTRY_TURN.lock().unwrap();
+    unregister_factory(XBREPMESH_FACTORY_NAME);
+    let factory = XBRepMeshFactory::new();
+    let view = factory.upcast::<dyn BRepMeshDiscretAlgoFactory>();
+    assert_eq!(factory.ref_count(), 3);
+    assert_eq!(view.object_address(), factory.object_address());
+    assert!(view.downcast_ref::<XBRepMeshFactory>().is_some());
+    assert_eq!(view.dynamic_type().unwrap().name(), "XBRepMeshFactory");
+    assert!(view.is_kind_name("BRepMesh_DiscretAlgoFactory"));
+    drop(factory);
+    unregister_factory(XBREPMESH_FACTORY_NAME);
+    assert_eq!(view.ref_count(), 1);
+    assert_eq!(view.name(), XBREPMESH_FACTORY_NAME);
 }

@@ -5,7 +5,6 @@ use martensite_tkernel::ncollection::{HArray1, Vec4};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::aspect::AspectTypeOfMarker;
 use martensite_tkservice::graphic3d::Graphic3dMarkerImage;
-use martensite_tkservice::image::ImagePixMap;
 
 /// The marker type of a corpus value (-1..=13).
 fn marker_type(value: i32) -> AspectTypeOfMarker {
@@ -30,7 +29,7 @@ fn marker_type(value: i32) -> AspectTypeOfMarker {
     all[(value + 1) as usize]
 }
 
-fn pixmap(output: &Output, image: &Handle<ImagePixMap>) {
+fn pixmap(output: &Output, image: &Handle<dyn martensite_tkservice::image::ImagePixMapObject>) {
     flag(output, image.is_some());
     let Some(image) = image.get() else { return };
     int(output, image.width() as i32);

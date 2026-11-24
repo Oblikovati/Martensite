@@ -1,0 +1,538 @@
+{
+  "status": "diagnostic-feasibility-only",
+  "scope": "Same curved holed planned sides and topology; alternative cap carriers/pcurves; native validation and estimate. Excludes full analytic geometric certification and no host-pressure admission. Analytic probe still constructs discarded rational caps before replacement. Sampled traces are not acceptance evidence.",
+  "source_sha256": "8c44fa8f0c546efd71f51f7c7bcb64d9f0bdd97b371e094cee70dbb42375309b",
+  "executable_sha256": "4424eb93dffbc839eadea7e1aedc7afc552cafd4c7ac29585e38b8ceaa231594",
+  "rows": [
+    {
+      "variant": "rational",
+      "exit_code": 0,
+      "elapsed_s": 19.69,
+      "user_s": 19.67,
+      "system_s": 0.01,
+      "peak_rss_kib": 85136,
+      "validation_seconds": 19.414584256,
+      "native_volume": 0.04587909807536661,
+      "native_volume_integration_estimate": 2.7629802172778625e-13,
+      "sampled_max_cap_trace": null,
+      "evidence_kind": "diagnostic timing/RSS; sampled geometry and native search validation, not certified acceptance",
+      "validation_modes": [
+        "Topology:Exact:Passed",
+        "Geometry:Sampled:Passed",
+        "SelfIntersection:NativeSearch:Passed",
+        "Tolerance:Sampled:Passed"
+      ]
+    },
+    {
+      "variant": "analytic",
+      "exit_code": 0,
+      "elapsed_s": 5.76,
+      "user_s": 5.74,
+      "system_s": 0.01,
+      "peak_rss_kib": 77980,
+      "validation_seconds": 5.451341497,
+      "native_volume": 0.04587909804414661,
+      "native_volume_integration_estimate": 5.3815463873581386e-17,
+      "sampled_max_cap_trace": 5.3693090078287925e-08,
+      "evidence_kind": "diagnostic timing/RSS; sampled geometry and native search validation, not certified acceptance",
+      "validation_modes": [
+        "Topology:Exact:Passed",
+        "Geometry:Sampled:Passed",
+        "SelfIntersection:NativeSearch:Passed",
+        "Tolerance:Sampled:Passed"
+      ]
+    },
+    {
+      "variant": "analytic",
+      "exit_code": 0,
+      "elapsed_s": 5.67,
+      "user_s": 5.65,
+      "system_s": 0.01,
+      "peak_rss_kib": 78460,
+      "validation_seconds": 5.349001881,
+      "native_volume": 0.04587909804414661,
+      "native_volume_integration_estimate": 5.3815463873581386e-17,
+      "sampled_max_cap_trace": 5.3693090078287925e-08,
+      "evidence_kind": "diagnostic timing/RSS; sampled geometry and native search validation, not certified acceptance",
+      "validation_modes": [
+        "Topology:Exact:Passed",
+        "Geometry:Sampled:Passed",
+        "SelfIntersection:NativeSearch:Passed",
+        "Tolerance:Sampled:Passed"
+      ]
+    },
+    {
+      "variant": "rational",
+      "exit_code": 0,
+      "elapsed_s": 19.88,
+      "user_s": 19.86,
+      "system_s": 0.02,
+      "peak_rss_kib": 84084,
+      "validation_seconds": 19.596602956,
+      "native_volume": 0.04587909807536661,
+      "native_volume_integration_estimate": 2.7629802172778625e-13,
+      "sampled_max_cap_trace": null,
+      "evidence_kind": "diagnostic timing/RSS; sampled geometry and native search validation, not certified acceptance",
+      "validation_modes": [
+        "Topology:Exact:Passed",
+        "Geometry:Sampled:Passed",
+        "SelfIntersection:NativeSearch:Passed",
+        "Tolerance:Sampled:Passed"
+      ]
+    }
+  ],
+  "revision": "698820f038c2a222e98f08248ac303af54d422b1 with preserved unfinished cone working-tree changes",
+  "date": "2026-11-18",
+  "platform": "Linux x86_64, Rust1.99.0, unoptimized test profile, debug0, strip debuginfo, incremental0",
+  "protocol": {
+    "order": [
+      "rational",
+      "analytic",
+      "analytic",
+      "rational"
+    ],
+    "warmups": 0,
+    "timing": "Separate processes; /usr/bin/time wall,user,system,peakRSS; no discarded trials",
+    "workload": "Existing gate::requests()[0]: curved outer boundary and one hole;42 planned spans, identical side construction, depths[0.1,0.2], semiangle0.5, native tolerance1e-5",
+    "analytic_carrier": "reference slant4; reference radius=4*sin(alpha)+depth*cos(alpha); axis z=4*cos(alpha)-depth*sin(alpha); U=chart_center+2*atan(q(t)), V=L(t)-4",
+    "pcurve": "Single cubic endpoint Hermite approximation of U from existing cubic q, exact cubic L minus reference slant; no proof of full-interval error",
+    "validation": "same_parameter_shape then pipeline::ordered_checks then native volume estimate; no certificate shortcuts"
+  },
+  "census": {
+    "vertices": 84,
+    "edges": 126,
+    "faces": 44,
+    "loops": 46,
+    "shells": 1,
+    "genus": 1
+  },
+  "limitations": [
+    "No host-pressure admission or randomized larger campaign",
+    "Full original operation not measured; analytic proof pipeline not implemented",
+    "Analytic path constructs discarded rational caps first",
+    "Existing rational and new analytic cap pcurves differ, so archives are not expected byte-identical",
+    "Five-second debug operation gate remains unmet",
+    "No cone multichart/text qualification",
+    "Temporary probe implementation removed after investigation; source/executable hashes retained only for provenance"
+  ],
+  "profile": {
+    "user_samples": 598,
+    "lost_samples": 0,
+    "callchain_qualification": "Stripped build did not recover useful parent callchains; no attribution conclusion from this run"
+  },
+  "component_539_diagnostic": {
+    "status": "failed-public-operation-diagnostic",
+    "component_commit": "77851970383668f17ae08f1e6cf5f206436ac101",
+    "source_scope": "Component #539 with the unfinished wrapped-analytic-cone working-tree changes.",
+    "public_test": "surface_sketch::wrapped_profile::operation::cone::tests::completed::curved_holed_cone_completes_with_independent_measure_bounds_and_owned_exports",
+    "public_entry": "crate::surface_sketch::normal_extrude_cone_profile",
+    "execution": "Direct test executable with --exact and --nocapture, timed with /usr/bin/time.",
+    "build_profile": {
+      "cargo_profile": "test, unoptimized package defaults with existing per-package overrides",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/martensite-analytic-cone-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+        "CARGO_PROFILE_TEST_STRIP": "debuginfo"
+      },
+      "rustflags_override": null,
+      "global_opt_level_override": null,
+      "preserved_dev_package_opt_levels": {
+        "sha2": 3,
+        "num-bigint": 3,
+        "martensite-tkmath": 3,
+        "martensite-tkbo": 1
+      }
+    },
+    "failed_run": {
+      "exit_code": 101,
+      "elapsed_s": 6.73,
+      "user_s": 6.72,
+      "system_s": 0.0,
+      "peak_rss_kib": 42268,
+      "actual_uv_planar_admission": "passed with the requested BernsteinV3 engine",
+      "failure": {
+        "leaf": "ConicalMaterial",
+        "cause": "Arithmetic::WorkLimit",
+        "span_index": 12,
+        "curve_id": 4,
+        "dyadic_level": 2,
+        "dyadic_index": 1,
+        "completed_operations": 79086,
+        "effective_operation_limit": 79086
+      },
+      "requested_arithmetic": {
+        "fractional_bits": 128,
+        "max_operations": 1000000,
+        "limits_changed": false
+      },
+      "unreached": [
+        "reference volume",
+        "conditional proxy flux",
+        "authored volume",
+        "global reference-body gate",
+        "completed native validation and publication"
+      ],
+      "qualification": "The public test refused after actual UV planar admission. Complete-operation and five-second performance acceptance remain open."
+    },
+    "separate_charge_probe": {
+      "purpose": "Count each actual arithmetic charge in a separate run of the same public test.",
+      "charge_entries": 67,
+      "before_material_operations": 920914,
+      "material_operations": 79086,
+      "final_operations": 1000000,
+      "stages": [
+        {
+          "leaf": "source sector",
+          "charges": 1,
+          "operations": 541
+        },
+        {
+          "leaf": "source radius",
+          "charges": 8,
+          "operations": 4057
+        },
+        {
+          "leaf": "accepted fit boundaries",
+          "charges": 21,
+          "operations": 180428
+        },
+        {
+          "leaf": "refused fit boundaries",
+          "charges": 13,
+          "operations": 27504
+        },
+        {
+          "leaf": "source clearance",
+          "charges": 1,
+          "operations": 724
+        },
+        {
+          "leaf": "paired cap trims",
+          "charges": 21,
+          "operations": 631889
+        },
+        {
+          "leaf": "joins",
+          "charges": 1,
+          "operations": 75771
+        },
+        {
+          "leaf": "material failure",
+          "charges": 1,
+          "operations": 79086
+        }
+      ],
+      "paired_trim_distribution": {
+        "constant_u_pairs": 1,
+        "constant_u_operations": 5149,
+        "other_pairs": 20,
+        "operations_per_other_pair": 31337
+      },
+      "frozen_boundary_charge_entries": 0,
+      "counter_double_charge_observed": false,
+      "restoration": {
+        "probe_removed": true,
+        "source_restored_byte_for_byte": true,
+        "preprobe_and_restored_sha256": "f8289905aa2bc7bb3ed6c777cac74c117561fd870f3f0505b2bd65887ff54f68"
+      },
+      "timing_used_for_acceptance": false
+    },
+    "leaf_profile": {
+      "event": "cpu-clock:u",
+      "samples": 26244,
+      "lost_samples": 42,
+      "leaf_percentages": {
+        "num_bigint::biguint::division::div_rem_core": 43.54,
+        "num_bigint::biguint::shift::biguint_shl2": 8.25,
+        "num_bigint::biguint::shift::biguint_shr2": 6.34
+      },
+      "parent_unwinding": "unavailable",
+      "stage_cpu_attribution": false,
+      "qualification": "Leaf samples do not identify which operation stage consumed the CPU time."
+    },
+    "retained_findings": [
+      "The arithmetic ledger charged accepted and refused work once under the unchanged aggregate limit.",
+      "Join certification prepares each contour first projection again for its closing join. The aggregate join receipt does not identify the cost of those repeated preparations.",
+      "Material development uses phase (U-origin)*sin(alpha); paired cap trims use U. Their trigonometric inputs differ, so their complete receipts cannot be substituted.",
+      "The equal 31337-operation trim counts describe different actual inputs and do not justify receipt reuse across spans."
+    ],
+    "raw_perf_data_in_repository": false,
+    "temporary_probe_source_in_repository": false
+  },
+  "post_540_diagnostic": {
+    "status": "post-540-correctness-pass-with-open-performance-and-qualification-gates",
+    "source": {
+      "head": "cb4ff7693c5e2f4f557c26518d315c2498f11b0c",
+      "working_tree": "Preserved uncommitted wrapped-analytic-cone implementation and test changes; HEAD alone does not identify the measured source.",
+      "issue_540": "Actual native shell/wire orientation and keyed flux-use fixes were present in the passing public test.",
+      "issue_542": "Main-line fix in progress in a separate worktree; not qualified by these measurements."
+    },
+    "public_test": "surface_sketch::wrapped_profile::operation::cone::tests::completed::curved_holed_cone_completes_with_independent_measure_bounds_and_owned_exports",
+    "protocol": {
+      "build_profile": {
+        "cargo_profile": "test, unoptimized package defaults with existing per-package overrides",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/martensite-analytic-cone-target",
+          "CARGO_BUILD_JOBS": "2",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+          "CARGO_PROFILE_TEST_STRIP": "debuginfo"
+        },
+        "rustflags_override": null,
+        "global_opt_level_override": null,
+        "preserved_dev_package_opt_levels": {"sha2": 3, "num-bigint": 3, "martensite-tkmath": 3, "martensite-tkbo": 1}
+      },
+      "execution": "Direct exact public test executable with --nocapture; /usr/bin/time process measurements. Each disposable whole-operation probe ran once.",
+      "workload": "Same public curved outer contour and hole request, with 8 original curves and 21 retained spans; original planar proof CarrierV2 and actual UV proof BernsteinV3.",
+      "limits": {"fractional_bits": 128, "aggregate_arithmetic_operations": 1000000, "changed": false},
+      "timing_scope": "Diagnostic wall time includes probe overhead. Nested parent and child timers are not summed twice. Per-stage CPU attribution is unavailable.",
+      "acceptance": {"accepted_performance": false, "gate_a_qualified": false, "five_second_target": "unmet", "gates_b_and_c": "pending"}
+    },
+    "unprobed_public_pass": {
+      "exit_code": 0,
+      "api_seconds": 10.366436,
+      "process_wall_seconds": 10.39,
+      "user_seconds": 10.38,
+      "system_seconds": 0.0,
+      "peak_rss_kib": 54512,
+      "controls": "Completed result, actual cap/outer-side/hole normals, positive signed native volume, keyed flux flags and export/source isolation passed.",
+      "additional_controls": {"native_inward_and_caller_depth_names": {"passed": 1, "seconds": 0.17}, "indexed_and_legacy_coverage": {"passed": 31, "seconds": 0.25}},
+      "comparison_limit": "Earlier 6.092658-second output had the wrong signed body and failed its measure assertion; it is not an equivalent accepted baseline."
+    },
+    "whole_operation_stage_probe": {
+      "api_seconds": 9.135187,
+      "process": {"wall_seconds": 9.15, "user_seconds": 9.14, "system_seconds": 0.01, "peak_rss_kib": 55680},
+      "wall_hierarchy": {
+        "cone::execute_total": {
+          "elapsed_ns": 9135164078,
+          "children": {
+            "cone::input_capture": 249071,
+            "stage::Selection": 136182655,
+            "stage::Construction": 26983352,
+            "stage::Encoding": 7810963,
+            "stage::Coverage": 563092,
+            "stage::History": 310625,
+            "stage::Storage": 145426641,
+            "stage::Binding": 39072,
+            "stage::MemberChecks": 8807869471,
+            "stage::Budget": 7188390,
+            "stage::Completion": 891,
+            "cone::publication": 2229809
+          },
+          "unattributed_ns": 310046
+        },
+        "stage::Storage": {"elapsed_ns": 145426641, "children": {"storage::member_oriented_coverage": 1433293}, "unattributed_ns": 143993348},
+        "stage::MemberChecks": {"elapsed_ns": 8807869471, "children": {"member::certified_geometry": 5855987621, "member::native_ordered_checks_and_estimate": 2951848409}, "unattributed_ns": 33441},
+        "member::certified_geometry": {
+          "elapsed_ns": 5855987621,
+          "children": {"geometry::material": 5767715136, "geometry::reference_volume": 29993596, "geometry::proxy_flux": 44785555, "geometry::authored_volume": 13471083},
+          "unattributed_ns": 22251
+        },
+        "geometry::material": {"elapsed_ns": 5767715136, "children": {"material::uv_capture_census": 5721232700, "material::normal_math": 46438205}, "unattributed_ns": 44231}
+      },
+      "arithmetic": {
+        "requested_operations": 1000000,
+        "fractional_bits": 128,
+        "charge_calls": 71,
+        "actual_operations": 743894,
+        "remaining_operations": 256106,
+        "continuous_once_charged_ledger": true,
+        "phase_totals": {"selection": 213254, "storage": 366578, "material_normal": 130628, "reference_volume": 475, "proxy_flux": 954, "authored_volume": 31307, "reference_body_gate": 698},
+        "fit_breakdown": {
+          "accepted_final_span_receipts": {"calls": 21, "operations": 180428},
+          "refused_parent_trials": {"calls": 13, "operations": 27504},
+          "basis": "Final accepted span IDs are the actual frozen trim span IDs; all candidate calls retained in aggregate."
+        }
+      },
+      "arithmetic_scope": "Bounded-arithmetic operations are distinct from planar pair-work and integration cells. They do not estimate CPU time."
+    },
+    "tkbo_builder_phase_probe": {
+      "api_seconds": 8.955389,
+      "phase_wall": [
+        {"phase": "admit_closed_profile", "curve_count": 8, "proof_version": "CarrierV2", "elapsed_ns": 55402},
+        {"phase": "certified_for_work_with_cancel", "curve_count": 8, "proof_version": "CarrierV2", "elapsed_ns": 38926707},
+        {"phase": "construct_regions_with_cancel", "curve_count": 8, "proof_version": "CarrierV2", "elapsed_ns": 22436232},
+        {"phase": "admit_closed_profile", "curve_count": 21, "proof_version": "BernsteinV3", "elapsed_ns": 101698},
+        {"phase": "certified_for_work_with_cancel", "curve_count": 21, "proof_version": "BernsteinV3", "elapsed_ns": 5467991771},
+        {"phase": "construct_regions_with_cancel", "curve_count": 21, "proof_version": "BernsteinV3", "elapsed_ns": 76215200}
+      ]
+    },
+    "owned_profile_phase_probe": {
+      "api_seconds": 8.860548,
+      "phase_wall": [
+        {"phase": "pipeline::construct", "edge_count": 8, "version": 2, "elapsed_ns": 692702},
+        {"phase": "census::capture_boundary_inputs", "edge_count": 8, "version": 2, "elapsed_ns": 2469732},
+        {"phase": "census::enumerate_carrier_census", "edge_count": 8, "version": 2, "elapsed_ns": 7600419},
+        {"phase": "pipeline::census", "edge_count": 8, "version": 2, "elapsed_ns": 10102460},
+        {"phase": "pipeline::partition", "edge_count": 8, "version": 2, "elapsed_ns": 14132981},
+        {"phase": "pipeline::contacts", "edge_count": 8, "version": 2, "elapsed_ns": 6527243},
+        {"phase": "prepare_owned_profile", "edge_count": 8, "version": 2, "elapsed_ns": 31547245},
+        {"phase": "inspect_plane_graph", "edge_count": 8, "version": 2, "elapsed_ns": 7502187},
+        {"phase": "pipeline::construct", "edge_count": 21, "version": 3, "elapsed_ns": 637370},
+        {"phase": "census::capture_boundary_inputs", "edge_count": 21, "version": 3, "elapsed_ns": 4092015},
+        {"phase": "census::enumerate_exclusion_census", "edge_count": 21, "version": 3, "elapsed_ns": 5125735985},
+        {"phase": "pipeline::census", "edge_count": 21, "version": 3, "elapsed_ns": 5129865909},
+        {"phase": "pipeline::partition", "edge_count": 21, "version": 3, "elapsed_ns": 38521706},
+        {"phase": "pipeline::contacts", "edge_count": 21, "version": 3, "elapsed_ns": 82494963},
+        {"phase": "prepare_owned_profile", "edge_count": 21, "version": 3, "elapsed_ns": 5251621767},
+        {"phase": "inspect_plane_graph", "edge_count": 21, "version": 3, "elapsed_ns": 109358839}
+      ]
+    },
+    "cold_pair_probe": {
+      "api_wall_seconds": 8.989035,
+      "cold_count": 231,
+      "alias_count": 0,
+      "capture_failures": 0,
+      "total_capture_ns": 91407,
+      "total_exclusion_ns": 27981097,
+      "total_fallback_ns": 5239120388,
+      "groups": {
+        "SelfOffDiagonal/Excluded/None": {"count": 21, "capture_ns": 11519, "exclusion_ns": 1784814, "fallback_ns": 0, "exclusion_work": 0, "fallback_work": 0, "contacts": 0},
+        "Distinct/Inconclusive/Complete": {"count": 21, "capture_ns": 3527, "exclusion_ns": 3667017, "fallback_ns": 5239120388, "exclusion_work": 0, "fallback_work": 124, "contacts": 21},
+        "Distinct/Excluded/None": {"count": 189, "capture_ns": 76361, "exclusion_ns": 22529266, "fallback_ns": 0, "exclusion_work": 0, "fallback_work": 0, "contacts": 0}
+      },
+      "fallback_zero_completed_work_count": 13,
+      "fallback_nonzero_completed_work_count": 8,
+      "fallback_source_bits_observations": {
+        "all_unweighted": true,
+        "all_four_controls": true,
+        "pairs_with_exact_shared_endpoint_control_bits": 21,
+        "basis": "Direct equality of retained endpoint control bit arrays only; no geometric projection or contact inference."
+      }
+    },
+    "actual_pair_microchecks": {
+      "scope": "Three captured hot pairs, pair policies 1 and 2, normal Math dependency with the same package optimization. Separate leaf executions are not whole-operation timings.",
+      "rows": [
+        {"sources": [18, 19], "pair_version": 1, "elapsed_ns": 359562134, "completion": "Complete", "proof_kind": "graph", "contacts": 1, "work": 0},
+        {"sources": [18, 19], "pair_version": 2, "elapsed_ns": 373305878, "completion": "Complete", "proof_kind": "graph", "contacts": 1, "work": 0},
+        {"sources": [2, 3], "pair_version": 1, "elapsed_ns": 353172589, "completion": "Complete", "proof_kind": "graph", "contacts": 1, "work": 29},
+        {"sources": [2, 3], "pair_version": 2, "elapsed_ns": 355559075, "completion": "Complete", "proof_kind": "graph", "contacts": 1, "work": 29},
+        {"sources": [19, 20], "pair_version": 1, "elapsed_ns": 337372870, "completion": "Complete", "proof_kind": "graph", "contacts": 1, "work": 0},
+        {"sources": [19, 20], "pair_version": 2, "elapsed_ns": 339221301, "completion": "Complete", "proof_kind": "graph", "contacts": 1, "work": 0}
+      ],
+      "policy": {
+        "root_version": 1,
+        "max_width": 0.001,
+        "max_degree": 32,
+        "max_bisections_by_pair": {"18,19": 3910, "2,3": 4024, "19,20": 3910},
+        "sign_version": 1,
+        "sign_admission": "DerivedProjection",
+        "world_error": 0.0001
+      },
+      "finding": "Both pair versions returned graph proofs. These three cases do not support attributing the census cost to common-carrier classification."
+    },
+    "math_stage_probe": {
+      "rows": [
+        {"sources": [18, 19], "pair_version": 1, "elapsed_ns": 382605498, "membership_ns": 333004296, "membership_fraction": 0.8703594113015072, "completed_work": 0},
+        {"sources": [18, 19], "pair_version": 2, "elapsed_ns": 390481363, "membership_ns": 340593991, "membership_fraction": 0.8722413494546217, "completed_work": 0},
+        {"sources": [2, 3], "pair_version": 1, "elapsed_ns": 381828740, "membership_ns": 332282059, "membership_fraction": 0.8702384713104624, "completed_work": 29},
+        {"sources": [2, 3], "pair_version": 2, "elapsed_ns": 380843337, "membership_ns": 332184279, "membership_fraction": 0.8722334007907299, "completed_work": 29},
+        {"sources": [19, 20], "pair_version": 1, "elapsed_ns": 371678486, "membership_ns": 323834917, "membership_fraction": 0.8712770020269616, "completed_work": 0},
+        {"sources": [19, 20], "pair_version": 2, "elapsed_ns": 369161308, "membership_ns": 321014728, "membership_fraction": 0.8695784770596815, "completed_work": 0}
+      ],
+      "finding": "Membership used about 87 percent of each of these six graph queries. These are wall-time fractions for three actual pairs under two policies.",
+      "nested_stages_not_summed": true
+    },
+    "actual_root_metadata": {
+      "rows": [
+        {
+          "sources": [18, 19],
+          "pair_version": 1,
+          "candidate_intervals": [{"lower": "1 * 2^0", "upper": "1 * 2^0", "singleton": true, "accepted": true}],
+          "all_membership_bounds_match_candidates": true
+        },
+        {
+          "sources": [18, 19],
+          "pair_version": 2,
+          "candidate_intervals": [{"lower": "1 * 2^0", "upper": "1 * 2^0", "singleton": true, "accepted": true}],
+          "all_membership_bounds_match_candidates": true
+        },
+        {
+          "sources": [2, 3],
+          "pair_version": 1,
+          "candidate_intervals": [
+            {"lower": "353 * 2^-10", "upper": "177 * 2^-9", "singleton": false, "accepted": false},
+            {"lower": "407 * 2^-9", "upper": "815 * 2^-10", "singleton": false, "accepted": false},
+            {"lower": "1 * 2^0", "upper": "1 * 2^0", "singleton": true, "accepted": true}
+          ],
+          "all_membership_bounds_match_candidates": true
+        },
+        {
+          "sources": [2, 3],
+          "pair_version": 2,
+          "candidate_intervals": [
+            {"lower": "353 * 2^-10", "upper": "177 * 2^-9", "singleton": false, "accepted": false},
+            {"lower": "407 * 2^-9", "upper": "815 * 2^-10", "singleton": false, "accepted": false},
+            {"lower": "1 * 2^0", "upper": "1 * 2^0", "singleton": true, "accepted": true}
+          ],
+          "all_membership_bounds_match_candidates": true
+        },
+        {
+          "sources": [19, 20],
+          "pair_version": 1,
+          "candidate_intervals": [{"lower": "1 * 2^0", "upper": "1 * 2^0", "singleton": true, "accepted": true}],
+          "all_membership_bounds_match_candidates": true
+        },
+        {
+          "sources": [19, 20],
+          "pair_version": 2,
+          "candidate_intervals": [{"lower": "1 * 2^0", "upper": "1 * 2^0", "singleton": true, "accepted": true}],
+          "all_membership_bounds_match_candidates": true
+        }
+      ],
+      "candidate_count_across_six_queries": 10,
+      "singleton_count": 6,
+      "non_singleton_count": 4,
+      "finding": "Pairs [18,19] and [19,20] had the exact singleton endpoint 1. Pair [2,3] also had two rejected non-singleton candidates. The actual input set contains both kinds; it is not an all-singleton root workload."
+    },
+    "native_validation_probe": {
+      "fixture": "Direct native Solid with 21 spans, tolerance 0.0001.",
+      "wall_seconds": {"topology": 0.072377113, "geometry": 0.166690556, "self_intersection": 2.810642721, "tolerance": 0.0010433, "volume_estimate": 0.014094019},
+      "limitation": "This native-only fixture was not the full operation Compound. Its self-intersection time does not establish an equivalent full-Compound result or authorize skipping validation."
+    },
+    "probe_restoration": {
+      "all_sources_byte_restored": true,
+      "all_current_sha256_rechecked": true,
+      "temporary_helpers_removed": true,
+      "sha256_by_source": {
+        "crates/martensite-tksketch/src/wrapped_profile/family/control.rs": "4864c1339684a06f66c5fe34faf76645d9d087181d695b29764aa8bfb33c7c8e",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/members.rs": "caec2d9155908a1724cc1fc99edc55218b706c7058c86713aeb3cb9f820af6e0",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/cone/mod.rs": "ec0839c64ce964cd74de1d50db665b24c5a7af2c2c6ad12734cfa14ac60de529",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/cone/storage.rs": "33799a9f72122d2974bf1d5baa82ec7cf8b874c30d0479b84d53c0993addf246",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/cone/storage/work.rs": "f8289905aa2bc7bb3ed6c777cac74c117561fd870f3f0505b2bd65887ff54f68",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures.rs": "c3419681fd62b9d1d6dbe31f9cf560f9d78cce1871b44e248aaf805ea8b8757f",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/cone/material.rs": "5177dade633cbdde79b34b936756d042f67d744e0ed35136fe588d09ac975ebc",
+        "crates/martensite-tkbo/src/profile_extrusion/build_regions.rs": "bfaa74bdcb577111209e835002faf68bb0f846e25913cf01d3ecf41480f7d08b",
+        "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/certify.rs": "da01404ebe0e4949d2a67dd960b1cbfd93d1fd19d7b18c0281eb60f31bc52652",
+        "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs": "9cde42553a2be58daae132ad12b0cf0c67292b39bc10152c9f9420532217bff1",
+        "crates/martensite-tkbo/src/sketch_region_certification/bernstein_execution.rs": "818c7c8289145c26505f84bcf4832f36711b339511789f4863f52c1a86a2339e",
+        "crates/martensite-tkmath/src/predicates/roots/bezier_pair/operation.rs": "a6c8286c0a56e0fe67625c82c579bd7903b9009c17312d347046efb0ea5c2173",
+        "crates/martensite-tkmath/src/predicates/roots/bezier_pair/projection.rs": "ff64cca62d42bec264de69824e7d424b5206de9a4c45512b46534dd24cf4f0d2",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/cone/material/tests.rs": "6d6325e69f0718e3f2bda1a95e61fe3188f84d70535e61800f5443142c4b99d5",
+        "crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests.rs": "b9bd1f3ffa9c6611c8408480e2156860d4bf12d37dadb585b4c49c6a3076433f",
+        "crates/martensite-tkbo/src/body_check/mod.rs": "a98386b1323c446aa4bd31b32aedb9f2d5f1c92329c1118d48e60496e6b7a43c",
+        "crates/martensite-tksketch/src/wrapped_profile/pipeline.rs": "d284776f35634c337782a34caac85413b707c35e0af5cdc2660f2da3efea7eb4"
+      },
+      "artifact_scope": "Raw timings, root metadata and full captured control/weight bit fixtures remain in /tmp only. No diagnostic implementation or bitfixture source was retained in the repository."
+    },
+    "terminal_exit_codes": {
+      "complete": 0,
+      "stage-probe": 0,
+      "tkbo-phase-run": 0,
+      "owned-phase-run": 0,
+      "pair-run": 0,
+      "carrier-micro": 0,
+      "math-stage": 0,
+      "native-root-metadata": 0,
+      "index-coverage-tests-fixed": 0,
+      "inward-native-test-fixed": 0
+    },
+    "qualification": "The diagnostic public runs passed correctness assertions under unchanged limits. Five-second performance and Gates A/B/C remain open. Earlier failure and cancelled records retain their original status."
+  }
+}

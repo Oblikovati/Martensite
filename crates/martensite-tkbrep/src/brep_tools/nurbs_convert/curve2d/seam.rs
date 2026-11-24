@@ -7,7 +7,7 @@ use super::{
 use crate::brep::BRepTool;
 use crate::brep_tools::nurbs_convert::NurbsConvertModification;
 use crate::topods;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkgeombase::proj_lib::ComputeApproxOnPolarSurface;
@@ -116,7 +116,7 @@ impl NurbsConvertModification {
         self.state
             .write()
             .lcu
-            .push(c2d_bis.cast::<StandardTransient>());
+            .push(c2d_bis.upcast::<dyn Transient>());
         Ok(accepted)
     }
 

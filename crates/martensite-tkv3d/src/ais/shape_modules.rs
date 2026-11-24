@@ -6,13 +6,11 @@ pub use shape_object::{
     ais_shape_compute_hlr_presentation, ais_shape_dump_json, ais_shape_selection_mode,
 };
 mod textured_shape;
-mod textured_shape_file_ref;
 mod textured_shape_mapping;
 mod textured_shape_source;
 mod textured_shape_sources;
 pub use shape::{AisShapeBase, AisShapeFields, AisShapeSource};
 pub use textured_shape::{AisTexturedShapeBase, AisTexturedShapeFields};
-pub use textured_shape_file_ref::AisTexturedShapeFileRef;
 pub use textured_shape_mapping::AisTexturedShapeMappingMembers;
 pub use textured_shape_source::{AisTexturedShapeMembers, AisTexturedShapeSource};
 pub use textured_shape_sources::{

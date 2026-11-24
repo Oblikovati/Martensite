@@ -6,11 +6,11 @@ use walk::walk_cell_indices;
 
 impl<I: CellGeometry> CellFilter<I> {
     /// Protected add of a target to a cell; `filter.add_index(&[2, 3], &target)` skips point conversion.
-    pub fn add_index(&mut self, index: &[i32], target: &I::CellTarget) {
+    pub(crate) fn add_index(&mut self, index: &[i32], target: &I::CellTarget) {
         self.cells.add_index(index, target);
     }
     /// Protected removal of a target from a cell; `filter.remove_index(&[2, 3], &target)` matches all copies.
-    pub fn remove_index(&mut self, index: &[i32], target: &I::CellTarget) {
+    pub(crate) fn remove_index(&mut self, index: &[i32], target: &I::CellTarget) {
         self.retain_index(index, |stored| !I::targets_equal(stored, target));
     }
     /// Protected recursion through `axis`, leaving later cursor coordinates unchanged.
@@ -59,7 +59,7 @@ impl<I: CellGeometry> CellFilter<I> {
 }
 impl<I: CellInspector> CellFilter<I> {
     /// Protected inspection of a cell; `filter.inspect_index(&[2, 3], &mut inspector)`.
-    pub fn inspect_index(&mut self, index: &[i32], inspector: &mut I) {
+    pub(crate) fn inspect_index(&mut self, index: &[i32], inspector: &mut I) {
         self.retain_index(index, |stored| {
             inspector.inspect(stored) == CellAction::Keep
         });

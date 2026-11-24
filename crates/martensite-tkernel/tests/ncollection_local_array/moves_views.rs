@@ -53,7 +53,7 @@ fn NCollection_LocalArrayTest__ToArray1_SamePointer() {
     let mut source = LocalArray::<i32>::new(10);
     local_fill(&mut source, 10, 0);
     let pointer = source.as_slice().as_ptr();
-    let view = source.to_array1();
+    let view = source.as_array1_mut();
     assert_eq!(10, view.len());
     assert_eq!(pointer, &view[0]);
 }
@@ -62,7 +62,7 @@ fn NCollection_LocalArrayTest__ToArray1_SamePointer() {
 fn NCollection_LocalArrayTest__ToArray1_ModifyReflectsInSource() {
     let mut source = LocalArray::<i32>::new(5);
     local_fill(&mut source, 1, 0);
-    let mut view = source.to_array1();
+    let mut view = source.as_array1_mut();
     view[0] = 99;
     view[4] = 77;
     assert_eq!(99, source[0]);
@@ -73,7 +73,7 @@ fn NCollection_LocalArrayTest__ToArray1_ModifyReflectsInSource() {
 #[test]
 fn NCollection_LocalArrayTest__ToArray1_EmptyVector() {
     let mut source = LocalArray::<i32>::default();
-    let view = source.to_array1();
+    let view = source.as_array1_mut();
     assert_eq!(0, view.len());
     assert!(view.is_empty());
 }
@@ -83,7 +83,7 @@ fn NCollection_LocalArrayTest__ToArray1_HeapBuffer() {
     let mut source = LocalArray::<i32, 8>::new(16);
     local_fill(&mut source, 3, 0);
     let pointer = source.as_slice().as_ptr();
-    let view = source.to_array1();
+    let view = source.as_array1_mut();
     assert_eq!(16, view.len());
     assert_eq!(pointer, &view[0]);
     assert_eq!(0, view[0]);
@@ -94,7 +94,7 @@ fn NCollection_LocalArrayTest__ToArray1_HeapBuffer() {
 fn NCollection_LocalArrayTest__ToArray1_ReadThrough() {
     let mut source = LocalArray::<i32>::new(7);
     local_fill(&mut source, 11, 0);
-    let view = source.to_array1();
+    let view = source.as_array1_mut();
     for i in 0..7 {
         assert_eq!(i * 11, view[i]);
     }

@@ -23,8 +23,8 @@ use martensite_tkxsbase::transfer::TransferFinderProcess;
 pub struct TopoDSToStepBuilder {
     /// Root.
     pub root: TopoDSToStepRoot,
-    my_result: Handle<StepShapeTopologicalRepresentationItem>,
-    my_tessellated_result: Handle<StepVisualTessellatedItem>,
+    my_result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
+    my_tessellated_result: Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>,
     my_error: TopoDSToStepBuilderError,
 }
 
@@ -41,9 +41,9 @@ fn count_faces(shape: &Shape) -> Result<i32, Failure> {
 
 /// The closed or open shell over the given faces.
 fn connected_face_set(
-    faces: Vec<Handle<StepShapeFace>>,
+    faces: Vec<Handle<dyn crate::StepEntityBase<StepShapeFace>>>,
     closed: bool,
-) -> Handle<StepShapeConnectedFaceSet> {
+) -> Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>> {
     let (name, set) = (empty_step_name(), shared_array1(faces));
     if closed {
         let shell = Handle::new(StepShapeClosedShell::new());
@@ -136,7 +136,11 @@ impl TopoDSToStepBuilder {
             maker.init(&face, tool, fp, factors)?;
             // MakeFace Error Handling: warning only
             if maker.is_done() {
-                faces.push(maker.value()?.cast::<StepShapeFace>());
+                faces.push(
+                    maker
+                        .value()?
+                        .cast::<dyn crate::StepEntityBase<StepShapeFace>>(),
+                );
             }
             explorer.next()?;
             let _ = scope.next(1.0);
@@ -213,7 +217,10 @@ impl TopoDSToStepBuilder {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<StepShapeTopologicalRepresentationItem>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root.check_done("TopoDSToStepBuilder::Value()")?;
         Ok(self.my_result.clone())
     }
@@ -221,7 +228,9 @@ impl TopoDSToStepBuilder {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn tessellated_value(&self) -> Result<Handle<StepVisualTessellatedItem>, Failure> {
+    pub fn tessellated_value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>, Failure> {
         self.root
             .check_done("TopoDSToStepBuilder::TessellatedValue()")?;
         Ok(self.my_tessellated_result.clone())

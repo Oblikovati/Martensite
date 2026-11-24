@@ -3,7 +3,8 @@
 use martensite_tkernel::ncollection::{Mat4, Vec4};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::{
-    Graphic3dCLight, Graphic3dLightSet, Graphic3dTypeOfLightSource, Graphic3dTypeOfShadingModel,
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dLightSet, Graphic3dTypeOfLightSource,
+    Graphic3dTypeOfShadingModel,
 };
 
 /// The light sources of one frame.
@@ -16,7 +17,7 @@ pub(crate) struct RaytraceLights {
 }
 
 /// The enabled non-ambient lights, positional before directional, each in set order.
-fn ordered_lights(set: &Graphic3dLightSet) -> Vec<Handle<Graphic3dCLight>> {
+fn ordered_lights(set: &Graphic3dLightSet) -> Vec<Handle<dyn Graphic3dCLightSource>> {
     let active: Vec<_> = set
         .lights()
         .into_iter()
@@ -24,7 +25,7 @@ fn ordered_lights(set: &Graphic3dLightSet) -> Vec<Handle<Graphic3dCLight>> {
             light.is_enabled() && light.light_type() != Graphic3dTypeOfLightSource::Ambient
         })
         .collect();
-    let directional = |light: &Handle<Graphic3dCLight>| {
+    let directional = |light: &Handle<dyn Graphic3dCLightSource>| {
         light.light_type() == Graphic3dTypeOfLightSource::Directional
     };
     let (positional, distant): (Vec<_>, Vec<_>) = active.into_iter().partition(|l| !directional(l));

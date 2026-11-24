@@ -7,9 +7,7 @@ use martensite_tkcdf::json_dump::class_begin;
 use martensite_tkernel::{
     impl_transient,
     ncollection::DataMap,
-    standard::{
-        Failure, Guid, Handle, RuntimeTyped, SharedState, StandardTransient, dump::DumpStream,
-    },
+    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState, dump::DumpStream},
 };
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
@@ -39,11 +37,10 @@ pub type TNamingShapeRefMap = DataMap<Shape, Arc<TNamingRefShape>, ShapeMapHashe
 /// assert!(used.map().is_empty());
 /// ```
 pub struct TNamingUsedShapes {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     map: SharedState<TNamingShapeRefMap>,
 }
-impl_transient!(TNamingUsedShapes, "TNamingUsedShapes", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TNamingUsedShapes, "TNamingUsedShapes", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl TNamingUsedShapes {
     /// `GetID`.
@@ -53,7 +50,6 @@ impl TNamingUsedShapes {
     /// The private constructor (reached by `TNamingBuilder` and `NewEmpty`).
     pub(crate) fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             map: SharedState::new(TNamingShapeRefMap::default()),
         }
@@ -120,7 +116,7 @@ impl TdfAttribute for TNamingUsedShapes {
         Ok(Handle::default())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).upcast()
     }
     /// `Paste`: does nothing.
     fn paste(

@@ -1,6 +1,10 @@
 //! Standalone cell operations use the same record as the map engine.
-use super::{CellGeometry, cell_map::cell_node::CellRecord};
-use crate::ncollection::{Array1, BaseAllocator, HashPolicy};
+#[cfg(test)]
+use super::CellGeometry;
+use super::cell_map::cell_node::CellRecord;
+#[cfg(test)]
+use crate::ncollection::Array1;
+use crate::ncollection::{BaseAllocator, HashPolicy};
 /// Owning adapter for a protected cell; it keeps the allocator identity it was given.
 /// `CellFilterCell::<i32>::from_indices(&[1, 2], arena)` constructs a lookup-only cell.
 pub struct CellFilterCell<T> {
@@ -16,7 +20,8 @@ impl<T> CellFilterCell<T> {
         }
     }
     /// Apply coordinate conversion and size-array length; `CellFilterCell::from_point::<I>(&point, &sizes, arena)`.
-    pub fn from_point<I: CellGeometry<CellTarget = T>>(
+    #[cfg(test)]
+    pub(crate) fn from_point<I: CellGeometry<CellTarget = T>>(
         point: &I::CellPoint,
         sizes: &Array1<'_, f64>,
         allocator: BaseAllocator,
@@ -35,11 +40,11 @@ impl<T> CellFilterCell<T> {
         self.record.index.data_ptr()
     }
     /// Compare only coordinates, regardless of targets; `cell.is_equal(&other)`.
-    pub fn is_equal(&self, other: &Self) -> bool {
+    pub(crate) fn is_equal(&self, other: &Self) -> bool {
         self.record.is_equal(&other.record)
     }
     /// Hash the coordinate bytes; `cell.hash_code()` ignores its object head.
-    pub fn hash_code(&self) -> usize {
+    pub(crate) fn hash_code(&self) -> usize {
         self.record.hash_code()
     }
     /// Borrow newest-first targets, the list order; `cell.targets().count()`.
@@ -72,10 +77,6 @@ impl<T: Clone> CellFilterCell<T> {
     /// This safely adapts external initialization of protected `Cell::Objects`.
     pub fn prepend_target(&mut self, target: &T) {
         self.record.prepend(target);
-    }
-    /// The allocator identity given at construction or adopted by a move; `cell.allocator()`.
-    pub fn allocator(&self) -> &BaseAllocator {
-        &self.allocator
     }
 }
 impl<T> PartialEq for CellFilterCell<T> {

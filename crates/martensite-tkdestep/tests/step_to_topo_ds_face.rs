@@ -11,7 +11,8 @@ use martensite_tkdestep::step_visual::{
     StepVisualTriangulatedFace, StepVisualTriangulatedSurfaceSet,
 };
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::Xyz;
 use martensite_tkmath::poly::{Triangulation, mesh_purpose};
@@ -98,8 +99,8 @@ fn surface_set(
     set
 }
 
-fn strips(list: &[&[i32]]) -> Handle<HArray1<Handle<StandardTransient>>> {
-    let entries: Vec<Handle<StandardTransient>> =
+fn strips(list: &[&[i32]]) -> Handle<HArray1<Handle<dyn Transient>>> {
+    let entries: Vec<Handle<dyn Transient>> =
         list.iter().map(|indices| array(indices).cast()).collect();
     array(&entries)
 }
@@ -107,8 +108,8 @@ fn strips(list: &[&[i32]]) -> Handle<HArray1<Handle<StandardTransient>>> {
 fn complex_face(
     points: &[[f64; 3]],
     pnmax: i32,
-    strips: Handle<HArray1<Handle<StandardTransient>>>,
-    fans: Handle<HArray1<Handle<StandardTransient>>>,
+    strips: Handle<HArray1<Handle<dyn Transient>>>,
+    fans: Handle<HArray1<Handle<dyn Transient>>>,
 ) -> Handle<StepVisualComplexTriangulatedFace> {
     let face = Handle::new(StepVisualComplexTriangulatedFace::new());
     face.init(

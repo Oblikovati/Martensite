@@ -16,7 +16,8 @@ use super::{
 };
 use crate::iges_geom::IgesGeom;
 use crate::iges_package_tables;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::Transient;
 use martensite_tkxsbase::interface::InterfaceCategory;
 
 /// The case of a type and form, 0 when not recognised.
@@ -51,7 +52,7 @@ fn iges_solid_case_iges(typenum: i32, formnum: i32) -> i32 {
 }
 
 /// The category of a case.
-fn iges_solid_category(_cn: i32, _ent: &Handle<StandardTransient>) -> i32 {
+fn iges_solid_category(_cn: i32, _ent: &Handle<dyn Transient>) -> i32 {
     InterfaceCategory::number("Shape")
 }
 

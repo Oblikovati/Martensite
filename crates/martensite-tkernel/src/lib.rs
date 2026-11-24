@@ -25,3 +25,12 @@ pub mod tcollection;
 pub mod units;
 pub mod units_api;
 pub mod units_methods;
+
+#[cfg(test)]
+extern crate self as martensite_tkernel;
+#[cfg(test)]
+include!("ncollection/array_visibility_tests.rs");
+#[cfg(test)]
+include!("ncollection/map_visibility_tests.rs");
+#[cfg(test)]
+include!("ncollection/sparse_visibility_tests.rs");

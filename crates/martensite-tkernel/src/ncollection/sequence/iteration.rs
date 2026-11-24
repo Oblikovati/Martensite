@@ -4,18 +4,9 @@ use std::marker::PhantomData;
 impl SequenceCursor {
     /// Positions at the first item or past the last, remembering the final node; `Self::new(&sequence, false)`.
     pub fn new<T>(sequence: &Sequence<T>, is_start: bool) -> Self {
-        let (head, tail) = sequence.topology.endpoints();
-        let first = pointer_address(head);
-        let last = pointer_address(tail);
-        if is_start {
-            return Self {
-                address: first,
-                previous: None,
-            };
-        }
         Self {
-            address: None,
-            previous: last,
+            raw: sequence.topology.cursor(is_start),
+            revision: sequence.topology.revision(),
         }
     }
     /// Resets either endpoint; `cursor.init(&sequence, true)`.
@@ -24,44 +15,73 @@ impl SequenceCursor {
     }
     /// Reports an unexhausted position; `cursor.more()`.
     pub fn more(self) -> bool {
-        self.address.is_some()
+        !self.raw.current.is_null()
     }
     /// Borrows a currently owned node's item; `cursor.value(&sequence)`.
     pub fn value<T>(self, sequence: &Sequence<T>) -> Option<&T> {
-        let node = sequence.owned_node(self.address)?;
+        let node = sequence.owned_node(self)?;
         // SAFETY: owned_node only returns a live node owned by `sequence`, and `&sequence`
         // bounds the shared borrow.
         Some(unsafe { owner::item_ref(node) })
     }
     /// Borrows a positioned item exclusively; `*cursor.change_value(&mut sequence)? = 3`.
     pub fn change_value<T>(self, sequence: &mut Sequence<T>) -> Option<&mut T> {
-        let node = sequence.owned_node(self.address)?;
+        let node = sequence.owned_node(self)?;
         // SAFETY: owned_node only returns a live node owned by `sequence`, and `&mut sequence`
         // bounds the exclusive borrow.
         Some(unsafe { owner::item_mut(node) })
     }
     /// Follows the actual next link; exhausted cursors remain unchanged; `cursor.next(&sequence)`.
     pub fn next<T>(&mut self, sequence: &Sequence<T>) {
-        if self.address.is_none() {
+        if !self.more() {
             return;
         }
-        let node = sequence.owned_node(self.address);
-        self.previous = self.address;
-        // SAFETY: owned_node only returns a live node owned by `sequence`, and `&sequence`
-        // keeps its link unchanged.
-        self.address = node.and_then(|node| pointer_address(unsafe { (*node).next() }));
+        if let Some(node) = sequence.owned_node(*self) {
+            self.step_to_next(sequence, node);
+        } else {
+            self.raw.previous = self.raw.current;
+            self.raw.current = std::ptr::null_mut();
+        }
     }
     /// Follows the remembered previous node; `cursor.previous(&sequence)`.
     pub fn previous<T>(&mut self, sequence: &Sequence<T>) {
-        self.address = self.previous;
-        if self.address.is_none() {
-            return;
+        let previous = sequence.previous_link(*self);
+        self.raw.current = self.raw.previous;
+        if let Some(node) = previous {
+            self.step_to_previous(sequence, node);
+        } else {
+            self.raw.previous = std::ptr::null_mut();
         }
-        self.previous = sequence
-            .owned_node(self.address)
-            // SAFETY: owned_node only returns a live node owned by `sequence`, and `&sequence`
-            // keeps its link unchanged.
-            .and_then(|node| pointer_address(unsafe { (*node).previous() }));
+    }
+    pub(super) fn step_to_next<T>(&mut self, sequence: &Sequence<T>, node: *mut super::SeqNode) {
+        // SAFETY: callers resolved node through this shared Sequence borrow.
+        self.raw.current = unsafe { (*node).next() };
+        self.raw.previous = node;
+        self.revision = sequence.topology.revision();
+    }
+    pub(super) fn step_to_previous<T>(
+        &mut self,
+        sequence: &Sequence<T>,
+        node: *mut super::SeqNode,
+    ) {
+        // SAFETY: callers resolved node through this shared Sequence borrow.
+        self.raw.previous = unsafe { (*node).previous() };
+        self.raw.current = node;
+        self.revision = sequence.topology.revision();
+    }
+    pub(super) fn record_detachment<T>(
+        &mut self,
+        sequence: &Sequence<T>,
+        predecessor: Option<*mut super::SeqNode>,
+    ) {
+        // A removed and reused remembered address may name the removed allocation itself.
+        // The caller supplies only predecessors that remain attached after removal.
+        if let Some(predecessor) = predecessor {
+            self.raw.previous = predecessor;
+            self.revision = sequence.topology.revision();
+        } else if self.raw.previous.is_null() {
+            self.revision = sequence.topology.revision();
+        }
     }
 }
 pub(super) fn pointer_address(node: *mut super::SeqNode) -> Option<usize> {
@@ -69,7 +89,7 @@ pub(super) fn pointer_address(node: *mut super::SeqNode) -> Option<usize> {
 }
 impl PartialEq for SequenceCursor {
     fn eq(&self, other: &Self) -> bool {
-        self.address == other.address
+        self.raw.current == other.raw.current
     }
 }
 impl Eq for SequenceCursor {}
@@ -77,7 +97,7 @@ impl<T> Sequence<T> {
     pub(super) fn linked_iter(&self) -> SequenceIter<'_, T> {
         let (front, back) = self.topology.endpoints();
         SequenceIter {
-            owners: &self.owners,
+            clear_nodes: self.clear_nodes.as_ref(),
             front,
             back,
             remaining: self.len(),
@@ -87,7 +107,12 @@ impl<T> Sequence<T> {
     pub(super) fn linked_iter_mut(&mut self) -> SequenceIterMut<'_, T> {
         let (front, back) = self.topology.endpoints();
         SequenceIterMut {
-            owners: &self.owners,
+            clear: self.clear_nodes.as_ref().map(|registry| {
+                Box::new(ClearIteratorState {
+                    registry,
+                    yielded: Default::default(),
+                })
+            }),
             front,
             back,
             remaining: self.len(),
@@ -101,10 +126,13 @@ impl<'a, T> Iterator for SequenceIter<'a, T> {
         if self.remaining == 0 {
             return None;
         }
-        let node = self.front;
-        if !self.owners.contains_key(&(node as usize)) {
-            self.remaining = 0;
-            return None;
+        let mut node = self.front;
+        if let Some(nodes) = self.clear_nodes {
+            let Some(live) = nodes.live_link(node) else {
+                self.remaining = 0;
+                return None;
+            };
+            node = live;
         }
         // SAFETY: `node` is owned by the borrowed sequence (checked above), which keeps its
         // links unchanged.
@@ -123,10 +151,13 @@ impl<T> DoubleEndedIterator for SequenceIter<'_, T> {
         if self.remaining == 0 {
             return None;
         }
-        let node = self.back;
-        if !self.owners.contains_key(&(node as usize)) {
-            self.remaining = 0;
-            return None;
+        let mut node = self.back;
+        if let Some(nodes) = self.clear_nodes {
+            let Some(live) = nodes.live_link(node) else {
+                self.remaining = 0;
+                return None;
+            };
+            node = live;
         }
         // SAFETY: `node` is owned by the borrowed sequence (checked above), which keeps its
         // links unchanged.
@@ -141,7 +172,7 @@ impl<T> ExactSizeIterator for SequenceIter<'_, T> {}
 impl<T> Clone for SequenceIter<'_, T> {
     fn clone(&self) -> Self {
         Self {
-            owners: self.owners,
+            clear_nodes: self.clear_nodes,
             front: self.front,
             back: self.back,
             remaining: self.remaining,
@@ -157,16 +188,32 @@ impl<T> PartialEq for SequenceIter<'_, T> {
     }
 }
 impl<T> Eq for SequenceIter<'_, T> {}
+pub(super) struct ClearIteratorState<'a, T> {
+    registry: &'a super::owner_registry::SequenceOwnerRegistry<T>,
+    yielded: std::collections::HashSet<usize>,
+}
+
+impl<T> ClearIteratorState<'_, T> {
+    fn resolve(&mut self, node: *mut super::SeqNode) -> Option<*mut super::SeqNode> {
+        // A reused address in historical endpoints must not yield the same &mut twice.
+        let live = self.registry.live_link(node)?;
+        self.yielded.insert(live.addr()).then_some(live)
+    }
+}
+
 impl<'a, T> Iterator for SequenceIterMut<'a, T> {
     type Item = &'a mut T;
     fn next(&mut self) -> Option<Self::Item> {
         if self.remaining == 0 {
             return None;
         }
-        let node = self.front;
-        if !self.owners.contains_key(&(node as usize)) {
-            self.remaining = 0;
-            return None;
+        let mut node = self.front;
+        if let Some(clear) = &mut self.clear {
+            let Some(live) = clear.resolve(node) else {
+                self.remaining = 0;
+                return None;
+            };
+            node = live;
         }
         // SAFETY: `node` is owned by the exclusively borrowed sequence (checked above).
         self.front = unsafe { (*node).next() };
@@ -183,10 +230,13 @@ impl<T> DoubleEndedIterator for SequenceIterMut<'_, T> {
         if self.remaining == 0 {
             return None;
         }
-        let node = self.back;
-        if !self.owners.contains_key(&(node as usize)) {
-            self.remaining = 0;
-            return None;
+        let mut node = self.back;
+        if let Some(clear) = &mut self.clear {
+            let Some(live) = clear.resolve(node) else {
+                self.remaining = 0;
+                return None;
+            };
+            node = live;
         }
         // SAFETY: `node` is owned by the exclusively borrowed sequence (checked above).
         self.back = unsafe { (*node).previous() };

@@ -39,7 +39,7 @@ impl ContainerRequest<'_> {
             return Ok(naming);
         }
         naming = Handle::new(TNamingNaming::new());
-        self.father.add_attribute(&naming.cast(), true)?;
+        self.father.add_attribute(&naming.upcast(), true)?;
         let naming_ref = live(&naming, "BuildName")?;
         let mut name = naming_ref.change_name();
         name.set_shape_type(self.selection.shape_type()?);

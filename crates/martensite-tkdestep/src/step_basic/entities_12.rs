@@ -70,7 +70,7 @@ step_entity! {
     /// Si unit and area unit.
     StepBasicSiUnitAndAreaUnit, StepBasicSiUnitAndAreaUnitState, "StepBasicSiUnitAndAreaUnit", StepBasicSiUnit, {
         area_unit: Handle<StepBasicAreaUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndAreaUnit {
     step_methods! {
@@ -83,7 +83,7 @@ step_entity! {
     /// Si unit and length unit.
     StepBasicSiUnitAndLengthUnit, StepBasicSiUnitAndLengthUnitState, "StepBasicSiUnitAndLengthUnit", StepBasicSiUnit, {
         length_unit: Handle<StepBasicLengthUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndLengthUnit {
     step_methods! {
@@ -109,7 +109,7 @@ step_entity! {
     /// Si unit and mass unit.
     StepBasicSiUnitAndMassUnit, StepBasicSiUnitAndMassUnitState, "StepBasicSiUnitAndMassUnit", StepBasicSiUnit, {
         mass_unit: Handle<StepBasicMassUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndMassUnit {
     step_methods! {
@@ -135,7 +135,7 @@ step_entity! {
     /// Si unit and plane angle unit.
     StepBasicSiUnitAndPlaneAngleUnit, StepBasicSiUnitAndPlaneAngleUnitState, "StepBasicSiUnitAndPlaneAngleUnit", StepBasicSiUnit, {
         plane_angle_unit: Handle<StepBasicPlaneAngleUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndPlaneAngleUnit {
     step_methods! {
@@ -161,7 +161,7 @@ step_entity! {
     /// Si unit and ratio unit.
     StepBasicSiUnitAndRatioUnit, StepBasicSiUnitAndRatioUnitState, "StepBasicSiUnitAndRatioUnit", StepBasicSiUnit, {
         ratio_unit: Handle<StepBasicRatioUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndRatioUnit {
     step_methods! {
@@ -187,7 +187,7 @@ step_entity! {
     /// Si unit and solid angle unit.
     StepBasicSiUnitAndSolidAngleUnit, StepBasicSiUnitAndSolidAngleUnitState, "StepBasicSiUnitAndSolidAngleUnit", StepBasicSiUnit, {
         solid_angle_unit: Handle<StepBasicSolidAngleUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndSolidAngleUnit {
     step_methods! {
@@ -213,7 +213,7 @@ step_entity! {
     /// Si unit and thermodynamic temperature unit.
     StepBasicSiUnitAndThermodynamicTemperatureUnit, StepBasicSiUnitAndThermodynamicTemperatureUnitState, "StepBasicSiUnitAndThermodynamicTemperatureUnit", StepBasicSiUnit, {
         thermodynamic_temperature_unit: Handle<StepBasicThermodynamicTemperatureUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndThermodynamicTemperatureUnit {
     step_methods! {
@@ -241,7 +241,7 @@ step_entity! {
     /// Si unit and time unit.
     StepBasicSiUnitAndTimeUnit, StepBasicSiUnitAndTimeUnitState, "StepBasicSiUnitAndTimeUnit", StepBasicSiUnit, {
         time_unit: Handle<StepBasicTimeUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndTimeUnit {
     step_methods! {
@@ -267,7 +267,7 @@ step_entity! {
     /// Si unit and volume unit.
     StepBasicSiUnitAndVolumeUnit, StepBasicSiUnitAndVolumeUnitState, "StepBasicSiUnitAndVolumeUnit", StepBasicSiUnit, {
         volume_unit: Handle<StepBasicVolumeUnit>,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl StepBasicSiUnitAndVolumeUnit {
     step_methods! {
@@ -279,29 +279,29 @@ impl StepBasicSiUnitAndVolumeUnit {
 step_entity! {
     /// Solid angle measure with unit.
     StepBasicSolidAngleMeasureWithUnit, StepBasicSolidAngleMeasureWithUnitState, "StepBasicSolidAngleMeasureWithUnit", StepBasicMeasureWithUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 
 step_entity! {
     /// Solid angle unit.
     StepBasicSolidAngleUnit, StepBasicSolidAngleUnitState, "StepBasicSolidAngleUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {
     /// Representation of STEP entity ThermodynamicTemperatureUnit
     StepBasicThermodynamicTemperatureUnit, StepBasicThermodynamicTemperatureUnitState, "StepBasicThermodynamicTemperatureUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {
     /// Time measure with unit.
     StepBasicTimeMeasureWithUnit, StepBasicTimeMeasureWithUnitState, "StepBasicTimeMeasureWithUnit", StepBasicMeasureWithUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 
 step_entity! {
     /// Time unit.
     StepBasicTimeUnit, StepBasicTimeUnitState, "StepBasicTimeUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }

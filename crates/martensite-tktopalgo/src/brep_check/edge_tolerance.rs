@@ -121,7 +121,7 @@ impl BRepCheckEdge {
             .ok_or_else(|| null_object("BRepCheck_Edge::Tolerance: null 3d curve"))?
             .transformed(location.transformation())?
             .cast::<dyn GeomCurve>();
-        Ok(Handle::new(GeomAdaptorCurve::with_range(&c3d, first, last)?).cast())
+        Ok(Handle::new(GeomAdaptorCurve::with_range(&c3d, first, last)?).into_upcast())
     }
 
     /// The curve on surface (and the second one of a closed surface) at `next`;

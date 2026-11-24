@@ -1,7 +1,7 @@
 //! Writing every section of a data set, in a fixed order.
 use super::Schema;
 use crate::ncollection::HSequence;
-use crate::standard::{Failure, Handle, StandardPersistent};
+use crate::standard::{Failure, Handle, Persistent};
 use crate::storage::PersistentNumbers;
 use crate::storage::{
     BaseDriver, BucketIterator, CallBackTable, Data, InternalData, OpenMode, Root, StorageError,
@@ -83,7 +83,7 @@ impl Schema {
         &self,
         driver: &mut dyn BaseDriver,
         set: &Data,
-        objects: &[Handle<StandardPersistent>],
+        objects: &[Handle<dyn Persistent>],
         step: &mut WriteStep,
     ) -> Result<(), Failure> {
         step.0 = "BeginWriteRefSection";
@@ -106,7 +106,7 @@ impl Schema {
         &self,
         driver: &mut dyn BaseDriver,
         functions: &CallBackTable,
-        objects: &[Handle<StandardPersistent>],
+        objects: &[Handle<dyn Persistent>],
         step: &mut WriteStep,
     ) -> Result<(), Failure> {
         step.0 = "BeginWriteDataSection";
@@ -136,7 +136,7 @@ fn root_list(roots: &Handle<HSequence<Handle<Root>>>) -> Vec<Handle<Root>> {
 
 /// The slots the bucket iterator visits, taken before callbacks run so that a callback
 /// reaching back into the schema cannot deadlock on the internal data.
-fn collected_objects(set: &Data) -> Vec<Handle<StandardPersistent>> {
+fn collected_objects(set: &Data) -> Vec<Handle<dyn Persistent>> {
     let internal = set.internal_data();
     let Some(internal) = internal.get() else {
         return Vec::new();

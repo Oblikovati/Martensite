@@ -48,7 +48,8 @@ macro_rules! rw_block_b_0011 {
             $the_data,
             $the_num
         );
-        let mut $a_pair_curve: Handle<StepGeomCurve> = Default::default();
+        let mut $a_pair_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         $the_data.read_entity(
             $the_num,
             7,
@@ -342,7 +343,8 @@ macro_rules! rw_block_b_0016 {
             $ach,
             &mut $a_definition,
         )?;
-        let mut $a_representation: Handle<StepReprRepresentation> = Default::default();
+        let mut $a_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         $data.read_entity(
             $num,
             4,

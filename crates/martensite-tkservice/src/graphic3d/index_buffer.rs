@@ -7,9 +7,9 @@ use super::{
 };
 use crate::json_dump::{base_class, class_begin};
 use martensite_tkernel::ncollection::BaseAllocator;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::out_of_range;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
 use std::io;
 
 /// An index buffer class (`Graphic3d_IndexBuffer` and the classes derived from it).
@@ -21,8 +21,13 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn Graphic3dIndexBufferSour
         // interface registration would invent an extra native ancestor and split is_kind.
         <Graphic3dIndexBuffer as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
+}
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dIndexBufferSource);
+impl martensite_tkernel::standard::HandleUpcast<dyn Graphic3dBufferSource>
+    for dyn Graphic3dIndexBufferSource
+{
+    fn upcast_arc(owner: std::sync::Arc<Self>) -> std::sync::Arc<dyn Graphic3dBufferSource> {
+        owner
     }
 }
 
@@ -82,10 +87,14 @@ fn index_buffer_dump_json(
 
 /// The native `Graphic3d_IndexBuffer`; `Graphic3dIndexBuffer::new(allocator)?`.
 pub struct Graphic3dIndexBuffer {
-    transient: StandardTransient,
     base: Graphic3dBufferBase,
 }
 impl Graphic3dBufferSource for Graphic3dIndexBuffer {
+    fn observe_buffer_input(&self, scope: &super::GraphicInputRevision) -> bool {
+        self.buffer_base().state.observe(scope);
+        true
+    }
+
     fn buffer_base(&self) -> &Graphic3dBufferBase {
         &self.base
     }
@@ -94,14 +103,13 @@ impl Graphic3dBufferSource for Graphic3dIndexBuffer {
     }
 }
 impl Graphic3dIndexBufferSource for Graphic3dIndexBuffer {}
-martensite_tkernel::impl_transient!(Graphic3dIndexBuffer, "Graphic3d_IndexBuffer", super::Graphic3dBuffer, transient,
+martensite_tkernel::impl_transient!(Graphic3dIndexBuffer, "Graphic3d_IndexBuffer", super::Graphic3dBuffer,
     interfaces: [dyn Graphic3dBufferSource, dyn Graphic3dIndexBufferSource]);
 
 impl Graphic3dIndexBuffer {
     /// An empty index buffer over an allocator; `Graphic3dIndexBuffer::new(allocator)?`.
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dBufferBase::new(allocator)?,
         })
     }
@@ -111,11 +119,16 @@ impl Graphic3dIndexBuffer {
 ///
 /// Example: `let indices = Graphic3dMutableIndexBuffer::new(allocator)?; indices.invalidate_indices(0, 2)?;`.
 pub struct Graphic3dMutableIndexBuffer {
-    transient: StandardTransient,
     base: Graphic3dBufferBase,
-    invalidated_range: SharedState<Graphic3dBufferRange>,
+    invalidated_range: super::RevisedState<Graphic3dBufferRange>,
 }
 impl Graphic3dBufferSource for Graphic3dMutableIndexBuffer {
+    fn observe_buffer_input(&self, scope: &super::GraphicInputRevision) -> bool {
+        self.buffer_base().state.observe(scope);
+        self.invalidated_range.observe(scope);
+        true
+    }
+
     fn buffer_base(&self) -> &Graphic3dBufferBase {
         &self.base
     }
@@ -139,7 +152,7 @@ impl Graphic3dBufferSource for Graphic3dMutableIndexBuffer {
     }
 }
 impl Graphic3dIndexBufferSource for Graphic3dMutableIndexBuffer {}
-martensite_tkernel::impl_transient!(Graphic3dMutableIndexBuffer, "Graphic3d_MutableIndexBuffer", dyn Graphic3dIndexBufferSource, transient,
+martensite_tkernel::impl_transient!(Graphic3dMutableIndexBuffer, "Graphic3d_MutableIndexBuffer", dyn Graphic3dIndexBufferSource,
     interfaces: [dyn Graphic3dBufferSource, dyn Graphic3dIndexBufferSource]);
 
 impl Graphic3dMutableIndexBuffer {
@@ -147,9 +160,8 @@ impl Graphic3dMutableIndexBuffer {
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
         let base = Graphic3dBufferBase::new(allocator)?;
         Ok(Self {
-            transient: StandardTransient::default(),
             base,
-            invalidated_range: SharedState::new(Graphic3dBufferRange::default()),
+            invalidated_range: super::RevisedState::new(Graphic3dBufferRange::default()),
         })
     }
     /// `Invalidate(lower, upper)`: the bytes of indices `lower..=upper`; `lower > upper` raises

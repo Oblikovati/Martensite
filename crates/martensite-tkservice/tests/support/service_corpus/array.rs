@@ -218,7 +218,7 @@ pub fn array_case(output: &Output, values: &[f64]) {
         r.integer(),
         r.integer(),
     );
-    let array: Handle<Graphic3dArrayOfPrimitives> =
+    let array: Handle<dyn martensite_tkservice::graphic3d::Graphic3dArraySource> =
         Graphic3dArrayOfPrimitives::create_array_with_bounds(kind, max_v, max_b, max_e, flags)
             .unwrap_or_default();
     flag(output, array.is_some());

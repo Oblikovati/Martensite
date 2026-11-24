@@ -51,9 +51,10 @@ fn cap_lighting_snapshot(
         scene.fields,
         scene.persistence_extent(),
     )?;
+    let (material, fixed_opacity) = crate::retained_lighting::aspect_material_snapshot(aspects);
     let mut snapshot = RenderLighting::new(
         vec![[0., -1., 0.]; vertex_count],
-        crate::retained_lighting::aspect_material(aspects),
+        material,
         world,
         view,
         !scene.camera.is_orthographic(),
@@ -62,6 +63,6 @@ fn cap_lighting_snapshot(
     .with_pbr(crate::retained_lighting::is_pbr_model(model));
     snapshot.normalize_fixed =
         crate::fixed_normalization::native_normalize_state(scene.camera, scene.fields, view, false);
-    crate::fixed_lighting::snapshot_fixed_material_opacity(&mut snapshot, aspects);
+    snapshot.fixed_source_opacity = Some(fixed_opacity);
     Ok(snapshot)
 }

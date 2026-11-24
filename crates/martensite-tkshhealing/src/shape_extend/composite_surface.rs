@@ -6,7 +6,7 @@ use super::status::ShapeExtendParametrisation;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray1, HArray2};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::{GeomGeometry, GeomSurface};
 use martensite_tkmath::gp::{Point2, Transform2, TransformForm, Vector2};
 
@@ -44,21 +44,18 @@ struct CompositeFields {
 /// assert!(surface.patches().is_null());
 /// ```
 pub struct ShapeExtendCompositeSurface {
-    parent: StandardTransient,
     fields: SharedState<CompositeFields>,
 }
 impl_transient!(
     ShapeExtendCompositeSurface,
     "ShapeExtend_CompositeSurface",
     dyn GeomSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface]
 );
 
 impl Default for ShapeExtendCompositeSurface {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(CompositeFields::default()),
         }
     }

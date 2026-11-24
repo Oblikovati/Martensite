@@ -39,36 +39,40 @@ impl<I> ItemsIterator<I> {
 
 impl<I: Iterator + Clone> ItemsIterator<I> {
     /// Extracts the current references without advancing; `cursor.value()`.
-    pub fn value(&self) -> Option<I::Item> {
+    pub(crate) fn value(&self) -> Option<I::Item> {
         self.inner.as_ref()?.clone().next()
     }
 
     /// Distinguishes a live position from the default end; `cursor.more()`.
-    pub fn more(&self) -> bool {
+    pub(crate) fn more(&self) -> bool {
         self.value().is_some()
     }
 
     /// Advances and returns this cursor, like prefix `++`; `cursor.advance_returning()`.
-    pub fn advance_returning(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn advance_returning(&mut self) -> &mut Self {
         self.next();
         self
     }
 
     /// Returns the previous cursor then advances, like postfix `++`; `cursor.advance_post()`.
-    pub fn advance_post(&mut self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn advance_post(&mut self) -> Self {
         let previous = self.clone();
         self.advance_returning();
         previous
     }
 
     /// Copies the forward position and returns the destination; `cursor.assign_from(&other)`.
-    pub fn assign_from(&mut self, other: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_from(&mut self, other: &Self) -> &mut Self {
         self.clone_from(other);
         self
     }
 
     /// Preserves the current position for self-assignment; `cursor.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }

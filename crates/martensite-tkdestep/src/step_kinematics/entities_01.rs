@@ -44,15 +44,15 @@ step_entity! {
     /// Representation of STEP entity ActuatedKinPairAndOrderKinPair
     StepKinematicsActuatedKinPairAndOrderKinPair, StepKinematicsActuatedKinPairAndOrderKinPairState, "StepKinematicsActuatedKinPairAndOrderKinPair", StepKinematicsKinematicPair, {
         my_actuated_kinematic_pair: Handle<StepKinematicsActuatedKinematicPair>,
-        my_order_kinematic_pair: Handle<StepKinematicsKinematicPair>,
-    }
+        my_order_kinematic_pair: Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>,
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair]
 }
 impl StepKinematicsActuatedKinPairAndOrderKinPair {
     step_methods! {
         set set_actuated_kinematic_pair = my_actuated_kinematic_pair: Handle<StepKinematicsActuatedKinematicPair>;
         get get_actuated_kinematic_pair = my_actuated_kinematic_pair: Handle<StepKinematicsActuatedKinematicPair>;
-        set set_order_kinematic_pair = my_order_kinematic_pair: Handle<StepKinematicsKinematicPair>;
-        get get_order_kinematic_pair = my_order_kinematic_pair: Handle<StepKinematicsKinematicPair>;
+        set set_order_kinematic_pair = my_order_kinematic_pair: Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>;
+        get get_order_kinematic_pair = my_order_kinematic_pair: Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>;
     }
     /// `init`.
     #[allow(clippy::too_many_arguments, reason = "the member takes every field")]
@@ -62,11 +62,15 @@ impl StepKinematicsActuatedKinPairAndOrderKinPair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_joint: &Handle<StepKinematicsKinematicJoint>,
         the_actuated_kinematic_pair: &Handle<StepKinematicsActuatedKinematicPair>,
-        the_order_kinematic_pair: &Handle<StepKinematicsKinematicPair>,
+        the_order_kinematic_pair: &Handle<dyn crate::StepEntityBase<StepKinematicsKinematicPair>>,
     ) {
         self.parent.init(
             the_representation_item_name,
@@ -97,7 +101,7 @@ step_entity! {
         def_rx: bool,
         def_ry: bool,
         def_rz: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair]
 }
 impl StepKinematicsActuatedKinematicPair {
     step_methods! {
@@ -129,8 +133,12 @@ impl StepKinematicsActuatedKinematicPair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         has_tx: bool,
         the_tx: StepKinematicsActuatedDirection,
@@ -226,7 +234,7 @@ impl StepKinematicsContextDependentKinematicLinkRepresentation {
 step_entity! {
     /// Representation of STEP entity CylindricalPair
     StepKinematicsCylindricalPair, StepKinematicsCylindricalPairState, "StepKinematicsCylindricalPair", StepKinematicsLowOrderKinematicPair, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 
 step_entity! {
@@ -234,7 +242,7 @@ step_entity! {
     StepKinematicsCylindricalPairValue, StepKinematicsCylindricalPairValueState, "StepKinematicsCylindricalPairValue", StepKinematicsPairValue, {
         my_actual_translation: f64,
         my_actual_rotation: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsCylindricalPairValue {
     step_methods! {
@@ -248,7 +256,9 @@ impl StepKinematicsCylindricalPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_translation: f64,
         the_actual_rotation: f64,
     ) {
@@ -271,7 +281,7 @@ step_entity! {
         def_upper_limit_actual_translation: bool,
         def_lower_limit_actual_rotation: bool,
         def_upper_limit_actual_rotation: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 impl StepKinematicsCylindricalPairWithRange {
     step_methods! {
@@ -297,8 +307,12 @@ impl StepKinematicsCylindricalPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,

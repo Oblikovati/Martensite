@@ -57,7 +57,7 @@ fn orange() -> Color {
 fn add_group(
     structure: &Graphic3dStructure,
     aspect: Handle<dyn Graphic3dAspectsSource>,
-    array: Handle<Graphic3dArrayOfPrimitives>,
+    array: Handle<dyn Graphic3dArraySource>,
 ) {
     let group = structure.new_group().unwrap();
     group.set_group_primitives_aspect(&aspect);
@@ -74,7 +74,11 @@ fn add_marker_row(structure: &Graphic3dStructure, kind: AspectTypeOfMarker, scal
         points.set_vertex_normal(rank, nx, ny, nz).unwrap();
     }
     let aspect = Graphic3dAspectMarker3d::new(kind, orange(), scale).unwrap();
-    add_group(structure, Handle::new(aspect).cast(), points.cast());
+    add_group(
+        structure,
+        Handle::new(aspect).into_upcast(),
+        points.into_upcast(),
+    );
 }
 
 /// `addDashedSegments`: two dashed segments with normals, 3 px wide; their edges avoid
@@ -89,7 +93,11 @@ fn add_dashed_segments(structure: &Graphic3dStructure) {
         segments.set_vertex_normal(rank, nx, ny, nz).unwrap();
     }
     let aspect = Graphic3dAspectLine3d::new(orange(), AspectTypeOfLine::Dash, 3.).unwrap();
-    add_group(structure, Handle::new(aspect).cast(), segments.cast());
+    add_group(
+        structure,
+        Handle::new(aspect).into_upcast(),
+        segments.into_upcast(),
+    );
 }
 
 /// `addColoredQuad`: a vertex-coloured quad from `x0` to `x0 + 1`, with tilted normals or,
@@ -127,7 +135,11 @@ fn add_colored_quad(structure: &Graphic3dStructure, x0: f64, normals: bool) {
     let material = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Plastified);
     aspect.set_front_material(material.clone());
     aspect.set_back_material(material);
-    add_group(structure, Handle::new(aspect).cast(), triangles.cast());
+    add_group(
+        structure,
+        Handle::new(aspect).into_upcast(),
+        triangles.into_upcast(),
+    );
 }
 
 /// The probe's viewer, view and structure; `PrimitiveScene::new(&driver)`.

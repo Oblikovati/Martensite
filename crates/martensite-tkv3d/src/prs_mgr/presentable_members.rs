@@ -37,7 +37,11 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     /// `Presentations`: the presentations of the object; `object.presentations()`.
     fn presentations(&self) -> Vec<Handle<PrsMgrPresentation>> {
         let fields = self.presentable_base().fields.read();
-        fields.presentations.iter().cloned().collect()
+        fields
+            .presentations
+            .iter()
+            .map(|slot| Handle::clone(slot))
+            .collect()
     }
     /// `ZLayer`: the layer of the drawer; `object.z_layer()`.
     fn z_layer(&self) -> Graphic3dZLayerId {
@@ -45,11 +49,11 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `IsMutable`; `object.is_mutable()`.
     fn is_mutable(&self) -> bool {
-        self.presentable_base().read().is_mutable
+        self.presentable_base().fields.read().is_mutable
     }
     /// `ViewAffinity`; `object.view_affinity()`.
     fn view_affinity(&self) -> Handle<Graphic3dViewAffinity> {
-        self.presentable_base().read().view_affinity
+        self.presentable_base().fields.read().view_affinity.clone()
     }
     /// `HasDisplayMode`: a display mode other than -1; `object.has_display_mode()`.
     fn has_display_mode(&self) -> bool {
@@ -121,7 +125,7 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `IsInfinite`; `object.is_infinite()`.
     fn is_infinite(&self) -> bool {
-        self.presentable_base().read().infinite_state
+        self.presentable_base().fields.read().infinite_state
     }
     /// `SetInfiniteState`: the flag of the object and its presentations; `object.set_infinite_state(true)`.
     fn set_infinite_state(&self, flag: bool) {
@@ -139,7 +143,7 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `TypeOfPresentation3d`; `object.type_of_presentation3d()`.
     fn type_of_presentation3d(&self) -> PrsMgrTypeOfPresentation3d {
-        self.presentable_base().read().type_of_presentation3d
+        self.presentable_base().fields.read().type_of_presentation3d
     }
     /// `SetTypeOfPresentation`: the type and the visual of the presentations.
     /// Example: `object.set_type_of_presentation(PrsMgrTypeOfPresentation3d::ProjectorDependent)`.
@@ -160,19 +164,23 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `DisplayStatus`; `object.display_status()`.
     fn display_status(&self) -> PrsMgrDisplayStatus {
-        self.presentable_base().read().display_status
+        self.presentable_base().fields.read().display_status
     }
     /// `Attributes`: the drawer; `object.attributes()`.
     fn attributes(&self) -> Handle<Prs3dDrawer> {
-        self.presentable_base().read().drawer
+        self.presentable_base().fields.read().drawer.clone()
     }
     /// `HilightAttributes`; `object.hilight_attributes()`.
     fn hilight_attributes(&self) -> Handle<Prs3dDrawer> {
-        self.presentable_base().read().hilight_drawer
+        self.presentable_base().fields.read().hilight_drawer.clone()
     }
     /// `DynamicHilightAttributes`; `object.dynamic_hilight_attributes()`.
     fn dynamic_hilight_attributes(&self) -> Handle<Prs3dDrawer> {
-        self.presentable_base().read().dyn_hilight_drawer
+        self.presentable_base()
+            .fields
+            .read()
+            .dyn_hilight_drawer
+            .clone()
     }
     /// `SynchronizeAspects`: the groups of every presentation resynchronize their aspects.
     /// Example: `object.synchronize_aspects()`.
@@ -193,11 +201,19 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `TransformPersistence`; `object.transform_persistence()`.
     fn transform_persistence(&self) -> Handle<dyn Graphic3dTransformPersSource> {
-        self.presentable_base().read().transform_persistence
+        self.presentable_base()
+            .fields
+            .read()
+            .transform_persistence
+            .clone()
     }
     /// `LocalTransformationGeom`; `object.local_transformation_geom()`.
     fn local_transformation_geom(&self) -> Handle<Datum3> {
-        self.presentable_base().read().local_transformation
+        self.presentable_base()
+            .fields
+            .read()
+            .local_transformation
+            .clone()
     }
     /// `SetLocalTransformation(gpTrsf)`; `object.set_local_transformation(&trsf)?`.
     fn set_local_transformation(&self, trsf: &Transform3) -> Result<(), Failure> {
@@ -205,11 +221,11 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `HasTransformation`: a non-identity absolute transformation; `object.has_transformation()`.
     fn has_transformation(&self) -> bool {
-        is_non_identity(&self.presentable_base().read().transformation)
+        is_non_identity(&self.presentable_base().fields.read().transformation)
     }
     /// `TransformationGeom`; `object.transformation_geom()`.
     fn transformation_geom(&self) -> Handle<Datum3> {
-        self.presentable_base().read().transformation
+        self.presentable_base().fields.read().transformation.clone()
     }
     /// `LocalTransformation`: the identity without local transformation; `object.local_transformation()`.
     fn local_transformation(&self) -> Transform3 {
@@ -225,23 +241,27 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `InversedTransformation`; `object.inversed_transformation()`.
     fn inversed_transformation(&self) -> GeneralTransform3 {
-        self.presentable_base().read().inv_transformation
+        self.presentable_base().fields.read().inv_transformation
     }
     /// `CombinedParentTransformation`; `object.combined_parent_transformation()`.
     fn combined_parent_transformation(&self) -> Handle<Datum3> {
-        self.presentable_base().read().combined_parent_transform
+        self.presentable_base()
+            .fields
+            .read()
+            .combined_parent_transform
+            .clone()
     }
     /// `ClipPlanes`; `object.clip_planes()`.
     fn clip_planes(&self) -> Handle<Graphic3dSequenceOfHClipPlane> {
-        self.presentable_base().read().clip_planes
+        self.presentable_base().fields.read().clip_planes.clone()
     }
     /// `Parent`: the parent, null without; `object.parent()`.
     fn parent(&self) -> Handle<dyn PrsMgrPresentableObject> {
-        self.presentable_base().read().parent.upgrade()
+        self.presentable_base().fields.read().parent.upgrade()
     }
     /// `Children`; `object.children()`.
     fn children(&self) -> Vec<Handle<dyn PrsMgrPresentableObject>> {
-        self.presentable_base().read().children
+        self.presentable_base().fields.read().children.clone()
     }
     /// `AddChildWithCurrentTransformation`: keeps the child where it is.
     /// Example: `parent.add_child_with_current_transformation(&child)?`.
@@ -274,11 +294,11 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `HasOwnPresentations`; `object.has_own_presentations()`.
     fn has_own_presentations(&self) -> bool {
-        self.presentable_base().read().has_own_presentations
+        self.presentable_base().fields.read().has_own_presentations
     }
     /// `CurrentFacingModel`; `object.current_facing_model()`.
     fn current_facing_model(&self) -> AspectTypeOfFacingModel {
-        self.presentable_base().read().current_facing_model
+        self.presentable_base().fields.read().current_facing_model
     }
     /// `SetCurrentFacingModel`; `object.set_current_facing_model(AspectTypeOfFacingModel::BothSide)`.
     fn set_current_facing_model(&self, model: AspectTypeOfFacingModel) {
@@ -290,19 +310,19 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `HasColor`; `object.has_color()`.
     fn has_color(&self) -> bool {
-        self.presentable_base().read().has_own_color
+        self.presentable_base().fields.read().has_own_color
     }
     /// `HasWidth`; `object.has_width()`.
     fn has_width(&self) -> bool {
-        self.presentable_base().read().own_width != 0.0
+        self.presentable_base().fields.read().own_width != 0.0
     }
     /// `Width`; `object.width()`.
     fn width(&self) -> f64 {
-        f64::from(self.presentable_base().read().own_width)
+        f64::from(self.presentable_base().fields.read().own_width)
     }
     /// `HasMaterial`; `object.has_material()`.
     fn has_material(&self) -> bool {
-        self.presentable_base().read().has_own_material
+        self.presentable_base().fields.read().has_own_material
     }
     /// `IsTransparent`: a drawer transparency above 0.005; `object.is_transparent()`.
     fn is_transparent(&self) -> bool {
@@ -310,7 +330,10 @@ pub trait PrsMgrPresentableObjectMembers: PrsMgrPresentableObject {
     }
     /// `ToPropagateVisualState`; `object.to_propagate_visual_state()`.
     fn to_propagate_visual_state(&self) -> bool {
-        self.presentable_base().read().to_propagate_visual_state
+        self.presentable_base()
+            .fields
+            .read()
+            .to_propagate_visual_state
     }
     /// `SetPropagateVisualState`; `object.set_propagate_visual_state(false)`.
     fn set_propagate_visual_state(&self, flag: bool) {

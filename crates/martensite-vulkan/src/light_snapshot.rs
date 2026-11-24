@@ -1,5 +1,5 @@
 //! World-space light records mirror GlShaderManager::PushLightSourceState.
-use crate::{RenderError, error::rejected};
+use crate::{RenderError, draw::DrawStream, error::rejected};
 use martensite_tkernel::{
     ncollection::{Mat4, Vec4},
     standard::Handle,
@@ -19,7 +19,8 @@ pub(crate) struct PackedRenderLight {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct RenderLightSet {
     pub(crate) ambient: [f32; 4],
-    pub(crate) sources: Vec<PackedRenderLight>,
+    // Draws in the same view share these immutable light records.
+    pub(crate) sources: DrawStream<PackedRenderLight>,
 }
 impl RenderLightSet {
     // GlView::render replaces sources for an Unlit view,
@@ -35,7 +36,7 @@ impl RenderLightSet {
         if shading == Graphic3dTypeOfShadingModel::Unlit {
             return Ok(Self {
                 ambient: [1.; 4],
-                sources: Vec::new(),
+                sources: Default::default(),
             });
         }
         Self::snapshot_around(lights, inverse_view, local_origin.unwrap_or_default())
@@ -65,7 +66,7 @@ impl RenderLightSet {
         };
         lights.update_revision();
         let inverse = Mat4::from_data(inverse_view);
-        let sources = lights
+        let sources: Vec<_> = lights
             .lights()
             .iter()
             .filter(|light| {
@@ -75,7 +76,7 @@ impl RenderLightSet {
             .collect();
         Ok(Self {
             ambient: lights.ambient_color().data(),
-            sources,
+            sources: sources.into(),
         })
     }
     /// Read the summed enabled ambient RGB, including intensity; `lights.ambient_color()`.

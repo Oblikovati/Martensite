@@ -9,7 +9,7 @@ use martensite_tkbrep::topods::{Edge, Face, Shape, ShapeIterator, Vertex};
 use martensite_tkbrep::toptools::IndexedMapOfShape;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, TransientHandleTarget};
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
     Geom2dHyperbola, Geom2dLine, Geom2dParabola, Geom2dTrimmedCurve,
@@ -25,7 +25,7 @@ use martensite_tkmath::gp::{
 };
 
 /// `tp_type`: the dynamic type name of a handle, `null` for a null one.
-pub fn type_name<T: ?Sized + RuntimeTyped>(output: &BufferedTokens, handle: &Handle<T>) {
+pub fn type_name<T: ?Sized + TransientHandleTarget>(output: &BufferedTokens, handle: &Handle<T>) {
     output.text(
         handle
             .dynamic_type()

@@ -239,7 +239,7 @@ fn cone_circle(
     let mut ax2 = cir_ax2;
     ax2.set_location(or);
     let gc: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::from_circ(Circle3::new(ax2, rad)?)).cast();
+        Handle::new(GeomCircle::from_circ(Circle3::new(ax2, rad)?)).into_upcast();
     let p = Point3::new(
         or.x() + rad * fr.dx.x(),
         or.y() + rad * fr.dx.y(),
@@ -270,7 +270,7 @@ fn asym_cylinder(
         ax.y_reverse();
         gcyl.set_position(ax);
     }
-    set_surf(data, Handle::new(gcyl).cast(), dstr);
+    set_surf(data, Handle::new(gcyl).into_upcast(), dstr);
     let mut cylaxe = ax.axis().direction();
     if !ax.direct()? != plandab {
         cylaxe.reverse();
@@ -346,7 +346,7 @@ fn asym_cone(
         gcon.set_position(ax);
     }
     let dir_chamf_axis = gcon.axis().direction();
-    set_surf(data, Handle::new(gcon).cast(), dstr);
+    set_surf(data, Handle::new(gcon).into_upcast(), dstr);
     let v = (ac.dis * ac.dis + ac.mv * ac.mv).sqrt() * if plandab { 1. } else { -1. };
     let (_, deru, derv) = elslib::cone_d1(0., v, ax, ac.chamf_rad, semi);
     let mut norchamf = Direction3::from_vector(deru.crossed(derv))?;

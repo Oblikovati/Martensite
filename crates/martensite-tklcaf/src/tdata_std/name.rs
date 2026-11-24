@@ -8,7 +8,7 @@ use crate::guid_from_text;
 use crate::tdf::{TdfAttribute, TdfAttributeBase, TdfLabel, TdfRelocationTable, dump_attribute};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, dump::DumpStream},
     tcollection::ExtendedString,
 };
 use std::io;
@@ -23,16 +23,14 @@ macro_rules! ext_string_attribute {
     ($(#[$doc:meta])* $name:ident, $type_name:literal, $default_id:expr) => {
         $(#[$doc])*
         pub struct $name {
-            transient: StandardTransient,
             base: TdfAttributeBase,
             strings: TDataStdGenericExtStringBase,
         }
-        impl_transient!($name, $type_name, dyn TDataStdGenericExtString, transient,
+        impl_transient!($name, $type_name, dyn TDataStdGenericExtString,
             interfaces: [dyn TdfAttribute, dyn TDataStdGenericExtString]);
         impl Default for $name {
             fn default() -> Self {
                 Self {
-                    transient: StandardTransient::default(),
                     base: TdfAttributeBase::default(),
                     strings: TDataStdGenericExtStringBase::with_id($default_id),
                 }
@@ -76,7 +74,7 @@ macro_rules! ext_string_members {
         }
         /// `NewEmpty` (from `IMPLEMENT_DERIVED_ATTRIBUTE`): a new attribute of this type.
         fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-            Handle::new(Self::new()).cast()
+            Handle::new(Self::new()).into_upcast()
         }
         fn paste(
             &self,

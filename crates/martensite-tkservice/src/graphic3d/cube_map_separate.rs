@@ -12,17 +12,16 @@ use crate::image::{
 };
 use martensite_tkernel::message::Message;
 use martensite_tkernel::osd::{CadPath, File};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A cube map of six files or images.
 ///
 /// Example: `Graphic3dCubeMapSeparate::from_paths(&paths)?` with six paths.
 pub struct Graphic3dCubeMapSeparate {
-    transient: StandardTransient,
     base: Graphic3dCubeMapBase,
     paths: [CadPath; 6],
-    images: [Handle<ImagePixMap>; 6],
+    images: [Handle<dyn crate::image::ImagePixMapObject>; 6],
     /// `mySize` and `myFormat`, set by the first side. Native quirk: both start
     /// uninitialised; here they start as 0 and `Gray`.
     first_side: SharedState<(usize, ImageFormat)>,
@@ -40,12 +39,15 @@ impl Graphic3dTextureRoot for Graphic3dCubeMapSeparate {
                 .all(|path| File::with_path(path.clone()).exists())
     }
     /// Always null: the sides are read through `value`.
-    fn get_image(&self, _supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn get_image(
+        &self,
+        _supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         Handle::default()
     }
 }
 impl Graphic3dTextureMap for Graphic3dCubeMapSeparate {}
-martensite_tkernel::impl_transient!(Graphic3dCubeMapSeparate, "Graphic3d_CubeMapSeparate", dyn Graphic3dCubeMap, transient,
+martensite_tkernel::impl_transient!(Graphic3dCubeMapSeparate, "Graphic3d_CubeMapSeparate", dyn Graphic3dCubeMap,
     interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dCubeMap]);
 
 fn count_error(what: &str, count: usize) -> Failure {
@@ -65,7 +67,10 @@ fn same_layout(image: &ImagePixMap, first: &ImagePixMap) -> bool {
 impl Graphic3dCubeMapSeparate {
     fn with_sources(
         paths: [CadPath; 6],
-        (images, top_down): ([Handle<ImagePixMap>; 6], Option<bool>),
+        (images, top_down): (
+            [Handle<dyn crate::image::ImagePixMapObject>; 6],
+            Option<bool>,
+        ),
     ) -> Self {
         let base = Graphic3dCubeMapBase::from_pix_map(Handle::default(), false);
         if let Some(is_top_down) = top_down {
@@ -73,7 +78,6 @@ impl Graphic3dCubeMapSeparate {
         }
         let first_side = SharedState::new((0, ImageFormat::Gray));
         Self {
-            transient: StandardTransient::default(),
             base,
             paths,
             images,
@@ -94,11 +98,14 @@ impl Graphic3dCubeMapSeparate {
     }
     /// Six square images of one size, format and row order; another count raises
     /// `Standard_Failure`, a mismatching set keeps no image. Example: `from_images(&images)?`.
-    pub fn from_images(images: &[Handle<ImagePixMap>]) -> Result<Self, Failure> {
-        let images: [Handle<ImagePixMap>; 6] = images
-            .to_vec()
-            .try_into()
-            .map_err(|_| count_error("images in", images.len()))?;
+    pub fn from_images(
+        images: &[Handle<dyn crate::image::ImagePixMapObject>],
+    ) -> Result<Self, Failure> {
+        let images: [Handle<dyn crate::image::ImagePixMapObject>; 6] =
+            images
+                .to_vec()
+                .try_into()
+                .map_err(|_| count_error("images in", images.len()))?;
         Ok(Self::with_sources(
             Default::default(),
             Self::accepted_images(images),
@@ -108,8 +115,11 @@ impl Graphic3dCubeMapSeparate {
     /// non-square first image keeps none) and the row order it records: that of a square
     /// first image, which the native loop stores before it can reset the images.
     fn accepted_images(
-        images: [Handle<ImagePixMap>; 6],
-    ) -> ([Handle<ImagePixMap>; 6], Option<bool>) {
+        images: [Handle<dyn crate::image::ImagePixMapObject>; 6],
+    ) -> (
+        [Handle<dyn crate::image::ImagePixMapObject>; 6],
+        Option<bool>,
+    ) {
         let Some(first) = images[0]
             .get()
             .filter(|first| first.width() == first.height())
@@ -130,7 +140,7 @@ impl Graphic3dCubeMapSeparate {
         &self.paths
     }
     /// The side images (`myImages`); `cube.images()`.
-    pub fn images(&self) -> &[Handle<ImagePixMap>; 6] {
+    pub fn images(&self) -> &[Handle<dyn crate::image::ImagePixMapObject>; 6] {
         &self.images
     }
     /// The first side's size and format (`mySize`, `myFormat`); `cube.first_side_layout()`.
@@ -162,7 +172,7 @@ impl Graphic3dCubeMapSeparate {
         &self,
         supported: &Handle<ImageSupportedFormats>,
         path: &AsciiString,
-    ) -> Handle<ImagePixMap> {
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let image = Handle::new(ImageAlienPixMap::default());
         if !image.load(path) {
             let text = format!(
@@ -172,7 +182,7 @@ impl Graphic3dCubeMapSeparate {
             Message::send_warning_text(&AsciiString::from(text.as_str()));
             return Handle::default();
         }
-        let pixmap: Handle<ImagePixMap> = image.cast();
+        let pixmap: Handle<dyn crate::image::ImagePixMapObject> = image.cast();
         graphic3d_convert_to_compatible(supported, &pixmap);
         let Some(side) = pixmap.get().filter(|side| side.width() == side.height()) else {
             return Handle::default();
@@ -234,7 +244,10 @@ impl Graphic3dCubeMap for Graphic3dCubeMapSeparate {
         Handle::default()
     }
     /// The image of the current side, else its decoded file, else null with a warning.
-    fn value(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn value(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let location = self.current_location(true);
         if self.images[location].is_some() {
             return self.images[location].clone();

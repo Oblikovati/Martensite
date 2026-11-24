@@ -1,7 +1,7 @@
 //! `Select3DBVHIndexBuffer`: a `Graphic3dBuffer` of unsigned element indexes, each with a
 //! patch size when patches are enabled.
 use martensite_tkernel::ncollection::BaseAllocator;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkservice::graphic3d::{
     Graphic3dBufferBase, Graphic3dBufferMembers as _, Graphic3dBufferSource,
 };
@@ -13,11 +13,10 @@ const INDEX_SIZE: usize = 4;
 ///
 /// Example: `let buffer = Select3DBvhIndexBuffer::new(Graphic3dBufferBase::default_allocator())?; buffer.init(4, false)?;`.
 pub struct Select3DBvhIndexBuffer {
-    transient: StandardTransient,
     base: Graphic3dBufferBase,
     has_patches: SharedState<bool>,
 }
-martensite_tkernel::impl_transient!(Select3DBvhIndexBuffer, "Select3DBVHIndexBuffer", dyn Graphic3dBufferSource, transient,
+martensite_tkernel::impl_transient!(Select3DBvhIndexBuffer, "Select3DBVHIndexBuffer", dyn Graphic3dBufferSource,
     interfaces: [dyn Graphic3dBufferSource]);
 
 impl Graphic3dBufferSource for Select3DBvhIndexBuffer {
@@ -30,7 +29,6 @@ impl Select3DBvhIndexBuffer {
     /// An empty buffer over an allocator; `Select3DBvhIndexBuffer::new(allocator)?`.
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dBufferBase::new(allocator)?,
             has_patches: SharedState::new(false),
         })

@@ -3,7 +3,8 @@ use crate::{
     RenderError, RenderFrame, RenderLayer, driver_structure::Graphic3dRenderStructure,
     error::rejected, render_element_pass::RenderElementPass,
 };
-use martensite_tkernel::standard::{Handle, HandleObserver, HandleReference};
+use martensite_tkernel::standard::{Handle, HandleReference};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 pub(crate) fn frame_for_view(
     view: &dyn Graphic3dCView,
@@ -13,6 +14,7 @@ pub(crate) fn frame_for_view(
 ) -> Result<RenderFrame, RenderError> {
     validate_view(view)?;
     crate::retained_texture_images::prune_view_texture_snapshots(view)?;
+    crate::primitive_cache::RetainedPrimitives::prune_for_view(view);
     let camera = crate::view_render_camera::owned_render_camera(view);
     // GlView::render ray-traces at the viewport size when the scene has ray-traced data.
     crate::raytrace::admit_view_adaptive_sampling(view, extras.limits);
@@ -36,7 +38,14 @@ pub(crate) fn frame_for_view(
         std::sync::Arc::new(raytrace)
     });
     let clear = view_clear_color(view);
-    let mut frame = RenderFrame::with_layers_and_grid(extent[0], extent[1], clear, passes, grid)?;
+    let mesh_lod = retained_mesh_lod(extras.mesh_lod && raytrace.is_none());
+    let mut frame =
+        RenderFrame::with_layers_and_grid(extent[0], extent[1], clear, passes, grid, mesh_lod)?;
+    // The retained main-pass key checks the opaque prefix. Immediate layers keep
+    // their original blend state, including a translucent dynamic highlight.
+    if extras.trihedron.is_none() && frame.shader_grid.is_none() {
+        frame.immediate_start = Some(main_layers);
+    }
     frame.colored_quad = colored_quad;
     frame.raytrace = raytrace;
     frame.environment = environment;
@@ -67,7 +76,22 @@ pub(crate) fn shadow_frame_for_view(
     )?;
     passes.truncate(passes.len() - immediate);
     apply_view_culling(&mut passes, view.backfacing_model());
-    RenderFrame::with_layers_and_grid(resolution, resolution, [0., 0., 0., 1.], passes, None)
+    RenderFrame::with_layers_and_grid(
+        resolution,
+        resolution,
+        [0., 0., 0., 1.],
+        passes,
+        None,
+        crate::mesh_lod::FrameMeshLod::Disabled,
+    )
+}
+
+fn retained_mesh_lod(admitted: bool) -> crate::mesh_lod::FrameMeshLod {
+    if admitted {
+        crate::mesh_lod::FrameMeshLod::RetainedPrecomposed
+    } else {
+        crate::mesh_lod::FrameMeshLod::Disabled
+    }
 }
 /// The clip planes and device limits of a shadow-map pass.
 pub(crate) type ShadowPassInputs<'a> = (
@@ -86,6 +110,7 @@ pub(crate) struct ViewFrameExtras<'a> {
     pub frame_steps: Option<&'a crate::Graphic3dRenderView>,
     /// The device limits elements see through their context state; `None` without a device.
     pub limits: Option<crate::RenderDeviceLimits>,
+    pub mesh_lod: bool,
 }
 impl ViewFrameExtras<'_> {
     /// The grid block of this frame, after recording the frame's world view for background grids.
@@ -141,7 +166,7 @@ pub(crate) fn scene_extent(
 }
 struct ViewLayerInputs<'a> {
     camera: &'a Graphic3dCamera,
-    clipping: HandleObserver<Graphic3dSequenceOfHClipPlane>,
+    clipping: Handle<dyn Graphic3dClipPlaneSequenceSource>,
     rendering: Graphic3dRenderingParams,
     extent: [u32; 2],
     view_id: i32,
@@ -160,6 +185,7 @@ impl<'a> ViewLayerInputs<'a> {
         extent: [u32; 2],
         camera: &'a Graphic3dCamera,
         (clipping, limits): ShadowPassInputs<'_>,
+        kept_window: Option<&crate::Graphic3dRenderView>,
     ) -> Result<Self, RenderError> {
         let raster = scene_extent(view, extent)?;
         let rendering =
@@ -167,10 +193,13 @@ impl<'a> ViewLayerInputs<'a> {
         // Culling updates before the clip planes reset; capture this owned field afterward.
         Ok(Self {
             camera,
-            clipping: clipping
-                .observe()
-                .observe_as::<Graphic3dSequenceOfHClipPlane>(),
-            context: frame_context_state(view, raster, &rendering, limits),
+            clipping: clipping.clone_handle(),
+            context: frame_context_state(
+                view,
+                raster,
+                &rendering,
+                (limits, frame_window_size(view, kept_window)),
+            ),
             rendering,
             extent: raster,
             view_id: view.identification(),
@@ -199,11 +228,22 @@ impl<'a> ViewLayerInputs<'a> {
 /// The context state of a frame: `SetResolution` with the
 /// render scale, `ResizeViewport` to the scene framebuffer, the line feather, the view's
 /// backfacing model and alpha-to-coverage allowed only for a multisampled scene.
+/// The bound window's size: the size a render view keeps once it saw the window mapped, as
+/// its auto Z-fit does, or a live read. A live read is an X server round trip, and every frame
+/// made one here (#594).
+pub(crate) fn frame_window_size(
+    view: &dyn Graphic3dCView,
+    kept: Option<&crate::Graphic3dRenderView>,
+) -> (i32, i32) {
+    kept.and_then(crate::Graphic3dRenderView::observed_window_size)
+        .or_else(|| view.window().get().map(|window| window.size()))
+        .unwrap_or_default()
+}
 fn frame_context_state(
     view: &dyn Graphic3dCView,
     raster: [u32; 2],
     rendering: &Graphic3dRenderingParams,
-    limits: Option<crate::RenderDeviceLimits>,
+    (limits, window_size): (Option<crate::RenderDeviceLimits>, (i32, i32)),
 ) -> crate::RenderContextState {
     let params = view.rendering_params();
     let scale = crate::render_scale::active_render_scale(&params).unwrap_or(1.);
@@ -212,7 +252,7 @@ fn frame_context_state(
     let mut state = crate::RenderContextState {
         limits,
         camera: view.camera(),
-        window_size: view.window().get().map_or([0; 2], |w| w.size().into()),
+        window_size: window_size.into(),
         // GlView::render: PBRShadingModelFallback(model, checkPBRAvailability).
         shading_model: crate::RenderContextState::pbr_shading_model_fallback(
             params.shading_model,
@@ -247,44 +287,17 @@ fn view_layer_passes(
     steps: Option<&crate::Graphic3dRenderView>,
     shadow: ShadowCulling<'_>,
 ) -> Result<(Vec<RenderLayer>, Graphic3dRenderingParams, usize), RenderError> {
-    let mut layers = view.layers();
-    // GlView::renderStructs draws no structure in a subview composer.
-    if view.is_subview_composer() {
-        layers.clear();
-    }
-    // GlFilteredIndexedLayerIterator renders normal layers before immediate ones.
-    layers.sort_by_key(|layer| layer.is_immediate());
-    let mut culling = || match shadow {
-        Some((camera, window)) => update_culling(view, &layers, camera, window),
-        None => update_culling(
-            view,
-            &layers,
-            &crate::view_render_camera::owned_render_camera(view),
-            extent,
-        ),
-    };
-    match stats {
-        // GlLayerList::UpdateCulling measures this traversal as CpuCulling.
-        Some(stats) => stats.time_culling(&mut culling)?,
-        None => culling()?,
-    }
+    let layers = ordered_layers(view);
+    cull_layers(view, &layers, (extent, stats), shadow)?;
     // Culling keeps the target size, as GlView passes the window size to its BVH selector.
-    let mut inputs = ViewLayerInputs::new(view, extent, camera, (clipping, limits))?;
+    let mut inputs = ViewLayerInputs::new(view, extent, camera, (clipping, limits), steps)?;
     inputs.skip_trsf_persistence = shadow.is_some();
     if let Some((light_camera, _)) = shadow {
         // GlView::renderShadowMap sets the light camera on the context.
         inputs.context.camera = light_camera.clone();
     }
     inputs.raytraced = raytraced;
-    let build = |immediate: bool| {
-        crate::view_layer_clear::source_passes(
-            layers
-                .iter()
-                .filter(|layer| layer.is_immediate() == immediate)
-                .filter(|layer| layer_selected(view, layer.layer_id())),
-            |layer| inputs.layer(layer),
-        )
-    };
+    let build = |immediate: bool| source_layer_passes(view, &layers, &inputs, immediate);
     let (mut passes, immediate) = match steps {
         Some(view) => view.run_frame_steps(camera.projection_type(), &build)?,
         None => (build(false)?, build(true)?),
@@ -299,7 +312,55 @@ fn view_layer_passes(
     );
     Ok((passes, inputs.rendering, count))
 }
-fn view_clear_color(view: &dyn Graphic3dCView) -> [f32; 4] {
+/// The view's layers in drawing order: normal layers before immediate ones, as
+/// GlFilteredIndexedLayerIterator renders them; none in a subview composer, whose
+/// GlView::renderStructs draws no structure.
+fn ordered_layers(view: &dyn Graphic3dCView) -> Vec<Handle<Graphic3dLayer>> {
+    let mut layers = view.layers();
+    if view.is_subview_composer() {
+        layers.clear();
+    }
+    layers.sort_by_key(|layer| layer.is_immediate());
+    layers
+}
+/// Culls `layers` for the view camera over `extent`, or for a shadow pass's light camera.
+fn cull_layers(
+    view: &dyn Graphic3dCView,
+    layers: &[Handle<Graphic3dLayer>],
+    (extent, stats): ([u32; 2], Option<&crate::RenderFrameStats>),
+    shadow: ShadowCulling<'_>,
+) -> Result<(), RenderError> {
+    let mut culling = || match shadow {
+        Some((camera, window)) => update_culling(view, layers, camera, window),
+        None => update_culling(
+            view,
+            layers,
+            &crate::view_render_camera::owned_render_camera(view),
+            extent,
+        ),
+    };
+    match stats {
+        // GlLayerList::UpdateCulling measures this traversal as CpuCulling.
+        Some(stats) => stats.time_culling(&mut culling),
+        None => culling(),
+    }
+}
+/// The passes of the normal or the immediate layers among `layers` that the view selects.
+fn source_layer_passes(
+    view: &dyn Graphic3dCView,
+    layers: &[Handle<Graphic3dLayer>],
+    inputs: &ViewLayerInputs<'_>,
+    immediate: bool,
+) -> Result<Vec<RenderLayer>, RenderError> {
+    crate::view_layer_clear::source_passes(
+        layers
+            .iter()
+            .filter(|layer| layer.is_immediate() == immediate)
+            .filter(|layer| layer_selected(view, layer.layer_id())),
+        |layer| inputs.layer(layer),
+    )
+}
+pub(crate) fn view_clear_color(view: &dyn Graphic3dCView) -> [f32; 4] {
     let color = view.cview_base().fields.read().bg_color;
     [
         color.rgb().red() as f32,
@@ -328,7 +389,7 @@ fn update_culling(
     }
     Ok(())
 }
-fn culling_selector(
+pub(crate) fn culling_selector(
     view: &dyn Graphic3dCView,
     camera: &Handle<Graphic3dCamera>,
     extent: [u32; 2],
@@ -355,7 +416,7 @@ fn layer_pass(
     view_id: i32,
     extent: [u32; 2],
     rendering: &Graphic3dRenderingParams,
-    clipping: &Handle<Graphic3dSequenceOfHClipPlane>,
+    clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     (environment, skip_trsf_persistence, raytraced, context): LayerPassFrame<'_>,
 ) -> Result<RenderLayer, RenderError> {
     let settings = layer.layer_settings();
@@ -368,7 +429,7 @@ fn layer_pass(
             .map_or([0.; 3], |o| o.coords()),
         ..context.clone()
     });
-    let inputs = StructureInputs {
+    let inputs = layer_scene::StructureInputs {
         camera,
         view_id,
         extent,
@@ -387,10 +448,14 @@ fn layer_pass(
         .with_skip_trsf_persistence(skip_trsf_persistence)
         .with_skip_raytraced(raytraced)
         .with_context_state(context);
-    let mut program = layer_program(layer, &inputs, &opaque)?;
+    let mut program = layer_scene::layer_program(layer, &inputs, &opaque)?;
     if opaque.needs_transparent_pass() {
         // GlLayerList::renderTransparent revisits layers whose opaque pass skipped elements.
-        program.append(layer_program(layer, &inputs, &opaque.transparent())?);
+        program.append(layer_scene::layer_program(
+            layer,
+            &inputs,
+            &opaque.transparent(),
+        )?);
     }
     let offset = settings.polygon_offset();
     let mut pass = RenderLayer::from_stencil_program(
@@ -417,47 +482,6 @@ type LayerPassFrame<'a> = (
     bool,
     &'a crate::RenderContextState,
 );
-struct StructureInputs<'a> {
-    camera: &'a Graphic3dCamera,
-    view_id: i32,
-    extent: [u32; 2],
-    rendering: &'a Graphic3dRenderingParams,
-    clipping: &'a Handle<Graphic3dSequenceOfHClipPlane>,
-}
-fn layer_program(
-    layer: &Graphic3dLayer,
-    inputs: &StructureInputs<'_>,
-    pass: &RenderElementPass,
-) -> Result<crate::stencil_program::StencilProgram, RenderError> {
-    let mut program = crate::stencil_program::StencilProgram::default();
-    for priority in layer.array_of_structures() {
-        for weak in priority.iter() {
-            program.append(structure_draws(&weak.upgrade(), inputs, pass)?);
-        }
-    }
-    Ok(program)
-}
-fn structure_draws(
-    structure: &Handle<dyn Graphic3dCStructure>,
-    inputs: &StructureInputs<'_>,
-    pass: &RenderElementPass,
-) -> Result<crate::stencil_program::StencilProgram, RenderError> {
-    if structure.is_null() {
-        return Ok(Default::default());
-    }
-    let retained = structure.cast::<Graphic3dRenderStructure>();
-    retained
-        .get()
-        .ok_or_else(|| rejected(structure.object_address(), "a Martensite driver structure"))?
-        .draws(
-            inputs.camera,
-            inputs.view_id,
-            inputs.extent,
-            inputs.rendering,
-            inputs.clipping,
-            pass,
-        )
-}
 fn validate_raster_params(view: &dyn Graphic3dCView) -> Result<(), RenderError> {
     let params = view.rendering_params();
     // Ray tracing renders the ray-traced layers itself (crate::raytrace), the rest rasterizes.
@@ -492,3 +516,16 @@ fn apply_view_culling(layers: &mut [RenderLayer], mode: Graphic3dTypeOfBackfacin
 #[cfg(test)]
 #[path = "ffp_texcoord_tests.rs"]
 mod ffp_texcoord_tests;
+
+#[path = "view_scene_batch.rs"]
+mod batch;
+pub(crate) use batch::{BatchSceneSources, match_batch_sources};
+
+#[path = "view_scene_layer.rs"]
+mod layer_scene;
+
+#[cfg(any(test, not(feature = "raytrace-input-diagnostics")))]
+#[path = "view_scene_immediate.rs"]
+mod immediate;
+#[cfg(not(feature = "raytrace-input-diagnostics"))]
+pub(crate) use immediate::immediate_frame_for_view;

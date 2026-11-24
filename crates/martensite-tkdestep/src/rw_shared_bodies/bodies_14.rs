@@ -4,7 +4,8 @@ macro_rules! rw_block_0138 {
     ($a_name:ident, $a_swept_face:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_swept_face: Handle<StepShapeFaceSurface> = Default::default();
+        let mut $a_swept_face: Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>> =
+            Default::default();
         $data.read_entity(
             $num,
             2,
@@ -73,7 +74,7 @@ macro_rules! rw_block_0142 {
             &mut $a_property_definition_representation_definition,
         )?;
         let mut $a_property_definition_representation_used_representation: Handle<
-            StepReprRepresentation,
+            dyn crate::StepEntityBase<StepReprRepresentation>,
         > = Default::default();
         $data.read_entity(
             $num,

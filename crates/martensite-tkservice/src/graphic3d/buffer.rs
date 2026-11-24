@@ -9,7 +9,7 @@ use super::Graphic3dBufferRange;
 use crate::json_dump::{base_class, class_begin, field_integer};
 use martensite_tkernel::ncollection::{BaseAllocator, Buffer};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Transient};
 use std::io;
 use std::sync::OnceLock;
 
@@ -96,7 +96,7 @@ pub struct Graphic3dBufferState {
 /// The embedded state of every buffer class.
 pub struct Graphic3dBufferBase {
     /// The buffer fields, shared by every handle to the buffer.
-    pub state: SharedState<Graphic3dBufferState>,
+    pub state: super::RevisedState<Graphic3dBufferState>,
 }
 
 impl Graphic3dBufferBase {
@@ -105,7 +105,7 @@ impl Graphic3dBufferBase {
     /// refuses with `Standard_ProgramError`. Example:
     /// `Graphic3dBufferBase::new(Graphic3dBufferBase::default_allocator())?`.
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
-        let data = Buffer::new(Some(allocator), 0)?;
+        let data = Buffer::new_versioned(Some(allocator), 0)?;
         let state = Graphic3dBufferState {
             data,
             stride: 0,
@@ -114,7 +114,7 @@ impl Graphic3dBufferBase {
             attributes: Vec::new(),
         };
         Ok(Self {
-            state: SharedState::new(state),
+            state: super::RevisedState::new(state),
         })
     }
     /// `DefaultAllocator`: the shared 16-byte aligned allocator; `Graphic3dBufferBase::default_allocator()`.
@@ -129,6 +129,12 @@ impl Graphic3dBufferBase {
 pub trait Graphic3dBufferSource: Transient {
     /// The embedded base; `buffer.buffer_base().state.read().stride`.
     fn buffer_base(&self) -> &Graphic3dBufferBase;
+    /// Subscribe to every mutable field used to read this buffer. Return true only when
+    /// all such fields are observed. Custom buffers can decline.
+    /// Example: `source.observe_buffer_input(&scope)`.
+    fn observe_buffer_input(&self, _scope: &super::GraphicInputRevision) -> bool {
+        false
+    }
     /// Whether the attributes are interleaved (true); `buffer.is_interleaved()`.
     fn is_interleaved(&self) -> bool {
         true
@@ -136,6 +142,14 @@ pub trait Graphic3dBufferSource: Transient {
     /// Whether the buffer can be invalidated (false); `buffer.is_mutable()`.
     fn is_mutable(&self) -> bool {
         false
+    }
+    /// Read the layout flag of a buffer that currently has no mutable upload ranges.
+    /// Example: `source.immutable_interleaving() == Some(true)`.
+    fn immutable_interleaving(&self) -> Option<bool> {
+        if self.is_mutable() {
+            return None;
+        }
+        Some(self.is_interleaved())
     }
     /// The invalidated byte range (empty); `buffer.invalidated_range()`.
     fn invalidated_range(&self) -> Graphic3dBufferRange {
@@ -160,10 +174,8 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn Graphic3dBufferSource {
         // interface registration would invent an extra native ancestor and split is_kind.
         <Graphic3dBuffer as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dBufferSource);
 
 /// The body of `Graphic3d_Buffer::DumpJson`; `graphic3d_buffer_dump_json(base, &mut stream, -1)?`.
 pub fn graphic3d_buffer_dump_json(
@@ -181,22 +193,25 @@ pub fn graphic3d_buffer_dump_json(
 
 /// The native `Graphic3d_Buffer`; `Graphic3dBuffer::new(Graphic3dBufferBase::default_allocator())?`.
 pub struct Graphic3dBuffer {
-    transient: StandardTransient,
     base: Graphic3dBufferBase,
 }
 impl Graphic3dBufferSource for Graphic3dBuffer {
+    fn observe_buffer_input(&self, scope: &super::GraphicInputRevision) -> bool {
+        self.buffer_base().state.observe(scope);
+        true
+    }
+
     fn buffer_base(&self) -> &Graphic3dBufferBase {
         &self.base
     }
 }
-martensite_tkernel::impl_transient!(Graphic3dBuffer, "Graphic3d_Buffer", Buffer, transient,
+martensite_tkernel::impl_transient!(Graphic3dBuffer, "Graphic3d_Buffer", Buffer,
     interfaces: [dyn Graphic3dBufferSource]);
 
 impl Graphic3dBuffer {
     /// An empty buffer over an allocator; `Graphic3dBuffer::new(allocator)?`.
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dBufferBase::new(allocator)?,
         })
     }

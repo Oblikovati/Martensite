@@ -7,7 +7,7 @@ use super::point::IntPatchPoint;
 use super::vertices::VertexList;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::gp::{Axis2, Circle3, Ellipse3, Hyperbola3, Line3, Parabola3, Plane3};
 use std::f64::consts::PI;
 
@@ -31,11 +31,10 @@ pub(super) struct GLineState {
 /// assert!(line.circle().is_err());
 /// ```
 pub struct IntPatchGLine {
-    transient: StandardTransient,
     base: IntPatchLineBase,
     state: SharedState<GLineState>,
 }
-impl_transient!(IntPatchGLine, "IntPatch_GLine", dyn IntPatchLine, transient,
+impl_transient!(IntPatchGLine, "IntPatch_GLine", dyn IntPatchLine,
     interfaces: [dyn IntPatchLine]);
 
 pub(super) const GLINE: &str = "IntPatch_GLine";
@@ -54,7 +53,6 @@ impl IntPatchGLine {
             vertices: VertexList::default(),
         };
         Self {
-            transient: StandardTransient::default(),
             base: IntPatchLineBase::new(tang, transitions, typ),
             state: SharedState::new(state),
         }

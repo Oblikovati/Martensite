@@ -26,7 +26,7 @@ fn init_round_trip_step_shape_dimensional_size() {
     let a_applies_to = Handle::new(StepReprShapeAspect::new());
     let a_name = Handle::new(HAsciiString::new("sample"));
     let object = StepShapeDimensionalSize::new();
-    object.init(&a_applies_to, &a_name);
+    object.init(&a_applies_to.upcast(), &a_name);
     assert!(object.applies_to() == a_applies_to);
     assert!(object.name() == a_name);
 }
@@ -48,9 +48,9 @@ fn init_round_trip_step_shape_dimensional_size_with_path() {
     let a_path = Handle::new(StepReprShapeAspect::new());
     let object = StepShapeDimensionalSizeWithPath::new();
     object.init(
-        &a_dimensional_size_applies_to,
+        &a_dimensional_size_applies_to.upcast(),
         &a_dimensional_size_name,
-        &a_path,
+        &a_path.upcast(),
     );
     assert!(object.path() == a_path);
 }
@@ -112,9 +112,9 @@ fn init_round_trip_step_shape_edge_curve() {
     let object = StepShapeEdgeCurve::new();
     object.init(
         &a_name,
-        &a_edge_start,
-        &a_edge_end,
-        &a_edge_geometry,
+        &a_edge_start.upcast(),
+        &a_edge_end.upcast(),
+        &a_edge_geometry.upcast(),
         a_same_sense,
     );
     assert!(object.edge_geometry() == a_edge_geometry);
@@ -177,7 +177,12 @@ fn init_round_trip_step_shape_extruded_face_solid() {
     let a_extruded_direction = Handle::new(StepGeomDirection::new());
     let a_depth = 2.5;
     let object = StepShapeExtrudedFaceSolid::new();
-    object.init(&a_name, &a_swept_area, &a_extruded_direction, a_depth);
+    object.init(
+        &a_name,
+        &a_swept_area.upcast(),
+        &a_extruded_direction,
+        a_depth,
+    );
     assert!(object.extruded_direction() == a_extruded_direction);
     assert!(object.depth() == a_depth);
 }
@@ -195,8 +200,10 @@ fn runtime_type_step_shape_face_based_surface_model() {
 #[test]
 fn init_round_trip_step_shape_face_based_surface_model() {
     let a_representation_item_name = Handle::new(HAsciiString::new("sample"));
-    let a_fbsm_faces =
-        Handle::new(HArray1::<Handle<StepShapeConnectedFaceSet>>::with_bounds(1, 2).unwrap());
+    let a_fbsm_faces = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let object = StepShapeFaceBasedSurfaceModel::new();
     object.init(&a_representation_item_name, &a_fbsm_faces);
     assert!(object.fbsm_faces() == a_fbsm_faces);
@@ -215,7 +222,7 @@ fn init_round_trip_step_shape_face_bound() {
     let a_bound = Handle::new(StepShapeLoop::new());
     let a_orientation = true;
     let object = StepShapeFaceBound::new();
-    object.init(&a_name, &a_bound, a_orientation);
+    object.init(&a_name, &a_bound.upcast(), a_orientation);
     assert!(object.bound() == a_bound);
     assert!(object.orientation() == a_orientation);
 }
@@ -243,11 +250,14 @@ fn runtime_type_step_shape_face_surface() {
 #[test]
 fn init_round_trip_step_shape_face_surface() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_bounds = Handle::new(HArray1::<Handle<StepShapeFaceBound>>::with_bounds(1, 2).unwrap());
+    let a_bounds = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let a_face_geometry = Handle::new(StepGeomSurface::new());
     let a_same_sense = true;
     let object = StepShapeFaceSurface::new();
-    object.init(&a_name, &a_bounds, &a_face_geometry, a_same_sense);
+    object.init(&a_name, &a_bounds, &a_face_geometry.upcast(), a_same_sense);
     assert!(object.face_geometry() == a_face_geometry);
     assert!(object.same_sense() == a_same_sense);
 }
@@ -279,7 +289,12 @@ fn init_round_trip_step_shape_faceted_brep_and_brep_with_voids() {
     let a_faceted_brep = Handle::new(StepShapeFacetedBrep::new());
     let a_brep_with_voids = Handle::new(StepShapeBrepWithVoids::new());
     let object = StepShapeFacetedBrepAndBrepWithVoids::new();
-    object.init(&a_name, &a_outer, &a_faceted_brep, &a_brep_with_voids);
+    object.init(
+        &a_name,
+        &a_outer.upcast(),
+        &a_faceted_brep,
+        &a_brep_with_voids,
+    );
     assert!(object.faceted_brep() == a_faceted_brep);
     assert!(object.brep_with_voids() == a_brep_with_voids);
 }
@@ -360,7 +375,7 @@ fn init_round_trip_step_shape_half_space_solid() {
     let a_base_surface = Handle::new(StepGeomSurface::new());
     let a_agreement_flag = true;
     let object = StepShapeHalfSpaceSolid::new();
-    object.init(&a_name, &a_base_surface, a_agreement_flag);
+    object.init(&a_name, &a_base_surface.upcast(), a_agreement_flag);
     assert!(object.base_surface() == a_base_surface);
     assert!(object.agreement_flag() == a_agreement_flag);
 }

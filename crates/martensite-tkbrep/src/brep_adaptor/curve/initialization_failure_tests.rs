@@ -6,7 +6,7 @@ use martensite_tkmath::gp::{Axis1, Direction3};
 
 fn initialized_line() -> BRepAdaptorCurve {
     let line: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast();
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast();
     let mut edge = Edge::default();
     let builder = BRepBuilder::default();
     builder

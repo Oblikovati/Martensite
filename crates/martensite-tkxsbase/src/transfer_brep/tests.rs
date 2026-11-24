@@ -9,7 +9,7 @@ use crate::transfer::{
 use martensite_tkbrep::topods::{Builder, Compound, HShape, Shape, Wire};
 use martensite_tkernel::{
     message::{Gravity, Msg, Printer, PrinterBase, PrinterHandle, PrinterType},
-    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient, Transient},
     tcollection::AsciiString,
 };
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
@@ -47,6 +47,27 @@ impl Printer for RecordingPrinter {
             .unwrap()
             .push(String::from_utf8_lossy(text.as_bytes()).into_owned());
     }
+}
+
+#[test]
+fn shape_result_view_shares_status_and_object_identity() {
+    let compound = compound();
+    let wire = wire();
+    let binder = Handle::new(TransferBRepShapeBinder::with_result(&compound));
+    let erased = binder.upcast::<dyn TransferBinder>();
+    let view = erased.view::<dyn TransferBRepShapeBinderOps>();
+    let result = view.get().unwrap();
+    assert_eq!(view.object_address(), binder.object_address());
+    assert_eq!(binder.ref_count(), 2);
+    let base = TransferBRepBinderOfShape::static_type();
+    assert!(result.is_kind(base));
+    let registered = RuntimeType::registered_by_name("TransferBRepBinderOfShape").unwrap();
+    assert!(std::ptr::eq(base, registered));
+    assert!(result.result().is_same(&compound));
+    result.set_result(&wire).unwrap();
+    assert!(binder.result().is_same(&wire));
+    result.set_already_used();
+    assert!(binder.set_result(&compound).is_err());
 }
 
 #[test]
@@ -94,10 +115,10 @@ fn mappers_and_infos() {
     let shape = compound();
     let mapper = TransferBRepShapeMapper::new(&shape);
     let same: Handle<dyn TransferFinder> =
-        Handle::new(TransferBRepShapeMapper::new(&shape.reversed())).cast();
+        Handle::new(TransferBRepShapeMapper::new(&shape.reversed())).into_upcast();
     assert!(mapper.equates(&same) && !mapper.equates(&Handle::default()));
     let other: Handle<dyn TransferFinder> =
-        Handle::new(TransferBRepShapeMapper::new(&compound())).cast();
+        Handle::new(TransferBRepShapeMapper::new(&compound())).into_upcast();
     assert!(!mapper.equates(&other));
     assert_eq!(
         (
@@ -135,15 +156,15 @@ fn shape_results_of_processes() {
     TransferBRep::set_shape_result(&tp, &a, &compound()).unwrap();
     let simple = TransferSimpleBinderOfTransient::new();
     simple
-        .set_result(&Handle::new(HShape::new(&wire())).cast())
+        .set_result(&Handle::new(HShape::new(&wire())).into_upcast())
         .unwrap();
-    tp.bind(&b, &Handle::new(simple).cast()).unwrap();
+    tp.bind(&b, &Handle::new(simple).into_upcast()).unwrap();
     let list = TransferBRepShapeListBinder::new();
     list.add_result(&wire()).unwrap();
-    tp.bind(&c, &Handle::new(list).cast()).unwrap();
+    tp.bind(&c, &Handle::new(list).into_upcast()).unwrap();
     assert!(!TransferBRep::shape_result_of(&tp, &a).unwrap().is_null());
     assert!(!TransferBRep::shape_result_of(&tp, &b).unwrap().is_null());
-    let hshape: Handle<StandardTransient> = Handle::new(HShape::new(&wire())).cast();
+    let hshape: Handle<dyn Transient> = Handle::new(HShape::new(&wire())).into_upcast();
     assert!(
         !TransferBRep::shape_result_of(&tp, &hshape)
             .unwrap()
@@ -186,7 +207,8 @@ fn shapes_in_finder_processes() {
         TransferBRep::shape_state(&fp, &shape).unwrap(),
         Orientation::External
     );
-    let result: Handle<StandardTransient> = Handle::new(StandardTransient::default());
+    let result: Handle<dyn Transient> =
+        Handle::new(StandardTransient).into_upcast::<dyn Transient>();
     TransferBRep::set_transient_from_shape(&fp, &shape, &result).unwrap();
     assert!(TransferBRep::transient_from_shape(&fp, &shape) == result);
     assert!(TransferBRep::result_from_shape(&fp, &shape).is_some());
@@ -237,7 +259,7 @@ fn shape_check_lists() {
     let fp = TransferFinderProcess::new(10);
     let shape = compound();
     let mapper: Handle<dyn TransferFinder> =
-        Handle::new(TransferBRepShapeMapper::new(&shape)).cast();
+        Handle::new(TransferBRepShapeMapper::new(&shape)).into_upcast();
     fp.bind_transient(&mapper, &ents[1]).unwrap();
     let mut chl = InterfaceCheckIterator::new();
     let on_mapper = Handle::new(InterfaceCheck::new());
@@ -252,7 +274,7 @@ fn shape_check_lists() {
     assert_eq!(TransferBRep::checked(&chl, false).len(), 1);
     assert_eq!(TransferBRep::checked(&chl, true).len(), 2);
     assert_eq!(TransferBRep::checked_shapes(&chl).len(), 1);
-    let same_shape: Handle<StandardTransient> = Handle::new(HShape::new(&shape)).cast();
+    let same_shape: Handle<dyn Transient> = Handle::new(HShape::new(&shape)).into_upcast();
     assert_eq!(
         TransferBRep::check_object(&chl, &same_shape).items().len(),
         1
@@ -271,8 +293,5 @@ fn shape_check_lists() {
             .items()
             .is_empty()
     );
-    assert_eq!(
-        StandardTransient::static_type().name(),
-        "Standard_Transient"
-    );
+    assert_eq!(<dyn Transient>::static_type().name(), "Standard_Transient");
 }

@@ -92,7 +92,8 @@ impl RwStepShapeRwFacetedBrepAndBrepWithVoids {
         if !data.check_nb_params(num, 1, ach, "manifold_solid_brep")? {
             return Ok(());
         }
-        let mut a_outer: Handle<StepShapeClosedShell> = Default::default();
+        let mut a_outer: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> =
+            Default::default();
         data.read_entity(
             num,
             1,

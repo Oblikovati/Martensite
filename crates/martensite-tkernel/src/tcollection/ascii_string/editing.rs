@@ -32,7 +32,8 @@ impl AsciiString {
     }
     /// Inserts one byte, NUL included, before `position` in `1..=len+1`;
     /// `text.insert_char(1, b'>')?`.
-    pub fn insert_char(&mut self, position: i32, byte: u8) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn insert_char(&mut self, position: i32, byte: u8) -> Result<(), Failure> {
         if position > self.length() + 1 {
             return Err(out_of_range(
                 "Insert",
@@ -60,7 +61,8 @@ impl AsciiString {
     }
     /// Inserting a span of this string: inserts a copy of the
     /// zero-based `source` span; `text.insert_self(2, 0..3)?`.
-    pub fn insert_self(
+    #[cfg(test)]
+    pub(crate) fn insert_self(
         &mut self,
         position: i32,
         source: std::ops::Range<usize>,
@@ -81,7 +83,12 @@ impl AsciiString {
         self.insert(index + 1, what)
     }
     /// Inserts before `index` in `1..=len`; `text.insert_before(1, "head")?`.
-    pub fn insert_before(&mut self, index: i32, what: impl AsRef<[u8]>) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn insert_before(
+        &mut self,
+        index: i32,
+        what: impl AsRef<[u8]>,
+    ) -> Result<(), Failure> {
         if index < 1 || index > self.length() {
             return Err(out_of_range(
                 "InsertBefore",
@@ -117,7 +124,7 @@ impl AsciiString {
                 "byte 0 (NULL terminator); expected a nonzero byte".into(),
             ));
         }
-        self.terminated.write()[position as usize - 1] = byte;
+        self.terminated[position as usize - 1] = byte;
         Ok(())
     }
     /// Overwrites from `position`,
@@ -136,10 +143,9 @@ impl AsciiString {
         let offset = position as usize - 1;
         let end = offset + what.len();
         if end > self.len() {
-            self.reserve_buffer_length(end + 1);
-            self.terminated.write().resize(end + 1, 0);
+            self.terminated.resize(end + 1, 0);
         }
-        self.terminated.write()[offset..end].copy_from_slice(what);
+        self.terminated[offset..end].copy_from_slice(what);
         Ok(())
     }
     /// `Remove`: erases `count` bytes from `position` when `position + count <= len + 1`;
@@ -158,9 +164,7 @@ impl AsciiString {
             ));
         }
         let offset = position as usize - 1;
-        self.terminated
-            .write()
-            .drain(offset..offset + count as usize);
+        self.terminated.drain(offset..offset + count as usize);
         Ok(())
     }
     /// Keeps the first `length` bytes, `length` in `0..=len`; `text.truncate(5)?`.
@@ -196,13 +200,14 @@ impl AsciiString {
             *self = Self::from_raw(bytes);
             return;
         }
-        self.terminated.write()[..bytes.len()].copy_from_slice(bytes);
+        self.terminated[..bytes.len()].copy_from_slice(bytes);
         self.set_length(bytes.len());
     }
     /// Copying a span of this string: moves the zero-based `source`
     /// span to the front. A span starting at offset 0 is the self-copy early
     /// return and leaves the string unchanged; `text.copy_self(2..4)`.
-    pub fn copy_self(&mut self, source: std::ops::Range<usize>) {
+    #[cfg(test)]
+    pub(crate) fn copy_self(&mut self, source: std::ops::Range<usize>) {
         assert!(
             source.start <= source.end && source.end <= self.len(),
             "AsciiString source {source:?}; expected a span within 0..{}",
@@ -212,7 +217,7 @@ impl AsciiString {
             return;
         }
         let length = source.len();
-        self.terminated.write().copy_within(source, 0);
+        self.terminated.copy_within(source, 0);
         self.set_length(length);
     }
 }

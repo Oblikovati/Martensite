@@ -8,7 +8,7 @@ use crate::aspect::{
 };
 use crate::cast::int_from_f64;
 use martensite_tkernel::ncollection::Vec2;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// Declares the uninhabited Emscripten event types (none exists without Emscripten).
@@ -54,12 +54,11 @@ pub struct WasmWindowFields {
 
 /// A canvas window; `WasmWindow::new(&"#canvas".into(), true)`.
 pub struct WasmWindow {
-    transient: StandardTransient,
     base: AspectWindowBase,
     /// The fields, shared by every handle.
     pub fields: SharedState<WasmWindowFields>,
 }
-martensite_tkernel::impl_transient!(WasmWindow, "Wasm_Window", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(WasmWindow, "Wasm_Window", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 
 impl WasmWindow {
     /// A mapped window of a canvas, of size 0 and pixel ratio 1; `WasmWindow::new(&id, true)`.
@@ -72,7 +71,6 @@ impl WasmWindow {
             is_mapped: true,
         };
         Self {
-            transient: StandardTransient::default(),
             base: AspectWindowBase::default(),
             fields: SharedState::new(fields),
         }

@@ -12,6 +12,7 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_live};
 use crate::iges_dimen::{IgesDimenGeneralNote, IgesDimenLeaderArrow};
 use crate::iges_geom::{IgesGeomCircularArc, IgesGeomCompositeCurve};
@@ -29,7 +30,7 @@ iges_entity! {
 IgesDimenPointDimension, IgesDimenPointDimensionState, "IgesDimenPointDimension", parent IgesDataIgesEntity, {
 the_note: Handle<IgesDimenGeneralNote>,
 the_leader: Handle<IgesDimenLeaderArrow>,
-the_geom: Handle<IgesDataIgesEntity>,
+the_geom: Handle<dyn IgesDataEntityKind>,
 }
 }
 
@@ -37,14 +38,14 @@ impl IgesDimenPointDimension {
     iges_methods! {
     get note = the_note: Handle<IgesDimenGeneralNote>;
     get leader_arrow = the_leader: Handle<IgesDimenLeaderArrow>;
-    get geom = the_geom: Handle<IgesDataIgesEntity>;
+    get geom = the_geom: Handle<dyn IgesDataEntityKind>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_note: &Handle<IgesDimenGeneralNote>,
         an_arrow: &Handle<IgesDimenLeaderArrow>,
-        a_geom: &Handle<IgesDataIgesEntity>,
+        a_geom: &Handle<dyn IgesDataEntityKind>,
     ) {
         {
             let mut state = self.state.write();

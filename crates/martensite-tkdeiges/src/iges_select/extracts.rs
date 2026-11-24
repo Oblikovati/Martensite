@@ -1,8 +1,10 @@
 //! The selections that keep the entities of their input by a criterion of the directory entry.
-use crate::iges_data::{IgesDataIgesEntity, IgesDataLevelListEntity};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::IgesDataLevelListEntity;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -20,7 +22,7 @@ macro_rules! iges_extract {
         $(#[$meta])*
         #[derive(Default)]
         pub struct $class {
-            transient: StandardTransient,
+
             base: IFSelectSelectExtractBase,
             $($field: SharedState<$ty>,)*
         }
@@ -28,7 +30,6 @@ macro_rules! iges_extract {
             $class,
             $recorded,
             dyn IFSelectSelectExtract,
-            transient,
             interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExtract]
         );
         impl IFSelectSelection for $class {
@@ -69,10 +70,10 @@ impl IFSelectSelectExtract for IgesSelectSelectVisibleStatus {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         Ok(entity.get().is_some_and(|live| live.blank_status() == 0))
     }
     fn extract_label(&self) -> AsciiString {
@@ -111,10 +112,10 @@ impl IFSelectSelectExtract for IgesSelectSelectSubordinate {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(false);
         };
@@ -184,10 +185,10 @@ impl IFSelectSelectExtract for IgesSelectSelectName {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let wanted = self.name();
         let (Some(live), Some(text)) = (entity.get(), wanted.get()) else {
             return Ok(false);
@@ -254,10 +255,10 @@ impl IFSelectSelectExtract for IgesSelectSelectLevelNumber {
     fn sort(
         &self,
         _rank: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(false);
         };

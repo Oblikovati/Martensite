@@ -13,11 +13,12 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_vals, iges_dump_xyz_l, iges_new_array1, iges_real_text,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_vals, iges_dump_xyz_l, iges_new_array1, iges_real_text,
 };
 use crate::iges_draw::IgesDrawCircArraySubfigure;
 use martensite_tkernel::ncollection::HArray1;
@@ -46,7 +47,7 @@ impl IgesDrawToolCircArraySubfigure {
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
         let mut temp_center: Xyz = Default::default();
-        let mut temp_base: Handle<IgesDataIgesEntity> = Default::default();
+        let mut temp_base: Handle<dyn IgesDataEntityKind> = Default::default();
         let mut temp_radius: f64 = Default::default();
         let mut temp_st_angle: f64 = Default::default();
         let mut temp_del_angle: f64 = Default::default();
@@ -170,7 +171,7 @@ impl IgesDrawToolCircArraySubfigure {
         ent: &Handle<IgesDrawCircArraySubfigure>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
-        let mut temp_base: Handle<IgesDataIgesEntity> =
+        let mut temp_base: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.base_entity().cast())?.cast();
         let mut temp_num_locs: i32 = another.nb_locations();
         let mut temp_center: Xyz = another.center_point().xyz();

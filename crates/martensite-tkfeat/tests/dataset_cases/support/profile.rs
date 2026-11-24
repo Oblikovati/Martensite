@@ -94,7 +94,7 @@ impl Pen {
         let (surface, location) = checked(BRepTool::surface_with_location(&face));
         self.surface = surface;
         self.location = location;
-        match self.surface.cast::<GeomPlane>().get() {
+        match self.surface.downcast_ref::<GeomPlane>() {
             Some(plane) => self.plane = plane.pln(),
             None => self.planar = false,
         }
@@ -135,7 +135,7 @@ impl Pen {
         );
         self.at[0] += length * self.along[0];
         self.at[1] += length * self.along[1];
-        Ok((Handle::new(line).cast(), length))
+        Ok((Handle::new(line).into_upcast(), length))
     }
 
     fn arc(&mut self, mut radius: f64, mut angle: f64) -> Result<Segment, Failure> {
@@ -153,7 +153,7 @@ impl Pen {
             sense = !sense;
         }
         let circle: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dCircle::from_axis(axis, radius, sense)?).cast();
+            Handle::new(Geom2dCircle::from_axis(axis, radius, sense)?).into_upcast();
         let (point, tangent) = circle.d1(angle)?;
         self.at = [point.x(), point.y()];
         self.along = [tangent.x() / radius, tangent.y() / radius];

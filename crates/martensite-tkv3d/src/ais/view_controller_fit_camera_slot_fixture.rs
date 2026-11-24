@@ -19,7 +19,7 @@ pub(super) struct FitCameraSlotWindow {
     backend: AspectNeutralWindow,
     control: Arc<FitCameraSlotControl>,
 }
-martensite_tkernel::impl_transient!(FitCameraSlotWindow,"Martensite_FitCameraSlotWindow",AspectNeutralWindow,backend,interfaces:[dyn AspectWindow]);
+martensite_tkernel::impl_transient!(FitCameraSlotWindow,"Martensite_FitCameraSlotWindow",AspectNeutralWindow,interfaces:[dyn AspectWindow]);
 impl AspectWindow for FitCameraSlotWindow {
     forward_neutral_window_surface!(backend);
     fn size(&self) -> (i32, i32) {
@@ -32,10 +32,14 @@ impl AspectWindow for FitCameraSlotWindow {
 }
 impl FitCameraSlotControl {
     fn replace_camera(&self) {
-        let view = self.view.observe();
-        let before = view.camera_ref().observe().ref_count();
-        view.set_camera(&*self.replacement.observe()).unwrap();
-        *self.records.write() = [1, before, view.camera_ref().observe().ref_count()];
+        let view = self.view.upgrade();
+        let before = view.camera_ref().ref_count();
+        view.set_camera(&self.replacement.upgrade()).unwrap();
+        *self.records.write() = [
+            1,
+            before.try_into().unwrap(),
+            view.camera_ref().ref_count().try_into().unwrap(),
+        ];
         match self.mode {
             1 => raise_native_failure(Err(Failure::new("fit Size fault=1; expected success"))),
             2 => std::panic::panic_any(73_u32),

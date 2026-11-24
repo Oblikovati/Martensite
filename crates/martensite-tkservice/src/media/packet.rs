@@ -15,16 +15,10 @@ pub struct MediaBufferPoolFields {
 /// A pool of frame buffers; `MediaBufferPool::default().buffer_size() == 0`.
 #[derive(Default)]
 pub struct MediaBufferPool {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<MediaBufferPoolFields>,
 }
-martensite_tkernel::impl_transient!(
-    MediaBufferPool,
-    "Media_BufferPool",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(MediaBufferPool, "Media_BufferPool", StandardTransient);
 
 impl MediaBufferPool {
     /// `Release`: drops a pool (none without FFmpeg, so the size is kept); `pool.release()`.
@@ -70,11 +64,10 @@ pub struct MediaPacketFields {
 /// A demuxed packet; `MediaPacket::default().size() == 0`.
 #[derive(Default)]
 pub struct MediaPacket {
-    transient: StandardTransient,
     /// The fields, shared by every handle.
     pub fields: SharedState<MediaPacketFields>,
 }
-martensite_tkernel::impl_transient!(MediaPacket, "Media_Packet", StandardTransient, transient);
+martensite_tkernel::impl_transient!(MediaPacket, "Media_Packet", StandardTransient);
 
 impl MediaPacket {
     /// `Unref`: nothing without FFmpeg; `packet.unref()`.

@@ -10,17 +10,15 @@ use martensite_tkv3d::{
     },
 };
 pub struct RejectedSensitivePoint {
-    transient: StandardTransient,
     point: Select3DSensitivePoint,
 }
-martensite_tkernel::impl_transient!(RejectedSensitivePoint,"RejectedSensitivePoint",StandardTransient,transient,
+martensite_tkernel::impl_transient!(RejectedSensitivePoint,"RejectedSensitivePoint",StandardTransient,
     interfaces:[dyn Select3DSensitiveEntity]);
 impl RejectedSensitivePoint {
     /// Exercise rejection despite implementing the sensitive interface.
     /// Example: `RejectedSensitivePoint::new(&owner, Point3::origin())`.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>, point: Point3) -> Self {
         Self {
-            transient: StandardTransient::default(),
             point: Select3DSensitivePoint::new(owner, point),
         }
     }

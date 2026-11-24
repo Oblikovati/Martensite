@@ -1,7 +1,7 @@
 //! `MoniToolRealVal`: a real through a handle.
 use martensite_tkernel::{
     impl_transient,
-    standard::{SharedState, StandardTransient},
+    standard::{SharedState, Transient},
 };
 use std::sync::RwLockWriteGuard;
 
@@ -16,21 +16,14 @@ use std::sync::RwLockWriteGuard;
 /// ```
 #[derive(Default)]
 pub struct MoniToolRealVal {
-    transient: StandardTransient,
     theval: SharedState<f64>,
 }
-impl_transient!(
-    MoniToolRealVal,
-    "MoniToolRealVal",
-    StandardTransient,
-    transient
-);
+impl_transient!(MoniToolRealVal, "MoniToolRealVal", dyn Transient);
 
 impl MoniToolRealVal {
     /// `MoniToolRealVal(val = 0.)`.
     pub fn new(val: f64) -> Self {
         Self {
-            transient: StandardTransient::default(),
             theval: SharedState::new(val),
         }
     }

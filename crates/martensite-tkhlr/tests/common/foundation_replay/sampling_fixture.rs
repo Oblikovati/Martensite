@@ -2,18 +2,17 @@
 use super::geometry_records::common::Reader;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::adaptor3d::{Adaptor3dSurface, h_surface_tool::Adaptor3dSurfaceHandle};
 use martensite_tkmath::geom_abs::SurfaceType;
 struct ContourSamplingSurface {
-    parent: StandardTransient,
     kind: SurfaceType,
     bounds: [f64; 4],
     counts: [i32; 6],
     failure_field: i32,
 }
-impl_transient!(ContourSamplingSurface, "ContourSamplingSurface", dyn Adaptor3dSurface, parent, interfaces: [dyn Adaptor3dSurface]);
+impl_transient!(ContourSamplingSurface, "ContourSamplingSurface", dyn Adaptor3dSurface, interfaces: [dyn Adaptor3dSurface]);
 impl ContourSamplingSurface {
     fn check_field(&self, field: i32) -> Result<(), Failure> {
         if self.failure_field == field {
@@ -90,13 +89,12 @@ pub fn sampling_surface(reader: &mut Reader) -> Adaptor3dSurfaceHandle {
     let counts = std::array::from_fn(|_| reader.integer());
     let failure_field = reader.integer();
     Handle::new(ContourSamplingSurface {
-        parent: StandardTransient::default(),
         kind,
         bounds,
         counts,
         failure_field,
     })
-    .cast()
+    .into_upcast()
 }
 
 #[cfg(test)]

@@ -83,12 +83,12 @@ impl BRepAlgoNormalProjection {
         out: &mut BuildOutput,
     ) -> Result<(), Failure> {
         let hsur: Handle<dyn Adaptor3dSurface> =
-            Handle::new(BRepAdaptorSurface::with_face(face, true)?).cast();
+            Handle::new(BRepAdaptorSurface::with_face(face, true)?).into_upcast();
         let s = hsur.get().ok_or_else(null_adaptor)?;
         // The computation of TolU and TolV.
         let tol_u: f64 = s.u_resolution(self.my_tol3d)? / 20.;
         let tol_v: f64 = s.v_resolution(self.my_tol3d)? / 20.;
-        let curve: Handle<dyn Adaptor3dCurve> = hcur.clone().cast();
+        let curve: Handle<dyn Adaptor3dCurve> = hcur.cast();
         let h_projector = Handle::new(CompProjectedCurve::with_max_dist(
             &hsur,
             &curve,

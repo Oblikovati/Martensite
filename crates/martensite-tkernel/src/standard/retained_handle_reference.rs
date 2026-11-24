@@ -1,5 +1,5 @@
 //! Explicit local retention keeps the slot capability, without owning its target.
-use super::{Failure, HandleObserver, HandleReference, RuntimeTyped};
+use super::{Failure, HandleObserver, HandleReference, RuntimeTyped, TransientHandleTarget};
 use std::marker::PhantomData;
 use std::rc::Rc;
 
@@ -22,7 +22,12 @@ impl<T: ?Sized + RuntimeTyped> RetainedHandleReference<T> {
         // Expiration follows the original scope owner, independently of a live null value.
         self.source.is_expired()
     }
-    pub(super) fn project<U: ?Sized + RuntimeTyped>(self) -> RetainedHandleReference<U> {
+    pub(super) fn project<U: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        self,
+    ) -> RetainedHandleReference<U>
+    where
+        T: TransientHandleTarget,
+    {
         RetainedHandleReference::from_source(RetainedProjection {
             source: self,
             projected: PhantomData,
@@ -41,7 +46,7 @@ impl<T: ?Sized + RuntimeTyped> HandleReference<T> for RetainedHandleReference<T>
         // Alias copies retain only the weak capability, so target counts remain unchanged.
         Ok(self.clone())
     }
-    fn observe(&self) -> HandleObserver<T> {
+    fn observe(&self) -> HandleObserver<'_, T> {
         // Read through the original slot capability; never retain a pointee snapshot.
         self.source.observe()
     }
@@ -58,16 +63,21 @@ impl<T: ?Sized + RuntimeTyped> HandleReference<T> for RetainedHandleReference<T>
         self.source.is_null()
     }
 }
-struct RetainedProjection<T: ?Sized + RuntimeTyped, U: ?Sized + RuntimeTyped> {
+struct RetainedProjection<
+    T: ?Sized + RuntimeTyped + TransientHandleTarget,
+    U: ?Sized + RuntimeTyped + TransientHandleTarget,
+> {
     source: RetainedHandleReference<T>,
     projected: PhantomData<fn() -> U>,
 }
-impl<T: ?Sized + RuntimeTyped, U: ?Sized + RuntimeTyped> HandleReference<U>
-    for RetainedProjection<T, U>
+impl<
+    T: ?Sized + RuntimeTyped + TransientHandleTarget,
+    U: ?Sized + RuntimeTyped + TransientHandleTarget,
+> HandleReference<U> for RetainedProjection<T, U>
 {
-    fn observe(&self) -> HandleObserver<U> {
+    fn observe(&self) -> HandleObserver<'_, U> {
         // Read through the original slot capability; never retain a pointee snapshot.
-        self.source.observe().observe_as::<U>()
+        HandleObserver::Snapshot(self.source.observe().into_handle().into_cast::<U>())
     }
     fn reference_address(&self) -> *const () {
         // Wrapper identity cannot substitute for the original handle address.
@@ -82,8 +92,10 @@ impl<T: ?Sized + RuntimeTyped, U: ?Sized + RuntimeTyped> HandleReference<U>
         self.source.is_null()
     }
 }
-impl<T: ?Sized + RuntimeTyped, U: ?Sized + RuntimeTyped> RetainedSlotSource<U>
-    for RetainedProjection<T, U>
+impl<
+    T: ?Sized + RuntimeTyped + TransientHandleTarget,
+    U: ?Sized + RuntimeTyped + TransientHandleTarget,
+> RetainedSlotSource<U> for RetainedProjection<T, U>
 {
     fn is_expired(&self) -> bool {
         // Expiration follows the original scope owner, independently of a live null value.

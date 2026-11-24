@@ -26,7 +26,7 @@ fn init_round_trip_step_element_analysis_item_within_representation() {
     let a_item = Handle::new(StepReprRepresentationItem::new());
     let a_rep = Handle::new(StepReprRepresentation::new());
     let object = StepElementAnalysisItemWithinRepresentation::new();
-    object.init(&a_name, &a_description, &a_item, &a_rep);
+    object.init(&a_name, &a_description, &a_item.upcast(), &a_rep.upcast());
     assert!(object.name() == a_name);
     assert!(object.description() == a_description);
     assert!(object.item() == a_item);

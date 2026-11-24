@@ -1,18 +1,16 @@
 //! A real point with an observable native initial-location override.
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{GeneralTransform3, Point3};
 use martensite_tkv3d::{select_basics::*, select3d::*};
 pub struct GeometrySensitivePoint {
-    transient: StandardTransient,
     point: Select3DSensitivePoint,
     initial: bool,
     inverse: GeneralTransform3,
 }
-martensite_tkernel::impl_transient!(GeometrySensitivePoint,"GeometrySensitivePoint",dyn Select3DSensitiveEntity,transient,interfaces:[dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(GeometrySensitivePoint,"GeometrySensitivePoint",dyn Select3DSensitiveEntity,interfaces:[dyn Select3DSensitiveEntity]);
 impl GeometrySensitivePoint {
     pub fn new(initial: bool, inverse: GeneralTransform3) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             point: Select3DSensitivePoint::new(&Handle::default(), Point3::default()),
             initial,
             inverse,

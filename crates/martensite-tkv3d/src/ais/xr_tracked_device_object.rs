@@ -2,14 +2,13 @@
 use super::*;
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::{graphic3d::*, image::ImageTextureSource};
 /// Auxiliary tracked-device mesh and laser; `AisXrTrackedDevice::new()?`.
 pub struct AisXrTrackedDevice {
-    transient: StandardTransient,
     base: AisXrTrackedDeviceBase,
 }
-martensite_tkernel::impl_transient!(AisXrTrackedDevice,"AisXRTrackedDevice",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisXrTrackedDevice,"AisXRTrackedDevice",dyn AisInteractiveObject,
     interfaces:[dyn AisXrTrackedDeviceSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisXrTrackedDevice {
     /// Creates the native axes-only device; `AisXrTrackedDevice::new()?`.
@@ -76,7 +75,6 @@ impl SelectMgrSelectableObject for AisXrTrackedDevice {
 pub(super) fn unbound_xr_tracked_device() -> AisXrTrackedDevice {
     // Native construction precedes binding this() to its final most-derived owning object.
     AisXrTrackedDevice {
-        transient: StandardTransient::default(),
         base: AisXrTrackedDeviceBase::new(),
     }
 }

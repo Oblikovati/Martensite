@@ -193,12 +193,16 @@ pub(super) const TABLE_WRITE_02: &[WriteRow] = &[
     ),
     write_row!(
         340,
-        StepBasicProductDefinitionContext,
+        StepBasicDesignContext,
         RwStepBasicRwProductDefinitionContext
     ),
-    write_row!(341, StepBasicMeasureWithUnit, RwStepBasicRwMeasureWithUnit),
-    write_row!(342, StepBasicNamedUnit, RwStepBasicRwNamedUnit),
-    write_row!(343, StepBasicNamedUnit, RwStepBasicRwNamedUnit),
+    write_row!(
+        341,
+        StepBasicTimeMeasureWithUnit,
+        RwStepBasicRwMeasureWithUnit
+    ),
+    write_row!(342, StepBasicRatioUnit, RwStepBasicRwNamedUnit),
+    write_row!(343, StepBasicTimeUnit, RwStepBasicRwNamedUnit),
     write_row!(
         344,
         StepBasicSiUnitAndRatioUnit,
@@ -224,11 +228,19 @@ pub(super) const TABLE_WRITE_02: &[WriteRow] = &[
         StepBasicApprovalDateTime,
         RwStepBasicRwApprovalDateTime
     ),
-    write_row!(349, StepVisualCameraImage, RwStepVisualRwCameraImage),
-    write_row!(350, StepVisualCameraImage, RwStepVisualRwCameraImage),
+    write_row!(
+        349,
+        StepVisualCameraImage2dWithScale,
+        RwStepVisualRwCameraImage
+    ),
+    write_row!(
+        350,
+        StepVisualCameraImage3dWithScale,
+        RwStepVisualRwCameraImage
+    ),
     write_row!(
         351,
-        StepGeomCartesianTransformationOperator,
+        StepGeomCartesianTransformationOperator2d,
         RwStepGeomRwCartesianTransformationOperator
     ),
     write_row!(352, StepBasicDerivedUnit, RwStepBasicRwDerivedUnit),
@@ -263,7 +275,7 @@ pub(super) const TABLE_WRITE_02: &[WriteRow] = &[
         RwStepAP214RwAutoDesignDocumentReference
     ),
     write_row!(367, StepBasicDocument, RwStepBasicRwDocument),
-    write_row!(368, StepBasicDocument, RwStepBasicRwDocument),
+    write_row!(368, StepBasicDigitalDocument, RwStepBasicRwDocument),
     write_row!(
         369,
         StepBasicDocumentRelationship,
@@ -313,12 +325,12 @@ pub(super) const TABLE_WRITE_02: &[WriteRow] = &[
     ),
     write_row!(
         380,
-        StepReprAssemblyComponentUsage,
+        StepReprNextAssemblyUsageOccurrence,
         RwStepReprRwAssemblyComponentUsage
     ),
     write_row!(
         381,
-        StepReprAssemblyComponentUsage,
+        StepReprPromissoryUsageOccurrence,
         RwStepReprRwAssemblyComponentUsage
     ),
     write_row!(
@@ -694,12 +706,12 @@ pub(super) const TABLE_WRITE_02: &[WriteRow] = &[
     ),
     write_row!(
         483,
-        StepReprCompoundRepresentationItem,
+        StepReprValueRange,
         RwStepReprRwCompoundRepresentationItem
     ),
     write_row!(
         484,
-        StepReprShapeAspectRelationship,
+        StepReprShapeAspectDerivingRelationship,
         RwStepReprRwShapeAspectRelationship
     ),
     write_row!(

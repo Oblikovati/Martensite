@@ -16,7 +16,7 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         }
     }
     /// Borrows values exclusively in insertion order; `map.iter_mut()`.
-    pub fn iter_mut(&mut self) -> OrderedDataValuesMut<'_, K, V> {
+    pub(crate) fn iter_mut(&mut self) -> OrderedDataValuesMut<'_, K, V> {
         OrderedDataValuesMut {
             inner: self.table.items_mut(),
         }
@@ -28,7 +28,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         }
     }
     /// Returns an exhausted pair iterator; `map.items()!=map.items_end()`.
-    pub fn items_end(&self) -> OrderedDataItems<'_, K, V> {
+    #[cfg(test)]
+    pub(crate) fn items_end(&self) -> OrderedDataItems<'_, K, V> {
         OrderedDataItems {
             inner: OrderedItems::default(),
         }

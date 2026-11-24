@@ -11,7 +11,7 @@ use crate::int_patch::{IntPatchIType, IntPatchLine};
 use crate::int_start::TheTopolTool;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom_adaptor::{GeomAdaptorSurface, GeomSurfaceAdaptor};
 use martensite_tkg3d::top_abs::State;
 use martensite_tkmath::gp::Point2;
 use std::rc::Rc;
@@ -31,8 +31,8 @@ pub struct GeomIntLineConstructor {
     seqp: Vec<f64>,
     my_dom1: Option<Rc<dyn TheTopolTool>>,
     my_dom2: Option<Rc<dyn TheTopolTool>>,
-    my_hs1: Handle<GeomAdaptorSurface>,
-    my_hs2: Handle<GeomAdaptorSurface>,
+    my_hs1: Handle<dyn GeomSurfaceAdaptor>,
+    my_hs2: Handle<dyn GeomSurfaceAdaptor>,
 }
 
 /// The StdFail_NotDone of the part accessors before a successful `Perform`.
@@ -58,10 +58,20 @@ impl GeomIntLineConstructor {
         s1: &Handle<GeomAdaptorSurface>,
         s2: &Handle<GeomAdaptorSurface>,
     ) {
+        self.load_surface_adaptors(d1, d2, s1.upcast(), s2.upcast());
+    }
+
+    pub(in crate::geom_int) fn load_surface_adaptors(
+        &mut self,
+        d1: Rc<dyn TheTopolTool>,
+        d2: Rc<dyn TheTopolTool>,
+        s1: Handle<dyn GeomSurfaceAdaptor>,
+        s2: Handle<dyn GeomSurfaceAdaptor>,
+    ) {
         self.my_dom1 = Some(d1);
         self.my_dom2 = Some(d2);
-        self.my_hs1 = s1.clone();
-        self.my_hs2 = s2.clone();
+        self.my_hs1 = s1;
+        self.my_hs2 = s2;
     }
 
     /// `IsDone()`; `lc.is_done()`.
@@ -120,7 +130,7 @@ impl GeomIntLineConstructor {
 
     /// The loaded surfaces, or Standard_NullObject before `Load` (a null dereference
     /// natively).
-    fn surfaces(&self) -> Result<(&GeomAdaptorSurface, &GeomAdaptorSurface), Failure> {
+    fn surfaces(&self) -> Result<(&dyn GeomSurfaceAdaptor, &dyn GeomSurfaceAdaptor), Failure> {
         match (self.my_hs1.get(), self.my_hs2.get()) {
             (Some(s1), Some(s2)) => Ok((s1, s2)),
             _ => Err(Failure::with_message(

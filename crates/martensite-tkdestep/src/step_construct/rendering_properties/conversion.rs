@@ -1,5 +1,6 @@
 //! The conversions of `StepConstructRenderingProperties` to and from STEP and XCAF.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 impl StepConstructRenderingProperties {
     /// `init(XCAFDocVisMaterialCommon)`: use diffuse color as the base surface color. An undefined
@@ -94,7 +95,7 @@ impl StepConstructRenderingProperties {
         self.my_specular_colour.set(*specular_colour);
     }
     /// The reflectance item of the properties defined here, null without a usable model.
-    fn reflectance_item(&self) -> Result<Handle<StandardTransient>, Failure> {
+    fn reflectance_item(&self) -> Result<Handle<dyn Transient>, Failure> {
         let ambient = self.my_ambient_reflectance;
         let diffuse = self.my_diffuse_reflectance;
         let specular = self.my_specular_reflectance;
@@ -142,7 +143,7 @@ impl StepConstructRenderingProperties {
     /// defined; a null colour takes the surface color.
     pub fn create_rendering_properties(
         &self,
-        render_colour: &Handle<StepVisualColour>,
+        render_colour: &Handle<dyn crate::StepEntityBase<StepVisualColour>>,
     ) -> Result<Handle<StepVisualSurfaceStyleRenderingWithProperties>, Failure> {
         if !self.my_is_defined {
             return Ok(Handle::default());

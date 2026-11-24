@@ -27,21 +27,20 @@ impl<T: ?Sized + RuntimeTyped + Send + Sync> BrepCurveSlotReplacement<T> {
 }
 impl<T: ?Sized + RuntimeTyped + Send + Sync> BrepCurveSlotMutation for BrepCurveSlotReplacement<T> {
     fn replace(&self) {
-        let incoming = self.incoming.observe();
         let old_count = self.slot.read().ref_count();
         let label = self.label;
         writeln!(
             &mut *self.rows.write(),
             "{label}-before {old_count} {}",
-            incoming.ref_count()
+            self.incoming.ref_count()
         )
         .unwrap();
-        *self.slot.write() = Handle::clone(&incoming);
+        *self.slot.write() = self.incoming.upgrade();
         let new_count = self.slot.read().ref_count();
         writeln!(
             &mut *self.rows.write(),
             "{label}-replaced {new_count} {}",
-            incoming.ref_count()
+            self.incoming.ref_count()
         )
         .unwrap();
     }

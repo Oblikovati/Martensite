@@ -1,9 +1,10 @@
 //! Sorting interferences on their parameters, finding the geometry of a point among
 //! interferences, and storing interferences on shapes and on their geometries.
 use super::TopOpeBRepDSHDataStructure;
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSInterference, TopOpeBRepDSKind,
-    TopOpeBRepDSPoint, TopOpeBRepDSPointIterator,
+    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSKind, TopOpeBRepDSPoint,
+    TopOpeBRepDSPointIterator,
 };
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::real::{real_first, real_last};
@@ -23,7 +24,7 @@ fn null_interference() -> Failure {
 /// the other kinds); `store_on_geometry_ds(&mut ds, &i)?`.
 pub(crate) fn store_on_geometry_ds(
     ds: &mut TopOpeBRepDSDataStructure,
-    i: &Handle<TopOpeBRepDSInterference>,
+    i: &Handle<dyn InterferenceRecord>,
 ) -> Result<(), Failure> {
     let ii = i.get().ok_or_else(null_interference)?;
     let (g, gt) = (ii.geometry(), ii.geometry_type());
@@ -44,7 +45,7 @@ pub(crate) fn store_on_geometry_ds(
 /// `store_interference_ds(&mut ds, &i, &face)?`.
 pub(crate) fn store_interference_ds(
     ds: &mut TopOpeBRepDSDataStructure,
-    i: &Handle<TopOpeBRepDSInterference>,
+    i: &Handle<dyn InterferenceRecord>,
     s: &Shape,
 ) -> Result<(), Failure> {
     if !ds.has_shape(s, true) {
@@ -71,7 +72,7 @@ pub fn fun_topopebrepds_sort_on_parameter(
         return Ok(());
     }
     let mut taken: Vec<bool> = vec![false; n_intf + 1];
-    let (mut intf, mut i_intf): (Handle<TopOpeBRepDSInterference>, usize) = (Handle::default(), 0);
+    let (mut intf, mut i_intf): (Handle<dyn InterferenceRecord>, usize) = (Handle::default(), 0);
     for _ in 1..=n_intf {
         let mut parmin: f64 = real_last();
         let mut it = TopOpeBRepDSPointIterator::new(list)?;
@@ -168,7 +169,7 @@ impl TopOpeBRepDSHDataStructure {
         position: &mut usize,
         pds: &TopOpeBRepDSPoint,
     ) -> Result<bool, Failure> {
-        let items: Vec<&Handle<TopOpeBRepDSInterference>> = list.iter().collect();
+        let items: Vec<&Handle<dyn InterferenceRecord>> = list.iter().collect();
         while let Some(i) = items.get(*position) {
             let i = i.get().ok_or_else(null_interference)?;
             let (gt, g) = (i.geometry_type(), i.geometry());
@@ -207,7 +208,7 @@ impl TopOpeBRepDSHDataStructure {
     }
 
     /// The interference stored on its surface or curve (nothing for the other kinds).
-    fn store_on_geometry(&self, i: &Handle<TopOpeBRepDSInterference>) -> Result<(), Failure> {
+    fn store_on_geometry(&self, i: &Handle<dyn InterferenceRecord>) -> Result<(), Failure> {
         store_on_geometry_ds(&mut self.change_ds(), i)
     }
 
@@ -215,7 +216,7 @@ impl TopOpeBRepDSHDataStructure {
     /// curve; `hds.store_interference_in(&i, &mut list)?`.
     pub fn store_interference_in(
         &self,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
         li: &mut ListOfInterference,
     ) -> Result<(), Failure> {
         li.append(i.clone());
@@ -226,7 +227,7 @@ impl TopOpeBRepDSHDataStructure {
     /// geometry); StandardProgramError for another shape; `hds.store_interference(&i, &face)?`.
     pub fn store_interference(
         &self,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
         s: &Shape,
     ) -> Result<(), Failure> {
         store_interference_ds(&mut self.change_ds(), i, s)
@@ -236,7 +237,7 @@ impl TopOpeBRepDSHDataStructure {
     /// StandardProgramError out of 1..=NbShapes; `hds.store_interference_index(&i, 1)?`.
     pub fn store_interference_index(
         &self,
-        i: &Handle<TopOpeBRepDSInterference>,
+        i: &Handle<dyn InterferenceRecord>,
         is: i32,
     ) -> Result<(), Failure> {
         let n = self.ds().nb_shapes();

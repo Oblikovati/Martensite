@@ -353,16 +353,16 @@ fn separately_built_nonplanar_faces_on_same_surface_reuse_stored_pcurves() {
 
 #[test]
 fn context_handles_preserve_runtime_type_and_base_downcast_identity() {
-    use martensite_tkernel::standard::{RuntimeTyped, StandardTransient};
+    use martensite_tkernel::standard::{RuntimeTyped, Transient};
     let face = Handle::new(TopOpeBRepHctxff2d::new());
-    let base: Handle<StandardTransient> = face.cast();
+    let base: Handle<dyn Transient> = face.upcast();
     assert_eq!(base.dynamic_type().unwrap().name(), "TopOpeBRepHctxff2d");
-    assert!(Handle::<TopOpeBRepHctxff2d>::down_cast(&base) == face);
-    assert!(Handle::<TopOpeBRepHctxee2d>::down_cast(&base).is_null());
+    assert!(base.downcast::<TopOpeBRepHctxff2d>() == face);
+    assert!(base.downcast::<TopOpeBRepHctxee2d>().is_null());
     let edge = Handle::new(TopOpeBRepHctxee2d::new());
-    let base: Handle<StandardTransient> = edge.cast();
+    let base: Handle<dyn Transient> = edge.upcast();
     assert_eq!(base.dynamic_type().unwrap().name(), "TopOpeBRepHctxee2d");
-    assert!(Handle::<TopOpeBRepHctxee2d>::down_cast(&base) == edge);
+    assert!(base.downcast::<TopOpeBRepHctxee2d>() == edge);
     assert_eq!(
         TopOpeBRepHctxee2d::static_type().name(),
         "TopOpeBRepHctxee2d"

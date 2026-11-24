@@ -13,8 +13,8 @@ use edit::Line;
 use grid::at2;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, Array2};
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkg2d::geom2d::spline_data::bezier_knots;
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::gp::{Point3, resolution};
@@ -22,14 +22,12 @@ use state::{SurfaceState, rationality};
 
 /// A Bezier surface; `Handle::new(GeomBezierSurface::new(&poles)?)`.
 pub struct GeomBezierSurface {
-    parent: StandardTransient,
     state: SharedState<SurfaceState>,
 }
 impl_transient!(
     GeomBezierSurface,
     "Geom_BezierSurface",
     dyn GeomBoundedSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomBoundedSurface]
 );
 
@@ -68,7 +66,6 @@ fn check_weights(weights: &Array2<'_, f64>, nb_u: usize, nb_v: usize) -> Result<
 impl GeomBezierSurface {
     fn stored(state: SurfaceState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

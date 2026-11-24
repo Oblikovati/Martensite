@@ -50,6 +50,7 @@ fn bug22368_transform() -> TextTransform {
         viewport: [0, 0, 409, 409],
         pixel_coordinates: false,
         zoomable_scale: 1.,
+        unview: Default::default(),
     }
 }
 
@@ -70,9 +71,16 @@ fn glyph_clip_is_the_float_product_of_the_float_projection_and_world_view() {
     let aspect = Graphic3dAspectText3d::default();
     let transform = bug22368_transform();
     let clip = transform.clip(&text, &aspect, 16).unwrap();
-    let win = transform.projected_anchor(&text).unwrap();
+    let win = transform
+        .projected_anchor(&LabelPlacement::of(&text))
+        .unwrap();
     let model = transform
-        .text_model(&text, &aspect, win, &transform.projection)
+        .text_model(
+            &LabelPlacement::of(&text),
+            &aspect,
+            win,
+            &transform.projection,
+        )
         .unwrap();
     let mut scaled = model;
     tr::scale(&mut scaled, [transform.pixel_scale(win, 16).unwrap(); 3]);
@@ -93,4 +101,20 @@ fn gpu_clip_rounds_both_matrices_before_multiplying() {
     let world_view = Mat4::<f64>::identity();
     let clip = gpu_clip(&projection, &world_view);
     assert_eq!(clip[0], 1., "1 + 1e-9 rounds to 1 in float");
+}
+
+#[test]
+fn a_shared_unview_inverts_each_projection_as_a_label_would() {
+    let shared = SharedTextUnview::default();
+    let first = Mat4::from_data(BUG22368_PROJECTION);
+    let mut second = first;
+    second.set_value(0, 0, 0.004);
+    for projection in [first, first, second, first] {
+        assert_eq!(
+            shared
+                .inverse(&projection)
+                .map(|m| m.data().map(f64::to_bits)),
+            invert_projection(&projection).map(|m| m.data().map(f64::to_bits)),
+        );
+    }
 }

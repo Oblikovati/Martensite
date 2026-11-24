@@ -9,7 +9,7 @@ use martensite_tkcdf::{
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, exceptions},
     storage::Data,
     tcollection::ExtendedString,
 };
@@ -28,19 +28,16 @@ pub struct ReaderCall {
 
 /// Reads the rest of the stream, sets `status` and fails when `failure` is set.
 pub struct StreamReader {
-    transient: StandardTransient,
     base: PcdmReaderBase,
     pub status: PcdmReaderStatus,
     pub failure: Option<Failure>,
     pub calls: Mutex<Vec<ReaderCall>>,
 }
-impl_transient!(StreamReader, "StreamReader", dyn PcdmReader,
-    transient, interfaces: [dyn PcdmReader]);
+impl_transient!(StreamReader, "StreamReader", dyn PcdmReader, interfaces: [dyn PcdmReader]);
 
 impl StreamReader {
     pub fn new(status: PcdmReaderStatus, failure: Option<Failure>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: PcdmReaderBase::default(),
             status,
             failure,
@@ -91,19 +88,16 @@ impl PcdmReader for StreamReader {
 
 /// An application with one reader for the format `last` and a traced `NewDocument`.
 pub struct StreamApplication {
-    transient: StandardTransient,
     pub base: CdfApplicationBase,
     pub reader: Handle<StreamReader>,
     pub new_document: Handle<dyn CdmDocument>,
     pub trace: Arc<Mutex<Vec<String>>>,
 }
-impl_transient!(StreamApplication, "StreamApplication", dyn CdfApplication,
-    transient, interfaces: [dyn CdmApplication, dyn CdfApplication]);
+impl_transient!(StreamApplication, "StreamApplication", dyn CdfApplication, interfaces: [dyn CdmApplication, dyn CdfApplication]);
 
 impl StreamApplication {
     pub fn bound(reader: StreamReader, new_document: Handle<dyn CdmDocument>) -> Handle<Self> {
         let application = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: CdfApplicationBase::default(),
             reader: Handle::new(reader),
             new_document,
@@ -111,7 +105,7 @@ impl StreamApplication {
         });
         application
             .application_base()
-            .bind_self(&application.cast());
+            .bind_self(&application.upcast());
         application
     }
 
@@ -156,6 +150,6 @@ impl CdfApplication for StreamApplication {
                 "owned lookup: no reader for missing",
             ));
         }
-        Ok(self.reader.clone().cast())
+        Ok(self.reader.upcast())
     }
 }

@@ -1,6 +1,7 @@
 //! `STEPCAFControlWriter`: writes an XDE document to a STEP file: the shapes through
 //! `StepControlWriter`, then the names, colours, layers, SHUOs, GD&T, materials, validation
 //! properties and metadata that each mode asks for, and the external files of a multi-file write.
+use super::writer_colors::MdgprMap;
 use super::{STEPCAFControlController, STEPCAFControlExternFile};
 use crate::de_step::{DeStepParameters, StepControlStepModelType};
 use crate::step_control::StepControlWriter;
@@ -9,11 +10,10 @@ use crate::step_entity::step_live;
 use crate::step_repr::{StepReprProductDefinitionShape, StepReprRepresentationItem};
 use crate::step_visual::{StepVisualDraughtingModel, StepVisualPresentationStyleAssignment};
 use martensite_tkbrep::topods::Shape;
-use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::ncollection::{DataMap, HArray1, IndexedDataMap};
 use martensite_tkernel::osd::CadPath;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
@@ -46,14 +46,15 @@ pub(super) struct WriterState {
     pub(super) shuo_mode: bool,
     /// `myMapCompMDGPR`: a map by address, here in the order of creation, so a file does not
     /// change from run to run.
-    pub(super) map_comp_mdgpr: IndexedDataMap<Shape, Handle<StandardTransient>, ShapeMapHasher>,
+    pub(super) map_comp_mdgpr: MdgprMap,
     pub(super) gdt_mode: bool,
     pub(super) mat_mode: bool,
     pub(super) vis_mat_mode: bool,
     pub(super) is_clean_duplicates: bool,
-    pub(super) gdt_annotations: Vec<Handle<StepReprRepresentationItem>>,
+    pub(super) gdt_annotations: Vec<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
     pub(super) gdt_presentation_dm: Handle<StepVisualDraughtingModel>,
-    pub(super) gdt_prs_curve_style: Handle<HArray1<Handle<StepVisualPresentationStyleAssignment>>>,
+    pub(super) gdt_prs_curve_style:
+        Handle<HArray1<Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>>>,
     pub(super) gdt_common_pds: Handle<StepReprProductDefinitionShape>,
 }
 
@@ -158,7 +159,7 @@ impl STEPCAFControlWriter {
         self.state.root_labels.clear();
         self.state.gdt_presentation_dm = Handle::new(StepVisualDraughtingModel::new());
         self.state.gdt_prs_curve_style = crate::step_entity::step_new_array1::<
-            Handle<StepVisualPresentationStyleAssignment>,
+            Handle<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>,
         >(1, 1)?;
         Ok(())
     }

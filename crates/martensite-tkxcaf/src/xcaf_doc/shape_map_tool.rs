@@ -4,7 +4,7 @@ use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkbrep::toptools::IndexedMapOfShape;
 use martensite_tkcdf::json_dump::field_pointer;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeBase, TdfLabel, TdfRelocationTable};
@@ -30,11 +30,10 @@ const SHAPE_MAP_TOOL_ID: Guid = guid_from_text("3B913F4D-4A82-44ef-A0BF-9E01E9FF
 /// ```
 #[derive(Default)]
 pub struct XCAFDocShapeMapTool {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     map: SharedState<IndexedMapOfShape>,
 }
-martensite_tkernel::impl_transient!(XCAFDocShapeMapTool, "XCAFDocShapeMapTool", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocShapeMapTool, "XCAFDocShapeMapTool", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 /// `AddSubShape`: the shape and, depth first, every sub-shape.
 fn add_sub_shape(shape: &Shape, map: &mut IndexedMapOfShape) {

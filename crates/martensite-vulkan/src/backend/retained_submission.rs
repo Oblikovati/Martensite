@@ -1,8 +1,8 @@
 //! The renderer, never its runtime, retains the complete submitted owner graph on unknown completion.
 use super::{
-    buffer::DeviceBuffer, frame::FrameResources, retirement_attempt::RetirementAttempt,
-    sampled_surface_image::SampledSurfaceImage, submission::CommandSubmission,
-    window_chain::WindowChain,
+    FrameReadback, buffer::DeviceBuffer, frame::FrameResources, frame_readback::ReadbackBuffers,
+    retirement_attempt::RetirementAttempt, sampled_surface_image::SampledSurfaceImage,
+    submission::CommandSubmission, window_chain::WindowChain,
 };
 use crate::{RenderError, error::rejected};
 use std::sync::{Arc, Mutex};
@@ -20,6 +20,11 @@ enum RetainedSubmission {
         _image: Arc<SampledSurfaceImage>,
         _staging: DeviceBuffer,
     },
+    Readback {
+        commands: CommandSubmission,
+        _readback: FrameReadback,
+        _buffers: ReadbackBuffers,
+    },
     Window {
         commands: CommandSubmission,
         _frame: FrameResources,
@@ -34,6 +39,7 @@ impl RetainedSubmission {
         match self {
             Self::Frame { commands, .. }
             | Self::Upload { commands, .. }
+            | Self::Readback { commands, .. }
             | Self::Window { commands, .. } => Some(commands),
             Self::ChainOnly { .. } => None,
         }
@@ -49,6 +55,7 @@ impl RetainedSubmission {
             Self::ChainOnly { chain } => chain.block_device_retirement(),
             Self::Frame { commands, .. }
             | Self::Upload { commands, .. }
+            | Self::Readback { commands, .. }
             | Self::Window { commands, .. } => commands.runtime.lifecycle.block_retirement(),
         }
     }
@@ -91,6 +98,23 @@ impl RetirementStore {
                 commands,
                 _image: image,
                 _staging: staging,
+            },
+            primary,
+        )
+    }
+    /// Preserve an on-demand attachment copy; `store.keep_readback(commands, frame, buffers, error)` publishes no capture.
+    pub fn keep_readback(
+        &self,
+        commands: CommandSubmission,
+        readback: FrameReadback,
+        buffers: ReadbackBuffers,
+        primary: RenderError,
+    ) -> RenderError {
+        self.retain(
+            RetainedSubmission::Readback {
+                commands,
+                _readback: readback,
+                _buffers: buffers,
             },
             primary,
         )

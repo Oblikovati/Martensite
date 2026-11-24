@@ -11,6 +11,40 @@ pub(super) fn begin_rendering(
     clear_depth: bool,
     encoded_attachment: bool,
 ) {
+    begin_color_rendering(
+        runtime,
+        command,
+        resources,
+        (clear, first, clear_depth, encoded_attachment),
+        false,
+    );
+    set_viewport(runtime, command, resources.extent);
+}
+
+/// Start a scope whose state and draw commands are recorded by secondary workers.
+pub(super) fn begin_secondary_rendering(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    resources: &FrameResources,
+    clear: [f32; 4],
+    first: bool,
+) {
+    begin_color_rendering(
+        runtime,
+        command,
+        resources,
+        (clear, first, false, false),
+        true,
+    );
+}
+
+fn begin_color_rendering(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    resources: &FrameResources,
+    (clear, first, clear_depth, encoded_attachment): ([f32; 4], bool, bool, bool),
+    secondary: bool,
+) {
     let colors = [scene_color_attachment(
         resources,
         clear,
@@ -25,8 +59,9 @@ pub(super) fn begin_rendering(
             stencil: u32::from(resources.stencil_clear_value),
         },
     };
-    begin_scene_attachments(runtime, command, resources, &colors, &depth, &stencil);
-    set_viewport(runtime, command, resources.extent);
+    begin_scene_attachments(
+        runtime, command, resources, &colors, &depth, &stencil, secondary,
+    );
 }
 // Layer initialization can clear depth/stencil but must not reinterpret prior color samples.
 pub(super) fn begin_empty_layer_rendering(
@@ -37,7 +72,7 @@ pub(super) fn begin_empty_layer_rendering(
 ) {
     let depth = scene_depth_attachment(resources, clear_depth);
     let stencil = scene_depth_attachment(resources, false);
-    begin_scene_attachments(runtime, command, resources, &[], &depth, &stencil);
+    begin_scene_attachments(runtime, command, resources, &[], &depth, &stencil, false);
     set_viewport(runtime, command, resources.extent);
 }
 pub(super) fn resume_color_draw_rendering(
@@ -60,7 +95,9 @@ pub(super) fn begin_colorless_draw_rendering(
     let colors = [without_color_resolve(color)];
     let depth = scene_depth_attachment(resources, false);
     let stencil = scene_depth_attachment(resources, false);
-    begin_scene_attachments(runtime, command, resources, &colors, &depth, &stencil);
+    begin_scene_attachments(
+        runtime, command, resources, &colors, &depth, &stencil, false,
+    );
     set_viewport(runtime, command, resources.extent);
 }
 fn without_color_resolve(
@@ -112,6 +149,7 @@ fn begin_scene_attachments(
     colors: &[vk::RenderingAttachmentInfo<'_>],
     depth: &vk::RenderingAttachmentInfo<'_>,
     stencil: &vk::RenderingAttachmentInfo<'_>,
+    secondary: bool,
 ) {
     let area = vk::Rect2D {
         offset: vk::Offset2D::default(),
@@ -122,6 +160,9 @@ fn begin_scene_attachments(
         .layer_count(1)
         .color_attachments(colors)
         .depth_attachment(depth);
+    if secondary {
+        info = info.flags(vk::RenderingFlags::CONTENTS_SECONDARY_COMMAND_BUFFERS);
+    }
     if resources
         .depth
         .aspect

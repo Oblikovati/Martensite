@@ -15,7 +15,8 @@ pub trait Graphic3dTextureMap: Graphic3dTextureRoot {}
 martensite_tkernel::impl_transient_interface!(
     dyn Graphic3dTextureMap,
     "Graphic3d_TextureMap",
-    dyn Graphic3dTextureRoot
+    dyn Graphic3dTextureRoot,
+    upcasts: [dyn Graphic3dTextureRoot]
 );
 
 /// The members of `Graphic3d_TextureMap`, all on the texture parameters.

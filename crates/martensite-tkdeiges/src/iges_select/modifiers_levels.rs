@@ -1,11 +1,12 @@
 //! The modifiers of the level of entities.
 use super::IgesSelectModelModifier;
 use super::modifier_bases::{add_fail, iges_model_modifier, modifier_base};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefList, IgesDataIgesEntity, IgesDataIgesModel, IgesDataLevelListEntity,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -43,7 +44,6 @@ impl IgesSelectChangeLevelList {
     /// A modifier of all the lists, to the first of each.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: modifier_base(true),
             theold: SharedState::new(Handle::default()),
             thenew: SharedState::new(Handle::default()),
@@ -111,7 +111,7 @@ impl IgesSelectModelModifier for IgesSelectChangeLevelList {
         }
         ctx.start();
         while ctx.more() {
-            let entity = ctx.value_result()?.cast::<IgesDataIgesEntity>();
+            let entity = ctx.value_result()?.cast::<dyn IgesDataEntityKind>();
             if let Some(ent) = entity.get()
                 && ent.def_level() == IgesDataDefList::DefSeveral
                 && (!yaold || ent.level() == oldl)
@@ -173,7 +173,6 @@ impl IgesSelectChangeLevelNumber {
     /// A modifier of all the numbers, to 0.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: modifier_base(false),
             theold: SharedState::new(Handle::default()),
             thenew: SharedState::new(Handle::default()),
@@ -229,7 +228,7 @@ impl IgesSelectModelModifier for IgesSelectChangeLevelNumber {
         }
         ctx.start();
         while ctx.more() {
-            let entity = ctx.value_result()?.cast::<IgesDataIgesEntity>();
+            let entity = ctx.value_result()?.cast::<dyn IgesDataEntityKind>();
             if let Some(ent) = entity.get()
                 && ent.def_level() != IgesDataDefList::DefSeveral
                 && (!yaold || ent.level() == oldl)

@@ -4,12 +4,12 @@ use crate::prs_mgr::PrsMgrTypeOfPresentation3d;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkmath::{bnd::BoundingBox3, gp::Point2};
+use std::sync::Arc;
 
 /// Protected AisShape fields; `object.shape_base.fields.read.uv_repeat`.
-#[derive(Clone)]
 pub struct AisShapeFields {
-    /// `myshape`: retains the actual located and oriented topology reference.
-    pub shape: Shape,
+    /// `myshape`: a field lease keeps the located shape alive during reentrant reads.
+    pub shape: Arc<Shape>,
     /// `myBB`: lazily recomputed native topology bounds.
     pub bounds: BoundingBox3,
     /// `myUVOrigin`.
@@ -22,17 +22,33 @@ pub struct AisShapeFields {
     pub initial_angle: f64,
     /// `myCompBB`.
     pub recompute_bounds: bool,
+    pub(super) mesh_lod: Option<crate::std_prs::StdPrsMeshLod>,
 }
 impl AisShapeFields {
     fn new(shape: &Shape) -> Self {
         Self {
-            shape: shape.clone(),
+            shape: Arc::new(shape.clone()),
             bounds: BoundingBox3::default(),
             uv_origin: Point2::new(0., 0.),
             uv_repeat: Point2::new(1., 1.),
             uv_scale: Point2::new(1., 1.),
             initial_angle: 0.,
             recompute_bounds: true,
+            mesh_lod: None,
+        }
+    }
+}
+impl Clone for AisShapeFields {
+    fn clone(&self) -> Self {
+        Self {
+            shape: Arc::new(self.shape.to_shape()),
+            bounds: self.bounds.clone(),
+            uv_origin: self.uv_origin,
+            uv_repeat: self.uv_repeat,
+            uv_scale: self.uv_scale,
+            initial_angle: self.initial_angle,
+            recompute_bounds: self.recompute_bounds,
+            mesh_lod: self.mesh_lod.clone(),
         }
     }
 }
@@ -67,8 +83,5 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisShapeSource {
         // The inheritance seam shares the one genuine AisShape class descriptor.
         <super::AisShape as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Registered casters project the actual subclass base without allocating a facade.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisShapeSource);

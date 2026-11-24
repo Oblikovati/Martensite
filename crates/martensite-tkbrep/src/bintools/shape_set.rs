@@ -2,13 +2,13 @@
 //! collected into indexed tables, written section by section (locations, 2D curves,
 //! curves, polygons, surfaces, triangulations, then the `TShapes`), and referred to by
 //! index.
-use super::SurfaceFrameReadPolicy;
 use super::curve_set::BinCurveSet;
 use super::curve2d_set::BinCurve2dSet;
 use super::handle_table::{FlaggedHandleTable, HandleTable};
 use super::location_set::BinLocationSet;
 use super::shape_set_base::{BinShapeSetBase, ShapeSetBaseData};
 use super::surface_set::BinSurfaceSet;
+use super::{LocationTransformReadPolicy, SurfaceFrameReadPolicy};
 use crate::brep::BRepBuilder;
 use crate::topods::{Shape, ShapeIterator};
 use crate::toptools::IndexedMapOfShape;
@@ -42,6 +42,7 @@ pub struct BinShapeSet {
     pub(super) base: ShapeSetBaseData,
     pub(super) shapes: IndexedMapOfShape,
     pub(super) locations: BinLocationSet,
+    pub(super) location_policy: LocationTransformReadPolicy,
     pub(super) builder: BRepBuilder,
     pub(super) surfaces: BinSurfaceSet,
     pub(super) curves: BinCurveSet,
@@ -85,6 +86,7 @@ impl BinShapeSet {
         policy: SurfaceFrameReadPolicy,
     ) -> Self {
         Self {
+            location_policy: LocationTransformReadPolicy::LegacyReplay,
             base: ShapeSetBaseData::default(),
             shapes: IndexedMapOfShape::default(),
             locations: BinLocationSet::new(),
@@ -98,6 +100,40 @@ impl BinShapeSet {
             nodes: HandleTable::new("BinTools_ShapeSet"),
             console,
         }
+    }
+
+    /// Creates a grouped reader with independent surface and location semantics (#451).
+    /// `BinShapeSet::with_read_policies(surface_policy, location_policy)`.
+    pub fn with_read_policies(
+        frame_policy: SurfaceFrameReadPolicy,
+        location_policy: LocationTransformReadPolicy,
+    ) -> Self {
+        Self::with_console_and_read_policies(Arc::new(StdoutConsole), frame_policy, location_policy)
+    }
+
+    /// Injects console output and fixed geometry decode semantics (#451).
+    /// `BinShapeSet::with_console_and_read_policies(console, surface_policy, location_policy)`.
+    pub fn with_console_and_read_policies(
+        console: Arc<dyn ConsoleOutput>,
+        policy: SurfaceFrameReadPolicy,
+        location_policy: LocationTransformReadPolicy,
+    ) -> Self {
+        let mut set = Self::with_console_and_surface_frame_policy(console, policy);
+        set.location_policy = location_policy;
+        set
+    }
+
+    /// Creates a grouped reader with all geometry decoding policies explicit (#455).
+    /// `BinShapeSet::with_geometry_read_policies(surface, location, curve)`.
+    pub fn with_geometry_read_policies(
+        surface: SurfaceFrameReadPolicy,
+        location: LocationTransformReadPolicy,
+        curve: super::CurveFrameReadPolicy,
+    ) -> Self {
+        let mut set = Self::with_read_policies(surface, location);
+        set.curves = BinCurveSet::with_curve_frame_policy(curve);
+        set.surfaces = BinSurfaceSet::with_geometry_read_policies(surface, curve);
+        set
     }
 
     /// `Add(S)`: stores `shape` without its location and, first, its sub-shapes (each

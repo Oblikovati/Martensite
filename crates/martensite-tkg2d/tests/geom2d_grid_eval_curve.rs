@@ -3,7 +3,7 @@
 mod common;
 use common::{CreateUniformParams, EXPECT_NEAR};
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, HandleUpcast};
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
     Geom2dHyperbola, Geom2dLine, Geom2dOffsetCurve, Geom2dParabola,
@@ -58,8 +58,10 @@ fn CircleOfRadius2() -> Handle<Geom2dCircle> {
 }
 
 // `Geom2dAdaptorCurve anAdaptor(theCurve)`.
-fn Adaptor<T: Geom2dCurve + RuntimeTyped>(theCurve: &Handle<T>) -> Geom2dAdaptorCurve {
-    Geom2dAdaptorCurve::with_curve(&theCurve.cast::<dyn Geom2dCurve>()).unwrap()
+fn Adaptor<T: Geom2dCurve + HandleUpcast<dyn Geom2dCurve>>(
+    theCurve: &Handle<T>,
+) -> Geom2dAdaptorCurve {
+    Geom2dAdaptorCurve::with_curve(&theCurve.upcast::<dyn Geom2dCurve>()).unwrap()
 }
 
 include!("geom2d_grid_eval_curve/suites_0.rs");

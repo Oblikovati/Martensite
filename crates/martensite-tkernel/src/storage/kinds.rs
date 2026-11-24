@@ -35,13 +35,6 @@ pub enum StorageError {
     WrongFileDriver,
 }
 
-impl StorageError {
-    /// The enumerator value, used by dumps; `StorageError::FormatError.ordinal() == 8`.
-    pub fn ordinal(self) -> i32 {
-        self as i32
-    }
-}
-
 /// How a driver opened its container; `OpenMode::Read`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum OpenMode {
@@ -54,13 +47,6 @@ pub enum OpenMode {
     Write,
     /// Open for reading and writing.
     ReadWrite,
-}
-
-impl OpenMode {
-    /// The enumerator value; `OpenMode::Write.ordinal() == 2`.
-    pub fn ordinal(self) -> i32 {
-        self as i32
-    }
 }
 
 /// Which schema step resolves an unknown type; `SolveMode::ReadSolve`.

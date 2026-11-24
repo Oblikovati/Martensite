@@ -1,5 +1,6 @@
 //! The values the writer of a file takes.
 use super::{IgesDataEntityKind, IgesDataIgesWriter};
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     standard::{Failure, Handle, RuntimeTyped},
     tcollection::HAsciiString,
@@ -74,13 +75,17 @@ impl IgesDataWriterParam for Handle<HAsciiString> {
     }
 }
 
-impl<T: ?Sized + RuntimeTyped + IgesDataEntityKind> IgesDataWriterParam for &Handle<T> {
+impl<T: ?Sized + RuntimeTyped + TransientHandleTarget + IgesDataEntityKind> IgesDataWriterParam
+    for &Handle<T>
+{
     fn send_to(self, writer: &mut IgesDataIgesWriter) -> Result<(), Failure> {
         writer.send_entity(self, false)
     }
 }
 
-impl<T: ?Sized + RuntimeTyped + IgesDataEntityKind> IgesDataWriterParam for Handle<T> {
+impl<T: ?Sized + RuntimeTyped + TransientHandleTarget + IgesDataEntityKind> IgesDataWriterParam
+    for Handle<T>
+{
     fn send_to(self, writer: &mut IgesDataIgesWriter) -> Result<(), Failure> {
         writer.send_entity(&self, false)
     }

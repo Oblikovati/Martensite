@@ -1,15 +1,16 @@
 //! The count of entities per level.
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
     ncollection::HSequence,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::{
     if_select::{
-        IFSelectSignCounter, IFSelectSignCounterOps, IFSelectSignatureList,
-        IFSelectSignatureListOps,
+        IFSelectSignCounter, IFSelectSignCounterData, IFSelectSignCounterOps,
+        IFSelectSignatureListData, IFSelectSignatureListOps,
     },
     interface::InterfaceInterfaceModel,
 };
@@ -33,7 +34,6 @@ struct LevelCounts {
 /// assert_eq!((counter.highest_level(), counter.nb_times_level(7)), (7, 1));
 /// ```
 pub struct IgesSelectCounterOfLevelNumber {
-    transient: StandardTransient,
     base: IFSelectSignCounter,
     counts: SharedState<LevelCounts>,
 }
@@ -41,7 +41,6 @@ impl_transient!(
     IgesSelectCounterOfLevelNumber,
     "IgesSelectCounterOfLevelNumber",
     dyn IFSelectSignCounterOps,
-    transient,
     interfaces: [dyn IFSelectSignatureListOps, dyn IFSelectSignCounterOps]
 );
 
@@ -51,13 +50,12 @@ impl IgesSelectCounterOfLevelNumber {
         let base = IFSelectSignCounter::new(withmap, withlist);
         base.set_name("IGES Level Number");
         Self {
-            transient: StandardTransient::default(),
             base,
             counts: SharedState::new(LevelCounts::default()),
         }
     }
     /// Counts an entity for a level; a negative level stands for a list.
-    pub fn add_level(&self, ent: &Handle<StandardTransient>, level: i32) {
+    pub fn add_level(&self, ent: &Handle<dyn Transient>, level: i32) {
         if level < 0 {
             self.counts.write().thenblists += 1;
             self.base.add(ent, "LEVEL LIST");
@@ -109,8 +107,8 @@ impl IgesSelectCounterOfLevelNumber {
 }
 
 impl IFSelectSignatureListOps for IgesSelectCounterOfLevelNumber {
-    fn signature_list(&self) -> &IFSelectSignatureList {
-        &self.base
+    fn signature_list(&self) -> &IFSelectSignatureListData {
+        self.base.signature_list()
     }
     fn clear(&self) {
         self.base.clear_base();
@@ -131,15 +129,15 @@ impl IFSelectSignatureListOps for IgesSelectCounterOfLevelNumber {
 }
 
 impl IFSelectSignCounterOps for IgesSelectCounterOfLevelNumber {
-    fn sign_counter(&self) -> &IFSelectSignCounter {
-        &self.base
+    fn sign_counter(&self) -> &IFSelectSignCounterData {
+        self.base.sign_counter()
     }
     fn add_sign(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<(), Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(());
         };
@@ -158,10 +156,10 @@ impl IFSelectSignCounterOps for IgesSelectCounterOfLevelNumber {
     }
     fn sign(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Handle<HAsciiString> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Handle::default();
         };

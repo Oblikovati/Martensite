@@ -20,7 +20,8 @@ use crate::step_shape::{
 use crate::step_visual::{StepVisualTessellatedItem, StepVisualTessellatedShapeRepresentation};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::ProgressScope;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkxsbase::transfer::{
@@ -64,7 +65,7 @@ impl StepControlActorWrite {
         let mode = self.mode();
         let tolerance = used_tolerance(live_model, self.state.read().mytoler, the_shape)?;
         let nbs = rep_items.len();
-        let mut item_seq: Vec<Handle<StandardTransient>> = vec![self.default_axis()?.cast()];
+        let mut item_seq: Vec<Handle<dyn Transient>> = vec![self.default_axis()?.cast()];
         let mut trmode = mode;
         let range = root.next(1.0);
         let scope = ProgressScope::unnamed(&range, nbs as f64, false);
@@ -132,7 +133,7 @@ impl StepControlActorWrite {
             return Ok(Handle::default());
         }
         let live_rep = step_live(&shape_rep, WHERE)?;
-        let items: Vec<Handle<StepReprRepresentationItem>> =
+        let items: Vec<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>> =
             item_seq.iter().map(|item| item.cast()).collect();
         let tessellated_binders = self.distribute_items(
             &shape_rep,
@@ -176,7 +177,13 @@ impl StepControlActorWrite {
         is_manifold: bool,
         shape_group: &Handle<martensite_tkernel::ncollection::HSequence<Shape>>,
         fp: &Handle<TransferFinderProcess>,
-    ) -> Result<(Handle<StepShapeShapeRepresentation>, bool), Failure> {
+    ) -> Result<
+        (
+            Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
+            bool,
+        ),
+        Failure,
+    > {
         if the_shape.shape_type()? == ShapeEnum::Shape {
             // for external references
             return Ok((
@@ -194,7 +201,8 @@ impl StepControlActorWrite {
             StepControlStepModelType::AS_IS => trmode,
             other => other,
         };
-        let new_rep: Handle<StepShapeShapeRepresentation> = match of_mode {
+        let new_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> = match of_mode
+        {
             StepControlStepModelType::MANIFOLD_SOLID_BREP => {
                 Handle::new(StepShapeAdvancedBrepShapeRepresentation::new()).cast()
             }
@@ -219,8 +227,8 @@ impl StepControlActorWrite {
     #[allow(clippy::too_many_arguments, reason = "the block reads each of these")]
     pub(super) fn distribute_items(
         &self,
-        shape_rep: &Handle<StepShapeShapeRepresentation>,
-        items: &[Handle<StepReprRepresentationItem>],
+        shape_rep: &Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
+        items: &[Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>],
         nbs: usize,
         use_existing: bool,
         tolerance: f64,
@@ -242,7 +250,8 @@ impl StepControlActorWrite {
             for item in &items[rank..] {
                 let split = representation_of_item(item);
                 let live_split = step_live(&split, WHERE)?;
-                let axis: Handle<StepReprRepresentationItem> = self.default_axis()?.cast();
+                let axis: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+                    self.default_axis()?.cast();
                 live_split.set_items(&shared_array1(vec![axis, item.clone()]));
                 let mut context = StepConstructUnitContext::new();
                 context.init(tolerance, model, factors)?;
@@ -259,11 +268,14 @@ impl StepControlActorWrite {
         }
         let tessellated: Vec<_> = items
             .iter()
-            .filter(|item| item.cast::<StepVisualTessellatedItem>().is_some())
+            .filter(|item| {
+                item.cast::<dyn crate::StepEntityBase<StepVisualTessellatedItem>>()
+                    .is_some()
+            })
             .cloned()
             .collect();
         if !tessellated.is_empty() {
-            let tess_rep: Handle<StepShapeShapeRepresentation> =
+            let tess_rep: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
                 Handle::new(StepVisualTessellatedShapeRepresentation::new()).cast();
             let live_tess = step_live(&tess_rep, WHERE)?;
             live_tess.set_items(&shared_array1(tessellated));

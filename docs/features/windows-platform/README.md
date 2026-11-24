@@ -76,8 +76,8 @@ See [Microsoft's API contract](https://learn.microsoft.com/en-us/windows/win32/d
 - Signal and exception translation: see the [approved contract](signal-contract.md).
 
 The Windows floating-point trap mask passed an enable/read/disable regression
-test on a dedicated thread. The approved policy keeps hardware faults fatal;
-`Osd::signal_capabilities()` reports available interruption and trap mechanisms
+test on a dedicated thread. The approved policy keeps hardware faults fatal.
+TKernel's internal capability probe reports interruption and trap mechanisms
 separately from recoverable native faults.
 
 The Windows child-test helper lives below the timing integration suite and is

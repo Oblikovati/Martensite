@@ -21,13 +21,12 @@ impl<T> SequencePreparedNode<T> {
 impl<T> Sequence<T> {
     /// Append an already constructed node at the current tail; `sequence.append_prepared(node)`.
     pub fn append_prepared(&mut self, node: SequencePreparedNode<T>) -> &mut T {
-        let link = node.owner.link;
-        self.owners.insert(link as usize, node.owner);
+        let link = self.own_link(node.owner);
         // Allocation callbacks may have edited the list: appending uses the current tail.
         self.topology
             // SAFETY: `link` is a detached node now owned by this sequence, and `base.size()`
             // is a valid insertion index.
-            .edit(|base| unsafe { base.insert_after(base.size(), link) })
+            .edit_preserving_positions(|base| unsafe { base.insert_after(base.size(), link) })
             .unwrap_or_else(|failure| {
                 panic!(
                     "prepared node {link:p}; expected current-tail append: {}",

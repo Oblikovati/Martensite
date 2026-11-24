@@ -4,21 +4,15 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, SharedState, StandardTransient, WeakHandle},
+    standard::{Handle, SharedState, Transient, WeakHandle},
 };
 use std::sync::Arc;
 
 struct CheckEntityLifetime {
-    transient: StandardTransient,
     model: WeakHandle<dyn InterfaceInterfaceModel>,
     observations: Arc<SharedState<Vec<bool>>>,
 }
-impl_transient!(
-    CheckEntityLifetime,
-    "CheckEntityLifetime",
-    StandardTransient,
-    transient
-);
+impl_transient!(CheckEntityLifetime, "CheckEntityLifetime", dyn Transient);
 
 impl Drop for CheckEntityLifetime {
     fn drop(&mut self) {
@@ -32,12 +26,11 @@ fn recorded_check_iterator(
     observations: &Arc<SharedState<Vec<bool>>>,
 ) -> (InterfaceCheckIterator, Handle<dyn InterfaceInterfaceModel>) {
     let model = fake_model();
-    let entity: Handle<StandardTransient> = Handle::new(CheckEntityLifetime {
-        transient: StandardTransient::default(),
+    let entity: Handle<dyn Transient> = Handle::new(CheckEntityLifetime {
         model: model.downgrade(),
         observations: observations.clone(),
     })
-    .cast();
+    .into_upcast();
     let check = Handle::new(InterfaceCheck::with_entity(&entity));
     check.add_warning_text("owned warning", "");
     let mut iterator = InterfaceCheckIterator::new();

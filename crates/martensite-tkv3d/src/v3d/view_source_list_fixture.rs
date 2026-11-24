@@ -1,7 +1,7 @@
 //! Valid native list mutation keeps the current node and original strong view owners alive.
 use super::view_source_fixture::*;
 use super::*;
-use martensite_tkernel::standard::{Handle, HandleReference};
+use martensite_tkernel::standard::{Handle, HandleReference, HandleSlot};
 
 pub(super) fn apply_probe_list_mutation(view: &NativeStyleViewProbe) {
     let viewer = view.base.viewer();
@@ -14,16 +14,16 @@ pub(super) fn apply_probe_list_mutation(view: &NativeStyleViewProbe) {
 }
 fn mutate_other_probe_node(viewer: &V3dViewer, trace: &ViewCallbackTrace) {
     let commands = trace.list_mutation.read();
-    viewer.set_view_off_one(&*commands.removed.observe());
+    viewer.set_view_off_one(&commands.removed.upgrade());
     viewer
-        .set_view_on_one(&*commands.appended.observe())
+        .set_view_on_one(&commands.appended.upgrade())
         .unwrap();
 }
 fn replace_current_probe_node(viewer: &V3dViewer, trace: &ViewCallbackTrace) {
     let commands = trace.list_mutation.read();
     let mut fields = viewer.state.write();
     // Native const_cast edits a nonconst owned list's value, preserving the current node itself.
-    *fields.active_views.first_mut().unwrap() = commands.replacement.observe().clone();
+    *fields.active_views.first_mut().unwrap() = HandleSlot::new(commands.replacement.upgrade());
 }
 pub(super) fn probe_live_active_iteration(viewer: &V3dViewer) -> Vec<String> {
     let mut cursor = viewer.active_view_iterator();

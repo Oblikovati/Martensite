@@ -150,7 +150,7 @@ pub fn convert_wire(
         let an_o_curve = &vec_curve[i];
         let c = an_o_curve.curve.get().ok_or_else(null_curve)?;
         let a_param = (c.first_parameter(), c.last_parameter());
-        let curve: Handle<dyn Geom2dCurve> = an_o_curve.curve.clone().cast();
+        let curve: Handle<dyn Geom2dCurve> = an_o_curve.curve.cast();
         let an_edge_res: Edge = if an_o_curve.is_reverse {
             let edge = BRepBuilderAPIMakeEdge::from_pcurve_vertices_params(
                 &curve,

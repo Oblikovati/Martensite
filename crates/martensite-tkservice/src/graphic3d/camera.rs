@@ -183,15 +183,9 @@ impl Graphic3dCameraState {
 
 /// A camera; `Graphic3dCamera::default().eye()` is `(0, 0, -1500)`.
 pub struct Graphic3dCamera {
-    transient: StandardTransient,
     pub(crate) state: SharedState<Graphic3dCameraState>,
 }
-martensite_tkernel::impl_transient!(
-    Graphic3dCamera,
-    "Graphic3d_Camera",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(Graphic3dCamera, "Graphic3d_Camera", StandardTransient);
 
 impl Default for Graphic3dCamera {
     /// An orthographic camera at `(0, 0, -1500)` looking along +Z with +Y up, scale 1000;
@@ -204,7 +198,6 @@ impl Default for Graphic3dCamera {
             .world_view_proj_state
             .initialize(projection, world_view, state.identity);
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -219,7 +212,6 @@ impl Graphic3dCamera {
             .world_view_proj_state
             .initialize_camera(state.identity);
         let camera = Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         };
         camera.copy(other);
@@ -231,7 +223,6 @@ impl Graphic3dCamera {
     /// scale is then recomputed from its distance). Example: `camera.copy_members()`.
     pub fn copy_members(&self) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(self.read(Clone::clone)),
         }
     }

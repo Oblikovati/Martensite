@@ -147,7 +147,7 @@ fn trim_curve(
     (first, last): (f64, f64),
 ) -> Result<Handle<BRepAdaptorCurve>, Failure> {
     let trimmed = state.curve(index)?.trim(first, last, state.p_tol)?;
-    Ok(trimmed.cast::<BRepAdaptorCurve>())
+    Ok(trimmed.downcast::<BRepAdaptorCurve>())
 }
 
 /// `myCurves->SetValue(index, *HC)`.

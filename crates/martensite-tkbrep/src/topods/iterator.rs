@@ -1,6 +1,6 @@
 //! `TopoDS_Iterator`: the direct sub-shapes of a shape.
-use super::Shape;
 use super::tshape::TShape;
+use super::{Shape, ShapeView};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{self, Orientation};
 use martensite_tkmath::toploc::Location;
@@ -43,7 +43,7 @@ impl Default for ShapeIterator {
 
 impl ShapeIterator {
     /// `TopoDS_Iterator(S, cumOri, cumLoc)`; `ShapeIterator::new(&shape, true, true)`.
-    pub fn new(shape: &Shape, cum_ori: bool, cum_loc: bool) -> Self {
+    pub fn new(shape: &ShapeView<'_>, cum_ori: bool, cum_loc: bool) -> Self {
         let mut iterator = Self::default();
         iterator.initialize(shape, cum_ori, cum_loc);
         iterator
@@ -52,7 +52,7 @@ impl ShapeIterator {
     /// `Initialize(S, cumOri, cumLoc)`: restarts on the sub-shapes of `shape`, taking its
     /// location (`cum_loc`) and orientation (`cum_ori`) as the cumulated ones;
     /// `iterator.initialize(&shape, true, true)`.
-    pub fn initialize(&mut self, shape: &Shape, cum_ori: bool, cum_loc: bool) {
+    pub fn initialize(&mut self, shape: &ShapeView<'_>, cum_ori: bool, cum_loc: bool) {
         self.location = if cum_loc {
             shape.location().clone()
         } else {

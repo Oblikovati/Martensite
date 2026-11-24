@@ -68,6 +68,13 @@ fn evaluate_pair(
         return DomainEvidence::Unsupported(CensusGap::SamePhysicalCurve);
     }
     let mode = query_mode(pair);
+    if census
+        .paired
+        .as_ref()
+        .is_some_and(|paired| paired.exclusion_version.is_some())
+    {
+        return super::bernstein_execution::evaluate(census, pair, sources, mode, cancelled);
+    }
     if let Some(report) = reports.find(sources, mode) {
         census.paired.as_mut().unwrap().reused_reports += 1;
         return report_reference(census, pair, report, true);
@@ -118,7 +125,7 @@ pub(super) fn query_mode(pair: [usize; 2]) -> PairedQueryMode {
     }
     PairedQueryMode::Distinct
 }
-fn remaining_policy(census: &BoundaryCensus) -> BezierPairPolicy {
+pub(super) fn remaining_policy(census: &BoundaryCensus) -> BezierPairPolicy {
     let mut effective = census.paired.as_ref().unwrap().requested;
     let used = u16::try_from(census.bisections).unwrap_or(u16::MAX);
     effective.roots.max_bisections = effective.roots.max_bisections.saturating_sub(used);
@@ -148,6 +155,9 @@ fn source_view(source: &crate::sketch_region_candidates::CandidateSegment) -> Be
     }
 }
 fn evidence_cancelled(census: &BoundaryCensus, evidence: DomainEvidence) -> bool {
+    if let DomainEvidence::BernsteinReport { report, .. } = evidence {
+        return census.paired.as_ref().unwrap().exclusions[report].cancelled();
+    }
     let DomainEvidence::PairedReport { report, .. } = evidence else {
         return false;
     };

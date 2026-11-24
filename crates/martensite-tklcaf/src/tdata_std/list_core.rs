@@ -6,7 +6,7 @@ use crate::live;
 use crate::tdf::{TdfAttribute, TdfAttributeState, TdfLabel};
 use martensite_tkcdf::json_dump::class_begin;
 use martensite_tkernel::standard::{
-    Failure, Guid, Handle, RuntimeTyped, SharedState, dump::DumpStream, exceptions,
+    Failure, Guid, Handle, HandleUpcast, RuntimeTyped, SharedState, dump::DumpStream, exceptions,
 };
 use std::io;
 
@@ -27,7 +27,9 @@ impl<T> ListState<T> {
 }
 
 /// A list attribute.
-pub(crate) trait ListAttribute: TdfAttribute + RuntimeTyped + Sized {
+pub(crate) trait ListAttribute:
+    TdfAttribute + RuntimeTyped + HandleUpcast<dyn TdfAttribute> + Sized
+{
     /// The stored item (`uint8_t` for `TDataStd_BooleanList`).
     type Item: Clone + PartialEq + Send + Sync + 'static;
     /// The default ID (`GetID`).
@@ -53,7 +55,7 @@ pub(crate) fn set_attr<A: ListAttribute>(
     }
     let created = Handle::new(A::make());
     live(&created, A::TYPE_NAME)?.set_id(guid)?;
-    label.add_attribute(&created.cast(), true)?;
+    label.add_attribute(&created.upcast(), true)?;
     Ok(created)
 }
 

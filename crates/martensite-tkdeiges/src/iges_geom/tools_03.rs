@@ -10,16 +10,18 @@
 use super::{IgesGeomBSplineSurface, IgesGeomBoundary, IgesGeomToolBSplineSurface};
 use crate::iges_basic::IgesBasicHArray1OfHArray1OfIgesEntity;
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_send_read_status, iges_tool};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_item, iges_array1_set, iges_dump_rect_vals, iges_dump_vals,
     iges_dump_xyz_l, iges_live, iges_msg, iges_new_array1, iges_real_text,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{GeneralTransform3, Xyz};
 use martensite_tkxsbase::interface::{InterfaceCheck, InterfaceEntityIterator, InterfaceShareTool};
 use std::io::Write;
@@ -129,9 +131,10 @@ impl IgesGeomToolBoundary {
         let mut num: i32 = 0;
         let mut temp_type: i32 = 0;
         let mut temp_preference: i32 = 0;
-        let mut temp_surface: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_surface: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut temp_senses: Handle<HArray1<i32>> = Handle::default();
-        let mut temp_model_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_model_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            Handle::default();
         let mut temp_parameter_curves: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> =
             Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
@@ -149,7 +152,7 @@ impl IgesGeomToolBoundary {
         }
         if pr.read_integer(&pr.current(), &mut num)? && num > 0 {
             temp_senses = iges_new_array1::<i32>(1, num)?;
-            temp_model_curves = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+            temp_model_curves = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
             temp_parameter_curves =
                 Handle::new(IgesBasicHArray1OfHArray1OfIgesEntity::with_bounds(1, num)?);
         } else {
@@ -161,7 +164,7 @@ impl IgesGeomToolBoundary {
             && !temp_parameter_curves.is_null()
         {
             for i in 1..=num {
-                let mut temp_ent: Handle<IgesDataIgesEntity> = Handle::default();
+                let mut temp_ent: Handle<dyn IgesDataEntityKind> = Handle::default();
                 if pr.read_entity_status(ir, &pr.current(), &mut a_status, &mut temp_ent, false)? {
                     iges_array1_set(
                         &temp_model_curves,
@@ -187,7 +190,7 @@ impl IgesGeomToolBoundary {
                 }
                 let mut temp_count: i32 = 0;
                 if pr.read_integer(&pr.current(), &mut temp_count)? && temp_count >= 0 {
-                    let mut temp_par_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+                    let mut temp_par_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
                         Handle::default();
                     if temp_count > 0 {
                         let msg130 = iges_msg("XTSEP_130");
@@ -244,7 +247,7 @@ impl IgesGeomToolBoundary {
         while i <= num1 {
             iw.send_entity(&ent_live.model_space_curve(i)?, false)?;
             iw.send(ent_live.sense(i)?)?;
-            let curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+            let curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
                 ent_live.parameter_curves(i)?;
             let nbc: i32 = ent_live.nb_parameter_curves(i)?;
             iw.send(nbc)?;
@@ -272,19 +275,19 @@ impl IgesGeomToolBoundary {
         let ent_live = iges_live(ent, "IgesGeomToolBoundary::own_shared")?;
         let mut i: i32 = 0;
         let mut num1: i32 = 0;
-        iter.get_one_item(&ent_live.surface().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.surface().cast::<dyn Transient>());
         num1 = ent_live.nb_model_space_curves()?;
         i = 1;
         while i <= num1 {
-            iter.get_one_item(&ent_live.model_space_curve(i)?.cast::<StandardTransient>());
-            let curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+            iter.get_one_item(&ent_live.model_space_curve(i)?.cast::<dyn Transient>());
+            let curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
                 ent_live.parameter_curves(i)?;
             if !curves.is_null() {
                 let nbc: i32 = iges_array1_length(&curves, "IgesGeomToolBoundary::own_shared")?;
                 for j in 1..=nbc {
                     iter.get_one_item(
                         &iges_array1_item(&curves, j, "IgesGeomToolBoundary::own_shared")?
-                            .cast::<StandardTransient>(),
+                            .cast::<dyn Transient>(),
                     );
                 }
             }
@@ -320,7 +323,7 @@ impl IgesGeomToolBoundary {
                 continue;
             }
             for j in 1..=nbi {
-                let c2d: Handle<IgesDataIgesEntity> = ent_live.parameter_curve(i, j)?;
+                let c2d: Handle<dyn IgesDataEntityKind> = ent_live.parameter_curve(i, j)?;
                 if c2d.is_null() {
                     continue;
                 }
@@ -342,8 +345,8 @@ impl IgesGeomToolBoundary {
         }
         let cv2d: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> =
             Handle::new(IgesBasicHArray1OfHArray1OfIgesEntity::with_bounds(1, nb)?);
-        let modcv: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nb)?;
+        let modcv: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nb)?;
         let senses: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, nb)?;
         for i in 1..=nb {
             iges_array1_set(

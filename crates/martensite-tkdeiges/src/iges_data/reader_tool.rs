@@ -3,10 +3,13 @@ use super::param_reader::{iges_atoi, iges_msg};
 use super::{
     IgesDataFileRecognizer, IgesDataIgesEntity, IgesDataIgesModel, IgesDataIgesReaderData,
     IgesDataIgesType, IgesDataParamReader, IgesDataProtocolOps, IgesDataReadStage,
-    IgesDataReadWriteModule, IgesDataUndefinedEntity, iges_live,
+    IgesDataReadWriteModule, iges_live,
 };
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::IgesDataUndefinedEntitySource;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceEntityList, InterfaceFileReaderDataParams, InterfaceFileReaderTool,
     InterfaceFileReaderToolBase, InterfaceFileReaderToolLoad, InterfaceFileReaderToolOps,
@@ -78,17 +81,17 @@ impl IgesDataIgesReaderTool {
     /// A failure of the module.
     pub fn read_own_params(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         ir: &Handle<IgesDataIgesReaderData>,
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
-        let selected = self.therlib.read().select(&ent.cast::<StandardTransient>());
+        let selected = self.therlib.read().select(&ent.cast::<dyn Transient>());
         if let Some((imodule, cn)) = selected {
             let module = imodule.cast::<dyn IgesDataReadWriteModule>();
             return iges_live(&module, "IGES reader tool: read own")?
                 .read_own_params(cn, ent, ir, pr);
         }
-        if let Some(undefined) = ent.cast::<IgesDataUndefinedEntity>().get() {
+        if let Some(undefined) = ent.cast::<dyn IgesDataUndefinedEntitySource>().get() {
             return undefined.read_own_params(ir, pr);
         }
         // The check of these two messages is local to this call: they go nowhere.
@@ -100,7 +103,7 @@ impl IgesDataIgesReaderTool {
     /// A failure of a parameter list.
     pub fn read_props(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         ir: &Handle<IgesDataIgesReaderData>,
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
@@ -133,7 +136,7 @@ impl IgesDataIgesReaderTool {
     /// A failure of a parameter list.
     pub fn read_assocs(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         ir: &Handle<IgesDataIgesReaderData>,
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
@@ -162,13 +165,13 @@ impl IgesDataIgesReaderTool {
     fn analyse_directory(
         &self,
         num: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         igesdat: &Handle<IgesDataIgesReaderData>,
         ach: &Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
         let data = iges_live(igesdat, "IGES reader tool")?;
         let mut part = data.dir_part(num);
-        if let Some(undefined) = ent.cast::<IgesDataUndefinedEntity>().get() {
+        if let Some(undefined) = ent.cast::<dyn IgesDataUndefinedEntitySource>().get() {
             undefined.read_dir(igesdat, &mut part, ach)?;
         }
         self.read_dir(ent, igesdat, &part, ach)
@@ -210,7 +213,7 @@ impl IgesDataIgesReaderTool {
     /// Reads the parameter stages; the stage where reading ends decides whether the next ones run.
     fn read_stages(
         &self,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         igesdat: &Handle<IgesDataIgesReaderData>,
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
@@ -238,7 +241,7 @@ impl InterfaceFileReaderTool for IgesDataIgesReaderTool {
         &self,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &mut Handle<StandardTransient>,
+        ent: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let igesdat = self.iges_data();
         let data = iges_live(&igesdat, "IGES reader tool")?;
@@ -286,10 +289,10 @@ impl InterfaceFileReaderTool for IgesDataIgesReaderTool {
     fn analyse_record(
         &self,
         num: i32,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         acheck: &mut Handle<InterfaceCheck>,
     ) -> Result<bool, Failure> {
-        let ent = anent.cast::<IgesDataIgesEntity>();
+        let ent = anent.cast::<dyn IgesDataEntityKind>();
         let igesdat = self.iges_data();
         let live = iges_live(&ent, "IGES reader tool: analyse")?;
         live.clear();
@@ -297,7 +300,7 @@ impl InterfaceFileReaderTool for IgesDataIgesReaderTool {
         let data = self.data();
         let nbpar = iges_live(&data, "IGES reader tool")?.nb_params(num)?;
         if nbpar < 1 {
-            if ent.cast::<IgesDataUndefinedEntity>().is_some() {
+            if ent.cast::<dyn IgesDataUndefinedEntitySource>().is_some() {
                 return Ok(true);
             }
             self.send_record_fail("XSTEP_27", acheck)?;

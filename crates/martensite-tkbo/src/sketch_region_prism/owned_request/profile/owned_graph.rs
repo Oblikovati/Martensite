@@ -63,45 +63,73 @@ fn run_observed(
     progress: &mut dyn OwnedPrismProgress,
     completed: impl FnOnce(usize),
 ) -> Result<GraphRegionCertificate, super::certify::ProfileProofRefusal> {
+    let (prepared, captured) = prepare_observed(request, progress)?;
+    finish_owned(&prepared, captured, || false, completed)
+}
+pub(super) fn run_with_cancel(
+    request: OwnedProfileRequest,
+    cancelled: &mut (impl FnMut() -> bool + Send),
+) -> Result<GraphRegionCertificate, super::certify::ProfileProofRefusal> {
+    let (prepared, captured) =
+        prepare_observed(request, &mut super::certify::PollProgress(cancelled))?;
+    finish_owned(&prepared, captured, cancelled, |_| {})
+}
+fn prepare_observed(
+    request: OwnedProfileRequest,
+    progress: &mut dyn OwnedPrismProgress,
+) -> Result<(PreparedProfile, usize), super::certify::ProfileProofRefusal> {
     let owner = FreshGraphRequest {
         request,
         #[cfg(test)]
         captures: std::cell::Cell::new(0),
     };
-    let (outcome, stop, phase) =
+    let (outcome, stop, phase, work) =
         super::pipeline::run_preparation(&owner.request, progress, Some(&owner));
-    let prepared = super::pipeline::finished(outcome, stop, phase, owner.request)
+    let prepared = super::pipeline::finished(outcome, stop, phase, work, owner.request)
         .map_err(super::certify::preparation_refusal)?;
-    let result = inspect_prepared(
-        &prepared,
-        #[cfg(test)]
-        &owner.captures,
-    );
     #[cfg(test)]
-    completed(owner.captures.get());
+    let captured = owner.captures.get();
+    #[cfg(not(test))]
+    let captured = 0;
+    Ok((prepared, captured))
+}
+fn finish_owned(
+    prepared: &PreparedProfile,
+    captured: usize,
+    cancelled: impl FnMut() -> bool,
+    completed: impl FnOnce(usize),
+) -> Result<GraphRegionCertificate, super::certify::ProfileProofRefusal> {
+    #[cfg(test)]
+    let captures = std::cell::Cell::new(captured);
+    #[cfg(not(test))]
+    let _ = captured;
+    let access = OwnedGraphAccess::fresh(
+        &prepared.request,
+        &prepared.edges,
+        #[cfg(test)]
+        &captures,
+    );
+    let result = inspect_owned(prepared, cancelled, &access);
+    #[cfg(test)]
+    completed(captures.get());
     #[cfg(not(test))]
     completed(0);
     result
 }
 
-fn inspect_prepared(
+fn inspect_owned(
     prepared: &PreparedProfile,
-    #[cfg(test)] captures: &std::cell::Cell<usize>,
+    cancelled: impl FnMut() -> bool,
+    access: &OwnedGraphAccess<'_>,
 ) -> Result<GraphRegionCertificate, super::certify::ProfileProofRefusal> {
-    let access = OwnedGraphAccess::fresh(
-        &prepared.request,
-        &prepared.edges,
-        #[cfg(test)]
-        captures,
-    );
     super::regions::inspect_graph(
         &prepared.request,
         &prepared.edges,
         &prepared.bridge,
-        || false,
-        SourceAccess::Owned(&access),
+        cancelled,
+        SourceAccess::Owned(access),
     )
-    .map_err(super::certify::region_refusal)
+    .map_err(|failure| super::certify::inspection_refusal(prepared, failure))
 }
 
 #[cfg(test)]

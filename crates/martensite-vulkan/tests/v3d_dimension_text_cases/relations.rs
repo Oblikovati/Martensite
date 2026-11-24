@@ -5,7 +5,7 @@ use super::prelude::*;
 use crate::case_view::viewer_session::{LocationChange, RelationKind};
 use crate::primitive_shapes::{box_at, box_sized, cylinder};
 use martensite_tkbrep::topods::Shape;
-use martensite_tkv3d::ais::{AisSelectionScheme as Scheme, AisShapeSource};
+use martensite_tkv3d::ais::{AisSelectionScheme as Scheme, AisShapeParameters, AisShapeSource};
 use martensite_tkv3d::prs_dim::{PrsDimRelationMembers as _, PrsDimRelationSource};
 
 const EDGES: i32 = 2;
@@ -179,11 +179,7 @@ fn identic_relation_sources(run: &mut SessionRun) -> Result<(Shape, [Shape; 2]),
     let source = source_object
         .get()
         .ok_or("b; expected a displayed AisShape")?
-        .shape_base()
-        .fields
-        .read()
-        .shape
-        .clone();
+        .shape();
     let relation_handle = relation_objects[0].cast::<dyn PrsDimRelationSource>();
     let relation = relation_handle
         .get()

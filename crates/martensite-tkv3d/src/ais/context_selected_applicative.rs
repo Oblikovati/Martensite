@@ -1,6 +1,6 @@
 //! Selected application owners follow the selection cursor, independently of detection.
 use super::{AisInteractiveContext, AisInteractiveObject, AisInteractiveObjectMembers};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions::null_object};
+use martensite_tkernel::standard::{Failure, Handle, Transient, exceptions::null_object};
 
 impl AisInteractiveContext {
     /// Test the selected object's application owner; `context.has_applicative()?`.
@@ -10,7 +10,7 @@ impl AisInteractiveContext {
     }
 
     /// Retain the selected application owner independently of later edits; `context.applicative()?`.
-    pub fn applicative(&self) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn applicative(&self) -> Result<Handle<dyn Transient>, Failure> {
         let object = selected_application_object(self)?;
         let application = object.get_owner().clone();
         Ok(application)

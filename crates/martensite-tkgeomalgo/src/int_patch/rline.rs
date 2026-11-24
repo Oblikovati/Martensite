@@ -10,7 +10,7 @@ use crate::int_start::TheArc;
 use crate::int_surf::{IntSurfLineOn2S, IntSurfPntOn2S, IntSurfSituation, IntSurfTypeTrans};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::real::real_last;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::{Point2, Point3};
 
 /// The fields of `IntPatch_RLine` (`ParamInf1`...`ParamSup2` are never set natively
@@ -35,11 +35,10 @@ struct RLineState {
 /// assert_eq!(line.param_on_s1(), (0.0, 0.0));
 /// ```
 pub struct IntPatchRLine {
-    transient: StandardTransient,
     base: IntPatchLineBase,
     state: SharedState<RLineState>,
 }
-impl_transient!(IntPatchRLine, "IntPatch_RLine", dyn IntPatchPointLine, transient,
+impl_transient!(IntPatchRLine, "IntPatch_RLine", dyn IntPatchPointLine,
     interfaces: [dyn IntPatchLine, dyn IntPatchPointLine]);
 
 pub(super) const RLINE: &str = "IntPatch_RLine";
@@ -55,7 +54,6 @@ impl IntPatchRLine {
             vertices: VertexList::default(),
         };
         Self {
-            transient: StandardTransient::default(),
             base: IntPatchLineBase::new(tang, transitions, IntPatchIType::Restriction),
             state: SharedState::new(state),
         }
@@ -83,7 +81,6 @@ impl IntPatchRLine {
     /// and the fields are copied. `let copy = line.duplicate();`.
     pub(crate) fn duplicate(&self) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: self.base.duplicate(),
             state: SharedState::new(self.state.read().clone()),
         }

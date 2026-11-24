@@ -114,7 +114,8 @@ fn blit_quad(
         sampler: blit_sampler(filter),
         uv: corners
             .map(|[x, y]| [(x + 1.) / 2., (y + 1.) / 2., 0., 1.])
-            .to_vec(),
+            .to_vec()
+            .into(),
         back_vertex: false,
         vertex_override: false,
         modulate: true,

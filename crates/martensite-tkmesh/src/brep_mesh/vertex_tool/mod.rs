@@ -22,16 +22,10 @@ struct VertexToolState {
 }
 /// Native indexed UV uniqueness tool; `BRepMeshVertexTool::new(&allocator)`.
 pub struct BRepMeshVertexTool {
-    transient: StandardTransient,
     allocator: MeshAllocator,
     state: SharedState<VertexToolState>,
 }
-impl_transient!(
-    BRepMeshVertexTool,
-    "BRepMesh_VertexTool",
-    StandardTransient,
-    transient
-);
+impl_transient!(BRepMeshVertexTool, "BRepMesh_VertexTool", StandardTransient);
 impl BRepMeshVertexTool {
     /// Initialize native confusion-sized cells and two-axis tolerance; `BRepMeshVertexTool::new(&allocator)`.
     pub fn new(allocator: &MeshAllocator) -> Self {
@@ -39,7 +33,6 @@ impl BRepMeshVertexTool {
         let mut selector = BRepMeshVertexInspector::new(allocator);
         selector.set_tolerances(tolerance, tolerance);
         Self {
-            transient: StandardTransient::default(),
             allocator: allocator.clone(),
             state: SharedState::new(VertexToolState {
                 filter: CellFilter::with_allocator(

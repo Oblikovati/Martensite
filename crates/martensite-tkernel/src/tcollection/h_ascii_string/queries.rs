@@ -6,18 +6,21 @@ use crate::tcollection::ascii_string::c_string_prefix;
 
 impl HAsciiString {
     /// Example: `object.is_less(&other)`.
-    pub fn is_less(&self, other: &HAsciiString) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_less(&self, other: &HAsciiString) -> bool {
         let other = other.snapshot();
         self.string().is_less(&other)
     }
     /// Example: `object.is_greater(&other)`.
-    pub fn is_greater(&self, other: &HAsciiString) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_greater(&self, other: &HAsciiString) -> bool {
         let other = other.snapshot();
         self.string().is_greater(&other)
     }
     /// Different lengths, or a difference before the first NUL (`strncmp`);
     /// `Standard_NullObject` for a null handle; `object.is_different(&handle)?`.
-    pub fn is_different(&self, other: &Handle<HAsciiString>) -> Result<bool, Failure> {
+    #[cfg(test)]
+    pub(crate) fn is_different(&self, other: &Handle<HAsciiString>) -> Result<bool, Failure> {
         let other = non_null(other, "IsDifferent")?.snapshot();
         Ok(!c_strings_match(&self.string(), &other))
     }
@@ -42,12 +45,14 @@ impl HAsciiString {
         ))
     }
     /// The `strncmp` comparison of two shared strings; `object.is_same_state(&other)`.
-    pub fn is_same_state(&self, other: &HAsciiString) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_same_state(&self, other: &HAsciiString) -> bool {
         let other = other.snapshot();
         c_strings_match(&self.string(), &other)
     }
     /// Example: `object.first_location_in_set(&set, 1, object.length())?`.
-    pub fn first_location_in_set(
+    #[cfg(test)]
+    pub(crate) fn first_location_in_set(
         &self,
         set: &HAsciiString,
         from: i32,
@@ -57,7 +62,8 @@ impl HAsciiString {
         self.string().first_location_in_set(&set, from, to)
     }
     /// Example: `object.first_location_not_in_set(&set, 1, object.length())?`.
-    pub fn first_location_not_in_set(
+    #[cfg(test)]
+    pub(crate) fn first_location_not_in_set(
         &self,
         set: &HAsciiString,
         from: i32,
@@ -79,13 +85,9 @@ impl HAsciiString {
     pub fn search(&self, what: impl AsRef<[u8]>) -> i32 {
         self.string().search(c_string_prefix(what.as_ref()))
     }
-    /// Example: `object.search_string(&what)`.
-    pub fn search_string(&self, what: &HAsciiString) -> i32 {
-        let what = what.snapshot();
-        self.string().search(&what)
-    }
     /// Example: `object.search_from_end("ab")`.
-    pub fn search_from_end(&self, what: impl AsRef<[u8]>) -> i32 {
+    #[cfg(test)]
+    pub(crate) fn search_from_end(&self, what: impl AsRef<[u8]>) -> i32 {
         self.string()
             .search_from_end(c_string_prefix(what.as_ref()))
     }
@@ -114,7 +116,8 @@ impl HAsciiString {
         self.string().is_real_value(false)
     }
     /// Example: `object.is_ascii()`.
-    pub fn is_ascii(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_ascii(&self) -> bool {
         self.string().is_ascii()
     }
     /// Example: `object.useful_length()`.
@@ -126,7 +129,8 @@ impl HAsciiString {
         self.string().value(position)
     }
     /// Example: `object.print(&mut output)?`.
-    pub fn print(&self, output: &mut dyn std::io::Write) -> std::io::Result<()> {
+    #[cfg(test)]
+    pub(crate) fn print(&self, output: &mut dyn std::io::Write) -> std::io::Result<()> {
         self.string().print(output)
     }
 }

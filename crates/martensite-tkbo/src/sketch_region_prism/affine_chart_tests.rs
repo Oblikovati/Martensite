@@ -201,7 +201,7 @@ fn surface_plane(
     face: &martensite_tkbrep::topods::Face,
 ) -> martensite_tkernel::standard::Handle<GeomPlane> {
     let (surface, _) = BRepTool::surface_with_location(face).unwrap();
-    surface.cast::<GeomPlane>()
+    surface.downcast::<GeomPlane>()
 }
 
 static_assertions::assert_impl_all!(PrismAffineChartEvidence: Send, Sync);

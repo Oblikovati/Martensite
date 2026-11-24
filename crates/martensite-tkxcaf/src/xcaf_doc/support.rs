@@ -1,7 +1,7 @@
 //! The code the XCAFDoc attributes repeat natively: the static `Set` that finds the attribute
 //! of a label or adds a new one first in its list (`L.AddAttribute(A)`, `append = false`), and
 //! the down cast of `Restore` and `Paste`.
-use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Guid, Handle, RuntimeTyped, TransientHandleTarget};
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeState, TdfLabel};
 
 /// The attribute of `id` on the label, created with `make` and added (first, as the native
@@ -24,7 +24,7 @@ where
 }
 
 /// The attribute of `id` on the label as a `T`, or null.
-pub(crate) fn find<T: RuntimeTyped + ?Sized>(
+pub(crate) fn find<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
     label: &TdfLabel,
     id: &Guid,
 ) -> Result<Handle<T>, Failure> {
@@ -35,7 +35,7 @@ pub(crate) fn find<T: RuntimeTyped + ?Sized>(
 
 /// The `down_cast<T>(with)` of `Restore` and `Paste`, dereferenced:
 /// `StandardNullObject` when the attribute is not a `T` (a null dereference natively).
-pub(crate) fn downcast<T: RuntimeTyped + ?Sized>(
+pub(crate) fn downcast<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
     attribute: &Handle<dyn TdfAttribute>,
     who: &str,
 ) -> Result<Handle<T>, Failure> {

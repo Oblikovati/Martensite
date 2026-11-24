@@ -4,17 +4,18 @@
 use super::UnitSentence;
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle};
+use crate::units::TokenObject;
 use crate::units::support::{EXCHANGE, INSERT_AFTER, edit, item, length, object};
 use crate::units::token::Token;
 
-type Tokens = Handle<HSequence<Handle<Token>>>;
+type Tokens = Handle<HSequence<Handle<dyn TokenObject>>>;
 
-fn token_of(token: &Handle<Token>) -> Result<&Token, Failure> {
+fn token_of(token: &Handle<dyn TokenObject>) -> Result<&dyn TokenObject, Failure> {
     object(token, "Units_UnitSentence::Analyse")
 }
 
 fn insert_before(tokens: &Tokens, index: usize, word: &[u8], mean: &[u8]) -> Result<(), Failure> {
-    let token = Handle::new(Token::with_mean(word, mean));
+    let token = Handle::new(Token::with_mean(word, mean)).into_upcast::<dyn TokenObject>();
     edit(tokens, INSERT_AFTER, |items| {
         items.insert_before(index, token).map(|_| ())
     })
@@ -71,7 +72,7 @@ fn group_prefixes(tokens: &Tokens) -> Result<(), Failure> {
             index += 1;
             insert_before(tokens, index, b"*", b"O")?;
             index += 1;
-            let close = Handle::new(Token::with_mean(b")", b"S"));
+            let close = Handle::new(Token::with_mean(b")", b"S")).into_upcast::<dyn TokenObject>();
             edit(tokens, INSERT_AFTER, |items| {
                 items.insert_after(index, close).map(|_| ())
             })?;

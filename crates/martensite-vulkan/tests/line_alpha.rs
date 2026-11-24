@@ -17,7 +17,7 @@ fn line_scene(alpha: Graphic3dAlphaMode) -> scene::GraphicScene {
     let style = scene.group.aspects();
     style.set_alpha_mode(alpha, 0.9);
     style.set_interior_color_rgba(ColorRgba::new(1., 0., 0., 0.25).unwrap());
-    scene.group.add_primitive_array(&array, true);
+    scene.group.add_primitive_array(&array.upcast(), true);
     scene
 }
 #[test]

@@ -4,6 +4,7 @@ mod clocks;
 mod cpu_native;
 mod osd_statics;
 mod real_text;
+#[cfg(test)]
 mod signal_capabilities;
 mod signal_native;
 mod signals;
@@ -12,10 +13,9 @@ mod timer;
 mod wall_native;
 
 pub use chronometer::Chronometer;
-pub use clocks::{CpuTimes, NativeCpuTimes, NativeWallClock, WallClock};
+pub(crate) use clocks::NativeWallClock;
+pub use clocks::{CpuTimes, NativeCpuTimes, WallClock};
 pub use osd_statics::Osd;
-pub use real_text::{c_string_to_real, real_to_c_string};
-pub use signal_capabilities::SignalCapabilities;
 pub use signals::{NativeSignalHost, SignalHost, SignalState};
 pub use sleep::{
     NativeSleeper, SleepRequest, Sleeper, milli_sec_sleep_duration, sec_sleep_duration,

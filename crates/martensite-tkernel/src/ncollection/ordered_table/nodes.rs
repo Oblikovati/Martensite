@@ -3,13 +3,13 @@
 use super::{OrderSlot, OrderedItems, OrderedTable};
 
 /// Shared ordered node view; `map.first_node().unwrap().key()`.
-pub struct OrderedNodeRef<'a, K, V> {
+pub(crate) struct OrderedNodeRef<'a, K, V> {
     inner: OrderedItems<'a, K, V>,
     pair: (&'a K, &'a V),
 }
 
 /// Exclusive ordered-data node view; `*map.first_node_mut().unwrap().change_value()=7`.
-pub struct OrderedNodeMut<'a, K, V> {
+pub(crate) struct OrderedNodeMut<'a, K, V> {
     order: &'a [OrderSlot],
     keys: &'a [K],
     values: &'a mut [V],
@@ -17,10 +17,10 @@ pub struct OrderedNodeMut<'a, K, V> {
 }
 
 impl<K, V, H> OrderedTable<K, V, H> {
-    pub fn first_node(&self) -> Option<OrderedNodeRef<'_, K, V>> {
+    pub(crate) fn first_node(&self) -> Option<OrderedNodeRef<'_, K, V>> {
         OrderedNodeRef::at(self.items())
     }
-    pub fn first_node_mut(&mut self) -> Option<OrderedNodeMut<'_, K, V>> {
+    pub(crate) fn first_node_mut(&mut self) -> Option<OrderedNodeMut<'_, K, V>> {
         let slot = self.first?;
         let (keys, values) = self.storage.payload_mut().split_mut();
         Some(OrderedNodeMut {
@@ -47,26 +47,10 @@ impl<'a, K, V> OrderedNodeRef<'a, K, V> {
         self.pair.1
     }
     /// Follows the insertion-order link, `None` after the last entry; `node.order_next()`.
-    pub fn order_next(&self) -> Option<Self> {
+    #[cfg(test)]
+    pub(crate) fn order_next(&self) -> Option<Self> {
         let mut inner = self.inner.clone();
         inner.advance();
-        Self::at(inner)
-    }
-    /// Reads the public previous-in-order link: the entry inserted before this one, `None`
-    /// for the first entry.
-    ///
-    /// ```
-    /// # use martensite_tkernel::ncollection::OrderedMap;
-    /// let mut map = OrderedMap::<i32>::default();
-    /// map.add(4);
-    /// map.add(1);
-    /// let second = map.first_node().unwrap().order_next().unwrap();
-    /// assert_eq!(second.order_previous().map(|node| *node.key()), Some(4));
-    /// assert!(map.first_node().unwrap().order_previous().is_none());
-    /// ```
-    pub fn order_previous(&self) -> Option<Self> {
-        let mut inner = self.inner.clone();
-        inner.retreat();
         Self::at(inner)
     }
 }
@@ -77,7 +61,8 @@ impl<K, V> OrderedNodeMut<'_, K, V> {
         &self.keys[self.slot]
     }
     /// Borrows the current value; `node.value()`.
-    pub fn value(&self) -> &V {
+    #[cfg(test)]
+    pub(crate) fn value(&self) -> &V {
         &self.values[self.slot]
     }
     /// Edits only the current value; `*node.change_value()=7`.

@@ -4,7 +4,7 @@
 use super::basic_aspect::{Prs3dBasicAspect, dump_graphic_aspects};
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::aspect::AspectTypeOfLine;
 use martensite_tkservice::graphic3d::{Graphic3dAspectLine3d, Graphic3dAspectsMembers as _};
 use martensite_tkservice::json_dump::class_begin;
@@ -14,10 +14,9 @@ use std::io;
 ///
 /// Example: `let aspect = Prs3dLineAspect::new(red, AspectTypeOfLine::Solid, 1.0)?; aspect.set_width(2.0)?;`.
 pub struct Prs3dLineAspect {
-    transient: StandardTransient,
     pub(super) aspect: SharedState<Handle<Graphic3dAspectLine3d>>,
 }
-martensite_tkernel::impl_transient!(Prs3dLineAspect, "Prs3dLineAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dLineAspect, "Prs3dLineAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 impl Prs3dLineAspect {
@@ -30,7 +29,6 @@ impl Prs3dLineAspect {
     /// Wraps an existing Graphic3d aspect; `Prs3dLineAspect::from_aspect(aspect)`.
     pub fn from_aspect(aspect: Handle<Graphic3dAspectLine3d>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             aspect: SharedState::new(aspect),
         }
     }
@@ -88,7 +86,7 @@ pub struct Prs3dIsoAspect {
     line: Prs3dLineAspect,
     number: SharedState<i32>,
 }
-martensite_tkernel::impl_transient!(Prs3dIsoAspect, "Prs3dIsoAspect", Prs3dLineAspect, line,
+martensite_tkernel::impl_transient!(Prs3dIsoAspect, "Prs3dIsoAspect", Prs3dLineAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 impl Prs3dIsoAspect {
@@ -169,12 +167,18 @@ mod tests {
         );
         iso.set_number(7);
         assert_eq!(iso.number(), 7);
-        let line: Handle<Prs3dLineAspect> = iso.cast();
-        assert!(!line.is_null());
+        let line = iso.line_aspect();
         assert_eq!(
-            line.dynamic_type().unwrap().name(),
-            Prs3dIsoAspect::TYPE_NAME
+            line.aspect().object_address(),
+            iso.aspect().object_address()
         );
+        let abstract_aspect = iso.upcast::<dyn Prs3dBasicAspect>();
+        let descriptor = abstract_aspect.dynamic_type().unwrap();
+        assert_eq!(descriptor.name(), Prs3dIsoAspect::TYPE_NAME);
+        assert!(std::ptr::eq(
+            descriptor.parent().unwrap(),
+            Prs3dLineAspect::static_type()
+        ));
         let mut stream = DumpStream::default();
         iso.dump_json(&mut stream, 0).unwrap();
         assert_eq!(stream.text(), "\"className\": \"Prs3dLineAspect\"");

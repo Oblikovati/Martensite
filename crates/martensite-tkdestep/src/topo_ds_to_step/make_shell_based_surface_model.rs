@@ -46,14 +46,14 @@ fn write_modes(
 
 /// The select on an open shell, else on a closed one.
 fn shell_select(
-    item: &Handle<StepShapeTopologicalRepresentationItem>,
+    item: &Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
 ) -> Result<StepShapeShell, Failure> {
     let mut select = StepShapeShell::default();
-    let open: Handle<StepShapeOpenShell> = item.cast();
+    let open: Handle<dyn crate::StepEntityBase<StepShapeOpenShell>> = item.cast();
     if open.is_some() {
         select.set_value(&open.cast())?;
     } else {
-        let closed: Handle<StepShapeClosedShell> = item.cast();
+        let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = item.cast();
         select.set_value(&closed.cast())?;
     }
     Ok(select)
@@ -91,12 +91,15 @@ impl TopoDSToStepMakeShellBasedSurfaceModel {
             )?;
             return Ok(made);
         }
-        let surface: Handle<StepShapeFaceSurface> = builder.value()?.cast();
+        let surface: Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>> =
+            builder.value()?.cast();
         if surface.is_some() {
             let open = Handle::new(StepShapeOpenShell::new());
             open.init(
                 &empty_step_name(),
-                &shared_array1::<Handle<StepShapeFace>>(vec![surface.cast()]),
+                &shared_array1::<Handle<dyn crate::StepEntityBase<StepShapeFace>>>(vec![
+                    surface.cast(),
+                ]),
             );
             let mut select = StepShapeShell::default();
             select.set_value(&open.cast())?;
@@ -126,10 +129,11 @@ impl TopoDSToStepMakeShellBasedSurfaceModel {
             if value.is_some() {
                 let mut select = StepShapeShell::default();
                 if shell.closed()? {
-                    let closed: Handle<StepShapeClosedShell> = value.cast();
+                    let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> =
+                        value.cast();
                     select.set_value(&closed.cast())?;
                 } else {
-                    let open: Handle<StepShapeOpenShell> = value.cast();
+                    let open: Handle<dyn crate::StepEntityBase<StepShapeOpenShell>> = value.cast();
                     select.set_value(&open.cast())?;
                 }
                 made.result = surface_model(vec![select]);

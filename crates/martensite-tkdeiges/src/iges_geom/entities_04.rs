@@ -10,6 +10,7 @@
 use crate::iges_basic::entity_shape::{
     iges_array1_length, iges_array1_lower, iges_placement_methods,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::iges_array1_item;
 use crate::{iges_entity, iges_methods};
@@ -195,14 +196,14 @@ iges_entity! {
 /// A curve on a parametric surface entity associates a given
 /// curve with a surface and identifies the curve as lying on
 /// the surface.
-IgesGeomCurveOnSurface, IgesGeomCurveOnSurfaceState, "IgesGeomCurveOnSurface", parent IgesDataIgesEntity, { creation_mode: i32, surface: Handle<IgesDataIgesEntity>, curve_uv: Handle<IgesDataIgesEntity>, curve3d: Handle<IgesDataIgesEntity>, preference_mode: i32 }
+IgesGeomCurveOnSurface, IgesGeomCurveOnSurfaceState, "IgesGeomCurveOnSurface", parent IgesDataIgesEntity, { creation_mode: i32, surface: Handle<dyn IgesDataEntityKind>, curve_uv: Handle<dyn IgesDataEntityKind>, curve3d: Handle<dyn IgesDataEntityKind>, preference_mode: i32 }
 }
 impl IgesGeomCurveOnSurface {
     iges_methods! {
     get creation_mode = creation_mode: i32;
-    get surface = surface: Handle<IgesDataIgesEntity>;
-    get curve_uv = curve_uv: Handle<IgesDataIgesEntity>;
-    get curve3d = curve3d: Handle<IgesDataIgesEntity>;
+    get surface = surface: Handle<dyn IgesDataEntityKind>;
+    get curve_uv = curve_uv: Handle<dyn IgesDataEntityKind>;
+    get curve3d = curve3d: Handle<dyn IgesDataEntityKind>;
     get preference_mode = preference_mode: i32;
     }
     /// This method is used to set the fields of the class
@@ -218,9 +219,9 @@ impl IgesGeomCurveOnSurface {
     pub fn init(
         &self,
         a_mode: i32,
-        a_surface: &Handle<IgesDataIgesEntity>,
-        a_curve_uv: &Handle<IgesDataIgesEntity>,
-        a_curve3d: &Handle<IgesDataIgesEntity>,
+        a_surface: &Handle<dyn IgesDataEntityKind>,
+        a_curve_uv: &Handle<dyn IgesDataEntityKind>,
+        a_curve3d: &Handle<dyn IgesDataEntityKind>,
         a_preference: i32,
     ) {
         {
@@ -264,14 +265,14 @@ iges_entity! {
 /// area. The points of this entity must all lie in the ZT=0
 /// plane. Second, it can be a member of a predefined set of
 /// flash shapes.
-IgesGeomFlash, IgesGeomFlashState, "IgesGeomFlash", parent IgesDataIgesEntity, { point: Xy, dim1: f64, dim2: f64, rotation: f64, reference: Handle<IgesDataIgesEntity> }
+IgesGeomFlash, IgesGeomFlashState, "IgesGeomFlash", parent IgesDataIgesEntity, { point: Xy, dim1: f64, dim2: f64, rotation: f64, reference: Handle<dyn IgesDataEntityKind> }
 }
 impl IgesGeomFlash {
     iges_methods! {
     get dimension1 = dim1: f64;
     get dimension2 = dim2: f64;
     get rotation = rotation: f64;
-    get reference_entity = reference: Handle<IgesDataIgesEntity>;
+    get reference_entity = reference: Handle<dyn IgesDataEntityKind>;
     }
     iges_placement_methods! {
     has has_reference_entity = reference;
@@ -289,7 +290,7 @@ impl IgesGeomFlash {
         a_dim1: f64,
         a_dim2: f64,
         a_rotation: f64,
-        a_reference: &Handle<IgesDataIgesEntity>,
+        a_reference: &Handle<dyn IgesDataEntityKind>,
     ) {
         {
             let mut state = self.state.write();
@@ -374,13 +375,13 @@ iges_entity! {
 /// determine the offset of a given curve C. This entity
 /// points to the base curve to be offset and contains
 /// offset distance and other pertinent information.
-IgesGeomOffsetCurve, IgesGeomOffsetCurveState, "IgesGeomOffsetCurve", parent IgesDataIgesEntity, { base_curve: Handle<IgesDataIgesEntity>, offset_type: i32, function: Handle<IgesDataIgesEntity>, function_coord: i32, tapered_offset_type: i32, offset_distance1: f64, arc_length1: f64, offset_distance2: f64, arc_length2: f64, normal_vector: Xyz, offset_param1: f64, offset_param2: f64 }
+IgesGeomOffsetCurve, IgesGeomOffsetCurveState, "IgesGeomOffsetCurve", parent IgesDataIgesEntity, { base_curve: Handle<dyn IgesDataEntityKind>, offset_type: i32, function: Handle<dyn IgesDataEntityKind>, function_coord: i32, tapered_offset_type: i32, offset_distance1: f64, arc_length1: f64, offset_distance2: f64, arc_length2: f64, normal_vector: Xyz, offset_param1: f64, offset_param2: f64 }
 }
 impl IgesGeomOffsetCurve {
     iges_methods! {
-    get base_curve = base_curve: Handle<IgesDataIgesEntity>;
+    get base_curve = base_curve: Handle<dyn IgesDataEntityKind>;
     get offset_type = offset_type: i32;
-    get function = function: Handle<IgesDataIgesEntity>;
+    get function = function: Handle<dyn IgesDataEntityKind>;
     get function_parameter = function_coord: i32;
     get tapered_offset_type = tapered_offset_type: i32;
     get first_offset_distance = offset_distance1: f64;
@@ -428,9 +429,9 @@ impl IgesGeomOffsetCurve {
     #[allow(clippy::too_many_arguments, reason = "the member takes every field")]
     pub fn init(
         &self,
-        a_base_curve: &Handle<IgesDataIgesEntity>,
+        a_base_curve: &Handle<dyn IgesDataEntityKind>,
         an_offset_type: i32,
-        a_function: &Handle<IgesDataIgesEntity>,
+        a_function: &Handle<dyn IgesDataEntityKind>,
         a_function_coord: i32,
         a_tapered_offset_type: i32,
         off_distance1: f64,

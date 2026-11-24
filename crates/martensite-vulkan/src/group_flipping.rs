@@ -1,7 +1,7 @@
 //! GlFlipper saves ModelWorld before testing axis orientation.
 use crate::RenderMatrixState;
 use martensite_tkernel::ncollection::Mat4;
-use martensite_tkmath::gp::Axis2;
+use martensite_tkmath::gp::{Axis2, TransformForm};
 use martensite_tkservice::graphic3d::{Graphic3dFlipper, Graphic3dGroupMembers};
 
 #[derive(Clone, Copy)]
@@ -27,30 +27,54 @@ pub(crate) struct GroupFlipStack {
     view: Mat4<f32>,
     baseline_view: Mat4<f32>,
     precise_view: Option<Mat4<f64>>,
+    implicit_structure_stack: bool,
 }
 const _: fn(&FlipCarry) -> &(dyn Send + Sync) = |value| value;
+
+impl FlipCarry {
+    /// The model stack that a group without flips, persistence or user code leaves when it
+    /// starts a structure: none for an implicit stack, else the structure's stack after the
+    /// group's own transformation is pushed and popped again. A draw record certifies it
+    /// against the lowered carry and replays it under any placement (#594);
+    /// `FlipCarry::ordinary(&fields, &group_trsf)`.
+    pub(crate) fn ordinary(
+        structure: &martensite_tkservice::graphic3d::Graphic3dCStructureFields,
+        local: &martensite_tkmath::gp::Transform3,
+    ) -> Self {
+        if structure.trsf.is_null() && local.form() == TransformForm::Identity {
+            return Self::default();
+        }
+        let mut state = crate::persistent_transform::structure_model_state(structure);
+        for _ in 0..crate::persistent_transform::push_local_transform(local, &mut state) {
+            let _ = state.pop();
+        }
+        Self { state: Some(state) }
+    }
+}
 const _: fn(&GroupFlipStack) -> &(dyn Send + Sync) = |value| value;
 
 impl GroupFlipStack {
     /// The stack of a group in `context` that inherits the earlier groups' pushed flips;
-    /// `GroupFlipStack::scene(context, clip, &carry)?`.
+    /// `GroupFlipStack::scene(context, clip, &carry, (has_flips, observes_stack))?`.
     pub fn scene(
         context: &crate::text_submission::TextSceneContext<'_>,
         clip: [f32; 16],
         carry: &FlipCarry,
+        (has_flips, observes_stack): (bool, bool),
     ) -> Result<Self, crate::RenderError> {
         let (model, view) = crate::persistent_transform::lighting_matrices(context)?;
-        let ordinary = context.structure.trsf_pers.is_null()
-            && context.group.transform_persistence().is_null();
-        let mut stack = Self::new(
-            Mat4::from_data(model),
-            Mat4::from_data(view),
-            context.camera.projection_matrix(),
-            ordinary.then(|| context.camera.orientation_matrix()),
-            clip,
-        );
+        let (model, view) = (Mat4::from_data(model), Mat4::from_data(view));
+        if can_keep_implicit_stack(context, carry, has_flips || observes_stack) {
+            let mut stack = Self::new(model, view, Mat4::identity(), None, clip);
+            stack.implicit_structure_stack = true;
+            return Ok(stack);
+        }
         let incoming =
             crate::persistent_transform::flipping_model_state(context, carry.state.clone())?;
+        let can_recompose =
+            has_flips || *incoming.model.current() != model || incoming.view != view;
+        let (projection, precise_view) = flip_projection(context, can_recompose);
+        let mut stack = Self::new(model, view, projection, precise_view, clip);
         stack.models = incoming.model;
         stack.local_pops = incoming.local_pops;
         stack.view = incoming.view;
@@ -59,6 +83,9 @@ impl GroupFlipStack {
     }
     /// The pushed flips the next group of the structure inherits.
     pub fn carry(&self) -> FlipCarry {
+        if self.implicit_structure_stack {
+            return FlipCarry::default();
+        }
         let mut state = self.models.clone();
         for _ in 0..self.local_pops {
             // Native Pop asserts and leaves the current model unchanged on an empty stack.
@@ -89,6 +116,7 @@ impl GroupFlipStack {
             view,
             baseline_view: view,
             precise_view,
+            implicit_structure_stack: false,
         }
     }
     pub fn apply(&mut self, plane: Option<Axis2>) {
@@ -146,6 +174,36 @@ impl GroupFlipStack {
     pub fn override_model(&self) -> Option<Mat4<f32>> {
         self.current.changed.then_some(self.current.model)
     }
+}
+
+fn can_keep_implicit_stack(
+    context: &crate::text_submission::TextSceneContext<'_>,
+    carry: &FlipCarry,
+    needs_stack: bool,
+) -> bool {
+    // A later group can rebuild the untouched native structure stack if it needs to pop it.
+    !needs_stack
+        && carry.state.is_none()
+        && context.structure.trsf.is_null()
+        && context.structure.trsf_pers.is_null()
+        && context.group.transform_persistence().is_null()
+        && context.group.transformation().form() == TransformForm::Identity
+}
+
+fn flip_projection(
+    context: &crate::text_submission::TextSceneContext<'_>,
+    can_recompose: bool,
+) -> (Mat4<f64>, Option<Mat4<f64>>) {
+    if !can_recompose {
+        // All commands keep the original clip already calculated from the float matrices.
+        return (Mat4::identity(), None);
+    }
+    let ordinary =
+        context.structure.trsf_pers.is_null() && context.group.transform_persistence().is_null();
+    (
+        context.camera.projection_matrix(),
+        ordinary.then(|| context.camera.orientation_matrix()),
+    )
 }
 
 #[cfg(test)]

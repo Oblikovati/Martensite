@@ -6,7 +6,7 @@ struct RenderClipDerivedPlane {
     base: Graphic3dClipPlane,
 }
 martensite_tkernel::impl_transient!(RenderClipDerivedPlane,
-    "Martensite_RenderClipDerivedPlane", Graphic3dClipPlane, base,
+    "Martensite_RenderClipDerivedPlane", Graphic3dClipPlane,
     interfaces: [dyn Graphic3dClipPlaneSource]);
 impl Graphic3dClipPlaneSource for RenderClipDerivedPlane {
     fn clip_plane_base(&self) -> &Graphic3dClipPlane {
@@ -17,7 +17,7 @@ struct RenderClipDerivedSequence {
     base: Graphic3dSequenceOfHClipPlane,
 }
 martensite_tkernel::impl_transient!(RenderClipDerivedSequence,
-    "Martensite_RenderClipDerivedSequence", Graphic3dSequenceOfHClipPlane, base,
+    "Martensite_RenderClipDerivedSequence", Graphic3dSequenceOfHClipPlane,
     interfaces: [dyn Graphic3dClipPlaneSequenceSource]);
 impl Graphic3dClipPlaneSequenceSource for RenderClipDerivedSequence {
     fn clip_sequence_base(&self) -> &Graphic3dSequenceOfHClipPlane {
@@ -47,11 +47,11 @@ fn derived_render_clip_plane() -> Handle<dyn Graphic3dClipPlaneSource> {
     Handle::new(RenderClipDerivedPlane {
         base: Graphic3dClipPlane::from_equation(Vec4::new(1., 0., 0., 0.)).unwrap(),
     })
-    .into_cast()
+    .into_upcast()
 }
 fn derived_render_clip_sequence() -> Handle<dyn Graphic3dClipPlaneSequenceSource> {
     Handle::new(RenderClipDerivedSequence {
         base: Graphic3dSequenceOfHClipPlane::default(),
     })
-    .into_cast()
+    .into_upcast()
 }

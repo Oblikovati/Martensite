@@ -6,9 +6,9 @@ use super::elementary_eval::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkmath::gp::{Axis3, Vector3, Xyz};
 use std::f64::consts::PI;
 use std::io;
@@ -25,14 +25,12 @@ struct HelicoidState {
 /// raise StandardNotImplemented;
 /// `GeomEvalCircularHelicoidSurface::new(Axis3::default(), 2.0)?`.
 pub struct GeomEvalCircularHelicoidSurface {
-    parent: StandardTransient,
     state: SharedState<HelicoidState>,
 }
 impl_transient!(
     GeomEvalCircularHelicoidSurface,
     "GeomEval_CircularHelicoidSurface",
     dyn crate::geom::GeomElementarySurface,
-    parent,
     interfaces: [
         dyn crate::geom::GeomGeometry,
         dyn crate::geom::GeomSurface,
@@ -60,7 +58,6 @@ fn nonzero_pitch(pitch: f64, member: &str) -> Result<f64, Failure> {
 impl GeomEvalCircularHelicoidSurface {
     fn stored(state: HelicoidState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

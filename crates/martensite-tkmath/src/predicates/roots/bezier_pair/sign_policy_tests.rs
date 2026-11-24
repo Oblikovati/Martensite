@@ -132,3 +132,43 @@ fn genuine_quartic_domain_degree_exhaustion_is_incomplete_then_repair_completes(
             .is_ok()
     );
 }
+fn filtered_signs() -> PairSignOptions {
+    PairSignOptions {
+        version: 2,
+        ..PairSignOptions::derived()
+    }
+}
+#[test]
+fn filtered_sign_admission_retains_explicit_and_primary_degree_refusals() {
+    let derived = filtered_signs();
+    let proof = run_signs(derived, 2).completion.unwrap();
+    assert_eq!(proof.graph().unwrap().signs.requested, derived);
+    assert_eq!(proof.graph().unwrap().signs.effective_limit, 2);
+    let explicit = PairSignOptions {
+        degree_limit: PairSignAdmission::Explicit(1),
+        ..derived
+    };
+    assert!(matches!(
+        run_signs(explicit, 2).completion,
+        Err(PairOperationFailure::Sign(_))
+    ));
+    assert!(matches!(
+        run_signs(derived, 1).completion,
+        Err(PairOperationFailure::Root(
+            super::super::RootIsolationError::Degree { .. }
+        ))
+    ));
+}
+#[test]
+fn unsupported_filtered_sign_version_three_is_refused() {
+    let unsupported = PairSignOptions {
+        version: 3,
+        ..filtered_signs()
+    };
+    assert!(matches!(
+        run_signs(unsupported, 2).completion,
+        Err(PairOperationFailure::SignPolicy(
+            PairSignPolicyFailure::Version(3)
+        ))
+    ));
+}

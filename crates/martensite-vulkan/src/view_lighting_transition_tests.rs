@@ -79,9 +79,9 @@ fn check_pending_lighting(policy: RenderGuiSurfacePolicy) {
         .set_lighting_pipeline(Mode::FixedFunction)
         .unwrap();
     let result = if policy == RenderGuiSurfacePolicy::CheckedV2 {
-        view.publish_checked_gui(stamp, Ok(capture_pixel()), target)
+        view.publish_checked_gui(stamp, Ok(capture_pixel().into()), target)
     } else {
-        view.publish_gui_outcome(&epoch, Ok(capture_pixel()), target)
+        view.publish_gui_outcome(&epoch, Ok(capture_pixel().into()), target)
     };
     assert!(is_lighting_failure(result) && view.capture().is_err());
 }
@@ -118,7 +118,7 @@ impl RetainedLightingGeometry {
         let group = crate::Graphic3dDrawGroup::new(&structure.cast());
         group.set_group_primitives_aspect(&Handle::new(Graphic3dAspects::default()).cast());
         let array = lighting_triangle();
-        group.add_primitive_array(&array, true);
+        group.add_primitive_array(&array.upcast(), true);
         structure.set_visible(true);
         Self {
             structure,

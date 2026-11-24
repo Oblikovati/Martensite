@@ -8,7 +8,7 @@ use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeMa
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::null_object;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::json_dump::{base_class, class_begin, field_dumped};
 use std::io;
@@ -26,19 +26,17 @@ struct WireState {
 ///
 /// Example: `let wire = Select3DSensitiveWire::new(&owner); wire.add(&edge)?;`.
 pub struct Select3DSensitiveWire {
-    transient: StandardTransient,
     entity: Select3DSensitiveEntityBase,
     set: Select3DSensitiveSetBase,
     state: SharedState<WireState>,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveWire, "Select3DSensitiveWire", dyn Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveWire, "Select3DSensitiveWire", dyn Select3DSensitiveSet,
     interfaces: [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet]);
 
 impl Select3DSensitiveWire {
     /// An empty wire of an owner; `Select3DSensitiveWire::new(&owner)`.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             entity: Select3DSensitiveEntityBase::new(owner),
             set: Select3DSensitiveSetBase::default(),
             state: SharedState::new(WireState::default()),

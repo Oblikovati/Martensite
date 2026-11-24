@@ -101,6 +101,6 @@ fn redirect_side_direction(receipt: &PrismReceipt) {
     let side = live_face(receipt, PrismImageRole::Generated);
     let raw = BRepTool::surface(&side)
         .unwrap()
-        .cast::<GeomSurfaceOfLinearExtrusion>();
+        .downcast::<GeomSurfaceOfLinearExtrusion>();
     raw.set_direction(martensite_tkmath::gp::Direction3::new(1., 0., 0.).unwrap());
 }

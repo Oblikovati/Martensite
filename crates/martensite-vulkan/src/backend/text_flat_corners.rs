@@ -6,6 +6,7 @@ const BASE_STRIDE: usize = 40;
 pub(super) struct FlatTextEncoding {
     pub(super) vertices: Vec<u8>,
     pub(super) indices: Vec<u32>,
+    #[cfg(test)]
     pub(super) sources: Vec<(usize, usize)>,
 }
 
@@ -46,10 +47,12 @@ pub(super) fn encode(base: &[u8], indices: &[u32]) -> FlatTextEncoding {
     FlatTextEncoding {
         vertices,
         indices: (0..indices.len() as u32).collect(),
+        #[cfg(test)]
         sources: source_pairs(indices),
     }
 }
 
+#[cfg(test)]
 fn source_pairs(indices: &[u32]) -> Vec<(usize, usize)> {
     indices
         .iter()

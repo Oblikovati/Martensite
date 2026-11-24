@@ -8,13 +8,12 @@ use super::named_expression::{
 use super::named_unknown::ExprNamedUnknown;
 use super::numeric_value::ExprNumericValue;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A named real constant;
 /// `ExprNamedConstant::new(&AsciiString::new("Pi"), 3.14).get_value() == 3.14`.
 pub struct ExprNamedConstant {
-    parent: StandardTransient,
     name: SharedState<AsciiString>,
     value: f64,
     link: ExprSelfLink,
@@ -23,7 +22,6 @@ impl_transient!(
     ExprNamedConstant,
     "Expr_NamedConstant",
     dyn ExprNamedExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression, dyn ExprNamedExpression]
 );
 impl ExprNamedConstant {
@@ -31,7 +29,6 @@ impl ExprNamedConstant {
     /// `ExprNamedConstant::new(&AsciiString::new("e"), 2.718)`.
     pub fn new(name: &AsciiString, value: f64) -> Handle<Self> {
         let object: Self = Self {
-            parent: StandardTransient::default(),
             name: SharedState::new(name.clone()),
             value,
             link: ExprSelfLink::default(),
@@ -64,7 +61,7 @@ impl ExprGeneralExpression for ExprNamedConstant {
         Ok(ExprNumericValue::expression(self.value))
     }
     fn copy(&self) -> Result<ExprHandle, Failure> {
-        Ok(Self::new(&self.get_name(), self.value).cast())
+        Ok(Self::new(&self.get_name(), self.value).into_upcast())
     }
     fn contains_unknowns(&self) -> Result<bool, Failure> {
         Ok(false)
@@ -105,11 +102,11 @@ mod tests {
 
     #[test]
     fn a_constant_simplifies_to_its_value_and_keeps_its_name() {
-        let pi: ExprHandle = ExprNamedConstant::new(&AsciiString::new("Pi"), 3.5).cast();
+        let pi: ExprHandle = ExprNamedConstant::new(&AsciiString::new("Pi"), 3.5).into_upcast();
         assert_eq!(pi.string().unwrap(), "Pi");
         assert_eq!(pi.simplified().unwrap().string().unwrap(), "3.5");
         assert!(pi.is_shareable());
-        let other: ExprHandle = ExprNamedConstant::new(&AsciiString::new("Pi"), 1.0).cast();
+        let other: ExprHandle = ExprNamedConstant::new(&AsciiString::new("Pi"), 1.0).into_upcast();
         assert!(pi.is_identical(&other).unwrap());
         assert_eq!(
             pi.n_derivative(&Handle::default(), 0)

@@ -3,7 +3,7 @@ use super::common::{Reader, attempt, ax1, ax2, flag, int, pnt, real, show, vec};
 use super::output::Output;
 use super::shapes;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, project_concrete};
 use martensite_tkg2d::adaptor2d::{Adaptor2dCurve2d, Adaptor2dLine2d};
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
@@ -143,7 +143,7 @@ pub fn surface(output: &Output, r: &mut Reader) -> Result<Handle<dyn Adaptor3dSu
             )?)
             .cast())
         }
-        2 => Ok(Handle::new(Adaptor3dSurfaceBase::default()).cast()),
+        2 => Ok(Handle::new(Adaptor3dSurfaceBase).cast()),
         _ => {
             let d = r.dir();
             let curve: Handle<dyn Adaptor3dCurve> =
@@ -211,8 +211,7 @@ pub fn curve_intervals(output: &Output, a: &dyn Adaptor3dCurve) {
 /// Whether a spline query would dereference a null 2D spline natively (a3_null_spline):
 /// a curve on a plane whose 2D Geom2dAdaptorCurve is of another kind.
 fn null_spline(_output: &Output, a: &dyn Adaptor3dCurve, kind: CurveType) -> bool {
-    let transient: &dyn Transient = a;
-    let Some(cos) = Adaptor3dCurveOnSurface::project_from(transient) else {
+    let Some(cos) = project_concrete::<Adaptor3dCurveOnSurface>(a) else {
         return false;
     };
     let (curve, surface) = (cos.get_curve(), cos.get_surface());

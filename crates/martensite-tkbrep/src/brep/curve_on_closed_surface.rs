@@ -1,5 +1,5 @@
 //! `BRep_CurveOnClosedSurface`: the two p-curves of a seam edge.
-use super::curve_on_surface::BRepCurveOnSurface;
+use super::curve_on_surface::{BRepCurveOnSurfaceSource, CurveOnSurfaceState};
 use super::curve_representation::{BRepCurveRepresentation, CurveRepresentationBase};
 use super::dump::{dump_base, dump_class_name, dump_field, dump_handle};
 use super::errors::null_object;
@@ -25,8 +25,7 @@ pub(crate) struct ClosedSurfaceFields {
 }
 
 /// `BRep_CurveOnClosedSurface`: a curve on a closed surface with its second p-curve
-/// and the continuity across the seam. It derives from `BRep_CurveOnSurface`, which
-/// it embeds.
+/// and the continuity across the seam. Both p-curve interfaces share the original owner.
 ///
 /// ```
 /// use martensite_tkbrep::brep::{BRepCurveOnClosedSurface, BRepCurveRepresentation};
@@ -36,17 +35,17 @@ pub(crate) struct ClosedSurfaceFields {
 /// use martensite_tkmath::geom_abs::Shape;
 /// use martensite_tkmath::gp::{Axis2d, Axis3};
 /// use martensite_tkmath::toploc::Location;
-/// let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::default())).into_cast();
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_cast();
+/// let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::default())).into_upcast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let seam = BRepCurveOnClosedSurface::new(&line, &line, &plane, &Location::default(), Shape::C0).unwrap();
 /// assert!(seam.is_curve_on_closed_surface() && seam.is_regularity());
 /// ```
 pub struct BRepCurveOnClosedSurface {
-    pub(crate) parent: BRepCurveOnSurface,
+    pub(crate) first_curve: CurveOnSurfaceState,
     pub(crate) fields: SharedState<ClosedSurfaceFields>,
 }
-impl_transient!(BRepCurveOnClosedSurface, "BRep_CurveOnClosedSurface", BRepCurveOnSurface, parent,
-    interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve]);
+impl_transient!(BRepCurveOnClosedSurface, "BRep_CurveOnClosedSurface", dyn BRepCurveOnSurfaceSource,
+    interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve, dyn BRepCurveOnSurfaceSource]);
 
 impl BRepCurveOnClosedSurface {
     /// `BRep_CurveOnClosedSurface(PC1, PC2, S, L, C)`; a null first p-curve raises
@@ -58,17 +57,21 @@ impl BRepCurveOnClosedSurface {
         location: &Location,
         continuity: Continuity,
     ) -> Result<Self, Failure> {
-        let parent = BRepCurveOnSurface::new(pcurve1, surface, location)?;
-        Ok(Self::from_components(parent, pcurve2.clone(), continuity))
+        let first_curve = CurveOnSurfaceState::new(pcurve1, surface, location)?;
+        Ok(Self::from_components(
+            first_curve,
+            pcurve2.clone(),
+            continuity,
+        ))
     }
 
     fn from_components(
-        parent: BRepCurveOnSurface,
+        first_curve: CurveOnSurfaceState,
         pcurve2: Handle<dyn Geom2dCurve>,
         continuity: Continuity,
     ) -> Self {
         Self {
-            parent,
+            first_curve,
             fields: SharedState::new(ClosedSurfaceFields {
                 pcurve2,
                 continuity,
@@ -80,23 +83,27 @@ impl BRepCurveOnClosedSurface {
 
     fn copy_from_current_binding(&self) -> Result<Self, Failure> {
         let continuity = self.fields.read().continuity;
-        let parent = self.parent.copy_from_current_binding()?;
-        Ok(Self::from_components(parent, self.pcurve2()?, continuity))
+        let first_curve = self.first_curve.copy_from_current_binding()?;
+        Ok(Self::from_components(
+            first_curve,
+            self.pcurve2()?,
+            continuity,
+        ))
     }
 
-    /// The embedded `BRep_CurveOnSurface`; `seam.as_curve_on_surface().uv_points()`.
-    pub fn as_curve_on_surface(&self) -> &BRepCurveOnSurface {
-        &self.parent
+    /// The first p-curve interface. Example: `seam.as_curve_on_surface().uv_points()`.
+    pub fn as_curve_on_surface(&self) -> &dyn BRepCurveOnSurfaceSource {
+        self
     }
 
     /// `SetUVPoints(P1, P2)` of the first p-curve (inherited); `seam.set_uv_points(a, b)`.
     pub fn set_uv_points(&self, first: Point2, last: Point2) {
-        self.parent.set_uv_points(first, last);
+        self.first_curve.set_uv_points(first, last);
     }
 
     /// `UVPoints(P1, P2)` of the first p-curve (inherited); `seam.uv_points()`.
     pub fn uv_points(&self) -> (Point2, Point2) {
-        self.parent.uv_points()
+        self.first_curve.uv_points()
     }
 
     /// `SetUVPoints2(P1, P2)`; `seam.set_uv_points2(first, last)`.
@@ -137,17 +144,17 @@ impl BRepCurveOnClosedSurface {
 
 impl BRepCurveRepresentation for BRepCurveOnClosedSurface {
     fn curve_representation_base(&self) -> &CurveRepresentationBase {
-        self.parent.curve_representation_base()
+        self.first_curve.gcurve.representation()
     }
     fn is_curve_on_surface(&self) -> bool {
-        self.parent.is_curve_on_surface()
+        true
     }
     fn is_curve_on_surface_at(
         &self,
         surface: &Handle<dyn GeomSurface>,
         location: &Location,
     ) -> bool {
-        self.parent.is_curve_on_surface_at(surface, location)
+        self.first_curve.is_on(surface, location)
     }
     /// Returns true.
     fn is_curve_on_closed_surface(&self) -> bool {
@@ -165,7 +172,7 @@ impl BRepCurveRepresentation for BRepCurveOnClosedSurface {
         location1: &Location,
         location2: &Location,
     ) -> bool {
-        let surface = self.parent.surface().unwrap_or_default();
+        let surface = self.first_curve.surface();
         let location = self.location();
         surface == *surface1
             && surface == *surface2
@@ -173,13 +180,14 @@ impl BRepCurveRepresentation for BRepCurveOnClosedSurface {
             && location == *location2
     }
     fn surface(&self) -> Result<Handle<dyn GeomSurface>, Failure> {
-        self.parent.surface()
+        Ok(self.first_curve.surface())
     }
     fn pcurve(&self) -> Result<Handle<dyn Geom2dCurve>, Failure> {
-        self.parent.pcurve()
+        Ok(self.first_curve.pcurve())
     }
     fn set_pcurve(&self, pcurve: &Handle<dyn Geom2dCurve>) -> Result<(), Failure> {
-        self.parent.set_pcurve(pcurve)
+        self.first_curve.set_pcurve(pcurve);
+        Ok(())
     }
     fn pcurve2(&self) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         Ok(self.fields.read().pcurve2.clone())
@@ -190,7 +198,7 @@ impl BRepCurveRepresentation for BRepCurveOnClosedSurface {
     }
     /// Returns `Surface()`.
     fn surface2(&self) -> Result<Handle<dyn GeomSurface>, Failure> {
-        self.parent.surface()
+        Ok(self.first_curve.surface())
     }
     /// Returns `Location()`.
     fn location2(&self) -> Result<Location, Failure> {
@@ -208,16 +216,16 @@ impl BRepCurveRepresentation for BRepCurveOnClosedSurface {
         let copy = self.copy_from_current_binding()?;
         let (first, last) = self.range();
         copy.set_range(first, last)?;
-        let (uv1, uv2) = self.parent.uv_points();
+        let (uv1, uv2) = self.first_curve.uv_points();
         copy.set_uv_points(uv1, uv2);
         let (uv21, uv22) = self.uv_points2();
         copy.set_uv_points2(uv21, uv22);
-        Ok(Handle::new(copy).into_cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         dump_class_name(stream, "BRep_CurveOnClosedSurface")?;
         dump_base(stream, depth, |nested, nested_depth| {
-            self.parent.dump_body(nested, nested_depth)
+            self.first_curve.dump_body(nested, nested_depth)
         })?;
         let pcurve2 = self.fields.read().pcurve2.clone();
         dump_handle(stream, depth, "PCurve2", &pcurve2, |c, s, d| {
@@ -237,14 +245,20 @@ impl BRepCurveRepresentation for BRepCurveOnClosedSurface {
 
 impl BRepGCurve for BRepCurveOnClosedSurface {
     fn gcurve_base(&self) -> &GCurveBase {
-        self.parent.gcurve_base()
+        &self.first_curve.gcurve
     }
     fn d0(&self, u: f64) -> Result<Point3, Failure> {
-        self.parent.d0(u)
+        self.first_curve.d0(u)
     }
     /// The second p-curve's UV points, then `BRep_CurveOnSurface::Update`.
     fn update(&self) -> Result<(), Failure> {
         self.update_uv_points2()?;
-        self.parent.update_uv_points()
+        self.first_curve.update_uv_points()
+    }
+}
+
+impl BRepCurveOnSurfaceSource for BRepCurveOnClosedSurface {
+    fn curve_on_surface_state(&self) -> &CurveOnSurfaceState {
+        &self.first_curve
     }
 }

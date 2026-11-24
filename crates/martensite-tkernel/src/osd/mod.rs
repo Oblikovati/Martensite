@@ -41,8 +41,8 @@ mod process_cpu_limit;
 pub use process_cpu_limit::{reported_process_cpu_limit, set_process_cpu_limit};
 
 // Timing, signals and the OSD package statics.
+#[cfg(test)]
 mod perf_meter;
-pub use perf_meter::*;
 mod timing;
 pub use timing::*;
 

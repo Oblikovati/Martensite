@@ -38,8 +38,7 @@ struct ModeCommandView {
     base: V3dView,
     trace: Arc<ModeCommandTrace>,
 }
-martensite_tkernel::impl_transient!(ModeCommandView,"Martensite_ModeCommandView",V3dView,base,
-    interfaces:[dyn V3dViewSource]);
+martensite_tkernel::impl_transient!(ModeCommandView,"Martensite_ModeCommandView",V3dView, interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for ModeCommandView {
     fn view_base(&self) -> &V3dView {
         // The override and command share one real retained base state.
@@ -55,7 +54,7 @@ impl V3dViewSource for ModeCommandView {
 impl ModeCommandTrace {
     fn record(&self, view: &V3dView) {
         let ordinal = self.rows.read().len() + 1;
-        let context = self.context.read().observe();
+        let context = self.context.read().upgrade();
         let mode = context.display_mode();
         self.rows
             .write()

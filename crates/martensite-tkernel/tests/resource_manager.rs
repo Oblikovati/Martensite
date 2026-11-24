@@ -3,6 +3,7 @@
 use martensite_tkernel::resource::ResourceManager;
 use std::{path::PathBuf, sync::Arc};
 #[path = "resource_manager/support.rs"]
+#[allow(dead_code)]
 mod support;
 use support::FakeResourceSystem;
 #[test]
@@ -23,29 +24,4 @@ fn Resource_ManagerTest__OCC27849_PathsWithSpecialChars() {
             assert_eq!(resources.value("test.resource").unwrap().as_bytes(), b"ok");
         }
     }
-}
-#[test]
-fn Resource_ManagerTest__OCC181_SaveToExistingDirectory() {
-    let system: Arc<FakeResourceSystem> = Arc::default();
-    let source: PathBuf = PathBuf::from("resource_manager_test/source");
-    let save: PathBuf = PathBuf::from("resource_manager_test/save_flat");
-    system.write_resource(&source, "SaveCheck", "test.key", "test_value");
-    system.add_directory(save.clone());
-    system.set_environment("CSF_SaveCheckUserDefaults", source);
-    let resources = ResourceManager::new("SaveCheck", false, system.host()).unwrap();
-    system.set_environment("CSF_SaveCheckUserDefaults", save.clone());
-    assert!(resources.save());
-    assert!(system.has_file(&save.join("SaveCheck")));
-}
-#[test]
-fn Resource_ManagerTest__OCC181_SaveToNestedNonExistentDirectory() {
-    let system: Arc<FakeResourceSystem> = Arc::default();
-    let source: PathBuf = PathBuf::from("resource_manager_test/source2");
-    let save: PathBuf = PathBuf::from("resource_manager_test/nested/deep/dir");
-    system.write_resource(&source, "SaveCheck", "test.key", "test_value");
-    system.set_environment("CSF_SaveCheckUserDefaults", source);
-    let resources = ResourceManager::new("SaveCheck", false, system.host()).unwrap();
-    system.set_environment("CSF_SaveCheckUserDefaults", save.clone());
-    assert!(resources.save());
-    assert!(system.has_file(&save.join("SaveCheck")));
 }

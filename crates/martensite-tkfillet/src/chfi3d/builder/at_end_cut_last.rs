@@ -66,7 +66,7 @@ impl ChFi3dBuilder {
         let c3df = self.ds.curve(ae.fi[1].line_index()).curve().clone();
         let mut ufi = ae.fi[0].parameter(ae.isfirst);
         let (hgs, hbs): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (ae.hgs.clone().cast(), ae.hbs.clone().cast());
+            (ae.hgs.upcast(), ae.hbs.upcast());
         let ok = {
             let mut g = lock(&ae.fd);
             let (mut fi, mut cp) = (g.interference(2).clone(), g.vertex(ae.isfirst, 2).clone());
@@ -127,7 +127,7 @@ impl ChFi3dBuilder {
         let parfin = [cl.pfil2.x(), cl.pfil2.y(), cl.pfac2.x(), cl.pfac2.y()];
         bound_fac(&ae.hbs, boite(cl.pfac1, cl.pfac2), true)?;
         let (hgs, hbs): (Handle<dyn Adaptor3dSurface>, Handle<dyn Adaptor3dSurface>) =
-            (ae.hgs.clone().cast(), ae.hbs.clone().cast());
+            (ae.hgs.upcast(), ae.hbs.upcast());
         let mut out = IntersectionCurves::default();
         if !compute_curves(
             (&hgs, &hbs),

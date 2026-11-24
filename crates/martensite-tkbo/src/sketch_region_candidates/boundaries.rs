@@ -147,10 +147,10 @@ fn capture_coefficients(
     bounds: [f64; 2],
     id: u64,
 ) -> Result<CapturedCoefficients, CandidateCause> {
-    if let Some(bezier) = curve.cast::<Geom2dBezierCurve>().get() {
+    if let Some(bezier) = curve.downcast::<Geom2dBezierCurve>().get() {
         return bezier_coefficients(bezier, bounds);
     }
-    if let Some(line) = curve.cast::<Geom2dLine>().get() {
+    if let Some(line) = curve.downcast::<Geom2dLine>().get() {
         let points = [
             line.value(bounds[0]).map_err(CandidateCause::Mapped)?,
             line.value(bounds[1]).map_err(CandidateCause::Mapped)?,

@@ -12,7 +12,7 @@ pub struct LightingScene {
     pub base: ViewerScene,
     pub aspect: Handle<Graphic3dAspects>,
     pub vertices: Handle<Graphic3dArrayOfPrimitives>,
-    pub light: Handle<Graphic3dCLight>,
+    pub light: Handle<dyn Graphic3dCLightSource>,
 }
 impl LightingScene {
     /// Build the paired native fixture; `LightingScene::new(&driver, "lit-phong")`.
@@ -109,7 +109,7 @@ fn configure_lighting_group(
     }
     base.group.set_group_primitives_aspect(&aspect.cast());
     let vertices = lighting_vertices(mode, line);
-    base.group.add_primitive_array(&vertices, true);
+    base.group.add_primitive_array(&vertices.upcast(), true);
     (aspect, vertices)
 }
 fn configure_lit_line_aspect(aspect: &Graphic3dAspects, mode: &str) {
@@ -194,21 +194,24 @@ fn fill_lighting_vertex_slots(vertices: &Graphic3dArrayOfPrimitives, mode: &str)
         }
     }
 }
-pub(crate) fn configure_lights(base: &ViewerScene, mode: &str) -> Handle<Graphic3dCLight> {
+pub(crate) fn configure_lights(
+    base: &ViewerScene,
+    mode: &str,
+) -> Handle<dyn Graphic3dCLightSource> {
     let light = lighting_source(mode);
     configure_light_parameters(&light, mode);
     let ambient = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient));
     ambient.set_color(rgb([0.125, 0.25, 0.5]));
     ambient.set_intensity(2.).unwrap();
     let set = Handle::new(Graphic3dLightSet::default());
-    set.add(&ambient).unwrap();
+    set.add(&ambient.upcast()).unwrap();
     if mode != "lit-ambient" {
         set.add(&light).unwrap();
     }
     base.cview().set_lights(&set);
     light
 }
-fn lighting_source(mode: &str) -> Handle<Graphic3dCLight> {
+fn lighting_source(mode: &str) -> Handle<dyn Graphic3dCLightSource> {
     let kind = match mode {
         "lit-point" | "lit-range" => Graphic3dTypeOfLightSource::Positional,
         "lit-spot" => Graphic3dTypeOfLightSource::Spot,
@@ -226,7 +229,7 @@ fn lighting_source(mode: &str) -> Handle<Graphic3dCLight> {
         light.set_position_coords(0., 0., 12.).unwrap();
         light.set_attenuation(0.5, 0.125).unwrap();
     }
-    light
+    light.into_upcast()
 }
 fn configure_light_parameters(light: &Graphic3dCLight, mode: &str) {
     if mode == "lit-range" {

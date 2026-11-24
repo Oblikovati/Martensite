@@ -145,7 +145,9 @@ fn displayed_sphere(scene: &EnvironmentTextureScene) -> Handle<dyn AisInteractiv
 }
 fn shading_dumps(scene: &EnvironmentTextureScene, dumps: &mut Vec<Vec<u8>>) {
     scene.orient_and_fit(V3dTypeOfOrientation::XposYnegZpos);
-    let environment = Handle::new(Graphic3dTextureEnv::from_pix_map(ramp_texture(true)));
+    let environment = Handle::new(Graphic3dTextureEnv::from_pix_map(
+        ramp_texture(true).into_upcast(),
+    ));
     scene.view().set_texture_env(&environment);
     for model in SHADING_MODELS {
         scene.shading(model);
@@ -173,7 +175,7 @@ fn layer_dumps(
         .context
         .set_z_layer(sphere, GRAPHIC3D_ZLAYER_ID_DEFAULT);
     let textured = AisTexturedShape::new(&box_shape([-0.5, -0.5, 1.2], [1., 1., 0.2]));
-    textured.set_texture_pix_map(&ramp_texture(false));
+    textured.set_texture_pix_map(&ramp_texture(false).into_upcast());
     textured.set_texture_map_on();
     scene.display(&textured.cast(), 3);
     dumps.push(scene.dump());

@@ -134,7 +134,7 @@ fn add_aline(
     }
     alig.set_first_point(1);
     alig.set_last_point(index_last_vertex);
-    slin.push(Handle::new(alig).cast());
+    slin.push(Handle::new(alig).into_upcast());
     Ok(())
 }
 
@@ -196,7 +196,7 @@ fn add_wline(
         wline.v2_period(),
     );
     wlig.compute_vertex_parameters(precision::confusion())?;
-    slin.push(Handle::new(wlig).cast());
+    slin.push(Handle::new(wlig).into_upcast());
     Ok(())
 }
 
@@ -256,7 +256,7 @@ fn add_rline(
     rlig.set_first_point(1);
     rlig.set_last_point(index_last_vertex);
     rlig.compute_vertex_parameters(precision::confusion())?;
-    slin.push(Handle::new(rlig).cast());
+    slin.push(Handle::new(rlig).into_upcast());
     Ok(())
 }
 
@@ -306,7 +306,7 @@ fn add_gline(
     }
     glig.set_first_point(1);
     glig.set_last_point(index_last_vertex);
-    slin.push(Handle::new(glig).cast());
+    slin.push(Handle::new(glig).into_upcast());
     Ok(())
 }
 

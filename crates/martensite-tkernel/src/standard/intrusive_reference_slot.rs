@@ -1,12 +1,39 @@
 //! Handle fields keep their pointer visible while the prior owner is destroyed.
 use super::{
-    Failure, Handle, HandleObserver, HandleReference, RuntimeTyped, SharedState, Transient,
-    WeakHandle,
+    Failure, Handle, HandleObserver, HandleReference, HandleSlot, RuntimeTyped, SharedState,
+    Transient, TransientHandleTarget, WeakHandle,
 };
 struct ReferenceSlotMembers<T: ?Sized + RuntimeTyped> {
     pointer: WeakHandle<T>,
-    ownership: Option<Handle<T>>,
+    ownership: ReferenceSlotOwnership<T>,
     retiring: bool,
+}
+enum ReferenceSlotOwnership<T: ?Sized> {
+    Direct(Handle<T>),
+    Shared(Option<HandleSlot<T>>),
+}
+impl<T: ?Sized> ReferenceSlotOwnership<T> {
+    fn is_empty(&self) -> bool {
+        match self {
+            Self::Direct(handle) => handle.is_null(),
+            Self::Shared(slot) => slot.is_none(),
+        }
+    }
+    fn take(&mut self) -> Self {
+        match self {
+            Self::Direct(handle) => Self::Direct(std::mem::take(handle)),
+            Self::Shared(slot) => Self::Shared(slot.take()),
+        }
+    }
+    fn replace(&mut self, handle: Handle<T>) -> Self {
+        match self {
+            Self::Direct(current) => Self::Direct(std::mem::replace(current, handle)),
+            Self::Shared(slot) => {
+                let incoming = (!handle.is_null()).then(|| HandleSlot::new(handle));
+                Self::Shared(std::mem::replace(slot, incoming))
+            }
+        }
+    }
 }
 /// Actual pointer slot plus its Rust ownership lease; `slot.assign(&replacement)?`.
 /// The pointer, rather than an owning snapshot, is the authoritative borrowed field value.
@@ -18,7 +45,7 @@ impl<T: ?Sized + RuntimeTyped> Default for IntrusiveReferenceSlot<T> {
         Self {
             members: SharedState::new(ReferenceSlotMembers {
                 pointer: WeakHandle::default(),
-                ownership: None,
+                ownership: ReferenceSlotOwnership::Direct(Handle::default()),
                 retiring: false,
             }),
         }
@@ -27,12 +54,24 @@ impl<T: ?Sized + RuntimeTyped> Default for IntrusiveReferenceSlot<T> {
 impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
     /// Move existing ownership into the actual slot; `IntrusiveReferenceSlot::from_owned(target)`.
     pub fn from_owned(target: Handle<T>) -> Self {
-        // Constructor transfer must not manufacture a temporary owning reference.
+        Self::with_ownership(target, false)
+    }
+    /// Share the slot's owner across unlocked callbacks; `IntrusiveReferenceSlot::from_owned_shared(target)`.
+    pub fn from_owned_shared(target: Handle<T>) -> Self {
+        Self::with_ownership(target, true)
+    }
+    fn with_ownership(target: Handle<T>, shared: bool) -> Self {
         let pointer = target.downgrade();
+        let mut ownership = if shared {
+            ReferenceSlotOwnership::Shared(None)
+        } else {
+            ReferenceSlotOwnership::Direct(Handle::default())
+        };
+        ownership.replace(target);
         Self {
             members: SharedState::new(ReferenceSlotMembers {
                 pointer,
-                ownership: Some(target),
+                ownership,
                 retiring: false,
             }),
         }
@@ -44,10 +83,12 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
             return Ok(());
         }
         // Assignment captures its pointer argument before ending the old scope, not an owning copy.
-        let incoming = source.observe();
+        let incoming = source.observe().downgrade();
         let old = self.begin_retirement(pointer)?;
+        let mut completion = RetirementCompletion(Some(self));
         drop(old);
-        self.finish_retirement(incoming);
+        self.finish_retirement(incoming, false);
+        completion.0 = None;
         Ok(())
     }
     /// Release ownership without prematurely clearing the pointer; `slot.clear()?`.
@@ -55,7 +96,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         let null = Handle::<T>::default();
         self.assign(&null)
     }
-    fn begin_retirement(&self, incoming: *const ()) -> Result<Option<Handle<T>>, Failure> {
+    fn begin_retirement(&self, incoming: *const ()) -> Result<ReferenceSlotOwnership<T>, Failure> {
         let mut members = self.members.write();
         if members.retiring {
             return Err(super::exceptions::program_error(&format!(
@@ -66,24 +107,18 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         members.retiring = true;
         Ok(members.ownership.take())
     }
-    fn finish_retirement(&self, incoming: HandleObserver<T>) {
-        // The last old destructor has returned before ownership is acquired.
-        // Ending the scope clears a callback-replaced pointer without releasing its reference.
-        self.clear_end_scope_pointer();
-        let ownership = incoming.clone();
-        let pointer = ownership.downgrade();
-        let mut members = self.members.write();
-        members.pointer = pointer;
-        members.ownership = Some(ownership);
-        members.retiring = false;
-    }
-    fn clear_end_scope_pointer(&self) {
-        let mut members = self.members.write();
-        if let Some(displaced) = members.ownership.take() {
-            // This reference is lost at every end-of-scope boundary, including nested destructors.
-            std::mem::forget(displaced);
+    fn finish_retirement(&self, mut incoming: WeakHandle<T>, retiring: bool) {
+        loop {
+            let mut members = self.members.write();
+            if members.settle_retirement(&mut incoming, retiring) {
+                return;
+            }
+            // A callback can publish another owned target. Its destructor must still
+            // see its own pointer and may in turn publish another target.
+            let displaced = members.ownership.take();
+            drop(members);
+            drop(displaced);
         }
-        members.pointer = WeakHandle::default();
     }
     /// Observe pointer nullness even during a destructor; `slot.is_null()`.
     pub fn is_null(&self) -> bool {
@@ -95,36 +130,41 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         let members = self.members.read();
         members.pointer.object_address()
     }
-    /// Borrow current physical storage without intrusive ownership; `slot.observe()`.
+    /// Lend the current slot or acquire an owning snapshot; `slot.observe()`.
     /// A retiring pointee cannot be safely projected through an expired Arc; no live facade is invented.
-    pub fn observe(&self) -> HandleObserver<T> {
+    pub fn observe(&self) -> HandleObserver<'_, T> {
         let members = self.members.read();
-        let observed = members.pointer.observe();
+        if let ReferenceSlotOwnership::Shared(Some(slot)) = &members.ownership {
+            return HandleObserver::Leased(slot.lease());
+        }
+        let observed = members.pointer.upgrade();
         let pointer = members.pointer.object_address();
         drop(members);
-        if !pointer.is_null() && observed.ref_count() == 0 {
+        if !pointer.is_null() && observed.is_null() {
             super::raise_native_failure::<()>(Err(super::exceptions::null_object(&format!(
-                "pointer={:p}, native count=0; expected a projectable live pointee",
-                pointer
+                "pointer={pointer:p}, strong count=0; expected a projectable live pointee"
             ))));
         }
-        observed
+        HandleObserver::Snapshot(observed)
     }
-    /// Reborrow the actual destructor pointee; `slot.with_retiring_pointee(self, |p| p.ref_count())?`.
+    /// Reborrow the actual destructor pointee; `slot.with_retiring_pointee(self, |p| p.dynamic_type())?`.
     /// The closure cannot return a reference borrowed from its pointee argument.
     /// ```compile_fail
     /// use martensite_tkernel::standard::{IntrusiveReferenceSlot, StandardTransient};
     /// let slot = IntrusiveReferenceSlot::<StandardTransient>::default();
-    /// let retiring = StandardTransient::default();
+    /// let retiring = StandardTransient;
     /// let escaped = slot.with_retiring_pointee(&retiring, |pointee| pointee);
     /// ```
     pub fn with_retiring_pointee<R>(
         &self,
         retiring: &dyn Transient,
         inspect: impl FnOnce(&T) -> R,
-    ) -> Result<R, Failure> {
+    ) -> Result<R, Failure>
+    where
+        T: TransientHandleTarget,
+    {
         self.require_retiring_pointer(retiring)?;
-        let pointee = T::project_from(retiring).ok_or_else(|| {
+        let pointee = T::borrow_from_transient(retiring).ok_or_else(|| {
             super::exceptions::type_mismatch(&format!(
                 "type={}; expected retiring {} projection",
                 retiring.dynamic_type().name(),
@@ -137,7 +177,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
     /// ```compile_fail
     /// use martensite_tkernel::standard::{IntrusiveReferenceSlot, StandardTransient};
     /// let slot = IntrusiveReferenceSlot::<StandardTransient>::default();
-    /// let retiring = StandardTransient::default();
+    /// let retiring = StandardTransient;
     /// let escaped = slot.with_retiring_reference(&retiring, |scope| scope);
     /// ```
     pub fn with_retiring_reference<R>(
@@ -146,10 +186,7 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         inspect: impl FnOnce(IntrusiveRetirementBorrow<'_, T>) -> R,
     ) -> Result<R, Failure> {
         self.require_retiring_pointer(retiring)?;
-        Ok(inspect(IntrusiveRetirementBorrow {
-            slot: self,
-            retiring,
-        }))
+        Ok(inspect(IntrusiveRetirementBorrow { slot: self }))
     }
     fn require_retiring_pointer(&self, retiring: &dyn Transient) -> Result<(), Failure> {
         let members = self.members.read();
@@ -164,9 +201,9 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         Ok(())
     }
     /// Inspect the reference count without keeping a field guard; `slot.ref_count()`.
-    pub fn ref_count(&self) -> i32 {
+    pub fn ref_count(&self) -> usize {
         let members = self.members.read();
-        members.pointer.observe().ref_count()
+        members.pointer.ref_count()
     }
     /// Identify the actual pointer member for retained aliases; `slot.reference_address()`.
     pub fn reference_address(&self) -> *const () {
@@ -174,11 +211,43 @@ impl<T: ?Sized + RuntimeTyped> IntrusiveReferenceSlot<T> {
         std::ptr::from_ref(&members.pointer).cast()
     }
 }
+impl<T: ?Sized + RuntimeTyped> ReferenceSlotMembers<T> {
+    fn settle_retirement(&mut self, incoming: &mut WeakHandle<T>, retiring: bool) -> bool {
+        if self.ownership.is_empty() {
+            let owner = incoming.upgrade();
+            self.pointer = if owner.is_null() {
+                WeakHandle::default()
+            } else {
+                std::mem::take(incoming)
+            };
+            self.ownership.replace(owner);
+        } else if self.pointer.object_address() != incoming.object_address() {
+            return false;
+        }
+        self.retiring = retiring;
+        true
+    }
+}
+
+struct RetirementCompletion<'a, T: ?Sized + RuntimeTyped>(Option<&'a IntrusiveReferenceSlot<T>>);
+impl<T: ?Sized + RuntimeTyped> Drop for RetirementCompletion<'_, T> {
+    fn drop(&mut self) {
+        let Some(slot) = self.0 else {
+            return;
+        };
+        // An unwinding destructor may have published a new target before it failed.
+        let mut members = slot.members.write();
+        if members.ownership.is_empty() {
+            members.pointer = WeakHandle::default();
+        }
+        members.retiring = false;
+    }
+}
 #[cfg(test)]
 #[path = "intrusive_reference_slot_tests.rs"]
 mod tests;
 impl<T: ?Sized + RuntimeTyped> HandleReference<T> for IntrusiveReferenceSlot<T> {
-    fn observe(&self) -> HandleObserver<T> {
+    fn observe(&self) -> HandleObserver<'_, T> {
         let slot = self;
         IntrusiveReferenceSlot::observe(slot)
     }
@@ -194,44 +263,29 @@ impl<T: ?Sized + RuntimeTyped> HandleReference<T> for IntrusiveReferenceSlot<T> 
         let slot = self;
         IntrusiveReferenceSlot::is_null(slot)
     }
+    fn ref_count(&self) -> usize {
+        IntrusiveReferenceSlot::ref_count(self)
+    }
 }
 
 /// A real destructor reborrow plus its original field; `borrow.assign(&incoming)?`.
 /// The scope carries no target ownership and must not escape its constructor closure.
 pub struct IntrusiveRetirementBorrow<'a, T: ?Sized + RuntimeTyped> {
     slot: &'a IntrusiveReferenceSlot<T>,
-    retiring: &'a dyn Transient,
 }
 impl<T: ?Sized + RuntimeTyped> IntrusiveRetirementBorrow<'_, T> {
-    /// Nested assignment, including count zero to negative one; `borrow.assign(&replacement)?`.
+    /// Assign within a retiring object's callback; `borrow.assign(&replacement)?`.
     pub fn assign(&self, source: &dyn HandleReference<T>) -> Result<(), Failure> {
-        let pointer = source.object_address();
-        if self.slot.object_address() == pointer {
+        if self.slot.object_address() == source.object_address() {
             return Ok(());
         }
-        let incoming = source.observe();
-        self.release_current_reference();
-        let owner = incoming.clone();
-        let mut members = self.slot.members.write();
-        members.pointer = owner.downgrade();
-        members.ownership = Some(owner);
+        let incoming = source.observe().downgrade();
+        self.slot.finish_retirement(incoming, true);
         Ok(())
     }
     /// Nested nullification; `borrow.clear()?`.
     pub fn clear(&self) -> Result<(), Failure> {
         let null = Handle::<T>::default();
         self.assign(&null)
-    }
-    fn release_current_reference(&self) {
-        let mut members = self.slot.members.write();
-        let is_original =
-            members.pointer.object_address() == std::ptr::from_ref(self.retiring).cast();
-        let ownership = members.ownership.take();
-        drop(members);
-        if is_original {
-            self.retiring.transient_base().decrement_ref_counter();
-        }
-        drop(ownership);
-        self.slot.clear_end_scope_pointer();
     }
 }

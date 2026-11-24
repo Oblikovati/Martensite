@@ -14,7 +14,7 @@ struct NullAllocationProbe {
     parent: AllocatorObject,
 }
 martensite_tkernel::impl_transient!(NullAllocationProbe, "Martensite_NullAllocationProbe",
-    AllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    AllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: NULL never exposes a range; inherited Optimal/Free retain Standard's valid contract.
 unsafe impl AllocatorSource for NullAllocationProbe {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -33,7 +33,7 @@ struct ThrowingIncrementalProbe {
     parent: IncrementalAllocatorObject,
 }
 martensite_tkernel::impl_transient!(ThrowingIncrementalProbe, "Martensite_ThrowingIncrementalProbe",
-    IncrementalAllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    IncrementalAllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: failure exposes no region and cannot leave live storage in the parent engine.
 unsafe impl AllocatorSource for ThrowingIncrementalProbe {
     fn allocator_object_base(&self) -> &AllocatorObject {

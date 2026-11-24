@@ -14,7 +14,7 @@ step_entity! {
     StepGeomGeometricRepresentationContextAndParametricRepresentationContext, StepGeomGeometricRepresentationContextAndParametricRepresentationContextState, "StepGeomGeometricRepresentationContextAndParametricRepresentationContext", StepReprRepresentationContext, {
         geometric_representation_context: Handle<StepGeomGeometricRepresentationContext>,
         parametric_representation_context: Handle<StepReprParametricRepresentationContext>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationContext]
 }
 impl StepGeomGeometricRepresentationContextAndParametricRepresentationContext {
     step_methods! {
@@ -87,7 +87,7 @@ impl StepGeomGeometricRepresentationContextAndParametricRepresentationContext {
 step_entity! {
     /// Geometric representation item.
     StepGeomGeometricRepresentationItem, StepGeomGeometricRepresentationItemState, "StepGeomGeometricRepresentationItem", StepReprRepresentationItem, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 
 step_entity! {
@@ -95,7 +95,7 @@ step_entity! {
     StepGeomHyperbola, StepGeomHyperbolaState, "StepGeomHyperbola", StepGeomConic, {
         semi_axis: f64,
         semi_imag_axis: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomConic]
 }
 impl StepGeomHyperbola {
     step_methods! {
@@ -123,7 +123,7 @@ impl StepGeomHyperbola {
 step_entity! {
     /// Intersection curve.
     StepGeomIntersectionCurve, StepGeomIntersectionCurveState, "StepGeomIntersectionCurve", StepGeomSurfaceCurve, {
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomSurfaceCurve]
 }
 
 step_entity! {
@@ -131,7 +131,7 @@ step_entity! {
     StepGeomLine, StepGeomLineState, "StepGeomLine", StepGeomCurve, {
         pnt: Handle<StepGeomCartesianPoint>,
         dir: Handle<StepGeomVector>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomLine {
     step_methods! {
@@ -158,16 +158,16 @@ impl StepGeomLine {
 step_entity! {
     /// Offset curve3d.
     StepGeomOffsetCurve3d, StepGeomOffsetCurve3dState, "StepGeomOffsetCurve3d", StepGeomCurve, {
-        basis_curve: Handle<StepGeomCurve>,
+        basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         distance: f64,
         self_intersect: StepDataLogical,
         ref_direction: Handle<StepGeomDirection>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomOffsetCurve3d {
     step_methods! {
-        set set_basis_curve = basis_curve: Handle<StepGeomCurve>;
-        get basis_curve = basis_curve: Handle<StepGeomCurve>;
+        set set_basis_curve = basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        get basis_curve = basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
         set_copy set_distance = distance: f64;
         get distance = distance: f64;
         set_copy set_self_intersect = self_intersect: StepDataLogical;
@@ -179,7 +179,7 @@ impl StepGeomOffsetCurve3d {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_curve: &Handle<StepGeomCurve>,
+        a_basis_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         a_distance: f64,
         a_self_intersect: StepDataLogical,
         a_ref_direction: &Handle<StepGeomDirection>,
@@ -197,15 +197,15 @@ impl StepGeomOffsetCurve3d {
 step_entity! {
     /// Offset surface.
     StepGeomOffsetSurface, StepGeomOffsetSurfaceState, "StepGeomOffsetSurface", StepGeomSurface, {
-        basis_surface: Handle<StepGeomSurface>,
+        basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         distance: f64,
         self_intersect: StepDataLogical,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomOffsetSurface {
     step_methods! {
-        set set_basis_surface = basis_surface: Handle<StepGeomSurface>;
-        get basis_surface = basis_surface: Handle<StepGeomSurface>;
+        set set_basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        get basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
         set_copy set_distance = distance: f64;
         get distance = distance: f64;
         set_copy set_self_intersect = self_intersect: StepDataLogical;
@@ -215,7 +215,7 @@ impl StepGeomOffsetSurface {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_surface: &Handle<StepGeomSurface>,
+        a_basis_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_distance: f64,
         a_self_intersect: StepDataLogical,
     ) {
@@ -232,7 +232,7 @@ step_entity! {
     /// Representation of STEP entity OrientedSurface
     StepGeomOrientedSurface, StepGeomOrientedSurfaceState, "StepGeomOrientedSurface", StepGeomSurface, {
         the_orientation: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomOrientedSurface {
     step_methods! {
@@ -250,14 +250,14 @@ impl StepGeomOrientedSurface {
 step_entity! {
     /// Outer boundary curve.
     StepGeomOuterBoundaryCurve, StepGeomOuterBoundaryCurveState, "StepGeomOuterBoundaryCurve", StepGeomBoundaryCurve, {
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedCurve, crate::step_geom::StepGeomBoundaryCurve, crate::step_geom::StepGeomCompositeCurve]
 }
 
 step_entity! {
     /// Parabola.
     StepGeomParabola, StepGeomParabolaState, "StepGeomParabola", StepGeomConic, {
         focal_dist: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomConic]
 }
 impl StepGeomParabola {
     step_methods! {
@@ -279,14 +279,14 @@ impl StepGeomParabola {
 step_entity! {
     /// Pcurve.
     StepGeomPcurve, StepGeomPcurveState, "StepGeomPcurve", StepGeomCurve, {
-        basis_surface: Handle<StepGeomSurface>,
+        basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         reference_to_curve: Handle<StepReprDefinitionalRepresentation>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomPcurve {
     step_methods! {
-        set set_basis_surface = basis_surface: Handle<StepGeomSurface>;
-        get basis_surface = basis_surface: Handle<StepGeomSurface>;
+        set set_basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        get basis_surface = basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
         set set_reference_to_curve = reference_to_curve: Handle<StepReprDefinitionalRepresentation>;
         get reference_to_curve = reference_to_curve: Handle<StepReprDefinitionalRepresentation>;
     }
@@ -294,7 +294,7 @@ impl StepGeomPcurve {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_basis_surface: &Handle<StepGeomSurface>,
+        a_basis_surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         a_reference_to_curve: &Handle<StepReprDefinitionalRepresentation>,
     ) {
         let mut state = self.state.write();
@@ -309,7 +309,7 @@ step_entity! {
     /// Placement.
     StepGeomPlacement, StepGeomPlacementState, "StepGeomPlacement", StepGeomGeometricRepresentationItem, {
         location: Handle<StepGeomCartesianPoint>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepGeomPlacement {
     step_methods! {
@@ -326,11 +326,11 @@ impl StepGeomPlacement {
 step_entity! {
     /// Plane.
     StepGeomPlane, StepGeomPlaneState, "StepGeomPlane", StepGeomElementarySurface, {
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomElementarySurface]
 }
 
 step_entity! {
     /// Point.
     StepGeomPoint, StepGeomPointState, "StepGeomPoint", StepGeomGeometricRepresentationItem, {
-    }
+    }, bases: [StepGeomPoint, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }

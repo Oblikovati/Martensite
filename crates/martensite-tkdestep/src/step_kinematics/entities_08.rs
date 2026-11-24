@@ -16,7 +16,7 @@ step_entity! {
     StepKinematicsRollingSurfacePairValue, StepKinematicsRollingSurfacePairValueState, "StepKinematicsRollingSurfacePairValue", StepKinematicsPairValue, {
         my_actual_point_on_surface: Handle<StepGeomPointOnSurface>,
         my_actual_rotation: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsRollingSurfacePairValue {
     step_methods! {
@@ -30,7 +30,9 @@ impl StepKinematicsRollingSurfacePairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_point_on_surface: &Handle<StepGeomPointOnSurface>,
         the_actual_rotation: f64,
     ) {
@@ -47,7 +49,7 @@ step_entity! {
     StepKinematicsRotationAboutDirection, StepKinematicsRotationAboutDirectionState, "StepKinematicsRotationAboutDirection", StepGeomGeometricRepresentationItem, {
         my_direction_of_axis: Handle<StepGeomDirection>,
         my_rotation_angle: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsRotationAboutDirection {
     step_methods! {
@@ -75,7 +77,7 @@ step_entity! {
     /// Representation of STEP entity ScrewPair
     StepKinematicsScrewPair, StepKinematicsScrewPairState, "StepKinematicsScrewPair", StepKinematicsLowOrderKinematicPairWithMotionCoupling, {
         my_pitch: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsScrewPair]
 }
 impl StepKinematicsScrewPair {
     step_methods! {
@@ -91,8 +93,12 @@ impl StepKinematicsScrewPair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_pitch: f64,
     ) {
@@ -113,7 +119,7 @@ step_entity! {
     /// Representation of STEP entity ScrewPairValue
     StepKinematicsScrewPairValue, StepKinematicsScrewPairValueState, "StepKinematicsScrewPairValue", StepKinematicsPairValue, {
         my_actual_rotation: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsScrewPairValue {
     step_methods! {
@@ -125,7 +131,9 @@ impl StepKinematicsScrewPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_rotation: f64,
     ) {
         self.parent
@@ -141,7 +149,7 @@ step_entity! {
         my_upper_limit_actual_rotation: f64,
         def_lower_limit_actual_rotation: bool,
         def_upper_limit_actual_rotation: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsScrewPair]
 }
 impl StepKinematicsScrewPairWithRange {
     step_methods! {
@@ -161,8 +169,12 @@ impl StepKinematicsScrewPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_screw_pair_pitch: f64,
         has_lower_limit_actual_rotation: bool,
@@ -199,7 +211,7 @@ impl StepKinematicsScrewPairWithRange {
 step_entity! {
     /// Representation of STEP entity SlidingCurvePair
     StepKinematicsSlidingCurvePair, StepKinematicsSlidingCurvePairState, "StepKinematicsSlidingCurvePair", StepKinematicsPlanarCurvePair, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsPlanarCurvePair]
 }
 
 step_entity! {
@@ -207,7 +219,7 @@ step_entity! {
     StepKinematicsSlidingCurvePairValue, StepKinematicsSlidingCurvePairValueState, "StepKinematicsSlidingCurvePairValue", StepKinematicsPairValue, {
         my_actual_point_on_curve1: Handle<StepGeomPointOnCurve>,
         my_actual_point_on_curve2: Handle<StepGeomPointOnCurve>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsSlidingCurvePairValue {
     step_methods! {
@@ -221,7 +233,9 @@ impl StepKinematicsSlidingCurvePairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_point_on_curve1: &Handle<StepGeomPointOnCurve>,
         the_actual_point_on_curve2: &Handle<StepGeomPointOnCurve>,
     ) {
@@ -236,7 +250,7 @@ impl StepKinematicsSlidingCurvePairValue {
 step_entity! {
     /// Representation of STEP entity SlidingSurfacePair
     StepKinematicsSlidingSurfacePair, StepKinematicsSlidingSurfacePairState, "StepKinematicsSlidingSurfacePair", StepKinematicsSurfacePair, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsSurfacePair]
 }
 
 step_entity! {
@@ -245,7 +259,7 @@ step_entity! {
         my_actual_point_on_surface1: Handle<StepGeomPointOnSurface>,
         my_actual_point_on_surface2: Handle<StepGeomPointOnSurface>,
         my_actual_rotation: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsSlidingSurfacePairValue {
     step_methods! {
@@ -261,7 +275,9 @@ impl StepKinematicsSlidingSurfacePairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_point_on_surface1: &Handle<StepGeomPointOnSurface>,
         the_actual_point_on_surface2: &Handle<StepGeomPointOnSurface>,
         the_actual_rotation: f64,
@@ -278,14 +294,14 @@ impl StepKinematicsSlidingSurfacePairValue {
 step_entity! {
     /// Representation of STEP entity SphericalPair
     StepKinematicsSphericalPair, StepKinematicsSphericalPairState, "StepKinematicsSphericalPair", StepKinematicsLowOrderKinematicPair, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 
 step_entity! {
     /// Representation of STEP entity SphericalPairValue
     StepKinematicsSphericalPairValue, StepKinematicsSphericalPairValueState, "StepKinematicsSphericalPairValue", StepKinematicsPairValue, {
         my_input_orientation: StepKinematicsSpatialRotation,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsSphericalPairValue {
     step_methods! {
@@ -297,7 +313,9 @@ impl StepKinematicsSphericalPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_input_orientation: &StepKinematicsSpatialRotation,
     ) {
         self.parent
@@ -309,5 +327,5 @@ impl StepKinematicsSphericalPairValue {
 step_entity! {
     /// Representation of STEP entity SphericalPairWithPin
     StepKinematicsSphericalPairWithPin, StepKinematicsSphericalPairWithPinState, "StepKinematicsSphericalPairWithPin", StepKinematicsLowOrderKinematicPair, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }

@@ -8,6 +8,7 @@ use index_flags::{capping_variant, ordinary_clipping};
 #[derive(Clone, Copy, Debug)]
 pub(super) struct PipelineVariant {
     pub lighting: bool,
+    pub dynamic_lighting: bool,
     pub fixed_lighting: bool,
     pub pbr: bool,           // PBR fragment; the environment binds at set 4
     pub material_maps: bool, // texture-set maps at set 5
@@ -32,6 +33,7 @@ pub(super) struct PipelineVariant {
     pub point_blend: bool,
     pub clamp: bool,
     pub line: bool,
+    pub line_tint: LineTintLayout,
     pub point: bool,
     pub text: bool,
     pub text_blend: bool,
@@ -46,6 +48,30 @@ pub(super) struct PipelineVariant {
     pub depth_pass: crate::depth_prepass::RenderDepthPass,
     /// Write the attachment alpha (native `buffersOpaqueAlpha` off).
     pub alpha_writes: bool,
+    /// Read the clip, world and normal matrices from the frame's draw table at set 7, for the
+    /// draws of an indirect run (draw_table_pipeline.rs, #594).
+    pub draw_table: bool,
+    pub hiz_depth_only: bool,
+    pub compact_vertices: bool,
+}
+/// Draw-color lines share a shader and select the layout of their resident vertex stream.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum LineTintLayout {
+    None,
+    Full,
+    Compact,
+}
+impl LineTintLayout {
+    pub(super) fn uses_draw_color(self) -> bool {
+        self != Self::None
+    }
+    fn cache_bits(self) -> u8 {
+        match self {
+            Self::None => 0,
+            Self::Full => 8,
+            Self::Compact => 32,
+        }
+    }
 }
 impl PipelineVariant {
     pub(super) fn uses_marker_sampler(self) -> bool {
@@ -94,6 +120,7 @@ fn empty_variant(
 ) -> PipelineVariant {
     PipelineVariant {
         lighting: false,
+        dynamic_lighting: false,
         fixed_lighting: false,
         pbr: false,
         material_maps: false,
@@ -116,6 +143,7 @@ fn empty_variant(
         point_blend: false,
         clamp,
         line: false,
+        line_tint: LineTintLayout::None,
         point: false,
         text: false,
         text_blend: false,
@@ -129,6 +157,9 @@ fn empty_variant(
         capping,
         depth_pass: Default::default(),
         alpha_writes: false,
+        draw_table: false,
+        hiz_depth_only: false,
+        compact_vertices: false,
     }
 }
 /// Base variant, depth-prepass flag and optional specialization words of a special pipeline.
@@ -138,11 +169,24 @@ pub(super) struct RasterPipelines {
     pub oit: super::oit_pipeline_cache::OitPipelineCache,
     variants: Vec<Option<Arc<DrawPipeline>>>,
     pub surface_images: super::surface_image_cache::SurfaceImageCache,
+    pub plain_point_sprite: super::point_sprite::PlainPointSprite,
+    pub glyph_atlases: super::glyph_atlas_image::GlyphAtlasCache,
+    pub geometry_staging: super::host_upload_pages::HostUploadPool,
+    pub frame_storage_pages: super::host_upload_pages::FrameStoragePool,
+    pub lighting_bindings: super::storage_descriptor::LightingBindingCache,
+    pub frame_targets: super::frame_targets::FrameTargetPool,
+    pub main_restore: super::main_restore_pipeline::MainRestoreCache,
+    pub geometry_residency: Arc<super::geometry_residency::GeometryStore>,
     pub stencil: bool,
+    pub(super) meshlets: super::meshlet_draw::MeshletCache,
     runtime: Arc<VulkanRuntime>,
     special_variants:
         std::sync::Mutex<std::collections::BTreeMap<SpecialVariantKey, Arc<DrawPipeline>>>,
     alpha_writes: super::alpha_write_pipelines::AlphaWritePipelines,
+    draw_tables: super::pipeline::DrawTablePipelines,
+    pub(super) mesh_vertex_twins: super::pipeline::MeshVertexTwins,
+    placement_visibility: super::placement_visibility::PlacementVisibilityCache,
+    pub(super) placement_hiz: super::placement_hiz::HiZCache,
     pub(super) pbr_environment:
         std::sync::Mutex<Option<Arc<super::pbr_environment::PbrEnvironment>>>,
     /// The PBR environment of the view being rendered, if the frame carries one.
@@ -158,6 +202,9 @@ pub(super) struct RasterPipelines {
     pub(super) user_programs: super::user_program_pipeline::UserProgramPipelineCache,
     pub(super) user_program_mock_layout:
         std::sync::Mutex<Option<Arc<super::surface_image_descriptor::SurfaceImageLayout>>>,
+    /// A number no other pipeline set of the process has; a draw body's pipeline memo is
+    /// valid only for the set that filled it (#594).
+    memo_serial: usize,
 }
 impl RasterPipelines {
     pub fn new(runtime: &Arc<VulkanRuntime>, stencil: bool) -> Result<Self, RenderError> {
@@ -175,14 +222,29 @@ impl RasterPipelines {
                 None
             });
         }
+        static SETS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(1);
         Ok(Self {
+            memo_serial: SETS.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             oit: Default::default(),
             variants,
             surface_images: Default::default(),
+            plain_point_sprite: Default::default(),
+            glyph_atlases: Default::default(),
+            geometry_staging: super::geometry_transfer::geometry_staging_pool(),
+            frame_storage_pages: Default::default(),
+            lighting_bindings: Default::default(),
+            frame_targets: Default::default(),
+            main_restore: Default::default(),
+            geometry_residency: Arc::new(super::geometry_residency::GeometryStore::new(runtime)),
             stencil,
             runtime: runtime.clone(),
             special_variants: Default::default(),
             alpha_writes: Default::default(),
+            draw_tables: Default::default(),
+            mesh_vertex_twins: Default::default(),
+            meshlets: Default::default(),
+            placement_visibility: Default::default(),
+            placement_hiz: Default::default(),
             pbr_environment: Default::default(),
             frame_pbr_environment: Default::default(),
             material_map_mocks: Default::default(),
@@ -202,6 +264,18 @@ impl RasterPipelines {
         self.oit = Default::default();
         self.alpha_writes = Default::default();
         self.surface_images = Default::default();
+        self.glyph_atlases = Default::default();
+        self.geometry_staging = super::geometry_transfer::geometry_staging_pool();
+        self.frame_storage_pages = Default::default();
+        self.lighting_bindings = Default::default();
+        self.frame_targets = Default::default();
+        self.draw_tables = Default::default();
+        self.placement_visibility = Default::default();
+        self.placement_hiz = Default::default();
+        self.main_restore = Default::default();
+        self.meshlets = Default::default();
+        self.geometry_residency =
+            Arc::new(super::geometry_residency::GeometryStore::new(&self.runtime));
         self.release_pbr_environment();
         self.release_shadow_maps();
         *self
@@ -216,16 +290,77 @@ impl RasterPipelines {
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         self.alpha_writes.twin(&self.runtime, source)
     }
+    /// The draw-table twin of `source`, or `None` when it has none (draw_table.rs);
+    /// `pipelines.draw_table_twin(&pipeline)?`.
+    pub fn draw_table_twin(
+        &self,
+        source: &Arc<DrawPipeline>,
+    ) -> Result<Option<Arc<DrawPipeline>>, RenderError> {
+        self.draw_tables.twin(&self.runtime, source)
+    }
+    pub(super) fn hiz_depth_twin(
+        &self,
+        source: &Arc<DrawPipeline>,
+    ) -> Result<Option<Arc<DrawPipeline>>, RenderError> {
+        self.draw_tables.hi_z(&self.runtime, source)
+    }
+    /// Prepare the capability-gated placement visibility pipeline once per renderer.
+    pub(super) fn placement_visibility(
+        &self,
+    ) -> Result<Option<Arc<super::placement_visibility::PlacementVisibilityPipeline>>, RenderError>
+    {
+        self.placement_visibility.get(&self.runtime)
+    }
+
+    /// The pipeline of `draw`, from its body's memo when the inputs are the memo's (#594).
     pub fn select(
         &self,
         draw: &PrimitiveDraw,
         factorized: bool,
         window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
+        dynamic_lighting: bool,
+    ) -> Result<Arc<DrawPipeline>, RenderError> {
+        let frame = (
+            factorized,
+            window_depth.map(|value| value.cache_words()),
+            dynamic_lighting,
+        );
+        let inputs = super::pipeline_memo::SelectionInputs::of(self.memo_serial, draw, frame);
+        if let Some(pipeline) = draw.pipeline_memo.get(&inputs) {
+            return Ok(pipeline);
+        }
+        let pipeline = self.select_unmemoized(draw, factorized, window_depth, dynamic_lighting)?;
+        draw.pipeline_memo.keep(inputs, pipeline.clone());
+        Ok(pipeline)
+    }
+    /// The serial a pipeline memo keys its selections by; `pipelines.selection_serial()`.
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
+    pub(super) fn selection_serial(&self) -> usize {
+        self.memo_serial
+    }
+    fn select_unmemoized(
+        &self,
+        draw: &PrimitiveDraw,
+        factorized: bool,
+        window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
+        dynamic_lighting: bool,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         // The lines of V3 and the unlit stencil masks of V4 have no ordinary raster-clip variant.
         let raster_clip = self.runtime.uses_raster_world_clipping(draw);
         if factorized || window_depth.is_some() || requires_special_pipeline(draw, raster_clip) {
-            return self.select_special(draw, factorized, window_depth);
+            return self.select_special(
+                draw,
+                factorized,
+                window_depth,
+                (LineTintLayout::None, dynamic_lighting),
+                draw.vertices.len(),
+            );
         }
         let index = variant_index(draw);
         self.variants
@@ -236,11 +371,40 @@ impl RasterPipelines {
                 "device support for requested stencil, depth-clamp and line rasterization features")
             })
     }
+    pub(super) fn select_draw_color_line(
+        &self,
+        draw: &PrimitiveDraw,
+        layout: LineTintLayout,
+    ) -> Result<Arc<DrawPipeline>, RenderError> {
+        self.select_special(draw, false, None, (layout, false), draw.vertices.len())
+    }
+    #[cfg_attr(
+        any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics"
+        ),
+        allow(dead_code)
+    )]
+    pub(super) fn select_batch(
+        &self,
+        draw: &PrimitiveDraw,
+        vertex_count: usize,
+    ) -> Result<Arc<DrawPipeline>, RenderError> {
+        self.select_special(
+            draw,
+            false,
+            None,
+            (LineTintLayout::None, false),
+            vertex_count,
+        )
+    }
     fn select_special(
         &self,
         draw: &PrimitiveDraw,
         factorized: bool,
         window_depth: Option<super::window_depth_parameters::WindowDepthPipelineParameters>,
+        (line_tint, dynamic_lighting): (LineTintLayout, bool),
+        vertex_count: usize,
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         crate::polygon_point_raster::require_polygon_points(
             draw.polygon_points,
@@ -266,7 +430,7 @@ impl RasterPipelines {
             && self.runtime.uses_raster_world_clipping(draw);
         let world_clip_v2 = self.runtime.uses_raster_world_clipping(draw) && !world_clip_v3_line;
         let world_clip_grid12 = self.runtime.uses_grid12_world_clipping(draw);
-        let index = projection_variant_key(
+        let mut index = projection_variant_key(
             draw,
             world_clip_v2,
             world_clip_v3_line,
@@ -274,6 +438,12 @@ impl RasterPipelines {
             factorized,
             window_depth.map(|value| value.cache_words()),
         );
+        let directional_phong = window_depth.is_none()
+            && !factorized
+            && super::directional_phong::admitted_for_vertices(&self.runtime, draw, vertex_count);
+        index.0.1 |= 64 * u8::from(directional_phong);
+        index.0.1 |= line_tint.cache_bits();
+        index.0.1 |= 16 * u8::from(dynamic_lighting && draw.lighting.is_some());
         let mut variants = self
             .special_variants
             .lock()
@@ -282,6 +452,8 @@ impl RasterPipelines {
             return Ok(pipeline.clone());
         }
         let mut kind = special_variant(draw, self.stencil);
+        kind.dynamic_lighting = dynamic_lighting;
+        kind.line_tint = line_tint;
         kind.factorized_projection = factorized;
         kind.window_depth = window_depth;
         kind.world_clip_v2 = world_clip_v2;
@@ -291,7 +463,12 @@ impl RasterPipelines {
             != crate::RenderTriangleCoverageBehavior::HardwareV1
             && super::triangle_grid_coverage_upload::selected_phong(draw);
         validate_special_features(kind, self.runtime.depth_clamp, self.runtime.lines.bresenham)?;
-        let pipeline = Arc::new(DrawPipeline::new(&self.runtime, kind)?);
+        let pipeline = if directional_phong {
+            DrawPipeline::new_directional_phong(&self.runtime, kind)?
+        } else {
+            DrawPipeline::new(&self.runtime, kind)?
+        };
+        let pipeline = Arc::new(pipeline);
         variants.insert(index, pipeline.clone());
         Ok(pipeline)
     }

@@ -185,9 +185,9 @@ mod tests {
             Point2::new(0., 1.),
             Direction2::new(1., 0.).unwrap(),
         ))
-        .cast();
+        .into_upcast();
         let curve: Handle<dyn Adaptor2dCurve2d> =
-            Handle::new(Geom2dAdaptorCurve::with_curve(&line).unwrap()).cast();
+            Handle::new(Geom2dAdaptorCurve::with_curve(&line).unwrap()).into_upcast();
         inverse.set_curve(true, &curve).unwrap();
         inverse
     }

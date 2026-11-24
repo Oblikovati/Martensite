@@ -1,7 +1,9 @@
 //! The root section, a map from root names to roots.
-use super::{BaseDriver, OpenMode, Root, SectionStatus, StorageError, StreamException};
+#[cfg(test)]
+use super::{BaseDriver, OpenMode, StorageError, StreamException};
+use super::{Root, SectionStatus};
 use crate::ncollection::{DataMap, HSequence};
-use crate::standard::{Failure, Handle, StandardPersistent, StandardTransient};
+use crate::standard::{Failure, Handle, Persistent, StandardTransient};
 use crate::tcollection::AsciiString;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
@@ -12,19 +14,8 @@ struct RootFields {
 }
 
 /// Named roots of a set of data; `roots()` walks the map in its bucket order.
-///
-/// ```
-/// use martensite_tkernel::standard::{Handle, StandardPersistent};
-/// use martensite_tkernel::storage::{Root, RootData};
-/// use martensite_tkernel::tcollection::AsciiString;
-/// let roots = RootData::default();
-/// let name = AsciiString::new("doc");
-/// roots.add_root(&Handle::new(Root::new(&name, &Handle::<StandardPersistent>::default())));
-/// assert!(roots.is_root(&name));
-/// ```
 #[derive(Default)]
-pub struct RootData {
-    parent: StandardTransient,
+pub(crate) struct RootData {
     fields: Mutex<RootFields>,
 }
 
@@ -36,7 +27,8 @@ impl RootData {
     /// Binds one retrieved root per entry of the root section. A
     /// type mismatch in a root read becomes the status; section-size failures propagate.
     /// Example: `roots.read(&mut driver)?`.
-    pub fn read(&self, driver: &mut dyn BaseDriver) -> Result<bool, Failure> {
+    #[cfg(test)]
+    pub(crate) fn read(&self, driver: &mut dyn BaseDriver) -> Result<bool, Failure> {
         if !matches!(driver.open_mode(), OpenMode::Read | OpenMode::ReadWrite) {
             return Ok(self.record(StorageError::ModeError, "OpenMode"));
         }
@@ -61,23 +53,24 @@ impl RootData {
         Ok(self.record(status, "EndReadRootSection"))
     }
 
+    #[cfg(test)]
     fn record(&self, error: StorageError, context: &str) -> bool {
         self.lock().status.record(error, context)
     }
 
     /// Example: `roots.number_of_roots()`.
-    pub fn number_of_roots(&self) -> i32 {
+    pub(crate) fn number_of_roots(&self) -> i32 {
         self.lock().objects.extent() as i32
     }
 
     /// Binds (or rebinds) the root under its name; `roots.add_root(&root)`.
-    pub fn add_root(&self, root: &Handle<Root>) {
+    pub(crate) fn add_root(&self, root: &Handle<Root>) {
         let name = root.get().map(Root::name).unwrap_or_default();
         self.lock().objects.bind(name, root.clone());
     }
 
     /// A new sequence in map iteration order; `roots.roots()`.
-    pub fn roots(&self) -> Handle<HSequence<Handle<Root>>> {
+    pub(crate) fn roots(&self) -> Handle<HSequence<Handle<Root>>> {
         let sequence = HSequence::default();
         for root in self.lock().objects.values() {
             sequence.append(root.clone());
@@ -86,26 +79,28 @@ impl RootData {
     }
 
     /// The root named `name`, or a null handle; `roots.find(&name)`.
-    pub fn find(&self, name: &AsciiString) -> Handle<Root> {
+    pub(crate) fn find(&self, name: &AsciiString) -> Handle<Root> {
         self.lock().objects.seek(name).cloned().unwrap_or_default()
     }
 
     /// Example: `roots.is_root(&name)`.
-    pub fn is_root(&self, name: &AsciiString) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_root(&self, name: &AsciiString) -> bool {
         self.lock().objects.is_bound(name)
     }
 
     /// Unbinds the name when bound; `roots.remove_root(&name)`.
-    pub fn remove_root(&self, name: &AsciiString) {
+    #[cfg(test)]
+    pub(crate) fn remove_root(&self, name: &AsciiString) {
         self.lock().objects.unbind(name);
     }
 
     /// Sets the object of the bound root, which every handle holder sees;
     /// an unknown name is `Standard_NoSuchObject`; `roots.update_root(&name, &object)?`.
-    pub fn update_root(
+    pub(crate) fn update_root(
         &self,
         name: &AsciiString,
-        object: &Handle<StandardPersistent>,
+        object: &Handle<dyn Persistent>,
     ) -> Result<(), Failure> {
         let root = self.find(name);
         let Some(root) = root.get() else {
@@ -123,19 +118,21 @@ impl RootData {
     }
 
     /// Example: `roots.error_status()`.
-    pub fn error_status(&self) -> StorageError {
+    #[cfg(test)]
+    pub(crate) fn error_status(&self) -> StorageError {
         self.lock().status.error
     }
 
     /// Example: `roots.error_status_extension()`.
-    pub fn error_status_extension(&self) -> AsciiString {
+    #[cfg(test)]
+    pub(crate) fn error_status_extension(&self) -> AsciiString {
         self.lock().status.extension.clone()
     }
 
     /// Example: `roots.clear_error_status()`.
-    pub fn clear_error_status(&self) {
+    pub(crate) fn clear_error_status(&self) {
         self.lock().status.clear();
     }
 }
 
-crate::impl_transient!(RootData, "Storage_RootData", StandardTransient, parent);
+crate::impl_transient!(RootData, "Storage_RootData", StandardTransient);

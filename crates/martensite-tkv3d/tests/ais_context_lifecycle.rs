@@ -4,7 +4,7 @@ mod context_object;
 use context_object::ContextObject;
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Handle, SharedState, dump::DumpStream},
 };
 use martensite_tkservice::{aspect::*, graphic3d::*, null_driver::NullGraphicDriver};
 use martensite_tkv3d::{ais::*, prs_mgr::*, prs3d::*, select_mgr::*, v3d::*};
@@ -153,11 +153,10 @@ fn interactive_dump_override_and_presentation_base_preserve_native_identity() {
     assert!(base.fields.read().owner.is_null());
 }
 struct ObservedSelection {
-    transient: StandardTransient,
     base: AisSelectionBase,
     clears: Arc<AtomicUsize>,
 }
-martensite_tkernel::impl_transient!(ObservedSelection,"ObservedSelection",dyn AisSelectionSource,transient,interfaces:[dyn AisSelectionSource]);
+martensite_tkernel::impl_transient!(ObservedSelection,"ObservedSelection",dyn AisSelectionSource,interfaces:[dyn AisSelectionSource]);
 impl AisSelectionSource for ObservedSelection {
     fn selection_base(&self) -> &AisSelectionBase {
         &self.base
@@ -173,7 +172,6 @@ fn replacement_selection_is_borrowed_and_destructor_dispatches_virtual_clear() {
     let previous = context.selection().clone();
     let clears = Arc::new(AtomicUsize::new(0));
     let replacement = Handle::new(ObservedSelection {
-        transient: StandardTransient::default(),
         base: AisSelectionBase::new(),
         clears: clears.clone(),
     });

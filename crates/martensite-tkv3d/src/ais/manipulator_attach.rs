@@ -3,7 +3,7 @@
 use super::*;
 use crate::prs_mgr::*;
 use martensite_tkernel::ncollection::HSequence;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions::program_error};
+use martensite_tkernel::standard::{Failure, Handle, exceptions::program_error};
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::gp::{self, Point3};
 use martensite_tkservice::graphic3d::Graphic3dTransformPersMembers;
@@ -94,7 +94,7 @@ impl AisManipulator {
         let Some(first) = sequence.sequence(|items| items.first().cloned()) else {
             return Ok(());
         };
-        self.set_owner(&objects.clone().cast::<StandardTransient>());
+        self.set_owner(&objects.upcast());
         let mut bounds = BoundingBox3::default();
         let current = first.get().ok_or_else(null_objects)?;
         current.bounding_box(&mut bounds);
@@ -167,7 +167,7 @@ impl AisManipulator {
     /// `Objects`: the attached objects (null when the owner is not a sequence of them).
     /// Example: `manipulator.objects()`.
     pub fn objects(&self) -> Handle<AisManipulatorObjects> {
-        self.get_owner().cast::<AisManipulatorObjects>()
+        self.get_owner().downcast::<AisManipulatorObjects>()
     }
 
     pub(super) fn objects_count(&self) -> Result<i32, Failure> {

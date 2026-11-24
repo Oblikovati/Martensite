@@ -2,7 +2,7 @@
 //! unit of a document).
 use super::support::{downcast, find_or_add, live};
 use martensite_tkernel::standard::dump::{DumpOutput, DumpStream, add_values_separator};
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkernel::units_methods::{LengthUnit, UnitsMethods};
 use martensite_tklcaf::guid_from_text;
@@ -30,11 +30,10 @@ const LOCATION_ID: Guid = guid_from_text("efd212ef-6dfd-11d4-b9c8-0060b0ee281b")
 /// ```
 #[derive(Default)]
 pub struct XCAFDocLocation {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     location: SharedState<Location>,
 }
-martensite_tkernel::impl_transient!(XCAFDocLocation, "XCAFDocLocation", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocLocation, "XCAFDocLocation", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocLocation {
     /// `XCAFDocLocation()`: the identity.
@@ -117,18 +116,16 @@ struct LengthUnitFields {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct XCAFDocLengthUnit {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     fields: SharedState<LengthUnitFields>,
 }
-martensite_tkernel::impl_transient!(XCAFDocLengthUnit, "XCAFDocLengthUnit", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocLengthUnit, "XCAFDocLengthUnit", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for XCAFDocLengthUnit {
     /// `XCAFDocLengthUnit()`: scale 1, empty name.
     fn default() -> Self {
         super::registration::register_derived_attributes();
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             fields: SharedState::new(LengthUnitFields {
                 scale: 1.0,

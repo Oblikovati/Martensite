@@ -1,5 +1,5 @@
 //! Native two-pass external-compound routing; live source nodes permit defined same-map output.
-use super::{AisColoredDrawer, AisColoredShapeSource, AisShapeDrawerMap};
+use super::{AisColoredDrawerSource, AisColoredShapeSource, AisShapeDrawerMap};
 use super::{
     colored_shape_expansion::bind_colored_shape_leaves,
     shape_drawer_cursor::ShapeDrawerNativeCursor,
@@ -34,7 +34,7 @@ fn own_colored_compounds<S: AisColoredShapeSource + ?Sized>(
     let mut owned = OwnedCompounds::with_hasher(ShapeMapHasher, 1);
     let fields = object.shape_base().fields.read();
     if fields.shape.shape_type()? == ShapeEnum::Compound {
-        owned.add(fields.shape.clone());
+        owned.add(fields.shape.to_shape());
         collect_colored_compounds(&mut owned, &fields.shape)?;
     }
     Ok(owned)
@@ -55,7 +55,7 @@ fn expand_external_compound(
     output: &AisShapeDrawerMap,
     owned: &OwnedCompounds,
     key: &Shape,
-    drawer: &impl HandleReference<AisColoredDrawer>,
+    drawer: &impl HandleReference<dyn AisColoredDrawerSource>,
 ) -> Result<(), Failure> {
     if key.shape_type()? != ShapeEnum::Compound || owned.contains(key) {
         return Ok(());
@@ -75,7 +75,7 @@ fn expand_explicit_entry<S: AisColoredShapeSource + ?Sized>(
     output: &AisShapeDrawerMap,
     owned: &OwnedCompounds,
     key: &Shape,
-    drawer: &impl HandleReference<AisColoredDrawer>,
+    drawer: &impl HandleReference<dyn AisColoredDrawerSource>,
 ) -> Result<(), Failure> {
     if object.shape_base().fields.read().shape.is_equal(key) {
         return Ok(());
@@ -90,7 +90,7 @@ pub(super) fn visit_colored_map_entries(
     source: &AisShapeDrawerMap,
     mut visit: impl FnMut(
         &Shape,
-        &HandleFieldRef<'_, Option<Handle<AisColoredDrawer>>, AisColoredDrawer>,
+        &HandleFieldRef<'_, Option<Handle<dyn AisColoredDrawerSource>>, dyn AisColoredDrawerSource>,
     ) -> Result<(), Failure>,
 ) -> Result<(), Failure> {
     let mut cursor = ShapeDrawerNativeCursor::new(source)?;

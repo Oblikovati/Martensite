@@ -12,7 +12,7 @@ use super::{BisectorCurve, PointOnBis, PolyBis};
 use crate::bisector::bisec_pc::lowered_continuity;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dGeometry};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Point2;
@@ -32,14 +32,12 @@ use state::{CcState, OnCurves};
 /// assert!(bisector.is_empty());
 /// ```
 pub struct BisecCC {
-    parent: StandardTransient,
     state: SharedState<CcState>,
 }
 impl_transient!(
     BisecCC,
     "Bisector_BisecCC",
     dyn BisectorCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn BisectorCurve]
 );
 
@@ -73,7 +71,6 @@ impl BisecCC {
     }
     fn from_state(state: CcState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

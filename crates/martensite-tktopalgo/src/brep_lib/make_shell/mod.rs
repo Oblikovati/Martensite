@@ -18,7 +18,7 @@ use std::ops::{Deref, DerefMut};
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 /// use martensite_tktopalgo::brep_lib::{BRepLibMakeShell, BRepLibShellError};
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let maker = BRepLibMakeShell::with_bounds(&plane, (0.0, 1.0, 0.0, 1.0), false)?;
 /// assert_eq!(maker.error(), BRepLibShellError::ShellDone);
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())

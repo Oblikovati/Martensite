@@ -120,12 +120,8 @@ impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMap<K, V, H> {
 
 impl<'a, K: Debug, V, H: HashPolicy<K>> IndexedDataMapIterator<'a, K, V, H> {
     /// True while the index is within `1..=extent()`.
-    pub fn more(&self) -> bool {
+    pub(crate) fn more(&self) -> bool {
         self.map.is_some_and(|map| self.index <= map.len())
-    }
-    /// `Next`: moves to the following index.
-    pub fn next(&mut self) {
-        self.index = self.index.wrapping_add(1);
     }
     /// `Value`: the item at the current index, or Standard_NoSuchObject past the end.
     pub fn value(&self) -> Result<&'a V, Failure> {
@@ -136,19 +132,6 @@ impl<'a, K: Debug, V, H: HashPolicy<K>> IndexedDataMapIterator<'a, K, V, H> {
     pub fn key(&self) -> Result<&'a K, Failure> {
         self.live("NCollection_IndexedDataMap::Iterator::Key")?
             .find_key(self.index)
-    }
-    /// `Index`: the current one-based index narrowed to `int` (1 for a default cursor).
-    pub fn index(&self) -> i32 {
-        self.index as i32
-    }
-    /// Both cursors are past the end, or on the same map and index.
-    pub fn is_equal(&self, other: &Self) -> bool {
-        let same_map = match (self.map, other.map) {
-            (Some(a), Some(b)) => std::ptr::eq(a, b),
-            (None, None) => true,
-            _ => false,
-        };
-        (!self.more() && !other.more()) || (same_map && self.index == other.index)
     }
     fn live(&self, method: &str) -> Result<&'a IndexedDataMap<K, V, H>, Failure> {
         self.map
@@ -169,17 +152,12 @@ impl<K, V, H> Default for IndexedDataMapIterator<'_, K, V, H> {
 
 impl<K: Debug, V, H: HashPolicy<K>> IndexedDataMapIteratorMut<'_, K, V, H> {
     /// True while the index is within `1..=extent()`.
-    pub fn more(&self) -> bool {
+    pub(crate) fn more(&self) -> bool {
         self.index <= self.map.len()
     }
     /// `Next`: moves to the following index.
     pub fn next(&mut self) {
         self.index = self.index.wrapping_add(1);
-    }
-    /// `Value`: the item at the current index, or Standard_NoSuchObject past the end.
-    pub fn value(&self) -> Result<&V, Failure> {
-        self.check("NCollection_IndexedDataMap::Iterator::Value")?;
-        self.map.find_from_index(self.index)
     }
     /// The item at the current index for modification.
     pub fn change_value(&mut self) -> Result<&mut V, Failure> {

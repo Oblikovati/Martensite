@@ -8,7 +8,7 @@ use martensite_tkbrep::brep::BRepTool;
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkmath::poly::mesh_purpose;
 mod cleanup;
@@ -17,10 +17,8 @@ mod seam;
 mod split_curve;
 /// Native model preprocessing stage; `BRepMeshModelPreProcessor::new()`.
 #[derive(Default)]
-pub struct BRepMeshModelPreProcessor {
-    transient: StandardTransient,
-}
-impl_transient!(BRepMeshModelPreProcessor,"BRepMesh_ModelPreProcessor",dyn ModelAlgo,transient,interfaces:[dyn ModelAlgo]);
+pub struct BRepMeshModelPreProcessor {}
+impl_transient!(BRepMeshModelPreProcessor,"BRepMesh_ModelPreProcessor",dyn ModelAlgo,interfaces:[dyn ModelAlgo]);
 impl BRepMeshModelPreProcessor {
     /// Construct the stateless native stage; `BRepMeshModelPreProcessor::new()`.
     pub fn new() -> Self {

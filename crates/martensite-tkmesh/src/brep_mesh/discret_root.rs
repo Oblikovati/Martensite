@@ -58,10 +58,9 @@ mod tests {
 
     #[derive(Default)]
     struct FakeDiscretRoot {
-        transient: StandardTransient,
         base: DiscretRootBase,
     }
-    impl_transient!(FakeDiscretRoot, "FakeDiscretRoot", dyn BRepMeshDiscretRoot, transient, interfaces: [dyn BRepMeshDiscretRoot]);
+    impl_transient!(FakeDiscretRoot, "FakeDiscretRoot", dyn BRepMeshDiscretRoot, interfaces: [dyn BRepMeshDiscretRoot]);
     impl BRepMeshDiscretRoot for FakeDiscretRoot {
         fn discret_root_base(&self) -> &DiscretRootBase {
             &self.base

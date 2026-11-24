@@ -96,7 +96,7 @@ impl RwStepBasicRwDocument {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepBasicDocument>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 4, ach, "document")? {
             return Ok(());
@@ -118,7 +118,7 @@ impl RwStepBasicRwDocument {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepBasicDocument>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
     ) -> Result<(), Failure> {
         rw_block_0178!(ent, sw);
         sw.send_entity(&ent.kind())?;
@@ -127,7 +127,7 @@ impl RwStepBasicRwDocument {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepBasicDocument>,
+        ent: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.add_item(&ent.kind().cast());
@@ -252,7 +252,8 @@ impl RwStepBasicRwDocumentProductAssociation {
             return Ok(());
         }
         rw_block_0102!(a_description, a_name, ach, data, has_description, num);
-        let mut a_relating_document: Handle<StepBasicDocument> = Default::default();
+        let mut a_relating_document: Handle<dyn crate::StepEntityBase<StepBasicDocument>> =
+            Default::default();
         data.read_entity(
             num,
             3,

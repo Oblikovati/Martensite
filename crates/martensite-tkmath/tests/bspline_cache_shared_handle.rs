@@ -1,7 +1,7 @@
 //! Runtime descriptor and shared owner behavior for the mutable cache wrappers.
 use martensite_tkernel::{
     ncollection::Array1,
-    standard::{RuntimeTyped, StandardTransient, Transient},
+    standard::{RuntimeTyped, Transient},
 };
 use martensite_tkmath::{
     bsplclib::{Cache as CurveCache, SharedBSplineCache},
@@ -36,13 +36,13 @@ fn flat_poles() -> Array1<'static, Point3> {
 fn curve_shared_report() -> String {
     let cache = SharedBSplineCache::new(curve_cache());
     let alias = cache.clone();
-    let base = cache.handle().cast::<StandardTransient>();
+    let base = cache.handle().into_upcast::<dyn Transient>();
     format!(
         "{} {} {} {} {} {}\n",
         cache.dynamic_type().unwrap().name(),
         i32::from(cache.is_instance(CurveCache::static_type())),
         i32::from(cache.is_same(&alias)),
-        i32::from(cache.is_kind(StandardTransient::static_type())),
+        i32::from(cache.is_kind(<dyn Transient>::static_type())),
         i32::from(cache.object_address() == base.object_address()),
         cache.ref_count()
     )
@@ -51,13 +51,13 @@ fn curve_shared_report() -> String {
 fn surface_shared_report() -> String {
     let cache = SharedBSplineSurfaceCache::new(surface_cache());
     let alias = cache.clone();
-    let base = cache.handle().cast::<StandardTransient>();
+    let base = cache.handle().into_upcast::<dyn Transient>();
     format!(
         "{} {} {} {} {} {}\n",
         cache.dynamic_type().unwrap().name(),
         i32::from(cache.is_instance(SurfaceCache::static_type())),
         i32::from(cache.is_same(&alias)),
-        i32::from(cache.is_kind(StandardTransient::static_type())),
+        i32::from(cache.is_kind(<dyn Transient>::static_type())),
         i32::from(cache.object_address() == base.object_address()),
         cache.ref_count()
     )
@@ -82,14 +82,11 @@ fn null_shared_cache_has_no_dynamic_object() {
 }
 
 #[test]
-fn shared_owner_aliases_increment_the_embedded_transient_counter() {
+fn shared_owner_aliases_share_one_strong_count() {
     let cache = SharedBSplineCache::new(curve_cache());
     let alias = cache.clone();
     assert!(cache.is_same(&alias));
-    assert_eq!(
-        cache
-            .with(|value| value.transient_base().ref_count())
-            .unwrap(),
-        2
-    );
+    assert_eq!(cache.ref_count(), 2);
+    assert_eq!(cache.with(|_| cache.ref_count()), Some(2));
+    assert_eq!(alias.ref_count(), 2);
 }

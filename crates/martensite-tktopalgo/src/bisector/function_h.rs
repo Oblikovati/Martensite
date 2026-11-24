@@ -17,7 +17,7 @@ use martensite_tkmath::math::{Function, FunctionWithDerivative};
 /// use martensite_tkmath::gp::{Direction2, Point2, Vector2};
 /// use martensite_tkmath::math::Function;
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 1.0), Direction2::new(1.0, 0.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 1.0), Direction2::new(1.0, 0.0)?)).into_upcast();
 /// let mut h = BisectorFunctionH::new(&line, Point2::new(0.0, 0.0), Vector2::new(1.0, 0.0))?;
 /// let mut value = 1.0;
 /// assert!(h.value(3.0, &mut value) && value == 0.0);

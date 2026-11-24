@@ -58,7 +58,7 @@ struct LiveOptionsView {
     base: V3dView,
     edited: Arc<AtomicBool>,
 }
-martensite_tkernel::impl_transient!(LiveOptionsView,"Martensite_LiveOptionsView",V3dView,base,
+martensite_tkernel::impl_transient!(LiveOptionsView,"Martensite_LiveOptionsView",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for LiveOptionsView {
     fn view_base(&self) -> &V3dView {
@@ -76,10 +76,9 @@ fn live_view(
     edited: &Arc<AtomicBool>,
 ) -> Handle<dyn V3dViewSource> {
     let mut base = V3dView::new_embedded(viewer, V3dTypeOfView::Orthographic).unwrap();
-    base.driver_view_slot = IntrusiveReferenceSlot::from_owned(CallbackObservedView::create(
-        &viewer.structure_manager(),
-        control,
-    ));
+    base.driver_view_slot = IntrusiveReferenceSlot::from_owned_shared(
+        CallbackObservedView::create(&viewer.structure_manager(), control),
+    );
     let view = Handle::new(LiveOptionsView {
         base,
         edited: edited.clone(),

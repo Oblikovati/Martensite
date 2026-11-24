@@ -136,7 +136,7 @@ impl BRepPrimCone {
         let mut v = Vector3::from(axes.x_direction());
         v *= self.my_radius;
         axis.translate(v);
-        let meridian: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(axis)).cast();
+        let meridian: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(axis)).into_upcast();
         let direction = Direction2::new(
             martensite_cmath::sin(self.my_half_angle),
             martensite_cmath::cos(self.my_half_angle),
@@ -145,7 +145,7 @@ impl BRepPrimCone {
             Point2::new(self.my_radius, 0.0),
             direction,
         ))
-        .cast();
+        .into_upcast();
         self.revolution.set_meridian(meridian, pmeridian);
         Ok(())
     }
@@ -192,6 +192,6 @@ impl BRepPrimRevolutionDerived for BRepPrimCone {
     fn derived_lateral_face(&self) -> Result<Face, Failure> {
         let axes = self.revolution.axes().axis3();
         let surface = GeomConicalSurface::new(axes, self.my_half_angle, self.my_radius)?;
-        lateral_face_on(&self.revolution, Handle::new(surface).cast())
+        lateral_face_on(&self.revolution, Handle::new(surface).into_upcast())
     }
 }

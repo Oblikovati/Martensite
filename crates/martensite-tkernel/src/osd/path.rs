@@ -108,10 +108,6 @@ impl CadPath {
             PathSyntax::Windows => windows_host::parse(path),
         }
     }
-    /// Parses `name` in dialect `sys_type` on the running host; `CadPath::with_sys_type("disk:[a]b.c", SysType::Vms)?`.
-    pub fn with_sys_type(path: impl AsRef<[u8]>, sys_type: SysType) -> Result<Self, Failure> {
-        Self::parse(path, sys_type, PathSyntax::native())
-    }
     /// Parses `name` in dialect `sys_type` with explicit rules; `CadPath::parse("a:b", SysType::MacOs, PathSyntax::Unix)?`.
     ///
     /// The Unix build raises `Standard_OutOfRange` for some malformed VMS names; the
@@ -230,15 +226,15 @@ impl CadPath {
 /// Component accessors and setters.
 impl CadPath {
     /// `Node()`; `path.node()`.
-    pub fn node(&self) -> AsciiString {
+    fn node(&self) -> AsciiString {
         AsciiString::from_raw(&self.node)
     }
     /// Example: `path.user_name()`.
-    pub fn user_name(&self) -> AsciiString {
+    fn user_name(&self) -> AsciiString {
         AsciiString::from_raw(&self.user_name)
     }
     /// Example: `path.password()`.
-    pub fn password(&self) -> AsciiString {
+    fn password(&self) -> AsciiString {
         AsciiString::from_raw(&self.password)
     }
     /// `Disk()`; `path.disk()`.

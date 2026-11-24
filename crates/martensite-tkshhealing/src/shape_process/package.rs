@@ -1,7 +1,7 @@
 //! The package ShapeProcess: the process-wide registry of named operators and the two
 //! ways of running them on a context (a resource sequence or a set of operation flags).
 use super::shape_context::statistics::{message, send};
-use super::{ShapeProcessContext, ShapeProcessOperator};
+use super::{ShapeProcessContextData, ShapeProcessContextSource, ShapeProcessOperator};
 use martensite_tkernel::message::{Gravity, ProgressRange, ProgressScope};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
@@ -134,11 +134,11 @@ fn operators() -> MutexGuard<'static, Option<OperatorMap>> {
 
 /// The `ScopeLock`: the scope is pushed on creation and popped on drop.
 struct ScopeLock<'a> {
-    context: &'a ShapeProcessContext,
+    context: &'a ShapeProcessContextData,
 }
 
 impl<'a> ScopeLock<'a> {
-    fn new(context: &'a ShapeProcessContext, scope: &str) -> Self {
+    fn new(context: &'a ShapeProcessContextData, scope: &str) -> Self {
         context.set_scope(scope);
         Self { context }
     }
@@ -200,7 +200,7 @@ impl ShapeProcess {
     /// or operator and an operator exception are reported to the messenger.
     /// Example: `ShapeProcess::perform_sequence(&context, "read", &ProgressRange::default())?`.
     pub fn perform_sequence(
-        context: &Handle<ShapeProcessContext>,
+        context: &Handle<dyn ShapeProcessContextSource>,
         sequence: &str,
         progress: &ProgressRange<'_>,
     ) -> Result<bool, Failure> {
@@ -228,7 +228,7 @@ impl ShapeProcess {
     /// context or operator. Example:
     /// `ShapeProcess::perform_operations(&context, flags, &ProgressRange::default())?`.
     pub fn perform_operations(
-        context: &Handle<ShapeProcessContext>,
+        context: &Handle<dyn ShapeProcessContextSource>,
         operations: ShapeProcessOperationsFlags,
         progress: &ProgressRange<'_>,
     ) -> Result<bool, Failure> {
@@ -288,8 +288,8 @@ fn sequence_operators(text: &AsciiString) -> Vec<Vec<u8>> {
 }
 
 fn run_sequence(
-    context: &Handle<ShapeProcessContext>,
-    ctx: &ShapeProcessContext,
+    context: &Handle<dyn ShapeProcessContextSource>,
+    ctx: &ShapeProcessContextData,
     names: &[Vec<u8>],
     progress: &ProgressRange<'_>,
 ) -> Result<bool, Failure> {
@@ -327,7 +327,7 @@ fn run_sequence(
 
 /// "Operator %s failed with exception %s".
 fn report_exception(
-    ctx: &ShapeProcessContext,
+    ctx: &ShapeProcessContextData,
     name: &[u8],
     failure: &Failure,
 ) -> Result<(), Failure> {

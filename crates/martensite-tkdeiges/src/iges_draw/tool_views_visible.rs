@@ -13,14 +13,15 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    IgesDataViewKindEntity, iges_array1_set, iges_dump_entities, iges_live, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataViewKindEntity,
+    iges_array1_set, iges_dump_entities, iges_live, iges_new_array1,
 };
 use crate::iges_draw::IgesDrawViewsVisible;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
 };
@@ -47,7 +48,7 @@ impl IgesDrawToolViewsVisible {
         let mut temp_nb_displayed_entities: i32 = Default::default();
         let mut temp_view_entities: Handle<HArray1<Handle<dyn IgesDataViewKindEntity>>> =
             Default::default();
-        let mut temp_display_entity: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut temp_display_entity: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
         if pr.read_integer_text(
             &pr.current(),
@@ -183,7 +184,7 @@ impl IgesDrawToolViewsVisible {
         let mut nb: i32 = ent.nb_displayed_entities()?;
         let mut entcomp: Handle<dyn IgesDataViewKindEntity> = ent.cast();
         for i in 1..=nb {
-            let mut displayed: Handle<IgesDataIgesEntity> = ent.displayed_entity(i)?;
+            let mut displayed: Handle<dyn IgesDataEntityKind> = ent.displayed_entity(i)?;
             if entcomp.object_address()
                 != iges_live(&displayed, "IgesDrawToolViewsVisible::own_check")?
                     .view()
@@ -221,7 +222,7 @@ impl IgesDrawToolViewsVisible {
                 "IgesDrawToolViewsVisible::own_copy",
             )?;
         }
-        let mut temp_display_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut temp_display_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
         ent.init(&temp_view_entities, &temp_display_entities)?;
         Ok(())
@@ -250,7 +251,7 @@ impl IgesDrawToolViewsVisible {
             newdisp.start();
             while newdisp.more() {
                 i += 1;
-                let mut temp_entity: Handle<IgesDataIgesEntity> = newdisp.value()?.cast();
+                let mut temp_entity: Handle<dyn IgesDataEntityKind> = newdisp.value()?.cast();
                 iges_array1_set(
                     &temp_display_entities,
                     i,
@@ -269,7 +270,7 @@ impl IgesDrawToolViewsVisible {
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
     pub fn own_when_delete(&self, ent: &Handle<IgesDrawViewsVisible>) -> Result<(), Failure> {
-        let mut temp_display_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut temp_display_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
         ent.init_implied(&temp_display_entities)?;
         Ok(())
@@ -307,7 +308,7 @@ impl IgesDrawToolViewsVisible {
         let mut nb: i32 = ent.nb_displayed_entities()?;
         let mut entcomp: Handle<dyn IgesDataViewKindEntity> = ent.cast();
         for i in 1..=nb {
-            let mut displayed: Handle<IgesDataIgesEntity> = ent.displayed_entity(i)?;
+            let mut displayed: Handle<dyn IgesDataEntityKind> = ent.displayed_entity(i)?;
             if entcomp.object_address()
                 != iges_live(&displayed, "IgesDrawToolViewsVisible::own_correct")?
                     .view()

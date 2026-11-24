@@ -4,14 +4,14 @@ use super::errors::interface_error;
 use super::{InterfaceInterfaceModel, InterfaceModelEntities};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
 };
 
 /// `InterfaceCopyControl`, abstract.
 ///
 /// ```
 /// use martensite_tkxsbase::interface::InterfaceCopyControl;
-/// fn known(map: &dyn InterfaceCopyControl, ent: &martensite_tkernel::standard::Handle<martensite_tkernel::standard::StandardTransient>) -> bool {
+/// fn known(map: &dyn InterfaceCopyControl, ent: &martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient>) -> bool {
 ///     let mut res = Default::default();
 ///     map.search(ent, &mut res).unwrap_or(false)
 /// }
@@ -20,38 +20,33 @@ pub trait InterfaceCopyControl: Transient {
     /// `Clear`.
     fn clear(&self);
     /// `Bind(ent, res)`.
-    fn bind(
-        &self,
-        ent: &Handle<StandardTransient>,
-        res: &Handle<StandardTransient>,
-    ) -> Result<(), Failure>;
+    fn bind(&self, ent: &Handle<dyn Transient>, res: &Handle<dyn Transient>)
+    -> Result<(), Failure>;
     /// `Search(ent, res)`: whether `ent` was copied, and its copy.
     fn search(
         &self,
-        ent: &Handle<StandardTransient>,
-        res: &mut Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
+        res: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure>;
 }
 impl_transient_interface!(
     dyn InterfaceCopyControl,
     "InterfaceCopyControl",
-    StandardTransient
+    dyn Transient
 );
 
 /// `InterfaceCopyMap`: the copies of the entities of a model, by entity number.
 pub struct InterfaceCopyMap {
-    transient: StandardTransient,
     themod: Handle<dyn InterfaceInterfaceModel>,
-    theres: SharedState<Vec<Handle<StandardTransient>>>,
+    theres: SharedState<Vec<Handle<dyn Transient>>>,
 }
-impl_transient!(InterfaceCopyMap, "InterfaceCopyMap", dyn InterfaceCopyControl, transient, interfaces: [dyn InterfaceCopyControl]);
+impl_transient!(InterfaceCopyMap, "InterfaceCopyMap", dyn InterfaceCopyControl, interfaces: [dyn InterfaceCopyControl]);
 
 impl InterfaceCopyMap {
     /// `InterfaceCopyMap(amodel)`: a place per entity (0..NbEntities).
     pub fn new(amodel: &Handle<dyn InterfaceInterfaceModel>) -> Self {
         let nb = amodel.get().map_or(0, |m| m.nb_entities());
         Self {
-            transient: StandardTransient::default(),
             themod: amodel.clone(),
             theres: SharedState::new(vec![Handle::default(); (nb + 1) as usize]),
         }
@@ -60,7 +55,7 @@ impl InterfaceCopyMap {
     pub fn model(&self) -> Handle<dyn InterfaceInterfaceModel> {
         self.themod.clone()
     }
-    fn number(&self, ent: &Handle<StandardTransient>) -> i32 {
+    fn number(&self, ent: &Handle<dyn Transient>) -> i32 {
         self.themod.get().map_or(0, |m| m.number(ent))
     }
 }
@@ -75,8 +70,8 @@ impl InterfaceCopyControl for InterfaceCopyMap {
     /// already bound.
     fn bind(
         &self,
-        ent: &Handle<StandardTransient>,
-        res: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
+        res: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let num = self.number(ent);
         let mut theres = self.theres.write();
@@ -99,8 +94,8 @@ impl InterfaceCopyControl for InterfaceCopyMap {
     /// the map was made (beyond the places).
     fn search(
         &self,
-        ent: &Handle<StandardTransient>,
-        res: &mut Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
+        res: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         let num = self.number(ent);
         if num == 0 {

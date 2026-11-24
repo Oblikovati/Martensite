@@ -84,7 +84,7 @@ impl BRepOffsetOffset {
         let vdir = the_plane.axis().direction();
         let axis = Axis3::new(origin, vdir, Direction3::from_vector(xdir)?)?;
         let s: Handle<dyn GeomSurface> =
-            Handle::new(GeomSphericalSurface::new(axis, offset.abs())?).cast();
+            Handle::new(GeomSphericalSurface::new(axis, offset.abs())?).into_upcast();
 
         let tol = BRepTool::vertex_tolerance(vertex)?;
         let builder = BRepBuilder::default();
@@ -96,7 +96,7 @@ impl BRepOffsetOffset {
         if polynomial {
             let approx = ApproxSurface::from_surface(&s, tol_app, (conti, conti), (10, 10), 10, 1)?;
             if approx.is_done() {
-                ss = approx.surface().cast();
+                ss = approx.surface().into_upcast();
             }
         }
         builder.update_face(&my_face, &ss, &Location::default(), tol)?;
@@ -120,7 +120,7 @@ impl BRepOffsetOffset {
             }
             let (f, l) = (found.first, found.last);
             let c: Handle<dyn GeomCurve> =
-                Handle::new(GeomTrimmedCurve::new(&found.curve, f, l, true, true)?).cast();
+                Handle::new(GeomTrimmedCurve::new(&found.curve, f, l, true, true)?).into_upcast();
             live(&c, "curve")?.transform(found.location.transformation())?;
             let pcurve = geom_proj_lib::curve2d(&c, &s)?;
             // A first point of the p-curve outside the canonical bounds of the sphere

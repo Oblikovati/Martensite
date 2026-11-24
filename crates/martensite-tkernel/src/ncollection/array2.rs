@@ -165,7 +165,8 @@ impl<'a, T> Array2<'a, T> {
     }
     /// Constructs a Rust replacement cell; `array.emplace_value(1,1,|| 42)?`.
     /// Use `emplace_value_with_assignment` for observable element assignment.
-    pub fn emplace_value(
+    #[cfg(test)]
+    pub(crate) fn emplace_value(
         &mut self,
         row: i32,
         col: i32,
@@ -192,7 +193,7 @@ impl<'a, T> Array2<'a, T> {
         self.col_lower = (i64::from(upper) - self.cols as i64 + 1) as i32;
     }
     /// Transfers storage, leaving the source empty; `dest.move_from(&mut source)`.
-    pub fn move_from(&mut self, source: &mut Self) -> &mut Self {
+    pub(crate) fn move_from(&mut self, source: &mut Self) -> &mut Self {
         *self = std::mem::take(source);
         self
     }
@@ -262,7 +263,7 @@ impl<T: Clone> Array2<'_, T> {
         self.init_ref(&value);
     }
     /// Assigns from a borrowed value in row-major order; `array.init_ref(&fill_value)`.
-    pub fn init_ref(&mut self, value: &T) {
+    pub(crate) fn init_ref(&mut self, value: &T) {
         // Keep the borrowed contract so custom elements can assign without copy construction.
         self.init_ref_with_assignment(value, T::clone_from);
     }

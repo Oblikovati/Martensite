@@ -5,19 +5,17 @@ use super::protected::ProtectedAccess;
 use super::vector::GeomVector;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Direction3, Transform3, Vector3, resolution};
 
 /// A unit vector; `Handle::new(GeomDirection::new(1.0, 1.0, 0.0)?)`.
 pub struct GeomDirection {
-    parent: StandardTransient,
     state: SharedState<Vector3>,
 }
 impl_transient!(
     GeomDirection,
     "Geom_Direction",
     dyn GeomVector,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomVector]
 );
 
@@ -35,7 +33,6 @@ fn normalized_coordinates(x: f64, y: f64, z: f64, member: &str) -> Result<Vector
 impl GeomDirection {
     fn stored(vector: Vector3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(vector),
         }
     }
@@ -100,7 +97,7 @@ impl GeomGeometry for GeomDirection {
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
         // Quirk kept: the retained Copy passes gpVec to the Direction3 constructor, which
         // normalizes the stored unit vector once more (the last bit can change).
-        Ok(Handle::new(Self::from_dir(self.dir()?)).cast())
+        Ok(Handle::new(Self::from_dir(self.dir()?)).into_upcast())
     }
 }
 impl GeomVector for GeomDirection {
@@ -121,7 +118,7 @@ impl GeomVector for GeomDirection {
     }
     fn crossed(&self, other: &dyn GeomVector) -> Result<Handle<dyn GeomVector>, Failure> {
         let unit: Vector3 = unit_of(self.vec().crossed(other.vec()))?;
-        Ok(Handle::new(Self::stored(unit)).cast())
+        Ok(Handle::new(Self::stored(unit)).into_upcast())
     }
     fn cross_cross(&self, v1: &dyn GeomVector, v2: &dyn GeomVector) -> Result<(), Failure> {
         let (first, second) = (v1.vec(), v2.vec());
@@ -135,6 +132,6 @@ impl GeomVector for GeomDirection {
         v2: &dyn GeomVector,
     ) -> Result<Handle<dyn GeomVector>, Failure> {
         let unit: Vector3 = unit_of(self.vec().cross_crossed(v1.vec(), v2.vec()))?;
-        Ok(Handle::new(Self::stored(unit)).cast())
+        Ok(Handle::new(Self::stored(unit)).into_upcast())
     }
 }

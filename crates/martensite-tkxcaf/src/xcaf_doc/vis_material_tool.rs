@@ -5,7 +5,7 @@ use super::support::{child_labels_with, find, find_or_add, live};
 use super::tool_support::{cached_shape_tool, search_shape};
 use super::{XCAFDoc, XCAFDocDocumentTool, XCAFDocShapeTool, XCAFDocVisMaterial};
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::tdata_std::{TDataStdName, TDataStdTreeNode};
@@ -29,11 +29,10 @@ const VIS_MATERIAL_TOOL_ID: Guid = guid_from_text("87B511CE-DA15-4A5E-98AF-E3F46
 /// ```
 #[derive(Default)]
 pub struct XCAFDocVisMaterialTool {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     shape_tool: SharedState<Handle<XCAFDocShapeTool>>,
 }
-martensite_tkernel::impl_transient!(XCAFDocVisMaterialTool, "XCAFDocVisMaterialTool", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocVisMaterialTool, "XCAFDocVisMaterialTool", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocVisMaterialTool {
     /// `XCAFDocVisMaterialTool()`.

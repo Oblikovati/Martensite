@@ -68,7 +68,7 @@ fn located_bspline(edge: &Edge) -> Result<Handle<GeomBSplineCurve>, Failure> {
         true,
         true,
     )?)
-    .cast();
+    .into_upcast();
     let approx = ApproxCurve::from_curve(&trim, precision::confusion(), Continuity::C1, 16, 14)?;
     let mut bs: Handle<GeomBSplineCurve> = Handle::default();
     if approx.has_result() {

@@ -2,7 +2,7 @@
 //! of a point, extensions and intervals of continuity.
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::Failure;
-use martensite_tkg2d::geom2d::Geom2dCurve;
+use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dGeometry};
 use martensite_tkmath::gp::Point2;
 
 /// `Bisector_Curve`: the members every bisector curve adds to `Geom2d_Curve`. A trimmed curve whose basis is a bisector
@@ -10,7 +10,7 @@ use martensite_tkmath::gp::Point2;
 /// ```
 /// use martensite_tktopalgo::bisector::{BisecAna, BisectorCurve};
 /// use martensite_tkernel::standard::Handle;
-/// let bisector: Handle<dyn BisectorCurve> = Handle::new(BisecAna::new()).cast();
+/// let bisector: Handle<dyn BisectorCurve> = Handle::new(BisecAna::new()).into_upcast();
 /// assert!(!bisector.is_extend_at_start() && bisector.nb_intervals() == 1);
 /// ```
 pub trait BisectorCurve: Geom2dCurve {
@@ -27,4 +27,5 @@ pub trait BisectorCurve: Geom2dCurve {
     /// The last parameter of the interval `index` (`IntervalLast`); `bis.interval_last(1)?`.
     fn interval_last(&self, index: i32) -> Result<f64, Failure>;
 }
-impl_transient_interface!(dyn BisectorCurve, "Bisector_Curve", dyn Geom2dCurve);
+impl_transient_interface!(dyn BisectorCurve, "Bisector_Curve", dyn Geom2dCurve,
+    upcasts: [dyn Geom2dCurve, dyn Geom2dGeometry]);

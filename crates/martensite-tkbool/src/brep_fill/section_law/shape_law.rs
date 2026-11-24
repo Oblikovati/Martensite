@@ -10,7 +10,7 @@ use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{self, Edge, Shape, Vertex, Wire};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomBoundedCurve, GeomCurve, GeomLine, GeomTrimmedCurve};
 use martensite_tkg3d::top_abs::Orientation;
@@ -28,7 +28,6 @@ use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeShape, BRepBuilde
 /// law per edge, or evolved sections scaled by a law function;
 /// `let law = BRepFillShapeLaw::with_wire(&wire, true)?;`.
 pub struct BRepFillShapeLaw {
-    parent: StandardTransient,
     base: BRepFillSectionLawBase,
     vertex: bool,
     my_shape: Shape,
@@ -39,7 +38,6 @@ impl_transient!(
     BRepFillShapeLaw,
     "BRepFillShapeLaw",
     dyn BRepFillSectionLaw,
-    parent,
     interfaces: [dyn BRepFillSectionLaw]
 );
 
@@ -50,9 +48,10 @@ fn section_of(
 ) -> Result<Handle<dyn GeomFillSectionLaw>, Failure> {
     if law.is_null() {
         let uniform = GeomFillUniformSection::new(curve, 0., 1.)?;
-        return Ok(Handle::new(uniform).cast::<dyn GeomFillSectionLaw>());
+        return Ok(Handle::new(uniform).into_upcast::<dyn GeomFillSectionLaw>());
     }
-    Ok(Handle::new(GeomFillEvolvedSection::new(curve, law)?).cast::<dyn GeomFillSectionLaw>())
+    Ok(Handle::new(GeomFillEvolvedSection::new(curve, law)?)
+        .into_upcast::<dyn GeomFillSectionLaw>())
 }
 
 /// The scaling about the origin by the value of the law at `param`.
@@ -79,12 +78,15 @@ impl BRepFillShapeLaw {
         law.my_edges = vec![v.as_ref().clone()];
         if build {
             let line: Handle<dyn GeomCurve> =
-                Handle::new(GeomLine::new(Axis1::new(BRepTool::pnt(v)?, Direction3::X))).cast();
+                Handle::new(GeomLine::new(Axis1::new(BRepTool::pnt(v)?, Direction3::X)))
+                    .into_upcast();
             let last: f64 = 2. * BRepTool::vertex_tolerance(v)? + precision::p_confusion();
             let trimmed: Handle<dyn GeomCurve> =
-                Handle::new(GeomTrimmedCurve::new(&line, 0., last, true, true)?).cast();
+                Handle::new(GeomTrimmedCurve::new(&line, 0., last, true, true)?).into_upcast();
             let section = GeomFillUniformSection::new(&trimmed, 0., 1.)?;
-            law.base.laws = Some(vec![Handle::new(section).cast::<dyn GeomFillSectionLaw>()]);
+            law.base.laws = Some(vec![
+                Handle::new(section).into_upcast::<dyn GeomFillSectionLaw>(),
+            ]);
         }
         law.base.done = true;
         Ok(law)
@@ -111,7 +113,6 @@ impl BRepFillShapeLaw {
     /// The fields before the constructor bodies.
     fn empty(shape: Shape, the_law: Handle<dyn LawFunction>, vertex: bool) -> Self {
         Self {
-            parent: StandardTransient::default(),
             base: BRepFillSectionLawBase::default(),
             vertex,
             my_shape: shape,
@@ -196,7 +197,8 @@ impl BRepFillShapeLaw {
             is_closed = false;
         }
         if ii > 1 || !is_closed {
-            curve = Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).cast();
+            curve =
+                Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).into_upcast();
         }
         section_of(&curve, &self.the_law)
     }
@@ -235,7 +237,7 @@ impl BRepFillShapeLaw {
             let (curve, f, l) = BRepTool::curve(edge)?;
             Ok(
                 Handle::new(GeomTrimmedCurve::new(&curve, f, l, true, true)?)
-                    .cast::<dyn GeomBoundedCurve>(),
+                    .into_upcast::<dyn GeomBoundedCurve>(),
             )
         };
         let mut concat = CompCurveToBSplineCurve::with_curve(

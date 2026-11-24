@@ -206,7 +206,7 @@ fn result_binder(
         return Ok(found);
     }
     let binder: Handle<dyn TransferBinder> =
-        Handle::new(TransferBRepShapeBinder::with_result(result)).cast();
+        Handle::new(TransferBRepShapeBinder::with_result(result)).into_upcast();
     if original.shape_type()? <= result.shape_type()? {
         return Ok(binder);
     }
@@ -224,10 +224,10 @@ fn result_binder(
         it.next();
     }
     match list.nb_transients() {
-        1 => Ok(Handle::new(TransferBRepShapeBinder::with_result(&sub_shape)).cast()),
+        1 => Ok(Handle::new(TransferBRepShapeBinder::with_result(&sub_shape)).into_upcast()),
         0 => Ok(binder),
         _ => {
-            binder.add_result(&Handle::new(list).cast());
+            binder.add_result(&Handle::new(list).into_upcast());
             Ok(binder)
         }
     }

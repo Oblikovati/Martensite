@@ -45,7 +45,7 @@ pub fn replace_alpha_lines(
     configure_alpha_style(&*style, mode);
     group.set_group_primitives_aspect(&style);
     let array = alpha_array(mode);
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
     configure_alpha_clipping(group, mode);
     array
 }

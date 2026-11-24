@@ -13,7 +13,7 @@ use crate::xcaf_dim_tol_objects::{
     XCAFDimTolObjectsDatumSingleModif, XCAFDimTolObjectsDatumTargetType,
 };
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
@@ -60,11 +60,10 @@ struct DatumFields {
 /// `XCAFDocDatum`.
 #[derive(Default)]
 pub struct XCAFDocDatum {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     fields: SharedState<DatumFields>,
 }
-martensite_tkernel::impl_transient!(XCAFDocDatum, "XCAFDocDatum", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocDatum, "XCAFDocDatum", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocDatum {
     /// `XCAFDocDatum()`.

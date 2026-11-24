@@ -19,7 +19,8 @@ impl RwStepBasicRwDateAndTime {
         if !data.check_nb_params(num, 2, ach, "date_and_time")? {
             return Ok(());
         }
-        let mut a_date_component: Handle<StepBasicDate> = Default::default();
+        let mut a_date_component: Handle<dyn crate::StepEntityBase<StepBasicDate>> =
+            Default::default();
         data.read_entity(
             num,
             1,
@@ -201,7 +202,7 @@ impl RwStepBasicRwDerivedUnitElement {
         if !data.check_nb_params(num, 2, ach, "derived_unit_element")? {
             return Ok(());
         }
-        let mut nu: Handle<StepBasicNamedUnit> = Default::default();
+        let mut nu: Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>> = Default::default();
         data.read_entity(
             num,
             1,

@@ -143,14 +143,12 @@ impl_transient_interface!(
 /// ```
 #[derive(Default)]
 pub struct StepDataSelectInt {
-    transient: StandardTransient,
     state: SharedState<(i32, i32)>,
 }
 impl_transient!(
     StepDataSelectInt,
     "StepDataSelectInt",
     dyn StepDataSelectMember,
-    transient,
     interfaces: [dyn StepDataSelectMember]
 );
 
@@ -179,14 +177,12 @@ impl StepDataSelectMember for StepDataSelectInt {
 /// ```
 #[derive(Default)]
 pub struct StepDataSelectReal {
-    transient: StandardTransient,
     state: SharedState<f64>,
 }
 impl_transient!(
     StepDataSelectReal,
     "StepDataSelectReal",
     dyn StepDataSelectMember,
-    transient,
     interfaces: [dyn StepDataSelectMember]
 );
 

@@ -21,11 +21,11 @@ pub fn basis_curve2d(c: &Handle<dyn Geom2dCurve>) -> Result<Handle<dyn Geom2dCur
     if c.is_null() {
         return Err(null_geometry("BASISCURVE2D"));
     }
-    let offset: Handle<Geom2dOffsetCurve> = c.clone().cast();
+    let offset: Handle<Geom2dOffsetCurve> = c.downcast();
     if let Some(o) = offset.get() {
         return basis_curve2d(&o.basis_curve());
     }
-    let trimmed: Handle<Geom2dTrimmedCurve> = c.clone().cast();
+    let trimmed: Handle<Geom2dTrimmedCurve> = c.downcast();
     if let Some(t) = trimmed.get() {
         return basis_curve2d(&t.basis_curve());
     }

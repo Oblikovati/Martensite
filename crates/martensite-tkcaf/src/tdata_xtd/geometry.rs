@@ -6,7 +6,7 @@ use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, RuntimeTyped, SharedState},
 };
 use martensite_tkg3d::geom::{
     GeomCircle, GeomCurve, GeomCylindricalSurface, GeomEllipse, GeomLine, GeomPlane,
@@ -32,11 +32,10 @@ const GEOMETRY_ID: Guid = guid_from_text("2a96b604-ec8b-11d0-bee7-080009dc3333")
 /// assert_eq!(geometry.get_type(), TDataXtdGeometryEnum::AnyGeom);
 /// ```
 pub struct TDataXtdGeometry {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     geometry_type: SharedState<TDataXtdGeometryEnum>,
 }
-impl_transient!(TDataXtdGeometry, "TDataXtdGeometry", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataXtdGeometry, "TDataXtdGeometry", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataXtdGeometry {
     fn default() -> Self {
@@ -58,7 +57,7 @@ fn basis_curve(shape: &Shape) -> Result<Handle<dyn GeomCurve>, Failure> {
     }
     let (curve, _, _) = BRepTool::curve(&topods::edge(shape)?)?;
     if curve.is_instance(GeomTrimmedCurve::static_type()) {
-        let trimmed = curve.cast::<GeomTrimmedCurve>();
+        let trimmed = curve.downcast::<GeomTrimmedCurve>();
         return Ok(martensite_tklcaf::live(&trimmed, "TDataXtdGeometry")?.basis_curve());
     }
     Ok(curve)
@@ -71,7 +70,7 @@ fn basis_surface(shape: &Shape) -> Result<Handle<dyn GeomSurface>, Failure> {
     }
     let surface = BRepTool::surface(&topods::face(shape)?)?;
     if surface.is_instance(GeomRectangularTrimmedSurface::static_type()) {
-        let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+        let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
         return Ok(martensite_tklcaf::live(&trimmed, "TDataXtdGeometry")?.basis_surface());
     }
     Ok(surface)
@@ -146,7 +145,7 @@ impl TDataXtdGeometry {
     }
     /// `Line(S, G)`: the line of an edge.
     pub fn line(named: &Handle<TNamingNamedShape>, line: &mut Line3) -> Result<bool, Failure> {
-        let curve = basis_curve(&TNamingTool::get_shape(named)?)?.cast::<GeomLine>();
+        let curve = basis_curve(&TNamingTool::get_shape(named)?)?.downcast::<GeomLine>();
         let Some(curve) = curve.get() else {
             return Ok(false);
         };
@@ -162,7 +161,7 @@ impl TDataXtdGeometry {
         named: &Handle<TNamingNamedShape>,
         circle: &mut Circle3,
     ) -> Result<bool, Failure> {
-        let curve = basis_curve(&TNamingTool::get_shape(named)?)?.cast::<GeomCircle>();
+        let curve = basis_curve(&TNamingTool::get_shape(named)?)?.downcast::<GeomCircle>();
         let Some(curve) = curve.get() else {
             return Ok(false);
         };
@@ -178,7 +177,7 @@ impl TDataXtdGeometry {
         named: &Handle<TNamingNamedShape>,
         ellipse: &mut Ellipse3,
     ) -> Result<bool, Failure> {
-        let curve = basis_curve(&TNamingTool::get_shape(named)?)?.cast::<GeomEllipse>();
+        let curve = basis_curve(&TNamingTool::get_shape(named)?)?.downcast::<GeomEllipse>();
         let Some(curve) = curve.get() else {
             return Ok(false);
         };
@@ -191,7 +190,7 @@ impl TDataXtdGeometry {
     }
     /// `Plane(S, G)`: the plane of a face.
     pub fn plane(named: &Handle<TNamingNamedShape>, plane: &mut Plane3) -> Result<bool, Failure> {
-        let surface = basis_surface(&TNamingTool::get_shape(named)?)?.cast::<GeomPlane>();
+        let surface = basis_surface(&TNamingTool::get_shape(named)?)?.downcast::<GeomPlane>();
         let Some(surface) = surface.get() else {
             return Ok(false);
         };
@@ -208,7 +207,7 @@ impl TDataXtdGeometry {
         cylinder: &mut Cylinder3,
     ) -> Result<bool, Failure> {
         let surface =
-            basis_surface(&TNamingTool::get_shape(named)?)?.cast::<GeomCylindricalSurface>();
+            basis_surface(&TNamingTool::get_shape(named)?)?.downcast::<GeomCylindricalSurface>();
         let Some(surface) = surface.get() else {
             return Ok(false);
         };
@@ -222,7 +221,6 @@ impl TDataXtdGeometry {
     /// `TDataXtdGeometry()`: `ANY_GEOM`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             geometry_type: SharedState::new(TDataXtdGeometryEnum::AnyGeom),
         }
@@ -276,7 +274,7 @@ impl TdfAttribute for TDataXtdGeometry {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).upcast()
     }
     fn paste(
         &self,

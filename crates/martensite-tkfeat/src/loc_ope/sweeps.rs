@@ -38,7 +38,7 @@ fn revol(axis: Axis1, angle: f64) -> impl FnOnce(&Shape) -> Result<BRepSweepRevo
 /// The line along `v` through `p`.
 fn line_along(p: Point3, v: Vector3) -> Result<Handle<dyn GeomCurve>, Failure> {
     let axis = Axis1::new(p, Direction3::from_vector(v)?);
-    Ok(Handle::new(GeomLine::new(axis)).cast())
+    Ok(Handle::new(GeomLine::new(axis)).into_upcast())
 }
 
 /// The circle around the axis through the point; None on the
@@ -63,7 +63,7 @@ fn find_circle(ax: Axis1, pt: Point3) -> Result<Option<Circle3>, Failure> {
 
 /// The circle `ci` as a GeomCircle.
 fn geom_circle(ci: Circle3) -> Result<Handle<dyn GeomCurve>, Failure> {
-    Ok(Handle::new(GeomCircle::new(ci.position(), ci.radius())?).cast())
+    Ok(Handle::new(GeomCircle::new(ci.position(), ci.radius())?).into_upcast())
 }
 
 macro_rules! swept_accessors {
@@ -164,7 +164,7 @@ impl Prism {
         for p in spt.iter() {
             let the_lin = line_along(*p, v)?;
             let trlin = GeomTrimmedCurve::new(&the_lin, u1, u2, true, true)?;
-            scurves.append(Handle::new(trlin).cast());
+            scurves.append(Handle::new(trlin).into_upcast());
         }
         Ok(())
     }

@@ -5,7 +5,7 @@ use super::test_norm::{
 };
 use super::*;
 use crate::lib_ctl::LibCtlRegistry;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient, Transient};
 
 #[test]
 fn numbering_values_and_types() {
@@ -39,7 +39,7 @@ fn add_with_refs_takes_the_shared_entities() {
         .unwrap();
     assert_eq!(shallow.nb_entities(), 2);
     let bare: Handle<dyn InterfaceInterfaceModel> =
-        Handle::new(super::test_norm::FakeModel::default()).cast();
+        Handle::new(super::test_norm::FakeModel::default()).into_upcast();
     let error = bare.add_with_refs(&ents[0], 0, false).err().unwrap();
     assert_eq!(error.exception_type(), "InterfaceInterfaceMismatch");
 }
@@ -156,7 +156,10 @@ fn gtool_caches_the_module_by_type() {
     assert!(gtool.select(&entity, true).is_some());
     assert!(
         gtool
-            .select(&Handle::new(StandardTransient::default()), false)
+            .select(
+                &Handle::new(StandardTransient).into_upcast::<dyn Transient>(),
+                false
+            )
             .is_none()
     );
     gtool.clear_entities();
@@ -170,8 +173,10 @@ fn gtool_caches_the_module_by_type() {
 #[test]
 fn private_registry_libraries() {
     let registry = LibCtlRegistry::<InterfaceGeneralLibKind>::new();
-    let protocol: Handle<dyn InterfaceProtocol> = Handle::new(FakeProtocol::default()).cast();
-    let module: Handle<dyn InterfaceGeneralModule> = Handle::new(FakeModule::default()).cast();
+    let protocol: Handle<dyn InterfaceProtocol> =
+        Handle::new(FakeProtocol::default()).into_upcast();
+    let module: Handle<dyn InterfaceGeneralModule> =
+        Handle::new(FakeModule::default()).into_upcast();
     let empty = InterfaceGeneralLib::new_in(&registry, &protocol);
     assert!(empty.select(&fake_entity("a", &[])).is_none());
     registry.set_global(&module, &protocol);

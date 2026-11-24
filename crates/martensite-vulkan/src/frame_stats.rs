@@ -24,14 +24,12 @@ pub struct RenderImageMemory {
 /// Rendering statistics of a Vulkan view; `view.frame_stats().counter_value(counter)`.
 #[derive(Default)]
 pub struct RenderFrameStats {
-    transient: StandardTransient,
     base: Graphic3dFrameStatsBase,
 }
 martensite_tkernel::impl_transient!(
     RenderFrameStats,
     "Martensite_RenderFrameStats",
     StandardTransient,
-    transient,
     interfaces: [dyn Graphic3dFrameStats]
 );
 

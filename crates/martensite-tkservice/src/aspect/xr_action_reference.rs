@@ -51,14 +51,18 @@ impl<'a> AspectXrActionRef<'a> {
             std::ptr::from_ref(slot) as usize,
         ))
     }
-    /// Observe current assignment with unchanged native refcount; `reference.observe()`.
-    pub fn observe(&self) -> HandleObserver<AspectXRAction> {
+    /// Borrow a stable slot or own a read snapshot of the current field; `reference.observe()`.
+    pub fn observe(&self) -> HandleObserver<'_, AspectXRAction> {
         match self {
             Self::Borrowed(action) => action.observe(),
             Self::Generic(fields, role, offset, address) => {
                 let actual = fields.read();
-                raise_native_failure(retained_generic_action(&actual, *role, *offset, *address))
-                    .observe()
+                HandleObserver::Snapshot(
+                    raise_native_failure(retained_generic_action(
+                        &actual, *role, *offset, *address,
+                    ))
+                    .clone(),
+                )
             }
         }
     }

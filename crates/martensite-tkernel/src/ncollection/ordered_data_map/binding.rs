@@ -5,7 +5,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.table.place(key, || value, false, true).0
     }
     /// Retains existing values and reports new-key insertion; `map.try_bind(1,42)`.
-    pub fn try_bind(&mut self, key: K, value: V) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_bind(&mut self, key: K, value: V) -> bool {
         self.table.place(key, || value, false, false).0
     }
     /// Replaces existing values and returns value storage; `map.bound(1,42)`.
@@ -14,16 +15,19 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.table.value_mut(slot)
     }
     /// Retains existing values and returns value storage; `map.try_bound(1,42)`.
-    pub fn try_bound(&mut self, key: K, value: V) -> &mut V {
+    #[cfg(test)]
+    pub(crate) fn try_bound(&mut self, key: K, value: V) -> &mut V {
         let (_, slot) = self.table.place(key, || value, false, false);
         self.table.value_mut(slot)
     }
     /// Replaces existing values and reports new-key insertion; `map.emplace(1,||42)`.
-    pub fn emplace(&mut self, key: K, construct: impl FnOnce() -> V) -> bool {
+    #[cfg(test)]
+    pub(crate) fn emplace(&mut self, key: K, construct: impl FnOnce() -> V) -> bool {
         self.table.place(key, construct, false, true).0
     }
     /// Replaces existing values and returns value storage; `map.emplaced(1,||42)`.
-    pub fn emplaced(&mut self, key: K, construct: impl FnOnce() -> V) -> &mut V {
+    #[cfg(test)]
+    pub(crate) fn emplaced(&mut self, key: K, construct: impl FnOnce() -> V) -> &mut V {
         let (_, slot) = self.table.place(key, construct, false, true);
         self.table.value_mut(slot)
     }

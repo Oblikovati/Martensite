@@ -1,5 +1,7 @@
 //! Const/mutable container adapters borrow one actual native map member without copying nodes.
-use super::{AisColoredDrawer, AisShapeDrawerMap, AisShapeDrawerNodeRef, AisShapeDrawerValueMut};
+use super::{
+    AisColoredDrawerSource, AisShapeDrawerMap, AisShapeDrawerNodeRef, AisShapeDrawerValueMut,
+};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
 /// Live const map view; `let alias=map.as_const(); map.clear(true); assert!(alias.is_empty())`.
@@ -53,7 +55,11 @@ impl<'a> AisShapeDrawerMapMut<'a> {
         AisShapeDrawerMapRef { owner }
     }
     /// Assigns a native key/value pair; `reference.bind(&shape, &drawer)?`.
-    pub fn bind(&self, key: &Shape, value: &Handle<AisColoredDrawer>) -> Result<bool, Failure> {
+    pub fn bind(
+        &self,
+        key: &Shape,
+        value: &Handle<dyn AisColoredDrawerSource>,
+    ) -> Result<bool, Failure> {
         let owner = self.owner;
         owner.bind(key, value)
     }

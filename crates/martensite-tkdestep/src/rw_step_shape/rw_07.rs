@@ -147,14 +147,15 @@ impl RwStepShapeRwEdgeCurve {
         the_step_data: &Handle<StepDataStepReaderData>,
         the_record_id: i32,
         the_message_tool: &Handle<InterfaceCheck>,
-        the_edge_curve: &Handle<StepShapeEdgeCurve>,
+        the_edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
     ) -> Result<(), Failure> {
         if !the_step_data.check_nb_params(the_record_id, 5, the_message_tool, "edge_curve")? {
             return Ok(());
         }
         let mut a_name: Handle<HAsciiString> = Default::default();
         the_step_data.read_string(the_record_id, 1, "name", the_message_tool, &mut a_name)?;
-        let mut an_edge_start: Handle<StepShapeVertex> = Default::default();
+        let mut an_edge_start: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         the_step_data.read_entity(
             the_record_id,
             2,
@@ -163,7 +164,8 @@ impl RwStepShapeRwEdgeCurve {
             StepShapeVertex::static_type(),
             &mut an_edge_start,
         )?;
-        let mut an_edge_end: Handle<StepShapeVertex> = Default::default();
+        let mut an_edge_end: Handle<dyn crate::StepEntityBase<StepShapeVertex>> =
+            Default::default();
         the_step_data.read_entity(
             the_record_id,
             3,
@@ -172,7 +174,8 @@ impl RwStepShapeRwEdgeCurve {
             StepShapeVertex::static_type(),
             &mut an_edge_end,
         )?;
-        let mut an_edge_geometry: Handle<StepGeomCurve> = Default::default();
+        let mut an_edge_geometry: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         the_step_data.read_entity(
             the_record_id,
             4,
@@ -202,7 +205,7 @@ impl RwStepShapeRwEdgeCurve {
     pub fn write_step(
         &self,
         the_step_writer: &mut StepDataStepWriter,
-        the_edge_curve: &Handle<StepShapeEdgeCurve>,
+        the_edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
     ) -> Result<(), Failure> {
         the_step_writer.send_entity(&the_edge_curve.name())?;
         the_step_writer.send_entity(&the_edge_curve.edge_start())?;
@@ -214,7 +217,7 @@ impl RwStepShapeRwEdgeCurve {
     /// `share`.
     pub fn share(
         &self,
-        the_edge_curve: &Handle<StepShapeEdgeCurve>,
+        the_edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
         the_shared_entities_it: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         the_shared_entities_it.get_one_item(&the_edge_curve.edge_start().cast());

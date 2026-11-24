@@ -13,10 +13,11 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_entities, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_entities, iges_new_array1,
 };
 use crate::iges_dimen::{IgesDimenGeneralNote, IgesDimenGeneralSymbol, IgesDimenLeaderArrow};
 use martensite_tkernel::ncollection::HArray1;
@@ -45,7 +46,7 @@ impl IgesDimenToolGeneralSymbol {
     ) -> Result<(), Failure> {
         let mut i: i32 = Default::default();
         let mut num: i32 = Default::default();
-        let mut temp_geoms: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut temp_geoms: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         let mut temp_leaders: Handle<HArray1<Handle<IgesDimenLeaderArrow>>> = Default::default();
         let mut temp_note: Handle<IgesDimenGeneralNote> = Default::default();
         if (ent.form_number() == 0) && (!(pr.is_param_entity(pr.current_number())?)) {
@@ -216,13 +217,13 @@ impl IgesDimenToolGeneralSymbol {
         let mut temp_note: Handle<IgesDimenGeneralNote> =
             tc.transferred(&another.note().cast())?.cast();
         let mut num: i32 = another.nb_geom_entities()?;
-        let mut temp_geoms: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+        let mut temp_geoms: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         let mut i: i32 = Default::default();
         {
             i = 1;
             while i <= num {
-                let mut new_item: Handle<IgesDataIgesEntity> =
+                let mut new_item: Handle<dyn IgesDataEntityKind> =
                     tc.transferred(&another.geom_entity(i)?.cast())?.cast();
                 iges_array1_set(
                     &temp_geoms,

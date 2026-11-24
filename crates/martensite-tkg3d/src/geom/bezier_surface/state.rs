@@ -325,7 +325,7 @@ impl SurfaceState {
         } else {
             GeomBezierCurve::new(&cpoles)?
         };
-        Ok(Handle::new(curve).cast())
+        Ok(Handle::new(curve).into_upcast())
     }
     /// `Resolution`: fills the cached inverse derivative bounds once, then scales them.
     pub(super) fn resolution(&mut self, tolerance_3d: f64) -> Result<(f64, f64), Failure> {

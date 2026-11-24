@@ -6,11 +6,9 @@ mod node;
 pub use node::MatTListNode;
 
 use martensite_tkernel::standard::{
-    Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient,
-    project_concrete,
+    Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient,
 };
 use martensite_tkg2d::geom2d::errors;
-use std::any::{Any, TypeId};
 
 /// The item of a [`MatTList`]: the native class names of the instance and the
 /// `Dump` the list calls on each item.
@@ -45,7 +43,6 @@ pub(super) struct ListState<I: MatTListItem> {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct MatTList<I: MatTListItem> {
-    parent: StandardTransient,
     state: SharedState<ListState<I>>,
 }
 
@@ -72,7 +69,6 @@ impl<I: MatTListItem> MatTList<I> {
     /// `MAT_TList()`: an empty list; `MatListOfEdge::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(ListState {
                 first: Handle::default(),
                 last: Handle::default(),
@@ -219,28 +215,16 @@ impl<I: MatTListItem> RuntimeTyped for MatTList<I> {
     fn static_type() -> &'static RuntimeType {
         // The registry is keyed by the Rust type, so each instance keeps its own
         // descriptor (a static in a generic function would be shared).
-        RuntimeType::retain_class_descriptor::<Self>(RuntimeType::register::<Self>(
+        RuntimeType::register::<Self>(
             I::LIST_NAME,
             std::mem::size_of::<Self>(),
-            Some(StandardTransient::static_type()),
-        ))
-    }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        project_concrete::<Self>(object)
+            Some(<dyn Transient>::static_type()),
+        )
     }
 }
 
 impl<I: MatTListItem> Transient for MatTList<I> {
     fn dynamic_type(&self) -> &'static RuntimeType {
         Self::static_type()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        if requested == TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.parent.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        &self.parent
     }
 }

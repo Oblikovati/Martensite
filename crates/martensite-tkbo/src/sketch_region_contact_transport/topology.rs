@@ -119,10 +119,15 @@ pub(super) fn domain_axes(
     domain_index: usize,
 ) -> Option<[usize; 2]> {
     let domain = &retained.census.domains[domain_index];
-    let crate::sketch_region_certification::DomainEvidence::PairedReport { source_slots, .. } =
-        domain.evidence
-    else {
-        return None;
+    let source_slots = match domain.evidence {
+        crate::sketch_region_certification::DomainEvidence::PairedReport {
+            source_slots, ..
+        }
+        | crate::sketch_region_certification::DomainEvidence::BernsteinReport {
+            source_slots,
+            ..
+        } => source_slots,
+        _ => return None,
     };
     let mut axes = [0; 2];
     for (position, axis) in source_slots.into_iter().enumerate() {

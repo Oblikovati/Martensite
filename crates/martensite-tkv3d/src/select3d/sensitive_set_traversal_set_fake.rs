@@ -4,21 +4,17 @@ use crate::select3d::{
     Select3DBndBox3d, Select3DSensitiveEntity, Select3DSensitiveEntityBase,
     Select3DSensitivePrimitiveArray, Select3DSensitiveSet, Select3DSensitiveSetBase,
 };
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::Point3;
 
 pub(super) struct CallbackSensitiveSet {
-    transient: StandardTransient,
     primitive: Select3DSensitivePrimitiveArray,
 }
-martensite_tkernel::impl_transient!(CallbackSensitiveSet, "Martensite_CallbackSensitiveSet", dyn Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(CallbackSensitiveSet, "Martensite_CallbackSensitiveSet", dyn Select3DSensitiveSet,
     interfaces: [dyn Select3DSensitiveEntity, dyn Select3DSensitiveSet]);
 impl CallbackSensitiveSet {
     pub(super) fn new(primitive: Select3DSensitivePrimitiveArray) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            primitive,
-        }
+        Self { primitive }
     }
 }
 // Geometry and lifecycle stay on the real primitive; only element callbacks expose scratch state.

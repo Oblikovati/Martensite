@@ -26,7 +26,7 @@ type PcurvePair = (Handle<StepGeomPcurve>, Handle<StepGeomPcurve>);
 /// The two pcurves of a surface curve when both lie on `surface`.
 fn both_on_surface(
     curve: &StepGeomSurfaceCurve,
-    surface: &Handle<StepGeomSurface>,
+    surface: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
 ) -> Result<Option<PcurvePair>, Failure> {
     let first = associated_pcurve(curve, 1)?;
     let second = associated_pcurve(curve, 2)?;
@@ -39,8 +39,8 @@ fn both_on_surface(
 
 /// How many oriented edges of a loop reference `edge`.
 fn occurrences_in_loop(
-    edge: &Handle<StepShapeEdge>,
-    edge_loop: &Handle<StepShapeEdgeLoop>,
+    edge: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
+    edge_loop: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
 ) -> Result<i32, Failure> {
     let live = step_live(edge_loop, "StepToTopoDSGeometricTool")?;
     let mut count = 0;
@@ -179,8 +179,8 @@ impl StepToTopoDSGeometricTool {
     /// `PCurve(SurfCurve, BasisSurf, thePCurve, last)`: the rank after `last` of a pcurve lying on
     /// the surface and that pcurve, 0 and a null handle without one.
     pub fn pcurve(
-        surf_curve: &Handle<StepGeomSurfaceCurve>,
-        basis_surf: &Handle<StepGeomSurface>,
+        surf_curve: &Handle<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>,
+        basis_surf: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         last: i32,
     ) -> Result<(i32, Handle<StepGeomPcurve>), Failure> {
         let live = step_live(surf_curve, "StepToTopoDSGeometricTool::PCurve")?;
@@ -197,10 +197,10 @@ impl StepToTopoDSGeometricTool {
     }
     /// `is_seam_curve`: two oriented edges of the same wire reference the same edge.
     pub fn is_seam_curve(
-        surf_curve: &Handle<StepGeomSurfaceCurve>,
-        surf: &Handle<StepGeomSurface>,
-        step_edge: &Handle<StepShapeEdge>,
-        edge_loop: &Handle<StepShapeEdgeLoop>,
+        surf_curve: &Handle<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>,
+        surf: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
+        step_edge: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
+        edge_loop: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
     ) -> Result<bool, Failure> {
         if surf_curve.cast::<StepGeomSeamCurve>().is_some() {
             return Ok(true);
@@ -214,10 +214,10 @@ impl StepToTopoDSGeometricTool {
     /// `is_like_seam`: the two pcurves lie on the same surface but on different wires, the typical
     /// CATIA B-rep of a cylinder coded as two faces on one closed B-spline surface.
     pub fn is_like_seam(
-        surf_curve: &Handle<StepGeomSurfaceCurve>,
-        surf: &Handle<StepGeomSurface>,
-        step_edge: &Handle<StepShapeEdge>,
-        edge_loop: &Handle<StepShapeEdgeLoop>,
+        surf_curve: &Handle<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>,
+        surf: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
+        step_edge: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
+        edge_loop: &Handle<dyn crate::StepEntityBase<StepShapeEdgeLoop>>,
     ) -> Result<bool, Failure> {
         let live = step_live(surf_curve, "StepToTopoDSGeometricTool::IsLikeSeam")?;
         if live.nb_associated_geometry()? != 2 {

@@ -145,7 +145,7 @@ mod tests {
             triangle_closure(&draw),
             Ok(crate::window_depth_closure::WindowDepthClosure::RasterEmpty)
         );
-        draw.vertices[2].position[0] += 0.25;
+        draw.vertices.make_mut()[2].position[0] += 0.25;
         assert_eq!(
             triangle_closure(&draw),
             Ok(crate::window_depth_closure::WindowDepthClosure::ReferencePlane)

@@ -50,7 +50,7 @@ fn reversed_pcurve(
         c = Handle::new(Geom2dTrimmedCurve::new(
             &c, first_old, last_old, true, true,
         )?)
-        .cast();
+        .into_upcast();
     }
     let curve = c
         .get()

@@ -45,7 +45,7 @@ const APPROX_MAX_SEG: i32 = 16;
 fn basis_curve(e: &Edge) -> Result<(Handle<dyn GeomCurve>, f64, f64), Failure> {
     let (mut c, f, l) = BRepTool::curve(e)?;
     if c.is_instance_name("Geom_TrimmedCurve") {
-        c = live(&c.clone().cast::<GeomTrimmedCurve>(), "curve")?.basis_curve();
+        c = live(&c.downcast::<GeomTrimmedCurve>(), "curve")?.basis_curve();
     }
     Ok((c, f, l))
 }
@@ -123,7 +123,7 @@ pub(super) fn reconstruct_pcurves(an_edge: &Edge) -> Result<(), Failure> {
         let the_loc = (an_edge.location() * &rep.location())?;
         let transformed: Handle<dyn GeomSurface> = live(&the_surf, "surface")?
             .transformed(the_loc.transformation())?
-            .cast();
+            .into_cast();
         let proj_pcurve = geom_proj_lib::curve2d_range(&c3d, (f, l), &transformed)?;
         if !proj_pcurve.is_null() {
             rep.set_pcurve(&proj_pcurve)?;
@@ -137,7 +137,7 @@ fn basis_pcurve(e: &Edge, f: &Face) -> Result<(Handle<dyn Geom2dCurve>, f64, f64
     let pc = BRepTool::curve_on_face(e, f)?;
     let mut c = pc.pcurve;
     if c.is_instance_name("Geom2d_TrimmedCurve") {
-        c = live(&c.clone().cast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
+        c = live(&c.downcast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
     }
     Ok((c, pc.first, pc.last))
 }
@@ -149,35 +149,35 @@ fn conic_parameters(
     p2: Point2,
 ) -> Result<Option<(f64, f64)>, Failure> {
     if c.is_instance_name("Geom2d_Line") {
-        let lin = live(&c.clone().cast::<Geom2dLine>(), "line")?.lin2d();
+        let lin = live(&c.downcast::<Geom2dLine>(), "line")?.lin2d();
         return Ok(Some((
             elclib::parameter(&lin, p1)?,
             elclib::parameter(&lin, p2)?,
         )));
     }
     if c.is_instance_name("Geom2d_Circle") {
-        let circ = live(&c.clone().cast::<Geom2dCircle>(), "circle")?.circ2d()?;
+        let circ = live(&c.downcast::<Geom2dCircle>(), "circle")?.circ2d()?;
         return Ok(Some((
             elclib::parameter(&circ, p1)?,
             elclib::parameter(&circ, p2)?,
         )));
     }
     if c.is_instance_name("Geom2d_Ellipse") {
-        let elips = live(&c.clone().cast::<Geom2dEllipse>(), "ellipse")?.elips2d()?;
+        let elips = live(&c.downcast::<Geom2dEllipse>(), "ellipse")?.elips2d()?;
         return Ok(Some((
             elclib::parameter(&elips, p1)?,
             elclib::parameter(&elips, p2)?,
         )));
     }
     if c.is_instance_name("Geom2d_Parabola") {
-        let parab = live(&c.clone().cast::<Geom2dParabola>(), "parabola")?.parab2d()?;
+        let parab = live(&c.downcast::<Geom2dParabola>(), "parabola")?.parab2d()?;
         return Ok(Some((
             elclib::parameter(&parab, p1)?,
             elclib::parameter(&parab, p2)?,
         )));
     }
     if c.is_instance_name("Geom2d_Hyperbola") {
-        let hypr = live(&c.clone().cast::<Geom2dHyperbola>(), "hyperbola")?.hypr2d()?;
+        let hypr = live(&c.downcast::<Geom2dHyperbola>(), "hyperbola")?.hypr2d()?;
         return Ok(Some((
             elclib::parameter(&hypr, p1)?,
             elclib::parameter(&hypr, p2)?,
@@ -215,14 +215,14 @@ fn concat_pcurves(
     let tc1: Handle<dyn Geom2dBoundedCurve> = Handle::new(Geom2dTrimmedCurve::new(
         &pcurve1, first1, last1, true, true,
     )?)
-    .cast();
+    .into_upcast();
     let tc2: Handle<dyn Geom2dBoundedCurve> = Handle::new(Geom2dTrimmedCurve::new(
         &pcurve2, first2, last2, true, true,
     )?)
-    .cast();
+    .into_upcast();
     let mut concat = CompCurve2d::with_curve(&tc1, ParameterisationType::TgtThetaOver2)?;
     concat.add(&tc2, precision::confusion(), after)?;
-    let mut new_pcurve: Handle<dyn Geom2dCurve> = concat.bspline_curve().cast();
+    let mut new_pcurve: Handle<dyn Geom2dCurve> = concat.bspline_curve().into_upcast();
     if live(&new_pcurve, "pcurve")?.continuity() < Continuity::C1 {
         let approx = ApproxCurve2d::from_curve(
             &new_pcurve,
@@ -232,7 +232,7 @@ fn concat_pcurves(
             APPROX_MAX_DEG,
         )?;
         if approx.has_result() {
-            new_pcurve = approx.curve().cast();
+            new_pcurve = approx.curve().into_upcast();
         }
     }
     let c = live(&new_pcurve, "pcurve")?;
@@ -307,15 +307,15 @@ fn concat_curves(
     ends: &GlueEnds,
 ) -> Result<Option<TrimmedCurve>, Failure> {
     let tc1: Handle<dyn GeomBoundedCurve> =
-        Handle::new(GeomTrimmedCurve::new(c1, first1, last1, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(c1, first1, last1, true, true)?).into_upcast();
     let tc2: Handle<dyn GeomBoundedCurve> =
-        Handle::new(GeomTrimmedCurve::new(c2, first2, last2, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(c2, first2, last2, true, true)?).into_upcast();
     let mut concat =
         CompCurveToBSplineCurve::with_curve(&tc1, ParameterisationType::TgtThetaOver2)?;
     if !concat.add(&tc2, ends.glue_tol, ends.after, true, 0)? {
         return Ok(None);
     }
-    let mut new_curve: Handle<dyn GeomCurve> = concat.bspline_curve().cast();
+    let mut new_curve: Handle<dyn GeomCurve> = concat.bspline_curve().into_upcast();
     if live(&new_curve, "curve")?.continuity() < Continuity::C1 {
         let approx = ApproxCurve::from_curve(
             &new_curve,
@@ -325,7 +325,7 @@ fn concat_curves(
             APPROX_MAX_DEG,
         )?;
         if approx.has_result() {
-            new_curve = approx.curve().cast();
+            new_curve = approx.curve().into_upcast();
         }
     }
     let c = live(&new_curve, "curve")?;

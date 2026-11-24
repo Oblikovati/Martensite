@@ -1,6 +1,6 @@
 //! Graphic3d primitive arrays and buffers; the byte layout is compared with the native
 //! classes by the sv_array probe.
-use martensite_tkernel::standard::Handle;
+use martensite_tkernel::{ncollection::Vec3, standard::Handle};
 use martensite_tkservice::graphic3d::*;
 
 #[test]
@@ -71,6 +71,76 @@ fn is_valid_truncates_partial_triangles() {
     assert_eq!(array.item_number(), 1);
 }
 
+fn indexed_triangle(vertices: i32, edge_capacity: i32) -> Graphic3dArrayOfTriangles {
+    let array = Graphic3dArrayOfTriangles::new(vertices, edge_capacity, 0).unwrap();
+    for vertex in 0..vertices {
+        array.add_vertex(vertex as f32, 0.0, 0.0).unwrap();
+    }
+    for rank in [1, 2, vertices] {
+        array.add_edge(rank).unwrap();
+    }
+    array
+}
+
+#[test]
+fn is_valid_rechecks_live_vertex_count_and_direct_index_edits() {
+    let array = indexed_triangle(4, 3);
+    let indices = array.indices();
+    let vertices = array.attributes();
+    assert!(array.is_valid());
+    vertices.set_nb_elements(3);
+    assert!(!array.is_valid());
+    vertices.set_nb_elements(4);
+    assert!(array.is_valid());
+    let mut index_storage = indices.buffer_base().state.write();
+    index_storage.data.as_mut_slice()[..2].copy_from_slice(&4_u16.to_le_bytes());
+    drop(index_storage);
+    assert!(!array.is_valid());
+    assert!(indices.set_index(0, 0));
+    assert!(array.is_valid());
+}
+
+#[test]
+fn is_valid_checks_the_whole_pre_truncation_prefix() {
+    let array = indexed_triangle(3, 4);
+    let indices = array.indices();
+    assert!(array.is_valid());
+    assert!(indices.set_index(3, 3));
+    indices.set_nb_elements(4);
+    assert!(!array.is_valid());
+    assert_eq!(array.edge_number(), 3);
+    assert!(array.is_valid());
+}
+
+#[test]
+fn is_valid_rejects_an_index_prefix_beyond_storage() {
+    let array = indexed_triangle(3, 3);
+    let indices = array.indices();
+    assert!(array.is_valid());
+    indices.set_nb_elements(6);
+    assert!(!array.is_valid());
+    assert!(!array.is_valid());
+    indices.set_nb_elements(3);
+    assert!(array.is_valid());
+}
+
+#[test]
+fn is_valid_preserves_signed_words_and_uses_actual_stride() {
+    let array = indexed_triangle(3, 3);
+    let indices = array.indices();
+    assert!(indices.init_int32(3).unwrap());
+    let mut state = indices.buffer_base().state.write();
+    state.data.as_mut_slice().fill(0xff);
+    drop(state);
+    assert!(array.is_valid());
+    indices.buffer_base().state.write().stride = 3;
+    assert!(array.is_valid());
+    indices.buffer_base().state.write().stride = 8;
+    assert!(!array.is_valid());
+    indices.buffer_base().state.write().stride = 0;
+    assert!(array.is_valid());
+}
+
 #[test]
 fn bounds_track_counts_and_colors() {
     let array = Graphic3dArrayOfPolylines::with_options(4, 2, 0, false, true).unwrap();
@@ -124,4 +194,23 @@ fn deinterleaved_buffers_pack_each_attribute() {
     }];
     assert!(packed.init_checked(2, &attributes).unwrap());
     assert!(packed.set_interleaved(false).is_err());
+}
+
+#[test]
+fn bulk_read_keeps_packed_offsets_at_allocated_capacity() {
+    let flags = GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_DEINTERLEAVED | GRAPHIC3D_ARRAY_FLAGS_VERTEX_NORMAL;
+    let array = Graphic3dArrayOfTriangles::new(3, 0, flags).unwrap();
+    let buffer = array.attributes();
+    assert!(buffer.write_at(36, Vec3::new(0f32, 1., 0.)));
+    buffer.set_nb_elements(1);
+    let read = buffer.read_buffer();
+    assert_eq!(read.element_count(), 1);
+    assert_eq!(read.element_stride(), 24);
+    assert_eq!(read.bytes().len(), 72);
+    let normals = read.attribute(Graphic3dTypeOfAttribute::Norm).unwrap();
+    assert_eq!(normals.kind, Graphic3dTypeOfData::Vec3);
+    assert_eq!(normals.byte_offset(0), Some(36));
+    assert_eq!(normals.value::<Vec3<f32>>(0).unwrap().data(), [0., 1., 0.]);
+    assert_eq!(normals.value::<f32>(3), None);
+    assert!(buffer.buffer_base().state.try_write().is_none());
 }

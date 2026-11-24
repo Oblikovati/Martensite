@@ -28,7 +28,7 @@ impl Decomposition<'_> {
         if line.nb_points() > 1 {
             let wline = IntPatchWLine::new_undecided(line, false);
             wline.set_creating_way_info(self.wline.get_creating_way());
-            new_lines.push(Handle::new(wline).cast());
+            new_lines.push(Handle::new(wline).into_upcast());
         }
         *line = Handle::new(IntSurfLineOn2S::new(None));
     }
@@ -192,7 +192,7 @@ impl Decomposition<'_> {
                 line.add(&self.wline.point(ilprm)?);
                 let wline = IntPatchWLine::new_undecided(&line, false);
                 wline.set_creating_way_info(self.wline.get_creating_way());
-                new_lines.push(Handle::new(wline).cast());
+                new_lines.push(Handle::new(wline).into_upcast());
             }
         }
         Ok(())

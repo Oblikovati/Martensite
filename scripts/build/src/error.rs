@@ -45,6 +45,8 @@ pub enum BuildError {
     Usage(String),
     /// One or more lint checks reported problems.
     LintFailed(String),
+    /// A paired performance case is slower than OCCT or did different work (#583).
+    ParityFailed(String),
 }
 
 impl fmt::Display for BuildError {
@@ -63,6 +65,7 @@ impl fmt::Display for BuildError {
             Self::ReleaseRule(rule) => write!(f, "release rejected: {rule}"),
             Self::Usage(message) => write!(f, "{message}"),
             Self::LintFailed(message) => write!(f, "lint failed: {message}"),
+            Self::ParityFailed(message) => write!(f, "OCCT parity failed: {message}"),
         }
     }
 }

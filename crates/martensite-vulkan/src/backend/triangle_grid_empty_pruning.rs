@@ -30,14 +30,15 @@ fn private_geometry_with(
     let mut replacement = None;
     for (ordinal, indices) in draw.indices.as_chunks::<3>().0.iter().enumerate() {
         if should_replace(draw, indices, ordinal)? {
-            let encoded = replacement.get_or_insert_with(|| draw.indices.clone());
+            let encoded = replacement.get_or_insert_with(|| draw.indices.to_vec());
             encoded[ordinal * 3..ordinal * 3 + 3].fill(indices[0]);
         }
     }
     if replacement.is_some() {
         require_private_carrier_pass(draw, version)?;
     }
-    Ok(replacement.map(|indices| draw.with_replacement_geometry(draw.vertices.clone(), indices)))
+    Ok(replacement
+        .map(|indices| draw.with_replacement_geometry(draw.vertices.clone(), indices.into())))
 }
 
 fn native_grid_v4_empty(

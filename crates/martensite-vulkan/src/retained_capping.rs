@@ -3,9 +3,11 @@ use crate::{
     Graphic3dDrawGroup, PrimitiveDraw, PrimitiveTopology, RenderCappingPass, RenderClipping,
     RenderError,
     capping_planes::{CapPlane, capping_planes},
+    driver_structure::{GeometryBatches, GroupBatch},
     error::rejected,
 };
 use martensite_tkernel::standard::Handle;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 struct CapGroup {
     group: Handle<Graphic3dDrawGroup>,
@@ -16,7 +18,7 @@ pub(crate) struct CappingScene<'a> {
     pub extent: [u32; 2],
     pub fields: &'a Graphic3dCStructureFields,
     pub rendering: &'a Graphic3dRenderingParams,
-    pub clipping: &'a Handle<Graphic3dSequenceOfHClipPlane>,
+    pub clipping: &'a Handle<dyn Graphic3dClipPlaneSequenceSource>,
     pub elements: &'a crate::render_element_pass::RenderElementPass,
 }
 impl CappingScene<'_> {
@@ -26,13 +28,13 @@ impl CappingScene<'_> {
     }
     pub fn draws(
         &self,
-        batches: Vec<Vec<Handle<dyn Graphic3dGroup>>>,
+        batches: GeometryBatches,
     ) -> Result<crate::stencil_program::StencilProgram, RenderError> {
         // Groups render instanced structures first (append_reversed), and each group inherits
         // the flips the groups before it left pushed (group_flipping::FlipCarry).
         let mut carry = crate::group_flipping::FlipCarry::default();
         let mut groups = Vec::with_capacity(batches.len());
-        for batch in batches.into_iter().rev() {
+        for batch in batches.into_batches().rev() {
             groups.push(self.snapshot_batch(batch, &mut carry)?);
         }
         groups.reverse();
@@ -65,7 +67,7 @@ impl CappingScene<'_> {
     }
     fn snapshot_batch(
         &self,
-        batch: Vec<Handle<dyn Graphic3dGroup>>,
+        batch: GroupBatch,
         carry: &mut crate::group_flipping::FlipCarry,
     ) -> Result<Vec<CapGroup>, RenderError> {
         // GlWorkspace::ShouldRender: the shadow-map pass skips GlGroup::HasPersistence.

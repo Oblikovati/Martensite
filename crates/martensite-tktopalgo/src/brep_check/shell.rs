@@ -7,7 +7,7 @@ use super::status::BRepCheckStatus;
 use martensite_tkbrep::topods::{Shape, Shell};
 use martensite_tkbrep::toptools::{IndexedDataMapOfShapeListOfShape, IndexedMapOfShape};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// The own fields of `BRepCheck_Shell`.
@@ -37,11 +37,10 @@ pub(super) struct ShellFields {
 /// assert_eq!(checker.status().unwrap().first(), Some(&BRepCheckStatus::EmptyShell));
 /// ```
 pub struct BRepCheckShell {
-    transient: StandardTransient,
     base: ResultBase,
     pub(super) fields: SharedState<ShellFields>,
 }
-impl_transient!(BRepCheckShell, "BRepCheck_Shell", dyn BRepCheckResult, transient,
+impl_transient!(BRepCheckShell, "BRepCheck_Shell", dyn BRepCheckResult,
     interfaces: [dyn BRepCheckResult]);
 
 /// `Propagate(mapEF, theFace, theMapF)`: the faces connected to `face` through the
@@ -72,7 +71,6 @@ impl BRepCheckShell {
     /// `BRepCheck_Shell(S)`: `Init(S)`; `BRepCheckShell::new(&shell)?`.
     pub fn new(shell: &Shell) -> Result<Self, Failure> {
         let checker = Self {
-            transient: StandardTransient::default(),
             base: ResultBase::new(),
             fields: SharedState::new(ShellFields {
                 nbori: 0,

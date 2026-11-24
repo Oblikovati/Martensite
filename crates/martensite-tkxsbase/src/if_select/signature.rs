@@ -3,7 +3,7 @@
 use crate::interface::{InterfaceInterfaceModel, InterfaceSignType};
 use martensite_tkernel::{
     impl_transient_interface,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 
@@ -105,7 +105,7 @@ pub trait IFSelectSignature: InterfaceSignType {
     /// `Matches(ent, model, text, exact)`: `MatchValue` of the value of `ent`.
     fn matches(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
         text: &AsciiString,
         exact: bool,
@@ -116,7 +116,7 @@ pub trait IFSelectSignature: InterfaceSignType {
 impl_transient_interface!(
     dyn IFSelectSignature,
     "IFSelectSignature",
-    dyn InterfaceSignType
+    dyn InterfaceSignType, upcasts: [dyn InterfaceSignType]
 );
 
 /// `IFSelectSignature::Name`: the name given at the construction.
@@ -135,10 +135,10 @@ macro_rules! impl_signature_text {
             fn text(
                 &self,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
                 context: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> martensite_tkernel::tcollection::AsciiString {
                 $crate::interface::interface_sign_type_text(self, ent, context)

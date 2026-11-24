@@ -1,5 +1,6 @@
 //! Graphic3d factory routes ordinary structure/view creation to Martensite rendering.
 use crate::retained_texture_images::RetainedTextureImages;
+use crate::text_layout::TextProvider;
 use crate::{
     RenderBackend, RenderError, VulkanOptions, VulkanRenderer,
     driver_backend::{DriverBackend, SharedRenderDevice},
@@ -16,14 +17,14 @@ use martensite_tkservice::{aspect::AspectWindow, graphic3d::*};
 use std::sync::Arc;
 /// A Graphic3d driver with an injected device; `Graphic3dRenderDriver::new(VulkanOptions::default())?`.
 pub struct Graphic3dRenderDriver {
-    transient: StandardTransient,
     base: Graphic3dGraphicDriverBase,
-    device: SharedRenderDevice,
-    text_source: Arc<dyn crate::TextLayoutSource>,
+    pub(crate) device: SharedRenderDevice,
+    text_source: TextProvider,
     pub(crate) mesh_edge_pipeline: crate::RenderMeshEdgePipeline,
     pub(crate) unlit_face_color_policy: crate::RenderUnlitFaceColorPolicy,
     pub(crate) lighting_selection: crate::driver_lighting_capability::SharedLightingSelection,
     pub(crate) texture_images: Arc<crate::retained_texture_images::RetainedTextureImages>,
+    pub(crate) primitive_sources: Arc<crate::primitive_cache::RetainedPrimitives>,
     /// The views and structures this driver created, shared with its views.
     pub(crate) objects: Arc<crate::driver_device_lost::DriverObjects>,
     limit: u32,
@@ -39,11 +40,11 @@ pub struct Graphic3dRenderDriver {
 struct DriverBuildInputs {
     backend: DriverBackend,
     limit: u32,
-    text_source: Arc<dyn crate::TextLayoutSource>,
+    text_source: TextProvider,
     selection: RenderPipelinePolicies,
     line_widths: crate::RenderLineWidthPolicy,
 }
-martensite_tkernel::impl_transient!(Graphic3dRenderDriver, "Martensite_RenderDriver", StandardTransient, transient, interfaces:[dyn Graphic3dGraphicDriver]);
+martensite_tkernel::impl_transient!(Graphic3dRenderDriver, "Martensite_RenderDriver", StandardTransient, interfaces:[dyn Graphic3dGraphicDriver]);
 impl Graphic3dRenderDriver {
     /// Create a Vulkan 1.3 driver; `Graphic3dRenderDriver::new(options)?`.
     pub fn new(options: VulkanOptions) -> Result<Handle<Self>, RenderError> {
@@ -237,7 +238,6 @@ impl Graphic3dRenderDriver {
             RetainedTextureImages::with_coordinate_pipeline(inputs.selection.texture_coordinates);
         let texture_images = Arc::new(retained);
         Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dGraphicDriverBase::new(&Handle::default()),
             device: Arc::new(SharedState::new(inputs.backend)),
             text_source: inputs.text_source,
@@ -249,6 +249,7 @@ impl Graphic3dRenderDriver {
             )),
             unlit_face_color_policy: inputs.selection.unlit_faces,
             texture_images,
+            primitive_sources: Arc::default(),
             objects: Arc::default(),
             limit: inputs.limit,
             line_widths: inputs.line_widths,
@@ -267,7 +268,7 @@ impl Graphic3dRenderDriver {
         Self::build(DriverBuildInputs {
             limit: renderer.capture_limit(),
             backend: DriverBackend::Vulkan(Box::new(renderer)),
-            text_source: Arc::new(crate::FreeTypeTextSource::default()),
+            text_source: TextProvider::default(),
             selection,
             line_widths,
         })
@@ -341,18 +342,13 @@ impl Graphic3dGraphicDriver for Graphic3dRenderDriver {
         &self,
         manager: &Handle<Graphic3dStructureManager>,
     ) -> Result<Handle<dyn Graphic3dCStructure>, Failure> {
-        let structure: Handle<dyn Graphic3dCStructure> =
-            Graphic3dRenderStructure::new(manager, self.text_source.clone())?.cast();
-        let mut structures = self.objects.structures.write();
-        structures.retain(|weak| !weak.upgrade().is_null());
-        structures.push(structure.downgrade());
+        let structure =
+            Graphic3dRenderStructure::registered(manager, self.text_source.clone(), &self.objects)?;
         Ok(structure)
     }
     fn remove_structure(&self, structure: &mut Handle<dyn Graphic3dCStructure>) {
         self.objects
-            .structures
-            .write()
-            .retain(|weak| weak.upgrade() != *structure && !weak.upgrade().is_null());
+            .forget_structure(structure.object_address().addr());
         if let Some(value) = structure.get() {
             value.clear();
         }

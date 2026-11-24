@@ -7,7 +7,7 @@ use super::{
     InterfaceModelReports, InterfaceProtocol, InterfaceProtocolBase, InterfaceReportEntity,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeTyped, Transient, exceptions},
     tcollection::HAsciiString,
 };
 
@@ -27,7 +27,7 @@ pub struct InterfaceCopyTool {
     thelev: i32,
     therts: Vec<i32>,
     theimp: bool,
-    theent: Handle<StandardTransient>,
+    theent: Handle<dyn Transient>,
     themdu: Handle<dyn InterfaceGeneralModule>,
     the_cn: i32,
 }
@@ -60,7 +60,7 @@ impl InterfaceCopyTool {
         Ok(Self {
             thelib: lib.clone(),
             themod: amodel.clone(),
-            themap: Handle::new(InterfaceCopyMap::new(amodel)).cast(),
+            themap: Handle::new(InterfaceCopyMap::new(amodel)).into_upcast(),
             therep: Handle::new(InterfaceCopyMap::new(amodel)),
             thelst,
             thelev: 0,
@@ -116,8 +116,8 @@ impl InterfaceCopyTool {
     /// from `NewCopiedCase`); false without module.
     pub fn new_void(
         &mut self,
-        entfrom: &Handle<StandardTransient>,
-        entto: &mut Handle<StandardTransient>,
+        entfrom: &Handle<dyn Transient>,
+        entto: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         if *entfrom == self.theent {
             return Ok(self
@@ -144,8 +144,8 @@ impl InterfaceCopyTool {
     /// filled by the module unless `errstat`; a string without module is duplicated.
     pub fn copy(
         &mut self,
-        entfrom: &Handle<StandardTransient>,
-        entto: &mut Handle<StandardTransient>,
+        entfrom: &Handle<dyn Transient>,
+        entto: &mut Handle<dyn Transient>,
         mapped: bool,
         errstat: bool,
     ) -> Result<bool, Failure> {
@@ -178,8 +178,8 @@ impl InterfaceCopyTool {
     /// `Implied(entfrom, entto)` (private): the module renews the implied references.
     fn implied(
         &self,
-        entfrom: &Handle<StandardTransient>,
-        entto: &Handle<StandardTransient>,
+        entfrom: &Handle<dyn Transient>,
+        entto: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         if let Some((module, cn)) = self.thelib.select(entfrom) {
             module.renew_implied_case(cn, entfrom, entto, self)?;
@@ -190,8 +190,8 @@ impl InterfaceCopyTool {
     /// `InterfaceInterfaceError` for an entity out of the model beyond 100 levels.
     pub fn transferred(
         &mut self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+        ent: &Handle<dyn Transient>,
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let mut res = Handle::default();
         if ent.is_null() {
             return Ok(res); // Copy of a Null : very simple ...
@@ -222,9 +222,9 @@ impl InterfaceCopyTool {
     /// The report part of `Transferred`: the copy gets a report like the original's.
     fn copy_report(
         &mut self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         nument: i32,
-        res: &Handle<StandardTransient>,
+        res: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let rep = if nument != 0 {
             self.live_model()?.report_entity(nument, false)
@@ -255,8 +255,8 @@ impl InterfaceCopyTool {
     /// `Bind(ent, res)`: records a copy made outside.
     pub fn bind(
         &mut self,
-        ent: &Handle<StandardTransient>,
-        res: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
+        res: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let num = self.live_model()?.number(ent);
         self.live_map()?.bind(ent, res)?;
@@ -265,8 +265,8 @@ impl InterfaceCopyTool {
     /// `Search(ent, res)`.
     pub fn search(
         &self,
-        ent: &Handle<StandardTransient>,
-        res: &mut Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
+        res: &mut Handle<dyn Transient>,
     ) -> Result<bool, Failure> {
         self.live_map()?.search(ent, res)
     }
@@ -279,8 +279,8 @@ impl InterfaceCopyTool {
     pub fn last_copied_after(
         &self,
         numfrom: i32,
-        ent: &mut Handle<StandardTransient>,
-        res: &mut Handle<StandardTransient>,
+        ent: &mut Handle<dyn Transient>,
+        res: &mut Handle<dyn Transient>,
     ) -> Result<i32, Failure> {
         for num in numfrom + 1..=self.thelst.length() {
             if self.thelst.value(num, 0)? {
@@ -293,7 +293,7 @@ impl InterfaceCopyTool {
         Ok(0)
     }
     /// `TransferEntity(ent)`: `Transferred` without the result.
-    pub fn transfer_entity(&mut self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn transfer_entity(&mut self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         self.transferred(ent).map(|_| ())
     }
     /// `RenewImpliedRefs`: once, the implied references of the copies.
@@ -374,7 +374,7 @@ impl InterfaceCopyTool {
 
 /// The copy of `Copy` without module: a string is duplicated, anything else is not
 /// copied.
-fn copy_string(entfrom: &Handle<StandardTransient>, entto: &mut Handle<StandardTransient>) -> bool {
+fn copy_string(entfrom: &Handle<dyn Transient>, entto: &mut Handle<dyn Transient>) -> bool {
     let Some(kind) = entfrom.dynamic_type() else {
         return false;
     };
@@ -382,6 +382,6 @@ fn copy_string(entfrom: &Handle<StandardTransient>, entto: &mut Handle<StandardT
         return false;
     }
     let text = entfrom.cast::<HAsciiString>();
-    *entto = Handle::new(HAsciiString::copied(&text)).cast();
+    *entto = Handle::new(HAsciiString::copied(&text)).into_upcast();
     true
 }

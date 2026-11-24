@@ -13,12 +13,11 @@ use martensite_tkg3d::{
 use martensite_tkmath::gp::{Plane3, Point3};
 use martensite_tkshhealing::shape_upgrade::{
     FaceDivider, FixSmallCurves, ShapeDivider, ShapeUpgradeFixSmallBezierCurves,
-    ShapeUpgradeFixSmallCurves, ShapeUpgradeShapeConvertToBezier, ShapeUpgradeWireDivide,
-    WireDivider,
+    ShapeUpgradeShapeConvertToBezier, WireDivider,
 };
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace};
 
-fn selected_wire_policy() -> Handle<ShapeUpgradeWireDivide> {
+fn selected_wire_policy() -> Handle<dyn WireDivider> {
     let converter = ShapeUpgradeShapeConvertToBezier::empty();
     converter.set_3d_conversion(true);
     let face = ShapeDivider::split_face_tool(&converter);
@@ -31,7 +30,7 @@ fn selected_conversion_policy_installs_specialized_small_bezier_recovery() {
     assert!(!small.cast::<ShapeUpgradeFixSmallBezierCurves>().is_null());
 }
 
-fn configured_small_policy() -> Handle<ShapeUpgradeFixSmallCurves> {
+fn configured_small_policy() -> Handle<dyn FixSmallCurves> {
     let wire = selected_wire_policy();
     let small = wire.fix_small_curve_tool();
     let edge = recovery_line(Point3::default(), Point3::new(1., 0., 0.));

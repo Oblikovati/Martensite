@@ -2,9 +2,11 @@
 //! `Init`.
 use super::{
     Graphic3dAttribute, Graphic3dBufferSource, Graphic3dBufferState, Graphic3dTypeOfAttribute,
+    Graphic3dTypeOfData,
 };
-use martensite_tkernel::ncollection::{Vec2, Vec3, Vec4};
+use martensite_tkernel::ncollection::{BufferRevision, Vec2, Vec3, Vec4};
 use martensite_tkernel::standard::Failure;
+use std::sync::RwLockReadGuard;
 
 /// A plain value stored in buffer bytes in native (little-endian x86-64) layout.
 pub trait Graphic3dBufferValue: Copy {
@@ -98,8 +100,105 @@ fn nb_max_elements_of(state: &Graphic3dBufferState) -> i32 {
     (state.data.size() / state.stride as usize) as i32
 }
 
+/// Guarded bulk view of a buffer; `let read = buffer.read_buffer();`.
+///
+/// The guard keeps the bytes and layout stable. Drop it before editing the buffer.
+/// It is thread-confined like the underlying read lock.
+pub struct Graphic3dBufferRead<'a> {
+    state: RwLockReadGuard<'a, Graphic3dBufferState>,
+    interleaved: bool,
+}
+
+impl Graphic3dBufferRead<'_> {
+    /// The element count in use; `read.element_count()`.
+    pub fn element_count(&self) -> i32 {
+        self.state.nb_elements
+    }
+
+    /// The interleaved element stride; `read.element_stride()`.
+    pub fn element_stride(&self) -> i32 {
+        self.state.stride
+    }
+
+    /// The allocated bytes without copying; `read.bytes().len()`.
+    pub fn bytes(&self) -> &[u8] {
+        self.state.data.as_slice()
+    }
+
+    /// The content revision visible to this guard, if address tracking is available.
+    /// Example: `read.content_revision()`.
+    pub fn content_revision(&self) -> Option<BufferRevision> {
+        self.state.data.content_revision()
+    }
+
+    /// Compare the guarded bytes' revision without taking a second content lease.
+    /// Example: `read.matches_content_revision(&saved_revision)`.
+    pub fn matches_content_revision(&self, saved: &BufferRevision) -> bool {
+        self.state.data.matches_content_revision(saved)
+    }
+
+    /// Borrow the layout used to interpret the bytes; `let (interleaved, layout) = read.attribute_layout();`.
+    pub fn attribute_layout(&self) -> (bool, &[Graphic3dAttribute]) {
+        let count = (self.state.nb_attributes.max(0) as usize).min(self.state.attributes.len());
+        (self.interleaved, &self.state.attributes[..count])
+    }
+
+    /// A strided attribute in the guarded bytes; `read.attribute(Graphic3dTypeOfAttribute::Pos)`.
+    pub fn attribute(&self, role: Graphic3dTypeOfAttribute) -> Option<Graphic3dAttributeRead<'_>> {
+        let (index, offset, stride) = attribute_data_of(&self.state, self.interleaved, role)?;
+        Some(Graphic3dAttributeRead {
+            kind: self.state.attributes[index as usize].data_type,
+            bytes: self.bytes(),
+            offset,
+            stride,
+        })
+    }
+}
+
+/// A read-only attribute stream; `attribute.value::<Vec3<f32>>(0)`.
+pub struct Graphic3dAttributeRead<'a> {
+    /// The stored attribute type.
+    pub kind: Graphic3dTypeOfData,
+    bytes: &'a [u8],
+    offset: usize,
+    stride: usize,
+}
+
+impl Graphic3dAttributeRead<'_> {
+    /// The starting byte of a vertex's attribute; `attribute.byte_offset(0)`.
+    pub fn byte_offset(&self, vertex: usize) -> Option<usize> {
+        self.offset.checked_add(self.stride.checked_mul(vertex)?)
+    }
+
+    /// Reads one value with the guard's layout; `attribute.value::<Vec3<f32>>(0)`.
+    pub fn value<T: Graphic3dBufferValue>(&self, vertex: usize) -> Option<T> {
+        let offset = self.byte_offset(vertex)?;
+        let end = offset.checked_add(T::SIZE)?;
+        self.bytes.get(offset..end).map(T::read)
+    }
+}
+
 /// The non-virtual members of `Graphic3d_Buffer`.
 pub trait Graphic3dBufferMembers: Graphic3dBufferSource {
+    /// Locks the layout and bytes once for bulk reads; `buffer.read_buffer().bytes().len()`.
+    fn read_buffer(&self) -> Graphic3dBufferRead<'_> {
+        // A buffer subclass may consult its own state to describe its layout.
+        let interleaved = self.is_interleaved();
+        Graphic3dBufferRead {
+            state: self.buffer_base().state.read(),
+            interleaved,
+        }
+    }
+
+    /// Read packed bytes when the buffer has no mutable upload range protocol.
+    /// Example: `let read = source.read_immutable_buffer();`.
+    fn read_immutable_buffer(&self) -> Option<Graphic3dBufferRead<'_>> {
+        let interleaved = self.immutable_interleaving()?;
+        Some(Graphic3dBufferRead {
+            state: self.buffer_base().state.read(),
+            interleaved,
+        })
+    }
     /// The allocated element count, `size / Stride`; `buffer.nb_max_elements()`.
     fn nb_max_elements(&self) -> i32 {
         nb_max_elements_of(&self.buffer_base().state.read())

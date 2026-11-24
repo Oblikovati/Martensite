@@ -10,7 +10,8 @@ use crate::step_data::StepDataFactors;
 use crate::step_dim_tol::*;
 use crate::step_entity::{step_array1_item, step_live};
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkxcaf::NativeEnum;
 use martensite_tkxcaf::xcaf_dim_tol_objects::{
@@ -21,7 +22,7 @@ use martensite_tkxcaf::xcaf_dim_tol_objects::{
 use martensite_tkxcaf::xcaf_doc::XCAFDocGeomTolerance;
 
 /// The type a combined tolerance records, `None` for another entity.
-fn recorded_type(entity: &Handle<StandardTransient>) -> Option<StepDimTolGeometricToleranceType> {
+fn recorded_type(entity: &Handle<dyn Transient>) -> Option<StepDimTolGeometricToleranceType> {
     macro_rules! recorded {
         ($($class:ty),+) => {
             $(if let Some(live) = entity.cast::<$class>().get() {
@@ -41,9 +42,12 @@ fn recorded_type(entity: &Handle<StandardTransient>) -> Option<StepDimTolGeometr
 }
 
 /// `getTolType`: the type of a tolerance; `None` for another entity.
-fn tolerance_type_of(entity: &Handle<StandardTransient>) -> XCAFDimTolObjectsGeomToleranceType {
+fn tolerance_type_of(entity: &Handle<dyn Transient>) -> XCAFDimTolObjectsGeomToleranceType {
     use XCAFDimTolObjectsGeomToleranceType as Kind;
-    if entity.cast::<StepDimTolGeometricTolerance>().is_null() {
+    if entity
+        .view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>()
+        .is_null()
+    {
         return Kind::None;
     }
     if let Some(recorded) = recorded_type(entity) {
@@ -94,7 +98,7 @@ fn scaled_length(
 /// whole member, on a projection without a named unit.
 fn read_zone(
     session: &SessionGraph,
-    zone_entity: &Handle<StandardTransient>,
+    zone_entity: &Handle<dyn Transient>,
     zone: &StepDimTolToleranceZone,
     object: &XCAFDimTolObjectsGeomToleranceObject,
     factors: &StepDataFactors,
@@ -138,10 +142,10 @@ fn read_zone(
 
 /// The modifiers of a tolerance of any kind, null without.
 fn modifiers_of(
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
 ) -> Result<Handle<HArray1<StepDimTolGeometricToleranceModifier>>, Failure> {
     if let Some(live) = entity
-        .cast::<StepDimTolGeometricToleranceWithModifiers>()
+        .view::<dyn crate::StepEntityBase<StepDimTolGeometricToleranceWithModifiers>>()
         .get()
     {
         return Ok(live.modifiers());
@@ -164,7 +168,7 @@ fn modifiers_of(
 }
 
 /// The value and the unit of the maximal tolerance, when there is one.
-fn maximum_of(entity: &Handle<StandardTransient>) -> Result<(f64, StepBasicUnit), Failure> {
+fn maximum_of(entity: &Handle<dyn Transient>) -> Result<(f64, StepBasicUnit), Failure> {
     if let Some(live) = entity
         .cast::<StepDimTolGeometricToleranceWithMaximumTolerance>()
         .get()
@@ -191,7 +195,7 @@ fn maximum_of(entity: &Handle<StandardTransient>) -> Result<(f64, StepBasicUnit)
 
 /// `setGeomTolObjectToXCAF`: the object of a tolerance on its label.
 pub(super) fn set_geom_tol_object_to_xcaf(
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     label: &TdfLabel,
     session: &SessionGraph,
     factors: &StepDataFactors,
@@ -203,8 +207,10 @@ pub(super) fn set_geom_tol_object_to_xcaf(
     let live_attribute = step_live(&attribute, WHERE)?;
     let object = live_attribute.get_object()?;
     let live_object = step_live(&object, WHERE)?;
-    let tolerance = entity.cast::<StepDimTolGeometricTolerance>();
-    let live_tolerance = step_live(&tolerance, WHERE)?;
+    let tolerance = entity.view::<dyn crate::StepEntityBase<StepDimTolGeometricTolerance>>();
+    let live_tolerance = tolerance.get().ok_or_else(|| {
+        martensite_tkernel::standard::exceptions::null_object(&format!("{WHERE}: null tolerance"))
+    })?;
     live_object.set_type(tolerance_type_of(entity));
     // get value
     let measure = measure_with_unit(&live_tolerance.magnitude());

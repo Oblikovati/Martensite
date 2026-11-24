@@ -8,6 +8,7 @@
     reason = "the members keep the form of the rules they state, and values a reader then ignores"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_lower, iges_placement_methods};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::{iges_array1_item, iges_live};
 use crate::iges_geom::{IgesGeomDirection, IgesGeomPoint};
@@ -22,16 +23,16 @@ iges_entity! {
 /// representation.
 /// From IGES-5.3, Form may be `1` for a BREP
 /// Else it is for a Boolean Tree, Primitive, other Solid Inst.
-IgesSolidSolidInstance, IgesSolidSolidInstanceState, "IgesSolidSolidInstance", parent IgesDataIgesEntity, { entity: Handle<IgesDataIgesEntity> }
+IgesSolidSolidInstance, IgesSolidSolidInstanceState, "IgesSolidSolidInstance", parent IgesDataIgesEntity, { entity: Handle<dyn IgesDataEntityKind> }
 }
 impl IgesSolidSolidInstance {
     iges_methods! {
-    get entity = entity: Handle<IgesDataIgesEntity>;
+    get entity = entity: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class
     /// SolidInstance
     /// - anEntity : the entity corresponding to the solid
-    pub fn init(&self, an_entity: &Handle<IgesDataIgesEntity>) {
+    pub fn init(&self, an_entity: &Handle<dyn IgesDataEntityKind>) {
         self.state.write().entity = an_entity.clone();
         self.init_type_and_form(430, 0);
     }
@@ -49,11 +50,11 @@ iges_entity! {
 /// defines SolidOfLinearExtrusion, Type `164` Form Number `0`
 /// Solid of linear extrusion is defined by translating an
 /// area determined by a planar curve
-IgesSolidSolidOfLinearExtrusion, IgesSolidSolidOfLinearExtrusionState, "IgesSolidSolidOfLinearExtrusion", parent IgesDataIgesEntity, { curve: Handle<IgesDataIgesEntity>, length: f64, direction: Xyz }
+IgesSolidSolidOfLinearExtrusion, IgesSolidSolidOfLinearExtrusionState, "IgesSolidSolidOfLinearExtrusion", parent IgesDataIgesEntity, { curve: Handle<dyn IgesDataEntityKind>, length: f64, direction: Xyz }
 }
 impl IgesSolidSolidOfLinearExtrusion {
     iges_methods! {
-    get curve = curve: Handle<IgesDataIgesEntity>;
+    get curve = curve: Handle<dyn IgesDataEntityKind>;
     get extrusion_length = length: f64;
     }
     iges_placement_methods! {
@@ -66,7 +67,7 @@ impl IgesSolidSolidOfLinearExtrusion {
     /// - aLength    : the length of extrusion
     /// - aDirection : the vector specifying the direction of extrusion
     ///   default (0,0,1)
-    pub fn init(&self, a_curve: &Handle<IgesDataIgesEntity>, length: f64, direction: Xyz) {
+    pub fn init(&self, a_curve: &Handle<dyn IgesDataEntityKind>, length: f64, direction: Xyz) {
         {
             let mut state = self.state.write();
             state.curve = a_curve.clone();
@@ -81,11 +82,11 @@ iges_entity! {
 /// This entity is defined by revolving the area determined
 /// by a planar curve about a specified axis through a given
 /// fraction of full rotation.
-IgesSolidSolidOfRevolution, IgesSolidSolidOfRevolutionState, "IgesSolidSolidOfRevolution", parent IgesDataIgesEntity, { curve: Handle<IgesDataIgesEntity>, fraction: f64, axis_point: Xyz, axis: Xyz }
+IgesSolidSolidOfRevolution, IgesSolidSolidOfRevolutionState, "IgesSolidSolidOfRevolution", parent IgesDataIgesEntity, { curve: Handle<dyn IgesDataEntityKind>, fraction: f64, axis_point: Xyz, axis: Xyz }
 }
 impl IgesSolidSolidOfRevolution {
     iges_methods! {
-    get curve = curve: Handle<IgesDataIgesEntity>;
+    get curve = curve: Handle<dyn IgesDataEntityKind>;
     get fraction = fraction: f64;
     }
     iges_placement_methods! {
@@ -102,7 +103,7 @@ impl IgesSolidSolidOfRevolution {
     /// - aDirection : the direction of the axis
     pub fn init(
         &self,
-        a_curve: &Handle<IgesDataIgesEntity>,
+        a_curve: &Handle<dyn IgesDataEntityKind>,
         fract: f64,
         axis_pnt: Xyz,
         direction: Xyz,

@@ -51,7 +51,7 @@ impl<'a> GeomTool<'a> {
         minimum: i32,
         min_size: f64,
     ) -> Result<Self, Failure> {
-        let curve = Adaptor3dIsoCurve::with_iso_range(&surface.cast(), iso, parameter, range)?;
+        let curve = Adaptor3dIsoCurve::with_iso_range(&surface.upcast(), iso, parameter, range)?;
         let distribution = discretize(
             &curve,
             range,

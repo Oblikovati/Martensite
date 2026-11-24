@@ -1,15 +1,17 @@
 //! `HLRBRep_Data`.
+use self::face_classifier::FaceClassifier;
 use super::rejection_cache::RejectionCache;
 use super::{EdgeData, FaceData, FaceIterator, Intersector};
 use crate::hlr_algo::{Interference, MinMaxIndices, Projector};
 use martensite_tkbrep::toptools::IndexedMapOfShape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, ArrayError};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
-use martensite_tktopalgo::brep_top_adaptor::BRepTopAdaptorTopolTool;
 use std::sync::{Arc, RwLockWriteGuard};
+
+mod face_classifier;
 
 /// The edge records `myEData` (indices 0 to NbEdges).
 pub type EdgeDataArray = Array1<'static, EdgeData>;
@@ -45,9 +47,8 @@ pub struct Data {
     nb_faces: i32,
     nb_edges: i32,
     nb_vertices: i32,
-    base: StandardTransient,
 }
-impl_transient!(Data, "HLRBRep_Data", StandardTransient, base);
+impl_transient!(Data, "HLRBRep_Data", StandardTransient);
 
 // The scalar members of the native class: the box scaling of Update, the current
 // hiding face (`iFace*`), the current hidden edge (`myLE*`), the current boundary edge
@@ -56,7 +57,7 @@ impl_transient!(Data, "HLRBRep_Data", StandardTransient, base);
 pub(super) struct Walk {
     // These owned members follow the native reverse destruction sequence.
     pub(super) rejection_cache: Option<RejectionCache>,
-    pub(super) classifier: Handle<BRepTopAdaptorTopolTool>,
+    pub(super) classifier: Option<Arc<dyn FaceClassifier>>,
     pub(super) intersector: Intersector,
     pub(super) face_itr2: FaceIterator,
     pub(super) face_itr1: FaceIterator,
@@ -176,7 +177,7 @@ impl Data {
             fe_tol: 0.,
             intersector: Intersector::new(),
             loaded_face: None,
-            classifier: Handle::default(),
+            classifier: None,
             same_vertex: false,
             intersected: false,
             nb_points: 0,
@@ -187,7 +188,6 @@ impl Data {
             rejection_cache: Some(RejectionCache::new(ne.max(0) as usize)),
         };
         Ok(Self {
-            base: StandardTransient::default(),
             nb_vertices: nv,
             nb_edges: ne,
             nb_faces: nf,

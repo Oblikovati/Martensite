@@ -11,26 +11,23 @@ use super::poly_expression::{
 };
 use super::text::infix_text;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A product; `ExprProduct::new_pair(&x, &y).string()? == "x*y"`.
 pub struct ExprProduct {
-    parent: StandardTransient,
     core: ExprPolyCore,
 }
 impl_transient!(
     ExprProduct,
     "Expr_Product",
     dyn ExprPolyExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression, dyn ExprPolyExpression]
 );
 impl ExprProduct {
     /// `new ExprProduct(exps)`: the operands in order; `ExprProduct::new(&[x, y, z])`.
     pub fn new(exps: &[ExprHandle]) -> Handle<Self> {
         let object: Self = Self {
-            parent: StandardTransient::default(),
             core: ExprPolyCore::new(exps),
         };
         super::handles::adopt(object, |created| created.core.link())
@@ -56,7 +53,7 @@ impl ExprProduct {
         if factor == 1.0 || factor == -1.0 {
             let rest: ExprHandle = match others.len() {
                 1 => others[0].clone(),
-                _ => Self::new(&others).cast(),
+                _ => Self::new(&others).into_upcast(),
             };
             return Ok(Some(if factor == 1.0 {
                 rest
@@ -68,7 +65,7 @@ impl ExprProduct {
             return Ok(Some(self.core.link().me()?));
         }
         others.push(ExprNumericValue::expression(factor));
-        Ok(Some(Self::new(&others).cast()))
+        Ok(Some(Self::new(&others).into_upcast()))
     }
     /// `V`, the product of the operands after the first, of the product rule `U*V`.
     fn tail(&self) -> Result<ExprHandle, Failure> {
@@ -112,7 +109,7 @@ impl ExprGeneralExpression for ExprProduct {
             .iter()
             .map(copy_share)
             .collect::<Result<_, _>>()?;
-        Ok(Self::new(&copies).cast())
+        Ok(Self::new(&copies).into_upcast())
     }
     fn is_identical(&self, other: &ExprHandle) -> Result<bool, Failure> {
         deref(other, "Expr_Product::IsIdentical")?;

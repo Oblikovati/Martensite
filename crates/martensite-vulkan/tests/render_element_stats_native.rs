@@ -97,7 +97,7 @@ impl StatsScene {
         let structure = Graphic3dStructure::new(&manager, &Handle::default()).unwrap();
         let group = structure.new_group().unwrap();
         group.set_group_primitives_aspect(&scene::unlit_style([1., 0., 0., 1.]));
-        group.add_primitive_array(&native_triangle(), true);
+        group.add_primitive_array(&native_triangle().upcast(), true);
         let calls = CallLog::default();
         let draw_group = group.cast::<Graphic3dDrawGroup>();
         let draw_group = draw_group.get().unwrap();

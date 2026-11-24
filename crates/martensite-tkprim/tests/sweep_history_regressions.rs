@@ -110,7 +110,7 @@ fn full_and_trimmed_spherical_prisms_preserve_original_history_counts() {
 
 fn full_and_trimmed_spherical_prisms_preserve_original_history_counts_body() {
     let sphere: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(Axis3::default(), 1.).unwrap()).cast();
+        Handle::new(GeomSphericalSurface::new(Axis3::default(), 1.).unwrap()).into_upcast();
     for (upper_u, generated) in [(2. * PI, 3), (5., 7)] {
         let source = spherical_patch(&sphere, upper_u);
         let mut maker =
@@ -155,7 +155,7 @@ fn axis_crossing_elliptical_face_revolution_stays_not_done_body() {
 
 fn elliptical_face() -> Shape {
     let ellipse: Handle<dyn GeomCurve> =
-        Handle::new(GeomEllipse::new(Axis2::default(), 200., 100.).unwrap()).cast();
+        Handle::new(GeomEllipse::new(Axis2::default(), 200., 100.).unwrap()).into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve(&ellipse)
         .unwrap()
         .edge()

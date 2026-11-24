@@ -321,7 +321,7 @@ pub(super) fn swept_meridian(
     }
     let ct = martensite_tkg3d::geom::GeomTrimmedCurve::new(meridian, first, last, true, true)?;
     curve_to_bspline_curve(
-        &Handle::new(ct).cast::<dyn GeomCurve>(),
+        &Handle::new(ct).into_upcast::<dyn GeomCurve>(),
         ParameterisationType::TgtThetaOver2,
     )
 }

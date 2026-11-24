@@ -12,7 +12,8 @@ use crate::step_shape::{
     StepShapeContextDependentShapeRepresentation, StepShapeFaceSurface, StepShapeGeometricSet,
     StepShapeShapeDefinitionRepresentation, StepShapeShapeRepresentation,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkxsbase::if_select::{IFSelectSelectExplore, IFSelectSelectExploreBase};
 use martensite_tkxsbase::interface::{InterfaceEntityIterator, InterfaceGraph};
@@ -20,7 +21,7 @@ use std::cell::Cell;
 
 /// The tail of each `explore`: the shared entities are explored next.
 fn explore_shareds(
-    start: &Handle<StandardTransient>,
+    start: &Handle<dyn Transient>,
     g: &InterfaceGraph,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<bool, Failure> {
@@ -62,7 +63,7 @@ impl IFSelectSelectExplore for STEPSelectionsSelectAssembly {
     fn explore(
         &self,
         _level: i32,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
@@ -73,10 +74,14 @@ impl IFSelectSelectExplore for STEPSelectionsSelectAssembly {
         if let Some(live) = cdsr.get() {
             return Ok(is_of_nauo(&live.represented_product_relation()));
         }
-        if start.cast::<StepReprMappedItem>().is_some() {
-            let rep = entities_of(g.sharings(start)?)?
-                .into_iter()
-                .find(|ent| ent.cast::<StepShapeShapeRepresentation>().is_some());
+        if start
+            .cast::<dyn crate::StepEntityBase<StepReprMappedItem>>()
+            .is_some()
+        {
+            let rep = entities_of(g.sharings(start)?)?.into_iter().find(|ent| {
+                ent.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+                    .is_some()
+            });
             let Some(rep) = rep else {
                 return Ok(false);
             };
@@ -117,24 +122,37 @@ impl IFSelectSelectExplore for STEPSelectionsSelectFaces {
     fn explore(
         &self,
         _level: i32,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
         if start.is_null() {
             return Ok(false);
         }
-        if start.cast::<StepShapeFaceSurface>().is_some() {
+        if start
+            .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+            .is_some()
+        {
             return Ok(true);
         }
-        if start.cast::<StepGeomSurface>().is_some() {
+        if start
+            .cast::<dyn crate::StepEntityBase<StepGeomSurface>>()
+            .is_some()
+        {
             let mut in_face_or_surface = false;
             for sharing in entities_of(g.sharings(start)?)? {
-                if sharing.cast::<StepShapeGeometricSet>().is_some() {
+                if sharing
+                    .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+                    .is_some()
+                {
                     return Ok(true);
                 }
-                if sharing.cast::<StepGeomSurface>().is_some()
-                    || sharing.cast::<StepShapeFaceSurface>().is_some()
+                if sharing
+                    .cast::<dyn crate::StepEntityBase<StepGeomSurface>>()
+                    .is_some()
+                    || sharing
+                        .cast::<dyn crate::StepEntityBase<StepShapeFaceSurface>>()
+                        .is_some()
                 {
                     in_face_or_surface = true;
                 }
@@ -156,17 +174,15 @@ thread_local! {
 
 /// `STEPSelectionsSelectGSCurves`: the curves in geometric sets.
 pub struct STEPSelectionsSelectGSCurves {
-    transient: StandardTransient,
     base: IFSelectSelectExploreBase,
 }
-martensite_tkernel::impl_transient!(STEPSelectionsSelectGSCurves, "STEPSelectionsSelectGSCurves", dyn IFSelectSelectExplore, transient, interfaces: [dyn martensite_tkxsbase::if_select::IFSelectSelection, dyn martensite_tkxsbase::if_select::IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
+martensite_tkernel::impl_transient!(STEPSelectionsSelectGSCurves, "STEPSelectionsSelectGSCurves", dyn IFSelectSelectExplore, interfaces: [dyn martensite_tkxsbase::if_select::IFSelectSelection, dyn martensite_tkxsbase::if_select::IFSelectSelectDeduct, dyn IFSelectSelectExplore]);
 explore_selection_members!(STEPSelectionsSelectGSCurves);
 
 impl Default for STEPSelectionsSelectGSCurves {
     fn default() -> Self {
         GS_CURVES_FLAG.with(|flag| flag.set(1));
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(-1),
         }
     }
@@ -185,19 +201,24 @@ impl IFSelectSelectExplore for STEPSelectionsSelectGSCurves {
     fn explore(
         &self,
         _level: i32,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
         if start.is_null() {
             return Ok(false);
         }
-        if start.cast::<StepGeomCurve>().is_some() {
+        if start
+            .cast::<dyn crate::StepEntityBase<StepGeomCurve>>()
+            .is_some()
+        {
             if start.cast::<StepGeomCompositeCurve>().is_some() {
                 return explore_composite_curve(start, g, explored);
             }
             for sharing in entities_of(g.sharings(start)?)? {
-                if sharing.cast::<StepShapeGeometricSet>().is_some()
+                if sharing
+                    .cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+                    .is_some()
                     || sharing.cast::<StepGeomCompositeCurveSegment>().is_some()
                 {
                     return Ok(true);
@@ -213,13 +234,14 @@ impl IFSelectSelectExplore for STEPSelectionsSelectGSCurves {
 
 /// A composite curve counts when a geometric set holds it.
 fn explore_composite_curve(
-    start: &Handle<StandardTransient>,
+    start: &Handle<dyn Transient>,
     g: &InterfaceGraph,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<bool, Failure> {
-    let set = entities_of(g.sharings(start)?)?
-        .into_iter()
-        .find(|ent| ent.cast::<StepShapeGeometricSet>().is_some());
+    let set = entities_of(g.sharings(start)?)?.into_iter().find(|ent| {
+        ent.cast::<dyn crate::StepEntityBase<StepShapeGeometricSet>>()
+            .is_some()
+    });
     let Some(set) = set else {
         return Ok(false);
     };

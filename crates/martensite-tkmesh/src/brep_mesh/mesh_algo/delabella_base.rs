@@ -14,7 +14,7 @@ use crate::imesh_data::FaceHandle;
 use crate::imesh_tools::{MeshAlgo, MeshParameters};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Gravity, Message, ProgressRange};
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::bnd::CompactBox2;
 use martensite_tkmath::gp::Xy;
@@ -196,14 +196,12 @@ impl FaceMeshingCore for DelabellaBaseMeshAlgoCore {
 /// let _algo = BRepMeshDelabellaBaseMeshAlgo::new();
 /// ```
 pub struct BRepMeshDelabellaBaseMeshAlgo {
-    transient: StandardTransient,
     core: LockedFaceCore,
 }
 impl_transient!(
     BRepMeshDelabellaBaseMeshAlgo,
     "BRepMesh_DelabellaBaseMeshAlgo",
     dyn CustomBaseMeshAlgo,
-    transient,
     interfaces: [dyn MeshAlgo, dyn BaseMeshAlgo, dyn ConstrainedBaseMeshAlgo, dyn CustomBaseMeshAlgo]
 );
 
@@ -222,7 +220,6 @@ impl BRepMeshDelabellaBaseMeshAlgo {
     /// `BRepMeshDelabellaBaseMeshAlgo::from_core(algo)`.
     pub fn from_core(core: impl FaceMeshingCore + 'static) -> Self {
         Self {
-            transient: StandardTransient::default(),
             core: LockedFaceCore::new(core),
         }
     }

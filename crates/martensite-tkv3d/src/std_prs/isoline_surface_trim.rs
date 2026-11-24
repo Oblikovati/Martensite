@@ -1,5 +1,5 @@
 //! Sample real oriented p-curves before hatch trimming; preserve OCC13144 finite-window origin policy.
-use super::StdPrsIsolineSurfaceSource;
+use super::StdPrsIsolineSurfaceTarget;
 use super::StdPrsToolRFace;
 use super::isoline_surface_reference::IsolineSurfaceReference;
 use martensite_tkernel::{precision, standard::Failure, standard::real::real_last};
@@ -19,9 +19,7 @@ pub(super) struct IsolineTrimRegion {
     pub ranges: [Range1; 2],
     pub tolerance: f64,
 }
-pub(super) fn surface_isoline_trimming<
-    S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
->(
+pub(super) fn surface_isoline_trimming<S: StdPrsIsolineSurfaceTarget + ?Sized>(
     surface: &IsolineSurfaceReference<'_, S>,
     limit: f64,
     coefficient: f64,
@@ -37,9 +35,7 @@ pub(super) fn surface_isoline_trimming<
         tolerance,
     })
 }
-fn pcurve_sampler_deflection<
-    S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
->(
+fn pcurve_sampler_deflection<S: StdPrsIsolineSurfaceTarget + ?Sized>(
     surface: &IsolineSurfaceReference<'_, S>,
     limit: f64,
     coefficient: f64,

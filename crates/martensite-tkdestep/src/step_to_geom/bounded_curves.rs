@@ -60,7 +60,7 @@ fn degree_out_of_range(degree: i32) -> bool {
 fn with_knots_from(
     source: &StepGeomBSplineCurve,
     knots: &GeneratedKnots,
-) -> Handle<StepGeomBSplineCurve> {
+) -> Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>> {
     let spline = StepGeomBSplineCurveWithKnots::new();
     spline.set_degree(source.degree());
     spline.set_control_points_list(&source.control_points_list());
@@ -77,7 +77,7 @@ fn rational_from(
     source: &StepGeomBSplineCurve,
     weights: &Handle<HArray1<f64>>,
     knots: &GeneratedKnots,
-) -> Handle<StepGeomBSplineCurve> {
+) -> Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>> {
     let spline = StepGeomBSplineCurveWithKnotsAndRationalBSplineCurve::new();
     spline.init_fields(
         &source.name(),
@@ -98,9 +98,9 @@ fn rational_from(
 /// into a STEP B-spline before being mapped); a null handle when `sc` is none of these or its
 /// degree is out of range.
 fn descriptor_as_bspline(
-    sc: &Handle<StepGeomBoundedCurve>,
-) -> Result<Handle<StepGeomBSplineCurve>, Failure> {
-    let source = sc.cast::<StepGeomBSplineCurve>();
+    sc: &Handle<dyn crate::StepEntityBase<StepGeomBoundedCurve>>,
+) -> Result<Handle<dyn crate::StepEntityBase<StepGeomBSplineCurve>>, Failure> {
+    let source = sc.cast::<dyn crate::StepEntityBase<StepGeomBSplineCurve>>();
     let Some(live) = source.get() else {
         return Ok(Handle::default());
     };
@@ -160,7 +160,7 @@ fn descriptor_as_bspline(
 impl StepToGeom {
     /// `make_bounded_curve`: null for another bounded curve or a descriptor of a wrong degree.
     pub fn make_bounded_curve(
-        sc: &Handle<StepGeomBoundedCurve>,
+        sc: &Handle<dyn crate::StepEntityBase<StepGeomBoundedCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn GeomBoundedCurve>, Failure> {
         if sc
@@ -187,7 +187,7 @@ impl StepToGeom {
     }
     /// `MakeBoundedCurve2d`: splines, trimmed curves and polylines; null for another curve.
     pub fn make_bounded_curve_2d(
-        sc: &Handle<StepGeomBoundedCurve>,
+        sc: &Handle<dyn crate::StepEntityBase<StepGeomBoundedCurve>>,
         factors: &StepDataFactors,
     ) -> Result<Handle<dyn Geom2dBoundedCurve>, Failure> {
         if sc

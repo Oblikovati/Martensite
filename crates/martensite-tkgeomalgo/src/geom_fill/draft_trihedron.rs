@@ -9,7 +9,7 @@ use super::trihedron_law::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{Axis1, Vector3};
@@ -25,7 +25,6 @@ struct DraftAngle {
 /// `GeomFill_DraftTrihedron`: the draft frame along the curve.
 /// `let law = GeomFillDraftTrihedron::new(b, 0.1)?; law.set_curve(&curve)?;`.
 pub struct GeomFillDraftTrihedron {
-    parent: StandardTransient,
     base: GeomFillTrihedronLawBase,
     b: Vector3,
     angle: SharedState<DraftAngle>,
@@ -34,7 +33,6 @@ impl_transient!(
     GeomFillDraftTrihedron,
     "GeomFill_DraftTrihedron",
     dyn GeomFillTrihedronLaw,
-    parent,
     interfaces: [dyn GeomFillTrihedronLaw]
 );
 
@@ -43,7 +41,6 @@ impl GeomFillDraftTrihedron {
     /// the normalization.
     pub fn new(bi_normal: Vector3, angle: f64) -> Result<Self, Failure> {
         let law = Self {
-            parent: StandardTransient::default(),
             base: GeomFillTrihedronLawBase::default(),
             b: bi_normal.normalized()?,
             angle: SharedState::new(DraftAngle::default()),
@@ -95,7 +92,7 @@ impl GeomFillTrihedronLaw for GeomFillDraftTrihedron {
     fn copy(&self) -> Result<Handle<dyn GeomFillTrihedronLaw>, Failure> {
         let copy = GeomFillDraftTrihedron::new(self.b, self.angle.read().angle - PI / 2.0)?;
         copy.set_curve(&self.base.curve())?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// False (outputs partly written) where the tangent is parallel to `B`.
     fn d0(&self, param: f64, frame: &mut TrihedronD0) -> Result<bool, Failure> {

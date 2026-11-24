@@ -3,6 +3,7 @@
 use super::complete_se::{evi_gbound, tki_groups};
 use super::config::{fds_lo_iinfsup, mkt_states};
 use super::{fds_parameter, has_same_domain, href, iref};
+use crate::top_ope_brep_ds::InterferenceRecord;
 use crate::top_ope_brep_ds::process_interferences_tool::{
     fun_select_itrasha_interference, fun_select_si_interference, fun_select_sk_interference,
     fun_select_traori_interference, fun_select_trasha_interference, fun_selectpure2d_i,
@@ -10,8 +11,8 @@ use crate::top_ope_brep_ds::process_interferences_tool::{
 };
 use crate::top_ope_brep_ds::redu::fun_ds_redu2d1d;
 use crate::top_ope_brep_ds::{
-    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSTransition, store_interference_ds,
+    ListOfInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure, TopOpeBRepDSKind,
+    TopOpeBRepDSTransition, store_interference_ds,
 };
 use crate::top_ope_brep_tool::{
     fun_tool_orient_v_in_e, fun_tool_par_e, fun_tool_par_f, fun_tool_paron_ef,
@@ -22,7 +23,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum, State};
 use martensite_tkmath::gp::Point2;
 
-type H = Handle<TopOpeBRepDSInterference>;
+type H = Handle<dyn InterferenceRecord>;
 
 /// The states on the face `fs` of the edge `e` at `par` (`FUN_ds_completeforE7`):
 /// through the edge of `fs` interfering at the point when there is one (`ies`).

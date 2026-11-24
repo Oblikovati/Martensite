@@ -67,12 +67,12 @@ fn ray_traceable_structures_count_visibility_and_transformation_changes_like_nat
     traced
         .new_group()
         .unwrap()
-        .add_primitive_array(&triangle, true);
+        .add_primitive_array(&triangle.upcast(), true);
     let segment = array(Kind::Segments, &[[-1., 0.], [1., 0.]]);
     segments
         .new_group()
         .unwrap()
-        .add_primitive_array(&segment, true);
+        .add_primitive_array(&segment.upcast(), true);
     print("filled");
     for (label, visible) in [("hidden", false), ("shown", true)] {
         traced.set_visible(visible);
@@ -100,7 +100,7 @@ fn triangle_structure(
     structure
         .new_group()
         .unwrap()
-        .add_primitive_array(&triangle, true);
+        .add_primitive_array(&triangle.upcast(), true);
     structure
 }
 

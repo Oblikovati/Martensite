@@ -1,10 +1,11 @@
 //! The presentations of GD&T read by `STEPCAFControlReader`.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 /// `readPMIPresentation`: polyline or tessellated presentation of an Annotation_Curve_Occurrence or a
 /// Draughting_Callout; true when it has a shape. The box is of the last annotation only.
 pub(in crate::stepcaf_control) fn read_pmi_presentation(
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     session: &SessionGraph,
     factor: f64,
     presentation: &mut Shape,
@@ -27,7 +28,7 @@ pub(in crate::stepcaf_control) fn read_pmi_presentation(
     for (index, annotation) in annotations.iter().enumerate() {
         let live = step_live(annotation, WHERE)?;
         let shape = if annotation
-            .cast::<StepVisualAnnotationOccurrence>()
+            .cast::<dyn crate::StepEntityBase<StepVisualAnnotationOccurrence>>()
             .is_some()
         {
             annotation_curve_shape(live, session)?
@@ -76,7 +77,7 @@ pub(in crate::stepcaf_control) fn read_annotation_plane(
 }
 
 /// `set_plane` of a dimension, a datum or a tolerance.
-fn set_object_plane(object: &Handle<StandardTransient>, plane: &Axis2) {
+fn set_object_plane(object: &Handle<dyn Transient>, plane: &Axis2) {
     if let Some(live) = object.cast::<XCAFDimTolObjectsDimensionObject>().get() {
         live.set_plane(plane);
     } else if let Some(live) = object.cast::<XCAFDimTolObjectsDatumObject>().get() {
@@ -88,7 +89,7 @@ fn set_object_plane(object: &Handle<StandardTransient>, plane: &Axis2) {
 
 /// `set_point_text_attach` and `set_presentation` of a dimension, a datum or a tolerance.
 fn set_object_presentation(
-    object: &Handle<StandardTransient>,
+    object: &Handle<dyn Transient>,
     point: &Point3,
     presentation: &Shape,
     name: &Handle<HAsciiString>,
@@ -107,7 +108,7 @@ fn set_object_presentation(
 
 /// The units of a representation, through a new read actor.
 pub(in crate::stepcaf_control) fn factors_of_representation(
-    representation: &Handle<StepReprRepresentation>,
+    representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
     tp: &Handle<TransferTransientProcess>,
     model: &Handle<dyn InterfaceInterfaceModel>,
     factors: &StepDataFactors,
@@ -131,7 +132,7 @@ pub(in crate::stepcaf_control) fn model_of(
 /// whatever its name; kept.
 fn association_of_gdt(
     session: &SessionGraph,
-    gdt: &Handle<StandardTransient>,
+    gdt: &Handle<dyn Transient>,
 ) -> Result<Handle<StepAP242DraughtingModelItemAssociation>, Failure> {
     let association: Handle<StepAP242DraughtingModelItemAssociation> =
         first_of(&session.sharings(gdt)?);
@@ -145,8 +146,8 @@ fn association_of_gdt(
 /// Datum_Feature or Placed_Datum_Target_Feature.
 pub(in crate::stepcaf_control) fn read_annotation(
     session: &SessionGraph,
-    gdt: &Handle<StandardTransient>,
-    object: &Handle<StandardTransient>,
+    gdt: &Handle<dyn Transient>,
+    object: &Handle<dyn Transient>,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {
     if gdt.is_null() || object.is_null() {
@@ -169,7 +170,7 @@ pub(in crate::stepcaf_control) fn read_annotation(
     )?;
     let factor = local.length_factor();
     // retrieve AnnotationPlane
-    let item: Handle<StandardTransient> = association.identified_item_value(1)?.cast();
+    let item: Handle<dyn Transient> = association.identified_item_value(1)?.cast();
     if item.is_null() {
         return Ok(());
     }
@@ -260,7 +261,7 @@ fn connection_point(
 /// The GISU of a derived shape aspect, null without one.
 fn gisu_of_aspect(
     session: &SessionGraph,
-    aspect: &Handle<StepReprDerivedShapeAspect>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>,
 ) -> Result<Handle<StepAP242GeometricItemSpecificUsage>, Failure> {
     if aspect.is_null() {
         return Ok(Handle::default());
@@ -271,7 +272,7 @@ fn gisu_of_aspect(
 /// `readConnectionPoints`: the connection points of a dimension.
 pub(in crate::stepcaf_control) fn read_connection_points(
     session: &SessionGraph,
-    gdt: &Handle<StandardTransient>,
+    gdt: &Handle<dyn Transient>,
     object: &Handle<XCAFDimTolObjectsDimensionObject>,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {
@@ -293,9 +294,14 @@ pub(in crate::stepcaf_control) fn read_connection_points(
             factor = local.length_factor();
         }
     }
-    if let Some(size) = gdt.cast::<StepShapeDimensionalSize>().get() {
+    if let Some(size) = gdt
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalSize>>()
+        .get()
+    {
         // retrieve derived geometry
-        let aspect = size.applies_to().cast::<StepReprDerivedShapeAspect>();
+        let aspect = size
+            .applies_to()
+            .cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>();
         if aspect.is_null() {
             return Ok(());
         }
@@ -308,14 +314,17 @@ pub(in crate::stepcaf_control) fn read_connection_points(
             }
             live_object.set_connection_name(&found.name);
         }
-    } else if let Some(location) = gdt.cast::<StepShapeDimensionalLocation>().get() {
+    } else if let Some(location) = gdt
+        .cast::<dyn crate::StepEntityBase<StepShapeDimensionalLocation>>()
+        .get()
+    {
         // retrieve derived geometry
         let first_aspect = location
             .relating_shape_aspect()
-            .cast::<StepReprDerivedShapeAspect>();
+            .cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>();
         let second_aspect = location
             .related_shape_aspect()
-            .cast::<StepReprDerivedShapeAspect>();
+            .cast::<dyn crate::StepEntityBase<StepReprDerivedShapeAspect>>();
         if first_aspect.is_null() && second_aspect.is_null() {
             return Ok(());
         }

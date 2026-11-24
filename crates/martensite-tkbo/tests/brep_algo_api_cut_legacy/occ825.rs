@@ -24,7 +24,7 @@ fn bspline_half_space(size: f64) -> Shape {
         .unwrap();
     poles.set_value(2, 2, Point3::new(size, 0.0, size)).unwrap();
     let bezier: Handle<dyn GeomSurface> =
-        Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_cast();
+        Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast();
     let bspline: Handle<dyn GeomSurface> = surface_to_bspline_surface(&bezier).unwrap().into_cast();
     let face_maker =
         BRepBuilderAPIMakeFace::from_surface(&bspline, precision::confusion()).unwrap();

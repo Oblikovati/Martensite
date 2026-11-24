@@ -12,6 +12,7 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_dimen::{IgesDimenGeneralNote, IgesDimenLeaderArrow, IgesDimenWitnessLine};
 use crate::{iges_entity, iges_methods};
@@ -25,8 +26,8 @@ iges_entity! {
 /// the orientation
 IgesDimenCurveDimension, IgesDimenCurveDimensionState, "IgesDimenCurveDimension", parent IgesDataIgesEntity, {
 the_note: Handle<IgesDimenGeneralNote>,
-the_first_curve: Handle<IgesDataIgesEntity>,
-the_second_curve: Handle<IgesDataIgesEntity>,
+the_first_curve: Handle<dyn IgesDataEntityKind>,
+the_second_curve: Handle<dyn IgesDataEntityKind>,
 the_first_leader: Handle<IgesDimenLeaderArrow>,
 the_second_leader: Handle<IgesDimenLeaderArrow>,
 the_first_witness_line: Handle<IgesDimenWitnessLine>,
@@ -37,8 +38,8 @@ the_second_witness_line: Handle<IgesDimenWitnessLine>,
 impl IgesDimenCurveDimension {
     iges_methods! {
     get note = the_note: Handle<IgesDimenGeneralNote>;
-    get first_curve = the_first_curve: Handle<IgesDataIgesEntity>;
-    get second_curve = the_second_curve: Handle<IgesDataIgesEntity>;
+    get first_curve = the_first_curve: Handle<dyn IgesDataEntityKind>;
+    get second_curve = the_second_curve: Handle<dyn IgesDataEntityKind>;
     get first_leader = the_first_leader: Handle<IgesDimenLeaderArrow>;
     get second_leader = the_second_leader: Handle<IgesDimenLeaderArrow>;
     get first_witness_line = the_first_witness_line: Handle<IgesDimenWitnessLine>;
@@ -58,8 +59,8 @@ impl IgesDimenCurveDimension {
     pub fn init(
         &self,
         a_note: &Handle<IgesDimenGeneralNote>,
-        a_curve: &Handle<IgesDataIgesEntity>,
-        another_curve: &Handle<IgesDataIgesEntity>,
+        a_curve: &Handle<dyn IgesDataEntityKind>,
+        another_curve: &Handle<dyn IgesDataEntityKind>,
         a_leader: &Handle<IgesDimenLeaderArrow>,
         another_leader: &Handle<IgesDimenLeaderArrow>,
         a_line: &Handle<IgesDimenWitnessLine>,

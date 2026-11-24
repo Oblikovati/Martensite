@@ -8,7 +8,8 @@ use crate::step_geom::{StepGeomPcurve, StepGeomSurfaceCurve};
 use crate::step_shape::StepShapeEdgeCurve;
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::Edge;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::{self, Orientation};
 use martensite_tkshhealing::shape_analysis::ShapeAnalysisCurve;
 use martensite_tkxsbase::transfer::TransferTransientProcess;
@@ -21,7 +22,7 @@ impl StepToTopoDSTranslateEdgeLoop {
         &mut self,
         translator: &StepToTopoDSTranslateEdge,
         edge: &Edge,
-        edge_curve: &Handle<StepShapeEdgeCurve>,
+        edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
         context: &FaceContext<'_>,
         locals: &mut EdgeLoopLocals,
         tool: &mut StepToTopoDSTool,
@@ -34,9 +35,9 @@ impl StepToTopoDSTranslateEdgeLoop {
         let mut there_is_like_seam = false;
         let process_handle = tool.transient_process();
         let process = step_live(&process_handle, "StepToTopoDSTranslateEdgeLoop")?;
-        let curve_entity: Handle<StandardTransient> = edge_curve.cast();
+        let curve_entity: Handle<dyn Transient> = edge_curve.cast();
         let pcurve = curve.cast::<StepGeomPcurve>();
-        let surface_curve = curve.cast::<StepGeomSurfaceCurve>();
+        let surface_curve = curve.cast::<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>();
         if curve.is_null() {
             tool.set_compute_pcurve(true);
             locals.has_pcurve = false;
@@ -92,8 +93,8 @@ impl StepToTopoDSTranslateEdgeLoop {
     pub(super) fn read_surface_curve(
         &mut self,
         translator: &StepToTopoDSTranslateEdge,
-        surface_curve: &Handle<StepGeomSurfaceCurve>,
-        edge_curve: &Handle<StepShapeEdgeCurve>,
+        surface_curve: &Handle<dyn crate::StepEntityBase<StepGeomSurfaceCurve>>,
+        edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
         context: &FaceContext<'_>,
         locals: &mut EdgeLoopLocals,
         tool: &mut StepToTopoDSTool,
@@ -164,7 +165,7 @@ impl StepToTopoDSTranslateEdgeLoop {
     pub(super) fn update_seam_edge(
         &mut self,
         edge: &Edge,
-        curve_entity: &Handle<StandardTransient>,
+        curve_entity: &Handle<dyn Transient>,
         is_seam: bool,
         context: &FaceContext<'_>,
         locals: &EdgeLoopLocals,

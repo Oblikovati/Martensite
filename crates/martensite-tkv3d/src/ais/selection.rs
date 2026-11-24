@@ -134,15 +134,13 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// Concrete native selection; `let selected = AisSelection::new()`.
 pub struct AisSelection {
-    transient: StandardTransient,
     base: AisSelectionBase,
 }
-martensite_tkernel::impl_transient!(AisSelection,"AisSelection",StandardTransient,transient,interfaces:[dyn AisSelectionSource]);
+martensite_tkernel::impl_transient!(AisSelection,"AisSelection",dyn martensite_tkernel::standard::Transient,interfaces:[dyn AisSelectionSource]);
 impl AisSelection {
     /// Start empty with native cursor and map defaults; `AisSelection::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisSelectionBase::new(),
         }
     }

@@ -2,7 +2,7 @@
 use super::{AisInteractiveObject, AisInteractiveObjectBase, AisKindOfInteractive};
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::{
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState},
     units_api::UnitsApi,
 };
 use martensite_tkg3d::geom::{GeomLine, GeomPoint};
@@ -16,12 +16,11 @@ pub(super) struct LineGeometry {
 }
 /// A finite or infinite datum with live, injected units; `AisLine::new(&geometry, units)`.
 pub struct AisLine {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     pub(super) geometry: SharedState<LineGeometry>,
     pub(super) units: Arc<SharedState<UnitsApi>>,
 }
-martensite_tkernel::impl_transient!(AisLine,"AisLine",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisLine,"AisLine",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisLine {
     /// Construct an infinite datum; `AisLine::new(&geometry, units)`.
@@ -54,7 +53,6 @@ impl AisLine {
     }
     fn with_geometry(geometry: LineGeometry, units: Arc<SharedState<UnitsApi>>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             geometry: SharedState::new(geometry),
             units,

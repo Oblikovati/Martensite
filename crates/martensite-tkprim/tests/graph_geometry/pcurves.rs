@@ -45,7 +45,7 @@ fn BRepGraph_GeometryTest__SetPCurveTwoArgPreservesExistingRange() {
         Point2::new(100.0, 200.0),
         Direction2::X,
     ))
-    .into_cast();
+    .into_upcast();
     graph
         .editor()
         .co_edges()

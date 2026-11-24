@@ -24,8 +24,8 @@ pub struct TexturedCursorTrace {
     pub edit: TexturedCursorEdit,
     /// B is appended twice: two sequence nodes retain the same group.
     pub duplicate: bool,
-    pub object: HandleObserver<TexturedStateFixture>,
-    pub victims: SharedState<Option<[HandleObserver<dyn Graphic3dGroup>; 2]>>,
+    pub object: WeakHandle<TexturedStateFixture>,
+    pub victims: SharedState<Option<[WeakHandle<dyn Graphic3dGroup>; 2]>>,
     pub rows: SharedState<Vec<String>>,
     pub edited: AtomicBool,
     pub old_external: SharedState<Handle<Graphic3dAspectFillArea3d>>,
@@ -33,15 +33,15 @@ pub struct TexturedCursorTrace {
     pub shading: Handle<Prs3dShadingAspect>,
 }
 impl TexturedCursorTrace {
-    /// Retain only the owners present in the Native input; `TexturedCursorTrace::new(name, object.observe())`.
-    pub fn new(name: &'static str, object: HandleObserver<TexturedStateFixture>) -> Arc<Self> {
+    /// Retain only the owners present in the Native input; `TexturedCursorTrace::new(name, &object)`.
+    pub fn new(name: &'static str, object: &Handle<TexturedStateFixture>) -> Arc<Self> {
         let edit = selected_cursor_edit(name);
-        let (alternate, shading) = cursor_rebind_owners(edit, &object);
+        let (alternate, shading) = cursor_rebind_owners(edit, object);
         Arc::new(Self {
             name,
             edit,
             duplicate: name.starts_with("duplicate-"),
-            object,
+            object: object.downgrade(),
             victims: SharedState::new(None),
             rows: SharedState::default(),
             edited: AtomicBool::new(false),

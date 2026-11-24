@@ -70,7 +70,8 @@ fn check_layout_formatter_bounds(
     text: usize,
     rectangle: FontRect,
 ) {
-    let layout = build_glyph_layout(font, formatter, &mut NativeTileColumns::default()).unwrap();
+    let layout =
+        build_glyph_layout(font, formatter, &mut NativeTileColumns::default(), None).unwrap();
     if text >= 6 {
         assert!(layout.is_none());
         return;

@@ -175,7 +175,7 @@ fn spline_and_swept_grid_estimates_keep_native_minimum() {
             )
             .unwrap(),
         )
-        .cast();
+        .into_upcast();
         let counts = GeomTool::cells_count(&surface, 31, 0.01, Some(&splitter)).unwrap();
         assert!(counts.0 >= 2 && counts.1 >= 2);
     }

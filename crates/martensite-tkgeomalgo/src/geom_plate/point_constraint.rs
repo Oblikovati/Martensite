@@ -1,6 +1,6 @@
 //! `GeomPlate_PointConstraint`: a point (and derivative) constraint of a plate.
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkg3d::geom::{GeomSurface, GeomSurfaceD2};
 use martensite_tkgeombase::geom_lprop::SLProps;
@@ -35,21 +35,18 @@ struct PointConstraintState {
 /// assert_eq!(c.d0(), Point3::new(1.0, 2.0, 3.0));
 /// ```
 pub struct GeomPlatePointConstraint {
-    parent: StandardTransient,
     state: SharedState<PointConstraintState>,
     lprop: SharedState<SLProps>,
 }
 impl_transient!(
     GeomPlatePointConstraint,
     "GeomPlate_PointConstraint",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl GeomPlatePointConstraint {
     fn from_parts(state: PointConstraintState, lprop: SLProps) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
             lprop: SharedState::new(lprop),
         }
@@ -223,7 +220,7 @@ mod tests {
     use martensite_tkmath::gp::Axis3;
 
     fn sphere() -> Handle<dyn GeomSurface> {
-        Handle::new(GeomSphericalSurface::new(Axis3::default(), 2.0).unwrap()).cast()
+        Handle::new(GeomSphericalSurface::new(Axis3::default(), 2.0).unwrap()).into_upcast()
     }
 
     #[test]

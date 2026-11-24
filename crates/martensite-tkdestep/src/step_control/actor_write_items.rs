@@ -67,7 +67,7 @@ pub(super) fn vertices_curve_set(
     shape: &Shape,
     fp: &Handle<TransferFinderProcess>,
     factors: &StepDataFactors,
-) -> Result<Handle<StepGeomGeometricRepresentationItem>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>, Failure> {
     let mut vertices = Vec::new();
     let mut exp = Explorer::new(shape, ShapeEnum::Vertex, ShapeEnum::Shape)?;
     while exp.more() {
@@ -90,8 +90,8 @@ pub(super) fn vertices_curve_set(
 /// The item and the tessellated item of one translated shape.
 #[derive(Default)]
 pub(super) struct TranslatedItem {
-    pub(super) item: Handle<StepGeomGeometricRepresentationItem>,
-    pub(super) tessellated: Handle<StepGeomGeometricRepresentationItem>,
+    pub(super) item: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
+    pub(super) tessellated: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
 }
 
 macro_rules! translated_from {
@@ -294,7 +294,7 @@ pub(super) fn translate_shape_item(
 /// Binds `item` to the sub-shape: the start mapper for the shape itself, else its own.
 pub(super) fn bind_item_result(
     actor: &StepControlActorWrite,
-    item: &Handle<StepGeomGeometricRepresentationItem>,
+    item: &Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>>,
     shape: &Shape,
     start: &Handle<dyn TransferFinder>,
     original: &Shape,
@@ -328,9 +328,12 @@ pub(super) fn as_is_mode(shape: &Shape) -> Result<StepControlStepModelType, Fail
 
 /// The shape_representation class of an item of a split AP203 representation.
 pub(super) fn representation_of_item(
-    item: &Handle<StepReprRepresentationItem>,
-) -> Handle<StepShapeShapeRepresentation> {
-    if item.cast::<StepShapeManifoldSolidBrep>().is_some() {
+    item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+) -> Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> {
+    if item
+        .cast::<dyn crate::StepEntityBase<StepShapeManifoldSolidBrep>>()
+        .is_some()
+    {
         Handle::new(StepShapeAdvancedBrepShapeRepresentation::new()).cast()
     } else if item.cast::<StepShapeShellBasedSurfaceModel>().is_some() {
         Handle::new(StepShapeManifoldSurfaceShapeRepresentation::new()).cast()
@@ -338,7 +341,10 @@ pub(super) fn representation_of_item(
         Handle::new(StepShapeGeometricallyBoundedWireframeShapeRepresentation::new()).cast()
     } else if item.cast::<StepShapeFacetedBrep>().is_some() {
         Handle::new(StepShapeFacetedBrepShapeRepresentation::new()).cast()
-    } else if item.cast::<StepVisualTessellatedItem>().is_some() {
+    } else if item
+        .cast::<dyn crate::StepEntityBase<StepVisualTessellatedItem>>()
+        .is_some()
+    {
         Handle::new(StepVisualTessellatedShapeRepresentation::new()).cast()
     } else {
         Handle::new(StepShapeShapeRepresentation::new()).cast()

@@ -16,17 +16,16 @@ impl_transient_interface!(dyn FakeShape, "Fake_Shape", StandardTransient);
 trait FakeRound: FakeShape {
     fn radius(&self) -> f64;
 }
-impl_transient_interface!(dyn FakeRound, "Fake_Round", dyn FakeShape);
+impl_transient_interface!(dyn FakeRound, "Fake_Round", dyn FakeShape, upcasts: [dyn FakeShape]);
 
 trait FakeUnrelated: Transient {}
 impl_transient_interface!(dyn FakeUnrelated, "Fake_Unrelated", StandardTransient);
 
 #[derive(Default)]
 struct FakeDisk {
-    parent: StandardTransient,
     radius: RwLock<f64>,
 }
-impl_transient!(FakeDisk, "Fake_Disk", dyn FakeRound, parent, interfaces: [dyn FakeShape, dyn FakeRound]);
+impl_transient!(FakeDisk, "Fake_Disk", dyn FakeRound, interfaces: [dyn FakeShape, dyn FakeRound]);
 impl FakeShape for FakeDisk {
     fn area(&self) -> f64 {
         let radius: f64 = *self.radius.read().unwrap();
@@ -43,10 +42,8 @@ impl FakeRound for FakeDisk {
 }
 
 #[derive(Default)]
-struct FakeSquare {
-    parent: StandardTransient,
-}
-impl_transient!(FakeSquare, "Fake_Square", dyn FakeShape, parent, interfaces: [dyn FakeShape]);
+struct FakeSquare {}
+impl_transient!(FakeSquare, "Fake_Square", dyn FakeShape, interfaces: [dyn FakeShape]);
 impl FakeShape for FakeSquare {
     fn area(&self) -> f64 {
         1.0
@@ -56,7 +53,6 @@ impl FakeShape for FakeSquare {
 
 fn disk(radius: f64) -> Handle<FakeDisk> {
     Handle::new(FakeDisk {
-        parent: StandardTransient::default(),
         radius: RwLock::new(radius),
     })
 }
@@ -64,7 +60,7 @@ fn disk(radius: f64) -> Handle<FakeDisk> {
 #[test]
 fn mutation_through_concrete_handle_is_visible_through_interface_handle() {
     let concrete: Handle<FakeDisk> = disk(2.0);
-    let shape: Handle<dyn FakeShape> = concrete.cast::<dyn FakeShape>();
+    let shape: Handle<dyn FakeShape> = concrete.upcast::<dyn FakeShape>();
     assert!(!shape.is_null());
     assert_eq!(shape.area(), 12.0);
     concrete.scale(0.5);
@@ -77,13 +73,13 @@ fn mutation_through_concrete_handle_is_visible_through_interface_handle() {
 #[test]
 fn interface_observer_uses_registered_projection_without_intrusive_ownership() {
     let concrete = disk(2.0);
-    let projected = concrete.observe_as::<dyn FakeShape>();
+    let projected = concrete.view::<dyn FakeShape>();
     assert_eq!(projected.object_address(), concrete.object_address());
-    assert_eq!(projected.area(), 12.0);
-    projected.scale(0.5);
+    assert_eq!(projected.get().unwrap().area(), 12.0);
+    projected.get().unwrap().scale(0.5);
     assert_eq!(concrete.radius(), 1.0);
     assert_eq!(concrete.ref_count(), 1);
-    assert!(concrete.observe_as::<dyn FakeUnrelated>().is_null());
+    assert!(concrete.view::<dyn FakeUnrelated>().is_null());
 }
 
 fn projected_disk_slot(slot: &Handle<FakeDisk>) -> &Handle<FakeDisk> {
@@ -91,7 +87,7 @@ fn projected_disk_slot(slot: &Handle<FakeDisk>) -> &Handle<FakeDisk> {
     slot
 }
 #[test]
-fn projected_reference_rereads_replacement_and_null_without_temporary_ownership() {
+fn projected_reference_rereads_replacement_and_null_with_scoped_snapshots() {
     let first = disk(2.0);
     let second = disk(3.0);
     let fields = SharedState::new(first.clone());
@@ -109,12 +105,12 @@ fn projected_reference_rereads_replacement_and_null_without_temporary_ownership(
 fn assert_projected_disk_target(
     reference: &dyn HandleReference<dyn FakeShape>,
     expected: &Handle<FakeDisk>,
-    owners: i32,
+    owners: usize,
 ) {
     let observed = reference.observe();
     assert_eq!(observed.object_address(), expected.object_address());
     assert_eq!(observed.area(), expected.area());
-    assert_eq!(observed.ref_count(), owners);
+    assert_eq!(observed.ref_count(), owners + 1);
 }
 #[test]
 fn failed_projection_preserves_slot_identity_without_acquiring_a_target() {
@@ -135,12 +131,13 @@ fn interface_handles_down_cast_and_keep_identity() {
     let round: Handle<dyn FakeRound> = shape.cast();
     let back: Handle<FakeDisk> = round.cast();
     assert!(!round.is_null() && !back.is_null());
+    assert_eq!(round.upcast::<dyn FakeShape>(), shape);
     assert!(back == concrete && round == shape);
     assert_eq!(back.as_ptr(), concrete.as_ptr());
     assert_eq!(shape.object_address(), concrete.object_address());
     assert!(shape.cast::<FakeSquare>().is_null());
     assert!(shape.cast::<dyn FakeUnrelated>().is_null());
-    assert!(shape.cast::<StandardTransient>().is_some());
+    assert!(shape.upcast::<dyn Transient>().is_some());
 }
 
 #[test]
@@ -187,9 +184,7 @@ fn interface_handles_share_mutation_across_threads() {
 }
 
 #[test]
-fn abstract_descriptors_keep_the_size_bounded_subtype_walk() {
-    // `is_subtype` stops at the first ancestor smaller than the base, so an abstract
-    // descriptor (a trait object has no size) must take its parent's size.
+fn abstract_descriptors_can_have_a_zero_size() {
     let shape: &RuntimeType = <dyn FakeShape>::static_type();
     let round: &RuntimeType = <dyn FakeRound>::static_type();
     assert_eq!(shape.size(), StandardTransient::static_type().size());
@@ -211,4 +206,16 @@ fn interface_handles_order_and_hash_by_object_identity() {
     assert!(null < shape && null.hash_code() == 0);
     let moved: Handle<dyn FakeRound> = shape.into_cast::<dyn FakeRound>();
     assert!(moved == round && concrete.ref_count() == 3);
+}
+
+#[test]
+fn handle_and_weak_sizes_match_their_native_shared_pointers() {
+    use martensite_tkernel::standard::WeakHandle;
+    assert_eq!(size_of::<Handle<FakeDisk>>(), size_of::<usize>());
+    assert_eq!(size_of::<Handle<dyn FakeShape>>(), 2 * size_of::<usize>());
+    assert_eq!(size_of::<WeakHandle<FakeDisk>>(), size_of::<usize>());
+    assert_eq!(
+        size_of::<WeakHandle<dyn FakeShape>>(),
+        2 * size_of::<usize>()
+    );
 }

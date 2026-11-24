@@ -14,16 +14,18 @@ use crate::iges_basic::entity_shape::iges_tool;
 use crate::iges_basic::shared_runs::{
     iges_shared_012, iges_shared_026, iges_shared_049, iges_shared_054,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_dump_xy_lz, iges_dump_xyz_l,
     iges_live, iges_msg, iges_new_array1, iges_real_text,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Direction3, Point3, Xy, Xyz};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -117,7 +119,7 @@ impl IgesGeomToolCompositeCurve {
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolCompositeCurve::read_own_params")?;
-        let mut temp_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         let mut num: i32 = 0;
         let st: bool = pr.read_integer(&pr.current(), &mut num)?;
         if st && num > 0 {
@@ -166,7 +168,7 @@ impl IgesGeomToolCompositeCurve {
         let ent_live = iges_live(ent, "IgesGeomToolCompositeCurve::own_shared")?;
         let num: i32 = ent_live.nb_curves();
         for i in 1..=num {
-            iter.get_one_item(&ent_live.curve(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.curve(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -208,12 +210,12 @@ impl IgesGeomToolCompositeCurve {
         let another_live = iges_live(another, "IgesGeomToolCompositeCurve::own_copy")?;
         let ent_live = iges_live(ent, "IgesGeomToolCompositeCurve::own_copy")?;
         let num: i32 = another_live.nb_curves();
-        let temp_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, num)?;
+        let temp_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, num)?;
         for i in 1..=num {
             let new_ent = tc
-                .transferred(&another_live.curve(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.curve(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &temp_entities,
                 i,

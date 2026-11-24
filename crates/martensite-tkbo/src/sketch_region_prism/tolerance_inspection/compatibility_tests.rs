@@ -18,10 +18,10 @@ fn authored_tolerances(raw: f64) -> [(f64, f64); 3] {
     face.set_tolerance(raw);
     let stored = [vertex.tolerance(), edge.tolerance(), face.tolerance()];
     let effective = [
-        BRepTool::vertex_tolerance(&Vertex::unchecked(shape(Handle::new(vertex).into_cast())))
+        BRepTool::vertex_tolerance(&Vertex::unchecked(shape(Handle::new(vertex).into_upcast())))
             .unwrap(),
-        BRepTool::edge_tolerance(&Edge::unchecked(shape(Handle::new(edge).into_cast()))).unwrap(),
-        BRepTool::face_tolerance(&Face::unchecked(shape(Handle::new(face).into_cast()))).unwrap(),
+        BRepTool::edge_tolerance(&Edge::unchecked(shape(Handle::new(edge).into_upcast()))).unwrap(),
+        BRepTool::face_tolerance(&Face::unchecked(shape(Handle::new(face).into_upcast()))).unwrap(),
     ];
     std::array::from_fn(|index| (stored[index], effective[index]))
 }

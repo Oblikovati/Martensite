@@ -165,14 +165,14 @@ impl Graphic3dRenderView {
     fn require_recorded_completion(
         &self,
         cursor: &RenderRedrawCursor,
-        outcome: Option<&Result<FrameCapture, RenderError>>,
+        outcome: Option<&crate::driver_view::FramePublication>,
         publication: u64,
     ) -> Result<(), RenderRedrawFailure> {
         require_fresh_serial(cursor.publication, publication)?;
         require_completed_outcome(outcome, publication)?;
         self.require_published_target(cursor, publication)?;
         if let Some(Ok(capture)) = outcome {
-            require_capture_dimensions(cursor, [capture.width, capture.height])?;
+            require_capture_dimensions(cursor, capture.size())?;
         }
         Ok(())
     }

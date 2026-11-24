@@ -12,7 +12,7 @@ step_entity! {
     StepGeomBezierCurveAndRationalBSplineCurve, StepGeomBezierCurveAndRationalBSplineCurveState, "StepGeomBezierCurveAndRationalBSplineCurve", StepGeomBSplineCurve, {
         bezier_curve: Handle<StepGeomBezierCurve>,
         rational_b_spline_curve: Handle<StepGeomRationalBSplineCurve>,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineCurve, crate::step_geom::StepGeomBoundedCurve]
 }
 impl StepGeomBezierCurveAndRationalBSplineCurve {
     step_methods! {
@@ -144,7 +144,7 @@ impl StepGeomBezierCurveAndRationalBSplineCurve {
 step_entity! {
     /// Bezier surface.
     StepGeomBezierSurface, StepGeomBezierSurfaceState, "StepGeomBezierSurface", StepGeomBSplineSurface, {
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 
 step_entity! {
@@ -152,7 +152,7 @@ step_entity! {
     StepGeomBezierSurfaceAndRationalBSplineSurface, StepGeomBezierSurfaceAndRationalBSplineSurfaceState, "StepGeomBezierSurfaceAndRationalBSplineSurface", StepGeomBSplineSurface, {
         bezier_surface: Handle<StepGeomBezierSurface>,
         rational_b_spline_surface: Handle<StepGeomRationalBSplineSurface>,
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBSplineSurface, crate::step_geom::StepGeomBoundedSurface]
 }
 impl StepGeomBezierSurfaceAndRationalBSplineSurface {
     step_methods! {
@@ -308,19 +308,19 @@ impl StepGeomBezierSurfaceAndRationalBSplineSurface {
 step_entity! {
     /// Boundary curve.
     StepGeomBoundaryCurve, StepGeomBoundaryCurveState, "StepGeomBoundaryCurve", StepGeomCompositeCurveOnSurface, {
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedCurve, crate::step_geom::StepGeomBoundaryCurve, crate::step_geom::StepGeomCompositeCurve]
 }
 
 step_entity! {
     /// Bounded curve.
     StepGeomBoundedCurve, StepGeomBoundedCurveState, "StepGeomBoundedCurve", StepGeomCurve, {
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedCurve]
 }
 
 step_entity! {
     /// Bounded surface.
     StepGeomBoundedSurface, StepGeomBoundedSurfaceState, "StepGeomBoundedSurface", StepGeomSurface, {
-    }
+    }, bases: [crate::step_geom::StepGeomSurface, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomBoundedSurface]
 }
 
 step_entity! {
@@ -333,7 +333,7 @@ step_entity! {
         has_axis1: bool,
         has_axis2: bool,
         has_scale: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomCartesianTransformationOperator]
 }
 impl StepGeomCartesianTransformationOperator {
     step_methods! {
@@ -381,7 +381,7 @@ impl StepGeomCartesianTransformationOperator {
 step_entity! {
     /// Added from StepGeom Rev2 to Rev4
     StepGeomCartesianTransformationOperator2d, StepGeomCartesianTransformationOperator2dState, "StepGeomCartesianTransformationOperator2d", StepGeomCartesianTransformationOperator, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomCartesianTransformationOperator]
 }
 
 step_entity! {
@@ -389,7 +389,7 @@ step_entity! {
     StepGeomCartesianTransformationOperator3d, StepGeomCartesianTransformationOperator3dState, "StepGeomCartesianTransformationOperator3d", StepGeomCartesianTransformationOperator, {
         axis3: Handle<StepGeomDirection>,
         has_axis3: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomCartesianTransformationOperator]
 }
 impl StepGeomCartesianTransformationOperator3d {
     step_methods! {
@@ -434,7 +434,7 @@ step_entity! {
     /// Circle.
     StepGeomCircle, StepGeomCircleState, "StepGeomCircle", StepGeomConic, {
         radius: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomCurve, crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_geom::StepGeomConic]
 }
 impl StepGeomCircle {
     step_methods! {

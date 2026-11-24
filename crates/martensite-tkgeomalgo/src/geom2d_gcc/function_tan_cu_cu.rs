@@ -22,8 +22,8 @@ pub type TanCuCuDerivatives = (Point2, Point2, Vector2, Vector2, Vector2, Vector
 /// use martensite_tkmath::gp::{Axis2d, Direction2, Point2};
 /// use martensite_tkmath::math::{FunctionSet, Vector};
 /// let axis = |x: f64| Axis2d::new(Point2::new(x, 0.0), Direction2::new(1.0, 0.0).unwrap());
-/// let c1: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis(0.0), 1.0, true)?).cast();
-/// let c2: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis(4.0), 1.0, true)?).cast();
+/// let c1: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis(0.0), 1.0, true)?).into_upcast();
+/// let c2: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis(4.0), 1.0, true)?).into_upcast();
 /// let (a1, a2) = (Geom2dAdaptorCurve::with_curve(&c1)?, Geom2dAdaptorCurve::with_curve(&c2)?);
 /// let mut f = FunctionTanCuCu::new(&a1, &a2);
 /// let x = Vector::filled(1, 2, std::f64::consts::FRAC_PI_2)?;

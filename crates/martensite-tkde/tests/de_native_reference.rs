@@ -132,7 +132,7 @@ provider.TST.VND.healing.tail : x\nprovider.TST.VND.value : 42\n";
         .expect("a valid resource");
     lines.line("fix.load", b(object.load(&context).expect("a context")));
     lines.line("fix.loaded", esc(&object.save()));
-    let copy = object.copy().cast::<ProbeNode>();
+    let copy = object.copy().into_downcast::<ProbeNode>();
     lines.line("fix.copy.value", copy.get().expect("a copy").value());
     let extensions: String = [".TsT", "tst", "", ".", "..tst"]
         .iter()
@@ -218,8 +218,8 @@ fn wrapper_saves(lines: &mut Lines, wrapper: &DeWrapper) {
     );
     lines.line("wrap.save.short", esc(&wrapper.save(false, &none, &none)));
     let small = DeWrapper::new();
-    small.bind(&probe_node("STL", "Martensite", "stl", true, true, "").cast());
-    small.bind(&probe_node("BREP", "Martensite", "brep", true, true, "").cast());
+    small.bind(&probe_node("STL", "Martensite", "stl", true, true, "").into_upcast());
+    small.bind(&probe_node("BREP", "Martensite", "brep", true, true, "").into_upcast());
     lines.line("wrap.save.small", esc(&small.save(true, &none, &none)));
     lines.line(
         "wrap.save.filtered",
@@ -244,7 +244,8 @@ fn wrapper_cases(lines: &mut Lines) {
     let handle = registry();
     let wrapper = handle.get().expect("a wrapper");
     lines.line("wrap.order", order(wrapper));
-    let rebind = wrapper.bind(&probe_node("STEP", "Martensite", "x", false, false, "").cast());
+    let rebind =
+        wrapper.bind(&probe_node("STEP", "Martensite", "x", false, false, "").into_upcast());
     lines.line("wrap.rebind", b(rebind));
     lines.line("wrap.bindnull", b(wrapper.bind(&Handle::default())));
     wrapper_lookups(lines, wrapper);
@@ -263,9 +264,9 @@ provider.STEP.ACME.healing.tolerance3d : 0.5\nprovider.VRML.Martensite.value : 1
         b(wrapper.load(&s(resource), true).expect("a valid resource")),
     );
     lines.line("load.order", order(wrapper));
-    let step = probe_value(wrapper, "STEP", "Martensite").cast::<ProbeNode>();
+    let step = probe_value(wrapper, "STEP", "Martensite").into_downcast::<ProbeNode>();
     lines.line("load.value", step.get().expect("a node").value());
-    let acme = probe_value(wrapper, "STEP", "ACME").cast::<dyn DeShapeFixConfigurationNode>();
+    let acme = probe_value(wrapper, "STEP", "ACME").into_cast::<dyn DeShapeFixConfigurationNode>();
     let tolerance = acme
         .get()
         .expect("a node")
@@ -278,7 +279,7 @@ provider.STEP.ACME.healing.tolerance3d : 0.5\nprovider.VRML.Martensite.value : 1
     let text = s("global.priority.STEP : ZETA\nprovider.STEP.Martensite.value : 9\n");
     shallow.load(&text, false).expect("a valid resource");
     lines.line("load.shallow", order(shallow));
-    let value = probe_value(shallow, "STEP", "Martensite").cast::<ProbeNode>();
+    let value = probe_value(shallow, "STEP", "Martensite").into_downcast::<ProbeNode>();
     lines.line("load.shallow.value", value.get().expect("a node").value());
 }
 

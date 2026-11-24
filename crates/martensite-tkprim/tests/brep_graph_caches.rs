@@ -13,7 +13,7 @@ use martensite_tkbrep::brep_graph::{
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Guid, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -22,11 +22,10 @@ use support::make_box;
 /// A cache service that counts its clears.
 #[derive(Default)]
 struct CountingCache {
-    transient: StandardTransient,
     base: CacheBase,
     clears: AtomicU32,
 }
-impl_transient!(CountingCache, "CountingCache", dyn BRepGraphCache, transient,
+impl_transient!(CountingCache, "CountingCache", dyn BRepGraphCache,
     interfaces: [dyn BRepGraphCache]);
 
 const COUNTING_ID: &str = "cccccccc-1111-2222-3333-444444444444";
@@ -81,7 +80,7 @@ fn registry_registers_finds_and_iterates() {
     assert!(registry.ensure::<CountingCache>().unwrap() == cache);
     assert!(registry.find::<CountingCache>() == cache);
     assert_eq!(registry.find_slot(&CountingCache::get_id()), Some(0));
-    let base = cache.cast::<dyn BRepGraphCache>();
+    let base = cache.upcast::<dyn BRepGraphCache>();
     assert_eq!(registry.find_slot_of(&base), Some(0));
     assert_eq!(registry.find_slot_of(&Handle::default()), None);
     assert!(cache.get().unwrap().base.is_attached());
@@ -96,7 +95,7 @@ fn registry_registers_finds_and_iterates() {
 #[test]
 fn a_service_belongs_to_one_graph() {
     let (first, second) = (BRepGraph::new(), BRepGraph::new());
-    let cache = Handle::new(CountingCache::default()).cast::<dyn BRepGraphCache>();
+    let cache = Handle::new(CountingCache::default()).into_upcast::<dyn BRepGraphCache>();
     first.cache_registry().register_cache(&cache).unwrap();
     let error = second.cache_registry().register_cache(&cache).unwrap_err();
     assert_eq!(error.exception_type(), "Standard_ProgramError");
@@ -104,7 +103,7 @@ fn a_service_belongs_to_one_graph() {
     first
         .cache_registry()
         .unregister_cache(&CountingCache::get_id());
-    let counting = cache.cast::<CountingCache>();
+    let counting = cache.downcast::<CountingCache>();
     assert_eq!(counting.get().unwrap().clears.load(Ordering::Relaxed), 1);
     let standalone = CacheRegistry::new();
     standalone.register_cache(&cache).unwrap();

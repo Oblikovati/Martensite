@@ -43,14 +43,8 @@ impl<K: Debug + Clone, V: Clone, H: HashPolicy<K> + Clone> Clone for DataMap<K, 
 
 impl<K: Debug, V, H: HashPolicy<K>> DataMap<K, V, H> {
     /// Models copy/move self-assignment without creating aliased references.
-    ///
-    /// ```
-    /// use martensite_tkernel::ncollection::DataMap;
-    /// let mut map = DataMap::<i32, i32>::default();
-    /// map.bind(1, 7);
-    /// assert_eq!(map.assign_self().find(&1), Ok(&7));
-    /// ```
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
     /// Exchanges both maps and returns the destination, as move assignment does.

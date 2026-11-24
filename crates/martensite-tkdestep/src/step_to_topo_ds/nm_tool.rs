@@ -22,7 +22,7 @@ fn edges_of(shape: &Shape) -> Result<Vec<Shape>, Failure> {
 /// vertices are also found by name.
 #[derive(Default)]
 pub struct StepToTopoDSNMTool {
-    my_ri_map: DataMap<Handle<StepReprRepresentationItem>, Shape>,
+    my_ri_map: DataMap<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Shape>,
     my_ri_names_map: DataMap<AsciiString, Shape>,
     my_nm_edges: Vec<Shape>,
     my_ideas_case: bool,
@@ -36,7 +36,7 @@ impl StepToTopoDSNMTool {
     }
     /// `StepToTopoDSNMTool(MapOfRI, MapOfRINames)`.
     pub fn with_maps(
-        map_of_ri: &DataMap<Handle<StepReprRepresentationItem>, Shape>,
+        map_of_ri: &DataMap<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Shape>,
         map_of_ri_names: &DataMap<AsciiString, Shape>,
     ) -> Self {
         let mut tool = Self::new();
@@ -46,7 +46,7 @@ impl StepToTopoDSNMTool {
     /// `init(MapOfRI, MapOfRINames)`.
     pub fn init(
         &mut self,
-        map_of_ri: &DataMap<Handle<StepReprRepresentationItem>, Shape>,
+        map_of_ri: &DataMap<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>, Shape>,
         map_of_ri_names: &DataMap<AsciiString, Shape>,
     ) {
         self.my_ri_map = map_of_ri.clone();
@@ -66,7 +66,10 @@ impl StepToTopoDSNMTool {
         self.my_ri_names_map.clear(false);
     }
     /// `is_bound(RI)`.
-    pub fn is_bound(&self, item: &Handle<StepReprRepresentationItem>) -> bool {
+    pub fn is_bound(
+        &self,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    ) -> bool {
         self.my_ri_map.is_bound(item)
     }
     /// `is_bound(RIName)`.
@@ -74,7 +77,11 @@ impl StepToTopoDSNMTool {
         self.my_ri_names_map.is_bound(name)
     }
     /// `bind(RI, S)`.
-    pub fn bind(&mut self, item: &Handle<StepReprRepresentationItem>, shape: &Shape) {
+    pub fn bind(
+        &mut self,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+        shape: &Shape,
+    ) {
         self.my_ri_map.bind(item.clone(), shape.clone());
     }
     /// `bind(RIName, S)`.
@@ -85,7 +92,10 @@ impl StepToTopoDSNMTool {
     ///
     /// # Errors
     /// a no such object failure when `item` is not bound.
-    pub fn find(&self, item: &Handle<StepReprRepresentationItem>) -> Result<&Shape, Failure> {
+    pub fn find(
+        &self,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+    ) -> Result<&Shape, Failure> {
         self.my_ri_map.find(item)
     }
     /// `find(RIName)`.

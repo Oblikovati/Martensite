@@ -128,13 +128,14 @@ pub use session_pilot::IFSelectSessionPilot;
 pub use share_out::IFSelectShareOut;
 pub use share_out_result::IFSelectShareOutResult;
 pub use sign_counter::{
-    IFSelectCheckCounter, IFSelectGraphCounter, IFSelectSignCounter, IFSelectSignCounterOps,
+    IFSelectCheckCounter, IFSelectGraphCounter, IFSelectSignCounter, IFSelectSignCounterData,
+    IFSelectSignCounterOps,
 };
 pub(crate) use signature::impl_signature_text;
 pub use signature::{IFSelectSignature, IFSelectSignatureBase, signature_name};
 pub use signature_list::{
     IFSelectSignatureCounts, IFSelectSignatureEntities, IFSelectSignatureList,
-    IFSelectSignatureListOps,
+    IFSelectSignatureListData, IFSelectSignatureListOps,
 };
 pub use signatures::{
     IFSelectSignAncestor, IFSelectSignCategory, IFSelectSignMultiple, IFSelectSignType,
@@ -142,7 +143,9 @@ pub use signatures::{
 };
 pub use transform_standard::IFSelectTransformStandard;
 pub use work_library::{IFSelectWorkLibrary, IFSelectWorkLibraryBase};
-pub use work_session::{IFSelectTransientList, IFSelectWorkSession, IFSelectWorkSessionOps};
+pub use work_session::{
+    IFSelectSession, IFSelectTransientList, IFSelectWorkSession, IFSelectWorkSessionOps,
+};
 
 mod dispatch_base_types;
 pub use dispatch_base_types::{

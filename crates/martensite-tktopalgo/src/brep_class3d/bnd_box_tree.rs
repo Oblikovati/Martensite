@@ -197,7 +197,7 @@ impl<'m> BRepClass3dBndBoxTreeSelectorLine<'m> {
     /// segment is reversed; `selector.set_current_line(line, 10.0)?`.
     pub fn set_current_line(&mut self, line: Line3, max_param: f64) -> Result<(), Failure> {
         self.my_l = line;
-        let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).cast();
+        let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).into_upcast();
         self.my_lc
             .load_range(&curve, -precision::p_confusion(), max_param)
     }

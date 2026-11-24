@@ -16,7 +16,7 @@ mod windows_backend;
 
 /// The address `dl_symb` returns (a C function pointer); callers cast it to
 /// the real signature with `std::mem::transmute`.
-pub type SymbolAddress = NonNull<c_void>;
+pub(crate) type SymbolAddress = NonNull<c_void>;
 
 /// A shared library; `SharedLibrary::named(Some("libm.so.6")).dl_open(LoadMode::RtldNow)`.
 #[derive(Debug)]

@@ -118,7 +118,7 @@ pub(super) fn draw_deflection(
         }
     }
     if let Some(array) = array {
-        group.add_primitive_array(&array, true);
+        group.add_primitive_array(&array.into_upcast(), true);
     }
     Ok(())
 }

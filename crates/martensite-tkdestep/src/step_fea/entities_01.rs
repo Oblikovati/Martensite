@@ -64,7 +64,7 @@ step_entity! {
     /// Representation of STEP entity AlignedCurve3dElementCoordinateSystem
     StepFEAAlignedCurve3dElementCoordinateSystem, StepFEAAlignedCurve3dElementCoordinateSystemState, "StepFEAAlignedCurve3dElementCoordinateSystem", StepFEAFeaRepresentationItem, {
         the_coordinate_system: Handle<StepFEAFeaAxis2Placement3d>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAAlignedCurve3dElementCoordinateSystem {
     step_methods! {
@@ -87,7 +87,7 @@ step_entity! {
     /// Representation of STEP entity AlignedSurface3dElementCoordinateSystem
     StepFEAAlignedSurface3dElementCoordinateSystem, StepFEAAlignedSurface3dElementCoordinateSystemState, "StepFEAAlignedSurface3dElementCoordinateSystem", StepFEAFeaRepresentationItem, {
         the_coordinate_system: Handle<StepFEAFeaAxis2Placement3d>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAAlignedSurface3dElementCoordinateSystem {
     step_methods! {
@@ -110,7 +110,7 @@ step_entity! {
     /// Representation of STEP entity ArbitraryVolume3dElementCoordinateSystem
     StepFEAArbitraryVolume3dElementCoordinateSystem, StepFEAArbitraryVolume3dElementCoordinateSystemState, "StepFEAArbitraryVolume3dElementCoordinateSystem", StepFEAFeaRepresentationItem, {
         the_coordinate_system: Handle<StepFEAFeaAxis2Placement3d>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAArbitraryVolume3dElementCoordinateSystem {
     step_methods! {
@@ -134,7 +134,7 @@ step_entity! {
     StepFEAConstantSurface3dElementCoordinateSystem, StepFEAConstantSurface3dElementCoordinateSystemState, "StepFEAConstantSurface3dElementCoordinateSystem", StepFEAFeaRepresentationItem, {
         the_axis: i32,
         the_angle: f64,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem]
 }
 impl StepFEAConstantSurface3dElementCoordinateSystem {
     step_methods! {
@@ -207,7 +207,7 @@ step_entity! {
         the_element_descriptor: Handle<StepElementCurve3dElementDescriptor>,
         the_property: Handle<StepFEACurve3dElementProperty>,
         the_material: Handle<StepElementElementMaterial>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 impl StepFEACurve3dElementRepresentation {
     step_methods! {
@@ -226,8 +226,12 @@ impl StepFEACurve3dElementRepresentation {
     pub fn init(
         &self,
         a_representation_name: &Handle<HAsciiString>,
-        a_representation_items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-        a_representation_context_of_items: &Handle<StepReprRepresentationContext>,
+        a_representation_items: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        >,
+        a_representation_context_of_items: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationContext>,
+        >,
         a_element_representation_node_list: &Handle<HArray1<Handle<StepFEANodeRepresentation>>>,
         a_model_ref: &Handle<StepFEAFeaModel3d>,
         a_element_descriptor: &Handle<StepElementCurve3dElementDescriptor>,

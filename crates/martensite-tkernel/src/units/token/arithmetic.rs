@@ -3,6 +3,7 @@
 use super::{Token, object};
 use crate::standard::{Failure, Handle};
 use crate::tcollection::AsciiString;
+use crate::units::TokenObject;
 
 /// `"(" + left + ")" + operator + "(" + right + ")"`, the composite spelling.
 pub(super) fn composite(left: &AsciiString, operator: &[u8], right: &[u8]) -> Vec<u8> {
@@ -19,29 +20,32 @@ pub(super) fn composite(left: &AsciiString, operator: &[u8], right: &[u8]) -> Ve
 impl Token {
     /// Ignores the integer and returns a blank token (addition of an integer is
     /// not defined); `token.add_integer(1)`.
-    pub fn add_integer(&self, _integer: i32) -> Handle<Token> {
-        Handle::new(Token::new())
+    pub fn add_integer(&self, _integer: i32) -> Handle<dyn TokenObject> {
+        Handle::new(Token::new()).into_upcast::<dyn TokenObject>()
     }
     /// Sums the factors when the dimensions agree, else returns `Token(" ")`;
     /// `token.add(&other)?`.
-    pub fn add(&self, token: &Handle<Token>) -> Result<Handle<Token>, Failure> {
+    pub fn add(&self, token: &Handle<dyn TokenObject>) -> Result<Handle<dyn TokenObject>, Failure> {
         self.additive(token, "Units_Token::Add", |a, b| a + b)
     }
     /// Subtracts the factors when the dimensions agree, else returns `Token(" ")`;
     /// `token.subtract(&other)?`.
-    pub fn subtract(&self, token: &Handle<Token>) -> Result<Handle<Token>, Failure> {
+    pub fn subtract(
+        &self,
+        token: &Handle<dyn TokenObject>,
+    ) -> Result<Handle<dyn TokenObject>, Failure> {
         self.additive(token, "Units_Token::Subtract", |a, b| a - b)
     }
     fn additive(
         &self,
-        token: &Handle<Token>,
+        token: &Handle<dyn TokenObject>,
         member: &str,
         combine: fn(f64, f64) -> f64,
-    ) -> Result<Handle<Token>, Failure> {
+    ) -> Result<Handle<dyn TokenObject>, Failure> {
         let other = object(token, member)?;
         let dimensions = self.dimensions();
         if !object(&dimensions, member)?.is_equal(&other.dimensions())? {
-            return Ok(Handle::new(Token::with_word(b" ")));
+            return Ok(Handle::new(Token::with_word(b" ")).into_upcast::<dyn TokenObject>());
         }
         let value = combine(self.value(), other.value());
         let word = self.word();
@@ -50,58 +54,59 @@ impl Token {
             b" ",
             value,
             &dimensions,
-        )))
+        ))
+        .into_upcast::<dyn TokenObject>())
     }
     /// `(a)*(b)` with multiplied factors and summed exponents; `token.multiply(&other)?`.
-    pub fn multiply(&self, token: &Handle<Token>) -> Result<Handle<Token>, Failure> {
+    pub fn multiply(
+        &self,
+        token: &Handle<dyn TokenObject>,
+    ) -> Result<Handle<dyn TokenObject>, Failure> {
         let other = object(token, "Units_Token::Multiply")?;
         let word = composite(&self.word(), b"*", other.word().as_bytes());
         let dimensions =
             object(&self.dimensions(), "Units_Token::Multiply")?.multiply(&other.dimensions())?;
         let value = self.value() * other.value();
-        Ok(Handle::new(Token::with_dimensions(
-            &word,
-            b" ",
-            value,
-            &dimensions,
-        )))
+        Ok(
+            Handle::new(Token::with_dimensions(&word, b" ", value, &dimensions))
+                .into_upcast::<dyn TokenObject>(),
+        )
     }
     /// `(a)/(b)` without the zero guard, which needs the handle (see
     /// `TokenHandle::divide`); `token.divided_by(&other)?`.
-    pub(super) fn divided_by(&self, other: &Token) -> Result<Handle<Token>, Failure> {
+    pub(super) fn divided_by(&self, other: &Token) -> Result<Handle<dyn TokenObject>, Failure> {
         let word = composite(&self.word(), b"/", other.word().as_bytes());
         let dimensions =
             object(&self.dimensions(), "Units_Token::Divide")?.divide(&other.dimensions())?;
         let value = self.value() / other.value();
-        Ok(Handle::new(Token::with_dimensions(
-            &word,
-            b" ",
-            value,
-            &dimensions,
-        )))
+        Ok(
+            Handle::new(Token::with_dimensions(&word, b" ", value, &dimensions))
+                .into_upcast::<dyn TokenObject>(),
+        )
     }
     /// `(a)**(b)` raising factor and exponents to the other token's value;
     /// `token.power_token(&other)?`.
-    pub fn power_token(&self, token: &Handle<Token>) -> Result<Handle<Token>, Failure> {
+    pub fn power_token(
+        &self,
+        token: &Handle<dyn TokenObject>,
+    ) -> Result<Handle<dyn TokenObject>, Failure> {
         let other = object(token, "Units_Token::Power")?;
         let word = composite(&self.word(), b"**", other.word().as_bytes());
         self.raised(&word, other.value())
     }
     /// `(a)**(e)` where `e` is spelled with C `%g`; `token.power(2.0)?`.
-    pub fn power(&self, exponent: f64) -> Result<Handle<Token>, Failure> {
+    pub fn power(&self, exponent: f64) -> Result<Handle<dyn TokenObject>, Failure> {
         let spelled = AsciiString::from_real(exponent);
         let word = composite(&self.word(), b"**", spelled.as_bytes());
         self.raised(&word, exponent)
     }
-    fn raised(&self, word: &[u8], exponent: f64) -> Result<Handle<Token>, Failure> {
+    fn raised(&self, word: &[u8], exponent: f64) -> Result<Handle<dyn TokenObject>, Failure> {
         let dimensions = object(&self.dimensions(), "Units_Token::Power")?.power(exponent);
         let value = martensite_cmath::pow(self.value(), exponent);
-        Ok(Handle::new(Token::with_dimensions(
-            word,
-            b" ",
-            value,
-            &dimensions,
-        )))
+        Ok(
+            Handle::new(Token::with_dimensions(word, b" ", value, &dimensions))
+                .into_upcast::<dyn TokenObject>(),
+        )
     }
 }
 
@@ -110,8 +115,9 @@ mod tests {
     use super::super::Dimensions;
     use super::*;
 
-    fn unit(word: &[u8], value: f64, dimensions: Handle<Dimensions>) -> Handle<Token> {
+    fn unit(word: &[u8], value: f64, dimensions: Handle<Dimensions>) -> Handle<dyn TokenObject> {
         Handle::new(Token::with_dimensions(word, b"U", value, &dimensions))
+            .into_upcast::<dyn TokenObject>()
     }
 
     #[test]

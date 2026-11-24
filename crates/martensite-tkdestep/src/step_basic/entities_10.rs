@@ -13,7 +13,7 @@ step_entity! {
         name: Handle<HAsciiString>,
         description: Handle<HAsciiString>,
         has_description: bool,
-    }
+    }, bases: [StepBasicProductCategory]
 }
 impl StepBasicProductCategory {
     step_methods! {
@@ -43,8 +43,8 @@ step_entity! {
     StepBasicProductCategoryRelationship, StepBasicProductCategoryRelationshipState, "StepBasicProductCategoryRelationship", StandardTransient, {
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_category: Handle<StepBasicProductCategory>,
-        the_sub_category: Handle<StepBasicProductCategory>,
+        the_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>,
+        the_sub_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>,
         def_description: bool,
     }
 }
@@ -55,10 +55,10 @@ impl StepBasicProductCategoryRelationship {
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
         get has_description = def_description: bool;
-        get category = the_category: Handle<StepBasicProductCategory>;
-        set set_category = the_category: Handle<StepBasicProductCategory>;
-        get sub_category = the_sub_category: Handle<StepBasicProductCategory>;
-        set set_sub_category = the_sub_category: Handle<StepBasicProductCategory>;
+        get category = the_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>;
+        set set_category = the_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>;
+        get sub_category = the_sub_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>;
+        set set_sub_category = the_sub_category: Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -67,8 +67,8 @@ impl StepBasicProductCategoryRelationship {
         a_name: &Handle<HAsciiString>,
         has_description: bool,
         a_description: &Handle<HAsciiString>,
-        a_category: &Handle<StepBasicProductCategory>,
-        a_sub_category: &Handle<StepBasicProductCategory>,
+        a_category: &Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>,
+        a_sub_category: &Handle<dyn crate::StepEntityBase<StepBasicProductCategory>>,
     ) {
         let mut state = self.state.write();
         state.the_name = a_name.clone();
@@ -114,7 +114,7 @@ step_entity! {
     /// Product context.
     StepBasicProductContext, StepBasicProductContextState, "StepBasicProductContext", StepBasicApplicationContextElement, {
         discipline_type: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_basic::StepBasicProductContext]
 }
 impl StepBasicProductContext {
     step_methods! {
@@ -138,9 +138,9 @@ step_entity! {
     StepBasicProductDefinition, StepBasicProductDefinitionState, "StepBasicProductDefinition", StandardTransient, {
         id: Handle<HAsciiString>,
         description: Handle<HAsciiString>,
-        formation: Handle<StepBasicProductDefinitionFormation>,
-        frame_of_reference: Handle<StepBasicProductDefinitionContext>,
-    }
+        formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
+        frame_of_reference: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
+    }, bases: [crate::step_basic::StepBasicProductDefinition]
 }
 impl StepBasicProductDefinition {
     step_methods! {
@@ -148,18 +148,18 @@ impl StepBasicProductDefinition {
         get id = id: Handle<HAsciiString>;
         set set_description = description: Handle<HAsciiString>;
         get description = description: Handle<HAsciiString>;
-        set set_formation = formation: Handle<StepBasicProductDefinitionFormation>;
-        get formation = formation: Handle<StepBasicProductDefinitionFormation>;
-        set set_frame_of_reference = frame_of_reference: Handle<StepBasicProductDefinitionContext>;
-        get frame_of_reference = frame_of_reference: Handle<StepBasicProductDefinitionContext>;
+        set set_formation = formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>;
+        get formation = formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>;
+        set set_frame_of_reference = frame_of_reference: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>;
+        get frame_of_reference = frame_of_reference: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_id: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_formation: &Handle<StepBasicProductDefinitionFormation>,
-        a_frame_of_reference: &Handle<StepBasicProductDefinitionContext>,
+        a_formation: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
+        a_frame_of_reference: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
     ) {
         let mut state = self.state.write();
         state.id = a_id.clone();
@@ -173,7 +173,7 @@ step_entity! {
     /// Product definition context.
     StepBasicProductDefinitionContext, StepBasicProductDefinitionContextState, "StepBasicProductDefinitionContext", StepBasicApplicationContextElement, {
         life_cycle_stage: Handle<HAsciiString>,
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinitionContext]
 }
 impl StepBasicProductDefinitionContext {
     step_methods! {
@@ -195,19 +195,19 @@ impl StepBasicProductDefinitionContext {
 step_entity! {
     /// Product definition effectivity.
     StepBasicProductDefinitionEffectivity, StepBasicProductDefinitionEffectivityState, "StepBasicProductDefinitionEffectivity", StepBasicEffectivity, {
-        the_usage: Handle<StepBasicProductDefinitionRelationship>,
+        the_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>,
     }
 }
 impl StepBasicProductDefinitionEffectivity {
     step_methods! {
-        get usage = the_usage: Handle<StepBasicProductDefinitionRelationship>;
-        set set_usage = the_usage: Handle<StepBasicProductDefinitionRelationship>;
+        get usage = the_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>;
+        set set_usage = the_usage: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_id: &Handle<HAsciiString>,
-        a_usage: &Handle<StepBasicProductDefinitionRelationship>,
+        a_usage: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionRelationship>>,
     ) {
         self.set_id(a_id);
         self.state.write().the_usage = a_usage.clone();
@@ -220,7 +220,7 @@ step_entity! {
         id: Handle<HAsciiString>,
         description: Handle<HAsciiString>,
         of_product: Handle<StepBasicProduct>,
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinitionFormation]
 }
 impl StepBasicProductDefinitionFormation {
     step_methods! {
@@ -251,8 +251,8 @@ step_entity! {
         the_id: Handle<HAsciiString>,
         the_name: Handle<HAsciiString>,
         the_description: Handle<HAsciiString>,
-        the_relating_product_definition_formation: Handle<StepBasicProductDefinitionFormation>,
-        the_related_product_definition_formation: Handle<StepBasicProductDefinitionFormation>,
+        the_relating_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
+        the_related_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
     }
 }
 impl StepBasicProductDefinitionFormationRelationship {
@@ -263,10 +263,10 @@ impl StepBasicProductDefinitionFormationRelationship {
         set set_name = the_name: Handle<HAsciiString>;
         get description = the_description: Handle<HAsciiString>;
         set set_description = the_description: Handle<HAsciiString>;
-        get relating_product_definition_formation = the_relating_product_definition_formation: Handle<StepBasicProductDefinitionFormation>;
-        set set_relating_product_definition_formation = the_relating_product_definition_formation: Handle<StepBasicProductDefinitionFormation>;
-        get related_product_definition_formation = the_related_product_definition_formation: Handle<StepBasicProductDefinitionFormation>;
-        set set_related_product_definition_formation = the_related_product_definition_formation: Handle<StepBasicProductDefinitionFormation>;
+        get relating_product_definition_formation = the_relating_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>;
+        set set_relating_product_definition_formation = the_relating_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>;
+        get related_product_definition_formation = the_related_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>;
+        set set_related_product_definition_formation = the_related_product_definition_formation: Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -275,8 +275,12 @@ impl StepBasicProductDefinitionFormationRelationship {
         a_id: &Handle<HAsciiString>,
         a_name: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_relating_product_definition_formation: &Handle<StepBasicProductDefinitionFormation>,
-        a_related_product_definition_formation: &Handle<StepBasicProductDefinitionFormation>,
+        a_relating_product_definition_formation: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        >,
+        a_related_product_definition_formation: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        >,
     ) {
         let mut state = self.state.write();
         state.the_id = a_id.clone();
@@ -293,7 +297,7 @@ step_entity! {
     /// Product definition formation with specified source.
     StepBasicProductDefinitionFormationWithSpecifiedSource, StepBasicProductDefinitionFormationWithSpecifiedSourceState, "StepBasicProductDefinitionFormationWithSpecifiedSource", StepBasicProductDefinitionFormation, {
         make_or_buy: StepBasicSource,
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinitionFormation]
 }
 impl StepBasicProductDefinitionFormationWithSpecifiedSource {
     step_methods! {

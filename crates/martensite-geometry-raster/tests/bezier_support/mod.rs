@@ -8,7 +8,7 @@ pub fn spatial() -> martensite_tkernel::standard::Handle<martensite_tkg3d::geom:
     martensite_tkgeombase::geom_tools::read_curve(&mut IoStream::from_bytes(
         b"6 0 2 -5 0 0 0 5 0 5 0 0".to_vec(),
     ))
-    .cast()
+    .into_downcast()
 }
 pub fn planar() -> martensite_tkernel::standard::Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve>
 {
@@ -16,5 +16,5 @@ pub fn planar() -> martensite_tkernel::standard::Handle<martensite_tkg2d::geom2d
     martensite_tkgeombase::geom_tools::read_curve2d(&mut IoStream::from_bytes(
         b"6 0 2 -5 0 0 5 5 0".to_vec(),
     ))
-    .cast()
+    .into_downcast()
 }

@@ -14,17 +14,17 @@ use crate::step_repr::*;
 step_entity! {
     /// Representation of STEP entity PlanarCurvePair
     StepKinematicsPlanarCurvePair, StepKinematicsPlanarCurvePairState, "StepKinematicsPlanarCurvePair", StepKinematicsHighOrderKinematicPair, {
-        my_curve1: Handle<StepGeomCurve>,
-        my_curve2: Handle<StepGeomCurve>,
+        my_curve1: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+        my_curve2: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         my_orientation: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsPlanarCurvePair]
 }
 impl StepKinematicsPlanarCurvePair {
     step_methods! {
-        get curve1 = my_curve1: Handle<StepGeomCurve>;
-        set set_curve1 = my_curve1: Handle<StepGeomCurve>;
-        get curve2 = my_curve2: Handle<StepGeomCurve>;
-        set set_curve2 = my_curve2: Handle<StepGeomCurve>;
+        get curve1 = my_curve1: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        set set_curve1 = my_curve1: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        get curve2 = my_curve2: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        set set_curve2 = my_curve2: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
         get orientation = my_orientation: bool;
         set_copy set_orientation = my_orientation: bool;
     }
@@ -37,11 +37,15 @@ impl StepKinematicsPlanarCurvePair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
-        the_curve1: &Handle<StepGeomCurve>,
-        the_curve2: &Handle<StepGeomCurve>,
+        the_curve1: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+        the_curve2: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         the_orientation: bool,
     ) {
         self.parent.init(
@@ -65,7 +69,7 @@ step_entity! {
     StepKinematicsPlanarCurvePairRange, StepKinematicsPlanarCurvePairRangeState, "StepKinematicsPlanarCurvePairRange", StepKinematicsPlanarCurvePair, {
         my_range_on_curve1: Handle<StepGeomTrimmedCurve>,
         my_range_on_curve2: Handle<StepGeomTrimmedCurve>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsPlanarCurvePair]
 }
 impl StepKinematicsPlanarCurvePairRange {
     step_methods! {
@@ -83,11 +87,15 @@ impl StepKinematicsPlanarCurvePairRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
-        the_planar_curve_pair_curve1: &Handle<StepGeomCurve>,
-        the_planar_curve_pair_curve2: &Handle<StepGeomCurve>,
+        the_planar_curve_pair_curve1: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
+        the_planar_curve_pair_curve2: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         the_planar_curve_pair_orientation: bool,
         the_range_on_curve1: &Handle<StepGeomTrimmedCurve>,
         the_range_on_curve2: &Handle<StepGeomTrimmedCurve>,
@@ -113,7 +121,7 @@ impl StepKinematicsPlanarCurvePairRange {
 step_entity! {
     /// Representation of STEP entity PlanarPair
     StepKinematicsPlanarPair, StepKinematicsPlanarPairState, "StepKinematicsPlanarPair", StepKinematicsLowOrderKinematicPair, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 
 step_entity! {
@@ -122,7 +130,7 @@ step_entity! {
         my_actual_rotation: f64,
         my_actual_translation_x: f64,
         my_actual_translation_y: f64,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsPlanarPairValue {
     step_methods! {
@@ -138,7 +146,9 @@ impl StepKinematicsPlanarPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_rotation: f64,
         the_actual_translation_x: f64,
         the_actual_translation_y: f64,
@@ -167,7 +177,7 @@ step_entity! {
         def_upper_limit_actual_translation_x: bool,
         def_lower_limit_actual_translation_y: bool,
         def_upper_limit_actual_translation_y: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 impl StepKinematicsPlanarPairWithRange {
     step_methods! {
@@ -199,8 +209,12 @@ impl StepKinematicsPlanarPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,
@@ -279,14 +293,14 @@ impl StepKinematicsPlanarPairWithRange {
 step_entity! {
     /// Representation of STEP entity PointOnPlanarCurvePair
     StepKinematicsPointOnPlanarCurvePair, StepKinematicsPointOnPlanarCurvePairState, "StepKinematicsPointOnPlanarCurvePair", StepKinematicsHighOrderKinematicPair, {
-        my_pair_curve: Handle<StepGeomCurve>,
+        my_pair_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         my_orientation: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsPointOnPlanarCurvePair]
 }
 impl StepKinematicsPointOnPlanarCurvePair {
     step_methods! {
-        get pair_curve = my_pair_curve: Handle<StepGeomCurve>;
-        set set_pair_curve = my_pair_curve: Handle<StepGeomCurve>;
+        get pair_curve = my_pair_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
+        set set_pair_curve = my_pair_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>>;
         get orientation = my_orientation: bool;
         set_copy set_orientation = my_orientation: bool;
     }
@@ -299,10 +313,14 @@ impl StepKinematicsPointOnPlanarCurvePair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
-        the_pair_curve: &Handle<StepGeomCurve>,
+        the_pair_curve: &Handle<dyn crate::StepEntityBase<StepGeomCurve>>,
         the_orientation: bool,
     ) {
         self.parent.init(
@@ -325,7 +343,7 @@ step_entity! {
     StepKinematicsPointOnPlanarCurvePairValue, StepKinematicsPointOnPlanarCurvePairValueState, "StepKinematicsPointOnPlanarCurvePairValue", StepKinematicsPairValue, {
         my_actual_point_on_curve: Handle<StepGeomPointOnCurve>,
         my_input_orientation: StepKinematicsSpatialRotation,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsPointOnPlanarCurvePairValue {
     step_methods! {
@@ -339,7 +357,9 @@ impl StepKinematicsPointOnPlanarCurvePairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_point_on_curve: &Handle<StepGeomPointOnCurve>,
         the_input_orientation: &StepKinematicsSpatialRotation,
     ) {

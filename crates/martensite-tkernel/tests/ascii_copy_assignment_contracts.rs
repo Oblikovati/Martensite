@@ -1,5 +1,5 @@
 //! Supplemental assignment checks pin the return and reuse contracts.
-use martensite_tkernel::tcollection::AsciiString;
+use crate::tcollection::AsciiString;
 
 fn verify_assignment(before: &[u8], input: &[u8]) {
     let mut destination = AsciiString::from_raw(before);

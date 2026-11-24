@@ -1,10 +1,10 @@
 //! The texts of a `MoniToolTypedValue`: its computed definition and its printing.
 use super::typed_value::TypedValueState;
-use super::{MoniToolTypedValue, MoniToolValueType};
+use super::{MoniToolValue, MoniToolValueType};
 use martensite_tkernel::{standard::Handle, tcollection::AsciiString};
 use std::io::{self, Write};
 
-impl MoniToolTypedValue {
+impl MoniToolValue {
     /// `Print`: name, label, definition, value and the name of the satisfies function.
     pub fn print(&self, s: &mut dyn Write) -> io::Result<()> {
         let (name, label, satisf) = {
@@ -142,7 +142,7 @@ impl TypedValueState {
         def
     }
     fn ident_definition(&self) -> String {
-        match self.theotyp.get() {
+        match self.theotyp {
             Some(typ) => format!("Object(Entity):{}", typ.name()),
             None => String::from("Object(Entity)"),
         }

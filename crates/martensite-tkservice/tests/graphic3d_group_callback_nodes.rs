@@ -10,14 +10,14 @@ fn append_clearing_group(
     presentation: &Handle<Graphic3dStructure>,
     earlier: &Handle<dyn Graphic3dGroup>,
 ) -> Handle<dyn Graphic3dGroup> {
-    let active = EarlierGroupClear::new(&presentation.cast(), earlier.observe());
+    let active = EarlierGroupClear::new(&presentation.cast(), earlier.downgrade());
     presentation
         .cstructure()
         .cstructure_base()
         .fields
         .write()
         .groups
-        .append(active.cast());
+        .append(martensite_tkernel::standard::HandleSlot::new(active.cast()));
     active.cast()
 }
 #[test]

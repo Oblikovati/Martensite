@@ -1,17 +1,14 @@
 //! Named failing child proves native partial animation stop precedes camera mutation.
 use super::view_controller_camera_fixture::PrimitiveScene;
 use super::{AisAnimationBase, AisAnimationMembers as _, AisAnimationSource};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 pub(super) struct PrimitiveStopFailure {
-    transient: StandardTransient,
     base: AisAnimationBase,
 }
-martensite_tkernel::impl_transient!(PrimitiveStopFailure,"PrimitiveStopFailure",dyn AisAnimationSource,transient,interfaces:[dyn AisAnimationSource]);
+martensite_tkernel::impl_transient!(PrimitiveStopFailure,"PrimitiveStopFailure",dyn AisAnimationSource,interfaces:[dyn AisAnimationSource]);
 impl PrimitiveStopFailure {
     pub(super) fn new() -> Self {
-        let transient = StandardTransient::default();
         Self {
-            transient,
             base: AisAnimationBase::new("primitive stop failure"),
         }
     }

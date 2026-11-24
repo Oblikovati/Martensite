@@ -5,6 +5,7 @@
 //! the optional normal `vec3`, texel `vec2` and color `vec4ub`), which the Vulkan driver uploads
 //! unchanged. The vertex, edge and bound members are in
 //! array_vertices.rs and array_edges.rs; the classes of each primitive type in array_classes.rs.
+use super::array_validity::IndexExtentMemo;
 use super::{
     GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_DEINTERLEAVED, GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE,
     GRAPHIC3D_ARRAY_FLAGS_BOUND_COLOR, GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE,
@@ -29,7 +30,6 @@ pub struct Graphic3dAttributeSlot {
 
 /// A primitive array; `Graphic3dArrayOfPrimitives::create_array(Graphic3dTypeOfPrimitiveArray::Triangles, 3, 0, 0)?`.
 pub struct Graphic3dArrayOfPrimitives {
-    transient: StandardTransient,
     pub(crate) indices: Handle<dyn Graphic3dIndexBufferSource>,
     pub(crate) attribs: Handle<dyn Graphic3dBufferSource>,
     pub(crate) bounds: Handle<Graphic3dBoundBuffer>,
@@ -38,13 +38,12 @@ pub struct Graphic3dArrayOfPrimitives {
     pub(crate) texels: Graphic3dAttributeSlot,
     pub(crate) colors: Graphic3dAttributeSlot,
     pub(crate) kind: Graphic3dTypeOfPrimitiveArray,
+    pub(super) index_extent: IndexExtentMemo,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dArrayOfPrimitives,
     "Graphic3d_ArrayOfPrimitives",
-    StandardTransient,
-    transient
-);
+    StandardTransient, interfaces: [dyn super::Graphic3dArraySource]);
 
 /// The vertex buffer of the flags: an attribute buffer for mutable or packed arrays.
 fn vertex_buffer(
@@ -135,7 +134,6 @@ impl Graphic3dArrayOfPrimitives {
     /// An array without buffers of a type (before `init`).
     fn empty(kind: Graphic3dTypeOfPrimitiveArray) -> Self {
         Self {
-            transient: StandardTransient::default(),
             indices: Handle::default(),
             attribs: Handle::default(),
             bounds: Handle::default(),
@@ -144,6 +142,7 @@ impl Graphic3dArrayOfPrimitives {
             texels: Graphic3dAttributeSlot::default(),
             colors: Graphic3dAttributeSlot::default(),
             kind,
+            index_extent: IndexExtentMemo::default(),
         }
     }
     /// The protected constructor: `init` of an array of `kind` with room for vertices, bounds
@@ -281,7 +280,7 @@ impl Graphic3dArrayOfPrimitives {
         max_bounds: i32,
         max_edges: i32,
         flags: Graphic3dArrayFlags,
-    ) -> Result<Handle<Self>, Failure> {
+    ) -> Result<Handle<dyn super::Graphic3dArraySource>, Failure> {
         use Graphic3dTypeOfPrimitiveArray as T;
         let (bounds, edges) = match kind {
             T::Undefined => return Ok(Handle::default()),
@@ -301,7 +300,7 @@ impl Graphic3dArrayOfPrimitives {
         max_vertexs: i32,
         max_edges: i32,
         flags: Graphic3dArrayFlags,
-    ) -> Result<Handle<Self>, Failure> {
+    ) -> Result<Handle<dyn super::Graphic3dArraySource>, Failure> {
         Self::create_array_with_bounds(kind, max_vertexs, 0, max_edges, flags)
     }
 }

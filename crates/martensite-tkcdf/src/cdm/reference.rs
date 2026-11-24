@@ -5,7 +5,7 @@ use crate::live;
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle, dump::DumpStream},
+    standard::{Failure, Handle, SharedState, Transient, WeakHandle, dump::DumpStream},
 };
 use std::io;
 
@@ -24,15 +24,13 @@ struct ReferenceState {
 /// `CDM_Reference`: created by the documents only (private constructors, friend
 /// `CDM_Document`); `document.reference(id)` returns one.
 pub struct CdmReference {
-    transient: StandardTransient,
     state: SharedState<ReferenceState>,
 }
-impl_transient!(CdmReference, "CDM_Reference", StandardTransient, transient);
+impl_transient!(CdmReference, "CDM_Reference", dyn Transient);
 
 impl CdmReference {
     fn create(state: ReferenceState) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }

@@ -28,7 +28,7 @@ use martensite_tkbrep::toptools::{IndexedDataMapOfShapeListOfShape, MapOfShape, 
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, HashPolicy};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomPlane;
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -99,14 +99,12 @@ pub(super) struct UnifyState {
 /// assert!(unifier.shape().is_null());
 /// ```
 pub struct ShapeUpgradeUnifySameDomain {
-    parent: StandardTransient,
     state: SharedState<UnifyState>,
 }
 impl_transient!(
     ShapeUpgradeUnifySameDomain,
     "ShapeUpgrade_UnifySameDomain",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 impl Default for ShapeUpgradeUnifySameDomain {
@@ -182,7 +180,6 @@ impl ShapeUpgradeUnifySameDomain {
     /// `ShapeUpgradeUnifySameDomain::new(&shape, true, true, false)`.
     pub fn new(shape: &Shape, unify_edges: bool, unify_faces: bool, concat_bsplines: bool) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(UnifyState::new(
                 shape,
                 unify_edges,

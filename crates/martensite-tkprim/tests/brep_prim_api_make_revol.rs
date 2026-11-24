@@ -36,7 +36,7 @@ fn check_toroidal_revolution(the_x_direction: Direction3, the_radius: f64) {
     )
     .unwrap();
     let a_circle: Handle<dyn GeomCurve> =
-        Handle::new(GeomCircle::new(an_circle_axis, the_radius).unwrap()).cast();
+        Handle::new(GeomCircle::new(an_circle_axis, the_radius).unwrap()).into_upcast();
     let a_make_edge = BRepBuilderAPIMakeEdge::from_curve(&a_circle).unwrap();
     assert!(a_make_edge.is_done());
 

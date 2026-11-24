@@ -22,7 +22,7 @@ step_entity! {
         def_upper_limit_yaw: bool,
         def_lower_limit_roll: bool,
         def_upper_limit_roll: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 impl StepKinematicsSphericalPairWithPinAndRange {
     step_methods! {
@@ -48,8 +48,12 @@ impl StepKinematicsSphericalPairWithPinAndRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,
@@ -124,7 +128,7 @@ step_entity! {
         def_upper_limit_pitch: bool,
         def_lower_limit_roll: bool,
         def_upper_limit_roll: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 impl StepKinematicsSphericalPairWithRange {
     step_methods! {
@@ -156,8 +160,12 @@ impl StepKinematicsSphericalPairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
         the_low_order_kinematic_pair_tx: bool,
         the_low_order_kinematic_pair_ty: bool,
@@ -236,17 +244,17 @@ impl StepKinematicsSphericalPairWithRange {
 step_entity! {
     /// Representation of STEP entity SurfacePair
     StepKinematicsSurfacePair, StepKinematicsSurfacePairState, "StepKinematicsSurfacePair", StepKinematicsHighOrderKinematicPair, {
-        my_surface1: Handle<StepGeomSurface>,
-        my_surface2: Handle<StepGeomSurface>,
+        my_surface1: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
+        my_surface2: Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         my_orientation: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsSurfacePair]
 }
 impl StepKinematicsSurfacePair {
     step_methods! {
-        get surface1 = my_surface1: Handle<StepGeomSurface>;
-        set set_surface1 = my_surface1: Handle<StepGeomSurface>;
-        get surface2 = my_surface2: Handle<StepGeomSurface>;
-        set set_surface2 = my_surface2: Handle<StepGeomSurface>;
+        get surface1 = my_surface1: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        set set_surface1 = my_surface1: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        get surface2 = my_surface2: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
+        set set_surface2 = my_surface2: Handle<dyn crate::StepEntityBase<StepGeomSurface>>;
         get orientation = my_orientation: bool;
         set_copy set_orientation = my_orientation: bool;
     }
@@ -259,11 +267,15 @@ impl StepKinematicsSurfacePair {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
-        the_surface1: &Handle<StepGeomSurface>,
-        the_surface2: &Handle<StepGeomSurface>,
+        the_surface1: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
+        the_surface2: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         the_orientation: bool,
     ) {
         self.parent.init(
@@ -291,7 +303,7 @@ step_entity! {
         my_upper_limit_actual_rotation: f64,
         def_lower_limit_actual_rotation: bool,
         def_upper_limit_actual_rotation: bool,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsSurfacePair]
 }
 impl StepKinematicsSurfacePairWithRange {
     step_methods! {
@@ -315,11 +327,15 @@ impl StepKinematicsSurfacePairWithRange {
         the_item_defined_transformation_name: &Handle<HAsciiString>,
         has_item_defined_transformation_description: bool,
         the_item_defined_transformation_description: &Handle<HAsciiString>,
-        the_item_defined_transformation_transform_item1: &Handle<StepReprRepresentationItem>,
-        the_item_defined_transformation_transform_item2: &Handle<StepReprRepresentationItem>,
+        the_item_defined_transformation_transform_item1: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
+        the_item_defined_transformation_transform_item2: &Handle<
+            dyn crate::StepEntityBase<StepReprRepresentationItem>,
+        >,
         the_kinematic_pair_joint: &Handle<StepKinematicsKinematicJoint>,
-        the_surface_pair_surface1: &Handle<StepGeomSurface>,
-        the_surface_pair_surface2: &Handle<StepGeomSurface>,
+        the_surface_pair_surface1: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
+        the_surface_pair_surface2: &Handle<dyn crate::StepEntityBase<StepGeomSurface>>,
         the_surface_pair_orientation: bool,
         the_range_on_surface1: &Handle<StepGeomRectangularTrimmedSurface>,
         the_range_on_surface2: &Handle<StepGeomRectangularTrimmedSurface>,
@@ -361,14 +377,14 @@ impl StepKinematicsSurfacePairWithRange {
 step_entity! {
     /// Representation of STEP entity UnconstrainedPair
     StepKinematicsUnconstrainedPair, StepKinematicsUnconstrainedPairState, "StepKinematicsUnconstrainedPair", StepKinematicsLowOrderKinematicPair, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_kinematics::StepKinematicsKinematicPair, crate::step_kinematics::StepKinematicsLowOrderKinematicPair]
 }
 
 step_entity! {
     /// Representation of STEP entity UnconstrainedPairValue
     StepKinematicsUnconstrainedPairValue, StepKinematicsUnconstrainedPairValueState, "StepKinematicsUnconstrainedPairValue", StepKinematicsPairValue, {
         my_actual_placement: Handle<StepGeomAxis2Placement3d>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepKinematicsUnconstrainedPairValue {
     step_methods! {
@@ -380,7 +396,9 @@ impl StepKinematicsUnconstrainedPairValue {
     pub fn init(
         &self,
         the_representation_item_name: &Handle<HAsciiString>,
-        the_pair_value_applies_to_pair: &Handle<StepKinematicsKinematicPair>,
+        the_pair_value_applies_to_pair: &Handle<
+            dyn crate::StepEntityBase<StepKinematicsKinematicPair>,
+        >,
         the_actual_placement: &Handle<StepGeomAxis2Placement3d>,
     ) {
         self.parent

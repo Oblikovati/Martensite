@@ -180,8 +180,8 @@ fn replay() -> Vec<String> {
     let structure = Graphic3dStructure::new(&manager, &Handle::default()).unwrap();
     let group = structure.new_group().unwrap();
     group.set_group_primitives_aspect(&view_setup::unlit_aspects::unlit_style([1., 0., 0., 1.]));
-    group.add_primitive_array(&triangle(), true);
-    group.add_primitive_array(&triangle(), true);
+    group.add_primitive_array(&triangle().upcast(), true);
+    group.add_primitive_array(&triangle().upcast(), true);
     let none = (Handle::default(), Handle::default(), Handle::default());
     group.add_primitive_array_buffers(Kind::Triangles, &none.0, &none.1, &none.2, true);
     lines.push(format!(

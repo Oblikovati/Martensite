@@ -2,7 +2,7 @@
 use super::support::{downcast, find_or_add, live};
 use martensite_tkernel::quantity::{Color, ColorRgba, ColorSpace, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
 use martensite_tklcaf::tdf::{
@@ -27,11 +27,10 @@ const COLOR_ID: Guid = guid_from_text("efd212f0-6dfd-11d4-b9c8-0060b0ee281b");
 /// ```
 #[derive(Default)]
 pub struct XCAFDocColor {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     color: SharedState<ColorRgba>,
 }
-martensite_tkernel::impl_transient!(XCAFDocColor, "XCAFDocColor", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocColor, "XCAFDocColor", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocColor {
     /// `XCAFDocColor()`.

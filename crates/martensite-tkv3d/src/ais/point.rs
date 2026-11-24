@@ -2,7 +2,7 @@
 use super::{AisInteractiveObject, AisInteractiveObjectBase, AisKindOfInteractive};
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkbrep::topods::Vertex;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::GeomPoint;
 use martensite_tkservice::aspect::AspectTypeOfMarker;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeVertex;
@@ -12,18 +12,16 @@ pub(super) struct PointMarker {
 }
 /// A geometric point datum with native marker and selection behavior; `AisPoint::new(&point)?`.
 pub struct AisPoint {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     component: SharedState<Handle<dyn GeomPoint>>,
     pub(super) marker: SharedState<PointMarker>,
 }
-martensite_tkernel::impl_transient!(AisPoint,"AisPoint",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisPoint,"AisPoint",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisPoint {
     /// Retain the component and initialize the two highlight drawers; `AisPoint::new(&point)?`.
     pub fn new(component: &Handle<dyn GeomPoint>) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             component: SharedState::new(component.clone()),
             marker: SharedState::new(PointMarker {

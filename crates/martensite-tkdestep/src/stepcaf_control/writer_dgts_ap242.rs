@@ -60,8 +60,8 @@ fn angle_relator(object: &XCAFDimTolObjectsDimensionObject) -> StepShapeAngleRel
 /// What the loop over the dimensions shares.
 #[derive(Default)]
 struct DimensionWalk {
-    context: Handle<StepReprRepresentationContext>,
-    dummy_context: Handle<StepReprRepresentationContext>,
+    context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+    dummy_context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     dummy_usage: Handle<StepAP242GeometricItemSpecificUsage>,
     points: Vec<Handle<StepGeomCartesianPoint>>,
 }
@@ -144,7 +144,7 @@ impl WriterState {
         dimension: &TdfLabel,
         shapes: &[TdfLabel],
         walk: &mut DimensionWalk,
-    ) -> Result<Handle<StepReprShapeAspect>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
         let model = model_of(ws)?;
         if let [single] = shapes {
             let aspect = self.write_shape_aspect(
@@ -191,7 +191,7 @@ impl WriterState {
         dimension: &TdfLabel,
         shapes: &[TdfLabel],
         walk: &mut DimensionWalk,
-    ) -> Result<Handle<StepReprShapeAspect>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
         let model = model_of(ws)?;
         if let [single] = shapes {
             let aspect = self.write_shape_aspect(
@@ -234,8 +234,8 @@ impl WriterState {
         ws: &Handle<XSControlWorkSession>,
         dimension_label: &TdfLabel,
         object: &XCAFDimTolObjectsDimensionObject,
-        first: &Handle<StepReprShapeAspect>,
-        second: &Handle<StepReprShapeAspect>,
+        first: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+        second: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         walk: &mut DimensionWalk,
     ) -> Result<StepShapeDimensionalCharacteristic, Failure> {
         let mut dimension = StepShapeDimensionalCharacteristic::default();
@@ -416,8 +416,9 @@ impl WriterState {
         }
         // Write Derived geometry
         if !walk.points.is_empty() {
-            let items =
-                step_new_array1::<Handle<StepReprRepresentationItem>>(1, walk.points.len() as i32)?;
+            let items = step_new_array1::<
+                Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
+            >(1, walk.points.len() as i32)?;
             for (index, point) in walk.points.iter().enumerate() {
                 step_array1_set(&items, index as i32 + 1, point.cast(), WHERE)?;
             }
@@ -450,7 +451,7 @@ impl WriterState {
         if self.gdt_annotations.is_empty() {
             return Ok(true);
         }
-        let items = step_new_array1::<Handle<StepReprRepresentationItem>>(
+        let items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(
             1,
             self.gdt_annotations.len() as i32,
         )?;

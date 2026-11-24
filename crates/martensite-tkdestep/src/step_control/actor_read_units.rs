@@ -15,13 +15,14 @@ use crate::step_repr::{
     StepReprShapeRepresentationRelationshipWithTransformation,
 };
 use crate::step_to_geom::StepToGeom;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis3, Transform3, TransformForm};
 use martensite_tkxsbase::transfer::TransferTransientProcess;
 
 /// The global contexts of a representation context.
 fn global_contexts(
-    context: &Handle<StandardTransient>,
+    context: &Handle<dyn Transient>,
 ) -> (
     Handle<StepReprGlobalUnitAssignedContext>,
     Handle<StepReprGlobalUncertaintyAssignedContext>,
@@ -57,7 +58,7 @@ impl StepControlActorRead {
     /// `prepare_units(rep, TP, local_factors)`.
     pub fn prepare_units(
         &self,
-        rep: &Handle<StepReprRepresentation>,
+        rep: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
         tp: &Handle<TransferTransientProcess>,
         factors: &mut StepDataFactors,
     ) -> Result<(), Failure> {
@@ -73,7 +74,7 @@ impl StepControlActorRead {
             live_tp.add_warning_text(&rep.cast(), text, "");
             return self.reset_units(&model, factors);
         }
-        let start: Handle<StandardTransient> = context.cast();
+        let start: Handle<dyn Transient> = context.cast();
         let (units, tolerance) = global_contexts(&start);
         let mut unit = StepConstructUnitContext::new();
         if units.is_some() {
@@ -142,8 +143,8 @@ impl StepControlActorRead {
         &self,
         origin: &Handle<StepGeomAxis2Placement3d>,
         target: &Handle<StepGeomAxis2Placement3d>,
-        orig_context: &Handle<StepReprRepresentation>,
-        targ_context: &Handle<StepReprRepresentation>,
+        orig_context: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+        targ_context: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
         tp: &Handle<TransferTransientProcess>,
         trsf: &mut Transform3,
         factors: &StepDataFactors,
@@ -153,13 +154,13 @@ impl StepControlActorRead {
             return Ok(false);
         }
         let (mut org, mut trg) = (origin.clone(), target.clone());
-        let org_entity: Handle<StandardTransient> = org.cast();
-        let trg_entity: Handle<StandardTransient> = trg.cast();
+        let org_entity: Handle<dyn Transient> = org.cast();
+        let trg_entity: Handle<dyn Transient> = trg.cast();
         let (mut ok_origin, mut swap_origin, mut ok_target, mut swap_target) =
             (false, false, false, false);
         let orig_live = step_live(orig_context, "StepControlActorRead::ComputeTransformation")?;
         for rank in 1..=orig_live.nb_items() {
-            let item: Handle<StandardTransient> = orig_live.items_value(rank)?.cast();
+            let item: Handle<dyn Transient> = orig_live.items_value(rank)?.cast();
             if item == org_entity {
                 ok_origin = true;
             } else if item == trg_entity {
@@ -168,7 +169,7 @@ impl StepControlActorRead {
         }
         let targ_live = step_live(targ_context, "StepControlActorRead::ComputeTransformation")?;
         for rank in 1..=targ_live.nb_items() {
-            let item: Handle<StandardTransient> = targ_live.items_value(rank)?.cast();
+            let item: Handle<dyn Transient> = targ_live.items_value(rank)?.cast();
             if item == trg_entity {
                 ok_target = true;
             } else if item == org_entity {
@@ -207,7 +208,7 @@ impl StepControlActorRead {
     /// `compute_srrwt(SRR, TP, Trsf, local_factors)`.
     pub fn compute_srrwt(
         &self,
-        srr: &Handle<StepReprRepresentationRelationship>,
+        srr: &Handle<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>,
         tp: &Handle<TransferTransientProcess>,
         trsf: &mut Transform3,
         factors: &StepDataFactors,

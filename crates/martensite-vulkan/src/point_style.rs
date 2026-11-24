@@ -1,6 +1,7 @@
 //! Native screen-space marker sprites retain the implemented Graphic3d bitmap/image definitions.
 use crate::{RenderError, error::rejected};
 use martensite_tkernel::{ncollection::Vec4, standard::Handle};
+use martensite_tkservice::image::ImagePixMapObject;
 use martensite_tkservice::{aspect::AspectTypeOfMarker, graphic3d::*, image::ImagePixMap};
 // Alpha-only and colored sprites use different unlit colors.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -125,7 +126,10 @@ fn resolve_marker_image(
     )
     .map_err(|e| rejected(e, "a valid native marker sprite"))
 }
-fn image_style(image: &Handle<ImagePixMap>, alpha: bool) -> Result<PointStyle, RenderError> {
+fn image_style(
+    image: &Handle<dyn ImagePixMapObject>,
+    alpha: bool,
+) -> Result<PointStyle, RenderError> {
     let image = image
         .get()
         .ok_or_else(|| rejected("null marker image", "an allocated sprite"))?;

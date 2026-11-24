@@ -10,7 +10,7 @@ use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
     resource::{ResourceHost, ResourceManager},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     storage::state,
 };
 use std::sync::{
@@ -22,11 +22,10 @@ mod byte_failures;
 
 #[derive(Default)]
 struct FakeProbeApplication {
-    transient: StandardTransient,
     base: CdfApplicationBase,
     callbacks: AtomicUsize,
 }
-impl_transient!(FakeProbeApplication, "FakeProbeApplication", dyn CdfApplication, transient, interfaces: [dyn CdmApplication, dyn CdfApplication]);
+impl_transient!(FakeProbeApplication, "FakeProbeApplication", dyn CdfApplication, interfaces: [dyn CdmApplication, dyn CdfApplication]);
 impl CdmApplication for FakeProbeApplication {
     cdf_application_cdm_members!();
     fn resources(&self) -> Result<SharedResourceManager, Failure> {
@@ -64,7 +63,7 @@ fn borrowed_application_read_consumes_unknown_prefix_and_keeps_document() {
     .unwrap();
     assert_eq!(device.consumed, 7);
     assert_eq!(app.get_retrieve_status(), PcdmReaderStatus::FormatFailure);
-    assert!(document.cast::<super::support::FakeDocument>() == original);
+    assert!(document.downcast::<super::support::FakeDocument>() == original);
 }
 
 #[test]
@@ -107,7 +106,7 @@ fn explicit_application_stream_catches_only_kernel_failures() {
                 &ProgressRange::default(),
             )
             .unwrap_err();
-        assert!(document.cast::<super::support::FakeDocument>() == original);
+        assert!(document.downcast::<super::support::FakeDocument>() == original);
         assert_eq!(failure.operation(), "CDF_Application::Read(stream)");
         assert_eq!(
             app.get_retrieve_status(),

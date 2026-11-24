@@ -3,12 +3,14 @@ use crate::standard::Failure;
 
 impl<'a> AliasedArray<'a> {
     /// Allocate from a signed length; `AliasedArray::new_signed(4, 3)?`.
-    pub fn new_signed(stride: usize, count: i32) -> Result<Self, Failure> {
+    #[cfg(test)]
+    pub(crate) fn new_signed(stride: usize, count: i32) -> Result<Self, Failure> {
         Self::new(stride, Self::checked_size(count)?)
     }
 
     /// Wrap the requested external prefix using signed length; `AliasedArray::from_slice_signed(&mut values, 2)?`.
-    pub fn from_slice_signed<T: ArrayValue>(
+    #[cfg(test)]
+    pub(crate) fn from_slice_signed<T: ArrayValue>(
         values: &'a mut [T],
         count: i32,
     ) -> Result<Self, Failure> {
@@ -25,7 +27,8 @@ impl<'a> AliasedArray<'a> {
     }
 
     /// Resize from a signed length; `array.resize_signed(3, true)?`.
-    pub fn resize_signed(&mut self, count: i32, copy: bool) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn resize_signed(&mut self, count: i32, copy: bool) -> Result<(), Failure> {
         self.resize(Self::checked_size(count)?, copy)
     }
 
@@ -35,44 +38,66 @@ impl<'a> AliasedArray<'a> {
     }
 
     /// Change an element after the signed-index check; `array.change_value_signed::<i32>(0)?`.
-    pub fn change_value_signed<T: ArrayValue>(&mut self, index: i32) -> Result<&mut T, Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_value_signed<T: ArrayValue>(
+        &mut self,
+        index: i32,
+    ) -> Result<&mut T, Failure> {
         self.change_value(checked_signed_index(index, "ChangeValue")?)
     }
 
     /// Read an element prefix after the signed-index check; `array.value2_signed::<u8>(0)?`.
-    pub fn value2_signed<T: ArrayValue>(&self, index: i32) -> Result<&T, Failure> {
+    #[cfg(test)]
+    pub(crate) fn value2_signed<T: ArrayValue>(&self, index: i32) -> Result<&T, Failure> {
         self.value2(checked_signed_index(index, "Value2")?)
     }
 
     /// Change an element prefix after the signed-index check; `array.change_value2_signed::<u8>(0)?`.
-    pub fn change_value2_signed<T: ArrayValue>(&mut self, index: i32) -> Result<&mut T, Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_value2_signed<T: ArrayValue>(
+        &mut self,
+        index: i32,
+    ) -> Result<&mut T, Failure> {
         self.change_value2(checked_signed_index(index, "ChangeValue2")?)
     }
 
     /// Return an element address after rejecting negative indices; `array.byte_value_ptr_signed(0)?`.
-    pub fn byte_value_ptr_signed(&self, index: i32) -> Result<*const u8, Failure> {
+    #[cfg(test)]
+    pub(crate) fn byte_value_ptr_signed(&self, index: i32) -> Result<*const u8, Failure> {
         self.byte_value_ptr(checked_signed_index(index, "value")?)
     }
 
     /// Return a mutable element address after rejecting negative indices; `array.change_byte_value_ptr_signed(0)?`.
-    pub fn change_byte_value_ptr_signed(&mut self, index: i32) -> Result<*mut u8, Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_byte_value_ptr_signed(&mut self, index: i32) -> Result<*mut u8, Failure> {
         self.change_byte_value_ptr(checked_signed_index(index, "changeValue")?)
     }
 
     /// Copy a value into the supplied destination; `array.value_into(0, &mut out)?`.
-    pub fn value_into<T: ArrayValue>(&self, index: usize, output: &mut T) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn value_into<T: ArrayValue>(
+        &self,
+        index: usize,
+        output: &mut T,
+    ) -> Result<(), Failure> {
         *output = *self.value(index)?;
         Ok(())
     }
 
     /// Copy a prefix into the supplied destination; `array.value2_into(0, &mut out)?`.
-    pub fn value2_into<T: ArrayValue>(&self, index: usize, output: &mut T) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn value2_into<T: ArrayValue>(
+        &self,
+        index: usize,
+        output: &mut T,
+    ) -> Result<(), Failure> {
         *output = *self.value2(index)?;
         Ok(())
     }
 
     /// Copy with signed-index error ordering; `array.value_into_signed(0, &mut out)?`.
-    pub fn value_into_signed<T: ArrayValue>(
+    #[cfg(test)]
+    pub(crate) fn value_into_signed<T: ArrayValue>(
         &self,
         index: i32,
         output: &mut T,
@@ -81,7 +106,8 @@ impl<'a> AliasedArray<'a> {
     }
 
     /// Copy a prefix with signed-index error ordering; `array.value2_into_signed(0, &mut out)?`.
-    pub fn value2_into_signed<T: ArrayValue>(
+    #[cfg(test)]
+    pub(crate) fn value2_into_signed<T: ArrayValue>(
         &self,
         index: i32,
         output: &mut T,

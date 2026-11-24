@@ -6,7 +6,7 @@ use super::elementary_criterion::{CriterionBase, ElementaryCriterion, coefficien
 use super::reference_matrix::reference_matrix;
 use crate::native_failure::{array_failure, failure};
 use martensite_tkernel::ncollection::{Array2, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::math::{Matrix, Vector};
 use martensite_tkmath::plib;
@@ -46,7 +46,6 @@ pub trait LinearKind: Send + Sync + 'static {
 /// A linear FEmTool criterion; see [`super::LinearFlexion`], [`super::LinearJerk`] and
 /// [`super::LinearTension`].
 pub struct LinearCriterion<K: LinearKind> {
-    pub(super) parent: StandardTransient,
     base: CriterionBase,
     ref_matrix: Matrix<'static>,
     order: i32,
@@ -64,7 +63,6 @@ impl<K: LinearKind> LinearCriterion<K> {
         let order: i32 = plib::niv_constr(constraint_order)?;
         reference_matrix::<K>(order, constraint_order, work_degree, &mut ref_matrix)?;
         Ok(Self {
-            parent: StandardTransient::default(),
             base: CriterionBase::new(),
             ref_matrix,
             order,

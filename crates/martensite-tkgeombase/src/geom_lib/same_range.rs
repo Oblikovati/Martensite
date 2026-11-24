@@ -112,7 +112,7 @@ impl SameRangeRequest {
                 true,
                 true,
             )?;
-            *new_curve_ptr = Handle::new(trimmed).cast();
+            *new_curve_ptr = Handle::new(trimmed).into_upcast();
         } else if (self.last_on_curve - self.first_on_curve).abs() > precision::p_confusion()
             || (self.requested_last + self.requested_first).abs() > precision::p_confusion()
         {
@@ -125,7 +125,7 @@ impl SameRangeRequest {
                 true,
                 true,
             )?;
-            *new_curve_ptr = self.reparametrized(&Handle::new(tc).cast())?;
+            *new_curve_ptr = self.reparametrized(&Handle::new(tc).into_upcast())?;
         }
         Ok(())
     }
@@ -154,7 +154,7 @@ impl SameRangeRequest {
         } else {
             (source.first_parameter(), source.last_parameter())
         };
-        Ok(Handle::new(Geom2dTrimmedCurve::new(curve_ptr, u1, u2, true, true)?).cast())
+        Ok(Handle::new(Geom2dTrimmedCurve::new(curve_ptr, u1, u2, true, true)?).into_upcast())
     }
 
     // The B-spline of `tc` with its knots reparametrized onto the requested range.

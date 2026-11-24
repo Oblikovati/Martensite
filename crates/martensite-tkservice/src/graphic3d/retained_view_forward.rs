@@ -65,10 +65,10 @@ macro_rules! martensite_retained_cview_methods {
         ) -> Result<(), Failure> {
             self.retained.set_z_layer_settings(layer_id, settings)
         }
-        fn fbo(&self) -> Handle<StandardTransient> {
+        fn fbo(&self) -> Handle<dyn martensite_tkernel::standard::Transient> {
             self.retained.fbo()
         }
-        fn set_fbo(&self, fbo: &Handle<StandardTransient>) {
+        fn set_fbo(&self, fbo: &Handle<dyn martensite_tkernel::standard::Transient>) {
             self.retained.set_fbo(fbo)
         }
         fn gradient_background(&self) -> AspectGradientBackground {

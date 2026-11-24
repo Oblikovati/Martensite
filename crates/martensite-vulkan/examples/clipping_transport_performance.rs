@@ -107,10 +107,9 @@ mod tests {
         refresh_live_clipping(fixture, plane, mode, 0);
         refresh_live_clipping(fixture, plane, mode, 1);
         assert_eq!(alias.object_address(), identity);
-        let selected = alias.observe();
-        assert_eq!(
-            (selected.ref_count(), selected.size(), plane.ref_count()),
-            (1, 1, 2)
-        );
+        // The collection snapshot used to inspect its size has its own Arc owner.
+        assert_eq!(alias.ref_count(), 1);
+        assert_eq!(alias.observe().size(), 1);
+        assert_eq!(plane.ref_count(), 2);
     }
 }

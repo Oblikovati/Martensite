@@ -1,6 +1,7 @@
 //! The selections that go down the structure of entities to the geometry they hold.
-use crate::iges_basic::{IgesBasicGroup, IgesBasicSingleParent};
-use crate::iges_data::{IgesDataIgesEntity, IgesDataSingleParentEntity};
+use crate::iges_basic::{IgesBasicGroupSource, IgesBasicSingleParent};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::IgesDataSingleParentEntity;
 use crate::iges_geom::{
     IgesGeomBoundary, IgesGeomBoundedSurface, IgesGeomCompositeCurve, IgesGeomCurveOnSurface,
     IgesGeomPlane, IgesGeomTrimmedSurface,
@@ -8,9 +9,12 @@ use crate::iges_geom::{
 use crate::iges_solid::{
     IgesSolidEdgeList, IgesSolidFace, IgesSolidLoop, IgesSolidManifoldSolid, IgesSolidShell,
 };
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::project_interface;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -27,7 +31,7 @@ macro_rules! iges_explore {
     ($(#[$meta:meta])* $class:ident, $recorded:literal, { $($field:ident: $ty:ty),* $(,)? }) => {
         $(#[$meta])*
         pub struct $class {
-            transient: StandardTransient,
+
             base: IFSelectSelectExploreBase,
             $($field: $ty,)*
         }
@@ -35,7 +39,6 @@ macro_rules! iges_explore {
             $class,
             $recorded,
             dyn IFSelectSelectExplore,
-            transient,
             interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct, dyn IFSelectSelectExplore]
         );
         impl IFSelectSelection for $class {
@@ -59,7 +62,7 @@ macro_rules! iges_explore {
 pub(super) use iges_explore;
 
 /// Adds an entity of any kind to what is explored; a null one is ignored by the iterator.
-pub(super) fn add<T: ?Sized + RuntimeTyped>(
+pub(super) fn add<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     explored: &mut InterfaceEntityIterator,
     ent: &Handle<T>,
 ) {
@@ -67,7 +70,7 @@ pub(super) fn add<T: ?Sized + RuntimeTyped>(
 }
 
 /// Adds the items of ranks 1 to `nb` of an accessor.
-pub(super) fn add_ranks<T: ?Sized + RuntimeTyped>(
+pub(super) fn add_ranks<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     explored: &mut InterfaceEntityIterator,
     nb: i32,
     mut item: impl FnMut(i32) -> Result<Handle<T>, Failure>,
@@ -80,7 +83,7 @@ pub(super) fn add_ranks<T: ?Sized + RuntimeTyped>(
 
 /// The parent and children of a single parent entity; false when `ent` is not one.
 pub(super) fn explore_single_parent(
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<bool, Failure> {
     let parent = ent.cast::<IgesBasicSingleParent>();
@@ -98,13 +101,16 @@ pub(super) fn explore_single_parent(
 
 /// The content of a group; false when `ent` is not one.
 pub(super) fn explore_group(
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<bool, Failure> {
-    let group = ent.cast::<IgesBasicGroup>();
-    let Some(live) = group.get() else {
+    let Some(group) = ent
+        .get()
+        .and_then(project_interface::<dyn IgesBasicGroupSource>)
+    else {
         return Ok(false);
     };
+    let live = group.group_base();
     add_ranks(explored, live.nb_entities(), |rank| live.entity(rank))?;
     Ok(true)
 }
@@ -112,7 +118,7 @@ pub(super) fn explore_group(
 /// The content of the solid structures: manifold solid and shell.
 pub(super) fn explore_solid(
     igt: i32,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     explored: &mut InterfaceEntityIterator,
 ) -> Result<Option<bool>, Failure> {
     if igt == 186 {
@@ -166,7 +172,6 @@ impl IgesSelectSelectBasicGeom {
     /// The selection of a mode.
     pub fn new(mode: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSelectExploreBase::new(-1),
             thegeom: mode,
         }
@@ -180,7 +185,7 @@ impl IgesSelectSelectBasicGeom {
     /// # Errors
     /// A failure of the entity.
     pub fn sub_curves(
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
         let Some(live) = ent.get() else {
@@ -199,7 +204,7 @@ impl IgesSelectSelectBasicGeom {
     fn explore_surfaces(
         &self,
         igt: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<Option<bool>, Failure> {
         match igt {
@@ -257,7 +262,7 @@ impl IgesSelectSelectBasicGeom {
     fn explore_curves(
         &self,
         igt: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<Option<bool>, Failure> {
         if self.thegeom < 0 {
@@ -305,11 +310,11 @@ impl IFSelectSelectExplore for IgesSelectSelectBasicGeom {
     fn explore(
         &self,
         _level: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _g: &InterfaceGraph,
         explored: &mut InterfaceEntityIterator,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(false);
         };

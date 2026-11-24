@@ -78,7 +78,9 @@ pub use note::{
     xcaf_doc_note_dump_json, xcaf_doc_note_get, xcaf_doc_note_is_mine, xcaf_doc_note_paste,
     xcaf_doc_note_restore,
 };
-pub use note_kinds::{XCAFDocNoteBalloon, XCAFDocNoteBinData, XCAFDocNoteComment};
+pub use note_kinds::{
+    XCAFDocNoteBalloon, XCAFDocNoteBinData, XCAFDocNoteComment, XCAFDocNoteCommentSource,
+};
 pub use notes_tool::XCAFDocNotesTool;
 pub use package::{XCAFDoc, XCAFDocColorType};
 pub use registration::register_derived_attributes;

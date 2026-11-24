@@ -1,11 +1,13 @@
 //! Shading handle references bind the actual slot owner, including drawer inheritance at lookup.
 use crate::prs3d::{Prs3dDrawer, Prs3dShadingAspect};
-use martensite_tkernel::standard::{Handle, HandleObserver, SharedState};
+use martensite_tkernel::standard::{
+    Handle, SharedState, WeakHandle, exceptions::null_object, raise_native_failure,
+};
 use std::marker::PhantomData;
 enum CubeShadingSlot<'a> {
     Local(&'a SharedState<Handle<Prs3dShadingAspect>>),
     Drawer(
-        HandleObserver<Prs3dDrawer>,
+        WeakHandle<Prs3dDrawer>,
         PhantomData<&'a super::AisViewCubePresentationBase>,
     ),
 }
@@ -38,7 +40,7 @@ impl<'a> AisViewCubeShadingRef<'a> {
     }
     /// Explicit owning snapshot, unaffected by later slot assignment; `alias.clone_handle()`.
     pub fn clone_handle(&self) -> Handle<Prs3dShadingAspect> {
-        self.current().clone()
+        self.current()
     }
     /// Compare actual slots, not merely equal current targets; `left.is_same_reference(&right)`.
     pub fn is_same_reference(&self, other: &AisViewCubeShadingRef<'_>) -> bool {
@@ -52,25 +54,40 @@ impl<'a> AisViewCubeShadingRef<'a> {
             _ => false,
         }
     }
-    /// Invoke user code outside the slot lock, preserving storage without a native reference increment.
+    /// Invoke user code outside the slot lock with a real owning snapshot.
+    /// Replacing the slot does not retire its captured value until this callback returns.
+    /// The snapshot adds one shading-aspect owner during the callback (#592). A drawer-bound
+    /// slot upgrades its weak drawer only for the lookup, so the drawer count is unchanged
+    /// during the callback; an expired drawer raises a typed Standard_NullObject.
     /// Example: `alias.with_shading(|style| style.is_some())`.
     pub fn with_shading<R>(&self, inspect: impl FnOnce(Option<&Prs3dShadingAspect>) -> R) -> R {
         let current = self.current();
         inspect(current.get())
     }
-    fn current(&self) -> HandleObserver<Prs3dShadingAspect> {
+    fn current(&self) -> Handle<Prs3dShadingAspect> {
         match &self.slot {
-            CubeShadingSlot::Local(slot) => slot.read().observe(),
-            CubeShadingSlot::Drawer(drawer, _) => drawer.fields.read().shading_aspect.observe(),
+            CubeShadingSlot::Local(slot) => slot.read().clone(),
+            CubeShadingSlot::Drawer(drawer, _) => cube_drawer_shading(drawer),
         }
     }
 }
-fn cube_shading_slot_owner(drawer: &Handle<Prs3dDrawer>) -> HandleObserver<Prs3dDrawer> {
+fn cube_shading_slot_owner(drawer: &Handle<Prs3dDrawer>) -> WeakHandle<Prs3dDrawer> {
     let fields = drawer.fields.read();
     if !fields.shading_aspect.is_null() || fields.link.is_null() {
-        return drawer.observe();
+        return drawer.downgrade();
     }
-    let link = fields.link.observe();
+    let link = fields.link.clone();
     drop(fields);
     cube_shading_slot_owner(&link)
+}
+
+fn cube_drawer_shading(drawer: &WeakHandle<Prs3dDrawer>) -> Handle<Prs3dShadingAspect> {
+    let current = drawer.upgrade();
+    let owner = raise_native_failure(current.get().ok_or_else(|| {
+        null_object(&format!(
+            "drawer={:p}, strong count=0; expected a live bound ViewCube shading slot",
+            drawer.object_address()
+        ))
+    }));
+    owner.fields.read().shading_aspect.clone()
 }

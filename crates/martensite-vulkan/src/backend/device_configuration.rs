@@ -55,6 +55,8 @@ fn requested_core_features(
         .texture_compression_bc(supported.texture_compression_bc == vk::TRUE)
         .depth_clamp(runtime.depth_clamp)
         .large_points(runtime.large_points)
+        .multi_draw_indirect(runtime.draw_tables)
+        .draw_indirect_first_instance(runtime.draw_tables)
         .wide_lines(runtime.lines.wide)
         .shader_clip_distance(runtime.line_clip.enabled() || runtime.world_clip.enabled())
         .logic_op(runtime.logic_op)
@@ -78,6 +80,9 @@ fn device_extension_names(
     policy: RenderRasterPolicy,
 ) -> Vec<*const std::ffi::c_char> {
     let mut extensions = Vec::new();
+    if runtime.meshlet_group_limit != 0 {
+        extensions.push(ash::ext::mesh_shader::NAME.as_ptr());
+    }
     if let Some(name) = runtime.lines.extension.filter(|_| runtime.lines.bresenham) {
         extensions.push(name.as_ptr());
     }
@@ -128,6 +133,7 @@ struct DeviceExtensionChain {
     transform_feedback: vk::PhysicalDeviceTransformFeedbackFeaturesEXT<'static>,
     #[cfg(test)]
     executable: vk::PhysicalDevicePipelineExecutablePropertiesFeaturesKHR<'static>,
+    mesh_shader: vk::PhysicalDeviceMeshShaderFeaturesEXT<'static>,
     core13: vk::PhysicalDeviceVulkan13Features<'static>,
     core12: vk::PhysicalDeviceVulkan12Features<'static>,
     window: vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT<'static>,
@@ -155,6 +161,8 @@ impl DeviceExtensionChain {
             #[cfg(test)]
             executable: vk::PhysicalDevicePipelineExecutablePropertiesFeaturesKHR::default()
                 .pipeline_executable_info(runtime.executable_profile.is_some()),
+            mesh_shader: vk::PhysicalDeviceMeshShaderFeaturesEXT::default()
+                .mesh_shader(runtime.meshlet_group_limit != 0),
             core13: vk::PhysicalDeviceVulkan13Features::default()
                 .dynamic_rendering(true)
                 .synchronization2(true)
@@ -162,7 +170,8 @@ impl DeviceExtensionChain {
                 .shader_demote_to_helper_invocation(true),
             core12: super::raytrace_texture_indexing::ray_tracing_textures_feature(
                 runtime.raytrace_textures,
-            ),
+            )
+            .draw_indirect_count(runtime.placement_visibility),
             window: vk::PhysicalDeviceSwapchainMaintenance1FeaturesEXT::default()
                 .swapchain_maintenance1(runtime.window_support),
             lines: vk::PhysicalDeviceLineRasterizationFeaturesKHR::default()
@@ -189,8 +198,13 @@ impl DeviceExtensionChain {
     ) -> vk::DeviceCreateInfo<'a> {
         let mut info =
             device_create_description(queues, core, extensions).push_next(&mut self.core13);
-        if self.core12.shader_sampled_image_array_non_uniform_indexing == vk::TRUE {
+        if self.core12.shader_sampled_image_array_non_uniform_indexing == vk::TRUE
+            || self.core12.draw_indirect_count == vk::TRUE
+        {
             info = info.push_next(&mut self.core12);
+        }
+        if self.mesh_shader.mesh_shader == vk::TRUE {
+            info = info.push_next(&mut self.mesh_shader);
         }
         if self.interpolation.fragment_shader_barycentric == vk::TRUE {
             info = info.push_next(&mut self.interpolation);

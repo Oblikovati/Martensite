@@ -5,9 +5,7 @@ use crate::{
     prs3d::*,
     select_mgr::select_mgr_selectable_dump_json,
 };
-use martensite_tkernel::standard::{
-    Failure, Handle, StandardTransient, WeakHandle, dump::DumpStream,
-};
+use martensite_tkernel::standard::{Failure, Handle, Transient, WeakHandle, dump::DumpStream};
 use martensite_tkservice::{
     graphic3d::{
         Graphic3dAspectsSource, Graphic3dPresentationAttributesMembers, Graphic3dStructureMembers,
@@ -19,7 +17,7 @@ use std::{ops::Deref, sync::RwLockReadGuard};
 /// Borrow the actual application-owner handle; `object.get_owner().is_null()`.
 pub struct AisApplicationOwner<'a>(RwLockReadGuard<'a, AisInteractiveObjectFields>);
 impl Deref for AisApplicationOwner<'_> {
-    type Target = Handle<StandardTransient>;
+    type Target = Handle<dyn Transient>;
     fn deref(&self) -> &Self::Target {
         &self.0.owner
     }
@@ -47,7 +45,7 @@ pub trait AisInteractiveObjectMembers: AisInteractiveObject {
         AisApplicationOwner(self.interactive_base().fields.read())
     }
     /// Retain any transient application owner; `object.set_owner(&owner)`.
-    fn set_owner(&self, owner: &Handle<StandardTransient>) {
+    fn set_owner(&self, owner: &Handle<dyn Transient>) {
         self.interactive_base().fields.write().owner = owner.clone();
     }
     /// Clear the application owner; `object.clear_owner()`.

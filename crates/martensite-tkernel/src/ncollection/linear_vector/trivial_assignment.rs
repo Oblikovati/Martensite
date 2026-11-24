@@ -3,7 +3,7 @@ use super::LinearVector;
 impl<T: Copy> LinearVector<T> {
     /// Uses trivial-element byte copying without Clone hooks; `destination.assign_trivial(&source)`.
     /// The caller explicitly selects the trivially-copyable policy with Rust Copy.
-    pub fn assign_trivial(&mut self, source: &Self) -> &mut Self {
+    pub(crate) fn assign_trivial(&mut self, source: &Self) -> &mut Self {
         if source.len() > self.capacity() {
             // Copy construction reserves exactly the source length, not its capacity.
             *self = source.clone_trivial();
@@ -16,7 +16,7 @@ impl<T: Copy> LinearVector<T> {
     }
 
     /// Copies initialized values into exactly sized storage without Clone hooks; `vector.clone_trivial()`.
-    pub fn clone_trivial(&self) -> Self {
+    pub(crate) fn clone_trivial(&self) -> Self {
         let mut elements = Vec::with_capacity(self.len());
         elements.extend(self.as_slice().iter().copied());
         Self { elements }

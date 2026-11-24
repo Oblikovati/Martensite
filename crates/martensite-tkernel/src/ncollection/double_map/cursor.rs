@@ -46,16 +46,6 @@ impl<'a, A, B> DoubleMapIterator<'a, A, B> {
     pub fn value(&self) -> Result<&'a B, Failure> {
         Ok(self.pair("NCollection_DoubleMap::Iterator::Value")?.1)
     }
-    /// Restarts on another map.
-    pub fn initialize<H1: HashPolicy<A>, H2: HashPolicy<B>>(
-        &mut self,
-        map: &'a DoubleMap<A, B, H1, H2>,
-    ) where
-        A: Debug,
-        B: Debug,
-    {
-        *self = map.cursor();
-    }
     /// `Reset`: restarts on the map the cursor was created for.
     pub fn reset(&mut self) {
         self.pairs.reset();
@@ -82,7 +72,10 @@ impl<A, B> Default for DoubleMapIterator<'_, A, B> {
 
 impl<'a, A, B> DoubleMapIterator<'a, A, B> {
     /// Constructs a legacy cursor; `let cursor = DoubleMapIterator::new(&map)`.
-    pub fn new<H1: HashPolicy<A>, H2: HashPolicy<B>>(map: &'a DoubleMap<A, B, H1, H2>) -> Self
+    #[cfg(test)]
+    pub(crate) fn new<H1: HashPolicy<A>, H2: HashPolicy<B>>(
+        map: &'a DoubleMap<A, B, H1, H2>,
+    ) -> Self
     where
         A: Debug,
         B: Debug,
@@ -90,23 +83,27 @@ impl<'a, A, B> DoubleMapIterator<'a, A, B> {
         map.cursor()
     }
     /// Copies cursor state and returns its destination; `cursor.assign(&other)`.
-    pub fn assign(&mut self, other: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign(&mut self, other: &Self) -> &mut Self {
         self.pairs = other.pairs.clone();
         self
     }
     /// Implements prefix increment with a stable end state; `cursor.advance()`.
-    pub fn advance(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn advance(&mut self) -> &mut Self {
         self.next();
         self
     }
     /// Returns the old iterator before advancing; `let previous = cursor.post_advance()`.
-    pub fn post_advance(&mut self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn post_advance(&mut self) -> Self {
         let previous = self.clone();
         self.next();
         previous
     }
     /// Returns the arrow identity, null at end; `cursor.value_ptr()`.
-    pub fn value_ptr(&self) -> *const B {
+    #[cfg(test)]
+    pub(crate) fn value_ptr(&self) -> *const B {
         self.value().map_or(std::ptr::null(), std::ptr::from_ref)
     }
 }

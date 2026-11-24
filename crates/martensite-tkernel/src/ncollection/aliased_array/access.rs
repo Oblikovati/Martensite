@@ -2,7 +2,8 @@ use super::{AliasedArray, ArrayValue, cast_failure};
 use crate::standard::Failure;
 impl AliasedArray<'_> {
     /// Borrow contiguous typed elements after stride/alignment checks; `array.typed_data::<i32>()?`.
-    pub fn typed_data<T: ArrayValue>(&self) -> Result<&[T], Failure> {
+    #[cfg(test)]
+    pub(crate) fn typed_data<T: ArrayValue>(&self) -> Result<&[T], Failure> {
         self.check_type::<T>(false, "Data")?;
         if self.is_empty() {
             return Ok(&[]);
@@ -10,7 +11,7 @@ impl AliasedArray<'_> {
         bytemuck::try_cast_slice(self.bytes()).map_err(cast_failure)
     }
     /// Mutably borrow contiguous typed elements; `array.change_data::<i32>()?[0] = 7`.
-    pub fn change_data<T: ArrayValue>(&mut self) -> Result<&mut [T], Failure> {
+    pub(crate) fn change_data<T: ArrayValue>(&mut self) -> Result<&mut [T], Failure> {
         self.check_type::<T>(false, "ChangeData")?;
         if self.is_empty() {
             return Ok(&mut []);
@@ -33,14 +34,14 @@ impl AliasedArray<'_> {
         self.change_value2(index)
     }
     /// Borrow a prefix type no larger than the stride; `array.value2::<u16>(0)?`.
-    pub fn value2<T: ArrayValue>(&self, index: usize) -> Result<&T, Failure> {
+    pub(crate) fn value2<T: ArrayValue>(&self, index: usize) -> Result<&T, Failure> {
         self.check_type::<T>(true, "Value2")?;
         let offset: usize = self.offset(index, "value")?;
         bytemuck::try_from_bytes(&self.bytes()[offset..offset + size_of::<T>()])
             .map_err(cast_failure)
     }
     /// Mutably borrow a prefix of one element; `*array.change_value2::<u16>(0)? = 1`.
-    pub fn change_value2<T: ArrayValue>(&mut self, index: usize) -> Result<&mut T, Failure> {
+    pub(crate) fn change_value2<T: ArrayValue>(&mut self, index: usize) -> Result<&mut T, Failure> {
         self.check_type::<T>(true, "ChangeValue2")?;
         let offset: usize = self.offset(index, "changeValue")?;
         bytemuck::try_from_bytes_mut(&mut self.bytes_mut()[offset..offset + size_of::<T>()])

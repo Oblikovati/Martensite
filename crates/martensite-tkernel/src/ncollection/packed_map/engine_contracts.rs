@@ -2,10 +2,9 @@
 use super::{PackedInteger, PackedMap, PackedMapNode, PackedWord};
 use std::collections::BTreeMap;
 mod bucket_policy;
-#[path = "../../../tests/packed_map_rows/mod.rs"]
-mod decoder;
+use crate::packed_map_rows::decode_expected_rows;
 fn fixture() -> BTreeMap<&'static str, Vec<u64>> {
-    decoder::decode_expected_rows(include_str!(
+    decode_expected_rows(include_str!(
         "../../../tests/fixtures/oracle/tkernel_packed_map_engine.expected"
     ))
 }

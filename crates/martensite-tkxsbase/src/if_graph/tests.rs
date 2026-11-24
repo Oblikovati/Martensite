@@ -2,14 +2,14 @@
 use super::*;
 use crate::interface::test_norm::fake_chain;
 use crate::interface::{InterfaceEntityIterator, InterfaceGraph, InterfaceGraphContentEvaluate};
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 
-fn chain_graph() -> (InterfaceGraph, Vec<Handle<StandardTransient>>) {
+fn chain_graph() -> (InterfaceGraph, Vec<Handle<dyn Transient>>) {
     let (model, ents) = fake_chain();
     (InterfaceGraph::new(&model, true).unwrap(), ents)
 }
 
-fn list(ents: &[&Handle<StandardTransient>]) -> InterfaceEntityIterator {
+fn list(ents: &[&Handle<dyn Transient>]) -> InterfaceEntityIterator {
     let mut iter = InterfaceEntityIterator::new();
     ents.iter().for_each(|e| iter.add_item(e));
     iter

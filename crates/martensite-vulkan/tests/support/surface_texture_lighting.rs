@@ -18,7 +18,7 @@ pub fn texture_lighting(scene: &ViewerScene, aspects: &dyn Graphic3dAspectsSourc
     let ambient = Handle::new(Graphic3dCLight::new(Graphic3dTypeOfLightSource::Ambient));
     ambient.set_color(texture_rgb([0.5, 0.25, 0.125]));
     let lights = Handle::new(Graphic3dLightSet::default());
-    lights.add(&ambient).unwrap();
+    lights.add(&ambient.upcast()).unwrap();
     scene.cview().set_lights(&lights);
 }
 fn texture_rgb(channels: [f64; 3]) -> Color {

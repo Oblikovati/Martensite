@@ -110,7 +110,7 @@ impl SelectMgrBaseIntersector for SelectMgrTriangularFrustum {
     ) -> Result<bool, Failure> {
         self.frustum_core
             .read()
-            .has_box_overlap(min, max, self.is_orthographic(), None)
+            .has_box_overlap_deferred(min, max, || self.is_orthographic(), None)
     }
     fn overlaps_point_pick(
         &self,

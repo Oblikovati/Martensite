@@ -17,7 +17,8 @@ use crate::step_shape::{
     StepShapeContextDependentShapeRepresentation, StepShapeShapeDefinitionRepresentation,
     StepShapeShapeRepresentation,
 };
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::InterfaceGraph;
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -35,7 +36,7 @@ fn text(value: &str) -> Handle<HAsciiString> {
 /// The product definition of an SDR: null at any null link but the SDR and its definition.
 fn sdr_product_definition(
     sdr: &Handle<StepShapeShapeDefinitionRepresentation>,
-) -> Result<Handle<StepBasicProductDefinition>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
     let prop = step_live(sdr, WHERE)?.definition().property_definition();
     Ok(step_live(&prop, WHERE)?.definition().product_definition())
 }
@@ -53,9 +54,9 @@ fn sdr_product_definition(
 pub struct StepConstructAssembly {
     thesdr: Handle<StepShapeShapeDefinitionRepresentation>,
     thesdr0: Handle<StepShapeShapeDefinitionRepresentation>,
-    thesr: Handle<StepShapeShapeRepresentation>,
-    thesr0: Handle<StepShapeShapeRepresentation>,
-    theval: Handle<StandardTransient>,
+    thesr: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
+    thesr0: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>,
+    theval: Handle<dyn Transient>,
     theloc: Handle<StepGeomAxis2Placement3d>,
     theax0: Handle<StepGeomAxis2Placement3d>,
     my_trsf_op: Handle<StepGeomCartesianTransformationOperator3d>,
@@ -108,7 +109,7 @@ impl StepConstructAssembly {
     }
     /// The item of the transformation of `make_relationship`.
     fn transformation(&self) -> Result<StepReprTransformation, Failure> {
-        let item: Handle<StandardTransient> = if self.my_is_cartesian_trsf {
+        let item: Handle<dyn Transient> = if self.my_is_cartesian_trsf {
             self.my_trsf_op.cast()
         } else {
             let item_def = Handle::new(StepReprItemDefinedTransformation::new());
@@ -169,7 +170,7 @@ impl StepConstructAssembly {
         Ok(())
     }
     /// `item_value`: the value, or the starting SR when no `Make...` has been called.
-    pub fn item_value(&self) -> Handle<StandardTransient> {
+    pub fn item_value(&self) -> Handle<dyn Transient> {
         if self.theval.is_null() {
             return self.thesr.cast();
         }
@@ -196,8 +197,8 @@ impl StepConstructAssembly {
     /// The product definition of the first SDR sharing a representation.
     fn pd_of_representation(
         graph: &InterfaceGraph,
-        rep: &Handle<StepReprRepresentation>,
-    ) -> Result<Handle<StepBasicProductDefinition>, Failure> {
+        rep: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>, Failure> {
         let target = StepShapeShapeDefinitionRepresentation::static_type();
         for enti in graph.sharings(&rep.cast())?.content() {
             if enti

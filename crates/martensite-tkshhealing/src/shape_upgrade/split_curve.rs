@@ -1,10 +1,10 @@
 //! `ShapeUpgradeSplitCurve`: the split values of a curve range, the base of the curve
 //! splitters.
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
+use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{HSequence, Sequence};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 
 /// The protected fields of a `ShapeUpgradeSplitCurve`.
 #[derive(Clone, Default)]
@@ -24,6 +24,59 @@ pub struct SplitCurveData {
 }
 
 impl SplitCurveData {
+    /// Reset the default criterion status before specialized computation.
+    /// Example: `splitter.split_curve_data().reset_status()`.
+    pub fn reset_status(&self) {
+        let ok = ShapeExtend::encode_status(ShapeExtendStatus::Ok);
+        self.with_mut(|fields| fields.status = ok);
+    }
+
+    pub(super) fn init(&self, first: f64, last: f64) {
+        let values = Handle::new(HSequence::default());
+        values.append(first);
+        values.append(last);
+        self.with_mut(|fields| {
+            fields.status = ShapeExtend::encode_status(ShapeExtendStatus::Ok);
+            fields.nb_curves = 1;
+            fields.split_values = values;
+        });
+    }
+
+    pub(super) fn set_split_values(
+        &self,
+        split_values: &Handle<HSequence<f64>>,
+    ) -> Result<(), Failure> {
+        let Some(given) = split_values.get() else {
+            return Ok(());
+        };
+        if given.sequence(|s| s.is_empty()) {
+            return Ok(());
+        }
+        let own = self.split_values();
+        let own = own.get().ok_or_else(|| {
+            Failure::with_type(
+                "Standard_NullObject",
+                "ShapeUpgrade_SplitCurve::SetSplitValues: Init was not called",
+                "",
+            )
+        })?;
+        if std::ptr::eq(own, given) {
+            // Read and edit the same shared sequence so later insertions see prior edits.
+            return own.change_sequence(|values| insert_split_values(values, None));
+        }
+        let given: Vec<f64> = given.sequence(|s| s.iter().copied().collect());
+        own.change_sequence(|values| insert_split_values(values, Some(&given)))
+    }
+
+    pub(super) fn split_values(&self) -> Handle<HSequence<f64>> {
+        self.with(|fields| fields.split_values.clone())
+    }
+
+    pub(super) fn status_flag(&self, status: ShapeExtendStatus) -> bool {
+        let bits = self.with(|fields| fields.status);
+        ShapeExtend::decode_status(bits, status)
+    }
+
     /// Reads the fields; `data.with(|fields| fields.status)`.
     pub fn with<R>(&self, read: impl FnOnce(&SplitCurveFields) -> R) -> R {
         read(&self.fields.read())
@@ -57,64 +110,33 @@ pub trait SplitCurve: Transient {
     /// status OK, one curve, the split values `[First, Last]`;
     /// `splitter.init(0.0, 1.0)`.
     fn init(&self, first: f64, last: f64) {
-        let values = Handle::new(HSequence::default());
-        values.append(first);
-        values.append(last);
-        self.split_curve_data().with_mut(|fields| {
-            fields.status = ShapeExtend::encode_status(ShapeExtendStatus::Ok);
-            fields.nb_curves = 1;
-            fields.split_values = values;
-        });
+        self.split_curve_data().init(first, last)
     }
 
     /// inserts the given values (increasing) that lie
     /// inside each current interval by more than `precision::p_confusion()`; nothing for
     /// a null or empty sequence. Standard_NullObject before `Init`; `splitter.set_split_values(&values)?`.
     fn set_split_values(&self, split_values: &Handle<HSequence<f64>>) -> Result<(), Failure> {
-        let Some(given) = split_values.get() else {
-            return Ok(());
-        };
-        if given.sequence(|s| s.is_empty()) {
-            return Ok(());
-        }
-        let own = self.split_values();
-        let own = own.get().ok_or_else(|| {
-            Failure::with_type(
-                "Standard_NullObject",
-                "ShapeUpgrade_SplitCurve::SetSplitValues: Init was not called",
-                "",
-            )
-        })?;
-        if std::ptr::eq(own, given) {
-            // Read and edit the same shared sequence so later insertions see prior edits.
-            return own.change_sequence(|values| insert_split_values(values, None));
-        }
-        let given: Vec<f64> = given.sequence(|s| s.iter().copied().collect());
-        own.change_sequence(|values| insert_split_values(values, Some(&given)))
+        self.split_curve_data().set_split_values(split_values)
     }
 
     /// `Build(Segment)` (virtual): the base class resets the status to OK;
     /// `splitter.build(true)?`.
     fn build(&self, _segment: bool) -> Result<(), Failure> {
-        let ok = ShapeExtend::encode_status(ShapeExtendStatus::Ok);
-        self.split_curve_data()
-            .with_mut(|fields| fields.status = ok);
+        self.split_curve_data().reset_status();
         Ok(())
     }
 
     /// the handle of the split values (null before `Init`);
     /// `splitter.split_values()`.
     fn split_values(&self) -> Handle<HSequence<f64>> {
-        self.split_curve_data()
-            .with(|fields| fields.split_values.clone())
+        self.split_curve_data().split_values()
     }
 
     /// `Compute()` (virtual): the base class resets the status to OK;
     /// `splitter.compute()?`.
     fn compute(&self) -> Result<(), Failure> {
-        let ok = ShapeExtend::encode_status(ShapeExtendStatus::Ok);
-        self.split_curve_data()
-            .with_mut(|fields| fields.status = ok);
+        self.split_curve_data().reset_status();
         Ok(())
     }
 
@@ -128,11 +150,10 @@ pub trait SplitCurve: Transient {
     /// the flag of the status bits;
     /// `splitter.status_flag(ShapeExtendStatus::Ok)`.
     fn status_flag(&self, status: ShapeExtendStatus) -> bool {
-        let bits = self.split_curve_data().with(|fields| fields.status);
-        ShapeExtend::decode_status(bits, status)
+        self.split_curve_data().status_flag(status)
     }
 }
-impl_transient_interface!(dyn SplitCurve, "ShapeUpgrade_SplitCurve", StandardTransient);
+parent_interface!(dyn SplitCurve, ShapeUpgradeSplitCurve, []);
 
 /// The loops of `SetSplitValues` on the current values: for each interval
 /// `[First, Last]`, the given values beyond `First + PConfusion` and before
@@ -177,14 +198,12 @@ pub(super) fn insert_split_values(
 /// The base class `ShapeUpgradeSplitCurve` itself.
 #[derive(Default)]
 pub struct ShapeUpgradeSplitCurve {
-    parent: StandardTransient,
     data: SplitCurveData,
 }
 impl_transient!(
     ShapeUpgradeSplitCurve,
     "ShapeUpgrade_SplitCurve",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn SplitCurve]
 );
 

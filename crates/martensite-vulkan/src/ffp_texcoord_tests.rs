@@ -46,7 +46,12 @@ impl CapCoordinateFixture {
     }
     fn draw(&self) -> crate::PrimitiveDraw {
         let rendering = self.view.rendering_params();
-        let context = frame_context_state(self.view.get().unwrap(), [1, 1], &rendering, None);
+        let context = frame_context_state(
+            self.view.get().unwrap(),
+            [1, 1],
+            &rendering,
+            (None, frame_window_size(self.view.get().unwrap(), None)),
+        );
         let pass = crate::render_element_pass::RenderElementPass::opaque(true)
             .with_context_state(Arc::new(context));
         let mut draw = self.source.clone();
@@ -83,7 +88,7 @@ impl CapCoordinateFixture {
             &self.driver.texture_images,
             scene,
             Mat4::identity(),
-            &self.plane,
+            &self.plane.upcast(),
         )
         .unwrap();
     }
@@ -115,7 +120,7 @@ fn coordinate_plane() -> Handle<Graphic3dClipPlane> {
     let image = Handle::new(ImagePixMap::default());
     assert!(image.init_zero(ImageFormat::Rgba, 2, 2, 0, 0));
     image.set_top_down(true);
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()));
     texture.get_params().set_scale(Vec2::new(2., -4.));
     texture.get_params().set_translation(Vec2::new(0.25, 0.5));
     let plane = Handle::new(Graphic3dClipPlane::default());
@@ -164,6 +169,21 @@ fn explicit_generated_coordinates_preserve_programmable_lighting_selection() {
     assert_cap_matrix(&fixture.draw(), true);
 }
 #[test]
+fn generated_texture_coordinates_get_fresh_storage_for_each_frame() {
+    let fixture = CapCoordinateFixture::new(Coordinates::GeneratedCompatibility);
+    let first = fixture.draw();
+    fixture
+        .view
+        .camera()
+        .set_eye(&martensite_tkmath::gp::Point3::new(2., 3., 5.))
+        .unwrap();
+    let moved = fixture.draw();
+    assert_cap_matrix(&moved, true);
+    let first_uv = &first.surface_texture.as_ref().unwrap().uv;
+    let moved_uv = &moved.surface_texture.as_ref().unwrap().uv;
+    assert_ne!(first_uv.identity(), moved_uv.identity());
+}
+#[test]
 fn live_fixed_capability_round_trip_restores_requested_programmable_coordinates() {
     let fixture = CapCoordinateFixture::new(Coordinates::Programmable);
     let baseline = fixture.draw();
@@ -196,7 +216,7 @@ fn check_coordinate_transition(
 fn assert_cap_matrix(draw: &crate::PrimitiveDraw, homogeneous: bool) {
     let uv = &draw.surface_texture.as_ref().unwrap().uv;
     assert_eq!(uv.len(), 12);
-    for (vertex, actual) in draw.vertices.iter().zip(uv) {
+    for (vertex, actual) in draw.vertices.iter().zip(uv.iter()) {
         let expected = matrix_sample(vertex, homogeneous);
         assert_eq!(
             *actual, expected,

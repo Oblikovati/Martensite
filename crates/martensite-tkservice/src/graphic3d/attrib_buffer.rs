@@ -5,8 +5,8 @@ use super::{
     Graphic3dBufferSource,
 };
 use martensite_tkernel::ncollection::BaseAllocator;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::exceptions::{out_of_range, program_error};
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
 
 /// The fields of `Graphic3d_AttribBuffer`.
 #[derive(Clone, Copy, Debug, Default)]
@@ -18,11 +18,10 @@ struct AttribBufferFields {
 
 /// An attribute buffer; `Graphic3dAttribBuffer::new(allocator)?.is_interleaved()`.
 pub struct Graphic3dAttribBuffer {
-    transient: StandardTransient,
     base: Graphic3dBufferBase,
-    fields: SharedState<AttribBufferFields>,
+    fields: super::RevisedState<AttribBufferFields>,
 }
-martensite_tkernel::impl_transient!(Graphic3dAttribBuffer, "Graphic3d_AttribBuffer", dyn Graphic3dBufferSource, transient,
+martensite_tkernel::impl_transient!(Graphic3dAttribBuffer, "Graphic3d_AttribBuffer", dyn Graphic3dBufferSource,
     interfaces: [dyn Graphic3dBufferSource]);
 
 /// `Standard_OutOfRange` for a byte size past the 32-bit range of a mutable buffer.
@@ -33,6 +32,12 @@ fn beyond_32_bits(member: &str, size: usize) -> Failure {
 }
 
 impl Graphic3dBufferSource for Graphic3dAttribBuffer {
+    fn observe_buffer_input(&self, scope: &super::GraphicInputRevision) -> bool {
+        self.buffer_base().state.observe(scope);
+        self.fields.observe(scope);
+        true
+    }
+
     fn buffer_base(&self) -> &Graphic3dBufferBase {
         &self.base
     }
@@ -41,6 +46,10 @@ impl Graphic3dBufferSource for Graphic3dAttribBuffer {
     }
     fn is_mutable(&self) -> bool {
         self.fields.read().is_mutable
+    }
+    fn immutable_interleaving(&self) -> Option<bool> {
+        let flags = self.fields.read();
+        (!flags.is_mutable).then_some(flags.is_interleaved)
     }
     fn invalidated_range(&self) -> Graphic3dBufferRange {
         self.fields.read().invalidated_range
@@ -66,9 +75,8 @@ impl Graphic3dAttribBuffer {
             ..Default::default()
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dBufferBase::new(allocator)?,
-            fields: SharedState::new(fields),
+            fields: super::RevisedState::new(fields),
         })
     }
     fn data_size(&self) -> usize {

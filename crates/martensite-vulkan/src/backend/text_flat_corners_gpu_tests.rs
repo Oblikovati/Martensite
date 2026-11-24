@@ -155,7 +155,7 @@ fn flat_corner_clip_generated_vertices_keep_the_original_uv_plane() {
 #[test]
 fn flat_corner_near_clip_preserves_visibility_and_the_unclipped_uv_field() {
     let mut draw = quad(false);
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         vertex.position[2] = vertex.position[0] - 1.;
     }
     let mut renderer = renderer(
@@ -174,7 +174,7 @@ fn flat_corner_near_clip_preserves_visibility_and_the_unclipped_uv_field() {
 
 fn clipped_quad() -> PrimitiveDraw {
     let mut draw = quad(false);
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         vertex.position[0] *= 2.;
     }
     draw

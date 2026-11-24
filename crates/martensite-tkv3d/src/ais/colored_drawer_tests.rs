@@ -1,4 +1,4 @@
-use super::{AisColoredDrawer, AisColoredDrawerParent};
+use super::{AisColoredDrawer, AisColoredDrawerSource};
 use crate::prs3d::{Prs3dDrawer, Prs3dLineAspect};
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
@@ -6,17 +6,20 @@ use martensite_tkernel::{
 };
 use martensite_tkservice::{
     aspect::AspectTypeOfLine,
-    graphic3d::{Graphic3dAspectsLineMembers, Graphic3dAspectsMembers},
+    graphic3d::{
+        Graphic3dAspectsLineMembers, Graphic3dAspectsMembers, Graphic3dPresentationAttributesSource,
+    },
 };
 use std::fmt::Write;
 
-fn linked_colored_drawer() -> (Handle<Prs3dDrawer>, Handle<AisColoredDrawer>) {
+fn linked_colored_drawer() -> (Handle<Prs3dDrawer>, Handle<dyn AisColoredDrawerSource>) {
     let defaults = Handle::new(Prs3dDrawer::new());
     defaults.set_discretisation(31);
     let line =
         Prs3dLineAspect::new(Color::named(NamedColor::BLUE), AspectTypeOfLine::Solid, 2.5).unwrap();
     defaults.set_line_aspect(Handle::new(line));
-    let drawer = Handle::new(AisColoredDrawer::new(&defaults));
+    let drawer =
+        Handle::new(AisColoredDrawer::new(&defaults)).into_upcast::<dyn AisColoredDrawerSource>();
     (defaults, drawer)
 }
 fn ownership_bits(drawer: &AisColoredDrawer) -> String {
@@ -62,11 +65,11 @@ fn clear_ownership(drawer: &AisColoredDrawer) {
 }
 fn record_aliases(
     output: &mut String,
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     defaults: &Handle<Prs3dDrawer>,
 ) {
-    let base: Handle<AisColoredDrawerParent> = drawer.cast();
-    let back: Handle<AisColoredDrawer> = base.cast();
+    let base: Handle<dyn Graphic3dPresentationAttributesSource> = drawer.upcast();
+    let back: Handle<dyn AisColoredDrawerSource> = base.cast();
     let aliases = [back == *drawer, base == *drawer, drawer.link() == *defaults];
     let descriptor = AisColoredDrawer::static_type();
     let names = format!(
@@ -134,7 +137,7 @@ fn record_unlinked(output: &mut String) {
     writeln!(output, "unlinked {linked} {bits}").unwrap();
 }
 
-fn record_types(output: &mut String, drawer: &Handle<AisColoredDrawer>) {
+fn record_types(output: &mut String, drawer: &Handle<dyn AisColoredDrawerSource>) {
     let name = AisColoredDrawer::TYPE_NAME;
     let same = std::ptr::eq(
         AisColoredDrawer::static_type(),

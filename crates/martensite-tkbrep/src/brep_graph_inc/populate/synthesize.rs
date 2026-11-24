@@ -13,13 +13,13 @@ use martensite_tkg3d::geom::{GeomPlane, GeomRectangularTrimmedSurface, GeomSurfa
 // Plane surfaces (or trimmed planes) get no stored p-curves: they derive from the 3D
 // curves.
 fn is_plane(surface: &Handle<dyn GeomSurface>) -> bool {
-    if surface.cast::<GeomPlane>().is_some() {
+    if surface.downcast::<GeomPlane>().is_some() {
         return true;
     }
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     trimmed
         .get()
-        .is_some_and(|t| t.basis_surface().cast::<GeomPlane>().is_some())
+        .is_some_and(|t| t.basis_surface().downcast::<GeomPlane>().is_some())
 }
 
 /// `synthesizeFaceBoundaries(theBuild, theFaceData)`: the boundary of every face that

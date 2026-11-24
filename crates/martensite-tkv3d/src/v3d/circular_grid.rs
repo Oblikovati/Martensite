@@ -8,7 +8,7 @@ use martensite_tkernel::message::{Gravity, Message};
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::null_object;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::aspect::{
@@ -49,12 +49,11 @@ struct CircGridState {
 ///
 /// Example: `let grid = V3dCircularGrid::new(&viewer, gray50, gray70)?; grid.display();`.
 pub struct V3dCircularGrid {
-    transient: StandardTransient,
     base: AspectCircularGridBase,
     viewer: WeakHandle<V3dViewer>,
     state: SharedState<CircGridState>,
 }
-martensite_tkernel::impl_transient!(V3dCircularGrid, "V3dCircularGrid", dyn AspectCircularGrid, transient,
+martensite_tkernel::impl_transient!(V3dCircularGrid, "V3dCircularGrid", dyn AspectCircularGrid,
     interfaces: [dyn AspectGrid, dyn AspectCircularGrid, dyn V3dStructureComputer]);
 
 impl V3dCircularGrid {
@@ -89,7 +88,6 @@ impl V3dCircularGrid {
             arc_warned: false,
         };
         let grid = Handle::new(Self {
-            transient: StandardTransient::default(),
             base,
             viewer: viewer.downgrade(),
             state: SharedState::new(state),

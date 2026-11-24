@@ -6,7 +6,7 @@ pub(super) fn initialize(
     face: &Face,
 ) -> Result<(), Failure> {
     tool.state.write().initialized = false;
-    tool.parent.init(edge, face)?;
+    tool.linear.init(edge, face)?;
     tool.state.write().precision = BRepTool::edge_tolerance(edge)?;
     let (spatial, first, last) = BRepTool::curve(edge)?;
     tool.transfer_parameter_data().with_mut(|fields| {

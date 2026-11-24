@@ -6,9 +6,7 @@ use martensite_tkg3d::geom::{
     GeomToroidalSurface,
 };
 use martensite_tkmath::gp::{Axis1, Axis3, Point3, dz};
-use martensite_tkshhealing::shape_upgrade::{
-    ShapeUpgradeSplitSurface, ShapeUpgradeSplitSurfaceAngle, SplitSurface,
-};
+use martensite_tkshhealing::shape_upgrade::{ShapeUpgradeSplitSurfaceAngle, SplitSurface};
 
 fn cylinder() -> Handle<dyn GeomSurface> {
     Handle::new(GeomCylindricalSurface::new(Axis3::default(), 1.).unwrap()).cast()
@@ -118,7 +116,7 @@ fn shared_angle_setting_and_virtual_dispatch_retain_parent_state() {
     splitter
         .init_surface_bounds(&cylinder(), (0., 5., 0., 1.), 0.)
         .unwrap();
-    let base = splitter.cast::<ShapeUpgradeSplitSurface>();
+    let base = splitter.upcast::<dyn SplitSurface>();
     let criterion = splitter.cast::<dyn SplitSurface>();
     criterion.compute(true).unwrap();
     assert_eq!(base.u_split_values().sequence(|s| s.len()), 4);

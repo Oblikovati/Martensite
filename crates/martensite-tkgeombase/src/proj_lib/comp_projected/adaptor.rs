@@ -26,7 +26,7 @@ impl CompProjectedCurve {
 
 impl Adaptor2dCurve2d for CompProjectedCurve {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
-        Ok(Handle::new(self.shallow_projection()?).cast())
+        Ok(Handle::new(self.shallow_projection()?).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         self.snapshot().pair()?.curve.first_parameter()
@@ -85,7 +85,7 @@ impl Adaptor2dCurve2d for CompProjectedCurve {
         let trimmed = state.pair()?.curve.trim(first, last, tol)?;
         let copy: CompProjectedCurve = CompProjectedCurve::from_state(state);
         copy.load_curve(&trimmed);
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn get_type(&self) -> Result<CurveType, Failure> {
         Ok(CurveType::OtherCurve)

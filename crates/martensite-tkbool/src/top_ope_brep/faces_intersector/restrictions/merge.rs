@@ -32,7 +32,7 @@ pub(in super::super) fn merge_restriction_segments(
     }
     let merged = merged_line(lines, &polygon, tolerance)?;
     lines.clear();
-    lines.push(Handle::new(merged).cast());
+    lines.push(Handle::new(merged).into_upcast());
     Ok(())
 }
 
@@ -49,7 +49,7 @@ fn boundary_side<'a>(
             .filter(|line| line.arc_type() == IntPatchIType::Walking)
         {
             count += 1;
-            let line = source.cast::<IntPatchWLine>();
+            let line = source.downcast::<IntPatchWLine>();
             if rank == 0 {
                 endpoints.extend([
                     line.vertex(1)?.value(),
@@ -80,7 +80,7 @@ fn merged_line(
         .iter()
         .filter(|line| line.arc_type() == IntPatchIType::Walking)
     {
-        let line = source.cast::<IntPatchWLine>();
+        let line = source.downcast::<IntPatchWLine>();
         update_transition(&mut transitions.0, line.transition_on_s1());
         update_transition(&mut transitions.1, line.transition_on_s2());
     }

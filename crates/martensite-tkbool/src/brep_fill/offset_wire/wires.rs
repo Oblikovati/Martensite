@@ -19,7 +19,7 @@ fn first_rep_range(an_edge: &Edge) -> Result<Option<(f64, f64)>, Failure> {
     let Some(first) = curves.first() else {
         return Ok(None);
     };
-    let gcurve = first.cast::<dyn BRepGCurve>();
+    let gcurve = first.view::<dyn BRepGCurve>();
     let g = gcurve.get().ok_or_else(not_gcurve)?;
     Ok(Some((g.first(), g.last())))
 }

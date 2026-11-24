@@ -1,27 +1,27 @@
 //! Shape identity and the native hash.
-use super::Shape;
+use super::ShapeView;
 use martensite_tkernel::ncollection::HashKey;
 use martensite_tkernel::standard::hashing;
 
-impl Shape {
+impl ShapeView<'_> {
     /// `IsPartner(theOther)`: the same TShape; `shape.is_partner(&other)`.
-    pub fn is_partner(&self, other: &Self) -> bool {
+    pub fn is_partner(&self, other: &ShapeView<'_>) -> bool {
         self.tshape() == other.tshape()
     }
 
     /// `IsSame(theOther)`: the same TShape and location; `shape.is_same(&other)`.
-    pub fn is_same(&self, other: &Self) -> bool {
+    pub fn is_same(&self, other: &ShapeView<'_>) -> bool {
         self.is_partner(other) && self.location() == other.location()
     }
 
     /// `IsEqual(theOther)` (`operator==`): the same TShape, location and orientation;
     /// `shape.is_equal(&other)`.
-    pub fn is_equal(&self, other: &Self) -> bool {
+    pub fn is_equal(&self, other: &ShapeView<'_>) -> bool {
         self.is_same(other) && self.orientation() == other.orientation()
     }
 
     /// `IsNotEqual(theOther)` (`operator!=`); `shape.is_not_equal(&other)`.
-    pub fn is_not_equal(&self, other: &Self) -> bool {
+    pub fn is_not_equal(&self, other: &ShapeView<'_>) -> bool {
         !self.is_equal(other)
     }
 
@@ -53,27 +53,27 @@ impl Shape {
     }
 }
 
-impl PartialEq for Shape {
-    fn eq(&self, other: &Self) -> bool {
+impl PartialEq<ShapeView<'_>> for ShapeView<'_> {
+    fn eq(&self, other: &ShapeView<'_>) -> bool {
         self.is_equal(other)
     }
 }
-impl Eq for Shape {}
+impl Eq for ShapeView<'_> {}
 
-impl HashKey for Shape {
+impl HashKey for ShapeView<'_> {
     const WALKS_IN_ORDER_ADDED: bool = true;
     fn kernel_hash(&self) -> usize {
         self.hash_code()
     }
 }
 
-impl std::hash::Hash for Shape {
+impl std::hash::Hash for ShapeView<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         state.write_usize(self.hash_code());
     }
 }
 
-impl std::fmt::Debug for Shape {
+impl std::fmt::Debug for ShapeView<'_> {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let kind = self.tshape().get().map(|tshape| tshape.shape_type());
         formatter

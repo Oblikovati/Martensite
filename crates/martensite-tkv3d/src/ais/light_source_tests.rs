@@ -2,11 +2,10 @@
 use super::*;
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::{gp::*, toploc::Datum3};
 use martensite_tkservice::{aspect::AspectTypeOfMarker, graphic3d::*};
 pub(super) struct FakeLightPresentation {
-    transient: StandardTransient,
     light: AisLightSourceBase,
     fail_refresh: std::sync::atomic::AtomicBool,
     pub(super) persistence_calls: std::sync::atomic::AtomicUsize,
@@ -15,18 +14,18 @@ pub(super) struct FakeLightPresentation {
 martensite_tkernel::impl_transient!(
     FakeLightPresentation,
     "FakeLightPresentation",
-    StandardTransient,
-    transient,
+    dyn martensite_tkernel::standard::Transient,
     interfaces:[dyn AisLightSourceSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]
 );
 impl FakeLightPresentation {
     pub(super) fn new(kind: Graphic3dTypeOfLightSource) -> Self {
         Self {
-            transient: StandardTransient::default(),
             fail_refresh: std::sync::atomic::AtomicBool::new(false),
             persistence_calls: std::sync::atomic::AtomicUsize::new(0),
             frame_calls: std::sync::atomic::AtomicUsize::new(0),
-            light: AisLightSourceBase::new(&Handle::new(Graphic3dCLight::new(kind))),
+            light: AisLightSourceBase::new(
+                &Handle::new(Graphic3dCLight::new(kind)).into_upcast::<dyn Graphic3dCLightSource>(),
+            ),
         }
     }
 }
@@ -204,7 +203,8 @@ fn native_world_light_transform_snapshots() {
 #[test]
 fn live_light_replacement_retains_pointer_identity() {
     let object = FakeLightPresentation::new(light_kind(1));
-    let replacement = Handle::new(Graphic3dCLight::new(light_kind(3)));
+    let replacement =
+        Handle::new(Graphic3dCLight::new(light_kind(3))).into_upcast::<dyn Graphic3dCLightSource>();
     object.set_light(&replacement);
     assert_eq!(
         object.light().object_address(),
@@ -326,7 +326,9 @@ fn presentation_for(object: &Handle<FakeLightPresentation>) -> Handle<PrsMgrPres
         .fields
         .write()
         .presentations
-        .append(presentation.clone());
+        .append(martensite_tkernel::standard::HandleSlot::new(
+            presentation.clone(),
+        ));
     presentation
 }
 #[test]

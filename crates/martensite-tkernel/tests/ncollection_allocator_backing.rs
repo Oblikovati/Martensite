@@ -52,7 +52,7 @@ struct IndependentHeapAllocator {
     retired: Arc<AtomicUsize>,
 }
 martensite_tkernel::impl_transient!(IndependentHeapAllocator, "Martensite_IndependentHeapAllocator",
-    AllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    AllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: the actual backing lease owns every returned range beyond this object's retirement.
 unsafe impl AllocatorSource for IndependentHeapAllocator {
     fn allocator_object_base(&self) -> &AllocatorObject {

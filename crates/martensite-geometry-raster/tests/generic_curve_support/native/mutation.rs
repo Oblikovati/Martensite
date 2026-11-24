@@ -80,8 +80,7 @@ fn spatial_geometry() {
     viewer.display(&curve_api::spatial_handle(curve)).unwrap();
     let before = pixels::capture(&mut viewer, "generic-spatial-geometry-before");
     geometry
-        .cast::<GeomCircle>()
-        .get()
+        .downcast_ref::<GeomCircle>()
         .unwrap()
         .set_radius(7.)
         .unwrap();
@@ -100,8 +99,7 @@ fn planar_geometry() {
     viewer.display(&curve_api::planar_handle(curve)).unwrap();
     let before = pixels::capture(&mut viewer, "generic-planar-geometry-before");
     geometry
-        .cast::<Geom2dCircle>()
-        .get()
+        .downcast_ref::<Geom2dCircle>()
         .unwrap()
         .set_radius(7.)
         .unwrap();

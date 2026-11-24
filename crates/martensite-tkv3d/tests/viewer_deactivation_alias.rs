@@ -8,7 +8,7 @@ use martensite_tkv3d::v3d::*;
 struct DeactivationAliasView {
     base: V3dView,
 }
-martensite_tkernel::impl_transient!(DeactivationAliasView,"Martensite_DeactivationAliasView",V3dView,base,
+martensite_tkernel::impl_transient!(DeactivationAliasView,"Martensite_DeactivationAliasView",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for DeactivationAliasView {
     fn view_base(&self) -> &V3dView {

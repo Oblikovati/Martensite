@@ -9,7 +9,7 @@ use crate::native_text::stream_real;
 use layout::ProfileLayout;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::math::Vector;
 use std::ops::{Deref, DerefMut};
 use std::sync::RwLockWriteGuard;
@@ -40,7 +40,6 @@ struct ProfileValues {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct ProfileMatrix {
-    parent: StandardTransient,
     layout: ProfileLayout,
     values: SharedState<ProfileValues>,
 }
@@ -48,7 +47,6 @@ impl_transient!(
     ProfileMatrix,
     "FEmTool_ProfileMatrix",
     dyn SparseMatrix,
-    parent,
     interfaces: [dyn SparseMatrix]
 );
 
@@ -61,7 +59,6 @@ impl ProfileMatrix {
         let layout: ProfileLayout = ProfileLayout::new(first_indexes)?;
         let size: usize = layout.size();
         Ok(Self {
-            parent: StandardTransient::default(),
             layout,
             values: SharedState::new(ProfileValues {
                 matrix: vec![0.; size],

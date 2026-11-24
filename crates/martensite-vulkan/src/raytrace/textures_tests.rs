@@ -11,7 +11,7 @@ fn pixels(red: u8) -> Handle<ImagePixMap> {
 }
 
 fn texture(red: u8, unit: Graphic3dTextureUnit) -> Handle<dyn Graphic3dTextureMap> {
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(pixels(red)));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(pixels(red).into_upcast()));
     texture.get_params().set_texture_unit(unit);
     texture.cast()
 }
@@ -22,7 +22,7 @@ fn textured_aspects(textures: &[Handle<dyn Graphic3dTextureMap>]) -> Handle<Grap
     for (index, texture) in textures.iter().enumerate() {
         set.set_value(index as i32, texture.clone()).unwrap();
     }
-    aspects.set_texture_set(set);
+    aspects.set_texture_set(set.into_upcast());
     aspects.set_texture_map_on(true);
     aspects
 }

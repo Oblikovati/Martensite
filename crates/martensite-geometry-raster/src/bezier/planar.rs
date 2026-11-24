@@ -36,7 +36,7 @@ impl PlanarBezierDrawable {
     ) -> Self {
         Self {
             curve: PlanarCurveDrawable::with_look(
-                curve.cast::<dyn Geom2dCurve>(),
+                curve.into_upcast::<dyn Geom2dCurve>(),
                 CurveLook::new(colors.0),
                 settings,
             ),
@@ -52,7 +52,7 @@ impl PlanarBezierDrawable {
         &self.poles
     }
     fn bezier(&self) -> Handle<Geom2dBezierCurve> {
-        self.curve.curve().cast::<Geom2dBezierCurve>()
+        self.curve.curve().into_downcast::<Geom2dBezierCurve>()
     }
     /// Finds the first pole after `index`; `curve.find_pole((x,y), display, 1., 0)?`.
     pub fn find_pole(

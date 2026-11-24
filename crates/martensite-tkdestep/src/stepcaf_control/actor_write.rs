@@ -26,7 +26,13 @@ use martensite_tkxsbase::transfer::{
 pub struct STEPCAFControlActorWrite {
     base: StepControlActorWrite,
 }
-impl_transient!(STEPCAFControlActorWrite, "STEPCAFControlActorWrite", StepControlActorWrite, base, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps]);
+impl_transient!(STEPCAFControlActorWrite, "STEPCAFControlActorWrite", StepControlActorWrite, interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps, dyn crate::StepEntityBase<StepControlActorWrite>]);
+
+impl crate::StepEntityBase<StepControlActorWrite> for STEPCAFControlActorWrite {
+    fn step_base(&self) -> &StepControlActorWrite {
+        &self.base
+    }
+}
 
 impl std::ops::Deref for STEPCAFControlActorWrite {
     type Target = StepControlActorWrite;

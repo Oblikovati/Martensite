@@ -12,7 +12,7 @@ use martensite_tkernel::{
 };
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
 use martensite_tkxsbase::{
-    if_select::{IFSelectFunctions, IFSelectSessionPilot, IFSelectWorkSession},
+    if_select::{IFSelectFunctions, IFSelectSessionPilot},
     xs_algo::XSAlgo,
     xs_control::{
         XSControlFuncShape, XSControlFunctions, XSControlVars, XSControlVarsOps,
@@ -87,7 +87,7 @@ impl IgesSession {
             .get()
             .expect("a work session")
             .set_vars(&Handle::new(XSControlVars::new()).cast::<dyn XSControlVarsOps>());
-        pilot.set_session(&work_session.clone().cast::<IFSelectWorkSession>());
+        pilot.set_session(&work_session);
         Ok(Self {
             raster: RasterSession::new(case_name),
             documents: BTreeMap::new(),

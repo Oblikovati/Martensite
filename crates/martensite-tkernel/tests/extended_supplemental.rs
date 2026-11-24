@@ -1,5 +1,5 @@
 //! Invalid Unicode and buffer boundaries must preserve the conversion policy.
-use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
+use crate::tcollection::{AsciiString, ExtendedString};
 #[test]
 fn utf16_conversion_discards_unpaired_surrogates() {
     let string = ExtendedString::from_utf16(&[65, 0xD800, 66, 0xDC00, 0xD83D, 0xDE00, 0]);

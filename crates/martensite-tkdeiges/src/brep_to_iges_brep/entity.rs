@@ -1,6 +1,7 @@
 //! `BRepToIgesBRepEntity`: the lists of a translation to BRep entities, and any shape.
 use crate::brep_to_iges::{BRepToIgesBREntity, BRepToIgesBRWire, BRepToIgesOriginMap};
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_set, iges_new_array1};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{iges_array1_set, iges_new_array1};
 use crate::iges_solid::{IgesSolidEdgeList, IgesSolidVertexList};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp;
@@ -52,7 +53,7 @@ pub struct BRepToIgesBRepEntity {
     pub(super) edge_list: Handle<IgesSolidEdgeList>,
     pub(super) vertices: ShapeList,
     pub(super) edges: ShapeList,
-    pub(super) curves: Vec<Handle<IgesDataIgesEntity>>,
+    pub(super) curves: Vec<Handle<dyn IgesDataEntityKind>>,
 }
 
 impl Deref for BRepToIgesBRepEntity {
@@ -115,7 +116,7 @@ impl BRepToIgesBRepEntity {
     }
     /// Adds an edge with its curve, once; gives its rank, 0 for a null edge;
     /// `tool.add_edge(&edge, &curve)`.
-    pub fn add_edge(&mut self, edge: &Edge, curve: &Handle<IgesDataIgesEntity>) -> i32 {
+    pub fn add_edge(&mut self, edge: &Edge, curve: &Handle<dyn IgesDataEntityKind>) -> i32 {
         if edge.is_null() {
             return 0;
         }
@@ -154,7 +155,7 @@ impl BRepToIgesBRepEntity {
         if count == 0 {
             return Ok(());
         }
-        let curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> = iges_new_array1(1, count)?;
+        let curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = iges_new_array1(1, count)?;
         let start_lists: Handle<HArray1<Handle<IgesSolidVertexList>>> = iges_new_array1(1, count)?;
         let end_lists: Handle<HArray1<Handle<IgesSolidVertexList>>> = iges_new_array1(1, count)?;
         let start_indices: Handle<HArray1<i32>> = iges_new_array1(1, count)?;
@@ -185,11 +186,11 @@ impl BRepToIgesBRepEntity {
         &mut self,
         start: &Shape,
         range: &ProgressRange<'_>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
-        let result: Handle<IgesDataIgesEntity> = match start.shape_type()? {
+        let result: Handle<dyn IgesDataEntityKind> = match start.shape_type()? {
             ShapeEnum::Vertex => {
                 self.add_warning(start, " A Vertex alone is not a IGESBRep Entity")?;
                 return self.wire_tool()?.transfer_vertex(&topods::vertex(start)?);

@@ -108,15 +108,13 @@ pub type Graphic3dUniformMat4 = Graphic3dUniformValue<Mat4<f32>>;
 ///
 /// Example: `let variable = Graphic3dShaderVariable::create("occScale", 2.0f32);`.
 pub struct Graphic3dShaderVariable {
-    transient: StandardTransient,
     name: AsciiString,
     value: Option<Box<dyn Graphic3dValueInterface>>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dShaderVariable,
     "Graphic3d_ShaderVariable",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Graphic3dShaderVariable {
@@ -127,7 +125,6 @@ impl Graphic3dShaderVariable {
         value: T,
     ) -> Handle<Self> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             name: name.into(),
             value: Some(Box::new(Graphic3dUniformValue::new(value))),
         })
@@ -136,7 +133,6 @@ impl Graphic3dShaderVariable {
     /// `Graphic3dShaderVariable::new("occScale").is_done() == false`.
     pub fn new(name: impl Into<AsciiString>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             name: name.into(),
             value: None,
         }
@@ -163,22 +159,19 @@ impl Graphic3dShaderVariable {
 ///
 /// Example: `Graphic3dShaderAttribute::new("occColor", 3).location() == 3`.
 pub struct Graphic3dShaderAttribute {
-    transient: StandardTransient,
     name: AsciiString,
     location: i32,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dShaderAttribute,
     "Graphic3d_ShaderAttribute",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Graphic3dShaderAttribute {
     /// An attribute `name` at `location`; `Graphic3dShaderAttribute::new("occColor", 3)`.
     pub fn new(name: impl Into<AsciiString>, location: i32) -> Self {
         Self {
-            transient: StandardTransient::default(),
             name: name.into(),
             location,
         }

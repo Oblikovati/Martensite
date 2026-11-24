@@ -172,7 +172,8 @@ impl RwStepAP242RwItemIdentifiedRepresentationUsage {
         let mut a_definition: StepAP242ItemIdentifiedRepresentationUsageDefinition =
             Default::default();
         data.read_entity_select(num, 3, "definition", ach, &mut a_definition)?;
-        let mut a_representation: Handle<StepReprRepresentation> = Default::default();
+        let mut a_representation: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         data.read_entity(
             num,
             4,

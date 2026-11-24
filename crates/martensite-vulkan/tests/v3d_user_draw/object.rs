@@ -1,23 +1,20 @@
 //! Presentation and sensitive curve share the exact interactive-object identity.
 use super::element::{UserDrawElement, UserDrawPayload, user_draw_positions};
-use martensite_tkernel::standard::{Failure, Handle, HandleReference, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference};
 use martensite_tkservice::graphic3d::*;
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*, select3d::Select3DSensitiveCurve};
 use martensite_vulkan::Graphic3dDrawGroup;
 use std::sync::Arc;
 
 pub(super) struct UserDrawObject {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     pub payload: Arc<UserDrawPayload>,
 }
-martensite_tkernel::impl_transient!(UserDrawObject,"VUserDrawObj",dyn AisInteractiveObject,transient,
-    interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(UserDrawObject,"VUserDrawObj",dyn AisInteractiveObject, interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl UserDrawObject {
     /// Bind actual virtual presentation/selection callbacks; `UserDrawObject::new()`.
     pub fn new() -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             payload: Arc::default(),
         });

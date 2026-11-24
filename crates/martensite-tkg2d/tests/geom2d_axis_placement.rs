@@ -152,7 +152,7 @@ fn axis_placement_transform_rotation() {
 fn axis_placement_copy() {
     let anAP = placement(1.0, 2.0, 0.0, 1.0);
     let aCopyGeom: Handle<dyn Geom2dGeometry> = anAP.copy().unwrap();
-    let aCopy: Handle<Geom2dAxisPlacement> = aCopyGeom.cast::<Geom2dAxisPlacement>();
+    let aCopy: Handle<Geom2dAxisPlacement> = aCopyGeom.into_downcast::<Geom2dAxisPlacement>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.location().x(), 1.0, precision::confusion());

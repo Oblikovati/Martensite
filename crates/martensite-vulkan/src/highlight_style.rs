@@ -1,7 +1,75 @@
 //! OpenGL color highlighting overrides vertex/bound color without replacing line width/pattern.
-use crate::{PrimitiveDraw, RenderError, error::rejected};
+use crate::{PrimitiveDraw, RenderError, RenderVertex, draw::DrawStream, error::rejected};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::{aspect::AspectTypeOfHighlightMethod, graphic3d::*};
+use std::sync::Weak;
+
+pub(crate) struct HighlightLineSource {
+    original: DrawStream<RenderVertex>,
+    recolored: Weak<Vec<RenderVertex>>,
+    color: [f32; 4],
+    compact: bool,
+}
+
+impl HighlightLineSource {
+    fn capture(
+        draw: &PrimitiveDraw,
+        recolored: &DrawStream<RenderVertex>,
+        color: [f32; 4],
+    ) -> Option<Self> {
+        if !native_highlight_line(draw) {
+            return None;
+        }
+        Some(Self {
+            original: draw.vertices.clone(),
+            recolored: recolored.witness()?,
+            color,
+            compact: draw.uniform_line_color().is_some() && compact_inputs(draw),
+        })
+    }
+
+    pub(crate) fn resolve(draw: &PrimitiveDraw) -> Option<(&DrawStream<RenderVertex>, [f32; 4])> {
+        if let Some(source) = draw.highlight_line_source() {
+            let recolored = draw.vertices.identity()?.get() == source.recolored.as_ptr().addr();
+            return (recolored && native_highlight_line(draw))
+                .then_some((&source.original, source.color));
+        }
+        let color = draw.uniform_line_color()?;
+        (native_highlight_line(draw) && compact_inputs(draw)).then_some((&draw.vertices, color))
+    }
+
+    /// Pick the layout of an admitted draw-color source; `HighlightLineSource::compact(draw)`.
+    pub(crate) fn compact(draw: &PrimitiveDraw) -> bool {
+        draw.highlight_line_source()
+            .is_none_or(|source| source.compact)
+    }
+}
+
+fn native_highlight_line(draw: &PrimitiveDraw) -> bool {
+    !cfg!(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    )) && draw
+        .line_style
+        .is_some_and(|line| line.width == 1. && !line.alpha_blend)
+        && draw.lighting.is_none()
+        && draw.clipping.is_none()
+        && draw.user_program.is_none()
+        && draw.mesh_edges.is_none()
+        && draw.surface_texture.is_none()
+        && draw.surface_texture_unavailable.is_none()
+        && draw.surface_cutoff.is_none()
+        && draw.unlit_back_color.is_none()
+        && draw.guard_band_source.is_none()
+        && draw.projected_dash.is_none()
+        && !draw.fixed_function_lighting
+        && !draw.compatibility_color_target
+        && draw.capping_pass == crate::RenderCappingPass::None
+        && draw.depth_pass == Default::default()
+}
+fn compact_inputs(draw: &PrimitiveDraw) -> bool {
+    draw.polygon_edge_style.is_none() && draw.quad_corners.is_empty()
+}
 pub(crate) fn validate_structure(structure: &Graphic3dCStructureFields) -> Result<(), RenderError> {
     let style = &structure.highlight_style;
     // AspectTypeOfHighlightMethod has only COLOR and BOUNDBOX; a future value stays explicit.
@@ -46,7 +114,11 @@ pub(crate) fn apply_highlight(
     if draw.annotation || draw.topology() == crate::PrimitiveTopology::Points {
         crate::scene::validate_annotation_opacity(&vertices)?;
     }
-    draw.vertices = vertices;
+    let recolored: DrawStream<_> = vertices.into();
+    if let Some(source) = HighlightLineSource::capture(draw, &recolored, rgba) {
+        draw.retain_highlight_line(source);
+    }
+    draw.vertices = recolored;
     draw.unlit_back_color = draw.unlit_back_color.map(|_| rgba);
     let alpha = match highlight_fill_material(&structure.highlight_style) {
         Some((material, alpha)) => draw.lighting.as_mut().map_or(rgba[3], |lighting| {
@@ -99,6 +171,79 @@ fn blend_translucent_fill(draw: &mut PrimitiveDraw, alpha: f32) {
 mod tests {
     use super::*;
     use martensite_tkernel::{quantity::ColorRgba, standard::Handle};
+
+    #[cfg(not(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    )))]
+    #[test]
+    fn warm_line_highlight_uses_draw_color_and_matches_recolored_vertices() {
+        use crate::{RenderBackend, RenderFrame, VulkanOptions, VulkanRenderer};
+        let mut renderer = VulkanRenderer::new(VulkanOptions {
+            validation: true,
+            device_index: None,
+        })
+        .unwrap();
+        let base = PrimitiveDraw::segments(
+            vec![
+                RenderVertex::new([-0.75, 0., 0.], [1., 0., 0., 1.]),
+                RenderVertex::new([0.75, 0., 0.], [0., 0., 1., 1.]),
+            ],
+            vec![0, 1],
+            crate::identity_clip(),
+            crate::LineStyle::new(1., u16::MAX, 1).unwrap(),
+        )
+        .unwrap();
+        let state = line_highlight_fields();
+        let frame = |draw| RenderFrame::new(48, 32, [0., 0., 0., 1.], vec![draw]).unwrap();
+        renderer.render(&frame(base.clone())).unwrap();
+        let before = renderer.work_ledger().totals();
+        state
+            .highlight_style
+            .set_color(*ColorRgba::new(0., 1., 0., 1.).unwrap().rgb());
+        let mut highlighted = base.clone();
+        apply_highlight(&mut highlighted, &state).unwrap();
+        assert!(HighlightLineSource::resolve(&highlighted).is_some());
+        let mut edited = highlighted.clone();
+        edited.vertices.make_mut()[0].color = [1., 0., 0., 1.];
+        assert!(HighlightLineSource::resolve(&edited).is_none());
+        let restored = renderer.render(&frame(highlighted.clone())).unwrap();
+        assert_eq!(
+            renderer
+                .work_ledger()
+                .totals()
+                .since(&before)
+                .geometry_uploaded_bytes,
+            0
+        );
+        highlighted.geometry_revision = Default::default();
+        let reference = renderer.render(&frame(highlighted)).unwrap();
+        assert_eq!(restored.rgba, reference.rgba);
+        assert_eq!(restored.depth, reference.depth);
+        assert!(restored.rgba.as_chunks::<4>().0.contains(&[0, 255, 0, 255]));
+        assert!(renderer.validation_errors().unwrap().is_empty());
+    }
+
+    #[cfg(not(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    )))]
+    fn line_highlight_fields() -> Graphic3dCStructureFields {
+        let manager = Handle::new(
+            Graphic3dStructureManager::new(
+                &martensite_tkservice::null_driver::NullGraphicDriver::new_handle(),
+            )
+            .unwrap(),
+        );
+        let mut fields = Graphic3dCStructureBase::new(&manager)
+            .unwrap()
+            .fields
+            .read()
+            .clone();
+        fields.highlight = true;
+        fields.highlight_style = Handle::new(Graphic3dPresentationAttributes::default()).cast();
+        fields
+    }
     #[test]
     fn color_highlight_preserves_homogeneous_position_weight() {
         let manager = Handle::new(

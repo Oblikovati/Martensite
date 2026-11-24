@@ -86,7 +86,7 @@ fn fixed_custom_marker(aspect: &Graphic3dAspects, mode: &str) {
     image.set_top_down(!mode.contains("bottom"));
     aspect.set_marker_type(AspectTypeOfMarker::Userdefined);
     aspect.set_marker_image(Handle::new(
-        Graphic3dMarkerImage::from_images(image, Handle::default()).unwrap(),
+        Graphic3dMarkerImage::from_images(image.into_upcast(), Handle::default()).unwrap(),
     ));
 }
 

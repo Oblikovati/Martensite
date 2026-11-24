@@ -1,27 +1,26 @@
 //! `Graphic3d_ViewAffinity`: the per-view visibility mask of a presentation.
+use super::revised_state::RevisedState;
 use crate::json_dump::{class_begin, field_unsigned};
+use martensite_tkernel::standard::StandardTransient;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{SharedState, StandardTransient};
 use std::io;
 
 /// A view visibility mask, visible in every view at first.
 /// Example: `let affinity = Graphic3dViewAffinity::default(); affinity.set_view_visible(3, false);`.
 pub struct Graphic3dViewAffinity {
-    transient: StandardTransient,
-    mask: SharedState<u32>,
+    // Culling and retained placements both read this mask (#594).
+    mask: RevisedState<u32>,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dViewAffinity,
     "Graphic3d_ViewAffinity",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Default for Graphic3dViewAffinity {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
-            mask: SharedState::new(u32::MAX),
+            mask: RevisedState::new(u32::MAX),
         }
     }
 }
@@ -33,6 +32,11 @@ fn view_bit(view_id: i32) -> u32 {
 }
 
 impl Graphic3dViewAffinity {
+    /// Observe per-view visibility changes across frames.
+    /// Example: `affinity.observe_input(&scope)`.
+    pub fn observe_input(&self, scope: &super::GraphicInputRevision) {
+        self.mask.observe(scope);
+    }
     /// Whether the view is visible; `affinity.is_visible(0)`.
     pub fn is_visible(&self, view_id: i32) -> bool {
         *self.mask.read() & view_bit(view_id) != 0
@@ -54,5 +58,27 @@ impl Graphic3dViewAffinity {
     pub fn dump_json(&self, stream: &mut DumpStream, _depth: i32) -> io::Result<()> {
         class_begin(stream, "Graphic3d_ViewAffinity")?;
         field_unsigned(stream, "myMask", u64::from(*self.mask.read()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn affinity_edits_advance_the_revision_used_by_retained_views() {
+        let affinity = Graphic3dViewAffinity::default();
+        let scope = super::super::GraphicInputRevision::default();
+        affinity.observe_input(&scope);
+        affinity.set_view_visible(2, false);
+        assert_eq!(affinity.mask.revision(), 1);
+        assert_eq!(scope.revision(), 1);
+        assert!(!affinity.is_visible(2));
+        assert!(affinity.is_visible(3));
+
+        affinity.set_visible(false);
+        assert_eq!(affinity.mask.revision(), 2);
+        assert_eq!(scope.revision(), 2);
+        assert!(!affinity.is_visible(3));
     }
 }

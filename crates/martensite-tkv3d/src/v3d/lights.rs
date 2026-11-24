@@ -7,7 +7,9 @@ use super::{V3d, V3dTypeOfOrientation};
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Direction3, Point3};
-use martensite_tkservice::graphic3d::{Graphic3dCLight, Graphic3dTypeOfLightSource};
+use martensite_tkservice::graphic3d::{
+    Graphic3dCLight, Graphic3dCLightSource, Graphic3dTypeOfLightSource,
+};
 
 /// Implements `Deref` to the embedded parent light.
 macro_rules! light_parent {
@@ -18,6 +20,11 @@ macro_rules! light_parent {
                 &self.$field
             }
         }
+        impl Graphic3dCLightSource for $ty {
+            fn light_base(&self) -> &Graphic3dCLight {
+                &self.$field
+            }
+        }
     };
 }
 
@@ -25,7 +32,8 @@ macro_rules! light_parent {
 pub struct V3dAmbientLight {
     light: Graphic3dCLight,
 }
-martensite_tkernel::impl_transient!(V3dAmbientLight, "V3dAmbientLight", Graphic3dCLight, light);
+martensite_tkernel::impl_transient!(V3dAmbientLight, "V3dAmbientLight", Graphic3dCLight,
+    interfaces: [dyn Graphic3dCLightSource]);
 light_parent!(V3dAmbientLight, Graphic3dCLight, light);
 
 impl V3dAmbientLight {
@@ -41,7 +49,8 @@ impl V3dAmbientLight {
 pub struct V3dPositionLight {
     light: Graphic3dCLight,
 }
-martensite_tkernel::impl_transient!(V3dPositionLight, "V3dPositionLight", Graphic3dCLight, light);
+martensite_tkernel::impl_transient!(V3dPositionLight, "V3dPositionLight", Graphic3dCLight,
+    interfaces: [dyn Graphic3dCLightSource]);
 light_parent!(V3dPositionLight, Graphic3dCLight, light);
 
 impl V3dPositionLight {
@@ -57,12 +66,8 @@ impl V3dPositionLight {
 pub struct V3dDirectionalLight {
     base: V3dPositionLight,
 }
-martensite_tkernel::impl_transient!(
-    V3dDirectionalLight,
-    "V3dDirectionalLight",
-    V3dPositionLight,
-    base
-);
+martensite_tkernel::impl_transient!(V3dDirectionalLight, "V3dDirectionalLight", V3dPositionLight,
+    interfaces: [dyn Graphic3dCLightSource]);
 light_parent!(V3dDirectionalLight, V3dPositionLight, base);
 
 impl V3dDirectionalLight {
@@ -101,12 +106,8 @@ impl V3dDirectionalLight {
 pub struct V3dPositionalLight {
     base: V3dPositionLight,
 }
-martensite_tkernel::impl_transient!(
-    V3dPositionalLight,
-    "V3dPositionalLight",
-    V3dPositionLight,
-    base
-);
+martensite_tkernel::impl_transient!(V3dPositionalLight, "V3dPositionalLight", V3dPositionLight,
+    interfaces: [dyn Graphic3dCLightSource]);
 light_parent!(V3dPositionalLight, V3dPositionLight, base);
 
 impl V3dPositionalLight {
@@ -123,7 +124,8 @@ impl V3dPositionalLight {
 pub struct V3dSpotLight {
     base: V3dPositionLight,
 }
-martensite_tkernel::impl_transient!(V3dSpotLight, "V3dSpotLight", V3dPositionLight, base);
+martensite_tkernel::impl_transient!(V3dSpotLight, "V3dSpotLight", V3dPositionLight,
+    interfaces: [dyn Graphic3dCLightSource]);
 light_parent!(V3dSpotLight, V3dPositionLight, base);
 
 impl V3dSpotLight {
@@ -183,7 +185,7 @@ mod tests {
         assert_eq!(spot.direction().unwrap().y(), -1.0);
         let point =
             Handle::new(V3dPositionalLight::new(&Point3::new(0.0, 0.0, 5.0), white).unwrap());
-        let base: Handle<Graphic3dCLight> = point.clone().cast();
+        let base: Handle<dyn Graphic3dCLightSource> = point.clone().cast();
         assert!(!base.is_null());
         assert_eq!(
             point.dynamic_type().unwrap().name(),

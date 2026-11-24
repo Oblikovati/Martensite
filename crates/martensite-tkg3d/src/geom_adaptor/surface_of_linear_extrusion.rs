@@ -1,7 +1,11 @@
 //! `GeomAdaptorSurfaceOfLinearExtrusion`: an adapted curve extruded along a
 //! direction, `S(u, v) = C(u) + v * D`.
 use super::extrusion_kind::{extrusion_cylinder, extrusion_plane, extrusion_type};
-use super::surface::GeomAdaptorSurface;
+use super::surface::GeomSurfaceAdaptor;
+use super::surface_eval;
+use super::surface_eval_order::{EvalD0, EvalD1, EvalD2, EvalD3};
+use super::surface_query;
+use super::surface_shape::Direction;
 use super::surface_state::{ExtrusionData, SurfaceData, SurfaceState, with_data};
 use crate::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use crate::geom::errors::{array_bounds, domain, no_such_object, null_object};
@@ -42,15 +46,14 @@ impl ExtrusionFields {
 /// `GeomAdaptorSurfaceOfLinearExtrusion::with_curve_and_direction(&curve, dir)`.
 #[derive(Default)]
 pub struct GeomAdaptorSurfaceOfLinearExtrusion {
-    parent: GeomAdaptorSurface,
+    state: SharedState<SurfaceState>,
     fields: SharedState<ExtrusionFields>,
 }
 impl_transient!(
     GeomAdaptorSurfaceOfLinearExtrusion,
     "GeomAdaptor_SurfaceOfLinearExtrusion",
-    GeomAdaptorSurface,
-    parent,
-    interfaces: [dyn Adaptor3dSurface]
+    dyn GeomSurfaceAdaptor,
+    interfaces: [dyn Adaptor3dSurface, dyn GeomSurfaceAdaptor]
 );
 
 impl GeomAdaptorSurfaceOfLinearExtrusion {
@@ -92,18 +95,13 @@ impl GeomAdaptorSurfaceOfLinearExtrusion {
             fields.direction = direction;
             fields.basis_curve.clone()
         };
-        let mut state = self.parent.cell().write();
+        let mut state = self.state.write();
         state.surface_type = SurfaceType::SurfaceOfExtrusion;
         state.data = SurfaceData::Extrusion(ExtrusionData {
             basis_curve: curve,
             direction: direction.xyz(),
             eval_rep: Handle::default(),
         });
-    }
-    /// The base-class part (`GeomAdaptorSurface`), whose own members (`Surface`,
-    /// `ToleranceU`...) read the base state; `adaptor.as_geom_adaptor_surface()`.
-    pub fn as_geom_adaptor_surface(&self) -> &GeomAdaptorSurface {
-        &self.parent
     }
     /// `Bounds` through the overridden bounds; `let (u1, u2, v1, v2) = adaptor.bounds()?;`.
     pub fn bounds(&self) -> Result<SurfaceBounds, Failure> {
@@ -120,7 +118,7 @@ impl GeomAdaptorSurfaceOfLinearExtrusion {
     // A new extrusion of `curve` along the direction of this one.
     fn extruded(&self, curve: &Handle<dyn Adaptor3dCurve>) -> Handle<dyn Adaptor3dSurface> {
         let direction: Direction3 = self.fields.read().direction;
-        Handle::new(Self::with_curve_and_direction(curve, direction)).cast()
+        Handle::new(Self::with_curve_and_direction(curve, direction)).into_upcast()
     }
     // ShallowCopy of the base part: the fields, and extrusion data (without its
     // representation) only when the base holds some.
@@ -149,12 +147,12 @@ impl Adaptor3dSurface for GeomAdaptorSurfaceOfLinearExtrusion {
         if let Some(curve) = fields.basis_curve.get() {
             fields.basis_curve = curve.shallow_copy()?;
         }
-        let base: SurfaceState = Self::shallow_base(&self.parent.cell().read())?;
+        let base: SurfaceState = Self::shallow_base(&self.state.read())?;
         let copy = Self {
-            parent: GeomAdaptorSurface::from_state(base),
+            state: SharedState::new(base),
             fields: SharedState::new(fields),
         };
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn first_u_parameter(&self) -> Result<f64, Failure> {
         self.snapshot().curve()?.first_parameter()
@@ -272,16 +270,16 @@ impl Adaptor3dSurface for GeomAdaptorSurfaceOfLinearExtrusion {
         self.snapshot().curve()?.nb_poles()
     }
     fn v_degree(&self) -> Result<i32, Failure> {
-        self.parent.v_degree()
+        surface_query::degree(&self.state.read(), Direction::V)
     }
     fn nb_v_poles(&self) -> Result<i32, Failure> {
-        self.parent.nb_v_poles()
+        surface_query::nb_poles(&self.state.read(), Direction::V)
     }
     fn nb_u_knots(&self) -> Result<i32, Failure> {
-        self.parent.nb_u_knots()
+        surface_query::nb_knots(&self.state.read(), Direction::U)
     }
     fn nb_v_knots(&self) -> Result<i32, Failure> {
-        self.parent.nb_v_knots()
+        surface_query::nb_knots(&self.state.read(), Direction::V)
     }
     fn is_u_rational(&self) -> Result<bool, Failure> {
         Err(not_this_kind("IsURational"))
@@ -306,25 +304,25 @@ impl Adaptor3dSurface for GeomAdaptorSurfaceOfLinearExtrusion {
         Ok(self.fields.read().basis_curve.clone())
     }
     fn basis_surface(&self) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
-        self.parent.basis_surface()
+        surface_query::basis_surface(&self.state.read())
     }
     fn offset_value(&self) -> Result<f64, Failure> {
-        self.parent.offset_value()
+        surface_query::offset_value(&self.state.read())
     }
     fn eval_d0(&self, u: f64, v: f64) -> Result<Point3, Failure> {
-        self.parent.eval_d0(u, v)
+        surface_eval::evaluate::<EvalD0>(&mut self.state.write(), u, v)
     }
     fn eval_d1(&self, u: f64, v: f64) -> Result<GeomSurfaceD1, Failure> {
-        self.parent.eval_d1(u, v)
+        surface_eval::evaluate::<EvalD1>(&mut self.state.write(), u, v)
     }
     fn eval_d2(&self, u: f64, v: f64) -> Result<GeomSurfaceD2, Failure> {
-        self.parent.eval_d2(u, v)
+        surface_eval::evaluate::<EvalD2>(&mut self.state.write(), u, v)
     }
     fn eval_d3(&self, u: f64, v: f64) -> Result<GeomSurfaceD3, Failure> {
-        self.parent.eval_d3(u, v)
+        surface_eval::evaluate::<EvalD3>(&mut self.state.write(), u, v)
     }
     fn eval_dn(&self, u: f64, v: f64, nu: i32, nv: i32) -> Result<Vector3, Failure> {
-        self.parent.eval_dn(u, v, nu, nv)
+        surface_eval::dn(&self.state.read(), u, v, (nu, nv))
     }
 }
 
@@ -333,6 +331,12 @@ impl GeomAdaptorSurfaceOfLinearExtrusion {
     /// The base surface, null for an adaptor built from a curve (`Surface`);
     /// `adaptor.surface()`.
     pub fn surface(&self) -> Handle<dyn GeomSurface> {
-        self.parent.surface()
+        self.state.read().surface.clone()
+    }
+}
+
+impl GeomSurfaceAdaptor for GeomAdaptorSurfaceOfLinearExtrusion {
+    fn surface(&self) -> Handle<dyn GeomSurface> {
+        self.surface()
     }
 }

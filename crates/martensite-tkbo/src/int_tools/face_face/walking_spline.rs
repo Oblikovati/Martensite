@@ -59,7 +59,7 @@ impl<'a> WalkingSpline<'a> {
             false,
         )?);
         CheckBSplineCurve::new(&curve, 1e-7, 1e-6)?.fix_tangent(true, true)?;
-        Ok(curve.cast())
+        Ok(curve.into_upcast())
     }
     pub(super) fn pcurve(&self, index: i32) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         let poles = self.planar_poles(index)?;
@@ -77,7 +77,7 @@ impl<'a> WalkingSpline<'a> {
             false,
         )?);
         Check2dBSplineCurve::new(&curve, 1e-7, 1e-6)?.fix_tangent(true, true)?;
-        Ok(curve.cast())
+        Ok(curve.into_upcast())
     }
     fn planar_poles(&self, index: i32) -> Result<Array1<'static, Point2>, Failure> {
         let mut poles = arrays::one_based(self.curve.nb_poles())?;

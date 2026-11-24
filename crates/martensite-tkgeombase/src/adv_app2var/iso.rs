@@ -2,7 +2,7 @@
 use super::iso_approx::IsoResult;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, Array2};
-use martensite_tkernel::standard::{SharedState, StandardTransient};
+use martensite_tkernel::standard::{SharedState, Transient};
 use martensite_tkmath::geom_abs::IsoType;
 
 /// The locked fields of an iso.
@@ -35,10 +35,9 @@ pub(super) struct IsoState {
 /// Shared through handles; every member takes `&self`.
 /// `AdvApp2VarIso::with_orders(IsoType::IsoU, 3, 1).u_order() == 3`.
 pub struct AdvApp2VarIso {
-    parent: StandardTransient,
     pub(super) state: SharedState<IsoState>,
 }
-impl_transient!(AdvApp2VarIso, "AdvApp2Var_Iso", StandardTransient, parent);
+impl_transient!(AdvApp2VarIso, "AdvApp2Var_Iso", dyn Transient);
 
 impl Default for AdvApp2VarIso {
     fn default() -> Self {
@@ -96,7 +95,6 @@ impl AdvApp2VarIso {
             dif_tab: None,
         };
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

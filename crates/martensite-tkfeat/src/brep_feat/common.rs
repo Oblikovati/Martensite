@@ -31,11 +31,11 @@ pub(crate) fn sample_barycentre(base: &Shape) -> Result<Point3, Failure> {
 /// not identity, None for another surface.
 fn face_plane(f: &Face) -> Result<Option<Plane3>, Failure> {
     let (mut s, loc) = BRepTool::surface_with_location(f)?;
-    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+    let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
     if let Some(t) = trimmed.get() {
         s = t.basis_surface();
     }
-    let plane = s.cast::<GeomPlane>();
+    let plane = s.downcast::<GeomPlane>();
     let Some(plane) = plane.get() else {
         return Ok(None);
     };

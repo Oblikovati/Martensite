@@ -74,10 +74,10 @@ fn actual_viewport_sign_and_ordered_transform_are_preserved() {
 #[test]
 fn v3_retains_original_degenerate_vertices_indices_material_and_draw_count() {
     let mut draw = phong_triangle();
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         vertex.position[0] = 0.;
     }
-    draw.indices = vec![2, 0, 1, 1, 2, 0];
+    draw.indices = vec![2, 0, 1, 1, 2, 0].into();
     let original = draw.clone();
     assert!(admit(Behavior::UnsnappedV3, &draw, [0., 0., 409., 409.]).is_ok());
     assert_eq!(draw, original);
@@ -107,7 +107,7 @@ fn v3_retains_input_on_unsupported_interface_and_invalid_clip_refusals() {
 #[test]
 fn private_carrier_triangles_skip_the_numeric_domain_check() {
     let mut draw = phong_triangle();
-    draw.indices = vec![0, 0, 0];
+    draw.indices = vec![0, 0, 0].into();
     draw.clip_transform[15] = 0.;
     assert!(admit(Behavior::UnsnappedV3, &draw, [0., 0., 4., 4.]).is_ok());
 }

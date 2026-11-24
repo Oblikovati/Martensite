@@ -328,7 +328,7 @@ fn code_side(
             side,
             (&arc, first_vertex, last_vertex),
         )? {
-            slin.push(Handle::new(rlig).cast());
+            slin.push(Handle::new(rlig).into_upcast());
             is_rline = true;
         }
     }

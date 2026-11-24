@@ -15,7 +15,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name, dump_field, dump_flag};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{GeneralTransform2, Point3, Transform3, Vector3};
@@ -25,14 +25,12 @@ use trim::{DirectionTrim, TrimState};
 /// A rectangular trimmed surface; the basis surface is a private copy;
 /// `Handle::new(GeomRectangularTrimmedSurface::new(&s, 0.0, 1.0, 0.0, 1.0, true, true)?)`.
 pub struct GeomRectangularTrimmedSurface {
-    parent: StandardTransient,
     state: SharedState<TrimState>,
 }
 impl_transient!(
     GeomRectangularTrimmedSurface,
     "Geom_RectangularTrimmedSurface",
     dyn GeomBoundedSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomBoundedSurface]
 );
 
@@ -71,14 +69,14 @@ fn trim_offset_basis(
     let Some(offset) = offset.get() else {
         return Ok(basis);
     };
-    let inner: Handle<dyn GeomSurface> = Handle::new(trim_basis(&offset.basis_surface())?).cast();
-    Ok(Handle::new(GeomOffsetSurface::new(&inner, offset.offset(), true)?).cast())
+    let inner: Handle<dyn GeomSurface> =
+        Handle::new(trim_basis(&offset.basis_surface())?).into_upcast();
+    Ok(Handle::new(GeomOffsetSurface::new(&inner, offset.offset(), true)?).into_upcast())
 }
 
 impl GeomRectangularTrimmedSurface {
     fn stored(state: TrimState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -283,7 +281,7 @@ impl GeomGeometry for GeomRectangularTrimmedSurface {
             (false, true) => Self::with_one_direction(&state.basis, v.0, v.1, false, true)?,
             (false, false) => return Ok(Handle::default()),
         };
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state = self.state.read();
@@ -395,7 +393,7 @@ impl GeomSurface for GeomRectangularTrimmedSurface {
             true,
             true,
         )?)
-        .cast())
+        .into_upcast())
     }
     fn v_iso(&self, v: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let state = self.state.read();
@@ -410,7 +408,7 @@ impl GeomSurface for GeomRectangularTrimmedSurface {
             true,
             true,
         )?)
-        .cast())
+        .into_upcast())
     }
     fn continuity(&self) -> Shape {
         self.state.read().basis.continuity()

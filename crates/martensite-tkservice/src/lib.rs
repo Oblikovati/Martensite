@@ -13,6 +13,20 @@
 //!
 //! See `docs/features/martensite-tkservice/README.md` for the platform interfaces and
 //! run-time libraries.
+//!
+//! # Rust-native handles (#592)
+//!
+//! Class descriptors retain native names and ancestry. Concrete downcasts use the
+//! actual Rust type; use state-lending interfaces to share a native base view.
+//! `ImagePixMapObject`, `Graphic3dArraySource` and `Graphic3dTextureSetSource`
+//! retain the original allocation and expose its composed state. Clipping chains
+//! use `Handle<dyn Graphic3dClipPlaneSource>` so derived planes keep their class.
+//!
+//! `ImagePixMapSource::original_image_base()` explicitly lends optional allocation
+//! storage. Its default returns `None`, preserving the typed missing-base refusal.
+//! Mutable-field observations and virtual receiver snapshots add a temporary Arc
+//! owner. Retained field aliases keep their slot identity and reread replacements.
+//!
 pub mod aspect;
 pub mod cocoa;
 pub mod font;

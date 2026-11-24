@@ -4,15 +4,14 @@ use martensite_tkv3d::select_mgr::{SelectMgrAndFilter, SelectMgrCompositionFilte
 
 fn assert_composition_descriptors(
     name: &'static str,
-    descriptor: &'static Handle<RuntimeType>,
-    dynamic: &'static Handle<RuntimeType>,
+    descriptor: &'static RuntimeType,
+    dynamic: &'static RuntimeType,
 ) {
     assert_eq!(name, "SelectMgrCompositionFilter");
     assert_eq!(descriptor.name(), name);
     assert_eq!(descriptor.parent().unwrap().name(), "SelectMgrFilter");
     assert_eq!(dynamic.name(), "SelectMgrAndFilter");
-    assert!(std::ptr::eq(dynamic.parent().unwrap(), &**descriptor));
-    assert!(std::ptr::eq(descriptor.class_handle_ref(), descriptor));
+    assert!(std::ptr::eq(dynamic.parent().unwrap(), descriptor));
     emit_composition_assertion(name, dynamic.name());
 }
 
@@ -30,7 +29,7 @@ fn composition_interface_static_and_dynamic_identity() {
     let composition: Handle<dyn SelectMgrCompositionFilter> = owner.cast();
     let value: &dyn SelectMgrCompositionFilter = &*composition;
     let name: &'static str = <dyn martensite_tkv3d::select_mgr::SelectMgrCompositionFilter as martensite_tkernel::standard::RuntimeTyped>::TYPE_NAME;
-    let descriptor: &'static Handle<RuntimeType> = <dyn martensite_tkv3d::select_mgr::SelectMgrCompositionFilter as martensite_tkernel::standard::RuntimeTyped>::static_type_ref();
-    let dynamic: &'static Handle<RuntimeType> = <dyn martensite_tkv3d::select_mgr::SelectMgrCompositionFilter as martensite_tkernel::standard::Transient>::dynamic_type_ref(value);
+    let descriptor: &'static RuntimeType = <dyn martensite_tkv3d::select_mgr::SelectMgrCompositionFilter as martensite_tkernel::standard::RuntimeTyped>::static_type();
+    let dynamic: &'static RuntimeType = <dyn martensite_tkv3d::select_mgr::SelectMgrCompositionFilter as martensite_tkernel::standard::Transient>::dynamic_type(value);
     assert_composition_descriptors(name, descriptor, dynamic);
 }

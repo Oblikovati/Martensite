@@ -44,7 +44,8 @@ impl SelectMgrBaseFrustumBase {
         camera: &dyn martensite_tkernel::standard::HandleReference<Graphic3dCamera>,
     ) {
         *self.intersector.camera.write() = camera.clone_handle();
-        let builder = self.builder.read().observe();
+        // Snapshot as set_window_size does: the builder calls run outside this field lock.
+        let builder = self.builder.read().clone();
         if let Some(builder) = builder.get() {
             builder.set_camera(camera);
             builder.invalidate_viewport();

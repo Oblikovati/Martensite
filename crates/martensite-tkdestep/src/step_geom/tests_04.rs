@@ -30,7 +30,7 @@ fn init_round_trip_step_geom_point_on_curve() {
     let a_basis_curve = Handle::new(StepGeomCurve::new());
     let a_point_parameter = 2.5;
     let object = StepGeomPointOnCurve::new();
-    object.init(&a_name, &a_basis_curve, a_point_parameter);
+    object.init(&a_name, &a_basis_curve.upcast(), a_point_parameter);
     assert!(object.basis_curve() == a_basis_curve);
     assert!(object.point_parameter() == a_point_parameter);
 }
@@ -54,7 +54,7 @@ fn init_round_trip_step_geom_point_on_surface() {
     let object = StepGeomPointOnSurface::new();
     object.init(
         &a_name,
-        &a_basis_surface,
+        &a_basis_surface.upcast(),
         a_point_parameter_u,
         a_point_parameter_v,
     );
@@ -76,7 +76,7 @@ fn runtime_type_step_geom_point_replica() {
 #[test]
 fn init_round_trip_step_geom_point_replica() {
     let a_name = Handle::new(HAsciiString::new("sample"));
-    let a_parent_pt = Handle::new(StepGeomPoint::new());
+    let a_parent_pt = Handle::new(StepGeomPoint::new()).into_upcast();
     let a_transformation = Handle::new(StepGeomCartesianTransformationOperator::new());
     let object = StepGeomPointReplica::new();
     object.init(&a_name, &a_parent_pt, &a_transformation);
@@ -310,7 +310,7 @@ fn init_round_trip_step_geom_rectangular_trimmed_surface() {
     let object = StepGeomRectangularTrimmedSurface::new();
     object.init(
         &a_name,
-        &a_basis_surface,
+        &a_basis_surface.upcast(),
         a_u1,
         a_u2,
         a_v1,
@@ -344,7 +344,12 @@ fn init_round_trip_step_geom_reparametrised_composite_curve_segment() {
     let a_parent_curve = Handle::new(StepGeomCurve::new());
     let a_param_length = 2.5;
     let object = StepGeomReparametrisedCompositeCurveSegment::new();
-    object.init(a_transition, a_same_sense, &a_parent_curve, a_param_length);
+    object.init(
+        a_transition,
+        a_same_sense,
+        &a_parent_curve.upcast(),
+        a_param_length,
+    );
     assert!(object.param_length() == a_param_length);
 }
 

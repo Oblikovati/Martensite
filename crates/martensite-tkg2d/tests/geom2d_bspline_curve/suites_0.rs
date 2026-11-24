@@ -48,7 +48,8 @@ fn b_spline_curve_copy_method_uses_optimized_constructor() {
     let myOriginalCurve = SetUp();
     // Test that Copy() method uses the optimized copy constructor
     let aCopiedGeom: Handle<dyn Geom2dGeometry> = myOriginalCurve.copy().unwrap();
-    let aCopiedCurve: Handle<Geom2dBSplineCurve> = aCopiedGeom.cast::<Geom2dBSplineCurve>();
+    let aCopiedCurve: Handle<Geom2dBSplineCurve> =
+        aCopiedGeom.into_downcast::<Geom2dBSplineCurve>();
 
     assert!(!aCopiedCurve.is_null());
 

@@ -4,7 +4,7 @@ use super::{TdfAttribute, TdfAttributeState, TdfLabel};
 use martensite_tkernel::{
     impl_transient,
     ncollection::Map,
-    standard::{Handle, SharedState, StandardTransient},
+    standard::{Handle, SharedState, Transient},
 };
 use std::{io, sync::RwLockWriteGuard};
 
@@ -26,12 +26,11 @@ pub type TdfAttributeMap = Map<Handle<dyn TdfAttribute>>;
 /// ```
 #[derive(Default)]
 pub struct TdfDataSet {
-    transient: StandardTransient,
     root_labels: SharedState<Vec<TdfLabel>>,
     label_map: SharedState<TdfLabelMap>,
     attribute_map: SharedState<TdfAttributeMap>,
 }
-impl_transient!(TdfDataSet, "TDF_DataSet", StandardTransient, transient);
+impl_transient!(TdfDataSet, "TDF_DataSet", dyn Transient);
 
 impl TdfDataSet {
     /// `TDF_DataSet()`: empty.

@@ -24,10 +24,9 @@ struct WiresBlockState {
 /// assert_eq!(wires.wire(1).unwrap().get().unwrap().nb_edges(), 3);
 /// ```
 pub struct WiresBlock {
-    base: StandardTransient,
     state: SharedState<WiresBlockState>,
 }
-impl_transient!(WiresBlock, "HLRAlgo_WiresBlock", StandardTransient, base);
+impl_transient!(WiresBlock, "HLRAlgo_WiresBlock", StandardTransient);
 
 impl WiresBlock {
     /// HLRAlgo_WiresBlock(NbWires): `nb_wires` null wires; Standard_RangeError for a
@@ -40,7 +39,6 @@ impl WiresBlock {
             min_max: MinMaxIndices::default(),
         };
         Ok(Self {
-            base: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }

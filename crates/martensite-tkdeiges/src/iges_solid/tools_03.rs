@@ -16,9 +16,10 @@ use crate::iges_basic::shared_runs::{
     iges_shared_013, iges_shared_014, iges_shared_028, iges_shared_035, iges_shared_042,
     iges_shared_052,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_vals, iges_live, iges_msg, iges_new_array1,
@@ -26,7 +27,8 @@ use crate::iges_data::{
 };
 use crate::iges_geom::{IgesGeomDirection, IgesGeomPoint};
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
 };
@@ -113,7 +115,7 @@ impl IgesSolidToolCylindricalSurface {
         iges_shared_014!(another_live, tc, temp_axis, temp_location, temp_radius);
         if another_live.is_parametrised() {
             let temp_refdir = tc
-                .transferred(&another_live.reference_dir().cast::<StandardTransient>())?
+                .transferred(&another_live.reference_dir().cast::<dyn Transient>())?
                 .cast::<IgesGeomDirection>();
             ent_live.init(&temp_location, &temp_axis, temp_radius, &temp_refdir);
         } else {
@@ -165,9 +167,9 @@ impl IgesSolidToolEdgeList {
         let ent_live = iges_live(ent, "IgesSolidToolEdgeList::read_own_params")?;
         let mut length: i32 = 0;
         let mut anint: i32 = 0;
-        let mut anent: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut anent: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut avert: Handle<IgesSolidVertexList> = Handle::default();
-        let mut temp_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         let mut temp_start_vertex_list: Handle<HArray1<Handle<IgesSolidVertexList>>> =
             Handle::default();
         let mut temp_start_vertex_index: Handle<HArray1<i32>> = Handle::default();
@@ -181,7 +183,7 @@ impl IgesSolidToolEdgeList {
             pr.send_fail(&msg184);
         }
         if st && length > 0 {
-            temp_curves = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, length)?;
+            temp_curves = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, length)?;
             temp_start_vertex_list = iges_new_array1::<Handle<IgesSolidVertexList>>(1, length)?;
             temp_start_vertex_index = iges_new_array1::<i32>(1, length)?;
             temp_end_vertex_list = iges_new_array1::<Handle<IgesSolidVertexList>>(1, length)?;
@@ -309,9 +311,9 @@ impl IgesSolidToolEdgeList {
         let ent_live = iges_live(ent, "IgesSolidToolEdgeList::own_shared")?;
         let length: i32 = ent_live.nb_edges();
         for i in 1..=length {
-            iter.get_one_item(&ent_live.curve(i)?.cast::<StandardTransient>());
-            iter.get_one_item(&ent_live.start_vertex_list(i)?.cast::<StandardTransient>());
-            iter.get_one_item(&ent_live.end_vertex_list(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.curve(i)?.cast::<dyn Transient>());
+            iter.get_one_item(&ent_live.start_vertex_list(i)?.cast::<dyn Transient>());
+            iter.get_one_item(&ent_live.end_vertex_list(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -356,8 +358,8 @@ impl IgesSolidToolEdgeList {
         let another_live = iges_live(another, "IgesSolidToolEdgeList::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolEdgeList::own_copy")?;
         let length: i32 = another_live.nb_edges();
-        let temp_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, length)?;
+        let temp_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, length)?;
         let temp_start_vertex_list: Handle<HArray1<Handle<IgesSolidVertexList>>> =
             iges_new_array1::<Handle<IgesSolidVertexList>>(1, length)?;
         let temp_start_vertex_index: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, length)?;
@@ -366,8 +368,8 @@ impl IgesSolidToolEdgeList {
         let temp_end_vertex_index: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, length)?;
         for i in 1..=length {
             let curve = tc
-                .transferred(&another_live.curve(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.curve(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &temp_curves,
                 i,
@@ -375,11 +377,7 @@ impl IgesSolidToolEdgeList {
                 "IgesSolidToolEdgeList::own_copy",
             )?;
             let start = tc
-                .transferred(
-                    &another_live
-                        .start_vertex_list(i)?
-                        .cast::<StandardTransient>(),
-                )?
+                .transferred(&another_live.start_vertex_list(i)?.cast::<dyn Transient>())?
                 .cast::<IgesSolidVertexList>();
             iges_array1_set(
                 &temp_start_vertex_list,
@@ -394,7 +392,7 @@ impl IgesSolidToolEdgeList {
                 "IgesSolidToolEdgeList::own_copy",
             )?;
             let end = tc
-                .transferred(&another_live.end_vertex_list(i)?.cast::<StandardTransient>())?
+                .transferred(&another_live.end_vertex_list(i)?.cast::<dyn Transient>())?
                 .cast::<IgesSolidVertexList>();
             iges_array1_set(
                 &temp_end_vertex_list,

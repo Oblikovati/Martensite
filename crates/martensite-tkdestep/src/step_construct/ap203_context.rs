@@ -19,7 +19,8 @@ use crate::step_data::StepDataSelectType;
 use crate::step_entity::{HArray1, step_array1_set, step_live, step_new_array1};
 use crate::step_repr::StepReprNextAssemblyUsageOccurrence;
 use crate::step_shape::StepShapeShapeDefinitionRepresentation;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 
 const WHERE: &str = "StepConstructAP203Context";
@@ -29,7 +30,7 @@ fn text(value: &str) -> Handle<HAsciiString> {
 }
 
 /// An array of select values, from 1, each set from one entity.
-fn select_items<S>(values: &[Handle<StandardTransient>]) -> Result<Handle<HArray1<S>>, Failure>
+fn select_items<S>(values: &[Handle<dyn Transient>]) -> Result<Handle<HArray1<S>>, Failure>
 where
     S: StepDataSelectType + Default + Clone + Send + Sync + 'static,
 {
@@ -280,7 +281,7 @@ impl StepConstructAP203Context {
     fn person_assignment(
         &mut self,
         role: Handle<StepBasicPersonAndOrganizationRole>,
-        values: &[Handle<StandardTransient>],
+        values: &[Handle<dyn Transient>],
     ) -> Result<Handle<StepAP203CcDesignPersonAndOrganizationAssignment>, Failure> {
         let assignment = Handle::new(StepAP203CcDesignPersonAndOrganizationAssignment::new());
         let items = select_items::<StepAP203PersonOrganizationItem>(values)?;
@@ -291,7 +292,7 @@ impl StepConstructAP203Context {
     fn date_assignment(
         &mut self,
         role: Handle<StepBasicDateTimeRole>,
-        value: &Handle<StandardTransient>,
+        value: &Handle<dyn Transient>,
     ) -> Result<Handle<StepAP203CcDesignDateAndTimeAssignment>, Failure> {
         let assignment = Handle::new(StepAP203CcDesignDateAndTimeAssignment::new());
         let items = select_items::<StepAP203DateTimeItem>(std::slice::from_ref(value))?;
@@ -299,7 +300,7 @@ impl StepConstructAP203Context {
         Ok(assignment)
     }
     /// The classification of `item`, when there is none yet.
-    fn ensure_security(&mut self, item: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn ensure_security(&mut self, item: &Handle<dyn Transient>) -> Result<(), Failure> {
         if self.my_security.is_some() {
             return Ok(());
         }
@@ -316,7 +317,7 @@ impl StepConstructAP203Context {
         Ok(())
     }
     /// The approval of `values`, when there is none yet.
-    fn ensure_approval(&mut self, values: &[Handle<StandardTransient>]) -> Result<(), Failure> {
+    fn ensure_approval(&mut self, values: &[Handle<dyn Transient>]) -> Result<(), Failure> {
         if self.my_approval.is_some() {
             return Ok(());
         }
@@ -327,15 +328,15 @@ impl StepConstructAP203Context {
         Ok(())
     }
     /// The assigned classification, as the value selects hold it.
-    fn assigned_security(&self) -> Result<Handle<StandardTransient>, Failure> {
+    fn assigned_security(&self) -> Result<Handle<dyn Transient>, Failure> {
         Ok(step_live(&self.my_security, WHERE)?
             .assigned_security_classification()
             .cast())
     }
     /// `init_part`: all missing data required for a part.
     fn init_part(&mut self, sdr_tool: &StepConstructPart) -> Result<(), Failure> {
-        let pdf: Handle<StandardTransient> = sdr_tool.pdf()?.cast();
-        let pd: Handle<StandardTransient> = sdr_tool.pd()?.cast();
+        let pdf: Handle<dyn Transient> = sdr_tool.pdf()?.cast();
+        let pd: Handle<dyn Transient> = sdr_tool.pd()?.cast();
         if self.my_creator.is_null() {
             self.my_creator =
                 self.person_assignment(self.role_creator(), &[pdf.clone(), pd.clone()])?;
@@ -365,8 +366,8 @@ impl StepConstructAP203Context {
                 &text(""),
                 true,
                 &text(""),
-                &category,
-                &sdr_tool.prpc().cast(),
+                &category.into_upcast(),
+                &sdr_tool.prpc().into_cast(),
             );
             self.my_product_category_relationship = relationship;
         }
@@ -440,7 +441,7 @@ impl StepConstructAP203Context {
 fn first_item_value<S>(
     items: &Handle<HArray1<S>>,
     where_called: &str,
-) -> Result<Handle<StandardTransient>, Failure>
+) -> Result<Handle<dyn Transient>, Failure>
 where
     S: StepDataSelectType + Clone + Send + Sync + 'static,
 {

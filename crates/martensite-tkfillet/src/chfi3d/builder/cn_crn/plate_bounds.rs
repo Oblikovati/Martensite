@@ -30,8 +30,8 @@ pub(super) fn curve_on(
     asurf: &Handle<GeomAdaptorSurface>,
 ) -> Result<Handle<Adaptor3dCurveOnSurface>, Failure> {
     let acurv: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(pcurve)?).cast();
-    let s: Handle<dyn Adaptor3dSurface> = asurf.clone().cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(pcurve)?).into_upcast();
+    let s: Handle<dyn Adaptor3dSurface> = asurf.upcast();
     Ok(Handle::new(Adaptor3dCurveOnSurface::with_curve(
         &acurv, &s,
     )?))
@@ -45,7 +45,7 @@ pub(super) fn add_constraint(
     (tolapp3d, angular): (f64, f64),
 ) -> Result<(), Failure> {
     let cont =
-        GeomPlateCurveConstraint::new(&hcons.clone().cast(), order, nbpnt, tolapp3d, angular, 0.1)?;
+        GeomPlateCurveConstraint::new(&hcons.upcast(), order, nbpnt, tolapp3d, angular, 0.1)?;
     psurf.add_curve(&Handle::new(cont));
     Ok(())
 }

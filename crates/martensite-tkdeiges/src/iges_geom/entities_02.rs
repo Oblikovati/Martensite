@@ -10,6 +10,7 @@
 use super::IgesGeomBoundary;
 use crate::iges_basic::entity_shape::{iges_array1_lower, iges_direction};
 use crate::iges_basic::shared_runs::{iges_shared_018, iges_shared_019, iges_shared_022};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
@@ -24,12 +25,12 @@ iges_entity! {
 /// A bounded surface is used to communicate trimmed
 /// surfaces. The surface and trimming curves are assumed
 /// to be represented parametrically.
-IgesGeomBoundedSurface, IgesGeomBoundedSurfaceState, "IgesGeomBoundedSurface", parent IgesDataIgesEntity, { type_: i32, surface: Handle<IgesDataIgesEntity>, boundaries: Handle<HArray1<Handle<IgesGeomBoundary>>> }
+IgesGeomBoundedSurface, IgesGeomBoundedSurfaceState, "IgesGeomBoundedSurface", parent IgesDataIgesEntity, { type_: i32, surface: Handle<dyn IgesDataEntityKind>, boundaries: Handle<HArray1<Handle<IgesGeomBoundary>>> }
 }
 impl IgesGeomBoundedSurface {
     iges_methods! {
     get representation_type = type_: i32;
-    get surface = surface: Handle<IgesDataIgesEntity>;
+    get surface = surface: Handle<dyn IgesDataEntityKind>;
     len nb_boundaries = boundaries;
     item boundary = boundaries: Handle<IgesGeomBoundary>;
     }
@@ -41,7 +42,7 @@ impl IgesGeomBoundedSurface {
     pub fn init(
         &self,
         a_type: i32,
-        a_surface: &Handle<IgesDataIgesEntity>,
+        a_surface: &Handle<dyn IgesDataEntityKind>,
         a_boundary: &Handle<HArray1<Handle<IgesGeomBoundary>>>,
     ) -> Result<(), Failure> {
         if iges_array1_lower(a_boundary, "IgesGeomBoundedSurface::init")? != 1 {
@@ -181,19 +182,19 @@ iges_entity! {
 /// A composite curve is defined as an ordered list of entities
 /// consisting of a point, connect point and parametrised curve
 /// entities (excluding the CompositeCurve entity).
-IgesGeomCompositeCurve, IgesGeomCompositeCurveState, "IgesGeomCompositeCurve", parent IgesDataIgesEntity, { entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> }
+IgesGeomCompositeCurve, IgesGeomCompositeCurveState, "IgesGeomCompositeCurve", parent IgesDataIgesEntity, { entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> }
 }
 impl IgesGeomCompositeCurve {
     iges_methods! {
     len nb_curves = entities;
-    item curve = entities: Handle<IgesDataIgesEntity>;
+    item curve = entities: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class
     /// CompositeCurve
     /// - allEntities : Constituent Entities of the composite curve
     pub fn init(
         &self,
-        all_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !all_entities.is_null()
             && iges_array1_lower(all_entities, "IgesGeomCompositeCurve::init")? != 1

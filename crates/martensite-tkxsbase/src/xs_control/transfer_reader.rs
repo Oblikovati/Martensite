@@ -13,17 +13,15 @@ use martensite_tkbrep::topods::{HShape, Shape};
 use martensite_tkernel::{
     impl_transient,
     ncollection::DataMap,
-    standard::{
-        Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, exceptions,
-    },
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::collections::HashMap;
 use std::sync::RwLockWriteGuard;
 
 /// The context of the transfers (`DataMap<AsciiString,
-/// Handle<StandardTransient>>`).
-pub type XSControlContext = DataMap<AsciiString, Handle<StandardTransient>>;
+/// Handle<dyn Transient>>`).
+pub type XSControlContext = DataMap<AsciiString, Handle<dyn Transient>>;
 
 /// The fields of `XSControlTransferReader` (the context aside).
 #[derive(Default)]
@@ -35,7 +33,7 @@ pub(super) struct ReaderState {
     pub(super) actor: Handle<dyn TransferActorOfTransientProcessOps>,
     pub(super) tp: Handle<TransferTransientProcess>,
     /// The final result (or the skipped entity) by entity number.
-    pub(super) results: HashMap<i32, Handle<StandardTransient>>,
+    pub(super) results: HashMap<i32, Handle<dyn Transient>>,
     /// The shape results, `None` for the native null sequence.
     pub(super) shape_result: Option<Vec<Shape>>,
 }
@@ -49,15 +47,13 @@ pub(super) struct ReaderState {
 /// ```
 #[derive(Default)]
 pub struct XSControlTransferReader {
-    transient: StandardTransient,
     pub(super) state: SharedState<ReaderState>,
     context: SharedState<XSControlContext>,
 }
 impl_transient!(
     XSControlTransferReader,
     "XSControlTransferReader",
-    StandardTransient,
-    transient
+    dyn Transient
 );
 
 impl XSControlTransferReader {
@@ -126,7 +122,7 @@ impl XSControlTransferReader {
         self.state.read().model.clone()
     }
     /// `SetContext(theName, theCtx)`.
-    pub fn set_context(&self, name: &str, ctx: &Handle<StandardTransient>) {
+    pub fn set_context(&self, name: &str, ctx: &Handle<dyn Transient>) {
         self.context
             .write()
             .bind(AsciiString::new(name), ctx.clone());
@@ -137,7 +133,7 @@ impl XSControlTransferReader {
         &self,
         name: &str,
         kind: Option<&RuntimeType>,
-    ) -> Option<Handle<StandardTransient>> {
+    ) -> Option<Handle<dyn Transient>> {
         let ctx = self
             .context
             .read()
@@ -186,16 +182,16 @@ impl XSControlTransferReader {
         self.state.write().tp = tp.clone();
     }
     /// The number of `ent` in the model, 0 without model.
-    pub(super) fn number(&self, ent: &Handle<StandardTransient>) -> i32 {
+    pub(super) fn number(&self, ent: &Handle<dyn Transient>) -> i32 {
         self.model().get().map_or(0, |m| m.number(ent))
     }
     /// The result recorded for the number `num` (`None` when not bound).
-    pub(super) fn result_at(&self, num: i32) -> Option<Handle<StandardTransient>> {
+    pub(super) fn result_at(&self, num: i32) -> Option<Handle<dyn Transient>> {
         self.state.read().results.get(&num).cloned()
     }
     /// `RecordResult(theEnt)`: the final result of an entity of the model recorded (a
     /// shape result as a transient result of its shape); false without model or process.
-    pub fn record_result(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn record_result(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         let (model, tp, filename) = {
             let st = self.state.read();
             (st.model.clone(), st.tp.clone(), st.filename.clone())
@@ -217,11 +213,11 @@ impl XSControlTransferReader {
             ))
         })?;
         let binder = main_live.binder();
-        if let Some(shb) = binder.cast::<TransferBRepShapeBinder>().get() {
+        if let Some(shb) = binder.downcast_ref::<TransferBRepShapeBinder>() {
             let trb = TransferSimpleBinderOfTransient::new();
-            trb.set_result(&Handle::new(HShape::new(&shb.result())).cast())?;
+            trb.set_result(&Handle::new(HShape::new(&shb.result())).into_upcast())?;
             trb.merge(&binder);
-            main_live.set_binder(&Handle::new(trb).cast());
+            main_live.set_binder(&Handle::new(trb).into_upcast());
         }
         res.set_file_name(&String::from_utf8_lossy(filename.as_bytes()));
         self.state.write().results.insert(num, res.cast());
@@ -231,9 +227,9 @@ impl XSControlTransferReader {
     /// marked); `StandardNullObject` for a cleared mark (a native null dereference).
     fn mark_is(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         what: &str,
-        test: fn(&Handle<StandardTransient>) -> bool,
+        test: fn(&Handle<dyn Transient>) -> bool,
     ) -> Result<bool, Failure> {
         let num = self.number(ent);
         let Some(mark) = self.result_at(num).filter(|_| num != 0) else {
@@ -247,24 +243,23 @@ impl XSControlTransferReader {
         Ok(test(&mark))
     }
     /// `IsRecorded(theEnt)`: a final result is recorded for `ent`.
-    pub fn is_recorded(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_recorded(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         self.mark_is(ent, "IsRecorded", |r| {
             r.is_instance(TransferResultFromModel::static_type())
         })
     }
     /// `HasResult(theEnt)`: the final result of `ent` has a result.
-    pub fn has_result(&self, ent: &Handle<StandardTransient>) -> bool {
+    pub fn has_result(&self, ent: &Handle<dyn Transient>) -> bool {
         let num = self.number(ent);
         num != 0
             && self.result_at(num).is_some_and(|r| {
-                r.cast::<TransferResultFromModel>()
-                    .get()
+                r.downcast_ref::<TransferResultFromModel>()
                     .is_some_and(TransferResultFromModel::has_result)
             })
     }
     /// `RecordedList`: the entities with a recorded result (or skipped), in the model
     /// order.
-    pub fn recorded_list(&self) -> Vec<Handle<StandardTransient>> {
+    pub fn recorded_list(&self) -> Vec<Handle<dyn Transient>> {
         let model = self.model();
         let Some(m) = model.get() else {
             return Vec::new();
@@ -275,7 +270,7 @@ impl XSControlTransferReader {
             .collect()
     }
     /// `Skip(theEnt)`: `ent` marked as skipped; false without model or process.
-    pub fn skip(&self, ent: &Handle<StandardTransient>) -> bool {
+    pub fn skip(&self, ent: &Handle<dyn Transient>) -> bool {
         if self.transient_process().is_null() {
             return false;
         }
@@ -287,18 +282,18 @@ impl XSControlTransferReader {
         true
     }
     /// `IsSkipped(theEnt)`: marked with something else than a final result.
-    pub fn is_skipped(&self, ent: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn is_skipped(&self, ent: &Handle<dyn Transient>) -> Result<bool, Failure> {
         self.mark_is(ent, "IsSkipped", |r| {
             !r.is_instance(TransferResultFromModel::static_type())
         })
     }
     /// `IsMarked(theEnt)`: recorded or skipped.
-    pub fn is_marked(&self, ent: &Handle<StandardTransient>) -> bool {
+    pub fn is_marked(&self, ent: &Handle<dyn Transient>) -> bool {
         let num = self.number(ent);
         num != 0 && self.result_at(num).is_some_and(|r| r.is_some())
     }
     /// `FinalResult(theEnt)`: the final result recorded (null otherwise).
-    pub fn final_result(&self, ent: &Handle<StandardTransient>) -> Handle<TransferResultFromModel> {
+    pub fn final_result(&self, ent: &Handle<dyn Transient>) -> Handle<TransferResultFromModel> {
         let num = self.number(ent);
         if num == 0 {
             return Handle::default();
@@ -306,14 +301,14 @@ impl XSControlTransferReader {
         self.result_at(num).map(|r| r.cast()).unwrap_or_default()
     }
     /// `FinalEntityLabel(theEnt)`: the label of the main entity of the final result.
-    pub fn final_entity_label(&self, ent: &Handle<StandardTransient>) -> AsciiString {
+    pub fn final_entity_label(&self, ent: &Handle<dyn Transient>) -> AsciiString {
         self.final_result(ent)
             .get()
             .map(TransferResultFromModel::main_label)
             .unwrap_or_default()
     }
     /// `FinalEntityNumber(theEnt)`: the number of the main entity of the final result.
-    pub fn final_entity_number(&self, ent: &Handle<StandardTransient>) -> i32 {
+    pub fn final_entity_number(&self, ent: &Handle<dyn Transient>) -> i32 {
         self.final_result(ent)
             .get()
             .map_or(0, TransferResultFromModel::main_number)

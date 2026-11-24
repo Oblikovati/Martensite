@@ -20,6 +20,21 @@ pub(super) enum OitTargets {
     },
 }
 impl OitTargets {
+    pub fn allocation_bytes(&self) -> u64 {
+        match self {
+            Self::Weighted {
+                accumulation,
+                coverage,
+            } => accumulation.allocation_bytes() + coverage.allocation_bytes(),
+            Self::Peeling { ping, pong, back } => ping
+                .iter()
+                .chain(pong.iter())
+                .chain(std::iter::once(back))
+                .map(TargetImage::allocation_bytes)
+                .sum(),
+        }
+    }
+
     pub fn geometry_shape(&self) -> ([vk::Format; 3], vk::SampleCountFlags) {
         match self {
             Self::Weighted {

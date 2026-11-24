@@ -167,10 +167,10 @@ fn projected_adaptor(graph: &BRepGraph, co_edge: CoEdgeId) -> Result<Geom2dAdapt
 // The plane of a plane or of a rectangular trimmed plane (the trimmed basis is not
 // unwrapped further, as natively).
 fn plane_basis(surface: &Handle<dyn GeomSurface>) -> Option<Handle<dyn GeomSurface>> {
-    if surface.cast::<GeomPlane>().is_some() {
+    if surface.downcast::<GeomPlane>().is_some() {
         return Some(surface.clone());
     }
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     let basis = trimmed.get()?.basis_surface();
-    basis.cast::<GeomPlane>().is_some().then_some(basis)
+    basis.downcast::<GeomPlane>().is_some().then_some(basis)
 }

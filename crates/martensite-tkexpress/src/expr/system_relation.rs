@@ -4,19 +4,17 @@ use super::general_relation::{ExprGeneralRelation, ExprRelationHandle};
 use super::handles::{ExprHandle, deref};
 use super::named_unknown::ExprNamedUnknown;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A system of relations, in order; `ExprSystemRelation::new(&equal).nb_of_sub_relations() == 1`.
 pub struct ExprSystemRelation {
-    parent: StandardTransient,
     relations: SharedState<Vec<ExprRelationHandle>>,
 }
 impl_transient!(
     ExprSystemRelation,
     "Expr_SystemRelation",
     dyn ExprGeneralRelation,
-    parent,
     interfaces: [dyn ExprGeneralRelation]
 );
 impl ExprSystemRelation {
@@ -24,7 +22,6 @@ impl ExprSystemRelation {
     /// `ExprSystemRelation::new(&equal)`.
     pub fn new(relation: &ExprRelationHandle) -> Handle<Self> {
         Handle::new(Self {
-            parent: StandardTransient::default(),
             relations: SharedState::new(vec![relation.clone()]),
         })
     }

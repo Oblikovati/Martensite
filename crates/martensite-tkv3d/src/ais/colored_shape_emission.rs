@@ -52,38 +52,38 @@ fn emit_colored_shape_maps<S: AisColoredShapeSource + ?Sized>(
     }
     Ok(())
 }
-fn colored_entry_drawer<S: AisColoredShapeSource + ?Sized>(
-    reference: &AisColoredCompoundRef<'_>,
-    object: &S,
-) -> Result<Option<Handle<Prs3dDrawer>>, Failure> {
-    let node = reference.live_node()?;
-    if node.drawer.is_null() {
-        return Ok(Some(object.attributes()));
-    }
-    let custom = node.drawer.observe();
-    if custom.is_hidden() {
-        return Ok(None);
-    }
-    Ok(Some(custom.cast()))
-}
 fn emit_colored_shape_entry<S: AisColoredShapeSource + ?Sized>(
     reference: &AisColoredCompoundRef<'_>,
     closed: bool,
     emission: &mut ColoredShapeEmission<'_, S>,
 ) -> Result<(), Failure> {
-    let Some(drawer) = colored_entry_drawer(reference, emission.object)? else {
-        return Ok(());
+    let node = reference.live_node()?;
+    let custom = node.drawer.observe();
+    let Some(drawer) = custom.get() else {
+        let defaults = emission.object.attributes();
+        return emit_visible_colored_shape(reference, &defaults, closed, emission);
     };
+    if drawer.is_hidden() {
+        return Ok(());
+    }
+    emit_visible_colored_shape(reference, drawer.colored_drawer(), closed, emission)
+}
+fn emit_visible_colored_shape<S: AisColoredShapeSource + ?Sized>(
+    reference: &AisColoredCompoundRef<'_>,
+    drawer: &Prs3dDrawer,
+    closed: bool,
+    emission: &mut ColoredShapeEmission<'_, S>,
+) -> Result<(), Failure> {
     let previous = drawer.type_of_deflection();
     drawer.set_type_of_deflection(AspectTypeOfDeflection::Absolute);
-    emit_colored_shape_geometry(reference, &drawer, closed, emission)?;
+    emit_colored_shape_geometry(reference, drawer, closed, emission)?;
     // Absolute deliberately stays on any failure; a cleanup guard would change behavior.
     drawer.set_type_of_deflection(previous);
     Ok(())
 }
 fn emit_colored_shape_geometry<S: AisColoredShapeSource + ?Sized>(
     reference: &AisColoredCompoundRef<'_>,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     closed: bool,
     emission: &mut ColoredShapeEmission<'_, S>,
 ) -> Result<(), Failure> {

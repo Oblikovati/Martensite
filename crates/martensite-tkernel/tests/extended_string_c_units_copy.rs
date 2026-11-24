@@ -1,5 +1,5 @@
 //! Null-terminated UTF-16 copy and assignment behavior of the pointer overloads.
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn pointer_copy_truncates_but_explicit_spans_preserve_embedded_nul() {

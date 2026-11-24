@@ -165,7 +165,7 @@ impl BRepOffsetAPIThruSections {
         let mut vertices = face_vertices(&first_edge, &last_edge);
         let builder = BRepBuilder::default();
         let mut face = Face::default();
-        let surface_handle: Handle<dyn GeomSurface> = surface.clone().cast();
+        let surface_handle: Handle<dyn GeomSurface> = surface.upcast();
         builder.make_face_on_surface(&mut face, &surface_handle, precision::confusion())?;
         let bounds: Bounds = live_surface(&surface)?.bounds();
         let edges = face_edges(sections, &surface, i, (&mut vertices, bounds), face_loop)?;
@@ -275,7 +275,7 @@ fn segmented_surface(
     total: &Handle<GeomBSplineSurface>,
     i: usize,
 ) -> Result<Handle<GeomBSplineSurface>, Failure> {
-    let copy: Handle<GeomBSplineSurface> = live_surface(total)?.copy()?.cast();
+    let copy: Handle<GeomBSplineSurface> = live_surface(total)?.copy()?.into_downcast();
     let surface = live_surface(&copy)?;
     let ui1 = precise_upar((i - 1) as f64, surface)?;
     let ui2 = precise_upar(i as f64, surface)?;
@@ -448,7 +448,7 @@ fn line2d(x: f64, y: f64, along_u: bool) -> Result<Handle<dyn Geom2dCurve>, Fail
     } else {
         Direction2::new(0., 1.)?
     };
-    Ok(Handle::new(Geom2dLine::from_point(Point2::new(x, y), direction)).cast())
+    Ok(Handle::new(Geom2dLine::from_point(Point2::new(x, y), direction)).into_upcast())
 }
 
 /// The p-curves of the four edges on the face: V isos for the section edges (a seam

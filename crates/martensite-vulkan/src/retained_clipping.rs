@@ -2,12 +2,14 @@
 //! local overrides, whole-structure bounds, and immutable fragment-plane chains.
 use crate::{RenderClipping, RenderError, error::rejected};
 use martensite_tkernel::{ncollection::Vec4, standard::Handle};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSource;
 use martensite_tkservice::graphic3d::*;
 
-type ClipPlanes = Vec<Handle<Graphic3dClipPlane>>;
+type ClipPlanes = Vec<Handle<dyn Graphic3dClipPlaneSource>>;
 
 pub(crate) fn structure_is_clipped(
-    global: &Handle<Graphic3dSequenceOfHClipPlane>,
+    global: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     structure: &Graphic3dCStructureFields,
 ) -> Result<bool, RenderError> {
     if !overrides_global(structure) && anchor_is_clipped(global, structure)? {
@@ -24,7 +26,7 @@ pub(crate) fn structure_is_clipped(
         .any(|plane| plane.probe_box(&structure.bnd_box) == Graphic3dClipState::Out))
 }
 fn anchor_is_clipped(
-    global: &Handle<Graphic3dSequenceOfHClipPlane>,
+    global: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     structure: &Graphic3dCStructureFields,
 ) -> Result<bool, RenderError> {
     let Some(persistence) = structure
@@ -44,7 +46,7 @@ fn anchor_is_clipped(
 }
 /// `local_origin` is the Z layer's origin the planes are taken relative to, if any.
 pub(crate) fn structure_clipping(
-    global: &Handle<Graphic3dSequenceOfHClipPlane>,
+    global: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     structure: &Graphic3dCStructureFields,
     model: [f32; 16],
     local_origin: Option<[f64; 3]>,
@@ -65,9 +67,18 @@ fn overrides_global(structure: &Graphic3dCStructureFields) -> bool {
         .is_some_and(|planes| planes.to_override_global())
 }
 fn effective_planes(
-    global: &Handle<Graphic3dSequenceOfHClipPlane>,
+    global: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     structure: &Graphic3dCStructureFields,
 ) -> Result<ClipPlanes, RenderError> {
+    // Each structure asks twice per frame; without planes the sequences need no copy (#594).
+    if global.get().is_none_or(|sequence| sequence.is_empty())
+        && structure
+            .clip_planes
+            .get()
+            .is_none_or(|sequence| sequence.is_empty())
+    {
+        return Ok(Vec::new());
+    }
     // Native disables all global fragment planes for persistent structures, even
     // when zoom/rotate anchor classification kept the complete structure visible.
     let mut planes = if overrides_global(structure) || !structure.trsf_pers.is_null() {
@@ -75,13 +86,14 @@ fn effective_planes(
     } else {
         enabled_planes(global)?
     };
-    planes.extend(enabled_planes(&structure.clip_planes)?);
+    planes.extend(enabled_planes(&structure.clip_planes.upcast())?);
     Ok(planes)
 }
 fn enabled_planes(
-    sequence: &Handle<Graphic3dSequenceOfHClipPlane>,
+    sequence: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
 ) -> Result<ClipPlanes, RenderError> {
-    let Some(sequence) = sequence.get() else {
+    // An empty sequence skips the copy of its members; each structure asks every frame (#594).
+    let Some(sequence) = sequence.get().filter(|sequence| !sequence.is_empty()) else {
         return Ok(Vec::new());
     };
     let mut planes = Vec::new();
@@ -96,7 +108,7 @@ fn enabled_planes(
     Ok(planes)
 }
 pub(crate) fn snapshot_chain(
-    cursor: Handle<Graphic3dClipPlane>,
+    cursor: Handle<dyn Graphic3dClipPlaneSource>,
 ) -> Result<Vec<[f32; 4]>, RenderError> {
     snapshot_chain_around(cursor, None)
 }
@@ -105,7 +117,7 @@ pub(crate) fn snapshot_chain(
 /// relative to the origin in double before the float cast, as GlShaderManager's
 /// pushClippingState does (`LocalClippingPlaneW`).
 pub(crate) fn snapshot_chain_around(
-    mut cursor: Handle<Graphic3dClipPlane>,
+    mut cursor: Handle<dyn Graphic3dClipPlaneSource>,
     origin: Option<[f64; 3]>,
 ) -> Result<Vec<[f32; 4]>, RenderError> {
     let mut equations = Vec::new();
@@ -136,7 +148,7 @@ pub(crate) fn local_plane_w(
 }
 
 pub(crate) fn structure_planes(
-    global: &Handle<Graphic3dSequenceOfHClipPlane>,
+    global: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     structure: &Graphic3dCStructureFields,
 ) -> Result<ClipPlanes, RenderError> {
     Ok(effective_planes(global, structure)?

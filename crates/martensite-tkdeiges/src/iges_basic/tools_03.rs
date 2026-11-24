@@ -13,16 +13,18 @@ use super::{
 };
 use crate::iges_basic::entity_shape::iges_tool;
 use crate::iges_basic::shared_runs::{iges_shared_023, iges_shared_030, iges_shared_048};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_dump_strings, iges_live,
     iges_msg, iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -155,7 +157,7 @@ impl IgesBasicToolGroup {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesBasicToolGroup::read_own_params")?;
         let mut nbval: i32 = 0;
-        let mut ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         if pr.read_integer(&pr.current(), &mut nbval)? {
             let mut msg203 = iges_msg("XSTEP_203");
             msg203.arg_integer(1)?;
@@ -200,7 +202,7 @@ impl IgesBasicToolGroup {
         let ent_live = iges_live(ent, "IgesBasicToolGroup::own_shared")?;
         let upper: i32 = ent_live.nb_entities();
         for i in 1..=upper {
-            iter.get_one_item(&ent_live.entity(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.entity(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -225,7 +227,7 @@ impl IgesBasicToolGroup {
         let mut nbtrue: i32 = 0;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul += 1;
             } else if iges_live(&val, "IgesBasicToolGroup::own_correct")?.type_number() == 0 {
@@ -234,7 +236,7 @@ impl IgesBasicToolGroup {
         }
         iges_shared_030!(ent_array, ianul, nb);
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 continue;
             } else if iges_live(&val, "IgesBasicToolGroup::own_correct")?.type_number() == 0 {
@@ -265,7 +267,7 @@ impl IgesBasicToolGroup {
         let mut ianul: bool = false;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul = true;
             } else if iges_live(&val, "IgesBasicToolGroup::own_check")?.type_number() == 0 {
@@ -294,8 +296,8 @@ impl IgesBasicToolGroup {
         iges_shared_048!(another_live, ent_array, lower, upper);
         for i in lower..=upper {
             let myentity = tc
-                .transferred(&another_live.entity(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.entity(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &ent_array,
                 i,
@@ -345,7 +347,7 @@ impl IgesBasicToolGroupWithoutBackP {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesBasicToolGroupWithoutBackP::read_own_params")?;
         let mut nbval: i32 = 0;
-        let mut ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         if pr.read_integer(&pr.current(), &mut nbval)? {
             let mut msg203 = iges_msg("XSTEP_203");
             msg203.arg_integer(7)?;
@@ -390,7 +392,7 @@ impl IgesBasicToolGroupWithoutBackP {
         let ent_live = iges_live(ent, "IgesBasicToolGroupWithoutBackP::own_shared")?;
         let upper: i32 = ent_live.nb_entities();
         for i in 1..=upper {
-            iter.get_one_item(&ent_live.entity(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.entity(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -415,7 +417,7 @@ impl IgesBasicToolGroupWithoutBackP {
         let mut nbtrue: i32 = 0;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul += 1;
             } else if iges_live(&val, "IgesBasicToolGroupWithoutBackP::own_correct")?.type_number()
@@ -426,7 +428,7 @@ impl IgesBasicToolGroupWithoutBackP {
         }
         iges_shared_030!(ent_array, ianul, nb);
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 continue;
             } else if iges_live(&val, "IgesBasicToolGroupWithoutBackP::own_correct")?.type_number()
@@ -459,7 +461,7 @@ impl IgesBasicToolGroupWithoutBackP {
         let mut ianul: bool = false;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul = true;
             } else if iges_live(&val, "IgesBasicToolGroupWithoutBackP::own_check")?.type_number()

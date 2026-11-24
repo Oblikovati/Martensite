@@ -15,7 +15,7 @@ fn init_round_trip_step_ap214_auto_design_nominal_date_assignment() {
     let a_role = Handle::new(StepBasicDateRole::new());
     let a_items = Handle::new(HArray1::<StepAP214AutoDesignDatedItem>::with_bounds(1, 2).unwrap());
     let object = StepAP214AutoDesignNominalDateAssignment::new();
-    object.init(&a_assigned_date, &a_role, &a_items);
+    object.init(&a_assigned_date.upcast(), &a_role, &a_items);
     assert!(object.items() == a_items);
 }
 

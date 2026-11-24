@@ -3,17 +3,19 @@ use super::IgesSelectModelModifier;
 use super::IgesSelectViewSorter;
 use super::modifier_bases::{iges_model_modifier, modifier_base};
 use crate::iges_basic::{
-    IgesBasicGroup, IgesBasicGroupWithoutBackP, IgesBasicOrderedGroup,
+    IgesBasicGroup, IgesBasicGroupSource, IgesBasicGroupWithoutBackP, IgesBasicOrderedGroup,
     IgesBasicOrderedGroupWithoutBackP,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataIgesEntity, IgesDataIgesModel, IgesDataViewKindEntity, iges_array1_set, iges_live,
-    iges_new_array1,
+    IgesDataIgesModel, IgesDataViewKindEntity, iges_array1_set, iges_live, iges_new_array1,
 };
 use crate::iges_draw::{IgesDrawDrawing, IgesDrawDrawingWithRotation};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::project_interface;
 use martensite_tkernel::{
     ncollection::HArray1,
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::AsciiString,
 };
 use martensite_tkmath::gp::Xy;
@@ -26,8 +28,8 @@ use martensite_tkxsbase::{
 
 /// A list of entities as an array from 1, null when empty.
 fn entity_array(
-    list: &[Handle<StandardTransient>],
-) -> Result<Handle<HArray1<Handle<IgesDataIgesEntity>>>, Failure> {
+    list: &[Handle<dyn Transient>],
+) -> Result<Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, Failure> {
     if list.is_empty() {
         return Ok(Handle::default());
     }
@@ -61,7 +63,6 @@ impl IgesSelectRebuildDrawings {
     /// The modifier.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: modifier_base(true),
         }
     }
@@ -100,9 +101,9 @@ fn copied_views(
 /// What was copied of the annotations of a drawing.
 fn copied_frame(
     nba: i32,
-    annotation: &dyn Fn(i32) -> Result<Handle<IgesDataIgesEntity>, Failure>,
+    annotation: &dyn Fn(i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure>,
     tc: &InterfaceCopyTool,
-) -> Result<Handle<HArray1<Handle<IgesDataIgesEntity>>>, Failure> {
+) -> Result<Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, Failure> {
     let mut framelist = InterfaceEntityIterator::new();
     for rank in 1..=nba {
         let mut annot = Handle::default();
@@ -115,7 +116,7 @@ fn copied_frame(
 
 /// Rebuilds a drawing of one class or the other, and adds it to the target.
 fn rebuild_drawing(
-    item: &Handle<IgesDataIgesEntity>,
+    item: &Handle<dyn IgesDataEntityKind>,
     target: &IgesDataIgesModel,
     tc: &mut InterfaceCopyTool,
 ) -> Result<(), Failure> {
@@ -171,7 +172,7 @@ fn attach_to_new_views(
     tc: &InterfaceCopyTool,
 ) -> Result<(), Failure> {
     for item in setl.content() {
-        let entity = item.cast::<IgesDataIgesEntity>();
+        let entity = item.cast::<dyn IgesDataEntityKind>();
         let Some(ent) = entity.get() else {
             continue;
         };
@@ -249,7 +250,6 @@ impl IgesSelectRebuildGroups {
     /// The modifier.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: modifier_base(true),
         }
     }
@@ -258,11 +258,15 @@ impl IgesSelectRebuildGroups {
 /// What was copied of the members of a group; `None` when the class is not one of the groups.
 /// The classes derive from the group, so the most derived decides the case.
 fn copied_members(
-    ent: &Handle<IgesDataIgesEntity>,
+    ent: &Handle<dyn IgesDataEntityKind>,
     tc: &InterfaceCopyTool,
 ) -> Result<InterfaceEntityIterator, Failure> {
     let mut newlist = InterfaceEntityIterator::new();
-    if let Some(group) = ent.cast::<IgesBasicGroup>().get() {
+    if let Some(source) = ent
+        .get()
+        .and_then(|entity| project_interface::<dyn IgesBasicGroupSource>(entity))
+    {
+        let group = source.group_base();
         for rank in 1..=group.nb_entities() {
             let mut newent = Handle::default();
             if tc.search(&group.value(rank)?, &mut newent)? {
@@ -275,8 +279,8 @@ fn copied_members(
 
 /// Adds to the target a new group of the class of `ent`.
 fn add_new_group(
-    ent: &Handle<IgesDataIgesEntity>,
-    members: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+    ent: &Handle<dyn IgesDataEntityKind>,
+    members: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     target: &IgesDataIgesModel,
 ) -> Result<(), Failure> {
     let is = |kind: &martensite_tkernel::standard::RuntimeType| ent.is_instance(kind);

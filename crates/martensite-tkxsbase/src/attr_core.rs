@@ -5,13 +5,13 @@
 //! [`AttributeBoxes`].
 use martensite_tkernel::{
     ncollection::DataMap,
-    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, Transient},
     tcollection::{AsciiString, HAsciiString},
 };
 
 /// A map of named attributes (`DataMap<AsciiString,
-/// Handle<StandardTransient>>`).
-pub type AttributeMap = DataMap<AsciiString, Handle<StandardTransient>>;
+/// Handle<dyn Transient>>`).
+pub type AttributeMap = DataMap<AsciiString, Handle<dyn Transient>>;
 
 /// The kind of an attribute, by the exact dynamic type of its object.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -25,16 +25,16 @@ pub(crate) enum AttributeKind {
 
 /// The objects that box an integer and a real attribute.
 pub(crate) trait AttributeBoxes {
-    fn new_integer(value: i32) -> Handle<StandardTransient>;
-    fn integer_of(atr: &Handle<StandardTransient>) -> Option<i32>;
+    fn new_integer(value: i32) -> Handle<dyn Transient>;
+    fn integer_of(atr: &Handle<dyn Transient>) -> Option<i32>;
     fn integer_type() -> &'static RuntimeType;
-    fn new_real(value: f64) -> Handle<StandardTransient>;
-    fn real_of(atr: &Handle<StandardTransient>) -> Option<f64>;
+    fn new_real(value: f64) -> Handle<dyn Transient>;
+    fn real_of(atr: &Handle<dyn Transient>) -> Option<f64>;
     fn real_type() -> &'static RuntimeType;
 }
 
 /// `Attribute(name)`: null when not recorded.
-pub(crate) fn attribute(map: &AttributeMap, name: &str) -> Handle<StandardTransient> {
+pub(crate) fn attribute(map: &AttributeMap, name: &str) -> Handle<dyn Transient> {
     if map.is_empty() {
         return Handle::default();
     }
@@ -53,7 +53,7 @@ pub(crate) fn get_attribute(
     map: &AttributeMap,
     name: &str,
     atype: &RuntimeType,
-    val: &mut Handle<StandardTransient>,
+    val: &mut Handle<dyn Transient>,
 ) -> bool {
     *val = attribute(map, name);
     if val.is_null() || !val.is_kind(atype) {
@@ -109,7 +109,7 @@ pub(crate) fn get_attributes<B: AttributeBoxes>(
 }
 
 /// A new object for an integer, real or text attribute, else the attribute itself.
-fn copy_basic<B: AttributeBoxes>(atr: &Handle<StandardTransient>) -> Handle<StandardTransient> {
+fn copy_basic<B: AttributeBoxes>(atr: &Handle<dyn Transient>) -> Handle<dyn Transient> {
     if let Some(value) = B::integer_of(atr) {
         return B::new_integer(value);
     }
@@ -117,7 +117,7 @@ fn copy_basic<B: AttributeBoxes>(atr: &Handle<StandardTransient>) -> Handle<Stan
         return B::new_real(value);
     }
     if let Some(hval) = atr.cast::<HAsciiString>().get() {
-        return Handle::new(HAsciiString::copied(hval)).cast();
+        return Handle::new(HAsciiString::copied(hval)).into_upcast();
     }
     atr.clone()
 }

@@ -1,6 +1,6 @@
 //! Martensite owned shape/drawer specialization backed by the existing native-order DataMap.
 use super::{
-    AisColoredDrawer,
+    AisColoredDrawerSource,
     shape_drawer_node::{ShapeDrawerNode, ShapeDrawerNodeHasher},
 };
 use martensite_tkbrep::{topods::Shape, toptools::ShapeMapHasher};
@@ -13,7 +13,7 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
 };
 pub(super) type ShapeDrawerNodeTable = DataMap<Arc<ShapeDrawerNode>, (), ShapeDrawerNodeHasher>;
-/// Owned native `NCollectionDataMap<TopoDSShape,Handle<AisColoredDrawer>,TopToolsShapeMapHasher>` semantics.
+/// Owned native `NCollectionDataMap<TopoDSShape,Handle<dyn AisColoredDrawerSource>,TopToolsShapeMapHasher>` semantics.
 /// Example: `let map=AisShapeDrawerMap::default; map.bind(&shape, &drawer)?;`.
 #[derive(Default)]
 pub struct AisShapeDrawerMap {
@@ -42,14 +42,18 @@ impl AisShapeDrawerMap {
     }
     /// Binds or replaces a value while retaining the first stored key and node.
     /// Example: `map.bind(&shape.reversed(), &replacement)?`.
-    pub fn bind(&self, key: &Shape, value: &Handle<AisColoredDrawer>) -> Result<bool, Failure> {
+    pub fn bind(
+        &self,
+        key: &Shape,
+        value: &Handle<dyn AisColoredDrawerSource>,
+    ) -> Result<bool, Failure> {
         // The borrowed-slot path also serves native same-map expansion without owning input copies.
         self.bind_reference(key, value)
     }
     pub(super) fn bind_reference(
         &self,
         key: &Shape,
-        value: &impl HandleReference<AisColoredDrawer>,
+        value: &impl HandleReference<dyn AisColoredDrawerSource>,
     ) -> Result<bool, Failure> {
         let mut nodes = self.nodes.write();
         prepare_shape_drawer_binding(&mut nodes);

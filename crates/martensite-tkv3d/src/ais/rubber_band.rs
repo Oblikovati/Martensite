@@ -4,7 +4,7 @@ use crate::{prs_mgr::*, prs3d::*};
 use martensite_tkernel::{
     ncollection::{Sequence, Vec2},
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkservice::{aspect::*, graphic3d::*};
 /// Native protected storage for subclasses; `base.fields.points.write().append(Vec2::new(1, 2))`.
@@ -190,10 +190,9 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// Rectangle/polygon selection overlay; `AisRubberBand::new()?`.
 pub struct AisRubberBand {
-    transient: StandardTransient,
     base: AisRubberBandBase,
 }
-martensite_tkernel::impl_transient!(AisRubberBand,"AisRubberBand",dyn AisInteractiveObject,transient,interfaces:[dyn AisRubberBandSource,dyn AisInteractiveObject,dyn crate::select_mgr::SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(AisRubberBand,"AisRubberBand",dyn AisInteractiveObject,interfaces:[dyn AisRubberBandSource,dyn AisInteractiveObject,dyn crate::select_mgr::SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisRubberBand {
     /// Default white solid closed boundary; `AisRubberBand::new()?`.
     pub fn new() -> Result<Handle<Self>, Failure> {
@@ -212,7 +211,6 @@ impl AisRubberBand {
         closed: bool,
     ) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisRubberBandBase::new(color, kind, width, closed)?,
         });
         prs_mgr_presentable_bind(&object.cast());

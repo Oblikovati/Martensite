@@ -47,7 +47,7 @@ fn faceted_builder(
 
 /// The faceted_brep on the builder's closed shell.
 fn faceted_brep_of(builder: &TopoDSToStepBuilder) -> Result<Handle<StepShapeFacetedBrep>, Failure> {
-    let closed: Handle<StepShapeClosedShell> = builder.value()?.cast();
+    let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> = builder.value()?.cast();
     let brep = Handle::new(StepShapeFacetedBrep::new());
     brep.init(&empty_step_name(), &closed);
     Ok(brep)

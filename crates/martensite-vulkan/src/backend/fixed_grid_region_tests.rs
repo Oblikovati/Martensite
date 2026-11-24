@@ -36,7 +36,7 @@ fn ordinary_lit_rectangle() -> PrimitiveDraw {
     .unwrap()
     .with_lights(crate::RenderLightSet {
         ambient: [0.; 4],
-        sources: vec![],
+        sources: Default::default(),
     });
     PrimitiveDraw::new(vertices, vec![0, 1, 2, 0, 2, 3], identity_clip())
         .unwrap()
@@ -47,7 +47,7 @@ fn ordinary_lit_rectangle() -> PrimitiveDraw {
 fn nonfull_frame() -> RenderFrame {
     let mut point = lit_front_point(RenderShading::Phong, false);
     point.point_style.as_mut().unwrap().size = 7.;
-    point.vertices[0].position = [0.984375, -0.3125, 0.5];
+    point.vertices.make_mut()[0].position = [0.984375, -0.3125, 0.5];
     RenderFrame::new(
         64,
         64,
@@ -77,17 +77,19 @@ fn capture_nonfull(renderer: &mut VulkanRenderer) -> FrameCapture {
         .viewport;
     [original.min_depth, original.max_depth] = NONFULL_DEPTH_RANGE;
     update_point_projection(&mut resources, original);
-    record_nonfull(ctx, &resources, &frame, regions, original)
+    record_nonfull(renderer, &resources, &frame, regions, original)
 }
 fn record_nonfull(
-    ctx: &std::sync::Arc<VulkanRuntime>,
+    renderer: &mut VulkanRenderer,
     resources: &FrameResources,
     frame: &RenderFrame,
     regions: [vk::Rect2D; 2],
     original: vk::Viewport,
 ) -> FrameCapture {
+    let ctx = &renderer.runtime;
     let commands = CommandSubmission::new(ctx).unwrap();
     let cmd = commands.command;
+    resources.geometry_transfers.record(ctx, cmd);
     transition_targets(ctx, cmd, resources, false);
     begin_rendering(ctx, cmd, resources, [0., 0., 0., 1.], true, true, false);
     set_raster_region(ctx, cmd, resources.extent, regions[0], regions[1]);
@@ -96,7 +98,7 @@ fn record_nonfull(
         ctx.device().cmd_set_viewport(cmd, 0, &[original]);
     }
     draw_partial_layer(ctx, cmd, resources, &frame.layers[0]);
-    finish_partial_capture(ctx, &commands, resources)
+    finish_partial_capture(renderer, &commands, resources)
 }
 fn require_nonfull_capture(capture: &FrameCapture) {
     for y in 0..64 {

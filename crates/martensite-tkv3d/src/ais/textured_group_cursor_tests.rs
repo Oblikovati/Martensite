@@ -7,9 +7,12 @@ fn identity_group() -> Handle<dyn Graphic3dGroup> {
     Handle::new(NullGroup::new(&Handle::default())).cast()
 }
 fn sequence(groups: &[&Handle<dyn Graphic3dGroup>]) -> GroupSequence {
-    groups.iter().map(|group| (*group).clone()).collect()
+    groups
+        .iter()
+        .map(|group| HandleSlot::new((*group).clone()))
+        .collect()
 }
-fn address(group: Option<HandleObserver<dyn Graphic3dGroup>>) -> Option<*const ()> {
+fn address(group: Option<Arc<Handle<dyn Graphic3dGroup>>>) -> Option<*const ()> {
     group.map(|group| group.object_address())
 }
 #[test]

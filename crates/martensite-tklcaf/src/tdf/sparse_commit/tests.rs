@@ -281,10 +281,11 @@ fn entry_storage_reuses_the_original_map_size_and_alignment() {
 }
 #[cfg(all(target_os = "linux", target_pointer_width = "64"))]
 #[test]
-fn linux_document_and_label_sizes_match_the_previous_release() {
-    // Owned v0.13.0 layout measurements, d051ff699; no per-document or per-node growth.
+fn linux_document_and_label_sizes_keep_the_native_handle_layout() {
+    // The v0.13.0 measurements in d051ff699 were 176 and 112 bytes. Native handles
+    // reduced the per-node size (#592), so guard the smaller 88-byte layout.
     assert_eq!(size_of::<super::super::data::DataCore>(), 176);
-    assert_eq!(size_of::<TdfLabelNode>(), 112);
+    assert_eq!(size_of::<TdfLabelNode>(), 88);
 }
 #[test]
 fn an_index_enable_disable_cycle_cannot_rearm_an_old_cursor() {

@@ -22,11 +22,13 @@ impl<T> Array1<'_, T> {
         }
     }
     /// Returns the initialized range end, including empty borrowed buffers; `array.data_end_ptr()`.
-    pub fn data_end_ptr(&self) -> *const T {
+    #[cfg(test)]
+    pub(crate) fn data_end_ptr(&self) -> *const T {
         self.data_ptr().wrapping_add(self.len())
     }
     /// Returns the writable range end; `array.data_end_mut_ptr()`.
-    pub fn data_end_mut_ptr(&mut self) -> *mut T {
+    #[cfg(test)]
+    pub(crate) fn data_end_mut_ptr(&mut self) -> *mut T {
         self.data_mut_ptr().wrapping_add(self.len())
     }
 }

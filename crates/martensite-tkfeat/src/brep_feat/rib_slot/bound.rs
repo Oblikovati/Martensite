@@ -71,7 +71,7 @@ impl RibSlot {
     ) -> Result<(), Failure> {
         let b = BRepBuilder::default();
         let mut f = Face::default();
-        b.make_face_on_surface(&mut f, &pln.clone().cast(), tol)?;
+        b.make_face_on_surface(&mut f, &pln.upcast(), tol)?;
         w.set_closed(BRepTool::is_closed(w)?)?;
         b.add(&mut f, w)?;
         self.skface = f.clone();

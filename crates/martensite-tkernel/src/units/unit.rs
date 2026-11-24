@@ -8,6 +8,7 @@ use super::token::Token;
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle, StandardTransient};
 use crate::tcollection::AsciiString;
+use crate::units::TokenObject;
 use std::io::Write;
 use std::sync::{PoisonError, RwLock};
 
@@ -16,13 +17,12 @@ pub use shifted::ShiftedUnit;
 
 /// A unit of a quantity; `Unit::with_symbol(b"metre", b"m")`.
 pub struct Unit {
-    base: StandardTransient,
     name: AsciiString,
     symbols: Handle<HSequence<AsciiString>>,
     value: RwLock<f64>,
     quantity: RwLock<Handle<Quantity>>,
 }
-crate::impl_transient!(Unit, "Units_Unit", StandardTransient, base);
+crate::impl_transient!(Unit, "Units_Unit", StandardTransient, interfaces: [dyn UnitObject]);
 
 impl Unit {
     fn build(name: &[u8], symbol: Option<&[u8]>, value: f64, quantity: Handle<Quantity>) -> Self {
@@ -33,7 +33,6 @@ impl Unit {
             });
         }
         Self {
-            base: StandardTransient::default(),
             name: AsciiString::from_bytes(c_str(name)),
             symbols,
             value: RwLock::new(value),
@@ -98,7 +97,7 @@ impl Unit {
         Ok(false)
     }
     /// The base `Token()`: first symbol, blank meaning, factor, quantity dimensions.
-    pub(super) fn plain_token(&self) -> Result<Handle<Token>, Failure> {
+    pub(super) fn plain_token(&self) -> Result<Handle<dyn TokenObject>, Failure> {
         let symbol = item(&self.symbols, 1)?;
         let quantity = self.quantity();
         let dimensions = object(&quantity, "Units_Unit::Token")?.dimensions();
@@ -107,7 +106,8 @@ impl Unit {
             b" ",
             self.value(),
             &dimensions,
-        )))
+        ))
+        .into_upcast::<dyn TokenObject>())
     }
     /// The quoted symbol list shared by both `Dump` overrides.
     pub(super) fn dump_symbols(&self, out: &mut dyn Write) -> Result<(), Failure> {
@@ -135,23 +135,54 @@ impl Unit {
 /// Virtual members of units, dispatched on the handle's dynamic type.
 pub trait UnitHandle {
     /// `Token()`: a (shifted) token for the first symbol; `unit.token()?`.
-    fn token(&self) -> Result<Handle<Token>, Failure>;
+    fn token(&self) -> Result<Handle<dyn TokenObject>, Failure>;
     /// Example: `unit.dump(0, 0, &mut std::io::stdout())?`.
     fn dump(&self, shift: i32, level: i32, out: &mut dyn Write) -> Result<(), Failure>;
 }
 
-impl UnitHandle for Handle<Unit> {
-    fn token(&self) -> Result<Handle<Token>, Failure> {
-        if let Some(shifted) = self.cast::<ShiftedUnit>().get() {
-            return shifted.token();
-        }
-        object(self, "Units_Unit::Token")?.plain_token()
+impl UnitHandle for Handle<dyn UnitObject> {
+    fn token(&self) -> Result<Handle<dyn TokenObject>, Failure> {
+        object(self, "Units_Unit::Token")?.first_symbol_token()
     }
     fn dump(&self, _shift: i32, _level: i32, out: &mut dyn Write) -> Result<(), Failure> {
-        if let Some(shifted) = self.cast::<ShiftedUnit>().get() {
-            return shifted.dump(out);
-        }
-        object(self, "Units_Unit::Dump")?.dump_plain(out)
+        object(self, "Units_Unit::Dump")?.dump_unit(out)
+    }
+}
+
+/// A polymorphic unit with access to its shared state.
+pub trait UnitObject: crate::standard::Transient {
+    /// Borrow this object's unit state; `object.unit_state()`.
+    fn unit_state(&self) -> &Unit;
+
+    /// Build a token from this unit's first symbol; `object.first_symbol_token()?`.
+    fn first_symbol_token(&self) -> Result<Handle<dyn TokenObject>, Failure> {
+        self.unit_state().plain_token()
+    }
+
+    /// Write the unit's symbol, name and SI conversion; `object.dump_unit(&mut output)?`.
+    fn dump_unit(&self, out: &mut dyn Write) -> Result<(), Failure> {
+        self.unit_state().dump_plain(out)
+    }
+}
+
+impl crate::standard::RuntimeTyped for dyn UnitObject {
+    const TYPE_NAME: &'static str = <Unit as crate::standard::RuntimeTyped>::TYPE_NAME;
+    fn static_type() -> &'static crate::standard::RuntimeType {
+        <Unit as crate::standard::RuntimeTyped>::static_type()
+    }
+}
+crate::impl_transient_interface_target!(dyn UnitObject);
+
+impl UnitObject for Unit {
+    fn unit_state(&self) -> &Unit {
+        self
+    }
+}
+
+impl std::ops::Deref for dyn UnitObject {
+    type Target = Unit;
+    fn deref(&self) -> &Self::Target {
+        self.unit_state()
     }
 }
 
@@ -171,7 +202,8 @@ mod tests {
     #[test]
     fn symbols_values_and_token() {
         let quantity = length_quantity();
-        let unit = Handle::new(Unit::new(b"millimetre", b"mm", 1e-3, &quantity));
+        let unit = Handle::new(Unit::new(b"millimetre", b"mm", 1e-3, &quantity))
+            .into_upcast::<dyn UnitObject>();
         let object = unit.get().unwrap();
         object.symbol(b"mmx");
         assert!(object.is_equal(b"mmx").unwrap() && !object.is_equal(b"m").unwrap());
@@ -192,10 +224,12 @@ mod tests {
 
     #[test]
     fn missing_symbol_or_quantity_is_reported() {
-        let bare: Handle<Unit> = Handle::new(Unit::with_name(b"bare"));
+        let bare: Handle<dyn UnitObject> =
+            Handle::new(Unit::with_name(b"bare")).into_upcast::<dyn UnitObject>();
         let failure = bare.token().err().unwrap();
         assert_eq!(failure.message(), "NCollection_Sequence::Value");
-        let orphan: Handle<Unit> = Handle::new(Unit::with_symbol(b"orphan", b"o"));
+        let orphan: Handle<dyn UnitObject> =
+            Handle::new(Unit::with_symbol(b"orphan", b"o")).into_upcast::<dyn UnitObject>();
         assert!(orphan.token().is_err());
         orphan.get().unwrap().set_value(2.0);
         assert_eq!(orphan.get().unwrap().value(), 2.0);

@@ -236,8 +236,8 @@ impl PointCloudScene {
         directional.set_direction_coords(0., 0., -1.).unwrap();
         directional.set_color(Color::new(0.75, 0.5, 0.25, ColorSpace::Rgb).unwrap());
         let lights = Handle::new(Graphic3dLightSet::default());
-        lights.add(&ambient).unwrap();
-        lights.add(&directional).unwrap();
+        lights.add(&ambient.into_upcast()).unwrap();
+        lights.add(&directional.into_upcast()).unwrap();
         self.view.get().unwrap().view().set_lights(&lights);
         if mode != "cloud-lit-clipped" {
             return;

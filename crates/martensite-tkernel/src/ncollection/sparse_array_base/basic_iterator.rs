@@ -126,7 +126,7 @@ impl<'a, C: BasicSparseArraySource<V>, V, const M: bool> BaseSparseArrayBasicIte
         }
     }
     /// Compares container/index identities or any two exhausted states; `left.is_equal(&right)`.
-    pub fn is_equal<const O: bool>(
+    pub(crate) fn is_equal<const O: bool>(
         &self,
         other: &BaseSparseArrayBasicIterator<'_, C, V, O>,
     ) -> bool {

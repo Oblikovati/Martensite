@@ -23,7 +23,7 @@ static LABELS: TableLabels = TableLabels {
 /// use martensite_tkg3d::geom::{GeomCurve, GeomLine};
 /// use martensite_tkmath::gp::{Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> =
-///     Handle::new(GeomLine::from_point(Point3::new(0., 0., 0.), Direction3::default())).into_cast();
+///     Handle::new(GeomLine::from_point(Point3::new(0., 0., 0.), Direction3::default())).into_upcast();
 /// let mut set = BinCurveSet::new();
 /// assert_eq!(set.add(&line), 1);
 /// assert_eq!(set.index(&line), 1);
@@ -31,6 +31,7 @@ static LABELS: TableLabels = TableLabels {
 /// ```
 pub struct BinCurveSet {
     table: HandleTable<dyn GeomCurve>,
+    frame_policy: super::CurveFrameReadPolicy,
 }
 
 impl Default for BinCurveSet {
@@ -44,6 +45,7 @@ impl BinCurveSet {
     pub fn new() -> Self {
         Self {
             table: HandleTable::new("BinTools_CurveSet"),
+            frame_policy: super::CurveFrameReadPolicy::LegacyReplay,
         }
     }
 
@@ -104,9 +106,10 @@ impl BinCurveSet {
         stream: &mut IoStream,
         progress: &ProgressRange<'_>,
     ) -> Result<(), Failure> {
+        let policy = self.frame_policy;
         let table = &mut self.table;
         read_table(stream, progress, &LABELS, |stream| {
-            table.add(&Self::read_curve(stream)?);
+            table.add(&curve_read::read_curve_with_frame_policy(stream, policy)?);
             Ok(())
         })
     }
@@ -125,5 +128,20 @@ impl BinCurveSet {
     /// in BinTools_CurveSet::ReadCurve(..)"; `BinCurveSet::read_curve(&mut stream)?`.
     pub fn read_curve(stream: &mut IoStream) -> Result<Handle<dyn GeomCurve>, Failure> {
         curve_read::read_curve(stream)
+    }
+    /// Creates an explicitly configured curve table; `BinCurveSet::with_curve_frame_policy(policy)`.
+    pub fn with_curve_frame_policy(frame_policy: super::CurveFrameReadPolicy) -> Self {
+        Self {
+            frame_policy,
+            ..Self::new()
+        }
+    }
+    /// Reads a curve with explicit conic frame semantics (#455).
+    /// `BinCurveSet::read_curve_with_frame_policy(&mut stream, policy)?`.
+    pub fn read_curve_with_frame_policy(
+        stream: &mut IoStream,
+        policy: super::CurveFrameReadPolicy,
+    ) -> Result<Handle<dyn GeomCurve>, Failure> {
+        curve_read::read_curve_with_frame_policy(stream, policy)
     }
 }

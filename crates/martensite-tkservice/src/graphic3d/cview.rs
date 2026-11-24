@@ -7,10 +7,10 @@ use super::{
     GRAPHIC3D_ZLAYER_ID_BOT_OSD, Graphic3dBufferType, Graphic3dCStructure, Graphic3dCamera,
     Graphic3dClipPlaneSequenceSource, Graphic3dDiagnosticInfo, Graphic3dDisplayPriority,
     Graphic3dFrameStatsDict, Graphic3dGraduatedTrihedron, Graphic3dLayer, Graphic3dLightSet,
-    Graphic3dRenderingParams, Graphic3dSequenceOfHClipPlane, Graphic3dStructureManager,
-    Graphic3dStructureSource, Graphic3dTextureEnv, Graphic3dTextureMap,
-    Graphic3dTypeOfBackfacingModel, Graphic3dTypeOfBackground, Graphic3dTypeOfVisualization,
-    Graphic3dVertex, Graphic3dZLayerId, Graphic3dZLayerSettings,
+    Graphic3dRenderingParams, Graphic3dStructureManager, Graphic3dStructureSource,
+    Graphic3dTextureEnv, Graphic3dTextureMap, Graphic3dTypeOfBackfacingModel,
+    Graphic3dTypeOfBackground, Graphic3dTypeOfVisualization, Graphic3dVertex, Graphic3dZLayerId,
+    Graphic3dZLayerSettings,
 };
 use super::{Graphic3dCubeMap, Graphic3dStructureSet};
 use crate::aspect::{
@@ -22,9 +22,7 @@ use crate::image::ImagePixMap;
 use martensite_tkernel::ncollection::{Vec2, Vec3};
 use martensite_tkernel::quantity::{ColorRgba, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient, WeakHandle,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState, WeakHandle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::gp::Axis3;
@@ -317,6 +315,15 @@ pub trait Graphic3dCView: Graphic3dDataStructureManager {
     fn invalidate_z_layer_bounding_box(&self, layer_id: Graphic3dZLayerId) {
         defaults::invalidate_z_layer_bounding_box(self, layer_id);
     }
+    /// The `Update` of one structure or group: invalidates the box of `layer_id` as
+    /// `update` does. `source` is the layer of the updated structure, `UNKNOWN` for one
+    /// that other structures connect; a view that keeps the image of its main layers can
+    /// keep it for an update of an immediate layer (#594);
+    /// `view.structure_update(0, GRAPHIC3D_ZLAYER_ID_UNKNOWN)`.
+    fn structure_update(&self, source: Graphic3dZLayerId, layer_id: Graphic3dZLayerId) {
+        let _ = source;
+        self.invalidate_z_layer_bounding_box(layer_id);
+    }
     /// `RemoveZLayer`.
     fn remove_z_layer(&self, layer_id: Graphic3dZLayerId) -> Result<(), Failure>;
     /// `SetZLayerSettings`.
@@ -326,17 +333,29 @@ pub trait Graphic3dCView: Graphic3dDataStructureManager {
         settings: &Graphic3dZLayerSettings,
     ) -> Result<(), Failure>;
     /// `FBO`.
-    fn fbo(&self) -> Handle<StandardTransient>;
+    fn fbo(&self) -> Handle<dyn martensite_tkernel::standard::Transient>;
     /// `SetFBO`.
-    fn set_fbo(&self, fbo: &Handle<StandardTransient>);
+    fn set_fbo(&self, fbo: &Handle<dyn martensite_tkernel::standard::Transient>);
     /// `FBOCreate`.
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient>;
+    fn fbo_create(
+        &self,
+        width: i32,
+        height: i32,
+    ) -> Handle<dyn martensite_tkernel::standard::Transient>;
     /// `FBORelease`.
-    fn fbo_release(&self, fbo: &mut Handle<StandardTransient>);
+    fn fbo_release(&self, fbo: &mut Handle<dyn martensite_tkernel::standard::Transient>);
     /// `FBOGetDimensions`: `[width, height, width max, height max]`.
-    fn fbo_get_dimensions(&self, fbo: &Handle<StandardTransient>) -> [i32; 4];
+    fn fbo_get_dimensions(
+        &self,
+        fbo: &Handle<dyn martensite_tkernel::standard::Transient>,
+    ) -> [i32; 4];
     /// `FBOChangeViewport`.
-    fn fbo_change_viewport(&self, fbo: &Handle<StandardTransient>, width: i32, height: i32);
+    fn fbo_change_viewport(
+        &self,
+        fbo: &Handle<dyn martensite_tkernel::standard::Transient>,
+        width: i32,
+        height: i32,
+    );
     /// `CopySettings`: the rendering parameters, background, texture environment, shading,
     /// back-facing, a copy of the camera, lights and clip planes; `view.copy_settings(&other)?`.
     fn copy_settings(&self, other: &Handle<dyn Graphic3dCView>) -> Result<(), Failure> {
@@ -417,11 +436,8 @@ pub trait Graphic3dCView: Graphic3dDataStructureManager {
     /// Capture the actual native clipping field once; `let alias=view.clip_planes_ref()`.
     fn clip_planes_ref(&self) -> Box<dyn HandleReference<dyn Graphic3dClipPlaneSequenceSource>>;
     /// Explicit owning convenience; native ClipPlanes uses clip_planes_ref; `view.clip_planes()`.
-    fn clip_planes(&self) -> Handle<Graphic3dSequenceOfHClipPlane> {
-        self.clip_planes_ref()
-            .observe()
-            .observe_as::<Graphic3dSequenceOfHClipPlane>()
-            .clone()
+    fn clip_planes(&self) -> Handle<dyn Graphic3dClipPlaneSequenceSource> {
+        self.clip_planes_ref().clone_handle()
     }
     /// Borrow the caller slot throughout assignment callbacks; `view.set_clip_planes(&planes)`.
     fn set_clip_planes(&self, planes: &dyn HandleReference<dyn Graphic3dClipPlaneSequenceSource>);
@@ -493,5 +509,6 @@ pub trait Graphic3dCView: Graphic3dDataStructureManager {
 martensite_tkernel::impl_transient_interface!(
     dyn Graphic3dCView,
     "Graphic3d_CView",
-    dyn Graphic3dDataStructureManager
+    dyn Graphic3dDataStructureManager,
+    upcasts: [dyn Graphic3dDataStructureManager]
 );

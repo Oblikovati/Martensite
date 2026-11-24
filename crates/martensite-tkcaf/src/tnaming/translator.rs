@@ -4,7 +4,7 @@ use super::{TNamingCopyShape, TNamingTransientMap};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkmath::toploc::Datum3;
 use std::io;
 
@@ -103,8 +103,8 @@ impl TNamingTranslator {
 /// One entry of `DumpMap`.
 fn dump_entry(
     stream: &mut dyn io::Write,
-    key: &Handle<StandardTransient>,
-    item: &Handle<StandardTransient>,
+    key: &Handle<dyn Transient>,
+    item: &Handle<dyn Transient>,
     index: usize,
     is_write: bool,
 ) -> io::Result<()> {
@@ -139,22 +139,22 @@ fn dump_entry(
 /// The datum branch of `DumpMap` with `isWrite`.
 fn dump_datums(
     stream: &mut dyn io::Write,
-    key: &Handle<StandardTransient>,
-    item: &Handle<StandardTransient>,
+    key: &Handle<dyn Transient>,
+    item: &Handle<dyn Transient>,
     index: usize,
 ) -> io::Result<()> {
     writeln!(
         stream,
         "TNamingTranslator::DumpMap: Location_Key_name  = Map_Key{index}"
     )?;
-    if let Some(datum) = key.cast::<Datum3>().get() {
+    if let Some(datum) = key.downcast::<Datum3>().get() {
         datum.shallow_dump(&mut &mut *stream)?;
     }
     writeln!(
         stream,
         "TNamingTranslator::DumpMap: Location_Item_name = Map_Item{index}"
     )?;
-    if let Some(datum) = item.cast::<Datum3>().get() {
+    if let Some(datum) = item.downcast::<Datum3>().get() {
         datum.shallow_dump(&mut &mut *stream)?;
     }
     Ok(())

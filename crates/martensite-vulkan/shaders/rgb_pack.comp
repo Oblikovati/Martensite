@@ -1,0 +1,40 @@
+#version 450
+// Packs the RGBA rows of a colour readback into tightly packed RGB rows for an RGB dump
+// (#594). Each invocation writes one 32-bit word of one destination row; rows are padded to
+// a whole word. Destination row y reads source row first_row + y, or first_row + height - 1 - y
+// when reversed, so the host copies the rows into the image without converting them.
+layout(local_size_x = 64) in;
+
+layout(std430, set = 0, binding = 0) readonly buffer Source { uint pixels[]; } source;
+layout(std430, set = 0, binding = 1) writeonly buffer Packed { uint words[]; } packed;
+
+layout(push_constant) uniform Rows {
+    uint width;
+    uint height;
+    uint first_row;
+    uint reversed;
+} rows;
+
+uint channel(uint row_start, uint byte_index) {
+    uint pixel = byte_index / 3u;
+    if (pixel >= rows.width) {
+        return 0u;
+    }
+    return (source.pixels[row_start + pixel] >> (8u * (byte_index % 3u))) & 0xffu;
+}
+
+void main() {
+    uint row_words = (rows.width * 3u + 3u) / 4u;
+    uint word = gl_GlobalInvocationID.x;
+    uint y = gl_GlobalInvocationID.y;
+    if (word >= row_words || y >= rows.height) {
+        return;
+    }
+    uint source_row = rows.first_row + (rows.reversed != 0u ? rows.height - 1u - y : y);
+    uint row_start = source_row * rows.width;
+    uint first = word * 4u;
+    packed.words[y * row_words + word] = channel(row_start, first)
+        | (channel(row_start, first + 1u) << 8u)
+        | (channel(row_start, first + 2u) << 16u)
+        | (channel(row_start, first + 3u) << 24u);
+}

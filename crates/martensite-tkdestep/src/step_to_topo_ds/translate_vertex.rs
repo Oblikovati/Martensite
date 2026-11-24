@@ -30,7 +30,7 @@ impl StepToTopoDSTranslateVertex {
     }
     /// `StepToTopoDSTranslateVertex(V, T, NMTool, factors)`.
     pub fn with_vertex(
-        vertex: &Handle<StepShapeVertex>,
+        vertex: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,
@@ -56,7 +56,7 @@ impl StepToTopoDSTranslateVertex {
     }
     /// The vertex a non-manifold tool already knows (ssv; 14.11.2010 and 15.11.2010).
     fn shared_vertex(
-        vertex: &Handle<StepShapeVertex>,
+        vertex: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
         nm_tool: &StepToTopoDSNMTool,
         live: &StepShapeVertex,
     ) -> Result<Option<Shape>, Failure> {
@@ -79,7 +79,7 @@ impl StepToTopoDSTranslateVertex {
     /// `init(vertex, tool, NMTool, factors)`.
     pub fn init(
         &mut self,
-        vertex: &Handle<StepShapeVertex>,
+        vertex: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
         tool: &mut StepToTopoDSTool,
         nm_tool: &mut StepToTopoDSNMTool,
         factors: &StepDataFactors,

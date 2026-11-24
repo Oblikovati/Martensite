@@ -12,7 +12,7 @@ pub mod error_list;
 mod unix_messages;
 mod windows_codes;
 #[cfg(unix)]
-pub use unix_messages::unix_perror_report;
+use unix_messages::unix_perror_report;
 pub use windows_codes::{windows_error_code, windows_perror_header};
 
 /// `OSD_Error`; `let mut error = OsdError::new(); error.set_value(2, WhoAmI::File as i32, "Open")`.

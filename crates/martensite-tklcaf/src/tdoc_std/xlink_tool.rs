@@ -185,6 +185,6 @@ fn document_entry(target: &TdfLabel, source: &TdfLabel) -> Result<i32, Failure> 
         return Ok(0);
     }
     let target_document = live(&target_document, "TDocStd_XLinkTool::CopyWithLink")?;
-    let source_document: Handle<dyn CdmDocument> = source_document.cast();
+    let source_document: Handle<dyn CdmDocument> = source_document.into_upcast();
     target_document.create_reference(&source_document)
 }

@@ -6,7 +6,7 @@ use martensite_tkbrep::{
     toptools::IndexedMapOfShape,
 };
 use martensite_tkcaf::tnaming::{TNamingNode, TNamingRefShape, TNamingUsedShapes};
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Handle, HandleUpcast, Transient, WeakHandle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::tdf::{TdfAttributeIterator, TdfChildIterator, TdfLabel, TdfLabelNode};
 use std::sync::{Arc, Weak};
@@ -21,14 +21,14 @@ const RELEASE_PROBE_COUNTS: [(&str, usize); 5] = [
 
 #[derive(Default)]
 pub(crate) struct ReleasedDocumentGraph {
-    transients: Vec<(&'static str, WeakHandle<StandardTransient>)>,
+    transients: Vec<(&'static str, WeakHandle<dyn Transient>)>,
     labels: Vec<Weak<TdfLabelNode>>,
     references: Vec<Weak<TNamingRefShape>>,
     evolutions: Vec<Weak<TNamingNode>>,
 }
 
 impl ReleasedDocumentGraph {
-    pub(crate) fn observe<T: ?Sized + RuntimeTyped>(
+    pub(crate) fn observe<T: ?Sized + HandleUpcast<dyn Transient>>(
         &mut self,
         kind: &'static str,
         handle: &Handle<T>,
@@ -36,7 +36,7 @@ impl ReleasedDocumentGraph {
         if handle.is_null() {
             return;
         }
-        let erased = handle.cast::<StandardTransient>();
+        let erased = handle.upcast::<dyn Transient>();
         assert!(
             erased.get().is_some(),
             "{kind} must project to its transient base"

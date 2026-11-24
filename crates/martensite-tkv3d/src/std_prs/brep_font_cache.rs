@@ -2,7 +2,7 @@
 //! strict level); each lookup returns a new font handle sharing the cached implementation.
 use super::brep_font::StdPrsBRepFont;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::font::{FontFontAspect, FontStrictLevel};
 use std::collections::HashMap;
@@ -28,15 +28,13 @@ struct StdPrsBRepFontCacheState {
 
 /// `StdPrsBRepFontCache`. Example: `let cache = StdPrsBRepFontCache::new(16); cache.find_font(&name, aspect, 12.0, FontStrictLevel::Any)`.
 pub struct StdPrsBRepFontCache {
-    transient: StandardTransient,
     capacity: usize,
     state: RwLock<StdPrsBRepFontCacheState>,
 }
 martensite_tkernel::impl_transient!(
     StdPrsBRepFontCache,
     "StdPrsBRepFontCache",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 
 impl Default for StdPrsBRepFontCache {
@@ -55,7 +53,6 @@ impl StdPrsBRepFontCache {
             next_index: 1,
         };
         Self {
-            transient: StandardTransient::default(),
             capacity,
             state: RwLock::new(state),
         }

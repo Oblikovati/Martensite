@@ -51,11 +51,11 @@ impl TopOpeBRepLineInter {
         first: &BRepAdaptorSurface,
         second: &BRepAdaptorSurface,
     ) -> Result<(), Failure> {
-        let s1: Handle<dyn Adaptor3dSurface> = Handle::new(first.clone()).cast();
-        let s2: Handle<dyn Adaptor3dSurface> = Handle::new(second.clone()).cast();
+        let s1: Handle<dyn Adaptor3dSurface> = Handle::new(first.clone()).into_upcast();
+        let s2: Handle<dyn Adaptor3dSurface> = Handle::new(second.clone()).into_upcast();
         let converter = IntPatchALineToWLine::new(&s1, &s2, 200)?;
         let mut converted = Vec::new();
-        converter.make_wline(&self.source.cast::<IntPatchALine>(), &mut converted)?;
+        converter.make_wline(&self.source.downcast::<IntPatchALine>(), &mut converted)?;
         if let Some(first) = converted.first() {
             self.walking = first.cast();
         }

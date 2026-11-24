@@ -6,7 +6,7 @@ mod values;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Message, Messenger};
 use martensite_tkernel::resource::ResourceManager;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::Arc;
 
@@ -31,23 +31,63 @@ struct ContextFields {
 /// assert_eq!(context.real_val("Tolerance", 0.5).unwrap(), 0.5);
 /// assert_eq!(context.trace_level(), 1);
 /// ```
+#[derive(Default)]
 pub struct ShapeProcessContext {
-    parent: StandardTransient,
+    context: ShapeProcessContextData,
+}
+impl_transient!(ShapeProcessContext, "ShapeProcess_Context", dyn Transient, interfaces: [dyn ShapeProcessContextSource]);
+parent_interface!(dyn ShapeProcessContextSource, ShapeProcessContext, []);
+
+impl ShapeProcessContext {
+    /// Create an empty processing context; `ShapeProcessContext::new()`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Load a scoped resource; `ShapeProcessContext::with_file("DE", "read")?`.
+    pub fn with_file(file: &str, scope: &str) -> Result<Self, Failure> {
+        Ok(Self {
+            context: ShapeProcessContextData::with_file(file, scope)?,
+        })
+    }
+}
+
+impl ShapeProcessContextSource for ShapeProcessContext {
+    fn context_data(&self) -> &ShapeProcessContextData {
+        &self.context
+    }
+}
+
+impl std::ops::Deref for ShapeProcessContext {
+    type Target = ShapeProcessContextData;
+    fn deref(&self) -> &Self::Target {
+        self.context_data()
+    }
+}
+
+/// The resource, scope and message settings shared by ShapeProcess operators.
+pub struct ShapeProcessContextData {
     fields: SharedState<ContextFields>,
 }
-impl_transient!(
-    ShapeProcessContext,
-    "ShapeProcess_Context",
-    StandardTransient,
-    parent
-);
 
-impl Default for ShapeProcessContext {
+/// Resource context identity shared by standalone and shape-bearing operators.
+pub trait ShapeProcessContextSource: Transient {
+    /// Borrow context settings from the current owner; `context.context_data().trace_level()`.
+    fn context_data(&self) -> &ShapeProcessContextData;
+}
+
+impl std::ops::Deref for dyn ShapeProcessContextSource {
+    type Target = ShapeProcessContextData;
+    fn deref(&self) -> &Self::Target {
+        self.context_data()
+    }
+}
+
+impl Default for ShapeProcessContextData {
     /// The default constructor: no resource manager, the default messenger, trace
     /// level 1.
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(ContextFields {
                 resource: None,
                 scope: None,
@@ -58,16 +98,9 @@ impl Default for ShapeProcessContext {
     }
 }
 
-impl ShapeProcessContext {
-    /// `ShapeProcessContext::new()`.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// `Init(file, scope)`, then the default messenger
-    /// and trace level 1; `ShapeProcessContext::with_file("DE", "read")?`.
-    pub fn with_file(file: &str, scope: &str) -> Result<Self, Failure> {
-        let context = Self::new();
+impl ShapeProcessContextData {
+    pub(super) fn with_file(file: &str, scope: &str) -> Result<Self, Failure> {
+        let context = Self::default();
         context.init(file, scope)?;
         Ok(context)
     }

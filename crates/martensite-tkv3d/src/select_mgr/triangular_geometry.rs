@@ -10,9 +10,10 @@ pub(super) fn triangular_build_core(
     builder: &SelectMgrFrustumBuilder,
 ) -> SelectMgrFrustumCore<3> {
     let mut core = SelectMgrFrustumCore::new();
+    let projector = builder.view_plane_projector();
     for (index, vertex) in core.vertices.iter_mut().enumerate() {
         let pixel = triangle.points[index % 3];
-        *vertex = builder.project_pnt_on_view_plane(pixel.x(), pixel.y(), (index / 3) as f64);
+        *vertex = projector.project(pixel.x(), pixel.y(), (index / 3) as f64);
     }
     triangular_cache_geometry(&mut core);
     core

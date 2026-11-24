@@ -6,7 +6,7 @@ use super::{
     InterfaceProtocol, InterfaceReportEntity, InterfaceSignTypeBase,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, RuntimeType, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeType, Transient, exceptions},
     tcollection::HAsciiString,
 };
 use std::io::{self, Write};
@@ -49,7 +49,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
         self.model_base().read().theentities.len() as i32
     }
     /// `Contains(anentity)`: an entity of the model, or a report of one.
-    fn contains(&self, anentity: &Handle<StandardTransient>) -> bool {
+    fn contains(&self, anentity: &Handle<dyn Transient>) -> bool {
         if self.model_base().read().theentities.contains(anentity) {
             return true;
         }
@@ -58,7 +58,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
     }
     /// `Number(anentity)`: the rank of an entity (or of the entity a report concerns),
     /// 0 when not in the model.
-    fn number(&self, anentity: &Handle<StandardTransient>) -> i32 {
+    fn number(&self, anentity: &Handle<dyn Transient>) -> i32 {
         if anentity.is_null() {
             return 0;
         }
@@ -70,31 +70,31 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
         rep.get().map_or(0, |r| self.number(&r.concerned()))
     }
     /// `Value(num)`: `StandardOutOfRange` out of 1..NbEntities.
-    fn value(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    fn value(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let state = self.model_base().read();
         let index =
             usize::try_from(num).map_err(|_| out_of_entities(num, state.theentities.len()))?;
         state.theentities.find_key(index).cloned()
     }
     /// `NbTypes(ent)`: from the protocol, 1 without protocol.
-    fn nb_types(&self, ent: &Handle<StandardTransient>) -> i32 {
+    fn nb_types(&self, ent: &Handle<dyn Transient>) -> i32 {
         let protocol = self.protocol();
         protocol.get().map_or(1, |p| p.nb_types(ent))
     }
     /// `Type(ent, num = 1)`: from the protocol, else the dynamic type (`StandardTransient`
     /// for a null entity, which the native code dereferences).
-    fn entity_type(&self, ent: &Handle<StandardTransient>, num: i32) -> &'static RuntimeType {
+    fn entity_type(&self, ent: &Handle<dyn Transient>, num: i32) -> &'static RuntimeType {
         let protocol = self.protocol();
         match protocol.get() {
             Some(live) => live.entity_type(ent, num),
             None => ent.dynamic_type().unwrap_or_else(
-                <StandardTransient as martensite_tkernel::standard::RuntimeTyped>::static_type,
+                <dyn Transient as martensite_tkernel::standard::RuntimeTyped>::static_type,
             ),
         }
     }
     /// `TypeName(ent, complete = true)`: the signature of the GTool, else the type name
     /// (without its package when not complete).
-    fn type_name(&self, ent: &Handle<StandardTransient>, complete: bool) -> String {
+    fn type_name(&self, ent: &Handle<dyn Transient>, complete: bool) -> String {
         let gtool = self.gtool();
         if let Some(live) = gtool.get() {
             return live.sign_value(ent, &self.model_base().this());
@@ -114,7 +114,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
     /// when the model has none.
     fn add_with_refs_protocol(
         &self,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         proto: &Handle<dyn InterfaceProtocol>,
         level: i32,
         listall: bool,
@@ -135,7 +135,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
     /// `InterfaceInterfaceMismatch` without protocol.
     fn add_with_refs(
         &self,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         level: i32,
         listall: bool,
     ) -> Result<(), Failure> {
@@ -150,7 +150,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
     /// `AddWithRefs(anent, lib, level = 0, listall = false)`: level 0 adds all levels.
     fn add_with_refs_lib(
         &self,
-        anent: &Handle<StandardTransient>,
+        anent: &Handle<dyn Transient>,
         lib: &InterfaceGeneralLib,
         level: i32,
         listall: bool,
@@ -180,11 +180,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
         Ok(())
     }
     /// `ReplaceEntity(nument, anent)`: `StandardOutOfRange` out of range.
-    fn replace_entity(
-        &self,
-        nument: i32,
-        anent: &Handle<StandardTransient>,
-    ) -> Result<(), Failure> {
+    fn replace_entity(&self, nument: i32, anent: &Handle<dyn Transient>) -> Result<(), Failure> {
         let mut state = self.model_base().write();
         let count = state.theentities.len();
         let index = usize::try_from(nument).map_err(|_| out_of_entities(nument, count))?;
@@ -287,7 +283,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
     }
     /// `FillIterator(iter)`: the entities in order.
     fn fill_iterator(&self, iter: &mut InterfaceEntityIterator) {
-        let entities: Vec<Handle<StandardTransient>> = self
+        let entities: Vec<Handle<dyn Transient>> = self
             .model_base()
             .read()
             .theentities
@@ -304,12 +300,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
     }
     /// `Print(ent, S, mode = 0)`: the number (mode <= 0), ":" (mode 0), and the label
     /// (mode >= 0, "??" for an entity out of the model); "NULL" for null.
-    fn print(
-        &self,
-        ent: &Handle<StandardTransient>,
-        s: &mut dyn Write,
-        mode: i32,
-    ) -> io::Result<()> {
+    fn print(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write, mode: i32) -> io::Result<()> {
         if ent.is_null() {
             return s.write_all(b"NULL");
         }
@@ -330,7 +321,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
         }
     }
     /// The entities in order, as the native `Array1` copy.
-    fn ordered_entities(&self) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    fn ordered_entities(&self) -> Result<Vec<Handle<dyn Transient>>, Failure> {
         Ok(self
             .model_base()
             .read()
@@ -340,11 +331,7 @@ pub trait InterfaceModelEntities: InterfaceInterfaceModel {
             .collect())
     }
     /// Clears the entities, reserves `nb` places and adds `order`.
-    fn refill_entities<'a>(
-        &self,
-        nb: i32,
-        order: impl Iterator<Item = &'a Handle<StandardTransient>>,
-    ) {
+    fn refill_entities<'a>(&self, nb: i32, order: impl Iterator<Item = &'a Handle<dyn Transient>>) {
         self.model_base().write().theentities.clear(false);
         self.reservate(nb);
         let mut state = self.model_base().write();
@@ -365,9 +352,9 @@ fn out_of_entities(num: i32, count: usize) -> Failure {
 
 /// Binds `rep` at `num`, or unbinds `num` when there is none.
 fn rebind_report(
-    reports: &mut martensite_tkernel::ncollection::DataMap<i32, Handle<StandardTransient>>,
+    reports: &mut martensite_tkernel::ncollection::DataMap<i32, Handle<dyn Transient>>,
     num: i32,
-    rep: Option<Handle<StandardTransient>>,
+    rep: Option<Handle<dyn Transient>>,
 ) {
     match rep.filter(|r| r.is_some()) {
         Some(found) => {
@@ -385,11 +372,11 @@ fn changed_order(
     oldnum: i32,
     newnum: i32,
     count: i32,
-    current: &[Handle<StandardTransient>],
-) -> Result<Vec<Handle<StandardTransient>>, Failure> {
+    current: &[Handle<dyn Transient>],
+) -> Result<Vec<Handle<dyn Transient>>, Failure> {
     let (minum, mxnum) = (oldnum.min(newnum), oldnum.max(newnum));
     let kount = if oldnum > newnum { count } else { -count };
-    let mut ents: Vec<Handle<StandardTransient>> = vec![Handle::default(); nb as usize];
+    let mut ents: Vec<Handle<dyn Transient>> = vec![Handle::default(); nb as usize];
     let mut set = |at: i32, from: i32| -> Result<(), Failure> {
         let source = current
             .get((from - 1) as usize)

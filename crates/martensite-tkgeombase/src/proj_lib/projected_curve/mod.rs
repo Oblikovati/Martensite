@@ -12,7 +12,7 @@ use super::projector::Projector;
 use crate::app_par_curves::Constraint;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 
@@ -56,14 +56,12 @@ impl ProjectedState {
 /// let pcurve = martensite_tkgeombase::proj_lib::make_pcurve_of_type(&projected)?;
 /// ```
 pub struct ProjectedCurve {
-    parent: StandardTransient,
     state: SharedState<ProjectedState>,
 }
 impl_transient!(
     ProjectedCurve,
     "ProjLib_ProjectedCurve",
     dyn Adaptor2dCurve2d,
-    parent,
     interfaces: [dyn Adaptor2dCurve2d]
 );
 
@@ -76,7 +74,6 @@ impl Default for ProjectedCurve {
 impl ProjectedCurve {
     fn from_state(state: ProjectedState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

@@ -45,9 +45,55 @@ pub enum BuildCommand {
         #[arg(long)]
         target: Option<String>,
     },
+    /// Compare a toolkit's paired performance cases with OCCT on this machine (#583).
+    OcctParity(OcctParityArgs),
     /// Entry points used by `.github/workflows/martensite.yml`.
     #[command(subcommand)]
     Ci(CiCommand),
+}
+
+/// Arguments of `cargo xtask occt-parity --occt /opt/occt --cpus 8-15`.
+#[derive(clap::Args)]
+pub struct OcctParityArgs {
+    /// The toolkit whose cases run.
+    #[arg(long, value_enum, default_value = "tkernel")]
+    toolkit: crate::occt_parity::ParityToolkit,
+    /// The OCCT install prefix, holding `include/opencascade` and `lib`.
+    #[arg(long)]
+    occt: PathBuf,
+    /// The C++ compiler.
+    #[arg(long, default_value = "c++")]
+    cxx: String,
+    /// A `taskset` CPU list for both programs, e.g. `8-15`; keep builds off these CPUs.
+    #[arg(long)]
+    cpus: Option<String>,
+    /// How many times each program runs, alternating.
+    #[arg(long, default_value_t = 2, value_parser = clap::value_parser!(u16).range(1..))]
+    rounds: u16,
+    /// Keeps the cases whose name contains this text.
+    #[arg(long)]
+    filter: Option<String>,
+    /// Frames of one timed run for the renderer cases (default 100); `--toolkit tkernel` ignores it.
+    #[arg(long, value_parser = clap::value_parser!(u32).range(1..))]
+    frames: Option<u32>,
+    /// The relative difference still counted as parity.
+    #[arg(long, default_value_t = 0.05)]
+    tolerance: f64,
+}
+
+impl OcctParityArgs {
+    fn request(self) -> crate::occt_parity::ParityRequest {
+        crate::occt_parity::ParityRequest {
+            toolkit: self.toolkit,
+            occt_prefix: self.occt,
+            compiler: self.cxx,
+            cpus: self.cpus,
+            rounds: usize::from(self.rounds),
+            filter: self.filter,
+            frames: self.frames.map(|frames| frames as usize),
+            tolerance: self.tolerance,
+        }
+    }
 }
 
 /// Owned arguments for one planned CI target; `cargo xtask ci run --target x86_64-unknown-linux-gnu`.
@@ -147,6 +193,9 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
     match command {
         BuildCommand::Pr { base } => validate_pull_request(context, &base, &BuildTarget::Host),
         BuildCommand::Release { version, target } => rehearse_release(context, &version, target),
+        BuildCommand::OcctParity(args) => {
+            crate::occt_parity::run_occt_parity(context, &args.request())
+        }
         BuildCommand::Ci(command) => dispatch_ci(context, command),
     }
 }

@@ -3,7 +3,7 @@
 use martensite_tkcdf::{cdf::CdfApplication, cdm::CdmApplication};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::ExtendedString,
 };
 use martensite_tklcaf::{
@@ -29,11 +29,10 @@ struct NotificationSnapshot {
 
 #[derive(Default)]
 struct FakeTransactionApplication {
-    transient: StandardTransient,
     base: TDocStdApplicationBase,
     notifications: SharedState<Vec<NotificationSnapshot>>,
 }
-impl_transient!(FakeTransactionApplication, "FakeTransactionApplication", dyn CdfApplication, transient,
+impl_transient!(FakeTransactionApplication, "FakeTransactionApplication", dyn CdfApplication,
     interfaces: [dyn CdmApplication, dyn CdfApplication, dyn TDocStdApplication]);
 impl CdmApplication for FakeTransactionApplication {
     tdoc_std_application_cdm_members!();
@@ -79,7 +78,7 @@ fn application_document() -> (Handle<FakeTransactionApplication>, Handle<TDocStd
     let application = Handle::new(FakeTransactionApplication::default());
     application
         .application_base()
-        .bind_self(&application.cast());
+        .bind_self(&application.upcast());
     let mut document = Handle::default();
     application
         .new_tdoc_std_document(&ExtendedString::new("BinOcaf"), &mut document)

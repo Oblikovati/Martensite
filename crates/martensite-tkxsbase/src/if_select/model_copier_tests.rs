@@ -26,9 +26,9 @@ fn library() -> (Handle<FakeWorkLibrary>, Handle<dyn IFSelectWorkLibrary>) {
 /// A share-out of one global dispatch on all the entities.
 fn share_out() -> Handle<IFSelectShareOut> {
     let disp = IFSelectDispGlobal::new();
-    disp.set_final_selection(&Handle::new(IFSelectSelectModelEntities::new()).cast());
+    disp.set_final_selection(&Handle::new(IFSelectSelectModelEntities::new()).into_upcast());
     let share = Handle::new(IFSelectShareOut::new());
-    share.add_dispatch(&Handle::new(disp).cast());
+    share.add_dispatch(&Handle::new(disp).into_upcast());
     share
 }
 
@@ -158,7 +158,7 @@ fn model_copier_send_all() {
     let copier = IFSelectModelCopier::new();
     copier.set_share_out(&share_out());
     let reorder: Handle<dyn IFSelectGeneralModifier> =
-        Handle::new(IFSelectModifReorder::new(false)).cast();
+        Handle::new(IFSelectModifReorder::new(false)).into_upcast();
     copier
         .state
         .read()

@@ -102,6 +102,24 @@ fn shared_item_references_survive_native_const_cache_updates() {
     assert_eq!(sequence.base_access().current_index(), 3);
 }
 
+#[test]
+fn inspection_borrows_the_allocator_and_leaves_indexed_reads_available() {
+    let arena = BaseAllocator::fresh_heap();
+    let mut sequence = Sequence::with_allocator(arena.clone());
+    sequence.append(1);
+    sequence.append(2);
+    let owners = arena.ref_count();
+    let base = sequence.base_access();
+    assert_eq!(arena.ref_count(), owners);
+    assert!(std::ptr::eq(base.allocator(), sequence.allocator()));
+    std::thread::scope(|scope| {
+        scope.spawn(|| assert_eq!(sequence.value(2).unwrap(), &2));
+    });
+    assert_eq!(base.current_index(), 1);
+    drop(base);
+    assert_eq!(sequence.base_access().current_index(), 2);
+}
+
 fn require_unpin<T: Unpin>() {}
 fn require_ref_unwind_safe<T: std::panic::RefUnwindSafe>() {}
 #[test]

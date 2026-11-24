@@ -6,6 +6,9 @@ use martensite_tkmath::predicates::roots::bezier_pair::*;
 
 pub(crate) struct PairedCensusEvidence {
     pub requested: BezierPairPolicy,
+    pub selected_signs: BezierPairSignOptions,
+    pub exclusion_version: Option<u32>,
+    pub exclusions: Vec<super::bernstein_execution::BernsteinStoredReport>,
     pub occurrences: Vec<PairedOccurrenceSnapshot>,
     pub reports: Vec<PairedStoredReport>,
     pub reused_reports: u64,

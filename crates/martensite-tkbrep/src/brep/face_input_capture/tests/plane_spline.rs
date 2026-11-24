@@ -30,10 +30,10 @@ fn planar_spline() -> Handle<Geom2dBSplineCurve> {
 
 fn overridden_planar_spline() -> Handle<Geom2dBSplineCurve> {
     let spline = planar_spline();
-    let replacement = Handle::new(Geom2dLine::new(Axis2d::default())).cast();
+    let replacement = Handle::new(Geom2dLine::new(Axis2d::default())).into_upcast();
     let descriptor = martensite_tkg2d::geom2d_eval::RepCurveDescFull::new(replacement);
     spline
-        .set_eval_representation(Handle::new(descriptor).cast())
+        .set_eval_representation(Handle::new(descriptor).into_upcast())
         .unwrap();
     spline
 }

@@ -1,30 +1,29 @@
 //! A physical quantity, its dimensions and its units.
 use super::dimensions::Dimensions;
 use super::support::{c_str, item, length, write_bytes};
-use super::unit::{Unit, UnitHandle};
+use super::unit::UnitHandle;
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle, StandardTransient};
 use crate::tcollection::AsciiString;
+use crate::units::UnitObject;
 use std::io::Write;
 
 /// A named quantity; `Quantity::new(b"LENGTH", &Dimensions::a_length(), &units)`.
 pub struct Quantity {
-    base: StandardTransient,
     name: AsciiString,
     dimensions: Handle<Dimensions>,
-    units: Handle<HSequence<Handle<Unit>>>,
+    units: Handle<HSequence<Handle<dyn UnitObject>>>,
 }
-crate::impl_transient!(Quantity, "Units_Quantity", StandardTransient, base);
+crate::impl_transient!(Quantity, "Units_Quantity", StandardTransient);
 
 impl Quantity {
     /// Shares the given dimensions and unit sequence; `Quantity::new(b"MASS", &d, &units)`.
     pub fn new(
         name: &[u8],
         dimensions: &Handle<Dimensions>,
-        units: &Handle<HSequence<Handle<Unit>>>,
+        units: &Handle<HSequence<Handle<dyn UnitObject>>>,
     ) -> Self {
         Self {
-            base: StandardTransient::default(),
             name: AsciiString::from_bytes(c_str(name)),
             dimensions: dimensions.clone(),
             units: units.clone(),
@@ -39,7 +38,7 @@ impl Quantity {
         self.dimensions.clone()
     }
     /// The shared unit sequence; `quantity.sequence()`.
-    pub fn sequence(&self) -> Handle<HSequence<Handle<Unit>>> {
+    pub fn sequence(&self) -> Handle<HSequence<Handle<dyn UnitObject>>> {
         self.units.clone()
     }
     /// Name equals the C string; `quantity.is_equal(b"LENGTH")`.
@@ -64,16 +63,16 @@ impl Quantity {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::units::Unit;
     use crate::units::support::new_sequence;
 
     #[test]
     fn quantity_dump_lists_units_at_level_one() {
-        let units = new_sequence::<Handle<Unit>>();
+        let units = new_sequence::<Handle<dyn UnitObject>>();
         let quantity = Handle::new(Quantity::new(b"LENGTH", &Dimensions::a_length(), &units));
-        units
-            .get()
-            .unwrap()
-            .append(Handle::new(Unit::new(b"metre", b"m", 1.0, &quantity)));
+        units.get().unwrap().append(
+            Handle::new(Unit::new(b"metre", b"m", 1.0, &quantity)).into_upcast::<dyn UnitObject>(),
+        );
         let object = quantity.get().unwrap();
         assert!(object.is_equal(b"LENGTH") && !object.is_equal(b"LEN"));
         let mut out = Vec::new();

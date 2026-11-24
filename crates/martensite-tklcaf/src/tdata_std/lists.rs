@@ -14,7 +14,7 @@ use crate::tdf::{
 use martensite_tkcdf::json_dump::{field_byte_char, field_integer, field_real, field_string};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream},
     tcollection::{AsciiString, ExtendedString},
 };
 use std::io;
@@ -147,7 +147,7 @@ impl TdfAttribute for TDataStdBooleanList {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste(Into, RT)`: `Into` takes the items (`Append(item != 0)`) and the ID.
     fn paste(

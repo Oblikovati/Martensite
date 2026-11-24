@@ -30,7 +30,9 @@ pub(crate) use rw_block_0123;
 
 macro_rules! rw_block_0124 {
     ($a_formation:ident, $a_frame_of_reference:ident, $ach:ident, $data:ident, $num:ident) => {
-        let mut $a_formation: Handle<StepBasicProductDefinitionFormation> = Default::default();
+        let mut $a_formation: Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>,
+        > = Default::default();
         $data.read_entity(
             $num,
             3,
@@ -39,8 +41,9 @@ macro_rules! rw_block_0124 {
             StepBasicProductDefinitionFormation::static_type(),
             &mut $a_formation,
         )?;
-        let mut $a_frame_of_reference: Handle<StepBasicProductDefinitionContext> =
-            Default::default();
+        let mut $a_frame_of_reference: Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionContext>,
+        > = Default::default();
         $data.read_entity(
             $num,
             4,
@@ -55,7 +58,8 @@ pub(crate) use rw_block_0124;
 
 macro_rules! rw_block_0125 {
     ($a_rep1:ident, $a_rep2:ident, $ach:ident, $data:ident, $num:ident) => {
-        let mut $a_rep1: Handle<StepReprRepresentation> = Default::default();
+        let mut $a_rep1: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         $data.read_entity(
             $num,
             3,
@@ -64,7 +68,8 @@ macro_rules! rw_block_0125 {
             StepReprRepresentation::static_type(),
             &mut $a_rep1,
         )?;
-        let mut $a_rep2: Handle<StepReprRepresentation> = Default::default();
+        let mut $a_rep2: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+            Default::default();
         $data.read_entity(
             $num,
             4,
@@ -152,7 +157,8 @@ macro_rules! rw_block_0132 {
     ($a_basis_curve:ident, $a_name:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_basis_curve: Handle<StepGeomCurve> = Default::default();
+        let mut $a_basis_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         $data.read_entity(
             $num,
             2,
@@ -169,7 +175,8 @@ macro_rules! rw_block_0133 {
     ($a_basis_surface:ident, $a_name:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_basis_surface: Handle<StepGeomSurface> = Default::default();
+        let mut $a_basis_surface: Handle<dyn crate::StepEntityBase<StepGeomSurface>> =
+            Default::default();
         $data.read_entity(
             $num,
             2,
@@ -186,7 +193,8 @@ macro_rules! rw_block_0134 {
     ($a_name:ident, $a_swept_curve:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_swept_curve: Handle<StepGeomCurve> = Default::default();
+        let mut $a_swept_curve: Handle<dyn crate::StepEntityBase<StepGeomCurve>> =
+            Default::default();
         $data.read_entity(
             $num,
             2,
@@ -201,7 +209,9 @@ pub(crate) use rw_block_0134;
 
 macro_rules! rw_block_0135 {
     ($a_dimensional_size_applies_to:ident, $a_dimensional_size_name:ident, $ach:ident, $data:ident, $num:ident) => {
-        let mut $a_dimensional_size_applies_to: Handle<StepReprShapeAspect> = Default::default();
+        let mut $a_dimensional_size_applies_to: Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        > = Default::default();
         $data.read_entity(
             $num,
             1,
@@ -226,7 +236,8 @@ macro_rules! rw_block_0136 {
     ($a_name:ident, $a_outer:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_outer: Handle<StepShapeClosedShell> = Default::default();
+        let mut $a_outer: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> =
+            Default::default();
         $data.read_entity(
             $num,
             2,

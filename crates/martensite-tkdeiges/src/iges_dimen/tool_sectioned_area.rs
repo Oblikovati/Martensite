@@ -13,10 +13,11 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_entities, iges_dump_xyz_l, iges_new_array1, iges_real_text,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_entities, iges_dump_xyz_l, iges_new_array1, iges_real_text,
 };
 use crate::iges_dimen::IgesDimenSectionedArea;
 use martensite_tkernel::ncollection::HArray1;
@@ -44,14 +45,14 @@ impl IgesDimenToolSectionedArea {
         ir: &Handle<IgesDataIgesReaderData>,
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
-        let mut ext_curve: Handle<IgesDataIgesEntity> = Default::default();
+        let mut ext_curve: Handle<dyn IgesDataEntityKind> = Default::default();
         let mut temp_pattern: i32 = Default::default();
         let mut nbislands: i32 = Default::default();
         let mut pass_pnt: Xyz = Default::default();
         let mut temp_distance: f64 = Default::default();
         let mut temp_angle: f64 = Default::default();
-        let mut temp_islands: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
-        let mut anent: Handle<IgesDataIgesEntity> = Default::default();
+        let mut temp_islands: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
+        let mut anent: Handle<dyn IgesDataEntityKind> = Default::default();
         pr.read_entity(
             ir,
             &pr.current(),
@@ -163,18 +164,18 @@ impl IgesDimenToolSectionedArea {
         ent: &Handle<IgesDimenSectionedArea>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
-        let mut ext_curve: Handle<IgesDataIgesEntity> =
+        let mut ext_curve: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.exterior_curve().cast())?.cast();
         let mut temp_pattern: i32 = another.pattern();
         let mut pass_pnt: Xyz = another.passing_point().xyz();
         let mut temp_distance: f64 = another.distance();
         let mut temp_angle: f64 = another.angle();
-        let mut temp_islands: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut temp_islands: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         let mut nbislands: i32 = another.nb_islands()?;
         if nbislands > 0 {
-            temp_islands = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbislands)?;
+            temp_islands = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbislands)?;
             for i in 1..=nbislands {
-                let mut anent: Handle<IgesDataIgesEntity> =
+                let mut anent: Handle<dyn IgesDataEntityKind> =
                     tc.transferred(&another.island_curve(i)?.cast())?.cast();
                 iges_array1_set(
                     &temp_islands,

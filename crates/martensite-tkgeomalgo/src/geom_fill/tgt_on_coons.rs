@@ -2,7 +2,7 @@
 //! made normal to the boundary's normals.
 use super::{GeomFillCoonsAlgPatch, GeomFillTgtField};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkmath::gp::Vector3;
 
@@ -13,7 +13,6 @@ use martensite_tkmath::gp::Vector3;
 ///
 /// `let field = GeomFillTgtOnCoons::new(&patch, 0); field.value(0.5)?`
 pub struct GeomFillTgtOnCoons {
-    parent: StandardTransient,
     my_k: Handle<GeomFillCoonsAlgPatch>,
     ibound: i32,
 }
@@ -21,7 +20,6 @@ impl_transient!(
     GeomFillTgtOnCoons,
     "GeomFill_TgtOnCoons",
     dyn GeomFillTgtField,
-    parent,
     interfaces: [dyn GeomFillTgtField]
 );
 
@@ -37,7 +35,6 @@ impl GeomFillTgtOnCoons {
     /// `k`; `GeomFillTgtOnCoons::new(&patch, 1)`.
     pub fn new(k: &Handle<GeomFillCoonsAlgPatch>, i: i32) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_k: k.clone(),
             ibound: i,
         }

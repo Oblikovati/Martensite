@@ -10,10 +10,9 @@ pub type Exponents = [f64; 9];
 
 /// Physical dimensions of a quantity; `Dimensions::new([0.,1.,0.,0.,0.,0.,0.,0.,0.])`.
 pub struct Dimensions {
-    base: StandardTransient,
     exponents: Exponents,
 }
-crate::impl_transient!(Dimensions, "Units_Dimensions", StandardTransient, base);
+crate::impl_transient!(Dimensions, "Units_Dimensions", StandardTransient);
 
 const LABELS: [&str; 9] = [
     "mass                      ",
@@ -30,10 +29,7 @@ const LABELS: [&str; 9] = [
 impl Dimensions {
     /// Stores the nine exponents in argument order; `Dimensions::new([1.0; 9])`.
     pub fn new(exponents: Exponents) -> Self {
-        Self {
-            base: StandardTransient::default(),
-            exponents,
-        }
+        Self { exponents }
     }
     /// Handle form of `new`; `Dimensions::handle([0.0; 9])`.
     pub fn handle(exponents: Exponents) -> Handle<Self> {

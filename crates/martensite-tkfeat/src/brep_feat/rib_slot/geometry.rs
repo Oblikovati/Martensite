@@ -49,7 +49,7 @@ pub(super) fn line(
     p: Point3,
     v: martensite_tkmath::gp::Vector3,
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
-    Ok(Handle::new(GeomLine::from_point(p, Direction3::from_vector(v)?)).cast())
+    Ok(Handle::new(GeomLine::from_point(p, Direction3::from_vector(v)?)).into_upcast())
 }
 
 /// The parameter of `p` on the line or conic `c` (0 for another curve
@@ -89,7 +89,7 @@ pub fn choice_of_faces(
     let mut scur = Sequence::default();
     let counter = 8;
     for i in 1..=counter {
-        let l: Handle<dyn GeomCurve> = l1.rotated(axe, (i as f64) * PI / 9.)?.cast();
+        let l: Handle<dyn GeomCurve> = l1.rotated(axe, (i as f64) * PI / 9.)?.into_cast();
         scur.append(l);
     }
     let mut best = f64::MAX;
@@ -114,11 +114,11 @@ pub fn choice_of_faces(
 
 /// Whether the curve is a line or a conic (`GeomLine`, `GeomCircle`, ...).
 fn is_conic(cu: &Handle<dyn GeomCurve>) -> bool {
-    !cu.cast::<GeomLine>().is_null()
-        || !cu.cast::<GeomCircle>().is_null()
-        || !cu.cast::<GeomEllipse>().is_null()
-        || !cu.cast::<GeomHyperbola>().is_null()
-        || !cu.cast::<GeomParabola>().is_null()
+    cu.downcast_ref::<GeomLine>().is_some()
+        || cu.downcast_ref::<GeomCircle>().is_some()
+        || cu.downcast_ref::<GeomEllipse>().is_some()
+        || cu.downcast_ref::<GeomHyperbola>().is_some()
+        || cu.downcast_ref::<GeomParabola>().is_some()
 }
 
 impl RibSlot {
@@ -174,7 +174,7 @@ impl RibSlot {
     ) -> Result<(), Failure> {
         let (cu, f, l) = edge_curve(e)?;
         let mut c: Handle<dyn GeomBoundedCurve> =
-            Handle::new(GeomTrimmedCurve::new(&cu, f, l, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(&cu, f, l, true, true)?).into_upcast();
         let ee = if is_conic(&cu) {
             let (a, b) = if first_last {
                 (f - bnd / 10., l)
@@ -190,7 +190,7 @@ impl RibSlot {
             let pt = live(&line(pnt, -vct)?)?.d0(bnd / 1000.)?;
             geom_lib::extend_curve_to_point(&mut c, pt, 1, false)?;
             let last = BRepTool::pnt(&topexp::last_vertex(e, true))?;
-            BRepLibMakeEdge::from_curve_points(&c.cast(), pt, last)?.edge()?
+            BRepLibMakeEdge::from_curve_points(&c.upcast(), pt, last)?.edge()?
         } else {
             let (pnt, vct) = c
                 .get()
@@ -199,7 +199,7 @@ impl RibSlot {
             let pt = live(&line(pnt, vct)?)?.d0(bnd / 1000.)?;
             geom_lib::extend_curve_to_point(&mut c, pt, 1, true)?;
             let first = BRepTool::pnt(&topexp::first_vertex(e, true))?;
-            BRepLibMakeEdge::from_curve_points(&c.cast(), first, pt)?.edge()?
+            BRepLibMakeEdge::from_curve_points(&c.upcast(), first, pt)?.edge()?
         };
         *e = ee;
         Ok(())

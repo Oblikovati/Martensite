@@ -7,7 +7,7 @@ use super::{
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkernel::message::{Gravity, Message};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::graphic3d::{
     Graphic3dCamera, Graphic3dStructure, Graphic3dStructureBase, Graphic3dStructureDisplay as _,
@@ -39,14 +39,13 @@ struct PresentationState {
 ///
 /// Example: `let prs = manager.presentation(&object, 0, true, &Handle::default())?;`.
 pub struct PrsMgrPresentation {
-    transient: StandardTransient,
     base: Graphic3dStructureBase,
     presentation_manager: Handle<PrsMgrPresentationManager>,
     presentable_object: SharedState<WeakHandle<dyn PrsMgrPresentableObject>>,
     mode: i32,
     state: SharedState<PresentationState>,
 }
-martensite_tkernel::impl_transient!(PrsMgrPresentation, "PrsMgrPresentation", dyn Graphic3dStructureSource, transient,
+martensite_tkernel::impl_transient!(PrsMgrPresentation, "PrsMgrPresentation", dyn Graphic3dStructureSource,
     interfaces: [dyn Graphic3dStructureSource]);
 
 impl PrsMgrPresentation {
@@ -63,7 +62,6 @@ impl PrsMgrPresentation {
             .map(PrsMgrPresentationManager::structure_manager)
             .unwrap_or_default();
         let prs = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dStructureBase::new(&structure_manager, &Handle::default())?,
             presentation_manager: manager.clone(),
             presentable_object: SharedState::new(object.downgrade()),

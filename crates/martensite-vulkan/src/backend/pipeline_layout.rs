@@ -13,7 +13,8 @@ pub(super) fn create_layout(
     triangle_grid_coverage: bool,
     native_grid_v4: bool,
     text_grid_interpolation: bool,
-    window_depth_status: Option<&super::storage_descriptor::StorageDescriptorLayout>,
+    [window_depth_status, draw_table]: [Option<&super::storage_descriptor::StorageDescriptorLayout>;
+        2],
     clipping: Option<&super::storage_descriptor::StorageDescriptorLayout>,
     [sphere, oit]: [Option<vk::DescriptorSetLayout>; 2],
     [pbr, maps, shadow]: [Option<vk::DescriptorSetLayout>; 3],
@@ -54,6 +55,9 @@ pub(super) fn create_layout(
     }
     if let Some(status) = window_depth_status {
         append_at(&mut layouts, 7, status.handle);
+    }
+    if let Some(table) = draw_table {
+        append_at(&mut layouts, 7, table.handle);
     }
     let info = vk::PipelineLayoutCreateInfo::default()
         .push_constant_ranges(&ranges)

@@ -15,12 +15,14 @@ use crate::iges_basic::entity_shape::iges_tool;
 use crate::iges_basic::shared_runs::{
     iges_shared_003, iges_shared_006, iges_shared_015, iges_shared_044,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{IgesDataDumpResult, iges_dump_xyz_l, iges_live, iges_real_text};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -55,7 +57,7 @@ impl IgesSolidToolSolidOfLinearExtrusion {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSolidOfLinearExtrusion::own_shared")?;
-        iter.get_one_item(&ent_live.curve().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.curve().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -104,8 +106,8 @@ impl IgesSolidToolSolidOfLinearExtrusion {
         let another_live = iges_live(another, "IgesSolidToolSolidOfLinearExtrusion::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolSolidOfLinearExtrusion::own_copy")?;
         let temp_entity = tc
-            .transferred(&another_live.curve().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.curve().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let temp_length: f64 = another_live.extrusion_length();
         let temp_direction: Xyz = Xyz::from(another_live.extrusion_direction()?);
         ent_live.init(&temp_entity, temp_length, temp_direction);
@@ -158,7 +160,7 @@ impl IgesSolidToolSolidOfRevolution {
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSolidOfRevolution::read_own_params")?;
-        let mut temp_entity: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_entity: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut temp_axis_point: Xyz = Xyz::default();
         let mut temp_axis: Xyz = Xyz::default();
         let mut temp_fraction: f64 = 0.0;
@@ -225,7 +227,7 @@ impl IgesSolidToolSolidOfRevolution {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSolidOfRevolution::own_shared")?;
-        iter.get_one_item(&ent_live.curve().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.curve().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -271,8 +273,8 @@ impl IgesSolidToolSolidOfRevolution {
         let another_live = iges_live(another, "IgesSolidToolSolidOfRevolution::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolSolidOfRevolution::own_copy")?;
         let temp_entity = tc
-            .transferred(&another_live.curve().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.curve().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let temp_fraction: f64 = another_live.fraction();
         let temp_axis_point: Xyz = Xyz::from(another_live.axis_point());
         let temp_axis: Xyz = Xyz::from(another_live.axis()?);

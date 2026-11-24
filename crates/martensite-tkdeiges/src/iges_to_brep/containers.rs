@@ -22,14 +22,11 @@ impl_transient_interface!(
 /// assert!(IgesToBRepToolContainer::new().iges_boundary().is_some());
 /// ```
 #[derive(Default)]
-pub struct IgesToBRepToolContainer {
-    transient: StandardTransient,
-}
+pub struct IgesToBRepToolContainer {}
 impl_transient!(
     IgesToBRepToolContainer,
     "IgesToBRepToolContainer",
     dyn IgesToBRepToolKind,
-    transient,
     interfaces: [dyn IgesToBRepToolKind]
 );
 
@@ -53,14 +50,12 @@ impl IgesToBRepToolKind for IgesToBRepToolContainer {
 /// assert!(IgesToBRepAlgoContainer::new().tool_container().is_ok());
 /// ```
 pub struct IgesToBRepAlgoContainer {
-    transient: StandardTransient,
     tools: SharedState<Handle<dyn IgesToBRepToolKind>>,
 }
 impl_transient!(
     IgesToBRepAlgoContainer,
     "IgesToBRepAlgoContainer",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl Default for IgesToBRepAlgoContainer {
@@ -73,7 +68,6 @@ impl IgesToBRepAlgoContainer {
     /// A holder of the plain tools; `IgesToBRepAlgoContainer::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             tools: SharedState::new(Handle::new(IgesToBRepToolContainer::new()).cast()),
         }
     }

@@ -97,7 +97,7 @@ fn bezier(r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     } else {
         Geom2dBezierCurve::new(&p)?
     };
-    Ok(Handle::new(curve).cast())
+    Ok(Handle::new(curve).into_upcast())
 }
 
 fn bspline(r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure> {
@@ -121,7 +121,7 @@ fn bspline(r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     } else {
         Geom2dBSplineCurve::new(&p, &k, &m, degree, periodic)?
     };
-    Ok(Handle::new(curve).cast())
+    Ok(Handle::new(curve).into_upcast())
 }
 
 fn conic(kind: i32, r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure> {
@@ -129,16 +129,16 @@ fn conic(kind: i32, r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure> 
     let sense = r.flag();
     let x = r.real();
     if kind == 1 {
-        return Ok(Handle::new(Geom2dCircle::from_axis(a, x, sense)?).cast());
+        return Ok(Handle::new(Geom2dCircle::from_axis(a, x, sense)?).into_upcast());
     }
     if kind == 4 {
-        return Ok(Handle::new(Geom2dParabola::from_axis(a, x, sense)?).cast());
+        return Ok(Handle::new(Geom2dParabola::from_axis(a, x, sense)?).into_upcast());
     }
     let y = r.real();
     if kind == 2 {
-        return Ok(Handle::new(Geom2dEllipse::from_axis(a, x, y, sense)?).cast());
+        return Ok(Handle::new(Geom2dEllipse::from_axis(a, x, y, sense)?).into_upcast());
     }
-    Ok(Handle::new(Geom2dHyperbola::from_axis(a, x, y, sense)?).cast())
+    Ok(Handle::new(Geom2dHyperbola::from_axis(a, x, y, sense)?).into_upcast())
 }
 
 /// One curve specification, as g2_curve reads it.
@@ -147,7 +147,7 @@ pub fn curve(r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     match kind {
         0 => {
             let p = r.pnt();
-            Ok(Handle::new(Geom2dLine::from_point(p, r.dir())).cast())
+            Ok(Handle::new(Geom2dLine::from_point(p, r.dir())).into_upcast())
         }
         1..=4 => conic(kind, r),
         5 => bezier(r),
@@ -156,22 +156,22 @@ pub fn curve(r: &mut Reader) -> Result<Handle<dyn Geom2dCurve>, Failure> {
             let (u1, u2) = (r.real(), r.real());
             let (sense, adjust) = (r.flag(), r.flag());
             let basis = curve(r)?;
-            Ok(Handle::new(Geom2dTrimmedCurve::new(&basis, u1, u2, sense, adjust)?).cast())
+            Ok(Handle::new(Geom2dTrimmedCurve::new(&basis, u1, u2, sense, adjust)?).into_upcast())
         }
         8 => {
             let d = r.real();
             let no_check = r.flag();
             let basis = curve(r)?;
-            Ok(Handle::new(Geom2dOffsetCurve::new(&basis, d, no_check)?).cast())
+            Ok(Handle::new(Geom2dOffsetCurve::new(&basis, d, no_check)?).into_upcast())
         }
         9 => {
             let (p, x, y) = (r.pnt(), r.dir(), r.dir());
             let frame = Axis22d::with_directions(p, x, y)?;
-            Ok(Handle::new(Geom2dCircle::new(frame, r.real())?).cast())
+            Ok(Handle::new(Geom2dCircle::new(frame, r.real())?).into_upcast())
         }
         10 => {
             let d = r.ax();
-            Ok(Handle::new(Geom2dParabola::from_directrix(d, r.pnt())?).cast())
+            Ok(Handle::new(Geom2dParabola::from_directrix(d, r.pnt())?).into_upcast())
         }
         11..=16 => super::eval::curve(kind, r),
         _ => panic!("unknown curve kind {kind}"),

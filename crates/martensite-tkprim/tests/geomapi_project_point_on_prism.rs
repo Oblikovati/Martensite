@@ -19,7 +19,7 @@ fn original_elliptical_wire() -> Wire {
     let normal = Direction3::new(0., 0., 1.).unwrap();
     let frame = Axis2::new(origin, normal).unwrap();
     let ellipse: Handle<dyn GeomCurve> =
-        Handle::new(GeomEllipse::new(frame, 10., 5.).unwrap()).cast();
+        Handle::new(GeomEllipse::new(frame, 10., 5.).unwrap()).into_upcast();
     let edge = BRepBuilderAPIMakeEdge::from_curve(&ellipse)
         .unwrap()
         .edge()

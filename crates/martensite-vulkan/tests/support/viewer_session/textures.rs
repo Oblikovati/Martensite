@@ -86,7 +86,7 @@ fn set_image(
     }
     if let Some(aspect) = fill_aspect(io).get() {
         aspect.set_texture_map_on(true);
-        aspect.set_texture_set(Handle::new(set));
+        aspect.set_texture_set(Handle::new(set).into_upcast());
     }
     Ok(())
 }

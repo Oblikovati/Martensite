@@ -1,7 +1,10 @@
 //! What every general module does with the directory part, around the own members of its package.
 use super::{IgesDataDefList, IgesDataDefType, IgesDataGeneralModule, IgesDataIgesEntity};
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeTyped, exceptions},
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -12,10 +15,10 @@ use martensite_tkxsbase::interface::{
 pub fn iges_fill_shared_case<M: IgesDataGeneralModule + ?Sized>(
     module: &M,
     cn: i32,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     iter: &mut InterfaceEntityIterator,
 ) -> Result<(), Failure> {
-    let anent = ent.cast::<IgesDataIgesEntity>();
+    let anent = ent.cast::<dyn IgesDataEntityKind>();
     let Some(live) = anent.get() else {
         return Ok(());
     };
@@ -42,10 +45,10 @@ fn add_all(
 pub fn iges_list_implied_case<M: IgesDataGeneralModule + ?Sized>(
     module: &M,
     cn: i32,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     iter: &mut InterfaceEntityIterator,
 ) -> Result<(), Failure> {
-    let anent = ent.cast::<IgesDataIgesEntity>();
+    let anent = ent.cast::<dyn IgesDataEntityKind>();
     let Some(live) = anent.get() else {
         return Ok(());
     };
@@ -57,17 +60,17 @@ pub fn iges_list_implied_case<M: IgesDataGeneralModule + ?Sized>(
 pub fn iges_check_case<M: IgesDataGeneralModule + ?Sized>(
     module: &M,
     cn: i32,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
     shares: &InterfaceShareTool,
     ach: &mut Handle<InterfaceCheck>,
 ) -> Result<(), Failure> {
-    let anent = ent.cast::<IgesDataIgesEntity>();
+    let anent = ent.cast::<dyn IgesDataEntityKind>();
     module.dir_checker(cn, &anent).check(ach, &anent);
     module.own_check_case(cn, &anent, shares, ach)
 }
 
 /// The entity another one was copied to, null for null.
-fn copied_kind<T: ?Sized + RuntimeTyped>(
+fn copied_kind<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     tc: &mut InterfaceCopyTool,
     from: &Handle<T>,
 ) -> Result<Handle<T>, Failure> {
@@ -81,12 +84,12 @@ fn copied_kind<T: ?Sized + RuntimeTyped>(
 pub fn iges_copy_case<M: IgesDataGeneralModule + ?Sized>(
     module: &M,
     cn: i32,
-    entfrom: &Handle<StandardTransient>,
-    entto: &Handle<StandardTransient>,
+    entfrom: &Handle<dyn Transient>,
+    entto: &Handle<dyn Transient>,
     tc: &mut InterfaceCopyTool,
 ) -> Result<(), Failure> {
-    let enfr = entfrom.cast::<IgesDataIgesEntity>();
-    let ento = entto.cast::<IgesDataIgesEntity>();
+    let enfr = entfrom.cast::<dyn IgesDataEntityKind>();
+    let ento = entto.cast::<dyn IgesDataEntityKind>();
     let (Some(from), Some(to)) = (enfr.get(), ento.get()) else {
         return Err(exceptions::null_object(
             "IGES copy: the entities must be IGES entities and not null",
@@ -98,7 +101,7 @@ pub fn iges_copy_case<M: IgesDataGeneralModule + ?Sized>(
         let iter = from.properties();
         iter.start();
         while iter.more() {
-            let property = copied_kind(tc, &iter.value()?)?.cast::<IgesDataIgesEntity>();
+            let property = copied_kind(tc, &iter.value()?)?.cast::<dyn IgesDataEntityKind>();
             to.add_property(&property)?;
             iter.next();
         }
@@ -161,12 +164,12 @@ fn copy_directory(
 pub fn iges_renew_implied_case<M: IgesDataGeneralModule + ?Sized>(
     module: &M,
     cn: i32,
-    entfrom: &Handle<StandardTransient>,
-    entto: &Handle<StandardTransient>,
+    entfrom: &Handle<dyn Transient>,
+    entto: &Handle<dyn Transient>,
     tc: &InterfaceCopyTool,
 ) -> Result<(), Failure> {
-    let enfr = entfrom.cast::<IgesDataIgesEntity>();
-    let ento = entto.cast::<IgesDataIgesEntity>();
+    let enfr = entfrom.cast::<dyn IgesDataEntityKind>();
+    let ento = entto.cast::<dyn IgesDataEntityKind>();
     module.own_renew_case(cn, &enfr, &ento, tc)?;
     let (Some(from), Some(to)) = (enfr.get(), ento.get()) else {
         return Ok(());
@@ -191,9 +194,9 @@ pub fn iges_renew_implied_case<M: IgesDataGeneralModule + ?Sized>(
 pub fn iges_when_delete_case<M: IgesDataGeneralModule + ?Sized>(
     module: &M,
     cn: i32,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
 ) {
-    let anent = ent.cast::<IgesDataIgesEntity>();
+    let anent = ent.cast::<dyn IgesDataEntityKind>();
     let Some(live) = anent.get() else {
         return;
     };
@@ -202,8 +205,8 @@ pub fn iges_when_delete_case<M: IgesDataGeneralModule + ?Sized>(
 }
 
 /// The name of an entity.
-pub fn iges_name_of(ent: &Handle<StandardTransient>) -> Handle<HAsciiString> {
-    ent.cast::<IgesDataIgesEntity>()
+pub fn iges_name_of(ent: &Handle<dyn Transient>) -> Handle<HAsciiString> {
+    ent.cast::<dyn IgesDataEntityKind>()
         .get()
         .and_then(|live| live.name_value().ok())
         .unwrap_or_default()

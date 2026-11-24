@@ -9,23 +9,15 @@ macro_rules! message_runtime_type {
         impl $crate::standard::RuntimeTyped for $class {
             const TYPE_NAME: &'static str = $name;
             fn static_type() -> &'static $crate::standard::RuntimeType {
-                // Keep the class-level static descriptor handle alive for the process lifetime.
-                static DESCRIPTOR: std::sync::OnceLock<
-                    $crate::standard::Handle<$crate::standard::RuntimeType>,
-                > = std::sync::OnceLock::new();
-                DESCRIPTOR
-                    .get_or_init(|| {
-                        $crate::standard::RuntimeType::register_owned::<Self>(
-                            $name,
-                            std::mem::size_of::<Self>(),
-                            Some(<$parent as $crate::standard::RuntimeTyped>::static_type_handle()),
-                        )
-                    })
-                    .get()
-                    .expect("registered descriptor")
-            }
-            fn project_from(object: &dyn $crate::standard::Transient) -> Option<&Self> {
-                $crate::standard::project_concrete::<Self>(object)
+                static DESCRIPTOR: std::sync::OnceLock<&'static $crate::standard::RuntimeType> =
+                    std::sync::OnceLock::new();
+                DESCRIPTOR.get_or_init(|| {
+                    $crate::standard::RuntimeType::register::<Self>(
+                        $name,
+                        std::mem::size_of::<Self>(),
+                        Some(<$parent as $crate::standard::RuntimeTyped>::static_type()),
+                    )
+                })
             }
         }
     };
@@ -79,7 +71,7 @@ pub use msg::Msg;
 mod msg_file;
 pub use msg_file::{MsgFile, MsgFileSource, NativeMsgFileSource};
 mod algorithm;
-pub use algorithm::Algorithm;
+pub use algorithm::{Algorithm, AlgorithmSource, AlgorithmState};
 mod defaults;
 pub use defaults::Message;
 mod lazy_progress_scope;

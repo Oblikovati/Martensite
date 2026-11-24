@@ -26,7 +26,7 @@ fn TDF_AttributeIterator_Test__OCC24755_AttributeInsertionOrder() {
     // Prepend a name.
     TDataStdName::set(&label, &ExtendedString::new("test")).unwrap();
     // Append a double value.
-    let real: Handle<dyn TdfAttribute> = Handle::new(TDataStdReal::new()).cast();
+    let real: Handle<dyn TdfAttribute> = Handle::new(TDataStdReal::new()).into_upcast();
     label.add_attribute(&real, true).unwrap();
     // Attributes come in insertion order: Integer, Name, Real.
     let mut iterator = TdfAttributeIterator::new(&label, true).unwrap();

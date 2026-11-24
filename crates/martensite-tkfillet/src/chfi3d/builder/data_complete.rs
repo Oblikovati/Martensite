@@ -33,7 +33,7 @@ fn line_2d(pd: Point2, pf: Point2) -> Result<Handle<dyn Geom2dCurve>, Failure> {
         pd,
         Direction2::from_vector(Vector2::between(pd, pf))?,
     ))
-    .cast())
+    .into_upcast())
 }
 
 impl ChFi3dBuilder {
@@ -56,9 +56,9 @@ impl ChFi3dBuilder {
         let sc = surfcoin.get().ok_or_else(|| Failure::new("CompleteData"))?;
         let crv3d = sc.v_iso(v)?;
         let hcs: Handle<dyn Adaptor3dCurve> =
-            Handle::new(GeomAdaptorCurve::with_curve(&crv3d)?).cast();
+            Handle::new(GeomAdaptorCurve::with_curve(&crv3d)?).into_upcast();
         let mut c2dtrim: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dTrimmedCurve::new(pc, ufirst, ulast, true, true)?).cast();
+            Handle::new(Geom2dTrimmedCurve::new(pc, ufirst, ulast, true, true)?).into_upcast();
         same_parameter(&hcs, &mut c2dtrim, s, self.tolapp3d, tolreached)?;
         let w = 0.5 * (ufirst + ulast);
         let xy = c2dtrim
@@ -181,12 +181,13 @@ impl ChFi3dBuilder {
     ) -> Result<bool, Failure> {
         let (the_func, degmax, segmax): (Handle<dyn SweepFunction>, i32, i32) = match kind {
             LineFunction::Surfaces => (
-                Handle::new(BRepBlendAppFunc::new(lin, func, self.tolapp3d, 1.0e-5)?).cast(),
+                Handle::new(BRepBlendAppFunc::new(lin, func, self.tolapp3d, 1.0e-5)?).into_upcast(),
                 20,
                 5000,
             ),
             LineFunction::SurfRst => (
-                Handle::new(BRepBlendAppFuncRst::new(lin, func, self.tolapp3d, 1.0e-5)?).cast(),
+                Handle::new(BRepBlendAppFuncRst::new(lin, func, self.tolapp3d, 1.0e-5)?)
+                    .into_upcast(),
                 11,
                 50,
             ),
@@ -197,7 +198,7 @@ impl ChFi3dBuilder {
                     self.tolapp3d,
                     1.0e-5,
                 )?)
-                .cast(),
+                .into_upcast(),
                 11,
                 50,
             ),

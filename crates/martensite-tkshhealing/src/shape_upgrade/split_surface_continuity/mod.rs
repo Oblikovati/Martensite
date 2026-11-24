@@ -1,5 +1,5 @@
 //! ShapeUpgradeSplitSurfaceContinuity.
-use super::{ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData, SurfaceSplitValues};
+use super::{SplitSurface, SplitSurfaceData, SurfaceSplitValues};
 use crate::shape_extend::ShapeExtendStatus;
 use martensite_tkernel::{
     impl_transient, precision,
@@ -33,18 +33,18 @@ impl Default for ContinuitySettings {
 /// Correct a surface's knot continuity or add split values where correction exceeds tolerance.
 /// `let splitter = ShapeUpgradeSplitSurfaceContinuity::new();`
 pub struct ShapeUpgradeSplitSurfaceContinuity {
-    parent: ShapeUpgradeSplitSurface,
+    state: SplitSurfaceData,
     settings: SharedState<ContinuitySettings>,
 }
 impl Default for ShapeUpgradeSplitSurfaceContinuity {
     fn default() -> Self {
         Self {
-            parent: ShapeUpgradeSplitSurface::default(),
+            state: SplitSurfaceData::default(),
             settings: SharedState::new(ContinuitySettings::default()),
         }
     }
 }
-impl_transient!(ShapeUpgradeSplitSurfaceContinuity,"ShapeUpgrade_SplitSurfaceContinuity",ShapeUpgradeSplitSurface,parent,interfaces:[dyn SplitSurface]);
+impl_transient!(ShapeUpgradeSplitSurfaceContinuity,"ShapeUpgrade_SplitSurfaceContinuity",dyn SplitSurface,interfaces:[dyn SplitSurface]);
 
 impl ShapeUpgradeSplitSurfaceContinuity {
     /// Create the C1 splitter with `precision::confusion()` tolerance;
@@ -64,19 +64,19 @@ impl ShapeUpgradeSplitSurfaceContinuity {
     }
     /// Shared surface split state; `splitter.split_surface_data()`.
     pub fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
     /// Shared U split values; `splitter.u_split_values()`.
     pub fn u_split_values(&self) -> SurfaceSplitValues {
-        self.parent.u_split_values()
+        SplitSurface::u_split_values(self)
     }
     /// Shared V split values; `splitter.v_split_values()`.
     pub fn v_split_values(&self) -> SurfaceSplitValues {
-        self.parent.v_split_values()
+        SplitSurface::v_split_values(self)
     }
     /// Decode a ShapeExtend flag; `splitter.status_flag(ShapeExtendStatus::Done3)`.
     pub fn status_flag(&self, status: ShapeExtendStatus) -> bool {
-        self.parent.status_flag(status)
+        SplitSurface::status_flag(self, status)
     }
 }
 
@@ -90,12 +90,9 @@ fn surface_continuity_order(criterion: Shape) -> i32 {
 }
 impl SplitSurface for ShapeUpgradeSplitSurfaceContinuity {
     fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
     fn compute(&self, segment: bool) -> Result<(), Failure> {
         self.compute_continuity(segment)
-    }
-    fn build(&self, segment: bool) -> Result<(), Failure> {
-        self.parent.build(segment)
     }
 }

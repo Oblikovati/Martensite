@@ -16,7 +16,8 @@ use crate::step_repr::{
 use crate::step_shape::{
     StepShapeShapeDefinitionRepresentation, StepShapeShapeRepresentation, StepShapeSolidModel,
 };
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
@@ -26,11 +27,11 @@ use martensite_tkxsbase::xs_control::XSControlWorkSession;
 /// The first solid model among the items of a representation, null without one.
 fn solid_of_items(
     representation: &StepShapeShapeRepresentation,
-) -> Result<Handle<StepShapeSolidModel>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>, Failure> {
     for rank in 1..=representation.nb_items() {
         let solid = representation
             .items_value(rank)?
-            .cast::<StepShapeSolidModel>();
+            .cast::<dyn crate::StepEntityBase<StepShapeSolidModel>>();
         if solid.is_some() {
             return Ok(solid);
         }
@@ -42,7 +43,7 @@ fn solid_of_items(
 fn find_solid_for_pds(
     session: &SessionGraph,
     pds: &Handle<StepReprProductDefinitionShape>,
-) -> Result<Handle<StepShapeSolidModel>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>, Failure> {
     for sharing in session.sharings(&pds.cast())? {
         let Some(sdr) = sharing
             .cast::<StepShapeShapeDefinitionRepresentation>()
@@ -51,7 +52,7 @@ fn find_solid_for_pds(
         else {
             continue;
         };
-        let representation = sdr.cast::<StepShapeShapeRepresentation>();
+        let representation = sdr.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
         let Some(live) = representation.get() else {
             continue;
         };
@@ -60,17 +61,19 @@ fn find_solid_for_pds(
             return Ok(solid);
         }
         for second in session.sharings(&representation.cast())? {
-            let relationship = second.cast::<StepReprRepresentationRelationship>();
+            let relationship =
+                second.cast::<dyn crate::StepEntityBase<StepReprRepresentationRelationship>>();
             let Some(relationship) = relationship.get() else {
                 continue;
             };
-            let rep: Handle<StepReprRepresentation> = representation.cast();
+            let rep: Handle<dyn crate::StepEntityBase<StepReprRepresentation>> =
+                representation.cast();
             let other = if relationship.rep1() == rep {
                 relationship.rep2()
             } else {
                 relationship.rep1()
             };
-            let other = other.cast::<StepShapeShapeRepresentation>();
+            let other = other.cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>();
             let Some(other) = other.get() else {
                 continue;
             };
@@ -127,7 +130,7 @@ fn density_of(
 /// The fields of the material a PDS has: from the last representation items.
 fn material_of(
     session: &SessionGraph,
-    product_definition: &Handle<StandardTransient>,
+    product_definition: &Handle<dyn Transient>,
     factors: &StepDataFactors,
 ) -> Result<XCAFDocMaterialFields, Failure> {
     let empty = || Handle::new(HAsciiString::new(""));
@@ -139,11 +142,15 @@ fn material_of(
         dens_val_type: empty(),
     };
     for sharing in session.sharings(product_definition)? {
-        if sharing.cast::<StepReprPropertyDefinition>().is_null() {
+        if sharing
+            .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>()
+            .is_null()
+        {
             continue;
         }
         for second in session.sharings(&sharing)? {
-            let representation = second.cast::<StepReprPropertyDefinitionRepresentation>();
+            let representation = second
+                .cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
             let Some(representation) = representation.get().map(|live| live.used_representation())
             else {
                 continue;
@@ -185,7 +192,7 @@ impl ReaderState {
         &self,
         ws: &Handle<XSControlWorkSession>,
         doc: &Handle<TDocStdDocument>,
-        seq_pds: &Handle<HSequence<Handle<StandardTransient>>>,
+        seq_pds: &Handle<HSequence<Handle<dyn Transient>>>,
         factors: &StepDataFactors,
     ) -> Result<bool, Failure> {
         let main = step_live(doc, WHERE)?.main()?;
@@ -195,7 +202,7 @@ impl ReaderState {
             return Ok(false);
         };
         let session = SessionGraph::of_process(ws)?;
-        let all: Vec<Handle<StandardTransient>> =
+        let all: Vec<Handle<dyn Transient>> =
             step_live(seq_pds, WHERE)?.sequence(|items| items.iter().cloned().collect());
         for entity in all {
             let pds = entity.cast::<StepReprProductDefinitionShape>();

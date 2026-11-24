@@ -43,20 +43,59 @@ impl SubmissionProtocol {
         }
         lifecycle.observe(outcome)
     }
+    /// Submit once without waiting, then complete later (#594); `protocol.submit_admitted(lifecycle, calls)?`.
+    pub fn submit_admitted(
+        &self,
+        lifecycle: &DeviceLifecycle,
+        calls: &mut impl SubmissionDispatch,
+    ) -> Result<(), RenderError> {
+        lifecycle.admit("submit frame")?;
+        let outcome = self.submit(calls);
+        self.observe_phase(lifecycle, outcome)
+    }
+    /// Qualify work that `submit_admitted` queued; `protocol.complete_observed(lifecycle, calls)?`.
+    pub fn complete_observed(
+        &self,
+        lifecycle: &DeviceLifecycle,
+        calls: &mut impl SubmissionDispatch,
+    ) -> Result<(), RenderError> {
+        // Completion is observed even after a loss, so it needs no new admission.
+        let outcome = self.complete(calls);
+        self.observe_phase(lifecycle, outcome)
+    }
+    fn observe_phase(
+        &self,
+        lifecycle: &DeviceLifecycle,
+        outcome: Result<(), RenderError>,
+    ) -> Result<(), RenderError> {
+        if self.phase() == SubmissionPhase::RetirementIncomplete {
+            lifecycle.block_retirement();
+        }
+        lifecycle.observe(outcome)
+    }
     /// Submit once and qualify completion; `protocol.finish(&mut calls)?` uses actual dispatch.
     pub fn finish(&self, calls: &mut impl SubmissionDispatch) -> Result<(), RenderError> {
+        self.submit(calls)?;
+        self.complete(calls)
+    }
+    /// End and submit a recording; `protocol.submit(&mut calls)?` leaves the work `Submitted`.
+    pub fn submit(&self, calls: &mut impl SubmissionDispatch) -> Result<(), RenderError> {
         if self.phase() != SubmissionPhase::Recording {
             return Err(rejected(self.phase(), "a recording one-shot submission"));
         }
         self.0.set(SubmissionPhase::NotSubmitted);
         calls.end_commands()?;
-        self.submit_and_wait(calls)
-    }
-    fn submit_and_wait(&self, calls: &mut impl SubmissionDispatch) -> Result<(), RenderError> {
         if let Err(primary) = calls.submit_commands() {
             return self.after_failed_submit(calls, primary);
         }
         self.0.set(SubmissionPhase::Submitted);
+        Ok(())
+    }
+    /// Wait once for submitted work; `protocol.complete(&mut calls)?` retires it or keeps it unknown.
+    pub fn complete(&self, calls: &mut impl SubmissionDispatch) -> Result<(), RenderError> {
+        if self.phase() != SubmissionPhase::Submitted {
+            return Err(rejected(self.phase(), "submitted work to complete"));
+        }
         match calls.wait_fence() {
             Ok(()) => {
                 self.0.set(SubmissionPhase::Retired);

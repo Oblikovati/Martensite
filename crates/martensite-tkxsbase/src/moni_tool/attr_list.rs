@@ -3,11 +3,11 @@
 use super::{MoniToolIntVal, MoniToolRealVal, MoniToolValueType};
 use crate::attr_core::{self, AttributeBoxes, AttributeKind, AttributeMap};
 use martensite_tkernel::{
-    standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, Transient},
     tcollection::{AsciiString, HAsciiString},
 };
 
-/// The native `DataMap<AsciiString, Handle<StandardTransient>>`
+/// The native `DataMap<AsciiString, Handle<dyn Transient>>`
 /// of the attributes.
 pub type MoniToolAttrMap = AttributeMap;
 
@@ -15,10 +15,10 @@ pub type MoniToolAttrMap = AttributeMap;
 struct MoniToolBoxes;
 
 impl AttributeBoxes for MoniToolBoxes {
-    fn new_integer(value: i32) -> Handle<StandardTransient> {
-        Handle::new(MoniToolIntVal::new(value)).cast()
+    fn new_integer(value: i32) -> Handle<dyn Transient> {
+        Handle::new(MoniToolIntVal::new(value)).into_upcast()
     }
-    fn integer_of(atr: &Handle<StandardTransient>) -> Option<i32> {
+    fn integer_of(atr: &Handle<dyn Transient>) -> Option<i32> {
         atr.cast::<MoniToolIntVal>()
             .get()
             .map(MoniToolIntVal::value)
@@ -26,10 +26,10 @@ impl AttributeBoxes for MoniToolBoxes {
     fn integer_type() -> &'static RuntimeType {
         MoniToolIntVal::static_type()
     }
-    fn new_real(value: f64) -> Handle<StandardTransient> {
-        Handle::new(MoniToolRealVal::new(value)).cast()
+    fn new_real(value: f64) -> Handle<dyn Transient> {
+        Handle::new(MoniToolRealVal::new(value)).into_upcast()
     }
-    fn real_of(atr: &Handle<StandardTransient>) -> Option<f64> {
+    fn real_of(atr: &Handle<dyn Transient>) -> Option<f64> {
         atr.cast::<MoniToolRealVal>()
             .get()
             .map(MoniToolRealVal::value)
@@ -61,7 +61,7 @@ impl MoniToolAttrList {
         Self::default()
     }
     /// `SetAttribute`: adds or replaces the attribute `name`.
-    pub fn set_attribute(&mut self, name: &str, val: &Handle<StandardTransient>) {
+    pub fn set_attribute(&mut self, name: &str, val: &Handle<dyn Transient>) {
         self.theattrib.bind(AsciiString::new(name), val.clone());
     }
     /// `RemoveAttribute`: true when the attribute existed.
@@ -73,12 +73,12 @@ impl MoniToolAttrList {
         &self,
         name: &str,
         atype: &RuntimeType,
-        val: &mut Handle<StandardTransient>,
+        val: &mut Handle<dyn Transient>,
     ) -> bool {
         attr_core::get_attribute(&self.theattrib, name, atype, val)
     }
     /// `Attribute`: the attribute `name`, null when not recorded.
-    pub fn attribute(&self, name: &str) -> Handle<StandardTransient> {
+    pub fn attribute(&self, name: &str) -> Handle<dyn Transient> {
         attr_core::attribute(&self.theattrib, name)
     }
     /// `AttributeType`: integer, real, text, ident (any other object) or void (not
@@ -122,7 +122,7 @@ impl MoniToolAttrList {
     }
     /// `SetStringAttribute`.
     pub fn set_string_attribute(&mut self, name: &str, val: &str) {
-        self.set_attribute(name, &Handle::new(HAsciiString::new(val)).cast());
+        self.set_attribute(name, &Handle::new(HAsciiString::new(val)).into_upcast());
     }
     /// `GetStringAttribute`: false and "" when absent or not a text.
     pub fn get_string_attribute(&self, name: &str, val: &mut AsciiString) -> bool {
@@ -158,6 +158,7 @@ impl MoniToolAttrList {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use martensite_tkernel::standard::StandardTransient;
 
     #[test]
     fn typed_attributes_round_trip() {
@@ -192,7 +193,7 @@ mod tests {
     fn remove_and_ident_attributes() {
         let mut list = MoniToolAttrList::new();
         assert!(!list.remove_attribute("a"));
-        let object = Handle::new(StandardTransient::default());
+        let object = Handle::new(StandardTransient).into_upcast::<dyn Transient>();
         list.set_attribute("a", &object);
         assert_eq!(list.attribute_type("a"), MoniToolValueType::ValueIdent);
         assert!(list.remove_attribute("a"));

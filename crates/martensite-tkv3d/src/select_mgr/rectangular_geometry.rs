@@ -18,10 +18,11 @@ pub(super) fn rectangular_compute_vertices(
     builder: &SelectMgrFrustumBuilder,
 ) {
     let (min, max) = bounds;
+    let projector = builder.view_plane_projector();
     for (index, vertex) in core.vertices.iter_mut().enumerate() {
         let x = if index < 4 { min.x() } else { max.x() };
         let y = if index % 4 < 2 { max.y() } else { min.y() };
-        *vertex = builder.project_pnt_on_view_plane(x, y, (index % 2) as f64);
+        *vertex = projector.project(x, y, (index % 2) as f64);
     }
     rectangular_compute_edges(core);
 }

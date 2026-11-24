@@ -3,18 +3,18 @@ use super::{PackedInteger, PackedMap, PackedWord};
 
 impl<T: PackedInteger> PackedMap<T> {
     /// Tests packed-block growth pressure; `assert!(PackedMap::<i32>::default().resizable())`.
-    pub fn resizable(&self) -> bool {
+    pub(crate) fn resizable(&self) -> bool {
         self.is_empty() || self.block_count > self.bucket_count
     }
 
     /// Computes the unsigned block index; `assert_eq!(PackedMap::<i32>::packed_key_index(32), 1)`.
-    pub fn packed_key_index(key: T) -> T::Word {
+    pub(crate) fn packed_key_index(key: T) -> T::Word {
         T::Word::from_bits(key.bits() >> Self::SHIFT)
     }
 
     /// Computes the one-based bucket; `assert_eq!(PackedMap::<i32>::hash_code(5, 3), 3)`.
     /// A zero bucket count has no defined result and panics here.
-    pub fn hash_code(key_index: T::Word, bucket_count: usize) -> usize {
+    pub(crate) fn hash_code(key_index: T::Word, bucket_count: usize) -> usize {
         assert!(
             bucket_count != 0,
             "bucket count {bucket_count}; expected a value in 1..=usize::MAX"
@@ -24,7 +24,8 @@ impl<T: PackedInteger> PackedMap<T> {
 
     /// Updates the mask's count-minus-one bits; `PackedMap::<i32>::population(&mut 0, 0b101)` returns 2.
     /// Zero population stores all low bits set, the unsigned underflow result.
-    pub fn population(mask: &mut T::Word, block_bits: T::Word) -> usize {
+    #[cfg(test)]
+    pub(crate) fn population(mask: &mut T::Word, block_bits: T::Word) -> usize {
         let count: u64 = u64::from(block_bits.bits().count_ones());
         let low_mask: u64 = Self::BITS_PER_BLOCK as u64 - 1;
         let preserved_base: u64 = mask.bits() & !low_mask;

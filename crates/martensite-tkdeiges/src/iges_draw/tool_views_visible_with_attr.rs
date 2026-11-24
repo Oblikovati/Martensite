@@ -13,11 +13,12 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesEntity, IgesDataIgesReaderData,
-    IgesDataIgesWriter, IgesDataLineFontEntity, IgesDataParamReader, IgesDataViewKindEntity,
-    iges_array1_set, iges_new_array1,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesReaderData, IgesDataIgesWriter,
+    IgesDataLineFontEntity, IgesDataParamReader, IgesDataViewKindEntity, iges_array1_set,
+    iges_new_array1,
 };
 use crate::iges_draw::IgesDrawViewsVisibleWithAttr;
 use crate::iges_graph::IgesGraphColor;
@@ -51,7 +52,7 @@ impl IgesDrawToolViewsVisibleWithAttr {
         let mut temp_line_fonts: Handle<HArray1<i32>> = Default::default();
         let mut temp_color_values: Handle<HArray1<i32>> = Default::default();
         let mut temp_line_weights: Handle<HArray1<i32>> = Default::default();
-        let mut temp_display_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut temp_display_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
         let mut temp_line_definitions: Handle<HArray1<Handle<dyn IgesDataLineFontEntity>>> =
             Default::default();

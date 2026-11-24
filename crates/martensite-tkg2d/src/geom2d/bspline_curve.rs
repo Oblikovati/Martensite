@@ -15,20 +15,18 @@ use crate::geom2d_eval::{RepCurveDesc, rep_utils};
 pub use input_lease::{PlanarSplineInputLease, StoredPlanarSplineInput};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::gp::{Point2, Vector2, resolution};
 
 /// A B-spline curve; `Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 3, false)?)`.
 pub struct Geom2dBSplineCurve {
-    parent: StandardTransient,
     state: SharedState<BSplineState>,
 }
 impl_transient!(
     Geom2dBSplineCurve,
     "Geom2d_BSplineCurve",
     dyn Geom2dBoundedCurve,
-    parent,
     interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve, dyn Geom2dBoundedCurve]
 );
 
@@ -55,7 +53,6 @@ impl Geom2dBSplineCurve {
     crate::bspline_curve_edits!(Point2, Vector2);
     fn from_state(state: BSplineState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

@@ -9,7 +9,7 @@ use crate::tdf::{
 use martensite_tkernel::{
     impl_transient,
     ncollection::DoubleMap,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
 };
 use std::io;
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
@@ -32,18 +32,16 @@ pub type TFunctionFunctionMap = DoubleMap<i32, TdfLabel>;
 /// assert_eq!((scope.get_function_id(&function).unwrap(), scope.get_free_id()), (1, 2));
 /// ```
 pub struct TFunctionScope {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     functions: SharedState<TFunctionFunctionMap>,
     free_id: SharedState<i32>,
 }
-impl_transient!(TFunctionScope, "TFunction_Scope", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TFunctionScope, "TFunction_Scope", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TFunctionScope {
     /// `TFunction_Scope()`: no function, the next ID is 1.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             functions: SharedState::new(TFunctionFunctionMap::default()),
             free_id: SharedState::new(1),
@@ -60,7 +58,7 @@ impl TFunctionScope {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        root.add_attribute(&created.cast(), true)?;
+        root.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `GetID`.
@@ -180,7 +178,7 @@ impl TdfAttribute for TFunctionScope {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Dump`: the attribute dump.
     fn dump(&self, stream: &mut dyn io::Write) -> io::Result<()> {

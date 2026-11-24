@@ -150,8 +150,8 @@ impl ChFi3dBuilder {
     fn more_corner_update(&mut self, oc: &mut OneCorner, vtx: &Vertex) -> Result<bool, Failure> {
         let surf = self.ds.surface(lock(&oc.fd).surf()).surface().clone();
         let hgs: Handle<dyn Adaptor3dSurface> =
-            Handle::new(GeomAdaptorSurface::with_surface(&surf)?).cast();
-        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.clone().cast();
+            Handle::new(GeomAdaptorSurface::with_surface(&surf)?).into_upcast();
+        let hbs: Handle<dyn Adaptor3dSurface> = oc.hbs.upcast();
         let mut wop = lock(&oc.fd).interference(oc.ifad).parameter(oc.isfirst);
         let c3df = self
             .ds
@@ -181,7 +181,7 @@ impl ChFi3dBuilder {
         };
         let cpad = lock(&oc.fd).vertex(oc.isfirst, oc.ifad).clone();
         let pced: Handle<dyn Adaptor2dCurve2d> =
-            Handle::new(BRepAdaptorCurve2d::with_edge_on_face(cpad.arc()?, &oc.fv)?).cast();
+            Handle::new(BRepAdaptorCurve2d::with_edge_on_face(cpad.arc()?, &oc.fv)?).into_upcast();
         self.update_side_on_edge(&oc.fd, (oc.isfirst, oc.ifad), &hbs, &pced, &hgs)?;
         Ok(inters)
     }

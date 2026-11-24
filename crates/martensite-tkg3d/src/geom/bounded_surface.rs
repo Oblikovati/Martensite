@@ -8,5 +8,5 @@ pub trait GeomBoundedSurface: GeomSurface {}
 impl_transient_interface!(
     dyn GeomBoundedSurface,
     "Geom_BoundedSurface",
-    dyn GeomSurface
+    dyn GeomSurface, upcasts: [dyn GeomSurface]
 );

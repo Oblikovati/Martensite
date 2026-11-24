@@ -25,7 +25,7 @@ pub(super) struct NativeStyleViewProbe {
     pub identity: i32,
     pub trace: Arc<ViewCallbackTrace>,
 }
-martensite_tkernel::impl_transient!(NativeStyleViewProbe,"Martensite_ViewSourceProbe",V3dView,base,
+martensite_tkernel::impl_transient!(NativeStyleViewProbe,"Martensite_ViewSourceProbe",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for NativeStyleViewProbe {
     fn view_base(&self) -> &V3dView {
@@ -75,7 +75,7 @@ impl NativeStyleViewProbe {
         }
     }
     fn record(&self, operation: &str) {
-        let count = self.base.this.read().observe().ref_count();
+        let count = self.base.this.read().ref_count();
         self.trace
             .rows
             .write()

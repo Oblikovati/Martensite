@@ -17,7 +17,7 @@ use basis::{BasisResolution, resolve_basis};
 pub use equivalent::equivalent_surface;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::geom_abs::Shape;
 
 #[derive(Clone)]
@@ -32,14 +32,12 @@ struct OffsetSurfaceState {
 /// An offset surface; the basis is a private copy (unwrapped from trimmed and
 /// offset surfaces); `Handle::new(GeomOffsetSurface::new(&plane.cast(), 3.0, false)?)`.
 pub struct GeomOffsetSurface {
-    parent: StandardTransient,
     state: SharedState<OffsetSurfaceState>,
 }
 impl_transient!(
     GeomOffsetSurface,
     "Geom_OffsetSurface",
     dyn GeomSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface]
 );
 
@@ -48,7 +46,7 @@ fn full_rep(surface: Handle<dyn GeomSurface>) -> Handle<dyn RepSurfaceDesc> {
     if surface.is_null() {
         return Handle::default();
     }
-    Handle::new(RepSurfaceDescFull::new(surface)).cast()
+    Handle::new(RepSurfaceDescFull::new(surface)).into_upcast()
 }
 
 impl GeomOffsetSurface {
@@ -64,7 +62,6 @@ impl GeomOffsetSurface {
         not_check_c0: bool,
     ) -> Result<Self, Failure> {
         let this = Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(OffsetSurfaceState {
                 basis: Handle::default(),
                 eval_rep: Handle::default(),
@@ -89,7 +86,6 @@ impl GeomOffsetSurface {
             basis_continuity: source.basis_continuity,
         };
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }

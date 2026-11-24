@@ -15,6 +15,7 @@ pub(super) struct OitCommandRecorder<'a> {
     pub resources: &'a FrameResources,
     pub frame: &'a RenderFrame,
     pub layouts: OitAttachmentLayouts,
+    secondary: Vec<super::secondary_layer_commands::LayerCommands>,
 }
 
 pub(super) fn record_layers(
@@ -22,6 +23,7 @@ pub(super) fn record_layers(
     command: vk::CommandBuffer,
     resources: &FrameResources,
     frame: &RenderFrame,
+    start: usize,
 ) {
     OitCommandRecorder {
         runtime,
@@ -29,11 +31,12 @@ pub(super) fn record_layers(
         resources,
         frame,
         layouts: Default::default(),
+        secondary: resources.secondary_layers.prepare(resources, frame, start),
     }
-    .record_all();
+    .record_all(start);
 }
 impl<'a> OitCommandRecorder<'a> {
-    fn record_all(&mut self) {
+    fn record_all(&mut self, start: usize) {
         use super::frame::FrameBackgroundDraw;
         match &self.resources.background {
             Some(FrameBackgroundDraw::Cube(background)) => {
@@ -63,8 +66,16 @@ impl<'a> OitCommandRecorder<'a> {
             }
             None => {}
         }
-        let mut index = 0;
+        let mut index = start;
         while index < self.frame.layers.len() {
+            if let Some(snapshot) = self
+                .resources
+                .main_snapshot
+                .as_ref()
+                .filter(|snapshot| snapshot.start == index)
+            {
+                snapshot.record(self.runtime, self.command, self.resources);
+            }
             self.grid_before(index);
             self.raytrace_before(index);
             if !self.transparent_layer(index) {
@@ -135,6 +146,18 @@ impl<'a> OitCommandRecorder<'a> {
                 .is_some_and(|draw| draw.presentation.surface_blend)
     }
     fn ordinary_layer(&self, index: usize) {
+        if let Some(secondary) = self.secondary.iter().find(|layer| layer.index == index) {
+            super::record::record_secondary_layer(
+                self.runtime,
+                self.command,
+                self.resources,
+                self.frame.clear_color,
+                index,
+                &self.frame.layers[index],
+                &secondary.commands,
+            );
+            return;
+        }
         super::record::record_layer(
             self.runtime,
             self.command,
@@ -151,7 +174,7 @@ impl<'a> OitCommandRecorder<'a> {
             .expect("allocated OIT batch resources")
     }
     fn record_batch(&mut self, layers: Range<usize>) {
-        match &self.pass().targets {
+        match self.pass().targets.as_ref() {
             OitTargets::Weighted {
                 accumulation,
                 coverage,
@@ -185,7 +208,7 @@ impl<'a> OitCommandRecorder<'a> {
         for iteration in 0..iterations {
             self.peel_iteration(layers.clone(), iteration);
         }
-        let OitTargets::Peeling { back, .. } = &self.pass().targets else {
+        let OitTargets::Peeling { back, .. } = self.pass().targets.as_ref() else {
             unreachable!()
         };
         self.transition(&[back], vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL);
@@ -206,7 +229,7 @@ impl<'a> OitCommandRecorder<'a> {
         );
     }
     fn initialize_peeling_images(&mut self) {
-        let OitTargets::Peeling { ping, pong, back } = &self.pass().targets else {
+        let OitTargets::Peeling { ping, pong, back } = self.pass().targets.as_ref() else {
             unreachable!()
         };
         self.clear_peeling(ping, [-1e15, -1e15, 0., 0.]);
@@ -215,7 +238,7 @@ impl<'a> OitCommandRecorder<'a> {
         self.clear_colors(&[color_attachment(back.view, [0.; 4], true)]);
     }
     fn peeling_images(&self, index: usize) -> &'a [TargetImage; 3] {
-        let OitTargets::Peeling { ping, pong, .. } = &self.pass().targets else {
+        let OitTargets::Peeling { ping, pong, .. } = self.pass().targets.as_ref() else {
             unreachable!()
         };
         if index == 0 { ping } else { pong }

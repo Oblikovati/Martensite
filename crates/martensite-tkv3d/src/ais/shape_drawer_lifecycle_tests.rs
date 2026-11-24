@@ -1,7 +1,7 @@
 //! The actual native ColoredShape reference is projected only onto the owned map prerequisite.
 use super::shape_drawer_reference_rows::shape_drawer_row;
 use super::{
-    AisColoredDrawer, AisShapeDrawerMap, shape_drawer_reference_inputs::shape_drawer_vertex,
+    AisColoredDrawerSource, AisShapeDrawerMap, shape_drawer_reference_inputs::shape_drawer_vertex,
 };
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkbrep::topods::Shape;
@@ -29,8 +29,8 @@ impl ShapeDrawerLifecycleInputs {
             reversed,
             outside,
             parent,
-            baseline_keys,
-            baseline_parent,
+            baseline_keys: baseline_keys.try_into().unwrap(),
+            baseline_parent: baseline_parent.try_into().unwrap(),
         }
     }
 }
@@ -38,12 +38,14 @@ struct ShapeDrawerLifecycleReplay<'a> {
     output: &'a mut String,
     map: &'a AisShapeDrawerMap,
     input: &'a ShapeDrawerLifecycleInputs,
-    children: [Handle<AisColoredDrawer>; 4],
+    children: [Handle<dyn AisColoredDrawerSource>; 4],
 }
 impl ShapeDrawerLifecycleReplay<'_> {
     fn record(&mut self, label: &str) {
-        let key_extra = self.input.key.tshape().ref_count() - self.input.baseline_keys;
-        let link_extra = self.input.parent.ref_count() - self.input.baseline_parent;
+        let key_extra =
+            i32::try_from(self.input.key.tshape().ref_count()).unwrap() - self.input.baseline_keys;
+        let link_extra =
+            i32::try_from(self.input.parent.ref_count()).unwrap() - self.input.baseline_parent;
         let prefix = format!("{label} {} {key_extra} {link_extra}", self.map.len());
         write!(self.output, "{prefix}").unwrap();
         for child in &self.children {
@@ -158,7 +160,11 @@ impl ShapeDrawerLifecycleReplay<'_> {
             .0;
         let outside = i32::from(!self.input.key.is_same(&self.input.outside));
         let owners = self.input.outside.tshape().ref_count();
-        shape_drawer_row(self.output, "outside", &[outside, owners]);
+        shape_drawer_row(
+            self.output,
+            "outside",
+            &[outside, owners.try_into().unwrap()],
+        );
         self.record("outside-counts");
     }
     fn release_custom(&mut self) {

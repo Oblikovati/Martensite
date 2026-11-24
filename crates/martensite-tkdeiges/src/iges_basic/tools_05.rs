@@ -13,15 +13,17 @@ use super::{
 };
 use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::{iges_shared_005, iges_shared_030, iges_shared_048};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_live, iges_msg, iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
 };
@@ -38,7 +40,7 @@ impl IgesBasicToolOrderedGroup {
         let mut nbtrue: i32 = 0;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul += 1;
             } else if iges_live(&val, "IgesBasicToolOrderedGroup::own_correct")?.type_number() == 0
@@ -48,7 +50,7 @@ impl IgesBasicToolOrderedGroup {
         }
         iges_shared_030!(ent_array, ianul, nb);
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 continue;
             } else if iges_live(&val, "IgesBasicToolOrderedGroup::own_correct")?.type_number() == 0
@@ -80,7 +82,7 @@ impl IgesBasicToolOrderedGroup {
         let mut ianul: bool = false;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul = true;
             } else if iges_live(&val, "IgesBasicToolOrderedGroup::own_check")?.type_number() == 0 {
@@ -110,8 +112,8 @@ impl IgesBasicToolOrderedGroup {
         iges_shared_048!(another_live, ent_array, lower, upper);
         for i in lower..=upper {
             let myentity = tc
-                .transferred(&another_live.entity(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.entity(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &ent_array,
                 i,
@@ -200,7 +202,7 @@ impl IgesBasicToolOrderedGroupWithoutBackP {
         let ent_live = iges_live(ent, "IgesBasicToolOrderedGroupWithoutBackP::own_shared")?;
         let upper: i32 = ent_live.nb_entities();
         for i in 1..=upper {
-            iter.get_one_item(&ent_live.entity(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.entity(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -231,7 +233,7 @@ impl IgesBasicToolOrderedGroupWithoutBackP {
         let mut nbtrue: i32 = 0;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul += 1;
             } else if iges_live(&val, "IgesBasicToolOrderedGroupWithoutBackP::own_correct")?
@@ -243,7 +245,7 @@ impl IgesBasicToolOrderedGroupWithoutBackP {
         }
         iges_shared_030!(ent_array, ianul, nb);
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 continue;
             } else if iges_live(&val, "IgesBasicToolOrderedGroupWithoutBackP::own_correct")?
@@ -277,7 +279,7 @@ impl IgesBasicToolOrderedGroupWithoutBackP {
         let mut ianul: bool = false;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            let val: Handle<IgesDataIgesEntity> = ent_live.entity(i)?;
+            let val: Handle<dyn IgesDataEntityKind> = ent_live.entity(i)?;
             if val.is_null() {
                 ianul = true;
             } else if iges_live(&val, "IgesBasicToolOrderedGroupWithoutBackP::own_check")?
@@ -310,8 +312,8 @@ impl IgesBasicToolOrderedGroupWithoutBackP {
         iges_shared_048!(another_live, ent_array, lower, upper);
         for i in lower..=upper {
             let myentity = tc
-                .transferred(&another_live.entity(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.entity(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &ent_array,
                 i,
@@ -365,9 +367,9 @@ impl IgesBasicToolSingleParent {
         let ent_live = iges_live(ent, "IgesBasicToolSingleParent::read_own_params")?;
         let msg207 = iges_msg("XSTEP_207");
         let mut temp_nb_parent_entities: i32 = 0;
-        let mut temp_parent: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_parent: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut nbval: i32 = 0;
-        let mut temp_children: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_children: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         if !pr.read_integer(&pr.current(), &mut temp_nb_parent_entities)? {
             let msg204 = iges_msg("XSTEP_204");
@@ -426,10 +428,10 @@ impl IgesBasicToolSingleParent {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesBasicToolSingleParent::own_shared")?;
-        iter.get_one_item(&ent_live.single_parent().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.single_parent().cast::<dyn Transient>());
         let upper: i32 = ent_live.nb_children();
         for i in 1..=upper {
-            iter.get_one_item(&ent_live.child(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.child(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }

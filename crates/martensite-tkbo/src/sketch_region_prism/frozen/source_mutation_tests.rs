@@ -12,7 +12,7 @@ fn change_cubic_pole(source: &Shape) {
     let curve = BRepTool::curve_with_location(&edge(source).unwrap()).unwrap();
     curve
         .curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, Point3::new(6., 0., 0.))
         .unwrap();
 }

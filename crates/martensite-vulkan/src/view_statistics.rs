@@ -6,6 +6,7 @@
 //! swaps and ABA cannot certify an earlier target. Every other call dereferences to the output-mode wrapper
 //! (flip output, draw-to-front) and through it to the shared view.
 use crate::{Graphic3dRenderView, RenderFrameStats, RenderImageMemory};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::graphic3d::{
@@ -26,6 +27,10 @@ pub(crate) struct RenderRetainedView {
     pub(crate) environment: SharedState<crate::view_environment::ViewEnvironmentState>,
     /// The light cameras and last rendered shadow maps (GlShadowMapArray, shadow_maps.rs).
     pub(crate) shadow_cameras: SharedState<crate::shadow_maps::ShadowCameras>,
+    /// The device work of the last redraw (frame_work.rs).
+    pub(crate) frame_work: SharedState<crate::RenderDeviceWork>,
+    /// The notices that can change the main layers (main_layer_notices.rs).
+    pub(crate) main_notices: crate::main_layer_notices::MainLayerNotices,
 }
 
 impl RenderRetainedView {
@@ -41,10 +46,16 @@ impl RenderRetainedView {
             graduated_trihedron_shown: Default::default(),
             environment: Default::default(),
             shadow_cameras: Default::default(),
+            frame_work: Default::default(),
+            main_notices: Default::default(),
         }
     }
+    /// The output-mode wrapper and, through it, the shared retained view.
+    pub(crate) fn shared_view(&self) -> &crate::view_output_modes::OutputModeRetainedView {
+        &self.view
+    }
     /// Keep forwarded FBO bindings observable, including same-owner round trips.
-    pub(crate) fn set_fbo(&self, fbo: &Handle<martensite_tkernel::standard::StandardTransient>) {
+    pub(crate) fn set_fbo(&self, fbo: &Handle<dyn Transient>) {
         //  held the new revision lease across final SDK-owner release.
         let retired;
         {
@@ -60,12 +71,7 @@ impl RenderRetainedView {
         self.fbo_revision.try_write().is_some()
     }
     /// Retain the actual selected owner and its binding revision without callbacks.
-    pub(crate) fn fbo_binding_stamp(
-        &self,
-    ) -> (
-        Handle<martensite_tkernel::standard::StandardTransient>,
-        std::sync::Arc<()>,
-    ) {
+    pub(crate) fn fbo_binding_stamp(&self) -> (Handle<dyn Transient>, std::sync::Arc<()>) {
         let revision = self.fbo_revision.read();
         (self.view.fbo(), revision.clone())
     }

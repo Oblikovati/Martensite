@@ -186,7 +186,9 @@ fn step_visual_presentation_layer_assignment() {
 #[test]
 fn step_visual_styled_item() {
     assert_merged_in(|fixture, point| {
-        let styles = HArray1::<Handle<StepVisualPresentationStyleAssignment>>::with_bounds(1, 1);
+        let styles = HArray1::<
+            Handle<dyn martensite_tkdestep::StepEntityBase<StepVisualPresentationStyleAssignment>>,
+        >::with_bounds(1, 1);
         let styled = Handle::new(StepVisualStyledItem::new());
         styled.init(
             &name(""),
@@ -251,7 +253,7 @@ fn step_repr_representation() {
         representation.init(
             &name(""),
             &one_item(point.cast()),
-            &Handle::new(StepReprRepresentationContext::new()),
+            &Handle::new(StepReprRepresentationContext::new()).into_upcast(),
         );
         fixture.add(&representation);
     });

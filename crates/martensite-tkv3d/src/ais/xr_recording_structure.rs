@@ -1,7 +1,7 @@
 //! Named CPU driver structure injects checked callback faults into the actual XR presentation path.
 use super::xr_recording_group::{XrRecordingEvents, XrRecordingGroup};
 use martensite_tkernel::standard::Failure as XrProbeFailure;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::{graphic3d::*, null_driver::NullGraphicDriver};
 use std::sync::Arc;
 pub(crate) fn xr_recording_presentation(
@@ -21,7 +21,6 @@ pub(crate) fn install_xr_recording(
     events: &Arc<XrRecordingEvents>,
 ) {
     let wrapper = Handle::new(XrRecordingStructure {
-        transient: StandardTransient::default(),
         inner: prs.cstructure(),
         events: events.clone(),
         _manager: prs.structure_manager(),
@@ -29,12 +28,11 @@ pub(crate) fn install_xr_recording(
     prs.structure_base().fields.write().cstructure = wrapper.cast();
 }
 struct XrRecordingStructure {
-    transient: StandardTransient,
     inner: Handle<dyn Graphic3dCStructure>,
     events: Arc<XrRecordingEvents>,
     _manager: Handle<Graphic3dStructureManager>,
 }
-martensite_tkernel::impl_transient!(XrRecordingStructure,"Martensite_XrRecordingStructure",StandardTransient,transient,interfaces:[dyn Graphic3dCStructure]);
+martensite_tkernel::impl_transient!(XrRecordingStructure,"Martensite_XrRecordingStructure",dyn martensite_tkernel::standard::Transient,interfaces:[dyn Graphic3dCStructure]);
 impl Graphic3dCStructure for XrRecordingStructure {
     fn cstructure_base(&self) -> &Graphic3dCStructureBase {
         // The named driver preserves inherited behavior instead of returning canned state.
@@ -92,7 +90,7 @@ impl Graphic3dCStructure for XrRecordingStructure {
             .fields
             .write()
             .groups
-            .append(group.clone());
+            .append(martensite_tkernel::standard::HandleSlot::new(group.clone()));
         Ok(group)
     }
 }

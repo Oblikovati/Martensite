@@ -179,7 +179,8 @@ fn vector_with_magnitude_vec2d() {
 fn vector_with_magnitude_copy() {
     let f = set_up();
     let aCopyGeom: Handle<dyn Geom2dGeometry> = f.myVec1.copy().unwrap();
-    let aCopy: Handle<Geom2dVectorWithMagnitude> = aCopyGeom.cast::<Geom2dVectorWithMagnitude>();
+    let aCopy: Handle<Geom2dVectorWithMagnitude> =
+        aCopyGeom.into_downcast::<Geom2dVectorWithMagnitude>();
 
     assert!(!aCopy.is_null());
     EXPECT_NEAR(aCopy.x(), 3.0, precision::confusion());

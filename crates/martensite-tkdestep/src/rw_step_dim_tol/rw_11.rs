@@ -221,7 +221,10 @@ impl RwStepDimTolRwToleranceZoneDefinition {
         rw_block_b_0190!(an_ent, an_items, nb_sub);
         if data.read_sub_list(num, 2, "boundaries", ach, &mut nb_sub, false, 0, 0)? {
             let nb_elements: i32 = data.nb_params(nb_sub)?;
-            an_items = step_new_array1::<Handle<StepReprShapeAspect>>(1, nb_elements)?;
+            an_items = step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>(
+                1,
+                nb_elements,
+            )?;
             for i in 1..=nb_elements {
                 if data.read_entity(
                     nb_sub,

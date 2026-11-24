@@ -4,7 +4,7 @@ use crate::cdm::CdmDocument;
 use martensite_tkernel::{
     impl_transient_interface,
     message::ProgressRange,
-    standard::{Failure, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Handle, SharedState, Transient},
     tcollection::ExtendedString,
 };
 use std::io;
@@ -26,7 +26,7 @@ pub trait PcdmWriter: Transient {
         range: &ProgressRange<'_>,
     ) -> Result<(), Failure>;
 }
-impl_transient_interface!(dyn PcdmWriter, "PCDM_Writer", StandardTransient);
+impl_transient_interface!(dyn PcdmWriter, "PCDM_Writer", dyn Transient);
 
 #[derive(Default)]
 struct StorageDriverState {
@@ -86,4 +86,4 @@ pub trait PcdmStorageDriver: PcdmWriter {
         self.storage_driver_base().state.write().store_status = store_status;
     }
 }
-impl_transient_interface!(dyn PcdmStorageDriver, "PCDM_StorageDriver", dyn PcdmWriter);
+impl_transient_interface!(dyn PcdmStorageDriver, "PCDM_StorageDriver", dyn PcdmWriter, upcasts: [dyn PcdmWriter]);

@@ -128,13 +128,13 @@ impl<D: TextDialect> TextFile<D> {
 impl<D: TextDialect> TextFile<D> {
     /// Calls the qualified FSD base writer, bypassing the dialect's extended-line hook.
     /// Example: `file.write_fsd_extended_line_base(&text)`.
-    pub fn write_fsd_extended_line_base(&mut self, text: &ExtendedString) {
+    pub(super) fn write_fsd_extended_line_base(&mut self, text: &ExtendedString) {
         self.fsd_write_extended_line(text);
     }
 
     /// Calls the qualified FSD base reader, bypassing the dialect's extended-line hook.
     /// Example: `file.read_fsd_extended_line_base(&mut text)`.
-    pub fn read_fsd_extended_line_base(
+    pub(super) fn read_fsd_extended_line_base(
         &mut self,
         text: &mut ExtendedString,
     ) -> Result<(), Failure> {

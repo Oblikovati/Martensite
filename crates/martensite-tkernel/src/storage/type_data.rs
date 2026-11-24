@@ -23,7 +23,6 @@ struct TypeFields {
 /// ```
 #[derive(Default)]
 pub struct TypeData {
-    parent: StandardTransient,
     fields: Mutex<TypeFields>,
 }
 
@@ -124,11 +123,6 @@ impl TypeData {
         self.lock().status.error
     }
 
-    /// Example: `types.error_status_extension()`.
-    pub fn error_status_extension(&self) -> AsciiString {
-        self.lock().status.extension.clone()
-    }
-
     /// Example: `types.clear_error_status()`.
     pub fn clear_error_status(&self) {
         self.lock().status.clear();
@@ -140,4 +134,4 @@ impl TypeData {
     }
 }
 
-crate::impl_transient!(TypeData, "Storage_TypeData", StandardTransient, parent);
+crate::impl_transient!(TypeData, "Storage_TypeData", StandardTransient);

@@ -249,7 +249,7 @@ impl BRepFillEvolved {
         map_prof: &mut ShapeOrigins,
     ) -> Result<(), Failure> {
         let plane = Handle::new(GeomPlane::new(Axis3::from_axis2(gp::yoz())));
-        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(gp::oy2d())).cast();
+        let line: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(gp::oy2d())).into_upcast();
         let mut map_ver_ref_moved = ShapeOrigins::default();
         let mut wp = ProfileWires::new();
         let mut exp = WireExplorer::with_wire(&self.my_profile)?;

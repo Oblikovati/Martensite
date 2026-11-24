@@ -1,5 +1,6 @@
 //! The styles of a shape read by `STEPCAFControlReader`.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 /// What `set_style` shares down its recursion.
 struct StyleContext<'a> {
@@ -8,7 +9,7 @@ struct StyleContext<'a> {
     color_tool: &'a Handle<XCAFDocColorTool>,
     shape_tool: &'a Handle<XCAFDocShapeTool>,
     styles: &'a StepConstructStyles,
-    invisible: &'a Handle<HSequence<Handle<StandardTransient>>>,
+    invisible: &'a Handle<HSequence<Handle<dyn Transient>>>,
     factors: &'a StepDataFactors,
 }
 
@@ -22,8 +23,11 @@ enum ComponentShape {
 
 impl StyleContext<'_> {
     /// Whether a style is among the invisible ones.
-    fn is_visible_style(&self, style: &Handle<StepVisualStyledItem>) -> Result<bool, Failure> {
-        let key: Handle<StandardTransient> = style.cast();
+    fn is_visible_style(
+        &self,
+        style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    ) -> Result<bool, Failure> {
+        let key: Handle<dyn Transient> = style.cast();
         Ok(!step_live(self.invisible, WHERE)?
             .sequence(|items| items.iter().any(|item| *item == key)))
     }
@@ -56,7 +60,7 @@ impl StyleContext<'_> {
             let usage = pds
                 .definition()
                 .product_definition_relationship()
-                .cast::<StepReprAssemblyComponentUsage>();
+                .cast::<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>>();
             if usage.is_null() {
                 continue;
             }
@@ -116,13 +120,19 @@ impl StyleContext<'_> {
         Ok(())
     }
     /// `set_style`: the style of parts and instances.
-    fn set_style(&self, style: &Handle<StepVisualStyledItem>) -> Result<(), Failure> {
+    fn set_style(
+        &self,
+        style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
+    ) -> Result<(), Failure> {
         let Some(live) = style.get() else {
             return Ok(());
         };
         let tr = step_live(self.ws, WHERE)?.transfer_reader();
         let tp = step_live(&tr, WHERE)?.transient_process();
-        if let Some(overriding) = style.cast::<StepVisualOverRidingStyledItem>().get() {
+        if let Some(overriding) = style
+            .view::<dyn crate::StepEntityBase<StepVisualOverRidingStyledItem>>()
+            .get()
+        {
             self.set_style(&overriding.over_ridden_style())?;
             let component = style.cast::<StepVisualContextDependentOverRidingStyledItem>();
             if component.is_some() {
@@ -191,11 +201,12 @@ impl StyleContext<'_> {
 /// `IsOverriden`: for a root style, true only if it is overridden by other root style.
 fn is_overridden(
     graph: &InterfaceGraph,
-    style: &Handle<StepVisualStyledItem>,
+    style: &Handle<dyn crate::StepEntityBase<StepVisualStyledItem>>,
     is_root: bool,
 ) -> Result<bool, Failure> {
     for sharing in graph.sharings(&style.cast())?.content() {
-        let overriding = sharing.cast::<StepVisualOverRidingStyledItem>();
+        let overriding =
+            sharing.view::<dyn crate::StepEntityBase<StepVisualOverRidingStyledItem>>();
         let Some(overriding) = overriding.get() else {
             continue;
         };
@@ -203,7 +214,10 @@ fn is_overridden(
             return Ok(true);
         }
         let item = overriding.item_ap242()?.value();
-        if item.cast::<StepShapeShapeRepresentation>().is_some() {
+        if item
+            .cast::<dyn crate::StepEntityBase<StepShapeShapeRepresentation>>()
+            .is_some()
+        {
             return Ok(true);
         }
     }
@@ -223,7 +237,7 @@ impl ReaderState {
             return Ok(false);
         }
         // searching for invisible items in the model
-        let mut invisible = Handle::new(HSequence::<Handle<StandardTransient>>::default());
+        let mut invisible = Handle::new(HSequence::<Handle<dyn Transient>>::default());
         styles.load_invis_styles(&mut invisible)?;
         let main = step_live(doc, WHERE)?.main()?;
         let color_tool = XCAFDocDocumentTool::color_tool(&main)?;

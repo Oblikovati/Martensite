@@ -20,7 +20,10 @@ pub fn append_subtitle_occluder(scene: &TextScene, mode: &str) {
         .scene
         .group
         .set_primitives_aspect(&super::super::scene::unlit_style([0., 1., 0., 1.]));
-    scene.scene.group.add_primitive_array(&vertices, true);
+    scene
+        .scene
+        .group
+        .add_primitive_array(&vertices.upcast(), true);
     configure_subtitle_depth_writes(scene, mode);
 }
 

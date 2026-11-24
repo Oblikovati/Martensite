@@ -4,7 +4,7 @@ use crate::{prs_mgr::*, prs3d::Prs3dPointAspect};
 use martensite_tkernel::{
     ncollection::HArray1,
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::{
     bnd::BoundingBox3,
@@ -111,16 +111,14 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// A retained point cloud with native subset selection; `AisPointCloud::new()?`.
 pub struct AisPointCloud {
-    transient: StandardTransient,
     base: AisPointCloudBase,
 }
-martensite_tkernel::impl_transient!(AisPointCloud,"AisPointCloud",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisPointCloud,"AisPointCloud",dyn AisInteractiveObject,
     interfaces:[dyn AisPointCloudSource,dyn AisInteractiveObject,dyn crate::select_mgr::SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisPointCloud {
     /// Construct and bind a cloud with native defaults; `AisPointCloud::new()?`.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let cloud = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisPointCloudBase::new()?,
         });
         prs_mgr_presentable_bind(&cloud.cast());

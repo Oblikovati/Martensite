@@ -1,10 +1,12 @@
 //! The dispatches and the selections by view and drawing.
 use super::IgesSelectViewSorter;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
     ncollection::HSequence,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -17,7 +19,7 @@ use martensite_tkxsbase::{
 };
 
 /// The entities of an iterator as the list a sorter takes.
-fn list_of(iter: &InterfaceEntityIterator) -> Handle<HSequence<Handle<StandardTransient>>> {
+fn list_of(iter: &InterfaceEntityIterator) -> Handle<HSequence<Handle<dyn Transient>>> {
     let list = Handle::new(HSequence::default());
     if let Some(live) = list.get() {
         for ent in iter.content() {
@@ -59,7 +61,7 @@ macro_rules! view_dispatch {
         $(#[$meta])*
         #[derive(Default)]
         pub struct $class {
-            transient: StandardTransient,
+
             base: IFSelectDispatchBase,
             thesorter: IgesSelectViewSorter,
         }
@@ -67,7 +69,6 @@ macro_rules! view_dispatch {
             $class,
             $recorded,
             dyn IFSelectDispatch,
-            transient,
             interfaces: [dyn IFSelectDispatch]
         );
         impl IFSelectDispatch for $class {
@@ -143,14 +144,13 @@ macro_rules! view_selection {
         $(#[$meta])*
         #[derive(Default)]
         pub struct $class {
-            transient: StandardTransient,
+
             base: IFSelectSelectDeductBase,
         }
         impl_transient!(
             $class,
             $recorded,
             dyn IFSelectSelectDeduct,
-            transient,
             interfaces: [dyn IFSelectSelection, dyn IFSelectSelectDeduct]
         );
         impl IFSelectSelectDeduct for $class {
@@ -198,7 +198,7 @@ fn add_attached_to_views(
     let nb = g.size();
     for i in 1..=nb {
         let ent = g.entity(i)?;
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         if let Some(live) = entity.get() {
             let nv = g.entity_number(&live.view().cast());
             if nv > 0 && nv <= nb {
@@ -250,7 +250,7 @@ view_selection! {
         }
         for ent in draws.content() {
             let is_drawing = ent
-                .cast::<IgesDataIgesEntity>()
+                .cast::<dyn IgesDataEntityKind>()
                 .get()
                 .is_some_and(|live| live.type_number() == 404);
             if is_drawing {

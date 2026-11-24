@@ -1,0 +1,7 @@
+trial	variant	elapsed_s	user_s	system_s	peak_rss_kib	sampled_anon_kib	sampled_file_kib	sampled_rss_kib
+1	before	3.99	3.98	0.0	53308	21312	33832	55144
+2	after	3.77	3.76	0.01	53784	21336	34216	55552
+3	after	4.07	4.06	0.01	53704	21340	34252	55592
+4	before	3.81	3.79	0.01	53776	21308	33780	55088
+5	before	3.73	3.71	0.01	53544	21308	33800	55108
+6	after	3.64	3.63	0.0	53864	21336	34244	55580

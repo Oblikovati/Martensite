@@ -192,7 +192,7 @@ fn folded_public_evaluator_override_refuses_a_supported_stored_net() {
     let old = certificate(&surface);
     let folded = folded_override();
     surface
-        .set_eval_representation(Handle::new(RepSurfaceDescFull::new(folded)).cast())
+        .set_eval_representation(Handle::new(RepSurfaceDescFull::new(folded)).into_upcast())
         .unwrap();
     let first = surface.value(2.5, -2.).unwrap();
     assert_eq!(first.distance(&surface.value(3.5, 0.).unwrap()), 0.);
@@ -215,5 +215,5 @@ fn folded_override() -> martensite_tkernel::standard::Handle<dyn GeomSurface> {
     use martensite_tkernel::standard::Handle;
     let folded = surface(None);
     folded.set_pole(2, 2, Point3::new(-2., -2., 0.)).unwrap();
-    Handle::new(folded).cast()
+    Handle::new(folded).into_upcast()
 }

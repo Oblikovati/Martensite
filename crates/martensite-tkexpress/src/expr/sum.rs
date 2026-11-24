@@ -11,26 +11,23 @@ use super::poly_expression::{
 };
 use super::text::infix_text;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A sum; `ExprSum::new_pair(&x, &y).string()? == "x+y"`.
 pub struct ExprSum {
-    parent: StandardTransient,
     core: ExprPolyCore,
 }
 impl_transient!(
     ExprSum,
     "Expr_Sum",
     dyn ExprPolyExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression, dyn ExprPolyExpression]
 );
 impl ExprSum {
     /// `new ExprSum(exps)`: the operands in order; `ExprSum::new(&[x, y, z])`.
     pub fn new(exps: &[ExprHandle]) -> Handle<Self> {
         let object: Self = Self {
-            parent: StandardTransient::default(),
             core: ExprPolyCore::new(exps),
         };
         super::handles::adopt(object, |created| created.core.link())
@@ -57,12 +54,12 @@ impl ExprSum {
                 return Ok(Some(self.core.link().me()?));
             }
             others.push(ExprNumericValue::expression(total));
-            return Ok(Some(Self::new(&others).cast()));
+            return Ok(Some(Self::new(&others).into_upcast()));
         }
         if others.len() == 1 {
             return Ok(Some(others[0].clone()));
         }
-        Ok(Some(Self::new(&others).cast()))
+        Ok(Some(Self::new(&others).into_upcast()))
     }
 }
 impl ExprPolyExpression for ExprSum {
@@ -89,7 +86,7 @@ impl ExprGeneralExpression for ExprSum {
             .iter()
             .map(copy_share)
             .collect::<Result<_, _>>()?;
-        Ok(Self::new(&copies).cast())
+        Ok(Self::new(&copies).into_upcast())
     }
     fn is_identical(&self, other: &ExprHandle) -> Result<bool, Failure> {
         deref(other, "Expr_Sum::IsIdentical")?;

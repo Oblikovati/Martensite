@@ -3,6 +3,7 @@ use crate::step_repr::StepReprNextAssemblyUsageOccurrence;
 use crate::step_shape::StepShapeShapeDefinitionRepresentation;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::HSequence;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 
 /// The list of links under a component.
@@ -17,14 +18,12 @@ struct ComponentState {
 /// Assembly component.
 #[derive(Default)]
 pub struct STEPSelectionsAssemblyComponent {
-    transient: StandardTransient,
     state: SharedState<ComponentState>,
 }
 impl_transient!(
     STEPSelectionsAssemblyComponent,
     "STEPSelectionsAssemblyComponent",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl STEPSelectionsAssemblyComponent {
@@ -59,28 +58,26 @@ impl STEPSelectionsAssemblyComponent {
 #[derive(Default)]
 struct LinkState {
     my_nauo: Handle<StepReprNextAssemblyUsageOccurrence>,
-    my_item: Handle<StandardTransient>,
+    my_item: Handle<dyn Transient>,
     my_component: Handle<STEPSelectionsAssemblyComponent>,
 }
 
 /// Assembly link.
 #[derive(Default)]
 pub struct STEPSelectionsAssemblyLink {
-    transient: StandardTransient,
     state: SharedState<LinkState>,
 }
 impl_transient!(
     STEPSelectionsAssemblyLink,
     "STEPSelectionsAssemblyLink",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl STEPSelectionsAssemblyLink {
     /// `STEPSelectionsAssemblyLink(nauo, item, part)`.
     pub fn new(
         nauo: &Handle<StepReprNextAssemblyUsageOccurrence>,
-        item: &Handle<StandardTransient>,
+        item: &Handle<dyn Transient>,
         part: &Handle<STEPSelectionsAssemblyComponent>,
     ) -> Self {
         let made = Self::default();
@@ -94,7 +91,7 @@ impl STEPSelectionsAssemblyLink {
         self.state.read().my_nauo.clone()
     }
     /// `get_item`.
-    pub fn get_item(&self) -> Handle<StandardTransient> {
+    pub fn get_item(&self) -> Handle<dyn Transient> {
         self.state.read().my_item.clone()
     }
     /// `get_component`.
@@ -106,7 +103,7 @@ impl STEPSelectionsAssemblyLink {
         self.state.write().my_nauo = nauo.clone();
     }
     /// `set_item(item)`.
-    pub fn set_item(&self, item: &Handle<StandardTransient>) {
+    pub fn set_item(&self, item: &Handle<dyn Transient>) {
         self.state.write().my_item = item.clone();
     }
     /// `set_component(part)`.

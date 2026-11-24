@@ -119,7 +119,7 @@ macro_rules! function_members {
             let operand = $crate::expr::package::copy_share(
                 &$crate::expr::ExprUnaryExpression::operand(self),
             )?;
-            Ok($class::new(&operand).cast())
+            Ok($class::new(&operand).into_upcast())
         }
         fn is_identical(
             &self,

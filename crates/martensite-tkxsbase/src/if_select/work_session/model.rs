@@ -1,6 +1,6 @@
 //! The settings of the session (share-out, library, protocol, signature type, model
 //! copier), its model, and the reading of a file or a stream.
-use super::{IFSelectWorkSession, report_interruption};
+use super::{IFSelectSession, report_interruption};
 use crate::if_select::{
     IFSelectModelCopier, IFSelectReturnStatus, IFSelectShareOut, IFSelectSignature,
     IFSelectWorkLibrary,
@@ -27,7 +27,7 @@ fn read_status(stat: i32) -> IFSelectReturnStatus {
     }
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `ShareOut`.
     pub fn share_out(&self) -> Handle<IFSelectShareOut> {
         self.state.read().theshareout.clone()

@@ -3,7 +3,7 @@ use super::{SelectMgrEntityOwnerSource, SelectMgrSelection, SelectMgrSensitiveEn
 use crate::select3d::{Select3DSensitiveEntity, Select3DSensitiveEntityMembers};
 use martensite_tkernel::{
     ncollection::{DataMap, IndexedMap},
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkmath::bvh::{
     BvhBuilderHandle, BvhObjectTransientSource, BvhPrimitiveSet3d, BvhVec3d,
@@ -13,21 +13,19 @@ use std::sync::{Mutex, MutexGuard, RwLockReadGuard};
 /// One selectable object's unique sensitives and shared live BVH.
 /// Example: `let set = SelectMgrSensitiveEntitySet::new(Some(builder)); set.append(&entity)?;`.
 pub struct SelectMgrSensitiveEntitySet {
-    transient: StandardTransient,
     pub(super) content: Mutex<BvhPrimitiveSet3d>,
     sensitives: SharedState<IndexedMap<Handle<SelectMgrSensitiveEntity>>>,
     owners: SharedState<DataMap<Handle<dyn SelectMgrEntityOwnerSource>, i32>>,
     persistence_counts: SharedState<(i32, i32)>,
 }
 martensite_tkernel::impl_transient!(SelectMgrSensitiveEntitySet, "SelectMgrSensitiveEntitySet",
-    dyn BvhObjectTransientSource, transient, interfaces: [dyn BvhObjectTransientSource]);
+    dyn BvhObjectTransientSource, interfaces: [dyn BvhObjectTransientSource]);
 
 impl SelectMgrSensitiveEntitySet {
     /// Start clean with an empty tree and the caller's builder, including null.
     /// Example: `SelectMgrSensitiveEntitySet::new(None)`.
     pub fn new(builder: BvhBuilderHandle<BvhVec3d>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             content: Mutex::new(BvhPrimitiveSet3d::new(builder)),
             sensitives: SharedState::new(IndexedMap::default()),
             owners: SharedState::new(DataMap::default()),

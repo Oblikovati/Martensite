@@ -13,14 +13,16 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_string, iges_live, iges_new_array1, iges_real_text,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_string, iges_live, iges_new_array1, iges_real_text,
 };
 use crate::iges_defs::IgesDefsGenericData;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -49,7 +51,7 @@ impl IgesDefsToolGenericData {
         let mut temp_nb_prop_val: i32 = Default::default();
         let mut temp_name: Handle<HAsciiString> = Default::default();
         let mut temp_types: Handle<HArray1<i32>> = Default::default();
-        let mut temp_values: Handle<HArray1<Handle<StandardTransient>>> = Default::default();
+        let mut temp_values: Handle<HArray1<Handle<dyn Transient>>> = Default::default();
         pr.read_integer_text(
             &pr.current(),
             "Number of property values",
@@ -60,7 +62,7 @@ impl IgesDefsToolGenericData {
             pr.read_integer_text(&pr.current(), "Number of TYPE/VALUEs", &mut num)?;
         if st && (num > 0) {
             temp_types = iges_new_array1::<i32>(1, num)?;
-            temp_values = iges_new_array1::<Handle<StandardTransient>>(1, num)?;
+            temp_values = iges_new_array1::<Handle<dyn Transient>>(1, num)?;
         } else {
             pr.add_fail("Number of TYPE/VALUEs: Not Positive", "");
         }
@@ -117,7 +119,7 @@ impl IgesDefsToolGenericData {
                         }
                     }
                     4 => {
-                        let mut temp_entity: Handle<IgesDataIgesEntity> = Default::default();
+                        let mut temp_entity: Handle<dyn IgesDataEntityKind> = Default::default();
                         if pr.read_entity(
                             ir,
                             &pr.current(),
@@ -275,8 +277,8 @@ impl IgesDefsToolGenericData {
             "IgesDefsToolGenericData::own_copy",
         )?));
         let mut temp_types: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, num)?;
-        let mut temp_values: Handle<HArray1<Handle<StandardTransient>>> =
-            iges_new_array1::<Handle<StandardTransient>>(1, num)?;
+        let mut temp_values: Handle<HArray1<Handle<dyn Transient>>> =
+            iges_new_array1::<Handle<dyn Transient>>(1, num)?;
         for i in 1..=num {
             iges_array1_set(
                 &temp_types,
@@ -329,7 +331,7 @@ impl IgesDefsToolGenericData {
                     )?;
                 }
                 4 => {
-                    let mut temp_obj: Handle<IgesDataIgesEntity> =
+                    let mut temp_obj: Handle<dyn IgesDataEntityKind> =
                         tc.transferred(&another.value_as_entity(i)?.cast())?.cast();
                     iges_array1_set(
                         &temp_values,

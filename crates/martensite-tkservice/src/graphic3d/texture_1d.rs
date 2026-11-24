@@ -5,9 +5,9 @@ use super::{
     Graphic3dNameOfTexture1D, Graphic3dTextureMap, Graphic3dTextureRoot, Graphic3dTextureRootBase,
     Graphic3dTypeOfTexture, Graphic3dTypeOfTextureMode,
 };
-use crate::image::ImagePixMap;
+
 use martensite_tkernel::ncollection::Vec4;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// `NameOfTexture1d_to_FileName`.
@@ -41,7 +41,10 @@ impl Graphic3dTexture1DBase {
         })
     }
     /// `Graphic3d_Texture1D(thePixMap, theType)`; `Graphic3dTexture1DBase::from_pix_map(pixmap, kind)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>, kind: Graphic3dTypeOfTexture) -> Self {
+    pub fn from_pix_map(
+        pix_map: Handle<dyn crate::image::ImagePixMapObject>,
+        kind: Graphic3dTypeOfTexture,
+    ) -> Self {
         Self {
             root: Graphic3dTextureRootBase::from_pix_map(pix_map, kind),
             name: Graphic3dNameOfTexture1D::Unknown,
@@ -65,7 +68,8 @@ pub trait Graphic3dTexture1D: Graphic3dTextureMap {
 martensite_tkernel::impl_transient_interface!(
     dyn Graphic3dTexture1D,
     "Graphic3d_Texture1D",
-    dyn Graphic3dTextureMap
+    dyn Graphic3dTextureMap,
+    upcasts: [dyn Graphic3dTextureMap]
 );
 
 /// The non-virtual members of `Graphic3d_Texture1D`.
@@ -91,24 +95,20 @@ macro_rules! texture_1d_traits {
                 &self.base
             }
         }
-        martensite_tkernel::impl_transient!($ty, $name, dyn Graphic3dTexture1D, transient,
+        martensite_tkernel::impl_transient!($ty, $name, dyn Graphic3dTexture1D,
             interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture1D]);
     };
 }
 
 /// A 1D texture with manual coordinates; `Graphic3dTexture1Dmanual::from_file(&"ramp.png".into())`.
 pub struct Graphic3dTexture1Dmanual {
-    transient: StandardTransient,
     base: Graphic3dTexture1DBase,
 }
 texture_1d_traits!(Graphic3dTexture1Dmanual, "Graphic3d_Texture1Dmanual");
 
 impl Graphic3dTexture1Dmanual {
     fn wrap(base: Graphic3dTexture1DBase) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
     /// A file texture; `Graphic3dTexture1Dmanual::from_file(&"ramp.png".into())`.
     pub fn from_file(file_name: &AsciiString) -> Self {
@@ -125,7 +125,7 @@ impl Graphic3dTexture1Dmanual {
         )?))
     }
     /// A pixmap texture; `Graphic3dTexture1Dmanual::from_pix_map(pixmap)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>) -> Self {
+    pub fn from_pix_map(pix_map: Handle<dyn crate::image::ImagePixMapObject>) -> Self {
         Self::wrap(Graphic3dTexture1DBase::from_pix_map(
             pix_map,
             Graphic3dTypeOfTexture::TOT_1D,
@@ -137,7 +137,6 @@ impl Graphic3dTexture1Dmanual {
 ///
 /// Example: `let t = Graphic3dTexture1Dsegment::from_file(&"ramp.png".into()); t.set_segment(0.0, 0.0, 0.0, 0.0, 0.0, 10.0);`.
 pub struct Graphic3dTexture1Dsegment {
-    transient: StandardTransient,
     base: Graphic3dTexture1DBase,
     segment: SharedState<[f32; 6]>,
 }
@@ -152,7 +151,6 @@ impl Graphic3dTexture1Dsegment {
             .params
             .set_gen_mode(Graphic3dTypeOfTextureMode::Object, plane_s, plane_t);
         Self {
-            transient: StandardTransient::default(),
             base,
             segment: SharedState::new([0.0; 6]),
         }
@@ -172,7 +170,7 @@ impl Graphic3dTexture1Dsegment {
         )?))
     }
     /// A pixmap texture; `Graphic3dTexture1Dsegment::from_pix_map(pixmap)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>) -> Self {
+    pub fn from_pix_map(pix_map: Handle<dyn crate::image::ImagePixMapObject>) -> Self {
         Self::wrap(Graphic3dTexture1DBase::from_pix_map(
             pix_map,
             Graphic3dTypeOfTexture::TOT_1D,

@@ -19,9 +19,10 @@ mod native_unix;
 mod osd_file;
 mod stdio;
 
+use calls::native_calls;
 pub use calls::{
     AccessMode, CallResult, Errno, NodeStatus, NodeType, OpenFlags, PosixFileCalls, RecordLock,
-    SeekOrigin, native_calls,
+    SeekOrigin,
 };
 pub use directory::Directory;
 pub use directory_stream::DirectoryEntries;

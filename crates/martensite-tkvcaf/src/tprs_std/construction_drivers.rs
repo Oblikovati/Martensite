@@ -4,7 +4,7 @@
 use super::TPrsStdDriver;
 use martensite_tkcaf::tdata_xtd::{TDataXtdAxis, TDataXtdGeometry, TDataXtdPlane, TDataXtdPoint};
 use martensite_tkcaf::tnaming::{TNamingNamedShape, TNamingTool};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, TransientHandleTarget};
 use martensite_tkg3d::geom::{GeomCartesianPoint, GeomLine, GeomPlane};
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkmath::gp::{Line3, Plane3, Point3};
@@ -18,11 +18,9 @@ macro_rules! presentation_driver {
     ($(#[$doc:meta])* $name:ident, $class_name:literal) => {
         $(#[$doc])*
         #[derive(Default)]
-        pub struct $name {
-            transient: martensite_tkernel::standard::StandardTransient,
-        }
+        pub struct $name;
         martensite_tkernel::impl_transient!($name, $class_name, dyn $crate::tprs_std::TPrsStdDriver,
-            transient, interfaces: [dyn $crate::tprs_std::TPrsStdDriver]);
+            interfaces: [dyn $crate::tprs_std::TPrsStdDriver]);
         impl $name {
             #[doc = concat!("`", $class_name, "()`.")]
             pub fn new() -> Self {
@@ -50,7 +48,7 @@ presentation_driver!(
 );
 
 /// True when the label holds the attribute of that ID.
-pub(super) fn label_has<T: RuntimeTyped + ?Sized>(
+pub(super) fn label_has<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
     label: &TdfLabel,
     id: &martensite_tkernel::standard::Guid,
 ) -> Result<bool, Failure> {
@@ -92,16 +90,13 @@ impl TPrsStdDriver for TPrsStdAxisDriver {
             return Ok(false);
         }
         let geometry = Handle::new(GeomLine::from_lin(line));
-        let kept = ais.cast::<AisAxis>();
-        let axis = match kept.get() {
+        match ais.downcast_ref::<AisAxis>() {
             Some(axis) => {
                 axis.set_component(&geometry)?;
                 refresh_kept_object(axis)?;
-                kept.clone()
             }
-            None => AisAxis::new(&geometry, prs_dim_units_api())?,
-        };
-        *ais = axis.cast();
+            None => *ais = AisAxis::new(&geometry, prs_dim_units_api())?.into_upcast(),
+        }
         Ok(true)
     }
 }
@@ -121,17 +116,16 @@ impl TPrsStdDriver for TPrsStdPlaneDriver {
             return Ok(false);
         }
         let geometry = Handle::new(GeomPlane::from_pln(plane));
-        let kept = ais.cast::<AisPlane>();
-        let object = match kept.get() {
+        match ais.downcast_ref::<AisPlane>() {
             Some(object) => {
                 object.set_component(&geometry);
                 object.set_center(plane.location());
                 refresh_kept_object(object)?;
-                kept.clone()
             }
-            None => AisPlane::with_center(&geometry, plane.location(), false)?,
-        };
-        *ais = object.cast();
+            None => {
+                *ais = AisPlane::with_center(&geometry, plane.location(), false)?.into_upcast();
+            }
+        }
         Ok(true)
     }
 }
@@ -150,7 +144,7 @@ impl TPrsStdDriver for TPrsStdPointDriver {
         if !TDataXtdGeometry::point_of_label(label, &mut point)? {
             return Ok(false);
         }
-        *ais = point_object(ais, point)?.cast();
+        *ais = point_object(ais, point)?.into_upcast();
         Ok(true)
     }
 }
@@ -160,13 +154,13 @@ pub(super) fn point_object(
     ais: &Handle<dyn AisInteractiveObject>,
     point: Point3,
 ) -> Result<Handle<AisPoint>, Failure> {
-    let geometry = Handle::new(GeomCartesianPoint::from_pnt(point)).cast();
-    let kept = ais.cast::<AisPoint>();
+    let geometry = Handle::new(GeomCartesianPoint::from_pnt(point)).into_upcast();
+    let kept = ais.downcast::<AisPoint>();
     match kept.get() {
         Some(object) => {
             object.set_component(&geometry);
             refresh_kept_object(object)?;
-            Ok(kept.clone())
+            Ok(kept)
         }
         None => AisPoint::new(&geometry),
     }

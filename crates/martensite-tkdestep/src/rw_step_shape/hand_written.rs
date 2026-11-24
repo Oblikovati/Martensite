@@ -7,10 +7,12 @@ use crate::step_shape::{
     StepShapeEdgeCurve, StepShapeEdgeLoop, StepShapeFaceBound, StepShapeOrientedEdge,
     StepShapeVertexPoint,
 };
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 
 /// The first entity of a type sharing `entity`, null when there is none (the `GetSharing`).
-fn sharing_of_type<T: RuntimeTyped>(
-    entity: &Handle<StandardTransient>,
+fn sharing_of_type<T: RuntimeTyped + TransientHandleTarget>(
+    entity: &Handle<dyn Transient>,
     share_tool: &InterfaceShareTool,
 ) -> Result<Handle<T>, Failure> {
     let mut sharing = share_tool.sharings(entity)?;
@@ -26,11 +28,11 @@ fn face_bound_orientation(
     oriented_edge: &Handle<StepShapeOrientedEdge>,
     share_tool: &InterfaceShareTool,
 ) -> Result<bool, Failure> {
-    let edge: Handle<StandardTransient> = oriented_edge.cast();
+    let edge: Handle<dyn Transient> = oriented_edge.cast();
     if !share_tool.is_shared(&edge)? {
         return Ok(true);
     }
-    let edge_loop: Handle<StandardTransient> =
+    let edge_loop: Handle<dyn Transient> =
         sharing_of_type::<StepShapeEdgeLoop>(&edge, share_tool)?.cast();
     if !share_tool.is_shared(&edge_loop)? {
         return Ok(true);
@@ -40,7 +42,9 @@ fn face_bound_orientation(
 }
 
 /// Whether the ends are two distinct vertices at equal points, within `Precision::confusion`.
-fn are_ends_match(edge_curve: &Handle<StepShapeEdgeCurve>) -> Result<bool, Failure> {
+fn are_ends_match(
+    edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
+) -> Result<bool, Failure> {
     let start = edge_curve.edge_start().cast::<StepShapeVertexPoint>();
     let end = edge_curve.edge_end().cast::<StepShapeVertexPoint>();
     if start == end {
@@ -82,7 +86,7 @@ impl RwStepShapeRwEdgeCurve {
     /// A failure of the sharing graph, or the null dereference of a vertex.
     pub fn check(
         &self,
-        the_edge_curve: &Handle<StepShapeEdgeCurve>,
+        the_edge_curve: &Handle<dyn crate::StepEntityBase<StepShapeEdgeCurve>>,
         the_share_tool: &InterfaceShareTool,
         the_message_tool: &Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
@@ -92,7 +96,7 @@ impl RwStepShapeRwEdgeCurve {
                 "",
             );
         }
-        let edge: Handle<StandardTransient> = the_edge_curve.cast();
+        let edge: Handle<dyn Transient> = the_edge_curve.cast();
         if !the_share_tool.is_shared(&edge)? {
             the_message_tool.add_fail_text("ERROR: EdgeCurve not referenced", "");
             return Ok(());
@@ -119,7 +123,7 @@ fn other_face_bound_orientation(
     share_tool: &InterfaceShareTool,
     running: bool,
 ) -> Result<bool, Failure> {
-    let other: Handle<StandardTransient> = other_edge.cast();
+    let other: Handle<dyn Transient> = other_edge.cast();
     if !share_tool.is_shared(&other)? {
         return Ok(running);
     }
@@ -133,7 +137,9 @@ fn other_face_bound_orientation(
     let mut sharing = share_tool.sharings(&edge_loop)?;
     sharing.select_type(StepShapeFaceBound::static_type(), true);
     sharing.start();
-    let face_bound = sharing.value()?.cast::<StepShapeFaceBound>();
+    let face_bound = sharing
+        .value()?
+        .cast::<dyn crate::StepEntityBase<StepShapeFaceBound>>();
     Ok(face_bound
         .get()
         .map_or(running, |bound| bound.orientation()))
@@ -147,7 +153,7 @@ impl RwStepShapeRwFaceBound {
     /// A failure of the sharing graph, or the null dereference of an oriented edge.
     pub fn check(
         &self,
-        ent: &Handle<StepShapeFaceBound>,
+        ent: &Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>,
         a_shto: &InterfaceShareTool,
         ach: &Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
@@ -156,7 +162,9 @@ impl RwStepShapeRwFaceBound {
         // The variable outlives the loop, so an orientation found for one edge stays for
         // the next edge whose links are missing.
         let mut other_orientation = true;
-        let edge_loop = ent.bound().cast::<StepShapeEdgeLoop>();
+        let edge_loop = ent
+            .bound()
+            .cast::<dyn crate::StepEntityBase<StepShapeEdgeLoop>>();
         let Some(the_loop) = edge_loop.get() else {
             return Ok(());
         };

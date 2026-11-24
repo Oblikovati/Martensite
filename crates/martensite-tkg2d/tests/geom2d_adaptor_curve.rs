@@ -20,13 +20,13 @@ fn setup() -> Fixture {
     // Create a simple 2D line for testing
     let aP1 = Point2::new(0.0, 0.0);
     let aLine = Line2::new(aP1, Direction2::new(1.0, 1.0).unwrap());
-    let myLine = Handle::new(Geom2dLine::from_lin2d(aLine)).cast();
+    let myLine = Handle::new(Geom2dLine::from_lin2d(aLine)).into_upcast();
 
     // Create a 2D circle for testing
     let aCenter = Point2::new(5.0, 5.0);
     let aAxis = Axis2d::new(aCenter, Direction2::new(1.0, 0.0).unwrap());
     let aCirc = Circle2::from_x_axis(aAxis, 3.0, true).unwrap();
-    let myCircle = Handle::new(Geom2dCircle::from_circ2d(aCirc)).cast();
+    let myCircle = Handle::new(Geom2dCircle::from_circ2d(aCirc)).into_upcast();
     Fixture { myLine, myCircle }
 }
 
@@ -192,7 +192,8 @@ fn curve_adaptor_curve_degenerated_curve_trimmed_curve_success() {
     let f = setup();
     // Create a trimmed curve and test degenerated case
     let aTrimmedCurve: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&f.myLine, 0.0, 20.0, true, true).unwrap()).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&f.myLine, 0.0, 20.0, true, true).unwrap())
+            .into_upcast();
 
     let aParam: f64 = 10.0;
     let anAdaptor = Geom2dAdaptorCurve::default();

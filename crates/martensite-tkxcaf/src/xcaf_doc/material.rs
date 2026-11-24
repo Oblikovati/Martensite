@@ -5,7 +5,7 @@ use crate::json::{field_h_string, field_raw_pointer};
 use crate::xcaf_dim_tol_objects::array_values;
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
@@ -48,11 +48,10 @@ pub struct XCAFDocMaterialFields {
 /// ```
 #[derive(Default)]
 pub struct XCAFDocMaterial {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     fields: SharedState<XCAFDocMaterialFields>,
 }
-martensite_tkernel::impl_transient!(XCAFDocMaterial, "XCAFDocMaterial", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocMaterial, "XCAFDocMaterial", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocMaterial {
     /// `XCAFDocMaterial()`.
@@ -155,11 +154,10 @@ struct DimTolFields {
 /// description.
 #[derive(Default)]
 pub struct XCAFDocDimTol {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     fields: SharedState<DimTolFields>,
 }
-martensite_tkernel::impl_transient!(XCAFDocDimTol, "XCAFDocDimTol", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocDimTol, "XCAFDocDimTol", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocDimTol {
     /// `XCAFDocDimTol()`.

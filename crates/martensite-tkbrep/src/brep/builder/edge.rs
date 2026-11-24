@@ -20,7 +20,7 @@ impl BRepBuilder {
     pub fn make_edge(&self, edge: &mut Edge) -> Result<(), Failure> {
         let tedge = BRepTEdge::new();
         check_unlocked_shape(edge, "BRep_Builder::MakeEdge")?;
-        self.make_shape(edge, &Handle::new(tedge).into_cast());
+        self.make_shape(edge, &Handle::new(tedge).into_upcast());
         Ok(())
     }
 

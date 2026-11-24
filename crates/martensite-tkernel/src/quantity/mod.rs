@@ -15,3 +15,6 @@ mod color_encoding;
 mod color_rgba;
 mod color_rgba_codec;
 pub use color_rgba::ColorRgba;
+
+#[cfg(test)]
+mod quantity_color;

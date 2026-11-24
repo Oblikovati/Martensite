@@ -17,7 +17,8 @@ use crate::step_repr::{
 };
 use crate::step_shape::{StepShapeShapeDefinitionRepresentation, StepShapeShapeRepresentation};
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tklcaf::tdata_std::TDataStdTreeNode;
 use martensite_tklcaf::tdf::{TdfAttribute, TdfLabel};
 use martensite_tkmath::toploc::Location;
@@ -28,20 +29,25 @@ use martensite_tkxsbase::interface::{InterfaceHGraph, InterfaceModelEntities};
 use martensite_tkxsbase::xs_control::XSControlWorkSession;
 use std::collections::HashMap;
 
-type RepresentationMap = HashMap<Vec<u8>, Handle<StepReprRepresentation>>;
+type RepresentationMap =
+    HashMap<Vec<u8>, Handle<dyn crate::StepEntityBase<StepReprRepresentation>>>;
 
 /// `FindPDSforRI`: the product definition shape and context of a representation item.
 fn find_pds_for_item(
     graph: &Handle<InterfaceHGraph>,
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     pds: &mut Handle<StepReprProductDefinitionShape>,
-    context: &mut Handle<StepReprRepresentationContext>,
+    context: &mut Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
 ) -> Result<(), Failure> {
-    if entity.cast::<StepReprRepresentationItem>().is_null() {
+    if entity
+        .cast::<dyn crate::StepEntityBase<StepReprRepresentationItem>>()
+        .is_null()
+    {
         return Ok(());
     }
     for sharing in sharings_of(graph, entity)? {
-        let representation: Handle<StepShapeShapeRepresentation> = sharing.cast();
+        let representation: Handle<dyn crate::StepEntityBase<StepShapeShapeRepresentation>> =
+            sharing.cast();
         if representation.is_null() {
             continue;
         }
@@ -64,8 +70,8 @@ fn find_pds_for_item(
 fn density_representation(
     ws: &Handle<XSControlWorkSession>,
     fields: &XCAFDocMaterialFields,
-    context: &Handle<StepReprRepresentationContext>,
-) -> Result<Handle<StepReprRepresentation>, Failure> {
+    context: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
+) -> Result<Handle<dyn crate::StepEntityBase<StepReprRepresentation>>, Failure> {
     let model = model_of(ws)?;
     // mass
     let mass = Handle::new(StepBasicSiUnitAndMassUnit::new());
@@ -99,15 +105,15 @@ fn density_representation(
     let representation = Handle::new(StepReprRepresentation::new());
     representation.init(&text("density"), &one_item(&measure.cast())?, context);
     model.add_with_refs(&representation.cast(), 0, false)?;
-    Ok(representation)
+    Ok(representation.into_upcast())
 }
 
 /// A property of the product definition with the representation.
 fn write_material_property(
     ws: &Handle<XSControlWorkSession>,
-    definition: &Handle<StepBasicProductDefinition>,
+    definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     description: &str,
-    representation: &Handle<StepReprRepresentation>,
+    representation: &Handle<dyn crate::StepEntityBase<StepReprRepresentation>>,
 ) -> Result<(), Failure> {
     let model = model_of(ws)?;
     let mut characterized = StepReprCharacterizedDefinition::default();
@@ -205,7 +211,7 @@ fn write_material_of_shape(
         let representation = Handle::new(StepReprRepresentation::new());
         representation.init(&text("material name"), &one_item(&item.cast())?, &context);
         model_of(ws)?.add_with_refs(&representation.cast(), 0, false)?;
-        map_dri.insert(key.clone(), representation);
+        map_dri.insert(key.clone(), representation.into_upcast());
         // write MRI
         if fields.density > 0.0 {
             map_mri.insert(key.clone(), density_representation(ws, &fields, &context)?);

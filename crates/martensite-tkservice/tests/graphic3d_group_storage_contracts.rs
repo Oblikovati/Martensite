@@ -20,7 +20,7 @@ pub(super) fn append_existing_group(
         .fields
         .write()
         .groups
-        .append(group.clone());
+        .append(martensite_tkernel::standard::HandleSlot::new(group.clone()));
 }
 #[test]
 fn group_snapshots_preserve_duplicate_order_and_each_intrusive_owner() {

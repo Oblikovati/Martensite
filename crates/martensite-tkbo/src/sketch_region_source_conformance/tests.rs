@@ -55,7 +55,7 @@ fn assert_complete(report: &SourceConformanceInspection) {
 }
 fn line_shape(origin: Point3, first: f64, last: f64) -> Shape {
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(origin, Direction3::X))).cast();
+        Handle::new(GeomLine::new(Axis1::new(origin, Direction3::X))).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve_params(&curve, first, last)
         .unwrap()
         .edge()
@@ -114,7 +114,7 @@ fn mutate_curve(shape: &Shape) {
     BRepTool::curve_with_location(&edge(shape).unwrap())
         .unwrap()
         .curve
-        .cast::<GeomBezierCurve>()
+        .downcast::<GeomBezierCurve>()
         .set_pole(2, Point3::new(4., 0., 1.))
         .unwrap();
 }
@@ -228,7 +228,7 @@ fn oblique_edge(plane: Plane3) -> Shape {
         frame.location(),
         frame.x_direction(),
     )))
-    .cast();
+    .into_upcast();
     BRepBuilderAPIMakeEdge::from_curve_params(&curve, -2., 5.)
         .unwrap()
         .edge()
@@ -296,7 +296,7 @@ fn rational_edge() -> Shape {
         )
         .unwrap(),
     )
-    .cast();
+    .into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()
@@ -363,7 +363,7 @@ fn unsupported_original_basis_retains_named_cause_without_line_or_faceted_fallba
         martensite_tkg3d::geom::GeomCircle::new(martensite_tkmath::gp::Axis2::default(), 1.)
             .unwrap(),
     )
-    .cast();
+    .into_upcast();
     let shape = BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()
@@ -448,7 +448,7 @@ fn varying_height_edge() -> Shape {
         Point3::default(),
     ];
     let curve: Handle<dyn GeomCurve> =
-        Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).cast();
+        Handle::new(GeomBezierCurve::new(&Array1::from_shared(&poles, 1)).unwrap()).into_upcast();
     BRepBuilderAPIMakeEdge::from_curve(&curve)
         .unwrap()
         .edge()

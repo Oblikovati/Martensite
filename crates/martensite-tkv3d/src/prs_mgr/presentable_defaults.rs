@@ -22,7 +22,7 @@ fn presentations_of<O: PrsMgrPresentableObject + ?Sized>(
         .read()
         .presentations
         .iter()
-        .cloned()
+        .map(|slot| Handle::clone(slot))
         .collect()
 }
 
@@ -116,7 +116,7 @@ pub fn prs_mgr_update_transformation<O: PrsMgrPresentableObject + ?Sized>(
     fields
         .presentations
         .iter()
-        .filter_map(Handle::get)
+        .filter_map(|slot| slot.get())
         .for_each(|p| p.set_transformation(&trsf));
     for child in fields.children.iter().filter_map(Handle::get) {
         child.set_combined_parent_transform(&trsf)?;
@@ -164,7 +164,7 @@ pub fn prs_mgr_update_clipping<O: PrsMgrPresentableObject + ?Sized>(object: &O) 
     fields
         .presentations
         .iter()
-        .filter_map(Handle::get)
+        .filter_map(|slot| slot.get())
         .for_each(|p| p.set_clip_planes(&planes));
 }
 

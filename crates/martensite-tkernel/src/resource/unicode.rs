@@ -8,10 +8,12 @@ use crate::{
     standard::Failure,
     tcollection::ExtendedString,
 };
+#[cfg(test)]
 use std::sync::{
     Mutex,
     atomic::{AtomicBool, AtomicI32},
 };
+#[cfg(test)]
 mod format;
 
 /// The Unicode conversions; every member is an associated function.
@@ -25,48 +27,69 @@ mod format;
 pub struct ResourceUnicode;
 
 /// The process-wide current format and whether it was read.
+#[cfg(test)]
 static FORMAT: AtomicI32 = AtomicI32::new(FormatType::ANSI as i32);
+#[cfg(test)]
 static FORMAT_READ: AtomicBool = AtomicBool::new(false);
+#[cfg(test)]
 static FORMAT_LOCK: Mutex<()> = Mutex::new(());
 
 impl ResourceUnicode {
     /// Shift-JIS bytes (up to the first NUL) to UTF-16; `ResourceUnicode::convert_sjis_to_unicode(b"A", &mut text)`.
-    pub fn convert_sjis_to_unicode(from: &[u8], to: &mut ExtendedString) {
+    pub(super) fn convert_sjis_to_unicode(from: &[u8], to: &mut ExtendedString) {
         *to = multibyte::decode_pairs(from, &multibyte::SJIS_DECODER);
     }
     /// EUC bytes (Japanese tables) to UTF-16; `ResourceUnicode::convert_euc_to_unicode(b"A", &mut text)`.
-    pub fn convert_euc_to_unicode(from: &[u8], to: &mut ExtendedString) {
+    pub(super) fn convert_euc_to_unicode(from: &[u8], to: &mut ExtendedString) {
         *to = multibyte::decode_pairs(from, &multibyte::EUC_DECODER);
     }
     /// GB2312 bytes to UTF-16; `ResourceUnicode::convert_gb_to_unicode(b"A", &mut text)`.
-    pub fn convert_gb_to_unicode(from: &[u8], to: &mut ExtendedString) {
+    pub(super) fn convert_gb_to_unicode(from: &[u8], to: &mut ExtendedString) {
         *to = multibyte::decode_pairs(from, &multibyte::GB_DECODER);
     }
     /// GBK bytes to UTF-16; false on an invalid byte, Standard_OutOfRange where the
     /// recovery inserts at position 0; `ResourceUnicode::convert_gbk_to_unicode(b"A", &mut text)?`.
-    pub fn convert_gbk_to_unicode(from: &[u8], to: &mut ExtendedString) -> Result<bool, Failure> {
+    pub(super) fn convert_gbk_to_unicode(
+        from: &[u8],
+        to: &mut ExtendedString,
+    ) -> Result<bool, Failure> {
         cjk::decode_into(from, to, cjk::gbk_units)
     }
     /// Big5 bytes to UTF-16, with the same failure modes as GBK;
     /// `ResourceUnicode::convert_big5_to_unicode(b"A", &mut text)?`.
-    pub fn convert_big5_to_unicode(from: &[u8], to: &mut ExtendedString) -> Result<bool, Failure> {
+    pub(super) fn convert_big5_to_unicode(
+        from: &[u8],
+        to: &mut ExtendedString,
+    ) -> Result<bool, Failure> {
         cjk::decode_into(from, to, cjk::big5_units)
     }
     /// UTF-16 to Shift-JIS in a buffer of `maxsize = to.len()` bytes; true when complete;
     /// `ResourceUnicode::convert_unicode_to_sjis(&text, &mut buffer)?`.
-    pub fn convert_unicode_to_sjis(from: &ExtendedString, to: &mut [u8]) -> Result<bool, Failure> {
+    pub(super) fn convert_unicode_to_sjis(
+        from: &ExtendedString,
+        to: &mut [u8],
+    ) -> Result<bool, Failure> {
         multibyte::encode_pairs(from, to, &multibyte::SJIS_ENCODER)
     }
     /// UTF-16 to EUC; `ResourceUnicode::convert_unicode_to_euc(&text, &mut buffer)?`.
-    pub fn convert_unicode_to_euc(from: &ExtendedString, to: &mut [u8]) -> Result<bool, Failure> {
+    pub(super) fn convert_unicode_to_euc(
+        from: &ExtendedString,
+        to: &mut [u8],
+    ) -> Result<bool, Failure> {
         multibyte::encode_pairs(from, to, &multibyte::EUC_ENCODER)
     }
     /// UTF-16 to GB2312; `ResourceUnicode::convert_unicode_to_gb(&text, &mut buffer)?`.
-    pub fn convert_unicode_to_gb(from: &ExtendedString, to: &mut [u8]) -> Result<bool, Failure> {
+    pub(super) fn convert_unicode_to_gb(
+        from: &ExtendedString,
+        to: &mut [u8],
+    ) -> Result<bool, Failure> {
         multibyte::encode_pairs(from, to, &multibyte::GB_ENCODER)
     }
     /// UTF-16 to single bytes, spaces above 0xFF; `ResourceUnicode::convert_unicode_to_ansi(&text, &mut buffer)?`.
-    pub fn convert_unicode_to_ansi(from: &ExtendedString, to: &mut [u8]) -> Result<bool, Failure> {
+    pub(super) fn convert_unicode_to_ansi(
+        from: &ExtendedString,
+        to: &mut [u8],
+    ) -> Result<bool, Failure> {
         multibyte::encode_ansi(from, to)
     }
     /// Converts bytes in `format` to UTF-16; the GBK/Big5
@@ -95,12 +118,17 @@ impl ResourceUnicode {
     }
     /// Converts bytes in the current format (`get_format`) to UTF-16;
     /// `ResourceUnicode::convert_current_to_unicode(b"text", &mut text)?`.
-    pub fn convert_current_to_unicode(from: &[u8], to: &mut ExtendedString) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn convert_current_to_unicode(
+        from: &[u8],
+        to: &mut ExtendedString,
+    ) -> Result<(), Failure> {
         Self::convert_format_to_unicode(Self::get_format()?, from, to)
     }
     /// Converts UTF-16 to the current format;
     /// `ResourceUnicode::convert_unicode_to_current(&text, &mut buffer)?`.
-    pub fn convert_unicode_to_current(
+    #[cfg(test)]
+    pub(crate) fn convert_unicode_to_current(
         from: &ExtendedString,
         to: &mut [u8],
     ) -> Result<bool, Failure> {

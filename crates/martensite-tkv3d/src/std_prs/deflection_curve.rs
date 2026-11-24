@@ -18,7 +18,7 @@ impl StdPrsDeflectionCurve {
     pub fn add(
         prs: &Handle<dyn Graphic3dStructureSource>,
         curve: &dyn Adaptor3dCurve,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         draw: bool,
     ) -> Result<(), Failure> {
         let group = styled_group(prs, drawer, draw)?;
@@ -35,7 +35,7 @@ impl StdPrsDeflectionCurve {
         curve: &dyn Adaptor3dCurve,
         first: f64,
         last: f64,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         draw: bool,
     ) -> Result<(), Failure> {
         let group = styled_group(prs, drawer, draw)?;
@@ -68,7 +68,7 @@ impl StdPrsDeflectionCurve {
         prs: &Handle<dyn Graphic3dStructureSource>,
         curve: &dyn Adaptor3dCurve,
         deflection: f64,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         points: &mut Sequence<Point3>,
         draw: bool,
     ) -> Result<(), Failure> {

@@ -101,7 +101,9 @@ fn raw_capture_preserves_override_without_admitting_it() {
         martensite_tkmath::gp::Axis1::default(),
     ));
     curve
-        .set_eval_representation(Handle::new(RepCurveDescFull::new(replacement.cast())).cast())
+        .set_eval_representation(
+            Handle::new(RepCurveDescFull::new(replacement.cast())).into_upcast(),
+        )
         .unwrap();
     let lease = curve.try_input_lease().unwrap();
     assert!(lease.stored_input().evaluation_override());

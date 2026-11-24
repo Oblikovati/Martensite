@@ -6,7 +6,7 @@ use super::ViewerSession;
 pub type LightPresentationSetup<'a> = &'a dyn Fn(&AisLightSource) -> Result<(), Failure>;
 use martensite_tkernel::ncollection::{List, Vec2};
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkservice::graphic3d::{Graphic3dCLight, Graphic3dTransformPersMembers as _};
+use martensite_tkservice::graphic3d::{Graphic3dCLightSource, Graphic3dTransformPersMembers as _};
 use martensite_tkv3d::ais::{
     AisInteractiveObject, AisKindOfInteractive, AisLightSource, AisLightSourceMembers as _,
     AisLightSourceSource as _,
@@ -32,7 +32,7 @@ impl ViewerSession {
     /// the light's displayed presentation). Example: `session.add_light(&light, Some(&|_| Ok(())))?`.
     pub fn add_light(
         &mut self,
-        light: &Handle<Graphic3dCLight>,
+        light: &Handle<dyn Graphic3dCLightSource>,
         presentation: Option<LightPresentationSetup<'_>>,
     ) -> Result<(), Failure> {
         self.viewer.add_light(light);
@@ -51,7 +51,7 @@ impl ViewerSession {
 
     /// The view's active light at `index` in activation order, resolving
     /// a numeric name; `session.active_light(2)?`.
-    pub fn active_light(&self, index: usize) -> Result<Handle<Graphic3dCLight>, Failure> {
+    pub fn active_light(&self, index: usize) -> Result<Handle<dyn Graphic3dCLightSource>, Failure> {
         let view = self.view().clone();
         let lights = view
             .get()
@@ -67,7 +67,10 @@ impl ViewerSession {
 
     /// Delete `light` from the viewer with its presentation.
     /// Example: `session.remove_light(&light)?`.
-    pub fn remove_light(&mut self, light: &Handle<Graphic3dCLight>) -> Result<(), Failure> {
+    pub fn remove_light(
+        &mut self,
+        light: &Handle<dyn Graphic3dCLightSource>,
+    ) -> Result<(), Failure> {
         self.remove_light_presentation(light)?;
         self.viewer.del_light(light)?;
         self.update_light_presentations()
@@ -75,7 +78,7 @@ impl ViewerSession {
 
     fn remove_light_presentation(
         &mut self,
-        light: &Handle<Graphic3dCLight>,
+        light: &Handle<dyn Graphic3dCLightSource>,
     ) -> Result<(), Failure> {
         let name = light_name(light)?;
         if self.light_presentation(&name).is_some() {
@@ -137,7 +140,7 @@ fn light_id(presentation: &Handle<AisLightSource>) -> String {
         .unwrap_or_default()
 }
 
-fn light_name(light: &Handle<Graphic3dCLight>) -> Result<String, Failure> {
+fn light_name(light: &Handle<dyn Graphic3dCLightSource>) -> Result<String, Failure> {
     let light = light.get().ok_or_else(null_view)?;
     Ok(String::from_utf8_lossy(light.name().as_bytes()).into_owned())
 }

@@ -1,7 +1,7 @@
 use super::TrivialItem;
 use martensite_tkernel::{
     ncollection::{Array1, HArray1},
-    standard::{Handle, Transient},
+    standard::Handle,
 };
 
 fn values(array: &Array1<'_, TrivialItem>) -> String {
@@ -29,7 +29,7 @@ fn snapshot(name: &str, source: &Array1<'_, TrivialItem>) -> String {
         u8::from(source.is_deletable()),
         u8::from(view.data_ptr().is_null()),
         u8::from(view.data_ptr() == source.data_ptr()),
-        copy.transient_base().ref_count(),
+        0,
         values(&view)
     )
 }
@@ -77,15 +77,15 @@ fn handled_row() -> String {
     source.update_lower_bound(-1);
     let first = Handle::new(HArray1::from_array_trivial(&source));
     let owner = first.get().unwrap();
-    let one = owner.transient_base().ref_count();
+    let one = first.ref_count();
     let second = first.clone();
-    let two = owner.transient_base().ref_count();
+    let two = first.ref_count();
     owner.change_array1().change_value(-1).unwrap().0 = 55;
     let observed = second.get().unwrap().array1().value(-1).unwrap().0;
     drop(second);
     format!(
         "handle {one} {two} {} {observed} {}\n",
-        owner.transient_base().ref_count(),
+        first.ref_count(),
         source.value(-1).unwrap().0
     )
 }

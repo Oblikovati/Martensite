@@ -164,3 +164,36 @@ fn blocking_teardown_reaches_retired_only_after_qualified_idle() {
     assert_eq!(protocol.phase(), SubmissionPhase::Retired);
     assert_eq!(calls.events, ["end", "submit", "fence", "idle", "idle"]);
 }
+#[test]
+fn a_submitted_frame_waits_only_when_it_is_completed() {
+    let protocol = SubmissionProtocol::default();
+    let mut calls = FakeSubmissionDispatch::default();
+    protocol.submit(&mut calls).unwrap();
+    assert_eq!(protocol.phase(), SubmissionPhase::Submitted);
+    assert_eq!(calls.events, ["end", "submit"]);
+    protocol.complete(&mut calls).unwrap();
+    assert_eq!(protocol.phase(), SubmissionPhase::Retired);
+    assert!(protocol.complete(&mut calls).is_err());
+    assert_eq!(calls.events, ["end", "submit", "fence"]);
+}
+#[test]
+fn completing_unsubmitted_work_is_refused_without_a_wait() {
+    let protocol = SubmissionProtocol::default();
+    let mut calls = FakeSubmissionDispatch::default();
+    assert!(protocol.complete(&mut calls).is_err());
+    calls.failures.insert("submit", -1);
+    assert!(protocol.submit(&mut calls).is_err());
+    assert!(protocol.complete(&mut calls).is_err());
+    assert_eq!(calls.events, ["end", "submit"]);
+}
+#[test]
+fn a_late_fence_failure_keeps_the_primary_cause_after_an_idle_proof() {
+    let protocol = SubmissionProtocol::default();
+    let mut calls = FakeSubmissionDispatch::default();
+    protocol.submit(&mut calls).unwrap();
+    calls.failures.insert("fence", -1);
+    let error = protocol.complete(&mut calls).unwrap_err();
+    assert_eq!(error.device_failure().unwrap().operation(), "fence");
+    assert_eq!(protocol.phase(), SubmissionPhase::Retired);
+    assert_eq!(calls.events, ["end", "submit", "fence", "idle"]);
+}

@@ -4,7 +4,7 @@ mod join_edges;
 mod merge_small;
 mod repair;
 mod small_edges;
-use super::{FixRoot, FixRootData, ShapeFixRoot};
+use super::{FixRoot, FixRootData};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkbrep::{topods::Shape, toptools::ShapeMapHasher};
 use martensite_tkernel::{
@@ -17,7 +17,7 @@ pub type ShapeFixWireframeShapeLists = DataMap<Shape, List<Shape>, ShapeMapHashe
 /// Analyze wireframe defects; `let tool=ShapeFixWireframe::new();`.
 #[derive(Default)]
 pub struct ShapeFixWireframe {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     state: SharedState<WireframeState>,
 }
 struct WireframeState {
@@ -38,10 +38,10 @@ impl Default for WireframeState {
         }
     }
 }
-impl_transient!(ShapeFixWireframe,"ShapeFix_Wireframe",ShapeFixRoot,parent,interfaces:[dyn FixRoot]);
+impl_transient!(ShapeFixWireframe,"ShapeFix_Wireframe",dyn FixRoot,interfaces:[dyn FixRoot]);
 impl FixRoot for ShapeFixWireframe {
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
 }
 impl ShapeFixWireframe {

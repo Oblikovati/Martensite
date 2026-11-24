@@ -23,17 +23,17 @@ pub(super) fn seam_edge(surface: &Handle<GeomSurfaceOfLinearExtrusion>) -> Handl
         martensite_tkmath::geom_abs::Shape::C0,
     )
     .unwrap();
-    seam.parent.gcurve.store_range(2., 5.);
+    seam.first_curve.gcurve.store_range(2., 5.);
     let line = Handle::new(GeomLine::new(Axis1::default()));
     let spatial = Handle::new(BRepCurve3D::new(&line.cast(), &Location::default()));
     let edge = Handle::new(BRepTEdge::new());
-    edge.change_curves(|curves| curves.extend([spatial.cast(), Handle::new(seam).cast()]));
+    edge.change_curves(|curves| curves.extend([spatial.cast(), Handle::new(seam).into_upcast()]));
     edge
 }
 #[test]
 fn real_seam_retains_two_distinct_pcurve_bindings_and_actual_range() {
     let (face, fields) = face_fixture();
-    let surface = fields.surface().cast::<GeomSurfaceOfLinearExtrusion>();
+    let surface = fields.surface().downcast::<GeomSurfaceOfLinearExtrusion>();
     append_owner(&face, seam_edge(&surface).cast());
     let snapshot = captured(&face);
     assert!(
@@ -105,9 +105,9 @@ fn planar_count(snapshot: &FaceInputSnapshot) -> usize {
 }
 
 fn attached_seam(face: &Face, fields: &BRepTFace) -> Handle<BRepCurveOnClosedSurface> {
-    let surface = fields.surface().cast::<GeomSurfaceOfLinearExtrusion>();
+    let surface = fields.surface().downcast::<GeomSurfaceOfLinearExtrusion>();
     let edge = seam_edge(&surface);
-    let seam = edge.curves()[1].cast::<BRepCurveOnClosedSurface>();
+    let seam = edge.curves()[1].downcast::<BRepCurveOnClosedSurface>();
     append_owner(face, edge.cast());
     seam
 }
@@ -115,7 +115,7 @@ fn attached_seam(face: &Face, fields: &BRepTFace) -> Handle<BRepCurveOnClosedSur
 fn embedded_range_writer_is_part_of_the_required_read_closure() {
     let (face, fields) = face_fixture();
     let seam = attached_seam(&face, &fields);
-    let writer = seam.parent.gcurve.range.write();
+    let writer = seam.first_curve.gcurve.range.write();
     assert_busy(capture_closed_extrusion_face(
         &face,
         FaceCaptureLimits::bounded(),
@@ -129,7 +129,7 @@ fn embedded_range_writer_is_part_of_the_required_read_closure() {
 fn embedded_location_writer_is_part_of_the_required_read_closure() {
     let (face, fields) = face_fixture();
     let seam = attached_seam(&face, &fields);
-    let writer = seam.parent.gcurve.representation.location.write();
+    let writer = seam.first_curve.gcurve.representation.location.write();
     assert_busy(capture_closed_extrusion_face(
         &face,
         FaceCaptureLimits::bounded(),

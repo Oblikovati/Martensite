@@ -4,6 +4,7 @@ use super::super::tests::{Continue, Profile};
 use super::*;
 mod early_failures;
 mod recapture;
+mod unified;
 #[derive(Default)]
 struct Trace {
     checkpoints: Vec<OwnedPrismCheckpoint>,
@@ -40,7 +41,7 @@ fn live(
         .map_err(super::super::certify::preparation_refusal)?;
     prepared
         .inspect_plane_graph(|| false)
-        .map_err(super::super::certify::region_refusal)
+        .map_err(|failure| super::super::certify::inspection_refusal(&prepared, failure))
 }
 #[test]
 fn owned_graph_capture_batches_are_linear_and_match_live_certificate_bytes() {

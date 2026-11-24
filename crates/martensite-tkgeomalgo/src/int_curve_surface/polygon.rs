@@ -24,8 +24,8 @@ use std::sync::atomic::{AtomicI32, Ordering};
 /// use martensite_tkgeomalgo::int_curve_surface::{HCurve, ThePolygonOfHInter};
 /// use martensite_tkmath::gp::{Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> =
-///     Handle::new(GeomLine::from_point(Point3::new(0.0, 0.0, 0.0), Direction3::new(1.0, 0.0, 0.0).unwrap())).cast();
-/// let curve: HCurve = Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 4.0).unwrap()).cast();
+///     Handle::new(GeomLine::from_point(Point3::new(0.0, 0.0, 0.0), Direction3::new(1.0, 0.0, 0.0).unwrap())).into_upcast();
+/// let curve: HCurve = Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 4.0).unwrap()).into_upcast();
 /// let polygon = ThePolygonOfHInter::new(&curve, 3).unwrap();
 /// assert_eq!(polygon.nb_segments(), 4);
 /// ```

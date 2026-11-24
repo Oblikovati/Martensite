@@ -2,7 +2,7 @@
 use super::boxed_selectable::BoxedSelectable;
 use martensite_tkernel::{
     ncollection::Mat4,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkmath::gp::{Axis1, Axis2, Direction3, Point3, Transform3, Vector3};
 use martensite_tkservice::{graphic3d::*, null_driver::NullGraphicDriver};
@@ -18,7 +18,6 @@ pub fn boxed_scene_manager() -> Handle<PrsMgrPresentationManager> {
 pub fn boxed_persistence(code: i32) -> Result<Handle<dyn Graphic3dTransformPersSource>, Failure> {
     if code == 10 {
         return Ok(Handle::new(FailingBoxPersistence {
-            transient: StandardTransient::default(),
             base: Graphic3dTransformPersBase::new(Graphic3dTransModeFlags::ZOOM_PERS)?,
         })
         .cast());
@@ -50,10 +49,9 @@ pub fn boxed_scene_groups(
 }
 
 struct FailingBoxPersistence {
-    transient: StandardTransient,
     base: Graphic3dTransformPersBase,
 }
-martensite_tkernel::impl_transient!(FailingBoxPersistence,"FailingBoxPersistence",dyn Graphic3dTransformPersSource,transient,
+martensite_tkernel::impl_transient!(FailingBoxPersistence,"FailingBoxPersistence",dyn Graphic3dTransformPersSource,
     interfaces:[dyn Graphic3dTransformPersSource]);
 impl Graphic3dTransformPersSource for FailingBoxPersistence {
     fn transform_pers_base(&self) -> &Graphic3dTransformPersBase {

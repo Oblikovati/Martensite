@@ -79,7 +79,7 @@ fn read_chain(
             output,
             Graphic3dClipPlane::from_equation(equation).and_then(|plane| {
                 let plane = Handle::new(plane);
-                Graphic3dClipPlane::set_chain_next_plane(&last, plane.clone())?;
+                Graphic3dClipPlane::set_chain_next_plane(&last.upcast(), plane.upcast())?;
                 last = plane;
                 Ok(())
             }),
@@ -134,7 +134,7 @@ fn cut_chain(output: &Output, head: &Handle<Graphic3dClipPlane>) {
     let second = head.chain_next_plane();
     tried(
         output,
-        Graphic3dClipPlane::set_chain_next_plane(head, Handle::default()),
+        Graphic3dClipPlane::set_chain_next_plane(&head.upcast(), Handle::default()),
     );
     int(output, head.nb_chain_next_planes());
     flag(output, head.is_chain());

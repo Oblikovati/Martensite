@@ -117,7 +117,7 @@ fn std430_sources_keep_eighty_byte_stride_and_enabled_count() {
     let set = martensite_tkernel::standard::Handle::new(
         martensite_tkservice::graphic3d::Graphic3dLightSet::default(),
     );
-    set.add(&light).unwrap();
+    set.add(&light.upcast()).unwrap();
     let bytes = state(identity_clip(), identity_clip(), false)
         .with_lights(RenderLightSet::snapshot(&set, identity_clip()).unwrap())
         .encode();
@@ -203,4 +203,11 @@ fn segment_lighting_accepts_nodal_models_and_rejects_facet_derivatives() {
             shading != RenderShading::PhongFacet
         );
     }
+}
+
+#[test]
+fn identities_leave_equality_and_debug_text_unchanged() {
+    let (first, second) = (LightingIdentity::next(), LightingIdentity::next());
+    assert_eq!(first, second);
+    assert_eq!(format!("{first:?}"), format!("{second:?}"));
 }

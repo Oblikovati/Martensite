@@ -12,16 +12,18 @@ use super::{
     IgesGeomTrimmedSurface,
 };
 use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_array2_set, iges_dump_entities, iges_live, iges_msg,
     iges_new_array1, iges_new_array2, iges_real_text,
 };
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
 };
@@ -209,7 +211,7 @@ impl IgesGeomToolTrimmedSurface {
         let ent_live = iges_live(ent, "IgesGeomToolTrimmedSurface::read_own_params")?;
         let mut a_flag: i32 = 0;
         let mut count: i32 = 0;
-        let mut a_surface: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_surface: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut an_outer: Handle<IgesGeomCurveOnSurface> = Handle::default();
         let mut an_inner: Handle<HArray1<Handle<IgesGeomCurveOnSurface>>> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
@@ -307,10 +309,10 @@ impl IgesGeomToolTrimmedSurface {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolTrimmedSurface::own_shared")?;
         let up: i32 = ent_live.nb_inner_contours();
-        iter.get_one_item(&ent_live.surface().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.outer_contour().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.surface().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.outer_contour().cast::<dyn Transient>());
         for i in 1..=up {
-            iter.get_one_item(&ent_live.inner_contour(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.inner_contour(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -359,18 +361,18 @@ impl IgesGeomToolTrimmedSurface {
         let ent_live = iges_live(ent, "IgesGeomToolTrimmedSurface::own_copy")?;
         let mut an_inner: Handle<HArray1<Handle<IgesGeomCurveOnSurface>>> = Handle::default();
         let a_surface = tc
-            .transferred(&another_live.surface().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.surface().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let a_flag: i32 = another_live.outer_boundary_type();
         let an_outer = tc
-            .transferred(&another_live.outer_contour().cast::<StandardTransient>())?
+            .transferred(&another_live.outer_contour().cast::<dyn Transient>())?
             .cast::<IgesGeomCurveOnSurface>();
         let count: i32 = another_live.nb_inner_contours();
         if count > 0 {
             an_inner = iges_new_array1::<Handle<IgesGeomCurveOnSurface>>(1, count)?;
             for i in 1..=count {
                 let temp = tc
-                    .transferred(&another_live.inner_contour(i)?.cast::<StandardTransient>())?
+                    .transferred(&another_live.inner_contour(i)?.cast::<dyn Transient>())?
                     .cast::<IgesGeomCurveOnSurface>();
                 iges_array1_set(
                     &an_inner,

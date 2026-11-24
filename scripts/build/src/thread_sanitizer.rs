@@ -58,6 +58,10 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::OpenExtrusion => open_extrusion_controls(root),
         Control::VertexNeighborhood => vertex_neighborhood_controls(root),
         Control::DocumentTransactions => document_transaction_controls(root),
+        Control::SurfaceSketch => surface_sketch_controls(root),
+        Control::FontTextCapture => font_text_capture_controls(root),
+        Control::WrappedFamily => wrapped_family_controls(root),
+        Control::WrappedCone => wrapped_cone_controls(root),
         Control::SharedContext => shared_context_controls(root),
     }
 }
@@ -226,6 +230,68 @@ fn sanitizer_flags(command: CommandSpec) -> CommandSpec {
         .environment("RUSTC_WRAPPER", None)
         .environment("RUSTC_WORKSPACE_WRAPPER", None)
         .environment("TSAN_OPTIONS", None)
+}
+
+fn surface_sketch_controls(root: &Path) -> CommandSpec {
+    // Independent operation contexts must preserve published value metadata (#414, #416).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--test",
+        "surface_sketch",
+        "--",
+        "replay::parallel_operations_match_sequential_value_metadata",
+        "--exact",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+fn font_text_capture_controls(root: &Path) -> CommandSpec {
+    // Private memory-font instances and immutable published snapshots have distinct stress controls (#425).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkv3d",
+        "--lib",
+        "brep_font::text_capture::tests::stress",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+fn wrapped_family_controls(root: &Path) -> CommandSpec {
+    // #529: the ignored family campaign supplements the existing primitive replay control.
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::family::replay_tests::stress::different_geometry_with_shared_authored_ids_replays_under_contention",
+        "--",
+        "--exact",
+        "--ignored",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+const WRAPPED_CONE_TEST: &str = "surface_sketch::wrapped_profile::operation::cone::tests::completed::concurrency::overlapping_public_cone_operations_and_shared_readers_preserve_owned_evidence";
+fn wrapped_cone_controls(root: &Path) -> CommandSpec {
+    // #414: public cone operations and shared immutable result readers need their own control.
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--lib",
+        WRAPPED_CONE_TEST,
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 #[cfg(test)]

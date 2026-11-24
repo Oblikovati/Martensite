@@ -66,7 +66,6 @@ pub struct ImageVideoRational {
 
 /// A video recorder; `ImageVideoRecorder::default().frame_count() == 0`.
 pub struct ImageVideoRecorder {
-    transient: StandardTransient,
     /// `myImgSrcRgba`: the frame the application draws into.
     frame: ImagePixMap,
     /// `myFrameRate` and `myFrameCount`.
@@ -77,18 +76,12 @@ impl Default for ImageVideoRecorder {
     fn default() -> Self {
         let rate = ImageVideoRational { num: 1, den: 30 };
         Self {
-            transient: StandardTransient::default(),
             frame: ImagePixMap::default(),
             state: SharedState::new((rate, 0)),
         }
     }
 }
-martensite_tkernel::impl_transient!(
-    ImageVideoRecorder,
-    "Image_VideoRecorder",
-    StandardTransient,
-    transient
-);
+martensite_tkernel::impl_transient!(ImageVideoRecorder, "Image_VideoRecorder", StandardTransient);
 
 impl ImageVideoRecorder {
     /// Closes the file; nothing to close without FFmpeg; `recorder.close()`.

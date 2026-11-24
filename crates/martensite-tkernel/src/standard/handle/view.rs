@@ -1,51 +1,69 @@
-use super::{Handle, Owner, RuntimeTyped, Transient};
-use std::marker::PhantomData;
-/// A const handle reference projected to a base type, with no extra owning reference.
-pub struct HandleView<'a, T: ?Sized + RuntimeTyped> {
-    owner: Option<&'a Owner>,
-    projected: PhantomData<T>,
+use super::{Handle, Transient, TransientHandleTarget};
+use std::sync::Arc;
+
+/// A typed borrow of a handle's object. A view never changes the strong count.
+pub struct HandleView<'a, T: ?Sized> {
+    target: Option<&'a T>,
+    source: &'a dyn ViewOwner,
 }
-impl<'a, T: ?Sized + RuntimeTyped> HandleView<'a, T> {
-    pub(super) fn new(owner: Option<&'a Owner>) -> Self {
+
+trait ViewOwner {
+    fn clone_transient(&self) -> Option<Arc<dyn Transient>>;
+}
+
+impl<T: ?Sized + TransientHandleTarget> ViewOwner for Handle<T> {
+    fn clone_transient(&self) -> Option<Arc<dyn Transient>> {
+        self.0.clone().map(T::into_transient)
+    }
+}
+
+impl<'a, T: ?Sized + TransientHandleTarget> HandleView<'a, T> {
+    pub(super) fn new<U: ?Sized + TransientHandleTarget>(owner: &'a Handle<U>) -> Self {
+        let target = owner
+            .get()
+            .and_then(|value| T::borrow_from_transient(value.as_transient()));
         Self {
-            owner: owner.filter(|owner| T::project_from(owner.get()).is_some()),
-            projected: PhantomData,
+            target,
+            source: owner,
         }
     }
-    /// The viewed owner, for building a new owning handle from this view.
-    pub(super) fn owner(&self) -> Option<&'a Owner> {
-        self.owner
-    }
-    /// Check a borrowed null handle; `view.is_null()`.
+
+    /// True for an absent object or a failed cast; `view.is_null()`.
     pub fn is_null(&self) -> bool {
-        self.owner.is_none()
+        self.target.is_none()
     }
-    /// Borrow the projected subobject or interface view; `view.get()`.
-    pub fn get(&self) -> Option<&T> {
-        T::project_from(self.owner?.get())
+
+    /// Borrow the typed view of the object; `view.get()`.
+    pub fn get(&self) -> Option<&'a T> {
+        self.target
+    }
+
+    /// Read the object address without changing ownership; `view.object_address()`.
+    pub fn object_address(&self) -> *const () {
+        self.target
+            .map_or(std::ptr::null(), |value| std::ptr::from_ref(value).cast())
+    }
+
+    /// Borrow the original object through its root interface; `view.transient()`.
+    pub fn transient(&self) -> Option<&'a dyn Transient> {
+        self.target.map(T::as_transient)
+    }
+
+    pub(super) fn clone_owner(&self) -> Option<Arc<dyn Transient>> {
+        self.target?;
+        self.source.clone_transient()
     }
 }
-impl<T: RuntimeTyped> HandleView<'_, T> {
-    /// Observe the projected address; `view.as_ptr()`.
+
+impl<T: TransientHandleTarget> HandleView<'_, T> {
+    /// Observe the typed pointer, or null for an absent object; `view.as_ptr()`.
     pub fn as_ptr(&self) -> *const T {
         self.get().map_or(std::ptr::null(), std::ptr::from_ref)
     }
 }
-impl<'a, T: ?Sized + RuntimeTyped> HandleView<'a, T> {
-    /// Borrow the viewed object as a transient;
-    /// `is_kind::<Base>(view.transient())`.
-    pub fn transient(&self) -> Option<&'a dyn Transient> {
-        self.owner.map(|owner| owner.get())
-    }
-}
-impl<T: ?Sized + RuntimeTyped, U: ?Sized + RuntimeTyped> PartialEq<Handle<U>>
-    for HandleView<'_, T>
-{
+
+impl<T: ?Sized + TransientHandleTarget, U: ?Sized> PartialEq<Handle<U>> for HandleView<'_, T> {
     fn eq(&self, other: &Handle<U>) -> bool {
-        match (self.owner, other.owner.as_ref()) {
-            (Some(left), Some(right)) => left.address() == right.address(),
-            (None, None) => true,
-            _ => false,
-        }
+        self.object_address() == other.object_address()
     }
 }

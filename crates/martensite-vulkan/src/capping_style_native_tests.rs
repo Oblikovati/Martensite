@@ -73,5 +73,5 @@ fn assert_native_cap_aspect(
 fn native_contract_texture() -> Handle<Graphic3dTexture2D> {
     let image = Handle::new(martensite_tkservice::image::ImagePixMap::default());
     assert!(image.init_zero(martensite_tkservice::image::ImageFormat::Rgba, 1, 1, 0, 0));
-    Handle::new(Graphic3dTexture2D::from_pix_map(image))
+    Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()))
 }

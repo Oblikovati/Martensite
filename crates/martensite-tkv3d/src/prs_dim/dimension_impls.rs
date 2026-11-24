@@ -139,12 +139,11 @@ macro_rules! prs_dim_relation_class {
         $(, kind = $kind:expr)? $(, movable = $movable:expr)?) => {
         #[doc = $doc]
         pub struct $type {
-            transient: martensite_tkernel::standard::StandardTransient,
             pub(super) base: $crate::prs_dim::PrsDimRelationBase,
             /// The class fields.
             pub fields: martensite_tkernel::standard::SharedState<$fields>,
         }
-        martensite_tkernel::impl_transient!($type, $native, $parent, transient,
+        martensite_tkernel::impl_transient!($type, $native, $parent,
             interfaces: [$($interface),+]);
         super::dimension_impls::prs_dim_relation_impls!($type);
         impl $crate::prs_dim::PrsDimRelationSource for $type {
@@ -166,7 +165,6 @@ macro_rules! prs_dim_relation_class {
             /// A bound handle on the default relation state and the given fields.
             fn alloc(fields: $fields) -> martensite_tkernel::standard::Handle<Self> {
                 let relation = martensite_tkernel::standard::Handle::new(Self {
-                    transient: martensite_tkernel::standard::StandardTransient::default(),
                     base: $crate::prs_dim::PrsDimRelationBase::new(
                         $crate::prs_mgr::PrsMgrTypeOfPresentation3d::AllView,
                     ),

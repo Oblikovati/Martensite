@@ -36,6 +36,25 @@ fn numeric_constructors_use_percent_d_and_percent_g() {
 }
 
 #[test]
+fn real_constructor_replays_native_rounding_and_exponent_boundaries() {
+    // OCCT 8.0's TCollection_AsciiString(double) in the C locale.
+    let cases: [(f64, &[u8]); 9] = [
+        (999999.5, b"1e+06"),
+        (999999.5_f64.next_down(), b"999999"),
+        (9.999995e-5, b"0.0001"),
+        (9.999995e-5_f64.next_down(), b"9.99999e-05"),
+        (1234.125, b"1234.12"),
+        (1234.375, b"1234.38"),
+        (-0.0, b"-0"),
+        (0.000101, b"0.000101"),
+        (101000.0, b"101000"),
+    ];
+    for (value, expected) in cases {
+        assert_eq!(bytes(&AsciiString::from_real(value)), expected, "{value}");
+    }
+}
+
+#[test]
 fn joining_constructors_keep_or_drop_nul_like_their_overload() {
     let head = AsciiString::from_raw(b"a\0");
     assert_eq!(bytes(&AsciiString::joined_with_char(&head, 0)), b"a\0\0");

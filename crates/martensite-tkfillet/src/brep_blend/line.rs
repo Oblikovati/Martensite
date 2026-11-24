@@ -4,7 +4,7 @@ use super::BRepBlendExtremity;
 use crate::blend::BlendPoint;
 use crate::chfi_ds::Shared;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::{Failure, Transient};
 use martensite_tkgeomalgo::int_surf::IntSurfTypeTrans;
 
 /// A shared, mutable `occ::handle<BRepBlendLine>`: the walkings fill the line their
@@ -24,7 +24,6 @@ pub type BRepBlendLineHandle = Shared<BRepBlendLine>;
 /// ```
 #[derive(Clone)]
 pub struct BRepBlendLine {
-    parent: StandardTransient,
     seqpt: Vec<BlendPoint>,
     tras1: IntSurfTypeTrans,
     tras2: IntSurfTypeTrans,
@@ -35,12 +34,11 @@ pub struct BRepBlendLine {
     hass1: bool,
     hass2: bool,
 }
-impl_transient!(BRepBlendLine, "BRepBlendLine", StandardTransient, parent);
+impl_transient!(BRepBlendLine, "BRepBlendLine", dyn Transient);
 
 impl Default for BRepBlendLine {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             seqpt: Vec::new(),
             tras1: IntSurfTypeTrans::Undecided,
             tras2: IntSurfTypeTrans::Undecided,

@@ -2,7 +2,7 @@
 //! shapes (`ResultCheckList`, `Checked`, `CheckedShapes`, `CheckObject`) of
 //! [`TransferBRep`].
 use super::{
-    TransferBRep, TransferBRepBinderOfShape, TransferBRepShapeMapper,
+    TransferBRep, TransferBRepShapeBinderOps, TransferBRepShapeMapper,
     TransferBRepTransferResultInfo,
 };
 use crate::interface::{
@@ -14,7 +14,7 @@ use crate::transfer::{
 use martensite_tkbrep::topods::{HShape, Shape};
 use martensite_tkernel::{
     message::{Gravity, Msg, PrinterHandle},
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -38,15 +38,15 @@ fn fill_info(
 
 /// The shape a check entity stands for: a `TopoDSHShape`, a binder of shape or a shape
 /// mapper (in that order, the last found wins as natively), else null.
-fn shape_of(ent: &Handle<StandardTransient>) -> Shape {
+fn shape_of(ent: &Handle<dyn Transient>) -> Shape {
     let mut shape = Shape::default();
-    if let Some(hs) = ent.cast::<HShape>().get() {
+    if let Some(hs) = ent.downcast_ref::<HShape>() {
         shape = hs.shape();
     }
-    if let Some(sb) = ent.cast::<TransferBRepBinderOfShape>().get() {
+    if let Some(sb) = ent.view::<dyn TransferBRepShapeBinderOps>().get() {
         shape = sb.result();
     }
-    if let Some(sm) = ent.cast::<TransferBRepShapeMapper>().get() {
+    if let Some(sm) = ent.downcast_ref::<TransferBRepShapeMapper>() {
         shape = sm.value().clone();
     }
     shape
@@ -55,7 +55,7 @@ fn shape_of(ent: &Handle<StandardTransient>) -> Shape {
 /// The checks of `chl` with messages and an entity.
 fn checks_with_messages(
     chl: &InterfaceCheckIterator,
-) -> Vec<(Handle<InterfaceCheck>, Handle<StandardTransient>)> {
+) -> Vec<(Handle<InterfaceCheck>, Handle<dyn Transient>)> {
     chl.items()
         .into_iter()
         .filter(|(_, ach)| ach.nb_fails() + ach.nb_warnings() != 0)
@@ -72,7 +72,7 @@ impl TransferBRep {
     /// for a null mapped entity or sample (native null dereferences).
     pub fn transfer_result_info(
         tp: &Handle<TransferTransientProcess>,
-        entity_types: Option<&[Handle<StandardTransient>]>,
+        entity_types: Option<&[Handle<dyn Transient>]>,
     ) -> Result<Vec<Handle<TransferBRepTransferResultInfo>>, Failure> {
         let (Some(process), Some(types)) = (tp.get(), entity_types) else {
             return Ok(Vec::new());
@@ -204,17 +204,14 @@ impl TransferBRep {
     }
     /// `Checked(chl, alsoshapes = false)`: the entities of the checks with messages
     /// (without the shape entities unless `alsoshapes`).
-    pub fn checked(
-        chl: &InterfaceCheckIterator,
-        alsoshapes: bool,
-    ) -> Vec<Handle<StandardTransient>> {
+    pub fn checked(chl: &InterfaceCheckIterator, alsoshapes: bool) -> Vec<Handle<dyn Transient>> {
         checks_with_messages(chl)
             .into_iter()
             .map(|(_, ent)| ent)
             .filter(|ent| ent.is_some())
             .filter(|ent| {
                 alsoshapes
-                    || (ent.cast::<TransferBRepBinderOfShape>().is_null()
+                    || (ent.view::<dyn TransferBRepShapeBinderOps>().is_null()
                         && ent.cast::<HShape>().is_null()
                         && ent.cast::<TransferBRepShapeMapper>().is_null())
             })
@@ -225,13 +222,13 @@ impl TransferBRep {
     pub fn checked_shapes(chl: &InterfaceCheckIterator) -> Vec<Shape> {
         let mut shapes = Vec::new();
         for (_, ent) in checks_with_messages(chl) {
-            if let Some(hs) = ent.cast::<HShape>().get() {
+            if let Some(hs) = ent.downcast_ref::<HShape>() {
                 shapes.push(hs.shape());
             }
-            if let Some(sb) = ent.cast::<TransferBRepBinderOfShape>().get() {
+            if let Some(sb) = ent.view::<dyn TransferBRepShapeBinderOps>().get() {
                 shapes.push(sb.result());
             }
-            if let Some(sm) = ent.cast::<TransferBRepShapeMapper>().get() {
+            if let Some(sm) = ent.downcast_ref::<TransferBRepShapeMapper>() {
                 shapes.push(sm.value().clone());
             }
         }
@@ -241,7 +238,7 @@ impl TransferBRep {
     /// (same TShape, location and orientation) when `obj` stands for a shape.
     pub fn check_object(
         chl: &InterfaceCheckIterator,
-        obj: &Handle<StandardTransient>,
+        obj: &Handle<dyn Transient>,
     ) -> InterfaceCheckIterator {
         let shape = shape_of(obj);
         let mut nchl = InterfaceCheckIterator::new();

@@ -133,7 +133,10 @@ fn rib_wire(s: &FeatScript<'_>, wire: &str) -> martensite_tkbrep::topods::Wire {
 }
 
 fn rib_plane(s: &FeatScript<'_>, plane: &str) -> Handle<GeomPlane> {
-    let surface = s.surface(plane).unwrap_or_default().cast::<GeomPlane>();
+    let surface = s
+        .surface(plane)
+        .unwrap_or_default()
+        .into_downcast::<GeomPlane>();
     if surface.is_null() {
         command_failed("null plane to transform");
     }

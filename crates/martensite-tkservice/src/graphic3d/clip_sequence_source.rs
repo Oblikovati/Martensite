@@ -19,10 +19,8 @@ impl RuntimeTyped for dyn Graphic3dClipPlaneSequenceSource {
         // Native handles and their source interfaces share descriptor identity.
         Graphic3dSequenceOfHClipPlane::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dClipPlaneSequenceSource);
 impl std::ops::Deref for dyn Graphic3dClipPlaneSequenceSource {
     type Target = Graphic3dSequenceOfHClipPlane;
     fn deref(&self) -> &Self::Target {

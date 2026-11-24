@@ -7,7 +7,7 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient},
     tcollection::HAsciiString,
 };
 use std::io::{self, Write};
@@ -16,29 +16,23 @@ use std::sync::OnceLock;
 /// An entity with a name and the entities it shares.
 #[derive(Default)]
 pub(crate) struct FakeEntity {
-    transient: StandardTransient,
     pub(crate) name: SharedState<String>,
-    pub(crate) shared: SharedState<Vec<Handle<StandardTransient>>>,
+    pub(crate) shared: SharedState<Vec<Handle<dyn Transient>>>,
 }
-impl_transient!(FakeEntity, "Fake_Entity", StandardTransient, transient);
+impl_transient!(FakeEntity, "Fake_Entity", dyn Transient);
 
 /// A new entity sharing `shared`.
-pub(crate) fn fake_entity(
-    name: &str,
-    shared: &[Handle<StandardTransient>],
-) -> Handle<StandardTransient> {
+pub(crate) fn fake_entity(name: &str, shared: &[Handle<dyn Transient>]) -> Handle<dyn Transient> {
     let entity = FakeEntity::default();
     *entity.name.write() = name.to_owned();
     *entity.shared.write() = shared.to_vec();
-    Handle::new(entity).cast()
+    Handle::new(entity).into_upcast()
 }
 
 /// The protocol of the fake norm: `FakeEntity` is case 1.
 #[derive(Default)]
-pub(crate) struct FakeProtocol {
-    transient: StandardTransient,
-}
-impl_transient!(FakeProtocol, "Fake_Protocol", dyn InterfaceProtocol, transient, interfaces: [dyn InterfaceProtocol]);
+pub(crate) struct FakeProtocol {}
+impl_transient!(FakeProtocol, "Fake_Protocol", dyn InterfaceProtocol, interfaces: [dyn InterfaceProtocol]);
 
 impl InterfaceProtocol for FakeProtocol {
     fn nb_resources(&self) -> i32 {
@@ -56,10 +50,10 @@ impl InterfaceProtocol for FakeProtocol {
     fn is_suitable_model(&self, model: &Handle<dyn InterfaceInterfaceModel>) -> bool {
         model.cast::<FakeModel>().is_some()
     }
-    fn unknown_entity(&self) -> Handle<StandardTransient> {
+    fn unknown_entity(&self) -> Handle<dyn Transient> {
         fake_entity("unknown", &[])
     }
-    fn is_unknown_entity(&self, ent: &Handle<StandardTransient>) -> bool {
+    fn is_unknown_entity(&self, ent: &Handle<dyn Transient>) -> bool {
         ent.cast::<FakeEntity>()
             .get()
             .is_some_and(|e| *e.name.read() == "unknown")
@@ -68,16 +62,14 @@ impl InterfaceProtocol for FakeProtocol {
 
 /// The general module of the fake norm.
 #[derive(Default)]
-pub(crate) struct FakeModule {
-    transient: StandardTransient,
-}
-impl_transient!(FakeModule, "Fake_GeneralModule", dyn InterfaceGeneralModule, transient, interfaces: [dyn InterfaceGeneralModule]);
+pub(crate) struct FakeModule {}
+impl_transient!(FakeModule, "Fake_GeneralModule", dyn InterfaceGeneralModule, interfaces: [dyn InterfaceGeneralModule]);
 
 impl InterfaceGeneralModule for FakeModule {
     fn fill_shared_case(
         &self,
         _cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         iter: &mut InterfaceEntityIterator,
     ) {
         let shared = ent
@@ -90,7 +82,7 @@ impl InterfaceGeneralModule for FakeModule {
     fn check_case(
         &self,
         _cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
         ach: &mut Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
@@ -106,18 +98,18 @@ impl InterfaceGeneralModule for FakeModule {
         }
         Ok(())
     }
-    fn can_copy(&self, _cn: i32, _ent: &Handle<StandardTransient>) -> bool {
+    fn can_copy(&self, _cn: i32, _ent: &Handle<dyn Transient>) -> bool {
         true
     }
-    fn new_void(&self, _cn: i32, entto: &mut Handle<StandardTransient>) -> bool {
+    fn new_void(&self, _cn: i32, entto: &mut Handle<dyn Transient>) -> bool {
         *entto = fake_entity("", &[]);
         true
     }
     fn copy_case(
         &self,
         _cn: i32,
-        entfrom: &Handle<StandardTransient>,
-        entto: &Handle<StandardTransient>,
+        entfrom: &Handle<dyn Transient>,
+        entto: &Handle<dyn Transient>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
         let (from, to) = (entfrom.cast::<FakeEntity>(), entto.cast::<FakeEntity>());
@@ -136,7 +128,7 @@ impl InterfaceGeneralModule for FakeModule {
     fn name(
         &self,
         _cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
     ) -> Handle<HAsciiString> {
         let name = ent
@@ -151,11 +143,10 @@ impl InterfaceGeneralModule for FakeModule {
 /// The model of the fake norm, with a header text.
 #[derive(Default)]
 pub(crate) struct FakeModel {
-    transient: StandardTransient,
     base: InterfaceModelBase,
     pub(crate) header: SharedState<String>,
 }
-impl_transient!(FakeModel, "Fake_Model", dyn InterfaceInterfaceModel, transient, interfaces: [dyn InterfaceInterfaceModel]);
+impl_transient!(FakeModel, "Fake_Model", dyn InterfaceInterfaceModel, interfaces: [dyn InterfaceInterfaceModel]);
 
 impl InterfaceInterfaceModel for FakeModel {
     fn model_base(&self) -> &InterfaceModelBase {
@@ -180,10 +171,10 @@ impl InterfaceInterfaceModel for FakeModel {
     fn dump_header(&self, s: &mut dyn Write, _level: i32) -> io::Result<()> {
         s.write_all(self.header.read().as_bytes())
     }
-    fn print_label(&self, ent: &Handle<StandardTransient>, s: &mut dyn Write) -> io::Result<()> {
+    fn print_label(&self, ent: &Handle<dyn Transient>, s: &mut dyn Write) -> io::Result<()> {
         write!(s, "#{}", self.number(ent))
     }
-    fn string_label(&self, ent: &Handle<StandardTransient>) -> Handle<HAsciiString> {
+    fn string_label(&self, ent: &Handle<dyn Transient>) -> Handle<HAsciiString> {
         let name = ent
             .cast::<FakeEntity>()
             .get()
@@ -199,9 +190,9 @@ pub(crate) fn fake_protocol() -> Handle<dyn InterfaceProtocol> {
     PROTOCOL
         .get_or_init(|| {
             let protocol: Handle<dyn InterfaceProtocol> =
-                Handle::new(FakeProtocol::default()).cast();
+                Handle::new(FakeProtocol::default()).into_upcast();
             let module: Handle<dyn InterfaceGeneralModule> =
-                Handle::new(FakeModule::default()).cast();
+                Handle::new(FakeModule::default()).into_upcast();
             InterfaceGeneralLib::set_global(&module, &protocol);
             protocol
         })
@@ -210,7 +201,8 @@ pub(crate) fn fake_protocol() -> Handle<dyn InterfaceProtocol> {
 
 /// A new empty fake model with the fake protocol, bound to its handle.
 pub(crate) fn fake_model() -> Handle<dyn InterfaceInterfaceModel> {
-    let model: Handle<dyn InterfaceInterfaceModel> = Handle::new(FakeModel::default()).cast();
+    let model: Handle<dyn InterfaceInterfaceModel> =
+        Handle::new(FakeModel::default()).into_upcast();
     model.model_base().bind_self(&model);
     model.set_protocol(&fake_protocol());
     model
@@ -219,7 +211,7 @@ pub(crate) fn fake_model() -> Handle<dyn InterfaceInterfaceModel> {
 /// A fake model of four entities: d shares c, c shares a and b.
 pub(crate) fn fake_chain() -> (
     Handle<dyn InterfaceInterfaceModel>,
-    Vec<Handle<StandardTransient>>,
+    Vec<Handle<dyn Transient>>,
 ) {
     let a = fake_entity("a", &[]);
     let b = fake_entity("b", &[]);

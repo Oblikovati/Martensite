@@ -4,7 +4,7 @@ use crate::c_text::atoi;
 use crate::if_select::{
     IFSelectGraphCounter, IFSelectIntParam, IFSelectPrintCount, IFSelectReturnStatus,
     IFSelectSelectDeduct, IFSelectSelectSuite, IFSelectSelection, IFSelectSessionPilot,
-    IFSelectSignCounter, IFSelectSignature,
+    IFSelectSignCounter, IFSelectSignCounterOps, IFSelectSignature,
 };
 use crate::interface::InterfaceCategory;
 use martensite_tkernel::{message::Message, standard::Handle, tcollection::HAsciiString};
@@ -14,12 +14,12 @@ use IFSelectReturnStatus::{RetDone, RetError, RetFail, RetVoid};
 
 /// The counter of `funcount`: the counter item, else a counter of the signature item.
 fn named_counter(
-    ws: &crate::if_select::IFSelectWorkSession,
+    ws: &crate::if_select::IFSelectSession,
     arg1: &str,
     listmode: bool,
-) -> Result<Handle<IFSelectSignCounter>, martensite_tkernel::standard::Failure> {
+) -> Result<Handle<dyn IFSelectSignCounterOps>, martensite_tkernel::standard::Failure> {
     let item = ws.named_item(arg1);
-    let counter: Handle<IFSelectSignCounter> = item.cast();
+    let counter: Handle<dyn IFSelectSignCounterOps> = item.cast();
     if counter.is_some() {
         return Ok(counter);
     }
@@ -29,7 +29,8 @@ fn named_counter(
     }
     Ok(Handle::new(IFSelectSignCounter::with_signature(
         &signa, false, listmode,
-    )?))
+    )?)
+    .into_upcast())
 }
 
 /// The help of `funcount`.
@@ -66,11 +67,11 @@ pub(super) fn funcount(pilot: &Handle<IFSelectSessionPilot>) -> Status {
                     return Ok(RetError);
                 }
             }
-            seld = Handle::new(suite).cast();
+            seld = Handle::new(suite).into_upcast();
         }
         let gc = IFSelectGraphCounter::new(false, listmode);
         gc.set_applied(&seld);
-        counter = Handle::new(gc).cast();
+        counter = Handle::new(gc).into_upcast();
     }
     if counter.is_null() {
         let _ = writeln!(sout, "Neither Counter nor Signature : {arg1}");
@@ -361,7 +362,7 @@ pub(super) fn fun14(pilot: &Handle<IFSelectSessionPilot>) -> Status {
     session_of(pilot)?;
     let intpar = IFSelectIntParam::new();
     intpar.set_value(atoi(pilot.arg(1)?.as_bytes()));
-    Ok(pilot.record_item(&Handle::new(intpar).cast()))
+    Ok(pilot.record_item(&Handle::new(intpar).into_upcast()))
 }
 
 /// `fun15` (setint): the value of an integer parameter item.

@@ -8,11 +8,14 @@ mod scene;
 #[allow(dead_code)]
 #[path = "support/view_setup.rs"]
 mod view_setup;
-use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::{Handle, WeakHandle};
 use martensite_tkservice::graphic3d::*;
 use martensite_tkservice::image::ImagePixMap;
 use martensite_vulkan::*;
-use std::sync::Arc;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, AtomicUsize, Ordering},
+};
 
 /// Named element: emits one retained primitive array with the current aspects.
 struct ArrayElement(Handle<Graphic3dArrayOfPrimitives>);
@@ -97,4 +100,65 @@ fn primitive_array_element_renders_like_the_group_array() {
         "rebuilt array element frame differs"
     );
     assert!(driver.validation_errors().unwrap().is_empty());
+}
+
+struct AppendArrayOnce {
+    group: WeakHandle<Graphic3dDrawGroup>,
+    vertices: Handle<Graphic3dArrayOfPrimitives>,
+    appended: AtomicBool,
+}
+
+impl RenderElement for AppendArrayOnce {
+    fn render(&self, _: &mut RenderElementContext<'_>) -> Result<(), RenderError> {
+        if !self.appended.swap(true, Ordering::AcqRel) {
+            let group = self.group.upgrade();
+            group.add_primitive_array(&self.vertices.upcast(), false);
+        }
+        Ok(())
+    }
+}
+
+#[test]
+fn a_callback_append_becomes_visible_to_the_next_group_extraction() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    scene.group.clear(true);
+    scene
+        .group
+        .set_group_primitives_aspect(&scene::unlit_style([1., 0., 0., 1.]));
+    let group: Handle<Graphic3dDrawGroup> = scene.group.clone().cast();
+    group.add_element(Arc::new(AppendArrayOnce {
+        group: group.downgrade(),
+        vertices: scene.vertices.clone(),
+        appended: AtomicBool::new(false),
+    }));
+    let camera = scene.view.camera();
+    assert!(group.primitive_draws(&camera).unwrap().is_empty());
+    assert_eq!(group.primitive_draws(&camera).unwrap().len(), 1);
+}
+
+#[derive(Default)]
+struct ObserveModelStack(AtomicUsize);
+
+impl RenderElement for ObserveModelStack {
+    fn render(&self, context: &mut RenderElementContext<'_>) -> Result<(), RenderError> {
+        let depth = context.context_state().model_world_state().depth();
+        self.0.store(depth + 1, Ordering::Relaxed);
+        Ok(())
+    }
+}
+
+#[test]
+fn a_later_group_can_observe_and_pop_the_structure_stack() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let scene = scene::ViewerScene::new(&driver);
+    let group: Handle<Graphic3dDrawGroup> = scene.structure.new_group().unwrap().cast();
+    let before = Arc::new(ObserveModelStack::default());
+    let after = Arc::new(ObserveModelStack::default());
+    group.add_element(before.clone());
+    group.set_flipping_options(false, &martensite_tkmath::gp::Axis2::default());
+    group.add_element(after.clone());
+    scene.render_view().try_redraw().unwrap();
+    assert_eq!(before.0.load(Ordering::Relaxed), 2);
+    assert_eq!(after.0.load(Ordering::Relaxed), 1);
 }

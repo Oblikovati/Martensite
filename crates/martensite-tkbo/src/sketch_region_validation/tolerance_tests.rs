@@ -85,7 +85,7 @@ fn retained_coefficients_are_isolated_from_source_edits_after_validation() {
     let stored = BRepTool::curve_with_location(&edge)
         .unwrap()
         .curve
-        .cast::<GeomBezierCurve>();
+        .downcast::<GeomBezierCurve>();
     stored.set_pole(2, Point3::new(4., 0., 1.)).unwrap();
     let snapshot = report.coefficient_snapshot.unwrap();
     assert!(matches!(
@@ -133,11 +133,11 @@ fn actual_rational_curve_capture_preserves_nonunit_stored_weights() {
     let space = BRepTool::curve_with_location(&edge)
         .unwrap()
         .curve
-        .cast::<GeomBezierCurve>();
+        .downcast::<GeomBezierCurve>();
     let planar = BRepTool::curve_on_face(&edge, &face)
         .unwrap()
         .pcurve
-        .cast::<Geom2dBezierCurve>();
+        .downcast::<Geom2dBezierCurve>();
     space.set_weight(2, 3.).unwrap();
     planar.set_weight(2, 3.).unwrap();
     assert!(space.is_rational() && planar.is_rational());
@@ -155,12 +155,12 @@ fn assert_unchanged_limits(report: &PlanarMetricInspection) {
 
 fn actual_line_fixture() -> (Edge, Face) {
     let space: Handle<dyn GeomCurve> =
-        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast();
+        Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast();
     let planar: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(Axis2d::new(
         Point2::default(),
         Direction2::new(1., 0.).unwrap(),
     )))
-    .cast();
+    .into_upcast();
     let edge = martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge::from_curve_params(
         &space, 0., 1.,
     )

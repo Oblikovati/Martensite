@@ -6,10 +6,9 @@ use super::abstract_intersector;
 
 #[derive(Default)]
 pub struct BaseDefaultsIntersector {
-    transient: StandardTransient,
     base: SelectMgrBaseIntersectorBase,
 }
-martensite_tkernel::impl_transient!(BaseDefaultsIntersector, "BaseDefaultsIntersector", StandardTransient, transient,
+martensite_tkernel::impl_transient!(BaseDefaultsIntersector, "BaseDefaultsIntersector", StandardTransient,
     interfaces: [dyn SelectMgrBaseIntersector]);
 
 impl SelectMgrBaseIntersector for BaseDefaultsIntersector {

@@ -1,6 +1,7 @@
 //! `IgesToBRepTopoCurve`: curve entities as edges and wires. This file holds the state, the choice
 //! among the kinds and points; the kinds with more to them have their own files.
 use super::{IgesToBRep, IgesToBRepCurveAndSurface};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, IgesDataToolLocation};
 use crate::iges_geom::{
     IgesGeomBoundary, IgesGeomCompositeCurve, IgesGeomCurveOnSurface, IgesGeomOffsetCurve,
@@ -9,6 +10,7 @@ use crate::iges_geom::{
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Face, Shape, Vertex};
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve};
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomCurve};
@@ -78,7 +80,10 @@ impl IgesToBRepTopoCurve {
         ))
     }
     /// The fail of a null entity.
-    pub(super) fn null_entity<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>) {
+    pub(super) fn null_entity<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        start: &Handle<T>,
+    ) {
         self.fail_key(start, "IGES_1005");
     }
     /// The compound location of an entity as a move of a shape, a warning when it is not a similarity.
@@ -86,7 +91,7 @@ impl IgesToBRepTopoCurve {
     pub(super) fn moved_to_location(
         &mut self,
         start: &IgesDataIgesEntity,
-        handle: &Handle<IgesDataIgesEntity>,
+        handle: &Handle<dyn IgesDataEntityKind>,
         shape: &mut Shape,
         to_unit: bool,
     ) -> Result<(), Failure> {
@@ -166,7 +171,7 @@ impl IgesToBRepTopoCurve {
     /// A failure of the entity or of the construction of the shape.
     pub fn transfer_topo_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Shape, Failure> {
         if start.is_null() {
             self.null_entity(start);
@@ -204,7 +209,7 @@ impl IgesToBRepTopoCurve {
     /// A failure of the entity or of the construction of the shape.
     pub fn transfer_2d_topo_curve(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         face: &Face,
         trans: Transform2,
         u_fact: f64,

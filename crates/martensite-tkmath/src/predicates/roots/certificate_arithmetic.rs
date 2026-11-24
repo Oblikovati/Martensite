@@ -7,3 +7,13 @@ pub(super) mod rounding;
 pub(super) use enclosure::{RatioInterval, bernstein_enclosure};
 pub(super) use rational::ExactRatio;
 pub(super) mod world;
+
+pub(super) mod bernstein_bounds;
+pub(super) mod bounded_dyadic;
+pub(super) mod bounded_failure;
+
+pub(super) mod bernstein_curve;
+
+pub(super) mod planar_hulls;
+
+pub(super) mod circular_constants;

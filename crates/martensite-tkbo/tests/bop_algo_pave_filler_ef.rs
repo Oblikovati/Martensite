@@ -133,7 +133,8 @@ fn bezier_face() -> Shape {
                 Point3::new(f64::from(u - 1), f64::from(v - 1), 0.0);
         }
     }
-    let surface = Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast::<dyn GeomSurface>();
+    let surface =
+        Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast::<dyn GeomSurface>();
     BRepBuilderAPIMakeFace::from_surface_bounds(&surface, (0.0, 1.0, 0.0, 1.0), 1.0e-7)
         .unwrap()
         .face()

@@ -7,20 +7,19 @@ use super::{
 use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::{Mat4, Vec3};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::bvh::BvhBox;
 use martensite_tkmath::gp::{Axis3, Circle3, Point3, Transform3, xoy};
 /// An exact sensitive circle, the circle of radius `radius` in `gp::XOY` placed by `trsf`.
 ///
 /// Example: `let circle = Select3DSensitiveCircle::new(&owner, &circ, false);`.
 pub struct Select3DSensitiveCircle {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     sens_type: Select3DTypeOfSensitivity,
     trsf: Transform3,
     radius: f64,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveCircle, "Select3DSensitiveCircle", dyn Select3DSensitiveEntity, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveCircle, "Select3DSensitiveCircle", dyn Select3DSensitiveEntity,
     interfaces: [dyn Select3DSensitiveEntity]);
 
 impl Select3DSensitiveCircle {
@@ -45,7 +44,6 @@ impl Select3DSensitiveCircle {
         filled: bool,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: circle_entity_base(owner, filled),
             sens_type: circle_sensitivity(filled),
             trsf,

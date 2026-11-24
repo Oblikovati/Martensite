@@ -37,7 +37,7 @@ pub struct PlaneVariable {
 
 impl PlaneVariable {
     fn on(frame: Axis3) -> Self {
-        let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).cast();
+        let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(frame)).into_upcast();
         Self { frame, surface }
     }
 
@@ -79,7 +79,7 @@ pub fn circle(center: [f64; 3], radius: f64) -> Handle<dyn GeomCurve> {
     let frame = Axis2::new(point(center), z_direction()).unwrap();
     let curve = GeomCircle::new(frame, radius)
         .unwrap_or_else(|failure| panic!("circle {center:?} {radius}: {failure:?}"));
-    Handle::new(curve).cast()
+    Handle::new(curve).into_upcast()
 }
 
 /// `psphere name plane radius`: a sphere on the frame of the plane.

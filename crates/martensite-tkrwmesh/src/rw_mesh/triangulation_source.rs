@@ -3,7 +3,7 @@ use super::RwMeshTriangulationReader;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::osd::FileSystemHandle;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::poly::{Triangulation, TriangulationHooks};
 use std::sync::Arc;
 
@@ -66,7 +66,6 @@ impl TriangulationHooks for SourceHooks {
 /// ```
 #[derive(Clone)]
 pub struct RwMeshTriangulationSource {
-    transient: StandardTransient,
     shared: Arc<SourceShared>,
     triangulation: Handle<Triangulation>,
 }
@@ -74,8 +73,7 @@ pub struct RwMeshTriangulationSource {
 impl_transient!(
     RwMeshTriangulationSource,
     "RwMeshTriangulationSource",
-    Triangulation,
-    transient
+    Triangulation
 );
 
 impl Default for RwMeshTriangulationSource {
@@ -103,7 +101,6 @@ impl RwMeshTriangulationSource {
             shared: shared.clone(),
         };
         Self {
-            transient: StandardTransient::default(),
             shared,
             triangulation: Handle::new(Triangulation::with_hooks(Box::new(hooks))),
         }

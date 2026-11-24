@@ -137,7 +137,7 @@ pub trait GeomCurve: GeomGeometry {
         self.eval_d0(u)
     }
 }
-impl_transient_interface!(dyn GeomCurve, "Geom_Curve", dyn GeomGeometry);
+impl_transient_interface!(dyn GeomCurve, "Geom_Curve", dyn GeomGeometry, upcasts: [dyn GeomGeometry]);
 
 /// `GeomCurve::DumpJson`; `dump_curve(&mut stream, -1)?`.
 pub fn dump_curve(stream: &mut DumpStream, depth: i32) -> io::Result<()> {

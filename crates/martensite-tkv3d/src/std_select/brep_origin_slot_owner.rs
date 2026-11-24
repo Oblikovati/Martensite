@@ -1,8 +1,7 @@
 //! Named owner override mutates the original live slot before invoking the native base setter.
 use crate::select_mgr::*;
 use martensite_tkernel::standard::{
-    Failure, Handle, HandleFieldRef, HandleReference, SharedState, StandardTransient, WeakHandle,
-    raise_native_failure,
+    Failure, Handle, HandleFieldRef, HandleReference, SharedState, WeakHandle, raise_native_failure,
 };
 use std::{fmt::Write, sync::Arc};
 pub(super) struct OriginSlotSharedInput {
@@ -14,17 +13,15 @@ pub(super) struct OriginSlotSharedInput {
 #[derive(Debug, PartialEq)]
 pub(super) struct OriginNonStandardFailure(pub i32);
 pub(super) struct OriginSlotOwnerFake {
-    transient: StandardTransient,
     owner: SelectMgrEntityOwnerBase,
     label: i32,
     input: Arc<OriginSlotSharedInput>,
 }
-martensite_tkernel::impl_transient!(OriginSlotOwnerFake,"Martensite_OriginSlotOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(OriginSlotOwnerFake,"Martensite_OriginSlotOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl OriginSlotOwnerFake {
     pub fn new(label: i32, input: &Arc<OriginSlotSharedInput>) -> Handle<Self> {
         let owner = SelectMgrEntityOwnerBase::new(&Handle::default(), label);
         Handle::new(Self {
-            transient: Default::default(),
             owner,
             label,
             input: input.clone(),
@@ -33,9 +30,8 @@ impl OriginSlotOwnerFake {
     fn record_before(&self, argument: &dyn HandleReference<dyn SelectMgrSelectableObject>) {
         let slot = HandleFieldRef::new(&self.input.slot, origin_slot_field);
         let same = i32::from(argument.reference_address() == slot.reference_address());
-        let incoming = self.input.incoming.observe();
-        let equal = i32::from(argument.object_address() == incoming.object_address());
-        let count = argument.observe().ref_count();
+        let equal = i32::from(argument.object_address() == self.input.incoming.object_address());
+        let count = argument.ref_count();
         writeln!(
             &mut *self.input.rows.write(),
             "origin-slot-before {} {same} {count} {equal}",
@@ -44,12 +40,11 @@ impl OriginSlotOwnerFake {
         .unwrap();
     }
     fn replace_and_record(&self, argument: &dyn HandleReference<dyn SelectMgrSelectableObject>) {
-        let incoming = self.input.incoming.observe();
         if self.label == 1 {
-            *self.input.slot.write() = Handle::clone(&incoming);
+            *self.input.slot.write() = self.input.incoming.upgrade();
         }
-        let count = argument.observe().ref_count();
-        let equal = i32::from(argument.object_address() == incoming.object_address());
+        let count = argument.ref_count();
+        let equal = i32::from(argument.object_address() == self.input.incoming.object_address());
         writeln!(
             &mut *self.input.rows.write(),
             "origin-slot-base {} {count} {equal}",

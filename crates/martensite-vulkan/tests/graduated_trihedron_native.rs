@@ -48,12 +48,12 @@ fn trihedron_scene() -> SizedViewScene {
     let structure = scene.structure();
     let group = structure.new_group().unwrap();
     group.set_group_primitives_aspect(&fill_aspect());
-    group.add_primitive_array(&box_triangles(), true);
+    group.add_primitive_array(&box_triangles().upcast(), true);
     group.set_group_primitives_aspect(&line_aspect());
     let diagonal = array(Graphic3dTypeOfPrimitiveArray::Segments, 2);
     diagonal.add_vertex(0., 0., 0.).unwrap();
     diagonal.add_vertex(40., 30., 20.).unwrap();
-    group.add_primitive_array(&diagonal, true);
+    group.add_primitive_array(&diagonal.upcast(), true);
     structure.display();
     scene
 }

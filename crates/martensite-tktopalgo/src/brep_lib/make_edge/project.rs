@@ -46,9 +46,9 @@ pub(super) fn project_on_surface_curve(
     let tolerance: f64 = BRepTool::vertex_tolerance(vertex)?;
     let eps2: f64 = tolerance * tolerance;
     let curve2d: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(curve)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(curve)?).into_upcast();
     let adapted: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surface)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surface)?).into_upcast();
     let on_surface = Adaptor3dCurveOnSurface::with_curve(&curve2d, &adapted)?;
     if let Some(parameter) = end_within(&on_surface, point, eps2)? {
         return Ok(Some(parameter));

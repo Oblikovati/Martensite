@@ -40,3 +40,9 @@ impl std::fmt::Display for ExactPairCoefficient<'_> {
         coefficient.fmt(output)
     }
 }
+
+impl<'a> ExactPairCoefficient<'a> {
+    pub(super) fn new(coefficient: &'a BigInt) -> Self {
+        Self { coefficient }
+    }
+}

@@ -14,7 +14,7 @@ use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{self, Edge, Shape, Vertex, Wire};
 use martensite_tkbrep::toptools::IndexedDataMapOfShapeListOfShape;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkernel::tcollection::ExtendedString;
 use martensite_tkg3d::geom::GeomTrimmedCurve;
 use martensite_tkg3d::geom::{GeomCircle, GeomConic, GeomCurve, GeomEllipse, GeomLine, GeomPlane};
@@ -27,7 +27,7 @@ use martensite_tkservice::graphic3d::{Graphic3dStructureMembers as _, Graphic3dS
 #[derive(Clone, Default)]
 pub struct PrsDimIdenticFields {
     /// `myUsers`.
-    pub users: Vec<Handle<StandardTransient>>,
+    pub users: Vec<Handle<dyn Transient>>,
     /// `isCircle`.
     pub is_circle: bool,
     /// `myFAttach`.
@@ -97,11 +97,11 @@ impl PrsDimIdenticRelation {
         !self.fields.read().users.is_empty()
     }
     /// `Users`; `relation.users()`.
-    pub fn users(&self) -> Vec<Handle<StandardTransient>> {
+    pub fn users(&self) -> Vec<Handle<dyn Transient>> {
         self.fields.read().users.clone()
     }
     /// `AddUser`; `relation.add_user(&user)`.
-    pub fn add_user(&self, user: &Handle<StandardTransient>) {
+    pub fn add_user(&self, user: &Handle<dyn Transient>) {
         self.fields.write().users.push(user.clone());
     }
     /// `ClearUsers`; `relation.clear_users()`.
@@ -198,7 +198,7 @@ impl PrsDimIdenticRelation {
     /// user is not a shape of a wire or a direction fails).
     fn user_direction(
         &self,
-        user: &Handle<StandardTransient>,
+        user: &Handle<dyn Transient>,
         first: &Vertex,
         second: &Vertex,
     ) -> Result<Option<Direction3>, Failure> {

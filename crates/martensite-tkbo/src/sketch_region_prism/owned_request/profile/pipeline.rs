@@ -11,7 +11,7 @@ use crate::sketch_region::{
 };
 use crate::sketch_region_candidates::observe_candidate_copies;
 use crate::sketch_region_certification::SourceAccess;
-use crate::sketch_region_certification::{capture_boundary_inputs, enumerate_carrier_census};
+use crate::sketch_region_certification::{CensusWorkReceipt, capture_boundary_inputs};
 use crate::sketch_region_contact_transport::{ContactTransportPhase, transport_partition_contacts};
 use crate::sketch_region_partition_bindings::{PartitionBoundOutputs, bind_partition_outputs};
 use crate::sketch_region_source_conformance::{capture_originals, capture_space_representation};
@@ -28,6 +28,7 @@ pub(in crate::sketch_region_prism) struct ProfilePreparationFailure {
     pub callback: Option<OwnedPrismCallbackStop>,
     pub phase: OwnedPrismPhase,
     pub request: OwnedProfileRequest,
+    pub pair_work: Option<CensusWorkReceipt>,
 }
 /// Prepared profile: owned request, constructed edges and the contact transaction.
 pub(in crate::sketch_region_prism) struct PreparedProfile {
@@ -49,6 +50,7 @@ struct Retained<'a, 'p> {
     request: &'a OwnedProfileRequest,
     callbacks: OwnedPrismCallbacks<'p>,
     phase: OwnedPrismPhase,
+    pair_work: Option<CensusWorkReceipt>,
 }
 
 /// Prepare an owned profile; `prepare_owned_profile(request, &mut progress)`.
@@ -57,8 +59,8 @@ pub(in crate::sketch_region_prism) fn prepare_owned_profile(
     request: OwnedProfileRequest,
     progress: &mut dyn OwnedPrismProgress,
 ) -> Result<PreparedProfile, Box<ProfilePreparationFailure>> {
-    let (outcome, stop, phase) = run_preparation(&request, progress, None);
-    finished(outcome, stop, phase, request)
+    let (outcome, stop, phase, work) = run_preparation(&request, progress, None);
+    finished(outcome, stop, phase, work, request)
 }
 type NativePreparation = Check<(Vec<ConstructedProfileEdge>, PairedContactTransaction)>;
 pub(super) fn run_preparation(
@@ -69,31 +71,53 @@ pub(super) fn run_preparation(
     NativePreparation,
     Option<OwnedPrismCallbackStop>,
     OwnedPrismPhase,
+    Option<CensusWorkReceipt>,
 ) {
-    let mut retained = Retained {
-        request,
-        callbacks: OwnedPrismCallbacks::new(progress),
-        phase: OwnedPrismPhase::Admission,
-    };
+    let mut retained = begin_profile(request, progress);
     let outcome = execute(&mut retained, owner);
-    (outcome, retained.callbacks.stop.take(), retained.phase)
+    (
+        outcome,
+        retained.callbacks.stop.take(),
+        retained.phase,
+        retained.pair_work,
+    )
 }
 pub(super) fn finished(
     outcome: NativePreparation,
     stop: Option<OwnedPrismCallbackStop>,
     phase: OwnedPrismPhase,
+    work: Option<CensusWorkReceipt>,
     request: OwnedProfileRequest,
 ) -> Result<PreparedProfile, Box<ProfilePreparationFailure>> {
     match (outcome, stop) {
-        (Ok((edges, bridge)), None) => Ok(PreparedProfile {
-            request,
-            edges,
-            bridge,
-        }),
-        (Ok(_), stop @ Some(_)) => Err(failed(request, cause_callback(), stop, phase)),
-        (Err(cause), stop) => Err(failed(request, cause, stop, phase)),
+        (Ok((edges, bridge)), None) => Ok(complete_profile(request, edges, bridge)),
+        (Ok(_), stop @ Some(_)) => Err(failed(request, cause_callback(), stop, phase, work)),
+        (Err(cause), stop) => Err(failed(request, cause, stop, phase, work)),
     }
 }
+fn begin_profile<'a, 'p>(
+    request: &'a OwnedProfileRequest,
+    progress: &'p mut dyn OwnedPrismProgress,
+) -> Retained<'a, 'p> {
+    Retained {
+        request,
+        callbacks: OwnedPrismCallbacks::new(progress),
+        phase: OwnedPrismPhase::Admission,
+        pair_work: None,
+    }
+}
+fn complete_profile(
+    request: OwnedProfileRequest,
+    edges: Vec<ConstructedProfileEdge>,
+    bridge: PairedContactTransaction,
+) -> PreparedProfile {
+    PreparedProfile {
+        request,
+        edges,
+        bridge,
+    }
+}
+
 fn cause_callback() -> ProfilePreparationCause {
     ProfilePreparationCause::Stage(OwnedPreparationCause::Callback)
 }
@@ -141,18 +165,24 @@ impl Retained<'_, '_> {
         let policy = self.request.policy;
         let callbacks = &mut self.callbacks;
         let poll = || callbacks.poll(OwnedPrismPhase::Census);
-        let census = enumerate_profile_census(inputs, policy, poll, access);
+        let census = super::selection::census_with_access(
+            self.request.version,
+            inputs,
+            (policy.census, policy.source),
+            poll,
+            access,
+        );
+        self.pair_work = CensusWorkReceipt::observed(&census);
         census.map_err(|cause| stage(cause.into()))
     }
     fn partition(&mut self, sources: &[ArrangementSource<'_>]) -> Check<PartitionBoundOutputs> {
         self.enter(OwnedPrismPhase::Partition(ArrangementPhase::Admission))?;
         let originals = capture_originals(sources).map_err(native)?;
-        let callbacks = &mut self.callbacks;
-        let poll = &mut |p| callbacks.poll(OwnedPrismPhase::Partition(p));
+        let poll = &mut |p| self.callbacks.poll(OwnedPrismPhase::Partition(p));
         let observed = observe_partition_space(sources, poll, capture_space_representation);
         let copied = match &observed.completion {
             ArrangementCompletion::Arranged(owned) => {
-                let poll = &mut |p| callbacks.poll(OwnedPrismPhase::Candidate(p));
+                let poll = &mut |p| self.callbacks.poll(OwnedPrismPhase::Candidate(p));
                 let plane = self.request.declared_plane;
                 Some(observe_candidate_copies(
                     owned,
@@ -193,25 +223,6 @@ impl Retained<'_, '_> {
         bridge.map_err(|cause| stage(OwnedPreparationCause::Contact(cause)))
     }
 }
-fn enumerate_profile_census(
-    inputs: crate::sketch_region_certification::BoundaryInputs,
-    policy: OwnedProfilePolicy,
-    poll: impl FnMut() -> bool,
-    access: SourceAccess<'_>,
-) -> Result<BoundaryCensus, crate::sketch_region_certification::CensusCause> {
-    match access {
-        SourceAccess::Live => enumerate_carrier_census(inputs, policy.census, policy.source, poll),
-        SourceAccess::Owned(_) => {
-            crate::sketch_region_certification::enumerate_carrier_census_with_access(
-                inputs,
-                policy.census,
-                policy.source,
-                poll,
-                access,
-            )
-        }
-    }
-}
 fn require_candidates(bound: &PartitionBoundOutputs) -> Check<()> {
     let completion = &bound.arrangement.completion;
     if !matches!(completion, ArrangementCompletion::Arranged(_)) {
@@ -232,17 +243,26 @@ fn failed(
     cause: ProfilePreparationCause,
     callback: Option<OwnedPrismCallbackStop>,
     phase: OwnedPrismPhase,
+    pair_work: Option<CensusWorkReceipt>,
 ) -> Box<ProfilePreparationFailure> {
-    let class = match (&callback, &cause) {
-        (Some(stop), _) => callback_class(&stop.cause),
-        (None, ProfilePreparationCause::Stage(cause)) => preparation_class(cause),
-        (None, ProfilePreparationCause::Admission(_)) => OwnedPreparationClass::Failed,
-    };
+    let class = classified_failure(&cause, callback.as_ref());
     Box::new(ProfilePreparationFailure {
         class,
         cause,
         callback,
         phase,
         request,
+        pair_work,
     })
+}
+
+fn classified_failure(
+    cause: &ProfilePreparationCause,
+    callback: Option<&OwnedPrismCallbackStop>,
+) -> OwnedPreparationClass {
+    match (callback, cause) {
+        (Some(stop), _) => callback_class(&stop.cause),
+        (None, ProfilePreparationCause::Stage(cause)) => preparation_class(cause),
+        (None, ProfilePreparationCause::Admission(_)) => OwnedPreparationClass::Failed,
+    }
 }

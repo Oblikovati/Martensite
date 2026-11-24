@@ -1,7 +1,7 @@
 //! Handle-string construction, buffer identity and content hash contracts.
-use martensite_tkernel::ncollection::{DataMap, HashPolicy};
-use martensite_tkernel::standard::Handle;
-use martensite_tkernel::tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString};
+use crate::ncollection::{DataMap, HashPolicy};
+use crate::standard::Handle;
+use crate::tcollection::{AsciiString, ExtendedString, HAsciiString, HExtendedString};
 
 #[test]
 fn ascii_handle_raw_pointer_names_the_wrapped_buffer_across_shared_handles() {
@@ -25,7 +25,8 @@ fn extended_handle_raw_pointer_names_the_wrapped_buffer_across_shared_handles() 
 
 #[test]
 fn move_constructors_transfer_underlying_buffers_without_deep_copies() {
-    let mut ascii = AsciiString::new("abc");
+    // Lengths above the inline capacity transfer the original allocation.
+    let mut ascii = AsciiString::new("a heap-allocated string");
     let ascii_pointer = ascii.as_bytes_with_nul().as_ptr();
     let ascii_handle = HAsciiString::from_moved_string(&mut ascii);
     assert_eq!(ascii_handle.to_c_ptr(), ascii_pointer);
@@ -35,6 +36,14 @@ fn move_constructors_transfer_underlying_buffers_without_deep_copies() {
     let extended_handle = HExtendedString::from_moved_string(&mut extended);
     assert_eq!(extended_handle.to_ext_ptr(), extended_pointer);
     assert!(extended.is_empty());
+}
+
+#[test]
+fn moving_an_inline_ascii_string_keeps_its_bytes_and_resets_the_source() {
+    let mut ascii = AsciiString::from_raw(b"a\0b");
+    let moved = HAsciiString::from_moved_string(&mut ascii);
+    assert_eq!(moved.string().as_bytes_with_nul(), b"a\0b\0");
+    assert!(ascii.is_empty());
 }
 
 #[test]

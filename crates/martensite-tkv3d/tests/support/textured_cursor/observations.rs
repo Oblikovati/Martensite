@@ -20,10 +20,11 @@ fn callback_row(
     phase: &str,
     argument: &dyn HandleReference<dyn Graphic3dAspectsSource>,
 ) -> String {
-    let source = HandleFieldRef::new(&trace.object.base.fields, current_cursor_aspect);
-    let groups = group.transient_base().ref_count();
-    let arguments = argument.observe().ref_count();
-    let sources = source.observe().ref_count();
+    let object = trace.object.upgrade();
+    let source = HandleFieldRef::new(&object.base.fields, current_cursor_aspect);
+    let groups = group.owner_count();
+    let arguments = argument.ref_count();
+    let sources = source.ref_count();
     let same = argument.object_address() == source.object_address();
     let slot = argument.reference_address() == source.reference_address();
     format!(
@@ -49,7 +50,8 @@ fn binding_row(
     phase: &str,
     argument: &dyn HandleReference<dyn Graphic3dAspectsSource>,
 ) -> String {
-    let source = HandleFieldRef::new(&trace.object.base.fields, current_cursor_aspect);
+    let object = trace.object.upgrade();
+    let source = HandleFieldRef::new(&object.base.fields, current_cursor_aspect);
     let alternate = trace.alternate.object_address();
     let shading = trace.shading.aspect().object_address() == alternate;
     let old = trace.old_external.read();
@@ -65,7 +67,14 @@ fn binding_row(
 }
 /// End the temporary Aspects owner before counts; `record_final_group(trace, group)`.
 pub fn record_final_group(trace: &TexturedCursorTrace, group: &TexturedCursorGroup) {
-    let current = trace.object.base.fields.read().aspect.object_address();
+    let current = trace
+        .object
+        .upgrade()
+        .base
+        .fields
+        .read()
+        .aspect
+        .object_address();
     let updated = group.aspects().object_address() == current;
     trace.record(format!(
         concat!(
@@ -75,7 +84,7 @@ pub fn record_final_group(trace: &TexturedCursorTrace, group: &TexturedCursorGro
         trace.name,
         group.role,
         group.is_deleted(),
-        group.transient_base().ref_count(),
+        group.owner_count(),
         updated
     ));
 }
@@ -104,7 +113,7 @@ pub fn record_duplicate_nodes(trace: &TexturedCursorTrace, prs: &Graphic3dStruct
 pub fn record_summary(trace: &TexturedCursorTrace, prs: &Graphic3dStructure) {
     let structure = prs.cstructure();
     let remaining = structure.cstructure_base().fields.read().groups.len();
-    let count = trace.object.base.fields.read().aspect.ref_count();
+    let count = trace.object.upgrade().base.fields.read().aspect.ref_count();
     trace.record(format!(
         concat!(
             "{{\"event\":\"summary\",\"case\":\"{}\",\"remaining_groups\":{},",

@@ -14,15 +14,17 @@ use crate::step_repr::*;
 #[test]
 fn init_round_trip_step_kinematics_mechanism_representation() {
     let the_representation_name = Handle::new(HAsciiString::new("sample"));
-    let the_representation_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_representation_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_representation_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_represented_topology = StepKinematicsKinematicTopologyRepresentationSelect::default();
     let object = StepKinematicsMechanismRepresentation::new();
     object.init(
         &the_representation_name,
         &the_representation_items,
-        &the_representation_context_of_items,
+        &the_representation_context_of_items.upcast(),
         &the_represented_topology,
     );
 }
@@ -40,12 +42,19 @@ fn runtime_type_step_kinematics_mechanism_state_representation() {
 #[test]
 fn init_round_trip_step_kinematics_mechanism_state_representation() {
     let the_name = Handle::new(HAsciiString::new("sample"));
-    let the_items =
-        Handle::new(HArray1::<Handle<StepReprRepresentationItem>>::with_bounds(1, 2).unwrap());
+    let the_items = Handle::new(
+        HArray1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>::with_bounds(1, 2)
+            .unwrap(),
+    );
     let the_context_of_items = Handle::new(StepReprRepresentationContext::new());
     let the_mechanism = Handle::new(StepKinematicsMechanismRepresentation::new());
     let object = StepKinematicsMechanismStateRepresentation::new();
-    object.init(&the_name, &the_items, &the_context_of_items, &the_mechanism);
+    object.init(
+        &the_name,
+        &the_items,
+        &the_context_of_items.upcast(),
+        &the_mechanism,
+    );
     assert!(object.mechanism() == the_mechanism);
 }
 
@@ -84,7 +93,7 @@ fn init_round_trip_step_kinematics_pair_value() {
     let the_representation_item_name = Handle::new(HAsciiString::new("sample"));
     let the_applies_to_pair = Handle::new(StepKinematicsKinematicPair::new());
     let object = StepKinematicsPairValue::new();
-    object.init(&the_representation_item_name, &the_applies_to_pair);
+    object.init(&the_representation_item_name, &the_applies_to_pair.upcast());
     assert!(object.applies_to_pair() == the_applies_to_pair);
 }
 
@@ -118,11 +127,11 @@ fn init_round_trip_step_kinematics_planar_curve_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
-        &the_curve1,
-        &the_curve2,
+        &the_curve1.upcast(),
+        &the_curve2.upcast(),
         the_orientation,
     );
     assert!(object.curve1() == the_curve1);
@@ -162,11 +171,11 @@ fn init_round_trip_step_kinematics_planar_curve_pair_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
-        &the_planar_curve_pair_curve1,
-        &the_planar_curve_pair_curve2,
+        &the_planar_curve_pair_curve1.upcast(),
+        &the_planar_curve_pair_curve2.upcast(),
         the_planar_curve_pair_orientation,
         &the_range_on_curve1,
         &the_range_on_curve2,
@@ -205,7 +214,7 @@ fn init_round_trip_step_kinematics_planar_pair_value() {
     let object = StepKinematicsPlanarPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_rotation,
         the_actual_translation_x,
         the_actual_translation_y,
@@ -260,8 +269,8 @@ fn init_round_trip_step_kinematics_planar_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_low_order_kinematic_pair_tx,
         the_low_order_kinematic_pair_ty,
@@ -325,10 +334,10 @@ fn init_round_trip_step_kinematics_point_on_planar_curve_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
-        &the_pair_curve,
+        &the_pair_curve.upcast(),
         the_orientation,
     );
     assert!(object.pair_curve() == the_pair_curve);
@@ -354,7 +363,7 @@ fn init_round_trip_step_kinematics_point_on_planar_curve_pair_value() {
     let object = StepKinematicsPointOnPlanarCurvePairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         &the_actual_point_on_curve,
         &the_input_orientation,
     );
@@ -403,10 +412,10 @@ fn init_round_trip_step_kinematics_point_on_planar_curve_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
-        &the_point_on_planar_curve_pair_pair_curve,
+        &the_point_on_planar_curve_pair_pair_curve.upcast(),
         the_point_on_planar_curve_pair_orientation,
         &the_range_on_pair_curve,
         has_lower_limit_yaw,

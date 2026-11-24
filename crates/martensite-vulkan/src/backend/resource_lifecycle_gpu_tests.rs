@@ -45,7 +45,6 @@ fn frame_owner_identity(
     RetainedOwnerSnapshot::Frame {
         command: commands.command.as_raw(),
         color: resources.color.handle.as_raw(),
-        readback: resources.color_read.handle.as_raw(),
     }
 }
 struct PendingFrameWitness {
@@ -110,6 +109,52 @@ fn actual_submitted_frame_survives_incomplete_close_until_real_idle() {
     witness.assert_incomplete();
     witness.close_actual();
 }
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+#[test]
+fn completed_geometry_stays_resident_until_its_stream_changes() {
+    let mut renderer = resource_witness_renderer();
+    let frame = solid_resource_frame();
+    let first = renderer.render(&frame).unwrap();
+    let before = renderer.work_ledger().totals();
+    let second = renderer.render(&frame).unwrap();
+    let work = renderer.work_ledger().totals().since(&before);
+    assert_eq!(first.rgba, second.rgba);
+    assert_eq!(work.uploaded_bytes, 0);
+    // The renderer reuses the colour readback buffer of the first frame (#594).
+    assert_eq!(work.buffers_created, 1, "only the depth readback buffer");
+    assert_edited_residency(&mut renderer, &frame);
+}
+
+#[cfg(not(any(
+    feature = "command-state-diagnostics",
+    feature = "vertex-output-diagnostics"
+)))]
+fn assert_edited_residency(renderer: &mut VulkanRenderer, frame: &RenderFrame) {
+    let mut edited = frame.clone();
+    for vertex in edited.draws[0].vertices.make_mut() {
+        vertex.color = [0., 1., 0., 1.];
+    }
+    let before = renderer.work_ledger().totals();
+    let green = renderer.render(&edited).unwrap();
+    assert_eq!(green.rgba, [0, 255, 0, 255].repeat(4));
+    assert!(
+        renderer
+            .work_ledger()
+            .totals()
+            .since(&before)
+            .uploaded_bytes
+            > 0
+    );
+    assert_eq!(
+        renderer.render(frame).unwrap().rgba,
+        [255, 0, 0, 255].repeat(4)
+    );
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
 #[test]
 fn closed_renderer_rejects_work_and_repeated_close_preserves_owned_capture() {
     let mut renderer = resource_witness_renderer();

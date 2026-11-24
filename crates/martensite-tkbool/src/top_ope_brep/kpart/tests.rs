@@ -20,14 +20,14 @@ pub(super) fn line(periodic: bool) -> Line {
     }
     let mut line = Line::new();
     line.set_line(
-        &Handle::new(source).cast(),
+        &Handle::new(source).into_upcast(),
         &BRepAdaptorSurface::default(),
         &BRepAdaptorSurface::default(),
     )
     .unwrap();
     line
 }
-fn interference(transition: Transition, parameter: f64) -> Handle<Interference> {
+fn interference(transition: Transition, parameter: f64) -> Handle<dyn Interference> {
     InterferenceTool::make_curve_interference(
         &transition,
         Kind::Curve,
@@ -40,7 +40,7 @@ fn interference(transition: Transition, parameter: f64) -> Handle<Interference> 
 fn with_pair(
     index: i32,
     previous: Option<Transition>,
-    found: Handle<Interference>,
+    found: Handle<dyn Interference>,
     same_parameter: bool,
     seam: bool,
     callback: impl FnOnce(&Pairing<'_>),

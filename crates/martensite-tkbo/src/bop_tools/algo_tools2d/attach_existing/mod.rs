@@ -84,7 +84,7 @@ fn prepare_pcurve(
         Handle::new(Geom2dTrimmedCurve::new(
             &copy, bounds.0, bounds.1, true, true,
         )?)
-        .cast(),
+        .into_upcast(),
         bounds,
     )))
 }

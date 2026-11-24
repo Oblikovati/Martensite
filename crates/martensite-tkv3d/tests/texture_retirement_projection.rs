@@ -3,7 +3,7 @@
 mod retirement_fixture;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{standard::*, tcollection::AsciiString};
-use martensite_tkservice::image::ImagePixMap;
+use martensite_tkservice::image::{ImagePixMap, ImagePixMapObject};
 use martensite_tkv3d::ais::*;
 use retirement_fixture::*;
 use std::sync::Arc;
@@ -14,7 +14,7 @@ fn texture_retirement_actual_getter_projects_count_zero_pointee() {
     assert_eq!(trace.read()[0], "POINTEE none 1 0 3 2 73");
 }
 #[test]
-fn texture_retirement_native_nested_matrix_matches_all_actual_records() {
+fn texture_retirement_nested_matrix_preserves_pointer_and_arc_ownership() {
     let trace = Arc::new(SharedState::new(Vec::new()));
     for mode in ["none", "same", "file", "pixmap"] {
         run_projection_case(mode, false, &trace);
@@ -22,7 +22,7 @@ fn texture_retirement_native_nested_matrix_matches_all_actual_records() {
     }
     assert_eq!(
         trace.read().join("\n"),
-        include_str!("fixtures/ais_textured_shape/native-retirement-projection.txt").trim_end()
+        include_str!("fixtures/ais_textured_shape/rust-retirement-projection.txt").trim_end()
     );
 }
 fn run_projection_case(
@@ -31,8 +31,8 @@ fn run_projection_case(
     trace: &Arc<SharedState<Vec<String>>>,
 ) {
     let owner = AisTexturedShape::new(&Shape::default());
-    let next = Handle::new(ImagePixMap::default());
-    let nested = Handle::new(ImagePixMap::default());
+    let next = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
+    let nested = Handle::new(ImagePixMap::default()).into_upcast::<dyn ImagePixMapObject>();
     let mut old = retirement_projection_pixels(&owner, &nested, mode, trace);
     owner.set_texture_pix_map(&old);
     old.nullify();
@@ -49,13 +49,13 @@ fn run_projection_case(
 }
 fn retirement_after_row(
     owner: &AisTexturedShape,
-    next: &Handle<ImagePixMap>,
-    nested: &Handle<ImagePixMap>,
+    next: &Handle<dyn ImagePixMapObject>,
+    nested: &Handle<dyn ImagePixMapObject>,
     mode: &str,
     outer_file: bool,
 ) -> String {
     let slot = owner.texture_pix_map();
-    let file = owner.texture_file().read().unwrap();
+    let file = owner.texture_file();
     format!(
         "AFTER {mode} {} {} {} {} {} {}",
         i32::from(outer_file),

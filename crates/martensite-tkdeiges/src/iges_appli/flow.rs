@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_array1_length;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::iges_draw::IgesDrawConnectPoint;
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
@@ -30,12 +31,12 @@ IgesAppliFlow, IgesAppliFlowState, "IgesAppliFlow", parent IgesDataIgesEntity, {
 the_nb_context_flags: i32,
 the_type_of_flow: i32,
 the_function_flag: i32,
-the_flow_associativities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_flow_associativities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 the_connect_points: Handle<HArray1<Handle<IgesDrawConnectPoint>>>,
-the_joins: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_joins: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 the_flow_names: Handle<HArray1<Handle<HAsciiString>>>,
 the_text_display_templates: Handle<HArray1<Handle<IgesGraphTextDisplayTemplate>>>,
-the_cont_flow_associativities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_cont_flow_associativities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 }
 }
 
@@ -60,12 +61,12 @@ impl IgesAppliFlow {
         nb_context_flags: i32,
         a_flow_type: i32,
         a_func_flag: i32,
-        all_flow_assocs: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_flow_assocs: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         all_connect_points: &Handle<HArray1<Handle<IgesDrawConnectPoint>>>,
-        all_joins: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_joins: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         all_flow_names: &Handle<HArray1<Handle<HAsciiString>>>,
         all_text_disps: &Handle<HArray1<Handle<IgesGraphTextDisplayTemplate>>>,
-        all_cont_flow_assocs: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_cont_flow_assocs: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) {
         {
             let mut state = self.state.write();
@@ -177,7 +178,10 @@ impl IgesAppliFlow {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn flow_associativity(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn flow_associativity(
+        &self,
+        index: i32,
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_flow_associativities,
             index,
@@ -201,7 +205,7 @@ impl IgesAppliFlow {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn join(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn join(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(&self.state.read().the_joins, index, "IgesAppliFlow::join")
     }
     /// returns Flow Name
@@ -239,7 +243,7 @@ impl IgesAppliFlow {
     pub fn cont_flow_associativity(
         &self,
         index: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_cont_flow_associativities,
             index,

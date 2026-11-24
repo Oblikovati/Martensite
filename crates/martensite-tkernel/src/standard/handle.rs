@@ -1,202 +1,133 @@
-//! Shared owning handles and non-owning projected views preserve one object identity.
-//!
-//! `T` is a concrete class (a struct, reached through its embedded subobjects) or
-//! an abstract class written as a trait (`Handle<dyn Trait>`, reached through the
-//! interface casters of the dynamic descriptor).
-use super::{RuntimeType, RuntimeTyped, Transient, TransientStorage};
-use std::{any::TypeId, marker::PhantomData, sync::Arc};
+//! Nullable shared ownership of a concrete object or an actual Rust trait object.
+use super::{RuntimeType, RuntimeTyped, Transient, TransientHandleTarget};
+use std::{any::TypeId, sync::Arc};
+
 mod casts;
 mod observer;
-pub use observer::HandleObserver;
 mod traits;
 mod view;
 mod weak;
+pub use casts::HandleUpcast;
+pub use observer::HandleObserver;
 pub use view::HandleView;
 pub use weak::WeakHandle;
-/// Nullable shared ownership with runtime checked base projection; `Handle::new(value)`.
-pub struct Handle<T: ?Sized + RuntimeTyped> {
-    owner: Option<Owner>,
-    projected: PhantomData<T>,
-}
-/// Keeps either heap ownership or a process-lifetime descriptor alive.
-#[derive(Clone)]
-pub(super) enum Owner {
-    Shared(Arc<dyn Transient>),
-    Static(&'static dyn Transient),
-}
-impl Owner {
-    pub(super) fn get(&self) -> &dyn Transient {
-        match self {
-            Self::Shared(owner) => owner.as_ref(),
-            Self::Static(owner) => *owner,
-        }
-    }
-    pub(super) fn address(&self) -> *const () {
-        std::ptr::from_ref(self.get()).cast::<()>()
-    }
-}
-impl<T: ?Sized + RuntimeTyped> Default for Handle<T> {
+
+/// A shared pointer with identity equality; `Handle::new(value)`.
+#[repr(transparent)]
+pub struct Handle<T: ?Sized>(Option<Arc<T>>);
+
+impl<T: ?Sized> Default for Handle<T> {
     fn default() -> Self {
-        Self {
-            owner: None,
-            projected: PhantomData,
+        Self(None)
+    }
+}
+
+impl<T: ?Sized> Clone for Handle<T> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        if self != source {
+            self.0.clone_from(&source.0);
         }
     }
 }
-impl<T: RuntimeTyped> Handle<T> {
-    /// Create shared ownership of a fresh concrete object; `Handle::new(StandardTransient::default())`.
-    pub fn new(value: T) -> Self
-    where
-        T: Transient,
-    {
-        let owner: Arc<dyn Transient> = Arc::new(value);
-        Self::adopt(Some(&Owner::Shared(owner)))
+
+impl<T> Handle<T> {
+    /// Allocate and own a concrete value; `Handle::new(3)`.
+    pub fn new(value: T) -> Self {
+        Self(Some(Arc::new(value)))
     }
-    /// Own a static transient descriptor while preserving its address; `Handle::from_static(RuntimeType::static_type())`.
-    pub fn from_static(value: &'static T) -> Self
-    where
-        T: Transient,
-    {
-        Self::adopt(Some(&Owner::Static(value)))
-    }
-    /// Observe the typed address without transferring ownership; `handle.as_ptr()`.
+
+    /// Borrow the pointer, returning null for an absent value; `handle.as_ptr()`.
     pub fn as_ptr(&self) -> *const T {
-        self.get().map_or(std::ptr::null(), std::ptr::from_ref)
+        self.0.as_ref().map_or(std::ptr::null(), Arc::as_ptr)
     }
 }
-impl<T: ?Sized + RuntimeTyped> Handle<T> {
-    /// Share `owner` when it projects to `T` (one more reference), else null.
-    pub(super) fn adopt(owner: Option<&Owner>) -> Self {
-        let Some(owner) = owner.filter(|owner| T::project_from(owner.get()).is_some()) else {
-            return Self::default();
-        };
-        owner.get().transient_base().increment_ref_counter();
-        Self {
-            owner: Some(owner.clone()),
-            projected: PhantomData,
-        }
+
+impl<T: ?Sized> Handle<T> {
+    /// Share an existing allocation; `Handle::from_arc(Arc::new(3))`.
+    pub fn from_arc(owner: Arc<T>) -> Self {
+        Self(Some(owner))
     }
-    /// Clone shared storage without changing the embedded reference count.
-    pub(super) fn clone_storage_owner(&self) -> Option<Arc<dyn Transient>> {
-        match self.owner.as_ref()? {
-            Owner::Shared(owner) => Some(Arc::clone(owner)),
-            Owner::Static(_) => None,
-        }
+
+    /// Transfer ownership to Rust's shared pointer, preserving null state; `handle.into_arc()`.
+    pub fn into_arc(self) -> Option<Arc<T>> {
+        self.0
     }
-    /// Check for absent ownership; `handle.is_null()`.
+
+    /// Check for absent ownership; `Handle::<i32>::default().is_null()`.
     pub fn is_null(&self) -> bool {
-        self.owner.is_none()
+        self.0.is_none()
     }
-    /// Rust's explicit boolean conversion; `handle.is_some()`.
+
+    /// Check for a live owner; `Handle::new(3).is_some()`.
     pub fn is_some(&self) -> bool {
-        self.owner.is_some()
+        self.0.is_some()
     }
-    /// Borrow the actual projected subobject or interface view; `handle.get()`.
+
+    /// Borrow the original value without a cast or clone; `Handle::new(3).get()`.
     pub fn get(&self) -> Option<&T> {
-        T::project_from(self.owner.as_ref()?.get())
+        self.0.as_deref()
     }
-    /// Observe the object address, independent of the projected type; `handle.object_address()`.
-    ///
-    /// Two handles to one object give the same address, whatever their `T`.
+
+    /// Read allocation identity across concrete and trait handles; `handle.object_address()`.
     pub fn object_address(&self) -> *const () {
-        self.owner.as_ref().map_or(std::ptr::null(), Owner::address)
-    }
-    /// Cast ownership to a supported base/derived type, returning null on failure; `handle.cast::<Base>()`.
-    pub fn cast<U: ?Sized + RuntimeTyped>(&self) -> Handle<U> {
-        Handle::adopt(self.owner.as_ref())
-    }
-    /// Borrow a projected view without incrementing the count; `handle.view::<Base>()`.
-    pub fn view<U: ?Sized + RuntimeTyped>(&self) -> HandleView<'_, U> {
-        HandleView::new(self.owner.as_ref())
-    }
-    /// Dispatch the original object's dynamic descriptor; `handle.dynamic_type()`.
-    pub fn dynamic_type(&self) -> Option<&'static RuntimeType> {
-        self.owner.as_ref().map(|owner| owner.get().dynamic_type())
-    }
-    /// Own the dynamic descriptor; `handle.dynamic_type_handle().name()`.
-    pub fn dynamic_type_handle(&self) -> Option<Handle<RuntimeType>> {
-        self.owner
+        self.0
             .as_ref()
-            .map(|owner| owner.get().dynamic_type_handle())
+            .map_or(std::ptr::null(), |owner| Arc::as_ptr(owner).cast())
     }
-    /// Borrow the original object's canonical descriptor without changing its reference count.
-    ///
-    /// Null handles return `None`; `handle.dynamic_type_handle_ref().map(|kind| kind.name())`.
-    /// This owner dispatch remains valid after projecting to a base or interface (#317).
-    pub fn dynamic_type_handle_ref(&self) -> Option<&'static Handle<RuntimeType>> {
-        self.owner
-            .as_ref()
-            .map(|owner| owner.get().dynamic_type_ref())
+
+    /// Count strong owners, including temporary snapshots; `Handle::new(3).ref_count() == 1`.
+    pub fn ref_count(&self) -> usize {
+        self.0.as_ref().map_or(0, Arc::strong_count)
     }
-    /// Read concrete Rust type identity independently of descriptor inheritance; `handle.rust_type_id()`.
-    pub fn rust_type_id(&self) -> Option<TypeId> {
-        self.owner.as_ref().map(|owner| owner.get().type_id())
-    }
-    /// Check dynamic ancestry, false for null; `handle.is_kind(Base::static_type())`.
-    pub fn is_kind(&self, base: &RuntimeType) -> bool {
-        self.owner
-            .as_ref()
-            .is_some_and(|owner| owner.get().is_kind(base))
-    }
-    /// Check dynamic ancestry by name, false for null; `handle.is_kind_name("Standard_Transient")`.
-    pub fn is_kind_name(&self, name: &str) -> bool {
-        self.owner
-            .as_ref()
-            .is_some_and(|owner| owner.get().is_kind_name(name))
-    }
-    /// Check exact registered type, false for null; `handle.is_instance(Derived::static_type())`.
-    pub fn is_instance(&self, exact: &RuntimeType) -> bool {
-        self.owner
-            .as_ref()
-            .is_some_and(|owner| owner.get().is_instance(exact))
-    }
-    /// Check the exact runtime type name, false for null; `handle.is_instance_name("Derived")`.
-    pub fn is_instance_name(&self, name: &str) -> bool {
-        self.owner
-            .as_ref()
-            .is_some_and(|owner| owner.get().is_instance_name(name))
-    }
-    /// Read the embedded counter; `handle.ref_count()` is zero for null handles.
-    pub fn ref_count(&self) -> i32 {
-        self.owner
-            .as_ref()
-            .map_or(0, |owner| owner.get().transient_base().ref_count())
-    }
+
     /// Release ownership and become null; `handle.nullify()`.
     pub fn nullify(&mut self) {
         *self = Self::default();
     }
-    /// Address of the owned object, 0 for null: the identity `<` and the hash compare.
-    fn address(&self) -> usize {
+
+    /// Hash identity, with zero for null; `handle.hash_code()`.
+    pub fn hash_code(&self) -> usize {
         self.object_address() as usize
     }
 }
-impl<T: ?Sized + RuntimeTyped> Clone for Handle<T> {
-    fn clone(&self) -> Self {
-        self.cast::<T>()
+
+impl<T: TransientHandleTarget + ?Sized> Handle<T> {
+    /// Dispatch the object's class descriptor; `handle.dynamic_type().map(RuntimeType::name)`.
+    pub fn dynamic_type(&self) -> Option<&'static RuntimeType> {
+        self.get()
+            .map(|target| target.as_transient().dynamic_type())
     }
-    /// Assignment keeps the count untouched when both handles already share the object.
-    fn clone_from(&mut self, source: &Self) {
-        if *self != *source {
-            *self = source.clone();
-        }
+
+    /// Inspect the actual Rust type, independently of reported ancestry; `handle.rust_type_id()`.
+    pub fn rust_type_id(&self) -> Option<TypeId> {
+        self.get().map(|target| target.as_transient().type_id())
     }
-}
-/// Releases one reference; the final one dispatches the virtual delete
-/// ([`Transient::delete`]) at the end of the handle's scope.
-impl<T: ?Sized + RuntimeTyped> Drop for Handle<T> {
-    fn drop(&mut self) {
-        let Some(owner) = self.owner.take() else {
-            return;
-        };
-        if owner.get().transient_base().decrement_ref_counter() != 0 {
-            return;
-        }
-        if let Owner::Shared(storage) = owner {
-            // The receiver borrow keeps the object alive for the call; the default
-            // `delete` drops the storage, so the object is destroyed before `drop` returns.
-            let receiver: Arc<dyn Transient> = Arc::clone(&storage);
-            receiver.delete(TransientStorage::new(storage));
-        }
+
+    /// Check dynamic ancestry, false for a null handle; `handle.is_kind(Base::static_type())`.
+    pub fn is_kind(&self, base: &RuntimeType) -> bool {
+        self.get()
+            .is_some_and(|target| target.as_transient().is_kind(base))
+    }
+
+    /// Check dynamic ancestry by name; `handle.is_kind_name("Standard_Transient")`.
+    pub fn is_kind_name(&self, name: &str) -> bool {
+        self.get()
+            .is_some_and(|target| target.as_transient().is_kind_name(name))
+    }
+
+    /// Check exact descriptor identity, false for a null handle; `handle.is_instance(Class::static_type())`.
+    pub fn is_instance(&self, exact: &RuntimeType) -> bool {
+        self.dynamic_type()
+            .is_some_and(|kind| std::ptr::eq(kind, exact))
+    }
+
+    /// Check exact class name, false for a null handle; `handle.is_instance_name("Standard_Transient")`.
+    pub fn is_instance_name(&self, name: &str) -> bool {
+        self.get()
+            .is_some_and(|target| target.as_transient().is_instance_name(name))
     }
 }

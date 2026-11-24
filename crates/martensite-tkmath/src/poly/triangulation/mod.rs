@@ -16,7 +16,7 @@ pub use deferred::{DeferredTriangulation, TriangulationHooks};
 use martensite_tkernel::{
     ncollection::{Array1, Vec3},
     standard::{
-        Failure, Handle, SharedState, StandardTransient,
+        Failure, Handle, SharedState, Transient,
         dump::{self, DumpOutput},
     },
 };
@@ -47,13 +47,12 @@ impl Default for TriangulationFields {
 /// `Triangulation`, shared through `Handle` and changed through any of them;
 /// `Triangulation::with_sizes(3, 1, false, false)?`.
 pub struct Triangulation {
-    base: StandardTransient,
     fields: SharedState<TriangulationFields>,
     // myCachedMinMax and its shared mutex.
     cached_min_max: SharedState<Option<BoundingBox3>>,
     hooks: Option<Box<dyn TriangulationHooks>>,
 }
-martensite_tkernel::impl_transient!(Triangulation, "Poly_Triangulation", StandardTransient, base);
+martensite_tkernel::impl_transient!(Triangulation, "Poly_Triangulation", dyn Transient);
 impl Default for Triangulation {
     fn default() -> Self {
         Self::from_fields(TriangulationFields::default())
@@ -66,7 +65,6 @@ impl Triangulation {
     }
     pub(crate) fn from_fields(fields: TriangulationFields) -> Self {
         Self {
-            base: StandardTransient::default(),
             fields: SharedState::new(fields),
             cached_min_max: SharedState::new(None),
             hooks: None,

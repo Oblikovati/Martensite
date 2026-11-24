@@ -180,8 +180,7 @@ fn selector_frustum_scale(
     base: &SelectMgrViewerSelectorBase,
     entity: &Handle<dyn Select3DSensitiveEntity>,
 ) -> i32 {
-    let volume = base.selecting_volume.read().clone();
-    if !volume.is_scalable_active_volume() {
+    if !base.selecting_volume.read().is_scalable_active_volume() {
         return 1;
     }
     let tolerances = base.tolerances.read();

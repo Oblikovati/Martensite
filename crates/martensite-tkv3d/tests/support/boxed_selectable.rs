@@ -1,25 +1,23 @@
 //! Named selectable with observable bounds reads for subset update tests and probes.
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use martensite_tkv3d::{prs_mgr::*, select_mgr::*};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct BoxedSelectable {
-    transient: StandardTransient,
     presentable: PrsMgrPresentableObjectBase,
     selectable: SelectMgrSelectableObjectBase,
     bounds: SharedState<BoundingBox3>,
     calls: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(BoxedSelectable, "Test_BoxedSelectable", dyn SelectMgrSelectableObject, transient,
+martensite_tkernel::impl_transient!(BoxedSelectable, "Test_BoxedSelectable", dyn SelectMgrSelectableObject,
     interfaces: [dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 impl BoxedSelectable {
     /// Make a bound selectable; `BoxedSelectable::new(1.0, false)`.
     pub fn new(offset: f64, void: bool) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             presentable: PrsMgrPresentableObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             selectable: SelectMgrSelectableObjectBase::default(),
             bounds: SharedState::default(),

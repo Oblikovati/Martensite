@@ -36,12 +36,12 @@ fn setup() -> Fixture {
 }
 
 // `new Geom2dTrimmedCurve(C, U1, U2)` with the default Sense and theAdjustPeriodic.
-fn trim<T: Geom2dCurve + martensite_tkernel::standard::RuntimeTyped>(
+fn trim<T: Geom2dCurve + martensite_tkernel::standard::HandleUpcast<dyn Geom2dCurve>>(
     curve: &Handle<T>,
     u1: f64,
     u2: f64,
 ) -> Handle<Geom2dTrimmedCurve> {
-    Handle::new(Geom2dTrimmedCurve::new(&curve.cast(), u1, u2, true, true).unwrap())
+    Handle::new(Geom2dTrimmedCurve::new(&curve.upcast(), u1, u2, true, true).unwrap())
 }
 
 #[test]
@@ -180,7 +180,7 @@ fn trimmed_curve_copy() {
     let f = setup();
     let aTrim = trim(&f.myCircle, 0.0, PI);
     let aCopyGeom: Handle<dyn Geom2dGeometry> = aTrim.copy().unwrap();
-    let aCopy: Handle<Geom2dTrimmedCurve> = aCopyGeom.cast::<Geom2dTrimmedCurve>();
+    let aCopy: Handle<Geom2dTrimmedCurve> = aCopyGeom.into_downcast::<Geom2dTrimmedCurve>();
 
     assert!(!aCopy.is_null());
     EXPECT_DOUBLE_EQ(aCopy.first_parameter(), 0.0);

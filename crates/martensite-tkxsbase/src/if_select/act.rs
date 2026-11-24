@@ -3,7 +3,7 @@
 use super::{IFSelectActivator, IFSelectActivatorBase, IFSelectReturnStatus, IFSelectSessionPilot};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use std::sync::{OnceLock, PoisonError, RwLock};
@@ -27,19 +27,17 @@ fn default_group() -> &'static RwLock<(AsciiString, AsciiString)> {
 /// assert_eq!(act.help(1).as_bytes(), b"says hello");
 /// ```
 pub struct IFSelectAct {
-    transient: StandardTransient,
     base: IFSelectActivatorBase,
     thename: AsciiString,
     thehelp: AsciiString,
     thefunc: Option<IFSelectActFunc>,
 }
-impl_transient!(IFSelectAct, "IFSelectAct", dyn IFSelectActivator, transient, interfaces: [dyn IFSelectActivator]);
+impl_transient!(IFSelectAct, "IFSelectAct", dyn IFSelectActivator, interfaces: [dyn IFSelectActivator]);
 
 impl IFSelectAct {
     /// `IFSelectAct(name, help, func)`: built as its handle, bound for `Add`.
     pub fn new(name: &str, help: &str, func: Option<IFSelectActFunc>) -> Handle<Self> {
         let act = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectActivatorBase::new(),
             thename: AsciiString::new(name),
             thehelp: AsciiString::new(help),

@@ -1,7 +1,3 @@
-#[allow(
-    unused_imports,
-    reason = "the classes of the package reference each other across its files"
-)]
 use super::*;
 #[allow(unused_imports)]
 use crate::step_data::*;
@@ -10,12 +6,17 @@ use crate::step_entity::*;
 use crate::step_geom::*;
 #[allow(unused_imports)]
 use crate::step_repr::*;
+#[allow(
+    unused_imports,
+    reason = "the classes of the package reference each other across its files"
+)]
+use martensite_tkernel::standard::Transient;
 
 step_entity! {
     /// Representation of STEP entity SeamEdge
     StepShapeSeamEdge, StepShapeSeamEdgeState, "StepShapeSeamEdge", StepShapeOrientedEdge, {
         the_pcurve_reference: Handle<StepGeomPcurve>,
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeEdge, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeSeamEdge {
     step_methods! {
@@ -27,7 +28,7 @@ impl StepShapeSeamEdge {
     pub fn init(
         &self,
         a_representation_item_name: &Handle<HAsciiString>,
-        a_oriented_edge_edge_element: &Handle<StepShapeEdge>,
+        a_oriented_edge_edge_element: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
         a_oriented_edge_orientation: bool,
         a_pcurve_reference: &Handle<StepGeomPcurve>,
     ) {
@@ -43,14 +44,14 @@ impl StepShapeSeamEdge {
 step_entity! {
     /// Representation of STEP entity ShapeDefinitionRepresentation
     StepShapeShapeDefinitionRepresentation, StepShapeShapeDefinitionRepresentationState, "StepShapeShapeDefinitionRepresentation", StepReprPropertyDefinitionRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprPropertyDefinitionRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity ShapeDimensionRepresentation
     StepShapeShapeDimensionRepresentation, StepShapeShapeDimensionRepresentationState, "StepShapeShapeDimensionRepresentation", StepShapeShapeRepresentation, {
         items_ap242: Handle<HArray1<StepShapeShapeDimensionRepresentationItem>>,
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 impl StepShapeShapeDimensionRepresentation {
     step_methods! {
@@ -62,8 +63,8 @@ impl StepShapeShapeDimensionRepresentation {
     pub fn init(
         &self,
         the_name: &Handle<HAsciiString>,
-        the_items: &Handle<HArray1<Handle<StepReprRepresentationItem>>>,
-        the_context_of_items: &Handle<StepReprRepresentationContext>,
+        the_items: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>>,
+        the_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) {
         self.parent
             .parent
@@ -75,7 +76,7 @@ impl StepShapeShapeDimensionRepresentation {
         &self,
         the_name: &Handle<HAsciiString>,
         the_items: &Handle<HArray1<StepShapeShapeDimensionRepresentationItem>>,
-        the_context_of_items: &Handle<StepReprRepresentationContext>,
+        the_context_of_items: &Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     ) {
         self.parent
             .parent
@@ -87,20 +88,20 @@ impl StepShapeShapeDimensionRepresentation {
 step_entity! {
     /// Shape representation.
     StepShapeShapeRepresentation, StepShapeShapeRepresentationState, "StepShapeShapeRepresentation", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity ShapeRepresentationWithParameters
     StepShapeShapeRepresentationWithParameters, StepShapeShapeRepresentationWithParametersState, "StepShapeShapeRepresentationWithParameters", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Shell based surface model.
     StepShapeShellBasedSurfaceModel, StepShapeShellBasedSurfaceModelState, "StepShapeShellBasedSurfaceModel", StepGeomGeometricRepresentationItem, {
         sbsm_boundary: Handle<HArray1<StepShapeShell>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeShellBasedSurfaceModel {
     step_methods! {
@@ -123,20 +124,20 @@ impl StepShapeShellBasedSurfaceModel {
 step_entity! {
     /// Solid model.
     StepShapeSolidModel, StepShapeSolidModelState, "StepShapeSolidModel", StepGeomGeometricRepresentationItem, {
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeSolidModel]
 }
 
 step_entity! {
     /// Solid replica.
     StepShapeSolidReplica, StepShapeSolidReplicaState, "StepShapeSolidReplica", StepShapeSolidModel, {
-        parent_solid: Handle<StepShapeSolidModel>,
+        parent_solid: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>,
         transformation: Handle<StepGeomCartesianTransformationOperator3d>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeSolidReplica {
     step_methods! {
-        set set_parent_solid = parent_solid: Handle<StepShapeSolidModel>;
-        get parent_solid = parent_solid: Handle<StepShapeSolidModel>;
+        set set_parent_solid = parent_solid: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>;
+        get parent_solid = parent_solid: Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>;
         set set_transformation = transformation: Handle<StepGeomCartesianTransformationOperator3d>;
         get transformation = transformation: Handle<StepGeomCartesianTransformationOperator3d>;
     }
@@ -144,7 +145,7 @@ impl StepShapeSolidReplica {
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
-        a_parent_solid: &Handle<StepShapeSolidModel>,
+        a_parent_solid: &Handle<dyn crate::StepEntityBase<StepShapeSolidModel>>,
         a_transformation: &Handle<StepGeomCartesianTransformationOperator3d>,
     ) {
         let mut state = self.state.write();
@@ -159,22 +160,22 @@ step_entity! {
     /// Sphere.
     StepShapeSphere, StepShapeSphereState, "StepShapeSphere", StepGeomGeometricRepresentationItem, {
         radius: f64,
-        centre: Handle<StepGeomPoint>,
-    }
+        centre: Handle<dyn crate::StepEntityBase<StepGeomPoint>>,
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeSphere {
     step_methods! {
         set_copy set_radius = radius: f64;
         get radius = radius: f64;
-        set set_centre = centre: Handle<StepGeomPoint>;
-        get centre = centre: Handle<StepGeomPoint>;
+        set set_centre = centre: Handle<dyn crate::StepEntityBase<StepGeomPoint>>;
+        get centre = centre: Handle<dyn crate::StepEntityBase<StepGeomPoint>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_name: &Handle<HAsciiString>,
         a_radius: f64,
-        a_centre: &Handle<StepGeomPoint>,
+        a_centre: &Handle<dyn crate::StepEntityBase<StepGeomPoint>>,
     ) {
         let mut state = self.state.write();
         state.radius = a_radius;
@@ -187,22 +188,22 @@ impl StepShapeSphere {
 step_entity! {
     /// Representation of STEP entity Subedge
     StepShapeSubedge, StepShapeSubedgeState, "StepShapeSubedge", StepShapeEdge, {
-        the_parent_edge: Handle<StepShapeEdge>,
-    }
+        the_parent_edge: Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeEdge, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeSubedge {
     step_methods! {
-        get parent_edge = the_parent_edge: Handle<StepShapeEdge>;
-        set set_parent_edge = the_parent_edge: Handle<StepShapeEdge>;
+        get parent_edge = the_parent_edge: Handle<dyn crate::StepEntityBase<StepShapeEdge>>;
+        set set_parent_edge = the_parent_edge: Handle<dyn crate::StepEntityBase<StepShapeEdge>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         a_representation_item_name: &Handle<HAsciiString>,
-        a_edge_edge_start: &Handle<StepShapeVertex>,
-        a_edge_edge_end: &Handle<StepShapeVertex>,
-        a_parent_edge: &Handle<StepShapeEdge>,
+        a_edge_edge_start: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+        a_edge_edge_end: &Handle<dyn crate::StepEntityBase<StepShapeVertex>>,
+        a_parent_edge: &Handle<dyn crate::StepEntityBase<StepShapeEdge>>,
     ) {
         self.parent.init(
             a_representation_item_name,
@@ -216,21 +217,21 @@ impl StepShapeSubedge {
 step_entity! {
     /// Representation of STEP entity Subface
     StepShapeSubface, StepShapeSubfaceState, "StepShapeSubface", StepShapeFace, {
-        the_parent_face: Handle<StepShapeFace>,
-    }
+        the_parent_face: Handle<dyn crate::StepEntityBase<StepShapeFace>>,
+    }, bases: [crate::step_shape::StepShapeFace, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeSubface {
     step_methods! {
-        get parent_face = the_parent_face: Handle<StepShapeFace>;
-        set set_parent_face = the_parent_face: Handle<StepShapeFace>;
+        get parent_face = the_parent_face: Handle<dyn crate::StepEntityBase<StepShapeFace>>;
+        set set_parent_face = the_parent_face: Handle<dyn crate::StepEntityBase<StepShapeFace>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         a_representation_item_name: &Handle<HAsciiString>,
-        a_face_bounds: &Handle<HArray1<Handle<StepShapeFaceBound>>>,
-        a_parent_face: &Handle<StepShapeFace>,
+        a_face_bounds: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeFaceBound>>>>,
+        a_parent_face: &Handle<dyn crate::StepEntityBase<StepShapeFace>>,
     ) {
         self.parent.init(a_representation_item_name, a_face_bounds);
         self.state.write().the_parent_face = a_parent_face.clone();
@@ -241,7 +242,7 @@ step_entity! {
     /// Swept area solid.
     StepShapeSweptAreaSolid, StepShapeSweptAreaSolidState, "StepShapeSweptAreaSolid", StepShapeSolidModel, {
         swept_area: Handle<StepGeomCurveBoundedSurface>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeSweptAreaSolid {
     step_methods! {
@@ -262,21 +263,28 @@ impl StepShapeSweptAreaSolid {
 step_entity! {
     /// Swept face solid.
     StepShapeSweptFaceSolid, StepShapeSweptFaceSolidState, "StepShapeSweptFaceSolid", StepShapeSolidModel, {
-        swept_area: Handle<StepShapeFaceSurface>,
-    }
+        swept_area: Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeSweptFaceSolid {
     /// `init`.
-    pub fn init(&self, a_name: &Handle<HAsciiString>, a_swept_area: &Handle<StepShapeFaceSurface>) {
+    pub fn init(
+        &self,
+        a_name: &Handle<HAsciiString>,
+        a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
+    ) {
         self.state.write().swept_area = a_swept_area.clone();
         self.parent.parent.parent.init(a_name);
     }
     /// `set_swept_face`.
-    pub fn set_swept_face(&self, a_swept_area: &Handle<StepShapeFaceSurface>) {
+    pub fn set_swept_face(
+        &self,
+        a_swept_area: &Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>>,
+    ) {
         self.state.write().swept_area = a_swept_area.clone();
     }
     /// `swept_face`.
-    pub fn swept_face(&self) -> Handle<StepShapeFaceSurface> {
+    pub fn swept_face(&self) -> Handle<dyn crate::StepEntityBase<StepShapeFaceSurface>> {
         self.state.read().swept_area.clone()
     }
 }
@@ -284,23 +292,19 @@ impl StepShapeSweptFaceSolid {
 step_entity! {
     /// Added for Dimensional Tolerances
     StepShapeToleranceValue, StepShapeToleranceValueState, "StepShapeToleranceValue", StandardTransient, {
-        the_lower_bound: Handle<StandardTransient>,
-        the_upper_bound: Handle<StandardTransient>,
+        the_lower_bound: Handle<dyn Transient>,
+        the_upper_bound: Handle<dyn Transient>,
     }
 }
 impl StepShapeToleranceValue {
     step_methods! {
-        get lower_bound = the_lower_bound: Handle<StandardTransient>;
-        set set_lower_bound = the_lower_bound: Handle<StandardTransient>;
-        get upper_bound = the_upper_bound: Handle<StandardTransient>;
-        set set_upper_bound = the_upper_bound: Handle<StandardTransient>;
+        get lower_bound = the_lower_bound: Handle<dyn Transient>;
+        set set_lower_bound = the_lower_bound: Handle<dyn Transient>;
+        get upper_bound = the_upper_bound: Handle<dyn Transient>;
+        set set_upper_bound = the_upper_bound: Handle<dyn Transient>;
     }
     /// `init`.
-    pub fn init(
-        &self,
-        lower_bound: &Handle<StandardTransient>,
-        upper_bound: &Handle<StandardTransient>,
-    ) {
+    pub fn init(&self, lower_bound: &Handle<dyn Transient>, upper_bound: &Handle<dyn Transient>) {
         let mut state = self.state.write();
         state.the_lower_bound = lower_bound.clone();
         state.the_upper_bound = upper_bound.clone();
@@ -310,5 +314,5 @@ impl StepShapeToleranceValue {
 step_entity! {
     /// Topological representation item.
     StepShapeTopologicalRepresentationItem, StepShapeTopologicalRepresentationItemState, "StepShapeTopologicalRepresentationItem", StepReprRepresentationItem, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }

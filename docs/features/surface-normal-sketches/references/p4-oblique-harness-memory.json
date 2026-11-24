@@ -1,0 +1,65 @@
+{
+  "method": "Test executable --list blocked on unread 4KiB stdout pipe; no modelling operation executes. Snapshot after80ms; pipe then drained. Separate harness observation, not a modelling RSS subtraction.",
+  "rows": [
+    {
+      "trial": 1,
+      "variant": "before",
+      "VmRSS": 10460,
+      "RssAnon": 1940,
+      "RssFile": 8520,
+      "listed_tests": 244
+    },
+    {
+      "trial": 2,
+      "variant": "after",
+      "VmRSS": 10544,
+      "RssAnon": 1968,
+      "RssFile": 8576,
+      "listed_tests": 278
+    },
+    {
+      "trial": 3,
+      "variant": "after",
+      "VmRSS": 10640,
+      "RssAnon": 1972,
+      "RssFile": 8668,
+      "listed_tests": 278
+    },
+    {
+      "trial": 4,
+      "variant": "before",
+      "VmRSS": 10660,
+      "RssAnon": 1940,
+      "RssFile": 8720,
+      "listed_tests": 244
+    },
+    {
+      "trial": 5,
+      "variant": "before",
+      "VmRSS": 10540,
+      "RssAnon": 1940,
+      "RssFile": 8600,
+      "listed_tests": 244
+    },
+    {
+      "trial": 6,
+      "variant": "after",
+      "VmRSS": 10516,
+      "RssAnon": 1968,
+      "RssFile": 8548,
+      "listed_tests": 278
+    }
+  ],
+  "medians": {
+    "before": {
+      "RssAnon": 1940,
+      "RssFile": 8600,
+      "VmRSS": 10540
+    },
+    "after": {
+      "RssAnon": 1968,
+      "RssFile": 8576,
+      "VmRSS": 10544
+    }
+  }
+}

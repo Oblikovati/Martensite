@@ -10,12 +10,11 @@ use super::package::copy_share;
 use super::unary_expression::{ExprUnaryCore, ExprUnaryExpression, unary_expression_members};
 use super::unary_kit::{evaluate_operand, shallow_of};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// `f(u)` for a function `f` of one variable; `ExprUnaryFunction::new(&f, &u)?`.
 pub struct ExprUnaryFunction {
-    parent: StandardTransient,
     core: ExprUnaryCore,
     function: ExprFunctionHandle,
 }
@@ -23,7 +22,6 @@ impl_transient!(
     ExprUnaryFunction,
     "Expr_UnaryFunction",
     dyn ExprUnaryExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression, dyn ExprUnaryExpression]
 );
 impl ExprUnaryFunction {
@@ -37,7 +35,6 @@ impl ExprUnaryFunction {
             )));
         }
         let object: Self = Self {
-            parent: StandardTransient::default(),
             core: ExprUnaryCore::new(exp),
             function: func.clone(),
         };

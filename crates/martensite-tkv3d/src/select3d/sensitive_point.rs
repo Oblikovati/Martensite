@@ -7,7 +7,7 @@ use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeMa
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::bvh::BvhBox;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::json_dump::{base_class, class_begin};
@@ -17,18 +17,16 @@ use std::io;
 ///
 /// Example: `let point = Select3DSensitivePoint::new(&owner, Point3::new(1.0, 2.0, 3.0));`.
 pub struct Select3DSensitivePoint {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     point: Point3,
 }
-martensite_tkernel::impl_transient!(Select3DSensitivePoint, "Select3DSensitivePoint", dyn Select3DSensitiveEntity, transient,
+martensite_tkernel::impl_transient!(Select3DSensitivePoint, "Select3DSensitivePoint", dyn Select3DSensitiveEntity,
     interfaces: [dyn Select3DSensitiveEntity]);
 
 impl Select3DSensitivePoint {
     /// A point of an owner, with the sensitivity factor 12; `Select3DSensitivePoint::new(&owner, p)`.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>, point: Point3) -> Self {
         let entity = Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             point,
         };

@@ -14,7 +14,11 @@ fn replay_aspect_slot<T: RuntimeTyped>(
     replace: impl Fn(Handle<T>),
 ) {
     let previous = slot.clone_handle();
-    let mut rows = aspect_before_row(label, slot.is_same_reference(&alias), previous.ref_count());
+    let mut rows = aspect_before_row(
+        label,
+        slot.is_same_reference(&alias),
+        previous.ref_count().try_into().unwrap(),
+    );
     replace(incoming.clone());
     rows.push_str(&aspect_replaced_row(label, slot, &previous, &incoming));
     replace(Handle::default());
@@ -100,15 +104,16 @@ fn shading_aspect_slot_replays_native_replacement_and_counts() {
     );
 }
 #[test]
-fn aspect_slot_callback_releases_lock_and_does_not_retain_target() {
+fn aspect_slot_callback_releases_lock_and_retains_its_target_until_return() {
     let line = Prs3dLineAspect::new(Color::default(), AspectTypeOfLine::Solid, 1.).unwrap();
     let owned = line.aspect();
     let reference = line.aspect_ref();
     reference.with_object(|value| {
         assert!(value.is_some());
-        assert_eq!(owned.ref_count(), 2);
+        assert_eq!(owned.ref_count(), 3);
         line.set_aspect(Handle::default());
-        assert_eq!(owned.ref_count(), 1);
+        assert_eq!(owned.ref_count(), 2);
     });
+    assert_eq!(owned.ref_count(), 1);
     assert!(reference.is_null());
 }

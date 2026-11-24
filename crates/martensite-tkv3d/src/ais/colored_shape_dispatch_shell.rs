@@ -1,6 +1,6 @@
 //! Native closed-shell classification accounts for hidden faces and actual front/back alpha policy.
 use super::{
-    AisColoredDrawer,
+    AisColoredDrawer, AisColoredDrawerSource,
     colored_shape_dispatch::{
         ColoredDispatchContext, ColoredDispatchParent, dispatch_colored_topology,
     },
@@ -14,7 +14,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkservice::graphic3d::*;
 pub(super) fn dispatch_colored_aggregate(
-    drawer: &Handle<AisColoredDrawer>,
+    drawer: &Handle<dyn AisColoredDrawerSource>,
     shape: &Shape,
     parent: ColoredDispatchParent,
     own: bool,

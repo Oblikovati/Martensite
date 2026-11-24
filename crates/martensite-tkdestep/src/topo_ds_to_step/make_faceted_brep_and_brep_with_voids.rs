@@ -29,9 +29,9 @@ topo_ds_to_step_brep_class!(
 /// What the shells of the solid gave.
 #[derive(Default)]
 struct ShellResults {
-    outer: Handle<StepShapeClosedShell>,
-    voids: Vec<Handle<StepShapeClosedShell>>,
-    tessellated: Vec<Handle<StepVisualTessellatedItem>>,
+    outer: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>,
+    voids: Vec<Handle<dyn crate::StepEntityBase<StepShapeClosedShell>>>,
+    tessellated: Vec<Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>,
 }
 
 /// Each closed shell through the builder; `None` when the progress stopped first.
@@ -69,7 +69,8 @@ fn translate_shells(
             add_warning(fp, &current, text)?;
             continue;
         }
-        let closed: Handle<StepShapeClosedShell> = builder.value()?.cast();
+        let closed: Handle<dyn crate::StepEntityBase<StepShapeClosedShell>> =
+            builder.value()?.cast();
         if outer_shell.is_equal(&current) {
             results.outer = closed;
         } else {

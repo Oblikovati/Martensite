@@ -125,3 +125,16 @@ fn unknown_extent_observation_overrides_surface_only_recovery() {
     };
     assert_eq!(fault, &unsupported);
 }
+
+#[test]
+fn only_frames_without_gui_may_reuse_the_last_surface_query() {
+    let plain = RenderFrame::new(64, 64, [0.; 4], Vec::new()).unwrap();
+    let mut gui = plain.clone();
+    gui.gui_draw_start = Some(0);
+    let observes =
+        |frame: &RenderFrame, policy| WindowGuiContract::new(frame, policy).observes_surface();
+    assert!(!observes(&plain, RenderGuiSurfacePolicy::LegacyV1));
+    assert!(!observes(&plain, RenderGuiSurfacePolicy::CheckedV2));
+    assert!(observes(&gui, RenderGuiSurfacePolicy::LegacyV1));
+    assert!(observes(&gui, RenderGuiSurfacePolicy::CheckedV2));
+}

@@ -1,25 +1,23 @@
 //! A real interactive object builds retained groups and a selectable center point.
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions::program_error};
+use martensite_tkernel::standard::{Failure, Handle, exceptions::program_error};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::*;
 use martensite_tkv3d::{ais::*, prs_mgr::*, select_mgr::*, select3d::Select3DSensitivePoint};
 use std::sync::atomic::{AtomicUsize, Ordering};
 pub struct AisTriangle {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     pub vertices: Handle<Graphic3dArrayOfPrimitives>,
     styles: [Handle<dyn Graphic3dAspectsSource>; 2],
     pub computations: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(AisTriangle,"Martensite_TestTriangle",dyn AisInteractiveObject,transient,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(AisTriangle,"Martensite_TestTriangle",dyn AisInteractiveObject,interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisTriangle {
     pub fn new(
         vertices: Handle<Graphic3dArrayOfPrimitives>,
         styles: [Handle<dyn Graphic3dAspectsSource>; 2],
     ) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             vertices,
             styles,
@@ -47,7 +45,7 @@ impl PrsMgrPresentableObject for AisTriangle {
         })?;
         let group = presentation.observe().new_group()?;
         group.set_group_primitives_aspect(style);
-        group.add_primitive_array(&self.vertices, true);
+        group.add_primitive_array(&self.vertices.upcast(), true);
         self.computations.fetch_add(1, Ordering::Relaxed);
         Ok(())
     }

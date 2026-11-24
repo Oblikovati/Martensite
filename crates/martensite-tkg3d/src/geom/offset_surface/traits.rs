@@ -27,7 +27,7 @@ impl GeomGeometry for GeomOffsetSurface {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(Self::copy_of(self)?).cast())
+        Ok(Handle::new(Self::copy_of(self)?).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let equivalent: Handle<dyn GeomSurface> = self.direct_rep_surface();

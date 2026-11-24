@@ -28,7 +28,7 @@ pub trait Geom2dPoint: Geom2dGeometry {
         first.square_distance(second)
     }
 }
-impl_transient_interface!(dyn Geom2dPoint, "Geom2d_Point", dyn Geom2dGeometry);
+impl_transient_interface!(dyn Geom2dPoint, "Geom2d_Point", dyn Geom2dGeometry, upcasts: [dyn Geom2dGeometry]);
 
 /// `Geom2dPoint::DumpJson`; `dump_point(&mut stream, -1)?`.
 pub fn dump_point(stream: &mut DumpStream, depth: i32) -> io::Result<()> {

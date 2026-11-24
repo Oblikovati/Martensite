@@ -6,7 +6,7 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 
 #[test]
 fn scoped_slot_retains_original_identity_without_intrusive_ownership() {
-    let peer = Handle::new(StandardTransient::default());
+    let peer = Handle::new(StandardTransient);
     let slot = ScopedHandleReferenceSlot::from_owned(peer.clone());
     let alias = slot.retain_reference().unwrap();
     let second = alias.retain_reference().unwrap();
@@ -21,11 +21,11 @@ fn scoped_slot_retains_original_identity_without_intrusive_ownership() {
 }
 #[test]
 fn projected_retention_preserves_slot_and_checked_expiration() {
-    let slot = ScopedHandleReferenceSlot::from_owned(Handle::new(StandardTransient::default()));
+    let slot = ScopedHandleReferenceSlot::from_owned(Handle::new(StandardTransient));
     let projected = ProjectedHandleReference::<StandardTransient, StandardTransient>::new(&slot);
     let alias = projected.retain_reference().unwrap();
     assert_eq!(alias.reference_address(), slot.reference_address());
-    assert_eq!(alias.observe().ref_count(), 1);
+    assert_eq!(alias.observe().ref_count(), 2);
     let owned = alias.clone_handle();
     assert_eq!(owned.ref_count(), 2);
     drop(slot);
@@ -34,7 +34,7 @@ fn projected_retention_preserves_slot_and_checked_expiration() {
 }
 #[test]
 fn ordinary_stack_reference_rejects_lifetime_erasure() {
-    let stack = Handle::new(StandardTransient::default());
+    let stack = Handle::new(StandardTransient);
     let failure = stack.retain_reference().err().unwrap();
     assert_eq!(failure.exception_type(), "Standard_ProgramError");
     assert!(failure.message().contains("borrowed lifetime"));
@@ -53,7 +53,7 @@ impl HandleReference<StandardTransient> for FakeThreadLocalReference<'_> {
     fn retain_reference(&self) -> Result<RetainedHandleReference<StandardTransient>, Failure> {
         self.original.retain_reference()
     }
-    fn observe(&self) -> HandleObserver<StandardTransient> {
+    fn observe(&self) -> HandleObserver<'_, StandardTransient> {
         self.reads.set(self.reads.get() + 1);
         self.original.observe()
     }
@@ -63,7 +63,7 @@ impl HandleReference<StandardTransient> for FakeThreadLocalReference<'_> {
 }
 #[test]
 fn custom_borrowed_thread_local_adapter_delegates_original_capability() {
-    let slot = ScopedHandleReferenceSlot::from_owned(Handle::new(StandardTransient::default()));
+    let slot = ScopedHandleReferenceSlot::from_owned(Handle::new(StandardTransient));
     let reads = Cell::new(0);
     let source = FakeThreadLocalReference {
         original: &slot,
@@ -78,7 +78,7 @@ fn custom_borrowed_thread_local_adapter_delegates_original_capability() {
 }
 #[test]
 fn success_typed_foreign_failure_success_releases_each_original_scope() {
-    let peer = Handle::new(StandardTransient::default());
+    let peer = Handle::new(StandardTransient);
     for policy in [0, 1, 2, 0] {
         assert_scoped_failure_reuse(&peer, policy);
     }
@@ -88,7 +88,7 @@ fn assert_scoped_failure_reuse(peer: &Handle<StandardTransient>, policy: usize) 
     let terminal = catch_unwind(AssertUnwindSafe(|| {
         let slot = ScopedHandleReferenceSlot::from_owned(peer.clone());
         retained = Some(slot.retain_reference().unwrap());
-        assert_eq!(retained.as_ref().unwrap().observe().ref_count(), 2);
+        assert_eq!(retained.as_ref().unwrap().observe().ref_count(), 3);
         scoped_callback_failure(policy);
     }));
     assert_eq!(terminal.is_err(), policy != 0);
@@ -143,19 +143,21 @@ fn slot_identity_and_count_rows_replay_without_dangling_reads() {
     }
 }
 fn assert_native_slot_row(columns: &[i32]) {
-    let peer = Handle::new(StandardTransient::default());
+    let peer = Handle::new(StandardTransient);
     let slot = ScopedHandleReferenceSlot::from_owned(peer.clone());
     let alias = slot.retain_reference().unwrap();
     let second = alias.retain_reference().unwrap();
     if columns[2] == 2 {
         drop(slot);
-        assert_eq!(peer.ref_count() - 1, columns[5]);
+        assert_eq!(peer.ref_count() - 1, columns[5] as usize);
         assert!(alias.is_expired());
         return;
     }
     assert_native_live_identity(&alias, &second, &peer, columns);
 
-    assert_eq!(alias.observe().ref_count() - 1, columns[5]);
+    let observed = alias.observe();
+    assert_eq!(peer.ref_count() - 2, columns[5] as usize);
+    assert_eq!(observed.object_address(), peer.object_address());
     assert!(!alias.is_expired());
 }
 

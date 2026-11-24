@@ -217,7 +217,7 @@ impl StdPrsWfSurface {
             }
             let group = prs.new_group()?;
             group.set_primitives_aspect(&aspect.cast());
-            group.add_primitive_array(&array, true);
+            group.add_primitive_array(&array.into_upcast(), true);
         }
         Ok(())
     }

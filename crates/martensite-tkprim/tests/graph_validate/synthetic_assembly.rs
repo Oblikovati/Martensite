@@ -47,7 +47,7 @@ fn synthetic_square_solid(graph: &mut BRepGraph) {
     let edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
         .map(|(first, last)| synthetic_line(graph, vertices[first], vertices[last], 10.0));
     let wire = synthetic_wire(graph, &edges.map(|edge| (edge, ParityOrientation::FORWARD)));
-    let plane = Handle::new(GeomPlane::new(Axis3::default())).into_cast();
+    let plane = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
     let face = synthetic_face(graph, &plane, wire);
     synthetic_solid(graph, &[face]);
 }

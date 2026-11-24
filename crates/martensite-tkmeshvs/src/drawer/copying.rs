@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! The implicit copy constructor copies fields in declaration order and resets object count.
+//! The implicit copy constructor copies each channel independently.
 use super::{MeshVSDrawer, storage::DrawerMaps};
 use martensite_tkernel::standard::{SharedState, StandardTransient};
 impl Clone for MeshVSDrawer {
     fn clone(&self) -> Self {
         Self {
-            transient: StandardTransient::default(),
             maps: DrawerMaps {
                 integers: SharedState::new(self.maps.integers.read().clone()),
                 booleans: SharedState::new(self.maps.booleans.read().clone()),
@@ -23,5 +22,5 @@ impl MeshVSDrawer {
         "MeshVSDrawer"
     }
 }
-/// `MeshVSDrawer::base_type`; aliases refer to the actual inherited counter base.
+/// `MeshVSDrawer::base_type`; the native root descriptor type.
 pub type MeshVSDrawerBaseType = StandardTransient;

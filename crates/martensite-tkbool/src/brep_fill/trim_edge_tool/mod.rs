@@ -40,16 +40,16 @@ fn simple_expression(b: &Bisec) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     };
     let analytic: Handle<BisecAna> = trimmed.basis_curve().cast();
     let Some(analytic) = analytic.get() else {
-        return Ok(tr_bis.clone().cast());
+        return Ok(tr_bis.cast());
     };
     let bis = analytic.geom2d_curve();
     let (first, last) = (trimmed.first_parameter(), trimmed.last_parameter());
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&bis, first, last, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&bis, first, last, true, true)?).into_upcast())
 }
 
 /// The point of a Geom2dCartesianPoint geometry, `None` for a curve.
 fn point_of(s: &Handle<dyn Geom2dGeometry>) -> Option<Point2> {
-    let point: Handle<Geom2dCartesianPoint> = s.cast();
+    let point: Handle<Geom2dCartesianPoint> = s.downcast();
     point.get().map(|p| p.pnt2d())
 }
 

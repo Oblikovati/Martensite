@@ -13,9 +13,7 @@ use crate::tdf::{
 use martensite_tkcdf::json_dump::{class_begin, field_integer, field_string};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream, exceptions,
-    },
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream, exceptions},
     tcollection::{AsciiString, ExtendedString},
 };
 use std::io;
@@ -40,17 +38,15 @@ struct VariableState {
 /// assert_eq!(variable.unit().as_bytes(), b"SCALAR");
 /// ```
 pub struct TDataStdVariable {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<VariableState>,
 }
-impl_transient!(TDataStdVariable, "TDataStd_Variable", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdVariable, "TDataStd_Variable", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdVariable {
     /// `TDataStd_Variable()`: not constant, unit `"SCALAR"`.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(VariableState {
                 is_constant: false,
@@ -83,7 +79,7 @@ impl TDataStdVariable {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `Name(string)`: sets the `TDataStd_Name` of the label.
@@ -152,7 +148,7 @@ impl TDataStdVariable {
     /// `Desassign`: forgets the expression; `Standard_DomainError` without one.
     pub fn desassign(&self) -> Result<(), Failure> {
         let expression = self.expression_or("Deassign")?;
-        self.label().forget_attribute(&expression.cast())
+        self.label().forget_attribute(&expression.into_upcast())
     }
     /// `Expression`: the `TDataStd_Expression` of the label; `Standard_DomainError` without one.
     pub fn expression(&self) -> Result<Handle<TDataStdExpression>, Failure> {
@@ -219,7 +215,7 @@ impl TdfAttribute for TDataStdVariable {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste(Into, RT)`: `Into` takes the constant flag and the unit.
     fn paste(

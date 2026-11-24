@@ -17,7 +17,7 @@ impl GeomGeometry for GeomBSplineSurface {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(Self::copy_of(self)?).cast())
+        Ok(Handle::new(Self::copy_of(self)?).into_upcast())
     }
     /// The retained dump; GeomBoundedSurface has no DumpJson, so its base level is the
     /// GeomSurface one.
@@ -101,10 +101,10 @@ impl GeomSurface for GeomBSplineSurface {
         self.state.read().v.periodic
     }
     fn u_iso(&self, u: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
-        Ok(Handle::new(self.state.read().default_iso(true, u)?).cast())
+        Ok(Handle::new(self.state.read().default_iso(true, u)?).into_upcast())
     }
     fn v_iso(&self, v: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
-        Ok(Handle::new(self.state.read().default_iso(false, v)?).cast())
+        Ok(Handle::new(self.state.read().default_iso(false, v)?).into_upcast())
     }
     /// The smaller of the U and V continuities (`myUSmooth < myVSmooth ? U : V`).
     fn continuity(&self) -> Shape {

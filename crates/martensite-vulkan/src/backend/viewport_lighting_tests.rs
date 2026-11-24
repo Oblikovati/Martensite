@@ -27,7 +27,7 @@ fn normal_light() -> RenderLightSet {
     };
     RenderLightSet {
         ambient: [0.; 4],
-        sources: vec![light],
+        sources: vec![light].into(),
     }
 }
 fn facet_state() -> RenderLighting {

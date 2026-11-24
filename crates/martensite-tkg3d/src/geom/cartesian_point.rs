@@ -3,20 +3,18 @@ use super::geometry::GeomGeometry;
 use super::point::GeomPoint;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Point3, Transform3};
 
 /// A Cartesian point; `Handle::new(GeomCartesianPoint::new(1.0, 2.0, 3.0))`.
 #[derive(Default)]
 pub struct GeomCartesianPoint {
-    parent: StandardTransient,
     state: SharedState<Point3>,
 }
 impl_transient!(
     GeomCartesianPoint,
     "Geom_CartesianPoint",
     dyn GeomPoint,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomPoint]
 );
 impl Clone for GeomCartesianPoint {
@@ -29,7 +27,6 @@ impl GeomCartesianPoint {
     /// `GeomCartesianPoint::from_pnt(Point3::new(1.0, 2.0, 3.0))`.
     pub fn from_pnt(point: Point3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(point),
         }
     }
@@ -65,7 +62,7 @@ impl GeomGeometry for GeomCartesianPoint {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
 }
 impl GeomPoint for GeomCartesianPoint {

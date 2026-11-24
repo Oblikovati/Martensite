@@ -22,8 +22,7 @@ pub trait TessellatedShape: MeshShape {
 impl_transient_interface!(
     dyn TessellatedShape,
     "IMeshData_TessellatedShape",
-    dyn MeshShape
-);
+    dyn MeshShape, upcasts: [dyn MeshShape]);
 /// Shared implementation of the shape and tessellation bases.
 pub(crate) struct ShapeState {
     pub(crate) shape: SharedState<Shape>,

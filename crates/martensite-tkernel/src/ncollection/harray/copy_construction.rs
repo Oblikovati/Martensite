@@ -11,7 +11,8 @@ impl<T: Copy + Send + Sync + 'static> HArray1<T> {
     /// Copies bounds and initialized values without invoking Clone hooks.
     /// The caller selects the trivially-copyable item policy; borrowed sources become owned copies.
     /// `let shared = HArray1::from_array_trivial(&Array1::<i32>::with_size(3))`.
-    pub fn from_array_trivial(values: &Array1<'_, T>) -> Self {
+    #[cfg(test)]
+    pub(crate) fn from_array_trivial(values: &Array1<'_, T>) -> Self {
         let mut copy = Array1::default();
         copy.assign_trivial(values);
         Self::from_owned(copy)

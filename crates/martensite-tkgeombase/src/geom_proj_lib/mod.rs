@@ -53,8 +53,8 @@ pub fn curve2d_range_bounds_tolerance(
     let tolerance: f64 = std_max(precision::p_confusion(), tolerance);
     let adapted_curve = GeomAdaptorCurve::with_range(curve, range.0, range.1)?;
     let adapted_surface = GeomAdaptorSurface::with_bounds(surface, bounds)?;
-    let hs: Handle<dyn Adaptor3dSurface> = Handle::new(adapted_surface).cast();
-    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(adapted_curve).cast();
+    let hs: Handle<dyn Adaptor3dSurface> = Handle::new(adapted_surface).into_upcast();
+    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(adapted_curve).into_upcast();
     let projection: ProjectedCurve = ProjectedCurve::with_tolerance(&hs, &hc, tolerance)?;
     let Some(g2d) = typed_curve2d(&projection)? else {
         return Ok((Handle::default(), tolerance));
@@ -144,16 +144,18 @@ pub(super) fn null_input(what: &str) -> Failure {
 // `default: return G2dC;`). The Bezier and B-spline results are the stored handles.
 fn typed_curve2d(projection: &ProjectedCurve) -> Result<Option<Handle<dyn Geom2dCurve>>, Failure> {
     let curve: Handle<dyn Geom2dCurve> = match projection.get_type()? {
-        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(projection.line()?)).cast(),
-        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(projection.circle()?)).cast(),
+        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(projection.line()?)).into_upcast(),
+        CurveType::Circle => {
+            Handle::new(Geom2dCircle::from_circ2d(projection.circle()?)).into_upcast()
+        }
         CurveType::Ellipse => {
-            Handle::new(Geom2dEllipse::from_elips2d(projection.ellipse()?)).cast()
+            Handle::new(Geom2dEllipse::from_elips2d(projection.ellipse()?)).into_upcast()
         }
         CurveType::Parabola => {
-            Handle::new(Geom2dParabola::from_parab2d(projection.parabola()?)).cast()
+            Handle::new(Geom2dParabola::from_parab2d(projection.parabola()?)).into_upcast()
         }
         CurveType::Hyperbola => {
-            Handle::new(Geom2dHyperbola::from_hypr2d(projection.hyperbola()?)).cast()
+            Handle::new(Geom2dHyperbola::from_hypr2d(projection.hyperbola()?)).into_upcast()
         }
         CurveType::BezierCurve => projection.bezier()?.cast(),
         CurveType::BSplineCurve => projection.bspline()?.cast(),
@@ -183,5 +185,5 @@ fn trim_like(
         u1 = std_max(u1, c2d.first_parameter());
         u2 = std_min(u2, c2d.last_parameter());
     }
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&g2d, u1, u2, true, true)?).cast())
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&g2d, u1, u2, true, true)?).into_upcast())
 }

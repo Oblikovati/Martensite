@@ -94,11 +94,11 @@ impl CompProjectedCurve {
         let hp_cur: Handle<dyn Adaptor2dCurve2d> = if let (true, u_iso) = self.is_u_iso(k)? {
             lp.approx2d = false;
             (udeb, ufin, lp.pcur2d) = iso_line(state, (udeb, ufin), u_iso, true)?;
-            Handle::new(Geom2dAdaptorCurve::with_curve(&lp.pcur2d)?).cast()
+            Handle::new(Geom2dAdaptorCurve::with_curve(&lp.pcur2d)?).into_upcast()
         } else if let (true, v_iso) = self.is_v_iso(k)? {
             lp.approx2d = false;
             (udeb, ufin, lp.pcur2d) = iso_line(state, (udeb, ufin), v_iso, false)?;
-            Handle::new(Geom2dAdaptorCurve::with_curve(&lp.pcur2d)?).cast()
+            Handle::new(Geom2dAdaptorCurve::with_curve(&lp.pcur2d)?).into_upcast()
         } else {
             self.extended_copy(state, lp)?
         };
@@ -140,7 +140,7 @@ impl CompProjectedCurve {
         }
         let hp: CompProjectedCurve = self.shallow_projection()?;
         hp.load_surface(&lp.hs);
-        Ok(Handle::new(hp).cast())
+        Ok(Handle::new(hp).into_upcast())
     }
 }
 
@@ -187,9 +187,9 @@ fn iso_line(
         origin,
         Direction2::from_standard(direction),
     ))
-    .cast();
+    .into_upcast();
     let trimmed = Geom2dTrimmedCurve::new(&line, first, last, true, true)?;
-    Ok((first, last, Handle::new(trimmed).cast()))
+    Ok((first, last, Handle::new(trimmed).into_upcast()))
 }
 
 // The approximation of the part: both curves, or only the asked one.

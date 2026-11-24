@@ -2,34 +2,38 @@
 use super::AisInteractiveContext;
 use crate::select_mgr::{SelectMgrSelectionManager, SelectMgrViewerSelectorSource};
 use martensite_tkernel::standard::{Handle, HandleObserver, HandleReference};
-use std::ops::Deref;
-/// Retain a noncounting storage lease of the original selector owner.
+use std::{ops::Deref, sync::Arc};
+/// Retain the selection manager's original selector slot across context edits.
 /// Example: `let reference=context.main_selector(); reference.observe().nb_picked()`.
+///
+/// The shared slot keeps the selector alive without adding an object handle or retaining the
+/// manager. Context replacement cannot retarget the reference.
 pub struct AisMainSelectorRef {
-    manager: HandleObserver<SelectMgrSelectionManager>,
+    selector: Arc<Handle<dyn SelectMgrViewerSelectorSource>>,
 }
 impl AisMainSelectorRef {
     pub(super) fn from_context(context: &AisInteractiveContext) -> Self {
-        // Return the selection manager's selector, not a projection through the context.
-        let manager = context.fields.read().selection_manager.observe();
-        Self { manager }
+        let fields = context.fields.read();
+        let selector = fields.selection_manager.get().map_or_else(
+            || Arc::new(Handle::default()),
+            SelectMgrSelectionManager::selector_slot,
+        );
+        Self { selector }
     }
 }
 impl Deref for AisMainSelectorRef {
     type Target = Handle<dyn SelectMgrViewerSelectorSource>;
     fn deref(&self) -> &Self::Target {
-        // Projecting through the current context would silently retarget this native reference.
-        self.manager.selector()
+        &self.selector
     }
 }
 impl HandleReference<dyn SelectMgrViewerSelectorSource> for AisMainSelectorRef {
-    fn observe(&self) -> HandleObserver<dyn SelectMgrViewerSelectorSource> {
-        // Native borrowing increments neither manager nor selector ownership.
-        self.manager.selector().observe()
+    fn observe(&self) -> HandleObserver<'_, dyn SelectMgrViewerSelectorSource> {
+        self.selector.observe()
     }
     fn reference_address(&self) -> *const () {
         // Equal targets can occupy distinct handle slots, so target identity is insufficient.
-        std::ptr::from_ref(self.manager.selector()).cast()
+        Arc::as_ptr(&self.selector).cast()
     }
 }
 

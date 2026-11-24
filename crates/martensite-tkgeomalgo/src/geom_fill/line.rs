@@ -1,16 +1,15 @@
 //! `GeomFill_Line`: the line of a skinning, the indices of its sections.
 use crate::app_blend::TheLine;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::StandardTransient;
+use martensite_tkernel::standard::Transient;
 
 /// The `TheLine` of `GeomFill_AppSurf`: `NbPoints` sections whose points are their
 /// indices (`GeomFill_Line`); `Handle::new(GeomFillLine::with_nb_points(2))`.
 #[derive(Default)]
 pub struct GeomFillLine {
-    parent: StandardTransient,
     my_nb_points: i32,
 }
-impl_transient!(GeomFillLine, "GeomFill_Line", StandardTransient, parent);
+impl_transient!(GeomFillLine, "GeomFill_Line", dyn Transient);
 
 impl GeomFillLine {
     /// A line without points (`GeomFill_Line()`); `GeomFillLine::new().nb_points() == 0`.
@@ -21,7 +20,6 @@ impl GeomFillLine {
     /// `GeomFillLine::with_nb_points(3).point(2) == 2`.
     pub fn with_nb_points(nb_points: i32) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_nb_points: nb_points,
         }
     }

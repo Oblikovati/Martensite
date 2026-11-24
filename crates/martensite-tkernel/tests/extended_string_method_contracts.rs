@@ -1,5 +1,5 @@
 //! ExtendedString shared-empty and ownership method contracts.
-use martensite_tkernel::tcollection::ExtendedString;
+use crate::tcollection::ExtendedString;
 
 #[test]
 fn independently_constructed_empty_strings_share_the_native_terminator() {

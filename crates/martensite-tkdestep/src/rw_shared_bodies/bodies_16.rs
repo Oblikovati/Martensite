@@ -153,7 +153,9 @@ macro_rules! rw_block_0179 {
     ($a_items:ident, $a_name:ident, $ach:ident, $data:ident, $num:ident) => {
         let mut $a_name: Handle<HAsciiString> = Default::default();
         $data.read_string($num, 1, "name", $ach, &mut $a_name)?;
-        let mut $a_items: Handle<HArray1<Handle<StepReprRepresentationItem>>> = Default::default();
+        let mut $a_items: Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>,
+        > = Default::default();
     };
 }
 pub(crate) use rw_block_0179;

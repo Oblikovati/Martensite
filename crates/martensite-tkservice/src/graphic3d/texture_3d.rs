@@ -9,20 +9,19 @@ use crate::image::{ImageAlienPixMap, ImagePixMap, ImageSupportedFormats};
 use martensite_tkernel::message::Message;
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::osd::CadPath;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// A 3D texture with trilinear filtering.
 ///
 /// Example: `Graphic3dTexture3D::from_slices(&["s0.png".into(), "s1.png".into()])`.
 pub struct Graphic3dTexture3D {
-    transient: StandardTransient,
     base: Graphic3dTextureRootBase,
     /// `myPaths`: the slice files.
     paths: SharedState<Vec<AsciiString>>,
 }
 impl Graphic3dTextureMap for Graphic3dTexture3D {}
-martensite_tkernel::impl_transient!(Graphic3dTexture3D, "Graphic3d_Texture3D", dyn Graphic3dTextureMap, transient,
+martensite_tkernel::impl_transient!(Graphic3dTexture3D, "Graphic3d_Texture3D", dyn Graphic3dTextureMap,
     interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap]);
 
 impl Graphic3dTexture3D {
@@ -30,7 +29,6 @@ impl Graphic3dTexture3D {
         base.params
             .set_filter(Graphic3dTypeOfTextureFilter::Trilinear);
         Self {
-            transient: StandardTransient::default(),
             base,
             paths: SharedState::new(paths),
         }
@@ -43,7 +41,7 @@ impl Graphic3dTexture3D {
         )
     }
     /// A 3D pixmap; `Graphic3dTexture3D::from_pix_map(pixmap)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>) -> Self {
+    pub fn from_pix_map(pix_map: Handle<dyn crate::image::ImagePixMapObject>) -> Self {
         Self::wrap(
             Graphic3dTextureRootBase::from_pix_map(pix_map, Graphic3dTypeOfTexture::Texture3d),
             Vec::new(),
@@ -60,7 +58,7 @@ impl Graphic3dTexture3D {
         )
     }
     /// Replaces the image by a pixmap and forgets the file and the slices; `texture.set_image(pixmap)`.
-    pub fn set_image(&self, pix_map: Handle<ImagePixMap>) {
+    pub fn set_image(&self, pix_map: Handle<dyn crate::image::ImagePixMapObject>) {
         let mut fields = self.base.fields.write();
         fields.pix_map = pix_map;
         fields.path = CadPath::default();
@@ -72,7 +70,7 @@ impl Graphic3dTexture3D {
     }
 }
 
-fn fail(text: String) -> Handle<ImagePixMap> {
+fn fail(text: String) -> Handle<dyn crate::image::ImagePixMapObject> {
     Message::send_fail_text(&AsciiString::from(text.as_str()));
     Handle::default()
 }
@@ -83,7 +81,7 @@ impl Graphic3dTexture3D {
         &self,
         slice: &ImagePixMap,
         nb_slices: usize,
-    ) -> Option<Handle<ImagePixMap>> {
+    ) -> Option<Handle<dyn crate::image::ImagePixMapObject>> {
         let is_top_down = slice.is_top_down();
         self.base.fields.write().is_top_down = is_top_down;
         let volume = ImagePixMap::default();
@@ -91,13 +89,13 @@ impl Graphic3dTexture3D {
         let size = Vec3::new(slice.width(), slice.height(), nb_slices);
         volume
             .init_trash_3d(slice.format(), size, slice.size_row_bytes())
-            .then(|| Handle::new(volume))
+            .then(|| Handle::new(volume).into_upcast())
     }
     /// Loads slice `index` of `count`, allocates the volume on the first slice and copies the
     /// slice into it; false (after the native failure message) when any step fails.
     fn stack_slice(
         &self,
-        volume: &mut Option<Handle<ImagePixMap>>,
+        volume: &mut Option<Handle<dyn crate::image::ImagePixMapObject>>,
         (index, count): (usize, usize),
         path: &AsciiString,
         supported: &Handle<ImageSupportedFormats>,
@@ -110,7 +108,7 @@ impl Graphic3dTexture3D {
             ));
             return false;
         }
-        let slice: Handle<ImagePixMap> = image.cast();
+        let slice: Handle<dyn crate::image::ImagePixMapObject> = image.cast();
         graphic3d_convert_to_compatible(supported, &slice);
         let Some(pixels) = slice.get() else {
             return false;
@@ -166,12 +164,15 @@ impl Graphic3dTextureRoot for Graphic3dTexture3D {
     }
     /// The base image for a pixmap or single file, else the slices stacked into one 3D image
     /// (null, with a report, when a slice fails to load).
-    fn get_image(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn get_image(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn crate::image::ImagePixMapObject> {
         let paths = self.slice_paths();
         if paths.is_empty() || self.base.fields.read().pix_map.is_some() {
             return graphic3d_texture_root_get_image(self, supported);
         }
-        let mut volume: Option<Handle<ImagePixMap>> = None;
+        let mut volume: Option<Handle<dyn crate::image::ImagePixMapObject>> = None;
         for (index, path) in paths.iter().enumerate() {
             if !self.stack_slice(&mut volume, (index, paths.len()), path, supported) {
                 return Handle::default();

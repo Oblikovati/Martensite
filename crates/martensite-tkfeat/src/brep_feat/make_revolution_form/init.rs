@@ -93,7 +93,7 @@ impl BRepFeatMakeRevolutionForm {
         h1: f64,
         h2: f64,
     ) -> Result<bool, Failure> {
-        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(self.axe)).cast();
+        let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::new(self.axe)).into_upcast();
         let range = line_range(sbase, &line)?;
         let pl = plane
             .get()

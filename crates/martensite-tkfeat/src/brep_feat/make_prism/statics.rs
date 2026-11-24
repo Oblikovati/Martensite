@@ -102,5 +102,5 @@ pub(super) fn sens_of_prism(c: &Handle<dyn GeomCurve>, until: &Shape) -> Result<
 /// of the base.
 pub(super) fn test_curve(base: &Shape, v: Direction3) -> Result<Handle<dyn GeomCurve>, Failure> {
     let bar = sample_barycentre(base)?;
-    Ok(Handle::new(GeomLine::new(Axis1::new(bar, v))).cast())
+    Ok(Handle::new(GeomLine::new(Axis1::new(bar, v))).into_upcast())
 }

@@ -3,7 +3,7 @@ use crate::reports::g17;
 use crate::xs_session::XsSession;
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkernel::{
-    standard::{Failure, Handle},
+    standard::{Failure, Handle, RuntimeTyped, TransientHandleTarget},
     tcollection::AsciiString,
 };
 use martensite_tklcaf::tdf::{TdfAttributeState, TdfChildIterator, TdfLabel, TdfTool};
@@ -45,7 +45,7 @@ fn all_shape_labels(shapes: &XCAFDocShapeTool) -> Result<Vec<TdfLabel>, Failure>
     Ok(labels)
 }
 
-fn found<T: martensite_tkernel::standard::RuntimeTyped + ?Sized>(
+fn found<T: RuntimeTyped + TransientHandleTarget + ?Sized>(
     label: &TdfLabel,
     id: &martensite_tkernel::standard::Guid,
 ) -> Option<Handle<T>> {

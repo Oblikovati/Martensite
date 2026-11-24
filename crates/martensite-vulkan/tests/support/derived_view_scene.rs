@@ -8,7 +8,7 @@ struct DerivedRenderSceneView {
     base: V3dView,
     redrawn: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(DerivedRenderSceneView,"Martensite_DerivedRenderSceneView",V3dView,base,
+martensite_tkernel::impl_transient!(DerivedRenderSceneView,"Martensite_DerivedRenderSceneView",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for DerivedRenderSceneView {
     fn view_base(&self) -> &V3dView {
@@ -35,7 +35,7 @@ pub(super) fn create_embedded_render_view(
         base: V3dView::new_embedded(viewer, V3dTypeOfView::Orthographic)?,
         redrawn: AtomicUsize::new(0),
     });
-    let source: Handle<dyn V3dViewSource> = derived.cast();
+    let source: Handle<dyn V3dViewSource> = derived.into_upcast();
     V3dView::bind_source(&source)?;
     Ok(source)
 }

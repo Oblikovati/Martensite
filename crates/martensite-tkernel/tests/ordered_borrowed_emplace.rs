@@ -5,5 +5,4 @@ mod cases;
 mod contracts;
 #[path = "ordered_borrowed_emplace/fixture.rs"]
 mod fixture;
-#[path = "support/native_node_counts.rs"]
-mod native_node_counts;
+use crate::native_node_counts;

@@ -1,12 +1,11 @@
 //! Native noexcept context destruction must not discard a virtual Clear failure.
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::null_driver::NullGraphicDriver;
 use martensite_tkv3d::{ais::*, v3d::V3dViewer};
 struct FailingSelection {
-    transient: StandardTransient,
     base: AisSelectionBase,
 }
-martensite_tkernel::impl_transient!(FailingSelection,"FailingSelection",dyn AisSelectionSource,transient,interfaces:[dyn AisSelectionSource]);
+martensite_tkernel::impl_transient!(FailingSelection,"FailingSelection",dyn AisSelectionSource,interfaces:[dyn AisSelectionSource]);
 impl AisSelectionSource for FailingSelection {
     fn selection_base(&self) -> &AisSelectionBase {
         &self.base
@@ -37,7 +36,6 @@ fn context_clear_failure_aborts() {
     let viewer = V3dViewer::new(&NullGraphicDriver::new_handle()).unwrap();
     let context = AisInteractiveContext::new(&viewer).unwrap();
     let selection = Handle::new(FailingSelection {
-        transient: StandardTransient::default(),
         base: AisSelectionBase::new(),
     });
     context.set_selection(&selection.cast());

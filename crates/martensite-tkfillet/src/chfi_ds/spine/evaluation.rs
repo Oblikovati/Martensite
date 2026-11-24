@@ -1,5 +1,5 @@
 //! The guideline as a curve of its abscissa: points, unit tangents, parameters on edges.
-use super::Spine;
+use super::SpineData;
 use crate::chfi_ds::errors::standard_failure;
 use martensite_tkbrep::brep_adaptor::BRepAdaptorCurve;
 use martensite_tkernel::precision;
@@ -20,7 +20,7 @@ enum Placed {
     AfterEnd(f64),
 }
 
-impl Spine {
+impl SpineData {
     /// `SetCurrent(Index)` (and the switch inside the evaluators): makes the `index`-th
     /// edge the current curve; `spine.set_current(2)?`.
     pub fn set_current(&mut self, index: i32) -> Result<(), Failure> {
@@ -265,7 +265,7 @@ impl Spine {
         }
     }
 
-    /// `D0(AbsC, P)`: as [`Spine::value`]; `spine.d0(1.0)?`.
+    /// `D0(AbsC, P)`: as [`SpineData::value`]; `spine.d0(1.0)?`.
     pub fn d0(&mut self, absc: f64) -> Result<Point3, Failure> {
         self.value(absc)
     }

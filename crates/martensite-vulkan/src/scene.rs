@@ -42,6 +42,10 @@ pub fn identity_clip() -> [f32; 16] {
 /// Immutable frame input; `RenderFrame::new(64,64,[0.,0.,0.,1.],draws)?`.
 #[derive(Clone, Debug)]
 pub struct RenderFrame {
+    /// A camera-dependent presentation mesh was authored, even if this extent uses the primary.
+    pub(crate) uses_mesh_lod: bool,
+    pub(crate) assembly_upload_budget: Option<u64>,
+    pub(crate) geometry_batch: Option<std::sync::Arc<crate::backend::GeometryBatch>>,
     #[cfg(feature = "raytrace-input-diagnostics")]
     pub(crate) raytrace_observation:
         Option<std::sync::Arc<crate::raytrace_input_observation::RayInputObservation>>,
@@ -74,6 +78,8 @@ pub struct RenderFrame {
     /// The active subviews' colour copies (GlView::blitSubviews), applied after the scene
     /// and before the flipped output: on the GPU for a presented frame, on the host capture.
     pub(crate) subview_blits: Vec<crate::subview_composition::RenderSubviewBlit>,
+    pub(crate) immediate_start: Option<usize>,
+    pub(crate) immediate_main: Option<crate::immediate_main::ImmediateMainPlan>,
 }
 /// One frame's shader grid: its position among the layer spans and its shader block.
 #[derive(Clone, Debug, PartialEq)]
@@ -126,17 +132,25 @@ impl RenderFrame {
         clear_color: [f32; 4],
         layers: Vec<RenderLayer>,
     ) -> Result<Self, RenderError> {
-        Self::with_layers_and_grid(width, height, clear_color, layers, None)
+        Self::with_layers_and_grid(
+            width,
+            height,
+            clear_color,
+            layers,
+            None,
+            crate::mesh_lod::FrameMeshLod::Direct,
+        )
     }
     /// Build a frame whose first `main` layers form the main pass, followed by the shader
     /// grid (GlView::render draws it after the main layers, before immediate ones).
-    /// Example: `RenderFrame::with_layers_and_grid(64, 64, clear, layers, Some((3, block)))?`.
+    /// Example: `RenderFrame::with_layers_and_grid(64, 64, clear, layers, grid, lod)?`.
     pub(crate) fn with_layers_and_grid(
         width: u32,
         height: u32,
         clear_color: [f32; 4],
         mut layers: Vec<RenderLayer>,
         grid: Option<(usize, crate::shader_grid::RenderShaderGridBlock)>,
+        mesh_lod: crate::mesh_lod::FrameMeshLod,
     ) -> Result<Self, RenderError> {
         if layers.is_empty() {
             layers.push(RenderLayer::new(vec![], true, true, true));
@@ -150,6 +164,7 @@ impl RenderFrame {
             span: grid_span,
             uniforms,
         });
+        let uses_mesh_lod = crate::mesh_lod::select_levels(&mut draws, [width, height], mesh_lod);
         crate::texture_coordinate_frame::resolve_ordered_texture_coordinates(&mut draws)?;
         crate::retained_mesh_edges::resolve_edge_background(&mut draws, clear_color);
         crate::retained_hollow::resolve_ordered_line_widths(&mut draws);
@@ -160,6 +175,9 @@ impl RenderFrame {
             return Err(rejected(clear_color, "finite clear color"));
         }
         Ok(Self {
+            uses_mesh_lod,
+            assembly_upload_budget: None,
+            geometry_batch: None,
             width,
             height,
             clear_color,
@@ -178,6 +196,8 @@ impl RenderFrame {
             raytrace_observation: None,
             shadow_maps: None,
             subview_blits: Vec::new(),
+            immediate_start: None,
+            immediate_main: None,
             stencil_context: None,
             stencil_clear_value: 0,
             shader_grid,

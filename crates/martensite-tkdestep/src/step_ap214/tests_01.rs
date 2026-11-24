@@ -64,7 +64,7 @@ fn init_round_trip_step_ap214_applied_date_assignment() {
     let a_role = Handle::new(StepBasicDateRole::new());
     let a_items = Handle::new(HArray1::<StepAP214DateItem>::with_bounds(1, 2).unwrap());
     let object = StepAP214AppliedDateAssignment::new();
-    object.init(&a_assigned_date, &a_role, &a_items);
+    object.init(&a_assigned_date.upcast(), &a_role, &a_items);
     assert!(object.items() == a_items);
 }
 
@@ -80,7 +80,7 @@ fn runtime_type_step_ap214_applied_document_reference() {
 
 #[test]
 fn init_round_trip_step_ap214_applied_document_reference() {
-    let a_assigned_document = Handle::new(StepBasicDocument::new());
+    let a_assigned_document = Handle::new(StepBasicDocumentFile::new()).into_upcast();
     let a_source = Handle::new(HAsciiString::new("sample"));
     let a_items =
         Handle::new(HArray1::<StepAP214DocumentReferenceItem>::with_bounds(1, 2).unwrap());
@@ -251,7 +251,7 @@ fn init_round_trip_step_ap214_auto_design_actual_date_assignment() {
     let a_role = Handle::new(StepBasicDateRole::new());
     let a_items = Handle::new(HArray1::<StepAP214AutoDesignDatedItem>::with_bounds(1, 2).unwrap());
     let object = StepAP214AutoDesignActualDateAssignment::new();
-    object.init(&a_assigned_date, &a_role, &a_items);
+    object.init(&a_assigned_date.upcast(), &a_role, &a_items);
     assert!(object.items() == a_items);
 }
 
@@ -308,7 +308,7 @@ fn runtime_type_step_ap214_auto_design_document_reference() {
 
 #[test]
 fn init_round_trip_step_ap214_auto_design_document_reference() {
-    let a_assigned_document = Handle::new(StepBasicDocument::new());
+    let a_assigned_document = Handle::new(StepBasicDocumentFile::new()).into_upcast();
     let a_source = Handle::new(HAsciiString::new("sample"));
     let a_items =
         Handle::new(HArray1::<StepAP214AutoDesignReferencingItem>::with_bounds(1, 2).unwrap());

@@ -46,7 +46,7 @@ impl<'a, T: PackedInteger> PackedMapIter<'a, T> {
         self.node.is_some()
     }
     /// Borrow the cursor's value; `iter.key()`.
-    pub fn key(&self) -> Option<&T> {
+    pub(crate) fn key(&self) -> Option<&T> {
         self.node.map(|_| &self.cached_key)
     }
     /// Advance once, retaining exhausted state; `iter.advance()`.

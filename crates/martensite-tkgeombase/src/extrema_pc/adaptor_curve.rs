@@ -11,7 +11,7 @@ use super::{
 use crate::extrema_pc_core::{PcCurveRef, Space3d, is_valid_tolerance};
 use crate::extrema_pc2d;
 use crate::proj_lib as projlib;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, project_concrete};
 use martensite_tkg2d::geom2d::Geom2dOffsetCurve;
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
@@ -146,8 +146,7 @@ impl<'a> AdaptorExtrema<'a> {
         let Some(curve) = self.shape.0.get() else {
             return Ok(None);
         };
-        let upcast: &dyn Transient = curve;
-        let Some(adaptor) = GeomAdaptorCurve::project_from(upcast) else {
+        let Some(adaptor) = project_concrete::<GeomAdaptorCurve>(curve) else {
             return Ok(None);
         };
         let offset: Handle<GeomOffsetCurve> = adaptor.curve().cast();

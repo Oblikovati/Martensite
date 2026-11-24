@@ -5,7 +5,7 @@ use std::fmt::Debug;
 impl<T> DynamicArray<T> {
     /// Reserves the append block before copying the borrowed source; no Clone bound is needed.
     /// `array.append_ref_with_constructor(&7, |source| *source)`.
-    pub fn append_ref_with_constructor(
+    pub(crate) fn append_ref_with_constructor(
         &mut self,
         source: &T,
         copy_construct: impl FnOnce(&T) -> T,
@@ -19,7 +19,7 @@ impl<T: Default> DynamicArray<T> {
     /// `array.set_value_ref_with_assignment(0, &7, |v| *v, |to, from| *to = *from)?`.
     /// This selects the assignable replacement branch explicitly. Assignment must leave
     /// both arguments valid on unwind; Rust Clone alone does not specify assignment.
-    pub fn set_value_ref_with_assignment<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn set_value_ref_with_assignment<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         source: &T,
@@ -32,7 +32,7 @@ impl<T: Default> DynamicArray<T> {
     /// Defaults the tail, move-assigns descending shifts, then copy-assigns the borrowed source.
     /// `array.insert_before_ref_with_assignment(0, &7, std::mem::swap, |a, b| *a = *b)?`.
     /// Hooks model separate assignment operations without requiring Clone construction.
-    pub fn insert_before_ref_with_assignment<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_before_ref_with_assignment<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         source: &T,
@@ -45,7 +45,7 @@ impl<T: Default> DynamicArray<T> {
     /// Inserts after the index with explicit move-shift and borrowed copy-assignment hooks.
     /// `array.insert_after_ref_with_assignment(0, &7, std::mem::swap, |a, b| *a = *b)?`.
     /// Size commits before assignment callbacks, including callbacks that unwind.
-    pub fn insert_after_ref_with_assignment<I: TryInto<usize> + Copy + Debug>(
+    pub(crate) fn insert_after_ref_with_assignment<I: TryInto<usize> + Copy + Debug>(
         &mut self,
         index: I,
         source: &T,

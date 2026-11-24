@@ -8,14 +8,12 @@ use super::Array1;
 use crate::standard::{Failure, Handle, SharedState, StandardTransient};
 /// A shared, bounded array of reals; `HArray1OfReal::with_bounds(1, 3)?`.
 pub struct HArray1OfReal {
-    base: StandardTransient,
     values: SharedState<Array1<'static, f64>>,
 }
 crate::impl_transient!(
     HArray1OfReal,
     "NCollection_HArray1<double>",
-    StandardTransient,
-    base
+    StandardTransient
 );
 impl HArray1OfReal {
     /// Allocates zeros at `lower..=upper`; `HArray1OfReal::with_bounds(1, 3)?`.
@@ -27,7 +25,6 @@ impl HArray1OfReal {
     /// Takes ownership of an array and its bounds; `HArray1OfReal::from_array(values)`.
     pub fn from_array(values: Array1<'static, f64>) -> Self {
         Self {
-            base: StandardTransient::default(),
             values: SharedState::new(values),
         }
     }

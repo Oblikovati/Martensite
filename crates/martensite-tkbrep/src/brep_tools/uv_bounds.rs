@@ -3,7 +3,8 @@ use super::uv_periodicity::{Axis, EdgeBox, is_bspline_periodic};
 use crate::brep::BRepTool;
 use crate::brep::errors::null_object;
 use crate::topexp::Explorer;
-use crate::topods::{self, Edge, Face, Wire};
+use crate::topods::{self, Wire};
+use crate::topods::{EdgeView, FaceView};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{GeomRectangularTrimmedSurface, GeomSurface};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
@@ -24,7 +25,7 @@ fn bounds_of(bounds: &BoundingBox2) -> Result<UVBounds, Failure> {
 
 /// `BRepTools::UVBounds(F, UMin, UMax, VMin, VMax)`: the bounds of `AddUVBounds(F)`,
 /// all zero when it adds nothing; `let (umin, umax, vmin, vmax) = uv_bounds(&face)?;`.
-pub fn uv_bounds(face: &Face) -> Result<UVBounds, Failure> {
+pub fn uv_bounds(face: &FaceView<'_>) -> Result<UVBounds, Failure> {
     let mut bounds = BoundingBox2::default();
     add_uv_bounds(face, &mut bounds)?;
     bounds_of(&bounds)
@@ -32,7 +33,7 @@ pub fn uv_bounds(face: &Face) -> Result<UVBounds, Failure> {
 
 /// `BRepTools::UVBounds(F, W, ...)`: the bounds of the edges of `wire` on `face`;
 /// `uv_bounds_of_wire(&face, &wire)?`.
-pub fn uv_bounds_of_wire(face: &Face, wire: &Wire) -> Result<UVBounds, Failure> {
+pub fn uv_bounds_of_wire(face: &FaceView<'_>, wire: &Wire) -> Result<UVBounds, Failure> {
     let mut bounds = BoundingBox2::default();
     add_uv_bounds_of_wire(face, wire, &mut bounds)?;
     bounds_of(&bounds)
@@ -40,7 +41,7 @@ pub fn uv_bounds_of_wire(face: &Face, wire: &Wire) -> Result<UVBounds, Failure> 
 
 /// `BRepTools::UVBounds(F, E, ...)`: the bounds of the p-curve of `edge` on `face`;
 /// `uv_bounds_of_edge(&face, &edge)?`.
-pub fn uv_bounds_of_edge(face: &Face, edge: &Edge) -> Result<UVBounds, Failure> {
+pub fn uv_bounds_of_edge(face: &FaceView<'_>, edge: &EdgeView<'_>) -> Result<UVBounds, Failure> {
     let mut bounds = BoundingBox2::default();
     add_uv_bounds_of_edge(face, edge, &mut bounds)?;
     bounds_of(&bounds)
@@ -49,7 +50,7 @@ pub fn uv_bounds_of_edge(face: &Face, edge: &Edge) -> Result<UVBounds, Failure> 
 /// `BRepTools::AddUVBounds(F, B)`: adds the bounds of the edges of the FORWARD face, or
 /// the natural bounds of its surface when the edges add nothing (nothing when the
 /// face has no surface); `add_uv_bounds(&face, &mut bounds)?`.
-pub fn add_uv_bounds(face: &Face, bounds: &mut BoundingBox2) -> Result<(), Failure> {
+pub fn add_uv_bounds(face: &FaceView<'_>, bounds: &mut BoundingBox2) -> Result<(), Failure> {
     let forward = topods::face(&face.oriented(Orientation::Forward))?;
     let mut face_box = BoundingBox2::default();
     for edge in Explorer::new(&forward, ShapeEnum::Edge, ShapeEnum::Shape)? {
@@ -70,7 +71,7 @@ pub fn add_uv_bounds(face: &Face, bounds: &mut BoundingBox2) -> Result<(), Failu
 /// `BRepTools::AddUVBounds(F, W, B)`: adds the bounds of each edge of `wire` on `face`;
 /// `add_uv_bounds_of_wire(&face, &wire, &mut bounds)?`.
 pub fn add_uv_bounds_of_wire(
-    face: &Face,
+    face: &FaceView<'_>,
     wire: &Wire,
     bounds: &mut BoundingBox2,
 ) -> Result<(), Failure> {
@@ -85,8 +86,8 @@ pub fn add_uv_bounds_of_wire(
 /// whose points repeat across its bounds counts as periodic). An edge without a
 /// p-curve adds nothing; `add_uv_bounds_of_edge(&face, &edge, &mut bounds)?`.
 pub fn add_uv_bounds_of_edge(
-    face: &Face,
-    edge: &Edge,
+    face: &FaceView<'_>,
+    edge: &EdgeView<'_>,
     bounds: &mut BoundingBox2,
 ) -> Result<(), Failure> {
     let found = BRepTool::curve_on_face(edge, face)?;
@@ -112,7 +113,7 @@ pub fn add_uv_bounds_of_edge(
 
 /// The p-curve box clamped to the bounds of the face's surface (its basis for a
 /// rectangular trimmed surface, whose bounds are read before the unwrap).
-fn clamped_edge_box(face: &Face, mut edge_box: EdgeBox) -> Result<EdgeBox, Failure> {
+fn clamped_edge_box(face: &FaceView<'_>, mut edge_box: EdgeBox) -> Result<EdgeBox, Failure> {
     let (surface, _) = BRepTool::surface_with_location(face)?;
     let Some(stored) = surface.get() else {
         return Err(null_object(
@@ -137,7 +138,7 @@ fn clamped_edge_box(face: &Face, mut edge_box: EdgeBox) -> Result<EdgeBox, Failu
 
 /// The basis surface of a `Geom_RectangularTrimmedSurface`, the surface otherwise.
 fn trimmed_basis(surface: &Handle<dyn GeomSurface>) -> Handle<dyn GeomSurface> {
-    match surface.cast::<GeomRectangularTrimmedSurface>().get() {
+    match surface.downcast::<GeomRectangularTrimmedSurface>().get() {
         Some(trimmed) => trimmed.basis_surface(),
         None => surface.clone(),
     }

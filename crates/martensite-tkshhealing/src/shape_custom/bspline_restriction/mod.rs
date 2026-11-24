@@ -18,7 +18,7 @@ use martensite_tkbrep::topods::{Edge, Face, Vertex};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Gravity, Msg};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkmath::geom_abs::Shape as Continuity;
@@ -104,7 +104,6 @@ impl Default for ShapeCustomBSplineRestrictionSettings {
 /// assert_eq!(restriction.nb_of_span(), 0);
 /// ```
 pub struct ShapeCustomBSplineRestriction {
-    parent: StandardTransient,
     messages: ShapeCustomModificationFields,
     state: SharedState<RestrictionState>,
 }
@@ -112,7 +111,6 @@ impl_transient!(
     ShapeCustomBSplineRestriction,
     "ShapeCustom_BSplineRestriction",
     dyn ShapeCustomModification,
-    parent,
     interfaces: [dyn BRepToolsModification, dyn ShapeCustomModification]
 );
 
@@ -169,7 +167,6 @@ impl ShapeCustomBSplineRestriction {
             parameters: modes.clone(),
         };
         Self {
-            parent: StandardTransient::default(),
             messages: ShapeCustomModificationFields::default(),
             state: SharedState::new(state),
         }

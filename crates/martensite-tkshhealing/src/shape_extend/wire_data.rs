@@ -9,7 +9,7 @@ use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{self, Edge, Shape, ShapeIterator, Vertex, Wire};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{HSequence, PackedMap, Sequence};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeShape, BRepBuilderAPIMakeWire};
 
@@ -61,15 +61,9 @@ impl WireDataFields {
 /// assert!(data.manifold_mode());
 /// ```
 pub struct ShapeExtendWireData {
-    parent: StandardTransient,
     fields: SharedState<WireDataFields>,
 }
-impl_transient!(
-    ShapeExtendWireData,
-    "ShapeExtend_WireData",
-    StandardTransient,
-    parent
-);
+impl_transient!(ShapeExtendWireData, "ShapeExtend_WireData", dyn Transient);
 
 impl Default for ShapeExtendWireData {
     /// an empty list (`Clear`).
@@ -85,7 +79,6 @@ impl Default for ShapeExtendWireData {
         };
         fields.clear();
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(fields),
         }
     }

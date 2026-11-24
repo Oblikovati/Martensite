@@ -56,8 +56,8 @@ fn assert_shading_alias_row(
         (alias.object_address() == original.object_address()) as i32,
         (alias.object_address() == next.object_address()) as i32,
         (current.object_address() == alias.object_address()) as i32,
-        original.ref_count(),
-        next.ref_count(),
+        original.ref_count().try_into().unwrap(),
+        next.ref_count().try_into().unwrap(),
     ];
     assert_eq!(actual.to_vec(), native_shading_alias_values(step));
 }

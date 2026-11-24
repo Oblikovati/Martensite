@@ -15,7 +15,7 @@ use crate::selection_policy::MESHVS_BP_ELEM_COLOR;
 use crate::two_colors::{MeshVSTwoColors, bind_two_colors, extract_colors};
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::quantity::Color;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 
 /// The color maps of `MeshVSElementalColorPrsBuilder`.
@@ -29,13 +29,11 @@ pub struct MeshVSElementalColorMaps {
 
 /// The builder of element colors; `MeshVSElementalColorPrsBuilder::with_defaults(&mesh)`.
 pub struct MeshVSElementalColorPrsBuilder {
-    transient: StandardTransient,
     base: MeshVSPrsBuilderBase,
     /// The color maps; `builder.maps.read().colors1.extent()`.
     pub maps: SharedState<MeshVSElementalColorMaps>,
 }
-martensite_tkernel::impl_transient!(MeshVSElementalColorPrsBuilder, "MeshVSElementalColorPrsBuilder", dyn MeshVSPrsBuilder, transient,
-    interfaces: [dyn MeshVSPrsBuilder]);
+martensite_tkernel::impl_transient!(MeshVSElementalColorPrsBuilder, "MeshVSElementalColorPrsBuilder", dyn MeshVSPrsBuilder, interfaces: [dyn MeshVSPrsBuilder]);
 
 fn set_or_bind<V>(map: &mut DataMap<i32, V>, id: i32, value: V) {
     match map.change_find(&id) {
@@ -56,7 +54,6 @@ impl MeshVSElementalColorPrsBuilder {
         priority: i32,
     ) -> Self {
         let builder = Self {
-            transient: StandardTransient::default(),
             base: MeshVSPrsBuilderBase::new(parent, flags, data_source, id, priority),
             maps: SharedState::default(),
         };

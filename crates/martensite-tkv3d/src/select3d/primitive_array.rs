@@ -7,7 +7,7 @@ use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::{Vec2, Vec3};
 use martensite_tkernel::standard::real::real_last;
 use martensite_tkernel::standard::short_real::short_real_last;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcol_std::HPackedMapOfInteger;
 use martensite_tkmath::gp::{GeneralTransform3, Point3, Transform3};
 use martensite_tkmath::toploc::Location;
@@ -54,13 +54,12 @@ pub(crate) struct PrimArrayState {
 ///
 /// Example: `let sens = Select3DSensitivePrimitiveArray::new(&owner)?; sens.init_triangulation_all(&verts, &indices, &Location::default(), true, 1)?;`.
 pub struct Select3DSensitivePrimitiveArray {
-    transient: StandardTransient,
     pub(crate) entity: Select3DSensitiveEntityBase,
     pub(crate) set: Select3DSensitiveSetBase,
     pub(crate) bvh_indices: Select3DBvhIndexBuffer,
     pub(crate) state: SharedState<PrimArrayState>,
 }
-martensite_tkernel::impl_transient!(Select3DSensitivePrimitiveArray, "Select3DSensitivePrimitiveArray", dyn super::Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(Select3DSensitivePrimitiveArray, "Select3DSensitivePrimitiveArray", dyn super::Select3DSensitiveSet,
     interfaces: [dyn super::Select3DSensitiveEntity, dyn super::Select3DSensitiveSet]);
 
 /// A point of single-precision coordinates.
@@ -153,7 +152,6 @@ impl Select3DSensitivePrimitiveArray {
             to_detect_edge: false,
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             entity: Select3DSensitiveEntityBase::new(owner),
             set: Select3DSensitiveSetBase::default(),
             bvh_indices: Select3DBvhIndexBuffer::new(Graphic3dBufferBase::default_allocator())?,

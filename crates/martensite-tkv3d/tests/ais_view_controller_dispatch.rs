@@ -1,7 +1,7 @@
 //! AisViewController dispatch: dragging an object that accepts it through the queued start,
 //! move, abort and stop requests, the virtual callbacks and the inactive XR handlers.
 use martensite_tkernel::ncollection::Vec2;
-use martensite_tkernel::standard::{Failure, Handle, HandleReference, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference};
 use martensite_tkg3d::geom::GeomCartesianPoint;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::aspect::AspectNeutralWindow;
@@ -20,11 +20,10 @@ type DragCall = (AisDragAction, Vec2<i32>, Vec2<i32>);
 
 /// A selectable point accepting every drag action, recording them.
 struct Draggable {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
     actions: Mutex<Vec<DragCall>>,
 }
-martensite_tkernel::impl_transient!(Draggable, "Draggable", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(Draggable, "Draggable", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 impl AisInteractiveObject for Draggable {
     fn interactive_base(&self) -> &AisInteractiveObjectBase {
@@ -96,7 +95,6 @@ fn scene() -> Scene {
     view.set_window(&window.cast(), 0).unwrap();
     let ctx = AisInteractiveContext::new(&viewer).unwrap();
     let object = Handle::new(Draggable {
-        transient: StandardTransient::default(),
         base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
         actions: Mutex::new(Vec::new()),
     });

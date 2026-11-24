@@ -31,7 +31,8 @@ fn highlight_snapshot(expected: &[f64]) -> Vec<f64> {
     let manager = PrsMgrPresentationManager::new(&viewer.structure_manager());
     let light = Handle::new(Graphic3dCLight::new(
         Graphic3dTypeOfLightSource::Directional,
-    ));
+    ))
+    .into_upcast::<dyn Graphic3dCLightSource>();
     let object = AisLightSource::new(&light).unwrap();
     object.set_arc_size(expected[3] as i32);
     let (_selection, sphere) = selected_sphere(&object);
@@ -115,13 +116,14 @@ fn highlight_style(manager: &PrsMgrPresentationManager, expected: &[f64]) -> Han
 }
 
 fn invalid_direction_click_scene() -> (
-    Handle<Graphic3dCLight>,
+    Handle<dyn Graphic3dCLightSource>,
     Handle<AisLightSource>,
     Handle<AisLightSourceOwner>,
 ) {
     let light = Handle::new(Graphic3dCLight::new(
         Graphic3dTypeOfLightSource::Directional,
-    ));
+    ))
+    .into_upcast::<dyn Graphic3dCLightSource>();
     light.set_headlight(true).unwrap();
     let object = AisLightSource::new(&light).unwrap();
     let owner = AisLightSourceOwner::new(&object.cast(), 15);

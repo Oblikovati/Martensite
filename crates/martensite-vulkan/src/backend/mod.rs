@@ -1,5 +1,7 @@
 //! Only this private boundary uses Ash or Vulkan handles.
+mod address_hasher;
 mod alpha_write_pipelines;
+mod dedicated_transfer;
 mod depth_bias_device;
 mod depth_bias_record;
 mod depth_equivalence;
@@ -7,13 +9,38 @@ mod device_lifecycle;
 mod device_limits_query;
 mod device_retirement;
 mod diagnostic_facts;
+mod draw_material_table;
+mod draw_table;
 mod factorized_line_upload;
+mod frame_flight;
+mod frame_readback;
+mod frame_work_ledger;
+pub(crate) mod pipeline_memo;
+mod placement_hiz;
+mod placement_hiz_history;
+mod placement_hiz_raster;
+pub(crate) use placement_hiz_history::HiZHistory;
+mod mesh_vertex_codec;
+mod mesh_vertex_pipeline;
+mod placement_visibility;
+mod readback_buffer_cache;
+mod rgb_pack;
+mod rgb_readback;
+pub(crate) mod upload_memo;
+pub(crate) use frame_readback::{CapturePlanes, FrameReadback};
+pub(crate) use frame_work_ledger::{FrameWorkLedger, WorkPhase};
 mod image_memory;
 mod layer_depth_policy;
 mod line_clip_device;
 mod line_clip_shader;
 mod line_clip_stage;
 mod line_source_upload;
+mod meshlet_device;
+mod meshlet_draw;
+mod meshlet_geometry;
+mod meshlet_pipeline;
+mod meshlet_range;
+mod meshlet_words;
 mod owned_frame_submission;
 mod owned_window_submission;
 mod portability_admission;
@@ -45,6 +72,7 @@ mod retained_submission;
 mod retirement_attempt;
 mod runtime;
 mod scene_color_scope;
+mod secondary_layer_commands;
 mod shader_grid_pass;
 mod submission_calls;
 mod submission_protocol;
@@ -67,6 +95,15 @@ pub use validation_layer::{
 /// Vulkan 1.3 offscreen renderer; `VulkanRenderer::new(VulkanOptions::default())?`.
 pub struct VulkanRenderer {
     runtime: std::sync::Arc<VulkanRuntime>,
+    // The frame on the presentation thread drops first: it waits for the thread, which stops
+    // only after its queued jobs (#594).
+    presenting: Option<window_handoff::PendingWindowFrame>,
+    present_thread: window_present_thread::PresentThread,
+    // Dropping the flight waits for its frames before the stores below are released.
+    flight: frame_flight::FrameFlight,
+    readback_buffers: readback_buffer_cache::ReadbackBufferCache,
+    rgb_pack_sources: readback_buffer_cache::ReadbackBufferCache,
+    rgb_pack: Option<rgb_pack::RgbPackPipeline>,
     retirements: retained_submission::RetirementStore,
     pipeline: pipeline_variants::RasterPipelines,
     capping_pipeline: Option<pipeline_variants::RasterPipelines>,
@@ -77,6 +114,69 @@ pub struct VulkanRenderer {
     environments: view_environments::ViewEnvironments,
 }
 impl VulkanRenderer {
+    pub(crate) fn prepare_batch(
+        &self,
+        draws: Vec<crate::PrimitiveDraw>,
+    ) -> Result<Option<GeometryBatch>, RenderError> {
+        self.runtime.lifecycle.admit("allocate retained batch")?;
+        GeometryBatch::prepare(draws, &self.runtime, &self.pipeline.geometry_residency)
+    }
+
+    pub(crate) fn supports_phong_batching(&self) -> bool {
+        directional_phong::supported_behavior(&self.runtime)
+    }
+
+    pub(crate) fn supports_mesh_lod(&self) -> bool {
+        self.runtime.projection_behavior == crate::RenderProjectionBehavior::PrecomposedV1
+            && self.runtime.triangle_coverage == crate::RenderTriangleCoverageBehavior::HardwareV1
+            && self.runtime.mesh_vertex_behavior == crate::RenderMeshVertexBehavior::Float32V1
+            && !self.runtime.meshlets_requested
+    }
+
+    pub(crate) fn supports_hiz(&self) -> bool {
+        !self.pipeline.stencil && self.pipeline.placement_hiz.supported(&self.runtime)
+    }
+
+    pub(crate) fn supports_placement_compaction(&self) -> bool {
+        self.runtime.placement_visibility
+    }
+
+    /// Whether the device can draw these placements with one draw-table pipeline.
+    /// Example: `renderer.supports_placements(&templates, placement_count)?`.
+    pub(crate) fn supports_placements(
+        &self,
+        templates: &[crate::PrimitiveDraw],
+        placement_count: usize,
+    ) -> Result<bool, RenderError> {
+        let storage_limit = self.runtime.limits.max_storage_buffer_range as usize;
+        if !self.runtime.draw_tables
+            || self.runtime.projection_behavior != crate::RenderProjectionBehavior::PrecomposedV1
+            || placement_count > storage_limit / draw_table::ENTRY_BYTES
+        {
+            return Ok(false);
+        }
+        let Some((head, rest)) = templates.split_first() else {
+            return Ok(false);
+        };
+        if head.user_program.is_some() {
+            return Ok(false);
+        }
+        let state = frame_draw_presentation::from_semantic_draw(head);
+        let initial = self.pipeline.select(head, false, None, false)?;
+        for template in rest {
+            if template.user_program.is_some()
+                || frame_draw_presentation::from_semantic_draw(template) != state
+                || !std::sync::Arc::ptr_eq(
+                    &initial,
+                    &self.pipeline.select(template, false, None, false)?,
+                )
+            {
+                return Ok(false);
+            }
+        }
+        Ok(self.pipeline.draw_table_twin(&initial)?.is_some())
+    }
+
     /// Load Vulkan and select a capable graphics device; `VulkanRenderer::new(options)?`.
     pub fn new(options: VulkanOptions) -> Result<Self, RenderError> {
         let runtime = VulkanRuntime::create(options)?;
@@ -145,6 +245,12 @@ impl VulkanRenderer {
         let pipeline = pipeline_variants::RasterPipelines::new(&runtime, false)?;
         Ok(Self {
             runtime,
+            presenting: None,
+            present_thread: Default::default(),
+            flight: Default::default(),
+            readback_buffers: Default::default(),
+            rgb_pack_sources: readback_buffer_cache::ReadbackBufferCache::device_local(),
+            rgb_pack: None,
             retirements: retained_submission::RetirementStore::new()?,
             pipeline,
             capping_pipeline: None,
@@ -192,28 +298,45 @@ mod attachment_orientation;
 mod buffer;
 #[cfg(feature = "command-state-diagnostics")]
 mod command_state_diagnostic;
+mod directional_phong;
+#[cfg(test)]
+pub(crate) mod directional_phong_fixture;
+pub(crate) use directional_phong::{
+    MIN_VERTICES as MIN_PHONG_BATCH_VERTICES, directional_lights, directional_phong_draw,
+};
 mod driver_identity;
 mod factorized_projection;
 mod fixed_lighting_pipeline;
 mod fixed_vertex_layout;
 mod fixed_vertex_sources;
 mod frame;
+pub(crate) use frame::GeometryBatch;
+mod assembly_streaming_frame;
 mod frame_draw_presentation;
+mod frame_targets;
+mod geometry_buffer;
 #[cfg(feature = "command-state-diagnostics")]
 mod geometry_command_diagnostic;
+mod geometry_residency;
+mod geometry_transfer;
+mod host_upload_pages;
 mod image;
+pub(crate) mod immediate_main_record;
 mod light_dot_renderer;
 mod light_dot_shader;
 mod light_dot_shader_table;
 #[cfg(feature = "lit-only-command-diagnostics")]
 pub(crate) mod lit_only_commands;
+mod main_restore_pipeline;
 mod memory_arena;
 mod memory_selection;
 mod pipeline;
+mod pipeline_cache;
 mod pipeline_shader_sources;
 mod pipeline_shader_stages;
 mod pipeline_state;
 mod pipeline_variants;
+mod queue_order;
 mod record;
 mod record_draw_bindings;
 #[cfg(feature = "command-state-diagnostics")]
@@ -237,6 +360,7 @@ mod replay_raster_commands;
 #[cfg(feature = "command-state-diagnostics")]
 mod replay_resource_diagnostic;
 mod submission;
+mod target_sample_set;
 mod transform_constants;
 mod validation_admission;
 mod validation_settings;
@@ -254,17 +378,34 @@ mod window_depth_status_protocol;
 mod window_depth_status_state;
 mod window_depth_transforms;
 mod window_depth_upload;
+mod window_handoff;
+mod window_present_thread;
 impl RenderBackend for VulkanRenderer {
     fn render(&mut self, frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
+        let readback = self.render_deferred(frame)?;
+        self.read_frame(&readback)
+    }
+}
+impl VulkanRenderer {
+    /// Render a frame and keep its images on the device; `renderer.render_deferred(&frame)?`.
+    pub(crate) fn render_deferred(
+        &mut self,
+        frame: &RenderFrame,
+    ) -> Result<FrameReadback, RenderError> {
         self.runtime.lifecycle.admit("render frame")?;
         let outcome = self.render_owned_frame(frame);
         self.runtime.lifecycle.observe(outcome)
     }
-}
-impl VulkanRenderer {
-    fn render_owned_frame(&mut self, frame: &RenderFrame) -> Result<FrameCapture, RenderError> {
-        let resources = self.completed_owned_frame(frame)?;
-        resources.capture()
+    fn render_owned_frame(&mut self, frame: &RenderFrame) -> Result<FrameReadback, RenderError> {
+        self.make_flight_room()?;
+        let resources = self.prepared_owned_frame(frame)?;
+        if resources.needs_host_completion() {
+            let resources = self.complete_prepared_frame(frame, resources)?;
+            let readback = resources.completed_readback()?;
+            immediate_main_record::remember(frame, &resources);
+            return Ok(readback);
+        }
+        self.launch_owned_frame(frame, resources)
     }
     /// Inspect persistent admission; `renderer.device_state()` never polls execution progress.
     pub fn device_state(&self) -> crate::RenderDeviceState {
@@ -278,8 +419,10 @@ mod gui_native_extent;
 mod line_device;
 mod point_sprite;
 mod subview_upload;
+mod window_acquisition_drain;
 mod window_blit;
 mod window_chain;
+mod window_chain_retirement;
 mod window_fence_retirement;
 mod window_gui_contract;
 mod window_gui_render;
@@ -329,6 +472,8 @@ impl VulkanRenderer {
         &mut self,
         frame: &RenderFrame,
     ) -> Result<frame::FrameResources, RenderError> {
+        let work = self.runtime.work.clone();
+        let _upload = work.enter(WorkPhase::Upload);
         let initial_stencil = frame.initial_stencil(self.stencil);
         let capped = needs_stencil_pipeline(frame, initial_stencil);
         self.prepare_capping_pipeline(capped)?;
@@ -399,7 +544,9 @@ impl VulkanRenderer {
                 },
             ),
         )?;
-        self.runtime.image_memory.sample_frame();
+        self.runtime
+            .image_memory
+            .sample_frame(resources.attachment_bytes());
         Ok(resources)
     }
     /// Image bytes for frame statistics; `renderer.image_memory().sampled_image_bytes`.

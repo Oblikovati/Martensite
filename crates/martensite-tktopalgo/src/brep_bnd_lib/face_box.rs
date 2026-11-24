@@ -106,7 +106,8 @@ fn is_modify_size(probe: &PatchProbe<'_>, plane: &Plane3, point: Point3) -> Resu
     let (pu2, pv2) = elslib::plane_parameters(plane.position(), point);
     let (pu1, pu2) = reorder(0., pu2);
     let (pv1, pv2) = reorder(0., pv2);
-    let geom_plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(*plane)).cast();
+    let geom_plane: Handle<dyn GeomSurface> =
+        Handle::new(GeomPlane::from_pln(*plane)).into_upcast();
     let plane_patch = GeomAdaptorSurface::with_bounds(&geom_plane, (pu1, pu2, pv1, pv2))?;
     let extrema = ExtSS::with_ranges(
         &plane_patch,

@@ -40,8 +40,8 @@ use martensite_tkxsbase::xs_control::XSControlWorkSession;
 /// A relationship without description between two shape aspects; `no_name` keeps the null.
 pub(super) fn relate_aspects(
     model: &Handle<dyn InterfaceInterfaceModel>,
-    relating: &Handle<StepReprShapeAspect>,
-    related: &Handle<StepReprShapeAspect>,
+    relating: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+    related: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     description: Handle<HAsciiString>,
 ) -> Result<(), Failure> {
     let relationship = Handle::new(StepReprShapeAspectRelationship::new());
@@ -52,9 +52,9 @@ pub(super) fn relate_aspects(
 /// What `writeDatumAP242` finds of the shapes of a datum.
 #[derive(Default)]
 struct DatumFeatures {
-    aspects: Vec<Handle<StepReprShapeAspect>>,
+    aspects: Vec<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>>,
     pds: Handle<StepReprProductDefinitionShape>,
-    context: Handle<StepReprRepresentationContext>,
+    context: Handle<dyn crate::StepEntityBase<StepReprRepresentationContext>>,
     usage: Handle<StepAP242GeometricItemSpecificUsage>,
     aspect_number: i32,
     usage_number: i32,
@@ -185,7 +185,7 @@ impl WriterState {
         object: &XCAFDimTolObjectsDatumObject,
         features: &mut DatumFeatures,
         factors: &StepDataFactors,
-    ) -> Result<Handle<StepReprShapeAspect>, Failure> {
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
         let model = model_of(ws)?;
         let target_id = match object.get_datum_target_number() {
             0 => empty(),
@@ -257,7 +257,7 @@ impl WriterState {
 fn write_simple_datum(
     model: &Handle<dyn InterfaceInterfaceModel>,
     features: &mut DatumFeatures,
-) -> Result<Handle<StepReprShapeAspect>, Failure> {
+) -> Result<Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>, Failure> {
     match features.aspects.len() {
         0 => {
             // Create empty datum with name and presentation only
@@ -317,7 +317,8 @@ fn write_target_parameters(
         XCAFDimTolObjectsDatumTargetType::Rectangle => 3,
         _ => 2,
     };
-    let items = step_new_array1::<Handle<StepReprRepresentationItem>>(1, count)?;
+    let items =
+        step_new_array1::<Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>>(1, count)?;
     if kind != XCAFDimTolObjectsDatumTargetType::Point {
         if kind == XCAFDimTolObjectsDatumTargetType::Rectangle {
             // Additional value
@@ -365,23 +366,24 @@ fn link_target_to_features(
     features: &DatumFeatures,
     target: &Handle<StepDimTolDatumTarget>,
 ) -> Result<(), Failure> {
-    let relating: Handle<StepReprShapeAspect> = match features.aspects.as_slice() {
-        [] => return Ok(()),
-        [single] => single.clone(),
-        several => {
-            let composite = Handle::new(StepReprCompositeShapeAspect::new());
-            composite.init(
-                &empty(),
-                &empty(),
-                &features.pds,
-                step_live(&several[0], WHERE)?.product_definitional(),
-            );
-            for aspect in several {
-                relate_aspects(model, &composite.cast(), aspect, empty())?;
+    let relating: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>> =
+        match features.aspects.as_slice() {
+            [] => return Ok(()),
+            [single] => single.clone(),
+            several => {
+                let composite = Handle::new(StepReprCompositeShapeAspect::new());
+                composite.init(
+                    &empty(),
+                    &empty(),
+                    &features.pds,
+                    step_live(&several[0], WHERE)?.product_definitional(),
+                );
+                for aspect in several {
+                    relate_aspects(model, &composite.cast(), aspect, empty())?;
+                }
+                composite.cast()
             }
-            composite.cast()
-        }
-    };
+        };
     let relationship = Handle::new(StepReprFeatureForDatumTargetRelationship::new());
     relationship.init(
         &empty(),

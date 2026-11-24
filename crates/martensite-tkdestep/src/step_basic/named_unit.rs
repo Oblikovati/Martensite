@@ -1,6 +1,6 @@
 //! A named unit and the SI unit that redefines its dimensions: `Dimensions` is virtual
 //! and the SI unit always answers null, so the base keeps a flag that makes the same answer when
-//! reached through a `Handle<StepBasicNamedUnit>`.
+//! reached through a `Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>`.
 #[allow(
     unused_imports,
     reason = "the classes of the package reference each other"
@@ -13,7 +13,7 @@ step_entity! {
     StepBasicNamedUnit, StepBasicNamedUnitState, "StepBasicNamedUnit", StandardTransient, {
         dimensions: Handle<StepBasicDimensionalExponents>,
         dimensions_redefined: bool,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 impl StepBasicNamedUnit {
     /// `init`.
@@ -43,7 +43,7 @@ step_entity! {
         has_prefix: bool,
         prefix: StepBasicSiPrefix,
         name: StepBasicSiUnitName,
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit, crate::step_basic::StepBasicSiUnit]
 }
 impl Default for StepBasicSiUnit {
     fn default() -> Self {
@@ -90,7 +90,7 @@ mod tests {
     fn an_si_unit_answers_null_dimensions_through_its_base_handle() {
         let unit = Handle::new(StepBasicSiUnit::new());
         let exponents = Handle::new(StepBasicDimensionalExponents::new());
-        let base = unit.cast::<StepBasicNamedUnit>();
+        let base = unit.cast::<dyn crate::StepEntityBase<StepBasicNamedUnit>>();
         base.set_dimensions(&exponents);
         assert!(base.dimensions().is_null());
         let plain = StepBasicNamedUnit::new();

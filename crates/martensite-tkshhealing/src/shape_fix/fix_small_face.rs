@@ -3,7 +3,7 @@ mod split;
 mod spot;
 mod strip;
 
-use super::{FixRoot, FixRootData, ShapeFixRoot};
+use super::{FixRoot, FixRootData};
 use crate::shape_analysis::ShapeAnalysisCheckSmallFace;
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
@@ -20,19 +20,19 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState};
 /// assert!(fixer.shape().is_null());
 /// ```
 pub struct ShapeFixFixSmallFace {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     input: SharedState<Shape>,
     result: SharedState<Shape>,
     status: SharedState<i32>,
     analyzer: SharedState<ShapeAnalysisCheckSmallFace>,
 }
 
-impl_transient!(ShapeFixFixSmallFace, "ShapeFix_FixSmallFace", ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
+impl_transient!(ShapeFixFixSmallFace, "ShapeFix_FixSmallFace", dyn FixRoot, interfaces: [dyn FixRoot]);
 
 impl Default for ShapeFixFixSmallFace {
     fn default() -> Self {
         let fixer = Self {
-            parent: ShapeFixRoot::new(),
+            root: FixRootData::default(),
             input: SharedState::new(Shape::default()),
             result: SharedState::new(Shape::default()),
             status: SharedState::new(ShapeExtend::encode_status(ShapeExtendStatus::Ok)),
@@ -179,13 +179,13 @@ impl ShapeFixFixSmallFace {
 
 impl FixRoot for ShapeFixFixSmallFace {
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
 }
 
 impl std::ops::Deref for ShapeFixFixSmallFace {
-    type Target = ShapeFixRoot;
+    type Target = dyn FixRoot;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        self
     }
 }

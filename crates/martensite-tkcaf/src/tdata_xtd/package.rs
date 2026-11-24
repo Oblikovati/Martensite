@@ -175,11 +175,11 @@ impl TDataXtd {
             return;
         }
         let creators: [fn() -> Handle<dyn TdfAttribute>; 5] = [
-            || Handle::new(TDataXtdShape::new()).cast(),
-            || Handle::new(TDataXtdAxis::new()).cast(),
-            || Handle::new(TDataXtdPoint::new()).cast(),
-            || Handle::new(TDataXtdPlane::new()).cast(),
-            || Handle::new(TDataXtdPlacement::new()).cast(),
+            || Handle::new(TDataXtdShape::new()).upcast(),
+            || Handle::new(TDataXtdAxis::new()).upcast(),
+            || Handle::new(TDataXtdPoint::new()).upcast(),
+            || Handle::new(TDataXtdPlane::new()).upcast(),
+            || Handle::new(TDataXtdPlacement::new()).upcast(),
         ];
         for create in creators {
             TdfDerivedAttribute::register(create, None, None);

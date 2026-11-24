@@ -22,7 +22,7 @@ use std::marker::PhantomData;
 /// use martensite_tkgeombase::geom_lprop::CLProps2d;
 /// use martensite_tkmath::gp::{Axis2d, Circle2};
 /// let circle = Circle2::from_x_axis(Axis2d::default(), 5.0, true).unwrap();
-/// let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_circ2d(circle)).cast();
+/// let curve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_circ2d(circle)).into_upcast();
 /// let mut props = CLProps2d::with_parameter(curve, 0.0, 2, 1e-7).unwrap();
 /// assert!((props.curvature().unwrap() - 0.2).abs() < 1e-12);
 /// ```

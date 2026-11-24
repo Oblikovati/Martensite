@@ -38,8 +38,8 @@ fn init_round_trip_step_kinematics_revolute_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_low_order_kinematic_pair_tx,
         the_low_order_kinematic_pair_ty,
@@ -96,7 +96,7 @@ fn init_round_trip_step_kinematics_rolling_curve_pair_value() {
     let object = StepKinematicsRollingCurvePairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         &the_actual_point_on_curve1,
     );
     assert!(object.actual_point_on_curve1() == the_actual_point_on_curve1);
@@ -131,7 +131,7 @@ fn init_round_trip_step_kinematics_rolling_surface_pair_value() {
     let object = StepKinematicsRollingSurfacePairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         &the_actual_point_on_surface,
         the_actual_rotation,
     );
@@ -192,8 +192,8 @@ fn init_round_trip_step_kinematics_screw_pair() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_pitch,
     );
@@ -218,7 +218,7 @@ fn init_round_trip_step_kinematics_screw_pair_value() {
     let object = StepKinematicsScrewPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         the_actual_rotation,
     );
     assert!(object.actual_rotation() == the_actual_rotation);
@@ -256,8 +256,8 @@ fn init_round_trip_step_kinematics_screw_pair_with_range() {
         &the_item_defined_transformation_name,
         has_item_defined_transformation_description,
         &the_item_defined_transformation_description,
-        &the_item_defined_transformation_transform_item1,
-        &the_item_defined_transformation_transform_item2,
+        &the_item_defined_transformation_transform_item1.upcast(),
+        &the_item_defined_transformation_transform_item2.upcast(),
         &the_kinematic_pair_joint,
         the_screw_pair_pitch,
         has_lower_limit_actual_rotation,
@@ -300,7 +300,7 @@ fn init_round_trip_step_kinematics_sliding_curve_pair_value() {
     let object = StepKinematicsSlidingCurvePairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         &the_actual_point_on_curve1,
         &the_actual_point_on_curve2,
     );
@@ -338,7 +338,7 @@ fn init_round_trip_step_kinematics_sliding_surface_pair_value() {
     let object = StepKinematicsSlidingSurfacePairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         &the_actual_point_on_surface1,
         &the_actual_point_on_surface2,
         the_actual_rotation,
@@ -376,7 +376,7 @@ fn init_round_trip_step_kinematics_spherical_pair_value() {
     let object = StepKinematicsSphericalPairValue::new();
     object.init(
         &the_representation_item_name,
-        &the_pair_value_applies_to_pair,
+        &the_pair_value_applies_to_pair.upcast(),
         &the_input_orientation,
     );
 }

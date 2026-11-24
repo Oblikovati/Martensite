@@ -267,8 +267,10 @@ pub(super) fn update_edge_curve(
 ) -> Result<(), Failure> {
     let builder = BRepBuilder::default();
     if c.is_instance_name("Geom_TrimmedCurve") {
-        let bc = c.clone().cast::<GeomTrimmedCurve>();
-        let basis = bc.get().map(|t| t.basis_curve()).unwrap_or_default();
+        let basis = c
+            .downcast_ref::<GeomTrimmedCurve>()
+            .map(|t| t.basis_curve())
+            .unwrap_or_default();
         return builder.update_edge_located_curve(e, &basis, l, tol);
     }
     builder.update_edge_located_curve(e, c, l, tol)
@@ -277,8 +279,10 @@ pub(super) fn update_edge_curve(
 /// The basis of a trimmed 2d curve, the curve otherwise.
 fn untrimmed_2d(c: &Handle<dyn Geom2dCurve>) -> Handle<dyn Geom2dCurve> {
     if c.is_instance_name("Geom2d_TrimmedCurve") {
-        let bc = c.clone().cast::<Geom2dTrimmedCurve>();
-        return bc.get().map(|t| t.basis_curve()).unwrap_or_default();
+        return c
+            .downcast_ref::<Geom2dTrimmedCurve>()
+            .map(|t| t.basis_curve())
+            .unwrap_or_default();
     }
     c.clone()
 }

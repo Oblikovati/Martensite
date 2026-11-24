@@ -1,11 +1,11 @@
 //! `TDF_Data`: a data framework, its label tree and its transaction state.
-use super::{TdfDelta, TdfLabel, TdfTool, label_node::TdfLabelNode};
+use super::{TdfDelta, TdfDeltaSource, TdfLabel, TdfTool, label_node::TdfLabelNode};
 use crate::json::dump_label_entry;
 use martensite_tkcdf::json_dump::class_begin;
 use martensite_tkcdf::json_dump::field_integer;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient, dump::DumpStream},
+    standard::{Failure, Handle, Transient, dump::DumpStream},
     tcollection::AsciiString,
 };
 use std::{io, sync::Arc};
@@ -87,10 +87,9 @@ impl DataCore {
 /// assert!(data.root().is_root() && data.not_undo_mode());
 /// ```
 pub struct TdfData {
-    transient: StandardTransient,
     pub(crate) core: Arc<DataCore>,
 }
-impl_transient!(TdfData, "TDF_Data", StandardTransient, transient);
+impl_transient!(TdfData, "TDF_Data", dyn Transient);
 
 impl TdfData {
     /// `TDF_Data()`: a new and empty framework, already in a handle (the root node keeps a
@@ -100,10 +99,7 @@ impl TdfData {
             root: Arc::new(TdfLabelNode::default()),
             state: super::sparse_commit::DocumentStateCell::default(),
         });
-        let data = Handle::new(TdfData {
-            transient: StandardTransient::default(),
-            core: core.clone(),
-        });
+        let data = Handle::new(TdfData { core: core.clone() });
         let mut root = core.root.state.write();
         root.data = data.downgrade();
         root.core = Arc::downgrade(&core);
@@ -123,16 +119,16 @@ impl TdfData {
         self.core.time()
     }
     /// `IsApplicable`: the delta ends at the current time.
-    pub fn is_applicable(&self, delta: &Handle<TdfDelta>) -> bool {
+    pub fn is_applicable<D: TdfDeltaSource + ?Sized>(&self, delta: &Handle<D>) -> bool {
         delta
             .get()
             .is_some_and(|delta| delta.is_applicable(self.time()))
     }
     /// `Undo(aDelta, withDelta)`: applies an applicable delta; with `with_delta`, returns
     /// the delta that redoes it.
-    pub fn undo(
+    pub fn undo<D: TdfDeltaSource + ?Sized>(
         &self,
-        delta: &Handle<TdfDelta>,
+        delta: &Handle<D>,
         with_delta: bool,
     ) -> Result<Handle<TdfDelta>, Failure> {
         super::data_commit::undo(&self.core, delta, with_delta)

@@ -246,7 +246,7 @@ impl BRepFeatMakePrism {
         };
         // if(sens==1) OrF = TopAbs::reverse(OrF); (disabled in the reference)
         let mut s = BRepTool::surface(&f_from)?;
-        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.cast();
+        let trimmed: Handle<GeomRectangularTrimmedSurface> = s.downcast();
         if let Some(t) = trimmed.get() {
             s = t.basis_surface();
         }

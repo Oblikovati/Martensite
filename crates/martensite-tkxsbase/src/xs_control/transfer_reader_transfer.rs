@@ -9,7 +9,7 @@ use crate::transfer::{TransferOutput, TransferTransientProcess};
 use crate::transfer_brep::TransferBRep;
 use martensite_tkernel::{
     message::{ProgressRange, ProgressScope},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, Transient},
 };
 use std::fmt::Write as _;
 
@@ -18,10 +18,7 @@ const FRAME: &str = "\n*********************************************************
 
 /// The trace of `TransferOne` (trace level above 1): the number, label and type of the
 /// entity.
-fn one_entity_trace(
-    model: &dyn InterfaceInterfaceModel,
-    ent: &Handle<StandardTransient>,
-) -> String {
+fn one_entity_trace(model: &dyn InterfaceInterfaceModel, ent: &Handle<dyn Transient>) -> String {
     let num = model.number(ent);
     let lab = model.string_label(ent);
     let mut out =
@@ -47,7 +44,7 @@ fn one_entity_trace(
 /// The trace of a list (or the roots) to transfer: its count per type.
 fn list_trace(
     model: &dyn InterfaceInterfaceModel,
-    ents: &[Handle<StandardTransient>],
+    ents: &[Handle<dyn Transient>],
     title: &str,
 ) -> String {
     let mut out = format!("{FRAME}{title}\n{FRAME}");
@@ -93,7 +90,7 @@ impl XSControlTransferReader {
         true
     }
     /// `Recognize(theEnt)`: the actor recognizes `ent` (false without actor).
-    pub fn recognize(&self, ent: &Handle<StandardTransient>) -> bool {
+    pub fn recognize(&self, ent: &Handle<dyn Transient>) -> bool {
         let actor = self.state.read().actor.clone();
         actor.get().is_some_and(|a| a.recognize(ent))
     }
@@ -127,7 +124,7 @@ impl XSControlTransferReader {
     fn record_root(
         &self,
         process: &TransferTransientProcess,
-        obj: &Handle<StandardTransient>,
+        obj: &Handle<dyn Transient>,
         rec: bool,
     ) -> Result<i32, Failure> {
         process.set_root(obj);
@@ -145,7 +142,7 @@ impl XSControlTransferReader {
     /// gives a result. 0 without actor or model.
     pub fn transfer_one(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         rec: bool,
         progress: &ProgressRange<'_>,
     ) -> Result<i32, Failure> {
@@ -176,7 +173,7 @@ impl XSControlTransferReader {
     /// final result; the count of entities with a result.
     pub fn transfer_list(
         &self,
-        list: &[Handle<StandardTransient>],
+        list: &[Handle<dyn Transient>],
         rec: bool,
         progress: &ProgressRange<'_>,
     ) -> Result<i32, Failure> {
@@ -271,7 +268,7 @@ impl XSControlTransferReader {
     }
     /// `TransferClear(theEnt, theLevel = 0)`: the process cleared for the model, else the
     /// result of `ent` removed from the process and its mark cleared.
-    pub fn transfer_clear(&self, ent: &Handle<StandardTransient>, level: i32) {
+    pub fn transfer_clear(&self, ent: &Handle<dyn Transient>, level: i32) {
         let tp = self.transient_process();
         let Some(process) = tp.get() else {
             return;

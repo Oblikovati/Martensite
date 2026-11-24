@@ -17,7 +17,7 @@ use martensite_tkg3d::geom::GeomSurface;
 /// use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 /// use martensite_tkmath::gp::Axis3;
 /// use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeShape, BRepBuilderAPIMakeShell};
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let maker = BRepBuilderAPIMakeShell::with_bounds(&plane, (0.0, 1.0, 0.0, 1.0), false)?;
 /// assert!(maker.is_done());
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())

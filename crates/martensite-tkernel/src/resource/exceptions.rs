@@ -3,7 +3,7 @@ use crate::standard::Failure;
 
 /// Raises `Resource_NoSuchResource` (a `Standard_NoSuchObject`), the failure of a lookup
 /// of an absent resource; `resource::no_such_resource("Units.Length")`.
-pub fn no_such_resource(message: &str) -> Failure {
+pub(super) fn no_such_resource(message: &str) -> Failure {
     Failure::with_type("Resource_NoSuchResource", message, "")
 }
 

@@ -12,13 +12,13 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
-use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesEntity, IgesDataIgesWriter,
-};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataDefType, IgesDataDirChecker, IgesDataIgesWriter};
 use crate::iges_defs::{IgesDefsAttributeDef, IgesDefsToolAttributeDef};
 use crate::iges_tool_support::iges_buffer_first;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{InterfaceCheck, InterfaceEntityIterator, InterfaceShareTool};
 
@@ -149,7 +149,7 @@ impl IgesDefsToolAttributeDef {
             if ent.attribute_value_count(i)? <= 0 {
                 continue;
             }
-            let mut list: Handle<StandardTransient> = ent.attribute_list(i)?;
+            let mut list: Handle<dyn Transient> = ent.attribute_list(i)?;
             if (fn_ > 0) && ent.is_null() {
                 if (aty == 0) || (aty == 5) {
                     continue;
@@ -184,7 +184,7 @@ impl IgesDefsToolAttributeDef {
                     }
                 }
                 4 => {
-                    if !(list.is_kind(<HArray1<Handle<IgesDataIgesEntity>>>::static_type())) {
+                    if !(list.is_kind(<HArray1<Handle<dyn IgesDataEntityKind>>>::static_type())) {
                         mess = format!("Attribute List n0.{} (IGES Pointers) badly defined", aty);
                     }
                 }

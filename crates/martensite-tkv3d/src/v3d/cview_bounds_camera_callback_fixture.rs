@@ -20,7 +20,7 @@ pub(super) struct BoundsCameraCallbackWindow {
     backend: AspectNeutralWindow,
     control: Arc<BoundsCameraWindowControl>,
 }
-martensite_tkernel::impl_transient!(BoundsCameraCallbackWindow,"Martensite_BoundsCameraCallbackWindow",AspectNeutralWindow,backend,interfaces:[dyn AspectWindow]);
+martensite_tkernel::impl_transient!(BoundsCameraCallbackWindow,"Martensite_BoundsCameraCallbackWindow",AspectNeutralWindow,interfaces:[dyn AspectWindow]);
 impl AspectWindow for BoundsCameraCallbackWindow {
     forward_neutral_window_surface!(backend);
     fn size(&self) -> (i32, i32) {
@@ -33,21 +33,25 @@ impl AspectWindow for BoundsCameraCallbackWindow {
 }
 impl BoundsCameraWindowControl {
     fn replace_selected_camera(&self) {
-        let view = self.view.observe();
-        let before = view.camera_ref().observe().ref_count();
+        let view = self.view.upgrade();
+        let before = view.camera_ref().ref_count();
         self.replace_actual_slot();
-        *self.records.write() = [1, before, view.camera_ref().observe().ref_count()];
+        *self.records.write() = [
+            1,
+            before.try_into().unwrap(),
+            view.camera_ref().ref_count().try_into().unwrap(),
+        ];
         *self.selection.alternate_selected.write() = false;
         self.raise_configured_callback_failure();
     }
     fn replace_actual_slot(&self) {
         if *self.selection.alternate_selected.read() {
-            *self.selection.alternate.write() = self.replacement.observe().clone();
+            *self.selection.alternate.write() = self.replacement.upgrade();
             return;
         }
         self.view
-            .observe()
-            .set_camera(&*self.replacement.observe())
+            .upgrade()
+            .set_camera(&self.replacement.upgrade())
             .unwrap();
     }
     fn raise_configured_callback_failure(&self) {

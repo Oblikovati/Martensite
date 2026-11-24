@@ -6,7 +6,7 @@ use crate::interface::{
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceProtocol,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, Transient, exceptions},
     tcollection::AsciiString,
 };
 use std::sync::RwLockReadGuard;
@@ -162,7 +162,7 @@ impl IFSelectContextWrite {
         self.thecurr += 1;
     }
     /// `Value`: the current entity of the modifier; `StandardNoSuchObject` without one.
-    pub fn value(&self) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value(&self) -> Result<Handle<dyn Transient>, Failure> {
         if self.thecurr < 1 || self.thecurr > self.thenbent {
             return Err(exceptions::no_such_object("IFSelectContextWrite:Value"));
         }
@@ -189,7 +189,7 @@ impl IFSelectContextWrite {
     /// `AddWarning(start, mess, orig = "")`.
     pub fn add_warning(
         &mut self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         mess: &str,
         orig: &str,
     ) -> Result<(), Failure> {
@@ -200,7 +200,7 @@ impl IFSelectContextWrite {
     /// `AddFail(start, mess, orig = "")`.
     pub fn add_fail(
         &mut self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         mess: &str,
         orig: &str,
     ) -> Result<(), Failure> {
@@ -220,7 +220,7 @@ impl IFSelectContextWrite {
     /// `CCheck(ent)`: the check of `ent` (number -1 out of the model).
     pub fn c_check_entity(
         &mut self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<Handle<InterfaceCheck>, Failure> {
         let mut num = self.themodel.get().ok_or_else(no_model)?.number(ent);
         if num == 0 {

@@ -93,8 +93,8 @@ impl ChFi3dChBuilder {
             let c = self.base.ds.curve(ind).curve().clone();
             c.d1(tc.p[j][pivot])?;
         }
-        let gfac: Handle<dyn Adaptor3dSurface> = pts.fac.clone().cast();
-        let gsurf: Handle<dyn Adaptor3dSurface> = pts.surf.clone().cast();
+        let gfac: Handle<dyn Adaptor3dSurface> = pts.fac.upcast();
+        let gsurf: Handle<dyn Adaptor3dSurface> = pts.surf.upcast();
         let (bfac, pcurve_on_face) =
             mkbound_segment(&gfac, pts.p2d[pivot], pts.p2d[3], (t3d, ta), false)?;
         let (bpiv, pcurve_on_piv) =

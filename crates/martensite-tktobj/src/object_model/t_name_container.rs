@@ -2,7 +2,7 @@
 use martensite_tkernel::{
     impl_transient,
     ncollection::DataMap,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
     tcollection::{HExtendedString, HExtendedStringHasher},
 };
 use martensite_tklcaf::{
@@ -20,17 +20,15 @@ pub type NameIndexMap = DataMap<Handle<HExtendedString>, TdfLabel, HExtendedStri
 
 /// `martensite_object_model_NameIndex`; `NameIndex::set(&label)`.
 pub struct NameIndex {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     map: SharedState<NameIndexMap>,
 }
-impl_transient!(NameIndex, "martensite_object_model_NameIndex", dyn TdfAttribute, transient,
+impl_transient!(NameIndex, "martensite_object_model_NameIndex", dyn TdfAttribute,
     interfaces: [dyn TdfAttribute]);
 
 impl Default for NameIndex {
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             map: SharedState::new(NameIndexMap::with_hasher(HExtendedStringHasher, 1)),
         }
@@ -118,7 +116,7 @@ impl TdfAttribute for NameIndex {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,

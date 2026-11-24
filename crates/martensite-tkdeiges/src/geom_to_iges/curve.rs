@@ -1,7 +1,7 @@
 //! `GeomToIgesGeomCurve`: curves into IGES curves. Each kind of curve has its own member, this
 //! file holds the choice among them and the offset and line curves.
 use super::{GeomToIgesGeomEntity, bounded_range};
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_geom::{IgesGeomLine, IgesGeomOffsetCurve};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{
@@ -43,7 +43,7 @@ impl DerefMut for GeomToIgesGeomCurve {
 }
 
 /// What a transfer of a curve gives: an entity, null when the curve has no translation.
-pub(super) type EntityResult = Result<Handle<IgesDataIgesEntity>, Failure>;
+pub(super) type EntityResult = Result<Handle<dyn IgesDataEntityKind>, Failure>;
 
 impl GeomToIgesGeomCurve {
     /// A tool at the initial state; `GeomToIgesGeomCurve::new()`.
@@ -82,7 +82,7 @@ impl GeomToIgesGeomCurve {
         start: &Handle<dyn GeomCurve>,
         first: f64,
         last: f64,
-    ) -> Result<Option<Handle<IgesDataIgesEntity>>, Failure> {
+    ) -> Result<Option<Handle<dyn IgesDataEntityKind>>, Failure> {
         let bspline = start.cast::<GeomBSplineCurve>();
         if bspline.is_some() {
             return self.transfer_bspline_curve(&bspline, first, last).map(Some);
@@ -102,7 +102,7 @@ impl GeomToIgesGeomCurve {
         start: &Handle<dyn GeomCurve>,
         first: f64,
         last: f64,
-    ) -> Result<Option<Handle<IgesDataIgesEntity>>, Failure> {
+    ) -> Result<Option<Handle<dyn IgesDataEntityKind>>, Failure> {
         let circle = start.cast::<GeomCircle>();
         if circle.is_some() {
             return self.transfer_circle(&circle, first, last).map(Some);
@@ -189,7 +189,7 @@ impl GeomToIgesGeomCurve {
         start: &Handle<GeomOffsetCurve>,
         lower: f64,
         upper: f64,
-    ) -> Option<Handle<IgesDataIgesEntity>> {
+    ) -> Option<Handle<dyn IgesDataEntityKind>> {
         let converted = geom_convert::curve_to_bspline_curve(
             &start.cast(),
             ParameterisationType::TgtThetaOver2,

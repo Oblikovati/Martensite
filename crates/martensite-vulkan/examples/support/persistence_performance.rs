@@ -34,7 +34,7 @@ fn persistent_groups(driver: &Handle<Graphic3dRenderDriver>) -> ViewerScene {
     for index in 1..64 {
         let group = scene.structure.new_group().unwrap();
         group.set_group_primitives_aspect(&scene.group.aspects());
-        group.add_primitive_array(&scene.vertices, true);
+        group.add_primitive_array(&scene.vertices.upcast(), true);
         let persistence = persistence_scene::scene_persistence("pers-group-zoom");
         persistence
             .set_anchor_point(&Point3::new(

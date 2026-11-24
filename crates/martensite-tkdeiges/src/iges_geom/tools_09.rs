@@ -14,12 +14,14 @@ use super::{
 use crate::iges_basic::IgesBasicSubfigureDef;
 use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
 use crate::iges_basic::shared_runs::iges_shared_038;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{IgesDataDumpResult, iges_dump_xyz_l, iges_live, iges_msg, iges_real_text};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -93,7 +95,7 @@ impl IgesGeomToolOffsetSurface {
         let msg162 = iges_msg("XSTEP_162");
         let mut an_indicator: Xyz = Xyz::default();
         let mut a_distance: f64 = 0.0;
-        let mut a_surface: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_surface: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         pr.read_xyz(&pr.current_list(1, 3), &msg162, &mut an_indicator)?;
         if !pr.read_real(&pr.current(), &mut a_distance)? {
@@ -137,7 +139,7 @@ impl IgesGeomToolOffsetSurface {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolOffsetSurface::own_shared")?;
-        iter.get_one_item(&ent_live.surface().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.surface().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -178,8 +180,8 @@ impl IgesGeomToolOffsetSurface {
         let another_live = iges_live(another, "IgesGeomToolOffsetSurface::own_copy")?;
         let ent_live = iges_live(ent, "IgesGeomToolOffsetSurface::own_copy")?;
         let a_surface = tc
-            .transferred(&another_live.surface().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.surface().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let an_indicator: Xyz = *another_live.offset_indicator().xyz();
         let a_distance: f64 = another_live.distance();
         ent_live.init(an_indicator, a_distance, &a_surface);
@@ -238,7 +240,7 @@ impl IgesGeomToolPlane {
         let mut c: f64 = 0.0;
         let mut d: f64 = 0.0;
         let mut a_size: f64 = 0.0;
-        let mut a_curve: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_curve: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut attach: Xyz = Xyz::new(0.0, 0.0, 0.0);
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         if !pr.read_real(&pr.current(), &mut a)?
@@ -301,7 +303,7 @@ impl IgesGeomToolPlane {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolPlane::own_shared")?;
-        iter.get_one_item(&ent_live.bounding_curve().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.bounding_curve().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -371,8 +373,8 @@ impl IgesGeomToolPlane {
         let attach: Xyz = Xyz::from(another_live.symbol_attach());
         let a_size: f64 = another_live.symbol_size();
         let a_curve = tc
-            .transferred(&another_live.bounding_curve().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.bounding_curve().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         ent_live.init(a, b, c, d, &a_curve, attach, a_size);
         ent_live.set_form_number(another_live.form_number());
         Ok(())

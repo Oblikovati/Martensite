@@ -75,7 +75,7 @@ fn find(
 pub fn get_real(document: &Handle<TDocStdDocument>, entry: &str) -> Result<f64, String> {
     let attribute = find(document, entry, &TDataStdReal::get_id())?;
     Ok(attribute
-        .cast::<TDataStdReal>()
+        .downcast::<TDataStdReal>()
         .get()
         .expect("TDataStd_Real")
         .get())
@@ -85,7 +85,7 @@ pub fn get_real(document: &Handle<TDocStdDocument>, entry: &str) -> Result<f64, 
 pub fn get_integer(document: &Handle<TDocStdDocument>, entry: &str) -> Result<i32, String> {
     let attribute = find(document, entry, &TDataStdInteger::get_id())?;
     Ok(attribute
-        .cast::<TDataStdInteger>()
+        .downcast::<TDataStdInteger>()
         .get()
         .expect("TDataStd_Integer")
         .get())

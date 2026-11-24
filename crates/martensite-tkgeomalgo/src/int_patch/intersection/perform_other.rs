@@ -29,7 +29,7 @@ fn is_simple_extrusion(s1: &Adaptor3dSurfaceHandle) -> Result<bool, Failure> {
     let proj_curve = projector.get_result();
     let a_plane: Handle<GeomPlane> = Handle::new(GeomPlane::new(an_axis));
     let ga_hsurf: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(&a_plane.cast())?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(&a_plane.cast())?).into_upcast();
     let projected = ProjectedCurve::with_curve(&ga_hsurf, &proj_curve.cast())?;
     let pcurve: Handle<dyn Geom2dCurve> = proj_lib::make_pcurve_of_type(&projected)?;
     let ac = Geom2dAdaptorCurve::with_range(

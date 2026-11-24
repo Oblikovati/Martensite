@@ -9,7 +9,7 @@ use martensite_tkbrep::{
     topexp::Explorer,
     topods::{self, Face, Shape, TopoDSShapeReadSource},
 };
-use martensite_tkernel::standard::{Failure, Handle, HandleReference};
+use martensite_tkernel::standard::{Failure, HandleReference};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkservice::graphic3d::*;
 const WF_ISO_U: usize = 0;
@@ -24,7 +24,7 @@ impl StdPrsWfShape {
     pub fn add(
         prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
         shape: &Shape,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<(), Failure> {
         Self::add_reference(prs, shape, drawer)
     }
@@ -32,7 +32,7 @@ impl StdPrsWfShape {
     pub fn add_reference<S: TopoDSShapeReadSource>(
         prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
         source: &S,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<(), Failure> {
         if source.read_current_shape(|shape| Ok(shape.is_null()))? {
             return Ok(());
@@ -50,7 +50,7 @@ impl StdPrsWfShape {
 fn add_wf_reference_free_edges<S: TopoDSShapeReadSource>(
     prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
     source: &S,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
 ) -> Result<(), Failure> {
     let edges = source
         .read_current_shape(|shape| StdPrsWfShape::add_edges_on_triangulation(shape, true))?;
@@ -58,17 +58,17 @@ fn add_wf_reference_free_edges<S: TopoDSShapeReadSource>(
         return Ok(());
     }
     let group = prs.observe().new_group()?;
-    let line = drawer.free_boundary_aspect().downgrade().observe();
+    let line = drawer.free_boundary_aspect();
     let reference = line.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_primitives_aspect(&aspect);
-    group.add_primitive_array(&edges, true);
+    group.add_primitive_array(&edges.into_upcast(), true);
     Ok(())
 }
 fn add_wf_reference_polylines<S: TopoDSShapeReadSource>(
     prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
     source: &S,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
 ) -> Result<(), Failure> {
     let deflection = source
         .read_current_shape(|shape| StdPrsToolTriangulatedShape::get_deflection(shape, drawer))?;
@@ -86,7 +86,7 @@ fn add_wf_reference_polylines<S: TopoDSShapeReadSource>(
 fn add_wf_reference_vertices<S: TopoDSShapeReadSource>(
     prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
     source: &S,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
 ) -> Result<(), Failure> {
     // Native AddVertexes is after boundary-group callbacks, not after the initial shape snapshot.
     let vertices = source.read_current_shape(|shape| {
@@ -96,7 +96,7 @@ fn add_wf_reference_vertices<S: TopoDSShapeReadSource>(
         return Ok(());
     }
     let group = prs.observe().new_group()?;
-    let point = drawer.point_aspect().downgrade().observe();
+    let point = drawer.point_aspect();
     let reference = point.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_primitives_aspect(&aspect);
@@ -122,7 +122,7 @@ fn wf_iso_routes(drawer: &Prs3dDrawer) -> (usize, usize) {
 }
 fn append_wf_face_isolines(
     shape: &Shape,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     deflection: f64,
     polylines: &mut WfPresentationPolylines,
 ) -> Result<(), Failure> {
@@ -137,7 +137,7 @@ fn append_wf_face_isolines(
 }
 fn append_routed_wf_isolines(
     face: &Face,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     deflection: f64,
     routes: (usize, usize),
     polylines: &mut WfPresentationPolylines,
@@ -163,14 +163,16 @@ fn emit_wf_iso_groups(
     drawer: &Prs3dDrawer,
     polylines: &mut WfPresentationPolylines,
 ) -> Result<(), Failure> {
-    Prs3d::add_primitives_group(
+    let u_aspect = drawer.u_iso_aspect();
+    Prs3d::add_primitives_group_with_line(
         &prs.observe(),
-        &drawer.u_iso_aspect().cast(),
+        u_aspect.get().map(|iso| iso.line_aspect()),
         &mut polylines[WF_ISO_U],
     )?;
-    Prs3d::add_primitives_group(
+    let v_aspect = drawer.v_iso_aspect();
+    Prs3d::add_primitives_group_with_line(
         &prs.observe(),
-        &drawer.v_iso_aspect().cast(),
+        v_aspect.get().map(|iso| iso.line_aspect()),
         &mut polylines[WF_ISO_V],
     )
 }
@@ -188,7 +190,7 @@ fn wf_boundary_route(
 }
 fn append_wf_boundary_groups(
     shape: &Shape,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
     deflection: f64,
     polylines: &mut WfPresentationPolylines,
 ) -> Result<(), Failure> {

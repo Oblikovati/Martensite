@@ -81,7 +81,7 @@ step_entity! {
     /// Product definition reference with local representation.
     StepBasicProductDefinitionReferenceWithLocalRepresentation, StepBasicProductDefinitionReferenceWithLocalRepresentationState, "StepBasicProductDefinitionReferenceWithLocalRepresentation", StepBasicProductDefinition, {
         my_source: Handle<StepBasicExternalSource>,
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinition]
 }
 impl StepBasicProductDefinitionReferenceWithLocalRepresentation {
     step_methods! {
@@ -94,8 +94,10 @@ impl StepBasicProductDefinitionReferenceWithLocalRepresentation {
         the_source: &Handle<StepBasicExternalSource>,
         the_id: &Handle<HAsciiString>,
         the_description: &Handle<HAsciiString>,
-        the_formation: &Handle<StepBasicProductDefinitionFormation>,
-        the_frame_of_reference: &Handle<StepBasicProductDefinitionContext>,
+        the_formation: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
+        the_frame_of_reference: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinitionContext>,
+        >,
     ) {
         self.parent.init(
             the_id,
@@ -116,7 +118,7 @@ step_entity! {
         the_relating_product_definition: StepBasicProductDefinitionOrReference,
         the_related_product_definition: StepBasicProductDefinitionOrReference,
         def_description: bool,
-    }
+    }, bases: [crate::step_basic::StepBasicProductDefinitionRelationship]
 }
 impl StepBasicProductDefinitionRelationship {
     step_methods! {
@@ -141,8 +143,12 @@ impl StepBasicProductDefinitionRelationship {
         a_name: &Handle<HAsciiString>,
         has_description: bool,
         a_description: &Handle<HAsciiString>,
-        a_relating_product_definition: &Handle<StepBasicProductDefinition>,
-        a_related_product_definition: &Handle<StepBasicProductDefinition>,
+        a_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
+        a_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
     ) -> Result<(), Failure> {
         let mut state = self.state.write();
         state.the_id = a_id.clone();
@@ -186,7 +192,9 @@ impl StepBasicProductDefinitionRelationship {
     }
     /// `relating_product_definition`.
     /// Returns field RelatingProductDefinition
-    pub fn relating_product_definition(&self) -> Handle<StepBasicProductDefinition> {
+    pub fn relating_product_definition(
+        &self,
+    ) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> {
         let field_the_relating_product_definition =
             self.state.read().the_relating_product_definition.clone();
         field_the_relating_product_definition.product_definition()
@@ -198,7 +206,9 @@ impl StepBasicProductDefinitionRelationship {
     /// The null dereference or array index failure.
     pub fn set_relating_product_definition(
         &self,
-        a_relating_product_definition: &Handle<StepBasicProductDefinition>,
+        a_relating_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
     ) -> Result<(), Failure> {
         self.state
             .write()
@@ -216,7 +226,9 @@ impl StepBasicProductDefinitionRelationship {
     }
     /// `related_product_definition`.
     /// Returns field RelatedProductDefinition
-    pub fn related_product_definition(&self) -> Handle<StepBasicProductDefinition> {
+    pub fn related_product_definition(
+        &self,
+    ) -> Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>> {
         let field_the_related_product_definition =
             self.state.read().the_related_product_definition.clone();
         field_the_related_product_definition.product_definition()
@@ -228,7 +240,9 @@ impl StepBasicProductDefinitionRelationship {
     /// The null dereference or array index failure.
     pub fn set_related_product_definition(
         &self,
-        a_related_product_definition: &Handle<StepBasicProductDefinition>,
+        a_related_product_definition: &Handle<
+            dyn crate::StepEntityBase<StepBasicProductDefinition>,
+        >,
     ) -> Result<(), Failure> {
         self.state
             .write()
@@ -249,24 +263,24 @@ impl StepBasicProductDefinitionRelationship {
 step_entity! {
     /// Product definition with associated documents.
     StepBasicProductDefinitionWithAssociatedDocuments, StepBasicProductDefinitionWithAssociatedDocumentsState, "StepBasicProductDefinitionWithAssociatedDocuments", StepBasicProductDefinition, {
-        the_doc_ids: Handle<HArray1<Handle<StepBasicDocument>>>,
-    }
+        the_doc_ids: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>>,
+    }, bases: [crate::step_basic::StepBasicProductDefinition]
 }
 impl StepBasicProductDefinitionWithAssociatedDocuments {
     step_methods! {
-        get doc_ids = the_doc_ids: Handle<HArray1<Handle<StepBasicDocument>>>;
-        set set_doc_ids = the_doc_ids: Handle<HArray1<Handle<StepBasicDocument>>>;
+        get doc_ids = the_doc_ids: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>>;
+        set set_doc_ids = the_doc_ids: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>>;
         len nb_doc_ids = the_doc_ids;
-        item doc_ids_value = the_doc_ids: Handle<StepBasicDocument>;
+        item doc_ids_value = the_doc_ids: Handle<dyn crate::StepEntityBase<StepBasicDocument>>;
     }
     /// `init`.
     pub fn init(
         &self,
         a_id: &Handle<HAsciiString>,
         a_description: &Handle<HAsciiString>,
-        a_formation: &Handle<StepBasicProductDefinitionFormation>,
-        a_frame: &Handle<StepBasicProductDefinitionContext>,
-        a_doc_ids: &Handle<HArray1<Handle<StepBasicDocument>>>,
+        a_formation: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionFormation>>,
+        a_frame: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinitionContext>>,
+        a_doc_ids: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepBasicDocument>>>>,
     ) {
         self.parent.init(a_id, a_description, a_formation, a_frame);
         self.state.write().the_doc_ids = a_doc_ids.clone();
@@ -278,7 +292,7 @@ impl StepBasicProductDefinitionWithAssociatedDocuments {
     pub fn set_doc_ids_value(
         &self,
         num: i32,
-        adoc: &Handle<StepBasicDocument>,
+        adoc: &Handle<dyn crate::StepEntityBase<StepBasicDocument>>,
     ) -> Result<(), Failure> {
         let field_the_doc_ids = self.state.read().the_doc_ids.clone();
         step_array1_set(
@@ -295,7 +309,7 @@ step_entity! {
     /// Product related product category.
     StepBasicProductRelatedProductCategory, StepBasicProductRelatedProductCategoryState, "StepBasicProductRelatedProductCategory", StepBasicProductCategory, {
         products: Handle<HArray1<Handle<StepBasicProduct>>>,
-    }
+    }, bases: [crate::step_basic::StepBasicProductCategory, crate::step_basic::StepBasicProductRelatedProductCategory]
 }
 impl StepBasicProductRelatedProductCategory {
     step_methods! {
@@ -320,19 +334,19 @@ impl StepBasicProductRelatedProductCategory {
 step_entity! {
     /// Product type.
     StepBasicProductType, StepBasicProductTypeState, "StepBasicProductType", StepBasicProductRelatedProductCategory, {
-    }
+    }, bases: [crate::step_basic::StepBasicProductRelatedProductCategory]
 }
 
 step_entity! {
     /// Ratio measure with unit.
     StepBasicRatioMeasureWithUnit, StepBasicRatioMeasureWithUnitState, "StepBasicRatioMeasureWithUnit", StepBasicMeasureWithUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicMeasureWithUnit]
 }
 
 step_entity! {
     /// Ratio unit.
     StepBasicRatioUnit, StepBasicRatioUnitState, "StepBasicRatioUnit", StepBasicNamedUnit, {
-    }
+    }, bases: [crate::step_basic::StepBasicNamedUnit]
 }
 
 step_entity! {

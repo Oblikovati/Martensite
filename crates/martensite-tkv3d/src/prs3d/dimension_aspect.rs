@@ -7,7 +7,7 @@ use super::{
 };
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::aspect::AspectTypeOfLine;
 use martensite_tkservice::graphic3d::{
@@ -77,10 +77,9 @@ struct Prs3dDimensionState {
 ///
 /// Example: `let dim = Prs3dDimensionAspect::new()?; dim.set_common_color(red);`.
 pub struct Prs3dDimensionAspect {
-    transient: StandardTransient,
     state: SharedState<Prs3dDimensionState>,
 }
-martensite_tkernel::impl_transient!(Prs3dDimensionAspect, "Prs3dDimensionAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dDimensionAspect, "Prs3dDimensionAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 /// The lawn green, non-zoomable, centered text of the default dimension aspect.
@@ -129,7 +128,6 @@ impl Prs3dDimensionAspect {
             is_arrows_3d: false,
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }

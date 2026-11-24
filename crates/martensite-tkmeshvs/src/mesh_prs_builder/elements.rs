@@ -145,10 +145,10 @@ pub fn meshvs_mesh_prs_build_elements<B: MeshVSMeshPrsBuilderSource + ?Sized>(
         fill_value.set_edge_color(Color::named(NamedColor::BLACK));
     }
     let draw = super::draw_arrays::DrawArraysInput {
-        polygons: arrays.face_triangles.clone().cast(),
-        lines: arrays.edge_segments.clone().cast(),
-        link_lines: arrays.link_segments.clone().cast(),
-        volumes_in_shad: arrays.volume_triangles.clone().cast(),
+        polygons: arrays.face_triangles.upcast(),
+        lines: arrays.edge_segments.upcast(),
+        link_lines: arrays.link_segments.upcast(),
+        volumes_in_shad: arrays.volume_triangles.upcast(),
         is_polygons_edges_off: !settings.show_edges,
         is_selected: settings.has_select,
     };
@@ -358,7 +358,7 @@ impl ElementPass<'_> {
                 &topo,
                 element.coords,
                 nb_nodes,
-                &self.arrays.edge_segments.clone().cast(),
+                &self.arrays.edge_segments,
                 s.is_reflect,
                 s.is_shrink,
                 s.has_select,
@@ -370,7 +370,7 @@ impl ElementPass<'_> {
                 &topo,
                 element.coords,
                 nb_nodes,
-                &self.arrays.volume_triangles.clone().cast(),
+                &self.arrays.volume_triangles,
                 s.is_reflect,
                 s.is_shrink,
                 s.has_select,

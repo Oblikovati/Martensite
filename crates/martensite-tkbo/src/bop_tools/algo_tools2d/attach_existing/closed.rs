@@ -110,7 +110,7 @@ fn translated_pcurve(
     let trimmed: Handle<dyn Geom2dCurve> = Handle::new(Geom2dTrimmedCurve::new(
         &copy, range.0, range.1, true, true,
     )?)
-    .cast();
+    .into_upcast();
     trimmed.translate(translation)?;
     Ok(trimmed)
 }

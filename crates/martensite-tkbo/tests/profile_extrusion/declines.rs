@@ -47,16 +47,7 @@ fn dangling_branch_is_an_open_profile() {
 
 #[test]
 fn self_intersecting_bow_tie_names_both_curves_and_the_crossing() {
-    let profile = SketchFixture::new()
-        .vertex(0, [0., 0.])
-        .vertex(1, [2., 2.])
-        .vertex(2, [2., 0.])
-        .vertex(3, [0., 2.])
-        .line(10, 0, 1)
-        .line(11, 1, 2)
-        .line(12, 2, 3)
-        .line(13, 3, 0)
-        .build();
+    let profile = bow_tie();
     let decline = declined(&profile, resolution());
     assert_eq!(decline.stage, OperationStage::Certification);
     let expected = DeclineCause::SelfIntersecting {

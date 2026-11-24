@@ -25,13 +25,14 @@ static LABELS: TableLabels = TableLabels {
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 /// use martensite_tkmath::gp::Axis3;
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let mut set = BinSurfaceSet::new();
 /// assert_eq!(set.add(&plane), 1);
 /// assert!(set.surface(1).unwrap() == plane);
 /// ```
 pub struct BinSurfaceSet {
     frame_policy: SurfaceFrameReadPolicy,
+    curve_policy: super::CurveFrameReadPolicy,
     table: HandleTable<dyn GeomSurface>,
 }
 
@@ -51,6 +52,7 @@ impl BinSurfaceSet {
     pub fn with_surface_frame_policy(frame_policy: SurfaceFrameReadPolicy) -> Self {
         Self {
             frame_policy,
+            curve_policy: super::CurveFrameReadPolicy::LegacyReplay,
             table: HandleTable::new("BinTools_SurfaceSet"),
         }
     }
@@ -104,9 +106,14 @@ impl BinSurfaceSet {
         progress: &ProgressRange<'_>,
     ) -> Result<(), Failure> {
         let policy = self.frame_policy;
+        let curve_policy = self.curve_policy;
         let table = &mut self.table;
         read_table(stream, progress, &LABELS, |stream| {
-            table.add(&Self::read_surface_with_frame_policy(stream, policy)?);
+            table.add(&Self::read_surface_with_geometry_policies(
+                stream,
+                policy,
+                curve_policy,
+            )?);
             Ok(())
         })
     }
@@ -129,5 +136,25 @@ impl BinSurfaceSet {
         policy: SurfaceFrameReadPolicy,
     ) -> Result<Handle<dyn GeomSurface>, Failure> {
         surface_read::read_surface_with_frame_policy(stream, policy)
+    }
+    /// Creates a surface table with explicit embedded-curve semantics (#455).
+    /// `BinSurfaceSet::with_geometry_read_policies(surface, curve)`.
+    pub fn with_geometry_read_policies(
+        surface: SurfaceFrameReadPolicy,
+        curve: super::CurveFrameReadPolicy,
+    ) -> Self {
+        Self {
+            curve_policy: curve,
+            ..Self::with_surface_frame_policy(surface)
+        }
+    }
+    /// Reads a surface and embedded curves with explicit semantics (#455).
+    /// `BinSurfaceSet::read_surface_with_geometry_policies(&mut stream, surface, curve)?`.
+    pub fn read_surface_with_geometry_policies(
+        stream: &mut IoStream,
+        surface: SurfaceFrameReadPolicy,
+        curve: super::CurveFrameReadPolicy,
+    ) -> Result<Handle<dyn GeomSurface>, Failure> {
+        surface_read::read_surface_with_geometry_policies(stream, surface, curve)
     }
 }

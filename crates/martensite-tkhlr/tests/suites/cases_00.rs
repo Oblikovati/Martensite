@@ -91,3 +91,6 @@ pub mod tangent_outputs;
 pub mod top_cnx_behavior;
 #[path = "../walking_record_numeric.rs"]
 pub mod walking_record_numeric;
+
+#[path = "../rust_object_owners.rs"]
+pub mod rust_object_owners;

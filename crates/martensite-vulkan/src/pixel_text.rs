@@ -56,6 +56,7 @@ fn pixel_text_transform(view: &PixelTextView) -> TextTransform {
         viewport: [0, 0, 1, 1],
         pixel_coordinates: true,
         zoomable_scale: 1.,
+        unview: Default::default(),
     }
 }
 

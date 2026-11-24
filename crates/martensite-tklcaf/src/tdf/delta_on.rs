@@ -6,7 +6,7 @@ use crate::live;
 use martensite_tkcdf::json_dump::{base_class, class_begin};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Failure, Handle, StandardTransient, dump::DumpStream},
+    standard::{Failure, Handle, dump::DumpStream},
 };
 use std::io;
 
@@ -15,15 +15,13 @@ macro_rules! concrete_delta {
     ($(#[$doc:meta])* $name:ident, $type_name:literal, $parent:ty, interfaces: [$($interface:ty),*]) => {
         $(#[$doc])*
         pub struct $name {
-            transient: StandardTransient,
             base: TdfAttributeDeltaBase,
         }
-        impl_transient!($name, $type_name, $parent, transient, interfaces: [dyn TdfAttributeDelta $(, $interface)*]);
+        impl_transient!($name, $type_name, $parent, interfaces: [dyn TdfAttributeDelta $(, $interface)*]);
         impl $name {
             /// The constructor `(anAttribute)`, already in its bound handle.
             pub fn new(attribute: &Handle<dyn TdfAttribute>) -> Handle<Self> {
                 TdfAttributeDeltaBase::share(Self {
-                    transient: StandardTransient::default(),
                     base: TdfAttributeDeltaBase::new(attribute),
                 })
             }
@@ -93,7 +91,8 @@ pub trait TdfDeltaOnRemoval: TdfAttributeDelta {}
 impl_transient_interface!(
     dyn TdfDeltaOnRemoval,
     "TDF_DeltaOnRemoval",
-    dyn TdfAttributeDelta
+    dyn TdfAttributeDelta,
+    upcasts: [dyn TdfAttributeDelta]
 );
 
 /// `TDF_DeltaOnModification`: the delta of a modified attribute (its constructor is
@@ -105,7 +104,7 @@ pub trait TdfDeltaOnModification: TdfAttributeDelta {
         let this = self
             .attribute_delta_base()
             .this()?
-            .cast::<dyn TdfDeltaOnModification>();
+            .into_cast::<dyn TdfDeltaOnModification>();
         live(&self.attribute(), "TDF_DeltaOnModification::Apply")?
             .apply_delta_on_modification(&this)
     }
@@ -113,7 +112,8 @@ pub trait TdfDeltaOnModification: TdfAttributeDelta {
 impl_transient_interface!(
     dyn TdfDeltaOnModification,
     "TDF_DeltaOnModification",
-    dyn TdfAttributeDelta
+    dyn TdfAttributeDelta,
+    upcasts: [dyn TdfAttributeDelta]
 );
 
 concrete_delta!(
@@ -152,7 +152,7 @@ impl TdfAttributeDelta for TdfDefaultDeltaOnModification {
         let this = self
             .attribute_delta_base()
             .this()?
-            .cast::<dyn TdfDeltaOnModification>();
+            .into_cast::<dyn TdfDeltaOnModification>();
         live(&current, "TDF_DefaultDeltaOnModification::Apply")?.apply_delta_on_modification(&this)
     }
 }

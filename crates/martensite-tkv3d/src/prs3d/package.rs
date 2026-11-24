@@ -9,7 +9,7 @@ use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::gp::{Point3, Transform3};
 use martensite_tkmath::poly::{Connect, Triangulation};
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfPrimitives, Graphic3dArrayOfSegments, Graphic3dGroupMembers as _,
+    Graphic3dArrayOfSegments, Graphic3dArraySource, Graphic3dGroupMembers as _,
     Graphic3dStructureMembers as _, Graphic3dStructureSource,
 };
 
@@ -93,7 +93,7 @@ impl Prs3d {
     /// Example: `Prs3d::primitives_from_polylines(&polylines)?`.
     pub fn primitives_from_polylines(
         points: &List<Handle<HSequence<Point3>>>,
-    ) -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
+    ) -> Result<Handle<dyn Graphic3dArraySource>, Failure> {
         if points.is_empty() {
             return Ok(Handle::default());
         }
@@ -103,7 +103,7 @@ impl Prs3d {
         for polyline in points.iter() {
             polyline.sequence(|sequence| add_polyline(&segments, sequence))?;
         }
-        Ok(Handle::new(segments).cast())
+        Ok(Handle::new(segments).into_upcast())
     }
     /// `AddPrimitivesGroup`: a new group of the polylines with a line aspect; clears the list.
     /// Example: `Prs3d::add_primitives_group(&prs, &aspect, &mut polylines)?`.
@@ -112,9 +112,16 @@ impl Prs3d {
         aspect: &Handle<Prs3dLineAspect>,
         polylines: &mut List<Handle<HSequence<Point3>>>,
     ) -> Result<(), Failure> {
+        Self::add_primitives_group_with_line(prs, aspect.get(), polylines)
+    }
+    pub(crate) fn add_primitives_group_with_line(
+        prs: &Handle<dyn Graphic3dStructureSource>,
+        line: Option<&Prs3dLineAspect>,
+        polylines: &mut List<Handle<HSequence<Point3>>>,
+    ) -> Result<(), Failure> {
         let primitives = Self::primitives_from_polylines(polylines)?;
         polylines.clear();
-        let (Some(structure), Some(line)) = (prs.get(), aspect.get()) else {
+        let (Some(structure), Some(line)) = (prs.get(), line) else {
             return Ok(());
         };
         if primitives.is_null() {
@@ -196,7 +203,7 @@ fn free_edge_nodes(
 fn add_borrowed_line_primitives(
     structure: &dyn Graphic3dStructureSource,
     line: &Prs3dLineAspect,
-    primitives: &Handle<Graphic3dArrayOfPrimitives>,
+    primitives: &Handle<dyn Graphic3dArraySource>,
 ) -> Result<(), Failure> {
     let group = structure.new_group()?;
     let Some(group) = group.get() else {

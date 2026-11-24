@@ -14,7 +14,7 @@ pub(super) type LawHandle = Handle<dyn LawFunction>;
 pub(super) fn constant(radius: f64, first: f64, last: f64) -> LawHandle {
     let law = LawConstant::new();
     law.set(radius, first, last);
-    Handle::new(law).cast()
+    Handle::new(law).into_upcast()
 }
 
 /// The span and end radii of one `mklaw` call: `[start, end]`, with a negative radius
@@ -138,7 +138,7 @@ fn law_without_pairs(span: Span) -> Result<LawHandle, Failure> {
     }
     let law = LawS::new();
     law.set(span.start, span.start_radius, span.end, span.end_radius)?;
-    Ok(Handle::new(law).cast())
+    Ok(Handle::new(law).into_upcast())
 }
 
 /// The native exchange sort: each pair swapped with every later smaller abscissa.
@@ -178,7 +178,7 @@ fn interpolated(points: &[Xy]) -> Result<LawHandle, Failure> {
     let tpr = Array1::from_slice(&mut buffer);
     let law = LawInterpol::new();
     law.set_with_tangents(&tpr, 0., 0., false)?;
-    Ok(Handle::new(law).cast())
+    Ok(Handle::new(law).into_upcast())
 }
 
 /// A periodic `LawInterpol` through `points` (`Set(pr, true)`).
@@ -190,5 +190,5 @@ pub(super) fn periodic_interpolated(points: &[Xy]) -> Result<LawHandle, Failure>
     let pr = Array1::from_slice(&mut buffer);
     let law = LawInterpol::new();
     law.set(&pr, true)?;
-    Ok(Handle::new(law).cast())
+    Ok(Handle::new(law).into_upcast())
 }

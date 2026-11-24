@@ -1,0 +1,43 @@
+{
+  "status": "source_frozen",
+  "frozen_utc": "2026-11-18T16:10:20.651840+00:00",
+  "owned_source_hashes": {
+    "scripts/build/src/thread_sanitizer.rs": "6d8895a60167055620827b4a0543cffd4958768a5bf7c86ca5323207b61c863e",
+    "scripts/build/src/thread_sanitizer_selection.rs": "7abd2613d98bbbf911692ce33b7affbf320a5b99e9a2e81d363b811e0e5b8178",
+    "scripts/build/src/thread_sanitizer_tests.rs": "7af11642dad7858958f9c8db115007f407d7ea52644ab0d6dc111180b69656fa",
+    "scripts/build/src/thread_sanitizer_wrapped_tests.rs": "d72cce4f73d494fd35eb376214228a829027a6fd20ec207c4f8faa555af8c9a0",
+    "scripts/build/src/thread_sanitizer_cone_tests.rs": "39426f9a180756a6b0ccd7e8003189ab610d0aa63336a4fe9a667c02239ebe35",
+    "scripts/build/src/inventory_impact.rs": "44f4d81abff27edd113df5dd704c4503ad1976e9ac282098a7015118d8bc7097",
+    "scripts/build/src/pr_inventory_tests.rs": "c2bb363fd6d2d131d2312406a0e5a8f93f9e46495d68c5eb7f6d212384d418cf"
+  },
+  "ordinary_driver_tests": {
+    "session": 57740,
+    "log": "/tmp/martensite-cone-tsan-driver-tests.log",
+    "exit_file": "/tmp/martensite-cone-tsan-driver-tests.exit",
+    "passed": 46,
+    "failed": 0,
+    "ignored": 0
+  },
+  "ordinary_inventory_tests": {
+    "session": 72984,
+    "log": "/tmp/martensite-cone-tsan-inventory-tests.log",
+    "exit_file": "/tmp/martensite-cone-tsan-inventory-tests.exit",
+    "passed": 9,
+    "failed": 0,
+    "ignored": 0
+  },
+  "startup_only_attempt": {
+    "session": 99920,
+    "receipt": "/tmp/martensite-cone-tsan-startup-receipt.json",
+    "exit": 139,
+    "instrumented_operation_controls_run": false,
+    "cleanup_receipt": "/tmp/martensite-cone-tsan-startup-cleanup-receipt.json"
+  },
+  "fmt_check": "passed seven owned files",
+  "diff_check": "passed scripts/build",
+  "required_peer_sources": [
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests/completed.rs",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests/completed/concurrency.rs"
+  ],
+  "plan": "/tmp/martensite-cone-tsan-plan.md"
+}

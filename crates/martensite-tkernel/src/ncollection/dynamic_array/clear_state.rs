@@ -11,7 +11,7 @@ use raw_block::ClearRawBlock;
 /// no complete-cleanup claim. Complete the clear or repair ended slots before extraction.
 /// Original payload addresses are retained. Receiver addresses and descriptor contents are not:
 /// the retained descriptor allocation contains empty placeholders during this explicit protocol.
-pub struct DynamicArrayClearState<T> {
+pub(crate) struct DynamicArrayClearState<T> {
     backbone: DynamicArray<T>,
     raw_blocks: Vec<ClearRawBlock<T>>,
     used: usize,
@@ -37,20 +37,20 @@ impl<T> DynamicArrayClearState<T> {
         }
     }
     /// Reads the protocol's logical size, including dead slots; `state.size()`.
-    pub fn size(&self) -> usize {
+    pub(crate) fn size(&self) -> usize {
         self.used
     }
     /// Reads retained payload block count; `assert_eq!(state.block_count(), 3);`.
-    pub fn block_count(&self) -> usize {
+    pub(crate) fn block_count(&self) -> usize {
         self.raw_blocks.len()
     }
     /// Reports exactly the slots needing reconstruction; `assert_eq!(state.dead_slots(), 0..2);`.
-    pub fn dead_slots(&self) -> Range<usize> {
+    pub(crate) fn dead_slots(&self) -> Range<usize> {
         self.repaired..self.ended
     }
     /// Borrows one proven live logical slot without constructing any whole initialized slice.
     /// `assert!(state.live_value(0).is_none());` after slot0 destruction.
-    pub fn live_value(&self, index: usize) -> Option<&T> {
+    pub(crate) fn live_value(&self, index: usize) -> Option<&T> {
         if index >= self.used || self.dead_slots().contains(&index) {
             return None;
         }
@@ -72,7 +72,7 @@ impl<T> DynamicArrayClearState<T> {
     /// only this state's logical metadata. Reentrant original-receiver/descriptor observers are
     /// unsupported. Allocator release must not unwind. A zero stride intentionally invokes no
     /// destructors and abandons their cleanup obligations.
-    pub unsafe fn clear_with_destruction(
+    pub(crate) unsafe fn clear_with_destruction(
         &mut self,
         release: bool,
         mut destroy: impl FnMut(*mut T, &usize),
@@ -113,7 +113,7 @@ impl<T> DynamicArrayClearState<T> {
     /// Reconstructs only dead slots; `state.repair_destroyed_with(|index| index as i32)`.
     /// Constructor panic preserves completed writes and the remaining hole range. It propagates
     /// its original payload unchanged. The new T is fully constructed before any slot write.
-    pub fn repair_destroyed_with(&mut self, mut construct: impl FnMut(usize) -> T) {
+    pub(crate) fn repair_destroyed_with(&mut self, mut construct: impl FnMut(usize) -> T) {
         while self.repaired < self.ended {
             let index = self.repaired;
             let (block, offset) = self.backbone.element_coordinates(index);
@@ -126,7 +126,7 @@ impl<T> DynamicArrayClearState<T> {
     }
     /// Restores an ordinary array only when all holes are repaired, or Clear completed.
     /// `let array = state.try_into_array();` returns the unchanged state while holes remain.
-    pub fn try_into_array(mut self) -> Result<DynamicArray<T>, Self> {
+    pub(crate) fn try_into_array(mut self) -> Result<DynamicArray<T>, Self> {
         if !self.dead_slots().is_empty() {
             return Err(self);
         }

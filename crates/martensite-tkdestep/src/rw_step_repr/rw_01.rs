@@ -110,7 +110,7 @@ impl RwStepReprRwAssemblyComponentUsage {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &Handle<InterfaceCheck>,
-        ent: &Handle<StepReprAssemblyComponentUsage>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>>,
     ) -> Result<(), Failure> {
         if !data.check_nb_params(num, 6, ach, "assembly_component_usage")? {
             return Ok(());
@@ -208,7 +208,7 @@ impl RwStepReprRwAssemblyComponentUsage {
     pub fn write_step(
         &self,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StepReprAssemblyComponentUsage>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>>,
     ) -> Result<(), Failure> {
         rw_block_0097!(ent, sw);
         if ent.has_reference_designator() {
@@ -221,7 +221,7 @@ impl RwStepReprRwAssemblyComponentUsage {
     /// `share`.
     pub fn share(
         &self,
-        ent: &Handle<StepReprAssemblyComponentUsage>,
+        ent: &Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         iter.add_item(
@@ -257,7 +257,8 @@ impl RwStepReprRwAssemblyComponentUsageSubstitute {
         if data.is_param_defined(num, 2)? {
             data.read_string(num, 2, "definition", ach, &mut a_def)?;
         }
-        let mut a_base: Handle<StepReprAssemblyComponentUsage> = Default::default();
+        let mut a_base: Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>> =
+            Default::default();
         data.read_entity(
             num,
             3,
@@ -266,7 +267,8 @@ impl RwStepReprRwAssemblyComponentUsageSubstitute {
             StepReprAssemblyComponentUsage::static_type(),
             &mut a_base,
         )?;
-        let mut a_subs: Handle<StepReprAssemblyComponentUsage> = Default::default();
+        let mut a_subs: Handle<dyn crate::StepEntityBase<StepReprAssemblyComponentUsage>> =
+            Default::default();
         data.read_entity(
             num,
             4,

@@ -1,14 +1,17 @@
 //! Declared parent aliases retain inherited dispatch and allocation identity.
 use crate::object_model_document::ObjectFixture;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{
+    Handle, HandleUpcast, RuntimeTyped, Transient, TransientHandleTarget,
+};
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeState};
 use martensite_tktobj::object_model::*;
 
-fn parent_roundtrip<T: RuntimeTyped + ?Sized, B: Transient + RuntimeTyped + ?Sized>(
-    source: &Handle<T>,
-    parent_name: &str,
-) -> Handle<B> {
-    let base = source.cast::<B>();
+fn parent_roundtrip<T, B>(source: &Handle<T>, parent_name: &str) -> Handle<B>
+where
+    T: RuntimeTyped + TransientHandleTarget + HandleUpcast<B> + ?Sized,
+    B: Transient + RuntimeTyped + TransientHandleTarget + ?Sized,
+{
+    let base = source.upcast::<B>();
     assert!(!base.is_null());
     assert_eq!(B::static_type().name(), parent_name);
     assert!(std::ptr::eq(
@@ -34,7 +37,7 @@ fn application_parent_alias_preserves_resources_virtual_dispatch() {
 #[test]
 fn partition_parent_aliases_preserve_object_and_partition_dispatch() {
     let fixture = ObjectFixture::set_up();
-    let partition = fixture.my_partition.cast::<StandardPartition>();
+    let partition = fixture.my_partition.downcast::<StandardPartition>();
     let base = parent_roundtrip::<_, ModelPartitionParent>(
         &partition,
         "martensite_object_model_ModelObject",
@@ -54,7 +57,7 @@ fn partition_parent_aliases_preserve_object_and_partition_dispatch() {
 fn sequence_parent_alias_exposes_live_inherited_iterator_state() {
     let fixture = ObjectFixture::set_up();
     let objects = Handle::new(BackReferences::default());
-    objects.append(fixture.my_partition.cast());
+    objects.append(fixture.my_partition.upcast());
     let iterator = Handle::new(TypedSequenceIterator::new(&objects, None));
     let base = parent_roundtrip::<_, TypedSequenceIteratorParent>(
         &iterator,
@@ -69,7 +72,7 @@ fn sequence_parent_alias_exposes_live_inherited_iterator_state() {
 #[test]
 fn model_and_label_parent_aliases_share_virtual_iteration() {
     let fixture = ObjectFixture::set_up();
-    let iterator = ModelIterator::new(&fixture.my_model().clone().cast()).unwrap();
+    let iterator = ModelIterator::new(&fixture.my_model().upcast()).unwrap();
     let base = parent_roundtrip::<_, ModelIteratorParent>(
         &iterator,
         "martensite_object_model_ObjectIterator",
@@ -89,8 +92,8 @@ fn check_label_parent_alias(
         &iterator,
         "martensite_object_model_LabelIterator",
     );
-    let inherited: Handle<LabelIteratorParent> = label_base.cast();
-    assert!(inherited.cast::<ObjectTreeIterator>() == iterator);
+    let inherited: Handle<LabelIteratorParent> = label_base.upcast();
+    assert!(inherited.downcast::<ObjectTreeIterator>() == iterator);
     let borrowed: &LabelIteratorParent = label_base.get().unwrap();
     assert_eq!(
         <LabelIteratorParent>::static_type().name(),
@@ -107,7 +110,7 @@ fn reference_parent_alias_preserves_inherited_label_and_value() {
     let holder = fixture.command(|| {
         let holder = fixture.create_object();
         holder
-            .set_reference(&fixture.my_partition.cast(), 1, 0)
+            .set_reference(&fixture.my_partition.upcast(), 1, 0)
             .unwrap();
         holder
     });
@@ -122,9 +125,11 @@ fn reference_parent_alias_preserves_inherited_label_and_value() {
     assert_eq!(base.label_value(), borrowed.label_value());
     assert!(base.value() == fixture.my_partition);
 }
-fn attribute_parent<T: RuntimeTyped + TdfAttribute, B: RuntimeTyped + TdfAttribute + ?Sized>(
-    attribute: T,
-) {
+fn attribute_parent<T, B>(attribute: T)
+where
+    T: RuntimeTyped + TdfAttribute + HandleUpcast<B>,
+    B: RuntimeTyped + TdfAttribute + TransientHandleTarget + ?Sized,
+{
     let attribute = Handle::new(attribute);
     let base = parent_roundtrip::<_, B>(&attribute, "TDF_Attribute");
     let borrowed: &B = base.get().unwrap();
@@ -156,6 +161,12 @@ fn checker_algorithm_alias_preserves_borrowed_dynamic_type_and_shared_status() {
         borrowed.dynamic_type(),
         ModelIntegrityCheck::static_type()
     ));
+    assert!(std::ptr::addr_eq(base.get().unwrap(), borrowed));
+    assert_eq!(base.object_address(), checker.object_address());
+    assert!(
+        base.downcast_ref::<martensite_tkernel::message::Algorithm>()
+            .is_none()
+    );
     borrowed.set_status(Status::WARN1);
     assert!(base.get_status().is_set(Status::WARN1));
     assert!(!checker.perform().unwrap());

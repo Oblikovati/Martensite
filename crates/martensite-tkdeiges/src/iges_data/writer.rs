@@ -1,13 +1,16 @@
 //! The making of an IGES file from a model: the sections, the parameters sent by the modules.
 use super::writer_directory::directory_values;
 use super::{
-    IgesDataDirPart, IgesDataGlobalSection, IgesDataIgesEntity, IgesDataIgesModel,
-    IgesDataProtocolOps, IgesDataReadStage, IgesDataTextLines, IgesDataUndefinedEntity,
-    IgesDataWriterLib, iges_entity_of,
+    IgesDataDirPart, IgesDataGlobalSection, IgesDataIgesModel, IgesDataProtocolOps,
+    IgesDataReadStage, IgesDataTextLines, IgesDataWriterLib, iges_entity_of,
 };
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::IgesDataUndefinedEntitySource;
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     message::{Gravity, Message},
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::interface::{
@@ -140,10 +143,10 @@ impl IgesDataIgesWriter {
         let cnt = content_of(live, i, &ent);
         self.dir_part(&cnt)?;
         self.own_params(&ent)?;
-        let content: Handle<StandardTransient> = cnt.cast();
+        let content: Handle<dyn Transient> = cnt.cast();
         if let Some((module, cn)) = lib.select(&content) {
             super::iges_live(&module, "IGES writer")?.write_own_params(cn, &cnt, self)?;
-        } else if let Some(undefined) = cnt.cast::<IgesDataUndefinedEntity>().get() {
+        } else if let Some(undefined) = cnt.cast::<dyn IgesDataUndefinedEntitySource>().get() {
             undefined.write_own_params(self)?;
         } else if let Some(entity) = cnt.get() {
             Message::send_text(
@@ -237,7 +240,10 @@ impl IgesDataIgesWriter {
     ///
     /// # Errors
     /// An interface failure out of the order of the sections.
-    pub fn dir_part<T: ?Sized + RuntimeTyped>(&mut self, anent: &Handle<T>) -> Result<(), Failure> {
+    pub fn dir_part<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &mut self,
+        anent: &Handle<T>,
+    ) -> Result<(), Failure> {
         self.check_stage(IgesDataReadStage::ReadEnd, "DirPart")?;
         let entity = iges_entity_of(anent);
         let model = self.themodel.clone();
@@ -259,7 +265,7 @@ impl IgesDataIgesWriter {
     ///
     /// # Errors
     /// An interface failure out of the order of the sections, a failure of the line buffer.
-    pub fn own_params<T: ?Sized + RuntimeTyped>(
+    pub fn own_params<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &mut self,
         anent: &Handle<T>,
     ) -> Result<(), Failure> {
@@ -282,7 +288,7 @@ impl IgesDataIgesWriter {
         self.thecurr.clear()?;
         let text = entity
             .get()
-            .map_or(0, IgesDataIgesEntity::type_number)
+            .map_or(0, |entity| entity.type_number())
             .to_string();
         self.add_bytes(text.as_bytes(), 0)?;
         self.thestep = IgesDataReadStage::ReadOwn;
@@ -292,7 +298,7 @@ impl IgesDataIgesWriter {
     ///
     /// # Errors
     /// An interface failure out of the order of the sections, a failure of the line buffer.
-    pub fn properties<T: ?Sized + RuntimeTyped>(
+    pub fn properties<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &mut self,
         anent: &Handle<T>,
     ) -> Result<(), Failure> {
@@ -312,7 +318,7 @@ impl IgesDataIgesWriter {
     ///
     /// # Errors
     /// An interface failure out of the order of the sections, a failure of the line buffer.
-    pub fn associativities<T: ?Sized + RuntimeTyped>(
+    pub fn associativities<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &mut self,
         anent: &Handle<T>,
     ) -> Result<(), Failure> {
@@ -334,7 +340,7 @@ impl IgesDataIgesWriter {
     ) -> Result<(), Failure> {
         iter.start();
         while iter.more() {
-            self.send_entity(&iter.value()?.cast::<IgesDataIgesEntity>(), false)?;
+            self.send_entity(&iter.value()?.cast::<dyn IgesDataEntityKind>(), false)?;
             iter.next();
         }
         Ok(())
@@ -437,7 +443,7 @@ impl IgesDataIgesWriter {
     ///
     /// # Errors
     /// A failure of the line buffer.
-    pub fn send_entity<T: ?Sized + RuntimeTyped>(
+    pub fn send_entity<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &mut self,
         val: &Handle<T>,
         negative: bool,
@@ -475,8 +481,8 @@ impl IgesDataIgesWriter {
 fn content_of(
     live: &IgesDataIgesModel,
     i: i32,
-    ent: &Handle<IgesDataIgesEntity>,
-) -> Handle<IgesDataIgesEntity> {
+    ent: &Handle<dyn IgesDataEntityKind>,
+) -> Handle<dyn IgesDataEntityKind> {
     if !live.is_redefined_content(i) {
         return ent.clone();
     }
@@ -486,7 +492,7 @@ fn content_of(
     );
     let report = live.report_entity(i, false);
     let content = report.get().map_or_else(Handle::default, |rep| {
-        rep.content().cast::<IgesDataIgesEntity>()
+        rep.content().cast::<dyn IgesDataEntityKind>()
     });
     if content.is_null() {
         ent.clone()

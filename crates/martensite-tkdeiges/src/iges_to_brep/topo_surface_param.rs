@@ -1,7 +1,8 @@
 //! The face of a surface entity with the transformation of its parameter curves.
 use super::IgesToBRepTopoSurface;
 use super::topo_surface::face_of_shape;
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::{
     IgesGeomCircularArc, IgesGeomOffsetSurface, IgesGeomRuledSurface, IgesGeomSurfaceOfRevolution,
     IgesGeomTabulatedCylinder,
@@ -61,7 +62,7 @@ fn seam_edge(face: &Face) -> Result<Edge, Failure> {
 
 /// The shift of the parameters of an elementary surface, from the first point of its seam.
 fn seam_parameters(
-    start: &Handle<IgesDataIgesEntity>,
+    start: &Handle<dyn IgesDataEntityKind>,
     surface: &Handle<dyn GeomSurface>,
     face: &Face,
 ) -> Result<(f64, f64), Failure> {
@@ -118,7 +119,7 @@ fn seam_parameters(
 
 /// The shift corrected by where the generatrix or the directrix starts.
 fn phased_parameters(
-    start: &Handle<IgesDataIgesEntity>,
+    start: &Handle<dyn IgesDataEntityKind>,
     surface: &Handle<dyn GeomSurface>,
     (mut param_u, mut param_v): (f64, f64),
 ) -> Result<(f64, f64), Failure> {
@@ -173,7 +174,7 @@ struct ParameterScales {
 }
 
 fn scales_of_entity(
-    entity: &Handle<IgesDataIgesEntity>,
+    entity: &Handle<dyn IgesDataEntityKind>,
     surface: &Handle<dyn GeomSurface>,
     trans: &mut Transform2,
     scales: &mut ParameterScales,
@@ -224,7 +225,7 @@ impl IgesToBRepTopoSurface {
     /// A failure of the entity or of the construction of the shape.
     pub fn param_surface(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<(Shape, Transform2, f64), Failure> {
         let mut trans = Transform2::default();
         let basis = self.transfer_topo_surface(start)?;

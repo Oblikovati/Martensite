@@ -63,8 +63,5 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisXrTrackedDeviceSource
         // The source is a Rust dispatch seam, not another native ancestor or class descriptor.
         <super::AisXrTrackedDevice as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Interface casting keeps application implementations of the parent's virtual methods.
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn AisXrTrackedDeviceSource);

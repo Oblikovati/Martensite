@@ -9,13 +9,17 @@ use crate::step_visual::*;
 use martensite_tkernel::standard::exceptions;
 
 /// The tessellated items of a set: an owned shared array, null when not read.
-type TessellatedItems = ObjectHandle<Array1<'static, Handle<StepVisualTessellatedItem>>>;
+type TessellatedItems =
+    ObjectHandle<Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>>;
 
 /// The array of a object handle, or the failure of its null dereference.
 fn live_items<'a>(
     items: &'a TessellatedItems,
     where_called: &str,
-) -> Result<&'a Array1<'static, Handle<StepVisualTessellatedItem>>, Failure> {
+) -> Result<
+    &'a Array1<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>,
+    Failure,
+> {
     items
         .get()
         .ok_or_else(|| exceptions::null_object(&format!("{where_called}: null array")))
@@ -33,10 +37,10 @@ fn read_tessellated_items(
         return Ok(ObjectHandle::default());
     }
     let count = data.nb_params(nsub)?;
-    let mut items = Array1::<'static, Handle<StepVisualTessellatedItem>>::with_bounds(1, count)
+    let mut items = Array1::<'static, Handle<dyn crate::StepEntityBase<StepVisualTessellatedItem>>>::with_bounds(1, count)
         .map_err(|error| error.into_failure("tessellated items"))?;
     for rank in 1..=count {
-        let mut item = Handle::<StepVisualTessellatedItem>::default();
+        let mut item = Handle::<dyn crate::StepEntityBase<StepVisualTessellatedItem>>::default();
         if data.read_entity(
             nsub,
             rank,

@@ -4,7 +4,7 @@ use super::fakes::{
     HelixHandler, RecordingConsole, handler_lock, helix, line, output_stream, text_stream, unread,
     written_text,
 };
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{GeomCartesianPoint, GeomTrimmedCurve};
 use martensite_tkgeombase::geom_tools::{
@@ -92,19 +92,19 @@ fn a_failing_handler_read_is_caught_as_a_null_curve() {
 #[test]
 fn the_debug_dump_names_what_it_found() {
     let console = RecordingConsole::default();
-    let null: Handle<StandardTransient> = Handle::default();
+    let null: Handle<dyn Transient> = Handle::default();
     assert_eq!(
         geom_tools_dump(&null, &console),
         "Error: Not a geometric object"
     );
-    let point: Handle<StandardTransient> =
+    let point: Handle<dyn Transient> =
         Handle::new(GeomCartesianPoint::new(1.0, 2.0, 3.0)).into_cast();
     assert_eq!(
         geom_tools_dump(&point, &console),
         "Error: Not a geometric object"
     );
     assert_eq!(console.text(), "");
-    let curve: Handle<StandardTransient> = line(0.0).cast();
+    let curve: Handle<dyn Transient> = line(0.0).cast();
     assert_eq!(
         geom_tools_dump(&curve, &console),
         "Found Geom_Curve, see dump in std::cout"

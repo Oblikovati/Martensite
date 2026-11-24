@@ -7,7 +7,7 @@ use super::text_in::{
 };
 use super::type_codes::curve as code;
 use super::undefined_type_handler;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBezierCurve, GeomCircle, GeomCurve, GeomEllipse, GeomHyperbola, GeomLine,
@@ -42,8 +42,8 @@ fn read_record(ctype: i32, stream: &mut IoStream) -> Result<Handle<dyn GeomCurve
 }
 
 /// `occ::handle<Curve> C = CC;`.
-fn upcast<C: Transient + RuntimeTyped>(curve: C) -> Handle<dyn GeomCurve> {
-    Handle::new(curve).into_cast()
+fn upcast<C: HandleUpcast<dyn GeomCurve>>(curve: C) -> Handle<dyn GeomCurve> {
+    Handle::new(curve).into_upcast()
 }
 
 fn read_line(stream: &mut IoStream) -> Result<GeomLine, Failure> {

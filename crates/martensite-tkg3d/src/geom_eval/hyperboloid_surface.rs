@@ -7,9 +7,9 @@ use super::elementary_eval::{
 };
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkmath::gp::{Axis3, Vector3, Xyz};
 use std::f64::consts::{FRAC_PI_2, PI};
 use std::io;
@@ -39,14 +39,12 @@ struct HyperboloidState {
 /// raise StandardNotImplemented;
 /// `GeomEvalHyperboloidSurface::new(frame, 2.0, 1.0, HyperboloidSheetMode::OneSheet)?`.
 pub struct GeomEvalHyperboloidSurface {
-    parent: StandardTransient,
     state: SharedState<HyperboloidState>,
 }
 impl_transient!(
     GeomEvalHyperboloidSurface,
     "GeomEval_HyperboloidSurface",
     dyn crate::geom::GeomElementarySurface,
-    parent,
     interfaces: [
         dyn crate::geom::GeomGeometry,
         dyn crate::geom::GeomSurface,
@@ -63,7 +61,6 @@ impl Clone for GeomEvalHyperboloidSurface {
 impl GeomEvalHyperboloidSurface {
     fn stored(state: HyperboloidState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

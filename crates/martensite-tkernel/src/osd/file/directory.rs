@@ -40,7 +40,7 @@ impl Default for Directory {
 
 impl Directory {
     /// An empty path over the host calls; `Directory::empty()`.
-    pub fn empty() -> Self {
+    fn empty() -> Self {
         Self::with_calls(CadPath::default(), native_calls())
     }
     /// A directory at `path` over the host calls; `Directory::with_path(CadPath::new("out/"))`.
@@ -91,13 +91,6 @@ impl Directory {
         let mut parent: Directory = Self::with_calls(parent_path, Arc::clone(&self.node.calls));
         parent.build(protection)?;
         Ok(parent)
-    }
-    /// `mkdtemp("/tmp/CSFXXXXXX")` (mode 0700), or an empty directory
-    /// object when it fails; `Directory::build_temporary()`.
-    ///
-    /// The `unlink` of the new directory always fails (EISDIR) and is ignored.
-    pub fn build_temporary() -> Self {
-        Self::build_temporary_with(native_calls())
     }
     /// Builds a temporary directory over injected calls; `Directory::build_temporary_with(calls)`.
     pub fn build_temporary_with(calls: Arc<dyn PosixFileCalls>) -> Self {

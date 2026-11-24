@@ -106,13 +106,13 @@ fn radius_failure_status(error: ErrorType) -> i32 {
 
 fn is_spline_offset(curve: &BRepAdaptorCurve) -> bool {
     let geometry = curve.transformed_curve().geom_curve();
-    let offset = geometry.cast::<GeomOffsetCurve>();
+    let offset = geometry.downcast::<GeomOffsetCurve>();
     let Some(offset) = offset.get() else {
         return false;
     };
     let basis = offset.basis_curve();
-    basis.cast::<GeomBezierCurve>().get().is_some()
-        || basis.cast::<GeomBSplineCurve>().get().is_some()
+    basis.downcast::<GeomBezierCurve>().get().is_some()
+        || basis.downcast::<GeomBSplineCurve>().get().is_some()
 }
 
 fn coincident_radius_samples([first, middle, last]: [Point3; 3]) -> bool {

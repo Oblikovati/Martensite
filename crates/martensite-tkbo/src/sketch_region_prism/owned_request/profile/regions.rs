@@ -59,6 +59,7 @@ pub(super) fn inspect_graph(
     cancelled: impl FnMut() -> bool,
     access: crate::sketch_region_certification::SourceAccess<'_>,
 ) -> LoopRegionCheck<GraphRegionCertificate> {
+    super::selection::bind(owned.version, &bridge.census)?;
     let ends: Vec<[u64; 2]> = owned
         .edges
         .iter()

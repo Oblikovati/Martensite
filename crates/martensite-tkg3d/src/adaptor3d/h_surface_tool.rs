@@ -314,7 +314,7 @@ fn swept_bspline(
     }
     if curve.get_type()? == CurveType::OffsetCurve {
         let offset: Handle<GeomOffsetCurve> = curve.offset_curve()?;
-        curve = Handle::new(GeomAdaptorCurve::with_curve(&offset.basis_curve())?).cast();
+        curve = Handle::new(GeomAdaptorCurve::with_curve(&offset.basis_curve())?).into_upcast();
     }
     let governs: bool = (along_u && kind == SurfaceType::SurfaceOfExtrusion)
         || (!along_u && kind == SurfaceType::SurfaceOfRevolution);

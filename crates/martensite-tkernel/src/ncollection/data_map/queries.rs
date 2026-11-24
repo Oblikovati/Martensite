@@ -33,10 +33,10 @@ impl<K: Debug, V, H: HashPolicy<K>> DataMap<K, V, H> {
     /// # use martensite_tkernel::ncollection::DataMap;
     /// let mut map = DataMap::<i32, i32>::default();
     /// map.bind(1, 10);
-    /// *map.contained_mut(&1).unwrap().1 = 5;
+    /// *map.change_seek(&1).unwrap() = 5;
     /// assert_eq!(map.seek(&1), Some(&5));
     /// ```
-    pub fn contained_mut(&mut self, key: &K) -> Option<(&K, &mut V)> {
+    pub(crate) fn contained_mut(&mut self, key: &K) -> Option<(&K, &mut V)> {
         let (_, slot) = self.lookup(key)?;
         Some(self.storage.payload_mut().entry_mut(slot))
     }

@@ -7,7 +7,7 @@ use martensite_tkernel::{
     message::Message,
     ncollection::{Buffer, List},
     osd::{CadPath, File, OpenMode, OsdErrorAccess, Protection},
-    standard::{Failure, Handle, StandardTransient, Transient},
+    standard::{Failure, Handle, Transient},
     tcollection::AsciiString,
 };
 
@@ -114,7 +114,7 @@ pub trait DeConfigurationNode: Transient {
 impl_transient_interface!(
     dyn DeConfigurationNode,
     "DEConfigurationNode",
-    StandardTransient
+    dyn Transient
 );
 
 /// The body of `CheckExtension`.

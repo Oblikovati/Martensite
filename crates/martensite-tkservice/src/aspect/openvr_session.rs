@@ -12,19 +12,18 @@ use crate::image::ImageTexture;
 use martensite_tkernel::message::Message;
 use martensite_tkernel::ncollection::{Mat4, Vec2};
 use martensite_tkernel::standard::exceptions::program_error;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::ffi::c_void;
 
 /// The OpenVR session of a build without OpenVR; `AspectOpenVRSession::default().open() == false`.
 #[derive(Default)]
 pub struct AspectOpenVRSession {
-    transient: StandardTransient,
     base: AspectXRSessionBase,
     /// `myActionsManifest`.
     actions_manifest: SharedState<AsciiString>,
 }
-martensite_tkernel::impl_transient!(AspectOpenVRSession, "Aspect_OpenVRSession", dyn AspectXRSession, transient,
+martensite_tkernel::impl_transient!(AspectOpenVRSession, "Aspect_OpenVRSession", dyn AspectXRSession,
     interfaces: [dyn AspectXRSession]);
 
 /// The `Standard_ProgramError` of an action of the wrong type (or null).

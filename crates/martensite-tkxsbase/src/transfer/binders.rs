@@ -2,9 +2,7 @@
 use super::{TransferBinder, TransferBinderBase};
 use martensite_tkernel::{
     impl_transient,
-    standard::{
-        Failure, Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, exceptions,
-    },
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped, SharedState, Transient, exceptions},
 };
 
 /// `TransferSimpleBinderOfTransient`: one transient result.
@@ -13,17 +11,16 @@ use martensite_tkernel::{
 /// use martensite_tkxsbase::transfer::{TransferBinder, TransferSimpleBinderOfTransient};
 /// use martensite_tkernel::standard::{Handle, StandardTransient};
 /// let binder = TransferSimpleBinderOfTransient::new();
-/// binder.set_result(&Handle::new(StandardTransient::default())).unwrap();
+/// binder.set_result(&Handle::new(StandardTransient).into_upcast::<dyn martensite_tkernel::standard::Transient>()).unwrap();
 /// assert!(binder.has_result());
 /// assert_eq!(binder.result_type_name(), "Standard_Transient");
 /// ```
 #[derive(Default)]
 pub struct TransferSimpleBinderOfTransient {
-    transient: StandardTransient,
     base: TransferBinderBase,
-    theres: SharedState<Handle<StandardTransient>>,
+    theres: SharedState<Handle<dyn Transient>>,
 }
-impl_transient!(TransferSimpleBinderOfTransient, "TransferSimpleBinderOfTransient", dyn TransferBinder, transient, interfaces: [dyn TransferBinder]);
+impl_transient!(TransferSimpleBinderOfTransient, "TransferSimpleBinderOfTransient", dyn TransferBinder, interfaces: [dyn TransferBinder]);
 
 impl TransferSimpleBinderOfTransient {
     /// `TransferSimpleBinderOfTransient()`: no result.
@@ -31,13 +28,13 @@ impl TransferSimpleBinderOfTransient {
         Self::default()
     }
     /// `SetResult(res)`: `TransferTransferFailure` when the result was already used.
-    pub fn set_result(&self, res: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn set_result(&self, res: &Handle<dyn Transient>) -> Result<(), Failure> {
         self.set_result_present()?;
         *self.theres.write() = res.clone();
         Ok(())
     }
     /// `Result`.
-    pub fn result(&self) -> Handle<StandardTransient> {
+    pub fn result(&self) -> Handle<dyn Transient> {
         self.theres.read().clone()
     }
     /// `GetTypedResult(bnd, atype, res)`: the first result of the chain of `bnd` (simple
@@ -45,7 +42,7 @@ impl TransferSimpleBinderOfTransient {
     pub fn get_typed_result(
         bnd: &Handle<dyn TransferBinder>,
         atype: &RuntimeType,
-        res: &mut Handle<StandardTransient>,
+        res: &mut Handle<dyn Transient>,
     ) -> bool {
         let mut current = bnd.clone();
         while let Some(live) = current.get() {
@@ -73,7 +70,7 @@ impl TransferBinder for TransferSimpleBinderOfTransient {
         let res = self.result();
         match res.dynamic_type().filter(|_| self.has_result()) {
             Some(kind) => kind,
-            None => StandardTransient::static_type(),
+            None => <dyn Transient>::static_type(),
         }
     }
     /// `ResultTypeName`: "(void)" without result.
@@ -89,10 +86,9 @@ impl TransferBinder for TransferSimpleBinderOfTransient {
 /// `TransferVoidBinder`: a binder without result (for the checks).
 #[derive(Default)]
 pub struct TransferVoidBinder {
-    transient: StandardTransient,
     base: TransferBinderBase,
 }
-impl_transient!(TransferVoidBinder, "TransferVoidBinder", dyn TransferBinder, transient, interfaces: [dyn TransferBinder]);
+impl_transient!(TransferVoidBinder, "TransferVoidBinder", dyn TransferBinder, interfaces: [dyn TransferBinder]);
 
 impl TransferVoidBinder {
     /// `TransferVoidBinder()`.
@@ -118,11 +114,10 @@ impl TransferBinder for TransferVoidBinder {
 /// `TransferMultipleBinder`: a list of results (created at the first one).
 #[derive(Default)]
 pub struct TransferMultipleBinder {
-    transient: StandardTransient,
     base: TransferBinderBase,
-    themulres: SharedState<Option<Vec<Handle<StandardTransient>>>>,
+    themulres: SharedState<Option<Vec<Handle<dyn Transient>>>>,
 }
-impl_transient!(TransferMultipleBinder, "TransferMultipleBinder", dyn TransferBinder, transient, interfaces: [dyn TransferBinder]);
+impl_transient!(TransferMultipleBinder, "TransferMultipleBinder", dyn TransferBinder, interfaces: [dyn TransferBinder]);
 
 impl TransferMultipleBinder {
     /// `TransferMultipleBinder()`.
@@ -130,7 +125,7 @@ impl TransferMultipleBinder {
         Self::default()
     }
     /// `AddResult(res)`: appends a result.
-    pub fn add_transient_result(&self, res: &Handle<StandardTransient>) {
+    pub fn add_transient_result(&self, res: &Handle<dyn Transient>) {
         self.themulres
             .write()
             .get_or_insert_with(Vec::new)
@@ -141,7 +136,7 @@ impl TransferMultipleBinder {
         self.themulres.read().as_ref().map_or(0, |l| l.len() as i32)
     }
     /// `ResultValue(num)`: `StandardOutOfRange` out of 1..NbResults.
-    pub fn result_value(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn result_value(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let list = self.themulres.read();
         let found = list
             .as_ref()
@@ -154,11 +149,11 @@ impl TransferMultipleBinder {
         })
     }
     /// `MultipleResult`: a copy of the results (empty when none).
-    pub fn multiple_result(&self) -> Vec<Handle<StandardTransient>> {
+    pub fn multiple_result(&self) -> Vec<Handle<dyn Transient>> {
         self.themulres.read().clone().unwrap_or_default()
     }
     /// `SetMultipleResult(mulres)`.
-    pub fn set_multiple_result(&self, mulres: Option<Vec<Handle<StandardTransient>>>) {
+    pub fn set_multiple_result(&self, mulres: Option<Vec<Handle<dyn Transient>>>) {
         *self.themulres.write() = mulres;
     }
 }
@@ -169,7 +164,7 @@ impl TransferBinder for TransferMultipleBinder {
     }
     /// `ResultType`: `StandardTransient`.
     fn result_type(&self) -> &'static RuntimeType {
-        StandardTransient::static_type()
+        <dyn Transient>::static_type()
     }
     /// `ResultTypeName`: "(list)".
     fn result_type_name(&self) -> String {
@@ -184,11 +179,10 @@ impl TransferBinder for TransferMultipleBinder {
 /// `TransferTransientListBinder`: a list of transient results.
 #[derive(Default)]
 pub struct TransferTransientListBinder {
-    transient: StandardTransient,
     base: TransferBinderBase,
-    theres: SharedState<Vec<Handle<StandardTransient>>>,
+    theres: SharedState<Vec<Handle<dyn Transient>>>,
 }
-impl_transient!(TransferTransientListBinder, "TransferTransientListBinder", dyn TransferBinder, transient, interfaces: [dyn TransferBinder]);
+impl_transient!(TransferTransientListBinder, "TransferTransientListBinder", dyn TransferBinder, interfaces: [dyn TransferBinder]);
 
 impl TransferTransientListBinder {
     /// `TransferTransientListBinder()`: an empty list.
@@ -196,21 +190,21 @@ impl TransferTransientListBinder {
         Self::default()
     }
     /// `TransferTransientListBinder(list)`.
-    pub fn with_list(list: &[Handle<StandardTransient>]) -> Self {
+    pub fn with_list(list: &[Handle<dyn Transient>]) -> Self {
         let binder = Self::default();
         *binder.theres.write() = list.to_vec();
         binder
     }
     /// `AddResult(res)`.
-    pub fn add_transient_result(&self, res: &Handle<StandardTransient>) {
+    pub fn add_transient_result(&self, res: &Handle<dyn Transient>) {
         self.theres.write().push(res.clone());
     }
     /// `Result`: a copy of the list.
-    pub fn result(&self) -> Vec<Handle<StandardTransient>> {
+    pub fn result(&self) -> Vec<Handle<dyn Transient>> {
         self.theres.read().clone()
     }
     /// `SetResult(num, res)`: `StandardOutOfRange` out of the list.
-    pub fn set_result(&self, num: i32, res: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub fn set_result(&self, num: i32, res: &Handle<dyn Transient>) -> Result<(), Failure> {
         let mut list = self.theres.write();
         let len = list.len();
         let slot = usize::try_from(num - 1).ok().and_then(|i| list.get_mut(i));
@@ -226,7 +220,7 @@ impl TransferTransientListBinder {
         self.theres.read().len() as i32
     }
     /// `Transient(num)`: `StandardOutOfRange` out of the list.
-    pub fn transient(&self, num: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn transient(&self, num: i32) -> Result<Handle<dyn Transient>, Failure> {
         let list = self.theres.read();
         let found = usize::try_from(num - 1).ok().and_then(|i| list.get(i));
         found.cloned().ok_or_else(|| {

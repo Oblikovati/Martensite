@@ -7,7 +7,7 @@ use super::point_representation::{
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkmath::toploc::Location;
@@ -60,7 +60,8 @@ pub trait BRepPointsOnSurface: BRepPointRepresentation {
 impl_transient_interface!(
     dyn BRepPointsOnSurface,
     "BRep_PointsOnSurface",
-    dyn BRepPointRepresentation
+    dyn BRepPointRepresentation,
+    upcasts: [dyn BRepPointRepresentation]
 );
 
 /// The body of `BRep_PointsOnSurface::DumpJson`: the class name, the base class and
@@ -90,11 +91,10 @@ pub fn dump_points_on_surface(
 /// assert_eq!((point.parameter(), point.parameter2().unwrap()), (1.0, 2.0));
 /// ```
 pub struct BRepPointOnSurface {
-    transient: StandardTransient,
     base: PointsOnSurfaceBase,
     parameter2: SharedState<f64>,
 }
-impl_transient!(BRepPointOnSurface, "BRep_PointOnSurface", dyn BRepPointsOnSurface, transient,
+impl_transient!(BRepPointOnSurface, "BRep_PointOnSurface", dyn BRepPointsOnSurface,
     interfaces: [dyn BRepPointRepresentation, dyn BRepPointsOnSurface]);
 
 impl BRepPointOnSurface {
@@ -106,7 +106,6 @@ impl BRepPointOnSurface {
         location: &Location,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: PointsOnSurfaceBase::new(parameter1, surface, location),
             parameter2: SharedState::new(parameter2),
         }
@@ -164,12 +163,10 @@ impl BRepPointsOnSurface for BRepPointOnSurface {
 /// assert!(point.is_point_on_curve_on_surface());
 /// ```
 pub struct BRepPointOnCurveOnSurface {
-    transient: StandardTransient,
     base: PointsOnSurfaceBase,
     pcurve: SharedState<Handle<dyn Geom2dCurve>>,
 }
-impl_transient!(BRepPointOnCurveOnSurface, "BRep_PointOnCurveOnSurface", dyn BRepPointsOnSurface,
-    transient, interfaces: [dyn BRepPointRepresentation, dyn BRepPointsOnSurface]);
+impl_transient!(BRepPointOnCurveOnSurface, "BRep_PointOnCurveOnSurface", dyn BRepPointsOnSurface, interfaces: [dyn BRepPointRepresentation, dyn BRepPointsOnSurface]);
 
 impl BRepPointOnCurveOnSurface {
     /// `BRep_PointOnCurveOnSurface(P, C, S, L)`;
@@ -181,7 +178,6 @@ impl BRepPointOnCurveOnSurface {
         location: &Location,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: PointsOnSurfaceBase::new(parameter, surface, location),
             pcurve: SharedState::new(pcurve.clone()),
         }

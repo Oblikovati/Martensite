@@ -3,7 +3,7 @@ use crate::standard::Failure;
 
 /// Supplies the operations an indexed map iterator uses.
 /// Example: `IndexedCursorSource::indexed_size(&map)`.
-pub trait IndexedCursorSource {
+pub(crate) trait IndexedCursorSource {
     /// Stored key type; e.g. `i32` for `IndexedMap<i32>`.
     type Key;
     /// Indexed value type; e.g. `String` for `IndexedDataMap<i32, String>`.
@@ -18,7 +18,7 @@ pub trait IndexedCursorSource {
 
 /// Supports mutable indexed values; keys in IndexedMap remain read-only.
 /// Example: `*map.indexed_value_mut(1)? = value`.
-pub trait IndexedCursorSourceMut: IndexedCursorSource {
+pub(crate) trait IndexedCursorSourceMut: IndexedCursorSource {
     /// Borrows one indexed value exclusively; `map.indexed_value_mut(1)?`.
     fn indexed_value_mut(&mut self, index: usize) -> Result<&mut Self::Value, Failure>;
 }

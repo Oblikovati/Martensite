@@ -4,7 +4,7 @@ use super::modification::{BRepToolsModification, NewCurve, NewSurface};
 use crate::brep::BRepTool;
 use crate::topods::{Edge, Face, Vertex};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::Point3;
@@ -20,7 +20,10 @@ use martensite_tkmath::poly::{Polygon3D, PolygonOnTriangulation, Triangulation, 
 /// assert!(modification.is_copy_geom());
 /// ```
 pub struct CopyModification {
-    parent: StandardTransient,
+    options: CopyOptions,
+}
+
+pub(super) struct CopyOptions {
     copy_geom: bool,
     copy_mesh: bool,
 }
@@ -28,9 +31,51 @@ impl_transient!(
     CopyModification,
     "BRepTools_CopyModification",
     dyn BRepToolsModification,
-    parent,
-    interfaces: [dyn BRepToolsModification]
+    interfaces: [dyn BRepToolsModification, dyn CopyModificationSource]
 );
+
+/// The copy options inherited by copy-based modifications.
+/// Example: `modification.upcast::<dyn CopyModificationSource>().is_copy_mesh()`.
+pub trait CopyModificationSource: BRepToolsModification {
+    /// Whether geometry is copied. Example: `modification.is_copy_geom()`.
+    fn is_copy_geom(&self) -> bool;
+    /// Whether the mesh of geometric shapes is kept. Example: `modification.is_copy_mesh()`.
+    fn is_copy_mesh(&self) -> bool;
+}
+parent_interface!(
+    dyn CopyModificationSource,
+    CopyModification,
+    [dyn BRepToolsModification]
+);
+
+impl Default for CopyOptions {
+    fn default() -> Self {
+        Self {
+            copy_geom: true,
+            copy_mesh: true,
+        }
+    }
+}
+
+impl CopyOptions {
+    pub(super) fn is_copy_geom(&self) -> bool {
+        self.copy_geom
+    }
+
+    pub(super) fn is_copy_mesh(&self) -> bool {
+        self.copy_mesh
+    }
+}
+
+impl CopyModificationSource for CopyModification {
+    fn is_copy_geom(&self) -> bool {
+        self.is_copy_geom()
+    }
+
+    fn is_copy_mesh(&self) -> bool {
+        self.is_copy_mesh()
+    }
+}
 
 impl Default for CopyModification {
     /// `BRepTools_CopyModification()`: copy the geometry and the mesh (both default
@@ -45,21 +90,22 @@ impl CopyModification {
     /// `CopyModification::new(true, false)`.
     pub fn new(copy_geom: bool, copy_mesh: bool) -> Self {
         Self {
-            parent: StandardTransient::default(),
-            copy_geom,
-            copy_mesh,
+            options: CopyOptions {
+                copy_geom,
+                copy_mesh,
+            },
         }
     }
 
     /// Whether the geometry is copied (`myCopyGeom`); `modification.is_copy_geom()`.
     pub fn is_copy_geom(&self) -> bool {
-        self.copy_geom
+        self.options.is_copy_geom()
     }
 
     /// Whether the mesh of geometric shapes is kept (`myCopyMesh`);
     /// `modification.is_copy_mesh()`.
     pub fn is_copy_mesh(&self) -> bool {
-        self.copy_mesh
+        self.options.is_copy_mesh()
     }
 }
 
@@ -73,7 +119,7 @@ impl BRepToolsModification for CopyModification {
         result.tolerance = BRepTool::face_tolerance(face)?;
         result.rev_wires = false;
         result.rev_face = false;
-        if let Some(stored) = result.surface.get().filter(|_| self.copy_geom) {
+        if let Some(stored) = result.surface.get().filter(|_| self.options.is_copy_geom()) {
             result.surface = stored.copy()?.cast();
         }
         Ok(true)
@@ -86,17 +132,7 @@ impl BRepToolsModification for CopyModification {
         face: &Face,
         triangulation: &mut Handle<Triangulation>,
     ) -> Result<bool, Failure> {
-        if !self.copy_mesh && BRepTool::is_geometric_face(face)? {
-            return Ok(false);
-        }
-        *triangulation = BRepTool::triangulation(face, mesh_purpose::NONE)?.0;
-        let Some(stored) = triangulation.get() else {
-            return Ok(false);
-        };
-        if self.copy_geom {
-            *triangulation = stored.copy();
-        }
-        Ok(true)
+        self.options.new_triangulation(face, triangulation)
     }
 
     /// The 3D curve and location of the edge (the curve copied) and its tolerance;
@@ -106,7 +142,7 @@ impl BRepToolsModification for CopyModification {
         result.curve = found.curve;
         result.location = found.location;
         result.tolerance = BRepTool::edge_tolerance(edge)?;
-        if let Some(stored) = result.curve.get().filter(|_| self.copy_geom) {
+        if let Some(stored) = result.curve.get().filter(|_| self.options.is_copy_geom()) {
             result.curve = stored.copy()?.cast();
         }
         Ok(true)
@@ -115,17 +151,7 @@ impl BRepToolsModification for CopyModification {
     /// The 3D polygon (copied with the geometry); false for a geometric edge without
     /// `copy_mesh` and for an edge without polygon.
     fn new_polygon(&self, edge: &Edge, polygon: &mut Handle<Polygon3D>) -> Result<bool, Failure> {
-        if !self.copy_mesh && BRepTool::is_geometric_edge(edge)? {
-            return Ok(false);
-        }
-        *polygon = BRepTool::polygon3d(edge)?.0;
-        let Some(stored) = polygon.get() else {
-            return Ok(false);
-        };
-        if self.copy_geom {
-            *polygon = stored.copy()?;
-        }
-        Ok(true)
+        self.options.new_polygon(edge, polygon)
     }
 
     /// The polygon on the face's active triangulation (copied with the geometry); false
@@ -136,18 +162,8 @@ impl BRepToolsModification for CopyModification {
         face: &Face,
         polygon: &mut Handle<PolygonOnTriangulation>,
     ) -> Result<bool, Failure> {
-        if !self.copy_mesh && BRepTool::is_geometric_edge(edge)? {
-            return Ok(false);
-        }
-        let (mesh, location) = BRepTool::triangulation(face, mesh_purpose::NONE)?;
-        *polygon = BRepTool::polygon_on_triangulation(edge, &mesh, &location)?;
-        let Some(stored) = polygon.get() else {
-            return Ok(false);
-        };
-        if self.copy_geom {
-            *polygon = stored.copy()?;
-        }
-        Ok(true)
+        self.options
+            .new_polygon_on_triangulation(edge, face, polygon)
     }
 
     /// The point and tolerance of the vertex; always true.
@@ -175,7 +191,7 @@ impl BRepToolsModification for CopyModification {
     ) -> Result<bool, Failure> {
         *tolerance = BRepTool::edge_tolerance(edge)?;
         *curve = BRepTool::curve_on_face(edge, face)?.pcurve;
-        if let Some(stored) = curve.get().filter(|_| self.copy_geom) {
+        if let Some(stored) = curve.get().filter(|_| self.options.is_copy_geom()) {
             *curve = stored.copy()?.cast();
         }
         Ok(true)
@@ -209,5 +225,63 @@ impl BRepToolsModification for CopyModification {
         _new_face2: &Face,
     ) -> Result<Continuity, Failure> {
         BRepTool::continuity_on_faces(edge, face1, face2)
+    }
+}
+
+impl CopyOptions {
+    pub(super) fn new_triangulation(
+        &self,
+        face: &Face,
+        triangulation: &mut Handle<Triangulation>,
+    ) -> Result<bool, Failure> {
+        if !self.copy_mesh && BRepTool::is_geometric_face(face)? {
+            return Ok(false);
+        }
+        *triangulation = BRepTool::triangulation(face, mesh_purpose::NONE)?.0;
+        let Some(stored) = triangulation.get() else {
+            return Ok(false);
+        };
+        if self.copy_geom {
+            *triangulation = stored.copy();
+        }
+        Ok(true)
+    }
+
+    pub(super) fn new_polygon(
+        &self,
+        edge: &Edge,
+        polygon: &mut Handle<Polygon3D>,
+    ) -> Result<bool, Failure> {
+        if !self.copy_mesh && BRepTool::is_geometric_edge(edge)? {
+            return Ok(false);
+        }
+        *polygon = BRepTool::polygon3d(edge)?.0;
+        let Some(stored) = polygon.get() else {
+            return Ok(false);
+        };
+        if self.copy_geom {
+            *polygon = stored.copy()?;
+        }
+        Ok(true)
+    }
+
+    pub(super) fn new_polygon_on_triangulation(
+        &self,
+        edge: &Edge,
+        face: &Face,
+        polygon: &mut Handle<PolygonOnTriangulation>,
+    ) -> Result<bool, Failure> {
+        if !self.copy_mesh && BRepTool::is_geometric_edge(edge)? {
+            return Ok(false);
+        }
+        let (mesh, location) = BRepTool::triangulation(face, mesh_purpose::NONE)?;
+        *polygon = BRepTool::polygon_on_triangulation(edge, &mesh, &location)?;
+        let Some(stored) = polygon.get() else {
+            return Ok(false);
+        };
+        if self.copy_geom {
+            *polygon = stored.copy()?;
+        }
+        Ok(true)
     }
 }

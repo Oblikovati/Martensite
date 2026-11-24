@@ -4,23 +4,21 @@
 use super::group_membership::GroupMembershipState;
 use super::{Select3DSensitiveEntity, Select3DSensitiveEntityBase, Select3DSensitiveSetBase};
 use crate::select_mgr::SelectMgrEntityOwnerSource;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 
 /// A group of sensitive entities sharing a composite owner.
 /// Example: `let group = Select3DSensitiveGroup::new(&owner, true); group.add(&entity);`.
 pub struct Select3DSensitiveGroup {
-    pub(super) transient: StandardTransient,
     pub(super) entity: Select3DSensitiveEntityBase,
     pub(super) set: Select3DSensitiveSetBase,
     pub(super) state: SharedState<GroupMembershipState>,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveGroup, "Select3DSensitiveGroup", dyn super::Select3DSensitiveSet, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveGroup, "Select3DSensitiveGroup", dyn super::Select3DSensitiveSet,
     interfaces: [dyn Select3DSensitiveEntity, dyn super::Select3DSensitiveSet, dyn super::Select3DSensitiveGroupSource]);
 impl Select3DSensitiveGroup {
     /// Constructs an empty group; `Select3DSensitiveGroup::new(&owner, true)`.
     pub fn new(owner: &Handle<dyn SelectMgrEntityOwnerSource>, must_match_all: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             entity: Select3DSensitiveEntityBase::new(owner),
             set: Select3DSensitiveSetBase::default(),
             state: SharedState::new(GroupMembershipState::new(must_match_all)),

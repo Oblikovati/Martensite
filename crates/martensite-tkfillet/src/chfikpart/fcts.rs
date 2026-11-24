@@ -53,9 +53,9 @@ fn bezier_copy(projc: &ProjectedCurve) -> Result<Handle<dyn Geom2dCurve>, Failur
     let tp = bez.poles();
     if bez.is_rational() {
         let weights = bez.weights_array(|w| w.clone());
-        return Ok(Handle::new(Geom2dBezierCurve::with_weights(&tp, &weights)?).cast());
+        return Ok(Handle::new(Geom2dBezierCurve::with_weights(&tp, &weights)?).into_upcast());
     }
-    Ok(Handle::new(Geom2dBezierCurve::new(&tp)?).cast())
+    Ok(Handle::new(Geom2dBezierCurve::new(&tp)?).into_upcast())
 }
 
 /// The copy of a projected B-spline pcurve (with its weights when rational).
@@ -75,9 +75,9 @@ fn bspline_copy(projc: &ProjectedCurve) -> Result<Handle<dyn Geom2dCurve>, Failu
             bsp.degree(),
             false,
         )?)
-        .cast());
+        .into_upcast());
     }
-    Ok(Handle::new(Geom2dBSplineCurve::new(&tp, &tk, &tm, bsp.degree(), false)?).cast())
+    Ok(Handle::new(Geom2dBSplineCurve::new(&tp, &tk, &tm, bsp.degree(), false)?).into_upcast())
 }
 
 /// `ChFiKPartProjPC(Cg, Sg, Pcurv)`: the pcurve of the curve projected on an
@@ -93,11 +93,11 @@ pub fn proj_pc(
             "approximate pcurve on the left surface",
         ));
     }
-    let hcg: Handle<dyn Adaptor3dCurve> = Handle::new(cg.shallow_adaptor()?).cast();
-    let hsg: Handle<dyn Adaptor3dSurface> = Handle::new(sg.shallow_adaptor()?).cast();
+    let hcg: Handle<dyn Adaptor3dCurve> = Handle::new(cg.shallow_adaptor()?).into_upcast();
+    let hsg: Handle<dyn Adaptor3dSurface> = Handle::new(sg.shallow_adaptor()?).into_upcast();
     let projc = ProjectedCurve::with_curve(&hsg, &hcg)?;
     match projc.get_type()? {
-        CurveType::Line => Ok(Handle::new(Geom2dLine::from_lin2d(projc.line()?)).cast()),
+        CurveType::Line => Ok(Handle::new(Geom2dLine::from_lin2d(projc.line()?)).into_upcast()),
         CurveType::BezierCurve => bezier_copy(&projc),
         CurveType::BSplineCurve => bspline_copy(&projc),
         _ => Err(Failure::with_message(

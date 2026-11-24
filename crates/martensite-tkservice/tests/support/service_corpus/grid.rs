@@ -2,7 +2,7 @@
 use super::common::{Reader, attempt, end, real};
 use super::print::Output;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::StandardTransient;
+
 use martensite_tkservice::aspect::{
     AspectCircularGrid, AspectCircularGridBase, AspectCircularGridMembers, AspectGrid,
     AspectGridBase, AspectGridMembers, AspectRectangularGrid, AspectRectangularGridBase,
@@ -10,10 +10,9 @@ use martensite_tkservice::aspect::{
 
 /// The do-nothing rectangular grid of the native probe (`SvRectGrid`).
 struct SvRectGrid {
-    transient: StandardTransient,
     base: AspectRectangularGridBase,
 }
-impl_transient!(SvRectGrid, "SvRectGrid", dyn AspectRectangularGrid, transient,
+impl_transient!(SvRectGrid, "SvRectGrid", dyn AspectRectangularGrid,
     interfaces: [dyn AspectGrid, dyn AspectRectangularGrid]);
 impl AspectGrid for SvRectGrid {
     fn grid_base(&self) -> &AspectGridBase {
@@ -40,10 +39,9 @@ impl AspectRectangularGrid for SvRectGrid {
 
 /// The do-nothing circular grid of the native probe (`SvCircGrid`).
 struct SvCircGrid {
-    transient: StandardTransient,
     base: AspectCircularGridBase,
 }
-impl_transient!(SvCircGrid, "SvCircGrid", dyn AspectCircularGrid, transient,
+impl_transient!(SvCircGrid, "SvCircGrid", dyn AspectCircularGrid,
     interfaces: [dyn AspectGrid, dyn AspectCircularGrid]);
 impl AspectGrid for SvCircGrid {
     fn grid_base(&self) -> &AspectGridBase {
@@ -74,10 +72,7 @@ pub fn rectangular_case(output: &Output, values: &[f64]) {
     let p: Vec<f64> = (0..9).map(|_| r.real()).collect();
     attempt(output, || {
         let base = AspectRectangularGridBase::new(p[0], p[1], p[2], p[3], p[4], p[5], p[6])?;
-        let grid = SvRectGrid {
-            transient: StandardTransient::default(),
-            base,
-        };
+        let grid = SvRectGrid { base };
         grid.init();
         let (gx, gy) = grid.compute(p[7], p[8]);
         real(output, gx);
@@ -99,10 +94,7 @@ pub fn circular_case(output: &Output, values: &[f64]) {
     let p: Vec<f64> = (0..5).map(|_| r.real()).collect();
     attempt(output, || {
         let base = AspectCircularGridBase::new(1.0, 1, 0.0, 0.0, 0.0);
-        let grid = SvCircGrid {
-            transient: StandardTransient::default(),
-            base,
-        };
+        let grid = SvCircGrid { base };
         grid.set_grid_values(p[0], p[1], step, divisions, p[2])?;
         let (gx, gy) = grid.compute(p[3], p[4]);
         real(output, gx);

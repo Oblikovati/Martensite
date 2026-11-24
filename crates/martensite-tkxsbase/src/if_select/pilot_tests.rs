@@ -48,7 +48,7 @@ pub(super) fn shared_pilot() -> (MutexGuard<'static, ()>, Handle<IFSelectSession
 
 /// An act function recording a new integer parameter.
 fn record_param(pilot: &Handle<IFSelectSessionPilot>) -> Result<IFSelectReturnStatus, Failure> {
-    Ok(pilot.record_item(&Handle::new(IFSelectIntParam::new()).cast()))
+    Ok(pilot.record_item(&Handle::new(IFSelectIntParam::new()).into_upcast()))
 }
 
 /// The count of entities of a counter (by signature, and the nulls).
@@ -272,7 +272,11 @@ fn pilot_counters_and_libraries() {
     assert_eq!(counted(&counter), 2);
     assert_eq!(
         pilot
-            .execute_counter(&Handle::default(), 1, IFSelectPrintCount::CountByItem)
+            .execute_counter(
+                &Handle::<IFSelectSignCounter>::default(),
+                1,
+                IFSelectPrintCount::CountByItem
+            )
             .unwrap(),
         IFSelectReturnStatus::RetError
     );

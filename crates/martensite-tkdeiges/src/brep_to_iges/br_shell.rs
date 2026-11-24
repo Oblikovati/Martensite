@@ -3,7 +3,8 @@ use super::br_shell_reversed::forward_copy;
 use super::{BRepToIgesBREntity, BRepToIgesBRWire, BRepToIgesOriginMap, entity_array};
 use crate::geom_to_iges::GeomToIgesGeomSurface;
 use crate::iges_basic::IgesBasicGroup;
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_set, iges_live, iges_new_array1};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{iges_array1_set, iges_live, iges_new_array1};
 use crate::iges_geom::{IgesGeomCurveOnSurface, IgesGeomTrimmedSurface};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_tools;
@@ -49,8 +50,8 @@ impl DerefMut for BRepToIgesBRShell {
 /// The preferred representation of a curve on surface from what it has; a wire with neither
 /// keeps the previous one, as all share the variable.
 fn preference(
-    curve_3d: &Handle<IgesDataIgesEntity>,
-    curve_2d: &Handle<IgesDataIgesEntity>,
+    curve_3d: &Handle<dyn IgesDataEntityKind>,
+    curve_2d: &Handle<dyn IgesDataEntityKind>,
     previous: i32,
 ) -> i32 {
     match (curve_3d.is_some(), curve_2d.is_some()) {
@@ -78,7 +79,7 @@ impl BRepToIgesBRShell {
         &self,
         start: &Shape,
         range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -94,8 +95,8 @@ impl BRepToIgesBRShell {
         start: &Face,
         (face, outer): (&Face, &Shape),
         tool: &BRepToIgesBRWire,
-        (origins, surface, length): (&BRepToIgesOriginMap, &Handle<IgesDataIgesEntity>, f64),
-        state: &mut (Handle<IgesDataIgesEntity>, i32),
+        (origins, surface, length): (&BRepToIgesOriginMap, &Handle<dyn IgesDataEntityKind>, f64),
+        state: &mut (Handle<dyn IgesDataEntityKind>, i32),
     ) -> Result<Vec<Handle<IgesGeomCurveOnSurface>>, Failure> {
         let mut curves = Vec::new();
         let mut wires = Explorer::new(face, ShapeEnum::Wire, ShapeEnum::Shape)?;
@@ -136,7 +137,7 @@ impl BRepToIgesBRShell {
         &self,
         start: &Face,
         face: &Face,
-    ) -> Result<(Handle<IgesDataIgesEntity>, f64), Failure> {
+    ) -> Result<(Handle<dyn IgesDataEntityKind>, f64), Failure> {
         let surface = BRepTool::surface(face)?;
         if surface.is_null() {
             return Ok((Handle::default(), 1.0));
@@ -159,7 +160,7 @@ impl BRepToIgesBRShell {
         &self,
         start: &Face,
         _range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -207,7 +208,7 @@ impl BRepToIgesBRShell {
         } else {
             trimmed.init(&entity, 1, &Handle::new(outer_curve), &holes)?;
         }
-        let result: Handle<IgesDataIgesEntity> = Handle::new(trimmed).cast();
+        let result: Handle<dyn IgesDataEntityKind> = Handle::new(trimmed).cast();
         self.set_shape_result(start, &result.cast())?;
         Ok(result)
     }
@@ -219,7 +220,7 @@ impl BRepToIgesBRShell {
         &self,
         start: &Shell,
         range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }

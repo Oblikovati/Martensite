@@ -5,15 +5,13 @@ use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 /// A transient packed integer set whose edits every handle holder sees;
 /// `Handle::new(HPackedMapOfInteger::new(1))`.
 pub struct HPackedMapOfInteger {
-    base: StandardTransient,
     // A lock gives mutable map access through a shared handle, which Rust lends only as `&`.
     map: RwLock<PackedMap<i32>>,
 }
 crate::impl_transient!(
     HPackedMapOfInteger,
     "TColStd_HPackedMapOfInteger",
-    StandardTransient,
-    base
+    StandardTransient
 );
 impl Default for HPackedMapOfInteger {
     fn default() -> Self {
@@ -33,7 +31,6 @@ impl HPackedMapOfInteger {
     /// Takes ownership of `map`, as the moving constructor; `HPackedMapOfInteger::from_map(map)`.
     pub fn from_map(map: PackedMap<i32>) -> Self {
         Self {
-            base: StandardTransient::default(),
             map: RwLock::new(map),
         }
     }

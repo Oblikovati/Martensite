@@ -82,7 +82,7 @@ fn box_scene(scene: SizedViewScene) -> SizedViewScene {
         style.set_interior_color(Color::named(color));
         let group = structure.new_group().unwrap();
         group.set_group_primitives_aspect(&Handle::new(style).cast());
-        group.add_primitive_array(&triangles, true);
+        group.add_primitive_array(&triangles.upcast(), true);
     }
     structure.display();
     scene

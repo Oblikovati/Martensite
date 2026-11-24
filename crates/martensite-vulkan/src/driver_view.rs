@@ -3,18 +3,24 @@ use crate::{
     FrameCapture, RenderError,
     driver_backend::SharedRenderDevice,
     error::rejected,
-    view_capture::{dump_capture, report_capture_failure},
+    redraw_capture::RedrawCapture,
+    view_capture::report_capture_failure,
     view_forward::retained_view_methods,
     view_scene::frame_for_view,
     view_target::{RenderFrameBuffer, capture_extent},
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::{aspect::*, graphic3d::*, image::ImagePixMap};
 use std::sync::Arc;
+#[path = "view_batch.rs"]
+mod batch;
+#[path = "view_placement_batch.rs"]
+mod placement_batch;
+use batch::ViewBatch;
 /// Renderer-backed Graphic3d view; `view.cast::<Graphic3dRenderView>().capture()?`.
 pub struct Graphic3dRenderView {
-    transient: StandardTransient,
     pub(crate) retained: crate::view_statistics::RenderRetainedView,
     pub(crate) this: SharedState<martensite_tkernel::standard::WeakHandle<Self>>,
     pub(crate) device: SharedRenderDevice,
@@ -24,8 +30,11 @@ pub struct Graphic3dRenderView {
     pub(crate) options: crate::driver_options::SharedDriverOptions,
     pub(crate) lighting_selection: crate::driver_lighting_capability::SharedLightingSelection,
     presenter: SharedState<Option<crate::backend::WindowPresenter>>,
+    assembly_streaming: SharedState<crate::RenderAssemblyStreaming>,
     window_error: SharedState<Option<RenderError>>,
-    pub(crate) outcome: SharedState<Option<Result<FrameCapture, RenderError>>>,
+    pub(crate) outcome: SharedState<Option<FramePublication>>,
+    immediate_main: Arc<crate::immediate_main::ImmediateMainCache>,
+    immediate_main_supported: std::sync::OnceLock<bool>,
     pub(crate) gui_layers: SharedState<crate::view_gui_layer::GuiLayerSlot>,
     raster_feedback: crate::raster_feedback::RasterFailureFeedback,
     stencil_feedback: crate::stencil_feedback::StencilFeedback,
@@ -45,10 +54,18 @@ pub struct Graphic3dRenderView {
     #[cfg(feature = "raytrace-input-diagnostics")]
     raytrace_observation: SharedState<crate::raytrace_input_observation::ViewRayInputs>,
     redraw_target: SharedState<Option<redraw_completion::RedrawPublicationTarget>>,
+    fused_replay: SharedState<Option<ViewBatch>>,
+    /// The retained placement frame of the view (view_placement_batch.rs).
+    placement_replay: SharedState<Option<placement_batch::PlacementBatch>>,
+    placement_inputs: SharedState<Option<placement_batch::PlacementInputs>>,
+    fused_replay_enabled: std::sync::atomic::AtomicBool,
+    /// Immediate redraws that kept their main pass without building it (immediate_elision.rs).
+    elided_redraws: std::sync::atomic::AtomicU64,
+    pub(crate) window_observation: crate::view_window_observation::WindowObservation,
 }
-martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, transient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
+pub(crate) type FramePublication = Result<Arc<RedrawCapture>, RenderError>;
+martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
 type RenderViewCreationInputs = (
-    StandardTransient,
     crate::view_output_modes::OutputModeRetainedView,
     SharedRenderDevice,
     u32,
@@ -75,7 +92,6 @@ impl Graphic3dRenderView {
         gui_surface: crate::RenderGuiSurfacePolicy,
     ) -> Result<Handle<Self>, Failure> {
         let inputs = (
-            StandardTransient::default(),
             crate::view_output_modes::OutputModeRetainedView::new(Graphic3dRetainedView::new(
                 manager, layers,
             )?),
@@ -91,7 +107,6 @@ impl Graphic3dRenderView {
     }
     fn initialized_gui_view(inputs: RenderViewCreationInputs) -> Self {
         let (
-            transient,
             retained,
             device,
             limit,
@@ -99,7 +114,6 @@ impl Graphic3dRenderView {
             gui_surface,
         ) = inputs;
         Self {
-            transient,
             retained: crate::view_statistics::RenderRetainedView::new(retained),
             this: SharedState::default(),
             device,
@@ -109,8 +123,11 @@ impl Graphic3dRenderView {
             gui_surface,
             line_widths,
             presenter: SharedState::default(),
+            assembly_streaming: SharedState::default(),
             window_error: SharedState::default(),
             outcome: SharedState::default(),
+            immediate_main: Default::default(),
+            immediate_main_supported: std::sync::OnceLock::new(),
             gui_layers: SharedState::default(),
             raster_feedback: Default::default(),
             stencil_feedback: Default::default(),
@@ -124,11 +141,30 @@ impl Graphic3dRenderView {
             #[cfg(feature = "raytrace-input-diagnostics")]
             raytrace_observation: SharedState::default(),
             redraw_target: Default::default(),
+            fused_replay: Default::default(),
+            placement_replay: Default::default(),
+            placement_inputs: Default::default(),
+            fused_replay_enabled: std::sync::atomic::AtomicBool::new(true),
+            elided_redraws: Default::default(),
+            window_observation: Default::default(),
         }
     }
     /// `myWasRedrawnGL`: whether a Redraw or RedrawImmediate of this view completed.
     pub(crate) fn was_redrawn(&self) -> bool {
         self.was_redrawn.load(std::sync::atomic::Ordering::Relaxed)
+    }
+    /// Every redraw publishes a new outcome, so the unread images of the last frame can serve
+    /// the new one instead of a second attachment generation (#594).
+    fn release_unread_frame(&self) {
+        let published = self
+            .outcome
+            .read()
+            .as_ref()
+            .and_then(|result| result.as_ref().ok())
+            .cloned();
+        if let Some(capture) = published {
+            capture.release_unread();
+        }
     }
     fn finish_redraw(&self, outcome: Result<(), RenderError>) {
         if outcome.is_ok() {
@@ -140,47 +176,91 @@ impl Graphic3dRenderView {
     pub fn stencil_context_state(&self) -> crate::RenderStencilState {
         self.stencil_feedback.current()
     }
-    fn render_current(&self) -> Result<FrameCapture, RenderError> {
-        #[cfg(feature = "raytrace-input-diagnostics")]
-        let observation = self.begin_raytrace_observation()?;
-        self.with_frame_stats(|| {
-            let (mut frame, scaled) = self.prepare_current_frame()?;
-            frame.flip_output = self.retained.flips_output(&self.rendering_params());
-            // redrawImmediate blits the subviews before the swap and the flipped output blit.
-            frame.subview_blits = self.subview_blits(frame.extent());
-            #[cfg(feature = "raytrace-input-diagnostics")]
-            self.attach_raytrace_observation(&mut frame, observation.as_ref(), scaled.is_some());
-            let mut capture = self.render_target(&frame)?;
-            #[cfg(feature = "command-state-diagnostics")]
-            let observed_transforms = [
-                usize::from(scaled.is_some()),
-                frame.subview_blits.len(),
-                usize::from(frame.flip_output),
-                usize::from(frame.gui_draw_start.is_some()),
-            ];
-            if let Some(scaled) = scaled {
-                capture.depth =
-                    crate::render_scale::blit_depth(&scaled, [frame.width, frame.height]);
-            }
-            crate::subview_composition::apply_subview_blits(&mut capture, &frame.subview_blits);
-            if frame.flip_output {
-                capture.reverse_rows();
-            }
-            #[cfg(feature = "raytrace-input-diagnostics")]
-            self.finish_raytrace_observation(observation.as_ref(), &capture);
-            #[cfg(feature = "command-state-diagnostics")]
-            crate::scene::replay_diagnostic::rendered(
-                self as *const Self as usize,
-                &capture,
-                observed_transforms,
-            );
-            Ok(capture)
-        })
+    /// Set the native view's assembly upload behavior for subsequent redraws.
+    ///
+    /// Example: `view.set_assembly_streaming(RenderAssemblyStreaming::CompleteV1)`.
+    pub fn set_assembly_streaming(&self, behavior: crate::RenderAssemblyStreaming) {
+        let mut mode = self.assembly_streaming.write();
+        if *mode == behavior {
+            return;
+        }
+        *mode = behavior;
+        drop(mode);
+        self.immediate_main.discard();
+        if behavior.budget().is_none()
+            && let Some(presenter) = self.presenter.write().as_mut()
+        {
+            presenter.cancel_assembly_streaming();
+        }
+    }
+    /// Report the last qualified native redraw and surface any deferred submission error.
+    /// Call redraw again while progress is incomplete. Example: `view.assembly_streaming_progress()?`.
+    pub fn assembly_streaming_progress(
+        &self,
+    ) -> Result<Option<crate::RenderAssemblyStreamingProgress>, RenderError> {
+        let Some(budget) = self.assembly_streaming.read().budget() else {
+            return Ok(None);
+        };
+        let capture = self.capture_publication(None)?;
+        let progress = capture
+            .assembly_streaming
+            .filter(|status| status.budget_bytes == budget);
+        if progress.is_some() {
+            self.device.write().finish_frames()?;
+        }
+        Ok(progress)
+    }
+    fn native_assembly_budget(&self) -> Option<u64> {
+        let budget = self.assembly_streaming.read().budget()?;
+        let window = self.window();
+        let window = window.get()?;
+        (self.fbo().is_null()
+            && !window.is_virtual()
+            && window.native_handle() != 0
+            && !self.options.read().buffers_no_swap
+            && self.observed_window_mapped(window))
+        .then_some(budget)
     }
     /// The frame to render on the target, and the scaled scene capture it blits, if any.
     fn prepare_current_frame(
         &self,
+        allow_batch: bool,
     ) -> Result<(crate::RenderFrame, Option<FrameCapture>), RenderError> {
+        let extent = self.redraw_extent()?;
+        let packet = if self.checked_gui_policy() {
+            self.checked_gui_snapshot(extent)?
+        } else {
+            self.gui_layers.read().snapshot(extent)?
+        };
+        // The immediate-main cache keys ordinary draw streams, which do not encode a batch.
+        let allow_batch = allow_batch && packet.is_none();
+        if allow_batch && let Some(frame) = self.try_replay_batch(extent)? {
+            return Ok((frame, None));
+        }
+        // Read before the scene: a write during it must not stand for the composed frame.
+        let stamp = self.input_stamp();
+        if allow_batch && let Some(frame) = self.try_replay_placements(extent, &stamp)? {
+            return Ok((frame, None));
+        }
+        let (mut frame, scaled) = self.composed_scene(extent)?;
+        if let Some(packet) = packet {
+            crate::view_gui_composition::append_gui_packet(&mut frame, packet)?;
+        }
+        let frame = frame.with_line_width_policy(self.line_widths);
+        if allow_batch
+            && scaled.is_none()
+            && let Some(first) = self.try_seed_batch(&frame)?
+        {
+            return Ok((first, None));
+        }
+        if allow_batch && scaled.is_none() {
+            self.try_seed_placements(&frame, stamp)?;
+        }
+        Ok((frame, scaled))
+    }
+
+    /// The extent of a redraw of this live view on its target.
+    fn redraw_extent(&self) -> Result<[u32; 2], RenderError> {
         self.require_native_target(AspectNativeWindowOperation::Redraw)?;
         if !self.is_defined() || self.is_removed() {
             return Err(rejected("undefined or removed view", "a defined live view"));
@@ -188,25 +268,18 @@ impl Graphic3dRenderView {
         if let Some(error) = self.window_error.read().as_ref() {
             return Err(error.clone());
         }
-        let extent = capture_extent(self, self.limit)?;
-        let packet = if self.checked_gui_policy() {
-            self.checked_gui_snapshot(extent)?
-        } else {
-            self.gui_layers.read().snapshot(extent)?
-        };
-        let (mut frame, scaled) = self.composed_scene(extent)?;
-        if let Some(packet) = packet {
-            crate::view_gui_composition::append_gui_packet(&mut frame, packet)?;
-        }
-        Ok((frame.with_line_width_policy(self.line_widths), scaled))
+        capture_extent(self, self.limit)
     }
     /// The scene frame with the view's feedback attached.
     fn fed_scene_frame(&self, extent: [u32; 2]) -> Result<crate::RenderFrame, RenderError> {
         let mut frame = self.scene_frame(extent)?;
+        self.attach_feedback(&mut frame);
+        Ok(frame)
+    }
+    fn attach_feedback(&self, frame: &mut crate::RenderFrame) {
         frame.attach_raster_feedback(&self.raster_feedback);
         frame.attach_stencil_context(&self.stencil_feedback);
         frame.attach_fragment_alpha(&self.fragment_alpha_feedback);
-        Ok(frame)
     }
     /// Under a render scale, render the scene offscreen and blit it over the target extent.
     fn blit_scaled_scene(
@@ -222,31 +295,51 @@ impl Graphic3dRenderView {
         Ok((frame, Some(scaled)))
     }
     fn scene_frame(&self, extent: [u32; 2]) -> Result<crate::RenderFrame, RenderError> {
+        // GlView::Redraw renders the shadow maps before the scene.
+        let shadow_maps = self.shadow_maps(extent)?;
+        let mut frame = self
+            .with_frame_extras(|clipping, extras| frame_for_view(self, extent, clipping, extras))?;
+        frame.shadow_maps = shadow_maps;
+        Ok(frame.with_line_width_policy(self.line_widths))
+    }
+    /// Calls `build` with the view's clip planes and the frame state beyond its layers.
+    fn with_frame_extras<T>(
+        &self,
+        build: impl FnOnce(
+            &dyn martensite_tkernel::standard::HandleReference<dyn Graphic3dClipPlaneSequenceSource>,
+            crate::view_scene::ViewFrameExtras<'_>,
+        ) -> T,
+    ) -> T {
         let stats = self.frame_stats();
-        let clipping = self.retained.render_clip_planes();
+        let (limits, mesh_lod) = {
+            let device = self.device.read();
+            (device.device_limits(), device.supports_mesh_lod())
+        };
         let extras = crate::view_scene::ViewFrameExtras {
             stats: stats.get(),
             overlay: Some(self.frame_stats_overlay()),
             trihedron: self.shown_graduated_trihedron(),
             grid: Some(self.shader_grid_state()),
             frame_steps: Some(self),
-            limits: self.device.read().device_limits(),
+            limits,
+            mesh_lod,
         };
-        // GlView::Redraw renders the shadow maps before the scene.
-        let shadow_maps = self.shadow_maps(extent)?;
-        let mut frame = frame_for_view(self, extent, clipping, extras)?;
-        frame.shadow_maps = shadow_maps;
-        Ok(frame.with_line_width_policy(self.line_widths))
+        build(self.retained.render_clip_planes(), extras)
     }
 }
+#[path = "view_immediate_redraw.rs"]
+mod immediate_redraw;
 #[path = "driver_view_stereo.rs"]
 mod stereo;
 impl Graphic3dRenderView {
-    fn render_target(&self, frame: &crate::RenderFrame) -> Result<FrameCapture, RenderError> {
+    fn render_target(
+        &self,
+        frame: &crate::RenderFrame,
+    ) -> Result<crate::driver_backend::RenderedFrame, RenderError> {
         let window = self.window();
         let mut device = self.device.write();
         if !self.fbo().is_null() || window.is_virtual() {
-            return device.render(frame);
+            return device.render_view_frame(frame);
         }
         if window.native_handle() == 0 {
             return Err(rejected(
@@ -255,8 +348,8 @@ impl Graphic3dRenderView {
             ));
         }
         // Native buffersNoSwap draws the frame but never swaps; dumps read the rendered frame.
-        if !window.is_mapped() || self.options.read().buffers_no_swap {
-            return device.render(frame);
+        if !self.observed_window_mapped(&*window) || self.options.read().buffers_no_swap {
+            return device.render_view_frame(frame);
         }
         self.render_mapped_target(frame, &mut device)
     }
@@ -264,13 +357,22 @@ impl Graphic3dRenderView {
         &self,
         frame: &crate::RenderFrame,
         device: &mut crate::driver_backend::DriverBackend,
-    ) -> Result<FrameCapture, RenderError> {
+    ) -> Result<crate::driver_backend::RenderedFrame, RenderError> {
         let mut presenter = self.presenter.write();
         if presenter.is_none() {
             *presenter = Some(device.window_presenter(&self.window())?);
         }
+        let mode = self.assembly_streaming.read();
+        let complete_frame = frame
+            .assembly_upload_budget
+            .filter(|budget| Some(*budget) != mode.budget())
+            .map(|_| {
+                let mut frame = frame.clone();
+                frame.assembly_upload_budget = None;
+                frame
+            });
         let result = device.render_window(
-            frame,
+            complete_frame.as_ref().unwrap_or(frame),
             presenter.as_mut().unwrap(),
             self.options.read().vertical_sync,
             self.gui_surface,
@@ -291,7 +393,23 @@ impl Drop for Graphic3dRenderView {
     }
 }
 impl Graphic3dCView for Graphic3dRenderView {
+    fn min_max_values(
+        &self,
+        include_auxiliary: bool,
+    ) -> Result<martensite_tkmath::bnd::BoundingBox3, Failure> {
+        self.kept_size_min_max_values(include_auxiliary)
+    }
     retained_view_methods!();
+    // Graphic3dCViewStructures::update reaches the view here: a layer update is a notice.
+    fn invalidate_z_layer_bounding_box(&self, layer_id: Graphic3dZLayerId) {
+        self.retained.notice_layer(layer_id);
+        graphic3d_cview_invalidate_z_layer_bounding_box(self, layer_id);
+    }
+    // A structure update changes the structure's own layer, whatever box it invalidates.
+    fn structure_update(&self, source: Graphic3dZLayerId, layer_id: Graphic3dZLayerId) {
+        self.retained.notice_layer(source);
+        graphic3d_cview_invalidate_z_layer_bounding_box(self, layer_id);
+    }
     fn cview_base(&self) -> &Graphic3dCViewBase {
         self.retained.cview_base()
     }
@@ -315,6 +433,8 @@ impl Graphic3dCView for Graphic3dRenderView {
         self.retained.set_to_flip_output(flip);
     }
     fn remove(&self) {
+        self.immediate_main.discard();
+        self.discard_batch();
         self.release_presenter();
         let retired = self.gui_layers.write().retire_removed();
         drop(retired);
@@ -325,15 +445,18 @@ impl Graphic3dCView for Graphic3dRenderView {
         self.finish_redraw(self.try_redraw());
     }
     fn redraw_immediate(&self) {
-        self.finish_redraw(self.try_redraw());
+        self.finish_redraw(self.try_redraw_mode(true));
     }
     fn resized(&self) {
         if self.reject_closed_resize() {
             return;
         }
+        self.immediate_main.discard();
+        self.discard_batch();
         if self.gui_layers.write().resized() {
             self.invalidate_gui_capture();
         }
+        self.window_observation.forget();
         graphic3d_cview_resized(self);
         self.invalidate();
     }
@@ -343,6 +466,8 @@ impl Graphic3dCView for Graphic3dRenderView {
         window: &Handle<dyn AspectWindow>,
         context: AspectRenderingContext,
     ) {
+        self.immediate_main.discard();
+        self.discard_batch();
         self.release_presenter();
         // A subview shares its parent's device and renders offscreen (blit_subviews composes
         // it); only an external GL context stays unsupported.
@@ -357,52 +482,37 @@ impl Graphic3dCView for Graphic3dRenderView {
         self.invalidate_window_binding();
     }
     fn buffer_dump(&self, image: &ImagePixMap, kind: &Graphic3dBufferType) -> bool {
+        #[cfg(not(any(
+            feature = "raytrace-input-diagnostics",
+            feature = "command-state-diagnostics"
+        )))]
+        let copied = self.dump_publication(image, kind);
+        // The diagnostics observe the dumped frame after the copy, so they keep an owned one.
         #[cfg(any(
             feature = "raytrace-input-diagnostics",
             feature = "command-state-diagnostics"
         ))]
-        let observed_serial = self
-            .redraw_serial
-            .load(std::sync::atomic::Ordering::Relaxed);
-        let capture = match self.capture() {
-            Ok(capture) => capture,
-            Err(error) => {
-                report_capture_failure(&error);
-                return false;
-            }
-        };
-        let copied = dump_capture(image, kind, &capture);
-        #[cfg(feature = "raytrace-input-diagnostics")]
-        self.observe_raytrace_buffer_dump(observed_serial, kind, &capture, copied);
-        #[cfg(feature = "command-state-diagnostics")]
-        crate::scene::replay_diagnostic::dumped(
-            self as *const Self as usize,
-            [
-                observed_serial,
-                self.redraw_serial
-                    .load(std::sync::atomic::Ordering::Relaxed),
-            ],
-            &format!("{kind:?}"),
-            copied,
-            &capture,
-        );
-        copied
+        let copied = self.observed_buffer_dump(image, kind);
+        copied.unwrap_or_else(|error| {
+            report_capture_failure(&error);
+            false
+        })
     }
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient> {
+    fn fbo_create(&self, width: i32, height: i32) -> Handle<dyn Transient> {
         RenderFrameBuffer::create(width, height, self.limit)
     }
-    fn fbo_release(&self, fbo: &mut Handle<StandardTransient>) {
+    fn fbo_release(&self, fbo: &mut Handle<dyn Transient>) {
         // Native FBORelease ignores a handle that is not a framebuffer of the driver.
         if !fbo.cast::<RenderFrameBuffer>().is_null() {
             *fbo = Handle::default();
         }
     }
-    fn fbo_get_dimensions(&self, fbo: &Handle<StandardTransient>) -> [i32; 4] {
+    fn fbo_get_dimensions(&self, fbo: &Handle<dyn Transient>) -> [i32; 4] {
         fbo.cast::<RenderFrameBuffer>()
             .get()
             .map_or([0; 4], RenderFrameBuffer::dimensions)
     }
-    fn fbo_change_viewport(&self, fbo: &Handle<StandardTransient>, width: i32, height: i32) {
+    fn fbo_change_viewport(&self, fbo: &Handle<dyn Transient>, width: i32, height: i32) {
         if let Some(target) = fbo.cast::<RenderFrameBuffer>().get() {
             target.change_viewport(width, height);
         }

@@ -1,6 +1,6 @@
 //! `Geom2dConic`: circles, ellipses, hyperbolas and parabolas placed by a Axis22d.
 use super::curve::{Geom2dCurve, dump_curve};
-use super::geometry::{dump_base, dump_class_name, dump_field};
+use super::geometry::{Geom2dGeometry, dump_base, dump_class_name, dump_field};
 use super::protected::{PROTECTED, ProtectedAccess};
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::Failure;
@@ -60,7 +60,7 @@ pub trait Geom2dConic: Geom2dCurve {
         self.position().location()
     }
 }
-impl_transient_interface!(dyn Geom2dConic, "Geom2d_Conic", dyn Geom2dCurve);
+impl_transient_interface!(dyn Geom2dConic, "Geom2d_Conic", dyn Geom2dCurve, upcasts: [dyn Geom2dCurve, dyn Geom2dGeometry]);
 
 /// `Geom2dConic::Reverse`: reverse the Y direction of the local system;
 /// `reverse_conic_position(&mut position)?`.

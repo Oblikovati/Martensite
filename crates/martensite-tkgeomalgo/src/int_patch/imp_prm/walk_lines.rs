@@ -95,7 +95,7 @@ impl IntPatchImpPrmIntersection {
             };
             self.first_vertices(input, &wline, &ends)?;
             self.last_vertices(input, &wline, &ends)?;
-            self.slin.push(Handle::new(wline).cast());
+            self.slin.push(Handle::new(wline).into_upcast());
         }
         Ok(())
     }

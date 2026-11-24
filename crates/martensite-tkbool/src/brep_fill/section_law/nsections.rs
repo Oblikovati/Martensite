@@ -11,7 +11,7 @@ use martensite_tkbrep::topods::{self, Edge, Shape, Vertex, Wire};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array2;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBSplineSurface, GeomCurve, GeomSurface, GeomTrimmedCurve,
@@ -26,7 +26,6 @@ use martensite_tktopalgo::brep_lib::{BRepLibMakeEdge, BRepLibMakeWire};
 /// through the sections, cut into one GeomFillNSections law per edge rank;
 /// `let law = BRepFillNSections::new(&sections, true)?;`.
 pub struct BRepFillNSections {
-    parent: StandardTransient,
     base: BRepFillSectionLawBase,
     v_first: f64,
     v_last: f64,
@@ -40,7 +39,6 @@ impl_transient!(
     BRepFillNSections,
     "BRepFillNSections",
     dyn BRepFillSectionLaw,
-    parent,
     interfaces: [dyn BRepFillSectionLaw]
 );
 
@@ -89,7 +87,6 @@ impl BRepFillNSections {
     /// The fields before the constructor bodies.
     fn empty(s: &[Shape], trsfs: &[Transform3], p: &[f64], v: (f64, f64)) -> Self {
         Self {
-            parent: StandardTransient::default(),
             base: BRepFillSectionLawBase::default(),
             v_first: v.0,
             v_last: v.1,
@@ -248,7 +245,7 @@ impl BRepFillNSections {
                 (self.v_first, self.v_last),
                 &self.my_surface,
             )?;
-            laws.push(Handle::new(law).cast::<dyn GeomFillSectionLaw>());
+            laws.push(Handle::new(law).into_upcast::<dyn GeomFillSectionLaw>());
         }
         Ok(laws)
     }
@@ -258,7 +255,9 @@ impl BRepFillNSections {
         let law = self.law(index)?;
         let law = law.get().ok_or_else(|| table_error("law", index))?;
         let surface = law.bspline_surface()?;
-        Ok(live_surface(&surface)?.v_iso(v)?.cast::<GeomBSplineCurve>())
+        Ok(live_surface(&surface)?
+            .v_iso(v)?
+            .downcast::<GeomBSplineCurve>())
     }
 }
 
@@ -332,7 +331,7 @@ fn rank_curve(edge: &Edge, ii: i32) -> Result<Handle<dyn GeomCurve>, Failure> {
         curve = reversed;
     }
     if ii > 1 || !BRepTool::is_closed(edge)? {
-        curve = Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).cast();
+        curve = Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).into_upcast();
     }
     Ok(curve)
 }
@@ -413,7 +412,7 @@ impl BRepFillSectionLaw for BRepFillNSections {
             (v_first, v_last),
             &self.my_surface,
         )?;
-        Ok(Handle::new(law).cast::<dyn GeomFillSectionLaw>())
+        Ok(Handle::new(law).into_upcast::<dyn GeomFillSectionLaw>())
     }
 
     /// `Continuity(Index, TolAngular)`: the lowest continuity over the sections at the

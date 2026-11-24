@@ -2,9 +2,7 @@
 //! world points for the selecting frustums.
 use martensite_tkernel::ncollection::{Vec3, Vec4};
 use martensite_tkernel::precision::confusion;
-use martensite_tkernel::standard::{
-    Handle, HandleReference, SharedState, StandardTransient, WeakHandleFieldRef,
-};
+use martensite_tkernel::standard::{Handle, HandleReference, SharedState, WeakHandleFieldRef};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::Graphic3dCamera;
 use std::sync::Arc;
@@ -23,14 +21,12 @@ struct BuilderState {
 ///
 /// Example: `let builder = SelectMgrFrustumBuilder::new(); builder.set_window_size(400, 300);`.
 pub struct SelectMgrFrustumBuilder {
-    transient: StandardTransient,
     state: Arc<SharedState<BuilderState>>,
 }
 martensite_tkernel::impl_transient!(
     SelectMgrFrustumBuilder,
     "SelectMgrFrustumBuilder",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 
 impl Default for SelectMgrFrustumBuilder {
@@ -51,7 +47,6 @@ impl SelectMgrFrustumBuilder {
             is_viewport_set: false,
         };
         Self {
-            transient: StandardTransient::default(),
             state: Arc::new(SharedState::new(state)),
         }
     }
@@ -110,27 +105,57 @@ impl SelectMgrFrustumBuilder {
     /// `ProjectPntOnViewPlane`: the world point of a pixel and a normalized depth, through the
     /// viewport when set; the origin without camera. Example: `builder.project_pnt_on_view_plane(10.0, 20.0, 0.0)`.
     pub fn project_pnt_on_view_plane(&self, x: f64, y: f64, z: f64) -> Point3 {
-        let state = self.state.read().clone();
-        let Some(camera) = state.camera.get() else {
+        self.view_plane_projector().project(x, y, z)
+    }
+    /// The projection of `project_pnt_on_view_plane` with the builder state and the camera
+    /// inverse read once, for the points of one selecting frustum (#594).
+    /// Example: `builder.view_plane_projector().project(10.0, 20.0, 0.0)`.
+    pub fn view_plane_projector(&self) -> SelectMgrViewPlaneProjector {
+        let state = self.state.read();
+        let camera = state
+            .camera
+            .get()
+            .map(|camera| (camera.is_zero_to_one_depth(), camera.un_projection()));
+        SelectMgrViewPlaneProjector {
+            size: (f64::from(state.width), f64::from(state.height)),
+            viewport: state.is_viewport_set.then_some(state.viewport),
+            camera,
+        }
+    }
+}
+
+/// Pixels to world points for one state of a [`SelectMgrFrustumBuilder`].
+pub struct SelectMgrViewPlaneProjector {
+    size: (f64, f64),
+    viewport: Option<Vec4<f64>>,
+    /// Whether the camera maps depth to [0, 1], and its inverse (none when singular); none
+    /// without a camera.
+    camera: Option<(
+        bool,
+        Option<martensite_tkservice::graphic3d::Graphic3dUnProjection>,
+    )>,
+}
+
+impl SelectMgrViewPlaneProjector {
+    /// The world point of pixel `(x, y)` at normalized depth `z`: the origin without a camera
+    /// or with a singular one; `projector.project(10.0, 20.0, 0.0)`.
+    pub fn project(&self, x: f64, y: f64, z: f64) -> Point3 {
+        let Some((zero_to_one, inverse)) = self.camera else {
             return Point3::default();
         };
-        let (w, h) = (f64::from(state.width), f64::from(state.height));
-        let xyz = if !state.is_viewport_set {
-            let depth = if camera.is_zero_to_one_depth() {
-                z
-            } else {
-                2.0 * z - 1.0
-            };
-            Point3::new(2.0 * x / w - 1.0, (h - 1.0 - y) / h * 2.0 - 1.0, depth)
-        } else {
-            let v = state.viewport;
-            Point3::new(
+        let (w, h) = self.size;
+        let xyz = match self.viewport {
+            None => {
+                let depth = if zero_to_one { z } else { 2.0 * z - 1.0 };
+                Point3::new(2.0 * x / w - 1.0, (h - 1.0 - y) / h * 2.0 - 1.0, depth)
+            }
+            Some(v) => Point3::new(
                 2.0 * (x - w * v.x) / (w * (v.z - v.x)) - 1.0,
                 2.0 * (y - h * v.y) / (h * (v.w - v.y)) - 1.0,
                 z,
-            )
+            ),
         };
-        camera.un_project(&xyz)
+        inverse.map_or(Point3::new(0.0, 0.0, 0.0), |inverse| inverse.apply(&xyz))
     }
 }
 

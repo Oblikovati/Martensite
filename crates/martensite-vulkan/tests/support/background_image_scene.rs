@@ -46,7 +46,7 @@ fn background_texture() -> Handle<dyn Graphic3dTextureMap> {
     let image = Handle::new(ImagePixMap::default());
     assert!(image.init_wrapper(ImageFormat::Rgb, Some(memory), 37, 23, 37 * 3));
     image.set_top_down(false);
-    Handle::new(Graphic3dTexture2D::from_pix_map(image)).cast()
+    Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast())).cast()
 }
 
 /// The capture's view and the viewer and window it keeps alive (a view without its viewer

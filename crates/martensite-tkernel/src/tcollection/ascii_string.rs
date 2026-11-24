@@ -4,10 +4,12 @@
 //! embedded NUL bytes are allowed and kept wherever the
 //! member copies by explicit length, and dropped wherever it copies a C string.
 
+type AsciiBytes = smallvec::SmallVec<[u8; 16]>;
+
 /// An owned C-compatible byte string; `AsciiString::new("hello").as_bytes() == b"hello"`.
 #[derive(Debug, Default)]
 pub struct AsciiString {
-    terminated: allocation::OwnedAsciiBuffer,
+    terminated: AsciiBytes,
 }
 impl AsciiString {
     /// Copies a C string through its first NUL;
@@ -26,12 +28,10 @@ impl AsciiString {
         if bytes.is_empty() {
             return Self::default();
         }
-        let mut terminated = Vec::with_capacity(storage::padded_byte_capacity(bytes.len()));
+        let mut terminated = AsciiBytes::with_capacity(storage::padded_byte_capacity(bytes.len()));
         terminated.extend_from_slice(bytes);
         terminated.push(0);
-        Self {
-            terminated: allocation::OwnedAsciiBuffer::from_vector(terminated),
-        }
+        Self { terminated }
     }
     /// Borrows content excluding the terminator;
     /// `AsciiString::new("abc").as_bytes() == b"abc"`.
@@ -64,49 +64,36 @@ impl AsciiString {
     }
     /// Appends raw bytes before the terminator; shared by every concatenating member.
     fn append_bytes(&mut self, bytes: &[u8]) {
-        if bytes.is_empty() {
-            return;
-        }
-        self.reserve_buffer_length(self.len() + bytes.len() + 1);
-        self.terminated.write().pop();
-        self.terminated.write().extend_from_slice(bytes);
-        self.terminated.write().push(0);
+        self.splice_bytes(self.len(), bytes);
     }
     /// Inserts raw bytes at a zero-based offset that the caller already validated.
     fn splice_bytes(&mut self, offset: usize, bytes: &[u8]) {
         if bytes.is_empty() {
             return;
         }
-        self.reserve_buffer_length(self.len() + bytes.len() + 1);
         self.ensure_owned_terminator();
-        self.terminated
-            .write()
-            .splice(offset..offset, bytes.iter().copied());
+        self.terminated.insert_from_slice(offset, bytes);
     }
     /// Sets the length, keeping the terminator, after the caller validated `length <= len()`.
     fn set_length(&mut self, length: usize) {
         if self.terminated.is_empty() {
             return;
         }
-        self.terminated.write().truncate(length + 1);
-        self.terminated.write()[length] = 0;
+        self.terminated.truncate(length + 1);
+        self.terminated[length] = 0;
     }
 }
 /// `strlen` over a byte span: the offset of the first NUL, or the span length.
 pub(crate) fn c_string_length(bytes: &[u8]) -> usize {
-    bytes
-        .iter()
-        .position(|&byte| byte == 0)
-        .unwrap_or(bytes.len())
+    memchr::memchr(0, bytes).unwrap_or(bytes.len())
 }
 /// The bytes a C-string argument designates: the span through its first NUL.
 pub(crate) fn c_string_prefix(bytes: &[u8]) -> &[u8] {
     &bytes[..c_string_length(bytes)]
 }
-mod allocation;
 mod assignment;
-mod buffer_identity;
 mod c_string_comparison;
+#[cfg(test)]
 mod c_string_editing;
 mod case_adjust;
 mod comparison;
@@ -118,11 +105,10 @@ mod numeric;
 mod raise;
 mod search;
 mod storage;
-pub use buffer_identity::AsciiStringBufferIdentity;
-#[cfg(test)]
-mod buffer_identity_tests;
 mod stream;
 mod traits;
 mod utf8_scan;
-pub use concatenation::CatOperand;
+#[cfg(test)]
+pub(crate) use concatenation::CatOperand;
+#[cfg(test)]
 pub(crate) use raise::negative_width;

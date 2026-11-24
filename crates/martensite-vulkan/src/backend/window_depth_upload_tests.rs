@@ -74,7 +74,7 @@ fn native_grid_v4_empty_carrier_cannot_use_joint_physical_source_depth() {
             .unwrap(),
         )
         .unwrap();
-    for vertex in &mut semantic.vertices {
+    for vertex in semantic.vertices.make_mut() {
         vertex.position[0] = -0.1;
     }
     let carrier = crate::backend::triangle_grid_coverage_upload::prepare(
@@ -91,7 +91,7 @@ fn native_grid_v4_empty_carrier_cannot_use_joint_physical_source_depth() {
     )
     .unwrap()
     .unwrap();
-    assert_eq!(carrier.indices, [0, 0, 0]);
+    assert_eq!(carrier.indices(), [0, 0, 0]);
     assert!(require_physical_source(Some(parameters()), &semantic, &carrier).is_err());
 }
 #[test]
@@ -135,12 +135,12 @@ fn every_closure_boundary_is_preserved_as_a_typed_refusal() {
 fn structural_empty_requires_bit_identical_position_and_weight_not_nearness_or_indices() {
     let mut draw = triangle();
     assert!(identical_source_pair(&draw, [0, 1, 2]));
-    draw.vertices[0].position[0] = 1.;
-    draw.vertices[1].position[0] = 1_f32.next_up();
+    draw.vertices.make_mut()[0].position[0] = 1.;
+    draw.vertices.make_mut()[1].position[0] = 1_f32.next_up();
     assert!(!identical_source_pair(&draw, [0, 1, 2]));
-    draw.vertices[2] = draw.vertices[0];
-    draw.vertices[2].weight = 2.;
+    draw.vertices.make_mut()[2] = draw.vertices[0];
+    draw.vertices.make_mut()[2].weight = 2.;
     assert!(!identical_source_pair(&draw, [0, 1, 2]));
-    draw.vertices[2].weight = draw.vertices[0].weight;
+    draw.vertices.make_mut()[2].weight = draw.vertices[0].weight;
     assert!(identical_source_pair(&draw, [0, 1, 2]));
 }

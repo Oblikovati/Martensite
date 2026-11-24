@@ -8,9 +8,7 @@ use martensite_tkcdf::json_dump::{class_begin, field_byte_char, field_integer};
 use martensite_tkernel::{
     impl_transient,
     ncollection::HArray1,
-    standard::{
-        Failure, Guid, Handle, SharedState, StandardTransient, dump::DumpStream, exceptions,
-    },
+    standard::{Failure, Guid, Handle, SharedState, dump::DumpStream, exceptions},
 };
 use std::io;
 
@@ -35,11 +33,10 @@ struct BooleanArrayState {
 /// assert!(array.value(9).unwrap() && !array.value(8).unwrap());
 /// ```
 pub struct TDataStdBooleanArray {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<BooleanArrayState>,
 }
-impl_transient!(TDataStdBooleanArray, "TDataStd_BooleanArray", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(TDataStdBooleanArray, "TDataStd_BooleanArray", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl Default for TDataStdBooleanArray {
     /// `TDataStd_BooleanArray()`: the default ID and no array. The native constructor
@@ -47,7 +44,6 @@ impl Default for TDataStdBooleanArray {
     /// range 0..-1.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(BooleanArrayState {
                 values: Handle::default(),
@@ -100,7 +96,7 @@ impl TDataStdBooleanArray {
         let attribute = live(&created, "TDataStd_BooleanArray::Set")?;
         attribute.set_id(guid)?;
         attribute.init(lower, upper)?;
-        label.add_attribute(&created.cast(), true)?;
+        label.add_attribute(&created.upcast(), true)?;
         Ok(created)
     }
     /// `Init(lower, upper)`: backs up, then `Length() >> 3` + 1 zero bytes;
@@ -233,7 +229,7 @@ impl TdfAttribute for TDataStdBooleanArray {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste(Into, RT)`: with bytes, `Into` is initialized to the bounds and takes every
     /// value and the ID; `Standard_NullObject` when `Into` is not a boolean array.
@@ -245,7 +241,7 @@ impl TdfAttribute for TDataStdBooleanArray {
         if self.internal_array().is_null() {
             return Ok(());
         }
-        let target = into.cast::<Self>();
+        let target = into.downcast::<Self>();
         if let Some(target) = target.get() {
             target.init(self.lower(), self.upper())?;
             for index in self.lower()..=self.upper() {

@@ -73,7 +73,8 @@ fn paired_report_index(
     domain: &crate::sketch_region_certification::BoundaryDomain,
 ) -> Option<usize> {
     match domain.evidence {
-        crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. } => {
+        crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. }
+        | crate::sketch_region_certification::DomainEvidence::BernsteinReport { report, .. } => {
             Some(report)
         }
         _ => None,
@@ -88,7 +89,7 @@ fn current_cardinality_gap(
     observe: &mut impl FnMut(DiscoveryStep),
 ) -> Option<ContactTransportGap> {
     let domain = &retained.census.domains[domain_index];
-    let proof = certificates?.certificate(domain)?;
+    let proof = certificates?.unified_certificate(domain)?;
     let observed = observations.map_or(0, |view| {
         super::super::topology::domain_axes(retained, domain_index)
             .map_or(0, |axes| view.cardinality(axes, observe))

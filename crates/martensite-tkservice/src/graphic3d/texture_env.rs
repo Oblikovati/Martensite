@@ -4,9 +4,9 @@ use super::{
     Graphic3dNameOfTextureEnv, Graphic3dTextureRoot, Graphic3dTextureRootBase,
     Graphic3dTypeOfTexture, Graphic3dTypeOfTextureFilter, Graphic3dTypeOfTextureMode,
 };
-use crate::image::ImagePixMap;
+
 use martensite_tkernel::ncollection::Vec4;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// `NameOfTextureEnv_to_FileName`.
@@ -25,7 +25,6 @@ const TEXTURE_ENV_FILES: [&str; 8] = [
 ///
 /// Example: `Graphic3dTextureEnv::from_file(&"sky.png".into())`.
 pub struct Graphic3dTextureEnv {
-    transient: StandardTransient,
     base: Graphic3dTextureRootBase,
     name: Graphic3dNameOfTextureEnv,
 }
@@ -34,7 +33,7 @@ impl Graphic3dTextureRoot for Graphic3dTextureEnv {
         &self.base
     }
 }
-martensite_tkernel::impl_transient!(Graphic3dTextureEnv, "Graphic3d_TextureEnv", dyn Graphic3dTextureRoot, transient,
+martensite_tkernel::impl_transient!(Graphic3dTextureEnv, "Graphic3d_TextureEnv", dyn Graphic3dTextureRoot,
     interfaces: [dyn Graphic3dTextureRoot]);
 
 impl Graphic3dTextureEnv {
@@ -46,11 +45,7 @@ impl Graphic3dTextureEnv {
         let (plane_s, plane_t) = (Vec4::new(1.0, 0.0, 0.0, 0.0), Vec4::new(0.0, 1.0, 0.0, 0.0));
         base.params
             .set_gen_mode(Graphic3dTypeOfTextureMode::Sphere, plane_s, plane_t);
-        Self {
-            transient: StandardTransient::default(),
-            base,
-            name,
-        }
+        Self { base, name }
     }
     /// A file texture; `Graphic3dTextureEnv::from_file(&"sky.png".into())`.
     pub fn from_file(file_name: &AsciiString) -> Self {
@@ -64,7 +59,7 @@ impl Graphic3dTextureEnv {
         Ok(Self::wrap(base, name))
     }
     /// A pixmap texture; `Graphic3dTextureEnv::from_pix_map(pixmap)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>) -> Self {
+    pub fn from_pix_map(pix_map: Handle<dyn crate::image::ImagePixMapObject>) -> Self {
         let base = Graphic3dTextureRootBase::from_pix_map(pix_map, Graphic3dTypeOfTexture::TOT_2D);
         Self::wrap(base, Graphic3dNameOfTextureEnv::Unknown)
     }

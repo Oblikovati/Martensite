@@ -6,22 +6,20 @@ use super::spline_kind::BezierState;
 use crate::geom_eval::{RepCurveDesc, rep_utils};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkg2d::geom2d::arrays::at;
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 
 /// A Bezier curve; `Handle::new(GeomBezierCurve::new(&poles)?)`.
 pub struct GeomBezierCurve {
-    parent: StandardTransient,
     state: SharedState<BezierState>,
 }
 impl_transient!(
     GeomBezierCurve,
     "Geom_BezierCurve",
     dyn GeomBoundedCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn GeomBoundedCurve]
 );
 
@@ -29,7 +27,6 @@ impl GeomBezierCurve {
     martensite_tkg2d::bezier_curve_members!(Point3);
     fn from_state(state: BezierState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

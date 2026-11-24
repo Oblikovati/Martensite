@@ -10,7 +10,7 @@ impl VulkanRenderer {
     /// Dropping an incomplete renderer can block indefinitely on a persistently failing driver.
     pub fn close(&mut self) -> RenderDeviceCloseOutcome {
         let runtime = self.runtime.clone();
-        let mut calls = DeviceIdleCalls::new(runtime.device());
+        let mut calls = DeviceIdleCalls::new(runtime.device(), &runtime.queue_order);
         self.close_dispatched(&mut calls)
     }
     /// Qualify close through the same completion dispatch; `renderer.close_dispatched(calls)` keeps synthetic faults private.
@@ -25,10 +25,13 @@ impl VulkanRenderer {
         classify_close(runtime.lifecycle.state(), outcome)
     }
     fn close_owned_resources(&mut self, calls: &mut impl CompletionDispatch) -> RetirementAttempt {
-        let device = RetirementAttempt::from(calls.wait_completion());
+        // The frame on the presentation thread joins the flight before the idle wait (#594).
+        let presented = RetirementAttempt::completed(self.settle_presentation());
+        let device = RetirementAttempt::from(calls.wait_completion()).join(presented);
         if !device.is_stopped() {
             return device;
         }
+        self.release_flight_after_idle();
         let pending = self.retirements.try_retire(&device);
         let attempt = device.join(pending);
         if attempt.is_stopped() {

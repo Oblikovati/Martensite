@@ -272,7 +272,7 @@ fn assert_gpu_pixel(
 #[test]
 fn nondefault_contract_refuses_attributes_and_degenerate_projection() {
     let mut source = segment([0., 0., 0., 1.], [1., 0., 0., 1.]);
-    source.vertices[1].color = [0., 1., 0., 1.];
+    source.vertices.make_mut()[1].color = [0., 1., 0., 1.];
     let retained = source.clone();
     let failure = prepare_projected_segments(
         &source,
@@ -306,8 +306,9 @@ fn caller_identities_remain_ordered_after_completed_empty_pairs() {
     let mut source = segment([2., 0., 0., 1.], [3., 0., 0., 1.]);
     source
         .vertices
-        .extend(segment([-1., 0., 0., 1.], [1., 0., 0., 1.]).vertices);
-    source.indices.extend([2, 3]);
+        .make_mut()
+        .extend_from_slice(segment([-1., 0., 0., 1.], [1., 0., 0., 1.]).vertices());
+    source.indices.make_mut().extend([2, 3]);
     let output = prepare_projected_segments(
         &source,
         [64, 64],
@@ -345,10 +346,10 @@ fn source_mutation_cannot_rewrite_published_prepared_geometry() {
     let mut source = segment([-1., 0., 0., 1.], [1., 0., 0., 1.]);
     let published = finite(&source);
     let expected = published.draws()[0].vertices.clone();
-    source.vertices[0].position = [0.5, 0.5, 0.5];
+    source.vertices.make_mut()[0].position = [0.5, 0.5, 0.5];
     source.indices.clear();
     assert_eq!(published.draws()[0].vertices, expected);
-    assert_eq!(published.draws()[0].indices, [0, 1]);
+    assert_eq!(published.draws()[0].indices(), [0, 1]);
 }
 #[test]
 fn generated_near_diagonal_axes_match_independent_binary_float_products() {

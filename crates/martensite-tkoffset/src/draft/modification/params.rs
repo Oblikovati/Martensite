@@ -48,18 +48,15 @@ pub(super) fn parameter(c: &Handle<dyn GeomCurve>, p: Point3) -> Result<(f64, i3
     let ctyp = live(&cbase, "curve")?;
     let mut param;
     if ctyp.is_instance_name("Geom_Line") {
-        param = elclib::parameter(&live(&cbase.clone().cast::<GeomLine>(), "line")?.lin(), p)?;
+        param = elclib::parameter(&live(&cbase.downcast::<GeomLine>(), "line")?.lin(), p)?;
     } else if ctyp.is_instance_name("Geom_Circle") {
-        param = elclib::parameter(
-            &live(&cbase.clone().cast::<GeomCircle>(), "circle")?.circ()?,
-            p,
-        )?;
+        param = elclib::parameter(&live(&cbase.downcast::<GeomCircle>(), "circle")?.circ()?, p)?;
         if (2. * PI - param).abs() <= epsilon_two_pi() {
             param = 0.;
         }
     } else if ctyp.is_instance_name("Geom_Ellipse") {
         param = elclib::parameter(
-            &live(&cbase.clone().cast::<GeomEllipse>(), "ellipse")?.elips()?,
+            &live(&cbase.downcast::<GeomEllipse>(), "ellipse")?.elips()?,
             p,
         )?;
         if (2. * PI - param).abs() <= epsilon_two_pi() {
@@ -67,12 +64,12 @@ pub(super) fn parameter(c: &Handle<dyn GeomCurve>, p: Point3) -> Result<(f64, i3
         }
     } else if ctyp.is_instance_name("Geom_Parabola") {
         param = elclib::parameter(
-            &live(&cbase.clone().cast::<GeomParabola>(), "parabola")?.parab()?,
+            &live(&cbase.downcast::<GeomParabola>(), "parabola")?.parab()?,
             p,
         )?;
     } else if ctyp.is_instance_name("Geom_Hyperbola") {
         param = elclib::parameter(
-            &live(&cbase.clone().cast::<GeomHyperbola>(), "hyperbola")?.hypr()?,
+            &live(&cbase.downcast::<GeomHyperbola>(), "hyperbola")?.hypr()?,
             p,
         )?;
     } else {
@@ -120,7 +117,7 @@ pub(super) fn parameter(c: &Handle<dyn GeomCurve>, p: Point3) -> Result<(f64, i3
 
 /// The bounded 2d curve of a B-spline handle.
 fn bounded_2d(c: &Handle<Geom2dBSplineCurve>) -> Handle<dyn Geom2dBoundedCurve> {
-    c.clone().cast()
+    c.upcast()
 }
 
 /// The edge curve extended to the
@@ -172,7 +169,7 @@ pub(super) fn smart_parameter(
 
     let mut new_c2d = einf.first_pc().clone();
     if live(&new_c2d, "pcurve")?.is_instance_name("Geom2d_TrimmedCurve") {
-        new_c2d = live(&new_c2d.clone().cast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
+        new_c2d = live(&new_c2d.downcast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
     }
 
     let p2d = Point2::new(u, v);
@@ -183,7 +180,7 @@ pub(super) fn smart_parameter(
         {
             geom2d_convert::curve_to_bspline_curve(&new_c2d, ParameterisationType::TgtThetaOver2)?
         } else {
-            new_c2d.clone().cast::<Geom2dBSplineCurve>()
+            new_c2d.downcast::<Geom2dBSplineCurve>()
         };
         let curve = live(&bcurve, "B-spline pcurve")?;
         let mut pnt_array: Array1<'static, Point2> = Array1::with_bounds(1, 2)
@@ -197,28 +194,28 @@ pub(super) fn smart_parameter(
             pnt_array[2] = p2d;
         }
         let patch: Handle<dyn Geom2dBoundedCurve> =
-            Handle::new(Geom2dBezierCurve::new(&pnt_array)?).cast();
+            Handle::new(Geom2dBezierCurve::new(&pnt_array)?).into_upcast();
         let mut concat = CompCurveToBSplineCurve::with_curve(
             &bounded_2d(&bcurve),
             ParameterisationType::QuasiAngular,
         )?;
         concat.add(&patch, tol, after)?;
         bcurve = concat.bspline_curve();
-        new_c2d = bcurve.cast();
+        new_c2d = bcurve.upcast();
     }
     *einf.change_first_pc() = new_c2d.clone();
     let hcur: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_curve(&new_c2d)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_curve(&new_c2d)?).into_upcast();
     let hsur: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(s1)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(s1)?).into_upcast();
     let cons = Adaptor3dCurveOnSurface::with_curve(&hcur, &hsur)?;
-    let hcons: Handle<dyn Adaptor3dCurve> = Handle::new(cons).cast();
+    let hcons: Handle<dyn Adaptor3dCurve> = Handle::new(cons).into_upcast();
     let hsur2: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(s2)?).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(s2)?).into_upcast();
     let h_projector = HCompProjectedCurve::with_tolerances(&hsur2, &hcons, tol, tol)?;
     let (udeb, ufin) = h_projector.bounds(1)?;
     let max_seg = 20 + h_projector.nb_intervals(Continuity::C3)?;
-    let h_projector: Handle<dyn Adaptor2dCurve2d> = Handle::new(h_projector).cast();
+    let h_projector: Handle<dyn Adaptor2dCurve2d> = Handle::new(h_projector).into_upcast();
     let appr = CurveOnSurface::new(
         &h_projector,
         &hsur2,
@@ -233,8 +230,8 @@ pub(super) fn smart_parameter(
             only_2d: false,
         },
     )?;
-    *einf.change_second_pc() = appr.curve_2d().cast();
-    *einf.change_geometry() = appr.curve_3d().cast();
+    *einf.change_second_pc() = appr.curve_2d().into_upcast();
+    *einf.change_geometry() = appr.curve_3d().into_upcast();
     einf.set_new_geometry(true);
 
     let geometry = live(einf.geometry(), "edge geometry")?;

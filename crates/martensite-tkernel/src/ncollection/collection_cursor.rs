@@ -129,7 +129,7 @@ impl<'a, T> CollectionCursorMut<'a, T> {
     }
 
     /// Cursor starting at `position`, ending at the container end.
-    pub fn with_position(items: &'a mut [T], position: usize) -> Self {
+    pub(crate) fn with_position(items: &'a mut [T], position: usize) -> Self {
         let positions = starting_at(position, items.len());
         Self {
             items,
@@ -139,7 +139,7 @@ impl<'a, T> CollectionCursorMut<'a, T> {
     }
 
     /// Restarts on `items`; `cursor.init(other)`.
-    pub fn init(&mut self, items: &'a mut [T]) {
+    pub(crate) fn init(&mut self, items: &'a mut [T]) {
         *self = Self::new(items);
     }
 

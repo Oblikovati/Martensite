@@ -24,7 +24,7 @@ pub fn add_clip_chain(scene: &PbrScene) -> Handle<Graphic3dClipPlane> {
     let first = Handle::new(Graphic3dClipPlane::from_equation(Vec4::new(1., 0., 0., 0.3)).unwrap());
     let second = Handle::new(Graphic3dClipPlane::copy_of(&first));
     second.set_equation(Vec4::new(0., 1., 0., 0.2)).unwrap();
-    Graphic3dClipPlane::set_chain_next_plane(&first, second).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&first.upcast(), second.into_upcast()).unwrap();
     scene.sphere.add_clip_plane(&first);
     first
 }

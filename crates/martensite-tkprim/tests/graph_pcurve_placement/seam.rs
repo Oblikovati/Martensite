@@ -30,7 +30,7 @@ fn authored_seam() -> Shape {
 }
 fn cylindrical_face() -> Face {
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomCylindricalSurface::new(Axis3::default(), 1.).unwrap()).into_cast();
+        Handle::new(GeomCylindricalSurface::new(Axis3::default(), 1.).unwrap()).into_upcast();
     let mut face = Face::default();
     BRepBuilder::default()
         .make_face_on_surface(&mut face, &surface, 1e-7)
@@ -46,7 +46,7 @@ fn vertical_edge() -> Edge {
 fn seam_curve(u: f64) -> Handle<dyn Geom2dCurve> {
     let origin = Point2::new(u, 0.);
     let line = Geom2dLine::from_point(origin, Direction2::Y);
-    Handle::new(line).into_cast()
+    Handle::new(line).into_upcast()
 }
 #[test]
 fn cumulative_v2_keeps_both_directed_seam_curves_and_ranges() {

@@ -291,5 +291,6 @@ impl<T: AspectCircularGrid + ?Sized> AspectCircularGridMembers for T {}
 martensite_tkernel::impl_transient_interface!(
     dyn AspectCircularGrid,
     "Aspect_CircularGrid",
-    dyn AspectGrid
+    dyn AspectGrid,
+    upcasts: [dyn AspectGrid]
 );

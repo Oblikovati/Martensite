@@ -13,10 +13,11 @@ use crate::step_data::{
     StepData, StepDataGeneralModule, StepDataProtocolOps, StepDataReadWriteModule,
     StepDataStepReaderData, StepDataStepWriter, StepDataUndefinedEntity, StepDataWriterLib,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
     ncollection::HArray1,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::interface::{
@@ -41,14 +42,11 @@ const RECO_FILE_SCHEMA: &str = "FILE_SCHEMA";
 /// assert_eq!(module.step_type(1), "FILE_NAME");
 /// ```
 #[derive(Default)]
-pub struct RWHeaderSectionReadWriteModule {
-    transient: StandardTransient,
-}
+pub struct RWHeaderSectionReadWriteModule {}
 impl_transient!(
     RWHeaderSectionReadWriteModule,
     "RWHeaderSectionReadWriteModule",
     dyn StepDataReadWriteModule,
-    transient,
     interfaces: [dyn InterfaceReaderModule, dyn StepDataReadWriteModule]
 );
 crate::impl_step_read_write_module!(RWHeaderSectionReadWriteModule);
@@ -76,7 +74,7 @@ impl StepDataReadWriteModule for RWHeaderSectionReadWriteModule {
         data: &Handle<StepDataStepReaderData>,
         num: i32,
         ach: &mut Handle<InterfaceCheck>,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let mismatch = |ach: &Handle<InterfaceCheck>, what: &str| {
             ach.add_fail_text(&format!("Type Mismatch on {what}"), "");
@@ -107,7 +105,7 @@ impl StepDataReadWriteModule for RWHeaderSectionReadWriteModule {
         &self,
         cn: i32,
         sw: &mut StepDataStepWriter,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         match cn {
             1 => match ent.cast::<HeaderSectionFileName>().get() {
@@ -132,7 +130,7 @@ fn read_undefined(
     data: &Handle<StepDataStepReaderData>,
     num: i32,
     ach: &Handle<InterfaceCheck>,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
 ) -> Result<(), Failure> {
     let undefined = ent.cast::<StepDataUndefinedEntity>();
     let (Some(live), Some(reader)) = (undefined.get(), data.get()) else {
@@ -147,7 +145,7 @@ fn read_undefined(
 
 fn write_undefined(
     sw: &mut StepDataStepWriter,
-    ent: &Handle<StandardTransient>,
+    ent: &Handle<dyn Transient>,
 ) -> Result<(), Failure> {
     let undefined = ent.cast::<StepDataUndefinedEntity>();
     let Some(live) = undefined.get() else {
@@ -172,14 +170,11 @@ fn write_undefined(
 /// assert!(ent.cast::<HeaderSectionFileName>().is_some());
 /// ```
 #[derive(Default)]
-pub struct RWHeaderSectionGeneralModule {
-    transient: StandardTransient,
-}
+pub struct RWHeaderSectionGeneralModule {}
 impl_transient!(
     RWHeaderSectionGeneralModule,
     "RWHeaderSectionGeneralModule",
     dyn StepDataGeneralModule,
-    transient,
     interfaces: [dyn InterfaceGeneralModule, dyn StepDataGeneralModule]
 );
 
@@ -232,7 +227,7 @@ impl InterfaceGeneralModule for RWHeaderSectionGeneralModule {
     fn fill_shared_case(
         &self,
         cn: i32,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         iter: &mut InterfaceEntityIterator,
     ) {
         if cn != 4 {
@@ -246,7 +241,7 @@ impl InterfaceGeneralModule for RWHeaderSectionGeneralModule {
     fn check_case(
         &self,
         _cn: i32,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         _shares: &InterfaceShareTool,
         _ach: &mut Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
@@ -255,8 +250,8 @@ impl InterfaceGeneralModule for RWHeaderSectionGeneralModule {
     fn copy_case(
         &self,
         cn: i32,
-        entfrom: &Handle<StandardTransient>,
-        entto: &Handle<StandardTransient>,
+        entfrom: &Handle<dyn Transient>,
+        entto: &Handle<dyn Transient>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
         match cn {
@@ -304,7 +299,7 @@ impl InterfaceGeneralModule for RWHeaderSectionGeneralModule {
             _ => Ok(()),
         }
     }
-    fn new_void(&self, cn: i32, ent: &mut Handle<StandardTransient>) -> bool {
+    fn new_void(&self, cn: i32, ent: &mut Handle<dyn Transient>) -> bool {
         *ent = match cn {
             1 => Handle::new(HeaderSectionFileName::default()).cast(),
             2 => Handle::new(HeaderSectionFileDescription::default()).cast(),

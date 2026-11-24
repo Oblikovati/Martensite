@@ -1,7 +1,10 @@
 //! Actual callbacks may change the parent's mode without invalidating its live list.
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkv3d::select_mgr::*;
-use std::{fmt::Write, sync::Arc};
+use std::{
+    fmt::Write,
+    sync::{Arc, Weak},
+};
 
 struct ModeTrace {
     parent: WeakHandle<SelectMgrAndOrFilter>,
@@ -10,35 +13,35 @@ struct ModeTrace {
 }
 
 struct ModeChangingFilter {
-    transient: StandardTransient,
     trace: Arc<ModeTrace>,
     identity: u8,
     accepted: bool,
+    owner: Weak<Self>,
 }
-martensite_tkernel::impl_transient!(ModeChangingFilter, "ModeChangingFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(ModeChangingFilter, "ModeChangingFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl ModeChangingFilter {
     fn new(trace: &Arc<ModeTrace>, identity: u8, accepted: bool) -> Handle<Self> {
-        Handle::new(Self {
-            transient: StandardTransient::default(),
+        Handle::from_arc(Arc::new_cyclic(|owner| Self {
             trace: trace.clone(),
             identity,
             accepted,
-        })
+            owner: owner.clone(),
+        }))
     }
 }
 
 impl SelectMgrFilter for ModeChangingFilter {
     fn is_ok(&self, _owner: &Handle<dyn SelectMgrEntityOwnerSource>) -> Result<bool, Failure> {
-        self.trace
-            .calls
-            .write()
-            .push((self.identity, self.transient.ref_count()));
+        self.trace.calls.write().push((
+            self.identity,
+            i32::try_from(self.owner.strong_count()).unwrap(),
+        ));
         if self.identity == 1 {
             self.trace
                 .parent
-                .observe()
+                .upgrade()
                 .set_filter_type(self.trace.replacement);
         }
         Ok(self.accepted)

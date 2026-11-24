@@ -12,7 +12,7 @@ use crate::extrema::pon::POnSurf;
 use crate::extrema::surface_ref::SurfaceRef;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use martensite_tkg3d::geom_adaptor::GeomAdaptorSurfaceOfLinearExtrusion;
 use martensite_tkmath::elclib;
@@ -26,7 +26,6 @@ const NB_EXT_MAX: i32 = 4;
 /// `ExtPExtS`; `ExtPExtS::with_surface(point, &extrusion, 1e-9, 1e-9)?.nb_ext()?`.
 pub struct ExtPExtS {
     // Transient base: ExtPS holds the retained object by handle.
-    parent: StandardTransient,
     uinf: f64,
     usup: f64,
     tolu: f64,
@@ -46,12 +45,11 @@ pub struct ExtPExtS {
     points: [POnSurf; 4],
 }
 
-impl_transient!(ExtPExtS, "Extrema_ExtPExtS", StandardTransient, parent);
+impl_transient!(ExtPExtS, "Extrema_ExtPExtS", dyn Transient);
 
 impl Default for ExtPExtS {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             uinf: 0.0,
             usup: 0.0,
             tolu: 0.0,

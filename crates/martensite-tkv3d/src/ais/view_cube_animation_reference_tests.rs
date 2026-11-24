@@ -28,9 +28,9 @@ fn replace_native_animation_slot(
         1 => cube.set_view_animation(owners[1]),
         2 => cube.set_view_animation(&Handle::default()),
         3 => cube.set_view_animation(owners[0]),
-        4 => cube.interaction.fields.write().animation = owners[2].clone(),
-        5 => cube.interaction.fields.write().animation = Handle::default(),
-        6 => cube.interaction.fields.write().animation = owners[1].clone(),
+        4 => cube.interaction.fields.write().animation = std::sync::Arc::new(owners[2].clone()),
+        5 => cube.interaction.fields.write().animation = std::sync::Arc::new(Handle::default()),
+        6 => cube.interaction.fields.write().animation = std::sync::Arc::new(owners[1].clone()),
         _ => panic!("animation step={step}; expected native sequence 0..=6"),
     }
 }
@@ -49,9 +49,9 @@ fn animation_alias_channels(
         left.is_null() as i32,
         right.is_null() as i32,
         animation_target_identity(copied.object_address(), owners),
-        owners[0].ref_count(),
-        owners[1].ref_count(),
-        owners[2].ref_count(),
+        owners[0].ref_count().try_into().unwrap(),
+        owners[1].ref_count().try_into().unwrap(),
+        owners[2].ref_count().try_into().unwrap(),
     ]
 }
 fn animation_target_identity(

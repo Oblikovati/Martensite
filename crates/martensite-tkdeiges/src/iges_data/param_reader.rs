@@ -2,7 +2,8 @@
 //!
 //! A read takes a cursor, feeds the check on what is wrong, and returns whether it gave a value.
 //! The reads themselves are in `param_reader_read` and `param_reader_lists`.
-use super::{IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataParamCursor, IgesDataReadStage};
+use super::{IgesDataIgesReaderData, IgesDataParamCursor, IgesDataReadStage};
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkernel::{
     message::Msg,
     standard::{Failure, Handle},
@@ -198,7 +199,7 @@ impl IgesDataParamReader {
         &mut self,
         ir: &Handle<IgesDataIgesReaderData>,
         num: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let n = self.param_number(num)?;
         if n == 0 {
             self.check_text(
@@ -340,7 +341,7 @@ impl IgesDataParamReader {
 pub(super) fn bound_entity(
     ir: &Handle<IgesDataIgesReaderData>,
     num: i32,
-) -> Handle<IgesDataIgesEntity> {
+) -> Handle<dyn IgesDataEntityKind> {
     ir.get()
         .map_or_else(Handle::default, |data| data.bound_entity(num).cast())
 }

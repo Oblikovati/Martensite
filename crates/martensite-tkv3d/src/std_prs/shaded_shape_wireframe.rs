@@ -6,7 +6,7 @@ use martensite_tkbrep::{
     topexp::Explorer,
     topods::{self, Compound, Shape, TopoDSShapeReadSource},
 };
-use martensite_tkernel::standard::{Failure, Handle, HandleReference};
+use martensite_tkernel::standard::{Failure, HandleReference};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::poly::mesh_purpose;
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
@@ -16,7 +16,7 @@ impl StdPrsShadedShape {
     pub fn add_wireframe_for_free_elements(
         prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
         shape: &Shape,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<(), Failure> {
         Self::add_free_elements_reference(prs, shape, drawer)
     }
@@ -24,7 +24,7 @@ impl StdPrsShadedShape {
     pub fn add_wireframe_for_faces_without_triangles(
         prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
         shape: &Shape,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<(), Failure> {
         Self::add_unmeshed_faces_reference(prs, shape, drawer)
     }
@@ -32,7 +32,7 @@ impl StdPrsShadedShape {
     pub fn add_free_elements_reference<S: TopoDSShapeReadSource>(
         prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
         source: &S,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<(), Failure> {
         let has_faces = source.read_current_shape(|shape| {
             Ok(Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)?.more())
@@ -46,7 +46,7 @@ impl StdPrsShadedShape {
     pub fn add_unmeshed_faces_reference<S: TopoDSShapeReadSource>(
         prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
         source: &S,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
     ) -> Result<(), Failure> {
         let unmeshed = source.read_current_shape(shaded_unmeshed_faces_compound)?;
         if unmeshed.nb_children() == 0 {
@@ -110,7 +110,7 @@ fn restore_unmeshed_shaded_iso_counts(drawer: &Prs3dDrawer, previous: [i32; 2]) 
 fn add_collected_free_elements<S: TopoDSShapeReadSource>(
     prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
     source: &S,
-    drawer: &Handle<Prs3dDrawer>,
+    drawer: &Prs3dDrawer,
 ) -> Result<(), Failure> {
     let all_vertices = drawer.vertex_draw_mode() == Prs3dVertexDrawMode::All;
     if !all_vertices

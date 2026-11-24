@@ -39,7 +39,7 @@ fn single_edge(spine: &Face) -> Result<Option<Edge>, Failure> {
 
 /// The basis of a trimmed 3d curve, else the curve.
 fn untrimmed(c: Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
-    let trimmed: Handle<GeomTrimmedCurve> = c.cast();
+    let trimmed: Handle<GeomTrimmedCurve> = c.downcast();
     match trimmed.get() {
         Some(t) => t.basis_curve(),
         None => c,
@@ -65,7 +65,7 @@ pub(super) fn k_part_circle(
         return Ok(false);
     }
     let c: Handle<dyn GeomCurve> = untrimmed(found.curve.clone());
-    let is_circle: bool = !c.cast::<GeomCircle>().is_null();
+    let is_circle: bool = !c.downcast::<GeomCircle>().is_null();
     if !((is_circle && BRepTool::is_closed(e.as_ref())?) || is_open_result) {
         return Ok(false);
     }
@@ -74,7 +74,8 @@ pub(super) fn k_part_circle(
         *out.2 = false;
         return Ok(true);
     };
-    let a_plane: Handle<dyn GeomSurface> = BRepTool::surface(my_spine)?.cast::<GeomPlane>().cast();
+    let a_plane: Handle<dyn GeomSurface> =
+        BRepTool::surface(my_spine)?.downcast::<GeomPlane>().cast();
     let mut shape: Shape = BRepLibMakeEdge::from_pcurve_params(&oc, &a_plane, pc.first, pc.last)?
         .edge()?
         .into_shape();
@@ -114,13 +115,13 @@ fn offset_pcurve(
         an_offset *= -1.;
     }
     let ahc: Handle<dyn Adaptor2dCurve2d> =
-        Handle::new(Geom2dAdaptorCurve::with_range(a_pcurve, f, l)?).cast();
+        Handle::new(Geom2dAdaptorCurve::with_range(a_pcurve, f, l)?).into_upcast();
     let adaptor = ahc.get().ok_or_else(null_pcurve)?;
     match adaptor.get_type()? {
         CurveType::Line => {
             let off = Adaptor2dOffsetCurve::with_offset(&ahc, an_offset)?;
             Ok(Some(
-                Handle::new(Geom2dLine::from_lin2d(off.line()?)).cast(),
+                Handle::new(Geom2dLine::from_lin2d(off.line()?)).into_upcast(),
             ))
         }
         CurveType::Circle => {
@@ -130,15 +131,15 @@ fn offset_pcurve(
             let the_circ = adaptor.circle()?;
             if an_offset > 0. || an_offset.abs() < the_circ.radius() {
                 let circle = Geom2dCircle::new(the_circ.position(), the_circ.radius() + an_offset)?;
-                return Ok(Some(Handle::new(circle).cast()));
+                return Ok(Some(Handle::new(circle).into_upcast()));
             }
             Ok(None)
         }
         _ => {
             let g2d_t: Handle<dyn Geom2dCurve> =
-                Handle::new(Geom2dTrimmedCurve::new(a_pcurve, f, l, true, true)?).cast();
+                Handle::new(Geom2dTrimmedCurve::new(a_pcurve, f, l, true, true)?).into_upcast();
             Ok(Some(
-                Handle::new(Geom2dOffsetCurve::new(&g2d_t, an_offset, false)?).cast(),
+                Handle::new(Geom2dOffsetCurve::new(&g2d_t, an_offset, false)?).into_upcast(),
             ))
         }
     }

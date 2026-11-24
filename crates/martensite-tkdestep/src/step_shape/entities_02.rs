@@ -14,32 +14,32 @@ use crate::step_repr::*;
 step_entity! {
     /// Closed shell.
     StepShapeClosedShell, StepShapeClosedShellState, "StepShapeClosedShell", StepShapeConnectedFaceSet, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeClosedShell, crate::step_shape::StepShapeConnectedFaceSet, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 
 step_entity! {
     /// Representation of STEP entity CompoundShapeRepresentation
     StepShapeCompoundShapeRepresentation, StepShapeCompoundShapeRepresentationState, "StepShapeCompoundShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity ConnectedEdgeSet
     StepShapeConnectedEdgeSet, StepShapeConnectedEdgeSetState, "StepShapeConnectedEdgeSet", StepShapeTopologicalRepresentationItem, {
-        the_ces_edges: Handle<HArray1<Handle<StepShapeEdge>>>,
-    }
+        the_ces_edges: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeConnectedEdgeSet {
     step_methods! {
-        get ces_edges = the_ces_edges: Handle<HArray1<Handle<StepShapeEdge>>>;
-        set set_ces_edges = the_ces_edges: Handle<HArray1<Handle<StepShapeEdge>>>;
+        get ces_edges = the_ces_edges: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>>;
+        set set_ces_edges = the_ces_edges: Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         a_representation_item_name: &Handle<HAsciiString>,
-        a_ces_edges: &Handle<HArray1<Handle<StepShapeEdge>>>,
+        a_ces_edges: &Handle<HArray1<Handle<dyn crate::StepEntityBase<StepShapeEdge>>>>,
     ) {
         self.parent.init(a_representation_item_name);
         self.state.write().the_ces_edges = a_ces_edges.clone();
@@ -49,27 +49,29 @@ impl StepShapeConnectedEdgeSet {
 step_entity! {
     /// Representation of STEP entity ConnectedFaceShapeRepresentation
     StepShapeConnectedFaceShapeRepresentation, StepShapeConnectedFaceShapeRepresentationState, "StepShapeConnectedFaceShapeRepresentation", StepReprRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Representation of STEP entity ConnectedFaceSubSet
     StepShapeConnectedFaceSubSet, StepShapeConnectedFaceSubSetState, "StepShapeConnectedFaceSubSet", StepShapeConnectedFaceSet, {
-        the_parent_face_set: Handle<StepShapeConnectedFaceSet>,
-    }
+        the_parent_face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
+    }, bases: [crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeConnectedFaceSet, crate::step_shape::StepShapeTopologicalRepresentationItem]
 }
 impl StepShapeConnectedFaceSubSet {
     step_methods! {
-        get parent_face_set = the_parent_face_set: Handle<StepShapeConnectedFaceSet>;
-        set set_parent_face_set = the_parent_face_set: Handle<StepShapeConnectedFaceSet>;
+        get parent_face_set = the_parent_face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>;
+        set set_parent_face_set = the_parent_face_set: Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
         a_representation_item_name: &Handle<HAsciiString>,
-        a_connected_face_set_cfs_faces: &Handle<HArray1<Handle<StepShapeFace>>>,
-        a_parent_face_set: &Handle<StepShapeConnectedFaceSet>,
+        a_connected_face_set_cfs_faces: &Handle<
+            HArray1<Handle<dyn crate::StepEntityBase<StepShapeFace>>>,
+        >,
+        a_parent_face_set: &Handle<dyn crate::StepEntityBase<StepShapeConnectedFaceSet>>,
     ) {
         self.parent
             .init(a_representation_item_name, a_connected_face_set_cfs_faces);
@@ -80,21 +82,21 @@ impl StepShapeConnectedFaceSubSet {
 step_entity! {
     /// Context dependent shape representation.
     StepShapeContextDependentShapeRepresentation, StepShapeContextDependentShapeRepresentationState, "StepShapeContextDependentShapeRepresentation", StandardTransient, {
-        the_rep_rel: Handle<StepReprShapeRepresentationRelationship>,
+        the_rep_rel: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>,
         the_pro_rel: Handle<StepReprProductDefinitionShape>,
     }
 }
 impl StepShapeContextDependentShapeRepresentation {
     step_methods! {
-        get representation_relation = the_rep_rel: Handle<StepReprShapeRepresentationRelationship>;
-        set set_representation_relation = the_rep_rel: Handle<StepReprShapeRepresentationRelationship>;
+        get representation_relation = the_rep_rel: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>;
+        set set_representation_relation = the_rep_rel: Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>;
         get represented_product_relation = the_pro_rel: Handle<StepReprProductDefinitionShape>;
         set set_represented_product_relation = the_pro_rel: Handle<StepReprProductDefinitionShape>;
     }
     /// `init`.
     pub fn init(
         &self,
-        a_rep_rel: &Handle<StepReprShapeRepresentationRelationship>,
+        a_rep_rel: &Handle<dyn crate::StepEntityBase<StepReprShapeRepresentationRelationship>>,
         a_pro_rel: &Handle<StepReprProductDefinitionShape>,
     ) {
         let mut state = self.state.write();
@@ -106,14 +108,14 @@ impl StepShapeContextDependentShapeRepresentation {
 step_entity! {
     /// Csg shape representation.
     StepShapeCsgShapeRepresentation, StepShapeCsgShapeRepresentationState, "StepShapeCsgShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
     /// Csg solid.
     StepShapeCsgSolid, StepShapeCsgSolidState, "StepShapeCsgSolid", StepShapeSolidModel, {
         tree_root_expression: StepShapeCsgSelect,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem, crate::step_shape::StepShapeSolidModel]
 }
 impl StepShapeCsgSolid {
     step_methods! {
@@ -131,7 +133,7 @@ step_entity! {
     /// Implements complex type
     /// (DEFINITIONAL_REPRESENTATION,REPRESENTATION,SHAPE_REPRESENTATION)
     StepShapeDefinitionalRepresentationAndShapeRepresentation, StepShapeDefinitionalRepresentationAndShapeRepresentationState, "StepShapeDefinitionalRepresentationAndShapeRepresentation", StepReprDefinitionalRepresentation, {
-    }
+    }, bases: [crate::step_repr::StepReprRepresentation]
 }
 
 step_entity! {
@@ -164,19 +166,19 @@ impl StepShapeDimensionalCharacteristicRepresentation {
 step_entity! {
     /// Representation of STEP entity DimensionalLocation
     StepShapeDimensionalLocation, StepShapeDimensionalLocationState, "StepShapeDimensionalLocation", StepReprShapeAspectRelationship, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspectRelationship, crate::step_shape::StepShapeDimensionalLocation]
 }
 
 step_entity! {
     /// Representation of STEP entity DimensionalLocationWithPath
     StepShapeDimensionalLocationWithPath, StepShapeDimensionalLocationWithPathState, "StepShapeDimensionalLocationWithPath", StepShapeDimensionalLocation, {
-        the_path: Handle<StepReprShapeAspect>,
-    }
+        the_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+    }, bases: [crate::step_repr::StepReprShapeAspectRelationship, crate::step_shape::StepShapeDimensionalLocation]
 }
 impl StepShapeDimensionalLocationWithPath {
     step_methods! {
-        get path = the_path: Handle<StepReprShapeAspect>;
-        set set_path = the_path: Handle<StepReprShapeAspect>;
+        get path = the_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
+        set set_path = the_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
@@ -185,9 +187,13 @@ impl StepShapeDimensionalLocationWithPath {
         a_shape_aspect_relationship_name: &Handle<HAsciiString>,
         has_shape_aspect_relationship_description: bool,
         a_shape_aspect_relationship_description: &Handle<HAsciiString>,
-        a_shape_aspect_relationship_relating_shape_aspect: &Handle<StepReprShapeAspect>,
-        a_shape_aspect_relationship_related_shape_aspect: &Handle<StepReprShapeAspect>,
-        a_path: &Handle<StepReprShapeAspect>,
+        a_shape_aspect_relationship_relating_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
+        a_shape_aspect_relationship_related_shape_aspect: &Handle<
+            dyn crate::StepEntityBase<StepReprShapeAspect>,
+        >,
+        a_path: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     ) {
         self.parent.init(
             a_shape_aspect_relationship_name,
@@ -203,20 +209,24 @@ impl StepShapeDimensionalLocationWithPath {
 step_entity! {
     /// Representation of STEP entity DimensionalSize
     StepShapeDimensionalSize, StepShapeDimensionalSizeState, "StepShapeDimensionalSize", StandardTransient, {
-        the_applies_to: Handle<StepReprShapeAspect>,
+        the_applies_to: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         the_name: Handle<HAsciiString>,
-    }
+    }, bases: [StepShapeDimensionalSize]
 }
 impl StepShapeDimensionalSize {
     step_methods! {
-        get applies_to = the_applies_to: Handle<StepReprShapeAspect>;
-        set set_applies_to = the_applies_to: Handle<StepReprShapeAspect>;
+        get applies_to = the_applies_to: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
+        set set_applies_to = the_applies_to: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
         get name = the_name: Handle<HAsciiString>;
         set set_name = the_name: Handle<HAsciiString>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
-    pub fn init(&self, a_applies_to: &Handle<StepReprShapeAspect>, a_name: &Handle<HAsciiString>) {
+    pub fn init(
+        &self,
+        a_applies_to: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+        a_name: &Handle<HAsciiString>,
+    ) {
         let mut state = self.state.write();
         state.the_applies_to = a_applies_to.clone();
         state.the_name = a_name.clone();
@@ -226,21 +236,21 @@ impl StepShapeDimensionalSize {
 step_entity! {
     /// Representation of STEP entity DimensionalSizeWithPath
     StepShapeDimensionalSizeWithPath, StepShapeDimensionalSizeWithPathState, "StepShapeDimensionalSizeWithPath", StepShapeDimensionalSize, {
-        the_path: Handle<StepReprShapeAspect>,
-    }
+        the_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
+    }, bases: [StepShapeDimensionalSize]
 }
 impl StepShapeDimensionalSizeWithPath {
     step_methods! {
-        get path = the_path: Handle<StepReprShapeAspect>;
-        set set_path = the_path: Handle<StepReprShapeAspect>;
+        get path = the_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
+        set set_path = the_path: Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>;
     }
     /// `init`.
     /// Initialize all fields (own and inherited)
     pub fn init(
         &self,
-        a_dimensional_size_applies_to: &Handle<StepReprShapeAspect>,
+        a_dimensional_size_applies_to: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
         a_dimensional_size_name: &Handle<HAsciiString>,
-        a_path: &Handle<StepReprShapeAspect>,
+        a_path: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     ) {
         self.parent
             .init(a_dimensional_size_applies_to, a_dimensional_size_name);
@@ -251,14 +261,14 @@ impl StepShapeDimensionalSizeWithPath {
 step_entity! {
     /// Representation of STEP entity DirectedDimensionalLocation
     StepShapeDirectedDimensionalLocation, StepShapeDirectedDimensionalLocationState, "StepShapeDirectedDimensionalLocation", StepShapeDimensionalLocation, {
-    }
+    }, bases: [crate::step_repr::StepReprShapeAspectRelationship, crate::step_shape::StepShapeDimensionalLocation]
 }
 
 step_entity! {
     /// Representation of STEP entity EdgeBasedWireframeModel
     StepShapeEdgeBasedWireframeModel, StepShapeEdgeBasedWireframeModelState, "StepShapeEdgeBasedWireframeModel", StepGeomGeometricRepresentationItem, {
         the_ebwm_boundary: Handle<HArray1<Handle<StepShapeConnectedEdgeSet>>>,
-    }
+    }, bases: [crate::step_geom::StepGeomGeometricRepresentationItem, crate::step_repr::StepReprRepresentationItem]
 }
 impl StepShapeEdgeBasedWireframeModel {
     step_methods! {
@@ -280,5 +290,5 @@ impl StepShapeEdgeBasedWireframeModel {
 step_entity! {
     /// Representation of STEP entity EdgeBasedWireframeShapeRepresentation
     StepShapeEdgeBasedWireframeShapeRepresentation, StepShapeEdgeBasedWireframeShapeRepresentationState, "StepShapeEdgeBasedWireframeShapeRepresentation", StepShapeShapeRepresentation, {
-    }
+    }, bases: [crate::step_shape::StepShapeShapeRepresentation, crate::step_repr::StepReprRepresentation]
 }

@@ -22,7 +22,7 @@ impl BaseAllocator {
 }
 impl AllocatorPolicyInvocation {
     /// Allocate from actual shared backing; `policy.allocate(8, true)`.
-    pub fn allocate(&self, size: usize, zeroed: bool) -> Option<NonNull<u8>> {
+    pub(crate) fn allocate(&self, size: usize, zeroed: bool) -> Option<NonNull<u8>> {
         match &*self.inner {
             AllocatorKind::Common => heap_allocate(size, MALLOC_ALIGNMENT, zeroed),
             AllocatorKind::Heap => heap_allocate(heap_round(size)?, MALLOC_ALIGNMENT, zeroed),

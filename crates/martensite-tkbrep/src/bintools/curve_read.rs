@@ -1,9 +1,10 @@
 //! Reading one binary `Geom_Curve` record back.
+use super::CurveFrameReadPolicy;
 use super::curve_write::code;
 use super::errors::wrap_failure;
 use super::geometry_in::{read_degree, read_direction3, read_knots, read_point3, read_poles};
 use super::scalars::{get_bool, get_integer, get_real, stream_get};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
+use martensite_tkernel::standard::{Failure, Handle, HandleUpcast};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBezierCurve, GeomCircle, GeomCurve, GeomEllipse, GeomHyperbola, GeomLine,
@@ -16,36 +17,57 @@ use martensite_tkmath::gp::{Axis2, Direction3, Point3};
 /// direction, a refused construction) is wrapped in "EXCEPTION in
 /// BinTools_CurveSet::ReadCurve(..)" with the stream left where it happened.
 pub(crate) fn read_curve(stream: &mut IoStream) -> Result<Handle<dyn GeomCurve>, Failure> {
+    read_curve_with_frame_policy(stream, CurveFrameReadPolicy::LegacyReplay)
+}
+
+pub(crate) fn read_curve_with_frame_policy(
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<Handle<dyn GeomCurve>, Failure> {
     wrap_failure("EXCEPTION in BinTools_CurveSet::ReadCurve(..)", || {
         let ctype = stream_get(stream) as u8;
-        read_record(ctype, stream)
+        read_record(ctype, stream, policy)
     })
 }
 
-fn read_record(ctype: u8, stream: &mut IoStream) -> Result<Handle<dyn GeomCurve>, Failure> {
+fn read_record(
+    ctype: u8,
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<Handle<dyn GeomCurve>, Failure> {
     match ctype {
-        code::LINE => read_line(stream).map(upcast),
-        code::CIRCLE => read_circle(stream).map(upcast),
-        code::ELLIPSE => read_ellipse(stream).map(upcast),
-        code::PARABOLA => read_parabola(stream).map(upcast),
-        code::HYPERBOLA => read_hyperbola(stream).map(upcast),
+        code::LINE => read_line(stream, policy).map(upcast),
+        code::CIRCLE => read_circle(stream, policy).map(upcast),
+        code::ELLIPSE => read_ellipse(stream, policy).map(upcast),
+        code::PARABOLA => read_parabola(stream, policy).map(upcast),
+        code::HYPERBOLA => read_hyperbola(stream, policy).map(upcast),
         code::BEZIER => read_bezier(stream).map(upcast),
         code::BSPLINE => read_bspline(stream).map(upcast),
-        code::TRIMMED => read_trimmed(stream).map(upcast),
-        code::OFFSET => read_offset(stream).map(upcast),
+        code::TRIMMED => read_trimmed(stream, policy).map(upcast),
+        code::OFFSET => read_offset(stream, policy).map(upcast),
         _ => Err(Failure::new("UNKNOWN CURVE TYPE")),
     }
 }
 
 /// `C = CC;`.
-fn upcast<C: Transient + RuntimeTyped>(curve: C) -> Handle<dyn GeomCurve> {
-    Handle::new(curve).into_cast()
+fn upcast<C: HandleUpcast<dyn GeomCurve>>(curve: C) -> Handle<dyn GeomCurve> {
+    Handle::new(curve).into_upcast()
 }
 
-fn read_line(stream: &mut IoStream) -> Result<GeomLine, Failure> {
+fn read_line(stream: &mut IoStream, policy: CurveFrameReadPolicy) -> Result<GeomLine, Failure> {
     let point = read_point3(stream)?;
-    let direction = read_direction3(stream)?;
+    let direction = read_stored_direction(stream, policy)?;
     Ok(GeomLine::from_point(point, direction))
+}
+
+fn read_stored_direction(
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<Direction3, Failure> {
+    if policy == CurveFrameReadPolicy::LegacyReplay {
+        return read_direction3(stream);
+    }
+    Direction3::from_stored_coefficients(*read_point3(stream)?.coordinates())
 }
 
 /// `IS >> P >> A >> AX >> AY`: the conic frame. The Y direction is read (and must not
@@ -58,31 +80,59 @@ fn read_conic_frame(stream: &mut IoStream) -> Result<(Point3, Direction3, Direct
     Ok((point, main, x))
 }
 
-/// `gp_Ax2(P, A, AX)`, built after the radii are read, as natively.
-fn conic_axis((point, main, x): (Point3, Direction3, Direction3)) -> Result<Axis2, Failure> {
-    Axis2::with_x_direction(point, main, x)
+enum ConicFrame {
+    Legacy(Point3, Direction3, Direction3),
+    Checked(Axis2),
+}
+fn read_axis(stream: &mut IoStream, policy: CurveFrameReadPolicy) -> Result<ConicFrame, Failure> {
+    if policy == CurveFrameReadPolicy::LegacyReplay {
+        let (point, main, x) = read_conic_frame(stream)?;
+        return Ok(ConicFrame::Legacy(point, main, x));
+    }
+    let origin = read_point3(stream)?;
+    let main = *read_point3(stream)?.coordinates();
+    let x = *read_point3(stream)?.coordinates();
+    let y = *read_point3(stream)?.coordinates();
+    Axis2::from_stored_coefficients(origin, main, x, y).map(ConicFrame::Checked)
 }
 
-fn read_circle(stream: &mut IoStream) -> Result<GeomCircle, Failure> {
-    let frame = read_conic_frame(stream)?;
+/// `gp_Ax2(P, A, AX)`, built after the radii are read, as natively.
+fn conic_axis(frame: ConicFrame) -> Result<Axis2, Failure> {
+    match frame {
+        ConicFrame::Legacy(point, main, x) => Axis2::with_x_direction(point, main, x),
+        ConicFrame::Checked(axis) => Ok(axis),
+    }
+}
+
+fn read_circle(stream: &mut IoStream, policy: CurveFrameReadPolicy) -> Result<GeomCircle, Failure> {
+    let frame = read_axis(stream, policy)?;
     let radius = get_real(stream)?;
     GeomCircle::new(conic_axis(frame)?, radius)
 }
 
-fn read_ellipse(stream: &mut IoStream) -> Result<GeomEllipse, Failure> {
-    let frame = read_conic_frame(stream)?;
+fn read_ellipse(
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<GeomEllipse, Failure> {
+    let frame = read_axis(stream, policy)?;
     let (major, minor) = (get_real(stream)?, get_real(stream)?);
     GeomEllipse::new(conic_axis(frame)?, major, minor)
 }
 
-fn read_parabola(stream: &mut IoStream) -> Result<GeomParabola, Failure> {
-    let frame = read_conic_frame(stream)?;
+fn read_parabola(
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<GeomParabola, Failure> {
+    let frame = read_axis(stream, policy)?;
     let focal = get_real(stream)?;
     GeomParabola::new(conic_axis(frame)?, focal)
 }
 
-fn read_hyperbola(stream: &mut IoStream) -> Result<GeomHyperbola, Failure> {
-    let frame = read_conic_frame(stream)?;
+fn read_hyperbola(
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<GeomHyperbola, Failure> {
+    let frame = read_axis(stream, policy)?;
     let (major, minor) = (get_real(stream)?, get_real(stream)?);
     GeomHyperbola::new(conic_axis(frame)?, major, minor)
 }
@@ -117,17 +167,23 @@ fn read_bspline(stream: &mut IoStream) -> Result<GeomBSplineCurve, Failure> {
 
 /// The parameters, then the basis record; `Geom_TrimmedCurve(BC, p1, p2)` with its
 /// default sense and periodic adjustment.
-fn read_trimmed(stream: &mut IoStream) -> Result<GeomTrimmedCurve, Failure> {
+fn read_trimmed(
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<GeomTrimmedCurve, Failure> {
     let (first, last) = (get_real(stream)?, get_real(stream)?);
-    let basis = read_curve(stream)?;
+    let basis = read_curve_with_frame_policy(stream, policy)?;
     GeomTrimmedCurve::new(&basis, first, last, true, true)
 }
 
 /// The offset, the reference direction, then the basis record; the basis continuity
 /// is checked (`isNotCheckC0` defaults to false).
-fn read_offset(stream: &mut IoStream) -> Result<GeomOffsetCurve, Failure> {
+fn read_offset(
+    stream: &mut IoStream,
+    policy: CurveFrameReadPolicy,
+) -> Result<GeomOffsetCurve, Failure> {
     let offset = get_real(stream)?;
-    let direction = read_direction3(stream)?;
-    let basis = read_curve(stream)?;
+    let direction = read_stored_direction(stream, policy)?;
+    let basis = read_curve_with_frame_policy(stream, policy)?;
     GeomOffsetCurve::new(&basis, offset, direction, false)
 }

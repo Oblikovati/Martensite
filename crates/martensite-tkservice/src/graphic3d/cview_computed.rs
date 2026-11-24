@@ -8,31 +8,23 @@ use super::{
     Graphic3dTypeOfAnswer as Answer, Graphic3dTypeOfStructure as Visual,
 };
 use crate::graphic3d::frame_stats_data::native_max;
-use martensite_tkernel::standard::{Failure, Handle, HandleObserver};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::bnd::BoundingBox3;
 
-/// Non-owning views of `myStructsComputed`, in order.
+/// Owning snapshots of `myStructsComputed`, in order.
 fn computed_observers<V: Graphic3dCView + ?Sized>(
     view: &V,
-) -> Vec<HandleObserver<dyn Graphic3dStructureSource>> {
+) -> Vec<Handle<dyn Graphic3dStructureSource>> {
     let fields = view.cview_base().fields.read();
-    fields
-        .structs_computed
-        .iter()
-        .map(Handle::observe)
-        .collect()
+    fields.structs_computed.to_vec()
 }
 
-/// Non-owning views of `myStructsDisplayed`, in its iteration order.
+/// Owning snapshots of `myStructsDisplayed`, in its iteration order.
 fn displayed_observers<V: Graphic3dCView + ?Sized>(
     view: &V,
-) -> Vec<HandleObserver<dyn Graphic3dStructureSource>> {
+) -> Vec<Handle<dyn Graphic3dStructureSource>> {
     let fields = view.cview_base().fields.read();
-    fields
-        .structs_displayed
-        .iter()
-        .map(Handle::observe)
-        .collect()
+    fields.structs_displayed.iter().cloned().collect()
 }
 
 /// The native `ReCompute` body.
@@ -199,13 +191,12 @@ pub trait Graphic3dCViewComputed: Graphic3dCView {
     /// `Compute`: invalidates the computed structures, recomputes the transformations and,
     /// in computed mode, displays the computed structures again; `view.compute()`.
     fn compute(&self) {
-        // The native loops walk the fields themselves: observers add no owner during the
-        // virtual RecomputeTransformation, and the view's lock is not held across it.
+        // Snapshots release the view lock before virtual calls; each keeps its receiver alive.
         for structure in computed_observers(self).iter().filter_map(|s| s.get()) {
             structure.set_hlr_validation(false);
         }
         let displayed = displayed_observers(self);
-        let camera = self.cview_camera_ref().observe();
+        let camera = self.cview_camera_ref().clone_handle();
         for structure in displayed.iter().filter_map(|s| s.get()) {
             structure.recompute_transformation(&camera);
         }
@@ -219,7 +210,7 @@ pub trait Graphic3dCViewComputed: Graphic3dCView {
                 s.get()
                     .is_some_and(|s| self.accept_display(s.visual()) == Answer::Compute)
             })
-            .map(|s| Handle::clone(s))
+            .map(Handle::clone)
             .collect();
         drop(displayed);
         for structure in &to_display {

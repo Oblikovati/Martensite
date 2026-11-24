@@ -15,9 +15,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::Message;
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, StandardTransient, catch_native_failure,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, catch_native_failure};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::bnd::BoundingBox3;
@@ -33,10 +31,9 @@ use std::io;
 /// `AisShape`: the presentation of a topological shape.
 /// Example: `let object = AisShape::new(&shape); context.display(&object.cast, true)?;`.
 pub struct AisShape {
-    transient: StandardTransient,
     base: AisShapeBase,
 }
-martensite_tkernel::impl_transient!(AisShape, "AisShape", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(AisShape, "AisShape", dyn AisInteractiveObject,
     interfaces: [dyn AisShapeSource, dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl AisShape {
@@ -44,11 +41,18 @@ impl AisShape {
     /// Example: `AisShape::new(&shape)`.
     pub fn new(shape: &Shape) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisShapeBase::new(shape),
         });
         prs_mgr_presentable_bind(&object.cast());
         object
+    }
+
+    /// Approve alternate raster meshes for this solid and request a shaded recompute.
+    /// Renew approval after an in-place topology edit. Assigning a shape clears it.
+    /// Example: `object.set_presentation_mesh_lod(Some(approval));`.
+    pub fn set_presentation_mesh_lod(&self, approval: Option<crate::std_prs::StdPrsMeshLod>) {
+        self.base.fields.write().mesh_lod = approval;
+        self.set_to_update(1);
     }
 }
 
@@ -171,7 +175,10 @@ pub fn ais_shape_compute<S: AisShapeSource + ?Sized>(
     if mode == 2 {
         return ais_shape_compute_bounds_mode(object, prs);
     }
-    let shape = object.shape_base().fields.read().shape.clone();
+    let (shape, mesh_lod) = {
+        let fields = object.shape_base().fields.read();
+        (fields.shape.to_shape(), fields.mesh_lod.clone())
+    };
     if shape.is_null() {
         return Ok(());
     }
@@ -209,6 +216,11 @@ pub fn ais_shape_compute<S: AisShapeSource + ?Sized>(
                 let aspect = drawer.shading_aspect().aspect();
                 let textured = aspect.to_map_texture() && !aspect.texture_map().is_null();
                 let shaded = catch_native_failure(|| {
+                    if let Some(approval) = mesh_lod.as_ref().filter(|_| !textured) {
+                        return StdPrsShadedShape::add_with_mesh_lod(
+                            prs, &shape, &drawer, approval,
+                        );
+                    }
                     StdPrsShadedShape::add_with_texels(
                         prs,
                         &shape,
@@ -246,7 +258,7 @@ pub fn ais_shape_compute_hlr<S: AisShapeSource + ?Sized>(
     trsf: &Handle<Datum3>,
     prs: &Handle<dyn Graphic3dStructureSource>,
 ) -> Result<(), Failure> {
-    let shape = object.shape_base().fields.read().shape.clone();
+    let shape = object.shape_base().fields.read().shape.to_shape();
     let drawer = object.attributes();
     match trsf.get() {
         Some(datum) if datum.trsf().form() != TransformForm::Identity => {
@@ -358,7 +370,7 @@ pub fn ais_shape_selection_mode(kind: ShapeEnum) -> i32 {
 pub trait AisShapeParameters: AisShapeSource {
     /// `Shape`: a copy of the shape; `object.shape()`.
     fn shape(&self) -> Shape {
-        self.shape_base().fields.read().shape.clone()
+        self.shape_base().fields.read().shape.to_shape()
     }
     /// `Set`: the same as `SetShape`; `object.set(&shape)`.
     fn set(&self, shape: &Shape) {

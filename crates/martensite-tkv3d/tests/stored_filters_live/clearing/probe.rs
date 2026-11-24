@@ -1,10 +1,10 @@
 //! Real Drop callbacks inspect the live parent while intrusive ownership reaches zero.
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkv3d::select_mgr::{
     SelectMgrCompositionFilter, SelectMgrEntityOwnerSource, SelectMgrFilter,
 };
 use std::sync::{
-    Arc,
+    Arc, Weak,
     atomic::{AtomicBool, Ordering},
 };
 
@@ -37,25 +37,25 @@ pub(super) struct DropTrace {
 }
 
 pub(super) struct DropProbeFilter {
-    transient: StandardTransient,
     trace: Arc<DropTrace>,
     identity: u8,
+    owner: Weak<Self>,
 }
-martensite_tkernel::impl_transient!(DropProbeFilter, "DropProbeFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(DropProbeFilter, "DropProbeFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl DropProbeFilter {
     /// Bind a real destructor observation; `DropProbeFilter::new(&trace, 1)`.
     pub(super) fn new(trace: &Arc<DropTrace>, identity: u8) -> Handle<Self> {
-        Handle::new(Self {
-            transient: StandardTransient::default(),
+        Handle::from_arc(Arc::new_cyclic(|owner| Self {
             trace: trace.clone(),
             identity,
-        })
+            owner: owner.clone(),
+        }))
     }
 
     fn observe_drop(&self) {
-        let parent = self.trace.parent.read().observe();
+        let parent = self.trace.parent.read().upgrade();
         self.trace.records.write().push(self.drop_record(&parent));
         if self.identity != 1 || parent.is_null() {
             return;
@@ -74,13 +74,13 @@ impl DropProbeFilter {
             identity: self.identity,
             parent_length: parent.get().map(|owner| owner.stored_filters().len()),
             parent_empty: parent.get().map(|owner| owner.is_empty()),
-            references: self.transient.ref_count(),
+            references: i32::try_from(self.owner.strong_count()).unwrap(),
         }
     }
 
     fn perform_action(&self, parent: &Handle<dyn SelectMgrCompositionFilter>) {
         let action = *self.trace.action.read();
-        let extra = self.trace.extra.read().observe();
+        let extra = self.trace.extra.read().upgrade();
         match action {
             DropAction::None => {}
             DropAction::Append => parent.add(&extra),

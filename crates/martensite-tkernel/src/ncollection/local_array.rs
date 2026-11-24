@@ -1,8 +1,10 @@
 //! Inline storage adapter with inline-then-heap allocation semantics.
 use smallvec::SmallVec;
 
+#[cfg(test)]
 mod nontrivial_move;
 mod pointers;
+#[cfg(test)]
 mod trivial_move;
 
 /// Contiguous storage with `N` inline elements before allocation moves to the heap.
@@ -10,7 +12,7 @@ mod trivial_move;
 /// ```
 /// use martensite_tkernel::ncollection::LocalArray;
 /// let array = LocalArray::<i32, 8>::default();
-/// assert!(array.as_slice().is_empty());
+/// assert!(array.is_empty());
 /// ```
 pub struct LocalArray<T, const N: usize = 1024> {
     elements: SmallVec<[T; N]>,
@@ -28,7 +30,8 @@ impl<T, const N: usize> Default for LocalArray<T, N> {
 impl<T, const N: usize> LocalArray<T, N> {
     /// Reports inline storage state; `LocalArray::<i32, 4>::new(3).is_inline()`.
     /// Shrinking a heap buffer retains heap ownership until a later relocation.
-    pub fn is_inline(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_inline(&self) -> bool {
         !self.elements.spilled()
     }
 
@@ -43,12 +46,12 @@ impl<T, const N: usize> LocalArray<T, N> {
     }
 
     /// Borrows the initialized elements; `LocalArray::<i32>::default().as_slice()`.
-    pub fn as_slice(&self) -> &[T] {
+    pub(crate) fn as_slice(&self) -> &[T] {
         self.elements.as_slice()
     }
 
     /// Iterates over the initialized elements; `LocalArray::<i32>::default().iter().count() == 0`.
-    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+    pub(crate) fn iter(&self) -> std::slice::Iter<'_, T> {
         self.elements.iter()
     }
 }
@@ -70,7 +73,7 @@ impl<T: Default, const N: usize> LocalArray<T, N> {
     /// Replacement growth without copying preserves the old array if `Default` panics.
     /// Rust ownership moves have no callbacks; use `reallocate_with_move` when
     /// the element type has an observable nontrivial move constructor.
-    pub fn reallocate(&mut self, size: usize, copy: bool) {
+    pub(crate) fn reallocate(&mut self, size: usize, copy: bool) {
         if size <= self.len() {
             self.truncate_forward(size);
             return;
@@ -97,12 +100,13 @@ impl<T: Default, const N: usize> LocalArray<T, N> {
 
 impl<T, const N: usize> LocalArray<T, N> {
     /// Borrows mutable contiguous elements; `array.as_mut_slice().reverse()`.
-    pub fn as_mut_slice(&mut self) -> &mut [T] {
+    #[cfg(test)]
+    pub(crate) fn as_mut_slice(&mut self) -> &mut [T] {
         self.elements.as_mut_slice()
     }
 
     /// Iterates mutably; `array.iter_mut().for_each(|v| *v = 3)`.
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
+    pub(crate) fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
         self.elements.iter_mut()
     }
 }
@@ -137,8 +141,9 @@ impl<'a, T, const N: usize> IntoIterator for &'a mut LocalArray<T, N> {
 }
 
 impl<T, const N: usize> LocalArray<T, N> {
-    /// Borrows the buffer as a zero-based array; `array.to_array1()[0] = 42`.
-    pub fn to_array1(&mut self) -> super::Array1<'_, T> {
+    /// Borrows the buffer as a zero-based array; `array.as_array1_mut()[0] = 42`.
+    #[cfg(test)]
+    pub(crate) fn as_array1_mut(&mut self) -> super::Array1<'_, T> {
         super::Array1::from_slice(self.as_mut_slice())
     }
 
@@ -153,14 +158,16 @@ impl<T, const N: usize> LocalArray<T, N> {
 
     /// Transfers storage and leaves the source empty; `dest.move_from(&mut source)`.
     /// Use `move_from_with` to keep element move-constructor callbacks.
-    pub fn move_from(&mut self, source: &mut Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn move_from(&mut self, source: &mut Self) -> &mut Self {
         self.deallocate();
         *self = std::mem::take(source);
         self
     }
 
     /// Preserves the receiver for self assignment; `array.move_self()`.
-    pub fn move_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn move_self(&mut self) -> &mut Self {
         self
     }
 

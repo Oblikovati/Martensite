@@ -51,7 +51,7 @@ fn evaluate_max_segment(a_curve_on_surface: &Adaptor3dCurveOnSurface) -> Result<
 /// A 2d line from the first pole of a two-pole curve to the second.
 fn pole_line(p1: Point2, p2: Point2) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let d = Direction2::from_vector(Vector2::between(p1, p2))?;
-    Ok(Handle::new(Geom2dLine::from_point(p1, d)).cast())
+    Ok(Handle::new(Geom2dLine::from_point(p1, d)).into_upcast())
 }
 
 /// A straight two-pole
@@ -66,8 +66,7 @@ fn extend_pcurve(
 ) -> Result<Option<Handle<dyn Geom2dCurve>>, Failure> {
     let mut new_pcurve = a_pcurve.clone();
     if new_pcurve.is_instance_name("Geom2d_TrimmedCurve") {
-        new_pcurve =
-            live(&new_pcurve.clone().cast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
+        new_pcurve = live(&new_pcurve.downcast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
     }
     let npc = live(&new_pcurve, "pcurve")?;
     let (first_par, last_par) = (npc.first_parameter(), npc.last_parameter());
@@ -75,14 +74,14 @@ fn extend_pcurve(
         && (first_par > an_ef - a2_offset || last_par < an_el + a2_offset)
     {
         if new_pcurve.is_instance_name("Geom2d_BezierCurve") {
-            let a_bezier = new_pcurve.clone().cast::<Geom2dBezierCurve>();
+            let a_bezier = new_pcurve.downcast::<Geom2dBezierCurve>();
             let b = live(&a_bezier, "Bezier")?;
             if b.nb_poles() == 2 {
                 let poles = b.poles();
                 return Ok(Some(pole_line(poles[1], poles[2])?));
             }
         } else if new_pcurve.is_instance_name("Geom2d_BSplineCurve") {
-            let a_bspline = new_pcurve.clone().cast::<Geom2dBSplineCurve>();
+            let a_bspline = new_pcurve.downcast::<Geom2dBSplineCurve>();
             let b = live(&a_bspline, "B-spline")?;
             if b.nb_knots() == 2 && b.nb_poles() == 2 {
                 let poles = b.poles();
@@ -95,7 +94,7 @@ fn extend_pcurve(
     let a_tr_curve: Handle<dyn Geom2dBoundedCurve> = Handle::new(Geom2dTrimmedCurve::new(
         a_pcurve, first_par, last_par, true, true,
     )?)
-    .cast();
+    .into_upcast();
     // The curve is not prolonged at its beginning or end: a segment is added there.
     let mut a_comp_curve = geom2d_convert::CompCurveToBSplineCurve::with_curve(
         &a_tr_curve,
@@ -104,8 +103,9 @@ fn extend_pcurve(
     let a_tol = precision::confusion();
     let a_delta = a2_offset.max(1.);
     let segment = |p: Point2, d: Direction2| -> Result<Handle<dyn Geom2dBoundedCurve>, Failure> {
-        let a_lin: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(p, d)).cast();
-        Ok(Handle::new(Geom2dTrimmedCurve::new(&a_lin, 0., a_delta, true, true)?).cast())
+        let a_lin: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_point(p, d)).into_upcast();
+        Ok(Handle::new(Geom2dTrimmedCurve::new(&a_lin, 0., a_delta, true, true)?).into_upcast())
     };
     if first_par > an_ef - a2_offset {
         let (a_p_bnd, a_v_bnd) = apc.d1(first_par)?;
@@ -122,7 +122,7 @@ fn extend_pcurve(
             return Ok(None);
         }
     }
-    Ok(Some(a_comp_curve.bspline_curve().cast()))
+    Ok(Some(a_comp_curve.bspline_curve().into_upcast()))
 }
 
 /// The extended range of a p-curve representation (its curve extended when bounded
@@ -164,7 +164,7 @@ fn extended_pcurve_range(
     let (umin, umax, vmin, vmax) = live(&the_surf, "surface")?.bounds();
     let mut bound_lines: Vec<Handle<dyn Geom2dCurve>> = Vec::new();
     let line = |x: f64, y: f64, d: Direction2| -> Handle<dyn Geom2dCurve> {
-        Handle::new(Geom2dLine::from_point(Point2::new(x, y), d)).cast()
+        Handle::new(Geom2dLine::from_point(Point2::new(x, y), d)).into_upcast()
     };
     if !precision::is_infinite(vmin) {
         bound_lines.push(line(0., vmin, Direction2::X));
@@ -274,7 +274,7 @@ impl BRepOffsetInter2d {
             }
             nb_pcurves += 1;
             let (first_par, last_par) = extended_pcurve_range(rep, an_ef, an_el, a2_offset)?;
-            let gc = curve_rep.clone().cast::<dyn BRepGCurve>();
+            let gc = curve_rep.cast::<dyn BRepGCurve>();
             live(&gc, "GCurve")?.set_range(first_par, last_par)?;
             // FirstParOnPC and LastParOnPC.
             let current = || -> Result<MinPCurve, Failure> {
@@ -325,7 +325,7 @@ impl BRepOffsetInter2d {
         // No 3d curve.
         let min_surf: Handle<dyn GeomSurface> = live(&min.surf, "surface")?
             .transformed(min_loc.transformation())?
-            .cast();
+            .into_cast();
         let mut max_deviation = 0.;
         if precision::is_infinite(first_par_on_pc) || precision::is_infinite(last_par_on_pc) {
             if min.pc.is_instance_name("Geom2d_Line") {
@@ -335,7 +335,7 @@ impl BRepOffsetInter2d {
                 } else if min_surf.is_instance_name("Geom_CylindricalSurface")
                     || min_surf.is_instance_name("Geom_ConicalSurface")
                 {
-                    let the_line = min.pc.clone().cast::<Geom2dLine>();
+                    let the_line = min.pc.downcast::<Geom2dLine>();
                     if live(&the_line, "line")?
                         .direction()
                         .is_parallel(Direction2::Y, precision::angular())
@@ -350,7 +350,7 @@ impl BRepOffsetInter2d {
                     let p1 = s.value(p2d1.x(), p2d1.y())?;
                     let p2 = s.value(p2d2.x(), p2d2.y())?;
                     let d = Direction3::from_vector(Vector3::between(p1, p2))?;
-                    c3d = Handle::new(GeomLine::from_point(p1, d)).cast();
+                    c3d = Handle::new(GeomLine::from_point(p1, d)).into_upcast();
                 }
             }
         } else {
@@ -359,9 +359,9 @@ impl BRepOffsetInter2d {
                 first_par_on_pc,
                 last_par_on_pc,
             )?)
-            .cast();
+            .into_upcast();
             let hsurf: Handle<dyn Adaptor3dSurface> =
-                Handle::new(GeomAdaptorSurface::with_surface(&min_surf)?).cast();
+                Handle::new(GeomAdaptorSurface::with_surface(&min_surf)?).into_upcast();
             let con_s = Adaptor3dCurveOnSurface::with_curve(&hc2d, &hsurf)?;
             let max_segment = evaluate_max_segment(&con_s)?;
             (max_deviation, _) = geom_lib::build_curve3d(
@@ -388,7 +388,7 @@ impl BRepOffsetInter2d {
                 if the_curve == min.pc && the_surf == min_surf && the_loc == min_loc {
                     continue;
                 }
-                let gc = curve_rep.clone().cast::<dyn BRepGCurve>();
+                let gc = curve_rep.cast::<dyn BRepGCurve>();
                 let g = live(&gc, "GCurve")?;
                 let (first_par, last_par) = (g.first(), g.last());
                 if (first_par - first_par_on_pc).abs() <= precision::p_confusion()
@@ -399,11 +399,11 @@ impl BRepOffsetInter2d {
                 the_loc = (e.location() * &the_loc)?;
                 the_surf = live(&the_surf, "surface")?
                     .transformed(the_loc.transformation())?
-                    .cast();
+                    .into_cast();
                 if the_curve.is_instance_name("Geom2d_Line")
                     && the_surf.is_kind_name("Geom_BoundedSurface")
                 {
-                    let the_line = the_curve.clone().cast::<Geom2dLine>();
+                    let the_line = the_curve.downcast::<Geom2dLine>();
                     let tl = live(&the_line, "line")?;
                     let the_dir = tl.direction();
                     if the_dir.is_parallel(Direction2::X, precision::angular())
@@ -513,7 +513,7 @@ fn extend_curve3d(
         && (first_par > an_ef - a2_offset || last_par < an_el + a2_offset)
     {
         let a_tr_curve: Handle<dyn GeomBoundedCurve> =
-            Handle::new(GeomTrimmedCurve::new(c3d, first_par, last_par, true, true)?).cast();
+            Handle::new(GeomTrimmedCurve::new(c3d, first_par, last_par, true, true)?).into_upcast();
         // The curve is not prolonged at its beginning or end: a segment is added there.
         let mut a_comp_curve = geom_convert::CompCurveToBSplineCurve::with_curve(
             &a_tr_curve,
@@ -522,8 +522,9 @@ fn extend_curve3d(
         let a_tol = precision::confusion();
         let a_delta = a2_offset.max(1.);
         let segment = |p, d| -> Result<Handle<dyn GeomBoundedCurve>, Failure> {
-            let a_lin: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_point(p, d)).cast();
-            Ok(Handle::new(GeomTrimmedCurve::new(&a_lin, 0., a_delta, true, true)?).cast())
+            let a_lin: Handle<dyn GeomCurve> =
+                Handle::new(GeomLine::from_point(p, d)).into_upcast();
+            Ok(Handle::new(GeomTrimmedCurve::new(&a_lin, 0., a_delta, true, true)?).into_upcast())
         };
         if first_par > an_ef - a2_offset {
             let (a_p_bnd, a_v_bnd) = c.d1(first_par)?;
@@ -540,7 +541,7 @@ fn extend_curve3d(
                 return Ok(());
             }
         }
-        let new_c3d: Handle<dyn GeomCurve> = a_comp_curve.bspline_curve().cast();
+        let new_c3d: Handle<dyn GeomCurve> = a_comp_curve.bspline_curve().into_upcast();
         let n = live(&new_c3d, "curve")?;
         (first_par, last_par) = (n.first_parameter(), n.last_parameter());
         builder.update_edge_curve(ne, &new_c3d, precision::confusion())?;

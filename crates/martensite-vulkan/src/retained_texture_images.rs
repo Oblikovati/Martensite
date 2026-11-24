@@ -305,7 +305,7 @@ mod tests {
         ] {
             let image = Handle::new(ImagePixMap::default());
             assert!(image.init_wrapper(format, Some(pixels.clone()), 1, 1, pixels.len()));
-            let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image));
+            let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()));
             let snapshot = RetainedTextureImages::default()
                 .snapshot(&texture.cast())
                 .unwrap()
@@ -315,12 +315,14 @@ mod tests {
     }
     #[test]
     fn an_unknown_format_drops_the_snapshot_like_a_failed_native_texture_init() {
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(one_pixel(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            one_pixel(255).into_upcast(),
+        ));
         let cache = RetainedTextureImages::default();
         assert!(cache.snapshot(&texture.cast()).unwrap().is_some());
         let unknown = Handle::new(ImagePixMap::default());
         assert!(unknown.init_wrapper(ImageFormat::Unknown, Some(vec![7; 4]), 2, 2, 2));
-        texture.set_image(unknown);
+        texture.set_image(unknown.into_upcast());
         texture.update_revision();
         assert!(cache.snapshot(&texture.cast()).unwrap().is_none());
         assert!(cache.images.lock().unwrap().is_empty());
@@ -334,7 +336,9 @@ mod tests {
     }
     #[test]
     fn null_replacement_retains_native_content_but_empty_replacement_releases_and_repairs() {
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(one_pixel(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            one_pixel(255).into_upcast(),
+        ));
         let cache = RetainedTextureImages::default();
         let original = cache.snapshot(&texture.cast()).unwrap().unwrap();
         texture.set_image(Handle::default());
@@ -343,11 +347,11 @@ mod tests {
             &original,
             &cache.snapshot(&texture.cast()).unwrap().unwrap()
         ));
-        texture.set_image(Handle::new(ImagePixMap::default()));
+        texture.set_image(Handle::new(ImagePixMap::default()).into_upcast());
         texture.update_revision();
         assert!(cache.snapshot(&texture.cast()).unwrap().is_none());
         assert!(cache.images.lock().unwrap().is_empty());
-        texture.set_image(one_pixel(64));
+        texture.set_image(one_pixel(64).into_upcast());
         texture.update_revision();
         assert_eq!(
             *cache.snapshot(&texture.cast()).unwrap().unwrap().bytes,
@@ -357,7 +361,9 @@ mod tests {
     }
     #[test]
     fn dead_texture_owners_are_reclaimed_while_existing_snapshots_remain_valid() {
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(one_pixel(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            one_pixel(255).into_upcast(),
+        ));
         let cache = RetainedTextureImages::default();
         let prior = cache.snapshot(&texture.cast()).unwrap().unwrap();
         assert_eq!(cache.images.lock().unwrap().len(), 1);
@@ -368,10 +374,12 @@ mod tests {
     }
     #[test]
     fn set_image_requires_content_revision_and_sampler_updates_reuse_upload() {
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(one_pixel(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            one_pixel(255).into_upcast(),
+        ));
         let cache = RetainedTextureImages::default();
         let first = cache.snapshot(&texture.cast()).unwrap().unwrap();
-        texture.set_image(one_pixel(64));
+        texture.set_image(one_pixel(64).into_upcast());
         texture.get_params().set_repeat(false);
         texture
             .get_params()
@@ -390,7 +398,7 @@ mod tests {
         let texture = Handle::new(Graphic3dTexture2D::from_pix_map(Handle::default()));
         let cache = RetainedTextureImages::default();
         assert!(cache.snapshot(&texture.cast()).unwrap().is_none());
-        texture.set_image(one_pixel(127));
+        texture.set_image(one_pixel(127).into_upcast());
         let first = cache.snapshot(&texture.cast()).unwrap().unwrap();
         texture.set_color_map(false);
         texture

@@ -1,9 +1,11 @@
 //! Search, SearchFromEnd, Token, SubString and the set locators.
+use super::{ExtendedString, errors::int_length};
+#[cfg(test)]
 use super::{
-    ExtendedString,
-    errors::{int_length, offset, out_of_range},
+    errors::{offset, out_of_range},
     utf,
 };
+#[cfg(test)]
 use crate::standard::Failure;
 impl ExtendedString {
     /// One-based start of the first occurrence, or -1 for an empty or absent needle;
@@ -20,7 +22,8 @@ impl ExtendedString {
     }
     /// Searches a bounded UTF-16 C string, stopping at NUL; `text.search_c_units(Some(&[65, 0, 66]))`.
     /// A null pointer is represented by `None` and returns `-1`.
-    pub fn search_c_units(&self, what: Option<&[u16]>) -> i32 {
+    #[cfg(test)]
+    pub(crate) fn search_c_units(&self, what: Option<&[u16]>) -> i32 {
         let Some(what) = what else {
             return -1;
         };
@@ -39,7 +42,8 @@ impl ExtendedString {
     }
     /// Searches a bounded UTF-16 C string from the end, stopping at NUL;
     /// `text.search_from_end_c_units(Some(&[65, 0, 66]))`.
-    pub fn search_from_end_c_units(&self, what: Option<&[u16]>) -> i32 {
+    #[cfg(test)]
+    pub(crate) fn search_from_end_c_units(&self, what: Option<&[u16]>) -> i32 {
         let Some(what) = what else {
             return -1;
         };
@@ -47,7 +51,8 @@ impl ExtendedString {
     }
     /// Copies the inclusive one-based range `from..=to`, zero units included;
     /// `ExtendedString::new("abcdefg").sub_string(3, 6)?`.
-    pub fn sub_string(&self, from: i32, to: i32) -> Result<Self, Failure> {
+    #[cfg(test)]
+    pub(crate) fn sub_string(&self, from: i32, to: i32) -> Result<Self, Failure> {
         const CONTEXT: &str = "TCollection_ExtendedString::SubString : ";
         if from < 1 || from > self.length() {
             return Err(self.index_error(CONTEXT, "theFromIndex", from));
@@ -70,7 +75,8 @@ impl ExtendedString {
     /// Extracts the `which_one`-th token; separators are read up to their first zero unit.
     /// An empty separator set, a `which_one` < 1 or a missing token give an empty string;
     /// a token ends at a zero unit. `ExtendedString::new("a b").token(&[32], 2)`.
-    pub fn token(&self, separators: &[u16], which_one: i32) -> Self {
+    #[cfg(test)]
+    pub(crate) fn token(&self, separators: &[u16], which_one: i32) -> Self {
         let units = self.as_utf16();
         let end = separators.iter().position(|&unit| unit == 0);
         let separators = &separators[..end.unwrap_or(separators.len())];
@@ -90,7 +96,13 @@ impl ExtendedString {
     /// First one-based index in `from..=to` whose unit is in `set`, or 0; both bounds must
     /// lie in 1..=len (a reversed range finds nothing);
     /// `text.first_location_in_set(&set, 1, text.length())?`.
-    pub fn first_location_in_set(&self, set: &Self, from: i32, to: i32) -> Result<i32, Failure> {
+    #[cfg(test)]
+    pub(crate) fn first_location_in_set(
+        &self,
+        set: &Self,
+        from: i32,
+        to: i32,
+    ) -> Result<i32, Failure> {
         self.check_location_bounds("FirstLocationInSet", from, to)?;
         if set.is_empty() {
             return Ok(0);
@@ -99,7 +111,8 @@ impl ExtendedString {
     }
     /// First one-based index in `from..=to` whose unit is not in `set`, or 0; with an empty
     /// set that is `from` when `from <= to`; `text.first_location_not_in_set(&set, 1, text.length())?`.
-    pub fn first_location_not_in_set(
+    #[cfg(test)]
+    pub(crate) fn first_location_not_in_set(
         &self,
         set: &Self,
         from: i32,
@@ -111,11 +124,13 @@ impl ExtendedString {
         }
         Ok(self.locate(from, to, |unit| !set.as_utf16().contains(&unit)))
     }
+    #[cfg(test)]
     fn locate(&self, from: i32, to: i32, matches: impl Fn(u16) -> bool) -> i32 {
         (from..=to)
             .find(|&index| matches(self.as_utf16()[offset(index)]))
             .unwrap_or(0)
     }
+    #[cfg(test)]
     fn check_location_bounds(&self, member: &str, from: i32, to: i32) -> Result<(), Failure> {
         let context = format!("TCollection_ExtendedString::{member} : ");
         if from < 1 || from > self.length() {
@@ -126,6 +141,7 @@ impl ExtendedString {
         }
         Ok(())
     }
+    #[cfg(test)]
     fn index_error(&self, context: &str, name: &str, index: i32) -> Failure {
         out_of_range(
             &format!("{context}{name}"),
@@ -134,6 +150,7 @@ impl ExtendedString {
     }
 }
 /// Token's first phase: skips the separators in front of the token.
+#[cfg(test)]
 fn skip_separators(units: &[u16], separators: &[u16], mut next: usize) -> usize {
     while next < units.len() && separators.contains(&units[next]) {
         next += 1;
@@ -142,6 +159,7 @@ fn skip_separators(units: &[u16], separators: &[u16], mut next: usize) -> usize 
 }
 /// Token's second phase, literally: with no separators nothing is written, so the buffer
 /// keeps the zero stored in its first unit and the token comes out empty.
+#[cfg(test)]
 fn copy_token(units: &[u16], separators: &[u16], mut next: usize, buffer: &mut [u16]) -> usize {
     let (mut written, mut at_separator) = (0, false);
     while !at_separator && next < units.len() {

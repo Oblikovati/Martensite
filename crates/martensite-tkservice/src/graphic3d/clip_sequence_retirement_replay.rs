@@ -5,7 +5,7 @@ use super::clip_sequence_retirement_fixture::{
 use super::{
     Graphic3dClipPlane, Graphic3dSequenceOfHClipPlane, Graphic3dSequenceOfHClipPlaneIterator,
 };
-use martensite_tkernel::standard::{Handle, Transient};
+use martensite_tkernel::standard::Handle;
 use std::sync::Arc;
 fn append_retirement_members(
     collection: &Arc<Graphic3dSequenceOfHClipPlane>,
@@ -13,7 +13,7 @@ fn append_retirement_members(
     phase: &'static str,
     count: i32,
 ) {
-    assert_eq!(collection.transient_base().ref_count(), 0);
+    assert_eq!(Arc::strong_count(collection), 1);
     for ordinal in 1..=count {
         append_retiring_plane(collection, transcript, phase, ordinal);
     }

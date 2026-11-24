@@ -233,7 +233,7 @@ impl WalkSetup<'_> {
         let npts: i32 = wline.nb_pnts()?;
         seek_additional_points(&self.ctx, &curve, index, self.nb_min_points, (1, npts))?;
         wline.compute_vertex_parameters(self.bw.tol_3d)?;
-        slin.push(Handle::new(wline).cast());
+        slin.push(Handle::new(wline).into_upcast());
         Ok(true)
     }
 

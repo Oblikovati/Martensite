@@ -1,5 +1,5 @@
 //! Allocated specialization nodes own each native key/value once and release them on removal.
-use super::AisColoredDrawer;
+use super::AisColoredDrawerSource;
 use martensite_tkbrep::{topods::Shape, toptools::ShapeMapHasher};
 use martensite_tkernel::{
     ncollection::HashPolicy,
@@ -11,15 +11,18 @@ pub(super) struct ShapeDrawerNodeFields {
 }
 pub(super) struct ShapeDrawerBorrowedFields<'a> {
     pub key: &'a Shape,
-    pub drawer: &'a Handle<AisColoredDrawer>,
+    pub drawer: &'a Handle<dyn AisColoredDrawerSource>,
 }
 pub(super) struct ShapeDrawerNode {
     pub fields: SharedState<Option<ShapeDrawerNodeFields>>,
     // Native immutable Key references may coexist with assignment to the actual Value slot.
-    drawer: SharedState<Option<Handle<AisColoredDrawer>>>,
+    drawer: SharedState<Option<Handle<dyn AisColoredDrawerSource>>>,
 }
 impl ShapeDrawerNode {
-    pub(super) fn new(key: &Shape, value: &impl HandleReference<AisColoredDrawer>) -> Self {
+    pub(super) fn new(
+        key: &Shape,
+        value: &impl HandleReference<dyn AisColoredDrawerSource>,
+    ) -> Self {
         // Construct the handle-valued base before copying the original key.
         let drawer = value.clone_handle();
         let key = key.clone();
@@ -45,7 +48,11 @@ impl ShapeDrawerNode {
         &self,
         inspect: impl FnOnce(
             &Shape,
-            &HandleFieldRef<'_, Option<Handle<AisColoredDrawer>>, AisColoredDrawer>,
+            &HandleFieldRef<
+                '_,
+                Option<Handle<dyn AisColoredDrawerSource>>,
+                dyn AisColoredDrawerSource,
+            >,
         ) -> R,
     ) -> Result<R, Failure> {
         let fields = self.fields.read();
@@ -62,7 +69,7 @@ impl ShapeDrawerNode {
     }
     pub(super) fn replace_value(
         &self,
-        value: &impl HandleReference<AisColoredDrawer>,
+        value: &impl HandleReference<dyn AisColoredDrawerSource>,
     ) -> Result<(), Failure> {
         let replacement = value.clone_handle();
         let removed = self.exchange_value(replacement)?;
@@ -71,8 +78,8 @@ impl ShapeDrawerNode {
     }
     fn exchange_value(
         &self,
-        replacement: Handle<AisColoredDrawer>,
-    ) -> Result<Handle<AisColoredDrawer>, Failure> {
+        replacement: Handle<dyn AisColoredDrawerSource>,
+    ) -> Result<Handle<dyn AisColoredDrawerSource>, Failure> {
         let mut value = self.drawer.write();
         let live = value.as_mut().ok_or_else(removed_shape_drawer_node)?;
         Ok(std::mem::replace(live, replacement))
@@ -120,7 +127,9 @@ pub(super) fn removed_shape_drawer_node() -> Failure {
     )
 }
 
-fn live_shape_drawer_value(slot: &Option<Handle<AisColoredDrawer>>) -> &Handle<AisColoredDrawer> {
+fn live_shape_drawer_value(
+    slot: &Option<Handle<dyn AisColoredDrawerSource>>,
+) -> &Handle<dyn AisColoredDrawerSource> {
     // This internal borrow spans a live iterator node; erasing that node invalidates native references.
     slot.as_ref()
         .expect("ShapeDrawerNode value=None; expected a live iterator value slot")

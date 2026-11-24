@@ -1,5 +1,5 @@
 //! Native canonical-versus-spline curve dispatch and bounded interval sampling.
-use super::StdPrsIsolineSurfaceSource;
+use super::StdPrsIsolineSurfaceTarget;
 use super::isoline_surface_reference::IsolineSurfaceReference;
 use super::{StdPrsDeflectionCurve, curve_limits::expand_curve_bounds};
 use crate::prs3d::Prs3dDrawer;
@@ -23,9 +23,7 @@ pub(super) enum IsolineSurfaceCurves {
     Spline(Handle<dyn GeomSurface>, Box<GeomAdaptorCurve>),
 }
 impl IsolineSurfaceCurves {
-    pub(super) fn new<
-        S: StdPrsIsolineSurfaceSource + martensite_tkernel::standard::RuntimeTyped + ?Sized,
-    >(
+    pub(super) fn new<S: StdPrsIsolineSurfaceTarget + ?Sized>(
         surface: &IsolineSurfaceReference<'_, S>,
     ) -> Result<Self, Failure> {
         match surface.snapshot().get_type()? {
@@ -38,7 +36,7 @@ impl IsolineSurfaceCurves {
                 Box::default(),
             )),
             _ => Ok(Self::Canonical(Adaptor3dIsoCurve::with_surface(
-                &surface.snapshot().cast(),
+                &surface.snapshot().into_upcast(),
             ))),
         }
     }

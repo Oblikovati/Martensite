@@ -81,14 +81,14 @@ impl<T, const M: bool> DynamicArrayCachedIterator<T, M> {
 impl<T> DynamicArrayCachedIterator<T, false> {
     /// Advances the cached pointer, consulting the original owner only at a block boundary.
     /// `cursor.advance_with(&source)?;` keeps transferred pointers until a reload.
-    pub fn advance_with(&mut self, owner: &DynamicArray<T>) -> Result<&mut Self, Failure> {
+    pub(crate) fn advance_with(&mut self, owner: &DynamicArray<T>) -> Result<&mut Self, Failure> {
         self.navigate(ptr::from_ref(owner), CachedStep::Advance, |index, end| {
             capture::capture_shared(owner, index, end)
         })
     }
     /// Retreats using the original owner's current mask and reload decisions.
     /// `cursor.retreat_with(&source)?;` rejects absent initialized slots on reload.
-    pub fn retreat_with(&mut self, owner: &DynamicArray<T>) -> Result<&mut Self, Failure> {
+    pub(crate) fn retreat_with(&mut self, owner: &DynamicArray<T>) -> Result<&mut Self, Failure> {
         let step = CachedStep::Retreat(owner.increment.wrapping_sub(1));
         self.navigate(ptr::from_ref(owner), step, |index, end| {
             capture::capture_shared(owner, index, end)
@@ -96,7 +96,7 @@ impl<T> DynamicArrayCachedIterator<T, false> {
     }
     /// Repositions and reloads from the original owner even when offset is zero.
     /// `cursor.offset_with(&source, 0)?;` can change a transferred cached pointer.
-    pub fn offset_with(
+    pub(crate) fn offset_with(
         &mut self,
         owner: &DynamicArray<T>,
         offset: isize,
@@ -111,14 +111,20 @@ impl<T> DynamicArrayCachedIterator<T, false> {
 impl<T> DynamicArrayCachedIterator<T, true> {
     /// Advances while obtaining any reloaded writable pointer from exclusive raw storage access.
     /// `cursor.advance_with(&mut source)?;` never dereferences the stored owner address.
-    pub fn advance_with(&mut self, owner: &mut DynamicArray<T>) -> Result<&mut Self, Failure> {
+    pub(crate) fn advance_with(
+        &mut self,
+        owner: &mut DynamicArray<T>,
+    ) -> Result<&mut Self, Failure> {
         self.navigate(ptr::from_ref(owner), CachedStep::Advance, |index, end| {
             capture::capture_mutable(owner, index, end)
         })
     }
     /// Retreats with the original owner's metadata and exclusive provenance for reloads.
     /// `cursor.retreat_with(&mut source)?;` leaves the cursor unchanged on invalid reload.
-    pub fn retreat_with(&mut self, owner: &mut DynamicArray<T>) -> Result<&mut Self, Failure> {
+    pub(crate) fn retreat_with(
+        &mut self,
+        owner: &mut DynamicArray<T>,
+    ) -> Result<&mut Self, Failure> {
         let step = CachedStep::Retreat(owner.increment.wrapping_sub(1));
         self.navigate(ptr::from_ref(owner), step, |index, end| {
             capture::capture_mutable(owner, index, end)
@@ -126,7 +132,7 @@ impl<T> DynamicArrayCachedIterator<T, true> {
     }
     /// Applies a signed displacement and reloads writable storage from the original owner.
     /// `cursor.offset_with(&mut source, 0)?;` rejects signed overflow before changing state.
-    pub fn offset_with(
+    pub(crate) fn offset_with(
         &mut self,
         owner: &mut DynamicArray<T>,
         offset: isize,

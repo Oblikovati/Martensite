@@ -14,7 +14,7 @@ use crate::iges_basic::{
     IgesBasicName, IgesBasicOrderedGroup, IgesBasicOrderedGroupWithoutBackP, IgesBasicSingleParent,
     IgesBasicSingularSubfigure, IgesBasicSubfigureDef,
 };
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_geom::samples_01::sample_iges_geom_line;
 use crate::iges_test_samples::sample_list;
 use martensite_tkernel::ncollection::HArray1;
@@ -45,9 +45,9 @@ pub(crate) fn sample_iges_basic_external_ref_file_index()
         Handle::new(HAsciiString::new("first")),
         Handle::new(HAsciiString::new("second")),
     ])?;
-    let all_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let all_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     object.init(&a_name_array, &all_entities)?;
     Ok(object)
@@ -87,9 +87,9 @@ pub(crate) fn sample_iges_basic_external_reference_file()
 }
 pub(crate) fn sample_iges_basic_group() -> Result<Handle<IgesBasicGroup>, Failure> {
     let object = Handle::new(IgesBasicGroup::new());
-    let all_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let all_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     object.init(&all_entities)?;
     Ok(object)
@@ -138,11 +138,11 @@ pub(crate) fn sample_iges_basic_ordered_group_without_back_p()
 pub(crate) fn sample_iges_basic_single_parent() -> Result<Handle<IgesBasicSingleParent>, Failure> {
     let object = Handle::new(IgesBasicSingleParent::new());
     let nb_parent_entities: i32 = 2;
-    let a_parent_entity: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
-    let all_children: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let a_parent_entity: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
+    let all_children: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     object.init(nb_parent_entities, &a_parent_entity, &all_children)?;
     Ok(object)
@@ -161,9 +161,9 @@ pub(crate) fn sample_iges_basic_subfigure_def() -> Result<Handle<IgesBasicSubfig
     let object = Handle::new(IgesBasicSubfigureDef::new());
     let a_depth: i32 = 2;
     let a_name: Handle<HAsciiString> = Handle::new(HAsciiString::new("text 2"));
-    let all_assoc_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let all_assoc_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     object.init(a_depth, &a_name, &all_assoc_entities)?;
     Ok(object)

@@ -5,6 +5,7 @@ impl<T> TypedSparseStorage<T> {
     pub(in super::super) fn first_key(&self, start: usize) -> Option<usize> {
         first_raw_sparse_key(&self.base, start)
     }
+    #[cfg(test)]
     pub(in super::super) fn has_allocated_blocks(&self) -> bool {
         (0..self.base.block_slots()).any(|number| !self.base.block_address(number).is_null())
     }

@@ -13,22 +13,15 @@ mod creates;
 
 /// The dictionary of units; `units.dictionary_of_units(false)?` returns the shared one.
 pub struct UnitsDictionary {
-    base: StandardTransient,
     quantities: RwLock<Handle<HSequence<Handle<Quantity>>>>,
 }
-crate::impl_transient!(
-    UnitsDictionary,
-    "Units_UnitsDictionary",
-    StandardTransient,
-    base
-);
+crate::impl_transient!(UnitsDictionary, "Units_UnitsDictionary", StandardTransient);
 
 impl UnitsDictionary {
     /// An uncreated dictionary whose sequence is still null; `UnitsDictionary::new()`.
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
-            base: StandardTransient::default(),
             quantities: RwLock::new(Handle::default()),
         }
     }

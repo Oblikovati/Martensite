@@ -23,10 +23,8 @@ impl RuntimeTyped for dyn Graphic3dClipPlaneSource {
         // Concrete and source projections represent one native class descriptor.
         Graphic3dClipPlane::static_type()
     }
-    fn project_from(object: &dyn Transient) -> Option<&Self> {
-        martensite_tkernel::standard::project_interface::<Self>(object)
-    }
 }
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dClipPlaneSource);
 impl std::ops::Deref for dyn Graphic3dClipPlaneSource {
     type Target = Graphic3dClipPlane;
     fn deref(&self) -> &Self::Target {

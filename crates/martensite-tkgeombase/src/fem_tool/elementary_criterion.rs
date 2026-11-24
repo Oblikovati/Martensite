@@ -2,7 +2,7 @@
 //! element E of a finite-element curve.
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::{Array2, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkmath::math::{Matrix, Vector};
 use std::sync::RwLockReadGuard;
 
@@ -96,7 +96,7 @@ pub trait ElementaryCriterion: Transient {
 impl_transient_interface!(
     dyn ElementaryCriterion,
     "FEmTool_ElementaryCriterion",
-    StandardTransient
+    dyn Transient
 );
 
 /// The element coefficients, or the error this implementation gives where the retained code

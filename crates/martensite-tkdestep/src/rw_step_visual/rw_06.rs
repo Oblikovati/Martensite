@@ -5,6 +5,7 @@
     reason = "the readers keep values they then ignore"
 )]
 use crate::step_rw::*;
+use martensite_tkernel::standard::Transient;
 
 step_rw_class!(
     RwStepVisualRwComplexTriangulatedFace,
@@ -44,7 +45,7 @@ impl RwStepVisualRwComplexTriangulatedFace {
             the_data,
             the_num
         );
-        let mut a_triangle_strips: Handle<HArray1<Handle<StandardTransient>>> = Default::default();
+        let mut a_triangle_strips: Handle<HArray1<Handle<dyn Transient>>> = Default::default();
         let mut sub7: i32 = 0;
         if the_data.read_sub_list(
             the_num,
@@ -57,7 +58,7 @@ impl RwStepVisualRwComplexTriangulatedFace {
             0,
         )? {
             let nb0: i32 = the_data.nb_params(sub7)?;
-            a_triangle_strips = step_new_array1::<Handle<StandardTransient>>(1, nb0)?;
+            a_triangle_strips = step_new_array1::<Handle<dyn Transient>>(1, nb0)?;
             for i0 in 1..=nb0 {
                 let nbj0: i32 = the_data.nb_params(the_data.param_number(sub7, i0)?)?;
                 let a_single_triangle_strip: Handle<HArray1<i32>> =
@@ -88,7 +89,7 @@ impl RwStepVisualRwComplexTriangulatedFace {
                 }
             }
         }
-        let mut a_triangle_fans: Handle<HArray1<Handle<StandardTransient>>> = Default::default();
+        let mut a_triangle_fans: Handle<HArray1<Handle<dyn Transient>>> = Default::default();
         let mut sub8: i32 = 0;
         if the_data.read_sub_list(
             the_num,
@@ -101,7 +102,7 @@ impl RwStepVisualRwComplexTriangulatedFace {
             0,
         )? {
             let nb0: i32 = the_data.nb_params(sub8)?;
-            a_triangle_fans = step_new_array1::<Handle<StandardTransient>>(1, nb0)?;
+            a_triangle_fans = step_new_array1::<Handle<dyn Transient>>(1, nb0)?;
             for i0 in 1..=nb0 {
                 let nbj0: i32 = the_data.nb_params(the_data.param_number(sub8, i0)?)?;
                 let a_single_triangle_fan: Handle<HArray1<i32>> = step_new_array1::<i32>(1, nbj0)?;

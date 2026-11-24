@@ -5,7 +5,7 @@ use crate::tdf::{GuidHashPolicy, Tdf, TdfLabel};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
     ncollection::DataMap,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, Transient},
+    standard::{Failure, Guid, Handle, SharedState, Transient},
     tcollection::ExtendedString,
 };
 use std::io;
@@ -73,7 +73,7 @@ pub trait TFunctionDriver: Transient {
     /// `Results(res)`: none by default.
     fn results(&self, _results: &mut Vec<TdfLabel>) {}
 }
-impl_transient_interface!(dyn TFunctionDriver, "TFunction_Driver", StandardTransient);
+impl_transient_interface!(dyn TFunctionDriver, "TFunction_Driver", dyn Transient);
 
 /// One table of drivers by GUID.
 type DriverMap = DataMap<Guid, Handle<dyn TFunctionDriver>, GuidHashPolicy>;
@@ -97,15 +97,9 @@ struct DriverTableState {
 /// ```
 #[derive(Default)]
 pub struct TFunctionDriverTable {
-    transient: StandardTransient,
     state: SharedState<DriverTableState>,
 }
-impl_transient!(
-    TFunctionDriverTable,
-    "TFunction_DriverTable",
-    StandardTransient,
-    transient
-);
+impl_transient!(TFunctionDriverTable, "TFunction_DriverTable", dyn Transient);
 
 /// The process-wide table of `TFunction_DriverTable::Get` (a file-static handle natively).
 static DRIVER_TABLE: OnceLock<Handle<TFunctionDriverTable>> = OnceLock::new();

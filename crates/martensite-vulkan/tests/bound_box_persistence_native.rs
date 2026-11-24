@@ -104,7 +104,7 @@ impl ProbeView {
         fill.set_shading_model(Graphic3dTypeOfShadingModel::Unlit);
         fill.set_interior_color(Color::named(NamedColor::RED));
         group.set_group_primitives_aspect(&fill.cast());
-        group.add_primitive_array(&square(), true);
+        group.add_primitive_array(&square().upcast(), true);
         structure.display();
         let style = Handle::new(Graphic3dPresentationAttributes::default());
         style.set_method(AspectTypeOfHighlightMethod::Boundbox);

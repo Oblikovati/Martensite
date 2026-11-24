@@ -6,7 +6,8 @@ use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkdeiges::iges_control::{IgesControlReader, IgesControlWriter};
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::Transient;
 use martensite_tkg3d::geom::{
     GeomCircle, GeomConicalSurface, GeomCylindricalSurface, GeomEllipse, GeomHyperbola, GeomLine,
     GeomParabola, GeomPlane, GeomSphericalSurface, GeomToroidalSurface, GeomTrimmedCurve,
@@ -211,7 +212,7 @@ fn every_setting_gives_the_sizes_of_the_table() {
     assert!(problems.is_empty(), "{problems:#?}");
 }
 
-fn geometry_of(handle: Handle<StandardTransient>) -> Shape {
+fn geometry_of(handle: Handle<dyn Transient>) -> Shape {
     let mut writer = IgesControlWriter::with_unit(b"MM", 0).expect("the writer");
     assert!(writer.add_geom(&handle).expect("the translation"));
     let mut text = Vec::new();
@@ -227,25 +228,22 @@ fn curves_come_back_at_their_length() {
         Direction3::new(0.0, 0.0, 1.0).expect("z"),
     )
     .expect("frame");
-    let trim = |curve: Handle<StandardTransient>,
-                first: f64,
-                last: f64|
-     -> Handle<StandardTransient> {
+    let trim = |curve: Handle<dyn Transient>, first: f64, last: f64| -> Handle<dyn Transient> {
         Handle::new(GeomTrimmedCurve::new(&curve.cast(), first, last, true, true).expect("trim"))
             .cast()
     };
-    let line: Handle<StandardTransient> = Handle::new(GeomLine::new(Axis1::new(
+    let line: Handle<dyn Transient> = Handle::new(GeomLine::new(Axis1::new(
         Point3::new(0.0, 0.0, 0.0),
         Direction3::new(1.0, 0.0, 0.0).expect("x"),
     )))
     .cast();
-    let circle: Handle<StandardTransient> =
+    let circle: Handle<dyn Transient> =
         Handle::new(GeomCircle::new(frame, 2.0).expect("circle")).cast();
-    let ellipse: Handle<StandardTransient> =
+    let ellipse: Handle<dyn Transient> =
         Handle::new(GeomEllipse::new(frame, 3.0, 1.0).expect("ellipse")).cast();
-    let hyperbola: Handle<StandardTransient> =
+    let hyperbola: Handle<dyn Transient> =
         Handle::new(GeomHyperbola::new(frame, 3.0, 1.0).expect("hyperbola")).cast();
-    let parabola: Handle<StandardTransient> =
+    let parabola: Handle<dyn Transient> =
         Handle::new(GeomParabola::new(frame, 1.0).expect("parabola")).cast();
     assert!((length(&geometry_of(trim(line, 0.0, 5.0))) - 5.0).abs() < 1.0e-3);
     assert!((length(&geometry_of(circle.clone())) - 4.0 * PI).abs() < 1.0e-3);
@@ -265,7 +263,7 @@ fn surfaces_are_written() {
         Direction3::new(1.0, 0.0, 0.0).expect("x"),
     )
     .expect("frame");
-    let surfaces: Vec<Handle<StandardTransient>> = vec![
+    let surfaces: Vec<Handle<dyn Transient>> = vec![
         Handle::new(GeomPlane::new(frame)).cast(),
         Handle::new(GeomCylindricalSurface::new(frame, 2.0).expect("cylinder")).cast(),
         Handle::new(GeomConicalSurface::new(frame, 0.3, 2.0).expect("cone")).cast(),

@@ -1,0 +1,197 @@
+{
+  "source_head": "be565085c02f9800cff2c49fdf1a3f7236d64f23",
+  "binary_sha256": "defec8ca8cc22981776aa1add96375b29d5a0a91d94ff82c07c9987d9bd5378f",
+  "harness_sha256": "477e578bdef2d931bf8243d7a4791a2dc1e44068dfad3ac7e9555b2a0868f0b6",
+  "fixture_sha256": "df73199b50d0acc937690788b217f1c54eb551f998f37629779fc6f6b087ca39",
+  "qualification": "Component diagnostic only. A concurrent certificate gate was reported active; no operation-level speedup or no-regression conclusion.",
+  "rows": [
+    {
+      "process_trial": 1,
+      "mode": "estimate",
+      "process": {
+        "elapsed_s": 7.08,
+        "user_s": 7.07,
+        "system_s": 0.01,
+        "peak_rss_kib": 53152
+      },
+      "component_median_ns_excluding_warmup": 9920942.5,
+      "sample_elapsed_ns_by_trial": [
+        9956013,
+        9922700,
+        9960370,
+        9967494,
+        9926007,
+        9903826,
+        9923102,
+        9919185,
+        9904767,
+        9914034,
+        9915307
+      ],
+      "members": 2,
+      "retained_bytes": 0,
+      "known_buffer_peak_bytes": 0
+    },
+    {
+      "process_trial": 2,
+      "mode": "guard",
+      "process": {
+        "elapsed_s": 7.11,
+        "user_s": 7.1,
+        "system_s": 0.01,
+        "peak_rss_kib": 53236
+      },
+      "component_median_ns_excluding_warmup": 7479329.5,
+      "sample_elapsed_ns_by_trial": [
+        7504676,
+        7490390,
+        7473268,
+        7469983,
+        7445147,
+        7467768,
+        7482665,
+        7583222,
+        7542386,
+        7481824,
+        7476835
+      ],
+      "members": 2,
+      "retained_bytes": 44699,
+      "known_buffer_peak_bytes": 82097
+    },
+    {
+      "process_trial": 3,
+      "mode": "guard",
+      "process": {
+        "elapsed_s": 7.03,
+        "user_s": 7.02,
+        "system_s": 0.01,
+        "peak_rss_kib": 53132
+      },
+      "component_median_ns_excluding_warmup": 7444740.0,
+      "sample_elapsed_ns_by_trial": [
+        7462208,
+        7476445,
+        7468740,
+        7448522,
+        7440958,
+        7420130,
+        7428606,
+        7432613,
+        7420030,
+        7449655,
+        7459813
+      ],
+      "members": 2,
+      "retained_bytes": 44699,
+      "known_buffer_peak_bytes": 82097
+    },
+    {
+      "process_trial": 4,
+      "mode": "estimate",
+      "process": {
+        "elapsed_s": 7.03,
+        "user_s": 7.01,
+        "system_s": 0.01,
+        "peak_rss_kib": 54256
+      },
+      "component_median_ns_excluding_warmup": 9752876.5,
+      "sample_elapsed_ns_by_trial": [
+        9816274,
+        9750532,
+        9779435,
+        9838214,
+        9717140,
+        9806626,
+        9731066,
+        9695551,
+        9764227,
+        9755221,
+        9746184
+      ],
+      "members": 2,
+      "retained_bytes": 0,
+      "known_buffer_peak_bytes": 0
+    },
+    {
+      "process_trial": 5,
+      "mode": "estimate",
+      "process": {
+        "elapsed_s": 7.03,
+        "user_s": 7.02,
+        "system_s": 0.01,
+        "peak_rss_kib": 53296
+      },
+      "component_median_ns_excluding_warmup": 9799037.0,
+      "sample_elapsed_ns_by_trial": [
+        9878258,
+        9797399,
+        9779646,
+        9748929,
+        9787090,
+        9800675,
+        9726337,
+        9857119,
+        9991718,
+        9855276,
+        9857971
+      ],
+      "members": 2,
+      "retained_bytes": 0,
+      "known_buffer_peak_bytes": 0
+    },
+    {
+      "process_trial": 6,
+      "mode": "guard",
+      "process": {
+        "elapsed_s": 7.06,
+        "user_s": 7.04,
+        "system_s": 0.01,
+        "peak_rss_kib": 52920
+      },
+      "component_median_ns_excluding_warmup": 7439751.5,
+      "sample_elapsed_ns_by_trial": [
+        7482225,
+        7518572,
+        7549669,
+        7457319,
+        7428496,
+        7427624,
+        7432132,
+        7447371,
+        7397949,
+        7452349,
+        7406585
+      ],
+      "members": 2,
+      "retained_bytes": 44699,
+      "known_buffer_peak_bytes": 82097
+    }
+  ],
+  "summary": {
+    "estimate": {
+      "component_median_ns": 9799037.0,
+      "process_peak_rss_kib": [
+        53152,
+        54256,
+        53296
+      ]
+    },
+    "guard": {
+      "component_median_ns": 7444740.0,
+      "process_peak_rss_kib": [
+        53236,
+        53132,
+        52920
+      ]
+    }
+  },
+  "scope": "Actual accepted zero-angle chart fixture, two solids with a hole and disconnected material; component-only comparison on exported physical graph.",
+  "timing_protocol": "Six alternating separate processes; eleven component samples per process, trial0 warmup excluded. Guard includes two complete encodes per member, exact byte comparisons and buffer disposal.",
+  "memory_limit": "Process peak RSS includes fixture construction; it does not isolate component allocator peak. Buffer capacities exclude transient encoder tables and internal stream buffers.",
+  "host_start_rustc_count": 0,
+  "host_pressure_admission": "Parent reported certificate gate active concurrently; no final quiet-host performance qualification was performed.",
+  "verdict": "Not implemented. The component saved about 2.4 ms within a roughly 7 s workload. Identity-only policy and receipt plumbing would add archive storage; no operation-level performance or memory improvement was established. Both ordered validations and both native estimates remain intact.",
+  "temporary_harness_removed": true,
+  "issue": 527
+}

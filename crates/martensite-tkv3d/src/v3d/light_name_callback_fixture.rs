@@ -1,7 +1,7 @@
 //! Named CPU backend reuses production view forwarding; only the shadow byte observer differs.
 #![allow(unsafe_code)] // One anchored UnsafeCell buffer is edited/read serially by actual callbacks.
 use super::{V3dView, V3dViewSource};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::{aspect::*, graphic3d::*, image::ImagePixMap};
 use std::{
@@ -84,10 +84,9 @@ impl ObservedRetainedView {
     }
 }
 pub(super) struct CallbackObservedView {
-    transient: StandardTransient,
     retained: ObservedRetainedView,
 }
-martensite_tkernel::impl_transient!(CallbackObservedView,"Martensite_CallbackObservedView",StandardTransient,transient,
+martensite_tkernel::impl_transient!(CallbackObservedView,"Martensite_CallbackObservedView",dyn martensite_tkernel::standard::Transient,
     interfaces:[dyn Graphic3dCView,dyn Graphic3dDataStructureManager]);
 impl CallbackObservedView {
     /// Register a real retained backend with a byte observer; `CallbackObservedView::create(manager,control)`.
@@ -96,9 +95,8 @@ impl CallbackObservedView {
         control: &Arc<CallbackNameStorage>,
     ) -> Handle<dyn Graphic3dCView> {
         let base = Graphic3dRetainedView::new(manager, &[]).unwrap();
-        base.set_fbo(&Handle::new(StandardTransient::default()));
+        base.set_fbo(&Handle::new(StandardTransient).into_upcast());
         let view = Handle::new(Self {
-            transient: Default::default(),
             retained: ObservedRetainedView {
                 base,
                 control: control.clone(),
@@ -113,7 +111,7 @@ pub(super) struct CallbackNameView {
     pub base: V3dView,
     pub control: Arc<CallbackNameStorage>,
 }
-martensite_tkernel::impl_transient!(CallbackNameView,"Martensite_CallbackNameView",V3dView,base,
+martensite_tkernel::impl_transient!(CallbackNameView,"Martensite_CallbackNameView",V3dView,
     interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for CallbackNameView {
     fn view_base(&self) -> &V3dView {
@@ -156,19 +154,19 @@ impl Graphic3dCView for CallbackObservedView {
         let observed = self.retained.control.observed_buffer_dump(image, *kind);
         observed.unwrap_or_else(|| self.retained.buffer_dump(image, kind))
     }
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient> {
+    fn fbo_create(&self, width: i32, height: i32) -> Handle<dyn Transient> {
         // Allocation remains the named backend responsibility.
         self.retained.fbo_create(width, height)
     }
-    fn fbo_release(&self, fbo: &mut Handle<StandardTransient>) {
+    fn fbo_release(&self, fbo: &mut Handle<dyn Transient>) {
         // Release the original caller slot instead of an owning snapshot.
         self.retained.fbo_release(fbo);
     }
-    fn fbo_get_dimensions(&self, _: &Handle<StandardTransient>) -> [i32; 4] {
+    fn fbo_get_dimensions(&self, _: &Handle<dyn Transient>) -> [i32; 4] {
         // Both native/Rust named framebuffers have this fixed validated extent.
         [8, 8, 128, 128]
     }
-    fn fbo_change_viewport(&self, fbo: &Handle<StandardTransient>, width: i32, height: i32) {
+    fn fbo_change_viewport(&self, fbo: &Handle<dyn Transient>, width: i32, height: i32) {
         // Viewport updates target the actual retained framebuffer.
         self.retained.fbo_change_viewport(fbo, width, height);
     }

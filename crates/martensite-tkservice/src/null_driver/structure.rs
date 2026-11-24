@@ -8,25 +8,23 @@ use crate::graphic3d::{
 };
 use martensite_tkernel::ncollection::{Sequence, SequenceCursor};
 use martensite_tkernel::standard::{
-    Failure, Handle, SharedState, StandardTransient, WeakHandle, raise_native_failure,
+    Failure, Handle, HandleSlot, SharedState, StandardTransient, WeakHandle, raise_native_failure,
 };
 use martensite_tkmath::gp::Axis2;
 
 /// A driver structure of the null driver; `NullCStructure::new(&manager)?`.
 pub struct NullCStructure {
-    transient: StandardTransient,
     pub(super) base: Graphic3dCStructureBase,
     pub(super) this: SharedState<WeakHandle<Self>>,
     pub(super) shadow_parent: SharedState<Handle<Self>>,
 }
-martensite_tkernel::impl_transient!(NullCStructure, "NullCStructure", StandardTransient, transient,
+martensite_tkernel::impl_transient!(NullCStructure, "NullCStructure", StandardTransient,
     interfaces: [dyn Graphic3dCStructure]);
 
 impl NullCStructure {
     /// A structure of the manager's driver; `NullCStructure::new(&manager)?`.
     pub fn new(manager: &Handle<Graphic3dStructureManager>) -> Result<Handle<Self>, Failure> {
         let structure = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dCStructureBase::new(manager)?,
             this: SharedState::new(WeakHandle::default()),
             shadow_parent: SharedState::new(Handle::default()),
@@ -44,7 +42,10 @@ impl NullCStructure {
         let groups = &fields.groups;
         let mut cursor = groups.cursor();
         while cursor.more() {
-            if cursor.value(groups).is_some_and(|stored| stored == group) {
+            if cursor
+                .value(groups)
+                .is_some_and(|stored| &**stored == group)
+            {
                 return Some(cursor);
             }
             cursor.next(groups);
@@ -103,7 +104,11 @@ impl Graphic3dCStructure for NullCStructure {
         structure: &Handle<dyn Graphic3dStructureSource>,
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         let group: Handle<dyn Graphic3dGroup> = Handle::new(NullGroup::new(structure)).cast();
-        self.base.fields.write().groups.append(group.clone());
+        self.base
+            .fields
+            .write()
+            .groups
+            .append(HandleSlot::new(group.clone()));
         Ok(group)
     }
     /// Clears the group (without manager update) and removes it from the sequence.
@@ -126,17 +131,15 @@ struct NullGroupState {
 
 /// A group of the null driver; `NullGroup::new(&structure)`.
 pub struct NullGroup {
-    transient: StandardTransient,
     base: Graphic3dGroupBase,
     state: SharedState<NullGroupState>,
 }
-martensite_tkernel::impl_transient!(NullGroup, "NullGroup", StandardTransient, transient, interfaces: [dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(NullGroup, "NullGroup", StandardTransient, interfaces: [dyn Graphic3dGroup]);
 
 impl NullGroup {
     /// A group of a structure; `NullGroup::new(&structure)`.
     pub fn new(structure: &Handle<dyn Graphic3dStructureSource>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Graphic3dGroupBase::new(structure),
             state: SharedState::default(),
         }

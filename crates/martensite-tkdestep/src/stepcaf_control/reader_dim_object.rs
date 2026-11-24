@@ -28,7 +28,8 @@ use crate::step_shape::{
     StepShapeValueFormatTypeQualifier,
 };
 use martensite_tkbrep::topods;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkmath::gp::Direction3;
@@ -93,10 +94,11 @@ impl DimensionValues {
     /// A simple value or range: upper limit, or lower limit or simple nominal value.
     fn read_measure_item(
         &mut self,
-        item: &Handle<StepReprRepresentationItem>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
-        let with_unit = item.cast::<StepReprReprItemAndMeasureWithUnit>();
+        let with_unit =
+            item.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>();
         let live = step_live(&with_unit, WHERE)?;
         let measure = live.get_measure_with_unit();
         let is_length = item
@@ -126,10 +128,11 @@ impl DimensionValues {
     /// A value with a qualifier: minimum, maximum or average.
     fn read_qualified_measure(
         &mut self,
-        item: &Handle<StepReprRepresentationItem>,
+        item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
         factors: &StepDataFactors,
     ) -> Result<(), Failure> {
-        let with_qualifier = item.cast::<StepReprReprItemAndMeasureWithUnitAndQRI>();
+        let with_qualifier =
+            item.cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnitAndQRI>>();
         let live = step_live(&with_qualifier, WHERE)?;
         let measure = live.get_measure_with_unit();
         let is_length = item
@@ -174,10 +177,13 @@ impl DimensionValues {
             if item.is_null() {
                 continue;
             }
-            if item.cast::<StepReprReprItemAndMeasureWithUnit>().is_some() {
+            if item
+                .cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnit>>()
+                .is_some()
+            {
                 self.read_measure_item(&item, factors)?;
             } else if item
-                .cast::<StepReprReprItemAndMeasureWithUnitAndQRI>()
+                .cast::<dyn crate::StepEntityBase<StepReprReprItemAndMeasureWithUnitAndQRI>>()
                 .is_some()
             {
                 self.read_qualified_measure(&item, factors)?;
@@ -205,7 +211,7 @@ impl DimensionValues {
     }
     /// One bound of a plus minus tolerance; `None` is the `continue`.
     fn bound_value(
-        bound: &Handle<StandardTransient>,
+        bound: &Handle<dyn Transient>,
         factors: &StepDataFactors,
     ) -> Result<Option<f64>, Failure> {
         if bound.is_null() {
@@ -366,7 +372,7 @@ fn set_orientation(
 /// The path of a dimension from its aspect; false when the returns before setting the object.
 fn set_path(
     session: &SessionGraph,
-    aspect: &Handle<StepReprShapeAspect>,
+    aspect: &Handle<dyn crate::StepEntityBase<StepReprShapeAspect>>,
     object: &XCAFDimTolObjectsDimensionObject,
 ) -> Result<bool, Failure> {
     // for DimensionalLocationWithPath
@@ -375,15 +381,17 @@ fn set_path(
     let Some(usage) = usage.get() else {
         return Ok(false);
     };
-    let item: Handle<StepGeomGeometricRepresentationItem> = if usage.nb_identified_item() > 0 {
-        usage.identified_item_value(1)?.cast()
-    } else {
-        Handle::default()
-    };
+    let item: Handle<dyn crate::StepEntityBase<StepGeomGeometricRepresentationItem>> =
+        if usage.nb_identified_item() > 0 {
+            usage.identified_item_value(1)?.cast()
+        } else {
+            Handle::default()
+        };
     if item.is_null() {
         return Ok(false);
     }
-    let holder: Handle<StepReprRepresentationItem> = first_of(&session.sharings(&item.cast())?);
+    let holder: Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>> =
+        first_of(&session.sharings(&item.cast())?);
     let shape = session.shape_at(find_shape_index_for_dgt(&holder.cast(), session)?)?;
     let edge = if shape.is_null() {
         Default::default()
@@ -401,13 +409,13 @@ fn set_path(
 /// the returns before setting the object.
 fn type_from_entity(
     session: &SessionGraph,
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     placement: &Handle<StepGeomAxis2Placement3d>,
     kind: &mut XCAFDimTolObjectsDimensionType,
     object: &XCAFDimTolObjectsDimensionObject,
 ) -> Result<bool, Failure> {
     let is_size = entity
-        .cast::<crate::step_shape::StepShapeDimensionalSize>()
+        .cast::<dyn crate::StepEntityBase<crate::step_shape::StepShapeDimensionalSize>>()
         .is_some();
     if let Some(angular) = entity.cast::<StepShapeAngularSize>().get() {
         // get qualifier for angular value
@@ -420,7 +428,7 @@ fn type_from_entity(
     if *kind != XCAFDimTolObjectsDimensionType::LocationNone {
         return Ok(true);
     }
-    let mut path = Handle::<StepReprShapeAspect>::default();
+    let mut path = Handle::<dyn crate::StepEntityBase<StepReprShapeAspect>>::default();
     if is_size {
         if let Some(with_path) = entity.cast::<StepShapeDimensionalSizeWithPath>().get() {
             *kind = XCAFDimTolObjectsDimensionType::SizeWithPath;
@@ -439,13 +447,15 @@ fn type_from_entity(
 
 /// `setDimObjectToXCAF`: the object of a dimension on its label; none without a nominal value.
 pub(super) fn set_dim_object_to_xcaf(
-    entity: &Handle<StandardTransient>,
+    entity: &Handle<dyn Transient>,
     label: &TdfLabel,
     session: &SessionGraph,
     factors: &StepDataFactors,
 ) -> Result<(), Failure> {
-    let size = entity.cast::<crate::step_shape::StepShapeDimensionalSize>();
-    let location = entity.cast::<crate::step_shape::StepShapeDimensionalLocation>();
+    let size =
+        entity.cast::<dyn crate::StepEntityBase<crate::step_shape::StepShapeDimensionalSize>>();
+    let location =
+        entity.cast::<dyn crate::StepEntityBase<crate::step_shape::StepShapeDimensionalLocation>>();
     if size.is_null() && location.is_null() {
         return Ok(());
     }

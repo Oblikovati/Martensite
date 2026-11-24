@@ -29,6 +29,8 @@ impl RenderRetainedView {
         texture: &Handle<dyn Graphic3dTextureMap>,
         to_update_pbr_env: bool,
     ) {
+        // A background is part of the main layers (main_layer_notices.rs).
+        self.main_notices.notice();
         let texture = done_texture(texture);
         let cube = texture.cast::<dyn Graphic3dCubeMap>();
         if to_update_pbr_env {
@@ -58,6 +60,7 @@ impl RenderRetainedView {
     /// or none when disabled or without a cubemap background. Example:
     /// `view.set_image_based_lighting(true)`.
     pub fn set_image_based_lighting(&self, to_enable_ibl: bool) {
+        self.main_notices.notice();
         let fields = self.cview_base().fields.read();
         let enabled = to_enable_ibl && fields.background_type == Graphic3dTypeOfBackground::Cubemap;
         let source = if enabled {

@@ -35,7 +35,7 @@ pub fn is_tangent_faces(
 }
 fn sample_count(face: &Face) -> Result<i32, Failure> {
     let surface: Handle<dyn Adaptor3dSurface> =
-        Handle::new(BRepAdaptorSurface::with_face(face, true)?).cast();
+        Handle::new(BRepAdaptorSurface::with_face(face, true)?).into_upcast();
     BRepTopAdaptorTopolTool::with_surface(&surface)?.nb_samples()
 }
 fn sample_continuity(

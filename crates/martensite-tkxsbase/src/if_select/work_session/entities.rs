@@ -1,39 +1,37 @@
 //! The entities of the model (numbers, labels, names, categories), the data clearing,
 //! the graph and the checks of the session.
-use super::{FLAG_INCORRECT, IFSelectTransientList, IFSelectWorkSession};
+use super::{FLAG_INCORRECT, IFSelectSession, IFSelectTransientList};
 use crate::c_text::atoi;
 use crate::if_select::{
-    IFSelectEditForm, IFSelectSelectPointed, IFSelectSignCounter, IFSelectSignValidity,
-    IFSelectSignatureList, IFSelectSignatureListOps,
+    IFSelectEditForm, IFSelectSelectPointed, IFSelectSignCounterOps, IFSelectSignValidity,
+    IFSelectSignatureListOps,
 };
 use crate::interface::{
     InterfaceCategory, InterfaceCheckIterator, InterfaceCheckTool, InterfaceGraph, InterfaceHGraph,
     InterfaceInterfaceModel, InterfaceModelEntities, InterfaceModelReports, InterfaceShareTool,
 };
 use martensite_tkernel::{
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient, exceptions},
+    standard::{Failure, Handle, RuntimeTyped, Transient, TransientHandleTarget, exceptions},
     tcollection::{AsciiString, HAsciiString},
 };
 use std::sync::RwLockReadGuard;
 
 /// A query of the graph on an entity (its shared or sharing entities).
-type GraphQuery = fn(
-    &InterfaceGraph,
-    &Handle<StandardTransient>,
-) -> Result<Vec<Handle<StandardTransient>>, Failure>;
+type GraphQuery =
+    fn(&InterfaceGraph, &Handle<dyn Transient>) -> Result<Vec<Handle<dyn Transient>>, Failure>;
 
 /// The graph of a session, `StandardDomainError` when not available.
 fn no_graph() -> Failure {
     exceptions::domain_error("IFSelect WorkSession : Graph not available")
 }
 
-impl IFSelectWorkSession {
+impl IFSelectSession {
     /// `NbStartingEntities`: the entities of the model (0 without model).
     pub fn nb_starting_entities(&self) -> i32 {
         self.model().get().map_or(0, |m| m.nb_entities())
     }
     /// `StartingEntity(num)`: null out of range.
-    pub fn starting_entity(&self, num: i32) -> Handle<StandardTransient> {
+    pub fn starting_entity(&self, num: i32) -> Handle<dyn Transient> {
         let model = self.model();
         let Some(m) = model.get() else {
             return Handle::default();
@@ -44,7 +42,7 @@ impl IFSelectWorkSession {
         m.value(num).unwrap_or_default()
     }
     /// `StartingNumber(ent)`: 0 when not in the model.
-    pub fn starting_number(&self, ent: &Handle<StandardTransient>) -> i32 {
+    pub fn starting_number(&self, ent: &Handle<dyn Transient>) -> i32 {
         self.model().get().map_or(0, |m| m.number(ent))
     }
     /// `NumberFromLabel(val, afternum = 0)`: a number given directly, else the number of
@@ -70,7 +68,7 @@ impl IFSelectWorkSession {
         if cnt == 1 { num } else { -num }
     }
     /// `EntityLabel(ent)`: null for an entity out of the model.
-    pub fn entity_label(&self, ent: &Handle<StandardTransient>) -> Handle<HAsciiString> {
+    pub fn entity_label(&self, ent: &Handle<dyn Transient>) -> Handle<HAsciiString> {
         let model = self.model();
         match model.get() {
             Some(m) if ent.is_some() && m.contains(ent) => m.string_label(ent),
@@ -81,7 +79,7 @@ impl IFSelectWorkSession {
     /// `StandardNullObject` without graph (a native null dereference).
     pub fn entity_name(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
     ) -> Result<Handle<HAsciiString>, Failure> {
         let (model, hgraph, gtool) = {
             let st = self.state.read();
@@ -107,23 +105,25 @@ impl IFSelectWorkSession {
             .unwrap_or_default())
     }
     /// `CategoryNumber(ent)`: -1 without model.
-    pub fn category_number(&self, ent: &Handle<StandardTransient>) -> i32 {
+    pub fn category_number(&self, ent: &Handle<dyn Transient>) -> i32 {
         let num = self.starting_number(ent);
         self.model().get().map_or(-1, |m| m.category_number(num))
     }
     /// `CategoryName(ent)`.
-    pub fn category_name(&self, ent: &Handle<StandardTransient>) -> String {
+    pub fn category_name(&self, ent: &Handle<dyn Transient>) -> String {
         InterfaceCategory::name(self.category_number(ent))
     }
     /// `ValidityName(ent)`: empty for an entity out of the model.
-    pub fn validity_name(&self, ent: &Handle<StandardTransient>) -> &'static str {
+    pub fn validity_name(&self, ent: &Handle<dyn Transient>) -> &'static str {
         if self.starting_number(ent) == 0 {
             return "";
         }
         IFSelectSignValidity::c_val(ent, &self.model())
     }
     /// The items of the kind `T`, with their idents.
-    pub(crate) fn items_of<T: ?Sized + RuntimeTyped>(&self) -> Vec<Handle<T>> {
+    pub(crate) fn items_of<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+    ) -> Vec<Handle<T>> {
         let idents = self.item_idents(T::static_type());
         idents.iter().map(|id| self.item(*id).cast::<T>()).collect()
     }
@@ -171,11 +171,11 @@ impl IFSelectWorkSession {
                 p.clear();
             }
         }
-        for sl in self.items_of::<IFSelectSignatureList>() {
-            if let Some(l) = sl.cast::<dyn IFSelectSignatureListOps>().get() {
+        for sl in self.items_of::<dyn IFSelectSignatureListOps>() {
+            if let Some(l) = sl.get() {
                 l.clear();
             }
-            if let Some(sc) = sl.cast::<IFSelectSignCounter>().get() {
+            if let Some(sc) = sl.view::<dyn IFSelectSignCounterOps>().get() {
                 sc.set_sel_mode(-1);
             }
         }
@@ -263,7 +263,7 @@ impl IFSelectWorkSession {
     /// entity out of the model.
     fn graph_query(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         query: GraphQuery,
     ) -> Result<IFSelectTransientList, Failure> {
         if !self.compute_graph(false)? || self.starting_number(ent) == 0 {
@@ -274,17 +274,11 @@ impl IFSelectWorkSession {
         query(&graph, ent).map(Some)
     }
     /// `Shareds(ent)`: the entities `ent` shares (`None` when not available).
-    pub fn shareds(
-        &self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<IFSelectTransientList, Failure> {
+    pub fn shareds(&self, ent: &Handle<dyn Transient>) -> Result<IFSelectTransientList, Failure> {
         self.graph_query(ent, |g, e| Ok(g.shareds(e)?.content()))
     }
     /// `Sharings(ent)`: the entities sharing `ent` (`None` when not available).
-    pub fn sharings(
-        &self,
-        ent: &Handle<StandardTransient>,
-    ) -> Result<IFSelectTransientList, Failure> {
+    pub fn sharings(&self, ent: &Handle<dyn Transient>) -> Result<IFSelectTransientList, Failure> {
         self.graph_query(ent, |g, e| Ok(g.sharings(e)?.content()))
     }
     /// `IsLoaded`: a protocol, a non empty model and its graph of the same size.
@@ -348,7 +342,7 @@ impl IFSelectWorkSession {
     /// or the model itself), syntactic and, when complete, semantic.
     pub fn check_one(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         complete: bool,
     ) -> Result<InterfaceCheckIterator, Failure> {
         let model = self.model();

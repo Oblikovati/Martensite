@@ -69,5 +69,5 @@ pub fn modeling_circle(
     use martensite_tkg2d::geom2d::Geom2dCircle;
     use martensite_tkmath::gp::{Axis22d, Direction2};
     let frame = Axis22d::with_directions(center, Direction2::X, Direction2::Y).unwrap();
-    Handle::new(Geom2dCircle::new(frame, radius).unwrap()).cast()
+    Handle::new(Geom2dCircle::new(frame, radius).unwrap()).into_upcast()
 }

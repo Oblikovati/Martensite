@@ -6,7 +6,7 @@ struct MetadataOnlyDrawerReference<'a> {
     original: &'a dyn HandleReference<dyn MeshVSDrawerSource>,
 }
 impl HandleReference<dyn MeshVSDrawerSource> for MetadataOnlyDrawerReference<'_> {
-    fn observe(&self) -> HandleObserver<dyn MeshVSDrawerSource> {
+    fn observe(&self) -> HandleObserver<'_, dyn MeshVSDrawerSource> {
         panic!("metadata-only reader expected original slot queries, received observation")
     }
     fn reference_address(&self) -> *const () {

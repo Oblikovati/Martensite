@@ -5,7 +5,7 @@ use crate::aspect::{
     AspectWindow, AspectWindowBase, AspectWindowMembers as _,
 };
 use crate::xlib::{XwWindowAttributes, xconst, xlib};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use std::ffi::CString;
 
@@ -30,14 +30,13 @@ pub struct XwWindowFields {
 
 /// An Xlib window; `XwWindow::create(&display, "Viewer", 0, 0, 640, 480)?`.
 pub struct XwWindow {
-    transient: StandardTransient,
     base: AspectWindowBase,
     /// The fields, shared by every handle.
     pub fields: SharedState<XwWindowFields>,
     native_closure: SharedState<Option<crate::aspect::AspectNativeWindowClosure>>,
     connection_lease: Option<crate::aspect::AspectDisplayConnectionLease>,
 }
-martensite_tkernel::impl_transient!(XwWindow, "Xw_Window", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(XwWindow, "Xw_Window", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 
 impl Drop for XwWindow {
     /// The destructor destroys a window created here.
@@ -61,7 +60,6 @@ fn definition_error(message: &str) -> Failure {
 impl XwWindow {
     fn with_fields(display: &Handle<AspectDisplayConnection>, fields: XwWindowFields) -> Self {
         let window = Self {
-            transient: StandardTransient::default(),
             base: AspectWindowBase::default(),
             fields: SharedState::new(fields),
             native_closure: SharedState::default(),

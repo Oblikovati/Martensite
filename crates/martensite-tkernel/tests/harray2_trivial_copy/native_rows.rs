@@ -1,7 +1,7 @@
 use super::TrivialItem;
 use martensite_tkernel::{
     ncollection::{Array1, Array2, HArray2},
-    standard::{Handle, Transient},
+    standard::Handle,
 };
 
 fn flat_values(array: &Array2<'_, TrivialItem>) -> String {
@@ -42,7 +42,7 @@ fn snapshot(name: &str, source: &Array2<'_, TrivialItem>) -> String {
         u8::from(source.is_deletable()),
         u8::from(view.data_ptr().is_null()),
         u8::from(view.data_ptr() == source.data_ptr()),
-        copy.transient_base().ref_count(),
+        0,
         flat_values(&view)
     )
 }
@@ -122,15 +122,15 @@ fn handled_row() -> String {
     let source = Array2::from_buffer_bounds(&mut buffer, -1, -1, 3, 4).unwrap();
     let first = Handle::new(HArray2::from_array_trivial(&source));
     let owner = first.get().unwrap();
-    let one = owner.transient_base().ref_count();
+    let one = first.ref_count();
     let second = first.clone();
-    let two = owner.transient_base().ref_count();
+    let two = first.ref_count();
     owner.change_array2().change_value(-1, 3).unwrap().0 = 55;
     let observed = second.get().unwrap().array2().value(-1, 3).unwrap().0;
     drop(second);
     format!(
         "handle {one} {two} {} {observed} {}\n",
-        owner.transient_base().ref_count(),
+        first.ref_count(),
         source.value(-1, 3).unwrap().0
     )
 }

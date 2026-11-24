@@ -36,11 +36,17 @@ struct Spans {
 // The Geom2d curve of an initial curve kind (null for another kind).
 fn geom2d_of(init: &dyn Adaptor2dCurve2d) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     Ok(match init.get_type()? {
-        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(init.line()?)).cast(),
-        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(init.circle()?)).cast(),
-        CurveType::Ellipse => Handle::new(Geom2dEllipse::from_elips2d(init.ellipse()?)).cast(),
-        CurveType::Hyperbola => Handle::new(Geom2dHyperbola::from_hypr2d(init.hyperbola()?)).cast(),
-        CurveType::Parabola => Handle::new(Geom2dParabola::from_parab2d(init.parabola()?)).cast(),
+        CurveType::Line => Handle::new(Geom2dLine::from_lin2d(init.line()?)).into_upcast(),
+        CurveType::Circle => Handle::new(Geom2dCircle::from_circ2d(init.circle()?)).into_upcast(),
+        CurveType::Ellipse => {
+            Handle::new(Geom2dEllipse::from_elips2d(init.ellipse()?)).into_upcast()
+        }
+        CurveType::Hyperbola => {
+            Handle::new(Geom2dHyperbola::from_hypr2d(init.hyperbola()?)).into_upcast()
+        }
+        CurveType::Parabola => {
+            Handle::new(Geom2dParabola::from_parab2d(init.parabola()?)).into_upcast()
+        }
         CurveType::BezierCurve => init.bezier()?.cast(),
         CurveType::BSplineCurve => init.bspline()?.cast(),
         _ => Handle::default(),
@@ -120,7 +126,7 @@ impl ComputeApproxOnPolarSurface {
                 spans.gtc.set_trim(first, last, true, true)?;
             }
             let span: Handle<dyn Adaptor3dCurve> =
-                Handle::new(GeomAdaptorCurve::with_curve(&spans.gtc.clone().cast())?).cast();
+                Handle::new(GeomAdaptorCurve::with_curve(&spans.gtc.clone().cast())?).into_upcast();
             let ahc2d: Handle<dyn Adaptor2dCurve2d> =
                 self.span_initial(spans, init, c, surface, &span, i)?;
             if !self.proj_is_done {
@@ -175,7 +181,7 @@ impl ComputeApproxOnPolarSurface {
         }
         self.proj_is_done = true;
         let adaptor = Geom2dAdaptorCurve::with_curve(&spans.g2dtc.clone().cast())?;
-        Ok(Handle::new(adaptor).cast())
+        Ok(Handle::new(adaptor).into_upcast())
     }
 
     // Both ends of the initial curve span map within Tol3d of the curve span ends.

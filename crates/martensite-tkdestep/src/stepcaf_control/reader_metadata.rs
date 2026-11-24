@@ -21,7 +21,8 @@ use crate::step_repr::{
     StepReprRepresentationItem, StepReprShapeAspect, StepReprValueRepresentationItem,
 };
 use crate::step_shape::StepShapeShapeDefinitionRepresentation;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::tdata_std::TDataStdNamedData;
 use martensite_tklcaf::tdf::TdfLabel;
@@ -64,8 +65,8 @@ fn find_repr_items(
 /// search.
 fn collect_aspect_binders(
     session: &SessionGraph,
-    aspect: &Handle<StandardTransient>,
-    source: &Handle<StepReprPropertyDefinition>,
+    aspect: &Handle<dyn Transient>,
+    source: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     binders: &mut Vec<Handle<dyn TransferBinder>>,
 ) -> Result<(), Failure> {
     let process = session.process()?;
@@ -88,7 +89,7 @@ fn collect_aspect_binders(
             }
             continue;
         }
-        let definition = sharing.cast::<StepReprPropertyDefinition>();
+        let definition = sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinition>>();
         if definition.is_some() && definition != *source {
             for second in session.sharings(&sharing)? {
                 if let Some(sdr) = second
@@ -113,13 +114,16 @@ fn collect_aspect_binders(
 /// `collectBinders`: the binders of what a property is on.
 fn collect_binders(
     session: &SessionGraph,
-    source: &Handle<StepReprPropertyDefinition>,
+    source: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
 ) -> Result<Vec<Handle<dyn TransferBinder>>, Failure> {
     let process = session.process()?;
     let mut binders = Vec::new();
     for shared in session.shareds(&source.cast())? {
         // Acquire binder from StepBasicProductDefinition.
-        if shared.cast::<StepBasicProductDefinition>().is_some() {
+        if shared
+            .cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>()
+            .is_some()
+        {
             push_binder(&mut binders, process.find(&shared));
         } else if let Some(shape) = shared.cast::<StepReprProductDefinitionShape>().get() {
             // Acquire binder from StepReprProductDefinitionShape.
@@ -133,7 +137,10 @@ fn collect_binders(
         {
             // Acquire binder from StepReprNextAssemblyUsageOccurrence.
             push_binder(&mut binders, process.find(&shared));
-        } else if shared.cast::<StepReprShapeAspect>().is_some() {
+        } else if shared
+            .cast::<dyn crate::StepEntityBase<StepReprShapeAspect>>()
+            .is_some()
+        {
             collect_aspect_binders(session, &shared, source, &mut binders)?;
         }
     }
@@ -190,7 +197,7 @@ fn derived_unit_scale(
 
 /// The scale of a named unit.
 fn named_unit_scale(
-    named: &Handle<StepBasicNamedUnit>,
+    named: &Handle<dyn crate::StepEntityBase<StepBasicNamedUnit>>,
     factors: &StepDataFactors,
 ) -> Result<f64, Failure> {
     if named
@@ -246,7 +253,7 @@ fn key(name: &AsciiString) -> ExtendedString {
 
 /// One item of a property as a value of the named data.
 fn fill_item(
-    item: &Handle<StepReprRepresentationItem>,
+    item: &Handle<dyn crate::StepEntityBase<StepReprRepresentationItem>>,
     name: &AsciiString,
     attribute: &TDataStdNamedData,
     factors: &StepDataFactors,
@@ -292,7 +299,7 @@ fn fill_item(
 /// `fillAttributes`: the values of a property definition in the named data.
 fn fill_attributes(
     session: &SessionGraph,
-    definition: &Handle<StepReprPropertyDefinition>,
+    definition: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     factors: &StepDataFactors,
     attribute: &TDataStdNamedData,
 ) -> Result<bool, Failure> {
@@ -306,7 +313,8 @@ fn fill_attributes(
     };
     let name = name.string().clone();
     for sharing in session.sharings(&definition.cast())? {
-        let representation = sharing.cast::<StepReprPropertyDefinitionRepresentation>();
+        let representation =
+            sharing.cast::<dyn crate::StepEntityBase<StepReprPropertyDefinitionRepresentation>>();
         let Some(representation) = representation.get().map(|live| live.used_representation())
         else {
             continue;
@@ -337,7 +345,7 @@ impl ReaderState {
     fn shape_label_of_product_definition(
         &self,
         session: &SessionGraph,
-        definition: &Handle<StepBasicProductDefinition>,
+        definition: &Handle<dyn crate::StepEntityBase<StepBasicProductDefinition>>,
     ) -> Result<TdfLabel, Failure> {
         let binder = session.process()?.find(&definition.cast());
         if binder.is_null() {
@@ -353,7 +361,7 @@ impl ReaderState {
     fn collect_shape_labels(
         &self,
         session: &SessionGraph,
-        source: &Handle<StepReprPropertyDefinition>,
+        source: &Handle<dyn crate::StepEntityBase<StepReprPropertyDefinition>>,
     ) -> Result<Vec<TdfLabel>, Failure> {
         let mut labels = Vec::new();
         for binder in collect_binders(session, source)? {
@@ -430,7 +438,9 @@ impl ReaderState {
         let session = SessionGraph::of_process(ws)?;
         for i in 1..=model.nb_entities() {
             // Processing only StepBasicProductDefinition entities.
-            let definition = model.value(i)?.cast::<StepBasicProductDefinition>();
+            let definition = model
+                .value(i)?
+                .cast::<dyn crate::StepEntityBase<StepBasicProductDefinition>>();
             let Some(live) = definition.get() else {
                 continue;
             };

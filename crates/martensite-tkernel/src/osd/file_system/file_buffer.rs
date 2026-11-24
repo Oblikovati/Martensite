@@ -84,7 +84,7 @@ impl FileBuffer {
         Self::default()
     }
     /// `is_open`; `buffer.is_open()`.
-    pub fn is_open(&self) -> bool {
+    pub(super) fn is_open(&self) -> bool {
         self.file.is_some()
     }
     /// `open`: fails when already open, for a mode outside the libstdc++ table, when the

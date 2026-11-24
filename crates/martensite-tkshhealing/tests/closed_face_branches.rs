@@ -17,28 +17,27 @@ use martensite_tkmath::{
 use martensite_tkprim::brep_prim_api::{BRepPrimAPIMakeCylinder, BRepPrimAPIMakeOneAxis};
 use martensite_tkshhealing::{
     shape_extend::ShapeExtendStatus,
-    shape_upgrade::{
-        ShapeUpgradeClosedFaceDivide, ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData,
-    },
+    shape_upgrade::{ShapeUpgradeClosedFaceDivide, SplitSurface, SplitSurfaceData},
 };
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeFace;
 
 #[derive(Default)]
 struct ObservedNoBuild {
-    parent: ShapeUpgradeSplitSurface,
+    state: SplitSurfaceData,
     calls: SharedState<String>,
 }
-impl_transient!(ObservedNoBuild, "ObservedNoBuild", ShapeUpgradeSplitSurface, parent, interfaces:[dyn SplitSurface]);
+impl_transient!(ObservedNoBuild, "ObservedNoBuild", dyn SplitSurface, interfaces:[dyn SplitSurface]);
 
 impl SplitSurface for ObservedNoBuild {
     fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
     fn compute(&self, segment: bool) -> Result<(), Failure> {
         self.calls
             .write()
             .push_str(if segment { "C1" } else { "C0" });
-        self.parent.compute(segment)
+        self.state.with_mut(|fields| fields.status = 0);
+        Ok(())
     }
     fn build(&self, segment: bool) -> Result<(), Failure> {
         self.calls

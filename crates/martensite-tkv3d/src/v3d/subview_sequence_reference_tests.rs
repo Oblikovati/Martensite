@@ -16,7 +16,7 @@ struct SubviewMutationProbe {
     identity: i32,
     commands: Arc<SharedState<Option<SubviewMutationCommands>>>,
 }
-martensite_tkernel::impl_transient!(SubviewMutationProbe,"Martensite_SubviewMutationProbe",V3dView,base,interfaces:[dyn V3dViewSource]);
+martensite_tkernel::impl_transient!(SubviewMutationProbe,"Martensite_SubviewMutationProbe",V3dView,interfaces:[dyn V3dViewSource]);
 impl V3dViewSource for SubviewMutationProbe {
     fn view_base(&self) -> &V3dView {
         &self.base
@@ -31,14 +31,17 @@ impl V3dViewSource for SubviewMutationProbe {
     }
 }
 fn apply_subview_mutation(commands: &SubviewMutationCommands) {
-    let parent = commands.parent.observe();
-    let removed = commands.removed.observe();
+    let parent = commands.parent.upgrade();
+    let removed = commands.removed.upgrade();
     match commands.policy {
         1 => {
             parent.remove_subview(removed.view_base());
-            parent.add_subview(&commands.appended.observe().clone());
+            parent.add_subview(&commands.appended.upgrade());
         }
-        2 => *parent.state.write().subviews.first_mut().unwrap() = removed.clone(),
+        2 => {
+            *parent.state.write().subviews.first_mut().unwrap() =
+                std::sync::Arc::new(removed.clone())
+        }
         _ => unreachable!(),
     }
 }

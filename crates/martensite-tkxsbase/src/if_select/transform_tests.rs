@@ -7,7 +7,7 @@ use crate::interface::{
     InterfaceCheckIterator, InterfaceCopyTool, InterfaceEntityIterator, InterfaceGraph,
     InterfaceModelEntities,
 };
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, Transient};
 
 #[test]
 fn work_library_dump_levels_and_helps() {
@@ -56,8 +56,10 @@ fn work_library_stream_and_copy_defaults() {
 fn transform_standard_modifiers() {
     let trf = IFSelectTransformStandard::new();
     assert!(trf.copy_option() && trf.selection().is_null());
-    let first: Handle<dyn IFSelectModifier> = Handle::new(IFSelectModifReorder::new(true)).cast();
-    let second: Handle<dyn IFSelectModifier> = Handle::new(IFSelectModifReorder::new(false)).cast();
+    let first: Handle<dyn IFSelectModifier> =
+        Handle::new(IFSelectModifReorder::new(true)).into_upcast();
+    let second: Handle<dyn IFSelectModifier> =
+        Handle::new(IFSelectModifReorder::new(false)).into_upcast();
     assert!(trf.add_modifier(&first, 0) && !trf.add_modifier(&second, 2));
     assert_eq!(
         trf.label().as_bytes(),
@@ -76,7 +78,7 @@ fn transform_standard_modifiers() {
         trf.label().as_bytes(),
         b"On the spot Edition - Reorder, Roots last"
     );
-    trf.set_selection(&Handle::new(IFSelectSelectModelRoots::new()).cast());
+    trf.set_selection(&Handle::new(IFSelectSelectModelRoots::new()).into_upcast());
     assert!(trf.selection().is_some());
 }
 
@@ -91,7 +93,7 @@ fn transform_standard_copies() {
     trf.set_copy_option(false);
     let mut tc = InterfaceCopyTool::with_protocol(&model, &fake_protocol()).unwrap();
     assert!(trf.copy(&g, &mut tc).unwrap() == model);
-    let mut image: Handle<StandardTransient> = Handle::default();
+    let mut image: Handle<dyn Transient> = Handle::default();
     assert!(tc.search(&ents[0], &mut image).unwrap() && image == ents[0]);
 }
 
@@ -106,7 +108,7 @@ fn transform_standard_perform() {
             .unwrap()
     );
     assert!(newmod.is_some() && newmod != model);
-    let mut image: Handle<StandardTransient> = Handle::default();
+    let mut image: Handle<dyn Transient> = Handle::default();
     assert!(trf.updated(&ents[0], &mut image) && image.is_some() && image != ents[0]);
     trf.set_copy_option(false);
     assert!(
@@ -117,7 +119,10 @@ fn transform_standard_perform() {
         newmod.is_null(),
         "on the spot without a graph change: no new model"
     );
-    trf.add_modifier(&Handle::new(IFSelectModifReorder::new(true)).cast(), 0);
+    trf.add_modifier(
+        &Handle::new(IFSelectModifReorder::new(true)).into_upcast(),
+        0,
+    );
     assert!(
         trf.perform(&g, &fake_protocol(), &mut checks, &mut newmod)
             .unwrap()

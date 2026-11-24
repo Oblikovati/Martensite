@@ -6,7 +6,155 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-24
+
+### Added
+
+- Added `Graphic3dCView::structure_update` and `Graphic3dStructureManager::update_structure`. A structure or group update now also gives each view the layer of the updated structure, or every layer when other structures connect it. The update invalidates the same bounding boxes as before (#594).
+- Added `graphic3d_cview_invalidate_z_layer_bounding_box`, the base body of `Graphic3dCView::invalidate_z_layer_bounding_box` for a view that overrides it (#594).
+- Added `Graphic3dCamera::un_projection`, which returns the inverse matrices of `un_project` for many points, and `SelectMgrFrustumBuilder::view_plane_projector`, which reads the builder and these matrices once per selecting frustum. A pick inverts the camera matrices once instead of ten times, and its points do not change by one bit (#594).
+
+- Added `transform_utils::un_project_inverted`, which unprojects a point through an already inverted matrix with the same arithmetic as `un_project`. Vulkan text inverts its projection once per label instead of once per point (#594).
+
+- Added `Graphic3dText::revision`, the number of edits made to a text. Vulkan keeps the draws of each text label and lowers a label again only after its text, aspects, font or resolution change; `frame_text_1k` takes 1.23 ms instead of 1.86 ms on the same host (#594).
+- Added `Graphic3dLayer::structure_handles`, which lists a layer's structures in draw order without copying its maps. Frustum culling no longer copies the layer's BVH tree on each frame and locks each structure once to update its culled flag; `frame_transparent_1k` takes 0.59 ms instead of 0.62 ms on the same host (#594).
+
+- Added `RevisedState` to tkservice: a shared cell whose writes advance a revision. A renderer reads the revision to know that the state did not change since it last read it (#594).
+
+- Added `graphic3d_cview_min_max_values_with_size`, which computes `MinMaxValues` with a window size the view supplies. The Vulkan view passes the size it keeps between resizes, so auto Z-fit no longer asks the X server for the window size on every redraw (#594).
+
+- Added `Graphic3dRenderDriver::finish_frames`, which waits for the frames that Vulkan redraws left on the GPU, as `glFinish` does, and returns the first GPU fault they reported (#594).
+
+- Added `Graphic3dCamera::orientation_with_axial_scale_f` to read the float view matrix and its axial scale together. Vulkan uses it to avoid copying the camera for each placement (#594).
+
+- Added Vulkan redraw counters for buffers, images, memory allocations, pipelines, descriptor sets, submissions, bytes uploaded and read back, and CPU time by phase. `Graphic3dRenderView::last_frame_work` and `Graphic3dRenderDriver::device_work` return `RenderDeviceWork`, which reports geometry buffers and geometry upload bytes separately from the device totals (#594).
+
+- Added per-shape presentation mesh levels. `AisShape::set_presentation_mesh_lod` selects alternate shaded meshes under an approved screen-space error budget, including for connected placements (#594).
+
+- Added opt-in mesh shaders for eligible opaque Phong triangles on devices with `VK_EXT_mesh_shader`. Meshlets reject groups outside the frustum or facing away from the camera, and unsupported draws keep their indexed path (#594).
+
+- Added `RenderMeshVertexBehavior::Quantized16OctV2`, an opt-in vertex encoding using 16-bit positions relative to each mesh's bounds and octahedral normals. Binary32 vertices stay selectable for replay (#594).
+
+- Added opt-in two-pass occlusion culling for retained placement batches. The depth pyramid comes from current-camera draws of previously visible placements, and the final pass keeps the original draw order (#594).
+
+- Added opt-in progressive geometry uploads for mapped Vulkan views. Set `RenderAssemblyStreaming::VisibleBudgetedV2` to limit geometry upload per redraw and query the visible assembly's progress (#594).
+
+- Added canonical single-chart conical normal extrusion for solved polynomial profiles with holes, using shared keyed construction and returning separate reference, storage and measure bounds, authored history and detached exports (#418).
+
+- Added opt-in exact point-root and bracket filtering for generated Bézier pair membership signs and the `FilteredBernsteinV4` planar-proof selector while retaining earlier sign and planar-proof policies for replay (#544).
+
+- Added opt-in exact Bernstein exclusion for planar Bézier pair and self queries while preserving the existing solver routes (#539).
+
+- Added an explicit chart-angle normal-extrusion entry point with a separate immutable result, rotation-aware spatial evidence and detached native exports while preserving the earlier constructor for replay (#420).
+
+- Added separate rotation-aware frame and spatial-budget certificates with bounded trigonometric evidence for explicit sketch seam angles (#420).
+
+- Added revision-checked conversion of native cylindrical face-hit parameters into developed coordinates with explicit seams, arithmetic bounds and separate trim-search coverage (#420).
+
+- Added owned cylindrical face attachments with revision checks, checked persistence and explicit native-history reattachment that refused missing or ambiguous face images (#420).
+
+- Added certified stored-frame deviation, positive stretch and determinant bounds against exact normalized reference frames (#425).
+
+- Added certified point-domain placement budgets with translation and affine-evaluation rounding bounds, downward canonical allocations and explicit spatial-limit refusals (#425).
+
+- Added certified oblique cylindrical profile placement with shared decoded locations, physical-frame validation, world-space reports and determinant-scaled retained boundary flux (#425).
+
+- Added explicit finite pair-proof work requests and work-bearing planar failures with original root-isolation causes and authored curve IDs, and reported requested, effective and consumed work on successful region sets and wrapped normal-extrusion reports without changing existing defaults (#425).
+
+- Added solved-profile cylindrical normal extrusion with typed spatial and measure reports, authored history, cooperative cancellation and detached native exports (#418).
+
+- Added affected-package ThreadSanitizer execution of the wrapped-family concurrency stress campaign, retaining startup refusal and failing on campaign errors (#418).
+
+- Added exact periodic material classification for private disconnected cylindrical selections, with guarded translated witnesses, original-source snapshots, complete interval coverage and aggregate winding budgets (#418).
+
+- Added global planar selection and shared boundary-clearance preparation for disconnected wrapped-profile regions, preserving authored identities and rejecting overlapping filled selections (#418).
+
+- Added source-matched outward comparisons between retained cylindrical boundary flux and ideal normal volume, preserving separate integration, profile-displacement and representative-error evidence (#418).
+
+- Added source-bound closed-profile area and ideal cylindrical normal-volume enclosures, with exact requested depth arithmetic and explicit geometric-error reporting or refusal (#418).
+
+- Added frozen incidence and curve-representation coverage checks for private rational wrapped profiles, with semantic-owner diagnostics and malformed-body controls (#418).
+
+- Added certified conditional flux integration for retained rational ruled sides and cylindrical cap pcurves, with aggregate work limits and per-span receipts (#418).
+
+- Added full-interval cylindrical cap-trim residual certificates over retained rational space curves and polynomial pcurves, checked against both retained edge and face tolerances (#418).
+
+- Added decoded pcurve, parameter-domain and raw/effective topology-tolerance checks for rational wrapped profiles, with edge/face-scoped refusals (#418).
+
+- Added complete cylindrical boundary-image clearance with certified true-period rounding, an infinite-tail bound and aggregate proof budgets, enabling private connected profiles spanning multiple turns (#418).
+
+- Added deterministic cylindrical multi-chart Hermite planning from original polynomial bounds under one work allowance, enabling private wrapped profiles across the cylinder parameter seam (#418).
+
+- Added outward true-circumference slab certificates for all nonzero cylindrical periodic images, bound to original profile sources with explicit incomplete results for wider selections (#418).
+
+- Added certified developed-profile clearance with bounding-hierarchy pruning, cached dyadic refinement, exact-parameter witnesses and later binding to retained cylindrical profile certificates (#418).
+
+- Added strict cylindrical profile tangent-cone certificates tied to retained position/derivative proofs, with exact positive margins and explicit work limits (#418).
+
+- Added exact radius/depth rounding bounds composed with cylindrical storage certificates under one requested error allowance (#418).
+
+- Added certified cylindrical profile position and derivative bounds against original authored polynomials, plus a priori dyadic Hermite fit planning with explicit resource limits (#418).
+
+- Added `certify_cylindrical_storage` for conservative error bounds on stored cylindrical curves and their linear depth interpolation, with retained coefficient bits and explicit precision and work limits (#418).
+
+- Added strict owned text capture with exact font-content bindings, caller occurrence IDs, raw glyph outlines and frozen text-builder plans. Added source-bound control-character diagnostics and an affected-package ThreadSanitizer stress control. (#425)
+
+- Added conical-sector sketches with signed normal extrusion, seam-crossing regions, validated conical carriers and preserved source history. (#417)
+
+- Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
+
+- Added checked opt-in rigid location-transform decoding for coefficient-bound geometry while preserving legacy normalization defaults (#451).
+
+- Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
+
+### Changed
+
+- Changed Vulkan `redraw_immediate` to reuse the image of the main layers while it holds, as OCCT's `RedrawImmediate` reuses its back buffer. The image holds until the view receives a main-layer notice, or until its camera, lights, rendering parameters, background colour, extent, layer selection or clip planes change. A notice is an update, display, erase, layer or priority change of a structure in a non-immediate layer, `invalidate`, or a change of the view's layers, background, lights or clip planes. While the image holds, an immediate redraw culls, builds and uploads only the immediate layers. An aspect or vertex buffer that is edited in place, without a structure or group update, now reaches the main layers at the next `redraw` instead of the next `redraw_immediate`. The `draw-record-verification` feature builds the whole frame beside each reused image and fails when its main draws differ (#594).
+- Changed the tkv3d presentable-object accessors, such as `transform_persistence`, `clip_planes` and `view_affinity`, to read their field under the lock instead of copying every field and the presentation list (#594).
+- Changed tkv3d picking to read the rectangular frustum once per pick instead of taking four locks for each box test. The tree walk reads the bounds of both children under the lock it already holds, and a box test reads the camera projection only after the axis test passes, as OCCT does. The objects of one pick share their scaled frustum and their walk stack. Pick results do not change, and `highlight_ais_spheres_400` goes from 1.24-1.35 to 1.18-1.22 times OCCT on the same host (#594).
+- Changed immediate redraws with floating-point depth to restore the saved main colour and depth in one fetch draw. Retained targets for this path have sampled usage. Captures do not change, and `highlight_ais_spheres_400` saves about 10 µs per hover pair on RADV (#594).
+- Changed Vulkan window redraws to hand the recorded frame to a presentation thread, one per renderer, which submits and presents it while the redraw returns. A submit or present error of such a frame now shows at the next redraw, `finish_frames`, capture or close instead of at the redraw itself. Acquire errors stay immediate, and frames with GUI layers, window depth status or ray-tracing feedback are still submitted and presented by the redraw. `highlight_ais_spheres_400` takes about 107 µs per hover pair instead of 130 µs on the same host, against 113 µs for OCCT (#594).
+- Changed Vulkan group draw records to replay under any placement of the group: a record is keyed on whether the model mirrors and whether the stack is implicit, not on the model matrix, and a replay sets the clip transform, projection factors, world and normal matrices and the model stack of each placement. `RenderLighting` now keeps its world and normal matrices inline, outside the shared `LightingBody`. A connected structure replays the records of the structure it references without lowering. Captures do not change, and `frame_connected_30k` falls from about 154 ms to 40 ms per frame on RADV (#594).
+- Changed Vulkan draw records and retained view batches to subscribe to the graphics inputs they read. Edits to watched groups, buffers, aspects, or per-view visibility trigger a fresh check without invalidating unrelated views (#594).
+- Changed eligible raster uploads to use 16-bit indices when they fit and draw tables to refer to shared materials by index. Larger index streams and unsupported draw tables keep their previous layouts (#594).
+- Changed eligible Vulkan layers to record secondary command buffers on workers. Large cold geometry uploads can run on a dedicated transfer queue when one is available (#594).
+- Changed Vulkan camera-only redraws of eligible connected assemblies to reuse their draw templates and placements. Edits to geometry, material, placement, or visibility invalidate the retained frame. Cropped views retain the batch and use ordered GPU compaction when the device and frame qualify (#594).
+- Changed the Vulkan renderer to record a run of at least eight consecutive plain lit surface draws as one indexed indirect draw when the device has `multiDrawIndirect` and `drawIndirectFirstInstance`. Each draw reads its clip, world and normal matrices from a per-frame draw table, so the draw order and the captures do not change, and draws of a run share one lighting block. `frame_connected_30k` records in 0.14 ms instead of 5 ms and uploads 6.2 MB instead of 11.2 MB per frame on RADV (#594).
+- Changed the Vulkan renderer to read the device limits and OIT attachment formats once per device instead of in every frame, and to check twice its uploads for geometry retirement in a frame that restores the main image, instead of 512 entries (#594).
+
+- Changed Vulkan `PrimitiveDraw` and `RenderLighting` to keep the values a frame sets on every draw inline and the rest in a shared `DrawBody` and `LightingBody`, which they dereference to. Replayed draws, the frames in flight and the instances of a connected presentation share one body instead of copying 1.5 KB per draw (#594).
+
+- Changed the Vulkan renderer to assemble a layer of 256 structures or more on `rayon` worker threads when every group of a chunk of structures replays a draw record; lowering and user callbacks stay on the calling thread, and the merged program keeps the structure order. Runs of 256 scene text labels or more replay their label records on the workers in the same way. `frame_transparent_1k` takes 0.68 ms instead of 0.87 ms, and `frame_text_1k` 0.68 ms instead of 0.88 ms, on the same host (#594).
+
+- Changed `Graphic3dAspectsBase::fields` from `SharedState` to `RevisedState`. `read`, `write`, `try_read`, `try_write` and `snapshot` work as before; each write now advances `fields.revision()`. Code that names the field's type must use `RevisedState<Graphic3dAspectsFields>` (#594).
+
+- Made a Vulkan group that two passes lowered keep its lowered surfaces and replay them on later redraws while its commands, aspects, geometry, transformation and the view's rendering parameters stay the same. Only the values derived from the camera are computed again. `frame_transparent_1k` takes 1.5 ms instead of 2.7 ms on the same build host (#594).
+
+- Changed a Vulkan view on a native window to keep the window size between `set_window` and `must_be_resized`, as OCCT's OpenGL view does, instead of asking the X server on every redraw. A native resize that the application does not report with `must_be_resized` now shows when the swapchain reports it out of date or suboptimal. GUI frames still check the surface on every redraw (#594).
+
+- Changed Vulkan swapchains without vertical sync to hold one more image than with FIFO, so acquiring an image no longer waits for XWayland to release one. FIFO keeps its image count and adds no latency (#594).
+
+- Made Vulkan colour dumps read only the colour attachment and reuse their host buffer. An RGB dump packs the rows on the GPU and copies them straight into the image; a 1080p RGB dump takes 0.46 ms instead of 12.8 ms. Captures return the same pixels as before (#594).
+
+- Stopped blocking a Vulkan resize on the destruction of the replaced swapchain; the old swapchain is destroyed once its presentation fences signal. A resize still recreates the swapchain, which RADV requires on X11, so `resize_redraw` stays about twice as slow as OCCT (#594).
+
+- Stopped waiting on an acquire fence and re-querying the surface in each Vulkan window frame (#594).
+
+- Stopped waiting for the GPU and copying the frame to host memory in each Vulkan redraw. Up to two frames run on the GPU while the host prepares the next one. `Graphic3dRenderView::capture` reads the frame back the first time it is called and returns the same pixels as before. A GPU fault that a frame reports after its redraw returned now comes from the next `capture`, the next redraw that needs the frame's slot, or `Graphic3dRenderDriver::finish_frames`. The redraw counters report no read-back bytes (#594).
+
+- Reused Vulkan vertex and index buffers between redraws, including for static textured meshes, and batched geometry transfers. Shared mapped storage pages and descriptor pools across the draws of a frame (#594).
+
+- **BREAKING** Replaced transient object ownership with typed Rust handles and static class descriptors. Callers use compile-time upcasts, checked downcasts and explicit weak references (#592).
+
+- Used Rust strong counts during TKV3D callbacks and released pixmaps displaced by reentrant texture setters (#592).
+
+- Restricted toolkit internals with no production callers outside their crate. Use the public palette lookups to access named colors whose unused constants were removed (#591).
+
+- Replaced `AsciiString`'s shared allocation with owned bytes and removed `buffer_identity`. Borrow `as_bytes` or `as_bytes_with_nul` while the string is live, and copy the bytes when they must survive an edit (#588).
+
 ### Fixed
+
+- Preserved exact 24-bit depth during retained Vulkan immediate redraws by copying the stored attachments (#596).
 
 - Shared one intersection context across the workers of parallel Boolean operations instead of building one per worker, and built missing cached services outside the cache lock; the body self-intersection check stays serial because its parallel path raised peak memory across long operations (#496, #580).
 
@@ -16,7 +164,30 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Reused native-source validation within private owned-profile graph batches, preserving live alias checks for borrowed inputs and exact source-history matching (#555).
 
+- Decoupled cylinder-only error reporting from cone-specific failure formatting while preserving typed causes and diagnostics (#547).
+
+- Clarified the raw native volume error-status units and corrected cone numerical verification to compare occurrence flux at the same field origin without changing native estimates or certified bounds (#546).
+
 - Refused negative grid sample counts in generic curve–surface extrema searches with a typed error instead of an indexing panic (#535).
+
+- Corrected the placed cylindrical flux contract to use `(x-t)/3` and exposed the decoded field origin on normal and chart results. The existing enclosures and volume budgets remained unchanged (#528).
+
+
+- Restored selection of the ignored wrapped-family ThreadSanitizer stress test for affected packages while retaining existing replay controls (#529).
+
+- Preserved cylindrical operation failures when cancellation arrived later and propagated cancellation through global planar proof work (#526).
+
+- Verified decoded export bindings by authored identity and rejected duplicate or mismatched bindings before publishing native exports (#519).
+
+- Preserved checked native conic frames and curve directions during explicitly configured binary capture, including recursive and surface-embedded curves, while retaining legacy read behavior (#455).
+
+- Required placed cap traces to remain within their retained edge and face tolerances, including affine-evaluation rounding and typed span/depth refusals (#454).
+
+- Canonicalized wrapped planar proof inputs by authored IDs so reordered selections retained identical actual work receipts, while preserving original admission errors and unchanged limits (#453).
+
+- Preserved authored entities and typed failure classes in solved-profile normal extrusion errors (#448).
+
+- Reported admitted input ranges and retained offending values in cylindrical profile certificate diagnostics (#524).
 
 - Rejected invalid raw body tolerances before native validation could mask or overwrite them, preserving refusal input state and explicit stage coverage (#490).
 

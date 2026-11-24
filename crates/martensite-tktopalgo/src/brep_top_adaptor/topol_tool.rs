@@ -43,10 +43,9 @@ pub(super) struct BRepTopolState {
 /// `BRepAdaptor_Surface` with the pcurves of its edges as arcs, its vertices as
 /// `BRepTopAdaptor_HVertex`, a lazily built `BRepTopAdaptor_FClass2d` for Classify
 /// and IsThePointOn, and sample counts by surface kind. Every member takes `&self`,
-/// as the base does. The base part (the parent field) carries the RTTI chain and runs
-/// the inherited members that read no base state (`Identical`, `Orientation(V)`); the
-/// tool implements the IntStart `TheTopolTool` trait, so IntStart and IntPatch take it
-/// as a domain.
+/// as the base does. Vertex queries dispatch through the supplied vertex adaptor.
+/// The tool implements IntStart's `TheTopolTool` trait so IntStart and IntPatch can
+/// use it as a domain.
 ///
 /// ```
 /// use martensite_tktopalgo::brep_top_adaptor::BRepTopAdaptorTopolTool;
@@ -55,15 +54,13 @@ pub(super) struct BRepTopolState {
 /// assert!(tool.has_3d());
 /// ```
 pub struct BRepTopAdaptorTopolTool {
-    parent: Adaptor3dTopolTool,
     pub(super) state: SharedState<BRepTopolState>,
     fclass2d: SharedState<Option<BRepTopAdaptorFClass2d>>,
 }
 impl_transient!(
     BRepTopAdaptorTopolTool,
     "BRepTopAdaptor_TopolTool",
-    Adaptor3dTopolTool,
-    parent
+    Adaptor3dTopolTool
 );
 
 impl Default for BRepTopAdaptorTopolTool {
@@ -93,7 +90,6 @@ impl BRepTopAdaptorTopolTool {
             dv: 0.0,
         };
         Self {
-            parent: Adaptor3dTopolTool::default(),
             state: SharedState::new(state),
             fclass2d: SharedState::new(None),
         }
@@ -189,7 +185,7 @@ impl BRepTopAdaptorTopolTool {
     /// `Value()`: the pcurve adaptor of the current arc; Standard_NoSuchObject past
     /// the end (a null dereference natively); `tool.value()?`.
     pub fn value(&self) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
-        Ok(self.current_curve("Value")?.cast())
+        Ok(self.current_curve("Value")?.into_upcast())
     }
 
     /// `Edge()`: the edge of the current arc (a pointer to it natively);
@@ -247,7 +243,7 @@ impl BRepTopAdaptorTopolTool {
         let state = self.state.read();
         let vertex = topods::vertex(state.v_iterator.current())?;
         let hvertex = Handle::new(BRepTopAdaptorHVertex::new(&vertex, &state.curve));
-        Ok(hvertex.cast())
+        Ok(hvertex.into_upcast())
     }
 
     /// `Classify(P2d, Tol, RecadreOnPeriodic)`: UNKNOWN without a face, else the
@@ -324,7 +320,7 @@ impl BRepTopAdaptorTopolTool {
         &self,
         vertex: &Handle<dyn Adaptor3dHVertex>,
     ) -> Result<Orientation, Failure> {
-        self.parent.vertex_orientation(vertex)
+        Ok(domain_vertex(vertex)?.orientation())
     }
 
     /// `Identical(V1, V2)`: the inherited base member, `V1->IsSame(V2)` through the
@@ -335,7 +331,7 @@ impl BRepTopAdaptorTopolTool {
         first: &Handle<dyn Adaptor3dHVertex>,
         second: &Handle<dyn Adaptor3dHVertex>,
     ) -> Result<bool, Failure> {
-        self.parent.identical(first, second)
+        domain_vertex(first)?.is_same(second)
     }
 
     /// `Has3d()`: the arcs and vertices have 3d tolerances; `tool.has_3d()`.
@@ -367,6 +363,12 @@ impl BRepTopAdaptorTopolTool {
     pub fn pnt(&self, vertex: &Handle<dyn Adaptor3dHVertex>) -> Result<Point3, Failure> {
         BRepTool::pnt(&brep_vertex(vertex)?)
     }
+}
+
+fn domain_vertex(vertex: &Handle<dyn Adaptor3dHVertex>) -> Result<&dyn Adaptor3dHVertex, Failure> {
+    vertex
+        .get()
+        .ok_or_else(|| null_object("Adaptor3d_TopolTool: null vertex; expected a vertex"))
 }
 
 // The TopoDS vertex of a BRepTopAdaptor_HVertex handle, for Tol3d(V) and Pnt(V).

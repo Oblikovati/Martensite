@@ -67,7 +67,7 @@ impl StdPrsPoleCurve {
             for pole in &poles {
                 array.add_vertex_pnt(pole)?;
             }
-            group.add_primitive_array(&array, true);
+            group.add_primitive_array(&array.into_upcast(), true);
         }
         draw_arrow(curve, &prs.current_group()?, drawer)
     }
@@ -159,7 +159,7 @@ fn add_poles(
             rows.add_vertex_pnt(&pole(i, j)?)?;
         }
     }
-    group.add_primitive_array(&rows, true);
+    group.add_primitive_array(&rows.into_upcast(), true);
     let group = prs.current_group()?;
     group.set_primitives_aspect(&drawer.v_iso_aspect().aspect().cast());
     let columns = Handle::new(Graphic3dArrayOfPrimitives::new(
@@ -175,7 +175,7 @@ fn add_poles(
             columns.add_vertex_pnt(&pole(i, j)?)?;
         }
     }
-    group.add_primitive_array(&columns, true);
+    group.add_primitive_array(&columns.into_upcast(), true);
     Ok(())
 }
 
@@ -253,7 +253,7 @@ impl StdPrsShadedSurface {
                         array.add_vertex_pnt_normal(&second.point, &d2)?;
                     }
                 }
-                group.add_primitive_array(&array, true);
+                group.add_primitive_array(&array.into_upcast(), true);
             }
         }
         Ok(())

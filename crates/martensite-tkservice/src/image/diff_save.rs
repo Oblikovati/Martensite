@@ -91,10 +91,10 @@ mod tests {
     use super::*;
     use martensite_tkernel::standard::Handle;
 
-    fn gray(values: &[u8]) -> Handle<ImagePixMap> {
+    fn gray(values: &[u8]) -> Handle<dyn crate::image::ImagePixMapObject> {
         let image = ImagePixMap::default();
         image.init_wrapper(ImageFormat::Gray, Some(values.to_vec()), 3, 3, 0);
-        Handle::new(image)
+        Handle::new(image).into_upcast()
     }
 
     #[test]

@@ -4,7 +4,10 @@ use martensite_tkernel::{
     standard::{Handle, SharedState},
     tcollection::AsciiString,
 };
-use martensite_tkservice::{graphic3d::*, image::ImagePixMap};
+use martensite_tkservice::{
+    graphic3d::*,
+    image::{ImagePixMap, ImagePixMapObject},
+};
 use martensite_tkv3d::{ais::*, prs_mgr::PrsMgrPresentableObjectMembers, prs3d::Prs3dDrawer};
 use std::sync::Arc;
 
@@ -15,7 +18,12 @@ struct DropPeerPixels {
     texture: Handle<dyn Graphic3dTexture2DSource>,
     trace: Arc<SharedState<Vec<String>>>,
 }
-martensite_tkernel::impl_transient!(DropPeerPixels, "NativeDropPeerPixels", ImagePixMap, base);
+martensite_tkernel::impl_transient!(DropPeerPixels, "NativeDropPeerPixels", ImagePixMap, interfaces: [dyn ImagePixMapObject]);
+impl ImagePixMapObject for DropPeerPixels {
+    fn pix_map_base(&self) -> &ImagePixMap {
+        &self.base
+    }
+}
 impl Drop for DropPeerPixels {
     fn drop(&mut self) {
         let row = format!(

@@ -5,7 +5,7 @@ use martensite_tkernel::{
     ncollection::{
         AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource, BaseAllocator,
     },
-    standard::{Failure, Handle, SharedState, Transient},
+    standard::{Failure, Handle, SharedState},
 };
 use std::{alloc::Layout, ptr::NonNull};
 #[derive(Default)]
@@ -14,8 +14,7 @@ struct CurrentFreeProbe {
     events: SharedState<Vec<i32>>,
     failure_policy: u8,
 }
-martensite_tkernel::impl_transient!(CurrentFreeProbe, "Martensite_CurrentFreeProbe", AllocatorObject,
-    parent, interfaces: [dyn AllocatorSource]);
+martensite_tkernel::impl_transient!(CurrentFreeProbe, "Martensite_CurrentFreeProbe", AllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: both test allocators share the standard process heap free implementation.
 unsafe impl AllocatorSource for CurrentFreeProbe {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -67,7 +66,7 @@ fn builtin_heap_records_restore_provenance_for_current_virtual_free() {
 #[test]
 fn protected_base_construction_and_actual_source_alias_replay_native() {
     let stack = AllocatorObject::default();
-    let mut rows = vec![format!("stack {}", stack.transient_base().ref_count())];
+    let mut rows = vec![format!("stack {}", stack.resource().ref_count())];
     let owner = Handle::new(AllocatorObject::default());
     rows.push(format!("owned {}", owner.ref_count()));
     let source = BaseAllocator::from_handle(&owner);
@@ -88,27 +87,25 @@ fn protected_base_construction_and_actual_source_alias_replay_native() {
     assert_eq!(actual, native);
 }
 
-fn record_current_probe(source: &CurrentFreeProbe) {
-    source
-        .events
-        .write()
-        .push(source.transient_base().ref_count());
+fn record_current_probe(source: &CurrentFreeProbe, owners: i32) {
+    source.events.write().push(owners);
 }
 unsafe fn current_probe_free(
     invocation: &AllocatorInvocation,
     pointer: *mut u8,
 ) -> Result<(), Failure> {
+    let owners = invocation.ref_count().try_into().unwrap();
     // SAFETY: this step mutates only plain trace values, without callbacks or retirement.
     let policy = martensite_tkernel::standard::raise_native_failure(unsafe {
-        invocation.capture(record_current_failure_policy)
+        invocation.capture(|source| record_current_failure_policy(source, owners))
     });
     current_free_failure_policy(policy)?;
     // SAFETY: the original Standard range is accepted by this actual parent.
     unsafe { invocation.free_base(pointer) }
 }
 
-fn record_current_failure_policy(source: &CurrentFreeProbe) -> u8 {
-    record_current_probe(source);
+fn record_current_failure_policy(source: &CurrentFreeProbe, owners: i32) -> u8 {
+    record_current_probe(source, owners);
     source.failure_policy
 }
 fn current_free_failure_policy(policy: u8) -> Result<(), Failure> {

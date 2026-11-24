@@ -97,7 +97,7 @@ fn records_of_each_package_become_their_entities_and_write_back_the_same() {
     let styles = live
         .value(5)
         .unwrap()
-        .cast::<StepVisualPresentationStyleAssignment>();
+        .cast::<dyn crate::StepEntityBase<StepVisualPresentationStyleAssignment>>();
     assert_eq!(styles.get().unwrap().nb_styles().unwrap(), 1);
     let first = written(&model);
     let again = written(&model_of(&first));

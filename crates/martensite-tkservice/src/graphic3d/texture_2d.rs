@@ -6,10 +6,10 @@ use super::{
     Graphic3dTextureRoot, Graphic3dTextureRootBase, Graphic3dTypeOfTexture,
     Graphic3dTypeOfTextureFilter, Graphic3dTypeOfTextureMode,
 };
-use crate::image::ImagePixMap;
+
 use martensite_tkernel::ncollection::{Vec2, Vec4};
 use martensite_tkernel::osd::CadPath;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// `NameOfTexture2d_to_FileName`.
@@ -73,7 +73,10 @@ impl Graphic3dTexture2DBase {
         ))
     }
     /// `Graphic3d_Texture2D(thePixMap, theType)`; `Graphic3dTexture2DBase::from_pix_map(pixmap, kind)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>, kind: Graphic3dTypeOfTexture) -> Self {
+    pub fn from_pix_map(
+        pix_map: Handle<dyn crate::image::ImagePixMapObject>,
+        kind: Graphic3dTypeOfTexture,
+    ) -> Self {
         Self::with_root(
             Graphic3dTextureRootBase::from_pix_map(pix_map, kind),
             Graphic3dNameOfTexture2D::Unknown,
@@ -111,9 +114,20 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn Graphic3dTexture2DSource
         // An abstract same-name registration would invent an extra native ancestor.
         <Graphic3dTexture2D as martensite_tkernel::standard::RuntimeTyped>::static_type()
     }
-    fn project_from(object: &dyn martensite_tkernel::standard::Transient) -> Option<&Self> {
-        // Dynamic views retain the actual implementation's image-reading override.
-        martensite_tkernel::standard::project_interface::<Self>(object)
+}
+martensite_tkernel::impl_transient_interface_target!(dyn Graphic3dTexture2DSource);
+impl martensite_tkernel::standard::HandleUpcast<dyn Graphic3dTextureMap>
+    for dyn Graphic3dTexture2DSource
+{
+    fn upcast_arc(owner: std::sync::Arc<Self>) -> std::sync::Arc<dyn Graphic3dTextureMap> {
+        owner
+    }
+}
+impl martensite_tkernel::standard::HandleUpcast<dyn Graphic3dTextureRoot>
+    for dyn Graphic3dTexture2DSource
+{
+    fn upcast_arc(owner: std::sync::Arc<Self>) -> std::sync::Arc<dyn Graphic3dTextureRoot> {
+        owner
     }
 }
 
@@ -124,7 +138,7 @@ pub trait Graphic3dTexture2DMembers: Graphic3dTexture2DSource {
         *self.texture_2d_base().name.read()
     }
     /// Replaces the image by a pixmap and forgets the file and the name; `texture.set_image(pixmap)`.
-    fn set_image(&self, pix_map: Handle<ImagePixMap>) {
+    fn set_image(&self, pix_map: Handle<dyn crate::image::ImagePixMapObject>) {
         let base = self.texture_2d_base();
         let mut fields = base.root.fields.write();
         fields.pix_map = pix_map;
@@ -148,14 +162,13 @@ macro_rules! texture_2d_traits {
                 &self.base
             }
         }
-        martensite_tkernel::impl_transient!($ty, $name, $parent, transient,
+        martensite_tkernel::impl_transient!($ty, $name, $parent,
             interfaces: [dyn Graphic3dTextureRoot, dyn Graphic3dTextureMap, dyn Graphic3dTexture2DSource]);
     };
 }
 
 /// The native `Graphic3d_Texture2D`; `Graphic3dTexture2D::from_file(&"wood.png".into())`.
 pub struct Graphic3dTexture2D {
-    transient: StandardTransient,
     base: Graphic3dTexture2DBase,
 }
 texture_2d_traits!(
@@ -167,10 +180,7 @@ texture_2d_traits!(
 impl Graphic3dTexture2D {
     /// Wraps a base built by a constructor; `Graphic3dTexture2D::with_base(base)`.
     pub fn with_base(base: Graphic3dTexture2DBase) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
     /// A file texture with mipmaps, modulation, repeat and trilinear filtering.
     /// Example: `Graphic3dTexture2D::from_file(&"wood.png".into())`.
@@ -188,7 +198,7 @@ impl Graphic3dTexture2D {
         ))
     }
     /// A pixmap texture with the public defaults; `Graphic3dTexture2D::from_pix_map(pixmap)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>) -> Self {
+    pub fn from_pix_map(pix_map: Handle<dyn crate::image::ImagePixMapObject>) -> Self {
         Self::with_base(
             Graphic3dTexture2DBase::from_pix_map(pix_map, Graphic3dTypeOfTexture::TOT_2D)
                 .with_public_defaults(),
@@ -200,7 +210,6 @@ impl Graphic3dTexture2D {
 ///
 /// Example: `let t = Graphic3dTexture2Dplane::from_file(&"wood.png".into()); t.set_plane(Graphic3dNameOfTexturePlane::Yz);`.
 pub struct Graphic3dTexture2Dplane {
-    transient: StandardTransient,
     base: Graphic3dTexture2DBase,
     plane_name: SharedState<Graphic3dNameOfTexturePlane>,
 }
@@ -230,7 +239,6 @@ impl Graphic3dTexture2Dplane {
     /// is left uninitialised by the constructors; here it starts as `Unknown`.
     fn wrap(base: Graphic3dTexture2DBase) -> Self {
         let texture = Self {
-            transient: StandardTransient::default(),
             base,
             plane_name: SharedState::new(Graphic3dNameOfTexturePlane::Unknown),
         };
@@ -252,7 +260,7 @@ impl Graphic3dTexture2Dplane {
         ))
     }
     /// A pixmap texture; `Graphic3dTexture2Dplane::from_pix_map(pixmap)`.
-    pub fn from_pix_map(pix_map: Handle<ImagePixMap>) -> Self {
+    pub fn from_pix_map(pix_map: Handle<dyn crate::image::ImagePixMapObject>) -> Self {
         Self::wrap(
             Graphic3dTexture2DBase::from_pix_map(pix_map, Graphic3dTypeOfTexture::TOT_2D)
                 .with_public_defaults(),

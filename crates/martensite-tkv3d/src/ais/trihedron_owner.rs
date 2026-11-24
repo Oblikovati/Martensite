@@ -1,6 +1,6 @@
 //! Trihedron part owners dispatch highlighting through the selectable object's virtual hook.
 use crate::{prs_mgr::*, prs3d::Prs3dDatumParts, prs3d::Prs3dDrawer, select_mgr::*};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 /// Native protected part field; `base.part.write()`.
 pub struct AisTrihedronOwnerBase {
     /// Inherited priority and selectable identity.
@@ -37,10 +37,9 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// Part-specific owner; `AisTrihedronOwner::new(&trihedron.cast(), part, 7)`.
 pub struct AisTrihedronOwner {
-    transient: StandardTransient,
     base: AisTrihedronOwnerBase,
 }
-martensite_tkernel::impl_transient!(AisTrihedronOwner,"AisTrihedronOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn AisTrihedronOwnerSource,dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(AisTrihedronOwner,"AisTrihedronOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn AisTrihedronOwnerSource,dyn SelectMgrEntityOwnerSource]);
 impl AisTrihedronOwner {
     /// Bind selectable and part identity; `AisTrihedronOwner::new(&trihedron.cast(), part, 7)`.
     pub fn new(
@@ -49,7 +48,6 @@ impl AisTrihedronOwner {
         priority: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisTrihedronOwnerBase::new(object, part, priority),
         });
         select_mgr_entity_owner_bind(&owner.cast());

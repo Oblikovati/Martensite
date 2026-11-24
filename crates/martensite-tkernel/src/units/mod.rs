@@ -25,12 +25,12 @@ pub use diagnostics::{ConsoleDiagnostics, ConsoleSink, UnitsDiagnostics};
 pub use dictionary::UnitsDictionary;
 pub use dimensions::{Dimensions, Exponents};
 pub use explorer::Explorer;
-pub use lexicon::{Lexicon, LexiconHandle, UnitsLexicon};
+pub use lexicon::{Lexicon, LexiconHandle, LexiconObject, UnitsLexicon};
 pub use measurement::Measurement;
 pub use quantity::Quantity;
 pub use sentence::Sentence;
-pub use token::{ShiftedToken, Token, TokenHandle};
-pub use unit::{ShiftedUnit, Unit, UnitHandle};
+pub use token::{ShiftedToken, Token, TokenHandle, TokenObject};
+pub use unit::{ShiftedUnit, Unit, UnitHandle, UnitObject};
 pub use unit_sentence::{MathSentence, UnitSentence};
 pub use units_system::UnitsSystem;
 

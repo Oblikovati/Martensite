@@ -13,7 +13,7 @@ use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
     precision,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -27,10 +27,9 @@ use values::optional_failure as failed;
 /// Native full/sectioned revolution driver; `NamingRevolutionDriver::default()`.
 #[derive(Default)]
 pub struct NamingRevolutionDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingRevolutionDriver, "DNamingRevolutionDriver", dyn TFunctionDriver, transient, interfaces: [dyn TFunctionDriver]);
+impl_transient!(NamingRevolutionDriver, "DNamingRevolutionDriver", dyn TFunctionDriver, interfaces: [dyn TFunctionDriver]);
 struct RevolutionInputs {
     basis: Shape,
     context: Shape,

@@ -314,7 +314,7 @@ fn plane_or_elementary(f: &Face) -> Result<Option<bool>, Failure> {
     let mut a_surf = BRepTool::surface(f)?;
     if a_surf.is_instance_name("Geom_RectangularTrimmedSurface") {
         a_surf = live(
-            &a_surf.clone().cast::<GeomRectangularTrimmedSurface>(),
+            &a_surf.downcast::<GeomRectangularTrimmedSurface>(),
             "surface",
         )?
         .basis_surface();
@@ -426,7 +426,7 @@ fn store_sections(
         let trim: Handle<dyn GeomCurve> = if c3de.is_null() {
             Handle::default()
         } else {
-            Handle::new(GeomTrimmedCurve::new(&c3de, f, l, true, true)?).cast()
+            Handle::new(GeomTrimmedCurve::new(&c3de, f, l, true, true)?).into_upcast()
         };
         let tol_edge = BRepTool::edge_tolerance(&an_edge)?;
         for (face, c2d) in [

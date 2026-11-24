@@ -1,6 +1,6 @@
 //! The projections of curves and points on the initial surface.
 use super::GeomPlateBuildPlateSurface;
-use crate::geom_plate::curve_constraint::GeomPlateCurveConstraint;
+use crate::geom_plate::curve_constraint::GeomPlateCurveConstraintState;
 use crate::geom_plate::live;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
@@ -17,7 +17,7 @@ use martensite_tkmath::gp::{Point2, Point3};
 impl GeomPlateBuildPlateSurface {
     /// `new GeomAdaptor_Surface(mySurfInit)`.
     pub(super) fn init_adaptor(&self) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
-        Ok(Handle::new(GeomAdaptorSurface::with_surface(&self.surf_init)?).cast())
+        Ok(Handle::new(GeomAdaptorSurface::with_surface(&self.surf_init)?).into_upcast())
     }
 
     /// Resets the parametric tolerances to the resolutions of `tol3d` on the initial
@@ -71,7 +71,7 @@ impl GeomPlateBuildPlateSurface {
     /// native sequence of `LoadCurve`, `Disc2dContour` and `EcartContraintesMil`).
     pub(super) fn uv_on_init(
         &mut self,
-        lin: &GeomPlateCurveConstraint,
+        lin: &GeomPlateCurveConstraintState,
         u: f64,
         p3d: impl FnOnce() -> Result<Point3, Failure>,
     ) -> Result<Point2, Failure> {
@@ -157,7 +157,7 @@ fn single_point_curve(proj: &CompProjectedCurve) -> Result<Handle<dyn Geom2dCurv
     let mut poles: Array1<'static, Point2> =
         Array1::with_bounds(1, 2).map_err(errors::array_bounds)?;
     poles.init(p2d);
-    Ok(Handle::new(Geom2dBezierCurve::new(&poles)?).cast())
+    Ok(Handle::new(Geom2dBezierCurve::new(&poles)?).into_upcast())
 }
 
 #[cfg(test)]
@@ -168,7 +168,8 @@ mod tests {
     use martensite_tkmath::gp::{Axis3, Direction3};
 
     fn builder_on_plane() -> GeomPlateBuildPlateSurface {
-        let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+        let plane: Handle<dyn GeomSurface> =
+            Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
         let mut builder = GeomPlateBuildPlateSurface::with_surface(
             &plane, 3, 10, 3, 1e-5, 1e-4, 0.01, 0.1, false,
         )
@@ -180,8 +181,8 @@ mod tests {
     fn segment(z: f64) -> Handle<dyn Adaptor3dCurve> {
         let dir = Direction3::new(1.0, 1.0, 0.0).unwrap();
         let line: Handle<dyn GeomCurve> =
-            Handle::new(GeomLine::from_point(Point3::new(0.0, 0.0, z), dir)).cast();
-        Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).cast()
+            Handle::new(GeomLine::from_point(Point3::new(0.0, 0.0, z), dir)).into_upcast();
+        Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).into_upcast()
     }
 
     #[test]

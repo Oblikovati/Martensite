@@ -14,7 +14,7 @@ use martensite_tkxsbase::transfer_brep::TransferBRep;
 pub struct TopoDSToStepMakeStepVertex {
     /// Root.
     pub root: TopoDSToStepRoot,
-    my_result: Handle<StepShapeTopologicalRepresentationItem>,
+    my_result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
     my_error: TopoDSToStepMakeVertexError,
 }
 
@@ -37,7 +37,7 @@ impl TopoDSToStepMakeStepVertex {
     fn finish(
         &mut self,
         error: TopoDSToStepMakeVertexError,
-        result: Handle<StepShapeTopologicalRepresentationItem>,
+        result: Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>,
     ) {
         self.my_error = error;
         self.my_result = result;
@@ -86,7 +86,10 @@ impl TopoDSToStepMakeStepVertex {
     ///
     /// # Errors
     /// a not done failure when the translation gave no result.
-    pub fn value(&self) -> Result<Handle<StepShapeTopologicalRepresentationItem>, Failure> {
+    pub fn value(
+        &self,
+    ) -> Result<Handle<dyn crate::StepEntityBase<StepShapeTopologicalRepresentationItem>>, Failure>
+    {
         self.root
             .check_done("TopoDSToStepMakeStepVertex::Value()")?;
         Ok(self.my_result.clone())

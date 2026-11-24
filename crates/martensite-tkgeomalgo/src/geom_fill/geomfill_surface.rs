@@ -65,7 +65,7 @@ fn plane_surface(
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
     let normal = d1.crossed(Direction3::from_vector(p1p2)?)?;
     let ax = Axis3::new(l1.location(), normal, d1)?;
-    let p: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(ax)).cast();
+    let p: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(ax)).into_upcast();
     let v = p1p2.dot(Vector3::from(ax.y_direction()));
     let trimmed = GeomRectangularTrimmedSurface::new(
         &p,
@@ -73,7 +73,7 @@ fn plane_surface(
         (std_min(0.0, v), std_max(0.0, v)),
         (true, true),
     )?;
-    Ok(Handle::new(trimmed).cast())
+    Ok(Handle::new(trimmed).into_upcast())
 }
 
 /// A cylinder (equal radii) or a cone between two coaxial full circles, trimmed in
@@ -100,7 +100,7 @@ fn cylinder_or_cone(
         false,
         true,
     )?;
-    Ok(Some(Handle::new(trimmed).cast()))
+    Ok(Some(Handle::new(trimmed).into_upcast()))
 }
 
 /// The cylinder (equal radii) or the cone on `a1` between circles of radii `r` at
@@ -111,7 +111,10 @@ fn revolved_between(
     mut v: f64,
 ) -> Result<(Handle<dyn GeomSurface>, f64), Failure> {
     if (r.0 - r.1).abs() < precision::confusion() {
-        return Ok((Handle::new(GeomCylindricalSurface::new(a1, r.0)?).cast(), v));
+        return Ok((
+            Handle::new(GeomCylindricalSurface::new(a1, r.0)?).into_upcast(),
+            v,
+        ));
     }
     let rad = r.1 - r.0;
     let mut ang = martensite_cmath::atan(rad / v);
@@ -120,7 +123,8 @@ fn revolved_between(
         v = -v;
         ang = -ang;
     }
-    let cone: Handle<dyn GeomSurface> = Handle::new(GeomConicalSurface::new(a1, ang, r.0)?).cast();
+    let cone: Handle<dyn GeomSurface> =
+        Handle::new(GeomConicalSurface::new(a1, ang, r.0)?).into_upcast();
     v /= martensite_cmath::cos(ang);
     Ok((cone, v))
 }

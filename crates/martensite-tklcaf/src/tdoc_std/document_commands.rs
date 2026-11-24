@@ -4,7 +4,7 @@
 use super::{TDocStdApplication, TDocStdCompoundDelta, TDocStdDocument};
 use crate::live;
 use crate::tdf::{
-    TdfData, TdfDelta, abort_until_transaction, commit_until_transaction, open_transaction,
+    TdfData, TdfDeltaSource, abort_until_transaction, commit_until_transaction, open_transaction,
 };
 use martensite_tkcdf::cdm::CdmDocumentLifecycle;
 use martensite_tkernel::standard::{Failure, Handle, exceptions};
@@ -40,13 +40,14 @@ impl TDocStdDocument {
         Ok(())
     }
     /// `myUndoTransaction.Commit(withDelta)`.
-    fn undo_commit(&self, with_delta: bool) -> Result<Handle<TdfDelta>, Failure> {
+    fn undo_commit(&self, with_delta: bool) -> Result<Handle<dyn TdfDeltaSource>, Failure> {
         if !self.undo_is_open() {
             return Ok(Handle::default());
         }
         let until = std::mem::take(&mut self.write().undo_transaction);
         let data = self.data_handle();
         commit_until_transaction(&live(&data, "TDocStd_Document")?.core, until, with_delta)
+            .map(Handle::into_upcast)
     }
     /// `myUndoTransaction.Abort()`.
     fn undo_abort(&self) -> Result<(), Failure> {
@@ -82,7 +83,7 @@ impl TDocStdDocument {
         if !self.is_opened() {
             return Ok(());
         }
-        let application: Handle<dyn TDocStdApplication> = self.application()?.cast();
+        let application: Handle<dyn TDocStdApplication> = self.application()?.into_cast();
         let Some(application) = application.get() else {
             return Ok(());
         };
@@ -160,7 +161,7 @@ impl TDocStdDocument {
             return Ok(false);
         }
         let delta = self.undo_commit(true)?;
-        if delta.get().is_none_or(TdfDelta::is_empty) {
+        if delta.get().is_none_or(TdfDeltaSource::is_empty) {
             return Ok(false);
         }
         let mut state = self.write();
@@ -228,7 +229,7 @@ impl TDocStdDocument {
         live(&compound, "TDocStd_Document::OpenTransaction")?
             .delta()
             .validity(last_time, last_time);
-        self.write().undo_filo.insert(0, compound.cast());
+        self.write().undo_filo.insert(0, compound.into_upcast());
         Ok(())
     }
     /// `SetUndoLimit(L)`: commits, keeps at most `L` (>= 0) undos (aborts a compaction).
@@ -310,7 +311,10 @@ impl TDocStdDocument {
     }
     /// The common part of `Undo` and `Redo`: resets every transaction, applies the delta
     /// with modifications allowed and names its reverse after it.
-    fn apply_stack_delta(&self, delta: &Handle<TdfDelta>) -> Result<Handle<TdfDelta>, Failure> {
+    fn apply_stack_delta(
+        &self,
+        delta: &Handle<dyn TdfDeltaSource>,
+    ) -> Result<Handle<dyn TdfDeltaSource>, Failure> {
         self.abort_transaction()?;
         while self.read().nested_transaction_mode && !self.read().undo_filo.is_empty() {
             self.abort_transaction()?;
@@ -319,7 +323,7 @@ impl TDocStdDocument {
         let reverse = live(&self.data_handle(), "TDocStd_Document::Undo")?.undo(delta, true)?;
         let name = live(delta, "TDocStd_Document::Undo")?.name();
         live(&reverse, "TDocStd_Document::Undo")?.set_name(&name);
-        Ok(reverse)
+        Ok(reverse.into_upcast())
     }
     fn finish_undo_or_redo(&self, reopen: bool) -> Result<(), Failure> {
         if reopen {
@@ -328,11 +332,11 @@ impl TDocStdDocument {
         self.update_modification_permission()
     }
     /// `GetUndos`: a copy of the undo list, oldest first.
-    pub fn get_undos(&self) -> Vec<Handle<TdfDelta>> {
+    pub fn get_undos(&self) -> Vec<Handle<dyn TdfDeltaSource>> {
         self.read().undos.clone()
     }
     /// `GetRedos`: a copy of the redo list, next first.
-    pub fn get_redos(&self) -> Vec<Handle<TdfDelta>> {
+    pub fn get_redos(&self) -> Vec<Handle<dyn TdfDeltaSource>> {
         self.read().redos.clone()
     }
     /// `RemoveFirstUndo`.
@@ -384,8 +388,8 @@ pub(crate) fn reinitialize_undo_transaction(document: &TDocStdDocument) -> Resul
 /// Private static `AppendDeltaToTheFirst`: adds to the compound delta the attribute deltas
 /// of `delta` whose (label, ID) it does not hold yet, and extends its validity.
 pub(crate) fn append_delta_to_the_first(
-    compound: &Handle<TdfDelta>,
-    delta: &Handle<TdfDelta>,
+    compound: &Handle<dyn TdfDeltaSource>,
+    delta: &Handle<dyn TdfDeltaSource>,
 ) -> Result<(), Failure> {
     let added = live(delta, "TDocStd_Document::AppendDeltaToTheFirst")?;
     if added.is_empty() {

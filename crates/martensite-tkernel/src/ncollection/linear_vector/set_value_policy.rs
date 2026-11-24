@@ -8,7 +8,7 @@ impl<T> LinearVector<T> {
     /// panics, its valid partial mutations and the extended length remain observable.
     /// Failed extension retains completed tail objects outside len, as resizing does;
     /// subsequent overwrite or storage release omits their destructors and can leak resources.
-    pub fn set_value_with_policies(
+    pub(crate) fn set_value_with_policies(
         &mut self,
         index: usize,
         relocate: impl FnMut(&mut T) -> T,

@@ -52,7 +52,7 @@ impl WindowDepthStatus {
         let (bytes, prefix_bytes, reference_tail) = initial_status(runtime, draw, pipeline)?;
         Ok(Self {
             storage: UploadedStorage::new(runtime, layout, &bytes)?,
-            indices: draw.indices.clone(),
+            indices: draw.indices.to_vec(),
             reference_tail,
             prefix_bytes,
             invocations: InvocationState::default(),
@@ -204,7 +204,7 @@ pub(super) fn validate(resources: &FrameResources) -> Result<(), RenderError> {
                     .is_some_and(|p| p.fragment_depth()),
                 status: loaded
                     .window_depth_status
-                    .as_ref()
+                    .as_deref()
                     .map(|s| s as &dyn super::window_depth_completion::DepthDrawCompletion),
             }
         },

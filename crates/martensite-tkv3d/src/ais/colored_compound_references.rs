@@ -1,6 +1,6 @@
 //! Const Key/Value aliases track allocated node identity rather than a moving numeric index.
 use super::{
-    AisColoredDrawer, AisColoredDrawerCompounds,
+    AisColoredDrawerCompounds, AisColoredDrawerSource,
     colored_compound_map::find_colored_compound,
     colored_compound_node::{ColoredCompoundNode, colored_compound_removed},
 };
@@ -27,7 +27,7 @@ impl AisColoredDrawerCompounds {
     /// Find a value without altering the output on a miss; `map.find_into(&drawer,&mut compound)?`.
     pub fn find_into(
         &self,
-        drawer: &Handle<AisColoredDrawer>,
+        drawer: &Handle<dyn AisColoredDrawerSource>,
         output: &mut Compound,
     ) -> Result<bool, Failure> {
         let nodes = self.nodes.read();
@@ -63,7 +63,8 @@ impl AisColoredCompoundRef<'_> {
         let node = self.live_node()?;
         node.compound.clone_compound()
     }
-    /// Lend current topology without acquiring an owning snapshot; `alias.with_shape(|shape|Ok(shape.nb_children()))?`.
+    /// Lend the entry's topology through the callback, including if it is replaced during the read.
+    /// Example: `alias.with_shape(|shape| Ok(shape.nb_children()))?`.
     pub fn with_shape<R>(
         &self,
         project: impl FnOnce(&Shape) -> Result<R, Failure>,
@@ -84,7 +85,7 @@ impl AisColoredCompoundRef<'_> {
     /// Inspect actual drawer ownership without retaining it; `alias.drawer_ref_count()?`.
     pub fn drawer_ref_count(&self) -> Result<i32, Failure> {
         let node = self.live_node()?;
-        Ok(node.drawer.ref_count())
+        Ok(i32::try_from(node.drawer.ref_count()).unwrap_or(i32::MAX))
     }
 }
 fn colored_compound_index(index: usize, extent: usize) -> Failure {

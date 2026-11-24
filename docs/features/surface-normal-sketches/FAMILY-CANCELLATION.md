@@ -1,0 +1,169 @@
+# Family cancellation and input isolation
+
+## Current cancellation contract
+
+The private rational family orchestrator now accepts an operation-local
+cancellation callback (#418). It observes cancellation before and after each
+outer stage: selection, member construction, shared encoding, family coverage,
+history, member storage, global source binding, member checks and completion.
+Member stages identify their authored region. The final completion check runs
+before the family is handed to its caller.
+
+The first observed cancellation is latched. A later callback returning false
+cannot resume that operation. If a stage returns a completed value after
+cancellation was requested, the control drops that value and returns a typed
+cancellation with the observed stage and region. It also refuses any later stage
+on the same control. The callback and its state belong to the operation; no
+global or thread-local cancellation state was introduced. The control has a
+compile-time `Send` check.
+
+Selection forwards the callback into fit planning, global within-boundary
+clearance, periodic boundary clearance and the material checker's probe and
+winding work. The proof-work checkpoint below records the added controls.
+Retained-storage, O2 profile, both cap-residual proofs, regularity and join cones,
+retained flux, ideal normal measure and their final comparison now receive the
+same callback. Planar capture, native construction, encoding, coverage, native
+trim inspection, ordered native validation and native quadrature cannot yet be
+interrupted throughout their work. Cancellation is observed when their enclosing
+stage returns; no latency bound is claimed. Finer native interruption is not
+part of that cooperative contract. No work budget, tolerance or geometric check was relaxed.
+
+## Isolation evidence
+
+Six geometry controls compare every request field before and after operations,
+using bits for all floating-point values. They cover:
+
+- cancellation at every outer checkpoint, including the second member after
+  earlier native or certificate work;
+- cancellation after a completed shared encoding and during nested selection
+  polling, with no partial family returned;
+- unchanged inputs after success, and unchanged retained sources and frozen
+  geometry after the caller later mutates its source;
+- failure in storage of a later member, leaving the original requests and
+  decoded frozen geometry unchanged;
+- unchanged successful replay after a planning refusal and late cancellation.
+
+Two focused control tests additionally verify cleanup of a completed value,
+refusal of later work, and latching when an inner operation ignores cancellation.
+These establish the tested ownership paths. They do not prove absence of
+allocation leaks or replace the remaining sanitizer and broader stress gates.
+The detached-export mutation and separate-process replay controls remain in
+[Frozen families](FROZEN-FAMILIES.md) and [Family replay](FAMILY-REPLAY.md).
+
+## Verification and remaining work
+
+On Linux x86_64, the affected sketch package passed 134 library tests and 32
+integration tests in 22.69 and 2.02 seconds excluding compilation. The ignored
+subprocess worker remains explicitly invoked by its parent test. Strict
+all-target clippy, formatting and whitespace checks passed. The approximate
+scan found no changed family function over 20 lines, file over 500 lines or
+nesting above two. The full affected-package PR gate remains required before
+pushing the branch.
+
+The family remains unqualified. In-stage cancellation, aggregate operation
+policy and the final publication contract remain open, along with the recorded
+ThreadSanitizer startup failure, broader stress testing, general conical
+profiles, additional curve classes, glyph scale, oblique frames and replacement
+deletion. No public API, dependency, package version or release tag changed.
+
+## Planning and boundary proof checkpoint
+
+The same operation-local callback now reaches the existing bounded arithmetic
+inside a priori fit planning, the global within-boundary proof, periodic image
+planning, and each periodic image's curve-pair proof. Default entry points
+continue to delegate with a non-cancelling callback, preserving their existing
+geometry, limits and work policies. Pre-cancelled selection preparation returns
+its own typed cancellation before entering planar capture.
+
+Six additional controls cancel after arithmetic begins in planning and within
+clearance, at the transition to periodic work, and inside the final image of
+the two-turn helical fixture. The last case preserves image turn 2 and the nested
+arithmetic cancellation cause. The controls also cover pre-cancelled preparation
+and authored-owner attribution for a cancelled fit. Callback counts select test
+interruption points; they do not select geometry or become replay identity.
+
+The affected sketch package passed 140 library and 32 integration tests on
+Linux x86_64, taking 22.83 and 1.98 seconds excluding compilation. The ignored
+subprocess worker was explicitly run by its parent replay test. Strict
+all-target clippy passed. Existing default geometry, process replay, overlapping
+operations and refusal-isolation controls remained green. No dependency suite
+was rerun because dependency sources and build inputs were unchanged.
+
+## Retained-storage proof checkpoint
+
+The family forwards its callback through member storage to O3 storage arithmetic,
+O2 profile certification and both cap-residual certificates. One callback covers
+all spans in that member; a cancellation after earlier span proofs completed
+still returns only failure. The latched family control refuses the enclosing
+operation with its authored region and storage stage. Existing non-cancelling
+entry points retain the same geometry, error limits and arithmetic policies.
+
+Five focused controls interrupt storage arithmetic, profile arithmetic after
+storage completes, the first cap, the last cap and a later span. They check the
+original source key, profile limit or cap-face role where applicable. Every
+case re-encodes the decoded native geometry and compares it byte for byte with
+the pre-operation encoding. A sixth control reaches storage arithmetic through
+the family entry point and checks all request fields remain unchanged.
+
+The O2 query construction moved into `storage_profile.rs` so source binding and
+policy diagnostics stay together. The error share remains the downward-rounded
+`epsilon/4`; storage uses the unchanged downward-rounded `epsilon/1000` share.
+Native capture, incidence, depth and trim checks retain their original order.
+No tolerance was widened and no numerical algorithm changed.
+
+On Linux x86_64, the affected sketch package passed 146 library tests and 32
+integration tests in 22.80 and 1.99 seconds excluding compilation. The ignored
+subprocess worker was explicitly executed by its parent replay control. Strict
+all-target clippy passed. The approximate scan found no new function over 20
+lines, file over 500 lines or nesting above two. The full affected-package PR
+gate remains required before a push. The following checkpoint covers cone and
+measure cancellation. Native interruption, aggregate operation policy, sanitizer
+qualification and publication remain open.
+
+## Cone and measure checkpoint
+
+Member checks now forward the operation callback through every regularity and
+join cone, retained boundary-flux integration, ideal normal-volume certification
+and the final retained/ideal comparison. The same callback spans those stages;
+finishing a cone or scalar report does not authorize a partial member result.
+Default entry points still use the original non-cancelling behavior. Requested
+limits, integration budgets and error evidence labels are unchanged.
+
+Six added controls interrupt a regularity proof, a join after regularity
+completes, ideal-volume arithmetic, retained flux, a comparison of already
+completed measures and the composed family member checks. The family control
+covers both cone work and measure work after every cone completes. Errors retain
+the original span, pair, region, depths, source counts or nested integration
+cause as applicable. Flux and comparison controls re-encode the decoded geometry
+and require unchanged bytes. Family controls check unchanged request bits.
+
+On Linux x86_64, the sketch package passed 152 library tests and 32 integration
+tests in 22.28 and 2.02 seconds excluding compilation. The ignored subprocess
+worker was explicitly executed by its parent replay control. Strict all-target
+clippy passed. After the final structural cleanup, all 24 tests matching `cancel`
+passed. The approximate scan found no new function over 20 lines, file over 500
+lines or nesting above two. The full affected-package PR gate remains required
+before a push.
+
+This completes propagation through the current callback-capable mathematical
+proof stages. Fixed-size exact radius/depth composition has no callback API;
+cancellation is observed by the adjacent proof calls. Native-stage interruption, aggregate operation policy, sanitizer and
+broader stress qualification, the final publication contract, general conical
+profiles, additional curve classes, glyph scale, oblique frames and replacement
+deletion remain open. The result is still `UnqualifiedFamily`; no public API,
+dependency, package version or release tag changed.
+
+## Native boundary contract
+
+Inspection of `same_parameter_shape`, `validate_body` and
+`volume_properties_gk` found no cancellation parameter in their existing APIs.
+The current operation checks cancellation before and after those stages, latches
+it when observed and refuses handoff. A native call may finish before that
+observation. The approved plan requires cancellation isolation and refusal of
+partial results; it specifies no response deadline. This cooperative contract
+is retained. Adding finer native interruption is a separate enhancement, rather
+than an extra publication requirement inferred by this implementation.
+
+The later [publication-budget gate](PUBLICATION-BUDGET.md) checks the family
+spatial allowances, ordered native passes and aggregate volume allowance.
+Successful budget evidence still does not authorize body publication.

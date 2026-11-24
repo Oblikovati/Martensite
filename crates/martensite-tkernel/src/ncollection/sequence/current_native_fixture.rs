@@ -4,7 +4,7 @@ use crate::ncollection::{
     AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource, BaseAllocator,
     HeapAllocatorObject, Sequence,
 };
-use crate::standard::{Failure, Handle, SharedState, Transient, WeakHandle};
+use crate::standard::{Failure, Handle, SharedState, WeakHandle};
 use std::{
     ptr::NonNull,
     sync::{Arc, Weak},
@@ -21,7 +21,7 @@ pub(super) struct CurrentSequenceHeap {
     scene: Weak<NativeSequenceScene>,
 }
 crate::impl_transient!(CurrentSequenceHeap,"Martensite_CurrentSequenceHeap",
-    HeapAllocatorObject,parent,interfaces:[dyn AllocatorSource]);
+    HeapAllocatorObject,interfaces:[dyn AllocatorSource]);
 // SAFETY: both actual derived resources share the genuine compatible heap backend.
 unsafe impl AllocatorSource for CurrentSequenceHeap {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -42,7 +42,7 @@ pub(super) struct ReplacingSequenceHeap {
     current: WeakHandle<CurrentSequenceHeap>,
 }
 crate::impl_transient!(ReplacingSequenceHeap,"Martensite_ReplacingSequenceHeap",
-    HeapAllocatorObject,parent,interfaces:[dyn AllocatorSource]);
+    HeapAllocatorObject,interfaces:[dyn AllocatorSource]);
 // SAFETY: allocation always delegates to the genuine embedded heap backend.
 unsafe impl AllocatorSource for ReplacingSequenceHeap {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -57,16 +57,12 @@ unsafe impl AllocatorSource for ReplacingSequenceHeap {
     }
 }
 impl ReplacingSequenceHeap {
-    fn record(&self, scene: &NativeSequenceScene, phase: &str) {
-        let prefix = format!(
-            "{phase} {} {}",
-            scene.sequence.read().length(),
-            self.transient_base().ref_count()
-        );
+    fn record(&self, scene: &NativeSequenceScene, phase: &str, owners: usize) {
+        let prefix = format!("{phase} {} {}", scene.sequence.read().length(), owners);
         let row = if phase == "allocate" {
             prefix
         } else {
-            format!("{prefix} {}", self.current.observe().ref_count())
+            format!("{prefix} {}", self.current.ref_count())
         };
         scene.rows.write().push(row);
     }
@@ -76,7 +72,7 @@ impl Drop for ReplacingSequenceHeap {
         let scene = self.scene.upgrade().unwrap();
         *scene.retired.write() = true;
         // Size comes from the actual sequence, never a parallel synthetic counter.
-        self.record(&scene, "retired");
+        self.record(&scene, "retired", 0);
     }
 }
 pub(super) fn create_sequence_resources(
@@ -106,12 +102,14 @@ fn install_sequence_resource(
         .clear(Some(BaseAllocator::from_handle(original)));
 }
 
-fn record_current_sequence_free(source: &CurrentSequenceHeap) {
-    let scene = source.scene.upgrade().unwrap();
+fn current_sequence_scene(source: &CurrentSequenceHeap) -> Arc<NativeSequenceScene> {
+    source.scene.upgrade().unwrap()
+}
+fn record_current_sequence_free(scene: &NativeSequenceScene, owners: usize) {
     scene.rows.write().push(format!(
         "current-free {} {} {}",
         scene.sequence.read().length(),
-        source.transient_base().ref_count(),
+        owners,
         i32::from(*scene.retired.read())
     ));
 }
@@ -119,10 +117,12 @@ unsafe fn current_sequence_free(
     invocation: &AllocatorInvocation,
     pointer: *mut u8,
 ) -> Result<(), Failure> {
+    let owners = invocation.ref_count();
     // SAFETY: plain trace mutation has no callbacks; current accepts restored original heap provenance.
-    crate::standard::raise_native_failure(unsafe {
-        invocation.capture(record_current_sequence_free)
+    let scene = crate::standard::raise_native_failure(unsafe {
+        invocation.capture(current_sequence_scene)
     });
+    record_current_sequence_free(&scene, owners);
     // SAFETY: the caller passes a block this allocator's base allocated, which free_base
     // requires.
     unsafe { invocation.free_base(pointer) }
@@ -130,13 +130,10 @@ unsafe fn current_sequence_free(
 fn capture_replacing_sequence(
     source: &ReplacingSequenceHeap,
 ) -> (Arc<NativeSequenceScene>, WeakHandle<CurrentSequenceHeap>) {
-    let scene = source.scene.upgrade().unwrap();
-    source.record(&scene, "allocate");
-    (scene, source.current.clone())
+    (source.scene.upgrade().unwrap(), source.current.clone())
 }
-fn record_replaced_sequence(source: &ReplacingSequenceHeap) {
-    let scene = source.scene.upgrade().unwrap();
-    source.record(&scene, "replaced");
+fn current_sequence_pointer(source: &ReplacingSequenceHeap) -> WeakHandle<CurrentSequenceHeap> {
+    source.current.clone()
 }
 fn replacing_sequence_allocate(
     invocation: &AllocatorInvocation,
@@ -146,12 +143,23 @@ fn replacing_sequence_allocate(
     let (scene, current) = crate::standard::raise_native_failure(unsafe {
         invocation.capture(capture_replacing_sequence)
     });
-    scene
-        .sequence
-        .write()
-        .clear(Some(BaseAllocator::from_handle(&current.observe())));
+    scene.rows.write().push(format!(
+        "allocate {} {}",
+        scene.sequence.read().length(),
+        invocation.ref_count()
+    ));
+    let replacement = BaseAllocator::from_handle(&current.upgrade());
+    scene.sequence.write().clear(Some(replacement));
     // SAFETY: record_replaced_sequence only writes the trace and runs no callback, so the
     // receiver stays alive while it is captured.
-    crate::standard::raise_native_failure(unsafe { invocation.capture(record_replaced_sequence) });
+    let current = crate::standard::raise_native_failure(unsafe {
+        invocation.capture(current_sequence_pointer)
+    });
+    scene.rows.write().push(format!(
+        "replaced {} {} {}",
+        scene.sequence.read().length(),
+        invocation.ref_count(),
+        current.ref_count()
+    ));
     invocation.allocate_base(size)
 }

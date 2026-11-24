@@ -1,6 +1,10 @@
 //! Retained block parameter copying validates typed ownership before forgetting live prefixes.
-use super::{DynamicArray, DynamicArrayStorageExtension, Failure};
+use super::DynamicArrayStorageExtension;
+#[cfg(test)]
+use super::{DynamicArray, Failure};
+#[cfg(test)]
 use crate::ncollection::BaseAllocator;
+#[cfg(test)]
 use crate::ncollection::dynamic_array::AllocVec;
 
 impl<T> DynamicArrayStorageExtension<'_, T> {
@@ -17,7 +21,8 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
     /// logical range. Do not destroy/re-publish a value twice or treat a destroyed slot as initialized.
     /// Detached raw allocations still require their original allocator, even after rebinding here.
     /// No ownership transfer occurs on validation error; values and metadata are unchanged.
-    pub unsafe fn copy_parameters_retained(
+    #[cfg(test)]
+    pub(crate) unsafe fn copy_parameters_retained(
         &mut self,
         source: &DynamicArray<T>,
         copy_allocator: bool,
@@ -31,6 +36,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
         self.apply_parameter_metadata(source, copy_allocator);
         Ok(())
     }
+    #[cfg(test)]
     pub(super) fn apply_parameter_metadata(
         &mut self,
         source: &DynamicArray<T>,
@@ -43,6 +49,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
         self.array.used = 0;
         self.array.needs_tail_scan = false;
     }
+    #[cfg(test)]
     fn parameter_allocator(&self, source: &DynamicArray<T>, copy_allocator: bool) -> BaseAllocator {
         let allocator = if copy_allocator {
             &source.allocator
@@ -51,6 +58,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
         };
         allocator.clone().unwrap_or_default()
     }
+    #[cfg(test)]
     fn validate_retained_parameters(
         &self,
         increment: usize,
@@ -67,6 +75,7 @@ impl<T> DynamicArrayStorageExtension<'_, T> {
         Ok(())
     }
 }
+#[cfg(test)]
 unsafe fn forget_and_rebind_block<T>(
     block: &mut AllocVec<T, BaseAllocator>,
     allocator: &BaseAllocator,
@@ -82,6 +91,7 @@ unsafe fn forget_and_rebind_block<T>(
     *block = unsafe { AllocVec::from_raw_parts_in(pointer, length, capacity, allocator.clone()) };
     drop(owner);
 }
+#[cfg(test)]
 fn retained_parameter_failure<T>(
     index: usize,
     increment: usize,

@@ -1,5 +1,6 @@
 //! Packed map node fields and bit contracts; links never own their targets.
 use super::{PackedInteger, PackedMap, PackedWord};
+#[cfg(test)]
 mod ownership;
 
 /// One packed block with a non-owning chain link; `PackedMapNode::<i32>::default()`.
@@ -19,53 +20,56 @@ impl<T: PackedInteger> Default for PackedMapNode<T> {
 
 impl<T: PackedInteger> PackedMapNode<T> {
     /// Keeps the empty node's zero mask; `PackedMapNode::<i32>::new(next)`.
-    pub fn new(next: *mut Self) -> Self {
+    pub(crate) fn new(next: *mut Self) -> Self {
         Self::from_parts(T::Word::from_bits(0), T::Word::from_bits(0), next)
     }
     /// Sets one key without changing the borrowed chain head; `PackedMapNode::from_value(42, &mut head)`.
-    pub fn from_value(value: T, next: &mut *mut Self) -> Self {
+    pub(crate) fn from_value(value: T, next: &mut *mut Self) -> Self {
         let mask = T::Word::from_bits(value.bits() & !Self::low_mask());
         let bits = T::Word::from_bits(Self::value_bit(value));
         Self::from_parts(mask, bits, *next)
     }
     /// Retains the raw mask/bits, including inconsistent counts; `PackedMapNode::<i32>::from_parts(31, 0, next)`.
-    pub fn from_parts(mask: T::Word, bits: T::Word, next: *mut Self) -> Self {
+    pub(crate) fn from_parts(mask: T::Word, bits: T::Word, next: *mut Self) -> Self {
         Self { next, mask, bits }
     }
     /// Copies the encoded block base/count word; `node.mask()`.
-    pub fn mask(&self) -> T::Word {
+    pub(crate) fn mask(&self) -> T::Word {
         self.mask
     }
     /// Copies the occupied-bit word; `node.bits()`.
-    pub fn bits(&self) -> T::Word {
+    pub(crate) fn bits(&self) -> T::Word {
         self.bits
     }
     /// Mutates the actual encoded mask field; `*node.change_mask() = 32`.
-    pub fn change_mask(&mut self) -> &mut T::Word {
+    #[cfg(test)]
+    pub(crate) fn change_mask(&mut self) -> &mut T::Word {
         &mut self.mask
     }
     /// Mutates the actual bit field without repairing the count; `*node.change_bits() = 3`.
-    pub fn change_bits(&mut self) -> &mut T::Word {
+    #[cfg(test)]
+    pub(crate) fn change_bits(&mut self) -> &mut T::Word {
         &mut self.bits
     }
     /// Returns the block base converted to the key type; `node.key()`.
-    pub fn key(&self) -> T {
+    pub(crate) fn key(&self) -> T {
         T::from_bits(self.mask.bits() & !Self::low_mask())
     }
     /// Decodes count-minus-one even for empty nodes; `assert_eq!(PackedMapNode::<i32>::default().nb_values(), 1)`.
-    pub fn nb_values(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn nb_values(&self) -> usize {
         (self.mask.bits() & Self::low_mask()) as usize + 1
     }
     /// Checks the actual bits independently of the encoded count; `node.has_values()`.
-    pub fn has_values(&self) -> bool {
+    pub(crate) fn has_values(&self) -> bool {
         self.bits.bits() != 0
     }
     /// Tests the value's low bits without checking its block base; `node.has_value(42)`.
-    pub fn has_value(&self, value: T) -> bool {
+    pub(crate) fn has_value(&self, value: T) -> bool {
         self.bits.bits() & Self::value_bit(value) != 0
     }
     /// Inserts a low-bit position and increments the entire mask; `node.add_value(42)`.
-    pub fn add_value(&mut self, value: T) -> bool {
+    pub(crate) fn add_value(&mut self, value: T) -> bool {
         if self.has_value(value) {
             return false;
         }
@@ -74,7 +78,7 @@ impl<T: PackedInteger> PackedMapNode<T> {
         true
     }
     /// Erases a low-bit position and keeps unsigned mask underflow; `node.del_value(42)`.
-    pub fn del_value(&mut self, value: T) -> bool {
+    pub(crate) fn del_value(&mut self, value: T) -> bool {
         if !self.has_value(value) {
             return false;
         }
@@ -83,22 +87,22 @@ impl<T: PackedInteger> PackedMapNode<T> {
         true
     }
     /// Returns the unowned chain address without dereferencing it; `node.next()`.
-    pub fn next(&self) -> *mut Self {
+    pub(crate) fn next(&self) -> *mut Self {
         self.next
     }
     /// Changes only the next field; `node.set_next(std::ptr::null_mut())`.
-    pub fn set_next(&mut self, next: *mut Self) {
+    pub(crate) fn set_next(&mut self, next: *mut Self) {
         self.next = next;
     }
     /// Computes the node's one-based bucket; `node.hash_code(101)`.
-    pub fn hash_code(&self, upper: usize) -> usize {
+    pub(crate) fn hash_code(&self, upper: usize) -> usize {
         PackedMap::<T>::hash_code(
             T::Word::from_bits(self.mask.bits() >> PackedMap::<T>::SHIFT),
             upper,
         )
     }
     /// Compares the unsigned block index, excluding count bits; `node.is_equal(1)`.
-    pub fn is_equal(&self, other: T::Word) -> bool {
+    pub(crate) fn is_equal(&self, other: T::Word) -> bool {
         self.mask.bits() >> PackedMap::<T>::SHIFT == other.bits()
     }
     fn low_mask() -> u64 {

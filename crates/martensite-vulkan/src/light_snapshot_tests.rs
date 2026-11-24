@@ -3,10 +3,10 @@ use super::*;
 use crate::identity_clip;
 use Graphic3dTypeOfLightSource as Kind;
 use martensite_tkernel::quantity::{Color, ColorSpace};
-fn source(kind: Kind) -> Handle<Graphic3dCLight> {
-    Handle::new(Graphic3dCLight::new(kind))
+fn source(kind: Kind) -> Handle<dyn Graphic3dCLightSource> {
+    Handle::new(Graphic3dCLight::new(kind)).into_upcast()
 }
-fn set(sources: &[Handle<Graphic3dCLight>]) -> Handle<Graphic3dLightSet> {
+fn set(sources: &[Handle<dyn Graphic3dCLightSource>]) -> Handle<Graphic3dLightSet> {
     let lights = Handle::new(Graphic3dLightSet::default());
     for light in sources {
         assert!(lights.add(light).unwrap());
@@ -143,4 +143,19 @@ fn layer_origin_leaves_headlights_and_directional_lights_unshifted() {
     let local = RenderLightSet::snapshot_around(&lights, identity_clip(), [5., 6., 7.]).unwrap();
     let world = RenderLightSet::snapshot(&lights, identity_clip()).unwrap();
     assert_eq!(local, world);
+}
+
+#[test]
+fn cloned_draw_lights_share_records_and_remain_isolated_from_live_edits() {
+    let directional = source(Kind::Directional);
+    let lights = set(std::slice::from_ref(&directional));
+    let original = RenderLightSet::snapshot(&lights, identity_clip()).unwrap();
+    let cloned = original.clone();
+    assert!(original.sources.identity().is_some());
+    assert_eq!(original.sources.identity(), cloned.sources.identity());
+
+    directional.set_intensity(2.).unwrap();
+    let edited = RenderLightSet::snapshot(&lights, identity_clip()).unwrap();
+    assert_ne!(edited.sources[0].color, cloned.sources[0].color);
+    assert_eq!(original.sources[0], cloned.sources[0]);
 }

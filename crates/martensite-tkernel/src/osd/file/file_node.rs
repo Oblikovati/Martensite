@@ -42,23 +42,19 @@ const IAM: i32 = WhoAmI::FileNode as i32;
 impl FileNode {
     /// A node at `path` over injected calls (`File`/`Directory`
     /// use it); `FileNode::with_calls(path, calls)`.
-    pub fn with_calls(path: CadPath, calls: Arc<dyn PosixFileCalls>) -> Self {
+    pub(super) fn with_calls(path: CadPath, calls: Arc<dyn PosixFileCalls>) -> Self {
         Self {
             path,
             error: OsdError::new(),
             calls,
         }
     }
-    /// The injected system calls; `node.calls()`.
-    pub fn calls(&self) -> &Arc<dyn PosixFileCalls> {
-        &self.calls
-    }
     /// `Path(name)`: the output reference becomes the returned path; `node.path()`.
     pub fn path(&self) -> CadPath {
         self.path.clone()
     }
     /// Replaces the path and forgets the last error; `node.set_path(path)`.
-    pub fn set_path(&mut self, path: CadPath) {
+    pub(super) fn set_path(&mut self, path: CadPath) {
         self.error.reset();
         self.path = path;
     }

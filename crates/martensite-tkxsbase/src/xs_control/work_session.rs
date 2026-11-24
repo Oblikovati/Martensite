@@ -5,7 +5,7 @@ use super::{
     XSControlContext, XSControlController, XSControlControllerBase, XSControlTransferReader,
     XSControlTransferWriter, XSControlVars, XSControlVarsOps,
 };
-use crate::if_select::{IFSelectWorkSession, IFSelectWorkSessionOps};
+use crate::if_select::{IFSelectSession, IFSelectWorkSessionOps};
 use crate::interface::InterfaceModelEntities;
 use crate::transfer::{TransferFinderProcess, TransferTransientProcess};
 use martensite_tkernel::{
@@ -33,8 +33,7 @@ pub(super) struct XsState {
     pub(super) vars: Handle<dyn XSControlVarsOps>,
 }
 
-/// `XSControlWorkSession`: embeds its IFSelect work session (dereferenced to it), whose
-/// `ClearData` it overrides.
+/// The norm-specific work session with its own `ClearData` implementation.
 ///
 /// ```
 /// use martensite_tkxsbase::xs_control::XSControlWorkSession;
@@ -42,21 +41,21 @@ pub(super) struct XsState {
 /// assert!(ws.transfer_reader().is_some() && ws.selected_norm(false).is_empty());
 /// ```
 pub struct XSControlWorkSession {
-    base: IFSelectWorkSession,
+    base: IFSelectSession,
     pub(super) state: SharedState<XsState>,
     this: OnceLock<WeakHandle<XSControlWorkSession>>,
 }
-impl_transient!(XSControlWorkSession, "XSControlWorkSession", IFSelectWorkSession, base, interfaces: [dyn IFSelectWorkSessionOps]);
+impl_transient!(XSControlWorkSession, "XSControlWorkSession", dyn IFSelectWorkSessionOps, interfaces: [dyn IFSelectWorkSessionOps]);
 
 impl Deref for XSControlWorkSession {
-    type Target = IFSelectWorkSession;
-    fn deref(&self) -> &IFSelectWorkSession {
+    type Target = IFSelectSession;
+    fn deref(&self) -> &IFSelectSession {
         &self.base
     }
 }
 
 impl IFSelectWorkSessionOps for XSControlWorkSession {
-    fn work_session(&self) -> &IFSelectWorkSession {
+    fn work_session(&self) -> &IFSelectSession {
         &self.base
     }
     /// `ClearData(theMode)`: the modes 1 to 4 of the IFSelect session, 5 and 7 the
@@ -108,14 +107,14 @@ impl XSControlWorkSession {
             transfer_reader: Handle::new(XSControlTransferReader::new()),
             transfer_writer: Handle::new(XSControlTransferWriter::new()),
             context: XSControlContext::default(),
-            vars: Handle::new(XSControlVars::new()).cast(),
+            vars: Handle::new(XSControlVars::new()).into_upcast(),
         };
         let ws = Handle::new(Self {
-            base: IFSelectWorkSession::new(),
+            base: IFSelectSession::default(),
             state: SharedState::new(state),
             this: OnceLock::new(),
         });
-        ws.base.bind_self(&ws.clone().cast());
+        ws.base.bind_self(&ws.upcast());
         let _ = ws.this.set(ws.downgrade());
         ws
     }

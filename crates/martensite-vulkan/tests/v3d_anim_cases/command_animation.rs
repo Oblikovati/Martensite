@@ -1,6 +1,6 @@
 //! A timeline atom that runs a command at each frame with its formatted progress, as the
 //! animation command's callback does (`%pts`, `%localNormalized`).
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkv3d::ais::{AisAnimationBase, AisAnimationProgress, AisAnimationSource};
 
@@ -10,18 +10,15 @@ pub(super) type FrameCommand =
 
 /// A named callback atom; `CommandAnimation::scheduled("1", Box::new(|p| Ok(())))`.
 pub(super) struct CommandAnimation {
-    transient: StandardTransient,
     base: AisAnimationBase,
     command: FrameCommand,
 }
-martensite_tkernel::impl_transient!(CommandAnimation,"ViewerTest_AnimationProc",dyn AisAnimationSource,transient,
-    interfaces:[dyn AisAnimationSource]);
+martensite_tkernel::impl_transient!(CommandAnimation,"ViewerTest_AnimationProc",dyn AisAnimationSource, interfaces:[dyn AisAnimationSource]);
 
 impl CommandAnimation {
     /// A stopped atom `name` running `command`; schedule it like any other atom.
     pub(super) fn scheduled(name: &str, command: FrameCommand) -> Handle<dyn AisAnimationSource> {
         let animation = Self {
-            transient: StandardTransient::default(),
             base: AisAnimationBase::new(name),
             command,
         };

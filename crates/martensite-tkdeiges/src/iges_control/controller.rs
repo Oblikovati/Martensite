@@ -14,6 +14,7 @@ use crate::iges_select::{
 };
 use crate::iges_to_brep::{IgesToBRep, IgesToBRepActor};
 use martensite_tkernel::impl_transient;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::if_select::{
@@ -35,27 +36,23 @@ const WHERE: &str = "IgesControlController";
 
 /// The IGES norm.
 pub struct IgesControlController {
-    transient: StandardTransient,
     base: XSControlControllerBase,
 }
 impl_transient!(
     IgesControlController,
     "IgesControlController",
     StandardTransient,
-    transient,
     interfaces: [dyn XSControlController]
 );
 
 /// The parent's members, on the base of this controller.
 struct InheritedMembers {
-    transient: StandardTransient,
     controller: Handle<dyn XSControlController>,
 }
 impl_transient!(
     InheritedMembers,
     "InheritedMembers",
     StandardTransient,
-    transient,
     interfaces: [dyn XSControlController]
 );
 
@@ -88,7 +85,7 @@ fn add_header_item(
 }
 
 fn add_session_items(controller: &Handle<dyn XSControlController>) -> Result<(), Failure> {
-    let items: Vec<(Handle<StandardTransient>, &str, bool)> = vec![
+    let items: Vec<(Handle<dyn Transient>, &str, bool)> = vec![
         (
             Handle::new(IgesSelectRemoveCurves::new(true)).cast(),
             "iges-remove-pcurves",
@@ -174,14 +171,14 @@ fn add_selections(
     roots: &Handle<dyn IFSelectSelection>,
     transferable: &Handle<dyn IFSelectSelection>,
 ) -> Result<(), Failure> {
-    let add = |name: &str, item: Handle<StandardTransient>| -> Result<(), Failure> {
+    let add = |name: &str, item: Handle<dyn Transient>| -> Result<(), Failure> {
         session.add_named_item(name, &item, true).map(|_| ())
     };
     let visible = |input: &Handle<dyn IFSelectSelection>, direct: bool| {
         let selection = IgesSelectSelectVisibleStatus::default();
         selection.set_direct(direct);
         selection.set_input(input);
-        Handle::new(selection).cast::<StandardTransient>()
+        Handle::new(selection).cast::<dyn Transient>()
     };
     add("iges-visible-roots", visible(roots, true))?;
     add("iges-visible-transf-roots", visible(transferable, true))?;
@@ -227,7 +224,7 @@ fn add_selections(
 
 /// The signatures of a session with model roots.
 fn add_signatures(session: &XSControlWorkSession) -> Result<(), Failure> {
-    let add = |name: &str, item: Handle<StandardTransient>| -> Result<(), Failure> {
+    let add = |name: &str, item: Handle<dyn Transient>| -> Result<(), Failure> {
         session.add_named_item(name, &item, true).map(|_| ())
     };
     let type_form = Handle::new(IgesSelectIGESTypeForm::new(true));
@@ -297,11 +294,7 @@ impl IgesControlController {
         reading.set_continuity(0);
         base.set_adaptor_read(&Handle::new(reading).cast());
         base.set_adaptor_write(&Handle::new(IgesControlActorWrite::default()).cast());
-        let controller: Handle<dyn XSControlController> = Handle::new(Self {
-            transient: StandardTransient::default(),
-            base,
-        })
-        .cast();
+        let controller: Handle<dyn XSControlController> = Handle::new(Self { base }).cast();
         controller.controller_base().bind_self(&controller);
         add_session_items(&controller)?;
         controller.set_mode_write(0, 1, true);
@@ -376,7 +369,6 @@ impl XSControlController for IgesControlController {
     }
     fn customise(&self, ws: &Handle<XSControlWorkSession>) -> Result<(), Failure> {
         InheritedMembers {
-            transient: StandardTransient::default(),
             controller: self.base.this()?,
         }
         .customise(ws)?;

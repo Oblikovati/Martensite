@@ -12,7 +12,7 @@ use martensite_tkernel::{
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::shape_process::{
-    ShapeProcess, ShapeProcessContext, ShapeProcessOperationsFlags, ShapeProcessShapeContext,
+    ShapeProcess, ShapeProcessOperationsFlags, ShapeProcessShapeContext,
 };
 use std::sync::OnceLock;
 
@@ -65,7 +65,7 @@ impl XSAlgoShapeProcessor {
             return Ok(shape.clone());
         }
         self.initialize_context(shape)?;
-        let context: Handle<ShapeProcessContext> = self.my_context.cast();
+        let context = self.my_context.upcast();
         if ShapeProcess::perform_operations(&context, operations, progress)? {
             return Ok(self
                 .my_context

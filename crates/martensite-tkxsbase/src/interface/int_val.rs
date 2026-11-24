@@ -2,7 +2,7 @@
 //! iterators).
 use martensite_tkernel::{
     impl_transient,
-    standard::{SharedState, StandardTransient},
+    standard::{SharedState, Transient},
 };
 use std::sync::RwLockWriteGuard;
 
@@ -16,15 +16,9 @@ use std::sync::RwLockWriteGuard;
 /// ```
 #[derive(Default)]
 pub struct InterfaceIntVal {
-    transient: StandardTransient,
     theval: SharedState<i32>,
 }
-impl_transient!(
-    InterfaceIntVal,
-    "InterfaceIntVal",
-    StandardTransient,
-    transient
-);
+impl_transient!(InterfaceIntVal, "InterfaceIntVal", dyn Transient);
 
 impl InterfaceIntVal {
     /// `InterfaceIntVal()`: 0.

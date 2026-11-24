@@ -37,7 +37,7 @@ fn is_intersect(curve: &GeomAdaptorCurve, axe: Axis1) -> Result<bool, Failure> {
     if circle_misses_axis(curve, &axis)? {
         return Ok(false);
     }
-    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(axis)).cast();
+    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(axis)).into_upcast();
     let lin = GeomAdaptorCurve::with_curve(&line)?;
     let par_tol = curve.resolution(precision::confusion())?;
     let par_f = curve.first_parameter()? + par_tol;
@@ -71,9 +71,9 @@ fn placed_curve(edge: &Edge) -> Result<(GeomAdaptorCurve, f64, f64), Failure> {
         ));
     }
     let (first, last) = (found.first, found.last);
-    let copy: Handle<dyn GeomCurve> = found.curve.copy()?.cast();
+    let copy: Handle<dyn GeomCurve> = found.curve.copy()?.into_cast();
     let trimmed: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(&copy, first, last, true, true)?).cast();
+        Handle::new(GeomTrimmedCurve::new(&copy, first, last, true, true)?).into_upcast();
     trimmed.transform(found.location.transformation())?;
     let adaptor = GeomAdaptorCurve::default();
     adaptor.load_range(&trimmed, first, last)?;

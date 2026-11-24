@@ -7,6 +7,7 @@ use super::{
     iges_data_init, iges_data_protocol, iges_dump_list_header, iges_dump_rect_vals,
     iges_dump_string, iges_dump_vals, iges_dump_xyz_l,
 };
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkernel::{
     standard::{Handle, RuntimeTyped},
     tcollection::HAsciiString,
@@ -20,11 +21,14 @@ use martensite_tkxsbase::interface::{
 const VOID: InterfaceParamType = InterfaceParamType::ParamVoid;
 const TEXT: InterfaceParamType = InterfaceParamType::ParamText;
 
-fn entity_in(model: &Handle<IgesDataIgesModel>, type_number: i32) -> Handle<IgesDataIgesEntity> {
+fn entity_in(
+    model: &Handle<IgesDataIgesModel>,
+    type_number: i32,
+) -> Handle<dyn IgesDataEntityKind> {
     let entity = Handle::new(IgesDataIgesEntity::default());
     entity.get().unwrap().init_type_and_form(type_number, 0);
-    model.get().unwrap().add_entity(&entity.cast()).unwrap();
-    entity
+    model.get().unwrap().add_entity(&entity.upcast()).unwrap();
+    entity.into_upcast()
 }
 
 #[test]
@@ -255,10 +259,10 @@ fn lists_of_an_entity_stay_apart_and_are_marked_when_read() {
     );
     live.remove_property(&other).unwrap();
     assert_eq!(live.nb_properties(), 0);
-    IgesDataIgesEntity::associate(&other, &owner).unwrap();
+    IgesDataIgesEntity::associate(&other, &owner.upcast()).unwrap();
     assert_eq!(live.nb_associativities(), 1);
     assert_eq!(live.associativities().nb_entities(), 1);
-    IgesDataIgesEntity::dissociate(&other, &owner).unwrap();
+    IgesDataIgesEntity::dissociate(&other, &owner.upcast()).unwrap();
     assert_eq!(live.nb_associativities(), 0);
     let mut read = InterfaceEntityList::new();
     read.append(&other.cast()).unwrap();
@@ -319,6 +323,23 @@ fn directory_errors_of_an_undefined_entity_show_in_its_definitions() {
 }
 
 #[test]
+fn free_format_views_keep_the_original_directory_and_parameter_storage() {
+    let free = Handle::new(IgesDataFreeFormatEntity::new());
+    let directory = free.upcast::<dyn IgesDataEntityKind>();
+    let undefined = directory.cast::<dyn super::IgesDataUndefinedEntitySource>();
+    assert_eq!(directory.object_address(), free.object_address());
+    assert_eq!(undefined.object_address(), free.object_address());
+    assert!(std::ptr::eq(
+        directory.iges_entity(),
+        undefined.iges_entity()
+    ));
+    directory.init_type_and_form(9, 2);
+    free.add_literal_text(INT, "12").unwrap();
+    assert_eq!(undefined.type_number(), 9);
+    assert_eq!(undefined.undefined_content().nb_params(), 1);
+}
+
+#[test]
 fn a_free_format_entity_writes_its_negative_pointers() {
     let model = IgesDataIgesModel::new();
     let target = entity_in(&model, 7);
@@ -369,7 +390,12 @@ fn the_dump_says_what_it_can_at_each_level() {
     assert!(text(4).contains("Dump Impossible, n0:id:1:D1"));
     let mut null = Vec::new();
     dumper
-        .dump(&Handle::<IgesDataIgesEntity>::default(), &mut null, 3, -1)
+        .dump(
+            &Handle::<dyn IgesDataEntityKind>::default(),
+            &mut null,
+            3,
+            -1,
+        )
         .unwrap();
     assert_eq!(String::from_utf8(null).unwrap(), "\n(Null)\n");
 }

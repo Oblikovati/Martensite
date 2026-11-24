@@ -110,7 +110,7 @@ impl BinShapeSet {
             1 => {
                 let curve = self.curves.curve(get_integer(stream)?)?;
                 Ok((!curve.is_null()).then(|| {
-                    Handle::new(BRepPointOnCurve::new(parameter, &curve, &identity)).into_cast()
+                    Handle::new(BRepPointOnCurve::new(parameter, &curve, &identity)).into_upcast()
                 }))
             }
             2 => {

@@ -38,7 +38,7 @@ fn attach_document(
     modified: bool,
 ) -> Handle<dyn CdmDocument> {
     let (document, _) = document_fixture::new_document();
-    document.open(&app.cast());
+    document.open(&app.upcast());
     document.set_meta_data(meta).unwrap();
     if modified {
         document.modify();

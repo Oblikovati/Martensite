@@ -23,6 +23,13 @@ impl OwnedWindowFrame {
             resources,
         })
     }
+    /// Hand a submitted and presented frame to the frame flight; `owned.into_flight()`.
+    pub fn into_flight(self) -> super::frame_flight::InFlightFrame {
+        super::frame_flight::InFlightFrame {
+            commands: self.commands,
+            resources: self.resources,
+        }
+    }
     /// Keep unknown cleanup reachable; `owned.reject(renderer, presenter, primary)` never drops pending references early.
     pub fn reject(
         self,
@@ -70,7 +77,7 @@ fn qualify_window_chain(
     chain: &mut super::window_chain::WindowChain,
 ) -> RetirementAttempt {
     let fences = chain.sync.try_retire();
-    let mut calls = DeviceIdleCalls::new(renderer.runtime.device());
+    let mut calls = DeviceIdleCalls::new(renderer.runtime.device(), &renderer.runtime.queue_order);
     let device = RetirementAttempt::from(calls.wait_completion());
     fences.join(device)
 }

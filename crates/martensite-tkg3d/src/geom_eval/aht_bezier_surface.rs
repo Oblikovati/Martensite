@@ -11,7 +11,7 @@ use axis::AxisShape;
 use evaluation::AhtSurfaceView;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array2;
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkg2d::geom2d_eval::eval_basis::aht::basis_dimension;
 use martensite_tkmath::gp::Point3;
 
@@ -21,7 +21,6 @@ const CLASS: &str = "GeomEval_AHTBezierSurface";
 /// (reversal, iso extraction and `Transform` raise StandardNotImplemented);
 /// `Handle::new(GeomEvalAHTBezierSurface::new(&poles, [2, 2], [0.0, 0.0], [0.0, 0.0])?)`.
 pub struct GeomEvalAHTBezierSurface {
-    parent: StandardTransient,
     poles: Array2<'static, Point3>,
     weights: Array2<'static, f64>,
     alg_degrees: [i32; 2],
@@ -33,7 +32,6 @@ impl_transient!(
     GeomEvalAHTBezierSurface,
     "GeomEval_AHTBezierSurface",
     dyn crate::geom::GeomBoundedSurface,
-    parent,
     interfaces: [
         dyn crate::geom::GeomGeometry,
         dyn crate::geom::GeomSurface,
@@ -118,7 +116,6 @@ impl GeomEvalAHTBezierSurface {
         rational: bool,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             poles: owned_grid(poles),
             weights,
             alg_degrees,

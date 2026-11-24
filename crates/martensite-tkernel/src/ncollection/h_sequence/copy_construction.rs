@@ -1,11 +1,10 @@
-use super::{HSequence, RwLock, Sequence, StandardTransient};
+use super::{HSequence, RwLock, Sequence};
 
 impl<T: Clone> HSequence<T> {
     /// Copies `source` and keeps its allocator, as copying the base sequence does;
     /// `HSequence::from_sequence(&values)`.
     pub fn from_sequence(source: &Sequence<T>) -> Self {
         Self {
-            base: StandardTransient::default(),
             items: RwLock::new(source.clone()),
         }
     }

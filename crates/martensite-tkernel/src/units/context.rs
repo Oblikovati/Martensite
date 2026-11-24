@@ -9,6 +9,7 @@ use super::quantity::Quantity;
 use crate::ncollection::HSequence;
 use crate::standard::{Failure, Handle};
 use crate::tcollection::AsciiString;
+use crate::units::LexiconObject;
 use std::sync::{Mutex, MutexGuard, PoisonError, RwLock};
 
 mod conversion;
@@ -38,8 +39,8 @@ struct Caches {
 pub struct Units {
     diagnostics: Box<dyn UnitsDiagnostics>,
     dictionary: RwLock<Handle<UnitsDictionary>>,
-    lexicon_units: RwLock<Handle<Lexicon>>,
-    lexicon_formula: RwLock<Handle<Lexicon>>,
+    lexicon_units: RwLock<Handle<dyn LexiconObject>>,
+    lexicon_formula: RwLock<Handle<dyn LexiconObject>>,
     null_dimensions: RwLock<Handle<Dimensions>>,
     caches: Mutex<Caches>,
 }
@@ -122,7 +123,7 @@ impl Units {
     }
     /// The units lexicon, created on first use (`mode` also builds the dictionary);
     /// `units.lexicon_units(true)?`.
-    pub fn lexicon_units(&self, mode: bool) -> Result<Handle<Lexicon>, Failure> {
+    pub fn lexicon_units(&self, mode: bool) -> Result<Handle<dyn LexiconObject>, Failure> {
         let existing = self
             .lexicon_units
             .read()
@@ -132,7 +133,7 @@ impl Units {
             return Ok(existing);
         }
         let created = Handle::new(UnitsLexicon::new());
-        let lexicon: Handle<Lexicon> = created.cast();
+        let lexicon: Handle<dyn LexiconObject> = created.upcast();
         *self
             .lexicon_units
             .write()
@@ -141,7 +142,7 @@ impl Units {
         Ok(lexicon)
     }
     /// The formula lexicon, created on first use; `units.lexicon_formula()?`.
-    pub fn lexicon_formula(&self) -> Result<Handle<Lexicon>, Failure> {
+    pub fn lexicon_formula(&self) -> Result<Handle<dyn LexiconObject>, Failure> {
         let existing = self
             .lexicon_formula
             .read()
@@ -150,7 +151,7 @@ impl Units {
         if existing.is_some() {
             return Ok(existing);
         }
-        let created = Handle::new(Lexicon::new());
+        let created = Handle::new(Lexicon::new()).into_upcast::<dyn LexiconObject>();
         *self
             .lexicon_formula
             .write()

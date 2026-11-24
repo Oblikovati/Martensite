@@ -8,7 +8,7 @@ use super::naming_transform_arguments::{
 use martensite_tkcaf::tnaming::TNamingNamedShape;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -19,10 +19,9 @@ use martensite_tkmath::gp::{Transform3, Vector3};
 /// Real transform driver fixture; `NamingTransformDriver::default()`.
 #[derive(Default)]
 pub struct NamingTransformDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingTransformDriver, "DNamingTransformationDriver", dyn TFunctionDriver, transient,
+impl_transient!(NamingTransformDriver, "DNamingTransformationDriver", dyn TFunctionDriver,
     interfaces: [dyn TFunctionDriver]);
 
 fn real_value(function: &Handle<TFunctionFunction>, position: i32) -> Result<f64, Failure> {

@@ -105,9 +105,19 @@ pub struct PlanarRegionSet {
     pub(crate) curve_edges: Vec<CurveEdge>,
     pub(crate) resolution: Resolution,
     pub(crate) certificate: RegionCertificate,
+    pub(crate) proof_work: super::PlanarProofWorkReceipt,
+    pub(crate) proof_version: super::PlanarProofVersion,
 }
 
 impl PlanarRegionSet {
+    /// Selected source-bound graph proof behavior; `regions.proof_version()`.
+    pub fn proof_version(&self) -> super::PlanarProofVersion {
+        self.proof_version
+    }
+    /// Actual shared pair-proof work; `let receipt = regions.proof_work();`.
+    pub fn proof_work(&self) -> super::PlanarProofWorkReceipt {
+        self.proof_work
+    }
     /// Every region, ordered by `RegionId`.
     pub fn regions(&self) -> &[PlanarRegion] {
         &self.regions

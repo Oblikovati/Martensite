@@ -86,7 +86,7 @@ void main() {
         return;
     }
 #endif
-#ifndef MARTENSITE_FIXED_LIGHTING
+#if !defined(MARTENSITE_FIXED_LIGHTING) && !defined(MARTENSITE_ORTHOGRAPHIC_DIRECTIONAL_PHONG)
     captureFacetNormal();
 #endif
 #if defined(MARTENSITE_OIT_WEIGHTED) || defined(MARTENSITE_OIT_PEELING)

@@ -2,7 +2,7 @@
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg2d::geom2d::dump_field;
 use martensite_tkmath::gp::{Axis1, Axis2, Axis3, Point3, Transform3, TransformForm, Vector3};
 use std::io;
@@ -10,15 +10,9 @@ use std::io;
 /// A transient similarity of space; `Handle::new(GeomTransformation::default())`.
 #[derive(Default)]
 pub struct GeomTransformation {
-    parent: StandardTransient,
     state: SharedState<Transform3>,
 }
-impl_transient!(
-    GeomTransformation,
-    "Geom_Transformation",
-    StandardTransient,
-    parent
-);
+impl_transient!(GeomTransformation, "Geom_Transformation", dyn Transient);
 impl Clone for GeomTransformation {
     fn clone(&self) -> Self {
         Self::new(self.trsf())
@@ -29,7 +23,6 @@ impl GeomTransformation {
     /// `GeomTransformation::new(transform)`.
     pub fn new(transform: Transform3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(transform),
         }
     }

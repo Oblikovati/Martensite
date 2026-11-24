@@ -57,6 +57,14 @@ pub(super) fn utf8_to_utf16(bytes: &[u8]) -> Option<Vec<u16>> {
     let mut units = Vec::with_capacity(bytes.len());
     let mut at = 0;
     while at < bytes.len() {
+        // Both ASCII and isolated continuation bytes have zero trailing bytes
+        // and a zero offset in the native decoder.
+        let lead = bytes[at];
+        if (1..0xc0).contains(&lead) {
+            units.push(u16::from(lead));
+            at += 1;
+            continue;
+        }
         let (value, next) = read_utf8(bytes, at)?;
         if value == 0 {
             break;
@@ -72,6 +80,7 @@ pub(super) fn utf8_to_utf16(bytes: &[u8]) -> Option<Vec<u16>> {
 
 /// Converts UTF-32 code units up to the first zero like `fromWideString` on a 4-byte
 /// `wchar_t`; `utf32_to_utf16(&[0x1F600, 0])`.
+#[cfg(test)]
 pub(super) fn utf32_to_utf16(values: &[u32]) -> Vec<u16> {
     let mut units = Vec::with_capacity(values.len());
     for &value in values.iter().take_while(|&&value| value != 0) {

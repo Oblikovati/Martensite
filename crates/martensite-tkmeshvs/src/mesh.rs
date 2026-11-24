@@ -35,9 +35,7 @@ use crate::drawer::MeshVSDrawerSource;
 use crate::prs_builder::MeshVSPrsBuilder;
 use crate::selection_policy::MeshVSMeshSelectionMethod;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference, SharedState};
 use martensite_tkernel::tcol_std::HPackedMapOfInteger;
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use martensite_tkv3d::ais::{AisInteractiveObject, AisInteractiveObjectBase};
@@ -174,18 +172,15 @@ martensite_tkernel::impl_transient_interface!(
 
 /// The concrete `MeshVSMesh`; `MeshVSMesh::new(false)?`.
 pub struct MeshVSMesh {
-    transient: StandardTransient,
     base: MeshVSMeshBase,
 }
-martensite_tkernel::impl_transient!(MeshVSMesh, "MeshVSMesh", dyn AisInteractiveObject, transient,
-    interfaces: [dyn MeshVSMeshSource, dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(MeshVSMesh, "MeshVSMesh", dyn AisInteractiveObject, interfaces: [dyn MeshVSMeshSource, dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl MeshVSMesh {
     /// The drawers and appearance.
     /// Example: `MeshVSMesh::new(false)?`.
     pub fn new(allow_overlapped: bool) -> Result<Handle<Self>, Failure> {
         let mesh = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: MeshVSMeshBase::new(),
         });
         prs_mgr_presentable_bind(&mesh.clone().cast());

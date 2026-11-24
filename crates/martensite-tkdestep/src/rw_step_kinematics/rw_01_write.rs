@@ -185,9 +185,11 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
             .get_order_kinematic_pair()
             .is_kind(StepKinematicsLowOrderKinematicPair::static_type())
         {
-            let a_low_order_kinematic_pair: Handle<StepKinematicsLowOrderKinematicPair> = the_ent
+            let a_low_order_kinematic_pair: Handle<
+                dyn crate::StepEntityBase<StepKinematicsLowOrderKinematicPair>,
+            > = the_ent
                 .get_order_kinematic_pair()
-                .cast::<StepKinematicsLowOrderKinematicPair>();
+                .cast::<dyn crate::StepEntityBase<StepKinematicsLowOrderKinematicPair>>();
             step_start_entity(the_sw, "LOW_ORDER_KINEMATIC_PAIR")?;
             the_sw.send_boolean(step_live(&a_low_order_kinematic_pair, "WriteStep")?.tx())?;
             the_sw.send_boolean(step_live(&a_low_order_kinematic_pair, "WriteStep")?.ty())?;
@@ -434,10 +436,10 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                     .is_kind(StepKinematicsUniversalPair::static_type())
                                 {
                                     step_start_entity(the_sw, "UNIVERSAL_PAIR")?;
-                                    let an_universal_pair: Handle<StepKinematicsUniversalPair> =
+                                    let an_universal_pair: Handle<dyn crate::StepEntityBase<StepKinematicsUniversalPair>> =
                                         the_ent
                                             .get_order_kinematic_pair()
-                                            .cast::<StepKinematicsUniversalPair>();
+                                            .cast::<dyn crate::StepEntityBase<StepKinematicsUniversalPair>>();
                                     step_send_optional_real(
                                         the_sw,
                                         step_live(&an_universal_pair, "WriteStep")?
@@ -469,9 +471,10 @@ step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteS
                     .is_kind(StepKinematicsGearPair::static_type())
                 {
                     step_start_entity(the_sw, "GEAR_PAIR")?;
-                    let a_gear_pair: Handle<StepKinematicsGearPair> = the_ent
-                        .get_order_kinematic_pair()
-                        .cast::<StepKinematicsGearPair>();
+                    let a_gear_pair: Handle<dyn crate::StepEntityBase<StepKinematicsGearPair>> =
+                        the_ent
+                            .get_order_kinematic_pair()
+                            .cast::<dyn crate::StepEntityBase<StepKinematicsGearPair>>();
                     the_sw.send_real(step_live(&a_gear_pair, "WriteStep")?.radius_first_link())?;
                     the_sw.send_real(step_live(&a_gear_pair, "WriteStep")?.radius_second_link())?;
                     the_sw.send_real(step_live(&a_gear_pair, "WriteStep")?.bevel())?;
@@ -507,10 +510,11 @@ step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteS
                         .is_kind(StepKinematicsRackAndPinionPair::static_type())
                     {
                         step_start_entity(the_sw, "RACK_AND_PINION_PAIR")?;
-                        let a_rack_and_pinion_pair: Handle<StepKinematicsRackAndPinionPair> =
-                            the_ent
-                                .get_order_kinematic_pair()
-                                .cast::<StepKinematicsRackAndPinionPair>();
+                        let a_rack_and_pinion_pair: Handle<
+                            dyn crate::StepEntityBase<StepKinematicsRackAndPinionPair>,
+                        > = the_ent
+                            .get_order_kinematic_pair()
+                            .cast::<dyn crate::StepEntityBase<StepKinematicsRackAndPinionPair>>();
                         the_sw.send_real(
                             step_live(&a_rack_and_pinion_pair, "WriteStep")?.pinion_radius(),
                         )?;
@@ -545,9 +549,11 @@ step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteS
                             .is_kind(StepKinematicsScrewPair::static_type())
                         {
                             step_start_entity(the_sw, "SCREW_PAIR")?;
-                            let a_screw_pair: Handle<StepKinematicsScrewPair> = the_ent
+                            let a_screw_pair: Handle<
+                                dyn crate::StepEntityBase<StepKinematicsScrewPair>,
+                            > = the_ent
                                 .get_order_kinematic_pair()
-                                .cast::<StepKinematicsScrewPair>();
+                                .cast::<dyn crate::StepEntityBase<StepKinematicsScrewPair>>();
                             the_sw.send_real(step_live(&a_screw_pair, "WriteStep")?.pitch())?;
                             step_start_entity(the_sw, "SCREW_PAIR_WITH_RANGE")?;
                             if the_ent
@@ -587,11 +593,9 @@ step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteS
                         .is_kind(StepKinematicsScrewPair::static_type())
                     {
                         step_start_entity(the_sw, "POINT_ON_PLANAR_CURVE_PAIR")?;
-                        let a_point_on_planar_curve_pair: Handle<
-                            StepKinematicsPointOnPlanarCurvePair,
-                        > = the_ent
+                        let a_point_on_planar_curve_pair: Handle<dyn crate::StepEntityBase<StepKinematicsPointOnPlanarCurvePair>> = the_ent
                             .get_order_kinematic_pair()
-                            .cast::<StepKinematicsPointOnPlanarCurvePair>();
+                            .cast::<dyn crate::StepEntityBase<StepKinematicsPointOnPlanarCurvePair>>();
                         the_sw.send_entity(
                             &step_live(&a_point_on_planar_curve_pair, "WriteStep")?.pair_curve(),
                         )?;
@@ -697,10 +701,10 @@ step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteS
                             .is_kind(StepKinematicsPointOnSurfacePair::static_type())
                         {
                             step_start_entity(the_sw, "POINT_ON_SURFACE_PAIR")?;
-                            let a_point_on_surface_pair: Handle<StepKinematicsPointOnSurfacePair> =
+                            let a_point_on_surface_pair: Handle<dyn crate::StepEntityBase<StepKinematicsPointOnSurfacePair>> =
                                 the_ent
                                     .get_order_kinematic_pair()
-                                    .cast::<StepKinematicsPointOnSurfacePair>();
+                                    .cast::<dyn crate::StepEntityBase<StepKinematicsPointOnSurfacePair>>();
                             the_sw.send_entity(
                                 &step_live(&a_point_on_surface_pair, "WriteStep")?.pair_surface(),
                             )?;
@@ -803,10 +807,10 @@ step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteS
                                 .is_kind(StepKinematicsPlanarCurvePair::static_type())
                             {
                                 step_start_entity(the_sw, "PLANAR_CURVE_PAIR")?;
-                                let a_planar_curve_pair: Handle<StepKinematicsPlanarCurvePair> =
+                                let a_planar_curve_pair: Handle<dyn crate::StepEntityBase<StepKinematicsPlanarCurvePair>> =
                                     the_ent
                                         .get_order_kinematic_pair()
-                                        .cast::<StepKinematicsPlanarCurvePair>();
+                                        .cast::<dyn crate::StepEntityBase<StepKinematicsPlanarCurvePair>>();
                                 the_sw.send_entity(
                                     &step_live(&a_planar_curve_pair, "WriteStep")?.curve1(),
                                 )?;
@@ -838,9 +842,9 @@ step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteS
                                     .is_kind(StepKinematicsSurfacePair::static_type())
                                 {
                                     step_start_entity(the_sw, "SURFACE_PAIR")?;
-                                    let a_surface_pair: Handle<StepKinematicsSurfacePair> = the_ent
+                                    let a_surface_pair: Handle<dyn crate::StepEntityBase<StepKinematicsSurfacePair>> = the_ent
                                         .get_order_kinematic_pair()
-                                        .cast::<StepKinematicsSurfacePair>();
+                                        .cast::<dyn crate::StepEntityBase<StepKinematicsSurfacePair>>();
                                     the_sw.send_entity(
                                         &step_live(&a_surface_pair, "WriteStep")?.surface1(),
                                     )?;

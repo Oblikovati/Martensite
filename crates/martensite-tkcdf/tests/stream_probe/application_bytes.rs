@@ -55,7 +55,7 @@ fn read_document(
         &Handle::default(),
         &ProgressRange::default(),
     );
-    assert!(document.cast::<FakeDocument>() == original);
+    assert!(document.downcast::<FakeDocument>() == original);
     assert_eq!(app.callbacks.load(Ordering::SeqCst), 0);
     outcome
 }

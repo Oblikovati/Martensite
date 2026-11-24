@@ -6,11 +6,7 @@ use martensite_tkbrep::{
     topexp::Explorer,
     topods::{self, Shape, ShapeIterator},
 };
-use martensite_tkernel::{
-    message::ProgressRange,
-    precision,
-    standard::{Failure, Handle},
-};
+use martensite_tkernel::{message::ProgressRange, precision, standard::Failure};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::{bnd::BoundingBox3, poly::mesh_purpose};
 use martensite_tkmesh::brep_mesh::BRepMeshDiscretFactory;
@@ -62,7 +58,7 @@ impl StdPrsToolTriangulatedShape {
         }
     }
     /// Relative deflection stores the computed absolute deviation only for finite bounds; `Self::get_deflection(&shape,&drawer)?`.
-    pub fn get_deflection(shape: &Shape, drawer: &Handle<Prs3dDrawer>) -> Result<f64, Failure> {
+    pub fn get_deflection(shape: &Shape, drawer: &Prs3dDrawer) -> Result<f64, Failure> {
         if drawer.type_of_deflection() != AspectTypeOfDeflection::Relative {
             return Ok(drawer.maximal_chordial_deviation());
         }
@@ -80,19 +76,19 @@ impl StdPrsToolTriangulatedShape {
         Ok(deviation)
     }
     /// Validate native mesh deflection and free edges; `Self::is_tessellated(&shape,&drawer)?`.
-    pub fn is_tessellated(shape: &Shape, drawer: &Handle<Prs3dDrawer>) -> Result<bool, Failure> {
+    pub fn is_tessellated(shape: &Shape, drawer: &Prs3dDrawer) -> Result<bool, Failure> {
         let deflection = Self::get_deflection(shape, drawer)?;
         brep_tools::triangulation(shape, deflection, true)
     }
     /// Native factory default, with an owned injectable companion; `Self::tessellate(&shape,&drawer)?`.
-    pub fn tessellate(shape: &Shape, drawer: &Handle<Prs3dDrawer>) -> Result<bool, Failure> {
+    pub fn tessellate(shape: &Shape, drawer: &Prs3dDrawer) -> Result<bool, Failure> {
         let mesher = StdPrsNativeShapeMesher;
         Self::tessellate_with_mesher(shape, drawer, &mesher)
     }
     /// Skip complete meshes before asking the injected factory; `Self::tessellate_with_mesher(&shape,&drawer,&mesher)?`.
     pub fn tessellate_with_mesher(
         shape: &Shape,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         mesher: &dyn StdPrsShapeMesher,
     ) -> Result<bool, Failure> {
         if Self::is_tessellated(shape, drawer)? {
@@ -104,7 +100,7 @@ impl StdPrsToolTriangulatedShape {
     /// Clean shared meshes only when own deviation changed; `Self::clear_on_own_deflection_change(&shape,&drawer,true)?`.
     pub fn clear_on_own_deflection_change(
         shape: &Shape,
-        drawer: &Handle<Prs3dDrawer>,
+        drawer: &Prs3dDrawer,
         reset: bool,
     ) -> Result<(), Failure> {
         if !drawer.is_auto_triangulation() || shape.is_null() {
@@ -145,7 +141,7 @@ fn closed_triangulated_solid(shape: &Shape) -> Result<bool, Failure> {
     }
     Ok(true)
 }
-fn own_shape_deviation_changed(drawer: &Handle<Prs3dDrawer>) -> bool {
+fn own_shape_deviation_changed(drawer: &Prs3dDrawer) -> bool {
     // The comparison uses <=: infinite current/previous values yield NaN and require cleaning.
     let angle_unchanged = !drawer.has_own_deviation_angle()
         || (drawer.deviation_angle() - drawer.previous_deviation_angle()).abs()

@@ -4,26 +4,23 @@ use super::handles::{ExprHandle, deref};
 use super::package::copy_share;
 use super::single_relation::{ExprSingleCore, ExprSingleRelation, single_relation_members};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// An equation; `ExprEqual::new(&x, &y).string()? == "x = y"`.
 pub struct ExprEqual {
-    parent: StandardTransient,
     core: ExprSingleCore,
 }
 impl_transient!(
     ExprEqual,
     "Expr_Equal",
     dyn ExprSingleRelation,
-    parent,
     interfaces: [dyn ExprGeneralRelation, dyn ExprSingleRelation]
 );
 impl ExprEqual {
     /// `new ExprEqual(exp1, exp2)`; `ExprEqual::new(&x, &y)`.
     pub fn new(exp1: &ExprHandle, exp2: &ExprHandle) -> Handle<Self> {
         let equal: Self = Self {
-            parent: StandardTransient::default(),
             core: ExprSingleCore::default(),
         };
         equal.set_first_member(exp1);
@@ -50,7 +47,7 @@ impl ExprGeneralRelation for ExprEqual {
     }
     fn simplified(&self) -> Result<ExprRelationHandle, Failure> {
         let (first, second) = self.simplified_members()?;
-        Ok(Self::new(&first, &second).cast())
+        Ok(Self::new(&first, &second).into_upcast())
     }
     fn simplify(&self) -> Result<(), Failure> {
         let first: ExprHandle =
@@ -63,7 +60,7 @@ impl ExprGeneralRelation for ExprEqual {
     }
     fn copy(&self) -> Result<ExprRelationHandle, Failure> {
         let first: ExprHandle = copy_share(&self.first_member())?;
-        Ok(Self::new(&first, &copy_share(&self.second_member())?).cast())
+        Ok(Self::new(&first, &copy_share(&self.second_member())?).into_upcast())
     }
     fn string(&self) -> Result<AsciiString, Failure> {
         let mut text: AsciiString = deref(&self.first_member(), "Expr_Equal::String")?.string()?;

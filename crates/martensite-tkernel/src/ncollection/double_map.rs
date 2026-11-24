@@ -20,7 +20,7 @@ pub struct DoubleMapValues<'a, A, B> {
 }
 impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H1, H2> {
     /// Injects both equality/hash policies and the node resource; `DoubleMap::with_allocator(p1,p2,10,arena)`.
-    pub fn with_allocator(
+    pub(crate) fn with_allocator(
         first_policy: H1,
         second_policy: H2,
         buckets: usize,
@@ -33,7 +33,7 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         }
     }
     /// Returns pair count; `map.len()==3`.
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.storage.len()
     }
     /// Returns the pair extent; `map.extent()==3`.
@@ -45,7 +45,7 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         self.len() == 0
     }
     /// Returns the common hash modulus; `map.bucket_count()`.
-    pub fn bucket_count(&self) -> usize {
+    pub(crate) fn bucket_count(&self) -> usize {
         self.storage.bucket_count()
     }
     /// Borrows the map allocator; `map.allocator()==&arena`.
@@ -53,7 +53,7 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         self.storage.allocator()
     }
     /// Rehashes both indices, Key1 then Key2 of each pair in first-key order; `map.resize(200)`.
-    pub fn resize(&mut self, requested: usize) {
+    pub(crate) fn resize(&mut self, requested: usize) {
         let (first, second) = (&self.first_policy, &self.second_policy);
         self.storage.resize(requested, |key1, key2, count| {
             (first.hash(key1) % count + 1, second.hash(key2) % count + 1)
@@ -68,7 +68,8 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         Ok(())
     }
     /// Binds only when neither key exists; `map.try_bind(1,42)`.
-    pub fn try_bind(&mut self, first: A, second: B) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_bind(&mut self, first: A, second: B) -> bool {
         let Some(buckets) = self.prepare_binding(&first, &second) else {
             return false;
         };
@@ -76,7 +77,8 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         true
     }
     /// Moves constructed keys into a new pair only when both are absent; `map.try_emplace(1,42)`.
-    pub fn try_emplace(&mut self, first: A, second: B) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_emplace(&mut self, first: A, second: B) -> bool {
         self.try_bind(first, second)
     }
     /// Tests first-key membership; `map.is_bound1(&1)`.
@@ -130,7 +132,8 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         self.storage.clear(release);
     }
     /// Swaps pairs, policies and allocators; `map.exchange(&mut other)`.
-    pub fn exchange(&mut self, other: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn exchange(&mut self, other: &mut Self) {
         std::mem::swap(&mut self.first_policy, &mut other.first_policy);
         std::mem::swap(&mut self.second_policy, &mut other.second_policy);
         self.storage.exchange(&mut other.storage);
@@ -174,7 +177,7 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A> + Default, H2: HashPolicy<B> + Defaul
     DoubleMap<A, B, H1, H2>
 {
     /// Creates default policies with the requested bucket count; `DoubleMap::<i32,i32>::new(100)`.
-    pub fn new(buckets: usize) -> Self {
+    pub(crate) fn new(buckets: usize) -> Self {
         Self::with_allocator(
             H1::default(),
             H2::default(),
@@ -204,4 +207,5 @@ mod queries;
 pub use cursor::DoubleMapIterator;
 
 mod borrowed_binding;
+#[cfg(test)]
 mod method_contracts;

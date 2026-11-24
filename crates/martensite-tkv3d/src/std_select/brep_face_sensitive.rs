@@ -1,7 +1,8 @@
 //! Native face selection prioritizes analytic closed quadrics, then mesh, planar bounds and ordered wire contours.
 use super::StdSelectBrepSelectionTool;
 use crate::{select_mgr::SelectMgrEntityOwnerSource, select3d::*};
-use martensite_tkbrep::{brep::BRepTool, brep_adaptor::BRepAdaptorSurface, topods::Face};
+use martensite_tkbrep::topods::FaceView;
+use martensite_tkbrep::{brep::BRepTool, brep_adaptor::BRepAdaptorSurface};
 use martensite_tkernel::standard::HandleReference;
 use martensite_tkernel::{
     ncollection::Sequence,
@@ -19,7 +20,7 @@ impl StdSelectBrepSelectionTool {
     /// Example: `Self::get_sensitive_for_face_into(&face,&owner,&sequence,false,9,500.,true)?`.
     #[allow(clippy::too_many_arguments)] // The pinned overload exposes independent tessellation and sampling arguments.
     pub fn get_sensitive_for_face_into(
-        face: &Face,
+        face: &FaceView<'_>,
         owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
         sequence: &SharedState<Sequence<Handle<dyn Select3DSensitiveEntity>>>,
         _auto_triangulation: bool,
@@ -38,7 +39,7 @@ impl StdSelectBrepSelectionTool {
     /// Append native face entities while preserving existing entries and partial failures; `Self::get_sensitive_for_face(&face,&owner,&mut entities,false,9,500.,true)?`.
     #[allow(clippy::too_many_arguments)] // Pinned overload exposes append list and independent legacy tessellation flag.
     pub fn get_sensitive_for_face(
-        face: &Face,
+        face: &FaceView<'_>,
         owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
         entities: &mut Vec<Handle<dyn Select3DSensitiveEntity>>,
         _auto_triangulation: bool,
@@ -55,7 +56,7 @@ impl StdSelectBrepSelectionTool {
     }
 }
 fn select_brep_face(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     entities: &mut dyn super::brep_face_destination::BrepFaceEntityDestination,
     criteria: &FaceSelectionCriteria,
@@ -73,7 +74,7 @@ fn select_brep_face(
     select_brep_face_fallback(face, owner, entities, criteria)
 }
 fn brep_triangulated_face_entity(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     interior: bool,
 ) -> Result<Option<Handle<dyn Select3DSensitiveEntity>>, Failure> {
@@ -86,7 +87,7 @@ fn brep_triangulated_face_entity(
     Ok(Some(Handle::new(sensitive).cast()))
 }
 fn select_brep_face_fallback(
-    face: &Face,
+    face: &FaceView<'_>,
     owner: &dyn HandleReference<dyn SelectMgrEntityOwnerSource>,
     entities: &mut dyn super::brep_face_destination::BrepFaceEntityDestination,
     criteria: &FaceSelectionCriteria,

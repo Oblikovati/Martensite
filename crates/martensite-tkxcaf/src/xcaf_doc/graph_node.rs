@@ -3,7 +3,7 @@
 use super::support::{downcast, live};
 use martensite_tkcdf::json_dump::field_pointer;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle, SharedState};
 use martensite_tklcaf::guid_from_text;
 use martensite_tklcaf::json::dump_attribute_json_base;
 use martensite_tklcaf::tdf::{
@@ -41,11 +41,10 @@ struct GraphFields {
 /// ```
 #[derive(Default)]
 pub struct XCAFDocGraphNode {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     fields: SharedState<GraphFields>,
 }
-martensite_tkernel::impl_transient!(XCAFDocGraphNode, "XCAFDocGraphNode", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+martensite_tkernel::impl_transient!(XCAFDocGraphNode, "XCAFDocGraphNode", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl XCAFDocGraphNode {
     /// `XCAFDocGraphNode()`: a null graph ID.

@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower, iges_array1_upper};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
@@ -26,7 +27,7 @@ iges_entity! {
 /// arranging them around the edge of an imaginary circle
 /// whose center and radius are specified
 IgesDrawCircArraySubfigure, IgesDrawCircArraySubfigureState, "IgesDrawCircArraySubfigure", parent IgesDataIgesEntity, {
-the_base_entity: Handle<IgesDataIgesEntity>,
+the_base_entity: Handle<dyn IgesDataEntityKind>,
 the_nb_locations: i32,
 the_center: Xyz,
 the_radius: f64,
@@ -39,7 +40,7 @@ the_positions: Handle<HArray1<i32>>,
 
 impl IgesDrawCircArraySubfigure {
     iges_methods! {
-    get base_entity = the_base_entity: Handle<IgesDataIgesEntity>;
+    get base_entity = the_base_entity: Handle<dyn IgesDataEntityKind>;
     get nb_locations = the_nb_locations: i32;
     get circle_radius = the_radius: f64;
     get start_angle = the_start_angle: f64;
@@ -62,7 +63,7 @@ impl IgesDrawCircArraySubfigure {
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
     pub fn init(
         &self,
-        a_base: &Handle<IgesDataIgesEntity>,
+        a_base: &Handle<dyn IgesDataEntityKind>,
         a_num_locs: i32,
         a_center: Xyz,
         a_radius: f64,

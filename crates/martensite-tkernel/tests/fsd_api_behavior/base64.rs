@@ -1,5 +1,5 @@
 //! The Base64 codec.
-use martensite_tkernel::fsd::Base64;
+use super::Base64;
 
 #[test]
 fn encoding_pads_and_sizes_like_rfc_4648() {
@@ -9,6 +9,7 @@ fn encoding_pads_and_sizes_like_rfc_4648() {
         (b"fo", "Zm8="),
         (b"foo", "Zm9v"),
         (b"foob", "Zm9vYg=="),
+        (b"CAD", "Q0FE"),
     ] {
         assert_eq!(Base64::encode(data).as_bytes(), text.as_bytes());
         assert_eq!(Base64::encode_into(None, data), text.len());
@@ -21,6 +22,7 @@ fn encoding_pads_and_sizes_like_rfc_4648() {
 #[test]
 fn decoding_follows_the_native_padding_rules() {
     assert_eq!(Base64::decode_into(None, b""), 0);
+    assert_eq!(Base64::decode(b"Q0FE").get().unwrap().as_slice(), b"CAD");
     assert_eq!(Base64::decode_into(None, b"Zg=="), 1);
     assert_eq!(Base64::decode_into(None, b"Zm8="), 2);
     assert_eq!(

@@ -21,7 +21,8 @@ impl HashPolicy<Handle<HAsciiString>> for HAsciiStringHasher {
 }
 impl HAsciiString {
     /// Selects content hashing rather than generic handle identity; `let policy = HAsciiString::hash_policy()`.
-    pub fn hash_policy() -> HAsciiStringHasher {
+    #[cfg(test)]
+    pub(crate) fn hash_policy() -> HAsciiStringHasher {
         HAsciiStringHasher
     }
 }

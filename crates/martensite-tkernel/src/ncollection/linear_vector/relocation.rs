@@ -18,13 +18,15 @@ impl<T> LinearVector<T> {
     /// until all new values are constructed, then old values drop in order.
     /// A relocation panic keeps the receiver's length and capacity; the replacement
     /// allocation is freed instead of leaked.
-    pub fn reserve_with_relocation<F>(&mut self, minimum: usize, relocate: F)
+    #[cfg(test)]
+    pub(crate) fn reserve_with_relocation<F>(&mut self, minimum: usize, relocate: F)
     where
         F: FnMut(&mut T) -> T,
     {
         self.reserve_relocation_owned(minimum, relocate);
     }
 
+    #[cfg(test)]
     pub(super) fn reserve_relocation_owned(
         &mut self,
         minimum: usize,
@@ -40,6 +42,7 @@ impl<T> LinearVector<T> {
         self.elements = replacement.elements;
     }
 
+    #[cfg(test)]
     pub(super) fn relocate_unpublished_into(
         &mut self,
         destination: &mut Self,

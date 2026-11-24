@@ -7,11 +7,12 @@ use super::brep_fill_multi_line::{curve2d, curve3d};
 use super::buffered_tokens::BufferedTokens;
 use super::common::Reader;
 use super::shapes::tp_shapes;
+use martensite_tkbool::top_ope_brep_ds::InterferenceRecord;
 use martensite_tkbool::top_ope_brep_ds::{
     ListOfInterference, TopOpeBRepDSBuildTool, TopOpeBRepDSConfig, TopOpeBRepDSCurve,
     TopOpeBRepDSCurvePointInterference, TopOpeBRepDSDataStructure, TopOpeBRepDSHDataStructure,
-    TopOpeBRepDSInterference, TopOpeBRepDSKind, TopOpeBRepDSPoint,
-    TopOpeBRepDSSurfaceCurveInterference, TopOpeBRepDSTransition,
+    TopOpeBRepDSKind, TopOpeBRepDSPoint, TopOpeBRepDSSurfaceCurveInterference,
+    TopOpeBRepDSTransition,
 };
 use martensite_tkbool::top_ope_brep_tool::{TopOpeBRepToolCurveTool, TopOpeBRepToolOutCurveType};
 use martensite_tkbrep::brep::BRepTool;
@@ -117,7 +118,7 @@ fn store_curve(
     let mut dc = TopOpeBRepDSCurve::new(&curves.0, 1e-7, walk);
     dc.set_shapes(f1.as_ref(), f2.as_ref());
     let t = TopOpeBRepDSTransition::default();
-    let s1: Handle<TopOpeBRepDSInterference> =
+    let s1: Handle<dyn InterferenceRecord> =
         Handle::new(TopOpeBRepDSSurfaceCurveInterference::new(
             &t,
             TopOpeBRepDSKind::Face,
@@ -127,7 +128,7 @@ fn store_curve(
             &curves.1,
         ))
         .cast();
-    let s2: Handle<TopOpeBRepDSInterference> =
+    let s2: Handle<dyn InterferenceRecord> =
         Handle::new(TopOpeBRepDSSurfaceCurveInterference::new(
             &t,
             TopOpeBRepDSKind::Face,

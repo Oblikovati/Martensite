@@ -75,19 +75,23 @@ impl<K: Debug, H: HashPolicy<K>> Map<K, H> {
         self.place_key(key, false).1
     }
     /// Replaces an equivalent stored key in place; `map.emplace(42)`.
-    pub fn emplace(&mut self, key: K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn emplace(&mut self, key: K) -> bool {
         self.place_key(key, true).0
     }
     /// Reconstructs and returns the stored key; `map.emplaced(42)`.
-    pub fn emplaced(&mut self, key: K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn emplaced(&mut self, key: K) -> &K {
         self.place_key(key, true).1
     }
     /// Keeps an existing equivalent key; `map.try_emplace(42)`.
-    pub fn try_emplace(&mut self, key: K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_emplace(&mut self, key: K) -> bool {
         self.add(key)
     }
     /// Returns an existing equivalent key or inserts it; `map.try_emplaced(42)`.
-    pub fn try_emplaced(&mut self, key: K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn try_emplaced(&mut self, key: K) -> &K {
         self.added(key)
     }
     /// Removes an equivalent key, reporting whether found; `map.remove(&42)`.
@@ -114,7 +118,8 @@ impl<K: Debug, H: HashPolicy<K>> Map<K, H> {
         }
     }
     /// Returns an exhausted iterator for iterator comparisons; `map.iter()!=map.end()`.
-    pub fn end(&self) -> MapIter<'_, K> {
+    #[cfg(test)]
+    pub(crate) fn end(&self) -> MapIter<'_, K> {
         MapIter {
             entries: SlotRange::default(),
         }

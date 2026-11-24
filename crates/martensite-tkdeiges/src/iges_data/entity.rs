@@ -10,7 +10,10 @@ use super::{
 };
 use martensite_tkernel::{
     impl_transient,
-    standard::{Handle, RuntimeTyped, SharedState, StandardTransient, Transient},
+    standard::{
+        Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient, Transient,
+        TransientHandleTarget,
+    },
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::InterfaceEntityList;
@@ -42,19 +45,19 @@ pub trait IgesDataEntityKind: Transient {
 pub(super) struct IgesEntityFields {
     pub(super) the_type: i32,
     pub(super) the_form: i32,
-    pub(super) the_structure: Handle<IgesDataIgesEntity>,
+    pub(super) the_structure: Handle<dyn IgesDataEntityKind>,
     pub(super) the_def_line_font: IgesDataDefSwitch,
-    pub(super) the_line_font: Handle<IgesDataIgesEntity>,
+    pub(super) the_line_font: Handle<dyn IgesDataEntityKind>,
     pub(super) the_def_level: i32,
-    pub(super) the_level_list: Handle<IgesDataIgesEntity>,
-    pub(super) the_view: Handle<IgesDataIgesEntity>,
-    pub(super) the_transf: Handle<IgesDataIgesEntity>,
-    pub(super) the_lab_display: Handle<IgesDataIgesEntity>,
+    pub(super) the_level_list: Handle<dyn IgesDataEntityKind>,
+    pub(super) the_view: Handle<dyn IgesDataEntityKind>,
+    pub(super) the_transf: Handle<dyn IgesDataEntityKind>,
+    pub(super) the_lab_display: Handle<dyn IgesDataEntityKind>,
     pub(super) the_status_num: i32,
     pub(super) the_l_weight_num: i32,
     pub(super) the_l_weight_val: f64,
     pub(super) the_def_color: IgesDataDefSwitch,
-    pub(super) the_color: Handle<IgesDataIgesEntity>,
+    pub(super) the_color: Handle<dyn IgesDataEntityKind>,
     pub(super) the_res1: [u8; 9],
     pub(super) the_res2: [u8; 9],
     pub(super) the_short_label: Handle<HAsciiString>,
@@ -79,18 +82,31 @@ pub(super) struct IgesEntityFields {
 /// ```
 #[derive(Default)]
 pub struct IgesDataIgesEntity {
-    transient: StandardTransient,
     pub(super) state: SharedState<IgesEntityFields>,
 }
 impl_transient!(
     IgesDataIgesEntity,
     "IgesDataIgesEntity",
     StandardTransient,
-    transient
+    interfaces: [dyn IgesDataEntityKind]
 );
 impl IgesDataEntityKind for IgesDataIgesEntity {
     fn iges_entity(&self) -> &IgesDataIgesEntity {
         self
+    }
+}
+
+impl RuntimeTyped for dyn IgesDataEntityKind {
+    const TYPE_NAME: &'static str = IgesDataIgesEntity::TYPE_NAME;
+    fn static_type() -> &'static RuntimeType {
+        IgesDataIgesEntity::static_type()
+    }
+}
+martensite_tkernel::impl_transient_interface_target!(dyn IgesDataEntityKind);
+impl std::ops::Deref for dyn IgesDataEntityKind {
+    type Target = IgesDataIgesEntity;
+    fn deref(&self) -> &IgesDataIgesEntity {
+        self.iges_entity()
     }
 }
 
@@ -102,7 +118,9 @@ impl IgesDataEntityKind for IgesDataIgesEntity {
 /// let entity = Handle::new(IgesDataIgesEntity::default());
 /// assert!(iges_entity_of(&entity).is_some());
 /// ```
-pub fn iges_entity_of<T: ?Sized + RuntimeTyped>(handle: &Handle<T>) -> Handle<IgesDataIgesEntity> {
+pub fn iges_entity_of<T: ?Sized + TransientHandleTarget>(
+    handle: &Handle<T>,
+) -> Handle<dyn IgesDataEntityKind> {
     handle.cast()
 }
 
@@ -146,7 +164,7 @@ impl IgesDataIgesEntity {
     /// The entity of a directory field, by its number in the directory entry: 3 structure,
     /// 4 line font, 5 level list, 6 view, 7 transformation, 8 label display, 13 color; null
     /// for any other number.
-    pub fn dir_field_entity(&self, fieldnum: i32) -> Handle<IgesDataIgesEntity> {
+    pub fn dir_field_entity(&self, fieldnum: i32) -> Handle<dyn IgesDataEntityKind> {
         let state = self.state.read();
         match fieldnum {
             3 => state.the_structure.clone(),
@@ -164,7 +182,7 @@ impl IgesDataIgesEntity {
         self.state.read().the_structure.is_some()
     }
     /// The structure, null when none.
-    pub fn structure(&self) -> Handle<IgesDataIgesEntity> {
+    pub fn structure(&self) -> Handle<dyn IgesDataEntityKind> {
         self.state.read().the_structure.clone()
     }
     /// How the line font is defined.
@@ -329,7 +347,7 @@ impl IgesDataIgesEntity {
     }
     /// Sets the entity of a directory field, see [`Self::dir_field_entity`]; the kind of the
     /// entity is not checked.
-    pub fn init_dir_field_entity(&self, fieldnum: i32, ent: &Handle<IgesDataIgesEntity>) {
+    pub fn init_dir_field_entity(&self, fieldnum: i32, ent: &Handle<dyn IgesDataEntityKind>) {
         let mut state = self.state.write();
         match fieldnum {
             3 => state.the_structure = ent.clone(),
@@ -390,7 +408,7 @@ impl IgesDataIgesEntity {
     /// already computed is scaled with the number.
     pub fn init_misc(
         &self,
-        str_ent: &Handle<IgesDataIgesEntity>,
+        str_ent: &Handle<dyn IgesDataEntityKind>,
         lab: &Handle<dyn IgesDataLabelDisplayEntity>,
         weightnum: i32,
     ) {

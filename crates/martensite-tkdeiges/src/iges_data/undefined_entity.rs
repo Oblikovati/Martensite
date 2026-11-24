@@ -32,8 +32,36 @@ impl_transient!(
     IgesDataUndefinedEntity,
     "IgesDataUndefinedEntity",
     IgesDataIgesEntity,
-    parent
+    interfaces: [dyn IgesDataEntityKind, dyn IgesDataUndefinedEntitySource]
 );
+
+/// An entity that stores undefined parameter content.
+pub trait IgesDataUndefinedEntitySource: IgesDataEntityKind {
+    /// Lend the original undefined content and directory state; `source.undefined_entity().is_ok_dir_part()`.
+    fn undefined_entity(&self) -> &IgesDataUndefinedEntity;
+}
+
+impl RuntimeTyped for dyn IgesDataUndefinedEntitySource {
+    const TYPE_NAME: &'static str = IgesDataUndefinedEntity::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        IgesDataUndefinedEntity::static_type()
+    }
+}
+martensite_tkernel::impl_transient_interface_target!(dyn IgesDataUndefinedEntitySource);
+
+impl std::ops::Deref for dyn IgesDataUndefinedEntitySource {
+    type Target = IgesDataUndefinedEntity;
+
+    fn deref(&self) -> &Self::Target {
+        self.undefined_entity()
+    }
+}
+impl IgesDataUndefinedEntitySource for IgesDataUndefinedEntity {
+    fn undefined_entity(&self) -> &IgesDataUndefinedEntity {
+        self
+    }
+}
 
 impl Default for IgesDataUndefinedEntity {
     fn default() -> Self {
@@ -211,7 +239,10 @@ pub(super) fn write_content(
         if cont.param_type(i)? == InterfaceParamType::ParamVoid {
             iw.send_void()?;
         } else if cont.is_param_entity(i)? {
-            iw.send_entity(&cont.param_entity(i)?.cast::<IgesDataIgesEntity>(), false)?;
+            iw.send_entity(
+                &cont.param_entity(i)?.cast::<dyn IgesDataEntityKind>(),
+                false,
+            )?;
         } else {
             iw.send_string(&cont.param_value(i)?)?;
         }

@@ -5,7 +5,7 @@ use crate::pcdm::PcdmReferenceIterator;
 use martensite_tkernel::{
     impl_transient_interface,
     message::Messenger,
-    standard::{Failure, Handle, StandardTransient, Transient},
+    standard::{Failure, Handle, Transient},
     tcollection::ExtendedString,
 };
 use std::sync::Arc;
@@ -124,8 +124,4 @@ pub trait CdfMetaDataDriver: Transient {
         self.meta_data(folder, name, &ExtendedString::default())
     }
 }
-impl_transient_interface!(
-    dyn CdfMetaDataDriver,
-    "CDF_MetaDataDriver",
-    StandardTransient
-);
+impl_transient_interface!(dyn CdfMetaDataDriver, "CDF_MetaDataDriver", dyn Transient);

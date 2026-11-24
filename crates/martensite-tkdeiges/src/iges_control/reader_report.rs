@@ -1,6 +1,7 @@
 //! The report of a transfer: counts, results and messages of a reader.
 use super::IgesControlReader;
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use martensite_tkernel::message::{Gravity, Msg};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkxsbase::if_select::{IFSelectPrintCount, IFSelectPrintFail};
@@ -59,7 +60,7 @@ impl TransferTally {
         checks.start();
         while checks.more() {
             let check = checks.value()?;
-            let entity: Handle<IgesDataIgesEntity> = live_model.value(checks.number()?)?.cast();
+            let entity: Handle<dyn IgesDataEntityKind> = live_model.value(checks.number()?)?.cast();
             let body = iges_live(&entity, WHERE)?;
             let (kind, form) = (body.type_number(), body.form_number());
             let number = live_model.number(&entity.cast()) * 2 - 1;
@@ -97,7 +98,7 @@ impl TransferTally {
             if mode == IFSelectPrintCount::ResultCount {
                 *self.results.entry(format!("\t{type_name}")).or_default() += 1;
             } else if mode == IFSelectPrintCount::Mapping {
-                let entity: Handle<IgesDataIgesEntity> = results.starting()?.cast();
+                let entity: Handle<dyn IgesDataEntityKind> = results.starting()?.cast();
                 let body = iges_live(&entity, WHERE)?;
                 let line = format!(
                     "{}\t{}\t%d\t{type_name}",
@@ -142,7 +143,7 @@ fn send_mapping(
 ) -> Result<(), Failure> {
     if nb_roots != tally.nb_results {
         for rank in 1..=nb_roots {
-            let root: Handle<IgesDataIgesEntity> = process.root(rank)?.cast();
+            let root: Handle<dyn IgesDataEntityKind> = process.root(rank)?.cast();
             if !process.is_bound(&root.cast()) {
                 let body = iges_live(&root, WHERE)?;
                 let line = format!(

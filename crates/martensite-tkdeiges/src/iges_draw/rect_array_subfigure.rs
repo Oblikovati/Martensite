@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower, iges_array1_upper};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
@@ -24,7 +25,7 @@ iges_entity! {
 /// Used to produce copies of object called the base entity,
 /// arranging them in equally spaced rows and columns
 IgesDrawRectArraySubfigure, IgesDrawRectArraySubfigureState, "IgesDrawRectArraySubfigure", parent IgesDataIgesEntity, {
-the_base_entity: Handle<IgesDataIgesEntity>,
+the_base_entity: Handle<dyn IgesDataEntityKind>,
 the_scale_factor: f64,
 the_lower_left_corner: Xyz,
 the_nb_columns: i32,
@@ -39,7 +40,7 @@ the_positions: Handle<HArray1<i32>>,
 
 impl IgesDrawRectArraySubfigure {
     iges_methods! {
-    get base_entity = the_base_entity: Handle<IgesDataIgesEntity>;
+    get base_entity = the_base_entity: Handle<dyn IgesDataEntityKind>;
     get scale_factor = the_scale_factor: f64;
     get nb_columns = the_nb_columns: i32;
     get nb_rows = the_nb_rows: i32;
@@ -67,7 +68,7 @@ impl IgesDrawRectArraySubfigure {
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
     pub fn init(
         &self,
-        a_base: &Handle<IgesDataIgesEntity>,
+        a_base: &Handle<dyn IgesDataEntityKind>,
         a_scale: f64,
         a_corner: Xyz,
         nb_cols: i32,

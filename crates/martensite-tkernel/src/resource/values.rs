@@ -1,10 +1,11 @@
 //! Resource manager lookups and assignments.
-use super::{ResourceManager, ResourceUnicode, c_string};
-use crate::{
-    ncollection::DataMap,
-    standard::Failure,
-    tcollection::{AsciiString, ExtendedString},
-};
+#[cfg(test)]
+use super::ResourceUnicode;
+use super::{ResourceManager, c_string};
+#[cfg(test)]
+use crate::tcollection::ExtendedString;
+use crate::{ncollection::DataMap, standard::Failure, tcollection::AsciiString};
+
 impl ResourceManager {
     /// True when the user or reference map holds the resource; `manager.find("language")`.
     pub fn find(&self, name: &str) -> bool {
@@ -13,7 +14,8 @@ impl ResourceManager {
     }
     /// The user value, else the reference value;
     /// `manager.find_value(&AsciiString::new("key"))`.
-    pub fn find_value(&self, name: &AsciiString) -> Option<AsciiString> {
+    #[cfg(test)]
+    pub(crate) fn find_value(&self, name: &AsciiString) -> Option<AsciiString> {
         self.user
             .seek(name)
             .or_else(|| self.reference.seek(name))
@@ -39,7 +41,8 @@ impl ResourceManager {
     }
     /// The value parsed with the real-prefix rule, or Standard_TypeMismatch;
     /// `manager.real("tolerance")?`.
-    pub fn real(&self, name: &str) -> Result<f64, Failure> {
+    #[cfg(test)]
+    pub(crate) fn real(&self, name: &str) -> Result<f64, Failure> {
         let value = self.value(name)?;
         if !value.is_real_value(false) {
             return Err(type_mismatch(name, "a real"));
@@ -50,7 +53,8 @@ impl ResourceManager {
     /// `manager.ext_value("title")?`.
     ///
     /// Quirk preserved: the cache is never refreshed by a later byte-string `set_resource`.
-    pub fn ext_value(&mut self, name: &str) -> Result<&ExtendedString, Failure> {
+    #[cfg(test)]
+    pub(crate) fn ext_value(&mut self, name: &str) -> Result<&ExtendedString, Failure> {
         let key = c_string(name);
         if self.extended.seek(&key).is_none() {
             let value = self.value(name)?.clone();
@@ -72,7 +76,8 @@ impl ResourceManager {
             .bind(c_string(name), AsciiString::from_raw(&value[..end]));
     }
     /// Stores the `%d` spelling of an integer; `manager.set_resource_integer("count", 3)`.
-    pub fn set_resource_integer(&mut self, name: &str, value: i32) {
+    #[cfg(test)]
+    pub(crate) fn set_resource_integer(&mut self, name: &str, value: i32) {
         self.set_resource(name, AsciiString::from_integer(value).as_bytes());
     }
     /// Stores the `%g` spelling of a real; `manager.set_resource_real("tolerance", 0.5)`.
@@ -86,7 +91,8 @@ impl ResourceManager {
     /// spaces; its result flag is ignored, and the stored text ends at the first
     /// NUL the conversion wrote. Conversions that raise (the code pages, whose loop reads past
     /// the source, and GBK/Big5) leave the cache updated.
-    pub fn set_resource_ext(&mut self, name: &str, value: &[u16]) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn set_resource_ext(&mut self, name: &str, value: &[u16]) -> Result<(), Failure> {
         let extended = ExtendedString::from_utf16(value);
         self.extended.bind(c_string(name), extended.clone());
         let mut buffer = vec![b' '; extended.len() * 3 + 10];

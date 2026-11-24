@@ -88,7 +88,7 @@ pub(super) fn try_cylinder_by_gauss_field(
     } else {
         cylinder
     };
-    Ok(Handle::new(GeomCylindricalSurface::from_cylinder(cylinder)).cast())
+    Ok(Handle::new(GeomCylindricalSurface::from_cylinder(cylinder)).into_upcast())
 }
 
 // The curvatures of the current point, None when the curvature is undefined, the

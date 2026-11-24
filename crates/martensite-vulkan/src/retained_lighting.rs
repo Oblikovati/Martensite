@@ -1,4 +1,5 @@
 //! Resolve native material and normal policy at live Graphic3d extraction, not presentation creation.
+use crate::draw::DrawStream;
 use crate::{
     PrimitiveDraw, RenderError, RenderLayer, RenderLighting, RenderMaterial,
     RenderMaterialColorSpace, RenderShading, error::rejected,
@@ -105,20 +106,26 @@ fn apply_resolved_lighting(
     context: &TextSceneContext<'_>,
     model: Graphic3dTypeOfShadingModel,
 ) -> Result<(), RenderError> {
-    let normals = primitive.normals()?;
+    let normals = primitive.shared_normals()?;
     if draws
         .iter()
         .any(|draw| draw.topology() != crate::PrimitiveTopology::Triangles)
     {
         return lower_nodal_lighting(draws, primitive, aspects, context, model, normals);
     }
-    let lighting = surface_lighting(primitive, &**aspects, context, model, normals.as_deref())?;
+    let mut lighting = surface_lighting(primitive, &**aspects, context, model, normals.as_deref())?;
+    let Some(normals) = normals else {
+        for draw in draws {
+            let mut snapshot = lighting.clone();
+            snapshot.normals = vec![[0., 0., 1.]; draw.vertices.len()].into();
+            draw.lighting = Some(snapshot);
+        }
+        return Ok(());
+    };
+    // One body for the shared normals, so the draws of the primitive share it (#594).
+    lighting.normals = normals;
     for draw in draws {
-        let mut snapshot = lighting.clone();
-        snapshot.normals = normals
-            .clone()
-            .unwrap_or_else(|| vec![[0., 0., 1.]; draw.vertices.len()]);
-        draw.lighting = Some(snapshot);
+        draw.lighting = Some(lighting.clone());
     }
     Ok(())
 }
@@ -128,7 +135,7 @@ fn lower_nodal_lighting(
     aspects: &Handle<dyn Graphic3dAspectsSource>,
     context: &TextSceneContext<'_>,
     model: Graphic3dTypeOfShadingModel,
-    normals: Option<Vec<[f32; 3]>>,
+    normals: Option<DrawStream<[f32; 3]>>,
 ) -> Result<(), RenderError> {
     if draws
         .iter()
@@ -163,7 +170,7 @@ fn apply_nodal_lighting(
     aspects: &Handle<dyn Graphic3dAspectsSource>,
     context: &TextSceneContext<'_>,
     model: Graphic3dTypeOfShadingModel,
-    normals: Option<Vec<[f32; 3]>>,
+    normals: Option<DrawStream<[f32; 3]>>,
 ) -> Result<(), RenderError> {
     let Some(normals) = normals else {
         return Ok(());
@@ -215,9 +222,10 @@ fn surface_lighting(
 ) -> Result<RenderLighting, RenderError> {
     let shading = surface_algorithm(model, normals.is_some())?;
     let (world, view) = crate::persistent_transform::lighting_matrices(context)?;
+    let (material, fixed_opacity) = aspect_material_snapshot(aspects);
     let mut snapshot = RenderLighting::new(
         Vec::new(),
-        aspect_material(aspects),
+        material,
         world,
         view,
         !context.camera.is_orthographic(),
@@ -236,7 +244,7 @@ fn surface_lighting(
         view,
         !context.group.transform_persistence().is_null(),
     );
-    crate::fixed_lighting::snapshot_fixed_material_opacity(&mut snapshot, aspects);
+    snapshot.fixed_source_opacity = Some(fixed_opacity);
     Ok(snapshot)
 }
 
@@ -251,10 +259,9 @@ pub(crate) fn resolved_model(
     aspect: &dyn Graphic3dAspectsSource,
     view: Graphic3dTypeOfShadingModel,
 ) -> Graphic3dTypeOfShadingModel {
-    let model = if aspect.shading_model() == Graphic3dTypeOfShadingModel::Default {
-        view
-    } else {
-        aspect.shading_model()
+    let model = match aspect.shading_model() {
+        Graphic3dTypeOfShadingModel::Default => view,
+        selected => selected,
     };
     pbr_shading_fallback(model, is_pbr_model(view))
 }
@@ -315,29 +322,34 @@ fn validate_non_surface_lighting(
     Ok(())
 }
 pub(crate) fn aspect_material(aspect: &dyn Graphic3dAspectsSource) -> RenderMaterial {
-    let (front, back) = surface_material_pair(aspect);
+    aspect_material_snapshot(aspect).0
+}
+
+/// Read pass-dependent coefficients and intrinsic fixed-function opacity from the same material.
+pub(crate) fn aspect_material_snapshot(
+    aspect: &dyn Graphic3dAspectsSource,
+) -> (RenderMaterial, [f32; 2]) {
+    let fields = aspect.aspects_base().fields.read();
+    let front = &fields.front_material;
+    let back = if fields.to_distinguish_materials {
+        &fields.back_material
+    } else {
+        front
+    };
     let mut material = RenderMaterial::default();
     // The target is an sRGB attachment; coefficients stay linear, matching active framebuffer sRGB.
     material.init(
         RenderMaterialColorSpace::Linear,
-        &front,
-        *aspect.interior_color_rgba().rgb(),
-        if aspect.distinguish() { &back } else { &front },
-        *aspect.back_interior_color_rgba().rgb(),
+        front,
+        *fields.interior_color.rgb(),
+        back,
+        *fields.back_interior_color.rgb(),
     );
-    material
-}
-
-fn surface_material_pair(
-    aspect: &dyn Graphic3dAspectsSource,
-) -> (Graphic3dMaterialAspect, Graphic3dMaterialAspect) {
-    let mut front = aspect.front_material();
-    let mut back = aspect.back_material();
-    if !crate::style::surface_uses_blending(aspect) {
-        front.set_transparency(0.).expect("valid opacity");
-        back.set_transparency(0.).expect("valid opacity");
+    if !crate::style::surface_fields_use_blending(&fields) {
+        // The native geometry policy forces both packed alpha coefficients to opaque.
+        material.set_alpha(1.);
     }
-    (front, back)
+    (material, [front.alpha(), back.alpha()])
 }
 pub(crate) fn apply_view_lights(
     layers: &mut [RenderLayer],
@@ -353,13 +365,8 @@ pub(crate) fn apply_view_lights(
     {
         return Ok(());
     }
-    // Headlights use the inverse of the float OrientationMatrixF (WorldViewMatrixInverse).
-    let camera_view = crate::view_render_camera::owned_render_camera(view).orientation_matrix_f();
-    let inverse = camera_view
-        .inverted()
-        .map_err(|e| rejected(e, "an invertible camera world-view matrix"))?;
     let shading = view.rendering_params().shading_model;
-    let lights = crate::RenderLightSet::for_view(shading, &view.lights(), inverse.data(), None)?;
+    let (camera_view, lights) = camera_lights(view)?;
     for layer in layers.iter_mut() {
         // Every structure of a layer with a local origin sees its lights relative to it
         // (GlLayerList::renderLayer sets it before UpdateLightSourceState).
@@ -377,6 +384,33 @@ pub(crate) fn apply_view_lights(
         }
     }
     Ok(())
+}
+/// The camera's float world-view matrix and the view's lights for the draws that use it;
+/// `camera_lights(view)?`.
+pub(crate) fn camera_lights(
+    view: &dyn Graphic3dCView,
+) -> Result<
+    (
+        martensite_tkernel::ncollection::Mat4<f32>,
+        crate::RenderLightSet,
+    ),
+    RenderError,
+> {
+    let camera_view = crate::view_render_camera::owned_render_camera(view).orientation_matrix_f();
+    Ok((camera_view, lights_for_camera_view(view, camera_view)?))
+}
+
+/// Resolve headlights using the camera matrix already selected by the caller.
+pub(crate) fn lights_for_camera_view(
+    view: &dyn Graphic3dCView,
+    camera_view: martensite_tkernel::ncollection::Mat4<f32>,
+) -> Result<crate::RenderLightSet, RenderError> {
+    // Headlights use the inverse of the float OrientationMatrixF (WorldViewMatrixInverse).
+    let inverse = camera_view
+        .inverted()
+        .map_err(|e| rejected(e, "an invertible camera world-view matrix"))?;
+    let shading = view.rendering_params().shading_model;
+    crate::RenderLightSet::for_view(shading, &view.lights(), inverse.data(), None)
 }
 /// Lights of a transform-persistent structure.
 /// GlShaderManager::PushLightSourceState pushes the lights again whenever the world-view
@@ -442,6 +476,7 @@ mod tests {
 #[cfg(test)]
 mod opacity_tests {
     use super::*;
+    use martensite_tkernel::quantity::{Color, NamedColor};
     #[test]
     fn opaque_lighting_overrides_transparency_without_mutating_aspects() {
         let aspect = Graphic3dAspects::default();
@@ -452,5 +487,44 @@ mod opacity_tests {
         aspect.set_alpha_mode(Graphic3dAlphaMode::Opaque, 0.5);
         assert_eq!(aspect_material(&aspect).common[0].diffuse[3], 1.);
         assert_eq!(aspect.front_material().transparency(), 0.8);
+    }
+
+    #[test]
+    fn borrowed_aspects_match_cloned_material_coefficients() {
+        let aspect = Graphic3dAspects::default();
+        let mut front = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Plastified);
+        let mut back = Graphic3dMaterialAspect::new(Graphic3dNameOfMaterial::Gold);
+        front.set_transparency(0.25).unwrap();
+        back.set_transparency(0.75).unwrap();
+        aspect.set_front_material(front.clone());
+        aspect.set_back_material(back.clone());
+        let red = Color::named(NamedColor::RED);
+        let blue = Color::named(NamedColor::BLUE);
+        aspect.set_interior_color(red);
+        aspect.set_back_interior_color(blue);
+        for mode in [
+            Graphic3dAlphaMode::Opaque,
+            Graphic3dAlphaMode::BlendAuto,
+            Graphic3dAlphaMode::MaskBlend,
+        ] {
+            aspect.set_alpha_mode(mode, 0.5);
+            for distinguish in [false, true] {
+                aspect.set_distinguish(distinguish);
+                let (mut front, mut back) = (front.clone(), back.clone());
+                if mode != Graphic3dAlphaMode::BlendAuto {
+                    front.set_transparency(0.).unwrap();
+                    back.set_transparency(0.).unwrap();
+                }
+                let mut expected = RenderMaterial::default();
+                expected.init(
+                    RenderMaterialColorSpace::Linear,
+                    &front,
+                    red,
+                    if distinguish { &back } else { &front },
+                    blue,
+                );
+                assert_eq!(aspect_material(&aspect), expected);
+            }
+        }
     }
 }

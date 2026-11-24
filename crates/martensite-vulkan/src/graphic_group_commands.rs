@@ -18,23 +18,66 @@ pub(super) enum GroupGeometry {
         Handle<Graphic3dText>,
         crate::element_upload::ElementUploadSlot,
         crate::render_element::TextPlacement,
+        crate::text_label_record::LabelSlot,
     ),
 }
+#[derive(Clone, Copy, Default)]
+pub(super) struct CommandEffects {
+    pub flips: bool,
+    pub calls_user_code: bool,
+}
+
+impl super::GroupSubmissionState {
+    pub(super) fn push_command(&mut self, command: GroupCommand) {
+        self.command_effects.flips |= matches!(command, GroupCommand::Flipping(_));
+        self.command_effects.calls_user_code |= matches!(
+            command,
+            GroupCommand::Element(_) | GroupCommand::Geometry(GroupGeometry::Text(..))
+        );
+        // A single retained array needs one slot. Text and other command sequences use
+        // Vec's usual growth to leave room for the following commands.
+        if self.commands.is_empty()
+            && matches!(
+                command,
+                GroupCommand::Geometry(GroupGeometry::Primitives(_))
+            )
+        {
+            self.commands = vec![command].into();
+        } else {
+            self.commands.make_mut().push(command);
+        }
+    }
+
+    pub(super) fn replace_command_aspects(&mut self, map: &Graphic3dAspectsReplaceMap) {
+        if self.commands.is_empty() {
+            return;
+        }
+        for command in self.commands.make_mut() {
+            if let GroupCommand::Aspects(style) = command {
+                super::replace_style(style, map);
+            }
+        }
+    }
+}
+
 impl GroupCommand {
     pub(super) fn advance(
-        self,
+        &self,
         aspects: &mut Handle<dyn Graphic3dAspectsSource>,
         flips: &mut crate::group_flipping::GroupFlipStack,
         program: &mut crate::stencil_program::StencilProgram,
-    ) -> Option<GroupGeometry> {
+    ) -> Option<&GroupGeometry> {
         match self {
-            Self::Aspects(style) => advance_aspect(aspects, style),
-            Self::Flipping(plane) => advance_flipping(flips, plane),
-            Self::Stencil(enabled) => advance_stencil(program, enabled),
-            Self::Geometry(geometry) => Some(geometry),
+            Self::Aspects(style) => *aspects = style.clone(),
+            Self::Flipping(plane) => flips.apply(*plane),
+            Self::Stencil(enabled) => {
+                program.command(crate::stencil_program::StencilCommand::Options(*enabled))
+            }
+            Self::Geometry(geometry) => return Some(geometry),
             // Elements are called by the extraction loop before advancing.
-            Self::Element(_) => None,
+            Self::Element(_) => {}
         }
+        None
     }
 }
 impl GroupGeometry {
@@ -59,42 +102,63 @@ impl GroupGeometry {
         }
     }
     pub(super) fn lower(
-        self,
+        &self,
         aspects: &Handle<dyn Graphic3dAspectsSource>,
         closed: bool,
         matrix: [f32; 16],
         highlighted: bool,
         context: &crate::text_submission::TextSceneContext<'_>,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
-        if empty_line_geometry(&self, aspects) {
+        if empty_line_geometry(self, aspects) {
             return Ok(Vec::new());
         }
         match self {
-            Self::Text(text, upload, placement) => {
-                let draws =
-                    lower_ordered_text(context, (&text, placement), &upload, aspects, closed)?;
+            Self::Text(text, upload, placement, label) => {
+                let draws = lower_ordered_text(
+                    context,
+                    (text, *placement, label),
+                    upload,
+                    aspects,
+                    closed,
+                )?;
                 #[cfg(feature = "vertex-output-diagnostics")]
-                return context.group.tag_vertex_output_text(&text, draws);
+                return context.group.tag_vertex_output_text(text, draws);
                 #[cfg(not(feature = "vertex-output-diagnostics"))]
                 Ok(draws)
             }
             Self::Primitives(primitive) => {
-                let draws = super::lower_hatched_surface(
-                    &primitive,
+                let primitive = retained_source(primitive, context.group);
+                let mut draws = super::lower_hatched_surface(
+                    primitive.as_ref(),
                     aspects,
                     closed,
                     matrix,
                     highlighted,
                     context,
                 )?;
+                if let Some(levels) = &primitive.mesh_levels {
+                    levels.attach(primitive.as_ref(), &mut draws);
+                }
                 #[cfg(feature = "vertex-output-diagnostics")]
                 let draws = context
                     .group
-                    .tag_vertex_output_primitive(&primitive, draws)?;
+                    .tag_vertex_output_primitive(primitive.as_ref(), draws)?;
                 Ok(draws)
             }
         }
     }
+}
+
+fn retained_source<'a>(
+    primitive: &'a PrimitiveSubmission,
+    group: &super::Graphic3dDrawGroup,
+) -> std::borrow::Cow<'a, PrimitiveSubmission> {
+    if primitive.retained.is_some() {
+        return std::borrow::Cow::Borrowed(primitive);
+    }
+    let mut prepared = primitive.clone();
+    prepared.retained = group.primitive_sources.entry(primitive);
+    std::borrow::Cow::Owned(prepared)
 }
 
 fn empty_line_geometry(
@@ -113,41 +177,25 @@ fn empty_line_geometry(
 
 fn lower_ordered_text(
     context: &crate::text_submission::TextSceneContext<'_>,
-    (text, placement): (&Graphic3dText, crate::render_element::TextPlacement),
+    (text, placement, label): (
+        &Graphic3dText,
+        crate::render_element::TextPlacement,
+        &crate::text_label_record::LabelSlot,
+    ),
     upload: &crate::element_upload::ElementUploadSlot,
     aspects: &Handle<dyn Graphic3dAspectsSource>,
     closed: bool,
 ) -> Result<Vec<PrimitiveDraw>, RenderError> {
     let draws = match placement {
-        crate::render_element::TextPlacement::Scene => context.draws(text, aspects, Some(upload)),
+        crate::render_element::TextPlacement::Scene => {
+            context.draws(text, aspects, Some(upload), Some(label))
+        }
         crate::render_element::TextPlacement::Pixel => context.pixel_draws(text, aspects, upload),
     };
     draws.map(|mut draws| {
         crate::text_culling::apply_text_face_culling(&mut draws, &**aspects, closed);
         draws
     })
-}
-
-fn advance_aspect(
-    aspects: &mut Handle<dyn Graphic3dAspectsSource>,
-    style: Handle<dyn Graphic3dAspectsSource>,
-) -> Option<GroupGeometry> {
-    *aspects = style;
-    None
-}
-fn advance_flipping(
-    flips: &mut crate::group_flipping::GroupFlipStack,
-    plane: Option<Axis2>,
-) -> Option<GroupGeometry> {
-    flips.apply(plane);
-    None
-}
-fn advance_stencil(
-    program: &mut crate::stencil_program::StencilProgram,
-    enabled: bool,
-) -> Option<GroupGeometry> {
-    program.command(crate::stencil_program::StencilCommand::Options(enabled));
-    None
 }
 
 #[cfg(test)]

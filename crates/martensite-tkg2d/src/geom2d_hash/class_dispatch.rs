@@ -1,24 +1,24 @@
 //! The exact-type dispatch of the polymorphic hashers: the null and identity cases,
 //! the down cast on an exact dynamic type, and the fallback for unknown classes.
 use martensite_tkernel::standard::c_string::CStringHasher;
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient, TransientHandleTarget};
 
 /// The typed handle when the dynamic type of `handle` is exactly `T`
 /// (an exact runtime type check followed by a typed handle cast);
 /// `exact_class::<Geom2dLine, _>(&curve)`.
-pub fn exact_class<T: RuntimeTyped, S: ?Sized + RuntimeTyped>(
+pub fn exact_class<T: RuntimeTyped + Transient, S: ?Sized + TransientHandleTarget>(
     handle: &Handle<S>,
 ) -> Option<Handle<T>> {
     handle
         .is_instance(T::static_type())
-        .then(|| handle.cast::<T>())
+        .then(|| handle.downcast::<T>())
 }
 
 /// The part of every polymorphic comparison that precedes the typed dispatch: two
 /// null handles are equal, one null handle is not, the same object is, and objects
 /// of different dynamic types are not; `None` when the typed hashers must decide;
 /// `decided_equality(&a, &b)`.
-pub fn decided_equality<S: ?Sized + RuntimeTyped>(
+pub fn decided_equality<S: ?Sized + TransientHandleTarget>(
     first: &Handle<S>,
     second: &Handle<S>,
 ) -> Option<bool> {
@@ -37,7 +37,7 @@ pub fn decided_equality<S: ?Sized + RuntimeTyped>(
 
 /// The hash of an object that no typed hasher handles: the a c-string-hasher failure
 /// hash of its type name, 0 for a null handle; `unknown_class_hash(&curve)`.
-pub fn unknown_class_hash<S: ?Sized + RuntimeTyped>(handle: &Handle<S>) -> usize {
+pub fn unknown_class_hash<S: ?Sized + TransientHandleTarget>(handle: &Handle<S>) -> usize {
     handle
         .dynamic_type()
         .map_or(0, |kind| CStringHasher.hash_code(kind.name().as_bytes()))

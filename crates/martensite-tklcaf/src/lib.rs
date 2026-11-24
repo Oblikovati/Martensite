@@ -5,6 +5,11 @@
 //! - [`tfunction`]: functions, their drivers, dependencies and execution order.
 //! - [`tdoc_std`]: documents, applications, external links and multi-document transactions.
 //!
+//! [`tdata_std::TDataStdExpressionSource`] and [`tdata_std::TDataStdRealSource`] expose
+//! the inherited operations of expression and real attributes on the original object.
+//! Document undo and redo history stores [`tdf::TdfDeltaSource`] handles, so a
+//! compound delta keeps its own type and identity.
+//!
 //! See `docs/features/martensite-tklcaf/README.md` for the ownership model.
 mod guid_text;
 pub mod json;

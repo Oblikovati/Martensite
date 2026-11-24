@@ -185,6 +185,7 @@ impl UploadedUserProgram {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let sets = unsafe { self.runtime.device().allocate_descriptor_sets(&info) }
             .map_err(|e| vk_error("allocate user program sets", e))?;
+        self.runtime.work.add_sets(&info);
         self.sets = [sets[0], sets[1]];
         let images: Vec<[vk::DescriptorImageInfo; 1]> = self
             .pipeline

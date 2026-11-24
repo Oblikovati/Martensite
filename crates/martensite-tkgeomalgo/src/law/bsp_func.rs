@@ -1,20 +1,22 @@
 //! `Law_BSpFunc`: a law evaluated on a `Law_BSpline` over a parameter range.
 use super::bsp_func_intervals::IntervalKnots;
 use super::{LawBSpline, LawFunction};
-use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{
+    Failure, Handle, HandleUpcast, RuntimeType, RuntimeTyped, SharedState, Transient,
+};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkg2d::geom2d::arrays::put;
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkmath::geom_abs::Shape;
 
 /// The fields of a B-spline law: the shared curve and the range.
 #[derive(Clone, Default)]
-pub(crate) struct BSpFuncFields {
-    pub(crate) curv: Handle<LawBSpline>,
-    pub(crate) first: f64,
-    pub(crate) last: f64,
+struct BSpFuncFields {
+    curv: Handle<LawBSpline>,
+    first: f64,
+    last: f64,
 }
 
 /// A law defined by a scalar B-spline between two parameters (`Law_BSpFunc`); the
@@ -23,10 +25,43 @@ pub(crate) struct BSpFuncFields {
 /// `let law = LawBSpFunc::with_curve(&curve, 0.0, 1.0); law.value(0.5)?`.
 #[derive(Default)]
 pub struct LawBSpFunc {
-    parent: StandardTransient,
+    state: BSpFuncState,
+}
+impl_transient!(LawBSpFunc, "Law_BSpFunc", dyn LawFunction, interfaces: [dyn LawFunction, dyn BSplineLaw]);
+
+/// B-spline laws share the `Law_BSpFunc` runtime class and its curve access.
+/// Use `law.cast::<dyn BSplineLaw>()` for an owning view of a `Law_S` or `Law_Interpol`.
+pub trait BSplineLaw: LawFunction {
+    /// The curve shared by the law; `law.curve()`.
+    fn curve(&self) -> Handle<LawBSpline>;
+
+    /// Replace the curve and adopt its range; `law.set_curve(&curve)?`.
+    fn set_curve(&self, curve: &Handle<LawBSpline>) -> Result<(), Failure>;
+}
+
+impl RuntimeTyped for dyn BSplineLaw {
+    const TYPE_NAME: &'static str = LawBSpFunc::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        LawBSpFunc::static_type()
+    }
+}
+impl_transient_interface_target!(dyn BSplineLaw);
+
+impl HandleUpcast<dyn LawFunction> for dyn BSplineLaw {
+    fn upcast_arc(owner: std::sync::Arc<Self>) -> std::sync::Arc<dyn LawFunction> {
+        owner
+    }
+}
+
+#[derive(Default)]
+pub(super) struct BSpFuncState {
     fields: SharedState<BSpFuncFields>,
 }
-impl_transient!(LawBSpFunc, "Law_BSpFunc", dyn LawFunction, parent, interfaces: [dyn LawFunction]);
+
+pub(super) trait BSpFuncOwner: Transient {
+    fn bsp_func_state(&self) -> &BSpFuncState;
+}
 
 /// `PosTol`: half of `Precision::PConfusion`.
 fn pos_tol() -> f64 {
@@ -44,7 +79,7 @@ impl LawBSpFunc {
     /// `LawBSpFunc::with_curve(&curve, 0.0, 1.0)`.
     pub fn with_curve(c: &Handle<LawBSpline>, first: f64, last: f64) -> Self {
         let law = Self::default();
-        *law.fields.write() = BSpFuncFields {
+        *law.state.fields.write() = BSpFuncFields {
             curv: c.clone(),
             first,
             last,
@@ -54,12 +89,28 @@ impl LawBSpFunc {
 
     /// The curve (`Curve`), possibly null; `law.curve()`.
     pub fn curve(&self) -> Handle<LawBSpline> {
-        self.fields.read().curv.clone()
+        self.state.curve()
     }
 
     /// Sets the curve and takes its parameter range (`SetCurve`);
     /// Standard_NullObject for a null curve. `law.set_curve(&curve)?`.
     pub fn set_curve(&self, c: &Handle<LawBSpline>) -> Result<(), Failure> {
+        self.state.set_curve(c)
+    }
+}
+
+impl BSpFuncOwner for LawBSpFunc {
+    fn bsp_func_state(&self) -> &BSpFuncState {
+        &self.state
+    }
+}
+
+impl BSpFuncState {
+    fn curve(&self) -> Handle<LawBSpline> {
+        self.fields.read().curv.clone()
+    }
+
+    fn set_curve(&self, c: &Handle<LawBSpline>) -> Result<(), Failure> {
         let curve: &LawBSpline = live_curve(c)?;
         let (first, last) = (curve.first_parameter(), curve.last_parameter());
         *self.fields.write() = BSpFuncFields {
@@ -71,7 +122,7 @@ impl LawBSpFunc {
     }
 
     /// A copy of the fields, so that no lock is held while the curve evaluates.
-    pub(crate) fn snapshot(&self) -> BSpFuncFields {
+    fn snapshot(&self) -> BSpFuncFields {
         self.fields.read().clone()
     }
 }
@@ -155,28 +206,28 @@ impl BSpFuncFields {
     }
 }
 
-impl LawFunction for LawBSpFunc {
+impl<T: BSpFuncOwner> LawFunction for T {
     /// The continuity of the curve.
     fn continuity(&self) -> Result<Shape, Failure> {
-        Ok(live_curve(&self.snapshot().curv)?.continuity())
+        Ok(live_curve(&self.bsp_func_state().snapshot().curv)?.continuity())
     }
     /// The number of knot spans of the curve inside the range where it is less than
     /// C`s`; Standard_DomainError for G1 and G2.
     fn nb_intervals(&self, s: Shape) -> Result<i32, Failure> {
-        self.snapshot().nb_intervals(s)
+        self.bsp_func_state().snapshot().nb_intervals(s)
     }
     fn intervals(&self, t: &mut Array1<'_, f64>, s: Shape) -> Result<(), Failure> {
-        self.snapshot().intervals(t, s)
+        self.bsp_func_state().snapshot().intervals(t, s)
     }
     /// The curve value; at the range ends it evaluates on the span inside the range.
     fn value(&self, x: f64) -> Result<f64, Failure> {
-        self.snapshot().value(x)
+        self.bsp_func_state().snapshot().value(x)
     }
     fn d1(&self, x: f64) -> Result<(f64, f64), Failure> {
-        self.snapshot().d1(x)
+        self.bsp_func_state().snapshot().d1(x)
     }
     fn d2(&self, x: f64) -> Result<(f64, f64, f64), Failure> {
-        self.snapshot().d2(x)
+        self.bsp_func_state().snapshot().d2(x)
     }
     /// A `Law_BSpFunc` on the same curve and the new range.
     fn trim(
@@ -185,11 +236,21 @@ impl LawFunction for LawBSpFunc {
         p_last: f64,
         _tol: f64,
     ) -> Result<Handle<dyn LawFunction>, Failure> {
-        let curve: Handle<LawBSpline> = self.snapshot().curv;
-        Ok(Handle::new(LawBSpFunc::with_curve(&curve, p_first, p_last)).cast())
+        let curve: Handle<LawBSpline> = self.bsp_func_state().snapshot().curv;
+        Ok(Handle::new(LawBSpFunc::with_curve(&curve, p_first, p_last)).into_upcast())
     }
     fn bounds(&self) -> Result<(f64, f64), Failure> {
-        let fields: BSpFuncFields = self.snapshot();
+        let fields: BSpFuncFields = self.bsp_func_state().snapshot();
         Ok((fields.first, fields.last))
+    }
+}
+
+impl<T: BSpFuncOwner> BSplineLaw for T {
+    fn curve(&self) -> Handle<LawBSpline> {
+        self.bsp_func_state().curve()
+    }
+
+    fn set_curve(&self, curve: &Handle<LawBSpline>) -> Result<(), Failure> {
+        self.bsp_func_state().set_curve(curve)
     }
 }

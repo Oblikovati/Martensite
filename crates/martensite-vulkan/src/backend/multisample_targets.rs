@@ -9,6 +9,10 @@ pub(super) struct MultisampleTargets {
     pub depth: TargetImage,
 }
 impl MultisampleTargets {
+    pub fn allocation_bytes(&self) -> u64 {
+        self.color.allocation_bytes() + self.depth.allocation_bytes()
+    }
+
     pub fn new(
         runtime: &Arc<VulkanRuntime>,
         extent: vk::Extent2D,

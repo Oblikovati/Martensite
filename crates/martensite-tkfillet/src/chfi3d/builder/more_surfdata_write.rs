@@ -138,7 +138,7 @@ impl ChFi3dBuilder {
         );
         self.ds
             .change_shape_interferences_index(ind_sol)?
-            .append(Handle::new(ssi).cast());
+            .append(Handle::new(ssi).into_upcast());
         let mut ind = ms.ind;
         lock(&ms.seq).remove((ind - 1) as usize);
         if !ms.isfirst {
@@ -276,7 +276,7 @@ impl ChFi3dBuilder {
             true,
             true,
         )?)
-        .cast();
+        .into_upcast();
         let tolerance = self.ds.curve(ind_line).tolerance();
         let (l1, _): (Point3, Point3) = ends(&tr_cline)?;
         let points = if l1.distance(&ms.cp1_on_arc.point()) < TOL3D {

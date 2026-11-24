@@ -92,7 +92,7 @@ impl Adaptor3dTopolTool {
         state.id_vtx = 0;
         for vertex in vertices {
             let index = state.nb_vtx as usize;
-            state.vtx[index] = Handle::new(vertex).cast();
+            state.vtx[index] = Handle::new(vertex).into_upcast();
             state.nb_vtx += 1;
         }
         Ok(())

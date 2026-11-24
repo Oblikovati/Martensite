@@ -4,6 +4,7 @@ use crate::{
     surface_texture::SurfaceTextureImage,
 };
 use martensite_tkernel::standard::{Handle, WeakHandle};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSource;
 use martensite_tkservice::graphic3d::*;
 use std::{
     collections::BTreeMap,
@@ -16,7 +17,7 @@ pub(crate) struct CapTextureSnapshot {
     pub resource_id: Vec<u8>,
 }
 struct CapTextureReadiness {
-    owner: WeakHandle<Graphic3dClipPlane>,
+    owner: WeakHandle<dyn Graphic3dClipPlaneSource>,
     aspect_revision: u32,
     snapshot: CapTextureSnapshot,
 }
@@ -41,7 +42,7 @@ impl RetainedCapTextures {
     }
     pub fn snapshot(
         &self,
-        plane: &Handle<Graphic3dClipPlane>,
+        plane: &Handle<dyn Graphic3dClipPlaneSource>,
         texture: &Handle<dyn Graphic3dTextureMap>,
         images: &RetainedTextureImages,
     ) -> Result<CapTextureSnapshot, RenderError> {
@@ -65,7 +66,7 @@ impl CapTextureReadiness {
     }
 
     fn new(
-        plane: &Handle<Graphic3dClipPlane>,
+        plane: &Handle<dyn Graphic3dClipPlaneSource>,
         texture: &Handle<dyn Graphic3dTextureMap>,
         images: &RetainedTextureImages,
     ) -> Result<Self, RenderError> {
@@ -113,18 +114,20 @@ mod tests {
     ) -> CapTextureSnapshot {
         cache
             .cap_textures
-            .snapshot(plane, &texture.cast(), cache)
+            .snapshot(&plane.upcast(), &texture.cast(), cache)
             .unwrap()
     }
     #[test]
     fn dedicated_cap_content_stays_stale_until_its_aspect_counter_is_refreshed() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         let before = snapshot_cap_fixture(&cache, &plane, &texture)
             .image
             .unwrap();
-        texture.set_image(cap_revision_image(0));
+        texture.set_image(cap_revision_image(0).into_upcast());
         texture.update_revision();
         let stale = snapshot_cap_fixture(&cache, &plane, &texture)
             .image
@@ -140,10 +143,12 @@ mod tests {
     #[test]
     fn inherited_caps_revalidate_content_and_an_ordinary_upload_updates_a_shared_resource() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         snapshot_cap_fixture(&cache, &plane, &texture);
-        texture.set_image(cap_revision_image(0));
+        texture.set_image(cap_revision_image(0).into_upcast());
         texture.update_revision();
         cache.snapshot(&texture.cast()).unwrap();
         let shared = snapshot_cap_fixture(&cache, &plane, &texture)
@@ -151,7 +156,7 @@ mod tests {
             .unwrap();
         assert_eq!(shared.bytes.as_slice(), [0, 0, 0, 255]);
         plane.set_use_object_texture(true);
-        texture.set_image(cap_revision_image(255));
+        texture.set_image(cap_revision_image(255).into_upcast());
         texture.update_revision();
         let inherited = snapshot_cap_fixture(&cache, &plane, &texture)
             .image
@@ -161,7 +166,9 @@ mod tests {
     #[test]
     fn cap_cache_does_not_retain_a_dead_plane_on_an_empty_redraw() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         snapshot_cap_fixture(&cache, &plane, &texture);
         assert_eq!(cache.cap_textures.bindings.lock().unwrap().len(), 1);
@@ -172,10 +179,12 @@ mod tests {
     #[test]
     fn shared_release_turns_stale_cap_black_and_repair_reuses_the_current_resource() {
         let cache = RetainedTextureImages::default();
-        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(cap_revision_image(255)));
+        let texture = Handle::new(Graphic3dTexture2D::from_pix_map(
+            cap_revision_image(255).into_upcast(),
+        ));
         let plane = Handle::new(Graphic3dClipPlane::default());
         snapshot_cap_fixture(&cache, &plane, &texture);
-        texture.set_image(Handle::new(ImagePixMap::default()));
+        texture.set_image(Handle::new(ImagePixMap::default()).into_upcast());
         texture.update_revision();
         assert!(cache.snapshot(&texture.cast()).unwrap().is_none());
         assert!(
@@ -183,7 +192,7 @@ mod tests {
                 .image
                 .is_none()
         );
-        texture.set_image(cap_revision_image(0));
+        texture.set_image(cap_revision_image(0).into_upcast());
         texture.update_revision();
         cache.snapshot(&texture.cast()).unwrap();
         let repaired = snapshot_cap_fixture(&cache, &plane, &texture)

@@ -171,6 +171,6 @@ pub trait PosixFileCalls: Send + Sync {
 }
 
 /// The process-wide host implementation; `native_calls()`.
-pub fn native_calls() -> Arc<dyn PosixFileCalls> {
+pub(super) fn native_calls() -> Arc<dyn PosixFileCalls> {
     Arc::new(super::NativePosixCalls)
 }

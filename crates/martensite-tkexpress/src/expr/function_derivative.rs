@@ -6,13 +6,12 @@ use super::handles::{ExprHandle, ExprSelfLink, adopt, deref};
 use super::named_function::ExprNamedFunction;
 use super::named_unknown::ExprNamedUnknown;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// The `deg`-th derivative of a function on one variable, with its expression;
 /// `ExprFunctionDerivative::new(&f, &x, 1)?.degree() == 1`.
 pub struct ExprFunctionDerivative {
-    parent: StandardTransient,
     function: ExprFunctionHandle,
     derivate: Handle<ExprNamedUnknown>,
     degree: i32,
@@ -23,7 +22,6 @@ impl_transient!(
     ExprFunctionDerivative,
     "Expr_FunctionDerivative",
     dyn ExprGeneralFunction,
-    parent,
     interfaces: [dyn ExprGeneralFunction]
 );
 impl ExprFunctionDerivative {
@@ -41,7 +39,6 @@ impl ExprFunctionDerivative {
             )));
         }
         let object: Self = Self {
-            parent: StandardTransient::default(),
             function: func.clone(),
             derivate: with_x.clone(),
             degree: deg,

@@ -21,7 +21,7 @@ fn vertex_on_curve(
 ) -> Result<Shape, Failure> {
     let new_vertex = vertex.empty_copied()?;
     let point: Handle<dyn BRepPointRepresentation> =
-        Handle::new(BRepPointOnCurve::new(par, c3d, location)).cast();
+        Handle::new(BRepPointOnCurve::new(par, c3d, location)).into_upcast();
     vertex_tshape(&new_vertex, "BRep_TVertex::ChangePoints")?
         .change_points(|points| points.push(point));
     Ok(new_vertex)
