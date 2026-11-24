@@ -18,7 +18,6 @@ use martensite_tkv3d::ais::{
 };
 use martensite_tkv3d::prs_mgr::{PrsMgrDisplayStatus, PrsMgrTypeOfPresentation3d};
 
-#[path = "ais_placement_verification.rs"]
 mod placement_verification;
 
 pub const CASES: &[Case] = &[

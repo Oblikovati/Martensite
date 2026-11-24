@@ -369,8 +369,7 @@ fn placement_admission_declines_mixed_dynamic_raster_state() {
             .supports_placements(std::slice::from_ref(&mirrored), 1)
             .unwrap()
     );
-    let too_many =
-        renderer.runtime.limits.max_storage_buffer_range as usize / ENTRY_BYTES as usize + 1;
+    let too_many = renderer.runtime.limits.max_storage_buffer_range as usize / ENTRY_BYTES + 1;
     assert!(
         !renderer
             .supports_placements(std::slice::from_ref(&first), too_many)

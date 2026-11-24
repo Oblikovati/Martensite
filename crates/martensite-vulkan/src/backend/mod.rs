@@ -151,7 +151,7 @@ impl VulkanRenderer {
         let storage_limit = self.runtime.limits.max_storage_buffer_range as usize;
         if !self.runtime.draw_tables
             || self.runtime.projection_behavior != crate::RenderProjectionBehavior::PrecomposedV1
-            || placement_count > storage_limit / draw_table::ENTRY_BYTES as usize
+            || placement_count > storage_limit / draw_table::ENTRY_BYTES
         {
             return Ok(false);
         }
