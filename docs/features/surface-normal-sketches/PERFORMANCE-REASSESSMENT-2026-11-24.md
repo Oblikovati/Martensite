@@ -191,3 +191,82 @@ pave blocks that feed later native stages. It was excluded from
 production. A shared-ruling certificate needs a bounded tolerance
 collar and a way to retain or separately validate the section payload
 those stages consume.
+
+### Optimized projection and checker trials
+
+The point-surface extrema change traverses contiguous grid rows without
+changing the search order. A release-build probe queried the 1,577 Bézier
+edge–face pairs from the decoded text boss at the start, middle and end of
+each edge range. Across 4,731 queries per sample, every ordered extremum,
+parameter, point and squared distance matched bit for bit. Median warm
+projection time fell from 568 to 361 ms across six warm samples per variant.
+Peak RSS was within 0.2%. In five alternating full boss runs, median API
+time fell from 23.912 to 22.579 s and retired user-space instructions fell
+by 3.8%. The frozen boss, ordered report and composed history were
+byte-identical to the saved baseline.
+
+In three fresh-process pairs on four pinned physical cores, the isolated
+checker dropped from 13.174 to 6.146 s median when allowed to use four
+workers. Peak RSS rose from 226,748 to 234,452 KiB. Ordered checker
+observations, native pave state and section curves matched byte for byte.
+
+The same policy exceeded the 10% memory allowance when applied solely to
+final validation within the public feature. These are single matched API
+call timings from the scratch build. The archive, report and history
+matched for each operation.
+
+| Text fixture | Serial API | Four-worker API | Serial peak RSS | Four-worker peak RSS |
+| --- | ---: | ---: | ---: | ---: |
+| Cold boss | 21.107 s | 15.195 s | 286,956 KiB | 432,180 KiB |
+| Cold pocket | 22.736 s | 15.491 s | 314,512 KiB | 451,264 KiB |
+| Warm 2% depth edit | 21.943 s | 14.494 s | 318,764 KiB | 453,696 KiB |
+
+On a separate cold boss run, two workers raised peak RSS from 287,052 to
+383,896 KiB. Before final validation the resident sizes agreed within
+0.2%. Most of the extra memory was anonymous and stayed resident when the
+validator returned. A 44×44 face projector retains about 0.48 MiB in four
+parameter grids. Three grids hold point-dependent scratch. Across 339
+cached face projectors those three grids alone account for about 120 MiB
+of capacity. Reusing the grids across point queries is being tested
+separately from worker scheduling.
+
+The GeometricCompositeV6 authored selection trial reduced the median
+planar stage from 2.658 to 0.379 s in five fresh-process pairs. All 18
+selected regions kept identical directed loops, native archives,
+validation and area bits. An independent rational Green integral lay
+inside every reported area interval. The new route spent zero pair
+bisections and the original spent 7,456. It is being qualified as an
+explicit execution selection because the two policies can differ in
+which requests fit the current work limit.
+
+### Offscreen interaction measurements
+
+A scratch Vulkan fixture on Linux with the Radeon 8060S starts from
+native cylinder UV hits and updates a retained ribbon. It measures chart
+mapping, preview geometry and submission through GPU completion. It ran
+1280×720 and 3840×2560 in both run orders at synthetic 60 and 120 Hz.
+
+| Viewport | Drag p95 at 60 Hz | Drag p95 at 120 Hz | First preview p95 at 60 Hz | First preview p95 at 120 Hz |
+| --- | ---: | ---: | ---: | ---: |
+| 1280×720 | 0.91–0.96 ms | 0.88 ms | 1.26–2.94 ms | 0.97–1.04 ms |
+| 3840×2560 | 1.00–1.01 ms | 0.92–0.97 ms | 1.15–1.79 ms | 0.77–1.00 ms |
+
+Each run used 160 drag updates and 40 fresh preview openings per mode.
+Chart opening and support capture were measured separately from the
+preview. No update missed its synthetic frame budget. Immediate and full
+render captures had identical color and depth. The test ends at the GPU
+completion signal. It excludes the application picker, constraint solve
+and compositor presentation.
+
+### Conical attachment seam
+
+All 339 zero-depth edges in each text tool fit inside one native periodic
+sheet. A full-interval homogeneous Bernstein bound places the stored 3D
+edges within `1.917e-13` model units of the selected cone. Carrier
+transfer and UV rounding add at most `1.494e-14`. The existing pcurves
+still fail the `1e-7` sew allowance after affine transfer. One exact
+midpoint gives a same-parameter residual of at least `3.2705587e-6`.
+This leaves room to preserve the 3D edges and refit the support pcurves.
+A direct attachment would require a full-interval certificate for the
+fitted pcurves as well as tolerance and incidence checks after freezing
+the assembled solid.
