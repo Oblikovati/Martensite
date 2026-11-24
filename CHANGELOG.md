@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-24
+
 ### Added
 
 - Added `Graphic3dCView::structure_update` and `Graphic3dStructureManager::update_structure`. A structure or group update now also gives each view the layer of the updated structure, or every layer when other structures connect it. The update invalidates the same bounding boxes as before (#594).
@@ -142,7 +144,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Reused Vulkan vertex and index buffers between redraws, including for static textured meshes, and batched geometry transfers. Shared mapped storage pages and descriptor pools across the draws of a frame (#594).
 
-- Replaced transient object ownership with typed Rust handles and static class descriptors. Callers use compile-time upcasts, checked downcasts and explicit weak references (#592).
+- **BREAKING** Replaced transient object ownership with typed Rust handles and static class descriptors. Callers use compile-time upcasts, checked downcasts and explicit weak references (#592).
 
 - Used Rust strong counts during TKV3D callbacks and released pixmaps displaced by reentrant texture setters (#592).
 
