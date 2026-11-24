@@ -2,7 +2,7 @@
 //! Capture source coefficients before algebra; normalize homogeneous components together.
 use super::super::{RootIsolationError, bernstein, error::poll};
 use super::polynomial::ExactCoefficientPolynomial;
-use crate::predicates::{NonFiniteCoordinate, exact_coordinate, exact_point};
+use crate::predicates::{NonFiniteCoordinate, binary64_parts};
 use num_bigint::{BigInt, Sign};
 use std::sync::Arc;
 
@@ -129,22 +129,93 @@ impl OwnedBezierSource {
         &self,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<[Vec<BigInt>; 3], PairSourceFailure> {
-        let unit = exact_coordinate(1., 0, 0).expect("finite unit in existing coordinate scale");
-        let mut components: [Vec<BigInt>; 3] =
-            std::array::from_fn(|_| Vec::with_capacity(self.controls.len()));
-        for (index, control) in self.controls.iter().enumerate() {
+        let unit = DyadicPart::UNIT;
+        let mut scale = HomogeneousScale {
+            coordinates: unit.shift,
+            weights: usize::MAX,
+        };
+        let mut controls = Vec::with_capacity(self.controls.len());
+        for (index, [x, y]) in self.controls.iter().copied().enumerate() {
             poll(cancelled).map_err(PairSourceFailure::Algebra)?;
-            let point = exact_point(*control, index).map_err(PairSourceFailure::Coordinate)?;
-            let weight = self.exact_weight(index)?;
-            components[0].push(&point[0] * &weight);
-            components[1].push(&point[1] * &weight);
-            components[2].push(&unit * &weight);
+            let x = DyadicPart::of(x, index, 0).map_err(PairSourceFailure::Coordinate)?;
+            let y = DyadicPart::of(y, index, 1).map_err(PairSourceFailure::Coordinate)?;
+            let weight = self.dyadic_weight(index)?;
+            scale.coordinates = x.common_shift(y.common_shift(scale.coordinates));
+            scale.weights = weight.common_shift(scale.weights);
+            controls.push([x, y, weight]);
         }
-        Ok(components)
+        Ok(scale.materialize(controls))
     }
-    fn exact_weight(&self, index: usize) -> Result<BigInt, PairSourceFailure> {
-        let value = self.weights.as_ref().map_or(1., |weights| weights[index]);
-        exact_coordinate(value, index, 0).map_err(|_| PairSourceFailure::Weight { index, value })
+
+    fn dyadic_weight(&self, index: usize) -> Result<DyadicPart, PairSourceFailure> {
+        let Some(weights) = self.weights.as_ref() else {
+            return Ok(DyadicPart::UNIT);
+        };
+        let value = weights[index];
+        DyadicPart::of(value, index, 0).map_err(|_| PairSourceFailure::Weight { index, value })
+    }
+}
+
+#[derive(Clone, Copy)]
+struct DyadicPart {
+    significand: i64,
+    shift: usize,
+}
+
+impl DyadicPart {
+    const UNIT: Self = Self {
+        significand: 1,
+        shift: 1074,
+    };
+
+    fn of(value: f64, point: usize, axis: usize) -> Result<Self, NonFiniteCoordinate> {
+        let parts = binary64_parts(value, point, axis)?;
+        let trailing = parts.significand.trailing_zeros().min(52);
+        let significand = (parts.significand >> trailing) as i64;
+        Ok(Self {
+            significand: if parts.negative {
+                -significand
+            } else {
+                significand
+            },
+            shift: parts.shift + trailing as usize,
+        })
+    }
+
+    fn common_shift(self, current: usize) -> usize {
+        if self.significand == 0 {
+            current
+        } else {
+            current.min(self.shift)
+        }
+    }
+}
+
+struct HomogeneousScale {
+    coordinates: usize,
+    weights: usize,
+}
+
+impl HomogeneousScale {
+    fn materialize(self, controls: Vec<[DyadicPart; 3]>) -> [Vec<BigInt>; 3] {
+        let mut components = std::array::from_fn(|_| Vec::with_capacity(controls.len()));
+        for [x, y, weight] in controls {
+            for (value, component) in [x, y, DyadicPart::UNIT].into_iter().zip(&mut components) {
+                component.push(self.product(value, weight));
+            }
+        }
+        components
+    }
+
+    fn product(&self, value: DyadicPart, weight: DyadicPart) -> BigInt {
+        if value.significand == 0 || weight.significand == 0 {
+            return BigInt::from(0);
+        }
+        // The two significands need at most 53 bits each. Factoring positive powers
+        // of two uniformly from every component leaves shared content reduction exact.
+        let significand = i128::from(value.significand) * i128::from(weight.significand);
+        let shift = (value.shift - self.coordinates) + (weight.shift - self.weights);
+        BigInt::from(significand) << shift
     }
 }
 impl HomogeneousPolynomials {
@@ -265,3 +336,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "source_dyadic_tests.rs"]
+mod dyadic_tests;
