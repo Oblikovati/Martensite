@@ -234,3 +234,13 @@ endpoint. The measurement retains the observed parameter and requested limit
 with their original signed-zero bits. Exact differential controls cover endpoint
 and interior points, reversed and extreme maps, invalid operands and threshold
 boundaries. This change adds no public API or numerical work policy.
+
+## Borrowed comparison of paired sources
+
+`CapturedBezierPair::matches_pair` compares the two source views in
+order. `matches_self_off_diagonal` compares the single source of a
+self query. Controls, optional weights and trim intervals follow the
+same equality as an owning capture. Signed zeros compare equal and
+NaNs compare unequal. Certificate rebinding uses these views when
+checking the source, and continues to check the recorded query
+domain, policy, completion and work.

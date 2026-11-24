@@ -3,6 +3,8 @@
 use super::{census, outcome::*, paired_types::*};
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 mod occurrence;
+#[cfg(test)]
+mod tests;
 
 pub(super) fn refresh_obligations(census: &mut BoundaryCensus) {
     refresh_obligations_with_access(census, super::SourceAccess::Live);
@@ -224,11 +226,11 @@ fn report_source_current(census: &BoundaryCensus, record: &PairedStoredReport) -
     let Ok(report) = &record.outcome else {
         return false;
     };
-    let Ok(expected) = super::paired_execution::captured_query(census, record.sources, record.mode)
-    else {
-        return false;
-    };
-    report.source() == &expected
+    let [left, right] = super::paired_execution::source_views(census, record.sources);
+    match record.mode {
+        PairedQueryMode::Distinct => report.source().matches_pair(left, right),
+        PairedQueryMode::SelfOffDiagonal => report.source().matches_self_off_diagonal(left),
+    }
 }
 pub(super) fn paired_work_exact(census: &BoundaryCensus) -> bool {
     let Some(paired) = &census.paired else {

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added borrowed comparison methods for captured Bézier pair and self-query sources, so planar certificate rebinding can compare the operands without recopying their control points or weights (#419).
+
 - Added a caller-owned `CylinderAuthoringChart` that opens the selected support once and reuses its face and radius for repeated hit development during sketch editing (#420).
 
 - Added exact native side and periodic cap validation to the opt-in directed cone atlas, including certificate reuse after rigid placement (#419).

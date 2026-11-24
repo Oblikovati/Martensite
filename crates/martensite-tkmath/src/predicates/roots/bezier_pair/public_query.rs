@@ -4,6 +4,9 @@ use super::{
     BezierPairCaptureFailure, BezierPairPolicy, CapturedBezierPair,
     public_report::BezierPairReport, source::OwnedBezierSource,
 };
+#[cfg(test)]
+#[path = "public_query_tests.rs"]
+mod tests;
 /// Borrowed planar Bernstein controls, optional rational weights and exact binary64 trim.
 #[derive(Clone, Copy, Debug)]
 pub struct BezierPairCurve<'a> {
@@ -53,6 +56,21 @@ impl CapturedBezierPair {
     pub fn captured_curves(&self) -> [BezierPairCurve<'_>; 2] {
         curve_views(self.sources())
     }
+    /// Compare ordered distinct operands as a fresh capture would, without copying the curves.
+    /// Floating-point equality treats signed zeros as equal and NaNs as unequal.
+    /// Example: `assert!(query.matches_pair(left, right));`.
+    pub fn matches_pair(&self, left: BezierPairCurve<'_>, right: BezierPairCurve<'_>) -> bool {
+        let [captured_left, captured_right] = self.sources();
+        !self.is_self()
+            && curve_matches(captured_left, left)
+            && curve_matches(captured_right, right)
+    }
+    /// Compare the sole operand of a self query using the same equality as `matches_pair`.
+    /// Example: `assert!(query.matches_self_off_diagonal(curve));`.
+    pub fn matches_self_off_diagonal(&self, curve: BezierPairCurve<'_>) -> bool {
+        // Both stored operands of a self query share the same immutable source.
+        self.is_self() && curve_matches(&self.sources()[0], curve)
+    }
     /// Execute one owned-source query with explicit policies and a global split budget. Example: `query.certify(policy, || false)`.
     pub fn certify(
         &self,
@@ -63,6 +81,12 @@ impl CapturedBezierPair {
         // The report owns its captured binding even when the caller drops this query.
         BezierPairReport::new(outcome)
     }
+}
+
+fn curve_matches(captured: &OwnedBezierSource, curve: BezierPairCurve<'_>) -> bool {
+    captured.controls.as_ref() == curve.controls
+        && captured.weights.as_deref() == curve.weights
+        && captured.interval == curve.interval
 }
 
 pub(super) fn curve_views(sources: &[OwnedBezierSource; 2]) -> [BezierPairCurve<'_>; 2] {
