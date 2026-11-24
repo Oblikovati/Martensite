@@ -353,12 +353,13 @@ gap:
   hand-over counts as the redraw's submission. Moving only the present call gave 121 µs
   against 115 µs, so the submit call moves too.
 
-- Restore: an immediate frame now draws the saved main colour and depth back with one
-  fetch draw instead of two image copies. RADV records a copy as a meta pass that saves
+- Restore: with floating-point depth, an immediate frame draws the saved main colour and
+  depth back with one fetch draw. RADV records a copy as a meta pass that saves
   and restores the command state; the two copies cost about 10 µs per pair, and the draw
   gives the same time as no restore at all. The saved pair is sampled, so a target that
   may be published has sampled usage, rests in `TRANSFER_SRC_OPTIMAL` for captures, and is
-  lent to the restore draw in `SHADER_READ_ONLY_OPTIMAL`.
+  lent to the restore draw in `SHADER_READ_ONLY_OPTIMAL`. With 24-bit depth, the restore
+  copies both attachments to preserve their stored bits (#596).
 - Picking: both programs make the same 26,100 box tests and the same X round trip per pick.
   A box test takes no locks and the frustum vertex loop has a fixed count. Picking still
   executes about 45 M instructions per 30 timed frames, against 32 M for OCCT; most of the

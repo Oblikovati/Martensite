@@ -2,7 +2,9 @@
 use super::super::frame_targets::{FrameTargetPool, RasterTargetLease};
 use super::super::geometry_transfer::GeometryTransfers;
 use super::super::host_upload_pages::FrameUploadPages;
-use super::super::immediate_main_record::{MainLayerImages, MainLayerSnapshot, MainRestoreSource};
+use super::super::immediate_main_record::{
+    MainLayerImages, MainLayerSnapshot, MainRestoreSource, uses_main_restore_draw,
+};
 use super::super::{
     fragment_alpha_plan::FragmentAlphaPlan, oit_frame::OitFramePass, oit_plan::OitResourcePlan,
     retained_submission::RetirementStore,
@@ -108,7 +110,9 @@ impl FrameSetup<'_> {
             return self.refuse_elided().map(|()| (true, None));
         };
         if let Some(destination) = self.optional_main_targets(dimensions.attachment, false)? {
-            let restore = self.pipeline.main_restore.get(self.runtime)?;
+            let restore = uses_main_restore_draw(self.runtime.depth.formats.plain)
+                .then(|| self.pipeline.main_restore.get(self.runtime))
+                .transpose()?;
             return Ok((
                 false,
                 Some(PreparedMainRestore {

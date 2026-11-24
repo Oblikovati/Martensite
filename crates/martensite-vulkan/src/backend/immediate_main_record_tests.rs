@@ -261,3 +261,13 @@ fn an_elided_frame_without_published_main_images_is_refused() {
         .unwrap_err();
     assert!(error.is_main_restore_unavailable(), "{error}");
 }
+
+#[test]
+fn only_float_depth_uses_the_sampled_main_restore() {
+    use super::uses_main_restore_draw;
+    use ash::vk::Format;
+
+    assert!(uses_main_restore_draw(Format::D32_SFLOAT));
+    assert!(!uses_main_restore_draw(Format::X8_D24_UNORM_PACK32));
+    assert!(!uses_main_restore_draw(Format::D24_UNORM_S8_UINT));
+}

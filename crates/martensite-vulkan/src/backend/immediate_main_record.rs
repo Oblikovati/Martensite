@@ -65,28 +65,41 @@ impl MainLayerImages {
         self.color.allocation_bytes() + self.depth.allocation_bytes()
     }
 
-    /// Bind the pinned images to `pipeline` for a restore draw; `images.into_source(p)?`.
+    /// Prepare the chosen restore without changing the saved attachment representation.
     pub(super) fn into_source(
         self,
-        pipeline: Arc<MainRestorePipeline>,
+        pipeline: Option<Arc<MainRestorePipeline>>,
     ) -> Result<MainRestoreSource, RenderError> {
+        let draw = pipeline
+            .map(|pipeline| self.bind_draw(pipeline))
+            .transpose()?;
+        Ok(MainRestoreSource {
+            color: self.color,
+            depth: self.depth,
+            draw,
+        })
+    }
+
+    fn bind_draw(
+        &self,
+        pipeline: Arc<MainRestorePipeline>,
+    ) -> Result<MainRestoreDraw, RenderError> {
         let sets = [
             self.color.restore_set(pipeline.set_layout)?,
             self.depth.restore_set(pipeline.set_layout)?,
         ];
-        Ok(MainRestoreSource {
-            color: self.color,
-            depth: self.depth,
-            pipeline,
-            sets,
-        })
+        Ok(MainRestoreDraw { pipeline, sets })
     }
 }
 
-/// Published main images bound to the draw that restores them into an immediate frame.
+/// Published main images with optional bindings for a lossless restore draw.
 pub(crate) struct MainRestoreSource {
     color: Arc<TargetImage>,
     depth: Arc<TargetImage>,
+    draw: Option<MainRestoreDraw>,
+}
+
+struct MainRestoreDraw {
     pipeline: Arc<MainRestorePipeline>,
     sets: [vk::DescriptorSet; 2],
 }
@@ -96,8 +109,7 @@ impl MainRestoreSource {
         self.color.allocation_bytes() + self.depth.allocation_bytes()
     }
 
-    /// Draw the saved colour and depth into the targets of `target`, which the immediate
-    /// layers then load; `source.restore(runtime, command, &resources)`.
+    /// Populate the targets before the immediate layers load them.
     pub(super) fn restore(
         &self,
         runtime: &VulkanRuntime,
@@ -106,6 +118,35 @@ impl MainRestoreSource {
     ) {
         let images = [target.color.as_ref(), target.depth.as_ref()];
         let saved = [self.color.as_ref(), self.depth.as_ref()];
+        if let Some(draw) = &self.draw {
+            draw.restore(runtime, command, target, (saved, images));
+        } else {
+            restore_attachments(runtime, command, (saved, images), target.attachment_extent);
+        }
+    }
+}
+
+fn restore_attachments(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    (saved, images): ([&TargetImage; 2], [&TargetImage; 2]),
+    extent: vk::Extent2D,
+) {
+    apply_barriers(runtime, command, &images.map(to_copy_destination));
+    copy_pair(runtime, command, saved, images, extent);
+    let ready = images
+        .map(|image| load_attachment(image, Layout::TRANSFER_DST_OPTIMAL, Access::TRANSFER_WRITE));
+    apply_barriers(runtime, command, &ready);
+}
+
+impl MainRestoreDraw {
+    fn restore(
+        &self,
+        runtime: &VulkanRuntime,
+        command: vk::CommandBuffer,
+        target: &FrameResources,
+        (saved, images): ([&TargetImage; 2], [&TargetImage; 2]),
+    ) {
         let attach = images.map(|image| super::record::image_barrier(image, false));
         apply_barriers(
             runtime,
@@ -330,12 +371,20 @@ impl super::VulkanRenderer {
             && self
                 .runtime
                 .supports_main_copy(self.runtime.depth.formats.plain)
-            && super::image::supports_sampling(
-                &self.runtime,
-                super::main_restore_pipeline::RESTORE_COLOR_FORMAT,
-            )
-            && super::image::supports_sampling(&self.runtime, self.runtime.depth.formats.plain)
+            && (!uses_main_restore_draw(self.runtime.depth.formats.plain)
+                || (super::image::supports_sampling(
+                    &self.runtime,
+                    super::main_restore_pipeline::RESTORE_COLOR_FORMAT,
+                ) && super::image::supports_sampling(
+                    &self.runtime,
+                    self.runtime.depth.formats.plain,
+                )))
     }
+}
+
+/// D24 can round again when a fetched UNORM value is written to the depth attachment (#596).
+pub(super) fn uses_main_restore_draw(depth: vk::Format) -> bool {
+    depth == vk::Format::D32_SFLOAT
 }
 
 impl VulkanRuntime {

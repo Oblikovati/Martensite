@@ -389,10 +389,18 @@ const MAIN_COPY_USAGE: vk::ImageUsageFlags = vk::ImageUsageFlags::from_raw(
     vk::ImageUsageFlags::TRANSFER_DST.as_raw() | vk::ImageUsageFlags::SAMPLED.as_raw(),
 );
 
+fn main_copy_usage(runtime: &VulkanRuntime) -> vk::ImageUsageFlags {
+    if super::immediate_main_record::uses_main_restore_draw(runtime.depth.formats.plain) {
+        MAIN_COPY_USAGE
+    } else {
+        vk::ImageUsageFlags::TRANSFER_DST
+    }
+}
+
 fn color_attachment(runtime: &VulkanRuntime, subview_copy: bool) -> AttachmentSpec {
     let (format, mut usage, aspect) = attachment_properties(runtime.depth.formats, false, false);
     if subview_copy {
-        usage |= MAIN_COPY_USAGE;
+        usage |= main_copy_usage(runtime);
     }
     AttachmentSpec {
         format,
@@ -405,7 +413,7 @@ fn color_attachment(runtime: &VulkanRuntime, subview_copy: bool) -> AttachmentSp
 fn depth_attachment(runtime: &VulkanRuntime, stencil: bool, copy: bool) -> AttachmentSpec {
     let (format, mut usage, aspect) = attachment_properties(runtime.depth.formats, true, stencil);
     if copy {
-        usage |= MAIN_COPY_USAGE;
+        usage |= main_copy_usage(runtime);
     }
     AttachmentSpec {
         format,
