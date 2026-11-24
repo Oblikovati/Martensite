@@ -22,6 +22,13 @@ each member's side and cap carriers, trims and incidences
 from the member proof; pairs across members come from the family clearance
 proof. The snapshot holds no tolerances: the proof is about exact geometry.
 
+The numeric receipt retains the source snapshots, adjacency and coverage
+totals. The side hierarchy records that hulls separate and discards the gap
+that proved it. An attached-solid check needs a certified lower bound for
+each pair it would skip. Compare that bound with the tolerances of the
+decoded result and the active fuzzy value. A pair proved injective along a
+shared ruling still needs native handling at that incidence.
+
 ## Failure modes
 
 1. A result face binds to the wrong certified source, so a pair whose geometry
@@ -71,11 +78,14 @@ code only.
 
 ## Order of work
 
-1. Land the shared-context fix on `main`, forward it to `release/next` and merge
-   it here, so measurements start from the parallel check.
+1. Measure the tagged kernel with the current native checker. Qualify any
+   parallel checker policy separately so its time and memory effects can be
+   distinguished from the coverage transfer.
 2. Add the coverage counts to the report and the binding of result entities,
    without skipping anything. Check that the counts match the census in
    CONE-REGION-ATLAS.md.
-3. Add the covered-pair predicate and its unit tests.
+3. Bind certified lower bounds to the candidate pairs and add the covered-pair
+   predicate with tests for exact matches, changed geometry and insufficient
+   clearance.
 4. Enable skipping behind the operation's own path, run the evidence table, then
    measure.

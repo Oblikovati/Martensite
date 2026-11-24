@@ -176,6 +176,12 @@ effective leaf policies and actual work/error receipts are retained separately.
 
 ### Candidate evidence and performance
 
+The v0.14.0 rebase has a new local performance baseline for the 239-curve
+tool and attached boss, and the connected `O.` fixture. The stage profiles
+include a matched Linux/glibc comparison of serial and four-worker
+validation with and without heap trimming.
+[Rebase measurements and profiles](PERFORMANCE-REASSESSMENT-2026-11-24.md).
+
 The full Math library passed 825 tests. The full Sketch library passed 441
 with no failures and 5 ignored controls in 142.42 seconds; public surface-sketch
 integration passed 50 with no failures and 2 ignored controls in 25.90 seconds.
