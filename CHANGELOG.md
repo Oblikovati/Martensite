@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added a caller-owned `CylinderAuthoringChart` that opens the selected support once and reuses its face and radius for repeated hit development during sketch editing (#420).
+
 - Added exact native side and periodic cap validation to the opt-in directed cone atlas, including certificate reuse after rigid placement (#419).
 
 - Added an opt-in connected cone atlas that extruded profiles wider than one revolution and certified separation of the decoded solids (#419).

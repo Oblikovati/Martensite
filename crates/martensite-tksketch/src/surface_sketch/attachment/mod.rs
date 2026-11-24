@@ -7,7 +7,9 @@ use martensite_tkbrep::{
 };
 mod admission;
 mod chart;
-pub use chart::{CylinderParameterRequest, DevelopedCylinderHit, OutOfSupportPolicy};
+pub use chart::{
+    CylinderAuthoringChart, CylinderParameterRequest, DevelopedCylinderHit, OutOfSupportPolicy,
+};
 mod codec;
 mod cone;
 pub use cone::{

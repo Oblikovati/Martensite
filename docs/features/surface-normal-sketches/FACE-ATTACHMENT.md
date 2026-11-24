@@ -36,6 +36,13 @@ to `(radius * (u - seam_angle), v)` without projecting the world hit again or
 reducing its angular branch. The caller retains the chosen unwrapped parameter.
 The seam angle defines zero developed arc length; it does not change native trims.
 
+For a sequence of pointer hits, open
+`attachment.authoring_chart(revision, seam_angle)` once and call
+`chart.develop_parameters(revision, uv, outside)` for each hit.
+The chart owns an independent native face and keeps the radius from
+that capture. Open a new chart after a support revision or seam change.
+Both entry points use the same trim classification and coordinate bounds.
+
 Coordinate measurements enclose rounding of that expression on the supplied
 binary64 parameters and native analytic radius. They exclude uncertainty in the
 intersector parameters and deviation of the stored frame from an ideal metric
