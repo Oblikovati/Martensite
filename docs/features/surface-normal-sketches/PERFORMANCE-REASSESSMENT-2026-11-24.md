@@ -296,3 +296,71 @@ Refit and certification took 3.51 s for the boss and 3.62 s for the
 pocket in scratch. Direct assembly still needs to certify whole-depth
 separation from both rims, seam winding, and any contact with retained
 support inside the sewing collar.
+
+### Repeated latency after the exact arithmetic changes
+
+On pinned CPUs, the `b22832a5` release build completed these public
+calls in 20 fresh processes per fixture. The connected `O.` run
+alternated the old and new binaries on the same CPU. Its old p95 was
+1.189 s. Each call still ran the owned test's geometry and history
+assertions after the timer stopped.
+
+| Fixture | Median API time | API p95 |
+| --- | ---: | ---: |
+| Cylinder boss | 0.344 s | 0.360 s |
+| Cylinder pocket | 0.347 s | 0.366 s |
+| Cone boss | 0.435 s | 0.457 s |
+| Connected `O.` | 0.942 s | 0.992 s |
+
+In five alternating standalone text runs, the dyadic changes reduced
+median tool time from 6.212 to 4.947 s and retired instructions from
+87.6 to 70.7 billion. The work receipt stayed at 3,057,275 arithmetic
+operations and 1,017 integration subintervals. The attached boss and
+pocket matched the previous B-rep, validation and history bytes.
+
+The opt-in authored planar selection was also compared with legacy V5
+in a single binary before the later arithmetic changes. Across five
+pairs, the attached boss median fell from 23.049 to 20.515 s and the
+pocket from 23.501 to 20.878 s, with effectively flat peak RSS. The
+proof receipt records the reduction in authored pair work. The decoded
+solid, tool, footprint and histories matched the legacy output.
+
+### Projection workspace reuse
+
+The scratch checker shares a bounded number of operation-owned buffers
+for the three grids rebuilt per query. Cached projectors retain their
+node samples. On the archived boss, two fresh-process samples per
+option gave four-worker peak RSS of 234,428 KiB with individual grids
+and 112,732 KiB with the pool. Median checker time was 5.692 and 5.736 s,
+respectively. All eight serial and parallel checker runs matched the
+ordered observations, internal pave state, section geometry and archive.
+
+The full operation already held roughly 286,000 KiB before the boss
+checker started. With the pool, four workers still raised the full
+operation's peak by 15.7–17.6% across boss, pocket and warm depth edit.
+Two workers reduced median cold boss API time from 21.667 to 16.836 s.
+Its two peak-RSS samples were 7.47% and 10.34% above their serial
+comparators. The approved 10% ceiling therefore still excludes these
+worker settings from the feature.
+
+### Direct curved-counter control
+
+A scratch assembly of one frozen curved-counter member passed the
+ordinary ordered checker for both senses. It used 54 shared edges
+with opposite coedges, retained the original edge tolerances, and
+replayed byte-identically after archive decode. Nine labeled material
+witnesses per sense agreed with Fuse or Cut. Both ordinary Booleans
+removed the zero-depth cap, retained the outer cap and stock end faces,
+and produced a remainder and a counter island on the selected stock face.
+The direct assembly took about 30 ms once the strict pcurves were ready.
+Archive freeze and native validation took about 2.7 s.
+
+For the full fixture, the refitted UV loops recovered the intended 18
+regions and two counter disks under the exact V6 planar census. That
+census took 2.36–2.41 s across 153,735 pair and self domains and used
+zero root bisections. A separate sign proof covered the decoded ruled
+side surfaces and terminal caps against the native carrier. Every side
+stayed on the proper side of the stock and at least 11.8759 model units
+from the stock end planes. The smallest certified normal separation
+was `8.468e-14`. A direct publication path needs to bind this separation,
+the UV census and the sewing bounds to the decoded shared seam.
