@@ -133,3 +133,61 @@ rebased branch. The TKSketch library suite passed 600 tests with
 nine ignored. The attached boss and pocket passed their native
 validation, 18-cap coverage and material-change assertions.
 [Tenfold performance plan](TENFOLD-PERFORMANCE-PLAN.md).
+
+## Optimized latency baseline
+
+Twenty fresh processes per fixture ran on the same eight logical CPUs
+with the release profile at `7ad97e2c`. The public API timers start
+after the fixture prepares the request. The V7 fixture at this revision
+timed the entire test, including its assertions.
+
+| Fixture | Median | Empirical p95 |
+| --- | ---: | ---: |
+| 239-curve attached outward boss | 19.344 s | 20.323 s |
+| 239-curve attached inward pocket | 19.602 s | 20.514 s |
+| 239-curve standalone text tool | 5.862 s | 6.025 s |
+| Directed common-chart `O.`, outward | 7.099 s | 7.440 s |
+| V7 connected `O.`, whole test | 1.135 s | 1.190 s |
+
+The exact depth-edit fixture holds the previous text boss while it
+recomputes after a 2% depth reduction. In twenty fresh processes,
+the edit took 19.998 s median and 20.348 s at p95. The test also
+checks that the old archive stays intact, the result has the same
+cap parents, and material volume decreases.
+
+The existing simple cylinder boss and pocket controls ran in under one
+second at p95, including setup and independent validation assertions.
+Twenty runs of each on one pinned CPU gave 0.850 s and 0.950 s
+respectively. The narrow oblique cone boss control, including a
+subprocess replay of the same operation, gave 2.250 s on that CPU.
+
+API-only timers at `43a718ae` ran 20 fresh processes per fixture on
+two pinned cores. The cylinder boss reached 0.416 s at p95, the cylinder
+pocket 0.426 s, and the cone boss 0.519 s. The V7 connected `O.` call
+reached 1.320 s at p95 in this run. The timers exclude fixture setup
+and the later assertions. All runs still executed the geometry, solid
+validity, and history controls.
+
+The caller-owned cylinder chart eliminates a repeated support decode.
+Across 256 paired hit measurements, its p95 moved from 44.151 to
+18.484 µs on a single-cylinder support, and from 1,029.576 to
+29.164 µs on a support with 16 additional disjoint solids. The inputs
+were already native UV hits. Each pair matched result bits and trim
+state. The independent-export and concurrent-reader controls passed
+under ThreadSanitizer in an isolated Linux runtime. Input-to-display
+and preview timing still require the desktop workflow and native
+presentation evidence.
+
+### Shared ruling checks
+
+The decoded boss contained 339 adjacent Bézier face pairs with an
+actual common linear ruling. Outward interval signs put all the
+off-ruling poles on opposite sides of a plane through that ruling
+for each pair. An experimental substitution of empty face–face
+records saved 7.25 s in the native debug checker on this archive
+and kept the published validation report and archive bytes identical.
+The substitution also changed the derived vertices, split edges and
+pave blocks that feed later native stages. It was excluded from
+production. A shared-ruling certificate needs a bounded tolerance
+collar and a way to retain or separately validate the section payload
+those stages consume.
