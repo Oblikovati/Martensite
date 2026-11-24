@@ -46,7 +46,9 @@ fn execute(
     })
 }
 
-pub(in crate::predicates::roots::metric_bounds) fn admit(query: ConicalTrimQuery<'_>) -> Checked<()> {
+pub(in crate::predicates::roots::metric_bounds) fn admit(
+    query: ConicalTrimQuery<'_>,
+) -> Checked<()> {
     admission::policy(query.options)?;
     admission::count("retained cone UV poles", query.pcurve.len(), 4)?;
     admission::count("retained cone space poles", query.curve.poles.len(), 10)?;
