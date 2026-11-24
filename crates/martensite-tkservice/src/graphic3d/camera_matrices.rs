@@ -268,6 +268,21 @@ fn inverse(matrix: &Mat4<f64>) -> Option<Mat4<f64>> {
     matrix.inverted_to(&mut output).then_some(output)
 }
 
+/// The inverse view and projection matrices of one camera state, from
+/// [`Graphic3dCamera::un_projection`].
+#[derive(Clone, Copy, Debug)]
+pub struct Graphic3dUnProjection {
+    inv_view: Mat4<f64>,
+    inv_projection: Mat4<f64>,
+}
+
+impl Graphic3dUnProjection {
+    /// `UnProject` of one point: device coordinates to world; `inverse.apply(&p)`.
+    pub fn apply(&self, point: &Point3) -> Point3 {
+        transformed(point, &[self.inv_projection, self.inv_view])
+    }
+}
+
 /// Point conversions.
 impl Graphic3dCamera {
     /// `Project`: world to normalized device coordinates; `camera.project(&p)`.
@@ -280,13 +295,18 @@ impl Graphic3dCamera {
     /// `UnProject`: device coordinates to world (the origin for singular matrices);
     /// `camera.un_project(&p)`.
     pub fn un_project(&self, point: &Point3) -> Point3 {
+        self.un_projection()
+            .map_or(Point3::new(0.0, 0.0, 0.0), |inverse| inverse.apply(point))
+    }
+    /// The inverse matrices that `un_project` applies, computed once for many points; none
+    /// for a singular camera. A selecting frustum unprojects ten points (#594).
+    /// Example: `camera.un_projection().map(|inverse| inverse.apply(&p))`.
+    pub fn un_projection(&self) -> Option<Graphic3dUnProjection> {
         let (view, projection) = (self.orientation_matrix(), self.projection_matrix());
-        match (inverse(&view), inverse(&projection)) {
-            (Some(inv_view), Some(inv_projection)) => {
-                transformed(point, &[inv_projection, inv_view])
-            }
-            _ => Point3::new(0.0, 0.0, 0.0),
-        }
+        Some(Graphic3dUnProjection {
+            inv_view: inverse(&view)?,
+            inv_projection: inverse(&projection)?,
+        })
     }
     /// `ConvertView2Proj`; `camera.convert_view_to_proj(&p)`.
     pub fn convert_view_to_proj(&self, point: &Point3) -> Point3 {

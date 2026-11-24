@@ -13,6 +13,7 @@ use std::sync::Arc;
 /// The images of one completed frame; `renderer.read_frame(&readback)?` copies them out.
 #[derive(Clone)]
 pub(crate) struct FrameReadback {
+    pub(crate) assembly_streaming: Option<crate::RenderAssemblyStreamingProgress>,
     pub(super) color: Arc<TargetImage>,
     pub(super) depth: Arc<TargetImage>,
     /// The logical frame extent of the capture.
@@ -45,6 +46,7 @@ impl FrameReadback {
         coordinates: AttachmentCoordinates,
     ) -> Self {
         Self {
+            assembly_streaming: None,
             color,
             depth,
             extent,
@@ -176,6 +178,8 @@ impl VulkanRenderer {
         planes: CapturePlanes,
     ) -> Result<FrameCapture, RenderError> {
         self.runtime.lifecycle.admit("read frame")?;
+        // The thread may hold the frame being read; settling also reports its error (#594).
+        self.settle_presentation()?;
         let outcome = self.read_admitted_frame(readback, planes);
         self.runtime.lifecycle.observe(outcome)
     }

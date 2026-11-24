@@ -127,6 +127,40 @@ impl Graphic3dLayer {
         self.state.write().nb_structures_not_culled = always + visible;
         Ok(())
     }
+    /// Whether culling with `selector` keeps every structure of the layer, as the last
+    /// `update_culling` did: then a new `update_culling` would write no flag and count the
+    /// same structures. A retained placement frame checks it instead of culling (#594).
+    /// Example: `layer.keeps_every_structure(&selector, Culling::On)?`.
+    pub fn keeps_every_structure(
+        &self,
+        selector: &Graphic3dCullingTool,
+        state: Culling,
+    ) -> Result<bool, Failure> {
+        {
+            let layer = self.state.read();
+            if state != Culling::On
+                || layer.is_bvh_primitives_needs_reset
+                || layer.nb_structures_not_culled != layer.nb_structures
+            {
+                return Ok(false);
+            }
+        }
+        let settings = self.layer_settings();
+        let mut ctx = Graphic3dCullingContext::default();
+        selector.set_culling_distance(&mut ctx, settings.culling_distance());
+        selector.set_culling_size(&mut ctx, settings.culling_size());
+        let pass = CullingPass { selector, ctx };
+        for is_trsf_pers in [false, true] {
+            if !self
+                .reached_leaves(&pass, is_trsf_pers)?
+                .iter()
+                .all(|reached| *reached)
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
     /// Sets the culled flag of every structure of both BVH sets.
     fn mark_all_culled(&self, culled: bool) {
         let sets = self.bvh_sets();
@@ -141,6 +175,38 @@ impl Graphic3dLayer {
             }
         }
     }
+    /// Produce coverage directly when the root proves it for every child. The ordinary
+    /// descent only applies the size test below a fully inside node (#594).
+    fn reached_flags(
+        &self,
+        pass: &CullingPass<'_>,
+        tree: &BvhTree<BvhVec3d>,
+        count: usize,
+    ) -> Result<Vec<bool>, Failure> {
+        let mut root = NodeInStack {
+            id: 0,
+            is_full_inside: true,
+        };
+        if pass.culled(tree, &mut root)? {
+            return Ok(vec![false; count]);
+        }
+        if root.is_full_inside && pass.ctx.size_cull2 <= 0.0 {
+            // Each inner node would queue its second child and toggle the next queue order.
+            if ((tree.length() - 1) / 2) % 2 != 0 {
+                let mut state = self.state.write();
+                state.bvh_is_left_child_queued_first = !state.bvh_is_left_child_queued_first;
+            }
+            return Ok(vec![true; count]);
+        }
+        let mut reached = vec![false; count];
+        for id in self.traverse(pass, tree, root)? {
+            if let Some(leaf) = usize::try_from(id).ok().and_then(|id| reached.get_mut(id)) {
+                *leaf = true;
+            }
+        }
+        Ok(reached)
+    }
+
     /// Which leaves of one BVH set the traversal reaches, by structure id.
     fn reached_leaves(
         &self,
@@ -153,9 +219,8 @@ impl Graphic3dLayer {
         } else {
             sets.primitives.structures().extent()
         };
-        let mut reached = vec![false; count];
         if count == 0 {
-            return Ok(reached);
+            return Ok(Vec::new());
         }
         // The traversal reads the tree under the sets lock: a copy of the whole tree on every
         // frame took 2% of a 1,000-structure Vulkan frame (#594). It takes only the layer
@@ -179,12 +244,7 @@ impl Graphic3dLayer {
             primitive_tree = sets.primitives.bvh()?;
             &*primitive_tree
         };
-        for id in self.traverse(pass, tree)? {
-            if let Some(leaf) = usize::try_from(id).ok().and_then(|id| reached.get_mut(id)) {
-                *leaf = true;
-            }
-        }
-        Ok(reached)
+        self.reached_flags(pass, tree, count)
     }
     /// Marks each structure of both sets culled unless the traversal reached it and it is
     /// visible in the view, writing only the flags that change: one write per structure and
@@ -202,15 +262,9 @@ impl Graphic3dLayer {
         &self,
         pass: &CullingPass<'_>,
         tree: &BvhTree<BvhVec3d>,
+        mut node: NodeInStack,
     ) -> Result<Vec<i32>, Failure> {
-        let mut node = NodeInStack {
-            id: 0,
-            is_full_inside: true,
-        };
         let mut leaves = Vec::new();
-        if pass.culled(tree, &mut node)? {
-            return Ok(leaves);
-        }
         let mut stack: Vec<NodeInStack> = Vec::new();
         // The queue order carries over between traversals; it is read and stored once, not
         // under the layer lock at every inner node (#594).
@@ -304,15 +358,8 @@ impl Graphic3dLayer {
             return Ok(Some(0));
         }
         let tree = sets.primitives.bvh()?;
-        let leaf_ids = self.traverse(&pass, &tree)?;
+        let reached = self.reached_flags(&pass, &tree, count)?;
         drop(tree);
-        let mut reached = vec![false; count];
-        for id in leaf_ids {
-            let Some(reached) = usize::try_from(id).ok().and_then(|id| reached.get_mut(id)) else {
-                return Ok(None);
-            };
-            *reached = true;
-        }
         let mut visible = 0;
         let mut compatible = true;
         for (weak, reached) in sets.primitives.structures().iter().zip(reached) {
@@ -320,14 +367,22 @@ impl Graphic3dLayer {
             let Some(structure) = lease.get() else {
                 continue;
             };
-            let mut fields = structure.cstructure_base().fields.write();
+            let fields = structure.cstructure_base().fields.read();
             let displayed = reached
                 && fields.visible
                 && fields
                     .view_affinity
                     .get()
                     .is_none_or(|a| a.is_visible(view_id));
-            fields.is_culled = !displayed;
+            // Write only a change: a write advances the graphic input epoch, which a stable
+            // orbit must leave still (#594).
+            let fields = if fields.is_culled == displayed {
+                drop(fields);
+                structure.set_culled(!displayed);
+                structure.cstructure_base().fields.read()
+            } else {
+                fields
+            };
             if displayed {
                 visible += 1;
                 if let Some(group) = ordinary_probe_group(&fields) {
@@ -434,3 +489,7 @@ fn ordinary_probe_group(
     }
     fields.groups.first().map(|slot| &**slot)
 }
+
+#[cfg(test)]
+#[path = "layer_culling_coverage_tests.rs"]
+mod coverage_tests;

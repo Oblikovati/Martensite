@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <memory>
 
 namespace parity
@@ -37,6 +38,7 @@ const GridLayout BOXES = {100, 3.0, 2.0};
 
 //! The instances of frame_connected_30k: 30 parts on a 200 x 150 grid, 10 units apart.
 const int    PARTS            = 30;
+const int    DISTRIBUTED_PARTS = 2815;
 const int    INSTANCE_COLUMNS = 200;
 const int    INSTANCE_ROWS    = 150;
 const double INSTANCE_PITCH   = 10.0;
@@ -156,11 +158,11 @@ TopoDS_Shape box_part(double theGrow)
     .Shape();
 }
 
-//! Part `theIndex` of 30: ten boxes, ten cylinders and ten cones that grow with the index.
+//! Cycle through the same three families, varying the dimensions in each additional batch.
 TopoDS_Shape part(int theIndex)
 {
-  const double aGrow = double(theIndex % 10);
-  switch (theIndex / 10)
+  const double aGrow = double(theIndex % 10) + 0.001 * double(theIndex / PARTS);
+  switch ((theIndex % PARTS) / 10)
   {
     case 0:
       return box_part(aGrow);
@@ -192,13 +194,14 @@ Measured frame_connected_30k(const Bench& theBench, const Mode& theMode)
   Stage        aStage(theBench, gp_Pnt(aHalfWidth, aHalfDepth, 0.0), aRadius);
   Handle(AIS_InteractiveContext)             aContext = new AIS_InteractiveContext(aStage.viewer);
   std::vector<Handle(AIS_InteractiveObject)> aParts;
-  for (int anIndex = 0; anIndex < PARTS; ++anIndex)
+  const int aPartCount = std::getenv("MARTENSITE_594_DISTRIBUTED_PARTS") ? DISTRIBUTED_PARTS : PARTS;
+  for (int anIndex = 0; anIndex < aPartCount; ++anIndex)
   {
     aParts.push_back(new AIS_Shape(part(anIndex)));
   }
   for (int anIndex = 0; anIndex < INSTANCE_COLUMNS * INSTANCE_ROWS; ++anIndex)
   {
-    display_instance(aContext, aParts[anIndex % PARTS], anIndex);
+    display_instance(aContext, aParts[anIndex % aPartCount], anIndex);
   }
   Measured aMeasured = measure_heavy_orbit(aStage, theMode);
   aContext.Nullify();

@@ -2,13 +2,20 @@
 //! Assemble prepared draw owners without changing allocation or command order.
 use super::*;
 impl DrawUploadContext<'_> {
-    /// The draw's push constants before any point viewports; `context.push_constants(&pipeline)`.
-    pub(super) fn push_constants(&self, pipeline: &DrawPipeline) -> Vec<u8> {
+    /// The draw's push constants before any point viewports.
+    pub(super) fn push_constants(
+        &self,
+        pipeline: &DrawPipeline,
+        mesh_decode: Option<&super::super::super::mesh_vertex_codec::MeshPositionDecode>,
+    ) -> Vec<u8> {
         let mut transform = encode_transform(self.draw, self.extent);
         if pipeline.kind.line_tint.uses_draw_color()
             && let Some((_, color)) = self.line_tint
         {
             transform.extend_from_slice(color.map(f32::to_ne_bytes).as_flattened());
+        }
+        if let Some(decode) = mesh_decode {
+            decode.append_push_bytes(&mut transform);
         }
         crate::backend::factorized_projection::transform(
             self.runtime.projection_behavior,
@@ -28,7 +35,8 @@ impl DrawUploadContext<'_> {
                 self.extent,
             )
         });
-        let mut transform = self.push_constants(&geometry.pipeline);
+        let mut transform =
+            self.push_constants(&geometry.pipeline, geometry.resident.mesh_decode.as_deref());
         if let Some(viewports) = point_viewports {
             crate::backend::fixed_grid_viewport::append_viewports(&mut transform, viewports);
         }
@@ -53,6 +61,8 @@ impl DrawUploadContext<'_> {
             pipeline: geometry.pipeline,
             vertices: geometry.resident.vertices,
             indices: geometry.resident.indices,
+            index_format: geometry.resident.index_format,
+            mesh_decode: geometry.resident.mesh_decode,
             count: geometry.count,
             instances: if self.draw.fixed_grid_point {
                 self.draw.indices.len() as u32
@@ -63,6 +73,8 @@ impl DrawUploadContext<'_> {
             transform,
             point_viewports,
             user_program: None,
+            table_run: None,
+            borrowed_lighting: false,
         }
     }
 }

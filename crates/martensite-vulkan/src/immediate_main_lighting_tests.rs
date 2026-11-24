@@ -1,21 +1,13 @@
 use super::*;
+use crate::immediate_redraw_fixture::{SceneExtractionOnly, display_sphere, lit_sphere_view};
 use crate::{
-    RenderClipping, RenderLayer, RenderVertex, identity_clip, light_snapshot::PackedRenderLight,
+    RenderClipping, RenderLayer, RenderLightSet, RenderLighting, RenderMaterial, RenderShading,
+    RenderVertex, identity_clip, light_snapshot::PackedRenderLight,
 };
 
 use martensite_tkernel::standard::Handle;
-use martensite_tkmath::gp::Point3;
-use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeSphere;
-use martensite_tkservice::{
-    aspect::{AspectNeutralWindow, AspectWindowMembers},
-    graphic3d::{Graphic3dCView, Graphic3dCameraProjection, Graphic3dClipPlaneSequenceSource},
-};
-use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
-use martensite_tkv3d::{
-    ais::{AisInteractiveContext, AisInteractiveObject, AisShape},
-    prs_mgr::PrsMgrDisplayStatus,
-    v3d::{V3dViewSource, V3dViewer},
-};
+use martensite_tkservice::graphic3d::{Graphic3dCView, Graphic3dClipPlaneSequenceSource};
+use martensite_tkv3d::{ais::AisInteractiveContext, v3d::V3dViewer};
 
 fn lit_draw() -> PrimitiveDraw {
     let points = [[-0.8, -0.8, 0.2], [0.8, -0.8, 0.2], [0., 0.8, 0.2]];
@@ -78,8 +70,10 @@ fn shares_common_lights_and_materials_without_pinning_geometry() {
     assert_eq!(key.lighting.materials.len(), 1);
     assert_eq!(key.lighting.view.as_ref().unwrap().lights.sources.len(), 1);
     assert_eq!(key.lighting.draws.len(), 2);
+    // The world matrix is inline, so the two placements share one lighting body and one
+    // normal stream (#594).
     for draw in &key.lighting.draws {
-        assert_eq!(draw.normals.0.as_ref().unwrap().strong_count(), 2);
+        assert_eq!(draw.normals.0.as_ref().unwrap().strong_count(), 1);
     }
     drop(frame);
     assert_eq!(
@@ -137,14 +131,6 @@ fn rejects_clipping_pbr_and_incompatible_view_lights() {
         mutate(&mut changed.draws[1]);
         assert!(MainPassKey::from_frame(&changed, 1).is_none());
         assert!(!key.matches(&changed, 1));
-    }
-}
-
-struct SceneExtractionOnly;
-
-impl crate::RenderBackend for SceneExtractionOnly {
-    fn render(&mut self, _frame: &RenderFrame) -> Result<crate::FrameCapture, crate::RenderError> {
-        panic!("the AIS admission check only extracts scene frames");
     }
 }
 
@@ -218,30 +204,4 @@ fn shaded_ais_hover_capture_matches_full_vulkan_redraw() {
     assert_eq!(restored.depth, full.depth);
     assert!(retained_attachments > rendered.image_memory().frame_attachment_bytes);
     assert!(driver.validation_errors().unwrap().is_empty());
-}
-
-fn lit_sphere_view(viewer: &V3dViewer) -> Handle<dyn V3dViewSource> {
-    viewer.set_default_lights().unwrap();
-    viewer.set_light_on().unwrap();
-    let view = viewer.create_view().unwrap();
-    let window = Handle::new(AspectNeutralWindow::default());
-    window.set_virtual(true);
-    window.set_size(128, 128);
-    view.set_immediate_update(false);
-    view.set_window(&window.cast(), 0).unwrap();
-    let camera = view.camera();
-    camera.set_projection_type(Graphic3dCameraProjection::Orthographic);
-    camera.set_center(&Point3::default()).unwrap();
-    camera.set_eye(&Point3::new(20., 10., 10.)).unwrap();
-    camera.set_scale(10.);
-    view
-}
-
-fn display_sphere(context: &AisInteractiveContext) -> Handle<dyn AisInteractiveObject> {
-    let mut sphere = BRepPrimAPIMakeSphere::new(1.).unwrap();
-    let object = AisShape::new(sphere.shape().unwrap()).cast();
-    context
-        .display_with_modes(&object, 1, 0, false, PrsMgrDisplayStatus::None)
-        .unwrap();
-    object
 }

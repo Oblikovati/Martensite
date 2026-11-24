@@ -365,13 +365,8 @@ pub(crate) fn apply_view_lights(
     {
         return Ok(());
     }
-    // Headlights use the inverse of the float OrientationMatrixF (WorldViewMatrixInverse).
-    let camera_view = crate::view_render_camera::owned_render_camera(view).orientation_matrix_f();
-    let inverse = camera_view
-        .inverted()
-        .map_err(|e| rejected(e, "an invertible camera world-view matrix"))?;
     let shading = view.rendering_params().shading_model;
-    let lights = crate::RenderLightSet::for_view(shading, &view.lights(), inverse.data(), None)?;
+    let (camera_view, lights) = camera_lights(view)?;
     for layer in layers.iter_mut() {
         // Every structure of a layer with a local origin sees its lights relative to it
         // (GlLayerList::renderLayer sets it before UpdateLightSourceState).
@@ -389,6 +384,33 @@ pub(crate) fn apply_view_lights(
         }
     }
     Ok(())
+}
+/// The camera's float world-view matrix and the view's lights for the draws that use it;
+/// `camera_lights(view)?`.
+pub(crate) fn camera_lights(
+    view: &dyn Graphic3dCView,
+) -> Result<
+    (
+        martensite_tkernel::ncollection::Mat4<f32>,
+        crate::RenderLightSet,
+    ),
+    RenderError,
+> {
+    let camera_view = crate::view_render_camera::owned_render_camera(view).orientation_matrix_f();
+    Ok((camera_view, lights_for_camera_view(view, camera_view)?))
+}
+
+/// Resolve headlights using the camera matrix already selected by the caller.
+pub(crate) fn lights_for_camera_view(
+    view: &dyn Graphic3dCView,
+    camera_view: martensite_tkernel::ncollection::Mat4<f32>,
+) -> Result<crate::RenderLightSet, RenderError> {
+    // Headlights use the inverse of the float OrientationMatrixF (WorldViewMatrixInverse).
+    let inverse = camera_view
+        .inverted()
+        .map_err(|e| rejected(e, "an invertible camera world-view matrix"))?;
+    let shading = view.rendering_params().shading_model;
+    crate::RenderLightSet::for_view(shading, &view.lights(), inverse.data(), None)
 }
 /// Lights of a transform-persistent structure.
 /// GlShaderManager::PushLightSourceState pushes the lights again whenever the world-view

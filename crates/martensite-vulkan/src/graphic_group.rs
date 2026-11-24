@@ -18,6 +18,8 @@ mod elements;
 mod extraction;
 #[path = "graphic_group_primitive_lowering.rs"]
 mod primitive_lowering;
+#[path = "graphic_group_primitive_submission.rs"]
+mod primitive_submission;
 #[path = "graphic_group_raytrace.rs"]
 mod raytrace;
 #[path = "graphic_group_stats.rs"]
@@ -27,6 +29,7 @@ use primitive_lowering::lower_styled_primitive;
 #[path = "graphic_group_vertex_output.rs"]
 mod vertex_output;
 use commands::{GroupCommand, GroupGeometry};
+pub(crate) use draw_record::ReplayedFields;
 pub(crate) use raytrace::RaytraceGroupCommand;
 #[derive(Default)]
 struct GroupSubmissionState {
@@ -43,7 +46,8 @@ struct GroupSubmissionState {
 /// A retained group feeding Martensite draw extraction; `Graphic3dDrawGroup::new(&structure)`.
 pub struct Graphic3dDrawGroup {
     base: Graphic3dGroupBase,
-    submissions: SharedState<GroupSubmissionState>,
+    /// Observed by the retained view batches (#594).
+    submissions: RevisedState<GroupSubmissionState>,
     primitive_sources: Arc<crate::primitive_cache::RetainedPrimitives>,
     text_source: crate::text_layout::TextProvider,
     mesh_edge_pipeline: crate::RenderMeshEdgePipeline,
@@ -76,7 +80,7 @@ impl Graphic3dDrawGroup {
     ) -> Handle<Self> {
         Handle::new(Self {
             base: Graphic3dGroupBase::new(structure),
-            submissions: SharedState::default(),
+            submissions: RevisedState::default(),
             primitive_sources: crate::primitive_cache::RetainedPrimitives::for_structure(structure),
             text_source,
             mesh_edge_pipeline: crate::retained_mesh_edges::driver_mesh_edge_pipeline(structure),
@@ -184,34 +188,6 @@ impl Graphic3dDrawGroup {
             .get()
             .map_or(0, |driver| driver.next_primitive_array_uid())
     }
-    /// Retain an array the driver draws itself rather than a group element (native
-    /// GlPrimitiveArray members of GlGraduatedTrihedron): it takes no driver id.
-    /// Example: `group.add_driver_primitive_array(&array)`.
-    pub(crate) fn add_driver_primitive_array(&self, array: &Graphic3dArrayOfPrimitives) {
-        let primitive = PrimitiveSubmission {
-            kind: array.primitive_type(),
-            indices: array.indices_ref().clone(),
-            attributes: array.attributes_ref().clone(),
-            bounds: array.bounds_ref().clone(),
-            upload: Default::default(),
-            uid: 0,
-            retained: None,
-        };
-        self.retain_primitive(primitive, false);
-    }
-    fn retain_primitive(&self, mut primitive: PrimitiveSubmission, evaluate_bounds: bool) {
-        if self.is_deleted() {
-            return;
-        }
-        primitive.retained = self.primitive_sources.entry(&primitive);
-        if evaluate_bounds && let Ok(bounds) = primitive.group_bounds() {
-            bounds.append(&mut self.base.fields.write().bounds);
-        }
-        self.submissions
-            .write()
-            .push_command(GroupCommand::Geometry(GroupGeometry::Primitives(primitive)));
-        self.update();
-    }
 }
 impl Graphic3dGroup for Graphic3dDrawGroup {
     fn group_base(&self) -> &Graphic3dGroupBase {
@@ -290,25 +266,18 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         bounds: &Handle<Graphic3dBoundBuffer>,
         evaluate_bounds: bool,
     ) {
-        if self.is_deleted() || attributes.is_null() {
-            // GlGroup::AddPrimitiveArray returns before creating an element.
-            return;
-        }
-        let uid = self.take_primitive_array_uid();
-        let primitive = PrimitiveSubmission {
-            kind,
-            indices: indices.clone(),
-            attributes: attributes.clone(),
-            bounds: bounds.clone(),
-            upload: Default::default(),
-            uid,
-            retained: None,
-        };
-        let raytraced = crate::driver_dump::is_raytraced_primitive(&primitive);
-        self.retain_primitive(primitive, evaluate_bounds);
-        if raytraced {
-            self.note_raytraced_element();
-        }
+        self.submit_array(kind, (indices, attributes, bounds), evaluate_bounds, None);
+    }
+    fn supports_triangle_mesh_levels(&self) -> bool {
+        !cfg!(feature = "command-state-diagnostics")
+    }
+    fn add_triangle_mesh_levels(
+        &self,
+        primary: &Handle<Graphic3dArrayOfTriangles>,
+        alternates: &[Graphic3dTriangleMeshLevel],
+        pixel_error: f64,
+    ) {
+        self.submit_triangle_mesh_levels(primary, alternates, pixel_error);
     }
     fn add_text(&self, text: &Handle<Graphic3dText>, evaluate_bounds: bool) {
         if self.is_deleted() || text.is_null() {

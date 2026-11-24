@@ -45,3 +45,34 @@ fn plane_distance_normalizes_and_rejects_tiny_normals() {
         0.
     );
 }
+
+/// The pixel's normalized device point, as native ProjectPntOnViewPlane computes it.
+fn device_point(builder_size: (f64, f64), pixel: (f64, f64), depth: f64) -> Point3 {
+    let ((w, h), (x, y)) = (builder_size, pixel);
+    Point3::new(
+        2.0 * x / w - 1.0,
+        (h - 1.0 - y) / h * 2.0 - 1.0,
+        2.0 * depth - 1.0,
+    )
+}
+
+#[test]
+fn one_projector_unprojects_every_point_of_a_frustum_exactly() {
+    let builder = SelectMgrFrustumBuilder::new();
+    let camera = Handle::new(Graphic3dCamera::default());
+    camera.set_eye(&Point3::new(3., -2., 5.)).unwrap();
+    builder.set_camera(&camera);
+    builder.set_window_size(800, 600);
+    let projector = builder.view_plane_projector();
+    let bits = |p: Point3| [p.x(), p.y(), p.z()].map(f64::to_bits);
+    for (x, y, z) in [(0., 0., 0.), (120., 240., 1.), (799., 599., 0.5)] {
+        let expected = camera.un_project(&device_point((800., 600.), (x, y), z));
+        assert_eq!(bits(projector.project(x, y, z)), bits(expected));
+        assert_eq!(
+            bits(builder.project_pnt_on_view_plane(x, y, z)),
+            bits(expected)
+        );
+    }
+    let detached = SelectMgrFrustumBuilder::new().view_plane_projector();
+    assert_eq!(detached.project(10., 20., 0.5), Point3::default());
+}

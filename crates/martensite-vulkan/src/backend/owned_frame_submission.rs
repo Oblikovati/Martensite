@@ -32,11 +32,12 @@ impl VulkanRenderer {
         resources
             .geometry_transfers
             .residency
-            .publish(resources.scene_empty());
+            .publish(resources.retirement_pace());
+        super::draw_table::publish_hiz(&mut resources.draws);
         Ok(resources)
     }
     /// Keep a failed frame's owners while its completion is unknown; returns the primary failure.
-    fn keep_failed_frame(
+    pub(super) fn keep_failed_frame(
         &self,
         commands: CommandSubmission,
         resources: FrameResources,
@@ -79,7 +80,7 @@ impl VulkanRenderer {
         resources: frame::FrameResources,
     ) -> Result<frame::FrameResources, RenderError> {
         let commands = submission::CommandSubmission::new(&self.runtime)?;
-        record::record_frame(&self.runtime, commands.command, &resources, frame);
+        record::record_submission_frame(&commands, &resources, frame)?;
         let resources = self.finish_owned_frame(commands, resources)?;
         #[cfg(feature = "vertex-output-diagnostics")]
         vertex_output::completed(&resources)?;
@@ -99,7 +100,7 @@ impl VulkanRenderer {
         resources: frame::FrameResources,
     ) -> Result<super::FrameReadback, RenderError> {
         let commands = submission::CommandSubmission::new(&self.runtime)?;
-        record::record_frame(&self.runtime, commands.command, &resources, frame);
+        record::record_submission_frame(&commands, &resources, frame)?;
         if let Err(primary) = commands.submit_synced(&[], &[]) {
             return Err(self.keep_failed_frame(commands, resources, primary));
         }

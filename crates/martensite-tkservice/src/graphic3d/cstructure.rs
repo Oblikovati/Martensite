@@ -11,9 +11,7 @@ use super::{
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::program_error;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleSlot, SharedState, StandardTransient, Transient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleSlot, StandardTransient, Transient};
 use martensite_tkmath::toploc::Datum3;
 use std::io;
 
@@ -124,7 +122,7 @@ impl Graphic3dCStructureFields {
 /// The embedded state of a driver structure.
 pub struct Graphic3dCStructureBase {
     /// The fields, shared by every handle.
-    pub fields: SharedState<Graphic3dCStructureFields>,
+    pub fields: super::RevisedState<Graphic3dCStructureFields>,
 }
 
 impl Graphic3dCStructureBase {
@@ -144,7 +142,7 @@ impl Graphic3dCStructureBase {
         };
         let id = driver_ref.graphic_driver_base().new_identification()?;
         Ok(Self {
-            fields: SharedState::new(default_fields(driver, id)),
+            fields: super::RevisedState::new(default_fields(driver, id)),
         })
     }
 }
@@ -333,7 +331,7 @@ pub trait Graphic3dCStructureMembers: Graphic3dCStructure {
     }
     /// `SetCulled`; `cstructure.set_culled(false)`.
     fn set_culled(&self, is_culled: bool) {
-        self.cstructure_base().fields.write().is_culled = is_culled;
+        self.cstructure_base().fields.write_derived().is_culled = is_culled;
     }
     /// `MarkAsNotCulled`; `cstructure.mark_as_not_culled()`.
     fn mark_as_not_culled(&self) {

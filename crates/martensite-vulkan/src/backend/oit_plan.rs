@@ -16,34 +16,46 @@ impl OitCapabilities {
         runtime: &super::runtime::VulkanRuntime,
         transparency: RenderTransparency,
     ) -> Self {
-        let probe = super::oit_support::DeviceOitFormats(runtime);
-        let weighted = super::oit_support::weighted_attachment_formats(&probe);
-        let peeling = super::oit_support::peeling_attachment_formats(&probe);
-        let samples = compatible_attachment_samples(runtime, transparency, weighted);
+        let formats = *runtime
+            .oit_formats
+            .get_or_init(|| OitFormatFacts::query(runtime));
+        let mut samples = runtime.limits.framebuffer_color_sample_counts
+            & runtime.limits.framebuffer_depth_sample_counts;
+        if matches!(transparency, RenderTransparency::Weighted { .. }) {
+            samples &= formats.weighted_samples;
+        }
         Self {
-            weighted_formats: weighted.is_some(),
-            peeling_formats: peeling.is_some(),
+            weighted_formats: formats.weighted,
+            peeling_formats: formats.peeling,
             max_color_attachments: runtime.limits.max_color_attachments,
             sample_rate_shading: runtime.sample_rate_shading,
             attachment_samples: samples,
         }
     }
 }
-fn compatible_attachment_samples(
-    runtime: &super::runtime::VulkanRuntime,
-    transparency: RenderTransparency,
-    weighted: Option<[vk::Format; 2]>,
-) -> vk::SampleCountFlags {
-    let mut samples = runtime.limits.framebuffer_color_sample_counts
-        & runtime.limits.framebuffer_depth_sample_counts;
-    if matches!(transparency, RenderTransparency::Weighted { .. })
-        && let Some(formats) = weighted
-    {
-        for format in formats {
-            samples &= super::oit_support::floating_sample_counts(runtime, format);
+/// The device's OIT attachment formats, read once per device: each frame plans its
+/// transparency, and each format query is a driver call (#594).
+#[derive(Clone, Copy, Debug)]
+pub(super) struct OitFormatFacts {
+    weighted: bool,
+    peeling: bool,
+    /// The sample counts both weighted attachment formats support; all counts without them.
+    weighted_samples: vk::SampleCountFlags,
+}
+impl OitFormatFacts {
+    fn query(runtime: &super::runtime::VulkanRuntime) -> Self {
+        let probe = super::oit_support::DeviceOitFormats(runtime);
+        let weighted = super::oit_support::weighted_attachment_formats(&probe);
+        let weighted_samples = weighted.into_iter().flatten().fold(
+            vk::SampleCountFlags::from_raw(u32::MAX),
+            |samples, format| samples & super::oit_support::floating_sample_counts(runtime, format),
+        );
+        Self {
+            weighted: weighted.is_some(),
+            peeling: super::oit_support::peeling_attachment_formats(&probe).is_some(),
+            weighted_samples,
         }
     }
-    samples
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct OitResourcePlan {

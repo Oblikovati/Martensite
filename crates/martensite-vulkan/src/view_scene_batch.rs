@@ -11,6 +11,9 @@ pub(crate) struct BatchSceneSources {
     saved: Vec<Option<crate::graphic_group::batch_probe::BatchGraphicInput>>,
     group_id_base: i32,
     groups: Vec<Graphic3dBatchEntry>,
+    /// The sources subscribed when this batch was seeded.
+    input_scope: GraphicInputRevision,
+    validated_revision: Option<u64>,
 }
 
 impl BatchSceneSources {
@@ -22,6 +25,8 @@ impl BatchSceneSources {
             saved: Vec::new(),
             group_id_base: 0,
             groups: Vec::new(),
+            input_scope: GraphicInputRevision::default(),
+            validated_revision: None,
         }
     }
 }
@@ -133,6 +138,13 @@ pub(crate) fn match_batch_sources(
     } else if !layer_inputs::same_layers(&layers, &prepared.layers) {
         return Ok(false);
     }
+    let mut revision = prepared.input_scope.revision();
+    let unwritten = !register_sources && prepared.validated_revision == Some(revision);
+    if !unwritten {
+        // A source may have been replaced by an equal input since the previous scan.
+        prepared.input_scope = GraphicInputRevision::default();
+        revision = prepared.input_scope.revision();
+    }
     let selector = culling_selector(view, camera, prepared.extent);
     let mut visited = 0;
     prepared.groups.clear();
@@ -161,10 +173,9 @@ pub(crate) fn match_batch_sources(
         check_connections.is_none_or(|driver| locally_owned(entry, driver))
             && register_or_match(
                 entry,
-                prepared.group_id_base,
-                prepared.draw_count,
+                (prepared.group_id_base, prepared.draw_count),
                 &mut prepared.saved,
-                register_sources,
+                (register_sources, unwritten, &prepared.input_scope),
             )
     });
     let matches_seed = matched
@@ -172,8 +183,10 @@ pub(crate) fn match_batch_sources(
         && seed_frame.is_none_or(|frame| {
             prepared.matches_seed(frame)
                 && layer_inputs::same_layers(&view.layers(), &prepared.layers)
-        });
+        })
+        && prepared.input_scope.revision() == revision;
     prepared.groups.clear();
+    prepared.validated_revision = matches_seed.then_some(revision);
     Ok(matches_seed)
 }
 
@@ -196,10 +209,9 @@ fn locally_owned(
 
 fn register_or_match(
     entry: &Graphic3dBatchEntry,
-    first: i32,
-    draw_count: usize,
+    (first, draw_count): (i32, usize),
     saved: &mut Vec<Option<crate::graphic_group::batch_probe::BatchGraphicInput>>,
-    register: bool,
+    (register, unwritten, scope): (bool, bool, &GraphicInputRevision),
 ) -> bool {
     use martensite_tkernel::standard::project_concrete;
     let Some(group) = entry
@@ -213,25 +225,38 @@ fn register_or_match(
         return false;
     };
     if let Some(captured) = saved.get(slot).and_then(Option::as_ref) {
-        return group.probe_unchanged(captured);
+        // Nothing the probe reads was written since every probe last passed.
+        if unwritten && captured.is_group(&entry.group) {
+            return true;
+        }
+        return group.observe_group_inputs(scope) && group.probe_unchanged(captured);
     }
-    register_group(slot, draw_count, saved, register, group)
+    register_group(
+        slot,
+        draw_count,
+        saved,
+        (register, scope),
+        (group, &entry.group),
+    )
 }
 
 fn register_group(
     slot: usize,
     draw_count: usize,
     saved: &mut Vec<Option<crate::graphic_group::batch_probe::BatchGraphicInput>>,
-    register: bool,
-    group: &crate::Graphic3dDrawGroup,
+    (register, scope): (bool, &GraphicInputRevision),
+    (group, handle): (&crate::Graphic3dDrawGroup, &Handle<dyn Graphic3dGroup>),
 ) -> bool {
     // IDs come from the structure manager. Limit storage by emitted work, even across gaps.
-    if !register || slot >= draw_count.saturating_mul(4) {
+    if !register || slot >= draw_count.saturating_mul(4) || !group.observe_group_inputs(scope) {
         return false;
     }
     if slot >= saved.len() {
         saved.resize_with(slot + 1, || None);
     }
-    saved[slot] = group.probe_graphic_input();
+    saved[slot] = group.probe_graphic_input().map(|mut input| {
+        input.pin_group(handle);
+        input
+    });
     saved[slot].is_some()
 }

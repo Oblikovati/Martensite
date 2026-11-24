@@ -108,6 +108,7 @@ mod tests {
             clear_depth,
             polygon_offset: crate::RenderPolygonOffset::new(1, 1., 1.).unwrap(),
             stencil_boundaries: Vec::new(),
+            placement_sources: Default::default(),
         };
         assert!(original.matches_span(&span));
         settings.set_enable_depth_write(!depth_write);

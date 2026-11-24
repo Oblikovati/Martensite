@@ -18,9 +18,11 @@ mod plane_geometry;
 pub use plane::StdPrsPlane;
 
 mod shaded_shape_indices;
+mod shaded_shape_level;
 mod shaded_shape_triangles;
 mod shaded_shape_vertices;
 mod triangulated_shape;
+pub use shaded_shape_level::{StdPrsMeshLevelRequest, StdPrsMeshLod};
 pub use shaded_shape_triangles::StdPrsShadedShape;
 pub use triangulated_shape::{
     StdPrsNativeShapeMesher, StdPrsShapeMesher, StdPrsToolTriangulatedShape,

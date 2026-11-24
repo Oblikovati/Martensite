@@ -24,6 +24,33 @@ pub(in super::super) fn record_layer(
     super::super::ordered_stencil_record::finish_layer(ctx, cmd, target, index);
     finish_rendering(ctx, cmd);
 }
+pub(in super::super) fn record_secondary_layer(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    resources: &FrameResources,
+    clear: [f32; 4],
+    index: usize,
+    layer: &crate::RenderLayerSpan,
+    recorded: &[vk::CommandBuffer],
+) {
+    let first = index == 0;
+    if !first {
+        // The ordinary layer opens an attachment-less color scope to apply its depth clear,
+        // then its first sRGB draw opens the color scope. Keep those resolves in the primary.
+        layer_dependency(runtime, command);
+        begin_layer_scope(runtime, command, resources, clear, layer, false);
+        finish_rendering(runtime, command);
+        layer_dependency(runtime, command);
+    }
+    super::super::render_target_record::begin_secondary_rendering(
+        runtime, command, resources, clear, first,
+    );
+    // SAFETY: the primary is inside the matching secondary-only rendering scope.
+    // The frame keeps every secondary pool and the command's resources until retirement.
+    unsafe { runtime.device().cmd_execute_commands(command, recorded) };
+    finish_rendering(runtime, command);
+}
+
 fn record_layer_draws(
     ctx: &VulkanRuntime,
     cmd: vk::CommandBuffer,

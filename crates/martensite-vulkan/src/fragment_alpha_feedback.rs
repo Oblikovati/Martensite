@@ -16,6 +16,11 @@ impl FragmentAlphaSnapshot {
     pub fn commit(&self, ending: LegacyFragmentAlpha) {
         *self.feedback.0.write() = ending;
     }
+    /// Put back the state the frame started from; `snapshot.restore_initial()` undoes a commit
+    /// whose frame never reached the queue (#594).
+    pub fn restore_initial(&self) {
+        self.commit(self.initial);
+    }
 }
 
 impl RenderFrame {

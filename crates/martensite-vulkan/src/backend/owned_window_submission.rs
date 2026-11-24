@@ -77,7 +77,7 @@ fn qualify_window_chain(
     chain: &mut super::window_chain::WindowChain,
 ) -> RetirementAttempt {
     let fences = chain.sync.try_retire();
-    let mut calls = DeviceIdleCalls::new(renderer.runtime.device());
+    let mut calls = DeviceIdleCalls::new(renderer.runtime.device(), &renderer.runtime.queue_order);
     let device = RetirementAttempt::from(calls.wait_completion());
     fences.join(device)
 }

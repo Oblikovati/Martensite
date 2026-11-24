@@ -22,36 +22,42 @@ pub(crate) type StructureFrame<'a> = (
 impl Graphic3dRenderStructure {
     /// Append the replayed program of every group to `target` and return the skips they
     /// counted, or `None` with `target` unchanged when the structure or one of its groups
-    /// needs lowering; `structure.replayed_groups(scene, &mut target)`.
+    /// needs lowering; `structure.replayed_groups(scene, &mut target)`. A connected structure
+    /// replays the groups of its references first, deepest first, then its own, in the order
+    /// and with the model stack of `CappingScene::draws`.
     pub(crate) fn replayed_groups(
         &self,
         (camera, extent, rendering, clipping, pass): StructureFrame<'_>,
         target: &mut StencilProgram,
     ) -> Option<usize> {
-        if !self.replays_local_groups(clipping, pass) {
+        if !replays_in_pass(clipping, pass) {
             return None;
         }
+        // Read before this structure's fields: each reference reads its own.
+        let batches = self.geometry_batches(Vec::new()).ok()?;
         let fields = self.base.fields.read();
         if fields.highlight || !fields.trsf_pers.is_null() || !fields.clip_planes.is_null() {
             return None;
         }
         let mark = target.mark();
-        let mut carry = crate::group_flipping::FlipCarry::default();
-        let mut skipped = 0;
-        for slot in fields.groups.iter() {
-            let group = slot.cast::<Graphic3dDrawGroup>();
-            let replay = group.get().and_then(|group| {
-                let scene = (&*fields, rendering, clipping);
-                group.replayed_in_structure(camera, Some(extent), scene, (pass, &carry), target)
-            });
-            let Some((skips, next)) = replay else {
-                target.truncate(mark);
-                return None;
-            };
-            skipped += skips;
-            carry = next;
+        let mut replay = GroupReplay {
+            camera,
+            extent,
+            scene: (&*fields, rendering, clipping),
+            pass,
+            carry: crate::group_flipping::FlipCarry::default(),
+            skipped: 0,
+        };
+        let references = batches.into_batches().rev().flatten();
+        let replayed = references
+            .map(|group| group.cast::<Graphic3dDrawGroup>())
+            .chain(fields.groups.iter().map(|slot| slot.cast()))
+            .all(|group| replay.group(&group, target));
+        if !replayed {
+            target.truncate(mark);
+            return None;
         }
-        Some(skipped)
+        Some(replay.skipped)
     }
 
     /// `replayed_groups` for a structure in a view: `Some(0)` and nothing appended when the
@@ -67,20 +73,46 @@ impl Graphic3dRenderStructure {
         }
         self.replayed_groups(scene, target)
     }
+}
 
-    /// Whether the structure draws only its own groups, in a pass and view that move none of
-    /// them off the camera.
-    fn replays_local_groups(
-        &self,
-        clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
-        pass: &RenderElementPass,
-    ) -> bool {
-        !cfg!(feature = "vertex-output-diagnostics")
-            && self.parent.is_none()
-            && self.connection.read().is_none()
-            && clipping.is_null()
-            && pass.layer_origin().is_none()
-            && pass.lowers_group_geometry()
+/// Whether nothing at the view or pass level moves the groups off the camera.
+fn replays_in_pass(
+    clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
+    pass: &RenderElementPass,
+) -> bool {
+    !cfg!(feature = "vertex-output-diagnostics")
+        && clipping.is_null()
+        && pass.layer_origin().is_none()
+        && pass.lowers_group_geometry()
+}
+
+/// The replay of one structure's groups: the model stack each group leaves for the next,
+/// and the skips they count.
+struct GroupReplay<'a> {
+    camera: &'a Graphic3dCamera,
+    extent: [u32; 2],
+    scene: (
+        &'a Graphic3dCStructureFields,
+        &'a Graphic3dRenderingParams,
+        &'a Handle<dyn Graphic3dClipPlaneSequenceSource>,
+    ),
+    pass: &'a RenderElementPass,
+    carry: crate::group_flipping::FlipCarry,
+    skipped: usize,
+}
+
+impl GroupReplay<'_> {
+    /// Append the replay of `group` to `target`; false when it has no valid record.
+    fn group(&mut self, group: &Handle<Graphic3dDrawGroup>, target: &mut StencilProgram) -> bool {
+        let Some((skips, next)) = group.get().and_then(|group| {
+            let inputs = (self.pass, &self.carry);
+            group.replayed_in_structure(self.camera, Some(self.extent), self.scene, inputs, target)
+        }) else {
+            return false;
+        };
+        self.skipped += skips;
+        self.carry = next;
+        true
     }
 }
 

@@ -92,6 +92,9 @@ pub struct PrimitiveDraw {
     pub(crate) lighting: Option<crate::RenderLighting>,
     /// Depth role assigned when layers are flattened; see `crate::depth_prepass`.
     pub(crate) depth_pass: crate::depth_prepass::RenderDepthPass,
+    /// The placements this draw stands for in a retained placement frame, which the backend
+    /// draws as one indirect run (draw_instances.rs, #594); `None` for an ordinary draw.
+    pub(crate) instances: Option<crate::draw_instances::DrawInstancesRef>,
     pub(crate) body: std::sync::Arc<DrawBody>,
 }
 /// The part of a draw that its lowering fixes; `draw.vertices.len()` reads it through `Deref`.
@@ -107,6 +110,7 @@ pub struct DrawBody {
     pub(crate) vertices: DrawStream<RenderVertex>,
     pub(crate) indices: DrawStream<u32>,
     pub(crate) geometry_revision: GeometryRevisionHint,
+    pub(crate) mesh_lod: Option<std::sync::Arc<crate::mesh_lod::MeshLod>>,
     /// The geometry `line_guard_band` replaced; a driver that clips lines itself draws this.
     pub(crate) guard_band_source: Option<std::sync::Arc<crate::line_guard_band::GuardBandSource>>,
     pub(crate) guard_band_bounds: crate::line_guard_band::GuardBandMemo,
@@ -221,6 +225,7 @@ impl PrimitiveDraw {
             face_culling: crate::RenderFaceCulling::None,
             lighting: None,
             depth_pass: Default::default(),
+            instances: None,
             body: std::sync::Arc::new(DrawBody {
                 pipeline_memo: Default::default(),
                 upload_memo: Default::default(),
@@ -230,6 +235,7 @@ impl PrimitiveDraw {
                 vertices: vertices.into(),
                 indices: indices.into(),
                 geometry_revision: Default::default(),
+                mesh_lod: None,
                 guard_band_source: None,
                 guard_band_bounds: Default::default(),
                 quad_corners: DrawStream::default(),
@@ -334,6 +340,7 @@ impl PrimitiveDraw {
             face_culling: crate::RenderFaceCulling::None,
             lighting: None,
             depth_pass: Default::default(),
+            instances: None,
             body: std::sync::Arc::new(DrawBody {
                 pipeline_memo: Default::default(),
                 upload_memo: Default::default(),
@@ -343,6 +350,7 @@ impl PrimitiveDraw {
                 vertices,
                 indices,
                 geometry_revision: Default::default(),
+                mesh_lod: None,
                 guard_band_source: None,
                 guard_band_bounds,
                 quad_corners: DrawStream::default(),

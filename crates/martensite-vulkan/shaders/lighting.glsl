@@ -13,6 +13,11 @@ layout(set=0,binding=0,std430) readonly buffer SurfaceLighting {
     uvec4 settings;
     RenderLight sources[];
 } lighting;
+#ifdef MARTENSITE_INDEXED_DRAW_MATERIALS
+#include "draw_material_table.glsl"
+#else
+#define materialCoefficient(slot) lighting.materials[slot]
+#endif
 float pointAttenuation(float distance, RenderLight light) {
     float range = light.direction.w;
     if (range == 0.0) return 1.0 / (light.params.x + light.params.y * distance);
@@ -82,14 +87,14 @@ vec4 computeLighting(vec3 normal, vec3 view, vec4 world, bool front, vec4 vertex
         float ndotl = max(0.0, nativeDot3(faceNormal, direction));
         float ndoth = max(0.0, nativeDot3(faceNormal, glslNormalize(direction + view)));
 #endif
-        float shine = ndotl > 0.0 ? pow(ndoth, lighting.materials[face+2u].w) : 0.0;
+        float shine = ndotl > 0.0 ? pow(ndoth, materialCoefficient(face+2u).w) : 0.0;
         float shadow = lightShadow(i, light, normal, world);
         diffuse += light.color.rgb * ndotl * attenuation * shadow;
         specular += light.color.rgb * shine * attenuation * shadow;
     }
-    vec4 result = vec4(lighting.ambient.rgb * lighting.materials[face+3u].rgb
-        + diffuse * lighting.materials[face].rgb + specular * lighting.materials[face+2u].rgb,
-        lighting.materials[face].a);
+    vec4 result = vec4(lighting.ambient.rgb * materialCoefficient(face+3u).rgb
+        + diffuse * materialCoefficient(face).rgb + specular * materialCoefficient(face+2u).rgb,
+        materialCoefficient(face).a);
 #ifndef MARTENSITE_ORTHOGRAPHIC_DIRECTIONAL_PHONG
     if (lighting.settings.z != 0u && (front || lighting.settings.w == 0u)) result *= vertexColor;
 #endif
@@ -100,9 +105,9 @@ vec4 computeLighting(vec3 normal, vec3 view, vec4 world, bool front, vec4 vertex
 #ifdef MARTENSITE_MATERIAL_MAPS
     // occMaterialOcclusion, then occMaterialEmission with the emissive map.
     result.rgb *= occlusionMapTexel();
-    result.rgb += lighting.materials[face+1u].rgb * emissiveMapTexel();
+    result.rgb += materialCoefficient(face+1u).rgb * emissiveMapTexel();
 #else
-    result.rgb += lighting.materials[face+1u].rgb;
+    result.rgb += materialCoefficient(face+1u).rgb;
 #endif
     return result;
 #endif

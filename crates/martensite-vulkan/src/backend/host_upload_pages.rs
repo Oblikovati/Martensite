@@ -14,6 +14,7 @@ pub(super) struct HostUploadPool {
     cached: Mutex<Vec<Arc<DeviceBuffer>>>,
     page_bytes: usize,
     usage: vk::BufferUsageFlags,
+    geometry_staging: bool,
 }
 
 impl HostUploadPool {
@@ -23,6 +24,15 @@ impl HostUploadPool {
             cached: Mutex::new(Vec::new()),
             page_bytes,
             usage,
+            geometry_staging: false,
+        }
+    }
+
+    /// Create a staging pool whose pages can serve either geometry queue.
+    pub(super) fn geometry_staging(page_bytes: usize) -> Self {
+        Self {
+            geometry_staging: true,
+            ..Self::new(page_bytes, vk::BufferUsageFlags::TRANSFER_SRC)
         }
     }
 
@@ -60,6 +70,9 @@ impl HostUploadPool {
         runtime: &Arc<VulkanRuntime>,
         bytes: usize,
     ) -> Result<Arc<DeviceBuffer>, RenderError> {
+        if self.geometry_staging {
+            return DeviceBuffer::geometry_staging(runtime, bytes as u64).map(Arc::new);
+        }
         DeviceBuffer::new(runtime, bytes as u64, self.usage, HostBufferAccess::Upload).map(Arc::new)
     }
 }
@@ -99,7 +112,11 @@ pub(super) struct FrameStoragePool {
 impl Default for FrameStoragePool {
     fn default() -> Self {
         Self {
-            buffers: HostUploadPool::new(STORAGE_PAGE_BYTES, vk::BufferUsageFlags::STORAGE_BUFFER),
+            // A draw table run reads its indirect commands from the same pages (draw_table.rs).
+            buffers: HostUploadPool::new(
+                STORAGE_PAGE_BYTES,
+                vk::BufferUsageFlags::STORAGE_BUFFER | vk::BufferUsageFlags::INDIRECT_BUFFER,
+            ),
             sets: StorageSetPool::default(),
             dynamic_sets: StorageSetPool::new(vk::DescriptorType::STORAGE_BUFFER_DYNAMIC),
         }
@@ -112,9 +129,11 @@ struct UploadPage {
     end: usize,
 }
 
+#[derive(Clone)]
 pub(super) struct UploadRange {
     pub(super) buffer: Arc<DeviceBuffer>,
     pub(super) offset: u64,
+    pub(super) size: u64,
 }
 
 impl<'a> FrameUploadPages<'a> {
@@ -138,18 +157,29 @@ impl<'a> FrameUploadPages<'a> {
         runtime: &Arc<VulkanRuntime>,
         bytes: &[u8],
     ) -> Result<UploadRange, RenderError> {
+        let range = self.reserve_storage(runtime, bytes.len())?;
+        range.buffer.write_at(range.offset as usize, bytes)?;
+        Ok(range)
+    }
+
+    /// Lease an aligned range for a shader that writes it before use.
+    pub(super) fn reserve_storage(
+        &mut self,
+        runtime: &Arc<VulkanRuntime>,
+        size: usize,
+    ) -> Result<UploadRange, RenderError> {
         let alignment = storage_alignment(runtime)?;
         if let Some(page) = self.current.as_mut()
-            && let Some(offset) = page.offset_for(bytes.len(), alignment)
+            && let Some(offset) = page.offset_for(size, alignment)
         {
-            return page.write(offset, bytes);
+            return Ok(page.reserve(offset, size));
         }
         let mut page = UploadPage {
-            buffer: self.pool.acquire(runtime, bytes.len())?,
-            capacity: self.pool.capacity_for(bytes.len()),
+            buffer: self.pool.acquire(runtime, size)?,
+            capacity: self.pool.capacity_for(size),
             end: 0,
         };
-        let range = page.write(0, bytes)?;
+        let range = page.reserve(0, size);
         self.current = Some(page);
         Ok(range)
     }
@@ -160,13 +190,13 @@ impl UploadPage {
         aligned_offset(self.end, self.capacity, bytes, alignment)
     }
 
-    fn write(&mut self, offset: usize, bytes: &[u8]) -> Result<UploadRange, RenderError> {
-        self.buffer.write_at(offset, bytes)?;
-        self.end = offset + bytes.len();
-        Ok(UploadRange {
+    fn reserve(&mut self, offset: usize, size: usize) -> UploadRange {
+        self.end = offset + size;
+        UploadRange {
             buffer: Arc::clone(&self.buffer),
             offset: offset as u64,
-        })
+            size: size as u64,
+        }
     }
 }
 

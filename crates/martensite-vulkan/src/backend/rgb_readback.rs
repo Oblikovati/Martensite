@@ -22,6 +22,8 @@ impl VulkanRenderer {
         write_row: &mut dyn FnMut(usize, &[u8]) -> bool,
     ) -> Result<bool, RenderError> {
         self.runtime.lifecycle.admit("read frame")?;
+        // The thread may hold the frame being read; settling also reports its error (#594).
+        self.settle_presentation()?;
         let outcome = self.read_admitted_rgb(readback, flip, write_row);
         self.runtime.lifecycle.observe(outcome)
     }

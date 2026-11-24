@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added `Graphic3dCView::structure_update` and `Graphic3dStructureManager::update_structure`. A structure or group update now also gives each view the layer of the updated structure, or every layer when other structures connect it. The update invalidates the same bounding boxes as before (#594).
+- Added `graphic3d_cview_invalidate_z_layer_bounding_box`, the base body of `Graphic3dCView::invalidate_z_layer_bounding_box` for a view that overrides it (#594).
+- Added `Graphic3dCamera::un_projection`, which returns the inverse matrices of `un_project` for many points, and `SelectMgrFrustumBuilder::view_plane_projector`, which reads the builder and these matrices once per selecting frustum. A pick inverts the camera matrices once instead of ten times, and its points do not change by one bit (#594).
+
 - Added `transform_utils::un_project_inverted`, which unprojects a point through an already inverted matrix with the same arithmetic as `un_project`. Vulkan text inverts its projection once per label instead of once per point (#594).
 
 - Added `Graphic3dText::revision`, the number of edits made to a text. Vulkan keeps the draws of each text label and lowers a label again only after its text, aspects, font or resolution change; `frame_text_1k` takes 1.23 ms instead of 1.86 ms on the same host (#594).
@@ -22,6 +26,16 @@ follows [Semantic Versioning](https://semver.org/).
 - Added `Graphic3dCamera::orientation_with_axial_scale_f` to read the float view matrix and its axial scale together. Vulkan uses it to avoid copying the camera for each placement (#594).
 
 - Added Vulkan redraw counters for buffers, images, memory allocations, pipelines, descriptor sets, submissions, bytes uploaded and read back, and CPU time by phase. `Graphic3dRenderView::last_frame_work` and `Graphic3dRenderDriver::device_work` return `RenderDeviceWork`, which reports geometry buffers and geometry upload bytes separately from the device totals (#594).
+
+- Added per-shape presentation mesh levels. `AisShape::set_presentation_mesh_lod` selects alternate shaded meshes under an approved screen-space error budget, including for connected placements (#594).
+
+- Added opt-in mesh shaders for eligible opaque Phong triangles on devices with `VK_EXT_mesh_shader`. Meshlets reject groups outside the frustum or facing away from the camera, and unsupported draws keep their indexed path (#594).
+
+- Added `RenderMeshVertexBehavior::Quantized16OctV2`, an opt-in vertex encoding using 16-bit positions relative to each mesh's bounds and octahedral normals. Binary32 vertices stay selectable for replay (#594).
+
+- Added opt-in two-pass occlusion culling for retained placement batches. The depth pyramid comes from current-camera draws of previously visible placements, and the final pass keeps the original draw order (#594).
+
+- Added opt-in progressive geometry uploads for mapped Vulkan views. Set `RenderAssemblyStreaming::VisibleBudgetedV2` to limit geometry upload per redraw and query the visible assembly's progress (#594).
 
 - Added canonical single-chart conical normal extrusion for solved polynomial profiles with holes, using shared keyed construction and returning separate reference, storage and measure bounds, authored history and detached exports (#418).
 
@@ -92,6 +106,19 @@ follows [Semantic Versioning](https://semver.org/).
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
 ### Changed
+
+- Changed Vulkan `redraw_immediate` to reuse the image of the main layers while it holds, as OCCT's `RedrawImmediate` reuses its back buffer. The image holds until the view receives a main-layer notice, or until its camera, lights, rendering parameters, background colour, extent, layer selection or clip planes change. A notice is an update, display, erase, layer or priority change of a structure in a non-immediate layer, `invalidate`, or a change of the view's layers, background, lights or clip planes. While the image holds, an immediate redraw culls, builds and uploads only the immediate layers. An aspect or vertex buffer that is edited in place, without a structure or group update, now reaches the main layers at the next `redraw` instead of the next `redraw_immediate`. The `draw-record-verification` feature builds the whole frame beside each reused image and fails when its main draws differ (#594).
+- Changed the tkv3d presentable-object accessors, such as `transform_persistence`, `clip_planes` and `view_affinity`, to read their field under the lock instead of copying every field and the presentation list (#594).
+- Changed tkv3d picking to read the rectangular frustum once per pick instead of taking four locks for each box test. The tree walk reads the bounds of both children under the lock it already holds, and a box test reads the camera projection only after the axis test passes, as OCCT does. The objects of one pick share their scaled frustum and their walk stack. Pick results do not change, and `highlight_ais_spheres_400` goes from 1.24-1.35 to 1.18-1.22 times OCCT on the same host (#594).
+- Changed the Vulkan renderer to draw the saved main colour and depth back into an immediate frame with one fetch draw instead of two image copies. Targets that a main pass may publish now also have sampled usage. Captures do not change, and `highlight_ais_spheres_400` saves about 10 µs per hover pair on RADV (#594).
+- Changed Vulkan window redraws to hand the recorded frame to a presentation thread, one per renderer, which submits and presents it while the redraw returns. A submit or present error of such a frame now shows at the next redraw, `finish_frames`, capture or close instead of at the redraw itself. Acquire errors stay immediate, and frames with GUI layers, window depth status or ray-tracing feedback are still submitted and presented by the redraw. `highlight_ais_spheres_400` takes about 107 µs per hover pair instead of 130 µs on the same host, against 113 µs for OCCT (#594).
+- Changed Vulkan group draw records to replay under any placement of the group: a record is keyed on whether the model mirrors and whether the stack is implicit, not on the model matrix, and a replay sets the clip transform, projection factors, world and normal matrices and the model stack of each placement. `RenderLighting` now keeps its world and normal matrices inline, outside the shared `LightingBody`. A connected structure replays the records of the structure it references without lowering. Captures do not change, and `frame_connected_30k` falls from about 154 ms to 40 ms per frame on RADV (#594).
+- Changed Vulkan draw records and retained view batches to subscribe to the graphics inputs they read. Edits to watched groups, buffers, aspects, or per-view visibility trigger a fresh check without invalidating unrelated views (#594).
+- Changed eligible raster uploads to use 16-bit indices when they fit and draw tables to refer to shared materials by index. Larger index streams and unsupported draw tables keep their previous layouts (#594).
+- Changed eligible Vulkan layers to record secondary command buffers on workers. Large cold geometry uploads can run on a dedicated transfer queue when one is available (#594).
+- Changed Vulkan camera-only redraws of eligible connected assemblies to reuse their draw templates and placements. Edits to geometry, material, placement, or visibility invalidate the retained frame. Cropped views retain the batch and use ordered GPU compaction when the device and frame qualify (#594).
+- Changed the Vulkan renderer to record a run of at least eight consecutive plain lit surface draws as one indexed indirect draw when the device has `multiDrawIndirect` and `drawIndirectFirstInstance`. Each draw reads its clip, world and normal matrices from a per-frame draw table, so the draw order and the captures do not change, and draws of a run share one lighting block. `frame_connected_30k` records in 0.14 ms instead of 5 ms and uploads 6.2 MB instead of 11.2 MB per frame on RADV (#594).
+- Changed the Vulkan renderer to read the device limits and OIT attachment formats once per device instead of in every frame, and to check twice its uploads for geometry retirement in a frame that restores the main image, instead of 512 entries (#594).
 
 - Changed Vulkan `PrimitiveDraw` and `RenderLighting` to keep the values a frame sets on every draw inline and the rest in a shared `DrawBody` and `LightingBody`, which they dereference to. Replayed draws, the frames in flight and the instances of a connected presentation share one body instead of copying 1.5 KB per draw (#594).
 

@@ -28,10 +28,12 @@ fn submit_and_wait(
         .stage_mask(vk::PipelineStageFlags2::ALL_COMMANDS)];
     let submit = vk::SubmitInfo2::default().wait_semaphore_infos(&waits);
     let device = runtime.device();
-    // SAFETY: the queue, semaphore and fence belong to this device, and the runtime serializes
-    // access to its queue.
-    unsafe { device.queue_submit2(runtime.queue, &[submit], fence) }
-        .map_err(|error| vk_error("drain window acquisition", error))?;
+    let turn = runtime.queue_order.next_turn();
+    // SAFETY: the queue, semaphore and fence belong to this device, and the queue turn keeps
+    // every other queue operation out.
+    let submitted = unsafe { device.queue_submit2(runtime.queue, &[submit], fence) };
+    drop(turn);
+    submitted.map_err(|error| vk_error("drain window acquisition", error))?;
     // SAFETY: the fence belongs to this device and was just submitted.
     unsafe { device.wait_for_fences(&[fence], true, u64::MAX) }
         .map_err(|error| vk_error("wait for window acquisition drain", error))

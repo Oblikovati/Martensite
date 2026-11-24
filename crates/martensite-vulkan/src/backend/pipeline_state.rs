@@ -64,6 +64,9 @@ const fn with_alpha_writes(
 fn color_blend(
     kind: super::pipeline_variants::PipelineVariant,
 ) -> &'static [vk::PipelineColorBlendAttachmentState] {
+    if kind.hiz_depth_only {
+        return &[];
+    }
     let blended =
         kind.point_blend || (kind.text && kind.text_blend) || kind.surface_blend || kind.line_blend;
     match (
@@ -121,7 +124,9 @@ impl PipelineState {
             ..
         } = kind;
         let mut state = Self {
-            vertex: if kind.fixed_lighting {
+            vertex: if kind.compact_vertices {
+                super::mesh_vertex_pipeline::vertex_input()
+            } else if kind.fixed_lighting {
                 super::fixed_vertex_layout::fixed_vertex_layout(
                     kind.surface_texture || kind.surface_alpha || kind.mesh_edges,
                 )
@@ -132,7 +137,7 @@ impl PipelineState {
             } else if kind.line_tint == super::pipeline_variants::LineTintLayout::Compact {
                 compact_line_vertex_state()
             } else {
-                vertex_state(text, kind.lighting)
+                vertex_state(text, kind.lighting, kind.hiz_depth_only)
             },
             assembly: vk::PipelineInputAssemblyStateCreateInfo::default().topology(
                 if point && !kind.fixed_grid_point {
@@ -212,7 +217,11 @@ fn compact_line_vertex_state() -> vk::PipelineVertexInputStateCreateInfo<'static
         .vertex_attribute_descriptions(&INPUTS)
 }
 
-fn vertex_state(text: bool, lighting: bool) -> vk::PipelineVertexInputStateCreateInfo<'static> {
+fn vertex_state(
+    text: bool,
+    lighting: bool,
+    depth_only: bool,
+) -> vk::PipelineVertexInputStateCreateInfo<'static> {
     const TEXT_BINDING: [vk::VertexInputBindingDescription; 1] =
         [vk::VertexInputBindingDescription {
             binding: 0,
@@ -243,7 +252,9 @@ fn vertex_state(text: bool, lighting: bool) -> vk::PipelineVertexInputStateCreat
         } else {
             &BINDINGS
         })
-        .vertex_attribute_descriptions(if lighting {
+        .vertex_attribute_descriptions(if depth_only {
+            &LIT_ATTRIBUTES[..1]
+        } else if lighting {
             &LIT_ATTRIBUTES
         } else {
             &ATTRIBUTES[..if text { 3 } else { 2 }]

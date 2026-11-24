@@ -46,6 +46,7 @@ pub(crate) struct LayerBvh {
 
 /// A Z layer; `Graphic3dLayer::new(GRAPHIC3D_ZLAYER_ID_DEFAULT, None)`.
 pub struct Graphic3dLayer {
+    scene_inputs: super::graphic_input_revision::InputObservers,
     /// `myLayerId`.
     layer_id: Graphic3dZLayerId,
     pub(crate) state: SharedState<LayerState>,
@@ -80,6 +81,7 @@ impl Graphic3dLayer {
             trsf_pers: Graphic3dBvhCStructureSetTrsfPers::new(builder),
         };
         Self {
+            scene_inputs: super::graphic_input_revision::InputObservers::new(),
             layer_id,
             state: SharedState::new(state),
             bvh: Mutex::new(bvh),
@@ -91,6 +93,11 @@ impl Graphic3dLayer {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
+    /// Subscribe to changes to the layer's settings, membership and draw order.
+    /// Example: `layer.observe_scene_inputs(&scope)`.
+    pub fn observe_scene_inputs(&self, scope: &super::GraphicInputRevision) {
+        self.scene_inputs.register(scope);
+    }
     /// `LayerId`; `layer.layer_id()`.
     pub fn layer_id(&self) -> Graphic3dZLayerId {
         self.layer_id
@@ -101,7 +108,9 @@ impl Graphic3dLayer {
     }
     /// `SetFrustumCullingBVHBuilder`; `layer.set_frustum_culling_bvh_builder(None)`.
     pub fn set_frustum_culling_bvh_builder(&self, builder: Graphic3dBvhBuilder3d) {
-        self.bvh_sets().trsf_pers.set_builder(builder);
+        let mut sets = self.bvh_sets();
+        sets.trsf_pers.set_builder(builder);
+        self.scene_inputs.notify();
     }
     /// `IsImmediate`; `layer.is_immediate()`.
     pub fn is_immediate(&self) -> bool {
@@ -118,6 +127,7 @@ impl Graphic3dLayer {
             let mut state = self.state.write();
             let moved = !xyz_equal(&state.layer_settings.origin(), &settings.origin());
             state.layer_settings = settings.clone();
+            self.scene_inputs.notify();
             if !moved {
                 return;
             }
@@ -161,6 +171,7 @@ impl Graphic3dLayer {
             }
         }
         state.nb_structures += 1;
+        self.scene_inputs.notify();
     }
     /// `Remove`: removes a structure and returns its priority (`Invalid` when absent).
     /// Example: `layer.remove(&cstructure, false)`.
@@ -191,6 +202,7 @@ impl Graphic3dLayer {
             }
         }
         state.nb_structures -= 1;
+        self.scene_inputs.notify();
         priority_of(priority)
     }
     /// `NbStructures`; `layer.nb_structures()`.

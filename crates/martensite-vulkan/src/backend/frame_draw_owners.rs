@@ -23,6 +23,7 @@ struct ExtraDrawOwners {
     _oit_pipelines: Option<OitUploadedVariants>,
     _user_program: Option<Box<UploadedUserProgram>>,
     _window_depth: Option<Box<WindowDepthStatus>>,
+    _table_run: Option<Box<super::super::draw_table::DrawTableRun>>,
     #[cfg(feature = "vertex-output-diagnostics")]
     _vertex_output: Option<super::super::vertex_output::VertexOutputResources>,
 }
@@ -57,12 +58,16 @@ impl DrawGpuOwners {
                 geometry_arguments: _,
             window_depth_expected: _,
             sample_alpha_cutoff: _,
+            index_format: _,
+            mesh_decode: _,
             count: _,
             instances: _,
             point_viewports: _,
             transform: _,
             line: _,
             presentation: _,
+            table_run,
+            borrowed_lighting: _,
         } = draw;
         keep_adjacent_owner(&mut self.vertices, vertices);
         keep_adjacent_owner(&mut self.indices, indices);
@@ -77,6 +82,7 @@ impl DrawGpuOwners {
             _oit_pipelines: oit,
             _user_program: user_program,
             _window_depth: window_depth_status,
+            _table_run: table_run,
             #[cfg(feature = "vertex-output-diagnostics")]
             _vertex_output: vertex_output,
         };
@@ -107,6 +113,7 @@ impl ExtraDrawOwners {
             || self._oit_pipelines.is_some()
             || self._user_program.is_some()
             || self._window_depth.is_some()
+            || self._table_run.is_some()
             || clipping.is_some()
             || sprite.is_some()
             || surface_image.is_some()

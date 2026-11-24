@@ -40,6 +40,9 @@ impl VulkanRuntime {
         let (points, dots, axes, lines, interpolation, triangles, text) = configuration.choices();
         self.depth_bias_behavior = configuration.depth_bias();
         self.projection_behavior = configuration.projection();
+        self.mesh_vertex_behavior = configuration.mesh_vertices();
+        self.meshlets_requested = configuration.meshlet_draws();
+        self.placement_occlusion = configuration.placement_occlusion();
         self.window_depth_behavior = configuration.window_depth();
         self.point_raster = points;
         self.light_dot_behavior = dots;

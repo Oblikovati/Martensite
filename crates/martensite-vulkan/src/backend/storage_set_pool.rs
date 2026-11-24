@@ -144,13 +144,22 @@ impl<'a> FrameStorageSets<'a> {
         runtime: &Arc<VulkanRuntime>,
         layout: vk::DescriptorSetLayout,
     ) -> Result<AllocatedStorageSet, RenderError> {
+        self.allocate_bindings(runtime, layout, 1)
+    }
+
+    pub(super) fn allocate_bindings(
+        &mut self,
+        runtime: &Arc<VulkanRuntime>,
+        layout: vk::DescriptorSetLayout,
+        bindings: u32,
+    ) -> Result<AllocatedStorageSet, RenderError> {
         if let Some(page) = self.current.as_mut()
-            && page.remaining != 0
+            && page.remaining >= bindings
         {
-            return page.allocate(layout);
+            return page.allocate(layout, bindings);
         }
         let mut page = self.pool.acquire(runtime)?;
-        let set = page.allocate(layout)?;
+        let set = page.allocate(layout, bindings)?;
         self.current = Some(page);
         Ok(set)
     }
@@ -167,9 +176,10 @@ impl OpenStoragePage {
     fn allocate(
         &mut self,
         layout: vk::DescriptorSetLayout,
+        bindings: u32,
     ) -> Result<AllocatedStorageSet, RenderError> {
         let handle = self.page.allocate(layout)?;
-        self.remaining -= 1;
+        self.remaining -= bindings;
         Ok(AllocatedStorageSet {
             owner: StorageSetOwner::Frame(Arc::clone(&self.page)),
             handle,

@@ -32,7 +32,10 @@ fn prepare_creation(
     owner: &DrawPipeline,
     request: &PipelineCreationRequest,
 ) -> PipelineCreationState {
-    let stages = shader_stages(&owner.shaders);
+    let mut stages = shader_stages(&owner.shaders);
+    if request.kind.hiz_depth_only {
+        stages.truncate(1);
+    }
     let mut state = pipeline_state::PipelineState::new(request.kind);
     state.set_multisampling(request.samples, request.alpha_coverage);
     state.set_flat_text(owner.runtime.text_interpolation, request.kind.text);
@@ -80,6 +83,9 @@ fn create_prepared(
 }
 
 fn color_formats(request: &PipelineCreationRequest) -> Vec<vk::Format> {
+    if request.kind.hiz_depth_only {
+        return Vec::new();
+    }
     let ordinary = vec![
         if request.kind.text_logic_xor || request.kind.encoded_surface {
             vk::Format::R8G8B8A8_UNORM

@@ -181,11 +181,24 @@ impl WindowChain {
         self.stale = suboptimal;
         Ok(index)
     }
+    /// Present in a queue turn of its own; `chain.present(queue, index, contract)?`.
     pub fn present(
         &mut self,
         queue: vk::Queue,
         index: u32,
         contract: super::window_gui_contract::WindowGuiContract,
+    ) -> Result<(), RenderError> {
+        let order = Arc::clone(&self.runtime.queue_order);
+        let turn = order.next_turn();
+        self.present_within(queue, (index, contract), &turn)
+    }
+    /// Present inside the caller's queue turn, as the presentation thread does (#594);
+    /// `chain.present_within(queue, (index, contract), &turn)?`.
+    pub fn present_within(
+        &mut self,
+        queue: vk::Queue,
+        (index, contract): (u32, super::window_gui_contract::WindowGuiContract),
+        _turn: &super::queue_order::QueueTurn,
     ) -> Result<(), RenderError> {
         let waits = [self.sync.current().rendered];
         let swaps = [self.handle];
@@ -197,7 +210,7 @@ impl WindowChain {
             .swapchains(&swaps)
             .image_indices(&indices)
             .push_next(&mut fence_info);
-        // SAFETY: the queue, fences and command buffers belong to this device, and the runtime serializes access to them.
+        // SAFETY: the queue, swapchain, semaphore and fence belong to this device, and the caller's queue turn keeps every other queue operation out.
         let result = unsafe { self.loader.queue_present(queue, &info) };
         self.complete_present(result, contract)
     }

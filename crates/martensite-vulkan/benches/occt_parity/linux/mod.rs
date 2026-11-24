@@ -10,7 +10,9 @@ mod work;
 
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::Graphic3dGraphicDriver as _;
-use martensite_vulkan::{Graphic3dRenderDriver, VulkanOptions};
+use martensite_vulkan::{
+    Graphic3dRenderDriver, RenderBehaviorConfiguration, RenderMeshVertexBehavior, VulkanOptions,
+};
 use std::cell::RefCell;
 use std::time::Instant;
 use work::TimedWork;
@@ -177,8 +179,27 @@ pub fn new_driver() -> Handle<Graphic3dRenderDriver> {
         validation: false,
         device_index: None,
     };
-    let driver = Graphic3dRenderDriver::new(options)
-        .unwrap_or_else(|error| panic!("Vulkan driver: {error:?}; expected a device"));
+    let quantized = std::env::var_os("MARTENSITE_594_QUANTIZED_MESH").is_some();
+    let meshlets = std::env::var_os("MARTENSITE_594_MESHLETS").is_some();
+    let driver = if quantized || meshlets {
+        Graphic3dRenderDriver::with_render_behavior_configuration(
+            options,
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            Default::default(),
+            RenderBehaviorConfiguration::default()
+                .with_mesh_vertices(if quantized {
+                    RenderMeshVertexBehavior::Quantized16OctV2
+                } else {
+                    Default::default()
+                })
+                .with_meshlet_draws(meshlets),
+        )
+    } else {
+        Graphic3dRenderDriver::new(options)
+    }
+    .unwrap_or_else(|error| panic!("Vulkan driver: {error:?}; expected a device"));
     driver.set_vertical_sync(false);
     driver
 }

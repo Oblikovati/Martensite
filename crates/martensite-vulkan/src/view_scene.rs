@@ -38,7 +38,9 @@ pub(crate) fn frame_for_view(
         std::sync::Arc::new(raytrace)
     });
     let clear = view_clear_color(view);
-    let mut frame = RenderFrame::with_layers_and_grid(extent[0], extent[1], clear, passes, grid)?;
+    let mesh_lod = retained_mesh_lod(extras.mesh_lod && raytrace.is_none());
+    let mut frame =
+        RenderFrame::with_layers_and_grid(extent[0], extent[1], clear, passes, grid, mesh_lod)?;
     // The retained main-pass key checks the opaque prefix. Immediate layers keep
     // their original blend state, including a translucent dynamic highlight.
     if extras.trihedron.is_none() && frame.shader_grid.is_none() {
@@ -74,7 +76,22 @@ pub(crate) fn shadow_frame_for_view(
     )?;
     passes.truncate(passes.len() - immediate);
     apply_view_culling(&mut passes, view.backfacing_model());
-    RenderFrame::with_layers_and_grid(resolution, resolution, [0., 0., 0., 1.], passes, None)
+    RenderFrame::with_layers_and_grid(
+        resolution,
+        resolution,
+        [0., 0., 0., 1.],
+        passes,
+        None,
+        crate::mesh_lod::FrameMeshLod::Disabled,
+    )
+}
+
+fn retained_mesh_lod(admitted: bool) -> crate::mesh_lod::FrameMeshLod {
+    if admitted {
+        crate::mesh_lod::FrameMeshLod::RetainedPrecomposed
+    } else {
+        crate::mesh_lod::FrameMeshLod::Disabled
+    }
 }
 /// The clip planes and device limits of a shadow-map pass.
 pub(crate) type ShadowPassInputs<'a> = (
@@ -93,6 +110,7 @@ pub(crate) struct ViewFrameExtras<'a> {
     pub frame_steps: Option<&'a crate::Graphic3dRenderView>,
     /// The device limits elements see through their context state; `None` without a device.
     pub limits: Option<crate::RenderDeviceLimits>,
+    pub mesh_lod: bool,
 }
 impl ViewFrameExtras<'_> {
     /// The grid block of this frame, after recording the frame's world view for background grids.
@@ -213,7 +231,7 @@ impl<'a> ViewLayerInputs<'a> {
 /// The bound window's size: the size a render view keeps once it saw the window mapped, as
 /// its auto Z-fit does, or a live read. A live read is an X server round trip, and every frame
 /// made one here (#594).
-fn frame_window_size(
+pub(crate) fn frame_window_size(
     view: &dyn Graphic3dCView,
     kept: Option<&crate::Graphic3dRenderView>,
 ) -> (i32, i32) {
@@ -269,27 +287,8 @@ fn view_layer_passes(
     steps: Option<&crate::Graphic3dRenderView>,
     shadow: ShadowCulling<'_>,
 ) -> Result<(Vec<RenderLayer>, Graphic3dRenderingParams, usize), RenderError> {
-    let mut layers = view.layers();
-    // GlView::renderStructs draws no structure in a subview composer.
-    if view.is_subview_composer() {
-        layers.clear();
-    }
-    // GlFilteredIndexedLayerIterator renders normal layers before immediate ones.
-    layers.sort_by_key(|layer| layer.is_immediate());
-    let mut culling = || match shadow {
-        Some((camera, window)) => update_culling(view, &layers, camera, window),
-        None => update_culling(
-            view,
-            &layers,
-            &crate::view_render_camera::owned_render_camera(view),
-            extent,
-        ),
-    };
-    match stats {
-        // GlLayerList::UpdateCulling measures this traversal as CpuCulling.
-        Some(stats) => stats.time_culling(&mut culling)?,
-        None => culling()?,
-    }
+    let layers = ordered_layers(view);
+    cull_layers(view, &layers, (extent, stats), shadow)?;
     // Culling keeps the target size, as GlView passes the window size to its BVH selector.
     let mut inputs = ViewLayerInputs::new(view, extent, camera, (clipping, limits), steps)?;
     inputs.skip_trsf_persistence = shadow.is_some();
@@ -298,15 +297,7 @@ fn view_layer_passes(
         inputs.context.camera = light_camera.clone();
     }
     inputs.raytraced = raytraced;
-    let build = |immediate: bool| {
-        crate::view_layer_clear::source_passes(
-            layers
-                .iter()
-                .filter(|layer| layer.is_immediate() == immediate)
-                .filter(|layer| layer_selected(view, layer.layer_id())),
-            |layer| inputs.layer(layer),
-        )
-    };
+    let build = |immediate: bool| source_layer_passes(view, &layers, &inputs, immediate);
     let (mut passes, immediate) = match steps {
         Some(view) => view.run_frame_steps(camera.projection_type(), &build)?,
         None => (build(false)?, build(true)?),
@@ -321,7 +312,55 @@ fn view_layer_passes(
     );
     Ok((passes, inputs.rendering, count))
 }
-fn view_clear_color(view: &dyn Graphic3dCView) -> [f32; 4] {
+/// The view's layers in drawing order: normal layers before immediate ones, as
+/// GlFilteredIndexedLayerIterator renders them; none in a subview composer, whose
+/// GlView::renderStructs draws no structure.
+fn ordered_layers(view: &dyn Graphic3dCView) -> Vec<Handle<Graphic3dLayer>> {
+    let mut layers = view.layers();
+    if view.is_subview_composer() {
+        layers.clear();
+    }
+    layers.sort_by_key(|layer| layer.is_immediate());
+    layers
+}
+/// Culls `layers` for the view camera over `extent`, or for a shadow pass's light camera.
+fn cull_layers(
+    view: &dyn Graphic3dCView,
+    layers: &[Handle<Graphic3dLayer>],
+    (extent, stats): ([u32; 2], Option<&crate::RenderFrameStats>),
+    shadow: ShadowCulling<'_>,
+) -> Result<(), RenderError> {
+    let mut culling = || match shadow {
+        Some((camera, window)) => update_culling(view, layers, camera, window),
+        None => update_culling(
+            view,
+            layers,
+            &crate::view_render_camera::owned_render_camera(view),
+            extent,
+        ),
+    };
+    match stats {
+        // GlLayerList::UpdateCulling measures this traversal as CpuCulling.
+        Some(stats) => stats.time_culling(&mut culling),
+        None => culling(),
+    }
+}
+/// The passes of the normal or the immediate layers among `layers` that the view selects.
+fn source_layer_passes(
+    view: &dyn Graphic3dCView,
+    layers: &[Handle<Graphic3dLayer>],
+    inputs: &ViewLayerInputs<'_>,
+    immediate: bool,
+) -> Result<Vec<RenderLayer>, RenderError> {
+    crate::view_layer_clear::source_passes(
+        layers
+            .iter()
+            .filter(|layer| layer.is_immediate() == immediate)
+            .filter(|layer| layer_selected(view, layer.layer_id())),
+        |layer| inputs.layer(layer),
+    )
+}
+pub(crate) fn view_clear_color(view: &dyn Graphic3dCView) -> [f32; 4] {
     let color = view.cview_base().fields.read().bg_color;
     [
         color.rgb().red() as f32,
@@ -350,7 +389,7 @@ fn update_culling(
     }
     Ok(())
 }
-fn culling_selector(
+pub(crate) fn culling_selector(
     view: &dyn Graphic3dCView,
     camera: &Handle<Graphic3dCamera>,
     extent: [u32; 2],
@@ -484,3 +523,9 @@ pub(crate) use batch::{BatchSceneSources, match_batch_sources};
 
 #[path = "view_scene_layer.rs"]
 mod layer_scene;
+
+#[cfg(any(test, not(feature = "raytrace-input-diagnostics")))]
+#[path = "view_scene_immediate.rs"]
+mod immediate;
+#[cfg(not(feature = "raytrace-input-diagnostics"))]
+pub(crate) use immediate::immediate_frame_for_view;

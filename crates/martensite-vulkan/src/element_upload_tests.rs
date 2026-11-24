@@ -10,6 +10,7 @@ fn submission(array: &Graphic3dArrayOfPrimitives) -> PrimitiveSubmission {
         attributes: array.attributes(),
         bounds: array.bounds(),
         retained: None,
+        mesh_levels: None,
         upload: ElementUploadSlot::default(),
         uid: 0,
     }

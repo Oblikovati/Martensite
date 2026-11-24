@@ -12,7 +12,7 @@ use std::sync::Arc;
 const STAGING_BLOCK_BYTES: usize = 4 << 20;
 
 pub(super) fn geometry_staging_pool() -> HostUploadPool {
-    HostUploadPool::new(STAGING_BLOCK_BYTES, vk::BufferUsageFlags::TRANSFER_SRC)
+    HostUploadPool::geometry_staging(STAGING_BLOCK_BYTES)
 }
 
 pub(super) struct GeometryTransfers {
@@ -20,6 +20,11 @@ pub(super) struct GeometryTransfers {
     preserved: Vec<PreservedRanges>,
     writes_shared_page: bool,
     pub(super) residency: FrameGeometryResidency,
+}
+
+pub(super) struct GeometryTransferOwners {
+    _staging: Vec<Arc<DeviceBuffer>>,
+    _destinations: Vec<Arc<GeometryBuffer>>,
 }
 
 struct StagingBlock {
@@ -138,6 +143,49 @@ impl GeometryTransfers {
         self.blocks
             .last_mut()
             .ok_or_else(|| rejected(bytes, "an allocated staging block"))
+    }
+
+    pub(super) fn staged_bytes(&self) -> u64 {
+        self.blocks.iter().map(|block| block.end as u64).sum()
+    }
+
+    /// Keep staging and destination buffers alive independently of frame error unwinding.
+    pub(super) fn dedicated_owners(&self) -> Option<GeometryTransferOwners> {
+        const MIN_DEDICATED_BYTES: u64 = 1 << 20;
+        if self.writes_shared_page
+            || !self.preserved.is_empty()
+            || self.staged_bytes() < MIN_DEDICATED_BYTES
+        {
+            return None;
+        }
+        let destinations = self.blocks.iter().flat_map(|block| block.copies.iter());
+        if !self
+            .blocks
+            .iter()
+            .all(|block| block.buffer.transfer_shared())
+            || !destinations
+                .clone()
+                .all(|copy| copy.destination.dedicated_transfer_shared())
+        {
+            return None;
+        }
+        Some(GeometryTransferOwners {
+            _staging: self
+                .blocks
+                .iter()
+                .map(|block| Arc::clone(&block.buffer))
+                .collect(),
+            _destinations: destinations
+                .map(|copy| Arc::clone(&copy.destination))
+                .collect(),
+        })
+    }
+
+    /// A transfer-only queue only records copies. Its semaphore supplies the cross-queue barrier.
+    pub(super) fn record_dedicated(&self, runtime: &VulkanRuntime, command: vk::CommandBuffer) {
+        for block in &self.blocks {
+            block.record(runtime.device(), command);
+        }
     }
 
     /// Record all copies before the first draw that can read their destinations.

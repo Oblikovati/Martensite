@@ -11,10 +11,16 @@ use std::sync::{
     atomic::{AtomicU64, Ordering},
 };
 
+#[path = "index_format.rs"]
+mod index_format;
+pub(super) use index_format::IndexFormat;
+
 #[derive(Clone)]
 pub(super) struct ResidentGeometry {
     pub vertices: Arc<GeometryBuffer>,
     pub indices: Arc<GeometryBuffer>,
+    pub index_format: IndexFormat,
+    pub mesh_decode: Option<Arc<super::mesh_vertex_codec::MeshPositionDecode>>,
 }
 
 impl ResidentGeometry {
@@ -33,6 +39,8 @@ pub(super) struct GeometryKey {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(super) struct GeometryEncoding {
+    pub(super) index_format: IndexFormat,
+    pub(super) compact_vertices: bool,
     pub(super) surface_coordinates: Option<[u32; 4]>,
     pub(super) surface_uv: bool,
     pub(super) sphere_normals: bool,
@@ -309,6 +317,17 @@ impl GeometryStore {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
+    pub(super) fn admits_streaming(
+        &self,
+        cold_bytes: impl Iterator<Item = u64>,
+        entries: usize,
+    ) -> bool {
+        // Leave space for existing batches and alignment/placement of independent streams.
+        let padding = 8192_u64.saturating_mul(entries as u64);
+        let bytes = cold_bytes.fold(padding, u64::saturating_add);
+        entries < MAX_RESIDENT_ENTRIES && self.can_pin_batch(bytes)
+    }
+
     pub(super) fn can_pin_batch(&self, bytes: u64) -> bool {
         let retained = self.retained();
         bytes <= self.batch_capacity(&retained)
@@ -332,22 +351,24 @@ impl GeometryStore {
             .saturating_sub(retained.bytes)
     }
 
-    fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
+    pub(super) fn find(&self, key: GeometryKey) -> Option<ResidentGeometry> {
         self.retained()
             .entries
             .get(&key)
             .map(|lease| lease.geometry.clone())
     }
 
-    /// Store a frame's pending uploads. `retire` holds whether the frame was empty and how many
+    /// Store a frame's pending uploads. `retire` holds the frame's retirement pace and how many
     /// uploads it made; it also checks the liveness of that many older entries, twice over.
-    fn publish(&self, pending: &mut PendingGeometry, retire: Option<(bool, usize)>) {
+    fn publish(&self, pending: &mut PendingGeometry, retire: Option<(RetirementPace, usize)>) {
         let mut retained = self.retained();
-        if let Some((empty_frame, uploads)) = retire {
-            let budget = if empty_frame {
-                retained.entries.len()
-            } else {
-                RETIREMENT_CHECKS_PER_FRAME.max(uploads.saturating_mul(2))
+        if let Some((pace, uploads)) = retire {
+            let budget = match pace {
+                RetirementPace::Sweep => retained.entries.len(),
+                RetirementPace::Steady => {
+                    RETIREMENT_CHECKS_PER_FRAME.max(uploads.saturating_mul(2))
+                }
+                RetirementPace::Uploads => uploads.saturating_mul(2),
             };
             retained.retire_expired(budget);
         }
@@ -488,12 +509,23 @@ impl FrameGeometryResidency {
         }
     }
 
-    pub(super) fn publish(&mut self, empty_frame: bool) {
+    pub(super) fn publish(&mut self, pace: RetirementPace) {
         self.publish_batch();
         let uploads = self.pending.order.len() + std::mem::take(&mut self.shared);
-        self.store
-            .publish(&mut self.pending, Some((empty_frame, uploads)));
+        self.store.publish(&mut self.pending, Some((pace, uploads)));
     }
+}
+
+/// How many resident entries a settled frame checks for retirement.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum RetirementPace {
+    /// A frame without a scene checks every entry: the scene's geometry may have just died.
+    Sweep,
+    /// A scene frame checks a fixed share of the entries, or twice its uploads.
+    Steady,
+    /// A frame over a restored main pass checks twice its uploads. The main geometry cannot
+    /// die without a main-layer notice, which makes the next frame a scene frame (#594).
+    Uploads,
 }
 
 #[cfg(test)]
@@ -504,6 +536,15 @@ mod tests {
     };
     use crate::{PrimitiveDraw, RenderVertex, backend::buffer::DeviceBuffer};
     use ash::vk;
+
+    #[test]
+    fn the_index_width_is_part_of_the_geometry_residency_key() {
+        let draw = test_draw();
+        let wide = test_key(&draw);
+        let mut packed = wide;
+        packed.encoding.index_format = super::IndexFormat::U16;
+        assert!(packed != wide);
+    }
 
     #[test]
     fn index_patches_require_a_direct_index_stream() {
@@ -606,6 +647,8 @@ mod tests {
         GeometryKey::new(
             draw,
             GeometryEncoding {
+                index_format: super::IndexFormat::U32,
+                compact_vertices: false,
                 surface_coordinates: None,
                 surface_uv: false,
                 sphere_normals: false,
@@ -628,6 +671,8 @@ mod tests {
         let indices =
             DeviceBuffer::device_local(runtime, 12, vk::BufferUsageFlags::INDEX_BUFFER).unwrap();
         ResidentGeometry {
+            index_format: super::IndexFormat::U32,
+            mesh_decode: None,
             vertices: Arc::new(GeometryBuffer::dedicated(vertices, None)),
             indices: Arc::new(GeometryBuffer::dedicated(indices, None)),
         }

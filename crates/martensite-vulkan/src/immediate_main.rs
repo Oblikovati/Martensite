@@ -1,13 +1,20 @@
 //! Preserve a completed main pass only while its effective input matches exactly.
+//!
+//! An immediate redraw proves this in one of two ways. With an elision (immediate_elision.rs),
+//! the view had no main-layer notice since the main pass and its in-place state matches, so the
+//! redraw builds only the immediate layers. Otherwise the redraw builds the whole frame and
+//! this key compares its main draws with those of the retained pass.
 use crate::{
-    PrimitiveDraw, RenderFrame, RenderLayerSpan, RenderLightSet, RenderLighting, RenderMaterial,
-    RenderPolygonOffset, RenderProjectionFactors, RenderShading,
-    backend::immediate_main_record::MainLayerTicket, draw::DrawStream,
+    PrimitiveDraw, RenderFrame, RenderLayerSpan, RenderPolygonOffset, RenderProjectionFactors,
+    backend::immediate_main_record::MainLayerTicket,
+    draw::DrawStream,
+    immediate_elision::{ImmediateViewInputs, MainElision},
 };
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex, PoisonError, Weak},
-};
+use lighting::MainLightingKey;
+use std::sync::{Arc, Mutex, PoisonError, Weak};
+
+#[path = "immediate_main_lighting.rs"]
+mod lighting;
 
 #[derive(Default)]
 pub(crate) struct ImmediateMainCache(Mutex<Option<RetainedMain>>);
@@ -16,6 +23,7 @@ pub(crate) struct ImmediateMainCache(Mutex<Option<RetainedMain>>);
 struct RetainedMain {
     key: Arc<MainPassKey>,
     ticket: MainLayerTicket,
+    elision: Option<Arc<MainElision>>,
 }
 
 #[derive(Clone)]
@@ -26,6 +34,12 @@ pub(crate) enum ImmediateMainPlan {
         ticket: MainLayerTicket,
         fallback: MainSeed,
     },
+    /// The frame holds only empty layers before `start`: without the retained images the
+    /// backend refuses it, and the view builds the whole frame.
+    Elided {
+        start: usize,
+        ticket: MainLayerTicket,
+    },
 }
 
 #[derive(Clone)]
@@ -33,66 +47,129 @@ pub(crate) struct MainSeed {
     pub(crate) snapshot_start: Option<usize>,
     cache: Arc<ImmediateMainCache>,
     key: Arc<MainPassKey>,
+    elision: Option<Arc<MainElision>>,
 }
+
+/// The notice count and the in-place view state read before a frame was built.
+pub(crate) type MainObservation = (u64, ImmediateViewInputs);
 
 impl std::fmt::Debug for ImmediateMainPlan {
     fn fmt(&self, output: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Remember(_) => output.write_str("RememberMain"),
             Self::Restore { start, .. } => output.debug_tuple("RestoreMain").field(start).finish(),
+            Self::Elided { start, .. } => output.debug_tuple("ElidedMain").field(start).finish(),
         }
     }
 }
 
 impl ImmediateMainCache {
     pub(crate) fn discard(&self) {
-        let retired = self.0.lock().unwrap_or_else(PoisonError::into_inner).take();
+        let retired = self.lock().take();
         drop(retired);
     }
 
-    pub(crate) fn plan(self: &Arc<Self>, frame: &RenderFrame) -> Option<ImmediateMainPlan> {
+    fn lock(&self) -> std::sync::MutexGuard<'_, Option<RetainedMain>> {
+        self.0.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// The plan of a whole frame. `observed`, read before the frame was built, becomes the
+    /// elision of the main pass that this frame draws or proves equal.
+    pub(crate) fn plan(
+        self: &Arc<Self>,
+        frame: &RenderFrame,
+        observed: Option<MainObservation>,
+    ) -> Option<ImmediateMainPlan> {
         let start = eligible_start(frame)?;
         let neutral = frame.layers[start..].iter().all(neutral_layer);
-        let active = self
-            .0
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .clone();
+        let elision = observed
+            .map(|(notices, inputs)| Arc::new(MainElision::capture(notices, inputs, frame, start)));
+        let active = self.lock().clone();
         let snapshot_start = (!neutral).then_some(start);
         if let Some(main) = active.filter(|main| main.key.matches(frame, start)) {
+            self.refresh(&main.ticket, elision.clone());
             return Some(ImmediateMainPlan::Restore {
                 start,
                 ticket: main.ticket,
-                fallback: self.seed(main.key, snapshot_start),
+                fallback: self.seed(main.key, snapshot_start, elision),
             });
         }
         let key = MainPassKey::from_frame(frame, start)?;
-        Some(ImmediateMainPlan::Remember(
-            self.seed(Arc::new(key), snapshot_start),
-        ))
+        Some(ImmediateMainPlan::Remember(self.seed(
+            Arc::new(key),
+            snapshot_start,
+            elision,
+        )))
     }
 
-    fn seed(self: &Arc<Self>, key: Arc<MainPassKey>, snapshot_start: Option<usize>) -> MainSeed {
+    /// The plan of an immediate-only frame when the retained main pass still holds for the
+    /// view's `notices` and `inputs`, with the elision that proves it.
+    pub(crate) fn elided(
+        &self,
+        notices: u64,
+        inputs: &ImmediateViewInputs,
+    ) -> Option<(ImmediateMainPlan, Arc<MainElision>)> {
+        let main = self.lock().clone()?;
+        let elision = main
+            .elision
+            .filter(|elision| elision.holds(notices, inputs))?;
+        let plan = ImmediateMainPlan::Elided {
+            start: elision.start(),
+            ticket: main.ticket,
+        };
+        Some((plan, elision))
+    }
+
+    /// Under `draw-record-verification`, an elided redraw also builds the whole frame: its main
+    /// draws must equal those of the retained pass, or a main-layer notice is missing.
+    #[cfg(feature = "draw-record-verification")]
+    pub(crate) fn verify_elided(&self, frame: &RenderFrame, start: usize) {
+        let main = self.lock().clone();
+        let held = main.is_some_and(|main| main.key.matches(frame, start));
+        assert!(
+            held,
+            "an elided immediate redraw reused a main pass that the view no longer draws; \
+             expected a main-layer notice for every change (#594)"
+        );
+    }
+
+    // A key match proves the main pass unchanged at the observed notice count.
+    fn refresh(&self, ticket: &MainLayerTicket, elision: Option<Arc<MainElision>>) {
+        let mut active = self.lock();
+        if let Some(main) = active.as_mut().filter(|main| main.ticket.same(ticket)) {
+            main.elision = elision;
+        }
+    }
+
+    fn seed(
+        self: &Arc<Self>,
+        key: Arc<MainPassKey>,
+        snapshot_start: Option<usize>,
+        elision: Option<Arc<MainElision>>,
+    ) -> MainSeed {
         MainSeed {
             snapshot_start,
             cache: self.clone(),
             key,
+            elision,
         }
     }
 }
 
 impl MainSeed {
+    /// The cache this seed remembers into; `seed.cache().discard()` forgets a main pass whose
+    /// frame never reached the queue (#594).
+    pub(crate) fn cache(&self) -> &Arc<ImmediateMainCache> {
+        &self.cache
+    }
+
     pub(crate) fn remember(&self, ticket: MainLayerTicket) {
         let retained = RetainedMain {
             key: self.key.clone(),
             ticket,
+            elision: self.elision.clone(),
         };
-        let retired = self
-            .cache
-            .0
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .replace(retained);
+        let retired = self.cache.lock().replace(retained);
         drop(retired);
     }
 }
@@ -100,19 +177,28 @@ impl MainSeed {
 impl ImmediateMainPlan {
     pub(crate) fn restore(&self) -> Option<(usize, &MainLayerTicket)> {
         match self {
-            Self::Restore { start, ticket, .. } => Some((*start, ticket)),
+            Self::Restore { start, ticket, .. } | Self::Elided { start, ticket } => {
+                Some((*start, ticket))
+            }
             Self::Remember(_) => None,
         }
     }
 
-    pub(crate) fn seed(&self) -> &MainSeed {
+    /// The seed that remembers a newly drawn main pass; an elided frame draws none.
+    pub(crate) fn seed(&self) -> Option<&MainSeed> {
         match self {
-            Self::Remember(seed) | Self::Restore { fallback: seed, .. } => seed,
+            Self::Remember(seed) | Self::Restore { fallback: seed, .. } => Some(seed),
+            Self::Elided { .. } => None,
         }
+    }
+
+    pub(crate) fn is_elided(&self) -> bool {
+        matches!(self, Self::Elided { .. })
     }
 }
 
-fn eligible_start(frame: &RenderFrame) -> Option<usize> {
+/// The span index of the first immediate layer, when the frame can keep its main pass.
+pub(crate) fn eligible_start(frame: &RenderFrame) -> Option<usize> {
     let start = frame.immediate_start?;
     if start == 0 || start > frame.layers.len() || !direct_single_sample(frame) {
         return None;
@@ -123,12 +209,14 @@ fn eligible_start(frame: &RenderFrame) -> Option<usize> {
 }
 
 fn direct_single_sample(frame: &RenderFrame) -> bool {
-    !cfg!(any(
-        feature = "command-state-diagnostics",
-        feature = "vertex-output-diagnostics",
-        feature = "raytrace-input-diagnostics",
-        feature = "lit-only-command-diagnostics"
-    )) && frame.raster.requested_samples <= 1
+    !frame.uses_mesh_lod
+        && !cfg!(any(
+            feature = "command-state-diagnostics",
+            feature = "vertex-output-diagnostics",
+            feature = "raytrace-input-diagnostics",
+            feature = "lit-only-command-diagnostics"
+        ))
+        && frame.raster.requested_samples <= 1
         && !frame.raster.alpha_writes
         && !frame.raster.fixed_function
         && frame.transparency() == crate::RenderTransparency::Unordered
@@ -284,12 +372,13 @@ fn plain_triangle(draw: &PrimitiveDraw) -> bool {
             face_culling: _,
             lighting: _,
             depth_pass: crate::depth_prepass::RenderDepthPass::Shaded,
+            instances: None,
             body: _,
         }
     ) && matches!(&**draw, crate::draw::DrawBody {
         #[cfg(feature = "vertex-output-diagnostics")]
         vertex_output_target: None,
-        projected_dash: None, vertices: _, indices: _, geometry_revision: _,
+        projected_dash: None, vertices: _, indices: _, geometry_revision: _, mesh_lod: None,
         guard_band_source: None, guard_band_bounds: _, quad_corners,
         polygon_offset: _, mirrored: _,
         capping_pass: crate::RenderCappingPass::None, clipping: None, hatch_rows: None,
@@ -332,165 +421,6 @@ fn projection_bits(factors: RenderProjectionFactors) -> ProjectionBits {
 fn offset_bits(offset: RenderPolygonOffset) -> (i32, u32, u32) {
     let (mode, factor, units) = offset.parameters();
     (mode, factor.to_bits(), units.to_bits())
-}
-
-// Ordinary lit structures share a world-view and its transformed headlights. A different
-// effective view or light set within the same main pass uses the full renderer.
-#[derive(Default)]
-struct MainLightingKey {
-    view: Option<MainViewLights>,
-    materials: Vec<MaterialBits>,
-    draws: Vec<MainLitDraw>,
-}
-
-type MaterialBits = [[u32; 4]; 8];
-
-impl MainLightingKey {
-    fn capture(draws: &[PrimitiveDraw]) -> Option<Self> {
-        let mut key = Self::default();
-        let mut materials = HashMap::new();
-        for (index, lighting) in lit_draws(draws) {
-            if !key.accepts_view(lighting) {
-                return None;
-            }
-            let bits = material_bits(&lighting.material);
-            let material = *materials.entry(bits).or_insert_with(|| {
-                key.materials.push(bits);
-                key.materials.len() - 1
-            });
-            key.draws
-                .push(MainLitDraw::capture(index, material, lighting));
-        }
-        Some(key)
-    }
-
-    fn accepts_view(&mut self, lighting: &RenderLighting) -> bool {
-        if !programmable_phong(lighting) {
-            return false;
-        }
-        self.view
-            .get_or_insert_with(|| MainViewLights::capture(lighting))
-            .matches(lighting)
-    }
-
-    fn matches(&self, draws: &[PrimitiveDraw]) -> bool {
-        let mut current = lit_draws(draws);
-        for key in &self.draws {
-            let Some((index, lighting)) = current.next() else {
-                return false;
-            };
-            if !programmable_phong(lighting)
-                || !self
-                    .view
-                    .as_ref()
-                    .is_some_and(|view| view.matches(lighting))
-                || !key.matches(index, lighting)
-                || self.materials[key.material] != material_bits(&lighting.material)
-            {
-                return false;
-            }
-        }
-        current.next().is_none()
-    }
-}
-
-fn lit_draws(draws: &[PrimitiveDraw]) -> impl Iterator<Item = (usize, &RenderLighting)> {
-    draws
-        .iter()
-        .enumerate()
-        .filter_map(|(index, draw)| draw.lighting().map(|lighting| (index, lighting)))
-}
-
-fn programmable_phong(lighting: &RenderLighting) -> bool {
-    !lighting.pbr && lighting.fixed.is_none()
-}
-
-struct MainViewLights {
-    view: [u32; 16],
-    eye: [u32; 4],
-    lights: RenderLightSet,
-}
-
-impl MainViewLights {
-    fn capture(lighting: &RenderLighting) -> Self {
-        Self {
-            view: lighting.view.map(f32::to_bits),
-            eye: lighting.eye.map(f32::to_bits),
-            lights: lighting.lights.clone(),
-        }
-    }
-
-    fn matches(&self, lighting: &RenderLighting) -> bool {
-        self.view == lighting.view.map(f32::to_bits)
-            && self.eye == lighting.eye.map(f32::to_bits)
-            && light_set_matches(&self.lights, &lighting.lights)
-    }
-}
-
-fn light_set_matches(left: &RenderLightSet, right: &RenderLightSet) -> bool {
-    left.ambient.map(f32::to_bits) == right.ambient.map(f32::to_bits)
-        && left.sources.len() == right.sources.len()
-        && left.sources.iter().zip(right.sources.iter()).all(|(a, b)| {
-            a.kind == b.kind
-                && a.cast_shadows == b.cast_shadows
-                && a.color.map(f32::to_bits) == b.color.map(f32::to_bits)
-                && a.position.map(f32::to_bits) == b.position.map(f32::to_bits)
-                && a.direction.map(f32::to_bits) == b.direction.map(f32::to_bits)
-                && a.params.map(f32::to_bits) == b.params.map(f32::to_bits)
-        })
-}
-
-struct MainLitDraw {
-    draw: usize,
-    material: usize,
-    normals: StreamWitness<[f32; 3]>,
-    world: [u32; 16],
-    normal: [u32; 16],
-    fixed_source_opacity: Option<[u32; 2]>,
-    shading: RenderShading,
-    flags: [bool; 3],
-}
-
-impl MainLitDraw {
-    fn capture(draw: usize, material: usize, lighting: &RenderLighting) -> Self {
-        Self {
-            draw,
-            material,
-            normals: StreamWitness::capture(&lighting.normals),
-            world: lighting.world.map(f32::to_bits),
-            normal: lighting.normal.map(f32::to_bits),
-            fixed_source_opacity: lighting
-                .fixed_source_opacity
-                .map(|values| values.map(f32::to_bits)),
-            shading: lighting.shading,
-            flags: lighting_flags(lighting),
-        }
-    }
-
-    fn matches(&self, draw: usize, lighting: &RenderLighting) -> bool {
-        self.draw == draw
-            && self.normals.matches(&lighting.normals)
-            && self.world == lighting.world.map(f32::to_bits)
-            && self.normal == lighting.normal.map(f32::to_bits)
-            && self.fixed_source_opacity
-                == lighting
-                    .fixed_source_opacity
-                    .map(|values| values.map(f32::to_bits))
-            && self.shading == lighting.shading
-            && self.flags == lighting_flags(lighting)
-    }
-}
-
-fn material_bits(material: &RenderMaterial) -> MaterialBits {
-    material.packed_common().map(|slot| slot.map(f32::to_bits))
-}
-
-fn lighting_flags(lighting: &RenderLighting) -> [bool; 3] {
-    [
-        lighting.vertex_colors,
-        lighting.front_vertex_colors_only,
-        lighting.normalize_fixed,
-    ]
 }
 
 #[cfg(test)]

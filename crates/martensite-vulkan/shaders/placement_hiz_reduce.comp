@@ -1,0 +1,41 @@
+#version 450
+#extension GL_EXT_samplerless_texture_functions : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 0) uniform texture2D depthSource;
+layout(set = 1, binding = 0, std430) buffer Pyramid {
+    float depthValues[];
+};
+
+layout(push_constant) uniform Reduction {
+    uvec2 sourceSize;
+    uvec2 destinationSize;
+    uint sourceOffset;
+    uint destinationOffset;
+    uint base;
+} level;
+
+float conservativeDepth(float depth) {
+    return !(depth >= 0.0 && depth <= 1.0) ? 1.0 : depth;
+}
+
+void main() {
+    uvec2 at = gl_GlobalInvocationID.xy;
+    if (any(greaterThanEqual(at, level.destinationSize))) {
+        return;
+    }
+    float farthest = 0.0;
+    uvec2 first = at * 2u;
+    for (uint child = 0u; child < 4u; child++) {
+        uvec2 source = first + uvec2(child & 1u, child >> 1u);
+        float sampleDepth = 1.0;
+        if (all(lessThan(source, level.sourceSize))) {
+            sampleDepth = level.base != 0u
+                ? texelFetch(depthSource, ivec2(source), 0).r
+                : depthValues[level.sourceOffset + source.y * level.sourceSize.x + source.x];
+        }
+        farthest = max(farthest, conservativeDepth(sampleDepth));
+    }
+    depthValues[level.destinationOffset + at.y * level.destinationSize.x + at.x] = farthest;
+}

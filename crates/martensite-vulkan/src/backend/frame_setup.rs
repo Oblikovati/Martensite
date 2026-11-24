@@ -2,7 +2,7 @@
 use super::super::frame_targets::{FrameTargetPool, RasterTargetLease};
 use super::super::geometry_transfer::GeometryTransfers;
 use super::super::host_upload_pages::FrameUploadPages;
-use super::super::immediate_main_record::{MainLayerImages, MainLayerSnapshot};
+use super::super::immediate_main_record::{MainLayerImages, MainLayerSnapshot, MainRestoreSource};
 use super::super::{
     fragment_alpha_plan::FragmentAlphaPlan, oit_frame::OitFramePass, oit_plan::OitResourcePlan,
     retained_submission::RetirementStore,
@@ -30,7 +30,7 @@ pub(super) struct PreparedFramePlan {
 }
 struct PreparedMainRestore {
     start: usize,
-    source: MainLayerImages,
+    source: MainRestoreSource,
     destination: RasterTargetLease,
 }
 struct FrameDimensions {
@@ -40,6 +40,7 @@ struct FrameDimensions {
 }
 pub(super) struct PreparedFrameUploads {
     draws: Vec<UploadedDraw>,
+    meshlets: super::super::meshlet_draw::FrameMeshlets,
     geometry_transfers: GeometryTransfers,
     oit: Option<OitFramePass>,
 }
@@ -98,26 +99,39 @@ impl FrameSetup<'_> {
                 && samples == vk::SampleCountFlags::TYPE_1
                 && FrameTargetPool::can_reserve_main(dimensions.bytes)
         }) else {
-            return Ok((false, None));
+            return self.refuse_elided().map(|()| (false, None));
         };
         let pool = &self.pipeline.frame_targets;
         let Some((start, ticket, source)) = plan.restore().and_then(|(start, ticket)| {
             pool.pin_main(ticket).map(|source| (start, ticket, source))
         }) else {
-            return Ok((true, None));
+            return self.refuse_elided().map(|()| (true, None));
         };
         if let Some(destination) = self.optional_main_targets(dimensions.attachment, false)? {
+            let restore = self.pipeline.main_restore.get(self.runtime)?;
             return Ok((
                 false,
                 Some(PreparedMainRestore {
                     start,
-                    source,
+                    source: source.into_source(restore)?,
                     destination,
                 }),
             ));
         }
         pool.revoke_main(ticket);
-        Ok((false, None))
+        self.refuse_elided().map(|()| (false, None))
+    }
+    /// An elided frame has no main draws to fall back on (immediate_elision.rs).
+    fn refuse_elided(&self) -> Result<(), RenderError> {
+        let elided = self
+            .frame
+            .immediate_main
+            .as_ref()
+            .is_some_and(ImmediateMainPlan::is_elided);
+        match elided {
+            true => Err(RenderError::main_restore_unavailable()),
+            false => Ok(()),
+        }
     }
     fn prepare_dimensions(&self) -> Result<FrameDimensions, RenderError> {
         self.pipeline.surface_images.prune()?;
@@ -154,7 +168,16 @@ impl FrameSetup<'_> {
         self.pipeline
             .surface_images
             .observe_live_fixed_function(self.frame.raster.fixed_function);
+        let compact_vertices = self.runtime.mesh_vertex_behavior
+            == crate::RenderMeshVertexBehavior::Quantized16OctV2
+            && plan.raster.samples == vk::SampleCountFlags::TYPE_1
+            && !self.frame.raster.alpha_writes
+            && self.frame.geometry_batch.is_none()
+            && !self.frame.draws[plan.first_draw..]
+                .iter()
+                .any(|draw| draw.instances.is_some());
         let mut uploads = FrameDrawUploads {
+            compact_vertices,
             geometry_batch: self.frame.geometry_batch.as_ref(),
             geometry: GeometryTransfers::new(&self.pipeline.geometry_residency),
             storage: FrameUploadPages::storage(&self.pipeline.frame_storage_pages),
@@ -167,6 +190,15 @@ impl FrameSetup<'_> {
         self.select_multisample(&mut draws, plan)?;
         self.upload_oit(&mut draws, oit.as_ref())?;
         self.upload_alpha(&mut draws, plan, oit.as_ref())?;
+        self.form_table_runs(&mut draws, plan, &mut uploads)?;
+        let meshlets = super::super::meshlet_draw::prepare(
+            self.runtime,
+            self.frame,
+            self.pipeline,
+            plan.raster.samples,
+            &draws,
+            plan.first_draw,
+        )?;
         super::super::window_depth_upload::require_scene_viewports(
             self.runtime,
             &draws,
@@ -178,10 +210,63 @@ impl FrameSetup<'_> {
             .validate_uploads(self.frame, &draws, plan.raster.samples)?;
         Ok(PreparedFrameUploads {
             draws,
+            meshlets,
             geometry_transfers: uploads.geometry,
             oit,
         })
     }
+    /// Attach the indirect runs of the plain lit surfaces to their first draws (draw_table.rs).
+    fn form_table_runs(
+        &self,
+        draws: &mut [UploadedDraw],
+        plan: &PreparedFramePlan,
+        uploads: &mut FrameDrawUploads<'_>,
+    ) -> Result<(), RenderError> {
+        let frame = crate::backend::draw_table::TableFrame {
+            runtime: self.runtime,
+            pipelines: self.pipeline,
+            sources: &self.frame.draws[plan.first_draw..],
+            first_draw: plan.first_draw,
+            stencil: &plan.stencil,
+            layers: &self.frame.layers,
+        };
+        let upload = (
+            self.runtime,
+            self.pipeline,
+            plan.dimensions.extent,
+            plan.raster.samples,
+            self.retirements,
+        );
+        let sources = &self.frame.draws[plan.first_draw..];
+        let hiz_layer = self.hiz_layer(plan, draws.len());
+        super::draw_instance_upload::attach_placement_runs(
+            upload,
+            (sources, hiz_layer),
+            draws,
+            uploads,
+        )?;
+        crate::backend::draw_table::form_runs(&frame, draws, &mut uploads.storage)
+    }
+    fn hiz_layer(&self, plan: &PreparedFramePlan, draws: usize) -> Option<&crate::RenderLayerSpan> {
+        let [layer] = self.frame.layers.as_slice() else {
+            return None;
+        };
+        (draws == 1
+            && plan.first_draw == 0
+            && plan.restore.is_none()
+            && !plan.stencil.during[0].enabled
+            && plan.fragment_alpha.during[0].is_none()
+            && self.frame.shader_grid.is_none()
+            && self.frame.environment.is_none()
+            && self.frame.shadow_maps.is_none()
+            && self.frame.raytrace.is_none()
+            && self.frame.stereo_pair.is_none()
+            && self.frame.colored_quad.is_none()
+            && !self.frame.raster.alpha_to_coverage
+            && !self.frame.raster.alpha_writes)
+            .then_some(layer)
+    }
+
     fn upload_draws(
         &self,
         plan: &PreparedFramePlan,
@@ -364,12 +449,15 @@ impl PreparedFrameUploads {
                     .immediate_main
                     .as_ref()
                     .filter(|_| plan.can_seed_main)
-                    .map(ImmediateMainPlan::seed);
+                    .and_then(ImmediateMainPlan::seed);
                 let (targets, snapshot) = setup.frame_targets(&plan, seed)?;
                 (targets, None, snapshot)
             }
         };
         Ok(FrameResources {
+            secondary_layers: super::super::secondary_layer_commands::FrameSecondaryLayers::new(
+                setup.runtime,
+            ),
             attachment_coordinates: setup.runtime.attachment_coordinates,
             fragment_alpha: plan.fragment_alpha,
             stencil: plan.stencil,
@@ -384,6 +472,7 @@ impl PreparedFrameUploads {
             main_publication: targets.main_publication,
             main_snapshot,
             draws: self.draws,
+            meshlets: self.meshlets,
             submitted_draws: Default::default(),
             first_draw: plan.first_draw,
             geometry_transfers: self.geometry_transfers,

@@ -3,8 +3,8 @@
 use super::Graphic3dBufferValue;
 use crate::json_dump::{base_class, class_begin, field_integer, field_pointer};
 use martensite_tkernel::ncollection::{BaseAllocator, Buffer, Vec4};
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, SharedState};
 use std::io;
 
 /// The fields of `Graphic3d_BoundBuffer`.
@@ -43,7 +43,7 @@ impl Graphic3dBoundBufferState {
 
 /// A bound buffer; `let bounds = Graphic3dBoundBuffer::new(allocator)?; bounds.init(2, true)?;`.
 pub struct Graphic3dBoundBuffer {
-    state: SharedState<Graphic3dBoundBufferState>,
+    state: super::RevisedState<Graphic3dBoundBufferState>,
 }
 martensite_tkernel::impl_transient!(Graphic3dBoundBuffer, "Graphic3d_BoundBuffer", Buffer);
 
@@ -57,8 +57,13 @@ impl Graphic3dBoundBuffer {
             nb_max_bounds: 0,
         };
         Ok(Self {
-            state: SharedState::new(state),
+            state: super::RevisedState::new(state),
         })
+    }
+    /// Observe bounds and colors before reading them for a retained result.
+    /// Example: `bounds.observe_input(&scope)`.
+    pub fn observe_input(&self, scope: &super::GraphicInputRevision) {
+        self.state.observe(scope);
     }
     /// The fields; `bounds.state().nb_bounds`.
     pub fn state(&self) -> std::sync::RwLockReadGuard<'_, Graphic3dBoundBufferState> {

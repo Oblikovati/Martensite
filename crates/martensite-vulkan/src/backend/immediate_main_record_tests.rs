@@ -41,7 +41,7 @@ fn completed_main_images_preserve_color_and_occlusion_for_a_changing_overlay() {
     let cache = Arc::new(ImmediateMainCache::default());
     let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
     let mut base = frame(main.clone(), vec![], false);
-    base.immediate_main = cache.plan(&base);
+    base.immediate_main = cache.plan(&base, None);
     assert!(matches!(
         base.immediate_main,
         Some(ImmediateMainPlan::Remember(_))
@@ -57,7 +57,7 @@ fn completed_main_images_preserve_color_and_occlusion_for_a_changing_overlay() {
             full.rgba.as_chunks::<4>().0.contains(&[255, 0, 0, 255]),
             !depth_clear
         );
-        updated.immediate_main = cache.plan(&updated);
+        updated.immediate_main = cache.plan(&updated, None);
         assert!(matches!(
             updated.immediate_main,
             Some(ImmediateMainPlan::Restore { start: 1, .. })
@@ -78,10 +78,10 @@ fn main_camera_color_geometry_and_extent_changes_cannot_reuse_the_base() {
     let cache = Arc::new(ImmediateMainCache::default());
     let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
     let mut base = frame(main, vec![], false);
-    base.immediate_main = cache.plan(&base);
+    base.immediate_main = cache.plan(&base, None);
     renderer.render(&base).unwrap();
     assert!(matches!(
-        cache.plan(&base),
+        cache.plan(&base, None),
         Some(ImmediateMainPlan::Restore { .. })
     ));
     let mutations: [fn(&mut RenderFrame); 4] = [
@@ -94,7 +94,7 @@ fn main_camera_color_geometry_and_extent_changes_cannot_reuse_the_base() {
         let mut changed = base.clone();
         mutate(&mut changed);
         assert!(!matches!(
-            cache.plan(&changed),
+            cache.plan(&changed, None),
             Some(ImmediateMainPlan::Restore { .. })
         ));
     }
@@ -106,20 +106,20 @@ fn recycled_main_frame_ticket_falls_back_to_a_complete_redraw() {
     let cache = Arc::new(ImmediateMainCache::default());
     let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
     let mut seed = frame(main.clone(), vec![], false);
-    seed.immediate_main = cache.plan(&seed);
+    seed.immediate_main = cache.plan(&seed, None);
     renderer.render(&seed).unwrap();
     let other_views: Vec<_> = (0..4)
         .map(|_| Arc::new(ImmediateMainCache::default()))
         .collect();
     let mut other = frame(triangle(0.5, [0., 0., 1., 1.], 0.9), vec![], false);
     for view in &other_views {
-        other.immediate_main = view.plan(&other);
+        other.immediate_main = view.plan(&other, None);
         renderer.render(&other).unwrap();
     }
     let overlay = triangle(0.8, [0., 1., 0., 1.], 0.9);
     let mut changed = frame(main, vec![overlay], false);
     let full = renderer.render(&changed).unwrap();
-    changed.immediate_main = cache.plan(&changed);
+    changed.immediate_main = cache.plan(&changed, None);
     assert!(matches!(
         changed.immediate_main,
         Some(ImmediateMainPlan::Restore { .. })
@@ -132,7 +132,7 @@ fn recycled_main_frame_ticket_falls_back_to_a_complete_redraw() {
             .is_none()
     );
     assert_capture(renderer.render(&changed).unwrap(), full);
-    changed.immediate_main = cache.plan(&changed);
+    changed.immediate_main = cache.plan(&changed, None);
     assert!(
         renderer
             .frame_resources(&changed)
@@ -151,7 +151,7 @@ fn first_immediate_frame_saves_the_main_prefix_before_drawing_a_visible_overlay(
     let green = triangle(0.1, [0., 1., 0., 1.], 0.9);
     let mut first = frame(main.clone(), vec![green], true);
     let full = renderer.render(&first).unwrap();
-    first.immediate_main = cache.plan(&first);
+    first.immediate_main = cache.plan(&first, None);
     assert!(
         matches!(&first.immediate_main, Some(ImmediateMainPlan::Remember(seed)) if seed.snapshot_start == Some(1))
     );
@@ -159,7 +159,7 @@ fn first_immediate_frame_saves_the_main_prefix_before_drawing_a_visible_overlay(
     let blue = triangle(0.7, [0., 0., 1., 1.], 0.9);
     let mut changed = frame(main, vec![blue], false);
     let reference = renderer.render(&changed).unwrap();
-    changed.immediate_main = cache.plan(&changed);
+    changed.immediate_main = cache.plan(&changed, None);
     assert!(
         renderer
             .frame_resources(&changed)
@@ -178,11 +178,11 @@ fn an_unobserved_submission_owns_its_source_after_view_invalidation() {
     let mut renderer = resource_lifecycle_test_support::create_resource_renderer();
     let cache = Arc::new(ImmediateMainCache::default());
     let mut frame = frame(triangle(0.2, [1., 0., 0., 1.], -0.1), vec![], false);
-    frame.immediate_main = cache.plan(&frame);
+    frame.immediate_main = cache.plan(&frame, None);
     renderer.render(&frame).unwrap();
     // The owner count below concerns this submission, not the earlier frame in flight.
     renderer.finish_frames().unwrap();
-    frame.immediate_main = cache.plan(&frame);
+    frame.immediate_main = cache.plan(&frame, None);
     let resources = renderer.frame_resources(&frame).unwrap();
     let (_, source) = resources.immediate_source.as_ref().unwrap();
     let color = Arc::downgrade(&source.color);
@@ -206,4 +206,58 @@ fn an_unobserved_submission_owns_its_source_after_view_invalidation() {
     assert_eq!(color.strong_count(), 0);
     assert_eq!(depth.strong_count(), 0);
     assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
+/// An immediate-only frame: an empty layer in place of the main layer, then the overlay.
+fn elided_frame(overlay: Vec<PrimitiveDraw>, plan: ImmediateMainPlan) -> RenderFrame {
+    let layers = vec![
+        RenderLayer::new(Vec::new(), true, true, true),
+        RenderLayer::new(overlay, true, true, false),
+    ];
+    let mut frame = RenderFrame::with_layers(48, 32, [0., 0., 0., 1.], layers).unwrap();
+    frame.immediate_start = Some(1);
+    frame.immediate_main = Some(plan);
+    frame
+}
+
+#[test]
+fn an_elided_frame_draws_its_overlay_over_the_retained_main_images() {
+    let mut renderer = crate::backend::resource_lifecycle_test_support::create_resource_renderer();
+    let cache = Arc::new(ImmediateMainCache::default());
+    let main = triangle(0.2, [1., 0., 0., 1.], -0.1);
+    let mut base = frame(main.clone(), vec![], false);
+    base.immediate_main = cache.plan(&base, None);
+    renderer.render(&base).unwrap();
+    let overlay = triangle(0.8, [0., 1., 0., 1.], 0.9);
+    let mut updated = frame(main, vec![overlay.clone()], false);
+    let full = renderer.render(&updated).unwrap();
+    updated.immediate_main = cache.plan(&updated, None);
+    let Some(ImmediateMainPlan::Restore { start, ticket, .. }) = updated.immediate_main else {
+        panic!("the unchanged main pass must be restorable");
+    };
+    let elided = elided_frame(vec![overlay], ImmediateMainPlan::Elided { start, ticket });
+    let prepared = renderer.frame_resources(&elided).unwrap();
+    assert!(prepared.immediate_source.is_some());
+    assert_eq!(prepared.draws.len(), 1, "only the overlay is uploaded");
+    assert_eq!(
+        prepared.retirement_pace(),
+        crate::backend::geometry_residency::RetirementPace::Uploads
+    );
+    drop(prepared);
+    assert_capture(renderer.render(&elided).unwrap(), full);
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}
+
+#[test]
+fn an_elided_frame_without_published_main_images_is_refused() {
+    let mut renderer = crate::backend::resource_lifecycle_test_support::create_resource_renderer();
+    let overlay = triangle(0.8, [0., 1., 0., 1.], 0.9);
+    let plan = ImmediateMainPlan::Elided {
+        start: 1,
+        ticket: Default::default(),
+    };
+    let error = renderer
+        .render(&elided_frame(vec![overlay], plan))
+        .unwrap_err();
+    assert!(error.is_main_restore_unavailable(), "{error}");
 }

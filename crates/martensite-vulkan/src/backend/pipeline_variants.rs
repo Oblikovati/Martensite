@@ -48,6 +48,11 @@ pub(super) struct PipelineVariant {
     pub depth_pass: crate::depth_prepass::RenderDepthPass,
     /// Write the attachment alpha (native `buffersOpaqueAlpha` off).
     pub alpha_writes: bool,
+    /// Read the clip, world and normal matrices from the frame's draw table at set 7, for the
+    /// draws of an indirect run (draw_table_pipeline.rs, #594).
+    pub draw_table: bool,
+    pub hiz_depth_only: bool,
+    pub compact_vertices: bool,
 }
 /// Draw-color lines share a shader and select the layout of their resident vertex stream.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -152,6 +157,9 @@ fn empty_variant(
         capping,
         depth_pass: Default::default(),
         alpha_writes: false,
+        draw_table: false,
+        hiz_depth_only: false,
+        compact_vertices: false,
     }
 }
 /// Base variant, depth-prepass flag and optional specialization words of a special pipeline.
@@ -167,12 +175,18 @@ pub(super) struct RasterPipelines {
     pub frame_storage_pages: super::host_upload_pages::FrameStoragePool,
     pub lighting_bindings: super::storage_descriptor::LightingBindingCache,
     pub frame_targets: super::frame_targets::FrameTargetPool,
+    pub main_restore: super::main_restore_pipeline::MainRestoreCache,
     pub geometry_residency: Arc<super::geometry_residency::GeometryStore>,
     pub stencil: bool,
+    pub(super) meshlets: super::meshlet_draw::MeshletCache,
     runtime: Arc<VulkanRuntime>,
     special_variants:
         std::sync::Mutex<std::collections::BTreeMap<SpecialVariantKey, Arc<DrawPipeline>>>,
     alpha_writes: super::alpha_write_pipelines::AlphaWritePipelines,
+    draw_tables: super::pipeline::DrawTablePipelines,
+    pub(super) mesh_vertex_twins: super::pipeline::MeshVertexTwins,
+    placement_visibility: super::placement_visibility::PlacementVisibilityCache,
+    pub(super) placement_hiz: super::placement_hiz::HiZCache,
     pub(super) pbr_environment:
         std::sync::Mutex<Option<Arc<super::pbr_environment::PbrEnvironment>>>,
     /// The PBR environment of the view being rendered, if the frame carries one.
@@ -220,11 +234,17 @@ impl RasterPipelines {
             frame_storage_pages: Default::default(),
             lighting_bindings: Default::default(),
             frame_targets: Default::default(),
+            main_restore: Default::default(),
             geometry_residency: Arc::new(super::geometry_residency::GeometryStore::new(runtime)),
             stencil,
             runtime: runtime.clone(),
             special_variants: Default::default(),
             alpha_writes: Default::default(),
+            draw_tables: Default::default(),
+            mesh_vertex_twins: Default::default(),
+            meshlets: Default::default(),
+            placement_visibility: Default::default(),
+            placement_hiz: Default::default(),
             pbr_environment: Default::default(),
             frame_pbr_environment: Default::default(),
             material_map_mocks: Default::default(),
@@ -249,6 +269,11 @@ impl RasterPipelines {
         self.frame_storage_pages = Default::default();
         self.lighting_bindings = Default::default();
         self.frame_targets = Default::default();
+        self.draw_tables = Default::default();
+        self.placement_visibility = Default::default();
+        self.placement_hiz = Default::default();
+        self.main_restore = Default::default();
+        self.meshlets = Default::default();
         self.geometry_residency =
             Arc::new(super::geometry_residency::GeometryStore::new(&self.runtime));
         self.release_pbr_environment();
@@ -265,6 +290,28 @@ impl RasterPipelines {
     ) -> Result<Arc<DrawPipeline>, RenderError> {
         self.alpha_writes.twin(&self.runtime, source)
     }
+    /// The draw-table twin of `source`, or `None` when it has none (draw_table.rs);
+    /// `pipelines.draw_table_twin(&pipeline)?`.
+    pub fn draw_table_twin(
+        &self,
+        source: &Arc<DrawPipeline>,
+    ) -> Result<Option<Arc<DrawPipeline>>, RenderError> {
+        self.draw_tables.twin(&self.runtime, source)
+    }
+    pub(super) fn hiz_depth_twin(
+        &self,
+        source: &Arc<DrawPipeline>,
+    ) -> Result<Option<Arc<DrawPipeline>>, RenderError> {
+        self.draw_tables.hi_z(&self.runtime, source)
+    }
+    /// Prepare the capability-gated placement visibility pipeline once per renderer.
+    pub(super) fn placement_visibility(
+        &self,
+    ) -> Result<Option<Arc<super::placement_visibility::PlacementVisibilityPipeline>>, RenderError>
+    {
+        self.placement_visibility.get(&self.runtime)
+    }
+
     /// The pipeline of `draw`, from its body's memo when the inputs are the memo's (#594).
     pub fn select(
         &self,

@@ -1,6 +1,8 @@
 //! Frame resources are private and never outlive the device that created them.
 #[cfg(test)]
 use super::transform_constants::encode_transform;
+#[path = "draw_instance_upload.rs"]
+mod draw_instance_upload;
 #[path = "frame_draw_upload.rs"]
 mod draw_upload;
 #[path = "frame_upload_point.rs"]
@@ -37,6 +39,7 @@ struct FrameDrawUploads<'a> {
     geometry: GeometryTransfers,
     storage: FrameUploadPages<'a>,
     dynamic_lighting: bool,
+    compact_vertices: bool,
 }
 pub(super) struct UploadedDraw {
     pub window_depth_expected: bool,
@@ -54,6 +57,8 @@ pub(super) struct UploadedDraw {
     pub oit: Option<super::oit_upload::OitUploadedVariants>,
     pub vertices: Arc<GeometryBuffer>,
     pub indices: Arc<GeometryBuffer>,
+    pub index_format: super::geometry_residency::IndexFormat,
+    pub mesh_decode: Option<Arc<super::mesh_vertex_codec::MeshPositionDecode>>,
     pub count: u32,
     pub instances: u32,
     pub point_viewports: Option<[vk::Viewport; 2]>,
@@ -64,6 +69,13 @@ pub(super) struct UploadedDraw {
     pub bindings: DrawBindings,
     /// The registered user program replacing the built-in pipeline (`user_program_draw`).
     pub user_program: Option<Box<super::user_program_draw::UploadedUserProgram>>,
+    /// The indirect run this draw starts, which the main pass records in its place and in the
+    /// place of the draws after it (draw_table.rs, #594).
+    pub table_run: Option<Box<super::draw_table::DrawTableRun>>,
+    /// The lighting binding is the previous draw's, which differs in the world and normal
+    /// matrices: only a run draws it, and a draw left out of a run binds its own block
+    /// (`draw_table::repair_borrowed_lighting`).
+    pub borrowed_lighting: bool,
 }
 pub(super) struct DrawLine {
     pub width: Option<f32>,
@@ -76,7 +88,7 @@ pub(super) struct WideLineDraw {
     pub x_major: u32,
     pub offsets: Vec<f32>,
 }
-#[cfg_attr(feature = "draw-record-verification", derive(PartialEq))]
+#[derive(PartialEq)]
 pub(super) struct DrawPresentation {
     pub annotation: bool,
     /// Dimension label rectangle: stencil writes only, depth test off.
@@ -103,6 +115,7 @@ pub(super) struct DrawBindings {
     pub shadow_maps: Option<Arc<super::shadow_maps::ShadowMapSet>>,
 }
 pub(super) struct FrameResources {
+    pub(super) secondary_layers: super::secondary_layer_commands::FrameSecondaryLayers,
     attachment_coordinates: super::attachment_coordinates::AttachmentCoordinates,
     pub stencil: crate::stencil_plan::StencilPlan,
     pub stencil_clear_value: u8,
@@ -115,10 +128,11 @@ pub(super) struct FrameResources {
     pub attachment_extent: vk::Extent2D,
     pub color: Arc<TargetImage>,
     pub depth: Arc<TargetImage>,
-    pub(super) immediate_source: Option<(usize, super::immediate_main_record::MainLayerImages)>,
+    pub(super) immediate_source: Option<(usize, super::immediate_main_record::MainRestoreSource)>,
     pub(super) main_publication: Option<super::immediate_main_record::MainLayerTicket>,
     pub(super) main_snapshot: Option<super::immediate_main_record::MainLayerSnapshot>,
     pub draws: Vec<UploadedDraw>,
+    pub(super) meshlets: super::meshlet_draw::FrameMeshlets,
     submitted_draws: DrawGpuOwners,
     pub(super) first_draw: usize,
     pub(super) geometry_transfers: GeometryTransfers,
@@ -162,6 +176,15 @@ impl FrameResources {
     }
     pub(super) fn scene_empty(&self) -> bool {
         self.first_draw == 0 && self.draws.is_empty() && self.submitted_draws.is_empty()
+    }
+    /// How many resident geometry entries this frame checks once it settles.
+    pub(super) fn retirement_pace(&self) -> super::geometry_residency::RetirementPace {
+        use super::geometry_residency::RetirementPace;
+        match (self.immediate_source.is_some(), self.scene_empty()) {
+            (true, _) => RetirementPace::Uploads,
+            (false, true) => RetirementPace::Sweep,
+            (false, false) => RetirementPace::Steady,
+        }
     }
     pub(super) fn retain_submitted_draws(&mut self) {
         self.submitted_draws = DrawGpuOwners::from_draws(std::mem::take(&mut self.draws));
@@ -242,6 +265,10 @@ pub(super) fn encode_vertices(draw: &PrimitiveDraw) -> Vec<u8> {
     encode_vertex_sources(draw, (0..draw.vertices.len()).map(|index| (index, index)))
 }
 
+pub(super) fn vertex_stream_bytes(draw: &PrimitiveDraw) -> u64 {
+    (draw.vertices.len() as u64).saturating_mul(VertexEncoding::from_draw(draw).stride() as u64)
+}
+
 fn encode_vertex_patch(
     draw: &PrimitiveDraw,
     vertices: std::ops::Range<usize>,
@@ -308,11 +335,12 @@ enum SurfaceCoordinates<'a> {
     Constant([f32; 4]),
 }
 
-fn geometry_key(
+pub(super) fn geometry_key(
     runtime: &VulkanRuntime,
     draw: &PrimitiveDraw,
+    compact_vertices: bool,
 ) -> Option<super::geometry_residency::GeometryKey> {
-    use super::geometry_residency::{GeometryEncoding, GeometryKey};
+    use super::geometry_residency::{GeometryEncoding, GeometryKey, IndexFormat};
     if cfg!(any(
         feature = "vertex-output-diagnostics",
         feature = "command-state-diagnostics"
@@ -333,6 +361,8 @@ fn geometry_key(
     Some(GeometryKey::new(
         draw,
         GeometryEncoding {
+            index_format: IndexFormat::of_draw(draw),
+            compact_vertices,
             surface_coordinates,
             surface_uv: matches!(layout.surface, Some(SurfaceCoordinates::Array(_))),
             sphere_normals: layout.sphere_normals.is_some(),

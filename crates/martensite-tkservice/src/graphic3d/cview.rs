@@ -315,6 +315,15 @@ pub trait Graphic3dCView: Graphic3dDataStructureManager {
     fn invalidate_z_layer_bounding_box(&self, layer_id: Graphic3dZLayerId) {
         defaults::invalidate_z_layer_bounding_box(self, layer_id);
     }
+    /// The `Update` of one structure or group: invalidates the box of `layer_id` as
+    /// `update` does. `source` is the layer of the updated structure, `UNKNOWN` for one
+    /// that other structures connect; a view that keeps the image of its main layers can
+    /// keep it for an update of an immediate layer (#594);
+    /// `view.structure_update(0, GRAPHIC3D_ZLAYER_ID_UNKNOWN)`.
+    fn structure_update(&self, source: Graphic3dZLayerId, layer_id: Graphic3dZLayerId) {
+        let _ = source;
+        self.invalidate_z_layer_bounding_box(layer_id);
+    }
     /// `RemoveZLayer`.
     fn remove_z_layer(&self, layer_id: Graphic3dZLayerId) -> Result<(), Failure>;
     /// `SetZLayerSettings`.

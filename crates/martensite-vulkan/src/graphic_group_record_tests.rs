@@ -7,6 +7,7 @@ use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::*;
 
 struct RecordScene {
+    manager: Handle<Graphic3dStructureManager>,
     structure: Handle<Graphic3dStructure>,
     _driver: Handle<crate::Graphic3dRenderDriver>,
     group: Handle<Graphic3dDrawGroup>,
@@ -28,6 +29,7 @@ impl RecordScene {
         structure.set_visible(true);
         group.add_primitive_array(&triangle().upcast(), true);
         Self {
+            manager,
             structure,
             _driver: driver,
             group,
@@ -72,9 +74,18 @@ impl RecordScene {
     fn translate(&self, x: f64) {
         let mut trsf = martensite_tkmath::gp::Transform3::default();
         trsf.set_translation(martensite_tkmath::gp::Vector3::new(x, 0., 0.));
+        self.place(trsf);
+    }
+    /// Give the structure the transformation `trsf`, as a connected presentation does.
+    fn place(&self, trsf: martensite_tkmath::gp::Transform3) {
         let datum = Handle::new(martensite_tkmath::toploc::Datum3::new(trsf));
         let cstructure = self.structure.cstructure();
         cstructure.cstructure_base().fields.write().trsf = datum;
+    }
+    /// Shade the group with lighting, so that its draws carry world and normal matrices.
+    fn lit(&self) {
+        self.aspect
+            .set_shading_model(Graphic3dTypeOfShadingModel::Phong);
     }
     /// Lower twice, so the second pass keeps a record; the first only notes its pass.
     fn recorded(&self) -> Vec<crate::PrimitiveDraw> {
@@ -83,8 +94,14 @@ impl RecordScene {
     }
     /// The structure-level replay of all groups, or `None` when it takes the lowering path.
     fn structure_replay(&self) -> Option<Vec<crate::PrimitiveDraw>> {
-        let render = self
-            .structure
+        self.replay_of(&self.structure)
+    }
+    /// The structure-level replay of `structure`, or `None` when it takes the lowering path.
+    fn replay_of(
+        &self,
+        structure: &Handle<Graphic3dStructure>,
+    ) -> Option<Vec<crate::PrimitiveDraw>> {
+        let render = structure
             .cstructure()
             .cast::<crate::Graphic3dRenderStructure>();
         let pass = crate::render_element_pass::RenderElementPass::unfiltered();
@@ -93,6 +110,27 @@ impl RecordScene {
         let mut program = crate::stencil_program::StencilProgram::default();
         render.get()?.replayed_groups(scene, &mut program)?;
         Some(program.draws)
+    }
+    /// The model stack the group leaves when it lowers without a record.
+    fn lowered_carry(&self) -> crate::group_flipping::FlipCarry {
+        *self.group.draw_record.write() = super::RecordSlot::Empty;
+        let cstructure = self.structure.cstructure();
+        let fields = cstructure.cstructure_base().fields.read();
+        let pass = crate::render_element_pass::RenderElementPass::unfiltered();
+        let mut carry = Default::default();
+        let clipping = Handle::default();
+        let scene = (&fields, &self.rendering, &clipping);
+        self.group
+            .program_in_structure(
+                &self.camera,
+                Some([64, 64]),
+                scene.0,
+                scene.1,
+                scene.2,
+                (&pass, &mut carry),
+            )
+            .unwrap();
+        carry
     }
     /// The draws a group without a record lowers for the current camera.
     fn lowered_again(&self) -> Vec<crate::PrimitiveDraw> {
@@ -169,19 +207,83 @@ fn an_aspects_write_rebuilds_the_record() {
 }
 
 #[test]
-fn a_structure_transformation_rebuilds_the_record() {
+fn replacing_base_aspects_invalidates_a_warmed_record() {
+    let scene = RecordScene::new();
+    let before = scene.recorded();
+    assert_eq!(scene.draws(), before);
+    assert_eq!(scene.replays(), Some(1));
+
+    let replacement = Handle::new(Graphic3dAspects::default());
+    replacement.set_interior_color(Color::named(NamedColor::GREEN));
+    scene.group.set_group_primitives_aspect(&replacement.cast());
+    let after = scene.draws();
+    assert_eq!(scene.replays(), Some(0));
+    assert_ne!(after, before);
+    assert_eq!(after, scene.lowered_again());
+}
+
+#[test]
+fn a_structure_that_gains_a_transformation_rebuilds_the_record() {
     let scene = RecordScene::new();
     scene.recorded();
     scene.draws();
     assert_eq!(scene.replays(), Some(1));
-    let mut trsf = martensite_tkmath::gp::Transform3::default();
-    trsf.set_translation(martensite_tkmath::gp::Vector3::new(1., 2., 3.));
-    let datum = Handle::new(martensite_tkmath::toploc::Datum3::new(trsf));
-    let cstructure = scene.structure.cstructure();
-    cstructure.cstructure_base().fields.write().trsf = datum;
+    scene.translate(1.);
     let moved = scene.draws();
-    assert_eq!(scene.replays(), Some(0), "the model matrix changed");
+    assert_eq!(scene.replays(), Some(0), "the implicit model stack ended");
     assert_eq!(moved, scene.lowered_again());
+}
+
+#[test]
+fn a_translated_structure_replays_its_record_under_the_new_placement() {
+    let scene = RecordScene::new();
+    scene.translate(1.);
+    scene.recorded();
+    scene.translate(7.);
+    let moved = scene.draws();
+    assert_eq!(
+        scene.replays(),
+        Some(1),
+        "one record serves every translation"
+    );
+    assert_eq!(moved, scene.lowered_again());
+}
+
+#[test]
+fn a_scaled_and_rotated_placement_replays_its_world_and_normal_matrices() {
+    let scene = RecordScene::new();
+    scene.lit();
+    scene.place(martensite_tkmath::gp::Transform3::translation([1., 0., 0.]));
+    scene.recorded();
+    use martensite_tkmath::gp::{Transform3, oz};
+    let rotation = Transform3::rotation(oz(), 0.7).unwrap();
+    let scale = Transform3::scaling(Point3::new(0., 0., 0.), 2.5).unwrap();
+    scene.place(rotation.multiplied(scale));
+    let moved = scene.draws();
+    assert_eq!(scene.replays(), Some(1));
+    let lighting = moved[0].lighting.as_ref().expect("a lit surface");
+    assert_ne!(
+        lighting.normal, lighting.world,
+        "a scale gives another normal matrix"
+    );
+    assert_eq!(moved, scene.lowered_again());
+}
+
+#[test]
+fn a_mirrored_placement_rebuilds_the_record_of_a_direct_one() {
+    let scene = RecordScene::new();
+    scene.translate(1.);
+    scene.recorded();
+    let mirror = martensite_tkmath::gp::Transform3::mirror_point(Point3::new(0., 0., 0.));
+    scene.place(mirror);
+    let mirrored = scene.draws();
+    assert_eq!(
+        scene.replays(),
+        Some(0),
+        "the winding is part of the record"
+    );
+    assert!(mirrored[0].mirrored);
+    assert_eq!(mirrored, scene.lowered_again());
 }
 
 #[test]
@@ -214,33 +316,57 @@ fn a_group_lowered_by_one_pass_keeps_no_record() {
     );
     assert!(matches!(
         *scene.group.draw_record.read(),
-        super::RecordSlot::Lowered(_)
+        super::RecordSlot::Lowered
     ));
 }
 
 #[test]
-fn a_group_lowered_twice_in_one_pass_drops_its_record_for_good() {
+fn the_instances_of_a_group_in_one_pass_replay_one_record() {
     use crate::render_element_pass::RenderElementPass;
     let scene = RecordScene::new();
+    let pass = RenderElementPass::unfiltered();
+    scene.translate(1.);
+    scene.draws_in(&pass);
+    assert_eq!(
+        scene.replays(),
+        None,
+        "the first instance only notes the lowering"
+    );
+    scene.translate(4.);
+    scene.draws_in(&pass);
+    assert_eq!(
+        scene.replays(),
+        Some(0),
+        "the second instance keeps a record"
+    );
+    scene.translate(9.);
+    let third = scene.draws_in(&pass);
+    assert_eq!(scene.replays(), Some(1), "the third instance replays it");
+    assert_eq!(third, scene.lowered_again());
+}
+
+#[test]
+fn an_instance_of_another_class_does_not_replace_the_record_in_its_pass() {
+    use crate::render_element_pass::RenderElementPass;
+    let scene = RecordScene::new();
+    scene.translate(1.);
     scene.recorded();
     let pass = RenderElementPass::unfiltered();
     scene.draws_in(&pass);
     assert_eq!(scene.replays(), Some(1));
-    scene.translate(5.);
-    let instance = scene.draws_in(&pass);
+    let mirror = martensite_tkmath::gp::Transform3::mirror_point(Point3::new(0., 0., 0.));
+    scene.place(mirror);
+    let mirrored = scene.draws_in(&pass);
     assert_eq!(
         scene.replays(),
-        None,
-        "an instanced group keeps no copy of its draws"
+        Some(1),
+        "the direct record stays for this pass"
     );
-    assert!(matches!(
-        *scene.group.draw_record.read(),
-        super::RecordSlot::Instanced
-    ));
-    scene.draws();
-    scene.draws();
-    assert_eq!(scene.replays(), None, "later passes do not record it again");
-    assert_eq!(instance, scene.lowered_again());
+    scene.translate(3.);
+    scene.draws_in(&pass);
+    assert_eq!(scene.replays(), Some(2));
+    scene.place(mirror);
+    assert_eq!(mirrored, scene.lowered_again());
 }
 
 #[test]
@@ -319,4 +445,103 @@ fn a_highlighted_or_stale_structure_takes_the_lowering_path() {
     let cstructure = scene.structure.cstructure();
     cstructure.cstructure_base().fields.write().highlight = true;
     assert!(scene.structure_replay().is_none(), "a highlight");
+}
+
+#[test]
+fn an_ordinary_group_leaves_the_model_stack_that_lowering_leaves() {
+    use martensite_tkmath::gp::{Transform3, oz};
+    let scene = RecordScene::new();
+    let placements = [
+        None,
+        Some(Transform3::translation([2., 0., 0.])),
+        Some(Transform3::mirror_point(Point3::new(1., 0., 0.))),
+    ];
+    for placement in placements {
+        if let Some(trsf) = placement {
+            scene.place(trsf);
+        }
+        for local in [
+            Transform3::default(),
+            Transform3::rotation(oz(), 0.5).unwrap(),
+        ] {
+            scene.group.set_transformation(&local);
+            let lowered = scene.lowered_carry();
+            let cstructure = scene.structure.cstructure();
+            let fields = cstructure.cstructure_base().fields.read();
+            let ordinary = crate::group_flipping::FlipCarry::ordinary(&fields, &local);
+            assert_eq!(ordinary, lowered, "{placement:?} {local:?}");
+        }
+    }
+}
+
+#[test]
+fn the_record_key_reads_the_winding_of_the_structure_transformation() {
+    use martensite_tkmath::gp::Transform3;
+    let scene = RecordScene::new();
+    let mirrored = || {
+        let cstructure = scene.structure.cstructure();
+        let fields = cstructure.cstructure_base().fields.read();
+        super::super::extraction::structure_mirrored(&fields)
+    };
+    assert!(!mirrored(), "no transformation");
+    scene.place(Transform3::translation([2., 0., 0.]));
+    assert!(!mirrored(), "a translation");
+    scene.place(Transform3::mirror_point(Point3::new(0., 0., 0.)));
+    assert!(mirrored(), "a point mirror");
+}
+
+/// A structure of the scene's manager that draws the scene's structure under `trsf`, as an
+/// `AisConnectedInteractive` does.
+fn connected_instance(
+    scene: &RecordScene,
+    trsf: martensite_tkmath::gp::Transform3,
+) -> Handle<Graphic3dStructure> {
+    let instance = Graphic3dStructure::new(&scene.manager, &Handle::default()).unwrap();
+    instance.set_visible(true);
+    let datum = Handle::new(martensite_tkmath::toploc::Datum3::new(trsf));
+    let cstructure = instance.cstructure();
+    cstructure.cstructure_base().fields.write().trsf = datum;
+    let source = scene.structure.cstructure();
+    cstructure.get().unwrap().connect(source.get().unwrap());
+    instance
+}
+
+#[test]
+fn a_connected_structure_replays_the_record_of_its_reference_under_its_placement() {
+    use martensite_tkmath::gp::Transform3;
+    let scene = RecordScene::new();
+    let first = connected_instance(&scene, Transform3::translation([3., 0., 0.]));
+    let second = connected_instance(&scene, Transform3::translation([-4., 1., 0.]));
+    assert!(scene.replay_of(&first).is_none(), "no record yet");
+    let draw = |instance: &Handle<Graphic3dStructure>| {
+        let cstructure = instance.cstructure();
+        let fields = cstructure.cstructure_base().fields.read();
+        let clipping = Handle::default();
+        let pass = crate::render_element_pass::RenderElementPass::unfiltered();
+        let carry = &mut Default::default();
+        let at = (
+            &scene.camera,
+            Some([64, 64]),
+            &*fields,
+            &scene.rendering,
+            &clipping,
+        );
+        let program =
+            scene
+                .group
+                .program_in_structure(at.0, at.1, at.2, at.3, at.4, (&pass, carry));
+        program.unwrap().draws
+    };
+    let expected = draw(&second);
+    draw(&first);
+    assert_eq!(
+        scene.replays(),
+        Some(0),
+        "the second lowering keeps a record"
+    );
+    assert_eq!(
+        scene.replay_of(&second),
+        Some(expected),
+        "one record serves both placements"
+    );
 }

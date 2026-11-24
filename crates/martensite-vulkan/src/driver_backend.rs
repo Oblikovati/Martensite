@@ -23,8 +23,37 @@ impl DriverBackend {
         }
     }
 
+    pub(crate) fn supports_hiz(&self) -> bool {
+        matches!(self, Self::Vulkan(renderer) if renderer.supports_hiz())
+    }
+
+    pub(crate) fn supports_placement_compaction(&self) -> bool {
+        match self {
+            Self::Vulkan(renderer) => renderer.supports_placement_compaction(),
+            _ => false,
+        }
+    }
+
+    pub(crate) fn supports_placements(
+        &self,
+        templates: &[crate::PrimitiveDraw],
+        placement_count: usize,
+    ) -> Result<bool, RenderError> {
+        match self {
+            Self::Vulkan(renderer) => renderer.supports_placements(templates, placement_count),
+            Self::Injected(_) => Ok(false),
+        }
+    }
+
     pub(crate) fn supports_phong_batching(&self) -> bool {
         matches!(self, Self::Vulkan(renderer) if renderer.supports_phong_batching())
+    }
+
+    pub(crate) fn supports_mesh_lod(&self) -> bool {
+        match self {
+            Self::Vulkan(renderer) => renderer.supports_mesh_lod(),
+            Self::Injected(_) => true,
+        }
     }
 
     pub(super) fn allows_main_copy(&self) -> bool {

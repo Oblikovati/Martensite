@@ -32,10 +32,11 @@ impl FrameFlight {
 }
 
 impl VulkanRenderer {
-    /// Wait for the oldest frame while the flight is full; `renderer.make_flight_room()?` returns
-    /// the late fault of a settled frame. A finished frame is not settled early, so the
+    /// Settle the frame on the presentation thread, then wait for the oldest frame while the
+    /// flight is full; `renderer.make_flight_room()?` returns the late fault of a settled frame. A finished frame is not settled early, so the
     /// resources a redraw creates do not depend on GPU timing.
     pub(super) fn make_flight_room(&mut self) -> Result<(), RenderError> {
+        self.settle_presentation()?;
         while self.flight.len() >= FRAMES_IN_FLIGHT {
             self.settle_oldest_frame()?;
         }
@@ -45,13 +46,14 @@ impl VulkanRenderer {
     /// uploads; `renderer.launch_frame(frame)`.
     pub(super) fn launch_frame(&mut self, mut frame: InFlightFrame) {
         frame.resources.geometry_transfers.residency.share();
+        super::draw_table::publish_hiz(&mut frame.resources.draws);
         frame.resources.retain_submitted_draws();
         self.flight.frames().push_back(frame);
     }
     /// Wait for every submitted frame, as `glFinish` does; `renderer.finish_frames()?` settles
-    /// all of them and returns the first late fault.
+    /// all of them, the one on the presentation thread first, and returns the first late fault.
     pub(crate) fn finish_frames(&mut self) -> Result<(), RenderError> {
-        let mut first = Ok(());
+        let mut first = self.settle_presentation();
         while self.flight.len() > 0 {
             let outcome = self.settle_oldest_frame();
             first = first.and(outcome);

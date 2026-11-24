@@ -1,0 +1,155 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+
+// Each workgroup compacts one contiguous range. Indirect calls consume the ranges in input
+// order, so two primitives at equal depth keep their original ordering.
+layout(local_size_x = 64) in;
+
+struct Candidate {
+    vec4 minimum;
+    vec4 maximum;
+    uint indexCount;
+    uint firstIndex;
+    int vertexOffset;
+    uint placement;
+};
+struct Placement {
+    mat4 clip;
+    mat4 world;
+    mat4 normal;
+};
+layout(set = 0, binding = 0, std430) readonly buffer Candidates {
+    Candidate candidates[];
+};
+layout(set = 1, binding = 0, std430) buffer Compacted {
+    uint words[];
+};
+layout(set = 2, binding = 0, std430) readonly buffer DrawTable {
+    Placement placements[];
+};
+
+#ifdef PLACEMENT_HIZ
+layout(set = 3, binding = 0, std430) readonly buffer PreviousVisibility {
+    uint previousWords[];
+};
+layout(set = 4, binding = 0, std430) readonly buffer Pyramid {
+    float depthValues[];
+};
+#endif
+layout(push_constant) uniform Compaction {
+    uint candidateCount;
+    uint firstCandidate;
+    uint firstCountWord;
+    uint includeDepthPlanes;
+    uint firstVisibilityWord;
+    uint sizeWidth;
+    uint sizeHeight;
+#ifdef PLACEMENT_HIZ
+    uint previousVisibilityWord;
+    uint hizMode;
+    uint pyramidWidth;
+    uint pyramidHeight;
+    uint viewportX;
+    uint viewportY;
+    uint viewportWidth;
+    uint viewportHeight;
+#endif
+} pass;
+
+#include "placement_ndc_bounds.glsl"
+
+bool hitsPixelCenter(Candidate candidate) {
+    if (pass.sizeWidth == 0u || pass.sizeHeight == 0u) {
+        return true;
+    }
+    vec3 lower;
+    vec3 upper;
+    if (!ndcBounds(candidate, lower, upper)) {
+        return true;
+    }
+    vec2 size = vec2(pass.sizeWidth, pass.sizeHeight);
+    // Expand by two minimum-precision raster subpixels. Only a subpixel region with
+    // no pixel center can be rejected, so this does not change the CPU culling policy.
+    vec2 first = (lower.xy + 1.0) * 0.5 * size - 0.125;
+    vec2 last = (upper.xy + 1.0) * 0.5 * size + 0.125;
+    if (any(greaterThanEqual(last - first, vec2(1.0)))) {
+        return true;
+    }
+    return !any(greaterThan(ceil(first - 0.5), floor(last - 0.5)));
+}
+
+#ifdef PLACEMENT_HIZ
+#include "placement_hiz_occlusion.glsl"
+#endif
+
+shared uint prefix[64];
+
+bool visible(Candidate candidate) {
+    if (candidate.minimum.w == 0.0) {
+        return true;
+    }
+    mat4 clip = placements[candidate.placement].clip;
+    bvec3 outsideLow = bvec3(true);
+    bvec3 outsideHigh = bvec3(true);
+    for (uint corner = 0u; corner < 8u; ++corner) {
+        bvec3 top = notEqual(uvec3(corner) & uvec3(1u, 2u, 4u), uvec3(0u));
+        vec4 local = vec4(mix(candidate.minimum.xyz, candidate.maximum.xyz, top), 1.0);
+        vec4 point = clip * local;
+        if (any(isnan(point)) || any(isinf(point))) {
+            return true;
+        }
+        // Bound clip-space dot product rounding before using the sign of a plane distance.
+        vec4 magnitude = abs(clip[0] * local.x) + abs(clip[1] * local.y)
+                       + abs(clip[2] * local.z) + abs(clip[3]);
+        vec3 margin = (magnitude.xyz + magnitude.w) * 0.000002 + vec3(1e-35);
+        bvec3 below = lessThan(point.xyz + point.w, -margin);
+        bvec3 above = lessThan(point.w - point.xyz, -margin);
+        outsideLow = bvec3(outsideLow.x && below.x, outsideLow.y && below.y,
+                           outsideLow.z && below.z);
+        outsideHigh = bvec3(outsideHigh.x && above.x, outsideHigh.y && above.y,
+                            outsideHigh.z && above.z);
+    }
+    return !(any(outsideLow.xy) || any(outsideHigh.xy)
+             || (pass.includeDepthPlanes != 0u && (outsideLow.z || outsideHigh.z)));
+}
+
+void main() {
+    uint lane = gl_LocalInvocationID.x;
+    uint source = pass.firstCandidate + gl_GlobalInvocationID.x;
+    bool keep = false;
+    if (gl_GlobalInvocationID.x < pass.candidateCount) {
+        Candidate candidate = candidates[source];
+        keep = candidate.indexCount != 0u && visible(candidate) && hitsPixelCenter(candidate);
+#ifdef PLACEMENT_HIZ
+        if (keep) {
+            keep = pass.hizMode == 1u
+                ? previousWords[pass.previousVisibilityWord + source] != 0u
+                : !occludedByPyramid(candidate);
+        }
+#endif
+        if (pass.firstVisibilityWord != 0u) {
+            words[pass.firstVisibilityWord + source] = uint(keep);
+        }
+    }
+    prefix[lane] = uint(keep);
+    barrier();
+    for (uint stride = 1u; stride < 64u; stride *= 2u) {
+        uint previous = lane >= stride ? prefix[lane - stride] : 0u;
+        barrier();
+        prefix[lane] += previous;
+        barrier();
+    }
+    if (keep) {
+        Candidate candidate = candidates[source];
+        uint blockStart = pass.firstCandidate + gl_WorkGroupID.x * 64u;
+        uint offset = (blockStart + prefix[lane] - 1u) * 5u;
+        words[offset] = candidate.indexCount;
+        words[offset + 1u] = 1u;
+        words[offset + 2u] = candidate.firstIndex;
+        words[offset + 3u] = uint(candidate.vertexOffset);
+        words[offset + 4u] = candidate.placement;
+    }
+    if (lane == 63u) {
+        words[pass.firstCountWord + gl_WorkGroupID.x] = prefix[lane];
+    }
+}

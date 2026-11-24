@@ -107,7 +107,7 @@ impl GeometryBufferPool {
         let Some(charge) = PageCharge::reserve(&self.bytes, self.byte_limit) else {
             return Ok(None);
         };
-        let buffer = match create_geometry_buffer(runtime, usage, PAGE_BYTES) {
+        let buffer = match allocate_geometry_buffer(runtime, usage, PAGE_BYTES, false) {
             Ok(buffer) => buffer,
             Err(error) if optional_geometry_refusal(&error) => return Ok(None),
             Err(error) => return Err(error),
@@ -150,6 +150,15 @@ impl GeometryBuffer {
 
     pub(super) fn is_shared(&self) -> bool {
         matches!(self.backing, GeometryBacking::Shared(_))
+    }
+
+    /// A full copy on the transfer queue can target only an unshared buffer.
+    pub(super) fn dedicated_transfer_shared(&self) -> bool {
+        match &self.backing {
+            GeometryBacking::Dedicated(buffer) => buffer.transfer_shared(),
+            GeometryBacking::Batch(batch) => batch.buffer.transfer_shared(),
+            GeometryBacking::Shared(_) => false,
+        }
     }
 
     pub(super) fn allocation_size(&self) -> u64 {
@@ -211,7 +220,16 @@ pub(super) fn create_geometry_buffer(
     usage: vk::BufferUsageFlags,
     size: u64,
 ) -> Result<DeviceBuffer, RenderError> {
-    let buffer = DeviceBuffer::device_local(runtime, size, usage)?;
+    allocate_geometry_buffer(runtime, usage, size, true)
+}
+
+fn allocate_geometry_buffer(
+    runtime: &Arc<VulkanRuntime>,
+    usage: vk::BufferUsageFlags,
+    size: u64,
+    allow_transfer_queue: bool,
+) -> Result<DeviceBuffer, RenderError> {
+    let buffer = DeviceBuffer::device_local_geometry(runtime, size, usage, allow_transfer_queue)?;
     runtime.work.add(DeviceCount::GeometryBuffers, 1);
     Ok(buffer)
 }

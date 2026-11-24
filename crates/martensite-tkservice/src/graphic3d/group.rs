@@ -11,7 +11,7 @@ use super::{
 };
 use martensite_tkernel::ncollection::Vec4;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, Transient, WeakHandle};
+use martensite_tkernel::standard::{Handle, StandardTransient, Transient, WeakHandle};
 use martensite_tkernel::tcollection::ExtendedString;
 use martensite_tkmath::gp::{Axis2, Transform3};
 use std::collections::HashMap;
@@ -26,6 +26,14 @@ pub type Graphic3dAspectsReplaceMap = HashMap<
         Handle<dyn Graphic3dAspectsSource>,
     ),
 >;
+
+/// A rendering-only triangle level whose producer approved its object-space deviation.
+pub struct Graphic3dTriangleMeshLevel {
+    /// The alternate geometry in the primary mesh's local coordinates.
+    pub triangles: Handle<super::Graphic3dArrayOfTriangles>,
+    /// The producer's positive finite bound on the two-way distance between both meshes.
+    pub maximum_deviation: f64,
+}
 
 /// The protected fields of a group.
 #[derive(Clone, Default)]
@@ -48,7 +56,7 @@ pub struct Graphic3dGroupFields {
 #[derive(Default)]
 pub struct Graphic3dGroupBase {
     /// The fields, shared by every handle.
-    pub fields: SharedState<Graphic3dGroupFields>,
+    pub fields: super::RevisedState<Graphic3dGroupFields>,
 }
 
 impl Graphic3dGroupBase {
@@ -60,7 +68,7 @@ impl Graphic3dGroupBase {
             ..Default::default()
         };
         Self {
-            fields: SharedState::new(fields),
+            fields: super::RevisedState::new(fields),
         }
     }
 }
@@ -117,6 +125,21 @@ pub trait Graphic3dGroup: Transient {
     ) {
         let _ = (primitive_type, indices, bounds);
         group_add_vertices(self, attribs, to_eval_min_max);
+    }
+    /// Submit a primary shaded triangle array and optional screen-error levels.
+    /// Example: `group.add_triangle_mesh_levels(&fine, &coarse, 0.5)`.
+    fn add_triangle_mesh_levels(
+        &self,
+        primary: &Handle<super::Graphic3dArrayOfTriangles>,
+        _alternates: &[Graphic3dTriangleMeshLevel],
+        _pixel_error: f64,
+    ) {
+        self.add_primitive_array(&primary.cast(), true);
+    }
+    /// Whether this group consumes alternate triangle meshes.
+    /// Example: `if group.supports_triangle_mesh_levels() { /* prepare levels */ }`.
+    fn supports_triangle_mesh_levels(&self) -> bool {
+        false
     }
     /// The deprecated virtual `Text(const char*, Graphic3d_Vertex, height, angle, path, hta,
     /// vta, evalMinMax)`; `group.text_at_vertex("A", &point, &layout, true)`.
@@ -363,10 +386,15 @@ pub trait Graphic3dGroupMembers: Graphic3dGroup {
             return;
         }
         let structure = self.structure();
-        if let Some(manager) = structure.get().map(|s| s.structure_manager())
-            && let Some(manager) = manager.get()
-        {
-            manager.update(super::GRAPHIC3D_ZLAYER_ID_UNKNOWN);
+        let Some(structure) = structure.get() else {
+            return;
+        };
+        let layer = structure.with_cstructure(|c| c.z_layer());
+        let source = layer.map_or(super::GRAPHIC3D_ZLAYER_ID_UNKNOWN, |layer| {
+            super::structure_members::update_source(structure.structure_base(), layer)
+        });
+        if let Some(manager) = structure.structure_manager().get() {
+            manager.update_structure(source, super::GRAPHIC3D_ZLAYER_ID_UNKNOWN);
         }
     }
 }

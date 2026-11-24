@@ -1,7 +1,7 @@
 //! Draw upload stages preserve the original fallible allocation and cleanup sequence.
 use super::super::surface_image_descriptor::SurfaceImageBinding;
 use super::super::{
-    geometry_residency::{GeometryKey, ResidentGeometry},
+    geometry_residency::{GeometryKey, IndexFormat, ResidentGeometry},
     geometry_transfer::GeometryTransfers,
     pipeline::DrawPipeline,
     pipeline_variants::{LineTintLayout, RasterPipelines},
@@ -26,10 +26,13 @@ struct DrawUploadContext<'a> {
     window_depth: Option<super::super::window_depth_parameters::WindowDepthPipelineParameters>,
     line_tint: Option<LineTint<'a>>,
     retirements: &'a RetirementStore,
+    compact_vertices: bool,
 }
 type LineTint<'a> = (&'a crate::draw::DrawStream<crate::RenderVertex>, [f32; 4]);
 // Fields follow reverse preparation order, so later-stage errors retain the original cleanup.
 struct EncodedGeometry {
+    index_format: IndexFormat,
+    mesh_decode: Option<Arc<super::super::mesh_vertex_codec::MeshPositionDecode>>,
     indices: Vec<u8>,
     vertices: Vec<u8>,
     vertex_alignment: Option<u64>,
@@ -192,6 +195,9 @@ fn upload_fresh(
         window_depth,
         line_tint: tinted,
         retirements,
+        compact_vertices: uploads.compact_vertices
+            && std::ptr::eq(semantic_draw, draw)
+            && super::super::mesh_vertex_pipeline::admits(runtime, draw),
     };
     let uploaded = context.upload_prepared(uploads)?;
     #[cfg(not(any(
@@ -365,6 +371,11 @@ impl<'a> DrawUploadContext<'a> {
             Some(tinted) => tinted,
             None => pipelines.select(draw, factorized, self.window_depth, dynamic_lighting)?,
         };
+        let pipeline = if resident.mesh_decode.is_some() {
+            pipelines.mesh_vertex_twins.get(runtime, &pipeline)?
+        } else {
+            pipeline
+        };
         super::super::window_depth_upload::require_pipeline(self.window_depth, pipeline.kind)?;
         super::super::phong_interpolation_upload::require_interface(
             runtime.phong_interpolation,
@@ -413,7 +424,7 @@ impl<'a> DrawUploadContext<'a> {
         transfers: &mut GeometryTransfers,
         use_line_tint: bool,
     ) -> Result<(ResidentGeometry, Option<EncodedGeometry>), RenderError> {
-        let mut key = geometry_key(self.runtime, self.draw);
+        let mut key = geometry_key(self.runtime, self.draw, self.compact_vertices);
         let line_source = self
             .line_tint
             .filter(|_| use_line_tint)
@@ -457,7 +468,7 @@ impl<'a> DrawUploadContext<'a> {
         let encoding = if compact_line {
             geometry_encoding::compact_line_geometry(draw)
         } else {
-            geometry_encoding::encoded_geometry(self.runtime, draw)
+            geometry_encoding::encoded_geometry(self.runtime, draw, self.compact_vertices)?
         };
         let resident = encoding.queue_transfers(
             self.runtime,
@@ -533,8 +544,8 @@ impl<'a> DrawUploadContext<'a> {
             None => None,
         };
         let indices = match indices {
-            Some(revision) => Some(geometry_encoding::encode_index_patch(
-                self.draw,
+            Some(revision) => Some(previous.index_format.patch(
+                &self.draw.indices,
                 revision.dirty_range(),
                 previous.indices.size(),
             )?),

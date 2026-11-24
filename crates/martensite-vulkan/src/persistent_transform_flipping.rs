@@ -49,7 +49,11 @@ fn persistent_flipping_state(
     })
 }
 
-fn structure_model_state(structure: &Graphic3dCStructureFields) -> RenderMatrixState<f32> {
+/// The native model stack of a structure before its first group: its transformation, pushed
+/// once; `structure_model_state(&fields)`.
+pub(crate) fn structure_model_state(
+    structure: &Graphic3dCStructureFields,
+) -> RenderMatrixState<f32> {
     let mut state = RenderMatrixState::default();
     state.push();
     if let Some(datum) = structure.trsf.get() {
@@ -59,7 +63,15 @@ fn structure_model_state(structure: &Graphic3dCStructureFields) -> RenderMatrixS
 }
 
 fn push_group_transform(group: &Graphic3dDrawGroup, state: &mut RenderMatrixState<f32>) -> usize {
-    let transform = group.transformation();
+    push_local_transform(&group.transformation(), state)
+}
+
+/// Push a group transformation onto the model stack and return the pops it needs: none for
+/// the identity; `push_local_transform(&trsf, &mut state)`.
+pub(crate) fn push_local_transform(
+    transform: &martensite_tkmath::gp::Transform3,
+    state: &mut RenderMatrixState<f32>,
+) -> usize {
     if transform.form() == TransformForm::Identity {
         return 0;
     }

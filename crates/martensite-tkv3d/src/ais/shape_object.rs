@@ -46,6 +46,14 @@ impl AisShape {
         prs_mgr_presentable_bind(&object.cast());
         object
     }
+
+    /// Approve alternate raster meshes for this solid and request a shaded recompute.
+    /// Renew approval after an in-place topology edit. Assigning a shape clears it.
+    /// Example: `object.set_presentation_mesh_lod(Some(approval));`.
+    pub fn set_presentation_mesh_lod(&self, approval: Option<crate::std_prs::StdPrsMeshLod>) {
+        self.base.fields.write().mesh_lod = approval;
+        self.set_to_update(1);
+    }
 }
 
 impl AisShapeSource for AisShape {
@@ -167,7 +175,10 @@ pub fn ais_shape_compute<S: AisShapeSource + ?Sized>(
     if mode == 2 {
         return ais_shape_compute_bounds_mode(object, prs);
     }
-    let shape = object.shape_base().fields.read().shape.to_shape();
+    let (shape, mesh_lod) = {
+        let fields = object.shape_base().fields.read();
+        (fields.shape.to_shape(), fields.mesh_lod.clone())
+    };
     if shape.is_null() {
         return Ok(());
     }
@@ -205,6 +216,11 @@ pub fn ais_shape_compute<S: AisShapeSource + ?Sized>(
                 let aspect = drawer.shading_aspect().aspect();
                 let textured = aspect.to_map_texture() && !aspect.texture_map().is_null();
                 let shaded = catch_native_failure(|| {
+                    if let Some(approval) = mesh_lod.as_ref().filter(|_| !textured) {
+                        return StdPrsShadedShape::add_with_mesh_lod(
+                            prs, &shape, &drawer, approval,
+                        );
+                    }
                     StdPrsShadedShape::add_with_texels(
                         prs,
                         &shape,

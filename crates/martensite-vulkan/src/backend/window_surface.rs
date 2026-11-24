@@ -16,12 +16,47 @@ pub(crate) struct WindowPresenter {
     retiring: super::window_chain_retirement::RetiringChains,
     /// The requested extent and vsync of the last surface query, and its result.
     last_query: Option<(([u32; 2], bool), WindowConfig)>,
+    /// The job that holds `chain` on the presentation thread (#594).
+    presenting: Option<Arc<super::window_present_thread::PresentReceipt>>,
+    pub(super) assembly_sources: Vec<crate::PrimitiveDraw>,
 }
 impl WindowPresenter {
+    pub(crate) fn cancel_assembly_streaming(&mut self) {
+        self.assembly_sources.clear();
+    }
+
     /// Transfer failed presentation ownership before unwinding; `presenter.take_failed_chain()` preserves its surface lease.
     pub(super) fn take_failed_chain(&mut self) -> Option<WindowChain> {
         // A later qualification decision owns retirement, not a facade error flag.
+        self.reclaim_chain();
         self.chain.take()
+    }
+    /// Lend the chain to the presentation thread until `receipt` finishes;
+    /// `presenter.lend_chain(receipt)` returns it, or `None` without an acquired chain.
+    pub(super) fn lend_chain(
+        &mut self,
+        receipt: &Arc<super::window_present_thread::PresentReceipt>,
+    ) -> Option<WindowChain> {
+        let chain = self.chain.take()?;
+        self.presenting = Some(Arc::clone(receipt));
+        Some(chain)
+    }
+    /// Take back a lent chain that never reached the thread; `presenter.return_lent_chain(chain)`.
+    pub(super) fn return_lent_chain(&mut self, chain: WindowChain) {
+        self.presenting = None;
+        self.chain = Some(chain);
+    }
+    /// Wait for the presentation thread and take the chain back; `presenter.reclaim_chain()`
+    /// returns whether its job failed, so the caller retires the chain as a failed redraw would.
+    pub(super) fn reclaim_chain(&mut self) -> bool {
+        let Some(receipt) = self.presenting.take() else {
+            return false;
+        };
+        let (chain, failed) = receipt.take_chain();
+        if chain.is_some() {
+            self.chain = chain;
+        }
+        failed
     }
     /// Observe the actual surface lease in a witness; `presenter.surface_observer()` neither clones ownership nor changes destruction.
     #[cfg(test)]
@@ -59,6 +94,8 @@ impl WindowPresenter {
             present_family: 0,
             retiring: Default::default(),
             last_query: None,
+            presenting: None,
+            assembly_sources: Vec::new(),
         };
         presenter.present_family = presenter.choose_present_family()?;
         Ok(presenter)
@@ -91,6 +128,7 @@ impl WindowPresenter {
         vsync: bool,
         contract: super::window_gui_contract::WindowGuiContract,
     ) -> Result<u32, RenderError> {
+        self.reclaim_chain();
         let config = self.window_config(extent, vsync, contract)?;
         contract.validate(
             [config.extent.width, config.extent.height],
@@ -197,6 +235,7 @@ impl WindowPresenter {
 }
 impl Drop for WindowPresenter {
     fn drop(&mut self) {
+        self.reclaim_chain();
         self.chain.take();
         self.retiring = Default::default();
         // The last retained swapchain lease, not this facade, releases the surface.

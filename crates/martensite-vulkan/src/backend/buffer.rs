@@ -11,6 +11,7 @@ pub(super) struct DeviceBuffer {
     pub handle: vk::Buffer,
     memory: Option<MemoryLease>,
     size: u64,
+    transfer_shared: bool,
 }
 impl DeviceBuffer {
     pub fn new(
@@ -19,27 +20,61 @@ impl DeviceBuffer {
         usage: vk::BufferUsageFlags,
         access: HostBufferAccess,
     ) -> Result<Self, RenderError> {
-        Self::allocate_buffer(runtime, size, usage, BufferMemory::Host(access))
+        Self::allocate_buffer(runtime, size, usage, BufferMemory::Host(access), None)
     }
-    /// Allocate a device-local transfer destination, for example a retained vertex buffer.
+    /// A staging page can be reused by the graphics or dedicated transfer queue.
+    pub(super) fn geometry_staging(
+        runtime: &Arc<VulkanRuntime>,
+        size: u64,
+    ) -> Result<Self, RenderError> {
+        Self::allocate_buffer(
+            runtime,
+            size,
+            vk::BufferUsageFlags::TRANSFER_SRC,
+            BufferMemory::Host(HostBufferAccess::Upload),
+            super::dedicated_transfer::sharing_families(runtime),
+        )
+    }
+    /// Allocate a device-local transfer destination on the graphics queue.
     pub(super) fn device_local(
         runtime: &Arc<VulkanRuntime>,
         size: u64,
         usage: vk::BufferUsageFlags,
     ) -> Result<Self, RenderError> {
+        Self::device_local_geometry(runtime, size, usage, false)
+    }
+
+    /// A dedicated geometry buffer can share the copy and graphics queue families.
+    pub(super) fn device_local_geometry(
+        runtime: &Arc<VulkanRuntime>,
+        size: u64,
+        usage: vk::BufferUsageFlags,
+        allow_transfer_queue: bool,
+    ) -> Result<Self, RenderError> {
         let usage = usage | vk::BufferUsageFlags::TRANSFER_DST | vk::BufferUsageFlags::TRANSFER_SRC;
-        Self::allocate_buffer(runtime, size, usage, BufferMemory::DeviceLocal)
+        let families = if allow_transfer_queue {
+            super::dedicated_transfer::sharing_families(runtime)
+        } else {
+            None
+        };
+        Self::allocate_buffer(runtime, size, usage, BufferMemory::DeviceLocal, families)
     }
     fn allocate_buffer(
         runtime: &Arc<VulkanRuntime>,
         size: u64,
         usage: vk::BufferUsageFlags,
         placement: BufferMemory,
+        families: Option<[u32; 2]>,
     ) -> Result<Self, RenderError> {
-        let info = vk::BufferCreateInfo::default()
+        let mut info = vk::BufferCreateInfo::default()
             .size(size.max(4))
             .usage(usage)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
+        if let Some(families) = families.as_ref() {
+            info = info
+                .sharing_mode(vk::SharingMode::CONCURRENT)
+                .queue_family_indices(families);
+        }
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let handle = unsafe { runtime.device().create_buffer(&info, None) }
             .map_err(|e| vk_error("create buffer", e))?;
@@ -49,6 +84,7 @@ impl DeviceBuffer {
             handle,
             memory: None,
             size: size.max(4),
+            transfer_shared: families.is_some(),
         };
         buffer.allocate(placement)?;
         Ok(buffer)
@@ -95,6 +131,10 @@ impl DeviceBuffer {
         Ok(())
     }
 
+    pub(super) fn transfer_shared(&self) -> bool {
+        self.transfer_shared
+    }
+
     pub(super) fn size(&self) -> u64 {
         self.size
     }
@@ -103,13 +143,24 @@ impl DeviceBuffer {
         self.memory.as_ref().map_or(0, MemoryLease::size)
     }
     pub fn read(&self, size: usize) -> Result<Vec<u8>, RenderError> {
-        if size as u64 > self.size {
-            return Err(rejected(size, "read size within the buffer allocation"));
+        self.read_at(0, size)
+    }
+
+    /// Read a written range after the owning submission fence.
+    pub(super) fn read_at(&self, offset: usize, size: usize) -> Result<Vec<u8>, RenderError> {
+        if offset
+            .checked_add(size)
+            .is_none_or(|end| end > isize::MAX as usize || end as u64 > self.size)
+        {
+            return Err(rejected(
+                (offset, size),
+                "read range within the buffer allocation",
+            ));
         }
         let pointer = self.host_pointer()?;
-        // A completed fence and a transfer-to-host barrier precede all readbacks.
-        // SAFETY: the pointer and length describe a live allocation or Vulkan output array of this scope, and the view does not outlive it.
-        let bytes = unsafe { std::slice::from_raw_parts(pointer, size) }.to_vec();
+        // SAFETY: the checked range stays within the live mapping, and readback callers
+        // wait for the GPU writes and transfer-to-host dependency before reading these bytes.
+        let bytes = unsafe { std::slice::from_raw_parts(pointer.add(offset), size) }.to_vec();
         self.runtime
             .work
             .add(DeviceCount::ReadBackBytes, size as u64);

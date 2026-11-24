@@ -5,8 +5,8 @@ use super::{
     Graphic3dBufferSource,
 };
 use martensite_tkernel::ncollection::BaseAllocator;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::exceptions::{out_of_range, program_error};
-use martensite_tkernel::standard::{Failure, SharedState};
 
 /// The fields of `Graphic3d_AttribBuffer`.
 #[derive(Clone, Copy, Debug, Default)]
@@ -19,7 +19,7 @@ struct AttribBufferFields {
 /// An attribute buffer; `Graphic3dAttribBuffer::new(allocator)?.is_interleaved()`.
 pub struct Graphic3dAttribBuffer {
     base: Graphic3dBufferBase,
-    fields: SharedState<AttribBufferFields>,
+    fields: super::RevisedState<AttribBufferFields>,
 }
 martensite_tkernel::impl_transient!(Graphic3dAttribBuffer, "Graphic3d_AttribBuffer", dyn Graphic3dBufferSource,
     interfaces: [dyn Graphic3dBufferSource]);
@@ -32,6 +32,12 @@ fn beyond_32_bits(member: &str, size: usize) -> Failure {
 }
 
 impl Graphic3dBufferSource for Graphic3dAttribBuffer {
+    fn observe_buffer_input(&self, scope: &super::GraphicInputRevision) -> bool {
+        self.buffer_base().state.observe(scope);
+        self.fields.observe(scope);
+        true
+    }
+
     fn buffer_base(&self) -> &Graphic3dBufferBase {
         &self.base
     }
@@ -70,7 +76,7 @@ impl Graphic3dAttribBuffer {
         };
         Ok(Self {
             base: Graphic3dBufferBase::new(allocator)?,
-            fields: SharedState::new(fields),
+            fields: super::RevisedState::new(fields),
         })
     }
     fn data_size(&self) -> usize {

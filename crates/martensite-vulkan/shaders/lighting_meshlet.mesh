@@ -1,0 +1,163 @@
+#version 460
+#extension GL_EXT_mesh_shader : require
+#extension GL_GOOGLE_include_directive : require
+
+#include "clip_position.glsl"
+#include "native_dot.glsl"
+
+layout(local_size_x = 64) in;
+layout(triangles, max_vertices = 64, max_primitives = 96) out;
+
+layout(set = 0, binding = 0, std430) readonly buffer SurfaceLighting {
+    mat4 worldFromObject;
+    mat4 normalFromObject;
+    vec4 eye;
+} lighting;
+layout(set = 7, binding = 0, std430) readonly buffer MeshletGeometry {
+    uint words[];
+};
+
+layout(push_constant) uniform MeshletTransform {
+    mat4 clip;
+    vec4 coneEye;
+    uint firstGroup;
+    uint remapDepth;
+    uint clipDepth;
+    uint viewportWidth;
+    uint viewportHeight;
+} transform;
+
+layout(location = 0) out vec4 vertexColor[];
+layout(location = 1) out vec3 worldNormal[];
+layout(location = 2) out vec3 viewDirection[];
+layout(location = 4) out vec4 worldPosition[];
+layout(location = 5) out vec4 frontColor[];
+layout(location = 6) out vec4 backColor[];
+layout(location = 15) out vec4 shadowPosition[][4];
+
+vec4 read4(uint at) {
+    return uintBitsToFloat(uvec4(words[at], words[at + 1u], words[at + 2u], words[at + 3u]));
+}
+
+bool clipped(vec3 minimum, vec3 maximum) {
+    bvec3 low = bvec3(true);
+    bvec3 high = bvec3(true);
+    for (uint corner = 0u; corner < 8u; ++corner) {
+        bvec3 top = notEqual(uvec3(corner) & uvec3(1u, 2u, 4u), uvec3(0u));
+        vec4 p = vec4(mix(minimum, maximum, top), 1.0);
+        vec4 q = clipPosition(transform.clip, p);
+        if (any(isnan(q)) || any(isinf(q))) {
+            return false;
+        }
+        vec4 magnitude = abs(transform.clip[0] * p.x) + abs(transform.clip[1] * p.y)
+                       + abs(transform.clip[2] * p.z) + abs(transform.clip[3]);
+        vec3 radius = (magnitude.xyz + magnitude.w) * 0.000002 + vec3(1e-35);
+        bvec3 below = lessThan(q.xyz + q.w, -radius);
+        bvec3 above = lessThan(q.w - q.xyz, -radius);
+        low = bvec3(low.x && below.x, low.y && below.y, low.z && below.z);
+        high = bvec3(high.x && above.x, high.y && above.y, high.z && above.z);
+    }
+    return any(low.xy) || any(high.xy)
+        || (transform.clipDepth != 0u && (low.z || high.z));
+}
+
+bool culledCone(vec4 cone) {
+    if (transform.coneEye.w == 0.0 || cone.w <= 0.0) {
+        return false;
+    }
+    vec3 direction = transform.coneEye.xyz;
+    return dot(cone.xyz, direction) < -length(cross(cone.xyz, direction)) * cone.w - 0.00002;
+}
+
+uvec3 readTriangle(uint firstTriangle, uint local) {
+    uint index = words[words[3] + firstTriangle + local];
+    return (uvec3(index) >> uvec3(0u, 8u, 16u)) & 255u;
+}
+
+vec4 positionOf(uint firstVertex, uint local) {
+    uint vertex = words[words[2] + firstVertex + local];
+    return read4(words[1] + vertex * 11u);
+}
+
+bool interior(vec4 clip) {
+    return all(lessThan(abs(clip.xyz), vec3(clip.w * 0.999998)));
+}
+
+bool safelyBackFacing(uint firstVertex, uvec3 triangle) {
+    vec4 a = clipPosition(transform.clip, positionOf(firstVertex, triangle.x));
+    vec4 b = clipPosition(transform.clip, positionOf(firstVertex, triangle.y));
+    vec4 c = clipPosition(transform.clip, positionOf(firstVertex, triangle.z));
+    // Clipping adds vertices. Let the rasterizer decide when a triangle touches a plane.
+    if (!interior(a) || !interior(b) || !interior(c)) {
+        return false;
+    }
+    vec2 scale = 0.5 * vec2(transform.viewportWidth, transform.viewportHeight);
+    vec2 ab = (b.xy / b.w - a.xy / a.w) * scale;
+    vec2 ac = (c.xy / c.w - a.xy / a.w) * scale;
+    // A one-pixel bound on viewport conversion and subpixel rounding at each endpoint leaves
+    // two pixels of error in either edge component. Bound the resulting signed-area error.
+    float error = 2.0 * (dot(abs(ab), vec2(1.0)) + dot(abs(ac), vec2(1.0))) + 8.0;
+    return ab.x * ac.y - ab.y * ac.x < -error;
+}
+
+shared uint needsRasterFacing;
+
+bool allBackFacing(uint firstVertex, uint firstTriangle, uint triangles) {
+    uint lane = gl_LocalInvocationID.x;
+    if (lane == 0u) {
+        needsRasterFacing = 0u;
+    }
+    barrier();
+    for (uint local = lane; local < triangles; local += 64u) {
+        if (!safelyBackFacing(firstVertex, readTriangle(firstTriangle, local))) {
+            atomicOr(needsRasterFacing, 1u);
+        }
+    }
+    barrier();
+    return needsRasterFacing == 0u;
+}
+
+void writeVertex(uint local, uint vertex) {
+    uint at = words[1] + vertex * 11u;
+    vec4 position = read4(at);
+    vec4 color = read4(at + 4u);
+    vec3 normal = uintBitsToFloat(uvec3(words[at + 8u], words[at + 9u], words[at + 10u]));
+    vec4 world = lighting.worldFromObject * position;
+    vec4 clip = clipPosition(transform.clip, position);
+    if (transform.remapDepth != 0u) {
+        clip.z = 0.5 * (clip.z + clip.w);
+    }
+    gl_MeshVerticesEXT[local].gl_Position = clip;
+    vertexColor[local] = color;
+    worldNormal[local] = glslNormalize((lighting.normalFromObject * vec4(normal, 0.0)).xyz);
+    viewDirection[local] = lighting.eye.w != 0.0 ? glslNormalize(lighting.eye.xyz - world.xyz) : lighting.eye.xyz;
+    worldPosition[local] = world;
+    frontColor[local] = vec4(0.0);
+    backColor[local] = vec4(0.0);
+    for (uint i = 0u; i < 4u; ++i) {
+        shadowPosition[local][i] = vec4(0.0);
+    }
+}
+
+void main() {
+    uint group = transform.firstGroup + gl_WorkGroupID.x;
+    uint at = 4u + group * 16u;
+    uint firstVertex = words[at];
+    uint vertices = words[at + 1u];
+    uint firstTriangle = words[at + 2u];
+    uint triangles = words[at + 3u];
+    bool outside = clipped(read4(at + 4u).xyz, read4(at + 8u).xyz);
+    bool back = culledCone(read4(at + 12u));
+    if (outside || (back && allBackFacing(firstVertex, firstTriangle, triangles))) {
+        SetMeshOutputsEXT(0u, 0u);
+        return;
+    }
+    SetMeshOutputsEXT(vertices, triangles);
+    uint lane = gl_LocalInvocationID.x;
+    if (lane < vertices) {
+        writeVertex(lane, words[words[2] + firstVertex + lane]);
+    }
+    for (uint local = lane; local < triangles; local += 64u) {
+        gl_PrimitiveTriangleIndicesEXT[local] = readTriangle(firstTriangle, local);
+    }
+}

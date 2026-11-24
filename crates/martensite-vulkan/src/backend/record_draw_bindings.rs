@@ -1,5 +1,8 @@
 //! Actual draw bindings and push commands share one diagnostic observation boundary.
-use super::{frame::UploadedDraw, pipeline::DrawPipeline, runtime::VulkanRuntime};
+use super::{
+    frame::UploadedDraw, geometry_residency::IndexFormat, pipeline::DrawPipeline,
+    runtime::VulkanRuntime,
+};
 use ash::vk;
 
 #[derive(Default)]
@@ -41,7 +44,7 @@ mod lighting_slot_tests {
 pub(super) struct BindingSlots {
     pub(super) lighting: LightingSlot,
     vertex: Option<(vk::Buffer, u64)>,
-    index: Option<(vk::Buffer, u64)>,
+    index: Option<(vk::Buffer, u64, IndexFormat)>,
     /// The set bound at each index with the layout it was bound for: glyph runs that share
     /// one atlas bound its set again for every label (#594).
     sets: [Option<(vk::PipelineLayout, vk::DescriptorSet)>; 8],
@@ -52,12 +55,35 @@ impl BindingSlots {
         self.vertex = None;
         self.index = None;
     }
+    /// Bind whole vertex and index buffers at offset zero unless they are bound already, as a
+    /// placement run's segments draw from them; `slots.bind_buffers(runtime, command, buffers)`.
+    pub(super) fn bind_buffers(
+        &mut self,
+        runtime: &VulkanRuntime,
+        command: vk::CommandBuffer,
+        (vertices, indices, format): (vk::Buffer, vk::Buffer, IndexFormat),
+    ) {
+        let (vertex, index) = ((vertices, 0), (indices, 0, format));
+        // SAFETY: the recording frame owns both buffers until retirement, through the run's
+        // template uploads.
+        unsafe {
+            let device = runtime.device();
+            if self.vertex != Some(vertex) {
+                device.cmd_bind_vertex_buffers(command, 0, &[vertices], &[0]);
+            }
+            if self.index != Some(index) {
+                device.cmd_bind_index_buffer(command, indices, 0, format.vk_type());
+            }
+        }
+        self.vertex = Some(vertex);
+        self.index = Some(index);
+    }
     /// Forget the bound sets: a pipeline bind may disturb them.
     pub(super) fn invalidate_sets(&mut self) {
         self.sets = [None; 8];
     }
     /// Whether `set` must be bound at `index`, and remember it as bound.
-    fn needs_set(
+    pub(super) fn needs_set(
         &mut self,
         layout: vk::PipelineLayout,
         index: u32,
@@ -121,7 +147,7 @@ fn line_state(runtime: &VulkanRuntime, command: vk::CommandBuffer, draw: &Upload
         super::replay_raster_commands::line_width(command, width);
     }
 }
-fn bind_lighting(
+pub(super) fn bind_lighting(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
     draw: &UploadedDraw,
@@ -233,7 +259,7 @@ fn bind_geometry(
     let (vertex_offset, base_vertex) = vertex_location(draw, pipeline, observe);
     let vertex = (draw.vertices.handle, vertex_offset);
     let (offset, first) = index_location(draw, observe);
-    let index = (draw.indices.handle, offset);
+    let index = (draw.indices.handle, offset, draw.index_format);
     // SAFETY: the recording frame owns both geometry ranges until retirement. The offsets and
     // first index name the same aligned vertex and index bytes as the uploaded draw.
     unsafe {
@@ -242,7 +268,7 @@ fn bind_geometry(
             device.cmd_bind_vertex_buffers(command, 0, &[vertex.0], &[vertex.1]);
         }
         if observe || slots.index != Some(index) {
-            device.cmd_bind_index_buffer(command, index.0, index.1, vk::IndexType::UINT32);
+            device.cmd_bind_index_buffer(command, index.0, index.1, index.2.vk_type());
         }
     }
     slots.vertex = Some(vertex);
@@ -252,12 +278,25 @@ fn bind_geometry(
     (first, base_vertex)
 }
 
+/// The vertex buffer offset and base vertex, then the index buffer offset and first index, that
+/// `bind_geometry` binds and draws `draw` with; `geometry_locations(&draw, &pipeline)`.
+pub(super) fn geometry_locations(
+    draw: &UploadedDraw,
+    pipeline: &DrawPipeline,
+) -> ((u64, i32), (u64, u32)) {
+    let observe = cfg!(feature = "command-state-diagnostics");
+    (
+        vertex_location(draw, pipeline, observe),
+        index_location(draw, observe),
+    )
+}
+
 fn index_location(draw: &UploadedDraw, observe: bool) -> (u64, u32) {
     let offset = draw.indices.offset;
     // Wide-line replay issues its own index offsets. Diagnostics retain the original commands.
     if !observe
         && draw.line.wide.is_none()
-        && let Ok(first) = u32::try_from(offset / 4)
+        && let Ok(first) = u32::try_from(offset / draw.index_format.byte_width())
     {
         return (0, first);
     }

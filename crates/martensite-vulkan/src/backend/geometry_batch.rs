@@ -1,6 +1,6 @@
 use super::super::{
     geometry_buffer::{GeometryBuffer, create_geometry_buffer, optional_geometry_refusal},
-    geometry_residency::{GeometryStore, ResidentGeometry},
+    geometry_residency::{GeometryStore, IndexFormat, ResidentGeometry},
     geometry_transfer::GeometryTransfers,
     host_upload_pages::HostUploadPool,
     pipeline_state::LIT_VERTEX_STRIDE,
@@ -136,6 +136,8 @@ fn batch_buffers(
         .allocation_size()
         .saturating_add(indices.allocation_size());
     Ok(store.pin_batch(bytes).map(|charge| ResidentGeometry {
+        index_format: IndexFormat::U32,
+        mesh_decode: None,
         vertices: Arc::new(GeometryBuffer::charged(vertices, charge.clone())),
         indices: Arc::new(GeometryBuffer::charged(indices, charge)),
     }))

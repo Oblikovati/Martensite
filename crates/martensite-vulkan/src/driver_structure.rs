@@ -13,7 +13,7 @@ use martensite_tkservice::graphic3d::*;
 /// `driver.create_structure(&manager)?.cast::<Graphic3dRenderStructure>`.
 pub struct Graphic3dRenderStructure {
     base: Graphic3dCStructureBase,
-    connection: SharedState<Option<WeakHandle<Self>>>,
+    connection: RevisedState<Option<WeakHandle<Self>>>,
     this: SharedState<WeakHandle<Self>>,
     parent: Option<Handle<Self>>,
     text_source: TextProvider,
@@ -73,7 +73,7 @@ impl Graphic3dRenderStructure {
     ) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
             base: Graphic3dCStructureBase::new(manager)?,
-            connection: SharedState::default(),
+            connection: RevisedState::default(),
             this: SharedState::default(),
             parent,
             text_source,

@@ -253,6 +253,12 @@ device, shows at the next `capture`, at the next redraw that reuses the frame sl
 at an explicit wait. `capture` reads the frame back on demand and returns the same pixels
 as before.
 
+Presentation thread, decided by the maintainer on 2026-11-24: this changes the decision
+above for window frames. A presentation thread submits and presents a window frame for the
+redraw, so a submit or present error of such a frame shows at the next redraw, explicit
+wait, capture or close. Acquire errors and frames that the redraw waits for (window depth
+status, ray-tracing feedback, GUI frames, every frame of a diagnostic build) stay immediate.
+
 ## Phase 3: draw submission at scale
 
 Done, with one exception. `frame_structures_10k` and `frame_text_1k` are faster than OCCT,
@@ -303,7 +309,82 @@ per hover pair, the 1,550 times case.
 
 Acceptance: the case at parity; `select_10k` uploads no geometry.
 
+Status (2026-11-23): items 1 and 2 are done. `select_10k` uploads no geometry.
+`highlight_ais_spheres_400` is 1.26 to 1.31 times OCCT, down from 5.96 times, so the
+parity target is still open.
+
+Decision (maintainer, 2026-11-23): `redraw_immediate` uses OCCT's contract. It reuses
+the main image until the view receives a main-layer notice, and does not prove each
+main draw unchanged on each immediate redraw. The view counts notices per view; there is
+no global counter (global-change-tracking.md). A notice is:
+
+- an update of a structure or group in a non-immediate layer, which the structure manager
+  now sends with the structure's layer (`structure_update`);
+- a display, erase, layer or priority change of such a structure;
+- `invalidate`, or a change of the view's layers, background, lights or clip planes.
+
+View state that changes in place has no notice, so the view compares it on each
+immediate redraw: the extent, the camera matrices, the lights, the rendering parameters
+(without the statistics fields), the background colour, the layer selection, the clip
+planes and the environment texture. An aspect or vertex buffer edited in place, without
+a structure or group update, reaches the main layers at the next `redraw`, as in OCCT.
+The `draw-record-verification` feature builds the whole frame beside each reused image and
+fails when its main draws differ from those of the kept image; every `martensite-vulkan`
+suite passes with it.
+
+Status (2026-11-24): the case is at parity. Alternating runs of 300 frames give a median of
+107 µs for a Rust hover pair against 113 µs for OCCT on a quiet host, and 129 µs against
+130 µs at a load of 11 to 13 (the build before the presentation thread: 130 µs and 166 µs).
+Single harness runs at that load gave 0.67 to 1.12, because OCCT's own time moved between
+126 and 295 µs. Before the presentation thread, the Rust main thread was busy for about
+85% of a pair and the OCCT main thread for about half, because radeonsi submits its
+commands on its own thread (`cs0`, a fifth of OCCT's samples). The steps that closed the
+gap:
+
+- Presentation thread: a window frame without host feedback or GUI layers is recorded on
+  the redraw thread and handed to one thread per renderer, which submits and presents it
+  with the same calls as before. A queue ticket (`queue_order.rs`) keeps every queue
+  operation in the order the host issued it, so a later submission or idle wait waits for
+  a frame the thread has not submitted yet. The thread borrows the swapchain until the
+  next redraw of its window. The frame's feedback and remembered main pass are committed
+  at the hand-over, because the view builds its next frame before the next redraw; a frame
+  that never reaches the queue undoes them when it settles, and its uploads join the
+  geometry store only after it settles. The thread does not touch the phase clock; the
+  hand-over counts as the redraw's submission. Moving only the present call gave 121 µs
+  against 115 µs, so the submit call moves too.
+
+- Restore: an immediate frame now draws the saved main colour and depth back with one
+  fetch draw instead of two image copies. RADV records a copy as a meta pass that saves
+  and restores the command state; the two copies cost about 10 µs per pair, and the draw
+  gives the same time as no restore at all. The saved pair is sampled, so a target that
+  may be published has sampled usage, rests in `TRANSFER_SRC_OPTIMAL` for captures, and is
+  lent to the restore draw in `SHADER_READ_ONLY_OPTIMAL`.
+- Picking: both programs make the same 26,100 box tests and the same X round trip per pick.
+  A box test takes no locks and the frustum vertex loop has a fixed count. Picking still
+  executes about 45 M instructions per 30 timed frames, against 32 M for OCCT; most of the
+  difference is in the box arithmetic.
+- Presentation, before the thread: submit, present and acquire took about 28 µs of the
+  Rust main thread per pair, more than 80% of it in the kernel. Per frame, `vkQueuePresentKHR` makes 11
+  `ioctl` calls (sync-object transfers, resets and waits, and the sync-file export and
+  import of the WSI), `vkQueueSubmit2` 4, `vkAcquireNextImageKHR` 3, and the present-fence
+  wait and the submit-fence reset 3. OCCT's main thread makes about 3.
+- Other main-thread costs per pair: the highlighted structure is lowered again in every
+  frame (about 5 µs, because a highlighted structure keeps no group record), the window
+  blit is a RADV meta pass (about 5 µs), and the frame-statistics culling timer reads the
+  thread CPU clock with two system calls per frame.
+- Measured and rejected: a frame without the present fence, a separate X connection for
+  the Vulkan surface, and Mesa's submit thread (`MESA_VK_ENABLE_SUBMIT_THREAD`) do not
+  change the time beyond the noise. Mesa's submit thread does not help because
+  `vkQueuePresentKHR` waits until the thread has submitted the frame.
+
+The remaining main-thread items (highlight lowering, the blit meta pass, the statistics
+clock) add up to about 10 µs per pair and stay open as margin work.
+
 ## Phase 5: faster than OpenGL for assemblies
+
+The retained placement path and its native verification are described in
+[instancing.md](instancing.md). The renderer options and their scope are described in
+[assembly-rendering.md](assembly-rendering.md).
 
 Target: `frame_connected_30k` and `frame_structures_100k` at least twice as fast as OCCT,
 and `frame_mesh_10m` limited only by the GPU.
@@ -336,7 +417,8 @@ and `frame_mesh_10m` limited only by the GPU.
 7. Parallel CPU work.
    - Secondary command buffers recorded per layer or bucket on worker threads.
    - Uploads on a transfer queue.
-   - Streaming, so a large assembly shows its first frame early and fills in.
+   - [Progressive uploads](assembly-streaming.md), so a large assembly shows its first
+     frame early and fills in.
 
 Acceptance:
 

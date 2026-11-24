@@ -10,7 +10,16 @@
 #[allow(unsafe_code)]
 mod backend;
 mod device_close;
+mod mesh_lod;
+pub use mesh_lod::RenderMeshLevel;
+mod assembly_streaming;
+pub use assembly_streaming::{RenderAssemblyStreaming, RenderAssemblyStreamingProgress};
+mod draw_instances;
+mod immediate_elision;
 mod immediate_main;
+#[cfg(test)]
+mod immediate_redraw_fixture;
+mod main_layer_notices;
 pub use device_close::RenderDeviceCloseOutcome;
 mod device_failure;
 mod portability_failure;
@@ -71,6 +80,8 @@ mod depth_bias_behavior;
 pub use depth_bias_behavior::{RenderDepthBiasBehavior, RenderDepthBiasFailure};
 mod render_behavior_configuration;
 pub use render_behavior_configuration::RenderBehaviorConfiguration;
+mod mesh_vertex_behavior;
+pub use mesh_vertex_behavior::RenderMeshVertexBehavior;
 mod clipped_depth_constants;
 #[cfg(test)]
 mod clipped_depth_plane;

@@ -1,6 +1,7 @@
 //! Layer ordering and depth policy stay explicit in immutable frame submissions.
 use crate::PrimitiveDraw;
-use std::ops::Range;
+use crate::stencil_program::StructureDrawSpan;
+use std::{ops::Range, sync::Arc};
 /// One ordered pass; `RenderLayer::new(draws, true, true, false)`.
 #[derive(Clone, Debug)]
 pub struct RenderLayer {
@@ -10,6 +11,7 @@ pub struct RenderLayer {
     pub(crate) clear_depth: bool,
     pub(crate) polygon_offset: crate::RenderPolygonOffset,
     pub(crate) stencil_boundaries: Vec<crate::stencil_program::StencilBoundary>,
+    pub(crate) placement_sources: Arc<[StructureDrawSpan]>,
     /// Native Graphic3dZLayerSettings::ToRenderInDepthPrepass (default true).
     pub(crate) in_depth_prepass: bool,
     pub(crate) depth_pass: crate::depth_prepass::RenderDepthPass,
@@ -36,6 +38,7 @@ impl RenderLayer {
             clear_depth,
             polygon_offset: crate::RenderPolygonOffset::default(),
             stencil_boundaries,
+            placement_sources: Arc::from([]),
             in_depth_prepass: true,
             depth_pass: Default::default(),
             local_origin: None,
@@ -58,6 +61,7 @@ impl RenderLayer {
             clear_depth,
             polygon_offset: Default::default(),
             stencil_boundaries: program.boundaries,
+            placement_sources: program.sources.into(),
             in_depth_prepass: true,
             depth_pass: Default::default(),
             local_origin: None,
@@ -96,6 +100,7 @@ pub struct RenderLayerSpan {
     pub(crate) clear_depth: bool,
     pub(crate) polygon_offset: crate::RenderPolygonOffset,
     pub(crate) stencil_boundaries: Vec<crate::stencil_program::StencilBoundary>,
+    pub(crate) placement_sources: Arc<[StructureDrawSpan]>,
 }
 impl RenderLayerSpan {
     /// Index into `frame.draws()`; `frame.layers()[0].draw_range()`.
@@ -202,6 +207,7 @@ impl RenderLayer {
                 deferred,
                 transparent,
             ),
+            placement_sources: Arc::from([]),
             in_depth_prepass: self.in_depth_prepass,
             local_origin: self.local_origin,
             raytraced: self.raytraced,
@@ -249,6 +255,7 @@ fn append_layer_span(
         clear_depth: layer.clear_depth,
         polygon_offset: layer.polygon_offset,
         stencil_boundaries: layer.stencil_boundaries,
+        placement_sources: layer.placement_sources,
     });
 }
 
@@ -333,6 +340,7 @@ mod tests {
                 before_draw: 2,
                 command: StencilCommand::CappingRestore,
             }],
+            sources: Vec::new(),
         };
         let layer = RenderLayer::from_stencil_program(program, true, true, true);
         let (opaque, blended) = split_blended_layer(layer);

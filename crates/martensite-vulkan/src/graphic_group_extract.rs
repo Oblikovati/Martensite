@@ -303,10 +303,7 @@ fn finish_group_spatial_state(
 ) -> Result<(), RenderError> {
     for draw in draws {
         draw.depth_clamp = clamp;
-        let mirrored = structure
-            .trsf
-            .get()
-            .is_some_and(|datum| datum.transformation().is_negative());
+        let mirrored = structure_mirrored(structure);
         // Writing only a changed winding keeps a cached template's body shared (#594).
         if draw.mirrored != mirrored {
             draw.mirrored = mirrored;
@@ -314,6 +311,15 @@ fn finish_group_spatial_state(
         crate::highlight_style::apply_highlight(draw, structure)?;
     }
     Ok(())
+}
+
+/// Whether the structure's transformation mirrors, which reverses the winding of its draws;
+/// `structure_mirrored(&fields)`.
+pub(crate) fn structure_mirrored(structure: &Graphic3dCStructureFields) -> bool {
+    structure
+        .trsf
+        .get()
+        .is_some_and(|datum| datum.transformation().is_negative())
 }
 
 fn update_element_matrices(

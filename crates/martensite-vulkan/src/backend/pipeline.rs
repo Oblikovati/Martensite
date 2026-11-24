@@ -4,7 +4,7 @@ use super::diagnostic_executable::{ExecutableGap, ExecutableModuleInput};
 #[cfg(test)]
 use super::pipeline_layout::descriptor_layout_handles;
 use super::pipeline_layout::{create_layout, fixed_marker_push_range, push_range};
-use super::pipeline_shader_sources::{clipping_shaders, lighting_shaders};
+use super::pipeline_shader_sources::lighting_shaders;
 pub(super) use super::raster_pipeline_policy::create_pipeline;
 use super::runtime::{VulkanRuntime, vk_error};
 use crate::{RenderError, error::rejected};
@@ -12,14 +12,28 @@ use ash::vk;
 use std::sync::Arc;
 #[path = "pipeline_creation.rs"]
 mod creation;
+#[path = "pipeline_draw_table.rs"]
+mod draw_table;
+#[cfg(test)]
+pub(super) use draw_table::indexed_storage_limits;
+#[path = "pipeline_stage_selection.rs"]
+mod stage_selection;
+#[path = "pipeline_stock_layout.rs"]
+mod stock_layout;
+pub(super) use draw_table::DrawTablePipelines;
+use stock_layout::{lighting_layout, stock_base_vertex_stride};
 #[path = "pipeline_light_dot.rs"]
 mod light_dot;
+#[path = "pipeline_mesh_vertex_twins.rs"]
+mod mesh_vertex_twins;
 #[path = "pipeline_v4_geometry.rs"]
 mod v4_geometry;
 #[path = "pipeline_vertex_output.rs"]
 mod vertex_output;
 #[path = "pipeline_window_depth.rs"]
 mod window_depth;
+pub(super) use mesh_vertex_twins::MeshVertexTwins;
+
 pub(super) struct DrawPipeline {
     pub phong_interpolation_shader: bool,
     pub triangle_grid_coverage_shader: bool,
@@ -36,7 +50,16 @@ pub(super) struct DrawPipeline {
     pub kind: super::pipeline_variants::PipelineVariant,
     pub oit_layout: Option<Arc<super::oit_descriptor::OitDescriptorLayout>>,
     shaders: Vec<vk::ShaderModule>,
+    /// The bytes of the vertex stage, after every substitution.
+    vertex_bytes: &'static [u8],
     fragment_bytes: &'static [u8],
+    /// The sample count and alpha coverage of an ordinary single-pass pipeline, from which its
+    /// draw-table twin is built again; `None` for OIT, native-alpha and directional pipelines.
+    table_inputs: Option<(vk::SampleCountFlags, bool)>,
+    /// The draw table of an indirect run, at set 7 (pipeline_draw_table.rs).
+    pub draw_table_layout: Option<super::storage_descriptor::StorageDescriptorLayout>,
+    /// `has_plain_lit_stages`, once it was asked after the pipeline was built.
+    plain_lit_stages: std::sync::OnceLock<bool>,
     #[cfg(test)]
     executable_bytes: Vec<&'static [u8]>,
     pub clipping_layout: Option<super::storage_descriptor::StorageDescriptorLayout>,
@@ -52,6 +75,13 @@ pub(super) struct DrawPipeline {
     pub shadow_layout: Option<super::shadow_maps::ShadowMapLayout>,
 }
 impl DrawPipeline {
+    pub(super) fn meshlet_fragment_module(&self) -> Option<vk::ShaderModule> {
+        let directional = self.vertex_bytes == super::directional_phong::SHADERS[0]
+            && self.fragment_bytes == super::directional_phong::SHADERS[1];
+        (self.shaders.len() == 2 && (directional || self.has_plain_lit_stages()))
+            .then(|| self.shaders[1])
+    }
+
     #[cfg(feature = "lit-only-command-diagnostics")]
     pub(super) fn lit_only_fragment_bytes(&self) -> &'static [u8] {
         self.fragment_bytes
@@ -180,7 +210,12 @@ impl DrawPipeline {
                 0
             },
             shaders: vec![],
+            vertex_bytes: &[],
             fragment_bytes: &[],
+            table_inputs: (oit.is_none() && alpha_layout.is_none() && !directional_phong)
+                .then_some((samples, alpha_coverage)),
+            draw_table_layout: None,
+            plain_lit_stages: std::sync::OnceLock::new(),
             #[cfg(test)]
             executable_bytes: Vec::new(),
             clipping_layout: if clipped {
@@ -260,6 +295,8 @@ impl DrawPipeline {
             for bytes in super::surface_texture_pipeline::surface_shaders(kind) {
                 pipeline.add_shader(bytes)?;
             }
+        } else if kind.compact_vertices {
+            pipeline.load_compact_mesh_shaders(directional_phong)?;
         } else if directional_phong {
             for bytes in super::directional_phong::SHADERS {
                 pipeline.add_shader(bytes)?;
@@ -290,6 +327,7 @@ impl DrawPipeline {
         pipeline.apply_sprite_fragment()?;
         pipeline.apply_window_depth_geometry()?;
         pipeline.add_v4_geometry_transport()?;
+        pipeline.apply_draw_table()?;
         let mut transform_push = super::factorized_projection::push_range(
             runtime.projection_behavior,
             kind,
@@ -309,6 +347,9 @@ impl DrawPipeline {
         if kind.line_tint.uses_draw_color() {
             transform_push.size = 96;
         }
+        if kind.compact_vertices {
+            transform_push.size += super::mesh_vertex_codec::DECODE_PUSH_BYTES;
+        }
         pipeline.layout = create_layout(
             runtime,
             transform_push,
@@ -325,7 +366,10 @@ impl DrawPipeline {
                 pipeline.triangle_grid_coverage_shader,
             ),
             pipeline.text_grid_interpolation_shader,
-            pipeline.window_depth_status_layout.as_ref(),
+            [
+                pipeline.window_depth_status_layout.as_ref(),
+                pipeline.draw_table_layout.as_ref(),
+            ],
             pipeline.clipping_layout.as_ref(),
             [
                 pipeline.sphere_layout.as_ref().map(|layout| layout.handle),
@@ -348,13 +392,6 @@ impl DrawPipeline {
         )?;
         Ok(pipeline)
     }
-    fn replace_oit_fragment(
-        &mut self,
-        target: super::oit_pipeline::OitPipelineTarget,
-    ) -> Result<(), RenderError> {
-        let bytes = super::oit_pipeline::oit_fragment_bytes(self.kind, target)?;
-        self.replace_fragment(bytes)
-    }
     #[cfg(feature = "command-state-diagnostics")]
     pub(super) fn diagnostic_modules(&self) -> Vec<u64> {
         use ash::vk::Handle;
@@ -365,6 +402,7 @@ impl DrawPipeline {
         let actual = self.capture_shader_source(bytes)?;
         if self.shaders.is_empty() {
             self.stock_base_vertex_stride = stock_base_vertex_stride(self.kind, actual);
+            self.vertex_bytes = actual;
         }
         if self.shaders.len() == 1 {
             self.fragment_bytes = bytes;
@@ -393,65 +431,6 @@ impl DrawPipeline {
         }
         Ok(())
     }
-    fn apply_coordinate_fragment(&mut self) -> Result<(), RenderError> {
-        let legacy = super::attachment_coordinates::AttachmentCoordinates::LegacyBottomUpV1;
-        if self.runtime.attachment_coordinates == legacy {
-            return Ok(());
-        }
-        let bytes = super::coordinate_shader::coordinate_fragment(self.fragment_bytes)?;
-        self.replace_fragment(bytes)
-    }
-    fn load_shaders(
-        &mut self,
-        line: bool,
-        point: bool,
-        text: bool,
-        clipped: bool,
-        lighting: bool,
-    ) -> Result<(), RenderError> {
-        if let Some(shaders) = super::text_grid_interpolation_shader::selected_pipeline(
-            self.runtime.text_interpolation,
-            text,
-            clipped,
-        ) {
-            self.text_grid_interpolation_shader = true;
-            for bytes in shaders {
-                self.add_shader(bytes)?;
-            }
-            return Ok(());
-        }
-        let shaders: [&[u8]; 2] = if lighting {
-            lighting_shaders(clipped, point, line)
-        } else if clipped {
-            clipping_shaders(line, point, text)
-        } else if text {
-            [
-                include_bytes!("../../shaders/text.vert.spv"),
-                include_bytes!("../../shaders/text.frag.spv"),
-            ]
-        } else if point {
-            [
-                include_bytes!("../../shaders/point.vert.spv"),
-                include_bytes!("../../shaders/point.frag.spv"),
-            ]
-        } else if line {
-            let vertex: &[u8] = if self.kind.line_tint.uses_draw_color() {
-                include_bytes!("../../shaders/line.draw-color.vert.spv")
-            } else {
-                include_bytes!("../../shaders/line.vert.spv")
-            };
-            [vertex, include_bytes!("../../shaders/line.frag.spv")]
-        } else {
-            [
-                include_bytes!("../../shaders/unlit.vert.spv"),
-                include_bytes!("../../shaders/unlit.frag.spv"),
-            ]
-        };
-        for bytes in shaders {
-            self.add_shader(bytes)?;
-        }
-        Ok(())
-    }
     fn create(
         &mut self,
         kind: super::pipeline_variants::PipelineVariant,
@@ -469,33 +448,6 @@ impl DrawPipeline {
         Ok(())
     }
 }
-fn lighting_layout(
-    runtime: &Arc<VulkanRuntime>,
-    kind: super::pipeline_variants::PipelineVariant,
-) -> Result<Option<super::storage_descriptor::StorageDescriptorLayout>, RenderError> {
-    use super::storage_descriptor::StorageDescriptorLayout;
-    if !kind.lighting {
-        return Ok(None);
-    }
-    let stages = vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT;
-    // Dynamic ranges are qualified for the stock opaque surface path.
-    if !kind.dynamic_lighting
-        || kind.surface_blend
-        || kind.line
-        || kind.point
-        || kind.polygon_points
-        || kind.pbr
-        || kind.fixed_lighting
-        || kind.clipped
-        || kind.mesh_edges
-        || kind.surface_texture
-        || kind.surface_alpha
-    {
-        return StorageDescriptorLayout::new(runtime, stages).map(Some);
-    }
-    StorageDescriptorLayout::lighting(runtime, stages).map(Some)
-}
-
 impl Drop for DrawPipeline {
     fn drop(&mut self) {
         // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
@@ -513,27 +465,6 @@ impl Drop for DrawPipeline {
         }
     }
 }
-// The packaged plain lighting vertex stage reads neither VertexIndex nor BaseVertex.
-fn stock_base_vertex_stride(
-    kind: super::pipeline_variants::PipelineVariant,
-    actual: &[u8],
-) -> Option<u64> {
-    if !kind.lighting
-        || kind.line
-        || kind.point
-        || kind.text
-        || kind.surface_texture
-        || kind.surface_alpha
-        || kind.fixed_lighting
-        || kind.mesh_edges
-    {
-        return None;
-    }
-    let [plain, _] = lighting_shaders(false, false, false);
-    (actual == plain || actual == super::directional_phong::SHADERS[0])
-        .then_some(u64::from(super::pipeline_state::LIT_VERTEX_STRIDE))
-}
-
 pub(super) fn load_shader(
     runtime: &VulkanRuntime,
     bytes: &[u8],

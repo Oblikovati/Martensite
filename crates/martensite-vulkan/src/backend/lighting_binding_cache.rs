@@ -12,6 +12,9 @@ use std::{
 
 const MAX_BINDINGS: usize = 128;
 const MAX_CACHED_LIGHTING_BYTES: usize = 1024;
+/// The world and normal matrices at the start of an encoded lighting block
+/// (`RenderLighting::encode_coefficients`).
+pub(in crate::backend) const PLACEMENT_BYTES: usize = 128;
 
 pub(in crate::backend) fn uses_lighting_pages(draws: &[PrimitiveDraw]) -> bool {
     if cfg!(feature = "command-state-diagnostics") {
@@ -66,6 +69,9 @@ pub(in crate::backend) struct FrameLightingBindings {
     candidate: Option<Arc<RetainedLightingBinding>>,
     first_static: Option<RetainedLightingBinding>,
     page: Option<LightingPage>,
+    /// The last block a kept draw bound, which the next kept draw borrows when only the
+    /// placement differs (draw_table.rs): its layout, binding and encoded bytes.
+    previous: Option<(vk::DescriptorSetLayout, Arc<UploadedStorage>, Vec<u8>)>,
 }
 
 impl LightingBindingCache {
@@ -82,6 +88,39 @@ impl LightingBindingCache {
         let bound = self.bind_encoded(runtime, layout, &bytes, pages, retain);
         pages.lighting.scratch = bytes;
         bound
+    }
+
+    /// `bind_draw`, or the previous kept draw's binding when the two blocks differ only in the
+    /// world and normal matrices, which a draw table carries; the flag tells a borrowed
+    /// binding, which only a run may draw with; `cache.bind_draw_sharing(...)?`.
+    pub(in crate::backend) fn bind_draw_sharing(
+        &self,
+        runtime: &Arc<VulkanRuntime>,
+        layout: &StorageDescriptorLayout,
+        lighting: &RenderLighting,
+        pages: &mut FrameUploadPages<'_>,
+    ) -> Result<(Arc<UploadedStorage>, bool), RenderError> {
+        let mut bytes = std::mem::take(&mut pages.lighting.scratch);
+        lighting.encode_into(&mut bytes);
+        if let Some((_, binding, _)) =
+            pages
+                .lighting
+                .previous
+                .as_ref()
+                .filter(|(handle, _, kept)| {
+                    *handle == layout.handle
+                        && kept.get(PLACEMENT_BYTES..) == bytes.get(PLACEMENT_BYTES..)
+                })
+        {
+            let binding = Arc::clone(binding);
+            pages.lighting.scratch = bytes;
+            return Ok((binding, true));
+        }
+        let bound = self.bind_encoded(runtime, layout, &bytes, pages, true)?;
+        let recycled = pages.lighting.previous.take().map(|(_, _, kept)| kept);
+        pages.lighting.previous = Some((layout.handle, Arc::clone(&bound), bytes));
+        pages.lighting.scratch = recycled.unwrap_or_default();
+        Ok((bound, false))
     }
 
     fn bind_encoded(

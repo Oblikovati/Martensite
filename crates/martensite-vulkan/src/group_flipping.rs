@@ -30,6 +30,27 @@ pub(crate) struct GroupFlipStack {
     implicit_structure_stack: bool,
 }
 const _: fn(&FlipCarry) -> &(dyn Send + Sync) = |value| value;
+
+impl FlipCarry {
+    /// The model stack that a group without flips, persistence or user code leaves when it
+    /// starts a structure: none for an implicit stack, else the structure's stack after the
+    /// group's own transformation is pushed and popped again. A draw record certifies it
+    /// against the lowered carry and replays it under any placement (#594);
+    /// `FlipCarry::ordinary(&fields, &group_trsf)`.
+    pub(crate) fn ordinary(
+        structure: &martensite_tkservice::graphic3d::Graphic3dCStructureFields,
+        local: &martensite_tkmath::gp::Transform3,
+    ) -> Self {
+        if structure.trsf.is_null() && local.form() == TransformForm::Identity {
+            return Self::default();
+        }
+        let mut state = crate::persistent_transform::structure_model_state(structure);
+        for _ in 0..crate::persistent_transform::push_local_transform(local, &mut state) {
+            let _ = state.pop();
+        }
+        Self { state: Some(state) }
+    }
+}
 const _: fn(&GroupFlipStack) -> &(dyn Send + Sync) = |value| value;
 
 impl GroupFlipStack {

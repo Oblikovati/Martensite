@@ -37,6 +37,8 @@ pub(super) fn replayed(
         window_depth: None,
         line_tint: None,
         retirements,
+        compact_vertices: uploads.compact_vertices
+            && crate::backend::mesh_vertex_pipeline::admits(runtime, draw),
     };
     let inputs = upload_inputs(&context, samples, uploads.dynamic_lighting);
     let residency = &uploads.geometry.residency;
@@ -45,8 +47,10 @@ pub(super) fn replayed(
     }) else {
         return Ok(None);
     };
-    let bindings = context.view_bindings(&kept.pipeline, &mut uploads.storage)?;
-    Ok(Some(context.kept_draw(kept, bindings)))
+    let (bindings, borrowed) = context.view_bindings(&kept.pipeline, &mut uploads.storage)?;
+    let mut draw = context.kept_draw(kept, bindings);
+    draw.borrowed_lighting = borrowed;
+    Ok(Some(draw))
 }
 
 /// Keep a fresh upload when it is a plain surface's; `retained::keep(&context, samples, uploads, &uploaded)`.
@@ -61,7 +65,8 @@ pub(super) fn keep(
     if uploads.geometry_batch.is_some()
         || !plain_body(context.semantic_draw)
         || !plain_upload(context, uploaded)
-        || super::super::geometry_key(context.runtime, context.draw).is_none()
+        || super::super::geometry_key(context.runtime, context.draw, context.compact_vertices)
+            .is_none()
     {
         return;
     }
@@ -70,6 +75,8 @@ pub(super) fn keep(
         pipeline: Arc::clone(&uploaded.pipeline),
         vertices: Arc::downgrade(&uploaded.vertices),
         indices: Arc::downgrade(&uploaded.indices),
+        index_format: uploaded.index_format,
+        mesh_decode: uploaded.mesh_decode.clone(),
         count: uploaded.count,
         sample_alpha_cutoff: uploaded.sample_alpha_cutoff,
         store: uploads.geometry.residency.store(),
@@ -139,6 +146,7 @@ fn upload_inputs(
     UploadInputs {
         runtime: Arc::as_ptr(context.runtime).addr(),
         selection: SelectionInputs::of(context.pipelines.selection_serial(), context.draw, frame),
+        compact_vertices: context.compact_vertices,
         extent: context.extent,
         samples,
     }
@@ -151,8 +159,8 @@ impl DrawUploadContext<'_> {
         &self,
         pipeline: &crate::backend::pipeline::DrawPipeline,
         storage: &mut crate::backend::host_upload_pages::FrameUploadPages<'_>,
-    ) -> Result<DrawBindings, RenderError> {
-        let lighting = self.upload_lighting(pipeline, storage)?;
+    ) -> Result<(DrawBindings, bool), RenderError> {
+        let (lighting, borrowed) = self.view_lighting(pipeline, storage)?;
         let pbr_environment = self.frame_pbr_environment(pipeline, storage)?;
         let shadow_maps = self.frame_shadow_maps(pipeline, storage)?;
         let surface_image = self
@@ -161,7 +169,7 @@ impl DrawUploadContext<'_> {
             .as_ref()
             .map(|style| self.frame_glyph_atlas(pipeline, &style.image, storage))
             .transpose()?;
-        Ok(DrawBindings {
+        let bindings = DrawBindings {
             clipping: None,
             lighting,
             sprite: None,
@@ -170,7 +178,39 @@ impl DrawUploadContext<'_> {
             material_maps: None,
             sphere_map: None,
             shadow_maps,
-        })
+        };
+        Ok((bindings, borrowed))
+    }
+
+    /// The lighting binding of a kept draw: the previous kept draw's when a draw table can draw
+    /// both and only their placement differs (draw_table.rs), else its own block.
+    fn view_lighting(
+        &self,
+        pipeline: &crate::backend::pipeline::DrawPipeline,
+        storage: &mut crate::backend::host_upload_pages::FrameUploadPages<'_>,
+    ) -> Result<
+        (
+            Option<Arc<crate::backend::storage_descriptor::UploadedStorage>>,
+            bool,
+        ),
+        RenderError,
+    > {
+        let lighting = self.draw.lighting.as_ref().filter(|lighting| {
+            lighting.fixed.is_none() && !lighting.pbr && self.draw.user_program.is_none()
+        });
+        let (Some(lighting), Some(layout)) = (lighting, pipeline.lighting_layout.as_ref()) else {
+            return Ok((self.upload_lighting(pipeline, storage)?, false));
+        };
+        if !self.runtime.draw_tables || !pipeline.has_plain_lit_stages() {
+            return Ok((self.upload_lighting(pipeline, storage)?, false));
+        }
+        let (binding, borrowed) = self.pipelines.lighting_bindings.bind_draw_sharing(
+            self.runtime,
+            layout,
+            lighting,
+            storage,
+        )?;
+        Ok((Some(binding), borrowed))
     }
 
     /// The kept upload with this frame's push constants and view bindings.
@@ -184,15 +224,19 @@ impl DrawUploadContext<'_> {
             oit: None,
             bindings,
             presentation: self.presentation(),
-            transform: self.push_constants(&kept.pipeline),
+            transform: self.push_constants(&kept.pipeline, kept.mesh_decode.as_deref()),
             pipeline: kept.pipeline,
             vertices: kept.vertices,
             indices: kept.indices,
+            index_format: kept.index_format,
+            mesh_decode: kept.mesh_decode,
             count: kept.count,
             instances: 1,
             line: self.line_state(),
             point_viewports: None,
             user_program: None,
+            table_run: None,
+            borrowed_lighting: false,
         }
     }
 }
@@ -216,6 +260,7 @@ pub(super) fn verify(kept: &UploadedDraw, fresh: &UploadedDraw) {
         ("pipeline", Arc::ptr_eq(&kept.pipeline, &fresh.pipeline)),
         ("vertices", Arc::ptr_eq(&kept.vertices, &fresh.vertices)),
         ("indices", Arc::ptr_eq(&kept.indices, &fresh.indices)),
+        ("index format", kept.index_format == fresh.index_format),
         (
             "counts",
             (kept.count, kept.instances) == (fresh.count, fresh.instances),

@@ -317,6 +317,41 @@ and median time fell from 81.43 ms to 80.30 ms. Both cases kept their checksums
 and peak RSS was within 1 MiB in every hover pair and within 2 MiB in every
 selection pair.
 
+## Immediate layer elision
+
+Phase 4 (PLAN.md) makes an immediate redraw skip the main layers while its view has had
+no main-layer notice and its in-place state still matches. The redraw then culls, builds
+and uploads only the immediate layers, restores the kept main colour and depth, and draws
+the immediate layers over them. Before, each hover built all 400 main draws and compared
+them with the kept pass, which cost about 2.5 million instructions per hover pair. OCCT's
+`redrawImmediate` spends about 65,000.
+
+The same profile showed five more per-frame costs, which this phase removes:
+
+| Cost | Before | After |
+| --- | --- | --- |
+| Geometry retirement after each frame | 512 entries checked | twice the frame's uploads, in a frame that restores the main image |
+| Device limits and OIT formats | format queries in each frame | read once per device |
+| Presentable-object accessors in picking | all fields and the presentation list copied, 236 times per hover pair | one field read under the lock |
+| Camera inversion in a selecting frustum | both matrices inverted for each of 10 points | inverted once |
+| Frustum box test | 21 million instructions | 15 million (OCCT: 11 million) |
+
+`cargo xtask occt-parity --toolkit vulkan --cpus 8-15`, same host and OCCT build:
+
+| Run | Vulkan | OCCT | Ratio |
+| --- | ---: | ---: | ---: |
+| Before phase 4, `--frames 10` | 0.609 ms | 0.102 ms | 5.96 |
+| `--frames 10` | 0.141 ms | 0.112 ms | 1.26 |
+| `--frames 100`, highlight case only | 0.160 ms | 0.122 ms | 1.31 |
+
+Each hover pair keeps its checksum and uploads no geometry. The two redraws take about
+0.07 ms together; an empty Vulkan frame takes about 0.033 ms on this host. The rest of the
+gap is picking in `martensite-tkv3d`, which runs about 270,000 instructions per hover pair
+against OCCT's 170,000.
+
+The other cases kept their time within run-to-run noise. `upload_mesh_100k` varies
+between 0.11 and 0.77 ms from one run to the next on this host.
+
 ## Frames in flight and capture on demand
 
 A redraw now submits its frame and returns. Up to two frames run on the GPU while the host
@@ -560,3 +595,21 @@ valgrind --tool=callgrind --callgrind-out-file=target/occt-parity/vulkan/frame_m
   target/release/deps/occt_parity-<hash> --filter frame_mesh_1m
 callgrind_annotate target/occt-parity/vulkan/frame_mesh_1m.cg
 ```
+
+## Presentation thread
+
+A window redraw now records its frame and hands it to a presentation thread, one per
+renderer, which submits and presents it with the same calls the redraw made before. The
+maintainer accepted on 2026-11-24 (PLAN.md, phase 2) that a submit or present error of such
+a frame shows at the next redraw, `finish_frames`, capture or close. Acquire errors stay
+immediate. Frames with GUI layers, window depth status or ray-tracing feedback are still
+submitted and presented by the redraw itself.
+
+Mesa's `vkQueuePresentKHR` made 11 `ioctl` calls per frame and `vkQueueSubmit2` 4, all
+on the redraw thread; radeonsi makes the matching calls on its own `cs0` thread. Alternating
+runs of 300 frames of `highlight_ais_spheres_400`, CPUs 8-15, median µs per hover pair:
+
+| Host load | Before | Present call only on the thread | Submit and present on the thread | OCCT |
+| --- | ---: | ---: | ---: | ---: |
+| 2 to 4 | 130 | 121 | 107 | 113 |
+| 11 to 13 | 166 | | 129 | 130 |

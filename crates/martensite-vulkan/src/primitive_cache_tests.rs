@@ -33,6 +33,7 @@ fn source(store: &RetainedPrimitives) -> (PrimitiveSubmission, Handle<Graphic3dB
         upload: Default::default(),
         uid: 1,
         retained: None,
+        mesh_levels: None,
     };
     primitive.retained = store.entry(&primitive);
     (primitive, attributes)
@@ -270,6 +271,7 @@ fn mutable_source(
         upload: Default::default(),
         uid: 1,
         retained: None,
+        mesh_levels: None,
     };
     primitive.retained = store.entry(&primitive);
     (primitive, attributes)
@@ -416,6 +418,7 @@ fn line_array(store: &RetainedPrimitives, count: i32, flags: i32) -> PrimitiveSu
         upload: Default::default(),
         uid: 1,
         retained: None,
+        mesh_levels: None,
     };
     source.retained = store.entry(&source);
     source

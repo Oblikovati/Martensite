@@ -25,10 +25,14 @@ pub(super) struct VulkanRuntime {
     device: Option<Device>,
     pub(super) pipeline_cache: PipelineCache,
     pub(super) command_slots: super::submission::CommandSlotPool,
+    pub(super) secondary_pools: super::secondary_layer_commands::SecondaryCommandPools,
+    /// The order of every queue operation, host and presentation thread alike (#594).
+    pub(super) queue_order: Arc<super::queue_order::QueueOrder>,
     pub validation: Arc<ValidationMessages>,
     pub physical: vk::PhysicalDevice,
     pub queue: vk::Queue,
     pub queue_family: u32,
+    pub(super) transfer_queue: Option<super::dedicated_transfer::TransferQueue>,
     pub memory: vk::PhysicalDeviceMemoryProperties,
     pub limits: vk::PhysicalDeviceLimits,
     pub depth_clamp: bool,
@@ -59,6 +63,11 @@ pub(super) struct VulkanRuntime {
     pub polygon_lines: bool,
     pub subset_point_polygons: Option<bool>,
     pub large_points: bool,
+    /// `multiDrawIndirect` and `drawIndirectFirstInstance`: runs of plain lit surfaces record
+    /// as one indirect draw that reads a draw table (draw_table.rs, #594).
+    pub draw_tables: bool,
+    /// The selected graphics queue can compute compacted draw-table commands.
+    pub(super) placement_visibility: bool,
     pub sampler_anisotropy: bool,
     pub sample_rate_shading: bool,
     pub depth_resolve_modes: vk::ResolveModeFlags,
@@ -79,6 +88,10 @@ pub(super) struct VulkanRuntime {
     pub(super) text_interpolation: crate::RenderTextInterpolationBehavior,
     pub(super) depth_bias_behavior: crate::RenderDepthBiasBehavior,
     pub(super) projection_behavior: crate::RenderProjectionBehavior,
+    pub(super) mesh_vertex_behavior: crate::RenderMeshVertexBehavior,
+    pub(super) meshlets_requested: bool,
+    pub(super) placement_occlusion: bool,
+    pub(super) meshlet_group_limit: u32,
     pub(super) window_depth_behavior: crate::RenderWindowDepthBehavior,
     pub(super) depth_bias_command: Option<ash::ext::depth_bias_control::Device>,
     pub(super) line_clip: super::line_clip_device::LineClipDevice,
@@ -95,6 +108,10 @@ pub(super) struct VulkanRuntime {
     pub(super) memory_arena: super::memory_arena::MemoryArena,
     /// Resource, transfer and phase counters behind `Graphic3dRenderView::last_frame_work`.
     pub(crate) work: Arc<super::frame_work_ledger::FrameWorkLedger>,
+    /// The OIT attachment formats, read on the first frame that plans transparency (#594).
+    pub(super) oit_formats: std::sync::OnceLock<super::oit_plan::OitFormatFacts>,
+    /// The device limits, read on first use; their format queries are driver calls (#594).
+    pub(super) device_limits: std::sync::OnceLock<crate::RenderDeviceLimits>,
 }
 impl VulkanRuntime {
     pub(super) fn admit_world_clip_interpolation(
@@ -287,6 +304,7 @@ impl VulkanRuntime {
             physical: vk::PhysicalDevice::null(),
             queue: vk::Queue::null(),
             queue_family: 0,
+            transfer_queue: None,
             memory: Default::default(),
             limits: Default::default(),
             depth_clamp: false,
@@ -308,6 +326,8 @@ impl VulkanRuntime {
             polygon_lines: false,
             subset_point_polygons: None,
             large_points: false,
+            draw_tables: false,
+            placement_visibility: false,
             sampler_anisotropy: false,
             sample_rate_shading: false,
             depth_resolve_modes: vk::ResolveModeFlags::empty(),
@@ -328,6 +348,10 @@ impl VulkanRuntime {
             text_interpolation: Default::default(),
             depth_bias_behavior: Default::default(),
             projection_behavior: Default::default(),
+            mesh_vertex_behavior: Default::default(),
+            meshlets_requested: false,
+            placement_occlusion: false,
+            meshlet_group_limit: 0,
             window_depth_behavior: Default::default(),
             depth_bias_command: None,
             line_clip: Default::default(),
@@ -341,8 +365,12 @@ impl VulkanRuntime {
             image_memory: Default::default(),
             memory_arena: Default::default(),
             work: Default::default(),
+            oit_formats: Default::default(),
+            device_limits: Default::default(),
             pipeline_cache: Default::default(),
             command_slots: Default::default(),
+            secondary_pools: Default::default(),
+            queue_order: Default::default(),
             #[cfg(test)]
             executable_profile: None,
         })
@@ -392,6 +420,11 @@ impl VulkanRuntime {
         }
         let cache_identity = self.initialize_device_properties(physical);
         self.initialize_core_features(physical);
+        if self.meshlets_requested {
+            self.meshlet_group_limit =
+                super::meshlet_device::meshlet_limit(&self.instance, physical);
+        }
+        self.placement_visibility = super::placement_visibility::supported(self, physical, family);
         self.initialize_format_features(physical)?;
         self.world_clip
             .admit_device(self.world_clip_device_behavior())?;
@@ -442,6 +475,10 @@ impl VulkanRuntime {
         self.large_points = unsafe { self.instance.get_physical_device_features(physical) }
             .large_points
             == vk::TRUE;
+        // SAFETY: the instance, physical device and device handles stay valid while the runtime holds them, and the call only reads through out-parameters it owns.
+        let features = unsafe { self.instance.get_physical_device_features(physical) };
+        self.draw_tables = features.multi_draw_indirect == vk::TRUE
+            && features.draw_indirect_first_instance == vk::TRUE;
         // SAFETY: the instance, physical device and device handles stay valid while the runtime holds them, and the call only reads through out-parameters it owns.
         self.sampler_anisotropy = unsafe { self.instance.get_physical_device_features(physical) }
             .sampler_anisotropy
@@ -510,7 +547,8 @@ impl VulkanRuntime {
     }
     /// Keep child destruction behind actual idle/loss; `runtime.retire_device_blocking()` may block.
     pub fn retire_device_blocking(&self) {
-        let mut calls = super::device_retirement::DeviceIdleCalls::new(self.device());
+        let mut calls =
+            super::device_retirement::DeviceIdleCalls::new(self.device(), &self.queue_order);
         let outcome = super::device_retirement::retire_until_stopped(&mut calls);
         let _ = self.lifecycle.observe(outcome);
     }
@@ -536,12 +574,14 @@ impl Drop for VulkanRuntime {
         if let Some(device) = self.device.take() {
             // Explicit close may be incomplete; last-owner teardown cannot abandon execution.
             if self.lifecycle.state() != crate::RenderDeviceState::Closed {
-                let mut calls = super::device_retirement::DeviceIdleCalls::new(&device);
+                let mut calls =
+                    super::device_retirement::DeviceIdleCalls::new(&device, &self.queue_order);
                 let _ = super::device_retirement::retire_until_stopped(&mut calls);
             }
             // Every lease holds this runtime, so all resources are gone; free the shared blocks.
             self.pipeline_cache.close(&device);
             self.command_slots.close(&device);
+            self.secondary_pools.close(&device);
             self.memory_arena.free_all(&device);
             // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
             unsafe {

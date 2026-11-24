@@ -12,8 +12,9 @@ impl SelectMgrRectangularFrustum {
         let rectangle = *self.selection_rectangle.read();
         let (center, bounds) = self.rectangular_build_pixels(rectangle);
         let mut ray = self.ray.write();
-        ray.near = builder.project_pnt_on_view_plane(center.x(), center.y(), 0.);
-        ray.far = builder.project_pnt_on_view_plane(center.x(), center.y(), 1.);
+        let projector = builder.view_plane_projector();
+        ray.near = projector.project(center.x(), center.y(), 0.);
+        ray.far = projector.project(center.x(), center.y(), 1.);
         ray.direction = Direction3::from_xyz(ray.far.xyz() - ray.near.xyz())?;
         let mut core = self.frustum_core.write();
         rectangular_compute_vertices(&mut core, bounds, &builder);

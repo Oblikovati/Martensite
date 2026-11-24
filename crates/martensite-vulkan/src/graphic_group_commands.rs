@@ -128,7 +128,7 @@ impl GroupGeometry {
             }
             Self::Primitives(primitive) => {
                 let primitive = retained_source(primitive, context.group);
-                let draws = super::lower_hatched_surface(
+                let mut draws = super::lower_hatched_surface(
                     primitive.as_ref(),
                     aspects,
                     closed,
@@ -136,6 +136,9 @@ impl GroupGeometry {
                     highlighted,
                     context,
                 )?;
+                if let Some(levels) = &primitive.mesh_levels {
+                    levels.attach(primitive.as_ref(), &mut draws);
+                }
                 #[cfg(feature = "vertex-output-diagnostics")]
                 let draws = context
                     .group

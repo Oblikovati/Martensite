@@ -149,9 +149,11 @@ fn replayed_chunk(
             continue;
         }
         let retained = structure.cast::<Graphic3dRenderStructure>();
+        let first = program.draws.len();
         skipped += retained
             .get()?
             .replayed_in_view(inputs.view_id, scene, &mut program)?;
+        program.mark_structure(structure.identification(), first);
     }
     Some((program, skipped))
 }
@@ -174,8 +176,11 @@ fn append_structure(
         inputs.clipping,
         pass,
     );
+    let first = program.draws.len();
     retained
         .get()
         .ok_or_else(|| rejected(structure.object_address(), "a Martensite driver structure"))?
-        .draws_into(inputs.view_id, scene, program)
+        .draws_into(inputs.view_id, scene, program)?;
+    program.mark_structure(structure.identification(), first);
+    Ok(())
 }

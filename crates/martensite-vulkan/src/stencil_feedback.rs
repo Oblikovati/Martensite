@@ -18,6 +18,11 @@ impl StencilSnapshot {
     pub fn commit(&self, ending: RenderStencilState) {
         *self.feedback.0.write() = ending;
     }
+    /// Put back the state the frame started from; `snapshot.restore_initial()` undoes a commit
+    /// whose frame never reached the queue (#594).
+    pub fn restore_initial(&self) {
+        self.commit(self.initial);
+    }
 }
 impl RenderFrame {
     pub(crate) fn attach_stencil_context(&mut self, feedback: &StencilFeedback) {

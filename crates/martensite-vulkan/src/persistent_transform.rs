@@ -9,7 +9,7 @@ use martensite_tkservice::graphic3d::*;
 
 #[path = "persistent_transform_flipping.rs"]
 mod flipping;
-pub(crate) use flipping::flipping_model_state;
+pub(crate) use flipping::{flipping_model_state, push_local_transform, structure_model_state};
 
 pub(crate) fn group_clip_transform(
     group: &Graphic3dDrawGroup,

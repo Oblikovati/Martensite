@@ -18,6 +18,9 @@ use martensite_tkv3d::ais::{
 };
 use martensite_tkv3d::prs_mgr::{PrsMgrDisplayStatus, PrsMgrTypeOfPresentation3d};
 
+#[path = "ais_placement_verification.rs"]
+mod placement_verification;
+
 pub const CASES: &[Case] = &[
     Case {
         name: "frame_ais_spheres_400",
@@ -61,6 +64,7 @@ const BOXES: GridLayout = GridLayout {
 
 /// The instances of `frame_connected_30k`: 30 parts on a 200 x 150 grid, 10 units apart.
 const PARTS: i32 = 30;
+const DISTRIBUTED_PARTS: i32 = 2_815;
 const INSTANCE_COLUMNS: i32 = 200;
 const INSTANCE_ROWS: i32 = 150;
 const INSTANCE_PITCH: f64 = 10.;
@@ -431,13 +435,23 @@ fn frame_connected_30k(bench: &Bench, mode: &Mode) -> Measured {
     let (center, radius) = instance_scene();
     let stage = Stage::new(&bench.driver, center, radius);
     let context = AisInteractiveContext::new(&stage.viewer).expect("context");
-    let parts: Vec<Handle<dyn AisInteractiveObject>> = (0..PARTS)
+    let unique_parts = if std::env::var_os("MARTENSITE_594_DISTRIBUTED_PARTS").is_some() {
+        DISTRIBUTED_PARTS
+    } else {
+        PARTS
+    };
+    let parts: Vec<Handle<dyn AisInteractiveObject>> = (0..unique_parts)
         .map(|index| AisShape::new(&part(index)).cast())
         .collect();
-    for (index, part) in (0..INSTANCE_COLUMNS * INSTANCE_ROWS).zip(parts.iter().cycle()) {
+    let first = display_instance(&context, &parts[0], 0);
+    for (index, part) in (1..INSTANCE_COLUMNS * INSTANCE_ROWS).zip(parts.iter().cycle().skip(1)) {
         display_instance(&context, part, index);
     }
     let measured = measure_heavy_orbit(bench, &stage, mode);
+    if std::env::var_os("MARTENSITE_594_VERIFY_PLACEMENT_EDITS").is_some() {
+        placement_verification::verify_placement_edits(&stage, &context, &parts[0], &first);
+    }
+    drop(first);
     drop(context);
     stage.close();
     measured
@@ -456,7 +470,7 @@ fn display_instance(
     context: &Handle<AisInteractiveContext>,
     part: &Handle<dyn AisInteractiveObject>,
     index: i32,
-) {
+) -> Handle<dyn AisInteractiveObject> {
     let column = f64::from(index % INSTANCE_COLUMNS);
     let row = f64::from(index / INSTANCE_COLUMNS);
     let offset = Transform3::translation([column * INSTANCE_PITCH, row * INSTANCE_PITCH, 0.]);
@@ -466,12 +480,13 @@ fn display_instance(
     context
         .display_with_modes(&instance, 1, -1, false, PrsMgrDisplayStatus::None)
         .expect("display");
+    instance
 }
 
-/// Part `index` of 30: ten boxes, ten cylinders and ten cones that grow with the index.
+/// Cycle through the same three families, varying the dimensions in each additional batch.
 fn part(index: i32) -> Shape {
-    let grow = f64::from(index % 10);
-    match index / 10 {
+    let grow = f64::from(index % 10) + 0.001 * f64::from(index / PARTS);
+    match (index % PARTS) / 10 {
         0 => box_part(grow),
         1 => made(BRepPrimAPIMakeCylinder::new(
             1. + 0.2 * grow,

@@ -26,6 +26,7 @@ struct RasterPool {
     color: TargetSlot<ImageKey, TargetImage>,
     depth: TargetSlot<ImageKey, TargetImage>,
     multisample: TargetSlot<MultisampleKey, MultisampleTargets>,
+    hiz_depth: TargetSlot<ImageKey, TargetImage>,
 }
 
 struct TargetSlot<Key, Target> {
@@ -142,7 +143,7 @@ struct ImageKey {
 
 impl ImageKey {
     fn without_copy_destination(mut self) -> Self {
-        self.attachment.usage &= !vk::ImageUsageFlags::TRANSFER_DST;
+        self.attachment.usage &= !MAIN_COPY_USAGE;
         self
     }
 
@@ -195,13 +196,20 @@ impl FrameTargetPool {
                 samples,
             },
         )?;
-        let color =
-            pool.color
-                .attachment(runtime, extent, color_attachment(runtime, copy_usage[0]))?;
+        // A remembered pair may be restored by a fetch draw, so it is sampled too.
+        let color = pool.color.attachment(
+            runtime,
+            extent,
+            color_attachment(runtime, copy_usage[0] || remember_main),
+        )?;
         let depth = pool.depth.attachment(
             runtime,
             extent,
-            depth_attachment(runtime, stencil, copy_usage[1]),
+            depth_attachment(
+                runtime,
+                stencil,
+                copy_usage[1] || (remember_main && !stencil),
+            ),
         )?;
         let main_publication = remember_main
             .then(|| pool.reserve_main(&color, &depth))
@@ -212,6 +220,19 @@ impl FrameTargetPool {
             multisample,
             main_publication,
         })
+    }
+
+    pub(super) fn hiz_depth(
+        &self,
+        runtime: &Arc<VulkanRuntime>,
+        extent: vk::Extent2D,
+        attachment: AttachmentSpec,
+    ) -> Result<Arc<TargetImage>, RenderError> {
+        self.raster
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .hiz_depth
+            .attachment(runtime, extent, attachment)
     }
 
     /// Read both generations under the same lock that admits writers to either image.
@@ -363,10 +384,15 @@ impl TargetSlot<ImageKey, TargetImage> {
     }
 }
 
+/// A copy destination is also sampled: a saved main image is drawn back by a fetch (#594).
+const MAIN_COPY_USAGE: vk::ImageUsageFlags = vk::ImageUsageFlags::from_raw(
+    vk::ImageUsageFlags::TRANSFER_DST.as_raw() | vk::ImageUsageFlags::SAMPLED.as_raw(),
+);
+
 fn color_attachment(runtime: &VulkanRuntime, subview_copy: bool) -> AttachmentSpec {
     let (format, mut usage, aspect) = attachment_properties(runtime.depth.formats, false, false);
     if subview_copy {
-        usage |= vk::ImageUsageFlags::TRANSFER_DST;
+        usage |= MAIN_COPY_USAGE;
     }
     AttachmentSpec {
         format,
@@ -379,7 +405,7 @@ fn color_attachment(runtime: &VulkanRuntime, subview_copy: bool) -> AttachmentSp
 fn depth_attachment(runtime: &VulkanRuntime, stencil: bool, copy: bool) -> AttachmentSpec {
     let (format, mut usage, aspect) = attachment_properties(runtime.depth.formats, true, stencil);
     if copy {
-        usage |= vk::ImageUsageFlags::TRANSFER_DST;
+        usage |= MAIN_COPY_USAGE;
     }
     AttachmentSpec {
         format,

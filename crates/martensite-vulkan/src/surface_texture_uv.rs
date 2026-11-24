@@ -179,6 +179,7 @@ mod tests {
             upload: Default::default(),
             uid: 1,
             retained: None,
+            mesh_levels: None,
         };
         primitive.retained =
             crate::primitive_cache::RetainedPrimitives::default().entry(&primitive);

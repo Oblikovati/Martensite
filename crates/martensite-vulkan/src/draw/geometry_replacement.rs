@@ -26,11 +26,13 @@ clone_with_geometry!(
     depth_clamp,
     face_culling,
     lighting,
-    depth_pass;
+    depth_pass,
+    instances;
     body: pipeline_memo,
     upload_memo,
     guard_band_bounds,
     geometry_revision,
+    mesh_lod,
     projected_dash,
     quad_corners,
     polygon_offset,

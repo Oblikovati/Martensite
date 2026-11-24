@@ -6,6 +6,13 @@ type Commands = crate::draw::DrawStream<GroupCommand>;
 pub(crate) struct BatchGraphicInput {
     geometry: crate::primitive_cache::BatchGeometryStamp,
     material: BatchMaterial,
+    /// The aspects the material was read from and their write revision: a probe reads the
+    /// material again only after a write, as group draw records do (#594). The handle pins
+    /// the address, so that no other aspects can take it.
+    aspects: (Handle<dyn Graphic3dAspectsSource>, u64),
+    /// The group the input was read from. A weak handle keeps its allocation, so that no
+    /// other group takes its address while the input is kept.
+    group: Option<martensite_tkernel::standard::WeakHandle<dyn Graphic3dGroup>>,
     commands: Weak<Vec<GroupCommand>>,
     closed: bool,
 }
@@ -13,6 +20,18 @@ pub(crate) struct BatchGraphicInput {
 impl BatchGraphicInput {
     pub(crate) fn commands_expired(&self) -> bool {
         self.commands.strong_count() == 0
+    }
+
+    /// Keep the group this input was read from; `input.pin_group(&group)`.
+    pub(crate) fn pin_group(&mut self, group: &Handle<dyn Graphic3dGroup>) {
+        self.group = Some(group.downgrade());
+    }
+
+    /// Whether `group` is the group this input was read from.
+    pub(crate) fn is_group(&self, group: &Handle<dyn Graphic3dGroup>) -> bool {
+        self.group
+            .as_ref()
+            .is_some_and(|pinned| pinned.object_address() == group.object_address())
     }
 }
 
@@ -28,7 +47,9 @@ impl Graphic3dDrawGroup {
         let (primitive, style) = probe_primitive(&commands, &aspects)?;
         Some(BatchGraphicInput {
             geometry: crate::primitive_cache::BatchGeometryStamp::capture(primitive)?,
-            material: probe_material(style)?,
+            material: probe_material(style.get()?)?,
+            aspects: (style.clone(), aspects_revision(style)?),
+            group: None,
             commands: commands.witness()?,
             closed,
         })
@@ -63,8 +84,7 @@ impl Graphic3dDrawGroup {
         let Some((primitive, style)) = probe_primitive(&commands, &aspects) else {
             return false;
         };
-        probe_material(style).as_ref() == Some(&saved.material)
-            && saved.geometry.probe_matches(primitive)
+        same_material(style, saved) && saved.geometry.probe_matches(primitive)
     }
 
     fn probe_group_state(&self) -> Option<bool> {
@@ -74,17 +94,40 @@ impl Graphic3dDrawGroup {
     }
 }
 
+/// Whether `style` still gives the saved material: the same unwritten aspects, or aspects
+/// whose fields give the same material again.
+fn same_material(style: &Handle<dyn Graphic3dAspectsSource>, saved: &BatchGraphicInput) -> bool {
+    let (aspects, revision) = &saved.aspects;
+    if style.object_address() == aspects.object_address()
+        && aspects_revision(style) == Some(*revision)
+    {
+        return true;
+    }
+    style
+        .get()
+        .and_then(probe_material)
+        .is_some_and(|material| material == saved.material)
+}
+
+fn aspects_revision(style: &Handle<dyn Graphic3dAspectsSource>) -> Option<u64> {
+    Some(style.get()?.aspects_base().fields.revision())
+}
+
 fn probe_primitive<'a>(
     commands: &'a Commands,
     base_aspects: &'a Handle<dyn Graphic3dAspectsSource>,
-) -> Option<(&'a PrimitiveSubmission, &'a dyn Graphic3dAspectsSource)> {
+) -> Option<(
+    &'a PrimitiveSubmission,
+    &'a Handle<dyn Graphic3dAspectsSource>,
+)> {
     let mut style = base_aspects;
     let mut source = None;
     for command in commands.iter() {
         match command {
             GroupCommand::Aspects(aspects) => style = aspects,
             GroupCommand::Geometry(GroupGeometry::Primitives(primitive)) if source.is_none() => {
-                source = Some((primitive, style.get()?));
+                style.get()?;
+                source = Some((primitive, style));
             }
             _ => return None,
         }
@@ -195,3 +238,7 @@ fn color_bits(color: &martensite_tkernel::quantity::ColorRgba) -> ([u64; 3], u32
         color.alpha().to_bits(),
     )
 }
+
+#[cfg(test)]
+#[path = "graphic_group_batch_tests.rs"]
+mod tests;

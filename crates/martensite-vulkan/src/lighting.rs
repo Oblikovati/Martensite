@@ -16,15 +16,18 @@ pub enum RenderShading {
 }
 /// One snapshot of geometry normals, transforms, materials and lights; `draw.with_lighting(state)?`.
 ///
-/// The view matrix, eye, normalization flag and lights change with the camera and the layer, so
-/// they are inline; the rest is a shared [`LightingBody`] that reads reach through `Deref`. A
-/// replayed draw record sets these four without copying the 400-byte body (#594).
+/// The view matrix, eye, normalization flag and lights change with the camera and the layer,
+/// and the world and normal matrices with the placement, so they are inline; the rest is a
+/// shared [`LightingBody`] that reads reach through `Deref`. A replayed draw record sets them
+/// without copying the body, under any camera and any placement of its group (#594).
 #[derive(Clone, Debug, PartialEq)]
 pub struct RenderLighting {
     pub(crate) view: [f32; 16],
     pub(crate) normalize_fixed: bool,
     pub(crate) eye: [f32; 4],
     pub(crate) lights: RenderLightSet,
+    pub(crate) world: [f32; 16],
+    pub(crate) normal: [f32; 16],
     pub(crate) body: std::sync::Arc<LightingBody>,
 }
 /// The part of a lighting snapshot that its lowering fixes; `lighting.material` reads it.
@@ -34,10 +37,8 @@ pub struct LightingBody {
     pub(crate) identity: LightingIdentity,
     pub(crate) normals: DrawStream<[f32; 3]>,
     pub(crate) material: RenderMaterial,
-    pub(crate) world: [f32; 16],
     pub(crate) fixed: Option<crate::fixed_lighting::FixedLightingInterpolation>,
     pub(crate) fixed_source_opacity: Option<[f32; 2]>,
-    pub(crate) normal: [f32; 16],
     pub(crate) shading: RenderShading,
     pub(crate) vertex_colors: bool,
     pub(crate) front_vertex_colors_only: bool,
@@ -96,14 +97,14 @@ impl RenderLighting {
             normalize_fixed: false,
             eye,
             lights: RenderLightSet::default(),
+            world,
+            normal,
             body: std::sync::Arc::new(LightingBody {
                 identity: LightingIdentity::next(),
                 normals: normals.into(),
                 material,
-                world,
                 fixed: None,
                 fixed_source_opacity: None,
-                normal,
                 shading,
                 vertex_colors: false,
                 front_vertex_colors_only: false,
@@ -175,7 +176,7 @@ impl RenderLighting {
 impl RenderLighting {
     /// The eight material vec4 slots: Phong records, or the front PBR record in slots 0-2 and
     /// the back one in slots 4-6 (GlMaterialPBR order) for metallic-roughness shading.
-    fn packed_material_records(&self) -> [[f32; 4]; 8] {
+    pub(crate) fn packed_material_records(&self) -> [[f32; 4]; 8] {
         if !self.pbr {
             return self.material.packed_common();
         }
@@ -183,7 +184,9 @@ impl RenderLighting {
         [f0, f1, f2, [0.; 4], b0, b1, b2, [0.; 4]]
     }
 }
-fn inverse_normal_transform(world: [f32; 16]) -> Result<[f32; 16], RenderError> {
+/// The normal matrix of a model matrix, the transposed inverse, with the bits a lowering
+/// gives it; `inverse_normal_transform(world)?`.
+pub(crate) fn inverse_normal_transform(world: [f32; 16]) -> Result<[f32; 16], RenderError> {
     let identity = crate::identity_clip();
     // A bitwise match preserves the cofactor path for signed zeros in authored matrices.
     if world.map(f32::to_bits) == identity.map(f32::to_bits) {

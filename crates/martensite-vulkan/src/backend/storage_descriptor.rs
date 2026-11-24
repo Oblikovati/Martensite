@@ -13,11 +13,14 @@ use std::sync::Arc;
 mod set_pool;
 use set_pool::AllocatedStorageSet;
 pub(super) use set_pool::{FrameStorageSets, StorageSetPool};
+#[path = "draw_table_storage.rs"]
+mod draw_table_storage;
+pub(super) use draw_table_storage::DrawTableStorage;
 
 #[path = "lighting_binding_cache.rs"]
 mod lighting_bindings;
 pub(super) use lighting_bindings::{
-    FrameLightingBindings, LightingBindingCache, uses_lighting_pages,
+    FrameLightingBindings, LightingBindingCache, PLACEMENT_BYTES, uses_lighting_pages,
 };
 
 pub(super) struct StorageDescriptorLayout {
@@ -53,12 +56,14 @@ impl StorageDescriptorLayout {
         stages: vk::ShaderStageFlags,
         descriptor: vk::DescriptorType,
     ) -> Result<Self, RenderError> {
-        let bindings = [vk::DescriptorSetLayoutBinding::default()
-            .binding(0)
-            .descriptor_type(descriptor)
-            .descriptor_count(1)
-            .stage_flags(stages)];
-        let info = vk::DescriptorSetLayoutCreateInfo::default().bindings(&bindings);
+        Self::for_bindings(runtime, &[storage_binding(0, descriptor, stages)])
+    }
+
+    fn for_bindings(
+        runtime: &Arc<VulkanRuntime>,
+        bindings: &[vk::DescriptorSetLayoutBinding<'_>],
+    ) -> Result<Self, RenderError> {
+        let info = vk::DescriptorSetLayoutCreateInfo::default().bindings(bindings);
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let handle = unsafe { runtime.device().create_descriptor_set_layout(&info, None) }
             .map_err(|e| vk_error("create storage layout", e))?;
@@ -67,10 +72,22 @@ impl StorageDescriptorLayout {
         Ok(Self {
             runtime: runtime.clone(),
             handle,
-            stages,
-            descriptor,
+            stages: bindings[0].stage_flags,
+            descriptor: bindings[0].descriptor_type,
         })
     }
+}
+
+fn storage_binding(
+    index: u32,
+    descriptor: vk::DescriptorType,
+    stages: vk::ShaderStageFlags,
+) -> vk::DescriptorSetLayoutBinding<'static> {
+    vk::DescriptorSetLayoutBinding::default()
+        .binding(index)
+        .descriptor_type(descriptor)
+        .descriptor_count(1)
+        .stage_flags(stages)
 }
 impl Drop for StorageDescriptorLayout {
     fn drop(&mut self) {
@@ -179,6 +196,32 @@ impl UploadedStorage {
         ))
     }
 
+    /// The aligned range leased by this descriptor, for another stage's descriptor alias.
+    pub(super) fn frame_range(&self) -> Option<&UploadRange> {
+        match &self.buffer {
+            StorageBuffer::FrameRange(range) => Some(range),
+            StorageBuffer::Dedicated(_) => None,
+        }
+    }
+
+    /// Bind an existing frame-owned range in a layout for another pipeline stage.
+    pub(super) fn bind_frame_range(
+        runtime: &Arc<VulkanRuntime>,
+        layout: &StorageDescriptorLayout,
+        range: UploadRange,
+        pages: &mut FrameUploadPages<'_>,
+    ) -> Result<Self, RenderError> {
+        let size = check_storage_size(runtime, range.size)?;
+        let set = pages.sets.allocate(runtime, layout.handle)?;
+        Ok(Self::bind_buffer(
+            layout,
+            &[],
+            size,
+            StorageBuffer::FrameRange(range),
+            set,
+        ))
+    }
+
     fn bind_buffer(
         _layout: &StorageDescriptorLayout,
         bytes: &[u8],
@@ -258,7 +301,10 @@ impl UploadedStorage {
     }
 }
 fn storage_size(runtime: &VulkanRuntime, bytes: &[u8]) -> Result<u64, RenderError> {
-    let size = bytes.len() as u64;
+    check_storage_size(runtime, bytes.len() as u64)
+}
+
+fn check_storage_size(runtime: &VulkanRuntime, size: u64) -> Result<u64, RenderError> {
     if size == 0 || size > u64::from(runtime.limits.max_storage_buffer_range) {
         return Err(rejected(
             size,

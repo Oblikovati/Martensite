@@ -44,7 +44,7 @@ pub(super) fn supported_behavior(runtime: &VulkanRuntime) -> bool {
         && runtime.projection_behavior == crate::RenderProjectionBehavior::PrecomposedV1
 }
 
-fn ordinary_surface(draw: &PrimitiveDraw) -> bool {
+pub(super) fn ordinary_surface(draw: &PrimitiveDraw) -> bool {
     draw.topology() == PrimitiveTopology::Triangles
         && !draw.annotation
         && draw.clipping.is_none()

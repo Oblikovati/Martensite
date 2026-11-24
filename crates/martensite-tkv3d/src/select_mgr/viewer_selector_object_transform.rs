@@ -57,15 +57,22 @@ pub(super) fn selector_entity_inverse(
         }
         sensitive = persistent_object_inverse(&persistence, object, view)?;
     }
-    let mut model_view = view.world_view;
-    if object.has_transformation() {
-        let mut model = Mat4::identity();
-        object.transformation().get_mat4(&mut model);
-        model_view = view.world_view * model;
-    }
     let mut flipped = GeneralTransform3::default();
+    // Only a flipped entity needs the model-view matrix (#594).
     if let Some(flipper) = entity.flipper().get() {
-        flipped.set_mat4(&flipper.compute(&model_view));
+        flipped.set_mat4(&flipper.compute(&entity_model_view(object, view)));
     }
     Ok(Some(flipped * sensitive))
+}
+/// The view's world-view matrix times the object's transformation.
+fn entity_model_view(
+    object: &Handle<dyn SelectMgrSelectableObject>,
+    view: &SelectMgrTraversalView,
+) -> Mat4<f64> {
+    if !object.has_transformation() {
+        return view.world_view;
+    }
+    let mut model = Mat4::identity();
+    object.transformation().get_mat4(&mut model);
+    view.world_view * model
 }

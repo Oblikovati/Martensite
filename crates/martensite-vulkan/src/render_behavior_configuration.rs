@@ -15,6 +15,9 @@ pub struct RenderBehaviorConfiguration {
     world_clipping: crate::RenderWorldClippingBehavior,
     world_clip_interpolation: crate::RenderWorldClipInterpolationBehavior,
     projection: crate::RenderProjectionBehavior,
+    mesh_vertices: crate::RenderMeshVertexBehavior,
+    meshlet_draws: bool,
+    placement_occlusion: bool,
 }
 impl RenderBehaviorConfiguration {
     /// Select window-depth reconstruction; `configuration.with_window_depth(RenderWindowDepthBehavior::HardwareV1)`.
@@ -32,6 +35,36 @@ impl RenderBehaviorConfiguration {
     }
     pub(crate) fn projection(self) -> crate::RenderProjectionBehavior {
         self.projection
+    }
+    /// Select the encoded vertex format used by eligible meshes.
+    /// Example: `configuration.with_mesh_vertices(RenderMeshVertexBehavior::Quantized16OctV2)`.
+    pub fn with_mesh_vertices(mut self, behavior: crate::RenderMeshVertexBehavior) -> Self {
+        self.mesh_vertices = behavior;
+        self
+    }
+    /// Use mesh shaders when an ordinary surface and the selected device support them.
+    /// Example: `let configuration = configuration.with_meshlet_draws(true);`.
+    pub fn with_meshlet_draws(mut self, enabled: bool) -> Self {
+        self.meshlet_draws = enabled;
+        self
+    }
+
+    /// Cull hidden placements on the GPU for compatible opaque assembly views.
+    /// Example: `let configuration = configuration.with_placement_occlusion(true);`.
+    pub fn with_placement_occlusion(mut self, enabled: bool) -> Self {
+        self.placement_occlusion = enabled;
+        self
+    }
+
+    pub(crate) fn placement_occlusion(self) -> bool {
+        self.placement_occlusion
+    }
+
+    pub(crate) fn meshlet_draws(self) -> bool {
+        self.meshlet_draws
+    }
+    pub(crate) fn mesh_vertices(self) -> crate::RenderMeshVertexBehavior {
+        self.mesh_vertices
     }
     /// Set point raster behavior; `configuration.with_point_raster(RenderPointRasterBehavior::FixedGridAliasedV2)`.
     pub fn with_point_raster(mut self, behavior: crate::RenderPointRasterBehavior) -> Self {
@@ -223,6 +256,17 @@ mod tests {
         assert_eq!(lines.world_clipping(), World::RasterClipDistanceV3);
         assert_eq!(selected.choices(), legacy.choices());
         assert_eq!(lines.choices(), legacy.choices());
+    }
+    #[test]
+    fn packed_mesh_vertices_are_independent_and_opt_in() {
+        use crate::RenderMeshVertexBehavior as Mesh;
+        let older = RenderBehaviorConfiguration::default()
+            .with_projection(crate::RenderProjectionBehavior::FactorizedTrianglesV2);
+        let selected = older.with_mesh_vertices(Mesh::Quantized16OctV2);
+        assert_eq!(older.mesh_vertices(), Mesh::Float32V1);
+        assert_eq!(selected.mesh_vertices(), Mesh::Quantized16OctV2);
+        assert_eq!(selected.projection(), older.projection());
+        assert_eq!(selected.choices(), older.choices());
     }
     #[test]
     fn configuration_is_send_sync() {

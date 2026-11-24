@@ -29,6 +29,8 @@ pub(crate) struct RenderRetainedView {
     pub(crate) shadow_cameras: SharedState<crate::shadow_maps::ShadowCameras>,
     /// The device work of the last redraw (frame_work.rs).
     pub(crate) frame_work: SharedState<crate::RenderDeviceWork>,
+    /// The notices that can change the main layers (main_layer_notices.rs).
+    pub(crate) main_notices: crate::main_layer_notices::MainLayerNotices,
 }
 
 impl RenderRetainedView {
@@ -45,7 +47,12 @@ impl RenderRetainedView {
             environment: Default::default(),
             shadow_cameras: Default::default(),
             frame_work: Default::default(),
+            main_notices: Default::default(),
         }
+    }
+    /// The output-mode wrapper and, through it, the shared retained view.
+    pub(crate) fn shared_view(&self) -> &crate::view_output_modes::OutputModeRetainedView {
+        &self.view
     }
     /// Keep forwarded FBO bindings observable, including same-owner round trips.
     pub(crate) fn set_fbo(&self, fbo: &Handle<dyn Transient>) {

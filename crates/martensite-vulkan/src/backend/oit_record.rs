@@ -15,6 +15,7 @@ pub(super) struct OitCommandRecorder<'a> {
     pub resources: &'a FrameResources,
     pub frame: &'a RenderFrame,
     pub layouts: OitAttachmentLayouts,
+    secondary: Vec<super::secondary_layer_commands::LayerCommands>,
 }
 
 pub(super) fn record_layers(
@@ -30,6 +31,7 @@ pub(super) fn record_layers(
         resources,
         frame,
         layouts: Default::default(),
+        secondary: resources.secondary_layers.prepare(resources, frame, start),
     }
     .record_all(start);
 }
@@ -144,6 +146,18 @@ impl<'a> OitCommandRecorder<'a> {
                 .is_some_and(|draw| draw.presentation.surface_blend)
     }
     fn ordinary_layer(&self, index: usize) {
+        if let Some(secondary) = self.secondary.iter().find(|layer| layer.index == index) {
+            super::record::record_secondary_layer(
+                self.runtime,
+                self.command,
+                self.resources,
+                self.frame.clear_color,
+                index,
+                &self.frame.layers[index],
+                &secondary.commands,
+            );
+            return;
+        }
         super::record::record_layer(
             self.runtime,
             self.command,

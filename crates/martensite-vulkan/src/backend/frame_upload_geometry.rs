@@ -4,35 +4,59 @@ use super::super::super::fixed_vertex_sources::{
 };
 use super::*;
 
-pub(super) fn encoded_geometry(runtime: &VulkanRuntime, draw: &PrimitiveDraw) -> EncodedGeometry {
+pub(super) fn encoded_geometry(
+    runtime: &VulkanRuntime,
+    draw: &PrimitiveDraw,
+    compact_vertices: bool,
+) -> Result<EncodedGeometry, RenderError> {
     if draw.fixed_grid_point {
-        return encoded_fixed_grid_geometry(draw);
+        return Ok(encoded_fixed_grid_geometry(draw));
     }
     let original = crate::quad_assembly::device_quad_indices(draw, runtime.quad_diagonal);
-    let (vertices, source_count) = if uses_fixed_flat_vertices(draw) {
+    let packed = if compact_vertices {
+        let normals = &draw
+            .lighting
+            .as_ref()
+            .ok_or_else(|| rejected("packed geometry", "a lit source with vertex normals"))?
+            .normals;
+        super::super::super::mesh_vertex_codec::pack_mesh_vertices(&draw.vertices, normals)
+    } else {
+        None
+    };
+    let (vertices, source_count, mesh_decode) = if let Some((packed, decode)) = packed {
+        (packed, draw.vertices.len(), Some(decode))
+    } else if uses_fixed_flat_vertices(draw) {
         let sources = expanded_provoking_sources(draw, &original);
         (
             encode_vertex_sources(draw, sources.iter().copied()),
             sources.len(),
+            None,
         )
     } else {
-        (encode_vertices(draw), draw.vertices.len())
+        (encode_vertices(draw), draw.vertices.len(), None)
     };
     if runtime.text_interpolation
         == crate::RenderTextInterpolationBehavior::ProjectedGrid12FlatCornersV4
         && draw.textured_style.is_some()
     {
-        return encoded_flat_text(vertices, &original);
+        return Ok(encoded_flat_text(vertices, &original));
     }
     let expanded =
         super::super::super::fixed_vertex_sources::fixed_expanded_indices(draw, source_count);
-    EncodedGeometry {
-        indices: encoded_index_bytes(&original, expanded.as_deref()),
+    let index_format = IndexFormat::of_draw(draw);
+    let source_indices = expanded.as_deref().unwrap_or(&original);
+    let indices = index_format
+        .encode(source_indices)
+        .ok_or_else(|| rejected(index_format, "an index stream that fits its device format"))?;
+    Ok(EncodedGeometry {
+        index_format,
+        mesh_decode,
+        indices,
         vertex_alignment: (source_count > 0).then(|| (vertices.len() / source_count) as u64),
         vertices,
         #[cfg(feature = "command-state-diagnostics")]
         source_count,
-    }
+    })
 }
 
 pub(super) fn compact_line_geometry(draw: &PrimitiveDraw) -> EncodedGeometry {
@@ -46,6 +70,8 @@ pub(super) fn compact_line_geometry(draw: &PrimitiveDraw) -> EncodedGeometry {
         );
     }
     EncodedGeometry {
+        index_format: IndexFormat::U32,
+        mesh_decode: None,
         indices: encoded_index_bytes(&draw.indices, None),
         vertex_alignment: Some(16),
         vertices,
@@ -57,6 +83,8 @@ pub(super) fn compact_line_geometry(draw: &PrimitiveDraw) -> EncodedGeometry {
 fn encoded_flat_text(vertices: Vec<u8>, original: &[u32]) -> EncodedGeometry {
     let packed = super::super::super::text_flat_corners::encode(&vertices, original);
     EncodedGeometry {
+        index_format: IndexFormat::U32,
+        mesh_decode: None,
         indices: encoded_index_bytes(original, Some(&packed.indices)),
         vertices: packed.vertices,
         vertex_alignment: None,
@@ -71,20 +99,6 @@ pub(super) fn encoded_index_bytes(original: &[u32], expanded: Option<&[u32]>) ->
         .iter()
         .flat_map(|index| index.to_ne_bytes())
         .collect()
-}
-
-pub(super) fn encode_index_patch(
-    draw: &PrimitiveDraw,
-    range: std::ops::Range<usize>,
-    full_size: u64,
-) -> Option<(u64, Vec<u8>)> {
-    let stride = size_of::<u32>();
-    if u64::try_from(draw.indices.len().checked_mul(stride)?).ok()? != full_size {
-        return None;
-    }
-    let offset = u64::try_from(range.start.checked_mul(stride)?).ok()?;
-    let changed = draw.indices.get(range)?;
-    Some((offset, encoded_index_bytes(changed, None)))
 }
 
 impl EncodedGeometry {
@@ -109,13 +123,20 @@ impl EncodedGeometry {
             retained.then_some(4),
             &self.indices,
         )?;
-        Ok(ResidentGeometry { vertices, indices })
+        Ok(ResidentGeometry {
+            vertices,
+            indices,
+            index_format: self.index_format,
+            mesh_decode: self.mesh_decode.clone(),
+        })
     }
 }
 
 pub(super) fn encoded_fixed_grid_geometry(draw: &PrimitiveDraw) -> EncodedGeometry {
     let sources = draw.indices.iter().map(|&i| (i as usize, i as usize));
     EncodedGeometry {
+        index_format: IndexFormat::U32,
+        mesh_decode: None,
         indices: [0u32, 1, 2, 2, 1, 3]
             .into_iter()
             .flat_map(u32::to_ne_bytes)

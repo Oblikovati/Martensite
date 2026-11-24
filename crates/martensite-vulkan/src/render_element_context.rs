@@ -102,6 +102,7 @@ impl RenderElementContext<'_> {
             upload: Default::default(),
             uid: 0,
             retained: None,
+            mesh_levels: None,
         });
     }
     /// Draw a retained submission whose residency slot records the frames that draw it.

@@ -4,7 +4,7 @@ use crate::{RenderError, error::rejected};
 use martensite_tkernel::standard::exceptions::program_error;
 use martensite_tkernel::standard::{Failure, Handle, WeakHandle, project_concrete};
 use martensite_tkservice::graphic3d::*;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 pub(crate) type GroupBatch = Vec<Handle<dyn Graphic3dGroup>>;
 
 pub(crate) struct GeometryBatches {
@@ -23,6 +23,39 @@ impl GeometryBatches {
 }
 
 impl Graphic3dRenderStructure {
+    /// Observe each distinct source that can contribute geometry to a placement frame.
+    pub(crate) fn observe_placement_inputs(
+        &self,
+        scope: &GraphicInputRevision,
+        visited: &mut HashSet<usize>,
+    ) -> bool {
+        if !visited.insert(self.this.read().object_address().addr()) {
+            return true;
+        }
+        self.base.fields.observe(scope);
+        self.connection.observe(scope);
+        let fields = self.base.fields.read();
+        // The sequence and its planes can change without replacing this observed handle.
+        if !fields.clip_planes.is_null() {
+            return false;
+        }
+        if let Some(affinity) = fields.view_affinity.get() {
+            affinity.observe_input(scope);
+        }
+        if !fields.groups.iter().all(|group| {
+            group
+                .cast::<crate::Graphic3dDrawGroup>()
+                .get()
+                .is_some_and(|group| group.observe_group_inputs(scope))
+        }) {
+            return false;
+        }
+        drop(fields);
+        matches!(self.geometry_reference(), Ok(reference) if reference.as_ref().is_none_or(|source| {
+            source.observe_placement_inputs(scope, visited)
+        }))
+    }
+
     fn connection_target(
         &self,
         other: &dyn Graphic3dCStructure,

@@ -152,7 +152,7 @@ impl RecordFrame {
 }
 
 impl RecordCameraParts {
-    fn of(camera: &Graphic3dCamera) -> Result<Self, RenderError> {
+    pub(crate) fn of(camera: &Graphic3dCamera) -> Result<Self, RenderError> {
         let projection = camera.projection_matrix_f();
         let view = camera.orientation_matrix_f();
         // Read both values together, as RenderProjectionFactors::retained_camera does.

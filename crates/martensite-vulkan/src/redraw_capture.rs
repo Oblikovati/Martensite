@@ -12,6 +12,7 @@ use std::sync::{Mutex, OnceLock, PoisonError};
 /// One published redraw; `capture.pixels(&view.device)?` returns its frame.
 pub(crate) struct RedrawCapture {
     size: [u32; 2],
+    pub(crate) assembly_streaming: Option<crate::RenderAssemblyStreamingProgress>,
     pixels: OnceLock<Result<FrameCapture, RenderError>>,
     /// The colour of a frame whose depth no caller read yet; its depth stays empty.
     color: OnceLock<Result<FrameCapture, RenderError>>,
@@ -29,26 +30,30 @@ impl RedrawCapture {
     /// at once to pixels already on the host, and later to device images.
     pub fn new(rendered: RenderedFrame, steps: HostCaptureSteps) -> Self {
         // The size is the one the backend produced, which the redraw cursor checks.
-        let (size, pixels, deferred) = match rendered {
+        let (size, pixels, deferred, assembly_streaming) = match rendered {
             RenderedFrame::Ready(mut capture) => {
                 steps.apply(&mut capture);
                 (
                     [capture.width, capture.height],
                     OnceLock::from(Ok(capture)),
                     None,
+                    None,
                 )
             }
             RenderedFrame::Deferred(readback) => {
                 let size = readback.logical_size();
+                let progress = readback.assembly_streaming;
                 (
                     size,
                     OnceLock::new(),
                     Some(DeferredPixels { readback, steps }),
+                    progress,
                 )
             }
         };
         Self {
             size,
+            assembly_streaming,
             pixels,
             color: OnceLock::new(),
             deferred: Mutex::new(deferred),

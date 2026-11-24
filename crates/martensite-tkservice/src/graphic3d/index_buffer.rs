@@ -7,9 +7,9 @@ use super::{
 };
 use crate::json_dump::{base_class, class_begin};
 use martensite_tkernel::ncollection::BaseAllocator;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::out_of_range;
-use martensite_tkernel::standard::{Failure, SharedState};
 use std::io;
 
 /// An index buffer class (`Graphic3d_IndexBuffer` and the classes derived from it).
@@ -90,6 +90,11 @@ pub struct Graphic3dIndexBuffer {
     base: Graphic3dBufferBase,
 }
 impl Graphic3dBufferSource for Graphic3dIndexBuffer {
+    fn observe_buffer_input(&self, scope: &super::GraphicInputRevision) -> bool {
+        self.buffer_base().state.observe(scope);
+        true
+    }
+
     fn buffer_base(&self) -> &Graphic3dBufferBase {
         &self.base
     }
@@ -115,9 +120,15 @@ impl Graphic3dIndexBuffer {
 /// Example: `let indices = Graphic3dMutableIndexBuffer::new(allocator)?; indices.invalidate_indices(0, 2)?;`.
 pub struct Graphic3dMutableIndexBuffer {
     base: Graphic3dBufferBase,
-    invalidated_range: SharedState<Graphic3dBufferRange>,
+    invalidated_range: super::RevisedState<Graphic3dBufferRange>,
 }
 impl Graphic3dBufferSource for Graphic3dMutableIndexBuffer {
+    fn observe_buffer_input(&self, scope: &super::GraphicInputRevision) -> bool {
+        self.buffer_base().state.observe(scope);
+        self.invalidated_range.observe(scope);
+        true
+    }
+
     fn buffer_base(&self) -> &Graphic3dBufferBase {
         &self.base
     }
@@ -150,7 +161,7 @@ impl Graphic3dMutableIndexBuffer {
         let base = Graphic3dBufferBase::new(allocator)?;
         Ok(Self {
             base,
-            invalidated_range: SharedState::new(Graphic3dBufferRange::default()),
+            invalidated_range: super::RevisedState::new(Graphic3dBufferRange::default()),
         })
     }
     /// `Invalidate(lower, upper)`: the bytes of indices `lower..=upper`; `lower > upper` raises

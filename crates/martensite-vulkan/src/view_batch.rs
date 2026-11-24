@@ -47,6 +47,9 @@ impl Graphic3dRenderView {
     pub(super) fn discard_batch(&self) {
         let retired = self.fused_replay.write().take();
         drop(retired);
+        let retired = self.placement_replay.write().take();
+        drop(retired);
+        self.placement_inputs.write().take();
     }
 
     fn batch_view_policy(&self) -> Option<BatchViewPolicy> {
@@ -71,7 +74,7 @@ impl Graphic3dRenderView {
 }
 
 #[derive(PartialEq)]
-struct BatchViewPolicy {
+pub(super) struct BatchViewPolicy {
     shading: Graphic3dTypeOfShadingModel,
     backfacing: Graphic3dTypeOfBackfacingModel,
     transparency: Graphic3dRenderTransparentMethod,
@@ -84,14 +87,21 @@ struct BatchViewPolicy {
 
 impl BatchViewPolicy {
     fn capture(view: &Graphic3dRenderView) -> Option<Self> {
+        let (policy, camera) = Self::capture_any_camera(view)?;
+        camera.is_orthographic().then_some(policy)
+    }
+
+    /// The policy of a view whose camera may also be perspective, as a retained placement
+    /// frame recomputes every camera-derived field; `BatchViewPolicy::capture_any_camera(view)`.
+    pub(super) fn capture_any_camera(
+        view: &Graphic3dRenderView,
+    ) -> Option<(Self, Handle<Graphic3dCamera>)> {
         let (mut policy, camera) = Self::capture_fields(view)?;
-        if !camera.is_orthographic()
-            || view.lighting_selection.read().policy == crate::RenderLightingPipeline::FixedFunction
-        {
+        if view.lighting_selection.read().policy == crate::RenderLightingPipeline::FixedFunction {
             return None;
         }
         policy.clear[3] = f32::from(view.options.read().buffers_opaque_alpha).to_bits();
-        Some(policy)
+        Some((policy, camera))
     }
 
     fn capture_fields(view: &Graphic3dRenderView) -> Option<(Self, Handle<Graphic3dCamera>)> {
@@ -120,7 +130,7 @@ impl BatchViewPolicy {
         ))
     }
 
-    fn matches_seed(&self, frame: &crate::RenderFrame) -> bool {
+    pub(super) fn matches_seed(&self, frame: &crate::RenderFrame) -> bool {
         frame.clear_color().map(f32::to_bits) == self.clear
             && !frame.raster.fixed_function
             && frame.raster.requested_samples == self.samples
@@ -280,7 +290,18 @@ impl ViewBatch {
     }
 }
 fn batch_packet(frame: &crate::RenderFrame) -> Option<crate::PrimitiveDraw> {
-    if frame.draws.len() < 2
+    if frame.draws.len() < 2 || !batchable_frame(frame) {
+        return None;
+    }
+    let packet = probe_packet(&frame.draws[0])?;
+    compatible_draws(&frame.draws, &packet).then_some(packet)
+}
+
+/// Whether the frame has one main layer and none of the passes a retained batch does not
+/// rebuild: stencil boundaries, GUI, environment, ray tracing, shadow maps, background quad,
+/// stereo, subviews and a restored main image.
+pub(super) fn batchable_frame(frame: &crate::RenderFrame) -> bool {
+    !(frame.uses_mesh_lod
         || frame.layers.len() != 1
         || !frame.layers[0].stencil_boundaries.is_empty()
         || frame.gui_draw_start.is_some()
@@ -290,12 +311,7 @@ fn batch_packet(frame: &crate::RenderFrame) -> Option<crate::PrimitiveDraw> {
         || frame.colored_quad.is_some()
         || frame.stereo_pair.is_some()
         || !frame.subview_blits.is_empty()
-        || frame.immediate_main.is_some()
-    {
-        return None;
-    }
-    let packet = probe_packet(&frame.draws[0])?;
-    compatible_draws(&frame.draws, &packet).then_some(packet)
+        || frame.immediate_main.is_some())
 }
 
 fn compatible_draws(draws: &[crate::PrimitiveDraw], packet: &crate::PrimitiveDraw) -> bool {
@@ -369,7 +385,7 @@ fn packet_lighting(body: &crate::lighting::LightingBody) -> crate::lighting::Lig
     body
 }
 
-fn batch_camera_matches(
+pub(super) fn batch_camera_matches(
     view: &Graphic3dRenderView,
     camera: &Handle<Graphic3dCamera>,
     previous: Graphic3dWorldViewProjState,

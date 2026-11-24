@@ -135,8 +135,10 @@ pub fn min_max_values_with_size<V: Graphic3dCView + ?Sized>(
     Ok(result)
 }
 
-/// The native `InvalidateZLayerBoundingBox`.
-pub(crate) fn invalidate_z_layer_bounding_box<V: Graphic3dCView + ?Sized>(
+/// The native `InvalidateZLayerBoundingBox`: the base body for a view that overrides it, as
+/// the Vulkan view does to count main-layer notices (#594);
+/// `graphic3d_cview_invalidate_z_layer_bounding_box(view, 0)`.
+pub fn invalidate_z_layer_bounding_box<V: Graphic3dCView + ?Sized>(
     view: &V,
     layer_id: Graphic3dZLayerId,
 ) {

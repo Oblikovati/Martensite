@@ -1,6 +1,9 @@
-//! Copy a completed main color and depth pair before loading the immediate layers.
-use super::{frame::FrameResources, image::TargetImage, runtime::VulkanRuntime};
-use crate::RenderFrame;
+//! Save a completed main color and depth pair, and draw it back before the immediate layers.
+use super::{
+    frame::FrameResources, image::TargetImage, main_restore_pipeline::MainRestorePipeline,
+    runtime::VulkanRuntime,
+};
+use crate::{RenderError, RenderFrame, immediate_main::ImmediateMainPlan};
 use ash::vk::{self, AccessFlags2 as Access, ImageLayout as Layout, PipelineStageFlags2 as Stage};
 use std::sync::{Arc, Weak};
 
@@ -15,6 +18,11 @@ impl MainLayerTicket {
 
     pub(super) fn identifies(&self, witness: &Weak<()>) -> bool {
         Arc::as_ptr(&self.0) == witness.as_ptr()
+    }
+
+    /// Whether both tickets name the same published images.
+    pub(crate) fn same(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
     }
 }
 
@@ -37,8 +45,14 @@ pub(super) fn remember(frame: &RenderFrame, resources: &FrameResources) {
             .as_ref()
             .map(|snapshot| &snapshot.ticket)
     });
-    if let (Some(plan), Some(ticket)) = (&frame.immediate_main, ticket) {
-        plan.seed().remember(ticket.clone());
+    if let (Some(seed), Some(ticket)) = (
+        frame
+            .immediate_main
+            .as_ref()
+            .and_then(ImmediateMainPlan::seed),
+        ticket,
+    ) {
+        seed.remember(ticket.clone());
     }
 }
 
@@ -51,6 +65,39 @@ impl MainLayerImages {
         self.color.allocation_bytes() + self.depth.allocation_bytes()
     }
 
+    /// Bind the pinned images to `pipeline` for a restore draw; `images.into_source(p)?`.
+    pub(super) fn into_source(
+        self,
+        pipeline: Arc<MainRestorePipeline>,
+    ) -> Result<MainRestoreSource, RenderError> {
+        let sets = [
+            self.color.restore_set(pipeline.set_layout)?,
+            self.depth.restore_set(pipeline.set_layout)?,
+        ];
+        Ok(MainRestoreSource {
+            color: self.color,
+            depth: self.depth,
+            pipeline,
+            sets,
+        })
+    }
+}
+
+/// Published main images bound to the draw that restores them into an immediate frame.
+pub(crate) struct MainRestoreSource {
+    color: Arc<TargetImage>,
+    depth: Arc<TargetImage>,
+    pipeline: Arc<MainRestorePipeline>,
+    sets: [vk::DescriptorSet; 2],
+}
+
+impl MainRestoreSource {
+    pub(super) fn allocation_bytes(&self) -> u64 {
+        self.color.allocation_bytes() + self.depth.allocation_bytes()
+    }
+
+    /// Draw the saved colour and depth into the targets of `target`, which the immediate
+    /// layers then load; `source.restore(runtime, command, &resources)`.
     pub(super) fn restore(
         &self,
         runtime: &VulkanRuntime,
@@ -58,20 +105,61 @@ impl MainLayerImages {
         target: &FrameResources,
     ) {
         let images = [target.color.as_ref(), target.depth.as_ref()];
-        let before = images.map(to_copy_destination);
-        apply_barriers(runtime, command, &before);
-        copy_pair(
+        let saved = [self.color.as_ref(), self.depth.as_ref()];
+        let attach = images.map(|image| super::record::image_barrier(image, false));
+        apply_barriers(
             runtime,
             command,
-            [&self.color, &self.depth],
-            images,
-            target.attachment_extent,
+            &[attach, saved.map(lend_to_restore)].concat(),
         );
-        let after = images.map(|image| {
-            load_attachment(image, Layout::TRANSFER_DST_OPTIMAL, Access::TRANSFER_WRITE)
-        });
-        apply_barriers(runtime, command, &after);
+        begin_restore_rendering(runtime, command, target);
+        self.pipeline
+            .record(command, self.sets, target.attachment_extent);
+        super::record::finish_rendering(runtime, command);
+        let reload = images.map(reload_attachment);
+        apply_barriers(
+            runtime,
+            command,
+            &[reload, saved.map(return_from_restore)].concat(),
+        );
     }
+}
+
+/// The colour through its UNORM alias, as the pipeline expects; both targets are overwritten.
+fn begin_restore_rendering(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    target: &FrameResources,
+) {
+    let overwritten = |view| {
+        super::record::render_attachment(view, super::record::depth_clear(), false)
+            .load_op(vk::AttachmentLoadOp::DONT_CARE)
+    };
+    let colors = [overwritten(target.color.xor_view)];
+    let depth = overwritten(target.depth.view);
+    let info = vk::RenderingInfo::default()
+        .render_area(vk::Rect2D {
+            offset: vk::Offset2D::default(),
+            extent: target.attachment_extent,
+        })
+        .layer_count(1)
+        .color_attachments(&colors)
+        .depth_attachment(&depth);
+    // SAFETY: the command buffer is recording on this thread, outside any rendering scope, and
+    // both target views are in `ATTACHMENT_OPTIMAL` for this frame.
+    unsafe { runtime.device().cmd_begin_rendering(command, &info) };
+}
+
+/// Make the restored attachment writes visible to the immediate layers that load them.
+fn reload_attachment(image: &TargetImage) -> vk::ImageMemoryBarrier2<'static> {
+    let (stage, access) = super::record::attachment_write_scope(image.aspect);
+    barrier(image)
+        .old_layout(Layout::ATTACHMENT_OPTIMAL)
+        .new_layout(Layout::ATTACHMENT_OPTIMAL)
+        .src_stage_mask(stage)
+        .src_access_mask(access)
+        .dst_stage_mask(ATTACHMENT_STAGES)
+        .dst_access_mask(ATTACHMENT_ACCESS)
 }
 
 impl MainLayerSnapshot {
@@ -84,8 +172,8 @@ impl MainLayerSnapshot {
         let rendered = [frame.color.as_ref(), frame.depth.as_ref()];
         let saved = [self.images.color.as_ref(), self.images.depth.as_ref()];
         let before = [
-            super::record::image_barrier(rendered[0], true, false),
-            super::record::image_barrier(rendered[1], true, false),
+            super::record::image_barrier(rendered[0], true),
+            super::record::image_barrier(rendered[1], true),
             to_copy_destination(saved[0]),
             to_copy_destination(saved[1]),
         ];
@@ -129,6 +217,18 @@ fn to_copy_destination(image: &TargetImage) -> vk::ImageMemoryBarrier2<'static> 
         .dst_access_mask(Access::TRANSFER_WRITE)
 }
 
+const ATTACHMENT_STAGES: Stage = Stage::from_raw(
+    Stage::COLOR_ATTACHMENT_OUTPUT.as_raw()
+        | Stage::EARLY_FRAGMENT_TESTS.as_raw()
+        | Stage::LATE_FRAGMENT_TESTS.as_raw(),
+);
+const ATTACHMENT_ACCESS: Access = Access::from_raw(
+    Access::COLOR_ATTACHMENT_READ.as_raw()
+        | Access::COLOR_ATTACHMENT_WRITE.as_raw()
+        | Access::DEPTH_STENCIL_ATTACHMENT_READ.as_raw()
+        | Access::DEPTH_STENCIL_ATTACHMENT_WRITE.as_raw(),
+);
+
 fn load_attachment(
     image: &TargetImage,
     from: Layout,
@@ -139,17 +239,8 @@ fn load_attachment(
         .new_layout(Layout::ATTACHMENT_OPTIMAL)
         .src_stage_mask(Stage::COPY)
         .src_access_mask(access)
-        .dst_stage_mask(
-            Stage::COLOR_ATTACHMENT_OUTPUT
-                | Stage::EARLY_FRAGMENT_TESTS
-                | Stage::LATE_FRAGMENT_TESTS,
-        )
-        .dst_access_mask(
-            Access::COLOR_ATTACHMENT_READ
-                | Access::COLOR_ATTACHMENT_WRITE
-                | Access::DEPTH_STENCIL_ATTACHMENT_READ
-                | Access::DEPTH_STENCIL_ATTACHMENT_WRITE,
-        )
+        .dst_stage_mask(ATTACHMENT_STAGES)
+        .dst_access_mask(ATTACHMENT_ACCESS)
 }
 
 fn publish_copy(image: &TargetImage) -> vk::ImageMemoryBarrier2<'static> {
@@ -159,6 +250,26 @@ fn publish_copy(image: &TargetImage) -> vk::ImageMemoryBarrier2<'static> {
         .src_stage_mask(Stage::COPY)
         .src_access_mask(Access::TRANSFER_WRITE)
         .dst_stage_mask(Stage::COPY)
+        .dst_access_mask(Access::TRANSFER_READ)
+}
+
+/// A published image rests in `TRANSFER_SRC_OPTIMAL`, where captures read it; a restore
+/// borrows it for the fetch and gives it back. Earlier users only read it.
+fn lend_to_restore(image: &TargetImage) -> vk::ImageMemoryBarrier2<'static> {
+    barrier(image)
+        .old_layout(Layout::TRANSFER_SRC_OPTIMAL)
+        .new_layout(Layout::SHADER_READ_ONLY_OPTIMAL)
+        .src_stage_mask(Stage::ALL_TRANSFER | Stage::FRAGMENT_SHADER)
+        .dst_stage_mask(Stage::FRAGMENT_SHADER)
+        .dst_access_mask(Access::SHADER_SAMPLED_READ)
+}
+
+fn return_from_restore(image: &TargetImage) -> vk::ImageMemoryBarrier2<'static> {
+    barrier(image)
+        .old_layout(Layout::SHADER_READ_ONLY_OPTIMAL)
+        .new_layout(Layout::TRANSFER_SRC_OPTIMAL)
+        .src_stage_mask(Stage::FRAGMENT_SHADER)
+        .dst_stage_mask(Stage::ALL_TRANSFER)
         .dst_access_mask(Access::TRANSFER_READ)
 }
 
@@ -219,6 +330,11 @@ impl super::VulkanRenderer {
             && self
                 .runtime
                 .supports_main_copy(self.runtime.depth.formats.plain)
+            && super::image::supports_sampling(
+                &self.runtime,
+                super::main_restore_pipeline::RESTORE_COLOR_FORMAT,
+            )
+            && super::image::supports_sampling(&self.runtime, self.runtime.depth.formats.plain)
     }
 }
 

@@ -14,15 +14,51 @@ mod alpha;
 mod indexed;
 #[path = "record_sync.rs"]
 mod sync;
-pub(super) use layer_commands::{layer_dependency, record_layer, set_depth_policy};
+pub(super) use layer_commands::{
+    layer_dependency, record_layer, record_secondary_layer, set_depth_policy,
+};
+pub(super) fn record_submission_frame(
+    submission: &super::submission::CommandSubmission,
+    resources: &FrameResources,
+    frame: &RenderFrame,
+) -> Result<(), crate::RenderError> {
+    let linked = submission.prepare_geometry_transfer(&resources.geometry_transfers)?;
+    record_frame_impl(
+        &submission.runtime,
+        submission.command,
+        resources,
+        frame,
+        !linked,
+    );
+    Ok(())
+}
+
+#[cfg(test)]
 pub(super) fn record_frame(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
     resources: &FrameResources,
     frame: &RenderFrame,
 ) {
+    record_frame_impl(runtime, command, resources, frame, true);
+}
+
+fn record_frame_impl(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    resources: &FrameResources,
+    frame: &RenderFrame,
+    inline_geometry: bool,
+) {
     let _recording = runtime.work.enter(super::WorkPhase::Recording);
-    resources.geometry_transfers.record(runtime, command);
+    if inline_geometry {
+        resources.geometry_transfers.record(runtime, command);
+    }
+    if let [draw] = resources.draws.as_slice()
+        && let Some(run) = &draw.table_run
+    {
+        run.record_compaction(runtime, command, resources.extent, draw);
+    }
     super::window_depth_status::begin(resources);
     #[cfg(feature = "command-state-diagnostics")]
     {
@@ -72,7 +108,6 @@ pub(super) fn record_attachment_reads(
 pub(super) fn image_barrier(
     image: &TargetImage,
     readback: bool,
-    restored: bool,
 ) -> vk::ImageMemoryBarrier2<'static> {
     let barrier = vk::ImageMemoryBarrier2::default()
         .image(image.handle)
@@ -80,7 +115,7 @@ pub(super) fn image_barrier(
         .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
         .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED);
     if readback {
-        return readback_transition(barrier, image.aspect, restored);
+        return readback_transition(barrier, image.aspect);
     }
     attachment_transition(barrier)
 }
@@ -99,17 +134,13 @@ fn attachment_transition(barrier: vk::ImageMemoryBarrier2<'_>) -> vk::ImageMemor
                 | vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ,
         )
 }
+/// A restored frame without immediate draws reads the restore draw's attachment writes,
+/// which this scope covers too.
 fn readback_transition(
     barrier: vk::ImageMemoryBarrier2<'_>,
     aspect: vk::ImageAspectFlags,
-    restored: bool,
 ) -> vk::ImageMemoryBarrier2<'_> {
-    let (mut stage, mut access) = attachment_write_scope(aspect);
-    if restored {
-        // A suffix without draws still needs to make the restored pixels visible.
-        stage |= vk::PipelineStageFlags2::COPY;
-        access |= vk::AccessFlags2::TRANSFER_WRITE;
-    }
+    let (stage, access) = attachment_write_scope(aspect);
     barrier
         .old_layout(vk::ImageLayout::ATTACHMENT_OPTIMAL)
         .new_layout(vk::ImageLayout::TRANSFER_SRC_OPTIMAL)
@@ -119,7 +150,7 @@ fn readback_transition(
         .dst_access_mask(vk::AccessFlags2::TRANSFER_READ)
 }
 /// The stages and accesses that write one attachment; `attachment_write_scope(aspect)`.
-fn attachment_write_scope(
+pub(super) fn attachment_write_scope(
     aspect: vk::ImageAspectFlags,
 ) -> (vk::PipelineStageFlags2, vk::AccessFlags2) {
     if aspect.intersects(vk::ImageAspectFlags::DEPTH | vk::ImageAspectFlags::STENCIL) {
@@ -174,7 +205,12 @@ pub(super) fn record_draws_selected(
     // Every built-in pipeline takes stencil as dynamic state, so a state recorded once holds
     // until it changes; each draw recorded five stencil commands before (#594).
     let mut stencil = None;
+    // The draws after the first of an indirect run record within the run (draw_table.rs).
+    let mut resume = 0;
     for (index, draw) in resources.draws[start..end].iter().enumerate() {
+        if index < resume {
+            continue;
+        }
         let draw_index = layer.draw_range.start + index;
         if resources.stencil.clear_before[draw_index] {
             super::capping_record::clear_stencil(runtime, command, resources.attachment_extent);
@@ -192,6 +228,9 @@ pub(super) fn record_draws_selected(
                     .pipeline(phase)
             })
             .unwrap_or(&draw.pipeline);
+        // OIT passes record the draws of a run one by one, with their own pipelines.
+        let run = draw.table_run.as_deref().filter(|_| selection.is_none());
+        let pipeline = run.map_or(pipeline, |run| &*run.pipeline);
         // A registered user program replaces the built-in pipeline; in an OIT pass only its
         // OIT variants (selected at upload) draw.
         let phase = selection.map(|(phase, _)| phase);
@@ -302,6 +341,16 @@ pub(super) fn record_draws_selected(
             user.record(command, linked);
             continue;
         }
+        if selection.is_none()
+            && let Some(Some(meshlet)) = resources.meshlets.get(start + index)
+        {
+            meshlet.record(runtime, command, draw, resources.extent);
+            state = super::draw_state::DrawState::default();
+            bindings.lighting.invalidate();
+            bindings.invalidate_sets();
+            bias_commands.invalidate();
+            continue;
+        }
         super::phong_interpolation_record::push_viewport(
             runtime,
             command,
@@ -337,6 +386,9 @@ pub(super) fn record_draws_selected(
             );
             stencil = None;
             bindings.invalidate_sets();
+        } else if let Some(run) = run {
+            super::draw_table::record_run(runtime, command, run, &mut bindings);
+            resume = index + run.count;
         } else {
             #[cfg(feature = "lit-only-command-diagnostics")]
             indexed::controlled(runtime, command, draw, draw_index, indices);
@@ -387,15 +439,14 @@ fn transition_targets(
     resources: &FrameResources,
     readback: bool,
 ) {
-    let restored = resources.immediate_source.is_some();
     let mut barriers = vec![
-        image_barrier(&resources.color, readback, restored),
-        image_barrier(&resources.depth, readback, restored),
+        image_barrier(&resources.color, readback),
+        image_barrier(&resources.depth, readback),
     ];
     if !readback && let Some(targets) = &resources.multisample {
         barriers.extend([
-            image_barrier(&targets.color, false, false),
-            image_barrier(&targets.depth, false, false),
+            image_barrier(&targets.color, false),
+            image_barrier(&targets.depth, false),
         ]);
     }
     // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.

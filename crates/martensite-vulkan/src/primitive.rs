@@ -21,6 +21,7 @@ pub(crate) struct PrimitiveSubmission {
     pub uid: usize,
     /// Group presentations may share immutable lowering while the same source is live.
     pub retained: Option<Arc<RetainedPrimitive>>,
+    pub mesh_levels: Option<Arc<crate::mesh_lod::SubmittedMeshLevels>>,
 }
 
 #[derive(Clone, Copy)]
@@ -39,6 +40,19 @@ pub(crate) enum PrimitiveBounds {
 }
 
 impl PrimitiveSubmission {
+    pub(crate) fn observe_inputs(&self, scope: &GraphicInputRevision) -> bool {
+        if let Some(bounds) = self.bounds.get() {
+            bounds.observe_input(scope);
+        }
+        self.attributes
+            .get()
+            .is_some_and(|buffer| buffer.observe_buffer_input(scope))
+            && self
+                .indices
+                .get()
+                .is_none_or(|buffer| buffer.observe_buffer_input(scope))
+    }
+
     pub fn positions(&self) -> Result<Vec<[f32; 4]>, RenderError> {
         self.position_snapshot(false)
             .map(|(positions, _)| positions)

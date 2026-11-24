@@ -4,6 +4,8 @@
 //! the selection and the geometry lookup. The view-level bindings (lighting, PBR environment,
 //! shadow maps) follow the view and are bound again on every frame.
 use super::geometry_buffer::GeometryBuffer;
+use super::geometry_residency::IndexFormat;
+use super::mesh_vertex_codec::MeshPositionDecode;
 use super::pipeline::DrawPipeline;
 use super::pipeline_memo::SelectionInputs;
 use ash::vk;
@@ -15,6 +17,7 @@ pub(super) struct UploadInputs {
     /// The runtime that uploaded, by address.
     pub runtime: usize,
     pub selection: SelectionInputs,
+    pub compact_vertices: bool,
     pub extent: vk::Extent2D,
     pub samples: vk::SampleCountFlags,
 }
@@ -34,6 +37,8 @@ pub(super) struct KeptUpload {
     /// store's lease decides how long the buffers stay resident.
     pub vertices: Weak<GeometryBuffer>,
     pub indices: Weak<GeometryBuffer>,
+    pub index_format: IndexFormat,
+    pub mesh_decode: Option<Arc<MeshPositionDecode>>,
     pub count: u32,
     pub sample_alpha_cutoff: bool,
     /// The geometry store, pinned by the weak reference, and its eviction count.
@@ -53,6 +58,8 @@ pub(super) struct LiveUpload {
     pub pipeline: Arc<DrawPipeline>,
     pub vertices: Arc<GeometryBuffer>,
     pub indices: Arc<GeometryBuffer>,
+    pub index_format: IndexFormat,
+    pub mesh_decode: Option<Arc<MeshPositionDecode>>,
     pub count: u32,
     pub sample_alpha_cutoff: bool,
 }
@@ -88,6 +95,8 @@ impl UploadMemo {
             pipeline: Arc::clone(&upload.pipeline),
             vertices: upload.vertices.upgrade()?,
             indices: upload.indices.upgrade()?,
+            index_format: upload.index_format,
+            mesh_decode: upload.mesh_decode.clone(),
             count: upload.count,
             sample_alpha_cutoff: upload.sample_alpha_cutoff,
         })
