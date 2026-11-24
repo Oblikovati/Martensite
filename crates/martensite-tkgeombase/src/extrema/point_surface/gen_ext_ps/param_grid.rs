@@ -61,6 +61,18 @@ impl ParamGrid {
         }
         Ok(dr as usize * self.cols + dc as usize)
     }
+    /// Borrows all columns of one initialized row in storage order.
+    pub(super) fn row(&self, row: i32) -> Result<&[POnSurfParams], Failure> {
+        let start = self.offset(row, self.lower_col)?;
+        Ok(&self.cells[start..start + self.cols])
+    }
+
+    /// Borrows all columns of one initialized row in storage order.
+    pub(super) fn row_mut(&mut self, row: i32) -> Result<&mut [POnSurfParams], Failure> {
+        let start = self.offset(row, self.lower_col)?;
+        Ok(&mut self.cells[start..start + self.cols])
+    }
+
     /// `Value(row, col)`.
     pub fn value(&self, row: i32, col: i32) -> Result<&POnSurfParams, Failure> {
         let offset: usize = self.offset(row, col)?;
@@ -79,5 +91,28 @@ impl ParamGrid {
     /// The square distance at `(row, col)`.
     pub fn sqr_distance(&self, row: i32, col: i32) -> Result<f64, Failure> {
         Ok(self.value(row, col)?.get_sqr_distance())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn full_rows_match_shifted_scalar_indexing_and_share_cells() {
+        let mut grid = ParamGrid::default();
+        grid.resize((-2, -1), (5, 7)).unwrap();
+        for (col, param) in grid.row_mut(-1).unwrap().iter_mut().enumerate() {
+            param.set_indices(-1, col as i32 + 5);
+        }
+        assert_eq!(grid.row(-1).unwrap().len(), 3);
+        for col in 5..=7 {
+            assert_eq!(grid.value(-1, col).unwrap().get_indices(), (-1, col));
+        }
+        assert_eq!(grid.row(-2).unwrap()[0], POnSurfParams::default());
+        assert_eq!(
+            grid.row(0).unwrap_err().exception_type(),
+            grid.value(0, 5).unwrap_err().exception_type()
+        );
     }
 }

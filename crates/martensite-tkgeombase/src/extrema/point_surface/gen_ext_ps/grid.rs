@@ -16,6 +16,12 @@ use martensite_tkg3d::geom_grid_eval::GeomGridEvalSurface;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
 use martensite_tkmath::gp::{Point3, Xyz};
 
+struct GridDistance<'a> {
+    surface: &'a dyn Adaptor3dSurface,
+    point: Point3,
+    diff_tol: f64,
+}
+
 /// A 1-based array of parameters for GeomGridEval.
 pub(super) fn param_array(values: &[f64]) -> Result<Array1<'static, f64>, Failure> {
     let mut array: Array1<'static, f64> = Array1::with_bounds(1, values.len() as i32)
@@ -160,49 +166,6 @@ impl GenExtPS<'_> {
         Ok(true)
     }
 
-    // `ComputeEdgeParameters`: the point of the edge `param0`-`param1` nearest to
-    // `point`: an end when the ends are confused or the nearest is an end,
-    // otherwise the projection by the ratio of the chord.
-    fn compute_edge_parameters(
-        &self,
-        is_u_edge: bool,
-        (param0, param1): (&POnSurfParams, &POnSurfParams),
-        point: Point3,
-        diff_tol: f64,
-    ) -> Result<POnSurfParams, Failure> {
-        let sqr_dist01: f64 = param0.value().square_distance(param1.value());
-        if sqr_dist01 <= diff_tol {
-            return Ok(*param0);
-        }
-        let diff_dist: f64 = (param0.get_sqr_distance() - param1.get_sqr_distance()).abs();
-        if diff_dist >= sqr_dist01 - diff_tol {
-            if param0.get_sqr_distance() > param1.get_sqr_distance() {
-                return Ok(*param1);
-            }
-            return Ok(*param0);
-        }
-        let po_p: Xyz = point.xyz() - param0.value().xyz();
-        let po_p1: Xyz = param1.value().xyz() - param0.value().xyz();
-        let ratio: f64 = po_p.dot(po_p1) / sqr_dist01;
-        let ((u0, v0), (u1, v1)) = (param0.parameter(), param1.parameter());
-        let (mut u_par, mut v_par) = (u0, v0);
-        if is_u_edge {
-            u_par += ratio * (u1 - u0);
-        } else {
-            v_par += ratio * (v1 - v0);
-        }
-        let mut grid_param = POnSurfParams::new(u_par, v_par, self.surface()?.value(u_par, v_par)?);
-        let (index_u, index_v) = param0.get_indices();
-        grid_param.set_element_type(if is_u_edge {
-            ElementType::UIsoEdge
-        } else {
-            ElementType::VIsoEdge
-        });
-        grid_param.set_sqr_distance(point.square_distance(grid_param.value()));
-        grid_param.set_indices(index_u, index_v);
-        Ok(grid_param)
-    }
-
     // The first part of BuildGrid: the parameters, the nodes and the array bounds,
     // once until the next Initialize or change of algorithm.
     fn init_grid(&mut self) -> Result<(), Failure> {
@@ -267,56 +230,146 @@ impl GenExtPS<'_> {
         if !self.init {
             self.init_grid()?;
         }
-        for no_u in 1..=self.usample {
-            for no_v in 1..=self.vsample {
-                let param = self.points.change_value(no_u, no_v)?;
-                let distance: f64 = point.square_distance(param.value());
-                param.set_sqr_distance(distance);
-            }
+        let complete_layout = self.init && self.usample >= 2 && self.vsample >= 2;
+        if complete_layout {
+            self.row_node_distances(point)?;
+        } else {
+            self.scalar_node_distances(point)?;
         }
         if matches!(
             self.flag,
             crate::extrema::ExtFlag::Min | crate::extrema::ExtFlag::MinMax
         ) {
-            let diff_tol: f64 = self.tolu + self.tolv;
-            self.edge_distances(point, diff_tol)?;
-            self.face_distances(point, diff_tol)?;
+            self.minimum_grid(point, complete_layout)?;
+        }
+        Ok(())
+    }
+
+    fn minimum_grid(&mut self, point: Point3, complete_layout: bool) -> Result<(), Failure> {
+        let surface = self.surface_ref()?;
+        let distance = GridDistance {
+            surface: surface.get(),
+            point,
+            diff_tol: self.tolu + self.tolv,
+        };
+        if complete_layout {
+            self.row_edge_distances(&distance)?;
+            self.row_face_distances(&distance)?;
+        } else {
+            // An empty evaluator grid or a refused reinitialization can leave old rows.
+            self.scalar_edge_distances(&distance)?;
+            self.scalar_face_distances(&distance)?;
+        }
+        self.reset_face_distances()
+    }
+
+    fn row_node_distances(&mut self, point: Point3) -> Result<(), Failure> {
+        for no_u in 1..=self.usample {
+            let nodes = self.points.row_mut(no_u)?;
+            for param in &mut nodes[1..=self.vsample as usize] {
+                let distance = point.square_distance(param.value());
+                param.set_sqr_distance(distance);
+            }
+        }
+        Ok(())
+    }
+
+    fn scalar_node_distances(&mut self, point: Point3) -> Result<(), Failure> {
+        for no_u in 1..=self.usample {
+            for no_v in 1..=self.vsample {
+                let param = self.points.change_value(no_u, no_v)?;
+                let distance = point.square_distance(param.value());
+                param.set_sqr_distance(distance);
+            }
+        }
+        Ok(())
+    }
+
+    fn row_edge_distances(&mut self, distance: &GridDistance<'_>) -> Result<(), Failure> {
+        for no_u in 1..=self.usample {
+            let nodes = self.points.row(no_u)?;
+            let following = self.points.row(no_u + 1)?;
+            let u_edges = if no_u < self.usample {
+                self.u_edge_pnt_params.row_mut(no_u)?
+            } else {
+                &mut []
+            };
+            let v_edges = self.v_edge_pnt_params.row_mut(no_u)?;
+            compute_edge_row(distance, nodes, following, u_edges, v_edges)?;
         }
         Ok(())
     }
 
     // Step 2: `UEdge(i, j) = {Point(i, j); Point(i + 1, j)}`,
     // `VEdge(i, j) = {Point(i, j); Point(i, j + 1)}`.
-    fn edge_distances(&mut self, point: Point3, diff_tol: f64) -> Result<(), Failure> {
+    fn scalar_edge_distances(&mut self, distance: &GridDistance<'_>) -> Result<(), Failure> {
         for no_u in 1..=self.usample {
             for no_v in 1..=self.vsample {
-                let param0: POnSurfParams = *self.points.value(no_u, no_v)?;
-                if no_u < self.usample {
-                    let param1: POnSurfParams = *self.points.value(no_u + 1, no_v)?;
-                    let edge =
-                        self.compute_edge_parameters(true, (&param0, &param1), point, diff_tol)?;
-                    self.u_edge_pnt_params.set_value(no_u, no_v, edge)?;
-                }
-                if no_v < self.vsample {
-                    let param1: POnSurfParams = *self.points.value(no_u, no_v + 1)?;
-                    let edge =
-                        self.compute_edge_parameters(false, (&param0, &param1), point, diff_tol)?;
-                    self.v_edge_pnt_params.set_value(no_u, no_v, edge)?;
-                }
+                self.scalar_edge_cell(distance, no_u, no_v)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn scalar_edge_cell(
+        &mut self,
+        distance: &GridDistance<'_>,
+        no_u: i32,
+        no_v: i32,
+    ) -> Result<(), Failure> {
+        let param0 = self.points.value(no_u, no_v)?;
+        if no_u < self.usample {
+            let param1 = self.points.value(no_u + 1, no_v)?;
+            let edge = distance.compute_edge_parameters(true, (param0, param1))?;
+            self.u_edge_pnt_params.set_value(no_u, no_v, edge)?;
+        }
+        if no_v < self.vsample {
+            let param1 = self.points.value(no_u, no_v + 1)?;
+            let edge = distance.compute_edge_parameters(false, (param0, param1))?;
+            self.v_edge_pnt_params.set_value(no_u, no_v, edge)?;
+        }
+        Ok(())
+    }
+
+    fn row_face_distances(&mut self, distance: &GridDistance<'_>) -> Result<(), Failure> {
+        for no_u in 1..self.usample {
+            let u_edges = self.u_edge_pnt_params.row(no_u)?;
+            let v_edges = self.v_edge_pnt_params.row(no_u)?;
+            let next_v_edges = self.v_edge_pnt_params.row(no_u + 1)?;
+            let faces = self.face_pnt_params.row_mut(no_u)?;
+            let interior = &mut faces[1..self.vsample as usize];
+            for (col, face) in interior.iter_mut().enumerate() {
+                let edges = [
+                    u_edges[col],
+                    u_edges[col + 1],
+                    v_edges[col],
+                    next_v_edges[col],
+                ];
+                *face = distance.face_point([no_u, col as i32 + 1], edges)?;
             }
         }
         Ok(())
     }
 
     // Step 3: the nearest point of each cell `{UEdge(i, j); VEdge(i + 1, j);
-    // UEdge(i, j + 1); VEdge(i, j)}`, then a RealLast() boundary.
-    fn face_distances(&mut self, point: Point3, diff_tol: f64) -> Result<(), Failure> {
+    // UEdge(i, j + 1); VEdge(i, j)}`.
+    fn scalar_face_distances(&mut self, distance: &GridDistance<'_>) -> Result<(), Failure> {
         for no_u in 1..self.usample {
             for no_v in 1..self.vsample {
-                let face = self.face_point(point, diff_tol, no_u, no_v)?;
+                let edges = [
+                    *self.u_edge_pnt_params.value(no_u, no_v)?,
+                    *self.u_edge_pnt_params.value(no_u, no_v + 1)?,
+                    *self.v_edge_pnt_params.value(no_u, no_v)?,
+                    *self.v_edge_pnt_params.value(no_u + 1, no_v)?,
+                ];
+                let face = distance.face_point([no_u, no_v], edges)?;
                 self.face_pnt_params.set_value(no_u, no_v, face)?;
             }
         }
+        Ok(())
+    }
+
+    fn reset_face_distances(&mut self) -> Result<(), Failure> {
         let (us, vs) = (self.usample, self.vsample);
         for no_v in 0..=vs {
             self.face_pnt_params
@@ -336,23 +389,80 @@ impl GenExtPS<'_> {
         }
         Ok(())
     }
+}
+
+fn compute_edge_row(
+    distance: &GridDistance<'_>,
+    nodes: &[POnSurfParams],
+    following: &[POnSurfParams],
+    u_edges: &mut [POnSurfParams],
+    v_edges: &mut [POnSurfParams],
+) -> Result<(), Failure> {
+    let mut u_edges = u_edges.iter_mut();
+    let mut v_edges = v_edges.iter_mut();
+    for (col, node) in nodes[1..nodes.len() - 1].iter().enumerate() {
+        if let Some(edge) = u_edges.next() {
+            *edge = distance.compute_edge_parameters(true, (node, &following[col + 1]))?;
+        }
+        if let Some(edge) = v_edges.next() {
+            *edge = distance.compute_edge_parameters(false, (node, &nodes[col + 2]))?;
+        }
+    }
+    Ok(())
+}
+
+impl GridDistance<'_> {
+    // `ComputeEdgeParameters`: the point of the edge `param0`-`param1` nearest to
+    // `point`: an end when the ends are confused or the nearest is an end,
+    // otherwise the projection by the ratio of the chord.
+    fn compute_edge_parameters(
+        &self,
+        is_u_edge: bool,
+        (param0, param1): (&POnSurfParams, &POnSurfParams),
+    ) -> Result<POnSurfParams, Failure> {
+        let sqr_dist01: f64 = param0.value().square_distance(param1.value());
+        if sqr_dist01 <= self.diff_tol {
+            return Ok(*param0);
+        }
+        let diff_dist: f64 = (param0.get_sqr_distance() - param1.get_sqr_distance()).abs();
+        if diff_dist >= sqr_dist01 - self.diff_tol {
+            if param0.get_sqr_distance() > param1.get_sqr_distance() {
+                return Ok(*param1);
+            }
+            return Ok(*param0);
+        }
+        let po_p: Xyz = self.point.xyz() - param0.value().xyz();
+        let po_p1: Xyz = param1.value().xyz() - param0.value().xyz();
+        let ratio: f64 = po_p.dot(po_p1) / sqr_dist01;
+        let ((u0, v0), (u1, v1)) = (param0.parameter(), param1.parameter());
+        let (mut u_par, mut v_par) = (u0, v0);
+        if is_u_edge {
+            u_par += ratio * (u1 - u0);
+        } else {
+            v_par += ratio * (v1 - v0);
+        }
+        let mut grid_param = POnSurfParams::new(u_par, v_par, self.surface.value(u_par, v_par)?);
+        let (index_u, index_v) = param0.get_indices();
+        grid_param.set_element_type(if is_u_edge {
+            ElementType::UIsoEdge
+        } else {
+            ElementType::VIsoEdge
+        });
+        grid_param.set_sqr_distance(self.point.square_distance(grid_param.value()));
+        grid_param.set_indices(index_u, index_v);
+        Ok(grid_param)
+    }
 
     // The nearest point of the cell `(no_u, no_v)`: of its nearest edge when the
     // projection is outside the cell, otherwise at the middle parameters.
     fn face_point(
         &self,
-        point: Point3,
-        diff_tol: f64,
-        no_u: i32,
-        no_v: i32,
+        [no_u, no_v]: [i32; 2],
+        [ue0, ue1, ve0, ve1]: [POnSurfParams; 4],
     ) -> Result<POnSurfParams, Failure> {
-        let ue0: POnSurfParams = *self.u_edge_pnt_params.value(no_u, no_v)?;
-        let ue1: POnSurfParams = *self.u_edge_pnt_params.value(no_u, no_v + 1)?;
-        let ve0: POnSurfParams = *self.v_edge_pnt_params.value(no_u, no_v)?;
-        let ve1: POnSurfParams = *self.v_edge_pnt_params.value(no_u + 1, no_v)?;
         let outside = |e0: &POnSurfParams, e1: &POnSurfParams| {
             let sqr_dist01: f64 = e0.value().square_distance(e1.value());
-            (e0.get_sqr_distance() - e1.get_sqr_distance()).abs() >= sqr_dist01 - diff_tol
+            (e0.get_sqr_distance() - e1.get_sqr_distance()).abs() >= sqr_dist01 - self.diff_tol
         };
         if outside(&ue0, &ue1) || outside(&ve0, &ve1) {
             let nearer = |a: POnSurfParams, b: POnSurfParams| {
@@ -366,10 +476,14 @@ impl GenExtPS<'_> {
         }
         let u_par: f64 = 0.5 * (ue0.parameter().0 + ue1.parameter().0);
         let v_par: f64 = 0.5 * (ve0.parameter().1 + ve1.parameter().1);
-        let mut param = POnSurfParams::new(u_par, v_par, self.surface()?.value(u_par, v_par)?);
+        let mut param = POnSurfParams::new(u_par, v_par, self.surface.value(u_par, v_par)?);
         param.set_element_type(ElementType::Face);
-        param.set_sqr_distance(point.square_distance(param.value()));
+        param.set_sqr_distance(self.point.square_distance(param.value()));
         param.set_indices(no_u, no_v);
         Ok(param)
     }
 }
+
+#[cfg(test)]
+#[path = "row_traversal_tests.rs"]
+mod row_traversal_tests;
