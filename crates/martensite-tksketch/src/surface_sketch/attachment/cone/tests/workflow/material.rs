@@ -139,9 +139,7 @@ fn checked_material(
     let mut request = material_request(source);
     request.support.normal = normal;
     let before = source.record().clone();
-    let feature = source
-        .apply_wrapped_profile(REVISION, SEAM, kind, &request, directed())
-        .unwrap_or_else(|cause| panic!("conical material operation refused: {cause:?}"));
+    let feature = measured_feature(source, kind, &request);
     assert_eq!(source.record(), &before);
     let detached = feature.export_native().unwrap();
     verify_body(&feature, &detached);
@@ -150,6 +148,22 @@ fn checked_material(
         !detached
             .body
             .is_partner(&feature.export_native().unwrap().body)
+    );
+    feature
+}
+
+fn measured_feature(
+    source: &ConeFaceAttachment,
+    kind: WrappedFeatureKind,
+    request: &WrappedConeNormalRequest,
+) -> ConeFeatureResult {
+    let started = std::time::Instant::now();
+    let feature = source
+        .apply_wrapped_profile(REVISION, SEAM, kind, request, directed())
+        .unwrap_or_else(|cause| panic!("conical material operation refused: {cause:?}"));
+    eprintln!(
+        r#"{{"event":"cone_feature_api","kind":"{kind:?}","seconds":{}}}"#,
+        started.elapsed().as_secs_f64()
     );
     feature
 }

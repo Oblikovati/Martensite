@@ -58,7 +58,12 @@ fn public_connected_atlas_publishes_strip_wider_than_one_turn() {
 fn public_connected_atlas_keeps_the_narrow_outlined_profile() {
     let mut request = super::super::super::super::tests::supported_common_chart_request();
     request.proof.arithmetic.max_operations = 1_250_000;
+    let started = std::time::Instant::now();
     let result = execute_atlas(&request).unwrap();
+    eprintln!(
+        r#"{{"event":"connected_atlas_api","seconds":{}}}"#,
+        started.elapsed().as_secs_f64()
+    );
     assert_eq!(result.reports().len(), request.selections.len());
     assert_eq!(
         result

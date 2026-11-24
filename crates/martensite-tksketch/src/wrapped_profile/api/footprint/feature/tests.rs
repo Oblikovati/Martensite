@@ -21,9 +21,7 @@ fn check_feature(kind: CylinderFeatureKind, normal: NormalSense, cap_radius: f64
     request.support.normal = normal;
     let original = request.clone();
     let support = attachment.record().brep.clone();
-    let feature = attachment
-        .apply_wrapped_profile(REVISION, kind, &request)
-        .unwrap();
+    let feature = measured_feature(&attachment, kind, &request);
     assert_eq!(feature.kind(), kind);
     assert!(feature.validation().is_valid());
     assert_eq!(feature.validation().census.len(), 1);
@@ -34,6 +32,22 @@ fn check_feature(kind: CylinderFeatureKind, normal: NormalSense, cap_radius: f64
     check_history(&feature, &native);
     assert_eq!(attachment.record().brep, support);
     assert_eq!(request, original);
+}
+
+fn measured_feature(
+    attachment: &CylinderFaceAttachment,
+    kind: CylinderFeatureKind,
+    request: &WrappedNormalRequest,
+) -> CylinderFeatureResult {
+    let started = std::time::Instant::now();
+    let result = attachment
+        .apply_wrapped_profile(REVISION, kind, request)
+        .unwrap();
+    eprintln!(
+        r#"{{"event":"cylinder_feature_api","kind":"{kind:?}","seconds":{}}}"#,
+        started.elapsed().as_secs_f64()
+    );
+    result
 }
 
 fn volume(shape: &Shape) -> f64 {
