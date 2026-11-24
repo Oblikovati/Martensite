@@ -258,6 +258,28 @@ render captures had identical color and depth. The test ends at the GPU
 completion signal. It excludes the application picker, constraint solve
 and compositor presentation.
 
+### Application constraint solve
+
+A scratch probe used the current Oblikovati Rust planar solver at
+`a30d24618`. It used the Move preview's sketch clone, coordinate update
+and selected-point anchors, with 160 targets per connected chain.
+
+| Connected horizontal lines | Solve p95 |
+| --- | ---: |
+| 2 | 0.0115 ms |
+| 8 | 0.986 ms |
+| 24 | 30.831 ms |
+
+Clone, transform and anchor setup took at most 0.016 ms at p95. The
+24-line solve alone exceeded the 60 and 120 Hz frame budgets. In a
+separate alternating comparison, seeding that chain from the previous
+solution changed p95 from 28.159 to 27.937 ms. The selected anchors
+stayed exact, and the remaining coordinates differed by up to
+`5.91e-7` model units. Cycle samples attributed 43% of self time to
+`hypot` and 25% to applying Householder reflectors. The planar solver
+rebuilds and factors a dense Jacobian for each trial. These timings
+cover the model entry point independently of viewport rendering.
+
 ### Conical attachment seam
 
 All 339 zero-depth edges in each text tool fit inside one native periodic
@@ -266,7 +288,11 @@ edges within `1.917e-13` model units of the selected cone. Carrier
 transfer and UV rounding add at most `1.494e-14`. The existing pcurves
 still fail the `1e-7` sew allowance after affine transfer. One exact
 midpoint gives a same-parameter residual of at least `3.2705587e-6`.
-This leaves room to preserve the 3D edges and refit the support pcurves.
-A direct attachment would require a full-interval certificate for the
-fitted pcurves as well as tolerance and incidence checks after freezing
-the assembled solid.
+A strict refit retained all 3D curves and their parameter ranges. Across
+554 cubic segments per sense, the largest certified same-parameter
+residual was `9.77024e-8`. The native B-spline reader preserved the
+control and knot bits, and adjacent edges shared identical UV endpoints.
+Refit and certification took 3.51 s for the boss and 3.62 s for the
+pocket in scratch. Direct assembly still needs to certify whole-depth
+separation from both rims, seam winding, and any contact with retained
+support inside the sewing collar.
