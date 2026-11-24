@@ -69,7 +69,7 @@ fn owned_filtered_graph_refuses_retained_selected_sign_policy_mutation() {
         .selected_signs
         .version = 1;
     let failure = prepared.inspect_plane_graph(|| false).unwrap_err();
-    assert_diagnostic(&prepared, failure, |diagnostic| {
+    assert_diagnostic(&prepared, failure, &[2, 3, 4], |diagnostic| {
         let actual = diagnostic.actual.unwrap();
         assert_eq!(diagnostic.expected.unwrap().selected_signs.version, 2);
         assert_eq!(actual.pair_policy.signs.version, 2);
@@ -82,7 +82,7 @@ fn assert_relabel(
     original: u32,
     changed: u32,
 ) {
-    assert_diagnostic(prepared, failure, |diagnostic| {
+    assert_diagnostic(prepared, failure, &[2, 3, 4], |diagnostic| {
         assert_eq!(diagnostic.requested_graph_version, changed);
         let expected = diagnostic.expected.unwrap();
         let actual = diagnostic.actual.unwrap();
@@ -103,11 +103,13 @@ fn assert_relabel(
 fn assert_diagnostic(
     prepared: &PreparedProfile,
     failure: LoopRegionFailure,
+    admitted_versions: &[u32],
     check: impl FnOnce(&GraphPolicyMismatch),
 ) {
     let LoopRegionCause::GraphPolicy(diagnostic) = &failure.cause else {
         panic!("typed graph policy refusal");
     };
+    assert_eq!(diagnostic.admitted_graph_versions, admitted_versions);
     check(diagnostic);
     let expected = format!("expected: {:?}", diagnostic.expected);
     let actual = format!("actual: {:?}", diagnostic.actual);
@@ -121,10 +123,8 @@ fn assert_diagnostic(
     assert!(text.contains(&version), "{text}");
     assert!(text.contains(&expected), "{text}");
     assert!(text.contains(&actual), "{text}");
-    assert!(
-        text.contains("admitted_graph_versions: [2, 3, 4]"),
-        "{text}"
-    );
+    let admitted = format!("admitted_graph_versions: {admitted_versions:?}");
+    assert!(text.contains(&admitted), "{text}");
 }
 #[test]
 fn scalar_policy_mismatches_keep_actual_and_expected_values_outward() {
@@ -132,7 +132,7 @@ fn scalar_policy_mismatches_keep_actual_and_expected_values_outward() {
         let mut prepared = prepared(4);
         mutate_scalar(&mut prepared, mutation);
         let failure = prepared.inspect_plane_graph(|| false).unwrap_err();
-        assert_diagnostic(&prepared, failure, |diagnostic| {
+        assert_diagnostic(&prepared, failure, &[2, 3, 4], |diagnostic| {
             assert_scalar(diagnostic, mutation)
         });
     }
@@ -170,11 +170,10 @@ fn assert_scalar(diagnostic: &GraphPolicyMismatch, mutation: usize) {
 #[test]
 fn unknown_retained_selector_reports_admitted_versions_and_observed_policy() {
     let mut prepared = prepared(4);
-    prepared.request.version = 6;
+    prepared.request.version = 7;
     let failure = prepared.inspect_plane_graph(|| false).unwrap_err();
-    assert_diagnostic(&prepared, failure, |diagnostic| {
-        assert_eq!(diagnostic.requested_graph_version, 5);
-        assert_eq!(diagnostic.admitted_graph_versions, [2, 3, 4]);
+    assert_diagnostic(&prepared, failure, &[2, 3, 4, 5, 6], |diagnostic| {
+        assert_eq!(diagnostic.requested_graph_version, 7);
         assert!(diagnostic.expected.is_none());
         assert_eq!(diagnostic.actual.unwrap().selected_signs.version, 2);
     });
