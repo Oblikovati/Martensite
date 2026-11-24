@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Shared immutable coefficient storage for the geometric census.
+//! Share immutable coefficient storage across pair reports.
 use super::*;
 
 #[derive(Default)]
@@ -9,11 +9,12 @@ pub(in crate::sketch_region_certification) struct PairSourcePool {
 
 impl PairSourcePool {
     pub(super) fn capture(census: &BoundaryCensus) -> Self {
-        let Some(paired) = census
-            .paired
-            .as_ref()
-            .filter(|paired| paired.exclusion_version == Some(2))
-        else {
+        let Some(paired) = census.paired.as_ref().filter(|paired| {
+            matches!(
+                (paired.exclusion_version, paired.requested.version),
+                (Some(2), _) | (None, 2)
+            )
+        }) else {
             return Self::default();
         };
         let curves = census

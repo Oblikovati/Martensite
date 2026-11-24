@@ -26,20 +26,21 @@ pub(super) fn enumerate_paired_domains_with_access(
     access: super::SourceAccess<'_>,
 ) -> Result<BoundaryCensus, CensusCause> {
     let mut reports = ReportReuseIndex::capture(&census);
-    enumerate_with_lookup(census, cancelled, access, &mut reports)
+    let source_pool = PairSourcePool::capture(&census);
+    enumerate_with_lookup(census, cancelled, access, &mut reports, &source_pool)
 }
 fn enumerate_with_lookup(
     mut census: BoundaryCensus,
     cancelled: &mut impl FnMut() -> bool,
     access: super::SourceAccess<'_>,
     reports: &mut impl ReportLookup,
+    source_pool: &PairSourcePool,
 ) -> Result<BoundaryCensus, CensusCause> {
-    let source_pool = PairSourcePool::capture(&census);
     for pair in census::pair_domains(census.inputs.segments.len()) {
         if cancelled() {
             return Err(stopped(census, pair, false));
         }
-        let evidence = append_pair(&mut census, pair, cancelled, reports, &source_pool);
+        let evidence = append_pair(&mut census, pair, cancelled, reports, source_pool);
         if evidence_cancelled(&census, evidence) {
             return Err(stopped(census, pair, true));
         }
@@ -102,7 +103,7 @@ fn evaluate_with_pool(
         census.paired.as_mut().unwrap().reused_reports += 1;
         return report_reference(census, pair, report, true);
     }
-    let report = retain_execution(census, sources, mode, cancelled);
+    let report = retain_execution(census, sources, mode, cancelled, source_pool);
     reports.remember(sources, mode, report);
     report_reference(census, pair, report, false)
 }
@@ -124,8 +125,9 @@ fn retain_execution(
     sources: [usize; 2],
     mode: PairedQueryMode,
     cancelled: &mut impl FnMut() -> bool,
+    source_pool: &PairSourcePool,
 ) -> usize {
-    let record = cold_execution(census, sources, mode, cancelled);
+    let record = cold_execution(census, sources, mode, cancelled, source_pool);
     census.bisections += record.completed_work();
     let paired = census.paired.as_mut().unwrap();
     let report = paired.reports.len();
@@ -137,10 +139,12 @@ fn cold_execution(
     sources: [usize; 2],
     mode: PairedQueryMode,
     cancelled: &mut impl FnMut() -> bool,
+    source_pool: &PairSourcePool,
 ) -> PairedStoredReport {
     let effective = remaining_policy(census);
-    let outcome =
-        captured_query(census, sources, mode).map(|query| query.certify(effective, cancelled));
+    let outcome = source_pool
+        .query(census, sources, mode)
+        .map(|query| query.certify(effective, cancelled));
     PairedStoredReport {
         sources,
         mode,

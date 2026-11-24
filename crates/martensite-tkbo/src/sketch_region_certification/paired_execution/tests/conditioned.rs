@@ -43,6 +43,7 @@ fn execute(
     stop: usize,
 ) -> (Result<BoundaryCensus, CensusCause>, Vec<usize>) {
     let mut trace = Vec::new();
+    let source_pool = PairSourcePool::capture(&census);
     let result = enumerate_with_lookup(
         census,
         &mut || {
@@ -51,6 +52,7 @@ fn execute(
         },
         SourceAccess::Live,
         lookup,
+        &source_pool,
     );
     (result, trace)
 }

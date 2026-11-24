@@ -114,7 +114,7 @@ fn assert_seeded_outcomes(census: &BoundaryCensus) {
 #[test]
 fn malformed_mixed_vectors_never_cross_seed_selected_report_addresses() {
     let mut census = seeded(0);
-    let generic = cold_execution(&census, [0, 1], PairedQueryMode::Distinct, &mut || false);
+    let generic = literal_distinct_report(&census);
     census.paired.as_mut().unwrap().reports.push(generic);
     let mut conditioned = ReportReuseIndex::capture(&census);
     assert!(matches!(conditioned, ReportReuseIndex::IndexedMap(_)));
@@ -133,7 +133,7 @@ fn malformed_mixed_vectors_never_cross_seed_selected_report_addresses() {
 #[test]
 fn conditioned_cold_unique_uses_only_selected_emptiness_and_complete_identity_inventory() {
     let mut census = fresh(0, false);
-    let generic = cold_execution(&census, [0, 1], PairedQueryMode::Distinct, &mut || false);
+    let generic = literal_distinct_report(&census);
     census.paired.as_mut().unwrap().reports.push(generic);
     assert!(matches!(
         ReportReuseIndex::capture(&census),
@@ -150,4 +150,14 @@ fn conditioned_cold_unique_uses_only_selected_emptiness_and_complete_identity_in
         ReportReuseIndex::capture(&census),
         ReportReuseIndex::IndexedMap(_)
     ));
+}
+
+fn literal_distinct_report(census: &BoundaryCensus) -> PairedStoredReport {
+    cold_execution(
+        census,
+        [0, 1],
+        PairedQueryMode::Distinct,
+        &mut || false,
+        &PairSourcePool::default(),
+    )
 }
