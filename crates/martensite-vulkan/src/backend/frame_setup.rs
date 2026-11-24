@@ -262,7 +262,6 @@ impl FrameSetup<'_> {
             && self.frame.raytrace.is_none()
             && self.frame.stereo_pair.is_none()
             && self.frame.colored_quad.is_none()
-            && !self.frame.raster.alpha_to_coverage
             && !self.frame.raster.alpha_writes)
             .then_some(layer)
     }

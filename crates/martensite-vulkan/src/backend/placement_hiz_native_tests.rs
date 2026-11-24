@@ -165,7 +165,10 @@ fn capture_hiz(
 }
 
 fn hiz_frame(draws: Vec<PrimitiveDraw>) -> RenderFrame {
-    RenderFrame::new(EXTENT[0], EXTENT[1], [0., 0., 0., 1.], draws).unwrap()
+    let mut frame = RenderFrame::new(EXTENT[0], EXTENT[1], [0., 0., 0., 1.], draws).unwrap();
+    // Graphic3d enables alpha-to-coverage by default even without multisampling.
+    frame.raster.alpha_to_coverage = true;
+    frame
 }
 
 fn visibility_mask(

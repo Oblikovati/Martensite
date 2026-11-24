@@ -181,3 +181,15 @@ fn placement_replay_declines_an_inherited_alpha_cutoff() {
             .is_none()
     );
 }
+
+#[test]
+fn default_single_sample_raster_settings_admit_retained_placements() {
+    let mut frame = crate::RenderFrame::new(128, 128, [0.; 4], Vec::new()).unwrap();
+    let parameters = Graphic3dRenderingParams::new().unwrap();
+    frame.raster =
+        crate::transparency::RenderRasterSettings::from_parameters(&parameters, false).unwrap();
+    assert!(frame.raster.alpha_to_coverage);
+    assert!(placement_raster_compatible(&frame));
+    frame.raster.requested_samples = 4;
+    assert!(!placement_raster_compatible(&frame));
+}

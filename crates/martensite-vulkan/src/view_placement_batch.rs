@@ -171,7 +171,6 @@ impl PlacementBatch {
         self.seed.layers[0].depth_test
             && self.seed.layers[0].depth_write
             && self.seed.raster.requested_samples <= 1
-            && !self.seed.raster.alpha_to_coverage
             && !self.seed.raster.alpha_writes
             && view.device.read().supports_hiz()
     }
@@ -229,12 +228,11 @@ impl PlacementBatch {
 }
 
 fn placement_raster_compatible(frame: &crate::RenderFrame) -> bool {
-    // The template upload expects the same stock state as the frame's first uploaded draw.
+    // Alpha-to-coverage can be enabled in single-sample views without changing the draw state.
     frame.initial_fragment_alpha(Default::default()).0.is_none()
         && !frame.stencil_state().is_enabled()
         && frame.raster.requested_samples <= 1
         && !frame.raster.alpha_writes
-        && !frame.raster.alpha_to_coverage
 }
 
 fn placement_camera_policy(
