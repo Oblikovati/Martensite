@@ -47,6 +47,42 @@ pub enum PairSourceFailure {
 pub(super) struct HomogeneousPolynomials {
     pub components: [ExactCoefficientPolynomial; 3],
 }
+
+/// A successful transform and its cancellation checkpoints, tied to one immutable source.
+pub(super) struct ObservedHomogeneous<'a> {
+    source: &'a OwnedBezierSource,
+    pub coefficients: HomogeneousPolynomials,
+    polls: usize,
+}
+
+impl<'a> ObservedHomogeneous<'a> {
+    pub fn capture(
+        source: &'a OwnedBezierSource,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Self, PairSourceFailure> {
+        let mut polls = 0;
+        let coefficients = source.homogeneous(&mut || {
+            polls += 1;
+            cancelled()
+        })?;
+        Ok(Self {
+            source,
+            coefficients,
+            polls,
+        })
+    }
+
+    pub fn replay(
+        self,
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<(&'a OwnedBezierSource, HomogeneousPolynomials), PairSourceFailure> {
+        // Reusing exact coefficients still owes the caller the second transform's checkpoints.
+        for _ in 0..self.polls {
+            poll(cancelled).map_err(PairSourceFailure::Algebra)?;
+        }
+        Ok((self.source, self.coefficients))
+    }
+}
 fn check_weight_count(controls: usize, weights: Option<&[f64]>) -> Result<(), PairSourceFailure> {
     if let Some(weights) = weights
         && weights.len() != controls

@@ -114,6 +114,7 @@ mod rational_circle_tests;
 
 mod carrier;
 mod carrier_spans;
+mod checked_equations;
 mod public_carrier;
 pub use carrier::BezierPairCarrierKind;
 pub use public_carrier::{BezierPairCarrierParameter, BezierPairCommonCarrier};
