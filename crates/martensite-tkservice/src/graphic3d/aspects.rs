@@ -18,7 +18,7 @@ use crate::font::FontFontAspect;
 use crate::json_dump::{class_begin, field_dumped, field_integer, field_real, field_string};
 use martensite_tkernel::quantity::{Color, ColorRgba, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, Transient};
+use martensite_tkernel::standard::{Handle, StandardTransient, Transient};
 use martensite_tkernel::tcollection::HAsciiString;
 use std::io;
 
@@ -142,8 +142,9 @@ impl Default for Graphic3dAspectsFields {
 /// The embedded state of every aspects class.
 #[derive(Default)]
 pub struct Graphic3dAspectsBase {
-    /// The protected fields, shared by every handle to the aspects.
-    pub fields: SharedState<Graphic3dAspectsFields>,
+    /// The protected fields, shared by every handle to the aspects. Each write advances
+    /// their revision, which a renderer compares to reuse what it built from them (#594).
+    pub fields: super::RevisedState<Graphic3dAspectsFields>,
 }
 
 impl Graphic3dAspectsBase {
@@ -153,7 +154,7 @@ impl Graphic3dAspectsBase {
         let mut fields = Graphic3dAspectsFields::default();
         edit(&mut fields);
         Self {
-            fields: SharedState::new(fields),
+            fields: super::RevisedState::new(fields),
         }
     }
 }

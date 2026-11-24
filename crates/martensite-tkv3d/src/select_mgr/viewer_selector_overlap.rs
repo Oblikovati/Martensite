@@ -72,10 +72,11 @@ fn apply_overlap_display_priority(
     let Some(object) = selectable.get() else {
         return Ok(());
     };
+    // The reads have no side effects; the presentation list, the one that allocates, is last.
     let persistence = object.transform_persistence();
-    if object.presentations().is_empty()
-        || persistence.is_null()
+    if persistence.is_null()
         || persistence.mode() != Graphic3dTransModeFlags::TMF_2D
+        || object.presentations().is_empty()
     {
         return Ok(());
     }

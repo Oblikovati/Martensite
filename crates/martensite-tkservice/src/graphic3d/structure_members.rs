@@ -262,11 +262,15 @@ pub trait Graphic3dStructureMembers: Graphic3dStructureSource {
             return;
         };
         if let Some(manager) = self.structure_manager().get() {
-            manager.update(if update_layer {
-                layer
-            } else {
-                GRAPHIC3D_ZLAYER_ID_UNKNOWN
-            });
+            let source = update_source(self.structure_base(), layer);
+            manager.update_structure(
+                source,
+                if update_layer {
+                    layer
+                } else {
+                    GRAPHIC3D_ZLAYER_ID_UNKNOWN
+                },
+            );
         }
     }
     /// `Remove(const handle<Graphic3d_Group>&)`: removes the group at `address` when it
@@ -289,3 +293,20 @@ pub trait Graphic3dStructureMembers: Graphic3dStructureSource {
     }
 }
 impl<T: Graphic3dStructureSource + ?Sized> Graphic3dStructureMembers for T {}
+
+#[cfg(test)]
+#[path = "structure_update_source_tests.rs"]
+mod update_source_tests;
+
+/// The layer that an update of a structure in `layer` can change: its own, or every layer
+/// (`UNKNOWN`) when other structures connect it and draw it in their layers;
+/// `update_source(structure.structure_base(), 0)`.
+pub(crate) fn update_source(
+    structure: &super::structure::Graphic3dStructureBase,
+    layer: Graphic3dZLayerId,
+) -> Graphic3dZLayerId {
+    match structure.fields.read().ancestors.is_empty() {
+        true => layer,
+        false => GRAPHIC3D_ZLAYER_ID_UNKNOWN,
+    }
+}

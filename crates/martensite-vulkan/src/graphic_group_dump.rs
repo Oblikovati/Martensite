@@ -62,7 +62,7 @@ impl Graphic3dDrawGroup {
                 aspects_element(o, d, address, &state.aspects)
             })?;
         }
-        for command in &state.commands {
+        for command in state.commands.iter() {
             let address = address_of(command);
             field_dumped(stream, depth, "anElement", &|o, d| {
                 dump_command(command, address, o, d)
@@ -89,7 +89,7 @@ fn dump_command(
         GroupCommand::Geometry(GroupGeometry::Primitives(primitive)) => {
             primitive_array(stream, depth, address, primitive, primitive.uid)
         }
-        GroupCommand::Geometry(GroupGeometry::Text(_, upload, _)) => {
+        GroupCommand::Geometry(GroupGeometry::Text(_, upload, _, _)) => {
             text(stream, depth, address, upload.current())
         }
         GroupCommand::Element(element) => element.dump_json(stream, depth),

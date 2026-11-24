@@ -5,6 +5,7 @@
 //! the optional normal `vec3`, texel `vec2` and color `vec4ub`), which the Vulkan driver uploads
 //! unchanged. The vertex, edge and bound members are in
 //! array_vertices.rs and array_edges.rs; the classes of each primitive type in array_classes.rs.
+use super::array_validity::IndexExtentMemo;
 use super::{
     GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_DEINTERLEAVED, GRAPHIC3D_ARRAY_FLAGS_ATTRIBS_MUTABLE,
     GRAPHIC3D_ARRAY_FLAGS_BOUND_COLOR, GRAPHIC3D_ARRAY_FLAGS_INDEXES_MUTABLE,
@@ -37,6 +38,7 @@ pub struct Graphic3dArrayOfPrimitives {
     pub(crate) texels: Graphic3dAttributeSlot,
     pub(crate) colors: Graphic3dAttributeSlot,
     pub(crate) kind: Graphic3dTypeOfPrimitiveArray,
+    pub(super) index_extent: IndexExtentMemo,
 }
 martensite_tkernel::impl_transient!(
     Graphic3dArrayOfPrimitives,
@@ -140,6 +142,7 @@ impl Graphic3dArrayOfPrimitives {
             texels: Graphic3dAttributeSlot::default(),
             colors: Graphic3dAttributeSlot::default(),
             kind,
+            index_extent: IndexExtentMemo::default(),
         }
     }
     /// The protected constructor: `init` of an array of `kind` with room for vertices, bounds

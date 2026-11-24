@@ -1,5 +1,9 @@
 //! Retained text uses the current aspect and view resolution on every extraction.
-use crate::{Graphic3dDrawGroup, PrimitiveDraw, RenderError, TextLayoutSource, error::rejected};
+use crate::{
+    Graphic3dDrawGroup, PrimitiveDraw, RenderError,
+    error::rejected,
+    text_layout::{TextLayoutSnapshot, TextProvider},
+};
 use martensite_tkernel::{
     ncollection::{Mat4, Vec3},
     standard::Handle,
@@ -12,7 +16,9 @@ pub(crate) struct TextSceneContext<'a> {
     pub extent: Option<[u32; 2]>,
     pub structure: &'a Graphic3dCStructureFields,
     pub rendering: &'a Graphic3dRenderingParams,
-    pub fonts: &'a dyn TextLayoutSource,
+    pub fonts: &'a TextProvider,
+    /// The group's model captured before visiting commands. Callback paths can observe edits.
+    pub base_model: Option<&'a Mat4<f64>>,
     pub model_override: Option<Mat4<f32>>,
     /// Group persistence uses the actual incoming model for its local anchor.
     pub view_override: Option<Mat4<f32>>,
@@ -20,6 +26,10 @@ pub(crate) struct TextSceneContext<'a> {
     /// The view's environment texture while the layer uses it (`GlWorkspace`).
     pub environment: Option<&'a Handle<Graphic3dTextureEnv>>,
     pub fixed_function_lighting: bool,
+    /// The pass's shared inverse of the text projection, when a pass lowers the group.
+    pub text_unview: Option<&'a crate::text_transform::SharedTextUnview>,
+    /// The group lowering's text transform, built for its first label.
+    pub text_transform: Option<&'a crate::text_transform::GroupTextTransform>,
 }
 impl TextSceneContext<'_> {
     /// Choose the binding path before lowering UVs; `context.texture_coordinates(aspect)`.
@@ -43,11 +53,67 @@ impl TextSceneContext<'_> {
         text: &Graphic3dText,
         aspects: &Handle<dyn Graphic3dAspectsSource>,
         upload: Option<&crate::element_upload::ElementUploadSlot>,
+        label: Option<&crate::text_label_record::LabelSlot>,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
+        if let Some(draws) = self.replayed_label(text, aspects, upload, label)? {
+            return Ok(draws);
+        }
+        let inputs = crate::text_label_record::LabelInputs::current(text, aspects, self.rendering);
         let Some((aspect, layout)) = self.recorded_layout(text, aspects, upload)? else {
             return Ok(vec![]);
         };
-        crate::text_drawing::lower_text_draws(text, aspect, &layout, &self.transform()?)
+        let placement = crate::text_transform::LabelPlacement::of(text);
+        let draws = crate::text_drawing::lower_text_draws(
+            placement,
+            aspect,
+            layout.view(),
+            &self.transform()?,
+        )?;
+        if let (Some(slot), Some(inputs)) = (label, inputs)
+            && text.text_formatter().is_null()
+        {
+            slot.keep(
+                inputs,
+                label_replay((aspect, placement), layout.view(), &draws),
+            );
+        }
+        Ok(draws)
+    }
+
+    /// The kept draws of an unchanged label, placed for the current camera.
+    fn replayed_label(
+        &self,
+        text: &Graphic3dText,
+        aspects: &Handle<dyn Graphic3dAspectsSource>,
+        upload: Option<&crate::element_upload::ElementUploadSlot>,
+        label: Option<&crate::text_label_record::LabelSlot>,
+    ) -> Result<Option<Vec<PrimitiveDraw>>, RenderError> {
+        let Some(replay) = label.and_then(|slot| slot.unchanged(text, aspects, self.rendering))
+        else {
+            return Ok(None);
+        };
+        let draws = placed_label(replay, &self.transform()?, aspects, upload)?;
+        #[cfg(feature = "draw-record-verification")]
+        if let Some(draws) = &draws {
+            self.verify_label(text, aspects, draws)?;
+        }
+        Ok(draws)
+    }
+
+    /// Lower the label again and require the replay to equal it.
+    #[cfg(feature = "draw-record-verification")]
+    fn verify_label(
+        &self,
+        text: &Graphic3dText,
+        aspects: &Handle<dyn Graphic3dAspectsSource>,
+        replayed: &[PrimitiveDraw],
+    ) -> Result<(), RenderError> {
+        let lowered = self.draws(text, aspects, None, None)?;
+        assert!(
+            lowered.as_slice() == replayed,
+            "a replayed text label differs from lowering it again"
+        );
+        Ok(())
     }
     /// Draws of a 2D text element (`GlText::Set2D`): the text model replaces the
     /// world-view under the group's projection and no depth test applies.
@@ -64,7 +130,8 @@ impl TextSceneContext<'_> {
         transform.pixel_coordinates = true;
         transform.camera_rotation = Mat4::identity();
         transform.zoomable_scale = 1.;
-        let mut draws = crate::text_drawing::lower_text_draws(text, aspect, &layout, &transform)?;
+        let mut draws =
+            crate::text_drawing::lower_text_draws(text, aspect, layout.view(), &transform)?;
         for draw in &mut draws {
             draw.annotation = true;
             draw.text_shadow_bias = false;
@@ -78,7 +145,7 @@ impl TextSceneContext<'_> {
         text: &Graphic3dText,
         aspects: &'s Handle<dyn Graphic3dAspectsSource>,
         upload: Option<&crate::element_upload::ElementUploadSlot>,
-    ) -> Result<Option<(&'s dyn Graphic3dAspectsSource, crate::GlyphLayout)>, RenderError> {
+    ) -> Result<Option<(&'s dyn Graphic3dAspectsSource, TextLayoutSnapshot)>, RenderError> {
         let aspect = aspects
             .get()
             .ok_or_else(|| rejected("null text aspect", "a retained text style"))?;
@@ -89,11 +156,28 @@ impl TextSceneContext<'_> {
         if let Some(upload) = upload {
             // GlTextBuilder emits six vertices per visible glyph, like the layout indices.
             let subtitle = aspect.text_display_type() == AspectTypeOfDisplayText::Subtitle;
-            upload.record_text(layout.indices.len(), subtitle, layout.formatter_bounds);
+            let view = layout.view();
+            upload.record_text(view.index_count(), subtitle, view.formatter_bounds());
         }
         Ok(Some((aspect, layout)))
     }
-    fn transform(&self) -> Result<crate::text_transform::TextTransform, RenderError> {
+    /// The text transform of this context's group lowering; `context.transform()?`.
+    pub(crate) fn transform(&self) -> Result<crate::text_transform::TextTransform, RenderError> {
+        let Some(memo) = self.text_transform else {
+            return self.built_transform();
+        };
+        let bits = |matrix: Option<Mat4<f32>>| matrix.map(|m| m.data().map(f32::to_bits));
+        let key = (bits(self.model_override), bits(self.view_override));
+        if let Some((kept, transform)) = memo.borrow().as_ref()
+            && *kept == key
+        {
+            return Ok(transform.clone());
+        }
+        let transform = self.built_transform()?;
+        *memo.borrow_mut() = Some((key, transform.clone()));
+        Ok(transform)
+    }
+    fn built_transform(&self) -> Result<crate::text_transform::TextTransform, RenderError> {
         let extent = self
             .extent
             .ok_or_else(|| rejected(self.extent, "a viewport for text rendering"))?;
@@ -113,6 +197,10 @@ impl TextSceneContext<'_> {
             viewport: [0, 0, extent[0] as i32, extent[1] as i32],
             pixel_coordinates: false,
             zoomable_scale: crate::render_scale::zoomable_text_scale(self.rendering),
+            unview: self
+                .text_unview
+                .map(|shared| std::sync::OnceLock::from(shared.inverse(&projection)))
+                .unwrap_or_default(),
         })
     }
     fn text_scene_matrices(&self, extent: [u32; 2]) -> Result<(Mat4<f64>, Mat4<f64>), RenderError> {
@@ -133,6 +221,48 @@ impl TextSceneContext<'_> {
         Ok((projection, model_view))
     }
 }
+/// A kept label's draws placed with the clip transforms of `transform`, recording its glyph
+/// upload; `None` when the clips cannot place them, and the label lowers again.
+/// `placed_label(replay, &transform, &aspects, Some(&upload))?`
+pub(crate) fn placed_label(
+    mut replay: crate::text_label_record::LabelReplay,
+    transform: &crate::text_transform::TextTransform,
+    aspects: &Handle<dyn Graphic3dAspectsSource>,
+    upload: Option<&crate::element_upload::ElementUploadSlot>,
+) -> Result<Option<Vec<PrimitiveDraw>>, RenderError> {
+    let Some(aspect) = aspects.get() else {
+        return Ok(None);
+    };
+    let offsets = crate::text_drawing::native_text_offsets(aspect.text_display_type());
+    let clips = transform.pass_clips(replay.placement, aspect, replay.point_size, offsets)?;
+    if !crate::text_drawing::place_text_draws(&mut replay.draws, &clips) {
+        return Ok(None);
+    }
+    if let Some(upload) = upload {
+        let (indices, subtitle, bounds) = replay.upload;
+        upload.record_text(indices, subtitle, bounds);
+    }
+    Ok(Some(replay.draws))
+}
+
+/// What a label replay needs besides its inputs; `label_replay(aspect, layout, &draws)`.
+fn label_replay(
+    (aspect, placement): (
+        &dyn Graphic3dAspectsSource,
+        crate::text_transform::LabelPlacement,
+    ),
+    layout: crate::text_layout::GlyphLayoutView<'_>,
+    draws: &[PrimitiveDraw],
+) -> crate::text_label_record::LabelReplay {
+    let subtitle = aspect.text_display_type() == AspectTypeOfDisplayText::Subtitle;
+    crate::text_label_record::LabelReplay {
+        placement,
+        point_size: layout.point_size(),
+        upload: (layout.index_count(), subtitle, layout.formatter_bounds()),
+        draws: draws.to_vec(),
+    }
+}
+
 /// Reject unsupported shader requests; `validate_text_style(&aspect)?` preserves native paths.
 /// Every display type is drawn: GlText::render has no default branch, so the values outside
 /// AspectTypeOfDisplayText (Native6, Native7) draw only the main pass, as Normal does

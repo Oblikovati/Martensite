@@ -1,4 +1,5 @@
 //! Native first-level traversal across the five object BVH subsets.
+use super::viewer_selector_object::{ObjectScratch, traverse_object_with};
 use super::viewer_selector_walk::*;
 use super::*;
 use crate::prs_mgr::PrsMgrPresentableObjectMembers;
@@ -74,20 +75,23 @@ fn traverse_object_subset(
     view_id: i32,
 ) -> Result<(), Failure> {
     let tree = base.selectable_objects.bvh(subset);
-    if !selector_node_overlaps(&tree, 0, volume)? {
+    let probe = volume.box_probe();
+    let boxes = SelectorBoxTest::new(volume, probe.as_ref());
+    if !boxes.node_overlaps(&tree, 0)? {
         return Ok(());
     }
     let mut stack = vec![0];
-    while let Some(node) = next_selector_leaf(&tree, &mut stack, |node| {
-        selector_node_overlaps(&tree, node, volume)
-    })? {
+    let mut scratch = ObjectScratch::default();
+    while let Some(node) =
+        next_selector_leaf(&tree, &mut stack, |_, bounds| boxes.overlaps(bounds))?
+    {
         let current = tree.read();
         let range = current.beg_primitive(node)?..=current.end_primitive(node)?;
         drop(current);
         for index in range {
             let object = base.selectable_objects.get_object_by_id(subset, index)?;
             if view_id == -1 || object.view_affinity().is_visible(view_id) {
-                select_mgr_traverse_object(base, &object, volume, view)?;
+                traverse_object_with(base, &object, (volume, view), probe.as_ref(), &mut scratch)?;
             }
         }
     }

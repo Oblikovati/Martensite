@@ -55,6 +55,11 @@ impl VulkanRenderer {
             .with_thin_axes(choices.2);
         Self::new_with_render_behavior(options, raster, coordinates, clipping, configuration)
     }
+    /// Inspect the version selected for eligible mesh vertices.
+    /// Example: `renderer.mesh_vertex_behavior()`.
+    pub fn mesh_vertex_behavior(&self) -> crate::RenderMeshVertexBehavior {
+        self.runtime.mesh_vertex_behavior
+    }
     /// Record the immutable coverage choice; `renderer.thin_axis_coverage()`.
     pub fn thin_axis_coverage(&self) -> crate::RenderThinAxisCoverage {
         self.runtime.thin_axis_coverage

@@ -3,8 +3,8 @@
 use super::Graphic3dBufferValue;
 use crate::json_dump::{base_class, class_begin, field_integer, field_pointer};
 use martensite_tkernel::ncollection::{BaseAllocator, Buffer, Vec4};
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, SharedState};
 use std::io;
 
 /// The fields of `Graphic3d_BoundBuffer`.
@@ -19,9 +19,31 @@ pub struct Graphic3dBoundBufferState {
     pub nb_max_bounds: i32,
 }
 
+impl Graphic3dBoundBufferState {
+    /// Reads the count of one bound under an existing read lease.
+    /// Example: `bounds.state().bound(0)`.
+    pub fn bound(&self, index: i32) -> Option<i32> {
+        let offset = Graphic3dBoundBuffer::bounds_offset(self)
+            .checked_add(4 * usize::try_from(index).ok()?)?;
+        self.data.as_slice().get(offset..offset + 4).map(i32::read)
+    }
+
+    /// Reads the optional color of a bound under an existing read lease.
+    /// Example: `bounds.state().color(0)`.
+    pub fn color(&self, index: i32) -> Option<Vec4<f32>> {
+        let slot = usize::try_from(index)
+            .ok()
+            .filter(|i| self.has_colors && (*i as i32) < self.nb_max_bounds)?;
+        self.data
+            .as_slice()
+            .get(16 * slot..16 * slot + 16)
+            .map(Vec4::<f32>::read)
+    }
+}
+
 /// A bound buffer; `let bounds = Graphic3dBoundBuffer::new(allocator)?; bounds.init(2, true)?;`.
 pub struct Graphic3dBoundBuffer {
-    state: SharedState<Graphic3dBoundBufferState>,
+    state: super::RevisedState<Graphic3dBoundBufferState>,
 }
 martensite_tkernel::impl_transient!(Graphic3dBoundBuffer, "Graphic3d_BoundBuffer", Buffer);
 
@@ -29,14 +51,19 @@ impl Graphic3dBoundBuffer {
     /// An empty bound buffer over an allocator; `Graphic3dBoundBuffer::new(allocator)?`.
     pub fn new(allocator: BaseAllocator) -> Result<Self, Failure> {
         let state = Graphic3dBoundBufferState {
-            data: Buffer::new(Some(allocator), 0)?,
+            data: Buffer::new_versioned(Some(allocator), 0)?,
             has_colors: false,
             nb_bounds: 0,
             nb_max_bounds: 0,
         };
         Ok(Self {
-            state: SharedState::new(state),
+            state: super::RevisedState::new(state),
         })
+    }
+    /// Observe bounds and colors before reading them for a retained result.
+    /// Example: `bounds.observe_input(&scope)`.
+    pub fn observe_input(&self, scope: &super::GraphicInputRevision) {
+        self.state.observe(scope);
     }
     /// The fields; `bounds.state().nb_bounds`.
     pub fn state(&self) -> std::sync::RwLockReadGuard<'_, Graphic3dBoundBufferState> {
@@ -69,9 +96,7 @@ impl Graphic3dBoundBuffer {
     }
     /// `Bounds[index]`; `None` past the allocation (undefined natively). `bounds.bound(0)`.
     pub fn bound(&self, index: i32) -> Option<i32> {
-        let state = self.state.read();
-        let offset = Self::bounds_offset(&state).checked_add(4 * usize::try_from(index).ok()?)?;
-        state.data.as_slice().get(offset..offset + 4).map(i32::read)
+        self.state.read().bound(index)
     }
     /// `Bounds[index] = value`; false past the allocation. `bounds.set_bound(0, 3)`.
     pub fn set_bound(&self, index: i32, value: i32) -> bool {
@@ -91,15 +116,7 @@ impl Graphic3dBoundBuffer {
     }
     /// `Colors[index]`; `None` without colors or past them. `bounds.color(0)`.
     pub fn color(&self, index: i32) -> Option<Vec4<f32>> {
-        let state = self.state.read();
-        let slot = usize::try_from(index)
-            .ok()
-            .filter(|i| state.has_colors && (*i as i32) < state.nb_max_bounds)?;
-        state
-            .data
-            .as_slice()
-            .get(16 * slot..16 * slot + 16)
-            .map(Vec4::<f32>::read)
+        self.state.read().color(index)
     }
     /// `Colors[index] = value`; false without colors or past them. `bounds.set_color(0, rgba)`.
     pub fn set_color(&self, index: i32, value: Vec4<f32>) -> bool {
@@ -127,7 +144,12 @@ impl Graphic3dBoundBuffer {
         class_begin(stream, "Graphic3d_BoundBuffer")?;
         let state = self.state.read();
         base_class(stream, depth, &|s, d| state.data.dump_json(s, d))?;
-        let base = state.data.data_ptr() as usize;
+        // This diagnostic only needs the numeric address, with no raw write access.
+        let base = if state.data.is_empty() {
+            0
+        } else {
+            state.data.as_slice().as_ptr().addr()
+        };
         field_pointer(stream, "Colors", if state.has_colors { base } else { 0 })?;
         field_pointer(
             stream,

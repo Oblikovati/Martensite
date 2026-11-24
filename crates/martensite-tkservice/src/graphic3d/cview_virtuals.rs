@@ -101,16 +101,29 @@ pub(crate) fn min_max_values<V: Graphic3dCView + ?Sized>(
     view: &V,
     include_auxiliary: bool,
 ) -> Result<BoundingBox3, Failure> {
+    min_max_values_with_size(view, include_auxiliary, || {
+        view.window().get().map_or([0, 0], |w| {
+            let (width, height) = w.size();
+            [width, height]
+        })
+    })
+}
+
+/// `MinMaxValues(bool)` with the window size supplied by the view, for a driver view that
+/// keeps its window size between resizes instead of asking the window server each frame
+/// (#594); `graphic3d_cview_min_max_values_with_size(view, false, || [640, 480])?`.
+pub fn min_max_values_with_size<V: Graphic3dCView + ?Sized>(
+    view: &V,
+    include_auxiliary: bool,
+    window_size: impl FnOnce() -> [i32; 2],
+) -> Result<BoundingBox3, Failure> {
     let mut result = BoundingBox3::default();
     if !view.is_defined() {
         return Ok(result);
     }
     // The view borrows Camera before Window::Size here; the set overload owns its copy.
     let camera = view.camera_ref();
-    let size = view.window().get().map_or([0, 0], |w| {
-        let (width, height) = w.size();
-        [width, height]
-    });
+    let size = window_size();
     for layer in view.layers().iter().filter_map(Handle::get) {
         result.add_box(&layer.bounding_box(
             view.identification(),
@@ -122,8 +135,10 @@ pub(crate) fn min_max_values<V: Graphic3dCView + ?Sized>(
     Ok(result)
 }
 
-/// The native `InvalidateZLayerBoundingBox`.
-pub(crate) fn invalidate_z_layer_bounding_box<V: Graphic3dCView + ?Sized>(
+/// The native `InvalidateZLayerBoundingBox`: the base body for a view that overrides it, as
+/// the Vulkan view does to count main-layer notices (#594);
+/// `graphic3d_cview_invalidate_z_layer_bounding_box(view, 0)`.
+pub fn invalidate_z_layer_bounding_box<V: Graphic3dCView + ?Sized>(
     view: &V,
     layer_id: Graphic3dZLayerId,
 ) {

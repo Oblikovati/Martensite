@@ -43,8 +43,8 @@ fn unchanged_public_framebuffer_binding_completes_without_copying_pixels() {
 
 fn capture_pixel_address(view: &Graphic3dRenderView) -> *const u8 {
     let capture = view.outcome.read();
-    let pixels = &capture.as_ref().unwrap().as_ref().unwrap().rgba;
-    pixels.as_ptr()
+    let published = capture.as_ref().unwrap().as_ref().unwrap();
+    published.pixels(&view.device).unwrap().rgba.as_ptr()
 }
 
 #[test]

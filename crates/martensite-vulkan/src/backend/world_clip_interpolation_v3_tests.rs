@@ -154,8 +154,8 @@ fn assert_projected_v3_private_empty_carrier(clips: [[u32; 4]; 3]) {
     )
     .unwrap()
     .unwrap();
-    assert_eq!(carrier.indices, [0, 0, 0]);
-    assert_eq!(original.indices, [0, 1, 2]);
+    assert_eq!(carrier.indices(), [0, 0, 0]);
+    assert_eq!(original.indices(), [0, 1, 2]);
     assert!(selects_grid12_fragment(
         &original,
         Behavior::ProjectedGrid12V2
@@ -176,7 +176,12 @@ fn admit_projected_v3_world_clip(draw: &PrimitiveDraw) -> bool {
 #[test]
 fn projected_v3_keeps_degenerate_lines_through_sample_centers_refused() {
     let mut draw = clipped_phong_triangle();
-    for (vertex, y) in draw.vertices.iter_mut().zip([-0.5_f32, 0.0_f32, 0.5_f32]) {
+    for (vertex, y) in draw
+        .vertices
+        .make_mut()
+        .iter_mut()
+        .zip([-0.5_f32, 0.0_f32, 0.5_f32])
+    {
         vertex.position = [0.0, y, 0.0];
     }
     let error = super::super::triangle_grid_coverage_upload::prepare(

@@ -1,4 +1,6 @@
 //! Renderer-created groups make ordinary Graphic3d submissions reach the draw stream.
+use crate::driver_device_lost::DriverObjects;
+use crate::text_layout::TextProvider;
 use crate::{Graphic3dDrawGroup, RenderError};
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
 use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
@@ -11,11 +13,12 @@ use martensite_tkservice::graphic3d::*;
 /// `driver.create_structure(&manager)?.cast::<Graphic3dRenderStructure>`.
 pub struct Graphic3dRenderStructure {
     base: Graphic3dCStructureBase,
-    connection: SharedState<Option<WeakHandle<Self>>>,
+    connection: RevisedState<Option<WeakHandle<Self>>>,
     this: SharedState<WeakHandle<Self>>,
     parent: Option<Handle<Self>>,
-    text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
+    text_source: TextProvider,
     raytrace: SharedState<RaytraceState>,
+    registry: Option<std::sync::Weak<DriverObjects>>,
 }
 /// Native `GlStructure` ray-tracing bookkeeping: `myIsRaytracable` and
 /// `myModificationState`, which the native ray tracer compares between frames.
@@ -25,27 +28,57 @@ struct RaytraceState {
     modification: usize,
 }
 martensite_tkernel::impl_transient!(Graphic3dRenderStructure, "Martensite_RenderStructure", StandardTransient, interfaces:[dyn Graphic3dCStructure]);
+#[path = "structure_replay.rs"]
+pub(crate) mod structure_replay;
 impl Graphic3dRenderStructure {
+    pub(crate) fn has_only_local_geometry(&self, driver: &std::sync::Arc<DriverObjects>) -> bool {
+        self.parent.is_none()
+            && self
+                .registry
+                .as_ref()
+                .is_some_and(|owner| owner.ptr_eq(&std::sync::Arc::downgrade(driver)))
+            && self.connection.read().is_none()
+    }
+
     /// A structure of `manager` whose groups lay out text with `text_source`; e.g.
     /// `Graphic3dRenderStructure::new(&manager, Arc::new(FreeTypeTextSource::default()))?`.
     pub fn new(
         manager: &Handle<Graphic3dStructureManager>,
         text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
     ) -> Result<Handle<Self>, Failure> {
-        Self::with_parent(manager, None, text_source)
+        Self::with_parent(manager, None, TextProvider::Injected(text_source), None)
     }
+
+    pub(crate) fn registered(
+        manager: &Handle<Graphic3dStructureManager>,
+        text_source: TextProvider,
+        registry: &std::sync::Arc<DriverObjects>,
+    ) -> Result<Handle<dyn Graphic3dCStructure>, Failure> {
+        let structure = Self::with_parent(
+            manager,
+            None,
+            text_source,
+            Some(std::sync::Arc::downgrade(registry)),
+        )?
+        .cast();
+        registry.register_structure(&structure);
+        Ok(structure)
+    }
+
     fn with_parent(
         manager: &Handle<Graphic3dStructureManager>,
         parent: Option<Handle<Self>>,
-        text_source: std::sync::Arc<dyn crate::TextLayoutSource>,
+        text_source: TextProvider,
+        registry: Option<std::sync::Weak<DriverObjects>>,
     ) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
             base: Graphic3dCStructureBase::new(manager)?,
-            connection: SharedState::default(),
+            connection: RevisedState::default(),
             this: SharedState::default(),
             parent,
             text_source,
             raytrace: SharedState::default(),
+            registry,
         });
         *object.this.write() = object.downgrade();
         object.inherit_shadow_state();
@@ -71,10 +104,52 @@ impl Graphic3dRenderStructure {
         clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
         elements: &crate::render_element_pass::RenderElementPass,
     ) -> Result<crate::stencil_program::StencilProgram, RenderError> {
+        let mut program = crate::stencil_program::StencilProgram::default();
+        let scene = (camera, extent, rendering, clipping, elements);
+        self.draws_into(view_id, scene, &mut program)?;
+        Ok(program)
+    }
+
+    /// Append the structure's program for this pass to `target`: its groups' records
+    /// replayed in place when all hold, otherwise its groups lowered;
+    /// `structure.draws_into(view_id, scene, &mut layer_program)?`.
+    pub(crate) fn draws_into(
+        &self,
+        view_id: i32,
+        scene: structure_replay::StructureFrame<'_>,
+        target: &mut crate::stencil_program::StencilProgram,
+    ) -> Result<(), RenderError> {
         if !self.is_visible_in_view(view_id) || self.is_culled() {
-            return Ok(Default::default());
+            return Ok(());
         }
-        let fields = self.base.fields.read().clone();
+        #[cfg(feature = "draw-record-verification")]
+        {
+            let mut replayed = crate::stencil_program::StencilProgram::default();
+            let replay = self.replayed_groups(scene, &mut replayed);
+            let lowered = self.lowered_draws(scene)?;
+            if replay.is_some() {
+                structure_replay::verify(&replayed, &lowered);
+            }
+            target.append(lowered);
+            Ok(())
+        }
+        #[cfg(not(feature = "draw-record-verification"))]
+        {
+            if let Some(skipped) = self.replayed_groups(scene, target) {
+                scene.4.add_skipped(skipped);
+                return Ok(());
+            }
+            target.append(self.lowered_draws(scene)?);
+            Ok(())
+        }
+    }
+
+    /// The structure's groups lowered (or replayed one by one) through the capping scene.
+    fn lowered_draws(
+        &self,
+        (camera, extent, rendering, clipping, elements): structure_replay::StructureFrame<'_>,
+    ) -> Result<crate::stencil_program::StencilProgram, RenderError> {
+        let (fields, local_groups) = self.base.fields.read().snapshot_with_group_handles();
         if crate::retained_clipping::structure_is_clipped(clipping, &fields)? {
             return Ok(Default::default());
         }
@@ -93,7 +168,7 @@ impl Graphic3dRenderStructure {
             clipping,
             elements,
         }
-        .draws(self.geometry_batches()?)?;
+        .draws(self.geometry_batches(local_groups)?)?;
         #[cfg(feature = "vertex-output-diagnostics")]
         vertex_output_scope::retain_main_capture(
             &mut program.draws,
@@ -120,10 +195,19 @@ impl Graphic3dRenderStructure {
     /// An invalid reference path keeps only the structure's own groups, which it still owns.
     /// Example: `structure.instanced_group_batches()[0].len()`.
     pub(crate) fn instanced_group_batches(&self) -> Vec<Vec<Handle<dyn Graphic3dGroup>>> {
-        self.geometry_batches()
+        self.geometry_batches(self.groups())
+            .map(|batches| batches.into_batches().collect())
             .unwrap_or_else(|_| vec![self.groups()])
     }
 }
+impl Drop for Graphic3dRenderStructure {
+    fn drop(&mut self) {
+        if let Some(registry) = self.registry.as_ref().and_then(std::sync::Weak::upgrade) {
+            registry.forget_structure(self.this.read().object_address().addr());
+        }
+    }
+}
+
 impl Graphic3dCStructure for Graphic3dRenderStructure {
     fn cstructure_base(&self) -> &Graphic3dCStructureBase {
         &self.base
@@ -199,14 +283,14 @@ impl Graphic3dCStructure for Graphic3dRenderStructure {
             .parent
             .clone()
             .unwrap_or_else(|| self.this.read().upgrade());
-        Ok(Self::with_parent(manager, Some(parent), self.text_source.clone())?.cast())
+        Ok(Self::with_parent(manager, Some(parent), self.text_source.clone(), None)?.cast())
     }
     fn new_group(
         &self,
         structure: &Handle<dyn Graphic3dStructureSource>,
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         let group: Handle<dyn Graphic3dGroup> =
-            Graphic3dDrawGroup::with_text_source(structure, self.text_source.clone()).cast();
+            Graphic3dDrawGroup::with_provider(structure, self.text_source.clone()).cast();
         self.base
             .fields
             .write()
@@ -239,6 +323,7 @@ impl Graphic3dCStructure for Graphic3dRenderStructure {
 
 #[path = "connected_geometry.rs"]
 mod connected_geometry;
+pub(crate) use connected_geometry::{GeometryBatches, GroupBatch};
 #[path = "driver_structure_dump.rs"]
 mod dump;
 

@@ -67,6 +67,8 @@ pub mod frame_statistics;
 pub mod frame_statistics_gpu;
 #[path = "../frame_statistics_hud.rs"]
 pub mod frame_statistics_hud;
+#[path = "../frame_work_gpu.rs"]
+pub mod frame_work_gpu;
 #[path = "../front_only_vertex_colors_native.rs"]
 pub mod front_only_vertex_colors_native;
 #[path = "../graphic_buffers.rs"]

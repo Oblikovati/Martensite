@@ -7,8 +7,12 @@ use crate::standard::{
 use std::io;
 
 mod adoption;
+mod content_revision;
 mod pointers;
 mod raw_adoption;
+
+pub use content_revision::BufferRevision;
+use content_revision::BufferRevisionTracker;
 
 /// Owned buffer with explicit allocation state; `Buffer::new(Some(allocator), 16)`.
 ///
@@ -19,6 +23,7 @@ pub struct Buffer {
     allocator: Option<BaseAllocator>,
     storage: Option<AllocatedBytes>,
     logical_size: usize,
+    revision: BufferRevisionTracker,
 }
 
 impl Buffer {
@@ -32,6 +37,7 @@ impl Buffer {
             allocator,
             storage: None,
             logical_size: 0,
+            revision: BufferRevisionTracker::default(),
         };
         buffer.allocate(size)?;
         Ok(buffer)
@@ -47,6 +53,7 @@ impl Buffer {
             allocator,
             logical_size: data.as_slice().len(),
             storage: Some(data),
+            revision: BufferRevisionTracker::default(),
         }
     }
 
@@ -75,10 +82,11 @@ impl Buffer {
     /// which the accumulating allocator refuses; on failure the buffer is unchanged.
     pub fn free(&mut self) -> Result<(), Failure> {
         if let Some(allocator) = &self.allocator {
-            allocator.check_free(self.data_ptr())?;
+            allocator.check_free(self.storage_pointer())?;
         }
         self.storage = None;
         self.logical_size = 0;
+        self.revision.retire_storage();
         Ok(())
     }
 
@@ -101,13 +109,23 @@ impl Buffer {
 
     /// Borrows mutable buffer bytes; `buffer.as_mut_slice().fill(42)`.
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        self.revision.advance();
         self.storage.as_mut().map_or(&mut [], |bytes| {
             &mut bytes.as_mut_slice()[..self.logical_size]
         })
     }
 
     /// The data address, null when unallocated; `buffer.data_ptr()`.
+    /// Exposing an address suspends content revision tracking for this allocation.
     pub fn data_ptr(&self) -> *const u8 {
+        let address = self.storage_pointer();
+        if !address.is_null() {
+            self.revision.expose();
+        }
+        address
+    }
+
+    fn storage_pointer(&self) -> *const u8 {
         self.storage
             .as_ref()
             .map_or(std::ptr::null(), AllocatedBytes::as_ptr)
@@ -132,7 +150,7 @@ impl Buffer {
     /// `x` after prepending `0x` (`"0xx7f..."`). Example: `buffer.dump_json(&mut stream, -1)?`.
     pub fn dump_json(&self, output: &mut impl DumpOutput, _depth: i32) -> io::Result<()> {
         let allocator = self.allocator.as_ref().map_or(0, |a| a.identity() as usize);
-        dump_pointer(output, "Data", self.data_ptr() as usize)?;
+        dump_pointer(output, "Data", self.storage_pointer().addr())?;
         add_values_separator(output)?;
         output.write_fragment(format!("\"Size\": {}", self.size()).as_bytes())?;
         dump_pointer(output, "Allocator", allocator)

@@ -89,7 +89,7 @@ fn missing_image_point_constants_preserve_emission_without_changing_face_masking
     let point_flags = u32::from_ne_bytes(point_bytes[68..72].try_into().unwrap());
     assert_eq!(point_flags & 18, 2);
     let mut face = crate::PrimitiveDraw::new(vec![], vec![], crate::identity_clip()).unwrap();
-    face.surface_texture_unavailable = point.surface_texture_unavailable;
+    face.surface_texture_unavailable = point.surface_texture_unavailable.clone();
     let face_bytes = encode_transform(&face, extent);
     let face_flags = u32::from_ne_bytes(face_bytes[68..72].try_into().unwrap());
     assert_eq!(face_flags & 16, 16);

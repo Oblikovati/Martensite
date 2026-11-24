@@ -114,7 +114,7 @@ fn polygon_edge_draw(
 ) -> PrimitiveDraw {
     let mut edge = face.clone();
     edge.unlit_back_color = None;
-    for vertex in &mut edge.vertices {
+    for vertex in edge.vertices.make_mut() {
         vertex.color = color;
     }
     edge.mesh_edges = None;
@@ -148,7 +148,7 @@ pub(crate) fn resolve_edge_background(draws: &mut [PrimitiveDraw], clear: [f32; 
         .iter_mut()
         .filter(|draw| draw.edge_background_fallback)
     {
-        for vertex in &mut draw.vertices {
+        for vertex in draw.vertices.make_mut() {
             vertex.color = clear;
         }
         draw.edge_background_fallback = false;
@@ -160,7 +160,13 @@ pub(crate) fn apply_graphic3d_raster_widths(
 ) -> Result<(), RenderError> {
     let scale = context_line_width_scale(params);
     for draw in draws {
-        for line in [&mut draw.line_style, &mut draw.polygon_edge_style]
+        // A unit scale or a draw without lines leaves a shared body uncopied (#594).
+        let lines = draw.line_style.is_some() || draw.polygon_edge_style.is_some();
+        if (scale == 1. || !lines) && draw.mesh_edges.is_none() {
+            continue;
+        }
+        let body = &mut **draw;
+        for line in [&mut body.line_style, &mut body.polygon_edge_style]
             .into_iter()
             .flatten()
         {

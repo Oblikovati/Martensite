@@ -101,3 +101,20 @@ fn dump_lists_valid_matrices_only() {
     assert!(stream.text().contains("\"Orientation\""));
     assert!(!stream.text().contains("\"MProjection\""));
 }
+
+#[test]
+fn one_un_projection_matches_un_project_bit_for_bit() {
+    let camera = Graphic3dCamera::default();
+    camera.set_projection_type(Graphic3dCameraProjection::Perspective);
+    camera.set_eye(&Point3::new(4., -3., 7.)).unwrap();
+    let inverse = camera.un_projection().expect("a regular camera");
+    for point in [
+        Point3::new(0., 0., -1.),
+        Point3::new(0.25, -0.5, 1.),
+        Point3::new(-1., 1., 0.3),
+    ] {
+        let (once, direct) = (inverse.apply(&point), camera.un_project(&point));
+        let bits = |p: Point3| [p.x(), p.y(), p.z()].map(f64::to_bits);
+        assert_eq!(bits(once), bits(direct));
+    }
+}

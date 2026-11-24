@@ -1,6 +1,7 @@
 //! Fixed state for the opaque unlit acceptance slice; unsupported styles fail before upload.
 use crate::depth_prepass::RenderDepthPass::{DepthEqual, DepthOnly};
 use ash::vk;
+pub(super) const LIT_VERTEX_STRIDE: u32 = 44;
 const BINDINGS: [vk::VertexInputBindingDescription; 1] = [vk::VertexInputBindingDescription {
     binding: 0,
     stride: 32,
@@ -63,6 +64,9 @@ const fn with_alpha_writes(
 fn color_blend(
     kind: super::pipeline_variants::PipelineVariant,
 ) -> &'static [vk::PipelineColorBlendAttachmentState] {
+    if kind.hiz_depth_only {
+        return &[];
+    }
     let blended =
         kind.point_blend || (kind.text && kind.text_blend) || kind.surface_blend || kind.line_blend;
     match (
@@ -120,7 +124,9 @@ impl PipelineState {
             ..
         } = kind;
         let mut state = Self {
-            vertex: if kind.fixed_lighting {
+            vertex: if kind.compact_vertices {
+                super::mesh_vertex_pipeline::vertex_input()
+            } else if kind.fixed_lighting {
                 super::fixed_vertex_layout::fixed_vertex_layout(
                     kind.surface_texture || kind.surface_alpha || kind.mesh_edges,
                 )
@@ -128,8 +134,10 @@ impl PipelineState {
                 super::surface_texture_pipeline::surface_vertex_state(
                     kind.lighting || kind.sphere_map,
                 )
+            } else if kind.line_tint == super::pipeline_variants::LineTintLayout::Compact {
+                compact_line_vertex_state()
             } else {
-                vertex_state(text, kind.lighting)
+                vertex_state(text, kind.lighting, kind.hiz_depth_only)
             },
             assembly: vk::PipelineInputAssemblyStateCreateInfo::default().topology(
                 if point && !kind.fixed_grid_point {
@@ -190,7 +198,30 @@ impl PipelineState {
             .layout(layout)
     }
 }
-fn vertex_state(text: bool, lighting: bool) -> vk::PipelineVertexInputStateCreateInfo<'static> {
+fn compact_line_vertex_state() -> vk::PipelineVertexInputStateCreateInfo<'static> {
+    const COMPACT: [vk::VertexInputBindingDescription; 1] = [vk::VertexInputBindingDescription {
+        binding: 0,
+        stride: 16,
+        input_rate: vk::VertexInputRate::VERTEX,
+    }];
+    // The packaged draw-color shader lists location 1 but never loads it.
+    const INPUTS: [vk::VertexInputAttributeDescription; 2] = [
+        ATTRIBUTES[0],
+        vk::VertexInputAttributeDescription {
+            offset: 0,
+            ..ATTRIBUTES[1]
+        },
+    ];
+    vk::PipelineVertexInputStateCreateInfo::default()
+        .vertex_binding_descriptions(&COMPACT)
+        .vertex_attribute_descriptions(&INPUTS)
+}
+
+fn vertex_state(
+    text: bool,
+    lighting: bool,
+    depth_only: bool,
+) -> vk::PipelineVertexInputStateCreateInfo<'static> {
     const TEXT_BINDING: [vk::VertexInputBindingDescription; 1] =
         [vk::VertexInputBindingDescription {
             binding: 0,
@@ -200,7 +231,7 @@ fn vertex_state(text: bool, lighting: bool) -> vk::PipelineVertexInputStateCreat
     const LIT_BINDING: [vk::VertexInputBindingDescription; 1] =
         [vk::VertexInputBindingDescription {
             binding: 0,
-            stride: 44,
+            stride: LIT_VERTEX_STRIDE,
             input_rate: vk::VertexInputRate::VERTEX,
         }];
     const LIT_ATTRIBUTES: [vk::VertexInputAttributeDescription; 3] = [
@@ -221,7 +252,9 @@ fn vertex_state(text: bool, lighting: bool) -> vk::PipelineVertexInputStateCreat
         } else {
             &BINDINGS
         })
-        .vertex_attribute_descriptions(if lighting {
+        .vertex_attribute_descriptions(if depth_only {
+            &LIT_ATTRIBUTES[..1]
+        } else if lighting {
             &LIT_ATTRIBUTES
         } else {
             &ATTRIBUTES[..if text { 3 } else { 2 }]

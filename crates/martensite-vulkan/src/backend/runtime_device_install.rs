@@ -44,5 +44,7 @@ impl VulkanRuntime {
         self.queue = self.queues[family as usize];
         self.physical = physical;
         self.queue_family = family;
+        self.transfer_queue =
+            super::super::dedicated_transfer::select_transfer_queue(&families, &self.queues);
     }
 }

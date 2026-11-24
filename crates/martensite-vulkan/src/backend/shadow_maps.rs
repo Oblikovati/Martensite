@@ -164,6 +164,7 @@ impl ShadowMapSet {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         let set = unsafe { self.runtime.device().allocate_descriptor_sets(&info) }
             .map_err(|e| vk_error("allocate shadow map set", e))?[0];
+        self.runtime.work.add_sets(&info);
         #[cfg(feature = "command-state-diagnostics")]
         super::replay_resource_diagnostic::allocated(set, self.layout.handle);
         let image = [vk::DescriptorImageInfo::default()

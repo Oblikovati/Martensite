@@ -3,7 +3,7 @@ use super::*;
 impl TextTransform {
     pub(super) fn pixel_clip(
         &self,
-        text: &Graphic3dText,
+        text: &LabelPlacement,
         aspect: &dyn Graphic3dAspectsSource,
         offset: [f64; 2],
     ) -> [f32; 16] {
@@ -18,7 +18,7 @@ impl TextTransform {
     }
     pub(super) fn pixel_pass_clips(
         &self,
-        text: &Graphic3dText,
+        text: &LabelPlacement,
         aspect: &dyn Graphic3dAspectsSource,
         offsets: &[[f64; 2]],
     ) -> Vec<[f32; 16]> {
@@ -32,7 +32,7 @@ impl TextTransform {
     }
     fn pixel_local_pass_clips(
         &self,
-        text: &Graphic3dText,
+        text: &LabelPlacement,
         aspect: &dyn Graphic3dAspectsSource,
         offsets: &[[f64; 2]],
     ) -> Vec<[f32; 16]> {
@@ -57,7 +57,7 @@ impl TextTransform {
     }
 }
 fn pixel_text_model(
-    text: &Graphic3dText,
+    text: &LabelPlacement,
     aspect: &dyn Graphic3dAspectsSource,
     offset: [f64; 2],
 ) -> Mat4<f64> {

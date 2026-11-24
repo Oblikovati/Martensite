@@ -22,6 +22,10 @@ coverage, window depth and light dot behaviours, and the text and Phong interpol
 policies. Earlier versions stay selectable for replay. Tests pick one per worker process with
 a `MARTENSITE_CASE_*` environment variable; the library never reads these variables.
 
+`RenderBehaviorConfiguration` selects optional mesh shaders, two-pass placement occlusion
+and the versioned compact vertex encoding. `Graphic3dRenderView` can also budget the geometry
+it uploads per redraw. See [assembly rendering](../vulkan-occt-parity/assembly-rendering.md).
+
 ## Validation admission
 
 Validated startup checks required extensions in the global and selected-layer
@@ -71,8 +75,10 @@ and the rest of each test still applies. A CI job can land on either vendor, so 
 exercise those checks.
 
 The `*_regressions` test targets run cases in isolated worker processes under their group's
-time budget and grade the case report. `modeling_view_regressions` exercises fitting, display
-aspects, Boolean results and meshed shapes.
+time budget and grade the case report. libtest runs the cases of one target one at a time;
+`cargo nextest run` runs each test in its own process, so they run in parallel (see
+[test cycle speed](../test-cycle-speed/README.md)). `modeling_view_regressions` exercises
+fitting, display aspects, Boolean results and meshed shapes.
 
 ## Assets
 

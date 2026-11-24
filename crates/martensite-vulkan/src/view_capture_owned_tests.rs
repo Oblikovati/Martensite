@@ -1,6 +1,7 @@
 //! Owned fixtures pin the current capture converter before sharing its row-copy loop.
 use super::capture_owned_fixture::{OWNED_COLOR_CASES, owned_depth_rows, owned_frame_capture};
 use super::view_capture::dump_capture;
+use crate::FrameCapture;
 use martensite_tkservice::{
     graphic3d::Graphic3dBufferType,
     image::{ImageFormat, ImagePixMap},
@@ -70,4 +71,61 @@ fn owned_capture_rejections_leave_destination_bytes_unchanged() {
         &owned_frame_capture()
     ));
     assert_eq!(*image.data(), original);
+}
+
+#[test]
+fn colour_dumps_read_captures_without_depth_and_depth_dumps_refuse_them() {
+    let colour_only = FrameCapture {
+        depth: Vec::new(),
+        ..owned_frame_capture()
+    };
+    for case in OWNED_COLOR_CASES {
+        let image = owned_capture_destination(case.format, case.first.len(), true);
+        assert!(dump_capture(&image, &case.kind, &colour_only));
+        assert_owned_capture_rows(&image, case.first, case.second);
+    }
+    let image = owned_capture_destination(ImageFormat::GrayF, 8, true);
+    let original = image.data().clone();
+    assert!(!dump_capture(
+        &image,
+        &Graphic3dBufferType::Depth,
+        &colour_only
+    ));
+    assert_eq!(*image.data(), original);
+}
+
+#[test]
+fn only_depth_dumps_read_the_depth_attachment() {
+    use crate::backend::CapturePlanes;
+    use crate::view_capture::dump_planes;
+    assert_eq!(
+        dump_planes(&Graphic3dBufferType::Depth),
+        CapturePlanes::ColorAndDepth
+    );
+    for kind in [
+        Graphic3dBufferType::Rgb,
+        Graphic3dBufferType::Rgba,
+        Graphic3dBufferType::Red,
+    ] {
+        assert_eq!(dump_planes(&kind), CapturePlanes::Color);
+    }
+}
+
+#[test]
+fn word_packed_rgb_rows_match_a_per_pixel_copy_for_every_width() {
+    use super::view_capture::rgba_row_to_rgb;
+    for width in 0..23usize {
+        let rgba: Vec<u8> = (0..width * 4)
+            .map(|index| (index * 37 % 251) as u8)
+            .collect();
+        let expected: Vec<u8> = rgba
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .flat_map(|pixel| pixel[..3].to_vec())
+            .collect();
+        let mut rgb = vec![0xa5; width * 3];
+        rgba_row_to_rgb(&rgba, &mut rgb);
+        assert_eq!(rgb, expected, "width {width}");
+    }
 }

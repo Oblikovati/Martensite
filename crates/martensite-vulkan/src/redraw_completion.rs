@@ -115,6 +115,12 @@ impl std::error::Error for RenderRedrawFailure {
     }
 }
 
+#[derive(Default)]
+pub(super) struct RetiredRedraw {
+    target: Option<RedrawPublicationTarget>,
+    frame: Option<crate::driver_view::FramePublication>,
+}
+
 impl Graphic3dRenderView {
     fn require_cursor_owner(&self, cursor: &RenderRedrawCursor) -> Result<(), RenderRedrawFailure> {
         let expected = self as *const Self as usize;
@@ -131,9 +137,9 @@ impl Graphic3dRenderView {
 
     pub(super) fn publish_redraw_observation(
         &self,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<crate::redraw_capture::RedrawCapture, RenderError>,
         publication: &RedrawPublicationTarget,
-        retired: &mut Option<RedrawPublicationTarget>,
+        retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {
         // Both new owners and retirement live in the outer, guard-free caller scope.
         let next = publication.clone();
@@ -145,16 +151,25 @@ impl Graphic3dRenderView {
         let result = outcome.as_ref().map(|_| ()).map_err(Clone::clone);
         let mut target = self.redraw_target.write();
         self.advance_redraw_serial();
+        // Diagnostic builds read every frame when it renders, so these pixels are cached.
+        #[cfg(any(
+            feature = "command-state-diagnostics",
+            feature = "raytrace-input-diagnostics"
+        ))]
+        let observed = outcome
+            .as_ref()
+            .map_err(Clone::clone)
+            .and_then(|capture| capture.pixels(&self.device).cloned());
         #[cfg(feature = "command-state-diagnostics")]
         crate::scene::replay_diagnostic::published(
             self as *const Self as usize,
             self.redraw_serial.load(Ordering::Relaxed),
-            &outcome,
+            &observed,
         );
         #[cfg(feature = "raytrace-input-diagnostics")]
-        self.publish_raytrace_observation(&outcome);
-        *retired = target.replace(next);
-        *stored = Some(outcome);
+        self.publish_raytrace_observation(&observed);
+        retired.target = target.replace(next);
+        retired.frame = stored.replace(outcome.map(Arc::new));
         result
     }
     fn advance_redraw_serial(&self) {
@@ -201,7 +216,7 @@ fn require_fresh_serial(before: u64, observed: u64) -> Result<(), RenderRedrawFa
 }
 
 fn require_completed_outcome(
-    outcome: Option<&Result<FrameCapture, RenderError>>,
+    outcome: Option<&crate::driver_view::FramePublication>,
     publication: u64,
 ) -> Result<(), RenderRedrawFailure> {
     match outcome {

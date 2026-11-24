@@ -1,6 +1,6 @@
 //! Background bounds include advance whitespace and preserve native triangle-strip winding.
 use super::*;
-use crate::{RasterImage, text_transform::TextTransform};
+use crate::{GlyphLayout, RasterImage, text_transform::TextTransform};
 use martensite_tkernel::{ncollection::Mat4, quantity::ColorRgba};
 use martensite_tkservice::{aspect::*, font::FontRect};
 fn subtitle_fixture_rectangle(right: f32) -> FontRect {
@@ -30,6 +30,7 @@ fn subtitle_fixture_transform() -> TextTransform {
         viewport: [0, 0, 128, 128],
         pixel_coordinates: false,
         zoomable_scale: 1.,
+        unview: Default::default(),
     }
 }
 fn subtitle_fixture_draws(aspect: &Graphic3dAspectText3d) -> Vec<PrimitiveDraw> {
@@ -48,7 +49,7 @@ fn rectangle_retains_native_formatter_winding_and_transparent_color() {
     let layout = subtitle_fixture_layout(subtitle_fixture_rectangle(-32.));
     let aspect = Graphic3dAspectText3d::default();
     aspect.set_edge_color_rgba(ColorRgba::new(1., 0., 0., 0.).unwrap());
-    let vertices = subtitle_vertices(&layout, &aspect);
+    let vertices = subtitle_vertices(layout.formatter_bounds, &aspect);
     let positions: Vec<[f32; 3]> = vertices.iter().map(|v| v.position).collect();
     let expected = [
         [-32., -15., 0.],

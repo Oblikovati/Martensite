@@ -1,5 +1,5 @@
 //! Checked publication retains primary faults and refuses obsolete GUI targets.
-use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp};
+use super::redraw_completion::{RedrawPublicationTarget, RedrawTargetStamp, RetiredRedraw};
 use super::*;
 use crate::RenderGuiSurfacePhase::{Capture, Publication};
 use crate::error::gui_native_failure::reconcile_native_target;
@@ -20,20 +20,20 @@ impl Graphic3dRenderView {
         stamp: GuiTargetStamp,
         target: RedrawTargetStamp,
     ) -> Result<(), RenderError> {
-        let outcome = self.render_current();
+        let outcome = self.render_current(false);
         self.publish_checked_gui(stamp, outcome, target)
     }
     pub(super) fn publish_checked_gui(
         &self,
         stamp: GuiTargetStamp,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         target: RedrawTargetStamp,
     ) -> Result<(), RenderError> {
         let publication = RedrawPublicationTarget {
             started: target,
             published: self.redraw_target_stamp(),
         };
-        let mut retired = None;
+        let mut retired = RetiredRedraw::default();
         let result = self.commit_checked_gui(stamp, outcome, &publication, &mut retired);
         drop(retired);
         result
@@ -41,9 +41,9 @@ impl Graphic3dRenderView {
     fn commit_checked_gui(
         &self,
         stamp: GuiTargetStamp,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         publication: &RedrawPublicationTarget,
-        retired: &mut Option<RedrawPublicationTarget>,
+        retired: &mut RetiredRedraw,
     ) -> Result<(), RenderError> {
         let observation = self.gui_publication_observation(stamp.extent);
         let outcome = reconcile_native_target(outcome, observation.target);
@@ -58,9 +58,9 @@ impl Graphic3dRenderView {
         &self,
         slot: &mut GuiLayerSlot,
         stamp: GuiTargetStamp,
-        outcome: Result<FrameCapture, RenderError>,
+        outcome: Result<RedrawCapture, RenderError>,
         observed: Result<Option<[u32; 2]>, RenderError>,
-    ) -> Result<FrameCapture, RenderError> {
+    ) -> Result<RedrawCapture, RenderError> {
         slot.retain_observed_change(&stamp, observed_target_change(&outcome, &observed, &stamp));
         let outcome = reconcile_observation(outcome, observed, &stamp, slot, Publication);
         let outcome = self.guard_gui_redraw(outcome);
@@ -81,12 +81,12 @@ impl Graphic3dRenderView {
     }
     fn guard_gui_redraw(
         &self,
-        outcome: Result<FrameCapture, RenderError>,
-    ) -> Result<FrameCapture, RenderError> {
+        outcome: Result<RedrawCapture, RenderError>,
+    ) -> Result<RedrawCapture, RenderError> {
         let target = self.require_native_target(Redraw);
         reconcile_native_target(outcome, target)
     }
-    pub(super) fn checked_gui_capture(&self) -> Result<FrameCapture, RenderError> {
+    pub(super) fn checked_gui_publication(&self) -> FramePublication {
         let outcome = self.recorded_gui_outcome();
         if let Err(target) = self.require_capture_target() {
             let refused = reconcile_native_target(outcome, Err(target));
@@ -95,16 +95,13 @@ impl Graphic3dRenderView {
         }
         self.capture_current_gui(outcome)
     }
-    fn recorded_gui_outcome(&self) -> Result<FrameCapture, RenderError> {
+    fn recorded_gui_outcome(&self) -> FramePublication {
         self.outcome
             .read()
             .clone()
             .unwrap_or_else(|| Err(rejected("no redraw", "a successfully rendered view")))
     }
-    fn capture_current_gui(
-        &self,
-        outcome: Result<FrameCapture, RenderError>,
-    ) -> Result<FrameCapture, RenderError> {
+    fn capture_current_gui(&self, outcome: FramePublication) -> FramePublication {
         let stamp = self.gui_layers.read().capture_stamp();
         let observed = self.checked_observed_extent(stamp.extent);
         let mut slot = self.gui_layers.write();

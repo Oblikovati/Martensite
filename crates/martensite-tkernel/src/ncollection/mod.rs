@@ -59,7 +59,7 @@ pub(crate) use dynamic_array::{
 };
 
 mod buffer;
-pub use buffer::Buffer;
+pub use buffer::{Buffer, BufferRevision};
 mod object_handle;
 pub use object_handle::ObjectHandle;
 mod shared;

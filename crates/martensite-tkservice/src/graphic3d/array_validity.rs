@@ -1,8 +1,9 @@
 //! `StringType`, `ItemNumber` and `IsValid` of `Graphic3d_ArrayOfPrimitives`.
 use super::{
-    Graphic3dArrayOfPrimitives, Graphic3dBufferMembers, Graphic3dIndexBufferMembers,
-    Graphic3dTypeOfPrimitiveArray,
+    Graphic3dArrayOfPrimitives, Graphic3dBufferMembers, Graphic3dBufferState,
+    Graphic3dIndexBufferSource, Graphic3dTypeOfPrimitiveArray,
 };
+use martensite_tkernel::{ncollection::BufferRevision, standard::SharedState};
 
 /// Counts that `IsValid` reads.
 struct ArrayCounts {
@@ -197,10 +198,78 @@ impl Graphic3dArrayOfPrimitives {
         let Some(indices) = self.indices.get().filter(|_| counts.edges > 0) else {
             return true;
         };
-        (0..counts.edges).all(|edge| {
-            indices
-                .index(edge)
-                .is_some_and(|index| index < self.vertex_number())
-        })
+        self.index_extent
+            .maximum(indices, counts.edges)
+            .is_some_and(|index| index < self.vertex_number())
     }
+}
+
+#[derive(Default)]
+pub(super) struct IndexExtentMemo(SharedState<Option<IndexExtent>>);
+
+struct IndexExtent {
+    revision: BufferRevision,
+    stride: i32,
+    count: i32,
+    maximum: Option<i32>,
+}
+
+impl IndexExtentMemo {
+    fn maximum(&self, indices: &dyn Graphic3dIndexBufferSource, count: i32) -> Option<i32> {
+        let state = indices.buffer_base().state.read();
+        let stride = state.stride;
+        if let Some(cached) = self.cached_maximum(&state, count) {
+            return cached;
+        }
+        let maximum = index_maximum(state.data.as_slice(), stride, count as usize);
+        if let Some(revision) = state.data.content_revision() {
+            *self.0.write() = Some(IndexExtent {
+                revision,
+                stride,
+                count,
+                maximum,
+            });
+        }
+        maximum
+    }
+
+    fn cached_maximum(&self, state: &Graphic3dBufferState, count: i32) -> Option<Option<i32>> {
+        self.0
+            .read()
+            .as_ref()
+            .filter(|cached| {
+                cached.stride == state.stride
+                    && cached.count == count
+                    && state.data.matches_content_revision(&cached.revision)
+            })
+            .map(|cached| cached.maximum)
+    }
+}
+
+fn index_maximum(bytes: &[u8], stride: i32, count: usize) -> Option<i32> {
+    match stride {
+        2 => packed_index_maximum(bytes, count, |word| i32::from(u16::from_le_bytes(word))),
+        4 => packed_index_maximum(bytes, count, i32::from_le_bytes),
+        stride => (0..count).try_fold(i32::MIN, |maximum, edge| {
+            // Graphic3dIndexBuffer::index reads a signed 32-bit word for every non-2 stride.
+            let offset = (stride as usize).wrapping_mul(edge);
+            let word = bytes.get(offset..offset.checked_add(4)?)?;
+            Some(maximum.max(i32::from_le_bytes(word.try_into().ok()?)))
+        }),
+    }
+}
+
+fn packed_index_maximum<const N: usize>(
+    bytes: &[u8],
+    count: usize,
+    decode: impl Fn([u8; N]) -> i32,
+) -> Option<i32> {
+    bytes
+        .as_chunks::<N>()
+        .0
+        .get(..count)?
+        .iter()
+        .copied()
+        .map(decode)
+        .max()
 }

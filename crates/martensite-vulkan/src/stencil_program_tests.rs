@@ -27,6 +27,22 @@ fn empty_and_trailing_commands_append_without_manufacturing_geometry() {
     assert_eq!(first.boundaries[1].command, StencilCommand::Options(false));
 }
 #[test]
+fn first_batch_transfers_its_draw_buffer_without_moving_stencil_boundaries() {
+    let mut program = StencilProgram::default();
+    program.command(StencilCommand::Options(true));
+    let mut child = StencilProgram {
+        draws: vec![triangle()],
+        boundaries: Vec::new(),
+        sources: Vec::new(),
+    };
+    child.command(StencilCommand::CappingRestore);
+    let buffer = child.draws.as_ptr();
+    program.append(child);
+    assert_eq!(program.draws.as_ptr(), buffer);
+    assert_eq!(program.boundaries[0].before_draw, 0);
+    assert_eq!(program.boundaries[1].before_draw, 1);
+}
+#[test]
 fn native_fill_filter_rejects_options_but_keeps_cap_restoration() {
     let program = native_fill_filter_program();
     let geometry = [true, false, true];
@@ -120,4 +136,23 @@ fn native_fill_filter_program() -> [StencilBoundary; 2] {
             command: StencilCommand::CappingRestore,
         },
     ]
+}
+
+#[test]
+fn structure_draw_ranges_follow_program_append_and_rollback() {
+    let mut program = StencilProgram::default();
+    program.geometry(vec![triangle()]);
+    program.mark_structure(9, 0);
+    let mark = program.mark();
+
+    let mut worker = StencilProgram::default();
+    worker.geometry(vec![triangle(), triangle()]);
+    worker.mark_structure(3, 0);
+    program.append(worker);
+    assert_eq!(program.sources[0].range, 0..1);
+    assert_eq!(program.sources[1].range, 1..3);
+    assert_eq!(program.sources[1].structure, 3);
+
+    program.truncate(mark);
+    assert_eq!(program.sources.len(), 1);
 }

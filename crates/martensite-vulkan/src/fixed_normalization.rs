@@ -14,15 +14,19 @@ pub(crate) fn native_normalize_state(
     {
         return true;
     }
-    if fields
-        .trsf
-        .get()
-        .is_some_and(|datum| scale_enables_normalization(datum.transformation().scale_factor()))
-    {
+    if structure_scale_normalizes(fields) {
         return true;
     }
     (!fields.trsf_pers.is_null() || local_persistence)
         && scale_enables_normalization(transform_utils::scale_factor(&Mat4::from_data(view)))
+}
+/// Whether the structure transformation's scale alone turns normalization on; a group draw
+/// record combines it with the camera's axial scale (#594); `structure_scale_normalizes(&f)`.
+pub(crate) fn structure_scale_normalizes(fields: &Graphic3dCStructureFields) -> bool {
+    fields
+        .trsf
+        .get()
+        .is_some_and(|datum| scale_enables_normalization(datum.transformation().scale_factor()))
 }
 fn scale_enables_normalization(scale: f64) -> bool {
     (scale - 1.).abs() > martensite_tkernel::precision::confusion()

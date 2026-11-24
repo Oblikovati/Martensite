@@ -104,6 +104,12 @@ impl Graphic3dStructureManager {
     pub fn update(&self, layer_id: Graphic3dZLayerId) {
         self.for_each_view(|view| view.update(layer_id));
     }
+    /// `Update` for one structure of layer `source`: updates `layer_id` (or every layer for
+    /// `UNKNOWN`) in every view, which also learns the structure's layer (#594);
+    /// `manager.update_structure(0, GRAPHIC3D_ZLAYER_ID_UNKNOWN)`.
+    pub fn update_structure(&self, source: Graphic3dZLayerId, layer_id: Graphic3dZLayerId) {
+        self.for_each_view(|view| view.structure_update(source, layer_id));
+    }
     /// `Remove`: removes the displayed structures and forgets every view; `manager.remove()`.
     pub fn remove(&self) {
         for structure in self.displayed() {

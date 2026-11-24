@@ -89,9 +89,12 @@ impl SelectMgrBaseIntersector for SelectMgrRectangularFrustum {
         inside: Option<&mut bool>,
     ) -> Result<bool, Failure> {
         self.rectangular_initialized("OverlapsBox")?;
-        self.frustum_core
-            .read()
-            .has_box_overlap(min, max, self.is_orthographic(), inside)
+        self.frustum_core.read().has_box_overlap_deferred(
+            min,
+            max,
+            || self.is_orthographic(),
+            inside,
+        )
     }
     fn overlaps_point_pick(
         &self,

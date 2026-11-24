@@ -1,16 +1,15 @@
 //! Retained Graphic3d commands distinguish the group style from later primitive styles.
 use crate::line_style::primitive_style_in_pipeline;
 use crate::{PrimitiveDraw, RenderError, primitive::PrimitiveSubmission};
-use martensite_tkernel::{
-    ncollection::Vec4,
-    standard::{Handle, SharedState, StandardTransient},
-};
+use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 use std::sync::Arc;
 #[path = "graphic_group_commands.rs"]
 mod commands;
+#[path = "graphic_group_record.rs"]
+mod draw_record;
 #[path = "graphic_group_dump.rs"]
 mod dump;
 #[path = "graphic_group_elements.rs"]
@@ -19,6 +18,8 @@ mod elements;
 mod extraction;
 #[path = "graphic_group_primitive_lowering.rs"]
 mod primitive_lowering;
+#[path = "graphic_group_primitive_submission.rs"]
+mod primitive_submission;
 #[path = "graphic_group_raytrace.rs"]
 mod raytrace;
 #[path = "graphic_group_stats.rs"]
@@ -28,6 +29,7 @@ use primitive_lowering::lower_styled_primitive;
 #[path = "graphic_group_vertex_output.rs"]
 mod vertex_output;
 use commands::{GroupCommand, GroupGeometry};
+pub(crate) use draw_record::ReplayedFields;
 pub(crate) use raytrace::RaytraceGroupCommand;
 #[derive(Default)]
 struct GroupSubmissionState {
@@ -36,40 +38,56 @@ struct GroupSubmissionState {
     #[cfg(feature = "vertex-output-diagnostics")]
     vertex_output_text: Option<(usize, std::num::NonZeroU64)>,
     aspects: Handle<dyn Graphic3dAspectsSource>,
-    commands: Vec<GroupCommand>,
+    commands: crate::draw::DrawStream<GroupCommand>,
+    command_effects: commands::CommandEffects,
     /// Native `myIsRaytracable`; reset by `Clear` with the commands.
     raytracable: bool,
 }
 /// A retained group feeding Martensite draw extraction; `Graphic3dDrawGroup::new(&structure)`.
 pub struct Graphic3dDrawGroup {
     base: Graphic3dGroupBase,
-    submissions: SharedState<GroupSubmissionState>,
-    text_source: Arc<dyn crate::TextLayoutSource>,
+    /// Observed by the retained view batches (#594).
+    submissions: RevisedState<GroupSubmissionState>,
+    primitive_sources: Arc<crate::primitive_cache::RetainedPrimitives>,
+    text_source: crate::text_layout::TextProvider,
     mesh_edge_pipeline: crate::RenderMeshEdgePipeline,
     pub(crate) texture_images: Arc<crate::retained_texture_images::RetainedTextureImages>,
     pub(crate) aspect_textures: crate::retained_aspect_textures::RetainedAspectTextures,
     /// The driver's precompiled user programs (`crate::retained_user_program`).
     pub(crate) user_programs: Arc<crate::RenderUserProgramLibrary>,
+    /// What the group lowered to on an earlier frame (#594); see graphic_group_record.rs.
+    draw_record: SharedState<draw_record::RecordSlot>,
 }
 martensite_tkernel::impl_transient!(Graphic3dDrawGroup,"Martensite_Graphic3dDrawGroup",StandardTransient,interfaces:[dyn Graphic3dGroup]);
 impl Graphic3dDrawGroup {
     /// Attach to a live Graphic3d structure; `Graphic3dDrawGroup::new(&structure)`.
     pub fn new(structure: &Handle<dyn Graphic3dStructureSource>) -> Handle<Self> {
-        Self::with_text_source(structure, Arc::new(crate::FreeTypeTextSource::default()))
+        Self::with_provider(structure, Default::default())
     }
     /// Inject font I/O and layout; `Graphic3dDrawGroup::with_text_source(&structure, fonts)`.
     pub fn with_text_source(
         structure: &Handle<dyn Graphic3dStructureSource>,
         text_source: Arc<dyn crate::TextLayoutSource>,
     ) -> Handle<Self> {
+        Self::with_provider(
+            structure,
+            crate::text_layout::TextProvider::Injected(text_source),
+        )
+    }
+    pub(crate) fn with_provider(
+        structure: &Handle<dyn Graphic3dStructureSource>,
+        text_source: crate::text_layout::TextProvider,
+    ) -> Handle<Self> {
         Handle::new(Self {
             base: Graphic3dGroupBase::new(structure),
-            submissions: SharedState::default(),
+            submissions: RevisedState::default(),
+            primitive_sources: crate::primitive_cache::RetainedPrimitives::for_structure(structure),
             text_source,
             mesh_edge_pipeline: crate::retained_mesh_edges::driver_mesh_edge_pipeline(structure),
             texture_images: crate::retained_surface_texture::driver_texture_images(structure),
             aspect_textures: Default::default(),
             user_programs: crate::retained_user_program::driver_user_programs(structure),
+            draw_record: SharedState::default(),
         })
     }
     /// Extract visible primitives using current styles, buffers and camera; `group.primitive_draws(&camera)?`.
@@ -170,37 +188,6 @@ impl Graphic3dDrawGroup {
             .get()
             .map_or(0, |driver| driver.next_primitive_array_uid())
     }
-    /// Retain an array the driver draws itself rather than a group element (native
-    /// GlPrimitiveArray members of GlGraduatedTrihedron): it takes no driver id.
-    /// Example: `group.add_driver_primitive_array(&array)`.
-    pub(crate) fn add_driver_primitive_array(&self, array: &Graphic3dArrayOfPrimitives) {
-        let primitive = PrimitiveSubmission {
-            kind: array.primitive_type(),
-            indices: array.indices_ref().clone(),
-            attributes: array.attributes_ref().clone(),
-            bounds: array.bounds_ref().clone(),
-            upload: Default::default(),
-            uid: 0,
-        };
-        self.retain_primitive(primitive, false);
-    }
-    fn retain_primitive(&self, primitive: PrimitiveSubmission, evaluate_bounds: bool) {
-        if self.is_deleted() {
-            return;
-        }
-        if evaluate_bounds && let Ok(positions) = primitive.positions() {
-            let mut fields = self.base.fields.write();
-            // Graphic3dGroup at bounds Vec4 inputs by raw xyz, ignoring w.
-            for [x, y, z, _] in positions {
-                fields.bounds.add(&Vec4::new(x, y, z, 1.));
-            }
-        }
-        self.submissions
-            .write()
-            .commands
-            .push(GroupCommand::Geometry(GroupGeometry::Primitives(primitive)));
-        self.update();
-    }
 }
 impl Graphic3dGroup for Graphic3dDrawGroup {
     fn group_base(&self) -> &Graphic3dGroupBase {
@@ -243,8 +230,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         self.aspect_textures.invalidate(&aspect.observe());
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Aspects(aspect.observe().clone()));
+            .push_command(GroupCommand::Aspects(aspect.observe().clone()));
         self.update();
     }
     fn synchronize_aspects(&self) {
@@ -259,11 +245,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         self.aspect_textures.synchronize();
         let mut state = self.submissions.write();
         let replaced = replace_style(&mut state.aspects, map);
-        for command in &mut state.commands {
-            if let GroupCommand::Aspects(style) = command {
-                replace_style(style, map);
-            }
-        }
+        state.replace_command_aspects(map);
         drop(state);
         if replaced {
             self.update_raytracable_structure();
@@ -284,24 +266,18 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         bounds: &Handle<Graphic3dBoundBuffer>,
         evaluate_bounds: bool,
     ) {
-        if self.is_deleted() || attributes.is_null() {
-            // GlGroup::AddPrimitiveArray returns before creating an element.
-            return;
-        }
-        let uid = self.take_primitive_array_uid();
-        let primitive = PrimitiveSubmission {
-            kind,
-            indices: indices.clone(),
-            attributes: attributes.clone(),
-            bounds: bounds.clone(),
-            upload: Default::default(),
-            uid,
-        };
-        let raytraced = crate::driver_dump::is_raytraced_primitive(&primitive);
-        self.retain_primitive(primitive, evaluate_bounds);
-        if raytraced {
-            self.note_raytraced_element();
-        }
+        self.submit_array(kind, (indices, attributes, bounds), evaluate_bounds, None);
+    }
+    fn supports_triangle_mesh_levels(&self) -> bool {
+        !cfg!(feature = "command-state-diagnostics")
+    }
+    fn add_triangle_mesh_levels(
+        &self,
+        primary: &Handle<Graphic3dArrayOfTriangles>,
+        alternates: &[Graphic3dTriangleMeshLevel],
+        pixel_error: f64,
+    ) {
+        self.submit_triangle_mesh_levels(primary, alternates, pixel_error);
     }
     fn add_text(&self, text: &Handle<Graphic3dText>, evaluate_bounds: bool) {
         if self.is_deleted() || text.is_null() {
@@ -313,11 +289,11 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         }
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Geometry(GroupGeometry::Text(
+            .push_command(GroupCommand::Geometry(GroupGeometry::Text(
                 text.clone(),
                 Default::default(),
                 crate::render_element::TextPlacement::Scene,
+                Default::default(),
             )));
         self.record_text_bounds(text, evaluate_bounds);
     }
@@ -327,8 +303,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         }
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Stencil(enabled));
+            .push_command(GroupCommand::Stencil(enabled));
     }
     fn set_flipping_options(&self, enabled: bool, plane: &Axis2) {
         if self.is_deleted() {
@@ -336,8 +311,7 @@ impl Graphic3dGroup for Graphic3dDrawGroup {
         }
         self.submissions
             .write()
-            .commands
-            .push(GroupCommand::Flipping(enabled.then_some(*plane)));
+            .push_command(GroupCommand::Flipping(enabled.then_some(*plane)));
         if enabled {
             self.structure().cstructure().set_group_flipping(true);
             self.base.fields.write().flipper = Handle::new(Graphic3dFlipper::new(*plane));
@@ -349,14 +323,18 @@ fn apply_command_clipping(
     flips: &crate::group_flipping::GroupFlipStack,
     clipping: Option<&crate::RenderClipping>,
 ) -> Result<(), RenderError> {
-    let clipping = command_clipping(flips, clipping)?;
+    apply_clipping(draws, &command_clipping(flips, clipping)?);
+    Ok(())
+}
+/// Give draws the command clipping, except glyphs: the standard font shader has no planes.
+fn apply_clipping(draws: &mut [PrimitiveDraw], clipping: &Option<crate::RenderClipping>) {
     for draw in draws {
         // The standard font shader advertises zero clipping planes.
-        if draw.textured_style.is_none() {
+        // Writing only changed planes keeps a cached template's body shared (#594).
+        if draw.textured_style.is_none() && draw.clipping != *clipping {
             draw.clipping = clipping.clone();
         }
     }
-    Ok(())
 }
 fn command_clipping(
     flips: &crate::group_flipping::GroupFlipStack,
@@ -405,8 +383,8 @@ fn lower_group_surface(
 ) -> Result<Vec<PrimitiveDraw>, RenderError> {
     let program =
         crate::retained_user_program::resolve_user_program(&context.group.user_programs, aspects)?;
-    let lighting_pipeline =
-        crate::lighting_pipeline::structure_lighting_pipeline(&context.group.structure());
+    let (lighting_pipeline, unlit_face_policy) =
+        crate::lighting_pipeline::structure_surface_policies(&context.group.structure());
     let mut lowered = lower_styled_primitive(
         primitive,
         aspects,
@@ -414,7 +392,7 @@ fn lower_group_surface(
         matrix,
         highlighted,
         lighting_pipeline,
-        crate::lighting_pipeline::structure_unlit_face_policy(&context.group.structure()),
+        unlit_face_policy,
     )?;
     crate::retained_surface_texture::apply_surface_texture(
         &mut lowered,
@@ -422,13 +400,18 @@ fn lower_group_surface(
         aspects,
         context,
     )?;
+    let line_strip = primitive.kind == Graphic3dTypeOfPrimitiveArray::Polylines;
+    let color_array = !highlighted
+        && primitive
+            .attributes
+            .attribute_data(Graphic3dTypeOfAttribute::Color)
+            .is_some();
     for draw in &mut lowered {
-        draw.source_line_strip = primitive.kind == Graphic3dTypeOfPrimitiveArray::Polylines;
-        draw.source_color_array = !highlighted
-            && primitive
-                .attributes
-                .attribute_data(Graphic3dTypeOfAttribute::Color)
-                .is_some();
+        // Writing only changed flags keeps a cached template's body shared (#594).
+        if (draw.source_line_strip, draw.source_color_array) != (line_strip, color_array) {
+            draw.source_line_strip = line_strip;
+            draw.source_color_array = color_array;
+        }
     }
     crate::retained_lighting::apply_surface_lighting(&mut lowered, primitive, aspects, context)?;
     crate::retained_user_program::apply_user_program(
@@ -491,3 +474,5 @@ fn lower_group_edges(
         crate::persistent_transform::group_projection_only(context)?,
     )
 }
+#[path = "graphic_group_batch.rs"]
+pub(crate) mod batch_probe;

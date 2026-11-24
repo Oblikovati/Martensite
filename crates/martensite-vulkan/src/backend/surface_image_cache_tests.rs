@@ -62,7 +62,7 @@ fn bilinear_checker_frame(texture: &Handle<Graphic3dTexture2D>) -> RenderFrame {
     let frame = sampled_texture_frame(texture);
     let mut draw = frame.draws()[0].clone();
     let style = draw.surface_texture.as_mut().unwrap();
-    style.uv = vec![[0.5, 0.5, 0., 1.]; 3];
+    style.uv = vec![[0.5, 0.5, 0., 1.]; 3].into();
     style.sampler.filter = Graphic3dTypeOfTextureFilter::Bilinear;
     RenderFrame::new(8, 8, [0., 0., 0., 1.], vec![draw]).unwrap()
 }
@@ -212,7 +212,7 @@ fn sampled_texture_frame(texture: &Handle<Graphic3dTexture2D>) -> RenderFrame {
         pending_texgen: None,
         fixed_environment: false,
         sampler: SurfaceSamplerPolicy::read(&texture.get_params()),
-        uv: vec![[0., 0., 0., 1.]; 3],
+        uv: vec![[0., 0., 0., 1.]; 3].into(),
         back_vertex: true,
         vertex_override: false,
         modulate: true,

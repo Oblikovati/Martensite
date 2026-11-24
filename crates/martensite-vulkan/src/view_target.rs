@@ -5,8 +5,8 @@ use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 use martensite_tkservice::graphic3d::Graphic3dCView;
 /// An offscreen framebuffer of a view (`GlFrameBuffer` as `Graphic3dCView::FBOCreate`
 /// returns it): the allocated size, the viewport rendered into it and the viewport given at
-/// creation. The colour and depth-stencil images are allocated by the device for each frame
-/// rendered into it. Example:
+/// creation. The device reuses compatible colour and depth-stencil images across frames.
+/// Example:
 /// `view.fbo_create(64, 48).cast::<RenderFrameBuffer>.get.map(|fbo| fbo.size)`.
 pub struct RenderFrameBuffer {
     viewport: SharedState<([i32; 2], std::sync::Arc<()>)>,
@@ -129,7 +129,7 @@ impl RenderFrameBuffer {
     }
 }
 pub(crate) fn capture_extent(
-    view: &dyn Graphic3dCView,
+    view: &crate::Graphic3dRenderView,
     limit: u32,
 ) -> Result<[u32; 2], RenderError> {
     let dimensions = target_dimensions(view);
@@ -148,10 +148,10 @@ pub(crate) fn capture_extent(
     Ok([width as u32, height as u32])
 }
 
-fn target_dimensions(view: &dyn Graphic3dCView) -> Option<(i32, i32)> {
+fn target_dimensions(view: &crate::Graphic3dRenderView) -> Option<(i32, i32)> {
     let fbo = view.fbo();
     if fbo.is_null() {
-        return view.window().get().map(|window| window.size());
+        return view.observed_window_size();
     }
     fbo.cast::<RenderFrameBuffer>().get().map(|target| {
         let [width, height, max_width, max_height] = target.dimensions();

@@ -152,7 +152,7 @@ fn lighting_for_material(material: RenderMaterial) -> RenderLighting {
     .unwrap()
     .with_lights(RenderLightSet {
         ambient: [0.0; 4],
-        sources: Vec::new(),
+        sources: Default::default(),
     })
 }
 
@@ -331,7 +331,7 @@ fn phong_emission() -> RenderLighting {
     .unwrap()
     .with_lights(RenderLightSet {
         ambient: [0.0; 4],
-        sources: Vec::new(),
+        sources: Default::default(),
     })
 }
 

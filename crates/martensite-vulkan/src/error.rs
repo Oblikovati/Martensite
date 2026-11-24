@@ -43,6 +43,7 @@ enum RenderFailureCause {
     ObservedFault(Box<ObservedRenderFault>),
     UserProgram(crate::RenderUserProgramFailure),
     PolygonPoint(crate::RenderPolygonPointFailure),
+    MainRestoreUnavailable,
 }
 #[derive(Clone, PartialEq, Eq)]
 struct WindowTargetFailure {
@@ -72,6 +73,19 @@ impl RenderError {
             Some(RenderFailureCause::LitOnlyCommands(failure)) => Some(failure),
             _ => None,
         }
+    }
+    /// An immediate-only frame whose retained main images the backend cannot restore; the
+    /// view then builds the whole frame (immediate_elision.rs).
+    pub(crate) fn main_restore_unavailable() -> Self {
+        Self(
+            "received an immediate-only frame without restorable main images; expected the \
+             retained main color and depth"
+                .into(),
+            Some(RenderFailureCause::MainRestoreUnavailable),
+        )
+    }
+    pub(crate) fn is_main_restore_unavailable(&self) -> bool {
+        matches!(self.1, Some(RenderFailureCause::MainRestoreUnavailable))
     }
     /// A user program that cannot be drawn; `RenderError::user_program(failure)`.
     pub(crate) fn user_program(failure: crate::RenderUserProgramFailure) -> Self {
@@ -207,7 +221,10 @@ impl std::error::Error for RenderError {
                 .map(|primary| primary as &(dyn std::error::Error + 'static)),
             Some(RenderFailureCause::WindowTarget(failure)) => Some(&failure.primary),
             Some(RenderFailureCause::ObservedFault(failure)) => Some(&failure.primary),
-            Some(RenderFailureCause::UserProgram(_)) | None => None,
+            Some(
+                RenderFailureCause::UserProgram(_) | RenderFailureCause::MainRestoreUnavailable,
+            )
+            | None => None,
         }
     }
 }

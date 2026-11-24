@@ -91,6 +91,7 @@ mod presentation_attributes;
 mod render_enums;
 mod rendering_params;
 mod rendering_params_dump;
+mod revised_state;
 mod shader_manager;
 mod shader_object;
 mod shader_program;
@@ -154,7 +155,9 @@ pub use buffer::{
     Graphic3dBufferState, Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
     graphic3d_buffer_dump_json,
 };
-pub use buffer_members::{Graphic3dBufferMembers, Graphic3dBufferValue};
+pub use buffer_members::{
+    Graphic3dAttributeRead, Graphic3dBufferMembers, Graphic3dBufferRead, Graphic3dBufferValue,
+};
 pub use bvh_cstructure_set::{
     Graphic3dBvhBuilder3d, Graphic3dBvhCStructureSet, Graphic3dBvhCStructureSetTrsfPers,
     Graphic3dCStructureIndexedMap, Graphic3dTrsfPersView,
@@ -164,6 +167,7 @@ pub use camera::{
     Graphic3dCameraProjection, Graphic3dCameraState,
 };
 pub use camera_fit::*;
+pub use camera_matrices::Graphic3dUnProjection;
 pub use camera_projection::Graphic3dCameraScalar;
 pub use camera_values::{Graphic3dCameraTile, Graphic3dWorldViewProjState};
 pub use capture_buffer_error::{CaptureBufferKindCause, CaptureBufferKindError};
@@ -193,6 +197,8 @@ pub use cview_structures::Graphic3dCViewStructures;
 pub use cview_subviews::Graphic3dCViewSubviews;
 pub use cview_virtuals::{
     diagnostic_information as graphic3d_cview_diagnostic_information,
+    invalidate_z_layer_bounding_box as graphic3d_cview_invalidate_z_layer_bounding_box,
+    min_max_values_with_size as graphic3d_cview_min_max_values_with_size,
     remove as graphic3d_cview_remove, resized as graphic3d_cview_resized,
 };
 pub use cview_xr::Graphic3dCViewXr;
@@ -225,7 +231,7 @@ pub use graphic_driver_factory::{
 };
 pub use group::{
     Graphic3dAspectsReplaceMap, Graphic3dGroup, Graphic3dGroupBase, Graphic3dGroupFields,
-    Graphic3dGroupMembers,
+    Graphic3dGroupMembers, Graphic3dTriangleMeshLevel,
 };
 pub use group_text::{Graphic3dGroupTextLayout, Graphic3dGroupTextMembers};
 pub use hatch_style::Graphic3dHatchStyle;
@@ -234,6 +240,7 @@ pub use index_buffer::{
     Graphic3dMutableIndexBuffer,
 };
 pub use layer::{Graphic3dArrayOfIndexedMapOfStructure, Graphic3dLayer};
+pub use layer_culling::Graphic3dBatchEntry;
 pub use light::{Graphic3dCLight, Graphic3dCLightSource};
 pub use light_set::{
     Graphic3dLightSet, Graphic3dLightSetFields, Graphic3dLightSetIterationFilter,
@@ -258,6 +265,9 @@ pub use rendering_params::{
     Graphic3dRenderingParamsFrustumCulling, Graphic3dRenderingParamsPerfCounters,
     Graphic3dStatsParams, Graphic3dStereoParams,
 };
+mod graphic_input_revision;
+pub use graphic_input_revision::GraphicInputRevision;
+pub use revised_state::{RevisedState, RevisedWriteGuard};
 pub use shader_manager::{
     GRAPHIC3D_GLSL_EXTENSION_NB, Graphic3dGlslExtension, Graphic3dLightingOptions,
     Graphic3dPhongVariant, Graphic3dShaderManager, Graphic3dShaderManagerFields,

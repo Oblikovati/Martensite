@@ -20,7 +20,7 @@ pub(crate) fn apply_fixed_view_lighting(
     if view.rendering_params().shading_model == Graphic3dTypeOfShadingModel::Unlit {
         lights = crate::RenderLightSet {
             ambient: [1.; 4],
-            sources: vec![],
+            sources: Default::default(),
         };
     }
     for draw in layers.iter_mut().flat_map(|layer| &mut layer.draws) {

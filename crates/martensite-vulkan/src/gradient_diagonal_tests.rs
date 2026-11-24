@@ -12,12 +12,12 @@ fn diagonal_authored_corners_match_independent_linear_color_midpoints() {
     ] {
         let layer = diagonal_test_layer(method, [97, 43]);
         let draw = &layer.draws[0];
-        for vertex in &draw.vertices {
+        for vertex in draw.vertices() {
             let [x, y, _] = vertex.position;
             let weight = diagonal_second_weight(method, x / 97., y / 43.);
             assert_eq!(vertex.color, diagonal_expected_color(weight));
         }
-        assert_eq!(draw.indices, [0, 1, 3, 1, 2, 3]);
+        assert_eq!(draw.indices(), [0, 1, 3, 1, 2, 3]);
         assert!(!layer.depth_test && !layer.depth_write && !layer.clear_depth);
     }
 }

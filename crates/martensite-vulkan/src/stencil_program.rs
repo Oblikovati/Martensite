@@ -24,10 +24,17 @@ pub(crate) struct StencilBoundary {
     pub before_draw: usize,
     pub command: StencilCommand,
 }
+/// Draws contributed by a structure in the exact ordinary layer order (#594).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct StructureDrawSpan {
+    pub range: std::ops::Range<usize>,
+    pub structure: i32,
+}
 #[derive(Clone, Debug, Default)]
 pub(crate) struct StencilProgram {
     pub draws: Vec<PrimitiveDraw>,
     pub boundaries: Vec<StencilBoundary>,
+    pub sources: Vec<StructureDrawSpan>,
 }
 impl StencilProgram {
     pub fn append(&mut self, mut other: Self) {
@@ -35,8 +42,49 @@ impl StencilProgram {
         for boundary in &mut other.boundaries {
             boundary.before_draw += offset;
         }
-        self.draws.extend(other.draws);
+        for source in &mut other.sources {
+            source.range.start += offset;
+            source.range.end += offset;
+        }
+        self.geometry(other.draws);
         self.boundaries.extend(other.boundaries);
+        self.sources.extend(other.sources);
+    }
+    /// Append copies of `other`'s draws, each changed by `patch`, and its boundaries: a
+    /// replayed record goes straight into the layer's program instead of through a program of
+    /// its own (#594); `program.append_patched(&record.program, |draw| camera.patch(draw))`.
+    pub fn append_patched(&mut self, other: &Self, mut patch: impl FnMut(&mut PrimitiveDraw)) {
+        let offset = self.draws.len();
+        self.draws.reserve(other.draws.len());
+        for draw in &other.draws {
+            self.draws.push(draw.clone());
+            if let Some(added) = self.draws.last_mut() {
+                patch(added);
+            }
+        }
+        self.boundaries
+            .extend(other.boundaries.iter().map(|boundary| StencilBoundary {
+                before_draw: boundary.before_draw + offset,
+                command: boundary.command,
+            }));
+    }
+    pub(crate) fn mark_structure(&mut self, structure: i32, first_draw: usize) {
+        if first_draw < self.draws.len() {
+            self.sources.push(StructureDrawSpan {
+                range: first_draw..self.draws.len(),
+                structure,
+            });
+        }
+    }
+    /// The program's draw and boundary counts, to restore with `truncate`.
+    pub fn mark(&self) -> (usize, usize) {
+        (self.draws.len(), self.boundaries.len())
+    }
+    /// Drop what was appended after `mark`; `program.truncate(mark)`.
+    pub fn truncate(&mut self, (draws, boundaries): (usize, usize)) {
+        self.draws.truncate(draws);
+        self.boundaries.truncate(boundaries);
+        self.sources.retain(|source| source.range.end <= draws);
     }
     pub fn command(&mut self, command: StencilCommand) {
         self.boundaries.push(StencilBoundary {
@@ -63,7 +111,13 @@ impl StencilProgram {
         self.command(StencilCommand::DimensionMaskEnd);
     }
     pub fn geometry(&mut self, draws: Vec<PrimitiveDraw>) {
-        self.draws.extend(draws);
+        // A group often contributes one already lowered draw buffer. Move it into the
+        // empty program so its records are only copied when they have to be concatenated.
+        if self.draws.capacity() == 0 {
+            self.draws = draws;
+        } else {
+            self.draws.extend(draws);
+        }
     }
 }
 pub(crate) fn filtered_boundaries(

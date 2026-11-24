@@ -153,6 +153,7 @@ impl RenderGraduatedTrihedron {
         let program = StencilProgram {
             draws: self.render(view, extent)?,
             boundaries: Vec::new(),
+            sources: Vec::new(),
         };
         Ok(RenderLayer::from_stencil_program(
             program, true, true, false,

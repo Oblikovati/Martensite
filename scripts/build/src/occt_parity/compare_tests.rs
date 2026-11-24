@@ -19,8 +19,35 @@ fn case_lines_parse_name_time_and_checksum() {
             name: "datamap_bind".into(),
             nanos: 15.25,
             checksum: 1_000_000,
+            work: vec![],
         }]
     );
+}
+
+#[test]
+fn a_fourth_column_carries_the_work_counters() {
+    let lines = parse_lines("Rust", "frame\t2.5\t7\tbuffers=3 upload_kib=1.5").unwrap();
+    let names: Vec<(&str, f64)> = (lines[0].work.iter())
+        .map(|value| (value.name.as_str(), value.value))
+        .collect();
+    assert_eq!(names, vec![("buffers", 3.0), ("upload_kib", 1.5)]);
+}
+
+#[test]
+fn a_malformed_work_column_names_the_line() {
+    let text = parse_lines("Rust", "frame\t2.5\t7\tbuffers")
+        .unwrap_err()
+        .to_string();
+    assert!(text.contains("\"frame\\t2.5\\t7\\tbuffers\""), "{text}");
+}
+
+#[test]
+fn the_latest_rust_work_reaches_the_comparison() {
+    let occt = runs("OCCT", &["a\t10\t7", "a\t10\t7"]);
+    let rust = runs("Rust", &["a\t5\t7\tbuffers=4", "a\t5\t7\tbuffers=2"]);
+    let compared = compare(&occt, &rust, 0.05).unwrap();
+    assert_eq!(compared[0].rust_work.len(), 1);
+    assert_eq!(compared[0].rust_work[0].value, 2.0);
 }
 
 #[test]

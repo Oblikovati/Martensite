@@ -9,8 +9,9 @@
 //! bind no texture. Under the fixed-function option (ffpEnable) the environment is bound as an
 //! ordinary texture with `GL_SPHERE_MAP` generation (`surface_sphere_texgen`).
 use crate::{
-    PrimitiveDraw, PrimitiveTopology, RenderError, error::rejected, primitive::PrimitiveSubmission,
-    surface_texture::SurfaceTextureStyle, text_submission::TextSceneContext,
+    PrimitiveDraw, PrimitiveTopology, RenderError, draw::DrawStream, error::rejected,
+    primitive::PrimitiveSubmission, surface_texture::SurfaceTextureStyle,
+    text_submission::TextSceneContext,
 };
 use martensite_tkernel::ncollection::Mat4;
 use martensite_tkernel::standard::Handle;
@@ -21,7 +22,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct SphereMapTransform {
     /// `occNormal` per vertex; zero where the array has none (the generic attribute default).
-    pub normals: Vec<[f32; 3]>,
+    pub normals: DrawStream<[f32; 3]>,
     /// occModelWorldMatrix, its inverse transpose, occWorldViewMatrix, its inverse transpose.
     matrices: [[f32; 16]; 4],
 }
@@ -29,7 +30,7 @@ impl SphereMapTransform {
     /// Invert the float matrices as `NCollectionMat4<float>::Inverted` does for the state
     /// uniforms; `SphereMapTransform::new(normals, model_world, world_view)?`.
     pub fn new(
-        normals: Vec<[f32; 3]>,
+        normals: DrawStream<[f32; 3]>,
         model_world: [f32; 16],
         world_view: [f32; 16],
     ) -> Result<Self, RenderError> {
@@ -98,7 +99,7 @@ fn environment_style(
     let parameters = environment.get_params();
     let sampler = images.samplers.policy(&image, &parameters)?;
     let transform = sphere_map_transform(primitive, context)?;
-    let uv = vec![[0., 0., 0., 1.]; transform.normals.len()];
+    let uv = crate::surface_texture_uv::environment_coordinates(primitive, transform.normals.len());
     let mut style = crate::retained_surface_texture::extracted_surface_style(
         image,
         uv,
@@ -133,10 +134,7 @@ fn sphere_map_transform(
     primitive: &PrimitiveSubmission,
     context: &TextSceneContext<'_>,
 ) -> Result<SphereMapTransform, RenderError> {
-    let normals = match primitive.normals()? {
-        Some(normals) => normals,
-        None => vec![[0.; 3]; primitive.positions()?.len()],
-    };
+    let normals = primitive.shared_sphere_normals()?;
     let (model_world, world_view) = crate::persistent_transform::lighting_matrices(context)?;
     SphereMapTransform::new(normals, model_world, world_view)
 }
@@ -150,7 +148,7 @@ mod tests {
         model[12] = 2.;
         model[0] = 4.;
         let view = Mat4::<f32>::identity().data();
-        let transform = SphereMapTransform::new(vec![[0., 0., 1.]], model, view).unwrap();
+        let transform = SphereMapTransform::new(vec![[0., 0., 1.]].into(), model, view).unwrap();
         let block = transform.encode();
         assert_eq!(block.len(), 256);
         let floats: Vec<f32> = block
@@ -165,11 +163,23 @@ mod tests {
     }
     #[test]
     fn singular_matrices_are_rejected_with_their_values() {
-        let error = SphereMapTransform::new(vec![], [0.; 16], [0.; 16]).unwrap_err();
+        let error = SphereMapTransform::new(DrawStream::default(), [0.; 16], [0.; 16]).unwrap_err();
         assert!(
             error
                 .to_string()
                 .contains("invertible environment-mapping matrix")
         );
+    }
+
+    #[test]
+    fn a_camera_change_refreshes_matrices_and_keeps_sphere_normals_shared() {
+        let normals: DrawStream<_> = vec![[0., 0., 1.]].into();
+        let identity = Mat4::<f32>::identity().data();
+        let first = SphereMapTransform::new(normals.clone(), identity, identity).unwrap();
+        let mut view = identity;
+        view[14] = -4.;
+        let moved = SphereMapTransform::new(normals, identity, view).unwrap();
+        assert_eq!(first.normals.identity(), moved.normals.identity());
+        assert_ne!(first.encode(), moved.encode());
     }
 }

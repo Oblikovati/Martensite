@@ -1,6 +1,6 @@
 //! Native shaded Add orchestration preserves actual WF fallbacks and ordered face boundaries.
 use super::shaded_shape_triangles::ShadedTexelParameters;
-use super::{StdPrsShadedShape, StdPrsToolTriangulatedShape, StdPrsVolume};
+use super::{StdPrsMeshLod, StdPrsShadedShape, StdPrsToolTriangulatedShape, StdPrsVolume};
 use crate::prs3d::Prs3dDrawer;
 use martensite_tkbrep::{
     brep::BRepBuilder,
@@ -15,6 +15,7 @@ struct ShadedPresentationContext<'a> {
     drawer: &'a Handle<Prs3dDrawer>,
     group: &'a Handle<dyn Graphic3dGroup>,
     texels: ShadedTexelParameters,
+    mesh_lod: Option<&'a StdPrsMeshLod>,
 }
 type ShadedPresentationResources<'a> = (
     &'a dyn HandleReference<dyn Graphic3dStructureSource>,
@@ -39,10 +40,34 @@ impl<'a> ShadedPresentationContext<'a> {
             drawer,
             group,
             texels,
+            mesh_lod: None,
         }
     }
 }
 impl StdPrsShadedShape {
+    /// Lower an approved solid as shaded triangles with privately tessellated alternates.
+    /// Example: `Self::add_with_mesh_lod(&prs, &solid, &drawer, &approval)?`.
+    pub fn add_with_mesh_lod(
+        prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+        shape: &Shape,
+        drawer: &Handle<Prs3dDrawer>,
+        approval: &StdPrsMeshLod,
+    ) -> Result<(), Failure> {
+        let group = Handle::default();
+        let dummy = Point2::default();
+        let mut context = ShadedPresentationContext::from_arguments(
+            (prs, drawer, &group),
+            (false, dummy, dummy, dummy),
+        );
+        if !shape.is_null()
+            && shape.shape_type()? == ShapeEnum::Solid
+            && !drawer.face_boundary_draw()
+        {
+            context.mesh_lod = Some(approval);
+        }
+        add_shaded_presentation(shape, StdPrsVolume::Autodetection, &context)
+    }
+
     /// Build native shaded groups without UVs; `Self::add(&prs,&shape,&drawer,StdPrsVolume::Autodetection,&Handle::default())?`.
     pub fn add(
         prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
@@ -122,21 +147,28 @@ fn shade_native_shape<S: TopoDSShapeReadSource>(
     if triangles.is_null() {
         return Ok(());
     }
-    emit_shaded_triangle_group(&triangles, closed, context)
+    let group = shaded_triangle_group(closed, context)?;
+    if let Some(approval) = context.mesh_lod
+        && group.supports_triangle_mesh_levels()
+    {
+        let alternates = source.read_current_shape(|shape| Ok(approval.tessellate(shape)))?;
+        group.add_triangle_mesh_levels(&triangles, &alternates, approval.pixel_error());
+    } else {
+        group.add_primitive_array(&triangles.cast(), true);
+    }
+    Ok(())
 }
-fn emit_shaded_triangle_group(
-    triangles: &Handle<Graphic3dArrayOfTriangles>,
+fn shaded_triangle_group(
     closed: bool,
     context: &ShadedPresentationContext<'_>,
-) -> Result<(), Failure> {
+) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
     let group = selected_shaded_group(context)?;
     group.set_closed(closed);
     let shading = context.drawer.shading_aspect();
     let reference = shading.aspect_ref();
     let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
     group.set_group_primitives_aspect(&aspect);
-    group.add_primitive_array(&triangles.cast(), true);
-    Ok(())
+    Ok(group)
 }
 fn selected_shaded_group(
     context: &ShadedPresentationContext<'_>,

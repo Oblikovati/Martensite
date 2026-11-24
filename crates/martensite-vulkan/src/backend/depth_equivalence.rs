@@ -47,11 +47,23 @@ pub(crate) fn is_unorm24(format: vk::Format) -> bool {
 /// Decode one depth texel copied from the depth aspect; `depth_value(format, word)`.
 pub(crate) fn depth_value(format: vk::Format, word: [u8; 4]) -> f32 {
     if is_unorm24(format) {
-        // Buffer copies of 24-bit depth place it in the low 24 bits of each 32-bit texel.
-        let bits = u32::from_ne_bytes(word) & 0x00ff_ffff;
-        return (f64::from(bits) / f64::from(0x00ff_ffff_u32)) as f32;
+        return unorm24_depth_value(word);
     }
     f32::from_ne_bytes(word)
+}
+
+fn unorm24_depth_value(word: [u8; 4]) -> f32 {
+    // Buffer copies of 24-bit depth place it in the low 24 bits of each 32-bit texel.
+    let bits = u32::from_ne_bytes(word) & 0x00ff_ffff;
+    (f64::from(bits) / f64::from(0x00ff_ffff_u32)) as f32
+}
+
+/// Decode a complete plane with the selected encoding outside the pixel loop.
+pub(super) fn depth_plane(format: vk::Format, words: &[[u8; 4]]) -> Vec<f32> {
+    if is_unorm24(format) {
+        return words.iter().copied().map(unorm24_depth_value).collect();
+    }
+    words.iter().copied().map(f32::from_ne_bytes).collect()
 }
 
 /// The value a capture reads back for `window` depth stored in `format`; `stored_depth(f, 0.5)`.
@@ -167,5 +179,18 @@ mod tests {
         );
         assert_eq!(DepthFormats::FLOAT.of(true), vk::Format::D32_SFLOAT_S8_UINT);
         assert!(!is_unorm24(DepthFormats::FLOAT.plain));
+    }
+
+    #[test]
+    fn depth_planes_keep_scalar_decode_bits_for_both_layouts() {
+        let words = [0xab00_0000_u32, 0x0080_0000, 0x00ff_ffff, 0x8000_0000].map(u32::to_ne_bytes);
+        for format in [DepthFormats::FLOAT.plain, DepthFormats::UNORM24.stencil] {
+            let expected = words.map(|word| depth_value(format, word).to_bits());
+            let actual: Vec<_> = depth_plane(format, &words)
+                .into_iter()
+                .map(f32::to_bits)
+                .collect();
+            assert_eq!(actual, expected);
+        }
     }
 }

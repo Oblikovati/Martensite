@@ -1,6 +1,7 @@
 //! Borrow the actual native AisShape topology field across assignments.
 use super::{AisShapeFields, AisShapeSource};
-use crate::{prs_mgr::PrsMgrPresentableObjectFields, prs3d::Prs3dDrawer};
+use crate::prs_mgr::{PrsMgrPresentableObjectFields, PrsMgrPresentableObjectMembers};
+use crate::prs3d::Prs3dDrawer;
 use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::{
     Failure, Handle, HandleFieldRef, SharedState, catch_native_failure,
@@ -61,8 +62,12 @@ pub trait AisShapeMembers: AisShapeSource {
         let mut fields = self.shape_base().fields.write();
         let previous = std::mem::replace(&mut fields.shape, replacement);
         fields.recompute_bounds = true;
+        let had_mesh_lod = fields.mesh_lod.take().is_some();
         drop(fields);
         drop(previous);
+        if had_mesh_lod {
+            self.set_to_update(1);
+        }
     }
 }
 impl<S: AisShapeSource + ?Sized> AisShapeMembers for S {}
@@ -70,4 +75,24 @@ impl<S: AisShapeSource + ?Sized> AisShapeMembers for S {}
 fn shape_drawer_slot(fields: &PrsMgrPresentableObjectFields) -> &Handle<Prs3dDrawer> {
     // Select the actual native parent member rather than create a temporary owning getter.
     &fields.drawer
+}
+
+#[cfg(test)]
+mod lod_tests {
+    use super::*;
+    use crate::std_prs::{StdPrsMeshLevelRequest, StdPrsMeshLod};
+
+    #[test]
+    fn assigning_a_shape_withdraws_the_previous_mesh_approval() {
+        let part = super::super::AisShape::new(&Shape::default());
+        let request = StdPrsMeshLevelRequest {
+            linear_deflection: 0.1,
+            angular_deflection: 0.5,
+            maximum_deviation: 0.2,
+        };
+        part.set_presentation_mesh_lod(Some(StdPrsMeshLod::new(vec![request], 0.5).unwrap()));
+        assert!(part.shape_base().fields.read().mesh_lod.is_some());
+        part.set_shape(&Shape::default());
+        assert!(part.shape_base().fields.read().mesh_lod.is_none());
+    }
 }

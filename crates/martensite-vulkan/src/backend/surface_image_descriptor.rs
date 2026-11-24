@@ -77,6 +77,7 @@ impl SurfaceImageBinding {
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         self.set = unsafe { runtime.device().allocate_descriptor_sets(&info) }
             .map_err(|e| vk_error("allocate surface image set", e))?[0];
+        runtime.work.add_sets(&info);
         write_surface_descriptor(runtime, self.set, self.view, self.sampler);
         Ok(())
     }

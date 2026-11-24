@@ -18,8 +18,11 @@ fn fixed_font_alpha_replace_keeps_source_color_and_ordinary_alpha_unchanged() {
     let vertex = crate::RenderVertex::new([0.; 3], [0.25, 0.5, 0.75, 0.5]);
     let ordinary = encoded_vertex_header(&vertex, false, false);
     let compatibility = encoded_vertex_header(&vertex, false, true);
-    assert_eq!(packed_vertex_rgba(&ordinary), vertex.color);
-    assert_eq!(packed_vertex_rgba(&compatibility), [0.25, 0.5, 0.75, 1.]);
+    assert_eq!(packed_vertex_rgba(ordinary.as_flattened()), vertex.color);
+    assert_eq!(
+        packed_vertex_rgba(compatibility.as_flattened()),
+        [0.25, 0.5, 0.75, 1.]
+    );
     assert_eq!(vertex.color[3], 0.5);
 }
 #[test]
@@ -44,17 +47,16 @@ fn packed_vertex_rgba(bytes: &[u8]) -> [f32; 4] {
 }
 #[test]
 fn unavailable_surface_and_alpha_only_pack_projective_default_coordinates() {
-    let mut draw = PrimitiveDraw::new(vec![], vec![], crate::identity_clip()).unwrap();
-    let mut bytes = vec![];
-    append_surface_coordinates(&mut bytes, &draw, 0);
-    assert!(bytes.is_empty());
+    let mut draw = side_pack_fixture();
+    assert_eq!(encode_vertices(&draw).len(), 3 * 32);
     draw.surface_cutoff = Some(0.5);
-    append_surface_coordinates(&mut bytes, &draw, 0);
+    let bytes = encode_vertices(&draw);
     let expected: Vec<u8> = [0_f32, 0., 0., 1.]
         .iter()
         .flat_map(|value| value.to_ne_bytes())
         .collect();
-    assert_eq!(bytes, expected);
+    assert_eq!(bytes.len(), 3 * 48);
+    assert_eq!(&bytes[32..48], expected);
 }
 #[test]
 fn unlit_back_rgba_owns_existing_auxiliary_vertex_slot_and_transform_flag() {

@@ -4,16 +4,48 @@ use ash::vk;
 use std::{path::Path, sync::Arc};
 pub(super) type OwnedResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-pub(super) fn stencil_buffer(runtime: &Arc<VulkanRuntime>) -> OwnedResult<DeviceBuffer> {
+/// The colour, depth and stencil copies of one 64x64 owned sample frame.
+pub(super) struct OwnedSampleBuffers {
+    pub color: DeviceBuffer,
+    pub depth: DeviceBuffer,
+    pub stencil: DeviceBuffer,
+}
+
+pub(super) fn sample_buffers(runtime: &Arc<VulkanRuntime>) -> OwnedResult<OwnedSampleBuffers> {
+    Ok(OwnedSampleBuffers {
+        color: readback_buffer(runtime, 16384)?,
+        depth: readback_buffer(runtime, 16384)?,
+        stencil: readback_buffer(runtime, 4096)?,
+    })
+}
+fn readback_buffer(runtime: &Arc<VulkanRuntime>, bytes: u64) -> OwnedResult<DeviceBuffer> {
     let buffer = DeviceBuffer::new(
         runtime,
-        4096,
+        bytes,
         vk::BufferUsageFlags::TRANSFER_DST,
         super::memory_selection::HostBufferAccess::Readback,
     )?;
     Ok(buffer)
 }
-pub(super) fn copy_stencil(
+/// Copy the colour and depth attachments, then the stencil aspect, after `record_frame`.
+pub(super) fn copy_samples(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    resources: &FrameResources,
+    buffers: &OwnedSampleBuffers,
+) {
+    super::record::record_attachment_reads(
+        runtime,
+        command,
+        [
+            Some((&*resources.color, buffers.color.handle)),
+            Some((&*resources.depth, buffers.depth.handle)),
+        ],
+        resources.attachment_extent,
+    );
+    copy_stencil(runtime, command, resources, &buffers.stencil);
+}
+fn copy_stencil(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
     resources: &FrameResources,
@@ -61,14 +93,11 @@ fn host_barrier(runtime: &VulkanRuntime, command: vk::CommandBuffer) {
         );
     }
 }
-pub(super) fn write_images(
-    directory: &Path,
-    resources: &FrameResources,
-    stencil: &DeviceBuffer,
-) -> OwnedResult<()> {
+pub(super) fn write_images(directory: &Path, buffers: &OwnedSampleBuffers) -> OwnedResult<()> {
     std::fs::create_dir(directory)?;
-    let raw_color = resources.color_read.read(16384)?;
-    let raw_depth = resources.depth_read.read(16384)?;
+    let raw_color = buffers.color.read(16384)?;
+    let raw_depth = buffers.depth.read(16384)?;
+    let stencil = &buffers.stencil;
     std::fs::write(directory.join("color.rgba"), raw_color)?;
     std::fs::write(
         directory.join("depth.f32bits.u32le"),

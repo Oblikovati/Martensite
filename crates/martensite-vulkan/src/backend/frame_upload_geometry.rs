@@ -1,52 +1,95 @@
 //! Ordered source encoding stays owned through the existing allocation sequence.
+use super::super::super::fixed_vertex_sources::{
+    expanded_provoking_sources, uses_fixed_flat_vertices,
+};
 use super::*;
 
-pub(super) fn encoded_geometry<'a>(
+pub(super) fn encoded_geometry(
     runtime: &VulkanRuntime,
-    draw: &'a PrimitiveDraw,
-) -> EncodedGeometry<'a> {
+    draw: &PrimitiveDraw,
+    compact_vertices: bool,
+) -> Result<EncodedGeometry, RenderError> {
     if draw.fixed_grid_point {
-        return encoded_fixed_grid_geometry(draw);
+        return Ok(encoded_fixed_grid_geometry(draw));
     }
     let original = crate::quad_assembly::device_quad_indices(draw, runtime.quad_diagonal);
-    let sources = super::super::super::fixed_vertex_sources::fixed_vertex_sources(draw, &original);
+    let packed = if compact_vertices {
+        let normals = &draw
+            .lighting
+            .as_ref()
+            .ok_or_else(|| rejected("packed geometry", "a lit source with vertex normals"))?
+            .normals;
+        super::super::super::mesh_vertex_codec::pack_mesh_vertices(&draw.vertices, normals)
+    } else {
+        None
+    };
+    let (vertices, source_count, mesh_decode) = if let Some((packed, decode)) = packed {
+        (packed, draw.vertices.len(), Some(decode))
+    } else if uses_fixed_flat_vertices(draw) {
+        let sources = expanded_provoking_sources(draw, &original);
+        (
+            encode_vertex_sources(draw, sources.iter().copied()),
+            sources.len(),
+            None,
+        )
+    } else {
+        (encode_vertices(draw), draw.vertices.len(), None)
+    };
     if runtime.text_interpolation
         == crate::RenderTextInterpolationBehavior::ProjectedGrid12FlatCornersV4
         && draw.textured_style.is_some()
     {
-        return encoded_flat_text(encode_vertex_sources(draw, &sources), original);
+        return Ok(encoded_flat_text(vertices, &original));
     }
-    encode_prepared(draw, original, sources)
-}
-
-fn encoded_flat_text(
-    vertices: Vec<u8>,
-    original: std::borrow::Cow<'_, [u32]>,
-) -> EncodedGeometry<'_> {
-    let packed = super::super::super::text_flat_corners::encode(&vertices, &original);
-    EncodedGeometry {
-        indices: encoded_index_bytes(&original, Some(&packed.indices)),
-        _expanded: Some(packed.indices),
-        vertices: packed.vertices,
-        _sources: packed.sources,
-        _original_indices: original,
-    }
-}
-
-fn encode_prepared<'a>(
-    draw: &PrimitiveDraw,
-    original: std::borrow::Cow<'a, [u32]>,
-    sources: Vec<(usize, usize)>,
-) -> EncodedGeometry<'a> {
-    let vertices = encode_vertex_sources(draw, &sources);
     let expanded =
-        super::super::super::fixed_vertex_sources::fixed_expanded_indices(draw, sources.len());
-    EncodedGeometry {
-        indices: encoded_index_bytes(&original, expanded.as_deref()),
-        _expanded: expanded,
+        super::super::super::fixed_vertex_sources::fixed_expanded_indices(draw, source_count);
+    let index_format = IndexFormat::of_draw(draw);
+    let source_indices = expanded.as_deref().unwrap_or(&original);
+    let indices = index_format
+        .encode(source_indices)
+        .ok_or_else(|| rejected(index_format, "an index stream that fits its device format"))?;
+    Ok(EncodedGeometry {
+        index_format,
+        mesh_decode,
+        indices,
+        vertex_alignment: (source_count > 0).then(|| (vertices.len() / source_count) as u64),
         vertices,
-        _sources: sources,
-        _original_indices: original,
+        #[cfg(feature = "command-state-diagnostics")]
+        source_count,
+    })
+}
+
+pub(super) fn compact_line_geometry(draw: &PrimitiveDraw) -> EncodedGeometry {
+    let mut vertices = Vec::with_capacity(draw.vertices.len() * 16);
+    for vertex in draw.vertices.iter() {
+        let [x, y, z] = vertex.position;
+        vertices.extend_from_slice(
+            [x, y, z, vertex.weight]
+                .map(f32::to_ne_bytes)
+                .as_flattened(),
+        );
+    }
+    EncodedGeometry {
+        index_format: IndexFormat::U32,
+        mesh_decode: None,
+        indices: encoded_index_bytes(&draw.indices, None),
+        vertex_alignment: Some(16),
+        vertices,
+        #[cfg(feature = "command-state-diagnostics")]
+        source_count: draw.vertices.len(),
+    }
+}
+
+fn encoded_flat_text(vertices: Vec<u8>, original: &[u32]) -> EncodedGeometry {
+    let packed = super::super::super::text_flat_corners::encode(&vertices, original);
+    EncodedGeometry {
+        index_format: IndexFormat::U32,
+        mesh_decode: None,
+        indices: encoded_index_bytes(original, Some(&packed.indices)),
+        vertices: packed.vertices,
+        vertex_alignment: None,
+        #[cfg(feature = "command-state-diagnostics")]
+        source_count: original.len(),
     }
 }
 
@@ -58,38 +101,50 @@ pub(super) fn encoded_index_bytes(original: &[u32], expanded: Option<&[u32]>) ->
         .collect()
 }
 
-impl EncodedGeometry<'_> {
-    pub(super) fn upload_vertices(
+impl EncodedGeometry {
+    pub(super) fn queue_transfers(
         &self,
         runtime: &Arc<VulkanRuntime>,
-    ) -> Result<DeviceBuffer, RenderError> {
-        // The original encoded vectors remain owned until final assembly, including failure cleanup.
-        upload_bytes(runtime, &self.vertices, vk::BufferUsageFlags::VERTEX_BUFFER)
-    }
-    pub(super) fn upload_indices(
-        &self,
-        runtime: &Arc<VulkanRuntime>,
-    ) -> Result<DeviceBuffer, RenderError> {
-        // Keep this after vertex allocation so the failed-upload cleanup sequence remains unchanged.
-        upload_bytes(runtime, &self.indices, vk::BufferUsageFlags::INDEX_BUFFER)
+        pool: &super::super::super::host_upload_pages::HostUploadPool,
+        transfers: &mut GeometryTransfers,
+        retained: bool,
+    ) -> Result<ResidentGeometry, RenderError> {
+        let vertices = transfers.upload(
+            runtime,
+            pool,
+            vk::BufferUsageFlags::VERTEX_BUFFER,
+            self.vertex_alignment.filter(|_| retained),
+            &self.vertices,
+        )?;
+        let indices = transfers.upload(
+            runtime,
+            pool,
+            vk::BufferUsageFlags::INDEX_BUFFER,
+            retained.then_some(4),
+            &self.indices,
+        )?;
+        Ok(ResidentGeometry {
+            vertices,
+            indices,
+            index_format: self.index_format,
+            mesh_decode: self.mesh_decode.clone(),
+        })
     }
 }
 
-pub(super) fn encoded_fixed_grid_geometry(draw: &PrimitiveDraw) -> EncodedGeometry<'_> {
-    let sources: Vec<_> = draw
-        .indices
-        .iter()
-        .map(|&i| (i as usize, i as usize))
-        .collect();
+pub(super) fn encoded_fixed_grid_geometry(draw: &PrimitiveDraw) -> EncodedGeometry {
+    let sources = draw.indices.iter().map(|&i| (i as usize, i as usize));
     EncodedGeometry {
+        index_format: IndexFormat::U32,
+        mesh_decode: None,
         indices: [0u32, 1, 2, 2, 1, 3]
             .into_iter()
             .flat_map(u32::to_ne_bytes)
             .collect(),
-        vertices: encode_vertex_sources(draw, &sources),
-        _sources: sources,
-        _expanded: None,
-        _original_indices: std::borrow::Cow::Borrowed(&draw.indices),
+        vertices: encode_vertex_sources(draw, sources),
+        vertex_alignment: None,
+        #[cfg(feature = "command-state-diagnostics")]
+        source_count: draw.indices.len(),
     }
 }
 #[cfg(test)]
@@ -107,24 +162,23 @@ mod fixed_grid_encoding_tests {
         let draw =
             PrimitiveDraw::points(vertices, vec![1, 0, 1], crate::identity_clip(), style).unwrap();
         let encoded = encoded_fixed_grid_geometry(&draw);
-        assert_eq!(encoded._sources, vec![(1, 1), (0, 0), (1, 1)]);
         assert_eq!(
             encoded.vertices,
-            encode_vertex_sources(&draw, &[(1, 1), (0, 0), (1, 1)])
+            encode_vertex_sources(&draw, [(1, 1), (0, 0), (1, 1)].into_iter())
         );
         let expected: Vec<u8> = [0u32, 1, 2, 2, 1, 3]
             .into_iter()
             .flat_map(u32::to_ne_bytes)
             .collect();
         assert_eq!(encoded.indices, expected);
-        assert_eq!(draw.indices, vec![1, 0, 1]);
+        assert_eq!(draw.indices(), &[1, 0, 1]);
     }
     #[test]
     fn fixed_grid_lit_uv_instances_retain_every_original_attribute() {
         use martensite_tkservice::graphic3d::Graphic3dTypeOfShadingModel as Model;
         for model in [Model::Unlit, Model::Gouraud, Model::Phong] {
             let mut source = crate::point_surface_texture_tests::fixture::point_draw(model, 3.);
-            source.indices = vec![1, 0, 1];
+            source.indices = vec![1, 0, 1].into();
             let snapshot = source.clone();
             let encoded = encoded_fixed_grid_geometry(&source);
             let stride = if source.lighting.is_some() { 60 } else { 48 };
@@ -177,7 +231,7 @@ mod fixed_grid_encoding_tests {
             2,
             crate::RenderShading::Gouraud,
         );
-        lighting.normals = vec![[1., 0., 0.], [0., 1., 0.]];
+        lighting.normals = vec![[1., 0., 0.], [0., 1., 0.]].into();
         source.lighting = Some(lighting);
         let encoded = encoded_fixed_grid_geometry(&source);
         assert_eq!(encoded.vertices.len(), 3 * 88);
@@ -211,5 +265,72 @@ mod fixed_grid_encoding_tests {
                 color
             );
         }
+    }
+}
+
+#[cfg(all(
+    test,
+    not(any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    ))
+))]
+mod compact_line_tests {
+    use crate::backend::resource_lifecycle_test_support::create_resource_renderer;
+    use crate::{
+        LineStyle, PrimitiveDraw, RenderBackend, RenderFrame, RenderVertex, identity_clip,
+    };
+
+    #[test]
+    fn retained_line_packing_keeps_ordered_pixels_and_depth() {
+        let mut renderer = create_resource_renderer();
+        let plain = weighted_segments();
+        let mut compact = plain.clone();
+        compact.retain_uniform_line();
+        let first = renderer.render(&frame(plain)).unwrap();
+        let before = renderer.work_ledger().totals();
+        let second = renderer.render(&frame(compact.clone())).unwrap();
+        let uploaded = renderer.work_ledger().totals().since(&before);
+        assert_eq!(uploaded.geometry_uploaded_bytes, 4 * 16 + 6 * 4);
+        assert!(first.rgba.as_chunks::<4>().0.contains(&[255, 0, 0, 255]));
+        assert_eq!(second.rgba, first.rgba);
+        assert_eq!(second.depth, first.depth);
+        let before = renderer.work_ledger().totals();
+        renderer.render_deferred(&frame(compact)).unwrap();
+        let warm = renderer.work_ledger().totals().since(&before);
+        assert_eq!((warm.geometry_uploaded_bytes, warm.buffers_created), (0, 0));
+        assert!(renderer.validation_errors().unwrap().is_empty());
+    }
+
+    #[test]
+    fn replacing_vertex_stream_removes_uniform_line_admission() {
+        let mut draw = weighted_segments();
+        draw.retain_uniform_line();
+        assert_eq!(draw.uniform_line_color(), Some([1., 0., 0., 1.]));
+        let unchanged = draw.clone();
+        draw.vertices.make_mut()[1].color = [0., 1., 0., 1.];
+        assert!(crate::highlight_style::HighlightLineSource::resolve(&draw).is_none());
+        assert!(crate::highlight_style::HighlightLineSource::resolve(&unchanged).is_some());
+    }
+
+    fn frame(draw: PrimitiveDraw) -> RenderFrame {
+        RenderFrame::new(16, 16, [0., 0., 0., 1.], vec![draw]).unwrap()
+    }
+
+    fn weighted_segments() -> PrimitiveDraw {
+        let vertices = [
+            [-0.6, -0.3, 0.2, 1.],
+            [1.2, 0.6, 1., 2.],
+            [-0.6, 0.3, 0.6, 1.],
+            [0.6, -0.3, 0.1, 1.],
+        ]
+        .map(|position| RenderVertex::homogeneous(position, [1., 0., 0., 1.]));
+        PrimitiveDraw::segments(
+            vertices.into(),
+            vec![2, 3, 0, 1, 2, 1],
+            identity_clip(),
+            LineStyle::new(1., u16::MAX, 1).unwrap(),
+        )
+        .unwrap()
     }
 }

@@ -56,7 +56,7 @@ fn assert_pending_binding_refused(with_gui: bool) {
     assert!(
         view.publish_gui_outcome(
             &pending_epoch,
-            Ok(binding_capture()),
+            Ok(binding_capture().into()),
             view.redraw_target_stamp()
         )
         .is_err()
@@ -82,7 +82,11 @@ fn checked_gui_pending_capture_cannot_cross_equal_handle_rebind() {
     let pending = view.gui_layers.read().target_stamp();
     view.set_window(&Handle::default(), &window.cast(), 0);
     let failure = view
-        .publish_checked_gui(pending, Ok(binding_capture()), view.redraw_target_stamp())
+        .publish_checked_gui(
+            pending,
+            Ok(binding_capture().into()),
+            view.redraw_target_stamp(),
+        )
         .unwrap_err();
     let Some(crate::RenderGuiSurfaceOutcome::SurfaceChanged(change)) =
         failure.gui_surface_outcome()
@@ -101,8 +105,12 @@ fn checked_policy_keeps_model_only_pending_rebind_refusal() {
     let pending = view.gui_layers.read().epoch.clone();
     view.set_window(&Handle::default(), &window.cast(), 0);
     assert!(
-        view.publish_gui_outcome(&pending, Ok(binding_capture()), view.redraw_target_stamp())
-            .is_err()
+        view.publish_gui_outcome(
+            &pending,
+            Ok(binding_capture().into()),
+            view.redraw_target_stamp()
+        )
+        .is_err()
     );
     assert!(view.capture().is_err());
     view.try_redraw().unwrap();

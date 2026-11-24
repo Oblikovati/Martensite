@@ -11,15 +11,12 @@ use super::{
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::program_error;
-use martensite_tkernel::standard::{
-    Failure, Handle, HandleSlot, SharedState, StandardTransient, Transient,
-};
+use martensite_tkernel::standard::{Failure, Handle, HandleSlot, StandardTransient, Transient};
 use martensite_tkmath::toploc::Datum3;
 use std::io;
 
 /// The fields of a driver structure: the protected members, the public bit fields and the
 /// public view affinity.
-#[derive(Clone)]
 pub struct Graphic3dCStructureFields {
     /// `myGraphicDriver`.
     pub graphic_driver: Handle<dyn Graphic3dGraphicDriver>,
@@ -72,10 +69,60 @@ pub struct Graphic3dCStructureFields {
     pub view_affinity: Handle<Graphic3dViewAffinity>,
 }
 
+impl Clone for Graphic3dCStructureFields {
+    fn clone(&self) -> Self {
+        self.copy_with_groups(self.groups.clone())
+    }
+}
+
+impl Graphic3dCStructureFields {
+    /// Capture render state and group handles together, without cloning the sequence nodes.
+    /// Example: `let (state, groups) = structure.cstructure_base().fields.read().snapshot_with_group_handles();`
+    pub fn snapshot_with_group_handles(&self) -> (Self, Vec<Handle<dyn Graphic3dGroup>>) {
+        (
+            self.copy_with_groups(Default::default()),
+            self.group_handles(),
+        )
+    }
+
+    fn group_handles(&self) -> Vec<Handle<dyn Graphic3dGroup>> {
+        self.groups.iter().map(|slot| Handle::clone(slot)).collect()
+    }
+
+    fn copy_with_groups(&self, groups: Sequence<HandleSlot<dyn Graphic3dGroup>>) -> Self {
+        Self {
+            graphic_driver: self.graphic_driver.clone(),
+            groups,
+            bnd_box: self.bnd_box,
+            trsf: self.trsf.clone(),
+            trsf_pers: self.trsf_pers.clone(),
+            clip_planes: self.clip_planes.clone(),
+            highlight_style: self.highlight_style.clone(),
+            id: self.id,
+            z_layer: self.z_layer,
+            priority: self.priority,
+            previous_priority: self.previous_priority,
+            is_culled: self.is_culled,
+            bnd_box_clip_check: self.bnd_box_clip_check,
+            has_group_trsf: self.has_group_trsf,
+            has_group_flipping: self.has_group_flipping,
+            is_infinite: self.is_infinite,
+            stick: self.stick,
+            highlight: self.highlight,
+            visible: self.visible,
+            hlr_validation: self.hlr_validation,
+            is_for_highlight: self.is_for_highlight,
+            is_mutable: self.is_mutable,
+            is_2d_text: self.is_2d_text,
+            view_affinity: self.view_affinity.clone(),
+        }
+    }
+}
+
 /// The embedded state of a driver structure.
 pub struct Graphic3dCStructureBase {
     /// The fields, shared by every handle.
-    pub fields: SharedState<Graphic3dCStructureFields>,
+    pub fields: super::RevisedState<Graphic3dCStructureFields>,
 }
 
 impl Graphic3dCStructureBase {
@@ -95,7 +142,7 @@ impl Graphic3dCStructureBase {
         };
         let id = driver_ref.graphic_driver_base().new_identification()?;
         Ok(Self {
-            fields: SharedState::new(default_fields(driver, id)),
+            fields: super::RevisedState::new(default_fields(driver, id)),
         })
     }
 }
@@ -195,13 +242,7 @@ pub trait Graphic3dCStructureMembers: Graphic3dCStructure {
     }
     /// `Groups` (a copy of the sequence); `cstructure.groups().len()`.
     fn groups(&self) -> Vec<Handle<dyn Graphic3dGroup>> {
-        self.cstructure_base()
-            .fields
-            .read()
-            .groups
-            .iter()
-            .map(|slot| Handle::clone(slot))
-            .collect()
+        self.cstructure_base().fields.read().group_handles()
     }
     /// `Transformation`; `cstructure.transformation().is_null()`.
     fn transformation(&self) -> Handle<Datum3> {
@@ -290,7 +331,7 @@ pub trait Graphic3dCStructureMembers: Graphic3dCStructure {
     }
     /// `SetCulled`; `cstructure.set_culled(false)`.
     fn set_culled(&self, is_culled: bool) {
-        self.cstructure_base().fields.write().is_culled = is_culled;
+        self.cstructure_base().fields.write_derived().is_culled = is_culled;
     }
     /// `MarkAsNotCulled`; `cstructure.mark_as_not_culled()`.
     fn mark_as_not_culled(&self) {

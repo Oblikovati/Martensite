@@ -102,13 +102,13 @@ fn quad_texture_style(
     let uv = corners
         .iter()
         .map(|(_, [s, t])| transform_surface_uv([*s, *t, 0., 1.], parameters, image.top_down))
-        .collect();
+        .collect::<Vec<_>>();
     SurfaceTextureStyle {
         image,
         pending_texgen: None,
         fixed_environment: false,
         sampler,
-        uv,
+        uv: uv.into(),
         back_vertex: false,
         vertex_override: false,
         modulate: parameters.is_modulate(),

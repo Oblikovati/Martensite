@@ -34,7 +34,7 @@ pub use selection::{SelectMgrSelection, SelectMgrSensitiveEntity};
 
 mod frustum_builder;
 mod view_clip_range;
-pub use frustum_builder::SelectMgrFrustumBuilder;
+pub use frustum_builder::{SelectMgrFrustumBuilder, SelectMgrViewPlaneProjector};
 pub use view_clip_range::SelectMgrViewClipRange;
 
 mod base_intersector;
@@ -67,6 +67,7 @@ mod frustum_quadric_geometry;
 mod frustum_sphere;
 pub use frustum::SelectMgrFrustumCore;
 mod frustum_box;
+mod frustum_box_probe;
 mod frustum_dump;
 mod frustum_linear;
 mod frustum_polygon;

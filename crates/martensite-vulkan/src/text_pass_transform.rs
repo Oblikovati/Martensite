@@ -4,11 +4,13 @@ impl TextTransform {
     /// Preserve native cumulative local-plane state; `transform.pass_clips(text, aspect, 16, offsets)` retains ordered decoration and foreground.
     pub(crate) fn pass_clips(
         &self,
-        text: &Graphic3dText,
+        text: impl Into<LabelPlacement>,
         aspect: &dyn Graphic3dAspectsSource,
         size: u32,
         offsets: &[[f64; 2]],
     ) -> Result<Vec<[f32; 16]>, RenderError> {
+        let placement = text.into();
+        let text = &placement;
         if self.pixel_coordinates {
             return Ok(self.pixel_pass_clips(text, aspect, offsets));
         }
@@ -22,7 +24,7 @@ impl TextTransform {
     }
     fn ordinary_pass_clip(
         &self,
-        text: &Graphic3dText,
+        text: &LabelPlacement,
         aspect: &dyn Graphic3dAspectsSource,
         size: u32,
         offset: [f64; 2],
@@ -34,7 +36,7 @@ impl TextTransform {
     }
     fn local_pass_clips(
         &self,
-        text: &Graphic3dText,
+        text: &LabelPlacement,
         aspect: &dyn Graphic3dAspectsSource,
         size: u32,
         count: usize,
@@ -61,7 +63,7 @@ impl TextTransform {
     }
     fn local_pass_model(
         &self,
-        text: &Graphic3dText,
+        text: &LabelPlacement,
         aspect: &dyn Graphic3dAspectsSource,
         size: u32,
     ) -> Result<Mat4<f64>, RenderError> {

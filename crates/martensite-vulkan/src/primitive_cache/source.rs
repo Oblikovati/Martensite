@@ -1,0 +1,228 @@
+//! Exact source keys include live public layout fields that can change without a byte edit.
+use super::PrimitiveSubmission;
+use martensite_tkernel::ncollection::BufferRevision;
+use martensite_tkservice::graphic3d::{
+    Graphic3dAttribute, Graphic3dBoundBufferState, Graphic3dBufferMembers, Graphic3dBufferRead,
+    Graphic3dTypeOfAttribute, Graphic3dTypeOfData,
+};
+
+#[derive(Clone, PartialEq, Eq)]
+pub(crate) struct GeometryStamp {
+    pub(crate) attributes: AttributeStamp,
+    pub(crate) indices: Option<IndexStamp>,
+    pub(crate) bounds: Option<BoundsStamp>,
+}
+
+impl GeometryStamp {
+    pub(super) fn has_vertex_colors(&self) -> bool {
+        self.attributes.layout[1].is_some()
+    }
+
+    pub(crate) fn capture(primitive: &PrimitiveSubmission) -> Option<Self> {
+        let attributes = AttributeStamp::capture(&primitive.attributes.get()?.read_buffer())?;
+        let indices = match primitive.indices.get() {
+            Some(buffer) => Some(IndexStamp::capture(&buffer.read_buffer())?),
+            None => None,
+        };
+        let bounds = match primitive.bounds.get() {
+            Some(buffer) => Some(BoundsStamp::capture(&buffer.state())?),
+            None => None,
+        };
+        Some(Self {
+            attributes,
+            indices,
+            bounds,
+        })
+    }
+
+    /// Whether `capture(primitive)` would equal this stamp, compared in place: a group record
+    /// checks every primitive on every frame, and building and dropping the captured revisions
+    /// took 11% of the structure draws of `frame_transparent_1k` (#594).
+    pub(crate) fn matches(&self, primitive: &PrimitiveSubmission) -> bool {
+        let Some(attributes) = primitive.attributes.get() else {
+            return false;
+        };
+        if !self.attributes.matches(&attributes.read_buffer()) {
+            return false;
+        }
+        let indices = match (&self.indices, primitive.indices.get()) {
+            (None, None) => true,
+            (Some(stamp), Some(buffer)) => stamp.probe_matches(&buffer.read_buffer()),
+            _ => false,
+        };
+        indices
+            && match (&self.bounds, primitive.bounds.get()) {
+                (None, None) => true,
+                (Some(stamp), Some(buffer)) => {
+                    BoundsStamp::capture(&buffer.state()).as_ref() == Some(stamp)
+                }
+                _ => false,
+            }
+    }
+}
+
+pub(crate) struct BatchGeometryStamp {
+    revision: BufferRevision,
+    count: i32,
+    stride: i32,
+    interleaved: bool,
+    layout: [Graphic3dAttribute; 2],
+    indices: IndexStamp,
+}
+
+impl BatchGeometryStamp {
+    pub(crate) fn capture(primitive: &PrimitiveSubmission) -> Option<Self> {
+        if !primitive.bounds.is_null() {
+            return None;
+        }
+        let attributes = primitive.attributes.get()?;
+        let indices = primitive.indices.get()?;
+        let read = attributes.read_immutable_buffer()?;
+        let (interleaved, layout) = read.attribute_layout();
+        let layout = layout.try_into().ok()?;
+        let (revision, count, stride) = (
+            read.content_revision()?,
+            read.element_count(),
+            read.element_stride(),
+        );
+        drop(read);
+        Some(Self {
+            revision,
+            count,
+            stride,
+            interleaved,
+            layout,
+            indices: IndexStamp::capture(&indices.read_immutable_buffer()?)?,
+        })
+    }
+
+    pub(crate) fn probe_matches(&self, primitive: &PrimitiveSubmission) -> bool {
+        let Some(attributes) = primitive.attributes.get() else {
+            return false;
+        };
+        let Some(indices) = primitive.indices.get() else {
+            return false;
+        };
+        attributes
+            .read_immutable_buffer()
+            .as_ref()
+            .is_some_and(|read| self.matches_attributes(read))
+            && indices
+                .read_immutable_buffer()
+                .as_ref()
+                .is_some_and(|read| self.indices.probe_matches(read))
+            && primitive.bounds.is_null()
+    }
+
+    fn matches_attributes(&self, read: &Graphic3dBufferRead<'_>) -> bool {
+        let (interleaved, layout) = read.attribute_layout();
+        interleaved == self.interleaved
+            && layout == self.layout
+            && read.element_count() == self.count
+            && read.element_stride() == self.stride
+            && read.matches_content_revision(&self.revision)
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub(crate) struct AttributeStamp {
+    revision: BufferRevision,
+    count: i32,
+    layout: [Option<AttributePlacement>; 3],
+}
+
+#[derive(Clone, PartialEq, Eq)]
+struct AttributePlacement {
+    kind: Graphic3dTypeOfData,
+    first: Option<usize>,
+    second: Option<usize>,
+}
+
+impl AttributeStamp {
+    /// Whether `capture(read)` would equal this stamp, without copying the revision.
+    fn matches(&self, read: &Graphic3dBufferRead<'_>) -> bool {
+        use Graphic3dTypeOfAttribute::{Color, Norm, Pos};
+        read.matches_content_revision(&self.revision)
+            && read.element_count() == self.count
+            && self.layout == [Pos, Color, Norm].map(|role| AttributePlacement::capture(read, role))
+    }
+
+    pub(crate) fn capture(read: &Graphic3dBufferRead<'_>) -> Option<Self> {
+        use Graphic3dTypeOfAttribute::{Color, Norm, Pos};
+        Some(Self {
+            revision: read.content_revision()?,
+            count: read.element_count(),
+            layout: [Pos, Color, Norm].map(|role| AttributePlacement::capture(read, role)),
+        })
+    }
+}
+
+impl AttributePlacement {
+    fn capture(read: &Graphic3dBufferRead<'_>, role: Graphic3dTypeOfAttribute) -> Option<Self> {
+        let stream = read.attribute(role)?;
+        Some(Self {
+            kind: stream.kind,
+            first: stream.byte_offset(0),
+            second: stream.byte_offset(1),
+        })
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub(crate) struct UvStamp {
+    revision: BufferRevision,
+    count: i32,
+    placement: Option<AttributePlacement>,
+}
+
+impl UvStamp {
+    pub(crate) fn capture(read: &Graphic3dBufferRead<'_>) -> Option<Self> {
+        Some(Self {
+            revision: read.content_revision()?,
+            count: read.element_count(),
+            placement: AttributePlacement::capture(read, Graphic3dTypeOfAttribute::Uv),
+        })
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub(crate) struct IndexStamp {
+    revision: BufferRevision,
+    count: i32,
+    stride: i32,
+}
+
+impl IndexStamp {
+    fn probe_matches(&self, read: &Graphic3dBufferRead<'_>) -> bool {
+        read.matches_content_revision(&self.revision)
+            && self.count == read.element_count()
+            && self.stride == read.element_stride()
+    }
+
+    pub(crate) fn capture(read: &Graphic3dBufferRead<'_>) -> Option<Self> {
+        Some(Self {
+            revision: read.content_revision()?,
+            count: read.element_count(),
+            stride: read.element_stride(),
+        })
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub(crate) struct BoundsStamp {
+    revision: BufferRevision,
+    count: i32,
+    capacity: i32,
+    colors: bool,
+}
+
+impl BoundsStamp {
+    pub(crate) fn capture(read: &Graphic3dBoundBufferState) -> Option<Self> {
+        Some(Self {
+            revision: read.data.content_revision()?,
+            count: read.nb_bounds,
+            capacity: read.nb_max_bounds,
+            colors: read.has_colors,
+        })
+    }
+}

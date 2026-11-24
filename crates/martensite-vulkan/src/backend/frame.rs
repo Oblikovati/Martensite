@@ -1,23 +1,49 @@
 //! Frame resources are private and never outlive the device that created them.
 #[cfg(test)]
 use super::transform_constants::encode_transform;
+#[path = "draw_instance_upload.rs"]
+mod draw_instance_upload;
 #[path = "frame_draw_upload.rs"]
 mod draw_upload;
 #[path = "frame_upload_point.rs"]
 mod upload_point;
 use draw_upload::upload_draw;
+#[path = "frame_draw_owners.rs"]
+mod draw_owners;
 #[path = "frame_setup.rs"]
 mod frame_setup;
 use super::{
-    buffer::DeviceBuffer, image::TargetImage, memory_selection::HostBufferAccess,
-    pipeline::DrawPipeline, pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
+    geometry_buffer::GeometryBuffer, geometry_transfer::GeometryTransfers,
+    host_upload_pages::FrameUploadPages, image::TargetImage, pipeline::DrawPipeline,
+    pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
 };
-use crate::{FrameCapture, PrimitiveDraw, RenderError, RenderFrame, error::rejected};
+use crate::{PrimitiveDraw, RenderError, RenderFrame, error::rejected};
 use ash::vk;
+use draw_owners::DrawGpuOwners;
 use std::sync::Arc;
+
+// Diagnostic captures require individual draw streams and skip batch dispatch.
+#[cfg_attr(
+    any(
+        feature = "command-state-diagnostics",
+        feature = "vertex-output-diagnostics"
+    ),
+    allow(dead_code)
+)]
+#[path = "geometry_batch.rs"]
+mod geometry_batch;
+pub(crate) use geometry_batch::GeometryBatch;
+
+struct FrameDrawUploads<'a> {
+    geometry_batch: Option<&'a Arc<GeometryBatch>>,
+    geometry: GeometryTransfers,
+    storage: FrameUploadPages<'a>,
+    dynamic_lighting: bool,
+    compact_vertices: bool,
+}
 pub(super) struct UploadedDraw {
     pub window_depth_expected: bool,
-    pub window_depth_status: Option<super::window_depth_status::WindowDepthStatus>,
+    pub window_depth_status: Option<Box<super::window_depth_status::WindowDepthStatus>>,
     #[cfg(feature = "vertex-output-diagnostics")]
     pub vertex_output: Option<super::vertex_output::VertexOutputResources>,
     #[cfg(feature = "command-state-diagnostics")]
@@ -29,8 +55,10 @@ pub(super) struct UploadedDraw {
     )>,
     pub sample_alpha_cutoff: bool,
     pub oit: Option<super::oit_upload::OitUploadedVariants>,
-    pub vertices: DeviceBuffer,
-    pub indices: DeviceBuffer,
+    pub vertices: Arc<GeometryBuffer>,
+    pub indices: Arc<GeometryBuffer>,
+    pub index_format: super::geometry_residency::IndexFormat,
+    pub mesh_decode: Option<Arc<super::mesh_vertex_codec::MeshPositionDecode>>,
     pub count: u32,
     pub instances: u32,
     pub point_viewports: Option<[vk::Viewport; 2]>,
@@ -40,7 +68,14 @@ pub(super) struct UploadedDraw {
     pub presentation: DrawPresentation,
     pub bindings: DrawBindings,
     /// The registered user program replacing the built-in pipeline (`user_program_draw`).
-    pub user_program: Option<super::user_program_draw::UploadedUserProgram>,
+    pub user_program: Option<Box<super::user_program_draw::UploadedUserProgram>>,
+    /// The indirect run this draw starts, which the main pass records in its place and in the
+    /// place of the draws after it (draw_table.rs, #594).
+    pub table_run: Option<Box<super::draw_table::DrawTableRun>>,
+    /// The lighting binding is the previous draw's, which differs in the world and normal
+    /// matrices: only a run draws it, and a draw left out of a run binds its own block
+    /// (`draw_table::repair_borrowed_lighting`).
+    pub borrowed_lighting: bool,
 }
 pub(super) struct DrawLine {
     pub width: Option<f32>,
@@ -53,6 +88,7 @@ pub(super) struct WideLineDraw {
     pub x_major: u32,
     pub offsets: Vec<f32>,
 }
+#[derive(PartialEq)]
 pub(super) struct DrawPresentation {
     pub annotation: bool,
     /// Dimension label rectangle: stencil writes only, depth test off.
@@ -69,31 +105,37 @@ pub(super) struct DrawPresentation {
     pub face_culling: crate::RenderFaceCulling,
 }
 pub(super) struct DrawBindings {
-    pub clipping: Option<super::storage_descriptor::UploadedStorage>,
-    pub lighting: Option<super::storage_descriptor::UploadedStorage>,
-    pub sprite: Option<super::storage_descriptor::UploadedStorage>,
+    pub clipping: Option<Box<super::storage_descriptor::UploadedStorage>>,
+    pub lighting: Option<Arc<super::storage_descriptor::UploadedStorage>>,
+    pub sprite: Option<Arc<super::storage_descriptor::UploadedStorage>>,
     pub surface_image: Option<Arc<super::surface_image_descriptor::SurfaceImageBinding>>,
     pub pbr_environment: Option<Arc<super::pbr_environment::PbrEnvironment>>,
     pub material_maps: Option<Arc<super::material_map_descriptor::MaterialMapBinding>>,
-    pub sphere_map: Option<super::storage_descriptor::UploadedStorage>,
+    pub sphere_map: Option<Box<super::storage_descriptor::UploadedStorage>>,
     pub shadow_maps: Option<Arc<super::shadow_maps::ShadowMapSet>>,
 }
 pub(super) struct FrameResources {
+    pub(super) secondary_layers: super::secondary_layer_commands::FrameSecondaryLayers,
     attachment_coordinates: super::attachment_coordinates::AttachmentCoordinates,
     pub stencil: crate::stencil_plan::StencilPlan,
     pub stencil_clear_value: u8,
     pub fragment_alpha: super::fragment_alpha_plan::FragmentAlphaPlan,
-    pub multisample: Option<super::multisample_targets::MultisampleTargets>,
+    pub multisample: Option<Arc<super::multisample_targets::MultisampleTargets>>,
     pub oit: Option<super::oit_frame::OitFramePass>,
     /// The logical frame extent: viewports, captures and shader frame sizes.
     pub extent: vk::Extent2D,
     /// The attachment extent: images, render areas and copies (see `leading_rows`).
     pub attachment_extent: vk::Extent2D,
-    pub color: TargetImage,
-    pub depth: TargetImage,
-    pub color_read: DeviceBuffer,
-    pub depth_read: DeviceBuffer,
+    pub color: Arc<TargetImage>,
+    pub depth: Arc<TargetImage>,
+    pub(super) immediate_source: Option<(usize, super::immediate_main_record::MainRestoreSource)>,
+    pub(super) main_publication: Option<super::immediate_main_record::MainLayerTicket>,
+    pub(super) main_snapshot: Option<super::immediate_main_record::MainLayerSnapshot>,
     pub draws: Vec<UploadedDraw>,
+    pub(super) meshlets: super::meshlet_draw::FrameMeshlets,
+    submitted_draws: DrawGpuOwners,
+    pub(super) first_draw: usize,
+    pub(super) geometry_transfers: GeometryTransfers,
     /// The shader grid draw, attached after allocation when the frame has one.
     pub grid: Option<super::shader_grid_pass::GridFrameDraw>,
     /// The ray-tracing pass, attached after allocation when the frame ray-traces.
@@ -132,73 +174,67 @@ impl FrameResources {
     pub(super) fn validate_completion(&self) -> Result<(), RenderError> {
         super::window_depth_status::validate(self)
     }
-    pub fn capture(&self) -> Result<FrameCapture, RenderError> {
+    pub(super) fn scene_empty(&self) -> bool {
+        self.first_draw == 0 && self.draws.is_empty() && self.submitted_draws.is_empty()
+    }
+    /// How many resident geometry entries this frame checks once it settles.
+    pub(super) fn retirement_pace(&self) -> super::geometry_residency::RetirementPace {
+        use super::geometry_residency::RetirementPace;
+        match (self.immediate_source.is_some(), self.scene_empty()) {
+            (true, _) => RetirementPace::Uploads,
+            (false, true) => RetirementPace::Sweep,
+            (false, false) => RetirementPace::Steady,
+        }
+    }
+    pub(super) fn retain_submitted_draws(&mut self) {
+        self.submitted_draws = DrawGpuOwners::from_draws(std::mem::take(&mut self.draws));
+    }
+    pub(super) fn attachment_bytes(&self) -> u64 {
+        self.color.allocation_bytes()
+            + self.depth.allocation_bytes()
+            + self
+                .immediate_source
+                .as_ref()
+                .map_or(0, |(_, main)| main.allocation_bytes())
+            + self
+                .main_snapshot
+                .as_ref()
+                .map_or(0, |snapshot| snapshot.images.allocation_bytes())
+            + self
+                .multisample
+                .as_ref()
+                .map_or(0, |targets| targets.allocation_bytes())
+            + self
+                .oit
+                .as_ref()
+                .map_or(0, |pass| pass.targets.allocation_bytes())
+    }
+    /// Check completion feedback and keep the images for an on-demand read (#594);
+    /// `renderer.read_frame(&resources.completed_readback()?)?`.
+    pub(super) fn completed_readback(&self) -> Result<super::FrameReadback, RenderError> {
         self.validate_completion()?;
         if let Some(raytrace) = &self.raytrace {
             raytrace.publish_feedback()?;
         }
-        let capture = self.read_logical_capture()?;
-        #[cfg(feature = "command-state-diagnostics")]
-        self.observe_readback(&capture);
-        Ok(capture)
+        Ok(self.readback_ticket())
     }
-    fn read_logical_capture(&self) -> Result<FrameCapture, RenderError> {
-        let size =
-            self.attachment_extent.width as usize * self.attachment_extent.height as usize * 4;
-        let rgba = self.logical_capture_rows(self.color_read.read(size)?)?;
-        let depth = self.capture_depth(size)?;
-        Ok(FrameCapture {
-            width: self.extent.width,
-            height: self.extent.height,
-            rgba,
-            depth,
-        })
+    /// The images a capture reads, for a frame with no host feedback to check;
+    /// `resources.readback_ticket()`.
+    pub(super) fn readback_ticket(&self) -> super::FrameReadback {
+        super::FrameReadback::new(
+            [Arc::clone(&self.color), Arc::clone(&self.depth)],
+            [self.extent, self.attachment_extent],
+            self.attachment_coordinates,
+        )
     }
-    #[cfg(feature = "command-state-diagnostics")]
-    fn observe_readback(&self, capture: &FrameCapture) {
-        use crate::scene::replay_diagnostic::{self, ReadbackArguments};
-        let [color, depth] = self.readback_image_handles();
-        let arguments = ReadbackArguments {
-            color,
-            depth,
-            formats: [self.color.format.as_raw(), self.depth.format.as_raw()],
-            samples: [self.color.samples.as_raw(), self.depth.samples.as_raw()],
-            attachment_extent: [self.attachment_extent.width, self.attachment_extent.height],
-            leading_rows: self.attachment_coordinates.leading_rows(self.extent.height),
-            coordinates: self.attachment_coordinates,
-        };
-        replay_diagnostic::readback(capture, arguments);
-    }
-    #[cfg(feature = "command-state-diagnostics")]
-    fn readback_image_handles(&self) -> [[u64; 3]; 2] {
-        use ash::vk::Handle;
-        [
-            [
-                self.color.handle.as_raw(),
-                self.color.view.as_raw(),
-                self.color_read.handle.as_raw(),
-            ],
-            [
-                self.depth.handle.as_raw(),
-                self.depth.view.as_raw(),
-                self.depth_read.handle.as_raw(),
-            ],
-        ]
-    }
-    fn capture_depth(&self, size: usize) -> Result<Vec<f32>, RenderError> {
-        let bytes = self.logical_capture_rows(self.depth_read.read(size)?)?;
-        Ok(bytes
-            .as_chunks::<4>()
-            .0
+    /// Whether the host must wait for this frame to check its feedback before publishing it:
+    /// window depth status, ray-tracing feedback, and every frame of a diagnostic build.
+    pub(super) fn needs_host_completion(&self) -> bool {
+        let window_depth = self
+            .draws
             .iter()
-            .map(|value| super::depth_equivalence::depth_value(self.depth.format, *value))
-            .collect())
-    }
-    /// Crop the leading attachment rows, then orient the logical rows top-left.
-    fn logical_capture_rows(&self, bytes: Vec<u8>) -> Result<Vec<u8>, RenderError> {
-        let coordinates = self.attachment_coordinates;
-        let bytes = coordinates.logical_rows(bytes, self.extent);
-        coordinates.capture_rows(bytes, self.extent.width)
+            .any(|draw| draw.window_depth_expected || draw.window_depth_status.is_some());
+        cfg!(feature = "command-state-diagnostics") || self.raytrace.is_some() || window_depth
     }
     pub fn render_color(&self) -> &TargetImage {
         self.multisample
@@ -225,22 +261,26 @@ fn check_extent(runtime: &VulkanRuntime, frame: &RenderFrame) -> Result<(), Rend
     Ok(())
 }
 
-fn upload_bytes(
-    runtime: &Arc<VulkanRuntime>,
-    bytes: &[u8],
-    usage: vk::BufferUsageFlags,
-) -> Result<DeviceBuffer, RenderError> {
-    let buffer = DeviceBuffer::new(runtime, bytes.len() as u64, usage, HostBufferAccess::Upload)?;
-    buffer.write(bytes)?;
-    Ok(buffer)
+pub(super) fn encode_vertices(draw: &PrimitiveDraw) -> Vec<u8> {
+    encode_vertex_sources(draw, (0..draw.vertices.len()).map(|index| (index, index)))
 }
 
-#[cfg(test)]
-pub(super) fn encode_vertices(draw: &PrimitiveDraw) -> Vec<u8> {
-    let sources: Vec<_> = (0..draw.vertices.len())
-        .map(|index| (index, index))
-        .collect();
-    encode_vertex_sources(draw, &sources)
+pub(super) fn vertex_stream_bytes(draw: &PrimitiveDraw) -> u64 {
+    (draw.vertices.len() as u64).saturating_mul(VertexEncoding::from_draw(draw).stride() as u64)
+}
+
+fn encode_vertex_patch(
+    draw: &PrimitiveDraw,
+    vertices: std::ops::Range<usize>,
+    full_size: u64,
+) -> Option<(u64, Vec<u8>)> {
+    let stride = VertexEncoding::from_draw(draw).stride();
+    if vertices.end > draw.vertices.len() || (draw.vertices.len() * stride) as u64 != full_size {
+        return None;
+    }
+    let offset = (vertices.start * stride) as u64;
+    let bytes = encode_vertex_sources(draw, vertices.map(|index| (index, index)));
+    Some((offset, bytes))
 }
 
 #[cfg(test)]
@@ -268,89 +308,183 @@ mod fixed_pack_tests {
         assert_eq!(f32::from_ne_bytes(bytes[72..76].try_into().unwrap()), 0.25);
     }
 }
-fn encode_vertex_sources(draw: &PrimitiveDraw, sources: &[(usize, usize)]) -> Vec<u8> {
-    let mut bytes = Vec::new();
-    for &(index, source) in sources {
-        let vertex = &draw.vertices[index];
-        bytes.extend(encoded_vertex_header(
-            vertex,
-            draw.text_logic_xor && !draw.compatibility_color_target,
-            draw.compatibility_color_target && draw.textured_style.is_some(),
-        ));
-        if let Some(style) = &draw.textured_style {
-            bytes.extend(style.uv[index].iter().flat_map(|v| v.to_ne_bytes()));
-        }
-        append_surface_coordinates(&mut bytes, draw, index);
-        append_sphere_map_normal(&mut bytes, draw, index);
-        if let Some(lighting) = &draw.lighting {
-            bytes.extend(lighting.normals[index].iter().flat_map(|v| v.to_ne_bytes()));
-            if lighting.is_fixed_lighting() {
-                let selected = &draw.vertices[source];
-                bytes.extend(
-                    selected
-                        .position
-                        .into_iter()
-                        .chain(std::iter::once(selected.weight))
-                        .chain(lighting.normals[source])
-                        .chain(selected.color)
-                        .flat_map(f32::to_ne_bytes),
-                );
-            }
-        }
+fn encode_vertex_sources(
+    draw: &PrimitiveDraw,
+    sources: impl ExactSizeIterator<Item = (usize, usize)>,
+) -> Vec<u8> {
+    let layout = VertexEncoding::from_draw(draw);
+    let mut bytes = Vec::with_capacity(sources.len() * layout.stride());
+    for (index, source) in sources {
+        layout.append(&mut bytes, &draw.vertices, index, source);
     }
     bytes
 }
-/// occNormal of the TextureEnv vertex stage, at the lit layout's normal offset.
-fn append_sphere_map_normal(bytes: &mut Vec<u8>, draw: &PrimitiveDraw, index: usize) {
-    if !super::surface_texture_pipeline::draw_uses_sphere_map(draw) {
-        return;
-    }
-    let Some(transform) = draw
-        .surface_texture
-        .as_ref()
-        .and_then(|style| style.sphere_map.as_ref())
-    else {
-        return;
-    };
-    bytes.extend(
-        transform.normals[index]
-            .iter()
-            .flat_map(|v| v.to_ne_bytes()),
-    );
-}
-fn append_surface_coordinates(bytes: &mut Vec<u8>, draw: &PrimitiveDraw, index: usize) {
-    if draw.surface_texture_binding_only
-        || (draw.surface_texture.is_none()
-            && draw.surface_cutoff.is_none()
-            && draw.surface_texture_unavailable.is_none()
-            && draw.mesh_edges.is_none()
-            && draw.unlit_back_color.is_none())
-    {
-        return;
-    }
-    let uv = draw
-        .surface_texture
-        .as_ref()
-        .map_or(draw.unlit_back_color.unwrap_or([0., 0., 0., 1.]), |style| {
-            style.uv[index]
-        });
-    bytes.extend(uv.iter().flat_map(|value| value.to_ne_bytes()));
+
+struct VertexEncoding<'a> {
+    text: Option<&'a crate::TexturedStyle>,
+    surface: Option<SurfaceCoordinates<'a>>,
+    sphere_normals: Option<&'a [[f32; 3]]>,
+    lighting: Option<&'a crate::RenderLighting>,
+    xor: bool,
+    font_replace: bool,
+    fixed_light: bool,
 }
 
-fn encoded_vertex_header(vertex: &crate::RenderVertex, xor: bool, font_replace: bool) -> Vec<u8> {
+enum SurfaceCoordinates<'a> {
+    Array(&'a [[f32; 4]]),
+    Constant([f32; 4]),
+}
+
+pub(super) fn geometry_key(
+    runtime: &VulkanRuntime,
+    draw: &PrimitiveDraw,
+    compact_vertices: bool,
+) -> Option<super::geometry_residency::GeometryKey> {
+    use super::geometry_residency::{GeometryEncoding, GeometryKey, IndexFormat};
+    if cfg!(any(
+        feature = "vertex-output-diagnostics",
+        feature = "command-state-diagnostics"
+    )) || draw.vertices.is_empty()
+    {
+        return None;
+    }
+    let layout = VertexEncoding::from_draw(draw);
+    // Live formatters and injected sources build one-frame geometry. Publishing a device lease
+    // for those streams would add cache traffic and retain buffers that cannot be reused.
+    if layout.text.is_some_and(|style| !style.retained_geometry) {
+        return None;
+    }
+    let surface_coordinates = match layout.surface {
+        Some(SurfaceCoordinates::Constant(coordinates)) => Some(coordinates.map(f32::to_bits)),
+        _ => None,
+    };
+    Some(GeometryKey::new(
+        draw,
+        GeometryEncoding {
+            index_format: IndexFormat::of_draw(draw),
+            compact_vertices,
+            surface_coordinates,
+            surface_uv: matches!(layout.surface, Some(SurfaceCoordinates::Array(_))),
+            sphere_normals: layout.sphere_normals.is_some(),
+            text_uv: layout.text.is_some(),
+            font_replace: layout.font_replace,
+            flat_text: layout.text.is_some()
+                && runtime.text_interpolation
+                    == crate::RenderTextInterpolationBehavior::ProjectedGrid12FlatCornersV4,
+            topology: draw.topology().into(),
+            has_lighting: layout.lighting.is_some(),
+            fixed_lighting: layout.fixed_light,
+            provoking_vertices: super::fixed_vertex_sources::uses_fixed_flat_vertices(draw),
+            fixed_grid_points: draw.fixed_grid_point,
+            xor_color: layout.xor,
+        },
+    ))
+}
+
+impl<'a> VertexEncoding<'a> {
+    fn from_draw(draw: &'a PrimitiveDraw) -> Self {
+        let sphere_normals = draw
+            .surface_texture
+            .as_ref()
+            .and_then(|style| style.sphere_map.as_ref())
+            .filter(|_| super::surface_texture_pipeline::draw_uses_sphere_map(draw))
+            .map(|transform| &*transform.normals);
+        let lighting = draw.lighting.as_ref();
+        Self {
+            text: draw.textured_style.as_ref(),
+            surface: surface_coordinates(draw),
+            sphere_normals,
+            lighting,
+            xor: draw.text_logic_xor && !draw.compatibility_color_target,
+            font_replace: draw.compatibility_color_target && draw.textured_style.is_some(),
+            fixed_light: lighting.is_some_and(crate::RenderLighting::is_fixed_lighting),
+        }
+    }
+
+    fn stride(&self) -> usize {
+        32 + 8 * usize::from(self.text.is_some())
+            + 16 * usize::from(self.surface.is_some())
+            + 12 * usize::from(self.sphere_normals.is_some())
+            + 12 * usize::from(self.lighting.is_some())
+            + 44 * usize::from(self.fixed_light)
+    }
+
+    fn append(
+        &self,
+        bytes: &mut Vec<u8>,
+        vertices: &[crate::RenderVertex],
+        i: usize,
+        source: usize,
+    ) {
+        let header = encoded_vertex_header(&vertices[i], self.xor, self.font_replace);
+        bytes.extend_from_slice(header.as_flattened());
+        if let Some(style) = self.text {
+            append_f32s(bytes, style.uv[i]);
+        }
+        if let Some(surface) = &self.surface {
+            append_f32s(bytes, surface.at(i));
+        }
+        if let Some(normals) = self.sphere_normals {
+            append_f32s(bytes, normals[i]);
+        }
+        if let Some(lighting) = self.lighting {
+            append_f32s(bytes, lighting.normals[i]);
+            if self.fixed_light {
+                append_fixed_light(bytes, vertices[source], lighting.normals[source]);
+            }
+        }
+    }
+}
+
+fn surface_coordinates(draw: &PrimitiveDraw) -> Option<SurfaceCoordinates<'_>> {
+    if draw.surface_texture_binding_only {
+        return None;
+    }
+    if let Some(style) = &draw.surface_texture {
+        return Some(SurfaceCoordinates::Array(&style.uv));
+    }
+    let uses_placeholder = draw.surface_cutoff.is_some()
+        || draw.surface_texture_unavailable.is_some()
+        || draw.mesh_edges.is_some()
+        || draw.unlit_back_color.is_some();
+    uses_placeholder
+        .then(|| SurfaceCoordinates::Constant(draw.unlit_back_color.unwrap_or([0., 0., 0., 1.])))
+}
+
+impl SurfaceCoordinates<'_> {
+    fn at(&self, index: usize) -> [f32; 4] {
+        match self {
+            Self::Array(values) => values[index],
+            Self::Constant(value) => *value,
+        }
+    }
+}
+
+fn append_fixed_light(bytes: &mut Vec<u8>, vertex: crate::RenderVertex, normal: [f32; 3]) {
+    append_f32s(bytes, vertex.position);
+    append_f32s(bytes, [vertex.weight]);
+    append_f32s(bytes, normal);
+    append_f32s(bytes, vertex.color);
+}
+
+fn append_f32s<const N: usize>(bytes: &mut Vec<u8>, values: [f32; N]) {
+    bytes.extend_from_slice(values.map(f32::to_ne_bytes).as_flattened());
+}
+
+fn encoded_vertex_header(
+    vertex: &crate::RenderVertex,
+    xor: bool,
+    font_replace: bool,
+) -> [[u8; 4]; 8] {
     // Native framebuffer conversion precedes XOR; public submissions remain linear RGBA.
     let mut color = crate::text_logic::text_target_rgba(xor, vertex.color);
     // Font textures use ALPHA/REPLACE, which ignores vertex alpha.
     if font_replace {
         color[3] = 1.;
     }
-    vertex
-        .position
-        .iter()
-        .chain(std::iter::once(&vertex.weight))
-        .chain(&color)
-        .flat_map(|value| value.to_ne_bytes())
-        .collect()
+    let [x, y, z] = vertex.position;
+    let [r, g, b, a] = color;
+    [x, y, z, vertex.weight, r, g, b, a].map(f32::to_ne_bytes)
 }
 
 #[cfg(test)]

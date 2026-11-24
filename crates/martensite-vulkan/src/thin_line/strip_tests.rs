@@ -117,9 +117,9 @@ fn stippled_disconnected_and_odd_strip_packets_stay_on_the_device_rasterizer() {
     let mut stippled = original.clone();
     stippled.line_style = Some(LineStyle::new(1., 0x00ff, 1).unwrap());
     let mut disconnected = original.clone();
-    disconnected.indices = vec![0, 1, 2, 1];
+    disconnected.indices = vec![0, 1, 2, 1].into();
     let mut odd = original;
-    odd.indices.push(0);
+    odd.indices.make_mut().push(0);
     for draw in [stippled, disconnected, odd] {
         assert_eq!(
             lower(&draw, RenderThinLineCoverage::DiamondExitFusedProjectionV4).unwrap(),

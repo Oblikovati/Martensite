@@ -68,7 +68,7 @@ fn replay_segments(
         .iter()
         .map(|&pair| (pair, is_x_major(draw, pair, extent)));
     if !endpoints_movable(draw) {
-        return (draw.vertices.clone(), classified.collect());
+        return (draw.vertices.to_vec(), classified.collect());
     }
     let mut vertices = Vec::with_capacity(pairs.len() * 2);
     let mut segments = Vec::with_capacity(pairs.len());

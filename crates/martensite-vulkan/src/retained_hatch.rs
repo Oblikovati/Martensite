@@ -10,7 +10,8 @@ pub(crate) fn apply_hatch(
 ) -> Result<(), RenderError> {
     let rows = source_hatch_rows(&**aspects)?;
     for draw in draws {
-        if draw.topology() == crate::PrimitiveTopology::Triangles {
+        // Writing only a changed mask keeps a cached template's body shared (#594).
+        if draw.topology() == crate::PrimitiveTopology::Triangles && draw.hatch_rows != rows {
             draw.hatch_rows = rows;
         }
     }

@@ -62,14 +62,19 @@ fn failed_publication_cannot_gain_a_capture_owner() {
 fn clone_retains_both_source_and_new_output_tokens() {
     let source = Some(Ok(owned_capture_fixture()));
     let output = source.clone();
-    let value = clone_json(73, 23, &source, &output);
+    let value = clone_json(
+        73,
+        23,
+        source.as_ref().and_then(|result| result.as_ref().ok()),
+        &output,
+    );
     assert_ne!(value["source"]["rgba_owner"], value["output"]["rgba_owner"]);
     assert_eq!(value["source"]["extent"], value["output"]["extent"]);
     assert_eq!(value["publication"], 23);
 }
 #[test]
 fn missing_capture_and_changed_publication_stay_explicit() {
-    assert!(clone_json(79, 29, &None, &None)["output"].is_null());
+    assert!(clone_json(79, 29, None, &None)["output"].is_null());
     let value = dump_json(79, [29, 30], "Rgb", false, &owned_capture_fixture());
     assert_eq!(value["publications_before_after"], json!([29, 30]));
     assert_eq!(value["copied"], false);

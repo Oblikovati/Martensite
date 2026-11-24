@@ -134,9 +134,10 @@ fn completed_capture(
     frame: &RenderFrame,
 ) -> Result<(super::frame::FrameResources, FrameCapture), ExecutableGap> {
     renderer.runtime.lifecycle.admit("render frame")?;
-    let outcome = renderer
-        .completed_owned_frame(frame)
-        .and_then(|resources| resources.capture().map(|capture| (resources, capture)));
+    let outcome = renderer.completed_owned_frame(frame).and_then(|resources| {
+        let capture = renderer.read_frame(&resources.completed_readback()?)?;
+        Ok((resources, capture))
+    });
     Ok(renderer.runtime.lifecycle.observe(outcome)?)
 }
 fn unselected_capture(

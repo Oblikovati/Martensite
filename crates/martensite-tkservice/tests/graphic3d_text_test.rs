@@ -57,3 +57,21 @@ fn orientation_and_position() {
     assert!(!text.has_plane());
     assert_eq!(text.position().x(), 0.0);
 }
+
+#[test]
+fn every_edit_advances_the_revision_and_reads_do_not() {
+    let text = Graphic3dText::new(10.0);
+    let start = text.revision();
+    let _ = (
+        text.text(),
+        text.position(),
+        text.has_plane(),
+        text.height(),
+    );
+    assert_eq!(text.revision(), start, "reads leave the revision");
+    text.set_text_str("label");
+    let after_text = text.revision();
+    assert!(after_text > start);
+    text.set_position(&Point3::new(1.0, 2.0, 3.0));
+    assert!(text.revision() > after_text);
+}

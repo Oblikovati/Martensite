@@ -1,7 +1,6 @@
 //! Per-draw alpha descriptors capture the inherited compatibility state without mutable uniforms.
 use super::{
-    fragment_alpha_plan::FragmentAlphaPlan, frame::UploadedDraw,
-    oit_descriptor::OitPassDescriptors, oit_frame::OitFramePass,
+    frame::UploadedDraw, oit_descriptor::OitPassDescriptors, oit_frame::OitFramePass,
     pipeline_variants::RasterPipelines, runtime::VulkanRuntime,
 };
 use crate::RenderError;
@@ -12,12 +11,12 @@ pub(super) fn upload_fragment_alpha(
     runtime: &Arc<VulkanRuntime>,
     pipelines: &RasterPipelines,
     draws: &mut [UploadedDraw],
-    plan: &FragmentAlphaPlan,
+    cutoffs: &[Option<f32>],
     oit: Option<&OitFramePass>,
     samples: vk::SampleCountFlags,
     coverage: bool,
 ) -> Result<(), RenderError> {
-    for (draw, cutoff) in draws.iter_mut().zip(&plan.during) {
+    for (draw, cutoff) in draws.iter_mut().zip(cutoffs) {
         let Some(cutoff) = cutoff else {
             continue;
         };

@@ -70,6 +70,15 @@ fn effective_planes(
     global: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     structure: &Graphic3dCStructureFields,
 ) -> Result<ClipPlanes, RenderError> {
+    // Each structure asks twice per frame; without planes the sequences need no copy (#594).
+    if global.get().is_none_or(|sequence| sequence.is_empty())
+        && structure
+            .clip_planes
+            .get()
+            .is_none_or(|sequence| sequence.is_empty())
+    {
+        return Ok(Vec::new());
+    }
     // Native disables all global fragment planes for persistent structures, even
     // when zoom/rotate anchor classification kept the complete structure visible.
     let mut planes = if overrides_global(structure) || !structure.trsf_pers.is_null() {
@@ -83,7 +92,8 @@ fn effective_planes(
 fn enabled_planes(
     sequence: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
 ) -> Result<ClipPlanes, RenderError> {
-    let Some(sequence) = sequence.get() else {
+    // An empty sequence skips the copy of its members; each structure asks every frame (#594).
+    let Some(sequence) = sequence.get().filter(|sequence| !sequence.is_empty()) else {
         return Ok(Vec::new());
     };
     let mut planes = Vec::new();

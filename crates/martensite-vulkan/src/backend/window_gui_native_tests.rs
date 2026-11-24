@@ -149,13 +149,14 @@ fn render_native_probe(
     extent: [u32; 2],
 ) -> Result<FrameCapture, RenderError> {
     let frame = native_gui_frame(extent);
-    renderer.render_window_with_probe(
+    let readback = renderer.render_window_with_probe(
         &frame,
         presenter,
         false,
         RenderGuiSurfacePolicy::CheckedV2,
         probe,
-    )
+    )?;
+    renderer.read_frame(&readback)
 }
 fn native_same_extent_fault(renderer: &mut VulkanRenderer, phase: RenderGuiSurfacePhase) {
     let native = NativeWindow::new(64, 64);
@@ -246,14 +247,15 @@ fn present_orientation_frame(
     presenter: &mut WindowPresenter,
     extent: [u32; 2],
 ) -> FrameCapture {
-    renderer
+    let readback = renderer
         .render_window(
             &orientation_frame(extent),
             presenter,
             false,
             RenderGuiSurfacePolicy::CheckedV2,
         )
-        .unwrap()
+        .unwrap();
+    renderer.read_frame(&readback).unwrap()
 }
 fn retain_window_orientation(capture: &FrameCapture, native: &[u8], stage: usize) {
     let Some(directory) = std::env::var_os("MARTENSITE_GEOMETRY_ARTIFACT_DIR") else {
@@ -314,3 +316,32 @@ fn four_coordinate_cells_present_and_capture_identical_native_rows_after_resize(
 
 #[path = "resource_lifecycle_window_gpu_tests.rs"]
 mod resource_owner;
+
+#[test]
+#[ignore = "requires explicit exclusive native/GPU lease and pinned validation layer"]
+fn uploads_on_the_dedicated_queue_before_native_presentation() {
+    let mut renderer = native_validation_renderer();
+    let native = NativeWindow::new(64, 64);
+    let mut presenter = renderer.window_presenter(&native.window.cast()).unwrap();
+    let frame = super::dedicated_transfer::tests::large_geometry_frame([64, 64]);
+    let before = renderer.runtime.work.totals().submissions;
+    let readback = renderer
+        .render_window(
+            &frame,
+            &mut presenter,
+            false,
+            RenderGuiSurfacePolicy::CheckedV2,
+        )
+        .unwrap();
+    renderer.finish_frames().unwrap();
+    let has_transfer = super::dedicated_transfer::sharing_families(&renderer.runtime).is_some();
+    assert_eq!(
+        renderer.runtime.work.totals().submissions - before,
+        1 + u64::from(has_transfer)
+    );
+    let capture = renderer.read_frame(&readback).unwrap();
+    let expected = [0, 255, 0, 255].repeat(64 * 64);
+    assert_eq!(capture.rgba, expected);
+    assert_eq!(native.wait_for_pixels(&expected), expected);
+    assert!(renderer.validation_errors().unwrap().is_empty());
+}

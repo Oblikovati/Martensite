@@ -39,7 +39,7 @@ fn resolve_unavailable_point_base(draw: &mut PrimitiveDraw) {
         return;
     }
     // Fresh unit-zero failure samples incomplete black before unmodulated emission is added.
-    for vertex in &mut draw.vertices {
+    for vertex in draw.vertices.make_mut() {
         vertex.color = [0., 0., 0., 1.];
     }
 }

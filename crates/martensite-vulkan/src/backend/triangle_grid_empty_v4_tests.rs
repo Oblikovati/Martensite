@@ -78,11 +78,11 @@ fn bug29791_triangle_zero_uses_interval_rectangle_empty_carrier() {
     assert!(super::sample::q12_interval_box_empty(intervals));
 
     let selected = prepare_v4(&original).unwrap().unwrap();
-    assert_eq!(selected.indices, [41, 41, 41]);
+    assert_eq!(selected.indices(), [41, 41, 41]);
     assert_eq!(selected.vertices, original.vertices);
     assert_eq!(selected.clip_transform, original.clip_transform);
     assert_eq!(selected.clipping, original.clipping);
-    assert_eq!(original.indices, [41, 80, 81]);
+    assert_eq!(original.indices(), [41, 80, 81]);
 }
 
 #[test]

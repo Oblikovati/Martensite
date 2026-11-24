@@ -8,7 +8,7 @@ use super::{
     Graphic3dCamera, Graphic3dCameraFocusType, Graphic3dCameraIodType, Graphic3dWorldViewProjState,
 };
 use martensite_tkernel::ncollection::{ElementCast, Mat4, Vec3, Vec4};
-use martensite_tkmath::gp::Point3;
+use martensite_tkmath::gp::{Point3, Xyz};
 
 /// The projection parameters of a camera state (IOD and focus resolved in world units).
 fn projection_params(s: &Graphic3dCameraState) -> ProjectionParams {
@@ -86,17 +86,43 @@ fn matrices_d(
     })
 }
 
-/// The float matrices after `update`.
-fn matrices_f(
+// Cached float matrices need only a read lock. Recheck if a writer could have refreshed them.
+fn read_float_matrix<R>(
     camera: &Graphic3dCamera,
+    is_valid: impl Fn(&Graphic3dCameraMatrices<f32>) -> bool,
     update: fn(&Graphic3dCameraState, &mut Graphic3dCameraMatrices<f32>),
-) -> Graphic3dCameraMatrices<f32> {
+    read: impl Fn(&Graphic3dCameraState) -> R,
+) -> R {
+    if let Some(value) = camera.read(|s| is_valid(&s.matrices_f).then(|| read(s))) {
+        return value;
+    }
     camera.write(|s| {
-        let mut matrices = s.matrices_f;
-        update(s, &mut matrices);
-        s.matrices_f = matrices;
-        matrices
+        if !is_valid(&s.matrices_f) {
+            let mut matrices = s.matrices_f;
+            update(s, &mut matrices);
+            s.matrices_f = matrices;
+        }
+        read(s)
     })
+}
+
+fn read_float_orientation<R>(
+    camera: &Graphic3dCamera,
+    read: impl Fn(&Graphic3dCameraState) -> R,
+) -> R {
+    read_float_matrix(camera, |m| m.is_orientation_valid, update_orientation, read)
+}
+
+fn read_float_projection(
+    camera: &Graphic3dCamera,
+    read: impl Fn(&Graphic3dCameraMatrices<f32>) -> Mat4<f32>,
+) -> Mat4<f32> {
+    read_float_matrix(
+        camera,
+        |m| m.is_projection_valid,
+        update_projection,
+        |s| read(&s.matrices_f),
+    )
 }
 
 /// The matrices and their state.
@@ -107,7 +133,12 @@ impl Graphic3dCamera {
     }
     /// The world-to-view matrix in float; `camera.orientation_matrix_f()`.
     pub fn orientation_matrix_f(&self) -> Mat4<f32> {
-        matrices_f(self, update_orientation).orientation
+        read_float_orientation(self, |s| s.matrices_f.orientation)
+    }
+    /// Read the float view matrix and the axial scale that produced it under one lock.
+    /// Example: `let (view, axial_scale) = camera.orientation_with_axial_scale_f();`
+    pub fn orientation_with_axial_scale_f(&self) -> (Mat4<f32>, Xyz) {
+        read_float_orientation(self, |s| (s.matrices_f.orientation, s.axial_scale))
     }
     /// The (mono) projection matrix; `camera.projection_matrix()`.
     pub fn projection_matrix(&self) -> Mat4<f64> {
@@ -115,7 +146,7 @@ impl Graphic3dCamera {
     }
     /// The projection matrix in float; `camera.projection_matrix_f()`.
     pub fn projection_matrix_f(&self) -> Mat4<f32> {
-        matrices_f(self, update_projection).m_projection
+        read_float_projection(self, |m| m.m_projection)
     }
     /// The left eye projection; `camera.projection_stereo_left()`.
     pub fn projection_stereo_left(&self) -> Mat4<f64> {
@@ -123,7 +154,7 @@ impl Graphic3dCamera {
     }
     /// The left eye projection in float; `camera.projection_stereo_left_f()`.
     pub fn projection_stereo_left_f(&self) -> Mat4<f32> {
-        matrices_f(self, update_projection).l_projection
+        read_float_projection(self, |m| m.l_projection)
     }
     /// The right eye projection; `camera.projection_stereo_right()`.
     pub fn projection_stereo_right(&self) -> Mat4<f64> {
@@ -131,7 +162,7 @@ impl Graphic3dCamera {
     }
     /// The right eye projection in float; `camera.projection_stereo_right_f()`.
     pub fn projection_stereo_right_f(&self) -> Mat4<f32> {
-        matrices_f(self, update_projection).r_projection
+        read_float_projection(self, |m| m.r_projection)
     }
     /// Drops the cached projections; `camera.invalidate_projection()`.
     pub fn invalidate_projection(&self) {
@@ -237,6 +268,21 @@ fn inverse(matrix: &Mat4<f64>) -> Option<Mat4<f64>> {
     matrix.inverted_to(&mut output).then_some(output)
 }
 
+/// The inverse view and projection matrices of one camera state, from
+/// [`Graphic3dCamera::un_projection`].
+#[derive(Clone, Copy, Debug)]
+pub struct Graphic3dUnProjection {
+    inv_view: Mat4<f64>,
+    inv_projection: Mat4<f64>,
+}
+
+impl Graphic3dUnProjection {
+    /// `UnProject` of one point: device coordinates to world; `inverse.apply(&p)`.
+    pub fn apply(&self, point: &Point3) -> Point3 {
+        transformed(point, &[self.inv_projection, self.inv_view])
+    }
+}
+
 /// Point conversions.
 impl Graphic3dCamera {
     /// `Project`: world to normalized device coordinates; `camera.project(&p)`.
@@ -249,13 +295,18 @@ impl Graphic3dCamera {
     /// `UnProject`: device coordinates to world (the origin for singular matrices);
     /// `camera.un_project(&p)`.
     pub fn un_project(&self, point: &Point3) -> Point3 {
+        self.un_projection()
+            .map_or(Point3::new(0.0, 0.0, 0.0), |inverse| inverse.apply(point))
+    }
+    /// The inverse matrices that `un_project` applies, computed once for many points; none
+    /// for a singular camera. A selecting frustum unprojects ten points (#594).
+    /// Example: `camera.un_projection().map(|inverse| inverse.apply(&p))`.
+    pub fn un_projection(&self) -> Option<Graphic3dUnProjection> {
         let (view, projection) = (self.orientation_matrix(), self.projection_matrix());
-        match (inverse(&view), inverse(&projection)) {
-            (Some(inv_view), Some(inv_projection)) => {
-                transformed(point, &[inv_projection, inv_view])
-            }
-            _ => Point3::new(0.0, 0.0, 0.0),
-        }
+        Some(Graphic3dUnProjection {
+            inv_view: inverse(&view)?,
+            inv_projection: inverse(&projection)?,
+        })
     }
     /// `ConvertView2Proj`; `camera.convert_view_to_proj(&p)`.
     pub fn convert_view_to_proj(&self, point: &Point3) -> Point3 {
@@ -274,5 +325,72 @@ impl Graphic3dCamera {
     pub fn convert_view_to_world(&self, point: &Point3) -> Point3 {
         inverse(&self.orientation_matrix())
             .map_or(Point3::new(0.0, 0.0, 0.0), |inv| transformed(point, &[inv]))
+    }
+}
+
+#[cfg(test)]
+mod orientation_snapshot_tests {
+    use super::*;
+
+    #[test]
+    fn float_projections_refresh_all_eyes_after_edit() {
+        let camera = Graphic3dCamera::default();
+        camera.set_projection_type(super::super::Graphic3dCameraProjection::Stereo);
+        let projections = || {
+            [
+                camera.projection_matrix_f(),
+                camera.projection_stereo_left_f(),
+                camera.projection_stereo_right_f(),
+            ]
+            .map(|matrix| matrix.data().map(f32::to_bits))
+        };
+        let before = projections();
+        assert_eq!(projections(), before);
+        camera.set_aspect(2.);
+        let expected = camera.read(|s| {
+            compute_projection::<f32>(&projection_params(s), &s.custom, true)
+                .map(|matrix| matrix.data().map(f32::to_bits))
+        });
+        assert_ne!(expected, before);
+        assert_eq!(projections(), expected);
+        assert_eq!(projections(), expected);
+    }
+
+    #[test]
+    fn float_orientation_snapshot_tracks_axial_scale_across_cache_invalidation() {
+        let camera = Graphic3dCamera::default();
+        let unit = Xyz::new(1., 1., 1.);
+        let scaled = Xyz::new(2., 1., 1.);
+        let (original, original_scale) = camera.orientation_with_axial_scale_f();
+        assert_eq!(original_scale, unit);
+        assert_eq!(original, camera.orientation_matrix_f());
+
+        camera.set_axial_scale(scaled).unwrap();
+        let (updated, updated_scale) = camera.orientation_with_axial_scale_f();
+        assert_eq!(updated_scale, scaled);
+        assert_ne!(updated, original);
+        assert_eq!(updated, camera.orientation_matrix_f());
+        assert_eq!(camera.orientation_with_axial_scale_f(), (updated, scaled));
+    }
+
+    #[test]
+    fn orientation_snapshot_keeps_the_matrix_and_scale_together_across_writes() {
+        let camera = Graphic3dCamera::default();
+        let unit = Xyz::new(1., 1., 1.);
+        let scaled = Xyz::new(2., 1., 1.);
+        let unscaled_matrix = camera.orientation_matrix_f();
+        camera.set_axial_scale(scaled).unwrap();
+        let scaled_matrix = camera.orientation_matrix_f();
+        std::thread::scope(|scope| {
+            scope.spawn(|| {
+                for scale in [unit, scaled].into_iter().cycle().take(4096) {
+                    camera.set_axial_scale(scale).unwrap();
+                }
+            });
+            for _ in 0..4096 {
+                let snapshot = camera.orientation_with_axial_scale_f();
+                assert!(snapshot == (unscaled_matrix, unit) || snapshot == (scaled_matrix, scaled));
+            }
+        });
     }
 }

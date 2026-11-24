@@ -34,10 +34,11 @@ fn partial_capture(
     let commands = CommandSubmission::new(&renderer.runtime).unwrap();
     let ctx = &renderer.runtime;
     let cmd = commands.command;
+    resources.geometry_transfers.record(ctx, cmd);
     transition_targets(ctx, cmd, &resources, false);
     begin_partial_layer(ctx, cmd, &resources, regions);
     draw_partial_layer(ctx, cmd, &resources, &frame.layers[0]);
-    finish_partial_capture(ctx, &commands, &resources)
+    finish_partial_capture(renderer, &commands, &resources)
 }
 fn draw_partial_layer(
     ctx: &VulkanRuntime,
@@ -58,15 +59,16 @@ fn begin_partial_layer(
     set_raster_region(ctx, cmd, target.extent, regions[0], regions[1]);
 }
 fn finish_partial_capture(
-    runtime: &VulkanRuntime,
+    renderer: &mut VulkanRenderer,
     commands: &CommandSubmission,
     resources: &FrameResources,
 ) -> FrameCapture {
-    finish_rendering(runtime, commands.command);
-    transition_targets(runtime, commands.command, resources, true);
-    read_attachments(runtime, commands.command, resources);
+    finish_rendering(&renderer.runtime, commands.command);
+    transition_targets(&renderer.runtime, commands.command, resources, true);
     commands.finish().unwrap();
-    resources.capture().unwrap()
+    renderer
+        .read_frame(&resources.completed_readback().unwrap())
+        .unwrap()
 }
 const RED: [u8; 4] = [255, 0, 0, 255];
 const BLUE: [u8; 4] = [0, 0, 255, 255];

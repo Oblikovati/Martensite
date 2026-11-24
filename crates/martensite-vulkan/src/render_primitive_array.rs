@@ -141,6 +141,8 @@ impl RenderPrimitiveArray {
             bounds: buffers.bounds.clone(),
             upload: self.upload.clone(),
             uid: self.uid,
+            retained: None,
+            mesh_levels: None,
         })
     }
     fn element_stats(&self) -> GroupElementStats {
@@ -189,6 +191,8 @@ impl RenderElement for RenderPrimitiveArray {
             bounds: buffers.bounds,
             upload: self.upload.clone(),
             uid: self.uid,
+            retained: None,
+            mesh_levels: None,
         };
         let address = crate::driver_dump::address_of(self);
         crate::driver_dump::primitive_array(stream, depth, address, &primitive, self.uid)

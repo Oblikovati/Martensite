@@ -29,6 +29,26 @@ fn occt_parity_defaults_to_tkernel_two_rounds_and_five_percent() {
 }
 
 #[test]
+fn occt_parity_selects_the_vulkan_renderer_cases() {
+    let arguments = [
+        "cargo xtask",
+        "occt-parity",
+        "--toolkit",
+        "vulkan",
+        "--occt",
+        "/o",
+    ];
+    let cli = Cli::try_parse_from(arguments).unwrap();
+    let BuildCommand::OcctParity(args) = cli.command else {
+        panic!("expected occt-parity");
+    };
+    assert_eq!(
+        args.request().toolkit,
+        crate::occt_parity::ParityToolkit::Vulkan
+    );
+}
+
+#[test]
 fn occt_parity_requires_the_occt_prefix_and_one_round() {
     assert!(Cli::try_parse_from(["cargo xtask", "occt-parity"]).is_err());
     let zero = [

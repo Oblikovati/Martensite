@@ -3,10 +3,11 @@ use super::elements::ElementVisit;
 use super::{Graphic3dDrawGroup, GroupCommand, GroupGeometry, apply_command_clipping};
 use crate::render_element_pass::{RenderElementPass, check_is_transparent};
 use crate::{PrimitiveDraw, RenderClipping, RenderError, stencil_program::StencilProgram};
-use martensite_tkernel::standard::Handle;
+use martensite_tkernel::{ncollection::Mat4, standard::Handle};
 use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 struct GroupSpatialSnapshot {
+    base_model: Mat4<f64>,
     matrix: [f32; 16],
     depth_clamp: bool,
     clipping: Option<RenderClipping>,
@@ -33,7 +34,9 @@ impl GroupDrawPolicy {
     }
 }
 impl Graphic3dDrawGroup {
-    pub(crate) fn program_in_structure(
+    /// Lower the group's commands in `structure` with the current camera; a group draw
+    /// record calls this when it cannot replay (graphic_group_record.rs).
+    pub(super) fn lower_in_structure(
         &self,
         camera: &Graphic3dCamera,
         extent: Option<[u32; 2]>,
@@ -47,16 +50,16 @@ impl Graphic3dDrawGroup {
         let origin = pass.layer_origin().map(|origin| origin.coords());
         let spatial =
             self.spatial_snapshot(camera, persistence, structure, (global_clipping, origin))?;
-        let mut context = self.stencil_text_context(
-            (camera, extent),
-            structure,
-            rendering,
-            spatial.clipping.as_ref(),
-        );
+        let mut context =
+            self.stencil_text_context((camera, extent), structure, rendering, &spatial);
         context.environment = pass.environment();
+        context.text_unview = Some(pass.record_frame().text_unview());
+        let text_transform = crate::text_transform::GroupTextTransform::default();
+        context.text_transform = Some(&text_transform);
         context.fixed_function_lighting = pass.context_state().fixed_function_lighting;
         let policy = GroupDrawPolicy::new(structure, spatial.clipping.is_none());
-        let mut program = self.extract_commands(spatial.matrix, policy, &context, (pass, carry))?;
+        let mut program =
+            self.extract_commands(spatial.matrix, policy, &mut context, (pass, carry))?;
         finish_group_spatial_state(&mut program.draws, spatial.depth_clamp, structure)?;
         Ok(program)
     }
@@ -71,16 +74,18 @@ impl Graphic3dDrawGroup {
         ),
     ) -> Result<GroupSpatialSnapshot, RenderError> {
         crate::highlight_style::validate_structure(structure)?;
-        let (matrix, depth_clamp) =
-            crate::persistent_transform::group_clip_transform(self, camera, extent, structure)?;
-        let model = crate::persistent_transform::clipping_model(self, structure)?;
-        let clipping = crate::retained_clipping::structure_clipping(
-            global_clipping,
-            structure,
-            model,
-            origin,
+        let base_model = crate::persistent_transform::model_transform(self, structure);
+        let (matrix, depth_clamp) = crate::persistent_transform::group_clip_transform(
+            self, camera, extent, structure, base_model,
         )?;
+        let clipping = if global_clipping.is_null() && structure.clip_planes.is_null() {
+            None
+        } else {
+            let model = crate::persistent_transform::clipping_model(self, base_model)?;
+            crate::retained_clipping::structure_clipping(global_clipping, structure, model, origin)?
+        };
         Ok(GroupSpatialSnapshot {
+            base_model,
             matrix,
             depth_clamp,
             clipping,
@@ -91,7 +96,7 @@ impl Graphic3dDrawGroup {
         projection: (&'a Graphic3dCamera, Option<[u32; 2]>),
         structure: &'a Graphic3dCStructureFields,
         rendering: &'a Graphic3dRenderingParams,
-        clipping: Option<&'a RenderClipping>,
+        spatial: &'a GroupSpatialSnapshot,
     ) -> crate::text_submission::TextSceneContext<'a> {
         crate::text_submission::TextSceneContext {
             group: self,
@@ -99,39 +104,77 @@ impl Graphic3dDrawGroup {
             extent: projection.1,
             structure,
             rendering,
-            fonts: self.text_source.as_ref(),
+            fonts: &self.text_source,
+            base_model: Some(&spatial.base_model),
             model_override: None,
             view_override: None,
-            clipping,
+            clipping: spatial.clipping.as_ref(),
             environment: None,
             fixed_function_lighting: false,
+            text_unview: None,
+            text_transform: None,
         }
     }
     fn extract_commands(
         &self,
         matrix: [f32; 16],
         policy: GroupDrawPolicy,
-        context: &crate::text_submission::TextSceneContext<'_>,
+        context: &mut crate::text_submission::TextSceneContext<'_>,
         (pass, carry): (&RenderElementPass, &mut crate::group_flipping::FlipCarry),
     ) -> Result<StencilProgram, RenderError> {
-        let (mut aspects, commands) = self.retained_commands();
+        let (mut aspects, commands, effects) = self.retained_commands();
         let mut program = StencilProgram::default();
         // The transparent element pass replays commands without re-emitting their stencil state.
         let mut replayed = StencilProgram::default();
-        let mut flips = crate::group_flipping::GroupFlipStack::scene(context, matrix, carry)?;
+        let mut flips = crate::group_flipping::GroupFlipStack::scene(
+            context,
+            matrix,
+            carry,
+            (effects.flips, effects.calls_user_code),
+        )?;
         let mut visit = ElementVisit {
             highlight: &policy.highlight,
             allow_face_culling: self.is_closed() && policy.allow_culling,
             pass,
             context: element_context_state(self, &commands, context, pass)?,
         };
-        for command in commands {
-            if let GroupCommand::Element(element) = &command {
+        if effects.calls_user_code {
+            // An injected text provider or render element may edit the live group.
+            context.base_model = None;
+        }
+        let mut index = 0;
+        while let Some(command) = commands.get(index) {
+            index += 1;
+            let run = if pass.lowers_group_geometry() {
+                text_run::parallel_text_run(&commands[index - 1..])
+            } else {
+                0
+            };
+            if run > 0 {
+                let labels = &commands[index - 1..index - 1 + run];
+                self.append_text_run(
+                    &mut program,
+                    labels,
+                    (&aspects, &flips, &policy),
+                    context,
+                    pass,
+                )?;
+                index += run - 1;
+                continue;
+            }
+            if let GroupCommand::Element(element) = command {
                 update_element_matrices(&mut visit, &flips);
                 for (style, geometry) in
                     self.call_element(element.as_ref(), &mut aspects, &visit)?
                 {
-                    self.append_geometry(&mut program, geometry, &style, &flips, &policy, context)?;
+                    self.append_geometry(
+                        &mut program,
+                        &geometry,
+                        &style,
+                        &flips,
+                        &policy,
+                        context,
+                    )?;
                 }
                 continue;
             }
@@ -160,7 +203,7 @@ impl Graphic3dDrawGroup {
     fn append_geometry(
         &self,
         program: &mut StencilProgram,
-        geometry: GroupGeometry,
+        geometry: &GroupGeometry,
         aspects: &Handle<dyn Graphic3dAspectsSource>,
         flips: &crate::group_flipping::GroupFlipStack,
         policy: &GroupDrawPolicy,
@@ -173,14 +216,14 @@ impl Graphic3dDrawGroup {
     }
     fn lower_ordered_geometry(
         &self,
-        geometry: GroupGeometry,
+        geometry: &GroupGeometry,
         aspects: &Handle<dyn Graphic3dAspectsSource>,
         flips: &crate::group_flipping::GroupFlipStack,
         policy: &GroupDrawPolicy,
         context: &crate::text_submission::TextSceneContext<'_>,
     ) -> Result<Vec<PrimitiveDraw>, RenderError> {
         let mut active = *context;
-        let source_primitives = matches!(&geometry, GroupGeometry::Primitives(_));
+        let source_primitives = matches!(geometry, GroupGeometry::Primitives(_));
         active.model_override = flips.override_model();
         active.view_override = Some(flips.world_view());
         let mut lowered = geometry.lower(
@@ -196,9 +239,19 @@ impl Graphic3dDrawGroup {
         }
         Ok(lowered)
     }
-    fn retained_commands(&self) -> (Handle<dyn Graphic3dAspectsSource>, Vec<GroupCommand>) {
+    pub(super) fn retained_commands(
+        &self,
+    ) -> (
+        Handle<dyn Graphic3dAspectsSource>,
+        crate::draw::DrawStream<GroupCommand>,
+        super::commands::CommandEffects,
+    ) {
         let state = self.submissions.read();
-        (state.aspects.clone(), state.commands.clone())
+        (
+            state.aspects.clone(),
+            state.commands.clone(),
+            state.command_effects,
+        )
     }
 }
 fn retain_projection_factors(
@@ -250,13 +303,23 @@ fn finish_group_spatial_state(
 ) -> Result<(), RenderError> {
     for draw in draws {
         draw.depth_clamp = clamp;
-        draw.mirrored = structure
-            .trsf
-            .get()
-            .is_some_and(|datum| datum.transformation().is_negative());
+        let mirrored = structure_mirrored(structure);
+        // Writing only a changed winding keeps a cached template's body shared (#594).
+        if draw.mirrored != mirrored {
+            draw.mirrored = mirrored;
+        }
         crate::highlight_style::apply_highlight(draw, structure)?;
     }
     Ok(())
+}
+
+/// Whether the structure's transformation mirrors, which reverses the winding of its draws;
+/// `structure_mirrored(&fields)`.
+pub(crate) fn structure_mirrored(structure: &Graphic3dCStructureFields) -> bool {
+    structure
+        .trsf
+        .get()
+        .is_some_and(|datum| datum.transformation().is_negative())
 }
 
 fn update_element_matrices(
@@ -269,3 +332,6 @@ fn update_element_matrices(
     context.model_world = flips.model_state().clone();
     context.world_view.set_current(&flips.world_view());
 }
+
+#[path = "graphic_group_text_run.rs"]
+mod text_run;

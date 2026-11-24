@@ -66,6 +66,27 @@ fn check_reinitialized_indices(scene: &GraphicScene, indices: &Graphic3dIndexBuf
     assert_eq!(draw.vertices()[2].weight, 1.);
     assert_eq!(draw.vertices()[0].color, [0., 1., 0., 1.]);
 }
+
+#[test]
+fn bulk_indices_reject_short_storage_and_signed_negative_words() {
+    let scene = GraphicScene::new();
+    let buffer = vertex_buffer();
+    let indices =
+        Handle::new(Graphic3dIndexBuffer::new(Graphic3dBufferBase::default_allocator()).unwrap());
+    submit(&scene, &buffer, &indices.cast());
+    assert!(indices.init_indices::<u16>(2).unwrap());
+    indices.set_nb_elements(3);
+    assert!(scene.group.triangle_draws(&scene.camera).is_err());
+
+    assert!(indices.init_int32(3).unwrap());
+    assert!(indices.set_index(0, -1));
+    let rejected = scene.group.triangle_draws(&scene.camera).unwrap_err();
+    assert!(
+        rejected
+            .to_string()
+            .contains("allocated nonnegative vertex index")
+    );
+}
 #[test]
 fn unindexed_buffers_and_truncated_attributes() {
     let scene = GraphicScene::new();

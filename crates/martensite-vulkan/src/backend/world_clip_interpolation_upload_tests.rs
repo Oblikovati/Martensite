@@ -23,7 +23,7 @@ fn clipped_homogeneous_triangle(
         [0.75, -0.75, 0.0],
         [-0.75, 0.75, 0.0],
     ]);
-    for (vertex, weight) in draw.vertices.iter_mut().zip(weights) {
+    for (vertex, weight) in draw.vertices.make_mut().iter_mut().zip(weights) {
         vertex.weight = weight;
         vertex
             .position
@@ -122,8 +122,8 @@ fn assert_private_empty_carrier(clips: [[u32; 4]; 3]) {
     let original = triangle_from_clip_bits(clips);
     assert!(admit_grid12_world_clip(&original));
     let carrier = prepare_empty_carrier(&original);
-    assert_eq!(carrier.indices, [0, 0, 0]);
-    assert_eq!(original.indices, [0, 1, 2]);
+    assert_eq!(carrier.indices(), [0, 0, 0]);
+    assert_eq!(original.indices(), [0, 1, 2]);
     assert!(
         super::super::world_clip_interpolation_upload::selects_grid12_fragment(
             &original,
@@ -161,7 +161,12 @@ fn prepare_empty_carrier(draw: &PrimitiveDraw) -> PrimitiveDraw {
 #[test]
 fn grid12_clipping_does_not_prune_a_degenerate_line_through_sample_centers() {
     let mut draw = clipped_phong_triangle();
-    for (vertex, y) in draw.vertices.iter_mut().zip([-0.5_f32, 0.0_f32, 0.5_f32]) {
+    for (vertex, y) in draw
+        .vertices
+        .make_mut()
+        .iter_mut()
+        .zip([-0.5_f32, 0.0_f32, 0.5_f32])
+    {
         vertex.position = [0.0, y, 0.0];
     }
     let error = super::super::triangle_grid_coverage_upload::prepare(
@@ -185,7 +190,7 @@ fn triangle_from_clip_bits(bits: [[u32; 4]; 3]) -> PrimitiveDraw {
     let mut draw = super::super::triangle_grid_coverage_upload::tests::phong_triangle([
         [0.0; 3], [0.0; 3], [0.0; 3],
     ]);
-    for (vertex, clip) in draw.vertices.iter_mut().zip(bits) {
+    for (vertex, clip) in draw.vertices.make_mut().iter_mut().zip(bits) {
         vertex.position = [
             f32::from_bits(clip[0]),
             f32::from_bits(clip[1]),
@@ -322,7 +327,7 @@ fn selected_grid12_clip_policy_refuses_world_weight_quotients_that_can_flush_to_
 #[test]
 fn clip_w_thresholds_use_the_full_transform_rounding_interval() {
     let mut draw = clipped_phong_triangle();
-    draw.vertices[0].position = [1.0; 3];
+    draw.vertices.make_mut()[0].position = [1.0; 3];
     draw.clip_transform[7] = 16_777_216.0;
     draw.clip_transform[3] = 1.0;
     draw.clip_transform[11] = -16_777_216.0;
@@ -360,7 +365,7 @@ fn plane_domain_uses_absolute_transform_terms_and_f32_rounding_margin() {
     ];
     let clipping = crate::RenderClipping::new(vec![vec![[1.0e30, 0.0, 0.0, 0.0]]], model).unwrap();
     let mut draw = clipped_homogeneous_triangle([1.0; 3], clipping);
-    draw.vertices[0].position = [1.0, 1.0, 1.0];
+    draw.vertices.make_mut()[0].position = [1.0, 1.0, 1.0];
     let error = admit(
         Behavior::ProjectedGrid12V1,
         crate::RenderWorldClippingBehavior::FragmentV1,

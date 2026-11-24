@@ -9,17 +9,17 @@ use martensite_tkservice::graphic3d::*;
 
 #[path = "persistent_transform_flipping.rs"]
 mod flipping;
-pub(crate) use flipping::flipping_model_state;
+pub(crate) use flipping::{flipping_model_state, push_local_transform, structure_model_state};
 
 pub(crate) fn group_clip_transform(
     group: &Graphic3dDrawGroup,
     camera: &Graphic3dCamera,
     extent: Option<[u32; 2]>,
     structure: &Graphic3dCStructureFields,
+    model: Mat4<f64>,
 ) -> Result<([f32; 16], bool), RenderError> {
     let parent = &structure.trsf_pers;
     let local = group.transform_persistence();
-    let model = model_transform(group, structure);
     if parent.is_null() && local.is_null() {
         return Ok((ordinary_clip(camera, model), false));
     }
@@ -162,19 +162,27 @@ pub(crate) fn model_transform(
     group: &Graphic3dDrawGroup,
     structure: &Graphic3dCStructureFields,
 ) -> Mat4<f64> {
+    model_with_local(structure, &group.transformation())
+}
+/// The structure's transformation times a group transformation already read;
+/// `model_with_local(&fields, &group_trsf)`.
+pub(crate) fn model_with_local(
+    structure: &Graphic3dCStructureFields,
+    group: &martensite_tkmath::gp::Transform3,
+) -> Mat4<f64> {
     let mut model = Mat4::<f64>::identity();
     let mut local = Mat4::<f64>::identity();
     if let Some(datum) = structure.trsf.get() {
         datum.transformation().get_mat4(&mut model);
     }
-    group.transformation().get_mat4(&mut local);
+    group.get_mat4(&mut local);
     model * local
 }
 pub(crate) fn clipping_model(
     group: &Graphic3dDrawGroup,
-    structure: &Graphic3dCStructureFields,
+    model: Mat4<f64>,
 ) -> Result<[f32; 16], RenderError> {
-    let mut model = Mat4::<f32>::from_other(&model_transform(group, structure));
+    let mut model = Mat4::<f32>::from_other(&model);
     // Local zoom/rotate persistence resets the native ModelWorld translation,
     // so fragment planes must see that same model, not the pre-persistence one.
     local_anchor(&group.transform_persistence(), &mut model)?;
@@ -263,14 +271,19 @@ pub(crate) fn cap_mask_transform(
 pub(crate) fn lighting_matrices(
     context: &crate::text_submission::TextSceneContext<'_>,
 ) -> Result<([f32; 16], [f32; 16]), RenderError> {
-    let model = model_transform(context.group, context.structure);
+    let model = || {
+        context
+            .base_model
+            .copied()
+            .unwrap_or_else(|| model_transform(context.group, context.structure))
+    };
     let parent = &context.structure.trsf_pers;
     let local = context.group.transform_persistence();
     if parent.is_null() && local.is_null() {
         return Ok((
             context
                 .model_override
-                .unwrap_or_else(|| Mat4::<f32>::from_other(&model))
+                .unwrap_or_else(|| Mat4::<f32>::from_other(&model()))
                 .data(),
             // Invert the float OrientationMatrixF for occWorldViewMatrixInverse.
             context
@@ -281,7 +294,7 @@ pub(crate) fn lighting_matrices(
     }
     let transform = persistent_view(
         context.camera,
-        model,
+        model(),
         parent,
         &local,
         context.persistence_extent(),

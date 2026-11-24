@@ -18,7 +18,12 @@ layout(location=0) in vec4 position;
 layout(location=1) in vec4 color;
 layout(location=0) out vec4 vertexColor;
 layout(location=1) out vec2 screenSpaceCoord;
-layout(push_constant) uniform LineTransform { mat4 clip; vec2 viewport; uint pattern; uint factor; } transform;
+layout(push_constant) uniform LineTransform {
+    mat4 clip; vec2 viewport; uint pattern; uint factor;
+#ifdef MARTENSITE_DRAW_COLOR
+    vec4 drawColor;
+#endif
+} transform;
 void main() {
 #ifdef MARTENSITE_CLIPPING
     clippingWorldPosition = clipping.worldFromObject * position;
@@ -33,5 +38,9 @@ void main() {
     nativeLineViewportClip(gl_Position);
 #endif
     if (kRemapClipDepth) gl_Position.z = 0.5 * (gl_Position.z + gl_Position.w);
+#ifdef MARTENSITE_DRAW_COLOR
+    vertexColor = transform.drawColor;
+#else
     vertexColor = color;
+#endif
 }

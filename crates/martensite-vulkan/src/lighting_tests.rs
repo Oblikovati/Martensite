@@ -204,3 +204,10 @@ fn segment_lighting_accepts_nodal_models_and_rejects_facet_derivatives() {
         );
     }
 }
+
+#[test]
+fn identities_leave_equality_and_debug_text_unchanged() {
+    let (first, second) = (LightingIdentity::next(), LightingIdentity::next());
+    assert_eq!(first, second);
+    assert_eq!(format!("{first:?}"), format!("{second:?}"));
+}

@@ -71,7 +71,7 @@ fn image_layer_is_an_unlit_double_sided_textured_quad_without_depth() {
     let layer = image_background_layer(&*view, [64, 32]).unwrap().unwrap();
     assert!(!layer.depth_test && !layer.depth_write);
     let draw = &layer.draws[0];
-    assert_eq!(draw.indices, QUAD_TRIANGLES);
+    assert_eq!(draw.indices(), QUAD_TRIANGLES);
     assert_eq!(draw.face_culling, crate::RenderFaceCulling::None);
     assert!(draw.lighting.is_none());
     let texture = draw.surface_texture.as_ref().unwrap();

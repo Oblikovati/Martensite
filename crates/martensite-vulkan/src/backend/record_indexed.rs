@@ -5,6 +5,7 @@ pub(in crate::backend) fn record(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
     draw: &UploadedDraw,
+    indices: (u32, i32),
 ) {
     if let Some(status) = &draw.window_depth_status {
         status.dispatch(draw.count, draw.instances);
@@ -13,7 +14,7 @@ pub(in crate::backend) fn record(
     if let Some(capture) = &draw.vertex_output {
         capture.begin(command);
     }
-    let arguments = (draw.count, draw.instances, 0, 0, 0);
+    let arguments = (draw.count, draw.instances, indices.0, indices.1, 0);
     // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
     unsafe {
         runtime.device().cmd_draw_indexed(
@@ -39,12 +40,14 @@ pub(in crate::backend) fn controlled(
     command: vk::CommandBuffer,
     draw: &UploadedDraw,
     ordinal: usize,
+    indices: (u32, i32),
 ) {
     let mut sink = ControlledIndexed {
         runtime,
         command,
         draw,
         ordinal,
+        indices,
     };
     runtime
         .lit_only_commands
@@ -56,11 +59,12 @@ struct ControlledIndexed<'a> {
     command: vk::CommandBuffer,
     draw: &'a UploadedDraw,
     ordinal: usize,
+    indices: (u32, i32),
 }
 #[cfg(feature = "lit-only-command-diagnostics")]
 impl super::super::lit_only_commands::FinalDrawCommand for ControlledIndexed<'_> {
     fn issue_draw(&mut self) {
-        record(self.runtime, self.command, self.draw);
+        record(self.runtime, self.command, self.draw, self.indices);
     }
     fn record_decision(&mut self, retained: bool) {
         use ash::vk::Handle;

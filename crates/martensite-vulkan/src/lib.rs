@@ -10,6 +10,16 @@
 #[allow(unsafe_code)]
 mod backend;
 mod device_close;
+mod mesh_lod;
+pub use mesh_lod::RenderMeshLevel;
+mod assembly_streaming;
+pub use assembly_streaming::{RenderAssemblyStreaming, RenderAssemblyStreamingProgress};
+mod draw_instances;
+mod immediate_elision;
+mod immediate_main;
+#[cfg(test)]
+mod immediate_redraw_fixture;
+mod main_layer_notices;
 pub use device_close::RenderDeviceCloseOutcome;
 mod device_failure;
 mod portability_failure;
@@ -70,6 +80,8 @@ mod depth_bias_behavior;
 pub use depth_bias_behavior::{RenderDepthBiasBehavior, RenderDepthBiasFailure};
 mod render_behavior_configuration;
 pub use render_behavior_configuration::RenderBehaviorConfiguration;
+mod mesh_vertex_behavior;
+pub use mesh_vertex_behavior::RenderMeshVertexBehavior;
 mod clipped_depth_constants;
 #[cfg(test)]
 mod clipped_depth_plane;
@@ -102,10 +114,17 @@ mod graduated_trihedron;
 pub use graduated_trihedron::RenderGraduatedTrihedron;
 mod graphic_group;
 mod group_flipping;
+mod group_record_frame;
 mod primitive;
+mod primitive_buffer_read;
+mod primitive_cache;
 mod primitive_ranges;
 mod primitive_topology;
 pub use frame_stats::{RenderFrameStats, RenderImageMemory};
+mod driver_frame_flight;
+mod frame_work;
+mod redraw_capture;
+pub use frame_work::{RenderDeviceWork, RenderWorkTimes};
 pub use graphic_group::Graphic3dDrawGroup;
 
 mod style;
@@ -201,6 +220,7 @@ mod view_scene;
 mod view_target;
 pub use view_target::RenderFrameBuffer;
 mod view_window_lifecycle;
+mod view_window_observation;
 pub use driver::Graphic3dRenderDriver;
 mod driver_factory;
 pub use driver_factory::{VULKAN_DRIVER_NAME, VulkanDriverFactory};
@@ -237,6 +257,7 @@ mod text_atlas;
 mod text_background;
 mod text_culling;
 mod text_drawing;
+mod text_label_record;
 mod text_submission;
 mod text_transform;
 

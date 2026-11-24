@@ -9,17 +9,76 @@
 //! of bug218 cross that limit. Such segments are clipped here, in homogeneous coordinates, to
 //! a band far outside the viewport, so the visible part keeps its rasterization; segments that
 //! stay below the limit are submitted unchanged.
-use crate::{PrimitiveDraw, PrimitiveTopology, RenderVertex};
-use std::sync::Arc;
+use crate::{PrimitiveDraw, PrimitiveTopology, RenderVertex, draw::DrawStream};
+use std::sync::{Arc, OnceLock, Weak};
+
+mod projection_bounds;
+use projection_bounds::PositionBounds;
 
 /// Window span from which a segment is clipped; half the measured llvmpipe limit.
 const SAFE_LINE_SPAN: f32 = 16384.;
+// Small draws cost less to check directly than building a retained bound.
+const RETAINED_INDEX_MINIMUM: usize = 128;
+
+/// Memoization belongs to the validated geometry and does not participate in draw equality.
+#[derive(Clone, Default)]
+pub(crate) struct GuardBandMemo(Option<Arc<GuardBandWitness>>);
+
+struct GuardBandWitness {
+    vertices: Weak<Vec<RenderVertex>>,
+    indices: Weak<Vec<u32>>,
+    bounds: OnceLock<Option<PositionBounds>>,
+}
+
+impl GuardBandMemo {
+    pub(crate) fn for_line(vertices: &DrawStream<RenderVertex>, indices: &DrawStream<u32>) -> Self {
+        if indices.len() < RETAINED_INDEX_MINIMUM {
+            return Self::default();
+        }
+        let witness = vertices
+            .witness()
+            .zip(indices.witness())
+            .map(|(vertices, indices)| {
+                Arc::new(GuardBandWitness {
+                    vertices,
+                    indices,
+                    bounds: OnceLock::new(),
+                })
+            });
+        Self(witness)
+    }
+
+    fn bounds(&self, draw: &PrimitiveDraw) -> Option<PositionBounds> {
+        let memo = self.0.as_ref()?;
+        if draw.vertices.identity().map(|value| value.get()) != Some(memo.vertices.as_ptr().addr())
+            || draw.indices.identity().map(|value| value.get())
+                != Some(memo.indices.as_ptr().addr())
+        {
+            return None;
+        }
+        *memo
+            .bounds
+            .get_or_init(|| PositionBounds::indexed(&draw.vertices, &draw.indices))
+    }
+}
+
+impl std::fmt::Debug for GuardBandMemo {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("GuardBandMemo")
+    }
+}
+
+impl PartialEq for GuardBandMemo {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
 
 /// The submitted geometry of a clipped draw, for renderers whose driver clips lines natively.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct GuardBandSource {
-    pub(crate) vertices: Vec<RenderVertex>,
-    pub(crate) indices: Vec<u32>,
+    pub(crate) vertices: DrawStream<RenderVertex>,
+    pub(crate) indices: DrawStream<u32>,
 }
 
 /// Clip every eligible line draw whose segments reach `SAFE_LINE_SPAN`.
@@ -60,6 +119,17 @@ impl GuardBand {
         Self { extent, scale }
     }
     fn needs_clipping(&self, draw: &PrimitiveDraw) -> bool {
+        if self.short_by_bounds(draw) {
+            return false;
+        }
+        self.scan_segments(draw)
+    }
+    fn short_by_bounds(&self, draw: &PrimitiveDraw) -> bool {
+        draw.guard_band_bounds.bounds(draw).is_some_and(|bounds| {
+            bounds.spans_less_than(&draw.clip_transform, self.extent, SAFE_LINE_SPAN)
+        })
+    }
+    fn scan_segments(&self, draw: &PrimitiveDraw) -> bool {
         draw.indices.as_chunks::<2>().0.iter().any(|&[a, b]| {
             let ends = [a, b].map(|i| clip_position(draw, &draw.vertices[i as usize]));
             self.window_span(ends) >= SAFE_LINE_SPAN
@@ -86,8 +156,8 @@ impl GuardBand {
                 vertices.extend(range.map(|t| interpolate(ends, t)));
             }
         }
-        let indices = (0..vertices.len() as u32).collect();
-        let mut clipped = draw.with_replacement_geometry(vertices, indices);
+        let indices = (0..vertices.len() as u32).collect::<Vec<_>>();
+        let mut clipped = draw.with_replacement_geometry(vertices.into(), indices.into());
         clipped.guard_band_source = Some(retained_source(draw));
         clipped
     }

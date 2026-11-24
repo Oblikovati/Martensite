@@ -14,13 +14,51 @@ mod alpha;
 mod indexed;
 #[path = "record_sync.rs"]
 mod sync;
-pub(super) use layer_commands::{layer_dependency, record_layer, set_depth_policy};
+pub(super) use layer_commands::{
+    layer_dependency, record_layer, record_secondary_layer, set_depth_policy,
+};
+pub(super) fn record_submission_frame(
+    submission: &super::submission::CommandSubmission,
+    resources: &FrameResources,
+    frame: &RenderFrame,
+) -> Result<(), crate::RenderError> {
+    let linked = submission.prepare_geometry_transfer(&resources.geometry_transfers)?;
+    record_frame_impl(
+        &submission.runtime,
+        submission.command,
+        resources,
+        frame,
+        !linked,
+    );
+    Ok(())
+}
+
+#[cfg(test)]
 pub(super) fn record_frame(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
     resources: &FrameResources,
     frame: &RenderFrame,
 ) {
+    record_frame_impl(runtime, command, resources, frame, true);
+}
+
+fn record_frame_impl(
+    runtime: &VulkanRuntime,
+    command: vk::CommandBuffer,
+    resources: &FrameResources,
+    frame: &RenderFrame,
+    inline_geometry: bool,
+) {
+    let _recording = runtime.work.enter(super::WorkPhase::Recording);
+    if inline_geometry {
+        resources.geometry_transfers.record(runtime, command);
+    }
+    if let [draw] = resources.draws.as_slice()
+        && let Some(run) = &draw.table_run
+    {
+        run.record_compaction(runtime, command, resources.extent, draw);
+    }
     super::window_depth_status::begin(resources);
     #[cfg(feature = "command-state-diagnostics")]
     {
@@ -37,36 +75,40 @@ pub(super) fn record_frame(
     super::vertex_output::reset(runtime, command, resources);
     #[cfg(feature = "raytrace-input-diagnostics")]
     super::raytrace_input_diagnostic::frame(command, resources, frame);
-    transition_targets(runtime, command, resources, false);
-    super::oit_record::record_layers(runtime, command, resources, frame);
+    let start = match &resources.immediate_source {
+        Some((start, images)) => {
+            images.restore(runtime, command, resources);
+            *start
+        }
+        None => {
+            transition_targets(runtime, command, resources, false);
+            0
+        }
+    };
+    super::oit_record::record_layers(runtime, command, resources, frame, start);
     transition_targets(runtime, command, resources, true);
     #[cfg(feature = "vertex-output-diagnostics")]
     super::vertex_output::host_barrier(runtime, command, resources);
     super::window_depth_status::host_barrier(runtime, command, resources);
-    read_attachments(runtime, command, resources);
 }
-fn read_attachments(
+/// Copy the colour and depth attachments, left in `TRANSFER_SRC_OPTIMAL` by their frame, into
+/// host buffers; a `None` read is skipped;
+/// `record_attachment_reads(rt, command, [Some((&color, buffer)), None], extent)`.
+pub(super) fn record_attachment_reads(
     runtime: &VulkanRuntime,
     command: vk::CommandBuffer,
-    resources: &FrameResources,
+    reads: [Option<(&TargetImage, vk::Buffer)>; 2],
+    extent: vk::Extent2D,
 ) {
-    copy_attachment(
-        runtime,
-        command,
-        &resources.color,
-        resources.color_read.handle,
-        resources.attachment_extent,
-    );
-    copy_attachment(
-        runtime,
-        command,
-        &resources.depth,
-        resources.depth_read.handle,
-        resources.attachment_extent,
-    );
+    for (image, buffer) in reads.into_iter().flatten() {
+        copy_attachment(runtime, command, image, buffer, extent);
+    }
     sync::host_barrier(runtime, command);
 }
-fn image_barrier(image: &TargetImage, readback: bool) -> vk::ImageMemoryBarrier2<'static> {
+pub(super) fn image_barrier(
+    image: &TargetImage,
+    readback: bool,
+) -> vk::ImageMemoryBarrier2<'static> {
     let barrier = vk::ImageMemoryBarrier2::default()
         .image(image.handle)
         .subresource_range(image.range())
@@ -92,6 +134,8 @@ fn attachment_transition(barrier: vk::ImageMemoryBarrier2<'_>) -> vk::ImageMemor
                 | vk::AccessFlags2::DEPTH_STENCIL_ATTACHMENT_READ,
         )
 }
+/// A restored frame without immediate draws reads the restore draw's attachment writes,
+/// which this scope covers too.
 fn readback_transition(
     barrier: vk::ImageMemoryBarrier2<'_>,
     aspect: vk::ImageAspectFlags,
@@ -106,7 +150,7 @@ fn readback_transition(
         .dst_access_mask(vk::AccessFlags2::TRANSFER_READ)
 }
 /// The stages and accesses that write one attachment; `attachment_write_scope(aspect)`.
-fn attachment_write_scope(
+pub(super) fn attachment_write_scope(
     aspect: vk::ImageAspectFlags,
 ) -> (vk::PipelineStageFlags2, vk::AccessFlags2) {
     if aspect.intersects(vk::ImageAspectFlags::DEPTH | vk::ImageAspectFlags::STENCIL) {
@@ -150,20 +194,32 @@ pub(super) fn record_draws_selected(
     mut color_scope: super::scene_color_scope::SceneColorScope,
 ) {
     let mut state = super::draw_state::DrawState::default();
+    let mut bindings = super::record_draw_bindings::BindingSlots::default();
+    let mut bias_commands = super::depth_bias_record::DepthBiasCommands::default();
     let mut depth_policy = None;
     let mut offsets = crate::polygon_offset::PolygonOffsetState::new(layer.polygon_offset);
     let mut culling = (crate::RenderFaceCulling::None, false);
     super::capping_record::set_culling(runtime, command, culling);
-    for (index, draw) in resources.draws[layer.draw_range.clone()].iter().enumerate() {
+    let start = layer.draw_range.start - resources.first_draw;
+    let end = layer.draw_range.end - resources.first_draw;
+    // Every built-in pipeline takes stencil as dynamic state, so a state recorded once holds
+    // until it changes; each draw recorded five stencil commands before (#594).
+    let mut stencil = None;
+    // The draws after the first of an indirect run record within the run (draw_table.rs).
+    let mut resume = 0;
+    for (index, draw) in resources.draws[start..end].iter().enumerate() {
+        if index < resume {
+            continue;
+        }
         let draw_index = layer.draw_range.start + index;
         if resources.stencil.clear_before[draw_index] {
             super::capping_record::clear_stencil(runtime, command, resources.attachment_extent);
         }
-        super::ordered_stencil_record::apply(
-            runtime,
-            command,
-            resources.stencil.during[draw_index],
-        );
+        let next_stencil = resources.stencil.during[draw_index];
+        if cfg!(feature = "command-state-diagnostics") || stencil != Some(next_stencil) {
+            super::ordered_stencil_record::apply(runtime, command, next_stencil);
+            stencil = Some(next_stencil);
+        }
         let pipeline = selection
             .map(|(phase, _)| {
                 draw.oit
@@ -172,6 +228,9 @@ pub(super) fn record_draws_selected(
                     .pipeline(phase)
             })
             .unwrap_or(&draw.pipeline);
+        // OIT passes record the draws of a run one by one, with their own pipelines.
+        let run = draw.table_run.as_deref().filter(|_| selection.is_none());
+        let pipeline = run.map_or(pipeline, |run| &*run.pipeline);
         // A registered user program replaces the built-in pipeline; in an OIT pass only its
         // OIT variants (selected at upload) draw.
         let phase = selection.map(|(phase, _)| phase);
@@ -190,6 +249,9 @@ pub(super) fn record_draws_selected(
         let handle = user.map_or(pipeline.handle, |(_, linked)| linked.handle);
         let (bind, push) = state.advance(handle, &draw.transform);
         if bind {
+            bindings.lighting.invalidate();
+            bindings.invalidate_sets();
+            bias_commands.invalidate();
             // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
             unsafe {
                 runtime
@@ -239,16 +301,8 @@ pub(super) fn record_draws_selected(
             && !kind
                 .window_depth
                 .is_some_and(|parameters| parameters.fragment_depth());
-        // SAFETY: the command buffer is recording on this thread and every handle it names outlives the submission.
-        unsafe {
-            // AspectPOM_Off disables offset; zero factors still bias edge-on triangles.
-            runtime
-                .device()
-                .cmd_set_depth_bias_enable(command, hardware_bias);
-            super::depth_bias_record::record(runtime, command, units, factor)
-        };
-        #[cfg(feature = "command-state-diagnostics")]
-        super::replay_raster_commands::hardware_bias_enable(command, hardware_bias);
+        // AspectPOM_Off disables offset; zero factors still bias edge-on triangles.
+        bias_commands.apply(runtime, command, hardware_bias, [units, factor]);
         super::window_depth_record::record(
             runtime,
             command,
@@ -272,12 +326,29 @@ pub(super) fn record_draws_selected(
                     kind,
                 ),
             },
-            draw.bindings.lighting.as_ref(),
+            draw.bindings.lighting.as_deref(),
         );
         #[cfg(feature = "command-state-diagnostics")]
         super::geometry_command_diagnostic::before_draw((command, draw_index, handle), draw);
         if let Some((user, linked)) = user {
+            bindings.lighting.invalidate();
+            bias_commands.invalidate();
+            bindings.invalidate_geometry();
+            bindings.invalidate_sets();
+            // A user pipeline may hold static stencil state, which leaves the dynamic state
+            // undefined for the next draw.
+            stencil = None;
             user.record(command, linked);
+            continue;
+        }
+        if selection.is_none()
+            && let Some(Some(meshlet)) = resources.meshlets.get(start + index)
+        {
+            meshlet.record(runtime, command, draw, resources.extent);
+            state = super::draw_state::DrawState::default();
+            bindings.lighting.invalidate();
+            bindings.invalidate_sets();
+            bias_commands.invalidate();
             continue;
         }
         super::phong_interpolation_record::push_viewport(
@@ -296,13 +367,14 @@ pub(super) fn record_draws_selected(
             resources.extent,
         );
         super::fixed_grid_record::begin_fixed_grid_draw(runtime, command, draw);
-        super::record_draw_bindings::record_draw(
+        let indices = super::record_draw_bindings::record_draw(
             runtime,
             command,
             draw,
             pipeline,
             push,
             alpha::selected_alpha_set(draw, selection.map(|(_, set)| set)),
+            &mut bindings,
         );
         if let Some(wide) = &draw.line.wide {
             super::render_target_record::record_wide_line(
@@ -312,11 +384,16 @@ pub(super) fn record_draws_selected(
                 wide,
                 resources.extent,
             );
+            stencil = None;
+            bindings.invalidate_sets();
+        } else if let Some(run) = run {
+            super::draw_table::record_run(runtime, command, run, &mut bindings);
+            resume = index + run.count;
         } else {
             #[cfg(feature = "lit-only-command-diagnostics")]
-            indexed::controlled(runtime, command, draw, draw_index);
+            indexed::controlled(runtime, command, draw, draw_index, indices);
             #[cfg(not(feature = "lit-only-command-diagnostics"))]
-            indexed::record(runtime, command, draw);
+            indexed::record(runtime, command, draw, indices);
         }
         super::fixed_grid_record::restore_fixed_grid_draw(runtime, command, draw, culling.1);
     }

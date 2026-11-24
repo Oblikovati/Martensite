@@ -119,7 +119,7 @@ fn cap_image_style(
         pending_texgen: None,
         fixed_environment: false,
         sampler,
-        uv,
+        uv: uv.into(),
         back_vertex: aspect.to_use_vertex_color_for_back_faces(),
         vertex_override: false,
         modulate: parameters.is_modulate(),

@@ -22,6 +22,7 @@ pub struct AisShapeFields {
     pub initial_angle: f64,
     /// `myCompBB`.
     pub recompute_bounds: bool,
+    pub(super) mesh_lod: Option<crate::std_prs::StdPrsMeshLod>,
 }
 impl AisShapeFields {
     fn new(shape: &Shape) -> Self {
@@ -33,6 +34,7 @@ impl AisShapeFields {
             uv_scale: Point2::new(1., 1.),
             initial_angle: 0.,
             recompute_bounds: true,
+            mesh_lod: None,
         }
     }
 }
@@ -46,6 +48,7 @@ impl Clone for AisShapeFields {
             uv_scale: self.uv_scale,
             initial_angle: self.initial_angle,
             recompute_bounds: self.recompute_bounds,
+            mesh_lod: self.mesh_lod.clone(),
         }
     }
 }

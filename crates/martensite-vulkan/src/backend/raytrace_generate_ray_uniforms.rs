@@ -60,6 +60,7 @@ impl UniformInput {
             .set_layouts(&layouts);
         // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
         self.set = unsafe { self.runtime.device().allocate_descriptor_sets(&info) }.unwrap()[0];
+        self.runtime.work.add_sets(&info);
     }
     fn bind_block(&self) {
         let blocks = [vk::DescriptorBufferInfo::default()

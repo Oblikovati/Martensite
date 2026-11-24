@@ -6,6 +6,12 @@ use martensite_tkservice::graphic3d::Graphic3dTypeOfLimit;
 impl super::VulkanRenderer {
     /// Snapshot the selected device capacities; `renderer.device_limits()`.
     pub(crate) fn device_limits(&self) -> RenderDeviceLimits {
+        *self
+            .runtime
+            .device_limits
+            .get_or_init(|| self.queried_device_limits())
+    }
+    fn queried_device_limits(&self) -> RenderDeviceLimits {
         let limits = &self.runtime.limits;
         let dump = self.capture_limit() as i32;
         RenderDeviceLimits {

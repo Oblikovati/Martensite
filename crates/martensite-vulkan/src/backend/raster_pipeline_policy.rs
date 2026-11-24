@@ -124,13 +124,20 @@ fn create_located_pipeline(
 ) -> Result<vk::Pipeline, RenderError> {
     #[cfg(test)]
     let info = executable_creation_info(runtime, info);
-    // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
-    match unsafe {
-        runtime
-            .device()
-            .create_graphics_pipelines(vk::PipelineCache::null(), &[info], None)
-    } {
+    let pipelines = runtime.pipeline_cache.with_handle(|cache| {
+        // SAFETY: the runtime owns the live device and serializes access to the cache. The
+        // pipeline create information borrows live values of this scope.
+        unsafe {
+            runtime
+                .device()
+                .create_graphics_pipelines(cache, &[info], None)
+        }
+    });
+    match pipelines {
         Ok(pipelines) => {
+            runtime
+                .work
+                .add(super::frame_work_ledger::DeviceCount::Pipelines, 1);
             #[cfg(any(
                 feature = "vertex-output-diagnostics",
                 feature = "command-state-diagnostics"

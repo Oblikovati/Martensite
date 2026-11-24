@@ -201,7 +201,7 @@ fn prepared_draw(
     let vertices = upload
         .map(|point| RenderVertex::homogeneous(point, color))
         .to_vec();
-    let mut prepared = source.with_replacement_geometry(vertices, vec![0, 1]);
+    let mut prepared = source.with_replacement_geometry(vertices.into(), vec![0, 1].into());
     prepared.clip_transform = crate::identity_clip();
     prepared.projected_dash = Some(PreparedAxis { extent, axis });
     prepared

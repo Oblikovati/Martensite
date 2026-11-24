@@ -52,7 +52,7 @@ fn clip_space_lowering_replaces_only_the_planes() {
     let draw = fixed_clipped_draw();
     let selected = fixed_function(Behavior::FactorizedLinesV3, true, &draw).unwrap();
     assert_eq!(selected.clip_transform, draw.clip_transform);
-    let planes = selected.clipping.unwrap();
+    let planes = selected.clipping.clone().unwrap();
     assert_eq!(planes.chains()[0][0], [0., 0., 1., 2.]);
 }
 

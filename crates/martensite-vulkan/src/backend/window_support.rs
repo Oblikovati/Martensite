@@ -84,8 +84,18 @@ pub(super) fn surface_format(
         "an RGBA8/BGRA8 sRGB nonlinear surface format",
     ))
 }
-pub(super) fn image_count(cap: &vk::SurfaceCapabilitiesKHR) -> u32 {
-    let desired = cap.min_image_count.saturating_add(1);
+/// The swapchain image count; `image_count(&cap, vk::PresentModeKHR::IMMEDIATE)`.
+/// Without vertical sync, two frames in flight each keep an image until the server releases
+/// it, which XWayland does late for an override-redirect window; one more image than FIFO
+/// lets the acquire find a free image instead of waiting about 20 µs (#594). FIFO keeps one
+/// spare image, because more queued images would only add display latency.
+pub(super) fn image_count(cap: &vk::SurfaceCapabilitiesKHR, mode: vk::PresentModeKHR) -> u32 {
+    let spare = if mode == vk::PresentModeKHR::FIFO {
+        1
+    } else {
+        2
+    };
+    let desired = cap.min_image_count.saturating_add(spare);
     if cap.max_image_count == 0 {
         desired
     } else {
@@ -160,9 +170,12 @@ mod tests {
             },
             ..Default::default()
         };
-        assert_eq!(image_count(&c), 2);
+        let (fifo, immediate) = (vk::PresentModeKHR::FIFO, vk::PresentModeKHR::IMMEDIATE);
+        assert_eq!(image_count(&c, fifo), 2);
+        assert_eq!(image_count(&c, immediate), 2);
         c.max_image_count = 0;
-        assert_eq!(image_count(&c), 3);
+        assert_eq!(image_count(&c, fifo), 3);
+        assert_eq!(image_count(&c, immediate), 4);
         assert_eq!(
             extent(&c, [200, 1]).unwrap(),
             vk::Extent2D {
