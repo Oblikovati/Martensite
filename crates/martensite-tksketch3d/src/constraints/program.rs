@@ -4,9 +4,10 @@ use super::{
     RelationId,
     adopt::apply_checked,
     binding::{Binding, EquationBlock},
+    continuity::JoinReference,
     poll, residual,
 };
-use crate::{Edit, EntityId, LineId, PointId, Snapshot};
+use crate::{Edit, EntityId, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveOptions, SolveTermination, solve_constraints_with_constants},
@@ -23,7 +24,7 @@ pub(super) struct Program {
     point_columns: Arc<BTreeMap<PointId, usize>>,
     fixed: Arc<[(usize, f64)]>,
     blocks: Arc<[EquationBlock]>,
-    incidence_charts: Arc<[(usize, LineId)]>,
+    chart_sources: Arc<[(usize, JoinReference)]>,
     authored_rows: usize,
     frozen_coordinates: usize,
     prepared: Prepared,
@@ -79,13 +80,13 @@ impl Program {
             limits,
         )
         .map_err(|error| preview_failure(&blocks, error))?;
-        let incidence_charts = chart::indexed(&blocks, relations);
+        let chart_sources = chart::indexed(&blocks, relations);
         Ok(Self {
             points: points.into(),
             point_columns: Arc::new(point_columns),
             fixed: fixed.into(),
             blocks: blocks.into(),
-            incidence_charts,
+            chart_sources,
             authored_rows,
             frozen_coordinates,
             prepared,
@@ -95,13 +96,13 @@ impl Program {
     pub(super) fn establish(
         &self,
         geometry: &Snapshot,
-        reference_lines: impl Iterator<Item = (RelationId, LineId)>,
+        references: impl Iterator<Item = (RelationId, JoinReference)>,
         options: SolveOptions,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Vec<f64>, Failure> {
         poll(cancelled)?;
         let mut values = self.values(geometry)?;
-        let fixed = self.authoring_fixed(geometry, reference_lines, &values, cancelled)?;
+        let fixed = self.authoring_fixed(geometry, references, &values, cancelled)?;
         super::initialization::initialize(
             &mut values,
             &self.blocks,
@@ -139,20 +140,17 @@ impl Program {
     fn authoring_fixed(
         &self,
         geometry: &Snapshot,
-        mut reference_lines: impl Iterator<Item = (RelationId, LineId)>,
+        mut references: impl Iterator<Item = (RelationId, JoinReference)>,
         values: &[f64],
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Cow<'_, [(usize, f64)]>, Failure> {
-        let Some(first) = reference_lines.next() else {
+        let Some(first) = references.next() else {
             return Ok(Cow::Borrowed(&self.fixed));
         };
         let mut fixed = self.fixed.iter().copied().collect::<BTreeMap<_, _>>();
-        for (relation, id) in std::iter::once(first).chain(reference_lines) {
+        for (relation, reference) in std::iter::once(first).chain(references) {
             poll(cancelled)?;
-            let line = geometry
-                .line(id)
-                .ok_or(Failure::MissingOperand(relation, EntityId::Line(id)))?;
-            for point in line.line.endpoints {
+            for point in reference.authoring_points(geometry, relation)? {
                 let start = *self
                     .point_columns
                     .get(&point)
@@ -305,8 +303,8 @@ impl Program {
 }
 
 fn pin_columns(fixed: &mut BTreeMap<usize, f64>, start: usize, values: &[f64]) {
-    for column in start..start + 3 {
-        fixed.entry(column).or_insert(values[column]);
+    for (offset, &value) in values[start..start + 3].iter().enumerate() {
+        fixed.entry(start + offset).or_insert(value);
     }
 }
 

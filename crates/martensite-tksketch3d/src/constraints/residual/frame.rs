@@ -14,7 +14,11 @@ pub(in crate::constraints) enum FrameReference {
 
 impl FrameReference {
     pub(in crate::constraints) fn axis(line: LineGeometry) -> Self {
-        Self::Axis(axis(*line.carrier.direction().coordinates()))
+        Self::from_direction(*line.carrier.direction().coordinates())
+    }
+
+    pub(in crate::constraints) fn from_direction(direction: [f64; 3]) -> Self {
+        Self::Axis(axis(direction))
     }
 
     pub(in crate::constraints) fn pair([first, second]: [LineGeometry; 2]) -> Self {
@@ -34,8 +38,7 @@ impl FrameReference {
         }
     }
 
-    pub(in crate::constraints) fn needs_refresh(self, line: LineGeometry) -> bool {
-        let direction = *line.carrier.direction().coordinates();
+    pub(in crate::constraints) fn needs_refresh(self, direction: [f64; 3]) -> bool {
         let projection: f64 = direction
             .into_iter()
             .zip(self.coordinates())

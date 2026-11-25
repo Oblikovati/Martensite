@@ -1,48 +1,84 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Differentiate exact endpoint stencils and moving line-frame projections.
+//! Differentiate exact endpoint stencils and a moving reference frame.
 use super::{
     DualNumber, FrameReference, ResidualError, Vector, checked_length, components, directed, unit,
 };
 use crate::constraints::ParallelDirection;
 use martensite_tkmath::predicates::roots::{CubicEndJet, CubicEndStencil};
 
-pub(super) fn line_cubic(
+pub(super) fn evaluate(
     inputs: &[DualNumber],
     line: &Vector,
     reference: FrameReference,
+    cubic_reference: bool,
     curvature_scale: Option<f64>,
 ) -> Result<Vec<DualNumber>, ResidualError> {
-    let (velocity, acceleration) = derivatives(inputs, curvature_scale.is_some())?;
-    let line = unit(line)?;
-    let speed = checked_length(&velocity)?;
-    let tangent = divide(&velocity, &speed)?;
-    directed(&line, &tangent, ParallelDirection::Same)?;
-    let basis = reference.basis(&line, "line/cubic continuity")?;
-    let mut rows = components(&basis, &tangent)?.to_vec();
-    if let (Some(scale), Some(acceleration)) = (curvature_scale, acceleration) {
-        let curvature = normal_curvature(&tangent, &speed, &acceleration)?;
+    let g2 = curvature_scale.is_some();
+    let adjusted = endpoint(inputs, [3, 6, 9], g2, 1.)?;
+    let incoming = if cubic_reference {
+        endpoint(inputs, [3, 0, 12], g2, -1.)?
+    } else {
+        Endpoint {
+            tangent: unit(line)?,
+            curvature: None,
+        }
+    };
+    directed(
+        &incoming.tangent,
+        &adjusted.tangent,
+        ParallelDirection::Same,
+    )?;
+    let basis = reference.basis(&incoming.tangent, "curve continuity")?;
+    let mut rows = components(&basis, &adjusted.tangent)?.to_vec();
+    if let (Some(scale), Some(mut curvature)) = (curvature_scale, adjusted.curvature) {
+        if let Some(reference_curvature) = incoming.curvature {
+            curvature = curvature.minus(&reference_curvature)?;
+        }
         let [a, b] = components(&basis, &curvature)?;
         rows.extend([a.scaled(scale)?, b.scaled(scale)?]);
     }
     Ok(rows)
 }
 
-fn derivatives(inputs: &[DualNumber], g2: bool) -> Result<(Vector, Option<Vector>), ResidualError> {
-    // Binding keeps each of the line endpoint and local cubic controls in one slot.
+struct Endpoint {
+    tangent: Vector,
+    curvature: Option<Vector>,
+}
+
+fn endpoint(
+    inputs: &[DualNumber],
+    offsets: [usize; 3],
+    g2: bool,
+    sign: f64,
+) -> Result<Endpoint, ResidualError> {
+    let (velocity, acceleration) = derivatives(inputs, offsets, g2)?;
+    let speed = checked_length(&velocity)?;
+    let tangent = divide(&velocity.scaled(sign)?, &speed)?;
+    let curvature = acceleration
+        .map(|a| normal_curvature(&tangent, &speed, &a))
+        .transpose()?;
+    Ok(Endpoint { tangent, curvature })
+}
+
+fn derivatives(
+    inputs: &[DualNumber],
+    [join, adjacent, second]: [usize; 3],
+    g2: bool,
+) -> Result<(Vector, Option<Vector>), ResidualError> {
+    // Both endpoint stencils read the same position and derivative columns at the join.
     let point = |offset: usize| std::array::from_fn(|axis| inputs[offset + axis].value());
-    let (join, adjacent) = (point(3), point(6));
     let stencil = if g2 {
-        CubicEndStencil::Curvature([join, adjacent, point(9)])
+        CubicEndStencil::Curvature([point(join), point(adjacent), point(second)])
     } else {
-        CubicEndStencil::Tangent([join, adjacent])
+        CubicEndStencil::Tangent([point(join), point(adjacent)])
     };
     let jet = CubicEndJet::new(stencil)
         .and_then(|jet| jet.rounded())
         .map_err(|cause| ResidualError::Domain(cause.to_string()))?;
-    let velocity = inject(jet.first, inputs, [-3., 3.])?;
+    let velocity = inject(jet.first, inputs, [(join, -3.), (adjacent, 3.)])?;
     let acceleration = jet
         .second
-        .map(|value| inject(value, inputs, [6., -12., 6.]))
+        .map(|value| inject(value, inputs, [(join, 6.), (adjacent, -12.), (second, 6.)]))
         .transpose()?;
     Ok((velocity, acceleration))
 }
@@ -50,7 +86,7 @@ fn derivatives(inputs: &[DualNumber], g2: bool) -> Result<(Vector, Option<Vector
 fn inject<const N: usize>(
     values: [f64; 3],
     inputs: &[DualNumber],
-    stencil: [f64; N],
+    stencil: [(usize, f64); N],
 ) -> Result<Vector, ResidualError> {
     let dimensions = inputs
         .iter()
@@ -68,15 +104,14 @@ fn inject<const N: usize>(
 
 fn partial<const N: usize>(
     inputs: &[DualNumber],
-    stencil: [f64; N],
+    stencil: [(usize, f64); N],
     axis: usize,
     column: usize,
 ) -> f64 {
     stencil
         .into_iter()
-        .enumerate()
-        .map(|(control, coefficient)| {
-            let gradient = inputs[3 * (control + 1) + axis].gradient();
+        .map(|(offset, coefficient)| {
+            let gradient = inputs[offset + axis].gradient();
             gradient.get(column).map_or(0., |entry| coefficient * entry)
         })
         .sum()

@@ -11,7 +11,7 @@ mod frame;
 pub(super) use frame::FrameReference;
 
 type Vector = DualVector<3>;
-// Each evaluator has at most 12 input scalars and four result rows.
+// Each evaluator has at most 15 input scalars and four result rows.
 // The parallel path uses fewer than 100 elementary dual operations and copies, including
 // both vector normalizations, the two basis vectors and the branch dot product. Colinear adds
 // two length projections. G2 adds fixed-size exact endpoint stencils and two curvature
@@ -60,37 +60,40 @@ pub(super) enum Equation {
         target: LineAngle,
         minimum_sine: f64,
     },
-    LineCubic {
+    Continuity {
         reference: FrameReference,
+        cubic_reference: bool,
         curvature_scale: Option<f64>,
     },
 }
 
 impl Equation {
-    pub(super) fn refreshed_incidence(self, line: crate::LineGeometry) -> Option<Self> {
+    pub(super) fn refreshed_chart(self, direction: [f64; 3]) -> Option<Self> {
         match self {
-            Self::PointOnLine { reference, scale } if reference.needs_refresh(line) => {
+            Self::PointOnLine { reference, scale } if reference.needs_refresh(direction) => {
                 Some(Self::PointOnLine {
                     scale,
-                    reference: FrameReference::axis(line),
+                    reference: FrameReference::from_direction(direction),
                 })
             }
             Self::Colinear {
                 reference,
-                direction,
+                direction: branch,
                 scale,
                 independent_offset,
-            } if reference.needs_refresh(line) => Some(Self::Colinear {
-                direction,
+            } if reference.needs_refresh(direction) => Some(Self::Colinear {
+                direction: branch,
                 scale,
                 independent_offset,
-                reference: FrameReference::axis(line),
+                reference: FrameReference::from_direction(direction),
             }),
-            Self::LineCubic {
+            Self::Continuity {
                 reference,
+                cubic_reference,
                 curvature_scale,
-            } if reference.needs_refresh(line) => Some(Self::LineCubic {
-                reference: FrameReference::axis(line),
+            } if reference.needs_refresh(direction) => Some(Self::Continuity {
+                reference: FrameReference::from_direction(direction),
+                cubic_reference,
                 curvature_scale,
             }),
             _ => None,
@@ -109,7 +112,7 @@ impl Equation {
                 independent_offset: true,
                 ..
             }
-            | Self::LineCubic {
+            | Self::Continuity {
                 curvature_scale: Some(_),
                 ..
             } => 4,
@@ -117,22 +120,27 @@ impl Equation {
             | Self::PointOnLine { .. }
             | Self::Parallel { .. }
             | Self::Axis(..)
-            | Self::LineCubic { .. } => 2,
+            | Self::Continuity { .. } => 2,
         }
     }
 
     fn width(self) -> usize {
         match self {
+            Self::Continuity {
+                cubic_reference: true,
+                curvature_scale: Some(_),
+                ..
+            } => 15,
             Self::Parallel { .. }
             | Self::Colinear { .. }
             | Self::Perpendicular
             | Self::EqualLength { .. }
             | Self::Angle { .. }
-            | Self::LineCubic {
+            | Self::Continuity {
                 curvature_scale: Some(_),
                 ..
             } => 12,
-            Self::PointOnLine { .. } | Self::LineCubic { .. } => 9,
+            Self::PointOnLine { .. } | Self::Continuity { .. } => 9,
             _ => 6,
         }
     }
@@ -189,10 +197,11 @@ impl ResidualSource for Equation {
                 target,
                 minimum_sine,
             } => angle_row(v, &first, target, minimum_sine),
-            Self::LineCubic {
+            Self::Continuity {
                 reference,
+                cubic_reference,
                 curvature_scale,
-            } => continuity::line_cubic(v, &first, reference, curvature_scale),
+            } => continuity::evaluate(v, &first, reference, cubic_reference, curvature_scale),
         }
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Refresh incidence charts between accepted states, without compiling another layout.
+//! Refresh direction charts between accepted states, without compiling another layout.
 use super::{
-    Arc, BTreeMap, ConstraintPolicy, EntityId, EquationBlock, Failure, Incomplete, LineId,
+    Arc, BTreeMap, ConstraintPolicy, EquationBlock, Failure, Incomplete, JoinReference,
     PreviewError, Program, Relation, RelationId, Snapshot, poll, preview_failure, residual,
 };
 use martensite_tksolve::preview::{Limit, SourceReplacement, Work};
@@ -22,7 +22,7 @@ impl Program {
     ) -> Result<Reframed, Failure> {
         let mut work = spent.unwrap_or_default();
         if let Some(spent) = spent {
-            work = charge(policy, spent, self.incidence_charts.len())?;
+            work = charge(policy, spent, self.chart_sources.len())?;
         }
         let updates = self.collect_frames(geometry, cancelled)?;
         if updates.is_empty() {
@@ -41,13 +41,11 @@ impl Program {
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Vec<(usize, Arc<residual::Equation>)>, Failure> {
         let mut updates = Vec::new();
-        for &(index, line) in self.incidence_charts.iter() {
+        for &(index, reference) in self.chart_sources.iter() {
             poll(cancelled)?;
             let block = &self.blocks[index];
-            let admitted = geometry
-                .line(line)
-                .ok_or(Failure::MissingOperand(block.id, EntityId::Line(line)))?;
-            if let Some(next) = block.source.refreshed_incidence(admitted) {
+            let direction = reference.chart_direction(geometry, block.id)?;
+            if let Some(next) = block.source.refreshed_chart(direction) {
                 updates.push((index, Arc::new(next)));
             }
         }
@@ -96,15 +94,15 @@ impl Program {
 pub(super) fn indexed(
     blocks: &[EquationBlock],
     relations: &BTreeMap<RelationId, Relation>,
-) -> Arc<[(usize, LineId)]> {
+) -> Arc<[(usize, JoinReference)]> {
     blocks
         .iter()
         .enumerate()
         .filter_map(|(index, block)| match *relations.get(&block.id)? {
             Relation::PointOnLine(_, line) | Relation::Colinear([line, _], _) => {
-                Some((index, line))
+                Some((index, JoinReference::Line(line)))
             }
-            Relation::Tangent(join) | Relation::G2(join, _) => Some((index, join.line)),
+            Relation::Tangent(join) | Relation::G2(join, _) => Some((index, join.reference())),
             _ => None,
         })
         .collect()

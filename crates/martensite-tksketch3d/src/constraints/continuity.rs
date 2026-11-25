@@ -1,9 +1,38 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Bind one incoming line and one outgoing control cubic by the authored join identity.
+//! Bind the reference and adjusted curves by their shared authored endpoint.
 use super::{ConstraintFailure, ConstraintPolicy, RelationId};
-use crate::{ControlSplineId, EntityId, LineGeometry, LineId, PointId, Snapshot};
-use martensite_tkmath::predicates::roots::{CubicEndJet, CubicEndJetFailure, CubicEndStencil};
+use crate::{ControlSplineId, EntityId, LineId, PointId, Snapshot};
+use martensite_tkmath::predicates::roots::CubicEndJetFailure;
 use std::{cmp::Ordering, fmt};
+
+mod pair;
+mod reference;
+pub use pair::CubicCubicJoin;
+pub(super) use reference::JoinReference;
+
+/// Directed continuity between supported curves at a shared point.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ContinuityJoin {
+    /// An incoming line and an outgoing control cubic.
+    LineCubic(LineCubicJoin),
+    /// An incoming and an outgoing control cubic.
+    CubicCubic(CubicCubicJoin),
+}
+
+impl ContinuityJoin {
+    pub(super) fn reference(self) -> JoinReference {
+        match self {
+            Self::LineCubic(join) => JoinReference::Line(join.line),
+            Self::CubicCubic(join) => JoinReference::Cubic(join.reference, join.endpoint),
+        }
+    }
+}
+
+impl From<LineCubicJoin> for ContinuityJoin {
+    fn from(join: LineCubicJoin) -> Self {
+        Self::LineCubic(join)
+    }
+}
 
 /// An incoming reference line and an outgoing control cubic with one shared endpoint.
 ///
@@ -38,15 +67,17 @@ impl CurvatureTolerance {
     }
 }
 
-/// A declined line/cubic relation input.
+/// A declined curve continuity relation input.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ContinuityFailure {
     /// The selected point is absent from either set of authored endpoint identities.
-    UnsharedEndpoint(LineCubicJoin),
+    UnsharedEndpoint(ContinuityJoin),
     /// This stencil requires distinct authored controls apart from the common endpoint.
     RepeatedControl(PointId),
-    /// The incoming line and outgoing cubic must start in the forward tangent branch.
+    /// The incoming and outgoing curves must start in the forward tangent branch.
     BackwardTangent,
+    /// The reference cubic's finite endpoint direction could not be represented.
+    ReferenceDirection(ControlSplineId, PointId),
     /// The exact endpoint stencil could not be evaluated.
     Endpoint(CubicEndJetFailure),
     /// Curvature tolerance must be a finite nonnegative inverse length.
@@ -61,7 +92,7 @@ impl fmt::Display for ContinuityFailure {
                 output,
                 "curvature tolerance {value} must be finite and nonnegative in inverse model units",
             ),
-            cause => write!(output, "line/cubic continuity declined for {cause:?}"),
+            cause => write!(output, "curve continuity declined for {cause:?}"),
         }
     }
 }
@@ -76,19 +107,18 @@ impl std::error::Error for ContinuityFailure {
 }
 
 #[derive(Clone, Copy)]
-pub(super) struct LineCubicStencil {
-    pub(super) line: LineGeometry,
-    points: [PointId; 4],
+pub(super) struct JoinStencil {
+    points: [PointId; 5],
     count: usize,
 }
 
-impl LineCubicStencil {
+impl JoinStencil {
     pub(super) fn points(&self) -> &[PointId] {
         &self.points[..self.count]
     }
 
-    fn coordinates(self, geometry: &Snapshot) -> Option<[[f64; 3]; 4]> {
-        let mut coordinates = [[0.; 3]; 4];
+    fn coordinates(self, geometry: &Snapshot) -> Option<[[f64; 3]; 5]> {
+        let mut coordinates = [[0.; 3]; 5];
         for (xyz, &point) in coordinates.iter_mut().zip(self.points()) {
             *xyz = *geometry.point(point)?.position.coordinates();
         }
@@ -99,9 +129,22 @@ impl LineCubicStencil {
 pub(super) fn bind(
     geometry: &Snapshot,
     id: RelationId,
+    join: ContinuityJoin,
+    g2: bool,
+) -> Result<JoinStencil, ConstraintFailure> {
+    let (points, count) = match join {
+        ContinuityJoin::LineCubic(join) => line_stencil(geometry, id, join, g2)?,
+        ContinuityJoin::CubicCubic(join) => pair::bind(geometry, id, join, g2)?,
+    };
+    Ok(JoinStencil { points, count })
+}
+
+fn line_stencil(
+    geometry: &Snapshot,
+    id: RelationId,
     join: LineCubicJoin,
     g2: bool,
-) -> Result<LineCubicStencil, ConstraintFailure> {
+) -> Result<([PointId; 5], usize), ConstraintFailure> {
     let line = geometry
         .line(join.line)
         .ok_or(ConstraintFailure::MissingOperand(
@@ -114,46 +157,43 @@ pub(super) fn bind(
             id,
             EntityId::ControlSpline(join.cubic),
         ))?;
-    let (points, count) = controls(line.line.endpoints, cubic.recipe().poles, join, g2)
-        .map_err(|cause| ConstraintFailure::Continuity(id, cause))?;
-    Ok(LineCubicStencil {
-        line,
-        points,
-        count,
-    })
+    line_controls(line.line.endpoints, cubic.recipe().poles, join, g2)
+        .map_err(|cause| ConstraintFailure::Continuity(id, cause))
 }
 
-fn controls(
+fn line_controls(
     line: [PointId; 2],
-    mut cubic: [PointId; 4],
+    cubic: [PointId; 4],
     join: LineCubicJoin,
     g2: bool,
-) -> Result<([PointId; 4], usize), ContinuityFailure> {
+) -> Result<([PointId; 5], usize), ContinuityFailure> {
     let [tip, other] = if line[0] == join.endpoint {
         line
     } else {
         [line[1], line[0]]
     };
-    if cubic[3] == join.endpoint {
-        cubic.reverse();
-    }
-    if tip != join.endpoint || cubic[0] != tip {
-        return Err(ContinuityFailure::UnsharedEndpoint(join));
-    }
-    let points = [other, tip, cubic[1], cubic[2]];
+    let Some(cubic) = pair::at_end(cubic, join.endpoint).filter(|_| tip == join.endpoint) else {
+        return Err(ContinuityFailure::UnsharedEndpoint(join.into()));
+    };
+    let points = [other, tip, cubic[1], cubic[2], tip];
     let count = if g2 { 4 } else { 3 };
-    for (index, &point) in points[..count].iter().enumerate() {
+    distinct(&points[..count])?;
+    Ok((points, count))
+}
+
+fn distinct(points: &[PointId]) -> Result<(), ContinuityFailure> {
+    for (index, &point) in points.iter().enumerate() {
         if points[..index].contains(&point) {
             return Err(ContinuityFailure::RepeatedControl(point));
         }
     }
-    Ok((points, count))
+    Ok(())
 }
 
 pub(super) fn check_seed(
     geometry: &Snapshot,
     id: RelationId,
-    join: LineCubicJoin,
+    join: ContinuityJoin,
     g2: bool,
 ) -> Result<(), ConstraintFailure> {
     let stencil = bind(geometry, id, join, g2)?;
@@ -161,11 +201,11 @@ pub(super) fn check_seed(
         .coordinates(geometry)
         .ok_or(ConstraintFailure::MissingOperand(
             id,
-            EntityId::Point(join.endpoint),
+            EntityId::Point(stencil.points[1]),
         ))?;
-    let (_, direction, _) =
-        measure(points, false, 0.).map_err(|cause| ConstraintFailure::Continuity(id, cause))?;
-    if direction != Ordering::Greater {
+    let forward = measure(join, points, 1., None)
+        .map_err(|cause| ConstraintFailure::Continuity(id, cause))?;
+    if !forward {
         return Err(ConstraintFailure::Continuity(
             id,
             ContinuityFailure::BackwardTangent,
@@ -176,51 +216,52 @@ pub(super) fn check_seed(
 
 pub(super) fn within(
     geometry: &Snapshot,
-    join: LineCubicJoin,
+    id: RelationId,
+    join: ContinuityJoin,
     curvature: Option<CurvatureTolerance>,
     policy: ConstraintPolicy,
 ) -> bool {
-    let Some(points) = source_points(geometry, join, curvature.is_some()) else {
-        return false;
-    };
-    let Ok((jet, direction, sine)) =
-        measure(points, curvature.is_some(), policy.parallel_sine_tolerance)
+    let Some(points) = bind(geometry, id, join, curvature.is_some())
+        .ok()
+        .and_then(|stencil| stencil.coordinates(geometry))
     else {
         return false;
     };
-    direction == Ordering::Greater
-        && sine != Ordering::Greater
-        && curvature.is_none_or(|cap| {
-            jet.curvature(cap.value())
-                .is_ok_and(|limit| limit != Ordering::Greater)
-        })
-}
-
-fn source_points(geometry: &Snapshot, join: LineCubicJoin, g2: bool) -> Option<[[f64; 3]; 4]> {
-    let line = geometry.line(join.line)?;
-    let cubic = geometry.control_spline(join.cubic)?;
-    let (points, count) = controls(line.line.endpoints, cubic.recipe().poles, join, g2).ok()?;
-    LineCubicStencil {
-        line,
+    measure(
+        join,
         points,
-        count,
-    }
-    .coordinates(geometry)
+        policy.parallel_sine_tolerance,
+        curvature.map(CurvatureTolerance::value),
+    )
+    .unwrap_or(false)
 }
 
 fn measure(
-    [incoming, join, control, second]: [[f64; 3]; 4],
-    g2: bool,
+    join: ContinuityJoin,
+    points: [[f64; 3]; 5],
     limit: f64,
-) -> Result<(CubicEndJet, Ordering, Ordering), ContinuityFailure> {
-    let stencil = if g2 {
-        CubicEndStencil::Curvature([join, control, second])
-    } else {
-        CubicEndStencil::Tangent([join, control])
-    };
-    let jet = CubicEndJet::new(stencil).map_err(ContinuityFailure::Endpoint)?;
+    curvature: Option<f64>,
+) -> Result<bool, ContinuityFailure> {
+    match join {
+        ContinuityJoin::LineCubic(_) => line_limits(points, limit, curvature),
+        ContinuityJoin::CubicCubic(_) => pair::limits(points, limit, curvature),
+    }
+}
+
+fn line_limits(
+    [incoming, join, control, second, _]: [[f64; 3]; 5],
+    limit: f64,
+    curvature: Option<f64>,
+) -> Result<bool, ContinuityFailure> {
+    let jet = pair::jet(join, control, second, curvature.is_some())?;
     let band = jet
         .tangent([incoming, join], limit)
         .map_err(ContinuityFailure::Endpoint)?;
-    Ok((jet, band.dot, band.sine))
+    if band.dot != Ordering::Greater || band.sine == Ordering::Greater {
+        return Ok(false);
+    }
+    let Some(cap) = curvature else {
+        return Ok(true);
+    };
+    Ok(jet.curvature(cap).map_err(ContinuityFailure::Endpoint)? != Ordering::Greater)
 }

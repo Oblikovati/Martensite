@@ -204,8 +204,9 @@ fn line_cubic_rows_match_independent_spatial_bernstein_curvature_and_moving_fram
     for curvature_scale in [None, Some(2.7)] {
         let width = if curvature_scale.is_some() { 12 } else { 9 };
         verify(
-            Equation::LineCubic {
+            Equation::Continuity {
                 reference: FrameReference::Axis(1),
+                cubic_reference: false,
                 curvature_scale,
             },
             &points[..width],
@@ -226,8 +227,51 @@ fn line_cubic_expected(points: &[f64], curvature_scale: Option<f64>) -> Vec<f64>
     if let Some(scale) = curvature_scale {
         let d = displacement(points, 6);
         let a = std::array::from_fn(|axis| 6. * (d[axis] - velocity[axis] / 3.));
-        let k = cross(cross(velocity, a), velocity).map(|x| x / speed.powi(4));
+        let k = scalar_curvature(velocity, a);
         rows.extend([dot(first, k) * scale, dot(second, k) * scale]);
     }
     rows
+}
+
+#[test]
+fn paired_cubic_endpoint_gradient_uses_one_shared_join_column_and_both_curvatures() {
+    use super::FrameReference;
+    let points = [
+        -1.2, -0.3, -0.4, 0.4, 0.2, -0.3, 2.0, 1.2, 0.2, 3.0, 0.7, 0.6, -2.4, 0.6, 0.8,
+    ];
+    for curvature_scale in [None, Some(2.7)] {
+        let width = if curvature_scale.is_some() { 15 } else { 9 };
+        verify(
+            Equation::Continuity {
+                reference: FrameReference::Axis(1),
+                cubic_reference: true,
+                curvature_scale,
+            },
+            &points[..width],
+            |points| paired_cubic_expected(points, curvature_scale),
+        );
+    }
+}
+
+fn paired_cubic_expected(points: &[f64], curvature_scale: Option<f64>) -> Vec<f64> {
+    let mut expected = line_cubic_expected(points, curvature_scale);
+    if let Some(scale) = curvature_scale {
+        let velocity = displacement(points, 0).map(|component| 3. * component);
+        let tangent = velocity.map(|component| component / length(velocity));
+        let transverse = cross(tangent, [0., 1., 0.]);
+        let second = transverse.map(|component| component / length(transverse));
+        let first = cross(second, tangent);
+        let acceleration = std::array::from_fn(|axis| {
+            6. * (points[12 + axis] - 2. * points[axis] + points[3 + axis])
+        });
+        let k = scalar_curvature(velocity, acceleration);
+        expected[2] -= scale * dot(first, k);
+        expected[3] -= scale * dot(second, k);
+    }
+    expected
+}
+
+fn scalar_curvature(velocity: Vector, acceleration: Vector) -> Vector {
+    let speed = length(velocity);
+    cross(cross(velocity, acceleration), velocity).map(|x| x / speed.powi(4))
 }

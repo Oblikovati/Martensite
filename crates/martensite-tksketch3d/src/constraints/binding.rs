@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind authored relations to solver columns and exact fixed coordinates.
 use super::{
-    ConstraintFailure as Failure, ConstraintPolicy, LineAngle, LineCubicJoin, Relation, RelationId,
-    RelationSpec, continuity,
+    ConstraintFailure as Failure, ConstraintPolicy, ContinuityJoin, LineAngle, Relation,
+    RelationId, RelationSpec, continuity,
     incidence::{SharedEnds, shared_ends},
     metric,
     residual::{Equation, FrameReference, axis_branch},
@@ -155,18 +155,25 @@ impl Layout<'_> {
                 self.pair_equation(id, lines, Equation::EqualLength { scale: self.scale })
             }
             Relation::Angle(lines, angle) => self.angle(id, lines, angle),
-            Relation::Tangent(join) => self.line_cubic(id, join, false),
-            Relation::G2(join, _) => self.line_cubic(id, join, true),
+            Relation::Tangent(join) => self.continuity(id, join, false),
+            Relation::G2(join, _) => self.continuity(id, join, true),
         }
     }
 
-    fn line_cubic(&mut self, id: RelationId, join: LineCubicJoin, g2: bool) -> Result<(), Failure> {
+    fn continuity(
+        &mut self,
+        id: RelationId,
+        join: ContinuityJoin,
+        g2: bool,
+    ) -> Result<(), Failure> {
         let stencil = continuity::bind(self.geometry, id, join, g2)?;
+        let reference = join.reference().chart_direction(self.geometry, id)?;
         self.equation(
             id,
             stencil.points(),
-            Equation::LineCubic {
-                reference: FrameReference::axis(stencil.line),
+            Equation::Continuity {
+                reference: FrameReference::from_direction(reference),
+                cubic_reference: matches!(join, ContinuityJoin::CubicCubic(_)),
                 curvature_scale: g2.then_some(self.length_scale),
             },
         )

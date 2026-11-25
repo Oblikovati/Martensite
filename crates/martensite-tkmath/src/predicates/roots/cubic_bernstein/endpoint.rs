@@ -5,6 +5,8 @@ use crate::predicates::{exact_coordinate, exact_vector3, triple_product::exact_c
 use num_bigint::BigInt;
 use std::{cmp::Ordering, fmt};
 
+mod pair;
+
 // Binary64 coordinates decode into integer multiples of 2^-1074.
 const UNIT_EXPONENT: i32 = -1074;
 const SQUARED_SCALE: usize = 2148;
@@ -136,18 +138,8 @@ impl CubicEndJet {
         [from, to]: [[f64; 3]; 2],
         sine: f64,
     ) -> Result<TangentDirectionBand, CubicEndJetFailure> {
-        if !(0. ..=1.).contains(&sine) {
-            return Err(CubicEndJetFailure::InvalidSine(sine));
-        }
-        let sine = magnitude(sine)?;
         let line = line_direction(from, to)?;
-        let normal = exact_cross(&line, &self.first);
-        let observed = squared(&normal) << SQUARED_SCALE;
-        let allowed = &sine * &sine * squared(&line) * squared(&self.first);
-        Ok(TangentDirectionBand {
-            dot: dot(&line, &self.first).cmp(&0.into()),
-            sine: observed.cmp(&allowed),
-        })
+        tangent_band(&line, &self.first, sine)
     }
 
     /// Compare exact endpoint curvature magnitude with an inverse-length cap.
@@ -165,6 +157,24 @@ impl CubicEndJet {
         let allowed = &limit * &limit * &squared_speed * &squared_speed * squared_speed;
         Ok(observed.cmp(&allowed))
     }
+}
+
+fn tangent_band(
+    from: &[BigInt; 3],
+    to: &[BigInt; 3],
+    sine: f64,
+) -> Result<TangentDirectionBand, CubicEndJetFailure> {
+    if !(0. ..=1.).contains(&sine) {
+        return Err(CubicEndJetFailure::InvalidSine(sine));
+    }
+    let sine = magnitude(sine)?;
+    let normal = exact_cross(from, to);
+    let observed = squared(&normal) << SQUARED_SCALE;
+    let allowed = &sine * &sine * squared(from) * squared(to);
+    Ok(TangentDirectionBand {
+        dot: dot(from, to).cmp(&0.into()),
+        sine: observed.cmp(&allowed),
+    })
 }
 
 fn point(position: [f64; 3], index: usize) -> Result<[BigInt; 3], CubicEndJetFailure> {

@@ -29,7 +29,7 @@ pub(super) fn verify_relations(
 ) -> Result<(), ConstraintFailure> {
     for (&id, &relation) in relations {
         poll(cancelled)?;
-        if !metric::feasible(geometry, relation, policy) {
+        if !metric::feasible(geometry, id, relation, policy) {
             return Err(ConstraintFailure::Infeasible(id, relation));
         }
     }

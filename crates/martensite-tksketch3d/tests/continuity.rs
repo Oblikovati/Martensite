@@ -16,6 +16,8 @@ use std::num::NonZeroU64;
 
 #[path = "continuity/bench.rs"]
 mod bench;
+#[path = "continuity/cubic_pair.rs"]
+mod cubic_pair;
 
 fn join() -> LineCubicJoin {
     LineCubicJoin {
@@ -79,7 +81,7 @@ fn tangent_keeps_the_reference_line_during_insertion_in_both_traversals() {
         );
         let base = ConstrainedSketch::new(original.clone(), policy()).unwrap();
         let accepted = base
-            .apply(&insertion(RelationSpec::Tangent(join())), || false)
+            .apply(&insertion(RelationSpec::Tangent(join().into())), || false)
             .unwrap();
         assert_eq!(
             accepted.geometry().line(join().line),
@@ -114,7 +116,7 @@ fn exact_line_cubic_g2_restore_enforces_the_closed_inverse_length_cap() {
         false,
     );
     let run = |cap| {
-        let relation = Relation::G2(join(), CurvatureTolerance::new(cap).unwrap());
+        let relation = Relation::G2(join().into(), CurvatureTolerance::new(cap).unwrap());
         ConstrainedSketch::restore(shape.clone(), &[(rid(1), relation)], policy(), || false)
     };
     let below = 2. / 3.;
@@ -125,7 +127,7 @@ fn exact_line_cubic_g2_restore_enforces_the_closed_inverse_length_cap() {
         [[2., 0., 0.], [4., 3., 0.], [6., 3., 0.]],
         false,
     );
-    let exact = Relation::G2(join(), CurvatureTolerance::new(0.5).unwrap());
+    let exact = Relation::G2(join().into(), CurvatureTolerance::new(0.5).unwrap());
     assert_eq!(
         ConstrainedSketch::restore(half.clone(), &[(rid(1), exact)], policy(), || false)
             .unwrap()
@@ -146,7 +148,7 @@ fn establishes_g2_from_curved_seed_then_transient_line_anchors_do_not_block_a_dr
         false,
     );
     let base = ConstrainedSketch::new(original.clone(), policy()).unwrap();
-    let recipe = RelationSpec::G2(join(), CurvatureTolerance::new(1e-7).unwrap());
+    let recipe = RelationSpec::G2(join().into(), CurvatureTolerance::new(1e-7).unwrap());
     let edits = insertion(recipe);
     let constrained = base.apply(&edits, || false).unwrap();
     assert_eq!(
@@ -189,15 +191,15 @@ fn tangent_declines_unshared_identity_and_the_backtracking_tangent_branch() {
         ..join()
     };
     assert!(matches!(
-        joined.apply(&insertion(RelationSpec::Tangent(wrong)), || false),
+        joined.apply(&insertion(RelationSpec::Tangent(wrong.into())), || false),
         Err(ConstraintFailure::Continuity(id, ContinuityFailure::UnsharedEndpoint(join)))
-            if id == rid(1) && join == wrong
+            if id == rid(1) && join == wrong.into()
     ));
     assert_eq!(joined.geometry(), &shape);
     let backwards = source([1., 0., 0.], controls, false);
     let sketch = ConstrainedSketch::new(backwards.clone(), policy()).unwrap();
     assert!(matches!(
-        sketch.apply(&insertion(RelationSpec::Tangent(join())), || false),
+        sketch.apply(&insertion(RelationSpec::Tangent(join().into())), || false),
         Err(ConstraintFailure::Continuity(id, ContinuityFailure::BackwardTangent)) if id == rid(1)
     ));
     assert_eq!(sketch.geometry(), &backwards);
@@ -221,7 +223,7 @@ fn incompatible_fixed_curvature_authoring_and_cancellation_leave_the_original_re
         )
         .unwrap();
     let edits = insertion(RelationSpec::G2(
-        join(),
+        join().into(),
         CurvatureTolerance::new(1e-9).unwrap(),
     ));
     assert!(matches!(
@@ -254,7 +256,7 @@ fn prepared_g2_refreshes_the_frame_before_the_next_accepted_drag() {
             &[
                 RelationEdit::Insert(rid(2), RelationSpec::FixPoint(pid(2))),
                 insertion(RelationSpec::G2(
-                    join(),
+                    join().into(),
                     CurvatureTolerance::new(1e-7).unwrap(),
                 ))[0],
             ],
@@ -289,11 +291,11 @@ fn preview_block_limit_counts_distinct_endpoint_stencil_coordinates() {
     let mut limited = policy();
     limited.preview.block_inputs = 11;
     let base = ConstrainedSketch::new(shape.clone(), limited).unwrap();
-    base.apply(&insertion(RelationSpec::Tangent(join())), || false)
+    base.apply(&insertion(RelationSpec::Tangent(join().into())), || false)
         .unwrap();
     let cap = CurvatureTolerance::new(1e-7).unwrap();
     assert!(matches!(
-        base.apply(&insertion(RelationSpec::G2(join(), cap)), || false),
+        base.apply(&insertion(RelationSpec::G2(join().into(), cap)), || false),
         Err(ConstraintFailure::Preview(
             None,
             PreviewError::Incomplete(Incomplete::Limit {
@@ -304,4 +306,38 @@ fn preview_block_limit_counts_distinct_endpoint_stencil_coordinates() {
         ))
     ));
     assert_eq!(base.geometry(), &shape);
+}
+
+#[test]
+fn g2_declines_repeated_control_identity_outside_the_tangent_stencil() {
+    let shape = source(
+        [-1., 0., 0.],
+        [[1., 0., 0.], [2., 0., 0.], [3., 0., 0.]],
+        false,
+    );
+    let other = ControlSplineId::new(NonZeroU64::new(12).unwrap());
+    let shape = shape
+        .apply(
+            &[Edit::InsertControlSpline(SketchControlSpline {
+                id: other,
+                poles: [2, 3, 2, 5].map(pid),
+                proof: ControlSplineProofPolicy::new(1e-8, 128).unwrap(),
+            })],
+            || false,
+        )
+        .unwrap();
+    let pair = LineCubicJoin {
+        cubic: other,
+        ..join()
+    }
+    .into();
+    let base = ConstrainedSketch::new(shape, policy()).unwrap();
+    base.apply(&insertion(RelationSpec::Tangent(pair)), || false)
+        .unwrap();
+    let cap = CurvatureTolerance::new(1e-7).unwrap();
+    assert!(matches!(
+        base.apply(&insertion(RelationSpec::G2(pair, cap)), || false),
+        Err(ConstraintFailure::Continuity(id, ContinuityFailure::RepeatedControl(point)))
+            if id == rid(1) && point == pid(2)
+    ));
 }
