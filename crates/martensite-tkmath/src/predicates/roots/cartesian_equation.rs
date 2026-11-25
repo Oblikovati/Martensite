@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Typed finite Cartesian polynomials with exact analytic jets and whole-domain proofs.
 mod export;
-mod net;
+pub(super) mod net;
 mod program;
 mod refusal;
 
@@ -53,9 +53,7 @@ impl CartesianEquationCurve {
         domain: [f64; 2],
         mut cancelled: impl FnMut() -> bool,
     ) -> Result<Self, CartesianEquationError> {
-        let (first, span) = parameter_basis(domain, &mut cancelled)?;
-        let coordinates = program::compile(programs, &first, &span, &mut cancelled)?;
-        let rows = net::jet(coordinates.into_bernstein(), &span);
+        let (span, rows) = component_rows(programs, domain, &mut cancelled)?;
         let certificate = net::certify(&rows, &mut cancelled)?;
         poll(&mut cancelled)?;
         Ok(Self {
@@ -124,6 +122,17 @@ impl CartesianEquationCurve {
         });
         Ok([x?, y?, z?])
     }
+}
+
+pub(super) fn component_rows(
+    programs: [&[EquationInstruction]; 3],
+    domain: [f64; 2],
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<(R, [net::Net; 4]), CartesianEquationError> {
+    let (first, span) = parameter_basis(domain, cancelled)?;
+    let coordinates = program::compile(programs, &first, &span, cancelled)?;
+    let rows = net::jet(coordinates.into_bernstein(), &span);
+    Ok((span, rows))
 }
 
 fn parameter_basis(

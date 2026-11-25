@@ -83,35 +83,40 @@ pub fn export_cartesian_equation(
     mut cancelled: impl FnMut() -> bool,
 ) -> Result<CartesianEquationExport, CartesianEquationExportError> {
     let certificate = equation.certify_bezier(distance_limit, &mut cancelled)?;
-    let poles: Vec<_> = certificate
-        .poles()
-        .iter()
-        .map(|&[x, y, z]| Point3::new(x, y, z))
-        .collect();
-    let curve = GeomBezierCurve::new(&Array1::from_shared(&poles, 1))?;
-    verify(&curve, &certificate)?;
+    let curve = retained_bezier(certificate.poles())?
+        .ok_or(CartesianEquationExportError::Representation)?;
     if cancelled() {
         return Err(CartesianEquationError::Cancelled.into());
     }
     Ok(CartesianEquationExport { curve, certificate })
 }
 
-fn verify(
-    curve: &GeomBezierCurve,
-    certificate: &EquationBezierCertificate,
-) -> Result<(), CartesianEquationExportError> {
-    use CartesianEquationExportError::Representation;
-    let degree = i32::try_from(certificate.poles().len() - 1).map_err(|_| Representation)?;
+pub(super) fn retained_bezier(poles: &[[f64; 3]]) -> Result<Option<GeomBezierCurve>, Failure> {
+    let points: Vec<_> = poles
+        .iter()
+        .map(|&[x, y, z]| Point3::new(x, y, z))
+        .collect();
+    let curve = GeomBezierCurve::new(&Array1::from_shared(&points, 1))?;
+    if !matches_controls(&curve, poles)? {
+        return Ok(None);
+    }
+    Ok(Some(curve))
+}
+
+fn matches_controls(curve: &GeomBezierCurve, poles: &[[f64; 3]]) -> Result<bool, Failure> {
+    let Ok(degree) = i32::try_from(poles.len().saturating_sub(1)) else {
+        return Ok(false);
+    };
     if curve.degree() != degree
         || curve.is_rational()
         || [curve.first_parameter(), curve.last_parameter()] != [0., 1.]
     {
-        return Err(Representation);
+        return Ok(false);
     }
-    for (index, expected) in (1..=degree + 1).zip(certificate.poles()) {
+    for (index, expected) in (1..=degree + 1).zip(poles) {
         if curve.pole(index)?.coordinates().map(f64::to_bits) != expected.map(f64::to_bits) {
-            return Err(Representation);
+            return Ok(false);
         }
     }
-    Ok(())
+    Ok(true)
 }

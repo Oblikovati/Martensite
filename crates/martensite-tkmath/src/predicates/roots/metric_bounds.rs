@@ -77,6 +77,7 @@ mod conical_material;
 pub use conical_development::{
     ConicalDevelopment, ConicalDevelopmentFailure, ConicalFootprint, ConicalTrimBand,
 };
+pub mod angular_equation;
 mod conical_profile;
 mod cylindrical_profile;
 mod cylindrical_storage;

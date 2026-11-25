@@ -8,16 +8,16 @@ use super::{
 const PROOF_DEPTH: u8 = 8;
 
 #[derive(Clone, Debug)]
-pub(super) struct Net(pub [Vec<R>; 3]);
+pub(in crate::predicates::roots) struct Net(pub [Vec<R>; 3]);
 
-pub(super) fn jet(position: Net, span: &R) -> [Net; 4] {
+pub(in crate::predicates::roots) fn jet(position: Net, span: &R) -> [Net; 4] {
     let first = position.derivative(span);
     let second = first.derivative(span);
     let third = second.derivative(span);
     [position, first, second, third]
 }
 
-pub(super) fn certify(
+pub(in crate::predicates::roots) fn certify(
     rows: &[Net; 4],
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<EquationDomainCertificate, Error> {
@@ -45,7 +45,7 @@ pub(super) fn certify(
 }
 
 impl Net {
-    pub(super) fn value(&self, u: &R) -> [R; 3] {
+    pub(in crate::predicates::roots) fn value(&self, u: &R) -> [R; 3] {
         let left = R::from_finite(1.).subtract(u);
         self.0.each_ref().map(|coordinate| {
             let mut work = coordinate.clone();
@@ -111,7 +111,7 @@ impl Net {
                 .all(|axis| axis[axis.len() - 1].sign().is_eq())
     }
 
-    fn bisect(&self) -> [Self; 2] {
+    pub(in crate::predicates::roots) fn bisect(&self) -> [Self; 2] {
         let [[lx, rx], [ly, ry], [lz, rz]] = self.0.each_ref().map(|axis| bisect(axis));
         [Self([lx, ly, lz]), Self([rx, ry, rz])]
     }

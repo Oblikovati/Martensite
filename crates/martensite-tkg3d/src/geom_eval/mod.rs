@@ -19,6 +19,10 @@ pub mod rep_utils;
 
 // GeomEval curves.
 mod aht_bezier_curve;
+mod angular_equation_curve;
+pub use angular_equation_curve::{
+    AngularEquationExport, AngularEquationExportError, export_angular_equation,
+};
 mod curve_support;
 mod equation_curve;
 pub use aht_bezier_curve::GeomEvalAHTBezierCurve;
