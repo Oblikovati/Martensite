@@ -32,6 +32,38 @@ fn existing_fixture_retains_its_nineteen_geometric_pieces() {
     }
 }
 
+#[test]
+fn stricter_shared_fit_keeps_the_remote_cap_allowance_in_the_frozen_graph() {
+    let mut original = super::super::tests::request();
+    original.depths = [0., 0.25];
+    let sew = 1e-7;
+    let original_fit = prepare(&original).unwrap();
+    let strict_fit = prepare_with_fit_limit(&original, sew, || false).unwrap();
+    let original_proofs = frozen_fit_proofs(&original, &original_fit);
+    let strict_proofs = frozen_fit_proofs(&original, &strict_fit);
+    assert!(original_proofs.len() < strict_proofs.len());
+    assert!(
+        original_proofs
+            .iter()
+            .any(|piece| { piece.trims.cap_residuals[0].spatial_residual_bound() > sew })
+    );
+    assert!(strict_proofs.iter().all(|piece| {
+        let [seam, remote] = &piece.trims.cap_residuals;
+        seam.spatial_residual_bound() <= sew
+            && remote.requested_spatial_limit() == original.tolerance / 4.
+    }));
+}
+
+fn frozen_fit_proofs(original: &Request, prepared: &Request) -> Vec<storage::StoredProof> {
+    assert_eq!(original.tolerance, prepared.tolerance);
+    assert_eq!(original.depths, prepared.depths);
+    let native = super::super::native::construct(prepared).unwrap();
+    let keys: Vec<_> = native.bindings.iter().map(|(key, _)| *key).collect();
+    let bytes = crate::surface_sketch::encoding::encode(&native.solid, &native.bindings).unwrap();
+    let (_, bindings) = super::super::pipeline::decode(&bytes, &keys).unwrap();
+    storage::certify(original, prepared, &bindings).unwrap()
+}
+
 fn near_full_request(start: f64, width: f64) -> Request {
     let mut input = super::super::tests::request();
     input.radius = 1.;
