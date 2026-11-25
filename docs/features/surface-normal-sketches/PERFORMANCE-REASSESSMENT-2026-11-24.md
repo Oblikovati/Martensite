@@ -683,12 +683,75 @@ directory and compare the three files emitted by each process.
 ThreadSanitizer's startup control exited with a segmentation fault on the
 host. The default Ubuntu container reported an incompatible memory layout
 before running the control. The shared-input test ran in the ordinary
-release build. The separate Oblikovati application still needs the SDK
-migration and the wrapped-sketch interaction before input-to-present
-and first-preview timing can be measured there.
+release build. The first native desktop measurements are for the
+cylindrical rectangle workflow described below.
 
 The offscreen Radeon Vulkan proxy also ran alongside repeated calls to
 the public warm edit. At 3840×2560 it missed zero of 400 paced
 deadlines. At 60 Hz, p95 input-to-GPU completion was 1.74 ms for drag
 and 1.17 ms for the first height preview. At 120 Hz it was 0.91 ms
 and 2.02 ms. The proxy supplies synthetic input and ends at GPU completion.
+
+
+## 2026-11-25 desktop cylindrical rectangle
+
+Oblikovati's native owner loop ran on Linux with an AMD Radeon 8060S
+and RADV. The 960×720 test window used Vulkan validation. The monitor
+ran at 59.97 Hz. The test injected motion at 60 and 120 Hz and timed
+each input through a completed native frame. Physical scanout at
+120 Hz still needs a display that supports that rate.
+
+Two release runs each dragged the same corner for 400 frames per input
+rate. Drag p95 was 4.78 and 5.16 ms at 60 Hz, and 5.25 and 4.60 ms at
+120 Hz. The slower p95 for the first saved-sketch extrusion preview
+was 16.53 ms over 30 requests per run. The editor retains the selected
+surface chart and updates one viewport buffer during the drag.
+The frame loop coalesces captured motion and retains the GUI draw data
+while the command queue is idle. A third FIFO run missed the 120 Hz
+input budget at 10.38 ms p95. In that run the editor and overlay update
+took 0.20 ms p95. Presentation took 14.91 ms p95 in the separate
+unpaced stage run. A RADV mailbox diagnostic brought those p95
+figures to 4.19 ms for 120 Hz input and 4.05 ms for presentation.
+
+Twenty cold boss commands took 366.31 ms p95 to build, name and commit
+the result, and 383.80 ms p95 through the next completed native
+frame. Each case began with a fresh part and a saved cylinder
+rectangle. The correctness test checked the added volume against the
+analytic annular-sector volume and reproduced the result bit for bit
+after restoring the part recipe.
+
+Run the native timing from the Oblikovati desktop branch with the
+Radeon ICD selected and a mapped Linux display.
+
+```sh
+CARGO_PROFILE_RELEASE_DEBUG=0 cargo test --locked --release -p oblikovati-head \
+  --lib measure_wrapped_drag_through_native_owner_frames -- --ignored --nocapture --test-threads=1
+CARGO_PROFILE_RELEASE_DEBUG=0 cargo test --locked --release -p oblikovati-head \
+  --lib measure_exact_wrapped_boss_command_to_native_frame -- --ignored --nocapture --test-threads=1
+```
+
+The desktop fixture uses a saved cylinder rectangle and an outward
+boss in the Extrude dialog. The ordinary circle extrusion supplying
+the cylinder has an indirect native surface frame. The kernel
+preserves its angular seam and reflects height into the right-handed
+extrusion chart before checking the original trim.
+
+At app revision `7ed030944` with SDK revision `0150ea1f`, the main Linux
+window requests mailbox presentation and falls back to FIFO when the
+surface lacks mailbox support. Two native runs with the app on cores
+separate from the build used the built-in policy and no Mesa mode
+override. Each run sampled 400 drags per input rate, 30 first previews
+and 120 depth changes at 60 Hz. The slower p95 from the two runs was
+5.26 ms at 60 Hz input, 4.52 ms at 120 Hz input, 15.42 ms for the first
+preview and 10.03 ms for depth changes. All 1,600 drag samples met
+their budget. A separate run of 20 exact commits reached a completed
+native frame in 384.49 ms p95.
+
+Drag timings taken during concurrent workspace builds exceeded the
+120 Hz budget. The 20-boss run under that load still reached a native
+frame in 678.38 ms p95. The desktop measurements cover one cylindrical
+rectangle on a part with one body. Native cone, connected sketch group
+and text gestures remain outside this fixture.
+
+[Oblikovati #4187](https://github.com/Oblikovati/Oblikovati/issues/4187),
+[Martensite #600](https://github.com/Oblikovati/Martensite/issues/600).
