@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 pub(in crate::surface_sketch::wrapped_profile) struct CylinderStages {
     pub work: PlanarProofWorkLimit,
     pub volume: CylindricalMeasureLimit,
-    pub proof: PlanarProofVersion,
+    pub preparation: selection::Preparation,
 }
 impl SupportStages for CylinderStages {
     type NativeEvidence = ();
@@ -32,7 +32,7 @@ impl SupportStages for CylinderStages {
             originals,
             Default::default(),
             self.work,
-            self.proof,
+            self.preparation,
             cancelled,
         )
         .map_err(|cause| FamilyFailure::Selection(Box::new(cause)))

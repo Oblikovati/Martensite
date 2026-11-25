@@ -34,6 +34,44 @@ fn cylindrical_attachment_handoff_preserves_the_legacy_fresh_operand_result() {
     }
 }
 
+#[test]
+fn private_cylindrical_attachment_preparation_preserves_requested_tolerances() {
+    use martensite_tkbo::profile_extrusion::PlanarProofVersion;
+    let attachment = attachment(None);
+    let mut request = request(&attachment, [1., 4.], [1., 2.]);
+    request.support.normal = NormalSense::Outward;
+    let normal = attachment
+        .extrude_within_trim_band(REVISION, &request)
+        .unwrap();
+    let prepared = selection::Preparation {
+        proof: PlanarProofVersion::GeometricCompositeV6 {
+            max_components: 64,
+            max_total_subintervals: 8192,
+        },
+        maximum_fit_error: Some(attachment.record().resolution.sew),
+    };
+    let (_, mut band) = attachment.resolve_band(REVISION, &request).unwrap();
+    let (strict, graph) = attachment
+        .prepare_trimmed_tool_with_preparation(REVISION, &request, &mut band, prepared, &mut || {
+            false
+        })
+        .unwrap();
+    assert!(strict.fitted_spans() > normal.fitted_spans());
+    assert_eq!(
+        strict.extrusion().options().spatial_error,
+        request.options.spatial_error
+    );
+    assert!(
+        strict
+            .extrusion()
+            .reports()
+            .values()
+            .all(|report| report.validation.is_valid())
+    );
+    let tool = strict.extrusion().attachment_operand(graph).unwrap();
+    assert_eq!(tool.entities.len(), strict.extrusion().history().len());
+}
+
 fn from_fresh_operand(
     attachment: &CylinderFaceAttachment,
     feature: &CylinderFeatureResult,

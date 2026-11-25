@@ -51,7 +51,16 @@ pub(super) fn from_inputs_with_proof(
     version: martensite_tkbo::profile_extrusion::PlanarProofVersion,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<WrappedNormalResult> {
-    let family = cylinder::construct_family(&inputs, request, version, cancelled)?;
+    from_inputs_with_preparation(request, inputs, version.into(), cancelled)
+}
+
+pub(super) fn from_inputs_with_preparation(
+    request: &WrappedNormalRequest,
+    inputs: input::Inputs,
+    preparation: selection::Preparation,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<WrappedNormalResult> {
+    let family = cylinder::construct_family(&inputs, request, preparation, cancelled)?;
     input::poll(cancelled, WrappedStage::History)?;
     let history = publication::project_history(&family, &inputs, request.support.normal)?;
     let mut result = publication::publish(request, family, history)?;

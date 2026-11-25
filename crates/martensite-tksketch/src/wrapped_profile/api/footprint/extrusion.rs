@@ -81,10 +81,23 @@ impl CylinderFaceAttachment {
         band: &mut band::Band,
         cancelled: &mut CancelPoll<'_>,
     ) -> FootprintChecked<(CylinderTrimmedTool, placement::ChartGraph)> {
+        let proof = martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2;
+        self.prepare_trimmed_tool_with_preparation(revision, request, band, proof.into(), cancelled)
+    }
+
+    pub(super) fn prepare_trimmed_tool_with_preparation(
+        &self,
+        revision: SupportRevision,
+        request: &WrappedNormalRequest,
+        band: &mut band::Band,
+        preparation: selection::Preparation,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> FootprintChecked<(CylinderTrimmedTool, placement::ChartGraph)> {
         let mut exclusions = holes::Exclusions::new(&band.holes)?;
         let inputs = read_inside(request, band, &mut exclusions, cancelled)?;
         let (extrusion, graph) =
-            placement::qualify_chart(request, inputs, cancelled).map_err(extrusion_error)?;
+            placement::qualify_chart_with_preparation(request, inputs, preparation, cancelled)
+                .map_err(extrusion_error)?;
         let fitted_spans = fitted::check(&extrusion, band, &mut exclusions, cancelled)?;
         poll(cancelled, WrappedStage::Publication)?;
         let tool = CylinderTrimmedTool {

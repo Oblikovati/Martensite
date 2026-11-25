@@ -4,7 +4,9 @@ use family::control::Checkpoint;
 use family::{BudgetedFamily, FamilyFailure};
 #[cfg(test)]
 use family::{Control, UnqualifiedFamily};
-use martensite_tkbo::profile_extrusion::{PlanarProofVersion, PlanarProofWorkLimit};
+#[cfg(test)]
+use martensite_tkbo::profile_extrusion::PlanarProofVersion;
+use martensite_tkbo::profile_extrusion::PlanarProofWorkLimit;
 use martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit;
 mod stages;
 pub(in crate::surface_sketch::wrapped_profile) use stages::CylinderStages;
@@ -13,14 +15,14 @@ type FamilyChecked<T> = Result<T, FamilyFailure>;
 pub(super) fn construct_family(
     inputs: &input::Inputs,
     request: &WrappedNormalRequest,
-    version: PlanarProofVersion,
+    preparation: selection::Preparation,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<family::BudgetedFamily> {
     construct_budgeted_with_proof(
         &inputs.requests,
         request.options.volume,
         request.options.planar_work,
-        version,
+        preparation,
         |_| cancelled(),
     )
     .map_err(api::failure_projection::family)
@@ -36,7 +38,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn construct_budgeted_with_work(
         requests,
         volume,
         work,
-        PlanarProofVersion::CarrierV2,
+        PlanarProofVersion::CarrierV2.into(),
         cancelled,
     )
 }
@@ -45,14 +47,14 @@ pub(super) fn construct_budgeted_with_proof(
     requests: &[Request],
     volume: CylindricalMeasureLimit,
     work: PlanarProofWorkLimit,
-    proof: PlanarProofVersion,
+    preparation: selection::Preparation,
     mut cancelled: impl FnMut(Checkpoint) -> bool + Send,
 ) -> FamilyChecked<BudgetedFamily> {
     execute::budgeted(
         &CylinderStages {
             work,
             volume,
-            proof,
+            preparation,
         },
         requests,
         &mut cancelled,
@@ -71,7 +73,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn construct_controlled(
         &CylinderStages {
             work,
             volume: CylindricalMeasureLimit::Report,
-            proof: PlanarProofVersion::CarrierV2,
+            preparation: PlanarProofVersion::CarrierV2.into(),
         },
         requests,
         control,
