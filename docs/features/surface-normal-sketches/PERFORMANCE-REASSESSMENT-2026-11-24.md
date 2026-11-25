@@ -802,6 +802,14 @@ checked the cut against the analytic volume through undo, redo, sketch
 re-edit, and save and reopen. A cut past the cylinder axis left the
 original solid intact.
 
+The six-test follow-up reached a completed native frame in 399 ms p95
+for an ordinary boss, 528 ms for a seam-crossing boss, 405 ms for a
+pocket and 769 ms for a boss rebuilt after a sketch edit. The two drag
+tests stopped on an unchanged-preview assertion on the shared display.
+An earlier binary reproduced the creation-drag assertion there. Both
+tests passed on an isolated Xvfb display using the software Vulkan
+driver. The Xvfb run checked drag behavior under injected input.
+
 [Oblikovati #4187](https://github.com/Oblikovati/Oblikovati/issues/4187),
 [Oblikovati #4188](https://github.com/Oblikovati/Oblikovati/issues/4188),
 [Oblikovati #4189](https://github.com/Oblikovati/Oblikovati/issues/4189),
