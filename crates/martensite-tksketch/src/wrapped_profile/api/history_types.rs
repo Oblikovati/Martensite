@@ -23,6 +23,15 @@ pub struct WrappedSourcePoint {
     pub numerator: u64,
 }
 
+/// Exact map from a conic quarter's dyadic stereographic parameter to its native angle.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WrappedConicParameterMap {
+    /// Start angle in signed multiples of pi/2.
+    pub first_quarter: i8,
+    /// `true` adds `2 atan(t)` to the starting angle; `false` subtracts it.
+    pub increasing: bool,
+}
+
 /// Authored source of one result entity; coordinates and traversal ranks carry no identity.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
@@ -35,6 +44,24 @@ pub enum WrappedEntitySource {
         curve: SurfaceCurveId,
         /// Exact normalized source interval and traversal direction.
         span: WrappedSourceSpan,
+    },
+    /// A mapped interval of one original analytic conic arc.
+    MappedCurve {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic interval in the stereographic parameter used by `map`.
+        span: WrappedSourceSpan,
+        /// Exact conversion to the authored angular parameter.
+        map: WrappedConicParameterMap,
+    },
+    /// A split of an original analytic conic arc.
+    MappedSplitVertex {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic point in the stereographic parameter used by `map`.
+        point: WrappedSourcePoint,
+        /// Exact conversion to the authored angular parameter.
+        map: WrappedConicParameterMap,
     },
     /// A caller-authored endpoint.
     Vertex(SurfaceVertexId),

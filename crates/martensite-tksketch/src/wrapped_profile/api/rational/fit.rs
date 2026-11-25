@@ -30,7 +30,7 @@ fn fit_native(
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Vec<RationalReferenceSpan>> {
     let query = RationalReferenceRequest {
-        source: native.curve,
+        source: native.metric(),
         level,
         limits: [limit, limit],
         direction: native.direction(),

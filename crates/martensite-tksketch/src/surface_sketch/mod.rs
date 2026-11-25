@@ -55,7 +55,7 @@ pub use wrapped_profile::{
     WrappedConeArithmeticGrantReceipt, WrappedConeAuthoredVolumeOptions, WrappedConeBudgetReport,
     WrappedConeDomainPolicy, WrappedConeExecutionSelection, WrappedConeMaterialReport,
     WrappedConeMemberReport, WrappedConeNormalRequest, WrappedConeNormalResult,
-    WrappedConePlacementReport, WrappedConeProofOptions, WrappedConeVolumeBounds,
+    WrappedConePlacementReport, WrappedConicParameterMap, WrappedConeProofOptions, WrappedConeVolumeBounds,
     WrappedEntitySource, WrappedFailureClass, WrappedFeatureFailure, WrappedFeatureHistory,
     WrappedFeatureKind, WrappedHistoryKey, WrappedHistoryRecord, WrappedHistoryRelation,
     WrappedIncidenceCoverage, WrappedMaterialRelation, WrappedMaterialWork, WrappedMeasureReport,

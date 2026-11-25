@@ -50,8 +50,8 @@ are unchanged.
 ## Positive rational reference
 
 The rational normal entries accept one positive-weight spline with monotone
-Bernstein spans, with optional straight edges around one outer region. They
-require symmetric signed
+Bernstein spans or one exact circular or axis-aligned elliptic quarter. Either
+can use straight edges to close its outer region. The entries require symmetric signed
 depths and one angular chart. The cone additionally requires the profile in
 the positive developed halfplane, clear of the apex. The tested cone request
 selects `GeometricCompositeV6` for its UV cap proof. The reference level splits
@@ -65,7 +65,8 @@ Bernstein partition and the retained proof uses the remaining pair-work budget. 
 rational curve and each cubic reference span. Both curves stay strictly
 inside the straight boundary halfplanes except at shared authored endpoints.
 The normal map then bounds the error in world coordinates. History records the
-original curve and its dyadic parameter intervals. The result includes the
+original curve and its dyadic parameter intervals. For an analytic quarter it
+also records how the stereographic parameter maps to the native angle. The result includes the
 authored area and sweep-volume enclosures, the retained boundary flux, the
 spatial bound, and the ordered native validation report.
 

@@ -2,8 +2,8 @@
 use super::*;
 use martensite_tkbo::body_check::ValidationReport;
 use martensite_tkbo::profile_extrusion::{
-    PlanarProofWorkLimit, PlanarProofWorkReceipt, PlanarRegionWorkFailure, ProfileCurveId,
-    SketchProfile, build_planar_regions_with_work_and_cancel,
+    OperationDecline, PlanarProofWorkLimit, PlanarProofWorkReceipt, PlanarRegionWorkFailure,
+    ProfileCurveId, SketchProfile, build_planar_regions_with_work_and_cancel,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedRationalMeasure, RationalIntegralError, RationalReferenceFailure,
@@ -28,6 +28,8 @@ pub enum RationalWrappedFailure {
     },
     /// Original rational source did not produce certified planar material.
     Planar(Box<PlanarRegionWorkFailure>),
+    /// Source conic admission declined.
+    Analytic(Box<OperationDecline>),
     /// The original signed boundary area did not produce a bounded enclosure.
     Measure(Box<RationalIntegralError>),
     /// Reference geometry or its monotone proof remained unresolved.
@@ -40,6 +42,7 @@ impl std::fmt::Display for RationalWrappedFailure {
         match self {
             Self::Input { actual, expected } => write!(f, "{actual}; expected {expected}"),
             Self::Planar(cause) => cause.fmt(f),
+            Self::Analytic(cause) => cause.fmt(f),
             Self::Measure(cause) => cause.fmt(f),
             Self::Reference(cause) => cause.fmt(f),
             Self::Wrapped(cause) => cause.fmt(f),
@@ -51,6 +54,7 @@ impl std::error::Error for RationalWrappedFailure {
         match self {
             Self::Input { .. } => None,
             Self::Planar(cause) => Some(cause.as_ref()),
+            Self::Analytic(cause) => Some(cause.as_ref()),
             Self::Measure(cause) => Some(cause.as_ref()),
             Self::Reference(cause) => Some(cause.as_ref()),
             Self::Wrapped(cause) => Some(cause.as_ref()),
@@ -132,7 +136,7 @@ impl RationalWrappedResult {
     }
 }
 
-/// Extrude one positive rational spline with monotone Bernstein spans and optional straight outer edges.
+/// Extrude a rational spline or exact analytic quarter with optional straight outer edges.
 /// Requires one material region and symmetric depths away from the cylindrical axis.
 /// The reference level specifies the dyadic intervals used in the original curve parameter.
 /// Example: `let body = normal_extrude_rational_cylinder(&request, 4, || false)?;`.
@@ -142,7 +146,7 @@ pub fn normal_extrude_rational_cylinder(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<RationalWrappedResult> {
     super::input::poll(&mut cancelled, WrappedStage::Admission).map_err(wrapped_failure)?;
-    let source = input::read(&request.profile, &request.selections)?;
+    let source = input::read(&request.profile, &request.selections, request.options)?;
     let support = domain::cylinder(request)?;
     let prepared = prepare(
         source,
@@ -162,7 +166,7 @@ pub fn normal_extrude_rational_cylinder(
     )
 }
 
-/// Extrude one positive rational spline with monotone Bernstein spans and optional straight outer edges on a cone.
+/// Extrude a rational spline or exact analytic quarter with optional straight outer edges on a cone.
 /// Requires symmetric depths, one chart in the positive developed halfplane, and clearance
 /// from the apex throughout the sweep. Example: `normal_extrude_rational_cone(&request, 4, || false)?`.
 pub fn normal_extrude_rational_cone(
@@ -171,7 +175,7 @@ pub fn normal_extrude_rational_cone(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<RationalWrappedResult> {
     super::input::poll(&mut cancelled, WrappedStage::Admission).map_err(wrapped_failure)?;
-    let source = input::read(&request.profile, &request.selections)?;
+    let source = input::read(&request.profile, &request.selections, request.options)?;
     let support = domain::cone(request, &source)?;
     let prepared = prepare(
         source,

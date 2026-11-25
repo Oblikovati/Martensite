@@ -15,6 +15,7 @@ pub(super) struct Proxy {
     pub options: WrappedNormalOptions,
     pub spatial_error: f64,
     source: SurfaceCurveId,
+    parameter_map: Option<WrappedConicParameterMap>,
     spans: BTreeMap<SurfaceCurveId, WrappedSourceSpan>,
     joins: BTreeMap<SurfaceVertexId, WrappedSourcePoint>,
 }
@@ -44,8 +45,8 @@ pub(super) fn native_partition(
     options: WrappedNormalOptions,
 ) -> Checked<Proxy> {
     let spans = original.spans.iter().map(|span| SpanControls {
-        poles: span.curve.poles,
-        weights: span.curve.weights,
+        poles: span.metric().poles,
+        weights: span.metric().weights,
         domain: span.domain,
     });
     expanded(
@@ -84,6 +85,7 @@ fn begin(
         options,
         spatial_error,
         source: SurfaceCurveId(original.occurrence.curve.0),
+        parameter_map: original.map,
         spans: BTreeMap::new(),
         joins: BTreeMap::new(),
     }
@@ -112,7 +114,7 @@ fn prove_separation(original: &input::Source<'_>, spans: &[RationalReferenceSpan
         check_controls(
             line,
             original,
-            original.spans.iter().map(|span| span.curve.poles),
+            original.spans.iter().map(|span| span.metric().poles),
         )?;
         check_controls(
             line,

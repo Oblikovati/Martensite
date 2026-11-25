@@ -1,5 +1,6 @@
 //! Resolve each source use and bind the exact authored region before fitting.
 use super::*;
+use martensite_tkbo::profile_extrusion::exact_conic_quarter;
 use martensite_tkbo::profile_extrusion::{
     LoopUse, ProfileCurve, ProfileLoop, ProfilePlane, ProfileVertex, ProfileVertexId,
     SketchProfile, exact_bernstein_partition,
@@ -15,12 +16,18 @@ pub(super) struct Source<'a> {
     pub spans: Vec<NativeSpan<'a>>,
     pub occurrence: LoopUse,
     pub ends: [ProfileVertexId; 2],
+    pub map: Option<WrappedConicParameterMap>,
     pub lines: Vec<Line>,
 }
 
 pub(super) struct NativeSpan<'a> {
-    pub curve: MetricBezier<'a, 2>,
+    controls: NativeControls<'a>,
     pub domain: WrappedSourceSpan,
+}
+
+enum NativeControls<'a> {
+    Spline(MetricBezier<'a, 2>),
+    Quarter([[f64; 2]; 3]),
 }
 
 pub(super) struct Line {
@@ -35,10 +42,12 @@ type VertexMap = BTreeMap<ProfileVertexId, [f64; 2]>;
 pub(super) fn read<'a>(
     profile: &'a SketchProfile,
     selections: &'a [WrappedRegionSelection],
+    options: WrappedNormalOptions,
 ) -> Checked<Source<'a>> {
     let selection = selected(profile, selections)?;
     let uses = resolve_uses(selection, profile)?;
     let vertices = vertices(profile)?;
+    let profile = selected_profile(&uses, &vertices)?;
     let mut lines = Vec::new();
     let mut curve = None;
     for (used, c) in &uses {
@@ -49,30 +58,33 @@ pub(super) fn read<'a>(
             ProfileCurve::Spline { .. } if curve.is_none() => {
                 curve = Some(rational(c, *used, &vertices)?)
             }
+            ProfileCurve::Arc { .. } | ProfileCurve::EllipticArc { .. } if curve.is_none() => {
+                curve = Some(quarter(c, *used, &profile, options)?);
+            }
             other => {
                 return Err(invalid(
                     format!("selection curve={:?}", other.id()),
-                    "one positive-rational spline and otherwise straight directed boundary uses",
+                    "one positive-rational spline or exact analytic arc, with optional straight boundary uses",
                 ));
             }
         }
     }
-    let Some((spans, occurrence, ends)) = curve else {
+    let Some((spans, occurrence, ends, map)) = curve else {
         return Err(invalid(
             format!(
                 "selected region={:?} with no rational boundary",
                 selection.region
             ),
-            "one positive-rational spline boundary",
+            "one positive-rational spline or exact analytic arc",
         ));
     };
-    let profile = selected_profile(&uses, &vertices)?;
     Ok(Source {
         selection,
         profile,
         spans,
         occurrence,
         ends,
+        map,
         lines,
     })
 }
@@ -185,11 +197,18 @@ fn line(
     })
 }
 
+type LocatedSource<'a> = (
+    Vec<NativeSpan<'a>>,
+    LoopUse,
+    [ProfileVertexId; 2],
+    Option<WrappedConicParameterMap>,
+);
+
 fn rational<'a>(
     curve: &'a ProfileCurve,
     used: LoopUse,
     vertices: &VertexMap,
-) -> Checked<(Vec<NativeSpan<'a>>, LoopUse, [ProfileVertexId; 2])> {
+) -> Checked<LocatedSource<'a>> {
     let ProfileCurve::Spline {
         id,
         start,
@@ -219,7 +238,46 @@ fn rational<'a>(
             "bitwise matching authored endpoints and first and last poles",
         ));
     }
-    Ok((spans, used, [*start, *end]))
+    Ok((spans, used, [*start, *end], None))
+}
+
+fn quarter<'a>(
+    curve: &ProfileCurve,
+    used: LoopUse,
+    profile: &SketchProfile,
+    options: WrappedNormalOptions,
+) -> Checked<LocatedSource<'a>> {
+    let Some(ends) = curve.ends() else {
+        return Err(invalid(
+            format!("arc={:?}", used.curve),
+            "two original analytic endpoints",
+        ));
+    };
+    let quarter = exact_conic_quarter(
+        profile,
+        used.curve,
+        pipeline::resolution(options.spatial_error),
+    )
+    .map_err(|cause| RationalWrappedFailure::Analytic(Box::new(cause)))?
+    .ok_or_else(|| {
+        invalid(
+            format!("arc={:?}", used.curve),
+            "an exact circular or axis-aligned elliptic quarter",
+        )
+    })?;
+    let map = WrappedConicParameterMap {
+        first_quarter: quarter.first_quarter,
+        increasing: quarter.increasing,
+    };
+    let span = NativeSpan {
+        controls: NativeControls::Quarter(quarter.poles),
+        domain: WrappedSourceSpan {
+            level: 0,
+            index: 0,
+            reversed: false,
+        },
+    };
+    Ok((vec![span], used, ends, Some(map)))
 }
 
 fn partition<'a>(
@@ -257,10 +315,10 @@ fn bind_span(
             )
         })?;
     Ok(NativeSpan {
-        curve: MetricBezier {
+        controls: NativeControls::Spline(MetricBezier {
             poles: piece.poles,
             weights: piece.weights,
-        },
+        }),
         domain,
     })
 }
@@ -309,7 +367,7 @@ impl Source<'_> {
     pub(super) fn poles(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
         self.spans
             .iter()
-            .flat_map(|span| span.curve.poles.iter().copied())
+            .flat_map(|span| span.metric().poles.iter().copied())
     }
 
     pub(super) fn area_wire(&self) -> Checked<Vec<OrientedMetricCurve<'_>>> {
@@ -329,7 +387,7 @@ impl Source<'_> {
         (0..n).map(move |index| {
             let index = if reversed { n - 1 - index } else { index };
             OrientedMetricCurve {
-                curve: MetricCurve::Bezier(self.spans[index].curve),
+                curve: MetricCurve::Bezier(self.spans[index].metric()),
                 reversed,
             }
         })
@@ -385,9 +443,20 @@ pub(super) fn matches_boundary(
 }
 
 impl NativeSpan<'_> {
+    pub(super) fn metric(&self) -> MetricBezier<'_, 2> {
+        match &self.controls {
+            NativeControls::Spline(curve) => *curve,
+            NativeControls::Quarter(poles) => MetricBezier {
+                poles,
+                weights: Some(&[1., 1., 2.]),
+            },
+        }
+    }
+
     pub(super) fn direction(&self) -> [f64; 2] {
-        let first = self.curve.poles[0];
-        let last = self.curve.poles[self.curve.poles.len() - 1];
+        let poles = self.metric().poles;
+        let first = poles[0];
+        let last = poles[poles.len() - 1];
         std::array::from_fn(|axis| last[axis] - first[axis])
     }
 }
