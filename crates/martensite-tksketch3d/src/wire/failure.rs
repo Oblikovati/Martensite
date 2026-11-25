@@ -14,7 +14,7 @@ pub enum WirePhase {
     Incidence,
     /// Build a fresh native topology.
     Materialize,
-    /// Read the detached topology, geometry and tolerances before returning it.
+    /// Read and prepare the verified detached export and its bindings.
     VerifyNative,
 }
 

@@ -242,6 +242,28 @@ fn cancellation_refuses_both_an_incomplete_recipe_and_a_private_native_draft() {
     );
 }
 
+#[test]
+fn cancellation_after_trace_stops_binding_collection_and_publication() {
+    let (source, uses) = sample_path();
+    let recipe = source
+        .wire_recipe(&uses, WireClosure::Open, 3, || false)
+        .unwrap();
+    // One opening and one per-edge poll for materialization. The trace adds
+    // its opening, per-edge and completion polls before preparing bindings.
+    let after_trace = 2 * uses.len() + 3;
+    let points = uses.len() + 1;
+    for offset in 1..=points + 1 {
+        assert!(
+            matches!(
+                recipe.materialize(cancel_at(after_trace + offset)),
+                Err(WireFailure::Cancelled(WirePhase::VerifyNative)),
+            ),
+            "expected cancellation on export poll {offset}"
+        );
+    }
+    assert_eq!(recipe.materialize(|| false).unwrap().points.len(), points);
+}
+
 fn cancel_at(target: usize) -> impl FnMut() -> bool {
     let mut polls = 0;
     move || {

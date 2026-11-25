@@ -86,16 +86,27 @@ impl WireRecipe {
             None,
         )?;
         let validation = trace::validate(self, &wire, &edges, &points, &mut cancelled)?;
+        let points = point_bindings(points, &mut cancelled)?;
+        poll(&mut cancelled, WirePhase::VerifyNative)?;
         Ok(DetachedWire {
             wire,
             edges,
-            points: points
-                .into_iter()
-                .map(|(point, vertex)| NativePointBinding { point, vertex })
-                .collect(),
+            points,
             validation,
         })
     }
+}
+
+fn point_bindings(
+    points: BTreeMap<PointId, Vertex>,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<Vec<NativePointBinding>, WireFailure> {
+    let mut bindings = Vec::with_capacity(points.len());
+    for (point, vertex) in points {
+        poll(cancelled, WirePhase::VerifyNative)?;
+        bindings.push(NativePointBinding { point, vertex });
+    }
+    Ok(bindings)
 }
 
 fn build_occurrences(
