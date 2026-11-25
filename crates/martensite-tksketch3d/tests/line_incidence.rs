@@ -13,6 +13,11 @@ use martensite_tksketch3d::{
 use martensite_tksolve::preview::{Incomplete, PreviewError};
 use std::time::Instant;
 
+#[path = "line_incidence/angular_bounds.rs"]
+mod angular_bounds;
+#[path = "line_incidence/colinear_bench.rs"]
+mod colinear_bench;
+
 const CORPUS_FIRST_LINE: u64 = 1000;
 
 #[test]

@@ -132,24 +132,17 @@ fn parallel(
     direction: ParallelDirection,
     tolerance: f64,
 ) -> Option<bool> {
-    if !certified_branch(a, b, direction)? {
+    let sign = dot(a, b)?;
+    let correct_branch = match direction {
+        ParallelDirection::Same => sign.lo > 0.,
+        ParallelDirection::Opposite => sign.hi < 0.,
+    };
+    if !correct_branch {
         return Some(false);
     }
     let cross = cross(a, b)?;
     let lhs = dot(cross, cross)?;
     within_angular_limit(a, b, lhs, tolerance)
-}
-
-fn certified_branch(
-    a: [Interval; 3],
-    b: [Interval; 3],
-    direction: ParallelDirection,
-) -> Option<bool> {
-    let sign = dot(a, b)?;
-    Some(match direction {
-        ParallelDirection::Same => sign.lo > 0.,
-        ParallelDirection::Opposite => sign.hi < 0.,
-    })
 }
 
 fn perpendicular(a: [Interval; 3], b: [Interval; 3], tolerance: f64) -> Option<bool> {
