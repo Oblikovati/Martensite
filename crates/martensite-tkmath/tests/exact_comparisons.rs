@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Supplied-coordinate ordering, checked against independent exact rational arithmetic.
-use martensite_tkmath::predicates::{compare_line_projections_2d, compare_squared_distances_2d, compare_squared_length_3d};
+use martensite_tkmath::predicates::{
+    compare_line_projections_2d, compare_squared_distances_2d, compare_squared_length_3d,
+};
 use std::cmp::Ordering;
 fn fixture(line: &str) -> ([[f64; 2]; 4], [Ordering; 2]) {
     let fields: Vec<&str> = line.split(',').collect();
@@ -218,10 +220,19 @@ fn exact_spatial_length_preserves_closed_form_ties() {
         (13., Ordering::Equal),
         (13_f64.next_up(), Ordering::Less),
     ] {
-        assert_eq!(compare_squared_length_3d([100., 200., 300.], [103., 204., 312.], limit), Ok(expected));
+        assert_eq!(
+            compare_squared_length_3d([100., 200., 300.], [103., 204., 312.], limit),
+            Ok(expected)
+        );
     }
-    assert_eq!(compare_squared_length_3d([0.; 3], [3., 4., 12.], -13.), Ok(Ordering::Equal));
-    assert_eq!(compare_squared_length_3d([-0.; 3], [0.; 3], -0.), Ok(Ordering::Equal));
+    assert_eq!(
+        compare_squared_length_3d([0.; 3], [3., 4., 12.], -13.),
+        Ok(Ordering::Equal)
+    );
+    assert_eq!(
+        compare_squared_length_3d([-0.; 3], [0.; 3], -0.),
+        Ok(Ordering::Equal)
+    );
 }
 
 #[test]
@@ -231,7 +242,12 @@ fn exact_spatial_length_compares_subnormal_and_overflowing_displacements() {
     for (start, end, limit, expected) in [
         ([0.; 3], [tiny, 0., 0.], tiny, Ordering::Equal),
         ([0.; 3], [tiny, tiny, 0.], tiny, Ordering::Greater),
-        ([-max / 2., 0., 0.], [max / 2., 0., 0.], max, Ordering::Equal),
+        (
+            [-max / 2., 0., 0.],
+            [max / 2., 0., 0.],
+            max,
+            Ordering::Equal,
+        ),
         ([-max, 0., 0.], [max, 0., 0.], max, Ordering::Greater),
         ([0.; 3], [max, max, 0.], max, Ordering::Greater),
     ] {
