@@ -92,12 +92,14 @@ fn transfer(
     ))
 }
 
-pub(super) fn inverse_slant_error(slanted_radius: f64, spans: &[RationalReferenceSpan]) -> f64 {
+pub(super) fn inverse_slant_error<'a>(
+    slanted_radius: f64,
+    spans: impl Iterator<Item = &'a RationalReferenceSpan>,
+) -> f64 {
     // Stokes gives the difference of the two boundary integrals over the
     // straight homotopy. The two-form is dx ∧ dy / |p|, with |p| at least
     // slanted_radius throughout. The unchanged edges contribute zero.
     spans
-        .iter()
         .map(|span| {
             let speed = (maximum_speed(&span.poles) + span.bounds.derivative).next_up();
             ((speed * span.bounds.position).next_up() / slanted_radius).next_up()

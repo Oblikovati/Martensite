@@ -14,7 +14,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added source-bound radial motion and stock-contact bounds for stored cylindrical ruled sides (#420).
 
-- Added checked cylindrical and conical normal extrusions for positive rational Bernstein splines and exact circular and elliptic quarter arcs, with directed holes, signed normal depths, original parameter history and certified material measurements (#418).
+- Added checked cylindrical and conical normal extrusions for mixed line, Bernstein spline and exact circular or elliptic quarter boundaries, with directed holes, signed normal depths, original parameter history and certified material measurements (#418).
 
 - Added wrapped cylinder and cone profiles for weighted Bernstein spans with a proven same-parameter polynomial identity and source-bound planar evidence (#418).
 

@@ -138,7 +138,7 @@ impl RationalWrappedResult {
     }
 }
 
-/// Extrude a rational spline or exact analytic quarter with optional straight outer edges.
+/// Extrude a selected region with lines, Bernstein splines, or exact analytic quarters.
 /// Requires one material region and increasing depths away from the cylindrical axis.
 /// The reference level specifies the dyadic intervals used in the original curve parameter.
 /// Example: `let body = normal_extrude_rational_cylinder(&request, 4, || false)?;`.
@@ -158,17 +158,18 @@ pub fn normal_extrude_rational_cylinder(
         &mut cancelled,
     )?;
     let native = prepared.proxy.cylinder(request);
-    let inputs = super::input::read(&native, &mut cancelled).map_err(wrapped_failure)?;
+    let inputs = super::input::read(&native, &mut cancelled)
+        .map_err(|cause| prepared.proxy.geometry_failure(cause))?;
     let proof = PlanarProofVersion::GeometricCompositeV6 {
         max_components: 64,
         max_total_subintervals: 100_000,
     };
     let retained = operation::from_inputs_with_proof(&native, inputs, proof, &mut cancelled)
-        .map_err(wrapped_failure)?;
+        .map_err(|cause| prepared.proxy.geometry_failure(cause))?;
     prepared.finish(retained.into(), request.options.volume, &mut cancelled)
 }
 
-/// Extrude a rational spline or exact analytic quarter with optional straight outer edges on a cone.
+/// Extrude a selected region with lines, Bernstein splines, or exact analytic quarters on a cone.
 /// Requires increasing depths, one chart in the positive developed halfplane, and clearance
 /// from the apex throughout the sweep. Example: `normal_extrude_rational_cone(&request, 4, || false)?`.
 pub fn normal_extrude_rational_cone(
@@ -188,7 +189,7 @@ pub fn normal_extrude_rational_cone(
     )?;
     let native = prepared.proxy.cone(request);
     let retained = normal_extrude_cone_profile_with_cancel(&native, &mut cancelled)
-        .map_err(wrapped_failure)?;
+        .map_err(|cause| prepared.proxy.geometry_failure(cause))?;
     prepared.finish(retained.into(), request.options.volume, &mut cancelled)
 }
 
@@ -294,7 +295,10 @@ fn original_area(
     source: &input::Source<'_>,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<(CertifiedRationalMeasure, PlanarProofWorkReceipt)> {
-    let partition = (source.spans.len() > 1)
+    let partition = source
+        .curves
+        .iter()
+        .any(|curve| curve.spans.len() > 1)
         .then(|| proxy::native_partition(source, options))
         .transpose()?;
     let (profile, selection) = partition

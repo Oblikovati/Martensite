@@ -87,18 +87,16 @@ impl Support {
         (1. + (depth / radius).next_up()).next_up()
     }
 
-    pub(super) fn inverse_slant_error(&self, spans: &[RationalReferenceSpan]) -> f64 {
+    pub(super) fn inverse_slant_error(&self, spans: &[fit::Cover]) -> f64 {
         match *self {
             Self::Cylinder { .. } => 0.,
-            Self::Cone { x_lower, .. } => measure::inverse_slant_error(x_lower, spans),
+            Self::Cone { x_lower, .. } => {
+                measure::inverse_slant_error(x_lower, fit::all_spans(spans))
+            }
         }
     }
 
-    pub(super) fn check(
-        &self,
-        source: &input::Source<'_>,
-        spans: &[RationalReferenceSpan],
-    ) -> Checked<()> {
+    pub(super) fn check(&self, source: &input::Source<'_>, spans: &[fit::Cover]) -> Checked<()> {
         let hull = Hull::capture(source, spans);
         let width = match *self {
             Self::Cylinder { radius, .. } => (hull.width(0) / radius).next_up(),
@@ -137,11 +135,11 @@ struct Hull {
 }
 
 impl Hull {
-    fn capture(source: &input::Source<'_>, spans: &[RationalReferenceSpan]) -> Self {
+    fn capture(source: &input::Source<'_>, spans: &[fit::Cover]) -> Self {
         let points = source
             .poles()
             .chain(source.lines.iter().flat_map(|line| line.points))
-            .chain(spans.iter().flat_map(|span| span.poles));
+            .chain(fit::all_spans(spans).flat_map(|span| span.poles));
         let mut hull = Self {
             lower: [f64::INFINITY; 2],
             upper: [f64::NEG_INFINITY; 2],

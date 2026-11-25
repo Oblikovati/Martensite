@@ -3,6 +3,18 @@ use super::*;
 use crate::surface_sketch::HistorySource;
 
 impl Proxy {
+    pub(in super::super) fn geometry_failure(
+        &self,
+        mut cause: WrappedNormalFailure,
+    ) -> RationalWrappedFailure {
+        for source in &mut cause.entities {
+            *source = self.parent(*source);
+        }
+        cause.entities.sort();
+        cause.entities.dedup();
+        RationalWrappedFailure::Wrapped(Box::new(cause))
+    }
+
     pub(in super::super) fn history(
         &self,
         publication: &mut history_projection::HistoryPublication,
@@ -26,7 +38,10 @@ impl Proxy {
 
     fn record(&self, record: &mut WrappedHistoryRecord) -> Checked<()> {
         if let WrappedEntitySource::Curve { curve, .. } = record.result.source
-            && self.spans.get(&curve).is_some_and(|base| base.level > 0)
+            && self
+                .spans
+                .get(&curve)
+                .is_some_and(|(_, base)| base.level > 0)
             && record.relation == WrappedHistoryRelation::Derived
         {
             record.relation = WrappedHistoryRelation::Split;
@@ -41,15 +56,12 @@ impl Proxy {
     }
 
     fn parent(&self, source: HistorySource) -> HistorySource {
-        match source {
-            HistorySource::Curve(curve) if self.spans.contains_key(&curve) => {
-                HistorySource::Curve(self.source)
-            }
-            HistorySource::Vertex(vertex) if self.joins.contains_key(&vertex) => {
-                HistorySource::Curve(self.source)
-            }
-            other => other,
-        }
+        let origin = match source {
+            HistorySource::Curve(curve) => self.spans.get(&curve).map(|(origin, _)| origin),
+            HistorySource::Vertex(vertex) => self.joins.get(&vertex).map(|(origin, _)| origin),
+            _ => None,
+        };
+        origin.map_or(source, |origin| HistorySource::Curve(origin.curve))
     }
 
     fn key(&self, mut key: WrappedHistoryKey) -> Checked<WrappedHistoryKey> {
@@ -59,8 +71,8 @@ impl Proxy {
             WrappedEntitySource::Vertex(vertex) => self
                 .joins
                 .get(&vertex)
-                .map_or(WrappedEntitySource::Vertex(vertex), |&point| {
-                    self.authored_point(point)
+                .map_or(WrappedEntitySource::Vertex(vertex), |&(origin, point)| {
+                    origin.authored_point(point)
                 }),
             other => other,
         };
@@ -72,17 +84,17 @@ impl Proxy {
         curve: SurfaceCurveId,
         span: WrappedSourceSpan,
     ) -> Checked<WrappedEntitySource> {
-        let Some(base) = self.spans.get(&curve) else {
+        let Some(&(origin, base)) = self.spans.get(&curve) else {
             return Ok(WrappedEntitySource::Curve { curve, span });
         };
-        let (index, level) = compose(*base, span.index, span.level)?;
+        let (index, level) = compose(base, span.index, span.level)?;
         let span = WrappedSourceSpan {
             level,
             index,
             reversed: span.reversed,
         };
-        let curve = self.source;
-        Ok(match self.parameter_map {
+        let curve = origin.curve;
+        Ok(match origin.map {
             Some(map) => WrappedEntitySource::MappedCurve { curve, span, map },
             None => WrappedEntitySource::Curve { curve, span },
         })
@@ -93,16 +105,18 @@ impl Proxy {
         curve: SurfaceCurveId,
         old: WrappedSourcePoint,
     ) -> Checked<WrappedEntitySource> {
-        let Some(base) = self.spans.get(&curve) else {
+        let Some(&(origin, base)) = self.spans.get(&curve) else {
             return Ok(WrappedEntitySource::SplitVertex { curve, point: old });
         };
-        let (numerator, level) = compose(*base, old.numerator, old.level)?;
-        Ok(self.authored_point(point(numerator, level)))
+        let (numerator, level) = compose(base, old.numerator, old.level)?;
+        Ok(origin.authored_point(point(numerator, level)))
     }
+}
 
-    fn authored_point(&self, point: WrappedSourcePoint) -> WrappedEntitySource {
-        let curve = self.source;
-        match self.parameter_map {
+impl CurveOrigin {
+    fn authored_point(self, point: WrappedSourcePoint) -> WrappedEntitySource {
+        let curve = self.curve;
+        match self.map {
             Some(map) => WrappedEntitySource::MappedSplitVertex { curve, point, map },
             None => WrappedEntitySource::SplitVertex { curve, point },
         }
