@@ -42,7 +42,9 @@ fn read_regions(
         &request.profile,
         &request.selections,
         cancelled,
-        |selection, reader| inputs.push_region(request, selection, depths, reader),
+        |selection, reader, cancelled| {
+            inputs.push_region(request, selection, depths, reader, cancelled)
+        },
     )
 }
 impl Inputs {
@@ -52,8 +54,9 @@ impl Inputs {
         selection: &WrappedRegionSelection,
         depths: [f64; 2],
         reader: &profile_input::ProfileReader<'_>,
+        cancelled: &mut CancelPoll<'_>,
     ) -> Checked<()> {
-        let oriented = selected(reader, selection)?;
+        let oriented = selected_with_cancel(reader, selection, cancelled)?;
         let (source, directions) = oriented.into_developed(
             depths,
             request.options.spatial_error,
@@ -72,13 +75,21 @@ pub(in crate::surface_sketch::wrapped_profile) fn selected(
     reader: &profile_input::ProfileReader<'_>,
     selection: &WrappedRegionSelection,
 ) -> Checked<profile_input::OrientedRegion> {
+    selected_with_cancel(reader, selection, &mut || false)
+}
+
+pub(in crate::surface_sketch::wrapped_profile) fn selected_with_cancel(
+    reader: &profile_input::ProfileReader<'_>,
+    selection: &WrappedRegionSelection,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<profile_input::OrientedRegion> {
     let selected = profile_input::ProfileSelection {
         region: selection.region,
         outer: selection.outer.clone(),
         holes: selection.holes.clone(),
     };
     reader
-        .select(&selected)
+        .select_with_cancel(&selected, cancelled)
         .map_err(|cause| profile_failure(cause, Some(selection.region)))
 }
 pub(in crate::surface_sketch::wrapped_profile) fn profile_failure(
