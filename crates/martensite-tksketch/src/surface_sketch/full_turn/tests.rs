@@ -7,6 +7,7 @@ mod curved_batch;
 mod curved_cone_aperture;
 mod multiple;
 mod placed;
+mod rational_aperture;
 
 use std::f64::consts::{FRAC_PI_6, PI, TAU};
 

@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! In a developed +X cone chart the physical zero meridian is the positive X ray.
 use super::*;
+use martensite_tkmath::predicates::roots::metric_bounds::{
+    DevelopedScale, certify_developed_period,
+};
 
 impl AperturePlan {
     pub(in crate::surface_sketch::full_turn::hole::curved) fn admit_cone(
@@ -8,6 +11,7 @@ impl AperturePlan {
         request: &WrappedConeNormalRequest,
         options: NormalExtrusionOptions,
         scope: Scope,
+        source: SourceModel,
     ) -> Checked<Self> {
         let stock = band_admission::admit(*band, request.depths, options)?;
         let FullTurnSupport::Cone { support, slant } = band.support else {
@@ -20,7 +24,9 @@ impl AperturePlan {
         let contours = request
             .selections
             .iter()
-            .map(|selection| cone_contour(&request.profile, selection, support, slant, options))
+            .map(|selection| {
+                cone_contour(&request.profile, selection, support, slant, options, source)
+            })
             .collect::<Checked<Vec<_>>>()?;
         Self::compose(*band, stock, contours, scope, options)
     }
@@ -48,8 +54,9 @@ fn cone_contour(
     support: ConeSupport,
     slant: [f64; 2],
     options: NormalExtrusionOptions,
+    source: SourceModel,
 ) -> Checked<Aperture> {
-    let mut curves = contour_curves(profile, selection)?;
+    let mut curves = contour_curves(profile, selection, source)?;
     let (meridian, maximum_x) = certify_cone_hull(&curves, support, slant, options)?;
     // atan(y/x) has magnitude at least |y|/(2 max(x)) when |y| <= x.
     // Division by sin(half angle) only increases this bound.

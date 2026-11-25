@@ -6,7 +6,9 @@ use crate::surface_sketch::full_turn::hole::crossed::CrossedBandResult;
 mod admission;
 mod binding;
 mod proof;
-use admission::{AperturePlan, Scope};
+mod rational;
+use admission::{AperturePlan, Scope, SourceModel};
+pub use rational::*;
 use std::collections::BTreeMap;
 
 /// Immutable curved aperture body, split provenance and achieved fitting bounds.
@@ -44,7 +46,7 @@ impl<T> CurvedBandResult<T> {
 
 /// Make one curved aperture on a canonical full cylindrical band by cutting its actual seam.
 /// Admits one simply connected loop of lines and clamped quadratic polynomial segments in a
-/// canonical +Z cylinder frame, with two transverse crossings of the authored zero meridian.
+/// canonical +Z cylinder frame, with two transverse crossings of one signed lift of the authored zero meridian.
 /// Uses the same physical depths as the wrapped aperture request.
 /// Example: `let cut = normal_extrude_cylinder_band_with_curved_hole(&band, &profile, options)?;`.
 pub fn normal_extrude_cylinder_band_with_curved_hole(
@@ -52,8 +54,14 @@ pub fn normal_extrude_cylinder_band_with_curved_hole(
     request: &WrappedNormalRequest,
     options: NormalExtrusionOptions,
 ) -> Result<CurvedBandResult, SurfaceSketchFailure> {
-    let plan = AperturePlan::admit(band, request, options, Scope::OneCrossed)
-        .map_err(|cause| admission_failure(band, cause))?;
+    let plan = AperturePlan::admit(
+        band,
+        request,
+        options,
+        Scope::OneCrossed,
+        SourceModel::Polynomial,
+    )
+    .map_err(|cause| admission_failure(band, cause))?;
     let cutter = fitted_cutter(&plan, request)?;
     let report = report(&plan, cutter.reports())?;
     let evidence = FitEvidence::cylinder(&plan, &report, request.support.radius)
@@ -73,8 +81,14 @@ pub fn normal_extrude_cone_band_with_curved_hole(
     request: &WrappedConeNormalRequest,
     options: NormalExtrusionOptions,
 ) -> Result<CurvedBandResult<WrappedConeMemberReport>, SurfaceSketchFailure> {
-    let plan = AperturePlan::admit_cone(band, request, options, Scope::OneCrossed)
-        .map_err(|cause| admission_failure(band, cause))?;
+    let plan = AperturePlan::admit_cone(
+        band,
+        request,
+        options,
+        Scope::OneCrossed,
+        SourceModel::Polynomial,
+    )
+    .map_err(|cause| admission_failure(band, cause))?;
     let cutter =
         normal_extrude_cone_profile(request).map_err(|cause| tool_failure(&plan, cause))?;
     let report = report(&plan, cutter.reports())?;
@@ -97,8 +111,14 @@ pub fn normal_extrude_cylinder_band_with_curved_holes(
 ) -> Result<CurvedBandResult<BTreeMap<SurfaceRegionId, WrappedMemberReport>>, SurfaceSketchFailure>
 {
     let request = canonical_cylinder_request(request);
-    let plan = AperturePlan::admit(band, &request, options, Scope::Batch)
-        .map_err(|cause| admission_failure(band, cause))?;
+    let plan = AperturePlan::admit(
+        band,
+        &request,
+        options,
+        Scope::Batch,
+        SourceModel::Polynomial,
+    )
+    .map_err(|cause| admission_failure(band, cause))?;
     let cutter = fitted_cutter(&plan, &request)?;
     let reports = cutter.reports();
     let evidence = batch_evidence(&plan, reports, |report| {
@@ -123,8 +143,14 @@ pub fn normal_extrude_cone_band_with_curved_holes(
 > {
     let mut request = request.clone();
     request.selections.sort_by_key(|selection| selection.region);
-    let plan = AperturePlan::admit_cone(band, &request, options, Scope::Batch)
-        .map_err(|cause| admission_failure(band, cause))?;
+    let plan = AperturePlan::admit_cone(
+        band,
+        &request,
+        options,
+        Scope::Batch,
+        SourceModel::Polynomial,
+    )
+    .map_err(|cause| admission_failure(band, cause))?;
     let cutter =
         normal_extrude_cone_profile(&request).map_err(|cause| tool_failure(&plan, cause))?;
     let reports = cutter.reports();
