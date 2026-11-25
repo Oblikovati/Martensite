@@ -2,16 +2,15 @@
 //! Distinguish one native edge from its two directed uses on a periodic face.
 use super::*;
 use martensite_tkbrep::brep::EdgePCurve;
-use martensite_tkbrep::topods::ShapeIterator;
 use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dCurve, Geom2dLine};
 use martensite_tkmath::{geom_abs::CurveType, gp::Point2};
 use std::f64::consts::{FRAC_PI_2, PI};
 
-struct FaceTrims {
-    rims: [topods::Edge; 2],
-    seam: Option<[topods::Edge; 2]>,
-}
+mod aperture;
+mod partition;
+
+pub(super) use aperture::{increasing, verify_aperture_walls};
 
 pub(super) fn verify(
     section: &BandSection,
@@ -20,8 +19,37 @@ pub(super) fn verify(
     surface: &BRepAdaptorSurface,
     rims: [SurfaceCurveId; 2],
     index: usize,
+    aperture: Option<[SurfaceCurveId; 4]>,
 ) -> Checked<()> {
     let periodic = carrier_type(section.cylinder, index) != SurfaceType::Plane;
+    let names = trim_names(section, bindings, rims, index, periodic, aperture)?;
+    let trims = partition::classify(face, names)?;
+    for rim in &trims.rims {
+        verify_rim_trim(section, face, surface, rim, periodic)?;
+    }
+    if let Some([first, second]) = trims.seam {
+        verify_seam(section, face, surface, first, second, index)?;
+    }
+    if let Some(hole) = trims.hole {
+        aperture::verify_wire(
+            section,
+            face,
+            surface,
+            &trims.rims[usize::from(index == 3)],
+            &hole,
+        )?;
+    }
+    Ok(())
+}
+
+fn trim_names<'a>(
+    section: &BandSection,
+    bindings: &'a Bindings,
+    rims: [SurfaceCurveId; 2],
+    index: usize,
+    periodic: bool,
+    aperture: Option<[SurfaceCurveId; 4]>,
+) -> Checked<partition::Names<'a>> {
     let sweep = &section.sweep;
     let [lower, upper] = rim_keys(rims, sweep.first_depth, index).map(|rim| lookup(bindings, rim));
     let seam = if periodic {
@@ -30,128 +58,41 @@ pub(super) fn verify(
     } else {
         None
     };
-    let trims = occurrences(face, [lower?, upper?], seam)?;
-    for rim in &trims.rims {
-        verify_rim_trim(section, face, surface, rim, periodic)?;
-    }
-    if let Some([first, second]) = trims.seam {
-        verify_seam(section, face, surface, first, second, index)?;
-    }
-    Ok(())
-}
-
-fn occurrences(
-    face: &topods::Face,
-    rims: [&topods::Shape; 2],
-    seam: Option<&topods::Shape>,
-) -> Checked<FaceTrims> {
-    verify_wire_partition(face, seam.is_some())?;
-    let mut explorer = Explorer::new(face, ShapeEnum::Edge, ShapeEnum::Shape)
-        .map_err(|e| native("full-turn coedges", e))?;
-    let mut found = [Vec::new(), Vec::new(), Vec::new()];
-    while explorer.more() {
-        let edge = topods::edge(explorer.current()).map_err(|e| native("full-turn coedge", e))?;
-        let index = occurrence_owner(&edge, rims, seam)?;
-        found[index].push(edge);
-        explorer
-            .next()
-            .map_err(|e| native("next full-turn coedge", e))?;
-    }
-    let [lower, upper, paired] = found;
-    finish_occurrences(lower, upper, paired, seam.is_some())
-}
-
-fn verify_wire_partition(face: &topods::Face, periodic: bool) -> Checked<()> {
-    let mut wires = ShapeIterator::new(face, false, false);
-    let mut count = 0;
-    while wires.more() {
-        let wire = wires
-            .value()
-            .map_err(|e| native("full-turn face wire", e))?;
-        verify_wire(wire, if periodic { 4 } else { 1 })?;
-        wires.next();
-        count += 1;
-    }
-    if count != if periodic { 1 } else { 2 } {
-        return Err(incomplete(
-            "one seam-cut loop or two planar rim loops",
-            format!("{count} loops"),
-        ));
-    }
-    Ok(())
-}
-
-fn verify_wire(wire: &topods::Shape, expected_uses: usize) -> Checked<()> {
-    let kind = wire
-        .shape_type()
-        .map_err(|e| native("full-turn wire kind", e))?;
-    if kind != ShapeEnum::Wire {
-        return Err(incomplete("full-turn trim wire", format!("{kind:?}")));
-    }
-    let mut uses = Explorer::new(wire, ShapeEnum::Edge, ShapeEnum::Shape)
-        .map_err(|e| native("full-turn wire edges", e))?;
-    let mut count = 0;
-    while uses.more() {
-        uses.next()
-            .map_err(|e| native("next full-turn wire edge", e))?;
-        count += 1;
-    }
-    if count != expected_uses {
-        return Err(incomplete(
-            "full-turn wire edge uses",
-            format!("{count} uses, expected {expected_uses}"),
-        ));
-    }
-    Ok(())
-}
-
-fn occurrence_owner(
-    edge: &topods::Edge,
-    rims: [&topods::Shape; 2],
-    seam: Option<&topods::Shape>,
-) -> Checked<usize> {
-    if let Some(index) = rims.into_iter().position(|rim| rim.is_same(edge)) {
-        return Ok(index);
-    }
-    if seam.is_some_and(|same| same.is_same(edge)) {
-        return Ok(2);
-    }
-    Err(incomplete(
-        "bound rim or periodic seam",
-        format!("{:?}", edge.orientation()),
-    ))
-}
-
-fn finish_occurrences(
-    lower: Vec<topods::Edge>,
-    upper: Vec<topods::Edge>,
-    paired: Vec<topods::Edge>,
-    periodic: bool,
-) -> Checked<FaceTrims> {
-    let [lower] = cardinality(lower, "one use of the first rim")?;
-    let [upper] = cardinality(upper, "one use of the second rim")?;
-    let seam = if periodic {
-        Some(cardinality(paired, "two uses of the periodic seam")?)
-    } else {
-        let [] = cardinality(paired, "zero planar seam uses")?;
-        None
-    };
-    Ok(FaceTrims {
-        rims: [lower, upper],
+    let hole = hole_bindings(bindings, aperture, index, sweep.first_depth)?;
+    Ok(partition::Names {
+        rims: [lower?, upper?],
         seam,
+        hole,
     })
 }
 
-fn cardinality<const N: usize>(
-    items: Vec<topods::Edge>,
-    expected: &'static str,
-) -> Checked<[topods::Edge; N]> {
-    items
-        .try_into()
-        .map_err(|items: Vec<_>| incomplete(expected, format!("{} uses", items.len())))
+fn hole_bindings(
+    bindings: &Bindings,
+    aperture: Option<[SurfaceCurveId; 4]>,
+    index: usize,
+    first_depth: usize,
+) -> Checked<Option<[&topods::Shape; 4]>> {
+    let Some(curves) = aperture.filter(|_| !index.is_multiple_of(2)) else {
+        return Ok(None);
+    };
+    let depth = if index == 3 {
+        first_depth
+    } else {
+        1 - first_depth
+    };
+    let [a, b, c, d] = curves.map(|curve| {
+        lookup(
+            bindings,
+            HistoryKey {
+                source: HistorySource::Curve(curve),
+                role: edge_role(depth),
+            },
+        )
+    });
+    Ok(Some([a?, b?, c?, d?]))
 }
 
-fn verify_rim_trim(
+pub(super) fn verify_rim_trim(
     section: &BandSection,
     face: &topods::Face,
     surface: &BRepAdaptorSurface,
@@ -193,13 +134,30 @@ fn verify_seam(
     second: topods::Edge,
     index: usize,
 ) -> Checked<()> {
-    opposite(&first, &second)?;
-    verify_seam_line(section, &first, index)?;
-    let left = seam_trim(face, &first)?;
-    let right = seam_trim(face, &second)?;
+    let points = section.sweep.points;
+    verify_seam_fragment(
+        section,
+        face,
+        surface,
+        [&first, &second],
+        [points[index], points[(index + 1) % 4]],
+    )
+}
+
+pub(super) fn verify_seam_fragment(
+    section: &BandSection,
+    face: &topods::Face,
+    surface: &BRepAdaptorSurface,
+    [first, second]: [&topods::Edge; 2],
+    endpoints: [[f64; 3]; 2],
+) -> Checked<()> {
+    opposite(first, second)?;
+    verify_seam_line(section, first, endpoints)?;
+    let left = seam_trim(face, first)?;
+    let right = seam_trim(face, second)?;
     verify_period_pair(section, surface, &left, &right)?;
-    verify_representation(section, surface, &first, &left)?;
-    verify_representation(section, surface, &second, &right)
+    verify_representation(section, surface, first, &left)?;
+    verify_representation(section, surface, second, &right)
 }
 
 fn opposite(first: &topods::Edge, second: &topods::Edge) -> Checked<()> {
@@ -217,11 +175,13 @@ fn opposite(first: &topods::Edge, second: &topods::Edge) -> Checked<()> {
     Ok(())
 }
 
-fn verify_seam_line(section: &BandSection, edge: &topods::Edge, index: usize) -> Checked<()> {
+fn verify_seam_line(
+    section: &BandSection,
+    edge: &topods::Edge,
+    [a, b]: [[f64; 3]; 2],
+) -> Checked<()> {
     let curve = BRepAdaptorCurve::with_edge(edge).map_err(|e| native("full-turn seam curve", e))?;
     check_curve_kind(&curve, false)?;
-    let a = section.sweep.points[index];
-    let b = section.sweep.points[(index + 1) % 4];
     let middle = std::array::from_fn(|i| a[i] * 0.5 + b[i] * 0.5);
     check_edge_samples(&curve, [a, b, middle], tolerance(section))
 }
@@ -264,7 +224,7 @@ fn verify_period_pair(
     Ok(())
 }
 
-fn verify_representation(
+pub(super) fn verify_representation(
     section: &BandSection,
     surface: &BRepAdaptorSurface,
     edge: &topods::Edge,
@@ -338,7 +298,7 @@ fn norm(x: [f64; 3]) -> f64 {
     frame::dot(x, x).sqrt()
 }
 
-fn trim_uv(trim: &EdgePCurve, parameter: f64) -> Checked<Point2> {
+pub(super) fn trim_uv(trim: &EdgePCurve, parameter: f64) -> Checked<Point2> {
     trim.pcurve
         .get()
         .ok_or_else(|| incomplete("analytic full-turn trim", "null pcurve"))?

@@ -17,11 +17,11 @@ pub enum SurfaceDiagnostic {
     },
 }
 /// Fresh native owners with semantic bindings belonging to the same exported solid.
-pub struct DetachedNormalBody {
+pub struct DetachedNormalBody<K = HistoryKey> {
     /// Mutable native export, independent of every other export and the published result.
     pub solid: Shape,
     /// Explicit native references, keyed by authored parent and operation role.
-    pub entities: Vec<(HistoryKey, Shape)>,
+    pub entities: Vec<(K, Shape)>,
 }
 /// Separate estimated contributions to the reported volume uncertainty.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -33,9 +33,9 @@ pub struct VolumeErrorEstimates {
 }
 /// Complete immutable normal extrusion, with value-only metadata and an owned encoding.
 #[derive(Clone, Debug)]
-pub struct NormalExtrusionResult {
+pub struct NormalExtrusionResult<K = HistoryKey> {
     pub(super) bytes: Vec<u8>,
-    pub(super) keys: Vec<HistoryKey>,
+    pub(super) keys: Vec<K>,
     pub(super) region: SurfaceRegionId,
     pub(super) validation: ValidationReport,
     pub(super) volume: Measured,
@@ -44,13 +44,13 @@ pub struct NormalExtrusionResult {
     pub(super) diagnostics: Vec<SurfaceDiagnostic>,
     pub(super) options: NormalExtrusionOptions,
 }
-impl NormalExtrusionResult {
+impl<K: Copy> NormalExtrusionResult<K> {
     /// Ordered checks of the decoded published body; `result.validation().is_valid()`.
     pub fn validation(&self) -> &ValidationReport {
         &self.validation
     }
     /// Complete semantic keys, in total order; `result.history().len()`.
-    pub fn history(&self) -> &[HistoryKey] {
+    pub fn history(&self) -> &[K] {
         &self.keys
     }
     /// Integrated native-body volume with estimated uncertainty; `result.volume().value`.
@@ -78,7 +78,7 @@ impl NormalExtrusionResult {
         super::request::effective_limits(self.options)
     }
     /// Decode independent native owners and their semantic references; `result.export_brep()?`.
-    pub fn export_brep(&self) -> Result<DetachedNormalBody, SurfaceSketchFailure> {
+    pub fn export_brep(&self) -> Result<DetachedNormalBody<K>, SurfaceSketchFailure> {
         let (solid, entities) =
             encoding::decode(&self.bytes, &self.keys).map_err(|cause| SurfaceSketchFailure {
                 region: self.region,
@@ -89,14 +89,14 @@ impl NormalExtrusionResult {
     }
 }
 
-pub(super) fn assemble(
+pub(super) fn assemble<K>(
     admitted: &super::sweep::Sweep,
     bytes: Vec<u8>,
-    keys: Vec<HistoryKey>,
+    keys: Vec<K>,
     checked: super::validation::CheckedBody,
     volume: Measured,
     volume_errors: VolumeErrorEstimates,
-) -> NormalExtrusionResult {
+) -> NormalExtrusionResult<K> {
     NormalExtrusionResult {
         bytes,
         keys,

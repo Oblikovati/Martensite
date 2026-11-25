@@ -220,7 +220,7 @@ pub(super) fn validate_sweep_membership(
 }
 
 // Native sweep images can have their source orientation rather than their solid use.
-fn root_face_orientations(solid: &Shape, bindings: &mut Bindings) -> Checked<()> {
+pub(super) fn root_face_orientations(solid: &Shape, bindings: &mut Bindings) -> Checked<()> {
     let mut faces = IndexedMapOfShape::default();
     topexp::map_shapes_of_type(solid, ShapeEnum::Face, &mut faces)
         .map_err(|error| native("root face occurrences", error))?;
@@ -295,7 +295,7 @@ fn corner_ends(
     collector.end(source, outer, &section.vertices[vertices[1]], last)
 }
 
-fn validate_kind(
+pub(super) fn validate_kind(
     solid: &Shape,
     bindings: &Bindings,
     kind: ShapeEnum,
