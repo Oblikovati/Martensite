@@ -8,6 +8,7 @@ pub struct AspectDisplayConnectionLease {
     connection: Handle<AspectDisplayConnection>,
     purpose: AspectDisplayLeasePurpose,
     display: usize,
+    backend: AspectDisplayBackend,
 }
 impl AspectDisplayConnectionLease {
     /// The retained connection object; `lease.retained_connection()` remains fixed for its lifetime.
@@ -17,6 +18,10 @@ impl AspectDisplayConnectionLease {
     /// The pinned native address; `lease.display_address()` does not follow later replacement.
     pub fn display_address(&self) -> usize {
         self.display
+    }
+    /// The window-system backend of this leased connection; `lease.backend()`.
+    pub fn backend(&self) -> AspectDisplayBackend {
+        self.backend
     }
     /// Compare retained connection objects, not numeric native addresses; `first.same_connection(&second)`.
     pub fn same_connection(&self, other: &Self) -> bool {
@@ -47,6 +52,7 @@ impl AspectDisplayConnection {
             connection: connection.clone(),
             purpose,
             display: state.display,
+            backend: state.backend,
         })
     }
     fn admit_consumer(

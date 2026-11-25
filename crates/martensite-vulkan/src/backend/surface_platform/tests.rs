@@ -3,7 +3,8 @@ use super::*;
 use crate::backend::{portability_admission::fixture::PortabilityCatalogFake, window_support};
 use martensite_tkservice::aspect::AspectNeutralWindow;
 
-const ALL: [RenderSurfacePlatform; 3] = [
+const ALL: [RenderSurfacePlatform; 4] = [
+    RenderSurfacePlatform::Wayland,
     RenderSurfacePlatform::Xlib,
     RenderSurfacePlatform::Win32,
     RenderSurfacePlatform::Metal,
@@ -12,6 +13,7 @@ const ALL: [RenderSurfacePlatform; 3] = [
 #[test]
 fn each_platform_factory_names_its_own_vulkan_surface_extension() {
     let expected = [
+        ash::khr::wayland_surface::NAME,
         ash::khr::xlib_surface::NAME,
         ash::khr::win32_surface::NAME,
         ash::ext::metal_surface::NAME,
@@ -25,9 +27,60 @@ fn each_platform_factory_names_its_own_vulkan_surface_extension() {
 
 #[cfg(target_os = "linux")]
 #[test]
-fn linux_host_keeps_the_xlib_factory() {
-    assert_eq!(RenderSurfacePlatform::host(), RenderSurfacePlatform::Xlib);
-    assert_eq!(host_factory().platform(), RenderSurfacePlatform::Xlib);
+fn linux_host_supports_wayland_and_xlib_in_parallel_with_wayland_preferred() {
+    assert_eq!(
+        RenderSurfacePlatform::host(),
+        RenderSurfacePlatform::Wayland
+    );
+    assert_eq!(host_factory().platform(), RenderSurfacePlatform::Wayland);
+    assert_eq!(
+        RenderSurfacePlatform::host_supported(),
+        &[RenderSurfacePlatform::Wayland, RenderSurfacePlatform::Xlib]
+    );
+    assert_eq!(
+        crate::surface_platform::preferred_linux_platform(Some("wayland-1"), Some(":0")),
+        RenderSurfacePlatform::Wayland
+    );
+    assert_eq!(
+        crate::surface_platform::preferred_linux_platform(None, Some(":0")),
+        RenderSurfacePlatform::Xlib
+    );
+}
+
+#[test]
+fn linux_parallel_wsi_admission_enables_both_wayland_and_xlib_when_advertised() {
+    let names = [
+        ash::khr::surface::NAME,
+        ash::khr::wayland_surface::NAME,
+        ash::khr::xlib_surface::NAME,
+        ash::khr::get_surface_capabilities2::NAME,
+        ash::ext::surface_maintenance1::NAME,
+    ];
+    let catalog = PortabilityCatalogFake::named(&names);
+    let factories: [&dyn PlatformSurfaceFactory; 2] = [
+        factory_for(RenderSurfacePlatform::Wayland),
+        factory_for(RenderSurfacePlatform::Xlib),
+    ];
+    let (enabled, platforms) =
+        window_support::instance_extensions_multi(&catalog.extensions, &factories);
+    assert_eq!(enabled, names.map(CStr::as_ptr));
+    assert_eq!(
+        platforms,
+        vec![RenderSurfacePlatform::Wayland, RenderSurfacePlatform::Xlib]
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn factory_for_window_dispatches_by_display_backend() {
+    use martensite_tkservice::wl::WlWindow;
+    let wl_display = Handle::new(AspectDisplayConnection::with_wayland_display(0x5000).unwrap());
+    let wl_window: Handle<dyn AspectWindow> =
+        Handle::new(WlWindow::wrap(&wl_display, 0x6000, 128, 96).unwrap()).cast();
+    assert_eq!(
+        factory_for_window(&wl_window).platform(),
+        RenderSurfacePlatform::Wayland
+    );
 }
 
 #[test]
@@ -94,6 +147,31 @@ fn live_unimplemented_platforms_refuse_with_a_typed_cause_before_any_surface_exi
     assert_eq!(std::sync::Arc::strong_count(&runtime), 1);
     let errors = runtime.validation.errors().unwrap();
     assert!(errors.is_empty(), "{errors:?}");
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+#[ignore = "requires live Wayland compositor (WAYLAND_DISPLAY)"]
+fn live_wayland_window_creates_vulkan_surface_and_retains_display_lease() {
+    use martensite_tkservice::aspect::AspectDisplayBackend;
+    use martensite_tkservice::wl::WlWindow;
+
+    let display = AspectDisplayConnection::new().expect("live Wayland display connection");
+    assert_eq!(display.backend(), AspectDisplayBackend::Wayland);
+    let display = Handle::new(display);
+    let wl_window =
+        Handle::new(WlWindow::create(&display, "Martensite Vulkan Wayland", 160, 120).unwrap());
+    let window: Handle<dyn AspectWindow> = wl_window.cast();
+
+    let runtime = crate::backend::runtime::VulkanRuntime::create(crate::VulkanOptions {
+        validation: false,
+        device_index: None,
+    })
+    .unwrap();
+    assert!(runtime.supports_platform(RenderSurfacePlatform::Wayland));
+    let presenter = crate::backend::WindowPresenter::new(&runtime, &window).unwrap();
+    assert_eq!(presenter.observed_extent().unwrap(), [160, 120]);
+    drop(presenter);
 }
 
 fn live_options() -> crate::VulkanOptions {

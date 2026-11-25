@@ -160,7 +160,7 @@ fn x_window_keys_constructors_and_event_layout() {
 #[cfg(all(target_os = "linux", feature = "x11-integration-tests"))]
 #[test]
 fn x_window_keys_constructors_and_events() {
-    let display = AspectDisplayConnection::new()
+    let display = AspectDisplayConnection::new_x11()
         .expect("X11 connection failed; expected live DISPLAY for x11-integration-tests");
     let display = Handle::new(display);
     let window = XwWindow::create(&display, "test", 10, 20, 64, 48).expect("window");
@@ -192,7 +192,7 @@ fn x_window_keys_constructors_and_events() {
 #[cfg(all(target_os = "linux", feature = "x11-integration-tests"))]
 #[test]
 fn x_window_pointer_failures_stop_before_processing_input() {
-    let display = AspectDisplayConnection::new()
+    let display = AspectDisplayConnection::new_x11()
         .expect("X11 connection failed; expected live DISPLAY for x11-integration-tests");
     let window = XwWindow::create(&Handle::new(display), "pointer failure", 0, 0, 16, 16).unwrap();
     let mut listener = RecordingInputListener {
@@ -221,7 +221,7 @@ fn destroyed_window_event(parent: u64, destroyed: u64) -> XwXEvent {
 #[cfg(all(target_os = "linux", feature = "x11-integration-tests"))]
 #[test]
 fn delivered_destroy_matches_target_and_notifies_close_once() {
-    let display = AspectDisplayConnection::new()
+    let display = AspectDisplayConnection::new_x11()
         .expect("X11 connection failed; expected live DISPLAY for x11-integration-tests");
     let display = Handle::new(display);
     let owner = XwWindow::create(&display, "destroy event", 0, 0, 16, 16).unwrap();
@@ -247,4 +247,90 @@ fn delivered_destroy_matches_target_and_notifies_close_once() {
         original
     );
     assert_eq!(window.native_handle(), 0);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn wayland_window_events_and_close_retirement() {
+    use martensite_tkservice::aspect::{AspectDisplayBackend, AspectDisplayConnection};
+    use martensite_tkservice::wl::{WlEvent, WlWindow};
+
+    let display = Handle::new(AspectDisplayConnection::with_wayland_display(0x9000).unwrap());
+    assert_eq!(display.backend(), AspectDisplayBackend::Wayland);
+    // XwWindow refuses a Wayland display connection.
+    assert!(XwWindow::create(&display, "wrong", 0, 0, 16, 16).is_err());
+
+    let window = WlWindow::wrap(&display, 0xA000, 64, 48).unwrap();
+    let mut listener = RecordingInputListener::default();
+    assert!(
+        window
+            .process_event(
+                &mut listener,
+                WlEvent::PointerButton {
+                    x: 4,
+                    y: 5,
+                    button: 0x110,
+                    pressed: true,
+                },
+            )
+            .unwrap()
+    );
+    assert!(
+        window
+            .process_event(
+                &mut listener,
+                WlEvent::PointerScroll {
+                    x: 4,
+                    y: 5,
+                    delta: -1.0,
+                },
+            )
+            .unwrap()
+    );
+    assert!(window.process_event(&mut listener, WlEvent::Close).unwrap());
+    assert!(!window.process_event(&mut listener, WlEvent::Close).unwrap());
+    assert_eq!(window.native_handle(), 0);
+    assert_eq!(
+        window.native_window_closure().unwrap().original_handle,
+        0xA000
+    );
+    assert_eq!(
+        listener.events,
+        [
+            format!("buttons {ASPECT_VKEY_MOUSE_LEFT_BUTTON}"),
+            "input".into(),
+            "scroll -1".into(),
+            "input".into(),
+            "close".into(),
+        ]
+    );
+}
+
+#[cfg(all(target_os = "linux", feature = "wayland-integration-tests"))]
+#[test]
+fn live_wayland_display_and_window_lifecycle() {
+    use martensite_tkernel::tcollection::AsciiString;
+    use martensite_tkservice::aspect::{AspectDisplayBackend, AspectDisplayConnection};
+    use martensite_tkservice::wl::WlWindow;
+
+    let display = AspectDisplayConnection::new()
+        .expect("Wayland connection failed; expected live WAYLAND_DISPLAY");
+    assert_eq!(display.backend(), AspectDisplayBackend::Wayland);
+    assert_ne!(display.get_display_aspect(), 0);
+
+    let display = Handle::new(display);
+    let window = WlWindow::create(&display, "Martensite Wayland Test", 320, 240)
+        .expect("create live WlWindow");
+    assert_ne!(window.wl_surface(), 0);
+    assert_eq!(window.native_handle(), window.wl_surface());
+    assert_eq!(window.size(), (320, 240));
+    window.set_title(&AsciiString::from("Updated Title"));
+    window.map();
+    assert!(window.is_mapped());
+    let mut listener = RecordingInputListener::default();
+    window
+        .dispatch_events(&mut listener)
+        .expect("dispatch_events");
+    window.unmap();
+    assert!(!window.is_mapped());
 }

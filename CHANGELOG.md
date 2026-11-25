@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added first-class native Wayland support in parallel with X11 on Linux, preferring native Wayland over XWayland whenever `WAYLAND_DISPLAY` is set. `martensite-tkservice` adds `AspectDisplayBackend`, explicit Wayland and X11 constructors on `AspectDisplayConnection`, dynamic loading of `libwayland-client.so.0` and `libxkbcommon.so.0`, and `wl::WlWindow` (`xdg-shell`, optional server-side decorations, keyboard and pointer input). `martensite-vulkan` adds `RenderSurfacePlatform::Wayland`, enables `VK_KHR_wayland_surface` and `VK_KHR_xlib_surface` in parallel on Linux instances, and dispatches surface creation per window display backend (#605).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).

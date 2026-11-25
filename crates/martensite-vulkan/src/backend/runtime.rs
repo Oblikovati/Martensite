@@ -16,6 +16,7 @@ pub(super) struct VulkanRuntime {
     pub(super) entry: Entry,
     pub(super) lifecycle: super::device_lifecycle::DeviceLifecycle,
     pub window_support: bool,
+    pub surface_platforms: Vec<crate::RenderSurfacePlatform>,
     pub displays: martensite_tkernel::standard::SharedState<
         Vec<martensite_tkservice::aspect::AspectDisplayConnectionLease>,
     >,
@@ -290,11 +291,13 @@ impl VulkanRuntime {
         let entry =
             // SAFETY: the Vulkan loader library is the system's, and loading it runs only its own initializers.
             unsafe { Entry::load() }.map_err(|e| rejected(e, "a loadable Vulkan 1.3 runtime"))?;
-        let (instance, window_support) = create_instance(&entry, enable_validation)?;
+        let (instance, window_support, surface_platforms) =
+            create_instance(&entry, enable_validation)?;
         Ok(Self {
             entry,
             lifecycle: Default::default(),
             window_support,
+            surface_platforms,
             queues: vec![],
             displays: Default::default(),
             instance,
@@ -438,6 +441,9 @@ impl VulkanRuntime {
         self.pipeline_cache =
             PipelineCache::new(self.device(), CacheStorage::platform(cache_identity));
         Ok(())
+    }
+    pub(super) fn supports_platform(&self, platform: crate::RenderSurfacePlatform) -> bool {
+        self.window_support && self.surface_platforms.contains(&platform)
     }
     fn admit_triangle_coverage(&self, physical: vk::PhysicalDevice) -> Result<(), RenderError> {
         #[cfg(feature = "vertex-output-diagnostics")]
@@ -594,14 +600,18 @@ impl Drop for VulkanRuntime {
     }
 }
 /// Create the instance and report window admission; `create_instance(&entry, validation)?`.
-fn create_instance(entry: &Entry, validation: bool) -> Result<(Instance, bool), RenderError> {
+fn create_instance(
+    entry: &Entry,
+    validation: bool,
+) -> Result<(Instance, bool, Vec<crate::RenderSurfacePlatform>), RenderError> {
     let app = vk::ApplicationInfo::default()
         .application_name(c"Martensite")
         .api_version(vk::API_VERSION_1_3);
     let mut info = vk::InstanceCreateInfo::default().application_info(&app);
     let layers = [super::validation_settings::VALIDATION_LAYER.as_ptr()];
-    let surfaces = super::surface_platform::host_factory();
-    let plan = super::portability_runtime::instance_extensions(entry, validation, surfaces)?;
+    let factories = super::surface_platform::host_factories();
+    let plan =
+        super::portability_runtime::instance_extensions_for_host(entry, validation, factories)?;
     let extensions = plan.names;
     info = info.flags(plan.flags).enabled_extension_names(&extensions);
     let settings = super::validation_settings::synchronization_settings();
@@ -615,7 +625,7 @@ fn create_instance(entry: &Entry, validation: bool) -> Result<(Instance, bool), 
     // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
     let instance = unsafe { entry.create_instance(&info, None) }
         .map_err(|e| vk_error("create Vulkan 1.3 instance", e))?;
-    Ok((instance, plan.window_support))
+    Ok((instance, plan.window_support, plan.surface_platforms))
 }
 fn choose_device(
     instance: &Instance,
