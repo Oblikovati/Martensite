@@ -82,6 +82,34 @@ fn three_jet_rows_match_independent_integer_bernstein_weights() {
 }
 
 #[test]
+fn cubic_derivative_beyond_max_can_still_round_to_a_finite_value() {
+    let unit = f64::from_bits((1023_u64 + 968) << 52);
+    let high = 6_004_799_503_160_660_f64 * (4. * unit);
+    let curve = ExactCubicBernstein3::new([
+        [-3. * unit, 3. * unit, 0.],
+        [high, -high, 0.],
+        [0.; 3],
+        [1., 1., 1.],
+    ])
+    .unwrap();
+    // The first derivative is ±(MAX + unit), one quarter of the way to the tie.
+    assert_eq!(
+        curve.first_derivative(0.).unwrap(),
+        [f64::MAX, -f64::MAX, 0.]
+    );
+    let tie =
+        ExactCubicBernstein3::new([[0.; 3], [high.next_up(), 0., 0.], [0.; 3], [1.; 3]]).unwrap();
+    assert_eq!(
+        tie.first_derivative(0.),
+        Err(CubicBernsteinFailure::Unrepresentable {
+            order: 1,
+            axis: 0,
+            negative: false
+        })
+    );
+}
+
+#[test]
 fn exact_capture_and_parameter_bounds_refuse_invalid_input() {
     let mut poles = [[0.; 3]; 4];
     poles[2][1] = f64::INFINITY;

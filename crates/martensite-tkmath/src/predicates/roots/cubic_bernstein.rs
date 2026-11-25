@@ -35,7 +35,7 @@ pub struct CubicBernsteinJet {
 pub enum CubicBernsteinFailure {
     /// The parameter must be finite and inside the closed normalized span.
     Parameter(f64),
-    /// An exact coordinate is outside the finite binary64 magnitude range.
+    /// An exact coordinate would round to infinity.
     Unrepresentable {
         /// Requested derivative order, zero for the position.
         order: usize,

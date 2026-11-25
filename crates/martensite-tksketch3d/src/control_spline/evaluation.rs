@@ -24,7 +24,7 @@ pub struct ControlSplineJet {
 pub enum ControlSplineJetFailure {
     /// Parameter is outside the closed normalized range.
     Parameter(f64),
-    /// An exact position or derivative coordinate exceeds the finite binary64 range.
+    /// An exact position or derivative coordinate would round to infinity.
     NonFinite {
         /// Requested normalized parameter.
         parameter: f64,
