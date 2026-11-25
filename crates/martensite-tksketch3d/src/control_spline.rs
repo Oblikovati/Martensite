@@ -9,7 +9,7 @@ use martensite_tkmath::{
     predicates::{
         NonFiniteCoordinate, compare_squared_length_3d,
         roots::{
-            RootIsolationError, RootIsolationOptions,
+            ExactCubicBernstein3, RootIsolationError, RootIsolationOptions,
             metric_bounds::{
                 BezierRegularityCause, BezierRegularityCompletion, BezierRegularityDecision,
                 BezierRegularityFailure, BezierRegularityOptions, BezierRegularityQuery,
@@ -107,7 +107,13 @@ impl SketchControlSpline {
 pub struct ControlSplineGeometry {
     recipe: SketchControlSpline,
     poles: [Point3; 4],
-    regularity: Arc<BezierRegularityReport>,
+    evidence: Arc<CubicEvidence>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct CubicEvidence {
+    polynomial: ExactCubicBernstein3,
+    regularity: BezierRegularityReport,
 }
 
 impl ControlSplineGeometry {
@@ -128,7 +134,7 @@ impl ControlSplineGeometry {
 
     /// Borrow the exact source-bound regularity certificate. Example: `curve.regularity().decision()`.
     pub fn regularity(&self) -> &BezierRegularityReport {
-        &self.regularity
+        &self.evidence.regularity
     }
 }
 
@@ -146,6 +152,8 @@ pub enum ControlSplineFailure {
     ShortChord(MinimumLength),
     /// The exact endpoint comparison refused a coordinate.
     ChordInput(NonFiniteCoordinate),
+    /// Exact polynomial capture refused a coefficient.
+    PolynomialInput(NonFiniteCoordinate),
     /// The exact parameterization has a zero derivative somewhere on the closed span.
     Stationary {
         /// Number of distinct isolated stationary parameters, or none for an identically zero derivative.
@@ -187,7 +195,7 @@ impl fmt::Display for ControlSplineFailure {
 impl std::error::Error for ControlSplineFailure {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::ChordInput(source) => Some(source),
+            Self::ChordInput(source) | Self::PolynomialInput(source) => Some(source),
             _ => None,
         }
     }
@@ -204,11 +212,26 @@ pub(super) fn admit(
         return Ok(old.clone());
     }
     check_chord(poles, snapshot.minimum).map_err(|cause| refusal(recipe.id, cause))?;
-    let regularity = certify(recipe, poles, cancelled)?;
+    let evidence = capture_evidence(recipe, poles, cancelled)?;
     Ok(ControlSplineGeometry {
         recipe,
         poles,
-        regularity: Arc::new(regularity),
+        evidence: Arc::new(evidence),
+    })
+}
+
+fn capture_evidence(
+    recipe: SketchControlSpline,
+    poles: [Point3; 4],
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CubicEvidence, EditFailure> {
+    let coefficients = poles.map(|pole| *pole.coordinates());
+    let polynomial = ExactCubicBernstein3::new(coefficients)
+        .map_err(|cause| refusal(recipe.id, ControlSplineFailure::PolynomialInput(cause)))?;
+    let regularity = certify(recipe, &coefficients, cancelled)?;
+    Ok(CubicEvidence {
+        polynomial,
+        regularity,
     })
 }
 
@@ -254,12 +277,11 @@ fn check_chord(poles: [Point3; 4], minimum: MinimumLength) -> Result<(), Control
 
 fn certify(
     recipe: SketchControlSpline,
-    poles: [Point3; 4],
+    coefficients: &[[f64; 3]; 4],
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<BezierRegularityReport, EditFailure> {
-    let coefficients = poles.map(|pole| *pole.coordinates());
     let query =
-        BezierRegularityQuery::new(recipe.id.get().get(), &coefficients, recipe.proof.options());
+        BezierRegularityQuery::new(recipe.id.get().get(), coefficients, recipe.proof.options());
     let report = certify_bezier_regularity(query, cancelled)
         .map_err(|failure| proof_refusal(recipe, failure))?;
     let isolated_parameters = match report.decision() {

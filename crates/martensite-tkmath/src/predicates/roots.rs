@@ -8,6 +8,7 @@ pub mod bezier_pair;
 mod certificate_arithmetic;
 mod chain;
 mod coefficient_enclosure;
+mod cubic_bernstein;
 mod dyadic;
 mod error;
 mod isolate;
@@ -21,6 +22,7 @@ pub mod signs;
 pub mod sketch_incidence;
 /// Exact bounded embeddings of supplied rational tensor query charts.
 pub mod surface_query;
+pub use cubic_bernstein::{CubicBernsteinFailure, CubicBernsteinJet, ExactCubicBernstein3};
 pub use dyadic::DyadicBound;
 pub use error::RootIsolationError;
 

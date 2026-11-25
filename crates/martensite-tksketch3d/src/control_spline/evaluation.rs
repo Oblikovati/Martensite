@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Read-only Bernstein evaluation of the captured polynomial and its local derivative nets.
+//! Read-only jet evaluation of the exact captured polynomial.
 use super::ControlSplineGeometry;
-use martensite_tkmath::gp::{Point3, Vector3, Xyz};
+use martensite_tkmath::{
+    gp::{Point3, Vector3},
+    predicates::roots::CubicBernsteinFailure,
+};
 use std::{error::Error, fmt};
 
-/// Rounded value and derivatives with respect to the normalized cubic parameter.
+/// Exact Bernstein value and derivatives, each rounded once to binary64.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ControlSplineJet {
     /// Curve position.
@@ -21,7 +24,7 @@ pub struct ControlSplineJet {
 pub enum ControlSplineJetFailure {
     /// Parameter is outside the closed normalized range.
     Parameter(f64),
-    /// A rounded position or derivative coordinate is not finite.
+    /// An exact position or derivative coordinate exceeds the finite binary64 range.
     NonFinite {
         /// Requested normalized parameter.
         parameter: f64,
@@ -29,7 +32,7 @@ pub enum ControlSplineJetFailure {
         order: usize,
         /// Zero-based coordinate index.
         axis: usize,
-        /// Returned nonfinite value.
+        /// Signed infinite representation of that out-of-range coordinate.
         value: f64,
     },
     /// All rounded first derivative components are zero despite exact regularity.
@@ -65,89 +68,81 @@ impl ControlSplineGeometry {
     /// Evaluate a rounded position on the closed span. Endpoints return their authored values.
     /// Example: `curve.value(0.5)?`.
     pub fn value(&self, parameter: f64) -> Result<Point3, ControlSplineJetFailure> {
-        check_parameter(parameter)?;
-        let position = Point3::from(bernstein(self.poles.map(|pole| pole.xyz()), parameter));
-        check_coordinate_row(parameter, 0, position.coordinates())?;
-        Ok(position)
+        if let Some(endpoint) = self.endpoint(parameter) {
+            return Ok(endpoint);
+        }
+        let [x, y, z] = self
+            .evidence
+            .polynomial
+            .position(parameter)
+            .map_err(|failure| evaluation_refusal(parameter, failure))?;
+        Ok(Point3::new(x, y, z))
     }
 
     /// Evaluate the rounded first derivative with respect to the normalized parameter.
     /// Example: `curve.first_derivative(0.5)?`.
     pub fn first_derivative(&self, parameter: f64) -> Result<Vector3, ControlSplineJetFailure> {
-        check_parameter(parameter)?;
-        velocity(self.local_differences(), parameter)
+        let first = self
+            .evidence
+            .polynomial
+            .first_derivative(parameter)
+            .map_err(|failure| evaluation_refusal(parameter, failure))?;
+        velocity(first, parameter)
     }
 
     /// Evaluate the rounded value and two derivatives on the closed span.
     /// Example: `curve.jet(0.)?.first`.
     pub fn jet(&self, parameter: f64) -> Result<ControlSplineJet, ControlSplineJetFailure> {
-        let position = self.value(parameter)?;
-        let [ab, bc, cd] = self.local_differences();
-        let first = velocity([ab, bc, cd], parameter)?;
-        let second = Vector3::from(bernstein([bc - ab, cd - bc], parameter) * 6.);
-        check_coordinate_row(parameter, 2, second.xyz().coordinates())?;
+        let jet = self
+            .evidence
+            .polynomial
+            .jet(parameter)
+            .map_err(|failure| evaluation_refusal(parameter, failure))?;
+        let [x, y, z] = jet.position;
+        let position = self
+            .endpoint(parameter)
+            .unwrap_or_else(|| Point3::new(x, y, z));
+        let first = velocity(jet.first, parameter)?;
+        let [dx, dy, dz] = jet.second;
         Ok(ControlSplineJet {
             position,
             first,
-            second,
+            second: Vector3::new(dx, dy, dz),
         })
     }
 
-    fn local_differences(&self) -> [Xyz; 3] {
-        let [a, b, c, d] = self.poles.map(|pole| pole.xyz());
-        // The endpoint derivatives depend only on nearby point differences.
-        [b - a, c - b, d - c]
-    }
-}
-
-fn bernstein<const N: usize>(mut controls: [Xyz; N], parameter: f64) -> Xyz {
-    if parameter == 0. {
-        return controls[0];
-    }
-    if parameter == 1. {
-        return controls[N - 1];
-    }
-    let left = 1. - parameter;
-    // Recovering t from 1 - left would erase tiny, nonzero endpoint contributions.
-    for remaining in (1..N).rev() {
-        for index in 0..remaining {
-            controls[index] = controls[index] * left + controls[index + 1] * parameter;
+    fn endpoint(&self, parameter: f64) -> Option<Point3> {
+        match parameter {
+            0. => Some(self.poles[0]),
+            1. => Some(self.poles[3]),
+            _ => None,
         }
     }
-    controls[0]
 }
 
-fn velocity(differences: [Xyz; 3], parameter: f64) -> Result<Vector3, ControlSplineJetFailure> {
-    let derivative = Vector3::from(bernstein(differences, parameter) * 3.);
-    let coordinates = derivative.xyz().coordinates();
-    check_coordinate_row(parameter, 1, coordinates)?;
-    if coordinates.iter().all(|value| *value == 0.) {
+fn velocity([x, y, z]: [f64; 3], parameter: f64) -> Result<Vector3, ControlSplineJetFailure> {
+    if x == 0. && y == 0. && z == 0. {
         return Err(ControlSplineJetFailure::RoundedStationary(parameter));
     }
-    Ok(derivative)
+    Ok(Vector3::new(x, y, z))
 }
 
-fn check_parameter(parameter: f64) -> Result<(), ControlSplineJetFailure> {
-    if (0. ..=1.).contains(&parameter) {
-        return Ok(());
+fn evaluation_refusal(parameter: f64, failure: CubicBernsteinFailure) -> ControlSplineJetFailure {
+    match failure {
+        CubicBernsteinFailure::Parameter(value) => ControlSplineJetFailure::Parameter(value),
+        CubicBernsteinFailure::Unrepresentable {
+            order,
+            axis,
+            negative,
+        } => ControlSplineJetFailure::NonFinite {
+            parameter,
+            order,
+            axis,
+            value: if negative {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            },
+        },
     }
-    Err(ControlSplineJetFailure::Parameter(parameter))
-}
-
-fn check_coordinate_row(
-    parameter: f64,
-    order: usize,
-    coordinates: &[f64; 3],
-) -> Result<(), ControlSplineJetFailure> {
-    for (axis, &value) in coordinates.iter().enumerate() {
-        if !value.is_finite() {
-            return Err(ControlSplineJetFailure::NonFinite {
-                parameter,
-                order,
-                axis,
-                value,
-            });
-        }
-    }
-    Ok(())
 }

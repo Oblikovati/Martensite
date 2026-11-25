@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::rational::ExactRatio;
+use super::{super::DyadicBound, rational::ExactRatio};
 use std::cmp::Ordering;
 
 const MAX_FINITE_BITS: u64 = 0x7fef_ffff_ffff_ffff;
@@ -10,6 +10,23 @@ mod quotient;
 pub(in crate::predicates::roots) fn outward_binary64(value: &ExactRatio) -> Option<[f64; 2]> {
     quotient::outward_binary64(value)
 }
+
+pub(in crate::predicates::roots) fn nearest_binary64(value: &ExactRatio) -> Option<f64> {
+    let [lower, upper] = outward_binary64(value)?;
+    if lower == upper {
+        return Some(lower);
+    }
+    let midpoint = DyadicBound::from_f64(lower)
+        .ok()?
+        .midpoint(&DyadicBound::from_f64(upper).ok()?);
+    Some(match value.cmp(&ExactRatio::from_dyadic(&midpoint)) {
+        Ordering::Less => lower,
+        Ordering::Greater => upper,
+        Ordering::Equal if lower.to_bits() & 1 == 0 => lower,
+        Ordering::Equal => upper,
+    })
+}
+
 pub(in crate::predicates::roots) fn outward_sqrt(value: &ExactRatio) -> Option<f64> {
     let bounds = outward_sqrt_bounds(value)?;
     Some(bounds[1])
@@ -49,6 +66,17 @@ fn greatest_bits_where(mut accepted: impl FnMut(f64) -> bool) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn nearest_checks_exact_rational_side_of_the_adjacent_midpoint() {
+        let third = ExactRatio::new(1.into(), 3.into());
+        assert_eq!(nearest_binary64(&third), Some(1. / 3.));
+        assert_eq!(nearest_binary64(&third.negated()), Some(-1. / 3.));
+        let odd = ExactRatio::from_finite(1_f64.next_up());
+        let even = ExactRatio::from_finite(1_f64.next_up().next_up());
+        let midpoint = odd.add(&even).divide(&ExactRatio::from_finite(2.));
+        assert_eq!(nearest_binary64(&midpoint), Some(1_f64.next_up().next_up()));
+    }
     #[test]
     fn owned_square_root_upper_baseline_covers_binary64_extremes() {
         for root in [0., f64::from_bits(1), f64::MIN_POSITIVE, 0.5, 1., f64::MAX] {

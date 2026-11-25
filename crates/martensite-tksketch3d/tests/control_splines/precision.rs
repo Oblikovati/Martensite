@@ -32,3 +32,29 @@ fn a_tiny_nonzero_parameter_keeps_its_first_interior_pole_contribution() {
     assert_eq!(value.y(), 3. * parameter);
     assert_eq!(spline.jet(parameter).unwrap().position, value);
 }
+
+#[test]
+fn opposing_far_poles_keep_the_interior_first_derivative_residual() {
+    let source = snapshot([[FAR, 0., 0.], [0., 1., 0.], [1., 2., 0.], [FAR, 3., 0.]]);
+    let spline = source.control_spline(sid(5)).unwrap();
+    // At t=1/2 the derivative is 3/4 times (-FAR + 2 + FAR - 1).
+    let expected = [0.75, 3., 0.];
+    assert_eq!(
+        spline.first_derivative(0.5).unwrap().xyz().coordinates(),
+        &expected
+    );
+    assert_eq!(rows(spline.jet(0.5).unwrap())[1], expected);
+}
+
+#[test]
+fn endpoint_acceleration_rounds_only_after_large_poles_cancel() {
+    let source = snapshot([
+        [0., 0., 0.],
+        [2. * FAR, 1., 0.],
+        [FAR, 2., 0.],
+        [1., 3., 0.],
+    ]);
+    let spline = source.control_spline(sid(5)).unwrap();
+    // The terminal acceleration is 6(P3 - 2P2 + P1).
+    assert_eq!(rows(spline.jet(1.).unwrap())[2], [6., 0., 0.]);
+}
