@@ -291,7 +291,7 @@ fn attach_wire(
     for edge in children(attempt, source)? {
         let (_, image) = swaps
             .iter()
-            .find(|(old, _)| edge.is_same(*old))
+            .find(|(old, _)| edge.is_same(old))
             .ok_or_else(|| attempt.refusal("known original rim or periodic seam occurrence"))?;
         let occurrence = image.oriented(edge.orientation());
         attempt.native(

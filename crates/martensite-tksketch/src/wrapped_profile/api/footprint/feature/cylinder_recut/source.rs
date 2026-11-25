@@ -59,14 +59,11 @@ impl<'a> Stock<'a> {
             Rim::capture(attempt, side, &edges, &carrier, &faces[1])?,
         ];
         let seam = Seam::capture(attempt, side, &edges, &carrier, &ends)?;
-        let tolerance = ends
+        let tolerances = ends
             .iter()
-            .fold(carrier.tolerance.min(seam.tolerance), |limit, rim| {
-                limit
-                    .min(rim.edge_tol)
-                    .min(rim.vertex_tol)
-                    .min(rim.disk_tol)
-            });
+            .flat_map(|rim| [rim.edge_tol, rim.vertex_tol, rim.disk_tol])
+            .chain([carrier.tolerance, seam.tolerance]);
+        let tolerance = strict_stock_limit(attempt, tolerances)?;
         Ok(Self {
             side,
             shell,
@@ -82,6 +79,20 @@ impl<'a> Stock<'a> {
             tolerance,
         })
     }
+}
+
+fn strict_stock_limit(
+    attempt: RecutCheck,
+    mut tolerances: impl Iterator<Item = f64>,
+) -> FeatureChecked<f64> {
+    tolerances.try_fold(f64::INFINITY, |limit, tolerance| {
+        if !tolerance.is_finite() || tolerance <= 0. {
+            return Err(
+                attempt.refusal("finite positive original band, disk, rim and seam tolerances")
+            );
+        }
+        Ok(limit.min(tolerance))
+    })
 }
 
 fn stock_faces(
