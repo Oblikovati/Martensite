@@ -84,13 +84,17 @@ fn curves(left: Paired<'_, '_>, right: Paired<'_, '_>) -> Checked<()> {
     let shared: BTreeSet<_> = a
         .ends
         .into_iter()
-        .filter(|vertex| b.ends.contains(vertex))
+        .flatten()
+        .filter(|vertex| b.ends.is_some_and(|ends| ends.contains(vertex)))
         .collect();
     let shared: Vec<_> = shared.into_iter().collect();
     if shared.is_empty() {
         return exclude_tubes(
             left_ref,
-            right_ref.spans.iter().map(Tube::span),
+            right_ref
+                .spans
+                .iter()
+                .map(|fitted| Tube::span(&fitted.span)),
             right_ref.curve,
         );
     }
@@ -144,9 +148,9 @@ fn pair_failure(a: &input::Curve<'_>, b: &input::Curve<'_>) -> RationalWrappedFa
 
 fn endpoint(curve: &input::Curve<'_>, vertex: ProfileVertexId) -> Checked<[f64; 2]> {
     curve
-        .ends
+        .endpoint_ids()
         .iter()
-        .position(|&end| end == vertex)
+        .position(|&end| end == Some(vertex))
         .map(|index| curve.endpoints()[index])
         .ok_or_else(|| {
             invalid(
@@ -159,15 +163,16 @@ fn endpoint(curve: &input::Curve<'_>, vertex: ProfileVertexId) -> Checked<[f64; 
 fn other_endpoint(curve: &input::Curve<'_>, vertex: ProfileVertexId) -> Checked<[f64; 2]> {
     let other = curve
         .ends
-        .iter()
-        .find(|&&end| end != vertex)
+        .into_iter()
+        .flatten()
+        .find(|&end| end != vertex)
         .ok_or_else(|| {
             invalid(
                 format!("curve={:?}, vertex={vertex:?}", curve.occurrence.curve),
                 "a distinct other endpoint",
             )
         })?;
-    endpoint(curve, *other)
+    endpoint(curve, other)
 }
 
 fn halfplane(
@@ -184,12 +189,15 @@ fn halfplane(
         curve: cover.curve,
     };
     check.spans(
-        curve.ends,
+        curve.endpoint_ids(),
         curve.spans.iter().map(|span| span.metric().poles),
     )?;
     check.spans(
-        curve.ends,
-        cover.spans.iter().map(|span| span.poles.as_slice()),
+        curve.endpoint_ids(),
+        cover
+            .spans
+            .iter()
+            .map(|fitted| fitted.span.poles.as_slice()),
     )
 }
 
@@ -203,14 +211,14 @@ struct Halfplane<'a> {
 impl Halfplane<'_> {
     fn spans<'a>(
         &self,
-        [start, end]: [ProfileVertexId; 2],
+        [start, end]: [Option<ProfileVertexId>; 2],
         poles: impl ExactSizeIterator<Item = &'a [[f64; 2]]>,
     ) -> Checked<()> {
         let count = poles.len();
         for (index, controls) in poles.enumerate() {
             let shared = [
-                (index == 0).then_some(start),
-                (index + 1 == count).then_some(end),
+                (index == 0).then_some(start).flatten(),
+                (index + 1 == count).then_some(end).flatten(),
             ];
             self.controls(controls, shared)?;
         }
@@ -251,7 +259,8 @@ fn exclude_tubes(
     other: impl Iterator<Item = Tube> + Clone,
     id: ProfileCurveId,
 ) -> Checked<()> {
-    for span in &cover.spans {
+    for fitted in &cover.spans {
+        let span = &fitted.span;
         let tube = Tube::span(span);
         if !other.clone().all(|target| tube.separate(target)) {
             return Err(invalid(

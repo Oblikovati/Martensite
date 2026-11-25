@@ -13,13 +13,19 @@ pub(super) struct Proxy {
     pub options: WrappedNormalOptions,
     pub spatial_error: f64,
     spans: BTreeMap<SurfaceCurveId, (CurveOrigin, WrappedSourceSpan)>,
-    joins: BTreeMap<SurfaceVertexId, (CurveOrigin, WrappedSourcePoint)>,
+    joins: BTreeMap<SurfaceVertexId, (CurveOrigin, NativeJoint)>,
 }
 
 #[derive(Clone, Copy)]
 struct CurveOrigin {
     curve: SurfaceCurveId,
     map: Option<WrappedConicParameterMap>,
+}
+
+#[derive(Clone, Copy)]
+enum NativeJoint {
+    Interior(WrappedSourcePoint),
+    ConicQuarter(i8),
 }
 
 pub(super) fn build(
@@ -43,9 +49,11 @@ pub(super) fn build(
     Ok(proxy)
 }
 
-fn reference_controls(span: &RationalReferenceSpan) -> SpanControls<'_> {
+fn reference_controls(fitted: &fit::FittedSpan) -> SpanControls<'_> {
+    let span = &fitted.span;
     SpanControls {
         poles: &span.poles,
+        map: fitted.map,
         weights: None,
         domain: WrappedSourceSpan {
             level: span.interval.level(),
@@ -61,7 +69,11 @@ pub(super) fn native_partition(
 ) -> Checked<Proxy> {
     let mut proxy = begin(options, source, [options.spatial_error; 2]);
     let mut ids = Names::new(source);
-    for curve in source.curves.iter().filter(|curve| curve.spans.len() > 1) {
+    for curve in source
+        .curves
+        .iter()
+        .filter(|curve| curve.ends.is_some() && curve.spans.len() > 1)
+    {
         let spans = curve.spans.iter().map(native_controls);
         expanded(&mut proxy, &mut ids, curve, spans)?;
     }
@@ -74,6 +86,7 @@ fn native_controls<'a>(span: &'a input::NativeSpan<'_>) -> SpanControls<'a> {
         poles: metric.poles,
         weights: metric.weights,
         domain: span.domain,
+        map: span.map,
     }
 }
 
@@ -95,6 +108,7 @@ struct SpanControls<'a> {
     poles: &'a [[f64; 2]],
     weights: Option<&'a [f64]>,
     domain: WrappedSourceSpan,
+    map: Option<WrappedConicParameterMap>,
 }
 
 fn begin(
@@ -136,20 +150,21 @@ fn compose<'a>(
     original: &input::Curve<'_>,
     spans: impl ExactSizeIterator<Item = SpanControls<'a>>,
 ) -> Checked<Vec<LoopUse>> {
-    let origin = CurveOrigin {
-        curve: SurfaceCurveId(original.occurrence.curve.0),
-        map: original.map,
-    };
+    let [first, last] = proxy.curve_ends(ids, original)?;
     proxy
         .profile
         .curves
         .retain(|c| c.id() != original.occurrence.curve);
-    let mut start = original.ends[0];
+    let mut start = first;
     let count = spans.len();
     let mut uses = Vec::with_capacity(count);
     for (index, span) in spans.enumerate() {
+        let origin = CurveOrigin {
+            curve: SurfaceCurveId(original.occurrence.curve.0),
+            map: span.map,
+        };
         let end = if index + 1 == count {
-            original.ends[1]
+            last
         } else {
             proxy.joint(ids, span, origin)?
         };
@@ -219,24 +234,54 @@ impl Proxy {
         Ok(id)
     }
 
+    fn curve_ends(
+        &mut self,
+        ids: &mut Names,
+        curve: &input::Curve<'_>,
+    ) -> Checked<[ProfileVertexId; 2]> {
+        if let Some(ends) = curve.ends {
+            return Ok(ends);
+        }
+        let origin = CurveOrigin {
+            curve: SurfaceCurveId(curve.occurrence.curve.0),
+            map: None,
+        };
+        let seam = self.vertex(
+            ids,
+            curve.endpoints()[0],
+            origin,
+            NativeJoint::ConicQuarter(0),
+        )?;
+        Ok([seam; 2])
+    }
+
     fn joint(
         &mut self,
         ids: &mut Names,
         span: SpanControls<'_>,
         origin: CurveOrigin,
     ) -> Checked<ProfileVertexId> {
+        let end = span.domain.index + 1;
+        let anchor = match span.map {
+            Some(map) if end == (1_u64 << span.domain.level) => {
+                let quarter = map.first_quarter + if map.increasing { 1 } else { -1 };
+                NativeJoint::ConicQuarter(quarter)
+            }
+            _ => NativeJoint::Interior(history::point(end, span.domain.level)),
+        };
+        self.vertex(ids, span.poles[span.poles.len() - 1], origin, anchor)
+    }
+
+    fn vertex(
+        &mut self,
+        ids: &mut Names,
+        point: [f64; 2],
+        origin: CurveOrigin,
+        anchor: NativeJoint,
+    ) -> Checked<ProfileVertexId> {
         let id = ProfileVertexId(ids.vertex.name()?);
-        self.profile.vertices.push(ProfileVertex {
-            id,
-            point: span.poles[span.poles.len() - 1],
-        });
-        self.joins.insert(
-            SurfaceVertexId(id.0),
-            (
-                origin,
-                history::point(span.domain.index + 1, span.domain.level),
-            ),
-        );
+        self.profile.vertices.push(ProfileVertex { id, point });
+        self.joins.insert(SurfaceVertexId(id.0), (origin, anchor));
         Ok(id)
     }
 }

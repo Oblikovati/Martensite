@@ -29,7 +29,7 @@ pub use placement::{
 };
 pub use rational::{
     RationalWrappedFailure, RationalWrappedResult, normal_extrude_rational_cone,
-    normal_extrude_rational_cylinder,
+    normal_extrude_rational_cone_with_selection, normal_extrude_rational_cylinder,
 };
 pub use reports::*;
 pub use request::*;

@@ -1,17 +1,24 @@
 //! Bind source-local reference spans to the authored normalized spline parameter.
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CylindricalProfileInterval, CylindricalProfileOptions, RationalReferenceRequest,
-    fit_rational_bezier_reference,
+    CylindricalProfileInterval, CylindricalProfileOptions, RationalReferenceProof,
+    RationalReferenceRequest, fit_rational_bezier_reference_with_proof,
 };
 
 pub(super) struct Cover {
     pub curve: ProfileCurveId,
-    pub spans: Vec<RationalReferenceSpan>,
+    pub spans: Vec<FittedSpan>,
+}
+
+pub(super) struct FittedSpan {
+    pub span: RationalReferenceSpan,
+    pub map: Option<WrappedConicParameterMap>,
 }
 
 pub(super) fn all_spans(covers: &[Cover]) -> impl Iterator<Item = &RationalReferenceSpan> + Clone {
-    covers.iter().flat_map(|cover| cover.spans.iter())
+    covers
+        .iter()
+        .flat_map(|cover| cover.spans.iter().map(|fitted| &fitted.span))
 }
 
 pub(super) fn cover(
@@ -37,10 +44,13 @@ fn fit_curve(
 ) -> Checked<Cover> {
     let mut spans = Vec::new();
     for native in &curve.spans {
-        let mut local = fit_native(native, level, limit, *options, cancelled)?;
+        let local = fit_native(native, level, limit, *options, cancelled)?;
         let work = local.last().map_or(0, |span| span.bounds.operations);
         options.max_operations -= work;
-        spans.append(&mut local);
+        spans.extend(local.into_iter().map(|span| FittedSpan {
+            span,
+            map: native.map,
+        }));
     }
     Ok(Cover {
         curve: curve.occurrence.curve,
@@ -59,14 +69,21 @@ fn fit_native(
     if metric.weights.is_none() {
         metric.weights = Some(&[1.; 17][..metric.poles.len()]);
     }
+    let direction = native.direction();
+    let derivative_limit = direction[0].abs().max(direction[1].abs());
     let query = RationalReferenceRequest {
         source: metric,
         level,
-        limits: [limit, limit],
-        direction: native.direction(),
+        limits: [limit, derivative_limit],
+        direction,
         options,
     };
-    let mut spans = fit_rational_bezier_reference(query, cancelled).map_err(fit_failure)?;
+    let mut spans = fit_rational_bezier_reference_with_proof(
+        query,
+        RationalReferenceProof::BisectResidualV2,
+        cancelled,
+    )
+    .map_err(fit_failure)?;
     for span in &mut spans {
         span.interval = native_interval(native.domain, span.interval)?;
     }

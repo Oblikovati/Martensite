@@ -57,7 +57,7 @@ fn mapped_source(result: &RationalWrappedResult, expected_id: u64, first_quarter
         if curve == SurfaceCurveId(expected_id) && start == first_quarter)));
 }
 
-fn check_half_round(result: &RationalWrappedResult) {
+pub(super) fn check_half_round(result: &RationalWrappedResult) {
     let expected = std::f64::consts::FRAC_PI_2 * QUARTER_RADIUS * QUARTER_RADIUS;
     let bounds = result.authored_area();
     assert!(bounds.lower <= expected && expected <= bounds.upper);
@@ -70,7 +70,7 @@ fn check_half_round(result: &RationalWrappedResult) {
     );
 }
 
-fn half_round(rational_first: bool) -> SketchProfile {
+pub(super) fn half_round(rational_first: bool) -> SketchProfile {
     let mut profile = quarter(QUARTER_RADIUS);
     profile.vertices[2].point[0] = 4. - QUARTER_RADIUS;
     if !rational_first {

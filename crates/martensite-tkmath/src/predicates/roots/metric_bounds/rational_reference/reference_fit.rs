@@ -15,6 +15,7 @@ pub struct RationalReferenceSpan {
 
 pub(super) fn fit(
     request: RationalReferenceRequest<'_>,
+    proof: RationalReferenceProof,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<Vec<RationalReferenceSpan>> {
     let RationalReferenceRequest {
@@ -38,7 +39,7 @@ pub(super) fn fit(
     (0..(1_u64 << level))
         .map(|index| {
             let interval = CylindricalProfileInterval::new(index, level)?;
-            let span = fit_span(request, weights, interval, start, &mut arithmetic)?;
+            let span = fit_span(request, proof, weights, interval, start, &mut arithmetic)?;
             start = span.poles[3];
             Ok(span)
         })
@@ -47,6 +48,7 @@ pub(super) fn fit(
 
 fn fit_span(
     request: RationalReferenceRequest<'_>,
+    proof: RationalReferenceProof,
     weights: &[f64],
     interval: CylindricalProfileInterval,
     start: [f64; 2],
@@ -61,7 +63,13 @@ fn fit_span(
     };
     let poles = fit_poles(&native, [start, end], arithmetic)?;
     let reference = capture_planar(&poles, arithmetic)?;
-    let mut bounds = accept(compare(&native, &reference, arithmetic)?, request.limits)?;
+    let mut bounds = bound_refinement::compare_with_proof(
+        &native,
+        &reference,
+        request.limits,
+        proof,
+        arithmetic,
+    )?;
     let projection_rate_lower =
         monotone::margin(&native, request.direction, bounds.derivative, arithmetic)?;
     bounds.operations = arithmetic.operations();

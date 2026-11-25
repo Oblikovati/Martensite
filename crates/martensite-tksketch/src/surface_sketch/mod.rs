@@ -74,7 +74,7 @@ pub use wrapped_profile::{
     normal_extrude_cone_profile_with_selection_and_cancel, normal_extrude_profile,
     normal_extrude_profile_on_chart, normal_extrude_profile_on_chart_with_cancel,
     normal_extrude_profile_with_cancel, normal_extrude_rational_cone,
-    normal_extrude_rational_cylinder,
+    normal_extrude_rational_cone_with_selection, normal_extrude_rational_cylinder,
 };
 
 /// Extrude one developed rectangle through an ordered physical normal-depth interval.

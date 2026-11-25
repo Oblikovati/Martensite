@@ -414,6 +414,8 @@ fn closed_rational_spline() -> SketchProfile {
 }
 
 mod analytic;
+mod closed_conics;
 mod holes;
 mod mixed_curves;
 mod one_sided;
+mod strict_cone;

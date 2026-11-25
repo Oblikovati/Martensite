@@ -268,8 +268,9 @@ pub use rational_integrals::{
     certify_rational_sweep_integral,
 };
 pub use rational_reference::{
-    RationalReferenceBounds, RationalReferenceFailure, RationalReferenceRequest,
-    RationalReferenceSpan, fit_rational_bezier_reference,
+    RationalReferenceBounds, RationalReferenceFailure, RationalReferenceProof,
+    RationalReferenceRequest, RationalReferenceSpan, fit_rational_bezier_reference,
+    fit_rational_bezier_reference_with_proof,
 };
 
 mod polynomial_side;
