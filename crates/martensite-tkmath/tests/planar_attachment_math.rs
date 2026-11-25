@@ -282,3 +282,26 @@ fn single_loop_proof_rejects_the_unbounded_complement_winding() {
         Err(PlanarAttachmentError::Loop)
     ));
 }
+
+#[test]
+fn shared_outer_only_capture_accepts_the_straight_curve_across_its_interior() {
+    let outer = square(4., false, 0.);
+    let proof =
+        CertifiedPlanarAttachment::capture_outer(Axis3::default(), PLACEMENT, &outer, || false)
+            .unwrap();
+    let result = proof
+        .certify_straight_curve(
+            [[-2., 0., 0.], [2., 0., 0.]],
+            [[-2., 0.], [2., 0.]],
+            0.,
+            || false,
+        )
+        .unwrap();
+    assert_eq!(result.distance_bound, 0.);
+    assert!(
+        result
+            .uv_lift
+            .into_iter()
+            .all(|end| end.location == PlanarAttachmentLocation::Material)
+    );
+}
