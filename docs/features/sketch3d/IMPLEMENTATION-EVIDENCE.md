@@ -236,3 +236,25 @@ The controls cover the `x=0` split, reversed direction, an oblique plane, large 
 outcomes, identity collision and cancellation at every poll. Rust `1.98.1` passed 1,276 math unit tests,
 3,118 math toolkit tests, 88 Sketch3D tests and strict Clippy. Two fresh processes produced identical
 receipts with SHA-256 `7923e08494f11645d6913f7daafd5f5b6ffc332b7ed8e72db65ace8e0779dcd6`.
+
+## E29. Work-plane mirror copies
+
+`c2b9de8d` reflects points and directed lines across a work plane. The caller
+reserves copy IDs. Shared endpoints, endpoint order and construction roles
+survive the copy. The original retains any frozen source stamp and the copy
+records its derivation from that point. The resulting line segments meet the
+same position limit as their endpoints because reflection and segment
+interpolation are affine.
+
+The evaluator rounds each changed coordinate once from the exact rational
+reflection. Moving the plane origin within the same plane preserves the result,
+even when a tangential coordinate would overflow a local-frame conversion.
+The result certifies the supplied bound for the authored geometry. The stored
+native line carrier has its own export checks. Owned controls cover equivalent
+plane origins, oblique and axis planes, signed rounding midpoints, overflow,
+identity conflicts and cancellation.
+
+Rust `1.98.1` passed 4,564 affected tests and strict Clippy, with three opt-in
+tests skipped. All 17 mirror tests passed under pinned ThreadSanitizer. Two
+processes produced identical replay receipts with SHA-256
+`26710dc5856beb240319b1520e9b5cb14258a9dc6a4753e6d6cd40f0c1b9606c`.

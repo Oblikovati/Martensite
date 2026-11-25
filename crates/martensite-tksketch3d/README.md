@@ -40,6 +40,13 @@ position's error relative to the exact translation or the native rotation matrix
 A rotation keeps exact axis points in place and refreshes the prepared relation
 frames for the next drag.
 
+Use `Snapshot::mirror_copies` to reflect selected points and directed lines
+across a work plane. Supply fresh IDs and include both endpoints of each
+selected line. The copies keep point and curve roles. A copy of a frozen point
+is editable, and the original retains its captured source. The result maps each
+copy to its source and certifies that the authored geometry meets the supplied
+position limit. Constraint recipes remain with their original entities.
+
 Supply a positive finite minimum in model units when creating the snapshot.
 Admission compares the squared distance of the supplied coordinates with the
 squared minimum using exact arithmetic. Equality is allowed. Line geometry
