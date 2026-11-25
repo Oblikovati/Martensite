@@ -17,10 +17,11 @@ pub(crate) enum Control {
     FontTextCapture,
     WrappedFamily,
     WrappedCone,
+    CertifiedConeAttachment,
     SharedContext,
 }
 
-pub(crate) const CONTROLS: [Control; 14] = [
+pub(crate) const CONTROLS: [Control; 15] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -34,6 +35,7 @@ pub(crate) const CONTROLS: [Control; 14] = [
     Control::FontTextCapture,
     Control::WrappedFamily,
     Control::WrappedCone,
+    Control::CertifiedConeAttachment,
     Control::SharedContext,
 ];
 
@@ -53,6 +55,7 @@ impl Control {
             Self::FontTextCapture => "font-text-capture",
             Self::WrappedFamily => "wrapped-family",
             Self::WrappedCone => "wrapped-cone",
+            Self::CertifiedConeAttachment => "certified-cone-attachment",
             Self::SharedContext => "shared-context",
         }
     }
@@ -67,7 +70,7 @@ impl Control {
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
             Self::DocumentTransactions => "martensite-tklcaf",
             Self::SurfaceSketch | Self::WrappedFamily | Self::WrappedCone => "martensite-tksketch",
-            Self::FontTextCapture => "martensite-tkv3d",
+            Self::FontTextCapture | Self::CertifiedConeAttachment => "martensite-tkv3d",
             Self::SharedContext => "martensite-tkbo",
         }
     }
@@ -202,6 +205,7 @@ mod tests {
                 "font-text-capture",
                 "wrapped-family",
                 "wrapped-cone",
+                "certified-cone-attachment",
                 "shared-context"
             ]
         );
@@ -268,13 +272,12 @@ mod tests {
 
 #[cfg(test)]
 #[test]
-fn font_capture_selects_only_its_affected_owner() {
+fn viewer_controls_select_only_their_affected_owner() {
     assert_eq!(
         select(&BTreeSet::from(["martensite-tkv3d".into()]), &[]),
-        [Control::FontTextCapture]
+        [Control::FontTextCapture, Control::CertifiedConeAttachment]
     );
-    assert!(
-        !select(&BTreeSet::from(["martensite-tksketch".into()]), &[])
-            .contains(&Control::FontTextCapture)
-    );
+    let sketch = select(&BTreeSet::from(["martensite-tksketch".into()]), &[]);
+    assert!(!sketch.contains(&Control::FontTextCapture));
+    assert!(!sketch.contains(&Control::CertifiedConeAttachment));
 }
