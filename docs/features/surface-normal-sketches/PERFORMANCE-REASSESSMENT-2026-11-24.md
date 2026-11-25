@@ -312,6 +312,12 @@ assertions after the timer stopped.
 | Cone boss | 0.435 s | 0.457 s |
 | Connected `O.` | 0.942 s | 0.992 s |
 
+A repeat of connected `O.` on another pinned core gave 1.039 s p95.
+After removing redundant exact-ratio operations, a same-core run with
+20 alternating samples per revision measured 0.981 s p95 before and
+0.906 s after. Median retired instructions fell from 13.76 to 13.56
+billion. Both runs retained the full public fixture assertions.
+
 In five alternating standalone text runs, the dyadic changes reduced
 median tool time from 6.212 to 4.947 s and retired instructions from
 87.6 to 70.7 billion. The work receipt stayed at 3,057,275 arithmetic
@@ -385,3 +391,42 @@ stayed on the proper side of the stock and at least 11.8759 model units
 from the stock end planes. The smallest certified normal separation
 was `8.468e-14`. A direct publication path needs to bind this separation,
 the UV census and the sewing bounds to the decoded shared seam.
+
+### Full direct assembly proof trials
+
+The direct assembler also produced one decoded solid for all 18 text
+regions in each sense. Both results matched the independent Fuse or Cut
+material witnesses and recovered the two counter islands, 18 removed
+zero-depth caps, 18 exposed caps and 339 retained side faces. The solid
+replayed byte for byte with 2,057 typed references. Assembly took about
+8.5 ms with the strict pcurves already available. Encode, decode and
+re-encode took about 36 ms. The full native validator still ran on the
+same decoded solid.
+
+The exact UV checker starts from those native oriented loops. It
+certifies contact on the residual Bézier pairs, checks the Green sign
+of each cycle, and runs exact winding where one loop's control hull
+can contain another loop's witness. It matched the dense V6 output.
+Across 20 fresh bindings per sense, UV proof p95 was 72.87 ms for the
+boss and 71.72 ms for the pocket. The dense comparison on the same
+geometry took 2.71 and 2.60 s, respectively.
+
+The combined scratch proof issued UV, carrier and same-parameter sewing
+receipts over the actual decoded solid. Each subsequent independent
+decode replayed those receipts against exact input bits. This table
+reports 20 samples per sense.
+
+| Stage | Boss p95 | Pocket p95 |
+| --- | ---: | ---: |
+| Issue proof receipts | 1.079 s | 1.168 s |
+| Fresh decode, audit and extract | 33.88 ms | 35.81 ms |
+| Rebind receipts | 1.58 ms | 1.67 ms |
+| Combined | 1.114 s | 1.204 s |
+
+Strict sewing spent 6,166,500 certified operations per sense and kept
+at least `2.298e-9` model units of slack under the requested `1e-7`.
+Mutations of pcurve bits, seam winding, counter ownership and carrier
+identity triggered typed refusals. The native ordered check still took
+12.9–13.2 s. Replacing its self-intersection stage requires complete
+retained-tool, stock, seam and tolerant contact coverage on the same
+frozen body.
