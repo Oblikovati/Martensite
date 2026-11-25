@@ -1,5 +1,12 @@
 //! Conditioned cone admission keeps the whole meridional section away from its axis.
-use super::{admission::*, cone_math, cone_request::*, failure::*, request::*, sweep::Sweep};
+use super::{
+    admission::*,
+    cone_math,
+    cone_request::*,
+    failure::*,
+    request::*,
+    sweep::{Sweep, SweepNames},
+};
 use martensite_cmath::{cos, sin};
 use std::f64::consts::{FRAC_PI_2, TAU};
 
@@ -72,8 +79,10 @@ fn derive(sector: ConeSector, depths: [f64; 2], options: NormalExtrusionOptions)
 fn initial_sweep(sector: ConeSector, options: NormalExtrusionOptions, angle: f64) -> Sweep {
     Sweep {
         region: sector.region,
-        corners: sector.corners,
-        boundaries: sector.boundaries,
+        names: SweepNames::Sector {
+            corners: sector.corners,
+            boundaries: sector.boundaries,
+        },
         options,
         origin: sector.support.apex,
         axis: sector.support.axis,
