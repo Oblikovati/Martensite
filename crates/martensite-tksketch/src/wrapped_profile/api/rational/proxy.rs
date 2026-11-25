@@ -1,7 +1,7 @@
 //! Construct the polynomial reference after proving that the source homotopy stays embedded.
 use super::*;
 use martensite_tkbo::profile_extrusion::{
-    LoopUse, ProfileCurve, ProfileVertex, ProfileVertexId, SketchProfile,
+    LoopUse, ProfileCurve, ProfileLoop, ProfileVertex, ProfileVertexId, SketchProfile,
 };
 use martensite_tkmath::predicates::{
     OrientationSign, orient2d, roots::metric_bounds::RationalReferenceSpan,
@@ -62,7 +62,9 @@ fn expanded<'a>(
     spans: impl ExactSizeIterator<Item = SpanControls<'a>>,
 ) -> Checked<Proxy> {
     let uses = compose(&mut proxy, original, spans)?;
-    proxy.selection.outer.uses = replace_uses(original, uses);
+    for cycle in std::iter::once(&mut proxy.selection.outer).chain(&mut proxy.selection.holes) {
+        expand_curve(cycle, original.occurrence.curve, &uses);
+    }
     Ok(proxy)
 }
 
@@ -110,25 +112,82 @@ fn allocate(spatial: f64, reference: &[RationalReferenceSpan], scale: f64) -> Ch
 }
 
 fn prove_separation(original: &input::Source<'_>, spans: &[RationalReferenceSpan]) -> Checked<()> {
+    let outer = &original.selection.outer;
+    let curve_uses = std::iter::once(outer)
+        .chain(&original.selection.holes)
+        .find(|loop_uses| contains(loop_uses, original.occurrence.curve))
+        .ok_or_else(|| {
+            invalid(
+                format!("curve={:?}", original.occurrence.curve),
+                "an authored boundary occurrence",
+            )
+        })?;
+    let interior = if contains(outer, original.occurrence.curve) {
+        OrientationSign::Positive
+    } else {
+        OrientationSign::Negative
+    };
     for line in &original.lines {
-        check_controls(
-            line,
-            original,
-            original.spans.iter().map(|span| span.metric().poles),
-        )?;
-        check_controls(
-            line,
-            original,
-            spans.iter().map(|span| span.poles.as_slice()),
-        )?;
+        if contains(curve_uses, line.id) {
+            check_controls(
+                line,
+                original,
+                original.spans.iter().map(|span| span.metric().poles),
+                interior,
+            )?;
+            check_controls(
+                line,
+                original,
+                spans.iter().map(|span| span.poles.as_slice()),
+                interior,
+            )?;
+        } else {
+            separate_boundary(line, spans)?;
+        }
     }
     Ok(())
+}
+
+fn contains(cycle: &ProfileLoop, curve: ProfileCurveId) -> bool {
+    cycle.uses.iter().any(|used| used.curve == curve)
+}
+
+fn separate_boundary(line: &input::Line, reference: &[RationalReferenceSpan]) -> Checked<()> {
+    for span in reference {
+        if !(0..2).any(|axis| disjoint_axis(line, span, axis)) {
+            return Err(invalid(
+                format!(
+                    "curve interval={:?}, separate line={:?}",
+                    span.interval, line.id
+                ),
+                "an error-bounded reference tube clear of every other boundary loop",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn disjoint_axis(line: &input::Line, span: &RationalReferenceSpan, axis: usize) -> bool {
+    let [a, b] = line.points.map(|point| point[axis]);
+    let lo = span
+        .poles
+        .iter()
+        .map(|point| point[axis])
+        .fold(f64::INFINITY, f64::min);
+    let hi = span
+        .poles
+        .iter()
+        .map(|point| point[axis])
+        .fold(f64::NEG_INFINITY, f64::max);
+    (hi + span.bounds.position).next_up() < a.min(b)
+        || b.max(a) < (lo - span.bounds.position).next_down()
 }
 
 fn check_controls<'a>(
     line: &input::Line,
     original: &input::Source<'_>,
     poles: impl ExactSizeIterator<Item = &'a [[f64; 2]]>,
+    interior: OrientationSign,
 ) -> Checked<()> {
     let count = poles.len();
     for (index, controls) in poles.enumerate() {
@@ -136,15 +195,16 @@ fn check_controls<'a>(
             (index == 0).then_some(original.ends[0]),
             (index + 1 == count).then_some(original.ends[1]),
         ];
-        positive_controls(line, controls, ends)?;
+        bound_controls(line, controls, ends, interior)?;
     }
     Ok(())
 }
 
-fn positive_controls(
+fn bound_controls(
     line: &input::Line,
     controls: &[[f64; 2]],
     ends: [Option<ProfileVertexId>; 2],
+    interior: OrientationSign,
 ) -> Checked<()> {
     let [a, b] = line.points;
     for (index, &point) in controls.iter().enumerate() {
@@ -154,7 +214,7 @@ fn positive_controls(
             _ => None,
         };
         let permitted = match orient2d(a, b, point) {
-            Ok(OrientationSign::Positive) => true,
+            Ok(sign) if sign == interior => true,
             Ok(OrientationSign::Zero) => endpoint.is_some_and(|id| line.ends.contains(&id)),
             _ => false,
         };
@@ -200,16 +260,10 @@ fn compose<'a>(
     Ok(uses)
 }
 
-fn replace_uses(original: &input::Source<'_>, uses: Vec<LoopUse>) -> Vec<LoopUse> {
-    let mut expanded = Vec::new();
-    for &used in &original.selection.outer.uses {
-        if used.curve == original.occurrence.curve {
-            expanded.extend_from_slice(&uses);
-        } else {
-            expanded.push(used);
-        }
+fn expand_curve(cycle: &mut ProfileLoop, curve: ProfileCurveId, uses: &[LoopUse]) {
+    if let Some(index) = cycle.uses.iter().position(|used| used.curve == curve) {
+        cycle.uses.splice(index..=index, uses.iter().copied());
     }
-    expanded
 }
 
 impl Proxy {

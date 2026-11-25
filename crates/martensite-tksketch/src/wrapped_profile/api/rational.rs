@@ -309,14 +309,16 @@ fn original_area(
         &mut *cancelled,
     )
     .map_err(|cause| RationalWrappedFailure::Planar(Box::new(cause)))?;
-    let [region] = regions.regions() else {
-        return Err(invalid(
-            format!("planar regions={}", regions.regions().len()),
-            "one certified original region",
-        ));
-    };
-    input::matches_boundary(selection, region.outer(), region.holes())?;
-    let area = certify_rational_face_area(&source.area_wire()?, &[], Default::default(), cancelled)
+    input::select_cell(selection, regions.regions())?;
+    let outer = source.area_wire(&source.selection.outer)?;
+    let holes = source
+        .selection
+        .holes
+        .iter()
+        .map(|boundary| source.area_wire(boundary))
+        .collect::<Checked<Vec<_>>>()?;
+    let holes: Vec<_> = holes.iter().map(Vec::as_slice).collect();
+    let area = certify_rational_face_area(&outer, &holes, Default::default(), cancelled)
         .map_err(|cause| RationalWrappedFailure::Measure(Box::new(cause)))?;
     Ok((area, regions.proof_work()))
 }
