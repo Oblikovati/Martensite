@@ -193,6 +193,11 @@ impl CapCheck<'_> {
         cut: binding::FittedCut,
         [one, two]: [TrimImage; 2],
     ) -> Checked<[f64; 2]> {
+        let [one, two] = if cut.span.reversed {
+            [two, one]
+        } else {
+            [one, two]
+        };
         let u = one.space[1];
         if one.space[0] != 0. || two.space != [u, 1.] || !(0. < u && u < 1.) {
             return Err(incomplete(
@@ -213,7 +218,13 @@ impl CapCheck<'_> {
         [a, b]: [f64; 2],
         trace_angle: f64,
     ) -> Checked<f64> {
-        let [left, right] = match cut.crossing.report.id.transition {
+        let transition = cut
+            .crossing
+            .report
+            .id
+            .transition
+            .oriented(cut.span.reversed);
+        let [left, right] = match transition {
             SheetTransition::Increasing => [self.sheet[1], self.sheet[0]],
             SheetTransition::Decreasing => self.sheet,
         };
@@ -225,8 +236,7 @@ impl CapCheck<'_> {
             "both active trims contact the commanded sheet lifts",
         )?;
         let error = self.parameter_bound(cut, (actual + trace_angle).next_up());
-        let [span0, span1] = binding::span_bounds(cut.span);
-        let mapped = span0 + parameter * (span1 - span0);
+        let mapped = cut.source_parameter(parameter);
         let [lo, hi] = cut.crossing.report.normalized_parameter;
         cylinder_admission::require(
             mapped >= lo - error && mapped <= hi + error,

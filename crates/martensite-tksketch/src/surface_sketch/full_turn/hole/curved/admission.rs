@@ -39,6 +39,7 @@ pub(super) struct Crossing {
     pub ends: [SurfaceVertexId; 2],
     pub angular_speed: f64,
     pub height_hull: [f64; 2],
+    contour_transition: SheetTransition,
 }
 
 impl AperturePlan {
@@ -257,13 +258,12 @@ fn extend_bounds(bounds: &mut [[f64; 2]; 2], points: &[[f64; 2]]) {
     }
 }
 
-fn ordered_crossings(mut roots: Vec<Crossing>) -> Checked<[Crossing; 2]> {
-    roots.sort_by_key(|crossing| crossing.report.id.transition);
+fn ordered_crossings(roots: Vec<Crossing>) -> Checked<[Crossing; 2]> {
     let count = roots.len();
     let [a, b]: [Crossing; 2] = roots
         .try_into()
         .map_err(|_| incomplete("two transverse curve crossings", format!("{count} roots")))?;
-    if a.report.id.transition == b.report.id.transition {
+    if a.contour_transition == b.contour_transition {
         return Err(incomplete(
             "opposite seam crossings",
             format!("{:?}", [a.report.id, b.report.id]),
@@ -285,16 +285,11 @@ struct DirectedCurve {
     id: SurfaceCurveId,
     ends: [SurfaceVertexId; 2],
     points: Vec<[f64; 2]>,
+    reversed: bool,
 }
 
 impl DirectedCurve {
     fn new(profile: &SketchProfile, curve: &ProfileCurve, reversed: bool) -> Checked<Self> {
-        if reversed {
-            return Err(incomplete(
-                "forward-authored aperture edges",
-                format!("{:?}", curve.id()),
-            ));
-        }
         let [start, end] = curve.ends().ok_or_else(|| {
             incomplete(
                 "explicit curved aperture endpoints",
@@ -331,6 +326,7 @@ impl DirectedCurve {
             id: SurfaceCurveId(curve.id().0),
             ends: [start, end].map(|v| SurfaceVertexId(v.0)),
             points,
+            reversed,
         })
     }
 
@@ -386,6 +382,7 @@ impl DirectedCurve {
             ends: self.ends,
             angular_speed: speed,
             height_hull,
+            contour_transition: direction.oriented(self.reversed),
         }))
     }
 

@@ -141,6 +141,55 @@ fn assert_lifted_aperture(result: &CurvedBandResult, turn: i64, parameters: [f64
 }
 
 #[test]
+fn reversed_boundary_use_binds_the_original_curve_parameter_and_transition() {
+    let (band, mut request) = fixture();
+    let ProfileCurve::Spline {
+        start, end, poles, ..
+    } = &mut request.profile.curves[0]
+    else {
+        panic!("quadratic source");
+    };
+    std::mem::swap(start, end);
+    poles.reverse();
+    request.selections[0].outer.uses[0].reversed = true;
+    let result = normal_extrude_cylinder_band_with_curved_hole(&band, &request, options()).unwrap();
+    let publication = result.publication();
+    let roots = publication.crossings();
+    assert_eq!(roots.len(), 2);
+    assert_eq!(roots[0].id.curve, SurfaceCurveId(1));
+    assert_eq!(roots[1].id.curve, SurfaceCurveId(3));
+    for root in roots {
+        assert_eq!(root.id.transition, SheetTransition::Decreasing);
+        let [lo, hi] = root.normalized_parameter;
+        assert!(lo <= 4. / 7. && 4. / 7. <= hi);
+    }
+    verify_reversed_piece_addresses(publication, roots[0].id);
+    let volume = publication.geometry().volume();
+    let discrepancy = result.tool().measures.retained_ideal_discrepancy.upper;
+    assert!((volume.value - (198. * PI - 6.7375)).abs() <= volume.error_bound + discrepancy);
+}
+
+fn verify_reversed_piece_addresses(publication: &CrossedBandResult, id: PeriodicCrossingId) {
+    let middle = PeriodicSourceEnd::Cut(id);
+    let endpoint =
+        |numerator, level| PeriodicSourceEnd::Dyadic(WrappedSourcePoint { numerator, level });
+    let halves = [[endpoint(1, 1), middle], [middle, endpoint(3, 2)]];
+    for depth in [PeriodicDepth::First, PeriodicDepth::Last] {
+        for interval in halves {
+            let key = PeriodicImageKey::AperturePiece {
+                curve: id.curve,
+                depth,
+                interval,
+            };
+            assert!(
+                publication.geometry().history().binary_search(&key).is_ok(),
+                "{key:?}"
+            );
+        }
+    }
+}
+
+#[test]
 fn curved_aperture_refuses_periodic_overlap_and_ambiguous_corner_contact() {
     let (band, mut request) = fixture();
     request.profile.vertices[1].point[0] = 32.;
