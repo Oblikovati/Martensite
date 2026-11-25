@@ -181,3 +181,58 @@ fn restored_frozen_history_keeps_generation_without_inventing_incarnation() {
         (-0_f64).to_bits()
     );
 }
+
+#[test]
+fn all_directed_line_relations_prepare_from_their_saved_operands() {
+    use martensite_tkmath::gp::Direction3;
+    use martensite_tksketch3d::constraints::{AxisDirection, CoordinateAxis, LineAngle};
+
+    let snapshot = Snapshot::empty(minimum(0.01))
+        .apply(
+            &[
+                seed(1, [-0., 0., 0.], PointRole::Defining),
+                seed(2, [3., 0., 0.], PointRole::Defining),
+                seed(3, [0., 0., 1.], PointRole::Defining),
+                seed(4, [0., 3., 1.], PointRole::Defining),
+                line(5, 1, 2),
+                line(6, 3, 4),
+            ],
+            || false,
+        )
+        .unwrap();
+    let lines = [lid(5), lid(6)];
+    let saved = [
+        (
+            rid(10),
+            Relation::Angle(lines, LineAngle::new(std::f64::consts::FRAC_PI_2).unwrap()),
+        ),
+        (
+            rid(7),
+            Relation::ParallelToAxis(lines[0], CoordinateAxis::X, AxisDirection::Positive),
+        ),
+        (rid(9), Relation::Perpendicular(lines)),
+        (rid(6), Relation::ParallelToPlane(lines[0], Direction3::Z)),
+        (rid(8), Relation::EqualLength(lines)),
+    ];
+    let sketch = ConstrainedSketch::restore(
+        snapshot.clone(),
+        &saved,
+        crate::constraints::policy(),
+        || false,
+    )
+    .unwrap();
+    let mut ordered = saved;
+    ordered.sort_by_key(|item| item.0);
+    assert_eq!(sketch.relations().collect::<Vec<_>>(), ordered);
+    assert_eq!(sketch.geometry(), &snapshot);
+    assert_eq!(
+        sketch
+            .geometry()
+            .point(pid(1))
+            .unwrap()
+            .position
+            .x()
+            .to_bits(),
+        (-0_f64).to_bits()
+    );
+}
