@@ -431,3 +431,19 @@ preserves geometry and identity. A line with the construction role can drive a l
 New wire recipes refuse it with its line ID. A previously captured recipe still materializes its own
 inputs. The tests also cover atomic cancellation, typed lookup, point-deletion closure and construction
 arcs. Independent review, 64 Sketch3D tests and strict toolkit Clippy passed on Rust `1.98.1`.
+
+## E21. Analytic planar spiral
+
+The TKG3d spiral at `f54c64ac7` evaluates the finite radial law from the owned fixture. The radial pitch is
+signed and the rotation sense is independent. Admission compares the exact authored turn law and the
+rounded radian parameter law at their endpoints. Both have to keep a positive radius through the entire
+interval. The curve evaluates native D0 through D3 and DN. For DN the four derivative phases repeat and
+bound the work independently of derivative order.
+
+The fixture checks the one-turn cardinal points, initial derivative, reversed rotation, oblique world
+placement and an inward radius limit. Public JSON and failed-edit inputs verify that bad finite frames
+refuse without changing valid oblique coefficients. All 16 focused tests passed on Rust `1.98.1` and under
+pinned ThreadSanitizer. Strict Clippy passed. Two independent processes emitted the same evaluator bytes,
+with SHA-256 `0732f1788cfa5599f2083429914deb02597ba94c7e8e1034fa1aca25a6563a40`.
+The earlier full TKG3d run passed all 985 tests before the frame admission correction. BRep storage and
+the desktop spiral command remain separate checks.

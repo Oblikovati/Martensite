@@ -20,6 +20,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added construction roles for spatial lines and arcs. Construction lines remain available to the sketch solver and are excluded from model wires (#611).
 
+- Added the analytic finite planar spiral with signed radial pitch, independent rotation sense, and checked derivatives (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).
