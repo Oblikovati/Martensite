@@ -56,6 +56,44 @@ pub fn exact_closed_conic(
     Ok(pieces.and_then(|pieces| pieces.try_into().ok()))
 }
 
+/// Read the exact affine carrier admitted for a circular or axis-aligned elliptic arc.
+/// The returned value keeps the authored endpoints and direction. The numeric
+/// lowering must still certify unit-circle incidence and the actual angle map.
+/// Example: `let segment = exact_conic_arc_source(&profile, curve, resolution)?;`.
+pub fn exact_conic_arc_source(
+    profile: &SketchProfile,
+    curve: ProfileCurveId,
+    resolution: Resolution,
+) -> Result<
+    Option<martensite_tkmath::predicates::roots::metric_bounds::RationalConicSegment>,
+    OperationDecline,
+> {
+    if !profile.curves.iter().any(|input| {
+        matches!(input,
+        ProfileCurve::Arc { id, .. } | ProfileCurve::EllipticArc { id, .. } if *id == curve)
+    }) {
+        return Ok(None);
+    }
+    let UseGeometry::Arc {
+        carrier,
+        start,
+        end,
+        sweep,
+        ..
+    } = admitted_geometry(profile, curve, resolution)?
+    else {
+        return Ok(None);
+    };
+    Ok(affine_columns(carrier).map(|(center, columns)| {
+        martensite_tkmath::predicates::roots::metric_bounds::RationalConicSegment {
+            center,
+            columns,
+            endpoints: [start, end],
+            increasing: sweep > 0.,
+        }
+    }))
+}
+
 fn admitted_geometry(
     profile: &SketchProfile,
     curve: ProfileCurveId,
@@ -119,6 +157,17 @@ fn checked_quarter(geometry: UseGeometry) -> Option<ExactConicQuarter> {
 }
 
 fn exact_quarter_controls(carrier: Conic, controls: [[f64; 2]; 3]) -> Option<[[f64; 2]; 3]> {
+    let (center, [first, second]) = affine_columns(carrier)?;
+    let mut exact = [[0.; 2]; 3];
+    for ([u, v], point) in controls.into_iter().zip(&mut exact) {
+        for axis in 0..2 {
+            point[axis] = exact_add(exact_add(center[axis], first[axis] * u)?, second[axis] * v)?;
+        }
+    }
+    Some(exact)
+}
+
+fn affine_columns(carrier: Conic) -> Option<([f64; 2], [[f64; 2]; 2])> {
     let (center, first, second) = match carrier {
         Conic::Circle(circle) => (circle.center, [circle.radius, 0.], [0., circle.radius]),
         Conic::Ellipse(ellipse) => {
@@ -132,13 +181,7 @@ fn exact_quarter_controls(carrier: Conic, controls: [[f64; 2]; 3]) -> Option<[[f
             )
         }
     };
-    let mut exact = [[0.; 2]; 3];
-    for ([u, v], point) in controls.into_iter().zip(&mut exact) {
-        for axis in 0..2 {
-            point[axis] = exact_add(exact_add(center[axis], first[axis] * u)?, second[axis] * v)?;
-        }
-    }
-    Some(exact)
+    Some((center, [first, second]))
 }
 
 fn exact_add(a: f64, b: f64) -> Option<f64> {

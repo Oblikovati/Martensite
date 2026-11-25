@@ -43,7 +43,7 @@ not converted. Errors retain offending source IDs or values and the expected
 shape.
 
 The rational entry points handle the additional profile representations below.
-Generic analytic conic lowering and knot insertion require certified geometry
+Longer analytic sweeps and native knot insertion require certified geometry
 transport with the original parameter identity.
 
 ## Positive rational reference
@@ -51,6 +51,8 @@ transport with the original parameter identity.
 The rational normal entries accept lines, polynomial or positive-weight splines
 with monotone Bernstein spans, and exact circular or axis-aligned elliptic
 quarters, plus closed circles and axis-aligned ellipses with exact coefficients.
+Shorter analytic sweeps can use exact affine-carrier endpoints even when their
+stereographic weights require rounding.
 The outer and hole loops may mix those curves. The entries require increasing
 signed depths and one angular chart. The cone also requires the profile to
 lie in the positive developed halfplane, clear of the apex. The rational cylinder
@@ -71,6 +73,8 @@ reference error tubes. The normal map bounds the error in world coordinates.
 History records the original curve and its dyadic parameter intervals. For an analytic quarter it
 also records how the stereographic parameter maps to the native angle. Closed
 conics record a native-angle key at each quarter, including the seam at zero.
+For a shorter sweep, the key records the original angular endpoints. The
+position, derivative and Green-area bounds include any coefficient rounding.
 The result includes the authored area and sweep-volume enclosures, the retained boundary flux, the
 spatial bound, and the ordered native validation report. The volume proof uses
 the original area and the signed depth Jacobian. For asymmetric cone depths,

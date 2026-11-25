@@ -93,6 +93,11 @@ impl<'a> Arithmetic<'a> {
         self.charge()?;
         scalar_bounds(value, usize::from(self.options.fractional_bits))
     }
+    pub fn rational(&mut self, exact: &ExactRatio) -> Checked<Interval> {
+        self.charge()?;
+        let scaled = exact.numerator() * &self.unit;
+        self.rounded(&scaled, &scaled, exact.denominator())
+    }
     pub fn add(&mut self, a: &Interval, b: &Interval) -> Checked<Interval> {
         self.charge()?;
         checked(&a.lower + &b.lower, &a.upper + &b.upper)

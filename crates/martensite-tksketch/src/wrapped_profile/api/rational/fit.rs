@@ -1,8 +1,8 @@
 //! Bind source-local reference spans to the authored normalized spline parameter.
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CylindricalProfileInterval, CylindricalProfileOptions, RationalReferenceProof,
-    RationalReferenceRequest, fit_rational_bezier_reference_with_proof,
+    CylindricalProfileInterval, CylindricalProfileOptions, RationalReferenceBounds,
+    RationalReferenceProof, RationalReferenceRequest, fit_rational_bezier_reference_with_proof,
 };
 
 pub(super) struct Cover {
@@ -12,7 +12,7 @@ pub(super) struct Cover {
 
 pub(super) struct FittedSpan {
     pub span: RationalReferenceSpan,
-    pub map: Option<WrappedConicParameterMap>,
+    pub map: Option<input::ConicMap>,
 }
 
 pub(super) fn all_spans(covers: &[Cover]) -> impl Iterator<Item = &RationalReferenceSpan> + Clone {
@@ -28,6 +28,7 @@ pub(super) fn cover(
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Vec<Cover>> {
     let mut options = CylindricalProfileOptions::default();
+    options.max_operations -= source.rounding_operations();
     source
         .curves
         .iter()
@@ -70,11 +71,12 @@ fn fit_native(
         metric.weights = Some(&[1.; 17][..metric.poles.len()]);
     }
     let direction = native.direction();
-    let derivative_limit = direction[0].abs().max(direction[1].abs());
+    let direction_scale = direction[0].abs().max(direction[1].abs());
+    let limits = transport_limits([limit, direction_scale], native.transport())?;
     let query = RationalReferenceRequest {
         source: metric,
         level,
-        limits: [limit, derivative_limit],
+        limits,
         direction,
         options,
     };
@@ -85,9 +87,56 @@ fn fit_native(
     )
     .map_err(fit_failure)?;
     for span in &mut spans {
+        transport_bounds(span, native.transport(), direction_scale)?;
         span.interval = native_interval(native.domain, span.interval)?;
     }
     Ok(spans)
+}
+
+fn transport_limits(
+    limits: [f64; 2],
+    rounding: Option<RationalReferenceBounds>,
+) -> Checked<[f64; 2]> {
+    let Some(rounding) = rounding else {
+        return Ok(limits);
+    };
+    let effective = [
+        (limits[0] - rounding.position).next_down(),
+        (limits[1] - rounding.derivative).next_down(),
+    ];
+    if effective.into_iter().all(|limit| limit > 0.) {
+        return Ok(effective);
+    }
+    Err(invalid(
+        format!("source transport={rounding:?}, limits={limits:?}"),
+        "positive remaining reference-fit allowances",
+    ))
+}
+
+fn transport_bounds(
+    span: &mut RationalReferenceSpan,
+    rounding: Option<RationalReferenceBounds>,
+    direction: f64,
+) -> Checked<()> {
+    let Some(rounding) = rounding else {
+        return Ok(());
+    };
+    let native_fraction = (1_u64 << span.interval.level()) as f64;
+    let derivative = (rounding.derivative / native_fraction).next_up();
+    span.bounds.position = (span.bounds.position + rounding.position).next_up();
+    span.bounds.derivative = (span.bounds.derivative + derivative).next_up();
+    let discrepancy = (derivative * direction).next_up();
+    span.projection_rate_lower = (span.projection_rate_lower - discrepancy).next_down();
+    if span.projection_rate_lower > 0. {
+        return Ok(());
+    }
+    Err(invalid(
+        format!(
+            "transported span={:?}, projected rate={}",
+            span.interval, span.projection_rate_lower
+        ),
+        "strict native source-reference projection throughout transport",
+    ))
 }
 
 fn native_interval(

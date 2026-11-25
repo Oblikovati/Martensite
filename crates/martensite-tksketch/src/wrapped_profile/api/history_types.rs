@@ -32,6 +32,28 @@ pub struct WrappedConicParameterMap {
     pub increasing: bool,
 }
 
+/// One bound of an exact stereographic portion of the original analytic arc.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum WrappedAnalyticArcEndpoint {
+    /// Native start of the authored arc.
+    Start,
+    /// Native end of the authored arc.
+    End,
+}
+
+/// The exact native-angle map of a stereographic interval on an original analytic arc.
+/// If `u0` and `u1` are its exact unit endpoints in the carrier's affine frame, then
+/// `angle(t) = arg(u0) + 2 atan(t * cross(u0,u1)/(1 + dot(u0,u1)))`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WrappedAnalyticArcMap {
+    /// Exact first angular endpoint.
+    pub first: WrappedAnalyticArcEndpoint,
+    /// Exact last angular endpoint.
+    pub last: WrappedAnalyticArcEndpoint,
+    /// Increasing native angle on the original curve.
+    pub increasing: bool,
+}
+
 /// Authored source of one result entity; coordinates and traversal ranks carry no identity.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
@@ -62,6 +84,24 @@ pub enum WrappedEntitySource {
         point: WrappedSourcePoint,
         /// Exact conversion to the authored angular parameter.
         map: WrappedConicParameterMap,
+    },
+    /// A mapped interval on an exact authored analytic sweep.
+    AnalyticArcCurve {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic interval in the mapped stereographic parameter.
+        span: WrappedSourceSpan,
+        /// Exact conversion to the native angle.
+        map: WrappedAnalyticArcMap,
+    },
+    /// A subdivision point of an original exact analytic sweep.
+    AnalyticArcSplitVertex {
+        /// Original authored curve identity.
+        curve: SurfaceCurveId,
+        /// Dyadic point in the mapped stereographic parameter.
+        point: WrappedSourcePoint,
+        /// Exact conversion to the native angle.
+        map: WrappedAnalyticArcMap,
     },
     /// Exact native quarter angle on a closed or multipart analytic conic.
     ConicAnchor {

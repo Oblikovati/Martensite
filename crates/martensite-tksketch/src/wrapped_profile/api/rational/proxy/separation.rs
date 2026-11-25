@@ -190,14 +190,17 @@ fn halfplane(
     };
     check.spans(
         curve.endpoint_ids(),
-        curve.spans.iter().map(|span| span.metric().poles),
+        curve
+            .spans
+            .iter()
+            .map(|span| (span.metric().poles, span.enclosure())),
     )?;
     check.spans(
         curve.endpoint_ids(),
         cover
             .spans
             .iter()
-            .map(|fitted| fitted.span.poles.as_slice()),
+            .map(|fitted| (fitted.span.poles.as_slice(), None)),
     )
 }
 
@@ -208,31 +211,46 @@ struct Halfplane<'a> {
     curve: ProfileCurveId,
 }
 
+type ControlInputs<'a> = (&'a [[f64; 2]], Option<&'a [[[f64; 2]; 2]; 3]>);
+
 impl Halfplane<'_> {
     fn spans<'a>(
         &self,
         [start, end]: [Option<ProfileVertexId>; 2],
-        poles: impl ExactSizeIterator<Item = &'a [[f64; 2]]>,
+        poles: impl ExactSizeIterator<Item = ControlInputs<'a>>,
     ) -> Checked<()> {
         let count = poles.len();
-        for (index, controls) in poles.enumerate() {
+        for (index, (controls, exact)) in poles.enumerate() {
             let shared = [
                 (index == 0).then_some(start).flatten(),
                 (index + 1 == count).then_some(end).flatten(),
             ];
-            self.controls(controls, shared)?;
+            self.controls(controls, exact, shared)?;
         }
         Ok(())
     }
 
-    fn controls(&self, controls: &[[f64; 2]], shared: [Option<ProfileVertexId>; 2]) -> Checked<()> {
+    fn controls(
+        &self,
+        controls: &[[f64; 2]],
+        exact: Option<&[[[f64; 2]; 2]; 3]>,
+        shared: [Option<ProfileVertexId>; 2],
+    ) -> Checked<()> {
         for (index, &point) in controls.iter().enumerate() {
             let endpoint = match index {
                 0 => shared[0],
                 i if i + 1 == controls.len() => shared[1],
                 _ => None,
             };
-            if !self.permits(point, endpoint) {
+            let permitted = exact.map_or_else(
+                || self.permits(point, endpoint),
+                |bounds| {
+                    input::enclosure_corners(bounds[index])
+                        .into_iter()
+                        .all(|corner| self.permits(corner, endpoint))
+                },
+            );
+            if !permitted {
                 return Err(invalid(
                     format!(
                         "curve={:?}, control={point:?}, separator={:?}",
