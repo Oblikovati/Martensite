@@ -1,8 +1,10 @@
 //! Time the conditioned attachment through the public entry point.
 use super::*;
 use martensite_tkbo::body_check::validate_body;
+use martensite_tkbrep::topexp::Explorer;
 use martensite_tksketch::surface_sketch::{
-    CertifiedConeFeatureResult, CylinderFeatureCause, CylinderFeatureStage, WrappedVolumePolicy,
+    CertifiedConeFeatureResult, CylinderFeatureCause, CylinderFeatureSource, CylinderFeatureStage,
+    WrappedVolumePolicy,
 };
 use std::time::Instant;
 
@@ -72,6 +74,53 @@ fn certified_selection() -> WrappedConeExecutionSelection {
         arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
         authored_max_components: 64,
         authored_max_subintervals: 1024,
+    }
+}
+
+#[test]
+fn named_cone_support_members_resolve_in_certified_boss_history() {
+    let attachment = text_attachment();
+    let native = attachment.export_native(REVISION).unwrap();
+    let edges = Explorer::new(&native.body, ShapeEnum::Edge, ShapeEnum::Shape).unwrap();
+    assert!(edges.more());
+    let labels = [
+        ("support", native.face.clone().into_shape()),
+        ("edge", edges.current().clone()),
+    ];
+    let kind = WrappedFeatureKind::Boss;
+    let bind = |revision, labels: &[_]| {
+        attachment.bind_feature_sources(revision, kind, &native.body, &native.face, labels)
+    };
+    let names = bind(REVISION, &labels).unwrap();
+    assert_eq!(
+        names["support"],
+        CylinderFeatureSource::SupportFace(attachment.record().id)
+    );
+    assert!(matches!(
+        names["edge"],
+        CylinderFeatureSource::SupportMember(_)
+    ));
+    assert_eq!(
+        names,
+        bind(REVISION, &[labels[1].clone(), labels[0].clone()]).unwrap()
+    );
+    assert!(bind(SupportRevision(REVISION.0 + 1), &labels).is_err());
+
+    let result = apply(
+        &attachment,
+        kind,
+        &attached_request(&attachment, NormalSense::Outward),
+    );
+    let history = result.history();
+    for name in names.values() {
+        assert!(
+            history.removed.contains(name)
+                || history
+                    .images
+                    .values()
+                    .flatten()
+                    .any(|parent| parent.source == *name)
+        );
     }
 }
 

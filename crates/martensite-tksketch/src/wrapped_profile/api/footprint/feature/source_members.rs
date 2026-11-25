@@ -1,5 +1,6 @@
 //! Transfer caller-owned identities into the frozen support's exact reference table (#420).
 use super::*;
+use crate::surface_sketch::attachment::ConeFaceAttachment;
 use martensite_tkbrep::bintools::{
     CurveFrameReadPolicy, LocationTransformReadPolicy, SurfaceFrameReadPolicy,
 };
@@ -18,29 +19,75 @@ impl CylinderFaceAttachment {
         selected: &Face,
         members: &[(Key, Shape)],
     ) -> Result<BTreeMap<Key, CylinderFeatureSource>, CylinderFeatureFailure> {
-        let attempt = Attempt {
-            attachment: self.record().id,
-            revision,
-            kind,
-        };
-        if revision != self.record().revision {
-            return Err(attempt.history(
-                CylinderFeatureSource::SupportSolid,
-                "the attachment's current support revision",
-            ));
-        }
-        let (body, selected, members) = decode_members(attempt, self, body, selected, members)?;
-        let solid = body::single_solid(attempt, &body, CylinderFeatureStage::History)?;
-        let index = body::Index::new(attempt, &solid, CylinderFeatureStage::History)?;
-        bind_members(attempt, &index, &selected, members)
+        let record = self.record();
+        bind_frozen_sources(
+            Attempt {
+                attachment: record.id,
+                revision,
+                kind,
+            },
+            record.revision,
+            &record.brep,
+            body,
+            selected,
+            members,
+        )
     }
+}
+
+impl ConeFaceAttachment {
+    /// Bind caller-owned names to exact support members used by conical boss and pocket history.
+    /// Supply the captured body and selected face, or their detached export for this revision.
+    /// Example: `attachment.bind_feature_sources(revision, kind, &body, &face, &[(name, edge)])?`.
+    pub fn bind_feature_sources<Key: Copy + Ord>(
+        &self,
+        revision: SupportRevision,
+        kind: CylinderFeatureKind,
+        body: &Shape,
+        selected: &Face,
+        members: &[(Key, Shape)],
+    ) -> Result<BTreeMap<Key, CylinderFeatureSource>, CylinderFeatureFailure> {
+        let record = self.record();
+        bind_frozen_sources(
+            Attempt {
+                attachment: record.id,
+                revision,
+                kind,
+            },
+            record.revision,
+            &record.brep,
+            body,
+            selected,
+            members,
+        )
+    }
+}
+
+fn bind_frozen_sources<Key: Copy + Ord>(
+    attempt: Attempt,
+    expected_revision: SupportRevision,
+    frozen: &[u8],
+    body: &Shape,
+    selected: &Face,
+    members: &[(Key, Shape)],
+) -> FeatureChecked<BTreeMap<Key, CylinderFeatureSource>> {
+    if attempt.revision != expected_revision {
+        return Err(attempt.history(
+            CylinderFeatureSource::SupportSolid,
+            "the attachment's current support revision",
+        ));
+    }
+    let (body, selected, members) = decode_members(attempt, frozen, body, selected, members)?;
+    let solid = body::single_solid(attempt, &body, CylinderFeatureStage::History)?;
+    let index = body::Index::new(attempt, &solid, CylinderFeatureStage::History)?;
+    bind_members(attempt, &index, &selected, members)
 }
 
 type SelectedMembers<Key> = (Shape, Shape, Vec<(Key, Shape)>);
 
 fn decode_members<Key: Copy>(
     attempt: Attempt,
-    attachment: &CylinderFaceAttachment,
+    frozen: &[u8],
     body: &Shape,
     selected: &Face,
     members: &[(Key, Shape)],
@@ -53,7 +100,7 @@ fn decode_members<Key: Copy>(
             .map(|(key, member)| (Some(*key), member.clone())),
     );
     let encoded = encoding::encode(body, &references).map_err(|cause| attempt.encoding(cause))?;
-    if !encoded.starts_with(&attachment.record().brep) {
+    if !encoded.starts_with(frozen) {
         return Err(attempt.history(
             CylinderFeatureSource::SupportSolid,
             "the frozen support's exact body and selected-face references",

@@ -10,7 +10,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added per-window mailbox presentation for synchronized native views, with FIFO fallback (#420).
 
-- Added exact support-member bindings for applications that preserve their own names through wrapped cylindrical bosses and pockets (#420).
+- Added exact support-member bindings for applications that preserve their own names through wrapped cylindrical and conical bosses and pockets (#420).
 
 - Added an opt-in certified conical-frustum attachment that published the final solid and its authored history in one operation (#419).
 

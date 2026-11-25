@@ -127,6 +127,11 @@ the committed B-rep, composed authored history, physical spatial budget,
 certified sewing gap and ordered validation coverage. The individual tool's
 volume comparison belongs to the separate tool result.
 
+Applications can pass their names and the corresponding native shapes to
+`ConeFaceAttachment::bind_feature_sources`. Each name resolves to the source
+reference used in the certified boss or pocket history. Binding requires the
+attachment revision and the exact body and face recorded at capture.
+
 The operation constructs the tool in one owner and validates the decoded
 final solid. Its checks account for every cap, ruled side, stock trim,
 shared seam, oriented edge use and vertex link. The exact contact policy
