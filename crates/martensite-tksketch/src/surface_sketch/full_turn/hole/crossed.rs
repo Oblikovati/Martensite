@@ -5,10 +5,12 @@ use super::*;
 mod binding;
 mod names;
 mod plan;
+mod tool;
 pub use names::*;
 pub(in crate::surface_sketch::full_turn) use plan::{ApprovedHole, CrossedPlan};
+pub(in crate::surface_sketch::full_turn) use tool::Contour;
 
-/// Published cylindrical band and its independently named periodic edge fragments.
+/// Published periodic band and its independently named periodic edge fragments.
 #[derive(Clone, Debug)]
 pub struct CrossedBandResult {
     geometry: NormalExtrusionResult<PeriodicImageKey>,
@@ -62,13 +64,73 @@ pub fn normal_extrude_cylinder_band_holes_at_authored_seam(
     depths: [f64; 2],
     options: NormalExtrusionOptions,
 ) -> Result<CrossedBandResult, SurfaceSketchFailure> {
-    let mut prepared = CrossedPlan::admit(*band, holes, depths, options).map_err(|cause| {
-        SurfaceSketchFailure {
-            region: band.region,
-            stage: SurfaceStage::Admission,
-            cause,
-        }
-    })?;
+    cylinder(band.support).map_err(|cause| failure_in_admission(band, cause))?;
+    extrude(
+        band,
+        holes.iter().copied().map(Contour::from).collect(),
+        depths,
+        options,
+    )
+}
+
+/// Extrude a full conical band with one aperture crossing the authored seam.
+/// The aperture must cross the zero developed angle transversely.
+/// Example: `let result = normal_extrude_cone_band_at_authored_seam(&band, &hole, [-0.25, 0.5], options)?;`.
+pub fn normal_extrude_cone_band_at_authored_seam(
+    band: &FullTurnBand,
+    hole: &ConeBandHole,
+    depths: [f64; 2],
+    options: NormalExtrusionOptions,
+) -> Result<CrossedBandResult, SurfaceSketchFailure> {
+    normal_extrude_cone_band_holes_at_authored_seam(
+        band,
+        std::slice::from_ref(hole),
+        depths,
+        options,
+    )
+}
+
+/// Extrude a conical band with slant-separated apertures crossing its native seam.
+/// Apertures may cover the angular period in projection if their slant intervals are disjoint.
+/// Example: `let result = normal_extrude_cone_band_holes_at_authored_seam(&band, &holes, [-0.25, 0.5], options)?;`.
+pub fn normal_extrude_cone_band_holes_at_authored_seam(
+    band: &FullTurnBand,
+    holes: &[ConeBandHole],
+    depths: [f64; 2],
+    options: NormalExtrusionOptions,
+) -> Result<CrossedBandResult, SurfaceSketchFailure> {
+    if let FullTurnSupport::Cylinder { support, .. } = band.support {
+        let cause = SurfaceFailureCause::InvalidInput {
+            field: "cylinder radius",
+            value: support.radius,
+            expected: "conical support for a developed aperture",
+        };
+        return Err(failure_in_admission(band, cause));
+    }
+    extrude(
+        band,
+        holes.iter().copied().map(Contour::from).collect(),
+        depths,
+        options,
+    )
+}
+
+fn failure_in_admission(band: &FullTurnBand, cause: SurfaceFailureCause) -> SurfaceSketchFailure {
+    SurfaceSketchFailure {
+        region: band.region,
+        stage: SurfaceStage::Admission,
+        cause,
+    }
+}
+
+fn extrude(
+    band: &FullTurnBand,
+    holes: Vec<Contour>,
+    depths: [f64; 2],
+    options: NormalExtrusionOptions,
+) -> Result<CrossedBandResult, SurfaceSketchFailure> {
+    let mut prepared = CrossedPlan::admit(*band, holes, depths, options)
+        .map_err(|cause| failure_in_admission(band, cause))?;
     let cut = prepared.subtract()?;
     let (body, bindings) = binding::bind(&prepared, cut)
         .map_err(|cause| prepared.stock.sweep.failure(SurfaceStage::History, cause))?;
@@ -83,21 +145,6 @@ pub fn normal_extrude_cylinder_band_holes_at_authored_seam(
         geometry,
         crossings,
     })
-}
-
-fn require_authored_crossing(aperture: &cylinder_admission::Admitted) -> Checked<()> {
-    let rectangle = aperture.rectangle;
-    let seam = rectangle.support.chart_origin;
-    let rounding = 64. * f64::EPSILON * (seam.abs() + aperture.angle + TAU);
-    let reserve = (effective_limits(aperture.options).angular_clearance + rounding)
-        * rectangle.support.radius;
-    let clearance = (-rectangle.s[0]).min(rectangle.s[1]);
-    cylinder_admission::require(
-        clearance > reserve,
-        "authored seam crossing clearance",
-        clearance,
-        "two transverse aperture rim crossings strictly inside their original intervals",
-    )
 }
 
 fn publish(

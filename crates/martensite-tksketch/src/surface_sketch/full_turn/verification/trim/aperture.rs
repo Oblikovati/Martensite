@@ -10,22 +10,27 @@ pub(in crate::surface_sketch::full_turn::verification) fn verify_aperture_walls(
         .iter()
         .filter(|(key, _)| key.role == HistoryRole::SideFace)
     {
-        let face = topods::face(shape).map_err(|e| native("aperture wall", e))?;
-        wall_trims(section, *key, &face)?;
+        verify_aperture_wall(section, *key, shape, SurfaceType::Plane)?;
     }
     Ok(())
 }
 
-fn wall_trims(section: &BandSection, key: HistoryKey, face: &topods::Face) -> Checked<()> {
-    let surface = BRepAdaptorSurface::with_face(face, true)
+pub(in crate::surface_sketch::full_turn::verification) fn verify_aperture_wall(
+    section: &BandSection,
+    key: HistoryKey,
+    shape: &topods::Shape,
+    carrier: SurfaceType,
+) -> Checked<()> {
+    let face = topods::face(shape).map_err(|e| native("aperture wall", e))?;
+    let surface = BRepAdaptorSurface::with_face(&face, true)
         .map_err(|e| native("aperture wall surface", e))?;
-    require_surface(&surface, SurfaceType::Plane)?;
-    let mut edges = Explorer::new(face, ShapeEnum::Edge, ShapeEnum::Shape)
+    require_surface(&surface, carrier)?;
+    let mut edges = Explorer::new(&face, ShapeEnum::Edge, ShapeEnum::Shape)
         .map_err(|e| native("aperture wall edges", e))?;
     while edges.more() {
         let edge = topods::edge(edges.current()).map_err(|e| native("aperture wall edge", e))?;
-        let pcurve = BRepTool::curve_on_face(&edge, face).map_err(|e| native("wall pcurve", e))?;
-        verify_wall_curve(&edge, &pcurve, key)?;
+        let pcurve = BRepTool::curve_on_face(&edge, &face).map_err(|e| native("wall pcurve", e))?;
+        verify_wall_curve(&edge, &pcurve, key, carrier)?;
         verify_representation(section, &surface, &edge, &pcurve)?;
         edges
             .next()
@@ -34,11 +39,19 @@ fn wall_trims(section: &BandSection, key: HistoryKey, face: &topods::Face) -> Ch
     Ok(())
 }
 
-fn verify_wall_curve(edge: &topods::Edge, pcurve: &EdgePCurve, key: HistoryKey) -> Checked<()> {
+fn verify_wall_curve(
+    edge: &topods::Edge,
+    pcurve: &EdgePCurve,
+    key: HistoryKey,
+    carrier: SurfaceType,
+) -> Checked<()> {
     let curve = BRepAdaptorCurve::with_edge(edge).map_err(|e| native("aperture wall curve", e))?;
     let kind = curve
         .get_type()
         .map_err(|e| native("aperture wall edge type", e))?;
+    if carrier == SurfaceType::Cone {
+        return verify_conical_wall_curve(edge, pcurve, kind);
+    }
     let supported = match kind {
         CurveType::Circle => pcurve.pcurve.downcast_ref::<Geom2dCircle>().is_some(),
         CurveType::Line => pcurve.pcurve.downcast_ref::<Geom2dLine>().is_some(),
@@ -51,6 +64,21 @@ fn verify_wall_curve(edge: &topods::Edge, pcurve: &EdgePCurve, key: HistoryKey) 
         "paired analytic line or circle on aperture wall",
         format!("{key:?}: {kind:?}"),
     ))
+}
+
+fn verify_conical_wall_curve(
+    edge: &topods::Edge,
+    pcurve: &EdgePCurve,
+    kind: CurveType,
+) -> Checked<()> {
+    if !pcurve.is_stored || !matches!(kind, CurveType::Circle | CurveType::Line) {
+        return Err(incomplete(
+            "stored conical wall pcurve of a circle or line",
+            format!("{kind:?}"),
+        ));
+    }
+    increasing(edge, pcurve, usize::from(kind == CurveType::Line))?;
+    Ok(())
 }
 
 pub(super) fn verify_wire(

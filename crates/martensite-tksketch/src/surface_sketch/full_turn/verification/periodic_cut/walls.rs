@@ -10,27 +10,22 @@ pub(super) fn check(proof: &Verification<'_>) -> Checked<()> {
 }
 
 fn check_aperture(proof: &Verification<'_>, hole: &ApprovedHole) -> Checked<()> {
-    let mut walls = Vec::new();
-    let mut regular = Vec::new();
-    for (key, image) in &proof.direct {
-        if !aperture_source(&hole.source, key.source) {
-            continue;
-        }
-        if key.role == HistoryRole::SideFace {
-            walls.push((*key, image.clone()));
-        } else {
-            regular.push((*key, image.clone()));
-        }
-    }
-    semantic::validate(&hole.admitted, &regular)?;
-    trim::verify_aperture_walls(&proof.prepared.stock, &walls)?;
+    let regular = proof
+        .direct
+        .iter()
+        .filter(|(key, _)| {
+            key.role != HistoryRole::SideFace && aperture_source(&hole.source, key.source)
+        })
+        .cloned()
+        .collect();
+    hole.admitted.check_boundary(&regular)?;
     for (index, &curve) in hole.source.boundaries.iter().enumerate() {
         wall(proof, hole, index, curve)?;
     }
     Ok(())
 }
 
-fn aperture_source(hole: &CylinderBandHole, source: HistorySource) -> bool {
+fn aperture_source(hole: &Contour, source: HistorySource) -> bool {
     match source {
         HistorySource::Region(_) => false,
         HistorySource::Curve(id) => hole.boundaries.contains(&id),
@@ -49,7 +44,14 @@ fn wall(
         role: HistoryRole::SideFace,
     };
     let face = proof.resolve(PeriodicImageKey::Retained(key))?;
-    semantic::check_face_carrier(&hole.admitted, key, face)?;
+    hole.admitted.check_wall(key, face)?;
+    let stock = &proof.prepared.stock;
+    let carrier = if !stock.cylinder && index.is_multiple_of(2) {
+        SurfaceType::Cone
+    } else {
+        SurfaceType::Plane
+    };
+    trim::verify_aperture_wall(stock, key, face, carrier)?;
     one_wire(face)?;
     let expected = aperture_wall_edges(proof, hole, index)?;
     let mut edges = IndexedMapOfShape::default();

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
 use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
+mod cone_aperture;
 mod multiple;
 
 use std::f64::consts::{FRAC_PI_6, PI, TAU};
 
 static_assertions::assert_impl_all!(FullTurnBand: Send, Sync);
 static_assertions::assert_impl_all!(CylinderBandHole: Send, Sync);
+static_assertions::assert_impl_all!(ConeBandHole: Send, Sync);
 static_assertions::assert_impl_all!(CrossedBandResult: Send, Sync);
 static_assertions::assert_impl_all!(PeriodicImageKey: Send, Sync);
 

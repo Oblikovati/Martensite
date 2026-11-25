@@ -95,7 +95,7 @@ impl SplitInputs<'_> {
         depth: PeriodicDepth,
         direct: &Bindings,
         output: &mut SplitBindings,
-        hole: &CylinderBandHole,
+        hole: &tool::Contour,
         raw: &Bindings,
         id: PeriodicCrossingId,
     ) -> Checked<topods::Shape> {
@@ -186,7 +186,7 @@ fn split_hole(hole: &ApprovedHole, key: HistoryKey) -> bool {
 }
 
 fn aperture_ends<'a>(
-    hole: &CylinderBandHole,
+    hole: &tool::Contour,
     id: PeriodicCrossingId,
     depth: PeriodicDepth,
     direct: &'a Bindings,
