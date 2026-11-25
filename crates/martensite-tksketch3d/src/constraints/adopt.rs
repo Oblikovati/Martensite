@@ -17,12 +17,22 @@ pub(super) fn apply_checked(
             EditFailure::Cancelled(_) => ConstraintFailure::Cancelled,
             error => ConstraintFailure::Geometry(error),
         })?;
+    verify_relations(&next, relations, policy, cancelled)?;
+    Ok(next)
+}
+
+pub(super) fn verify_relations(
+    geometry: &Snapshot,
+    relations: &BTreeMap<RelationId, Relation>,
+    policy: ConstraintPolicy,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<(), ConstraintFailure> {
     for (&id, &relation) in relations {
         poll(cancelled)?;
-        if !metric::feasible(&next, relation, policy) {
+        if !metric::feasible(geometry, relation, policy) {
             return Err(ConstraintFailure::Infeasible(id, relation));
         }
     }
     poll(cancelled)?;
-    Ok(next)
+    Ok(())
 }

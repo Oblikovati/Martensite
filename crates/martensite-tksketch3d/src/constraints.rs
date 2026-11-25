@@ -6,6 +6,7 @@ mod metric;
 mod motion;
 mod program;
 mod residual;
+mod restore;
 
 use crate::{LineId, MinimumLength, PointId, Snapshot};
 use martensite_tkmath::gp::Point3;

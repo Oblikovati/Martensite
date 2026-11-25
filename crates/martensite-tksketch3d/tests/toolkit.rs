@@ -7,5 +7,6 @@ mod construction;
 mod fixture;
 mod frozen_point;
 mod motion;
+mod restore;
 mod values;
 mod wire;
