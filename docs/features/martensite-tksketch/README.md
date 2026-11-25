@@ -13,3 +13,7 @@ exports have independent ownership.
 See [supported operations and examples](../surface-normal-sketches/README.md),
 [the geometry contract](../surface-normal-sketches/DESIGN.md) and
 [verification evidence](../surface-normal-sketches/VERIFICATION.md).
+
+The toolkit also consumes [Sketch3D line wires](../sketch3d/IMPLEMENTATION-EVIDENCE.md)
+for ordinary coplanar extrusion, rounded Sweep along a three-leg orthogonal
+path and ruled Loft between corresponding closed sections.

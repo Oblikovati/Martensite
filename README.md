@@ -37,7 +37,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkmesh` | Mesh elements, discretization, triangulation and incremental meshing. |
 | `martensite-tktobj` | Document objects, partitions, references, attributes and model iteration. |
 | `martensite-tkbo` | Boolean operations, general fuse, builders, sections with face ancestry, intersection tools, splitting and defeaturing. |
-| `martensite-tksketch` | [Surface-bound sketches](docs/features/martensite-tksketch/README.md) with cylindrical and conical normal extrusion, periodic bands and apertures, and selected-face bosses and pockets. Includes certified ordinary extrusion and ruled lofts from [Sketch3D line wires](docs/features/sketch3d/IMPLEMENTATION-EVIDENCE.md). |
+| `martensite-tksketch` | [Surface-bound sketches](docs/features/martensite-tksketch/README.md) with cylindrical and conical normal extrusion, periodic bands and apertures, and selected-face bosses and pockets. Includes certified ordinary extrusion, rounded Sweep and ruled Loft from [Sketch3D line wires](docs/features/sketch3d/IMPLEMENTATION-EVIDENCE.md). |
 | `martensite-tksketch3d` | [Spatial sketches](crates/martensite-tksketch3d/README.md) with stable identities, circular arcs, point and line constraints, and ordered native line wires. See the [Sketch3D implementation evidence](docs/features/sketch3d/IMPLEMENTATION-EVIDENCE.md). |
 | `martensite-tkbool` | Topological operations, sweeps, evolved shapes and projections. |
 | `martensite-tkfillet` | Fillets and chamfers. |

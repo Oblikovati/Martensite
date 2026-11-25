@@ -49,6 +49,12 @@ boundary, the toolkit can prepare a new reference on an accepted step.
 The replacement reuses the existing solver layout and counts against the
 current tick. A refused step keeps the last accepted sketch.
 
+Use `ConstrainedSketch::drag_preferred` when the cursor can leave the feasible
+motion of a point. The result reports whether the stored point reaches the
+target or settles locally in the feasible directions. Hard checks and chart
+updates share the tick's work budget. Keep the accepted sketch when a tick is
+refused so the gesture can continue from it.
+
 Use `ConstrainedSketch::transform_points` for a rigid translation or rotation of
 owned points. The operation checks the resulting geometry and existing hard
 relations together before adopting. The length tolerance also caps each stored
@@ -98,6 +104,11 @@ stations. A point edit reuses the band's interpolation operator and checks the
 new stored curve against the station miss and regularity limits. Position and
 derivative evaluation use the stored poles. Station sensitivities describe the
 retained affine interpolation operator before pole rounding.
+
+Use `Snapshot::bend_lines` to replace an exclusive corner between two
+orthogonal cardinal line legs with a tangent quarter arc. The retained legs
+keep their outer endpoints. The new arc records both parent legs and separate
+radius, position and tangent checks.
 
 `Snapshot::trim_line` removes the picked side of a proper crossing.
 `Snapshot::extend_line` finds the nearest admitted forward crossing from a

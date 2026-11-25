@@ -12,6 +12,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added immutable model-space point and line sketches with atomic edits and exact minimum-length checks (#611).
 
+- Added preferred cursor motion for feasible underconstrained Sketch3D previews, with bounded work and a checked settlement report (#611).
+
+- Added revision-bound point classification against a located native planar solid face with an outer trim and one convex hole (#611).
+
 - Added frozen spatial sketch points with captured source revisions and explicit detachment (#611).
 
 - Added ordered spatial line wires with exact authored contact checks, detached BRep export, and point and edge bindings for Sweep and Loft (#611).
@@ -30,6 +34,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added ordinary extrusion from certified coplanar Sketch3D line wires with detached history and volume bounded on the retained native trims (#611).
 
+- Added rounded sheet and solid Sweep for a centered rectangular Sketch3D section and a three-leg orthogonal path, with certified native traces and solid volume (#611).
+
 - Added ruled solid lofts between corresponding closed Sketch3D line sections, with detached native history and certified volume on retained trims (#611).
 
 - Added directed axis and plane parallelism, perpendicularity, equal length and driving angles for spatial lines (#611).
@@ -39,6 +45,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Added open clamped spatial control cubics with certified regularity and exact binary64-rounded position and derivative evaluation (#611).
 
 - Added spatial fit cubics that retain four authored stations, with checked parameter spacing, interpolation error and analytic station sensitivities (#611).
+
+- Added tangent quarter-circle bends at exclusive orthogonal cardinal corners, with separate radius, position and tangency checks (#611).
 
 - Added exact work-plane splits for spatial lines with ordered fragment history and bounded cut placement (#611).
 

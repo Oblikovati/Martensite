@@ -334,3 +334,63 @@ its endpoint when selected for replacement.
 Rust `1.98.1` passed 4,735 combined TKMath, TKSketch3D and TKSolve tests and
 strict Clippy, with seven opt-in tests skipped. Trim and Extend also passed
 22 ThreadSanitizer controls with byte-identical replay.
+
+## E34. Preferred cursor motion
+
+The prepared solver can minimize world-space cursor error along the local
+feasible directions. It reports whether the cursor target was reached or the
+retained point was stationary in those directions. Before publishing, the
+sketch checks its original hard relations, updates any incidence charts and
+checks the retained values against the same work budget. A refused tick leaves
+the last accepted preview available for the next sample.
+
+The release benchmark replayed 6,480 accepted motions across exact and
+preferred cursor paths on owned rail and circular fixtures. At 240 scalar
+coordinates, off-model circular targets took 0.490–0.555 ms p95 and off-model
+rail targets took 0.165–0.181 ms p95 across three loaded runs. Eight pinned
+ThreadSanitizer controls passed. These timings cover the prepared kernel
+operation.
+
+## E35. Cardinal bends
+
+`Snapshot::bend_lines` replaces the corner of two exclusive orthogonal
+cardinal line legs with a tangent quarter arc. It keeps each far endpoint,
+records the retained line intervals and attaches both original legs to the
+arc's history. The exact radius, tangent directions and contact positions
+have separate checks on the stored result. Overlong, shared or frozen corner
+edits and unrepresentable contact points are refused before adoption.
+
+The native bend and its separate math fixtures passed the focused tests,
+ThreadSanitizer and deterministic replay on Rust 1.98.1.
+
+## E36. Rounded Sweep from Sketch3D line wires
+
+`sweep_rounded_shell` and `sweep_rounded_solid` consume a centered closed
+rectangular section and an open path of three nonzero cardinal legs along
+distinct axes. The sheet has two terminal loops. The solid adds planar caps
+and qualifies the paired oriented edge uses across the closed shell. Each
+result maps the retained path and section rows to the corresponding native
+images after copy. The trace report records the measured bound independently
+of the requested limit. The solid also bounds volume on the retained trims.
+
+In the loaded Rust 1.98.1 release run, p95 was 70.110 ms for the sheet and
+81.887 ms for the solid (96 operations each). Across 30 fresh processes per
+body kind, the first native operation took 90.469 ms p95 for the sheet and
+100.975 ms for the solid. The solid's maximum volume bound error was
+`4.139e-13` in cubic fixture units, and maximum source trace bound was
+`5.330e-15` in fixture units for both body kinds. The concurrent native
+Sweep control passed ThreadSanitizer.
+
+## E37. Native planar face attachment evidence
+
+`capture_planar_attachment` binds one located planar face of an actual native
+solid to its named source revision. It checks the original stored frame and
+placement against the effective map and qualifies the native 3D curves and
+pcurves of its outer trim and one convex hole. A query uses the original
+affine chart to classify the projected point as material, a rim, hole
+interior or outside. It reports a certified Euclidean distance bound. The
+capture owns its evidence and refuses a different source revision.
+
+Eight focused TKMath cases and twelve native TKPrim cases passed on Rust
+1.98.1, with twelve native ThreadSanitizer controls. The combined E34–E37
+stage passed 1,191 tests and strict Clippy, with 28 tests marked ignored.
