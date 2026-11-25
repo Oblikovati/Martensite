@@ -1,14 +1,12 @@
 //! Resolve each source use and bind the exact authored region before fitting.
 use super::*;
 use martensite_tkbo::profile_extrusion::{
-    ExactConicQuarter, exact_closed_conic, exact_conic_quarter,
-};
-use martensite_tkbo::profile_extrusion::{
     LoopUse, ProfileCurve, ProfileLoop, ProfilePlane, ProfileVertex, ProfileVertexId,
     SketchProfile, exact_bernstein_partition,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    MetricBezier, MetricCurve, OrientedMetricCurve,
+    CertifiedRationalConicSegment, CylindricalProfileOptions, MetricBezier, MetricCurve,
+    OrientedMetricCurve, RationalReferenceBounds,
 };
 
 pub(super) struct Source<'a> {
@@ -27,12 +25,19 @@ pub(super) struct Curve<'a> {
 pub(super) struct NativeSpan<'a> {
     controls: NativeControls<'a>,
     pub domain: WrappedSourceSpan,
-    pub map: Option<WrappedConicParameterMap>,
+    pub map: Option<ConicMap>,
+}
+
+#[derive(Clone, Copy)]
+pub(super) enum ConicMap {
+    Quarter(WrappedConicParameterMap),
+    Analytic(WrappedAnalyticArcMap),
 }
 
 enum NativeControls<'a> {
     Spline(MetricBezier<'a, 2>),
     Quarter([[f64; 2]; 3]),
+    Transported(Box<CertifiedRationalConicSegment>),
 }
 
 pub(super) struct Line {
@@ -41,6 +46,7 @@ pub(super) struct Line {
     pub points: [[f64; 2]; 2],
 }
 
+mod conic;
 mod selection;
 pub(super) use selection::select_cell;
 use selection::{VertexMap, point, resolve_uses, selected, selected_profile, vertices};
@@ -49,6 +55,7 @@ pub(super) fn read<'a>(
     profile: &'a SketchProfile,
     selections: &'a [WrappedRegionSelection],
     options: WrappedNormalOptions,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Source<'a>> {
     let selection = selected(profile, selections)?;
     let uses = resolve_uses(selection, profile)?;
@@ -56,6 +63,7 @@ pub(super) fn read<'a>(
     let profile = selected_profile(&uses, &vertices)?;
     let mut lines = Vec::new();
     let mut curves = Vec::new();
+    let mut analytic_options = CylindricalProfileOptions::default();
     for (used, c) in &uses {
         match c {
             ProfileCurve::Line { id, start, end } => {
@@ -63,10 +71,17 @@ pub(super) fn read<'a>(
             }
             ProfileCurve::Spline { .. } => curves.push(rational(c, *used, &vertices)?),
             ProfileCurve::Arc { .. } | ProfileCurve::EllipticArc { .. } => {
-                curves.push(quarter(c, *used, &profile, options)?);
+                curves.push(conic::analytic_arc(
+                    c,
+                    *used,
+                    &profile,
+                    options,
+                    &mut analytic_options,
+                    cancelled,
+                )?);
             }
             ProfileCurve::Circle { .. } | ProfileCurve::Ellipse { .. } => {
-                curves.push(closed_conic(*used, &profile, options)?);
+                curves.push(conic::closed_conic(*used, &profile, options)?);
             }
         }
     }
@@ -144,77 +159,6 @@ fn rational<'a>(
     })
 }
 
-fn quarter<'a>(
-    curve: &ProfileCurve,
-    used: LoopUse,
-    profile: &SketchProfile,
-    options: WrappedNormalOptions,
-) -> Checked<Curve<'a>> {
-    let Some(ends) = curve.ends() else {
-        return Err(invalid(
-            format!("arc={:?}", used.curve),
-            "two original analytic endpoints",
-        ));
-    };
-    let quarter = exact_conic_quarter(
-        profile,
-        used.curve,
-        pipeline::resolution(options.spatial_error),
-    )
-    .map_err(|cause| RationalWrappedFailure::Analytic(Box::new(cause)))?
-    .ok_or_else(|| {
-        invalid(
-            format!("arc={:?}", used.curve),
-            "an exact circular or axis-aligned elliptic quarter",
-        )
-    })?;
-    Ok(Curve {
-        spans: vec![conic_span(quarter)],
-        occurrence: used,
-        ends: Some(ends),
-    })
-}
-
-fn closed_conic<'a>(
-    used: LoopUse,
-    profile: &SketchProfile,
-    options: WrappedNormalOptions,
-) -> Checked<Curve<'a>> {
-    let quarters = exact_closed_conic(
-        profile,
-        used.curve,
-        pipeline::resolution(options.spatial_error),
-    )
-    .map_err(|cause| RationalWrappedFailure::Analytic(Box::new(cause)))?
-    .ok_or_else(|| {
-        invalid(
-            format!("conic={:?}", used.curve),
-            "an exact circle or axis-aligned ellipse",
-        )
-    })?;
-    Ok(Curve {
-        spans: quarters.into_iter().map(conic_span).collect(),
-        occurrence: used,
-        ends: None,
-    })
-}
-
-fn conic_span<'a>(quarter: ExactConicQuarter) -> NativeSpan<'a> {
-    let map = WrappedConicParameterMap {
-        first_quarter: quarter.first_quarter,
-        increasing: quarter.increasing,
-    };
-    NativeSpan {
-        controls: NativeControls::Quarter(quarter.poles),
-        domain: WrappedSourceSpan {
-            level: 0,
-            index: 0,
-            reversed: false,
-        },
-        map: Some(map),
-    }
-}
-
 fn partition<'a>(
     id: ProfileCurveId,
     degree: usize,
@@ -278,6 +222,24 @@ fn dyadic_cell([first, last]: [f64; 2]) -> Option<WrappedSourceSpan> {
 }
 
 impl Source<'_> {
+    pub(super) fn rounding_operations(&self) -> u32 {
+        self.curves
+            .iter()
+            .flat_map(|curve| &curve.spans)
+            .filter_map(NativeSpan::transport)
+            .map(|proof| proof.operations)
+            .sum()
+    }
+
+    pub(super) fn rounded_area_error(&self) -> f64 {
+        self.curves
+            .iter()
+            .flat_map(|curve| &curve.spans)
+            .filter_map(NativeSpan::rounded)
+            .map(|rounded| rounded.area_transfer)
+            .fold(0., |sum, bound| (sum + bound).next_up())
+    }
+
     pub(super) fn poles(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
         self.curves.iter().flat_map(Curve::poles)
     }
@@ -328,9 +290,7 @@ impl Curve<'_> {
     }
 
     pub(super) fn poles(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
-        self.spans
-            .iter()
-            .flat_map(|span| span.metric().poles.iter().copied())
+        self.spans.iter().flat_map(NativeSpan::hull_points)
     }
 
     pub(super) fn endpoints(&self) -> [[f64; 2]; 2] {
@@ -352,9 +312,38 @@ impl Curve<'_> {
 }
 
 impl NativeSpan<'_> {
+    fn rounded(&self) -> Option<&CertifiedRationalConicSegment> {
+        if let NativeControls::Transported(value) = &self.controls {
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    pub(super) fn enclosure(&self) -> Option<&[[[f64; 2]; 2]; 3]> {
+        self.rounded().map(|rounded| &rounded.control_enclosures)
+    }
+
+    pub(super) fn transport(&self) -> Option<RationalReferenceBounds> {
+        self.rounded().map(|rounded| rounded.transport)
+    }
+
+    fn hull_points(&self) -> impl Iterator<Item = [f64; 2]> + '_ {
+        self.metric().poles.iter().copied().chain(
+            self.enclosure()
+                .into_iter()
+                .flatten()
+                .flat_map(|&bbox| enclosure_corners(bbox)),
+        )
+    }
+
     pub(super) fn metric(&self) -> MetricBezier<'_, 2> {
         match &self.controls {
             NativeControls::Spline(curve) => *curve,
+            NativeControls::Transported(lowered) => MetricBezier {
+                poles: &lowered.poles,
+                weights: Some(&lowered.weights),
+            },
             NativeControls::Quarter(poles) => MetricBezier {
                 poles,
                 weights: Some(&[1., 1., 2.]),
@@ -368,6 +357,10 @@ impl NativeSpan<'_> {
         let last = poles[poles.len() - 1];
         std::array::from_fn(|axis| last[axis] - first[axis])
     }
+}
+
+pub(super) fn enclosure_corners([[x0, x1], [y0, y1]]: [[f64; 2]; 2]) -> [[f64; 2]; 4] {
+    [[x0, y0], [x0, y1], [x1, y0], [x1, y1]]
 }
 
 #[cfg(test)]

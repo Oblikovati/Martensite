@@ -11,6 +11,12 @@ use crate::predicates::roots::certificate_arithmetic::{
     bounded_failure::BoundedArithmeticFailure,
 };
 mod bound_refinement;
+mod conic_lowering;
+mod rational_difference;
+pub use conic_lowering::{
+    CertifiedRationalConicSegment, RationalConicSegment, RationalConicSegmentFailure,
+    lower_rational_conic_segment,
+};
 mod monotone;
 mod reference_fit;
 

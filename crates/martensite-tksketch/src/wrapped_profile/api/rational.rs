@@ -7,8 +7,8 @@ use martensite_tkbo::profile_extrusion::{
     build_planar_regions_with_work_and_cancel,
 };
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedRationalMeasure, RationalIntegralError, RationalReferenceFailure,
-    RationalReferenceSpan, certify_rational_face_area,
+    CertifiedRationalMeasure, RationalConicSegmentFailure, RationalIntegralError,
+    RationalReferenceFailure, RationalReferenceSpan, certify_rational_face_area,
 };
 mod domain;
 mod fit;
@@ -32,6 +32,13 @@ pub enum RationalWrappedFailure {
     Planar(Box<PlanarRegionWorkFailure>),
     /// Source conic admission declined.
     Analytic(Box<OperationDecline>),
+    /// The supplied native curve had no certified rational transport.
+    ConicTransport {
+        /// Original authored conic identity.
+        curve: ProfileCurveId,
+        /// Exact incidence, sweep, or transport failure.
+        cause: Box<RationalConicSegmentFailure>,
+    },
     /// The original signed boundary area did not produce a bounded enclosure.
     Measure(Box<RationalIntegralError>),
     /// Reference geometry or its monotone proof remained unresolved.
@@ -45,6 +52,7 @@ impl std::fmt::Display for RationalWrappedFailure {
             Self::Input { actual, expected } => write!(f, "{actual}; expected {expected}"),
             Self::Planar(cause) => cause.fmt(f),
             Self::Analytic(cause) => cause.fmt(f),
+            Self::ConicTransport { curve, cause } => write!(f, "authored conic {curve:?}: {cause}"),
             Self::Measure(cause) => cause.fmt(f),
             Self::Reference(cause) => cause.fmt(f),
             Self::Wrapped(cause) => cause.fmt(f),
@@ -57,6 +65,7 @@ impl std::error::Error for RationalWrappedFailure {
             Self::Input { .. } => None,
             Self::Planar(cause) => Some(cause.as_ref()),
             Self::Analytic(cause) => Some(cause.as_ref()),
+            Self::ConicTransport { cause, .. } => Some(cause.as_ref()),
             Self::Measure(cause) => Some(cause.as_ref()),
             Self::Reference(cause) => Some(cause.as_ref()),
             Self::Wrapped(cause) => Some(cause.as_ref()),
@@ -98,7 +107,7 @@ impl RationalWrappedResult {
     }
     /// Original rational material area evidence. Example: `let area = result.authored_area();`.
     pub fn authored_area(&self) -> WrappedCertifiedRange {
-        area_range(&self.source.area)
+        self.source.area_enclosure
     }
     /// Original selected curves and vertices. Example: `result.authored_profile().curves.len()`.
     pub fn authored_profile(&self) -> &SketchProfile {
@@ -112,9 +121,15 @@ impl RationalWrappedResult {
     pub fn authored_planar_work(&self) -> PlanarProofWorkReceipt {
         self.source.planar_work
     }
-    /// Error-bounded integration receipt for the original source. Example: `result.authored_area_receipt().enclosure()`.
+    /// Error-bounded integration receipt before any source transport. Example: `result.authored_area_receipt().enclosure()`.
     pub fn authored_area_receipt(&self) -> &CertifiedRationalMeasure {
         &self.source.area
+    }
+    /// Certified area change from rounding exact native coefficients. Example: `result.area_transport_error().upper`.
+    pub fn area_transport_error(&self) -> WrappedCertifiedBound {
+        WrappedCertifiedBound {
+            upper: self.source.area_transport_error,
+        }
     }
     /// Original normal-sweep volume enclosure. Example: `let bounds = result.authored_volume();`.
     pub fn authored_volume(&self) -> WrappedCertifiedRange {
@@ -156,7 +171,12 @@ pub fn normal_extrude_rational_cylinder(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<RationalWrappedResult> {
     super::input::poll(&mut cancelled, WrappedStage::Admission).map_err(wrapped_failure)?;
-    let source = input::read(&request.profile, &request.selections, request.options)?;
+    let source = input::read(
+        &request.profile,
+        &request.selections,
+        request.options,
+        &mut cancelled,
+    )?;
     let support = domain::cylinder(request)?;
     let prepared = prepare(
         source,
@@ -201,7 +221,12 @@ pub fn normal_extrude_rational_cone_with_selection(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<RationalWrappedResult> {
     super::input::poll(&mut cancelled, WrappedStage::Admission).map_err(wrapped_failure)?;
-    let source = input::read(&request.profile, &request.selections, request.options)?;
+    let source = input::read(
+        &request.profile,
+        &request.selections,
+        request.options,
+        &mut cancelled,
+    )?;
     let support = domain::cone(request, &source)?;
     let prepared = prepare(
         source,
@@ -231,11 +256,17 @@ struct AuthoredSource {
     profile: SketchProfile,
     selection: WrappedRegionSelection,
     area: CertifiedRationalMeasure,
+    area_enclosure: WrappedCertifiedRange,
+    area_transport_error: f64,
     planar_work: PlanarProofWorkReceipt,
 }
 
-fn area_range(area: &CertifiedRationalMeasure) -> WrappedCertifiedRange {
-    let [lower, upper] = area.enclosure();
+fn area_range(area: &CertifiedRationalMeasure, transport: f64) -> WrappedCertifiedRange {
+    let [mut lower, mut upper] = area.enclosure();
+    if transport > 0. {
+        lower = (lower - transport).next_down();
+        upper = (upper + transport).next_up();
+    }
     WrappedCertifiedRange { lower, upper }
 }
 
@@ -253,10 +284,14 @@ fn prepare(
     support.check(&source, &reference)?;
     let proxy_options = reference_options(options, planar_work)?;
     let proxy = proxy::build(proxy_options, &source, &reference, scale)?;
+    let area_transport_error = source.rounded_area_error();
+    let area_enclosure = area_range(&area, area_transport_error);
     let source = AuthoredSource {
         profile: source.profile,
         selection: source.selection.clone(),
         area,
+        area_enclosure,
+        area_transport_error,
         planar_work,
     };
     let inverse_slant_error = support.inverse_slant_error(&reference);
@@ -292,7 +327,7 @@ impl Prepared {
         cancelled: &mut CancelPoll<'_>,
     ) -> Checked<RationalWrappedResult> {
         let authored_volume = retained.authored_volume(
-            area_range(&self.source.area),
+            self.source.area_enclosure,
             self.proxy.selection.region,
             self.inverse_slant_error,
         )?;

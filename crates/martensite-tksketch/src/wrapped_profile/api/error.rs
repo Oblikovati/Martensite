@@ -368,7 +368,9 @@ fn public_source(source: WrappedEntitySource) -> HistorySource {
         | WrappedEntitySource::SplitVertex { curve, .. }
         | WrappedEntitySource::MappedCurve { curve, .. }
         | WrappedEntitySource::MappedSplitVertex { curve, .. }
-        | WrappedEntitySource::ConicAnchor { curve, .. } => HistorySource::Curve(curve),
+        | WrappedEntitySource::ConicAnchor { curve, .. }
+        | WrappedEntitySource::AnalyticArcCurve { curve, .. }
+        | WrappedEntitySource::AnalyticArcSplitVertex { curve, .. } => HistorySource::Curve(curve),
         WrappedEntitySource::Vertex(vertex) => HistorySource::Vertex(vertex),
     }
 }

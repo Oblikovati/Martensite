@@ -19,7 +19,7 @@ pub(super) struct Proxy {
 #[derive(Clone, Copy)]
 struct CurveOrigin {
     curve: SurfaceCurveId,
-    map: Option<WrappedConicParameterMap>,
+    map: Option<input::ConicMap>,
 }
 
 #[derive(Clone, Copy)]
@@ -108,7 +108,7 @@ struct SpanControls<'a> {
     poles: &'a [[f64; 2]],
     weights: Option<&'a [f64]>,
     domain: WrappedSourceSpan,
-    map: Option<WrappedConicParameterMap>,
+    map: Option<input::ConicMap>,
 }
 
 fn begin(
@@ -263,7 +263,7 @@ impl Proxy {
     ) -> Checked<ProfileVertexId> {
         let end = span.domain.index + 1;
         let anchor = match span.map {
-            Some(map) if end == (1_u64 << span.domain.level) => {
+            Some(input::ConicMap::Quarter(map)) if end == (1_u64 << span.domain.level) => {
                 let quarter = map.first_quarter + if map.increasing { 1 } else { -1 };
                 NativeJoint::ConicQuarter(quarter)
             }

@@ -3,7 +3,7 @@ use super::*;
 use martensite_tkbo::body_check::{CheckMode, ValidationStage};
 use martensite_tkbo::profile_extrusion::PlanarProofVersion;
 
-const V8_FAMILY_V3: WrappedConeExecutionSelection =
+pub(super) const V8_FAMILY_V3: WrappedConeExecutionSelection =
     WrappedConeExecutionSelection::DirectedTransportedAuthoredPlanarV8 {
         domain: WrappedConeDomainPolicy::PositiveXFamilyChartV3,
         arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,
