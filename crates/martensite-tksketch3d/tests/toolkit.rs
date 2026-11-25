@@ -10,6 +10,7 @@ mod control_splines;
 mod fit_splines;
 mod fixture;
 mod frozen_point;
+mod import;
 mod line_angle;
 mod line_edit;
 mod line_incidence;

@@ -8,6 +8,7 @@ mod control_spline;
 mod edit;
 mod failure;
 mod fit_spline;
+pub mod import;
 pub mod line_edit;
 mod mirror;
 mod source;
