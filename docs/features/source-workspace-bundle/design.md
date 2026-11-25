@@ -105,9 +105,9 @@ Keep the smoke consumer independent of a particular optional feature such as
 the surface-policy API.
 
 The gate proves production-library source completeness, dependency resolution
-and representative consumption on the primary platform. Existing affected-package suites and the
-four-target release matrix retain responsibility for kernel behavior and native
-platform correctness. The bundle does not contain a Rust toolchain or operating
+and representative consumption on the primary platform. The release matrix
+runs affected-package suites to check kernel behavior on each release target.
+The bundle does not contain a Rust toolchain or operating
 system libraries and does not promise a fully provisioned offline machine.
 
 ## Pipeline and catalog changes

@@ -109,7 +109,10 @@ mod tests {
     #[test]
     fn platforms_without_the_renderer_never_receive_its_suite_or_an_empty_shard() {
         let packages = names(&["martensite-vulkan", "martensite-tkmath"]);
-        let windows = RELEASE_TARGETS[3];
+        let windows = RELEASE_TARGETS
+            .into_iter()
+            .find(|target| target.triple == "x86_64-pc-windows-msvc")
+            .unwrap();
         assert_eq!(release_shards(&packages, &windows), [["martensite-tkmath"]]);
     }
 
@@ -118,6 +121,7 @@ mod tests {
         let packages = (0..8).map(|i| format!("package-{i}")).collect();
         let matrix = release_test_matrix(&packages);
         let rows = matrix["include"].as_array().unwrap();
+        assert_eq!(rows.len(), 12);
         for target in RELEASE_TARGETS {
             let count = rows
                 .iter()

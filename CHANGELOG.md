@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Removed Intel macOS from release validation after repeated hosted runner disconnects. The release gate covers Linux x86_64, Apple Silicon and Windows x64 (#602).
+
 ## [0.14.1] - 2026-11-25
 
 This is the first published 0.14 release. **BREAKING** public Rust API
