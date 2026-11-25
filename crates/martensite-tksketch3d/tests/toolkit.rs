@@ -2,6 +2,7 @@
 //! One executable for the spatial sketch toolkit tests.
 mod admission;
 mod arcs;
+mod bend;
 mod constraints;
 mod construction;
 mod control_splines;

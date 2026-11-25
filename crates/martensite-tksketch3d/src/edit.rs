@@ -28,7 +28,7 @@ impl Snapshot {
         self.apply_batch(edits, true, &mut cancelled)
     }
 
-    pub(super) fn apply_targeted_line_batch(
+    pub(super) fn apply_targeted_edit_batch(
         &self,
         edits: &[Edit],
         cancelled: &mut impl FnMut() -> bool,

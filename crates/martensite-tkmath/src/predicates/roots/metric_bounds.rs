@@ -339,6 +339,11 @@ pub use segment_plane::{
     intersect_segment_plane,
 };
 
+mod cardinal_bend;
+pub use cardinal_bend::{
+    BINARY64_QUARTER_ANGLE_ERROR, CardinalBendFailure, CardinalBendPlacement, CardinalLegCut,
+    cardinal_bend_placement,
+};
 mod directed_line;
 pub use directed_line::{
     DirectedLineContact, DirectedLineHit, DirectedLineIncidenceFailure, DirectedLineParameter,

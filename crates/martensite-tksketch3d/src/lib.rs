@@ -2,6 +2,7 @@
 //! Owned spatial sketch geometry with atomic edit validation.
 mod admission;
 mod arc;
+pub mod bend;
 pub mod constraints;
 mod control_spline;
 mod edit;

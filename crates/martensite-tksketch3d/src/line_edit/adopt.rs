@@ -115,7 +115,7 @@ impl Snapshot {
             batch.push(Edit::RemovePoint(point));
         }
         // This edit declares its specific retirement instead of applying global orphan cleanup.
-        Ok(self.apply_targeted_line_batch(&batch, cancelled)?)
+        Ok(self.apply_targeted_edit_batch(&batch, cancelled)?)
     }
 }
 
