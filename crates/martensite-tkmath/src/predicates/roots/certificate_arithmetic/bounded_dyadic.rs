@@ -103,6 +103,13 @@ impl<'a> Arithmetic<'a> {
     }
     pub fn multiply(&mut self, a: &Interval, b: &Interval) -> Checked<Interval> {
         self.charge()?;
+        if let Some([(l0, l1), (u0, u1)]) = multiply_extrema(a, b) {
+            return rounded_shift(
+                &(l0 * l1),
+                &(u0 * u1),
+                usize::from(self.options.fractional_bits),
+            );
+        }
         let products = [
             &a.lower * &b.lower,
             &a.lower * &b.upper,
@@ -153,6 +160,9 @@ impl<'a> Arithmetic<'a> {
     pub fn divide(&mut self, a: &Interval, b: &Interval) -> Checked<Interval> {
         self.charge()?;
         self.positive_denominator(&b.lower)?;
+        if a.lower <= a.upper && b.lower <= b.upper {
+            return self.divide_ordered(a, b);
+        }
         let pairs = [
             (&a.lower, &b.lower),
             (&a.lower, &b.upper),
@@ -169,6 +179,30 @@ impl<'a> Arithmetic<'a> {
             .iter()
             .fold(bounds[0].upper.clone(), |a, b| a.max(b.upper.clone()));
         checked(lower, upper)
+    }
+    fn divide_ordered(&self, a: &Interval, b: &Interval) -> Checked<Interval> {
+        let shift = usize::from(self.options.fractional_bits);
+        let lower = &a.lower << shift;
+        check_bits(lower.bits())?;
+        let upper = &a.upper << shift;
+        check_bits(upper.bits())?;
+        // A positive integer grid denominator cannot increase either rounded
+        // magnitude past its integral scaled numerator. The legacy lower
+        // numerator size check therefore precedes the upper numerator check.
+        let lo_denominator = if a.lower.sign() == Sign::Minus {
+            &b.lower
+        } else {
+            &b.upper
+        };
+        let hi_denominator = if a.upper.sign() == Sign::Minus {
+            &b.upper
+        } else {
+            &b.lower
+        };
+        checked(
+            divide_floor(&lower, lo_denominator),
+            divide_ceil(&upper, hi_denominator),
+        )
     }
     pub fn integer_scale(&mut self, a: &Interval, factor: &BigInt) -> Checked<Interval> {
         self.charge()?;
@@ -307,6 +341,30 @@ fn divide_floor(numerator: &BigInt, denominator: &BigInt) -> BigInt {
 fn divide_ceil(numerator: &BigInt, denominator: &BigInt) -> BigInt {
     -divide_floor(&(-numerator), denominator)
 }
+fn multiply_extrema<'a>(a: &'a Interval, b: &'a Interval) -> Option<[(&'a BigInt, &'a BigInt); 2]> {
+    if a.lower > a.upper || b.lower > b.upper {
+        return None;
+    }
+    sign_definite_product_extrema(a, b).or_else(|| sign_definite_product_extrema(b, a))
+}
+
+fn sign_definite_product_extrema<'a>(
+    a: &'a Interval,
+    b: &'a Interval,
+) -> Option<[(&'a BigInt, &'a BigInt); 2]> {
+    // The order of the right endpoints follows the sign of the left interval.
+    let [lo, hi] = if a.lower.sign() != Sign::Minus {
+        [&b.lower, &b.upper]
+    } else if a.upper.sign() != Sign::Plus {
+        [&b.upper, &b.lower]
+    } else {
+        return None;
+    };
+    let left = [&a.lower, &a.upper];
+    let lower = left[usize::from(lo.sign() == Sign::Minus)];
+    let upper = left[usize::from(hi.sign() != Sign::Minus)];
+    Some([(lower, lo), (upper, hi)])
+}
 const fn binomial_table() -> [[u64; 51]; 51] {
     // Choose(50,25) < 2^47; every admitted product has total degree at most 50.
     let mut table = [[0; 51]; 51];
@@ -331,3 +389,7 @@ mod tests;
 #[cfg(test)]
 #[path = "bounded_dyadic_scale_tests.rs"]
 mod scale_tests;
+
+#[cfg(test)]
+#[path = "bounded_dyadic_endpoint_tests.rs"]
+mod endpoint_tests;
