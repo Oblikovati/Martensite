@@ -1,5 +1,10 @@
 //! Semantic identities are bound through native sweep images before any serialization.
-use super::{construction::Section, failure::*, request::*, sweep::Sweep};
+use super::{
+    construction::Section,
+    failure::*,
+    request::*,
+    sweep::{Sweep, SweepNames},
+};
 use martensite_tkbrep::{topexp, topods::Shape, toptools::IndexedMapOfShape};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeRevol;
@@ -46,12 +51,12 @@ pub struct HistoryKey {
     pub role: HistoryRole,
 }
 pub(super) type Bindings = Vec<(HistoryKey, Shape)>;
-struct Collector<'a> {
-    maker: &'a mut BRepPrimAPIMakeRevol,
-    images: Bindings,
+pub(super) struct Collector<'a> {
+    pub maker: &'a mut BRepPrimAPIMakeRevol,
+    pub images: Bindings,
 }
 impl Collector<'_> {
-    fn generated(
+    pub(super) fn generated(
         &mut self,
         source: HistorySource,
         role: HistoryRole,
@@ -104,36 +109,55 @@ fn collect_images(
         role: HistoryRole::Solid,
     };
     collector.images.push((key, solid.clone()));
-    region_faces(&mut collector, admitted, section)?;
-    curve_images(&mut collector, admitted, section)?;
-    corner_images(&mut collector, admitted, section)?;
+    match admitted.names {
+        SweepNames::Sector {
+            corners,
+            boundaries,
+        } => {
+            region_faces(&mut collector, admitted.region, boundaries, section)?;
+            curve_images(&mut collector, boundaries, section)?;
+            corner_images(&mut collector, corners, section)?;
+        }
+        SweepNames::FullTurn { rims } => {
+            super::full_turn::collect(&mut collector, admitted.region, rims, section, solid)?;
+        }
+    }
     Ok(collector.images)
 }
-fn face_role(depth: usize) -> HistoryRole {
+pub(super) fn face_role(depth: usize) -> HistoryRole {
     [HistoryRole::FirstDepthFace, HistoryRole::LastDepthFace][depth]
 }
-fn edge_role(depth: usize) -> HistoryRole {
+pub(super) fn edge_role(depth: usize) -> HistoryRole {
     [HistoryRole::FirstDepthEdge, HistoryRole::LastDepthEdge][depth]
 }
-fn vertex_role(depth: usize) -> HistoryRole {
+pub(super) fn vertex_role(depth: usize) -> HistoryRole {
     [HistoryRole::FirstDepthVertex, HistoryRole::LastDepthVertex][depth]
 }
-fn region_faces(collector: &mut Collector<'_>, admitted: &Sweep, section: &Section) -> Checked<()> {
-    depth_faces(collector, admitted, section)?;
+fn region_faces(
+    collector: &mut Collector<'_>,
+    region: SurfaceRegionId,
+    boundaries: [SurfaceCurveId; 4],
+    section: &Section,
+) -> Checked<()> {
+    depth_faces(collector, region, section)?;
     for (curve, edge) in [(0, 0), (2, 2)] {
-        let source = boundary_source(admitted, curve);
+        let source = HistorySource::Curve(boundaries[curve]);
         collector.generated(source, HistoryRole::SideFace, &section.edges[edge])?;
     }
     for (curve, last) in [(3, false), (1, true)] {
-        let source = boundary_source(admitted, curve);
+        let source = HistorySource::Curve(boundaries[curve]);
         collector.end(source, HistoryRole::SideFace, &section.face, last)?;
     }
     Ok(())
 }
-fn curve_images(collector: &mut Collector<'_>, admitted: &Sweep, section: &Section) -> Checked<()> {
-    arc_images(collector, admitted, section)?;
+fn curve_images(
+    collector: &mut Collector<'_>,
+    boundaries: [SurfaceCurveId; 4],
+    section: &Section,
+) -> Checked<()> {
+    arc_images(collector, [boundaries[0], boundaries[2]], section)?;
     for (curve, last) in [(3, false), (1, true)] {
-        let source = boundary_source(admitted, curve);
+        let source = HistorySource::Curve(boundaries[curve]);
         let inner = edge_role(section.first_depth);
         let outer = edge_role(1 - section.first_depth);
         collector.end(source, inner, &section.edges[3], last)?;
@@ -143,11 +167,11 @@ fn curve_images(collector: &mut Collector<'_>, admitted: &Sweep, section: &Secti
 }
 fn corner_images(
     collector: &mut Collector<'_>,
-    admitted: &Sweep,
+    corners: [SurfaceVertexId; 4],
     section: &Section,
 ) -> Checked<()> {
-    for corner in 0..4 {
-        let source = HistorySource::Vertex(admitted.corners[corner]);
+    for (corner, id) in corners.into_iter().enumerate() {
+        let source = HistorySource::Vertex(id);
         corner_ends(collector, source, section, corner)?;
     }
     Ok(())
@@ -170,6 +194,25 @@ pub(super) fn validate_membership(solid: &Shape, bindings: &Bindings) -> Checked
         (ShapeEnum::Face, 6),
         (ShapeEnum::Edge, 12),
         (ShapeEnum::Vertex, 8),
+    ] {
+        validate_kind(solid, bindings, kind, Some(count))?;
+    }
+    Ok(())
+}
+
+pub(super) fn validate_sweep_membership(
+    sweep: &Sweep,
+    solid: &Shape,
+    bindings: &Bindings,
+) -> Checked<()> {
+    if matches!(sweep.names, SweepNames::Sector { .. }) {
+        return validate_membership(solid, bindings);
+    }
+    for (kind, count) in [
+        (ShapeEnum::Solid, Some(1)),
+        (ShapeEnum::Face, Some(4)),
+        (ShapeEnum::Edge, None),
+        (ShapeEnum::Vertex, Some(4)),
     ] {
         validate_kind(solid, bindings, kind, count)?;
     }
@@ -203,11 +246,15 @@ pub(super) fn collect(
     let mut images = collect_images(admitted, section, maker, solid)?;
     images.sort_by_key(|(key, _)| *key);
     root_face_orientations(solid, &mut images)?;
-    validate_membership(solid, &images)?;
+    validate_sweep_membership(admitted, solid, &images)?;
     Ok(images)
 }
-fn depth_faces(collector: &mut Collector<'_>, admitted: &Sweep, section: &Section) -> Checked<()> {
-    let source = HistorySource::Region(admitted.region);
+pub(super) fn depth_faces(
+    collector: &mut Collector<'_>,
+    region: SurfaceRegionId,
+    section: &Section,
+) -> Checked<()> {
+    let source = HistorySource::Region(region);
     collector.generated(source, face_role(section.first_depth), &section.edges[3])?;
     collector.generated(
         source,
@@ -215,19 +262,20 @@ fn depth_faces(collector: &mut Collector<'_>, admitted: &Sweep, section: &Sectio
         &section.edges[1],
     )
 }
-fn boundary_source(admitted: &Sweep, index: usize) -> HistorySource {
-    HistorySource::Curve(admitted.boundaries[index])
-}
 
-fn arc_images(collector: &mut Collector<'_>, admitted: &Sweep, section: &Section) -> Checked<()> {
+pub(super) fn arc_images(
+    collector: &mut Collector<'_>,
+    rims: [SurfaceCurveId; 2],
+    section: &Section,
+) -> Checked<()> {
     for vertex in 0..4 {
-        let curve = if vertex < 2 { 0 } else { 2 };
+        let rim = rims[vertex / 2];
         let depth = if vertex == 0 || vertex == 3 {
             section.first_depth
         } else {
             1 - section.first_depth
         };
-        let source = boundary_source(admitted, curve);
+        let source = HistorySource::Curve(rim);
         collector.generated(source, edge_role(depth), &section.vertices[vertex])?;
     }
     Ok(())
@@ -247,7 +295,12 @@ fn corner_ends(
     collector.end(source, outer, &section.vertices[vertices[1]], last)
 }
 
-fn validate_kind(solid: &Shape, bindings: &Bindings, kind: ShapeEnum, count: usize) -> Checked<()> {
+fn validate_kind(
+    solid: &Shape,
+    bindings: &Bindings,
+    kind: ShapeEnum,
+    count: Option<usize>,
+) -> Checked<()> {
     let mut map = IndexedMapOfShape::default();
     topexp::map_shapes_of_type(solid, kind, &mut map)
         .map_err(|error| native("history membership", error))?;
@@ -255,6 +308,7 @@ fn validate_kind(solid: &Shape, bindings: &Bindings, kind: ShapeEnum, count: usi
         .iter()
         .filter(|(key, _)| role_kind(key.role) == kind)
         .collect();
+    let count = count.unwrap_or(selected.len());
     if selected.len() != count || map.extent() != count {
         return Err(incomplete(
             "complete history census",

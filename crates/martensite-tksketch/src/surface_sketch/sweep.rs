@@ -1,10 +1,20 @@
 //! Private values shared by admitted analytic section sweeps.
 use super::{failure::*, request::*};
 
+#[derive(Clone, Copy)]
+pub(super) enum SweepNames {
+    Sector {
+        corners: [SurfaceVertexId; 4],
+        boundaries: [SurfaceCurveId; 4],
+    },
+    FullTurn {
+        rims: [SurfaceCurveId; 2],
+    },
+}
+
 pub(super) struct Sweep {
     pub region: SurfaceRegionId,
-    pub corners: [SurfaceVertexId; 4],
-    pub boundaries: [SurfaceCurveId; 4],
+    pub names: SweepNames,
     pub options: NormalExtrusionOptions,
     pub origin: [f64; 3],
     pub axis: [f64; 3],
