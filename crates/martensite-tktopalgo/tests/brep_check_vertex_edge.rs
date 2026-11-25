@@ -4,13 +4,14 @@ mod brep_check_support;
 
 use brep_check_support::{TOL, cube, solid_of, square, vertex};
 use martensite_tkbrep::brep::BRepBuilder;
-use martensite_tkbrep::topods::{Edge, Shape};
-use martensite_tkernel::ncollection::Array1;
+use martensite_tkbrep::topods::{Edge, Face, Shape, Wire};
+use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Handle;
-use martensite_tkg3d::geom::{GeomCurve, GeomLine};
+use martensite_tkg2d::geom2d::Geom2dBezierCurve;
+use martensite_tkg3d::geom::{GeomBezierCurve, GeomBezierSurface, GeomCurve, GeomLine};
 use martensite_tkg3d::top_abs::Orientation;
-use martensite_tkmath::gp::{Direction3, Point3};
+use martensite_tkmath::gp::{Direction3, Point2, Point3};
 use martensite_tkmath::poly::{PolygonOnTriangulation, Triangle, Triangulation};
 use martensite_tktopalgo::brep_check::{
     BRepCheckEdge, BRepCheckResult, BRepCheckStatus, BRepCheckVertex,
@@ -133,6 +134,48 @@ fn edge_in_face_validates_its_pcurve() {
     let checker = BRepCheckEdge::new(&sq.edges[&(0, 1)]).unwrap();
     assert_eq!(on(&checker, &sq.faces[0]), [InvalidSameParameterFlag]);
     assert_eq!(on(&checker, &sq.wires[0][0]), [NoError]);
+}
+
+fn bezier_wall() -> Face {
+    let mut face = Face::default();
+    let (a, b) = (Point3::new(0., 0., 0.), Point3::new(1., 0., 0.));
+    let mut net = [a, Point3::new(0., 1., 0.), b, Point3::new(1., 1., 0.5)];
+    let patch = GeomBezierSurface::new(&Array2::from_buffer(&mut net, 2, 2).unwrap()).unwrap();
+    BRepBuilder::default().make_face_on_surface(&mut face, &Handle::new(patch).into_upcast(), TOL).unwrap();
+    face
+}
+
+fn bezier_wall_edge(shift: f64, trace_v: f64) -> (Edge, Face) {
+    let builder = BRepBuilder::default();
+    let mut face = bezier_wall();
+    let (mut edge, mut wire) = (Edge::default(), Wire::default());
+    let rail = [Point3::new(0., 0., 0.), Point3::new(1., 0., shift)];
+    let curve = GeomBezierCurve::new(&Array1::from_shared(&rail, 1)).unwrap();
+    let trim = [Point2::new(0., trace_v), Point2::new(1., trace_v)];
+    let trace = Geom2dBezierCurve::new(&Array1::from_shared(&trim, 1)).unwrap();
+    builder.make_edge_with_curve(&mut edge, &Handle::new(curve).into_upcast(), TOL).unwrap();
+    builder.update_edge_pcurve_on_face(&edge, &Handle::new(trace).into_upcast(), &face, TOL).unwrap();
+    builder.range(&edge, 0., 1., false).unwrap();
+    builder.make_wire(&mut wire);
+    builder.add(&mut wire, &edge).unwrap();
+    builder.add(&mut face, &wire).unwrap();
+    (edge, face)
+}
+
+#[test]
+fn exact_bezier_boundary_preserves_edge_status_and_checks_changed_geometry() {
+    for (shift, trace_v, expected) in [
+        (0., 0., vec![NoError]),
+        (1e-3, 0., vec![InvalidCurveOnSurface, InvalidSameParameterFlag]),
+        (0., 1., vec![InvalidCurveOnSurface, InvalidSameParameterFlag]),
+    ] {
+        let (edge, face) = bezier_wall_edge(shift, trace_v);
+        for exact in [false, true] {
+            let check = BRepCheckEdge::new(&edge).unwrap();
+            check.set_exact_method(exact);
+            assert_eq!(on(&check, &face), expected);
+        }
+    }
 }
 
 #[test]

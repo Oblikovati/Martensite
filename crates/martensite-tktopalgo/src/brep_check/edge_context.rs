@@ -1,6 +1,7 @@
 //! `BRepCheck_Edge::InContext`: the edge in a face (its curves on the face surface
 //! against its reference curve) and in a solid (shared by two faces).
 use super::edge::{BRepCheckEdge, pcurve_range_fits};
+use super::edge_bezier_boundary::identical_boundary;
 use super::errors::null_object;
 use super::explore::{holds_same, sub_shapes};
 use super::result::{BRepCheckResult, SharedStatusList, add_status, close_status_list};
@@ -33,6 +34,7 @@ struct FaceCheck<'a> {
     cref: Handle<dyn BRepCurveRepresentation>,
     /// `Floc * TFloc`: the face location composed with its surface location.
     face_location: Location,
+    reference_location: Location,
     surface: Handle<dyn GeomSurface>,
     tol: f64,
     same_parameter: bool,
@@ -90,7 +92,8 @@ impl FaceCheck<'_> {
             return Ok(false);
         }
         if self.gctrl {
-            self.check_distances(r, (f, l))?;
+            let unit_parameter = [(f, l), (ff, ll), (first, last)] == [(0., 1.); 3];
+            self.check_distances(r, (f, l), unit_parameter)?;
         }
         Ok(true)
     }
@@ -120,18 +123,21 @@ impl FaceCheck<'_> {
         &self,
         r: &dyn BRepCurveRepresentation,
         range: (f64, f64),
+        unit_parameter: bool,
     ) -> Result<(), Failure> {
         let sb = self.moved_surface()?;
         let gahs: Handle<dyn Adaptor3dSurface> =
             Handle::new(GeomAdaptorSurface::with_surface(&sb)?).into_upcast();
-        let ghpc = Handle::new(Geom2dAdaptorCurve::with_range(
-            &r.pcurve()?,
-            range.0,
-            range.1,
-        )?);
+        let pcurve = r.pcurve()?;
+        let closed = r.is_curve_on_closed_surface();
+        if self.literal_boundary_candidate(unit_parameter, closed)
+            && identical_boundary(&self.hcurve, &sb, &pcurve)
+        {
+            return Ok(());
+        }
+        let ghpc = Handle::new(Geom2dAdaptorCurve::with_range(&pcurve, range.0, range.1)?);
         let ghpc_curve: Handle<dyn Adaptor2dCurve2d> = ghpc.clone().cast();
         let acs = Handle::new(Adaptor3dCurveOnSurface::with_curve(&ghpc_curve, &gahs)?);
-        let closed: bool = r.is_curve_on_closed_surface();
         if !self.validate(&acs)? {
             let status = if closed {
                 BRepCheckStatus::InvalidCurveOnClosedSurface
@@ -156,6 +162,17 @@ impl FaceCheck<'_> {
             }
         }
         Ok(())
+    }
+
+    fn literal_boundary_candidate(&self, unit_parameter: bool, closed: bool) -> bool {
+        self.exact
+            && self.same_parameter
+            && unit_parameter
+            && !closed
+            && self.reference_location.is_identity()
+            && self.face_location.is_identity()
+            && self.tol.is_finite()
+            && self.tol > 0.
     }
 
     /// No curve on the face surface: `NoCurveOnSurface` unless the surface is a plane,
@@ -289,12 +306,14 @@ impl BRepCheckEdge {
             )
         };
         let cref_location = cref.get().expect("checked reference").location();
-        let etrsf = (shape.location() * &cref_location)?.transformation();
+        let reference_location = (shape.location() * &cref_location)?;
+        let etrsf = reference_location.transformation();
         let check = FaceCheck {
             list,
             hcurve,
             cref: cref.clone(),
             face_location,
+            reference_location,
             surface: tface.surface(),
             tol,
             same_parameter,
