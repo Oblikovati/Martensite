@@ -23,8 +23,9 @@ pub mod sketch_incidence;
 /// Exact bounded embeddings of supplied rational tensor query charts.
 pub mod surface_query;
 pub use cubic_bernstein::{
-    CubicBernsteinFailure, CubicBernsteinJet, CubicChordDistortion, CubicFitMaterialization,
-    CubicFitNumericError, CubicFitOperator, ExactCubicBernstein3, cubic_chord_distortion,
+    CubicBernsteinFailure, CubicBernsteinJet, CubicChordDistortion, CubicEndJet, CubicEndJetFailure,
+    CubicEndStencil, CubicFitMaterialization, CubicFitNumericError, CubicFitOperator,
+    ExactCubicBernstein3, RoundedCubicEndJet, TangentDirectionBand, cubic_chord_distortion,
 };
 pub use dyadic::DyadicBound;
 pub use error::RootIsolationError;

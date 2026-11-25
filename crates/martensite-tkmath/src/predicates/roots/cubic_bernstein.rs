@@ -16,6 +16,11 @@ pub use fit::{
     cubic_chord_distortion,
 };
 
+mod endpoint;
+pub use endpoint::{
+    CubicEndJet, CubicEndJetFailure, CubicEndStencil, RoundedCubicEndJet, TangentDirectionBand,
+};
+
 /// Owned exact coordinates of one unweighted spatial cubic Bernstein polynomial.
 ///
 /// The degree and binary64 source range bound work and intermediate integer size.
