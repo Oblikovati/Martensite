@@ -195,3 +195,171 @@ fn assert_partial_refusals(band: &FullTurnBand) {
         assert_eq!(refused.stage, SurfaceStage::Admission);
     }
 }
+
+#[test]
+fn oblique_full_turn_retains_analytic_shape_and_trim_correspondence() {
+    let mut band = cylinder(NormalSense::Outward, 0.3);
+    if let FullTurnSupport::Cylinder { support, .. } = &mut band.support {
+        support.origin = [2., -4., 8.];
+        support.axis = [0.6, 0., 0.8];
+        support.radial = [0.8, 0., -0.6];
+    }
+    let result = normal_extrude_full_turn_band(&band, [-1., 2.], options()).unwrap();
+    check_analytic_band(&result, 99. * PI, [4, 6, 4, 6, 1]);
+    assert_authored_images(&band, &result);
+}
+
+#[test]
+fn moved_seam_binding_refuses_before_accepting_an_unchanged_valid_solid() {
+    let band = cylinder(NormalSense::Outward, 0.3);
+    let section = admission::admit(band, [-1., 2.], options()).unwrap();
+    let (meridian, mut maker, solid) = construction::construct(&section.sweep).unwrap();
+    let mut bound =
+        crate::surface_sketch::history::collect(&section.sweep, &meridian, &mut maker, &solid)
+            .unwrap();
+    swap_seam_images(&mut bound, band.region);
+    assert!(verification::validate(&section, band.rims, &bound).is_err());
+    assert!(
+        martensite_tkbo::body_check::validate_body(&solid, &options().resolution)
+            .unwrap()
+            .is_valid()
+    );
+}
+
+fn swap_seam_images(
+    bindings: &mut crate::surface_sketch::history::Bindings,
+    region: SurfaceRegionId,
+) {
+    let source = HistorySource::Region(region);
+    let [first, last] = [HistoryRole::FirstDepthEdge, HistoryRole::LastDepthEdge].map(|role| {
+        bindings
+            .iter()
+            .position(|(key, _)| *key == HistoryKey { source, role })
+            .unwrap()
+    });
+    let other = bindings[first].1.clone();
+    bindings[first].1 = bindings[last].1.clone();
+    bindings[last].1 = other;
+}
+
+#[test]
+fn full_turn_archives_match_across_fresh_processes() {
+    const CHILD: &str = "MARTENSITE_FULL_TURN_REPLAY_CHILD";
+    if std::env::var_os(CHILD).is_some() {
+        let request = cone(NormalSense::Outward, 0.3);
+        let result = normal_extrude_full_turn_band(&request, [-0.25, 0.5], options()).unwrap();
+        println!(
+            "FULL_TURN={:x?}|{:?}|{:?}",
+            result.bytes,
+            result.history(),
+            result.validation()
+        );
+        return;
+    }
+    assert_eq!(fresh_archive(CHILD), fresh_archive(CHILD));
+}
+
+fn fresh_archive(child: &str) -> String {
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "surface_sketch::full_turn::tests::full_turn_archives_match_across_fresh_processes",
+            "--nocapture",
+        ])
+        .env(child, "1")
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{output:?}");
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    stdout
+        .lines()
+        .find(|line| line.starts_with("FULL_TURN="))
+        .unwrap()
+        .to_owned()
+}
+
+fn seam_crossing_hole() -> CylinderBandHole {
+    CylinderBandHole {
+        arc_length: [-0.625, 0.625],
+        axial: [2., 3.],
+        corners: [31, 22, 15, 7].map(SurfaceVertexId),
+        boundaries: [83, 61, 42, 17].map(SurfaceCurveId),
+    }
+}
+
+#[test]
+fn seam_crossing_aperture_preserves_its_authored_ids_after_native_cut_relocation() {
+    let band = cylinder(NormalSense::Outward, 0.);
+    let hole = seam_crossing_hole();
+    let depths = [-1., 2.];
+    let original = normal_extrude_cylinder_band_with_hole(&band, &hole, depths, options()).unwrap();
+    let repeated = normal_extrude_cylinder_band_with_hole(&band, &hole, depths, options()).unwrap();
+    assert_eq!(original.bytes, repeated.bytes);
+    let relocated = super::hole::build(&band, &hole, depths, options(), Some(2.5)).unwrap();
+    assert_eq!(original.history(), relocated.history());
+    assert_aperture(&original, 99. * PI - 33. / 8.);
+    assert_aperture(&relocated, 99. * PI - 33. / 8.);
+    for curve in hole.boundaries {
+        let wall = HistoryKey {
+            source: HistorySource::Curve(curve),
+            role: HistoryRole::SideFace,
+        };
+        assert!(original.history().binary_search(&wall).is_ok());
+    }
+}
+
+fn assert_aperture(result: &NormalExtrusionResult, expected: f64) {
+    let volume = result.volume();
+    assert!((volume.value - expected).abs() <= volume.error_bound);
+    let [census] = result.validation().census.as_slice() else {
+        panic!("one solid expected, got {:?}", result.validation().census);
+    };
+    assert_eq!(
+        [
+            census.vertices,
+            census.edges,
+            census.faces,
+            census.loops,
+            census.shells
+        ],
+        [12, 18, 8, 12, 1]
+    );
+    assert_eq!(census.genus, Some(2));
+}
+
+#[test]
+fn inward_normal_preserves_the_through_hole_and_reverses_requested_depth_roles() {
+    let band = cylinder(NormalSense::Inward, 0.);
+    let hole = seam_crossing_hole();
+    let result =
+        normal_extrude_cylinder_band_with_hole(&band, &hole, [-1., 2.], options()).unwrap();
+    assert_aperture(&result, 81. * PI - 27. / 8.);
+    assert!(result.validation().is_valid());
+}
+
+#[test]
+fn authored_hole_cannot_erase_a_band_rim_or_force_an_unqualified_native_cut() {
+    let band = cylinder(NormalSense::Outward, 0.);
+    let hole = seam_crossing_hole();
+    let bad = CylinderBandHole {
+        axial: [1., 2.],
+        ..hole
+    };
+    let refused =
+        normal_extrude_cylinder_band_with_hole(&band, &bad, [-1., 2.], options()).unwrap_err();
+    assert!(matches!(
+        refused.cause,
+        SurfaceFailureCause::InvalidInput {
+            field: "lower aperture clearance",
+            ..
+        }
+    ));
+    let refused = super::hole::build(&band, &hole, [-1., 2.], options(), Some(0.)).unwrap_err();
+    assert!(matches!(
+        refused.cause,
+        SurfaceFailureCause::InvalidInput {
+            field: "aperture to native seam clearance",
+            ..
+        }
+    ));
+}

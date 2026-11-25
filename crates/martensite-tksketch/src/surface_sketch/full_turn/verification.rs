@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind each analytic carrier, closed rim and directed seam to its meridional source.
 use super::{admission::BandSection, history::*};
+use crate::surface_sketch::{admission as cylinder, semantic};
 use crate::surface_sketch::{failure::*, frame, history::*, request::*, semantic::*};
 use martensite_tkbrep::{
     brep::BRepTool,
@@ -25,8 +26,38 @@ pub(super) fn validate(
     rims: [SurfaceCurveId; 2],
     bindings: &Bindings,
 ) -> Checked<()> {
+    verify_band(section, rims, bindings, None)
+}
+
+pub(super) fn validate_aperture(
+    section: &BandSection,
+    rims: [SurfaceCurveId; 2],
+    aperture: &cylinder::Admitted,
+    bindings: &Bindings,
+) -> Checked<()> {
+    let rectangle = &aperture.rectangle;
+    let hole: Bindings = bindings
+        .iter()
+        .filter(|(key, _)| match key.source {
+            HistorySource::Region(_) => false,
+            HistorySource::Curve(curve) => rectangle.boundaries.contains(&curve),
+            HistorySource::Vertex(vertex) => rectangle.corners.contains(&vertex),
+        })
+        .cloned()
+        .collect();
+    semantic::validate(aperture, &hole)?;
+    trim::verify_aperture_walls(section, &hole)?;
+    verify_band(section, rims, bindings, Some(rectangle.boundaries))
+}
+
+fn verify_band(
+    section: &BandSection,
+    rims: [SurfaceCurveId; 2],
+    bindings: &Bindings,
+    aperture: Option<[SurfaceCurveId; 4]>,
+) -> Checked<()> {
     for index in 0..4 {
-        verify_face(section, rims, bindings, index)?;
+        verify_face(section, rims, bindings, index, aperture)?;
         let rim = rim_keys(rims, section.sweep.first_depth, index)[0];
         verify_rim(section, bindings, rim, index)?;
     }
@@ -38,6 +69,7 @@ fn verify_face(
     rims: [SurfaceCurveId; 2],
     bindings: &Bindings,
     index: usize,
+    aperture: Option<[SurfaceCurveId; 4]>,
 ) -> Checked<()> {
     let key = face_key(section.sweep.region, rims, section.sweep.first_depth, index);
     let face = topods::face(lookup(bindings, key)?).map_err(|e| native("full-turn face", e))?;
@@ -46,7 +78,7 @@ fn verify_face(
     let carrier = carrier_type(section.cylinder, index);
     require_surface(&surface, carrier)?;
     verify_carrier(section, &surface, carrier, index)?;
-    trim::verify(section, bindings, &face, &surface, rims, index)
+    trim::verify(section, bindings, &face, &surface, rims, index, aperture)
 }
 
 fn carrier_type(cylinder: bool, index: usize) -> SurfaceType {

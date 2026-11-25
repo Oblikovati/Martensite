@@ -216,7 +216,7 @@ impl MeridianMap {
             expected_volume,
             surface_area,
             coordinate_error,
-            reference_plane: Some(self.reference(meridian)?),
+            reference_plane: self.integration_reference(meridian)?,
         })
     }
 
@@ -232,7 +232,11 @@ impl MeridianMap {
         })
     }
 
-    fn reference(&self, meridian: [[f64; 2]; 4]) -> Checked<Plane3> {
+    fn integration_reference(&self, meridian: [[f64; 2]; 4]) -> Checked<Option<Plane3>> {
+        // Follow the same conditioning as the existing analytic sector paths.
+        if self.cylinder {
+            return Ok(None);
+        }
         let margin = meridian.into_iter().map(|p| p[0]).fold(0., f64::max);
         let axial = meridian
             .into_iter()
@@ -245,6 +249,7 @@ impl MeridianMap {
         let normal =
             Direction3::new(a, b, c).map_err(|e| native("integration reference normal", e))?;
         Plane3::new(Point3::new(x, y, z), normal)
+            .map(Some)
             .map_err(|e| native("integration reference plane", e))
     }
 }

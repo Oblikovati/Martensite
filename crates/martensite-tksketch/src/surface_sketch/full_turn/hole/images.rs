@@ -1,0 +1,172 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//! Compose semantic bindings through a single non-destructive difference.
+use super::*;
+use martensite_tkbo::{bop_algo::Operation, brep_algo_api::BRepAlgoAPIBooleanOperation};
+use martensite_tkbrep::{topexp, topods::ShapeIterator, toptools::IndexedMapOfShape};
+use martensite_tkernel::ncollection::List;
+use martensite_tkg3d::top_abs::ShapeEnum;
+use std::collections::BTreeMap;
+
+pub(super) struct Candidate {
+    body: topods::Shape,
+    cut: BRepAlgoAPIBooleanOperation,
+    members: BTreeMap<ShapeEnum, IndexedMapOfShape>,
+}
+
+pub(super) fn subtract(stock: &topods::Shape, hole: &topods::Shape) -> Checked<Candidate> {
+    let mut cut = BRepAlgoAPIBooleanOperation::new();
+    cut.set_operation(Operation::Cut);
+    cut.set_non_destructive(true);
+    cut.set_arguments(&List::from_iter([stock.clone()]));
+    cut.set_tools(&List::from_iter([hole.clone()]));
+    cut.build()
+        .map_err(|e| native("subtract admitted aperture", e))?;
+    if cut.has_errors() {
+        return Err(incomplete(
+            "completed aperture subtraction",
+            "native Boolean errors",
+        ));
+    }
+    let body = one_solid(cut.shape())?;
+    let members = rooted_members(&body)?;
+    Ok(Candidate { body, cut, members })
+}
+
+fn rooted_members(body: &topods::Shape) -> Checked<BTreeMap<ShapeEnum, IndexedMapOfShape>> {
+    let mut all = BTreeMap::new();
+    for kind in [
+        ShapeEnum::Solid,
+        ShapeEnum::Face,
+        ShapeEnum::Edge,
+        ShapeEnum::Vertex,
+    ] {
+        let mut map = IndexedMapOfShape::default();
+        topexp::map_shapes_of_type(body, kind, &mut map)
+            .map_err(|e| native("index aperture result images", e))?;
+        all.insert(kind, map);
+    }
+    Ok(all)
+}
+
+pub(super) fn bind(
+    candidate: Candidate,
+    stock: Bindings,
+    hole: Bindings,
+) -> Checked<(topods::Shape, Bindings)> {
+    let mut result = stock
+        .into_iter()
+        .map(|(key, shape)| candidate.image(key, &shape))
+        .collect::<Checked<Bindings>>()?;
+    for (key, shape) in hole {
+        if matches!(key.source, HistorySource::Region(_)) {
+            candidate.deleted_cap(key, &shape)?;
+        } else {
+            result.push(candidate.image(key, &shape)?);
+        }
+    }
+    result.sort_by_key(|(key, _)| *key);
+    root_face_orientations(&candidate.body, &mut result)?;
+    Ok((candidate.body, result))
+}
+
+impl Candidate {
+    fn image(
+        &self,
+        key: HistoryKey,
+        parent: &topods::Shape,
+    ) -> Checked<(HistoryKey, topods::Shape)> {
+        let members = self
+            .members
+            .get(&role_kind(key.role))
+            .ok_or_else(|| incomplete("indexed aperture result kind", format!("{key:?}")))?;
+        let modified = self
+            .cut
+            .modified(parent)
+            .map_err(|e| native("aperture modified history", e))?;
+        let images = std::iter::once(parent)
+            .chain(&modified)
+            .map(|image| members.find_index(image));
+        let one = unique_member(images, key)?;
+        self.require_unsplit(key, parent)?;
+        let image = members
+            .find_key(one)
+            .map_err(|e| native("bound aperture image", e))?;
+        Ok((key, image.clone()))
+    }
+
+    fn require_unsplit(&self, key: HistoryKey, parent: &topods::Shape) -> Checked<()> {
+        let generated = self
+            .cut
+            .generated(parent)
+            .map_err(|e| native("aperture generated history", e))?;
+        let unexpected = generated
+            .iter()
+            .any(|image| self.members.values().any(|map| map.find_index(image) != 0));
+        if unexpected {
+            return Err(incomplete(
+                "unsplit source at a clear native seam",
+                format!("{key:?}"),
+            ));
+        }
+        Ok(())
+    }
+
+    fn deleted_cap(&self, key: HistoryKey, image: &topods::Shape) -> Checked<()> {
+        if self
+            .cut
+            .is_deleted(image)
+            .map_err(|e| native("aperture deleted history", e))?
+        {
+            return Ok(());
+        }
+        Err(incomplete(
+            "consumed aperture tool cap or solid",
+            format!("{key:?}"),
+        ))
+    }
+}
+
+fn unique_member(indices: impl Iterator<Item = usize>, key: HistoryKey) -> Checked<usize> {
+    let mut one = 0;
+    for image in indices.filter(|&index| index != 0) {
+        if one != 0 && one != image {
+            return Err(incomplete(
+                "unique image of an admitted unsplit aperture source",
+                format!("{key:?}"),
+            ));
+        }
+        one = image;
+    }
+    if one != 0 {
+        return Ok(one);
+    }
+    Err(incomplete(
+        "retained source image after aperture subtraction",
+        format!("{key:?}"),
+    ))
+}
+
+fn one_solid(proposal: &topods::Shape) -> Checked<topods::Shape> {
+    let kind = proposal
+        .shape_type()
+        .map_err(|e| native("aperture output kind", e))?;
+    if kind == ShapeEnum::Solid {
+        return Ok(proposal.clone());
+    }
+    let mut members = ShapeIterator::new(proposal, true, true);
+    let first = members
+        .value()
+        .map_err(|e| native("aperture result member", e))?
+        .clone();
+    members.next();
+    let member_kind = first
+        .shape_type()
+        .map_err(|e| native("aperture member kind", e))?;
+    if kind != ShapeEnum::Compound || members.more() || member_kind != ShapeEnum::Solid {
+        return Err(incomplete(
+            "one solid from an aperture cut",
+            format!("{kind:?} with {member_kind:?} member"),
+        ));
+    }
+    Ok(first)
+}

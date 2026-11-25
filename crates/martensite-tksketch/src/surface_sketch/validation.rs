@@ -29,6 +29,36 @@ pub(super) fn check_body(
     if matches!(admitted.names, SweepNames::FullTurn { .. }) {
         verify_band_census(&report)?;
     }
+    finish(report, bindings, admitted)
+}
+
+pub(super) fn check_one_periodic_hole(
+    solid: &topods::Shape,
+    bindings: &Bindings,
+    admitted: &Sweep,
+    semantic_check: &impl Fn(&Bindings) -> Checked<()>,
+) -> Checked<CheckedBody> {
+    use martensite_tkg3d::top_abs::ShapeEnum;
+    for (kind, count) in [
+        (ShapeEnum::Solid, 1),
+        (ShapeEnum::Face, 8),
+        (ShapeEnum::Edge, 18),
+        (ShapeEnum::Vertex, 12),
+    ] {
+        super::history::validate_kind(solid, bindings, kind, Some(count))?;
+    }
+    semantic_check(bindings)?;
+    let report = ordered_report(solid, admitted)?;
+    if !matches!(report.census.as_slice(), [body] if body.shells == 1 && body.genus == Some(2)) {
+        return Err(incomplete(
+            "one genus-two shell after a through hole",
+            format!("{:?}", report.census),
+        ));
+    }
+    finish(report, bindings, admitted)
+}
+
+fn finish(report: ValidationReport, bindings: &Bindings, admitted: &Sweep) -> Checked<CheckedBody> {
     let achieved = tolerances(bindings)?;
     let diagnostics = cap_diagnostics(achieved, admitted.options.resolution.cap)?;
     Ok(CheckedBody {
