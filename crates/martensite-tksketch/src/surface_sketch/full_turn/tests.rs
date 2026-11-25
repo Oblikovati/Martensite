@@ -6,6 +6,7 @@ pub(super) mod conic_aperture;
 pub(super) mod curved_aperture;
 pub(super) mod curved_batch;
 pub(super) mod curved_cone_aperture;
+mod curved_failures;
 mod lifted_cone;
 mod multiple;
 mod placed;
@@ -19,6 +20,15 @@ static_assertions::assert_impl_all!(CylinderBandHole: Send, Sync);
 static_assertions::assert_impl_all!(ConeBandHole: Send, Sync);
 static_assertions::assert_impl_all!(CrossedBandResult: Send, Sync);
 static_assertions::assert_impl_all!(PeriodicImageKey: Send, Sync);
+
+pub(in crate::surface_sketch::full_turn) fn surface_failure(
+    failure: CurvedBandFailure,
+) -> SurfaceSketchFailure {
+    let CurvedBandFailure::Surface(source) = failure else {
+        panic!("expected a periodic surface refusal: {failure:?}");
+    };
+    source
+}
 
 pub(super) fn options() -> NormalExtrusionOptions {
     NormalExtrusionOptions {

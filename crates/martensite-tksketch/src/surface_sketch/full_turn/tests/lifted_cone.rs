@@ -92,6 +92,7 @@ fn curved_cone_refuses_uncertain_contact_with_a_nonzero_cut_ray() {
     }
     let failure =
         normal_extrude_cone_band_with_curved_hole(&band, &request, options()).unwrap_err();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,

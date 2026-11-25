@@ -48,6 +48,7 @@ fn rational_periodic_aperture_refuses_nonpositive_authored_weights() {
     let failure = normal_extrude_cylinder_band_with_rational_hole(&band, &request, options(), 4)
         .err()
         .unwrap();
+    let failure = surface_failure(failure);
     assert_eq!(failure.stage, SurfaceStage::Admission);
     assert!(matches!(
         failure.cause,
