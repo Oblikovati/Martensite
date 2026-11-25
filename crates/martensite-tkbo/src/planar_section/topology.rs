@@ -7,7 +7,8 @@ use super::{
 use geometry::{RawChart, RawLine, RawPcurve};
 use martensite_tkbrep::{
     brep::face_input_capture::{
-        CapturedFaceCell, FaceCaptureBehavior, FaceCaptureLimits, capture_face_input_with_behavior,
+        CapturedFaceCell, CapturedLocation, FaceCaptureBehavior, FaceCaptureLimits,
+        FaceInputSnapshot, capture_face_input_with_behavior,
     },
     topods::{self, Edge, Face, Shape, ShapeIterator, Vertex},
 };
@@ -53,7 +54,7 @@ pub(super) fn observe(
         FaceCaptureBehavior::StoredSurfaceQueriesV2,
         || progress.user_break(),
     )?;
-    require_source_tolerances(captured.cells(), progress)?;
+    validate_source_snapshot(&captured, progress)?;
     let support = geometry::face_chart(&face)?;
     read_original(
         support,
@@ -65,26 +66,59 @@ pub(super) fn observe(
     )
 }
 
-fn require_source_tolerances(
-    cells: &[(usize, CapturedFaceCell)],
-    progress: &ProgressRange,
-) -> Checked<()> {
-    for (owner, cell) in cells {
+fn validate_source_snapshot(snapshot: &FaceInputSnapshot, progress: &ProgressRange) -> Checked<()> {
+    check_stored_location(&snapshot.root().location, progress)?;
+    for (owner, cell) in snapshot.cells() {
         poll(progress)?;
         match cell {
-            CapturedFaceCell::Face { tolerance, .. }
-            | CapturedFaceCell::Edge { tolerance, .. }
-            | CapturedFaceCell::Vertex { tolerance, .. }
-                if *tolerance < 0. =>
-            {
-                return Err(Cause::SourceTolerance {
-                    owner: *owner,
-                    actual: *tolerance,
-                });
+            CapturedFaceCell::Topology { children, .. } => {
+                for child in children {
+                    check_stored_location(&child.location, progress)?;
+                }
+            }
+            CapturedFaceCell::Face {
+                location,
+                tolerance,
+                ..
+            } => {
+                check_tolerance(*owner, *tolerance)?;
+                check_stored_location(location, progress)?;
+            }
+            CapturedFaceCell::Edge { tolerance, .. }
+            | CapturedFaceCell::Vertex { tolerance, .. } => {
+                check_tolerance(*owner, *tolerance)?;
+            }
+            CapturedFaceCell::Location(location)
+            | CapturedFaceCell::Regularity {
+                location2: location,
+                ..
+            } => {
+                check_stored_location(location, progress)?;
             }
             _ => {}
         }
     }
+    Ok(())
+}
+
+fn check_tolerance(owner: usize, actual: f64) -> Checked<()> {
+    if actual < 0. {
+        return Err(Cause::SourceTolerance { owner, actual });
+    }
+    Ok(())
+}
+
+fn check_stored_location(location: &CapturedLocation, progress: &ProgressRange) -> Checked<()> {
+    for (_, _, datum) in location.steps() {
+        poll(progress)?;
+        datum
+            .checked_unit_placement_rows()
+            .map_err(Cause::Placement)?;
+    }
+    location
+        .effective_transform()
+        .checked_unit_placement_rows()
+        .map_err(Cause::Placement)?;
     Ok(())
 }
 

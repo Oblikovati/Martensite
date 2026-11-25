@@ -299,6 +299,33 @@ fn lying_unit_translation_form_cannot_classify_a_transverse_section_as_empty() {
 }
 
 #[test]
+fn composed_valid_map_cannot_hide_a_contradictory_source_datum() {
+    let rotation = quarter_y();
+    let mut bad = rotation;
+    bad.set_form(TransformForm::Translation);
+    let placement = Location::new(rotation)
+        .multiplied(&Location::new(bad))
+        .unwrap();
+    assert_eq!(
+        placement
+            .transformation()
+            .checked_unit_placement_rows()
+            .unwrap(),
+        rotation.checked_unit_placement_rows().unwrap()
+    );
+    let located = setup().moved(&placement, false).unwrap();
+    let face = topods::face(&located).unwrap();
+    let tool = work_plane([0., 0., 0.], Direction3::Z);
+    let failure = cut(&face, tool).unwrap_err();
+    assert!(matches!(
+        failure.cause,
+        PlanarSectionCause::Placement(martensite_tkmath::gp::UnitPlacementError::Shortcut(
+            TransformForm::Translation
+        ))
+    ));
+}
+
+#[test]
 fn ordinary_quarter_rotation_retains_the_source_chart() {
     let face = rotate_face(quarter_y());
     let tool = work_plane([0., 0., 0.], Direction3::Z);
