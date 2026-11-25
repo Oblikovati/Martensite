@@ -13,7 +13,7 @@ use martensite_tksolve::{
     preview::{Block, Domain, Incomplete, PreferenceReport, Prepared, PreviewError, Update},
     residual::{EvaluationError, ResidualBlock},
 };
-use std::{collections::BTreeMap, sync::Arc};
+use std::{borrow::Cow, collections::BTreeMap, sync::Arc};
 
 mod chart;
 
@@ -95,15 +95,17 @@ impl Program {
     pub(super) fn establish(
         &self,
         geometry: &Snapshot,
+        reference_lines: impl Iterator<Item = (RelationId, LineId)>,
         options: SolveOptions,
         cancelled: &mut impl FnMut() -> bool,
     ) -> Result<Vec<f64>, Failure> {
         poll(cancelled)?;
         let mut values = self.values(geometry)?;
+        let fixed = self.authoring_fixed(geometry, reference_lines, &values, cancelled)?;
         super::initialization::initialize(
             &mut values,
             &self.blocks,
-            &self.fixed,
+            &fixed,
             options.rank_tolerance,
             geometry,
             &self.point_columns,
@@ -118,9 +120,8 @@ impl Program {
                 equations: block.source.rows(),
             })
             .collect::<Vec<_>>();
-        let result =
-            solve_constraints_with_constants(&values, &blocks, &self.fixed, options, cancelled)
-                .map_err(|cause| Failure::Solve(failure_relation(&self.blocks, &cause), cause))?;
+        let result = solve_constraints_with_constants(&values, &blocks, &fixed, options, cancelled)
+            .map_err(|cause| Failure::Solve(failure_relation(&self.blocks, &cause), cause))?;
         match result.termination {
             SolveTermination::Converged => Ok(result.values),
             SolveTermination::Cancelled => Err(Failure::Cancelled),
@@ -133,6 +134,33 @@ impl Program {
                     .collect(),
             )),
         }
+    }
+
+    fn authoring_fixed(
+        &self,
+        geometry: &Snapshot,
+        mut reference_lines: impl Iterator<Item = (RelationId, LineId)>,
+        values: &[f64],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Result<Cow<'_, [(usize, f64)]>, Failure> {
+        let Some(first) = reference_lines.next() else {
+            return Ok(Cow::Borrowed(&self.fixed));
+        };
+        let mut fixed = self.fixed.iter().copied().collect::<BTreeMap<_, _>>();
+        for (relation, id) in std::iter::once(first).chain(reference_lines) {
+            poll(cancelled)?;
+            let line = geometry
+                .line(id)
+                .ok_or(Failure::MissingOperand(relation, EntityId::Line(id)))?;
+            for point in line.line.endpoints {
+                let start = *self
+                    .point_columns
+                    .get(&point)
+                    .ok_or(Failure::MissingPoint(point))?;
+                pin_columns(&mut fixed, start, values);
+            }
+        }
+        Ok(Cow::Owned(fixed.into_iter().collect()))
     }
 
     pub(super) fn drag(
@@ -276,6 +304,12 @@ impl Program {
     }
 }
 
+fn pin_columns(fixed: &mut BTreeMap<usize, f64>, start: usize, values: &[f64]) {
+    for column in start..start + 3 {
+        fixed.entry(column).or_insert(values[column]);
+    }
+}
+
 fn admit(
     geometry: &Snapshot,
     relations: &BTreeMap<RelationId, Relation>,
@@ -295,9 +329,6 @@ fn admit(
     )?;
     if let Some(&arc) = geometry.arcs.keys().next() {
         return Err(Failure::UnsupportedEntity(EntityId::Arc(arc)));
-    }
-    if let Some(&spline) = geometry.control_splines.keys().next() {
-        return Err(Failure::UnsupportedEntity(EntityId::ControlSpline(spline)));
     }
     if let Some(&spline) = geometry.fit_splines.keys().next() {
         return Err(Failure::UnsupportedEntity(EntityId::FitSpline(spline)));

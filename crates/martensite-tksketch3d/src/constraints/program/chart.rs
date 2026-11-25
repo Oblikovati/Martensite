@@ -104,6 +104,7 @@ pub(super) fn indexed(
             Relation::PointOnLine(_, line) | Relation::Colinear([line, _], _) => {
                 Some((index, line))
             }
+            Relation::Tangent(join) | Relation::G2(join, _) => Some((index, join.line)),
             _ => None,
         })
         .collect()

@@ -6,6 +6,7 @@ use martensite_tksolve::{
     residual::{ResidualError, ResidualSource, ResidualTolerance},
 };
 
+mod continuity;
 mod frame;
 pub(super) use frame::FrameReference;
 
@@ -13,9 +14,10 @@ type Vector = DualVector<3>;
 // Each evaluator has at most 12 input scalars and four result rows.
 // The parallel path uses fewer than 100 elementary dual operations and copies, including
 // both vector normalizations, the two basis vectors and the branch dot product. Colinear adds
-// two length projections. Charging 256 per structural unit covers these operations, fixed-size
-// seeding and row collection, and Angle's outward trial guard. The charge counts abstract
-// scalar work, independent of allocator or libm time.
+// two length projections. G2 adds fixed-size exact endpoint stencils and two curvature
+// projections. Charging 256 per structural unit covers these operations, fixed-size seeding,
+// row collection and Angle's outward trial guard. The charge counts abstract scalar work,
+// independent of allocator or libm time.
 const SCALAR_WORK_PER_UNIT: usize = 256;
 
 pub(super) fn numeric_budget(residual_work: usize) -> usize {
@@ -58,6 +60,10 @@ pub(super) enum Equation {
         target: LineAngle,
         minimum_sine: f64,
     },
+    LineCubic {
+        reference: FrameReference,
+        curvature_scale: Option<f64>,
+    },
 }
 
 impl Equation {
@@ -80,6 +86,13 @@ impl Equation {
                 independent_offset,
                 reference: FrameReference::axis(line),
             }),
+            Self::LineCubic {
+                reference,
+                curvature_scale,
+            } if reference.needs_refresh(line) => Some(Self::LineCubic {
+                reference: FrameReference::axis(line),
+                curvature_scale,
+            }),
             _ => None,
         }
     }
@@ -95,11 +108,16 @@ impl Equation {
             Self::Colinear {
                 independent_offset: true,
                 ..
+            }
+            | Self::LineCubic {
+                curvature_scale: Some(_),
+                ..
             } => 4,
             Self::Colinear { .. }
             | Self::PointOnLine { .. }
             | Self::Parallel { .. }
-            | Self::Axis(..) => 2,
+            | Self::Axis(..)
+            | Self::LineCubic { .. } => 2,
         }
     }
 
@@ -109,8 +127,12 @@ impl Equation {
             | Self::Colinear { .. }
             | Self::Perpendicular
             | Self::EqualLength { .. }
-            | Self::Angle { .. } => 12,
-            Self::PointOnLine { .. } => 9,
+            | Self::Angle { .. }
+            | Self::LineCubic {
+                curvature_scale: Some(_),
+                ..
+            } => 12,
+            Self::PointOnLine { .. } | Self::LineCubic { .. } => 9,
             _ => 6,
         }
     }
@@ -167,6 +189,10 @@ impl ResidualSource for Equation {
                 target,
                 minimum_sine,
             } => angle_row(v, &first, target, minimum_sine),
+            Self::LineCubic {
+                reference,
+                curvature_scale,
+            } => continuity::line_cubic(v, &first, reference, curvature_scale),
         }
     }
 }

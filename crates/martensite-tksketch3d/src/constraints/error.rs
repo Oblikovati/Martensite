@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{AxisDirection, CoordinateAxis, LineAngle, ParallelDirection, Relation, RelationId};
+use super::{
+    AxisDirection, ContinuityFailure, CoordinateAxis, LineAngle, ParallelDirection, Relation,
+    RelationId,
+};
 use crate::{EditFailure, EntityId, FrozenPointSource, LineId, PointId};
 use martensite_tksolve::{
     nonlinear::{SolveError, SolveTermination},
@@ -19,6 +22,8 @@ pub enum PolicyQuantity {
 /// A declined constraint edit or drag. The prior sketch remains available to the caller.
 #[derive(Debug)]
 pub enum ConstraintFailure {
+    /// A continuity stencil or directed seed was refused.
+    Continuity(RelationId, ContinuityFailure),
     /// Parallel tolerance outside the open unit interval.
     InvalidParallelSine(f64),
     /// Model length scale whose reciprocal cannot be represented.
@@ -106,6 +111,7 @@ impl fmt::Display for ConstraintFailure {
             ),
             Self::Preview(id, cause) => write!(output, "constraint preview for {id:?}: {cause}"),
             Self::Solve(id, cause) => write!(output, "constraint solve for {id:?}: {cause}"),
+            Self::Continuity(id, cause) => write!(output, "continuity relation {id:?}: {cause}"),
             Self::Geometry(cause) => cause.fmt(output),
             _ => write!(output, "spatial constraint operation declined: {self:?}"),
         }
@@ -118,6 +124,7 @@ impl Error for ConstraintFailure {
             Self::Preview(_, cause) => Some(cause),
             Self::Solve(_, cause) => Some(cause),
             Self::Geometry(cause) => Some(cause),
+            Self::Continuity(_, cause) => Some(cause),
             _ => None,
         }
     }

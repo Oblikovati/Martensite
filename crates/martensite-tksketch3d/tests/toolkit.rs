@@ -5,6 +5,7 @@ mod arcs;
 mod bend;
 mod constraints;
 mod construction;
+mod continuity;
 mod control_splines;
 mod fit_splines;
 mod fixture;

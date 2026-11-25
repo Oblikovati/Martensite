@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! Immutable spatial point and line constraints with separate apply and drag paths.
+//! Immutable spatial sketch constraints with separate apply and drag paths.
 mod adopt;
 mod angle;
 mod binding;
+mod continuity;
 mod error;
 mod incidence;
 mod initialization;
@@ -23,6 +24,7 @@ use std::{
 };
 
 pub use angle::{InvalidLineAngle, LineAngle};
+pub use continuity::{ContinuityFailure, CurvatureTolerance, LineCubicJoin};
 pub use error::{ConstraintFailure, PolicyQuantity};
 pub use martensite_tksolve::{nonlinear::SolveOptions, preview::Limits as SolverLimits};
 pub use motion::{RigidMotion, RigidMotionFailure};
@@ -110,6 +112,10 @@ pub enum RelationSpec {
     EqualLength([LineId; 2]),
     /// Drive the angle between two directed lines in radians. Their positions stay free.
     Angle([LineId; 2], LineAngle),
+    /// Align the directed endpoint tangents of an incoming line and outgoing cubic.
+    Tangent(LineCubicJoin),
+    /// Align the directed tangents and match physical endpoint curvature.
+    G2(LineCubicJoin, CurvatureTolerance),
 }
 
 /// The persisted relation value, with the anchors captured for Fix relations.
@@ -140,6 +146,10 @@ pub enum Relation {
     EqualLength([LineId; 2]),
     /// Two directed line identities and their open-interval angle in radians.
     Angle([LineId; 2], LineAngle),
+    /// Directed endpoint tangency at a common authored point.
+    Tangent(LineCubicJoin),
+    /// Directed tangent and curvature continuity at a common authored point.
+    G2(LineCubicJoin, CurvatureTolerance),
 }
 
 /// A relation edit in an atomic authoring batch.
@@ -241,7 +251,19 @@ impl ConstrainedSketch {
         poll(&mut cancelled)?;
         let relations = self.stage(edits, &mut cancelled)?;
         let program = Arc::new(Program::new(&self.geometry, &relations, self.policy)?);
-        let coordinates = program.establish(&self.geometry, self.policy.solve, &mut cancelled)?;
+        let reference_lines = edits.iter().filter_map(|edit| match edit {
+            RelationEdit::Insert(id, _) => match relations.get(id)? {
+                Relation::Tangent(join) | Relation::G2(join, _) => Some((*id, join.line)),
+                _ => None,
+            },
+            RelationEdit::Remove(_) => None,
+        });
+        let coordinates = program.establish(
+            &self.geometry,
+            reference_lines,
+            self.policy.solve,
+            &mut cancelled,
+        )?;
         let geometry = program.adopt(
             &self.geometry,
             &relations,

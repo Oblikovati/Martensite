@@ -194,3 +194,40 @@ fn incidence_expected(
     }
     rows
 }
+
+#[test]
+fn line_cubic_rows_match_independent_spatial_bernstein_curvature_and_moving_frame() {
+    use super::FrameReference;
+    let points = [
+        -1.2, -0.3, -0.4, 0.4, 0.2, -0.3, 2.0, 1.2, 0.2, 3.0, 0.7, 0.6,
+    ];
+    for curvature_scale in [None, Some(2.7)] {
+        let width = if curvature_scale.is_some() { 12 } else { 9 };
+        verify(
+            Equation::LineCubic {
+                reference: FrameReference::Axis(1),
+                curvature_scale,
+            },
+            &points[..width],
+            |points| line_cubic_expected(points, curvature_scale),
+        );
+    }
+}
+
+fn line_cubic_expected(points: &[f64], curvature_scale: Option<f64>) -> Vec<f64> {
+    let line = displacement(points, 0);
+    let forward = line.map(|x| x / length(line));
+    let cross_ref = cross(forward, [0., 1., 0.]);
+    let second = cross_ref.map(|x| x / length(cross_ref));
+    let first = cross(second, forward);
+    let velocity = displacement(points, 3).map(|x| 3. * x);
+    let speed = length(velocity);
+    let mut rows = vec![dot(first, velocity) / speed, dot(second, velocity) / speed];
+    if let Some(scale) = curvature_scale {
+        let d = displacement(points, 6);
+        let a = std::array::from_fn(|axis| 6. * (d[axis] - velocity[axis] / 3.));
+        let k = cross(cross(velocity, a), velocity).map(|x| x / speed.powi(4));
+        rows.extend([dot(first, k) * scale, dot(second, k) * scale]);
+    }
+    rows
+}

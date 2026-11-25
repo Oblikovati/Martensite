@@ -78,5 +78,7 @@ fn spec(relation: Relation) -> RelationSpec {
         Relation::Perpendicular(lines) => RelationSpec::Perpendicular(lines),
         Relation::EqualLength(lines) => RelationSpec::EqualLength(lines),
         Relation::Angle(lines, radians) => RelationSpec::Angle(lines, radians),
+        Relation::Tangent(join) => RelationSpec::Tangent(join),
+        Relation::G2(join, cap) => RelationSpec::G2(join, cap),
     }
 }

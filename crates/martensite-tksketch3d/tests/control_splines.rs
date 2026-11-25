@@ -432,12 +432,18 @@ fn retaining_a_spline_keeps_its_defining_poles_during_unrelated_deletion() {
 }
 
 #[test]
-fn point_line_constraint_compilation_reports_the_unimplemented_curve_kind() {
+fn prepared_point_drags_revalidate_the_control_curve_before_adoption() {
     let shape = snapshot(NONPLANAR);
+    let sketch = ConstrainedSketch::new(shape.clone(), crate::constraints::policy()).unwrap();
+    let accepted = sketch.drag(pid(2), point([1.2, 0., 0.]), || false).unwrap();
+    assert_ne!(accepted.sketch.geometry(), &shape);
     assert!(matches!(
-        ConstrainedSketch::new(shape, crate::constraints::policy()),
-        Err(ConstraintFailure::UnsupportedEntity(EntityId::ControlSpline(id))) if id == sid(5)
+        sketch.drag(pid(2), point([0.; 3]), || false),
+        Err(ConstraintFailure::Geometry(EditFailure::ControlSpline {
+            spline, source: ControlSplineFailure::Stationary { .. }
+        })) if spline == sid(5)
     ));
+    assert_eq!(sketch.geometry(), &shape);
 }
 
 #[test]

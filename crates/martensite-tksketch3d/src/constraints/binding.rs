@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind authored relations to solver columns and exact fixed coordinates.
 use super::{
-    ConstraintFailure as Failure, ConstraintPolicy, LineAngle, Relation, RelationId, RelationSpec,
+    ConstraintFailure as Failure, ConstraintPolicy, LineAngle, LineCubicJoin, Relation, RelationId,
+    RelationSpec, continuity,
     incidence::{SharedEnds, shared_ends},
     metric,
     residual::{Equation, FrameReference, axis_branch},
@@ -37,6 +38,7 @@ pub(super) fn bind(
         blocks: Vec::new(),
         authored_rows: 0,
         scale: 1. / policy.length_scale.value(),
+        length_scale: policy.length_scale.value(),
         angular_sine: policy.parallel_sine_tolerance,
     };
     for (&id, &start) in point_columns {
@@ -68,6 +70,7 @@ struct Layout<'a> {
     blocks: Vec<EquationBlock>,
     authored_rows: usize,
     scale: f64,
+    length_scale: f64,
     angular_sine: f64,
 }
 
@@ -152,7 +155,21 @@ impl Layout<'_> {
                 self.pair_equation(id, lines, Equation::EqualLength { scale: self.scale })
             }
             Relation::Angle(lines, angle) => self.angle(id, lines, angle),
+            Relation::Tangent(join) => self.line_cubic(id, join, false),
+            Relation::G2(join, _) => self.line_cubic(id, join, true),
         }
+    }
+
+    fn line_cubic(&mut self, id: RelationId, join: LineCubicJoin, g2: bool) -> Result<(), Failure> {
+        let stencil = continuity::bind(self.geometry, id, join, g2)?;
+        self.equation(
+            id,
+            stencil.points(),
+            Equation::LineCubic {
+                reference: FrameReference::axis(stencil.line),
+                curvature_scale: g2.then_some(self.length_scale),
+            },
+        )
     }
 
     fn angle(
@@ -305,6 +322,14 @@ pub(super) fn capture(
         RelationSpec::Angle(lines, target) => {
             pair_of(geometry, id, lines)?;
             Ok(Relation::Angle(lines, target))
+        }
+        RelationSpec::Tangent(join) => {
+            continuity::check_seed(geometry, id, join, false)?;
+            Ok(Relation::Tangent(join))
+        }
+        RelationSpec::G2(join, cap) => {
+            continuity::check_seed(geometry, id, join, true)?;
+            Ok(Relation::G2(join, cap))
         }
     }
 }

@@ -4,7 +4,7 @@ pub(super) mod angle;
 mod incidence;
 pub(super) use incidence::line_branch;
 
-use super::{AxisDirection, ConstraintPolicy, ParallelDirection, Relation};
+use super::{AxisDirection, ConstraintPolicy, ParallelDirection, Relation, continuity};
 use crate::{LineGeometry, LineId, Snapshot};
 use martensite_tkmath::{
     gp::Point3,
@@ -98,6 +98,8 @@ pub(super) fn feasible(snapshot: &Snapshot, relation: Relation, policy: Constrai
         Relation::Angle(lines, target) => pair(snapshot, lines)
             .and_then(|lines| angle::matches(lines, target, policy.parallel_sine_tolerance))
             .unwrap_or(false),
+        Relation::Tangent(join) => continuity::within(snapshot, join, None, policy),
+        Relation::G2(join, cap) => continuity::within(snapshot, join, Some(cap), policy),
     }
 }
 
