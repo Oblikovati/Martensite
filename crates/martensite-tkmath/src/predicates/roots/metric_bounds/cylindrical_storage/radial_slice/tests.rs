@@ -164,3 +164,52 @@ fn extended_depth_proves_common_radius_existence_in_both_senses() {
         ));
     }
 }
+
+#[test]
+fn joined_directions_share_the_complete_rational_patch_algebra() {
+    let base = geometry(&INNER, &OUTER);
+    let joins = [[0., 1.], [1., 0.5]];
+    let combined = certify_cylindrical_slice_with_joins(base, joins, || false).unwrap();
+    let mut separate = 0;
+    for (receipt, direction) in combined.iter().zip([base.direction, joins[0], joins[1]]) {
+        let query = CylindricalSliceQuery { direction, ..base };
+        let reference = certify_cylindrical_slice_direction(query, || false).unwrap();
+        assert!(receipt.matches_source(query));
+        assert_eq!(receipt.derivative_lower(), reference.derivative_lower());
+        assert_eq!(
+            receipt.signed_squared_radius_derivative_lower(),
+            reference.signed_squared_radius_derivative_lower()
+        );
+        separate += reference.operations();
+    }
+    assert!(combined[2].operations() < separate);
+    assert!(certify_cylindrical_slice_with_joins(base, [joins[0], [-1., 0.]], || false).is_err());
+}
+
+#[test]
+fn unit_radial_authority_requires_identical_complete_rails_and_depth() {
+    let complete = geometry(&INNER, &OUTER);
+    let receipt = certify_cylindrical_slice_direction(complete, || false).unwrap();
+    let [forward, reverse] = receipt.unit_radial_sweeps(complete).unwrap();
+    assert!(forward.matches_source(complete.rails, [0.; 2], CylindricalRadialSense::Outward));
+    assert!(reverse.matches_source(
+        [complete.rails[1], complete.rails[0]],
+        [0.; 2],
+        CylindricalRadialSense::Inward
+    ));
+    assert_eq!(
+        forward.signed_squared_radius_derivative_lower(),
+        reverse.signed_squared_radius_derivative_lower()
+    );
+    let changed = CylindricalSliceQuery {
+        direction: [0., 1.],
+        ..complete
+    };
+    assert!(receipt.unit_radial_sweeps(changed).is_none());
+    let shorter = CylindricalSliceQuery {
+        depth: [0.125, 1.],
+        ..complete
+    };
+    let incomplete = certify_cylindrical_slice_direction(shorter, || false).unwrap();
+    assert!(incomplete.unit_radial_sweeps(shorter).is_none());
+}

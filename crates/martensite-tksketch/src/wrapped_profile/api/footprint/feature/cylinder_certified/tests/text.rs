@@ -7,6 +7,7 @@ use martensite_tkbo::profile_extrusion::{
 use std::time::Instant;
 
 mod desktop;
+mod latency;
 mod pinned;
 
 #[test]

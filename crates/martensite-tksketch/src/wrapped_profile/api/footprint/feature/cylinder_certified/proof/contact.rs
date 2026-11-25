@@ -2,9 +2,9 @@
 //! Qualify the stock and far-cap contact collars on actual decoded ruled sides.
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalStorage, CertifiedCylindricalTrim, CylindricalContactPrefixQuery,
-    CylindricalRadialSense, CylindricalRadialSweepQuery, CylindricalTrimQuery, MetricBezier,
-    certify_cylindrical_contact_prefix, certify_cylindrical_radial_sweep,
+    CertifiedCylindricalRadialSweep, CertifiedCylindricalStorage, CertifiedCylindricalTrim,
+    CylindricalContactPrefixQuery, CylindricalRadialSense, CylindricalTrimQuery, MetricBezier,
+    certify_cylindrical_contact_prefix,
 };
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -25,6 +25,7 @@ pub(super) struct Tube<'a> {
     /// Actual depth-zero and far-cap traces, regardless of radial ordering.
     pub(super) caps: [Trace<'a>; 2],
     pub(super) storage: &'a CertifiedCylindricalStorage,
+    pub(super) sweeps: [CertifiedCylindricalRadialSweep; 2],
     pub(super) directions: &'a [[f64; 2]],
     /// Lower bounds on the effective distance thresholds at the two cap contacts.
     pub(super) floor: [f64; 2],
@@ -141,7 +142,15 @@ fn verify_end(
         positive(floor) && floor <= contact && error < floor,
         "actual seam gap below the retained contact continuation floor",
     )?;
-    let prefix = radial_prefix(attempt, trace, far, sense, contact, cancelled)?;
+    let prefix = radial_prefix(
+        attempt,
+        trace,
+        far,
+        &tube.sweeps[cap],
+        sense,
+        contact,
+        cancelled,
+    )?;
     let bounds = EndBounds::new(tube, trace, sense, motion, error, &prefix);
     require(
         attempt,
@@ -156,21 +165,12 @@ fn radial_prefix(
     attempt: Attempt,
     trace: Trace<'_>,
     far: MetricBezier<'_, 3>,
+    radial: &CertifiedCylindricalRadialSweep,
     sense: CylindricalRadialSense,
     contact: f64,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalContactPrefix>
 {
-    let sweep = CylindricalRadialSweepQuery {
-        rails: [trace.query.curve, far],
-        axis_origin: [0.; 2],
-        sense,
-        minimum: 0.,
-        options: Default::default(),
-    };
-    let radial = certify_math(attempt, "stored cylinder radial sweep", cancelled, |poll| {
-        certify_cylindrical_radial_sweep(sweep, poll)
-    })?;
     let prefix = CylindricalContactPrefixQuery {
         seam: trace.query,
         far_rail: far,
@@ -183,7 +183,7 @@ fn radial_prefix(
         attempt,
         "stored cylinder radial contact prefix",
         cancelled,
-        |poll| certify_cylindrical_contact_prefix(prefix, &radial, trace.proof, poll),
+        |poll| certify_cylindrical_contact_prefix(prefix, radial, trace.proof, poll),
     )
 }
 

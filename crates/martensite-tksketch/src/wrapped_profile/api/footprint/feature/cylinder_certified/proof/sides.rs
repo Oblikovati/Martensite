@@ -4,8 +4,8 @@ use crate::surface_sketch::CylinderSupport;
 use martensite_tkbrep::{brep::BRepTool, topods};
 use martensite_tkg3d::geom::GeomBezierSurface;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CylindricalRadialSense, CylindricalSliceQuery, MetricBezier,
-    certify_cylindrical_slice_direction,
+    CertifiedCylindricalRadialSweep, CylindricalRadialSense, CylindricalSliceQuery, MetricBezier,
+    certify_cylindrical_slice_with_joins,
 };
 
 mod boundary;
@@ -202,7 +202,7 @@ impl<'a> Part<'a> {
     ) -> Checked<contact::Tube<'a>> {
         let rails = self.caps.map(|cap| cap.query().curve);
         bind_net(attempt, &self.face, support.origin, rails, sense)?;
-        prove_slices(
+        let sweeps = prove_slices(
             attempt,
             support.radius,
             rails,
@@ -221,6 +221,7 @@ impl<'a> Part<'a> {
                 proof: &cap.proof,
             }),
             storage: &span.storage.certificate,
+            sweeps,
             directions: &span.directions,
             floor,
         })
@@ -314,39 +315,43 @@ fn prove_slices(
     span: &material::Span,
     allowance: [f64; 2],
     cancelled: &mut CancelPoll<'_>,
-) -> Checked<()> {
-    require(
+) -> Checked<[CertifiedCylindricalRadialSweep; 2]> {
+    let &[direction, incoming, outgoing] = span.directions.as_slice() else {
+        return Err(missing(
+            attempt,
+            VALIDATION,
+            "one side and both oriented adjacent join directions",
+        ));
+    };
+    let slice = CylindricalSliceQuery {
+        rails,
+        sense,
+        chart_radius: radius,
+        direction,
+        depth: [-1e-5, 1. + 1e-5],
+        options: Default::default(),
+    };
+    let [slope, _, _] = certify_cancellable(
         attempt,
         VALIDATION,
-        span.directions.len() == 3,
-        "one side and both oriented adjacent join directions",
+        "actual fixed-radius side and joined trim projections",
+        cancelled,
+        |poll| certify_cylindrical_slice_with_joins(slice, [incoming, outgoing], poll),
     )?;
-    for &direction in &span.directions {
-        let slice = CylindricalSliceQuery {
-            rails,
-            sense,
-            chart_radius: radius,
-            direction,
-            depth: [-1e-5, 1. + 1e-5],
-            options: Default::default(),
-        };
-        let slope = certify(
+    certify_cancellable(
+        attempt,
+        VALIDATION,
+        "complete common radial interval including terminal collars",
+        cancelled,
+        |poll| {
+            slope.require_common_radial_interval(slice, &span.storage.certificate, allowance, poll)
+        },
+    )?;
+    slope.unit_radial_sweeps(slice).ok_or_else(|| {
+        missing(
             attempt,
             VALIDATION,
-            "actual fixed-radius side trace projection",
-            certify_cylindrical_slice_direction(slice, &mut *cancelled),
-        )?;
-        certify(
-            attempt,
-            VALIDATION,
-            "complete common radial interval including terminal collars",
-            slope.require_common_radial_interval(
-                slice,
-                &span.storage.certificate,
-                allowance,
-                &mut *cancelled,
-            ),
-        )?;
-    }
-    Ok(())
+            "the same whole-depth signed radial bound in both directions",
+        )
+    })
 }

@@ -25,7 +25,7 @@ use error::Checked;
 pub use error::{CylindricalStorageError, CylindricalStorageFailure};
 pub use radial_slice::{
     CertifiedCylindricalSlice, CylindricalSliceQuery, CylindricalSliceRefusal,
-    certify_cylindrical_slice_direction,
+    certify_cylindrical_slice_direction, certify_cylindrical_slice_with_joins,
 };
 pub use radial_sweep::{
     CertifiedCylindricalRadialSweep, CylindricalRadialSense, CylindricalRadialSweepError,

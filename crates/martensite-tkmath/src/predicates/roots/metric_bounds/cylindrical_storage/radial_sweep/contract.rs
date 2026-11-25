@@ -44,7 +44,11 @@ pub struct CertifiedCylindricalRadialSweep {
 }
 
 impl CertifiedCylindricalRadialSweep {
-    pub(super) fn new(query: CylindricalRadialSweepQuery<'_>, lower: f64, operations: u32) -> Self {
+    pub(in super::super) fn new(
+        query: CylindricalRadialSweepQuery<'_>,
+        lower: f64,
+        operations: u32,
+    ) -> Self {
         Self {
             source: types::source_bits(query.rails, query.axis_origin),
             sense: query.sense,
