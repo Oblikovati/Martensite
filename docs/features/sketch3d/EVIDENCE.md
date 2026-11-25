@@ -361,3 +361,48 @@ source resolution and checks the source revision before capture.
 
 The four focused cases passed with the existing 21 toolkit tests on Rust `1.98.1`. Strict toolkit Clippy
 and an independent review passed.
+
+## E17. Native constraints and bounded drag
+
+The native point and line constraint slice at `dad1a659` supports Fix, release, coincidence, same- and
+opposite-direction parallelism, and driving length. The checked transaction captures Fix anchors from the
+current sketch and verifies the final geometry and hard relations before publishing. A frozen point
+contributes its exact coordinate bits to a solve and keeps its source stamp. Preview uses a prepared
+program with explicit size and residual work limits. A point drag on a sphere has only two reachable
+coordinate directions. The soft target solve uses those directions while the hard length equation stays
+in the hard system. An extreme finite-coordinate test covers the rounding bounds used by the parallel check.
+
+Three independent warm release processes on Linux x86-64 and Rust `1.98.1` ran 100 updates per size on a
+pinned Ryzen AI Max+ 395 core. The solver, whole-snapshot publication and independent relation checks
+were inside the timer. All 1,500 updates passed.
+
+| Coordinates | p95 range in ms |
+| ---: | ---: |
+| 15 | 0.041–0.059 |
+| 30 | 0.076–0.077 |
+| 60 | 0.140–0.143 |
+| 120 | 0.266–0.278 |
+| 240 | 0.545–0.587 |
+
+Peak RSS was 7,352–7,536 KiB. At 240 coordinates, the conservative residual bound peaked at 30,692,352
+of the allowed 64,000,000. There were 34 native tests and 103 solver tests, with three opt-in tests excluded
+from those counts. The focused benchmark ran separately. Strict Clippy and dependency checks passed.
+This fixture measures a native line chain. Desktop input, GPU completion and presentation have their own gates.
+
+## E18. Ordered native line wires
+
+The line-wire export at `dc13eeda` resolves directed occurrences by line ID, joins them by point ID and
+checks authored segment contact with exact arithmetic within a caller-supplied pair budget. Native readback
+verifies the occurrence order, orientation, vertex identities, trim ranges and stored `1e-7` tolerance. It
+reports an outward bound on the whole affine trim relative to the authored segment. Authored incidence and
+native trim deviation have separate checks. Native self-incidence and minimum clearance require their own proof.
+
+The E10 nonplanar Sweep produced a valid shell at the expected stations and traced a face to its profile edge.
+The E10 ruled Loft rebuilt after the second closed section moved. The two valid native solids had volumes 12
+and 20 under the fixture's volume check. Both sections traced to output side faces, and later edits or native
+vertex mutations left captured inputs and earlier exports intact. These controls use the production builders.
+Full consumer validation, curved wires, incompatible sections and application-driven rebuild remain open.
+
+All 35 toolkit tests passed on the wire lane. Independent re-review covered the late cancellation checks during
+native point binding publication. Two fresh processes emitted identical 692-byte wire archives with SHA-256
+`1ed6890c71ebe742d8e5b7e993d85dbccb6fbe3d73e311a5d8bbc62ae1fdba18`.

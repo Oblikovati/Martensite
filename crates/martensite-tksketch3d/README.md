@@ -32,6 +32,13 @@ a support line with rounded direction. Use the authored endpoints for exact
 checks. The toolkit refuses a segment when its displacement or estimated length
 overflows, or a nonzero component disappears from its unit direction.
 
+Use `Snapshot::wire_recipe` with a directed list of line IDs and a pair-check
+budget. A wire joins consecutive uses through shared point IDs and checks exact
+contact on the authored segments. `WireRecipe::materialize` returns a fresh BRep
+wire with its point and edge bindings. It verifies the stored native tolerance
+and bounds the deviation of each native line trim from its authored segment.
+Sweep and Loft can take independent exports from the same recipe.
+
 An edit batch adopts a complete snapshot. It can traverse the whole draft and
 reuses proof for lines whose identities and endpoint bits match. A failed or
 cancelled batch leaves the source available for the next edit.
