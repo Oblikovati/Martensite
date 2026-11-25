@@ -24,6 +24,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added checked translation and rotation of spatial point selections with constraint preservation and bounded placement error (#611).
 
+- Added checked replay of saved spatial relations and anchors, with historical session stamps for frozen source points (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).

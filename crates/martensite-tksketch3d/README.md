@@ -23,6 +23,10 @@ the prepared program for that accepted sketch and publishes a new snapshot only
 when the geometry and the caller's physical tolerances pass an independent check.
 Use `inspect_rank` outside interactive drag when numerical rank needs inspection.
 Frozen points contribute exact fixed coordinates to either solve and keep their source stamp.
+Use `ConstrainedSketch::restore` to prepare saved geometry with its authored
+relation values. Restore checks the saved anchors and all physical relations
+before publishing the supplied coordinates. A captured point may carry its
+source incarnation and revision or its historical session generation.
 
 Use `ConstrainedSketch::transform_points` for a rigid translation or rotation of
 owned points. The operation checks the resulting geometry and existing hard

@@ -462,3 +462,16 @@ policy's length limit. Independent controls cover the owned translation and quar
 refusal, a large pivot, a lost translation unit at `2^53`, wrong selection and cancellation. The native
 Parallel fixture also drags after a 90-degree rotation. The toolkit passed 74 tests on Rust `1.98.1`, plus
 strict toolkit and TKMath Clippy. A separate package run exercised 1,269 TKMath library and 3,118 toolkit tests.
+
+## E23. Checked relation replay
+
+`b114f6ed` prepares stored geometry and typed relation values for warm drag. It checks relation identities,
+operand types, dimensional limits and physical feasibility, then returns the original accepted coordinates.
+The supplied Fix anchors are checked bit by bit. Restore uses no numerical solve. The preparation limit
+applies before staging the relation list, and cancellation is checked before publication.
+
+A frozen source can retain either a source incarnation and revision or a historical session generation.
+The latter preserves the evidence available in an Oblikovati version 18 recipe. The restore fixture keeps
+its frozen coordinate bits through a later warm drag. The other cases cover a signed-zero anchor mismatch,
+contradictory saved length, malformed relations, size refusal and late cancellation. Independent review,
+78 toolkit tests and strict Clippy passed on Rust `1.98.1`. Package and desktop adoption have their own gates.
