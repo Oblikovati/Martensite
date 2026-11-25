@@ -1,5 +1,5 @@
 //! `BRepAlgoAPIBooleanOperation`: the API of the Boolean operations and the section.
-use super::builder_algo::BRepAlgoAPIBuilderAlgo;
+use super::{builder_algo::BRepAlgoAPIBuilderAlgo, section_operands::SectionOperandRoots};
 use crate::bop_algo::alerts::alert;
 use crate::bop_algo::{
     AlertBOPNotSet, AlertTooFewArguments, BOPAlgoBOP, BOPAlgoPaveFiller, BOPAlgoSection,
@@ -10,6 +10,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::{AlertHandle, ProgressRange, ProgressScope};
 use martensite_tkernel::ncollection::List;
 use martensite_tkernel::standard::Failure;
+use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
 use std::ops::{Deref, DerefMut};
 
 /// A Boolean operation (or section) of the arguments (objects) and the tools.
@@ -144,7 +145,9 @@ impl BRepAlgoAPIBooleanOperation {
             }
         }
         self.builder_algo.builder = Some(self.operation_builder());
-        self.builder_algo.build_result()
+        self.builder_algo.build_result()?;
+        self.retain_section_operands();
+        Ok(())
     }
 
     /// `build` in the caller's range (`Build(Range)`): with an own intersection 70 of its 100 units
@@ -169,7 +172,29 @@ impl BRepAlgoAPIBooleanOperation {
         }
         self.builder_algo.builder = Some(self.operation_builder());
         let built = self.builder_algo.build_result_progress(&scope.next(30.));
-        retain_intersection_completion(intersection, built)
+        let completion = retain_intersection_completion(intersection, built);
+        if matches!(completion, ProgressCompletion::Completed) {
+            self.retain_section_operands();
+        }
+        completion
+    }
+
+    fn retain_section_operands(&mut self) {
+        if self.operation != Operation::Section || !self.builder_algo.is_done() {
+            return;
+        }
+        let Some(structure) = self.ds_filler().and_then(BOPAlgoPaveFiller::data_structure) else {
+            return;
+        };
+        let Some(builder) = self.builder() else {
+            return;
+        };
+        self.builder_algo.completed_section_operands = SectionOperandRoots::capture(
+            structure,
+            self.arguments(),
+            &self.tools,
+            builder.arguments(),
+        );
     }
 
     /// Records a refusal before any work starts and classifies it.

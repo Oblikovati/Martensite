@@ -212,14 +212,14 @@ impl BRepAlgoAPISection {
     }
 
     /// The face of the first shape the section edge comes from (`HasAncestorFaceOn1`).
-    /// A boundary-coincident edge needs a unique source face pair.
+    /// A boundary-coincident edge needs a unique face pair in the completed build.
     /// `section.has_ancestor_face_on1(&edge)`.
     pub fn has_ancestor_face_on1(&self, edge: &Shape) -> Result<Option<Shape>, Failure> {
         Ok(self.ancestor_faces(edge)?.map(|(first, _)| first))
     }
 
     /// The face of the second shape the section edge comes from (`HasAncestorFaceOn2`).
-    /// A boundary-coincident edge needs a unique source face pair.
+    /// A boundary-coincident edge needs a unique face pair in the completed build.
     /// `section.has_ancestor_face_on2(&edge)`.
     pub fn has_ancestor_face_on2(&self, edge: &Shape) -> Result<Option<Shape>, Failure> {
         Ok(self.ancestor_faces(edge)?.map(|(_, second)| second))

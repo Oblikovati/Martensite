@@ -1,15 +1,11 @@
 //! Face/face records omit boundary edges contributed by edge/face common blocks (#613).
 use super::BRepAlgoAPISection;
 use crate::bop_ds::{DataStructure, PaveBlockHandle};
-use martensite_tkbrep::{
-    topexp::{self, Explorer},
-    topods::Shape,
-    toptools::IndexedMapOfShape,
-};
+use martensite_tkbrep::{topexp::Explorer, topods::Shape};
 use martensite_tkernel::{ncollection::List, standard::Failure};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, sync::Arc};
 
 pub(super) fn unique_boundary_pair(
     section: &BRepAlgoAPISection,
@@ -19,6 +15,9 @@ pub(super) fn unique_boundary_pair(
     if !section.is_done() {
         return Ok(None);
     }
+    let Some(roots) = &section.completed_section_operands else {
+        return Ok(None);
+    };
     let Some(origins) = section
         .builder()
         .and_then(|builder| builder.origins().seek(edge))
@@ -29,10 +28,7 @@ pub(super) fn unique_boundary_pair(
     if incidences.is_empty() || !result_contains_edge(section, edge)? {
         return Ok(None);
     }
-    let operands = [
-        operand_faces(section.arguments(), structure)?,
-        operand_faces(section.tools(), structure)?,
-    ];
+    let operands = roots.face_sets(structure)?;
     let Some([first, second]) = unique_pair(structure, &operands, incidences)? else {
         return Ok(None);
     };
@@ -70,20 +66,22 @@ fn common_faces_for_image(
     let Some(common) = structure.common_block(block) else {
         return Ok(Vec::new());
     };
-    let common = common.lock().map_err(|_| poisoned("common block"))?;
-    if common.faces().is_empty() {
-        return Ok(Vec::new());
-    }
+    let (representative, faces) = {
+        let common = common.lock().map_err(|_| poisoned("common block"))?;
+        if common.faces().is_empty() {
+            return Ok(Vec::new());
+        }
+        (Arc::clone(common.pave_block1()?), common.faces().to_vec())
+    };
     // Section construction publishes the first pave block's edge for the entire group.
-    let image = common
-        .pave_block1()?
+    let image = representative
         .lock()
         .map_err(|_| poisoned("pave block"))?
         .edge();
     if image < 0 || !edge.is_same(structure.shape(image)?) {
         return Ok(Vec::new());
     }
-    Ok(common.faces().to_vec())
+    Ok(faces)
 }
 
 fn poisoned(object: &str) -> Failure {
@@ -102,18 +100,6 @@ fn result_contains_edge(section: &BRepAlgoAPISection, edge: &Shape) -> Result<bo
         images.next()?;
     }
     Ok(false)
-}
-
-fn operand_faces(roots: &List<Shape>, structure: &DataStructure) -> Result<BTreeSet<i32>, Failure> {
-    let mut faces = IndexedMapOfShape::default();
-    for root in roots.iter() {
-        topexp::map_shapes_of_type(root, ShapeEnum::Face, &mut faces)?;
-    }
-    Ok(faces
-        .iter()
-        .map(|face| structure.index(face))
-        .filter(|&index| index >= 0)
-        .collect())
 }
 
 fn unique_pair(

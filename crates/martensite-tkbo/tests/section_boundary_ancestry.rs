@@ -1,9 +1,15 @@
 //! Section boundary provenance from real edge/face common blocks (#613).
-use martensite_tkbo::brep_algo_api::BRepAlgoAPISection;
+use martensite_tkbo::{
+    bop_algo::ProgressCompletion,
+    brep_algo_api::{BRepAlgoAPIBooleanOperation, BRepAlgoAPISection},
+};
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::Explorer,
     topods::{self, Compound, Face, Shape},
+};
+use martensite_tkernel::message::{
+    ProgressIndicator, ProgressIndicatorHooks, ProgressRange, ProgressScope,
 };
 use martensite_tkg3d::{
     geom::{GeomCircle, GeomLine},
@@ -17,6 +23,7 @@ use martensite_tkprim::{
 use martensite_tktopalgo::brep_builder_api::{
     BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace, BRepBuilderAPIMakeShape,
 };
+use std::sync::Arc;
 
 fn cylinder() -> Face {
     BRepPrimAPIMakeCylinder::new(4., 6.).face().unwrap()
@@ -62,6 +69,19 @@ fn assert_face_pair(section: &BRepAlgoAPISection, edge: &Shape, first: &Shape, s
     );
 }
 
+fn assert_no_face_pair(section: &BRepAlgoAPISection, edge: &Shape) {
+    assert!(section.has_ancestor_face_on1(edge).unwrap().is_none());
+    assert!(section.has_ancestor_face_on2(edge).unwrap().is_none());
+}
+
+fn only_edge(section: &BRepAlgoAPISection) -> Shape {
+    let edges = edges(section.shape());
+    let [edge] = edges.as_slice() else {
+        panic!("expected exactly one section edge");
+    };
+    edge.clone()
+}
+
 #[test]
 fn boundary_rim_has_both_ancestors_in_operand_order() {
     let cylinder = cylinder();
@@ -82,13 +102,66 @@ fn boundary_rim_has_both_ancestors_in_operand_order() {
         assert_eq!(circle.location(), Point3::new(0., 0., 0.));
         assert_face_pair(&section, edge, first, second);
         assert_eq!(section.section_edges().unwrap().len(), 0);
-        assert!(
-            section
-                .has_ancestor_face_on1(&Shape::default())
-                .unwrap()
-                .is_none()
-        );
+        assert_no_face_pair(&section, &Shape::default());
+        assert_no_face_pair(&section, first);
     }
+}
+
+#[test]
+fn pending_init_swap_preserves_completed_ancestry_until_rebuild() {
+    let cylinder = cylinder();
+    let plane = plane(Point3::new(0., 0., 0.), Direction3::Z, Direction3::X);
+    let mut section = section(&cylinder, &plane);
+    let old_rim = only_edge(&section);
+    section.init1(&plane);
+    assert_face_pair(&section, &old_rim, &cylinder, &plane);
+    section.init2(&cylinder);
+    assert_face_pair(&section, &old_rim, &cylinder, &plane);
+    section.build().unwrap();
+    assert!(section.is_done() && !section.has_errors());
+    let rebuilt_rim = only_edge(&section);
+    assert_face_pair(&section, &rebuilt_rim, &plane, &cylinder);
+
+    section.set_arguments(&Default::default());
+    section.build().unwrap();
+    assert!(!section.is_done() && section.has_errors());
+    assert_no_face_pair(&section, &rebuilt_rim);
+}
+
+struct CancelSectionBuild;
+
+impl ProgressIndicatorHooks for CancelSectionBuild {
+    fn show(&self, _: &ProgressScope<'_>, _: f64, _: bool) {}
+
+    fn user_break(&self) -> bool {
+        true
+    }
+}
+
+#[test]
+fn cancelled_ranged_rebuild_clears_completed_boundary_ancestry() {
+    let cylinder = cylinder();
+    let plane = plane(Point3::new(0., 0., 0.), Direction3::Z, Direction3::X);
+    let mut section = section(&cylinder, &plane);
+    let old_rim = only_edge(&section);
+    assert_face_pair(&section, &old_rim, &cylinder, &plane);
+    let indicator = ProgressIndicator::new(Box::new(CancelSectionBuild));
+    let completion = section.build_with_progress(&indicator.start());
+    assert!(matches!(completion, ProgressCompletion::Cancelled { .. }));
+    assert_no_face_pair(&section, &old_rim);
+    section.build().unwrap();
+    assert_face_pair(&section, &only_edge(&section), &cylinder, &plane);
+}
+
+#[test]
+fn a_coincident_edge_from_another_operation_has_no_ancestry() {
+    let first_cylinder = cylinder();
+    let second_cylinder = cylinder();
+    let plane = plane(Point3::new(0., 0., 0.), Direction3::Z, Direction3::X);
+    let result = section(&first_cylinder, &plane);
+    let unrelated = only_edge(&section(&second_cylinder, &plane));
+    assert!(!unrelated.is_same(&only_edge(&result)));
+    assert_no_face_pair(&result, &unrelated);
 }
 
 #[test]
@@ -142,7 +215,7 @@ fn overlapping_opposite_faces_leave_the_boundary_pair_unresolved() {
     builder.make_compound(&mut support);
     builder.add(&mut support, &first).unwrap();
     builder.add(&mut support, &second).unwrap();
-    let section = section(&cylinder, &support);
+    let mut section = section(&cylinder, &support);
     let cuts = edges(section.shape());
     let [edge] = cuts.as_slice() else {
         panic!("expected one shared circular rim")
@@ -153,14 +226,53 @@ fn overlapping_opposite_faces_leave_the_boundary_pair_unresolved() {
         let Some(common) = structure.common_block(block) else {
             return false;
         };
-        let common = common.lock().unwrap();
-        common_faces.iter().all(|id| common.faces().contains(id))
-            && edge.is_same(
-                structure
-                    .shape(common.pave_block1().unwrap().lock().unwrap().edge())
-                    .unwrap(),
-            )
+        let representative = {
+            let common = common.lock().unwrap();
+            if !common_faces.iter().all(|id| common.faces().contains(id)) {
+                return false;
+            }
+            Arc::clone(common.pave_block1().unwrap())
+        };
+        let image = representative.lock().unwrap().edge();
+        edge.is_same(structure.shape(image).unwrap())
     }));
-    assert!(section.has_ancestor_face_on1(edge).unwrap().is_none());
-    assert!(section.has_ancestor_face_on2(edge).unwrap().is_none());
+    assert_no_face_pair(&section, edge);
+    builder.remove(&mut support, &second).unwrap();
+    let mut remaining_faces = Explorer::new(&support, ShapeEnum::Face, ShapeEnum::Shape).unwrap();
+    assert!(remaining_faces.current().is_same(&first));
+    remaining_faces.next().unwrap();
+    assert!(!remaining_faces.more());
+    assert_no_face_pair(&section, edge);
+    section.set_arguments(&[first.clone().into_shape()].into_iter().collect());
+    section.set_tools(&[cylinder.clone().into_shape()].into_iter().collect());
+    assert_no_face_pair(&section, edge);
+
+    // The Boolean base entry must also freeze the newly completed section's roles.
+    let completed =
+        BRepAlgoAPIBooleanOperation::build_with_progress(&mut section, &ProgressRange::default());
+    assert!(matches!(completed, ProgressCompletion::Completed));
+    let rebuilt_rim = only_edge(&section);
+    assert_face_pair(&section, &rebuilt_rim, &first, &cylinder);
+}
+
+#[test]
+fn reused_filler_requires_the_same_completed_operand_roots() {
+    let cylinder = cylinder();
+    let plane = plane(Point3::new(0., 0., 0.), Direction3::Z, Direction3::X);
+    let mut original = section(&cylinder, &plane);
+    let filler = original.take_ds_filler().unwrap();
+    let mut reversed =
+        BRepAlgoAPISection::from_shapes(&plane, &cylinder, Some(filler), true).unwrap();
+    let rim = only_edge(&reversed);
+    assert_face_pair(&reversed, &rim, &plane, &cylinder);
+
+    let builder = BRepBuilder::default();
+    let mut substitute = Compound::default();
+    builder.make_compound(&mut substitute);
+    builder.add(&mut substitute, &plane).unwrap();
+    let filler = reversed.take_ds_filler().unwrap();
+    let mismatched =
+        BRepAlgoAPISection::from_shapes(&cylinder, &substitute, Some(filler), true).unwrap();
+    assert!(mismatched.is_done());
+    assert_no_face_pair(&mismatched, &only_edge(&mismatched));
 }
