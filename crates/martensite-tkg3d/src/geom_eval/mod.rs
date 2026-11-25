@@ -23,6 +23,8 @@ mod curve_support;
 pub use aht_bezier_curve::GeomEvalAHTBezierCurve;
 mod circular_helix_curve;
 pub use circular_helix_curve::GeomEvalCircularHelixCurve;
+mod planar_spiral_curve;
+pub use planar_spiral_curve::{GeomEvalPlanarSpiralCurve, SpiralRotation};
 mod sine_wave_curve;
 pub use sine_wave_curve::GeomEvalSineWaveCurve;
 mod tbezier_curve;
