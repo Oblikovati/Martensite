@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact transversality of supplied vectors; no source, surface chart or body certificate.
-use super::{NonFiniteCoordinate, exact_coordinate, exact_determinant};
+use super::{NonFiniteCoordinate, exact_determinant, exact_vector3};
 use num_bigint::BigInt;
 use std::cmp::Ordering;
 
@@ -22,13 +22,6 @@ pub fn compare_scalar_triple_product_3d(
     let second = exact_vector3(second, 1)?;
     let third = exact_vector3(third, 2)?;
     Ok(exact_triple_product(&first, &second, &third).cmp(&BigInt::from(0)))
-}
-fn exact_vector3(vector: [f64; 3], index: usize) -> Result<[BigInt; 3], NonFiniteCoordinate> {
-    Ok([
-        exact_coordinate(vector[0], index, 0)?,
-        exact_coordinate(vector[1], index, 1)?,
-        exact_coordinate(vector[2], index, 2)?,
-    ])
 }
 pub(super) fn exact_triple_product(
     first: &[BigInt; 3],

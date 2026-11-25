@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{NonFiniteCoordinate, exact_dot, exact_point};
+use super::{NonFiniteCoordinate, exact_coordinate, exact_dot, exact_point, exact_vector3};
 use num_bigint::BigInt;
 use std::cmp::Ordering;
 /// Compare exact squared distances from `origin` to `first` and `second`.
@@ -18,6 +18,28 @@ pub fn compare_squared_distances_2d(
     let first = exact_point(first, 1)?;
     let second = exact_point(second, 2)?;
     Ok(squared_separation(&origin, &first).cmp(&squared_separation(&origin, &second)))
+}
+/// Compare the exact squared distance between two finite 3D points with the squared limit.
+/// Operands are indexed first point 0, second point 1, and limit 2. The limit's sign
+/// has no effect on its square. The comparison does not estimate the length.
+/// Example: `compare_squared_length_3d([0.; 3], [3., 4., 12.], 13.)`.
+pub fn compare_squared_length_3d(
+    first: [f64; 3],
+    second: [f64; 3],
+    length_limit: f64,
+) -> Result<Ordering, NonFiniteCoordinate> {
+    let first = exact_vector3(first, 0)?;
+    let second = exact_vector3(second, 1)?;
+    let limit = exact_coordinate(length_limit, 2, 0)?;
+    let length_squared: BigInt = first
+        .into_iter()
+        .zip(second)
+        .map(|(first, second)| {
+            let delta = first - second;
+            &delta * &delta
+        })
+        .sum();
+    Ok(length_squared.cmp(&(&limit * &limit)))
 }
 /// Compare projections of `first` and `second` along the directed `start`→`end` support.
 /// Indices are start=0, end=1, first=2, second=3. A zero direction returns equality;

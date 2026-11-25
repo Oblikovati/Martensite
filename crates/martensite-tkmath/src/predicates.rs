@@ -8,7 +8,9 @@ mod compare;
 /// Certified polynomial roots for extension topology.
 pub mod roots;
 mod triple_product;
-pub use compare::{compare_line_projections_2d, compare_squared_distances_2d};
+pub use compare::{
+    compare_line_projections_2d, compare_squared_distances_2d, compare_squared_length_3d,
+};
 pub use triple_product::compare_scalar_triple_product_3d;
 
 use num_bigint::{BigInt, Sign};
@@ -84,6 +86,14 @@ fn exact_point(point: [f64; 2], index: usize) -> Result<[BigInt; 2], NonFiniteCo
     Ok([
         exact_coordinate(point[0], index, 0)?,
         exact_coordinate(point[1], index, 1)?,
+    ])
+}
+
+fn exact_vector3(vector: [f64; 3], index: usize) -> Result<[BigInt; 3], NonFiniteCoordinate> {
+    Ok([
+        exact_coordinate(vector[0], index, 0)?,
+        exact_coordinate(vector[1], index, 1)?,
+        exact_coordinate(vector[2], index, 2)?,
     ])
 }
 

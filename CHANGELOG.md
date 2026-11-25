@@ -10,6 +10,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added the constraint solver toolkit for residual equations, numerical rank analysis, coordinate preferences, and bounded Sketch3D drag previews (#611).
 
+- Added immutable model-space point and line sketches with atomic edits and exact minimum-length checks (#611).
+
 - Added explicit full-turn cylinder and cone bands with authored rim history and paired native seams (#419).
 
 - Added rectangular and curved apertures across native seams in full-turn cylinder and cone bands, with exact authored split intervals and stable replay (#419).

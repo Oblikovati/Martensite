@@ -1120,6 +1120,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tksketch3d"
+version = "0.1.0"
+dependencies = [
+ "martensite-tkmath",
+]
+
+[[package]]
 name = "martensite-tksolve"
 version = "0.1.0"
 dependencies = [
