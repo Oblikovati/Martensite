@@ -4,6 +4,7 @@ mod admission;
 mod contact_prefix;
 mod error;
 mod proof;
+mod radial_slice;
 mod radial_sweep;
 #[cfg(test)]
 mod tests;
@@ -22,6 +23,10 @@ pub use contact_prefix::{
 };
 use error::Checked;
 pub use error::{CylindricalStorageError, CylindricalStorageFailure};
+pub use radial_slice::{
+    CertifiedCylindricalSlice, CylindricalSliceQuery, CylindricalSliceRefusal,
+    certify_cylindrical_slice_direction,
+};
 pub use radial_sweep::{
     CertifiedCylindricalRadialSweep, CylindricalRadialSense, CylindricalRadialSweepError,
     CylindricalRadialSweepFailure, CylindricalRadialSweepQuery, certify_cylindrical_radial_sweep,
