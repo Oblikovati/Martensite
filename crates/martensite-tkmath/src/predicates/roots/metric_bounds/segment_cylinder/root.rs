@@ -16,6 +16,14 @@ pub(super) struct Root {
 }
 
 impl Root {
+    pub(super) fn zero() -> Self {
+        Self {
+            offset: Ratio::from_finite(0.),
+            factor: Ratio::from_finite(0.),
+            square: Ratio::from_finite(0.),
+        }
+    }
+
     pub(super) fn ordered(a: &Ratio, b: &Ratio, discriminant: &Ratio) -> [Self; 2] {
         let inverse = Ratio::from_finite(0.5).divide(a);
         let offset = b.negated().multiply(&inverse);

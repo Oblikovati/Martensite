@@ -83,7 +83,7 @@ pub struct CylindricalSplitDomain {
     trace: CylindricalTrimTrace,
 }
 
-/// Spatial model-space bound for the retained native circular rims and paired seam.
+/// Spatial model-space bound for the retained native rims, paired seam and any hole edges.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CylindricalTrimTrace {
     /// Original requested L1 error limit.
@@ -130,8 +130,9 @@ impl CylindricalSplitDomain {
 
 /// Capture a uniquely selected full-period native cylindrical wall from a solid.
 /// The host keeps the supplied topology occurrence stable throughout capture and provides its stamp.
-/// The first supported trim is one paired seam and two complete circular rims with an exact
-/// rectangular UV domain. The trace limit bounds stored geometry independently of incidence.
+/// The supported outer trim is one paired seam and two complete circular rims with an exact
+/// rectangular UV domain. One strictly interior genuine rectangular UV hole is admitted.
+/// The trace limit bounds stored geometry independently of the incidence decisions.
 /// Example: `capture_cylindrical_split_domain(&body, &face, source, limits, 1e-9, || false)?`.
 pub fn capture_cylindrical_split_domain(
     body: &Solid,

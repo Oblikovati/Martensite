@@ -122,7 +122,7 @@ impl From<SplitLineFailure> for SplitCylindricalLineFailure {
 
 impl Snapshot {
     /// Split an owned directed line at isolated transverse hits on a frozen closed cylindrical wall.
-    /// Exact rim hits count. Tangencies and existing endpoints create no new points.
+    /// Exact outer and hole rim hits count. Tangencies and existing endpoints create no new points.
     /// Example: `snapshot.split_line_at_cylindrical_face(line, &wall, current, ids, 1e-9, || false)?`.
     pub fn split_line_at_cylindrical_face(
         &self,
@@ -207,7 +207,9 @@ fn cut_points(
             });
         }
         Hit::Isolated(contacts) => contacts,
-        Hit::Disjoint | Hit::GeneratorEndpoint { .. } => return Ok(Vec::new()),
+        Hit::Disjoint | Hit::GeneratorEndpoint { .. } | Hit::GeneratorHole { .. } => {
+            return Ok(Vec::new());
+        }
     };
     hits.iter()
         .filter_map(|hit| hit.cut.map(|cut| (hit, cut)))

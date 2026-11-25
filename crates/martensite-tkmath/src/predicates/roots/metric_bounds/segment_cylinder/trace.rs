@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bound actual rim, seam and common vertex representations against the cylindrical chart.
+mod hole;
 use super::{CylinderSegmentError as Error, Ratio, cross, poll};
 use crate::{
     gp::{Circle3, Cylinder3, Line3},
@@ -8,6 +9,7 @@ use crate::{
         metric_bounds::placed_plane::{ExactPlacement, ExactVector, exact_point, exact_vector},
     },
 };
+pub use hole::{CylinderHoleCarrier, CylinderHoleTraceEdge, certify_cylinder_hole_trace};
 use std::{cmp::Ordering, f64::consts::TAU};
 
 /// Stored native evidence from the selected full-period wall trim.

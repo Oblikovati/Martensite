@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bind one exact periodic UV rectangle to its stored seam, rims and vertex identities.
+mod hole;
 use super::{CylindricalFaceError as Error, numeric_failure, poll};
 use crate::brep::{
     face_input_capture::{
@@ -29,10 +30,15 @@ pub(super) fn prove(
     limit: f64,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Checked<(SegmentCylinderWall, f64)> {
-    let wall = Wall::capture(input, cancelled)?;
+    let (wall, hole) = Wall::capture(input, cancelled)?;
     let proof = SegmentCylinderWall::capture(wall.cylinder, wall.placement, wall.axial)
         .map_err(numeric_failure)?;
-    let upper_bound = certify_cylinder_wall_trace(wall, cancelled).map_err(numeric_failure)?;
+    let upper_bound =
+        certify_cylinder_wall_trace(wall, &mut *cancelled).map_err(numeric_failure)?;
+    let (proof, upper_bound) = match hole {
+        Some(hole) => hole.bind(wall, proof, upper_bound, cancelled)?,
+        None => (proof, upper_bound),
+    };
     if upper_bound > limit {
         return Err(Error::TraceError { upper_bound, limit });
     }
@@ -49,20 +55,20 @@ impl<'a> Wall<'a> {
     fn capture(
         input: &'a AnalyticFaceInput,
         cancelled: &mut impl FnMut() -> bool,
-    ) -> Checked<CylinderWallTraceInput> {
+    ) -> Checked<(CylinderWallTraceInput, Option<hole::Hole>)> {
         let root = input.common.root();
         reversed(root).map_err(Error::Source)?;
         let values = Captured::index(&input.common);
         let surface = values.surface(root.owner).map_err(Error::Source)?;
-        let [wire] = values
+        let wires = values
             .children(root.owner, ShapeEnum::Face)
-            .map_err(Error::Source)?
-        else {
+            .map_err(Error::Source)?;
+        if !(1..=2).contains(&wires.len()) {
             return Err(required(
                 root.owner,
-                "one closed full-period wire without holes",
+                "one full-period wire and at most one rectangular hole",
             ));
-        };
+        }
         let trimmed = Self {
             values,
             carriers: &input.carriers,
@@ -70,8 +76,33 @@ impl<'a> Wall<'a> {
         };
         let cylinder = trimmed.cylinder()?;
         let placement = placement(root, cancelled)?;
-        let (seam, rims) = trimmed.wire(wire, cancelled)?;
-        trimmed.bind(cylinder, placement, seam, rims)
+        let (outer, hole) = trimmed.wall_wires(wires, cancelled)?;
+        let (seam, rims) = outer.outer()?;
+        let wall = trimmed.bind(cylinder, placement, seam, rims)?;
+        let hole = hole
+            .map(|wire| hole::Hole::capture(wire, &trimmed.values, seam[0].vertices))
+            .transpose()?;
+        Ok((wall, hole))
+    }
+
+    fn wall_wires(
+        &self,
+        wires: &[CapturedOccurrence],
+        cancelled: &mut impl FnMut() -> bool,
+    ) -> Checked<(RawWire, Option<RawWire>)> {
+        let first = self.wire(&wires[0], cancelled)?;
+        let Some(second) = wires.get(1) else {
+            return Ok((first, None));
+        };
+        let second = self.wire(second, cancelled)?;
+        match [first.has_seam(), second.has_seam()] {
+            [true, false] => Ok((first, Some(second))),
+            [false, true] => Ok((second, Some(first))),
+            _ => Err(required(
+                first.owner,
+                "one native outer paired seam and one hole wire",
+            )),
+        }
     }
 
     fn cylinder(&self) -> Checked<Cylinder3> {
@@ -86,7 +117,7 @@ impl<'a> Wall<'a> {
         &self,
         wire: &CapturedOccurrence,
         cancelled: &mut impl FnMut() -> bool,
-    ) -> Checked<([Use; 2], [Use; 2])> {
+    ) -> Checked<RawWire> {
         local(wire).map_err(Error::Source)?;
         let reverse = reversed(wire).map_err(Error::Source)?;
         let edges = self
@@ -94,17 +125,20 @@ impl<'a> Wall<'a> {
             .children(wire.owner, ShapeEnum::Wire)
             .map_err(Error::Source)?;
         if edges.len() != 4 {
-            return Err(required(wire.owner, "four native full-wall coedges"));
+            return Err(required(wire.owner, "four native rectangular coedges"));
         }
         let mut uses = Vec::with_capacity(4);
         for edge in edges {
             poll(cancelled)?;
             uses.push(self.edge_use(edge, reverse)?);
         }
-        classify_uses(uses, wire.owner)
+        Ok(RawWire {
+            owner: wire.owner,
+            uses,
+        })
     }
 
-    fn edge_use(&self, edge: &CapturedOccurrence, wire_reverse: bool) -> Checked<Use> {
+    fn edge_use(&self, edge: &CapturedOccurrence, wire_reverse: bool) -> Checked<RawUse> {
         local(edge).map_err(Error::Source)?;
         let reversed = wire_reverse ^ reversed(edge).map_err(Error::Source)?;
         let vertices = self
@@ -141,15 +175,15 @@ impl<'a> Wall<'a> {
                 "one actual parameter interval for the spatial and chart traces",
             ));
         }
-        Use::capture(
-            edge.owner,
+        Ok(RawUse {
+            owner: edge.owner,
             vertices,
             reversed,
             curve,
             uv,
             range,
-            parametric.second.is_some(),
-        )
+            paired: parametric.second.is_some(),
+        })
     }
 
     fn representations(&self, edge: usize) -> Checked<(StoredCurve, Pcurve)> {
@@ -283,6 +317,36 @@ fn unique<T>(slot: &mut Option<T>, value: T, owner: usize) -> Checked<()> {
     Ok(())
 }
 
+struct RawWire {
+    owner: usize,
+    uses: Vec<RawUse>,
+}
+
+impl RawWire {
+    fn has_seam(&self) -> bool {
+        self.uses.iter().any(|coedge| coedge.paired)
+    }
+
+    fn outer(self) -> Checked<([Use; 2], [Use; 2])> {
+        let uses = self
+            .uses
+            .into_iter()
+            .map(Use::capture)
+            .collect::<Checked<Vec<_>>>()?;
+        classify_uses(uses, self.owner)
+    }
+}
+
+struct RawUse {
+    owner: usize,
+    vertices: [usize; 2],
+    reversed: bool,
+    curve: Curve,
+    uv: Axis2d,
+    range: [f64; 2],
+    paired: bool,
+}
+
 #[derive(Clone, Copy)]
 enum Curve {
     Rim(Circle3),
@@ -299,15 +363,16 @@ struct Use {
 }
 
 impl Use {
-    fn capture(
-        owner: usize,
-        vertices: [usize; 2],
-        reversed: bool,
-        curve: Curve,
-        uv: Axis2d,
-        range: [f64; 2],
-        paired: bool,
-    ) -> Checked<Self> {
+    fn capture(raw: RawUse) -> Checked<Self> {
+        let RawUse {
+            owner,
+            vertices,
+            reversed,
+            curve,
+            uv,
+            range,
+            paired,
+        } = raw;
         let [a, b] = [uv.location().x(), uv.location().y()];
         let direction = [uv.direction().x(), uv.direction().y()];
         let points = match curve {

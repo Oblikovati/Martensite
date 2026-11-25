@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact directed segment contacts with a located, full-period cylindrical chart.
+mod hole;
 mod root;
 mod trace;
-pub use trace::{CylinderWallTraceInput, certify_cylinder_wall_trace};
+pub use trace::{
+    CylinderHoleCarrier, CylinderHoleTraceEdge, CylinderWallTraceInput,
+    certify_cylinder_hole_trace, certify_cylinder_wall_trace,
+};
 
 use super::super::certificate_arithmetic::ExactRatio as Ratio;
+use super::CylindricalProfileFailure;
 use super::placed_plane::{ExactPlacement, ExactVector, cross, dot, exact_point, exact_vector};
 pub use super::segment_plane::SegmentPlaneCut as SegmentCylinderCut;
 use crate::{gp::Cylinder3, predicates::NonFiniteCoordinate};
+use hole::Hole;
 use root::Root;
 use std::{cmp::Ordering, error::Error, fmt};
 
@@ -35,11 +41,15 @@ pub enum CylinderWallPlace {
     LastRim,
     /// Beyond the last retained rim.
     Above,
+    /// On the closed boundary of the selected rectangular hole.
+    HoleBoundary,
+    /// Strictly inside the removed rectangular hole.
+    HoleInterior,
 }
 
 impl CylinderWallPlace {
     fn on_wall(self) -> bool {
-        !matches!(self, Self::Below | Self::Above)
+        !matches!(self, Self::Below | Self::Above | Self::HoleInterior)
     }
 }
 
@@ -81,6 +91,11 @@ pub enum CylinderSegmentIntersection {
         /// Retained rim reached by the endpoint.
         rim: CylinderWallPlace,
     },
+    /// A generator was wholly within the open hole or reached its closed rim only at existing endpoints.
+    GeneratorHole {
+        /// The retained original endpoints on the hole rim, in source order.
+        endpoints: [bool; 2],
+    },
     /// A coincident generator shares a positive-length range with the actual axial trim.
     Overlap,
 }
@@ -101,6 +116,17 @@ pub enum CylinderSegmentError {
     CoincidentEndpoints,
     /// Algebraic rounding did not finish within the fixed precision schedule.
     PositionEnclosure,
+    /// A rectangular hole is outside the positive strictly interior native chart domain.
+    HoleBounds {
+        /// Literal angular pcurve bounds.
+        angular: [f64; 2],
+        /// Literal axial pcurve bounds.
+        axial: [f64; 2],
+    },
+    /// Bounded exact comparisons could not separate an algebraic root and the literal angular ray.
+    AngularSign(f64),
+    /// Certification of a stored angular ray could not complete.
+    Trigonometry(Box<CylindricalProfileFailure>),
     /// The operation observed cooperative cancellation.
     Cancelled,
 }
@@ -126,6 +152,17 @@ impl fmt::Display for CylinderSegmentError {
             Self::PositionEnclosure => {
                 out.write_str("cylindrical intersection position enclosure did not complete")
             }
+            Self::HoleBounds { angular, axial } => write!(
+                out,
+                "cylindrical hole {angular:?} by {axial:?} needs positive bounds strictly within the outer wall"
+            ),
+            Self::AngularSign(angle) => write!(
+                out,
+                "cylindrical hole ray {angle} did not have a certified strict angular sign"
+            ),
+            Self::Trigonometry(cause) => {
+                write!(out, "cylindrical angular certificate failed ({cause})")
+            }
             Self::Cancelled => out.write_str("cylindrical intersection cancelled"),
         }
     }
@@ -135,6 +172,7 @@ impl Error for CylinderSegmentError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Coordinate(cause) => Some(cause),
+            Self::Trigonometry(cause) => Some(cause.as_ref()),
             _ => None,
         }
     }
@@ -146,6 +184,12 @@ impl From<NonFiniteCoordinate> for CylinderSegmentError {
     }
 }
 
+impl CylinderSegmentError {
+    fn from_trig(cause: impl Into<CylindricalProfileFailure>) -> Self {
+        Self::Trigonometry(Box::new(cause.into()))
+    }
+}
+
 /// Exact placed chart coefficients and a caller-certified full-period axial trim.
 #[derive(Clone, Debug)]
 pub struct SegmentCylinderWall {
@@ -153,6 +197,7 @@ pub struct SegmentCylinderWall {
     inverse: [ExactVector; 3],
     radius: Ratio,
     axial: [Ratio; 2],
+    hole: Option<Hole>,
 }
 
 impl SegmentCylinderWall {
@@ -183,7 +228,20 @@ impl SegmentCylinderWall {
             inverse,
             radius: Ratio::from_finite(radius),
             axial: axial.map(Ratio::from_finite),
+            hole: None,
         })
+    }
+
+    /// Bind one certified rectangular hole lying strictly inside the full-period chart.
+    /// Example: `wall.with_rectangular_hole([0.5, 2.5], [1., 2.], || false)?`.
+    pub fn with_rectangular_hole(
+        mut self,
+        angular: [f64; 2],
+        axial: [f64; 2],
+        mut cancelled: impl FnMut() -> bool,
+    ) -> Result<Self, CylinderSegmentError> {
+        self.hole = Some(Hole::capture(angular, axial, &self.axial, &mut cancelled)?);
+        Ok(self)
     }
 
     /// Classify exact roots and only then round the admitted interior crossings.
@@ -265,7 +323,10 @@ impl SegmentCylinderWall {
             .axial
             .each_ref()
             .map(|rim| root.affine_sign(&local.start[2].subtract(rim), &local.rate[2]));
-        let wall = classify_wall(first, last);
+        let wall = match (&self.hole, classify_wall(first, last)) {
+            (Some(hole), CylinderWallPlace::Interior) => hole.classify(local, root)?,
+            (_, place) => place,
+        };
         let cut = if line == CylinderLinePlace::Interior
             && wall.on_wall()
             && sense == CylinderContactSense::Transverse
@@ -293,6 +354,9 @@ impl SegmentCylinderWall {
         if slope.sign() == Ordering::Equal {
             return Err(CylinderSegmentError::Frame);
         }
+        if let Some(result) = self.generator_hole(local)? {
+            return Ok(result);
+        }
         let [a, b] = self
             .axial
             .each_ref()
@@ -315,6 +379,28 @@ impl SegmentCylinderWall {
                 Ok(Hit::GeneratorEndpoint { line, rim })
             }
         }
+    }
+
+    fn generator_hole(
+        &self,
+        local: &LocalSegment,
+    ) -> Result<Option<CylinderSegmentIntersection>, CylinderSegmentError> {
+        let Some(hole) = &self.hole else {
+            return Ok(None);
+        };
+        let ends = [&local.start[2], &local.start[2].add(&local.rate[2])];
+        let [first, last] = &hole.axial;
+        if ends.iter().any(|end| *end < first || *end > last) {
+            return Ok(None);
+        }
+        let [low, high] = hole.angular(local, &Root::zero())?;
+        if low != Ordering::Greater || high != Ordering::Less {
+            return Ok(None);
+        }
+        let endpoints = ends.map(|end| end == first || end == last);
+        Ok(Some(CylinderSegmentIntersection::GeneratorHole {
+            endpoints,
+        }))
     }
 }
 

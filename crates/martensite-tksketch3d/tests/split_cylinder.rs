@@ -464,4 +464,5 @@ fn emit_cylindrical_split() {
     );
 }
 
+mod hole;
 mod native_trim;
