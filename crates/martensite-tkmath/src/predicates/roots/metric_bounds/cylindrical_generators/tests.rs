@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
-use crate::gp::Axis3;
+use crate::gp::{Axis3, Point3};
 
 const IDENTITY: [[f64; 4]; 3] = [[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.]];
+const TWO_TO_53: f64 = 9_007_199_254_740_992.;
 const TRIM: [f64; 2] = [0., 10.];
 
 #[test]
@@ -15,7 +16,7 @@ fn exact_axis_pair_and_lost_bits_at_large_translation() {
         Ok([0.; 2])
     );
 
-    let x = 2f64.powi(53);
+    let x = TWO_TO_53;
     let mut placement = IDENTITY;
     placement[0][3] = x;
     let chart = CylindricalGeneratorChart::capture(cylinder, placement, Direction3::Y).unwrap();
@@ -30,7 +31,7 @@ fn transported_center_rounding_and_axial_scale_are_charged() {
     let mut frame = Axis3::default();
     frame.set_location(Point3::new(1., 0., 0.));
     let cylinder = Cylinder3::new(frame, 4.).unwrap();
-    let x = 2f64.powi(53);
+    let x = TWO_TO_53;
     let mut placement = IDENTITY;
     placement[0][3] = x;
     placement[2][2] = 1.25;

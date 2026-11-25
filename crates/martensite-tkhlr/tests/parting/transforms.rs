@@ -72,3 +72,107 @@ fn assert_point(actual: [f64; 3], expected: [f64; 3]) {
         );
     }
 }
+
+#[test]
+fn noncardinal_box_uses_the_exact_source_placement_signs() {
+    use martensite_tkmath::gp::{Axis1, Plane3};
+    let original = Model::new(super::block());
+    let axis = Axis1::new(Point3::default(), Direction3::new(1., 2., 3.).unwrap());
+    let transform = Transform3::rotation(axis, 0.3).unwrap();
+    let pull = Plane3::default()
+        .transformed(transform)
+        .position()
+        .x_direction();
+    let located = Solid::unchecked(
+        original
+            .solid
+            .moved(&Location::new(transform), true)
+            .unwrap(),
+    );
+    let model = Model::new(located);
+    let expected = exact_box_edge_ids(&original, transform, pull);
+    let actual: Vec<_> = selected(&model, pull, PartingOptions::default())
+        .iter()
+        .map(|curve| {
+            let PartingOrigin::Shared { edge, .. } = curve.origin() else {
+                panic!("expected native edge");
+            };
+            edge
+        })
+        .collect();
+    assert_eq!(actual, expected);
+    assert!(!actual.is_empty());
+}
+
+fn exact_box_edge_ids(
+    model: &Model,
+    transform: Transform3,
+    pull: Direction3,
+) -> Vec<martensite_tkhlr::parting::PartingEdgeId> {
+    use martensite_tkbrep::topexp::Explorer;
+    use martensite_tkg3d::top_abs::ShapeEnum;
+    let signs: Vec<_> = model
+        .faces
+        .iter()
+        .map(|face| placed_box_face_sign(face, transform, pull))
+        .collect();
+    let (_, edges) = model.bindings();
+    edges
+        .into_iter()
+        .filter_map(|edge| {
+            let signs: Vec<_> = model
+                .faces
+                .iter()
+                .zip(&signs)
+                .filter_map(|(face, &sign)| {
+                    let incident = Explorer::new(face, ShapeEnum::Edge, ShapeEnum::Shape)
+                        .unwrap()
+                        .any(|child| child.is_same(edge.occurrence));
+                    incident.then_some(sign)
+                })
+                .collect();
+            assert_eq!(signs.len(), 2);
+            (signs[0] != signs[1]).then_some(edge.id)
+        })
+        .collect()
+}
+
+fn placed_box_face_sign(
+    face: &martensite_tkbrep::topods::Face,
+    transform: Transform3,
+    pull: Direction3,
+) -> std::cmp::Ordering {
+    use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
+    use martensite_tkg3d::{adaptor3d::Adaptor3dSurface, top_abs::Orientation};
+    use martensite_tkmath::predicates::compare_scalar_triple_product_3d;
+    let plane = BRepAdaptorSurface::with_face(face, false)
+        .unwrap()
+        .plane()
+        .unwrap();
+    let frame = plane.position();
+    let column = |direction: Direction3| {
+        let basis = *direction.coordinates();
+        let axis = basis
+            .iter()
+            .position(|component| component.abs() == 1.)
+            .unwrap();
+        assert!(
+            basis
+                .iter()
+                .enumerate()
+                .all(|(index, &component)| index == axis || component == 0.)
+        );
+        [1, 2, 3].map(|row| basis[axis] * transform.value(row, axis as i32 + 1).unwrap())
+    };
+    let sign = compare_scalar_triple_product_3d(
+        *pull.coordinates(),
+        column(frame.x_direction()),
+        column(frame.y_direction()),
+    )
+    .unwrap();
+    if face.orientation() == Orientation::Reversed {
+        sign.reverse()
+    } else {
+        sign
+    }
+}

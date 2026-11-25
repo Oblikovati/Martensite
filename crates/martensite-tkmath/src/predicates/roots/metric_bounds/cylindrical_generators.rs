@@ -4,8 +4,9 @@ use super::super::certificate_arithmetic::{
     ExactRatio,
     rounding::{outward_sqrt, outward_sqrt_bounds},
 };
+use super::placed_plane::{ExactPlacement, ExactVector, exact_point, exact_vector, triple};
 use crate::{
-    gp::{Cylinder3, Direction3, Line3, Point3},
+    gp::{Cylinder3, Direction3, Line3},
     predicates::NonFiniteCoordinate,
 };
 use std::{cmp::Ordering, fmt};
@@ -79,8 +80,13 @@ pub enum CylindricalPullKind {
     Skew,
 }
 
+impl From<NonFiniteCoordinate> for CylindricalGeneratorError {
+    fn from(error: NonFiniteCoordinate) -> Self {
+        Self::Coordinate(error)
+    }
+}
+
 type Checked<T> = Result<T, CylindricalGeneratorError>;
-type ExactVector = [ExactRatio; 3];
 type ExactInterval = [ExactRatio; 2];
 
 /// The exact placed source coefficients and angular root bounds for one cylinder and pull.
@@ -170,69 +176,6 @@ impl CylindricalGeneratorChart {
         }
         outward_sqrt(&squared).ok_or(CylindricalGeneratorError::Unrepresentable)
     }
-}
-
-struct ExactPlacement {
-    linear: [ExactVector; 3],
-    translation: ExactVector,
-}
-
-impl ExactPlacement {
-    fn capture(rows: [[f64; 4]; 3]) -> Checked<Self> {
-        let [a, b, c] = rows;
-        let linear = [linear_row(a, 5)?, linear_row(b, 6)?, linear_row(c, 7)?];
-        let translation = exact_vector([a[3], b[3], c[3]], 7)?;
-        Ok(Self {
-            linear,
-            translation,
-        })
-    }
-
-    fn vector(&self, source: ExactVector) -> ExactVector {
-        self.linear.each_ref().map(|row| dot(row, &source))
-    }
-
-    fn point(&self, source: ExactVector) -> ExactVector {
-        let placed = self.vector(source);
-        std::array::from_fn(|i| placed[i].add(&self.translation[i]))
-    }
-}
-
-fn linear_row([a, b, c, _]: [f64; 4], index: usize) -> Checked<ExactVector> {
-    exact_vector([a, b, c], index)
-}
-
-fn exact_point(point: Point3, index: usize) -> Checked<ExactVector> {
-    exact_vector([point.x(), point.y(), point.z()], index)
-}
-
-fn exact_vector(coordinates: [f64; 3], index: usize) -> Checked<ExactVector> {
-    for (axis, value) in coordinates.into_iter().enumerate() {
-        if !value.is_finite() {
-            return Err(CylindricalGeneratorError::Coordinate(NonFiniteCoordinate {
-                point: index,
-                axis,
-                value,
-            }));
-        }
-    }
-    Ok(coordinates.map(ExactRatio::from_finite))
-}
-
-fn dot(a: &ExactVector, b: &ExactVector) -> ExactRatio {
-    a.iter()
-        .zip(b)
-        .fold(ExactRatio::from_finite(0.), |sum, (a, b)| {
-            sum.add(&a.multiply(b))
-        })
-}
-
-fn triple(a: &ExactVector, b: &ExactVector, c: &ExactVector) -> ExactRatio {
-    let cross = std::array::from_fn(|i| {
-        let [j, k] = [(i + 1) % 3, (i + 2) % 3];
-        b[j].multiply(&c[k]).subtract(&b[k].multiply(&c[j]))
-    });
-    dot(a, &cross)
 }
 
 fn chart_roots(

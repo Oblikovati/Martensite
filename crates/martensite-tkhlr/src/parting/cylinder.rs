@@ -4,7 +4,7 @@ use super::{
     PartingCarrier, PartingCurve, PartingCylinderProblem as CylinderProblem, PartingEntity,
     PartingFaceUse, PartingFailureKind, PartingOrigin, PartingPositionEvidence,
     failure::{Checked, native},
-    geometry::{FaceSign, checked_curve},
+    geometry::{FaceSign, checked_curve, placement_rows},
 };
 use crate::contap::ContapContAna;
 use martensite_tkbrep::{
@@ -61,15 +61,7 @@ fn capture_chart(
         .get()
         .ok_or_else(|| problem(trace, CylinderProblem::Trim))?;
     let cylinder = local.cylinder().map_err(native(entity))?;
-    let transform = placed.trsf();
-    let mut rows = [[0.; 4]; 3];
-    for (row, values) in rows.iter_mut().enumerate() {
-        for (column, element) in values.iter_mut().enumerate() {
-            *element = transform
-                .value(row as i32 + 1, column as i32 + 1)
-                .map_err(native(entity))?;
-        }
-    }
+    let rows = placement_rows(placed.trsf(), entity)?;
     CylindricalGeneratorChart::capture(cylinder, rows, pull).map_err(|cause| {
         PartingFailureKind::CylinderPosition {
             face: trace.id,

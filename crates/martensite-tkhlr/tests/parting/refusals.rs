@@ -10,6 +10,8 @@ use martensite_tkmath::{
 };
 use std::num::NonZeroU64;
 
+const TWO_TO_53: f64 = 9_007_199_254_740_992.;
+
 #[test]
 fn unsupported_curved_wall_and_partial_cylinder_fail_as_typed_results() {
     let cone = Model::new(fixtures::cone());
@@ -200,14 +202,14 @@ fn large_origin_refuses_lost_contour_translation_bits() {
     use martensite_tkbrep::topods::Solid;
     use martensite_tkmath::{gp::Transform3, toploc::Location};
     let body = fixtures::cylinder(1.5, 10.);
-    let transform = Transform3::translation([2f64.powi(53), 0., 0.]);
+    let transform = Transform3::translation([TWO_TO_53, 0., 0.]);
     let located = Solid::unchecked(body.moved(&Location::new(transform), true).unwrap());
     let model = Model::new(located);
     let kind = refuse(&model, Direction3::Y);
     assert!(
         matches!(kind, PartingFailureKind::Cylinder {
         problem: PartingCylinderProblem::Position { generator: 1, upper_bound: 0.5, source_tolerance }, ..
-    } if 0. <= source_tolerance && source_tolerance < 0.5),
+    } if (0. ..0.5).contains(&source_tolerance)),
         "{kind:?}"
     );
 }
@@ -288,13 +290,13 @@ fn rebuilt_world_center_does_not_hide_placement_rounding() {
     let local_axes = Axis2::new(Point3::new(1., 0., 0.), Direction3::Z).unwrap();
     let mut maker = BRepPrimAPIMakeCylinder::with_axes(local_axes, 4., 10.);
     let body = topods::solid(maker.shape().unwrap()).unwrap();
-    let transform = Transform3::translation([2f64.powi(53), 0., 0.]);
+    let transform = Transform3::translation([TWO_TO_53, 0., 0.]);
     let located = Solid::unchecked(body.moved(&Location::new(transform), true).unwrap());
     let kind = refuse(&Model::new(located), Direction3::Y);
     assert!(
         matches!(kind, PartingFailureKind::Cylinder {
         problem: PartingCylinderProblem::Position { generator: 1, upper_bound: 1., source_tolerance }, ..
-    } if 0. <= source_tolerance && source_tolerance < 1.),
+    } if (0. ..1.).contains(&source_tolerance)),
         "{kind:?}"
     );
 }

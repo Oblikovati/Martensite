@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Explicit cavity evidence for separate, strictly nested orthogonal box shells.
 use super::{
-    PartingEntity, PartingFailureKind, PartingOptions, PartingShell,
+    PartingEntity, PartingFaceId, PartingFailureKind, PartingOptions, PartingShell,
     failure::{Checked, native},
-    geometry::{FaceGeometry, FaceSign, direction, plane_sign, point},
+    geometry::{FaceGeometry, FaceSign, placement_rows, plane_sign},
     observe_stop,
     topology::{BoundEdge, SourceTopology},
 };
-use martensite_tkbrep::brep_adaptor::BRepAdaptorCurve;
-use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
+use martensite_tkbrep::brep::BRepTool;
+use martensite_tkg3d::{geom::GeomLine, top_abs::Orientation};
 use martensite_tkmath::{
-    geom_abs::{CurveType, SurfaceType},
-    gp::Direction3,
-    predicates::roots::metric_bounds::exact_affine_coordinate,
+    geom_abs::SurfaceType, predicates::roots::metric_bounds::exact_placed_line_ends,
 };
-
-const AXES: [Direction3; 3] = [Direction3::X, Direction3::Y, Direction3::Z];
 
 pub(super) fn classify_shells(
     topology: &SourceTopology<'_>,
@@ -61,9 +57,9 @@ fn box_shell(
     }
     let mut sides = Vec::with_capacity(6);
     for &index in faces {
-        let entity = PartingEntity::Face(topology.faces[index].id);
+        let id = topology.faces[index].id;
         let orientation = topology.faces[index].face.orientation();
-        let Some(side) = box_side(&geometry[index], orientation, entity)? else {
+        let Some(side) = box_side(&geometry[index], orientation, id)? else {
             return Ok(None);
         };
         sides.push(side);
@@ -81,31 +77,20 @@ fn box_shell(
 
 fn box_side(
     geometry: &FaceGeometry,
-    orientation: martensite_tkg3d::top_abs::Orientation,
-    entity: PartingEntity,
+    orientation: Orientation,
+    id: PartingFaceId,
 ) -> Checked<Option<BoxSide>> {
     if geometry.kind != SurfaceType::Plane {
         return Ok(None);
     }
-    let plane = geometry.surface.plane().map_err(native(entity))?;
-    let normal = direction(plane.axis().direction());
-    let Some(axis) = normal.iter().position(|component| component.abs() == 1.) else {
-        return Ok(None);
-    };
-    if normal
-        .iter()
-        .enumerate()
-        .any(|(i, &component)| i != axis && component != 0.)
-    {
-        return Ok(None);
-    }
-    let frame = plane.position();
-    if direction(frame.x_direction())[axis] != 0. || direction(frame.y_direction())[axis] != 0. {
-        return Ok(None);
-    }
-    let height = point(plane.location())[axis];
-    let sign = plane_sign(plane, AXES[axis], orientation, entity)?;
-    Ok((height.is_finite() && sign != FaceSign::Zero).then_some(BoxSide { axis, height, sign }))
+    Ok(geometry
+        .placed_plane(id)?
+        .axis_side()
+        .map(|(axis, height, order)| BoxSide {
+            axis,
+            height,
+            sign: plane_sign(order, orientation),
+        }))
 }
 
 fn box_limits(sides: &[BoxSide]) -> Option<BoxShell> {
@@ -162,29 +147,14 @@ fn box_face_trim(
 
 fn exact_line_ends(edge: &BoundEdge<'_>) -> Checked<Option<[[f64; 3]; 2]>> {
     let entity = PartingEntity::Edge(edge.binding.id);
-    let curve = BRepAdaptorCurve::with_edge(edge.binding.occurrence).map_err(native(entity))?;
-    if curve.get_type().map_err(native(entity))? != CurveType::Line {
+    let stored = BRepTool::curve_with_location(edge.binding.occurrence).map_err(native(entity))?;
+    let line = stored.curve.cast::<GeomLine>();
+    let Some(line) = line.get() else {
         return Ok(None);
-    }
-    let line = curve.line().map_err(native(entity))?;
-    let origin = point(line.location());
-    let direction = direction(line.direction());
-    let range = [
-        curve.first_parameter().map_err(native(entity))?,
-        curve.last_parameter().map_err(native(entity))?,
-    ];
-    let mut ends = [[0.; 3]; 2];
-    for (parameter, end) in range.into_iter().zip(&mut ends) {
-        for axis in 0..3 {
-            let coordinate = exact_affine_coordinate(origin[axis], direction[axis], parameter)
-                .map_err(|cause| PartingFailureKind::Coordinate { entity, cause })?;
-            let Some(value) = coordinate else {
-                return Ok(None);
-            };
-            end[axis] = value;
-        }
-    }
-    Ok(Some(ends))
+    };
+    let rows = placement_rows(stored.location.transformation(), entity)?;
+    exact_placed_line_ends(line.lin(), rows, [stored.first, stored.last])
+        .map_err(|cause| PartingFailureKind::Coordinate { entity, cause })
 }
 
 fn box_rail(ends: [[f64; 3]; 2], side: BoxSide, limits: [[f64; 2]; 3]) -> Option<usize> {
