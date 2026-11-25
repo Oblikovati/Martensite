@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::fixture::{lid, line, pid, point, seed};
 use martensite_tksketch3d::{
-    BatchPhase, Edit, EditFailure, EntityId, FrozenPointSource, MinimumLength, PointRole,
-    SketchPoint, Snapshot,
+    BatchPhase, Edit, EditFailure, EntityId, FrozenPointSource, FrozenSourceRevision,
+    MinimumLength, PointRole, SketchPoint, Snapshot,
 };
 use std::num::NonZeroU64;
 
@@ -14,8 +14,10 @@ fn source() -> FrozenPointSource {
     FrozenPointSource {
         document: [27; 16],
         sketch: NonZeroU64::new(3).unwrap(),
-        incarnation: 2,
-        revision: 4,
+        revision: FrozenSourceRevision::Snapshot {
+            incarnation: 2,
+            revision: 4,
+        },
         point: pid(6),
     }
 }

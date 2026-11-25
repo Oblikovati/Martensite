@@ -2,7 +2,8 @@
 use crate::fixture::{lid, line, pid, point, seed};
 use martensite_tkmath::gp::{Axis1, Direction3, Point3, Vector3};
 use martensite_tksketch3d::{
-    Edit, EditFailure, FrozenPointSource, MinimumLength, PointRole, SketchPoint, Snapshot,
+    Edit, EditFailure, FrozenPointSource, FrozenSourceRevision, MinimumLength, PointRole,
+    SketchPoint, Snapshot,
     constraints::{
         ConstrainedSketch, ConstraintFailure, RelationEdit, RelationId, RelationSpec, RigidMotion,
         RigidMotionFailure,
@@ -153,8 +154,10 @@ fn moving_a_captured_endpoint_preserves_its_read_only_source() {
     let stamp = FrozenPointSource {
         document: [7; 16],
         sketch: id(8),
-        incarnation: 9,
-        revision: 10,
+        revision: FrozenSourceRevision::Snapshot {
+            incarnation: 9,
+            revision: 10,
+        },
         point: pid(11),
     };
     let snapshot = source()

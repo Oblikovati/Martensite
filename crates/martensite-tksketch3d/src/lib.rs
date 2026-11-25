@@ -11,7 +11,7 @@ pub mod wire;
 pub use arc::{ArcDefinition, ArcFailure, ArcFitTolerance, ArcGeometry, ArcId, SketchArc};
 pub use failure::{BatchPhase, EditFailure, InvalidMinimumLength};
 use martensite_tkmath::gp::{Line3, Point3};
-pub use source::FrozenPointSource;
+pub use source::{FrozenPointSource, FrozenSourceRevision};
 use std::{
     collections::{BTreeMap, BTreeSet},
     num::NonZeroU64,

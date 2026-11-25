@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use crate::fixture::{lid, line, pid, point, seed};
 use martensite_tksketch3d::{
-    Edit, EditFailure, EntityId, FrozenPointSource, MinimumLength, PointRole, SketchPoint,
-    Snapshot,
+    Edit, EditFailure, EntityId, FrozenPointSource, FrozenSourceRevision, MinimumLength, PointRole,
+    SketchPoint, Snapshot,
     constraints::{
         ConstrainedSketch, ConstraintFailure, ConstraintPolicy, DragUpdate, ParallelDirection,
         Relation, RelationEdit, RelationId, RelationSpec, SolveOptions, SolverLimits,
@@ -335,8 +335,10 @@ fn frozen_points_are_exact_solver_coordinates_with_owned_source_provenance() {
     let source = FrozenPointSource {
         document: [42; 16],
         sketch: NonZeroU64::new(11).unwrap(),
-        incarnation: 1,
-        revision: 5,
+        revision: FrozenSourceRevision::Snapshot {
+            incarnation: 1,
+            revision: 5,
+        },
         point: pid(7),
     };
     let snapshot = Snapshot::empty(length(0.01))
