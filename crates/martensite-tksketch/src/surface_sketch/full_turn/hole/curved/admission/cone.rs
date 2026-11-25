@@ -7,6 +7,7 @@ impl AperturePlan {
         band: &FullTurnBand,
         request: &WrappedConeNormalRequest,
         options: NormalExtrusionOptions,
+        scope: Scope,
     ) -> Checked<Self> {
         let stock = band_admission::admit(*band, request.depths, options)?;
         let FullTurnSupport::Cone { support, slant } = band.support else {
@@ -16,25 +17,12 @@ impl AperturePlan {
             ));
         };
         require_support(support, request)?;
-        let [selection] = request.selections.as_slice() else {
-            return Err(incomplete(
-                "one selected conical aperture",
-                format!("{} selections", request.selections.len()),
-            ));
-        };
-        if !selection.holes.is_empty() {
-            return Err(incomplete(
-                "one simply connected conical aperture",
-                "nested aperture loops",
-            ));
-        }
-        let crossings = cone_contour(&request.profile, selection, support, slant, options)?;
-        Ok(Self {
-            stock,
-            band: *band,
-            region: selection.region,
-            crossings,
-        })
+        let contours = request
+            .selections
+            .iter()
+            .map(|selection| cone_contour(&request.profile, selection, support, slant, options))
+            .collect::<Checked<Vec<_>>>()?;
+        Self::compose(*band, stock, contours, scope, options)
     }
 }
 
@@ -60,9 +48,9 @@ fn cone_contour(
     support: ConeSupport,
     slant: [f64; 2],
     options: NormalExtrusionOptions,
-) -> Checked<[Crossing; 2]> {
+) -> Checked<Aperture> {
     let mut curves = contour_curves(profile, selection)?;
-    let maximum_x = certify_cone_hull(&curves, support, slant, options)?;
+    let (meridian, maximum_x) = certify_cone_hull(&curves, support, slant, options)?;
     // atan(y/x) has magnitude at least |y|/(2 max(x)) when |y| <= x.
     // Division by sin(half angle) only increases this bound.
     let denominator = (2. * maximum_x).next_up();
@@ -76,7 +64,12 @@ fn cone_contour(
         .iter()
         .map(|curve| curve.crossing(denominator, angular))
         .collect::<Checked<Vec<_>>>()?;
-    ordered_crossings(roots.into_iter().flatten().collect())
+    aperture(
+        selection,
+        curves,
+        meridian,
+        roots.into_iter().flatten().collect(),
+    )
 }
 
 fn certify_cone_hull(
@@ -84,13 +77,7 @@ fn certify_cone_hull(
     support: ConeSupport,
     slant: [f64; 2],
     options: NormalExtrusionOptions,
-) -> Checked<f64> {
-    if !curves.iter().any(DirectedCurve::is_curved) {
-        return Err(incomplete(
-            "at least one conical polynomial curve",
-            "only lines",
-        ));
-    }
+) -> Checked<([f64; 2], f64)> {
     let mut bounds = [[f64::INFINITY, f64::NEG_INFINITY]; 2];
     for curve in curves {
         extend_bounds(&mut bounds, &curve.points);
@@ -106,7 +93,7 @@ fn certify_cone_hull(
     let l1 = (max_x + y).next_up();
     require_rim_clearance(slant, [min_x, l1], options)?;
     certify_phase(support, y, min_x)?;
-    Ok(max_x)
+    Ok(([min_x, l1], max_x))
 }
 
 fn certify_phase(support: ConeSupport, y: f64, min_x: f64) -> Checked<()> {

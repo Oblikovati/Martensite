@@ -3,9 +3,6 @@
 use super::*;
 use martensite_tkbrep::brep::EdgePCurve;
 
-mod boundary;
-use boundary::DirectedWires;
-
 pub(super) fn check(proof: &Verification<'_>, depth: PeriodicDepth) -> Checked<()> {
     let face = proof.retained(
         HistorySource::Region(proof.band.region),
@@ -23,7 +20,14 @@ pub(super) fn check(proof: &Verification<'_>, depth: PeriodicDepth) -> Checked<(
     let carrier = carrier_type(stock.cylinder, index);
     require_surface(&surface, carrier)?;
     verify_carrier(stock, &surface, carrier, index)?;
-    let uses = DirectedWires::read(&face, &ExpectedTopology::new(proof.prepared))?;
+    let topology = ExpectedTopology::new(proof.prepared);
+    let uses = DirectedWires::read(
+        &face,
+        [
+            1 + topology.clear,
+            4 + 8 * topology.crossed + 4 * topology.clear,
+        ],
+    )?;
     let row = DepthFace {
         proof,
         depth,

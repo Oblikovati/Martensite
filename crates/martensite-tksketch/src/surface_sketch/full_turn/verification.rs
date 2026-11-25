@@ -19,9 +19,11 @@ use martensite_tkmath::{
 };
 use std::f64::consts::TAU;
 
+mod boundary;
 mod periodic_cut;
 mod trim;
 
+pub(super) use boundary::DirectedWires;
 pub(super) use periodic_cut::unique_kind;
 pub(super) use periodic_cut::validate_crossed;
 pub(super) use trim::{verify_rim_trim, verify_seam_fragment};
