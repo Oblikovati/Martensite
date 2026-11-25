@@ -52,7 +52,7 @@ fn store(
             work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
             volume:
                 martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit::Report,
-            proof: martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2,
+            preparation: martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2.into(),
         },
         originals,
         prepared,

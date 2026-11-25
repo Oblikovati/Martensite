@@ -57,6 +57,21 @@ pub(super) struct QualifiedSelection {
     pub prepared: PreparedSelection,
     pub material: PeriodicMaterialEvidence,
 }
+
+#[derive(Clone, Copy)]
+pub(super) struct Preparation {
+    pub proof: PlanarProofVersion,
+    pub maximum_fit_error: Option<f64>,
+}
+
+impl From<PlanarProofVersion> for Preparation {
+    fn from(proof: PlanarProofVersion) -> Self {
+        Self {
+            proof,
+            maximum_fit_error: None,
+        }
+    }
+}
 #[cfg(test)]
 pub(super) fn certify(
     requests: &[Request],
@@ -74,7 +89,7 @@ pub(super) fn certify_with_cancel(
         requests,
         options,
         PlanarProofWorkLimit::CurrentDefault,
-        PlanarProofVersion::CarrierV2,
+        PlanarProofVersion::CarrierV2.into(),
         cancelled,
     )
 }
@@ -82,10 +97,10 @@ pub(super) fn certify_with_proof(
     requests: &[Request],
     options: MaterialOptions,
     work: PlanarProofWorkLimit,
-    version: PlanarProofVersion,
+    preparation: Preparation,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<QualifiedSelection, SelectionFailure> {
-    let prepared = prepare_with_proof(requests, work, version, &mut cancelled)?;
+    let prepared = prepare_with_proof(requests, work, preparation, &mut cancelled)?;
     let material = material::certify_with_cancel(requests, &prepared, options, &mut cancelled)
         .map_err(|cause| SelectionFailure::Material(Box::new(cause)))?;
     Ok(QualifiedSelection { prepared, material })
@@ -103,23 +118,23 @@ pub(super) fn prepare_with_cancel(
     prepare_with_proof(
         requests,
         PlanarProofWorkLimit::CurrentDefault,
-        PlanarProofVersion::CarrierV2,
+        PlanarProofVersion::CarrierV2.into(),
         cancelled,
     )
 }
 fn prepare_with_proof(
     requests: &[Request],
     work: PlanarProofWorkLimit,
-    version: PlanarProofVersion,
+    preparation: Preparation,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<PreparedSelection, SelectionFailure> {
     if cancelled() {
         return Err(SelectionFailure::Cancelled);
     }
-    let planar = qualify_with_proof(requests, work, version, &mut cancelled)?;
+    let planar = qualify_with_proof(requests, work, preparation.proof, &mut cancelled)?;
     let prepared = requests
         .iter()
-        .map(|request| prepare_region(request, &mut cancelled))
+        .map(|request| prepare_region(request, preparation.maximum_fit_error, &mut cancelled))
         .collect::<Result<Vec<_>, _>>()?;
     let boundary_clearance = prepare_boundary(requests, &prepared, &mut cancelled)?;
     Ok(PreparedSelection {
@@ -139,13 +154,16 @@ fn prepare_boundary(
 
 fn prepare_region(
     request: &Request,
+    maximum_fit_error: Option<f64>,
     cancelled: &mut CancelPoll<'_>,
 ) -> Result<Request, SelectionFailure> {
-    subdivision::prepare_with_cancel(request, cancelled).map_err(|cause| {
-        SelectionFailure::Planning {
-            region: request.region,
-            cause: Box::new(cause),
-        }
+    let prepared = match maximum_fit_error {
+        Some(limit) => subdivision::prepare_with_fit_limit(request, limit, cancelled),
+        None => subdivision::prepare_with_cancel(request, cancelled),
+    };
+    prepared.map_err(|cause| SelectionFailure::Planning {
+        region: request.region,
+        cause: Box::new(cause),
     })
 }
 

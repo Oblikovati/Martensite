@@ -17,7 +17,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn construct_with_control(
             work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
             volume:
                 martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit::Report,
-            proof: martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2,
+            preparation: martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2.into(),
         },
         requests,
         control,

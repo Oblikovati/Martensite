@@ -105,14 +105,25 @@ pub fn normal_extrude_profile_on_chart_with_cancel(
 }
 pub(in crate::surface_sketch::wrapped_profile::api) fn qualify_chart(
     request: &WrappedNormalRequest,
+    inputs: input::Inputs,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<(WrappedChartNormalResult, ChartGraph)> {
+    let proof = martensite_tkbo::profile_extrusion::PlanarProofVersion::CarrierV2;
+    qualify_chart_with_preparation(request, inputs, proof.into(), cancelled)
+}
+
+pub(in crate::surface_sketch::wrapped_profile::api) fn qualify_chart_with_preparation(
+    request: &WrappedNormalRequest,
     mut inputs: input::Inputs,
+    preparation: selection::Preparation,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<(WrappedChartNormalResult, ChartGraph)> {
     let plan = chart_admission::prepare(request, &inputs.requests)?;
     for source in &mut inputs.requests {
         source.tolerance = plan.budget.canonical_allowance();
     }
-    let mut base = operation::from_inputs(request, inputs, cancelled)?;
+    let mut base =
+        operation::from_inputs_with_preparation(request, inputs, preparation, cancelled)?;
     let physical = publish_chart(&mut base, plan, cancelled)?;
     input::poll(cancelled, WrappedStage::Publication)?;
     let result = WrappedChartNormalResult {
