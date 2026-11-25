@@ -60,13 +60,39 @@ impl BRepLibMakeEdge {
     /// `BRepLib_LineThroughIdenticPoints` when their points are within gp::Resolution();
     /// `BRepLibMakeEdge::from_vertices(&v1, &v2)?`.
     pub fn from_vertices(v1: &Vertex, v2: &Vertex) -> Result<Self, Failure> {
+        Self::vertex_segment(v1, v2, crate::brep_lib::globals::precision)
+    }
+
+    /// Build a segment from two vertices with explicit local modelling tolerance.
+    /// Example: `BRepLibMakeEdge::from_vertices_with_tolerance(&start, &end, 1e-7)?`.
+    pub fn from_vertices_with_tolerance(
+        v1: &Vertex,
+        v2: &Vertex,
+        tolerance: f64,
+    ) -> Result<Self, Failure> {
+        if !tolerance.is_finite() || tolerance <= 0.0 {
+            return Err(Failure::with_message(
+                "Standard_DomainError",
+                &format!("segment tolerance {tolerance} must be finite and positive"),
+            ));
+        }
+        Self::vertex_segment(v1, v2, || tolerance)
+    }
+
+    fn vertex_segment(
+        v1: &Vertex,
+        v2: &Vertex,
+        precision: impl Fn() -> f64,
+    ) -> Result<Self, Failure> {
         let (p1, p2) = (BRepTool::pnt(v1)?, BRepTool::pnt(v2)?);
         let Some((line, length)) = segment(p1, p2)? else {
             let mut maker = Self::new();
             maker.my_error = BRepLibEdgeError::LineThroughIdenticPoints;
             return Ok(maker);
         };
-        Self::initialized(|maker| maker.init_curve_vertices_params(&line, v1, v2, 0.0, length))
+        Self::initialized(|maker| {
+            maker.init_vertices_with_precision(&line, [v1, v2], [0.0, length], precision)
+        })
     }
 
     /// `BRepLib_MakeEdge(P1, P2)`: the segment between two points;

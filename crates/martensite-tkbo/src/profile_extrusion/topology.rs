@@ -21,8 +21,22 @@ pub(crate) struct ProfileTopology {
     pub edges: BTreeMap<ProfileCurveId, Edge>,
 }
 
+/// Keep existing construction semantics for callers of the original profile APIs.
+#[derive(Clone, Copy)]
+pub(crate) enum ProfileTopologyMode {
+    Legacy,
+    ScopedLines,
+}
+
 /// Build every vertex and edge of the admitted profile; `build_topology(&profile)?`.
 pub(crate) fn build_topology(profile: &AdmittedProfile) -> Result<ProfileTopology, Failure> {
+    build_topology_with_mode(profile, ProfileTopologyMode::Legacy)
+}
+
+pub(crate) fn build_topology_with_mode(
+    profile: &AdmittedProfile,
+    mode: ProfileTopologyMode,
+) -> Result<ProfileTopology, Failure> {
     let mut vertices = BTreeMap::new();
     for (id, point) in &profile.vertices {
         let tolerance = vertex_tolerance(profile, *id, *point);
@@ -30,7 +44,10 @@ pub(crate) fn build_topology(profile: &AdmittedProfile) -> Result<ProfileTopolog
     }
     let mut edges = BTreeMap::new();
     for curve in &profile.curves {
-        edges.insert(curve.id(), make_edge(&profile.frame, curve, &vertices)?);
+        edges.insert(
+            curve.id(),
+            make_edge(&profile.frame, curve, &vertices, mode)?,
+        );
     }
     Ok(ProfileTopology { vertices, edges })
 }
@@ -63,13 +80,23 @@ fn make_edge(
     frame: &WorldFrame,
     curve: &AdmittedCurve,
     vertices: &BTreeMap<ProfileVertexId, Vertex>,
+    mode: ProfileTopologyMode,
 ) -> Result<Edge, Failure> {
     let ends = |ends: &[ProfileVertexId; 2]| [&vertices[&ends[0]], &vertices[&ends[1]]];
     let ccw = ArcSense::CounterClockwise;
     let maker = match curve {
         AdmittedCurve::Line { ends: ids, .. } => {
             let [start, end] = ends(ids);
-            BRepBuilderAPIMakeEdge::from_vertices(start, end)?
+            match mode {
+                ProfileTopologyMode::Legacy => BRepBuilderAPIMakeEdge::from_vertices(start, end)?,
+                ProfileTopologyMode::ScopedLines => {
+                    BRepBuilderAPIMakeEdge::from_vertices_with_tolerance(
+                        start,
+                        end,
+                        martensite_tkernel::precision::confusion(),
+                    )?
+                }
+            }
         }
         AdmittedCurve::Arc {
             ends: ids,

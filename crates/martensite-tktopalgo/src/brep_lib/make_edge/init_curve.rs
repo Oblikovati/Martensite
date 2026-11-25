@@ -132,6 +132,16 @@ impl BRepLibMakeEdge {
         pp1: f64,
         pp2: f64,
     ) -> Result<(), Failure> {
+        self.init_vertices_with_precision(curve, [vv1, vv2], [pp1, pp2], globals::precision)
+    }
+
+    pub(super) fn init_vertices_with_precision(
+        &mut self,
+        curve: &Handle<dyn GeomCurve>,
+        [vv1, vv2]: [&Vertex; 2],
+        [pp1, pp2]: [f64; 2],
+        precision: impl Fn() -> f64,
+    ) -> Result<(), Failure> {
         let c: Handle<dyn GeomCurve> = untrimmed(curve);
         let basis: &dyn GeomCurve = checked_curve(&c)?;
         let bounds: (f64, f64) = (basis.first_parameter(), basis.last_parameter());
@@ -151,8 +161,8 @@ impl BRepLibMakeEdge {
         if !periodic && range.p2 - range.p1 <= gp::resolution() {
             return self.record(BRepLibEdgeError::LineThroughIdenticPoints);
         }
-        match self.checked_ends(&adaptor, &mut range)? {
-            Ok(flags) => self.build_curve_edge(&c, &range, flags),
+        match self.checked_ends(&adaptor, &mut range, &precision)? {
+            Ok(flags) => self.build_curve_edge(&c, &range, flags, precision()),
             Err(error) => self.record(error),
         }
     }
@@ -168,6 +178,7 @@ impl BRepLibMakeEdge {
         &self,
         adaptor: &GeomAdaptorCurve,
         range: &mut EdgeRange,
+        precision: &impl Fn() -> f64,
     ) -> Step<(bool, bool)> {
         let p1inf: bool = precision::is_negative_infinite(range.p1);
         let p2inf: bool = precision::is_positive_infinite(range.p2);
@@ -181,7 +192,7 @@ impl BRepLibMakeEdge {
         } else {
             Some(adaptor.value(range.p2)?)
         };
-        let preci: f64 = globals::precision();
+        let preci = precision();
         let closed: bool = match (point1, point2) {
             (Some(a), Some(b)) => a.distance(&b) <= preci,
             _ => false,
@@ -206,8 +217,8 @@ impl BRepLibMakeEdge {
         c: &Handle<dyn GeomCurve>,
         range: &EdgeRange,
         (closed, degenerated): (bool, bool),
+        preci: f64,
     ) -> Result<(), Failure> {
-        let preci: f64 = globals::precision();
         let builder = BRepBuilder::default();
         let mut edge: Edge = self.oriented_vertices(range);
         builder.make_edge_with_curve(&mut edge, c, preci)?;

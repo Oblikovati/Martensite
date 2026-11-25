@@ -24,6 +24,7 @@ martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.4.0" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.4.0" }
 martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.5.0" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.4.0" }
+martensite-tksketch3d = { path = "../martensite-tksketch3d", version = "0.1.0" }
 
 [dev-dependencies]
 static_assertions = "=1.1.0"
@@ -31,3 +32,7 @@ static_assertions = "=1.1.0"
 [[test]]
 name = "surface_sketch"
 path = "tests/surface_sketch/main.rs"
+
+[[test]]
+name = "spatial_prism"
+path = "tests/spatial_prism.rs"

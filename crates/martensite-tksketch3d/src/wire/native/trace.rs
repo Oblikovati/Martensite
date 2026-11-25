@@ -15,7 +15,7 @@ use martensite_tkbrep::{
 };
 use martensite_tkernel::precision;
 use martensite_tkg3d::{geom::GeomLine, top_abs::Orientation};
-use martensite_tkmath::gp::{Line3, Point3};
+use martensite_tkmath::{gp::Point3, predicates::affine_line_trace_bound};
 use std::collections::BTreeMap;
 
 pub(super) fn validate(
@@ -165,7 +165,7 @@ fn check_carrier(source: &WireSegment, edge: &Edge) -> Result<f64, WireFailure> 
         entity,
         "stored edge tolerance",
     )?;
-    let bound = trace_bound(curve.lin(), parameters, source.authored.points);
+    let bound = affine_line_trace_bound(curve.lin(), parameters, source.authored.points);
     if !bound.is_finite() || bound > tolerance {
         return Err(WireFailure::NativeErrorBound {
             line,
@@ -185,55 +185,4 @@ fn require(
         return Err(WireFailure::NativeMismatch { entity, expected });
     }
     Ok(())
-}
-
-fn trace_bound(line: Line3, parameters: [f64; 2], points: [Point3; 2]) -> f64 {
-    // The difference from the authored segment is affine under the normalized trim.
-    // Its L1 norm is bounded by the larger endpoint bound and bounds Euclidean error.
-    let first = endpoint_bound(line, parameters[0], points[0]);
-    let last = endpoint_bound(line, parameters[1], points[1]);
-    first.max(last)
-}
-
-fn endpoint_bound(line: Line3, t: f64, point: Point3) -> f64 {
-    let origin = line.location();
-    let direction = line.direction();
-    let mut bound = 0.0;
-    for ((&base, &dir), &target) in origin
-        .coordinates()
-        .iter()
-        .zip(direction.coordinates())
-        .zip(point.coordinates())
-    {
-        let component = component_bound(base, dir, t, target);
-        bound = add_up(bound, component);
-    }
-    bound
-}
-
-fn component_bound(base: f64, direction: f64, t: f64, target: f64) -> f64 {
-    if t == 0. || direction == 0. {
-        return abs_difference(base, target);
-    }
-    // FMA performs one rounding. Neighboring floats enclose the exact affine value,
-    // even if the unrounded product and origin nearly cancel.
-    let rounded = direction.mul_add(t, base);
-    if !rounded.is_finite() {
-        return f64::INFINITY;
-    }
-    abs_difference(rounded.next_down(), target).max(abs_difference(rounded.next_up(), target))
-}
-
-fn abs_difference(left: f64, right: f64) -> f64 {
-    if left == right {
-        return 0.;
-    }
-    (left - right).abs().next_up()
-}
-
-fn add_up(a: f64, b: f64) -> f64 {
-    if a == 0. || b == 0. {
-        return a + b;
-    }
-    (a + b).next_up()
 }

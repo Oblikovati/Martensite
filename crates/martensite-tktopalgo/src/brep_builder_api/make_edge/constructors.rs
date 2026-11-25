@@ -12,6 +12,7 @@ use martensite_tkmath::gp::{Circle3, Ellipse3, Hyperbola3, Line3, Parabola3, Poi
 impl BRepBuilderAPIMakeEdge {
     wrapped_constructors!(BRepBuilderAPIMakeEdge, BRepLibMakeEdge;
         from_vertices(v1: &Vertex, v2: &Vertex) = "BRepBuilderAPI_MakeEdge(V1, V2)";
+        from_vertices_with_tolerance(v1: &Vertex, v2: &Vertex, tolerance: f64) = "a segment with explicit local tolerance";
         from_points(p1: Point3, p2: Point3) = "BRepBuilderAPI_MakeEdge(P1, P2)";
         from_lin(curve: Line3) = "BRepBuilderAPI_MakeEdge(const gp_Lin& L)";
         from_lin_params(curve: Line3, p1: f64, p2: f64) = "BRepBuilderAPI_MakeEdge(L, p1, p2)";

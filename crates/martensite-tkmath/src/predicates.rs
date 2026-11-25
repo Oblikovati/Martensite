@@ -6,20 +6,29 @@ mod affine_point;
 /// Exact injectivity certificates for supported bilinear patches.
 pub mod bilinear_patch;
 mod compare;
+mod line_trace;
+mod plane_sign;
 /// Certified polynomial roots for extension topology.
 pub mod roots;
 mod segment_contact;
 mod triangle;
+mod triple_measure;
 mod triple_product;
 pub use affine_point::compare_affine_point_error_3d;
 pub use compare::{
     compare_line_projections_2d, compare_squared_distances_2d, compare_squared_length_3d,
 };
+pub use line_trace::{
+    affine_line_trace_bound, placed_affine_line_trace_bound, placed_point_distance_upper_bound,
+    point_distance_upper_bound,
+};
+pub use plane_sign::{compare_plane_direction_3d, compare_tetrahedron_orientation_3d};
 pub use segment_contact::{SegmentContact3d, exact_segment_contact_3d};
 pub use triangle::{
     compare_triangle_altitude_3d, compare_triangle_orientation_3d,
     compare_triangle_projected_dot_3d, point_on_anchored_direction_3d,
 };
+pub use triple_measure::enclose_scalar_triple_product_3d;
 pub use triple_product::compare_scalar_triple_product_3d;
 
 use num_bigint::{BigInt, Sign};

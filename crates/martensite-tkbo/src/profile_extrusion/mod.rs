@@ -56,7 +56,8 @@ pub use bezier::{
     exact_conic_quarter,
 };
 pub use build_regions::{
-    build_planar_regions, build_planar_regions_with_integration_budget_and_cancel,
+    build_planar_line_regions_with_work_and_cancel, build_planar_regions,
+    build_planar_regions_with_integration_budget_and_cancel,
     build_planar_regions_with_proof_and_cancel, build_planar_regions_with_work,
     build_planar_regions_with_work_and_cancel,
 };

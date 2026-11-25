@@ -25,6 +25,7 @@ pub fn build_planar_regions_with_integration_budget_and_cancel(
         requested,
         version,
         Some(remaining_integration_cells),
+        ProfileTopologyMode::Legacy,
         &mut cancelled,
     )
 }
@@ -46,6 +47,7 @@ pub(super) fn build_selected(
     requested: feature::PlanarProofWorkLimit,
     version: feature::PlanarProofVersion,
     allowance: Option<u64>,
+    mode: ProfileTopologyMode,
     cancelled: &mut (impl FnMut() -> bool + Send),
 ) -> feature::PlanarRegionWorkResult {
     if cancelled() {
@@ -66,7 +68,7 @@ pub(super) fn build_selected(
     let effective = effective_version(version, allowance);
     let certified = certified_for_work_with_cancel(&profile, requested, effective, &mut *cancelled)
         .map_err(|failure| attach_program_policy(failure, version, allowance))?;
-    let built = construct_selected(&profile, &certified, requested, cancelled);
+    let built = construct_selected(&profile, &certified, requested, mode, cancelled);
     let mut built = built
         .map_err(|failure| attach_completed_program(failure, &certified, version, allowance))?;
     built.integral = issued_program(&certified, source, version, allowance);
@@ -76,6 +78,7 @@ fn construct_selected(
     profile: &AdmittedProfile,
     certified: &CertifiedRegions,
     requested: feature::PlanarProofWorkLimit,
+    mode: ProfileTopologyMode,
     cancelled: &mut impl FnMut() -> bool,
 ) -> feature::PlanarRegionWorkResult {
     if cancelled() {
@@ -85,7 +88,7 @@ fn construct_selected(
             Some(certified.work),
         ));
     }
-    construct_regions_with_cancel(profile, certified, requested, cancelled)
+    construct_regions_with_cancel(profile, certified, requested, mode, cancelled)
 }
 fn issued_program(
     certified: &CertifiedRegions,
