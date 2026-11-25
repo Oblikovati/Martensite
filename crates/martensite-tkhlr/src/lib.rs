@@ -12,5 +12,6 @@ pub mod hlr_appli;
 pub mod hlr_brep;
 pub mod hlr_topo_brep;
 pub mod intrv;
+pub mod parting;
 pub mod top_bas;
 pub mod top_cnx;
